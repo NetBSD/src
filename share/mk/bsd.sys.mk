@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.27 1998/08/26 19:36:37 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.28 1998/08/27 23:26:37 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -27,6 +27,8 @@ HOST_CPPFLAGS?=
 
 HOST_LD?=	ld
 HOST_LDFLAGS?=
+
+STRIPPROG?=	strip
 
 
 # Objective C
