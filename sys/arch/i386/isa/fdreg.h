@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fdreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: fdreg.h,v 1.4.4.1 1993/09/14 17:32:25 mycroft Exp $
+ *	$Id: fdreg.h,v 1.4.4.2 1993/10/28 14:30:03 mycroft Exp $
  */
 
 /*
@@ -65,4 +65,4 @@
 
 #define	FDC_BSIZE	512
 #define	FDC_NPORT	8
-#define	FDC_MAXIOSIZE	FDC_BSIZE	/* XXX this sucks */
+#define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
