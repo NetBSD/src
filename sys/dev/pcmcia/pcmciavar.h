@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.10 2000/02/04 01:27:14 cgd Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.11 2000/02/07 09:35:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -216,6 +216,9 @@ const struct pcmcia_product
 	*pcmcia_product_lookup __P((struct pcmcia_attach_args *pa,
 	    const struct pcmcia_product *tab, size_t ent_size,
 	    pcmcia_product_match_fn matchfn));
+
+void pcmcia_devinfo __P((struct pcmcia_card *card, int showhex, char *cp, 
+			 int cplen));
 
 void	pcmcia_read_cis __P((struct pcmcia_softc *));
 void	pcmcia_check_cis_quirks __P((struct pcmcia_softc *));
