@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.11 2001/10/22 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.12 2001/11/13 07:26:28 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.12 2001/11/13 07:26:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

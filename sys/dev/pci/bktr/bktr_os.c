@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.21 2001/10/18 16:08:05 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.22 2001/11/13 07:29:37 lukem Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -49,6 +49,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.22 2001/11/13 07:29:37 lukem Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.34 2001/07/01 16:35:37 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.35 2001/11/13 07:26:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.35 2001/11/13 07:26:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

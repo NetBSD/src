@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.4 2001/07/01 16:35:37 thorpej Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.5 2001/11/13 07:26:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -38,6 +38,9 @@
  * o IBM Turbo 16/4 Token Ring PC Card
  * o 3Com TokenLink Velocity PC Card
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.5 2001/11/13 07:26:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.9 2001/04/25 17:53:37 bouyer Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.10 2001/11/13 07:26:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.10 2001/11/13 07:26:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
