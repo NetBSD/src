@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 1997/10/15 04:36:01 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.6 1997/10/17 22:17:35 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -180,7 +180,7 @@ get_via_ftp (void)
 		
 	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
 	process_menu (MENU_ftpsource);
-	msg_prompt (MSG_netdir, dist_dir, dist_dir, STRSIZE, "ftp");
+	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, "ftp");
 	snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
 	strcpy (dist_dir, realdir);
 	run_prog ("/bin/mkdir %s", realdir);
@@ -195,10 +195,10 @@ get_via_ftp (void)
 	printf ("chdir (%s)\n", realdir);
 #endif
 	
-	list = ftp_list;
+	list = dist_list;
 	endwin();
 	while (*list) {
-		snprintf (filename, SSTRSIZE, *list, rels, ftp_postfix);
+		snprintf (filename, SSTRSIZE, *list, rels, dist_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
 			ret = run_prog("/usr/bin/ftp -a ftp://%s/%s/%s",
 				       ftp_host, ftp_dir,
