@@ -1358,6 +1358,7 @@
 ./usr/share/man/cat3/hash.0
 ./usr/share/man/cat3/heapsort.0
 ./usr/share/man/cat3/herror.0
+./usr/share/man/cat3/hosts_access.0
 ./usr/share/man/cat3/hstrerror.0
 ./usr/share/man/cat3/htonl.0
 ./usr/share/man/cat3/htons.0
