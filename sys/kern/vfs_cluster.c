@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.24 2000/06/27 17:41:48 mrg Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.25 2000/11/14 22:23:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,6 +44,8 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
+
+#include <uvm/uvm_extern.h>
 
 int doreallocblks = 0;
 
@@ -328,7 +330,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 	 * is no way of doing the necessary page moving, so
 	 * terminate early.
 	 */
-	if (size != roundup(size, NBPG))
+	if (size != round_page(size))
 		return (bp);
 
 	inc = btodb(size);
