@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.253 2004/06/09 22:45:24 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.254 2004/06/10 00:29:59 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -391,7 +391,7 @@ LOBJS=
 SOBJS=
 .endif	# !defined(LIB)							# }
 
-_YLSRCS=${YHEADER:D${SRCS:M*.y:.y=.h}} ${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
+_YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .NOPATH: ${ALLOBJS} ${_LIBS} ${_YLSRCS}
 
