@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.55 2003/12/08 17:09:39 pooka Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.56 2003/12/09 15:19:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.55 2003/12/08 17:09:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.56 2003/12/09 15:19:33 pooka Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2169,10 +2169,11 @@ bge_attach(parent, self, aux)
 	aprint_normal("%s: ", sc->bge_dev.dv_xname);
 
 	if (br == NULL) {
-		aprint_normal("unknown ASIC 0x%08x", sc->bge_chipid);
+		aprint_normal("unknown ASIC (0x%04x)", sc->bge_chipid >> 16);
 		sc->bge_quirks = 0;
 	} else {
-		aprint_normal("ASIC %s (0x%x)", br->br_name, sc->bge_chipid);
+		aprint_normal("ASIC %s (0x%04x)",
+		    br->br_name, sc->bge_chipid >> 16);
 		sc->bge_quirks |= br->br_quirks;
 	}
 	aprint_normal(", Ethernet address %s\n", ether_sprintf(eaddr));
