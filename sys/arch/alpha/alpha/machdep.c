@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.23 2002/12/16 17:26:26 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.24 2003/01/08 01:03:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.23 2002/12/16 17:26:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.24 2003/01/08 01:03:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1943,62 +1943,6 @@ fpusave_proc(struct lwp *l, int save)
 	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
-}
-
-/*
- * The following primitives manipulate the run queues.  _whichqs tells which
- * of the 32 queues _qs have processes in them.  Setrunqueue puts processes
- * into queues, Remrunqueue removes them from queues.  The running process is
- * on no queue, other processes are on a queue related to l->l_priority,
- * divided by 4 actually to shrink the 0-127 range of priorities into the 32
- * available queues.
- */
-/*
- * setrunqueue(l)
- *	lwp *l;
- *
- * Call should be made at splclock(), and l->l_stat should be LSRUN.
- */
-
-void
-setrunqueue(l)
-	struct lwp *l;
-{
-	int bit;
-
-	/* firewall: p->p_back must be NULL */
-	if (l->l_back != NULL)
-		panic("setrunqueue");
-
-	bit = l->l_priority >> 2;
-	sched_whichqs |= (1 << bit);
-	l->l_forw = (struct lwp *)&sched_qs[bit];
-	l->l_back = sched_qs[bit].ph_rlink;
-	l->l_back->l_forw = l;
-	sched_qs[bit].ph_rlink = l;
-}
-
-/*
- * remrunqueue(l)
- *
- * Call should be made at splclock().
- */
-void
-remrunqueue(l)
-	struct lwp *l;
-{
-	int bit;
-
-	bit = l->l_priority >> 2;
-	if ((sched_whichqs & (1 << bit)) == 0)
-		panic("remrunqueue");
-
-	l->l_back->l_forw = l->l_forw;
-	l->l_forw->l_back = l->l_back;
-	l->l_back = NULL;	/* for firewall checking. */
-
-	if ((struct lwp *)&sched_qs[bit] == sched_qs[bit].ph_link)
-		sched_whichqs &= ~(1 << bit);
 }
 
 /*
