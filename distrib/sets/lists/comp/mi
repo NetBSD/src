@@ -790,7 +790,6 @@
 ./usr/include/netiso/tp_trace.h
 ./usr/include/netiso/tp_user.h
 ./usr/include/netiso/tp_var.h
-./usr/include/netiso/tuba_table.h
 ./usr/include/netnatm/natm.h
 ./usr/include/netns/idp.h
 ./usr/include/netns/idp_var.h
