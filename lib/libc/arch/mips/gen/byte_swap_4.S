@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.4 2001/02/27 19:44:54 cgd Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.5 2002/11/10 18:10:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htonl.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: byte_swap_4.S,v 1.4 2001/02/27 19:44:54 cgd Exp $")
+	ASMSTR("$NetBSD: byte_swap_4.S,v 1.5 2002/11/10 18:10:25 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #undef _LOCORE
@@ -50,7 +50,7 @@
 #ifdef _KERNEL
 #define	BSWAP32_NAME	bswap32
 #else
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 #endif
 #define	BSWAP32_NAME	__bswap32

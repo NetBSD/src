@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.6 2000/03/05 05:41:53 shin Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.7 2002/11/10 18:10:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,10 +45,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __setjmp14.S,v 1.6 2000/03/05 05:41:53 shin Exp $")
+	ASMSTR("$NetBSD: __setjmp14.S,v 1.7 2002/11/10 18:10:25 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 #endif
 
@@ -67,13 +67,13 @@
 
 NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
 	.set	reorder
 #endif
 	subu	sp, sp, SETJMP_FRAME_SIZE	# allocate stack frame
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.cprestore 16
 #endif
 	sw	ra, CALLFRAME_RA(sp)		# save RA
@@ -137,7 +137,7 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 END(__setjmp14)
 
 LEAF(__longjmp14)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
 	.set	reorder

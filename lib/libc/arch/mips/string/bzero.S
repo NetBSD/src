@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.6 1997/10/19 01:19:58 jonathan Exp $	*/
+/*	$NetBSD: bzero.S,v 1.7 2002/11/10 18:10:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,14 +40,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)bzero.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: bzero.S,v 1.6 1997/10/19 01:19:58 jonathan Exp $")
+	ASMSTR("$NetBSD: bzero.S,v 1.7 2002/11/10 18:10:26 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 
 #define _LOCORE		/* XXX not really, just assembly-code source */
 #include <machine/endian.h>
 
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 #endif
 

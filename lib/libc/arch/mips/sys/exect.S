@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.7 2000/12/13 23:29:07 simonb Exp $	*/
+/*	$NetBSD: exect.S,v 1.8 2002/11/10 18:10:26 thorpej Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,11 +39,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)exect.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: exect.S,v 1.7 2000/12/13 23:29:07 simonb Exp $")
+	ASMSTR("$NetBSD: exect.S,v 1.8 2002/11/10 18:10:26 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 LEAF(exect)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set    noreorder
 	.cpload t9
 	.set    reorder

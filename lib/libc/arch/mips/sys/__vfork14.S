@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.3 2000/12/13 23:29:06 simonb Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.4 2002/11/10 18:10:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)Ovfork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __vfork14.S,v 1.3 2000/12/13 23:29:06 simonb Exp $")
+	ASMSTR("$NetBSD: __vfork14.S,v 1.4 2002/11/10 18:10:26 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 LEAF(__vfork14)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
 	.set	reorder

@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.8 2000/12/13 23:29:07 simonb Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.9 2002/11/10 18:10:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,11 +40,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setlogin.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: setlogin.S,v 1.8 2000/12/13 23:29:07 simonb Exp $")
+	ASMSTR("$NetBSD: setlogin.S,v 1.9 2002/11/10 18:10:26 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 LEAF(setlogin)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set    noreorder
 	.cpload t9
 	.set    reorder
