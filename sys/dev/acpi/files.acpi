@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.8 2002/12/28 06:20:15 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.9 2002/12/28 08:04:28 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -37,6 +37,10 @@ file	dev/acpi/acpi_bat.c		acpibat
 # Serial interface
 attach	com at acpi with com_acpi
 file	dev/acpi/com_acpi.c		com_acpi
+
+# Parallel interface
+attach	lpt at acpi with lpt_acpi
+file	dev/acpi/lpt_acpi.c		lpt_acpi
 
 # NeoMagic 256AV audio with CS4232 codec
 attach	wss at acpi with wss_acpi
