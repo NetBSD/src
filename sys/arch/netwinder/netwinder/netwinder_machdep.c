@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.27 2002/04/03 02:06:33 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.28 2002/04/03 05:37:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -338,7 +338,7 @@ struct l1_sec_map {
 };
 
 /*
- * u_int initarm(struct ebsaboot *bootinfo)
+ * u_int initarm(void);
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -352,8 +352,7 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(bootinfo)
-	struct nwbootinfo *bootinfo;
+initarm(void)
 {
 	int loop;
 	int loop1;
@@ -390,12 +389,35 @@ initarm(bootinfo)
 
 	printf("initarm: Configuring system ...\n");
 
+	/*
+	 * Copy out the boot info passed by the firmware.  Note that
+	 * early versions of NeTTrom fill this in with bogus values,
+	 * so we need to sanity check it.
+	 */
+	memcpy(&nwbootinfo, (caddr_t)(KERNEL_BASE + 0x100),
+	    sizeof(nwbootinfo));
+#ifdef VERBOSE_INIT_ARM
+	printf("NeTTrom boot info:\n");
+	printf("\tpage size = 0x%08lx\n", nwbootinfo.bi_pagesize);
+	printf("\tnpages = %ld (0x%08lx)\n", nwbootinfo.bi_nrpages,
+	    nwbootinfo.bi_nrpages);
+	printf("\trootdev = 0x%08lx\n", nwbootinfo.bi_rootdev);
+	printf("\tcmdline = %s\n", nwbootinfo.bi_cmdline);
+#endif
+	if (nwbootinfo.bi_nrpages != 0x02000 &&
+	    nwbootinfo.bi_nrpages != 0x04000 &&
+	    nwbootinfo.bi_nrpages != 0x08000 &&
+	    nwbootinfo.bi_nrpages != 0x10000) {
+		nwbootinfo.bi_pagesize = 0xdeadbeef;
+		nwbootinfo.bi_nrpages = 0x01000;	/* 16MB */
+		nwbootinfo.bi_rootdev = 0;
+	}
+
 	/* Fake bootconfig structure for the benefit of pmap.c */
 	/* XXX must make the memory description h/w independant */
-	/* XXX must query 21285, or something... */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = 0;
-	bootconfig.dram[0].pages = 0x04000000 / NBPG;
+	bootconfig.dram[0].pages = nwbootinfo.bi_nrpages;
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -713,6 +735,13 @@ initarm(bootinfo)
 	printf("irq ");
 	irq_init();
 	printf("done.\n");
+
+	/*
+	 * Warn the user if the bootinfo was bogus.  We already
+	 * faked up some safe values.
+	 */
+	if (nwbootinfo.bi_pagesize == 0xdeadbeef)
+		printf("WARNING: NeTTrom boot info corrupt\n");
 
 #ifdef IPKDB
 	/* Initialise ipkdb */
