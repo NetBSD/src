@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.61 2000/10/01 23:32:45 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.62 2000/10/01 23:43:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -520,18 +520,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
-	}
-	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
-
-	/*
-	 * If we're in promiscuous mode, and we are holding a
-	 * unicast packet that isn't for us, drop it.
-	 */
-	if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-	    (m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
-	    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-		   ETHER_ADDR_LEN) != 0) {
+	} else if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+		   memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			  ETHER_ADDR_LEN) != 0) {
 		m_freem(m);
 		return;
 	}
