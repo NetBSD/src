@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.4.10.2 2002/03/08 21:34:50 nathanw Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.4.10.3 2002/03/22 20:41:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe

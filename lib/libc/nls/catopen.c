@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.18.2.1 2002/03/08 21:35:29 nathanw Exp $	*/
+/*	$NetBSD: catopen.c,v 1.18.2.2 2002/03/22 20:42:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.5.2.2 2001/11/14 19:31:58 nathanw Exp $	*/
+/*	$NetBSD: runetable.c,v 1.5.2.3 2002/03/22 20:42:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,26 +43,19 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.5.2.2 2001/11/14 19:31:58 nathanw Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.5.2.3 2002/03/22 20:42:18 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <stdlib.h>
 #include <ctype.h>
 #include <locale.h>
+#include <assert.h>
+#include <citrus/citrus_module.h>
+#include <citrus/citrus_ctype.h>
 #include "rune.h"
+#include "rune_local.h"
 #include <stdlib.h>
-
-extern size_t	_none_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *,
-	size_t, void *));
-extern size_t	_none_wcrtomb __P((struct _RuneLocale *, char *, size_t,
-	const rune_t, void *));
-
-static _RuneState _DefaultRuneState = {
-	0,		/* sizestate */
-	NULL,		/* initstate */
-	NULL,		/* packstate */
-	NULL		/* unpackstate */
-};
 
 _RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,
@@ -268,10 +261,8 @@ _RuneLocale _DefaultRuneLocale = {
     { 0, NULL },
     { 0, NULL },
     NULL, 0, 
-    (__rune_mbrtowc_t)_none_mbrtowc,
-    (__rune_wcrtomb_t)_none_wcrtomb,
-    &_DefaultRuneState, 1,
-    NULL, "646"
+    "646",
+    &_citrus_ctype_default,
 };
 
 _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.18.2.1 2002/03/08 21:36:55 nathanw Exp $	*/
+/*	$NetBSD: zic.c,v 1.18.2.2 2002/03/22 20:42:47 nathanw Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 #if 0
 static char	elsieid[] = "@(#)zic.c	7.104";
 #else
-__RCSID("$NetBSD: zic.c,v 1.18.2.1 2002/03/08 21:36:55 nathanw Exp $");
+__RCSID("$NetBSD: zic.c,v 1.18.2.2 2002/03/22 20:42:47 nathanw Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */

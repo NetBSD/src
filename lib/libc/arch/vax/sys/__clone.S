@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1.2.3 2002/03/08 21:34:59 nathanw Exp $	*/
+/*	$NetBSD: __clone.S,v 1.1.2.4 2002/03/22 20:41:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

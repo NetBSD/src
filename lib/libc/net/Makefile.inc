@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.56.2.2 2001/11/14 19:31:59 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.56.2.3 2002/03/22 20:42:19 nathanw Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -7,13 +7,17 @@
 SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getnetnamadr.c getnetent.c getproto.c \
 	getprotoent.c getprotoname.c getservbyname.c getservbyport.c \
-	getservent.c herror.c hesiod.c inet_lnaof.c inet_makeaddr.c \
+	getservent.c herror.c inet_lnaof.c inet_makeaddr.c \
 	inet_net_ntop.c inet_net_pton.c inet_neta.c inet_ntop.c inet_pton.c \
 	inet_netof.c inet_network.c inet_ntoa.c iso_addr.c linkaddr.c \
 	nsdispatch.c nslexer.l nsparser.y ns_addr.c ns_ntoa.c nsap_addr.c \
 	rcmd.c recv.c res_comp.c res_data.c res_debug.c res_init.c \
 	res_mkquery.c res_query.c res_send.c send.c sethostent.c \
 	sockatmark.c
+
+.if (${MKHESIOD} != "no")
+SRCS+=	hesiod.c
+.endif
 
 SRCS+=	__dn_comp.c __res_close.c __res_send.c _inet_aton.c _inet_pton.c
 CPPFLAGS+=-DRESOLVSORT -I.
@@ -39,8 +43,12 @@ nslexer.c: nslexer.l nsparser.h
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getifaddrs.3 \
 	getnetent.3 getprotoent.3 \
-	getservent.3 hesiod.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 ns.3 \
+	getservent.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 ns.3 \
 	nsdispatch.3 rcmd.3 resolver.3 sockatmark.3
+
+.if (${MKHESIOD} != "no")
+MAN+=	hesiod.3
+.endif
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3
@@ -56,9 +64,11 @@ MLINKS+=getprotoent.3 endprotoent.3 getprotoent.3 getprotobyname.3 \
 	getprotoent.3 getprotobynumber.3 getprotoent.3 setprotoent.3
 MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 	getservent.3 getservbyport.3 getservent.3 setservent.3
+.if (${MKHESIOD} != "no")
 MLINKS+=hesiod.3 hesiod_end.3 hesiod.3 hesiod_free_list.3 \
 	hesiod.3 hesiod_init.3 hesiod.3 hesiod_resolve.3 \
 	hesiod.3 hesiod_to_bind.3
+.endif
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
 	inet.3 inet_network.3 inet.3 inet_ntoa.3 inet.3 network.3 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.7.2.1 2002/03/08 21:36:51 nathanw Exp $	*/
+/*	$NetBSD: difftime.c,v 1.7.2.2 2002/03/22 20:42:46 nathanw Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	7.9";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.7.2.1 2002/03/08 21:36:51 nathanw Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.7.2.2 2002/03/22 20:42:46 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)htonl.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: byte_swap_4.S,v 1.2.12.1 2002/03/08 21:34:55 nathanw Exp $"
+	.asciz "$NetBSD: byte_swap_4.S,v 1.2.12.2 2002/03/22 20:41:56 nathanw Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"

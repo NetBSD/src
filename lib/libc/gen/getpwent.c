@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.48.2.1 2002/03/08 21:35:07 nathanw Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.48.2.2 2002/03/22 20:42:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.48.2.1 2002/03/08 21:35:07 nathanw Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.48.2.2 2002/03/22 20:42:08 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

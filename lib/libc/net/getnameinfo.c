@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.25.2.4 2002/03/08 21:35:25 nathanw Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.25.2.5 2002/03/22 20:42:20 nathanw Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.4 2002/03/08 21:35:25 nathanw Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.5 2002/03/22 20:42:20 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"

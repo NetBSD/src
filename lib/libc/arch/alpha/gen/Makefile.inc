@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7.6.2 2002/03/08 21:34:43 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.7.6.3 2002/03/22 20:41:50 nathanw Exp $
 
 SRCS+=	fabs.S 
 

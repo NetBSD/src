@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype_sb.c,v 1.1 2000/12/25 23:30:58 itojun Exp $	*/
+/*	$NetBSD: iswctype_sb.c,v 1.1.2.1 2002/03/22 20:42:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_sb.c,v 1.1 2000/12/25 23:30:58 itojun Exp $");
+__RCSID("$NetBSD: iswctype_sb.c,v 1.1.2.1 2002/03/22 20:42:16 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
@@ -162,7 +162,7 @@ towlower(c)
 #undef wcwidth
 int
 wcwidth(c)
-	wint_t c;
+	wchar_t c;
 {
 	return 1;
 }

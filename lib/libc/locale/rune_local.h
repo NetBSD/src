@@ -1,4 +1,4 @@
-/*	$NetBSD: rune_local.h,v 1.5 2001/01/20 17:40:10 itojun Exp $	*/
+/*	$NetBSD: rune_local.h,v 1.5.2.1 2002/03/22 20:42:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -26,6 +26,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _RUNE_LOCAL_H_
+#define _RUNE_LOCAL_H_
+
 /* rune.c */
 extern _RuneLocale *_Read_RuneMagi __P((FILE *fp));
 extern _RuneLocale *_Read_CTypeAsRune __P((FILE *fp));
@@ -40,10 +43,12 @@ extern int _newrunelocale __P((char *));
 extern int __runetable_to_netbsd_ctype __P((const char *));
 
 /* ___runetype_mb.c */
-unsigned long ___runetype_mb __P((wint_t));
+extern unsigned long ___runetype_mb __P((wint_t));
 
 /* ___tolower_mb.c */
-wint_t ___tolower_mb __P((wint_t));
+extern wint_t ___tolower_mb __P((wint_t));
 
 /* ___toupper_mb.c */
-wint_t ___toupper_mb __P((wint_t));
+extern wint_t ___toupper_mb __P((wint_t));
+
+#endif

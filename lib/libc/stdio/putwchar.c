@@ -1,4 +1,4 @@
-/* $NetBSD: putwchar.c,v 1.1.2.2 2002/01/28 20:51:05 nathanw Exp $ */
+/* $NetBSD: putwchar.c,v 1.1.2.3 2002/03/22 20:42:27 nathanw Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -37,7 +37,7 @@
 #undef putwchar
 
 wint_t
-putwchar(wint_t wc)
+putwchar(wchar_t wc)
 {
 
 	return fputwc(wc, stdout);

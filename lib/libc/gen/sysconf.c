@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.12.6.2 2002/03/08 21:35:16 nathanw Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.12.6.3 2002/03/22 20:42:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.12.6.2 2002/03/08 21:35:16 nathanw Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.12.6.3 2002/03/22 20:42:13 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)syscall.s	8.2 (Berkeley) 1/21/94" */
-	.asciz "$NetBSD: __syscall.S,v 1.1.2.1 2002/03/08 21:34:59 nathanw Exp $"
+	.asciz "$NetBSD: __syscall.S,v 1.1.2.2 2002/03/22 20:41:59 nathanw Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

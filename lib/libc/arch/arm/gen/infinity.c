@@ -1,4 +1,4 @@
-/*	$NetBSD: infinity.c,v 1.1.2.2 2002/03/08 21:34:45 nathanw Exp $	*/
+/*	$NetBSD: infinity.c,v 1.1.2.3 2002/03/22 20:41:50 nathanw Exp $	*/
 
 /*
  * IEEE-compatible infinity.c -- public domain.

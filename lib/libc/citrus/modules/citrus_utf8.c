@@ -1,7 +1,7 @@
-/*	$NetBSD: utf8.c,v 1.8.2.1 2001/10/08 20:19:56 nathanw Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.2.2.2 2002/03/22 20:42:03 nathanw Exp $	*/
 
 /*-
- * Copyright (c)1999 Citrus Project,
+ * Copyright (c)2002 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,8 +24,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Citrus: xpg4dl/FreeBSD/lib/libc/locale/utf8.c,v 1.19 2001/06/21 01:51:44 yamt Exp $
  */
 
 /*-
@@ -66,47 +64,30 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: utf8.c,v 1.8.2.1 2001/10/08 20:19:56 nathanw Exp $");
-#endif
+__RCSID("$NetBSD: citrus_utf8.c,v 1.2.2.2 2002/03/22 20:42:03 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
-#include "rune.h"
-#include <stddef.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <stddef.h>
+#include <locale.h>
+#include <wchar.h>
+#include <sys/types.h>
+#include <limits.h>
+#include "citrus_module.h"
+#include "citrus_ctype.h"
+#include "citrus_utf8.h"
 
-const char *_UTF8_magic __P((void));
-int _UTF8_init __P((_RuneLocale *));
-static int findlen __P((rune_t));
-size_t _UTF8_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
-	void *));
-size_t _UTF8_wcrtomb __P((struct _RuneLocale *, char *, size_t, const rune_t,
-	void *));
-void _UTF8_initstate __P((_RuneLocale *, void *));
-void _UTF8_packstate __P((_RuneLocale *, mbstate_t *, void *));
-void _UTF8_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
 
-static int _utf_count[256];
+/* ----------------------------------------------------------------------
+ * private stuffs used by templates
+ */
 
-typedef struct {
-	void *runelocale;	/* reserved for future thread-safeness */
-	char ch[6];
-	int chlen;
-} _UTF8State;
-
-static _RuneState _UTF8_RuneState = {
-	sizeof(_UTF8State),		/* sizestate */
-	_UTF8_initstate,		/* initstate */
-	_UTF8_packstate,		/* packstate */
-	_UTF8_unpackstate		/* unpackstate */
-};
+static int _UTF8_count_array[256];
+static int const *_UTF8_count = NULL;
 
 static u_int32_t _UTF8_range[] = {
 	0,	/*dummy*/
@@ -114,51 +95,67 @@ static u_int32_t _UTF8_range[] = {
 	0x00200000, 0x04000000, 0x80000000,
 };
 
-const char *
-_UTF8_magic()
-{
+typedef struct {
+	char ch[6];
+	int chlen;
+} _UTF8State;
 
-	return _RUNE_MODULE_1("LC_CTYPE");
-}
+typedef struct {
+} _UTF8EncodingInfo;
+typedef struct {
+	_UTF8EncodingInfo	ei;
+	struct {
+		/* for future multi-locale facility */
+		_UTF8State	s_mblen;
+		_UTF8State	s_mbrlen;
+		_UTF8State	s_mbrtowc;
+		_UTF8State	s_mbtowc;
+		_UTF8State	s_mbsrtowcs;
+		_UTF8State	s_wcrtomb;
+		_UTF8State	s_wcsrtombs;
+		_UTF8State	s_wcstombs;
+		_UTF8State	s_wctomb;
+	} states;
+} _UTF8CTypeInfo;
 
-int
-_UTF8_init(rl)
-	_RuneLocale *rl;
+#define	_TO_EI(_cl_)			((_UTF8EncodingInfo *)(_cl_))
+#define	_TO_CEI(_cl_)			((_UTF8CTypeInfo *)(_cl_))
+#define _TO_STATE(_ps_)			((_UTF8State *)(_ps_))
+#define _CEI_TO_EI(_cei_)		(&(_cei_)->ei)
+#define _CEI_TO_STATE(_ei_, _func_)	(_ei_)->states.s_##_func_
+
+#define _FUNCNAME(m)			_citrus_UTF8_##m
+#define _ENCODING_INFO			_UTF8EncodingInfo
+#define _CTYPE_INFO			_UTF8CTypeInfo
+#define _ENCODING_STATE			_UTF8State
+#define _ENCODING_MB_CUR_MAX(_cl_)	6
+#define _ENCODING_IS_STATE_DEPENDENT	0
+
+
+static __inline void
+_UTF8_init_count(void)
 {
 	int i;
-
-	_DIAGASSERT(rl != NULL);
-
-	/* sanity check to avoid overruns */
-	if (sizeof(_UTF8State) > sizeof(mbstate_t))
-		return (EINVAL);
-
-	rl->__rune_mbrtowc = _UTF8_mbrtowc;
-	rl->__rune_wcrtomb = _UTF8_wcrtomb;
-
-	rl->__rune_RuneState = &_UTF8_RuneState;
-	rl->__rune_mb_cur_max = 6;
-
-	memset(_utf_count, 0, sizeof(_utf_count));
-	for (i = 0; i <= 0x7f; i++)
-		_utf_count[i] = 1;
-	for (i = 0xc0; i <= 0xdf; i++)
-		_utf_count[i] = 2;
-	for (i = 0xe0; i <= 0xef; i++)
-		_utf_count[i] = 3;
-	for (i = 0xf0; i <= 0xf7; i++)
-		_utf_count[i] = 4;
-	for (i = 0xf8; i <= 0xfb; i++)
-		_utf_count[i] = 5;
-	for (i = 0xfc; i <= 0xfd; i++)
-		_utf_count[i] = 6;
-
-	return (0);
+	if (!_UTF8_count) {
+		memset(_UTF8_count_array, 0, sizeof(_UTF8_count_array));
+		for (i = 0; i <= 0x7f; i++)
+			_UTF8_count_array[i] = 1;
+		for (i = 0xc0; i <= 0xdf; i++)
+			_UTF8_count_array[i] = 2;
+		for (i = 0xe0; i <= 0xef; i++)
+			_UTF8_count_array[i] = 3;
+		for (i = 0xf0; i <= 0xf7; i++)
+			_UTF8_count_array[i] = 4;
+		for (i = 0xf8; i <= 0xfb; i++)
+			_UTF8_count_array[i] = 5;
+		for (i = 0xfc; i <= 0xfd; i++)
+			_UTF8_count_array[i] = 6;
+		_UTF8_count = _UTF8_count_array;
+	}
 }
 
 static int
-findlen(v)
-	rune_t v;
+_UTF8_findlen(wchar_t v)
 {
 	int i;
 	u_int32_t c;
@@ -167,120 +164,148 @@ findlen(v)
 	for (i = 1; i < sizeof(_UTF8_range) / sizeof(_UTF8_range[0]); i++)
 		if (c >= _UTF8_range[i] && c < _UTF8_range[i + 1])
 			return i;
+
 	return -1;	/*out of range*/
 }
 
-/* s is non-null */
-size_t
-_UTF8_mbrtowc(rl, pwcs, s, n, state)
-	_RuneLocale *rl;
-	rune_t *pwcs;
-	const char *s;
-	size_t n;
-	void *state;
+static __inline void
+/*ARGSUSED*/
+_citrus_UTF8_init_state(_UTF8EncodingInfo *ei, _UTF8State *s)
 {
-	_UTF8State *ps;
-	rune_t rune;
+	memset(s, 0, sizeof(*s));
+}
+
+static __inline void
+/*ARGSUSED*/
+_citrus_UTF8_pack_state(_UTF8EncodingInfo *ei, void *pspriv,
+			const _UTF8State *s)
+{
+	memcpy(pspriv, (const void *)s, sizeof(*s));
+}
+
+static __inline void
+/*ARGSUSED*/
+_citrus_UTF8_unpack_state(_UTF8EncodingInfo *ei, _UTF8State *s,
+			  const void *pspriv)
+{
+	memcpy((void *)s, pspriv, sizeof(*s));
+}
+
+static int
+_citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
+			  size_t n, _UTF8State *psenc, size_t *nresult)
+{
+	wchar_t wchar;
+	const char *s0;
 	int c;
 	int i;
 	int chlenbak;
 
-	/* rl appears to be unused */
-	/* pwcs may be NULL */
+	_DIAGASSERT(nresult != 0);
+	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(s != NULL);
-	_DIAGASSERT(state != NULL);
+	_DIAGASSERT(psenc != NULL);
 
-	ps = state;
-	chlenbak = ps->chlen;
+	s0 = *s;
+
+	if (s0 == NULL) {
+		_citrus_UTF8_init_state(ei, psenc);
+		*nresult = 0; /* state independent */
+		return (0);
+	}
+
+	chlenbak = psenc->chlen;
 
 	/* make sure we have the first byte in the buffer */
-	switch (ps->chlen) {
+	switch (psenc->chlen) {
 	case 0:
-		if (n < 1)
-			return (size_t)-2;
-		ps->ch[0] = *s++;
-		ps->chlen = 1;
+		if (n < 1) {
+			goto restart;
+		}
+		psenc->ch[0] = *s0++;
+		psenc->chlen = 1;
 		n--;
 		break;
 	case 1: case 2: case 3: case 4: case 5:
 		break;
 	default:
 		/* illegal state */
-		goto encoding_error;
+		goto ilseq;
 	}
 
-	c = _utf_count[ps->ch[0] & 0xff];
+	c = _UTF8_count[psenc->ch[0] & 0xff];
 	if (c == 0)
-		goto encoding_error;
-	while (ps->chlen < c) {
-		if (n < 1)
-			return (size_t)-2;
-		ps->ch[ps->chlen] = *s++;
-		ps->chlen++;
+		goto ilseq;
+	while (psenc->chlen < c) {
+		if (n < 1) {
+			goto restart;
+		}
+		psenc->ch[psenc->chlen] = *s0++;
+		psenc->chlen++;
 		n--;
 	}
 
 	switch (c) {
 	case 1:
-		rune = ps->ch[0] & 0xff;
+		wchar = psenc->ch[0] & 0xff;
 		break;
 	case 2: case 3: case 4: case 5: case 6:
-		rune = ps->ch[0] & (0x7f >> c);
+		wchar = psenc->ch[0] & (0x7f >> c);
 		for (i = 1; i < c; i++) {
-			if ((ps->ch[i] & 0xc0) != 0x80)
-				goto encoding_error;
-			rune <<= 6;
-			rune |= (ps->ch[i] & 0x3f);
+			if ((psenc->ch[i] & 0xc0) != 0x80)
+				goto ilseq;
+			wchar <<= 6;
+			wchar |= (psenc->ch[i] & 0x3f);
 		}
 
-#if 1	/* should we do it?  utf2.c does not reject redundant encodings */
-		i = findlen(rune);
-		if (i != c)
-			goto encoding_error;
-#endif
+		_DIAGASSERT(findlen(wchar) == c);
 
 		break;
 	}
 
-	ps->chlen = 0;
-	if (pwcs)
-		*pwcs = rune;
-	if (!rune)
-		return 0;
-	else
-		return c - chlenbak;
+	*s = s0;
 
-encoding_error:
-	ps->chlen = 0;
-	return (size_t)-1;
+	psenc->chlen = 0;
+
+	if (pwc)
+		*pwc = wchar;
+
+	if (!wchar)
+		*nresult = 0;
+	else
+		*nresult = c - chlenbak;
+
+	return (0);
+
+ilseq:
+	psenc->chlen = 0;
+	return (EILSEQ);
+
+restart:
+	*nresult = (size_t)-2;
+	*s = s0;
+	return (0);
 }
 
-/* s is non-null */
-size_t
-_UTF8_wcrtomb(rl, s, n, wc, state)
-        _RuneLocale *rl;
-        char *s;
-	size_t n;
-        const rune_t wc;
-        void *state;
+static int
+_citrus_UTF8_wcrtomb_priv(_UTF8EncodingInfo *ei, char *s, size_t n, wchar_t wc,
+			  _UTF8State *psenc, size_t *nresult)
 {
 	int cnt, i;
-	rune_t c;
+	wchar_t c;
 
-	/* rl appears to be unused */
-	/* s may be NULL (actually, it's checked below) */
-	/* state appears to be unused */
+	_DIAGASSERT(ei != NULL);
+	_DIAGASSERT(nresult != 0);
+	_DIAGASSERT(s != NULL);
 
-	cnt = findlen(wc);
+	cnt = _UTF8_findlen(wc);
 	if (cnt <= 0 || cnt > 6) {
 		/* invalid UCS4 value */
-		errno = EILSEQ;
-		return (size_t)-1;
+		goto ilseq;
 	}
 	if (n < cnt) {
 		/* bound check failure */
-		errno = EILSEQ;	/*XXX*/
-		return (size_t)-1;
+		goto ilseq;
 	}
 
 	c = wc;
@@ -298,50 +323,40 @@ _UTF8_wcrtomb(rl, s, n, wc, state)
 		}
 	}
 
-	return cnt;
+	*nresult = (size_t)cnt;
+	return (0);
+
+ilseq:
+	*nresult = (size_t)-1;
+	return (EILSEQ);
 }
 
-void
-_UTF8_initstate(rl, s)
-	_RuneLocale *rl;
-	void *s;
+
+static int
+/*ARGSUSED*/
+_citrus_UTF8_stdencoding_init(_UTF8EncodingInfo * __restrict ei,
+			      const void * __restrict var, size_t lenvar)
 {
-	_UTF8State *state;
+	_DIAGASSERT(ei != NULL);
 
-	/* rl appears to be unused */
+	_UTF8_init_count();
+	memset((void *)ei, 0, sizeof(*ei));
 
-	if (!s)
-		return;
-	state = s;
-	memset(state, 0, sizeof(_UTF8State));
+	return (0);
 }
 
-void
-_UTF8_packstate(rl, dst, src)
-	_RuneLocale *rl;
-	mbstate_t *dst;
-	void* src;
+static void
+/*ARGSUSED*/
+_citrus_UTF8_stdencoding_uninit(_UTF8EncodingInfo *ei)
 {
-
-	/* rl appears to be unused */
-	_DIAGASSERT(dst != NULL);
-	_DIAGASSERT(src != NULL);
-
-	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF8State));
-	return;
 }
 
-void
-_UTF8_unpackstate(rl, dst, src)
-	_RuneLocale *rl;
-	void* dst;
-	const mbstate_t *src;
-{
 
-	/* rl appears to be unused */
-	_DIAGASSERT(dst != NULL);
-	_DIAGASSERT(src != NULL);
+/* ----------------------------------------------------------------------
+ * public interface for ctype
+ */
 
-	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF8State));
-	return;
-}
+_CITRUS_CTYPE_DECLS(UTF8);
+_CITRUS_CTYPE_DEF_OPS(UTF8);
+
+#include "citrus_ctype_template.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.1.20.1 2002/03/08 21:34:58 nathanw Exp $	*/
+/*	$NetBSD: memmove.S,v 1.1.20.2 2002/03/22 20:41:58 nathanw Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

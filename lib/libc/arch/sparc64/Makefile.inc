@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.12.2 2002/03/08 21:34:52 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.1.12.3 2002/03/22 20:41:54 nathanw Exp $
 
 KMINCLUDES= arch/sparc64/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
