@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.17 1996/04/01 01:35:48 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.18 1996/04/04 06:59:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/devconf.h>
 
 #include <vm/vm.h>
 
@@ -59,6 +58,8 @@ static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
 /* unused */ static u_short	GetWord __P((nubus_slot *fmt, u_long ptr));
 #endif
 static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
+
+extern int matchbyname();	/* XXX - this really ought to be elsewhere! */
 
 struct cfattach nubus_ca = {
 	sizeof(struct nubus_softc), matchbyname, nubusattach
