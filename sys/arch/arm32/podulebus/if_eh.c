@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.12 1996/10/29 23:53:01 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.13 1996/10/30 01:50:01 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -718,23 +718,31 @@ eh_ensure_dma_completed(sc, type)
 	struct eh_softc *sc;
 	int type;
 {
-	register int status = GetReg ( EH_COMMAND );
+	register int status = GetReg(EH_COMMAND);
+	register int s;
+	s = splhigh();	/* XXX - jasper */
 
-	if ( (status&COM_ABORT)==0 ) {
+	if ((status&COM_ABORT)==0) {
 	        int dummy=0;
-		printf ( "EHDEBUG: Remote %d wasn't finished\n", type );
-		SetReg ( EH_COMMAND, status|COM_ABORT );
-		switch ( type ) {
+		printf("EHDEBUG: Remote %d wasn't finished : spl level %d\n", type, s);
+		SetReg(EH_COMMAND, status|COM_ABORT);
+		printf("EHDEBUG: SetReg done : status %d : type %d\n", status, type);
+		switch(type) {
 		case COM_READ:
 			dummy = GetReg ( EH_DATA_PORT );
 			break;
 		case COM_WRITE:
-			SetReg ( EH_DATA_PORT, dummy );
+			printf ( "EHDEBUG: COM_WRITE : About to SetReg ( EH_DATA_PORT, dummy );\n" );
+			/*SetReg ( EH_DATA_PORT, dummy );*/
 			break;
+		default:
+		    printf("EHDEBUG: default : type = %d\n", type);
 		}
 		ehinit (sc);
+		splx(s);	/* XXX - jasper */
 		return 1;
 	}
+	splx(s);	/* XXX - jasper */
 	return 0;
 }
 
@@ -871,6 +879,9 @@ ehinit(sc)
 {
 	int card_freestart;
 	int counter;
+	register int s;
+
+	s = splhigh();	/* XXX - jasper */
 
 	PAGE(0);
 
@@ -893,6 +904,7 @@ ehinit(sc)
 		    card_freestart, sc->sc_physstart );
 	        sc->sc_arpcom.ac_if.if_flags &= ~IFF_RUNNING;
 		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+		splx(s);    /* XXX -japser */
 		return;
 	}
 
@@ -969,6 +981,7 @@ ehinit(sc)
 	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 
 	ehstart(&sc->sc_arpcom.ac_if);
+	splx(s);    /* XXX -japser */
 }
 
 int
@@ -1182,6 +1195,9 @@ ehintr(arg)
 	struct eh_softc *sc = arg;
 	register int isr = GetReg ( EH_ISR );	/* Is char of int faster ? */
 	register int times = 0;
+	register int s;
+
+	s = splhigh();	/* XXX -jasper */
 
 	PAGE(0);
 
@@ -1203,6 +1219,7 @@ ehintr(arg)
 		printf ( "\n" );
 		INTR_ACK ( ISR_RXE );
 		ehinit (sc);
+		splx(s);    /* XXX - jasper */
 		return 0;
 	}
 
@@ -1275,6 +1292,7 @@ ehintr(arg)
 	if ( (isr&GetReg(EH_IMR))!=0 )
 		printf ( "eh: Interrupt not serviced\n" );
 
+	splx(s);    /* XXX - jasper */
 	return 0;
 }
 
