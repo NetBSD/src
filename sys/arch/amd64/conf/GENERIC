@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21.2.2 2004/06/30 21:01:39 jdc Exp $
+# $NetBSD: GENERIC,v 1.21.2.3 2004/07/13 09:27:38 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21.2.2 $"
+#ident 		"GENERIC-$Revision: 1.21.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -498,6 +498,7 @@ mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 skc* 	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
 sk* 	at skc?				# SysKonnect SK9821 Gigabit Ethernet
