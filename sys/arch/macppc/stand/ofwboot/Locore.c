@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4 1999/02/02 16:29:25 tsubai Exp $	*/
+/*	$NetBSD: Locore.c,v 1.5 1999/02/04 15:41:15 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include <lib/libsa/stand.h>
 
 #include <machine/cpu.h>
+#include <machine/stdarg.h>
 
 #include "openfirm.h"
 
@@ -556,6 +557,53 @@ OF_chain(virt, size, entry, arg, len)
 	entry(0, 0, openfirmware, arg, len);
 }
 #endif
+
+int
+#ifdef	__STDC__
+OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
+#else
+OF_call_method(method, ihandle, nargs, nreturns, va_alist)
+	char *method;
+	int ihandle;
+	int nargs;
+	int nreturns;
+	va_dcl
+#endif
+{
+	va_list ap;
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		char *method;
+		int ihandle;
+		int args_n_results[12];
+	} args = {
+		"call-method",
+		2,
+		1,
+	};
+	int *ip, n;
+
+	if (nargs > 6)
+		return -1;
+	args.nargs = nargs + 2;
+	args.nreturns = nreturns + 1;
+	args.method = method;
+	args.ihandle = ihandle;
+	va_start(ap, nreturns);
+	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
+		*--ip = va_arg(ap, int);
+
+	if (openfirmware(&args) == -1)
+		return -1;
+	if (args.args_n_results[nargs])
+		return args.args_n_results[nargs];
+	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
+		*va_arg(ap, int *) = *--ip;
+	va_end(ap);
+	return 0;
+}
 
 static int stdin;
 static int stdout;

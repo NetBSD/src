@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.2 1999/02/04 12:14:24 tsubai Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.3 1999/02/04 15:41:15 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -173,6 +173,10 @@ netif_put(desc, pkt, len)
 #endif
 	}
 
+	if (op->dmabuf) {
+		bcopy(pkt, op->dmabuf, sendlen);
+		pkt = op->dmabuf;
+	}
 	rv = OF_write(op->handle, pkt, sendlen);
 
 #ifdef	NETIF_DEBUG

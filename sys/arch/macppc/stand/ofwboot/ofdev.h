@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.h,v 1.1 1998/05/15 10:16:00 tsubai Exp $	*/
+/*	$NetBSD: ofdev.h,v 1.2 1999/02/04 15:41:15 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,7 @@ struct of_dev {
 	int type;
 	u_long partoff;
 	int bsize;
+	void *dmabuf;
 };
 
 /* Known types: */
