@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.4 2001/07/27 18:38:55 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.5 2001/07/27 20:33:35 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,10 +101,10 @@ static void memecc_log_error(struct memc_softc *, u_int8_t, int, int);
  * corrected.
  */
 #define MEMECC_SYN_BIT_MASK		0x0fu
-#define MEMECC_SYN_BANK_A		0x00u
-#define MEMECC_SYN_BANK_B		0x01u
-#define MEMECC_SYN_BANK_C		0x10u
-#define MEMECC_SYN_BANK_D		0x11u
+#define MEMECC_SYN_BANK_A		(0x00u << 4)
+#define MEMECC_SYN_BANK_B		(0x01u << 4)
+#define MEMECC_SYN_BANK_C		(0x02u << 4)
+#define MEMECC_SYN_BANK_D		(0x03u << 4)
 #define MEMECC_SYN_BANK_SHIFT		4
 #define MEMECC_SYN_BANK_MASK		0x03u
 #define MEMECC_SYN_CHECKBIT_ERR		0x80u
