@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.16 1995/04/24 21:55:08 gwr Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.17 1995/05/20 01:52:52 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -50,6 +50,7 @@
 #include <nfs/nfs.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/krpc.h>
+#include <nfs/xdr_subs.h>
 
 #include "ether.h"
 #if NETHER == 0
@@ -322,15 +323,15 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	m = m_get(M_WAIT, MT_DATA);
 	call = mtod(m, struct whoami_call *);
 	m->m_len = sizeof(*call);
-	call->call_prog = htonl(BOOTPARAM_PROG);
-	call->call_vers = htonl(BOOTPARAM_VERS);
-	call->call_proc = htonl(BOOTPARAM_WHOAMI);
+	call->call_prog = txdr_unsigned(BOOTPARAM_PROG);
+	call->call_vers = txdr_unsigned(BOOTPARAM_VERS);
+	call->call_proc = txdr_unsigned(BOOTPARAM_WHOAMI);
 
 	/*
 	 * append encapsulated data (client IP address)
 	 */
 	m->m_next = xdr_inaddr_encode(my_ip);
-	call->call_arglen = m->m_next->m_len;
+	call->call_arglen = txdr_unsigned(m->m_next->m_len);
 
 	/* RPC: portmap/callit */
 	bpsin->sin_port = htons(PMAPPORT);
@@ -349,8 +350,8 @@ bp_whoami(bpsin, my_ip, gw_ip)
 			goto bad;
 	}
 	reply = mtod(m, struct callit_reply *);
-	port = ntohl(reply->port);
-	msg_len = ntohl(reply->encap_len);
+	port = fxdr_unsigned(u_int32_t, reply->port);
+	msg_len = fxdr_unsigned(u_int32_t, reply->encap_len);
 	m_adj(m, sizeof(*reply));
 
 	/*
@@ -508,7 +509,7 @@ md_mount(mdsin, path, fhp)
 			goto bad;
 	}
 	rdata = mtod(m, struct rdata *);
-	error = ntohl(rdata->errno);
+	error = fxdr_unsigned(u_int32_t, rdata->errno);
 	if (error)
 		goto bad;
 	bcopy(rdata->fh, fhp, NFS_FHSIZE);
