@@ -24,10 +24,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Get generic NetBSD ELF definitions.  We will override these if necessary. */
 
-#include <elfos.h>
 #define NETBSD_ELF
-#include <netbsd.h>
-#include <vax/netbsd.h>
+#include "vax/netbsd.h"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"

@@ -1,3 +1,9 @@
+#include <vax/vax.h>
+#ifdef NETBSD_ELF
+#include <elfos.h>
+#endif
+#include <netbsd.h>
+
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__vax__ -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(vax) -Amachine(vax)"
 
@@ -82,3 +88,4 @@ while (0)
 }
 
 /* Use sjlj exceptions. */
+

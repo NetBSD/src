@@ -5588,13 +5588,9 @@ for machine in $build $host $target; do
 		xm_defines=USG
 		float_format=vax
 		;;
-	vax-*-netbsdelf*)
+	vax-*-netbsd*)
 		float_format=vax
 		gas=yes gnu_ld=yes
-		;;
-	vax-*-netbsd*)
-		tm_file="${tm_file} netbsd.h vax/netbsd.h"
-		float_format=vax
 		;;
 	vax-*-openbsd*)
 		tmake_file="${tmake_file} vax/t-openbsd"
