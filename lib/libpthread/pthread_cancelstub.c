@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.8 2003/11/24 23:23:17 cl Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.9 2004/05/21 17:15:42 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.8 2003/11/24 23:23:17 cl Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.9 2004/05/21 17:15:42 kleink Exp $");
 
 /*
  * This is necessary because the fsync_range() name is always weak (it is
@@ -74,6 +74,7 @@ int	_sys_accept(int, struct sockaddr *, socklen_t *);
 int	_sys_close(int);
 int	_sys_connect(int, const struct sockaddr *, socklen_t);
 int	_sys_fcntl(int, int, ...);
+int	_sys_fdatasync(int);
 int	_sys_fsync(int);
 int	_sys_fsync_range(int, int, off_t, off_t);
 ssize_t	_sys_msgrcv(int, void *, size_t, long, int);
@@ -152,6 +153,20 @@ fcntl(int fd, int cmd, ...)
 	va_end(ap);
 	TESTCANCEL(self);
 
+	return retval;
+}
+
+int
+fdatasync(int d)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_fdatasync(d);
+	TESTCANCEL(self);
+	
 	return retval;
 }
 
@@ -372,6 +387,7 @@ writev(int d, const struct iovec *iov, int iovcnt)
 
 __strong_alias(_close, close)
 __strong_alias(_fcntl, fcntl)
+__strong_alias(_fdatasync, fdatasync)
 __strong_alias(_fsync, fsync)
 __weak_alias(fsync_range, _fsync_range)
 __strong_alias(_msgrcv, msgrcv)
