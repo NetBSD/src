@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.2 1997/09/15 11:12:13 leo Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.3 1998/09/02 11:16:31 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
 #endif
 
 void	_TBIA __P((void));
-void	_TBIS __P((vm_offset_t));
+void	_TBIS __P((vaddr_t));
 void	_TBIAS __P((void));
 void	_TBIAU __P((void));
 void	_ICIA __P((void));
@@ -132,7 +132,7 @@ void	_ICPA __P((void));
 void	_DCIA __P((void));
 void	_DCIS __P((void));
 void	_DCIU __P((void));
-void	_DCIAS __P((vm_offset_t));
+void	_DCIAS __P((vaddr_t));
 
 #define	TBIA()		_TBIA()
 #define	TBIS(va)	_TBIS((va))
@@ -149,23 +149,23 @@ void	_DCIAS __P((vm_offset_t));
 
 void	_PCIA __P((void));
 void	_DCFA __P((void));
-void	_ICPL __P((vm_offset_t));
-void	_ICPP __P((vm_offset_t));
-void	_DCPL __P((vm_offset_t));
-void	_DCPP __P((vm_offset_t));
+void	_ICPL __P((paddr_t));
+void	_ICPP __P((paddr_t));
+void	_DCPL __P((paddr_t));
+void	_DCPP __P((paddr_t));
 void	_DCPA __P((void));
-void	_DCFL __P((vm_offset_t));
-void	_DCFP __P((vm_offset_t));
+void	_DCFL __P((paddr_t));
+void	_DCFP __P((paddr_t));
 
 #define	PCIA()		_PCIA()
 #define	DCFA()		_DCFA()
-#define	ICPL(va)	_ICPL((va))
-#define	ICPP(va)	_ICPP((va))
-#define	DCPL(va)	_DCPL((va))
-#define	DCPP(va)	_DCPP((va))
+#define	ICPL(pa)	_ICPL((pa))
+#define	ICPP(pa)	_ICPP((pa))
+#define	DCPL(pa)	_DCPL((pa))
+#define	DCPP(pa)	_DCPP((pa))
 #define	DCPA()		_DCPA()
-#define	DCFL(va)	_DCFL((va))
-#define	DCFP(va)	_DCFP((va))
+#define	DCFL(pa)	_DCFL((pa))
+#define	DCFP(pa)	_DCFP((pa))
 
 #endif /* defined(M68040)||defined(M68060) */
 
