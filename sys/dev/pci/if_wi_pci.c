@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.13 2002/10/21 11:57:26 soren Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.14 2002/12/31 06:33:20 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.13 2002/10/21 11:57:26 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.14 2002/12/31 06:33:20 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,10 +159,12 @@ wi_pci_reset(sc)
 {
 	int i, secs, usecs;
 
-	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_SOFT_RESET);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    WI_PCI_COR, WI_COR_SOFT_RESET);
 	DELAY(250*1000); /* 1/4 second */
 
-	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_CLEAR);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    WI_PCI_COR, WI_COR_CLEAR);
 	DELAY(500*1000); /* 1/2 second */
 
 	/* wait 2 seconds for firmware to complete initialization. */
