@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 1997/05/16 21:35:43 gwr Exp $ */
+/*	$NetBSD: pmap.h,v 1.26 1997/05/24 19:59:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -203,14 +203,27 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 #define	PMAP_VME16	2		/* etc */
 #define	PMAP_VME32	3		/* etc */
 #define	PMAP_NC		4		/* tells pmap_enter to set PG_NC */
+#define	PMAP_TNC_4	7		/* mask to get PG_TYPE & PG_NC */
 
-#define PMAP_TYPE4M	0x78		/* mask to get 4m page type */
-#define PMAP_PTESHFT4M	25		/* right shift to put type in pte */
-#define PMAP_SHFT4M	0x3		/* left shift to extract type */
-#define	PMAP_TNC	\
-	(CPU_ISSUN4M?127:7)		/* mask to get PG_TYPE & PG_NC */
+#define PMAP_T2PTE_4(x)		(((x) & PMAP_TNC_4) << PG_TNC_SHIFT)
+#define PMAP_IOENC_4(io)	(io)
+
+/*
+ * On a SRMMU machine, the iospace is encoded in bits [3-6] of the
+ * physical address passed to pmap_enter().
+ */
+#define PMAP_TYPE_SRMMU		0x78	/* mask to get 4m page type */
+#define PMAP_PTESHFT_SRMMU	25	/* right shift to put type in pte */
+#define PMAP_SHFT_SRMMU		3	/* left shift to extract iospace */
+#define	PMAP_TNC_SRMMU		127	/* mask to get PG_TYPE & PG_NC */
+
 /*#define PMAP_IOC      0x00800000      -* IO cacheable, NOT shifted */
 
+#define PMAP_T2PTE_SRMMU(x)	(((x) & PMAP_TYPE_SRMMU) << PMAP_PTESHFT_SRMMU)
+#define PMAP_IOENC_SRMMU(io)	((io) << PMAP_SHFT_SRMMU)
+
+/* Encode IO space for pmap_enter() */
+#define PMAP_IOENC(io)	(CPU_ISSUN4M ? PMAP_IOENC_SRMMU(io) : PMAP_IOENC_4(io))
 
 #if xxx
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
