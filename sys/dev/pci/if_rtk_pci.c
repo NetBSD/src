@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.5 2001/01/31 07:44:04 thorpej Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.6 2001/06/11 06:36:23 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -172,6 +172,9 @@ static const struct rtk_type rtk_pci_devs[] = {
 		RTK_8139 },
 	{ PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
 		"SEGA Broadband Adapter",
+		RTK_8139 },
+	{	PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
+		"D-Link Systems DFE 530TX+",
 		RTK_8139 },
 	{ 0, 0, NULL, 0 }
 };
