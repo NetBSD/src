@@ -1,4 +1,4 @@
-/*      $NetBSD: strncmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $ */
+/*      $NetBSD: strncmp.S,v 1.3 2004/08/21 11:25:17 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2002 ARM Ltd
@@ -30,13 +30,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strncmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $")
+RCSID("$NetBSD: strncmp.S,v 1.3 2004/08/21 11:25:17 rearnsha Exp $")
 
 ENTRY(strncmp)
 /* if ((len - 1) < 0) return 0 */
 	subs	r2, r2, #1
 	movmi	r0, #0
-	movmi	pc, lr
+	RETc(mi)
 
 /* ip == last src address to compare */
 	add	ip, r0, r2
@@ -48,4 +48,4 @@ ENTRY(strncmp)
 	cmpcs	r2, r3
 	beq	1b
 	sub	r0, r2, r3
-	mov	pc, lr
+	RET
