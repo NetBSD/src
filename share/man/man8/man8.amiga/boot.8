@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.8 2003/03/30 16:39:58 is Exp $
+.\"	$NetBSD: boot.8,v 1.9 2003/04/08 03:49:44 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\"	From:
 .\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 8, 1997
+.Dd April 8, 2003
 .Dt BOOT 8 amiga
 .Os
 .Sh NAME
@@ -102,7 +102,9 @@ The default is
 .It Fl a
 Autoboot into multi-user mode (default).
 .It Fl b
-Ask for the root device the kernel must use.
+Prompt for the root file system device, the system crash dump
+device, and the path to
+.Xr init 8 .
 .It Fl c Ar model
 force machine
 .Ar model .
@@ -122,10 +124,8 @@ of memory to use, encoded as follows: 0 (default): 1 segment, 1:
 Select kernel load segment by priority instead of size.
 .It Fl q
 Boot in quiet mode.
-.It Fl b
-Ask for a root device
 .It Fl s
-Boot into single-user mode
+Boot into single-user mode.
 .It Fl v
 Boot in verbose mode.
 .It Fl D
@@ -165,7 +165,9 @@ Description of options:
 .It Fl a
 Autoboot into multi-user mode.
 .It Fl b
-Ask for the root device the kernel must use.
+Prompt for the root file system device, the system crash dump
+device, and the path to
+.Xr init 8 .
 .It Fl c
 force machine model.
 .It Fl k
