@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.17 2001/06/08 00:32:01 matt Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.18 2001/06/19 12:02:55 simonb Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1009,7 +1009,8 @@ adb_soft_intr(void)
 
 		/* call default completion routine if it's valid */
 		if (comprout) {
-			int (*f)() = (void *)comprout;
+			void (*f)(caddr_t, caddr_t, int) =
+			    (void (*)(caddr_t, caddr_t, int))comprout;
 
 			(*f)(buffer, compdata, cmd);
 #if 0
