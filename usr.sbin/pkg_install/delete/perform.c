@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.12 1999/02/26 10:49:30 chopps Exp $	*/
+/*	$NetBSD: perform.c,v 1.13 1999/02/26 17:04:13 chopps Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.12 1999/02/26 10:49:30 chopps Exp $");
+__RCSID("$NetBSD: perform.c,v 1.13 1999/02/26 17:04:13 chopps Exp $");
 #endif
 #endif
 
@@ -77,7 +77,6 @@ int recurse_require_find(rec_del_t *);
 int require_find(char *, char *);
 int require_delete(char *);
 void require_print(int);
-int strequal(const char *, const char *);
 int undepend(const char *deppkgname, char *pkg2delname);
 
 static char LogDir[FILENAME_MAX];
@@ -104,20 +103,6 @@ cleanup(int sig)
     /* Nothing to do */
     if(sig)	/* in case this is ever used as a signal handler */
 	exit(1);
-}
-
-int
-strequal(const char *a, const char *b)
-{
-    int al, bl;
-
-    al = strlen(a);
-    bl = strlen(b);
-
-    if (al != bl || strcmp(a, b))
-	return (0);
-
-    return (1);
 }
 
 /* deppkgname is the pkg from which's +REQUIRED_BY file we are
@@ -207,7 +192,7 @@ find_on_queue(rec_del_head_t *qp, char *name)
     rec_del_t *rdp;
 
     for (rdp = TAILQ_FIRST(qp); rdp; rdp = TAILQ_NEXT(rdp, rd_link))
-	if (strequal(name, rdp->rd_name))
+	if (!strcmp(name, rdp->rd_name))
 	    return (rdp);
     return (0);
 }
