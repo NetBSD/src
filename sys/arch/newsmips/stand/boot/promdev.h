@@ -1,6 +1,7 @@
 struct romdev {
 	int fd;
 	int devtype;
+	char devname[32];
 };
 
 #define DT_BLOCK	1
