@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsdiff.c,v 1.4 1996/10/15 07:00:40 veego Exp $	*/
+/*	$NetBSD: rcsdiff.c,v 1.5 1999/07/22 01:48:09 hubertf Exp $	*/
 
 /* Compare RCS revisions.  */
 
@@ -31,6 +31,12 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsdiff.c,v $
+ * Revision 1.5  1999/07/22 01:48:09  hubertf
+ * Allow -L on both files, not only one.
+ *
+ * Reported in PR 1947 by Niklas Hallqvist <niklas@filippa.appli.se> and
+ * also fed back to the GNU RCS maintainers.
+ *
  * Revision 1.4  1996/10/15 07:00:40  veego
  * Merge rcs 5.7.
  *
@@ -221,7 +227,7 @@ mainProg(rcsdiffId, "rcsdiff", "Id: rcsdiff.c,v 5.19 1995/06/16 06:19:24 eggert 
 		    /* fall into */
 	    case 'C': case 'F': case 'I': case 'L': case 'W':
 #if DIFF_L
-		    if (c == 'L'  &&  ++file_labels == 2)
+		    if (c == 'L'  &&  file_labels++ == 2)
 			faterror("too many -L options");
 #endif
 		    *dcp++ = c;
