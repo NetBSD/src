@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.148 2001/11/15 07:03:29 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.149 2001/12/02 10:45:40 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.148 2001/11/15 07:03:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.149 2001/12/02 10:45:40 augustss Exp $");
 
 #include "opt_compat_svr4.h"
 
@@ -213,6 +213,10 @@ cdev_decl(esh_fp);
 #include "scsibus.h"
 cdev_decl(scsibus);
 #include "bktr.h"
+#include "irframe.h"
+cdev_decl(irframe);
+#include "cir.h"
+cdev_decl(cir);
 
 #include "i4b.h"
 #include "i4bctl.h"
@@ -344,6 +348,8 @@ struct cdevsw	cdevsw[] =
 	cdev__ocim_init(NAGP,agp),	/* 82: AGP graphics aperture device */
 	cdev_pci_init(NPCI,pci),	/* 83: PCI bus access device */
 	cdev__oci_init(NDPTI,dpti),	/* 84: DPT/Adaptec RAID management */
+	cdev_ir_init(NIRFRAME,irframe),	/* 85: IrDA physical driver */
+	cdev_ir_init(NCIR,cir),		/* 86: Consumer Ir */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -470,6 +476,8 @@ static int chrtoblktbl[] = {
 	/* 82 */	NODEV,
 	/* 83 */	NODEV,
 	/* 84 */	NODEV,
+	/* 85 */	NODEV,
+	/* 86 */	NODEV,
 };
 
 /*
