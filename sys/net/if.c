@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.137 2003/12/10 11:46:33 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.138 2004/01/29 16:33:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.137 2003/12/10 11:46:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.138 2004/01/29 16:33:14 drochner Exp $");
 
 #include "opt_inet.h"
 
@@ -1699,6 +1699,7 @@ ifconf(cmd, data)
 	return (error);
 }
 
+#if defined(INET) || defined(INET6)
 static void
 sysctl_net_ifq_setup(int pf, const char *pfname,
 		     int ipn, const char *ipname,
@@ -1763,3 +1764,4 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_ifq_setup,
 			     IPV6CTL_IFQ, &ip6intrq);
 }
 #endif /* INET6 */
+#endif /* INET || INET6 */
