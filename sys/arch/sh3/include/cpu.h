@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1999/12/21 22:19:16 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1999/12/24 08:29:23 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -182,6 +182,28 @@ int	math_emulate __P((struct trapframe *));
 void	child_return __P((struct proc *, int, int, int, struct trapframe));
 
 #endif /* _KERNEL */
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_NKPDE		2	/* int: number of kernel PDEs */
+#define	CPU_BOOTED_KERNEL	3	/* string: booted kernel name */
+#define	CPU_SETPRIVPROC		4	/* set current proc to piviledged proc
+					   */
+#define	CPU_DEBUGMODE		5	/* set debug mode */
+#define	CPU_LOADANDRESET	6	/* load kernel image and reset */
+#define	CPU_MAXID		7	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "nkpde", CTLTYPE_INT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "set_priv_proc", CTLTYPE_INT }, \
+	{ "debug_mode", CTLTYPE_INT }, \
+	{ "load_and_reset", CTLTYPE_INT }, \
+}
 
 #include <machine/sh3.h>
 
