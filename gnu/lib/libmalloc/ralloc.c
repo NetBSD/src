@@ -68,6 +68,7 @@ typedef size_t SIZE;
 typedef void *POINTER;
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
 
