@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	8.5 (Berkeley) 12/21/93
- *	$Id: pathnames.h,v 1.2 1994/01/24 06:39:07 cgd Exp $
+ *	@(#)pathnames.h	8.6 (Berkeley) 3/16/94
  */
 
 #define	_PATH_BSHELL	"/bin/sh"

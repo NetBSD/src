@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)search.h	8.7 (Berkeley) 11/18/93
- *	$Id: search.h,v 1.2 1994/01/24 06:39:13 cgd Exp $
+ *	@(#)search.h	8.9 (Berkeley) 3/16/94
  */
 
 #define	RE_WSTART	"[[:<:]]"	/* Not-in-word search patterns. */
@@ -47,7 +46,6 @@
 #define	SEARCH_TERM	0x080		/* Search pattern should terminate. */
 
 enum direction	{ NOTSET, FORWARD, BACKWARD };
-enum cdirection	{ CNOTSET, FSEARCH, fSEARCH, TSEARCH, tSEARCH };
 
 /* Search functions. */
 int	b_search __P((SCR *, EXF *, MARK *, MARK *, char *, char **, u_int *));

@@ -32,12 +32,13 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)exf.c	8.65 (Berkeley) 1/11/94"; */
-static char *rcsid = "$Id: exf.c,v 1.2 1994/01/24 06:38:50 cgd Exp $";
+static char sccsid[] = "@(#)exf.c	8.71 (Berkeley) 3/23/94";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 /*
  * We include <sys/file.h>, because the flock(2) #defines were
@@ -46,15 +47,24 @@ static char *rcsid = "$Id: exf.c,v 1.2 1994/01/24 06:38:50 cgd Exp $";
  */
 #include <sys/file.h>
 
+#include <bitstring.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
+#include <pathnames.h>
 
 #include "vi.h"
 #include "excmd.h"
-#include "pathnames.h"
 
 /*
  * file_add --
@@ -263,7 +273,7 @@ file_init(sp, frp, rcv_name, force)
 			msgq(sp, M_ERR,
 			    "Warning: %s is not a regular file.", oname);
 	}
-	
+
 	/* Set up recovery. */
 	memset(&oinfo, 0, sizeof(RECNOINFO));
 	oinfo.bval = '\n';			/* Always set. */
@@ -525,7 +535,7 @@ file_write(sp, ep, fm, tm, name, flags)
 	FREF *frp;
 	MARK from, to;
 	u_long nlno, nch;
-	int fd, oflags, rval;
+	int btear, fd, itear, oflags, rval;
 	char *msg;
 
 	/*
@@ -656,17 +666,22 @@ exists:			if (LF_ISSET(FS_POSSIBLE))
 		tm = &to;
 	}
 
-	/* Write the file. */
+	/* Write the file, allowing interrupts. */
+	btear = F_ISSET(sp, S_EXSILENT) ? 0 : !busy_on(sp, "Writing...");
+	itear = !intr_init(sp);
 	rval = ex_writefp(sp, ep, name, fp, fm, tm, &nlno, &nch);
+	if (btear)
+		busy_off(sp);
+	if (itear)
+		intr_end(sp);
 
 	/*
 	 * Save the new last modification time -- even if the write fails
-	 * we re-init the time if we wrote anything.  That way the user can
-	 * clean up the disk and rewrite without having to force it.
+	 * we re-init the time.  That way the user can clean up the disk
+	 * and rewrite without having to force it.
 	 */
-	if (nlno || nch)
-		frp->mtime = stat(name, &sb) ? 0 : sb.st_mtime;
-	
+	frp->mtime = stat(name, &sb) ? 0 : sb.st_mtime;
+
 	/* If the write failed, complain loudly. */
 	if (rval) {
 		if (!LF_ISSET(FS_APPEND))
