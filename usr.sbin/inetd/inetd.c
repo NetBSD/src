@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.80 2002/06/01 00:32:41 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.81 2002/06/01 03:41:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.80 2002/06/01 00:32:41 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.81 2002/06/01 03:41:33 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -501,17 +501,6 @@ main(argc, argv)
 	sv.sv_mask = 0L;
 	sv.sv_handler = SIG_IGN;
 	sigvec(SIGPIPE, &sv, (struct sigvec *)0);
-
-	{
-		/* space for daemons to overwrite environment for ps */
-#define	DUMMYSIZE	100
-		char dummy[DUMMYSIZE];
-
-		(void)memset(dummy, 'x', DUMMYSIZE - 1);
-		dummy[DUMMYSIZE - 1] = '\0';
-
-		(void)setenv("inetd_dummy", dummy, 1);
-	}
 
 	for (;;) {
 		int n, ctrl;
