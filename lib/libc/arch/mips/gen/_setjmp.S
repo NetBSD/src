@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.10 1999/01/15 03:53:33 castor Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.11 1999/02/05 00:41:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,10 +40,11 @@
 #include <mips/regnum.h>
 #include <mips/asm.h>
 #include <machine/setjmp.h>
+#include <machine/signal.h>		/* XXX */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: _setjmp.S,v 1.10 1999/01/15 03:53:33 castor Exp $")
+	ASMSTR("$NetBSD: _setjmp.S,v 1.11 1999/02/05 00:41:42 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
