@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.26 2003/10/26 16:34:07 mycroft Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.27 2003/10/27 22:48:20 dyoung Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.26 2003/10/26 16:34:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.27 2003/10/27 22:48:20 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -1235,7 +1235,7 @@ adb_reinit(void)
 	u_char send_string[ADB_MAX_MSG_LENGTH];
 	ADBDataBlock data;	/* temp. holder for getting device info */
 	volatile int i, x;
-	int s;
+	int s = 0;		/* XXX: gcc */
 	int command;
 	int result;
 	int saveptr;		/* point to next free relocation address */
