@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.18 2002/01/14 16:10:33 kleink Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.19 2002/02/01 13:40:16 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.18 2002/01/14 16:10:33 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.19 2002/02/01 13:40:16 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -77,6 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.18 2002/01/14 16:10:33 kleink Exp $")
 #define	PPPOE_CODE_PADS		0x65		/* Active Discovery Session confirmation */
 #define	PPPOE_CODE_PADT		0xA7		/* Active Discovery Terminate */
 
+/* two byte PPP protocol discriminator, then IP data */
+#define	PPPOE_MAXMTU	(ETHERMTU-PPPOE_HEADERLEN-2)
+
 /* Read a 16 bit unsigned value from a buffer */
 #define PPPOE_READ_16(PTR, VAL)				\
 		(VAL) = ((PTR)[0] << 8) | (PTR)[1];	\
@@ -95,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.18 2002/01/14 16:10:33 kleink Exp $")
 		PPPOE_ADD_16(PTR, LEN)
 
 #define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
-#define	PPPOE_SLOW_RETRY	(hz*240)	/* persistent retry interval */
+#define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
 #define PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
 #define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 
@@ -198,7 +201,7 @@ pppoe_clone_create(ifc, unit)
 
 	sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", unit);
 	sc->sc_sppp.pp_if.if_softc = sc;
-	sc->sc_sppp.pp_if.if_mtu = ETHERMTU - PPPOE_HEADERLEN - 2; /* two byte PPP protocol discriminator, then IP data */
+	sc->sc_sppp.pp_if.if_mtu = PPPOE_MAXMTU;
 	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX|IFF_POINTOPOINT|IFF_MULTICAST;
 	sc->sc_sppp.pp_if.if_type = IFT_PPP;
 	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header)+PPPOE_HEADERLEN;
@@ -684,8 +687,16 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 			sc->sc_padr_retried = 0;
 			memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 		}
+		return sppp_ioctl(ifp, cmd, data);
 	}
-	/* FALLTHROUGH */
+	case SIOCSIFMTU:
+	{
+		struct ifreq *ifr = (struct ifreq*) data;
+
+		if (ifr->ifr_mtu > PPPOE_MAXMTU)
+			return EINVAL;
+		return sppp_ioctl(ifp, cmd, data);
+	}
 	default:
 		return sppp_ioctl(ifp, cmd, data);
 	}
