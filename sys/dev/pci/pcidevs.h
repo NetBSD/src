@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.426 2002/04/29 18:21:32 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.427 2002/05/03 12:46:41 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.421 2002/04/29 18:18:29 nonaka Exp 
+ *	NetBSD: pcidevs,v 1.422 2002/05/03 12:46:11 augustss Exp 
  */
 
 /*
@@ -562,6 +562,7 @@
 #define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
+#define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst, Inc. */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */

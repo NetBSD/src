@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.424 2002/04/29 18:21:33 nonaka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.425 2002/05/03 12:46:42 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.421 2002/04/29 18:18:29 nonaka Exp 
+ *	NetBSD: pcidevs,v 1.422 2002/05/03 12:46:11 augustss Exp 
  */
 
 /*
@@ -10381,6 +10381,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_FZJZEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "FZ Juelich / ZEL",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SANDBURST, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Sandburst, Inc.",
 	    NULL,
 	},
 	{
