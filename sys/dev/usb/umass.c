@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.28 2000/04/02 23:46:53 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.29 2000/04/03 03:56:49 enami Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,6 +94,8 @@
  *     umass_scsi.c, umass_8070.c, umass_ufi.c, umass_bbb.c, umass_cbi.c or
  *     something similar?
  */
+
+#include "atapibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,8 +520,10 @@ Static usbd_status umass_setup_ctrl_transfer	__P((struct umass_softc *sc,
 Static void umass_clear_endpoint_stall	__P((struct umass_softc *sc,
 				u_int8_t endpt, usbd_pipe_handle pipe,
 				int state, usbd_xfer_handle xfer));
+#if 0
 Static void umass_reset		__P((struct umass_softc *sc,
 				transfer_cb_f cb, void *priv));
+#endif
 
 /* Bulk-Only related functions */
 Static void umass_bbb_reset	__P((struct umass_softc *sc, int status));
@@ -589,7 +593,9 @@ Static void umass_scsipi_sense_cb __P((struct umass_softc *sc, void *priv,
 				       int residue, int status));
 
 Static int scsipiprint __P((void *aux, const char *pnp));
+#if NATAPIBUS > 0
 Static void umass_atapi_probedev __P((struct atapibus_softc *, int));
+#endif
 #endif
 
 #if defined(__FreeBSD__)
@@ -1049,6 +1055,7 @@ USB_ATTACH(umass)
 			sc->u.sc_link.quirks |= ADEV_NOTUR;
 		break;
 
+#if NATAPIBUS > 0
 	case PROTO_8070:
 		sc->u.aa.sc_aa.aa_type = T_ATAPI;
 		sc->u.aa.sc_aa.aa_channel = 0;
@@ -1058,6 +1065,7 @@ USB_ATTACH(umass)
 		sc->sc_atapi_adapter.atapi_probedev = umass_atapi_probedev;
 		sc->sc_atapi_adapter.atapi_kill_pending = scsi_kill_pending;
 		break;
+#endif
 
 	default:
 		printf("%s: proto=0x%x not supported yet\n", 
@@ -1300,6 +1308,7 @@ umass_clear_endpoint_stall(struct umass_softc *sc,
 	umass_setup_ctrl_transfer(sc, dev, &sc->request, NULL, 0, 0, xfer);
 }
 
+#if 0
 Static void
 umass_reset(struct umass_softc *sc, transfer_cb_f cb, void *priv)
 {
@@ -1309,6 +1318,7 @@ umass_reset(struct umass_softc *sc, transfer_cb_f cb, void *priv)
 	/* The reset is a forced reset, so no error (yet) */
 	sc->reset(sc, STATUS_CMD_OK);
 }
+#endif
 
 /*
  * Bulk protocol specific functions
@@ -3245,6 +3255,7 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	splx(s);
 }
 
+#if NATAPIBUS > 0
 Static void
 umass_atapi_probedev(atapi, target)
 	struct atapibus_softc *atapi;
@@ -3308,4 +3319,5 @@ bad:
 	free(sc_link, M_DEVBUF);
 	return;
 }
+#endif
 #endif
