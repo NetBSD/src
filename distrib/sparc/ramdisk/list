@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 1999/06/27 12:56:00 mrg Exp $
+#	$NetBSD: list,v 1.10 1999/11/09 22:22:52 pk Exp $
 
 LIBS	libhack.o -lz -lpcap -lbz2
 
@@ -10,6 +10,7 @@ CRUNCHSPECIAL	init srcdir distrib/utils/init_s
 CRUNCHSPECIAL	netstat srcdir distrib/utils/x_netstat
 CRUNCHSPECIAL	route srcdir distrib/utils/x_route
 CRUNCHSPECIAL	sh srcdir distrib/utils/x_sh
+CRUNCHSPECIAL	ping srcdir distrib/utils/x_ping
 
 SRCDIRS bin gnu/usr.bin/binutils gnu/usr.bin sbin sys/arch/sparc/stand usr.bin/less usr.bin usr.sbin/pppd usr.sbin
 
