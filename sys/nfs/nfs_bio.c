@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.64 2001/03/10 22:46:47 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.65 2001/04/03 15:07:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -333,7 +333,7 @@ diragain:
 		en = ndp->dc_entry;
 
 		pdp = dp = (struct dirent *)bp->b_data;
-		edp = bp->b_data + bp->b_bcount;
+		edp = bp->b_data + bp->b_bcount - bp->b_resid;
 		enn = 0;
 		while (enn < en && (caddr_t)dp < edp) {
 			pdp = dp;
@@ -377,11 +377,11 @@ diragain:
 			enn++;
 		}
 
-		if (uio->uio_resid < (bp->b_bcount - on)) {
+		if (uio->uio_resid < (bp->b_bcount - bp->b_resid - on)) {
 			n = uio->uio_resid;
 			enough = 1;
 		} else
-			n = bp->b_bcount - on;
+			n = bp->b_bcount - bp->b_resid - on;
 
 		ep = bp->b_data + on + n;
 
@@ -411,7 +411,7 @@ diragain:
 		 * set of the offset to it.
 		 */
 
-		if ((on + n) < bp->b_bcount) {
+		if ((on + n) < bp->b_bcount - bp->b_resid) {
 			curoff = NFS_GETCOOKIE(pdp);
 			nndp = nfs_enterdircache(vp, curoff, ndp->dc_blkcookie,
 			    enn, bp->b_lblkno);
