@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.7 2002/01/08 00:32:40 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.8 2002/01/09 02:56:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.7 2002/01/08 00:32:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.8 2002/01/09 02:56:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ sys_ptrace(l, v, retval)
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
-		return (ptrace_machdep_dorequest(p, t,
+		return (ptrace_machdep_dorequest(p, lt,
 		    SCARG(uap, req), SCARG(uap, addr),
 		    SCARG(uap, data)));
 #endif
