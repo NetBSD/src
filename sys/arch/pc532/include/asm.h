@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 1996/01/26 08:10:10 phil Exp $	*/
+/*	$NetBSD: asm.h,v 1.7 1996/10/09 07:28:40 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -88,20 +88,23 @@
 #define PIC_S_ARG3	16(sp)
 #endif
 
-#ifdef PROF
+#if defined(PROF) || defined(GPROF)
 #define	MC1	.data; 1:; .long 0; .text
-#define MC2	addr 1b(pc),r0; bsr mcount
+#define MC2	enter [r0],0; addr 1b(pc),r0; bsr mcount; exit [r0]
 #else
 #define MC1
 #define MC2
 #endif
 
 #define	DECL(x)	MC1; .globl x; .type x,@function; .align ALIGN; CAT(x,:); MC2
+#define	_DECL(x) .globl x; .type x,@function; .align ALIGN; CAT(x,:)
 
 #define	ENTRY(x)	DECL(EX(x))
-#define	Entry(x)	DECL(EX(x))
+#define	_ENTRY(x)	_DECL(EX(x))
 #define ASENTRY(x)	DECL(x)
+#define _ASENTRY(x)	_DECL(x)
 #define	ASMSTR		.asciz
+#define RCSID(x)	.text; .asciz x
 
 #define	SVC svc
 
