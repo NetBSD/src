@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.35 1994/03/09 04:02:58 cgd Exp $
+#	$Id: rc,v 1.36 1994/03/14 04:14:19 cgd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -90,9 +90,9 @@ if [ X${nfs_client} = X"YES" ]; then
 	echo -n ' nfsiod';		nfsiod 4
 fi
 
-if [ X${amd} = X"YES" ]; then
+if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
 	echo -n ' amd'
-	amd -x error,noinfo,nostats -a /tmp_mnt /home amd.home
+	amd -l syslog -x error,noinfo,nostats -a ${amd_dir} `cat ${amd_master}`
 fi
 
 echo '.'
