@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.7 1999/07/29 18:20:03 augustss Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.8 1999/12/01 23:22:59 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -82,6 +82,7 @@ struct wskbddev_attach_args {
  */
 void	wskbd_cnattach __P((const struct wskbd_consops *, void *,
 			    const struct wskbd_mapdata *));
+void	wskbd_cndetach __P((void));
 int	wskbddevprint __P((void *, const char *));
 
 /*
