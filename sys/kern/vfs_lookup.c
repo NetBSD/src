@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_lookup.c	7.32 (Berkeley) 5/21/91
- *	$Id: vfs_lookup.c,v 1.10 1994/05/17 04:22:02 cgd Exp $
+ *	$Id: vfs_lookup.c,v 1.11 1994/05/18 05:12:44 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -114,7 +114,7 @@ namei(ndp, p)
 	 * Get starting point for the translation.
 	 */
 	if ((ndp->ni_rootdir = fdp->fd_rdir) == NULL)
-		ndp->ni_rootdir = rootdir;
+		ndp->ni_rootdir = rootvnode;
 	dp = fdp->fd_cdir;
 	VREF(dp);
 	for (;;) {
@@ -331,7 +331,7 @@ dirloop:
 	 */
 	if (ndp->ni_isdotdot) {
 		for (;;) {
-			if ((dp == ndp->ni_rootdir) || (dp == rootdir)) {
+			if ((dp == ndp->ni_rootdir) || (dp == rootvnode)) {
 				ndp->ni_dvp = dp;
 				ndp->ni_vp = dp;
 				VREF(dp);

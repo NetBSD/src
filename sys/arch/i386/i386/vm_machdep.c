@@ -94,8 +94,8 @@ cpu_fork(p1, p2)
 	/*
 	 * Copy the stack.
 	 *
-	 * When we first swtch() to the child, this will return from swtch()
-	 * rather than savectx().  swtch() returns a pointer to the current
+	 * When we first switch to the child, this will return from cpu_switch()
+	 * rather than savectx().  cpu_switch returns a pointer to the current
 	 * process; savectx() returns 0.  Thus we can look for a non-zero
 	 * return value to indicate that we're in the child.
 	 */
@@ -111,10 +111,10 @@ cpu_fork(p1, p2)
 /*
  * cpu_exit is called as the last action during exit.
  *
- * We clean up a little and then call swtch_exit() with the old proc as an
- * argument.  swtch_exit() first switches to proc0's context, then does the
+ * We clean up a little and then call switch_exit() with the old proc as an
+ * argument.  switch_exit() first switches to proc0's context, then does the
  * vmspace_free() and kmem_free() that we don't do here, and finally jumps
- * into swtch() to wait for another process to wake up.
+ * into switch() to wait for another process to wake up.
  */
 void
 cpu_exit(p)
@@ -141,7 +141,7 @@ cpu_exit(p)
 	if (vm->vm_refcnt == 1)
 		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 
-	swtch_exit(p);
+	switch_exit(p);
 }
 
 void

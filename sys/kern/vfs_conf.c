@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.18 1994/05/11 18:51:18 chopps Exp $
+ *	$Id: vfs_conf.c,v 1.19 1994/05/18 05:12:43 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -41,7 +41,7 @@
  * These define the root filesystem and device.
  */
 struct mount *rootfs;
-struct vnode *rootdir;
+struct vnode *rootvnode;
 
 /*
  * Set up the filesystem operations for vnodes.

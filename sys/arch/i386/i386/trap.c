@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.41 1994/05/16 09:46:10 cgd Exp $
+ *	$Id: trap.c,v 1.42 1994/05/18 05:12:14 cgd Exp $
  */
 
 /*
@@ -80,7 +80,7 @@ userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig;
+	int sig, s;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -92,14 +92,14 @@ userret(p, pc, oticks)
 		 * change our priority without changing run queues
 		 * (the running process is not kept on a run queue).
 		 * If this happened after we setrunqueue ourselves but
-		 * before we swtch()'ed, we might not be on the queue
+		 * before we switch()'ed, we might not be on the queue
 		 * indicated by our priority.
 		 */
-		(void) splclock();
+		s = splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		(void) spl0();
+		mi_switch();
+		splx(s);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
