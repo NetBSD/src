@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.45 2001/04/20 16:22:34 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.46 2001/04/20 22:28:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ _splraise(int s)
 
 #define	splsched()		splhigh()
 #define	spllock()		splhigh()
+#define	splipi()		splclock()	/* AARM, 5-2, II-B */
 #define spllpt()		spltty()
 
 /*
