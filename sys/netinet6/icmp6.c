@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.27 2000/03/22 04:42:01 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.28 2000/04/13 14:07:10 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.75 2000/03/11 09:32:17 itojun Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ icmp6_error(m, type, code, param)
 	 * don't do it.
 	 */
 	nxt = -1;
-	off = ip6_lasthdr(m, sizeof(struct ip6_hdr), oip6->ip6_nxt, &nxt);
+	off = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxt);
 	if (off >= 0 && nxt == IPPROTO_ICMPV6) {
 		struct icmp6_hdr *icp;
 
