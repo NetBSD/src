@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.19 2003/09/06 23:52:25 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.20 2003/11/07 17:17:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.19 2003/09/06 23:52:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.20 2003/11/07 17:17:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,9 +166,9 @@ mach_thread_create_running(args)
 	mctc.mctc_lwp->l_stat = LSRUN;
 	setrunqueue(mctc.mctc_lwp);
 	SCHED_UNLOCK(s);
-	simple_lock(&p->p_lwplock);
+	simple_lock(&p->p_lock);
 	p->p_nrlwps++;
-	simple_unlock(&p->p_lwplock);
+	simple_unlock(&p->p_lock);
 
 	/* 
 	 * The child relies on some values in mctc, so we should not
