@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.4 1995/08/29 09:43:37 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.5 1995/09/12 07:28:09 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -73,7 +73,7 @@ struct cfdriver ioasiccd =
     { NULL, "asic", asicmatch, asicattach, DV_DULL, sizeof(struct asic_softc) };
 
 void    asic_intr_establish __P((struct confargs *, intr_handler_t,
-				 handler_arg_t));
+				 intr_arg_t));
 void    asic_intr_disestablish __P((struct confargs *));
 caddr_t asic_cvtaddr __P((struct confargs *));
 int     asic_matchname __P((struct confargs *, char *));
@@ -82,7 +82,7 @@ int     asic_matchname __P((struct confargs *, char *));
 int	asic_intr __P((void *));
 #endif
 
-int	asic_intrnull __P((handler_arg_t));
+int	asic_intrnull __P((intr_arg_t));
 
 struct asic_slot {
 	struct confargs	as_ca;
@@ -251,6 +251,7 @@ asicprint(aux, pnp)
 	if (pnp)
 		printf("%s at %s", ca->ca_name, pnp);
 	printf(" offset 0x%lx", ca->ca_offset);
+	printf(" priority %d", ca->ca_slotpri);
 	return (UNCONF);
 }
 
@@ -269,7 +270,7 @@ void
 asic_intr_establish(ca, handler, val)
 	struct confargs *ca;
 	intr_handler_t handler;
-        handler_arg_t val;
+        intr_arg_t val;
 {
 
 #ifdef DIAGNOSTIC
@@ -384,7 +385,7 @@ asic_intr(val)
 
 int
 asic_intrnull(val)
-	handler_arg_t val;
+	intr_arg_t val;
 {
 
         panic("uncaught IOCTL ASIC intr for slot %ld\n", (long)val);
