@@ -70,7 +70,9 @@ isc_result_t omapi_init (void)
 					     omapi_connection_destroy,
 					     omapi_connection_signal_handler,
 					     omapi_connection_stuff_values,
-					     0, 0, 0);
+					     0, 0, 0, 0, 0,
+					     sizeof
+					     (omapi_connection_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -81,7 +83,8 @@ isc_result_t omapi_init (void)
 					     omapi_listener_destroy,
 					     omapi_listener_signal_handler,
 					     omapi_listener_stuff_values,
-					     0, 0, 0);
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_listener_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -92,7 +95,8 @@ isc_result_t omapi_init (void)
 					     omapi_io_destroy,
 					     omapi_io_signal_handler,
 					     omapi_io_stuff_values,
-					     0, 0, 0);
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_io_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -103,7 +107,8 @@ isc_result_t omapi_init (void)
 					     omapi_generic_destroy,
 					     omapi_generic_signal_handler,
 					     omapi_generic_stuff_values,
-					     0, 0, 0);
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_generic_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -114,18 +119,19 @@ isc_result_t omapi_init (void)
 					     omapi_protocol_destroy,
 					     omapi_protocol_signal_handler,
 					     omapi_protocol_stuff_values,
-					     0, 0, 0);
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_protocol_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
-	status = omapi_object_type_register (&omapi_type_protocol_listener,
-					     "protocol-listener",
-					     omapi_protocol_listener_set_value,
-					     omapi_protocol_listener_get_value,
-					     omapi_protocol_listener_destroy,
-					     omapi_protocol_listener_signal,
-					     omapi_protocol_listener_stuff,
-					     0, 0, 0);
+	status = (omapi_object_type_register
+		  (&omapi_type_protocol_listener, "protocol-listener",
+		   omapi_protocol_listener_set_value,
+		   omapi_protocol_listener_get_value,
+		   omapi_protocol_listener_destroy,
+		   omapi_protocol_listener_signal,
+		   omapi_protocol_listener_stuff,
+		   0, 0, 0, 0, 0, sizeof (omapi_protocol_listener_object_t)));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -136,7 +142,8 @@ isc_result_t omapi_init (void)
 					     omapi_message_destroy,
 					     omapi_message_signal_handler,
 					     omapi_message_stuff_values,
-					     0, 0, 0);
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_message_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -146,7 +153,8 @@ isc_result_t omapi_init (void)
 					     0,
 					     0,
 					     omapi_waiter_signal_handler, 0,
-					     0, 0, 0);
+					     0, 0, 0, 0, 0,
+					     sizeof (omapi_waiter_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -185,7 +193,12 @@ isc_result_t omapi_object_type_register (omapi_object_type_t **type,
 						 omapi_object_t *),
 					 isc_result_t (*remove)
 						(omapi_object_t *,
-						 omapi_object_t *))
+						 omapi_object_t *),
+					 isc_result_t (*freer)
+						(omapi_object_t *,
+						 const char *, int),
+					 isc_result_t (*sizer) (size_t),
+					 size_t size)
 {
 	omapi_object_type_t *t;
 
@@ -204,6 +217,9 @@ isc_result_t omapi_object_type_register (omapi_object_type_t **type,
 	t -> create = create;
 	t -> remove = remove;
 	t -> next = omapi_object_types;
+	t -> sizer = sizer;
+	t -> size = size;
+	t -> freer = freer;
 	omapi_object_types = t;
 	if (type)
 		*type = t;
@@ -608,16 +624,22 @@ isc_result_t omapi_make_int_value (omapi_value_t **vp,
 		omapi_value_dereference (vp, file, line);
 		return status;
 	}
-	if (value) {
-		status = omapi_typed_data_new (file, line, &(*vp) -> value,
-					       omapi_datatype_int);
-		if (status != ISC_R_SUCCESS) {
-			omapi_value_dereference (vp, file, line);
-			return status;
-		}
-		(*vp) -> value -> u.integer = value;
+	status = omapi_typed_data_new (file, line, &(*vp) -> value,
+				       omapi_datatype_int);
+	if (status != ISC_R_SUCCESS) {
+		omapi_value_dereference (vp, file, line);
+		return status;
 	}
+	(*vp) -> value -> u.integer = value;
 	return ISC_R_SUCCESS;
+}
+
+isc_result_t omapi_make_uint_value (omapi_value_t **vp,
+				    omapi_data_string_t *name,
+				    unsigned int value,
+				    const char *file, int line)
+{
+	return omapi_make_int_value (vp, name, (int)value, file, line);
 }
 
 isc_result_t omapi_make_handle_value (omapi_value_t **vp,

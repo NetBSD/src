@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.3 2000/04/22 07:11:40 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.1.1.4 2000/06/10 18:04:52 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -3394,8 +3394,6 @@ int binding_scope_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	struct binding_scope *bp;
-
 	if (!ptr || !*ptr) {
 		log_error ("%s(%d): null pointer", file, line);
 #if defined (POINTER_DEBUG)
@@ -3417,7 +3415,7 @@ int fundef_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	struct fundef *bp;
+	struct fundef *bp = *ptr;
 	struct string_list *sp, *next;
 
 	if (!ptr) {

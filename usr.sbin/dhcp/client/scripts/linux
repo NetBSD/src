@@ -99,10 +99,12 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
   current_hostname=`hostname`
   if [ x$current_hostname = x ] || \
      [ x$current_hostname = x$old_host_name ]; then
-    if [ x$new_host_name != x$old_host_name ]; then
+    if [ x$current_hostname = x ] || \
+       [ x$new_host_name != x$old_host_name ]; then
       hostname $new_host_name
     fi
   fi
+    
   if [ x$old_ip_address != x ] && [ x$alias_ip_address != x ] && \
 		[ x$alias_ip_address != x$old_ip_address ]; then
     # Possible new alias. Remove old alias.

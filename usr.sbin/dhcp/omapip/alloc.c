@@ -309,6 +309,47 @@ void dump_rc_history ()
 }
 #endif
 
+isc_result_t omapi_object_allocate (omapi_object_t **o,
+				    omapi_object_type_t *type,
+				    size_t size,
+				    const char *file, int line)
+{
+	size_t tsize;
+	void *foo;
+	isc_result_t status;
+
+	if (type -> sizer)
+		tsize = (*type -> sizer) (size);
+	else
+		tsize = type -> size;
+
+	/* Sanity check. */
+	if (tsize < sizeof (omapi_object_t))
+		return ISC_R_INVALIDARG;
+
+	foo = dmalloc (tsize, file, line);
+	if (!foo)
+		return ISC_R_NOMEMORY;
+
+	status = omapi_object_initialize ((omapi_object_t *)foo,
+					  type, size, tsize, file, line);
+	if (status != ISC_R_SUCCESS) {
+		dfree (foo, file, line);
+		return status;
+	}
+	return omapi_object_reference (o, (omapi_object_t *)foo, file, line);
+}
+
+isc_result_t omapi_object_initialize (omapi_object_t *o,
+				      omapi_object_type_t *type,
+				      size_t usize, size_t psize,
+				      const char *file, int line)
+{
+	memset (o, 0, psize);
+	o -> type = type;
+	return ISC_R_SUCCESS;
+}
+
 isc_result_t omapi_object_reference (omapi_object_t **r,
 				     omapi_object_t *h,
 				     const char *file, int line)
@@ -800,6 +841,83 @@ isc_result_t omapi_value_dereference (omapi_value_t **h,
 		if ((*h) -> value)
 			omapi_typed_data_dereference (&(*h) -> value,
 						      file, line);
+		dfree (*h, file, line);
+	}
+	*h = 0;
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t omapi_addr_list_new (omapi_addr_list_t **d, unsigned count,
+				  const char *file, int line)
+{
+	omapi_addr_list_t *new;
+
+	new = dmalloc ((count * sizeof (omapi_addr_t)) +
+		       sizeof (omapi_addr_list_t), file, line);
+	if (!new)
+		return ISC_R_NOMEMORY;
+	memset (new, 0, ((count * sizeof (omapi_addr_t)) +
+			 sizeof (omapi_addr_list_t)));
+	new -> count = count;
+	new -> addresses = (omapi_addr_t *)(new + 1);
+	return omapi_addr_list_reference (d, new, file, line);
+}
+
+isc_result_t omapi_addr_list_reference (omapi_addr_list_t **r,
+					  omapi_addr_list_t *h,
+					  const char *file, int line)
+{
+	if (!h || !r)
+		return ISC_R_INVALIDARG;
+
+	if (*r) {
+#if defined (POINTER_DEBUG)
+		log_error ("%s(%d): reference store into non-null pointer!",
+			   file, line);
+		abort ();
+#else
+		return ISC_R_INVALIDARG;
+#endif
+	}
+	*r = h;
+	h -> refcnt++;
+	rc_register (file, line, r, h, h -> refcnt);
+	dmalloc_reuse (h, file, line, 1);
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t omapi_addr_list_dereference (omapi_addr_list_t **h,
+					    const char *file, int line)
+{
+	if (!h)
+		return ISC_R_INVALIDARG;
+
+	if (!*h) {
+#if defined (POINTER_DEBUG)
+		log_error ("%s(%d): dereference of null pointer!", file, line);
+		abort ();
+#else
+		return ISC_R_INVALIDARG;
+#endif
+	}
+	
+	if ((*h) -> refcnt <= 0) {
+#if defined (POINTER_DEBUG)
+		log_error ("%s(%d): dereference of pointer with zero refcnt!",
+			   file, line);
+#if defined (DEBUG_RC_HISTORY)
+		dump_rc_history ();
+#endif
+		abort ();
+#else
+		*h = 0;
+		return ISC_R_INVALIDARG;
+#endif
+	}
+
+	--((*h) -> refcnt);
+	rc_register (file, line, h, *h, (*h) -> refcnt);
+	if ((*h) -> refcnt <= 0 ) {
 		dfree (*h, file, line);
 	}
 	*h = 0;
