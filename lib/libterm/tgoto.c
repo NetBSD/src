@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.18 2000/12/13 22:14:40 scw Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.19 2001/01/09 07:18:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.18 2000/12/13 22:14:40 scw Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.19 2001/01/09 07:18:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <termcap.h>
@@ -115,6 +116,7 @@ t_goto(info, CM, destcol, destline, buffer, limit)
 	int which = destline;
 
 	/* CM is checked below */
+	_DIAGASSERT(buffer != NULL);
 
 	if (info != NULL)
 	{

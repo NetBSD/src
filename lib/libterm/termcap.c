@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.36 2000/06/03 07:14:55 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.37 2001/01/09 07:18:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.36 2000/06/03 07:14:55 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.37 2001/01/09 07:18:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,9 @@ t_setinfo(struct tinfo **bp, const char *entry)
 	char capability[256], *cap_ptr;
 	size_t limit;
 	
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(entry != NULL);
+
 	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
 		return -1;
 
