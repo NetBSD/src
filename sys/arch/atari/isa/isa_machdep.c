@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.14 1999/10/21 15:26:57 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.15 1999/11/23 14:48:58 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -213,9 +213,11 @@ isa_intr_alloc(ic, mask, type, irq)
 		    slot    = SLOTNR(i);
 		    iinfo_p = &iinfo[slot];
 
-		    if (iinfo_p->slot >= 0) {
+		    if (iinfo_p->slot < 0) {
 			*irq = i;
-			printf("WARNING: isa_intr_alloc is not yet ready!\n");
+			printf("WARNING: isa_intr_alloc is not yet ready!\n"
+			       "         make sure the card is in slot %d!\n",
+				slot);
 			return 0;
 		    }
 		}
