@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.45 2003/06/29 22:31:32 fvdl Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.46 2003/07/30 12:09:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.45 2003/06/29 22:31:32 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.46 2003/07/30 12:09:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -96,6 +96,45 @@ int doingcache = 1;			/* 1 => enable the cache */
 
 /* A single lock to protect cache insertion, removal and lookup */
 static struct simplelock namecache_slock = SIMPLELOCK_INITIALIZER;
+
+static void cache_remove(struct namecache *);
+static void cache_free(struct namecache *);
+
+static void
+cache_remove(struct namecache *ncp)
+{
+
+	LOCK_ASSERT(simple_lock_held(&namecache_slock));
+
+	ncp->nc_dvp = NULL;
+	ncp->nc_vp = NULL;
+
+	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+	if (ncp->nc_hash.le_prev != NULL) {
+		LIST_REMOVE(ncp, nc_hash);
+		ncp->nc_hash.le_prev = NULL;
+	}
+	if (ncp->nc_vhash.le_prev != NULL) {
+		LIST_REMOVE(ncp, nc_vhash);
+		ncp->nc_vhash.le_prev = NULL;
+	}
+	if (ncp->nc_vlist.le_prev != NULL) {
+		LIST_REMOVE(ncp, nc_vlist);
+		ncp->nc_vlist.le_prev = NULL;
+	}
+	if (ncp->nc_dvlist.le_prev != NULL) {
+		LIST_REMOVE(ncp, nc_dvlist);
+		ncp->nc_dvlist.le_prev = NULL;
+	}
+}
+
+static void
+cache_free(struct namecache *ncp)
+{
+
+	pool_put(&namecache_pool, ncp);
+	numcache--; /* XXX MP */
+}
 
 /*
  * Look for a the name in the cache. We don't do this
@@ -370,15 +409,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		memset(ncp, 0, sizeof(*ncp));
 		simple_lock(&namecache_slock);
 	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = NULL;
-		}
-		if (ncp->nc_vhash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = NULL;
-		}
+		cache_remove(ncp);
 	} else {
 		simple_unlock(&namecache_slock);
 		return;
@@ -396,6 +427,9 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	}
 	/* Fill in cache info. */
 	ncp->nc_dvp = dvp;
+	LIST_INSERT_HEAD(&dvp->v_dnclist, ncp, nc_dvlist);
+	if (vp)
+		LIST_INSERT_HEAD(&vp->v_nclist, ncp, nc_vlist);
 	ncp->nc_dvpid = dvp->v_id;
 	ncp->nc_nlen = cnp->cn_namelen;
 	memcpy(ncp->nc_name, cnp->cn_nameptr, (unsigned)ncp->nc_nlen);
@@ -494,11 +528,21 @@ nchreinit(void)
 void
 cache_purge(struct vnode *vp)
 {
-	struct namecache *ncp;
+	struct namecache *ncp, *ncnext;
 	struct nchashhead *ncpp;
 	static u_long nextvnodeid;
 
 	simple_lock(&namecache_slock);
+	for (ncp = LIST_FIRST(&vp->v_nclist); ncp != NULL; ncp = ncnext) {
+		ncnext = LIST_NEXT(ncp, nc_vlist);
+		cache_remove(ncp);
+		cache_free(ncp);
+	}
+	for (ncp = LIST_FIRST(&vp->v_dnclist); ncp != NULL; ncp = ncnext) {
+		ncnext = LIST_NEXT(ncp, nc_dvlist);
+		cache_remove(ncp);
+		cache_free(ncp);
+	}
 	vp->v_id = ++nextvnodeid;
 	if (nextvnodeid != 0)
 		goto out;
@@ -529,18 +573,8 @@ cache_purgevfs(struct mount *mp)
 			continue;
 		}
 		/* Free the resources we had. */
-		ncp->nc_vp = NULL;
-		ncp->nc_dvp = NULL;
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = NULL;
-		}
-		if (ncp->nc_vhash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = NULL;
-		}
-		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
+		cache_remove(ncp);
+		cache_free(ncp);
 	}
 	simple_unlock(&namecache_slock);
 }

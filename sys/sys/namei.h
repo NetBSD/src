@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.30 2003/07/08 06:49:21 itojun Exp $	*/
+/*	$NetBSD: namei.h,v 1.31 2003/07/30 12:09:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -166,8 +166,10 @@ struct	namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
 	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
 	LIST_ENTRY(namecache) nc_vhash;	/* directory hash chain */
+	LIST_ENTRY(namecache) nc_dvlist;
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
 	u_long	nc_dvpid;		/* capability number of nc_dvp */
+	LIST_ENTRY(namecache) nc_vlist;
 	struct	vnode *nc_vp;		/* vnode the name refers to */
 	u_long	nc_vpid;		/* capability number of nc_vp */
 	char	nc_nlen;		/* length of name */
