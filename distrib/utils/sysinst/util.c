@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.97 2003/06/11 21:35:36 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.98 2003/06/11 23:06:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,7 +184,7 @@ get_ramsize(void)
 	sysctl(mib, 2, &ramsize, &len, NULL, 0);
 
 	/* Find out how many Megs ... round up. */
-	rammb = (unsigned int)((ramsize + MEG - 1) / MEG);
+	rammb = ((unsigned int)ramsize + MEG - 1) / MEG;
 }
 
 static int asked = 0;
