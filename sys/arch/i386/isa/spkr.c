@@ -6,7 +6,7 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  *
- *	$Id: spkr.c,v 1.14 1994/05/24 07:31:16 mycroft Exp $
+ *	$Id: spkr.c,v 1.15 1994/06/16 01:08:27 mycroft Exp $
  */
 
 #include "speaker.h"
@@ -439,7 +439,7 @@ struct uio *uio;
     else
     {
 	n = min(DEV_BSIZE, uio->uio_resid);
-	cp = spkr_inbuf->b_un.b_addr;
+	cp = spkr_inbuf->b_data;
 	error = uiomove(cp, n, uio);
 	if (!error)
 		playstring(cp, n);

@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: cd.c,v 1.27 1994/05/11 09:53:52 mycroft Exp $
+ *      $Id: cd.c,v 1.28 1994/06/16 01:11:40 mycroft Exp $
  */
 
 /*
@@ -490,7 +490,7 @@ cdstart(unit)
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
 		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-		    sizeof(cmd), (u_char *) bp->b_un.b_addr, bp->b_bcount,
+		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))
 		    != SUCCESSFULLY_QUEUED) {

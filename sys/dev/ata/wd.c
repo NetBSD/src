@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.83 1994/06/09 20:00:13 pk Exp $
+ *	$Id: wd.c,v 1.84 1994/06/16 01:08:31 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -666,7 +666,7 @@ loop:
 		}
 #ifdef WDDEBUG
 		printf("sector %d cylin %d head %d addr %x sts %x\n", sector,
-		    cylin, head, bp->b_un.b_addr, inb(wd->sc_iobase+wd_altsts));
+		    cylin, head, bp->b_data, inb(wd->sc_iobase+wd_altsts));
 #endif
 	}
 
@@ -681,7 +681,7 @@ loop:
 	}
 
 	/* Then send it! */
-	outsw(wdc->sc_iobase+wd_data, bp->b_un.b_addr + wd->sc_skip * DEV_BSIZE,
+	outsw(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip * DEV_BSIZE,
 	    DEV_BSIZE / sizeof(short));
 }
 
@@ -768,7 +768,7 @@ wdcintr(wdc)
 
 		/* Suck in data. */
 		insw(wdc->sc_iobase+wd_data,
-		    bp->b_un.b_addr + wd->sc_skip * DEV_BSIZE, 
+		    bp->b_data + wd->sc_skip * DEV_BSIZE, 
 		    DEV_BSIZE / sizeof(short));
 	}
     

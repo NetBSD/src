@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.31 1994/05/11 09:53:45 mycroft Exp $
+ *	$Id: st.c,v 1.32 1994/06/16 01:11:51 mycroft Exp $
  */
 
 /*
@@ -1057,7 +1057,7 @@ ststart(unit)
 		 * go ask the adapter to do all this for us
 		 */
 		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-		    sizeof(cmd), (u_char *) bp->b_un.b_addr, bp->b_bcount, 0,
+		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
 		    100000, bp, flags | SCSI_NOSLEEP) != SUCCESSFULLY_QUEUED) {
 badnews:
 			printf("%s: not queued\n", st->sc_dev.dv_xname);

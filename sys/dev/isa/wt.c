@@ -16,7 +16,7 @@
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
  *
- *	$Id: wt.c,v 1.15 1994/05/05 08:31:44 mycroft Exp $
+ *	$Id: wt.c,v 1.16 1994/06/16 01:08:37 mycroft Exp $
  */
 
 /*
@@ -578,7 +578,7 @@ wtstrategy(bp)
 
 	sc->flags &= ~TPEXCEP;
 	s = splbio();
-	if (wtstart(sc, bp->b_flags, bp->b_un.b_addr, bp->b_bcount)) {
+	if (wtstart(sc, bp->b_flags, bp->b_data, bp->b_bcount)) {
 		wtwait(sc, 0, (bp->b_flags & B_READ) ? "wtread" : "wtwrite");
 		bp->b_resid -= sc->dmacount;
 	}
