@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.66 1998/09/11 12:50:09 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.67 1998/10/01 19:26:30 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1284,7 +1284,7 @@ loop:
 			}
 			q->p_xstat = 0;
 			ruadd(&p->p_stats->p_cru, q->p_ru);
-			FREE(q->p_ru, M_ZOMBIE);
+			pool_put(&rusage_pool, q->p_ru);
 
 			/*
 			 * Decrement the count of procs running with this uid.
@@ -1296,7 +1296,7 @@ loop:
 			 */
 			if (--q->p_cred->p_refcnt == 0) {
 				crfree(q->p_cred->pc_ucred);
-				FREE(q->p_cred, M_SUBPROC);
+				pool_put(&pcred_pool, p->p_cred);
 			}
 
 			/*
