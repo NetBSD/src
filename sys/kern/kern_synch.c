@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.69 2000/03/23 20:37:59 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.70 2000/03/28 22:04:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -364,7 +364,6 @@ tsleep(ident, priority, wmesg, timo)
 	register struct slpque *qp;
 	register int s;
 	int sig, catch = priority & PCATCH;
-	void endtsleep __P((void *));
 
 	if (cold || panicstr) {
 		/*
