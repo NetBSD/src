@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/02/27 04:43:22 tv Exp $
+#	$NetBSD: Makefile,v 1.21 2002/02/27 16:45:11 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -59,7 +59,6 @@ native: .native/.configure_done
 			--target=${MACHINE_GNU_PLATFORM}) && \
 		(cd .native/bfd && ${MAKE} bfd.h) && \
 		(cd .native/gcc && ${MAKE} tree-check.h HOST_CC=${HOST_CC:Q}) && \
-		(cd .native/gdb && ${MAKE} init.c version.c) && \
 		(cd .native/ld && ${MAKE} ldemul-list.h) && \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 && \
 			${MAKE} configure-target-libiberty \
