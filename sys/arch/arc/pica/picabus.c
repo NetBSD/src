@@ -1,4 +1,4 @@
-/*	$NetBSD: picabus.c,v 1.12 2000/06/09 05:42:03 soda Exp $	*/
+/*	$NetBSD: picabus.c,v 1.13 2000/06/17 07:23:06 soda Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -114,13 +114,13 @@ struct pica_dev acer_pica_61_cpu[] = {
 	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
 	{{ NULL,	3, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
-	{{ NULL,	4, NULL, },
-	   0, pica_intrnull, (void *)NULL, },
+	{{ "vga",	4, NULL, },
+	   0, pica_intrnull, (void *)PICA_V_LOCAL_VIDEO, },
 	{{ "sonic",	5, 0, },
 	   PICA_SYS_LB_IE_SONIC, pica_intrnull, (void *)PICA_SYS_SONIC, },
 	{{ "asc",	6, 0, },
 	   PICA_SYS_LB_IE_SCSI,  pica_intrnull, (void *)PICA_SYS_SCSI, },
-	{{ "pc",	7, 0, },
+	{{ "pckbd",	7, 0, },
 	   PICA_SYS_LB_IE_KBD,	 pica_intrnull, (void *)PICA_SYS_KBD, },
 	{{ "pms",	8, NULL, },
 	   PICA_SYS_LB_IE_MOUSE, pica_intrnull, (void *)PICA_SYS_KBD, },
@@ -141,7 +141,7 @@ struct pica_dev mips_magnum_r4000_cpu[] = {
 	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
 	{{ NULL,	3, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
-	{{ "fb",        4, 0, },
+	{{ "vxl",       4, 0, },
 	   PICA_SYS_LB_IE_VIDEO, pica_intrnull, (void *)PICA_V_LOCAL_VIDEO, },
 	{{ "sonic",	5, 0, },
 	   PICA_SYS_LB_IE_SONIC, pica_intrnull, (void *)PICA_SYS_SONIC, },
