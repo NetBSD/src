@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.5 1998/10/05 07:13:07 christos Exp $ */
+/*	$NetBSD: promdev.c,v 1.6 1998/10/12 21:17:28 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -40,6 +40,8 @@
 #include <machine/idprom.h>
 #include <machine/oldmon.h>
 #include <machine/ctlreg.h>
+#include <sparc/sparc/asm.h>
+#include <machine/pte.h>
 
 #include <lib/libsa/stand.h>
 
@@ -625,8 +627,6 @@ getpropstring(node, name)
  * Old monitor routines
  */
 
-#include <machine/pte.h>
-
 struct saioreq prom_si;
 static int promdev_inuse;
 
@@ -678,7 +678,7 @@ prom0_iopen(pd)
 #ifdef	DEBUG_PROM
 		printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
 			si->si_devaddr,
-			getpte((u_long)si->si_devaddr & ~PGOFSET));
+			getpte4((u_long)si->si_devaddr & ~PGOFSET));
 #endif
 	}
 
@@ -780,7 +780,7 @@ found:
 
 	va = prom_devmap;
 	do {
-		setpte(va, pte);
+		setpte4(va, pte);
 		va += NBPG;
 		pte += 1;
 		length -= NBPG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.1 1997/06/01 03:39:33 mrg Exp $	*/
+/*	$NetBSD: dvma.c,v 1.2 1998/10/12 21:17:28 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -38,6 +38,7 @@
  */
 
 #include <sys/param.h>
+#include <sparc/sparc/asm.h>
 #include <machine/pte.h>
 #include <machine/ctlreg.h>
 
@@ -49,6 +50,12 @@
 #define SA_MIN_VA	(RELOC - 0x40000)	/* XXX - magic constant */
 #define SA_MAX_VA	(SA_MIN_VA + DVMA_MAPLEN)
 
+#define	getsegmap(va)		(CPU_ISSUN4C \
+					? lduba(va, ASI_SEGMAP) \
+					: (lduha(va, ASI_SEGMAP)))
+#define	setsegmap(va, pmeg)	(CPU_ISSUN4C \
+					? stba(va, ASI_SEGMAP, pmeg) \
+					: stha(va, ASI_SEGMAP, pmeg))
 void
 dvma_init()
 {
