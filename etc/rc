@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.139 2000/01/04 05:20:51 lukem Exp $
+#	$NetBSD: rc,v 1.140 2000/01/07 05:11:43 enami Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -188,7 +188,7 @@ echo 'building databases...'
 # db so dmesg will run work when we boot /netbsd.new, etc.
 sysctl machdep 2>/dev/null | grep -q booted_kernel
 if [ $? -eq 0 ] ; then
-        kvm_mkdb `sysctl -n machdep.booted_kernel`
+	kvm_mkdb `sysctl -n machdep.booted_kernel`
 	if [ $? -ne 0 ] ; then
 		kvm_mkdb /netbsd
 	fi
@@ -249,7 +249,7 @@ if checkyesno ntpdate; then
 	if [ -z "$ntpdate_hosts" ]; then
 		ntpdate_hosts=`awk '
 		    /^server[ \t]*127.127/	{next}
-		    /^(server|peer)/			{print $2}
+		    /^(server|peer)/		{print $2}
 		' </etc/ntp.conf`
 	fi
 	if [ -n "$ntpdate_hosts"  ]; then
@@ -263,25 +263,25 @@ echo -n 'starting rpc daemons:'
 
 # note that portmap is generally required for all other rpc services.
 if checkyesno portmap; then
-	echo -n ' portmap';             portmap $portmap_flags
+	echo -n ' portmap';		portmap $portmap_flags
 fi
 
 if checkyesno ypserv; then
 	checkyesno portmap || \
 	logger -s "WARNING: set portmap=YES in /etc/rc.conf if ypserv=YES."
 
-        echo -n ' ypserv';              ypserv $ypserv_flags
+	echo -n ' ypserv';		ypserv $ypserv_flags
 fi
 
 if checkyesno ypbind; then
-        echo -n ' ypbind';              ypbind $ypbind_flags
+	echo -n ' ypbind';		ypbind $ypbind_flags
 fi
 
 if checkyesno yppasswdd; then
 	checkyesno ypserv || \
 	logger -s "WARNING: set ypserv=YES in /etc/rc.conf if yppasswdd=YES."
 
-        echo -n ' rpc.yppasswdd';       rpc.yppasswdd $yppasswdd_flags
+	echo -n ' rpc.yppasswdd';       rpc.yppasswdd $yppasswdd_flags
 fi
 
 if checkyesno bootparamd; then
@@ -313,7 +313,8 @@ if checkyesno nfs_client || checkyesno nfs_server; then
 	echo -n 'starting nfs daemons:'
 
 	if checkyesno nfs_server && ! checkyesno portmap; then
-		logger -s "WARNING: set portmap=YES in /etc/rc.conf if nfs_server=YES."
+		logger -s "WARNING: set portmap=YES in /etc/rc.conf " \
+		    "if nfs_server=YES."
 	fi
 
 	nfs_locking=NO
@@ -322,8 +323,8 @@ if checkyesno nfs_client || checkyesno nfs_server; then
 		if [ -r /etc/exports ]; then
 			rm -f /var/db/mountdtab
 			echo -n > /var/db/mountdtab
-			echo -n ' mountd';              mountd $mountd_flags
-			echo -n ' nfsd';                nfsd $nfsd_flags
+			echo -n ' mountd';		mountd $mountd_flags
+			echo -n ' nfsd';		nfsd $nfsd_flags
 			nfs_locking=YES
 		else
 			echo
@@ -333,7 +334,7 @@ if checkyesno nfs_client || checkyesno nfs_server; then
 	fi
 
 	if checkyesno nfs_client; then
-		echo -n ' nfsiod';              nfsiod $nfsiod_flags
+		echo -n ' nfsiod';		nfsiod $nfsiod_flags
 		nfs_locking=YES
 	fi
 
@@ -354,13 +355,14 @@ if checkyesno nfs_client || checkyesno nfs_server; then
 				`sed s/#.*$// <$amd_master`  >/var/run/amd.pid
 			else
 				echo
-				logger -s "WARNING: \$amd_master ($amd_master)not " \
-				    "readable; amd not started."
+				logger -s "WARNING: \$amd_master " \
+				    "($amd_master) not readable; " \
+				    "amd not started."
 			fi
 		else
 			echo
-			logger -s "WARNING: \$amd_dir ($amd_dir) not a directory; " \
-			    "amd not started."
+			logger -s "WARNING: \$amd_dir ($amd_dir) not a " \
+			    "directory; amd not started."
 		fi
 	fi
 	echo '.'
@@ -406,7 +408,7 @@ chmod 666 /dev/tty[pqrs]*
 if [ -f /etc/ptmp ]
 then
 	logger -s -p auth.err \
-	'password file may be incorrect -- /etc/ptmp exists'
+	    'password file may be incorrect -- /etc/ptmp exists'
 fi
 
 # XXX replace me with a script that works!
@@ -525,7 +527,7 @@ if checkyesno dhcpd; then
 		    "dhcpd not started."
 	fi
 elif checkyesno dhcrelay; then
-	echo -n ' dhcrelay';            dhcrelay $dhcrelay_flags
+	echo -n ' dhcrelay';		dhcrelay $dhcrelay_flags
 fi
 
 if checkyesno rwhod; then
