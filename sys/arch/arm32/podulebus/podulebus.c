@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.5 1996/03/27 22:07:26 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.6 1996/04/26 22:32:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -186,49 +186,59 @@ podulebusmatch(parent, match, aux)
 
 
 int
-podulebusprint(aux, podulebus)
+podulebusprint(aux, name)
 	void *aux;
-	char *podulebus;
+	char *name;
 {
 	struct podule_attach_args *pa = aux;
 
-	if (pa->pa_podule != NULL) {
-		if (pa->pa_podule->slottype == SLOT_POD)
-			printf(" [ podule %d ]:", pa->pa_podule_number);
-		else if (pa->pa_podule->slottype == SLOT_NET)
-			printf(" [ netslot %d ]:", pa->pa_podule_number - MAX_PODULES);
-		else
-			panic("Invalid slot type\n");
+	if (name) {
+		printf("podule%d: ", pa->pa_podule_number);
+		return(UNCONF);
 	}
+
+	if (pa->pa_podule->slottype == SLOT_POD)
+		printf(" [ podule %d ]:", pa->pa_podule_number);
+	else if (pa->pa_podule->slottype == SLOT_NET)
+		printf(" [ netslot %d ]:", pa->pa_podule_number - MAX_PODULES);
+	else
+		panic("Invalid slot type\n");
 
 /* XXXX print flags */
 	return (QUIET);
 }
 
 
-void
-podulebusscan(parent, match)
+int
+podulebussubmatch(parent, match, aux)
 	struct device *parent;
 	void *match;
+	void *aux;
 {
-	struct device *dev = match;
-	struct cfdata *cf = dev->dv_cfdata;
-	struct podule_attach_args pa;
+	struct cfdata *cf = match;
+	struct podule_attach_args *pa = aux;
 
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("nope cannot handle this");
 
-	pa.pa_podule = NULL;
-	pa.pa_podule_number = -1;
+/*	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_podule_number)
+		return(0);
 
-	if (cf->cf_loc[0] != -1) {
-		pa.pa_podule_number = cf->cf_loc[0];
-	}
+	return((*cf->cf_attach->ca_match)(parent, match, aux));
+*/
 
-	if ((*cf->cf_attach->ca_match)(parent, dev, &pa) > 0)
-		config_attach(parent, dev, &pa, podulebusprint);
-	else
-		free(dev, M_DEVBUF);
+/* Return priority 0 or 1 for wildcarded podule */
+
+	if (cf->cf_loc[0] == -1)
+		return((*cf->cf_attach->ca_match)(parent, match, aux));
+
+/* Return higher priority if we match the specific podule */
+
+	else if (cf->cf_loc[0] == pa->pa_podule_number)
+		return((*cf->cf_attach->ca_match)(parent, match, aux) * 8);
+
+/* Fail */
+	return(0);
 }
 
 
@@ -503,6 +513,7 @@ podulebusattach(parent, self, aux)
 	void *aux;
 {
 	int loop;
+	struct podule_attach_args pa;
     
 	printf("\n");
 
@@ -532,7 +543,7 @@ podulebusattach(parent, self, aux)
 	poduleirq.ih_func = poduleirqhandler;
 	poduleirq.ih_arg = NULL;
 	poduleirq.ih_level = IPL_NONE;
-	poduleirq.ih_name = "podulebus";
+	poduleirq.ih_name = "podule";
 
 	if (irq_claim(IRQ_PODULE, &poduleirq))
 		panic("Cannot claim IRQ for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
@@ -542,9 +553,14 @@ podulebusattach(parent, self, aux)
 	podulescan(self); 
 	netslotscan(self);
 
-/* Look for drivers */
+/* Look for drivers to attach */
 
-	config_scan(podulebusscan, self);
+	for (loop = 0; loop < MAX_PODULES+MAX_NETSLOTS; ++loop)
+		if (podules[loop].slottype != SLOT_NONE) {
+			pa.pa_podule_number = loop;
+			pa.pa_podule = &podules[loop];
+			config_found_sm(self, &pa, podulebusprint, podulebussubmatch);
+		}
 }
 
 
@@ -591,7 +607,7 @@ struct cfattach podulebus_ca = {
 };
 
 struct cfdriver podulebus_cd = {
-	NULL, "podulebus", DV_DULL, 1
+	NULL, "podulebus", DV_DULL, 0
 };
 
 
@@ -603,6 +619,8 @@ struct cfdriver podulebus_cd = {
  * the podule was in the required slot.
  * A required slot of -1 means any slot.
  */
+
+/* The use of this function is deprecated, use matchpodule() instead */
 
 int
 findpodule(manufacturer, product, required_slot)
@@ -622,6 +640,30 @@ findpodule(manufacturer, product, required_slot)
 	}
       
 	return(-1);
+}
+
+
+/*
+ * Match a podule structure with the specified parameters
+ * Returns 0 if the match failed
+ * The required_slot is not used.
+ */
+
+int
+matchpodule(pa, manufacturer, product, required_slot)
+	struct podule_attach_args *pa;
+	int manufacturer;
+	int product;
+	int required_slot;
+{
+	if (pa->pa_podule->attached)
+		panic("podulebus: Podule already attached\n");
+
+	if (pa->pa_podule->manufacturer == manufacturer
+	    && pa->pa_podule->product == product)
+		return(1);
+
+	return(0);
 }
 
 /* End of podulebus.c */
