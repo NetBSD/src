@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.67 2003/01/18 09:53:18 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.68 2003/05/20 17:39:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -705,6 +705,7 @@ struct netbsd_elfcore_procinfo {
 	uint32_t	cpi_nlwps;	/* number of LWPs */
 	int8_t		cpi_name[32];	/* copy of p->p_comm */
 	/* Add version 2 fields below here. */
+	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
 
 #if defined(ELFSIZE)
