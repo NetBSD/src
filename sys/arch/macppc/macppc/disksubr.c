@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2002/06/19 03:10:56 itojun Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2002/09/10 11:31:10 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -171,7 +171,7 @@ whichType(struct part_map_entry *part, u_int8_t *fstype, int *clust)
 
 	/* Set default unix partition type. Certain partition types can
 	 * specify a different partition type. */
-	*fstype = FS_BSDFFS;
+	*fstype = FS_OTHER;
 	*clust = 0;	/* only A/UX partitions not in cluster 0 */
 
 	if (part->pmSig != PART_ENTRY_MAGIC || part->pmPartType[0] == '\0')
@@ -198,6 +198,8 @@ whichType(struct part_map_entry *part, u_int8_t *fstype, int *clust)
 		if ((bzb->bzbMagic == BZB_MAGIC) &&
 		    (bzb->bzbType < FSMAXTYPES))
 			*fstype = bzb->bzbType;
+		else
+			*fstype = FS_BSDFFS;
 	} else if (strcmp(PART_TYPE_NETBSD, typestr) == 0 ||
 		 strcmp(PART_TYPE_NBSD_68KBOOT, typestr) == 0) {
 		type = UFS_PART;
@@ -205,24 +207,43 @@ whichType(struct part_map_entry *part, u_int8_t *fstype, int *clust)
 		if ((bzb->bzbMagic == BZB_MAGIC) &&
 		    (bzb->bzbType < FSMAXTYPES))
 			*fstype = bzb->bzbType;
+		else
+			*fstype = FS_BSDFFS;
 	} else if (strcmp(PART_TYPE_UNIX, typestr) == 0) {
 		/* unix part, swap, root, usr */
 		bzb = (struct blockzeroblock *)(&part->pmBootArgs);
 		*clust = bzb->bzbCluster;
-		if (bzb->bzbMagic != BZB_MAGIC)
+		if (bzb->bzbMagic != BZB_MAGIC) {
 			type = 0;
-		else if (bzb->bzbFlags & BZB_ROOTFS)
+		} else if (bzb->bzbFlags & BZB_ROOTFS) {
 			type = ROOT_PART;
-		else if (bzb->bzbFlags & (BZB_USRFS | BZB_USRFS_NEW))
+			*fstype = FS_BSDFFS;
+		} else if (bzb->bzbFlags & (BZB_USRFS | BZB_USRFS_NEW)) {
 			type = UFS_PART;
-		else if (bzb->bzbType == BZB_TYPESWAP)
+			*fstype = FS_BSDFFS;
+		} else if (bzb->bzbType == BZB_TYPESWAP) {
 			type = SWAP_PART;
-		else
+			*fstype = FS_SWAP;
+		} else {
 			type = SCRATCH_PART;
-	} else if (strcmp(PART_TYPE_MAC, typestr) == 0)
+			*fstype = FS_OTHER;
+		}
+	} else if (strcmp(PART_TYPE_MAC, typestr) == 0) {
 		type = HFS_PART;
-	else
+		*fstype = FS_HFS;
+	} else if (strcmp(PART_TYPE_APPLEUFS, typestr) == 0) {
+		type = SCRATCH_PART;
+		*fstype = FS_OTHER;
+	} else if (strcmp(PART_TYPE_LINUX, typestr) == 0) {
+		type = SCRATCH_PART;
+		*fstype = FS_OTHER;
+	} else if (strcmp(PART_TYPE_LINUX_SWAP, typestr) == 0) {
+		type = SCRATCH_PART;
+		*fstype = FS_OTHER;
+	} else {
 		type = SCRATCH_PART;	/* no known type */
+		*fstype = FS_OTHER;
+	}
 
 	return type;
 }
@@ -268,11 +289,11 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
 			if (*maxslot < 6)
 				*maxslot = 6;
 		} else if (type == SWAP_PART) {
-			setpartition(part + i, &lp->d_partitions[1], FS_SWAP);
+			setpartition(part + i, &lp->d_partitions[1], realtype);
 			if (*maxslot < 1)
 				*maxslot = 1;
 		} else if (type == HFS_PART) {
-			setpartition(part + i, &lp->d_partitions[3], FS_HFS);
+			setpartition(part + i, &lp->d_partitions[3], realtype);
 			if (*maxslot < 3)
 				*maxslot = 3;
 		} else
@@ -356,27 +377,15 @@ read_mac_label(dev, strat, lp, osdep)
 
 		pp = &lp->d_partitions[slot];
 
-		switch (whichType(part + i, &realtype, &clust)) {
-		case ROOT_PART:
 		/*
-		 * another root part will turn into a plain old
+		 * Additional ROOT_PART will turn into a plain old
 		 * UFS_PART partition, live with it.
 		 */
-		case UFS_PART:
+
+		if (whichType(part + i, &realtype, &clust)) {
 			setpartition(part + i, pp, realtype);
-			break;
-		case SWAP_PART:
-			setpartition(part + i, pp, FS_SWAP);
-			break;
-		case HFS_PART:
-			setpartition(part + i, pp, FS_HFS);
-			break;
-		case SCRATCH_PART:
-			setpartition(part + i, pp, FS_OTHER);
-			break;
-		default:
+		} else {
 			slot = 0;
-			break;
 		}
 		if (slot > maxslot)
 			maxslot = slot;
