@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 1998/11/25 20:30:44 hwr Exp $
+# $NetBSD: GENERIC,v 1.107 1998/12/10 19:01:42 augustss Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -168,6 +168,9 @@ tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #audio*	at	eap?
+#sv*	at	pci? dev ? function ?		# S3 SonicVibes
+#audio*	at	sv?
+#opl*	at	sv?
 
 # MII/PHY support
 inphy*	at	mii? phy ?
