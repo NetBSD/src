@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.5 2004/04/25 00:24:08 cl Exp $ */
+/* $NetBSD: hypervisor.c,v 1.6 2004/05/07 15:51:04 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.5 2004/04/25 00:24:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.6 2004/05/07 15:51:04 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.5 2004/04/25 00:24:08 cl Exp $");
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
+
+#ifdef DOM0OPS
+#include <sys/dirent.h>
+#include <sys/stat.h>
+#include <sys/tree.h>
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h>
+#include <miscfs/kernfs/kernfs.h>
+#include <machine/kernfs_machdep.h>
+#endif
 
 #if NXENNET > 0
 #include <net/if.h>
@@ -162,6 +172,14 @@ hypervisor_attach(parent, self, aux)
 	hac.hac_xennpx.xa_device = "npx";
 	config_found(self, &hac.hac_xennpx, hypervisor_print);
 #endif
+#ifdef DOM0OPS
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		xenkernfs_init();
+		xenprivcmd_init();
+		xenmachmem_init();
+		xenvfr_init();
+	}
+#endif
 }
 
 int
@@ -175,3 +193,21 @@ hypervisor_print(aux, parent)
 		aprint_normal("%s at %s", hac->hac_device, parent);
 	return (UNCONF);
 }
+
+#ifdef DOM0OPS
+
+#define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+
+kernfs_parentdir_t *kernxen_pkt;
+
+void
+xenkernfs_init()
+{
+	kernfs_entry_t *dkt;
+
+	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_INITENTRY(dkt, DT_DIR, "xen", NULL, KFSsubdir, VDIR, DIR_MODE);
+	kernfs_addentry(NULL, dkt);
+	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
+}
+#endif

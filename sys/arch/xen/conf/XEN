@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.9 2004/04/26 19:44:54 cl Exp $
+# $NetBSD: XEN,v 1.10 2004/05/07 15:51:04 cl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -12,6 +12,7 @@ maxusers	32		# estimated number of users
 
 #
 options		XEN
+options		DOM0OPS
 options		HZ=50
 
 #options 	I586_CPU
