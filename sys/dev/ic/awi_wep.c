@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.1 2000/06/09 05:31:16 onoe Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
  * with other stations.
  */
 
-#include "opt_awi.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -88,12 +86,34 @@
 #include <dev/ic/am79c930var.h>
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
+
+#include <crypto/arc4/arc4.h>
 #endif
+
 #ifdef __FreeBSD__
 #include <dev/awi/am79c930reg.h>
 #include <dev/awi/am79c930var.h>
 #include <dev/awi/awireg.h>
 #include <dev/awi/awivar.h>
+
+#include <crypto/rc4/rc4.h>
+static __inline int
+arc4_ctxlen(void)
+{
+        return sizeof(struct rc4_state);
+}
+
+static __inline void
+arc4_setkey(void *ctx, u_int8_t *key, int keylen)
+{
+	rc4_init(ctx, key, keylen);
+}
+
+static __inline void
+arc4_encrypt(void *ctx, u_int8_t *dst, u_int8_t *src, int len)
+{
+	rc4_crypt(ctx, dst, src, len);
+}
 #endif
 
 static void awi_crc_init __P((void));
@@ -103,36 +123,17 @@ static int awi_null_ctxlen __P((void));
 static void awi_null_setkey __P((void *ctx, u_int8_t *key, int keylen));
 static void awi_null_copy __P((void *ctx, u_int8_t *dst, u_int8_t *src, int len));
 
-#ifdef AWI_WEP_ARC4
-extern int awi_arc4_ctxlen __P((void));
-extern void awi_arc4_setkey __P((void *ctx, u_int8_t *key, int keylen));
-extern void awi_arc4_encrypt __P((void *ctx, u_int8_t *dst, u_int8_t *src, int len));
-#endif
-#ifdef AWI_WEP_DES3
-extern int awi_des3_ctxlen __P((void));
-extern void awi_des3_setkey __P((void *ctx, u_int8_t *key, int keylen));
-extern void awi_des3_encrypt __P((void *ctx, u_int8_t *dst, u_int8_t *src, int len));
-#endif
-
 /* XXX: the order should be known to wiconfig/user */
 
 static struct awi_wep_algo awi_wep_algo[] = {
+/* 0: no wep */
 	{ "no" },	/* dummy for no wep */
 
-#ifdef AWI_WEP_ARC4
-	{ "arc4", awi_arc4_ctxlen, awi_arc4_setkey,
-	    awi_arc4_encrypt, awi_arc4_encrypt },
-#else
-	{ NULL },	/* not supported */
-#endif
+/* 1: normal wep (arc4) */
+	{ "arc4", arc4_ctxlen, arc4_setkey,
+	    arc4_encrypt, arc4_encrypt },
 
-#ifdef AWI_WEP_DES3
-	{ "des3", awi_des3_ctxlen, awi_des3_setkey,
-	    awi_des3_encrypt, awi_des3_decrypt },
-#else
-	{ NULL },	/* not supported */
-#endif
-
+/* 2: debug wep (null) */
 	{ "null", awi_null_ctxlen, awi_null_setkey,
 	    awi_null_copy, awi_null_copy },
 			/* dummy for wep without encryption */
