@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 1994/11/20 21:30:03 deraadt Exp $
+	$NetBSD: syscalls.master,v 1.23 1994/11/25 23:59:31 deraadt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -88,7 +88,7 @@
 44	NOARGS		{ int profil(caddr_t samples, u_int size, \
 			    u_int offset, u_int scale); }
 45	UNIMPL		
-46	UNIMPL		sunos_setgid
+46	NOARGS		{ int setgid(uid_t gid); }
 47	NOARGS		{ gid_t getgid(void); }
 48	UNIMPL		sunos_ssig
 49	UNIMPL		reserved for USG
@@ -129,7 +129,7 @@
 82	STD		{ int sunos_setpgid(int pid, int pgid); }
 83	NOARGS		{ int setitimer(u_int which, struct itimerval *itv, \
 			    struct itimerval *oitv); }
-84	UNIMPL		{ int wait(void); }
+84	UNIMPL		{ int sunos_wait(void); }
 85	NOARGS		{ int swapon(char *name); }
 86	NOARGS		{ int getitimer(u_int which, struct itimerval *itv); }
 87	NOARGS		{ int compat_43_gethostname(char *hostname, u_int len); }
@@ -270,7 +270,7 @@
 183	STD		{ int sunos_sigpending(int *mask); }
 184	UNIMPL		
 185	NOARGS		{ int setpgid(int pid, int pgid); }
-186	UNIMPL		{ long pathconf(char *path, int name); }
-187	UNIMPL		{ long fpathconf(int fd, int name); }
+186	NOARGS		{ long pathconf(char *path, int name); }
+187	NOARGS		{ long fpathconf(int fd, int name); }
 188	STD		{ int sunos_sysconf(int name); }
 189	STD		{ int sunos_uname(struct sunos_utsname *name); }
