@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.288 2002/04/26 15:02:02 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.289 2002/04/26 19:16:04 groo Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -13,8 +13,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 
 # Temporary; this will become default when all platforms have migrated.
 # List all the platforms that have NOT switched, since the majority have.
-.if !(${MACHINE_ARCH} == "ns32k" || \
-      ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el")
+.if !(${MACHINE_ARCH} == "ns32k")
 USE_NEW_TOOLCHAIN=nowarn
 .endif
 
