@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.1.1.12 2002/10/01 13:39:57 itojun Exp $	*/
+/*	$NetBSD: compat.c,v 1.2 2002/12/06 03:39:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -185,7 +185,7 @@ proto_spec(const char *spec)
 			ret |= SSH_PROTO_2;
 			break;
 		default:
-			log("ignoring bad proto spec: '%s'.", p);
+			logit("ignoring bad proto spec: '%s'.", p);
 			break;
 		}
 	}
