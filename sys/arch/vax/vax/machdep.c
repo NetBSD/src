@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.56 1998/06/08 18:42:40 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.57 1998/06/20 18:45:40 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -468,8 +468,12 @@ consinit()
 		smgcninit();
 #endif
 #ifdef DDB
-/*	db_machine_init(); */
-	ddb_init();
+	{
+		extern int end; /* Contains pointer to symsize also */
+		extern int *esym;
+
+		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+	}
 #ifdef donotworkbyunknownreason
 	if (boothowto & RB_KDB)
 		Debugger();
