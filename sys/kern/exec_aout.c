@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.22 2001/11/12 15:25:01 lukem Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.23 2002/08/29 06:31:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.22 2001/11/12 15:25:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.23 2002/08/29 06:31:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,9 +138,10 @@ exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (execp->a_bss > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		    epp->ep_daddr + execp->a_data, NULLVP, 0,
+		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
 }
