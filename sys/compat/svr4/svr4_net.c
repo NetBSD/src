@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.14 1998/07/18 05:04:37 lukem Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.15 1998/08/27 07:04:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -295,6 +295,7 @@ svr4_stream_get(fp)
 	st->s_family = so->so_proto->pr_domain->dom_family;
 	st->s_cmd = ~0;
 	st->s_afd = -1;
+	st->s_eventmask = 0;
 	so->so_internal = st;
 
 	return st;
