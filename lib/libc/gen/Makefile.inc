@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.55 1994/12/07 04:47:23 phil Exp $
+#	$Id: Makefile.inc,v 1.56 1994/12/07 14:52:59 deraadt Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -36,7 +36,7 @@ SRCS+=	adddf3.S addsf3.S ashlsi3.S ashrsi3.S cmpdf2.S cmpsf2.S divdf3.S \
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.c modf.S setjmp.S sigsetjmp.S
 SRCS+=	divsi3.S fixdfsi.S fixunsdfsi.S udivsi3.S
 .elif (${MACHINE_ARCH} == "ns32k")
-SRCS+=	__main.c _setjmp.S alloca.S fabs.S frexp.S infinity.c isinf.c
+SRCS+=	__main.c _setjmp.S alloca.S fabs.S frexp.S isinf.c
 SRCS+=  ldexp.S modf.S setjmp.S sigsetjmp.S
 .elif (${MACHINE_ARCH} == "tahoe")
 CFLAGS+=-I/sys
@@ -46,10 +46,10 @@ SRCS+=	udiv.S urem.S
 SRCS+=	_setjmp.S alloca.S fabs.S frexp.c ldexp.S modf.S setjmp.S
 SRCS+=	udiv.S urem.S
 .elif (${MACHINE_ARCH} == "sparc")
-SRCS+=	_setjmp.S fabs.S frexp.c infinity.c isnan.c ldexp.c modf.S
+SRCS+=	_setjmp.S fabs.S frexp.c isnan.c ldexp.c modf.S
 SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S
 .elif (${MACHINE_ARCH} == "mips")
-SRCS+=	_setjmp.S fabs.S frexp.c infinity.c isinf.S ldexp.S modf.S
+SRCS+=	_setjmp.S fabs.S frexp.c isinf.S ldexp.S modf.S
 SRCS+=	setjmp.S
 .endif
 
