@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/05/07 14:28:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.10.14.1 2001/11/14 23:42:09 thorpej Exp $
 
 LIB=	z
 MKPIC=	no
@@ -23,6 +23,7 @@ CLEANFILES+= lib${LIB}.o
 # only needed during build
 libinstall::
 
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}
