@@ -3,10 +3,14 @@ This is the directory file `dir' a.k.a. `DIR', which contains the
 This particular dir file is merely made available for your hacking
   pleasure, not official or standard in any way.  If it doesn't make sense
   to you, or you don't like it, ignore it.
+rms suggested that we follow the categories of the Free Software
+  Directory (http://www.gnu.org/directory/) where possible.  Since
+  capitalization in the directory is random, I've chosen to use
+  `minimum' capitals, just the first word and proper nouns.
 If you have dir entries for Texinfo manuals you'd like to be added here,
   please send them to karl@gnu.org.
 
-Id: dir-example,v 1.14 2003/02/05 00:54:07 karl Exp
+Id: dir-example,v 1.34 2003/05/31 12:47:04 karl Exp
 
 File: dir,	Node: Top,	This is the top of the INFO tree.
 
@@ -22,49 +26,57 @@ Not all of the topics shown below may be available on this system.
 
 * Menu:
 
-GNU Packages
+Basics
 * Bash: (bash).                 Bourne-Again SHell.
-* Coreutils: (coreutils).	Core (file, text, shell) utilities.
-* Cpio: (cpio).                 Copy-in-copy-out archiver.
+* BC: (bc).                     Arbitrary precision calculator language.
+* Coreutils: (coreutils).       Core GNU (file, text, shell) utilities.
 * DC: (dc).                     Postfix desk calculator.
-* Diff: (diff).                 Comparing and merging programs.
-* Ed: (ed).                     Line editor.
-* Emacs: (emacs).               Extensible self-documenting text editor.
-* File utilities: (fileutils).  GNU file utilities.
 * Finding files: (find).        Operating on files matching certain criteria.
-* Font utilities: (fontu).      Programs for font manipulation.
-* Gawk: (gawk).                 A text scanning and processing language.
-* Gawkinet: (gawkinet).         TCP/IP Internetworking With `gawk'.
 * Gcal: (gcal).                 GNU calendar program.
-* Groff: (groff).               The GNU troff document formatting system.
-* Gzip: (gzip).                 General (de)compression.
-* Identifier DB: (id-utils).    Identifier database utilities.
-* Ispell: (ispell).             Interactive spelling corrector.
-* Make: (make).                 Remake files automatically.
-* M4: (m4).                     Macro processor.
-* Ptx: (ptx).                   Permuted index generator.
-* Shar utilities: (sharutils).  Shell archiver, uudecode/uuencode.
-* Shell utilities: (sh-utils).  GNU shell utilities.
-* tar: (tar).                   Making tape (or disk) archives.
-* Text utilities: (textutils).  GNU text utilities.
 * Time: (time).                 Measuring program resource usage.
-* UUCP: (uucp).                 Copying between machines, offline.
-* Wdiff: (wdiff).               Word-by-word comparison.
-* Wget: (wget).                 URL download.
+
+* Common options: (coreutils)Common options.      Common options.
+* File permissions: (coreutils)File permissions.  Access modes.
+* Date input formats: (coreutils)Date input formats.
 
 Text creation and manipulation
+* Diff: (diff).                 Comparing and merging programs.
+* Ed: (ed).                     Line editor.
+* Gawk: (gawk).                 A text scanning and processing language.
 * grep: (grep).                 Print lines matching a pattern.
+* m4: (m4).			General-purpose text macro processor.
 * sed: (sed).                   Stream EDitor.
+* Wdiff: (wdiff).               Word difference finder.
 
 Texinfo documentation system
-* Texinfo: (texinfo).           The GNU documentation format.
 * Info: (info).                 Documentation browsing system.
+* Texinfo: (texinfo).           The GNU documentation format.
 * info standalone: (info-stnd).                 Standalone Info reader.
 * infokey: (info-stnd)Invoking infokey.         Compile Info customizations.
 * install-info: (texinfo)Invoking install-info. Updating info/dir entries.
 * makeinfo: (texinfo)makeinfo options.          Translate Texinfo source.
 * texi2dvi: (texinfo)Format with texi2dvi.      Printing Texinfo documentation.
 * texindex: (texinfo)Format with tex/texindex.  Sorting Texinfo index files.
+
+Archiving
+* Cpio: (cpio).                 Copy-in-copy-out archiver to tape or disk.
+* Shar utilities: (sharutils).  Shell archiver, uuencode/uudecode.
+* Tar: (tar).                   Making tape or disk archives.
+
+Compression
+* bzip2: (bzip2).               General (de)compression of files (blocksort).
+* Gzip: (gzip).                 General (de)compression of files (lzw).
+
+Email
+* Anubis: (anubis).             The GNU outgoing mail processor.
+* Mailutils: (mailutils).       Utilities & library for mailboxes, protocols.
+
+Network applications
+* Gawkinet: (gawkinet).         TCP/IP Internetworking With `gawk'.
+* Wget: (wget).                 Non-interactive network downloader.
+
+Typesetting
+* Groff: (groff).               The GNU troff document formatting system.
 
 Printing Tools
 * a2ps: (a2ps).                    PostScript Generating Utility
@@ -78,14 +90,13 @@ Printing Tools
 
 Software development
 * As: (as).                     Assembler.
-* Autoconf: (autoconf).         Create source code configuration scripts
-* automake: (automake).		Making Makefile.in's
+* Autoconf: (autoconf).         Create source code configuration scripts.
+* Automake: (automake).		Making Makefile.in's.
 * Binutils: (binutils).         ar/copy/objdump/nm/size/strip/ranlib.
 * bison: (bison).               GNU parser generator (Yacc replacement).
-* CVS: (cvs).                   Concurrent versions system for source control.
-* Configure: (configure).       Cygnus configure.
 * Cpp: (cpp).		        The GNU C preprocessor.
 * Cpplib: (cppinternals).       Cpplib internals.
+* CVS: (cvs).                   Concurrent versions system for source control.
 * DejaGnu: (dejagnu).           Testing framework.
 * Gdb: (gdb).                   The GNU debugger.
 * egcs: (egcs).                 Experimental GNU C compiler.
@@ -99,19 +110,17 @@ Software development
 * Gprof: (gprof).               Profiler.
 * Guile Reference: (guile).     The Guile reference manual.
 * help2man: (help2man).         Automatic manual page generation from --help.
+* Identifier DB: (id-utils).    Identifier database utilities.
 * Indent: (indent).             Prettyprinter for programs.
 * Ld: (ld).                     Linker.
 * Libtool: (libtool).           Generic library support script.
+* Make: (make).                 Remake files automatically.
 * Remsync: (remsync).           Remote synchronization of directory trees.
 * Send PR: (send-pr).           Cygnus bug reporting for Gnats.
 * Source config: (cfg-paper).   Some theory on configuring source packages.
 * Standards: (standards).       GNU coding standards.
 
 Emacs
-* Elisp: (elisp).               GNU Emacs Lisp reference manual.
-* Intro Elisp: (emacs-lisp-intro). Introduction to Elisp programming.
-
-* AUC TeX: (auctex).            Editing (La)TeX files.
 * Ada mode: (ada-mode). The GNU Emacs mode for editing Ada.
 * Autotype: (autotype). Convenient features for text that you enter frequently
                           in Emacs.
@@ -119,18 +128,23 @@ Emacs
                           Java, Pike, and IDL code.
 * CL: (cl).		Partial Common Lisp support for Emacs Lisp.
 * Dired-X: (dired-x).   Dired Extra Features.
+* EUDC: (eudc).   A client for directory servers (LDAP, PH)
 * Ebrowse: (ebrowse).   A C++ class browser for Emacs.
 * Ediff: (ediff).       A visual interface for comparing and merging programs.
+* Emacs: (emacs).	The extensible self-documenting text editor.
+* Elisp: (elisp).               GNU Emacs Lisp reference manual.
 * Emacs FAQ: (efaq).	Frequently Asked Questions about Emacs.
 * Emacs MIME: (emacs-mime).   The MIME de/composition library.
 * Eshell: (eshell).     A command shell implemented in Emacs Lisp.
-* EUDC: (eudc).   A client for directory servers (LDAP, PH)
 * Forms: (forms).	Emacs package for editing data bases
 			  by filling in forms.
 * Gnus: (gnus).         The newsreader Gnus.
 * IDLWAVE: (idlwave).	Major mode and shell for IDL and WAVE/CL files.
-* Message: (message).   Mail and news composition mode that goes with Gnus.
+* Intro Elisp: (emacs-lisp-intro). Introduction to Elisp programming.
+
+* AUC TeX: (auctex).            Editing (La)TeX files.
 * MH-E: (mh-e).		Emacs interface to the MH mail system.
+* Message: (message).   Mail and news composition mode that goes with Gnus.
 * PCL-CVS: (pcl-cvs).	Emacs front-end to CVS.
 * RefTeX: (reftex).	Emacs support for LaTeX cross-references and citations.
 * SC: (sc).		Supercite lets you cite parts of messages you're
@@ -145,34 +159,52 @@ Emacs
 * WoMan: (woman).       Browse UN*X Manual Pages `Wo (without) Man'.
 
 GNU Gettext Utilities
-* Gettext: (gettext).                           GNU gettext utilities.
-* gettextize: (gettext)gettextize Invocation.   Prepare a package for gettext.
-* msgfmt: (gettext)msgfmt Invocation.           Make MO files out of PO files.
-* msgmerge: (gettext)msgmerge Invocation.       Update two PO files into one.
-* xgettext: (gettext)xgettext Invocation.       Extract strings into a PO file.
+* ISO3166: (gettext)Country Codes.             ISO 3166 country codes.
+* ISO639: (gettext)Language Codes.             ISO 639 language codes.
+* autopoint: (gettext)autopoint Invocation.    Copy gettext infrastructure.
+* gettext: (gettext).                          GNU gettext utilities.
+* xgettext: (gettext)xgettext Invocation.      Extract strings into a PO file.
+* gettextize: (gettext)gettextize Invocation.  Prepare a package for gettext.
+* msgattrib: (gettext)msgattrib Invocation.    Select part of a PO file.
+* msgcat: (gettext)msgcat Invocation.          Combine several PO files.
+* msgcmp: (gettext)msgcmp Invocation.          Compare a PO file and template.
+* msgcomm: (gettext)msgcomm Invocation.        Match two PO files.
+* msgconv: (gettext)msgconv Invocation.        Convert PO file to encoding.
+* msgen: (gettext)msgen Invocation.            Create an English PO file.
+* msgexec: (gettext)msgexec Invocation.        Process a PO file.
+* msgfilter: (gettext)msgfilter Invocation.    Pipe a PO file through a filter.
+* msgfmt: (gettext)msgfmt Invocation.          Make MO files out of PO files.
+* msggrep: (gettext)msggrep Invocation.        Select part of a PO file.
+* msginit: (gettext)msginit Invocation.        Create a fresh PO file.
+* msgmerge: (gettext)msgmerge Invocation.      Update a PO file from template.
+* msgunfmt: (gettext)msgunfmt Invocation.      Uncompile MO file into PO file.
+* msguniq: (gettext)msguniq Invocation.        Unify duplicates for PO file.
 
 Software libraries
 * Annotate: (annotate).         High-level GDB to GUI's.
 * Bfd: (bfd).                   The Binary File Descriptor library.
 * CVS protocol: (cvsclient).    CVS client/server protocol specification.
-* Gdb-Internals: (gdbint).	The GNU debugger's internals.
+* Gdb-Internals: (gdbint).      The GNU debugger's internals.
 * GDB library: (libgdb).        Application programming interface to GDB.
 * GDBM: (gdbm).                 Hashed databases.
 * GDK: (gdk).                   General drawing kit.
 * GTK: (gtk).                   GIMP toolkit.
 * History: (history).           Recall previous lines of input.
-* Iostream: (iostream).         C++ input/output.
 * Ld internals: (ldint).        GNU linker internals.
 * Libc: (libc).                 C library.
-* Libg++: (libg++).             C++ classes.
-* Mmalloc: (mmalloc).		The GNU mapped-malloc package.
+* Mmalloc: (mmalloc).           The GNU mapped-malloc package.
 * Stabs: (stabs).               The "stabs" debugging information format.
 * Readline: (readline).         General command-line interface.
 * Regex: (regex).               Regular expressions.
 * Termcap: (termcap).           All about /etc/termcap.
 
+C++ libraries
+* autosprintf: (autosprintf).   GNU autosprintf for printf formats in C++.
+* Iostream: (iostream).         C++ input/output.
+* Libg++: (libg++).             C++ classes.
+
 GNU organization
-* Maintain: (maintain).		GNU maintainer guidelines.
+* Maintain: (maintain).         GNU maintainer guidelines.
 * Tasks: (tasks).               GNU task list.
 
 GNU music project
@@ -194,14 +226,17 @@ TeX
 * Kpathsearch: (kpathsea).      File lookup along search paths.
 * LaTeX: (latex).               LaTeX.
 * MakeIndex: (makeindex).       Index creation for TeX.
-* Naming fonts: (fontname).     Filenames for TeX fonts.
+* Naming TeX fonts: (fontname). Filenames for TeX fonts.
 * TDS: (tds).                   Standard TeX directory structure.
 * TeXDraw: (texdraw).           Drawing PostScript diagrams within TeX.
 * Web2c: (web2c).               TeX, Metafont, and their companion programs.
 
-DOS 
+DOS
 * GNUish: (gnuish).             GNU utilities for DOS.
 * Mtools: (mtools).             Access DOS disks from Unix.
+
+Font related software
+* Font utilities: (fontu).      Programs for font manipulation.
 
 Science
 * R FAQ: (R-FAQ).               The R statistical language FAQ.
@@ -221,7 +256,7 @@ Other things
 * Screen: (screen).             Terminal multiplexer.
 
 Individual utilities
-* aclocal: (automake)Invoking aclocal.          Generating aclocal.m4
+* aclocal: (automake)Invoking aclocal.          Generating aclocal.m4.
 * aid: (id-utils)aid invocation.                Matching strings.
 * ar: (binutils)ar.                             Create/modify/extract archives.
 * at-pr: (gnats)at-pr.                          Bug report timely reminders.
@@ -238,177 +273,186 @@ Individual utilities
 * autoupdate: (autoconf)autoupdate Invocation.
                                 Automatic update of `configure.ac'
 * awk: (gawk)Invoking gawk.                     Text scanning and processing.
-* basename: (sh-utils)basename invocation.      Strip directory and suffix.
+* basename: (coreutils)basename invocation.     Strip directory and suffix.
 * bibtex: (web2c)BibTeX invocation.             Maintaining bibliographies.
-* bzip2: (bzip2).               		(de)compression.
 * c++filt: (binutils)c++filt.                   Demangle C++ symbols.
-* cat: (textutils)cat invocation.               Concatenate and write files.
-* chgrp: (fileutils)chgrp invocation.           Change file groups.
-* chmod: (fileutils)chmod invocation.           Change file permissions.
-* chown: (fileutils)chown invocation.           Change file owners/groups.
-* chroot: (sh-utils)chroot invocation.          Specify the root directory.
-* cksum: (textutils)cksum invocation.           Print POSIX CRC checksum.
+* cat: (coreutils)cat invocation.               Concatenate and write files.
+* chgrp: (coreutils)chgrp invocation.           Change file groups.
+* chmod: (coreutils)chmod invocation.           Change file permissions.
+* chown: (coreutils)chown invocation.           Change file owners/groups.
+* chroot: (coreutils)chroot invocation.         Specify the root directory.
+* cksum: (coreutils)cksum invocation.           Print POSIX CRC checksum.
 * cmp: (diff)Invoking cmp.                      Character-by-character diff.
-* comm: (textutils)comm invocation.             Compare sorted files by line.
-* config.status: (autoconf)config.status Invocation.
-                                Recreating a configuration
-* configure: (autoconf)configure Invocation.
-                                Configuring a package
-* cp: (fileutils)cp invocation.                 Copy files.
-* csplit: (textutils)csplit invocation.         Split by context.
-* cut: (textutils)cut invocation.               Print selected parts of lines.
-* date: (sh-utils)date invocation.              Print/set system date and time.
-* dd: (fileutils)dd invocation.                 Copy and convert a file.
-* df: (fileutils)df invocation.                 Report filesystem disk usage.
+* comm: (coreutils)comm invocation.             Compare sorted files by line.
+* comsatd: (mailutils)comsatd.                  Comsat daemon.
+* config.status: (autoconf)config.status Invocation. Recreating configurations.
+* configure: (autoconf)configure Invocation.    Configuring a package.
+* cp: (coreutils)cp invocation.                 Copy files.
+* csplit: (coreutils)csplit invocation.         Split by context.
+* cut: (coreutils)cut invocation.               Print selected parts of lines.
+* date: (coreutils)date invocation.             Print/set system date and time.
+* dd: (coreutils)dd invocation.                 Copy and convert a file.
+* df: (coreutils)df invocation.                 Report filesystem disk usage.
 * diff3: (diff)Invoking diff3.                  Three-way diff.
-* dir: (fileutils)dir invocation.               List directories briefly.
-* dircolors: (fileutils)dircolors invocation.   Color setup for ls.
-* dirname: (sh-utils)dirname invocation.        Strip non-directory suffix.
+* dir: (coreutils)dir invocation.               List directories briefly.
+* dircolors: (coreutils)dircolors invocation.   Color setup for ls.
+* dirname: (coreutils)dirname invocation.       Strip non-directory suffix.
 * dmp: (web2c)Dmp invocation.                   Troff->MPX (MetaPost pictures).
-* du: (fileutils)du invocation.                 Report on disk usage.
+* du: (coreutils)du invocation.                 Report on disk usage.
 * dvicopy: (web2c)DVIcopy invocation.           Virtual font expansion
 * dvitomp: (web2c)DVItoMP invocation.           DVI to MPX (MetaPost pictures).
 * dvitype: (web2c)DVItype invocation.           DVI to human-readable text.
-* echo: (sh-utils)echo invocation.              Print a line of text.
+* echo: (coreutils)echo invocation.             Print a line of text.
 * edit-pr: (gnats)Invoking edit-pr.             Changing bugs.
 * egrep: (grep)Invoking.                        grep -E.
 * eid: (id-utils)eid invocation.                Invoking an editor on matches.
-* emacsclient: (emacs)Emacs Server.             Connecting to a running Emacs.
-* emacsserver: (emacs)Emacs Server.             Connecting to a running Emacs.
-* env: (sh-utils)env invocation.                Modify the environment.
-* etags: (emacs)Create Tags Table.              Creating a TAGS table.
-* expand: (textutils)expand invocation.         Convert tabs to spaces.
-* expr: (sh-utils)expr invocation.              Evaluate expressions.
-* factor: (sh-utils)factor invocation.          Print prime factors
-* false: (sh-utils)false invocation.            Do nothing, unsuccessfully.
+* env: (coreutils)env invocation.               Modify the environment.
+* expand: (coreutils)expand invocation.         Convert tabs to spaces.
+* expr: (coreutils)expr invocation.             Evaluate expressions.
+* factor: (coreutils)factor invocation.         Print prime factors
+* false: (coreutils)false invocation.           Do nothing, unsuccessfully.
 * fgrep: (fgrep)Invoking.                       grep -F.
 * fid: (id-utils)fid invocation.                Listing a file's identifiers.
 * file-pr: (gnats)file-pr.                      Processing incoming traffic.
 * find: (find)Invoking find.                    Finding and acting on files.
-* fmt: (textutils)fmt invocation.               Reformat paragraph text.
-* fold: (textutils)fold invocation.             Wrap long input lines.
+* fmt: (coreutils)fmt invocation.               Reformat paragraph text.
+* fold: (coreutils)fold invocation.             Wrap long input lines.
+* frm: (mailutils)frm.                          List headers from a mailbox.
 * gcal2txt: (gcal)Invoking gcal2txt.            Calendar resource to text file.
 * gftodvi: (web2c)GFtoDVI invocation.           Generic font proofsheets.
 * gftopk: (web2c)GFtoPK invocation.             Generic to packed fonts.
 * gftype: (web2c)GFtype invocation.             GF to human-readable text.
 * gid: (id-utils)gid invocation.                Listing all matching lines.
 * git: (git).                                   GNU interactive tools.
-* groups: (sh-utils)groups invocation.          Print group names a user is in.
+* groups: (coreutils)groups invocation.         Print group names a user is in.
+* guimb: (mailutils)guimb.                      Mailbox processing language.
 * gunzip: (gzip)Overview.                       Decompression.
-* head: (textutils)head invocation.             Output the first part of files.
-* hostname: (sh-utils)hostname invocation.      Print or set system name.
-* id: (sh-utils)id invocation.                  Print real/effective uid/gid.
+* gzexe: (gzip)Overview.			Compress executables.
+* head: (coreutils)head invocation.             Output the first part of files.
+* hostname: (coreutils)hostname invocation.     Print or set system name.
+* id: (coreutils)id invocation.                 Print real/effective uid/gid.
 * idx: (id-utils)idx invocation.                Testing mkid scanners.
 * ifnames: (autoconf)ifnames Invocation.        Listing conditionals in source.
 * iid: (id-utils)iid invocation.                Interactive complex queries.
+* imap4d: (mailutils)imap4d.                    IMAP4 daemon.
 * inimf: (web2c)inimf invocation.               Initial Metafont.
 * inimp: (web2c)inimp invocation.               Initial MetaPost.
 * initex: (web2c)initex invocation.             Initial TeX.
-* install: (fileutils)install invocation.       Copy and change attributes.
-* join: (textutils)join invocation.             Join lines on a common field.
+* install: (coreutils)install invocation.       Copy and change attributes.
+* join: (coreutils)join invocation.             Join lines on a common field.
 * kpsewhich: (kpathsea)Invoking kpsewhich.      TeX file searching.
 * libtoolize: (libtool)Invoking libtoolize.     Adding libtool support.
 * lid: (id-utils)lid invocation.                Matching identifier patterns.
-* ln: (fileutils)ln invocation.                 Make links between files.
+* ln: (coreutils)ln invocation.                 Make links between files.
 * locate: (find)Invoking locate.                Finding files in a database.
-* logname: (sh-utils)logname invocation.        Print current login name.
-* ls: (fileutils)ls invocation.                 List directory contents.
+* logname: (coreutils)logname invocation.       Print current login name.
+* ls: (coreutils)ls invocation.                 List directory contents.
 * mail-files: (sharutils)mail-files invocation. Send files to remote site.
+* mail.local: (mailutils)mail.local.            Deliver mail to local mailbox.
+* mail: (mailutils)mail.                        Send and receive mail.
 * mailshar: (sharutils)mailshar invocation.     Make and send a shell archive.
 * makempx: (web2c)MakeMPX invocation.           MetaPost label typesetting.
 * maketexmf: (kpathsea)MakeTeX scripts.         MF source generation.
 * maketexpk: (kpathsea)MakeTeX scripts.         PK bitmap generation.
 * maketextex: (kpathsea)MakeTeX scripts.        TeX source generation.
 * maketextfm: (kpathsea)MakeTeX scripts.        TeX font metric generation.
-* md5sum: (textutils)md5sum invocation.         Print or check message-digests.
+* md5sum: (coreutils)md5sum invocation.         Print or check message-digests.
+* messages: (mailutils)messages.                Count messages in mailbox.
 * mf: (web2c)mf invocation.                     Creating typeface families.
 * mft: (web2c)MFT invocation.                   Prettyprinting Metafont source.
 * mgetty: (mgetty).                             Faxes, voicemail and more.
-* mkdir: (fileutils)mkdir invocation.           Create directories.
-* mkfifo: (fileutils)mkfifo invocation.         Create FIFOs: (named pipes).
+* mkdir: (coreutils)mkdir invocation.           Create directories.
+* mkfifo: (coreutils)mkfifo invocation.         Create FIFOs: (named pipes).
 * mkid: (id-utils)mkid invocation.              Creating an ID database.
-* mknod: (fileutils)mknod invocation.           Create special files.
+* mknod: (coreutils)mknod invocation.           Create special files.
 * mp: (web2c)mp invocation.                     Creating technical diagrams.
 * mpto: (web2c)MPto invocation.                 MetaPost label extraction.
-* mv: (fileutils)mv invocation.                 Rename files.
+* mv: (coreutils)mv invocation.                 Rename files.
 * newer: (web2c)Newer invocation.               Compare modification times.
-* nice: (sh-utils)nice invocation.              Modify scheduling priority.
-* nl: (textutils)nl invocation.                 Number lines and write files.
+* nice: (coreutils)nice invocation.             Modify scheduling priority.
+* nl: (coreutils)nl invocation.                 Number lines and write files.
 * nlmconv: (binutils)nlmconv.                   Convert object to NetWare LM.
 * nm: (binutils)nm.                             List symbols in object files.
-* nohup: (sh-utils)nohup invocation.            Immunize to hangups.
+* nohup: (coreutils)nohup invocation.           Immunize to hangups.
 * objcopy: (binutils)objcopy.                   Copy/translate object files.
 * objdump: (binutils)objdump.                   Display info from object files.
-* od: (textutils)od invocation.                 Dump files in octal, etc.
-* paste: (textutils)paste invocation.           Merge lines of files.
+* od: (coreutils)od invocation.                 Dump files in octal, etc.
+* paste: (coreutils)paste invocation.           Merge lines of files.
 * patch: (diff)Invoking patch.                  Automatically applying diffs.
 * patgen: (web2c)Patgen invocation.             Creating hyphenation patterns.
-* pathchk: (sh-utils)pathchk invocation.        Check file name portability.
+* pathchk: (coreutils)pathchk invocation.       Check file name portability.
 * pid: (id-utils)pid invocation.                Looking up filenames.
 * pktogf: (web2c)PKtoGF invocation.             Packed to generic fonts.
 * pktype: (web2c)PKtype invocation.             PK to human-readable text.
 * pltotf: (web2c)PLtoTF invocation.             Property list to TFM.
 * pooltype: (web2c)Pooltype invocation.         Display WEB pool files.
+* pop3d: (mailutils)pop3d.                      POP3 daemon.
 * pr-addr: (gnats)pr-addr.                      Bug report address retrieval.
 * pr-edit: (gnats)pr-edit.                      The edit-pr driver.
-* pr: (textutils)pr invocation.                 Paginate or columnate files.
-* printenv: (sh-utils)printenv invocation.      Print environment variables.
-* printf: (sh-utils)printf invocation.          Format and print data.
-* pwd: (sh-utils)pwd invocation.                Print working directory.
+* pr: (coreutils)pr invocation.                 Paginate or columnate files.
+* printenv: (coreutils)printenv invocation.     Print environment variables.
+* printf: (coreutils)printf invocation.         Format and print data.
+* pwd: (coreutils)pwd invocation.               Print working directory.
 * query-pr: (gnats)Invoking query-pr.           Bug searching/reporting.
 * queue-pr: (gnats)queue-pr.                    Handling incoming traffic.
 * ranlib: (binutils)ranlib.                     Index archive file contents.
-* rm: (fileutils)rm invocation.                 Remove files.
-* rmdir: (fileutils)rmdir invocation.           Remove empty directories.
+* readmsg: (mailutils)readmsg.                  Extract messages from a folder.
+* rm: (coreutils)rm invocation.                 Remove files.
+* rmdir: (coreutils)rmdir invocation.           Remove empty directories.
 * sdiff: (diff)Invoking sdiff.                  Interactively merge files.
 * send-pr: (gnats)Invoking send-pr.             Submitting bugs.
-* seq: (sh-utils)seq invocation.                Print numeric sequences
+* seq: (coreutils)seq invocation.               Print numeric sequences
 * shar: (sharutils)shar invocation.             Create shell archive.
+* sieve: (mailutils)sieve.                      Mail filtering utility.
 * size: (binutils)size.                         List object file section sizes.
-* sleep: (sh-utils)sleep invocation.            Delay for a specified time.
-* sort: (textutils)sort invocation.             Sort text files.
-* split: (textutils)split invocation.           Split into fixed-size pieces.
+* sleep: (coreutils)sleep invocation.           Delay for a specified time.
+* sort: (coreutils)sort invocation.             Sort text files.
+* split: (coreutils)split invocation.           Split into fixed-size pieces.
 * strings: (binutils)strings.                   List printable strings.
 * strip: (binutils)strip.                       Discard symbols.
-* stty: (sh-utils)stty invocation.              Print/change terminal settings.
-* su: (sh-utils)su invocation.                  Modify user and group id.
-* sum: (textutils)sum invocation.               Print traditional checksum.
-* sync: (fileutils)sync invocation.             Synchronize memory and disk.
+* stty: (coreutils)stty invocation.             Print/change terminal settings.
+* su: (coreutils)su invocation.                 Modify user and group id.
+* sum: (coreutils)sum invocation.               Print traditional checksum.
+* sync: (coreutils)sync invocation.             Synchronize memory and disk.
 * tabs: (tput)Invoking tabs.                    Tab settings.
-* tac: (textutils)tac invocation.               Reverse files.
-* tail: (textutils)tail invocation.             Output the last part of files.
+* tac: (coreutils)tac invocation.               Reverse files.
+* tail: (coreutils)tail invocation.             Output the last part of files.
 * tangle: (web2c)Tangle invocation.             WEB to Pascal.
 * tcal: (gcal)Invoking tcal.                    Run Gcal with tomorrow's date.
-* tee: (sh-utils)tee invocation.                Redirect to multiple files.
-* test: (sh-utils)test invocation.              File/string tests.
+* tee: (coreutils)tee invocation.               Redirect to multiple files.
+* test: (coreutils)test invocation.             File/string tests.
 * testsuite: (autoconf)testsuite Invocation.    Running an Autotest test suite.
 * tex: (web2c)tex invocation.                   Typesetting.
 * tftopl: (web2c)TFtoPL invocation.             TFM -> property list.
-* touch: (fileutils)touch invocation.           Change file timestamps.
+* touch: (coreutils)touch invocation.           Change file timestamps.
 * tput: (tput)Invoking tput.                    Termcap in shell scripts.
-* tr: (textutils)tr invocation.                 Translate characters.
-* true: (sh-utils)true invocation.              Do nothing, successfully.
-* tty: (sh-utils)tty invocation.                Print terminal name.
+* tr: (coreutils)tr invocation.                 Translate characters.
+* true: (coreutils)true invocation.             Do nothing, successfully.
+* tty: (coreutils)tty invocation.               Print terminal name.
 * txt2gcal: (gcal)Invoking txt2gcal.            Calendar text to resource file.
 * umb-scheme: (umb-scheme).                     UMB Scheme Interpreter.
-* uname: (sh-utils)uname invocation.            Print system information.
-* unexpand: (textutils)unexpand invocation.     Convert spaces to tabs.
-* uniq: (textutils)uniq invocation.             Uniqify files.
+* uname: (coreutils)uname invocation.           Print system information.
+* unexpand: (coreutils)unexpand invocation.     Convert spaces to tabs.
+* uniq: (coreutils)uniq invocation.             Uniqify files.
 * unshar: (sharutils)unshar invocation.         Extract from shell archive.
 * updatedb: (find)Invoking updatedb.            Building the locate database.
-* users: (sh-utils)users invocation.            Print current user names.
-* vdir: (fileutils)vdir invocation.             List directories verbosely.
+* users: (coreutils)users invocation.           Print current user names.
+* vdir: (coreutils)vdir invocation.             List directories verbosely.
 * vftovp: (web2c)VFtoVP invocation.             Virtual font -> virtual pl.
 * view-pr: (gnats)Invoking view-pr.             Showing bug reports.
 * virmf: (web2c)virmf invocation.               Virgin Metafont.
 * virmp: (web2c)virmp invocation.               Virgin MetaPost.
 * virtex: (web2c)virtex invocation.             Virgin TeX.
 * vptovf: (web2c)VPtoVF invocation.             Virtual pl -> virtual font.
-* wc: (textutils)wc invocation.                 Byte, word, and line counts.
+* wc: (coreutils)wc invocation.                 Byte, word, and line counts.
 * weave: (web2c)Weave invocation.               WEB to TeX.
-* who: (sh-utils)who invocation.                Print who is logged in.
-* whoami: (sh-utils)whoami invocation.          Print effective user id.
+* who: (coreutils)who invocation.               Print who is logged in.
+* whoami: (coreutils)whoami invocation.         Print effective user id.
 * xargs: (find)Invoking xargs.                  Operating on many files.
-* yes: (sh-utils)yes invocation.                Print a string indefinitely.
+* yes: (coreutils)yes invocation.               Print a string indefinitely.
 * zcat: (gzip)Overview.                         Decompression to stdout.
+* zdiff: (gzip)Overview.                        Compare compressed files.
+* zforce: (gzip)Overview.                       Force .gz extension on files.
+* zgrep: (gzip)Overview.                        Search compressed files.
+* zmore: (gzip)Overview.                        Decompression output by pages.
 * zsh: (zsh).                                   An enhanced Bourne shell.

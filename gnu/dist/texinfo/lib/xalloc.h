@@ -1,4 +1,4 @@
-/*	$NetBSD: xalloc.h,v 1.1.1.1 2003/01/17 14:54:30 wiz Exp $	*/
+/*	$NetBSD: xalloc.h,v 1.1.1.2 2003/07/03 14:58:58 wiz Exp $	*/
 
 /* xalloc.h -- malloc with out-of-memory checking
    Copyright (C) 1990-1998, 1999, 2000 Free Software Foundation, Inc.
@@ -19,6 +19,8 @@
 
 #ifndef XALLOC_H_
 # define XALLOC_H_
+
+# include <stddef.h>
 
 # ifndef PARAMS
 #  if defined PROTOTYPES || (defined __STDC__ && __STDC__)

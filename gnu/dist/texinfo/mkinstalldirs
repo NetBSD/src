@@ -1,14 +1,20 @@
 #! /bin/sh
 # mkinstalldirs --- make directory hierarchy
-# Author: Noah Friedman <friedman@prep.ai.mit.edu>
+# Original author: Noah Friedman <friedman@prep.ai.mit.edu>
 # Created: 1993-05-16
-# Public domain
+# Public domain.
+
+version="mkinstalldirs 2003-06-02"
 
 errstatus=0
 dirmode=""
 
 usage="\
-Usage: mkinstalldirs [-h] [--help] [-m MODE] DIR ..."
+Usage: mkinstalldirs [-h] [--help] [--version] [-m MODE] DIR ...
+
+Create each directory DIR (with mode MODE, if specified), including all
+leading file name components.
+"
 
 # process command line arguments
 while test $# -gt 0 ; do
@@ -20,6 +26,7 @@ while test $# -gt 0 ; do
       test $# -eq 0 && { echo "${usage}" 1>&2; exit 1; }
       dirmode="${1}"
       shift ;;
+    --version) echo "$version"; exit 0;;
     --) shift; break ;;			# stop option processing
     -*) echo "${usage}" 1>&2; exit 1 ;;	# unknown option
      *) break ;;			# first non-opt arg
