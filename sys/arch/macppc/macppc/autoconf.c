@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1998/10/14 12:18:20 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1998/12/10 20:49:17 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,15 +37,18 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
+#include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/pio.h>
+#include <machine/stdarg.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/pci/pcivar.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <dev/ofw/openfirm.h>
-#include <dev/pci/pcivar.h>
-
-#include <machine/powerpc.h>
-#include <machine/pio.h>
-#include <machine/autoconf.h>
+#include <dev/ata/atavar.h>
+#include <dev/ic/wdcvar.h>
 
 extern int cold;
 
@@ -98,35 +101,68 @@ cpu_rootconf()
 void
 findroot()
 {
-	int chosen, len;
-	int targ;
-	int lun = 0;	/* XXX */
+	int chosen, node, pnode;
+	u_int targ, lun = 0;	/* XXX lun */
 	struct device *dv;
-	char p[64];
+	char *controller, *addr, p[64];
 
-	chosen = OF_finddevice("/chosen");
-	if (chosen == -1)
+	booted_device = NULL;
+
+	if ((chosen = OF_finddevice("/chosen")) == -1)
 		goto out;
-
 	bzero(p, sizeof(p));
-	len = OF_getprop(chosen, "bootpath", p, sizeof(p));
-	if (len < 0 || len >= sizeof(p))
+	if (OF_getprop(chosen, "bootpath", p, sizeof(p)) == -1)
+		goto out;
+	if ((addr = strrchr(p, '@')) == NULL)	/* XXX fd:0 case... */
+		goto out;
+	targ = addr[1] - '0';
+	booted_partition = 0;	/* booted_partition = addr[3] - '0'; */
+
+	if ((node = OF_finddevice(p)) == -1)
+		goto out;
+	if ((pnode = OF_parent(node)) == -1)
+		goto out;
+	bzero(p, sizeof(p));
+	if (OF_getprop(pnode, "name", p, sizeof(p)) == -1)
 		goto out;
 
-	/* XXX for now... */
-	if (strncmp(p, "scsi/sd", 7) != 0)
-		goto out;
-
-	booted_partition = p[len - 2] - '0';
-	targ = p[len - 4] - '0';
+	controller = "";
+	if (strcmp(p, "53c94") == 0) controller = "esp";
+	if (strcmp(p, "mesh") == 0) controller = "mesh";
+	if (strcmp(p, "ide") == 0) controller = "wdc";
+	if (strcmp(p, "ata") == 0) controller = "wdc";
+	if (strcmp(p, "ATA") == 0) controller = "wdc";
 
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
-		if (strncmp(dv->dv_xname, "scsibus0", 8) == 0) { /* XXX */
-			struct scsibus_softc *sdv = (void *)dv;
+		if (dv->dv_class != DV_DISK)
+			continue;
 
+		if (strncmp(dv->dv_xname, "sd", 2) == 0) {
+			struct scsibus_softc *sdv = (void *)dv->dv_parent;
+
+			/* sd? at scsibus at esp/mesh */
+			if (strncmp(dv->dv_parent->dv_parent->dv_xname,
+				    controller, strlen(controller)) != 0)
+				continue;
+			if (targ > 7 || lun > 7)
+				goto out;
 			if (sdv->sc_link[targ][lun] == NULL)
 				continue;
-			booted_device = sdv->sc_link[targ][lun]->device_softc;
+			booted_device = dv;
+			break;
+		}
+
+		if (strncmp(dv->dv_xname, "wd", 2) == 0) {
+			struct wdc_softc *wdv = (void *)dv->dv_parent;
+
+			if (strncmp(dv->dv_parent->dv_xname,
+				    controller, strlen(controller)) != 0)
+				continue;
+			if (targ >= wdv->nchannels
+			 || wdv->channels == NULL
+			 || wdv->channels[targ] == NULL)
+				continue;
+			booted_device = dv;
 			break;
 		}
 	}
@@ -134,8 +170,6 @@ findroot()
 out:
 	dk_cleanup();
 }
-
-#include <machine/stdarg.h>
 
 int
 #ifdef __STDC__
