@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.c,v 1.3 2004/01/05 23:23:35 jmmv Exp $	*/
+/*	$NetBSD: locale.c,v 1.4 2004/07/12 08:51:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Alexey Zelkin <phantom@FreeBSD.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: locale.c,v 1.3 2004/01/05 23:23:35 jmmv Exp $");
+__RCSID("$NetBSD: locale.c,v 1.4 2004/07/12 08:51:56 jdolecek Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -436,7 +436,7 @@ showlocale(void)
 	if (lang == NULL) {
 		lang = "";
 	}
-	printf("LANG=%s\n", lang);
+	printf("LANG=\"%s\"\n", lang);
 	/* XXX: if LANG is null, then set it to "C" to get implied values? */
 
 	for (i = 0; i < NLCINFO; i++) {
@@ -452,7 +452,7 @@ showlocale(void)
 			 * overriden environment variable are set into same
 			 * value, then it'll be assumed as 'implied'
 			 */
-			printf("%s=%s\n", lcinfo[i].name, vval);
+			printf("%s=\"%s\"\n", lcinfo[i].name, vval);
 		} else {
 			printf("%s=\"%s\"\n", lcinfo[i].name, vval);
 		}
@@ -462,7 +462,7 @@ showlocale(void)
 	if (vval == NULL) {
 		vval = "";
 	}
-	printf("LC_ALL=%s\n", vval);
+	printf("LC_ALL=\"%s\"\n", vval);
 }
 
 /*
