@@ -371,7 +371,8 @@ sloutput(ifp, m, dst)
 		m_freem(m);
 		return (ENETDOWN);	/* sort of */
 	}
-	if ((sc->sc_ttyp->t_state & TS_CARR_ON) == 0) {
+	if ((sc->sc_ttyp->t_state & TS_CARR_ON) == 0 &&
+	    (sc->sc_ttyp->t_cflag & CLOCAL) == 0) {
 		m_freem(m);
 		return (EHOSTUNREACH);
 	}
