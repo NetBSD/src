@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.3 2004/05/10 00:50:07 christos Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.4 2004/07/23 05:39:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1999-2001, 2003 by Darren Reed.
@@ -466,8 +466,8 @@ char *file;
 		if (i == 0)
 			break;
 		if (i != sizeof(ips)) {
-			fprintf(stderr, "incomplete read: %d != %d\n", i,
-				(int)sizeof(ips));
+			fprintf(stderr, "state:incomplete read: %d != %d\n",
+				i, (int)sizeof(ips));
 			close(sfd);
 			return 1;
 		}
@@ -581,8 +581,8 @@ char *file;
 		if (i == 0)
 			break;
 		if (i != sizeof(ipn)) {
-			fprintf(stderr, "incomplete read: %d != %d\n", i,
-				(int)sizeof(ipn));
+			fprintf(stderr, "nat:incomplete read: %d != %d\n",
+				i, (int)sizeof(ipn));
 			close(nfd);
 			return 1;
 		}
@@ -604,8 +604,8 @@ char *file;
 					break;
 				if (i != n) {
 					fprintf(stderr,
-						"incomplete read: %d != %d\n",
-						i, n);
+					    "nat:incomplete read: %d != %d\n",
+					    i, n);
 					close(nfd);
 					return 1;
 				}
