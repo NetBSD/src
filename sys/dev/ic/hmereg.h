@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.6.2.1 2001/06/21 20:02:31 nathanw Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.6.2.2 2002/01/08 00:29:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.9 2001/12/28 06:12:18 nathanw Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.10 2002/01/08 00:23:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -72,11 +72,10 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.9 2001/12/28 06:12:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.10 2002/01/08 00:23:06 nathanw Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -118,7 +117,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
 	tf->tf_pc = pack->ep_entry;
-#ifdef PROG32
+#ifdef __PROG32
 	tf->tf_spsr = PSR_USR32_MODE;
 #endif
 

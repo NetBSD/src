@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/18 15:44:10 nonaka Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2002/01/08 00:27:20 nathanw Exp $
 
 PROG= installboot
 CPPFLAGS= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-MKMAN= no
+NOMAN= # defined
 
 .include <bsd.prog.mk>

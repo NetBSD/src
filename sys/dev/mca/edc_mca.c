@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.9.2.3 2001/11/14 19:15:00 nathanw Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.9.2.4 2002/01/08 00:30:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,19 +41,16 @@
  * for MCA rev. 2.2 in hands, thanks to Scott Telford <st@epcc.ed.ac.uk>.
  *
  * TODO:
- * - move the MCA DMA controller (edc_setup_dma()) goo to device driver
- *   independant location
  * - improve error recovery
- *   add any soft resets when anything gets stuck?
- * - test with > 1 disk (this is supported by some controllers), eliminate
- *   any remaining devno=0 assumptions if there are any still
+ *   Issue soft reset on error or timeout?
+ * - test with > 1 disk (this is supported by some controllers)
  * - test with > 1 ESDI controller in machine; shared interrupts
  *   necessary for this to work should be supported - edc_intr() specifically
  *   checks if the interrupt is for this controller
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.3 2001/11/14 19:15:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.4 2002/01/08 00:30:41 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -69,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.3 2001/11/14 19:15:00 nathanw Exp 
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -85,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.3 2001/11/14 19:15:00 nathanw Exp 
 #include <dev/mca/edcvar.h>
 
 #define EDC_ATTN_MAXTRIES	10000	/* How many times check for unbusy */
+#define EDC_MAX_CMD_RES_LEN	8
 
 struct edc_mca_softc {
 	struct device sc_dev;
@@ -92,19 +91,23 @@ struct edc_mca_softc {
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 
+	/* DMA related stuff */
 	bus_dma_tag_t sc_dmat;		/* DMA tag as passed by parent */
-	bus_space_handle_t sc_dmaextcmdh;
-	bus_space_handle_t sc_dmaexech;
+	bus_dmamap_t  sc_dmamap_xfer;	/* transfer dma map */
 
 	void	*sc_ih;				/* interrupt handle */
-	int	sc_drq;				/* DRQ number */
-	int	sc_cmd_async;			/* asynchronous cmd pending */
 
 	int	sc_flags;
 #define	DASD_QUIET	0x01		/* don't dump cmd error info */
+
 #define DASD_MAXDEVS	8
 	struct ed_softc *sc_ed[DASD_MAXDEVS];
-	struct ed_softc sc_controller;
+	int sc_maxdevs;			/* max number of disks attached to this
+					 * controller */
+
+	/* I/O results variables */
+	volatile int sc_error;
+	volatile int sc_resblk;		/* residual block count */
 };
 
 int	edc_mca_probe	__P((struct device *, struct cfdata *, void *));
@@ -114,15 +117,13 @@ struct cfattach edc_mca_ca = {
 	sizeof(struct edc_mca_softc), edc_mca_probe, edc_mca_attach
 };
 
-#define DMA_EXTCMD	0x18
-#define DMA_EXEC	0x1A
-
 static int	edc_intr __P((void *));
-static void	edc_dump_status_block __P((struct edc_mca_softc *, int, int));
-static int	edc_setup_dma __P((struct edc_mca_softc *, int,
-			bus_addr_t, bus_size_t));
+static void	edc_dump_status_block __P((struct edc_mca_softc *,
+		    u_int16_t *, int));
 static int	edc_do_attn __P((struct edc_mca_softc *, int, int, int));
-static int	edc_cmd_wait __P((struct edc_mca_softc *, int, int, int));
+static int	edc_cmd_wait __P((struct edc_mca_softc *, int, int));
+static void	edcworker __P((void *));
+static void	edc_spawn_worker __P((void *));
 
 int
 edc_mca_probe(parent, match, aux)
@@ -148,12 +149,11 @@ edc_mca_attach(parent, self, aux)
 {
 	struct edc_mca_softc *sc = (void *) self;
 	struct mca_attach_args *ma = aux;
+	struct ed_attach_args eda;
 	int pos2, pos3, pos4;
 	int irq, drq, iobase;
 	const char *typestr;
-	struct ed_softc *ed;
-	struct ed_attach_args eda;
-	int devno, maxdevs;
+	int devno, error;
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
@@ -194,7 +194,7 @@ edc_mca_attach(parent, self, aux)
 		typestr = "IBM Integ. ESDI Fixed Disk & Controller";
 		break;
 	default:
-		/* never reached */
+		/* never reached */ ;
 	}
 		
 	irq = ESDIC_IRQ;
@@ -231,7 +231,6 @@ edc_mca_attach(parent, self, aux)
 		printf("DMA pacing control disabled\n");
 
 	sc->sc_iot = ma->ma_iot;
-	sc->sc_drq = drq;
 
 	if (bus_space_map(sc->sc_iot, iobase,
 	    ESDIC_REG_NPORTS, 0, &sc->sc_ioh)) {
@@ -240,23 +239,20 @@ edc_mca_attach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map(sc->sc_iot, DMA_EXTCMD, 1, 0, &sc->sc_dmaextcmdh)) {
-		printf("%s: couldn't map registers\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-	if (bus_space_map(sc->sc_iot, DMA_EXEC, 1, 0, &sc->sc_dmaexech)) {
-		printf("%s: couldn't map registers\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	sc->sc_dmat = ma->ma_dmat;
-
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, edc_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 			sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* Create a MCA DMA map, used for data transfer */
+	sc->sc_dmat = ma->ma_dmat;
+	if ((error = mca_dmamap_create(sc->sc_dmat, MAXPHYS,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_16BIT,
+	    &sc->sc_dmamap_xfer, drq)) != 0){
+		printf("%s: couldn't create DMA map - error %d\n",
+			sc->sc_dev.dv_xname, error);
 		return;
 	}
 
@@ -265,17 +261,9 @@ edc_mca_attach(parent, self, aux)
 	 * controllers support two disks.
 	 */
 	if (ma->ma_id == MCA_PRODUCT_IBM_ESDIC_IG)
-		maxdevs = 1;
+		sc->sc_maxdevs = 1;
 	else
-		maxdevs = 2;
-
-	/*
-	 * Initialize the controller ed softc. We could do without this,
-	 * but absence of checks for controller devno simplifies code logic
-	 * somewhat.
-	 */
-	sc->sc_ed[DASD_DEVNO_CONTROLLER] = &sc->sc_controller;
-	strcpy(sc->sc_controller.sc_dev.dv_xname, sc->sc_dev.dv_xname);/*safe*/
+		sc->sc_maxdevs = 2;
 
 	/*
 	 * Reset controller and attach individual disks. ed attach routine
@@ -306,53 +294,53 @@ edc_mca_attach(parent, self, aux)
 		delay(100);
 	}
 
-	/*
-	 * Get dummy ed_softc to be used during probe. Once a disk is
-	 * found, ed_mca_attach() calls edc_add_disk() to insert the
-	 * right pointer into sc->sc_ed[] array. 
-	 */
-	MALLOC(ed, struct ed_softc *, sizeof(struct ed_softc),
-		M_TEMP, M_WAITOK);
-
-	/* be quiet duting probes */
+	/* be quiet during probes */
 	sc->sc_flags |= DASD_QUIET;
 
 	/* check for attached disks */
-	for(devno=0; devno < maxdevs; devno++) {
-		eda.sc_devno = devno;
-		eda.sc_dmat  = sc->sc_dmat;
-		sc->sc_ed[devno] = ed;
-		(void *) config_found_sm(self, &eda, NULL, NULL);
+	for(devno=0; devno < sc->sc_maxdevs; devno++) {
+		eda.edc_drive = devno;
+		sc->sc_ed[devno] =
+			(void *) config_found_sm(self, &eda, NULL, NULL);
+
+		/* If initialization did not succeed, NULL the pointer. */
+		if (sc->sc_ed[devno]
+		    && (sc->sc_ed[devno]->sc_flags & EDF_INIT) == 0)
+			sc->sc_ed[devno] = NULL;
 	}
 
 	/* enable full error dumps again */
 	sc->sc_flags &= ~DASD_QUIET;
 
-	/* cleanup */
-	FREE(ed, M_TEMP);
-
 	/*
 	 * Check if there are any disks attached. If not, disestablish
 	 * the interrupt.
 	 */
-	for(devno=0; devno < maxdevs; devno++) {
-		if (sc->sc_ed[devno] && (sc->sc_ed[devno]->sc_flags & EDF_INIT))
+	for(devno=0; devno < sc->sc_maxdevs; devno++) {
+		if (sc->sc_ed[devno])
 			break;
 	}
-	if (devno == maxdevs) {
+
+	if (devno == sc->sc_maxdevs) {
 		printf("%s: disabling controller (no drives attached)\n",
 			sc->sc_dev.dv_xname);
 		mca_intr_disestablish(ma->ma_mc, sc->sc_ih);
+		return;
 	}
+
+	/*
+	 * Run the worker thread.
+	 */
+	config_pending_incr();
+	kthread_create(edc_spawn_worker, (void *) sc);
 }
 
 void
-edc_add_disk(sc, ed, devno)
+edc_add_disk(sc, ed)
 	struct edc_mca_softc *sc;
 	struct ed_softc *ed;
-	int devno;
 {
-	sc->sc_ed[devno] = ed;
+	sc->sc_ed[ed->sc_devno] = ed;
 }
 
 static int
@@ -362,8 +350,8 @@ edc_intr(arg)
 	struct edc_mca_softc *sc = arg;
 	u_int8_t isr, intr_id;
 	u_int16_t sifr;
-	int cmd=-1, devno, bioerror=0;
-	struct ed_softc *ed=NULL;
+	int cmd=-1, devno, error=0;
+	u_int16_t status_block[EDC_MAX_CMD_RES_LEN]; /* CMD status block */
 
 	/*
 	 * Check if the interrupt was for us.
@@ -403,24 +391,24 @@ edc_intr(arg)
 		sifr = le16toh(bus_space_read_2(sc->sc_iot, sc->sc_ioh, SIFR));
 		len = (sifr & 0xff00) >> 8;
 #ifdef DEBUG
-		if (len > DASD_MAX_CMD_RES_LEN)
+		if (len > EDC_MAX_CMD_RES_LEN)
 			panic("%s: maximum Status Length exceeded: %d > %d",
 				sc->sc_dev.dv_xname,
-				len, DASD_MAX_CMD_RES_LEN);
+				len, EDC_MAX_CMD_RES_LEN);
 #endif
 
 		/* Get command code */
 		cmd = sifr & SIFR_CMD_MASK;
 
 		/* Read whole status block */
-		ed = sc->sc_ed[devno];
-		ed->sc_status_block[0] = sifr;
+		memset(status_block, 0, sizeof(status_block)); /* zero first */
+		status_block[0] = sifr;
 		for(i=1; i < len; i++) {
 			while((bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
 				& BSR_SIFR_FULL) == 0)
 				delay(1);
 
-			ed->sc_status_block[i] = le16toh(
+			status_block[i] = le16toh(
 				bus_space_read_2(sc->sc_iot, sc->sc_ioh, SIFR));
 		}
 	}
@@ -428,29 +416,27 @@ edc_intr(arg)
 	switch (intr_id) {
 	case ISR_DATA_TRANSFER_RDY:
 		/*
-		 * Ready to do DMA, setup DMA controller and kick DASD
-		 * controller to do the transfer.
+		 * Ready to do DMA. The DMA controller has already been
+		 * setup, now just kick disk controller to do the transfer.
 		 */
-		ed = sc->sc_ed[devno];
-		if (!edc_setup_dma(sc, ed->sc_read,
-			ed->dmamap_xfer->dm_segs[0].ds_addr,
-			ed->dmamap_xfer->dm_segs[0].ds_len)) {
-			/* XXX bail out? */
-			printf("%s: edc_setup_dma() failed\n",
-				ed->sc_dev.dv_xname);
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
-				BCR_INT_ENABLE);
-		} else {
-			/* OK, proceed with DMA */
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
-				BCR_INT_ENABLE|BCR_DMA_ENABLE);
-		}
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
+			BCR_INT_ENABLE|BCR_DMA_ENABLE);
 		break;
 	case ISR_COMPLETED:
 	case ISR_COMPLETED_WITH_ECC:
 	case ISR_COMPLETED_RETRIES:
 	case ISR_COMPLETED_WARNING:
-		bioerror = 0;
+		error = 0;
+
+		/*
+		 * Copy device config data if appropriate. sc->sc_ed[]
+		 * entry might be NULL during probe.
+		 */
+		if (cmd == CMD_GET_DEV_CONF && sc->sc_ed[devno]) {
+			memcpy(sc->sc_ed[devno]->sense_data, status_block,
+				sizeof(sc->sc_ed[devno]->sense_data));
+		}
+
 		break;
 	case ISR_RESET_COMPLETED:
 	case ISR_ABORT_COMPLETED:
@@ -458,9 +444,9 @@ edc_intr(arg)
 		break;
 	default:
 		if ((sc->sc_flags & DASD_QUIET) == 0)
-			edc_dump_status_block(sc, devno, intr_id);
+			edc_dump_status_block(sc, status_block, intr_id);
 
-		bioerror = EIO;
+		error = EIO;
 		break;
 	}
 			
@@ -476,8 +462,9 @@ edc_intr(arg)
 	/* If Read or Write Data, wakeup worker thread to finish it */
 	if (intr_id != ISR_DATA_TRANSFER_RDY
 	    && (cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)) {
-		sc->sc_ed[devno]->sc_error = bioerror;
-		wakeup_one(&sc->sc_ed[devno]->edc_softc);
+		if ((sc->sc_error = error) == 0)
+			sc->sc_resblk = status_block[SB_RESBLKCNT_IDX];
+		wakeup_one(sc);
 	}
 
 	return (1);
@@ -541,22 +528,32 @@ edc_do_attn(sc, attn_type, devno, intr_id)
  * interval.
  */
 static int
-edc_cmd_wait(sc, devno, secs, poll)
+edc_cmd_wait(sc, secs, poll)
 	struct edc_mca_softc *sc;
-	int devno, secs, poll;
+	int secs, poll;
 {
 	int val, delayed;
 
+	if (!poll) {
+		int error;
+
+		/* Not polling, can sleep. Sleep until we are awakened,
+		 * but maximum secs seconds.
+		 */
+		error = tsleep(sc, PRIBIO, "edcwcmd", secs * hz);
+		if (error)
+			goto err;
+		return (0);
+	}
+
+	/* Poll the controller until command finishes */
 	delayed = 0;
 	do {
 		val = bus_space_read_1(sc->sc_iot,sc->sc_ioh, BSR);
 		if ((val & BSR_CMD_INPROGRESS) == 0)
 			break;
 
-		if (poll && (val & BSR_INTR))
-			goto out;
-
-		if (secs == 0)
+		if (val & BSR_INTR)
 			break;
 
 		delay(1);
@@ -570,44 +567,33 @@ edc_cmd_wait(sc, devno, secs, poll)
 			delayed = 0;
 			secs--;
 		}
-#if 0
-		if (delayed % 1000)
-			printf("looping ...");
-#endif
-	} while(1);
+	} while(secs > 0);
 
 	if (secs == 0 &&
 	    bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_CMD_INPROGRESS){
-		printf("%s: timed out waiting for previous cmd to finish\n",
-			sc->sc_ed[devno]->sc_dev.dv_xname);
+    err:
+		printf("%s: timed out waiting for cmd to finish\n",
+			sc->sc_dev.dv_xname);
 		return (EAGAIN);
 	}
 
-    out:
 	return (0);
 }
 	  
 int
-edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async, poll)
+edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
 	struct edc_mca_softc *sc;
 	int cmd;
 	int devno;
 	u_int16_t cmd_args[];
-	int cmd_len, async, poll;
+	int cmd_len, poll;
 {
 	int i, error, tries;
 	u_int16_t cmd0;
 
-	/*
-	 * If there has been an asynchronous command executed, first wait for it
-	 * to finish.
-	 */
-	if (sc->sc_cmd_async) {
-		/* Wait maximum 15s */
-		if (edc_cmd_wait(sc, devno, 15, 0))
-			return (EAGAIN);	/* Busy */
-
-		sc->sc_cmd_async = 0;
+	if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_BUSY) {
+		printf("%s: device busy?\n", sc->sc_dev.dv_xname);
+		return (EAGAIN);
 	}
 
 	/* Do Attention Request for Command Request. */
@@ -635,7 +621,8 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async, poll)
 	/*
 	 * Write word of CMD to the CIFR. This sets "Command
 	 * Interface Register Full (CMD IN)" in BSR. Once the attachment
-	 * detects it, it reads the word and clears CMD IN.
+	 * detects it, it reads the word and clears CMD IN. This all should
+	 * be quite fast, so don't bother with sleeps for !poll case.
 	 */
 	for(i=0; i < cmd_len; i++) {
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, CIFR,
@@ -647,22 +634,20 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async, poll)
 		 * soon. Quirky hw ?
 		 */
 		tries = 0;
-		while(bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_CIFR_FULL)
+		for(; (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
+		    & BSR_CIFR_FULL) && tries < 1000 ; tries++)
 			delay(poll ? 1000 : 1);
-	}
 
-	/*
-	 * Attachment is now executing the command. Unless we are executing
-	 * command asynchronously, wait until it finishes.
-	 */
-	if (async) {
-		sc->sc_cmd_async = 1;
-		return (0);
+		if (tries == 10000) {
+			printf("%s: device too slow to accept command %d\n",
+				sc->sc_dev.dv_xname, cmd);
+			return (EAGAIN);
+		}
 	}
 
 	/* Wait for command to complete, but maximum 15 seconds. */
-	if (edc_cmd_wait(sc, devno, 15, poll))
-		return (EAGAIN);
+	if ((error = edc_cmd_wait(sc, 15, poll)))
+		return (error);
 
 	/* If polling, call edc_intr() explicitly */
 	if (poll) {
@@ -672,70 +657,21 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, async, poll)
 		 * If got attention id DATA TRANSFER READY, wait for
 		 * the transfer to finish.
 		 */
-		if (sc->sc_ed[devno]->sc_error == 0
-		    && (cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)) {
-			if (edc_cmd_wait(sc, devno, 15, 1))
-				return (EAGAIN);
+		if ((cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)
+		    && sc->sc_error == 0) {
+			if ((error = edc_cmd_wait(sc, 15, poll)))
+				return (error);
 			edc_intr(sc);
 		}
 
-		if (edc_cmd_wait(sc, devno, 15, 0))
-			return (EAGAIN);
+		if ((error = edc_cmd_wait(sc, 15, poll)))
+			return (error);
 	}
 
-	/* Check if the command completed successfully; if not, return error */
-	switch(SB_GET_CMD_STATUS(sc->sc_ed[devno]->sc_status_block)) {
-	case ISR_COMPLETED:
-	case ISR_COMPLETED_WITH_ECC:
-	case ISR_COMPLETED_RETRIES:
-	case ISR_COMPLETED_WARNING:
-		return (0);
-	default:
-		return (EIO);
-	}
+	return (sc->sc_error);
 }
 
-static int
-edc_setup_dma(sc, isread, phys, cnt)
-	struct edc_mca_softc *sc;
-	int isread;
-	bus_addr_t phys;
-	bus_size_t cnt;
-{
-	/* XXX magic constants, should be moved to device-independant location*/
-	/* The exact sequence to setup MCA DMA controller is taken from Minix */
-
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaextcmdh, 0,
-		0x90 + sc->sc_drq);
-	/* Disable access to dma channel       */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaextcmdh, 0,
-		0x20 + sc->sc_drq);
-	/* Clear the address byte pointer      */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaexech, 0,
-		(phys >> 0) & 0xff);	/* address bits 0..7   */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaexech, 0,
-		(phys >> 8) & 0xff);	/* address bits 8..15  */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaexech, 0,
-		(phys >> 16) & 0xff);	/* address bits 16..23  */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaextcmdh, 0,
-		0x40 + sc->sc_drq);
-	/* Clear the count byte pointer        */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaexech, 0,
-		((cnt - 1) >> 0) & 0xff);         /* count bits 0..7     */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaexech, 0,
-		((cnt - 1) >> 8) & 0xff);         /* count bits 8..15    */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaextcmdh, 0,
-		0x70 + sc->sc_drq);
-	/* Set the transfer mode               */
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaexech, 0,
-  		(isread) ? 0x4C : 0x44);
-	bus_space_write_1(sc->sc_iot, sc->sc_dmaextcmdh, 0,
-			0xA0 + sc->sc_drq);
-	/* Enable access to dma channel        */
-
-	return (1);
-}
-
+#ifdef EDC_DEBUG
 static const char * const edc_commands[] = {
 	"Invalid Command",
 	"Read Data",
@@ -832,36 +768,51 @@ static const char * const edc_dev_errors[] = {
 	"No ID found on track (ID search)",
 	/* 0x19 - 0xff reserved */
 };
+#endif /* EDC_DEBUG */
 
 static void
-edc_dump_status_block(sc, devno, intr_id)
+edc_dump_status_block(sc, status_block, intr_id)
 	struct edc_mca_softc *sc;
-	int devno, intr_id;
+	u_int16_t *status_block;
+	int intr_id;
 {
-	struct ed_softc *ed = sc->sc_ed[devno];
+#ifdef EDC_DEBUG
 	printf("%s: Command: %s, Status: %s\n",
-		ed->sc_dev.dv_xname,
-		edc_commands[ed->sc_status_block[0] & 0x1f],
-		edc_cmd_status[SB_GET_CMD_STATUS(ed->sc_status_block)]
+		sc->sc_dev.dv_xname,
+		edc_commands[status_block[0] & 0x1f],
+		edc_cmd_status[SB_GET_CMD_STATUS(status_block)]
 		);
+#else
+	printf("%s: Command: %d, Status: %d\n",
+		sc->sc_dev.dv_xname,
+		status_block[0] & 0x1f,
+		SB_GET_CMD_STATUS(status_block));
+#endif
 	printf("%s: # left blocks: %u, last processed RBA: %u\n",
-		ed->sc_dev.dv_xname,
-		ed->sc_status_block[SB_RESBLKCNT_IDX],
-		(ed->sc_status_block[5] << 16) | ed->sc_status_block[4]);
+		sc->sc_dev.dv_xname,
+		status_block[SB_RESBLKCNT_IDX],
+		(status_block[5] << 16) | status_block[4]);
 
 	if (intr_id == ISR_COMPLETED_WARNING) {
+#ifdef EDC_DEBUG
 		printf("%s: Command Error Code: %s\n",
-			ed->sc_dev.dv_xname,
-			edc_cmd_error[ed->sc_status_block[1] & 0xff]);
+			sc->sc_dev.dv_xname,
+			edc_cmd_error[status_block[1] & 0xff]);
+#else
+		printf("%s: Command Error Code: %d\n",
+			sc->sc_dev.dv_xname,
+			status_block[1] & 0xff);
+#endif
 	}
 
 	if (intr_id == ISR_CMD_FAILED) {
+#ifdef EDC_DEBUG
 		char buf[100];
 
 		printf("%s: Device Error Code: %s\n",
-			ed->sc_dev.dv_xname,
-			edc_dev_errors[ed->sc_status_block[2] & 0xff]);
-		bitmask_snprintf((ed->sc_status_block[2] & 0xff00) >> 8,
+			sc->sc_dev.dv_xname,
+			edc_dev_errors[status_block[2] & 0xff]);
+		bitmask_snprintf((status_block[2] & 0xff00) >> 8,
 			"\20"
 			"\01SeekOrCmdComplete"
 			"\02Track0Flag"
@@ -873,6 +824,147 @@ edc_dump_status_block(sc, devno, intr_id)
 			"\010Reserved0",
 			buf, sizeof(buf));
 		printf("%s: Device Status: %s\n",
-			ed->sc_dev.dv_xname, buf);
+			sc->sc_dev.dv_xname, buf);
+#else
+		printf("%s: Device Error Code: %d, Device Status: %d\n",
+			sc->sc_dev.dv_xname,
+			status_block[2] & 0xff,
+			(status_block[2] & 0xff00) >> 8);
+#endif
 	}
+}
+
+static void
+edc_spawn_worker(arg)
+	void *arg;
+{
+	struct edc_mca_softc *sc = (struct edc_mca_softc *) arg;
+	int error;
+	struct proc *wrk;
+
+	/* Now, everything is ready, start a kthread */
+	if ((error = kthread_create1(edcworker, sc, &wrk,
+			"%s", sc->sc_dev.dv_xname))) {
+		printf("%s: cannot spawn worker thread: errno=%d\n",
+			sc->sc_dev.dv_xname, error);
+		panic("edc_spawn_worker");
+	}
+}
+
+/*
+ * Main worker thread function.
+ */
+void
+edcworker(arg)
+	void *arg;
+{
+	struct edc_mca_softc *sc = (struct edc_mca_softc *) arg;
+	struct ed_softc *ed;
+	struct buf *bp;
+	int s, i, error;
+
+	config_pending_decr();
+
+	s = splbio();
+
+	for(;;) {
+		/* Wait until awakened */
+		(void) tsleep(sc, PRIBIO, "edcidle", 0);
+
+		for(i=0; i<sc->sc_maxdevs; ) {
+			if ((ed = sc->sc_ed[i]) == NULL) {
+				i++;
+				continue;
+			}
+
+			/* Is there a buf for us ? */
+			simple_lock(&ed->sc_q_lock);
+			if ((bp = BUFQ_FIRST(&ed->sc_q)) == NULL) {
+				simple_unlock(&ed->sc_q_lock);
+				i++;
+				continue;
+			}
+			BUFQ_REMOVE(&ed->sc_q, bp);
+			simple_unlock(&ed->sc_q_lock);
+
+			/* Instrumentation. */
+			disk_busy(&ed->sc_dk);
+	
+			error = edc_bio(sc, ed, bp->b_data, bp->b_bcount,
+				bp->b_rawblkno, (bp->b_flags & B_READ), 0);
+
+			if (error) {
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
+			} else {
+				/* Set resid, most commonly to zero. */
+				bp->b_resid = sc->sc_resblk * DEV_BSIZE;
+			}
+
+			disk_unbusy(&ed->sc_dk, (bp->b_bcount - bp->b_resid));
+#if NRND > 0
+			rnd_add_uint32(&ed->rnd_source, bp->b_blkno);
+#endif
+			biodone(bp);
+		}
+	}
+
+	splx(s);
+}
+
+int
+edc_bio(struct edc_mca_softc *sc, struct ed_softc *ed, void *data,
+	size_t bcount, daddr_t rawblkno, int isread, int poll)
+{
+	u_int16_t cmd_args[4];
+	int error=0, fl;
+	u_int16_t track;
+	u_int16_t cyl;
+	u_int8_t head;
+	u_int8_t sector;
+
+	mca_disk_busy();
+
+	/* set WAIT and R/W flag appropriately for the DMA transfer */
+	fl = ((poll) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK)
+		| ((isread) ? BUS_DMA_READ : BUS_DMA_WRITE);
+
+	/* Load the buffer for DMA transfer. */
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_xfer, data,
+	    bcount, NULL, BUS_DMA_STREAMING|fl))) {
+		printf("%s: ed_bio: unable to load DMA buffer - error %d\n",
+			ed->sc_dev.dv_xname, error);
+		goto out;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_xfer, 0,
+		bcount, (isread) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	
+	track = rawblkno / ed->sectors;
+	head = track % ed->heads;
+	cyl = track / ed->heads;
+	sector = rawblkno % ed->sectors;
+
+	/* Read or Write Data command */
+	cmd_args[0] = 2;	/* Options 0000010 */
+	cmd_args[1] = bcount / DEV_BSIZE;
+	cmd_args[2] = ((cyl & 0x1f) << 11) | (head << 5) | sector;
+	cmd_args[3] = ((cyl & 0x3E0) >> 5);
+	error = edc_run_cmd(sc,
+			(isread) ? CMD_READ_DATA : CMD_WRITE_DATA,
+			ed->sc_devno, cmd_args, 4, poll);
+
+	/* Sync the DMA memory */
+	if (!error)  {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_xfer, 0, bcount,
+			(isread)? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	}
+
+	/* We are done, unload buffer from DMA map */
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap_xfer);
+
+    out:
+	mca_disk_unbusy();
+
+	return (error);
 }

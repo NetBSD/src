@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4.6.4 2001/12/17 21:34:45 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.4.6.5 2002/01/08 00:28:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -461,9 +461,9 @@ trap(type, code, v, tf)
 		/*FALLTHROUGH*/
 
 	case T_MMUFLT|T_USER: { 	/* page fault */
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register struct vm_map *map;
+		vaddr_t va;
+		struct vmspace *vm = p->p_vmspace;
+		struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
@@ -493,7 +493,7 @@ trap(type, code, v, tf)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		va = m68k_trunc_page((vm_offset_t)v);
+		va = m68k_trunc_page((vaddr_t)v);
 
 		/*
 		 * Need to resolve the fault.

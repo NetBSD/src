@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.21.4.4 2001/10/08 20:10:46 nathanw Exp $ */
+/* $NetBSD: pnpbios.c,v 1.21.4.5 2002/01/08 00:25:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -39,6 +39,9 @@
  * I had no platforms to test on so someone else will need to finish
  * it.  I didn't want to toss the code though
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.21.4.5 2002/01/08 00:25:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

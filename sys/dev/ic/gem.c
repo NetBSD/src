@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.1.2.5 2001/11/14 19:14:22 nathanw Exp $ */
+/*	$NetBSD: gem.c,v 1.1.2.6 2002/01/08 00:29:44 nathanw Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.1.2.5 2001/11/14 19:14:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.1.2.6 2002/01/08 00:29:44 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -788,7 +788,10 @@ gem_init(struct ifnet *ifp)
 	bus_space_write_4(t, h, GEM_RX_BLANKING, (2<<12)|6);
 
 	/* step 11. Configure Media */
-	(void) gem_mediachange(ifp);
+	gem_mii_statchg(&sc->sc_dev);
+
+/* XXXX Serial link needs a whole different setup. */
+
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
@@ -926,7 +929,8 @@ gem_start(ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	for (;;) {
+	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
+	       sc->sc_txfree != 0) {
 		/*
 		 * Grab a packet off the queue.
 		 */
@@ -934,12 +938,6 @@ gem_start(ifp)
 		if (m0 == NULL)
 			break;
 		m = NULL;
-
-		/* Get a work queue entry. */
-		if ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) == NULL) {
-			/* We've run out. */
-			break;
-		}
 
 		dmamap = txs->txs_dmamap;
 
@@ -979,11 +977,9 @@ gem_start(ifp)
 
 		/*
 		 * Ensure we have enough descriptors free to describe
-		 * the packet.  Note, we always reserve one descriptor
-		 * at the end of the ring as a termination point, to
-		 * prevent wrap-around.
+		 * the packet.
 		 */
-		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
+		if (dmamap->dm_nsegs > sc->sc_txfree) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed to anything yet,
@@ -1651,7 +1647,8 @@ gem_mediachange(ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
 
-	/* XXX Add support for serial media. */
+	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
+		return (EINVAL);
 
 	return (mii_mediachg(&sc->sc_mii));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.14 2000/09/24 12:37:04 jdolecek Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.14.2.1 2002/01/08 00:25:34 nathanw Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -115,6 +115,9 @@
  *	-- Jason R. Thorpe <thorpej@NetBSD.ORG>
  *	   July 12, 1996
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.14.2.1 2002/01/08 00:25:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.4 1996/02/02 18:05:59 mycroft Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.4.44.1 2002/01/08 00:25:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,8 @@
  *	@(#)dkbad.c	5.4 (Berkeley) 1/19/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.4.44.1 2002/01/08 00:25:21 nathanw Exp $");
 
 #ifndef NOBADSECT
 #include <sys/param.h>

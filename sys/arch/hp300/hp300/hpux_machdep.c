@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.26.8.1 2001/11/18 18:09:32 scw Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.26.8.2 2002/01/08 00:24:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -190,6 +190,13 @@ hpux_cpu_vmcmd(p, ev)
 	struct exec_vmcmd *ev;
 {
 	struct hpux_exec *execp = (struct hpux_exec *)ev->ev_addr;
+
+#if 0 /* XXX - unable to handle HPUX coredumps */
+	/* Make sure we have room. */
+	if (ev->ev_len <= sizeof(p->p_addr->u_md.md_exec))
+		memcpy(p->p_addr->u_md.md_exec, (caddr_t)ev->ev_addr,
+		    ev->ev_len);
+#endif
 
 	/* Deal with misc. HP-UX process attributes. */
 	if (execp->ha_trsize & HPUXM_VALID) {
@@ -458,7 +465,7 @@ hpux_sendsig(catcher, sig, mask, code)
 	 *	- FP coprocessor state
 	 */
 	kf.hsf_sigstate.hss_flags = HSS_USERREGS;
-	bcopy(frame->f_regs, kf.hsf_sigstate.hss_frame.f_regs,
+	memcpy(kf.hsf_sigstate.hss_frame.f_regs, frame->f_regs,
 	    sizeof(frame->f_regs));
 	if (ft >= FMT4) {
 #ifdef DEBUG
@@ -468,7 +475,7 @@ hpux_sendsig(catcher, sig, mask, code)
 		kf.hsf_sigstate.hss_flags |= HSS_RTEFRAME;
 		kf.hsf_sigstate.hss_frame.f_format = frame->f_format;
 		kf.hsf_sigstate.hss_frame.f_vector = frame->f_vector;
-		bcopy(&frame->F_u, &kf.hsf_sigstate.hss_frame.F_u,
+		memcpy(&kf.hsf_sigstate.hss_frame.F_u, &frame->F_u,
 		    exframesize[ft]);
 		/*
 		 * Leave an indicator that we need to clean up the kernel
@@ -654,7 +661,7 @@ hpux_sys_sigreturn(l, v, retval)
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.hss_frame.f_format;
 		frame->f_vector = tstate.hss_frame.f_vector;
-		bcopy(&tstate.hss_frame.F_u, &frame->F_u, sz);
+		memcpy(&frame->F_u, &tstate.hss_frame.F_u, sz);
 #ifdef DEBUG
 		if (hpuxsigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
@@ -667,8 +674,8 @@ hpux_sys_sigreturn(l, v, retval)
 	 * which were handled above.
 	 */
 	if (flags & HSS_USERREGS)
-		bcopy(tstate.hss_frame.f_regs,
-		    frame->f_regs, sizeof(frame->f_regs) - (2 * NBPW));
+		memcpy(frame->f_regs, tstate.hss_frame.f_regs,
+		    sizeof(frame->f_regs) - (2 * NBPW));
 
 	/*
 	 * Finally we restore the original FP context

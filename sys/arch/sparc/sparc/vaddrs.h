@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.10 2000/01/04 15:08:30 pk Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.10.12.1 2002/01/08 00:27:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -84,6 +84,7 @@
 #define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
 #define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
 #define INTRREG_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4/4c] */
+#define MSIIEP_PCIC_VA	(    MSGBUF_VA + _MAXNBPG)		/* [IIep] */
 #define PI_INTR_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4m] */
 #define SI_INTR_VA	(   PI_INTR_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
 #define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)

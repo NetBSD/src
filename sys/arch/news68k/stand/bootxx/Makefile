@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2001/03/04 16:15:51 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7.8.1 2002/01/08 00:26:54 nathanw Exp $
+
+NOMAN= # defined
 
 .include <bsd.own.mk>
 
@@ -10,7 +12,6 @@ COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
 PROG= bootxx
 SRCS= start.S bootxx.c
 SRCS+= romcalls.S putchar.c
-MKMAN= no
 STRIPFLAG=
 BINMODE= 444
 

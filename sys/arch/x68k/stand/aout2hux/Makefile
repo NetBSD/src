@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/15 05:02:29 itohy Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2002/01/08 00:28:44 nathanw Exp $
 
 HOSTPROG=	aout2hux
-MKMAN=		no		# See share/man/man1/man1.x68k/aout2hux.1
+NOMAN=		# defined
 
 .include <bsd.hostprog.mk>
 

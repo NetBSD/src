@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.38.4.3 2001/11/14 19:14:31 nathanw Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.38.4.4 2002/01/08 00:30:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,11 +71,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.38.4.3 2001/11/14 19:14:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.38.4.4 2002/01/08 00:30:00 nathanw Exp $");
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -2280,7 +2279,6 @@ next_phase:
 	sc->sc_prevphase = phase;
 
 do_actions:
-	__asm("_ncr5380_actions:");
 
 	if (act_flags & ACT_WAIT_DMA) {
 		act_flags &= ~ACT_WAIT_DMA;
@@ -2385,7 +2383,6 @@ do_actions:
 		NCR5380_WRITE(sc, sci_sel_enb, 0x80);
 
 		if ((act_flags & ACT_CMD_DONE) == 0) {
-			__asm("_ncr5380_disconnected:");
 			NCR_TRACE("machine: discon, cur=0x%x\n", (long)sr);
 		}
 

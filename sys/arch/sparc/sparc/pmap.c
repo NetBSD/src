@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.2 2001/11/20 16:31:56 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.3 2002/01/08 00:27:49 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,6 +59,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -7122,7 +7123,7 @@ int
 pmap_count_ptes(pm)
 	struct pmap *pm;
 {
-	int idx, total;
+	int idx, vs, total;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -7133,9 +7134,14 @@ pmap_count_ptes(pm)
 		rp = pm->pm_regmap;
 		idx = NUREG;
 	}
-	for (total = 0; idx;)
-		if ((sp = rp[--idx].rg_segmap) != NULL)
-			total += sp->sg_npte;
+	for (total = 0; idx;) {
+		if ((sp = rp[--idx].rg_segmap) == NULL) {
+			continue;
+		}
+		for (vs = 0; vs < NSEGRG; vs++) {
+			total += sp[vs].sg_npte;
+		}
+	}
 	pm->pm_stats.resident_count = total;
 	return (total);
 }

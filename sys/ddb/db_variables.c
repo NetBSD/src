@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.20.2.2 2001/11/14 19:13:39 nathanw Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.20.2.3 2002/01/08 00:29:16 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.20.2.2 2001/11/14 19:13:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.20.2.3 2002/01/08 00:29:16 nathanw Exp $");
 
-#include "opt_ddb.h"				/* for sysctl.h */
-#include "opt_ddbparam.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.7.6.4 2001/11/17 09:00:32 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7.6.5 2002/01/08 00:23:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,11 +41,10 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.4 2001/11/17 09:00:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.5 2002/01/08 00:23:07 nathanw Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -63,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.4 2001/11/17 09:00:32 thorpej 
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #ifndef arm26
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #endif
 
 static __inline struct trapframe *
@@ -210,11 +209,11 @@ sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * Make sure the processor mode has not been tampered with and
 	 * interrupts have not been disabled.
 	 */
-#ifdef PROG32
+#ifdef __PROG32
 	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE ||
 	    (context.sc_spsr & (I32_bit | F32_bit)) != 0)
 		return (EINVAL);
-#else /* PROG26 */
+#else /* __PROG26 */
 	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
 	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EINVAL;

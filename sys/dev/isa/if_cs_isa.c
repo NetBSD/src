@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.3.2.1 2001/11/14 19:14:47 nathanw Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.3.2.2 2002/01/08 00:30:26 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.1 2001/11/14 19:14:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.2 2002/01/08 00:30:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.1 2001/11/14 19:14:47 nathanw Ex
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
-#include <dev/isa/cs89x0reg.h>
-#include <dev/isa/cs89x0var.h>
+#include <dev/ic/cs89x0reg.h>
+#include <dev/ic/cs89x0var.h>
+#include <dev/isa/cs89x0isavar.h>
 
 int	cs_isa_probe __P((struct device *, struct cfdata *, void *));
 void	cs_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach cs_isa_ca = {
-	sizeof(struct cs_softc), cs_isa_probe, cs_isa_attach
+	sizeof(struct cs_softc_isa), cs_isa_probe, cs_isa_attach
 };
 
 int 
@@ -190,13 +191,14 @@ cs_isa_attach(parent, self, aux)
 	void *aux;
 {
 	struct cs_softc *sc = (struct cs_softc *) self;
+	struct cs_softc_isa *isc = (void *) self;
 	struct isa_attach_args *ia = aux;
 
-	sc->sc_ic = ia->ia_ic;
+	isc->sc_ic = ia->ia_ic;
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 
-	sc->sc_drq = ia->ia_drq;
+	isc->sc_drq = ia->ia_drq;
 	sc->sc_irq = ia->ia_irq;
 
 	printf("\n");
@@ -243,6 +245,10 @@ cs_isa_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	sc->sc_dma_chipinit = cs_isa_dma_chipinit;
+	sc->sc_dma_attach = cs_isa_dma_attach;
+	sc->sc_dma_process_rx = cs_process_rx_dma;
 
 	cs_attach(sc, NULL, NULL, 0, 0);
 }

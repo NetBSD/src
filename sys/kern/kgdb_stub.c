@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7.2.4 2001/11/14 19:16:39 nathanw Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7.2.5 2002/01/08 00:32:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.2.4 2001/11/14 19:16:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.2.5 2002/01/08 00:32:36 nathanw Exp $");
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,15 +66,15 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.2.4 2001/11/14 19:16:39 nathanw Ex
 #endif
 
 /* XXX: Maybe these should be in the MD files? */
-#ifndef KGDBDEV
-#define KGDBDEV -1
+#ifndef KGDB_DEV
+#define KGDB_DEV NODEV
 #endif
-#ifndef KGDBRATE
-#define KGDBRATE 19200
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE 19200
 #endif
 
-int kgdb_dev = KGDBDEV;		/* remote debugging device (-1 if none) */
-int kgdb_rate = KGDBRATE;	/* remote debugging baud rate */
+int kgdb_dev = KGDB_DEV;	/* remote debugging device (NODEV if none) */
+int kgdb_rate = KGDB_DEVRATE;	/* remote debugging baud rate */
 int kgdb_active = 0;		/* remote debugging active if != 0 */
 int kgdb_debug_init = 0;	/* != 0 waits for remote at system init */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.1.4.3 2001/07/09 22:37:27 nathanw Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.1.4.4 2002/01/08 00:25:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * 386 Trap and System call handling
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1.4.4 2002/01/08 00:25:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

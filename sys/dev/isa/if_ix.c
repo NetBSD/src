@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.8.2.2 2001/11/14 19:14:48 nathanw Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.8.2.3 2002/01/08 00:30:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.8.2.2 2001/11/14 19:14:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.8.2.3 2002/01/08 00:30:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,7 +814,7 @@ ix_attach(parent, self, aux)
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* write test pattern */
-			for(i = 0; i < memsize; i += 2) {
+			for(i = 0, wpat = 1; i < memsize; i += 2) {
 				bus_space_write_2(iot, ioh, IX_DATAPORT, wpat);
 				wpat += 3;
 			}
@@ -924,10 +924,12 @@ ix_attach(parent, self, aux)
 		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
 					          BUS_SPACE_BARRIER_WRITE);
 
-		bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
+		bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT,
+				  IE_SYSBUS_16BIT);
 	} else {
 		bus_space_write_1(sc->bt, sc->bh, 
-				  IE_SCP_BUS_USE((u_long)sc->scp), 0);
+				  IE_SCP_BUS_USE((u_long)sc->scp),
+				  IE_SYSBUS_16BIT);
 	}
 
 	/* set up pointers to key structures */

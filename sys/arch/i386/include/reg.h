@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.15.30.1 2001/08/24 00:08:35 nathanw Exp $	*/
+/*	$NetBSD: reg.h,v 1.15.30.2 2002/01/08 00:25:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,6 +101,14 @@ struct fpreg {
 	 * Fill this in with real info.
 	 */
 	char	__data[108];
+};
+
+struct xmmregs {
+	/*
+	 * XXX
+	 * Fill this in with real info.
+	 */
+	char	__data[512];
 };
 
 #endif /* !_I386_REG_H_ */

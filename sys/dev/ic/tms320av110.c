@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.8.20.2 2001/11/14 19:14:39 nathanw Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.8.20.3 2002/01/08 00:30:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,9 +44,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.8.20.2 2001/11/14 19:14:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.8.20.3 2002/01/08 00:30:07 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

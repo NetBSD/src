@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.6 1999/11/10 00:01:32 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.6.12.1 2002/01/08 00:25:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,7 +96,7 @@ _ASM_LABEL(faultstkadjnotrap2):
 	movl	%sp@,%sp		| and our SP
 	jra	_ASM_LABEL(rei)		| all done
 
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_SUNOS)
 /*
  * Trap 1 - compat_13_sigreturn13
  */

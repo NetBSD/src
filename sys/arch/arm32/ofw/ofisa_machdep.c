@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.c,v 1.4 1998/07/27 00:48:15 thorpej Exp $	*/
+/*	$NetBSD: ofisa_machdep.c,v 1.4.32.1 2002/01/08 00:23:29 nathanw Exp $	*/
 
 /*
  * Copyright 1998
@@ -35,6 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 

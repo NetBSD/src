@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.5 2001/12/08 08:22:39 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.6 2002/01/08 00:23:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -76,15 +76,6 @@
 #ifndef _LKM
 #include "opt_cputypes.h"
 #include "opt_lockdebug.h"
-#include "opt_progmode.h"
-
-#if defined(PROG26) && defined(PROG32)
-#error "26-bit and 32-bit CPU support are not compatible"
-#endif
-#if !defined(PROG26) && !defined(PROG32)
-#error "Support for at least one CPU type must be configured into the kernel"
-#endif
-
 #endif /* !_LKM */
 
 
@@ -97,7 +88,7 @@
 
 #include <arm/armreg.h>
 
-#ifdef PROG32
+#ifdef __PROG32
 #ifdef _LOCORE
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
@@ -127,7 +118,7 @@
  * CLKF_USERMODE: Return TRUE/FALSE (1/0) depending on whether the
  * frame came from USR mode or not.
  */
-#ifdef PROG32
+#ifdef __PROG32
 #define CLKF_USERMODE(frame)	((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
 #else
 #define CLKF_USERMODE(frame)	((frame->if_r15 & R15_MODE) == R15_MODE_USR)
@@ -146,7 +137,7 @@
  * interrupt handler.
  */
 extern int current_intr_depth;
-#ifdef PROG32
+#ifdef __PROG32
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame)						\
 	((current_intr_depth > 1) ||					\
@@ -158,7 +149,7 @@ extern int current_intr_depth;
 /*
  * CLKF_PC: Extract the program counter from a clockframe
  */
-#ifdef PROG32
+#ifdef __PROG32
 #define CLKF_PC(frame)		(frame->if_pc)
 #else
 #define CLKF_PC(frame)		(frame->if_r15 & R15_PC)
@@ -167,7 +158,7 @@ extern int current_intr_depth;
 /*
  * LWP_PC: Find out the program counter for the given lwp.
  */
-#ifdef PROG32
+#ifdef __PROG32
 #define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_pc)
 #else
 #define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
@@ -247,7 +238,7 @@ void atomic_clear_bit	__P((u_int *address, u_int clearmask));
 struct pcb;
 void	savectx		__P((struct pcb *pcb));
 
-/* ast.c (arm32) / except.c (arm26) */
+/* ast.c */
 void userret		__P((register struct lwp *p));
 
 /* machdep.h */

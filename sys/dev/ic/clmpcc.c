@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.15.2.3 2001/11/14 19:14:19 nathanw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.15.2.4 2002/01/08 00:29:38 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,11 +41,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.15.2.3 2001/11/14 19:14:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.15.2.4 2002/01/08 00:29:38 nathanw Exp $");
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>

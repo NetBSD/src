@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.3.28.1 2001/06/21 19:26:00 nathanw Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.3.28.2 2002/01/08 00:25:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.3.28.2 2002/01/08 00:25:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

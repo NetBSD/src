@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960reg.h,v 1.3 1998/03/23 16:57:21 msaitoh Exp $	*/
+/*	$NetBSD: mb86960reg.h,v 1.3.26.1 2002/01/08 00:29:57 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -320,3 +320,12 @@
 
 /* Length (in bytes) of a "packet length" word in transmission buffer.  */
 #define FE_DATA_LEN_LEN 2
+
+/*
+ * FUJITSU MBH10302 specific Registers.
+ */
+
+#define FE_MBH0			0x10	/* Master interrupt register */
+#define FE_MBH_ENADDR		0x1A	/* Mac address */
+#define FE_MBH0_MASK		0x0D
+#define FE_MBH0_INTR_ENABLE	0x10	/* Enable interrupts */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.3 2001/12/02 12:30:32 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.4 2002/01/08 00:26:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,6 +111,8 @@
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
+#define ELFSIZE 32
+#include <sys/exec_elf.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -142,6 +144,8 @@
 #include <mac68k/dev/macfbvar.h>
 #endif
 #include <mac68k/dev/zs_cons.h>
+
+int symsize, end, *ssym, *esym;
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -222,6 +226,9 @@ void	initcpu __P((void));
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
+
+void		getenvvars __P((u_long, char *));
+static long	getenv __P((char *));
 
 /* functions called from locore.s */
 void	dumpsys __P((void));
@@ -341,12 +348,8 @@ consinit(void)
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */
-		{
-			extern int end;
-			extern int *esym;
 
-			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-		}
+		ddb_init(symsize, ssym, esym);
 #endif
 
 		if (boothowto & RB_KDB) {
@@ -454,9 +457,8 @@ cpu_startup(void)
 			if (pg == NULL) 
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -1056,8 +1058,6 @@ static char *envbuf = NULL;
 /*
  * getenvvars: Grab a few useful variables
  */
-void		getenvvars __P((u_long, char *));
-static long	getenv __P((char *));
 
 void
 getenvvars(flag, buf)
@@ -1067,9 +1067,13 @@ getenvvars(flag, buf)
 	extern u_long bootdev;
 	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
-	extern int *esym;
-	extern int end;
 	int root_scsi_id;
+#ifdef	__ELF__
+	int i;
+	Elf_Ehdr *ehdr;
+	Elf_Shdr *shp;
+	vaddr_t minsym;
+#endif
 
 	/*
 	 * If flag & 0x80000000 == 0, then we're booting with the old booter
@@ -1163,6 +1167,38 @@ getenvvars(flag, buf)
 	HwCfgFlags3 = getenv("HWCFGFLAG3");
  	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
  	mrg_ADBIntrPtr = (caddr_t)getenv("ADBINTERRUPT");
+
+#ifdef	__ELF__
+	/*
+	 * Check the ELF headers.
+	 */
+
+	ehdr = (void *)getenv("MARK_SYM");
+	if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0 ||
+	    ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+		return;
+	}
+
+	/*
+	 * Find the end of the symbols and strings.
+	 */
+
+	minsym = ~0;
+	shp = (Elf_Shdr *)(end + ehdr->e_shoff);
+	for (i = 0; i < ehdr->e_shnum; i++) {
+		if (shp[i].sh_type != SHT_SYMTAB &&
+		    shp[i].sh_type != SHT_STRTAB) {
+			continue;
+		}
+		minsym = MIN(minsym, (vaddr_t)end + shp[i].sh_offset);
+	}
+
+	symsize = 1;
+	ssym = (int *)ehdr;
+#else
+	symsize = *(int *)&end;
+	ssym = ((int *)&end) + 1;
+#endif
 }
 
 static long
@@ -2346,10 +2382,10 @@ gray_bar()
    	3) restore regs
 */
 
-	__asm __volatile ("	movl a0,sp@-;
-				movl a1,sp@-;
-				movl d0,sp@-;
-				movl d1,sp@-");
+	__asm __volatile ("	movl %a0,%sp@-;
+				movl %a1,%sp@-;
+				movl %d0,%sp@-;
+				movl %d1,%sp@-");
 
 /* check to see if gray bars are turned off */
 	if (mac68k_machine.do_graybars) {
@@ -2361,10 +2397,10 @@ gray_bar()
 			((u_long *)videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
 
-	__asm __volatile ("	movl sp@+,d1;
-				movl sp@+,d0;
-				movl sp@+,a1;
-				movl sp@+,a0");
+	__asm __volatile ("	movl %sp@+,%d1;
+				movl %sp@+,%d0;
+				movl %sp@+,%a1;
+				movl %sp@+,%a0");
 }
 #endif
 
@@ -2754,17 +2790,17 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	__asm __volatile ("	movl a0,sp@-;
-				movl a1,sp@-;
-				movl d0,sp@-;
-				movl d1,sp@-");
+	__asm __volatile ("	movl %a0,%sp@-;
+				movl %a1,%sp@-;
+				movl %d0,%sp@-;
+				movl %d1,%sp@-");
 
 	/* printf("*"); */
 
-	__asm __volatile ("	movl sp@+,d1;
-				movl sp@+,d0;
-				movl sp@+,a1;
-				movl sp@+,a0");
+	__asm __volatile ("	movl %sp@+,%d1;
+				movl %sp@+,%d0;
+				movl %sp@+,%a1;
+				movl %sp@+,%a0");
 }
 
 /*

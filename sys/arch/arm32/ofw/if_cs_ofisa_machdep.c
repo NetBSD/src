@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.2 1998/08/17 20:38:08 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.2.30.1 2002/01/08 00:23:29 nathanw Exp $	*/
 
 /*
  * Copyright 1998
@@ -54,8 +54,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/ofisa/ofisavar.h>
 
-#include <dev/isa/cs89x0reg.h>
-#include <dev/isa/cs89x0var.h>
+#include <dev/ic/cs89x0reg.h>
+#include <dev/ic/cs89x0var.h>
 
 #ifdef COMPAT_OLD_OFW
 

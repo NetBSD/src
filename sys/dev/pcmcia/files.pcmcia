@@ -1,9 +1,9 @@
-#	$NetBSD: files.pcmcia,v 1.37.2.3 2001/10/08 20:11:21 nathanw Exp $
+#	$NetBSD: files.pcmcia,v 1.37.2.4 2002/01/08 00:31:22 nathanw Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
 
-defopt	PCMCIAVERBOSE
+defflag				PCMCIAVERBOSE
 
 device	pcmcia {[function = -1], [irq = -1]}
 file	dev/pcmcia/pcmcia.c			pcmcia
@@ -42,7 +42,7 @@ file	dev/pcmcia/com_pcmcia.c			com_pcmcia
 # Digital RoamAbout / Lucent WaveLAN PCMCIA card
 attach	wl at pcmcia with wl_pcmcia
 file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
-defopt	opt_wl_pcmcia.h		WL_TIMER WLP_CC_DEBUG WL_DEBUG MMC_STATUS
+defflag	opt_wl_pcmcia.h		WL_TIMER WLP_CC_DEBUG WL_DEBUG MMC_STATUS
 				WL_IFCNTRS WL_TIMING
 
 # PCMCIA IDE controller
@@ -102,6 +102,10 @@ file	dev/pcmcia/if_xi.c			xi_pcmcia
 attach	tr at pcmcia with tr_pcmcia
 file	dev/pcmcia/if_tr_pcmcia.c		tr_pcmcia
 
+# Crystal Semiconductor CS8920 based cards
+attach	cs at pcmcia with cs_pcmcia
+file	dev/pcmcia/if_cs_pcmcia.c		cs_pcmcia
+
 # Aironet PC4500/PC4800
 attach	an at pcmcia with an_pcmcia
 file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
@@ -110,7 +114,7 @@ file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
 attach	isic at pcmcia with isic_pcmcia
 file	dev/pcmcia/isic_pcmcia.c		isic_pcmcia
 
-defopt	opt_isicpcmcia.h	ISICPCMCIA_AVM_A1 ISICPCMCIA_ELSA_ISDNMC
+defflag	opt_isicpcmcia.h	ISICPCMCIA_AVM_A1 ISICPCMCIA_ELSA_ISDNMC
 				ISICPCMCIA_ELSA_MCALL ISICPCMCIA_SBSPEEDSTAR2
 
 file	dev/pcmcia/isic_pcmcia_avm_fritz.c	isic_pcmcia
@@ -127,3 +131,4 @@ file	dev/pcmcia/esl.c			esl
 
 attach	opl at esl with opl_esl
 file	dev/pcmcia/opl_esl.c			opl_esl
+

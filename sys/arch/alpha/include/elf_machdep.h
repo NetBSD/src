@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.6.6.1 2001/11/14 19:12:40 nathanw Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.6.6.2 2002/01/08 00:22:54 nathanw Exp $ */
 
 #ifndef	_ALPHA_ELF_MACHDEP_H_
 #define	_ALPHA_ELF_MACHDEP_H_
@@ -21,6 +21,8 @@ typedef	uint64_t	Elf64_Word;
 		case EM_ALPHA:						\
 		case EM_ALPHA_EXP:					\
 			break;
+
+#define	ELF64_MACHDEP_ID	EM_ALPHA_EXP	/* XXX */
 
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 

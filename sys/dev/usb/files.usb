@@ -1,14 +1,13 @@
-#	$NetBSD: files.usb,v 1.28.2.2 2001/06/21 20:06:17 nathanw Exp $
+#	$NetBSD: files.usb,v 1.28.2.3 2002/01/08 00:32:03 nathanw Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
-defopt	USBVERBOSE
+defflag	USBVERBOSE
 
 device	usb { }
 attach	usb at usbus
-file	dev/usb/hid.c			usb
 file	dev/usb/usb.c			usb			needs-flag
 file	dev/usb/usbdi.c			usb
 file	dev/usb/usbdi_util.c		usb
@@ -55,20 +54,32 @@ file	dev/usb/ugen.c			ugen			needs-flag
 
 
 # HID
+# HID "bus"
+define	uhidbus {[ reportid = -1 ]}
+
+# HID processing
+define	hid
+file	dev/usb/hid.c			hid
+
+# HID root device for multiple report IDs
+device	uhidev: hid, uhidbus
+attach	uhidev at uhub
+file	dev/usb/uhidev.c		uhidev
+
 # Generic HID devices
-device	uhid
-attach	uhid at uhub
+device	uhid: hid
+attach	uhid at uhidbus
 file	dev/usb/uhid.c			uhid			needs-flag
 
 # Keyboards
-device	ukbd: wskbddev
-attach	ukbd at uhub
+device	ukbd: hid, wskbddev
+attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
 file	dev/usb/ukbdmap.c		ukbd
 
 # Mice
-device	ums: wsmousedev
-attach	ums at uhub
+device	ums: hid, wsmousedev
+attach	ums at uhidbus
 file	dev/usb/ums.c			ums
 
 
@@ -79,10 +90,18 @@ file	dev/usb/ulpt.c			ulpt			needs-flag
 
 
 # Mass storage
-device	umass: scsi, atapi
+device	umass: scsi, atapi, ata
 attach	umass at uhub
 file	dev/usb/umass.c			umass
-file	dev/usb/umassbus.c		umass
+file	dev/usb/umass_isdata.c		umass & wd
+file	dev/usb/umass_quirks.c		umass
+file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
+
+
+# IrDA bridges
+device	uirda: irbus
+attach	uirda at uhub
+file	dev/usb/uirda.c			uirda
 
 
 # Misc
@@ -100,6 +119,11 @@ file	dev/usb/uvisor.c		uvisor
 device	uyap: ezload
 attach	uyap at uhub
 file	dev/usb/uyap.c			uyap
+
+# D-Link DSB-R100 FM radio
+device	udsbr: radio
+attach	udsbr at uhub
+file	dev/usb/udsbr.c			udsbr
 
 
 # Ethernet adapters
@@ -144,6 +168,7 @@ file	dev/usb/uplcom.c		uplcom
 device	umct: ucombus
 attach	umct at uhub
 file	dev/usb/umct.c			umct
+
 
 # Scanners
 # Generic scanner support

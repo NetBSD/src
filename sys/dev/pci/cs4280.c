@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.15.2.3 2001/11/14 19:15:10 nathanw Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.15.2.4 2002/01/08 00:31:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.15.2.3 2001/11/14 19:15:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.15.2.4 2002/01/08 00:31:00 nathanw Exp $");
 
 #include "midi.h"
 
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.15.2.3 2001/11/14 19:15:10 nathanw Exp 
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcidevs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29.2.3 2001/08/30 23:22:58 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29.2.4 2002/01/08 00:25:20 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.4 2002/01/08 00:25:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

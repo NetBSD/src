@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.47.2.5 2001/11/14 19:14:22 nathanw Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.47.2.6 2002/01/08 00:29:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.47.2.5 2001/11/14 19:14:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.47.2.6 2002/01/08 00:29:43 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -660,8 +660,10 @@ ex_init(ifp)
 	bus_space_write_4(iot, ioh, ELINK_DMACTRL,
 	    bus_space_read_4(iot, ioh, ELINK_DMACTRL) | ELINK_DMAC_UPRXEAREN);
 
-	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_RD_0_MASK | S_MASK);
-	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_INTR_MASK | S_MASK);
+	bus_space_write_2(iot, ioh, ELINK_COMMAND,
+	    SET_RD_0_MASK | XL_WATCHED_INTERRUPTS);
+	bus_space_write_2(iot, ioh, ELINK_COMMAND,
+	    SET_INTR_MASK | XL_WATCHED_INTERRUPTS);
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR | 0xff);
 	if (sc->intr_ack)
@@ -1136,8 +1138,8 @@ ex_intr(arg)
 	for (;;) {
 		stat = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		if ((stat & S_MASK) == 0) {
-			if ((stat & S_INTR_LATCH) == 0) {
+		if ((stat & XL_WATCHED_INTERRUPTS) == 0) {
+			if ((stat & INTR_LATCH) == 0) {
 #if 0
 				printf("%s: intr latch cleared\n",
 				       sc->sc_dev.dv_xname);
@@ -1152,24 +1154,24 @@ ex_intr(arg)
 		 * Acknowledge interrupts.
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
-				  (stat & (S_MASK | S_INTR_LATCH)));
+		    (stat & (XL_WATCHED_INTERRUPTS | INTR_LATCH)));
 		if (sc->intr_ack)
 			(*sc->intr_ack)(sc);
 
-		if (stat & S_HOST_ERROR) {
+		if (stat & HOST_ERROR) {
 			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, stat);
 			ex_reset(sc);
 			ex_init(ifp);
 			return 1;
 		}
-		if (stat & S_TX_COMPLETE) {
+		if (stat & TX_COMPLETE) {
 			ex_txstat(sc);
 		}
-		if (stat & S_UPD_STATS) {
+		if (stat & UPD_STATS) {
 			ex_getstats(sc);
 		}
-		if (stat & S_DN_COMPLETE) {
+		if (stat & DN_COMPLETE) {
 			struct ex_txdesc *txp, *ptxp = NULL;
 			bus_dmamap_t txmap;
 
@@ -1208,7 +1210,7 @@ ex_intr(arg)
 			ifp->if_flags &= ~IFF_OACTIVE;
 		}
 
-		if (stat & S_UP_COMPLETE) {
+		if (stat & UP_COMPLETE) {
 			struct ex_rxdesc *rxd;
 			struct mbuf *m;
 			struct ex_upd *upd;
@@ -1424,7 +1426,7 @@ ex_tick(arg)
 		mii_tick(&sc->ex_mii);
 
 	if (!(bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, ELINK_STATUS)
-	    & S_COMMAND_IN_PROGRESS))
+	    & COMMAND_IN_PROGRESS))
 		ex_getstats(sc);
 
 	splx(s);
@@ -1505,7 +1507,7 @@ ex_stop(ifp, disable)
 		ex_add_rxbuf(sc, rx);
 	}
 
-	bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
+	bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR | INTR_LATCH);
 
 	callout_stop(&sc->ex_mii_callout);
 	if (sc->ex_conf & EX_CONF_MII)

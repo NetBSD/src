@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1.2.6 2001/12/06 09:30:54 wdk Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.1.2.7 2002/01/08 00:29:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.6 2001/12/06 09:30:54 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.7 2002/01/08 00:29:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.6 2001/12/06 09:30:54 wdk Ex
 #include <machine/regnum.h>
 #include <machine/vmparam.h>
 #include <machine/locore.h>
+
 #include <mips/cache.h>
 
 /*
@@ -137,9 +138,6 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	printf("linux_sendsig()\n");
 #endif /* DEBUG_LINUX */
 	f = (struct frame *)l->l_md.md_regs;
-#ifdef DEBUG_LINUX
-	printf("f = %p\n", f);
-#endif /* DEBUG_LINUX */
 
 	/* 
 	 * Do we need to jump onto the signal stack? 
@@ -149,7 +147,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
-	 * Signal stack is broken (see at the end of linux_Sigreturn), so we do
+	 * Signal stack is broken (see at the end of linux_sigreturn), so we do
 	 * not use it yet. XXX fix this.
 	 */
 	onstack=0;
@@ -165,10 +163,6 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
 		fp = (struct linux_sigframe *)(u_int32_t)f->f_regs[SP];
 
-#ifdef DEBUG_LINUX
-	printf("fp = %p, sf = %p\n", fp, &sf);
-#endif /* DEBUG_LINUX */
-
 	/* 
 	 * Build stack frame for signal trampoline. 
 	 */
@@ -176,14 +170,15 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 
 	/*
 	 * This is the signal trampoline used by Linux, we don't use it,
-	 * but we set ip up in case an application expects it to be there
+	 * but we set it up in case an application expects it to be there
 	 */
 	sf.lsf_code[0] = 0x24020000;	/* li	v0, __NR_sigreturn	*/
 	sf.lsf_code[1] = 0x0000000c;	/* syscall			*/
 
 	native_to_linux_sigset(mask, &sf.lsf_mask);
-	for (i=0; i<32; i++)
+	for (i=0; i<32; i++) {
 		sf.lsf_sc.lsc_regs[i] = f->f_regs[i];
+	}
 	sf.lsf_sc.lsc_mdhi = f->f_regs[MULHI];
 	sf.lsf_sc.lsc_mdlo = f->f_regs[MULLO];
 	sf.lsf_sc.lsc_pc = f->f_regs[PC];
@@ -246,10 +241,9 @@ linux_sys_sigreturn(l, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_sigreturn_args /* {
-		syscallarg(struct linux_pt_regs) regs;
+		syscallarg(struct linux_sigframe *) sf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct linux_pt_regs regs, kregs;
 	struct linux_sigframe *sf, ksf;
 	struct frame *f;
 	sigset_t mask;
@@ -264,28 +258,21 @@ linux_sys_sigreturn(l, v, retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	regs = SCARG(uap, regs); 
+	sf = SCARG(uap, sf); 
 
-	kregs = regs;
-	/* if ((error = copyin(regs, &kregs, sizeof(kregs))) != 0)
-		return (error); */
-
-	sf = (struct linux_sigframe *)kregs.lregs[29];
 	if ((error = copyin(sf, &ksf, sizeof(ksf))) != 0)
 		return (error);
 
 	/* Restore the register context. */
 	f = (struct frame *)l->l_md.md_regs;
-#ifdef DEBUG_LINUX
-	printf("sf = %p, f = %p\n", sf, f);
-#endif /* DEBUG_LINUX */
 	for (i=0; i<32; i++)
-		f->f_regs[i] = kregs.lregs[i];
-	f->f_regs[MULLO] = kregs.llo;
-	f->f_regs[MULHI] = kregs.lhi;
-	f->f_regs[PC] = kregs.lcp0_epc;
-	f->f_regs[BADVADDR] = kregs.lcp0_badvaddr;
-	f->f_regs[CAUSE] = kregs.lcp0_cause;
+		f->f_regs[i] = ksf.lsf_sc.lsc_regs[i];
+	f->f_regs[MULLO] = ksf.lsf_sc.lsc_mdlo;
+	f->f_regs[MULHI] = ksf.lsf_sc.lsc_mdhi;
+	f->f_regs[PC] = ksf.lsf_sc.lsc_pc;
+	f->f_regs[BADVADDR] = ksf.lsf_sc.lsc_badvaddr;
+	f->f_regs[CAUSE] = ksf.lsf_sc.lsc_cause;
+	f->f_regs[SR] = ksf.lsf_sc.lsc_status;
 
 	/* Restore signal stack. */
 	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.38.4.6 2001/11/14 19:16:03 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38.4.7 2002/01/08 00:31:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.38.4.6 2001/11/14 19:16:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.38.4.7 2002/01/08 00:31:50 nathanw Exp $");
 
 #include "opt_scsi.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -797,6 +796,28 @@ scsipi_interpret_sense(xs)
 	}
 	/* otherwise use the default */
 	switch (sense->error_code & SSD_ERRCODE) {
+
+		/*
+		 * Old SCSI-1 and SASI devices respond with
+		 * codes other than 70.
+		 */
+	case 0x00:		/* no error (command completed OK) */
+		return (0);
+	case 0x04:		/* drive not ready after it was selected */
+		if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
+			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
+		if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
+			return (0);
+		/* XXX - display some sort of error here? */
+		return (EIO);
+	case 0x20:		/* invalid command */
+		if ((xs->xs_control &
+		     XS_CTL_IGNORE_ILLEGAL_REQUEST) != 0)
+			return (0);
+		return (EINVAL);
+	case 0x25:		/* invalid LUN (Adaptec ACB-4000) */
+		return (EACCES);
+
 		/*
 		 * If it's code 70, use the extended stuff and
 		 * interpret the key
@@ -932,7 +953,7 @@ scsipi_interpret_sense(xs)
 		return (error);
 
 	/*
-	 * Not code 70, just report it
+	 * Some other code, just report it
 	 */
 	default:
 #if    defined(SCSIDEBUG) || defined(DEBUG)
@@ -1035,15 +1056,65 @@ scsipi_inquire(periph, inqbuf, flags)
 	int flags;
 {
 	struct scsipi_inquiry scsipi_cmd;
+	int error;
 
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = INQUIRY;
 	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
-	return (scsipi_command(periph,
+	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
-	    SCSIPIRETRIES, 10000, NULL, XS_CTL_DATA_IN | flags));
+	    SCSIPIRETRIES, 10000, NULL, XS_CTL_DATA_IN | flags);
+	
+#ifdef SCSI_OLD_NOINQUIRY
+	/*
+	 * Kludge for the Adaptec ACB-4000 SCSI->MFM translator.
+	 * This board doesn't support the INQUIRY command at all.
+	 */
+	if (error == EINVAL || error == EACCES) {
+		/*
+		 * Conjure up an INQUIRY response.
+		 */
+		inqbuf->device = (error == EINVAL ?
+			 SID_QUAL_LU_PRESENT :
+			 SID_QUAL_LU_NOTPRESENT) | T_DIRECT;
+		inqbuf->dev_qual2 = 0;
+		inqbuf->version = 0;
+		inqbuf->response_format = SID_FORMAT_SCSI1;
+		inqbuf->additional_length = 3 + 28;
+		inqbuf->flags1 = inqbuf->flags2 = inqbuf->flags3 = 0;
+		memcpy(inqbuf->vendor, "ADAPTEC ", sizeof(inqbuf->vendor));
+		memcpy(inqbuf->product, "ACB-4000        ",
+			sizeof(inqbuf->product));
+		memcpy(inqbuf->revision, "    ", sizeof(inqbuf->revision));
+		error = 0;
+	}
+
+	/*
+	 * Kludge for the Emulex MT-02 SCSI->QIC translator.
+	 * This board gives an empty response to an INQUIRY command.
+	 */
+	else if (error == 0 && 
+		 inqbuf->device == (SID_QUAL_LU_PRESENT | T_DIRECT) &&
+		 inqbuf->dev_qual2 == 0 &&
+		 inqbuf->version == 0 &&
+		 inqbuf->response_format == SID_FORMAT_SCSI1) {
+		/*
+		 * Fill out the INQUIRY response.
+		 */
+		inqbuf->device = (SID_QUAL_LU_PRESENT | T_SEQUENTIAL);
+		inqbuf->dev_qual2 = SID_REMOVABLE;
+		inqbuf->additional_length = 3 + 28;
+		inqbuf->flags1 = inqbuf->flags2 = inqbuf->flags3 = 0;
+		memcpy(inqbuf->vendor, "EMULEX  ", sizeof(inqbuf->vendor));
+		memcpy(inqbuf->product, "MT-02 QIC       ",
+			sizeof(inqbuf->product));
+		memcpy(inqbuf->revision, "    ", sizeof(inqbuf->revision));
+	}
+#endif /* SCSI_OLD_NOINQUIRY */
+
+	return error; 
 }
 
 /*

@@ -1,0 +1,15 @@
+#	$NetBSD: std.netwinder,v 1.5.6.2 2002/01/08 00:26:40 nathanw Exp $
+#
+# standard NetBSD/netwinder options
+
+machine	netwinder arm
+
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+options 	EXEC_ELF32
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+makeoptions	LOADADDRESS="0xF000C000"
+makeoptions	ENTRYPOINT="nwstart"

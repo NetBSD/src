@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.3.2.1 2001/11/14 19:14:54 nathanw Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.3.2.2 2002/01/08 00:30:32 nathanw Exp $	*/
 
 /*
  *
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.3.2.1 2001/11/14 19:14:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.3.2.2 2002/01/08 00:30:32 nathanw Exp $");
 
 #undef	TCICISADEBUG
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

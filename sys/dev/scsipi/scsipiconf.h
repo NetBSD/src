@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.46.2.6 2001/10/22 20:41:43 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.46.2.7 2002/01/08 00:31:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -231,6 +231,8 @@ struct scsipi_adapter {
  * scsipi_bustype:
  *
  *	This structure describes a SCSIPI bus type.
+ *	The bustype_type member is shared with struct ata_bustype
+ *	(because we can ata, atapi or scsi busses to the same controller)
  */
 struct scsipi_bustype {
 	int	bustype_type;		/* symbolic name of type */
@@ -246,6 +248,7 @@ struct scsipi_bustype {
 /* bustype_type */
 #define	SCSIPI_BUSTYPE_SCSI	0
 #define	SCSIPI_BUSTYPE_ATAPI	1
+/* #define SCSIPI_BUSTYPE_ATA	2 */
 
 
 /*
@@ -254,16 +257,13 @@ struct scsipi_bustype {
  *	This structure describes a single channel of a SCSIPI adapter.
  *	An adapter may have one or more channels.  See the comment above
  *	regarding the resource counter.
+ *	Note: chan_bustype has to be first member, as its bustype_type member
+ * 	is shared with the aa_bustype member of struct ata_atapi_attach.
  */
 struct scsipi_channel {
-	u_int8_t type; /* XXX will die, compat with ata_atapi_attach for umass */
-#define BUS_SCSI                0
-#define BUS_ATAPI               1
-/*define BUS_ATA                2*/
+	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
 
 	struct scsipi_adapter *chan_adapter; /* pointer to our adapter */
-
-	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
 
 	/*
 	 * Periphs for this channel.  2-dimensional array is dynamically
@@ -445,8 +445,10 @@ struct scsipi_periph {
 #define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
 #define PQUIRK_BYTE5_ZERO	0x00010000	/* byte5 in capacity is wrong */
-#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom page */
+#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom
+						   page */
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
+#define PQUIRK_CAP_SYNC		0x00080000	/* SCSI1 device with sync op */
 
 
 /*

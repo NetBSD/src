@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.17.2.3 2001/11/14 19:15:37 nathanw Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.17.2.4 2002/01/08 00:31:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.3 2001/11/14 19:15:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.4 2002/01/08 00:31:23 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -208,7 +208,7 @@ struct cnw_softc {
 	bus_space_handle_t sc_ioh;	    /*   ...bus_space handle */
 #endif
 	struct pcmcia_mem_handle sc_pcmemh; /* PCMCIA memory handle */
-	bus_addr_t sc_memoff;		    /*   ...offset */
+	bus_size_t sc_memoff;		    /*   ...offset */
 	int sc_memwin;			    /*   ...window */
 	bus_space_tag_t sc_memt;	    /*   ...bus_space tag */
 	bus_space_handle_t sc_memh;	    /*   ...bus_space handle */

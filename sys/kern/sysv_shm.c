@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.60.2.3 2001/11/14 19:16:44 nathanw Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.60.2.4 2002/01/08 00:32:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,11 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.60.2.3 2001/11/14 19:16:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.60.2.4 2002/01/08 00:32:41 nathanw Exp $");
 
 #define SYSVSHM
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>

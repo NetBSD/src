@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.28.2.4 2001/11/14 19:14:00 nathanw Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.28.2.5 2002/01/08 00:29:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,11 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.28.2.4 2001/11/14 19:14:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.28.2.5 2002/01/08 00:29:23 nathanw Exp $");
 
 #include "opt_cardbus.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -288,9 +287,6 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 static void
 parse_tuple(u_int8_t *tuple, int len, void *data)
 {
-#ifdef CARDBUS_DEBUG
-	static const char __func__[] = "parse_tuple";
-#endif
 	struct cardbus_cis_info *cis = data;
 	char *p;
 	int i, bar_index;

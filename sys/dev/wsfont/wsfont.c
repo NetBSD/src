@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.18.2.4 2001/10/22 20:41:50 nathanw Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.18.2.5 2002/01/08 00:32:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.18.2.4 2001/10/22 20:41:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.18.2.5 2002/01/08 00:32:27 nathanw Exp $");
 
 #include "opt_wsfont.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

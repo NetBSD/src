@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.11.2.4 2001/11/14 19:12:51 nathanw Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.11.2.5 2002/01/08 00:28:59 nathanw Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.2.4 2001/11/14 19:12:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.2.5 2002/01/08 00:28:59 nathanw Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.2.4 2001/11/14 19:12:51 nathanw
 int codadebug = 0;
 
 int coda_vfsop_print_entry = 0;
-#define ENTRY if(coda_vfsop_print_entry) myprintf(("Entered %s\n",__FUNCTION__))
+#define ENTRY if(coda_vfsop_print_entry) myprintf(("Entered %s\n",__func__))
 
 struct vnode *coda_ctlvp;
 struct coda_mntinfo coda_mnttbl[NVCODA]; /* indexed by minor device number */

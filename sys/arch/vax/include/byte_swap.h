@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.2 2000/07/01 06:43:42 matt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2.8.1 2002/01/08 00:28:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -38,23 +38,31 @@
 #ifndef _VAX_BYTE_SWAP_H_
 #define _VAX_BYTE_SWAP_H_
 
-#define	__byte_swap_long_variable(x) __extension__	\
-({ register u_int32_t __y, __x = (x);			\
-							\
-	__asm ("rotl	$-8, %1, %0;   			\
-		insv	%0, $16, $8, %0;		\
-		rotl	$8, %1, r1; 			\
-		movb	r1, %0"				\
-		: "=&r" (__y)				\
-		: "r" (__x)				\
-		: "r1", "cc" );				\
-	__y; })
+#include <sys/types.h>
 
-#define __byte_swap_word_variable(x) __extension__	\
-({ register u_int16_t __x = (x);			\
-							\
-	(u_int16_t)(__x << 8 | __x >> 8);		\
-})
+static __inline uint32_t __attribute__((__unused__))
+__byte_swap_long_variable(uint32_t x)
+{
+	uint32_t y;
+
+	__asm __volatile(
+		"rotl	$-8, %1, %0	\n"
+		"insv	%0, $16, $8, %0	\n"
+		"rotl	$8, %1, r1	\n"
+		"movb	r1, %0"
+		: "=&r" (y)
+		: "r" (x)
+		: "r1", "cc");
+
+	return (y);
+}
+
+static __inline uint16_t __attribute__((__unused__))
+__byte_swap_word_variable(uint16_t x)
+{
+
+	return (x << 8 | x >> 8);
+}
 
 #define __byte_swap_long(x)     __byte_swap_long_variable(x)
 #define __byte_swap_word(x)     __byte_swap_word_variable(x)

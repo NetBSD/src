@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.34.2.2 2001/11/14 19:15:48 nathanw Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.34.2.3 2002/01/08 00:31:34 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.34.2.2 2001/11/14 19:15:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.34.2.3 2002/01/08 00:31:34 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.34.2.2 2001/11/14 19:15:48 nathanw Ex
 #include "rf_kintf.h"
 #include "rf_netbsd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>

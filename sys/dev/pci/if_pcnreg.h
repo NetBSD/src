@@ -1,7 +1,7 @@
-/*	$NetBSD: if_pcnreg.h,v 1.1.6.2 2001/09/21 22:35:57 nathanw Exp $	*/
+/*	$NetBSD: if_pcnreg.h,v 1.1.6.3 2002/01/08 00:31:04 nathanw Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.

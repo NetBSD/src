@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.4.8.1 2001/11/20 16:28:02 pk Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.4.8.2 2002/01/08 00:27:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -36,7 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct lwp;
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
+
+struct proc;
 #ifndef SUN4U
 struct fpstate;
 struct trapframe;

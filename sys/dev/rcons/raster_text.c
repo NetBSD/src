@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_text.c,v 1.4.6.1 2001/11/14 19:15:55 nathanw Exp $ */
+/*	$NetBSD: raster_text.c,v 1.4.6.2 2002/01/08 00:31:40 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,10 +44,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.4.6.1 2001/11/14 19:15:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.4.6.2 2002/01/08 00:31:40 nathanw Exp $");
 
-#ifdef _KERNEL
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/systm.h>
 #include <dev/rcons/raster.h>
 #ifdef COLORFONT_CACHE
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.4.6.1 2001/11/14 19:15:55 nathanw 
 #define NEW(size) malloc(size, M_DEVBUF, M_NOWAIT)
 #endif
 #else
-#include <sys/types.h>
 #include <string.h>
 #include "raster.h"
 #ifdef COLORFONT_CACHE

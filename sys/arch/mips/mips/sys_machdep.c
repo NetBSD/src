@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.22.2.2 2001/11/17 23:43:44 wdk Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22.2.3 2002/01/08 00:26:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.10.4.1 2001/06/21 19:25:30 nathanw Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.10.4.2 2002/01/08 00:25:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.10.4.2 2002/01/08 00:25:22 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_largepages.h"

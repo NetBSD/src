@@ -1,4 +1,4 @@
-/*	$NetBSD: amd756.c,v 1.1.8.2 2001/06/21 19:26:04 nathanw Exp $	*/
+/*	$NetBSD: amd756.c,v 1.1.8.3 2002/01/08 00:25:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  * Support for the Advanced Micro Devices AMD756 Peripheral Bus Controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amd756.c,v 1.1.8.3 2002/01/08 00:25:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

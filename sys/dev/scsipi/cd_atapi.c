@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.13.4.3 2001/11/14 19:16:01 nathanw Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.13.4.4 2002/01/08 00:31:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -47,11 +47,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.13.4.3 2001/11/14 19:16:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.13.4.4 2002/01/08 00:31:47 nathanw Exp $");
 
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.3 2001/12/02 12:30:31 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.4 2002/01/08 00:24:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
+#include "hil.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +86,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 #include <machine/reg.h>
@@ -169,16 +171,6 @@ void	nmihand __P((struct frame));
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /*
- * Select code of console.  Set to -1 if console is on
- * "internal" framebuffer.
- */
-int	conscode;
-int	consinit_active;	/* flag for driver init routines */
-caddr_t	conaddr;		/* for drivers in cn_init() */
-int	convasize;		/* size of mapped console device */
-int	conforced;		/* console has been forced */
-
-/*
  * Note that the value of delay_divisor is roughly
  * 2048 / cpuspeed (where cpuspeed is in MHz) on 68020
  * and 68030 systems.  See clock.c for the delay
@@ -252,14 +244,6 @@ consinit()
 	extern struct map extiomap[];
 
 	/*
-	 * Initialize some variables for sanity.
-	 */
-	consinit_active = 1;
-	convasize = 0;
-	conforced = 0;
-	conscode = 1024;		/* invalid */
-
-	/*
 	 * Initialize the DIO resource map.
 	 */
 	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
@@ -267,9 +251,8 @@ consinit()
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-	hp300_cninit();
 
-	consinit_active = 0;
+	hp300_cninit();
 
 	/*
 	 * Issue a warning if the boot loader didn't provide bootinfo.
@@ -615,7 +598,9 @@ identifycpu()
 
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
+#ifdef DIAGNOSTIC
 	printf("cpu: delay divisor %d", delay_divisor);
+#endif
 	if (mmuid)
 		printf(", mmuid %d", mmuid);
 	printf("\n");
@@ -781,7 +766,7 @@ cpu_init_kcore_hdr()
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	extern int end;
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.
@@ -866,7 +851,7 @@ cpu_dump(dump, blknop)
 	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
 
-	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);
@@ -1142,6 +1127,7 @@ nmihand(frame)
 		return;
 	innmihand = 1;
 
+#if NHIL > 0
 	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
 	if (kbdnmi()) {
 		printf("Got a keyboard NMI");
@@ -1179,14 +1165,17 @@ nmihand(frame)
 
 		goto nmihand_out;	/* no more work to do */
 	}
+#endif
 
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 
- nmihand_out:
+#if NHIL > 0
+nmihand_out:
 	innmihand = 0;
+#endif
 }
 
 /*
@@ -1209,13 +1198,12 @@ parityenable()
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		printf("No parity memory\n");
+		printf("Parity detection disabled\n");
 		return;
 	}
 	*PARREG = 1;
 	nofault = (int *) 0;
 	gotparmem = 1;
-	printf("Parity detection enabled\n");
 }
 
 /*

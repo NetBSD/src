@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.8.2.1 2001/11/14 19:15:06 nathanw Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.8.2.2 2002/01/08 00:30:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -63,9 +63,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.8.2.1 2001/11/14 19:15:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.8.2.2 2002/01/08 00:30:57 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

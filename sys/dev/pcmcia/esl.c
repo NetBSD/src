@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.5.2.4 2001/11/14 19:15:36 nathanw Exp $	*/
+/*	$NetBSD: esl.c,v 1.5.2.5 2002/01/08 00:31:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.5.2.4 2001/11/14 19:15:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.5.2.5 2002/01/08 00:31:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,16 +257,6 @@ esl_set_params(void *hdl, int setmode, int usemode,
 {
 	struct esl_pcmcia_softc *sc = hdl;
 	int rate;
-
-	/*
-	 * I'm too lazy to make this do anything other than play
-	 *  -- jmcneill
-	 */
-	if ((setmode & AUMODE_PLAY) == 0) {
-		printf("%s: esl_set_params: only AUMODE_PLAY is supported\n",
-		    sc->sc_esl.sc_dev.dv_xname);
-		return (EINVAL);
-	}
 
 	if (play->sample_rate < ESS_MINRATE ||
 	    play->sample_rate > ESS_MAXRATE ||
@@ -648,20 +638,24 @@ esl_intr(void *hdl)
 	reg = bus_space_read_1(iot, ioh, ESS_CLEAR_INTR);
 
 	if (sc->sc_esl.active) {
-		pos = sc->sc_esl.sc_dmaaddr;
-		bus_space_write_multi_1(iot, ioh, ESS_FIFO_WRITE, pos,
-		    ESS_FIFO_SIZE / 2);
+		reg = bus_space_read_1(iot, ioh, ESS_DSP_RW_STATUS);
+		while (reg & ESS_DSP_READ_HALF) {
+			pos = sc->sc_esl.sc_dmaaddr;
+			bus_space_write_multi_1(iot, ioh, ESS_FIFO_WRITE, pos,
+			    ESS_FIFO_SIZE / 2);
 
-		sc->sc_esl.sc_blkpos += (ESS_FIFO_SIZE / 2);
-		if (sc->sc_esl.sc_blkpos > sc->sc_esl.sc_blksize) {
-			(*sc->sc_esl.intr)(sc->sc_esl.arg);
-			sc->sc_esl.sc_blkpos -= sc->sc_esl.sc_blksize;
+			sc->sc_esl.sc_blkpos += (ESS_FIFO_SIZE / 2);
+			if (sc->sc_esl.sc_blkpos >= sc->sc_esl.sc_blksize) {
+				(*sc->sc_esl.intr)(sc->sc_esl.arg);
+				sc->sc_esl.sc_blkpos -= sc->sc_esl.sc_blksize;
+			}
+			pos += (ESS_FIFO_SIZE / 2);
+			if (pos >= sc->sc_esl.sc_dmaend)
+				pos = sc->sc_esl.sc_dmastart;
+
+			sc->sc_esl.sc_dmaaddr = pos;
+			reg = bus_space_read_1(iot, ioh, ESS_DSP_RW_STATUS);
 		}
-		pos += (ESS_FIFO_SIZE / 2);
-		if (pos >= sc->sc_esl.sc_dmaend)
-			pos = sc->sc_esl.sc_dmastart;
-
-		sc->sc_esl.sc_dmaaddr = pos;
 	}
 
 	return (1);

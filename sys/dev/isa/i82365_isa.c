@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.14.2.1 2001/11/14 19:14:47 nathanw Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.14.2.2 2002/01/08 00:30:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.14.2.1 2001/11/14 19:14:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.14.2.2 2002/01/08 00:30:24 nathanw Exp $");
 
 #define	PCICISADEBUG
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

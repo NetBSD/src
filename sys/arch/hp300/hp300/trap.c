@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91.4.4 2001/12/17 21:34:42 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.91.4.5 2002/01/08 00:24:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,6 @@
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
-extern struct emul emul_hpux;
 #endif
 
 #ifdef COMPAT_SUNOS
@@ -528,17 +527,9 @@ trap(type, code, v, frame)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		if (ssir & SIR_NET) {
-			void netintr __P((void));
-			siroff(SIR_NET);
-			uvmexp.softs++;
-			netintr();
-		}
-		if (ssir & SIR_CLOCK) {
-			siroff(SIR_CLOCK);
-			uvmexp.softs++;
-			softclock(NULL);
-		}
+
+		softintr_dispatch();
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
@@ -755,7 +746,7 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
+			memcpy((caddr_t)fa, (caddr_t)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -780,9 +771,11 @@ writeback(fp, docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)(f->f_fa & ~0xF), 16);
+			memcpy((caddr_t)(f->f_fa & ~0xF),
+			    (caddr_t)&f->f_pd0, 16);
 		else
-			err = suline((caddr_t)(f->f_fa & ~0xF), (caddr_t)&f->f_pd0);
+			err = suline((caddr_t)(f->f_fa & ~0xF),
+			    (caddr_t)&f->f_pd0);
 		if (err) {
 			fa = f->f_fa & ~0xF;
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.33.2.3 2001/11/14 19:16:05 nathanw Exp $	*/
+/*	$NetBSD: ss.c,v 1.33.2.4 2002/01/08 00:31:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,9 +31,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.33.2.3 2001/11/14 19:16:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.33.2.4 2002/01/08 00:31:55 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>

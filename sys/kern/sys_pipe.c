@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.4.2.8 2001/11/14 19:16:43 nathanw Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.4.2.9 2002/01/08 00:32:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.8 2001/11/14 19:16:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.9 2002/01/08 00:32:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -963,7 +963,6 @@ pipe_loan_free(wpipe)
 	vsize_t len;
 
 	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
-	pmap_kremove(wpipe->pipe_map.kva, len);
 	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len);
 	wpipe->pipe_map.kva = NULL;
 	amountpipekva -= len;
@@ -1095,8 +1094,10 @@ retry:
 
 cleanup:
 	pipelock(wpipe, 0);
-	if (pgs != NULL)
+	if (pgs != NULL) {
+		pmap_kremove(wpipe->pipe_map.kva, blen);
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
+	}
 	if (error || amountpipekva > maxpipekva)
 		pipe_loan_free(wpipe);
 	pipeunlock(wpipe);
@@ -1674,7 +1675,7 @@ pipeclose(cpipe)
 	/*
 	 * free resources
 	 */
-#ifdef _FreeBSD__
+#ifdef __FreeBSD__
 	mtx_lock(&vm_mtx);
 	pipe_free_kmem(cpipe);
 	/* XXX: erm, doesn't zalloc already have its own locks and

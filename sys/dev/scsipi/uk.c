@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.29.6.2 2001/11/14 19:16:06 nathanw Exp $	*/
+/*	$NetBSD: uk.c,v 1.29.6.3 2002/01/08 00:31:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,9 +42,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.29.6.2 2001/11/14 19:16:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.29.6.3 2002/01/08 00:31:58 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 

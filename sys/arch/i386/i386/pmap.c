@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.2.5 2001/09/21 22:35:06 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.2.6 2002/01/08 00:25:26 nathanw Exp $	*/
 
 /*
  *
@@ -58,6 +58,9 @@
  *     done by Alessandro Forin (CMU/Mach) and Chris Demetriou
  *     (NetBSD/alpha).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.6 2002/01/08 00:25:26 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -351,6 +354,7 @@ struct pool pmap_pmap_pool;
 
 struct pool pmap_pdp_pool;
 struct pool_cache pmap_pdp_cache;
+u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
 
@@ -1450,6 +1454,7 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
+	u_int gen;
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
@@ -1477,15 +1482,21 @@ pmap_create()
 	 * malloc since malloc allocates out of a submap and we should
 	 * have already allocated kernel PTPs to cover the range...
 	 *
-	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock'!
+	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock', nor
+	 * must we call pmap_growkernel() while holding it!
 	 */
+
+ try_again:
+	gen = pmap_pdp_cache_generation;
+	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
 
 	simple_lock(&pmaps_lock);
 
-	/* XXX Need a generic "I want memory" wchan */
-	while ((pmap->pm_pdir =
-	    pool_cache_get(&pmap_pdp_cache, PR_NOWAIT)) == NULL)
-		(void) ltsleep(&lbolt, PVM, "pmapcr", hz >> 3, &pmaps_lock);
+	if (gen != pmap_pdp_cache_generation) {
+		simple_unlock(&pmaps_lock);
+		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
+		goto try_again;
+	}
 
 	pmap->pm_pdirpa = pmap->pm_pdir[PDSLOT_PTE] & PG_FRAME;
 
@@ -2300,18 +2311,6 @@ pmap_page_remove(pg)
 #endif
 
 		opte = ptes[i386_btop(pve->pv_va)];
-#if 1 /* XXX Work-around for kern/12554. */
-		if (opte & PG_W) {
-#ifdef DEBUG
-			printf("pmap_page_remove: wired mapping for "
-			    "0x%lx (wire count %d) not removed\n",
-			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
-#endif
-			prevptr = &pve->pv_next;
-			pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
-			continue;
-		}
-#endif /* kern/12554 */
 		ptes[i386_btop(pve->pv_va)] = 0;		/* zap! */
 
 		if (opte & PG_W)
@@ -2991,6 +2990,8 @@ pmap_growkernel(maxkvaddr)
 
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
+		pmap_pdp_cache_generation++;
+
 		simple_unlock(&pmaps_lock);
 	}
 

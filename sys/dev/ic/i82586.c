@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.34.2.4 2001/11/14 19:14:24 nathanw Exp $	*/
+/*	$NetBSD: i82586.c,v 1.34.2.5 2002/01/08 00:29:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,12 +144,12 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34.2.4 2001/11/14 19:14:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34.2.5 2002/01/08 00:29:46 nathanw Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34.2.4 2001/11/14 19:14:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34.2.5 2002/01/08 00:29:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1258,7 +1258,7 @@ i82586_proberam(sc)
 
 	/* Put in 16-bit mode */
 	off = IE_SCP_BUS_USE(sc->scp);
-	sc->ie_bus_write16(sc, off, 0);
+	sc->ie_bus_write16(sc, off, IE_SYSBUS_16BIT);
 	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_WRITE);
 
 	/* Set the ISCP `busy' bit */

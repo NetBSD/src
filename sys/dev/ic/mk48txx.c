@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.6.4.2 2001/11/14 19:14:30 nathanw Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.6.4.3 2002/01/08 00:29:58 nathanw Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.6.4.2 2001/11/14 19:14:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.6.4.3 2002/01/08 00:29:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -77,6 +77,7 @@ struct {
 } mk48txx_models[] = {
 	{ "mk48t02", MK48T02_CLKSZ, MK48T02_CLKOFF, 0 },
 	{ "mk48t08", MK48T08_CLKSZ, MK48T08_CLKOFF, 0 },
+	{ "mk48t18", MK48T18_CLKSZ, MK48T18_CLKOFF, 0 },
 	{ "mk48t59", MK48T59_CLKSZ, MK48T59_CLKOFF, MK48TXX_EXT_REGISTERS },
 };
 

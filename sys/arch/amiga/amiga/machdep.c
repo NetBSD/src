@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.3 2001/12/02 12:30:30 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.4 2002/01/08 00:22:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

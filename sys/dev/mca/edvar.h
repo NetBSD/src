@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.4.2.3 2001/08/24 00:09:54 nathanw Exp $	*/
+/*	$NetBSD: edvar.h,v 1.4.2.4 2002/01/08 00:30:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
  */
 
 struct edc_mca_softc;
-#define DASD_MAX_CMD_RES_LEN	8
 
 struct ed_softc {
 	struct device sc_dev;
@@ -43,56 +42,28 @@ struct ed_softc {
 	struct disk sc_dk;
 	struct buf_queue sc_q;
 	struct simplelock sc_q_lock;
-	struct callout sc_edstart;
 
-	void *sc_data;		/* pointer to data for transfer */ 
-	long sc_bcount;		/* bytes available in buffer */
-	daddr_t sc_rawblkno;	/* starting blkno of transfer */
-	int sc_read;		/* Read Transfer ? */
-
-	struct edc_mca_softc *edc_softc;   /* pointer to our parent */
+	struct edc_mca_softc *edc_softc;   /* pointer to our controller */
 
 	int sc_flags;	  
 #define WDF_WLABEL	0x001 /* label is writable */
 #define WDF_LABELLING   0x002 /* writing label */
 #define WDF_LOADED	0x004 /* parameters loaded */
 #define WDF_KLABEL	0x008 /* retain label after 'full' close */
-#define EDF_BOUNCEBUF		0x010	/* use bounce buffer */
-#define EDF_DMAMAP_LOADED	0x020	/* dmamap_xfer loaded */
-#define EDF_PROCESS_QUEUE	0x040
-#define EDF_DK_BUSY		0x080	/* disk_busy() called */
-#define EDF_INIT		0x100	/* disk initialized */
-	int sc_capacity;
+#define EDF_INIT	0x100 /* disk initialized */
 	struct lock sc_lock;	/* drive lock */
 
 	/* actual drive parameters */
-	int sc_devno;		/* DASD device number */
+	int sc_capacity;
+	int sc_devno;
+	u_int16_t sense_data[4];	/* sensed drive parameters */ 
 	u_int16_t cyl;
 	u_int8_t heads;
 	u_int8_t sectors;
 	u_int8_t spares;	/* spares per cylinder */
-	u_int32_t rba;
-	u_int8_t drv_flags;
-
-	u_int16_t sc_status_block[DASD_MAX_CMD_RES_LEN]; /* CMD status block */
-
-	daddr_t sc_badsect[127];	/* 126 plus trailing -1 marker */
-
-	/* Info needed for DMA */
-	bus_dma_tag_t sc_dmat;		/* DMA tag as passed by parent */
-	bus_dmamap_t dmamap_xfer;	/* transfer dma map */
-#define ED_NSEGS	1
-	bus_dma_segment_t sc_dmaseg[ED_NSEGS];	/* DMA segment array */
-	bus_dma_segment_t sc_dmam[1];	/* Allocated DMA-safe memory */
-	vsize_t		sc_dmam_sz;	/* Size of allocated DMA memory */ 
-	caddr_t		sc_dmamkva;	/* Mapped kva of the memory */
-	
-	void *sc_sdhook;		/* our shutdown hook */
+	u_int32_t rba;		/* # of RBAs */
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
-
-	struct proc *sc_worker;		/* Worker thread */
-	volatile int sc_error;
 };

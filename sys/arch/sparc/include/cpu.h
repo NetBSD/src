@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.3 2001/12/08 08:22:43 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.45.4.4 2002/01/08 00:27:37 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,9 +63,10 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
-#if !defined(_LKM)
+#if !defined(_LKM) && defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_sparc_arch.h"
 #endif
 
 #include <machine/psl.h>
@@ -203,7 +204,6 @@ caddr_t	reserve_dumppages __P((caddr_t));
 /* clock.c */
 struct timeval;
 void	lo_microtime __P((struct timeval *));
-int	statintr __P((void *));
 int	clockintr __P((void *));/* level 10 (clock) interrupt code */
 int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 /* locore.s */
@@ -253,6 +253,8 @@ int emulinstr __P((int, struct trapframe *));
 void mp_pause_cpus __P((void));
 void mp_resume_cpus __P((void));
 void mp_halt_cpus __P((void));
+/* msiiep.c */
+void msiiep_swap_endian __P((int));
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.3 2000/07/02 21:05:14 sommerfeld Exp $	*/
+/*	$NetBSD: rnd.h,v 1.3.6.1 2002/01/08 00:25:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 static __inline int
 cpu_hascounter(void)
 {
-#if I586_CPU || I686_CPU
+#if defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * Note that:
 	 * 1) Intel documentation is very specific that code *must* test

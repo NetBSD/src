@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33.2.3 2001/11/14 19:13:22 nathanw Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.2.4 2002/01/08 00:29:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.33.2.3 2001/11/14 19:13:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.33.2.4 2002/01/08 00:29:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,10 +118,12 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_SYNC:
-	case OSS_SNDCTL_DSP_POST:
 		error = ioctlf(fp, AUDIO_DRAIN, (caddr_t)0, p);
 		if (error)
 			goto out;
+		break;
+	case OSS_SNDCTL_DSP_POST:
+		/* This call is merely advisory, and may be a nop. */
 		break;
 	case OSS_SNDCTL_DSP_SPEED:
 		AUDIO_INITINFO(&tmpinfo);

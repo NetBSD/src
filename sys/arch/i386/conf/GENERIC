@@ -1,11 +1,26 @@
-#	$NetBSD: GENERIC,v 1.400.2.8 2001/11/14 19:12:42 nathanw Exp $
+# $NetBSD: GENERIC,v 1.400.2.9 2002/01/08 00:25:10 nathanw Exp $
 #
-#	GENERIC -- everything that's currently supported
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include "arch/i386/conf/std.i386"
+include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.400.2.8 $"
+#ident 		"GENERIC-$Revision: 1.400.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -29,7 +44,7 @@ options 	MTRR		# memory-type range register syscall support
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 #options 	CONS_OVERRIDE	# Always use above! independent of boot info
@@ -70,7 +85,7 @@ options 	LKM		# loadable kernel modules
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
@@ -116,7 +131,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -290,7 +305,7 @@ pcic*	at isapnp?
 
 # CardBus bridge support
 #cbb*		at pci? dev ? function ?
-#cardslot*	at cbb?	
+#cardslot*	at cbb?
 
 # CardBus bus support
 #cardbus*	at cardslot?
@@ -389,7 +404,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
-# Hardware monitors 
+# Hardware monitors
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
@@ -512,7 +527,7 @@ ld*	at mlx? unit ?
 pciide* at pci? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
-wdc*	at isapnp? 
+wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
@@ -546,6 +561,7 @@ atapibus* at pciide? channel ?
 # flags have the same meaning as for IDE drives.
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 
@@ -658,8 +674,8 @@ le*	at bicc?
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
-tr0	at isa? port 0xa20 iomem 0xd8000 irq ?  # IBM TROPIC based Token-Ring
-tr1	at isa? port 0xa24 iomem 0xd0000 irq ?  # IBM TROPIC based Token-Ring
+tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
+tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
 tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
@@ -706,13 +722,17 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
+# The EHCI is not ready for prime time.
+#ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
+#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? dev ? function ?	# Open Host Controller
 
 # USB bus support
+#usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
 
@@ -720,16 +740,19 @@ usb*	at uhci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
-wsmouse*	at ums? mux 0
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -742,12 +765,17 @@ ucom*	at umodem?
 umass*	at uhub? port ? configuration ? interface ?
 atapibus* at umass? channel ?
 scsibus* at umass? channel ?
+#wd* at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
+
+# USB IrDA bridges
+uirda* at uhub? port ? configuration ? interface ?
+irframe* at uirda?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -763,7 +791,7 @@ uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
 
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ? 
+ucom*	at uplcom? portno ?
 
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
@@ -785,14 +813,26 @@ scsibus* at usscanner? channel ?
 # Y@P firmware loader
 uyap* at uhub? port ?
 
+# D-Link DSB-R100 USB radio
+#udsbr*	at uhub? port ?
+#radio*	at udsbr?
+
 # USB Generic driver
 ugen*	at uhub? port ?
+
+
+# IrDA and Consumer Ir devices
+
+# Toshiba Oboe
+oboe* 	at pci? dev ? function ?
+irframe* at oboe?
 
 
 # Audio Devices
 
 # PCI audio devices
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
+autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
@@ -819,7 +859,7 @@ ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
@@ -845,6 +885,7 @@ opl*	at ym?
 # Audio support
 #audio*	at aria?
 audio*	at auich?
+audio*	at autri?
 audio*	at auvia?
 audio*	at clcs?
 audio*	at clct?
@@ -869,7 +910,7 @@ audio*	at yds?
 audio*	at ym?
 
 # MPU 401 UARTs
-#mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+#mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
 mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
@@ -878,6 +919,7 @@ mpu*	at yds?
 mpu*	at ym?
 
 # MIDI support
+midi*	at autri?		# Trident 4DWAVE MIDI port
 midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
 #midi*	at clct?		# Cirrus Logic CS4281 MIDI port
 #midi*	at cms?			# Creative Music System
@@ -886,10 +928,33 @@ midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB1 MIDI port
-midi*   at umidi?               # USB MIDI
+midi*	at umidi?		# USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
+
+
+# FM-Radio devices
+# ISA radio devices
+#az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
+#az1	at isa? port 0x358
+#rt0	at isa? port 0x20c      # AIMS Lab Radiotrack & compatible
+#rt1	at isa? port 0x284
+#rt2	at isa? port 0x30c
+#rt3	at isa? port 0x384
+#rtii0	at isa? port 0x20c      # AIMS Lab Radiotrack II FM Radio Card
+#rtii1	at isa? port 0x30c
+#sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
+
+# PCI radio devices
+#mr*	at pci? dev ? function ? # Guillemot Maxi Radio FM 2000 Radio Card
+
+# Radio support
+#radio*	at az?
+#radio*	at mr?
+#radio*	at rt?
+#radio*	at rtii?
+#radio*	at sf2r?
 
 
 # TV cards
@@ -934,6 +999,9 @@ joy*	at pci?				# Game ports (usually on audio cards)
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
 
+# Middle Digital, Inc. PCI-Weasel serial console board control
+# devices (watchdog timer, etc.)
+weasel* at pci?
 
 # Pull in optional local configuration
 include	"arch/i386/conf/GENERIC.local"
@@ -953,8 +1021,10 @@ pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
@@ -975,5 +1045,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8.8.2 2001/11/05 19:46:14 briggs Exp $
+#	$NetBSD: genassym.cf,v 1.8.8.3 2002/01/08 00:26:11 nathanw Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,8 @@ include <uvm/uvm_extern.h>
 
 include <machine/pcb.h>
 include <machine/pmap.h>
+
+include <powerpc/cpu.h>
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_0		offsetof(struct trapframe, fixreg[0])
@@ -90,3 +92,5 @@ define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
 define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
 define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
 define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
+
+define	CACHELINESIZE	CACHELINESIZE

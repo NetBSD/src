@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.7.2.2 2001/11/14 19:13:13 nathanw Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.7.2.3 2002/01/08 00:29:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,9 +42,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.7.2.2 2001/11/14 19:13:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.7.2.3 2002/01/08 00:29:05 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/lwp.h>

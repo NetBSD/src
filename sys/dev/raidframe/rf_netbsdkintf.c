@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.5 2001/11/18 13:22:09 scw Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.6 2002/01/08 00:31:35 nathanw Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,10 +114,10 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.5 2001/11/18 13:22:09 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.6 2002/01/08 00:31:35 nathanw Exp $");
 
-#include <sys/errno.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/pool.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
@@ -130,9 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.5 2001/11/18 13:22:09 scw
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <machine/types.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/lock.h>
@@ -384,7 +381,7 @@ raidattach(num)
 		}
 	}
 
-#if RAID_AUTOCONFIG
+#ifdef RAID_AUTOCONFIG
 	raidautoconfig = 1;
 #endif
 
@@ -3298,7 +3295,7 @@ rf_auto_config_set(cset,unit)
 		   not taken. 
 		*/
 
-		for(raidID = numraid; raidID >= 0; raidID--) {
+		for(raidID = numraid - 1; raidID >= 0; raidID--) {
 			if (raidPtrs[raidID]->valid == 0) {
 				/* can use this one! */
 				break;

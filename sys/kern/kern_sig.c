@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.8 2001/11/17 00:32:23 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.9 2002/01/08 00:32:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.8 2001/11/17 00:32:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.9 2002/01/08 00:32:34 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.8 2001/11/17 00:32:23 nathanw E
 #include <sys/ucontext.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/exec.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -90,8 +91,6 @@ sigset_t	contsigmask, stopsigmask, sigcantmask;
 
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 struct pool	siginfo_pool;	/* memory pool for siginfo structures */
-
-int	(*coredump32_hook)(struct proc *p, struct vnode *vp);
 
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
@@ -1064,6 +1063,7 @@ issignal(struct lwp *l)
 {
 	struct proc	*p;
 	int		s, signum, prop;
+	int		dolock = (p->p_flag & P_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
 
 	p = l->l_proc;
@@ -1074,6 +1074,8 @@ issignal(struct lwp *l)
 		signum = firstsig(&ss);
 		if (signum == 0) {		 	/* no signal to send */
 			p->p_sigctx.ps_sigcheck = 0;
+			if (locked && dolock)
+				SCHED_LOCK(s);
 			return (0);
 		}
 							/* take the signal! */
@@ -1094,12 +1096,16 @@ issignal(struct lwp *l)
 			 */
 			p->p_xstat = signum;
 			if ((p->p_flag & P_FSTRACE) == 0)
-				psignal(p->p_pptr, SIGCHLD);
-			SCHED_LOCK(s);
+				psignal1(p->p_pptr, SIGCHLD, dolock);
+			if (dolock)
+				SCHED_LOCK(s);
 			proc_stop(p);
 			mi_switch(l, NULL);
 			SCHED_ASSERT_UNLOCKED();
-			splx(s);
+			if (dolock)
+				splx(s);
+			else
+				dolock = 1;
 
 			/*
 			 * If we are no longer being traced, or the parent
@@ -1161,12 +1167,16 @@ issignal(struct lwp *l)
 					break;	/* == ignore */
 				p->p_xstat = signum;
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
-					psignal(p->p_pptr, SIGCHLD);
-				SCHED_LOCK(s);
+					psignal1(p->p_pptr, SIGCHLD, dolock);
+				if (dolock)
+					SCHED_LOCK(s);
 				proc_stop(p);
 				mi_switch(l, NULL);
 				SCHED_ASSERT_UNLOCKED();
-				splx(s);
+				if (dolock)
+					splx(s);
+				else
+					dolock = 1;
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -1203,6 +1213,8 @@ issignal(struct lwp *l)
 						/* leave the signal for later */
 	sigaddset(&p->p_sigctx.ps_siglist, signum);
 	CHECKSIGS(p);
+	if (locked && dolock)
+		SCHED_LOCK(s);
 	return (signum);
 }
 
@@ -1481,7 +1493,6 @@ coredump(struct lwp *l)
 	struct vattr		vattr;
 	int			error, error1;
 	char			name[MAXPATHLEN];
-	struct core		core;
 
 	p = l->l_proc;
 	vm = p->p_vmspace;
@@ -1553,28 +1564,8 @@ coredump(struct lwp *l)
 	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
 #endif
 
-	core.c_midmag = 0;
-	strncpy(core.c_name, p->p_comm, MAXCOMLEN);
-	core.c_nseg = 0;
-	core.c_signo = p->p_sigctx.ps_sig;
-	core.c_ucode = p->p_sigctx.ps_code;
-	core.c_cpusize = 0;
-	core.c_tsize = (u_long)ctob(vm->vm_tsize);
-	core.c_dsize = (u_long)ctob(vm->vm_dsize);
-	core.c_ssize = (u_long)round_page(ctob(vm->vm_ssize));
-	error = cpu_coredump(l, vp, cred, &core);
-	if (error)
-		goto out;
-	/*
-	 * uvm_coredump() spits out all appropriate segments.
-	 * All that's left to do is to write the core header.
-	 */
-	error = uvm_coredump(p, vp, cred, &core);
-	if (error)
-		goto out;
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
-	    (int)core.c_hdrsize, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	/* Now dump the actual core file. */
+	error = (*p->p_execsw->es_coredump)(l, vp, cred);
  out:
 	VOP_UNLOCK(vp, 0);
 	error1 = vn_close(vp, FWRITE, cred, p);
@@ -1731,7 +1722,7 @@ int
 sigismasked(struct proc *p, int sig)
 {
 
-	return sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU)
-		|| sigismember(&p->p_sigctx.ps_sigmask, SIGTTOU);
+	return (sigismember(&p->p_sigctx.ps_sigignore, sig) ||
+	    sigismember(&p->p_sigctx.ps_sigmask, sig));
 }
 

@@ -1,10 +1,11 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6 2001/02/21 21:39:59 jdolecek Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.6.2.1 2002/01/08 00:25:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Frank van der Linden for Wasabi Systems, Inc.
+ * Written by Frank van der Linden and Jason R. Thorpe for
+ * Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,13 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.1 2002/01/08 00:25:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 #include <sys/vnode.h>
+
 #include <miscfs/procfs/procfs.h>
+
 #include <machine/cpu.h>
+#include <machine/reg.h>
 #include <machine/specialreg.h>
 
 extern int i386_fpu_present, i386_fpu_exception, i386_fpu_fdivbug;
@@ -150,3 +157,55 @@ procfs_getcpuinfstr(char *buf, int *len)
 
 	return 0;
 }
+
+#ifdef __HAVE_PROCFS_MACHDEP
+void
+procfs_machdep_allocvp(struct vnode *vp)
+{
+	struct pfsnode *pfs = vp->v_data;
+
+	switch (pfs->pfs_type) {
+	case Pmachdep_xmmregs:	/* /proc/N/xmmregs = -rw------- */
+		pfs->pfs_mode = S_IRUSR|S_IWUSR;
+		vp->v_type = VREG;
+		break;
+
+	default:
+		panic("procfs_machdep_allocvp");
+	}
+}
+
+int
+procfs_machdep_rw(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+    struct uio *uio)
+{
+
+	switch (pfs->pfs_type) {
+	case Pmachdep_xmmregs:
+		return (procfs_machdep_doxmmregs(curp, p, pfs, uio));
+
+	default:
+		panic("procfs_machdep_rw");
+	}
+
+	/* NOTREACHED */
+	return (EINVAL);
+}
+
+int
+procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
+{
+	struct pfsnode *pfs = VTOPFS(vp);
+
+	switch (pfs->pfs_type) {
+	case Pmachdep_xmmregs:
+		vap->va_bytes = vap->va_size = sizeof(struct xmmregs);
+		break;
+
+	default:
+		panic("procfs_machdep_getattr");
+	}
+
+	return (0);
+}
+#endif

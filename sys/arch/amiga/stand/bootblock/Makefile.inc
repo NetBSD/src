@@ -1,7 +1,26 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/08/30 23:51:54 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.2.8.1 2002/01/08 00:22:59 nathanw Exp $
 
 BINDIR=		/usr/mdec
 
+.include <bsd.own.mk>
+
+.if ${OBJECT_FMT} == "ELF"
+### Figure out what to use for elf2bb
+ELF2BBDIR=	${.CURDIR}/../elf2bb
+
+.if exists(${ELF2BBDIR}/obj.${MACHINE})
+ELF2BBOBJDIR=	${ELF2BBDIR}/obj.${MACHINE}
+.elif exists(${ELF2BBDIR}/obj)
+ELF2BBOBJDIR=	${ELF2BBDIR}/obj
+.else
+ELF2BBOBJDIR=	${ELF2BBDIR}
+.endif
+RELOC2BB=	${ELF2BBOBJDIR}/elf2bb
+
+${RELOC2BB}:
+	@cd ${ELF2BBDIR} && ${MAKE} depend && ${MAKE}
+
+.else
 ### Figure out what to use for aout2bb
 AOUT2BBDIR=	${.CURDIR}/../aout2bb
 
@@ -12,10 +31,11 @@ AOUT2BBOBJDIR=	${AOUT2BBDIR}/obj
 .else
 AOUT2BBOBJDIR=	${AOUT2BBDIR}
 .endif
-AOUT2BB=	${AOUT2BBOBJDIR}/aout2bb
+RELOC2BB=	${AOUT2BBOBJDIR}/aout2bb
 
-${AOUT2BB}:
+${RELOC2BB}:
 	@cd ${AOUT2BBDIR} && ${MAKE} depend && ${MAKE}
+.endif
 
 ### Figure out what to use for txlt
 TXLTDIR=	${.CURDIR}/../txlt

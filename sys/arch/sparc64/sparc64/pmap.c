@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.3 2002/01/04 19:12:31 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.4 2002/01/08 00:28:04 nathanw Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3224,16 +3224,6 @@ pmap_page_protect(pg, prot)
 				firstpv->pv_va |= PV_REF;
 			if (data & (TLB_MODIFY))
 				firstpv->pv_va |= PV_MOD;
-			if (data & TLB_TSB_LOCK) {
-#ifdef DIAGNOSTIC
-				printf("pmap_page_protect: wired page pm %p va %p not removed\n",
-				       npv->pv_pmap, (void *)(u_long)npv->pv_va);
-				printf("vm wire count %d\n", 
-					PHYS_TO_VM_PAGE(pa)->wire_count);
-				pv = npv;
-				continue;
-#endif			
-			}
 			/* Clear mapping */
 			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, 0, 0)) {
 				printf("pmap_page_protect: gotten pseg empty!\n");

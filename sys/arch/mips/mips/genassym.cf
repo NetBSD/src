@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.2.4 2001/11/18 01:26:28 wdk Exp $
+#	$NetBSD: genassym.cf,v 1.25.2.5 2002/01/08 00:26:20 nathanw Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.

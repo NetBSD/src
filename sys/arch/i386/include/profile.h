@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.14.8.1 2001/09/21 22:35:10 nathanw Exp $	*/
+/*	$NetBSD: profile.h,v 1.14.8.2 2002/01/08 00:25:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,11 +58,12 @@ mcount()								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm__("movl 4(%%ebp),%0" : "=r" (selfpc));			\
+	__asm__ __volatile__("movl 4(%%ebp),%0" : "=r" (selfpc));	\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm__("movl (%%ebp),%0;movl 4(%0),%0" : "=r" (frompcindex));	\
+	__asm__ __volatile__("movl (%%ebp),%0;movl 4(%0),%0"		\
+	    : "=r" (frompcindex));					\
 	_mcount((u_long)frompcindex, (u_long)selfpc);			\
 }
 

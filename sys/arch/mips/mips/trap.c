@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.3 2001/11/18 11:41:05 wdk Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.4 2002/01/08 00:26:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.3 2001/11/18 11:41:05 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.4 2002/01/08 00:26:26 nathanw Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -322,7 +322,7 @@ trap(status, cause, vaddr, opc, frame)
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (l->l_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
@@ -414,7 +414,7 @@ trap(status, cause, vaddr, opc, frame)
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
 	copyfault:
-		if (l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		frame->tf_epc = (int)l->l_addr->u_pcb.pcb_onfault;
 		return; /* KERN */

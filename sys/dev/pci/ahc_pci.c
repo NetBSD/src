@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.29.2.2 2001/11/14 19:15:07 nathanw Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.29.2.3 2002/01/08 00:30:57 nathanw Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.29.2.2 2001/11/14 19:15:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.29.2.3 2002/01/08 00:30:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,7 +850,7 @@ ahc_pci_attach(parent, self, aux)
 }
 
 /*
- * Test for the presense of external sram in an
+ * Test for the presence of external sram in an
  * "unshared" configuration.
  */
 static int

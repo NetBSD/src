@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.3.4.3 2001/11/15 11:03:05 pk Exp $	*/
+/*	$NetBSD: sunms.c,v 1.3.4.4 2002/01/08 00:31:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.3.4.3 2001/11/15 11:03:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.3.4.4 2002/01/08 00:31:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.3.4.3 2001/11/15 11:03:05 pk Exp $");
 #include "ms.h"
 #if NMS > 0
 
-int	sunms_bps = MS_BPS;
+#ifdef SUN_MS_BPS
+int	sunms_bps = SUN_MS_BPS;
+#else
+int	sunms_bps = MS_DEFAULT_BPS;
+#endif
 
 static int	sunms_match(struct device *, struct cfdata *, void *);
 static void	sunms_attach(struct device *, struct device *, void *);
@@ -179,7 +183,7 @@ sunmsiopen(dev, flags)
 	tp->t_ospeed = 0;
 	t.c_ispeed = sunms_bps;
 	t.c_ospeed = sunms_bps;
-	t.c_cflag =  CLOCAL;
+	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
 
 	return (0);

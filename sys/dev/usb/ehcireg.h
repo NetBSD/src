@@ -1,7 +1,7 @@
-/*	$NetBSD: ehcireg.h,v 1.2.4.2 2001/11/14 19:16:14 nathanw Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.2.4.3 2002/01/08 00:32:03 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,8 +37,10 @@
  */
 
 /*
- * EHCI 0.96 spec can be found at
+ * The EHCI 0.96 spec can be found at
  * http://developer.intel.com/technology/usb/download/ehci-r096.pdf
+ * and the USB 2.0 spec at
+ * http://www.usb.org/developers/data/usb_20.zip
  */
 
 #ifndef _DEV_PCI_EHCIREG_H_
@@ -91,12 +93,20 @@
 /* EHCI operational registers.  Offset given by EHCI_CAPLENGTH register */
 #define EHCI_USBCMD		0x00	/* RO, RW, WO Command register */
 #define  EHCI_CMD_ITC_M		0x00ff0000 /* RW interrupt threshold ctrl */
+#define   EHCI_CMD_ITC_1	0x00010000
+#define   EHCI_CMD_ITC_2	0x00020000
+#define   EHCI_CMD_ITC_4	0x00040000
+#define   EHCI_CMD_ITC_8	0x00080000
+#define   EHCI_CMD_ITC_16	0x00100000
+#define   EHCI_CMD_ITC_32	0x00200000
+#define   EHCI_CMD_ITC_64	0x00400000
 #define  EHCI_CMD_ASPME		0x00000800 /* RW/RO async park enable */
 #define  EHCI_CMD_ASPMC		0x00000300 /* RW/RO async park count */
 #define  EHCI_CMD_LHCR		0x00000080 /* RW light host ctrl reset */
 #define  EHCI_CMD_IAAD		0x00000040 /* RW intr on async adv door bell */
 #define  EHCI_CMD_ASE		0x00000020 /* RW async sched enable */
 #define  EHCI_CMD_PSE		0x00000010 /* RW periodic sched enable */
+#define  EHCI_CMD_FLS_M		0x0000000c /* RW/RO frame list size */
 #define  EHCI_CMD_FLS(x)	(((x) >> 2) & 3) /* RW/RO frame list size */
 #define  EHCI_CMD_HCRESET	0x00000002 /* RW reset */
 #define  EHCI_CMD_RS		0x00000001 /* RW run/stop */
@@ -112,6 +122,9 @@
 #define  EHCI_STS_PCD		0x00000004 /* RWC port change detect */
 #define  EHCI_STS_ERRINT	0x00000002 /* RWC error interrupt */
 #define  EHCI_STS_INT		0x00000001 /* RWC interrupt */
+#define  EHCI_STS_INTRS(x)	((x) & 0x3f)
+
+#define EHCI_NORMAL_INTRS (EHCI_STS_IAA | EHCI_STS_HSE | EHCI_STS_PCD | EHCI_STS_ERRINT | EHCI_STS_INT)
 
 #define EHCI_USBINTR		0x08	/* RW Interrupt register */
 #define EHCI_INTR_IAAE		0x00000020 /* interrupt on async advance ena */
@@ -140,17 +153,135 @@
 #define  EHCI_PS_PO		0x00002000 /* RW port owner */
 #define  EHCI_PS_PP		0x00001000 /* RW,RO port power */
 #define  EHCI_PS_LS		0x00000c00 /* RO line status */
+#define  EHCI_PS_IS_LOWSPEED(x)	(((x) & EHCI_PS_LS) == 0x00000400)
 #define  EHCI_PS_PR		0x00000100 /* RW port reset */
 #define  EHCI_PS_SUSP		0x00000080 /* RW suspend */
 #define  EHCI_PS_FPR		0x00000040 /* RW force port resume */
 #define  EHCI_PS_OCC		0x00000020 /* RWC over current change */
 #define  EHCI_PS_OCA		0x00000010 /* RO over current active */
 #define  EHCI_PS_PEC		0x00000008 /* RWC port enable change */
-#define  EHCI_PS_PE		0x00000004 /* RO port enable */
+#define  EHCI_PS_PE		0x00000004 /* RW port enable */
 #define  EHCI_PS_CSC		0x00000002 /* RWC connect status change */
 #define  EHCI_PS_CS		0x00000001 /* RO connect status */
+#define  EHCI_PS_CLEAR		(EHCI_PS_OCC|EHCI_PS_PEC|EHCI_PS_CSC)
 
+#define EHCI_PORT_RESET_COMPLETE 2 /* ms */
 
 #define EHCI_FLALIGN_ALIGN	0x1000
+
+/* No data structure may cross a page boundary. */
+#define EHCI_PAGE_SIZE 0x1000
+#define EHCI_PAGE(x) ((x) &~ 0xfff)
+#define EHCI_PAGE_OFFSET(x) ((x) & 0xfff)
+
+typedef u_int32_t ehci_link_t;
+#define EHCI_LINK_TERMINATE	0x00000001
+#define EHCI_LINK_TYPE(x)	((x) & 0x00000006)
+#define  EHCI_LINK_ITD		0x0
+#define  EHCI_LINK_QH		0x2
+#define  EHCI_LINK_SITD		0x4
+#define  EHCI_LINK_FSTN		0x6
+#define EHCI_LINK_ADDR(x)	((x) &~ 0x1f)
+
+typedef u_int32_t ehci_physaddr_t;
+
+/* Isochronous Transfer Descriptor */
+typedef struct {
+	ehci_link_t	itd_next;
+	/* XXX many more */
+} ehci_itd_t;
+#define EHCI_ITD_ALIGN 32
+
+/* Split Transaction Isochronous Transfer Descriptor */
+typedef struct {
+	ehci_link_t	sitd_next;
+	/* XXX many more */
+} ehci_sitd_t;
+#define EHCI_SITD_ALIGN 32
+
+/* Queue Element Transfer Descriptor */
+#define EHCI_QTD_NBUFFERS 5
+typedef struct {
+	ehci_link_t	qtd_next;
+	ehci_link_t	qtd_altnext;
+	u_int32_t	qtd_status;
+#define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
+#define  EHCI_QTD_ACTIVE	0x80
+#define  EHCI_QTD_HALTED	0x40
+#define  EHCI_QTD_BUFERR	0x20
+#define  EHCI_QTD_BABBLE	0x10
+#define  EHCI_QTD_XACTERR	0x08
+#define  EHCI_QTD_MISSEDMICRO	0x04
+#define  EHCI_QTD_SPLITXSTATE	0x02
+#define  EHCI_QTD_PINGSTATE	0x01
+#define  EHCI_QTD_STATERRS	0x7c
+#define EHCI_QTD_GET_PID(x)	(((x) >>  8) & 0x3)
+#define EHCI_QTD_SET_PID(x)	((x) <<  8)
+#define  EHCI_QTD_PID_OUT	0x0
+#define  EHCI_QTD_PID_IN	0x1
+#define  EHCI_QTD_PID_SETUP	0x2
+#define EHCI_QTD_GET_CERR(x)	(((x) >> 10) &  0x3)
+#define EHCI_QTD_SET_CERR(x)	((x) << 10)
+#define EHCI_QTD_GET_C_PAGE(x)	(((x) >> 12) &  0x7)
+#define EHCI_QTD_SET_C_PAGE(x)	((x) << 12)
+#define EHCI_QTD_GET_IOC(x)	(((x) >> 15) &  0x1)
+#define EHCI_QTD_IOC		0x00008000
+#define EHCI_QTD_GET_BYTES(x)	(((x) >> 16) &  0x7fff)
+#define EHCI_QTD_SET_BYTES(x)	((x) << 16)
+#define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
+#define EHCI_QTD_TOGGLE		0x80000000
+	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
+} ehci_qtd_t;
+#define EHCI_QTD_ALIGN 32
+
+/* Queue Head */
+typedef struct {
+	ehci_link_t	qh_link;
+	u_int32_t	qh_endp;
+#define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
+#define EHCI_QH_SET_ADDR(x)	(x)
+#define EHCI_QH_ADDRMASK	0x0000007f
+#define EHCI_QH_GET_INACT(x)	(((x) >>  7) & 0x01) /* inactivate on next */
+#define EHCI_QH_INACT		0x00000080
+#define EHCI_QH_GET_ENDPT(x)	(((x) >>  8) & 0x0f) /* endpoint no */
+#define EHCI_QH_SET_ENDPT(x)	((x) <<  8)
+#define EHCI_QH_GET_EPS(x)	(((x) >> 12) & 0x03) /* endpoint speed */
+#define EHCI_QH_SET_EPS(x)	((x) << 12)
+#define  EHCI_QH_SPEED_FULL	0x0
+#define  EHCI_QH_SPEED_LOW	0x1
+#define  EHCI_QH_SPEED_HIGH	0x2
+#define EHCI_QH_GET_DTC(x)	(((x) >> 14) & 0x01) /* data toggle control */
+#define EHCI_QH_DTC		0x00004000
+#define EHCI_QH_GET_HRECL(x)	(((x) >> 15) & 0x01) /* head of reclamation */
+#define EHCI_QH_HRECL		0x00008000
+#define EHCI_QH_GET_MPL(x)	(((x) >> 16) & 0x7ff) /* max packet len */
+#define EHCI_QH_SET_MPL(x)	((x) << 16)
+#define EHCI_QG_MPLMASK		0x07ff0000
+#define EHCI_QH_GET_CTL(x)	(((x) >> 26) & 0x01) /* control endpoint */
+#define EHCI_QH_CTL		0x08000000
+#define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
+#define EHCI_QH_SET_NRL(x)	((x) << 28)
+	u_int32_t	qh_endphub;
+#define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
+#define EHCI_QH_SET_SMASK(x)	((x) <<  0)
+#define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
+#define EHCI_QH_SET_CMASK(x)	((x) <<  8)
+#define EHCI_QH_GET_HUBA(x)	(((x) >> 16) & 0x7f) /* hub address */
+#define EHCI_QH_SET_HUBA(x)	((x) << 16)
+#define EHCI_QH_GET_PORT(x)	(((x) >> 23) & 0x7f) /* hub port */
+#define EHCI_QH_SET_PORT(x)	((x) << 23)
+#define EHCI_QH_GET_MULT(x)	(((x) >> 30) & 0x03) /* pipe multiplier */
+#define EHCI_QH_SET_MULT(x)	((x) << 30)
+	ehci_link_t	qh_curqtd;
+	ehci_qtd_t	qh_qtd;
+} ehci_qh_t;
+#define EHCI_QH_ALIGN 32
+
+/* Periodic Frame Span Traversal Node */
+typedef struct {
+	ehci_link_t	fstn_link;
+	ehci_link_t	fstn_back;
+} ehci_fstn_t;
+#define EHCI_FSTN_ALIGN 32
 
 #endif /* _DEV_PCI_EHCIREG_H_ */

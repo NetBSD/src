@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53cxxx.c,v 1.5.4.1 2001/06/21 20:04:13 nathanw Exp $	*/
+/*	$NetBSD: ncr53cxxx.c,v 1.5.4.2 2002/01/08 00:30:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995,1999 Michael L. Hitch
@@ -110,7 +110,7 @@ unsigned int	npatches;
 struct patchlist {
 	struct patchlist *next;
 	unsigned	offset;
-};
+} *patches;
 
 #define	S_LABEL		0x0000
 #define	S_ABSOLUTE	0x0001
@@ -136,148 +136,149 @@ char	*phases[] = {
 
 struct ncrregs {
 	char *name;
-	int addr[4];
+	int addr[5];
 };
-#define ARCH710 1
-#define ARCH720 2
-#define ARCH810 3
-#define ARCH825 4
+#define ARCH700 1
+#define ARCH710 2
+#define ARCH720 3
+#define ARCH810 4
+#define ARCH825 5
 
 struct ncrregs 	regs[] = {
-	{"scntl0",	{0x00, 0x00, 0x00, 0x00}},
-	{"scntl1",	{0x01, 0x01, 0x01, 0x01}},
-	{"sdid",	{0x02,   -1,   -1,   -1}},
-	{"sien",	{0x03,   -1,   -1,   -1}},
-	{"scid",	{0x04,   -1,   -1,   -1}},
-	{"scntl2",	{  -1, 0x02, 0x02, 0x02}},
-	{"scntl3",	{  -1, 0x03, 0x03, 0x03}},
-	{"scid", 	{  -1, 0x04, 0x04, 0x04}},
-	{"sxfer",	{0x05, 0x05, 0x05, 0x05}},
-	{"sodl",	{0x06,   -1,   -1,   -1}},
-	{"socl",	{0x07,   -1,   -1,   -1}},
-	{"sdid",	{  -1, 0x06, 0x06, 0x06}},
-	{"gpreg",	{  -1, 0x07, 0x07, 0x07}},
-	{"sfbr",	{0x08, 0x08, 0x08, 0x08}},
-	{"sidl",	{0x09,   -1,   -1,   -1}},
-	{"sbdl",	{0x0a,   -1,   -1,   -1}},
-	{"socl",	{  -1, 0x09, 0x09, 0x09}},
-	{"ssid", 	{  -1, 0x0a, 0x0a, 0x0a}},
-	{"sbcl",	{0x0b, 0x0b, 0x0b, 0x0b}}, 
-	{"dstat",	{0x0c, 0x0c, 0x0c, 0x0c}},
-	{"sstat0",	{0x0d, 0x0d, 0x0d, 0x0d}},
-	{"sstat1",	{0x0e, 0x0e, 0x0e, 0x0e}},
-	{"sstat2",	{0x0f, 0x0f, 0x0f, 0x0f}},
-	{"dsa0",	{0x10, 0x10, 0x10, 0x10}},
-	{"dsa1",	{0x11, 0x11, 0x11, 0x11}},
-	{"dsa2",	{0x12, 0x12, 0x12, 0x12}},
-	{"dsa3",	{0x13, 0x13, 0x13, 0x13}},
-	{"ctest0",	{0x14, 0x18, 0x18, 0x18}},
-	{"ctest1",	{0x15, 0x19, 0x19, 0x19}},
-	{"ctest2",	{0x16, 0x1a, 0x1a, 0x1a}},
-	{"ctest3",	{0x17, 0x1b, 0x1b, 0x1b}},
-	{"ctest4",	{0x18, 0x21, 0x21, 0x21}},
-	{"ctest5",	{0x19, 0x22, 0x22, 0x22}},
-	{"ctest6",	{0x1a, 0x23, 0x23, 0x23}},
-	{"ctest7",	{0x1b,   -1,   -1,   -1}},
-	{"temp0",	{0x1c, 0x1c, 0x1c, 0x1c}},
-	{"temp1",	{0x1d, 0x1d, 0x1d, 0x1d}},
-	{"temp2", 	{0x1e, 0x1e, 0x1e, 0x1e}},
-	{"temp3",	{0x1f, 0x1f, 0x1f, 0x1f}},
-	{"dfifo",	{0x20, 0x20, 0x20, 0x20}},
-	{"istat", 	{0x21, 0x14, 0x14, 0x14}},
-	{"ctest8",	{0x22,   -1,   -1,   -1}},
-	{"lcrc",	{0x23,   -1,   -1,   -1}},
-	{"dbc0",	{0x24, 0x24, 0x24, 0x24}},
-	{"dbc1",	{0x25, 0x25, 0x25, 0x25}},
-	{"dbc2",	{0x26, 0x26, 0x26, 0x26}},
-	{"dcmd",	{0x27, 0x27, 0x27, 0x27}},
-	{"dnad0",	{0x28, 0x28, 0x28, 0x28}},
-	{"dnad1",	{0x29, 0x29, 0x29, 0x29}},
-	{"dnad2",	{0x2a, 0x2a, 0x2a, 0x2a}},
-	{"dnad3",	{0x2b, 0x2b, 0x2b, 0x2b}},
-	{"dsp0",	{0x2c, 0x2c, 0x2c, 0x2c}},
-	{"dsp1",	{0x2d, 0x2d, 0x2d, 0x2d}},
-	{"dsp2",	{0x2e, 0x2e, 0x2e, 0x2e}},
-	{"dsp3",	{0x2f, 0x2f, 0x2f, 0x2f}},
-	{"dsps0",	{0x30, 0x30, 0x30, 0x30}},
-	{"dsps1",	{0x31, 0x31, 0x31, 0x31}},
-	{"dsps2",	{0x32, 0x32, 0x32, 0x32}},
-	{"dsps3",	{0x33, 0x33, 0x33, 0x33}},
-	{"scratch0",	{0x34,   -1,   -1,   -1}},
-	{"scratch1",	{0x35,   -1,   -1,   -1}},
-	{"scratch2",	{0x36,   -1,   -1,   -1}},
-	{"scratch3",	{0x37,   -1,   -1,   -1}},
-	{"scratcha0",	{  -1, 0x34, 0x34, 0x34}},
-	{"scratcha1",	{  -1, 0x35, 0x35, 0x35}},
-	{"scratcha2",	{  -1, 0x36, 0x36, 0x36}},
-	{"scratcha3",	{  -1, 0x37, 0x37, 0x37}},
-	{"dmode",	{0x38, 0x38, 0x38, 0x38}},
-	{"dien",	{0x39, 0x39, 0x39, 0x39}},
-	{"dwt",		{0x3a, 0x3a,   -1,   -1}},
-	{"sbr",		{  -1,   -1, 0x3a, 0x3a}},
-	{"dcntl",	{0x3b, 0x3b, 0x3b, 0x3b}},
-	{"addr0",	{0x3c, 0x3c, 0x3c, 0x3c}},
-	{"addr1",	{0x3d, 0x3d, 0x3d, 0x3d}},
-	{"addr2",	{0x3e, 0x3e, 0x3e, 0x3e}},
-	{"addr3",	{0x3f, 0x3f, 0x3f, 0x3f}},
-	{"sien0",	{  -1, 0x40, 0x40, 0x40}},
-	{"sien1",	{  -1, 0x41, 0x41, 0x41}},
-	{"sist0",	{  -1, 0x42, 0x42, 0x42}},
-	{"sist1",	{  -1, 0x43, 0x43, 0x43}},
-	{"slpar",	{  -1, 0x44, 0x44, 0x44}},
-	{"swide",	{  -1, 0x45,   -1, 0x45}},
-	{"macntl",	{  -1, 0x46, 0x46, 0x46}},
-	{"gpcntl",	{  -1, 0x47, 0x47, 0x47}},
-	{"stime0",	{  -1, 0x48, 0x48, 0x48}},
-	{"stime1",	{  -1, 0x49, 0x49, 0x49}},
-	{"respid0",	{  -1, 0x4a, 0x4a, 0x4a}},
-	{"respid1",	{  -1, 0x4b,   -1, 0x4b}},
-	{"stest0",	{  -1, 0x4c, 0x4c, 0x4c}},
-	{"stest1",	{  -1, 0x4d, 0x4d, 0x4d}},
-	{"stest2",	{  -1, 0x4e, 0x4e, 0x4e}},
-	{"stest3",	{  -1, 0x4f, 0x4f, 0x4f}},
-	{"sidl0",	{  -1, 0x50, 0x50, 0x50}},
-	{"sidl1",	{  -1, 0x51,   -1, 0x51}},
-	{"sodl0",	{  -1, 0x54, 0x54, 0x54}},
-	{"sodl1",	{  -1, 0x55,   -1, 0x55}},
-	{"sbdl0",	{  -1, 0x58, 0x58, 0x58}},
-	{"sbdl1",	{  -1, 0x59,   -1, 0x59}},
-	{"scratchb0",	{  -1, 0x5c, 0x5c, 0x5c}},
-	{"scratchb1",	{  -1, 0x5d, 0x5d, 0x5d}},
-	{"scratchb2",	{  -1, 0x5e, 0x5e, 0x5e}},
-	{"scratchb3",	{  -1, 0x5f, 0x5f, 0x5f}},
-	{"scratchc0",	{  -1,   -1,   -1, 0x60}},
-	{"scratchc1",	{  -1,   -1,   -1, 0x61}},
-	{"scratchc2",	{  -1,   -1,   -1, 0x62}},
-	{"scratchc3",	{  -1,   -1,   -1, 0x63}},
-	{"scratchd0",	{  -1,   -1,   -1, 0x64}},
-	{"scratchd1",	{  -1,   -1,   -1, 0x65}},
-	{"scratchd2",	{  -1,   -1,   -1, 0x5e}},
-	{"scratchd3",	{  -1,   -1,   -1, 0x67}},
-	{"scratche0",	{  -1,   -1,   -1, 0x68}},
-	{"scratche1",	{  -1,   -1,   -1, 0x69}},
-	{"scratche2",	{  -1,   -1,   -1, 0x6a}},
-	{"scratche3",	{  -1,   -1,   -1, 0x6b}},
-	{"scratchf0",	{  -1,   -1,   -1, 0x6c}},
-	{"scratchf1",	{  -1,   -1,   -1, 0x6d}},
-	{"scratchf2",	{  -1,   -1,   -1, 0x6e}},
-	{"scratchf3",	{  -1,   -1,   -1, 0x6f}},
-	{"scratchg0",	{  -1,   -1,   -1, 0x70}},
-	{"scratchg1",	{  -1,   -1,   -1, 0x71}},
-	{"scratchg2",	{  -1,   -1,   -1, 0x72}},
-	{"scratchg3",	{  -1,   -1,   -1, 0x73}},
-	{"scratchh0",	{  -1,   -1,   -1, 0x74}},
-	{"scratchh1",	{  -1,   -1,   -1, 0x75}},
-	{"scratchh2",	{  -1,   -1,   -1, 0x7e}},
-	{"scratchh3",	{  -1,   -1,   -1, 0x77}},
-	{"scratchi0",	{  -1,   -1,   -1, 0x78}},
-	{"scratchi1",	{  -1,   -1,   -1, 0x79}},
-	{"scratchi2",	{  -1,   -1,   -1, 0x7a}},
-	{"scratchi3",	{  -1,   -1,   -1, 0x7b}},
-	{"scratchj0",	{  -1,   -1,   -1, 0x7c}},
-	{"scratchj1",	{  -1,   -1,   -1, 0x7d}},
-	{"scratchj2",	{  -1,   -1,   -1, 0x7e}},
-	{"scratchj3",	{  -1,   -1,   -1, 0x7f}},
+	{"scntl0",	{0x00, 0x00, 0x00, 0x00, 0x00}},
+	{"scntl1",	{0x01, 0x01, 0x01, 0x01, 0x01}},
+	{"sdid",	{0x02, 0x02,   -1,   -1,   -1}},
+	{"sien",	{0x03, 0x03,   -1,   -1,   -1}},
+	{"scid",	{0x04, 0x04,   -1,   -1,   -1}},
+	{"scntl2",	{  -1,   -1, 0x02, 0x02, 0x02}},
+	{"scntl3",	{  -1,   -1, 0x03, 0x03, 0x03}},
+	{"scid", 	{  -1,   -1, 0x04, 0x04, 0x04}},
+	{"sxfer",	{0x05, 0x05, 0x05, 0x05, 0x05}},
+	{"sodl",	{0x06, 0x06,   -1,   -1,   -1}},
+	{"socl",	{0x07, 0x07,   -1,   -1,   -1}},
+	{"sdid",	{  -1,   -1, 0x06, 0x06, 0x06}},
+	{"gpreg",	{  -1,   -1, 0x07, 0x07, 0x07}},
+	{"sfbr",	{0x08, 0x08, 0x08, 0x08, 0x08}},
+	{"sidl",	{0x09, 0x09,   -1,   -1,   -1}},
+	{"sbdl",	{0x0a, 0x0a,   -1,   -1,   -1}},
+	{"socl",	{  -1,   -1, 0x09, 0x09, 0x09}},
+	{"ssid", 	{  -1,   -1, 0x0a, 0x0a, 0x0a}},
+	{"sbcl",	{0x0b, 0x0b, 0x0b, 0x0b, 0x0b}}, 
+	{"dstat",	{0x0c, 0x0c, 0x0c, 0x0c, 0x0c}},
+	{"sstat0",	{0x0d, 0x0d, 0x0d, 0x0d, 0x0d}},
+	{"sstat1",	{0x0e, 0x0e, 0x0e, 0x0e, 0x0e}},
+	{"sstat2",	{0x0f, 0x0f, 0x0f, 0x0f, 0x0f}},
+	{"dsa0",	{  -1, 0x10, 0x10, 0x10, 0x10}},
+	{"dsa1",	{  -1, 0x11, 0x11, 0x11, 0x11}},
+	{"dsa2",	{  -1, 0x12, 0x12, 0x12, 0x12}},
+	{"dsa3",	{  -1, 0x13, 0x13, 0x13, 0x13}},
+	{"ctest0",	{0x14, 0x14, 0x18, 0x18, 0x18}},
+	{"ctest1",	{0x15, 0x15, 0x19, 0x19, 0x19}},
+	{"ctest2",	{0x16, 0x16, 0x1a, 0x1a, 0x1a}},
+	{"ctest3",	{0x17, 0x17, 0x1b, 0x1b, 0x1b}},
+	{"ctest4",	{0x18, 0x18, 0x21, 0x21, 0x21}},
+	{"ctest5",	{0x19, 0x19, 0x22, 0x22, 0x22}},
+	{"ctest6",	{0x1a, 0x1a, 0x23, 0x23, 0x23}},
+	{"ctest7",	{0x1b, 0x1b,   -1,   -1,   -1}},
+	{"temp0",	{0x1c, 0x1c, 0x1c, 0x1c, 0x1c}},
+	{"temp1",	{0x1d, 0x1d, 0x1d, 0x1d, 0x1d}},
+	{"temp2", 	{0x1e, 0x1e, 0x1e, 0x1e, 0x1e}},
+	{"temp3",	{0x1f, 0x1f, 0x1f, 0x1f, 0x1f}},
+	{"dfifo",	{0x20, 0x20, 0x20, 0x20, 0x20}},
+	{"istat", 	{0x21, 0x21, 0x14, 0x14, 0x14}},
+	{"ctest8",	{  -1, 0x22,   -1,   -1,   -1}},
+	{"lcrc",	{  -1, 0x23,   -1,   -1,   -1}},
+	{"dbc0",	{0x24, 0x24, 0x24, 0x24, 0x24}},
+	{"dbc1",	{0x25, 0x25, 0x25, 0x25, 0x25}},
+	{"dbc2",	{0x26, 0x26, 0x26, 0x26, 0x26}},
+	{"dcmd",	{0x27, 0x27, 0x27, 0x27, 0x27}},
+	{"dnad0",	{0x28, 0x28, 0x28, 0x28, 0x28}},
+	{"dnad1",	{0x29, 0x29, 0x29, 0x29, 0x29}},
+	{"dnad2",	{0x2a, 0x2a, 0x2a, 0x2a, 0x2a}},
+	{"dnad3",	{0x2b, 0x2b, 0x2b, 0x2b, 0x2b}},
+	{"dsp0",	{0x2c, 0x2c, 0x2c, 0x2c, 0x2c}},
+	{"dsp1",	{0x2d, 0x2d, 0x2d, 0x2d, 0x2d}},
+	{"dsp2",	{0x2e, 0x2e, 0x2e, 0x2e, 0x2e}},
+	{"dsp3",	{0x2f, 0x2f, 0x2f, 0x2f, 0x2f}},
+	{"dsps0",	{0x30, 0x30, 0x30, 0x30, 0x30}},
+	{"dsps1",	{0x31, 0x31, 0x31, 0x31, 0x31}},
+	{"dsps2",	{0x32, 0x32, 0x32, 0x32, 0x32}},
+	{"dsps3",	{0x33, 0x33, 0x33, 0x33, 0x33}},
+	{"scratch0",	{  -1, 0x34,   -1,   -1,   -1}},
+	{"scratch1",	{  -1, 0x35,   -1,   -1,   -1}},
+	{"scratch2",	{  -1, 0x36,   -1,   -1,   -1}},
+	{"scratch3",	{  -1, 0x37,   -1,   -1,   -1}},
+	{"scratcha0",	{  -1,   -1, 0x34, 0x34, 0x34}},
+	{"scratcha1",	{  -1,   -1, 0x35, 0x35, 0x35}},
+	{"scratcha2",	{  -1,   -1, 0x36, 0x36, 0x36}},
+	{"scratcha3",	{  -1,   -1, 0x37, 0x37, 0x37}},
+	{"dmode",	{0x34, 0x38, 0x38, 0x38, 0x38}},
+	{"dien",	{0x39, 0x39, 0x39, 0x39, 0x39}},
+	{"dwt",		{0x3a, 0x3a, 0x3a,   -1,   -1}},
+	{"sbr",		{  -1,   -1,   -1, 0x3a, 0x3a}},
+	{"dcntl",	{0x3b, 0x3b, 0x3b, 0x3b, 0x3b}},
+	{"addr0",	{  -1, 0x3c, 0x3c, 0x3c, 0x3c}},
+	{"addr1",	{  -1, 0x3d, 0x3d, 0x3d, 0x3d}},
+	{"addr2",	{  -1, 0x3e, 0x3e, 0x3e, 0x3e}},
+	{"addr3",	{  -1, 0x3f, 0x3f, 0x3f, 0x3f}},
+	{"sien0",	{  -1,   -1, 0x40, 0x40, 0x40}},
+	{"sien1",	{  -1,   -1, 0x41, 0x41, 0x41}},
+	{"sist0",	{  -1,   -1, 0x42, 0x42, 0x42}},
+	{"sist1",	{  -1,   -1, 0x43, 0x43, 0x43}},
+	{"slpar",	{  -1,   -1, 0x44, 0x44, 0x44}},
+	{"swide",	{  -1,   -1, 0x45,   -1, 0x45}},
+	{"macntl",	{  -1,   -1, 0x46, 0x46, 0x46}},
+	{"gpcntl",	{  -1,   -1, 0x47, 0x47, 0x47}},
+	{"stime0",	{  -1,   -1, 0x48, 0x48, 0x48}},
+	{"stime1",	{  -1,   -1, 0x49, 0x49, 0x49}},
+	{"respid0",	{  -1,   -1, 0x4a, 0x4a, 0x4a}},
+	{"respid1",	{  -1,   -1, 0x4b,   -1, 0x4b}},
+	{"stest0",	{  -1,   -1, 0x4c, 0x4c, 0x4c}},
+	{"stest1",	{  -1,   -1, 0x4d, 0x4d, 0x4d}},
+	{"stest2",	{  -1,   -1, 0x4e, 0x4e, 0x4e}},
+	{"stest3",	{  -1,   -1, 0x4f, 0x4f, 0x4f}},
+	{"sidl0",	{  -1,   -1, 0x50, 0x50, 0x50}},
+	{"sidl1",	{  -1,   -1, 0x51,   -1, 0x51}},
+	{"sodl0",	{  -1,   -1, 0x54, 0x54, 0x54}},
+	{"sodl1",	{  -1,   -1, 0x55,   -1, 0x55}},
+	{"sbdl0",	{  -1,   -1, 0x58, 0x58, 0x58}},
+	{"sbdl1",	{  -1,   -1, 0x59,   -1, 0x59}},
+	{"scratchb0",	{  -1,   -1, 0x5c, 0x5c, 0x5c}},
+	{"scratchb1",	{  -1,   -1, 0x5d, 0x5d, 0x5d}},
+	{"scratchb2",	{  -1,   -1, 0x5e, 0x5e, 0x5e}},
+	{"scratchb3",	{  -1,   -1, 0x5f, 0x5f, 0x5f}},
+	{"scratchc0",	{  -1,   -1,   -1,   -1, 0x60}},
+	{"scratchc1",	{  -1,   -1,   -1,   -1, 0x61}},
+	{"scratchc2",	{  -1,   -1,   -1,   -1, 0x62}},
+	{"scratchc3",	{  -1,   -1,   -1,   -1, 0x63}},
+	{"scratchd0",	{  -1,   -1,   -1,   -1, 0x64}},
+	{"scratchd1",	{  -1,   -1,   -1,   -1, 0x65}},
+	{"scratchd2",	{  -1,   -1,   -1,   -1, 0x5e}},
+	{"scratchd3",	{  -1,   -1,   -1,   -1, 0x67}},
+	{"scratche0",	{  -1,   -1,   -1,   -1, 0x68}},
+	{"scratche1",	{  -1,   -1,   -1,   -1, 0x69}},
+	{"scratche2",	{  -1,   -1,   -1,   -1, 0x6a}},
+	{"scratche3",	{  -1,   -1,   -1,   -1, 0x6b}},
+	{"scratchf0",	{  -1,   -1,   -1,   -1, 0x6c}},
+	{"scratchf1",	{  -1,   -1,   -1,   -1, 0x6d}},
+	{"scratchf2",	{  -1,   -1,   -1,   -1, 0x6e}},
+	{"scratchf3",	{  -1,   -1,   -1,   -1, 0x6f}},
+	{"scratchg0",	{  -1,   -1,   -1,   -1, 0x70}},
+	{"scratchg1",	{  -1,   -1,   -1,   -1, 0x71}},
+	{"scratchg2",	{  -1,   -1,   -1,   -1, 0x72}},
+	{"scratchg3",	{  -1,   -1,   -1,   -1, 0x73}},
+	{"scratchh0",	{  -1,   -1,   -1,   -1, 0x74}},
+	{"scratchh1",	{  -1,   -1,   -1,   -1, 0x75}},
+	{"scratchh2",	{  -1,   -1,   -1,   -1, 0x7e}},
+	{"scratchh3",	{  -1,   -1,   -1,   -1, 0x77}},
+	{"scratchi0",	{  -1,   -1,   -1,   -1, 0x78}},
+	{"scratchi1",	{  -1,   -1,   -1,   -1, 0x79}},
+	{"scratchi2",	{  -1,   -1,   -1,   -1, 0x7a}},
+	{"scratchi3",	{  -1,   -1,   -1,   -1, 0x7b}},
+	{"scratchj0",	{  -1,   -1,   -1,   -1, 0x7c}},
+	{"scratchj1",	{  -1,   -1,   -1,   -1, 0x7d}},
+	{"scratchj2",	{  -1,   -1,   -1,   -1, 0x7e}},
+	{"scratchj3",	{  -1,   -1,   -1,   -1, 0x7f}},
 };
 
 int	lineno;
@@ -304,6 +305,7 @@ void	emit_symbols (void);
 void	list_symbols (void);
 void	errout (char *);
 void	define_symbol (char *, u_int32_t, short, short);
+void	patch_label (void);
 void	close_script (void);
 void	new_script (char *);
 void	store_inst (void);
@@ -329,6 +331,7 @@ int
 main (int argc, char *argv[])
 {
 	int	i;
+	struct patchlist *p;
 
 	if (argc < 2 || argv[1][0] == '-')
 		usage();
@@ -409,7 +412,7 @@ main (int argc, char *argv[])
 	if (outfp) {
 		time_t cur_time;
 
-		fprintf(outfp, "/*\t$NetBSD: ncr53cxxx.c,v 1.5.4.1 2001/06/21 20:04:13 nathanw Exp $\t*/\n");
+		fprintf(outfp, "/*\t$NetBSD: ncr53cxxx.c,v 1.5.4.2 2002/01/08 00:30:54 nathanw Exp $\t*/\n");
 		fprintf(outfp, "/*\n");
 		fprintf(outfp, " *\tDO NOT EDIT - this file is automatically generated.\n");
 		time(&cur_time);
@@ -451,6 +454,13 @@ main (int argc, char *argv[])
 	if (outfp && !partial_flag) {
 		fprintf (outfp, "\nu_int32_t INSTRUCTIONS = 0x%08x;\n", ninsts);
 		fprintf (outfp, "u_int32_t PATCHES = 0x%08x;\n", npatches);
+		fprintf (outfp, "u_int32_t LABELPATCHES[] = {\n");
+		p = patches;
+		while (p) {
+			fprintf (outfp, "\t0x%08x,\n", p->offset / 4);
+			p = p->next;
+		}
+		fprintf (outfp, "};\n\n");
 	}
 	list_symbols ();
 	exit(0);
@@ -459,6 +469,9 @@ main (int argc, char *argv[])
 void setarch(char *val)
 {
 	switch (atoi(val)) {
+	case 700:
+		arch = ARCH700;
+		break;
 	case 710:
 		arch = ARCH710;
 		break;
@@ -627,7 +640,7 @@ void define_symbol (char *name, u_int32_t value, short type, short flags)
 					if (p->offset > dsps)
 						errout ("Whoops\007");
 					else
-						script[p->offset / 4] = dsps - p->offset - 4;
+						script[p->offset / 4] += dsps;
 					p = p->next;
 				}
 			}
@@ -645,6 +658,20 @@ void define_symbol (char *name, u_int32_t value, short type, short flags)
 	symbols[nsymbols].name = malloc (strlen (name) + 1);
 	strcpy (symbols[nsymbols].name, name);
 	++nsymbols;
+}
+
+void patch_label (void)
+{
+	struct patchlist *p, **h;
+
+	h = &patches;
+	while(*h)
+		h = &(*h)->next;
+	p = (struct patchlist *) malloc (sizeof (struct patchlist));
+	*h = p;
+	p->next = NULL;
+	p->offset = dsps + 4;
+	npatches++;
 }
 
 void close_script ()
@@ -1003,12 +1030,18 @@ void	f_wait (void)
 			errout ("Expected SELECT or RESELECT");
 		++i;
 		if (reserved ("rel", i)) {
+			if (arch < ARCH710) {
+				errout ("Wrong arch for relative dsps");
+				return;
+			}
 			i += 2;
 			inst1 = evaluate (i) - dsps - 8;
 			inst0 |= 0x04000000;
 		}
-		else
+		else {
 			inst1 = evaluate (i);
+			patch_label();
+		}
 	}
 	store_inst ();
 }
@@ -1090,6 +1123,10 @@ void loadstore(int i)
 	else
 		errout ("expected ','");
 	if (reserved("from", i) || reserved("dsarel", i)) {
+		if (arch < ARCH710) {
+			errout ("Wrong arch for table indirect");
+			return;
+		}
 		i++;
 		inst0 |= 0x10000000;
 	}
@@ -1104,6 +1141,10 @@ void	transfer (int word0, int type)
 	i = tokenix;
 	inst0 = word0;
 	if (type == 0 && reserved ("rel", i)) {
+		if (arch < ARCH710) {
+			errout ("Wrong arch for relative dsps");
+			return;
+		}
 		inst1 = evaluate (i + 2) - dsps - 8;
 		i += 4;
 		inst0 |= 0x00800000;
@@ -1111,6 +1152,8 @@ void	transfer (int word0, int type)
 	else if (type != 1) {
 		inst1 = evaluate (i);
 		++i;
+		if (type == 0)
+			patch_label();
 	}
 	if (i >= ntokens) {
 		inst0 |= 0x00080000;
@@ -1174,6 +1217,10 @@ void 	select_reselect (int t)
 {
 	inst0 |= 0x40000000;		/* ATN may be set from SELECT */
 	if (reserved ("from", t)) {
+		if (arch < ARCH710) {
+			errout ("Wrong arch for table indirect");
+			return;
+		}
 		++t;
 		inst0 |= 0x02000000 | evaluate (t++);
 	}
@@ -1181,11 +1228,17 @@ void 	select_reselect (int t)
 		inst0 |= (evaluate (t++) & 0xff) << 16;
 	if (tokens[t++].type == ',') {
 		if (reserved ("rel", t)) {
+			if (arch < ARCH710) {
+				errout ("Wrong arch for relative dsps");
+				return;
+			}
 			inst0 |= 0x04000000;
 			inst1 = evaluate (t + 2) - dsps - 8;
 		}
-		else
+		else {
 			inst1 = evaluate (t);
+			patch_label();
+		}
 	}
 	else
 		errout ("Expected separator");
@@ -1227,6 +1280,10 @@ void	set_clear (u_int32_t code)
 void	block_move ()
 {
 	if (reserved ("from", tokenix)) {
+		if (arch < ARCH710) {
+			errout ("Wrong arch for table indirect");
+			return;
+		}
 		inst1 = evaluate (tokenix+1);
 		inst0 |= 0x10000000 | inst1;	/*** ??? to match Zeus script */
 		tokenix += 2;
@@ -1335,6 +1392,8 @@ fprintf (listfp, "Move register to SFBR: %02x %d %d\n", inst0 >> 8, op, reg);
 	}
 	else {				/* register to register */
 		data = CheckRegister (tokenix+2);
+		if (data < 0)
+			errout ("Expected register");
 		if (reg == 8)		/* move SFBR to reg */
 			inst0 = 0x6a000000 | (data << 16);
 		else if (data == 8)	/* move reg to SFBR */

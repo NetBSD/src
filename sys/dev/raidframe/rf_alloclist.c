@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.4.14.3 2001/11/14 19:15:45 nathanw Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.4.14.4 2002/01/08 00:31:33 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.14.3 2001/11/14 19:15:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.14.4 2002/01/08 00:31:33 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -50,18 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.14.3 2001/11/14 19:15:45 nathan
 #include "rf_shutdown.h"
 
 RF_DECLARE_STATIC_MUTEX(alist_mutex)
-	static unsigned int fl_hit_count, fl_miss_count;
+static unsigned int fl_hit_count, fl_miss_count;
 
-	static RF_AllocListElem_t *al_free_list = NULL;
-	static int al_free_list_count;
+static RF_AllocListElem_t *al_free_list = NULL;
+static int al_free_list_count;
 
 #define RF_AL_FREELIST_MAX 256
 
 #define DO_FREE(_p,_sz) RF_Free((_p),(_sz))
 
-	static void rf_ShutdownAllocList(void *);
+static void rf_ShutdownAllocList(void *);
 
-	static void rf_ShutdownAllocList(ignored)
+static void rf_ShutdownAllocList(ignored)
 	void   *ignored;
 {
 	RF_AllocListElem_t *p, *pt;

@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.14.2.4 2001/09/21 22:35:50 nathanw Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.14.2.5 2002/01/08 00:30:56 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.31 2001/08/25 05:55:19 thorpej Exp 
+ *	NetBSD: miidevs,v 1.32 2001/12/15 00:31:03 augustss Exp 
  */
 
 /*-
@@ -108,6 +108,9 @@
  */
 
 /* Altima Communications PHYs */
+/* Don't know the model for ACXXX */
+#define	MII_MODEL_ALTIMA_ACXXX	0x0001
+#define	MII_STR_ALTIMA_ACXXX	"ACXXX 10/100 media interface"
 #define	MII_MODEL_ALTIMA_AC101	0x0021
 #define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
 

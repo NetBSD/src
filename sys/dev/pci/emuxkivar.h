@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.1.2.2 2001/10/22 20:41:23 nathanw Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.1.2.3 2002/01/08 00:31:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct dmamem {
 #define	EMU_PTESIZE		4096
 #define	EMU_MAXPTE ((EMU_CHAN_PSST_LOOPSTARTADDR_MASK + 1) /	\
 			EMU_PTESIZE)
-#define EMU_NUMCHAN		64
+#define EMU_NUMCHAN	64
 #define EMU_NUMRECSRCS	3
 
 #define	EMU_DMA_ALIGN	4096
@@ -205,7 +205,7 @@ struct emuxki_voice {
 	u_int16_t       timerate;
 	void            (*inth) (void *);
 	void           *inthparam;
-	                LIST_ENTRY(emuxki_voice) next;
+	LIST_ENTRY(emuxki_voice) next;
 };
 
 #if 0 /* Not yet */
@@ -234,7 +234,7 @@ struct emuxki_softc {
 	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih;		/* interrupt handler */
 
-	/* EMU10k1 device structures */
+	/* EMU10K1 device structures */
 	LIST_HEAD(, emuxki_mem) mem;
 
 	struct dmamem		*ptb;
@@ -253,7 +253,7 @@ struct emuxki_softc {
 	struct ac97_codec_if	*codecif;
 	struct device		*sc_audev;
 
-	struct emuxki_voice	*pvoice, *rvoice;
+	struct emuxki_voice	*pvoice, *rvoice, *lvoice;
 };
 
 #endif				/* !_DEV_PCI_EMU10K1VAR_H_ */

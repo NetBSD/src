@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.7.6.3 2001/09/21 22:35:12 nathanw Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.7.6.4 2002/01/08 00:25:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -25,6 +25,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.7.6.4 2002/01/08 00:25:41 nathanw Exp $");
+
 #include "opt_pcibios.h"
 
 #include <sys/param.h>

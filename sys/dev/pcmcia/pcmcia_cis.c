@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.21.2.5 2001/11/14 19:15:41 nathanw Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.21.2.6 2002/01/08 00:31:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.5 2001/11/14 19:15:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.6 2002/01/08 00:31:27 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183.2.5 2001/11/14 19:14:19 nathanw Exp $	*/
+/*	$NetBSD: com.c,v 1.183.2.6 2002/01/08 00:29:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.5 2001/11/14 19:14:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.6 2002/01/08 00:29:38 nathanw Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
-#include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
@@ -113,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.5 2001/11/14 19:14:19 nathanw Exp $"
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/timepps.h>

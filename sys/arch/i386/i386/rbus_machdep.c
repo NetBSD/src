@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.10.4.3 2001/09/21 22:35:07 nathanw Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.10.4.4 2002/01/08 00:25:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,6 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10.4.4 2002/01/08 00:25:28 nathanw Exp $");
 
 #include "opt_pcibios.h"
 

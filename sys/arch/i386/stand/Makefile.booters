@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.26.4.2 2001/09/26 19:54:45 nathanw Exp $
+#	$NetBSD: Makefile.booters,v 1.26.4.3 2002/01/08 00:25:46 nathanw Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -22,8 +22,11 @@ CPPFLAGS+= -D_STANDALONE
 CLEANFILES+= vers.c ${BASE}.list
 SRCS+=	vers.c
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN: machine
 .NOPATH: machine
+.endif
+
 realdepend realall: machine
 CLEANFILES+= machine
 

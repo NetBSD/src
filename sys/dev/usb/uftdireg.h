@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.1.8.1 2001/06/21 20:06:21 nathanw Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.1.8.2 2002/01/08 00:32:08 nathanw Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter - 
@@ -120,6 +120,7 @@ enum {
 #define FTDI_SIO_SET_DATA_STOP_BITS_1 (0x0 << 11)
 #define FTDI_SIO_SET_DATA_STOP_BITS_15 (0x1 << 11)
 #define FTDI_SIO_SET_DATA_STOP_BITS_2 (0x2 << 11)
+#define FTDI_SIO_SET_BREAK (0x1 << 14)
 
 
 /* 

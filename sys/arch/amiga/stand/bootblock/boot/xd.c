@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.3 1997/02/01 01:46:28 mhitch Exp $
+ * $NetBSD: xd.c,v 1.3.40.1 2002/01/08 00:23:01 nathanw Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -35,7 +35,7 @@
 
 #include <stand.h>
 #include <ufs.h>
-
+#include <ustarfs.h>
 
 #include "samachdep.h"
 #include "amigaio.h"
@@ -54,6 +54,8 @@ static struct devsw devsw[] = {
 
 struct fs_ops file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, ustarfs_seek,
+	  ustarfs_stat },
 };
 
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
@@ -116,7 +118,7 @@ xdstrategy (devd, flag, dblk, size, buf, rsize)
 	DoIO(aio);
 
 #ifdef XDDEBUG
-	printf("strategy got err %ld, rsize %ld\n", aio->err, aio->actual);
+	printf("strategy got err %ld, rsize %ld\n", (long)aio->err, (long)aio->actual);
 #endif
 
 	if (aio->err) {
@@ -135,6 +137,7 @@ static int
 xdopenclose(f)
 	struct open_file *f;
 {
+	aio_save->offset = aio_base;	/* Restore original offset */
 	return 0;
 }
 
@@ -146,3 +149,11 @@ xdioctl (f, cmd, data)
 {
 	return EIO;
 }
+
+#ifdef _PRIMARY_BOOT
+void
+xdreset()
+{
+	aio_save->offset = aio_base;	/* Restore original offset */
+}
+#endif

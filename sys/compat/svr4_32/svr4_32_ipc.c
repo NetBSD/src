@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.1.4.2 2001/11/14 19:13:29 nathanw Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.1.4.3 2002/01/08 00:29:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.1.4.2 2001/11/14 19:13:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.1.4.3 2002/01/08 00:29:11 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>

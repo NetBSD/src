@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.43 2000/11/20 08:24:15 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.43.4.1 2002/01/08 00:25:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43.4.1 2002/01/08 00:25:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

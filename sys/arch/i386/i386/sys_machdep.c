@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.56.2.4 2001/10/08 21:49:48 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.56.2.5 2002/01/08 00:25:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.56.2.5 2002/01/08 00:25:29 nathanw Exp $");
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.21.16.4 2001/11/14 19:12:46 nathanw Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.21.16.5 2002/01/08 00:25:25 nathanw Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -35,6 +35,9 @@
  * to 80-bit temporary reals, and do with them as they please. I wanted to
  * hide most of the 387-specific things here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.21.16.5 2002/01/08 00:25:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

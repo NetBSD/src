@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.8.2.4 2001/11/14 19:14:35 nathanw Exp $ */
+/* $NetBSD: seeq8005.c,v 1.8.2.5 2002/01/08 00:30:04 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,9 +61,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.8.2.4 2001/11/14 19:14:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.8.2.5 2002/01/08 00:30:04 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/endian.h>

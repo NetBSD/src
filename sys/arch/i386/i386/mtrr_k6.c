@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.1.2.2 2001/09/21 22:35:06 nathanw Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.1.2.3 2002/01/08 00:25:26 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * AMD K6 MTRR support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.1.2.3 2002/01/08 00:25:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

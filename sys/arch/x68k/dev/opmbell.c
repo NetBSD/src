@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.7 2000/03/23 06:47:33 thorpej Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.7.12.1 2002/01/08 00:28:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -124,7 +124,7 @@ bellattach(num)
 		printf("WARNING: no memory for opm bell\n");
 		return;
 	}
-	bzero(mem, size);
+	memset(mem, 0, size);
 	bell_softc = (struct bell_softc *)mem;
 
 	for (unit = 0; unit < num; unit++) {
@@ -137,7 +137,7 @@ bellattach(num)
 		sc->key = bell_pitchtokey(sc->pitch);
 
 		/* setup initial voice parameter */
-		bcopy(&bell_voice, &vtab[unit], sizeof(bell_voice));
+		memcpy(&vtab[unit], &bell_voice, sizeof(bell_voice));
 		opm_set_voice(sc->ch, &vtab[unit]);
 
 		printf("bell%d: YM2151 OPM bell emulation.\n", unit);
@@ -219,7 +219,7 @@ bellioctl(dev, cmd, addr, flag, p)
 	    if (addr == NULL)
 		return EFAULT;
 
-	    bcopy(&vtab[unit], addr, sizeof(struct opm_voice));
+	    memcpy(addr, &vtab[unit], sizeof(struct opm_voice));
 	    break;
 
 	case BELLIOCSVOICE:
@@ -229,7 +229,7 @@ bellioctl(dev, cmd, addr, flag, p)
 	    if (addr == NULL)
 		return EFAULT;
 
-	    bcopy(addr, &vtab[unit], sizeof(struct opm_voice));
+	    memcpy(&vtab[unit], addr, sizeof(struct opm_voice));
 	    opm_set_voice(sc->ch, &vtab[unit]);
 	    break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.2 2001/11/15 06:39:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.3 2002/01/08 00:23:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -140,9 +140,9 @@
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 #include <machine/param.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.2 2001/11/15 06:39:22 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.3 2002/01/08 00:23:09 nathanw Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1727,6 +1727,19 @@ pmap_deactivate(l)
 {
 }
 
+/*
+ * Perform any deferred pmap operations.
+ */
+void
+pmap_update(struct pmap *pmap)
+{
+
+	/*
+	 * We haven't deferred any pmap operations, but we do need to
+	 * make sure TLB/cache operations have completed.
+	 */
+	cpu_cpwait();
+}
 
 /*
  * pmap_clean_page()
@@ -1858,6 +1871,7 @@ pmap_zero_page(phys)
 	 */
 	*page_hook0.pte = L2_PTE(phys & PG_FRAME, AP_KRW);
 	cpu_tlb_flushD_SE(page_hook0.va);
+	cpu_cpwait();
 	bzero_page(page_hook0.va);
 	cpu_cache_purgeD_rng(page_hook0.va, NBPG);
 }
@@ -1889,7 +1903,8 @@ pmap_pageidlezero(phys)
 	 */
 	*page_hook0.pte = L2_PTE(phys & PG_FRAME, AP_KRW);
 	cpu_tlb_flushD_SE(page_hook0.va);
-	
+	cpu_cpwait();
+
 	for (i = 0, ptr = (int *)page_hook0.va;
 			i < (NBPG / sizeof(int)); i++) {
 		if (sched_whichqs != 0) {
@@ -1951,6 +1966,7 @@ pmap_copy_page(src, dest)
 	*page_hook1.pte = L2_PTE(dest & PG_FRAME, AP_KRW);
 	cpu_tlb_flushD_SE(page_hook0.va);
 	cpu_tlb_flushD_SE(page_hook1.va);
+	cpu_cpwait();
 	bcopy_page(page_hook0.va, page_hook1.va);
 	cpu_cache_purgeD_rng(page_hook0.va, NBPG);
 	cpu_cache_purgeD_rng(page_hook1.va, NBPG);
@@ -2275,6 +2291,7 @@ pmap_vac_me_user(struct pmap *pmap, struct pv_head *pvh, pt_entry_t *ptes,
 			cpu_cache_purgeID();
 			cpu_tlb_flushID();
 		}
+		cpu_cpwait();
 	} else if (entries > 0) {
 		/*
 		 * Turn cacheing back on for some pages.  If it is a kernel
@@ -2506,7 +2523,7 @@ pmap_remove_all(pa)
 		PDEBUG(0, printf("[%p,%08x,%08lx,%08x] ", pmap, *pte,
 		    pv->pv_va, pv->pv_flags));
 #ifdef DEBUG
-		if (!pmap_pde_page(pmap_pde(pmap, pv->pv_pa)) ||
+		if (!pmap_pde_page(pmap_pde(pmap, pv->pv_va)) ||
 		    !pmap_pte_v(pte) || pmap_pte_pa(pte) != pa)
 			panic("pmap_remove_all: bad mapping");
 #endif	/* DEBUG */
@@ -2544,6 +2561,7 @@ reduce wiring count on page table pages as references drop
 
 	PDEBUG(0, printf("done\n"));
 	cpu_tlb_flushID();
+	cpu_cpwait();
 }
 
 
@@ -3121,6 +3139,7 @@ pmap_pte(pmap, va)
 		pmap_map_in_l1(p->p_vmspace->vm_map.pmap, ALT_PAGE_TBLS_BASE,
 		    pmap->pm_pptpt, FALSE);
 		cpu_tlb_flushD();
+		cpu_cpwait();
 	}
 	PDEBUG(10, printf("page tables base = %p offset=%lx\n", ptp,
 	    ((va >> (PGSHIFT-2)) & ~3)));
@@ -3295,6 +3314,7 @@ pmap_map_ptes(struct pmap *pmap)
 	pmap_map_in_l1(p->p_vmspace->vm_map.pmap, ALT_PAGE_TBLS_BASE,
 			pmap->pm_pptpt, FALSE);
 	cpu_tlb_flushD();
+	cpu_cpwait();
 	return (pt_entry_t *)ALT_PAGE_TBLS_BASE;
 }
 
@@ -3418,6 +3438,7 @@ pmap_clearbit(pa, maskbits)
 			 */
 			cpu_tlb_flushID_SE(pv->pv_va); 
 	}
+	cpu_cpwait();
 
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
@@ -3562,6 +3583,7 @@ pmap_modified_emulation(pmap, va)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	/* Return, indicating the problem has been dealt with */
 	cpu_tlb_flushID_SE(va);
+	cpu_cpwait();
 	return(1);
 }
 
@@ -3610,6 +3632,7 @@ pmap_handled_emulation(pmap, va)
 
 	/* Return, indicating the problem has been dealt with */
 	cpu_tlb_flushID_SE(va);
+	cpu_cpwait();
 	return(1);
 }
 

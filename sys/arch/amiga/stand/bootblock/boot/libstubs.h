@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.h,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: libstubs.h,v 1.3.26.1 2002/01/08 00:23:00 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,6 +63,9 @@ void AbortIO(struct AmigaIO *);
 u_int8_t WaitIO(struct AmigaIO *);
 
 int OpenDevice(const char *, u_int32_t, struct AmigaIO *, u_int32_t);
+#ifdef _PRIMARY_BOOT
+void CloseDevice(struct AmigaIO *);
+#endif
 
 void *FindResident(const char *);
 void *OpenResource(const char *);
@@ -79,6 +82,10 @@ struct Screen *OpenScreenTagList(struct NewScreen *, const u_int32_t *);
 struct Screen *OpenScreenTag(struct NewScreen *, ...);
 struct Window *OpenWindowTagList(struct Window *, const u_int32_t *);
 struct Window *OpenWindowTag(struct Window *, ...);
+#ifdef _PRIMARY_BOOT
+void CloseScreen(struct Screen *);
+void CloseWindow(struct Window *);
+#endif
 
 #ifdef nomore
 u_int32_t mytime(void);

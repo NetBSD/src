@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.59.2.4 2001/10/08 20:10:45 nathanw Exp $ */
+/*	$NetBSD: apm.c,v 1.59.2.5 2002/01/08 00:25:16 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.59.2.5 2002/01/08 00:25:16 nathanw Exp $");
 
 #include "apm.h"
 #if NAPM > 1

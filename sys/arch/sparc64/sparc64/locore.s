@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.7 2002/01/04 22:38:51 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.8 2002/01/08 00:28:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -74,6 +74,7 @@
 #undef	SCHED_DEBUG
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 

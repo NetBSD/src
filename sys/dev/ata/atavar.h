@@ -1,7 +1,7 @@
-/*	$NetBSD: atavar.h,v 1.18.6.1 2001/06/21 20:01:18 nathanw Exp $	*/
+/*	$NetBSD: atavar.h,v 1.18.6.2 2002/01/08 00:29:22 nathanw Exp $	*/
 
 /*
- * Copyright (c) 1998 Manuel Bouyer.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,7 @@ struct ata_drive_datas {
 #define DRIVE_MODE	0x0040 /* the drive reported its mode */
 #define DRIVE_RESET	0x0080 /* reset the drive state at next xfer */
 #define DRIVE_DMAERR	0x0100 /* Udma transfer had crc error, don't try DMA */
+#define DRIVE_ATAPIST	0x0100 /* device is an ATAPI tape drive */
     /*
      * Current setting of drive's PIO, DMA and UDMA modes.
      * Is initialised by the disks drivers at attach time, and may be
@@ -88,24 +89,6 @@ struct ata_drive_datas {
 
     struct device *drv_softc; /* ATA drives softc, if any */
     void* chnl_softc; /* channel softc */
-};
-
-/* ATA/ATAPI common attachement datas */
-/*
- * XXX Small hack alert
- * NOTE:  The first field of struct ata_atapi_attach is shared with 
- * dev/scspi/scsipiconf.h's struct scsipi_channel.  This allows
- * atapibus and scsibus to attach to the same device.
- */
-struct ata_atapi_attach {
-    u_int8_t aa_type; /* Type of device */
-/*#define T_SCSI 0*/
-#define T_ATAPI 1
-#define T_ATA 2
-    u_int8_t aa_channel; /* controller's channel */
-    u_int8_t aa_openings; /* Number of simultaneous commands possible */
-    struct ata_drive_datas *aa_drv_data;
-    void *aa_bus_private; /* infos specifics to this bus */
 };
 
 /* User config flags that force (or disable) the use of a mode */
@@ -161,19 +144,7 @@ struct wdc_command {
     void *callback_arg;  /* argument passed to *callback() */
 };
 
-int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
-#define WDC_COMPLETE 0x01
-#define WDC_QUEUED   0x02
-#define WDC_TRY_AGAIN 0x03
-
-void wdc_probe_caps __P((struct ata_drive_datas*));
 int  wdc_downgrade_mode __P((struct ata_drive_datas*));
-
-void wdc_reset_channel __P((struct ata_drive_datas *));
-
-int wdc_ata_addref __P((struct ata_drive_datas *));
-void wdc_ata_delref __P((struct ata_drive_datas *));
-void wdc_ata_kill_pending __P((struct ata_drive_datas *));
 
 struct ataparams;
 int ata_get_params __P((struct ata_drive_datas*, u_int8_t,
@@ -185,4 +156,3 @@ int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));
 #define CMD_AGAIN 2
 
 void ata_dmaerr __P((struct ata_drive_datas *));
-void ata_perror __P((struct ata_drive_datas *, int, char *));

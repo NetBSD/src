@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.2 2000/09/21 23:40:47 eeh Exp $	*/
+/*	$NetBSD: msvar.h,v 1.2.2.1 2002/01/08 00:31:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,14 +57,9 @@
 #define	MS_TX_RING_SIZE	16
 #define MS_TX_RING_MASK (MS_TX_RING_SIZE-1)
 /*
- * Keyboard serial line speed is fixed at 1200 bps; mouse serial line
- * speed defaults to 1200 bps.
+ * mouse serial line speed defaults to 1200 bps.
  */
-#ifdef	SUN_MS_BPS
-#define	MS_BPS	SUN_MS_BPS
-#else
-#define MS_BPS 	1200
-#endif
+#define MS_DEFAULT_BPS 	1200
 
 /*
  * Mouse state.  A Mouse Systems mouse is a fairly simple device,

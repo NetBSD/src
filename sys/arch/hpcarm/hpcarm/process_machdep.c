@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3.8.2 2001/11/15 17:46:27 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3.8.3 2002/01/08 00:24:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -77,7 +77,7 @@
 #include <machine/reg.h>
 
 #ifdef ARMFPE
-#include <machine/cpus.h>
+#include <arm/cpus.h>
 #include <arm32/fpe-arm/armfpe.h>
 #endif	/* ARMFPE */
 

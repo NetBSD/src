@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.36.2.4 2001/11/14 19:16:16 nathanw Exp $	*/
+/*	$NetBSD: ucom.c,v 1.36.2.5 2002/01/08 00:32:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.4 2001/11/14 19:16:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.36.2.5 2002/01/08 00:32:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ Static int	ucomparam(struct tty *, struct termios *);
 Static void	ucomstart(struct tty *);
 Static void	ucom_shutdown(struct ucom_softc *);
 Static int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
-			      int, struct proc *);
+			      int, usb_proc_ptr);
 Static void	ucom_dtr(struct ucom_softc *, int);
 Static void	ucom_rts(struct ucom_softc *, int);
 Static void	ucom_break(struct ucom_softc *, int);
@@ -291,7 +291,7 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode, struct proc *p)
+ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
@@ -486,7 +486,7 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode, struct proc *p)
+ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -553,10 +553,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ucompoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+ucompoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -582,7 +579,7 @@ ucomtty(dev_t dev)
 }
 
 int
-ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
@@ -596,7 +593,7 @@ ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 Static int
 ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
-	      int flag, struct proc *p)
+	      int flag, usb_proc_ptr p)
 {
 	struct tty *tp = sc->sc_tty;
 	int error;

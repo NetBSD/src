@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.8.3 2001/12/15 07:03:49 gmcgarry Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.8.4 2002/01/08 00:24:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,6 @@
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
-extern struct emul emul_hpux;
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -261,7 +260,7 @@ grfioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case GRFIOCGINFO:
-		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
+		memcpy(data, (caddr_t)&gp->g_display, sizeof(struct grfinfo));
 		break;
 
 	case GRFIOCON:
@@ -716,7 +715,7 @@ grffindpid(gp)
 	if (gp->g_pid == NULL) {
 		gp->g_pid = (short *)
 			malloc(GRFMAXLCK * sizeof(short), M_DEVBUF, M_WAITOK);
-		bzero((caddr_t)gp->g_pid, GRFMAXLCK * sizeof(short));
+		memset((caddr_t)gp->g_pid, 0, GRFMAXLCK * sizeof(short));
 	}
 	pid = curproc->l_proc->p_pid;
 	ni = limit = gp->g_pid[0];

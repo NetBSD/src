@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.1.2.6 2001/12/06 09:30:55 wdk Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.1.2.7 2002/01/08 00:29:02 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -292,7 +292,7 @@ struct linux_sys_ipc_args {
 };
 
 struct linux_sys_sigreturn_args {
-	syscallarg(struct linux_pt_regs) regs;
+	syscallarg(struct linux_sigframe *) sf;
 };
 
 struct linux_sys_clone_args {

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1.2.4 2001/10/22 20:41:13 nathanw Exp $  
+	$NetBSD: syscalls.master,v 1.1.2.5 2002/01/08 00:29:03 nathanw Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -218,7 +218,7 @@
 117	STD		{ int linux_sys_ipc(int what, int a1, int a2, int a3, \
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
-119	STD		{ int linux_sys_sigreturn(struct linux_pt_regs regs); }
+119	STD		{ int linux_sys_sigreturn(struct linux_sigframe *sf); }
 120	STD		{ int linux_sys_clone(int flags, void *stack); }
 121	STD		{ int linux_sys_setdomainname(char *domainname, \
 			    int len); }

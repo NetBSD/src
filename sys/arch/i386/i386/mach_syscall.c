@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.1.6.2 2001/08/24 00:08:31 nathanw Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.1.6.3 2002/01/08 00:25:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.1.6.3 2002/01/08 00:25:23 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"

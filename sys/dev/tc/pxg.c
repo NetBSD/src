@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.4.2.3 2001/11/14 19:16:10 nathanw Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.4.2.4 2002/01/08 00:32:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.4.2.3 2001/11/14 19:16:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.4.2.4 2002/01/08 00:32:01 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

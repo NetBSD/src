@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.41.2.3 2001/11/14 19:16:18 nathanw Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.41.2.4 2002/01/08 00:32:11 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.41.2.3 2001/11/14 19:16:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.41.2.4 2002/01/08 00:32:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ int ulptusein = 1;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev_t dev, int flag, int mode, struct proc *p)
+ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
@@ -547,8 +547,18 @@ ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_in_xfer2 = usbd_alloc_xfer(sc->sc_udev);
 		if (sc->sc_in_xfer1 == NULL || sc->sc_in_xfer2 == NULL) {
 			error = ENOMEM;
+			if (sc->sc_in_xfer1 != NULL) {
+				usbd_free_xfer(sc->sc_in_xfer1);
+				sc->sc_in_xfer1 = NULL;
+			}
+			if (sc->sc_in_xfer2 != NULL) {
+				usbd_free_xfer(sc->sc_in_xfer2);
+				sc->sc_in_xfer2 = NULL;
+			}
 			usbd_close_pipe(sc->sc_out_pipe);
 			sc->sc_out_pipe = NULL;
+			usbd_close_pipe(sc->sc_in_pipe);
+			sc->sc_in_pipe = NULL;
 			sc->sc_state = 0;
 			goto done;
 		}
@@ -591,7 +601,7 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 }
 
 int
-ulptclose(dev_t dev, int flag, int mode, struct proc *p)
+ulptclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ulpt_softc *sc;
 
@@ -681,7 +691,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	int error = 0;
 

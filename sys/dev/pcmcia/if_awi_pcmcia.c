@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.18.2.3 2001/11/14 19:15:36 nathanw Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.18.2.4 2002/01/08 00:31:22 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.18.2.3 2001/11/14 19:15:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.18.2.4 2002/01/08 00:31:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ awi_pcmcia_attach(parent, self, aux)
 	const struct awi_pcmcia_product *app;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	bus_addr_t memoff;
+	bus_size_t memoff;
 
 	app = awi_pcmcia_lookup(pa);
 	if (app == NULL)

@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.152.2.4 2001/11/14 19:12:39 nathanw Exp $
+# $NetBSD: ALPHA,v 1.152.2.5 2002/01/08 00:22:52 nathanw Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.152.2.4 $"
+ident		"ALPHA-$Revision: 1.152.2.5 $"
 
 maxusers 32
 
@@ -354,8 +354,8 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
 #wdc*	at	isapnp?
-we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
-we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
+we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
 #audio*	at	wss?
@@ -451,16 +451,19 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -507,8 +510,8 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4		# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1

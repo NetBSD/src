@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.7.6.2 2001/11/14 19:15:58 nathanw Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.7.6.3 2002/01/08 00:31:43 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.6.2 2001/11/14 19:15:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.6.3 2002/01/08 00:31:43 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

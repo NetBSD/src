@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.40.2.4 2001/11/14 19:14:17 nathanw Exp $	*/
+/*	$NetBSD: bha.c,v 1.40.2.5 2002/01/08 00:29:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,11 +53,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.40.2.4 2001/11/14 19:14:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.40.2.5 2002/01/08 00:29:36 nathanw Exp $");
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

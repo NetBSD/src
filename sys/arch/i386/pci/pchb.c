@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.23.4.1 2001/09/21 22:35:12 nathanw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.23.4.2 2002/01/08 00:25:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.23.4.2 2002/01/08 00:25:41 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,6 +144,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_SERVERWORKS_XX5:
 		case PCI_PRODUCT_SERVERWORKS_CNB20HE:
+		case PCI_PRODUCT_SERVERWORKS_CNB20LE:
 		case PCI_PRODUCT_SERVERWORKS_CIOB20:
 			if ((attachflags &
 			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==

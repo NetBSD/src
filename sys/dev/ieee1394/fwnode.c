@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.5.2.3 2001/11/14 19:14:42 nathanw Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.5.2.4 2002/01/08 00:30:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.2.3 2001/11/14 19:14:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.2.4 2002/01/08 00:30:16 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>

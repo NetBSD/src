@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.60.2.2 2001/11/14 19:16:37 nathanw Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.60.2.3 2002/01/08 00:32:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.60.2.2 2001/11/14 19:16:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.60.2.3 2002/01/08 00:32:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,12 +265,17 @@ dosetrlimit(p, cred, which, limp)
 	    limp->rlim_max == alimp->rlim_max)
 		return 0;
 
-	if (limp->rlim_cur > alimp->rlim_max || 
-	    limp->rlim_max > alimp->rlim_max)
-		if ((error = suser(cred->pc_ucred, &p->p_acflag)) != 0)
+	if (limp->rlim_cur > limp->rlim_max) {
+		/*
+		 * This is programming error. According to SUSv2, we should
+		 * return error in this case.
+		 */
+		return (EINVAL);
+	}
+	if (limp->rlim_max > alimp->rlim_max
+	    && (error = suser(cred->pc_ucred, &p->p_acflag)) != 0)
 			return (error);
-	if (limp->rlim_cur > limp->rlim_max)
-		limp->rlim_cur = limp->rlim_max;
+
 	if (p->p_limit->p_refcnt > 1 &&
 	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
 		newplim = limcopy(p->p_limit);
@@ -293,6 +298,16 @@ dosetrlimit(p, cred, which, limp)
 			limp->rlim_cur = maxsmap;
 		if (limp->rlim_max > maxsmap)
 			limp->rlim_max = maxsmap;
+
+		/*
+		 * Return EINVAL if the new stack size limit is lower than
+		 * current usage. Otherwise, the process would get SIGSEGV the
+		 * moment it would try to access anything on it's current stack.
+		 * This conforms to SUSv2.
+		 */
+		if (limp->rlim_cur < p->p_vmspace->vm_ssize * PAGE_SIZE
+		    || limp->rlim_max < p->p_vmspace->vm_ssize * PAGE_SIZE)
+			return (EINVAL);
 
 		/*
 		 * Stack is allocated to the max at exec time with

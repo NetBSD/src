@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.26 2000/05/12 20:31:22 bouyer Exp $	*/
+/*	$NetBSD: pcib.c,v 1.26.8.1 2002/01/08 00:25:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.26.8.1 2002/01/08 00:25:42 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

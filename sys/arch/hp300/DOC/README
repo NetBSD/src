@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 1994/10/26 07:22:55 cgd Exp $
+$NetBSD: README,v 1.2.50.1 2002/01/08 00:24:29 nathanw Exp $
 
 This directory contains random snippets related to various hp300 issues.
 
@@ -12,13 +12,7 @@ Options		Kernel configuration options that are either defined in
 		the prototype makefile or that can be specified in a config
 		file.
 
-Pmap.notes	Some (mostly HP-specific) observations I made while cleaning
-		up the hp300 pmap module.
-
 README		This.
-
-README.68040	Notes and copyright information for the 68040 floating point
-		emulation package.
 
 TODO.dev	A fairly ancient list of projects related to IO devices.
 

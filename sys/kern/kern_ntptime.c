@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.13.2.3 2001/11/14 19:16:36 nathanw Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.13.2.4 2002/01/08 00:32:33 nathanw Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.13.2.3 2001/11/14 19:16:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.13.2.4 2002/01/08 00:32:33 nathanw Exp $");
 
 #include "opt_ntp.h"
 
@@ -211,7 +211,6 @@ sys_ntp_adjtime(l, v, retval)
 	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
 			sizeof(ntv))) != 0)
 		return (error);
-
 
 	if (ntv.modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);

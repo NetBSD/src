@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.2.8.2 2001/06/21 20:04:09 nathanw Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.2.8.3 2002/01/08 00:30:46 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.15 2001/04/27 18:03:41 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.16 2001/12/01 10:43:36 jdolecek Exp 
  */
 
 /*-

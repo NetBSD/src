@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.55.2.3 2001/11/14 19:16:39 nathanw Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.55.2.4 2002/01/08 00:32:36 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.55.2.3 2001/11/14 19:16:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.55.2.4 2002/01/08 00:32:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -325,6 +325,42 @@ number(char *ep, int n)
 }
 
 /*
+ * Expand the size of the cd_devs array if necessary.
+ */
+void
+config_makeroom(int n, struct cfdriver *cd)
+{
+	int old, new;
+	void **nsp;
+
+	if (n < cd->cd_ndevs)
+		return;
+
+	/*
+	 * Need to expand the array.
+	 */
+	old = cd->cd_ndevs;
+	if (old == 0)
+		new = MINALLOCSIZE / sizeof(void *);
+	else
+		new = old * 2;
+	while (new <= n)
+		new *= 2;
+	cd->cd_ndevs = new;
+	nsp = malloc(new * sizeof(void *), M_DEVBUF,
+	    cold ? M_NOWAIT : M_WAITOK);	
+	if (nsp == NULL)
+		panic("config_attach: %sing dev array",
+		    old != 0 ? "expand" : "creat");
+	memset(nsp + old, 0, (new - old) * sizeof(void *));
+	if (old != 0) {
+		memcpy(nsp, cd->cd_devs, old * sizeof(void *));
+		free(cd->cd_devs, M_DEVBUF);
+	}
+	cd->cd_devs = nsp;
+}
+
+/*
  * Attach a found device.  Allocates memory for device variables.
  */
 struct device *
@@ -395,32 +431,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	}
 
 	/* put this device in the devices array */
-	if (dev->dv_unit >= cd->cd_ndevs) {
-		/*
-		 * Need to expand the array.
-		 */
-		int old = cd->cd_ndevs, new;
-		void **nsp;
-
-		if (old == 0)
-			new = MINALLOCSIZE / sizeof(void *);
-		else
-			new = old * 2;
-		while (new <= dev->dv_unit)
-			new *= 2;
-		cd->cd_ndevs = new;
-		nsp = malloc(new * sizeof(void *), M_DEVBUF,
-		    cold ? M_NOWAIT : M_WAITOK);	
-		if (nsp == 0)
-			panic("config_attach: %sing dev array",
-			    old != 0 ? "expand" : "creat");
-		memset(nsp + old, 0, (new - old) * sizeof(void *));
-		if (old != 0) {
-			memcpy(nsp, cd->cd_devs, old * sizeof(void *));
-			free(cd->cd_devs, M_DEVBUF);
-		}
-		cd->cd_devs = nsp;
-	}
+	config_makeroom(dev->dv_unit, cd);
 	if (cd->cd_devs[dev->dv_unit])
 		panic("config_attach: duplicate %s", dev->dv_xname);
 	cd->cd_devs[dev->dv_unit] = dev;

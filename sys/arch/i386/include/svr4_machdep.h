@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.12.4.1 2001/11/14 19:12:48 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.12.4.2 2002/01/08 00:25:34 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -126,8 +126,7 @@ struct svr4_ssd {
 #define	SVR4_TRAP_FSETFP	2	/* Set emulated FP context */
 #define	SVR4_TRAP_GETHRTIME	3	/* implements gethrtime(2) */
 #define	SVR4_TRAP_GETHRVTIME	4	/* implements gethrvtime(2) */
-#define	SVR4_TRAP_CLOCK_SETTIME	5	/* implements clock_settime(2) */
-					/* Solaris calls this T_GETHRESTIME */
+#define	SVR4_TRAP_GETHRESTIME	5	/* clock_gettime(CLOCK_REALTIME, tp) */
 
 void svr4_syscall_intern __P((struct proc *));
 

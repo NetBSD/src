@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2001/03/04 08:28:52 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.21.8.1 2002/01/08 00:23:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,8 +41,13 @@
 
 #define	_MACHINE	arm32
 #define	MACHINE		"arm32"
+#ifdef __ELF__
+#define	_MACHINE_ARCH	arm
+#define	MACHINE_ARCH	"arm"
+#else
 #define	_MACHINE_ARCH	arm32
 #define	MACHINE_ARCH	"arm32"
+#endif /* __ELF__ */
 
 #include <arm/arm32/param.h>
 

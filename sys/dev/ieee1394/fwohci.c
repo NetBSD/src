@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.6 2001/11/14 19:14:42 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.7 2002/01/08 00:30:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.6 2001/11/14 19:14:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.7 2002/01/08 00:30:16 nathanw Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.6 2001/11/14 19:14:42 nathanw Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kthread.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -3661,6 +3660,48 @@ fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->fwbuscf_idlo == ntohl(*((u_int32_t *)&fwa->uid[4]))))
 		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 	return 0;
+}
+
+int
+fwohci_detach(struct fwohci_softc *sc, int flags)
+{
+	int rv = 0;
+
+	if (sc->sc_sc1394.sc1394_if != NULL)
+		rv = config_detach(sc->sc_sc1394.sc1394_if, flags);
+	if (rv != 0)
+		return (rv);
+
+	callout_stop(&sc->sc_selfid_callout);
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_shutdownhook != NULL)
+		shutdownhook_disestablish(sc->sc_shutdownhook);
+
+	return (rv);
+}
+
+int
+fwohci_activate(struct device *self, enum devact act)
+{
+	struct fwohci_softc *sc = (struct fwohci_softc *)self;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_sc1394.sc1394_if != NULL)
+	                rv = config_deactivate(sc->sc_sc1394.sc1394_if);
+		break; 
+	}
+	splx(s);
+
+	return (rv);
 }
 
 #ifdef FW_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 1999/09/17 19:59:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.20.1 2002/01/08 00:24:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -98,6 +98,18 @@
  * and the drivers are initialized.
  */
 
+#include "hil.h"
+#include "dvbox.h"
+#include "gbox.h"
+#include "hyper.h"
+#include "rbox.h"
+#include "rbox.h"
+#include "topcat.h"
+#include "dca.h"
+#include "dcm.h"
+#include "apci.h"
+#include "ite.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -133,6 +145,22 @@
 
 #include <hp300/dev/hpibvar.h>
 #include <hp300/dev/scsivar.h>
+
+
+/* should go away with a cleanup */
+extern int dcacnattach(bus_space_tag_t, bus_addr_t, int);
+extern int dcmcnattach(bus_space_tag_t, bus_addr_t, int);
+extern int apcicnattach(bus_space_tag_t, bus_addr_t, int);
+extern int dvboxcnattach(bus_space_tag_t, bus_addr_t, int);
+extern int gboxcnattach(bus_space_tag_t, bus_addr_t, int);
+extern int rboxcnattach(bus_space_tag_t, bus_addr_t, int);
+extern int hypercnattach(bus_space_tag_t, bus_addr_t, int);
+extern int topcatcnattach(bus_space_tag_t, bus_addr_t, int);
+extern int hilkbdcnattach(bus_space_tag_t, bus_addr_t);
+extern int dnkbdcnattach(bus_space_tag_t, bus_addr_t);
+
+int dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int));
+int dio_scode_probe(int, int (*func)(bus_space_tag_t, bus_addr_t, int));
 
 /* XXX must be allocated statically because of early console init */
 struct	map extiomap[EIOMAPSIZE/16];
@@ -261,22 +289,15 @@ cpu_configure()
 	LIST_INIT(&dev_data_list_hpib);
 	LIST_INIT(&dev_data_list_scsi);
 
-	/*
-	 * XXX In order for the HIL to configure, interrupts need to be
-	 * XXX enabled.  However, we need to initialize the HIL driver's
-	 * XXX software state prior to that, since a pending interrupt
-	 * XXX might cause the HIL's interrupt handler to be run in an
-	 * XXX uninitialized environment otherwise.
-	 *
-	 * XXX These should be consolidated into some kind of table.
-	 */
-	hilsoftinit(0, HILADDR);
-	(void)spl0();
-	hilinit(0, HILADDR);
-
+	/* Kick off autoconfiguration. */
 	(void)splhigh();
+
+	softintr_init();
+
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
+
+	/* Configuration is finished, turn on interrupts. */
 	(void)spl0();
 
 	intr_printlevels();
@@ -385,7 +406,7 @@ device_register(dev, aux)
 	    M_DEVBUF, M_NOWAIT);
 	if (dd == NULL)
 		panic("device_register: can't allocate dev_data");
-	bzero(dd, sizeof(struct dev_data));
+	memset(dd, 0, sizeof(struct dev_data));
 
 	dd->dd_dev = dev;
 
@@ -402,16 +423,16 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    memcmp(dev->dv_xname, "nhpib", 5) == 0 ||
+	    memcmp(dev->dv_xname, "oscsi", 5) == 0) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "rd", 2) == 0) {
+	if (memcmp(dev->dv_xname, "rd", 2) == 0) {
 		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
@@ -419,7 +440,7 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "sd", 2) == 0) {
+	if (memcmp(dev->dv_xname, "sd", 2) == 0) {
 		struct oscsi_attach_args *osa = aux;
 
 		dd->dd_slave = osa->osa_target;
@@ -436,13 +457,13 @@ device_register(dev, aux)
  linkup:
 	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
 
-	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    bcmp(dev->dv_xname, "nhpib", 5) == 0) {
+	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    memcmp(dev->dv_xname, "nhpib", 5) == 0) {
 		dev_data_insert(dd, &dev_data_list_hpib);
 		return;
 	}
 
-	if (bcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (memcmp(dev->dv_xname, "oscsi", 5) == 0) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -506,8 +527,8 @@ findbootdev()
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 0 && bcmp(booted_device->dv_xname, "ct", 2)) ||
-		    (type == 2 && bcmp(booted_device->dv_xname, "rd", 2))) {
+		if ((type == 0 && memcmp(booted_device->dv_xname, "ct", 2)) ||
+		    (type == 2 && memcmp(booted_device->dv_xname, "rd", 2))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -528,7 +549,7 @@ findbootdev()
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 4 && bcmp(booted_device->dv_xname, "sd", 2))) {
+		if ((type == 4 && memcmp(booted_device->dv_xname, "sd", 2))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -576,7 +597,7 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 		 * XXX for SCSI, so we have to do a little bit of
 		 * XXX extra work.
 		 */
-		if (bcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
+		if (memcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
 			/*
 			 * "sd" -> "oscsi"
 			 */
@@ -640,9 +661,9 @@ setbootdev()
 	/*
 	 * Determine device type.
 	 */
-	if (bcmp(root_device->dv_xname, "rd", 2) == 0)
+	if (memcmp(root_device->dv_xname, "rd", 2) == 0)
 		type = 2;
-	else if (bcmp(root_device->dv_xname, "sd", 2) == 0)
+	else if (memcmp(root_device->dv_xname, "sd", 2) == 0)
 		type = 4;
 	else {
 		printf("WARNING: strange root device!\n");
@@ -765,106 +786,126 @@ dev_data_insert(dd, ddlist)
  * Code to find and initialize the console
  **********************************************************************/
 
-/*
- * Scan all select codes, passing the corresponding VA to (*func)().
- * (*func)() is a driver-specific routine that looks for the console
- * hardware.
- */
-void
-console_scan(func, arg)
-	int (*func) __P((int, caddr_t, void *));
-	void *arg;
-{
-	int size, scode, sctop;
-	caddr_t pa, va;
-
-	/*
-	 * Scan all select codes.  Check each location for some
-	 * hardware.  If there's something there, call (*func)().
-	 */
-	sctop = DIO_SCMAX(machineid);
-	for (scode = 0; scode < sctop; ++scode) {
-		/*
-		 * Abort mission if console has been forced.
-		 */
-		if (conforced)
-			return;
-
-		/*
-		 * Skip over the select code hole and
-		 * the internal HP-IB controller.
-		 */
-		if (((scode >= 32) && (scode < 132)) ||
-		    ((scode == 7) && internalhpib))
-			continue;
-
-		/* Map current PA. */
-		pa = dio_scodetopa(scode);
-		va = iomap(pa, NBPG);
-		if (va == 0)
-			continue;
-
-		/* Check to see if hardware exists. */
-		if (badaddr(va)) {
-			iounmap(va, NBPG);
-			continue;
-		}
-
-		/*
-		 * Hardware present, call callback.  Driver returns
-		 * size of region to map if console probe successful
-		 * and worthwhile.
-		 */
-		size = (*func)(scode, va, arg);
-		iounmap(va, NBPG);
-		if (size) {
-			/* Free last mapping. */
-			if (convasize)
-				iounmap(conaddr, convasize);
-			convasize = 0;
-
-			/* Remap to correct size. */
-			va = iomap(pa, size);
-			if (va == 0)
-				continue;
-
-			/* Save this state for next time. */
-			conscode = scode;
-			conaddr = va;
-			convasize = size;
-		}
-	}
-}
-
-/*
- * Special version of cninit().  Actually, crippled somewhat.
- * This version lets the drivers assign cn_tab.
- */
 void
 hp300_cninit()
 {
-	struct consdev *cp;
-	extern struct consdev constab[];
-
-	cn_tab = NULL;
-
 	/*
-	 * Call all of the console probe functions.
+	 * Look for serial consoles first.
 	 */
-	for (cp = constab; cp->cn_probe; cp++)
-		(*cp->cn_probe)(cp);
-
-	/*
-	 * No console, we can handle it.
-	 */
-	if (cn_tab == NULL)
+#if NDCA > 0
+	if (!dio_scan(dcacnattach))
 		return;
+#endif
+#if NAPCI > 0
+	if (!dio_scan(apcicnattach))
+		return;
+#endif
+#if NDCM > 0
+	if (!dio_scan(dcmcnattach))
+		return;
+#endif
+
+#if NITE > 0
+#ifndef CONSCODE
+	/*
+	 * Look for internal framebuffers.
+	 */
+#if NDVBOX > 0
+	if (!dvboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+		goto find_kbd;
+#endif
+#if NGBOX > 0
+	if (!gboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+		goto find_kbd;
+#endif
+#if NRBOX > 0
+	if (!rboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+		goto find_kbd;
+#endif
+#if NTOPCAT > 0
+	if (!topcatcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+		goto find_kbd;
+#endif
+#endif
 
 	/*
-	 * Turn on the console.
+	 * Look for external framebuffers.
 	 */
-	(*cn_tab->cn_init)(cn_tab);
+#if NDVBOX > 0
+	if (!dio_scan(dvboxcnattach))
+		goto find_kbd;
+#endif
+#if NGBOX > 0
+	if (!dio_scan(gboxcnattach))
+		goto find_kbd;
+#endif
+#if NHYPER > 0
+	if (!dio_scan(hypercnattach))
+		goto find_kbd;
+#endif
+#if NRBOX > 0
+	if (!dio_scan(rboxcnattach))
+		goto find_kbd;
+#endif
+#if NTOPCAT > 0
+	if (!dio_scan(topcatcnattach))
+		goto find_kbd;
+#endif
+
+find_kbd:
+
+#if NDNKBD > 0
+	dnkbdcnattach(HP300_BUS_SPACE_INTIO, 0x1c000)
+#endif
+
+#if NHIL > 0
+	hilkbdcnattach(HP300_BUS_SPACE_INTIO, 0x28000);
+#endif
+#endif	/* NITE */
 }
+
+int
+dio_scan(func)
+	int (*func)(bus_space_tag_t, bus_addr_t, int);
+{
+#ifndef CONSCODE
+	int scode, sctop;
+
+	sctop = DIO_SCMAX(machineid);
+	for (scode = 0; scode < sctop; ++scode) {
+		if (DIO_INHOLE(scode) || ((scode == 7) && internalhpib))
+			continue;
+		if (!dio_scode_probe(scode, func))
+			return (0);
+	}
+#else
+		if (!dio_scode_probe(CONSCODE, func))
+			return (0);
+#endif
+
+	return (1);
+}
+
+int
+dio_scode_probe(scode, func)
+	int scode;
+	int (*func)(bus_space_tag_t, bus_addr_t, int);
+{
+	caddr_t pa, va;
+
+	pa = dio_scodetopa(scode);
+	va = iomap(pa, NBPG);
+	if (va == 0)
+		return (1);
+	if (badaddr(va)) {
+		iounmap(va, NBPG);
+		return (1);
+	}
+	iounmap(va, NBPG);
+
+	return ((*func)(HP300_BUS_SPACE_DIO, (bus_addr_t)pa, scode));
+}
+
 
 /**********************************************************************
  * Mapping functions

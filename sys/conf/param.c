@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.37.2.3 2001/11/14 19:13:33 nathanw Exp $	*/
+/*	$NetBSD: param.c,v 1.37.2.4 2002/01/08 00:29:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.37.2.3 2001/11/14 19:13:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.37.2.4 2002/01/08 00:29:13 nathanw Exp $");
 
 #include "opt_rtc_offset.h"
 #include "opt_sb_max.h"
@@ -71,6 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.37.2.3 2001/11/14 19:13:33 nathanw Exp $
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
+
+#define CONFIG_FILE
+#include "config_file.h"
 
 /*
  * System parameter formulae.

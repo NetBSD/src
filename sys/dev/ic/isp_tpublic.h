@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.5.2.2 2001/06/21 20:02:45 nathanw Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.5.2.3 2002/01/08 00:29:54 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -211,7 +211,8 @@ typedef struct {
  */
 
 #ifndef	_LP64
-#if	defined(__alpha__) || defined(__sparcv9cpu) || defined(__sparc_v9__)
+#if	defined(__alpha__) || defined(__sparcv9cpu) || defined(__sparc_v9__) ||\
+    defined(__ia64__)
 #define	_LP64
 #endif
 #endif

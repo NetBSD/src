@@ -1,7 +1,7 @@
-/*	$NetBSD: wd.c,v 1.212.2.2 2001/11/14 19:13:59 nathanw Exp $ */
+/*	$NetBSD: wd.c,v 1.212.2.3 2002/01/08 00:29:22 nathanw Exp $ */
 
 /*
- * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.2 2001/11/14 19:13:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.3 2002/01/08 00:29:22 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -141,6 +141,7 @@ struct wd_softc {
 	struct buf *sc_bp; /* buf being transfered */
 	void *wdc_softc;   /* pointer to our parent */
 	struct ata_drive_datas *drvp; /* Our controller's infos */
+	const struct ata_bustype *atabus;
 	int openings;
 	struct ataparams sc_params;/* drive characteistics found */
 	int sc_flags;	  
@@ -179,6 +180,7 @@ void	wdattach	__P((struct device *, struct device *, void *));
 int	wddetach __P((struct device *, int));
 int	wdactivate __P((struct device *, enum devact));
 int	wdprint	__P((void *, char *));
+void    wdperror __P((struct ata_drive_datas *, int, char *));
 
 struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach, wddetach, wdactivate
@@ -235,19 +237,19 @@ wdprobe(parent, match, aux)
 
 	void *aux;
 {
-	struct ata_atapi_attach *aa_link = aux;
+	struct ata_device *adev = aux;
 
-	if (aa_link == NULL)
+	if (adev == NULL)
 		return 0;
-	if (aa_link->aa_type != T_ATA)
+	if (adev->adev_bustype->bustype_type != SCSIPI_BUSTYPE_ATA)
 		return 0;
 
 	if (match->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT &&
-	    match->cf_loc[ATACF_CHANNEL] != aa_link->aa_channel)
+	    match->cf_loc[ATACF_CHANNEL] != adev->adev_channel)
 		return 0;
 
 	if (match->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
-	    match->cf_loc[ATACF_DRIVE] != aa_link->aa_drv_data->drive)
+	    match->cf_loc[ATACF_DRIVE] != adev->adev_drv_data->drive)
 		return 0;
 	return 1;
 }
@@ -258,7 +260,7 @@ wdattach(parent, self, aux)
 	void *aux;
 {
 	struct wd_softc *wd = (void *)self;
-	struct ata_atapi_attach *aa_link= aux;
+	struct ata_device *adev= aux;
 	int i, blank;
 	char buf[41], pbuf[9], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
@@ -266,8 +268,9 @@ wdattach(parent, self, aux)
 	callout_init(&wd->sc_restart_ch);
 	BUFQ_INIT(&wd->sc_q);
 
-	wd->openings = aa_link->aa_openings;
-	wd->drvp = aa_link->aa_drv_data;;
+	wd->atabus = adev->adev_bustype;
+	wd->openings = adev->adev_openings;
+	wd->drvp = adev->adev_drv_data;;
 	wd->wdc_softc = parent;
 	/* give back our softc to our caller */
 	wd->drvp->drv_softc = &wd->sc_dev;
@@ -554,7 +557,7 @@ __wdstart(wd, bp)
 	wd->sc_wdc_bio.databuf = bp->b_data;
 	/* Instrumentation. */
 	disk_busy(&wd->sc_dk);
-	switch (wdc_ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
+	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
 	case WDC_TRY_AGAIN:
 		callout_reset(&wd->sc_restart_ch, hz, wdrestart, wd);
 		break;
@@ -562,7 +565,7 @@ __wdstart(wd, bp)
 	case WDC_COMPLETE:
 		break;
 	default:
-		panic("__wdstart: bad return code from wdc_ata_bio()");
+		panic("__wdstart: bad return code from ata_bio()");
 	}
 }
 
@@ -595,9 +598,9 @@ wddone(v)
 		if (wd->sc_wdc_bio.r_error != 0 &&
 		    (wd->sc_wdc_bio.r_error & ~(WDCE_MC | WDCE_MCR)) == 0)
 			goto noerror;
-		ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
+		wdperror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
 retry:		/* Just reset and retry. Can we do more ? */
-		wdc_reset_channel(wd->drvp);
+		wd->atabus->ata_reset_channel(wd->drvp);
 		diskerr(bp, "wd", errbuf, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries++ < WDIORETRIES) {
@@ -732,7 +735,7 @@ wdopen(dev, flag, fmt, p)
 	 * to the adapter.
 	 */
 	if (wd->sc_dk.dk_openmask == 0 &&
-	    (error = wdc_ata_addref(wd->drvp)) != 0)
+	    (error = wd->atabus->ata_addref(wd->drvp)) != 0)
 		return (error);
 
 	if ((error = wdlock(wd)) != 0)
@@ -792,7 +795,7 @@ bad3:
 	wdunlock(wd);
 bad4:
 	if (wd->sc_dk.dk_openmask == 0)
-		wdc_ata_delref(wd->drvp);
+		wd->atabus->ata_delref(wd->drvp);
 	return error;
 }
 
@@ -828,7 +831,7 @@ wdclose(dev, flag, fmt, p)
 		if (! (wd->sc_flags & WDF_KLABEL))
 			wd->sc_flags &= ~WDF_LOADED;
 
-		wdc_ata_delref(wd->drvp);
+		wd->atabus->ata_delref(wd->drvp);
 	}
 
 	wdunlock(wd);
@@ -918,6 +921,40 @@ wdgetdisklabel(wd)
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
 #endif
+}
+
+void
+wdperror(drvp, errno, buf)
+	struct ata_drive_datas *drvp;
+	int errno;
+	char *buf;
+{
+	static char *errstr0_3[] = {"address mark not found",
+	    "track 0 not found", "aborted command", "media change requested",
+	    "id not found", "media changed", "uncorrectable data error",
+	    "bad block detected"};
+	static char *errstr4_5[] = {"obsolete (address mark not found)",
+	    "no media/write protected", "aborted command",
+	    "media change requested", "id not found", "media changed",
+	    "uncorrectable data error", "interface CRC error"};
+	char **errstr;  
+	int i;
+	char *sep = "";
+
+	if (drvp->ata_vers >= 4)
+		errstr = errstr4_5;
+	else
+		errstr = errstr0_3;
+
+	if (errno == 0)
+		sprintf(buf, "error not notified");
+
+	for (i = 0; i < 8; i++) {
+		if (errno & (1 << i)) {
+			buf += sprintf(buf, "%s%s", sep, errstr[i]);
+			sep = ", ";
+		}
+	}
 }
 
 int
@@ -1235,7 +1272,7 @@ again:
 			min(nblks, wddumpmulti) * lp->d_secsize;
 		wd->sc_wdc_bio.databuf = va;
 #ifndef WD_DUMP_NOT_TRUSTED
-		switch (wdc_ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
+		switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
 		case WDC_TRY_AGAIN:
 			panic("wddump: try again");
 			break;
@@ -1260,7 +1297,7 @@ again:
 			break;
 		case ERROR:
 			errbuf[0] = '\0';
-			ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
+			wdperror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
 			printf("wddump: %s", errbuf);
 			err = EIO;
 			break;
@@ -1329,7 +1366,7 @@ wd_get_params(wd, flags, params)
 	u_int8_t flags;
 	struct ataparams *params;
 {
-	switch (ata_get_params(wd->drvp, flags, params)) {
+	switch (wd->atabus->ata_get_params(wd->drvp, flags, params)) {
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
@@ -1371,7 +1408,7 @@ wd_flushcache(wd, flags)
 	wdc_c.r_st_pmask = WDCS_DRDY;
 	wdc_c.flags = flags;
 	wdc_c.timeout = 30000; /* 30s timeout */
-	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+	if (wd->atabus->ata_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
 		    wd->sc_dev.dv_xname);
 	}
@@ -1463,7 +1500,7 @@ wi_find(bp)
  *   user space I/O is required.  If physio() is called, physio() eventually
  *   calls wdioctlstrategy().
  *
- * - In either case, wdioctlstrategy() calls wdc_exec_command()
+ * - In either case, wdioctlstrategy() calls wd->atabus->ata_exec_command()
  *   to perform the actual command
  *
  * The reason for the use of the pseudo strategy routine is because
@@ -1543,7 +1580,8 @@ wdioctlstrategy(bp)
 	wdc_c.data = wi->wi_bp.b_data;
 	wdc_c.bcount = wi->wi_bp.b_bcount;
 
-	if (wdc_exec_command(wi->wi_softc->drvp, &wdc_c) != WDC_COMPLETE) {
+	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &wdc_c)
+	    != WDC_COMPLETE) {
 		wi->wi_atareq.retsts = ATACMD_ERROR;
 		goto bad;
 	}

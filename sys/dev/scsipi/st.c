@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.134.2.3 2001/11/14 19:16:05 nathanw Exp $ */
+/*	$NetBSD: st.c,v 1.134.2.4 2002/01/08 00:31:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,11 +57,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.134.2.3 2001/11/14 19:16:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.134.2.4 2002/01/08 00:31:56 nathanw Exp $");
 
 #include "opt_scsi.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
@@ -75,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.134.2.3 2001/11/14 19:16:05 nathanw Exp $")
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.134.2.3 2001/11/14 19:16:05 nathanw Exp $")
 #define STMODE(z)	( minor(z)       & 0x03)
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
+#define STNMINOR	16
 
 #define NORMAL_MODE	0
 #define NOREW_MODE	1
@@ -271,18 +272,18 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{ST_Q_FORCE_BLKSIZE, 512, 0},	        /* minor 12-15 */
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
+	 "OnStream DI-30",      "",   "1.0"},  {ST_Q_NOFILEMARKS, 0, {
+		{0, 0, 0},                              /* minor 0-3 */
+		{0, 0, 0},                              /* minor 4-7 */
+		{0, 0, 0},                              /* minor 8-11 */
+		{0, 0, 0}                               /* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
 	 "NCR H621", "0-STD-03-46F880 ", ""},     {ST_Q_NOPREVENT, 0, {
 		{0, 0, 0},			       /* minor 0-3 */
 		{0, 0, 0},			       /* minor 4-7 */
 		{0, 0, 0},			       /* minor 8-11 */
 		{0, 0, 0}			       /* minor 12-15 */
-	}}},
-	{{T_SEQUENTIAL, T_REMOV,
-	 "OnStream DI-30",      "",   "1.0"},  {ST_Q_IGNORE_LOADS, 0, {
-		{0, 0, 0},				/* minor 0-3 */
-		{0, 0, 0},				/* minor 4-7 */
-		{0, 0, 0},				/* minor 8-11 */
-		{0, 0, 0}				/* minor 12-15 */
 	}}},
 };
 
@@ -384,6 +385,74 @@ stattach(parent, st, aux)
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
 			  RND_TYPE_TAPE, 0);
 #endif
+}
+
+int
+stactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVE.
+		 */
+		break;
+	}
+	return (rv);
+}
+
+int
+stdetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct st_softc *st = (struct st_softc *)self;
+	struct buf *bp;
+	int s, bmaj, cmaj, mn;
+
+	/* locate the major number */
+	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == stopen)
+			break;
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == stopen)
+			break;
+
+	s = splbio();
+
+	/* Kill off any queued buffers. */
+	while ((bp = BUFQ_FIRST(&st->buf_queue)) != NULL) {
+		BUFQ_REMOVE(&st->buf_queue, bp);
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+
+	/* Kill off any pending commands. */
+	scsipi_kill_pending(st->sc_periph);
+
+	splx(s);
+
+	/* Nuke the vnodes for any open instances */
+	mn = STUNIT(self->dv_unit);
+	vdevgone(bmaj, mn, mn+STNMINOR-1, VBLK);
+	vdevgone(cmaj, mn, mn+STNMINOR-1, VCHR);
+
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&st->rnd_source);
+#endif
+
+	return (0);
 }
 
 /*
@@ -1682,7 +1751,14 @@ st_write_filemarks(st, number, flags)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE_FILEMARKS;
-	_lto3b(number, cmd.number);
+	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
+		cmd.byte2 = SR_IMMED;
+	/*
+	 * The ATAPI Onstream DI-30 doesn't support writing filemarks, but
+	 * WRITE_FILEMARKS is still used to flush the buffer
+	 */
+	if ((st->quirks & ST_Q_NOFILEMARKS) == 0)
+		_lto3b(number, cmd.number);
 
 	return (scsipi_command(st->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
@@ -1757,6 +1833,8 @@ st_load(st, type, flags)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = LOAD;
+	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
+		cmd.byte2 = SR_IMMED;
 	cmd.how = type;
 
 	error = scsipi_command(st->sc_periph,
@@ -1791,7 +1869,7 @@ st_rewind(st, immediate, flags)
 	st->flags &= ~ST_PER_ACTION;
 
 	/*
-	 * ATAPI tapes always need foo to be set
+	 * ATAPI tapes always need immediate to be set
 	 */
 	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
 		immediate = SR_IMMED;
@@ -1935,6 +2013,14 @@ st_interpret_sense(xs)
 	st->asc = sense->add_sense_code;
 	st->ascq = sense->add_sense_code_qual;
 	st->mt_resid = (short) info;
+
+	if (key == SKEY_NOT_READY && st->asc == 0x4 && st->ascq == 0x1) {
+		/* Not Ready, Logical Unit Is in Process Of Becoming Ready */
+		scsipi_periph_freeze(periph, 1);
+		callout_reset(&periph->periph_callout,
+		    hz, scsipi_periph_timed_thaw, periph);
+		return (ERESTART);
+	}
 
 	/*
 	 * If the device is not open yet, let generic handle

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.12.2.4 2001/11/14 19:16:03 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.12.2.5 2002/01/08 00:31:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,9 +55,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.12.2.4 2001/11/14 19:16:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.12.2.5 2002/01/08 00:31:52 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

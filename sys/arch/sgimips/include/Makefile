@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.8.2 2001/11/17 23:12:13 wdk Exp $
+#	$NetBSD: Makefile,v 1.7.8.3 2002/01/08 00:27:30 nathanw Exp $
 
 KDIR=	/sys/arch/sgimips/include
 INCSDIR= /usr/include/sgimips

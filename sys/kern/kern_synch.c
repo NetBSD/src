@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.9 2001/12/17 20:41:49 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.10 2002/01/08 00:32:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.9 2001/12/17 20:41:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.10 2002/01/08 00:32:35 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -486,7 +486,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 
 #if	defined(DDB) && !defined(GPROF)
 	/* handy breakpoint location after process "wakes" */
-	asm(".globl bpendtsleep ; bpendtsleep:");
+	__asm(".globl bpendtsleep ; bpendtsleep:");
 #endif
 
 	SCHED_ASSERT_UNLOCKED();

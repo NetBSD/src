@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.13 1998/04/30 21:01:30 mark Exp $	*/
+/*	$NetBSD: iic.c,v 1.13.32.1 2002/01/08 00:23:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -54,7 +54,7 @@
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #include <arm32/dev/iic.h>
 #include <arm32/dev/iicvar.h>
 

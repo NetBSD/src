@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.1.2.3 2001/11/14 19:15:44 nathanw Exp $	*/
+/*	$NetBSD: if_il.c,v 1.1.2.4 2002/01/08 00:31:33 nathanw Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.1.2.3 2001/11/14 19:15:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.1.2.4 2002/01/08 00:31:33 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -376,7 +376,7 @@ ilinit(struct ifnet *ifp)
 		    goto too_many_multis;
 		}
 	}
-#endif MULTI
+#endif /* MULTICAST */
 	/*
 	 * Set board online.
 	 * Hang receive buffer and start any pending

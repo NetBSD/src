@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5.4.2 2001/11/17 23:43:44 wdk Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.4.3 2002/01/08 00:26:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.4.2 2001/11/17 23:43:44 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.4.3 2002/01/08 00:26:26 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -172,7 +172,7 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			/*
 			 * Code is first argument, followed by actual args.
 			 */
-			code = frame->f_regs[A0];
+			code = frame->f_regs[A0] - SYSCALL_SHIFT;
 			args[0] = frame->f_regs[A1];
 			args[1] = frame->f_regs[A2];
 			args[2] = frame->f_regs[A3];
@@ -182,7 +182,8 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			 * Like syscall, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
-			code = frame->f_regs[A0 + _QUAD_LOWWORD];
+			code = frame->f_regs[A0 + _QUAD_LOWWORD] 
+			    - SYSCALL_SHIFT;
 			args[0] = frame->f_regs[A2];
 			args[1] = frame->f_regs[A3];
 			nsaved = 2;
@@ -291,7 +292,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			/*
 			 * Code is first argument, followed by actual args.
 			 */
-			code = frame->f_regs[A0];
+			code = frame->f_regs[A0] - SYSCALL_SHIFT;
 			args[0] = frame->f_regs[A1];
 			args[1] = frame->f_regs[A2];
 			args[2] = frame->f_regs[A3];
@@ -301,7 +302,8 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 			 * Like syscall, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
-			code = frame->f_regs[A0 + _QUAD_LOWWORD];
+			code = frame->f_regs[A0 + _QUAD_LOWWORD] 
+			    - SYSCALL_SHIFT;
 			args[0] = frame->f_regs[A2];
 			args[1] = frame->f_regs[A3];
 			nsaved = 2;

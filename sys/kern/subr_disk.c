@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.29.6.2 2001/11/14 19:16:40 nathanw Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.29.6.3 2002/01/08 00:32:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.29.6.2 2001/11/14 19:16:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.29.6.3 2002/01/08 00:32:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ disksort_cylinder(struct buf_queue *bufq, struct buf *bp)
 				} while ((nbq = BUFQ_NEXT(bq)) != NULL);
 				goto insert;		/* after last */
 			}
-			bq = BUFQ_NEXT(bq);
+			bq = nbq;
 		}
 		/*
 		 * No inversions... we will go after the last, and
@@ -262,7 +262,7 @@ disksort_blkno(struct buf_queue *bufq, struct buf *bp)
 				} while ((nbq = BUFQ_NEXT(bq)) != NULL);
 				goto insert;		/* after last */
 			}
-			bq = BUFQ_NEXT(bq);
+			bq = nbq;
 		}
 		/*
 		 * No inversions... we will go after the last, and

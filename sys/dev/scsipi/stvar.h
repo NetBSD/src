@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.2.2.2 2001/06/21 20:06:07 nathanw Exp $ */
+/*	$NetBSD: stvar.h,v 1.2.2.3 2002/01/08 00:31:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct quirkdata {
 #define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
 #define	ST_Q_NOPREVENT		0x0020	/* does not support PREVENT */
 #define	ST_Q_ERASE_NOIMM	0x0040	/* drive rejects ERASE/w Immed bit */
+#define	ST_Q_NOFILEMARKS	0x0080	/* can only write 0 filemarks */
 	u_int page_0_size;
 #define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
@@ -174,5 +175,7 @@ struct st_softc {
 			 ST_2FM_AT_EOD | ST_PER_ACTION)
 
 void	stattach __P((struct device *, struct st_softc *, void *));
+int stactivate __P((struct device *, enum devact));
+int stdetach __P((struct device *, int));
 
 extern struct cfdriver st_cd;

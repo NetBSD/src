@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.2.2.3 2001/11/14 19:16:19 nathanw Exp $	*/
+/*	$NetBSD: umct.c,v 1.2.2.4 2002/01/08 00:32:15 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,14 +36,13 @@
  */
 
 /*
- * This driver is for the device MCT USB-RS232 Interfact Controller.
+ * MCT USB-RS232 Interface Controller
  * http://www.mct.com.tw/p_u232.html
  * http://www.dlink.com/products/usb/dsbs25
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.2.2.3 2001/11/14 19:16:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.2.2.4 2002/01/08 00:32:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +87,7 @@ struct	umct_softc {
 	usbd_device_handle	sc_udev;	/* USB device */
 	usbd_interface_handle	sc_iface;	/* interface */
 	int			sc_iface_number;	/* interface number */
+	u_int16_t		sc_product;
 
 	int			sc_intr_number;	/* interrupt number */
 	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
@@ -107,6 +107,8 @@ struct	umct_softc {
 
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* umct status register */
+
+	u_int			last_lcr;	/* keep lcr register */
 };
 
 /*
@@ -117,8 +119,8 @@ struct	umct_softc {
 #define UMCTOBUFSIZE 256
 
 Static	void umct_init(struct umct_softc *);
-Static	void umct_set_baudrate(struct umct_softc *, void *);
-Static	void umct_set_lcr(struct umct_softc *, void *);
+Static	void umct_set_baudrate(struct umct_softc *, u_int);
+Static	void umct_set_lcr(struct umct_softc *, u_int);
 Static	void umct_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static	void umct_set(void *, int, int, int);
@@ -142,37 +144,27 @@ struct	ucom_methods umct_methods = {
 	NULL,
 };
 
-static const struct umct_product {
-	uint16_t	vendor;
-	uint16_t	product;
-} umct_products [] = {
+static const struct usb_devno umct_devs[] = {
 	/* MCT USB-232 Interface Products */
 	{ USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232 },
 	/* Sitecom USB-232 Products */
 	{ USB_VENDOR_MCT, USB_PRODUCT_MCT_SITECOM_USB232 },
 	/* D-Link DU-H3SP USB BAY Hub Products */
 	{ USB_VENDOR_MCT, USB_PRODUCT_MCT_DU_H3SP_USB232 },
-
-	{ 0, 0 }
 };
+#define umct_lookup(v, p) usb_lookup(umct_devs, v, p)
 
 USB_DECLARE_DRIVER(umct);
 
 USB_MATCH(umct)
 {
 	USB_MATCH_START(umct, uaa);
-	int i;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (i = 0; umct_products[i].vendor != 0; i++) {
-		if (umct_products[i].vendor == uaa->vendor &&
- 		    umct_products[i].product == uaa->product) {
-			return (UMATCH_VENDOR_PRODUCT);
-		}
-	}
-	return (UMATCH_NONE);
+	return (umct_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 USB_ATTACH(umct)
@@ -186,7 +178,7 @@ USB_ATTACH(umct)
 	char devinfo[1024];
 	char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
-	int i,found;
+	int i, found;
 	struct ucom_attach_args uca;
 
         usbd_devinfo(dev, 0, devinfo);
@@ -194,6 +186,7 @@ USB_ATTACH(umct)
         printf("%s: %s\n", devname, devinfo);
 
         sc->sc_udev = dev;
+	sc->sc_product = uaa->product;
 
 	DPRINTF(("\n\numct attach: sc=%p\n", sc));
 
@@ -286,7 +279,10 @@ USB_ATTACH(umct)
 	uca.portno = UCOM_UNK_PORTNO;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UMCTIBUFSIZE;
-	uca.obufsize = UMCTOBUFSIZE;
+	if (sc->sc_product == USB_PRODUCT_MCT_SITECOM_USB232)
+		uca.obufsize = 16; /* device is broken */
+	else
+		uca.obufsize = UMCTOBUFSIZE;
 	uca.ibufsizepad = UMCTIBUFSIZE;
 	uca.opkthdrlen = 0;
 	uca.device = dev;
@@ -357,10 +353,10 @@ void
 umct_set_line_state(struct umct_softc *sc)
 {
 	usb_device_request_t req;
-	int ls = MCR_NONE;
+	uByte ls;
 
 	ls = (sc->sc_dtr ? MCR_DTR : 0) |
-		(sc->sc_rts ? MCR_RTS : 0);
+	     (sc->sc_rts ? MCR_RTS : 0);
 
 	DPRINTF(("umct_set_line_state: DTR=%d,RTS=%d,ls=%02x\n",
 			sc->sc_dtr, sc->sc_rts, ls));
@@ -422,33 +418,53 @@ umct_rts(struct umct_softc *sc, int onoff)
 void
 umct_break(struct umct_softc *sc, int onoff)
 {
-	u_char data;
-
 	DPRINTF(("umct_break: onoff=%d\n", onoff));
 
-	data = onoff ? LCR_SET_BREAK : 0;
-
-	umct_set_lcr(sc, &data);
+	umct_set_lcr(sc, onoff ? sc->last_lcr | LCR_SET_BREAK :
+		     sc->last_lcr);
 }
 
 void
-umct_set_lcr(struct umct_softc *sc, void *data)
+umct_set_lcr(struct umct_softc *sc, u_int data)
 {
 	usb_device_request_t req;
+	uByte adata;
 
+	adata = data;
 	req.bmRequestType = UMCT_SET_REQUEST;
 	req.bRequest = REQ_SET_LCR;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_iface_number);
 	USETW(req.wLength, LENGTH_SET_LCR);
 
-	(void)usbd_do_request(sc->sc_udev, &req, data);
+	(void)usbd_do_request(sc->sc_udev, &req, &adata); /* XXX should check */
 }
 
 void
-umct_set_baudrate(struct umct_softc *sc, void *rate)
+umct_set_baudrate(struct umct_softc *sc, u_int rate)
 {
         usb_device_request_t req;
+	uDWord arate;
+	u_int val;
+
+	if (sc->sc_product == USB_PRODUCT_MCT_SITECOM_USB232) {
+		switch (rate) {
+		case    300: val = 0x01; break;
+		case    600: val = 0x02; break;
+		case   1200: val = 0x03; break;
+		case   2400: val = 0x04; break;
+		case   4800: val = 0x06; break;
+		case   9600: val = 0x08; break;
+		case  19200: val = 0x09; break;
+		case  38400: val = 0x0a; break;
+		case  57600: val = 0x0b; break;
+		case 115200: val = 0x0c; break;
+		default:     val = -1; break;
+		}
+	} else {
+		val = UMCT_BAUD_RATE(rate);
+	}
+	USETDW(arate, val);
 
         req.bmRequestType = UMCT_SET_REQUEST;
         req.bRequest = REQ_SET_BAUD_RATE;
@@ -456,32 +472,24 @@ umct_set_baudrate(struct umct_softc *sc, void *rate)
         USETW(req.wIndex, sc->sc_iface_number);
         USETW(req.wLength, LENGTH_BAUD_RATE);
 
-        (void)usbd_do_request(sc->sc_udev, &req, rate);
+        (void)usbd_do_request(sc->sc_udev, &req, arate); /* XXX should check */
 }
 
 void
 umct_init(struct umct_softc *sc)
 {
-	int brate, data;
-
-	brate = UMCT_BAUD_RATE(9600);
-	data |= LCR_DATA_BITS_8 | LCR_PARITY_NONE |
-		LCR_STOP_BITS_1;
-
-	umct_set_baudrate(sc, &brate);
-	umct_set_lcr(sc, &data);
+	umct_set_baudrate(sc, 9600);
+	umct_set_lcr(sc, LCR_DATA_BITS_8 | LCR_PARITY_NONE | LCR_STOP_BITS_1);
 }
 
 int
 umct_param(void *addr, int portno, struct termios *t)
 {
 	struct umct_softc *sc = addr;
-	int divisor = 0;
-	u_char data = NULL;
+	u_int data = 0;
 
 	DPRINTF(("umct_param: sc=%p\n", sc));
 
-	divisor = UMCT_BAUD_RATE(t->c_ospeed);
 	DPRINTF(("umct_param: BAUDRATE=%d\n", t->c_ospeed));
 
 	if (ISSET(t->c_cflag, CSTOPB))
@@ -510,9 +518,10 @@ umct_param(void *addr, int portno, struct termios *t)
 		break;
 	}
 
-	umct_set_baudrate(sc, &divisor);
+	umct_set_baudrate(sc, t->c_ospeed);
 
-	umct_set_lcr(sc, &data);
+	sc->last_lcr = data;
+	umct_set_lcr(sc, data);
 
 	return (0);
 }
@@ -529,9 +538,9 @@ umct_open(void *addr, int portno)
 	DPRINTF(("umct_open: sc=%p\n", sc));
 
 	/* initialize LCR */
-        lcr_data |= LCR_DATA_BITS_8 | LCR_PARITY_NONE |
-                LCR_STOP_BITS_1;
-        umct_set_lcr(sc, &lcr_data);  
+        lcr_data = LCR_DATA_BITS_8 | LCR_PARITY_NONE |
+	    LCR_STOP_BITS_1;
+        umct_set_lcr(sc, lcr_data);  
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_status = 0; /* clear status bit */
