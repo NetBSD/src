@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.31 1998/09/07 08:11:20 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.32 1998/11/17 16:00:28 msaitoh Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -268,7 +268,7 @@ The file
 .Pa /etc/ftpusers
 is used to determine which users may use ftp.
 If the file does not exist, all users are denied access.
-If it does exist, each line is a a comment starting with
+If it does exist, each line is a comment starting with
 .Dq #
 or a glob pattern that uses the same syntax as /bin/sh,
 optionally followed by whitespace and
@@ -311,7 +311,7 @@ The file
 is used to determine which users will have their session's root changed
 to the user's home directory.
 If the file does not exist, the root change is not performed.
-If it does exist, each line is a a comment starting with
+If it does exist, each line is a comment starting with
 .Dq #
 or a glob pattern that uses the same syntax as /bin/sh,
 optionally followed by whitespace and
