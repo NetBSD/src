@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2000/07/10 10:38:23 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.7 2000/07/13 03:13:40 matt Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,7 @@
  */
 
 #include "lib/libsa/stand.h"
+#include "lib/libkern/libkern.h"
 
 #include "machine/rpb.h"
 #include "machine/sid.h"
