@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.20 1996/07/17 13:33:28 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.21 1996/07/17 14:35:01 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -58,6 +58,7 @@ static struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
 	{ "atfsc",	514,	84 },
 	{ "atzee",	513,	1 },
+	{ "atzsc",	514,	2 },
 	{ "atzsc",	514,	3 },
 	{ "bah",	514,	9 },	/* A2060 */
 	{ "le",		514,	112 },
@@ -100,7 +101,7 @@ static struct aconfdata aconftab[] = {
 	/* Hydra */
 	{ "ed",		2121,	1 },
 	/* ASDG */
-	{ "ed",		9999,	9 },		/* XXXX */
+	{ "ed",		1023,	254 },
 	/* Village Tronic Ariadne */
 	{ "ae",		2167,	201},
 	/* bsc/Alf Data */
@@ -131,6 +132,7 @@ static struct aconfdata aconftab[] = {
 	{ "qn",		2011,	2 },	/* QuickNet Ethernet */
 	/* ??? */
 	{ "empsc",	2171,	21 },	/* Emplant SCSI */
+	{ "empsc",	2171,	32 },	/* Emplant SCSI */
 	/* Tseng ET4000 boards */
 	{ "grfet",	2181,	0 },	/* oMniBus */
 	{ "grfet",	2167,	1 },	/* Domnio mem */
@@ -138,7 +140,9 @@ static struct aconfdata aconftab[] = {
 	{ "grfet",	2117,	3 },	/* Merlin mem */
 	{ "grfet",	2117,	4 },	/* Merlin regs */
 	/* Advanced Systems */
-	{ "nxsc",   2102,   1 }	    /* Nexus SCSI board */
+	{ "nxsc",   2102,   1 },    /* Nexus SCSI board */
+	/* Masoboshi */
+	{ "mcsc",   8535,   4 }		/* Masoboshi Mastercard 702 */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
