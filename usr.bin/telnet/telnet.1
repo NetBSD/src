@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)telnet.1	6.16 (Berkeley) 7/27/91
-.\"	$Id: telnet.1,v 1.2 1993/08/01 07:27:59 mycroft Exp $
+.\"	$Id: telnet.1,v 1.3 1994/01/11 18:49:16 jtc Exp $
 .\"
 .Dd July 27, 1991
 .Dt TELNET 1
@@ -117,7 +117,7 @@ escape character to
 .Ar escape char.
 If
 .Ar escape char
-is ommitted, then
+is omitted, then
 there will be no escape character.
 .It Ar host
 Indicates the official name, an alias, or the Internet address
@@ -330,11 +330,11 @@ When connecting to a non-standard port,
 omits any automatic initiation of
 .Tn TELNET
 options.  When the port number is preceeded by a minus sign,
-the inital option negotiation is done.
+the initial option negotiation is done.
 After establishing a connection, the file
 .Pa \&.telnetrc
 in the
-users home directory is opened.  Lines begining with a # are
+users home directory is opened.  Lines beginning with a # are
 comment lines.  Blank lines are ignored.  Lines that begin
 without whitespace are the start of a machine entry.  The
 first thing on the line is the name of the machine that is
@@ -693,7 +693,7 @@ the terminal's
 .Ic suspend
 character.
 .It Ic tracefile
-Thi is the file to which the output, caused by
+This is the file to which the output, caused by
 .Ic netdata
 or
 .Ic option
@@ -757,7 +757,7 @@ connection was established.
 .It Ic check
 Verify the current settings for the current special characters.
 The remote side is requested to send all the current special
-character settings, and if there are any discrepencies with
+character settings, and if there are any discrepancies with
 the local side, the local side will switch to the remote value.
 .It Ic \&?
 Prints out help information for the
@@ -1017,9 +1017,9 @@ toggle is enabled, if
 .Ic prettydump
 is enabled the output from the
 .Ic netdata
-command will be formated in a more user readable format.
+command will be formatted in a more user readable format.
 Spaces are put between each character in the output, and the
-begining of any
+beginning of any
 .Tn TELNET
 escape sequence is preceeded by a '*' to aid in locating them.
 .It Ic \&?
@@ -1036,7 +1036,7 @@ This command only works when the user is using the
 Execute a single command in a subshell on the local
 system.  If
 .Ic command
-is ommitted, then an interactive
+is omitted, then an interactive
 subshell is invoked.
 .It Ic status
 Show the current status of
@@ -1059,8 +1059,8 @@ uses at least the
 .Ev DISPLAY ,
 and
 .Ev TERM
-environent variables.
-Other envirnoment variables may be propogated
+environment variables.
+Other environment variables may be propagated
 to the other side via the
 .Dv TELNET ENVIRON
 option.
