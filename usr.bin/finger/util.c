@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 2003/08/07 11:13:46 agc Exp $	*/
+/*	$NetBSD: util.c,v 1.22 2004/10/30 17:21:15 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.21 2003/08/07 11:13:46 agc Exp $");
+__RCSID("$NetBSD: util.c,v 1.22 2004/10/30 17:21:15 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ expandusername(gecos, login, buf, buflen)
 		if (*p == '&') {
 			/* interpolate full name */
 			snprintf(bp, buflen - (bp - buf), "%s", login);
-			*bp = toupper(*bp);
+			*bp = toupper((unsigned char)*bp);
 			bp += strlen(bp);
 		}
 		else

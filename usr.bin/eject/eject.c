@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.18 2004/04/21 01:05:47 christos Exp $	*/
+/*	$NetBSD: eject.c,v 1.19 2004/10/30 17:20:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.18 2004/04/21 01:05:47 christos Exp $");
+__RCSID("$NetBSD: eject.c,v 1.19 2004/10/30 17:20:01 dsl Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -338,9 +338,9 @@ unmount_dev(char *name)
 
 	/* Set len to strip off the partition name: */
 	len = strlen(dn);
-	if (!isdigit(dn[len - 1]))
+	if (!isdigit((unsigned char)dn[len - 1]))
 		len--;
-	if (!isdigit(dn[len - 1])) {
+	if (!isdigit((unsigned char)dn[len - 1])) {
 		errx(1, "Can't figure out base name for dev name %s", dn);
 	}
 	for (i = 0; i < nmnts; i++) {

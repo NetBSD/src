@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.17 2003/08/07 11:13:47 agc Exp $	*/
+/*	$NetBSD: fmt.c,v 1.18 2004/10/30 17:23:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.17 2003/08/07 11:13:47 agc Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.18 2004/10/30 17:23:40 dsl Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -166,10 +166,10 @@ fmt(FILE *fi)
 			cp = fgets(linebuf, BUFSIZ, fi);
 			if (!cp)
 				return;
-			while (*cp && isspace(*cp))
+			while (*cp && isspace((unsigned char)*cp))
 				cp++;
 			cp2 = cp + strlen(cp) - 1;
-			while (cp2 > cp && isspace(*cp2))
+			while (cp2 > cp && isspace((unsigned char)*cp2))
 				cp2--;
 			if (cp == cp2)
 				putchar('\n');
