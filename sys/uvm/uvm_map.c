@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.100 2001/07/22 13:34:12 wiz Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.101 2001/08/16 01:37:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2683,15 +2683,14 @@ uvm_map_checkprot(map, start, end, protection)
  * - refcnt set to 1, rest must be init'd by caller
  */
 struct vmspace *
-uvmspace_alloc(min, max, pageable)
+uvmspace_alloc(min, max)
 	vaddr_t min, max;
-	int pageable;
 {
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
 	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
-	uvmspace_init(vm, NULL, min, max, pageable);
+	uvmspace_init(vm, NULL, min, max);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
 }
@@ -2703,16 +2702,15 @@ uvmspace_alloc(min, max, pageable)
  * - refcnt set to 1, rest must me init'd by caller
  */
 void
-uvmspace_init(vm, pmap, min, max, pageable)
+uvmspace_init(vm, pmap, min, max)
 	struct vmspace *vm;
 	struct pmap *pmap;
 	vaddr_t min, max;
-	boolean_t pageable;
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
 	memset(vm, 0, sizeof(*vm));
-	uvm_map_setup(&vm->vm_map, min, max, pageable ? VM_MAP_PAGEABLE : 0);
+	uvm_map_setup(&vm->vm_map, min, max, VM_MAP_PAGEABLE);
 	if (pmap)
 		pmap_reference(pmap);
 	else
@@ -2833,8 +2831,7 @@ uvmspace_exec(p, start, end)
 		 * for p
 		 */
 
-		nvm = uvmspace_alloc(start, end,
-			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
+		nvm = uvmspace_alloc(start, end);
 
 		/*
 		 * install new vmspace and drop our ref to the old one.
@@ -2915,8 +2912,7 @@ uvmspace_fork(vm1)
 
 	vm_map_lock(old_map);
 
-	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset,
-		      (old_map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
+	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset);
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	(caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */
