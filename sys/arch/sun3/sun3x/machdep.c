@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1997/01/14 20:57:09 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1997/01/16 22:08:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -816,8 +816,9 @@ boot(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
-	char *bs, *p;
-	char default_boot_string[8];
+	/* Note: this string MUST be static! */
+	static char bootstr[128];
+	char *p;
 
 	/* If system is cold, just halt. (early panic?) */
 	if (cold)
@@ -855,18 +856,18 @@ boot(howto, user_boot_string)
 	/*
 	 * Automatic reboot.
 	 */
-	bs = user_boot_string;
-	if (bs == NULL) {
+	if (user_boot_string)
+		strncpy(bootstr, user_boot_string, sizeof(bootstr));
+	else {
 		/*
 		 * Build our own boot string with an empty
 		 * boot device/file and (maybe) some flags.
 		 * The PROM will supply the device/file name.
 		 */
-		bs = default_boot_string;
-		*bs = '\0';
+		p = bootstr;
+		*p = '\0';
 		if (howto & (RB_KDB|RB_ASKNAME|RB_SINGLE)) {
 			/* Append the boot flags. */
-			p = bs;
 			*p++ = ' ';
 			*p++ = '-';
 			if (howto & RB_KDB)
@@ -879,7 +880,7 @@ boot(howto, user_boot_string)
 		}
 	}
 	printf("Kernel rebooting...\n");
-	sun3x_mon_reboot(bs);
+	sun3x_mon_reboot(bootstr);
 	for (;;) ;
 	/*NOTREACHED*/
 }
