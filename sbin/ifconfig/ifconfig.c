@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.102 2001/03/01 08:34:10 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.103 2001/03/01 08:35:16 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.102 2001/03/01 08:34:10 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.103 2001/03/01 08:35:16 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -950,7 +950,7 @@ settunnel(src, dst)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
-	if ((ecode = getaddrinfo(dst, NULL, &hints, &dstres)) != 0)  
+	if ((ecode = getaddrinfo(dst, NULL, &hints, &dstres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
@@ -2099,7 +2099,7 @@ in_status(force)
 	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
 		err(1, "SIOCGIFCONF");
 	for (i = 0; i < ifc.ifc_len; ) {
-		/* Copy the mininum ifreq into the buffer. */ 
+		/* Copy the mininum ifreq into the buffer. */
 		cp = ((caddr_t)ifc.ifc_req + i);
 		memcpy(ifrbuf, cp, sizeof(*ifr));
 
@@ -2304,7 +2304,7 @@ in6_status(force)
 	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
 		err(1, "SIOCGIFCONF");
 	for (i = 0; i < ifc.ifc_len; ) {
-		/* Copy the mininum ifreq into the buffer. */ 
+		/* Copy the mininum ifreq into the buffer. */
 		cp = ((caddr_t)ifc.ifc_req + i);
 		memcpy(ifrbuf, cp, sizeof(*ifr));
 
