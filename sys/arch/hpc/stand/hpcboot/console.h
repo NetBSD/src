@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.8 2002/03/02 22:01:35 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.8.14.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_CONSOLE_H_
-#define _HPCBOOT_CONSOLE_H_
+#define	_HPCBOOT_CONSOLE_H_
 
 #include <hpcboot.h>
 #include <hpcmenu.h>
@@ -88,7 +88,7 @@ public:
 	static HANDLE OpenCOM1(void);
 };
 
-#define SETUP_WIDECHAR_BUFFER()						\
+#define	SETUP_WIDECHAR_BUFFER()						\
 __BEGIN_MACRO								\
 	va_list ap;							\
 	va_start(ap, fmt);						\
@@ -96,10 +96,10 @@ __BEGIN_MACRO								\
 	va_end(ap);							\
 __END_MACRO
 
-#define DPRINTF_SETUP()		Console *_cons = Console::Instance()
-#define DPRINTFN(level, x)						\
+#define	DPRINTF_SETUP()		Console *_cons = Console::Instance()
+#define	DPRINTFN(level, x)						\
 	if (_debug > level) _cons->print x
-#define DPRINTF(x)							\
+#define	DPRINTF(x)							\
 	_cons->print x
 
 #endif // _HPCBOOT_CONSOLE_H_

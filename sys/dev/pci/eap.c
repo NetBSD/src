@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.66.2.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: eap.c,v 1.66.2.2 2004/08/12 11:41:44 skrll Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.1 2004/08/03 10:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.2 2004/08/12 11:41:44 skrll Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -815,25 +815,37 @@ int
 eap_detach(struct device *self, int flags)
 {
 	struct eap_softc *sc = (struct eap_softc *) self;
+	int res;
 #if NJOY_EAP > 0
 	struct eap_gameport_args gpargs;
 
 	if (sc->sc_gameport) {
 		gpargs.gpa_iot = sc->iot;
 		gpargs.gpa_ioh = sc->ioh;
-		eap_joy_detach(sc->sc_gameport, &gpargs);
+		res = eap_joy_detach(sc->sc_gameport, &gpargs);
+		if (res)
+			return (res);
 	}
 #endif
 #if NMIDI > 0
-	if (sc->sc_mididev != NULL)
-		config_detach(sc->sc_mididev, 0);
+	if (sc->sc_mididev != NULL) {
+		res = config_detach(sc->sc_mididev, 0);
+		if (res)
+			return (res);
+	}
 #endif
 #ifdef EAP_USE_BOTH_DACS
-	if (sc->sc_ei[EAP_I2].ei_audiodev != NULL)
-		config_detach(sc->sc_ei[EAP_I2].ei_audiodev, 0);
+	if (sc->sc_ei[EAP_I2].ei_audiodev != NULL) {
+		res = config_detach(sc->sc_ei[EAP_I2].ei_audiodev, 0);
+		if (res)
+			return (res);
+	}
 #endif
-	if (sc->sc_ei[EAP_I1].ei_audiodev != NULL)
-		config_detach(sc->sc_ei[EAP_I1].ei_audiodev, 0);
+	if (sc->sc_ei[EAP_I1].ei_audiodev != NULL) {
+		res = config_detach(sc->sc_ei[EAP_I1].ei_audiodev, 0);
+		if (res)
+			return (res);
+	}
 
 	bus_space_unmap(sc->iot, sc->ioh, sc->iosz);
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);

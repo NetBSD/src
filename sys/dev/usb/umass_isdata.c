@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.5.2.1 2004/08/03 10:51:38 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.5.2.2 2004/08/12 11:42:19 skrll Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.5.2.1 2004/08/03 10:51:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.5.2.2 2004/08/12 11:42:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ int	uisdatadebug = 0;
 int  uisdata_bio(struct ata_drive_datas *, struct ata_bio *);
 int  uisdata_bio1(struct ata_drive_datas *, struct ata_bio *);
 void uisdata_reset_channel(struct ata_drive_datas *, int);
-int  uisdata_exec_command(struct ata_drive_datas *, struct wdc_command *);
+int  uisdata_exec_command(struct ata_drive_datas *, struct ata_command *);
 int  uisdata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
 int  uisdata_addref(struct ata_drive_datas *);
 void uisdata_delref(struct ata_drive_datas *);
@@ -293,12 +293,12 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		printf("%s: ATA_NOSLEEP not supported\n", __func__);
 		ata_bio->error = TIMEOUT;
 		ata_bio->flags |= ATA_ITSDONE;
-		return (WDC_COMPLETE);
+		return (ATACMD_COMPLETE);
 	}
 
 	if (scbus->sc_ata_bio != NULL) {
 		printf("%s: multiple uisdata_bio\n", __func__);
-		return (WDC_TRY_AGAIN);
+		return (ATACMD_TRY_AGAIN);
 	} else
 		scbus->sc_ata_bio = ata_bio;
 
@@ -369,11 +369,11 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		if (tsleep(ata_bio, PZERO, "uisdatabl", 0)) {
 			ata_bio->error = TIMEOUT;
 			ata_bio->flags |= ATA_ITSDONE;
-			return (WDC_COMPLETE);
+			return (ATACMD_COMPLETE);
 		}
 	}
 
-	return (ata_bio->flags & ATA_ITSDONE) ? WDC_COMPLETE : WDC_QUEUED;
+	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 void
@@ -386,7 +386,7 @@ uisdata_reset_channel(struct ata_drive_datas *drv, int flags)
 void
 uisdata_exec_cb(struct umass_softc *sc, void *priv, int residue, int status)
 {
-	struct wdc_command *cmd = priv;
+	struct ata_command *cmd = priv;
 
 	DPRINTF(("%s: status=%d\n", __func__, status));
 	if (status != STATUS_CMD_OK)
@@ -399,7 +399,7 @@ uisdata_exec_cb(struct umass_softc *sc, void *priv, int residue, int status)
 }
 
 int
-uisdata_exec_command(struct ata_drive_datas *drv, struct wdc_command *cmd)
+uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 {
 	struct umass_softc *sc = drv->chnl_softc;
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
@@ -460,7 +460,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct wdc_command *cmd)
 	}
 
 done:
-	return (WDC_COMPLETE);
+	return (ATACMD_COMPLETE);
 }
 
 int
@@ -501,7 +501,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		struct ataparams *prms)
 {
 	char tb[DEV_BSIZE];
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
@@ -512,20 +512,20 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	memset(&ata_c, 0, sizeof(struct ata_command));
 
-	wdc_c.r_command = WDCC_IDENTIFY;
-	wdc_c.timeout = 1000; /* 1s */
-	wdc_c.flags = AT_READ | flags;
-	wdc_c.data = tb;
-	wdc_c.bcount = DEV_BSIZE;
-	if (uisdata_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
+	ata_c.r_command = WDCC_IDENTIFY;
+	ata_c.timeout = 1000; /* 1s */
+	ata_c.flags = AT_READ | flags;
+	ata_c.data = tb;
+	ata_c.bcount = DEV_BSIZE;
+	if (uisdata_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
 		DPRINTF(("uisdata_get_parms: wdc_exec_command failed\n"));
 		return (CMD_AGAIN);
 	}
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		DPRINTF(("uisdata_get_parms: wdc_c.flags=0x%x\n",
-			 wdc_c.flags));
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		DPRINTF(("uisdata_get_parms: ata_c.flags=0x%x\n",
+			 ata_c.flags));
 		return (CMD_ERR);
 	} else {
 		/* Read in parameter block. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.4.2.2 2004/08/03 10:52:24 skrll Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.4.2.3 2004/08/12 11:42:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,11 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.2 2004/08/03 10:52:24 skrll Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_nfsserver.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.3 2004/08/12 11:42:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

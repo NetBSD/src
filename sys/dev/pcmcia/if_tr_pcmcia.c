@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.11 2002/10/02 16:52:16 thorpej Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.11.6.1 2004/08/12 11:42:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.11 2002/10/02 16:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.11.6.1 2004/08/12 11:42:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,57 +135,45 @@ tr_pcmcia_attach(parent, self, aux)
 	bus_size_t offset;
 
 	psc->sc_pf = pa->pf;
+
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	pcmcia_function_init(pa->pf, cfe);
-
 	if (pcmcia_function_enable(pa->pf) != 0) {
-		printf(": function enable failed\n");
+		printf("%s: function enable failed\n", self->dv_xname);
 		return;
 	}
 
 	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pioh) != 0)
-		printf(": can't allocate pio space\n");
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO8, 0,	/* XXX _AUTO? */
-	    cfe->iospace[0].length, &psc->sc_pioh, &psc->sc_pio_window) != 0) {
-		printf(": can't map pio space\n");
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pioh);
-		return;
+	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pioh) != 0) {
+		printf("%s: can't allocate pio space\n", self->dv_xname);
+		goto fail1;
+	}
+	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO8,	/* XXX _AUTO? */
+	    &psc->sc_pioh, &psc->sc_pio_window) != 0) {
+		printf("%s: can't map pio space\n", self->dv_xname);
+		goto fail2;
 	}
 
 	if (pcmcia_mem_alloc(psc->sc_pf, TR_SRAM_SIZE, &psc->sc_sramh) != 0) {
-	    printf(": can't allocate sram space\n");
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_pio_window);
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pioh);
-		return;
+		printf("%s: can't allocate sram space\n", self->dv_xname);
+		goto fail3;
 	}
         if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_COMMON, TR_PCMCIA_SRAM_ADDR,
 	    TR_SRAM_SIZE, &psc->sc_sramh, &offset, &psc->sc_sram_window) != 0) {
-                printf(": can't map sram space\n");
-		pcmcia_mem_free(psc->sc_pf, &psc->sc_sramh);
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_pio_window);
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pioh);
-                return;
+                printf("%s: can't map sram space\n", self->dv_xname);
+		goto fail4;
         }
 
 	if (pcmcia_mem_alloc(psc->sc_pf, TR_MMIO_SIZE, &psc->sc_mmioh) != 0) {
-		pcmcia_mem_unmap(psc->sc_pf, psc->sc_sram_window);
-		pcmcia_mem_free(psc->sc_pf, &psc->sc_sramh);
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_pio_window);
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pioh);
-		printf(": can't allocate mmio space\n");
+		printf("%s: can't allocate mmio space\n", self->dv_xname);
+		goto fail5;
 		return;
 	}
         if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_COMMON, TR_PCMCIA_MMIO_ADDR,
 	    TR_MMIO_SIZE, &psc->sc_mmioh, &offset, &psc->sc_mmio_window) != 0) {
-		pcmcia_mem_free(psc->sc_pf, &psc->sc_mmioh);
-		pcmcia_mem_unmap(psc->sc_pf, psc->sc_sram_window);
-		pcmcia_mem_free(psc->sc_pf, &psc->sc_sramh);
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_pio_window);
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pioh);
-                printf(": can't map mmio space\n");
-                return;
+                printf("%s: can't map mmio space\n", self->dv_xname);
+		goto fail6;
         }
 
 	sc->sc_piot = psc->sc_pioh.iot;
@@ -204,12 +192,25 @@ tr_pcmcia_attach(parent, self, aux)
 	sc->sc_enable = tr_pcmcia_enable;
 	sc->sc_disable = tr_pcmcia_disable;
 
-	printf(": %s\n", PCMCIA_STR_IBM_TROPIC);
-
 	tr_pcmcia_setup(sc);
 	if (tr_reset(sc) == 0)
 		(void)tr_attach(sc);
 
+	pcmcia_function_disable(pa->pf);
+	sc->sc_enabled = 0;
+	return;
+
+fail6:
+	pcmcia_mem_free(psc->sc_pf, &psc->sc_mmioh);
+fail5:
+	pcmcia_mem_unmap(psc->sc_pf, psc->sc_sram_window);
+fail4:
+	pcmcia_mem_free(psc->sc_pf, &psc->sc_sramh);
+fail3:
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_pio_window);
+fail2:
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pioh);
+fail1:
 	pcmcia_function_disable(pa->pf);
 	sc->sc_enabled = 0;
 }

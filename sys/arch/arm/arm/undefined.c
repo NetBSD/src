@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.17.2.1 2004/08/03 10:32:29 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.17.2.2 2004/08/12 11:41:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17.2.1 2004/08/03 10:32:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17.2.2 2004/08/12 11:41:03 skrll Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -94,7 +94,7 @@ static int gdb_trapper(u_int, u_int, struct trapframe *, int);
 extern int want_resched;
 #endif
 
-LIST_HEAD(, undefined_handler) undefined_handlers[MAX_COPROCS];
+LIST_HEAD(, undefined_handler) undefined_handlers[MAX_COPROCS+1];
 
 
 void *
@@ -102,7 +102,7 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 {
 	struct undefined_handler *uh;
 
-	KASSERT(coproc >= 0 && coproc < MAX_COPROCS);
+	KASSERT(coproc >= 0 && coproc <= MAX_COPROCS);
 	KASSERT(handler != NULL); /* Used to be legal. */
 
 	/* XXX: M_TEMP??? */
@@ -164,12 +164,12 @@ undefined_init()
 	int loop;
 
 	/* Not actually necessary -- the initialiser is just NULL */
-	for (loop = 0; loop < MAX_COPROCS; ++loop)
+	for (loop = 0; loop <= MAX_COPROCS; ++loop)
 		LIST_INIT(&undefined_handlers[loop]);
 
 	/* Install handler for GDB breakpoints */
 	gdb_uh.uh_handler = gdb_trapper;
-	install_coproc_handler_static(0, &gdb_uh);
+	install_coproc_handler_static(CORE_UNKNOWN_HANDLER, &gdb_uh);
 }
 
 
@@ -246,12 +246,16 @@ undefinedinstruction(trapframe_t *frame)
 	 * instruction to tell the difference between and undefined
 	 * instruction and a coprocessor instruction following an undefined
 	 * instruction trap.
+	 *
+	 * ARMv5 adds undefined instructions in the NV space, even when
+	 * bit 27 is set.
 	 */
 
-	if ((fault_instruction & (1 << 27)) != 0)
+	if ((fault_instruction & (1 << 27)) != 0
+	    && (fault_instruction & 0xf0000000) != 0xf0000000)
 		coprocessor = (fault_instruction >> 8) & 0x0f;
 	else
-		coprocessor = 0;
+		coprocessor = CORE_UNKNOWN_HANDLER;
 
 #ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {

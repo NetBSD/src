@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.9.2.1 2004/08/03 10:43:29 skrll Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.9.2.2 2004/08/12 11:41:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9.2.1 2004/08/03 10:43:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9.2.2 2004/08/12 11:41:14 skrll Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -306,7 +306,7 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
 	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct proc *p = args->l->l_proc;
 	int maxoutcount;
 	int error;
 
@@ -340,13 +340,13 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
 		wsevt.value = pt->x;
 		if ((error = (wsmux->d_ioctl)(dev, 
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l)) != 0)
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p)) != 0)
 			return mach_msg_error(args, error); 
 
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
 		wsevt.value = pt->y;
 		if ((error = (wsmux->d_ioctl)(dev, 
-		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, l)) != 0)
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, p)) != 0)
 			return mach_msg_error(args, error); 
 
 		rep->rep_outcount = 0;
@@ -465,7 +465,7 @@ darwin_iohidsystem_thread(args)
 		goto out2;
 	}
 
-	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, l)) != 0)
+	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
 		goto out2;
 	
 	while(!finished) {
@@ -530,7 +530,7 @@ darwin_iohidsystem_thread(args)
 	}
 
 out1:
-	(wsmux->d_close)(dev, FREAD|FWRITE, 0, l);
+	(wsmux->d_close)(dev, FREAD|FWRITE, 0, p);
 	
 out2:
 	while (!finished)
@@ -720,7 +720,7 @@ mach_notify_iohidsystem(l, mr)
 	mach_set_trailer(req, sizeof(*req));
 
 #ifdef KTRACE
-	ktruser(l->l_proc, "notify_iohidsystem", NULL, 0, 0);
+	ktruser(l, "notify_iohidsystem", NULL, 0, 0);
 #endif
 	
 	mr->mr_refcount++;
@@ -742,8 +742,8 @@ mach_notify_iohidsystem(l, mr)
 }
 
 void
-darwin_iohidsystem_postfake(l)
-	struct lwp *l;
+darwin_iohidsystem_postfake(p)
+	struct proc *p;
 {
 	const struct cdevsw *wsmux;
 	dev_t dev;	
@@ -761,7 +761,7 @@ darwin_iohidsystem_postfake(l)
 
 	wsevt.type = 0;
 	wsevt.value = 0;
-	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l);
+	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p);
 
 	return;
 }

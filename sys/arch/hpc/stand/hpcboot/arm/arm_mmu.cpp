@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_mmu.cpp,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_mmu.cpp,v 1.2.24.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ MemoryManager_ArmMMU::searchPage(vaddr_t vaddr)
 	desc1 = readPhysical4(daddr);
 	DPRINTF((TEXT("1st level descriptor 0x%08x(addr 0x%08x)\n"),
 	    desc1, daddr));
-  
+
 	switch(ARM_MMU_LEVEL1DESC_TRANSLATE_TYPE(desc1)) {
 	default:
 		DPRINTF((TEXT("1st level descriptor fault.\n")));
@@ -122,6 +122,6 @@ MemoryManager_ArmMMU::searchPage(vaddr_t vaddr)
 		}
 		break;
 	}
-      
+
 	return paddr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdefs.h,v 1.3 2001/03/25 17:13:16 uch Exp $	*/
+/*	$NetBSD: hpcdefs.h,v 1.3.24.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
  */
 
 #ifndef _HPCDEFS_H_
-#define _HPCDEFS_H_
+#define	_HPCDEFS_H_
 
-#define HPCBOOT_VERSION		0x0102
+#define	HPCBOOT_VERSION		0x0102
 
-#define STRICT
+#define	STRICT
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
@@ -56,7 +56,7 @@
 #include <stdlib.h>
 #endif
 #if _WIN32_WCE < 210
-#define EOF	(-1)
+#define	EOF	(-1)
 #endif
 
 #include <machine/cdefs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.34.2.2 2004/08/03 10:54:21 skrll Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.34.2.3 2004/08/12 11:42:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.34.2.2 2004/08/03 10:54:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.34.2.3 2004/08/12 11:42:20 skrll Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -302,7 +302,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 					IEEE80211_SEND_MGMT(ic, ni,
 					    IEEE80211_FC0_SUBTYPE_DEAUTH,
 					    IEEE80211_REASON_NOT_AUTHED);
-					ieee80211_free_node(ic, ni);
 				}
 				ic->ic_stats.is_rx_notassoc++;
 				goto err;
@@ -314,7 +313,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_DISASSOC,
 				    IEEE80211_REASON_NOT_ASSOCED);
-				ieee80211_unref_node(&ni);
 				ic->ic_stats.is_rx_notassoc++;
 				goto err;
 			}
@@ -367,7 +365,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 						m1 = m;
 						m = NULL;
 					}
-					ieee80211_free_node(ic, ni);
 				}
 			}
 			if (m1 != NULL) {
@@ -675,7 +672,6 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
     struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
     u_int16_t status)
 {
-	int allocbs;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_IBSS:
 		if (ic->ic_state != IEEE80211_S_RUN ||
@@ -715,15 +711,15 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			ni->ni_rssi = rssi;
 			ni->ni_rstamp = rstamp;
 			ni->ni_chan = ic->ic_bss->ni_chan;
-			allocbs = 1;
-		} else
-			allocbs = 0;
+		}
 		IEEE80211_SEND_MGMT(ic, ni,
 			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 			("station %s %s authenticated (open)\n",
 			ether_sprintf(ni->ni_macaddr),
-			(allocbs ? "newly" : "already")));
+			((ni->ni_state != IEEE80211_STA_CACHE)
+			    ? "newly" : "already")));
+		ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
 		break;
 
 	case IEEE80211_M_STA:
@@ -762,7 +758,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
     u_int32_t rstamp, u_int16_t seq, u_int16_t status)
 {
 	u_int8_t *challenge = NULL;
-	int allocbs, i;
+	int i;
 
 	if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
@@ -827,9 +823,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				ni->ni_rssi = rssi;
 				ni->ni_rstamp = rstamp;
 				ni->ni_chan = ic->ic_bss->ni_chan;
-				allocbs = 1;
-			} else
-				allocbs = 0;
+			}
 			if (ni->ni_challenge == NULL)
 				ni->ni_challenge = (u_int32_t*)malloc(
 				    IEEE80211_CHALLENGE_LEN, M_DEVBUF,
@@ -847,7 +841,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			IEEE80211_DPRINTF(ic,
 				IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 				("shared key %sauth request from station %s\n",
-				(allocbs ? "" : "re"),
+				((ni->ni_state != IEEE80211_STA_CACHE)
+				    ? "" : "re"),
 				ether_sprintf(ni->ni_macaddr)));
 			break;
 		case IEEE80211_AUTH_SHARED_RESPONSE:
@@ -874,6 +869,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 				("station %s authenticated (shared key)\n",
 				ether_sprintf(ni->ni_macaddr)));
+			ieee80211_node_newstate(ni, IEEE80211_STA_AUTH);
 			break;
 		default:
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
@@ -944,7 +940,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
 	u_int8_t *ssid, *rates, *xrates;
-	int reassoc, resp, allocbs;
+	int is_new, reassoc, resp;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (u_int8_t *)&wh[1];
@@ -1124,9 +1120,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ni = ieee80211_alloc_node(ic, wh->i_addr2);
 			if (ni == NULL)
 				return;
-			allocbs = 1;
+			is_new = 1;
 		} else
-			allocbs = 0;
+			is_new = 0;
 		if (ssid[1] != 0 && ni->ni_esslen == 0) {
 			/*
 			 * Update ESSID at probe response to adopt hidden AP by
@@ -1156,8 +1152,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 * Anything else can be discarded (XXX and should be handled
 		 * above so we don't do so much work). 
 		 */
-		if (ic->ic_opmode == IEEE80211_M_IBSS && allocbs &&
-		    ISPROBE(subtype)) {
+		if (ic->ic_opmode == IEEE80211_M_IBSS || (is_new &&
+		    ISPROBE(subtype))) {
 			/*
 			 * Fake an association so the driver can setup it's
 			 * private state.  The rate set has been setup above;
@@ -1165,9 +1161,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			 */
 			if (ic->ic_newassoc)
 				(*ic->ic_newassoc)(ic, ni, 1);
-			/* NB: hold reference */
-		} else
-			ieee80211_unref_node(&ni);	/* NB: do not free */
+		}
 		break;
 	}
 
@@ -1211,9 +1205,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 				("%s: new probe req from %s\n",
 				__func__, ether_sprintf(wh->i_addr2)));
-			allocbs = 1;
-		} else
-			allocbs = 0;
+		}
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
 		rate = ieee80211_setup_rates(ic, ni, rates, xrates,
@@ -1227,8 +1219,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_SEND_MGMT(ic, ni,
 				IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 		}
-		if (allocbs)
-			ieee80211_free_node(ic, ni);
 		break;
 	}
 
@@ -1322,7 +1312,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		IEEE80211_VERIFY_SSID(ic->ic_bss, ssid,
 			reassoc ? "reassoc" : "assoc");
 
-		if (ni == ic->ic_bss) {
+		if (ni->ni_state != IEEE80211_STA_AUTH &&
+		    ni->ni_state != IEEE80211_STA_ASSOC) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 			    ("%s: deny %sassoc from %s, not authenticated\n",
 			    __func__, reassoc ? "re" : "",
@@ -1332,7 +1323,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				IEEE80211_SEND_MGMT(ic, ni,
 				    IEEE80211_FC0_SUBTYPE_DEAUTH,
 				    IEEE80211_REASON_ASSOC_NOT_AUTHED);
-				ieee80211_free_node(ic, ni);
 			}
 			ic->ic_stats.is_rx_assoc_notauth++;
 			return;
@@ -1365,6 +1355,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 				("%s: rate mismatch for %s\n",
 				__func__, ether_sprintf(wh->i_addr2)));
+			/* XXX what rate will we send this at? */
 			IEEE80211_SEND_MGMT(ic, ni, resp,
 				IEEE80211_STATUS_BASIC_RATE);
 			ieee80211_node_leave(ic, ni);
@@ -1674,6 +1665,7 @@ ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
 		printf("(from %s)\n", ether_sprintf(ni->ni_macaddr));
 	}
 
+	ieee80211_node_newstate(ni, IEEE80211_STA_BSS);
 	(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
 
 	return ENETRESET;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.1 2004/08/03 10:49:11 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.2 2004/08/12 11:41:45 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2309,7 +2309,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM,
-	    "3c556 V.90 MiniPCI Modem",
+	    "3c556 V.90 Mini-PCI Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940,
@@ -2349,15 +2349,15 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
-	    "3c555 10/100 MiniPCI Ethernet",
+	    "3c555 10/100 Mini-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
-	    "3c556 10/100 MiniPCI Ethernet",
+	    "3c556 10/100 Mini-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556B,
-	    "3c556B 10/100 MiniPCI Ethernet",
+	    "3c556B 10/100 Mini-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_E,
@@ -2885,19 +2885,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
-	    "ADMtek AL981 10/100 Ethernet",
+	    "AL981 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
-	    "ADMtek AN985 10/100 Ethernet",
+	    "AN985 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985_2,
-	    "ADMtek AN985 10/100 Ethernet (OEM)",
+	    "AN985 10/100 Ethernet (OEM)",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
-	    "ADMtek ADM8211 11Mbps 802.11b WLAN",
+	    "ADM8211 11Mbps 802.11b WLAN",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
@@ -2929,23 +2929,23 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4xxx,
-	    "Aironet PC4500/PC4800 Wireless LAN Adapter",
+	    "PC4500/PC4800 Wireless LAN Adapter",
 	},
 	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_350,
-	    "Aironet 350 Wireless LAN Adapter",
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PCI350,
+	    "PCI350 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_MPI350,
-	    "Aironet 350 miniPCI Wireless LAN Adapter",
+	    "MPI350 Mini-PCI Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
-	    "Aironet PC4500 Wireless LAN Adapter",
+	    "PC4500 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800,
-	    "Aironet PC4800 Wireless LAN Adapter",
+	    "PC4800 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
@@ -2957,11 +2957,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
-	    "ACEnic 1000baseSX Gigabit Ethernet",
+	    "ACEnic 1000baseSX Ethernet",
 	},
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC_COPPER,
-	    "ACEnic 1000baseT Gigabit Ethernet",
+	    "ACEnic 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700,
@@ -3021,11 +3021,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_PPB,
-	    "AMD751 PCI-to-PCI Bridge",
+	    "AMD751 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA,
-	    "AMD756 PCI-to-ISA Bridge",
+	    "AMD756 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_IDE,
@@ -3041,7 +3041,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_NB,
-	    "AMD762 NorthBridge",
+	    "AMD762 Northbridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_PPB,
@@ -3053,11 +3053,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_PPB,
-	    "AMD761 PCI-to-PCI Bridge",
+	    "AMD761 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
-	    "AMD766 SouthBridge",
+	    "AMD766 Southbridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_IDE,
@@ -3073,7 +3073,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_ISA,
-	    "AMD768 PCI to ISA/LPC Bridge",
+	    "AMD768 PCI-ISA/LPC Bridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_IDE,
@@ -3093,7 +3093,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PPB,
-	    "AMD768 PCI to PCI Bridge",
+	    "AMD768 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_USB,
@@ -3189,11 +3189,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW,
-	    "MAC-IO I/O Controller (Heathrow)",
+	    "Heathrow I/O Controller",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
-	    "MAC-IO I/O Controller (Paddington)",
+	    "Paddington I/O Controller",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO_USB,
@@ -3217,7 +3217,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO,
-	    "MAC-IO I/O Controller (KeyLargo)",
+	    "KeyLargo I/O Controller",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC2,
@@ -3225,7 +3225,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_MACIO,
-	    "MAC-IO I/O Controller (Pangea)",
+	    "Pangea I/O Controller",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_USB,
@@ -3289,7 +3289,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID,
-	    "MAC-IO I/O Controller (Intrepid)",
+	    "Intrepid I/O Controller",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -3309,7 +3309,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
-	    "Asustek ISDN",
+	    "ISDN",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_A3,
@@ -3897,11 +3897,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704C,
-	    "BCM5704C Gigabit Ethernet (1000BASE-T)",
+	    "BCM5704C 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S,
-	    "BCM5704S Gigabit Ethernet (1000BASE-X)",
+	    "BCM5704S 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705,
@@ -4217,7 +4217,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2,
-	    "COMPAL 38W2 OEM Notebook",
+	    "38W2 OEM Notebook",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE,
@@ -4433,7 +4433,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_PCIB,
-	    "Cx5530 I/O Companion Multi-Function South Bridge",
+	    "Cx5530 I/O Companion Multi-Function Southbridge",
 	},
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_SMI,
@@ -4453,19 +4453,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
-	    "Davicom DM9102 10/100 Ethernet",
+	    "DM9102 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
-	    "DECchip 21050 PCI-PCI Bridge",
+	    "DC21050 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21040,
-	    "DECchip 21040 (\"Tulip\") Ethernet",
+	    "DC21040 (\"Tulip\") Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21030,
-	    "DECchip 21030 (\"TGA\")",
+	    "DC21030 (\"TGA\")",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_NVRAM,
@@ -4477,7 +4477,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140,
-	    "DECchip 21140 (\"FasterNet\") 10/100 Ethernet",
+	    "DC21140 (\"FasterNet\") 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PBXGB,
@@ -4489,7 +4489,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21041,
-	    "DECchip 21041 (\"Tulip Plus\") Ethernet",
+	    "DC21041 (\"Tulip Plus\") Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DGLPB,
@@ -4497,31 +4497,31 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142,
-	    "DECchip 21142/21143 10/100 Ethernet",
+	    "DC21142/21143 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21052,
-	    "DECchip 21052 PCI-PCI Bridge",
+	    "DC21052 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21150,
-	    "DECchip 21150 PCI-PCI Bridge",
+	    "DC21150 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21152,
-	    "DECchip 21152 PCI-PCI Bridge",
+	    "DC21152 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21153,
-	    "DECchip 21153 PCI-PCI Bridge",
+	    "DC21153 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21154,
-	    "DECchip 21154 PCI-PCI Bridge",
+	    "DC21154 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21554,
-	    "DECchip 21554 PCI-PCI Bridge",
+	    "DC21554 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,
@@ -4645,7 +4645,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH,
-	    "Dynalink IS64PH ISDN Adapter",
+	    "IS64PH ISDN Adapter",
 	},
 	{
 	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
@@ -4681,27 +4681,27 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
-	    "CB710 Cardbus Controller",
+	    "CB710 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
-	    "CB720 Cardbus Controller",
+	    "CB720 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
-	    "CB1211 Cardbus Controller",
+	    "CB1211 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1225,
-	    "CB1225 Cardbus Controller",
+	    "CB1225 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410,
-	    "CB1410 Cardbus Controller",
+	    "CB1410 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1420,
-	    "CB1420 Cardbus Controller",
+	    "CB1420 CardBus Controller",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
@@ -4805,23 +4805,23 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6836,
-	    "OZ6836/OZ6860 PCI-Cardbus Bridge",
+	    "OZ6836/OZ6860 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872,
-	    "OZ6812/OZ6872 PCI-Cardbus Bridge",
+	    "OZ6812/OZ6872 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922,
-	    "OZ6922 PCI-Cardbus Bridge",
+	    "OZ6922 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933,
-	    "OZ6933 PCI-Cardbus Bridge",
+	    "OZ6933 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
-	    "OZ6912/OZ6972 PCI-Cardbus Bridge",
+	    "OZ6912/OZ6972 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -4837,7 +4837,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_FM801,
-	    "Forte Media 801 Sound",
+	    "801 Sound",
 	},
 	{
 	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_PCIJOY,
@@ -5177,19 +5177,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
-	    "82375EB/SB PCI-EISA Bridge (PCEB)",
+	    "82375EB/SB PCI-EISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CDC,
-	    "82424ZX Cache and DRAM controller (CDC)",
+	    "82424ZX Cache and DRAM controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SIO,
-	    "82378ZB System I/O (SIO)",
+	    "82378ZB System I/O",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82426EX,
-	    "82426EX PCI-to-ISA Bridge (PCIB)",
+	    "82426EX PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC,
@@ -5217,7 +5217,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_FIBER,
-	    "i82453GC Gigabit Ethernet (1000BASE-X)",
+	    "i82453GC 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
@@ -5225,19 +5225,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_COPPER,
-	    "i82543GC Gigabit Ethernet (1000BASE-T)",
+	    "i82543GC 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_COPPER,
-	    "i82544EI Gigabit Ethernet (1000BASE-T)",
+	    "i82544EI 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_FIBER,
-	    "i82544EI Gigabit Ethernet (1000BASE-X)",
+	    "i82544EI 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_COPPER,
-	    "i82544GC Gigabit Ethernet (1000BASE-T)",
+	    "i82544GC 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_LOM,
@@ -5245,23 +5245,23 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM,
-	    "i82540EM Gigabit Ethernet (1000BASE-T)",
+	    "i82540EM 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_COPPER,
-	    "i82545EM Gigabit Ethernet (1000BASE-T)",
+	    "i82545EM 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_COPPER,
-	    "i82546EB Gigabit Ethernet (1000BASE-T)",
+	    "i82546EB 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_FIBER,
-	    "i82545EM Gigabit Ethernet (1000BASE-X)",
+	    "i82545EM 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_FIBER,
-	    "i82546EB Gigabit Ethernet (1000BASE-X)",
+	    "i82546EB 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI,
@@ -5289,7 +5289,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD,
-	    "i82546EB Gigabit Ethernet (1000BASE-T)",
+	    "i82546EB 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LP,
@@ -5297,11 +5297,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_COPPER,
-	    "i82545GM Gigabit Ethernet (1000BASE-T)",
+	    "i82545GM 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_FIBER,
-	    "i82545GM Gigabit Ethernet (1000BASE-X)",
+	    "i82545GM 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_SERDES,
@@ -5369,7 +5369,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2100,
-	    "PRO/Wireless LAN 2100 3B Mini PCI Adapter",
+	    "PRO/Wireless LAN 2100 3B Mini-PCI Adapter",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX,
@@ -5405,11 +5405,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_COPPER,
-	    "i82546GB Gigabit Ethernet (1000BASE-T)",
+	    "i82546GB 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_FIBER,
-	    "i82546GB Gigabit Ethernet (1000BASE-X)",
+	    "i82546GB 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES,
@@ -5501,43 +5501,43 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
-	    "82437FX System Controller (TSC)",
+	    "82437FX (TSC) System Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_ISA,
-	    "82371FB PCI-to-ISA Bridge (PIIX)",
+	    "82371FB (PIIX) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_IDE,
-	    "82371FB IDE controller (PIIX)",
+	    "82371FB (PIIX) IDE controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371MX,
-	    "82371MX Mobile PCI I/O IDE Xcelerator (MPIIX)",
+	    "82371MX (MPIIX) Mobile PCI I/O IDE Xcelerator",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437MX,
-	    "82437MX Mobile System Controller (MTSC)",
+	    "82437MX (MTSC) Mobile System Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX,
-	    "82441FX PCI and Memory Controller (PMC)",
+	    "82441FX (PMC) PCI and Memory Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380AB,
-	    "82380AB Mobile PCI-to-ISA Bridge (MISA)",
+	    "82380AB (MISA) Mobile PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380FB,
-	    "82380FB Mobile PCI-to-PCI Bridge (MPCI2)",
+	    "82380FB (MPCI2) Mobile PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX,
-	    "82439HX System Controller (TXC)",
+	    "82439HX (TXC) System Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_PPB,
-	    "82870P2 P64H2 PCI-to-PCI Bridge",
+	    "82870P2 P64H2 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC,
@@ -5601,7 +5601,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_HPB,
-	    "82801AA Hub-to-PCI Bridge",
+	    "82801AA Hub-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC,
@@ -5629,7 +5629,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_HPB,
-	    "82801AB Hub-to-PCI Bridge",
+	    "82801AB Hub-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC,
@@ -5657,7 +5657,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_HPB,
-	    "82801BAM Hub-to-PCI Bridge",
+	    "82801BAM Hub-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN,
@@ -5677,7 +5677,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_HPB,
-	    "82801BA Hub-to-PCI Bridge",
+	    "82801BA Hub-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_SMB,
@@ -5905,15 +5905,15 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_AGP,
-	    "E7505 MCH Host-to-AGP Bridge",
+	    "E7505 MCH Host-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B1,
-	    "E7505 MCH HI_B PCI-to-PCI",
+	    "E7505 MCH HI_B PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B2,
-	    "E7505 MCH HI_B PCI-to-PCI Error Reporting",
+	    "E7505 MCH HI_B PCI-PCI Error Reporting",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_DRAM,
@@ -5921,7 +5921,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_AGP,
-	    "82845G/GL Host-to-AGP Bridge",
+	    "82845G/GL Host-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IGD,
@@ -5941,7 +5941,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_HPB,
-	    "82801EB Hub-to-PCI Bridge",
+	    "82801EB Hub-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_HB,
@@ -6025,7 +6025,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_AGP,
-	    "82855PM Host-to-AGP Bridge",
+	    "82855PM Host-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_PM,
@@ -6033,7 +6033,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MCH,
-	    "82855GM Host-to-Hub Controller",
+	    "82855GM Host-Hub Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD,
@@ -6069,39 +6069,39 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
-	    "82371SB PCI-to-ISA Bridge (PIIX3)",
+	    "82371SB (PIIX3) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_IDE,
-	    "82371SB IDE Interface (PIIX3)",
+	    "82371SB (PIIX3) IDE Interface",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_USB,
-	    "82371SB USB Host Controller (PIIX3)",
+	    "82371SB (PIIX3) USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437VX,
-	    "82437VX System Controller (TVX)",
+	    "82437VX (TVX) System Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX,
-	    "82439TX System Controller (MTXC)",
+	    "82439TX (MTXC) System Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_ISA,
-	    "82371AB PCI-to-ISA Bridge (PIIX4)",
+	    "82371AB (PIIX4) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_IDE,
-	    "82371AB IDE controller (PIIX4)",
+	    "82371AB (PIIX4) IDE controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_USB,
-	    "82371AB USB Host Controller (PIIX4)",
+	    "82371AB (PIIX4) USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC,
-	    "82371AB Power Management Controller (PIIX4)",
+	    "82371AB (PIIX4) Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH,
@@ -6129,11 +6129,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
-	    "82443LX PCI AGP Controller (PAC)",
+	    "82443LX PCI AGP Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP,
-	    "82443LX AGP Interface (PAC)",
+	    "82443LX AGP Interface",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX,
@@ -6157,7 +6157,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ISA,
-	    "82443MX PCI-to-ISA Bridge",
+	    "82443MX PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_IDE,
@@ -6205,11 +6205,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21152,
-	    "S21152BB PCI to PCI Bridge",
+	    "S21152BB PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21154,
-	    "S21152BA,S21154AE/BE PCI to PCI Bridge",
+	    "S21152BA,S21154AE/BE PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21555,
@@ -6425,11 +6425,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3LP26,
-	    "Lucent ORCA FPGA w/32-bit PCI ASIC core",
+	    "ORCA FPGA w/32-bit PCI ASIC core",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3TP12,
-	    "Lucent ORCA FPGA w/64-bit PCI ASIC core",
+	    "ORCA FPGA w/64-bit PCI ASIC core",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
@@ -6437,7 +6437,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
-	    "FW322/323 IEEE 1394 OHCI Controller",
+	    "FW322/323 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
@@ -6821,7 +6821,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72872,
-	    "uPD72872 IEEE 1394 OHCI Host Controller",
+	    "uPD72872 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU,
@@ -6833,11 +6833,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870,
-	    "uPD72870 IEEE 1394 OHCI Host Controller",
+	    "uPD72870 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72871,
-	    "uPD72871 IEEE 1394 OHCI Host Controller",
+	    "uPD72871 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD720100A,
@@ -6845,11 +6845,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D,
-	    "NEC Versa Pro LX VA26D",
+	    "Versa Pro LX VA26D",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX,
-	    "NEC Versa LX",
+	    "Versa LX",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2070,
@@ -6889,11 +6889,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
-	    "GA620 1000baseSX Gigabit Ethernet",
+	    "GA620 1000baseSX Ethernet",
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
-	    "GA620 1000baseT Gigabit Ethernet",
+	    "GA620 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
@@ -7284,6 +7284,10 @@ const struct pci_product pci_products[] = {
 	    "GeForce FX 5900",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900XT,
+	    "GeForce FX 5900XT",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5950U,
 	    "GeForce FX 5950 Ultra",
 	},
@@ -7301,15 +7305,15 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
-	    "Olicom OC-2183/2185 Ethernet",
+	    "OC-2183/2185 Ethernet",
 	},
 	{
 	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
-	    "Olicom OC-2325 Ethernet",
+	    "OC-2325 Ethernet",
 	},
 	{
 	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
-	    "Olicom OC-2326 10/100-TX Ethernet",
+	    "OC-2326 10/100-TX Ethernet",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557,
@@ -8061,7 +8065,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_180_SATA,
-	    "SiS 180 SATA controller",
+	    "180 SATA controller",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
@@ -8077,15 +8081,15 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530HB,
-	    "530 Host to PCI Bridge",
+	    "530 Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_540HB,
-	    "540 Host to PCI Bridge",
+	    "540 Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_550HB,
-	    "550 Host to PCI Bridge",
+	    "550 Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
@@ -8093,123 +8097,123 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_620,
-	    "SiS 620 Host Bridge",
+	    "620 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_630,
-	    "SiS 630 Host Bridge",
+	    "630 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_633,
-	    "SiS 633 Host Bridge",
+	    "633 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_635,
-	    "SiS 635 Host Bridge",
+	    "635 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_640,
-	    "SiS 640 Host Bridge",
+	    "640 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
-	    "SiS 645 Host Bridge",
+	    "645 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_646,
-	    "SiS 646 Host Bridge",
+	    "646 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_648,
-	    "SiS 648 Host Bridge",
+	    "648 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
-	    "SiS 650 Host Bridge",
+	    "650 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_651,
-	    "SiS 651 Host Bridge",
+	    "651 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_652,
-	    "SiS 652 Host Bridge",
+	    "652 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_655,
-	    "SiS 655 Host Bridge",
+	    "655 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_658,
-	    "SiS 658 Host Bridge",
+	    "658 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
-	    "SiS 730 Host Bridge",
+	    "730 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_733,
-	    "SiS 733 Host Bridge",
+	    "733 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_735,
-	    "SiS 735 Host Bridge",
+	    "735 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740,
-	    "SiS 740 Host Bridge",
+	    "740 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741,
-	    "SiS 741 Host Bridge",
+	    "741 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_745,
-	    "SiS 745 Host Bridge",
+	    "745 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_746,
-	    "SiS 746 Host Bridge",
+	    "746 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_748,
-	    "SiS 748 Host Bridge",
+	    "748 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_750,
-	    "SiS 750 Host Bridge",
+	    "750 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_751,
-	    "SiS 751 Host Bridge",
+	    "751 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_752,
-	    "SiS 752 Host Bridge",
+	    "752 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_755,
-	    "SiS 755 Host Bridge",
+	    "755 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
-	    "SiS 900 10/100 Ethernet",
+	    "900 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_961,
-	    "SiS 961 Host Bridge",
+	    "961 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_962,
-	    "SiS 962 Host Bridge",
+	    "962 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_963,
-	    "SiS 963 Host Bridge",
+	    "963 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_964,
-	    "SiS 964 Host Bridge",
+	    "964 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
@@ -8241,15 +8245,15 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
-	    "SiS 7012 AC-97 Sound",
+	    "7012 AC-97 Sound",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
-	    "SiS 7016 10/100 Ethernet",
+	    "7016 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
-	    "SiS 7018 Sound",
+	    "7018 Sound",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM710,
@@ -8281,11 +8285,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
-	    "FDC 37C665",
+	    "FDC37C665",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C922,
-	    "FDC 37C922",
+	    "FDC37C922",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
@@ -8313,7 +8317,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD3222,
-	    "CXD3222 OHCI IEEE 1394 Host Controller",
+	    "CXD3222 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK,
@@ -8353,7 +8357,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_5821,
-	    "Sun bcm5821",
+	    "BCM5821",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K,
@@ -8433,11 +8437,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
-	    "Tamarack TC9021 Gigabit Ethernet",
+	    "TC9021 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT,
-	    "Tamarack TC9021 Gigabit Ethernet (alt ID)",
+	    "TC9021 Gigabit Ethernet (alt ID)",
 	},
 	{
 	    PCI_VENDOR_TANDEM, PCI_PRODUCT_TANDEM_SERVERNETII,
@@ -8469,55 +8473,55 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22,
-	    "TSB12LV22 OHCI IEEE 1394 Host Controller",
+	    "TSB12LV22 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450LYNX,
-	    "PCI4450 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4450 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410LYNX,
-	    "PCI4410 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4410 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
-	    "TSB12LV23 OHCI IEEE 1394 Host Controller",
+	    "TSB12LV23 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26,
-	    "TSB12LV26 OHCI IEEE 1394 Host Controller",
+	    "TSB12LV26 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22,
-	    "TSB43AA22 OHCI IEEE 1394 Host Controller",
+	    "TSB43AA22 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22A,
-	    "TSB43AA22/A OHCI IEEE 1394 Host Controller",
+	    "TSB43AA22/A IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA23,
-	    "TSB43AA23 OHCI IEEE 1394 Host Controller",
+	    "TSB43AA23 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB21,
-	    "TSB43AA21 OHCI IEEE 1394 Host Controller",
+	    "TSB43AA21 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
-	    "PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510LYNX,
-	    "PCI4510 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520LYNX,
-	    "PCI4520 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410LYNX,
-	    "PCI7[4-6]10 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
@@ -8581,35 +8585,35 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA,
-	    "PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4450 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA,
-	    "PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451YENTA,
-	    "PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4451 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510YENTA,
-	    "PCI4510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520YENTA,
-	    "PCI4520 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4520 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7510YENTA,
-	    "PCI7510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI7510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610YENTA,
-	    "PCI7610 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI7610 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410YENTA,
-	    "PCI7410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI7410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610SM,
@@ -8661,7 +8665,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040,
-	    "PCI2040 PCI-to-DSP Bridge",
+	    "PCI2040 PCI-DSP Bridge",
 	},
 	{
 	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L,
@@ -8693,19 +8697,19 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ISA,
-	    "ISA Bridge",
+	    "PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
-	    "ToPIC95 CardBus-PCI Bridge",
+	    "ToPIC95 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B,
-	    "ToPIC95B CardBus-PCI Bridge",
+	    "ToPIC95B PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97,
-	    "ToPIC97 CardBus-PCI Bridge",
+	    "ToPIC97 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SMCARD,
@@ -8717,7 +8721,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100,
-	    "ToPIC100 CardBus-PCI Bridge",
+	    "ToPIC100 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_OBOE,
@@ -8861,7 +8865,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C886,
-	    "UM82C886 ISA Bridge",
+	    "UM82C886 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8673F,
@@ -8949,7 +8953,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305,
-	    "VT6305 OHCI IEEE 1394 Controller",
+	    "VT6305 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
@@ -9053,7 +9057,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
-	    "VT3606 OHCI IEEE 1394 Controller",
+	    "VT3606 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
@@ -9612,4 +9616,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1828;
+const int pci_nproducts = 1829;

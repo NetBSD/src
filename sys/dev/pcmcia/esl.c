@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.10.2.1 2004/08/03 10:50:15 skrll Exp $	*/
+/*	$NetBSD: esl.c,v 1.10.2.2 2004/08/12 11:41:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.10.2.1 2004/08/03 10:50:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.10.2.2 2004/08/12 11:41:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,8 +463,8 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 		   struct audio_params *param)
 {
 	struct esl_pcmcia_softc *sc = hdl;
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int bs;
 	int cnt;
 	u_int8_t reg;
@@ -548,8 +548,8 @@ esl_init(struct esl_pcmcia_softc *sc)
 	struct audio_attach_args aa;
 	int i;
 	int model;
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	
 	/* Initialization sequence */
 	for (i = 0; ENABLE_ORDER[i] != -1; i++)
@@ -618,8 +618,8 @@ int
 esl_intr(void *hdl)
 {
 	struct esl_pcmcia_softc *sc = hdl;
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t reg;
 	u_char *pos;
 
@@ -653,8 +653,8 @@ esl_intr(void *hdl)
 int
 esl_reset(struct esl_pcmcia_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	bus_space_write_1(iot, ioh, ESS_DSP_RESET, ESS_RESET_EXT);
 	delay(10000);	/* XXX: Ugly, but ess.c does this too */
@@ -767,8 +767,8 @@ esl_identify(struct esl_pcmcia_softc *sc)
 int
 esl_rdsp(struct esl_pcmcia_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	for (i = ESS_READ_TIMEOUT; i > 0; --i) {
@@ -787,8 +787,8 @@ esl_rdsp(struct esl_pcmcia_softc *sc)
 int
 esl_wdsp(struct esl_pcmcia_softc *sc, u_char v)
 {
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	for (i = ESS_WRITE_TIMEOUT; i > 0; --i) {
@@ -824,7 +824,7 @@ u_char
 esl_get_dsp_status(struct esl_pcmcia_softc *sc)
 {
 
-	return (bus_space_read_1(sc->sc_pcioh.iot, sc->sc_pcioh.ioh,
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    ESS_DSP_RW_STATUS));
 }
 
@@ -872,8 +872,8 @@ esl_set_xreg_bits(struct esl_pcmcia_softc *sc, u_char reg, u_char mask)
 u_char
 esl_read_mix_reg(struct esl_pcmcia_softc *sc, u_char reg)
 {
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 #if 0
 	int s;
 #endif
@@ -894,8 +894,8 @@ esl_read_mix_reg(struct esl_pcmcia_softc *sc, u_char reg)
 void
 esl_write_mix_reg(struct esl_pcmcia_softc *sc, u_char reg, u_char val)
 {
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 #if 0
 	int s;
 #endif
@@ -934,8 +934,8 @@ void
 esl_read_multi_mix_reg(struct esl_pcmcia_softc *sc, u_char reg,
 		u_int8_t *datap, bus_size_t count)
 {
-	bus_space_tag_t iot = sc->sc_pcioh.iot;
-	bus_space_handle_t ioh = sc->sc_pcioh.ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 #if 0
 	int s;
 #endif

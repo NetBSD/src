@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.2 2001/12/15 13:23:22 soren Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.2.16.1 2004/08/12 11:41:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -181,6 +181,7 @@ void	tcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 
 void	tcic_chip_socket_enable __P((pcmcia_chipset_handle_t));
 void	tcic_chip_socket_disable __P((pcmcia_chipset_handle_t));
+void	tcic_chip_socket_settype __P((pcmcia_chipset_handle_t, int));
 
 static __inline__ int tcic_read_1 __P((struct tcic_handle *, int));
 static __inline__ int

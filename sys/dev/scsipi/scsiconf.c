@@ -1,7 +1,7 @@
-/*	$NetBSD: scsiconf.c,v 1.207.2.2 2004/08/03 10:51:14 skrll Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.207.2.3 2004/08/12 11:42:05 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.2 2004/08/03 10:51:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.3 2004/08/12 11:42:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,9 @@ scsibusattach(parent, self, aux)
 	    chan->chan_nluns,
 	    chan->chan_nluns == 1 ? "" : "s");
 
+	if (scsipi_adapter_addref(chan->chan_adapter))
+		return;
+
 	/* Initialize the channel structure first */
 	chan->chan_init_cb = scsibus_config;
 	chan->chan_init_cb_arg = sc;
@@ -240,6 +243,8 @@ scsibus_config(chan, arg)
 	wakeup(&scsi_initq_head);
 
 	config_pending_decr();
+
+	scsipi_adapter_delref(chan->chan_adapter);
 }
 
 int
@@ -305,16 +310,42 @@ scsibusdetach(self, flags)
 {
 	struct scsibus_softc *sc = (void *) self;
 	struct scsipi_channel *chan = sc->sc_channel;
+	struct scsipi_periph *periph;
+	int ctarget, clun;
+	struct scsipi_xfer *xs;
+	int error;
+
 
 	/*
-	 * Shut down the channel.
+	 * Process outstanding commands (which will never complete as the
+	 * controller is gone).
+	 */
+	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
+		if (ctarget == chan->chan_id)
+			continue;
+		for (clun = 0; clun < chan->chan_nluns; clun++) {
+			periph = scsipi_lookup_periph(chan, ctarget, clun);
+			if (periph == NULL)
+				continue;
+			TAILQ_FOREACH(xs, &periph->periph_xferq, device_q) {
+				callout_stop(&xs->xs_callout);
+				xs->error = XS_DRIVER_STUFFUP;
+				scsipi_done(xs);
+			}
+		}
+	}
+
+	/*
+	 * Detach all of the periphs.
+	 */
+	error = scsipi_target_detach(chan, -1, -1, flags);
+
+	/*
+	 * Now shut down the channel.
+	 * XXX only if no errors ?
 	 */
 	scsipi_channel_shutdown(chan);
-
-	/*
-	 * Now detach all of the periphs.
-	 */
-	return scsipi_target_detach(chan, -1, -1, flags);
+	return (error);
 }
 
 /*

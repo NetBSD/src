@@ -1,4 +1,4 @@
-;	$NetBSD: arm.asm,v 1.3 2001/07/17 01:43:42 toshii Exp $	
+;	$NetBSD: arm.asm,v 1.3.22.1 2004/08/12 11:41:05 skrll Exp $	
 ;
 ; Copyright (c) 2001 The NetBSD Foundation, Inc.
 ; All rights reserved.
@@ -34,7 +34,7 @@
 ; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 ;
-	
+
 ;
 ;armasm.exe $(InputPath)
 ;arm.obj
@@ -42,11 +42,11 @@
 	; dummy buffer for WritebackDCache
 	EXPORT	|dcachebuf|	[DATA]
 	AREA	|.data|, DATA
-|dcachebuf|	
+|dcachebuf|
 	%	8192	; D-cache size
 
 	AREA	|.text|, CODE, PIC
-	
+
 	;
 	; Operation mode ops.
 	;
@@ -83,7 +83,7 @@
 	msr	cpsr, r0
 	mov	pc, lr
 	ENDP  ; |EI|
-	
+
 	;
 	; Cache ops.
 	;
@@ -95,7 +95,7 @@
 	mcr	p15, 0, r0, c7, c5, 0
 	mov	pc, lr
 	ENDP  ; |InvalidateICache|
-	
+
 	EXPORT	|WritebackDCache|
 |WritebackDCache| PROC
 	ldr	r0, [pc, #16]	; dcachebuf
@@ -107,13 +107,13 @@
 	mov	pc, lr
 	DCD	|dcachebuf|
 	ENDP  ; |WritebackDCache|
-	
+
 	EXPORT	|InvalidateDCache|
 |InvalidateDCache| PROC
 	; c7	(CRn) Cache Control Register
 	; c6, 0	(CRm, opcode_2) Flush D
 	; r0	(Rd) ignored
-	mcr	p15, 0, r0, c7, c6, 0	
+	mcr	p15, 0, r0, c7, c6, 0
 	mov	pc, lr
 	ENDP  ; |InvalidateDCache|
 
@@ -156,7 +156,7 @@
 	mcr	p15, 0, r0, c8, c5, 0
 	mov	pc, lr
 	ENDP  ; |FlushITLB|
-	
+
 	EXPORT	|FlushDTLB|
 |FlushDTLB| PROC
 	mcr	p15, 0, r0, c8, c6, 0
@@ -178,7 +178,7 @@
 	mov	pc, lr
 	ENDP  ; |GetCPSR|
 
-	EXPORT	|SetCPSR|	
+	EXPORT	|SetCPSR|
 |SetCPSR| PROC
 	msr	cpsr, r0
 	mov	pc, lr
@@ -211,7 +211,7 @@
 	;	13 (1)Base address of interrupt vector is 0xffff0000
 	mov	pc, lr
 	ENDP  ; |GetCop15Reg1|
-	EXPORT	|SetCop15Reg1|	
+	EXPORT	|SetCop15Reg1|
 |SetCop15Reg1| PROC
 	mcr	p15, 0, r0, c1, c0, 0
 	nop
@@ -219,14 +219,14 @@
 	nop
 	mov	pc, lr
 	ENDP  ; |SetCop15Reg1|
-	
-; Reg2	Translation table base (R/W)	
-	EXPORT	|GetCop15Reg2|	
+
+; Reg2	Translation table base (R/W)
+	EXPORT	|GetCop15Reg2|
 |GetCop15Reg2| PROC
 	mrc	p15, 0, r0, c2, c0, 0
 	mov	pc, lr
 	ENDP  ; |GetCop15Reg2|
-	EXPORT	|SetCop15Reg2|	
+	EXPORT	|SetCop15Reg2|
 |SetCop15Reg2| PROC
 	mcr	p15, 0, r0, c2, c0, 0
 	mov	pc, lr
@@ -238,21 +238,21 @@
 	mrc	p15, 0, r0, c3, c0, 0
 	mov	pc, lr
 	ENDP  ; |GetCop15Reg3|
-	EXPORT	|SetCop15Reg3|	
+	EXPORT	|SetCop15Reg3|
 |SetCop15Reg3| PROC
 	mcr	p15, 0, r0, c3, c0, 0
 	mov	pc, lr
 	ENDP  ; |SetCop15Reg3|
-	
+
 ; Reg5	Fault status (R/W)
-	EXPORT	|GetCop15Reg5|	
+	EXPORT	|GetCop15Reg5|
 |GetCop15Reg5| PROC
 	mrc	p15, 0, r0, c5, c0, 0
 	mov	pc, lr
 	ENDP  ; |GetCop15Reg5|
-	
-; Reg6	Fault address (R/W)	
-	EXPORT	|GetCop15Reg6|	
+
+; Reg6	Fault address (R/W)
+	EXPORT	|GetCop15Reg6|
 |GetCop15Reg6| PROC
 	mrc	p15, 0, r0, c6, c0, 0
 	mov	pc, lr
@@ -262,33 +262,33 @@
 	; -> Cache ops
 ; Reg8	TLB operations (Flush) (W)
 	; -> TLB ops
-; Reg9	Read buffer operations (W)	
-; Reg13	Process ID (R/W)	
-	EXPORT	|GetCop15Reg13|	
+; Reg9	Read buffer operations (W)
+; Reg13	Process ID (R/W)
+	EXPORT	|GetCop15Reg13|
 |GetCop15Reg13| PROC
 	mrc	p15, 0, r0, c13, c0, 0
 	mov	pc, lr
 	ENDP  ; |GetCop15Reg13|
-	EXPORT	|SetCop15Reg13|	
+	EXPORT	|SetCop15Reg13|
 |SetCop15Reg13| PROC
 	mcr	p15, 0, r0, c13, c0, 0
 	mov	pc, lr
 	ENDP  ; |SetCop15Reg13|
-	
+
 ; Reg14	Breakpoint (R/W)
-	EXPORT	|GetCop15Reg14|	
+	EXPORT	|GetCop15Reg14|
 |GetCop15Reg14| PROC
 	mrc	p15, 0, r0, c14, c0, 0
 	mov	pc, lr
 	ENDP  ; |GetCop15Reg14|
 ; Reg15	Test, clock, and idle (W)
-	
+
 	; FlatJump (kaddr_t bootinfo, kaddr_t pvec, kaddr_t stack
 	;		kaddr_t jump)
 	;	bootinfo	boot information block address.
 	;	pvec		page vector of kernel.
 	;	stack		physical address of stack
-	;	jump		physical address of boot function 
+	;	jump		physical address of boot function
 	; *** MMU and pipeline behavier are SA-1100 specific. ***
 	EXPORT	|FlatJump|
 |FlatJump| PROC
@@ -316,7 +316,7 @@
 	ENDP  ; |FlatJump|
 ;
 ;	UART test
-;	
+;
 	; boot_func (u_int32_t mapaddr, u_int32_t bootinfo, u_int32_t flags)
 	;
 	EXPORT	|boot_func|
@@ -333,40 +333,40 @@
 	bl	boot
 	nop	; NOTREACHED
 	nop
-	ENDP  ; |boot_func|	
-	
+	ENDP  ; |boot_func|
+
 	EXPORT |colorbar|
-|colorbar| PROC	
-	stmea	sp!, {r4-r7, lr}	
-	adr	r4, |$FBADDR|	
+|colorbar| PROC
+	stmea	sp!, {r4-r7, lr}
+	adr	r4, |$FBADDR|
 	ldr	r4, [r4]
-	
+
 	mov	r7, #8
 	add	r0, r0, r7
 |color_loop|
 	mov	r6, r0
 	and	r6, r6, #7
-	orr	r6, r6, r6, LSL #8	
+	orr	r6, r6, r6, LSL #8
 	orr	r6, r6, r6, LSL #16
 	add	r5, r4, #0x9600
 |fb_loop|
 	str	r6, [r4], #4
 	cmp	r4, r5
 	blt	|fb_loop|
-	
+
 	subs	r7, r7, #1
-	bne	|color_loop|	
-	
+	bne	|color_loop|
+
 	ldmea	sp!, {r4-r7, pc}
 |$FBADDR|
 	DCD	0xc0003000	; use WindowsCE default.
-	ENDP  ; |colorbar|	
-	
+	ENDP  ; |colorbar|
+
 	EXPORT	|boot|
 |boot| PROC
 ;
 ;	UART test code
-;	
+;
 ;	; print boot_info address (r0) and page_vector start address (r1).
 ;	mov	r4, r0
 ;	mov	r5, r1
@@ -379,32 +379,32 @@
 ;	mov	r0, r5
 ;	bl	hexdump
 ;	mov	r7, r4
-;	mov	r2, r5		; start	
-	
+;	mov	r2, r5		; start
+
 	mov	r7, r0		; if enabled above debug print, remove this.
 	mov	r2, r1		; if enabled above debug print, remove this.
-|page_loop|	
+|page_loop|
 	mvn	r0, #0		; ~0
 	cmp	r2, r0
 	beq	|page_end|	; if (next == ~0) goto page_end
-	
+
 	mov	r1, r2		; p = next
 	ldr	r2, [r1]	; next
 	ldr	r3, [r1, #4]	; src
 	ldr	r4, [r1, #8]	; dst
 	ldr	r5, [r1, #12]	; sz
-	
+
 	cmp	r3, r0
 	add	r6, r4, r5	; end address
 	bne	|page_memcpy4|	; if (src != ~0) goto page_memcpy4
 
-	mov	r0, #0	
+	mov	r0, #0
 |page_memset|			; memset (dst, 0, sz) uncached.
 	str	r0, [r4], #4
 	cmp	r4, r6
 	blt	|page_memset|
 	b	|page_loop|
-	
+
 |page_memcpy4|			; memcpy (dst, src, sz) uncached.
 	ldr	r0, [r3], #4
 	ldr	r5, [r3], #4
@@ -418,7 +418,7 @@
 |page_end|
 	;
 	; jump to kernel
-	;	
+	;
 ;	mov	r0, #'E'
 ;	bl	btputc
 ;	ldr	r0, [r7]
@@ -440,7 +440,7 @@
 	ldr	r2, [r7, #12]
 	mov	pc, r4
 	; NOTREACHED
-	
+
 |infinite_loop|
 	nop
 	nop
@@ -449,7 +449,7 @@
 	nop
 	b	|infinite_loop|
 	ENDP  ; |boot|
-	
+
 |btputc| PROC
 	adr	r1, |$UARTTXBSY|
 	ldr	r1, [r1]
@@ -479,7 +479,7 @@
 	adr	r2, |$UARTTXBSY|
 	ldr	r2, [r2]
 	mov	r5, #8
-|hex_loop|	
+|hex_loop|
 	mov	r3, r0, LSR #28
 	cmp	r3, #9
 	addgt	r3, r3, #0x41 - 10
@@ -499,13 +499,13 @@
 	bl	btputc
 	ldmea	sp!, {r4-r5, pc}
 	ENDP	;|hexdump|
-	
+
 |$UARTTXADR|
 	DCD	0x80050014
-|$UARTTXBSY|	
-	DCD	0x80050020	
-	
+|$UARTTXBSY|
+	DCD	0x80050020
+
 	EXPORT	|boot_func_end| [ DATA ]
-|boot_func_end|	DCD	0x0	
+|boot_func_end|	DCD	0x0
 
 	END

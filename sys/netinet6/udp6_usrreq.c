@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.55.2.2 2004/08/03 10:55:19 skrll Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.55.2.3 2004/08/12 11:42:21 skrll Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,9 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.55.2.2 2004/08/03 10:55:19 skrll Exp $");
-
-#include "opt_ipsec.h"
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.55.2.3 2004/08/12 11:42:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

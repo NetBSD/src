@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.1.2.2 2004/08/12 11:41:03 skrll Exp $	*/
 
 /*
  *
@@ -114,7 +114,7 @@
  *  |         Kernel Space            |
  *  |                                 |
  *  |                                 |
- *  +---------------------------------+ 0xffff800000000000 = 0x0000008000000000
+ *  +---------------------------------+ 0xffff800000000000 = 0x0000800000000000
  *  |                                 |
  *  |    alt.L1 table (PTE pages)     |
  *  |                                 |
@@ -126,7 +126,7 @@
  *  |                                 |
  *  +---------------------------------+ 0x0000000000000000
  *
- * In other words, there is a 'VA hole' at 0x0000008000000000 -
+ * In other words, there is a 'VA hole' at 0x0000800000000000 -
  * 0xffff800000000000 which will trap, just as on, for example,
  * sparcv9.
  *
@@ -560,7 +560,7 @@ kvtopte(vaddr_t va)
 	{
 		pd_entry_t *pde;
 
-		pde = L1_BASE + pl2_i(va);
+		pde = L2_BASE + pl2_i(va);
 		if (*pde & PG_PS)
 			return ((pt_entry_t *)pde);
 	}

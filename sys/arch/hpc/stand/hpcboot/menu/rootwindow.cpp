@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.4.24.1 2004/08/03 10:34:59 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.4.24.2 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <menu/rootwindow.h>
 #include <res/resource.h>
 #include "../binary/build_number.h"
+#include <console.h>
 
 //
 // root window
@@ -333,7 +334,7 @@ RootWindow::focusManagerHook(MSG &msg, HWND tab_window)
 		next = _base->_window; // out of the tab window
 		prev = 0;	// let IsDialogMessage handle it
 	}
- 
+
 #if 0 // XXX: breaks tabbing out of the console window
 	if (dlgcode & DLGC_WANTALLKEYS)
 		return FALSE;
@@ -371,8 +372,12 @@ RootWindow::focusManagerHook(MSG &msg, HWND tab_window)
 }
 
 void
-RootWindow::progress()
+RootWindow::progress(const char *msg)
 {
+
+	if (msg)
+		Console::Instance()->print(TEXT("[progress] %s\n"), msg);
+
 	SendMessage(_progress_bar->_window, PBM_STEPIT, 0, 0);
 }
 

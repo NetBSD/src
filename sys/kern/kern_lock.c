@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.71.2.1 2004/08/03 10:52:46 skrll Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.71.2.2 2004/08/12 11:42:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.71.2.1 2004/08/03 10:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.71.2.2 2004/08/12 11:42:19 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -718,8 +718,10 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			lkp->lk_flags |= LK_WANT_UPGRADE;
 			error = acquire(&lkp, &s, extflags, 0, LK_SHARE_NONZERO);
 			lkp->lk_flags &= ~LK_WANT_UPGRADE;
-			if (error)
+			if (error) {
+				WAKEUP_WAITER(lkp);
 				break;
+			}
 			lkp->lk_flags |= LK_HAVE_EXCL;
 			SETHOLDER(lkp, pid, lid, cpu_id);
 #if defined(LOCKDEBUG)
@@ -785,10 +787,12 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		 * Wait for shared locks and upgrades to finish.
 		 */
 		error = acquire(&lkp, &s, extflags, 0,
-		    LK_WANT_UPGRADE | LK_SHARE_NONZERO);
+		    LK_HAVE_EXCL | LK_WANT_UPGRADE | LK_SHARE_NONZERO);
 		lkp->lk_flags &= ~LK_WANT_EXCL;
-		if (error)
+		if (error) {
+			WAKEUP_WAITER(lkp);
 			break;
+		}
 		lkp->lk_flags |= LK_HAVE_EXCL;
 		SETHOLDER(lkp, pid, lid, cpu_id);
 #if defined(LOCKDEBUG)
@@ -994,7 +998,7 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 	 * Wait for shared locks and upgrades to finish.
 	 */
 	error = acquire(&lkp, &s, LK_SPIN, 0,
-	    LK_SHARE_NONZERO | LK_WANT_UPGRADE);
+	    LK_HAVE_EXCL | LK_SHARE_NONZERO | LK_WANT_UPGRADE);
 	lkp->lk_flags &= ~LK_WANT_EXCL;
 	lkp->lk_flags |= LK_HAVE_EXCL;
 	SETHOLDER(lkp, LK_NOPROC, 0, cpu_id);

@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.43.2.1 2004/08/03 10:46:06 skrll Exp $ */
+/*      $NetBSD: ac97.c,v 1.43.2.2 2004/08/12 11:41:22 skrll Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43.2.1 2004/08/03 10:46:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43.2.2 2004/08/12 11:41:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,6 +371,8 @@ static const struct ac97_codecid {
 	  0xffffffff,			"Analog Devices AD1886" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x63),
 	  0xffffffff,			"Analog Devices AD1886A" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x68),
+	  0xffffffff,			"Analog Devices AD1888", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x70),
 	  0xffffffff,			"Analog Devices AD1980", ac97_ad198x_init },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x72),
@@ -407,6 +409,9 @@ static const struct ac97_codecid {
 	/*
 	 * Realtek & Avance Logic
 	 *	http://www.realtek.com.tw/downloads/downloads1-3.aspx?lineid=5&famid=All&series=All&Spec=True
+	 *
+	 * ALC650 and ALC658 support VRA, but it supports only 8000, 11025,
+	 * 12000, 16000, 22050, 24000, 32000, 44100, and 48000 Hz.
 	 */
 	{ AC97_CODEC_ID('A', 'L', 'C', 0x00),
 	  0xfffffff0,			"Realtek RL5306"	},
@@ -417,17 +422,32 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x10),
 	  0xffffffff,			"Avance Logic ALC200/ALC201"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x20),
-	  0xffffffff,			"Avance Logic ALC650", ac97_alc650_init },
+	  0xfffffff0,			"Avance Logic ALC650", ac97_alc650_init },
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x30),
 	  0xffffffff,			"Avance Logic ALC101"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x40),
 	  0xffffffff,			"Avance Logic ALC202"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x50),
 	  0xffffffff,			"Avance Logic ALC250"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x60),
+	  0xfffffff0,			"Avance Logic ALC655"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x80),
+	  0xfffffff0,			"Avance Logic ALC658"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x90),
+	  0xfffffff0,			"Avance Logic ALC850"	},
 	{ AC97_CODEC_ID('A', 'L', 'C', 0),
 	  AC97_VENDOR_ID_MASK,		"Realtek unknown"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0),
 	  AC97_VENDOR_ID_MASK,		"Avance Logic unknown"	},
+
+	/**
+	 * C-Media Electronics Inc.
+	 * http://www.cmedia.com.tw/doc/CMI9739%206CH%20Audio%20Codec%20SPEC_Ver12.pdf
+	 */
+	{ AC97_CODEC_ID('C', 'M', 'I', 0x61),
+	  0xffffffff,			"C-Media CMI9739"	},
+	{ AC97_CODEC_ID('C', 'M', 'I', 0),
+	  AC97_VENDOR_ID_MASK,		"C-Media unknown"	},
 
 	/* Cirrus Logic, Crystal series:
 	 *  'C' 'R' 'Y' 0x0[0-7]  - CS4297
@@ -488,8 +508,10 @@ static const struct ac97_codecid {
 	  0xffffffff,			"ICEnsemble ICE1232A",	},
 	{ AC97_CODEC_ID('I', 'C', 'E', 0x51),
 	  0xffffffff,			"VIA Technologies VT1616", ac97_vt1616_init },
+	{ AC97_CODEC_ID('I', 'C', 'E', 0x52),
+	  0xffffffff,			"VIA Technologies VT1616i", ac97_vt1616_init },
 	{ AC97_CODEC_ID('I', 'C', 'E', 0),
-	  AC97_VENDOR_ID_MASK,		"ICEnsemble unknown",	},
+	  AC97_VENDOR_ID_MASK,		"ICEnsemble/VIA unknown",	},
 
 	{ AC97_CODEC_ID('N', 'S', 'C', 0),
 	  0xffffffff,			"National Semiconductor LM454[03568]", },
@@ -1461,37 +1483,33 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
  */
 
 #define	AD1980_REG_MISC	0x76
-#define		AD1980_MISC_MBG0	0x0001	/* 0 */
-#define		AD1980_MISC_MBG1	0x0002	/* 1 */
-#define		AD1980_MISC_VREFD	0x0004	/* 2 */
-#define		AD1980_MISC_VREFH	0x0008	/* 3 */
-#define		AD1980_MISC_SRU		0x0010	/* 4 */
-#define		AD1980_MISC_LOSEL	0x0020	/* 5 */
-#define		AD1980_MISC_2CMIC	0x0040	/* 6 */
-#define		AD1980_MISC_SPRD	0x0080	/* 7 */
-#define		AD1980_MISC_DMIX0	0x0100	/* 8 */
-#define		AD1980_MISC_DMIX1	0x0200	/* 9 */
-#define		AD1980_MISC_HPSEL	0x0400	/*10 */
-#define		AD1980_MISC_CLDIS	0x0800	/*11 */
-#define		AD1980_MISC_LODIS	0x1000	/*12 */
-#define		AD1980_MISC_MSPLT	0x2000	/*13 */
-#define		AD1980_MISC_AC97NC	0x4000	/*14 */
-#define		AD1980_MISC_DACZ	0x8000	/*15 */
+#define		AD1980_MISC_MBG0	0x0001	/* 0 1888/1980/1981 /1985 */
+#define		AD1980_MISC_MBG1	0x0002	/* 1 1888/1980/1981 /1985 */
+#define		AD1980_MISC_VREFD	0x0004	/* 2 1888/1980/1981 /1985 */
+#define		AD1980_MISC_VREFH	0x0008	/* 3 1888/1980/1981 /1985 */
+#define		AD1980_MISC_SRU		0x0010	/* 4 1888/1980      /1985 */
+#define		AD1980_MISC_LOSEL	0x0020	/* 5 1888/1980/1981 /1985 */
+#define		AD1980_MISC_2CMIC	0x0040	/* 6      1980/1981B/1985 */
+#define		AD1980_MISC_SPRD	0x0080	/* 7 1888/1980      /1985 */
+#define		AD1980_MISC_DMIX0	0x0100	/* 8 1888/1980      /1985 */
+#define		AD1980_MISC_DMIX1	0x0200	/* 9 1888/1980      /1985 */
+#define		AD1980_MISC_HPSEL	0x0400	/*10 1888/1980      /1985 */
+#define		AD1980_MISC_CLDIS	0x0800	/*11 1888/1980      /1985 */
+#define		AD1980_MISC_LODIS	0x1000	/*12 1888/1980/1981 /1985 */
+#define		AD1980_MISC_MSPLT	0x2000	/*13 1888/1980/1981 /1985 */
+#define		AD1980_MISC_AC97NC	0x4000	/*14 1888/1980      /1985 */
+#define		AD1980_MISC_DACZ	0x8000	/*15 1888/1980/1981 /1985 */
 #define	AD1981_REG_MISC	0x76
-#define		AD1981_MISC_MBG		0x0001  /* 0 */
-#define		AD1981_MISC_VREFD	0x0002  /* 1 */
-#define		AD1981_MISC_VREFH	0x0004  /* 2 */
-#define		AD1981_MISC_MADST	0x0008  /* 3 */
-#define		AD1981_MISC_MADPD	0x0020  /* 5 */
-#define		AD1981_MISC_FMXE	0x0100  /* 8 */
-#define		AD1981_MISC_DAM		0x0400  /*10 */
-#define		AD1981_MISC_MSPLT	0x1000  /*12 */
-#define		AD1981_MISC_DACZ	0x4000  /*14 */
+#define		AD1981_MISC_MADST	0x0010  /* 4 */
+#define		AD1981A_MISC_MADPD	0x0040  /* 6 */
+#define		AD1981B_MISC_MADPD	0x0080  /* 7 */
+#define		AD1981_MISC_FMXE	0x0200  /* 9 */
+#define		AD1981_MISC_DAM		0x0800  /*11 */
 static void
 ac97_ad198x_init(struct ac97_softc *as)
 {
 	int i;
-	unsigned short misc;
+	uint16_t misc;
 
 	ac97_read(as, AD1980_REG_MISC, &misc);
 	ac97_write(as, AD1980_REG_MISC,
@@ -1590,4 +1608,3 @@ ac97_vt1616_init(struct ac97_softc *as)
 	ac97_add_port(as, &sources[1]);
 	ac97_add_port(as, &sources[2]);
 }
-

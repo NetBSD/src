@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.31.2.2 2004/08/03 10:54:20 skrll Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.31.2.3 2004/08/12 11:42:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.31.2.2 2004/08/03 10:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.31.2.3 2004/08/12 11:42:20 skrll Exp $");
 #endif
 
 /*
@@ -102,8 +102,8 @@ SYSCTL_INT(_debug, OID_AUTO, ieee80211, CTLFLAG_RW, &ieee80211_debug,
 #endif
 #endif
 
-int	ieee80211_inact_max = IEEE80211_INACT_MAX;
-static int ieee80211_inact_max_nodenum;
+int	ieee80211_cache_size = IEEE80211_CACHE_SIZE;
+static int ieee80211_cache_size_nodenum;
 
 struct ieee80211com_head ieee80211com_head =
     LIST_HEAD_INITIALIZER(ieee80211com_head);
@@ -637,10 +637,8 @@ ieee80211_watchdog(struct ifnet *ifp)
 
 	if (ic->ic_mgt_timer && --ic->ic_mgt_timer == 0)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	if (ic->ic_inact_timer && --ic->ic_inact_timer == 0)
-		ieee80211_timeout_nodes(ic);
 
-	if (ic->ic_mgt_timer != 0 || ic->ic_inact_timer != 0)
+	if (ic->ic_mgt_timer != 0)
 		ifp->if_timer = 1;
 }
 
@@ -929,6 +927,16 @@ ieee80211_media2rate(int mword)
 }
 
 #ifdef __NetBSD__
+static void
+ieee80211_clean_all_nodes(int cache_size)
+{
+	struct ieee80211com *ic;
+	LIST_FOREACH(ic, &ieee80211com_head, ic_list) {
+		ic->ic_max_nnodes = cache_size;
+		ieee80211_clean_nodes(ic);
+	}
+}
+
 /* TBD factor with sysctl_ath_verify. */
 static int
 sysctl_ieee80211_verify(SYSCTLFN_ARGS)
@@ -943,10 +951,9 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (node.sysctl_num == ieee80211_inact_max_nodenum) {
-		if (t < 1)
+	if (node.sysctl_num == ieee80211_cache_size_nodenum) {
+		if (t < 0)
 			return (EINVAL);
-		t = roundup(t, IEEE80211_INACT_WAIT) / IEEE80211_INACT_WAIT;
 #ifdef IEEE80211_DEBUG
 	} else if (node.sysctl_num != ieee80211_debug_nodenum)
 #else /* IEEE80211_DEBUG */
@@ -956,6 +963,8 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
 
 	*(int*)rnode->sysctl_data = t;
 
+	if (node.sysctl_num == ieee80211_cache_size_nodenum)
+		ieee80211_clean_all_nodes(t);
 	return (0);
 }
 
@@ -1184,15 +1193,15 @@ SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
 
 #endif /* IEEE80211_DEBUG */
 
-	/* control inactivity timer */
+	/* control LRU cache size */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "maxinact", SYSCTL_DESCR("Station inactivity timeout"),
-	    sysctl_ieee80211_verify, 0, &ieee80211_inact_max,
+	    "maxnodecache", SYSCTL_DESCR("Maximum station cache size"),
+	    sysctl_ieee80211_verify, 0, &ieee80211_cache_size,
 	    0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	ieee80211_inact_max_nodenum = cnode->sysctl_num;
+	ieee80211_cache_size_nodenum = cnode->sysctl_num;
 
 	return;
 err:

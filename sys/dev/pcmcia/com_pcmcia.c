@@ -1,7 +1,7 @@
-/*	$NetBSD: com_pcmcia.c,v 1.32.6.1 2004/08/03 10:50:14 skrll Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.32.6.2 2004/08/12 11:41:59 skrll Exp $	 */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32.6.1 2004/08/03 10:50:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32.6.2 2004/08/12 11:41:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,62 +96,33 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32.6.1 2004/08/03 10:50:14 skrll Ex
 
 #include <dev/isa/isareg.h>
 
-struct com_dev {
-	char	*cis1_info[4];
-};
-
-/* Devices that we need to match by CIS strings */
-static struct com_dev com_devs[] = {
-	{ PCMCIA_CIS_MEGAHERTZ_XJ2288 },
-};
-
-
-static int com_devs_size = sizeof(com_devs) / sizeof(com_devs[0]);
-static struct com_dev *com_dev_match __P((struct pcmcia_card *));
-
 int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
+int com_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
 int com_pcmcia_detach __P((struct device *, int));
 void com_pcmcia_cleanup __P((void *));
 
 int com_pcmcia_enable __P((struct com_softc *));
 void com_pcmcia_disable __P((struct com_softc *));
-int com_pcmcia_enable1 __P((struct com_softc *));
-void com_pcmcia_disable1 __P((struct com_softc *));
 
 struct com_pcmcia_softc {
 	struct com_softc sc_com;		/* real "com" softc */
 
 	/* PCMCIA-specific goo */
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
+	int sc_attached;
 };
 
 CFATTACH_DECL(com_pcmcia, sizeof(struct com_pcmcia_softc),
     com_pcmcia_match, com_pcmcia_attach, com_pcmcia_detach, com_activate);
 
-/* Look for pcmcia cards with particular CIS strings */
-static struct com_dev *
-com_dev_match(card)
-	struct pcmcia_card *card;
-{
-	int i, j;
-
-	for (i = 0; i < com_devs_size; i++) {
-		for (j = 0; j < 4; j++)
-			if (com_devs[i].cis1_info[j] &&
-			    strcmp(com_devs[i].cis1_info[j],
-			    card->cis1_info[j]) != 0)
-				break;
-		if (j == 4)
-			return &com_devs[i];
-	}
-
-	return NULL;
-}
-
+static const struct pcmcia_product com_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_MEGAHERTZ_XJ2288 },
+};
+static const size_t com_pcmcia_nproducts =
+    sizeof(com_pcmcia_products) / sizeof(com_pcmcia_products[0]);
 
 int
 com_pcmcia_match(parent, match, aux)
@@ -190,10 +161,23 @@ com_pcmcia_match(parent, match, aux)
 		return 1;
 
 	/* 3. Is this a card we know about? */
-	if (com_dev_match(pa->card) != NULL)
+	if (pcmcia_product_lookup(pa, com_pcmcia_products, com_pcmcia_nproducts,
+	    sizeof(com_pcmcia_products[0]), NULL))
 		return 1;
 
 	return 0;
+}
+
+int
+com_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace != 1)
+		return (EINVAL);
+	/* Some cards have a memory space, but we don't use it. */
+	cfe->num_memspace = 0;
+	return (0);
 }
 
 void
@@ -205,78 +189,26 @@ com_pcmcia_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	int             autoalloc = 0;
+	int error;
 
 	psc->sc_pf = pa->pf;
 
-	psc->sc_io_window = -1;
-
-retry:
-	/* find a cfe we can use */
-
-	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-#if 0
-		/*
-		 * Some modem cards (e.g. Xircom CM33) also have
-		 * mem space.  Don't bother with this check.
-		 */
-		if (cfe->num_memspace != 0)
-			continue;
-#endif
-
-		if (cfe->num_iospace != 1)
-			continue;
-
-		if (autoalloc == 0) {
-			/*
-			 * cfe->iomask == 3 is our test for the "generic"
-			 * config table entry, which we want to avoid on the
-			 * first pass and use exclusively on the second pass.
-			 */
-			if ((cfe->iomask != 3) && 
-			    (cfe->iospace[0].start != 0)) {
-				if (!pcmcia_io_alloc(pa->pf,
-				    cfe->iospace[0].start, 
-				    cfe->iospace[0].length,
-				    cfe->iospace[0].length, &psc->sc_pcioh)) {
-					goto found;
-				}
-			}
-		} else {
-			if (cfe->iomask == 3) {
-				if (!pcmcia_io_alloc(pa->pf, 0,
-				    cfe->iospace[0].length,
-				    cfe->iospace[0].length, &psc->sc_pcioh)) {
-					goto found;
-				}
-			}
-		}
-	}
-	if (autoalloc == 0) {
-		autoalloc = 1;
-		goto retry;
-	} else if (!cfe) {
-		printf(": can't allocate i/o space\n");
+	error = pcmcia_function_configure(pa->pf, com_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
 		return;
 	}
-found:
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (com_pcmcia_enable1(sc))
-		printf(": function enable failed\n");
+
+	cfe = pa->pf->cfe;
+	sc->sc_iot = cfe->iospace[0].handle.iot;
+	sc->sc_ioh = cfe->iospace[0].handle.ioh;
+
+	error = com_pcmcia_enable(sc);
+	if (error)
+		goto fail;
 
 	sc->enabled = 1;
-
-	/* map in the io space */
-
-	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, psc->sc_pcioh.size,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
 
 	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
@@ -284,13 +216,18 @@ found:
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 
-	aprint_normal("\n%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", self->dv_xname);
 
 	com_attach_subr(sc);
 
 	sc->enabled = 0;
 
-	com_pcmcia_disable1(sc);
+	psc->sc_attached = 1;
+	com_pcmcia_disable(sc);
+	return;
+
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 int
@@ -301,23 +238,14 @@ com_pcmcia_detach(self, flags)
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) self;
 	int error;
 
-	/* Unmap our i/o window. */
-	if (psc->sc_io_window == -1) {
-		printf("%s: I/O window not allocated.\n",
-		    psc->sc_com.sc_dev.dv_xname);
-		return 0;
-	}
+	if (!psc->sc_attached)
+		return (0);
 
 	if ((error = com_detach(self, flags)) != 0)
 		return error;
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-
-	return 0;
+	pcmcia_function_unconfigure(psc->sc_pf);
+	return (0);
 }
 
 int
@@ -328,30 +256,19 @@ com_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
-	if ((error = com_pcmcia_enable1(sc)) != 0)
-		return error;
-
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_SERIAL, comintr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
-		com_pcmcia_disable1(sc);
-		return 1;
+		return (1);
 	}
-	return 0;
-}
 
-int
-com_pcmcia_enable1(sc)
-	struct com_softc *sc;
-{
-	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
-	struct pcmcia_function *pf = psc->sc_pf;
-	int ret;
-
-	if ((ret = pcmcia_function_enable(pf)) != 0)
-		return ret;
+	if ((error = pcmcia_function_enable(pf)) != 0) {
+		pcmcia_intr_disestablish(pf, psc->sc_ih);
+		psc->sc_ih = 0;
+		return (error);
+	}
 
 	if ((psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) ||
 	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556) ||
@@ -359,14 +276,14 @@ com_pcmcia_enable1(sc)
 		int reg;
 
 		/* turn off the ethernet-disable bit */
-
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		if (reg & 0x08) {
 			reg &= ~0x08;
 			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 		}
 	}
-	return ret;
+
+	return (0);
 }
 
 void
@@ -375,15 +292,7 @@ com_pcmcia_disable(sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-	com_pcmcia_disable1(sc);
-}
-
-void
-com_pcmcia_disable1(sc)
-	struct com_softc *sc;
-{
-	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
-
 	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = 0;
 }

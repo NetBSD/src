@@ -1,4 +1,4 @@
-/*	$NetBSD: 7707.h,v 1.1 2002/02/11 17:08:57 uch Exp $	*/
+/*	$NetBSD: 7707.h,v 1.1.18.1 2004/08/12 11:41:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,17 +37,17 @@
  */
 
 #ifndef _HPCBOOT_SH_CPU_7707_H_
-#define _HPCBOOT_SH_CPU_7707_H_
+#define	_HPCBOOT_SH_CPU_7707_H_
 
-#define SH7707_LCDAR	0xa40000c0 /* address register */
-#define SH7707_LCDDR	0xa40000c2 /* display control register */
-#define SH7707_LCDPR	0xa40000c6 /* palette register */
-#define SH7707_LCDDMR	0xa40000ce /* DMA control register */
+#define	SH7707_LCDAR	0xa40000c0 /* address register */
+#define	SH7707_LCDDR	0xa40000c2 /* display control register */
+#define	SH7707_LCDPR	0xa40000c6 /* palette register */
+#define	SH7707_LCDDMR	0xa40000ce /* DMA control register */
 
-#define SH7707_LCDAR_LCDDMR0	0x0
-#define SH7707_LCDAR_LCDDMR1	0x1
-#define SH7707_LCDAR_LCDDMR2	0x2
-#define SH7707_LCDAR_LCDDMR3	0x3
-#define SH7707_LCDAR_LCDDMR4	0x4
+#define	SH7707_LCDAR_LCDDMR0	0x0
+#define	SH7707_LCDAR_LCDDMR1	0x1
+#define	SH7707_LCDAR_LCDDMR2	0x2
+#define	SH7707_LCDAR_LCDDMR3	0x3
+#define	SH7707_LCDAR_LCDDMR4	0x4
 
 #endif // _HPCBOOT_SH_CPU_7707_H_

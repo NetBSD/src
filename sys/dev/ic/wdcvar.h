@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.36.2.1 2004/08/03 10:46:21 skrll Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.36.2.2 2004/08/12 11:41:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -67,14 +67,11 @@ struct wdc_channel {
 	bus_space_handle_t    cmd_iohs[WDC_NREG+WDC_NSHADOWREG];
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
-
-	/* data32{iot,ioh} are only used for 32 bit data xfers */
-	bus_space_tag_t         data32iot;
-	bus_space_handle_t      data32ioh;
+	bus_space_tag_t       data32iot;
+	bus_space_handle_t    data32ioh;
 
 	/* Our state */
 	volatile int ch_flags;
-#define WDCF_ACTIVE   0x01	/* channel is active */
 #define WDCF_SHUTDOWN 0x02	/* channel is shutting down */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define WDCF_DMA_WAIT 0x20	/* controller is waiting for DMA */
@@ -116,20 +113,20 @@ struct wdc_softc {
 	struct device sc_dev;		/* generic device info */
 
 	int           cap;		/* controller capabilities */
-#define	WDC_CAPABILITY_DATA16 0x0001    /* can do  16-bit data access */
-#define	WDC_CAPABILITY_DATA32 0x0002    /* can do 32-bit data access */
-#define WDC_CAPABILITY_MODE   0x0004	/* controller knows its PIO/DMA modes */
-#define	WDC_CAPABILITY_DMA    0x0008	/* DMA */
-#define	WDC_CAPABILITY_UDMA   0x0010	/* Ultra-DMA/33 */
-#define	WDC_CAPABILITY_HWLOCK 0x0020	/* Needs to lock HW */
+#define	WDC_CAPABILITY_DATA16	0x0001	/* can do 16-bit data access */
+#define	WDC_CAPABILITY_DATA32	0x0002	/* can do 32-bit data access */
+#define WDC_CAPABILITY_MODE	0x0004	/* controller knows its PIO/DMA modes */
+#define	WDC_CAPABILITY_DMA	0x0008	/* DMA */
+#define	WDC_CAPABILITY_UDMA	0x0010	/* Ultra-DMA/33 */
+#define	WDC_CAPABILITY_HWLOCK	0x0020	/* Needs to lock HW */
 #define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
-#define WDC_CAPABILITY_PREATA 0x0200	/* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_IRQACK 0x0400	/* callback to ack interrupt */
-#define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
-#define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
-#define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */
+#define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
+#define WDC_CAPABILITY_IRQACK	0x0400	/* callback to ack interrupt */
+#define WDC_CAPABILITY_NOIRQ	0x1000	/* Controller never interrupts */
+#define WDC_CAPABILITY_SELECT	0x2000	/* Controller selects target */
+#define	WDC_CAPABILITY_RAID	0x4000	/* Controller "supports" RAID */
 	u_int8_t      PIO_cap;		/* highest PIO mode supported */
 	u_int8_t      DMA_cap;		/* highest DMA mode supported */
 	u_int8_t      UDMA_cap;		/* highest UDMA mode supported */
@@ -176,6 +173,10 @@ struct wdc_softc {
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void		(*irqack)(struct wdc_channel *);
+
+	/* overridden if the backend has a different data transfer method */
+	void	(*datain_pio)(struct wdc_channel *, int, void *, size_t);
+	void	(*dataout_pio)(struct wdc_channel *, int, void *, size_t);
 };
 
 /*
@@ -209,8 +210,11 @@ int	wdcwait(struct wdc_channel *, int, int, int, int);
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
 
+void	wdc_datain_pio(struct wdc_channel *, int, void *, size_t);
+void	wdc_dataout_pio(struct wdc_channel *, int, void *, size_t);
+void	wdcbit_bucket(struct wdc_channel *, int);
+
 int	wdc_dmawait(struct wdc_channel *, struct ata_xfer *, int);
-void	wdcbit_bucket( struct wdc_channel *, int);
 void	wdccommand(struct wdc_channel *, u_int8_t, u_int8_t, u_int16_t,
 		   u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 void	wdccommandext(struct wdc_channel *, u_int8_t, u_int8_t, u_int64_t,
@@ -220,14 +224,11 @@ void	wdctimeout(void *arg);
 void	wdc_reset_drive(struct ata_drive_datas *, int);
 void	wdc_reset_channel(struct wdc_channel *, int);
 
-int	wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
-#define WDC_COMPLETE 0x01
-#define WDC_QUEUED   0x02
-#define WDC_TRY_AGAIN 0x03
+int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
 
 int	wdc_addref(struct wdc_channel *);
 void	wdc_delref(struct wdc_channel *);
-void	wdc_kill_pending(struct wdc_channel *);
+void	wdc_kill_pending(struct ata_drive_datas *);
 
 void	wdc_print_modes (struct wdc_channel *);
 void	wdc_probe_caps(struct ata_drive_datas*);

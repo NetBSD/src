@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.3 2004/08/03 10:52:45 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.4 2004/08/12 11:42:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.3 2004/08/03 10:52:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.4 2004/08/12 11:42:19 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -382,6 +382,7 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 	free(ktp, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 	return error;
+
 }
 
 int
@@ -399,6 +400,33 @@ ktrmmsg(struct lwp *l, const void *msgh, size_t size)
 	kth.ktr_buf = (caddr_t)kp;
 	kth.ktr_len = size;
 	error = ktrwrite(l, &kth);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	return error;
+}
+
+int
+ktrmool(struct lwp *l, const void *kaddr, size_t size, const void *uaddr)
+{
+	struct proc *p = l->l_proc;
+	struct ktr_header kth;
+	struct ktr_mool *kp;
+	struct ktr_mool *buf;
+	int error;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	ktrinitheader(&kth, l, KTR_MOOL);
+
+	kp = malloc(size + sizeof(*kp), M_TEMP, M_WAITOK);
+	kp->uaddr = uaddr;
+	kp->size = size;
+	buf = kp + 1; /* Skip uaddr and size */
+	(void)memcpy(buf, kaddr, size);
+
+	kth.ktr_buf = (caddr_t)kp;
+	kth.ktr_len = size + sizeof(*kp);
+	error = ktrwrite(l, &kth);
+	free(kp, M_TEMP);
+
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 	return error;
 }
@@ -446,34 +474,6 @@ ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 	return error;
 }
-
-int
-ktrmool(struct lwp *l, const void *kaddr, size_t size, const void *uaddr)
-{
-	struct proc *p = l->l_proc;
-	struct ktr_header kth;
-	struct ktr_mool *kp;
-	struct ktr_mool *buf;
-	int error;
-
-	p->p_traceflag |= KTRFAC_ACTIVE;
-	ktrinitheader(&kth, l, KTR_MOOL);
-
-	kp = malloc(size + sizeof(*kp), M_TEMP, M_WAITOK);
-	kp->uaddr = uaddr;
-	kp->size = size;
-	buf = kp + 1; /* Skip uaddr and size */
-	(void)memcpy(buf, kaddr, size);
-
-	kth.ktr_buf = (caddr_t)kp;
-	kth.ktr_len = size + sizeof(*kp);
-	error = ktrwrite(l, &kth);
-	free(kp, M_TEMP);
-
-	p->p_traceflag &= ~KTRFAC_ACTIVE;
-	return error;
-}
-
 
 /* Interface and common routines */
 

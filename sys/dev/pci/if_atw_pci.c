@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.7.2.2 2004/08/03 10:49:07 skrll Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.7.2.3 2004/08/12 11:41:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.7.2.2 2004/08/03 10:49:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.7.2.3 2004/08/12 11:41:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -180,7 +180,7 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	int ioh_valid, memh_valid;
 	const struct atw_pci_product *app;
 	pcireg_t reg;
-	int pmreg, rev;
+	int pmreg;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
@@ -200,9 +200,9 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get revision info, and set some chip-specific variables.
 	 */
-	rev = PCI_REVISION(pa->pa_class);
-	printf(": %s, pass %d.%d\n", app->app_product_name,
-	    (rev >> 4) & 0xf, rev & 0xf);
+	sc->sc_rev = PCI_REVISION(pa->pa_class);
+	printf(": %s, revision %d.%d\n", app->app_product_name,
+	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/*
 	 * Check to see if the device is in power-save mode, and

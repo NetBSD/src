@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.16.2.2 2004/08/03 10:54:21 skrll Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.16.2.3 2004/08/12 11:42:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.16.2.2 2004/08/03 10:54:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.16.2.3 2004/08/12 11:42:20 skrll Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -267,8 +267,8 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 bad:
 	if (m != NULL)
 		m_freem(m);
-	if (ni && ni != ic->ic_bss)
-		ieee80211_free_node(ic, ni);
+	if (ni != NULL)
+		ieee80211_release_node(ic, ni);
 	*pni = NULL;
 	return NULL;
 }
@@ -364,8 +364,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	 * the xmit is complete all the way in the driver.  On error we
 	 * will remove our reference.
 	 */
-	if (ni != ic->ic_bss)
-		ieee80211_ref_node(ni);
+	ieee80211_ref_node(ni);
 	timer = 0;
 	switch (type) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
@@ -649,8 +648,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			ic->ic_mgt_timer = timer;
 	} else {
 bad:
-		if (ni != ic->ic_bss)		/* remove ref we added */
-			ieee80211_free_node(ic, ni);
+		ieee80211_release_node(ic, ni);
 	}
 	return ret;
 #undef senderr

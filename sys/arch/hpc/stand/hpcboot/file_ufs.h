@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_ufs.h,v 1.1 2001/02/09 18:34:40 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_ufs.h,v 1.1.26.1 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_FILE_UFS_H_
-#define _HPCBOOT_FILE_UFS_H_
+#define	_HPCBOOT_FILE_UFS_H_
 
 #include <file.h>
 
@@ -61,6 +61,6 @@ public:
 	BOOL seek(off_t);
 };
 
-#define O_RDONLY        0x0000          /* open for reading only */
+#define	O_RDONLY        0x0000          /* open for reading only */
 
 #endif //_HPCBOOT_FILE_UFS_H_

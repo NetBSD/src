@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.1.26.1 2004/08/03 10:35:04 skrll Exp $	*/
+/*	$NetBSD: winblk.c,v 1.1.26.2 2004/08/12 11:41:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  */
-#define STANDALONE_WINDOWS_SIDE
+#define	STANDALONE_WINDOWS_SIDE
 #include <stand.h>
 #include <winblk.h>
 #include <winioctl.h>
@@ -52,15 +52,15 @@
  */
 
 #ifdef DEBUG
-#define DEBUG_PRINTF(a) win_printf a
+#define	DEBUG_PRINTF(a) win_printf a
 #else
-#define DEBUG_PRINTF(a)
+#define	DEBUG_PRINTF(a)
 #endif
 
-#define islower(c)	('a' <= (c) && (c) <= 'z')
-#define toupper(c)	(islower(c) ? ((c) - 'a' + 'A') : (c))
+#define	islower(c)	('a' <= (c) && (c) <= 'z')
+#define	toupper(c)	(islower(c) ? ((c) - 'a' + 'A') : (c))
 
-#define BLKSZ	512
+#define	BLKSZ	512
 
 struct winblk {
 	HANDLE	hDevice;
@@ -73,7 +73,7 @@ struct winblk {
 
 static int rawread(struct winblk *ctx, int start, int nsecs, char *buf);
 
-int 
+int
 winblkstrategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	       void *buf, size_t *rsize)
 {
@@ -104,7 +104,7 @@ winblkstrategy(void *devdata, int flag, daddr_t dblk, size_t size,
 }
 
 
-int 
+int
 winblkopen(struct open_file *f, ...)
 /* file, devname, unit, partition */
 {
@@ -149,7 +149,7 @@ winblkopen(struct open_file *f, ...)
 	DEBUG_PRINTF((TEXT("winblk.open: block device name is '%s'\n"),
 		      wdevname));
 
-	ctx->hDevice = CreateFile(wdevname, GENERIC_READ, 0, NULL,    
+	ctx->hDevice = CreateFile(wdevname, GENERIC_READ, 0, NULL,
 				  OPEN_EXISTING, 0, NULL);
 	if (ctx->hDevice == INVALID_HANDLE_VALUE) {
 		win_printf(TEXT("can't open %s.\n"), wdevname);
@@ -290,7 +290,7 @@ winblkopen(struct open_file *f, ...)
 	return (error);
 }
 
-int 
+int
 winblkclose(struct open_file *f)
 {
 	struct winblk *ctx = f->f_devdata;
@@ -301,7 +301,7 @@ winblkclose(struct open_file *f)
 	return (0);
 }
 
-int 
+int
 winblkioctl(struct open_file *f, u_long cmd, void *arg)
 {
 	return EIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.1 2001/02/09 18:35:37 uch Exp $	*/
+/*	$NetBSD: stand.h,v 1.1.26.1 2004/08/12 11:41:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -45,7 +45,7 @@ int win_printf(LPWSTR lpszFmt, ...);
 
 #endif /* STANDALONE_WINDOWS_SIDE */
 #if defined __cplusplus
-#define free __libsa_free
+#define	free __libsa_free
 #endif
 #include "../../../../lib/libsa/stand.h"
 #if defined __cplusplus

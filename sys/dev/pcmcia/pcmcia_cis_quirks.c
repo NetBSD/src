@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.20 2002/08/15 10:37:02 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.20.6.1 2004/08/12 11:42:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.20 2002/08/15 10:37:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.20.6.1 2004/08/12 11:42:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,8 +244,8 @@ static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  &pcmcia_fujitsu_j181_func0, &pcmcia_fujitsu_j181_func0_cfe0 },
 };
 	
-static int n_pcmcia_cis_quirks =
-	sizeof(pcmcia_cis_quirks)/sizeof(pcmcia_cis_quirks[0]);
+static const int pcmcia_cis_nquirks =
+   sizeof(pcmcia_cis_quirks) / sizeof(pcmcia_cis_quirks[0]);
 
 void pcmcia_check_cis_quirks(sc)
 	struct pcmcia_softc *sc;
@@ -259,7 +259,7 @@ void pcmcia_check_cis_quirks(sc)
 	pf = NULL;
 	pf_last = NULL;
 
-	for (i=0; i<n_pcmcia_cis_quirks; i++) {
+	for (i=0; i<pcmcia_cis_nquirks; i++) {
 		if ((sc->card.manufacturer == pcmcia_cis_quirks[i].manufacturer) &&
 			(sc->card.product == pcmcia_cis_quirks[i].product) &&
 			(((sc->card.manufacturer != PCMCIA_VENDOR_INVALID) &&

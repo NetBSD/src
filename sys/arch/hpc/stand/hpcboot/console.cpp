@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.8 2002/03/02 22:01:34 uch Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.8.14.1 2004/08/12 11:41:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -98,9 +98,9 @@ BOOL
 SerialConsole::init()
 {
 	// always open COM1 to supply clock and power for the
-	// sake of kernel serial driver 
+	// sake of kernel serial driver
 	if (_handle == INVALID_HANDLE_VALUE)
-		_handle = OpenCOM1(); 
+		_handle = OpenCOM1();
 
 	if (_handle == INVALID_HANDLE_VALUE) {
 		Console::print(TEXT("couldn't open COM1\n"));
@@ -156,7 +156,7 @@ SerialConsole::OpenCOM1()
 	if (COM1handle != INVALID_HANDLE_VALUE)
 		return (COM1handle);
 
-	h = CreateFile(TEXT("COM1:"), 
+	h = CreateFile(TEXT("COM1:"),
 	    GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0,
 	    NULL);
 	if (h == INVALID_HANDLE_VALUE)
@@ -165,7 +165,7 @@ SerialConsole::OpenCOM1()
 	DCB dcb;
 	if (!GetCommState(h, &dcb))
 		goto bad;
-      
+
 	dcb.BaudRate = speed;
 	if (!SetCommState(h, &dcb))
 		goto bad;
@@ -186,7 +186,7 @@ SerialConsole::genericPrint(const char *buf)
 {
 	unsigned long wrote;
 	int i;
-	
+
 	for (i = 0; *buf != '\0'; buf++) {
 		char c = *buf;
 		if (c == '\n')
