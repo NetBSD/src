@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97 1998/05/24 19:32:36 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.98 1998/07/10 20:24:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,8 @@
  * Amiga author: Markus Wild
  * Other contributors: Bryan Ford (kernel reload stuff)
  */
+
+#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -463,7 +465,11 @@ _trace:
 
 _spurintr:
 	addql	#1,_intrcnt+0
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _lev5intr:
@@ -477,7 +483,11 @@ _lev5intr:
 #endif
 	moveml	sp@+,d0/d1/a0/a1
 	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 #ifdef DRACO
@@ -505,7 +515,11 @@ _DraCoLev2intr:
 
 Ldraciaend:
 	moveml	sp@+,d0/d1/a0/d1
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 /* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
@@ -539,7 +553,11 @@ Ldrclockretry:
 	clrb	a0@(9)		| reset timer irq
 
 	moveml	sp@+,d0/d1/a0/a1
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
@@ -556,7 +574,11 @@ Ldrintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,d0/d1/a0/a1
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 #endif
 	
@@ -578,7 +600,11 @@ Lintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,d0/d1/a0/a1
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 /* XXX used to be ifndef DRACO; vector will be overwritten by initcpu() */
@@ -652,7 +678,11 @@ Lskipciab:
 | other ciab interrupts?
 Llev6done:
 	moveml	sp@+,d0/d1/a0/a1		| restore scratch regs
-	addql	#1,_cnt+V_INTR		| chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR		| chalk up another interrupt
+#endif
 	jra	rei			| all done [can we do rte here?]
 Lchkexter:
 | check to see if EXTER request is really set?
@@ -1095,7 +1125,7 @@ ENTRY(qsetjmp)
 	moveq	#0,d0		| return 0
 	rts
 
-	.globl	_whichqs,_qs,_cnt,_panic
+	.globl	_whichqs,_qs,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
 
@@ -1133,7 +1163,11 @@ ENTRY(switch_exit)
 	movl	#USPACE,sp@-		| size of u-area
 	movl	a0@(P_ADDR),sp@-	| address u-area of process
 	movl	_kernel_map,sp@-	| map it was allocated in
-	jbsr	_kmem_free		| deallocate it
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_km_free)	| deallocate it
+#else
+	jbsr	_C_LABEL(kmem_free)	| deallocate it
+#endif
 	lea	sp@(12),sp		| pop args
 
 	jra	_cpu_switch
