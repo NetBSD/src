@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.16 2002/10/22 17:25:20 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.17 2002/10/24 23:34:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -537,35 +537,51 @@ struct lwp *
 proc_representative_lwp(p)
 	struct proc *p;
 {
-	struct lwp *l = NULL;
+	struct lwp *l, *onproc, *running, *sleeping, *stopped, *suspended;
 
 	/* Trivial case: only one LWP */
 	if (p->p_nrlwps == 1)
 		return (LIST_FIRST(&p->p_lwps));
 
 	switch (p->p_stat) {
-	case SSTOP: 
-		/* Pick the first stopped LWP */
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_stat == LSSTOP)
-				return (l);
-		}
-		/* NOTREACHED */
-		break;
+	case SSTOP:
 	case SACTIVE:
-		/* Pick the first live LWP */
+		/* Pick the most live LWP */
+		onproc = running = sleeping = stopped = suspended = NULL;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_stat == LSRUN ||
-			    l->l_stat == LSSLEEP ||
-			    l->l_stat == LSONPROC ||
-			    l->l_stat == LSSUSPENDED)
-				return (l);
+			switch (l->l_stat) {
+			case LSONPROC:
+				onproc = l;
+				break;
+			case LSRUN:
+				running = l;
+				break;
+			case LSSLEEP:
+				sleeping = l;
+				break;
+			case LSSTOP:
+				stopped = l;
+				break;
+			case LSSUSPENDED:
+				suspended = l;
+				break;
+			}
+			if (onproc)
+				return onproc;
+			if (running)
+				return running;
+			if (sleeping)
+				return sleeping;
+			if (stopped)
+				return stopped;
+			if (suspended)
+				return suspended;
 		}
 		break;
 	case SDEAD:
 	case SZOMB:
 		/* Doesn't really matter... */
-		l = LIST_FIRST(&p->p_lwps);
+		return (LIST_FIRST(&p->p_lwps));
 		break;
 #ifdef DIAGNOSTIC
 	case SIDL:
