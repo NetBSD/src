@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1999/07/20 08:55:30 dbj Exp $
+#	$NetBSD: Makefile,v 1.4 2000/10/05 18:22:41 tsutsui Exp $
 
 # Makefile for next68k tags file and boot blocks
 
-# Find where m68k sourc717e files are for inclusion in tags
+# Find where m68k source files are for inclusion in tags
 .include <../m68k/Makefile.inc>
 
 ENEXT68K=	../next68k/TAGS
