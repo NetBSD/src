@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.11 2000/08/25 02:03:33 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.12 2000/08/25 03:56:29 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,12 +141,13 @@ struct cpu_info {
 #define CPU_IS_PRIMARY(ci) ((ci)->ci_flags & CPUF_PRIMARY)
 
 #define	curpcb		curcpu()->ci_curpcb
-#define aston(ci)	((ci)->ci_astpending = 1)
+#define ipisend(ci)	(((ci) != curcpu()) ? i386_send_ipi((ci),0) : 0)
+#define aston(ci)	((ci)->ci_astpending = 1, ipisend(ci))
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
 extern	u_long cpus_running;
 
-extern void cpu_boot_secondary_processors __P((void));
-extern void cpu_init_idle_pcbs __P((void));
+void cpu_boot_secondary_processors __P((void));
+void cpu_init_idle_pcbs __P((void));
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -173,7 +174,13 @@ extern struct cpu_info cpu_info_store;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched()		(curcpu()->ci_want_resched = 1, aston(0))
+#define	need_resched(ci)						\
+do {									\
+	struct cpu_info *__ci = (ci);					\
+	__ci->ci_want_resched = 1;					\
+	aston(__ci);							\
+} while(0)
+	
 #define aston(ci)		(astpending = 1)
 
 #endif
@@ -279,6 +286,8 @@ void	startrtclock __P((void));
 void	i8254_delay __P((int));
 void	i8254_microtime __P((struct timeval *));
 void	i8254_initclocks __P((void));
+
+/* cpu.c */
 
 /* npx.c */
 void	npxsave_proc __P((struct proc *, int));
