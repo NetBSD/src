@@ -1,4 +1,33 @@
-/*	$NetBSD: ip_input.c,v 1.88 1999/06/26 06:16:48 sommerfeld Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.89 1999/07/01 08:12:50 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,6 +134,19 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+/* just for gif_ttl */
+#include <netinet/in_gif.h>
+#include "gif.h"
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#include <netinet6/ah.h>
+#ifdef IPSEC_ESP
+#include <netinet6/esp.h>
+#endif
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
@@ -278,38 +320,56 @@ struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 struct	route ipforward_rt;
 
 /*
- * Ip input routine.  Checksum and byte swap header.  If fragmented
- * try to reassemble.  Process options.  Pass to next level.
+ * IP software interrupt routine
  */
 void
 ipintr()
 {
+	int s;
+	struct mbuf *m;
+
+	while (1) {
+		s = splimp();
+		IF_DEQUEUE(&ipintrq, m);
+		splx(s);
+		if (m == 0)
+			return;
+		ip_input(m);
+	}
+}
+
+/*
+ * Ip input routine.  Checksum and byte swap header.  If fragmented
+ * try to reassemble.  Process options.  Pass to next level.
+ */
+void
+ip_input(struct mbuf *m)
+{
 	register struct ip *ip = NULL;
-	register struct mbuf *m;
 	register struct ipq *fp;
 	register struct in_ifaddr *ia;
 	register struct ifaddr *ifa;
 	struct ipqent *ipqe;
-	int hlen = 0, mff, len, s;
+	int hlen = 0, mff, len;
 #ifdef PFIL_HOOKS
 	struct packet_filter_hook *pfh;
 	struct mbuf *m0;
 	int rv;
 #endif /* PFIL_HOOKS */
 
-next:
-	/*
-	 * Get next datagram off input queue and get IP header
-	 * in first mbuf.
-	 */
-	s = splimp();
-	IF_DEQUEUE(&ipintrq, m);
-	splx(s);
-	if (m == 0)
-		return;
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("ipintr no HDR");
+#endif
+#ifdef IPSEC
+	/*
+	 * should the inner packet be considered authentic?
+	 * see comment in ah4_input().
+	 */
+	if (m) {
+		m->m_flags &= ~M_AUTHIPHDR;
+		m->m_flags &= ~M_AUTHIPDGM;
+	}
 #endif
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -321,7 +381,7 @@ next:
 	if (m->m_len < sizeof (struct ip) &&
 	    (m = m_pullup(m, sizeof (struct ip))) == 0) {
 		ipstat.ips_toosmall++;
-		goto next;
+		return;
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {
@@ -336,7 +396,7 @@ next:
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == 0) {
 			ipstat.ips_badhlen++;
-			goto next;
+			return;
 		}
 		ip = mtod(m, struct ip *);
 	}
@@ -405,10 +465,10 @@ next:
 		if (pfh->pfil_func) {
 			rv = pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 0, &m0);
 			if (rv)
-				goto next;
+				return;
 			m = m0;
 			if (m == NULL)
-				goto next;
+				return;
 			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
@@ -421,7 +481,7 @@ next:
 	 */
 	ip_nhops = 0;		/* for source routed packets */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m))
-		goto next;
+		return;
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -459,7 +519,7 @@ next:
 		if (m->m_flags & M_EXT) {
 			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
-				goto next;
+				return;
 			}
 			ip = mtod(m, struct ip *);
 		}
@@ -480,7 +540,7 @@ next:
 			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
 				ipstat.ips_cantforward++;
 				m_freem(m);
-				goto next;
+				return;
 			}
 
 			/*
@@ -501,7 +561,7 @@ next:
 		if (inm == NULL) {
 			ipstat.ips_cantforward++;
 			m_freem(m);
-			goto next;
+			return;
 		}
 		goto ours;
 	}
@@ -517,7 +577,7 @@ next:
 		m_freem(m);
 	} else
 		ip_forward(m, 0);
-	goto next;
+	return;
 
 ours:
 	/*
@@ -581,7 +641,7 @@ found:
 			m = ip_reass(ipqe, fp);
 			if (m == 0) {
 				IPQ_UNLOCK();
-				goto next;
+				return;
 			}
 			ipstat.ips_reassembled++;
 			ip = mtod(m, struct ip *);
@@ -600,11 +660,14 @@ found:
 	ia->ia_ifa.ifa_data.ifad_inbytes += ip->ip_len;
 #endif
 	ipstat.ips_delivered++;
-	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen);
-	goto next;
+    {
+	int off = hlen, nh = ip->ip_p;
+
+	(*inetsw[ip_protox[nh]].pr_input)(m, off, nh);
+	return;
+    }
 bad:
 	m_freem(m);
-	goto next;
 }
 
 /*
@@ -749,6 +812,8 @@ insert:
 	 * Make header visible.
 	 */
 	ip->ip_len = next;
+	ip->ip_ttl = 0;	/* xxx */
+	ip->ip_sum = 0;
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 	LIST_REMOVE(fp, ipq_q);
@@ -1086,7 +1151,7 @@ save_rte(option, dst)
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
 		printf("save_rte: olen %d\n", olen);
-#endif
+#endif /* 0 */
 	if (olen > sizeof(ip_srcrt) - (1 + sizeof(dst)))
 		return;
 	bcopy((caddr_t)option, (caddr_t)ip_srcrt.srcopt, olen);
@@ -1226,6 +1291,9 @@ ip_forward(m, srcrt)
 	struct mbuf *mcopy;
 	n_long dest;
 	struct ifnet *destifp;
+#ifdef IPSEC
+	struct ifnet dummyifp;
+#endif
 
 	dest = 0;
 #ifdef DIAGNOSTIC
@@ -1303,6 +1371,9 @@ ip_forward(m, srcrt)
 		}
 	}
 
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif /*IPSEC*/
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
 	if (error)
@@ -1344,8 +1415,57 @@ ip_forward(m, srcrt)
 	case EMSGSIZE:
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
+#ifndef IPSEC
 		if (ipforward_rt.ro_rt)
 			destifp = ipforward_rt.ro_rt->rt_ifp;
+#else
+		/*
+		 * If the packet is routed over IPsec tunnel, tell the
+		 * originator the tunnel MTU.
+		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
+		 * XXX quickhack!!!
+		 */
+		if (ipforward_rt.ro_rt) {
+			struct secpolicy *sp;
+			int ipsecerror;
+			int ipsechdr;
+			struct route *ro;
+
+			sp = ipsec4_getpolicybyaddr(mcopy,
+						    IP_FORWARDING,
+						    &ipsecerror);
+
+			if (sp == NULL)
+				destifp = ipforward_rt.ro_rt->rt_ifp;
+			else {
+				/* count IPsec header size */
+				ipsechdr = ipsec4_hdrsiz(mcopy, NULL);
+
+				/*
+				 * find the correct route for outer IPv4
+				 * header, compute tunnel MTU.
+				 *
+				 * XXX BUG ALERT
+				 * The "dummyifp" code relies upon the fact
+				 * that icmp_error() touches only ifp->if_mtu.
+				 */
+				/*XXX*/
+				destifp = NULL;
+				if (sp->req != NULL
+				 && sp->req->sa != NULL) {
+					ro = &sp->req->sa->saidx->sa_route;
+					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
+						dummyifp.if_mtu =
+						    ro->ro_rt->rt_ifp->if_mtu;
+						dummyifp.if_mtu -= ipsechdr;
+						destifp = &dummyifp;
+					}
+				}
+
+				key_freesp(sp);
+			}
+		}
+#endif /*IPSEC*/
 		ipstat.ips_cantfrag++;
 		break;
 
@@ -1517,6 +1637,11 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		splx(s);
 		return (error);
 	    }
+#endif
+#if NGIF > 0
+	case IPCTL_GIF_TTL:
+		return(sysctl_int(oldp, oldlenp, newp, newlen,
+				  &gif_ttl));
 #endif
 	case IPCTL_HOSTZEROBROADCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,

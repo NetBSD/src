@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.44 1999/07/01 05:56:32 darrenr Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.45 1999/07/01 08:12:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -910,8 +910,8 @@ sys_getsockopt(p, v, retval)
 		syscallarg(unsigned int *) avalsize;
 	} */ *uap = v;
 	struct file *fp;
-	struct mbuf *m = NULL;
-	unsigned int valsize;
+	struct mbuf *m = NULL, *m0;
+	unsigned int op, i, valsize;
 	int error;
 
 	/* getsock() will use the descriptor for us */
@@ -927,13 +927,19 @@ sys_getsockopt(p, v, retval)
 	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), &m)) == 0 && SCARG(uap, val) && valsize &&
 	    m != NULL) {
-		if (valsize > m->m_len)
-			valsize = m->m_len;
-		error = copyout(mtod(m, caddr_t), SCARG(uap, val),
-		    valsize);
+		op = 0;
+		while (m && !error && op < valsize) {
+			i = min(m->m_len, (valsize - op));
+			error = copyout(mtod(m, caddr_t), SCARG(uap, val), i);
+			op += i;
+			SCARG(uap, val) = ((u_int8_t *)SCARG(uap, val)) + i;
+			m0 = m;
+			MFREE(m0, m);
+		}
+		valsize = op;
 		if (error == 0)
-			error = copyout((caddr_t)&valsize,
-			    (caddr_t)SCARG(uap, avalsize), sizeof(valsize));
+			error = copyout(&valsize,
+					SCARG(uap, avalsize), sizeof(valsize));
 	}
 	if (m != NULL)
 		(void) m_free(m);

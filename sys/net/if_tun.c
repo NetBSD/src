@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.37 1999/03/04 02:38:31 mjacob Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.38 1999/07/01 08:12:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -173,12 +173,14 @@ tunclose(dev, flag, mode, p)
 			register struct ifaddr *ifa;
 			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 			    ifa = ifa->ifa_list.tqe_next) {
+#ifdef INET
 				if (ifa->ifa_addr->sa_family == AF_INET) {
 					rtinit(ifa, (int)RTM_DELETE,
 					       tp->tun_flags & TUN_DSTADDR
 							? RTF_HOST
 							: 0);
 				}
+#endif
 			}
 		}
 		splx(s);
@@ -204,6 +206,7 @@ tuninit(tp)
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR);
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	     ifa = ifa->ifa_list.tqe_next) {
+#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin;
 
@@ -217,6 +220,7 @@ tuninit(tp)
 					tp->tun_flags |= TUN_DSTADDR;
 			}
 		}
+#endif
 	}
 
 	return;
@@ -276,6 +280,8 @@ tun_ioctl(ifp, cmd, data)
 		}
 		break;
 	}
+	case SIOCSIFFLAGS:
+		break;
 	default:
 		error = EINVAL;
 	}
@@ -295,7 +301,9 @@ tun_output(ifp, m0, dst, rt)
 {
 	struct tun_softc *tp = ifp->if_softc;
 	struct proc	*p;
+#ifdef INET
 	int		s;
+#endif
 
 	TUNDEBUG ("%s: tun_output\n", ifp->if_xname);
 

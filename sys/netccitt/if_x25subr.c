@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.20 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.21 1999/07/01 08:12:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -66,6 +66,10 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#else
+#ifdef _KERNEL
+#error options CCITT assumes options INET
+#endif
 #endif
 
 #ifdef NS

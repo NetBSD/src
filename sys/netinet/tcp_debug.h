@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.6 1998/02/10 01:27:11 perry Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.7 1999/07/01 08:12:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -43,7 +43,16 @@ struct	tcp_debug {
 	short	td_act;
 	short	td_ostate;
 	caddr_t	td_tcb;
+	int	td_family;
 	struct	tcpiphdr td_ti;
+	struct {
+#ifdef INET6
+		struct ip6_hdr ip6;
+#else
+		u_char ip6_dummy[40];	/* just to keep struct align/size */
+#endif
+		struct tcphdr th;
+	} td_ti6;
 	short	td_req;
 	struct	tcpcb td_cb;
 };

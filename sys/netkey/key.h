@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: key.h,v 1.1.2.1 1999/06/28 06:37:09 itojun Exp $ */
+/* $Id: key.h,v 1.2 1999/07/01 08:12:59 itojun Exp $ */
 
 #ifndef _NETKEY_KEY_H_
 #define _NETKEY_KEY_H_

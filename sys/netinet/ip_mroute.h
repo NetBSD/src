@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.15 1999/01/11 21:31:03 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.16 1999/07/01 08:12:51 itojun Exp $	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -211,7 +211,8 @@ int legal_vif_num __P((int));
 int ip_rsvp_vif_init __P((struct socket *, struct mbuf *));
 int ip_rsvp_vif_done __P((struct socket *, struct mbuf *));
 void ip_rsvp_force_done __P((struct socket *));
-void rsvp_input __P((struct mbuf *, struct ifnet *));
+/*int rsvp_input __P((struct mbuf *, struct ifnet *));*/
+void rsvp_input __P((struct mbuf *, int, int));
 #else
 int ip_mforward __P((struct mbuf *, struct ifnet *));
 #endif

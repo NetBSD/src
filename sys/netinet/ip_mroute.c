@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.42 1999/03/27 21:47:59 nathanw Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.43 1999/07/01 08:12:50 itojun Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1677,6 +1677,9 @@ tbf_send_packet(vifp, m)
 
 	if (vifp->v_flags & VIFF_TUNNEL) {
 		/* If tunnel options */
+#ifdef IPSEC
+		m->m_pkthdr.rcvif = NULL;
+#endif
 		ip_output(m, (struct mbuf *)0, &vifp->v_route,
 			  IP_FORWARDING, (struct ip_moptions *)0);
 	} else {
@@ -1690,6 +1693,9 @@ tbf_send_packet(vifp, m)
 		imo.imo_multicast_vif = -1;
 #endif
 
+#ifdef IPSEC
+		m->m_pkthdr.rcvif = NULL;
+#endif
 		error = ip_output(m, (struct mbuf *)0, (struct route *)0,
 				  IP_FORWARDING|IP_MULTICASTOPTS, &imo);
 
@@ -1941,7 +1947,7 @@ rsvp_input(m, ifp)
     if (ip_rsvpd != 0) {
 	if (rsvpdebug)
 	    printf("rsvp_input: Sending packet up old-style socket\n");
-	rip_input(m);
+	rip_input(m);	/*XXX*/
 	return;
     }
 

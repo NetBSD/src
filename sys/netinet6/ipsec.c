@@ -78,13 +78,13 @@
 
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
+#ifdef IPSEC_ESP
 #include <netinet6/esp.h>
+#endif
 #include <netinet6/ipcomp.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
-#include <crypto/md5.h>
-#include <crypto/sha1.h>
 
 #ifdef __NetBSD__
 #define ovbcopy	bcopy
@@ -169,7 +169,9 @@ static void vshiftl __P((unsigned char *, int, int));
 static int ipsec_in_reject __P((struct secpolicy *, struct mbuf *));
 static size_t ipsec_hdrsiz __P((struct secpolicy *));
 static struct mbuf *ipsec4_splithdr __P((struct mbuf *));
+#ifdef INET6
 static struct mbuf *ipsec6_splithdr __P((struct mbuf *));
+#endif
 static int ipsec4_encapsulate __P((struct mbuf *, struct secas *));
 #ifdef INET6
 static int ipsec6_encapsulate __P((struct mbuf *, struct secas *));
@@ -2007,7 +2009,9 @@ ipsec_logsastr(sa)
 		snprintf(p, sizeof(buf) - (p - buf),
 			"src=%d.%d.%d.%d dst=%d.%d.%d.%d",
 			s[0], s[1], s[2], s[3], d[0], d[1], d[2], d[3]);
-	} else if (idx->family == AF_INET6) {
+	}
+#ifdef INET6
+	else if (idx->family == AF_INET6) {
 		snprintf(p, sizeof(buf) - (p - buf),
 			"src=%s", ip6_sprintf((struct in6_addr *)(&idx->src)));
 		for (/*nothing*/; p && *p; p++)
@@ -2015,6 +2019,7 @@ ipsec_logsastr(sa)
 		snprintf(p, sizeof(buf) - (p - buf),
 			" dst=%s", ip6_sprintf((struct in6_addr *)(&idx->dst)));
 	}
+#endif
 	for (/*nothing*/; p && *p; p++)
 		;
 	snprintf(p, sizeof(buf) - (p - buf), ")");

@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME $Id: key.c,v 1.1.2.1 1999/06/28 06:37:09 itojun Exp $ */
+/* KAME $Id: key.c,v 1.2 1999/07/01 08:12:59 itojun Exp $ */
 
 /*
  * This code is referd to RFC 2367,
@@ -84,7 +84,9 @@
 
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
+#ifdef IPSEC_ESP
 #include <netinet6/esp.h>
+#endif
 #include <netinet6/ipcomp.h>
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3

@@ -116,11 +116,7 @@ in6_pcballoc(so, head)
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
 	insque(in6p, head);
-#ifdef MAPPED_ADDR_ENABLED
-	(caddr_t)sotoin6pcb(so) = (caddr_t)in6p;
-#else /* MAPPED_ADDR_ENABLED */
 	so->so_pcb = (caddr_t)in6p;
-#endif /* MAPPED_ADDR_ENABLED */
 	return(0);
 }
 

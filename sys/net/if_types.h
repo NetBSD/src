@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.13 1999/01/18 06:31:13 msaitoh Exp $	*/
+/*	$NetBSD: if_types.h,v 1.14 1999/07/01 08:12:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -176,4 +176,9 @@
 #define IFT_DOCSCABLEDOWNSTREAM	   0x80 /* CATV Downstream interface */
 #define IFT_DOCSCABLEUPSTREAM	   0x81 /* CATV Upstream interface */
 #define IFT_A12MPPSWITCH	   0x82	/* Avalon Parallel Processor */
+
+/* not based on IANA assignments - how should we treat these? */
+#define	IFT_GIF		0xf0
+#define IFT_PVC		0xf1
+#define IFT_FAITH	0xf2
 #endif /* _NET_IF_TYPES_H_ */

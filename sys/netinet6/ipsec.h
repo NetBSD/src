@@ -253,7 +253,7 @@ extern int ipsec_set_policy __P((struct secpolicy **, int, caddr_t, int, int));
 extern int ipsec_get_policy __P((struct secpolicy *, struct mbuf **));
 extern int ipsec4_delete_pcbpolicy __P((struct inpcb *));
 #ifdef INET6
-#if defined(__FreeBSD__) || __FreeBSD__ >= 3
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 extern int ipsec6_delete_pcbpolicy __P((struct inpcb *));
 #else
 extern int ipsec6_delete_pcbpolicy __P((struct in6pcb *));

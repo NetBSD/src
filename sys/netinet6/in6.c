@@ -73,9 +73,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#ifdef MAPPED_ADDR_ENABLED
-#include <sys/mbuf.h>
-#endif /* MAPPED_ADDR_ENABLED */
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sockio.h>
@@ -797,7 +794,6 @@ in6_control(so, cmd, data, ifp, p)
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			nd6_dad_start((struct ifaddr *)ia, NULL);
 			break;
-		case IFT_DUMMY:
 		case IFT_GIF:
 		case IFT_LOOP:
 		default:
@@ -1721,147 +1717,6 @@ in6_ifawithifp(ifp, dst)
 	return NULL;
 }
 
-#ifdef MAPPED_ADDR_ENABLED
-/* 
- * Convert sockaddr_in6 to sockaddr_in. Original sockaddr_in6 must be
- * v4 mapped addr or v4 compat addr
- */
-void
-in6_sin6_2_sin(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
-{
-	bzero(sin, sizeof(*sin));
-	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_family = AF_INET;
-	sin->sin_port = sin6->sin6_port;
-	sin->sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];	
-}
-
-/* Convert sockaddr_in to sockaddr_in6 in v4 mapped addr format. */
-void
-in6_sin_2_v4mapsin6(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
-{
-	bzero(sin6, sizeof(*sin6));
-	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	sin6->sin6_family = AF_INET6;
-	sin6->sin6_port = sin->sin_port;
-	sin6->sin6_addr.s6_addr32[0] = 0;
-	sin6->sin6_addr.s6_addr32[1] = 0;
-	sin6->sin6_addr.s6_addr32[2] = IPV6_ADDR_INT32_SMP;
-	sin6->sin6_addr.s6_addr32[3] = sin->sin_addr.s_addr;
-}
-
-/* Convert sockaddr_in6 in an mbuf to sockaddr_in. */
-void
-in6_sin6_2_sin_in_m(struct mbuf *addr6)
-{
-	struct sockaddr_in *sin_p;
-	struct sockaddr_in6 sin6;
-
-	/*
-	 * Save original sockaddr_in6 addr and convert it
-	 * to sockaddr_in.
-	 */
-	sin6 = *mtod(addr6, struct sockaddr_in6 *);
-	sin_p = mtod(addr6, struct sockaddr_in *);
-	in6_sin6_2_sin(sin_p, &sin6);
-	addr6->m_len = sizeof(*sin_p);
-}
-
-/*
- * Convert sockaddr_in in an mbuf to sockaddr_in6 in v4 mapped addr format.
- * The mbuf must have enough space to keep sockaddr_in6, else this function
- * panic.
- */
-void
-in6_sin_2_v4mapsin6_in_m(struct mbuf *addr6)
-{
-	struct sockaddr_in sin;
-	struct sockaddr_in6 *sin6_p;
-
-	/*
-	 * Save original IPv4 addr and convert it
-	 * to IPv6 addr.(v4 mapped addr)
-	 */
-	sin = *mtod(addr6, struct sockaddr_in *);
-	sin6_p = mtod(addr6, struct sockaddr_in6 *);
-	/* Check if there is room */
-	if (M_TRAILINGSPACE(addr6) < (sizeof(struct sockaddr_in6) -
-				      sizeof(struct sockaddr_in)))
-		panic("in6_sin_2_sin6_in_m:not enough space in mbuf");
-	in6_sin_2_v4mapsin6(&sin, sin6_p);
-	addr6->m_len = sizeof(*sin6_p);
-}
-
-/* Convert sockaddr_in6 into sockaddr_in. */
-void
-in6_sin6_2_sin_in_sock(struct sockaddr *nam)
-{
-	struct sockaddr_in *sin_p;
-	struct sockaddr_in6 sin6;
-
-	/*
-	 * Save original sockaddr_in6 addr and convert it
-	 * to sockaddr_in.
-	 */
-	sin6 = *(struct sockaddr_in6 *)nam;
-	sin_p = (struct sockaddr_in *)nam;
-	in6_sin6_2_sin(sin_p, &sin6);
-}
-
-/* Convert sockaddr_in into sockaddr_in6 in v4 mapped addr format. */
-void
-in6_sin_2_v4mapsin6_in_sock(struct sockaddr **nam)
-{
-	struct sockaddr_in *sin_p;
-	struct sockaddr_in6 *sin6_p;
-
-	MALLOC(sin6_p, struct sockaddr_in6 *, sizeof *sin6_p, M_SONAME,
-	       M_WAITOK);
-	sin_p = (struct sockaddr_in *)*nam;
-	in6_sin_2_v4mapsin6(sin_p, sin6_p);
-	FREE(*nam, M_SONAME);
-	*nam = (struct sockaddr *)sin6_p;
-}
-#endif /* MAPPED_ADDR_ENABLED */
-
-#ifdef RADISH
-int
-in6_rd_match(d_arg, head, rdp)
-	struct sockaddr *d_arg;
-	struct radish_head *head;
-	struct radish **rdp;
-{
-	struct radish *cur = head->rdh_top;
-	struct radish *target = NULL;
-	int off = head->rdh_offset;
-	u_char *tp = (u_char *)d_arg + off;
-	u_long *dp = (u_long *)tp, *cp, *mp;
-
-	while (cur) {
-		target = cur;
-		if (cur->rd_btest & *(tp + cur->rd_masklim))
-			cur = cur->rd_r;
-		else
-			cur = cur->rd_l;
-	}
-	do {
-		if (target->rd_rtent != NULL) {
-			cp = (u_long *)((u_char *)target->rd_route + off);
-			mp = (u_long *)((u_char *)target->rd_mask + off);
-			if ((*cp == (*dp & *mp)) &&
-			    (*(cp + 1) == (*(dp + 1) & *(mp + 1))) &&
-			    (*(cp + 2) == (*(dp + 2) & *(mp + 2))) &&
-			    (*(cp + 3) == (*(dp + 3) & *(mp + 3)))) {
-				*rdp = target;
-				return 1;
-			}
-		}
-	} while (target = target->rd_p);
-	*rdp = NULL;
-	return 0;
-}
-#endif /* RADISH */
-
 /*
  * perform DAD when interface becomes IFF_UP.
  */
@@ -1894,7 +1749,6 @@ in6_if_up(ifp)
 	switch (ifp->if_type) {
 	case IFT_SLIP:
 	case IFT_PPP:
-	case IFT_DUMMY:
 	case IFT_GIF:
 	case IFT_FAITH:
 		type = IN6_IFT_P2P;

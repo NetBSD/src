@@ -1,4 +1,33 @@
-/*	$NetBSD: raw_ip.c,v 1.42 1999/01/30 21:43:16 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.43 1999/07/01 08:12:51 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -60,6 +89,10 @@
 
 #include <machine/stdarg.h>
 
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#endif /*IPSEC*/
+
 struct inpcbtable rawcbtable;
 
 int	 rip_bind __P((struct inpcb *, struct mbuf *));
@@ -86,6 +119,8 @@ rip_init()
 	in_pcbinit(&rawcbtable, 1, 1);
 }
 
+static struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
+
 /*
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
@@ -100,11 +135,18 @@ rip_input(m, va_alist)
 	va_dcl
 #endif
 {
+	int off, proto;
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct inpcb *inp;
 	struct inpcb *last = 0;
 	struct mbuf *opts = 0;
 	struct sockaddr_in ripsrc;
+	va_list ap;
+
+	va_start(ap, m);
+	off = va_arg(ap, int);
+	proto = va_arg(ap, int);
+	va_end(ap);
 
 	ripsrc.sin_family = AF_INET;
 	ripsrc.sin_len = sizeof(struct sockaddr_in);
@@ -121,7 +163,7 @@ rip_input(m, va_alist)
 	for (inp = rawcbtable.inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&rawcbtable.inpt_queue;
 	    inp = inp->inp_queue.cqe_next) {
-		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
+		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
 			continue;
 		if (!in_nullhost(inp->inp_laddr) &&
 		    !in_hosteq(inp->inp_laddr, ip->ip_dst))
@@ -164,6 +206,7 @@ rip_input(m, va_alist)
 		ipstat.ips_noproto++;
 		ipstat.ips_delivered--;
 	}
+	return;
 }
 
 /*
@@ -229,6 +272,9 @@ rip_output(m, va_alist)
 		flags |= IP_RAWOUTPUT;
 		ipstat.ips_rawout++;
 	}
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = (struct ifnet *)inp->inp_socket;	/*XXX*/
+#endif /*IPSEC*/
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions, &inp->inp_errormtu));
 }
 
@@ -409,6 +455,9 @@ rip_usrreq(so, req, m, nam, control, p)
 			break;
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_p = (long)nam;
+#ifdef IPSEC
+		error = ipsec_init_policy(&inp->inp_sp);
+#endif /*IPSEC*/
 		break;
 
 	case PRU_DETACH:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.36 1999/05/18 23:57:19 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.37 1999/07/01 08:12:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -112,6 +112,7 @@ TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
  * Note: this is the same size as a generic device's external name.
  */
 #define	IFNAMSIZ	16
+#define	IF_NAMESIZE	IFNAMSIZ
 
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
@@ -150,6 +151,7 @@ struct ifnet {				/* and the entries */
 	} if_snd;			/* output queue */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
+	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -261,6 +263,19 @@ struct ifaddr {
 #define	IFA_ROUTE	RTF_UP		/* route installed */
 
 /*
+ * The prefix structure contains information about one prefix
+ * of an interface.  They are maintained by the different address families,
+ * are allocated and attached when an prefix or an address is set, 
+ * and are linked together so all prfefixes for an interface can be located.
+ */
+struct ifprefix {
+	struct	sockaddr *ifpr_prefix;	/* prefix of interface */
+	struct	ifnet *ifpr_ifp;	/* back-pointer to interface */
+	struct ifprefix *ifpr_next;
+	u_char	ifpr_plen;		/* prefix length in bits */
+};
+
+/*
  * Message format for use in obtaining information about interfaces
  * from sysctl and the routing socket.
  */
@@ -358,6 +373,18 @@ struct	ifconf {
 #define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
 };
 
+/*
+ * Structure for SIOC[AGD]LIFADDR
+ */
+struct if_laddrreq {
+	char iflr_name[IFNAMSIZ];
+	unsigned int flags;
+#define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
+	unsigned int prefixlen;		/* in/out */
+	struct sockaddr_storage addr;	/* in/out */
+	struct sockaddr_storage dstaddr; /* out */
+};
+
 #include <net/if_arp.h>
 
 #ifdef _KERNEL
@@ -368,6 +395,11 @@ struct	ifconf {
 		(ifa)->ifa_refcnt--;
 
 struct ifnet_head ifnet;
+struct ifnet **ifindex2ifnet;
+#if 0
+struct ifnet loif[];
+#endif
+int if_index;
 
 void	ether_ifattach __P((struct ifnet *, const u_int8_t *));
 char	*ether_sprintf __P((const u_char *));
@@ -382,6 +414,7 @@ void	ifinit __P((void));
 int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((char *));
+struct  ifnet *if_withname __P((struct sockaddr *));
 
 struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithaf __P((int));
@@ -399,5 +432,17 @@ void	loopattach __P((int));
 int	looutput __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
 void	lortrequest __P((int, struct rtentry *, struct sockaddr *));
+#else
+struct if_nameindex {
+	unsigned int	if_index;	/* 1, 2, ... */
+	char		*if_name;	/* null terminated name: "le0", ... */
+};
+
+__BEGIN_DECLS
+unsigned int if_nametoindex __P((const char *));
+char *if_indextoname __P((unsigned int, char *));
+struct if_nameindex *if_nameindex __P((void));
+void if_freenameindex __P((struct if_nameindex *));
+__END_DECLS
 #endif /* _KERNEL */
 #endif /* !_NET_IF_H_ */

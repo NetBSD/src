@@ -1,4 +1,33 @@
-/*	$NetBSD: ip_icmp.c,v 1.36 1999/03/30 19:02:56 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.37 1999/07/01 08:12:50 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,6 +125,12 @@
 #include <netinet/ip_var.h>
 #include <netinet/icmp_var.h>
 
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif
+
 #include <machine/stdarg.h>
 
 /*
@@ -107,6 +142,12 @@
 int	icmpmaskrepl = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
+#endif
+
+#if 0
+static int	ip_next_mtu __P((int, int));
+#else
+/*static*/ int	ip_next_mtu __P((int, int));
 #endif
 
 extern	struct protosw inetsw[];
@@ -228,6 +269,7 @@ icmp_input(m, va_alist)
 	va_dcl
 #endif
 {
+	int proto;
 	register struct icmp *icp;
 	register struct ip *ip = mtod(m, struct ip *);
 	int icmplen;
@@ -241,6 +283,7 @@ icmp_input(m, va_alist)
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
+	proto = va_arg(ap, int);
 	va_end(ap);
 
 	/*
@@ -281,6 +324,13 @@ icmp_input(m, va_alist)
 	if (icmpprintfs)
 		printf("icmp_input, type %d code %d\n", icp->icmp_type,
 		    icp->icmp_code);
+#endif
+#ifdef IPSEC
+	/* drop it if it does not match the policy */
+	if (ipsec4_in_reject(m, NULL)) {
+		ipsecstat.in_polvio++;
+		goto freeit;
+	}
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
 		goto raw;
@@ -357,6 +407,10 @@ icmp_input(m, va_alist)
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		if (code == PRC_MSGSIZE && ip_mtudisc)
 			icmp_mtudisc(icp);
+		/*
+		 * XXX if the packet contains [IPv4 AH TCP], we can't make a
+		 * notification to TCP layer.
+		 */
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
 			(*ctlfunc)(code, sintosa(&icmpsrc), &icp->icmp_ip);
@@ -441,6 +495,9 @@ reflect:
 		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
 		    sintosa(&icmpgw), (struct rtentry **)0);
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
+#ifdef IPSEC
+		key_sa_routechange((struct sockaddr *)&icmpsrc);
+#endif
 		break;
 
 	/*
@@ -458,11 +515,12 @@ reflect:
 	}
 
 raw:
-	rip_input(m);
+	rip_input(m, hlen, proto);
 	return;
 
 freeit:
 	m_freem(m);
+	return;
 }
 
 /*
@@ -635,6 +693,9 @@ icmp_send(m, opts)
 	if (icmpprintfs)
 		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
 #endif
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif /*IPSEC*/
 	(void) ip_output(m, opts, NULL, 0, NULL);
 }
 
@@ -758,6 +819,44 @@ icmp_mtudisc(icp)
 
 	if (rt)
 		rtfree(rt);
+}
+
+/*
+ * Return the next larger or smaller MTU plateau (table from RFC 1191)
+ * given current value MTU.  If DIR is less than zero, a larger plateau
+ * is returned; otherwise, a smaller value is returned.
+ */
+int
+ip_next_mtu(mtu, dir)	/* XXX */
+	int mtu;
+	int dir;
+{
+	static int mtutab[] = {
+		65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296,
+		68, 0
+	};
+	int i;
+
+	for (i = 0; i < (sizeof mtutab) / (sizeof mtutab[0]); i++) {
+		if (mtu >= mtutab[i])
+			break;
+	}
+
+	if (dir < 0) {
+		if (i == 0) {
+			return 0;
+		} else {
+			return mtutab[i - 1];
+		}
+	} else {
+		if (mtutab[i] == 0) {
+			return 0;
+		} else if(mtu > mtutab[i]) {
+			return mtutab[i];
+		} else {
+			return mtutab[i + 1];
+		}
+	}
 }
 
 

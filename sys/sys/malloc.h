@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.45 1999/06/29 16:45:14 augustss Exp $	*/
+/*	$NetBSD: malloc.h,v 1.46 1999/07/01 08:13:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -144,7 +144,10 @@
 #define	M_FILECORENODE	92	/* Filcore FS vnode private part */
 #define	M_RAIDFRAME	93	/* RAIDframe structures */
 #define M_USBHC		94	/* USB host controller */
-#define	M_LAST		95	/* Must be last type + 1 */
+#define	M_SECA		95	/* security associations, key management */
+#define	M_IP6OPT	96	/* IPv6 options */
+#define	M_IP6NDP	97	/* IPv6 Neighbour Discovery */
+#define	M_LAST		98	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -242,7 +245,10 @@
 	"filecore node", /* 92 M_FILECORENODE */ \
 	"RAIDframe",	/* 93 M_RAIDFRAME */ \
 	"USB HC",	/* 94 M_USBHC */ \
-	NULL,		/* 95 */ \
+	"key mgmt",	/* 95 M_SECA */ \
+	"ip6_options",	/* 96 M_IP6OPT */ \
+	"NDP",		/* 97 M_IP6NDP */ \
+	NULL,		/* 98 */ \
 }
 
 struct kmemstats {

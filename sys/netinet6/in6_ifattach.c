@@ -167,7 +167,6 @@ in6_ifattach_p2p()
 
 	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next) {
 		switch (ifp->if_type) {
-		case IFT_DUMMY:
 		case IFT_GIF:
 		case IFT_FAITH:
 			/* pseudo interfaces - safe to initialize here */
@@ -507,7 +506,6 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 		/* nd6_dad_start() will be called in in6_if_up */
 		break;
-	case IFT_DUMMY:
 	case IFT_GIF:
 	case IFT_LOOP:
 	case IFT_FAITH:

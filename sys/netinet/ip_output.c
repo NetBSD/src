@@ -1,4 +1,33 @@
-/*	$NetBSD: ip_output.c,v 1.60 1999/06/07 01:26:04 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.61 1999/07/01 08:12:51 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,6 +113,9 @@
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 
+#include <vm/vm.h>
+#include <sys/proc.h>
+
 #include <net/if.h>
 #include <net/route.h>
 #include <net/pfil.h>
@@ -100,6 +132,12 @@
 #endif
 
 #include <machine/stdarg.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif /*IPSEC*/
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
@@ -143,6 +181,10 @@ ip_output(m0, va_alist)
 	struct mbuf *m1;
 	int rv;
 #endif /* PFIL_HOOKS */
+#ifdef IPSEC
+	struct socket *so = (struct socket *)m->m_pkthdr.rcvif;
+	struct secpolicy *sp = NULL;
+#endif /*IPSEC*/
 
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
@@ -154,6 +196,10 @@ ip_output(m0, va_alist)
 	else
 		mtu_p = NULL;
 	va_end(ap);
+
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif /*IPSEC*/
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -378,6 +424,126 @@ sendit:
 			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
+
+#ifdef IPSEC
+	/* get SP for this packet */
+	if (so == NULL)
+		sp = ipsec4_getpolicybyaddr(m, flags, &error);
+	else
+		sp = ipsec4_getpolicybysock(m, so, &error);
+
+	if (sp == NULL) {
+		ipsecstat.out_inval++;
+		goto bad;
+	}
+
+	error = 0;
+
+	/* check policy */
+	switch (sp->policy) {
+	case IPSEC_POLICY_DISCARD:
+		/*
+		 * This packet is just discarded.
+		 */
+		ipsecstat.out_polvio++;
+		goto bad;
+
+	case IPSEC_POLICY_BYPASS:
+	case IPSEC_POLICY_NONE:
+		/* no need to do IPsec. */
+		goto skip_ipsec;
+	
+	case IPSEC_POLICY_IPSEC:
+		if (sp->req == NULL) {
+			/* XXX should be panic ? */
+			printf("ip_output: No IPsec request specified.\n");
+			error = EINVAL;
+			goto bad;
+		}
+		break;
+
+	case IPSEC_POLICY_ENTRUST:
+	default:
+		printf("ip_output: Invalid policy found. %d\n", sp->policy);
+	}
+
+	ip->ip_len = htons((u_short)ip->ip_len);
+	ip->ip_off = htons((u_short)ip->ip_off);
+	ip->ip_sum = 0;
+
+    {
+	struct ipsec_output_state state;
+	bzero(&state, sizeof(state));
+	state.m = m;
+	if (flags & IP_ROUTETOIF) {
+		state.ro = &iproute;
+		bzero(&iproute, sizeof(iproute));
+	} else
+		state.ro = ro;
+	state.dst = (struct sockaddr *)dst;
+
+	error = ipsec4_output(&state, sp, flags);
+
+	m = state.m;
+	if (flags & IP_ROUTETOIF) {
+		/*
+		 * if we have tunnel mode SA, we may need to ignore
+		 * IP_ROUTETOIF.
+		 */
+		if (state.ro != &iproute || state.ro->ro_rt != NULL) {
+			flags &= ~IP_ROUTETOIF;
+			ro = state.ro;
+		}
+	} else
+		ro = state.ro;
+	dst = (struct sockaddr_in *)state.dst;
+	if (error) {
+		/* mbuf is already reclaimed in ipsec4_output. */
+		m0 = NULL;
+		switch (error) {
+		case EHOSTUNREACH:
+		case ENETUNREACH:
+		case EMSGSIZE:
+		case ENOBUFS:
+		case ENOMEM:
+			break;
+		default:
+			printf("ip4_output (ipsec): error code %d\n", error);
+			/*fall through*/
+		case ENOENT:
+			/* don't show these error codes to the user */
+			error = 0;
+			break;
+		}
+		goto bad;
+	}
+    }
+
+	/* be sure to update variables that are affected by ipsec4_output() */
+	ip = mtod(m, struct ip *);
+#ifdef _IP_VHL
+	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
+#else
+	hlen = ip->ip_hl << 2;
+#endif
+	if (ro->ro_rt == NULL) {
+		if ((flags & IP_ROUTETOIF) == 0) {
+			printf("ip_output: "
+				"can't update route after IPsec processing\n");
+			error = EHOSTUNREACH;	/*XXX*/
+			goto bad;
+		}
+	} else {
+		/* nobody uses ia beyond here */
+		ifp = ro->ro_rt->rt_ifp;
+	}
+
+	/* make it flipped, again. */
+	ip->ip_len = ntohs((u_short)ip->ip_len);
+	ip->ip_off = ntohs((u_short)ip->ip_off);
+skip_ipsec:
+#endif /*IPSEC*/
+
 	/*
 	 * If small enough for mtu of path, can just send directly.
 	 */
@@ -389,10 +555,21 @@ sendit:
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
+
 	/*
 	 * Too large for interface; fragment if possible.
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
+#if 0
+	/*
+	 * If IPsec packet is too big for the interface, try fragment it.
+	 * XXX This really is a quickhack.  May be inappropriate.
+	 * XXX fails if somebody is sending AH'ed packet, with:
+	 *	sizeof(packet without AH) < mtu < sizeof(packet with AH)
+	 */
+	if (sab && ip->ip_p != IPPROTO_AH && (flags & IP_FORWARDING) == 0)
+		ip->ip_off &= ~IP_DF;
+#endif /*IPSEC*/
 	if (ip->ip_off & IP_DF) {
 		if (flags & IP_RETURNMTU)
 			*mtu_p = mtu;
@@ -509,6 +686,15 @@ done:
 			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
 	}
 #endif
+
+#ifdef IPSEC
+	if (sp != NULL) {
+		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+			printf("DP ip_output call free SP:%p\n", sp));
+		key_freesp(sp);
+	}
+#endif /* IPSEC */
+
 	return (error);
 bad:
 	m_freem(m);
@@ -631,6 +817,11 @@ ip_ctloutput(op, so, level, optname, mp)
 	register struct mbuf *m = *mp;
 	register int optval = 0;
 	int error = 0;
+#ifdef IPSEC
+#ifdef __NetBSD__
+	struct proc *p = curproc;	/*XXX*/
+#endif
+#endif
 
 	if (level != IPPROTO_IP) {
 		error = EINVAL;
@@ -725,6 +916,30 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			break;
 
+#ifdef IPSEC
+		case IP_IPSEC_POLICY:
+		    {
+			caddr_t req = NULL;
+			int len = 0;
+			int priv = 0;
+#ifdef __NetBSD__
+			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+				priv = 0;
+			else
+				priv = 1;
+#else
+			priv = (in6p->in6p_socket->so_state & SS_PRIV);
+#endif
+			if (m != 0) {
+				req = mtod(m, caddr_t);
+				len = m->m_len;
+			}
+			error = ipsec_set_policy(&inp->inp_sp,
+			                         optname, req, len, priv);
+			break;
+		    }
+#endif /*IPSEC*/
+
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -789,6 +1004,12 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			*mtod(m, int *) = optval;
 			break;
+
+#ifdef IPSEC
+		case IP_IPSEC_POLICY:
+			error = ipsec_get_policy(inp->inp_sp, mp);
+			break;
+#endif /*IPSEC*/
 
 		case IP_MULTICAST_IF:
 		case IP_MULTICAST_TTL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.18 1998/02/10 01:26:44 perry Exp $	*/
+/*	$NetBSD: ip.h,v 1.19 1999/07/01 08:12:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -79,6 +79,11 @@ struct ip {
 #define	IPTOS_THROUGHPUT	0x08
 #define	IPTOS_RELIABILITY	0x04
 /*	IPTOS_LOWCOST		0x02 XXX */
+#if 1
+/* ECN bits proposed by Sally Floyd */
+#define IPTOS_CE		0x01	/* congestion experienced */
+#define IPTOS_ECT		0x02	/* ECN-capable transport */
+#endif
 
 /*
  * Definitions for IP precedence (also in ip_tos) (hopefully unused)

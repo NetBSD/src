@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: key_debug.c,v 1.1.2.1 1999/06/28 06:37:09 itojun Exp $ */
+/* KAME @(#)$Id: key_debug.c,v 1.2 1999/07/01 08:12:59 itojun Exp $ */
 
 #ifdef _KERNEL
 # define KERNEL
