@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.50 1997/05/10 22:04:14 pk Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.51 1997/09/10 13:44:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -306,8 +306,8 @@ kernfs_lookup(v)
 	int error, i;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_lookup(%x)\n", ap);
-	printf("kernfs_lookup(dp = %x, vpp = %x, cnp = %x)\n", dvp, vpp, ap->a_cnp);
+	printf("kernfs_lookup(%p)\n", ap);
+	printf("kernfs_lookup(dp = %p, vpp = %p, cnp = %p)\n", dvp, vpp, ap->a_cnp);
 	printf("kernfs_lookup(%s)\n", pname);
 #endif
 
@@ -370,7 +370,7 @@ found:
 	*vpp = fvp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_lookup: newvp = %x\n", fvp);
+	printf("kernfs_lookup: newvp = %p\n", fvp);
 #endif
 	return (0);
 }
@@ -625,7 +625,7 @@ kernfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_inactive(%x)\n", vp);
+	printf("kernfs_inactive(%p)\n", vp);
 #endif
 	/*
 	 * Clear out the v_type field to avoid
@@ -645,7 +645,7 @@ kernfs_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_reclaim(%x)\n", vp);
+	printf("kernfs_reclaim(%p)\n", vp);
 #endif
 	if (vp->v_data) {
 		FREE(vp->v_data, M_TEMP);
