@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.95 2000/07/24 12:26:15 ad Exp $
+# $NetBSD: md_share,v 1.96 2000/07/28 00:17:36 wiz Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -506,7 +506,7 @@
 ./usr/share/man/man4/pmax/intro.4
 ./usr/share/man/man4/pmax/ioasic.4
 ./usr/share/man/man4/pmax/lk201.4
-./usr/share/man/cat4/pmax/px.4
+./usr/share/man/man4/pmax/px.4
 ./usr/share/man/man4/pmax/scc.4
 ./usr/share/man/man4/pmax/sii.4
 ./usr/share/man/man4/pmax/tc.4
