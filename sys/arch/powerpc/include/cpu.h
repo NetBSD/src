@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2003/02/10 04:01:37 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2003/03/04 07:48:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -69,10 +69,10 @@ struct cpu_info {
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
 
-	int ci_astpending;
+	volatile int ci_astpending;
 	int ci_want_resched;
-	u_long ci_lasttb;
-	int ci_tickspending;
+	volatile u_long ci_lasttb;
+	volatile int ci_tickspending;
 	int ci_cpl;
 	int ci_iactive;
 	int ci_ipending;
