@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.19 1999/09/12 18:26:58 itojun Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.20 1999/09/28 17:55:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -207,7 +207,12 @@ smc91cxx_attach(sc, myea)
 
 	SMC_SELECT_BANK(sc, 3);
 	tmp = bus_space_read_2(bst, bsh, REVISION_REG_W);
-	idstr = smc91cxx_idstrs[RR_ID(tmp)];
+	/* check magic number */
+	if ((tmp & BSR_DETECT_MASK) != BSR_DETECT_VALUE) {
+		idstr = NULL;
+		printf("%s: invalid BSR 0x%04x\n", sc->sc_dev.dv_xname, tmp);
+	} else
+		idstr = smc91cxx_idstrs[RR_ID(tmp)];
 	printf("%s: ", sc->sc_dev.dv_xname);
 	if (idstr != NULL)
 		printf("%s, ", idstr);
