@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.21 1999/04/26 03:30:48 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.22 1999/04/26 05:57:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -527,11 +527,6 @@ osf1_sys_mknod(p, v, retval)
 	return sys_mknod(p, &a, retval);
 }
 
-#define	OSF1_FAPPEND	0x00008		/* XXX OSF1_O_APPEND */
-#define	OSF1_FNONBLOCK	0x00004		/* XXX OSF1_O_NONBLOCK */
-#define	OSF1_FASYNC	0x00040
-#define	OSF1_FSYNC	0x04000		/* XXX OSF1_O_SYNC */
-
 const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_xtab[] = {
     {	OSF1_FD_CLOEXEC,	OSF1_FD_CLOEXEC,	FD_CLOEXEC	},
     {	0								}
@@ -542,21 +537,25 @@ const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_rxtab[] = {
     {	0								}
 };
 
-/* XXX THIS TABLE IS NOT COMPLETE */
 const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_xtab[] = {
-    {	OSF1_FAPPEND,		OSF1_FAPPEND,		FAPPEND		},
     {	OSF1_FNONBLOCK,		OSF1_FNONBLOCK,		FNONBLOCK	},
+    {	OSF1_FAPPEND,		OSF1_FAPPEND,		FAPPEND		},
     {	OSF1_FASYNC,		OSF1_FASYNC,		FASYNC		},
     {	OSF1_FSYNC,		OSF1_FSYNC,		FFSYNC		},
+    {	OSF1_FNDELAY,		OSF1_FNDELAY,		FNDELAY		},
+    {	OSF1_FDSYNC,		OSF1_FDSYNC,		FDSYNC		},
+    {	OSF1_FRSYNC,		OSF1_FRSYNC,		FRSYNC		},
     {	0								}
 };
 
-/* XXX THIS TABLE IS NOT COMPLETE */
 const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_rxtab[] = {
-    {	FAPPEND,		FAPPEND,		OSF1_FAPPEND	},
     {	FNONBLOCK,		FNONBLOCK,		OSF1_FNONBLOCK	},
+    {	FAPPEND,		FAPPEND,		OSF1_FAPPEND	},
     {	FASYNC,			FASYNC,			OSF1_FASYNC	},
     {	FFSYNC,			FFSYNC,			OSF1_FSYNC	},
+    {	FNDELAY,		FNDELAY,		OSF1_FNDELAY	},
+    {	FDSYNC,			FDSYNC,			OSF1_FDSYNC	},
+    {	FRSYNC,			FRSYNC,			OSF1_FRSYNC	},
     {	0								}
 };
 
