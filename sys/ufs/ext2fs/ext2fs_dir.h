@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.1 1997/06/11 09:33:50 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.2 1998/09/13 15:14:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -49,7 +49,7 @@
  * Theoretically, directories can be more than 2Gb in length, however, in
  * practice this seems unlikely. So, we define the type doff_t as a 32-bit
  * quantity to keep down the cost of doing lookup on a 32-bit machine.
-*/
+ */
 #define	doff_t		int32_t
 #define	EXT2FS_MAXDIRSIZE	(0x7fffffff)
 
