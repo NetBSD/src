@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.26 1999/06/17 21:15:10 thorpej Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.27 1999/07/16 22:23:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ do_conf ()
 			line[--len] = '\0';
 		} else {
 			cline = xmalloc(len+1);
-			bcopy(line, cline, len);
+			memcpy(cline, line, len);
 			line = cline;
 			line[len] = '\0';
 		}
@@ -261,7 +261,7 @@ dodir(dir, silent, update_dir_list)
 		if (!isdigit(*(cp+4)))
 			continue;
 
-		bzero((caddr_t)dewey, sizeof(dewey));
+		memset(dewey, 0, sizeof(dewey));
 		ndewey = getdewey(dewey, cp + 4);
 		enter(dir, dp->d_name, name, dewey, ndewey);
 	}
@@ -295,7 +295,7 @@ enter(dir, file, name, dewey, ndewey)
 			shp->name = strdup(name);
 			free(shp->path);
 			shp->path = concat(dir, "/", file);
-			bcopy(dewey, shp->dewey, sizeof(shp->dewey));
+			memcpy(shp->dewey, dewey, sizeof(shp->dewey));
 			shp->ndewey = ndewey;
 		}
 		break;
@@ -312,7 +312,7 @@ enter(dir, file, name, dewey, ndewey)
 	shp = (struct shlib_list *)xmalloc(sizeof *shp);
 	shp->name = strdup(name);
 	shp->path = concat(dir, "/", file);
-	bcopy(dewey, shp->dewey, MAXDEWEY);
+	memcpy(shp->dewey, dewey, MAXDEWEY);
 	shp->ndewey = ndewey;
 	shp->next = NULL;
 
@@ -383,7 +383,7 @@ buildhints()
 
 	/* Allocate buckets and string table */
 	blist = (struct hints_bucket *)xmalloc(n);
-	bzero((char *)blist, n);
+	memset(blist, 0, n);
 	for (i = 0; i < hdr.hh_nbucket; i++)
 		/* Empty all buckets */
 		blist[i].hi_next = -1;
@@ -424,7 +424,7 @@ buildhints()
 		str_index += 1 + strlen(shp->path);
 
 		/* Copy versions */
-		bcopy(shp->dewey, bp->hi_dewey, sizeof(bp->hi_dewey));
+		memcpy(bp->hi_dewey, shp->dewey, sizeof(bp->hi_dewey));
 		bp->hi_ndewey = shp->ndewey;
 	}
 
@@ -484,52 +484,54 @@ static int
 readhints()
 {
 	int			fd;
-	caddr_t			addr;
-	long			msize;
+	void			*addr = (void *) -1;
+	size_t			msize;
 	struct hints_header	*hdr;
 	struct hints_bucket	*blist;
 	char			*strtab;
 	struct shlib_list	*shp;
 	int			i;
+	struct			stat st;
+	int			error = 0;
 
 	if ((fd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto cleanup;
 	}
 
-	msize = getpagesize();
+	if (fstat(fd, &st) == -1) {
+		warn("%s", _PATH_LD_HINTS);
+		goto cleanup;
+	}
+
+	msize = (size_t)st.st_size;
+	if (msize < sizeof(*hdr)) {
+		warnx("%s: File too short", _PATH_LD_HINTS);
+		goto cleanup;
+	}
+
 	addr = mmap(0, msize, PROT_READ, MAP_FILE|MAP_PRIVATE, fd, 0);
 
-	if (addr == (caddr_t)-1) {
+	if (addr == (void *)-1) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto cleanup;
 	}
 
 	hdr = (struct hints_header *)addr;
 	if (HH_BADMAG(*hdr)) {
 		warnx("%s: Bad magic: %lo",
-			_PATH_LD_HINTS, hdr->hh_magic);
-		return (-1);
+		    _PATH_LD_HINTS, hdr->hh_magic);
+		goto cleanup;
 	}
 
 	if (hdr->hh_version != LD_HINTS_VERSION_2) {
 		warnx("Unsupported version: %ld", hdr->hh_version);
-		return (-1);
+		goto cleanup;
 	}
 
-	if (hdr->hh_ehints > msize) {
-		if (mmap(addr+msize, hdr->hh_ehints - msize,
-				PROT_READ, MAP_FILE|MAP_PRIVATE|MAP_FIXED,
-				fd, msize) != (caddr_t)(addr+msize)) {
 
-			warn("%s", _PATH_LD_HINTS);
-			return (-1);
-		}
-	}
-	close(fd);
-
-	blist = (struct hints_bucket *)(addr + hdr->hh_hashtab);
-	strtab = (char *)(addr + hdr->hh_strtab);
+	blist = (struct hints_bucket *)((char *)addr + hdr->hh_hashtab);
+	strtab = ((char *)addr + hdr->hh_strtab);
 
 	for (i = 0; i < hdr->hh_nbucket; i++) {
 		struct hints_bucket	*bp = &blist[i];
@@ -537,18 +539,18 @@ readhints()
 		/* Sanity check */
 		if (bp->hi_namex >= hdr->hh_strtab_sz) {
 			warnx("Bad name index: %#x", bp->hi_namex);
-			return (-1);
+			goto cleanup;
 		}
 		if (bp->hi_pathx >= hdr->hh_strtab_sz) {
 			warnx("Bad path index: %#x", bp->hi_pathx);
-			return (-1);
+			goto cleanup;
 		}
 
 		/* Allocate new list element */
 		shp = (struct shlib_list *)xmalloc(sizeof *shp);
 		shp->name = strdup(strtab + bp->hi_namex);
 		shp->path = strdup(strtab + bp->hi_pathx);
-		bcopy(bp->hi_dewey, shp->dewey, sizeof(shp->dewey));
+		memcpy(shp->dewey, bp->hi_dewey, sizeof(shp->dewey));
 		shp->ndewey = bp->hi_ndewey;
 		shp->next = NULL;
 
@@ -556,8 +558,16 @@ readhints()
 		shlib_tail = &shp->next;
 	}
 	dir_list = strdup(strtab + hdr->hh_dirlist);
+	goto done;
+cleanup:
+	error = 1;
+done:
+	if (fd != -1)
+		close(fd);
+	if (addr != (void *)-1)
+		munmap(addr, msize);
+	return error;
 
-	return (0);
 }
 
 static void
