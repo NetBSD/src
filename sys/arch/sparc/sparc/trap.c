@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.130 2003/01/18 06:45:07 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.131 2003/01/26 13:20:12 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -271,6 +271,7 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
 
@@ -282,6 +283,7 @@ upcallret(l)
 	struct lwp *l;
 {
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
 
