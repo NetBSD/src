@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.51 2002/03/13 01:27:01 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.52 2002/06/17 16:21:12 christos Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -45,6 +45,7 @@
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	unknown SCSI device
+#	systrace syscall tracer
 # Platform-specific devices:
 #	NOTE: /dev/mouse should be a link to one of these for X windows.
 #	fb*	generic framebuffer pseudo-device
@@ -89,6 +90,7 @@ all)
 	makedev audio
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
+	makedev systrace
 	;;
 
 minimal)
@@ -406,6 +408,12 @@ clockctl)
 	mknod clockctl c 100 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 103 0
+	chmod 644 systrace
 	;;
 
 local)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 2002/06/17 13:30:39 fredette Exp $
+#	$NetBSD: MAKEDEV,v 1.14 2002/06/17 16:21:15 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -66,6 +66,7 @@
 #	tun*	network tunnel driver
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
+#	systrace syscall tracer
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -115,6 +116,7 @@ all)
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev local
 	makedev clockctl
+	makedev systrace
 	;;
 
 std)
@@ -280,6 +282,12 @@ clockctl)
 	mknod clockctl c 89 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 90 0
+	chmod 644 systrace
 	;;
 
 local)
