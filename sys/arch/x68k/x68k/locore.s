@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 1996/05/05 12:17:22 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 1996/05/17 12:22:22 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,13 @@
 #include "par.h"
 #include "adpcm.h"
 #include "assym.h"
+
+| This is for kvm_mkdb, and should be the address of the beginning
+| of the kernel text segment (not necessarily the same as kernbase).
+	.text
+	.globl	_kernel_text
+_kernel_text:
+
 #include <x68k/x68k/vectors.s>
 
 /*
