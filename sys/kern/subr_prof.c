@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.14 1996/10/13 02:32:40 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.15 1996/12/18 20:12:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -54,6 +54,9 @@
  */
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
+/* Actual start of the kernel text segment. */
+extern char kernel_text[];
+
 extern char etext[];
 
 
@@ -66,8 +69,10 @@ kmstartup()
 	 * Round lowpc and highpc to multiples of the density we're using
 	 * so the rest of the scaling (here and in gprof) stays in ints.
 	 */
-	p->lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
-	p->highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
+	p->lowpc = ROUNDDOWN(((u_long)kernel_text),
+		HISTFRACTION * sizeof(HISTCOUNTER));
+	p->highpc = ROUNDUP((u_long)etext,
+		HISTFRACTION * sizeof(HISTCOUNTER));
 	p->textsize = p->highpc - p->lowpc;
 	printf("Profiling kernel, textsize=%ld [%lx..%lx]\n",
 	       p->textsize, p->lowpc, p->highpc);
