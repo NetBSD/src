@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.16 1995/04/19 19:15:47 mycroft Exp $	*/
+/*	$NetBSD: dca.c,v 1.17 1995/10/04 17:46:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -43,9 +43,12 @@
  *	98626/98644/internal serial interface on hp300/hp400
  *	internal serial ports on hp700
  *
- *  N.B. On the hp700, there is a "secret bit" with undocumented behavior.
- *  The third bit of the Modem Control Register (MCR_IEN == 0x08) must be
- *  set to enable interrupts.
+ *  N.B. On the hp700 and some hp300s, there is a "secret bit" with
+ *  undocumented behavior.  The third bit of the Modem Control Register
+ *  (MCR_IEN == 0x08) must be set to enable interrupts.  Failure to do
+ *  so can result in deadlock on those machines, whereas the don't seem to
+ *  be any harmful side-effects from setting this bit on non-affected
+ *  machines.
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +151,10 @@ dcaprobe(hd)
 		return (0);
 #endif
 	unit = hd->hp_unit;
+
 	if (unit == dcaconsole)
 		DELAY(100000);
+
 #ifdef hp300
 	dca->dca_reset = 0xFF;
 	DELAY(100);
@@ -194,6 +199,7 @@ dcaprobe(hd)
 #ifdef hp300
 	dca->dca_ic = IC_IE;
 #endif
+
 	/*
 	 * Need to reset baud rate, etc. of next print so reset dcaconsinit.
 	 * Also make sure console is always "hardwired."
@@ -201,7 +207,15 @@ dcaprobe(hd)
 	if (unit == dcaconsole) {
 		dcaconsinit = 0;
 		dcasoftCAR |= (1 << unit);
-	}
+		printf("dca%d: console, ", unit);
+	} else
+		printf("dca%d: ", unit);
+
+	if (dca_hasfifo & (1 << unit))
+		printf("working fifo\n");
+	else
+		printf("no fifo\n");
+
 	return (1);
 }
 
@@ -214,7 +228,9 @@ dcaopen(dev, flag, mode, p)
 {
 	register struct tty *tp;
 	register int unit;
-	int error = 0;
+	struct dcadevice *dca;
+	u_char code;
+	int s, error = 0;
  
 	unit = UNIT(dev);
 	if (unit >= NDCA || (dca_active & (1 << unit)) == 0)
@@ -226,32 +242,67 @@ dcaopen(dev, flag, mode, p)
 	tp->t_oproc = dcastart;
 	tp->t_param = dcaparam;
 	tp->t_dev = dev;
+
+	dca = dca_addr[unit];
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
+		/*
+		 * Sanity clause: reset the card on first open.
+		 * The card might be left in an inconsistent state
+		 * if card memory is read inadvertently.
+		 */
+		dcainit(unit, dcadefaultrate);
+
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = dcadefaultrate;
-		}
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = dcadefaultrate;
+
+		s = spltty();
+
 		dcaparam(tp, &tp->t_termios);
 		ttsetwater(tp);
+
+		/* Set the FIFO threshold based on the receive speed. */
+		if (dca_hasfifo & (1 << unit))
+                        dca->dca_fifo = FIFO_ENABLE | FIFO_RCV_RST |
+                            FIFO_XMT_RST |
+			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 :
+			    FIFO_TRIGGER_14);   
+
+		/* Flush any pending I/O */
+		while ((dca->dca_iir & IIR_IMASK) == IIR_RXRDY)
+			code = dca->dca_data;
+
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
+	else
+		s = spltty();
+
+	/* Set modem control state. */
 	(void) dcamctl(dev, MCR_DTR | MCR_RTS, DMSET);
+
+	/* Set soft-carrier if so configured. */
 	if ((dcasoftCAR & (1 << unit)) || (dcamctl(dev, 0, DMGET) & MSR_DCD))
 		tp->t_state |= TS_CARR_ON;
-	(void) spltty();
-	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
-	       (tp->t_state & TS_CARR_ON) == 0) {
-		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
-			break;
-	}
-	(void) spl0();
+
+	/* Wait for carrier if necessary. */
+	if ((flag & O_NONBLOCK) == 0)
+		while ((tp->t_cflag & CLOCAL) == 0 &&
+		    (tp->t_state & TS_CARR_ON) == 0) {
+			tp->t_state |= TS_WOPEN; 
+			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+			    TTIPRI | PCATCH, ttopen, 0);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+		}
+	splx(s);
+
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
 #ifdef hp300
@@ -276,6 +327,7 @@ dcaclose(dev, flag, mode, p)
 	register struct tty *tp;
 	register struct dcadevice *dca;
 	register int unit;
+	int s;
  
 	unit = UNIT(dev);
 #ifdef hp300
@@ -285,15 +337,21 @@ dcaclose(dev, flag, mode, p)
 	dca = dca_addr[unit];
 	tp = dca_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
+
+	s = spltty();
+
 	dca->dca_cfcr &= ~CFCR_SBREAK;
 #ifdef KGDB
 	/* do not disable interrupts if debugging */
 	if (dev != kgdb_dev)
 #endif
 	dca->dca_ier = 0;
-	if (tp->t_cflag&HUPCL || tp->t_state&TS_WOPEN ||
-	    (tp->t_state&TS_ISOPEN) == 0)
+	if (tp->t_cflag & HUPCL && (dcasoftCAR & (1 << unit)) == 0) {
+		/* XXX perhaps only clear DTR */
 		(void) dcamctl(dev, 0, DMSET);
+	}
+	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
+	splx(s);
 	ttyclose(tp);
 #if 0
 	ttyfree(tp);
@@ -357,7 +415,7 @@ dcaintr(unit)
 		return (0);
 #endif
 	tp = dca_tty[unit];
-	while (1) {
+	for (;;) {
 		code = dca->dca_iir;
 #ifdef DEBUG
 		dcaintrcount[code & IIR_IMASK]++;
@@ -519,8 +577,8 @@ dcaioctl(dev, cmd, data, flag, p)
 		return (error);
 
 	dca = dca_addr[unit];
-	switch (cmd) {
 
+	switch (cmd) {
 	case TIOCSBRK:
 		dca->dca_cfcr |= CFCR_SBREAK;
 		break;
@@ -553,6 +611,37 @@ dcaioctl(dev, cmd, data, flag, p)
 		*(int *)data = dcamctl(dev, 0, DMGET);
 		break;
 
+	case TIOCGFLAGS: {
+		int bits = 0;
+
+		if (dcasoftCAR & (1 << unit))
+			bits |= TIOCFLAG_SOFTCAR;
+
+		if (tp->t_cflag & CLOCAL)
+			bits |= TIOCFLAG_CLOCAL;
+
+		*(int *)data = bits;
+		break;
+	}
+
+	case TIOCSFLAGS: {
+		int userbits;
+
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			return (EPERM);
+
+		userbits = *(int *)data;
+
+		if ((userbits & TIOCFLAG_SOFTCAR) || (unit == dcaconsole))
+			dcasoftCAR |= (1 << unit);
+
+		if (userbits & TIOCFLAG_CLOCAL)
+			tp->t_cflag |= CLOCAL;
+
+		break;
+	}
+
 	default:
 		return (ENOTTY);
 	}
@@ -568,47 +657,72 @@ dcaparam(tp, t)
 	register int cfcr, cflag = t->c_cflag;
 	int unit = UNIT(tp->t_dev);
 	int ospeed = ttspeedtab(t->c_ospeed, dcaspeedtab);
+	int s;
  
 	/* check requested parameters */
         if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
                 return (EINVAL);
-        /* and copy to tty */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
 
 	dca = dca_addr[unit];
-	dca->dca_ier = IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC;
-#ifdef hp700
-	dca->dca_mcr |= MCR_IEN;
-#endif
-	if (ospeed == 0) {
-		(void) dcamctl(unit, 0, DMSET);	/* hang up line */
-		return (0);
-	}
-	dca->dca_cfcr |= CFCR_DLAB;
-	dca->dca_data = ospeed & 0xFF;
-	dca->dca_ier = ospeed >> 8;
-	switch (cflag&CSIZE) {
+
+	switch (cflag & CSIZE) {
 	case CS5:
-		cfcr = CFCR_5BITS; break;
+		cfcr = CFCR_5BITS;
+		break;
+
 	case CS6:
-		cfcr = CFCR_6BITS; break;
+		cfcr = CFCR_6BITS;
+		break;
+
 	case CS7:
-		cfcr = CFCR_7BITS; break;
+		cfcr = CFCR_7BITS;
+		break;
+
 	case CS8:
-		cfcr = CFCR_8BITS; break;
+		cfcr = CFCR_8BITS;
+		break;
 	}
-	if (cflag&PARENB) {
+	if (cflag & PARENB) {
 		cfcr |= CFCR_PENAB;
-		if ((cflag&PARODD) == 0)
+		if ((cflag & PARODD) == 0)
 			cfcr |= CFCR_PEVEN;
 	}
-	if (cflag&CSTOPB)
+	if (cflag & CSTOPB)
 		cfcr |= CFCR_STOPB;
-	dca->dca_cfcr = cfcr;
-	if (dca_hasfifo & (1 << unit))
-		dca->dca_fifo = FIFO_ENABLE | FIFO_TRIGGER_14;
+
+	s = spltty();
+
+	if (ospeed == 0)
+		(void) dcamctl(unit, 0, DMSET);	/* hang up line */
+
+	/*
+	 * Set the FIFO threshold based on the recieve speed, if we
+	 * are changing it.
+	 */
+	if (tp->t_ispeed != t->c_ispeed) {
+		if (dca_hasfifo & (1 << unit))
+			dca->dca_fifo = FIFO_ENABLE |
+			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 :
+			    FIFO_TRIGGER_14);
+	}
+
+	if (ospeed != 0) {
+		dca->dca_cfcr |= CFCR_DLAB;
+		dca->dca_data = ospeed & 0xFF;
+		dca->dca_ier = ospeed >> 8;
+		dca->dca_cfcr = cfcr;
+	} else
+		dca->dca_cfcr = cfcr;
+
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = cflag;
+
+	dca->dca_ier = IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC;
+	dca->dca_mcr |= MCR_IEN;
+
+	splx(s);
 	return (0);
 }
  
@@ -621,24 +735,24 @@ dcastart(tp)
  
 	unit = UNIT(tp->t_dev);
 	dca = dca_addr[unit];
+
 	s = spltty();
+
 	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
 		goto out;
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
+		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_outq);
 		}
+		if (tp->t_outq.c_cc == 0)
+			goto out;
 		selwakeup(&tp->t_wsel);
 	}
-	if (tp->t_outq.c_cc == 0)
-		goto out;
 	if (dca->dca_lsr & LSR_TXRDY) {
-		c = getc(&tp->t_outq);
 		tp->t_state |= TS_BUSY;
-		dca->dca_data = c;
 		if (dca_hasfifo & (1 << unit)) {
-			for (c = 1; c < 16 && tp->t_outq.c_cc; ++c)
+			for (c = 0; c < 16 && tp->t_outq.c_cc; ++c)
 				dca->dca_data = getc(&tp->t_outq);
 #ifdef DEBUG
 			if (c > 16)
@@ -646,12 +760,14 @@ dcastart(tp)
 			else
 				fifoout[c]++;
 #endif
-		}
+		} else
+			dca->dca_data = getc(&tp->t_outq); 
 	}
+
 out:
 	splx(s);
 }
- 
+
 /*
  * Stop output on a line.
  */
@@ -664,10 +780,9 @@ dcastop(tp, flag)
 	register int s;
 
 	s = spltty();
-	if (tp->t_state & TS_BUSY) {
-		if ((tp->t_state&TS_TTSTOP)==0)
+	if (tp->t_state & TS_BUSY)
+		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
-	}
 	splx(s);
 }
  
@@ -681,7 +796,6 @@ dcamctl(dev, bits, how)
 
 	unit = UNIT(dev);
 	dca = dca_addr[unit];
-#ifdef hp700
 	/*
 	 * Always make sure MCR_IEN is set (unless setting to 0)
 	 */
@@ -694,7 +808,6 @@ dcamctl(dev, bits, how)
 		bits |= MCR_IEN;
 	else if (how == DMBIC)
 		bits &= ~MCR_IEN;
-#endif
 	s = spltty();
 	switch (how) {
 
@@ -801,23 +914,24 @@ dcainit(unit, rate)
 #ifdef lint
 	stat = unit; if (stat) return;
 #endif
+
 	dca = dca_addr[unit];
 	s = splhigh();
+
 #ifdef hp300
 	dca->dca_reset = 0xFF;
 	DELAY(100);
 	dca->dca_ic = IC_IE;
 #endif
+
 	dca->dca_cfcr = CFCR_DLAB;
 	rate = ttspeedtab(rate, dcaspeedtab);
 	dca->dca_data = rate & 0xFF;
 	dca->dca_ier = rate >> 8;
 	dca->dca_cfcr = CFCR_8BITS;
 	dca->dca_ier = IER_ERXRDY | IER_ETXRDY;
-#ifdef hp700
-	dca->dca_mcr |= MCR_IEN;
-#endif
 	dca->dca_fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_14;
+	dca->dca_mcr |= MCR_IEN;
 	DELAY(100);
 	stat = dca->dca_iir;
 	splx(s);
