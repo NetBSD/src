@@ -1,4 +1,4 @@
-/* $NetBSD: gzio.c,v 1.17 2003/03/18 19:53:15 mycroft Exp $ */
+/* $NetBSD: gzio.c,v 1.18 2003/03/18 20:47:47 jdolecek Exp $ */
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -7,10 +7,10 @@
  * Compile this file with -DNO_DEFLATE to avoid the compression code.
  */
 
-/* @(#) $Id: gzio.c,v 1.17 2003/03/18 19:53:15 mycroft Exp $ */
+/* @(#) $Id: gzio.c,v 1.18 2003/03/18 20:47:47 jdolecek Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gzio.c,v 1.17 2003/03/18 19:53:15 mycroft Exp $");
+__RCSID("$NetBSD: gzio.c,v 1.18 2003/03/18 20:47:47 jdolecek Exp $");
 
 #include <stdio.h>
 
@@ -83,7 +83,7 @@ local gzFile gz_open (path, mode, fd)
     int err;
     int level = Z_DEFAULT_COMPRESSION; /* compression level */
     int strategy = Z_DEFAULT_STRATEGY; /* compression strategy */
-    char *p = (char*)mode;
+    const char *p = mode;
     gz_stream *s;
     char fmode[80]; /* copy of mode, without the compression level */
     char *m = fmode;
@@ -846,7 +846,7 @@ const char*  ZEXPORT gzerror (file, errnum)
     gzFile file;
     int *errnum;
 {
-    char *m;
+    const char *m;
     gz_stream *s = (gz_stream*)file;
 
     if (s == NULL) {
@@ -856,9 +856,9 @@ const char*  ZEXPORT gzerror (file, errnum)
     *errnum = s->z_err;
     if (*errnum == Z_OK) return (const char*)"";
 
-    m =  (char*)(*errnum == Z_ERRNO ? zstrerror(errno) : s->stream.msg);
+    m =  (*errnum == Z_ERRNO ? zstrerror(errno) : s->stream.msg);
 
-    if (m == NULL || *m == '\0') m = (char*)ERR_MSG(s->z_err);
+    if (m == NULL || *m == '\0') m = ERR_MSG(s->z_err);
 
     TRYFREE(s->msg);
     s->msg = (char*)ALLOC(strlen(s->path) + strlen(m) + 3);
