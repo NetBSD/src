@@ -1,4 +1,4 @@
-.\"	$NetBSD: apropos.1,v 1.8 2000/11/07 06:43:35 lukem Exp $
+.\"	$NetBSD: apropos.1,v 1.9 2002/03/08 20:27:41 jdolecek Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd locate commands by keyword lookup
 .Sh SYNOPSIS
 .Nm apropos
+.Op Fl C Ar path
 .Op Fl M Ar path
 .Op Fl m Ar path
 .Ar keyword ...
@@ -67,6 +68,11 @@ its documentation.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
+.It Fl C
+Use different
+.Xr man 1
+configuration file than the default,
+.Pa /etc/man.conf .
 .It Fl M
 Override the list of standard directories
 .Nm
@@ -108,14 +114,20 @@ The format of the path is a colon
 separated list of directories.
 .El
 .Sh FILES
-.Bl -tag -width whatis.db -compact
+.Bl -tag -width /etc/man.conf1 -compact
 .It Pa whatis.db
 name of the apropos database
+.It Pa /etc/man.conf
+.Xr man 1
+configuration file, used to get location of whatis database if
+.Ev MANPATH
+is not set.
 .El
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr whatis 1 ,
 .Xr whereis 1 ,
+.Xr man.conf 5 ,
 .Xr makewhatis 8
 .Sh HISTORY
 The
