@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.2 2001/12/12 15:33:53 augustss Exp $	*/
+/*	$NetBSD: cir.c,v 1.2.12.1 2002/05/16 12:13:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,17 @@
 #include <dev/ir/cirio.h>
 #include <dev/ir/cirvar.h>
 
-cdev_decl(cir);
+dev_type_open(ciropen);
+dev_type_close(circlose);
+dev_type_read(cirread);
+dev_type_write(cirwrite);
+dev_type_ioctl(cirioctl);
+dev_type_poll(cirpoll);
+
+const struct cdevsw cir_cdevsw = {
+	ciropen, circlose, cirread, cirwrite, cirioctl,
+	nostop, notty, cirpoll, nommap,
+};
 
 int cir_match(struct device *parent, struct cfdata *match, void *aux);
 void cir_attach(struct device *parent, struct device *self, void *aux);
@@ -115,9 +125,7 @@ cir_detach(struct device *self, int flags)
 	int maj, mn;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ciropen)
-			break;
+	maj = cdevsw_lookup_major(&cir_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
