@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.17 1997/07/31 22:33:20 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.18 1997/08/18 21:19:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -130,14 +130,16 @@ extern int	audio_hardware_detach __P((struct audio_hw_if *, void *));
 /* Device identity flags */
 #define SOUND_DEVICE		0
 #define AUDIO_DEVICE		0x80
+#define AUDIOCTL_DEVICE		0xc0
 #define MIXER_DEVICE		0x10
-
-#define ISDEVAUDIO(x)		((minor(x)&0xf0) == AUDIO_DEVICE)
-#define ISDEVSOUND(x)		((minor(x)&0xf0) == SOUND_DEVICE)
-#define ISDEVMIXER(x)		((minor(x)&0xf0) == MIXER_DEVICE)
 
 #define AUDIOUNIT(x)		(minor(x)&0x0f)
 #define AUDIODEV(x)		(minor(x)&0xf0)
+
+#define ISDEVSOUND(x)		(AUDIODEV(minor(x)) == SOUND_DEVICE)
+#define ISDEVAUDIO(x)		(AUDIODEV(minor(x)) == AUDIO_DEVICE)
+#define ISDEVAUDIOCTL(x)	(AUDIODEV(minor(x)) == AUDIOCTL_DEVICE)
+#define ISDEVMIXER(x)		(AUDIODEV(minor(x)) == MIXER_DEVICE)
 
 #ifndef __i386__
 #define splaudio splbio		/* XXX */
