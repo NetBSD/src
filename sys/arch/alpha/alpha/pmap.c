@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.184 2001/07/16 19:48:03 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.185 2001/07/16 21:37:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2001/07/16 19:48:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185 2001/07/16 21:37:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1461,6 +1461,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	pv_entry_t pv, nextpv;
 	boolean_t needkisync = FALSE;
 	long cpu_id = cpu_number();
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 #ifdef DEBUG
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
@@ -1479,9 +1480,27 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	case VM_PROT_READ:
 		PMAP_HEAD_TO_MAP_LOCK();
 		simple_lock(&pg->mdpage.pvh_slock);
-/* XXX */	pmap_changebit(pg, 0, ~(PG_KWE | PG_UWE), cpu_id);
+
+		for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
+			/* XXX Don't write-protect pager mappings. */
+			if (pv->pv_va >= uvm.pager_sva &&
+			    pv->pv_va < uvm.pager_eva)
+				continue;
+
+			PMAP_LOCK(pv->pv_pmap);
+
+			if (*pv->pv_pte & (PG_KWE | PG_UWE)) {
+				*pv->pv_pte &= ~(PG_KWE | PG_UWE);
+				PMAP_INVALIDATE_TLB(pv->pv_pmap, pv->pv_va,
+				    pmap_pte_asm(pv->pv_pte),
+				    PMAP_ISACTIVE(pv->pv_pmap, cpu_id), cpu_id);
+			}
+		}
+
 		simple_unlock(&pg->mdpage.pvh_slock);
 		PMAP_HEAD_TO_MAP_UNLOCK();
+
+		PMAP_TLB_SHOOTNOW();
 		return;
 	/* remove_all */
 	default:
@@ -2700,15 +2719,6 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 	 */
 	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 		va = pv->pv_va;
-
-		/*
-		 * XXX don't write protect pager mappings
-		 */
-		if (pv->pv_pmap == pmap_kernel() &&
-/* XXX */	    mask == ~(PG_KWE | PG_UWE)) {
-			if (va >= uvm.pager_sva && va < uvm.pager_eva)
-				continue;
-		}
 
 		PMAP_LOCK(pv->pv_pmap);
 
