@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 1996/12/08 00:22:08 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 1997/03/12 05:50:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -58,6 +58,9 @@ cpumatch(parent, cfdata, aux)
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return (0);
 
+	/* XXX CHECK SLOT? */
+	/* XXX CHECK PRIMARY? */
+
 	return (1);
 }
 
@@ -67,16 +70,19 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
+	struct confargs *ca = aux;
         struct pcs *p;
 	int needcomma;
 	u_int32_t major, minor;
 
-        p = (struct pcs*)((char *)hwrpb + hwrpb->rpb_pcs_off +
-	    (dev->dv_unit * hwrpb->rpb_pcs_size));
+	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
+	    (ca->ca_slot * hwrpb->rpb_pcs_size));
 	major = (p->pcs_proc_type & PCS_PROC_MAJOR) >> PCS_PROC_MAJORSHIFT;
 	minor = (p->pcs_proc_type & PCS_PROC_MINOR) >> PCS_PROC_MINORSHIFT;
 
-	printf(": ");
+	printf(": ID %d%s, ", ca->ca_slot,
+	    ca->ca_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
+
 	switch (major) {
 	case PCS_PROC_EV3:
 		printf("EV3 (minor type 0x%x)", minor);
@@ -232,6 +238,7 @@ cpuattach(parent, dev, aux)
 	}
 	printf("\n");
 
+#ifdef DEBUG
 	/* XXX SHOULD CHECK ARCHITECTURE MASK, TOO */
 	if (p->pcs_proc_var != 0) {
 		printf("cpu%d: ", dev->dv_unit);
@@ -254,6 +261,7 @@ cpuattach(parent, dev, aux)
 			    p->pcs_proc_var & PCS_VAR_RESERVED);
 		printf("\n");
 	}
+#endif
 
 	/*
 	 * Though we could (should?) attach the LCA cpus' PCI
