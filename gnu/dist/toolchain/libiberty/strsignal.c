@@ -244,7 +244,7 @@ static int num_signal_names = 0;
 static int sys_nsig;
 static const char **sys_siglist;
 
-#else
+#elif !defined(__NetBSD__)
 
 #ifdef NSIG
 static int sys_nsig = NSIG;
