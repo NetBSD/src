@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 1996/04/25 01:16:07 jtc Exp $
+#	$NetBSD: Makefile,v 1.17 1996/05/15 22:56:13 phil Exp $
 
-SUBDIR= libg++ libstdc++ # libio libiostream
+SUBDIR= libg++ libstdc++ libio libiostream
 
 HEADERS= cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
          csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime \
@@ -27,6 +27,12 @@ includes:
 		cmp -s $$j ${DESTDIR}/usr/include/g++/gen/$$j || \
 		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
 			${DESTDIR}/usr/include/g++/gen/$$j; \
+	done)
+	@echo installing includes from libio
+	@(cd libio ; for j in *.h; do \
+		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/include/g++/$$j; \
 	done)
 	@echo installing includes from libstdc++/std
 	@(cd libstdc++/std ; for j in *.h; do \
