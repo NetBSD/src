@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.22 1995/08/04 08:08:41 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.23 1995/12/02 18:22:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -104,6 +104,7 @@ struct	isr le_isr[NLE];
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	le_softc {
+	struct	hp_device *sc_hd;
 	struct	arpcom sc_arpcom;	/* common Ethernet structures */
 	struct	lereg0 *sc_r0;		/* DIO registers */
 	struct	lereg1 *sc_r1;		/* LANCE registers */
@@ -138,10 +139,11 @@ void xmit_print __P((struct le_softc *, int));
 #endif
 void lesetladrf __P((struct arpcom *, u_long *));
 
-int leattach __P((struct hp_device *));
+int lematch __P((struct hp_device *));
+void leattach __P((struct hp_device *));
 
 struct	driver ledriver = {
-	leattach, "le",
+	lematch, leattach, "le",
 };
 
 static inline void
@@ -179,12 +181,29 @@ lerdcsr(sc, port)
 	return (val);
 }
 
+int
+lematch(hd)
+	struct hp_device *hd;
+{
+	register struct lereg0 *ler0;
+	struct le_softc *sc = &le_softc[hd->hp_unit];
+
+	ler0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
+	if (ler0->ler0_id != LEID)
+		return (0);
+
+	hd->hp_ipl = LE_IPL(ler0->ler0_status);
+	sc->sc_hd = hd;
+
+	return (1);
+}
+
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-int
+void
 leattach(hd)
 	struct hp_device *hd;
 {
@@ -195,12 +214,10 @@ leattach(hd)
 	int i;
 
 	ler0 = sc->sc_r0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
-	if (ler0->ler0_id != LEID)
-		return(0);
 	sc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)hd->hp_addr);
 	sc->sc_mem = (void *)(lestd[2] + (int)hd->hp_addr);
 	le_isr[hd->hp_unit].isr_intr = leintr;
-	hd->hp_ipl = le_isr[hd->hp_unit].isr_ipl = LE_IPL(ler0->ler0_status);
+	le_isr[hd->hp_unit].isr_ipl = hd->hp_ipl;
 	le_isr[hd->hp_unit].isr_arg = hd->hp_unit;
 	ler0->ler0_id = 0xFF;
 	DELAY(100);
@@ -215,8 +232,8 @@ leattach(hd)
 		sc->sc_arpcom.ac_enaddr[i] |= *++cp & 0xF;
 		cp++;
 	}
-	printf("le%d: hardware address %s\n", hd->hp_unit,
-		ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": hardware address %s\n",
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	isrlink(&le_isr[hd->hp_unit]);
 	ler0->ler0_status = LE_IE;
@@ -236,7 +253,6 @@ leattach(hd)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-	return (1);
 }
 
 void
@@ -253,7 +269,7 @@ lewatchdog(unit)
 {
 	struct le_softc *sc = &le_softc[unit];
 
-	log(LOG_ERR, "le%d: device timeout\n", unit);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_hd->hp_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
 
 	lereset(sc);
@@ -386,7 +402,7 @@ leinit(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		lestart(ifp);
 	} else
-		printf("le%d: card failed to initialize\n", ifp->if_unit);
+		printf("%s: card failed to initialize\n", sc->sc_hd->hp_xname);
 
 	(void) splx(s);
 }
@@ -404,8 +420,8 @@ leintr(unit)
 	isr = lerdcsr(sc, 0);
 #ifdef LEDEBUG
 	if (sc->sc_debug)
-		printf("le%d: leintr entering with isr=%04x\n",
-		    unit, isr);
+		printf("%s: leintr entering with isr=%04x\n",
+		    sc->sc_hd->hp_xname, isr);
 #endif
 	if ((isr & LE_INTR) == 0)
 		return 0;
@@ -416,36 +432,37 @@ leintr(unit)
 			   LE_RINT | LE_TINT | LE_IDON));
 		if (isr & (LE_BABL | LE_CERR | LE_MISS | LE_MERR)) {
 			if (isr & LE_BABL) {
-				printf("le%d: BABL\n", unit);
+				printf("%s: BABL\n", sc->sc_hd->hp_xname);
 				sc->sc_arpcom.ac_if.if_oerrors++;
 			}
 #if 0
 			if (isr & LE_CERR) {
-				printf("le%d: CERR\n", unit);
+				printf("%s: CERR\n", sc->sc_hd->hp_xname);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
 #endif
 			if (isr & LE_MISS) {
 #if 0
-				printf("le%d: MISS\n", unit);
+				printf("%s: MISS\n", sc->sc_hd->hp_xname);
 #endif
 				sc->sc_arpcom.ac_if.if_ierrors++;
 			}
 			if (isr & LE_MERR) {
-				printf("le%d: MERR\n", unit);
+				printf("%s: MERR\n", sc->sc_hd->hp_xname);
 				lereset(sc);
 				goto out;
 			}
 		}
 
 		if ((isr & LE_RXON) == 0) {
-			printf("le%d: receiver disabled\n", unit);
+			printf("%s: receiver disabled\n", sc->sc_hd->hp_xname);
 			sc->sc_arpcom.ac_if.if_ierrors++;
 			lereset(sc);
 			goto out;
 		}
 		if ((isr & LE_TXON) == 0) {
-			printf("le%d: transmitter disabled\n", unit);
+			printf("%s: transmitter disabled\n",
+			    sc->sc_hd->hp_xname);
 			sc->sc_arpcom.ac_if.if_oerrors++;
 			lereset(sc);
 			goto out;
@@ -467,8 +484,8 @@ leintr(unit)
 
 #ifdef LEDEBUG
 	if (sc->sc_debug)
-		printf("le%d: leintr returning with isr=%04x\n",
-		    unit, isr);
+		printf("%s: leintr returning with isr=%04x\n",
+		    sc->sc_hd->hp_xname, isr);
 #endif
 
 out:
@@ -588,7 +605,7 @@ letint(unit)
 		/* Race condition with loop below. */
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("le%d: extra tint\n", unit);
+			printf("%s: extra tint\n", sc->sc_hd->hp_xname);
 #endif
 		return;
 	}
@@ -606,23 +623,25 @@ letint(unit)
 		--sc->sc_no_td;
 		if (cdm->mcnt & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
 			if (cdm->mcnt & LE_TBUFF)
-				printf("le%d: TBUFF\n", unit);
+				printf("%s: TBUFF\n", sc->sc_hd->hp_xname);
 			if ((cdm->mcnt & (LE_TBUFF | LE_UFLO)) == LE_UFLO)
-				printf("le%d: UFLO\n", unit);
+				printf("%s: UFLO\n", sc->sc_hd->hp_xname);
 			if (cdm->mcnt & LE_UFLO) {
 				lereset(sc);
 				return;
 			}
 #if 0
 			if (cdm->mcnt & LE_LCOL) {
-				printf("le%d: late collision\n", unit);
+				printf("%s: late collision\n",
+				    sc->sc_hd->hp_xname);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
 			if (cdm->mcnt & LE_LCAR)
-				printf("le%d: lost carrier\n", unit);
+				printf("%s: lost carrier\n",
+				    sc->sc_hd->hp_xname);
 			if (cdm->mcnt & LE_RTRY) {
-				printf("le%d: excessive collisions, tdr %d\n",
-				    unit, cdm->mcnt & 0x1ff);
+				printf("%s: excessive collisions, tdr %d\n",
+				    sc->sc_hd->hp_xname, cdm->mcnt & 0x1ff);
 				sc->sc_arpcom.ac_if.if_collisions += 16;
 			}
 #endif
@@ -658,7 +677,7 @@ lerint(unit)
 		/* Race condition with loop below. */
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("le%d: extra rint\n", unit);
+			printf("%s: extra rint\n", sc->sc_hd->hp_xname);
 #endif
 		return;
 	}
@@ -667,13 +686,13 @@ lerint(unit)
 	do {
 		if (cdm->flags & (LE_FRAM | LE_OFLO | LE_CRC | LE_RBUFF)) {
 			if ((cdm->flags & (LE_FRAM | LE_OFLO | LE_ENP)) == (LE_FRAM | LE_ENP))
-				printf("le%d: FRAM\n", unit);
+				printf("%s: FRAM\n", sc->sc_hd->hp_xname);
 			if ((cdm->flags & (LE_OFLO | LE_ENP)) == LE_OFLO)
-				printf("le%d: OFLO\n", unit);
+				printf("%s: OFLO\n", sc->sc_hd->hp_xname);
 			if ((cdm->flags & (LE_CRC | LE_OFLO | LE_ENP)) == (LE_CRC | LE_ENP))
-				printf("le%d: CRC\n", unit);
+				printf("%s: CRC\n", sc->sc_hd->hp_xname);
 			if (cdm->flags & LE_RBUFF)
-				printf("le%d: RBUFF\n", unit);
+				printf("%s: RBUFF\n", sc->sc_hd->hp_xname);
 		} else if (cdm->flags & (LE_STP | LE_ENP) != (LE_STP | LE_ENP)) {
 			do {
 				cdm->mcnt = 0;
@@ -681,7 +700,7 @@ lerint(unit)
 				NEXTRDS;
 			} while ((cdm->flags & (LE_OWN | LE_ERR | LE_STP | LE_ENP)) == 0);
 			sc->sc_last_rd = rmd;
-			printf("le%d: chained buffer\n", unit);
+			printf("%s: chained buffer\n", sc->sc_hd->hp_xname);
 			if ((cdm->flags & (LE_OWN | LE_ERR | LE_STP | LE_ENP)) != LE_ENP) {
 				lereset(sc);
 				return;

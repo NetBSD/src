@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.6 1995/11/19 17:57:17 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.7 1995/12/02 18:22:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -52,14 +52,16 @@
 #include <machine/cpu.h>
 #include <hp300/hp300/isr.h>
 
-int	hpibinit __P((struct hp_ctlr *));
+int	hpibmatch __P((struct hp_ctlr *));
+void	hpibattach __P((struct hp_ctlr *));
 void	hpibstart __P((int));
 void	hpibgo __P((int, int, int, void *, int, int, int));
 void	hpibdone __P((int));
 int	hpibintr __P((int));
 
 struct	driver hpibdriver = {
-	hpibinit,
+	hpibmatch,
+	hpibattach,
 	"hpib",
 	(int(*)())hpibstart,			/* XXX */
 	(int(*)())hpibgo,			/* XXX */
@@ -72,19 +74,59 @@ struct	isr hpib_isr[NHPIB];
 
 extern	int nhpibtype __P((struct hp_ctlr *));	/* XXX */
 extern	int fhpibtype __P((struct hp_ctlr *));	/* XXX */
+extern	void nhpibattach __P((struct hp_ctlr *));	/* XXX */
+extern	void fhpibattach __P((struct hp_ctlr *));	/* XXX */
 
 int	hpibtimeout = 100000;	/* # of status tests before we give up */
 int	hpibidtimeout = 10000;	/* # of status tests for hpibid() calls */
 int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
 
 int
-hpibinit(hc)
+hpibmatch(hc)
 	register struct hp_ctlr *hc;
 {
-	register struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
-	
-	if ((nhpibtype(hc) == 0) && (fhpibtype(hc) == 0))
-		return(0);
+	struct hp_hw *hw = hc->hp_args;
+	extern caddr_t internalhpib;
+
+	/* Special case for internal HP-IB. */
+	if ((hw->hw_sc == 7) && internalhpib)
+		goto hwid_ok;
+
+	switch (hw->hw_id) {
+	case 8:			/* 98625B */
+	case 128:		/* 98624A */
+ hwid_ok:
+		if (nhpibtype(hc) || fhpibtype(hc))
+			return (1);
+	}
+
+	return (0);
+}
+
+void
+hpibattach(hc)
+	struct hp_ctlr *hc;
+{
+	struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
+
+	/*
+	 * Call the appropriate "attach" routine for this controller.
+	 * The type is set in the "type" routine.
+	 */
+	switch (hs->sc_type) {
+	case HPIBA:
+	case HPIBB:
+		nhpibattach(hc);
+		break;
+
+	case HPIBC:
+		fhpibattach(hc);
+		break;
+
+	default:
+		panic("hpibattach: unknown type 0x%x", hs->sc_type);
+		/* NOTREACHED */
+	}
 
 	hs->sc_hc = hc;
 	hs->sc_dq.dq_unit = hc->hp_unit;
@@ -99,8 +141,7 @@ hpibinit(hc)
 
 	/* Reset the controller, display what we've seen, and we're done. */
 	hpibreset(hc->hp_unit);
-	printf("hpib%d: %s\n", hc->hp_unit, hs->sc_descrip);
-	return(1);
+	printf(": %s\n", hs->sc_descrip);
 }
 
 void
@@ -213,7 +254,8 @@ hpibswait(unit, slave)
 	mask = 0x80 >> slave;
 	while (((ppoll)(unit) & mask) == 0)
 		if (--timo == 0) {
-			printf("hpib%d: swait timeout\n", unit);
+			printf("%s: swait timeout\n",
+			    hpib_softc[unit].sc_hc->hp_xname);
 			return(-1);
 		}
 	return(0);

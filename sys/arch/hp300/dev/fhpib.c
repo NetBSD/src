@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.7 1995/11/19 17:57:15 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.8 1995/12/02 18:21:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -110,15 +110,27 @@ fhpibtype(hc)
 	register struct fhpibdevice *hd = (struct fhpibdevice *)hc->hp_addr;
 
 	if (hd->hpib_cid != HPIBC)
-		return(0);
+		return (0);
 
 	hs->sc_type = HPIBC;
-	hs->sc_ba = HPIBC_BA;
 	hc->hp_ipl = HPIB_IPL(hd->hpib_ids);
 
-	hs->sc_controller = &fhpib_controller;
+	return (1);
+}
+
+void
+fhpibattach(hc)
+	struct hp_ctlr *hc;
+{
+	register struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
+
+	if (hs->sc_type != HPIBC)
+		panic("fhpibattach: unknown type 0x%x", hs->sc_type);
+		/* NOTREACHED */
+
+	hs->sc_ba = HPIBC_BA;
 	hs->sc_descrip = "98625A or 98625B fast HP-IB";
-	return(1);
+	hs->sc_controller = &fhpib_controller;
 }
 
 void
@@ -220,8 +232,8 @@ senderr:
 	fhpibifc(hd);
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
-		printf("hpib%d: fhpibsend failed: slave %d, sec %x, ",
-			unit, slave, sec);
+		printf("%s: fhpibsend failed: slave %d, sec %x, ",
+		    hs->sc_hc->hp_xname, slave, sec);
 		printf("sent %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
@@ -284,8 +296,8 @@ recvbyteserror:
 	hd->hpib_imask = 0;
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
-		printf("hpib%d: fhpibrecv failed: slave %d, sec %x, ",
-		       unit, slave, sec);
+		printf("%s: fhpibrecv failed: slave %d, sec %x, ",
+		    hs->sc_hc->hp_xname, slave, sec);
 		printf("got %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
@@ -473,8 +485,8 @@ fhpibintr(unit)
 #ifdef DEBUG
 		if ((fhpibdebug & FDB_FAIL) && (stat0 & IDS_IR) &&
 		    (hs->sc_flags & (HPIBF_IO|HPIBF_DONE)) != HPIBF_IO)
-			printf("hpib%d: fhpibintr: bad status %x\n",
-			       unit, stat0);
+			printf("%s: fhpibintr: bad status %x\n",
+			hs->sc_hc->hp_xname, stat0);
 		fhpibbadint[0]++;
 #endif
 		return(0);
@@ -507,8 +519,8 @@ fhpibintr(unit)
 #ifdef DEBUG
 		if ((fhpibdebug & FDB_FAIL) &&
 		    doppollint && (stat0 & IM_PPRESP) == 0)
-			printf("hpib%d: fhpibintr: bad intr reg %x\n",
-			       unit, stat0);
+			printf("%s: fhpibintr: bad intr reg %x\n",
+			    hs->sc_hc->hp_xname, stat0);
 #endif
 		hd->hpib_stat = 0;
 		hd->hpib_imask = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.14 1995/11/19 19:07:18 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.15 1995/12/02 18:22:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,10 +69,10 @@
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
 
-int	rdinit(), rdstart(), rdgo(), rdintr();
-void	rdstrategy();
+int	rdmatch(), rdstart(), rdgo(), rdintr();
+void	rdattach(), rdstrategy();
 struct	driver rddriver = {
-	rdinit, "rd", rdstart, rdgo, rdintr,
+	rdmatch, rdattach, "rd", rdstart, rdgo, rdintr,
 };
 
 struct	rd_softc rd_softc[NRD];
@@ -221,16 +221,29 @@ struct rdidentinfo rdidentinfo[] = {
 };
 int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
-rdinit(hd)
+int
+rdmatch(hd)
 	register struct hp_device *hd;
 {
 	register struct rd_softc *rs = &rd_softc[hd->hp_unit];
 
 	rs->sc_hd = hd;
 	rs->sc_punit = rdpunit(hd->hp_flags);
-	rs->sc_type = rdident(rs, hd);
+	rs->sc_type = rdident(rs, hd, 0);
 	if (rs->sc_type < 0)
-		return(0);
+		return (0);
+
+	return (1);
+}
+
+void
+rdattach(hd)
+	register struct hp_device *hd;
+{
+	register struct rd_softc *rs = &rd_softc[hd->hp_unit];
+
+	(void)rdident(rs, hd, 1);	/* XXX Ick. */
+
 	rs->sc_dq.dq_ctlr = hd->hp_ctlr;
 	rs->sc_dq.dq_unit = hd->hp_unit;
 	rs->sc_dq.dq_slave = hd->hp_slave;
@@ -241,12 +254,13 @@ rdinit(hd)
 	if (rddebug & RDB_ERROR)
 		rderrthresh = 0;
 #endif
-	return(1);
 }
 
-rdident(rs, hd)
+int
+rdident(rs, hd, verbose)
 	struct rd_softc *rs;
 	struct hp_device *hd;
+	int verbose;
 {
 	struct rd_describe *desc = &rs->sc_rddesc;
 	u_char stat, cmd[3];
@@ -352,10 +366,13 @@ rdident(rs, hd)
 	 * off the driver because all of this code assumes 512 byte
 	 * blocks.  ICK!
 	 */
-	printf("rd%d: %s, %d cylinders, %d heads, %d blocks, %d bytes/block\n",
-	    lunit, rdidentinfo[id].ri_desc, rdidentinfo[id].ri_ncyl,
-	    rdidentinfo[id].ri_ntpc, rdidentinfo[id].ri_nblocks,
-	    DEV_BSIZE);
+	if (verbose) {
+		printf(": %s\n", rdidentinfo[id].ri_desc);
+		printf("%s: %d cylinders, %d heads, %d blocks, %d bytes/block\n",
+		    rs->sc_hd->hp_xname, rdidentinfo[id].ri_ncyl,
+		    rdidentinfo[id].ri_ntpc, rdidentinfo[id].ri_nblocks,
+		    DEV_BSIZE);
+	}
 	return(id);
 }
 
@@ -430,7 +447,7 @@ rdgetinfo(dev)
 		return(0);
 
 	pi = lp->d_partitions;
-	printf("rd%d: WARNING: %s, ", unit, msg);
+	printf("%s: WARNING: %s, ", rs->sc_hd->hp_xname, msg);
 #ifdef COMPAT_NOLABEL
 	printf("using old default partitioning\n");
 	rdmakedisklabel(unit, lp);
@@ -689,8 +706,8 @@ again:
 	 */
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR)
-		printf("rd%d: rdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
-		       unit, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
+		printf("%s: rdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
+		       rs->sc_hd->hp_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 		       bp->b_blkno, rs->sc_resid, rdtab[unit].b_errcnt);
 	rdstats[unit].rdretries++;
 #endif
@@ -698,8 +715,8 @@ again:
 	rdreset(rs, hp);
 	if (rdtab[unit].b_errcnt++ < RDRETRY)
 		goto again;
-	printf("rd%d: rdstart err: cmd 0x%x sect %d blk %d len %d\n",
-	       unit, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
+	printf("%s: rdstart err: cmd 0x%x sect %d blk %d len %d\n",
+	       rs->sc_hd->hp_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
 	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
@@ -749,7 +766,7 @@ rdintr(unit)
 		printf("rdintr(%d): bp %x, %c, flags %x\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W', rs->sc_flags);
 	if (bp == NULL) {
-		printf("rd%d: bp == NULL\n", unit);
+		printf("%s: bp == NULL\n", rs->sc_hd->hp_xname);
 		return;
 	}
 #endif
@@ -858,7 +875,7 @@ rderror(unit)
 
 	if (rdstatus(rs)) {
 #ifdef DEBUG
-		printf("rd%d: couldn't get status\n", unit);
+		printf("%s: couldn't get status\n", rs->sc_hd->hp_xname);
 #endif
 		rdreset(rs, rs->sc_hd);
 		return(1);
@@ -881,8 +898,8 @@ rderror(unit)
 		extern int hz;
 		int rdtimo = RDWAITC << rdtab[unit].b_errcnt;
 #ifdef DEBUG
-		printf("rd%d: internal maintenance, %d second timeout\n",
-		       unit, rdtimo);
+		printf("%s: internal maintenance, %d second timeout\n",
+		       rs->sc_hd->hp_xname, rdtimo);
 		rdstats[unit].rdtimeouts++;
 #endif
 		hpibfree(&rs->sc_dq);
