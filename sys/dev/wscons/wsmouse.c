@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.5 1998/12/30 14:02:18 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.6 1999/01/10 18:22:14 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsmouse.c,v 1.5 1998/12/30 14:02:18 augustss Exp $";
+    "$NetBSD: wsmouse.c,v 1.6 1999/01/10 18:22:14 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -325,13 +325,7 @@ wsmouseclose(dev, flags, mode, p)
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	struct wsmouse_softc *sc;
-	int unit;
-
-	unit = minor(dev);
-	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
 
 	if ((flags & (FREAD | FWRITE)) == FWRITE)
 		return (0);			/* see wsmouseopen() */
@@ -354,13 +348,7 @@ wsmouseread(dev, uio, flags)
 	int flags;
 {
 #if NWSMOUSE > 0
-	struct wsmouse_softc *sc;
-	int unit;
-
-	unit = minor(dev);
-	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
 
 	return (wsevent_read(&sc->sc_events, uio, flags));
 #else
@@ -377,13 +365,8 @@ wsmouseioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	struct wsmouse_softc *sc;
-	int unit, error;
-
-	unit = minor(dev);
-	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
+	int error;
 
 	/*
 	 * Try the generic ioctls that the wsmouse interface supports.
