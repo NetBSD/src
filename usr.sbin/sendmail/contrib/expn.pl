@@ -14,7 +14,7 @@ $sockaddr = 'S n a4 x8';
 # system requirements:
 # 	must have 'nslookup' and 'hostname' programs.
 
-# $Header: /cvsroot/src/usr.sbin/sendmail/contrib/Attic/expn.pl,v 1.2 1994/03/16 02:12:38 glass Exp $
+# Header: /home/muir/bin/RCS/expn,v 3.6 1994/02/23 22:26:19 muir Exp muir 
 
 # TODO:
 #	less magic should apply to command-line addresses
