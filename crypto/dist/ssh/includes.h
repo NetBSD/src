@@ -1,5 +1,5 @@
-/*	$NetBSD: includes.h,v 1.1.1.5 2002/03/08 01:20:44 itojun Exp $	*/
-/*	$OpenBSD: includes.h,v 1.17 2002/01/26 16:44:22 stevesk Exp $	*/
+/*	$NetBSD: includes.h,v 1.1.1.6 2005/02/13 00:53:00 christos Exp $	*/
+/*	$OpenBSD: includes.h,v 1.18 2004/06/13 15:03:02 djm Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,6 +39,7 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <stddef.h>
 #include <netgroup.h>
 #include <stdio.h>
 #include <ctype.h>

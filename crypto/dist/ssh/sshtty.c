@@ -1,4 +1,4 @@
-/*	$NetBSD: sshtty.c,v 1.1.1.2 2002/03/08 01:21:47 itojun Exp $	*/
+/*	$NetBSD: sshtty.c,v 1.1.1.3 2005/02/13 00:53:26 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,19 +36,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshtty.c,v 1.3 2002/03/04 17:27:39 stevesk Exp $");
+RCSID("$OpenBSD: sshtty.c,v 1.6 2004/05/08 00:01:37 deraadt Exp $");
 
-#include "sshtty.h"
+#include "sshpty.h"
 #include "log.h"
 
 static struct termios _saved_tio;
 static int _in_raw_mode = 0;
-
-int
-in_raw_mode(void)
-{
-	return _in_raw_mode;
-}
 
 struct termios
 get_saved_tio(void)
@@ -65,8 +59,6 @@ leave_raw_mode(void)
 		perror("tcsetattr");
 	else
 		_in_raw_mode = 0;
-
-	fatal_remove_cleanup((void (*) (void *)) leave_raw_mode, NULL);
 }
 
 void
@@ -81,6 +73,9 @@ enter_raw_mode(void)
 	_saved_tio = tio;
 	tio.c_iflag |= IGNPAR;
 	tio.c_iflag &= ~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXANY | IXOFF);
+#ifdef IUCLC
+	tio.c_iflag &= ~IUCLC;
+#endif
 	tio.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
 #ifdef IEXTEN
 	tio.c_lflag &= ~IEXTEN;
@@ -92,6 +87,4 @@ enter_raw_mode(void)
 		perror("tcsetattr");
 	else
 		_in_raw_mode = 1;
-
-	fatal_add_cleanup((void (*) (void *)) leave_raw_mode, NULL);
 }

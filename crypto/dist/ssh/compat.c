@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.1.1.13 2003/04/03 05:57:20 itojun Exp $	*/
+/*	$NetBSD: compat.c,v 1.1.1.14 2005/02/13 00:52:58 christos Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.66 2003/04/01 10:31:26 markus Exp $");
+RCSID("$OpenBSD: compat.c,v 1.70 2003/11/02 11:01:03 markus Exp $");
 
 #include "buffer.h"
 #include "packet.h"
@@ -132,12 +132,9 @@ compat_datafellows(const char *version)
 		  "1.2.19*,"
 		  "1.2.20*,"
 		  "1.2.21*,"
-		  "1.2.22*",		SSH_BUG_IGNOREMSG|SSH_BUG_K5USER },
+		  "1.2.22*",		SSH_BUG_IGNOREMSG },
 		{ "1.3.2*",		/* F-Secure */
-					SSH_BUG_IGNOREMSG|SSH_BUG_K5USER },
-		{ "1.2.1*,"
-		  "1.2.2*,"
-		  "1.2.3*",		SSH_BUG_K5USER },
+					SSH_BUG_IGNOREMSG },
 		{ "*SSH Compatible Server*",			/* Netscreen */
 					SSH_BUG_PASSWORDPAD },
 		{ "*OSU_0*,"
@@ -189,7 +186,7 @@ proto_spec(const char *spec)
 			ret |= SSH_PROTO_2;
 			break;
 		default:
-			log("ignoring bad proto spec: '%s'.", p);
+			logit("ignoring bad proto spec: '%s'.", p);
 			break;
 		}
 	}

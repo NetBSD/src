@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.1.1.8 2002/04/22 07:37:30 itojun Exp $	*/
-/*	$OpenBSD: myproposal.h,v 1.14 2002/04/03 09:26:11 markus Exp $	*/
+/*	$NetBSD: myproposal.h,v 1.1.1.9 2005/02/13 00:53:04 christos Exp $	*/
+/*	$OpenBSD: myproposal.h,v 1.16 2004/06/13 12:53:24 djm Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,11 +24,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define KEX_DEFAULT_KEX		"diffie-hellman-group-exchange-sha1,diffie-hellman-group1-sha1"
+#define KEX_DEFAULT_KEX		"diffie-hellman-group-exchange-sha1," \
+	"diffie-hellman-group14-sha1," \
+	"diffie-hellman-group1-sha1"
 #define	KEX_DEFAULT_PK_ALG	"ssh-rsa,ssh-dss"
 #define	KEX_DEFAULT_ENCRYPT \
 	"aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour," \
-	"aes192-cbc,aes256-cbc,rijndael-cbc@lysator.liu.se"
+	"aes192-cbc,aes256-cbc,rijndael-cbc@lysator.liu.se," \
+	"aes128-ctr,aes192-ctr,aes256-ctr"
 #define	KEX_DEFAULT_MAC \
 	"hmac-md5,hmac-sha1,hmac-ripemd160," \
 	"hmac-ripemd160@openssh.com," \

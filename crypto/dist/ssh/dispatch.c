@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.6 2002/03/08 01:20:44 itojun Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.1.1.7 2005/02/13 00:52:59 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: dispatch.c,v 1.15 2002/01/11 13:39:36 markus Exp $");
+RCSID("$OpenBSD: dispatch.c,v 1.16 2003/04/08 20:21:28 itojun Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"
@@ -40,7 +40,7 @@ dispatch_fn *dispatch[DISPATCH_MAX];
 void
 dispatch_protocol_error(int type, u_int32_t seq, void *ctxt)
 {
-	log("dispatch_protocol_error: type %d seq %u", type, seq);
+	logit("dispatch_protocol_error: type %d seq %u", type, seq);
 	if (!compat20)
 		fatal("protocol error");
 	packet_start(SSH2_MSG_UNIMPLEMENTED);
@@ -51,7 +51,7 @@ dispatch_protocol_error(int type, u_int32_t seq, void *ctxt)
 void
 dispatch_protocol_ignore(int type, u_int32_t seq, void *ctxt)
 {
-	log("dispatch_protocol_ignore: type %d seq %u", type, seq);
+	logit("dispatch_protocol_ignore: type %d seq %u", type, seq);
 }
 void
 dispatch_init(dispatch_fn *dflt)

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.1.1.15 2003/04/03 05:57:15 itojun Exp $	*/
+/*	$NetBSD: auth1.c,v 1.1.1.16 2005/02/13 00:52:48 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,14 +11,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.47 2003/02/06 21:22:42 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.59 2004/07/28 09:40:29 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
 #include "ssh1.h"
 #include "packet.h"
 #include "buffer.h"
-#include "mpaux.h"
 #include "log.h"
 #include "servconf.h"
 #include "compat.h"
@@ -50,10 +49,6 @@ get_authname(int type)
 	case SSH_CMSG_AUTH_TIS:
 	case SSH_CMSG_AUTH_TIS_RESPONSE:
 		return "challenge-response";
-#if defined(KRB4) || defined(KRB5)
-	case SSH_CMSG_AUTH_KERBEROS:
-		return "kerberos";
-#endif
 	}
 	snprintf(buf, sizeof buf, "bad-auth-msg-%d", type);
 	return buf;
@@ -75,14 +70,13 @@ do_authloop(Authctxt *authctxt)
 	u_int dlen;
 	u_int ulen;
 	int type = 0;
-	struct passwd *pw = authctxt->pw;
 
 	debug("Attempting authentication for %s%.100s.",
-	    authctxt->valid ? "" : "illegal user ", authctxt->user);
+	    authctxt->valid ? "" : "invalid user ", authctxt->user);
 
 	/* If the user has no password, accept authentication immediately. */
 	if (options.password_authentication &&
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
 	    PRIVSEP(auth_password(authctxt, ""))) {
@@ -106,104 +100,6 @@ do_authloop(Authctxt *authctxt)
 
 		/* Process the packet. */
 		switch (type) {
-
-#if defined(KRB4) || defined(KRB5)
-		case SSH_CMSG_AUTH_KERBEROS:
-			if (!options.kerberos_authentication) {
-				verbose("Kerberos authentication disabled.");
-			} else {
-				char *kdata = packet_get_string(&dlen);
-				packet_check_eom();
-
-				if (kdata[0] == 4) { /* KRB_PROT_VERSION */
-#ifdef KRB4
-					KTEXT_ST tkt, reply;
-					tkt.length = dlen;
-					if (tkt.length < MAX_KTXT_LEN)
-						memcpy(tkt.dat, kdata, tkt.length);
-
-					if (PRIVSEP(auth_krb4(authctxt, &tkt,
-					    &client_user, &reply))) {
-						authenticated = 1;
-						snprintf(info, sizeof(info),
-						    " tktuser %.100s",
-						    client_user);
-
-						packet_start(
-						    SSH_SMSG_AUTH_KERBEROS_RESPONSE);
-						packet_put_string((char *)
-						    reply.dat, reply.length);
-						packet_send();
-						packet_write_wait();
-
-						xfree(client_user);
-					}
-#endif /* KRB4 */
-				} else {
-#ifdef KRB5
- 					krb5_data tkt, reply;
-					tkt.length = dlen;
-					tkt.data = kdata;
-
-					if (PRIVSEP(auth_krb5(authctxt, &tkt,
-					    &client_user, &reply))) {
-						authenticated = 1;
-						snprintf(info, sizeof(info),
-						    " tktuser %.100s",
-						    client_user);
-
- 						/* Send response to client */
- 						packet_start(
-						    SSH_SMSG_AUTH_KERBEROS_RESPONSE);
- 						packet_put_string((char *)
-						    reply.data, reply.length);
- 						packet_send();
- 						packet_write_wait();
-
- 						if (reply.length)
- 							xfree(reply.data);
-						xfree(client_user);
-					}
-#endif /* KRB5 */
-				}
-				xfree(kdata);
-			}
-			break;
-#endif /* KRB4 || KRB5 */
-
-#if defined(AFS) || defined(KRB5)
-			/* XXX - punt on backward compatibility here. */
-		case SSH_CMSG_HAVE_KERBEROS_TGT:
-			packet_send_debug("Kerberos TGT passing disabled before authentication.");
-			break;
-#ifdef AFS
-		case SSH_CMSG_HAVE_AFS_TOKEN:
-			packet_send_debug("AFS token passing disabled before authentication.");
-			break;
-#endif /* AFS */
-#endif /* AFS || KRB5 */
-
-		case SSH_CMSG_AUTH_RHOSTS:
-			if (!options.rhosts_authentication) {
-				verbose("Rhosts authentication disabled.");
-				break;
-			}
-			/*
-			 * Get client user name.  Note that we just have to
-			 * trust the client; this is one reason why rhosts
-			 * authentication is insecure. (Another is
-			 * IP-spoofing on a local network.)
-			 */
-			client_user = packet_get_string(&ulen);
-			packet_check_eom();
-
-			/* Try to authenticate using /etc/hosts.equiv and .rhosts. */
-			authenticated = auth_rhosts(pw, client_user);
-
-			snprintf(info, sizeof info, " ruser %.100s", client_user);
-			xfree(client_user);
-			break;
-
 		case SSH_CMSG_AUTH_RHOSTS_RSA:
 			if (!options.rhosts_rsa_authentication) {
 				verbose("Rhosts with RSA authentication disabled.");
@@ -228,7 +124,7 @@ do_authloop(Authctxt *authctxt)
 				    BN_num_bits(client_host_key->rsa->n), bits);
 			packet_check_eom();
 
-			authenticated = auth_rhosts_rsa(pw, client_user,
+			authenticated = auth_rhosts_rsa(authctxt, client_user,
 			    client_host_key);
 			key_free(client_host_key);
 
@@ -246,7 +142,7 @@ do_authloop(Authctxt *authctxt)
 				fatal("do_authloop: BN_new failed");
 			packet_get_bignum(n);
 			packet_check_eom();
-			authenticated = auth_rsa(pw, n);
+			authenticated = auth_rsa(authctxt, n);
 			BN_clear_free(n);
 			break;
 
@@ -301,7 +197,7 @@ do_authloop(Authctxt *authctxt)
 			 * Any unknown messages will be ignored (and failure
 			 * returned) during authentication.
 			 */
-			log("Unknown message during authentication: type %d", type);
+			logit("Unknown message during authentication: type %d", type);
 			break;
 		}
 #ifdef BSD_AUTH
@@ -325,7 +221,7 @@ do_authloop(Authctxt *authctxt)
 		if (authenticated)
 			return;
 
-		if (authctxt->failures++ > AUTH_FAIL_MAX)
+		if (authctxt->failures++ > options.max_authtries)
 			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);
 
 		packet_start(SSH_SMSG_FAILURE);
@@ -338,10 +234,9 @@ do_authloop(Authctxt *authctxt)
  * Performs authentication of an incoming connection.  Session key has already
  * been exchanged and encryption is enabled.
  */
-Authctxt *
-do_authentication(void)
+void
+do_authentication(Authctxt *authctxt)
 {
-	Authctxt *authctxt;
 	u_int ulen;
 	char *user, *style = NULL;
 
@@ -355,27 +250,18 @@ do_authentication(void)
 	if ((style = strchr(user, ':')) != NULL)
 		*style++ = '\0';
 
-#ifdef KRB5
-	/* XXX - SSH.com Kerberos v5 braindeath. */
-	if ((datafellows & SSH_BUG_K5USER) &&
-	    options.kerberos_authentication) {
-		char *p;
-		if ((p = strchr(user, '@')) != NULL)
-			*p = '\0';
-	}
-#endif
-
-	authctxt = authctxt_new();
 	authctxt->user = user;
 	authctxt->style = style;
 
 	/* Verify that the user is a valid user. */
 	if ((authctxt->pw = PRIVSEP(getpwnamallow(user))) != NULL)
 		authctxt->valid = 1;
-	else
-		debug("do_authentication: illegal user %s", user);
+	else {
+		debug("do_authentication: invalid user %s", user);
+		authctxt->pw = fakepw();
+	}
 
-	setproctitle("%s%s", authctxt->pw ? user : "unknown",
+	setproctitle("%s%s", authctxt->valid ? user : "unknown",
 	    use_privsep ? " [net]" : "");
 
 	/*
@@ -396,6 +282,4 @@ do_authentication(void)
 	packet_start(SSH_SMSG_SUCCESS);
 	packet_send();
 	packet_write_wait();
-
-	return (authctxt);
 }

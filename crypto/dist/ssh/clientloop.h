@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.h,v 1.1.1.4 2002/05/13 02:28:00 itojun Exp $	*/
-/*	$OpenBSD: clientloop.h,v 1.7 2002/04/22 21:04:52 markus Exp $	*/
+/*	$NetBSD: clientloop.h,v 1.1.1.5 2005/02/13 00:52:58 christos Exp $	*/
+/*	$OpenBSD: clientloop.h,v 1.11 2004/07/11 17:48:47 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,4 +38,6 @@
 
 /* Client side main loop for the interactive session. */
 int	 client_loop(int, int, int);
-void	 client_global_request_reply(int type, u_int32_t seq, void *ctxt);
+void	 client_global_request_reply_fwd(int, u_int32_t, void *);
+void	 client_session2_setup(int, int, int, const char *, struct termios *,
+	    int, Buffer *, char **, dispatch_fn *);

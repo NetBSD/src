@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_mm.c,v 1.1.1.3 2002/10/01 13:40:03 itojun Exp $	*/
+/*	$NetBSD: monitor_mm.c,v 1.1.1.4 2005/02/13 00:53:04 christos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_mm.c,v 1.8 2002/08/02 14:43:15 millert Exp $");
+RCSID("$OpenBSD: monitor_mm.c,v 1.9 2004/05/11 19:01:43 deraadt Exp $");
 
 #include <sys/mman.h>
 
@@ -91,7 +91,7 @@ mm_create(struct mm_master *mmalloc, size_t size)
 	mm->mmalloc = mmalloc;
 
 	address = mmap(NULL, size, PROT_WRITE|PROT_READ, MAP_ANON|MAP_SHARED,
-	    -1, 0);
+	    -1, (off_t)0);
 	if (address == MAP_FAILED)
 		fatal("mmap(%lu): %s", (u_long)size, strerror(errno));
 

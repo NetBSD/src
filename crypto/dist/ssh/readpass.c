@@ -1,4 +1,4 @@
-/*	$NetBSD: readpass.c,v 1.1.1.12 2003/04/03 05:57:28 itojun Exp $	*/
+/*	$NetBSD: readpass.c,v 1.1.1.13 2005/02/13 00:53:07 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,12 +24,12 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readpass.c,v 1.28 2003/01/23 13:50:27 markus Exp $");
+RCSID("$OpenBSD: readpass.c,v 1.30 2004/06/17 15:10:14 djm Exp $");
 
 #include <readpassphrase.h>
 
 #include "xmalloc.h"
-#include "readpass.h"
+#include "misc.h"
 #include "pathnames.h"
 #include "log.h"
 #include "ssh.h"
@@ -106,7 +106,9 @@ read_passphrase(const char *prompt, int flags)
 	int rppflags, use_askpass = 0, ttyfd;
 
 	rppflags = (flags & RP_ECHO) ? RPP_ECHO_ON : RPP_ECHO_OFF;
-	if (flags & RP_ALLOW_STDIN) {
+	if (flags & RP_USE_ASKPASS)
+		use_askpass = 1;
+	else if (flags & RP_ALLOW_STDIN) {
 		if (!isatty(STDIN_FILENO))
 			use_askpass = 1;
 	} else {
@@ -117,6 +119,9 @@ read_passphrase(const char *prompt, int flags)
 		else
 			use_askpass = 1;
 	}
+
+	if ((flags & RP_USE_ASKPASS) && getenv("DISPLAY") == NULL)
+		return (flags & RP_ALLOW_EOF) ? NULL : xstrdup("");
 
 	if (use_askpass && getenv("DISPLAY")) {
 		if (getenv(SSH_ASKPASS_ENV))

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.9 2003/04/03 05:57:23 itojun Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.10 2005/02/13 00:53:02 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.20 2002/12/13 10:03:15 markus Exp $");
+RCSID("$OpenBSD: misc.c,v 1.25 2004/08/11 21:43:05 avsm Exp $");
 
 #include "misc.h"
 #include "log.h"
@@ -47,7 +47,7 @@ chop(char *s)
 }
 
 /* set/unset filedescriptor to non-blocking */
-void
+int
 set_nonblock(int fd)
 {
 	int val;
@@ -55,20 +55,23 @@ set_nonblock(int fd)
 	val = fcntl(fd, F_GETFL, 0);
 	if (val < 0) {
 		error("fcntl(%d, F_GETFL, 0): %s", fd, strerror(errno));
-		return;
+		return (-1);
 	}
 	if (val & O_NONBLOCK) {
-		debug2("fd %d is O_NONBLOCK", fd);
-		return;
+		debug3("fd %d is O_NONBLOCK", fd);
+		return (0);
 	}
-	debug("fd %d setting O_NONBLOCK", fd);
+	debug2("fd %d setting O_NONBLOCK", fd);
 	val |= O_NONBLOCK;
-	if (fcntl(fd, F_SETFL, val) == -1)
-		debug("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
-		    fd, strerror(errno));
+	if (fcntl(fd, F_SETFL, val) == -1) {
+		debug("fcntl(%d, F_SETFL, O_NONBLOCK): %s", fd,
+		    strerror(errno));
+		return (-1);
+	}
+	return (0);
 }
 
-void
+int
 unset_nonblock(int fd)
 {
 	int val;
@@ -76,17 +79,20 @@ unset_nonblock(int fd)
 	val = fcntl(fd, F_GETFL, 0);
 	if (val < 0) {
 		error("fcntl(%d, F_GETFL, 0): %s", fd, strerror(errno));
-		return;
+		return (-1);
 	}
 	if (!(val & O_NONBLOCK)) {
-		debug2("fd %d is not O_NONBLOCK", fd);
-		return;
+		debug3("fd %d is not O_NONBLOCK", fd);
+		return (0);
 	}
 	debug("fd %d clearing O_NONBLOCK", fd);
 	val &= ~O_NONBLOCK;
-	if (fcntl(fd, F_SETFL, val) == -1)
-		debug("fcntl(%d, F_SETFL, O_NONBLOCK): %s",
+	if (fcntl(fd, F_SETFL, val) == -1) {
+		debug("fcntl(%d, F_SETFL, ~O_NONBLOCK): %s",
 		    fd, strerror(errno));
+		return (-1);
+	}
+	return (0);
 }
 
 /* disable nagle on socket */
@@ -98,7 +104,7 @@ set_nodelay(int fd)
 
 	optlen = sizeof opt;
 	if (getsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &opt, &optlen) == -1) {
-		error("getsockopt TCP_NODELAY: %.100s", strerror(errno));
+		debug("getsockopt TCP_NODELAY: %.100s", strerror(errno));
 		return;
 	}
 	if (opt == 1) {
@@ -303,18 +309,21 @@ addargs(arglist *args, char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
+	u_int nalloc;
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
+	nalloc = args->nalloc;
 	if (args->list == NULL) {
-		args->nalloc = 32;
+		nalloc = 32;
 		args->num = 0;
-	} else if (args->num+2 >= args->nalloc)
-		args->nalloc *= 2;
+	} else if (args->num+2 >= nalloc)
+		nalloc *= 2;
 
-	args->list = xrealloc(args->list, args->nalloc * sizeof(char *));
+	args->list = xrealloc(args->list, nalloc * sizeof(char *));
+	args->nalloc = nalloc;
 	args->list[args->num++] = xstrdup(buf);
 	args->list[args->num] = NULL;
 }

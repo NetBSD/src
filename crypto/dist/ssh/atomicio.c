@@ -1,4 +1,4 @@
-/*	$NetBSD: atomicio.c,v 1.1.1.6 2001/05/15 15:02:21 itojun Exp $	*/
+/*	$NetBSD: atomicio.c,v 1.1.1.7 2005/02/13 00:52:43 christos Exp $	*/
 /*
  * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
  * All rights reserved.
@@ -25,16 +25,16 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: atomicio.c,v 1.10 2001/05/08 22:48:07 markus Exp $");
+RCSID("$OpenBSD: atomicio.c,v 1.12 2003/07/31 15:50:16 avsm Exp $");
 
 #include "atomicio.h"
 
 /*
- * ensure all of data on socket comes through. f==read || f==write
+ * ensure all of data on socket comes through. f==read || f==vwrite
  */
 ssize_t
 atomicio(f, fd, _s, n)
-	ssize_t (*f) ();
+	ssize_t (*f) (int, void *, size_t);
 	int fd;
 	void *_s;
 	size_t n;

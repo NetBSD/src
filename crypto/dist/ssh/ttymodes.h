@@ -1,5 +1,5 @@
-/*	$NetBSD: ttymodes.h,v 1.1.1.6 2002/03/08 01:21:46 itojun Exp $	*/
-/*	$OpenBSD: ttymodes.h,v 1.12 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$NetBSD: ttymodes.h,v 1.1.1.7 2005/02/13 00:53:26 christos Exp $	*/
+/*	$OpenBSD: ttymodes.h,v 1.13 2004/07/11 17:48:47 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -114,17 +114,17 @@ TTYCHAR(VDISCARD, 18)
 /* name, field, op */
 TTYMODE(IGNPAR,	c_iflag, 30)
 TTYMODE(PARMRK,	c_iflag, 31)
-TTYMODE(INPCK, 	c_iflag, 32)
+TTYMODE(INPCK,	c_iflag, 32)
 TTYMODE(ISTRIP,	c_iflag, 33)
-TTYMODE(INLCR, 	c_iflag, 34)
-TTYMODE(IGNCR, 	c_iflag, 35)
-TTYMODE(ICRNL, 	c_iflag, 36)
+TTYMODE(INLCR,	c_iflag, 34)
+TTYMODE(IGNCR,	c_iflag, 35)
+TTYMODE(ICRNL,	c_iflag, 36)
 #if defined(IUCLC)
-TTYMODE(IUCLC, 	c_iflag, 37)
+TTYMODE(IUCLC,	c_iflag, 37)
 #endif
-TTYMODE(IXON,  	c_iflag, 38)
-TTYMODE(IXANY, 	c_iflag, 39)
-TTYMODE(IXOFF, 	c_iflag, 40)
+TTYMODE(IXON,	c_iflag, 38)
+TTYMODE(IXANY,	c_iflag, 39)
+TTYMODE(IXOFF,	c_iflag, 40)
 #ifdef IMAXBEL
 TTYMODE(IMAXBEL,c_iflag, 41)
 #endif /* IMAXBEL */

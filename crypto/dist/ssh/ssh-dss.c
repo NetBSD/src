@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.1.1.12 2003/04/03 05:57:36 itojun Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.1.1.13 2005/02/13 00:53:16 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-dss.c,v 1.18 2003/02/12 09:33:04 markus Exp $");
+RCSID("$OpenBSD: ssh-dss.c,v 1.19 2003/11/10 16:23:41 jakob Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -40,8 +40,8 @@ RCSID("$OpenBSD: ssh-dss.c,v 1.18 2003/02/12 09:33:04 markus Exp $");
 #define SIGBLOB_LEN	(2*INTBLOB_LEN)
 
 int
-ssh_dss_sign(Key *key, u_char **sigp, u_int *lenp,
-    u_char *data, u_int datalen)
+ssh_dss_sign(const Key *key, u_char **sigp, u_int *lenp,
+    const u_char *data, u_int datalen)
 {
 	DSA_SIG *sig;
 	const EVP_MD *evp_md = EVP_sha1();
@@ -102,8 +102,8 @@ ssh_dss_sign(Key *key, u_char **sigp, u_int *lenp,
 	return 0;
 }
 int
-ssh_dss_verify(Key *key, u_char *signature, u_int signaturelen,
-    u_char *data, u_int datalen)
+ssh_dss_verify(const Key *key, const u_char *signature, u_int signaturelen,
+    const u_char *data, u_int datalen)
 {
 	DSA_SIG *sig;
 	const EVP_MD *evp_md = EVP_sha1();
@@ -120,7 +120,8 @@ ssh_dss_verify(Key *key, u_char *signature, u_int signaturelen,
 
 	/* fetch signature */
 	if (datafellows & SSH_BUG_SIGBLOB) {
-		sigblob = signature;
+		sigblob = xmalloc(signaturelen);
+		memcpy(sigblob, signature, signaturelen);
 		len = signaturelen;
 	} else {
 		/* ietf-drafts */
@@ -160,10 +161,9 @@ ssh_dss_verify(Key *key, u_char *signature, u_int signaturelen,
 	BN_bin2bn(sigblob, INTBLOB_LEN, sig->r);
 	BN_bin2bn(sigblob+ INTBLOB_LEN, INTBLOB_LEN, sig->s);
 
-	if (!(datafellows & SSH_BUG_SIGBLOB)) {
-		memset(sigblob, 0, len);
-		xfree(sigblob);
-	}
+	/* clean up */
+	memset(sigblob, 0, len);
+	xfree(sigblob);
 
 	/* sha1 the data */
 	EVP_DigestInit(&md, evp_md);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.1.1.14 2003/04/03 05:57:37 itojun Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.1.1.15 2005/02/13 00:53:17 christos Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.41 2003/02/16 17:09:57 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.50 2004/08/11 21:44:32 avsm Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -211,7 +211,7 @@ fdlim_get(int hard)
 	if (getrlimit(RLIMIT_NOFILE, &rlfd) < 0)
 		return (-1);
 	if ((hard ? rlfd.rlim_max : rlfd.rlim_cur) == RLIM_INFINITY)
-		return 10000;
+		return sysconf(_SC_OPEN_MAX);
 	else
 		return hard ? rlfd.rlim_max : rlfd.rlim_cur;
 }
@@ -337,6 +337,7 @@ keygrab_ssh2(con *c)
 	    "ssh-dss": "ssh-rsa";
 	c->c_kex = kex_setup(myproposal);
 	c->c_kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
+	c->c_kex->kex[KEX_DH_GRP14_SHA1] = kexdh_client;
 	c->c_kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
 	c->c_kex->verify_host_key = hostjump;
 
@@ -379,13 +380,13 @@ tcpconnect(char *host)
 	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0)
 		fatal("getaddrinfo %s: %s", host, gai_strerror(gaierr));
 	for (ai = aitop; ai; ai = ai->ai_next) {
-		s = socket(ai->ai_family, SOCK_STREAM, 0);
+		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s < 0) {
 			error("socket: %s", strerror(errno));
 			continue;
 		}
-		if (fcntl(s, F_SETFL, O_NONBLOCK) < 0)
-			fatal("F_SETFL: %s", strerror(errno));
+		if (set_nonblock(s) == -1)
+			fatal("%s: set_nonblock(%d)", __func__, s);
 		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0 &&
 		    errno != EINPROGRESS)
 			error("connect (`%s'): %s", host, strerror(errno));
@@ -477,7 +478,7 @@ conrecycle(int s)
 static void
 congreet(int s)
 {
-	int remote_major, remote_minor, n = 0;
+	int remote_major = 0, remote_minor = 0, n = 0;
 	char buf[256], *cp;
 	char remote_version[sizeof buf];
 	size_t bufsiz;
@@ -485,7 +486,7 @@ congreet(int s)
 
 	bufsiz = sizeof(buf);
 	cp = buf;
-	while (bufsiz-- && (n = read(s, cp, 1)) == 1 && *cp != '\n') {
+	while (bufsiz-- && (n = atomicio(read, s, cp, 1)) == 1 && *cp != '\n') {
 		if (*cp == '\r')
 			*cp = '\n';
 		cp++;
@@ -527,7 +528,7 @@ congreet(int s)
 	n = snprintf(buf, sizeof buf, "SSH-%d.%d-OpenSSH-keyscan\r\n",
 	    c->c_keytype == KT_RSA1? PROTOCOL_MAJOR_1 : PROTOCOL_MAJOR_2,
 	    c->c_keytype == KT_RSA1? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_2);
-	if (atomicio(write, s, buf, n) != n) {
+	if (atomicio(vwrite, s, buf, n) != n) {
 		error("write (%s): %s", c->c_name, strerror(errno));
 		confree(s);
 		return;
@@ -551,7 +552,7 @@ conread(int s)
 		congreet(s);
 		return;
 	}
-	n = read(s, c->c_data + c->c_off, c->c_len - c->c_off);
+	n = atomicio(read, s, c->c_data + c->c_off, c->c_len - c->c_off);
 	if (n < 0) {
 		error("read (%s): %s", c->c_name, strerror(errno));
 		confree(s);
@@ -661,13 +662,13 @@ fatal(const char *fmt,...)
 	if (nonfatal_fatal)
 		longjmp(kexjmp, -1);
 	else
-		fatal_cleanup();
+		exit(255);
 }
 
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-v46] [-p port] [-T timeout] [-f file]\n"
+	fprintf(stderr, "usage: %s [-v46] [-p port] [-T timeout] [-t type] [-f file]\n"
 	    "\t\t   [host | addrlist namelist] [...]\n",
 	    __progname);
 	exit(1);

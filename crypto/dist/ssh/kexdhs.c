@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdhs.c,v 1.1.1.1 2003/04/03 05:57:22 itojun Exp $	*/
+/*	$NetBSD: kexdhs.c,v 1.1.1.2 2005/02/13 00:53:00 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexdhs.c,v 1.1 2003/02/16 17:09:57 markus Exp $");
+RCSID("$OpenBSD: kexdhs.c,v 1.2 2004/06/13 12:53:24 djm Exp $");
 
 #include "xmalloc.h"
 #include "key.h"
@@ -46,7 +46,16 @@ kexdh_server(Kex *kex)
 	u_int slen;
 
 	/* generate server DH public key */
-	dh = dh_new_group1();
+	switch (kex->kex_type) {
+	case KEX_DH_GRP1_SHA1:
+		dh = dh_new_group1();
+		break;
+	case KEX_DH_GRP14_SHA1:
+		dh = dh_new_group14();
+		break;
+	default:
+		fatal("%s: Unexpected KEX type %d", __func__, kex->kex_type);
+	}
 	dh_gen_key(dh, kex->we_need * 8);
 
 	debug("expecting SSH2_MSG_KEXDH_INIT");

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.1.1.1 2002/06/24 05:26:12 itojun Exp $	*/
+/*	$NetBSD: auth2-hostbased.c,v 1.1.1.2 2005/02/13 00:52:52 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-hostbased.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
+RCSID("$OpenBSD: auth2-hostbased.c,v 1.6 2004/01/19 21:25:15 markus Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -43,7 +43,7 @@ RCSID("$OpenBSD: auth2-hostbased.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
 /* import */
 extern ServerOptions options;
 extern u_char *session_id2;
-extern int session_id2_len;
+extern u_int session_id2_len;
 
 static int
 userauth_hostbased(Authctxt *authctxt)
@@ -78,7 +78,7 @@ userauth_hostbased(Authctxt *authctxt)
 	pktype = key_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC) {
 		/* this is perfectly legal */
-		log("userauth_hostbased: unsupported "
+		logit("userauth_hostbased: unsupported "
 		    "public key algorithm: %s", pkalg);
 		goto done;
 	}
@@ -115,7 +115,7 @@ userauth_hostbased(Authctxt *authctxt)
 			buffer_len(&b))) == 1)
 		authenticated = 1;
 
-	buffer_clear(&b);
+	buffer_free(&b);
 done:
 	debug2("userauth_hostbased: authenticated %d", authenticated);
 	if (key != NULL)
@@ -137,7 +137,7 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
 	HostStatus host_status;
 	int len;
 
-	resolvedname = get_canonical_hostname(options.verify_reverse_mapping);
+	resolvedname = get_canonical_hostname(options.use_dns);
 	ipaddr = get_remote_ipaddr();
 
 	debug2("userauth_hostbased: chost %s resolvedname %s ipaddr %s",
@@ -153,7 +153,7 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
 			chost[len - 1] = '\0';
 		}
 		if (strcasecmp(resolvedname, chost) != 0)
-			log("userauth_hostbased mismatch: "
+			logit("userauth_hostbased mismatch: "
 			    "client sends %s, but we resolve %s to %s",
 			    chost, ipaddr, resolvedname);
 		if (auth_rhosts2(pw, cuser, resolvedname, ipaddr) == 0)

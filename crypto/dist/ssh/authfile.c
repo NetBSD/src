@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.1.1.15 2003/04/03 05:57:17 itojun Exp $	*/
+/*	$NetBSD: authfile.c,v 1.1.1.16 2005/02/13 00:52:54 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.52 2003/03/13 11:42:18 markus Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.57 2004/06/21 17:36:31 avsm Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -73,7 +73,7 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	int fd, i, cipher_num;
 	CipherContext ciphercontext;
 	Cipher *cipher;
-	u_int32_t rand;
+	u_int32_t rnd;
 
 	/*
 	 * If the passphrase is empty, use SSH_CIPHER_NONE to ease converting
@@ -88,9 +88,9 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	buffer_init(&buffer);
 
 	/* Put checkbytes for checking passphrase validity. */
-	rand = arc4random();
-	buf[0] = rand & 0xff;
-	buf[1] = (rand >> 8) & 0xff;
+	rnd = arc4random();
+	buf[0] = rnd & 0xff;
+	buf[1] = (rnd >> 8) & 0xff;
 	buf[2] = buf[0];
 	buf[3] = buf[1];
 	buffer_append(&buffer, buf, 4);
@@ -144,6 +144,7 @@ key_save_private_rsa1(Key *key, const char *filename, const char *passphrase,
 	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (fd < 0) {
 		error("open %s failed: %s.", filename, strerror(errno));
+		buffer_free(&encrypted);
 		return 0;
 	}
 	if (write(fd, buffer_ptr(&encrypted), buffer_len(&encrypted)) !=
@@ -236,14 +237,16 @@ key_load_public_rsa1(int fd, const char *filename, char **commentp)
 	struct stat st;
 	char *cp;
 	int i;
-	off_t len;
+	size_t len;
 
 	if (fstat(fd, &st) < 0) {
 		error("fstat for key file %.200s failed: %.100s",
 		    filename, strerror(errno));
 		return NULL;
 	}
-	len = st.st_size;
+	if (st.st_size > 1*1024*1024)
+		close(fd);
+	len = (size_t)st.st_size;		/* truncated */
 
 	buffer_init(&buffer);
 	cp = buffer_append_space(&buffer, len);
@@ -318,7 +321,7 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
     char **commentp)
 {
 	int i, check1, check2, cipher_type;
-	off_t len;
+	size_t len;
 	Buffer buffer, decrypted;
 	u_char *cp;
 	CipherContext ciphercontext;
@@ -332,7 +335,11 @@ key_load_private_rsa1(int fd, const char *filename, const char *passphrase,
 		close(fd);
 		return NULL;
 	}
-	len = st.st_size;
+	if (st.st_size > 1*1024*1024) {
+		close(fd);
+		return (NULL);
+	}
+	len = (size_t)st.st_size;		/* truncated */
 
 	buffer_init(&buffer);
 	cp = buffer_append_space(&buffer, len);
@@ -512,7 +519,7 @@ key_perm_ok(int fd, const char *filename)
 		error("@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @");
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		error("Permissions 0%3.3o for '%s' are too open.",
-		    st.st_mode & 0777, filename);
+		    (u_int)st.st_mode & 0777, filename);
 		error("It is recommended that your private key files are NOT accessible by others.");
 		error("This private key will be ignored.");
 		return 0;
@@ -627,9 +634,18 @@ key_load_public(const char *filename, char **commentp)
 	Key *pub;
 	char file[MAXPATHLEN];
 
+	/* try rsa1 private key */
 	pub = key_load_public_type(KEY_RSA1, filename, commentp);
 	if (pub != NULL)
 		return pub;
+
+	/* try rsa1 public key */
+	pub = key_new(KEY_RSA1);
+	if (key_try_load_public(pub, filename, commentp) == 1)
+		return pub;
+	key_free(pub);
+
+	/* try ssh2 public key */
 	pub = key_new(KEY_UNSPEC);
 	if (key_try_load_public(pub, filename, commentp) == 1)
 		return pub;

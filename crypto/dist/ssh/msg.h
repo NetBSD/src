@@ -1,5 +1,5 @@
-/*	$NetBSD: msg.h,v 1.1.1.2 2003/04/03 05:57:25 itojun Exp $	*/
-/*	$OpenBSD: msg.h,v 1.2 2002/12/19 00:07:02 djm Exp $	*/
+/*	$NetBSD: msg.h,v 1.1.1.3 2005/02/13 00:53:04 christos Exp $	*/
+/*	$OpenBSD: msg.h,v 1.3 2003/11/17 09:45:39 djm Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +26,7 @@
 #ifndef SSH_MSG_H
 #define SSH_MSG_H
 
-void	 ssh_msg_send(int, u_char, Buffer *);
+int	 ssh_msg_send(int, u_char, Buffer *);
 int	 ssh_msg_recv(int, Buffer *);
 
 #endif

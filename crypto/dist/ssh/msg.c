@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.1.1.4 2003/04/03 05:57:25 itojun Exp $	*/
+/*	$NetBSD: msg.c,v 1.1.1.5 2005/02/13 00:53:04 christos Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: msg.c,v 1.5 2002/12/19 00:07:02 djm Exp $");
+RCSID("$OpenBSD: msg.c,v 1.7 2003/11/17 09:45:39 djm Exp $");
 
 #include "buffer.h"
 #include "getput.h"
@@ -31,7 +31,7 @@ RCSID("$OpenBSD: msg.c,v 1.5 2002/12/19 00:07:02 djm Exp $");
 #include "atomicio.h"
 #include "msg.h"
 
-void
+int
 ssh_msg_send(int fd, u_char type, Buffer *m)
 {
 	u_char buf[5];
@@ -41,10 +41,15 @@ ssh_msg_send(int fd, u_char type, Buffer *m)
 
 	PUT_32BIT(buf, mlen + 1);
 	buf[4] = type;		/* 1st byte of payload is mesg-type */
-	if (atomicio(write, fd, buf, sizeof(buf)) != sizeof(buf))
-		fatal("ssh_msg_send: write");
-	if (atomicio(write, fd, buffer_ptr(m), mlen) != mlen)
-		fatal("ssh_msg_send: write");
+	if (atomicio(vwrite, fd, buf, sizeof(buf)) != sizeof(buf)) {
+		error("ssh_msg_send: write");
+		return (-1);
+	}
+	if (atomicio(vwrite, fd, buffer_ptr(m), mlen) != mlen) {
+		error("ssh_msg_send: write");
+		return (-1);
+	}
+	return (0);
 }
 
 int
@@ -58,17 +63,21 @@ ssh_msg_recv(int fd, Buffer *m)
 
 	res = atomicio(read, fd, buf, sizeof(buf));
 	if (res != sizeof(buf)) {
-		if (res == 0)
-			return -1;
-		fatal("ssh_msg_recv: read: header %ld", (long)res);
+		if (res != 0)
+			error("ssh_msg_recv: read: header %ld", (long)res);
+		return (-1);
 	}
 	msg_len = GET_32BIT(buf);
-	if (msg_len > 256 * 1024)
-		fatal("ssh_msg_recv: read: bad msg_len %u", msg_len);
+	if (msg_len > 256 * 1024) {
+		error("ssh_msg_recv: read: bad msg_len %u", msg_len);
+		return (-1);
+	}
 	buffer_clear(m);
 	buffer_append_space(m, msg_len);
 	res = atomicio(read, fd, buffer_ptr(m), msg_len);
-	if (res != msg_len)
-		fatal("ssh_msg_recv: read: %ld != msg_len", (long)res);
-	return 0;
+	if (res != msg_len) {
+		error("ssh_msg_recv: read: %ld != msg_len", (long)res);
+		return (-1);
+	}
+	return (0);
 }

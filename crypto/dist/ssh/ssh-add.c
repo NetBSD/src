@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.1.1.14 2003/04/03 05:57:35 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.1.1.15 2005/02/13 00:53:15 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.66 2003/03/05 22:33:43 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.70 2004/05/08 00:21:31 djm Exp $");
 
 #include <openssl/evp.h>
 
@@ -48,7 +48,6 @@ RCSID("$OpenBSD: ssh-add.c,v 1.66 2003/03/05 22:33:43 markus Exp $");
 #include "authfd.h"
 #include "authfile.h"
 #include "pathnames.h"
-#include "readpass.h"
 #include "misc.h"
 
 /* argv0 */
@@ -159,18 +158,19 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			if (private != NULL)
 				break;
 			clear_pass();
-			strlcpy(msg, "Bad passphrase, try again: ", sizeof msg);
+			snprintf(msg, sizeof msg,
+			    "Bad passphrase, try again for %.200s: ", comment);
 		}
 	}
 
- 	if (ssh_add_identity_constrained(ac, private, comment, lifetime,
- 	    confirm)) {
+	if (ssh_add_identity_constrained(ac, private, comment, lifetime,
+	    confirm)) {
 		fprintf(stderr, "Identity added: %s (%s)\n", filename, comment);
 		ret = 0;
 		if (lifetime != 0)
 			fprintf(stderr,
 			    "Lifetime set to %d seconds\n", lifetime);
- 		if (confirm != 0)
+		if (confirm != 0)
 			fprintf(stderr,
 			    "The user has to confirm each use of the key\n");
 	} else if (ssh_add_identity(ac, private, comment)) {
@@ -196,7 +196,7 @@ update_card(AuthenticationConnection *ac, int add, const char *id)
 	if (pin == NULL)
 		return -1;
 
-	if (ssh_update_card(ac, add, id, pin)) {
+	if (ssh_update_card(ac, add, id, pin, lifetime, confirm)) {
 		fprintf(stderr, "Card %s: %s\n",
 		    add ? "added" : "removed", id);
 		ret = 0;

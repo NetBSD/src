@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1.1.16 2003/04/03 05:57:26 itojun Exp $	*/
+/*	$NetBSD: packet.c,v 1.1.1.17 2005/02/13 00:53:06 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
+RCSID("$OpenBSD: packet.c,v 1.115 2004/06/21 17:36:31 avsm Exp $");
 
 #include <sys/queue.h>
 
@@ -109,7 +109,7 @@ static int compression_buffer_ready = 0;
 static int packet_compression = 0;
 
 /* default maximum packet size */
-int max_packet_size = 32768;
+u_int max_packet_size = 32768;
 
 /* Flag indicating whether this module has been initialized. */
 static int initialized = 0;
@@ -155,8 +155,10 @@ packet_set_connection(int fd_in, int fd_out)
 		fatal("packet_set_connection: cannot load cipher 'none'");
 	connection_in = fd_in;
 	connection_out = fd_out;
-	cipher_init(&send_context, none, "", 0, NULL, 0, CIPHER_ENCRYPT);
-	cipher_init(&receive_context, none, "", 0, NULL, 0, CIPHER_DECRYPT);
+	cipher_init(&send_context, none, (const u_char *)"",
+	    0, NULL, 0, CIPHER_ENCRYPT);
+	cipher_init(&receive_context, none, (const u_char *)"",
+	    0, NULL, 0, CIPHER_DECRYPT);
 	newkeys[MODE_IN] = newkeys[MODE_OUT] = NULL;
 	if (!initialized) {
 		initialized = 1;
@@ -166,8 +168,6 @@ packet_set_connection(int fd_in, int fd_out)
 		buffer_init(&incoming_packet);
 		TAILQ_INIT(&outgoing);
 	}
-	/* Kludge: arrange the close function to be called from fatal(). */
-	fatal_add_cleanup((void (*) (void *)) packet_close, NULL);
 }
 
 /* Returns 1 if remote host is connected via socket, 0 if not. */
@@ -266,7 +266,7 @@ packet_set_iv(int mode, u_char *dat)
 	cipher_set_keyiv(cc, dat);
 }
 int
-packet_get_ssh1_cipher()
+packet_get_ssh1_cipher(void)
 {
 	return (cipher_get_number(receive_context.cipher));
 }
@@ -315,13 +315,10 @@ void
 packet_set_nonblocking(void)
 {
 	/* Set the socket into non-blocking mode. */
-	if (fcntl(connection_in, F_SETFL, O_NONBLOCK) < 0)
-		error("fcntl O_NONBLOCK: %.100s", strerror(errno));
+	set_nonblock(connection_in);
 
-	if (connection_out != connection_in) {
-		if (fcntl(connection_out, F_SETFL, O_NONBLOCK) < 0)
-			error("fcntl O_NONBLOCK: %.100s", strerror(errno));
-	}
+	if (connection_out != connection_in)
+		set_nonblock(connection_out);
 }
 
 /* Returns the socket used for reading. */
@@ -506,7 +503,7 @@ packet_send1(void)
 	u_char buf[8], *cp;
 	int i, padding, len;
 	u_int checksum;
-	u_int32_t rand = 0;
+	u_int32_t rnd = 0;
 
 	/*
 	 * If using packet compression, compress the payload of the outgoing
@@ -532,9 +529,9 @@ packet_send1(void)
 		cp = buffer_ptr(&outgoing_packet);
 		for (i = 0; i < padding; i++) {
 			if (i % 4 == 0)
-				rand = arc4random();
-			cp[7 - i] = rand & 0xff;
-			rand >>= 8;
+				rnd = arc4random();
+			cp[7 - i] = rnd & 0xff;
+			rnd >>= 8;
 		}
 	}
 	buffer_consume(&outgoing_packet, 8 - padding);
@@ -579,18 +576,18 @@ set_newkeys(int mode)
 	Comp *comp;
 	CipherContext *cc;
 	u_int64_t *max_blocks;
-	int encrypt;
+	int crypt_type;
 
 	debug2("set_newkeys: mode %d", mode);
 
 	if (mode == MODE_OUT) {
 		cc = &send_context;
-		encrypt = CIPHER_ENCRYPT;
+		crypt_type = CIPHER_ENCRYPT;
 		p_send.packets = p_send.blocks = 0;
 		max_blocks = &max_blocks_out;
 	} else {
 		cc = &receive_context;
-		encrypt = CIPHER_DECRYPT;
+		crypt_type = CIPHER_DECRYPT;
 		p_read.packets = p_read.blocks = 0;
 		max_blocks = &max_blocks_in;
 	}
@@ -619,7 +616,7 @@ set_newkeys(int mode)
 		mac->enabled = 1;
 	DBG(debug("cipher_init_context: %d", mode));
 	cipher_init(cc, enc->cipher, enc->key, enc->key_len,
-	    enc->iv, enc->block_size, encrypt);
+	    enc->iv, enc->block_size, crypt_type);
 	/* Deleting the keys does not gain extra security */
 	/* memset(enc->iv,  0, enc->block_size);
 	   memset(enc->key, 0, enc->key_len); */
@@ -631,7 +628,14 @@ set_newkeys(int mode)
 			buffer_compress_init_recv();
 		comp->enabled = 1;
 	}
-	*max_blocks = ((u_int64_t)1 << (enc->block_size*2));
+	/*
+	 * The 2^(blocksize*2) limit is too expensive for 3DES,
+	 * blowfish, etc, so enforce a 1GB limit for small blocksizes.
+	 */
+	if (enc->block_size >= 16)
+		*max_blocks = (u_int64_t)1 << (enc->block_size*2);
+	else
+		*max_blocks = ((u_int64_t)1 << 30) / enc->block_size;
 	if (rekey_limit)
 		*max_blocks = MIN(*max_blocks, rekey_limit / enc->block_size);
 }
@@ -646,7 +650,7 @@ packet_send2_wrapped(void)
 	u_char padlen, pad;
 	u_int packet_length = 0;
 	u_int i, len;
-	u_int32_t rand = 0;
+	u_int32_t rnd = 0;
 	Enc *enc   = NULL;
 	Mac *mac   = NULL;
 	Comp *comp = NULL;
@@ -705,9 +709,9 @@ packet_send2_wrapped(void)
 		/* random padding */
 		for (i = 0; i < padlen; i++) {
 			if (i % 4 == 0)
-				rand = arc4random();
-			cp[i] = rand & 0xff;
-			rand >>= 8;
+				rnd = arc4random();
+			cp[i] = rnd & 0xff;
+			rnd >>= 8;
 		}
 	} else {
 		/* clear padding */
@@ -740,7 +744,7 @@ packet_send2_wrapped(void)
 #endif
 	/* increment sequence number for outgoing packets */
 	if (++p_send.seqnr == 0)
-		log("outgoing seqnr wraps around");
+		logit("outgoing seqnr wraps around");
 	if (++p_send.packets == 0)
 		if (!(datafellows & SSH_BUG_NOREKEY))
 			fatal("XXX too many packets with same key");
@@ -858,8 +862,8 @@ packet_read_seqnr(u_int32_t *seqnr_p)
 		/* Read data from the socket. */
 		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
-			log("Connection closed by %.200s", get_remote_ipaddr());
-			fatal_cleanup();
+			logit("Connection closed by %.200s", get_remote_ipaddr());
+			cleanup_exit(255);
 		}
 		if (len < 0)
 			fatal("Read from socket failed: %.100s", strerror(errno));
@@ -1009,7 +1013,9 @@ packet_read_poll2(u_int32_t *seqnr_p)
 		cp = buffer_ptr(&incoming_packet);
 		packet_length = GET_32BIT(cp);
 		if (packet_length < 1 + 4 || packet_length > 256 * 1024) {
+#ifdef PACKET_DEBUG
 			buffer_dump(&incoming_packet);
+#endif
 			packet_disconnect("Bad packet length %u.", packet_length);
 		}
 		DBG(debug("input: packet len %u", packet_length+4));
@@ -1051,7 +1057,7 @@ packet_read_poll2(u_int32_t *seqnr_p)
 	if (seqnr_p != NULL)
 		*seqnr_p = p_read.seqnr;
 	if (++p_read.seqnr == 0)
-		log("incoming seqnr wraps around");
+		logit("incoming seqnr wraps around");
 	if (++p_read.packets == 0)
 		if (!(datafellows & SSH_BUG_NOREKEY))
 			fatal("XXX too many packets with same key");
@@ -1120,10 +1126,10 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 			case SSH2_MSG_DISCONNECT:
 				reason = packet_get_int();
 				msg = packet_get_string(NULL);
-				log("Received disconnect from %s: %u: %.400s",
+				logit("Received disconnect from %s: %u: %.400s",
 				    get_remote_ipaddr(), reason, msg);
 				xfree(msg);
-				fatal_cleanup();
+				cleanup_exit(255);
 				break;
 			case SSH2_MSG_UNIMPLEMENTED:
 				seqnr = packet_get_int();
@@ -1146,9 +1152,9 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				break;
 			case SSH_MSG_DISCONNECT:
 				msg = packet_get_string(NULL);
-				log("Received disconnect from %s: %.400s",
+				logit("Received disconnect from %s: %.400s",
 				    get_remote_ipaddr(), msg);
-				fatal_cleanup();
+				cleanup_exit(255);
 				xfree(msg);
 				break;
 			default:
@@ -1305,7 +1311,7 @@ packet_disconnect(const char *fmt,...)
 	va_end(args);
 
 	/* Display the error locally */
-	log("Disconnecting: %.100s", buf);
+	logit("Disconnecting: %.100s", buf);
 
 	/* Send the disconnect message to the other side, and wait for it to get sent. */
 	if (compat20) {
@@ -1325,8 +1331,7 @@ packet_disconnect(const char *fmt,...)
 
 	/* Close the connection. */
 	packet_close();
-
-	fatal_cleanup();
+	cleanup_exit(255);
 }
 
 /* Checks if there is any buffered output, and tries to write some of the output. */
@@ -1437,17 +1442,17 @@ packet_is_interactive(void)
 }
 
 int
-packet_set_maxsize(int s)
+packet_set_maxsize(u_int s)
 {
 	static int called = 0;
 
 	if (called) {
-		log("packet_set_maxsize: called twice: old %d new %d",
+		logit("packet_set_maxsize: called twice: old %d new %d",
 		    max_packet_size, s);
 		return -1;
 	}
 	if (s < 4 * 1024 || s > 1024 * 1024) {
-		log("packet_set_maxsize: bad size %d", s);
+		logit("packet_set_maxsize: bad size %d", s);
 		return -1;
 	}
 	called = 1;
@@ -1477,20 +1482,20 @@ packet_add_padding(u_char pad)
 void
 packet_send_ignore(int nbytes)
 {
-	u_int32_t rand = 0;
+	u_int32_t rnd = 0;
 	int i;
 
 	packet_start(compat20 ? SSH2_MSG_IGNORE : SSH_MSG_IGNORE);
 	packet_put_int(nbytes);
 	for (i = 0; i < nbytes; i++) {
 		if (i % 4 == 0)
-			rand = arc4random();
-		packet_put_char(rand & 0xff);
-		rand >>= 8;
+			rnd = arc4random();
+		packet_put_char(rnd & 0xff);
+		rnd >>= 8;
 	}
 }
 
-#define MAX_PACKETS	(1<<31)
+#define MAX_PACKETS	(1U<<31)
 int
 packet_need_rekeying(void)
 {
