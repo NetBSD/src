@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.102.2.6 2004/09/24 10:53:43 skrll Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.102.2.7 2004/10/12 05:42:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.6 2004/09/24 10:53:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.7 2004/10/12 05:42:06 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -178,8 +178,8 @@ uiomove(buf, n, uio)
 		case UIO_USERSPACE:
 			l = uio->uio_lwp;
 			p = l ? l->l_proc : NULL;
-			/* XXX - Should curlwp == uio->uio_lwp ?? */
-			if (curlwp->l_cpu->ci_schedstate.spc_flags &
+
+			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(1);
 			if (__predict_true(p == curproc)) {
