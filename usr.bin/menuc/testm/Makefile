@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2000/12/30 14:54:40 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.13 2001/01/07 07:18:32 phil Exp $
+
+.include <bsd.own.mk>
 
 MENUCDIR!=	cd $(.CURDIR)/..; ${PRINTOBJDIR}
 MENUC=	${MENUCDIR}/menuc
