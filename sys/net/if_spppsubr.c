@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.66.2.6 2005/01/17 19:32:38 skrll Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.66.2.7 2005/02/04 11:47:44 skrll Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.66.2.6 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.66.2.7 2005/02/04 11:47:44 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4749,7 +4749,7 @@ sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst, u_int32_t *sr
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			sm = (struct sockaddr_in *)ifa->ifa_netmask;
@@ -4789,7 +4789,7 @@ sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
@@ -4855,7 +4855,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
@@ -4904,7 +4904,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			si = (struct sockaddr_in6 *)ifa->ifa_addr;
 			sm = (struct sockaddr_in6 *)ifa->ifa_netmask;
@@ -4957,7 +4957,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	 */
 
 	sin6 = NULL;
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 		{

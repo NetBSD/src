@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.9.2.6 2004/11/29 07:24:03 skrll Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.9.2.7 2005/02/04 11:44:18 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -149,6 +149,11 @@ gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
 iic0	at gpiic?			# I2C bus
 xrtc0	at iic? addr 0x6f		# RTC
 
+gpio0	at opb? addr ? irq ?		# On-chip GPIO controller
+obsled0	at gpio? addr 0x0c		# OBS LED connected GPIO
+obsled1	at gpio? addr 0x0d		# OBS LED connected GPIO
+obsled2	at gpio? addr 0x0e		# OBS LED connected GPIO
+
 pchb0	at plb?				# PCI-Host bridges
 
 pci*	at pchb?
@@ -210,6 +215,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter

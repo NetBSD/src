@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.11.16.1 2004/12/18 09:32:08 skrll Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.11.16.2 2005/02/04 11:46:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.11.16.1 2004/12/18 09:32:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.11.16.2 2005/02/04 11:46:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,18 +56,18 @@ __KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.11.16.1 2004/12/18 09:32:08 skrll Ex
 #include <dev/isapnp/isapnpvar.h>
 
 
-static int isapnp_wait_status __P((struct isapnp_softc *));
+static int isapnp_wait_status(struct isapnp_softc *);
 static struct isapnp_attach_args *
-    isapnp_newdev __P((struct isapnp_attach_args *));
+    isapnp_newdev(struct isapnp_attach_args *);
 static struct isapnp_attach_args *
-    isapnp_newconf __P((struct isapnp_attach_args *));
-static void isapnp_merge __P((struct isapnp_attach_args *,
-    const struct isapnp_attach_args *));
+    isapnp_newconf(struct isapnp_attach_args *);
+static void isapnp_merge(struct isapnp_attach_args *,
+    const struct isapnp_attach_args *);
 static struct isapnp_attach_args *
-    isapnp_flatten __P((struct isapnp_attach_args *));
-static int isapnp_process_tag __P((u_char, u_char, u_char *,
+    isapnp_flatten(struct isapnp_attach_args *);
+static int isapnp_process_tag(u_char, u_char, u_char *,
     struct isapnp_attach_args **, struct isapnp_attach_args **,
-    struct isapnp_attach_args **));
+    struct isapnp_attach_args **);
 
 
 /* isapnp_wait_status():

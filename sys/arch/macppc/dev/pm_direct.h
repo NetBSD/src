@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.h,v 1.6.6.1 2005/01/17 19:29:57 skrll Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.6.6.2 2005/02/04 11:44:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -46,6 +46,8 @@ typedef	struct	{
 }	PMData;
 
 int pmgrop __P((PMData *));
+int pm_intr __P((void *));
+void pm_init __P((void));
 void pm_adb_restart __P((void));
 void pm_adb_poweroff __P((void));
 void pm_read_date_time __P((u_long *));
@@ -58,6 +60,7 @@ struct pmu_battery_info
 	unsigned int max_charge;
 	signed   int draw;
 	unsigned int voltage;
+	unsigned int secs_remaining;
 };
 
 int pm_battery_info __P((int, struct pmu_battery_info *));
@@ -90,7 +93,20 @@ void pm_eject_pcmcia __P((int));
 #define PMU_POWER_EVENTS        0x8f    /* Send power-event commands to PMU */
 #define PMU_SYSTEM_READY        0xdf    /* tell PMU we are awake */
 
+#define PMU_BATTERY_STATE	0x6b	/* Read old battery state */
 #define PMU_SMART_BATTERY_STATE	0x6f	/* Read battery state */
+
+#define PMU_ADB_CMD		0x20	/* Send ADB packet */
+#define PMU_ADB_POLL_OFF	0x21	/* Disable ADB auto-poll */
+#define PMU_SET_VOL		0x40	/* Set volume button position */
+#define PMU_GET_VOL		0x48	/* Get volume button position */
+#define PMU_SET_IMASK		0x70	/* Set interrupt mask */
+#define PMU_INT_ACK		0x78	/* Read interrupt bits */
+#define PMU_CPU_SPEED		0x7d	/* Control CPU speed on some models */
+#define PMU_SLEEP		0x7f	/* Put CPU to sleep */
+#define PMU_I2C_CMD		0x9a	/* i2c commands */
+#define PMU_GET_LID_STATE	0xdc	/* Report lid state */
+#define PMU_GET_VERSION		0xea	/* Identify thyself */
 
 /* Bits in PMU interrupt and interrupt mask bytes */
 #define PMU_INT_ADB_AUTO	0x04	/* ADB autopoll, when PMU_INT_ADB */
@@ -113,6 +129,9 @@ void pm_eject_pcmcia __P((int));
 #define PMU_POW_IRLED		0x04	/* IR led power (on wallstreet) */
 #define PMU_POW_MEDIABAY	0x08	/* media bay power (wallstreet/lombard ?) */
 
+/* Bits from PMU_GET_LID_STATE or PMU_INT_ENVIRONMENT on core99 */
+#define PMU_ENV_LID_CLOSED	0x01	/* The lid is closed */
+
 /* PMU PMU_POWER_EVENTS commands */
 enum {
 	PMU_PWR_GET_POWERUP_EVENTS      = 0x00,
@@ -126,5 +145,7 @@ enum {
 /* PMU Power Information */
 
 #define PMU_PWR_AC_PRESENT	(1 << 0)
+#define PMU_PWR_BATT_CHARGING	(1 << 1)
 #define PMU_PWR_BATT_PRESENT	(1 << 2)
+#define PMU_PWR_PCHARGE_RESET	(1 << 6)
 

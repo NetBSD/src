@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.2.3 2004/11/02 07:50:24 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.2.4 2005/02/04 11:44:19 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,10 +86,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.3 2004/11/02 07:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.4 2005/02/04 11:44:19 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
+#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +118,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.3 2004/11/02 07:50:24 skrll Exp $
 #include <dev/cons.h>
 
 #include <hp700/hp700/machdep.h>
+#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
 
-void (*cold_hook)(void); /* see below */
 register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
 
 /*
@@ -166,8 +167,10 @@ cpu_configure(void)
 	spl0();
 
 	cold = 0;
-	if (cold_hook)
-		(*cold_hook)();
+#ifdef POWER_SWITCH
+	/* Give OS control over the power switch. */
+	pwr_sw_ctrl(PWR_SW_CTRL_ENABLE);
+#endif /* POWER_SWITCH */
 
 #ifdef USELEDS
 	memset(_hp700_led_on_cycles, 0, sizeof(_hp700_led_on_cycles));

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.33 2003/05/03 18:11:11 wiz Exp $	*/
+/*	$NetBSD: adv.c,v 1.33.2.1 2005/02/04 11:45:23 skrll Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.33 2003/05/03 18:11:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.33.2.1 2005/02/04 11:45:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,25 +74,25 @@ __KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.33 2003/05/03 18:11:11 wiz Exp $");
 /******************************************************************************/
 
 
-static int adv_alloc_control_data __P((ASC_SOFTC *));
-static void adv_free_control_data __P((ASC_SOFTC *));
-static int adv_create_ccbs __P((ASC_SOFTC *, ADV_CCB *, int));
-static void adv_free_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static void adv_reset_ccb __P((ADV_CCB *));
-static int adv_init_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static ADV_CCB *adv_get_ccb __P((ASC_SOFTC *));
-static void adv_queue_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static void adv_start_ccbs __P((ASC_SOFTC *));
+static int adv_alloc_control_data(ASC_SOFTC *);
+static void adv_free_control_data(ASC_SOFTC *);
+static int adv_create_ccbs(ASC_SOFTC *, ADV_CCB *, int);
+static void adv_free_ccb(ASC_SOFTC *, ADV_CCB *);
+static void adv_reset_ccb(ADV_CCB *);
+static int adv_init_ccb(ASC_SOFTC *, ADV_CCB *);
+static ADV_CCB *adv_get_ccb(ASC_SOFTC *);
+static void adv_queue_ccb(ASC_SOFTC *, ADV_CCB *);
+static void adv_start_ccbs(ASC_SOFTC *);
 
 
-static void adv_scsipi_request __P((struct scsipi_channel *,
-	scsipi_adapter_req_t, void *));
-static void advminphys __P((struct buf *));
-static void adv_narrow_isr_callback __P((ASC_SOFTC *, ASC_QDONE_INFO *));
+static void adv_scsipi_request(struct scsipi_channel *,
+	scsipi_adapter_req_t, void *);
+static void advminphys(struct buf *);
+static void adv_narrow_isr_callback(ASC_SOFTC *, ASC_QDONE_INFO *);
 
-static int adv_poll __P((ASC_SOFTC *, struct scsipi_xfer *, int));
-static void adv_timeout __P((void *));
-static void adv_watchdog __P((void *));
+static int adv_poll(ASC_SOFTC *, struct scsipi_xfer *, int);
+static void adv_timeout(void *);
+static void adv_watchdog(void *);
 
 
 /******************************************************************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.17.2.3 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.17.2.4 2005/02/04 11:46:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.17.2.3 2004/09/21 13:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.17.2.4 2005/02/04 11:46:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.17.2.3 2004/09/21 13:31:02 skrll Ex
  */
 #define	PCI_CBIO		0x10	/* Configuration Base IO Address */
 
-int	pcic_pci_match __P((struct device *, struct cfdata *, void *));
-void	pcic_pci_attach __P((struct device *, struct device *, void *));
+int	pcic_pci_match(struct device *, struct cfdata *, void *);
+void	pcic_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcic_pci, sizeof(struct pcic_pci_softc),
     pcic_pci_match, pcic_pci_attach, NULL, NULL);
@@ -108,7 +108,7 @@ pcic_pci_match(parent, match, aux)
 	return (1);
 }
 
-void pcic_isa_config_interrupts __P((struct device *));
+void pcic_isa_config_interrupts(struct device *);
 
 void
 pcic_pci_attach(parent, self, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalvar.h,v 1.2.24.3 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: sunscpalvar.h,v 1.2.24.4 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -193,14 +193,14 @@ struct sunscpal_softc {
 
 	/* Functions set from MD code */
 #ifndef	SUNSCPAL_USE_BUS_DMA
-	void		(*sc_dma_alloc) __P((struct sunscpal_softc *));
-	void		(*sc_dma_free) __P((struct sunscpal_softc *));
+	void		(*sc_dma_alloc)(struct sunscpal_softc *);
+	void		(*sc_dma_free)(struct sunscpal_softc *);
 
-	void		(*sc_dma_setup) __P((struct sunscpal_softc *));
+	void		(*sc_dma_setup)(struct sunscpal_softc *);
 #endif
 
-	void		(*sc_intr_on) __P((struct sunscpal_softc *));
-	void		(*sc_intr_off) __P((struct sunscpal_softc *));
+	void		(*sc_intr_on)(struct sunscpal_softc *);
+	void		(*sc_intr_off)(struct sunscpal_softc *);
 
 	int		sc_flags;	/* Misc. flags and capabilities */
 #define	SUNSCPAL_DISABLE_DMA	1	/* Do not use DMA. */
@@ -264,14 +264,14 @@ struct sunscpal_softc {
 
 };
 
-void	sunscpal_attach __P((struct sunscpal_softc *, int));
-int	sunscpal_detach __P((struct sunscpal_softc *, int));
-int 	sunscpal_intr __P((void *));
-void 	sunscpal_scsipi_request __P((struct scsipi_channel *,
-		scsipi_adapter_req_t, void *));
-int 	sunscpal_pio_in __P((struct sunscpal_softc *, int, int, u_char *));
-int 	sunscpal_pio_out __P((struct sunscpal_softc *, int, int, u_char *));
-void	sunscpal_init __P((struct sunscpal_softc *));
+void	sunscpal_attach(struct sunscpal_softc *, int);
+int	sunscpal_detach(struct sunscpal_softc *, int);
+int 	sunscpal_intr(void *);
+void 	sunscpal_scsipi_request(struct scsipi_channel *,
+		scsipi_adapter_req_t, void *);
+int 	sunscpal_pio_in(struct sunscpal_softc *, int, int, u_char *);
+int 	sunscpal_pio_out(struct sunscpal_softc *, int, int, u_char *);
+void	sunscpal_init(struct sunscpal_softc *);
 
 /* Options for no-parity, DMA, and interrupts. */
 #define SUNSCPAL_OPT_NO_PARITY_CHK  0xff
@@ -280,7 +280,7 @@ void	sunscpal_init __P((struct sunscpal_softc *));
 
 #ifdef	SUNSCPAL_DEBUG
 struct sunscpal_softc *sunscpal_debug_sc;
-void sunscpal_trace __P((char *msg, long val));
+void sunscpal_trace(char *msg, long val);
 #define	SUNSCPAL_TRACE(msg, val) sunscpal_trace(msg, val)
 #else	/* SUNSCPAL_DEBUG */
 #define	SUNSCPAL_TRACE(msg, val)	/* nada */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.74.2.4 2004/09/21 13:37:12 skrll Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.74.2.5 2005/02/04 11:47:48 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.4 2004/09/21 13:37:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.5 2005/02/04 11:47:48 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -159,16 +159,16 @@ struct icmpstat	icmpstat;
  */
 struct icmp_mtudisc_callback {
 	LIST_ENTRY(icmp_mtudisc_callback) mc_list;
-	void (*mc_func) __P((struct in_addr));
+	void (*mc_func)(struct in_addr);
 };
 
 LIST_HEAD(, icmp_mtudisc_callback) icmp_mtudisc_callbacks =
     LIST_HEAD_INITIALIZER(&icmp_mtudisc_callbacks);
 
 #if 0
-static int	ip_next_mtu __P((int, int));
+static int	ip_next_mtu(int, int);
 #else
-/*static*/ int	ip_next_mtu __P((int, int));
+/*static*/ int	ip_next_mtu(int, int);
 #endif
 
 extern int icmperrppslim;
@@ -178,14 +178,14 @@ static int icmp_rediraccept = 1;
 static int icmp_redirtimeout = 600;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 
-static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
-static void icmp_redirect_timeout __P((struct rtentry *, struct rttimer *));
+static void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
+static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
-static int icmp_ratelimit __P((const struct in_addr *, const int, const int));
+static int icmp_ratelimit(const struct in_addr *, const int, const int);
 
 
 void
-icmp_init()
+icmp_init(void)
 {
 	/*
 	 * This is only useful if the user initializes redirtimeout to
@@ -201,8 +201,7 @@ icmp_init()
  * Register a Path MTU Discovery callback.
  */
 void
-icmp_mtudisc_callback_register(func)
-	void (*func) __P((struct in_addr));
+icmp_mtudisc_callback_register(void (*func)(struct in_addr))
 {
 	struct icmp_mtudisc_callback *mc;
 
@@ -225,11 +224,8 @@ icmp_mtudisc_callback_register(func)
  * in response to bad packet ip.
  */
 void
-icmp_error(n, type, code, dest, destifp)
-	struct mbuf *n;
-	int type, code;
-	n_long dest;
-	struct ifnet *destifp;
+icmp_error(struct mbuf *n, int type, int code, n_long dest,
+    struct ifnet *destifp)
 {
 	struct ip *oip = mtod(n, struct ip *), *nip;
 	unsigned oiplen = oip->ip_hl << 2;
@@ -381,7 +377,7 @@ icmp_input(struct mbuf *m, ...)
 	int icmplen;
 	int i;
 	struct in_ifaddr *ia;
-	void *(*ctlfunc) __P((int, struct sockaddr *, void *));
+	void *(*ctlfunc)(int, struct sockaddr *, void *);
 	int code;
 	int hlen;
 	va_list ap;
@@ -636,8 +632,7 @@ freeit:
  * Reflect the ip packet back to the source
  */
 void
-icmp_reflect(m)
-	struct mbuf *m;
+icmp_reflect(struct mbuf *m)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct in_ifaddr *ia;
@@ -669,7 +664,7 @@ icmp_reflect(m)
 	/* look for packet sent to broadcast address */
 	if (ia == NULL && m->m_pkthdr.rcvif &&
 	    (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
-		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (in_hosteq(t,ifatoia(ifa)->ia_broadaddr.sin_addr)) {
@@ -726,7 +721,7 @@ icmp_reflect(m)
 	 * when the incoming packet was encapsulated
 	 */
 	if (sin == (struct sockaddr_in *)0 && m->m_pkthdr.rcvif) {
-		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);
@@ -852,9 +847,7 @@ done:
  * after supplying a checksum.
  */
 void
-icmp_send(m, opts)
-	struct mbuf *m;
-	struct mbuf *opts;
+icmp_send(struct mbuf *m, struct mbuf *opts)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	int hlen;
@@ -877,7 +870,7 @@ icmp_send(m, opts)
 }
 
 n_time
-iptime()
+iptime(void)
 {
 	struct timeval atv;
 	u_long t;
@@ -1023,9 +1016,7 @@ static const u_int mtu_table[] = {
 };
 
 void
-icmp_mtudisc(icp, faddr)
-	struct icmp *icp;
-	struct in_addr faddr;
+icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 {
 	struct icmp_mtudisc_callback *mc;
 	struct sockaddr *dst = sintosa(&icmpsrc);
@@ -1122,9 +1113,7 @@ icmp_mtudisc(icp, faddr)
  * is returned; otherwise, a smaller value is returned.
  */
 int
-ip_next_mtu(mtu, dir)	/* XXX */
-	int mtu;
-	int dir;
+ip_next_mtu(int mtu, int dir)	/* XXX */
 {
 	int i;
 
@@ -1151,9 +1140,7 @@ ip_next_mtu(mtu, dir)	/* XXX */
 }
 
 static void
-icmp_mtudisc_timeout(rt, r)
-	struct rtentry *rt;
-	struct rttimer *r;
+icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp_mtudisc_timeout:  bad route to timeout");
@@ -1169,9 +1156,7 @@ icmp_mtudisc_timeout(rt, r)
 }
 
 static void
-icmp_redirect_timeout(rt, r)
-	struct rtentry *rt;
-	struct rttimer *r;
+icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp_redirect_timeout:  bad route to timeout");
@@ -1190,11 +1175,9 @@ icmp_redirect_timeout(rt, r)
  *
  * XXX per-destination/type check necessary?
  */
+/* "type" and "code" are not used at this moment */
 static int
-icmp_ratelimit(dst, type, code)
-	const struct in_addr *dst;
-	const int type;			/* not used at this moment */
-	const int code;			/* not used at this moment */
+icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
 {
 
 	/* PPS limit */
@@ -1204,6 +1187,6 @@ icmp_ratelimit(dst, type, code)
 		return 1;
 	}
 
-	/*okay to send*/
+	/* okay to send */
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.3 2003/01/06 21:05:38 matt Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.3.2.1 2005/02/04 11:45:27 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -68,7 +68,7 @@ struct	ze_softc {
 	u_int8_t 	sc_enaddr[ETHER_ADDR_LEN];
 };
 
-void	sgec_attach __P((struct ze_softc *));
-int	sgec_intr __P((struct ze_softc *));
+void	sgec_attach(struct ze_softc *);
+int	sgec_intr(struct ze_softc *);
 
 #endif /* _DEV_IC_SGECVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.7 2003/04/09 01:55:14 thorpej Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.7.2.1 2005/02/04 11:44:33 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -85,7 +85,7 @@ extern int adbHardware;
 #define ADB_HW_UNKNOWN		0x01	/* don't know */
 #define ADB_HW_II		0x02	/* Mac II series */
 #define ADB_HW_IISI		0x03	/* Mac IIsi series */
-#define ADB_HW_PB		0x04	/* PowerBook series */
+#define ADB_HW_PMU		0x04	/* PowerBook series */
 #define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
 
 #define ADB_CMDADDR(cmd)	((u_int8_t)((cmd) & 0xf0) >> 4)
@@ -93,10 +93,11 @@ extern int adbHardware;
 #define ADBLISTEN(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x08 | (reg))
 #define ADBTALK(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x0c | (reg))
 
-void	adb_intr __P((void));
+int	adb_intr __P((void *));
 int	adb_poweroff __P((void));
 void	adb_restart __P((void));
 void	adb_cuda_autopoll __P((void));
+int	adb_intr_cuda __P((void *));
 int	CountADBs __P((void));
 void	ADBReInit __P((void));
 int	GetIndADB __P((ADBDataBlock * info, int index));

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.10.2.5 2004/10/30 09:21:37 skrll Exp $	*/
+/*	$NetBSD: event.h,v 1.10.2.6 2005/02/04 11:48:05 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -160,11 +160,11 @@ MALLOC_DECLARE(M_KEVENT);
  */
 struct filterops {
 	int	f_isfd;			/* true if ident == filedescriptor */
-	int	(*f_attach)	__P((struct knote *));
+	int	(*f_attach)	(struct knote *);
 					/* called when knote is ADDed */
-	void	(*f_detach)	__P((struct knote *));
+	void	(*f_detach)	(struct knote *);
 					/* called when knote is DELETEd */
-	int	(*f_event)	__P((struct knote *, long));
+	int	(*f_event)	(struct knote *, long);
 					/* called when event is triggered */
 };
 
@@ -218,9 +218,9 @@ struct timespec;
 
 __BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
-int	kqueue __P((void));
-int	kevent __P((int, const struct kevent *, size_t, struct kevent *, size_t,
-		    const struct timespec *));
+int	kqueue(void);
+int	kevent(int, const struct kevent *, size_t, struct kevent *, size_t,
+		    const struct timespec *);
 #endif /* !_POSIX_C_SOURCE */
 __END_DECLS
 

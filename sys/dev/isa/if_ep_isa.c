@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.33.6.2 2004/09/21 13:29:44 skrll Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.33.6.3 2005/02/04 11:46:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.33.6.2 2004/09/21 13:29:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.33.6.3 2005/02/04 11:46:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,13 +99,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.33.6.2 2004/09/21 13:29:44 skrll Exp
 #include <dev/isa/isavar.h>
 #include <dev/isa/elink.h>
 
-int ep_isa_probe __P((struct device *, struct cfdata *, void *));
-void ep_isa_attach __P((struct device *, struct device *, void *));
+int ep_isa_probe(struct device *, struct cfdata *, void *);
+void ep_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ep_isa, sizeof(struct ep_softc),
     ep_isa_probe, ep_isa_attach, NULL, NULL);
 
-static	void epaddcard __P((int, int, int, int));
+static	void epaddcard(int, int, int, int);
 
 /*
  * This keeps track of which ISAs have been through an ep probe sequence.

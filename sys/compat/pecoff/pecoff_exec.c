@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.22.2.4 2004/09/21 13:25:59 skrll Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.22.2.5 2005/02/04 11:45:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.22.2.4 2004/09/21 13:25:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.22.2.5 2005/02/04 11:45:08 skrll Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -487,9 +487,10 @@ exec_pecoff_prep_zmagic(l, epp, fp, ap, peofs)
 			/* set up command for bss segment */
 			baddr = sh[i].s_vaddr;
 			bsize = sh[i].s_paddr;
-			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-				  bsize, baddr, NULLVP, 0,
-				  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+			if (bsize)
+				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
+				    bsize, baddr, NULLVP, 0,
+				    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 			epp->ep_daddr = min(epp->ep_daddr, baddr);
 			bsize = baddr + bsize - epp->ep_daddr;
 			epp->ep_dsize = max(epp->ep_dsize, bsize);

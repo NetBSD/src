@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.34.2.4 2004/10/19 15:58:30 skrll Exp $	*/
+/*	$NetBSD: shm.h,v 1.34.2.5 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  * need to include unistd.h
  */
 __BEGIN_DECLS
-long __sysconf __P((int));
+long __sysconf(int);
 __END_DECLS
 #define	SHMLBA		(__sysconf(28))
 #endif
@@ -187,17 +187,17 @@ extern struct shmid_ds *shmsegs;
 
 struct vmspace;
 
-void	shminit __P((void));
-void	shmfork __P((struct vmspace *, struct vmspace *));
-void	shmexit __P((struct vmspace *));
-int	shmctl1 __P((struct proc *, int, int, struct shmid_ds *));
+void	shminit(void);
+void	shmfork(struct vmspace *, struct vmspace *);
+void	shmexit(struct vmspace *);
+int	shmctl1(struct proc *, int, int, struct shmid_ds *);
 #else /* !_KERNEL */
 
 __BEGIN_DECLS
-void	*shmat __P((int, const void *, int));
-int	shmctl __P((int, int, struct shmid_ds *)) __RENAME(__shmctl13);
-int	shmdt __P((const void *));
-int	shmget __P((key_t, size_t, int));
+void	*shmat(int, const void *, int);
+int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl13);
+int	shmdt(const void *);
+int	shmget(key_t, size_t, int);
 __END_DECLS
 
 #endif /* !_KERNEL */

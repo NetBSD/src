@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.177.2.5 2005/01/17 19:30:27 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.177.2.6 2005/02/04 11:44:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -54,10 +54,8 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
-#define INTRLIST
 
 #define	SPITFIRE		/* We don't support Cheetah (USIII) yet */
-#define	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #ifdef DEBUG
@@ -4074,10 +4072,8 @@ Lsoftint_regular:
 	 nop
 
 setup_sparcintr:
-#ifdef	INTR_INTERLOCK
 	LDPTR	[%g5+IH_PEND], %g6	! Read pending flag
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
-#endif
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
 	sethi	%hi(intrpending), %g1
 	mov	8, %g7			! Number of slots to search
@@ -4085,7 +4081,6 @@ setup_sparcintr:
 	or	%g1, %lo(intrpending), %g1
 	 add	%g1, %g3, %g1
 1:
-#ifdef INTRLIST
 	LDPTR	[%g1], %g3		! Load list head
 	STPTR	%g3, [%g5+IH_PEND]	! Link our intrhand node in
 	mov	%g5, %g7
@@ -4093,52 +4088,6 @@ setup_sparcintr:
 	cmp	%g7, %g3		! Did it work?
 	bne,pn	%xcc, 1b		! No, try again
 	 nop
-#else	/* INTRLIST */
-	mov	%g5, %g3
-	CASPTR	[%g1] ASI_N, %g0, %g3	! Try a slot -- MPU safe
-	brz,pt	%g3, 2f			! Available?
-#ifdef DEBUG
-	 cmp	%g5, %g3		! if these are the same
-	bne,pt	%icc, 97f		! then we aleady have the
-	 nop				! interrupt registered
-	set	_C_LABEL(intrdebug), %g4
-	ld	[%g4], %g4
-	btst	INTRDEBUG_VECTOR, %g4
-	bz,pt	%icc, 97f
-	 nop
-
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	LOAD_ASCIZ(%o0, "interrupt_vector: duplicate handler %p\r\n")
-	GLOBTOLOC
-	clr	%g4
-	call	prom_printf
-	 mov	%g3, %o1
-	LOCTOGLOB
-	 restore
-97:
-#endif
-	 dec	%g7
-	brgz,pt	%g7, 1b
-	 inc	PTRSZ, %g1		! Next slot
-
-	!! If we get here we have a problem.
-	!! There were no available slots and the interrupt was lost.
-	!! We'll resort to polling in this case.
-#ifdef DIAGNOSTIC
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	LOAD_ASCIZ(%o0, "interrupt_vector: level %d out of slots\r\n")
-	mov	%g6, %o1
-	GLOBTOLOC
-	clr	%g4
-	rdpr	%pil, %l0
-	call	prom_printf
-	 mov	%l0, %o2
-	wrpr	%g0, 15, %pil
-	ta	1
-	LOCTOGLOB
-	restore
-#endif
-#endif	/* INTRLIST */
 2:
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
@@ -4440,7 +4389,6 @@ sparc_intr_retry:
 	mov	8, %l7
 	add	%l2, %l4, %l4
 
-#ifdef INTRLIST
 1:
 	membar	#StoreLoad		! Make sure any failed casxa insns complete
 	LDPTR	[%l4], %l2		! Check a slot
@@ -4473,103 +4421,6 @@ sparc_intr_retry:
 	bne,pn	CCCR, 2b		! 'Nother?
 	 mov	%l7, %l2
 
-#else /* INTRLIST */
-	/*
-	 * Register usage at this point:
-	 *	%l4 - current slot at intrpending[PIL]
-	 *	%l5 - sum of interrupt handler return values
-	 *	%l6 - PIL
-	 */
-sparc_intr_check_slot:
-	LDPTR	[%l4], %l2		! Check a slot
-	dec	%l7
-	brnz,pt	%l2, 1f			! Pending?
-	 nop
-	brgz,pt	%l7, sparc_intr_check_slot
-	 inc	PTRSZ, %l4		! Next slot
-
-	ba,a,pt	%icc, intrcmplt		! Only handle vectors -- don't poll XXXX
-	 nop				! XXX spitfire bug?
-
-1:
-	/*
-	 * We have a pending interrupt; prepare to call handler
-	 */
-!	DLFLUSH(%l2, %o3)
-	LDPTR	[%l2 + IH_CLR], %l1
-	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
-	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
-	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
-
-#ifdef DEBUG
-	set	_C_LABEL(intrdebug), %o3
-	ld	[%o3], %o3
-	btst	INTRDEBUG_FUNC, %o3
-	bz,a,pt	%icc, 97f
-	 nop
-
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	LOAD_ASCIZ(%o0, "sparc_interrupt:  calling %lx(%lx) sp = %p\r\n")
-	mov	%i0, %o2		! arg
-	mov	%i6, %o3		! sp
-	GLOBTOLOC
-	call	prom_printf
-	 mov	%i4, %o1		! fun
-	LOCTOGLOB
-	restore
-97:
-	mov	%l4, %o1	! XXXXXXX DEBUGGGGGG!
-#endif	/* DEBUG */
-
-!	STPTR	%g0, [%l4]		! Clear the slot
-	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
-	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
-	STPTR	%g0, [%l4]		! Clear the slot
-
-#ifdef DEBUG
-	set	_C_LABEL(intrdebug), %o3
-	ld	[%o3], %o3
-	btst	INTRDEBUG_FUNC, %o3
-	bz,a,pt	%icc, 97f
-	 nop
-#if 0
-	brnz,pt	%l1, 97f
-	 nop
-#endif
-
-	mov	%l4, %o5
-	mov	%l1, %o3
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	mov	%i5, %o1
-	mov	%i3, %o3
-	LOAD_ASCIZ(%o0, "sparc_interrupt:  ih %p fun %p has %p clear\r\n")
-	GLOBTOLOC
-	call	prom_printf
-	 mov	%i4, %o2		! fun
-	LOCTOGLOB
-	restore
-97:
-#endif	/* DEBUG */
-	brz,pn	%l1, 0f
-	 add	%l5, %o0, %l5
-	stx	%g0, [%l1]		! Clear intr source
-	membar	#Sync			! Should not be needed
-0:
-	brnz,pt	%o0, sparc_intr_check_slot	! Handle any others
-	 nop
-
-	/*
-	 * Interrupt not claimed by handler at this vector entry;
-	 * report that.
-	 */
-	mov	1, %o1
-	call	_C_LABEL(strayintr)		! strayintr(&intrframe, 1)
-	 add	%sp, CC64FSZ + STKB, %o0
-
-	ba,a,pt	%icc, sparc_intr_check_slot	! Try another
-	 nop					! XXX spitfire bug?
-#endif /* INTRLIST */
 intrcmplt:
 	/*
 	 * Re-read SOFTINT to see if any new  pending interrupts
@@ -11579,13 +11430,10 @@ ENTRY(send_softint)
 	 set	intrpending, %o3
 	LDPTR	[%o2 + IH_PEND], %o5
 	mov	8, %o4			! Number of slots to search
-#ifdef INTR_INTERLOCK
 	brnz	%o5, 1f
-#endif
 	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 2:
-#ifdef INTRLIST
 	LDPTR	[%o3], %o5		! Load list head
 	STPTR	%o5, [%o2+IH_PEND]	! Link our intrhand node in
 	mov	%o2, %o4
@@ -11593,28 +11441,6 @@ ENTRY(send_softint)
 	cmp	%o4, %o5		! Did it work?
 	bne,pn	%xcc, 2b		! No, try again
 	 nop
-#else	/* INTRLIST */
-#if 1
-	DLFLUSH(%o3, %o5)
-	mov	%o2, %o5
-	CASPTR	[%o3] ASI_N, %g0, %o5	! Try a slot -- MPU safe
-	brz,pt	%o5, 4f			! Available?
-#else
-	DLFLUSH(%o3, %o5)
-	LDPTR	[%o3], %o5		! Try a slog
-	brz,a	%o5, 4f			! Available?
-	 STPTR	%o2, [%o3]		! Grab it
-#endif
-	 dec	%o4
-	brgz,pt	%o4, 2b
-	 inc	PTRSZ, %o3		! Next slot
-
-	!! If we get here we have a problem.
-	!! There were no available slots and the interrupt was lost.
-	!! We'll resort to polling in this case.
-4:
-	 DLFLUSH(%o3, %o3)		! Prevent D$ pollution
-#endif /* INTRLIST */
 1:
 	mov	1, %o3			! Change from level to bitmask
 	sllx	%o3, %o1, %o3

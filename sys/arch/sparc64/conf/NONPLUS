@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.40.2.4 2004/11/14 08:15:32 skrll Exp $
+# 	$NetBSD: NONPLUS,v 1.40.2.5 2005/02/04 11:44:57 skrll Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -417,3 +417,4 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	fss		4	# file system snapshot device

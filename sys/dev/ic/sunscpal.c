@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.14.2.2 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.14.2.3 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.14.2.2 2004/09/21 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.14.2.3 2005/02/04 11:45:27 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -103,23 +103,23 @@ __KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.14.2.2 2004/09/21 13:28:08 skrll Exp 
 #include <dev/ic/sunscpalreg.h>
 #include <dev/ic/sunscpalvar.h>
 
-static void	sunscpal_reset_scsibus __P((struct sunscpal_softc *));
-static void	sunscpal_sched __P((struct sunscpal_softc *));
-static void	sunscpal_done __P((struct sunscpal_softc *));
+static void	sunscpal_reset_scsibus(struct sunscpal_softc *);
+static void	sunscpal_sched(struct sunscpal_softc *);
+static void	sunscpal_done(struct sunscpal_softc *);
 
 static int	sunscpal_select
-	__P((struct sunscpal_softc *, struct sunscpal_req *));
-static void	sunscpal_reselect __P((struct sunscpal_softc *));
+	(struct sunscpal_softc *, struct sunscpal_req *);
+static void	sunscpal_reselect(struct sunscpal_softc *);
 
-static int	sunscpal_msg_in __P((struct sunscpal_softc *));
-static int	sunscpal_msg_out __P((struct sunscpal_softc *));
-static int	sunscpal_data_xfer __P((struct sunscpal_softc *, int));
-static int	sunscpal_command __P((struct sunscpal_softc *));
-static int	sunscpal_status __P((struct sunscpal_softc *));
-static void	sunscpal_machine __P((struct sunscpal_softc *));
+static int	sunscpal_msg_in(struct sunscpal_softc *);
+static int	sunscpal_msg_out(struct sunscpal_softc *);
+static int	sunscpal_data_xfer(struct sunscpal_softc *, int);
+static int	sunscpal_command(struct sunscpal_softc *);
+static int	sunscpal_status(struct sunscpal_softc *);
+static void	sunscpal_machine(struct sunscpal_softc *);
 
-void	sunscpal_abort __P((struct sunscpal_softc *));
-void	sunscpal_cmd_timeout __P((void *));
+void	sunscpal_abort(struct sunscpal_softc *);
+void	sunscpal_cmd_timeout(void *);
 /*
  * Action flags returned by the info_transfer functions:
  * (These determine what happens next.)
@@ -149,12 +149,12 @@ void	sunscpal_cmd_timeout __P((void *));
 int sunscpal_debug = 0;
 #define	SUNSCPAL_BREAK() \
 	do { if (sunscpal_debug & SUNSCPAL_DBG_BREAK) Debugger(); } while (0)
-static void sunscpal_show_scsi_cmd __P((struct scsipi_xfer *));
+static void sunscpal_show_scsi_cmd(struct scsipi_xfer *);
 #ifdef DDB
-void	sunscpal_clear_trace __P((void));
-void	sunscpal_show_trace __P((void));
-void	sunscpal_show_req __P((struct sunscpal_req *));
-void	sunscpal_show_state __P((void));
+void	sunscpal_clear_trace(void);
+void	sunscpal_show_trace(void);
+void	sunscpal_show_req(struct sunscpal_req *);
+void	sunscpal_show_state(void);
 #endif	/* DDB */
 #else	/* SUNSCPAL_DEBUG */
 
@@ -176,15 +176,15 @@ phase_names[8] = {
 };
 
 #ifdef SUNSCPAL_USE_BUS_DMA
-static void sunscpal_dma_alloc __P((struct sunscpal_softc *));
-static void sunscpal_dma_free __P((struct sunscpal_softc *));
-static void sunscpal_dma_setup __P((struct sunscpal_softc *));
+static void sunscpal_dma_alloc(struct sunscpal_softc *);
+static void sunscpal_dma_free(struct sunscpal_softc *);
+static void sunscpal_dma_setup(struct sunscpal_softc *);
 #else
 #define sunscpal_dma_alloc(sc) (*sc->sc_dma_alloc)(sc)
 #define sunscpal_dma_free(sc) (*sc->sc_dma_free)(sc)
 #define sunscpal_dma_setup(sc) (*sc->sc_dma_setup)(sc)
 #endif
-static void sunscpal_minphys __P((struct buf *));
+static void sunscpal_minphys(struct buf *);
 
 /*****************************************************************
  * Actual chip control
@@ -201,9 +201,9 @@ int sunscpal_wait_phase_timo = 1000 * 10 * 300;	/* 5 min. */
 int sunscpal_wait_req_timo = 1000 * 50;	/* X2 = 100 mS. */
 int sunscpal_wait_nrq_timo = 1000 * 25;	/* X2 =  50 mS. */
 
-static __inline int sunscpal_wait_req __P((struct sunscpal_softc *));
-static __inline int sunscpal_wait_not_req __P((struct sunscpal_softc *));
-static __inline void sunscpal_sched_msgout __P((struct sunscpal_softc *, int));
+static __inline int sunscpal_wait_req(struct sunscpal_softc *);
+static __inline int sunscpal_wait_not_req(struct sunscpal_softc *);
+static __inline void sunscpal_sched_msgout(struct sunscpal_softc *, int);
 
 /* Return zero on success. */
 static __inline int sunscpal_wait_req(sc)
@@ -243,9 +243,9 @@ static __inline int sunscpal_wait_not_req(sc)
  * These functions control DMA functions in the chipset independent of
  * the host DMA implementation.
  */
-static void sunscpal_dma_start __P((struct sunscpal_softc *));
-static void sunscpal_dma_poll __P((struct sunscpal_softc *));
-static void sunscpal_dma_stop __P((struct sunscpal_softc *));
+static void sunscpal_dma_start(struct sunscpal_softc *);
+static void sunscpal_dma_poll(struct sunscpal_softc *);
+static void sunscpal_dma_stop(struct sunscpal_softc *);
 
 static void
 sunscpal_dma_start(sc)

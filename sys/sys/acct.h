@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.21.2.4 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: acct.h,v 1.21.2.5 2005/02/04 11:48:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -73,8 +73,8 @@ struct acct {
 #define	AHZ	64
 
 #ifdef _KERNEL
-void	acct_init __P((void));
-int	acct_process __P((struct lwp *));
+void	acct_init(void);
+int	acct_process(struct lwp *);
 #endif
 
 #endif /* !_SYS_ACCT_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.5.2.5 2004/09/21 13:31:02 skrll Exp $	 */
+/* $NetBSD: if_bce.c,v 1.5.2.6 2005/02/04 11:46:37 skrll Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -225,6 +225,12 @@ static const struct bce_product {
 		"Broadcom BCM4401 10/100 Ethernet"
 	},
 	{
+		PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4401_B0,
+		"Broadcom BCM4401-B0 10/100 Ethernet"
+	},
+	{
+
 		0,
 		0,
 		NULL
@@ -782,6 +788,12 @@ bce_rxintr(struct bce_softc *sc)
 		sc->bce_cdata.bce_rx_chain[i]->m_data += 30;	/* MAGIC */
 
 		/*
+		 * The chip includes the CRC with every packet.  Trim
+		 * it off here.
+		 */
+		len -= ETHER_CRC_LEN;
+
+		/*
 		 * If the packet is small enough to fit in a
 		 * single header mbuf, allocate one and copy
 		 * the data into it.  This greatly reduces
@@ -815,7 +827,6 @@ bce_rxintr(struct bce_softc *sc)
 			}
 		}
 
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 		ifp->if_ipackets++;

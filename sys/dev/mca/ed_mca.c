@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.22.2.7 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.22.2.8 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.7 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.8 2005/02/04 11:46:29 skrll Exp $");
 
 #include "rnd.h"
 
@@ -82,17 +82,17 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.7 2004/11/02 07:51:55 skrll Exp $"
 
 #define	EDLABELDEV(dev) (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
-static int     ed_mca_probe   __P((struct device *, struct cfdata *, void *));
-static void    ed_mca_attach  __P((struct device *, struct device *, void *));
+static int     ed_mca_probe  (struct device *, struct cfdata *, void *);
+static void    ed_mca_attach (struct device *, struct device *, void *);
 
 CFATTACH_DECL(ed_mca, sizeof(struct ed_softc),
     ed_mca_probe, ed_mca_attach, NULL, NULL);
 
 extern struct cfdriver ed_cd;
 
-static int	ed_get_params __P((struct ed_softc *, int *));
-static void	edgetdisklabel	__P((dev_t, struct ed_softc *));
-static void	edgetdefaultlabel __P((struct ed_softc *, struct disklabel *));
+static int	ed_get_params(struct ed_softc *, int *);
+static void	edgetdisklabel(dev_t, struct ed_softc *);
+static void	edgetdefaultlabel(struct ed_softc *, struct disklabel *);
 
 dev_type_open(edmcaopen);
 dev_type_close(edmcaclose);

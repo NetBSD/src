@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.32.6.4 2004/09/21 13:32:19 skrll Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.32.6.5 2005/02/04 11:47:08 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32.6.4 2004/09/21 13:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32.6.5 2005/02/04 11:47:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,14 +96,14 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.32.6.4 2004/09/21 13:32:19 skrll Ex
 
 #include <dev/isa/isareg.h>
 
-int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
-int com_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void com_pcmcia_attach __P((struct device *, struct device *, void *));
-int com_pcmcia_detach __P((struct device *, int));
-void com_pcmcia_cleanup __P((void *));
+int com_pcmcia_match(struct device *, struct cfdata *, void *);
+int com_pcmcia_validate_config(struct pcmcia_config_entry *);
+void com_pcmcia_attach(struct device *, struct device *, void *);
+int com_pcmcia_detach(struct device *, int);
+void com_pcmcia_cleanup(void *);
 
-int com_pcmcia_enable __P((struct com_softc *));
-void com_pcmcia_disable __P((struct com_softc *));
+int com_pcmcia_enable(struct com_softc *);
+void com_pcmcia_disable(struct com_softc *);
 
 struct com_pcmcia_softc {
 	struct com_softc sc_com;		/* real "com" softc */

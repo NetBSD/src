@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.13 2003/05/03 18:11:42 wiz Exp $	*/
+/*	$NetBSD: si.c,v 1.13.2.1 2005/02/04 11:47:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.13 2003/05/03 18:11:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.13.2.1 2005/02/04 11:47:34 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -172,22 +172,22 @@ struct si_softc {
 #define SI_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
 int si_options = SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT;
 
-static int	si_match __P((struct device *, struct cfdata *, void *));
-static void	si_attach __P((struct device *, struct device *, void *));
-static int	si_intr __P((void *));
-static void	si_reset_adapter __P((struct ncr5380_softc *));
+static int	si_match(struct device *, struct cfdata *, void *);
+static void	si_attach(struct device *, struct device *, void *);
+static int	si_intr(void *);
+static void	si_reset_adapter(struct ncr5380_softc *);
 
-void	si_dma_alloc __P((struct ncr5380_softc *));
-void	si_dma_free __P((struct ncr5380_softc *));
-void	si_dma_poll __P((struct ncr5380_softc *));
+void	si_dma_alloc(struct ncr5380_softc *);
+void	si_dma_free(struct ncr5380_softc *);
+void	si_dma_poll(struct ncr5380_softc *);
 
-void	si_dma_setup __P((struct ncr5380_softc *));
-void	si_dma_start __P((struct ncr5380_softc *));
-void	si_dma_eop __P((struct ncr5380_softc *));
-void	si_dma_stop __P((struct ncr5380_softc *));
+void	si_dma_setup(struct ncr5380_softc *);
+void	si_dma_start(struct ncr5380_softc *);
+void	si_dma_eop(struct ncr5380_softc *);
+void	si_dma_stop(struct ncr5380_softc *);
 
-void	si_intr_on  __P((struct ncr5380_softc *));
-void	si_intr_off __P((struct ncr5380_softc *));
+void	si_intr_on (struct ncr5380_softc *);
+void	si_intr_off(struct ncr5380_softc *);
 
 /*
  * Shorthand bus space access

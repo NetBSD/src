@@ -1,8 +1,13 @@
-#	$NetBSD: files.cobalt,v 1.15.2.4 2004/09/21 13:14:33 skrll Exp $
+#	$NetBSD: files.cobalt,v 1.15.2.5 2005/02/04 11:44:17 skrll Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 device mainbus {[addr = -1], [level = -1]}: pcibus
 attach mainbus at root

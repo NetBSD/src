@@ -1,4 +1,4 @@
-/*	$NetBSD: pucvar.h,v 1.4.24.3 2004/09/21 13:31:07 skrll Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.4.24.4 2005/02/04 11:46:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -106,4 +106,4 @@ struct puc_attach_args {
 
 extern const struct puc_device_description puc_devices[];
 extern const struct puc_device_description *
-	puc_find_description __P((pcireg_t, pcireg_t, pcireg_t, pcireg_t));
+	puc_find_description(pcireg_t, pcireg_t, pcireg_t, pcireg_t);

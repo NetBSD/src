@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.3.2.3 2004/09/21 13:30:59 skrll Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.3.2.4 2005/02/04 11:46:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.3.2.3 2004/09/21 13:30:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.3.2.4 2005/02/04 11:46:36 skrll Exp $");
 
 #include "vmetwo.h"
 
@@ -78,7 +78,7 @@ int vmetwo_not_present;
  * which does the clearing automatically.
  */
 static struct vme_two_handler {
-	int (*isr_hand) __P((void *));
+	int (*isr_hand)(void *);
 	void *isr_arg;
 } vme_two_handlers[(VME2_VECTOR_LOCAL_MAX - VME2_VECTOR_LOCAL_MIN) + 1];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22.2.4 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.5 2005/02/04 11:44:56 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.2.4 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.2.5 2005/02/04 11:44:56 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -165,6 +165,7 @@ trap(struct lwp *l, struct trapframe *tf)
 	struct proc *p;
 	u_int traptype;
 	vaddr_t vaddr;
+	caddr_t pcb_onfault;
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
 
@@ -179,6 +180,8 @@ trap(struct lwp *l, struct trapframe *tf)
 	if (l == NULL)
 		l = &lwp0;
 
+	pcb_onfault = l->l_addr->u_pcb.pcb_onfault;
+	l->l_addr->u_pcb.pcb_onfault = NULL;
 	p = l->l_proc;
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
 
@@ -252,6 +255,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		if (pmap_write_trap(p, USERMODE(tf), vaddr)) {
 			if (traptype & T_USER)
 				userret(l);
+			l->l_addr->u_pcb.pcb_onfault = pcb_onfault;
 			return;
 		}
 
@@ -267,8 +271,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		 * But catch the kernel writing to a read-only page
 		 * outside of copyin/copyout and friends.
 		 */
-		if ((traptype & T_USER) == 0 &&
-		    l->l_addr->u_pcb.pcb_onfault == NULL)
+		if ((traptype & T_USER) == 0 && pcb_onfault == NULL)
 			goto dopanic;
 		goto pagefault;
 
@@ -280,7 +283,7 @@ trap(struct lwp *l, struct trapframe *tf)
 		if (vaddr >= VM_MIN_KERNEL_ADDRESS)
 			goto kernelfault;
 
-		if (l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (pcb_onfault == NULL)
 			goto dopanic;
 		goto pagefault;
 
@@ -331,11 +334,14 @@ trap(struct lwp *l, struct trapframe *tf)
 		if (rv == 0) {
 			if (traptype & T_USER)
 				userret(l);
+			l->l_addr->u_pcb.pcb_onfault = pcb_onfault;
 			return;
 		}
 
 		if ((traptype & T_USER) == 0)
 			goto copyfault;
+
+		KASSERT(pcb_onfault == NULL);
 
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
@@ -362,23 +368,27 @@ trap(struct lwp *l, struct trapframe *tf)
 
 		va = trunc_page(vaddr);
 		rv = uvm_fault(kernel_map, va, 0, ftype);
-		if (rv == 0)
+		if (rv == 0) {
+			l->l_addr->u_pcb.pcb_onfault = pcb_onfault;
 			return;
+		}
 		/*FALLTHROUGH*/
 	    }
 
 	case T_RADDERR:
 	case T_WADDERR:
 	case T_READPROT:
-		if (onfault)
+		if (onfault) {
+			l->l_addr->u_pcb.pcb_onfault = pcb_onfault;
 			longjmp(onfault);
+		}
 		/*FALLTHROUGH*/
 
 	copyfault:
-		if (l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (pcb_onfault == NULL)
 			goto dopanic;
-		tf->tf_state.sf_spc =
-		    (register_t)(uintptr_t)l->l_addr->u_pcb.pcb_onfault;
+		tf->tf_state.sf_spc = (register_t)(uintptr_t)pcb_onfault;
+		l->l_addr->u_pcb.pcb_onfault = pcb_onfault;
 		return;
 
 	case T_BREAK|T_USER:
@@ -464,12 +474,6 @@ trap(struct lwp *l, struct trapframe *tf)
 		userret(l);
 		return;
 
-	case T_NMI:
-	case T_NMI|T_USER:
-		printf("trap: NMI detected\n");
-		sh5_nmi_clear();
-		/*FALLTHROUGH*/
-
 	case T_TRAP|T_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
@@ -485,6 +489,12 @@ trap(struct lwp *l, struct trapframe *tf)
 		ksi.ksi_addr = (void *)(uintptr_t)tf->tf_state.sf_spc;
 		ksi.ksi_trap = T_DIVZERO;
 		break;
+
+	case T_NMI:
+	case T_NMI|T_USER:
+		printf("trap: NMI detected\n");
+		sh5_nmi_clear();
+		/*FALLTHROUGH*/
 
 #ifdef DDB
 	case T_BREAK:

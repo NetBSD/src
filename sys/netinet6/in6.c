@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.77.2.3 2004/09/21 13:37:32 skrll Exp $	*/
+/*	$NetBSD: in6.c,v 1.77.2.4 2005/02/04 11:48:04 skrll Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.77.2.3 2004/09/21 13:37:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.77.2.4 2005/02/04 11:48:04 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -288,32 +288,6 @@ in6_ifremloop(struct ifaddr *ifa)
 			in6_ifloop_request(RTM_DELETE, ifa);
 		}
 	}
-}
-
-int
-in6_ifindex2scopeid(idx)
-	int idx;
-{
-	struct ifnet *ifp;
-	struct ifaddr *ifa;
-	struct sockaddr_in6 *sin6;
-
-	if (idx < 0 || if_indexlim <= idx)
-		return -1;
-	ifp = ifindex2ifnet[idx];
-	if (!ifp)
-		return -1;
-
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-	{
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-		if (IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr))
-			return sin6->sin6_scope_id & 0xffff;
-	}
-
-	return -1;
 }
 
 int

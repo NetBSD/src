@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.10.2.4 2004/11/02 07:52:10 skrll Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.10.2.5 2005/02/04 11:46:38 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2370,4 +2370,6 @@ struct bge_softc {
   	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
+	void			*bge_powerhook;
+	struct pci_conf_state	bge_pciconf;
 };

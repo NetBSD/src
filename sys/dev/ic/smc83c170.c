@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.53.2.4 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.53.2.5 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.4 2004/11/02 07:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.5 2005/02/04 11:45:27 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -78,28 +78,28 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.4 2004/11/02 07:51:31 skrll Exp
 #include <dev/ic/smc83c170reg.h>
 #include <dev/ic/smc83c170var.h>
 
-void	epic_start __P((struct ifnet *));
-void	epic_watchdog __P((struct ifnet *));
-int	epic_ioctl __P((struct ifnet *, u_long, caddr_t));
-int	epic_init __P((struct ifnet *));
-void	epic_stop __P((struct ifnet *, int));
+void	epic_start(struct ifnet *);
+void	epic_watchdog(struct ifnet *);
+int	epic_ioctl(struct ifnet *, u_long, caddr_t);
+int	epic_init(struct ifnet *);
+void	epic_stop(struct ifnet *, int);
 
-void	epic_shutdown __P((void *));
+void	epic_shutdown(void *);
 
-void	epic_reset __P((struct epic_softc *));
-void	epic_rxdrain __P((struct epic_softc *));
-int	epic_add_rxbuf __P((struct epic_softc *, int));
-void	epic_read_eeprom __P((struct epic_softc *, int, int, u_int16_t *));
-void	epic_set_mchash __P((struct epic_softc *));
-void	epic_fixup_clock_source __P((struct epic_softc *));
-int	epic_mii_read __P((struct device *, int, int));
-void	epic_mii_write __P((struct device *, int, int, int));
-int	epic_mii_wait __P((struct epic_softc *, u_int32_t));
-void	epic_tick __P((void *));
+void	epic_reset(struct epic_softc *);
+void	epic_rxdrain(struct epic_softc *);
+int	epic_add_rxbuf(struct epic_softc *, int);
+void	epic_read_eeprom(struct epic_softc *, int, int, u_int16_t *);
+void	epic_set_mchash(struct epic_softc *);
+void	epic_fixup_clock_source(struct epic_softc *);
+int	epic_mii_read(struct device *, int, int);
+void	epic_mii_write(struct device *, int, int, int);
+int	epic_mii_wait(struct epic_softc *, u_int32_t);
+void	epic_tick(void *);
 
-void	epic_statchg __P((struct device *));
-int	epic_mediachange __P((struct ifnet *));
-void	epic_mediastatus __P((struct ifnet *, struct ifmediareq *));
+void	epic_statchg(struct device *);
+int	epic_mediachange(struct ifnet *);
+void	epic_mediastatus(struct ifnet *, struct ifmediareq *);
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \
 	    INTSTAT_TXC | INTSTAT_RXE | INTSTAT_RQE | INTSTAT_RCC)
@@ -678,9 +678,10 @@ epic_intr(arg)
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 			/*
-			 * The EPIC includes the CRC with every packet.
+			 * The EPIC includes the CRC with every packet;
+			 * trim it.
 			 */
-			len = RXSTAT_RXLENGTH(rxstatus);
+			len = RXSTAT_RXLENGTH(rxstatus) - ETHER_CRC_LEN;
 
 			if (len < sizeof(struct ether_header)) {
 				/*
@@ -729,7 +730,6 @@ epic_intr(arg)
 				}
 			}
 
-			m->m_flags |= M_HASFCS;
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
 

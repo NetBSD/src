@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.23.2.4 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.23.2.5 2005/02/04 11:46:36 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.23.2.4 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.23.2.5 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -96,12 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.23.2.4 2004/11/02 07:51:55 skrll Exp
 
 #define b_forw	b_hash.le_next
 
-int	mscp_match __P((struct device *, struct cfdata *, void *));
-void	mscp_attach __P((struct device *, struct device *, void *));
-void	mscp_start __P((struct	mscp_softc *));
-int	mscp_init __P((struct  mscp_softc *));
-void	mscp_initds __P((struct mscp_softc *));
-int	mscp_waitstep __P((struct mscp_softc *, int, int));
+int	mscp_match(struct device *, struct cfdata *, void *);
+void	mscp_attach(struct device *, struct device *, void *);
+void	mscp_start(struct	mscp_softc *);
+int	mscp_init(struct  mscp_softc *);
+void	mscp_initds(struct mscp_softc *);
+int	mscp_waitstep(struct mscp_softc *, int, int);
 
 CFATTACH_DECL(mscpbus, sizeof(struct mscp_softc),
     mscp_match, mscp_attach, NULL, NULL);

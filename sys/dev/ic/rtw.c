@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.1.2.5 2005/01/17 19:30:40 skrll Exp $ */
+/* $NetBSD: rtw.c,v 1.1.2.6 2005/02/04 11:45:27 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.1.2.5 2005/01/17 19:30:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.1.2.6 2005/02/04 11:45:27 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -1343,6 +1343,9 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			goto next;
 		}
 
+		/* CRC is included with the packet; trim it off. */
+		len -= IEEE80211_CRC_LEN;
+
 		hwrate = MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK);
 		if (hwrate >= sizeof(ratetbl) / sizeof(ratetbl[0])) {
 			printf("%s: unknown rate #%d\n", sc->sc_dev.dv_xname,
@@ -1425,7 +1428,6 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		 */
 		m->m_pkthdr.rcvif = &sc->sc_if;
 		m->m_pkthdr.len = m->m_len = len;
-		m->m_flags |= M_HASFCS;
 
 		wh = mtod(m, struct ieee80211_frame *);
 

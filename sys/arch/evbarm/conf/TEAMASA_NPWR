@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.26.2.4 2004/11/14 08:15:06 skrll Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.26.2.5 2005/02/04 11:44:17 skrll Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -201,6 +201,7 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	raid		4	# RAIDframe devices
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ccd		4	# Concatenated disk devices
 
 # network pseudo-devices

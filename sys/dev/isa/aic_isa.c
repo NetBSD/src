@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.13.6.2 2004/09/21 13:29:42 skrll Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.13.6.3 2005/02/04 11:46:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.13.6.2 2004/09/21 13:29:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.13.6.3 2005/02/04 11:46:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.13.6.2 2004/09/21 13:29:42 skrll Exp $
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
-int	aic_isa_probe __P((struct device *, struct cfdata *, void *));
+int	aic_isa_probe(struct device *, struct cfdata *, void *);
 
 struct aic_isa_softc {
 	struct	aic_softc sc_aic;	/* real "aic" softc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145.2.8 2005/01/17 19:30:27 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.145.2.9 2005/02/04 11:44:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.8 2005/01/17 19:30:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.9 2005/02/04 11:44:57 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1896,7 +1896,7 @@ cpu_getmcontext(l, mcp, flags)
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if (rwindow_save(l))
+	if ((l->l_flag & L_SA_SWITCHING) == 0 && rwindow_save(l))
 		sigexit(l, SIGILL);
 
 	/* For now: Erase any random indicators for optional state. */

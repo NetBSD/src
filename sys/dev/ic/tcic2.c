@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.12.2.4 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.12.2.5 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12.2.4 2004/09/21 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12.2.5 2005/02/04 11:45:27 skrll Exp $");
 
 #undef	TCICDEBUG
 
@@ -67,25 +67,25 @@ int	tcic_debug = 1;
 
 #define	TCIC_MEM_ALIGN	TCIC_MEM_PAGESIZE
 
-void	tcic_attach_socket __P((struct tcic_handle *));
-void	tcic_init_socket __P((struct tcic_handle *));
+void	tcic_attach_socket(struct tcic_handle *);
+void	tcic_init_socket(struct tcic_handle *);
 
-int	tcic_submatch __P((struct device *, struct cfdata *,
-			   const locdesc_t *, void *));
-int	tcic_print  __P((void *arg, const char *pnp));
-int	tcic_intr_socket __P((struct tcic_handle *));
+int	tcic_submatch(struct device *, struct cfdata *,
+			   const locdesc_t *, void *);
+int	tcic_print(void *arg, const char *pnp);
+int	tcic_intr_socket(struct tcic_handle *);
 
-void	tcic_attach_card __P((struct tcic_handle *));
-void	tcic_detach_card __P((struct tcic_handle *, int));
-void	tcic_deactivate_card __P((struct tcic_handle *));
+void	tcic_attach_card(struct tcic_handle *);
+void	tcic_detach_card(struct tcic_handle *, int);
+void	tcic_deactivate_card(struct tcic_handle *);
 
-void	tcic_chip_do_mem_map __P((struct tcic_handle *, int));
-void	tcic_chip_do_io_map __P((struct tcic_handle *, int));
+void	tcic_chip_do_mem_map(struct tcic_handle *, int);
+void	tcic_chip_do_io_map(struct tcic_handle *, int);
 
-void	tcic_create_event_thread __P((void *));
-void	tcic_event_thread __P((void *));
+void	tcic_create_event_thread(void *);
+void	tcic_event_thread(void *);
 
-void	tcic_queue_event __P((struct tcic_handle *, int));
+void	tcic_queue_event(struct tcic_handle *, int);
 
 /* Map between irq numbers and internal representation */
 #if 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.112.2.4 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.112.2.5 2005/02/04 11:47:42 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.4 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.5 2005/02/04 11:47:42 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -726,18 +726,22 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * process it locally.
 	 */
 	if (ifp->if_bridge) {
-		/* clear M_PROMISC, in case the packets comes from a vlan */
-		m->m_flags &= ~M_PROMISC;
-		m = bridge_input(ifp, m);
-		if (m == NULL)
-			return;
+		if(m->m_flags & M_PROTO1) {
+			m->m_flags &= ~M_PROTO1;
+		} else {
+			/* clear M_PROMISC, in case the packets comes from a vlan */
+			m->m_flags &= ~M_PROMISC;
+			m = bridge_input(ifp, m);
+			if (m == NULL)
+				return;
 
-		/*
-		 * Bridge has determined that the packet is for us.
-		 * Update our interface pointer -- we may have had
-		 * to "bridge" the packet locally.
-		 */
-		ifp = m->m_pkthdr.rcvif;
+			/*
+			 * Bridge has determined that the packet is for us.
+			 * Update our interface pointer -- we may have had
+			 * to "bridge" the packet locally.
+			 */
+			ifp = m->m_pkthdr.rcvif;
+		}
 	} else 
 #endif /* NBRIDGE > 0 */
 	{

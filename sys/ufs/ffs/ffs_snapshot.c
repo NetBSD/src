@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.6 2005/01/24 08:36:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.7 2005/02/04 11:48:27 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -146,7 +146,7 @@ ffs_snapshot(mp, vp, ctime)
 	caddr_t cgbuf;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *copy_fs = NULL, *fs = ump->um_fs;
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 	struct inode *ip, *xp;
 	struct buf *bp, *ibp;
 	struct vattr vat;
@@ -174,7 +174,7 @@ ffs_snapshot(mp, vp, ctime)
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
 	if (vp->v_size != 0) {
-		error = VOP_TRUNCATE(vp, 0, 0, NOCRED, p);
+		error = VOP_TRUNCATE(vp, 0, 0, NOCRED, l);
 		if (error)
 			return error;
 	}
@@ -198,7 +198,7 @@ ffs_snapshot(mp, vp, ctime)
 		goto out;
 	error = vn_rdwr(UIO_WRITE, vp,
 	    cgbuf, fs->fs_bsize, lblktosize(fs, (off_t)(numblks - 1)),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_ucred, NULL, NULL);
 	if (error)
 		goto out;
 	/*
@@ -214,7 +214,7 @@ ffs_snapshot(mp, vp, ctime)
 	 */
 	for (blkno = NDADDR; blkno < numblks; blkno += NINDIR(fs)) {
 		error = VOP_BALLOC(vp, lblktosize(fs, (off_t)blkno),
-		    fs->fs_bsize, p->p_ucred, B_METAONLY, &ibp);
+		    fs->fs_bsize, l->l_proc->p_ucred, B_METAONLY, &ibp);
 		if (error)
 			goto out;
 		bwrite(ibp);
@@ -266,7 +266,7 @@ ffs_snapshot(mp, vp, ctime)
 	 * Since we have marked it as a snapshot it is safe to
 	 * unlock it as no process will be allowed to write to it.
 	 */
-	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0, p)) != 0)
+	if ((error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0, l)) != 0)
 		goto out;
 	VOP_UNLOCK(vp, 0);
 	/*
@@ -373,7 +373,7 @@ loop:
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
-		if (VOP_GETATTR(xvp, &vat, p->p_ucred, p) == 0 &&
+		if (VOP_GETATTR(xvp, &vat, l->l_proc->p_ucred, l) == 0 &&
 		    vat.va_nlink > 0) {
 			VOP_UNLOCK(xvp, 0);
 			MNT_ILOCK(mp);
@@ -564,7 +564,7 @@ out1:
 	 */
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t)snapblklist, snaplistsize*sizeof(ufs2_daddr_t), ip->i_size,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, p->p_ucred, NULL, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_ucred, NULL, NULL);
 	if (error) {
 		fs->fs_snapinum[snaploc] = 0;
 		FREE(snapblklist, M_UFSMNT);
@@ -626,7 +626,7 @@ out:
 	}
 	mp->mnt_flag = flag;
 	if (error)
-		(void) VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+		(void) VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
 	else
 		vref(vp);
 	return (error);

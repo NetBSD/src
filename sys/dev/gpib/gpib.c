@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.1.2.2 2004/09/21 13:27:37 skrll Exp $	*/
+/*	$NetBSD: gpib.c,v 1.1.2.3 2005/02/04 11:45:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.1.2.2 2004/09/21 13:27:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.1.2.3 2005/02/04 11:45:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ int gpibdebug = 0xff;
 #define DPRINTF(mask, str)	/* nothing */
 #endif
 
-int	gpibmatch __P((struct device *, struct cfdata *, void *));
-void	gpibattach __P((struct device *, struct device *, void *));
+int	gpibmatch(struct device *, struct cfdata *, void *);
+void	gpibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gpib, sizeof(struct gpib_softc),
 	gpibmatch, gpibattach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.3.22.4 2004/09/21 13:30:17 skrll Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.3.22.5 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct mca_attach_args {
 
 int	mcabusprint(void *, const char *);
 
-void	mca_devinfo __P((int, char *, size_t));
-int	mca_match_disabled __P((int));
+void	mca_devinfo(int, char *, size_t);
+int	mca_match_disabled(int);
 
 #endif /* _DEV_MCA_MCAVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.16 2001/09/02 19:35:20 thorpej Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.16.20.1 2005/02/04 11:47:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1999 Jason R. Thorpe <thorpej@and.com>

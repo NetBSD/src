@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.1.10.3 2004/09/21 13:15:40 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.1.10.4 2005/02/04 11:44:19 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.15 2000/12/06 17:18:57 deraadt Exp $	*/
 
@@ -455,6 +455,11 @@ struct pdc_hwtlb {	/* PDC_TLB */
 	u_int	min_size;	/* What do these mean? */
 	u_int	max_size;
 	u_int	filler[30];
+};
+
+struct pdc_power_info {		/* PDC_SOFT_POWER_INFO */
+	u_int	addr;		/* power register address */
+	u_int	filler[31];
 };
 
 struct pdc_pat_io_num {	/* PDC_PAT_IO */

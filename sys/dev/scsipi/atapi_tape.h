@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_tape.h,v 1.2 2001/12/01 00:03:45 bouyer Exp $	*/
+/*	$NetBSD: atapi_tape.h,v 1.2.16.1 2005/02/04 11:47:23 skrll Exp $	*/
 
 
 /*-

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.62.2.4 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.62.2.5 2005/02/04 11:46:08 skrll Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62.2.4 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62.2.5 2005/02/04 11:46:08 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -148,48 +148,47 @@ struct iy_softc {
 #endif
 };
 
-void iywatchdog __P((struct ifnet *));
-int iyioctl __P((struct ifnet *, u_long, caddr_t));
-int iyintr __P((void *));
-void iyinit __P((struct iy_softc *));
-void iystop __P((struct iy_softc *));
-void iystart __P((struct ifnet *));
+void iywatchdog(struct ifnet *);
+int iyioctl(struct ifnet *, u_long, caddr_t);
+int iyintr(void *);
+void iyinit(struct iy_softc *);
+void iystop(struct iy_softc *);
+void iystart(struct ifnet *);
 
-void iy_intr_rx __P((struct iy_softc *));
-void iy_intr_tx __P((struct iy_softc *));
+void iy_intr_rx(struct iy_softc *);
+void iy_intr_tx(struct iy_softc *);
 
-void iyreset __P((struct iy_softc *));
-void iy_readframe __P((struct iy_softc *, int));
-void iy_drop_packet_buffer __P((struct iy_softc *));
-void iy_find_mem_size __P((struct iy_softc *));
-void iyrint __P((struct iy_softc *));
-void iytint __P((struct iy_softc *));
-void iyxmit __P((struct iy_softc *));
-static void iy_mc_setup __P((struct iy_softc *));
-static void iy_mc_reset __P((struct iy_softc *));
-void iyget __P((struct iy_softc *, bus_space_tag_t, bus_space_handle_t, int));
-void iyprobemem __P((struct iy_softc *));
-static __inline void eepromwritebit __P((bus_space_tag_t, bus_space_handle_t,
-    int));
-static __inline int eepromreadbit __P((bus_space_tag_t, bus_space_handle_t));
+void iyreset(struct iy_softc *);
+void iy_readframe(struct iy_softc *, int);
+void iy_drop_packet_buffer(struct iy_softc *);
+void iy_find_mem_size(struct iy_softc *);
+void iyrint(struct iy_softc *);
+void iytint(struct iy_softc *);
+void iyxmit(struct iy_softc *);
+static void iy_mc_setup(struct iy_softc *);
+static void iy_mc_reset(struct iy_softc *);
+void iyget(struct iy_softc *, bus_space_tag_t, bus_space_handle_t, int);
+void iyprobemem(struct iy_softc *);
+static __inline void eepromwritebit(bus_space_tag_t, bus_space_handle_t, int);
+static __inline int eepromreadbit(bus_space_tag_t, bus_space_handle_t);
 
 #ifdef IYDEBUGX
-void print_rbd __P((volatile struct iy_recv_buf_desc *));
+void print_rbd(volatile struct iy_recv_buf_desc *);
 
 int in_ifrint = 0;
 int in_iftint = 0;
 #endif
 
-int iy_mediachange __P((struct ifnet *));
-void iy_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int iy_mediachange(struct ifnet *);
+void iy_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int iyprobe __P((struct device *, struct cfdata *, void *));
-void iyattach __P((struct device *, struct device *, void *));
+int iyprobe(struct device *, struct cfdata *, void *);
+void iyattach(struct device *, struct device *, void *);
 
-static u_int16_t eepromread __P((bus_space_tag_t, bus_space_handle_t, int));
+static u_int16_t eepromread(bus_space_tag_t, bus_space_handle_t, int);
 
-static int eepromreadall __P((bus_space_tag_t, bus_space_handle_t, u_int16_t *,
-    int));
+static int eepromreadall(bus_space_tag_t, bus_space_handle_t, u_int16_t *,
+    int);
 
 CFATTACH_DECL(iy, sizeof(struct iy_softc),
     iyprobe, iyattach, NULL, NULL);

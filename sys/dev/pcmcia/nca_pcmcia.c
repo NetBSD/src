@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.9.6.3 2004/09/21 13:32:21 skrll Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.9.6.4 2005/02/04 11:47:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.9.6.3 2004/09/21 13:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.9.6.4 2005/02/04 11:47:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,11 +70,11 @@ struct nca_pcmcia_softc {
 #define NCA_PCMCIA_ATTACHED	3
 };
 
-int	nca_pcmcia_match __P((struct device *, struct cfdata *, void *)); 
-int	nca_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void	nca_pcmcia_attach __P((struct device *, struct device *, void *));  
-int	nca_pcmcia_detach __P((struct device *, int));
-int	nca_pcmcia_enable __P((struct device *, int));
+int	nca_pcmcia_match(struct device *, struct cfdata *, void *); 
+int	nca_pcmcia_validate_config(struct pcmcia_config_entry *);
+void	nca_pcmcia_attach(struct device *, struct device *, void *);  
+int	nca_pcmcia_detach(struct device *, int);
+int	nca_pcmcia_enable(struct device *, int);
 
 CFATTACH_DECL(nca_pcmcia, sizeof(struct nca_pcmcia_softc),
     nca_pcmcia_match, nca_pcmcia_attach, nca_pcmcia_detach, NULL);

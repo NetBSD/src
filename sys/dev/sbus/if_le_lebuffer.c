@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.16.6.3 2004/09/21 13:33:13 skrll Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.16.6.4 2005/02/04 11:47:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.16.6.3 2004/09/21 13:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.16.6.4 2005/02/04 11:47:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -87,8 +87,8 @@ struct	le_softc {
 };
 
 
-int	lematch_lebuffer __P((struct device *, struct cfdata *, void *));
-void	leattach_lebuffer __P((struct device *, struct device *, void *));
+int	lematch_lebuffer(struct device *, struct cfdata *, void *);
+void	leattach_lebuffer(struct device *, struct device *, void *);
 
 /*
  * Media types supported.
@@ -107,8 +107,8 @@ extern struct cfdriver le_cd;
 #include "opt_ddb.h"
 #endif
 
-static void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-static u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
+static void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+static u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
 
 static void
 lewrcsr(sc, port, val)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.23.2.3 2004/09/21 13:16:57 skrll Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.23.2.4 2005/02/04 11:44:30 skrll Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.23.2.3 2004/09/21 13:16:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.23.2.4 2005/02/04 11:44:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,12 +166,12 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.23.2.3 2004/09/21 13:16:57 skrll Exp $
 #define	AHC_ISA_PRIMING_VID(index)	(AHC_ISA_VID + (index))
 #define	AHC_ISA_PRIMING_PID(index)	(AHC_ISA_PID + (index))
 
-int	ahc_isa_idstring __P((bus_space_tag_t, bus_space_handle_t, char *));
-int	ahc_isa_match __P((struct isa_attach_args *, bus_addr_t));
+int	ahc_isa_idstring(bus_space_tag_t, bus_space_handle_t, char *);
+int	ahc_isa_match(struct isa_attach_args *, bus_addr_t);
 
-int	ahc_isa_probe __P((struct device *, struct cfdata *, void *));
-void	ahc_isa_attach __P((struct device *, struct device *, void *));
-void	aha2840_load_seeprom __P((struct ahc_softc *ahc));
+int	ahc_isa_probe(struct device *, struct cfdata *, void *);
+void	ahc_isa_attach(struct device *, struct device *, void *);
+void	aha2840_load_seeprom(struct ahc_softc *ahc);
 static int verify_seeprom_cksum(struct seeprom_config *sc);
 
 CFATTACH_DECL(ahc_isa, sizeof(struct ahc_softc),
@@ -195,10 +195,7 @@ static LIST_HEAD(, ahc_isa_slot) ahc_isa_all_slots;
 static int ahc_isa_slot_initialized;
 
 int
-ahc_isa_idstring(iot, ioh, idstring)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	char *idstring;
+ahc_isa_idstring(bus_space_tag_t iot, bus_space_handle_t ioh, char *idstring)
 {
 	u_int8_t vid[EISA_NVIDREGS], pid[EISA_NPIDREGS];
 	int i;
@@ -248,9 +245,7 @@ ahc_isa_idstring(iot, ioh, idstring)
 }
 
 int
-ahc_isa_match(ia, iobase)
-	struct isa_attach_args *ia;
-	bus_addr_t iobase;
+ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
 {
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -315,10 +310,7 @@ ahc_isa_match(ia, iobase)
  * the actual probe routine to check it out.
  */
 int
-ahc_isa_probe(parent, match, aux)
-        struct device *parent;
-        struct cfdata *match;
-	void *aux; 
+ahc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 {       
 	struct isa_attach_args *ia = aux;
 	struct ahc_isa_slot *as;
@@ -375,9 +367,7 @@ ahc_isa_probe(parent, match, aux)
 }
 
 void
-ahc_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahc_softc *ahc = (void *)self;
 	struct isa_attach_args *ia = aux;

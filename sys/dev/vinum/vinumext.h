@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumext.h,v 1.2.4.4 2004/09/21 13:34:15 skrll Exp $
+ * $Id: vinumext.h,v 1.2.4.5 2005/02/04 11:47:34 skrll Exp $
  */
 
 /* vinumext.h: external definitions */
@@ -164,7 +164,7 @@ void longjmp(label_t *);				    /* the kernel doesn't define this */
 #endif
 
 char *basename(char *);
-typedef int cmp_t __P((const void *, const void *));
+typedef int cmp_t(const void *, const void *);
 void qsort(void *a, size_t n, size_t es, cmp_t * cmp);
 void expand_table(void **, int, int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.5.2.3 2004/09/21 13:27:36 skrll Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.5.2.4 2005/02/04 11:45:23 skrll Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -97,7 +97,7 @@ struct	dz_softc {
 		struct	dz_softc *dz_sc;	/* backpointer to softc */
 		int		dz_line;	/* channel number */
 		void		*dz_private;	/* sub-driver data pointer */
-		int		(*dz_catch) __P((void *, int)); /* Fast catch recv */
+		int		(*dz_catch)(void *, int); /* Fast catch recv */
 		struct	tty *	dz_tty;		/* what we work on */
 #ifdef notyet
 		caddr_t		dz_mem;		/* pointers to clist output */

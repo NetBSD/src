@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci_var.h,v 1.2 2000/03/12 11:21:03 drochner Exp $ */
+/* $NetBSD: universe_pci_var.h,v 1.2.30.1 2005/02/04 11:46:41 skrll Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -38,17 +38,17 @@ struct univ_pci_data {
 	bus_space_handle_t csrh;
 	char devname [16];
 	void *ih;
-	void (*vmeinthandler) __P((void *, int, int));
+	void (*vmeinthandler)(void *, int, int);
 	void *vmeintcookie;
 };
 
-int univ_pci_attach __P((struct univ_pci_data *, struct pci_attach_args *,
+int univ_pci_attach(struct univ_pci_data *, struct pci_attach_args *,
 			 const char *,
-			 void (*)(void *, int, int), void *));
-int univ_pci_mapvme __P((struct univ_pci_data *, int, vme_addr_t, u_int32_t,
-			 vme_am_t, vme_datasize_t, u_int32_t));
-void univ_pci_unmapvme __P((struct univ_pci_data *, int));
-int univ_pci_mappci __P((struct univ_pci_data *, int, u_int32_t, u_int32_t,
-			 vme_addr_t, vme_am_t));
-void univ_pci_unmappci __P((struct univ_pci_data *, int));
-int univ_pci_vmebuserr __P((struct univ_pci_data *, int));
+			 void (*)(void *, int, int), void *);
+int univ_pci_mapvme(struct univ_pci_data *, int, vme_addr_t, u_int32_t,
+			 vme_am_t, vme_datasize_t, u_int32_t);
+void univ_pci_unmapvme(struct univ_pci_data *, int);
+int univ_pci_mappci(struct univ_pci_data *, int, u_int32_t, u_int32_t,
+			 vme_addr_t, vme_am_t);
+void univ_pci_unmappci(struct univ_pci_data *, int);
+int univ_pci_vmebuserr(struct univ_pci_data *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.26.6.2 2004/09/21 13:29:49 skrll Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.26.6.3 2005/02/04 11:46:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.26.6.2 2004/09/21 13:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.26.6.3 2005/02/04 11:46:10 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.26.6.2 2004/09/21 13:29:49 skrll Exp $
 
 #define	UHA_ISA_IOSIZE	16
 
-int	uha_isa_probe __P((struct device *, struct cfdata *, void *));
-void	uha_isa_attach __P((struct device *, struct device *, void *));
+int	uha_isa_probe(struct device *, struct cfdata *, void *);
+void	uha_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(uha_isa, sizeof(struct uha_softc),
     uha_isa_probe, uha_isa_attach, NULL, NULL);
@@ -73,12 +73,11 @@ CFATTACH_DECL(uha_isa, sizeof(struct uha_softc),
 #define Debugger() panic("should call debugger here (uha_isa.c)")
 #endif /* ! DDB */
 
-int	u14_find __P((bus_space_tag_t, bus_space_handle_t,
-	    struct uha_probe_data *));
-void	u14_start_mbox __P((struct uha_softc *, struct uha_mscp *));
-int	u14_poll __P((struct uha_softc *, struct scsipi_xfer *, int));
-int	u14_intr __P((void *));
-void	u14_init __P((struct uha_softc *));
+int	u14_find(bus_space_tag_t, bus_space_handle_t, struct uha_probe_data *);
+void	u14_start_mbox(struct uha_softc *, struct uha_mscp *);
+int	u14_poll(struct uha_softc *, struct scsipi_xfer *, int);
+int	u14_intr(void *);
+void	u14_init(struct uha_softc *);
 
 /*
  * Check the slots looking for a board we recognise

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.14.2.3 2004/09/21 13:18:19 skrll Exp $	*/
+/*	$NetBSD: adb.c,v 1.14.2.4 2005/02/04 11:44:33 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.14.2.3 2004/09/21 13:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.14.2.4 2005/02/04 11:44:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.14.2.3 2004/09/21 13:18:19 skrll Exp $");
 
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/akbdvar.h>
+#include <macppc/dev/pm_direct.h>
 #include <macppc/dev/viareg.h>
 
 #include <dev/ofw/openfirm.h>
@@ -122,7 +123,7 @@ adbattach(parent, self, aux)
 	if (strcmp(ca->ca_name, "via-cuda") == 0)
 		adbHardware = ADB_HW_CUDA;
 	else if (strcmp(ca->ca_name, "via-pmu") == 0)
-		adbHardware = ADB_HW_PB;
+		adbHardware = ADB_HW_PMU;
 
 	node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (node)
@@ -133,7 +134,15 @@ adbattach(parent, self, aux)
 	adb_polling = 1;
 	ADBReInit();
 
-	intr_establish(irq, IST_LEVEL, IPL_HIGH, (int (*)(void *))adb_intr, sc);
+	switch (adbHardware) {
+	case ADB_HW_CUDA:
+		intr_establish(irq, IST_LEVEL, IPL_HIGH, adb_intr_cuda, sc);
+		break;
+	case ADB_HW_PMU:
+		intr_establish(irq, IST_LEVEL, IPL_HIGH, pm_intr, sc);
+		pm_init();
+		break;
+	}
 
 #ifdef ADB_DEBUG
 	if (adb_debug)

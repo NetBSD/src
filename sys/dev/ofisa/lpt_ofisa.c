@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.7 2002/10/02 16:34:29 thorpej Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.7.6.1 2005/02/04 11:46:36 skrll Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.7 2002/10/02 16:34:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.7.6.1 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,8 +62,8 @@ struct lpt_ofisa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int lpt_ofisa_probe __P((struct device *, struct cfdata *, void *));
-void lpt_ofisa_attach __P((struct device *, struct device *, void *));
+int lpt_ofisa_probe(struct device *, struct cfdata *, void *);
+void lpt_ofisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_ofisa, sizeof(struct lpt_ofisa_softc),
     lpt_ofisa_probe, lpt_ofisa_attach, NULL, NULL);

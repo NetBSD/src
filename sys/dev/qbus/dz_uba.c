@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.19.6.3 2004/09/21 13:32:38 skrll Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.19.6.4 2005/02/04 11:47:09 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19.6.3 2004/09/21 13:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19.6.4 2005/02/04 11:47:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19.6.3 2004/09/21 13:32:38 skrll Exp $"
 
 #include "ioconf.h"
 
-static	int	dz_uba_match __P((struct device *, struct cfdata *, void *));
-static	void	dz_uba_attach __P((struct device *, struct device *, void *));
+static	int	dz_uba_match(struct device *, struct cfdata *, void *);
+static	void	dz_uba_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(dz_uba, sizeof(struct dz_softc),
     dz_uba_match, dz_uba_attach, NULL, NULL);

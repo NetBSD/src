@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2003/05/08 18:13:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18.2.1 2005/02/04 11:44:56 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,6 +111,8 @@ extern int	pmap_initialized;
 extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
 extern vaddr_t	pmap_map_device(paddr_t, u_int);
 extern int	pmap_page_is_cacheable(pmap_t, vaddr_t);
+extern void	pmap_register_copyzero_helpers(void (*)(void *, paddr_t),
+		    void (*)(void *, paddr_t, paddr_t), void *);
 
 struct sh5_tlb_ops {
 	void (*tlbinv_cookie)(pteh_t, tlbcookie_t);

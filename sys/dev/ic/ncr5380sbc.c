@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.49.2.4 2004/09/21 13:28:05 skrll Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.49.2.5 2005/02/04 11:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.49.2.4 2004/09/21 13:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.49.2.5 2005/02/04 11:45:26 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,23 +98,23 @@ __KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.49.2.4 2004/09/21 13:28:05 skrll Ex
 #include <dev/ic/ncr5380var.h>
 #include <dev/ic/ncr53c400reg.h>
 
-static void	ncr5380_reset_scsibus __P((struct ncr5380_softc *));
-static void	ncr5380_sched __P((struct ncr5380_softc *));
-static void	ncr5380_done __P((struct ncr5380_softc *));
+static void	ncr5380_reset_scsibus(struct ncr5380_softc *);
+static void	ncr5380_sched(struct ncr5380_softc *);
+static void	ncr5380_done(struct ncr5380_softc *);
 
 static int	ncr5380_select
-	__P((struct ncr5380_softc *, struct sci_req *));
-static void	ncr5380_reselect __P((struct ncr5380_softc *));
+	(struct ncr5380_softc *, struct sci_req *);
+static void	ncr5380_reselect(struct ncr5380_softc *);
 
-static int	ncr5380_msg_in __P((struct ncr5380_softc *));
-static int	ncr5380_msg_out __P((struct ncr5380_softc *));
-static int	ncr5380_data_xfer __P((struct ncr5380_softc *, int));
-static int	ncr5380_command __P((struct ncr5380_softc *));
-static int	ncr5380_status __P((struct ncr5380_softc *));
-static void	ncr5380_machine __P((struct ncr5380_softc *));
+static int	ncr5380_msg_in(struct ncr5380_softc *);
+static int	ncr5380_msg_out(struct ncr5380_softc *);
+static int	ncr5380_data_xfer(struct ncr5380_softc *, int);
+static int	ncr5380_command(struct ncr5380_softc *);
+static int	ncr5380_status(struct ncr5380_softc *);
+static void	ncr5380_machine(struct ncr5380_softc *);
 
-void	ncr5380_abort __P((struct ncr5380_softc *));
-void	ncr5380_cmd_timeout __P((void *));
+void	ncr5380_abort(struct ncr5380_softc *);
+void	ncr5380_cmd_timeout(void *);
 /*
  * Action flags returned by the info_transfer functions:
  * (These determine what happens next.)
@@ -143,12 +143,12 @@ void	ncr5380_cmd_timeout __P((void *));
 int ncr5380_debug = 0;
 #define	NCR_BREAK() \
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
-static void ncr5380_show_scsi_cmd __P((struct scsipi_xfer *));
+static void ncr5380_show_scsi_cmd(struct scsipi_xfer *);
 #ifdef DDB
-void	ncr5380_clear_trace __P((void));
-void	ncr5380_show_trace __P((void));
-void	ncr5380_show_req __P((struct sci_req *));
-void	ncr5380_show_state __P((void));
+void	ncr5380_clear_trace(void);
+void	ncr5380_show_trace(void);
+void	ncr5380_show_req(struct sci_req *);
+void	ncr5380_show_state(void);
 #endif	/* DDB */
 #else	/* NCR5380_DEBUG */
 
@@ -184,9 +184,9 @@ int ncr5380_wait_phase_timo = 1000 * 10 * 300;	/* 5 min. */
 int ncr5380_wait_req_timo = 1000 * 50;	/* X2 = 100 mS. */
 int ncr5380_wait_nrq_timo = 1000 * 25;	/* X2 =  50 mS. */
 
-static __inline int ncr5380_wait_req __P((struct ncr5380_softc *));
-static __inline int ncr5380_wait_not_req __P((struct ncr5380_softc *));
-static __inline void ncr_sched_msgout __P((struct ncr5380_softc *, int));
+static __inline int ncr5380_wait_req(struct ncr5380_softc *);
+static __inline int ncr5380_wait_not_req(struct ncr5380_softc *);
+static __inline void ncr_sched_msgout(struct ncr5380_softc *, int);
 
 /* Return zero on success. */
 static __inline int ncr5380_wait_req(sc)

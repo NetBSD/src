@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.10.2.3 2004/09/21 13:27:56 skrll Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.10.2.4 2005/02/04 11:45:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,10 +87,10 @@ struct hme_softc {
 	/* Ring descriptor */
 	struct hme_ring		sc_rb;
 #if notused
-	void		(*sc_copytobuf) __P((struct hme_softc *,
-					     void *, void *, size_t));
-	void		(*sc_copyfrombuf) __P((struct hme_softc *,
-					      void *, void *, size_t));
+	void		(*sc_copytobuf)(struct hme_softc *,
+					     void *, void *, size_t);
+	void		(*sc_copyfrombuf)(struct hme_softc *,
+					      void *, void *, size_t);
 #endif
 
 	int			sc_debug;
@@ -99,8 +99,8 @@ struct hme_softc {
 	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */
-	void	(*sc_hwreset) __P((struct hme_softc *));
-	void	(*sc_hwinit) __P((struct hme_softc *));
+	void	(*sc_hwreset)(struct hme_softc *);
+	void	(*sc_hwinit)(struct hme_softc *);
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;
@@ -108,6 +108,6 @@ struct hme_softc {
 };
 
 
-void	hme_config __P((struct hme_softc *));
-void	hme_reset __P((struct hme_softc *));
-int	hme_intr __P((void *));
+void	hme_config(struct hme_softc *);
+void	hme_reset(struct hme_softc *);
+int	hme_intr(void *);

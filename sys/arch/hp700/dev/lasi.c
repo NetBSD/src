@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.5.6.2 2005/02/04 11:44:19 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -33,9 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.5.6.2 2005/02/04 11:44:19 skrll Exp $");
 
 #undef LASIDEBUG
+
+#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $");
 #include <hp700/dev/cpudevs.h>
 
 #include <hp700/gsc/gscbusvar.h>
+#include <hp700/hp700/power.h>
 
 struct lasi_hwr {
 	u_int32_t lasi_power;
@@ -192,6 +195,11 @@ lasiattach(struct device *parent, struct device *self, void *aux)
 	hp700_intr_reg_establish(&sc->sc_int_reg);
 	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
 	sc->sc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
+
+#ifdef POWER_SWITCH
+	/* Tell power switch handling code about the Power Control Register */
+	lasi_pwr_sw_reg = &sc->sc_hw->lasi_power;
+#endif /* POWER_SWITCH */
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */

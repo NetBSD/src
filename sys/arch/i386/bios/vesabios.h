@@ -1,6 +1,6 @@
-/* $NetBSD: vesabios.h,v 1.2 2002/07/10 19:15:43 drochner Exp $ */
+/* $NetBSD: vesabios.h,v 1.2.14.1 2005/02/04 11:44:19 skrll Exp $ */
 
-int vbeprobe __P((void));
+int vbeprobe(void);
 
 struct vesabios_attach_args {
 	char *vaa_busname;

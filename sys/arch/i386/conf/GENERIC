@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.564.2.15 2005/01/24 08:34:12 skrll Exp $
+# $NetBSD: GENERIC,v 1.564.2.16 2005/02/04 11:44:20 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.564.2.15 $"
+#ident 		"GENERIC-$Revision: 1.564.2.16 $"
 
 maxusers	32		# estimated number of users
 
@@ -165,6 +165,7 @@ file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -1199,6 +1200,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 
 # Vinum
 # pseudo-device	vinum		8	# Vinum

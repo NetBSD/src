@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.41.6.3 2004/12/18 09:31:14 skrll Exp $	*/
+/*	$NetBSD: mms.c,v 1.41.6.4 2005/02/04 11:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.41.6.3 2004/12/18 09:31:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.41.6.4 2005/02/04 11:44:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,16 +56,16 @@ struct mms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-int mmsprobe __P((struct device *, struct cfdata *, void *));
-void mmsattach __P((struct device *, struct device *, void *));
-int mmsintr __P((void *));
+int mmsprobe(struct device *, struct cfdata *, void *);
+void mmsattach(struct device *, struct device *, void *);
+int mmsintr(void *);
 
 CFATTACH_DECL(mms, sizeof(struct mms_softc),
     mmsprobe, mmsattach, NULL, NULL);
 
-int	mms_enable __P((void *));
-int	mms_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
-void	mms_disable __P((void *));
+int	mms_enable(void *);
+int	mms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+void	mms_disable(void *);
 
 const struct wsmouse_accessops mms_accessops = {
 	mms_enable,
@@ -74,10 +74,7 @@ const struct wsmouse_accessops mms_accessops = {
 };
 
 int
-mmsprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mmsprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -128,9 +125,7 @@ out:
 }
 
 void
-mmsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mmsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -166,8 +161,7 @@ mmsattach(parent, self, aux)
 }
 
 int
-mms_enable(v)
-	void *v;
+mms_enable(void *v)
 {
 	struct mms_softc *sc = v;
 
@@ -184,8 +178,7 @@ mms_enable(v)
 }
 
 void
-mms_disable(v)
-	void *v;
+mms_disable(void *v)
 {
 	struct mms_softc *sc = v;
 
@@ -196,12 +189,7 @@ mms_disable(v)
 }
 
 int
-mms_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 #if 0
 	struct mms_softc *sc = v;
@@ -216,8 +204,7 @@ mms_ioctl(v, cmd, data, flag, l)
 }
 
 int
-mmsintr(arg)
-	void *arg;
+mmsintr(void *arg)
 {
 	struct mms_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

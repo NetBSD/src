@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4.6.4 2004/11/14 08:15:04 skrll Exp $
+# $NetBSD: INSTALL,v 1.4.6.5 2005/02/04 11:44:13 skrll Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -195,6 +195,7 @@ wsdisplay0	at arcvideo0
 #pseudo-device	ccd		4
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
@@ -212,4 +213,3 @@ pseudo-device	wsmux			# keyboard/mouse multiplexor
 
 # rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
-

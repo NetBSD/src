@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.69.2.6 2005/01/24 08:35:36 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.69.2.7 2005/02/04 11:47:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.6 2005/01/24 08:35:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.69.2.7 2005/02/04 11:47:42 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -384,9 +384,10 @@ m_reclaim(void *arg, int flags)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
 	}
-	TAILQ_FOREACH(ifp, &ifnet, if_list)
+	IFNET_FOREACH(ifp) {
 		if (ifp->if_drain)
 			(*ifp->if_drain)(ifp);
+	}
 	splx(s);
 	mbstat.m_drain++;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.41.2.8 2005/02/04 07:09:17 skrll Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.41.2.9 2005/02/04 11:46:36 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.8 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.9 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -126,15 +126,15 @@ struct ra_softc {
 
 #define rx_softc ra_softc
 
-void	rxattach __P((struct device *, struct device *, void *));
-int	rx_putonline __P((struct rx_softc *));
-void	rrmakelabel __P((struct disklabel *, long));
+void	rxattach(struct device *, struct device *, void *);
+int	rx_putonline(struct rx_softc *);
+void	rrmakelabel(struct disklabel *, long);
 
 #if NRA
 
-int	ramatch __P((struct device *, struct cfdata *, void *));
-void	raattach __P((struct device *, struct device *, void *));
-int	ra_putonline __P((struct ra_softc *));
+int	ramatch(struct device *, struct cfdata *, void *);
+void	raattach(struct device *, struct device *, void *);
+int	ra_putonline(struct ra_softc *);
 
 CFATTACH_DECL(ra, sizeof(struct ra_softc),
     ramatch, rxattach, NULL, NULL);
@@ -619,7 +619,7 @@ rasize(dev)
 
 #if NRX
 
-int	rxmatch __P((struct device *, struct cfdata *, void *));
+int	rxmatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(rx, sizeof(struct rx_softc),
     rxmatch, rxattach, NULL, NULL);
@@ -933,14 +933,14 @@ rxsize(dev)
 
 #endif /* NRX */
 
-void	rrdgram __P((struct device *, struct mscp *, struct mscp_softc *));
-void	rriodone __P((struct device *, struct buf *));
-int	rronline __P((struct device *, struct mscp *));
-int	rrgotstatus __P((struct device *, struct mscp *));
-void	rrreplace __P((struct device *, struct mscp *));
-int	rrioerror __P((struct device *, struct mscp *, struct buf *));
-void	rrfillin __P((struct buf *, struct mscp *));
-void	rrbb __P((struct device *, struct mscp *, struct buf *));
+void	rrdgram(struct device *, struct mscp *, struct mscp_softc *);
+void	rriodone(struct device *, struct buf *);
+int	rronline(struct device *, struct mscp *);
+int	rrgotstatus(struct device *, struct mscp *);
+void	rrreplace(struct device *, struct mscp *);
+int	rrioerror(struct device *, struct mscp *, struct buf *);
+void	rrfillin(struct buf *, struct mscp *);
+void	rrbb(struct device *, struct mscp *, struct buf *);
 
 
 struct	mscp_device ra_device = {

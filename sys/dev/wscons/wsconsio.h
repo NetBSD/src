@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.58.2.2 2004/09/03 12:45:39 skrll Exp $ */
+/* $NetBSD: wsconsio.h,v 1.58.2.3 2005/02/04 11:47:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -97,6 +97,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_SUN		16	/* Sun Type3/4 */
 #define	WSKBD_TYPE_SUN5		17	/* Sun Type5 */
 #define WSKBD_TYPE_SGI		18	/* SGI keyboard */
+#define WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -284,6 +285,7 @@ struct wsmouse_id {
 #define	WSDISPLAY_TYPE_SUNTCX	38	/* Sun TCX */
 #define	WSDISPLAY_TYPE_SUNFFB	39	/* Sun creator FFB */
 #define	WSDISPLAY_TYPE_STI	40	/* HP STI frambuffers */
+#define	WSDISPLAY_TYPE_HDLCD	41	/* Hitachi HD44780 based LCDs */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

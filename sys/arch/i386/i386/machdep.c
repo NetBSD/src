@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.526.2.7 2004/11/02 07:50:35 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.526.2.8 2005/02/04 11:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.7 2004/11/02 07:50:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.8 2005/02/04 11:44:30 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -219,7 +219,7 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 #ifdef COMPAT_NOMID
-static int exec_nomid(struct proc *, struct exec_package *);
+static int exec_nomid(struct lwp *, struct exec_package *);
 #endif
 
 int	physmem;
@@ -1937,7 +1937,7 @@ init386(paddr_t first_avail)
 
 #ifdef COMPAT_NOMID
 static int
-exec_nomid(struct proc *p, struct exec_package *epp)
+exec_nomid(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 	u_long midmag, magic;
@@ -1962,7 +1962,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		/*
 		 * 386BSD's ZMAGIC format:
 		 */
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | QMAGIC:
@@ -1970,7 +1970,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * BSDI's QMAGIC format:
 		 * same as new ZMAGIC format, but with different magic number
 		 */
-		error = exec_aout_prep_zmagic(p, epp);
+		error = exec_aout_prep_zmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | NMAGIC:
@@ -1979,7 +1979,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * same as NMAGIC format, but with different magic number
 		 * and with text starting at 0.
 		 */
-		error = exec_aout_prep_oldnmagic(p, epp);
+		error = exec_aout_prep_oldnmagic(l, epp);
 		break;
 
 	case (MID_ZERO << 16) | OMAGIC:
@@ -1988,7 +1988,7 @@ exec_nomid(struct proc *p, struct exec_package *epp)
 		 * same as OMAGIC format, but with different magic number
 		 * and with text starting at 0.
 		 */
-		error = exec_aout_prep_oldomagic(p, epp);
+		error = exec_aout_prep_oldomagic(l, epp);
 		break;
 
 	default:
@@ -2015,7 +2015,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 	int error = ENOEXEC;
 
 #ifdef COMPAT_NOMID
-	if ((error = exec_nomid(l->l_proc, epp)) == 0)
+	if ((error = exec_nomid(l, epp)) == 0)
 		return error;
 #endif /* ! COMPAT_NOMID */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.19.2.3 2004/09/21 13:16:39 skrll Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.19.2.4 2005/02/04 11:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.19.2.3 2004/09/21 13:16:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.19.2.4 2005/02/04 11:44:30 skrll Exp $");
 
 #include "ioapic.h"
 
@@ -121,9 +121,8 @@ struct x86_bus_dma_tag eisa_bus_dma_tag = {
 };
 
 void
-eisa_attach_hook(parent, self, eba)
-	struct device *parent, *self;
-	struct eisabus_attach_args *eba;
+eisa_attach_hook(struct device *parent, struct device *self,
+    struct eisabus_attach_args *eba)
 {
 	extern int eisa_has_been_seen; 
 
@@ -137,8 +136,7 @@ eisa_attach_hook(parent, self, eba)
 }
 
 int
-eisa_maxslots(ec)
-	eisa_chipset_tag_t ec;
+eisa_maxslots(eisa_chipset_tag_t ec)
 {
 
 	/*
@@ -148,10 +146,7 @@ eisa_maxslots(ec)
 }
 
 int
-eisa_intr_map(ec, irq, ihp)
-	eisa_chipset_tag_t ec;
-	u_int irq;
-	eisa_intr_handle_t *ihp;
+eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
 {
 	if (irq >= NUM_LEGACY_IRQS) {
 		printf("eisa_intr_map: bad IRQ %d\n", irq);
@@ -181,9 +176,7 @@ eisa_intr_map(ec, irq, ihp)
 }
 
 const char *
-eisa_intr_string(ec, ih)
-	eisa_chipset_tag_t ec;
-	eisa_intr_handle_t ih;
+eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
@@ -214,11 +207,8 @@ eisa_intr_evcnt(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
 }
 
 void *
-eisa_intr_establish(ec, ih, type, level, func, arg)
-	eisa_chipset_tag_t ec;
-	eisa_intr_handle_t ih;
-	int type, level, (*func) __P((void *));
-	void *arg;
+eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
+    int type, int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
 	struct pic *pic;
@@ -245,22 +235,16 @@ eisa_intr_establish(ec, ih, type, level, func, arg)
 }
 
 void
-eisa_intr_disestablish(ec, cookie)
-	eisa_chipset_tag_t ec;
-	void *cookie;
+eisa_intr_disestablish(eisa_chipset_tag_t ec, void *cookie)
 {
 
 	intr_disestablish(cookie);
 }
 
 int
-eisa_mem_alloc(t, size, align, boundary, cacheable, addrp, bahp)
-	bus_space_tag_t t;
-	bus_size_t size, align;
-	bus_addr_t boundary;
-	int cacheable;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bahp;
+eisa_mem_alloc(bus_space_tag_t t, bus_size_t size, bus_size_t align,
+    bus_addr_t boundary, int cacheable,
+    bus_addr_t *addrp, bus_space_handle_t *bahp)
 {
 	extern struct extent *iomem_ex;
 
@@ -272,20 +256,15 @@ eisa_mem_alloc(t, size, align, boundary, cacheable, addrp, bahp)
 }
 
 void
-eisa_mem_free(t, bah, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bah;
-	bus_size_t size;
+eisa_mem_free(bus_space_tag_t t, bus_space_handle_t bah, bus_size_t size)
 {
 
 	bus_space_free(t, bah, size);
 }
 
 int
-eisa_conf_read_mem(ec, slot, func, entry, ecm)
-	eisa_chipset_tag_t ec;
-	int slot, func, entry;
-	struct eisa_cfg_mem *ecm;
+eisa_conf_read_mem(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_mem *ecm)
 {
 
 	/* XXX XXX XXX */
@@ -293,10 +272,8 @@ eisa_conf_read_mem(ec, slot, func, entry, ecm)
 }
 
 int
-eisa_conf_read_irq(ec, slot, func, entry, eci)
-	eisa_chipset_tag_t ec;
-	int slot, func, entry;
-	struct eisa_cfg_irq *eci;
+eisa_conf_read_irq(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_irq *eci)
 {
 
 	/* XXX XXX XXX */
@@ -304,10 +281,8 @@ eisa_conf_read_irq(ec, slot, func, entry, eci)
 }
 
 int
-eisa_conf_read_dma(ec, slot, func, entry, ecd)
-	eisa_chipset_tag_t ec;
-	int slot, func, entry;
-	struct eisa_cfg_dma *ecd;
+eisa_conf_read_dma(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_dma *ecd)
 {
 
 	/* XXX XXX XXX */
@@ -315,10 +290,8 @@ eisa_conf_read_dma(ec, slot, func, entry, ecd)
 }
 
 int
-eisa_conf_read_io(ec, slot, func, entry, ecio)
-	eisa_chipset_tag_t ec;
-	int slot, func, entry;
-	struct eisa_cfg_io *ecio;
+eisa_conf_read_io(eisa_chipset_tag_t ec, int slot, int func, int entry,
+    struct eisa_cfg_io *ecio)
 {
 
 	/* XXX XXX XXX */

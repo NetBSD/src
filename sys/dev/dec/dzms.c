@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.9.6.4 2005/01/13 08:33:11 skrll Exp $	*/
+/*	$NetBSD: dzms.c,v 1.9.6.5 2005/02/04 11:45:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.9.6.4 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.9.6.5 2005/02/04 11:45:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,16 +82,16 @@ struct dzms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-static int  dzms_match __P((struct device *, struct cfdata *, void *));
-static void dzms_attach __P((struct device *, struct device *, void *));
-static int dzms_input __P((void *, int));
+static int  dzms_match(struct device *, struct cfdata *, void *);
+static void dzms_attach(struct device *, struct device *, void *);
+static int dzms_input(void *, int);
 
 CFATTACH_DECL(dzms, sizeof(struct dzms_softc),
     dzms_match, dzms_attach, NULL, NULL);
 
-static int  dzms_enable __P((void *));
-static int  dzms_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
-static void dzms_disable __P((void *));
+static int  dzms_enable(void *);
+static int  dzms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static void dzms_disable(void *);
 
 const struct wsmouse_accessops dzms_accessops = {
 	dzms_enable,

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.45.2.5 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.45.2.6 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.5 2004/11/02 07:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.6 2005/02/04 11:45:27 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -184,8 +184,8 @@ const int smc91cxx_media[] = {
 /*
  * MII bit-bang glue.
  */
-u_int32_t smc91cxx_mii_bitbang_read __P((struct device *));
-void smc91cxx_mii_bitbang_write __P((struct device *, u_int32_t));
+u_int32_t smc91cxx_mii_bitbang_read(struct device *);
+void smc91cxx_mii_bitbang_write(struct device *, u_int32_t);
 
 const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 	smc91cxx_mii_bitbang_read,
@@ -200,27 +200,27 @@ const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 };
 
 /* MII callbacks */
-int	smc91cxx_mii_readreg __P((struct device *, int, int));
-void	smc91cxx_mii_writereg __P((struct device *, int, int, int));
-void	smc91cxx_statchg __P((struct device *));
-void	smc91cxx_tick __P((void *));
+int	smc91cxx_mii_readreg(struct device *, int, int);
+void	smc91cxx_mii_writereg(struct device *, int, int, int);
+void	smc91cxx_statchg(struct device *);
+void	smc91cxx_tick(void *);
 
-int	smc91cxx_mediachange __P((struct ifnet *));
-void	smc91cxx_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	smc91cxx_mediachange(struct ifnet *);
+void	smc91cxx_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int	smc91cxx_set_media __P((struct smc91cxx_softc *, int));
+int	smc91cxx_set_media(struct smc91cxx_softc *, int);
 
-void	smc91cxx_init __P((struct smc91cxx_softc *));
-void	smc91cxx_read __P((struct smc91cxx_softc *));
-void	smc91cxx_reset __P((struct smc91cxx_softc *));
-void	smc91cxx_start __P((struct ifnet *));
-void	smc91cxx_copy_tx_frame __P((struct smc91cxx_softc *, struct mbuf *));
-void	smc91cxx_resume __P((struct smc91cxx_softc *));
-void	smc91cxx_stop __P((struct smc91cxx_softc *));
-void	smc91cxx_watchdog __P((struct ifnet *));
-int	smc91cxx_ioctl __P((struct ifnet *, u_long, caddr_t));
+void	smc91cxx_init(struct smc91cxx_softc *);
+void	smc91cxx_read(struct smc91cxx_softc *);
+void	smc91cxx_reset(struct smc91cxx_softc *);
+void	smc91cxx_start(struct ifnet *);
+void	smc91cxx_copy_tx_frame(struct smc91cxx_softc *, struct mbuf *);
+void	smc91cxx_resume(struct smc91cxx_softc *);
+void	smc91cxx_stop(struct smc91cxx_softc *);
+void	smc91cxx_watchdog(struct ifnet *);
+int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
 
-static __inline int ether_cmp __P((void *, void *));
+static __inline int ether_cmp(void *, void *);
 static __inline int
 ether_cmp(va, vb)
 	void *va, *vb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.18.6.1 2004/08/03 10:51:04 skrll Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.18.6.2 2005/02/04 11:47:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18.6.1 2004/08/03 10:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18.6.2 2005/02/04 11:47:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.18.6.1 2004/08/03 10:51:04 skrll Exp 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>
 
-int	lebufprint	__P((void *, const char *));
-int	lebufmatch	__P((struct device *, struct cfdata *, void *));
-void	lebufattach	__P((struct device *, struct device *, void *));
+int	lebufprint(void *, const char *);
+int	lebufmatch(struct device *, struct cfdata *, void *);
+void	lebufattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lebuffer, sizeof(struct lebuf_softc),
     lebufmatch, lebufattach, NULL, NULL);

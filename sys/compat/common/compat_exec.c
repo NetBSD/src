@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.9.2.4 2005/02/04 07:09:17 skrll Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.9.2.5 2005/02/04 11:45:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.9.2.4 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.9.2.5 2005/02/04 11:45:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,10 @@ exec_aout_prep_oldzmagic(l, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (execp->a_bss)
+	    NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		epp->ep_daddr + execp->a_data, NULLVP, 0,
+		VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1.14.3 2004/09/21 13:16:34 skrll Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.14.4 2005/02/04 11:44:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,8 +68,9 @@
  *	FreeBSD: src/sys/i386/acpica/acpi_wakecode.S,v 1.1 2001/07/20 06:07:31 takawata Exp
  */
 
-#define LOCORE
+#define _LOCORE
 
+#include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/param.h>
 #include <machine/segments.h>
@@ -79,11 +80,23 @@
 wakeup_16:
 	nop
 	cli
+	cld
 
 	/* Set up segment registers for real mode */
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
+
+	/* The following needs to be configurable */
+#ifdef notyet
+	/* Kick the VBIOS. */
+	movw	$0x1000, %sp /* Small call stack. */
+	lcall	$0xc000,$3
+
+	movw	%cs,%ax
+	movw	%ax,%ds
+	movw	%ax,%ss
+#endif
 
 	/* Get physical address of the code */
 	xorl	%esi,%esi

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.25.2.3 2004/09/21 13:38:46 skrll Exp $	*/
+/*	$NetBSD: ipc.h,v 1.25.2.4 2005/02/04 11:48:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -163,17 +163,17 @@ struct ipc_perm14 {
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 
-int	ipcperm __P((struct ucred *, struct ipc_perm *, int));
+int	ipcperm(struct ucred *, struct ipc_perm *, int);
 
-void	ipc_perm14_to_native __P((struct ipc_perm14 *, struct ipc_perm *));
-void	native_to_ipc_perm14 __P((struct ipc_perm *, struct ipc_perm14 *));
+void	ipc_perm14_to_native(struct ipc_perm14 *, struct ipc_perm *);
+void	native_to_ipc_perm14(struct ipc_perm *, struct ipc_perm14 *);
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-key_t	ftok __P((const char *, int));
+key_t	ftok(const char *, int);
 __END_DECLS
 #endif
 #endif /* !_SYS_IPC_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.9.6.3 2004/09/21 13:29:47 skrll Exp $ */
+/* $NetBSD: pcppi.c,v 1.9.6.4 2005/02/04 11:46:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9.6.3 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9.6.4 2005/02/04 11:46:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9.6.3 2004/09/21 13:29:47 skrll Exp $");
 #if NPCKBD > 0
 #include <dev/pckbport/pckbdvar.h>
 
-void	pcppi_pckbd_bell __P((void *, u_int, u_int, u_int, int));
+void	pcppi_pckbd_bell(void *, u_int, u_int, u_int, int);
 #endif
 
 struct pcppi_softc {
@@ -67,13 +67,13 @@ struct pcppi_softc {
 	int sc_timeout;
 };
 
-int	pcppi_match __P((struct device *, struct cfdata *, void *));
-void	pcppi_attach __P((struct device *, struct device *, void *));
+int	pcppi_match(struct device *, struct cfdata *, void *);
+void	pcppi_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcppi, sizeof(struct pcppi_softc),
     pcppi_match, pcppi_attach, NULL, NULL);
 
-static void pcppi_bell_stop __P((void*));
+static void pcppi_bell_stop(void*);
 
 #define PCPPIPRI (PZERO - 1)
 

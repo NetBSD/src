@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.80.2.6 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.80.2.7 2005/02/04 11:47:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.6 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.80.2.7 2005/02/04 11:47:42 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -99,15 +99,27 @@ genfs_fsync(void *v)
 		off_t offhi;
 		struct lwp *a_l;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp, *dvp;
 	int wait;
+	int error;
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
 	vflushbuf(vp, wait);
 	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		return (0);
+		error = 0;
 	else
-		return (VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0));
+		error = VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
+
+	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+		int l = 0;
+		if (VOP_BMAP(vp, 0, &dvp, NULL, NULL))
+			error = ENXIO;
+		else
+			error = VOP_IOCTL(dvp, DIOCCACHESYNC, &l, FWRITE,
+					  ap->a_l->l_proc->p_ucred, ap->a_l);
+	}
+
+	return (error);
 }
 
 int
@@ -508,19 +520,7 @@ genfs_getpages(void *v)
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
 	KASSERT(orignpages > 0);
-
-	/*
-	 * Bounds-check the request.
-	 */
-
-	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= memeof) {
-		if ((flags & PGO_LOCKED) == 0) {
-			simple_unlock(&uobj->vmobjlock);
-		}
-		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
-		    origoffset, *ap->a_count, memeof,0);
-		return (EINVAL);
-	}
+	KASSERT(origoffset + (ap->a_centeridx << PAGE_SHIFT) < memeof);
 
 	/*
 	 * For PGO_LOCKED requests, just return whatever's in memory.
@@ -903,6 +903,10 @@ raout:
 		    genfs_rapages);
 		rasize = rapages << PAGE_SHIFT;
 		for (i = skipped = 0; i < genfs_racount; i++) {
+
+			if (raoffset >= memeof)
+				break;
+
 			err = VOP_GETPAGES(vp, raoffset, NULL, &rapages, 0,
 			    VM_PROT_READ, 0, 0);
 			simple_lock(&uobj->vmobjlock);

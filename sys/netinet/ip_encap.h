@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.3.2.4 2004/09/21 13:37:11 skrll Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.3.2.5 2005/02/04 11:47:48 skrll Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -55,19 +55,19 @@ struct encaptab {
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
 };
 
-void	encap_setkeylen __P((void));
-void	encap_init __P((void));
-void	encap4_input __P((struct mbuf *, ...));
-int	encap6_input __P((struct mbuf **, int *, int));
-const struct encaptab *encap_attach __P((int, int, const struct sockaddr *,
+void	encap_setkeylen(void);
+void	encap_init(void);
+void	encap4_input(struct mbuf *, ...);
+int	encap6_input(struct mbuf **, int *, int);
+const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
-	const struct sockaddr *, const struct protosw *, void *));
-const struct encaptab *encap_attach_func __P((int, int,
-	int (*) __P((const struct mbuf *, int, int, void *)),
-	const struct protosw *, void *));
-void	encap6_ctlinput __P((int, struct sockaddr *, void *));
-int	encap_detach __P((const struct encaptab *));
-void	*encap_getarg __P((struct mbuf *));
+	const struct sockaddr *, const struct protosw *, void *);
+const struct encaptab *encap_attach_func(int, int,
+	int (*)(const struct mbuf *, int, int, void *),
+	const struct protosw *, void *);
+void	encap6_ctlinput(int, struct sockaddr *, void *);
+int	encap_detach(const struct encaptab *);
+void	*encap_getarg(struct mbuf *);
 #endif
 
 #endif /*_NETINET_IP_ENCAP_H_*/

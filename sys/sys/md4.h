@@ -1,4 +1,4 @@
-/*	$NetBSD: md4.h,v 1.1.26.3 2004/09/21 13:38:47 skrll Exp $	*/
+/*	$NetBSD: md4.h,v 1.1.26.4 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest 
@@ -43,13 +43,13 @@ typedef struct MD4Context {
 } MD4_CTX;
 
 __BEGIN_DECLS
-void	MD4Init __P((MD4_CTX *));
-void	MD4Update __P((MD4_CTX *, const unsigned char *, unsigned int));
-void	MD4Final __P((unsigned char[16], MD4_CTX *));
+void	MD4Init(MD4_CTX *);
+void	MD4Update(MD4_CTX *, const unsigned char *, unsigned int);
+void	MD4Final(unsigned char[16], MD4_CTX *);
 #ifndef _KERNEL
-char	*MD4End __P((MD4_CTX *, char *));
-char	*MD4File __P((const char *, char *));
-char	*MD4Data __P((const unsigned char *, unsigned int, char *));
+char	*MD4End(MD4_CTX *, char *);
+char	*MD4File(const char *, char *);
+char	*MD4Data(const unsigned char *, unsigned int, char *);
 #endif /* _KERNEL */
 __END_DECLS
 

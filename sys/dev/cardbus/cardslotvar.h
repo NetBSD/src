@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.6.22.3 2004/09/21 13:27:25 skrll Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.6.22.4 2005/02/04 11:45:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -122,6 +122,6 @@ typedef struct cardslot_softc *cardslot_t;
 
 #define IS_CARDSLOT_INSERT_REMOVE_EV(x) (0 <= (x) && (x) <= 3)
 
-void cardslot_event_throw __P((cardslot_t, int));
+void cardslot_event_throw(cardslot_t, int);
 
 #endif /* !_DEV_CARDBUS_CARDSLOTVAR_H_ */

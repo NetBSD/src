@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.46.2.3 2004/09/21 13:27:54 skrll Exp $	*/
+/*	$NetBSD: comvar.h,v 1.46.2.4 2005/02/04 11:45:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -46,13 +46,13 @@
 #include <sys/lock.h>
 #endif
 
-int comcnattach __P((bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t));
+int comcnattach(bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t);
 
 #ifdef KGDB
-int com_kgdb_attach __P((bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t));
+int com_kgdb_attach(bus_space_tag_t, bus_addr_t, int, int, int, tcflag_t);
 #endif
 
-int com_is_console __P((bus_space_tag_t, bus_addr_t, bus_space_handle_t *));
+int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01
@@ -135,8 +135,8 @@ struct com_softc {
 #define	COM_TYPE_AU1x00		3	/* AMD/Alchemy Au1x000 proc. built-in */
 
 	/* power management hooks */
-	int (*enable) __P((struct com_softc *));
-	void (*disable) __P((struct com_softc *));
+	int (*enable)(struct com_softc *);
+	void (*disable)(struct com_softc *);
 	int enabled;
 
 	/* PPS signal on DCD, with or without inkernel clock disciplining */
@@ -159,11 +159,11 @@ struct com_softc {
 #define CLR(t, f)	(t) &= ~(f)
 #define ISSET(t, f)	((t) & (f))
 
-int comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
-int comintr __P((void *));
-void com_attach_subr __P((struct com_softc *));
-int com_detach __P((struct device *, int));
-int com_activate __P((struct device *, enum devact));
+int comprobe1(bus_space_tag_t, bus_space_handle_t);
+int comintr(void *);
+void com_attach_subr(struct com_softc *);
+int com_detach(struct device *, int);
+int com_activate(struct device *, enum devact);
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT

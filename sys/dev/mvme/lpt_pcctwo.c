@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.4.8.3 2004/09/21 13:30:59 skrll Exp $	*/
+/*	$NetBSD: lpt_pcctwo.c,v 1.4.8.4 2005/02/04 11:46:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.4.8.3 2004/09/21 13:30:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.4.8.4 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.4.8.3 2004/09/21 13:30:59 skrll Exp
 /*
  * Autoconfig stuff
  */
-int lpt_pcctwo_match __P((struct device *, struct cfdata *, void *));
-void lpt_pcctwo_attach __P((struct device *, struct device *, void *));
+int lpt_pcctwo_match(struct device *, struct cfdata *, void *);
+void lpt_pcctwo_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_pcctwo, sizeof(struct lpt_softc),
     lpt_pcctwo_match, lpt_pcctwo_attach, NULL, NULL);
@@ -68,13 +68,13 @@ CFATTACH_DECL(lpt_pcctwo, sizeof(struct lpt_softc),
 extern struct cfdriver lpt_cd;
 
 
-int lpt_pcctwo_intr __P((void *));
-void lpt_pcctwo_open __P((struct lpt_softc *, int));
-void lpt_pcctwo_close __P((struct lpt_softc *));
-void lpt_pcctwo_iprime __P((struct lpt_softc *));
-void lpt_pcctwo_speed __P((struct lpt_softc *, int));
-int lpt_pcctwo_notrdy __P((struct lpt_softc *, int));
-void lpt_pcctwo_wr_data __P((struct lpt_softc *, u_char));
+int lpt_pcctwo_intr(void *);
+void lpt_pcctwo_open(struct lpt_softc *, int);
+void lpt_pcctwo_close(struct lpt_softc *);
+void lpt_pcctwo_iprime(struct lpt_softc *);
+void lpt_pcctwo_speed(struct lpt_softc *, int);
+int lpt_pcctwo_notrdy(struct lpt_softc *, int);
+void lpt_pcctwo_wr_data(struct lpt_softc *, u_char);
 
 struct lpt_funcs lpt_pcctwo_funcs = {
 	lpt_pcctwo_open,

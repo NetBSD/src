@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.19.2.4 2005/01/24 08:34:13 skrll Exp $	*/
+/*	$NetBSD: signal.h,v 1.19.2.5 2005/02/04 11:44:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#include "opt_compat_ultrix.h"
 #endif
 #ifdef COMPAT_16 
 #define SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
@@ -70,7 +71,7 @@ typedef int sig_atomic_t;
  *
  * sizeof(sigcontext) = 45 * sizeof(int) + 35 * sizeof(mips_reg_t)
  */
-#if defined(_KERNEL) && defined(COMPAT_13)
+#if defined(_KERNEL) && (defined(COMPAT_13) || defined(COMPAT_ULTRIX))
 struct sigcontext13 {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	sc_mask;	/* signal mask to restore (old style) */
@@ -84,7 +85,7 @@ struct sigcontext13 {
 };
 #endif /* _KERNEL && COMPAT_13 */
 
-#if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16)))
+#if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16) || defined(COMPAT_ULTRIX)))
 struct sigcontext {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	__sc_mask13;	/* signal mask to restore (old style) */

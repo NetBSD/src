@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.84.2.4 2004/09/24 10:53:43 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.84.2.5 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -272,6 +272,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_EXT		0x0001	/* has associated external storage */
 #define	M_PKTHDR	0x0002	/* start of record */
 #define	M_EOR		0x0004	/* end of record */
+#define	M_PROTO1	0x0008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
 #define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */

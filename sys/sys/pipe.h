@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.13.2.3 2004/09/21 13:38:48 skrll Exp $ */
+/* $NetBSD: pipe.h,v 1.13.2.4 2005/02/04 11:48:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -134,7 +134,7 @@ struct pipe {
 }
 
 #ifdef _KERNEL
-int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
+int sysctl_dopipe(int *, u_int, void *, size_t *, void *, size_t);
 
 #define PIPE_LOCK(pipe)		simple_lock(&(pipe)->pipe_slock);
 #define PIPE_UNLOCK(pipe)	simple_unlock(&(pipe)->pipe_slock);

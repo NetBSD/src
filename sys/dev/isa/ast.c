@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.52.2.2 2004/09/21 13:29:42 skrll Exp $	*/
+/*	$NetBSD: ast.c,v 1.52.2.3 2005/02/04 11:46:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.52.2.2 2004/09/21 13:29:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.52.2.3 2005/02/04 11:46:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,9 @@ struct ast_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int astprobe __P((struct device *, struct cfdata *, void *));
-void astattach __P((struct device *, struct device *, void *));
-int astintr __P((void *));
+int astprobe(struct device *, struct cfdata *, void *);
+void astattach(struct device *, struct device *, void *);
+int astintr(void *);
 
 CFATTACH_DECL(ast, sizeof(struct ast_softc),
     astprobe, astattach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.30.6.3 2004/09/21 13:32:20 skrll Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.30.6.4 2005/02/04 11:47:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.30.6.3 2004/09/21 13:32:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.30.6.4 2005/02/04 11:47:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,10 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.30.6.3 2004/09/21 13:32:20 skrll 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-int	sm_pcmcia_match __P((struct device *, struct cfdata *, void *));
-int	sm_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
-int	sm_pcmcia_detach __P((struct device *, int));
+int	sm_pcmcia_match(struct device *, struct cfdata *, void *);
+int	sm_pcmcia_validate_config(struct pcmcia_config_entry *);
+void	sm_pcmcia_attach(struct device *, struct device *, void *);
+int	sm_pcmcia_detach(struct device *, int);
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -86,10 +86,10 @@ struct sm_pcmcia_softc {
 CFATTACH_DECL(sm_pcmcia, sizeof(struct sm_pcmcia_softc),
     sm_pcmcia_match, sm_pcmcia_attach, sm_pcmcia_detach, smc91cxx_activate);
 
-int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
-void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
+int	sm_pcmcia_enable(struct smc91cxx_softc *);
+void	sm_pcmcia_disable(struct smc91cxx_softc *);
 
-int	sm_pcmcia_ascii_enaddr __P((const char *, u_int8_t *));
+int	sm_pcmcia_ascii_enaddr(const char *, u_int8_t *);
 
 const struct pcmcia_product sm_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,

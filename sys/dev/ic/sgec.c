@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.22.2.1 2004/11/02 07:51:31 skrll Exp $ */
+/*      $NetBSD: sgec.c,v 1.22.2.2 2005/02/04 11:45:27 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.22.2.1 2004/11/02 07:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.22.2.2 2005/02/04 11:45:27 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -76,13 +76,13 @@ __KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.22.2.1 2004/11/02 07:51:31 skrll Exp $");
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>
 
-static	void	zeinit __P((struct ze_softc *));
-static	void	zestart __P((struct ifnet *));
-static	int	zeioctl __P((struct ifnet *, u_long, caddr_t));
-static	int	ze_add_rxbuf __P((struct ze_softc *, int));
-static	void	ze_setup __P((struct ze_softc *));
-static	void	zetimeout __P((struct ifnet *));
-static	int	zereset __P((struct ze_softc *));
+static	void	zeinit(struct ze_softc *);
+static	void	zestart(struct ifnet *);
+static	int	zeioctl(struct ifnet *, u_long, caddr_t);
+static	int	ze_add_rxbuf(struct ze_softc *, int);
+static	void	ze_setup(struct ze_softc *);
+static	void	zetimeout(struct ifnet *);
+static	int	zereset(struct ze_softc *);
 
 #define	ZE_WCSR(csr, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, csr, val)
@@ -416,7 +416,7 @@ sgec_intr(sc)
 		return 0;
 	ZE_WCSR(ZE_CSR5, csr);
 
-	if (csr & ZE_NICSR5_RI)
+	if (csr & ZE_NICSR5_RI) {
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
@@ -424,17 +424,23 @@ sgec_intr(sc)
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 			ze_add_rxbuf(sc, sc->sc_nextrx);
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = len;
-			m->m_flags |= M_HASFCS;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
+			if (len < ETHER_MIN_LEN) {
+				ifp->if_ierrors++;
+				m_freem(m);
+			} else {
+				m->m_pkthdr.rcvif = ifp;
+				m->m_pkthdr.len = m->m_len =
+				    len - ETHER_CRC_LEN;
 #if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+				if (ifp->if_bpf)
+					bpf_mtap(ifp->if_bpf, m);
 #endif
-			(*ifp->if_input)(ifp, m);
+				(*ifp->if_input)(ifp, m);
+			}
 		}
+	}
 
 	if (csr & ZE_NICSR5_TI) {
 		while ((zc->zc_xmit[sc->sc_lastack].ze_tdr & ZE_TDR_OW) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.12.6.2 2004/09/21 13:29:47 skrll Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.12.6.3 2005/02/04 11:46:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.12.6.2 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.12.6.3 2005/02/04 11:46:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,11 @@ struct nca_isa_probe_data {
 	int sc_host_type;
 };
 
-int	nca_isa_find __P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    struct nca_isa_probe_data *));
-int	nca_isa_match __P((struct device *, struct cfdata *, void *)); 
-void	nca_isa_attach __P((struct device *, struct device *, void *));  
-int	nca_isa_test __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+int	nca_isa_find(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    struct nca_isa_probe_data *);
+int	nca_isa_match(struct device *, struct cfdata *, void *); 
+void	nca_isa_attach(struct device *, struct device *, void *);  
+int	nca_isa_test(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 CFATTACH_DECL(nca_isa, sizeof(struct nca_isa_softc),
     nca_isa_match, nca_isa_attach, NULL, NULL);

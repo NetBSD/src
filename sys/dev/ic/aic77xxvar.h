@@ -1,4 +1,4 @@
-/*	$NetBSD: aic77xxvar.h,v 1.1 2000/03/15 02:06:19 fvdl Exp $	*/
+/*	$NetBSD: aic77xxvar.h,v 1.1.30.1 2005/02/04 11:45:24 skrll Exp $	*/
 
 /*
  * Common routines for AHA-27/284X and aic7770 motherboard SCSI controllers.
@@ -30,5 +30,5 @@
  * $FreeBSD: src/sys/dev/aic7xxx/ahc_eisa.c,v 1.15 2000/01/29 14:22:19 peter Exp $
  */
 
-int	ahc_aic77xx_irq __P((bus_space_tag_t, bus_space_handle_t));
-int	ahc_aic77xx_attach __P((struct ahc_softc *ahc));
+int	ahc_aic77xx_irq(bus_space_tag_t, bus_space_handle_t);
+int	ahc_aic77xx_attach(struct ahc_softc *ahc);

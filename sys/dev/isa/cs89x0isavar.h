@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isavar.h,v 1.2 2001/11/26 19:55:38 yamt Exp $ */
+/* $NetBSD: cs89x0isavar.h,v 1.2.20.1 2005/02/04 11:46:08 skrll Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -26,9 +26,9 @@
  * SUCH DAMAGE.
  */
 
-void	cs_process_rx_dma __P((struct cs_softc *));
-void	cs_isa_dma_chipinit __P((struct cs_softc *));
-void	cs_isa_dma_attach __P((struct cs_softc *));
+void	cs_process_rx_dma(struct cs_softc *);
+void	cs_isa_dma_chipinit(struct cs_softc *);
+void	cs_isa_dma_attach(struct cs_softc *);
 
 struct cs_softc_isa {
 	struct cs_softc sc_cs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.1.2.3 2004/09/21 13:38:46 skrll Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.1.2.4 2005/02/04 11:48:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 
 #ifndef FLT_ROUNDS
 __BEGIN_DECLS
-extern int __flt_rounds __P((void));
+extern int __flt_rounds(void);
 __END_DECLS
 #define FLT_ROUNDS	__flt_rounds()
 #endif

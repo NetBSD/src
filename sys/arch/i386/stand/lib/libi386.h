@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.15.2.4 2004/09/21 13:17:11 skrll Exp $	*/
+/*	$NetBSD: libi386.h,v 1.15.2.5 2005/02/04 11:44:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -64,7 +64,7 @@ void initio(int);
 #define CONSDEV_COM2KBD 7
 #define CONSDEV_COM3KBD 8
 #define CONSDEV_AUTO (-1)
-int iskey(void);
+int iskey(int);
 char awaitkey(int, int);
 
 /* this is in "user code"! */
@@ -108,6 +108,7 @@ void cominit(int);
 int computc(int, int);
 int comstatus(int);
 int congetc(void);
+int conisshift(void);
 int coniskey(void);
 void conputc(int);
 

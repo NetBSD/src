@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.2.2.3 2004/09/21 13:30:16 skrll Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.2.2.4 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.2.2.3 2004/09/21 13:30:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.2.2.4 2005/02/04 11:46:29 skrll Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -228,31 +228,31 @@ idma_list_sync_post(idma_chan_t * const idcp, idma_desch_t *iddhp)
 #endif	/* IDMA_COHERENT */
 
 
-STATIC void idma_attach		__P((struct device *, struct device *, void *));
-STATIC int  idma_match		__P((struct device *, struct cfdata *, void *));
+STATIC void idma_attach		(struct device *, struct device *, void *);
+STATIC int  idma_match		(struct device *, struct cfdata *, void *);
 STATIC void idma_chan_init
-	__P((idma_softc_t *, idma_chan_t *, unsigned int));
-STATIC void idma_arb_init	__P((idma_softc_t *));
-STATIC void idma_dmamem_free	__P((idma_softc_t *, idma_dmamem_t *));
+	(idma_softc_t *, idma_chan_t *, unsigned int);
+STATIC void idma_arb_init(idma_softc_t *);
+STATIC void idma_dmamem_free(idma_softc_t *, idma_dmamem_t *);
 STATIC int  idma_dmamem_alloc
-	__P((idma_softc_t *, idma_dmamem_t *, int, size_t sz));
+	(idma_softc_t *, idma_dmamem_t *, int, size_t sz);
 STATIC void idma_qstart
-	__P((idma_softc_t *, idma_chan_t *, unsigned int));
+	(idma_softc_t *, idma_chan_t *, unsigned int);
 STATIC void idma_start_subr
-	__P((idma_softc_t *, idma_chan_t *, unsigned int, idma_desch_t *));
+	(idma_softc_t *, idma_chan_t *, unsigned int, idma_desch_t *);
 STATIC void idma_retry
-	__P((idma_softc_t *, idma_chan_t *, const u_int, idma_desch_t *));
+	(idma_softc_t *, idma_chan_t *, const u_int, idma_desch_t *);
 STATIC void idma_done
-	__P((idma_softc_t *, idma_chan_t *, const u_int, idma_desch_t *, u_int32_t));
-STATIC int  idma_intr0_1	__P((void *));
-STATIC int  idma_intr2_3	__P((void *));
-STATIC int  idma_intr4_5	__P((void *));
-STATIC int  idma_intr6_7	__P((void *));
+	(idma_softc_t *, idma_chan_t *, const u_int, idma_desch_t *, u_int32_t);
+STATIC int  idma_intr0_1	(void *);
+STATIC int  idma_intr2_3	(void *);
+STATIC int  idma_intr4_5	(void *);
+STATIC int  idma_intr6_7	(void *);
 STATIC int  idma_intr_comm
-	__P((idma_softc_t *, unsigned int, unsigned int, unsigned int, u_int32_t, char *));
+	(idma_softc_t *, unsigned int, unsigned int, unsigned int, u_int32_t, char *);
 
 STATIC void idma_print_active
-	__P((idma_softc_t *, unsigned int, idma_desch_t *));
+	(idma_softc_t *, unsigned int, idma_desch_t *);
 
 
 struct cfattach idma_ca = {
@@ -432,7 +432,7 @@ idma_chan_free(idma_chan_t * const idcp)
 idma_chan_t *
 idma_chan_alloc(
 	const unsigned int ndesc,
-	int (* const callback) __P((void *, idma_desch_t *, u_int32_t)),
+	int (* const callback)(void *, idma_desch_t *, u_int32_t),
 	void * const arg)
 {
 	idma_softc_t * const sc = idma_sc;	/* XXX */
@@ -446,7 +446,7 @@ idma_chan_alloc(
 	int err;
 	int i;
 	unsigned int s;
-	STATIC void idma_time __P((void *));;
+	STATIC void idma_time(void *);;
 
 	DPRINTF(("idma_chan_alloc %d %p %p\n", ndesc, callback, arg));
 	KASSERT(ndesc >= 0);
@@ -1198,7 +1198,7 @@ idma_done(
 	idma_desch_t * const iddhp,
 	u_int32_t ccause) 
 {
-	int (*callback) __P((void *, idma_desch_t *, u_int32_t));
+	int (*callback)(void *, idma_desch_t *, u_int32_t);
 
 	idcp->idc_active = NULL;
 	idcp->idc_done_count++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.11.6.3 2004/09/21 13:33:13 skrll Exp $	*/
+/*	$NetBSD: sio16.c,v 1.11.6.4 2005/02/04 11:47:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.11.6.3 2004/09/21 13:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.11.6.4 2005/02/04 11:47:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.11.6.3 2004/09/21 13:33:13 skrll Exp $")
  * device cfattach and cfdriver definitions, plus the routine we pass
  * to the cd18xx code or interrupt acknowledgement.
  */
-static int	sio16_match __P((struct device *, struct cfdata *, void *));
-static void	sio16_attach __P((struct device *, struct device *, void *));
+static int	sio16_match(struct device *, struct cfdata *, void *);
+static void	sio16_attach(struct device *, struct device *, void *);
 static u_char	sio16_ackfunc(void *, int who);
 
 /*

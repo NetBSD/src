@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.22.2.5 2004/11/02 07:53:37 skrll Exp $	*/
+/*	$NetBSD: disk.h,v 1.22.2.6 2005/02/04 11:48:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -267,15 +267,15 @@ struct disk_sysctl {
 };
 
 struct dkdriver {
-	void	(*d_strategy) __P((struct buf *));
-	void	(*d_minphys) __P((struct buf *));
+	void	(*d_strategy)(struct buf *);
+	void	(*d_minphys)(struct buf *);
 #ifdef notyet
-	int	(*d_open) __P((dev_t, int, int, struct proc *));
-	int	(*d_close) __P((dev_t, int, int, struct proc *));
-	int	(*d_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
-	int	(*d_dump) __P((dev_t));
-	void	(*d_start) __P((struct buf *, daddr_t));
-	int	(*d_mklabel) __P((struct disk *));
+	int	(*d_open)(dev_t, int, int, struct proc *);
+	int	(*d_close)(dev_t, int, int, struct proc *);
+	int	(*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int	(*d_dump)(dev_t);
+	void	(*d_start)(struct buf *, daddr_t);
+	int	(*d_mklabel)(struct disk *);
 #endif
 };
 
@@ -316,12 +316,12 @@ extern	int disk_count;			/* number of disks in global disklist */
 struct device;
 struct proc;
 
-void	disk_attach __P((struct disk *));
-void	disk_detach __P((struct disk *));
-void	disk_busy __P((struct disk *));
-void	disk_unbusy __P((struct disk *, long, int));
-void	disk_resetstat __P((struct disk *));
-struct	disk *disk_find __P((char *));
+void	disk_attach(struct disk *);
+void	disk_detach(struct disk *);
+void	disk_busy(struct disk *);
+void	disk_unbusy(struct disk *, long, int);
+void	disk_resetstat(struct disk *);
+struct	disk *disk_find(char *);
 
 int	dkwedge_add(struct dkwedge_info *);
 int	dkwedge_del(struct dkwedge_info *);

@@ -1,4 +1,4 @@
-/* $NetBSD: exec_coff.h,v 1.4.2.4 2004/09/21 13:38:45 skrll Exp $ */
+/* $NetBSD: exec_coff.h,v 1.4.2.5 2005/02/04 11:48:05 skrll Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -141,16 +141,16 @@ struct coff_exechdr {
          COFF_SEGMENT_ALIGNMENT(fp, ap))))
 
 #ifdef _KERNEL
-int     exec_coff_makecmds __P((struct lwp *, struct exec_package *));
+int     exec_coff_makecmds(struct lwp *, struct exec_package *);
 
-int	exec_coff_prep_omagic __P((struct proc *, struct exec_package *,
-				   struct coff_filehdr *,
-				   struct coff_aouthdr *));
-int	exec_coff_prep_nmagic __P((struct proc *, struct exec_package *,
-				   struct coff_filehdr *,
-				   struct coff_aouthdr *));
-int	exec_coff_prep_zmagic __P((struct proc *, struct exec_package *,
-				   struct coff_filehdr *,
-				   struct coff_aouthdr *));
+int	exec_coff_prep_omagic(struct proc *, struct exec_package *,
+				struct coff_filehdr *,
+				struct coff_aouthdr *);
+int	exec_coff_prep_nmagic(struct proc *, struct exec_package *,
+				struct coff_filehdr *,
+				struct coff_aouthdr *);
+int	exec_coff_prep_zmagic(struct proc *, struct exec_package *,
+				struct coff_filehdr *,
+				struct coff_aouthdr *);
 #endif /* _KERNEL */
 #endif /* !_SYS_EXEC_COFF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.2.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.2.4 2005/02/04 11:44:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.2.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.2.4 2005/02/04 11:44:49 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -207,11 +207,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	consinit();
 
-	/*
-	 * external interrupt handler install
-	 */
-	(*platform->init_intr)();
-
         /*
 	 * Set the page size.
 	 */
@@ -253,6 +248,11 @@ cpu_startup()
 	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
 	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
+
+	/*
+	 * external interrupt handler install
+	 */
+	(*platform->init_intr)();
 
 	/*
 	 * Do common startup.

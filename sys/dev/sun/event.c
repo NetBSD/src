@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.14.2.4 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: event.c,v 1.14.2.5 2005/02/04 11:47:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14.2.4 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14.2.5 2005/02/04 11:47:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14.2.4 2004/09/21 13:33:27 skrll Exp $")
 #include <dev/sun/vuid_event.h>
 #include <dev/sun/event_var.h>
 
-int (*ev_out32_hook) __P((struct firm_event *, int, struct uio *));
+int (*ev_out32_hook)(struct firm_event *, int, struct uio *);
 
 /*
  * Initialize a firm_event queue.

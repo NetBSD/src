@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.28.2.4 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: lance.c,v 1.28.2.5 2005/02/04 11:45:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.28.2.4 2004/11/02 07:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.28.2.5 2005/02/04 11:45:26 skrll Exp $");
 
 #include "opt_ccitt.h"
 #include "opt_llc.h"
@@ -125,18 +125,18 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.28.2.4 2004/11/02 07:51:31 skrll Exp $")
 #define hide		static
 #endif
 
-integrate struct mbuf *lance_get __P((struct lance_softc *, int, int));
+integrate struct mbuf *lance_get(struct lance_softc *, int, int);
 
-hide void lance_shutdown __P((void *));
+hide void lance_shutdown(void *);
 
-int lance_mediachange __P((struct ifnet *));
-void lance_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int lance_mediachange(struct ifnet *);
+void lance_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static inline u_int16_t ether_cmp __P((void *, void *));
+static inline u_int16_t ether_cmp(void *, void *);
 
-void lance_stop __P((struct ifnet *, int));
-int lance_ioctl __P((struct ifnet *, u_long, caddr_t));
-void lance_watchdog __P((struct ifnet *));
+void lance_stop(struct ifnet *, int);
+int lance_ioctl(struct ifnet *, u_long, caddr_t);
+void lance_watchdog(struct ifnet *);
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and

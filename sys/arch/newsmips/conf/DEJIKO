@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.8.6.5 2005/01/24 08:34:18 skrll Exp $
+# 	$NetBSD: DEJIKO,v 1.8.6.6 2005/02/04 11:44:47 skrll Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -79,3 +79,4 @@ pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	fss		4	# file system snapshot device

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.5.16.2 2004/09/21 13:29:45 skrll Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.5.16.3 2005/02/04 11:46:09 skrll Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.5.16.2 2004/09/21 13:29:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.5.16.3 2005/02/04 11:46:09 skrll Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -63,15 +63,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.5.16.2 2004/09/21 13:29:45 skrll 
 
 #include <dev/ic/elink3reg.h>
 
-u_int16_t	tcmreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
+u_int16_t	tcmreadeeprom(bus_space_tag_t, bus_space_handle_t, int);
 #ifdef TRTCMISADEBUG
-void	tcmdumpeeprom __P((bus_space_tag_t, bus_space_handle_t));
+void	tcmdumpeeprom(bus_space_tag_t, bus_space_handle_t);
 #endif
 
-int	trtcm_isa_probe __P((struct device *, struct cfdata *, void *));
+int	trtcm_isa_probe(struct device *, struct cfdata *, void *);
 
-int	trtcm_isa_mediachange __P((struct tr_softc *));
-void	trtcm_isa_mediastatus __P((struct tr_softc *, struct ifmediareq *));
+int	trtcm_isa_mediachange(struct tr_softc *);
+void	trtcm_isa_mediastatus(struct tr_softc *, struct ifmediareq *);
 
 /*
  * TODO:
@@ -82,7 +82,7 @@ void	trtcm_isa_mediastatus __P((struct tr_softc *, struct ifmediareq *));
  * DIR_SET_DEFAULT_RING_SPEED or set the speed in the eeprom ??
  */
 
-static	void tcmaddcard __P((int, int, int, int, u_int, int, int));
+static	void tcmaddcard(int, int, int, int, u_int, int, int);
 
 /*
  * This keeps track of which ISAs have been through a 3com probe sequence.

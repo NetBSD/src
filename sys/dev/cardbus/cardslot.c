@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.22.2.3 2004/09/21 13:27:25 skrll Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.22.2.4 2005/02/04 11:45:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.3 2004/09/21 13:27:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.4 2005/02/04 11:45:23 skrll Exp $");
 
 #include "opt_cardslot.h"
 
@@ -65,16 +65,16 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.3 2004/09/21 13:27:25 skrll Exp 
 
 
 
-STATIC void cardslotattach __P((struct device *, struct device *, void *));
+STATIC void cardslotattach(struct device *, struct device *, void *);
 
-STATIC int cardslotmatch __P((struct device *, struct cfdata *, void *));
-static void create_slot_manager __P((void *));
-static void cardslot_event_thread __P((void *arg));
+STATIC int cardslotmatch(struct device *, struct cfdata *, void *);
+static void create_slot_manager(void *);
+static void cardslot_event_thread(void *arg);
 
-STATIC int cardslot_cb_print __P((void *aux, const char *pcic));
-static int cardslot_16_print __P((void *, const char *));
-static int cardslot_16_submatch __P((struct device *, struct cfdata *,
-				     const locdesc_t *, void *));
+STATIC int cardslot_cb_print(void *aux, const char *pcic);
+static int cardslot_16_print(void *, const char *);
+static int cardslot_16_submatch(struct device *, struct cfdata *,
+				     const locdesc_t *, void *);
 
 CFATTACH_DECL(cardslot, sizeof(struct cardslot_softc),
     cardslotmatch, cardslotattach, NULL, NULL);

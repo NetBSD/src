@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.50.2.9 2004/12/18 09:33:18 skrll Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.50.2.10 2005/02/04 11:48:27 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.9 2004/12/18 09:33:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.10 2005/02/04 11:48:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/callout.h>
+#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -202,7 +203,7 @@ static void softdep_trackbufs(struct inode *, int, boolean_t);
 static	void softdep_disk_io_initiation __P((struct buf *));
 static	void softdep_disk_write_complete __P((struct buf *));
 static	void softdep_deallocate_dependencies __P((struct buf *));
-static	int softdep_fsync __P((struct vnode *));
+static	int softdep_fsync __P((struct vnode *, int));
 static	int softdep_process_worklist __P((struct mount *));
 static	void softdep_move_dependencies __P((struct buf *, struct buf *));
 static	int softdep_count_dependencies __P((struct buf *bp, int));
@@ -4666,8 +4667,9 @@ merge_inode_lists(inodedep)
  * entries for the inode have been written after the inode gets to disk.
  */
 static int
-softdep_fsync(vp)
+softdep_fsync(vp, f)
 	struct vnode *vp;	/* the "in_core" copy of the inode */
+	int f;			/* Flags */
 {
 	struct diradd *dap;
 	struct inodedep *inodedep;
@@ -4678,10 +4680,11 @@ softdep_fsync(vp)
 	struct inode *ip;
 	struct buf *bp;
 	struct fs *fs;
-	struct lwp *l = curlwp;		/* XXX */
+	struct lwp *lp = curlwp;	/* XXX */
 	int error, flushparent;
 	ino_t parentino;
 	daddr_t lbn;
+	int l;
 
 	ip = VTOI(vp);
 	fs = ip->i_fs;
@@ -4759,8 +4762,8 @@ softdep_fsync(vp)
 				return (error);
 			}
 			if ((pagedep->pd_state & NEWBLOCK) &&
-			    (error = VOP_FSYNC(pvp, l->l_proc->p_ucred,
-			    FSYNC_WAIT, 0, 0, l))) {
+			    (error = VOP_FSYNC(pvp, lp->l_proc->p_ucred,
+			    FSYNC_WAIT, 0, 0, lp))) {
 				vput(pvp);
 				return (error);
 			}
@@ -4769,7 +4772,7 @@ softdep_fsync(vp)
 		 * Flush directory page containing the inode's name.
 		 */
 		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn),
-		    l->l_proc->p_ucred, &bp);
+		    lp->l_proc->p_ucred, &bp);
 		if (error == 0)
 			error = VOP_BWRITE(bp);
 		vput(pvp);
@@ -4780,6 +4783,15 @@ softdep_fsync(vp)
 			break;
 	}
 	FREE_LOCK(&lk);
+	if (f & FSYNC_CACHE) {
+		/*
+		 * If requested, make sure all of these changes don't
+		 * linger in disk caches
+		 */
+		l = 0;
+		VOP_IOCTL(ip->i_devvp, DIOCCACHESYNC, &l, FWRITE,
+		    lp->l_proc->p_ucred, lp);
+	}
 	return (0);
 }
 

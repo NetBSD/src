@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11.22.3 2004/09/21 13:19:57 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11.22.4 2005/02/04 11:44:48 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11.22.3 2004/09/21 13:19:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11.22.4 2005/02/04 11:44:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
 
-		if (lastframe == 0 && sym == NULL) {
+		if (lastframe == NULL && sym == 0) {
 			/* Symbol not found, peek at code */
 			int	instr = db_get_value(callpc, 1, FALSE);
 
@@ -314,7 +314,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 		(*pr)("%s(", name);
 
-		if (lastframe == 0 && offset == 0 && !have_addr) {
+		if (lastframe == NULL && offset == 0 && !have_addr) {
 			/*
 			 * We have a breakpoint before the frame is set up
 			 * Use sp instead
@@ -336,7 +336,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		db_printsym(callpc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 
-		if (lastframe == 0 && offset == 0 && !have_addr) {
+		if (lastframe == NULL && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
 			lastframe = (struct ns532_frame *)(ddb_regs.tf_regs.r_sp-4);
 			callpc = (db_addr_t)
@@ -347,7 +347,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		lastframe = frame;
 		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);
 
-		if (frame == 0) {
+		if (frame == NULL) {
 			/* end of chain */
 			break;
 		}

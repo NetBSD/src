@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.39.2.11 2005/01/17 19:31:23 skrll Exp $	*/
+/*	$NetBSD: auich.c,v 1.39.2.12 2005/02/04 11:46:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.11 2005/01/17 19:31:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.12 2005/02/04 11:46:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,7 @@ struct auich_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
+	struct pci_conf_state sc_pciconf;
 
 	/* sysctl */
 	struct sysctllog *sc_log;
@@ -337,8 +338,10 @@ static const struct audio_format auich_formats[AUICH_NFORMATS] = {
 #define PCIID_SIS7012		PCI_ID_CODE0(SIS, 7012_AC)
 #define PCIID_NFORCE		PCI_ID_CODE0(NVIDIA, NFORCE_MCP_AC)
 #define PCIID_NFORCE2		PCI_ID_CODE0(NVIDIA, NFORCE2_MCPT_AC)
+#define PCIID_NFORCE2_400	PCI_ID_CODE0(NVIDIA, NFORCE2_400_MCPT_AC)
 #define PCIID_NFORCE3		PCI_ID_CODE0(NVIDIA, NFORCE3_MCPT_AC)
 #define PCIID_NFORCE3_250	PCI_ID_CODE0(NVIDIA, NFORCE3_250_MCPT_AC)
+#define PCIID_NFORCE4		PCI_ID_CODE0(NVIDIA, NFORCE4_AC)
 #define PCIID_AMD768		PCI_ID_CODE0(AMD, PBC768_AC)
 #define PCIID_AMD8111		PCI_ID_CODE0(AMD, PBC8111_AC)
 
@@ -358,8 +361,10 @@ static const struct auich_devtype {
 	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",	"SiS7012" },
 	{ PCIID_NFORCE,	"nForce MCP AC-97 Audio",	"nForce" },
 	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
+	{ PCIID_NFORCE2_400, "nForce2 400 MCP-T AC-97 Audio",	"nForce2" },
 	{ PCIID_NFORCE3, "nForce3 MCP-T AC-97 Audio",	"nForce3" },
 	{ PCIID_NFORCE3_250, "nForce3 250 MCP-T AC-97 Audio", "nForce3" },
+	{ PCIID_NFORCE4, "nForce4 AC-97 Audio",		"nForce4" },
 	{ PCIID_AMD768,	"AMD768 AC-97 Audio",		"AMD768" },
 	{ PCIID_AMD8111,"AMD8111 AC-97 Audio",		"AMD8111" },
 	{ 0,		NULL,				NULL },
@@ -1420,6 +1425,7 @@ auich_powerhook(int why, void *addr)
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
 		sc->sc_suspend = why;
+		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
 		break;
 
 	case PWR_RESUME:
@@ -1431,6 +1437,7 @@ auich_powerhook(int why, void *addr)
 			sc->sc_suspend = why;
 			return;
 		}
+		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
 		sc->sc_suspend = why;
 		auich_reset_codec(sc);
 		DELAY(1000);

@@ -1,4 +1,4 @@
-#	$NetBSD: BULLBOX,v 1.14.6.4 2004/11/14 08:15:24 skrll Exp $
+#	$NetBSD: BULLBOX,v 1.14.6.5 2005/02/04 11:44:47 skrll Exp $
 #
 # BULLBOX: Kernel for Jon Buller's machine
 #
@@ -80,6 +80,7 @@ uk* at scsibus? target ? lun ?		# All the things we don't know
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop		1	# loopback network
 pseudo-device	vnd		2	# vnode devices
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	bpfilter	4	# packet filter
 pseudo-device	ipfilter
 pseudo-device	ppp		4	# Point-to-Point Protocol

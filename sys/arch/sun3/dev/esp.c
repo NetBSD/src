@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.17.6.4 2005/01/24 08:34:47 skrll Exp $	*/
+/*	$NetBSD: esp.c,v 1.17.6.5 2005/02/04 11:45:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.17.6.4 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.17.6.5 2005/02/04 11:45:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,11 +241,8 @@ espattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
 
-#if 0
-	/* XXX - This doesn't work yet.  Not sure why... */
 	/* Turn on target selection using the `dma' method */
-	sc->sc_features |= NCR_F_DMASELECT;  /* XXX - OK? */
-#endif
+	sc->sc_features |= NCR_F_DMASELECT;
 }
 
 

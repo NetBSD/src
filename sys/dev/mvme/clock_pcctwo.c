@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.4.8.3 2004/09/21 13:30:59 skrll Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.4.8.4 2005/02/04 11:46:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.4.8.3 2004/09/21 13:30:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.4.8.4 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.4.8.3 2004/09/21 13:30:59 skrll E
 #include <dev/mvme/pcctworeg.h>
 
 
-int clock_pcctwo_match __P((struct device *, struct cfdata *, void *));
-void clock_pcctwo_attach __P((struct device *, struct device *, void *));
+int clock_pcctwo_match(struct device *, struct cfdata *, void *);
+void clock_pcctwo_attach(struct device *, struct device *, void *);
 
 struct clock_pcctwo_softc {
 	struct device sc_dev;
@@ -72,11 +72,11 @@ CFATTACH_DECL(clock_pcctwo, sizeof(struct device),
 
 extern struct cfdriver clock_cd;
 
-static int clock_pcctwo_profintr __P((void *));
-static int clock_pcctwo_statintr __P((void *));
-static void clock_pcctwo_initclocks __P((void *, int, int));
-static long clock_pcctwo_microtime __P((void *));
-static void clock_pcctwo_shutdown __P((void *));
+static int clock_pcctwo_profintr(void *);
+static int clock_pcctwo_statintr(void *);
+static void clock_pcctwo_initclocks(void *, int, int);
+static long clock_pcctwo_microtime(void *);
+static void clock_pcctwo_shutdown(void *);
 
 static struct clock_pcctwo_softc *clock_pcctwo_sc;
 

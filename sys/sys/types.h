@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.58.2.4 2005/01/17 19:33:10 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.58.2.5 2005/02/04 11:48:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -230,9 +230,9 @@ typedef intptr_t semid_t;
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
-off_t	 lseek __P((int, off_t, int));
-int	 ftruncate __P((int, off_t));
-int	 truncate __P((const char *, off_t));
+off_t	 lseek(int, off_t, int);
+int	 ftruncate(int, off_t);
+int	 truncate(const char *, off_t);
 __END_DECLS
 #endif /* !_KERNEL */
 #endif /* __OFF_T_SYSCALLS_DECLARED */

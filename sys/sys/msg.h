@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.14.2.1 2004/10/19 15:58:30 skrll Exp $	*/
+/*	$NetBSD: msg.h,v 1.14.2.2 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -207,16 +207,16 @@ extern struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	msgctl __P((int, int, struct msqid_ds *)) __RENAME(__msgctl13);
-int	msgget __P((key_t, int));
-int	msgsnd __P((int, const void *, size_t, int));
-ssize_t	msgrcv __P((int, void *, size_t, long, int));
+int	msgctl(int, int, struct msqid_ds *) __RENAME(__msgctl13);
+int	msgget(key_t, int);
+int	msgsnd(int, const void *, size_t, int);
+ssize_t	msgrcv(int, void *, size_t, long, int);
 __END_DECLS
 #else
 struct proc;
 
-void	msginit __P((void));
-int	msgctl1 __P((struct proc *, int, int, struct msqid_ds *));
+void	msginit(void);
+int	msgctl1(struct proc *, int, int, struct msqid_ds *);
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

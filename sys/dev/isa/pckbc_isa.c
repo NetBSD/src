@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.11.6.3 2004/09/21 13:29:47 skrll Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.11.6.4 2005/02/04 11:46:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11.6.3 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11.6.4 2005/02/04 11:46:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11.6.3 2004/09/21 13:29:47 skrll Exp
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 
-int	pckbc_isa_match __P((struct device *, struct cfdata *, void *));
-void	pckbc_isa_attach __P((struct device *, struct device *, void *));
+int	pckbc_isa_match(struct device *, struct cfdata *, void *);
+void	pckbc_isa_attach(struct device *, struct device *, void *);
 
 struct pckbc_isa_softc {
 	struct pckbc_softc sc_pckbc;
@@ -59,7 +59,7 @@ struct pckbc_isa_softc {
 CFATTACH_DECL(pckbc_isa, sizeof(struct pckbc_isa_softc),
     pckbc_isa_match, pckbc_isa_attach, NULL, NULL);
 
-void	pckbc_isa_intr_establish __P((struct pckbc_softc *, pckbc_slot_t));
+void	pckbc_isa_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 int
 pckbc_isa_match(parent, match, aux)

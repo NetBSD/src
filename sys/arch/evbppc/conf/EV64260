@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.6.2.5 2004/11/29 07:24:03 skrll Exp $
+#	$NetBSD: EV64260,v 1.6.2.6 2005/02/04 11:44:18 skrll Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -178,6 +178,10 @@ gfe0		at gt0 unit 0 flags 1	# Ethernet #0 (RMMI)
 gfe1		at gt0 unit 1 flags 1	# Ethernet #1 (RMMI)
 gfe2		at gt0 unit 2 flags 1	# Ethernet #2 (RMMI)
 
+# I2C
+gtiic0		at gt0 unit 0		# I2C controller
+iic*		at gtiic?
+
 # PCI devices
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
@@ -251,6 +255,7 @@ wd*		at atabus? drive ? flags 0x0000
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter

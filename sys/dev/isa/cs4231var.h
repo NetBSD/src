@@ -1,4 +1,4 @@
-/* $NetBSD: cs4231var.h,v 1.3 1997/10/09 07:57:17 jtc Exp $ */
+/* $NetBSD: cs4231var.h,v 1.3.50.1 2005/02/04 11:46:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,10 +48,10 @@ struct cs4231_softc {
 #define CS4231_MUX_LINE_IN	3
 };
 
-int	cs4231_set_linein_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	cs4231_get_linein_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	cs4231_set_mono_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	cs4231_get_mono_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-void	cs4231_mute_mono __P((struct ad1848_softc *, int /* onoff */));
-void	cs4231_mute_line __P((struct ad1848_softc *, int /* onoff */));
-void	cs4231_mute_monitor __P((struct ad1848_softc *, int /* onoff */));
+int	cs4231_set_linein_gain(struct ad1848_softc *, struct ad1848_volume *);
+int	cs4231_get_linein_gain(struct ad1848_softc *, struct ad1848_volume *);
+int	cs4231_set_mono_gain(struct ad1848_softc *, struct ad1848_volume *);
+int	cs4231_get_mono_gain(struct ad1848_softc *, struct ad1848_volume *);
+void	cs4231_mute_mono(struct ad1848_softc *, int /* onoff */);
+void	cs4231_mute_line(struct ad1848_softc *, int /* onoff */);
+void	cs4231_mute_monitor(struct ad1848_softc *, int /* onoff */);

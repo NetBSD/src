@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.9.2.7 2004/11/14 08:15:45 skrll Exp $	*/
+/*	$NetBSD: piixide.c,v 1.9.2.8 2005/02/04 11:46:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -46,6 +46,7 @@ static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 
+static void piixide_powerhook(int, void *);
 static int  piixide_match(struct device *, struct cfdata *, void *);
 static void piixide_attach(struct device *, struct device *, void *);
 
@@ -186,6 +187,33 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
+	/* Setup our powerhook */
+	sc->sc_powerhook = powerhook_establish(piixide_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish PCI power hook\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+}
+
+static void
+piixide_powerhook(int why, void *hdl)
+{
+	struct pciide_softc *sc = (struct pciide_softc *)hdl;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+
+	return;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.4.6.3 2004/09/21 13:29:47 skrll Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.4.6.4 2005/02/04 11:46:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.4.6.3 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.4.6.4 2005/02/04 11:46:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.4.6.3 2004/09/21 13:29:47 skrll Exp $"
 
 #define JOY_NPORTS    1
 
-int	joy_isa_probe __P((struct device *, struct cfdata *, void *));
-void	joy_isa_attach __P((struct device *, struct device *, void *));
+int	joy_isa_probe(struct device *, struct cfdata *, void *);
+void	joy_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(joy_isa, sizeof(struct joy_softc),
     joy_isa_probe, joy_isa_attach, NULL, NULL);

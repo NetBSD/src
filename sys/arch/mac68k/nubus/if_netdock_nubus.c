@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.3.6.5 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.3.6.6 2005/02/04 11:44:32 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.3.6.5 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.3.6.6 2005/02/04 11:44:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -731,6 +731,9 @@ netdock_rxint(struct netdock_softc *sc)
 		if ((regdata1 & REG_DATA_BIT_04) == 0)
 			len -= 2;
 
+		/* CRC is included with the packet; trim it off. */
+		len -= ETHER_CRC_LEN;
+
 		if ((regdata1 & 0x00ac) == 0) {
 			if (netdock_read(sc, len))
 				ifp->if_ipackets++;
@@ -769,9 +772,6 @@ netdock_read(struct netdock_softc *sc, int len)
 	m = netdock_get(sc, len);
 	if (m == 0)
 		return (0);
-
-	/* the data comes with frame checksum and ethernet header */
-	m->m_flags |= M_HASFCS;
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) 

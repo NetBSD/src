@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.125.2.9 2005/01/24 08:35:53 skrll Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.125.2.10 2005/02/04 11:48:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.9 2005/01/24 08:35:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.10 2005/02/04 11:48:04 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1502,18 +1502,22 @@ done:
 }
 
 void
-nfs_invaldircache(vp, forcefree)
+nfs_invaldircache(vp, flags)
 	struct vnode *vp;
-	int forcefree;
+	int flags;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdircache *ndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	const boolean_t forcefree = flags & NFS_INVALDIRCACHE_FORCE;
 
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VDIR)
 		panic("nfs: invaldircache: not dir");
 #endif
+
+	if ((flags & NFS_INVALDIRCACHE_KEEPEOF) == 0)
+		np->n_flag &= ~NEOFVALID;
 
 	if (!np->n_dircache)
 		return;
@@ -1946,12 +1950,23 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			error = EINVAL;
 		}
 
-		/*
-		 *
-		 */
-
 		nmp = VFSTONFS(vp->v_mount);
 		if (error) {
+
+			/*
+			 * despite of the fact that we've updated the file,
+			 * timestamps of the file were not updated as we
+			 * expected.
+			 * it means that the server has incompatible
+			 * semantics of timestamps or (more likely)
+			 * the server time is not precise enough to
+			 * track each modifications.
+			 * in that case, we disable wcc processing.
+			 *
+			 * yes, strictly speaking, we should disable all
+			 * caching.  it's a compromise.
+			 */
+
 			simple_lock(&nmp->nm_slock);
 #if defined(DEBUG)
 			if (!NFS_WCCKLUDGE(nmp, now)) {
@@ -2089,6 +2104,8 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 
 	if ((len + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
+	if (len == 0)
+		return (EACCES);
 	cnp->cn_pnbuf = PNBUF_GET();
 
 	/*
@@ -2667,7 +2684,7 @@ nfs_clearcommit(mp)
 
 	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
-		if (vp->v_type == VNON)
+		if (vp->v_type != VREG)
 			continue;
 		np = VTONFS(vp);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.33.2.5 2005/01/24 08:35:36 skrll Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.33.2.6 2005/02/04 11:47:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.5 2005/01/24 08:35:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.6 2005/02/04 11:47:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,19 +73,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.5 2005/01/24 08:35:36 skrll 
 
 #include <dev/microcode/wi/spectrum24t_cf.h>
 
-static int	wi_pcmcia_match __P((struct device *, struct cfdata *, void *));
-static int	wi_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-static void	wi_pcmcia_attach __P((struct device *, struct device *, void *));
-static int	wi_pcmcia_detach __P((struct device *, int));
-static int	wi_pcmcia_enable __P((struct wi_softc *));
-static void	wi_pcmcia_disable __P((struct wi_softc *));
-static void	wi_pcmcia_powerhook __P((int, void *));
-static void	wi_pcmcia_shutdown __P((void *));
+static int	wi_pcmcia_match(struct device *, struct cfdata *, void *);
+static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
+static void	wi_pcmcia_attach(struct device *, struct device *, void *);
+static int	wi_pcmcia_detach(struct device *, int);
+static int	wi_pcmcia_enable(struct wi_softc *);
+static void	wi_pcmcia_disable(struct wi_softc *);
+static void	wi_pcmcia_powerhook(int, void *);
+static void	wi_pcmcia_shutdown(void *);
 
 /* support to download firmware for symbol CF card */
-static int	wi_pcmcia_load_firm __P((struct wi_softc *, const void *, int, const void *, int));
-static int	wi_pcmcia_write_firm __P((struct wi_softc *, const void *, int, const void *, int));
-static int	wi_pcmcia_set_hcr __P((struct wi_softc *, int));
+static int	wi_pcmcia_load_firm(struct wi_softc *, const void *, int, const void *, int);
+static int	wi_pcmcia_write_firm(struct wi_softc *, const void *, int, const void *, int);
+static int	wi_pcmcia_set_hcr(struct wi_softc *, int);
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;

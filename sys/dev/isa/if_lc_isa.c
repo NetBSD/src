@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.16.6.3 2004/09/21 13:29:45 skrll Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.16.6.4 2005/02/04 11:46:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.3 2004/09/21 13:29:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.4 2005/02/04 11:46:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,10 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.3 2004/09/21 13:29:45 skrll Exp
 
 extern struct cfdriver lc_cd;
 
-static int lemac_isa_find __P((lemac_softc_t *, struct isa_attach_args *,
-    int));
-static int lemac_isa_probe __P((struct device *, struct cfdata *, void *));
-static void lemac_isa_attach __P((struct device *, struct device *, void *));
+static int lemac_isa_find(lemac_softc_t *, struct isa_attach_args *, int);
+static int lemac_isa_probe(struct device *, struct cfdata *, void *);
+static void lemac_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lc_isa, sizeof(lemac_softc_t),
     lemac_isa_probe, lemac_isa_attach, NULL, NULL);

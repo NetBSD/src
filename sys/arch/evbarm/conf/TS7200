@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.7.4.3 2005/01/24 08:34:06 skrll Exp $
+#	$NetBSD: TS7200,v 1.7.4.4 2005/02/04 11:44:18 skrll Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -132,7 +132,7 @@ options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=400000
+options 	SYMTAB_SPACE=450000
 
 ##options 	PMAP_INCLUDE_PTE_SYNC
 ##options 	LOCKDEBUG
@@ -169,6 +169,10 @@ wdc0		at tspld?
 tsrtc*		at tspld?
 # HD44780 LCD on LCD header
 tslcd*		at tspld?
+wsdisplay*	at tslcd? console ?
+# 4x4 Matrix Keypad on DIO header
+tskp*		at tspld?
+wskbd*	at tskp? console ? mux 1
 
 # TS-SER[1,2,4] multiport serial PC/104 cards
 com0		at isa? port 0x3f8 irq 6        # Standard PC serial ports
@@ -269,8 +273,8 @@ uhidev*	at uhub? port ? configuration ? interface ?
 # wsmouse* at uep? mux 0
 
 # USB Keyboards
-#ukbd*	at uhidev? reportid ?
-# wskbd*	at ukbd? console ? mux 1
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -404,6 +408,7 @@ audio*	at audiobus?
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
@@ -421,7 +426,50 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
+#
+# wscons options
+#
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+#options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
+#options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+# customization of console border color
+#options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
+# compatibility to other console drivers
+#options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+#options 	PCDISPLAY_SOFTCURSOR
+# modify the screen type of the console; defaults to "80x25"
+#options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# work around a hardware bug that loaded fonts don't work; found on ATI cards
+#options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
+# console scrolling support.
+#options 	WSDISPLAY_SCROLLSUPPORT
+# enable VGA raster mode capable of displaying multilingual text on console
+#options 	VGA_RASTERCONSOLE
+
 # wscons pseudo-devices
-#pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21.2.4 2005/01/17 19:30:09 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21.2.5 2005/02/04 11:44:48 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21.2.4 2005/01/17 19:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21.2.5 2005/02/04 11:44:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1297,7 +1297,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 
 #ifdef DIAGNOSTIC
 	if ((idx < TLB_NRESERVED) || (idx >= NTLB)) {
-		panic("ppc4xx_tlb_enter: repacing entry %ld", idx);
+		panic("ppc4xx_tlb_enter: replacing entry %ld", idx);
 	}
 #endif
 

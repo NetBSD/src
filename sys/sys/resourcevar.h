@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.17.2.3 2004/09/21 13:38:49 skrll Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.17.2.4 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -103,15 +103,15 @@ int       chgproccnt(uid_t, int);
 int       chgsbsize(uid_t, u_long *, u_long, rlim_t);
 
 extern char defcorename[];
-void	 addupc_intr __P((struct proc *, u_long));
-void	 addupc_task __P((struct proc *, u_long, u_int));
-void	 calcru __P((struct proc *, struct timeval *, struct timeval *,
-	    struct timeval *));
-struct plimit *limcopy __P((struct plimit *));
-void limfree __P((struct plimit *));
-void	ruadd __P((struct rusage *, struct rusage *));
-struct	pstats *pstatscopy __P((struct pstats *));
-void 	pstatsfree __P((struct pstats *));
+void	 addupc_intr(struct proc *, u_long);
+void	 addupc_task(struct proc *, u_long, u_int);
+void	 calcru(struct proc *, struct timeval *, struct timeval *,
+	    struct timeval *);
+struct plimit *limcopy(struct plimit *);
+void limfree(struct plimit *);
+void	ruadd(struct rusage *, struct rusage *);
+struct	pstats *pstatscopy(struct pstats *);
+void 	pstatsfree(struct pstats *);
 extern rlim_t maxdmap;
 extern rlim_t maxsmap;
 #endif

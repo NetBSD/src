@@ -1,4 +1,4 @@
-/*	$NetBSD: utsname.h,v 1.10.2.3 2004/09/21 13:38:51 skrll Exp $	*/
+/*	$NetBSD: utsname.h,v 1.10.2.4 2005/02/04 11:48:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -56,7 +56,7 @@ struct utsname {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	uname __P((struct utsname *));
+int	uname(struct utsname *);
 __END_DECLS
 
 #endif	/* !_SYS_UTSNAME_H_ */

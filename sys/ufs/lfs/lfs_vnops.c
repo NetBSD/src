@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.109.2.6 2004/10/30 06:46:50 skrll Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.109.2.7 2005/02/04 11:48:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.6 2004/10/30 06:46:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.7 2005/02/04 11:48:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,6 +317,11 @@ lfs_fsync(void *v)
 	if (error)
 		return error;
 	error = VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
+	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+		int l = 0;
+		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
+				  ap->a_l->l_proc->p_ucred, ap->a_l);
+	}
 	if (wait && !VPISEMPTY(vp))
 		LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.24.2.3 2004/09/21 13:17:06 skrll Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.24.2.4 2005/02/04 11:44:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.24.2.3 2004/09/21 13:17:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.24.2.4 2005/02/04 11:44:31 skrll Exp $");
 
 #include "opt_pcibios.h"
 
@@ -336,7 +336,7 @@ pciintr_bitmap_find_lowest_irq(int irq_bitmap, int *irqp)
 }
 
 int
-pciintr_link_init()
+pciintr_link_init(void)
 {
 	int entry, pin, link;
 	struct pcibios_intr_routing *pir;
@@ -395,7 +395,7 @@ pciintr_link_init()
  * Hopes the BIOS already setup the ICU.
  */
 int
-pciintr_guess_irq()
+pciintr_guess_irq(void)
 {
 	struct pciintr_link_map *l;
 	int irq, guessed = 0;
@@ -423,7 +423,7 @@ pciintr_guess_irq()
 #endif /* PCIBIOS_INTR_GUESS */
 
 int
-pciintr_link_fixup()
+pciintr_link_fixup(void)
 {
 	struct pciintr_link_map *l;
 	int irq;

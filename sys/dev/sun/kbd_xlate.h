@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_xlate.h,v 1.4.6.3 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: kbd_xlate.h,v 1.4.6.4 2005/02/04 11:47:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,5 +71,5 @@ struct kbd_state {
 
 };
 
-extern void kbd_xlate_init __P((struct kbd_state *ks));
-extern int kbd_code_to_keysym __P((struct kbd_state *ks, int c));
+extern void kbd_xlate_init(struct kbd_state *ks);
+extern int kbd_code_to_keysym(struct kbd_state *ks, int c);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.188.2.3 2004/09/21 13:22:33 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.188.2.4 2005/02/04 11:44:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2501,9 +2501,17 @@ return_from_syscall:
  * this contains the psr, pc, npc, and interrupt level.
  */
 softintr_sun44c:
+	/*
+	 * Entry point for level 1, 4 or 6 interrupts on sun4/sun4c
+	 * which may be software interrupts. Check the interrupt
+	 * register to see whether we're dealing software or hardware
+	 * interrupt.
+	 */
 	sethi	%hi(INTRREG_VA), %l6
 	ldub	[%l6 + %lo(INTRREG_VA)], %l5
-	andn	%l5, %l4, %l5
+	btst	%l5, %l4		! is IE_L{1,4,6} set?
+	bz	sparc_interrupt44c	! if not, must be a hw intr
+	andn	%l5, %l4, %l5		! clear soft intr bit
 	stb	%l5, [%l6 + %lo(INTRREG_VA)]
 
 softintr_common:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.1.2.2 2005/01/24 08:35:36 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.1.2.3 2005/02/04 11:47:34 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.1.2.2 2005/01/24 08:35:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.1.2.3 2005/02/04 11:47:34 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -488,7 +488,7 @@ atu_start_scan(struct atu_softc *sc)
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		DPRINTFN(20, ("%s: scan cmd len=%02lx\n",
-		    USBDEVNAME(sc->atu_dev), sizeof(Scan)));
+		    USBDEVNAME(sc->atu_dev), (unsigned long)sizeof(Scan)));
 	}
 #endif /* ATU_DEBUG */
 
@@ -635,7 +635,7 @@ atu_initial_config(struct atu_softc *sc)
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		DPRINTFN(20, ("%s: configlen=%02lx\n", USBDEVNAME(sc->atu_dev),
-		    sizeof(cmd)));
+		    (unsigned long)sizeof(cmd)));
 	}
 #endif /* ATU_DEBUG */
 

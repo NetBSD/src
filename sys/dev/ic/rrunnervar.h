@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnervar.h,v 1.7 2002/07/24 19:34:57 hannken Exp $	*/
+/*	$NetBSD: rrunnervar.h,v 1.7.6.1 2005/02/04 11:45:27 skrll Exp $	*/
 
 /* Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -172,8 +172,8 @@ struct esh_softc {
 	caddr_t			sc_dma_addr; /* address in kernel of DMA mem */
 	bus_size_t		sc_dma_size; /* size of dma-able region */
 
-	u_int8_t	(*sc_bist_read) __P((struct esh_softc *));
-	void		(*sc_bist_write) __P((struct esh_softc *, u_int8_t));
+	u_int8_t	(*sc_bist_read)(struct esh_softc *);
+	void		(*sc_bist_write)(struct esh_softc *, u_int8_t);
 
 	/* 
 	 * Definitions for the various driver structures that sit in host
@@ -252,8 +252,8 @@ struct esh_softc {
 	u_int			sc_fp_rings;
 };
 
-void	eshconfig __P((struct esh_softc *));
-int	eshintr __P((void *));
+void	eshconfig(struct esh_softc *);
+int	eshintr(void *);
 #endif /* _KERNEL */
 
 /* Define a few constants for future use */

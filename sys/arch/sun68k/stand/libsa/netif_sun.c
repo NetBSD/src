@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.2.6.1 2005/01/24 08:35:03 skrll Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.2.6.2 2005/02/04 11:45:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ netif_open(void *aux)
 found:
 	memset(s, 0, sizeof(*s));
 	nif = &prom_netif;
-	error = netif_attach(nif, s);
+	error = netif_attach(nif, s, aux);
 	if (error != 0) {
 		errno = error;
 		return (-1);

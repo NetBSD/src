@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.34.6.3 2004/09/21 13:29:45 skrll Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.34.6.4 2005/02/04 11:46:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.34.6.3 2004/09/21 13:29:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.34.6.4 2005/02/04 11:46:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,12 +102,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.34.6.3 2004/09/21 13:29:45 skrll Exp
 
 #include <dev/isa/if_levar.h>
 
-int ne2100_isa_probe __P((struct device *, struct cfdata *, void *));
-int bicc_isa_probe __P((struct device *, struct cfdata *, void *));
-void le_dummyattach __P((struct device *, struct device *, void *));
-int le_dummyprobe __P((struct device *, struct cfdata *, void *));
-void le_ne2100_attach __P((struct device *, struct device *, void *));
-void le_bicc_attach __P((struct device *, struct device *, void *));
+int ne2100_isa_probe(struct device *, struct cfdata *, void *);
+int bicc_isa_probe(struct device *, struct cfdata *, void *);
+void le_dummyattach(struct device *, struct device *, void *);
+int le_dummyprobe(struct device *, struct cfdata *, void *);
+void le_ne2100_attach(struct device *, struct device *, void *);
+void le_bicc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(nele, sizeof(struct device),
     ne2100_isa_probe, le_dummyattach, NULL, NULL);
@@ -135,12 +135,11 @@ struct le_isa_params {
 	0, 2
 };
 
-int lance_isa_probe __P((struct isa_attach_args *, 
-			 struct le_isa_params *, int));
-void le_isa_attach __P((struct device *, struct le_softc *,
-			struct isa_attach_args *, struct le_isa_params *));
+int lance_isa_probe(struct isa_attach_args *, struct le_isa_params *, int);
+void le_isa_attach(struct device *, struct le_softc *,
+			struct isa_attach_args *, struct le_isa_params *);
 
-int le_isa_intredge __P((void *));
+int le_isa_intredge(void *);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -154,8 +153,8 @@ int le_isa_intredge __P((void *));
 #define hide		static
 #endif
 
-hide void le_isa_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_isa_rdcsr __P((struct lance_softc *, u_int16_t));  
+hide void le_isa_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+hide u_int16_t le_isa_rdcsr(struct lance_softc *, u_int16_t);  
 
 #define	LE_ISA_MEMSIZE	16384
 

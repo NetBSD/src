@@ -37,14 +37,14 @@
  *	Siemens I-Surf 2.0 PnP specific routines for isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_siemens_isurf.c,v 1.4 2002/03/24 20:35:52 martin Exp $
+ *	$Id: isic_isapnp_siemens_isurf.c,v 1.4.10.1 2005/02/04 11:46:28 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.4 2002/03/24 20:35:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.4.10.1 2005/02/04 11:46:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.4 2002/03/24 20:35:5
 #include <dev/ic/hscx.h>
 
 #if !defined(__FreeBSD__)
-void isic_attach_siemens_isurf __P((struct isic_softc *sc));
+void isic_attach_siemens_isurf(struct isic_softc *sc);
 #endif
 
 /* masks for register encoded in base addr */

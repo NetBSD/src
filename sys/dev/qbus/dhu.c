@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.33.2.4 2004/09/21 13:32:37 skrll Exp $	*/
+/*	$NetBSD: dhu.c,v 1.33.2.5 2005/02/04 11:47:09 skrll Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.33.2.4 2004/09/21 13:32:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.33.2.5 2005/02/04 11:47:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,14 +170,14 @@ static const struct speedtab dhuspeedtab[] = {
   {      -1,	-1		}
 };
 
-static int	dhu_match __P((struct device *, struct cfdata *, void *));
-static void	dhu_attach __P((struct device *, struct device *, void *));
-static	void	dhurint __P((void *));
-static	void	dhuxint __P((void *));
-static	void	dhustart __P((struct tty *));
-static	int	dhuparam __P((struct tty *, struct termios *));
-static	int	dhuiflow __P((struct tty *, int));
-static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
+static int	dhu_match(struct device *, struct cfdata *, void *);
+static void	dhu_attach(struct device *, struct device *, void *);
+static	void	dhurint(void *);
+static	void	dhuxint(void *);
+static	void	dhustart(struct tty *);
+static	int	dhuparam(struct tty *, struct termios *);
+static	int	dhuiflow(struct tty *, int);
+static unsigned	dhumctl(struct dhu_softc *,int, int, int);
 
 CFATTACH_DECL(dhu, sizeof(struct dhu_softc),
     dhu_match, dhu_attach, NULL, NULL);
