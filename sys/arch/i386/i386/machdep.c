@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.549 2004/02/13 11:36:13 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.550 2004/03/05 11:34:17 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.549 2004/02/13 11:36:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.550 2004/03/05 11:34:17 junyoung Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -220,7 +220,7 @@ struct mtrr_funcs *mtrr_funcs;
 
 #ifdef COMPAT_NOMID
 static int exec_nomid  (struct proc *, struct exec_package *);
-#endif  
+#endif
 
 int	physmem;
 int	dumpmem_low;
@@ -659,7 +659,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		sendsig_siginfo(ksi, mask);
 }
 
-void 
+void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
     void *ap, void *sp, sa_upcall_t upcall)
 {
@@ -676,7 +676,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	frame.sa_interrupted = ninterrupted;
 	frame.sa_arg = ap;
 	frame.sa_ra = 0;
- 
+
 	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
