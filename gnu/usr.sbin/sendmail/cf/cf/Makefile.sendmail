@@ -1,0 +1,15 @@
+# $NetBSD: Makefile.sendmail,v 1.1 2003/04/01 03:16:54 atatat Exp $
+
+CFDIR?=		${.CURDIR}/..
+CHMOD=		chmod
+M4?=		m4
+ROMODE=		444
+RM=		rm -f
+
+.SUFFIXES: .mc .cf
+
+.mc.cf:
+	${RM} $@
+	(cd ${CFDIR}/cf && \
+	    ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
+	${CHMOD} ${ROMODE} $@
