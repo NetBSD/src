@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/06/01 03:39:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 1997/11/04 22:36:19 mellon Exp $
 
 PROG=		boot
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c
@@ -15,5 +15,15 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -o ${.TARGET} -N -T ${RELOC} -e start ${OBJS} \
 	    vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	@size ${.TARGET}
+
+afterinstall:
+	# conjure up a magic header that is accepted by all Sun PROMS;
+	# see installboot.c for details.
+	printf '\01\03\01\07\060\200\0\07' | dd of=${BINDIR}/boot.net \
+		bs=32 conv=sync
+	dd if=${DESTDIR}/${BINDIR}/boot of=${DESTDIR}/${BINDIR}/boot.net \
+		bs=32 skip=1 seek=1
+	chmod ${BINMODE} ${DESTDIR}/${BINDIR}/boot.net
+	chown ${BINOWN}.${BINGRP} ${DESTDIR}/${BINDIR}/boot.net
 
 .include <bsd.prog.mk>
