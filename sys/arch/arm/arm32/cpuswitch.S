@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.39 2003/11/04 10:33:16 dsl Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.40 2003/11/04 22:20:50 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -231,9 +231,9 @@ ASENTRY_NP(idle)
 
 3:	ldr	r3, [r7]		/* r3 = whichqs */
 	teq	r3, #0x00000000
-	moveq	r0, r6
-	adreq	lr, .Lswitch_search
-	beq	_C_LABEL(splx)	    /* Restore ipl, return to switch_search */
+	movne	r0, r6
+	adrne	lr, .Lswitch_search
+	bne	_C_LABEL(splx)	    /* Restore ipl, return to switch_search */
 
 	/* if saving power, don't want to pageidlezero */
 	mov	r0, #0
