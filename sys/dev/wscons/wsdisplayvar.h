@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.16 2000/09/10 09:39:58 takemura Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.17 2000/09/10 11:44:13 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -199,3 +199,5 @@ int wsdisplay_cfg_ioctl __P((struct wsdisplay_softc *sc,
  */
 #define WSDISPLAY_NULLSCREEN	-1
 void wsdisplay_switchtoconsole __P((void));
+const struct wsscreen_descr *
+    wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.32 2000/08/14 20:14:51 thorpej Exp $ */
+/* $NetBSD: vga.c,v 1.33 2000/09/10 11:44:13 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -160,17 +160,17 @@ static unsigned char fgansitopc[] = {
 #endif
 };
 
-const struct wsscreen_descr vga_stdscreen = {
+const struct wsscreen_descr vga_25lscreen = {
 	"80x25", 80, 25,
 	&vga_emulops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
-}, vga_stdscreen_mono = {
+}, vga_25lscreen_mono = {
 	"80x25", 80, 25,
 	&vga_emulops,
 	8, 16,
 	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
-}, vga_stdscreen_bf = {
+}, vga_25lscreen_bf = {
 	"80x25bf", 80, 25,
 	&vga_emulops,
 	8, 16,
@@ -225,8 +225,8 @@ const struct wsscreen_descr vga_stdscreen = {
 #define VGA_SCREEN_CANTWOFONTS(type) (!((type)->capabilities & WSSCREEN_HILIT))
 
 const struct wsscreen_descr *_vga_scrlist[] = {
-	&vga_stdscreen,
-	&vga_stdscreen_bf,
+	&vga_25lscreen,
+	&vga_25lscreen_bf,
 	&vga_40lscreen,
 	&vga_40lscreen_bf,
 	&vga_50lscreen,
@@ -235,7 +235,7 @@ const struct wsscreen_descr *_vga_scrlist[] = {
 	&vga_24lscreen_bf,
 	/* XXX other formats, graphics screen? */
 }, *_vga_scrlist_mono[] = {
-	&vga_stdscreen_mono,
+	&vga_25lscreen_mono,
 	&vga_40lscreen_mono,
 	&vga_50lscreen_mono,
 	&vga_24lscreen_mono,
@@ -515,7 +515,22 @@ vga_init(vc, iot, memt)
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
-	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
+
+#ifndef WSCONS_DEFAULT_TYPE
+#define WSCONS_DEFAULT_TYPE	"80x25"
+#endif
+	vc->currenttype = wsdisplay_screentype_pick(vh->vh_mono ?
+	    &vga_screenlist_mono : &vga_screenlist, WSCONS_DEFAULT_TYPE);
+	if (vc->currenttype == NULL)
+		panic("vga_init: unknown screen type `%s'",
+		    WSCONS_DEFAULT_TYPE);
+			/*
+			 * XXX: here we should ensure that the fontheight
+			 *	and fontwidth match vga_builtinfont's
+			 *	heigth & width...
+			 */
+	vga_setscreentype(vh, vc->currenttype);
+
 	callout_init(&vc->vc_switch_callout);
 
 	vc->vc_fonts[0] = &vga_builtinfont;
