@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.63 2003/11/15 23:10:31 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.64 2003/11/16 10:13:48 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.63 2003/11/15 23:10:31 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.64 2003/11/16 10:13:48 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ void	eprint __P((int));
 void	rprint __P((register_t));
 char	*ioctlname __P((long));
 static const char *signame __P((long, int));
-static void hexdump_buf(const void *, int);
+static void hexdump_buf(const void *, int, int);
 static void visdump_buf(const void *, int, int);
 
 int
@@ -127,7 +127,7 @@ main(argc, argv)
 	const char *emul_name = "netbsd";
 	int col;
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:x")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:x:")) != -1)
 		switch (ch) {
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
@@ -166,7 +166,18 @@ main(argc, argv)
 				errx(1, "unknown trace point in %s", optarg);
 			break;
 		case 'x':
-			hexdump = 1;
+			hexdump = atoi(optarg);
+			switch (hexdump) {
+			case 1:
+			case 4:
+				break;
+			case 0:
+				hexdump = 1;
+				break;
+			default:
+				errx(1, "Only -x1 and -x4 are supported");
+				break;
+			}
 			break;
 		default:
 			usage();
@@ -255,7 +266,7 @@ main(argc, argv)
 			break;
 		default:
 			printf("\n");
-			hexdump_buf(m, ktrlen);
+			hexdump_buf(m, ktrlen, hexdump);
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -572,26 +583,56 @@ ktremul(name, len, bufsize)
 }
 
 static void
-hexdump_buf(const void *vdp, int datalen)
+hexdump_buf(vdp, datalen, dumpsize) 
+	const void *vdp;
+	int datalen;
+	int dumpsize;
 {
 	char chars[16];
 	const unsigned char *dp = vdp;
 	int line_end, off, l, c;
 	char *cp;
+	int divmask, cdisp, pad, padbase;
+	const char *bdelim;
+	const char *gdelim;
+
+	switch (dumpsize) {
+	case 4:
+		divmask = 3;
+		cdisp = 39;
+		bdelim = "";
+		gdelim = "  ";
+		padbase = -2;
+		break;
+	case 1:
+	default:
+		divmask = 7;
+		cdisp = 50;
+		bdelim = " ";
+		gdelim = " ";
+		padbase = 0;
+		break;
+	}
 
 	for (off = 0; off < datalen;) {
 		line_end = off + 16;
-		if (line_end > datalen)
+		pad = 0;
+		if (line_end > datalen) {
 			line_end = datalen;
+			pad = padbase;
+		}
+
 		printf("\t%3.3x ", off);
 		for (l = 0, cp = chars; off < line_end; off++) {
 			c = *dp++;
-			if ((off & 7) == 0)
-				l += printf(" ");
-			l += printf(" %2.2x", c);
+			if ((off & divmask) == 0)
+				l += printf(gdelim);
+			l += printf("%s%2.2x", bdelim, c);
 			*cp++ = isgraph(c) ? c : '.';
 		};
-		printf("%*s %.*s\n", 50 - l, "", (int)(cp - chars), chars);
+
+		l += pad;
+		printf("%*s %.*s\n", cdisp - l , "", (int)(cp - chars), chars);
 	}
 }
 
@@ -668,7 +709,7 @@ ktrgenio(ktr, len)
 	if (maxdata > 0 && datalen > maxdata)
 		datalen = maxdata;
 	if (hexdump) {
-		hexdump_buf(dp, datalen);
+		hexdump_buf(dp, datalen, hexdump);
 		return;
 	}
 	(void)printf("       ");
@@ -825,7 +866,7 @@ ktrmmsg(mmsg, len)
 	else 
 		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
-	hexdump_buf(mmsg, len);
+	hexdump_buf(mmsg, len, hexdump);
 }
 
 static const char *
@@ -846,8 +887,8 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: kdump [-dlNnRTx] [-e emulation] "
+	(void)fprintf(stderr, "usage: kdump [-dlNnRT] [-e emulation] "
 	   "[-f file] [-m maxdata] [-p pid]\n             [-t trstr] "
-	   "[file]\n");
+	   "[-x [size]] [file]\n");
 	exit(1);
 }
