@@ -1,3 +1,5 @@
+/*	$NetBSD: dvdio.h,v 1.4 2001/01/08 08:37:12 enami Exp $	*/
+
 #include <sys/types.h>
 #include <sys/ioccom.h>
 
