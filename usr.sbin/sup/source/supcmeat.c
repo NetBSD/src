@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.24 2002/07/10 20:19:44 wiz Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.25 2002/07/10 21:28:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1102,14 +1102,14 @@ execone(TREE * t, void *v)
 	return (SCMOK);
 }
 
+/* from will be 0 if reading from network */
 int 
 copyfile(char *to, char *from)
- /* 0 if reading from network */
 {
 	int fromf, tof, istemp, x;
 	char dpart[STRINGLENGTH], fpart[STRINGLENGTH];
 	char tname[STRINGLENGTH];
-	static int true = 1;
+	static int returntrue = 1;
 
 	static int thispid = 0;	/* process id # */
 
@@ -1185,7 +1185,7 @@ copyfile(char *to, char *from)
 			if (x != SCMOK)
 				goaway("Can't skip file transfer");
 		}
-		if (true)
+		if (returntrue)
 			return (TRUE);
 	}
 	if (fromf >= 0) {	/* read file */

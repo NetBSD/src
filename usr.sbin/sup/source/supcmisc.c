@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.12 2002/07/10 20:19:45 wiz Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.13 2002/07/10 21:28:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -106,7 +106,7 @@ establishdir(char *fname)
 }
 
 int 
-makedir(char *fname, int mode, struct stat * statp)
+makedir(char *fname, unsigned int mode, struct stat * statp)
 {
 	if (lstat(fname, statp) != -1 && !S_ISDIR(statp->st_mode)) {
 		if (unlink(fname) == -1) {
@@ -114,7 +114,7 @@ makedir(char *fname, int mode, struct stat * statp)
 			return -1;
 		}
 	}
-	(void) mkdir(fname, 0755);
+	(void) mkdir(fname, mode);
 
 	return stat(fname, statp);
 }
@@ -200,8 +200,8 @@ ugconvert(char *uname, char *gname, int *uid, int *gid, int *mode)
 	static int first = TRUE;
 
 	if (first) {
-		bzero((char *) uidL, sizeof(uidL));
-		bzero((char *) gidL, sizeof(gidL));
+		bzero(uidL, sizeof(uidL));
+		bzero(gidL, sizeof(gidL));
 		first = FALSE;
 	}
 	pw = NULL;
@@ -313,7 +313,7 @@ char *
 fmttime(time_t time)
 {
 	static char buf[STRINGLENGTH];
-	int len;
+	unsigned int len;
 
 	(void) strcpy(buf, ctime(&time));
 	len = strlen(buf + 4) - 6;

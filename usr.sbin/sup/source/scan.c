@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.14 2002/07/10 20:19:42 wiz Exp $	*/
+/*	$NetBSD: scan.c,v 1.15 2002/07/10 21:28:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -358,7 +358,7 @@ makescanlists(void)
 				(void) chdir(basedir);
 			}
 			makescan(tl->TLlist, tl->TLscan);
-			free((char *) tl);
+			free(tl);
 			count++;
 		}
 		(void) fclose(f);
@@ -536,7 +536,7 @@ readlistfile(char *fname)
 				} while (_argbreak != ')');
 				continue;
 			}
-			/* fall through */
+			/* FALLTHROUGH */
 		default:
 			goaway("Error in handling list file keyword %d", ltn);
 		}
@@ -581,7 +581,7 @@ static void
 listentry(char *name, char *fullname, char *updir, int always)
 {
 	struct stat statbuf;
-	int link = 0;
+	int linkcount = 0;
 
 	if (Tlookup(refuseT, fullname))
 		return;
@@ -603,7 +603,7 @@ listentry(char *name, char *fullname, char *updir, int always)
 			return;
 		}
 		if (updir)
-			link++;
+			linkcount++;
 		if (stat(name, &statbuf) < 0)
 			return;
 	}
@@ -618,7 +618,7 @@ listentry(char *name, char *fullname, char *updir, int always)
 			(void) fflush(stdout);
 		}
 		listdir(fullname, always);
-		if (updir == 0 || link) {
+		if (updir == 0 || linkcount) {
 			(void) chdir(basedir);
 			if (prefix)
 				(void) chdir(prefix);

@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.17 2002/07/10 18:55:34 wiz Exp $	*/
+/*	$NetBSD: supextern.h,v 1.18 2002/07/10 21:28:13 wiz Exp $	*/
 
 struct stat;
 
@@ -143,7 +143,7 @@ void goaway(char *, ...)
 /* supcmisc.c */
 void prtime(void);
 int establishdir(char *);
-int makedir(char *, int, struct stat *);
+int makedir(char *, unsigned int, struct stat *);
 int estabd(char *, char *);
 void ugconvert(char *, char *, int *, int *, int *);
 void notify(char *, ...)
