@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.3 2000/01/08 04:40:25 nisimura Exp $ */
+/* $NetBSD: lunafb.c,v 1.4 2000/01/12 01:57:23 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.3 2000/01/08 04:40:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.4 2000/01/12 01:57:23 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ omfbmatch(parent, cf, aux)
 
 	if (strcmp(ma->ma_name, fb_cd.cd_name))
 		return (0);
-#if 0	/* badaddr() bombs if no framebuffer is installed */
+#if 0	/* XXX badaddr() bombs if no framebuffer is installed */
 	if (badaddr((caddr_t)ma->ma_addr, 4))
 		return (0);
 #else
@@ -364,7 +364,10 @@ omfb_getdevconfig(paddr, dc)
 	int bpp, i;
 	struct raster *rap;
 	struct rcons *rcp;
-	struct { short h, v; } *rfcnt;
+	union {
+		struct { short h, v; } p;
+		u_int32_t u;
+	} rfcnt;
 
 	switch (hwplanemask) {
 	case 0xff:
@@ -385,7 +388,7 @@ omfb_getdevconfig(paddr, dc)
 	dc->dc_cmsize = (bpp == 1) ? 0 : 1 << bpp;
 	dc->dc_videobase = paddr;
 
-#if 0 /* WHITE on BLACK */
+#if 0 /* WHITE on BLACK XXX experiment resulted in WHITE on SKYBLUE... */
 	if (hwplanemask == 0x0f) {
 		/* XXX Need Bt454 initialization */
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
@@ -420,16 +423,15 @@ omfb_getdevconfig(paddr, dc)
 #endif
 
 	/* adjust h/v orgin on screen */
-	/* XXX not sure it's necessary XXX */
-	rfcnt = (void *)OMFB_RFCNT;
-	rfcnt->h = 0;
-	rfcnt->v = 0;
+	rfcnt.p.h = 7;
+	rfcnt.p.v = -27;
+	*(u_int32_t *)OMFB_RFCNT = rfcnt.u; /* single write of 0x007ffe6 */
 
 	/* clear the screen */
 	*(u_int32_t *)OMFB_PLANEMASK = 0xff;
 	((u_int32_t *)OMFB_ROPFUNC)[5] = ~0;	/* ROP copy */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes/sizeof(u_int32_t); i++)
-		*(u_int32_t *)(dc->dc_videobase + i) = 0;
+		*((u_int32_t *)dc->dc_videobase + i) = 0;
 	*(u_int32_t *)OMFB_PLANEMASK = 0x01;
 
 	/* initialize the raster */
