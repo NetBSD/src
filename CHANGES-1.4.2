@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.84 1999/11/29 21:44:33 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.85 1999/12/04 20:12:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1273,3 +1273,469 @@ sys/arch/mac68k/dev/adb.c			1.33
 share/man/man4/options.4			1.91
 
   Add "see also apm(4)" for other options.
+
+dist/bind/LICENSE				1.1 (new)
+dist/bind/README				1.1 (new)
+dist/bind/bind2netbsd				1.1-1.9 (new)
+dist/bind/bin/probe_ipv6			1.1-1.2 (new)
+dist/bind/bin/addr/addr.c			1.1 (new)
+dist/bind/bin/dig/dig.c				1.1 (new)
+dist/bind/bin/dnskeygen/dnskeygen.c		1.1 (new)
+dist/bind/bin/dnsquery/dnsquery.c		1.1 (new)
+dist/bind/bin/host/host.c			1.1-1.2 (new)
+dist/bind/bin/irpd/irpd.c			1.1 (new)
+dist/bind/bin/irpd/irs-irpd.conf		1.1-1.2 (new)
+dist/bind/bin/irpd/version.c			1.1 (new)
+dist/bind/bin/mkservdb/mkservdb.c		1.1 (new)
+dist/bind/bin/named/db_defs.h			1.1 (new)
+dist/bind/bin/named/db_dump.c			1.1 (new)
+dist/bind/bin/named/db_func.h			1.1 (new)
+dist/bind/bin/named/db_glob.h			1.1 (new)
+dist/bind/bin/named/db_glue.c			1.1 (new)
+dist/bind/bin/named/db_ixfr.c			1.1 (new)
+dist/bind/bin/named/db_load.c			1.1 (new)
+dist/bind/bin/named/db_lookup.c			1.1 (new)
+dist/bind/bin/named/db_save.c			1.1 (new)
+dist/bind/bin/named/db_sec.c			1.1 (new)
+dist/bind/bin/named/db_tsig.c			1.1 (new)
+dist/bind/bin/named/db_update.c			1.1 (new)
+dist/bind/bin/named/named.conf			1.1-1.2 (new)
+dist/bind/bin/named/named.h			1.1 (new)
+dist/bind/bin/named/ns_config.c			1.1-1.2 (new)
+dist/bind/bin/named/ns_ctl.c			1.1 (new)
+dist/bind/bin/named/ns_defs.h			1.1 (new)
+dist/bind/bin/named/ns_forw.c			1.1 (new)
+dist/bind/bin/named/ns_func.h			1.1-1.2 (new)
+dist/bind/bin/named/ns_glob.h			1.1 (new)
+dist/bind/bin/named/ns_glue.c			1.1 (new)
+dist/bind/bin/named/ns_init.c			1.1 (new)
+dist/bind/bin/named/ns_ixfr.c			1.1 (new)
+dist/bind/bin/named/ns_lexer.c			1.1 (new)
+dist/bind/bin/named/ns_lexer.h			1.1 (new)
+dist/bind/bin/named/ns_main.c			1.1-1.4 (new)
+dist/bind/bin/named/ns_maint.c			1.1 (new)
+dist/bind/bin/named/ns_ncache.c			1.1 (new)
+dist/bind/bin/named/ns_notify.c			1.1 (new)
+dist/bind/bin/named/ns_parser.h			1.1 (new)
+dist/bind/bin/named/ns_parser.y			1.1 (new)
+dist/bind/bin/named/ns_parseutil.c		1.1 (new)
+dist/bind/bin/named/ns_parseutil.h		1.1 (new)
+dist/bind/bin/named/ns_req.c			1.1 (new)
+dist/bind/bin/named/ns_resp.c			1.1 (new)
+dist/bind/bin/named/ns_signal.c			1.1 (new)
+dist/bind/bin/named/ns_sort.c			1.1-1.2 (new)
+dist/bind/bin/named/ns_stats.c			1.1 (new)
+dist/bind/bin/named/ns_udp.c			1.1 (new)
+dist/bind/bin/named/ns_update.c			1.1 (new)
+dist/bind/bin/named/ns_xfr.c			1.1 (new)
+dist/bind/bin/named/pathtemplate.h		1.1 (new)
+dist/bind/bin/named/version.c			1.1 (new)
+dist/bind/bin/named/test/127.0.0.zone		1.1 (new)
+dist/bind/bin/named/test/localhost.zone		1.1 (new)
+dist/bind/bin/named/test/named.conf		1.1 (new)
+dist/bind/bin/named/test/root.hint		1.1 (new)
+dist/bind/bin/named-bootconf/named-bootconf.sh	1.1 (new)
+dist/bind/bin/named-bootconf/Grot/named-bootconf.pl 1.1-1.2 (new)
+dist/bind/bin/named-xfer/named-xfer.c		1.1 (new)
+dist/bind/bin/ndc/ndc.c				1.1 (new)
+dist/bind/bin/nslookup/commands.l		1.1 (new)
+dist/bind/bin/nslookup/debug.c			1.1-1.2 (new)
+dist/bind/bin/nslookup/getinfo.c		1.1-1.2 (new)
+dist/bind/bin/nslookup/list.c			1.1 (new)
+dist/bind/bin/nslookup/main.c			1.1 (new)
+dist/bind/bin/nslookup/nslookup.help		1.1-1.2 (new)
+dist/bind/bin/nslookup/pathnames.h		1.1 (new)
+dist/bind/bin/nslookup/res.h			1.1 (new)
+dist/bind/bin/nslookup/send.c			1.1-1.2 (new)
+dist/bind/bin/nslookup/skip.c			1.1 (new)
+dist/bind/bin/nslookup/subr.c			1.1 (new)
+dist/bind/bin/nsupdate/nsupdate.c		1.1 (new)
+dist/bind/lib/dst/README			1.1 (new)
+dist/bind/lib/dst/bsafe_link.c			1.1 (new)
+dist/bind/lib/dst/cylink_link.c			1.1 (new)
+dist/bind/lib/dst/dst_api.c			1.1 (new)
+dist/bind/lib/dst/dst_internal.h		1.1 (new)
+dist/bind/lib/dst/eay_dss_link.c		1.1 (new)
+dist/bind/lib/dst/hmac_link.c			1.1 (new)
+dist/bind/lib/dst/prandom.c			1.1 (new)
+dist/bind/lib/dst/rsaref_link.c			1.1 (new)
+dist/bind/lib/dst/support.c			1.1 (new)
+dist/bind/lib/inet/inet_addr.c			1.1 (new)
+dist/bind/lib/inet/inet_cidr_ntop.c		1.1 (new)
+dist/bind/lib/inet/inet_cidr_pton.c		1.1 (new)
+dist/bind/lib/inet/inet_lnaof.c			1.1 (new)
+dist/bind/lib/inet/inet_makeaddr.c		1.1 (new)
+dist/bind/lib/inet/inet_net_ntop.c		1.1 (new)
+dist/bind/lib/inet/inet_net_pton.c		1.1 (new)
+dist/bind/lib/inet/inet_neta.c			1.1 (new)
+dist/bind/lib/inet/inet_netof.c			1.1 (new)
+dist/bind/lib/inet/inet_network.c		1.1 (new)
+dist/bind/lib/inet/inet_ntoa.c			1.1 (new)
+dist/bind/lib/inet/inet_ntop.c			1.1 (new)
+dist/bind/lib/inet/inet_pton.c			1.1 (new)
+dist/bind/lib/inet/nsap_addr.c			1.1 (new)
+dist/bind/lib/irs/Makefile.BSD			1.1 (new)
+dist/bind/lib/irs/README			1.1 (new)
+dist/bind/lib/irs/dns.c				1.1 (new)
+dist/bind/lib/irs/dns_gr.c			1.1 (new)
+dist/bind/lib/irs/dns_ho.c			1.1 (new)
+dist/bind/lib/irs/dns_nw.c			1.1 (new)
+dist/bind/lib/irs/dns_p.h			1.1 (new)
+dist/bind/lib/irs/dns_pr.c			1.1 (new)
+dist/bind/lib/irs/dns_pw.c			1.1 (new)
+dist/bind/lib/irs/dns_sv.c			1.1 (new)
+dist/bind/lib/irs/gai_strerror.c		1.1 (new)
+dist/bind/lib/irs/gen.c				1.1 (new)
+dist/bind/lib/irs/gen_gr.c			1.1 (new)
+dist/bind/lib/irs/gen_ho.c			1.1 (new)
+dist/bind/lib/irs/gen_ng.c			1.1 (new)
+dist/bind/lib/irs/gen_nw.c			1.1 (new)
+dist/bind/lib/irs/gen_p.h			1.1 (new)
+dist/bind/lib/irs/gen_pr.c			1.1 (new)
+dist/bind/lib/irs/gen_pw.c			1.1 (new)
+dist/bind/lib/irs/gen_sv.c			1.1 (new)
+dist/bind/lib/irs/getaddrinfo.c			1.1 (new)
+dist/bind/lib/irs/getgrent.c			1.1 (new)
+dist/bind/lib/irs/getgrent_r.c			1.1 (new)
+dist/bind/lib/irs/gethostent.c			1.1 (new)
+dist/bind/lib/irs/gethostent_r.c		1.1 (new)
+dist/bind/lib/irs/getnameinfo.c			1.1 (new)
+dist/bind/lib/irs/getnetent.c			1.1 (new)
+dist/bind/lib/irs/getnetent_r.c			1.1 (new)
+dist/bind/lib/irs/getnetgrent.c			1.1 (new)
+dist/bind/lib/irs/getnetgrent_r.c		1.1 (new)
+dist/bind/lib/irs/getprotoent.c			1.1 (new)
+dist/bind/lib/irs/getprotoent_r.c		1.1 (new)
+dist/bind/lib/irs/getpwent.c			1.1 (new)
+dist/bind/lib/irs/getpwent_r.c			1.1 (new)
+dist/bind/lib/irs/getservent.c			1.1 (new)
+dist/bind/lib/irs/getservent_r.c		1.1 (new)
+dist/bind/lib/irs/hesiod.c			1.1 (new)
+dist/bind/lib/irs/hesiod_p.h			1.1 (new)
+dist/bind/lib/irs/irp.c				1.1 (new)
+dist/bind/lib/irs/irp_gr.c			1.1 (new)
+dist/bind/lib/irs/irp_ho.c			1.1 (new)
+dist/bind/lib/irs/irp_ng.c			1.1 (new)
+dist/bind/lib/irs/irp_nw.c			1.1 (new)
+dist/bind/lib/irs/irp_p.h			1.1 (new)
+dist/bind/lib/irs/irp_pr.c			1.1 (new)
+dist/bind/lib/irs/irp_pw.c			1.1 (new)
+dist/bind/lib/irs/irp_sv.c			1.1 (new)
+dist/bind/lib/irs/irpmarshall.c			1.1 (new)
+dist/bind/lib/irs/irs_data.c			1.1 (new)
+dist/bind/lib/irs/irs_data.h			1.1 (new)
+dist/bind/lib/irs/irs_p.h			1.1 (new)
+dist/bind/lib/irs/lcl.c				1.1 (new)
+dist/bind/lib/irs/lcl_gr.c			1.1 (new)
+dist/bind/lib/irs/lcl_ho.c			1.1 (new)
+dist/bind/lib/irs/lcl_ng.c			1.1 (new)
+dist/bind/lib/irs/lcl_nw.c			1.1 (new)
+dist/bind/lib/irs/lcl_p.h			1.1 (new)
+dist/bind/lib/irs/lcl_pr.c			1.1 (new)
+dist/bind/lib/irs/lcl_pw.c			1.1 (new)
+dist/bind/lib/irs/lcl_sv.c			1.1 (new)
+dist/bind/lib/irs/nis.c				1.1 (new)
+dist/bind/lib/irs/nis_gr.c			1.1 (new)
+dist/bind/lib/irs/nis_ho.c			1.1 (new)
+dist/bind/lib/irs/nis_ng.c			1.1 (new)
+dist/bind/lib/irs/nis_nw.c			1.1 (new)
+dist/bind/lib/irs/nis_p.h			1.1 (new)
+dist/bind/lib/irs/nis_pr.c			1.1 (new)
+dist/bind/lib/irs/nis_pw.c			1.1 (new)
+dist/bind/lib/irs/nis_sv.c			1.1 (new)
+dist/bind/lib/irs/nul_ng.c			1.1 (new)
+dist/bind/lib/irs/pathnames.h			1.1 (new)
+dist/bind/lib/irs/util.c			1.1 (new)
+dist/bind/lib/isc/assertions.c			1.1 (new)
+dist/bind/lib/isc/base64.c			1.1 (new)
+dist/bind/lib/isc/bitncmp.c			1.1 (new)
+dist/bind/lib/isc/ctl_clnt.c			1.1-1.2 (new)
+dist/bind/lib/isc/ctl_p.c			1.1 (new)
+dist/bind/lib/isc/ctl_p.h			1.1 (new)
+dist/bind/lib/isc/ctl_srvr.c			1.1-1.2 (new)
+dist/bind/lib/isc/ev_connects.c			1.1 (new)
+dist/bind/lib/isc/ev_files.c			1.1 (new)
+dist/bind/lib/isc/ev_streams.c			1.1 (new)
+dist/bind/lib/isc/ev_timers.c			1.1 (new)
+dist/bind/lib/isc/ev_waits.c			1.1 (new)
+dist/bind/lib/isc/eventlib.c			1.1 (new)
+dist/bind/lib/isc/eventlib_p.h			1.1 (new)
+dist/bind/lib/isc/heap.c			1.1 (new)
+dist/bind/lib/isc/logging.c			1.1 (new)
+dist/bind/lib/isc/logging_p.h			1.1 (new)
+dist/bind/lib/isc/memcluster.c			1.1 (new)
+dist/bind/lib/isc/tree.c			1.1 (new)
+dist/bind/lib/nameser/ns_date.c			1.1 (new)
+dist/bind/lib/nameser/ns_name.c			1.1 (new)
+dist/bind/lib/nameser/ns_netint.c		1.1 (new)
+dist/bind/lib/nameser/ns_parse.c		1.1 (new)
+dist/bind/lib/nameser/ns_print.c		1.1 (new)
+dist/bind/lib/nameser/ns_samedomain.c		1.1 (new)
+dist/bind/lib/nameser/ns_sign.c			1.1 (new)
+dist/bind/lib/nameser/ns_ttl.c			1.1 (new)
+dist/bind/lib/nameser/ns_verify.c		1.1 (new)
+dist/bind/lib/resolv/herror.c			1.1 (new)
+dist/bind/lib/resolv/res_comp.c			1.1 (new)
+dist/bind/lib/resolv/res_data.c			1.1-1.2 (new)
+dist/bind/lib/resolv/res_debug.c		1.1 (new)
+dist/bind/lib/resolv/res_debug.h		1.1 (new)
+dist/bind/lib/resolv/res_findzonecut.c		1.1 (new)
+dist/bind/lib/resolv/res_init.c			1.1 (new)
+dist/bind/lib/resolv/res_mkquery.c		1.1 (new)
+dist/bind/lib/resolv/res_mkupdate.c		1.1 (new)
+dist/bind/lib/resolv/res_mkupdate.h		1.1 (new)
+dist/bind/lib/resolv/res_query.c		1.1 (new)
+dist/bind/lib/resolv/res_send.c			1.1 (new)
+dist/bind/lib/resolv/res_sendsigned.c		1.1 (new)
+dist/bind/lib/resolv/res_update.c		1.1 (new)
+dist/bind/include/fd_setsize.h			1.1 (new)
+dist/bind/include/hesiod.h			1.1 (new)
+dist/bind/include/irp.h				1.1 (new)
+dist/bind/include/irs.h				1.1 (new)
+dist/bind/include/port_after.h			1.1 (new)
+dist/bind/include/port_before.h			1.1-1.2 (new)
+dist/bind/include/prand_conf.h			1.1 (new)
+dist/bind/include/res_update.h			1.1 (new)
+dist/bind/include/resolv.h			1.1-1.2 (new)
+dist/bind/include/arpa/nameser.h		1.1 (new)
+dist/bind/include/arpa/nameser_compat.h		1.1 (new)
+dist/bind/include/isc/assertions.h		1.1 (new)
+dist/bind/include/isc/ctl.h			1.1 (new)
+dist/bind/include/isc/dst.h			1.1 (new)
+dist/bind/include/isc/eventlib.h		1.1 (new)
+dist/bind/include/isc/heap.h			1.1 (new)
+dist/bind/include/isc/irpmarshall.h		1.1 (new)
+dist/bind/include/isc/list.h			1.1 (new)
+dist/bind/include/isc/logging.h			1.1 (new)
+dist/bind/include/isc/memcluster.h		1.1 (new)
+dist/bind/include/isc/misc.h			1.1 (new)
+dist/bind/include/isc/tree.h			1.1 (new)
+dist/bind/man/dig.1				1.1 (new)
+dist/bind/man/dnskeygen.1			1.1 (new)
+dist/bind/man/dnsquery.1			1.1 (new)
+dist/bind/man/host.1				1.1-1.2 (new)
+dist/bind/man/named-bootconf.8			1.1 (new)
+dist/bind/man/named-xfer.8			1.1 (new)
+dist/bind/man/named.8				1.1-1.2 (new)
+dist/bind/man/named.conf.5			1.1-1.2 (new)
+dist/bind/man/ndc.8				1.1 (new)
+dist/bind/man/nslookup.8			1.1-1.2 (new)
+dist/bind/man/nsupdate.8			1.1-1.2 (new)
+usr.sbin/bind/dnskeygen/Makefile		1.1 (new)
+usr.sbin/bind/named-bootconf/Makefile		1.1 (new)
+usr.sbin/bind/Makefile				1.2-1.3
+usr.sbin/bind/Makefile.inc			1.4-1.5
+usr.sbin/bind/dig/Makefile			1.3
+usr.sbin/bind/dnsquery/Makefile			1.3
+usr.sbin/bind/host/Makefile			1.4
+usr.sbin/bind/include/namespace.h		1.3-1.4
+usr.sbin/bind/lib/Makefile			1.3-1.6
+usr.sbin/bind/named-xfer/Makefile		1.4-1.7
+usr.sbin/bind/named/Makefile			1.6-1.7
+usr.sbin/bind/ndc/Makefile			1.2-1.5
+usr.sbin/bind/nslookup/Makefile			1.3-1.5
+usr.sbin/bind/nsupdate/Makefile			1.4
+usr.sbin/bind/reload/named.reload.sh		1.2-1.3
+usr.sbin/bind/restart/named.restart.sh		1.2-1.3
+usr.sbin/bind/dig/dig.c				deleted
+usr.sbin/bind/dnsquery/dnsquery.c		deleted
+usr.sbin/bind/host/host.c			deleted
+usr.sbin/bind/include/fd_setsize.h		deleted
+usr.sbin/bind/include/hesiod.h			deleted
+usr.sbin/bind/include/port_after.h		deleted
+usr.sbin/bind/include/port_before.h		deleted
+usr.sbin/bind/include/resolv.h			deleted
+usr.sbin/bind/man/dig.1				deleted
+usr.sbin/bind/man/dnsquery.1			deleted
+usr.sbin/bind/man/host.1			deleted
+usr.sbin/bind/man/named-bootconf.8		deleted
+usr.sbin/bind/man/named-xfer.8			deleted
+usr.sbin/bind/man/named.8			deleted
+usr.sbin/bind/man/named.conf.5			deleted
+usr.sbin/bind/man/ndc.8				deleted
+usr.sbin/bind/man/nslookup.8			deleted
+usr.sbin/bind/named/db_defs.h			deleted
+usr.sbin/bind/named/db_dict.c			deleted
+usr.sbin/bind/named/db_dump.c			deleted
+usr.sbin/bind/named/db_func.h			deleted
+usr.sbin/bind/named/db_glob.h			deleted
+usr.sbin/bind/named/db_glue.c			deleted
+usr.sbin/bind/named/db_load.c			deleted
+usr.sbin/bind/named/db_lookup.c			deleted
+usr.sbin/bind/named/db_save.c			deleted
+usr.sbin/bind/named/db_update.c			deleted
+usr.sbin/bind/named/named-bootconf.sh		deleted
+usr.sbin/bind/named/named.conf			deleted
+usr.sbin/bind/named/named.h			deleted
+usr.sbin/bind/named/ns_config.c			deleted
+usr.sbin/bind/named/ns_defs.h			deleted
+usr.sbin/bind/named/ns_forw.c			deleted
+usr.sbin/bind/named/ns_func.h			deleted
+usr.sbin/bind/named/ns_glob.h			deleted
+usr.sbin/bind/named/ns_glue.c			deleted
+usr.sbin/bind/named/ns_init.c			deleted
+usr.sbin/bind/named/ns_lexer.c			deleted
+usr.sbin/bind/named/ns_lexer.h			deleted
+usr.sbin/bind/named/ns_main.c			deleted
+usr.sbin/bind/named/ns_maint.c			deleted
+usr.sbin/bind/named/ns_ncache.c			deleted
+usr.sbin/bind/named/ns_parser.h			deleted
+usr.sbin/bind/named/ns_parser.y			deleted
+usr.sbin/bind/named/ns_parseutil.c		deleted
+usr.sbin/bind/named/ns_parseutil.h		deleted
+usr.sbin/bind/named/ns_req.c			deleted
+usr.sbin/bind/named/ns_resp.c			deleted
+usr.sbin/bind/named/ns_stats.c			deleted
+usr.sbin/bind/named/ns_udp.c			deleted
+usr.sbin/bind/named/ns_update.c			deleted
+usr.sbin/bind/named/ns_xfr.c			deleted
+usr.sbin/bind/named/pathnames.c			deleted
+usr.sbin/bind/named/pathnames.h			deleted
+usr.sbin/bind/named/pathtemplate.h		deleted
+usr.sbin/bind/named/version.c			deleted
+usr.sbin/bind/named-xfer/named-xfer.c		deleted
+usr.sbin/bind/ndc/ndc.sh			deleted
+usr.sbin/bind/nslookup/commands.l		deleted
+usr.sbin/bind/nslookup/debug.c			deleted
+usr.sbin/bind/nslookup/getinfo.c		deleted
+usr.sbin/bind/nslookup/list.c			deleted
+usr.sbin/bind/nslookup/main.c			deleted
+usr.sbin/bind/nslookup/nslookup.help		deleted
+usr.sbin/bind/nslookup/pathnames.h		deleted
+usr.sbin/bind/nslookup/res.h			deleted
+usr.sbin/bind/nslookup/send.c			deleted
+usr.sbin/bind/nslookup/skip.c			deleted
+usr.sbin/bind/nslookup/subr.c			deleted
+usr.sbin/bind/nsupdate/nsupdate.c		deleted
+usr.sbin/bind/lib/inet/Makefile.inc             deleted
+usr.sbin/bind/lib/inet/hostnamelen.c            deleted
+usr.sbin/bind/lib/inet/inet_addr.c              deleted
+usr.sbin/bind/lib/inet/inet_lnaof.c             deleted
+usr.sbin/bind/lib/inet/inet_makeaddr.c          deleted
+usr.sbin/bind/lib/inet/inet_net_ntop.c          deleted
+usr.sbin/bind/lib/inet/inet_net_pton.c          deleted
+usr.sbin/bind/lib/inet/inet_neta.c              deleted
+usr.sbin/bind/lib/inet/inet_netof.c             deleted
+usr.sbin/bind/lib/inet/inet_network.c           deleted
+usr.sbin/bind/lib/inet/inet_ntoa.c              deleted
+usr.sbin/bind/lib/inet/inet_ntop.c              deleted
+usr.sbin/bind/lib/inet/inet_pton.c              deleted
+usr.sbin/bind/lib/inet/nsap_addr.c              deleted
+usr.sbin/bind/lib/isc/Makefile.inc              deleted
+usr.sbin/bind/lib/isc/assertions.c              deleted
+usr.sbin/bind/lib/isc/base64.c                  deleted
+usr.sbin/bind/lib/isc/bitncmp.c                 deleted
+usr.sbin/bind/lib/isc/ev_connects.c             deleted
+usr.sbin/bind/lib/isc/ev_files.c                deleted
+usr.sbin/bind/lib/isc/ev_streams.c              deleted
+usr.sbin/bind/lib/isc/ev_timers.c               deleted
+usr.sbin/bind/lib/isc/ev_waits.c                deleted
+usr.sbin/bind/lib/isc/eventlib.c                deleted
+usr.sbin/bind/lib/isc/eventlib_p.h              deleted
+usr.sbin/bind/lib/isc/heap.c                    deleted
+usr.sbin/bind/lib/isc/logging.c                 deleted
+usr.sbin/bind/lib/isc/logging_p.h               deleted
+usr.sbin/bind/lib/isc/memcluster.c              deleted
+usr.sbin/bind/lib/isc/tree.c                    deleted
+usr.sbin/bind/lib/nameser/Makefile.inc          deleted
+usr.sbin/bind/lib/nameser/ns_name.c             deleted
+usr.sbin/bind/lib/nameser/ns_netint.c           deleted
+usr.sbin/bind/lib/nameser/ns_parse.c            deleted
+usr.sbin/bind/lib/nameser/ns_print.c            deleted
+usr.sbin/bind/lib/nameser/ns_ttl.c              deleted
+usr.sbin/bind/lib/resolv/Makefile.inc           deleted
+usr.sbin/bind/lib/resolv/herror.c               deleted
+usr.sbin/bind/lib/resolv/res_comp.c             deleted
+usr.sbin/bind/lib/resolv/res_data.c             deleted
+usr.sbin/bind/lib/resolv/res_debug.c            deleted
+usr.sbin/bind/lib/resolv/res_init.c             deleted
+usr.sbin/bind/lib/resolv/res_mkquery.c          deleted
+usr.sbin/bind/lib/resolv/res_mkupdate.c         deleted
+usr.sbin/bind/lib/resolv/res_mkupdate.h         deleted
+usr.sbin/bind/lib/resolv/res_query.c            deleted
+usr.sbin/bind/lib/resolv/res_send.c             deleted
+usr.sbin/bind/lib/resolv/res_update.c           deleted
+usr.sbin/bind/include/arpa/nameser.h            deleted
+usr.sbin/bind/include/arpa/nameser_compat.h     deleted
+usr.sbin/bind/include/isc/assertions.h          deleted
+usr.sbin/bind/include/isc/eventlib.h            deleted
+usr.sbin/bind/include/isc/heap.h                deleted
+usr.sbin/bind/include/isc/list.h                deleted
+usr.sbin/bind/include/isc/logging.h             deleted
+usr.sbin/bind/include/isc/memcluster.h          deleted
+usr.sbin/bind/include/isc/misc.h                deleted
+usr.sbin/bind/include/isc/tree.h                deleted
+
+  Update to BIND 8.2.2-P5.
+
+distrib/sets/lists/base/mi			patch (part of 1.135)
+distrib/sets/lists/man/mi			patch (part of 1.176)
+
+  Add dnskeygen, dnskeygen(1) and nsupdate(8) after
+  BIND 8.2.2-P5 pull-up.
+
+sys/arch/i386/i386/machdep.c			1.368
+
+  Apply the "coma bug workaround" also for the Cyrix 6x86MX processor,
+  fixing PR#7538.
+
+sys/arch/sparc/sparc/pmap.c			1.150
+
+  Make this file compile under -DDEBUG, fixing PR#8358.
+
+sys/arch/pmax/dev/fb_usrreq.c			1.17
+
+  Reset the keyboard when the framebuffer is closed, so that it is
+  in a known good state after e.g. X11 has run.
+
+sys/arch/pmax/dev/dtop.c			1.40
+
+  Make the keyboard handler work correctly in DDB.
+
+sys/arch/pmax/dev/dc.c				1.50
+
+  Use the console_debugger() macro to enter Debugger() on a serial
+  console break, so sysctl can be used to disable/enable entering
+  the debugger.
+
+sys/dev/ic/ncr53c9x.c				1.35
+sys/dev/ic/ncr53c9xreg.h			1.6
+sys/dev/ic/ncr53c9xvar.h			1.18
+sys/dev/pci/pcscp.c				1.4
+sys/arch/alpha/tc/asc.c				1.16
+sys/arch/alpha/tc/tcds.c			1.28-1.29
+
+  Fix the problems in detecting the clock speed on the TCDS Dual
+  SCSI Option cards, and correctly configure the Fast SCSI interfaces.
+  This allows installation on the 3000/500 -> 3000/900 Alphas which
+  have the Fast SCSI interface on the on-board SCSI adapters.
+
+sys/dev/wscons/wsksymdef.h	 		1.25
+sys/dev/pckbc/wskbdmap_mfii.c	 		1.10
+
+  Add Swedish and Dvorak keyboard maps for PC keyboards, fixing
+  PR#6983 and PR#7429.
+
+sys/arch/atari/vme/et4000.c	  		1.4
+sys/arch/atari/vme/if_le_vme.c	 		1.11
+sys/arch/atari/vme/leo.c			1.2
+
+  Fix arguments of bus_space_unmap().
+
+sys/arch/atari/atari/disksubr.c			1.17
+
+  Make sure the pointer to the cpu_label is not NULL before trying
+  to use it.
+
+sys/arch/atari/dev/hdfd.c			1.14
+
+  If the floppy has no label, fake one.
+
+usr.bin/whois/whois.c				1.12 via patch
+
+  New default whois server: whois.networksolutions.com.
+
+src/lib/libutil/passwd.c			1.19
+
+  Correct handling of more complex EDITOR environment variable
+  settings by using /bin/sh.  Fixes PR#8935.
