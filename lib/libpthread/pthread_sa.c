@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.29 2002/10/21 22:21:20 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.30 2002/10/22 01:46:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 {
 	pthread_t t, self, next, intqueue;
 	int first = 1;
-	int deliversig = 0;
+	int deliversig = 0, runalarms = 0;
 	siginfo_t *si;
 
 	PTHREADD_ADD(PTHREADD_UPCALLS);
@@ -133,9 +133,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	case SA_UPCALL_SIGEV:
 		PTHREADD_ADD(PTHREADD_UP_SIGEV);
 		si = arg;
-		/* Run the alarm queue */
 		if (si->si_value.sival_int == PT_ALARMTIMER_MAGIC)
-			pthread__alarm_process(self, arg);
+			runalarms = 1;
 		break;
 	case SA_UPCALL_USER:
 		/* We don't send ourselves one of these. */
@@ -159,16 +158,24 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	if (intqueue)
 		pthread__sched_bulk(self, intqueue);
 
+
 	/*
-	 * Note that we handle signals after handling spinlock
-	 * preemption. This is because spinlocks are only used
-	 * internally to the thread library and we don't want to
+	 * Run the alarm queue (handled after lock resolution since
+	 * alarm handling requires locks).
+	 */
+	if (runalarms)
+		pthread__alarm_process(self, arg);
+
+	/*
+	 * Note that we handle signals after handling
+	 * spinlock preemption. This is because spinlocks are only
+	 * used internally to the thread library and we don't want to
 	 * expose the middle of them to a signal.  While this means
 	 * that synchronous instruction traps that occur inside
 	 * critical sections in this library (SIGFPE, SIGILL, SIGBUS,
 	 * SIGSEGV) won't be handled at the precise location where
 	 * they occured, that's okay, because (1) we don't use any FP
-	 * and (2) SIGILL/SIGBUS/SIGSEGV should really just core dump.  
+	 * and (2) SIGILL/SIGBUS/SIGSEGV should really just core dump.
 	 *
 	 * This also means that a thread that was interrupted to take
 	 * a signal will be on a run queue, and not in upcall limbo.
