@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2000/04/16 16:03:42 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 2000/04/22 16:43:47 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -152,16 +152,21 @@ struct	cfattach mainbus_ca = {
 
 #include "sd.h"
 #include "cd.h"
+#include "rl.h"
 
 int	booted_qe(struct device *, void *);
 int	booted_ze(struct device *, void *);
 int	booted_sd(struct device *, void *);
+int	booted_rl(struct device *, void *);
 
 int (*devreg[])(struct device *, void *) = {
 	booted_qe,
 	booted_ze,
 #if NSD > 0 || NCD > 0
 	booted_sd,
+#endif
+#if NRL > 0
+	booted_rl,
 #endif
 	0,
 };
@@ -243,5 +248,17 @@ booted_sd(dev, aux)
 			return 1;
 
 	return 0; /* Where did we come from??? */
+}
+#endif
+#if NRL > 0
+int
+booted_rl(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	if ((B_TYPE(bootdev) == BDEV_RL) &&
+	    !strcmp("rl", dev->dv_cfdata->cf_driver->cd_name))
+		return 1; /* XXX should check unit number also */
+	return 0;
 }
 #endif
