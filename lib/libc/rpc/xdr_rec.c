@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.6 1996/12/20 20:25:12 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $";
+static char *rcsid = "$NetBSD: xdr_rec.c,v 1.6 1996/12/20 20:25:12 cgd Exp $";
 #endif
 
 /*
@@ -53,24 +53,20 @@ static char *rcsid = "$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <netinet/in.h>
 
-static u_int	fix_buf_size();
-static bool_t	flush_out();
-static bool_t	get_input_bytes();
-static bool_t	set_input_fragment();
-static bool_t	skip_input_bytes();
+static bool_t	xdrrec_getlong __P((XDR *, long *));
+static bool_t	xdrrec_putlong __P((XDR *, long *));
+static bool_t	xdrrec_getbytes __P((XDR *, caddr_t, u_int));
 
-static bool_t	xdrrec_getlong();
-static bool_t	xdrrec_putlong();
-static bool_t	xdrrec_getbytes();
-static bool_t	xdrrec_putbytes();
-static u_int	xdrrec_getpos();
-static bool_t	xdrrec_setpos();
-static int32_t *xdrrec_inline();
-static void	xdrrec_destroy();
+static bool_t	xdrrec_putbytes __P((XDR *, caddr_t, u_int));
+static u_int	xdrrec_getpos __P((XDR *));
+static bool_t	xdrrec_setpos __P((XDR *, u_int));
+static int32_t *xdrrec_inline __P((XDR *, u_int));
+static void	xdrrec_destroy __P((XDR *));
 
 static struct  xdr_ops xdrrec_ops = {
 	xdrrec_getlong,
@@ -123,6 +119,12 @@ typedef struct rec_strm {
 	u_int sendsize;
 	u_int recvsize;
 } RECSTREAM;
+
+static u_int	fix_buf_size __P((u_int));
+static bool_t	flush_out __P((RECSTREAM *, bool_t));
+static bool_t	get_input_bytes __P((RECSTREAM *, caddr_t, int));
+static bool_t	set_input_fragment __P((RECSTREAM *));
+static bool_t	skip_input_bytes __P((RECSTREAM *, long));
 
 
 /*
@@ -360,7 +362,7 @@ xdrrec_setpos(xdrs, pos)
 static int32_t *
 xdrrec_inline(xdrs, len)
 	register XDR *xdrs;
-	int len;
+	u_int len;
 {
 	register RECSTREAM *rstrm = (RECSTREAM *)xdrs->x_private;
 	int32_t *buf = NULL;
