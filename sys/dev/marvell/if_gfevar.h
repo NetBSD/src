@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.2 2003/03/16 07:05:34 matt Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.3 2003/03/17 16:41:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -125,6 +125,7 @@ struct gfe_softc {
 	 */
 	bus_space_tag_t sc_gt_memt;
 	bus_space_handle_t sc_gt_memh;
+	bus_space_handle_t sc_memh;	/* subregion for ethernet */
 	bus_dma_tag_t sc_dmat;
 	int sc_macno;			/* which mac? 0, 1, or 2 */
 
