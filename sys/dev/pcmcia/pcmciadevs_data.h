@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.62 1999/11/29 12:55:20 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.63 1999/12/05 20:09:17 danw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.61 1999/11/29 12:54:00 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.62 1999/12/05 20:08:41 danw Exp 
  */
 
 /*-
@@ -598,6 +598,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IO-DATA PCLA/T"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EPSON_EEN10B,
+	    PCMCIA_CIS_EPSON_EEN10B,
+	    0,
+	    "Seiko Epson Corporation",
+	    "Epson EEN10B"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -847,6 +854,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "AmbiCom Inc",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EPSON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Seiko Epson Corporation",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }

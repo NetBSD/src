@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.62 1999/11/29 12:55:20 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.63 1999/12/05 20:09:17 danw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.61 1999/11/29 12:54:00 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.62 1999/12/05 20:08:41 danw Exp 
  */
 
 /*-
@@ -319,6 +319,7 @@
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
 #define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking Technology */
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
+#define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -381,3 +382,6 @@
 #define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLAT	-1
 #define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
+#define	PCMCIA_CIS_EPSON_EEN10B	{ "Seiko Epson Corp.", "Ethernet", "P/N: EEN10B Rev. 00", NULL }
+#define	PCMCIA_PRODUCT_EPSON_EEN10B	-1
+#define	PCMCIA_STR_EPSON_EEN10B	"Epson EEN10B"
