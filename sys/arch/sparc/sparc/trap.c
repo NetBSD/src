@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.21 2003/01/06 22:12:35 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.22 2003/01/07 11:03:09 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -778,7 +778,7 @@ rwindow_save(l)
 #ifdef DEBUG
 	if (rwindow_debug)
 		printf("cpu%d:%s[%d]: rwindow: pcb->stack:",
-			cpuinfo.ci_cpuid, p->p_comm, p->p_pid);
+			cpuinfo.ci_cpuid, l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 	do {
 #ifdef DEBUG
