@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypinit.8,v 1.14 2003/11/12 13:31:08 grant Exp $
+.\"	$NetBSD: ypinit.8,v 1.15 2005/02/26 16:33:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,12 +34,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 31, 2001
+.Dd February 26, 2005
 .Dt YPINIT 8
 .Os
 .Sh NAME
 .Nm ypinit
-.Nd initialise YP system
+.Nd initialize NIS subsystem
 .Sh SYNOPSIS
 .Nm
 .Fl c
@@ -56,8 +56,8 @@
 .Op Fl l Ar server1,...,serverN
 .Sh DESCRIPTION
 .Nm
-initialises the files and directories that are required for a
-.Tn YP
+initializes the files and directories that are required for a
+.Tn NIS
 client or server.
 .Pp
 If
@@ -70,9 +70,9 @@ The following options are available:
 .Bl -tag -width indent
 .It Fl c
 Create a
-.Tn YP
+.Tn NIS
 client.
-Initialises
+Initializes
 .Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 to contain a list of ypservers for
 .Xr ypbind 8
@@ -83,7 +83,7 @@ prompting for them interactively.  The format is a comma separated list
 of server names with no spaces.
 .It Fl m
 Create a master
-.Tn YP
+.Tn NIS
 server.
 Generates map data from local files
 .Pa ( /etc/master.passwd ,
@@ -94,12 +94,12 @@ Create a slave server.
 Downloads the maps from
 .Ar master_server ,
 which should be the active master
-.Tn YP
+.Tn NIS
 server.
 .El
 .Pp
 To rebuild or refresh the maps for the
-.Tn YP
+.Tn NIS
 domain \*[Lt]domain\*[Gt], change to the
 .Pa /var/yp/\*[Lt]domain\*[Gt]
 directory and run
@@ -108,15 +108,15 @@ directory and run
 .Bl -tag -width /var/yp/ypserv.log -compact
 .It Pa /var/yp
 master
-.Tn YP
+.Tn NIS
 directory; contains the template makefiles.
 .It Pa /var/yp/\*[Lt]domain\*[Gt]
 directory to store
-.Tn YP
+.Tn NIS
 maps for \*[Lt]domain\*[Gt].
 .It Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
 list of
-.Tn YP
+.Tn NIS
 servers to bind to.
 .El
 .Sh SEE ALSO
@@ -124,9 +124,9 @@ servers to bind to.
 .Xr make 1 ,
 .Xr makedbm 8 ,
 .Xr mknetid 8 ,
+.Xr nis 8 ,
 .Xr stdethers 8 ,
 .Xr stdhosts 8 ,
-.Xr yp 8 ,
 .Xr ypbind 8 ,
 .Xr yppush 8 ,
 .Xr ypserv 8
