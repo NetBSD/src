@@ -1,7 +1,7 @@
-/*	$NetBSD: wire.c,v 1.4 2001/05/13 18:07:00 veego Exp $	*/
+/*	$NetBSD: wire.c,v 1.5 2002/11/29 23:06:26 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: wire.c,v 1.8.2.5 2001/01/10 03:23:41 ezk Exp
+ * Id: wire.c,v 1.17 2002/02/02 20:59:05 ezk Exp
  *
  */
 
@@ -61,6 +60,7 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amu.h>
+
 
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
@@ -281,16 +281,16 @@ int
 islocalnet(u_long addr)
 {
   addrlist *al;
-#ifdef DEBUG
-  char buf[16];
-#endif /* DEBUG */
 
   for (al = localnets; al; al = al->ip_next)
     if (((addr ^ al->ip_addr) & al->ip_mask) == 0)
       return TRUE;
 
 #ifdef DEBUG
+  {
+    char buf[16];
     plog(XLOG_INFO, "%s is on a remote network", inet_dquad(buf, addr));
+  }
 #endif /* DEBUG */
 
   return FALSE;
@@ -306,9 +306,51 @@ is_network_member(const char *net)
 {
   addrlist *al;
 
-  for (al = localnets; al; al = al->ip_next)
-    if (STREQ(net, al->ip_net_name) || STREQ(net, al->ip_net_num))
-      return TRUE;
+  /*
+   * If the network name string does not contain a '/', use old behavior.
+   * If it does contain a '/' then interpret the string as a network/netmask
+   * pair.  If "netmask" doesn't exist, use the interface's own netmask.
+   * Also support fully explicit netmasks such as 255.255.255.0 as well as
+   * bit-length netmask such as /24 (hex formats such 0xffffff00 work too).
+   */
+  if (strchr(net, '/') == NULL) {
+    for (al = localnets; al; al = al->ip_next)
+      if (STREQ(net, al->ip_net_name) || STREQ(net, al->ip_net_num))
+	return TRUE;
+  } else {
+    char *netstr = strdup(net), *maskstr;
+    u_long netnum, masknum = 0;
+    maskstr = strchr(netstr, '/');
+    maskstr++;
+    maskstr[-1] = '\0';		/* null terminate netstr */
+    if (*maskstr == '\0')	/* if empty string, make it NULL */
+      maskstr = NULL;
+    /* check if netmask uses a dotted-quad or bit-length, or not defined at all */
+    if (maskstr) {
+      if (strchr(maskstr, '.')) {
+	masknum = inet_addr(maskstr);
+	if (masknum < 0)		/* can be invalid (-1) or all-1s */
+	  masknum = 0xffffffff;
+      } else if (NSTRCEQ(maskstr, "0x", 2)) {
+	masknum = strtoul(maskstr, NULL, 16);
+      } else {
+	int bits = atoi(maskstr);
+	if (bits < 0)
+	  bits = 0;
+	if (bits > 32)
+	  bits = 32;
+	masknum = 0xffffffff << (32-bits);
+      }
+    }
+    netnum = inet_addr(netstr);	/* not checking return value, b/c -1 (0xffffffff) is valid */
+    XFREE(netstr);		/* netstr not needed any longer */
+
+    /* now check against each local interface */
+    for (al = localnets; al; al = al->ip_next) {
+      if ((al->ip_addr & (maskstr ? masknum : al->ip_mask)) == netnum)
+	return TRUE;
+    }
+  }
 
   return FALSE;
 }
@@ -320,22 +362,22 @@ getwire(char **name1, char **number1)
 {
   addrlist *al = NULL, *tail = NULL;
   struct ifaddrs *ifaddrs, *ifap;
-#ifndef HAVE_FIELD_STRUCT_IFADDRS_IFA_NEXT
+#ifndef HAVE_STRUCT_IFADDRS_IFA_NEXT
   int count = 0, i;
-#endif /* not HAVE_FIELD_STRUCT_IFADDRS_IFA_NEXT */
+#endif /* not HAVE_STRUCT_IFADDRS_IFA_NEXT */
 
   ifaddrs = NULL;
-#ifdef HAVE_FIELD_STRUCT_IFADDRS_IFA_NEXT
+#ifdef HAVE_STRUCT_IFADDRS_IFA_NEXT
   if (getifaddrs(&ifaddrs) < 0)
     goto out;
 
   for (ifap = ifaddrs; ifap != NULL; ifap = ifap->ifa_next) {
-#else /* not HAVE_FIELD_STRUCT_IFADDRS_IFA_NEXT */
+#else /* not HAVE_STRUCT_IFADDRS_IFA_NEXT */
   if (getifaddrs(&ifaddrs, &count) < 0)
     goto out;
 
   for (i = 0,ifap = ifaddrs; i < count; ifap++, i++) {
-#endif /* HAVE_FIELD_STRUCT_IFADDRS_IFA_NEXT */
+#endif /* HAVE_STRUCT_IFADDRS_IFA_NEXT */
 
     if (!ifap || !ifap->ifa_addr || ifap->ifa_addr->sa_family != AF_INET)
       continue;
@@ -379,11 +421,11 @@ out:
 
 #else /* not HAVE_GETIFADDRS */
 
-#if defined(HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN)
+#if defined(HAVE_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_STRUCT_SOCKADDR_SA_LEN)
 # define SIZE(ifr)	(MAX((ifr)->ifr_addr.sa_len, sizeof((ifr)->ifr_addr)) + sizeof(ifr->ifr_name))
-#else /* not defined(HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN) */
+#else /* not defined(HAVE_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_STRUCT_SOCKADDR_SA_LEN) */
 # define SIZE(ifr)	sizeof(struct ifreq)
-#endif /* not defined(HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN) */
+#endif /* not defined(HAVE_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_STRUCT_SOCKADDR_SA_LEN) */
 
 #define clist		(ifc.ifc_ifcu.ifcu_req)
 #define count		(ifc.ifc_len/sizeof(struct ifreq))

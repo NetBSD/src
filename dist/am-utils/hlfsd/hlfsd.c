@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.c,v 1.3 2001/05/13 18:07:00 veego Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.4 2002/11/29 23:06:25 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: hlfsd.c,v 1.7.2.2 2001/01/10 03:23:35 ezk Exp
+ * Id: hlfsd.c,v 1.18 2002/06/23 01:05:40 ib42 Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -265,12 +264,12 @@ main(int argc, char *argv[])
  * Terminate if did not ask to forcecache (-C) and hlfsd would not be able
  * to set the minimum cache intervals.
  */
-#if !defined(MNT2_NFS_OPT_ACREGMIN) && !defined(MNT2_NFS_OPT_NOAC) && !defined(HAVE_FIELD_NFS_ARGS_T_ACREGMIN)
+#if !defined(MNT2_NFS_OPT_ACREGMIN) && !defined(MNT2_NFS_OPT_NOAC) && !defined(HAVE_NFS_ARGS_T_ACREGMIN)
   if (!forcecache) {
     fprintf(stderr, "%s: will not be able to turn off attribute caches.\n", am_get_progname());
     exit(1);
   }
-#endif /* !defined(MNT2_NFS_OPT_ACREGMIN) && !defined(MNT2_NFS_OPT_NOAC) && !defined(HAVE_FIELD_NFS_ARGS_T_ACREGMIN) */
+#endif /* !defined(MNT2_NFS_OPT_ACREGMIN) && !defined(MNT2_NFS_OPT_NOAC) && !defined(HAVE_NFS_ARGS_T_ACREGMIN) */
 
 
   switch (argc - optind) {
@@ -500,7 +499,11 @@ main(int argc, char *argv[])
    * If they don't appear to support the either the "ignore" mnttab
    * option entry, or the "auto" one, set the mount type to "nfs".
    */
+#ifdef HIDE_MOUNT_TYPE
   mnt.mnt_type = HIDE_MOUNT_TYPE;
+#else /* not HIDE_MOUNT_TYPE */
+  mnt.mnt_type = "nfs";
+#endif /* not HIDE_MOUNT_TYPE */
   /* some systems don't have a mount type, but a mount flag */
 
 #ifndef HAVE_TRANSPORT_TYPE_TLI
@@ -551,6 +554,7 @@ main(int argc, char *argv[])
   compute_nfs_args(&nfs_args,
 		   &mnt,
 		   genflags,
+		   NULL,
 		   &localsocket,
 		   NFS_VERSION, /* version 2 */
 		   "udp",	/* XXX: shouldn't this be "udp"? */
@@ -583,16 +587,16 @@ main(int argc, char *argv[])
  * signal handler to perform the mount in N seconds via some alarm.
  *      -Erez Zadok.
  */
-  if (debug_flags & D_DAEMON) {	/* asked for -D daemon */
+  amuDebug(D_DAEMON) {	/* asked for -D daemon */
     plog(XLOG_INFO, "parent NFS mounting hlfsd service points");
-    if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0)
+    if (mount_fs2(&mnt, dir_name, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0)
       fatal("nfsmount: %m");
   } else {			/* asked for -D nodaemon */
     if (fork() == 0) {		/* child runs mount */
       am_set_mypid();
       foreground = 0;
       plog(XLOG_INFO, "child NFS mounting hlfsd service points");
-      if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0) {
+      if (mount_fs2(&mnt, dir_name, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0) {
 	fatal("nfsmount: %m");
       }
       exit(0);			/* all went well */
@@ -602,7 +606,7 @@ main(int argc, char *argv[])
   }
 #else /* not DEBUG */
   plog(XLOG_INFO, "normal NFS mounting hlfsd service points");
-  if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 2, "udp", mnttab_file_name) < 0)
+  if (mount_fs2(&mnt, dir_name, genflags, (caddr_t) &nfs_args, retry, type, 2, "udp", mnttab_file_name) < 0)
     fatal("nfsmount: %m");
 #endif /* not DEBUG */
 
@@ -622,7 +626,6 @@ main(int argc, char *argv[])
     printf("%d\n", masterpid);
 
   plog(XLOG_INFO, "hlfsd ready to serve");
-#ifdef DEBUG
   /*
    * If asked not to fork a daemon (-D nodaemon), then hlfsd_init()
    * will not run svc_run.  We must start svc_run here.
@@ -630,7 +633,6 @@ main(int argc, char *argv[])
   dlog("starting no-daemon debugging svc_run");
   amuDebugNo(D_DAEMON)
     svc_run();
-#endif /* DEBUG */
 
   cleanup(0);			/* should never happen here */
   return (0);			/* everything went fine? */
@@ -865,7 +867,7 @@ cleanup(int signum)
   am_set_mypid();
 
   for (;;) {
-    while ((umount_result = UMOUNT_FS(dir_name, mnttab_file_name)) == EBUSY) {
+    while ((umount_result = UMOUNT_FS(dir_name, dir_name, mnttab_file_name)) == EBUSY) {
 #ifdef DEBUG
       dlog("cleanup(): umount delaying for 10 seconds");
 #endif /* DEBUG */

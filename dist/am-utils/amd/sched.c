@@ -1,7 +1,7 @@
-/*	$NetBSD: sched.c,v 1.3 2001/05/13 18:06:57 veego Exp $	*/
+/*	$NetBSD: sched.c,v 1.4 2002/11/29 23:06:22 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: sched.c,v 1.4.2.2 2001/01/10 03:23:12 ezk Exp
+ * Id: sched.c,v 1.10 2002/02/02 20:58:56 ezk Exp
  *
  */
 
@@ -145,7 +144,7 @@ run_task(task_fun tf, voidp ta, cb_fun cf, voidp ca)
     return;
   }
 
-  /* child code runs here, parent have returned to caller */
+  /* child code runs here, parent has returned to caller */
 
   exit((*tf) (ta));
   /* firewall... */
@@ -164,9 +163,7 @@ sched_task(cb_fun cf, voidp ca, voidp wchan)
    */
   pjob *p = sched_job(cf, ca);
 
-#ifdef DEBUG
   dlog("SLEEP on %#lx", (unsigned long) wchan);
-#endif /* DEBUG */
   p->wchan = wchan;
   p->pid = 0;
   memset((voidp) &p->w, 0, sizeof(p->w));
@@ -191,7 +188,7 @@ wakeup(voidp wchan)
     return;
 
   /*
-   * Can't user ITER() here because
+   * Can't use ITER() here because
    * wakeupjob() juggles the list.
    */
   for (p = AM_FIRST(pjob, &proc_wait_list);
@@ -263,11 +260,9 @@ sigchld(int sig)
     if (WIFSIGNALED(w))
       plog(XLOG_ERROR, "Process %d exited with signal %d",
 	   pid, WTERMSIG(w));
-#ifdef DEBUG
     else
       dlog("Process %d exited with status %d",
 	   pid, WEXITSTATUS(w));
-#endif /* DEBUG */
 
     for (p = AM_FIRST(pjob, &proc_wait_list);
 	 p2 = NEXT(pjob, p), p != HEAD(pjob, &proc_wait_list);
@@ -279,10 +274,8 @@ sigchld(int sig)
       }
     } /* end of for loop */
 
-#ifdef DEBUG
     if (!p)
       dlog("can't locate task block for pid %d", pid);
-#endif /* DEBUG */
 
     /*
      * Must count down children inside the while loop, otherwise we won't
