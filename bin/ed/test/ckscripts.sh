@@ -19,9 +19,8 @@ done >errs.o 2>&1
 # Run the remainding scripts; they exit with zero status
 for i in *.ed; do
 	base=`echo $i | sed 's/\..*//'`
-#	base=`$ED - <<-EOF
-#	r !echo $i
-#	s/\..*
+#	base=`$ED - \!"echo \\\\$i" <<-EOF
+#		s/\..*
 #	EOF`
 	if $base.ed; then
 		if cmp -s $base.o $base.r; then :; else

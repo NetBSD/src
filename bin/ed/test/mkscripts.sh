@@ -18,21 +18,20 @@ for i in *.t; do
 	chmod +x $base.ed
 # The following is pretty ugly and not appropriate use of ed
 # but the point is that it can be done...
-#	base=`$ED - <<-EOF
-#	r !echo "$i"
-#	s/\..*
+#	base=`$ED - \!"echo \\\\$i" <<-EOF
+#		s/\..*
 #	EOF`
 #	$ED - <<-EOF
-#	a
-#	#!/bin/sh -
-#	$ED - <<\EOT
-#	r \\$base.d
-#	w \\$base.o
-#	EOT
-#	.
-#	-2r \\$i
-#	w \\$base.ed
-#	!chmod +x \\$base.ed
+#		a
+#		#!/bin/sh -
+#		$ED - <<\EOT
+#		r \\$base.d
+#		w \\$base.o
+#		EOT
+#		.
+#		-2r \\$i
+#		w \\$base.ed
+#		!chmod +x \\$base.ed
 #	EOF
 done
 
