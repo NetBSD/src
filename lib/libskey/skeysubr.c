@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.3 1995/05/17 20:24:43 cgd Exp $
+ * $Id: skeysubr.c,v 1.4 1995/06/05 19:48:40 pk Exp $
  */
 
 #include <stdio.h>
@@ -25,7 +25,10 @@
 struct termios newtty;
 struct termios oldtty;
 
-void trapped();
+static void trapped __ARGS((int sig));
+static void set_term __ARGS((void));
+static void unset_term __ARGS((void));
+static void echo_off __ARGS((void));
 
 /* Crunch a key:
  * concatenate the seed and the password, run through MD4 and
@@ -78,8 +81,9 @@ char *passwd;	/* Password, any length */
 }
 
 /* The one-way function f(). Takes 8 bytes and returns 8 bytes in place */
-void f (x)
-char *x;
+void
+f(x)
+	char *x;
 {
 	MDstruct md;
 	register long tmp;
@@ -114,83 +118,166 @@ char *x;
 }
 
 /* Strip trailing cr/lf from a line of text */
-void rip (buf)
-char *buf;
+void
+rip(buf)
+	char *buf;
 {
 	char *cp;
 
-	if((cp = strchr(buf,'\r')) != NULL)
+	if ((cp = strchr(buf,'\r')) != NULL)
 		*cp = '\0';
 
-	if((cp = strchr(buf,'\n')) != NULL)
+	if ((cp = strchr(buf,'\n')) != NULL)
 		*cp = '\0';
 }
 
-char *readpass (buf,n)
-char *buf;
-int n;
+char *
+readpass (buf,n)
+	char *buf;
+	int n;
 {
-    set_term ();
-    echo_off ();
+	set_term();
+	echo_off();
 
-    fgets (buf, n, stdin);
+	fgets(buf, n, stdin);
 
-    rip (buf);
-    printf ("\n");
+	rip(buf);
+	printf("\n");
 
-    sevenbit (buf);
+	sevenbit(buf);
 
-    unset_term ();
-    return buf;
+	unset_term();
+	return buf;
 }
 
-char *readskey (buf, n)
-char *buf;
-int n;
+char *
+readskey(buf, n)
+	char *buf;
+	int n;
 {
-    fgets (buf, n, stdin);
+	fgets (buf, n, stdin);
 
-    rip(buf);
-    printf ("\n");
+	rip(buf);
+	printf ("\n");
 
-    sevenbit (buf);
+	sevenbit (buf);
 
-    return buf;
+	return buf;
 }
 
-set_term () 
+static void
+set_term() 
 {
-    fflush(stdout);
-    tcgetattr(fileno(stdin), &newtty);
-    tcgetattr(fileno(stdin), &oldtty);
+	fflush(stdout);
+	tcgetattr(fileno(stdin), &newtty);
+	tcgetattr(fileno(stdin), &oldtty);
  
-    signal (SIGINT, trapped);
+	signal (SIGINT, trapped);
 }
 
-echo_off ()
+static void
+echo_off()
 {
-    newtty.c_lflag &= ~(ICANON | ECHO | ECHONL);
-    newtty.c_cc[VMIN] = 1;
-    newtty.c_cc[VTIME] = 0;
-    newtty.c_cc[VINTR] = 3;
+	newtty.c_lflag &= ~(ICANON | ECHO | ECHONL);
+	newtty.c_cc[VMIN] = 1;
+	newtty.c_cc[VTIME] = 0;
+	newtty.c_cc[VINTR] = 3;
 
-    tcsetattr(fileno(stdin), TCSADRAIN, &newtty);
+	tcsetattr(fileno(stdin), TCSADRAIN, &newtty);
 }
 
-unset_term ()
+static void
+unset_term()
 {
-    tcsetattr(fileno(stdin), TCSADRAIN, &oldtty);
+	tcsetattr(fileno(stdin), TCSADRAIN, &oldtty);
 }
 
-void trapped()
- {
-  signal (SIGINT, trapped);
-  printf ("^C\n");
-  unset_term ();
-  exit (-1);
- }
+static void
+trapped(sig)
+	int sig;
+{
+	signal(SIGINT, trapped);
+	printf("^C\n");
+	unset_term();
+	exit(-1);
+}
+
+/* Convert 8-byte hex-ascii string to binary array
+ * Returns 0 on success, -1 on error
+ */
+int
+atob8(out, in)
+	register char *out, *in;
+{
+	register int i;
+	register int val;
+
+	if (in == NULL || out == NULL)
+		return -1;
+
+	for (i=0; i<8; i++) {
+		if ((in = skipspace(in)) == NULL)
+			return -1;
+		if ((val = htoi(*in++)) == -1)
+			return -1;
+		*out = val << 4;
+
+		if ((in = skipspace(in)) == NULL)
+			return -1;
+		if ((val = htoi(*in++)) == -1)
+			return -1;
+		*out++ |= val;
+	}
+	return 0;
+}
+
+/* Convert 8-byte binary array to hex-ascii string */
+int
+btoa8(out, in)
+	register char *out, *in;
+{
+	register int i;
+
+	if (in == NULL || out == NULL)
+		return -1;
+
+	for (i=0;i<8;i++) {
+		sprintf(out,"%02x",*in++ & 0xff);
+		out += 2;
+	}
+	return 0;
+}
+
+
+/* Convert hex digit to binary integer */
+int
+htoi(c)
+	register char c;
+{
+	if ('0' <= c && c <= '9')
+		return c - '0';
+	if ('a' <= c && c <= 'f')
+		return 10 + c - 'a';
+	if ('A' <= c && c <= 'F')
+		return 10 + c - 'A';
+	return -1;
+}
+
+char *
+skipspace(cp)
+	register char *cp;
+{
+	while (*cp == ' ' || *cp == '\t')
+		cp++;
+
+	if (*cp == '\0')
+		return NULL;
+	else
+		return cp;
+}
 
 /* removebackspaced over charaters from the string */
+void
 backspace(buf)
 char *buf;
 {
@@ -198,9 +285,9 @@ char *buf;
 	char *cp = buf;
 	char *out = buf;
 
-	while(*cp){
-		if( *cp == bs ) {
-			if(out == buf){
+	while (*cp) {
+		if (*cp == bs) {
+			if (out == buf) {
 				cp++;
 				continue;
 			}
@@ -208,14 +295,12 @@ char *buf;
 			  cp++;
 			  out--;
 			}
-		}
-		else {
+		} else {
 			*out++ = *cp++;
 		}
 
 	}
 	*out = '\0';
-	
 }
 
 /* sevenbit ()
@@ -223,11 +308,10 @@ char *buf;
  * Make sure line is all seven bits.
  */
  
-sevenbit (s)
-char *s;
+void
+sevenbit(s)
+	char *s;
 {
-   while (*s) {
-     *s = 0x7f & ( *s);
-     s++;
-   }
+	while (*s)
+		*s++ &= 0x7f;
 }
