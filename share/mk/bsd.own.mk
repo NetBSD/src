@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.247 2002/01/02 23:58:18 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.248 2002/01/03 22:45:26 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -127,6 +127,7 @@ EQN=		${TOOLDIR}/bin/nbeqn
 GENCAT=		${TOOLDIR}/bin/nbgencat
 #GRIND=		${TOOLDIR}/bin/nbvgrind -f
 GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/nbgroff
+HOST_MKDEP=	${TOOLDIR}/bin/nbhost-mkdep
 INDXBIB=	${TOOLDIR}/bin/nbindxbib
 INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/nbinstall
 INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
