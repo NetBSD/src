@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.23.2.8 2004/04/07 21:54:18 jmc Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.23.2.9 2004/04/07 22:35:43 jmc Exp $	*/
 /*	$KAME: ipsec.c,v 1.83 2000/11/09 17:45:30 itojun Exp $	*/
 
 /*
@@ -3170,7 +3170,6 @@ ipsec_copypkt(m)
 					}
 #endif
 					M_COPY_PKTHDR(mnew, n);
-					mnew->m_flags = n->m_flags & M_COPYFLAGS;
 				}
 				else {
 					MGET(mnew, M_DONTWAIT, MT_DATA);
