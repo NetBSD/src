@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.32 2001/11/12 15:25:36 lukem Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.33 2001/12/08 04:09:56 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.32 2001/11/12 15:25:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.33 2001/12/08 04:09:56 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -387,19 +387,17 @@ cache_enter(dvp, vp, cnp)
 	/*
 	 * Create reverse-cache entries (used in getcwd) for directories.
 	 */
-	if (vp &&
-	    (vp != dvp) &&
+	if (vp != NULL &&
+	    vp != dvp &&
 #ifndef NAMECACHE_ENTER_REVERSE
-	    (vp->v_type == VDIR) &&
+	    vp->v_type == VDIR &&
 #endif
-	    ((ncp->nc_nlen > 2) ||
-	     ((ncp->nc_nlen == 2) && (ncp->nc_name[0] != '.') && (ncp->nc_name[1] != '.')) ||
-	     ((ncp->nc_nlen == 1) && (ncp->nc_name[0] != '.'))))
-	{
+	    (ncp->nc_nlen > 2 ||
+	    (ncp->nc_nlen > 1 && ncp->nc_name[1] != '.') ||
+	    (/* ncp->nc_nlen > 0 && */ ncp->nc_name[0] != '.'))) {
 		nvcpp = &ncvhashtbl[NCVHASH(vp)];
 		LIST_INSERT_HEAD(nvcpp, ncp, nc_vhash);
 	}
-	
 }
 
 /*
