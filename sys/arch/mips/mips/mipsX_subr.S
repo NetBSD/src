@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.2.6.8 2002/11/11 22:00:46 nathanw Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.2.6.9 2002/11/24 02:06:22 wdk Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -911,7 +911,8 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
  * Check pending asynchronous traps.
  */
 	lw	t0, _C_LABEL(curlwp)
-	lw	t0, P_MD_ASTPENDING(t0)
+	lw	t0, L_PROC(t0)
+	lw	t0, P_MD_ASTPENDING(t0)	# curlwp->l_proc->p_md.md_astpending
 	beq	t0, zero, 1f
 	nop
 /*
@@ -1249,6 +1250,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	nop
 	lw	v0, _C_LABEL(curlwp)
 	addu	a1, sp, CALLFRAME_SIZ
+	lw	v0, L_PROC(v0)
  #	REG_L	a0, FRAME_SR(a1)
 	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
