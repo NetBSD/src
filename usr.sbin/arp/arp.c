@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.17 1997/03/15 18:37:27 is Exp $ */
+/*	$NetBSD: arp.c,v 1.18 1997/03/26 01:49:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /* static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95"; */
-static char *rcsid = "$NetBSD: arp.c,v 1.17 1997/03/15 18:37:27 is Exp $";
+static char *rcsid = "$NetBSD: arp.c,v 1.18 1997/03/26 01:49:44 thorpej Exp $";
 #endif /* not lint */
 
 /*
@@ -446,13 +446,19 @@ sdl_print(sdl)
 {
 	int i;
 	u_int8_t *p;
+	const char *hexfmt = "%x";
+
+	if (sdl->sdl_type == IFT_ETHER || sdl->sdl_type == IFT_FDDI)
+		hexfmt = "%02x";
 
 	i = sdl->sdl_alen;
 	p = LLADDR(sdl);
 
-	(void)printf("%x", *p);
-	while (--i > 0)
-		(void)printf(":%x", *++p);
+	(void)printf(hexfmt, *p);
+	while (--i > 0) {
+		putchar(':');
+		(void)printf(hexfmt, *++p);
+	}
 }
 
 int
