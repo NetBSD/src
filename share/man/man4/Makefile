@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.250 2002/03/24 22:29:54 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.251 2002/03/25 19:15:35 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amhphy.4 an.4 aria.4 \
@@ -72,7 +72,7 @@ MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
 
 # ISDN devices
 MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
-	isic.4
+	ifpci.4 isic.4
 
 MLINKS+=bha.4 bt.4
 MLINKS+=cardbus.4 cbb.4
