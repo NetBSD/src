@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.204 2001/11/30 13:41:00 augustss Exp $
+$NetBSD: usbdevs,v 1.205 2001/12/05 23:25:31 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -304,6 +304,7 @@ vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor TODOS		0x0b0c	Todos Data System
+vendor NEC2		0x0b62	NEC
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor MOTOROLA		0x1063	Motorola
@@ -828,6 +829,9 @@ product NATIONAL BEARPAW	0x1000	BearPaw 1200
 /* NEC products */
 product NEC HUB			0x55aa	hub
 product NEC HUB_B		0x55ab	hub
+
+/* NEC2 products */
+product NEC2 HUB2_0		0x0058	USB2.0 Hub Controller(
 
 /* NetChip Technology Products */
 product NETCHIP TURBOCONNECT	0x1080	Turbo-Connect
