@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.21 2003/06/06 21:06:07 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.22 2003/06/26 01:30:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.21 2003/06/06 21:06:07 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.22 2003/06/26 01:30:39 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -244,7 +244,7 @@ pthread__initthread(pthread_t self, pthread_t t)
 	t->pt_parent = NULL;
 	t->pt_heldlock = NULL;
 	t->pt_switchto = NULL;
-	t->pt_sleepuc = NULL;
+	t->pt_trapuc = NULL;
 	sigemptyset(&t->pt_siglist);
 	sigemptyset(&t->pt_sigmask);
 	pthread_lockinit(&t->pt_siglock);
