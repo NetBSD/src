@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
+/*	$NetBSD: subr.c,v 1.7 1997/07/23 05:40:20 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -33,11 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)subr.c	8.2 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: subr.c,v 1.7 1997/07/23 05:40:20 mikel Exp $");
 #endif
-static char *rcsid = "$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,6 +53,7 @@ static char *rcsid = "$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $";
 
 #include "ktrace.h"
 
+int
 getpoints(s)
 	char *s;
 {
