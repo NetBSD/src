@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.6 1993/08/01 19:24:19 mycroft Exp $
+ *	$Id: hil.c,v 1.7 1993/08/08 03:44:10 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -81,6 +81,9 @@ int 	hildebug = 0;
 
 /* symbolic sleep message strings */
 char hilin[] = "hilin";
+
+/* XXX see function definition below */
+#define hilq_to_b q_to_b
 
 hilinit()
 {
@@ -1049,6 +1052,7 @@ hilqunmap(qnum, device)
 	return(0);
 }
 
+#if 0
 #include "sys/clist.h"
 
 /*
@@ -1063,6 +1067,7 @@ hilq_to_b(q, cp, cc)
 
 	panic("hilq_to_b: missing body");
 }
+#endif
 
 /*
  * Cooked keyboard functions for ite driver.
