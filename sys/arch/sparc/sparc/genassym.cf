@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 1998/10/12 14:03:22 pk Exp $
+#	$NetBSD: genassym.cf,v 1.16 1998/10/12 21:50:22 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,6 +155,7 @@ define	CPUINFO_EINTSTACK	offsetof(struct cpu_info, eintstack)
 define	INT_STACK_SIZE		INT_STACK_SIZE
 define	CPUINFO_REDZONE		offsetof(struct cpu_info, redzone)
 define	REDSIZE			REDSIZE
+define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
 
 # PTE bits and related information
