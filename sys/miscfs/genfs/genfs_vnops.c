@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.37 2001/09/15 20:36:38 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.38 2001/09/21 07:52:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -640,12 +640,20 @@ genfs_getpages(v)
 
 	/*
 	 * if EOF is in the middle of the range, zero the part past EOF.
+	 * if the page including EOF is not PG_FAKE, skip over it since
+	 * in that case it has valid data that we need to preserve.
 	 */
 
 	if (tailbytes > 0) {
+		size_t tailstart = bytes;
+
+		if ((pgs[bytes >> PAGE_SHIFT]->flags & PG_FAKE) == 0) {
+			tailstart = round_page(tailstart);
+			tailbytes -= tailstart - bytes;
+		}
 		UVMHIST_LOG(ubchist, "tailbytes %p 0x%x 0x%x",
-			    kva, bytes, tailbytes,0);
-		memset((void *)(kva + bytes), 0, tailbytes);
+			    kva, tailstart, tailbytes,0);
+		memset((void *)(kva + tailstart), 0, tailbytes);
 	}
 
 	/*
