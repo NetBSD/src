@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.67 2003/08/07 10:04:34 agc Exp $	*/
+/*	$NetBSD: newfs.c,v 1.68 2003/08/21 15:47:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.67 2003/08/07 10:04:34 agc Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.68 2003/08/21 15:47:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,14 +170,6 @@ int main(int, char *[]);
 #define	DFL_SECSIZE	512
 
 /*
- * Cylinder groups may have up to many cylinders. The actual
- * number used depends upon how much information can be stored
- * on a single cylinder. The default is to use 16 cylinders
- * per group.
- */
-#define	MAXBLKSPERCG	0x7fffffff	/* desired fs_fpg ("infinity") */
-
-/*
  * MAXBLKPG determines the maximum number of data blocks which are
  * placed in a single cylinder group. The default is one indirect
  * block worth of data blocks.
@@ -201,7 +193,6 @@ int	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
 int	maxbsize = 0;		/* maximum clustering */
-int	maxblkspercg = MAXBLKSPERCG; /* maximum blocks per cylinder group */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	density;		/* number of bytes per inode */
@@ -311,9 +302,7 @@ main(int argc, char *argv[])
 			bsize = strsuftoi("block size",
 			    optarg, MINBSIZE, MAXBSIZE);
 			break;
-		case 'c':
-			maxblkspercg = strsuftoi("max. blocks per group",
-			    optarg, 1, INT_MAX);
+		case 'c':	/* was cylinders per group... */
 			break;
 		case 'd':
 			maxbsize = strsuftoi("maximum extent size",
