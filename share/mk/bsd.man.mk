@@ -1,8 +1,12 @@
 #	from: @(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
-#	$Id: bsd.man.mk,v 1.8 1993/08/15 20:42:42 mycroft Exp $
+#	$Id: bsd.man.mk,v 1.9 1993/08/15 20:59:37 mycroft Exp $
 
+.if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
+.endif
+
+.MAIN: all
 .endif
 
 MINSTALL=	install ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
