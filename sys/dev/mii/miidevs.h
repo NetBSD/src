@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.17 2001/05/15 21:37:33 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.18 2001/05/15 23:18:16 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.17 2001/05/15 21:37:04 thorpej Exp 
+ *	NetBSD: miidevs,v 1.18 2001/05/15 23:17:48 matt Exp 
  */
 
 /*-
@@ -69,6 +69,7 @@
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
+#define	MII_OUI_PMCSIERRA	0x0009c0	/* PMC-Sierra */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
@@ -125,6 +126,8 @@
 #define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3C905C internal PHY"
 #define	MII_MODEL_xxBROADCOM_BCM5201	0x0021
 #define	MII_STR_xxBROADCOM_BCM5201	"BCM5201 10/100 media interface"
+#define	MII_MODEL_BROADCOM_BCM5221	0x001e
+#define	MII_STR_BROADCOM_BCM5221	"BCM5221 10/100 PHY"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
 
@@ -167,6 +170,10 @@
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83861	0x0006
 #define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000baseTX PHY"
+
+/* Quality Semiconductor PHYs */
+#define	MII_MODEL_PMCSIERRA_PM8351	0x0000
+#define	MII_STR_PMCSIERRA_PM8351	"PM8351 OctalPHY Gigabit interface"
 
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000
