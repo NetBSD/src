@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.c,v 1.2 1994/02/04 23:17:56 cgd Exp $
+**	$Id: identd.c,v 1.3 1995/05/21 00:39:11 mycroft Exp $
 **
 ** identd.c                       A TCP/IP link identification protocol server
 **
@@ -418,9 +418,7 @@ int main(argc,argv)
       addr.sin_addr.s_addr = htonl(INADDR_ANY);
     else
     {
-      if (isdigit(bind_address[0]))
-	addr.sin_addr.s_addr = inet_addr(bind_address);
-      else
+      if (inet_aton(bind_address, &addr.sin_addr) == 0)
       {
 	struct hostent *hp;
 
@@ -428,8 +426,7 @@ int main(argc,argv)
 	if (!hp)
 	  ERROR1("no such address (%s) for -a switch", bind_address);
 
-	/* This is ugly, should use memcpy() or bcopy() but... */
-	addr.sin_addr.s_addr = * (unsigned long *) (hp->h_addr);
+	memcpy(&addr.sin_addr, hp->h_addr, sizeof(addr.sin_addr));
       }
     }
 
