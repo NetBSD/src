@@ -32,7 +32,8 @@
  */
 
 #if !defined(lint) && !defined(KERNEL) && defined(LIBC_SCCS)
-static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
+/* from: static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: mcount.c,v 1.2 1994/05/14 06:31:17 cgd Exp $";
 #endif
 
 #include <sys/param.h>
