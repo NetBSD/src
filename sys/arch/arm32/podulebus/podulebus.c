@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.6 1996/04/26 22:32:36 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.7 1996/05/06 00:04:06 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -88,6 +88,11 @@ struct podule_description podules_001a[] = {
 	{ 0x00, NULL },
 };
 
+struct podule_description podules_001f[] = {
+	{ 0xe6, "24i16 digitiser" },
+	{ 0x00, NULL },
+};
+
 struct podule_description podules_0021[] = {
 	{ 0x58, "16 bit SCSI interface" },
 	{ 0x00, NULL },
@@ -143,6 +148,7 @@ struct podule_list known_podules[] = {
 	{ 0x09, "CConcepts",	podules_0009 },
 	{ 0x11, "Atomwide",	podules_0011 },
 	{ 0x1a, "Lingenuity",	podules_001a },
+	{ 0x1f, "Irlam",	podules_001f },
 	{ 0x21, "Oak",		podules_0021 },
 	{ 0x2b, "Morley",	podules_002b },
 	{ 0x3a, "Cumana",	podules_003a },
@@ -546,7 +552,7 @@ podulebusattach(parent, self, aux)
 	poduleirq.ih_name = "podule";
 
 	if (irq_claim(IRQ_PODULE, &poduleirq))
-		panic("Cannot claim IRQ for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
+		panic("Cannot claim IRQ %d for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
 
 /* Find out what hardware is bolted on */
 
