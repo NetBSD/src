@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.2 2000/04/22 15:49:33 simonb Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1589,7 +1589,8 @@ oncore_msg_En(
 
 		if (debug > 2)
 			printf("ONCORE: serial/j (%lu, %d) %ld.%09ld\n",
-			    pps_i.assert_sequence, j, tsp->tv_sec, tsp->tv_nsec);
+			    (long)pps_i.assert_sequence, j,
+			    (long)tsp->tv_sec, (long)tsp->tv_nsec);
 
 		if (pps_i.assert_sequence == j) {
 			printf("ONCORE: oncore_msg_En, error serial pps\n");
@@ -1601,7 +1602,8 @@ oncore_msg_En(
 
 		if (debug > 2)
 			printf("ONCORE: serial/j (%lu, %d) %ld.%09ld\n",
-			    pps_i.clear_sequence, j, tsp->tv_sec, tsp->tv_nsec);
+			    (long)pps_i.clear_sequence, j,
+			    (long)tsp->tv_sec, (long)tsp->tv_nsec);
 
 		if (pps_i.clear_sequence == j) {
 			printf("ONCORE: oncore_msg_En, error serial pps\n");
