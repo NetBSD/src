@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.3 2000/04/30 13:23:34 lukem Exp $
+# $NetBSD: named,v 1.4 2000/05/13 03:46:42 lukem Exp $
 #
 
 # PROVIDE: named
@@ -11,8 +11,8 @@
 
 name="named"
 command="/usr/sbin/${name}"
-command_flags="$1"
 pidfile="/var/run/${name}.pid"
-extra_commands="reload dumpdb notrace qrylog querylog stats trace"
+
+extra_commands="reload"
 
 run_rc_command "$1"
