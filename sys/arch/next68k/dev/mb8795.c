@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.17 1999/08/29 05:51:45 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.17.12.1 2001/04/05 12:29:23 he Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -341,6 +341,9 @@ mb8795_rint(sc)
 			 */
 			m->m_pkthdr.len = map->dm_segs[0].ds_xfer_len-4;
 			m->m_len = map->dm_segs[0].ds_xfer_len-4;
+			if (m->m_pkthdr.len > ETHER_MAX_LEN-ETHER_CRC_LEN) {
+				m->m_pkthdr.len = m->m_len = ETHER_MAX_LEN-ETHER_CRC_LEN;
+			}
 			m->m_pkthdr.rcvif = ifp;
 
 			bus_dmamap_unload(sc->sc_rx_dmat, map);
