@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.60 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.61 2004/06/27 18:24:47 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.60 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.61 2004/06/27 18:24:47 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -703,12 +703,12 @@ sbus_alloc_bustag(sc)
 	if (sbt == NULL)
 		return (NULL);
 
-	bzero(sbt, sizeof *sbt);
+	memcpy(sbt, sc->sc_bustag, sizeof(*sbt));
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
-	sbt->sparc_bus_map = sc->sc_bustag->sparc_bus_map;
-	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
+	sbt->ranges = NULL;
+	sbt->nranges = 0;
 	return (sbt);
 }
 
