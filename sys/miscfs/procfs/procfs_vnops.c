@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.114 2004/09/20 17:53:08 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.115 2004/10/01 14:09:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.114 2004/09/20 17:53:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.115 2004/10/01 14:09:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1223,7 +1223,7 @@ procfs_readdir(v)
 				d.d_namlen = snprintf(d.d_name,
 				    sizeof(d.d_name), "%ld", (long)p->p_pid);
 				d.d_type = DT_DIR;
-				p = p->p_list.le_next;
+				p = LIST_NEXT(p, p_list);
 				break;
 			}
 
