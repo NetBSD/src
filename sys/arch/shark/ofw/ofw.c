@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.16 2002/07/31 00:20:54 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.17 2002/07/31 17:34:27 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -50,6 +50,7 @@
 
 #include <dev/cons.h>
 
+#define	_ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
@@ -675,6 +676,11 @@ ofw_configvl(vl, pio, pmem)
 		panic("bad OFW /isa ranges property");
 }
 
+#if NISADMA > 0
+struct arm32_dma_range *shark_isa_dma_ranges;
+int shark_isa_dma_nranges;
+#endif
+
 void
 ofw_configisadma(pdma)
 	vm_offset_t *pdma;
@@ -683,10 +689,6 @@ ofw_configisadma(pdma)
 	int rangeidx;
 	int size;
 	struct dma_range *dr;
-#if NISADMA > 0
-	extern bus_dma_segment_t *pmap_isa_dma_ranges;
-	extern int pmap_isa_dma_nranges;
-#endif
 
 	if ((root = OF_finddevice("/")) == -1 ||
 	    (size = OF_getproplen(root, "dma-ranges")) <= 0 ||
@@ -698,11 +700,11 @@ ofw_configisadma(pdma)
 
 #if NISADMA > 0
 	/* Allocate storage for non-OFW representation of the range. */
-	pmap_isa_dma_ranges = ofw_malloc(nOFdmaranges *
-	    sizeof(bus_dma_segment_t));
-	if (pmap_isa_dma_ranges == NULL)
-		panic("unable to allocate pmap_isa_dma_ranges");
-	pmap_isa_dma_nranges = nOFdmaranges;
+	shark_isa_dma_ranges = ofw_malloc(nOFdmaranges *
+	    sizeof(*shark_isa_dma_ranges));
+	if (shark_isa_dma_ranges == NULL)
+		panic("unable to allocate shark_isa_dma_ranges");
+	shark_isa_dma_nranges = nOFdmaranges;
 #endif
 
 	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges; 
@@ -710,8 +712,9 @@ ofw_configisadma(pdma)
 		dr->start = of_decode_int((unsigned char *)&dr->start);
 		dr->size = of_decode_int((unsigned char *)&dr->size);
 #if NISADMA > 0
-		pmap_isa_dma_ranges[rangeidx].ds_addr = dr->start;
-		pmap_isa_dma_ranges[rangeidx].ds_len  = dr->size;
+		shark_isa_dma_ranges[rangeidx].dr_sysbase = dr->start;
+		shark_isa_dma_ranges[rangeidx].dr_busbase = dr->start;
+		shark_isa_dma_ranges[rangeidx].dr_len  = dr->size;
 #endif
 	}
 
@@ -887,8 +890,10 @@ ofw_configmem(void)
 #endif
 
 #if NISADMA > 0
-		if (pmap_isa_dma_range_intersect(start, end - start,
-						 &istart, &isize)) {
+		if (arm32_dma_range_intersect(shark_isa_dma_ranges,
+					      shark_isa_dma_nranges,
+					      start, end - start,
+					      &istart, &isize)) {
 			/*
 			 * Place the pages that intersect with the
 			 * ISA DMA range onto the ISA DMA free list.

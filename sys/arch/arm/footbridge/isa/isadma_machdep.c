@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.1 2002/02/10 12:26:01 chris Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.2 2002/07/31 17:34:24 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -65,8 +65,9 @@
  * etc. (unless we've run out of memory elsewhere).
  */
 #define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
-extern bus_dma_segment_t *pmap_isa_dma_ranges;
-extern int pmap_isa_dma_nranges;
+
+struct arm32_dma_range *footbridge_isa_dma_ranges;
+int footbridge_isa_dma_nranges;
 
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -120,8 +121,8 @@ void
 isa_dma_init()
 {
 
-	isa_bus_dma_tag._ranges = pmap_isa_dma_ranges;
-	isa_bus_dma_tag._nranges = pmap_isa_dma_nranges;
+	isa_bus_dma_tag._ranges = footbridge_isa_dma_ranges;
+	isa_bus_dma_tag._nranges = footbridge_isa_dma_nranges;
 }
 
 /**********************************************************************
@@ -606,22 +607,13 @@ _isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	bus_dma_segment_t *ds;
-	int i, error;
 
 	if (t->_ranges == NULL)
 		return (ENOMEM);
 
-	for (i = 0, error = ENOMEM, ds = t->_ranges;
-	     i < t->_nranges; i++, ds++) {
-		error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
-		    segs, nsegs, rsegs, flags, ds->ds_addr,
-		    ds->ds_addr + ds->ds_len);
-		if (error == 0)
-			break;
-	}
-
-	return (error);
+	/* _bus_dmamem_alloc() does the range checks for us. */
+	return (_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs,
+	    rsegs, flags));
 }
 
 /**********************************************************************

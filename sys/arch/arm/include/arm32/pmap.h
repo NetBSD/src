@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54 2002/07/31 00:20:52 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55 2002/07/31 17:34:24 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -206,9 +206,6 @@ void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
-
-/* XXX This will go away. */
-boolean_t pmap_isa_dma_range_intersect(paddr_t, psize_t, paddr_t *, psize_t *);
 
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 
