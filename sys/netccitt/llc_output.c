@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_output.c,v 1.6 2001/04/13 23:30:20 thorpej Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.7 2001/11/13 00:12:57 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -41,6 +41,9 @@
  *
  *	@(#)llc_output.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.7 2001/11/13 00:12:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.11 2001/01/17 04:05:43 itojun Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.12 2001/11/13 00:12:58 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -41,6 +41,9 @@
  *
  *	@(#)pk_llcsubr.c	8.2 (Berkeley) 2/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.12 2001/11/13 00:12:58 lukem Exp $");
 
 #include "opt_llc.h"
 
