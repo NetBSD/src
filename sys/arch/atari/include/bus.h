@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1997/03/03 12:28:20 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 1997/06/25 12:06:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -46,6 +46,12 @@ typedef u_long	bus_addr_t;
 typedef u_long	bus_size_t;
 
 /*
+ * DMA methods (currently unused)
+ */
+typedef void	*bus_dma_tag_t;
+typedef void	*bus_dmamap_t;
+
+/*
  * Access methods for bus resources and address space.
  */
 typedef u_long	bus_space_tag_t;
@@ -58,19 +64,19 @@ void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 void	bus_space_read_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
 				int, caddr_t, int));
 void	bus_space_read_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
-				int, caddr_t, int));
+				int, u_int16_t *, int));
 void	bus_space_read_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
-				int, caddr_t, int));
+				int, u_int32_t *, int));
 void	bus_space_read_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
-				int, caddr_t, int));
+				int, u_int64_t *, int));
 void	bus_space_write_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
 				int, caddr_t, int));
 void	bus_space_write_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
-				int, caddr_t, int));
+				int, u_int16_t *, int));
 void	bus_space_write_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
-				int, caddr_t, int));
+				int, u_int32_t *, int));
 void	bus_space_write_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
-				int, caddr_t, int));
+				int, u_int64_t *, int));
 
 /*
  * Check accesibility of the location for various sized bus accesses
@@ -117,10 +123,10 @@ bus_space_read_multi_2(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	int			o, c;
-	caddr_t			a;
+	u_int16_t		*a;
 {
-	for (; c; a += 2, c--)
-		*(u_int16_t *)a = bus_space_read_2(t, h, o);
+	for (; c; a++, c--)
+		*a = bus_space_read_2(t, h, o);
 }
 
 extern __inline__ void
@@ -128,10 +134,10 @@ bus_space_read_multi_4(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	int			o, c;
-	caddr_t			a;
+	u_int32_t		*a;
 {
-	for (; c; a += 4, c--)
-		*(u_int32_t *)a = bus_space_read_4(t, h, o);
+	for (; c; a++, c--)
+		*a = bus_space_read_4(t, h, o);
 }
 
 extern __inline__ void
@@ -139,10 +145,10 @@ bus_space_read_multi_8(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	int			o, c;
-	caddr_t			a;
+	u_int64_t		*a;
 {
-	for (; c; a += 8, c--)
-		*(u_int64_t *)a = bus_space_read_8(t, h, o);
+	for (; c; a++, c--)
+		*a = bus_space_read_8(t, h, o);
 }
 
 extern __inline__ void
@@ -161,10 +167,10 @@ bus_space_write_multi_2(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	int			o, c;
-	caddr_t			a;
+	u_int16_t		*a;
 {
-	for (; c; a += 2, c--)
-		bus_space_write_2(t, h, o, *(u_int16_t *)a);
+	for (; c; a++, c--)
+		bus_space_write_2(t, h, o, *a);
 }
 
 extern __inline__ void
@@ -172,10 +178,10 @@ bus_space_write_multi_4(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	int			o, c;
-	caddr_t			a;
+	u_int32_t		*a;
 {
-	for (; c; a += 4, c--)
-		bus_space_write_4(t, h, o, *(u_int32_t *)a);
+	for (; c; a++, c--)
+		bus_space_write_4(t, h, o, *a);
 }
 
 extern __inline__ void
@@ -183,9 +189,9 @@ bus_space_write_multi_8(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	int			o, c;
-	caddr_t			a;
+	u_int64_t		*a;
 {
-	for (; c; a += 8, c--)
-		bus_space_write_8(t, h, o, *(u_int64_t *)a);
+	for (; c; a++, c--)
+		bus_space_write_8(t, h, o, *a);
 }
 #endif /* _ATARI_BUS_H_ */
