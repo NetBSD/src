@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.21 1995/06/18 20:01:08 cgd Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.22 1995/08/12 23:59:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -351,7 +351,7 @@ in_setpeeraddr(inp, nam)
  * Call the protocol specific routine (if any) to report
  * any errors for each matching socket.
  *
- * Must be called at splnet.
+ * Must be called at splsoftnet.
  */
 void
 in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)

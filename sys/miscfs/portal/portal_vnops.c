@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.12 1995/06/01 22:44:23 jtc Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.13 1995/08/12 23:59:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -265,7 +265,7 @@ portal_open(ap)
 	 * will happen if the server dies.  Sleep for 5 second intervals
 	 * and keep polling the reference count.   XXX.
 	 */
-	s = splnet();
+	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 		if (fmp->pm_server->f_count == 1) {
 			error = ECONNREFUSED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.7 1995/06/13 08:36:58 mycroft Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.8 1995/08/12 23:59:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -467,7 +467,7 @@ idp_usrreq(so, req, m, nam, control)
 			/*
 			 * Must block input while temporarily connected.
 			 */
-			s = splnet();
+			s = splsoftnet();
 			error = ns_pcbconnect(nsp, nam);
 			if (error) {
 				splx(s);

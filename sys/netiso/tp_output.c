@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.7 1994/12/13 20:38:52 mycroft Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.8 1995/08/12 23:59:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -364,7 +364,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 	struct mbuf 	**mp;
 {
 	struct		tp_pcb	*tpcb = sototpcb(so);
-	int 		s = splnet();
+	int 		s = splsoftnet();
 	caddr_t		value;
 	unsigned	val_len;
 	int			error = 0;

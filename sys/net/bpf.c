@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.20 1995/07/23 16:29:47 mycroft Exp $	*/
+/*	$NetBSD: bpf.c,v 1.21 1995/08/12 23:59:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -544,7 +544,7 @@ bpfwrite(dev, uio)
 	if (m->m_pkthdr.len > ifp->if_mtu)
 		return (EMSGSIZE);
 
-	s = splnet();
+	s = splsoftnet();
 #if BSD >= 199103
 	error = (*ifp->if_output)(ifp, m, &dst, (struct rtentry *)0);
 #else

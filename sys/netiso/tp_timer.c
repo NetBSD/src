@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.5 1994/06/29 06:40:38 cgd Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.6 1995/08/12 23:59:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -185,7 +185,7 @@ tp_slowtimo()
 	register struct tp_ref		*rp;
 	struct tp_pcb		*tpcb;
 	struct tp_event		E;
-	int 				s = splnet(), t;
+	int 				s = splsoftnet(), t;
 
 	/* check only open reference structures */
 	IncStat(ts_Cticks);
@@ -270,7 +270,7 @@ void
 tp_fasttimo()
 {
 	register struct tp_pcb *t;
-	int s = splnet();
+	int s = splsoftnet();
 	struct tp_event		E;
 
 	E.ev_number = TM_sendack;

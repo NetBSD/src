@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_table.c,v 1.3 1994/09/20 06:41:40 cgd Exp $	*/
+/*	$NetBSD: tuba_table.c,v 1.4 1995/08/12 23:59:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@ extern	int arpt_keep, arpt_prune;	/* use same values as arp cache */
 void
 tuba_timer()
 {
-	int s = splnet();
+	int s = splsoftnet();
 	int	i;
 	register struct	tuba_cache *tc;
 	long	timelimit = time.tv_sec - arpt_keep;

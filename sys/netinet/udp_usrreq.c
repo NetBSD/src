@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.23 1995/06/26 08:46:16 cgd Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.24 1995/08/12 23:59:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -410,7 +410,7 @@ udp_output(inp, m, addr, control)
 		/*
 		 * Must block input while temporarily connected.
 		 */
-		s = splnet();
+		s = splsoftnet();
 		error = in_pcbconnect(inp, addr);
 		if (error) {
 			splx(s);
@@ -508,7 +508,7 @@ udp_usrreq(so, req, m, addr, control)
 			error = EINVAL;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		error = in_pcballoc(so, &udbtable);
 		splx(s);
 		if (error)
@@ -524,7 +524,7 @@ udp_usrreq(so, req, m, addr, control)
 		break;
 
 	case PRU_BIND:
-		s = splnet();
+		s = splsoftnet();
 		error = in_pcbbind(inp, addr);
 		splx(s);
 		break;
@@ -538,7 +538,7 @@ udp_usrreq(so, req, m, addr, control)
 			error = EISCONN;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		error = in_pcbconnect(inp, addr);
 		splx(s);
 		if (error == 0)
@@ -558,7 +558,7 @@ udp_usrreq(so, req, m, addr, control)
 			error = ENOTCONN;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		in_pcbdisconnect(inp);
 		inp->inp_laddr.s_addr = INADDR_ANY;
 		splx(s);
@@ -621,7 +621,7 @@ static void
 udp_detach(inp)
 	struct inpcb *inp;
 {
-	int s = splnet();
+	int s = splsoftnet();
 
 	if (inp == udp_last_inpcb)
 		udp_last_inpcb = 0;

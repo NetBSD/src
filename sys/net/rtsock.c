@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.13 1995/06/12 00:46:57 mycroft Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.14 1995/08/12 23:59:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -99,7 +99,7 @@ route_usrreq(so, req, m, nam, control)
 			route_cb.iso_count--;
 		route_cb.any_count--;
 	}
-	s = splnet();
+	s = splsoftnet();
 	error = raw_usrreq(so, req, m, nam, control);
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
@@ -786,7 +786,7 @@ sysctl_rtable(name, namelen, where, given, new, newlen)
 	w.w_op = name[1];
 	w.w_arg = name[2];
 
-	s = splnet();
+	s = splsoftnet();
 	switch (w.w_op) {
 
 	case NET_RT_DUMP:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.6 1995/07/12 09:17:06 cgd Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.7 1995/08/12 23:59:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ tuba_usrreq(so, req, m, nam, control)
 		return (iso_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 
-	s = splnet();
+	s = splsoftnet();
 	inp = sotoinpcb(so);
 	/*
 	 * When a TCP is attached to a socket, then there will be

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_timer.c,v 1.5 1994/06/29 06:39:24 cgd Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.6 1995/08/12 23:59:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -147,7 +147,7 @@ void
 clnp_slowtimo()
 {
 	register struct clnp_fragl	*cfh = clnp_frags;
-	int s = splnet();
+	int s = splsoftnet();
 
 	while (cfh != NULL) {
 		if (--cfh->cfl_ttl == 0) {
