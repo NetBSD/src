@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.s,v 1.16 1994/12/12 18:59:59 gwr Exp $	*/
+/*	$NetBSD: interrupt.s,v 1.17 1995/01/11 20:31:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -57,8 +57,8 @@ timebomb:
 	INTERRUPT_RESTORE ;\
 	jra rei			/* XXX - Just do rte here? */
 
-.globl _level0intr, _level1intr, _level2intr, _level3intr, _level4intr
-.globl _level5intr, _level6intr, _level7intr
+.globl _level0intr, _level1intr, _level2intr, _level3intr
+.globl _level4intr, _level5intr, _level6intr, _level7intr
 
 .align 4
 /*
@@ -166,6 +166,17 @@ Lstackok:
 	addql	#4,sp
 	INTERRUPT_RESTORE
 	jra	rei
+
+	.globl	_isr_vectored
+	.globl	_vect_intr
+_vect_intr:
+	INTERRUPT_SAVEREG
+	movw	sp@(22),sp@-		| push exception vector info
+	clrw	sp@-
+	jbsr	_isr_vectored		| C dispatcher
+	addql	#4,sp			|
+	INTERRUPT_RESTORE
+	jra	rei			| all done
 
 
 #undef	INTERRUPT_SAVEREG

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.14 1994/12/12 19:00:00 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.15 1995/01/11 20:31:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -31,6 +31,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This handles multiple attach of autovectored interrupts,
+ * and the handy software interrupt request register.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -48,44 +53,21 @@
 
 extern int intrcnt[];	/* statistics */
 
-/*
- * Justification:
- *
- * the reason the interrupts are not initialized earlier is because of
- * concerns that if it was done earlier then this might screw up the monitor.
- * this may just be lame.
- * 
- */
+#define NISR 8
+
+struct isr {
+	struct	isr *isr_next;
+	int	(*isr_intr)();
+	void *isr_arg;
+	int	isr_ipl;
+};
+
+static struct isr *isr_autovec_list[NISR];
 
 volatile u_char *interrupt_reg;
 
-extern void level0intr(), level1intr(), level2intr(), level3intr(),
-	level4intr(), level5intr(), level6intr(), level7intr();
-
-struct level_intr {
-	void (*level_intr)();
-	int used;
-} level_intr_array[NISR] = {
-	{ level0intr, 0 },		/* this is really the spurious interrupt */
-	{ level1intr, 0 },
-	{ level2intr, 0 }, 
-	{ level3intr, 0 },
-	{ level4intr, 0 }, 
-	{ level5intr, 0 },
-	{ level6intr, 0 },
-	{ level7intr, 0 }
-};
-
-
-struct isr *isr_array[NISR];
-
 void isr_init()
 {
-	int i;
-
-	for (i = 0; i < NISR; i++)
-		isr_array[i] = NULL;
-
 	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
 	if (!interrupt_reg)
 		mon_panic("interrupt reg VA not found\n");
@@ -95,55 +77,7 @@ void isr_add_custom(level, handler)		/* XXX */
 	int level;
 	void (*handler)();
 {
-	level_intr_array[level].used++;
 	set_vector_entry(AUTO_VECTOR_BASE + level, handler);
-}
-
-
-void isr_activate(level)
-	int level;
-{
-	level_intr_array[level].used++;
-	set_vector_entry(AUTO_VECTOR_BASE + level,
-					 level_intr_array[level].level_intr);
-}
-
-void isr_cleanup()
-{
-	int i;
-
-	for (i = 0; i <NISR; i++) {
-		if (level_intr_array[i].used) continue;
-		isr_activate(i);
-	}
-}
-
-void isr_add_autovect(handler, arg, level)
-	int (*handler)();
-	void *arg;
-	int level;
-{
-	struct isr *new_isr;
-	int first_isr;
-
-	first_isr = 0;
-	if ((level < 0) || (level >= NISR))
-		panic("isr_add: attempt to add handler for bad level");
-	new_isr = (struct isr *)
-		malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
-	if (!new_isr)
-		panic("isr_add: allocation of new 'isr' failed");
-
-	new_isr->isr_arg = arg;
-	new_isr->isr_ipl = level;
-	new_isr->isr_intr = handler;
-	new_isr->isr_back = NULL;
-	new_isr->isr_forw = isr_array[level];
-	if (!isr_array[level])
-		first_isr++;
-	isr_array[level] = new_isr;
-	if (first_isr) 
-		isr_activate(level);
 }
 
 static int isr_soft_pending;
@@ -171,6 +105,7 @@ void isr_soft_request(level)
 	*interrupt_reg |= IREG_ALL_ENAB;
 	splx(s);
 }
+
 void isr_soft_clear(level)
 	int level;
 {
@@ -190,38 +125,6 @@ void isr_soft_clear(level)
 	*interrupt_reg &= ~bit;
 	*interrupt_reg |= IREG_ALL_ENAB;
 	splx(s);
-}
-
-/*
- * This is called by the first-level assembly routines
- * for handling auto-vectored interupts.
- */
-void isr_autovec(ipl)
-	int ipl;
-{
-	struct isr *isr;
-	int found;
-
-	intrcnt[ipl]++;
-	cnt.v_intr++;
-
-	isr = isr_array[ipl];
-	if (!isr) {
-		printf("intrhand: unexpected ipl %d\n", ipl);
-		return;
-	}
-	if (!ipl) {
-		printf("intrhand: spurious interrupt\n");
-		return;
-	}
-	/* Give all the handlers a chance. */
-	found = 0;
-	while (isr) {
-		found |= isr->isr_intr(isr->isr_arg);
-		isr = isr->isr_forw;
-	}
-	if (!found)
-		printf("intrhand: stray interrupt, ipl %d\n", ipl);
 }
 
 /*
@@ -306,4 +209,125 @@ int soft1intr(fp)
 		return (1);
 	}
 	return(0);
+}
+
+
+/*
+ * This is called by the assembly routines
+ * for handling auto-vectored interupts.
+ */
+void isr_autovec(ipl)
+	int ipl;
+{
+	struct isr *isr;
+	register int n;
+
+	n = intrcnt[ipl];
+	intrcnt[ipl] = n+1;
+	cnt.v_intr++;
+
+	isr = isr_autovec_list[ipl];
+	if ((isr == NULL) && (n == 0)) {
+		printf("isr_autovec: ipl %d unexpected\n", ipl);
+		return;
+	}
+	/* Give all the handlers a chance. */
+	n = 0;
+	while (isr) {
+		n |= isr->isr_intr(isr->isr_arg);
+		isr = isr->isr_next;
+	}
+	if (!n)
+		printf("isr_autovec: ipl %d not claimed\n", ipl);
+}
+
+/*
+ * Establish an interrupt handler.
+ * Called by driver attach functions.
+ */
+void isr_add_autovect(handler, arg, level)
+	int (*handler)();
+	void *arg;
+	int level;
+{
+	struct isr *new_isr;
+
+	if ((level < 0) || (level >= NISR))
+		panic("isr_add: bad level=%d", level);
+	new_isr = (struct isr *)
+		malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
+	if (!new_isr)
+		panic("isr_add: malloc failed");
+
+	new_isr->isr_intr = handler;
+	new_isr->isr_arg = arg;
+	new_isr->isr_ipl = level;
+	new_isr->isr_next = isr_autovec_list[level];
+	isr_autovec_list[level] = new_isr;
+}
+
+extern void badtrap();
+struct vector_handler {
+	int (*func)();
+	void *arg;
+};
+static struct vector_handler isr_vector_handlers[192];
+
+/*
+ * This is called by the assembly glue
+ * for handling vectored interupts.
+ */
+void
+isr_vectored(evec)
+	u_short evec;
+{
+	int ipl, vec = evec >> 4;
+	struct vector_handler *vh;
+
+	ipl = getsr();
+	ipl = (ipl >> 8) & 7;
+
+	intrcnt[ipl]++;
+	cnt.v_intr++;
+
+	if (vec < 64 || vec >= 256) {
+		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
+		return;
+	}
+	vh = &isr_vector_handlers[vec - 64];
+	if (vh->func == NULL) {
+		printf("isr_vectored: vector=0x%x (nul func)\n", vec);
+		set_vector_entry(vec, badtrap);
+		return;
+	}
+
+	/* OK, call the isr function. */
+	if (vh->func(vh->arg) == 0)
+		printf("isr_vectored: vector=0x%x (not claimed)\n", vec);
+}
+
+/*
+ * Establish an interrupt handler.
+ * Called by driver attach functions.
+ */
+extern void vect_intr();
+void isr_add_vectored(func, arg, level, vec)
+	int (*func)();
+	void *arg;
+	int level, vec;
+{
+	struct vector_handler *vh;
+
+	if (vec < 64 || vec >= 256) {
+		printf("isr_add_vectored: vect=0x%x (invalid)\n", vec);
+		return;
+	}
+	vh = &isr_vector_handlers[vec - 64];
+	if (vh->func) {
+		printf("isr_add_vectored: vect=0x%x (in use)\n", vec);
+		return;
+	}
+	vh->func = func;
+	vh->arg = arg;
+	set_vector_entry(vec, vect_intr);
 }
