@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.7 1995/12/14 16:51:27 jtc Exp $	*/
+/*	$NetBSD: exec.c,v 1.8 1996/07/03 19:53:46 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.7 1995/12/14 16:51:27 jtc Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.8 1996/07/03 19:53:46 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,8 +52,10 @@ static char rcsid[] = "$NetBSD: exec.c,v 1.7 1995/12/14 16:51:27 jtc Exp $";
 
 #if __STDC__
 #include <stdarg.h>
+#define VA_START(ap, last)	va_start(ap, last)
 #else
 #include <varargs.h>
+#define VA_START(ap, last)	va_start(ap)
 #endif
 
 extern char **environ;
@@ -72,22 +74,14 @@ execl(name, arg, va_alist)
 	char **argv;
 	int i;
 
-#if __STDC__
-	va_start(ap, arg);
-#else
-	va_start(ap);
-#endif
+	VA_START(ap, arg);
 	for (i = 1; va_arg(ap, char *) != NULL; i++)
 		;
 	va_end(ap);
 
 	argv = alloca (i * sizeof (char *));
 	
-#if __STDC__
-	va_start(ap, arg);
-#else
-	va_start(ap);
-#endif
+	VA_START(ap, arg);
 	argv[0] = (char *) arg;
 	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
 		;
@@ -110,22 +104,14 @@ execle(name, arg, va_alist)
 	char **argv, **envp;
 	int i;
 
-#if __STDC__
-	va_start(ap, arg);
-#else
-	va_start(ap);
-#endif
+	VA_START(ap, arg);
 	for (i = 1; va_arg(ap, char *) != NULL; i++)
 		;
 	va_end(ap);
 
 	argv = alloca (i * sizeof (char *));
 	
-#if __STDC__
-	va_start(ap, arg);
-#else
-	va_start(ap);
-#endif
+	VA_START(ap, arg);
 	argv[0] = (char *) arg;
 	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
 		;
@@ -149,22 +135,14 @@ execlp(name, arg, va_alist)
 	char **argv;
 	int i;
 
-#if __STDC__
-	va_start(ap, arg);
-#else
-	va_start(ap);
-#endif
+	VA_START(ap, arg);
 	for (i = 1; va_arg(ap, char *) != NULL; i++)
 		;
 	va_end(ap);
 
 	argv = alloca (i * sizeof (char *));
 	
-#if __STDC__
-	va_start(ap, arg);
-#else
-	va_start(ap);
-#endif
+	VA_START(ap, arg);
 	argv[0] = (char *) arg;
 	for (i = 1; (argv[i] = va_arg(ap, char *)) != NULL; i++) 
 		;
