@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 1999/02/03 01:11:23 tv Exp $
+#	$NetBSD: Makefile,v 1.70 1999/02/03 01:32:53 tv Exp $
 
 SUBDIR+=	bc binutils cpio dc diff diff3 egcs gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
@@ -22,8 +22,8 @@ SUBDIR+=	gas.new
     (${MACHINE_ARCH} == "sparc") || \
     (${MACHINE_ARCH} == "vax")
 SUBDIR+=	ld
-.else
-# SUBDIR+=	ld.new
+.elif (${MACHINE_ARCH} == "alpha")
+SUBDIR+=	ld.new
 .endif
 
 .if (${MACHINE_ARCH} == "alpha") || \
