@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.2 1996/01/30 22:35:19 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.3 1996/02/19 04:36:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,7 +181,7 @@ ms_attach(parent, self, aux)
 	int reset, s, tconst;
 
 	cf = ms->ms_dev.dv_cfdata;
-	ms_unit = cf->cf_unit;
+	ms_unit = ms->ms_dev.dv_unit;
 	channel = args->channel;
 	cs = &zsc->zsc_cs[channel];
 	cs->cs_private = ms;

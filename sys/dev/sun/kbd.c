@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.2 1996/01/30 22:35:16 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.3 1996/02/19 04:36:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -231,7 +231,7 @@ kbd_attach(parent, self, aux)
 	int reset, s, tconst;
 
 	cf = k->k_dev.dv_cfdata;
-	kbd_unit = cf->cf_unit;
+	kbd_unit = k->k_dev.dv_unit;
 	channel = args->channel;
 	cs = &zsc->zsc_cs[channel];
 	cs->cs_private = k;
