@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.38 2000/07/28 14:46:37 tv Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.39 2000/07/28 15:40:24 tv Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1952,10 +1952,13 @@ static void
 ncr_aprint(struct ncr_softc *sc, char *fmt, ...)
 {
 	va_list	ap;
+	char buf[256];
 
 	va_start(ap, fmt);
-	printf("%s: %:", sc->sc_dev.dv_xname, fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+
+	printf("%s: %s", sc->sc_dev.dv_xname, buf);
 }
 /****************************************************************************
  *		Start Debugging Functions				    *
