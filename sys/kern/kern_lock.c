@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.25 1999/08/27 01:14:38 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.26 2000/02/09 16:46:09 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -689,10 +689,17 @@ int simple_lock_debugger = 0;
 #define	SLOCK_DEBUGGER()	/* nothing */
 #endif /* } */
 
+#ifdef MULTIPROCESSOR
+#define SLOCK_MP()		lock_printf("on cpu %d\n", cpu_number())
+#else
+#define SLOCK_MP()		/* nothing */
+#endif
+
 #define	SLOCK_WHERE(str, alp, id, l)					\
 do {									\
 	lock_printf(str);						\
-	lock_printf("currently at: %s:%d\n", (id), (l));		\
+	lock_printf("lock: %p, currently at: %s:%d\n", (alp), (id), (l));		\
+	SLOCK_MP();							\
 	if ((alp)->lock_file != NULL)					\
 		lock_printf("last locked: %s:%d\n", (alp)->lock_file,	\
 		    (alp)->lock_line);					\
@@ -792,7 +799,7 @@ _simple_lock_try(alp, id, l)
 	if ((rv = cpu_simple_lock_try(alp)) == 0) {
 		if (alp->lock_holder == cpu_id)
 			SLOCK_WHERE("simple_lock_try: locking against myself\n",
-			    alp, id l);
+			    alp, id, l);
 		goto out;
 	}
 #else
@@ -858,6 +865,7 @@ _simple_unlock(alp, id, l)
 	alp->unlock_line = l;
 
 #if defined(MULTIPROCESSOR) /* { */
+	alp->lock_holder = LK_NOCPU;
 	/* Now that we've modified all fields, release the lock. */
 	cpu_simple_unlock(alp);
 #else
