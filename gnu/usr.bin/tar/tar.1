@@ -1,0 +1,338 @@
+.\" Copyright (c) 1991, 1992, 1993 Free Software Foundation	-*- nroff -*-
+.\" See section COPYING for conditions for redistribution
+.\"
+.\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
+.\"
+.\"	$Id: tar.1,v 1.1 1994/08/07 00:44:33 deraadt Exp $
+.\"
+.Dd 6 August 1994
+.Os NetBSD
+.Dt TAR 1
+.Sh NAME
+.Nm tar
+.Nd
+tape archiver; manipulate "tar" archive files
+.Sh SYNOPSIS
+.Nm
+.Op Cm Bq -
+.Op Cm bundled-options
+.Op Ar [gnu-style-flags]
+.Op Ar tarfile
+.Op Ar blocksize
+.Op Ar exclude-file
+.Op Ar filenames
+.Op Fl C Ar directory-name
+.Sh DESCRIPTION
+.Nm
+is short for 
+.Dq tape archiver,
+so named for historical reasons; the
+.Nm
+program creates, adds files to, or extracts files from an archive file
+in
+.Dq tar
+format, called a
+.Em tarfile .
+A tarfile is often a magnetic tape, but can be a floppy diskette or any
+regular disk file.
+.Pp
+The first argument word of the
+.Nm
+command line is usually a command word of bundled function and modifier
+letters, optionally preceeded by a dash;
+it must contain exactly one function letter from the set
+.Cm A ,
+.Cm c ,
+.Cm d ,
+.Cm r ,
+.Cm t ,
+.Cm u ,
+.Cm x ,
+for append, create, difference, replace, table of contents, update, and
+extract (further described below).  The command word can also contain other
+function modifiers described below, some of which will take arguments from
+the command line in the order they are specified in the command word (review
+the EXAMPLES section).  Functions and function modifiers can also be specified
+with the GNU argument convention (preceeded by two dashes, one function or
+modifier per word.  Command-line arguments that specify files to
+add to, extract from, or list from an archive may be given as shell
+pattern matching strings.
+.Sh FUNCTIONS
+Exactly one of the following functions must be specified.
+.Pp
+.Bl -tag -width "--concatenate" -compact
+.It -A,
+.It --catenate,
+.It "--concatenate"
+Add the named files to the end an archive.
+.Em Note:
+This option requires a rewritable tarfile,
+and therefore does not work on quarter-inch cartridge tapes.
+.It -c,
+.It --create
+Create a new archive (or truncates an old one) and writes the named files
+to it.
+.It -d,
+.It --diff,
+.It --compare
+Find differences between files in the archive and corresponding files in
+the file system.
+.It --delete
+Delete named files from the archive (Does not work on quarter-inch tapes).
+.It -r,
+.It --append
+Append files to the end of an archive (Does not work on quarter-inch tapes).
+.It -t,
+.It --list
+List the contents of an archive; if filename arguments are given, only those
+files are listed, otherwise the entire table of contents is listed.
+.It -u,
+.It --update
+Append the named files if the on-disk version has a modification date
+more recent than their copy in the archive (if any).  Does not work on
+quarter-inch tapes.
+.It -x,
+.It --extract,
+.It --get
+Extract files from an archive.  The owner, modification time, and file
+permissions are restored, if possible.  If no
+.Em filename
+arguments are given, extract all the files in the archive.  If a
+.Em filename
+argument matches the name of a directory on the tape, that directory and
+its contents are extracted (as well as all directories under that directory).
+If the archive contains multiple entries corresponding to the same file
+(see the
+.Fl -append
+command above), the last one extracted will overwrite all earlier versions.
+.El
+.Sh OPTIONS
+The other options to
+.Nm
+may be combined arbitrarily; single-letter options may be bundled in with
+the command word.  Verbose options which take arguments will be
+followed by the argument; single-letter options will consume
+successive command line arguments (see the
+.Sx EXAMPLES
+below).
+.Pp
+.Bl -tag -width "--preserve-permissions" -compact
+.It --help
+Prints a message listing and briefly describing all the command
+options to tar.
+.It --atime-preserve
+Restore the access times on files which are written to tape (note that
+this will change the inode-change time!).
+.It -b,
+.It --block-size N
+Sets the block size for reading or writing to N 512-byte blocks.
+.It -B,
+.It --read-full-blocks
+Re-assemble short readsinto full blocks (for reading 4.2BSD pipes).
+.It -C,
+.It directory DIR
+Change to directory DIR for extraction.
+.It --checkpoint
+Print directory names while reading the archive.
+.It -f,
+.It --filename [HOSTNAME:]F
+Use archive file or devicename F (default is /dev/rst0).
+.It -F,
+.It --info-script F,
+.It --new-volume-script F
+Run a script at the end of each archive volume (implies
+.Fl M ) .
+.It -G,
+.It --incremental
+Create/list/extract old GNU-format incremental backup.
+.It -g,
+.It --listed-incremental F
+Create/list/extract new GNU-format incremental backup.
+.It -h,
+.it --dereference
+Don't write symlinks as symlinks; write the data of the files they name.
+.It -i,
+.It --ignore-zeros
+Ignore blocks of zeroes in archive (usually means End-Of-File).
+.It --ignore-failed-read
+Don't exit with non-zero status on unreadable files.
+.It -k,
+-It --keep-old-files
+Keep files which already exist on disk; don't overwrite them from the archive.
+.It -K,
+.It --starting-file F
+Begin at file F in the archive.
+.It -l,
+.It --one-file-system
+Stay in local filesystem when creating an archive (do not cross mount
+points).
+.It -L,
+.It --tape-length N
+Change tapes after writing N*1024 bytes.
+.It -m,
+.It --modification-time
+Don't extract file modified time.
+.It -M,
+.It --multi-volume
+Create/list/extract multi-volume archive.
+.It -N,
+.It --after-date DATE,
+.It --newer DATE
+Only store files newer than DATE
+.It -o,
+.It --old-archive,
+.It --portability
+Write a V7 format archive, rather than POSIX format.
+.It -O,
+.It --to-stdout
+Extract files to standard output.
+.It -p,
+.It --same-permissions,
+.It --preserve-permissions
+Extract all protection information.
+.It --preserve
+Has the effect of
+.Fl p s.
+.It -R,
+.It --record-number
+Show record number within archive with each message.
+.It --remove-files
+Remove files after adding them to the archive.
+.It -s,
+.It --same-order,
+.It --preserve-order
+List of names to extract is sorted to match archive.
+.It -S,
+.It --sparse
+Handle "sparse" files efficiently.
+.It -T,
+.It --files-from F
+Get names of files to extract or create from file F, one per line.
+.It --null
+Modifies behavior of
+.Fl T
+to expect null-terminated names; disables
+.Fl C.
+.It --totals
+Prints total bytes written with --create.
+.It -v,
+.It --verbose
+Lists files written to archive with --create or extracted with --extract;
+lists file protection information along with file names with --list.
+.It -V,
+.It --label NAME
+Create archive with volume name NAME.
+.It --version
+Print tar program version number.
+.It -w,
+.It --interactive,
+.It --confirmation
+Ask for confirmation for every action.
+.It -W,
+.It --verify
+Attempt to verify the archive after writing it.
+.It --exclude FILE
+Exclude FILE (don't extract it, don't add it, don't list it).
+.It -X,
+.It --exclude-from FILE
+Exclude files listed in FILE.
+.It -Z,
+.It --compress,
+.It --uncompress
+Filter the archive through
+.Em compress ( 1 ) .
+.It -z,
+.It --gzip,
+.It --gunzip
+Filter the archive through
+.Em gzip ( 1 ) .
+.It --use-compress-program PROG
+Filter the archive through PROG (which must accept
+.Fl d
+to mean "decompress").
+.It --block-compress
+Block the output of compression program for tapes or floppies
+(otherwise writes will be of odd length, which device drivers may reject).
+.It -[0-7][lmh]
+Specify tape drive and density.
+.It --norecurse
+Don't recurse into subdirectories when creating.
+.It --unlink
+Unlink files before creating them.
+.El
+.Sh EXAMPLES
+To create an archive on tape drive /dev/rst0 with a block size of 20
+blocks, containing files named "bert" and "ernie", you can enter
+.Dl tar cfb /dev/rst0 20 bert ernie
+or
+.Dl tar --create --file /dev/rst0 --block-size 20 bert ernie
+Note that the
+.Em f
+and
+.Em b
+flags both require arguments, which they take from the command line in
+the order they were listed in the command word.
+.Pp
+Because /dev/rst0 is the default device, and 20 is the default block
+size, the above example could have simply been
+.Dl tar c bert ernie
+.Pp
+To extract all the C sources and headers from an archive named
+"backup.tar", type
+.Dl tar xf backup.tar "*.[ch]"
+Note that the pattern must be quoted to prevent the shell from
+attempting to expand it according the files in the current working
+directory (the shell does not have access to the list of files in
+the archive, of course).
+.Pp
+To create a compressed archive on diskette, using gzip, use a command-line like
+.Dl tar --block-compress -z -c -v -f /dev/rfd1a -b 36 tar/
+Note that you cannot mix bundled flags and --style flags; you can use
+single-letter flags in the manner above, rather than having to type
+.Dl tar --block-compress --gzip --verbose --file /dev/rfd1a --block-size 20 tar/
+.Pp
+The above-created diskette can be listed with
+.Dl tar tvfbz /dev/rfd1a 36
+.Sh ENVIRONMENT
+The tar program examines the following environment variables.
+.Bl -tag -width "POSIXLY-CORRECT"
+.It POSIXLY-CORRECT
+Normally, tar will process flag arguments that appear in the file list
+If set in the environment, this causes tar to consider the first
+non-flag argument to terminate flag processing, as per the POSIX specification.
+.It SHELL
+In interactive mode, a permissible response to the prompt is to
+request to spawn a subshell, which will be "/bin/sh" unless the SHELL variable
+is set.
+.It TAPE
+Changes tar's default tape drive (which is still overridden by the
+.Fl f
+flag).
+.El
+.Sh FILES
+.Bl -tag -width "/dev/rst0"
+.It Pa /dev/rst0
+The default tape drive.
+.El
+.\" This next request is for sections 1, 6, 7 & 8 only
+.\"     (command return values (to shell) and fprintf/stderr type diagnostics)
+.\" .Sh DIAGNOSTICS
+.Sh SEE ALSO
+.Bl -tag -width "pax"
+.Xr pax 1
+POSIX archiver.
+.El
+.\" .Sh STANDARDS
+.Sh HISTORY
+The tar format has a rich history, dating back to Sixth Edition UNIX.
+The current implementation of tar is the GNU implementation, which
+originated as the public-domain tar written by John Gilmore.
+.Sh AUTHORS
+A cast of thousands, including [as listed in the ChangeLog file in the
+source] John Gilmore (author of original public
+domain version), Jay Fenlason (first GNU author), Joy Kendall, Jim
+Kingdon, David J. MacKenzie, Michael I Bushnell, Noah Friedman, and
+innumerable others who have contributed fixes and additions.
+.Sh BUGS
+The -C feature does not work like historical tar programs, and is probably
+untrustworthy.
