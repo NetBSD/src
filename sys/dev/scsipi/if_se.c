@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.32 2000/11/15 01:02:19 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.33 2000/12/14 07:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -354,6 +354,7 @@ seattach(parent, self, aux)
 	ifp->if_watchdog = sewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -430,7 +431,7 @@ se_ifstart(ifp)
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 #if NBPFILTER > 0
@@ -544,7 +545,7 @@ sedone(xs)
 			}
 			sc->sc_last_timeout = ntimeo;
 			if (ntimeo == se_poll0  &&
-			    ifp->if_snd.ifq_head)
+			    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				/* Output is pending. Do next recv
 				 * after the next send.  */
 				sc->sc_flags |= SE_NEED_RECV;
