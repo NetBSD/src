@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.1.1.2 2000/11/19 23:43:24 wiz Exp $	*/
+/*	$NetBSD: xutil.c,v 1.2 2000/11/20 03:19:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -82,7 +82,8 @@ static int orig_mem_bytes;
 #endif /* DEBUG_MEM */
 
 /* forward definitions */
-static void real_plog(int lvl, char *fmt, va_list vargs);
+static void real_plog(int lvl, const char *fmt, va_list vargs)
+     __attribute__((__format__(__printf__, 2, 0)));
 
 #ifdef DEBUG
 /*
@@ -288,10 +289,13 @@ checkup_mem(void)
  * 'e' never gets longer than maxlen characters.
  */
 static void
-expand_error(char *f, char *e, int maxlen)
+expand_error(const char *f, char *e, int maxlen)
 {
+#ifndef HAVE_STRERROR
   extern int sys_nerr;
-  char *p, *q;
+#endif
+  const char *p;
+  char *q;
   int error = errno;
   int len = 0;
 
@@ -404,7 +408,7 @@ debug_option(char *opt)
 
 
 void
-dplog(char *fmt, ...)
+dplog(const char *fmt, ...)
 {
   va_list ap;
 
@@ -419,7 +423,7 @@ dplog(char *fmt, ...)
 
 
 void
-plog(int lvl, char *fmt, ...)
+plog(int lvl, const char *fmt, ...)
 {
   va_list ap;
 
@@ -433,7 +437,7 @@ plog(int lvl, char *fmt, ...)
 
 
 static void
-real_plog(int lvl, char *fmt, va_list vargs)
+real_plog(int lvl, const char *fmt, va_list vargs)
 {
   char msg[1024];
   char efmt[1024];
@@ -454,12 +458,13 @@ real_plog(int lvl, char *fmt, va_list vargs)
   vsnprintf(ptr, 1024, efmt, vargs);
 #else /* not HAVE_VSNPRINTF */
   /*
-   * XXX: ptr is 1024 bytes long.  It is possible to write into it
-   * more than 1024 bytes, if efmt is already large, and vargs expand
-   * as well.  This is not as safe as using vsnprintf().
+   * XXX: ptr is 1024 bytes long, but we may write to ptr[strlen(ptr) + 2]
+   * (to add an '\n', see code below) so we have to limit the string copy
+   * to 1023 (including the '\0').
    */
-  vsprintf(ptr, efmt, vargs);
-  msg[1023] = '\0';		/* null terminate, to be sure */
+  fmt = efmt;
+  vsnprintf(ptr, 1023, fmt, vargs);
+  msg[1022] = '\0';		/* null terminate, to be sure */
 #endif /* not HAVE_VSNPRINTF */
 
   ptr += strlen(ptr);
