@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.10 2004/02/13 11:36:15 wiz Exp $ */
+/* $NetBSD: aubus.c,v 1.11 2004/03/16 18:13:45 nathanw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.10 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.11 2004/03/16 18:13:45 nathanw Exp $");
 
 #include "locators.h"
 
@@ -127,7 +127,6 @@ const struct au1x00_dev au1500_devs [] = {
 	{ "usbd",	{ USBD_BASE },				   { 24, 25 }},
 	{ "gpio",	{ SYS_BASE },				   { -1, -1 }},
 	{ "gpio2",	{ GPIO2_BASE },				   { -1, -1 }},
-	{ "i2s",	{ I2S_BASE },				   { -1, -1 }},
 	{ "aupci",	{ },					   { -1, -1 }},
 	{ NULL }
 };
