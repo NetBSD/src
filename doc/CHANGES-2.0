@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.124 2004/04/27 18:58:19 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.125 2004/04/28 03:34:34 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1336,3 +1336,21 @@ src/sys/netinet/ip_rules.c			1.2
 	Fix VAX kernel problem: always include <sys/param.h> first.
 	[matt, ticket #187]
 
+bin/pax/file_subs.c				1.43-1.44
+bin/pax/tar.c					1.52
+
+	PR/25188: Thomas Klausner: pax-as-tar problem with trailing slashes
+	The problem is with the program that generates the tar file:
+	-rwxrwxrwx  1 root     wheel          0 Feb  8 16:46 faad2/aacDECdrop/
+	It creates directory nodes without the 'd' bit set, so that pax thinks
+	they are files and does the temporary name and dance with them. Added
+	code to detect this condition, warn about it, and work around it.
+
+	PR/25350: Alan Barrett: Treat the sticky bit specially as non-superusers
+	cannot set it on non-directories (elvis-2.2_0 extraction failed)
+
+	PR/25299: grant beattie: 1.5.3/i386 kernel set archives confuse
+	-current pax
+	PR/25310: Juan RP: tar can't unpack MS-DOS gzip files correctly
+
+	[snj, ticket #217]
