@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2001/01/16 16:54:01 nonaka Exp $	*/
+/*	$NetBSD: md.c,v 1.2 2002/07/26 01:00:41 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,7 +175,7 @@ md_make_bsd_partitions(void)
 	case 2: /* standard X: a root, b swap (big), c "unused", d /usr */
 		partstart = ptstart;
 
-		/* check that we have enouth space */
+		/* check that we have enough space */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize);
 		i += NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize);
