@@ -1,4 +1,4 @@
-/* $NetBSD: lrint.S,v 1.1 2004/07/01 19:08:21 drochner Exp $ */
+/* $NetBSD: lrint.S,v 1.2 2004/07/02 10:17:23 drochner Exp $ */
 
 #include <machine/asm.h>
 
@@ -7,7 +7,10 @@ LEAF(lrint, 1)
 #if 0
 	ftoit ft0,v0
 #else
-	stt ft0,(-8)(sp)
-	ldq v0,(-8)(sp)
+	lda sp,-8(sp)
+	stt ft0,0(sp)
+	ldq v0,0(sp)
+	lda sp,8(sp)
 #endif
 	ret
+END(lrint)
