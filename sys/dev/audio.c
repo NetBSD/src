@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.22 1996/03/14 19:08:32 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.23 1996/03/29 00:11:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -170,7 +170,7 @@ void
 audio_printsc(sc)
 	struct audio_softc *sc;
 {
-	printf("hwhandle %x hw_if %x ", sc->hw_hdl, sc->hw_if);
+	printf("hwhandle %p hw_if %p ", sc->hw_hdl, sc->hw_if);
 	printf("open %x mode %x\n", sc->sc_open, sc->sc_mode);
 	printf("rchan %x wchan %x ", sc->sc_rchan, sc->sc_wchan);
 	printf("rring blk %x pring nblk %x\n", sc->rr.nblk, sc->pr.nblk);
@@ -1001,7 +1001,7 @@ audio_write(dev, uio, ioflag)
 #ifdef AUDIO_DEBUG
 		if (audiodebug > 1) {
 		    int left = cb->ep - tp;
-		    Dprintf("audio_write: cc=%d tp=0x%x bs=%d nblk=%d left=%d\n", cc, tp, blocksize, cb->nblk, left);
+		    Dprintf("audio_write: cc=%d tp=%p bs=%d nblk=%d left=%d\n", cc, tp, blocksize, cb->nblk, left);
 		}
 #endif		
 #ifdef DIAGNOSTIC
@@ -1010,7 +1010,7 @@ audio_write(dev, uio, ioflag)
       
 		/* check for an overwrite. Should never happen */
 		if ((tp + towrite) > cb->ep) {
-			DPRINTF(("audio_write: overwrite tp=0x%x towrite=%d ep=0x%x bs=%d\n",
+			DPRINTF(("audio_write: overwrite tp=%p towrite=%d ep=0x%x bs=%d\n",
 			         tp, towrite, cb->ep, blocksize));
 			printf("audio_write: overwrite tp=%p towrite=%d ep=%p\n",
 			         tp, towrite, cb->ep);
@@ -1037,7 +1037,7 @@ audio_write(dev, uio, ioflag)
 		}
 		if (error) {
 #ifdef AUDIO_DEBUG
-		        printf("audio_write:(1) uiomove failed %d; cc=%d tp=0x%x bs=%d\n", error, cc, tp, blocksize);
+		        printf("audio_write:(1) uiomove failed %d; cc=%d tp=%p bs=%d\n", error, cc, tp, blocksize);
 #endif
 			break;
 		}		    
@@ -1240,7 +1240,7 @@ audiostartr(sc)
 {
 	int error;
     
-    	DPRINTF(("audiostartr: tp=0x%x\n", sc->rr.tp));
+    	DPRINTF(("audiostartr: tp=%p\n", sc->rr.tp));
 
 	error = sc->hw_if->start_input(sc->hw_hdl, sc->rr.tp, sc->sc_blksize,
 	    			       audio_rint, (void *)sc);
@@ -1416,7 +1416,7 @@ audio_rint(v)
 	    	if (++cb->nblk < cb->maxblk) {
 #ifdef AUDIO_DEBUG
 		    	if (audiodebug > 1)
-				Dprintf("audio_rint: tp=0x%x cc=%d\n", tp, cc);
+				Dprintf("audio_rint: tp=%p cc=%d\n", tp, cc);
 #endif
 			error = hw->start_input(sc->hw_hdl, tp, cc,
 						audio_rint, (void *)sc);
