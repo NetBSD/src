@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.3 2001/06/14 15:20:46 fredette Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.4 2001/06/27 17:41:03 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,22 +102,22 @@ zs_any_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 	int matched;
 
 	/* Make sure there is something there... */
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, sizeof(struct zsdevice), 
+	if (bus_space_map(ma->ma_bustag, ma->ma_paddr, sizeof(struct zsdevice), 
 			  0, &bh))
 		return (0);
-	matched = (bus_space_peek_1(ca->ca_bustag, bh, 0, NULL) == 0);
-	bus_space_unmap(ca->ca_bustag, bh, sizeof(struct zsdevice));
+	matched = (bus_space_peek_1(ma->ma_bustag, bh, 0, NULL) == 0);
+	bus_space_unmap(ma->ma_bustag, bh, sizeof(struct zsdevice));
 	if (!matched)
 		return (0);
 
 	/* Default interrupt priority (always splbio==2) */
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = ZSHARD_PRI;
+	if (ma->ma_pri == -1)
+		ma->ma_pri = ZSHARD_PRI;
 
 	return (1);
 }
@@ -132,21 +132,53 @@ zs_any_attach(parent, self, aux)
 	void *aux;
 {
 	struct zsc_softc *zsc = (void *) self;
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 
-        zsc->zsc_bustag = ca->ca_bustag;
-        zsc->zsc_dmatag = ca->ca_dmatag;
+        zsc->zsc_bustag = ma->ma_bustag;
+        zsc->zsc_dmatag = ma->ma_dmatag;
         zsc->zsc_promunit = self->dv_unit;
         zsc->zsc_node = 0;
         
 	/* Map in the device. */
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, sizeof(struct zsdevice), 
+	if (bus_space_map(ma->ma_bustag, ma->ma_paddr, sizeof(struct zsdevice), 
 			  BUS_SPACE_MAP_LINEAR, &bh))
 		panic("zs_any_attach: can't map");
 
 	/* This is where we break the bus_space(9) abstraction: */
-	zs_attach(zsc, (void *)bh, ca->ca_intpri);
+	zs_attach(zsc, (void *)bh, ma->ma_pri);
+}
+
+int
+zs_console_flags(promunit, node, channel)
+	int promunit;
+	int node;
+	int channel;
+{
+	int cookie, flags = 0;
+
+	/*
+	 * Use `promunit' and `channel' to derive the PROM
+	 * stdio handles that correspond to this device.
+	 */
+	if (promunit == 0)
+		cookie = PROMDEV_TTYA + channel;
+	else if (promunit == 1 && channel == 0)
+		cookie = PROMDEV_KBD;
+	else
+		cookie = -1;
+
+	if (cookie == prom_stdin())
+		flags |= ZS_HWFLAG_CONSOLE_INPUT;
+
+	/*
+	 * Prevent the keyboard from matching the output device
+	 * (note that PROMDEV_KBD == PROMDEV_SCREEN == 0!).
+	 */
+	if (cookie != PROMDEV_KBD && cookie == prom_stdout())
+		flags |= ZS_HWFLAG_CONSOLE_OUTPUT;
+
+	return (flags);
 }
 
 #ifdef	KGDB
