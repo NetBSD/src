@@ -1,4 +1,4 @@
-/*	$NetBSD: ispvar.h,v 1.3 1997/03/13 03:33:05 mycroft Exp $	*/
+/*	$NetBSD: ispvar.h,v 1.4 1997/04/05 02:48:36 mjacob Exp $	*/
 
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
@@ -59,6 +59,7 @@ struct ispmdvec {
 	 * Initial values for conf1 register
 	 */
 	u_int16_t	dv_conf1;
+	u_int16_t	dv_clock;	/* clock frequency */
 };
 
 #define	MAX_TARGETS	16
