@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.23 2002/11/28 06:00:55 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.24 2002/11/29 23:26:59 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -25,8 +25,8 @@
 #     remaining lines until the end of the record are notes.
 
 Package:	am-utils [amd]
-Version:	6.0.6
-Current Vers:	6.0.7/6.1b1
+Version:	6.1b1
+Current Vers:	6.1b1
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/
 Mailing List:	amd-dev
