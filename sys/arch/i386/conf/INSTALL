@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.49 1997/10/08 09:32:39 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.50 1997/10/08 10:09:40 mycroft Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -14,7 +14,8 @@ options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# Virtual 8086 emulation
+#options 	VM86		# virtual 8086 emulation
+#options 	USER_LDT	# user-settable LDT; used by WINE
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -67,7 +68,6 @@ options 	COMPAT_12	# NetBSD 1.2,
 
 #options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
-#options 	USER_LDT	# user-settable LDT; used by WINE
 options 	LKM		# loadable kernel modules
 
 file-system 	FFS		# UFS
