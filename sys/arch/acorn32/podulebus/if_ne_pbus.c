@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.11 2003/12/06 17:39:30 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.12 2003/12/06 20:00:12 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.11 2003/12/06 17:39:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.12 2003/12/06 20:00:12 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -202,7 +202,7 @@ struct ne_clone {
 	},
 	/* Acorn EtherI podule. (supplied with NC) */
 	{
-	  PODULE_ETHER, EN_REGSHIFT,
+	  PODULE_ETHERI, EN_REGSHIFT,
 	  EN_NIC_OFFSET, EN_NIC_SIZE, EN_ASIC_OFFSET, EN_ASIC_SIZE,
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
