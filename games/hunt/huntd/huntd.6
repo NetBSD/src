@@ -11,7 +11,7 @@
 .SH NAME
 huntd \- hunt daemon, back-end for hunt game
 .SH SYNOPSIS
-\fB/usr/games/lib/huntd\fP [ \fB\-s\fP ] [ \fB\-p\fP port ]
+\fB/usr/games/huntd\fP [ \fB\-s\fP ] [ \fB\-p\fP port ]
 .SH DESCRIPTION
 .PP
 .I huntd
@@ -59,12 +59,12 @@ hunt 26740/udp		# multi-player/multi-host mazewars
 and add a line in
 .BR /etc/inetd.conf :
 .IP
-hunt dgram udp wait nobody /usr/games/lib/huntd HUNT
+hunt dgram udp wait nobody /usr/games/huntd HUNT
 .LP
 except for Suns which use
 .BR /etc/servers :
 .IP
-hunt udp /usr/games/lib/huntd
+hunt udp /usr/games/huntd
 .LP
 Do not use any of the command line options \(em if you want
 .I inetd
