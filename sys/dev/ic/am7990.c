@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.7 1995/12/11 02:30:44 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.8 1995/12/11 19:48:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -154,7 +154,7 @@ lereset(sc)
 
 void
 lewatchdog(unit)
-	short unit;
+	int unit;
 {
 	struct le_softc *sc = LE_SOFTC(unit);
 

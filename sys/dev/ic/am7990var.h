@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.2 1995/11/25 01:23:57 cgd Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.3 1995/12/11 19:48:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@ void lereset __P((struct le_softc *));
 void lesetladrf __P((struct arpcom *, u_int16_t *));
 void lestart __P((struct ifnet *));
 void lestop __P((struct le_softc *));
-void lewatchdog __P((/* short */));
+void lewatchdog __P((int));
 
 integrate u_int16_t lerdcsr __P((/* struct le_softc *, u_int16_t */));
 integrate void lewrcsr __P((/* struct le_softc *, u_int16_t, u_int16_t */));
