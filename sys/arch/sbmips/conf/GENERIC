@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.10 2002/09/18 02:44:07 lukem Exp $
+# $NetBSD: GENERIC,v 1.11 2002/09/20 10:39:58 martti Exp $
 
 #include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
 include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 
 # The following three options are required for BCM1250 pass 1 silicon
 options 	SB1250_PASS1
@@ -89,6 +89,7 @@ options 	INET6		# IPV6
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
