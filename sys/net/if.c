@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.82 2001/01/17 04:05:41 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.83 2001/01/17 09:34:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -279,6 +279,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	sdl->sdl_family = AF_LINK;
 	bcopy(ifp->if_xname, sdl->sdl_data, namelen);
 	sdl->sdl_nlen = namelen;
+	sdl->sdl_alen = ifp->if_addrlen;
 	sdl->sdl_index = ifp->if_index;
 	sdl->sdl_type = ifp->if_type;
 	ifnet_addrs[ifp->if_index] = ifa;
