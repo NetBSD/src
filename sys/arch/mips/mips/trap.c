@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.155 2001/01/14 00:10:29 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.156 2001/01/14 00:35:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2001/01/14 00:10:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2001/01/14 00:35:53 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -154,14 +154,12 @@ syscall(status, cause, opc)
 {
 	struct proc *p = curproc;
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
-	u_quad_t sticks;
 	int args[8], rval[2], error;
 	size_t code, numsys, nsaved, argsiz;
 	const struct sysent *callp;
 
 	uvmexp.syscalls++;
 
-	sticks = p->p_sticks;
 	if (DELAYBRANCH(cause))
 		frame->f_regs[PC] = MachEmulateBranch(frame, opc, 0, 0);
 	else
@@ -298,17 +296,14 @@ trap(status, cause, vaddr, opc, frame)
 {
 	int type, sig;
 	int ucode = 0;
-	u_quad_t sticks = 0;
 	struct proc *p = curproc;
 	vm_prot_t ftype;
 	extern void fswintrberr __P((void));
 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
-	if (USERMODE(status)) {
+	if (USERMODE(status))
 		type |= T_USER;
-		sticks = p->p_sticks;
-	}
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
 		if (type != T_BREAK)
