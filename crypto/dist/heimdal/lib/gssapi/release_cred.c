@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: release_cred.c,v 1.6 2002/08/20 12:02:45 nectar Exp $"
-        "$NetBSD: release_cred.c,v 1.3 2002/09/12 13:19:08 joda Exp $");
+        "$NetBSD: release_cred.c,v 1.4 2002/11/28 11:21:17 elric Exp $");
 
 OM_uint32 gss_release_cred
            (OM_uint32 * minor_status,
@@ -45,7 +45,7 @@ OM_uint32 gss_release_cred
         return GSS_S_COMPLETE;
     }
 
-    gssapi_krb5_init ();
+    GSSAPI_KRB5_INIT_MS(minor_status);
 
     if ((*cred_handle)->principal != NULL)
         krb5_free_principal(gssapi_krb5_context, (*cred_handle)->principal);

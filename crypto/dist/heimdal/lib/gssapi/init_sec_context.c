@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: init_sec_context.c,v 1.31 2002/09/02 17:16:12 joda Exp $"
-        "$NetBSD: init_sec_context.c,v 1.7 2002/09/12 13:19:08 joda Exp $");
+        "$NetBSD: init_sec_context.c,v 1.8 2002/11/28 11:21:17 elric Exp $");
 
 /*
  * copy the addresses from `input_chan_bindings' (if any) to
@@ -504,7 +504,7 @@ OM_uint32 gss_init_sec_context
             OM_uint32 * time_rec
            )
 {
-    gssapi_krb5_init ();
+    GSSAPI_KRB5_INIT_MS(minor_status);
 
     if (input_token == GSS_C_NO_BUFFER || input_token->length == 0)
 	return init_auth (minor_status,
