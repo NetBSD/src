@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1999/05/20 05:32:06 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 1999/05/20 10:50:08 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 1999/05/20 05:32:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 1999/05/20 10:50:08 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -656,7 +656,7 @@ pmap_activate(p)
 	struct proc *p;
 {
 	pmap_t pmap;
-	int asid;
+	unsigned asid;
 
 	pmap = p->p_vmspace->vm_map.pmap;
 
@@ -697,6 +697,7 @@ pmap_remove(pmap, sva, eva)
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	unsigned entry;
+	unsigned asid, needflush;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -751,6 +752,8 @@ pmap_remove(pmap, sva, eva)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_remove: uva not in range");
 #endif
+	asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
+	needflush = (pmap->pm_asidgen == pmap_asid_generation);
 	while (sva < eva) {
 		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -784,9 +787,8 @@ pmap_remove(pmap, sva, eva)
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			if (pmap->pm_asidgen == pmap_asid_generation) {
-				MachTLBFlushAddr(sva | (pmap->pm_asid <<
-					MIPS_TLB_PID_SHIFT));
+			if (needflush) {
+				MachTLBFlushAddr(sva | asid);
 #ifdef DEBUG
 				remove_stats.flushes++;
 #endif
@@ -872,6 +874,7 @@ pmap_protect(pmap, sva, eva, prot)
 	pt_entry_t *pte;
 	unsigned entry;
 	u_int p;
+	unsigned asid, needupdate;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -921,6 +924,8 @@ pmap_protect(pmap, sva, eva, prot)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_protect: uva not in range");
 #endif
+	asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
+	needupdate = (pmap->pm_asidgen == pmap_asid_generation);
 	while (sva < eva) {
 		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -947,9 +952,8 @@ pmap_protect(pmap, sva, eva, prot)
 			/*
 			 * Update the TLB if the given address is in the cache.
 			 */
-			if (pmap->pm_asidgen == pmap_asid_generation)
-				MachTLBUpdate(sva | (pmap->pm_asid <<
-					MIPS_TLB_PID_SHIFT), entry);
+			if (needupdate)
+				MachTLBUpdate(sva | asid, entry);
 		}
 	}
 }
@@ -1023,6 +1027,7 @@ pmap_page_cache(pa, mode)
 	unsigned entry;
 	unsigned newmode;
 	int s;
+	unsigned asid, needupdate;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1033,6 +1038,9 @@ pmap_page_cache(pa, mode)
 
 	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
 	pv = pa_to_pvh(pa);
+	asid = pv->pv_pmap->pm_asid;
+	needupdate = (pv->pv_pmap->pm_asidgen == pmap_asid_generation);
+
 	s = splimp();
 	while (pv) {
 		pv->pv_flags = (pv->pv_flags & ~PV_UNCACHED) | mode;
@@ -1049,21 +1057,17 @@ pmap_page_cache(pa, mode)
 			}
 		}
 		else {
-			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va))
-			    != NULL) {
-				pte += (pv->pv_va >> PGSHIFT) & (NPTEPG - 1);
-				entry = pte->pt_entry;
-				if (entry & MIPS3_PG_V) {
-					entry = (entry & ~MIPS3_PG_CACHEMODE)
-					    | newmode;
-					pte->pt_entry = entry;
-					if (pv->pv_pmap->pm_asidgen ==
-					    pmap_asid_generation)
-						MachTLBUpdate(pv->pv_va |
-						    (pv->pv_pmap->pm_asid <<
-						    MIPS3_TLB_PID_SHIFT),
-						    entry);
-				}
+
+			pte = pmap_segmap(pv->pv_pmap, pv->pv_va);
+			if (pte == NULL)
+				continue;
+			pte += (pv->pv_va >> PGSHIFT) & (NPTEPG - 1);
+			entry = pte->pt_entry;
+			if (entry & MIPS3_PG_V) {
+				entry = (entry & ~MIPS3_PG_CACHEMODE) | newmode;
+				pte->pt_entry = entry;
+				if (needupdate)
+					MachTLBUpdate(pv->pv_va | asid, entry);
 			}
 		}
 		pv = pv->pv_next;
@@ -1098,6 +1102,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	u_int npte;
 	int i;
 	vm_page_t mem;
+	unsigned asid;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1276,6 +1281,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	}
 #endif
 	i = mipspagesperpage;
+	asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
 	do {
 		if (pfn_to_vad(pte->pt_entry) != pa) {
 			pmap_remove(pmap, va,  va + NBPG);
@@ -1287,8 +1293,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			pmap->pm_stats.resident_count++;
 		pte->pt_entry = npte;
 		if (pmap->pm_asidgen == pmap_asid_generation)
-			MachTLBUpdate(va | (pmap->pm_asid <<
-				MIPS_TLB_PID_SHIFT), npte);
+			MachTLBUpdate(va | asid, npte);
 		va += NBPG;
 		npte += vad_to_pfn(NBPG);
 		pte++;
