@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.8 1993/10/26 11:59:12 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.9 1993/11/03 21:35:38 mycroft Exp $
  */
 
 /*
@@ -72,7 +72,7 @@ int	nsysent;
 
 /*
  * Define the code needed before returning to user mode, for
- * trap, mem_access_fault, and syscall.
+ * trap, and syscall.
  */
 static inline void
 userret(p, pc, oticks)
