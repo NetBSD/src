@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.c,v 1.168 1999/04/11 04:04:04 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.169 1999/04/15 22:15:05 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 1999/04/11 04:04:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 1999/04/15 22:15:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,10 +444,7 @@ nobootinfo:
 	 * Initalize the real console, so the the bootstrap console is
 	 * no longer necessary.
 	 */
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	if (!pmap_uses_prom_console())
-#endif
-		(*platform.cons_init)();
+	(*platform.cons_init)();
 
 #ifdef DIAGNOSTIC
 	/* Paranoid sanity checking */
