@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.6 2001/11/13 02:08:07 lukem Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.7 2002/11/19 22:38:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.6 2001/11/13 02:08:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.7 2002/11/19 22:38:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,18 +69,20 @@ ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
         static const char wantBrand[] = FREEBSD_ELF_BRAND_STRING;
         static const char wantInterp[] = FREEBSD_ELF_INTERP_PREFIX_STRING;
 
-        /*
-	 * Insist that the executable have a brand, and that it be "FreeBSD".
-	 * Newer FreeBSD binaries have OSABI set to ELFOSABI_FREEBSD. This
-	 * is arguably broken, but they seem to think they need it, for
-	 * whatever reason.
-	 */
 #ifndef EI_BRAND
 #define EI_BRAND 8
 #endif
-        if ((eh->e_ident[EI_BRAND] == '\0'
-		|| strcmp(&eh->e_ident[EI_BRAND], wantBrand) != 0)
-	    && eh->e_ident[EI_OSABI] != ELFOSABI_FREEBSD)
+	/*
+	 * If a binary has a brand, make sure that it is "FreeBSD".
+	 * Newer FreeBSD binaries have OSABI set to ELFOSABI_FREEBSD. This
+	 * is arguably broken, but they seem to think they need it, for
+	 * whatever reason. If the OSABI field is set, insist that it is
+	 * ELFOSABI_FREEBSD.
+	 */
+	if ((eh->e_ident[EI_BRAND] != '\0' &&
+	    strcmp(&eh->e_ident[EI_BRAND], wantBrand) != 0) ||
+	    (eh->e_ident[EI_OSABI] != 0 &&
+	    eh->e_ident[EI_OSABI] != ELFOSABI_FREEBSD))
 		return ENOEXEC;
 
 	i = eh->e_phnum;
