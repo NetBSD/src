@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.198 2001/10/25 22:31:11 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.199 2001/10/26 04:59:10 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -20,10 +20,21 @@ USE_NEW_TOOLCHAIN=yes	# set
 .endif
 .endif
 
-.if defined(BSD_PKG_MK) || !defined(USE_NEW_TOOLCHAIN)
-USETOOLS:=	no
+.if !defined(_SRC_TOP_)
+# Find the top of the source tree to see if we're inside of $BSDSRCDIR
+_SRC_TOP_!= cd ${.CURDIR}; while :; do \
+		here=`pwd`; echo "$$here" >&2 ; \
+		[ -f build.sh  ] && [ -d tools ] && { echo $$here; break; }; \
+		case $$here in /) echo ""; break;; esac; \
+		cd ..; done 
+
+.MAKEOVERRIDES+=	_SRC_TOP_
 .endif
+
+.if (${_SRC_TOP_} != "") && defined(USE_NEW_TOOLCHAIN)
 USETOOLS?=	yes
+.endif
+USETOOLS?=	no
 
 .if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3"
 .BEGIN:
@@ -35,8 +46,12 @@ USETOOLS?=	yes
 	@false
 .endif
 
-.if ${USETOOLS} != "no"
+.if ${USETOOLS} == "yes" && defined(USE_NEW_TOOLCHAIN)
 # Define default locations for common tools.
+.if !defined(TOOLDIR)
+.BEGIN:
+	@echo "USETOOLS=yes, but TOOLDIR isn't set which is a requirement"; exit 1
+.endif
 
 AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
 AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
