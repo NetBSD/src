@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtouq.c,v 1.1 1997/07/13 20:16:32 christos Exp $	*/
+/*	$NetBSD: _strtouq.c,v 1.2 1997/07/17 21:15:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -34,7 +34,16 @@
 __indr_reference(_strtouq, strtouq);
 #else
 
-#define	_strtouq	strtouq
-#include "strtouq.c"
+#include <stdlib.h>
+u_quad_t _strtouq __P((const char *, char **, int));	/* XXX */
 
+u_quad_t
+strtouq(nptr, endptr, base)
+	const char *nptr;
+	char **endptr;
+	register int base;
+{
+
+	return _strtouq(nptr, endptr, base);
+}
 #endif

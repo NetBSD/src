@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoq.c,v 1.1 1997/07/13 20:16:31 christos Exp $	*/
+/*	$NetBSD: _strtoq.c,v 1.2 1997/07/17 21:15:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -34,7 +34,16 @@
 __indr_reference(_strtoq, strtoq);
 #else
 
-#define	_strtoq	strtoq
-#include "strtoq.c"
+#include <stdlib.h>
+quad_t	_strtoq __P((const char *, char **, int));	/* XXX */
 
+quad_t
+strtoq(nptr, endptr, base)
+	const char *nptr;
+	char **endptr;
+	register int base;
+{
+
+	return _strtoq(nptr, endptr, base);
+}
 #endif
