@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.27 2001/12/21 06:30:44 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.28 2002/06/08 20:06:44 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.27 2001/12/21 06:30:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.28 2002/06/08 20:06:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -391,7 +391,7 @@ in6_gif_attach(sc)
 
 	bzero(&mask6, sizeof(mask6));
 	mask6.sin6_len = sizeof(struct sockaddr_in6);
-	mask6.sin6_addr.s6_addr32[0] = mask6.sin6_addr.s6_addr32[1] = 
+	mask6.sin6_addr.s6_addr32[0] = mask6.sin6_addr.s6_addr32[1] =
 	    mask6.sin6_addr.s6_addr32[2] = mask6.sin6_addr.s6_addr32[3] = ~0;
 
 	if (!sc->gif_psrc || !sc->gif_pdst)
