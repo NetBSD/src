@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.22 2000/08/01 04:57:29 thorpej Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.23 2000/08/02 20:42:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -94,13 +94,14 @@ vmcmdset_extend(struct exec_vmcmd_set *evsp)
 	evsp->evs_cnt += ocnt ? ocnt : EXEC_DEFAULT_VMCMD_SETSIZE;
 
 	/* allocate it */
-	MALLOC(nvcp, struct exec_vmcmd *, 
-	    (evsp->evs_cnt * sizeof(struct exec_vmcmd)), M_EXEC, M_WAITOK);
+	nvcp = malloc(evsp->evs_cnt * sizeof(struct exec_vmcmd),
+	    M_EXEC, M_WAITOK);
 
 	/* free the old struct, if there was one, and record the new one */
 	if (ocnt) {
-		memcpy(nvcp, evsp->evs_cmds, (ocnt * sizeof(struct exec_vmcmd)));
-		FREE(evsp->evs_cmds, M_EXEC);
+		memcpy(nvcp, evsp->evs_cmds,
+		    (ocnt * sizeof(struct exec_vmcmd)));
+		free(evsp->evs_cmds, M_EXEC);
 	}
 	evsp->evs_cmds = nvcp;
 }
@@ -120,7 +121,7 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 			vrele(vcp->ev_vp);
 	}
 	evsp->evs_used = evsp->evs_cnt = 0;
-	FREE(evsp->evs_cmds, M_EXEC);
+	free(evsp->evs_cmds, M_EXEC);
 }
 
 /*
