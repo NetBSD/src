@@ -33,7 +33,7 @@
 #
 #	@(#)mkioctls	8.2 (Berkeley) 4/28/95
 #
-cpp -dM ${1+"$@"} | awk '
+cpp -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | awk '
 BEGIN {
 	print "#include <sys/param.h>"
 	print "#include <sys/socket.h>"
