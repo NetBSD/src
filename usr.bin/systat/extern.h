@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1999/02/21 21:48:07 jwise Exp $	*/
+/*	$NetBSD: extern.h,v 1.7.2.1 1999/09/26 13:35:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -92,7 +92,7 @@ int	 initnetstat __P((void));
 int	 initpigs __P((void));
 int	 initswap __P((void));
 int	 keyboard __P((void)) __attribute__((__noreturn__));
-int	 kvm_ckread __P((void *, void *, int));
+ssize_t	 kvm_ckread __P((void *, void *, size_t));
 void	 labeliostat __P((void));
 void	 labelkre __P((void));
 void	 labelmbufs __P((void));
