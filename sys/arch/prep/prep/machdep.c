@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2002/02/24 10:58:41 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2002/02/24 13:19:09 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,11 @@
 #include "gten.h"
 #if (NGTEN > 0)
 #include <machine/gtenvar.h>
+#endif
+
+/* Implied by gten support. */
+#if (NGTEN > 0)
+#include <dev/pci/pcivar.h>
 #endif
 
 #include "vga.h"
@@ -578,6 +583,9 @@ consinit()
 {
 	struct btinfo_console *consinfo;
 	static int initted = 0;
+#if (NGTEN > 0)
+	struct prep_pci_chipset pc;
+#endif
 
 	if (initted)
 		return;
@@ -601,7 +609,10 @@ consinit()
 #if (NVGA > 0) || (NGTEN > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NGTEN > 0)
-		if (!gten_cnattach(&prep_mem_space_tag))
+		(*platform->pci_get_chipset_tag)(&pc);
+#endif
+#if (NGTEN > 0)
+		if (!gten_cnattach(&pc, &prep_mem_space_tag))
 			goto dokbd;
 #endif
 #if (NVGA > 0)
@@ -616,7 +627,7 @@ dokbd:
 #endif
 		return;
 	}
-#endif /* PC | VGA */
+#endif /* VGA | GTEN */
 
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {

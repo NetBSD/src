@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1 2001/06/20 14:35:24 nonaka Exp $	*/
+/*	$NetBSD: platform.h,v 1.2 2002/02/24 13:19:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,15 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	__PREP_PLATFORM_H__
-#define	__PREP_PLATFORM_H__
+#ifndef	_PREP_PLATFORM_H_
+#define	_PREP_PLATFORM_H_
 
 #include <sys/param.h>
 #include <sys/device.h>
 
+#include <dev/pci/pcivar.h>
+
 struct platform {
 	const char	*model;
 	int		(*match)(struct platform *);
+	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
 	void		(*pci_intr_fixup)(int, int, int *);
 	void		(*ext_intr)(void);
 	void		(*cpu_setup)(struct device *);
@@ -75,4 +78,4 @@ void reset_ibm_generic(void);
 void pci_intr_fixup_ibm_6050(int, int, int *);
 void pci_intr_fixup_ibm_7248(int, int, int *);
 
-#endif /* __PREP_PLATFORM_H__ */
+#endif /* !_PREP_PLATFORM_H_ */

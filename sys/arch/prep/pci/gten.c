@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.2 2000/12/02 05:46:46 matt Exp $	*/
+/*	$NetBSD: gten.c,v 1.3 2002/02/24 13:19:08 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ gten_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 int
-gten_cnattach(bus_space_tag_t memt)
+gten_cnattach(pci_chipset_tag_t pc, bus_space_tag_t memt)
 {
 	struct rasops_info *ri = &gten_console_ri;
 	u_int32_t mapreg, id, mask, mapsize;
@@ -354,22 +354,22 @@ gten_cnattach(bus_space_tag_t memt)
 	bus_size_t bussize;
 	bus_addr_t busaddr;
 
-	tag = pci_make_tag(NULL, 0, 14, 0);
+	tag = pci_make_tag(pc, 0, 14, 0);
 
-	id = pci_conf_read(NULL, tag, PCI_ID_REG);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	if (PCI_VENDOR(id) != PCI_VENDOR_WD ||
 	    PCI_PRODUCT(id) != PCI_PRODUCT_WD_90C)
 		return ENXIO;
 
-	mapreg = pci_conf_read(NULL, tag, 0x14);
+	mapreg = pci_conf_read(pc, tag, 0x14);
 	if (PCI_MAPREG_TYPE(mapreg) != PCI_MAPREG_TYPE_MEM ||
 	    PCI_MAPREG_MEM_TYPE(mapreg) != PCI_MAPREG_MEM_TYPE_32BIT)
 		return ENXIO;
 
         s = splhigh();
-        pci_conf_write(NULL, tag, 0x14, 0xffffffff);
-        mask = pci_conf_read(NULL, tag, 0x14);
-        pci_conf_write(NULL, tag, 0x14, mapreg);
+        pci_conf_write(pc, tag, 0x14, 0xffffffff);
+        mask = pci_conf_read(pc, tag, 0x14);
+        pci_conf_write(pc, tag, 0x14, mapreg);
 	splx(s);
 	bussize = PCI_MAPREG_MEM_SIZE(mask);
 	busaddr = PCI_MAPREG_MEM_ADDR(mapreg);
