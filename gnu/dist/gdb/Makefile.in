@@ -89,15 +89,15 @@ LIBIBERTY = ../libiberty/libiberty.a
 
 # Where is the MMALLOC library?  Typically in ../mmalloc.
 # Note that mmalloc can still be used on systems without mmap().
-# To use your system malloc, comment out the following defines.
-MMALLOC_DIR = ../mmalloc
+MMALLOC_DIR = @mmalloc_dir@
 MMALLOC_SRC = $(srcdir)/$(MMALLOC_DIR)
 MMALLOC = $(MMALLOC_DIR)/libmmalloc.a
-# To use your system malloc, uncomment MMALLOC_DISABLE.
-#MMALLOC_DISABLE = -DNO_MMALLOC
 # To use mmalloc but disable corruption checking, uncomment MMALLOC_CHECK
 #MMALLOC_CHECK = -DNO_MMALLOC_CHECK
-MMALLOC_CFLAGS = -I$(MMALLOC_SRC) $(MMALLOC_CHECK) $(MMALLOC_DISABLE)
+# configure will set MMALLOC_CFLAGS to one of these:
+MMALLOC_YES = -I$(MMALLOC_SRC) $(MMALLOC_CHECK)
+MMALLOC_NO  = -DNO_MMALLOC
+MMALLOC_CFLAGS = $(@mmalloc_yn@)
 
 # Where is the BFD library?  Typically in ../bfd.
 BFD_DIR = ../bfd
