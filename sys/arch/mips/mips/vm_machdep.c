@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 1997/05/18 17:26:31 mhitch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 1997/05/25 10:16:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,8 @@
 extern int  copykstack __P((struct user *up));
 extern void MachSaveCurFPState __P((struct proc *p));
 extern int switch_exit __P((void)); /* XXX never returns? */
+
+extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -346,7 +348,8 @@ vunmapbuf(bp, len)
  * The first two are so cheap they could just be macros. The last two
  * overlap, so we must check for UADDR pages first.
  *
- * XXX the u-area mappng should all change anyway.
+ * XXX the double-mapped u-area holding the current process's kernel stack
+ * and u-area at a fixed address should be fixed.
  */
 vm_offset_t
 kvtophys(vm_offset_t kva)
