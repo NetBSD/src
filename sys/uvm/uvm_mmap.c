@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.63 2002/03/22 11:06:33 darrenr Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.63.4.1 2003/08/17 10:14:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.63 2002/03/22 11:06:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.63.4.1 2003/08/17 10:14:52 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ sys_mmap(p, v, retval)
 		if (addr > addr + size)
 			return (EOVERFLOW);		/* no wrapping! */
 
-	} else {
+	} else if (addr == NULL || !(flags & MAP_TRYFIXED)) {
 
 		/*
 		 * not fixed: make sure we skip over the largest possible heap.
