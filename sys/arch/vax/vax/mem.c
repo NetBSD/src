@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 1994/10/26 08:03:15 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 1995/02/13 00:46:12 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -38,6 +38,7 @@
 #include <sys/errno.h>
 #include <sys/uio.h>
 #include <sys/param.h>
+#include "lib/libkern/libkern.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vax/include/pte.h"

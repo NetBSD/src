@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.2 1994/10/26 08:03:25 cgd Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.3 1995/02/13 00:46:15 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "buf.h"
 #include "mbuf.h"
 #include "vax/include/pte.h"
-#include "uba.h"
+#include "uda.h"
 #include "reboot.h"
 #include "conf.h"
 #include "vax/include/macros.h"
@@ -92,7 +92,7 @@ setroot()
 {
         int  majdev, mindev, unit, part, controller, adaptor;
         dev_t temp, orootdev;
-#if NUBA > 0
+#if NUDA > 0
 	extern struct uba_device ubdinit[];
 #endif
         struct swdevt *swp;
@@ -200,8 +200,7 @@ setroot()
          */
         if (temp == dumpdev)
                 dumpdev = swdevt[0].sw_dev;
-        printf("autoconf.c: argdev\n");
-        asm("halt");
+        panic("autoconf.c: argdev\n");
 /*      if (temp == argdev)
                 argdev = swdevt[0].sw_dev; */
 #endif

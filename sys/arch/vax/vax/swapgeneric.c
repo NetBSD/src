@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.3 1994/10/26 08:03:31 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.4 1995/02/13 00:46:18 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -36,19 +36,17 @@
  */
 
 #include "mba.h"
-#include "uba.h"
+#include "uda.h"
 
-#include "../include/pte.h"
 
 #include "sys/param.h"
 #include "sys/conf.h"
 #include "sys/buf.h"
-/* #include "sys/vm.h" */
 #include "sys/systm.h"
 #include "sys/reboot.h"
 
-/* #include "cons.h" */
-#include "../include/mtpr.h"
+#include "machine/pte.h"
+#include "machine/mtpr.h"
 #if NMBA > 0
 #include "../mba/mbareg.h"
 #include "../mba/mbavar.h"
@@ -90,7 +88,7 @@ struct	genericconf {
 } genericconf[] = {
 /*	{ (caddr_t)&hpdriver,	"hp",	makedev(0, 0),	},
 	{ (caddr_t)&scdriver,	"up",	makedev(2, 0),	}, */
-#if NUBA > 0
+#if NUDA > 0
 	{ (caddr_t)&udadriver,	"ra",	makedev(9, 0),	},
 #endif
 /*	{ (caddr_t)&idcdriver,	"rb",	makedev(11, 0),	},
@@ -106,7 +104,7 @@ setconf()
 #if NMBA > 0
 	register struct mba_device *mi;
 #endif
-#if NUBA > 0
+#if NUDA > 0
 	register struct uba_device *ui;
 #endif
 	register struct genericconf *gc;
@@ -152,7 +150,7 @@ gotit:
 			}
 		}
 #endif
-#if NUBA > 0
+#if NUDA > 0
 		for (ui = ubdinit; ui->ui_driver; ui++) {
 			if (ui->ui_alive == 0)
 				continue;
