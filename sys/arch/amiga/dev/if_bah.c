@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.6 1995/04/14 16:57:19 chopps Exp $ */
+/*	$NetBSD: if_bah.c,v 1.7 1995/04/15 10:35:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Ignatios Souvatzis
- *      for the NetBSD project.
+ *      for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -32,9 +32,7 @@
  */
 
 /*
- * Driver for the Commodore Busines Machines arcnet card
- * written by Ignatios Souvatzis <is@beverly.rhein.de>,
- * somewhat based on Amiga if_ed.c by Timo Rossi <trossi@jyu.fi>.
+ * Driver for the Commodore Busines Machines ARCnet card.
  */
 
 #define BAHASMCOPY /**/
@@ -94,8 +92,6 @@
 /* for watchdog timer. This should be more than enough. */
 #define ARCTIMEOUT (5*IFNET_SLOWHZ)
 
-#define MIN(a,b) ((b)<0?(a):min((a),(b)))
-
 /*
  * This currently uses 2 bufs for tx, 2 for rx
  *
@@ -129,9 +125,26 @@
  * #define fill(i) get mbuf && copy mbuf to chip(i)
  */
 
+#ifdef BAHTIMINGS
+/*
+ * ARCnet stats; per interface.
+ */
+struct bah_stats {
+	u_long	mincopyin;
+	u_long	maxcopyin;		/* divided by byte count */
+	u_long	mincopyout;
+	u_long	maxcopyout;
+	u_long	minsend;
+	u_long	maxsend;
+	u_long	lasttxstart_mics;
+	struct	timeval lasttxstart_tv;
+};
+
+#error BAHTIMINGS CODE IS BROKEN; use of clkread() is bogus
+#endif
+
 /*
  * Arcnet software status per interface
- *
  */
 struct bah_softc {
 	struct	device	sc_dev;
@@ -153,37 +166,26 @@ struct bah_softc {
 	u_char	sc_broadcast[2];	/* is it a broadcast packet? */
 	u_char	sc_retransmits[2];	/* unused at the moment */
 #ifdef BAHTIMINGS
-	struct	{
-		int mincopyin;
-		int maxcopyin;	/* divided by byte count */
-		int mincopyout;
-		int maxcopyout;
-		int minsend;
-		int maxsend;
-		int lasttxstart_mics;
-		struct timeval lasttxstart_tv;
-		
-	} sc_stats;
+	struct	bah_stats sc_stats;
 #endif
-/* Add other fields as needed... -- IS */
 };
 
-int bahmatch __P((struct device *, void *, void *));
-void bahattach __P((struct device *, struct device *, void *));
-void bah_ini __P((struct bah_softc *));
-void bah_reset __P((struct bah_softc *));
-void bah_stop __P((struct bah_softc *));
-void bah_start __P((struct ifnet *));
-int bahintr __P((struct bah_softc *sc));
-int bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
-void bah_watchdog __P((int));
-void movepout __P((u_char *from, u_char volatile *to, int len));
-void movepin __P((u_char volatile *from, u_char *to, int len));
-void bah_srint __P((struct bah_softc *sc, void *dummy));
-void callstart __P((struct bah_softc *sc, void *dummy));
+int	bahmatch __P((struct device *, void *, void *));
+void	bahattach __P((struct device *, struct device *, void *));
+void	bah_ini __P((struct bah_softc *));
+void	bah_reset __P((struct bah_softc *));
+void	bah_stop __P((struct bah_softc *));
+void	bah_start __P((struct ifnet *));
+int	bahintr __P((struct bah_softc *sc));
+int	bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
+void	bah_watchdog __P((int));
+void	movepout __P((u_char *from, u_char __volatile *to, int len));
+void	movepin __P((u_char __volatile *from, u_char *to, int len));
+void	bah_srint __P((struct bah_softc *sc, void *dummy));
+void	callstart __P((struct bah_softc *sc, void *dummy));
 
 #ifdef BAHTIMINGS
-int clkread();
+int	clkread();
 #endif
 
 struct cfdriver bahcd = {
@@ -258,7 +260,6 @@ bahattach(parent, self, aux)
 
 	/*
 	 * set interface to stopped condition (reset)
-	 * 
 	 */
 	bah_stop(sc); 
 
@@ -403,10 +404,10 @@ bah_reset(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 #ifdef BAHTIMINGS
-	bzero((caddr_t)&(sc->sc_stats),sizeof(sc->sc_stats));
+	bzero((caddr_t)&(sc->sc_stats), sizeof(sc->sc_stats));
 	sc->sc_stats.mincopyin =
 	    sc->sc_stats.mincopyout =
-	    sc->sc_stats.minsend = 999999L;
+	    sc->sc_stats.minsend = ULONG_MAX;
 #endif
 
 	bah_start(ifp);
@@ -432,39 +433,42 @@ bah_stop(sc)
 	sc->sc_arccom.ac_if.if_timer = 0;
 
 #ifdef BAHTIMINGS
-	log(LOG_DEBUG,"%s\
-  To board: %6ld .. %6ld ns/byte\nFrom board: %6ld .. %6ld ns/byte\n\
-Send time:  %6ld .. %6ld mics\n",
+	log(LOG_DEBUG,"%s: to board: %6lu .. %6lu ns/byte\n",
 	    sc->sc_dev.dv_xname,
-	    sc->sc_stats.mincopyout,sc->sc_stats.maxcopyout,
-	    sc->sc_stats.mincopyin, sc->sc_stats.maxcopyin,
-	    sc->sc_stats.minsend,   sc->sc_stats.maxsend);
+	    sc->sc_stats.mincopyout, sc->sc_stats.maxcopyout);
+
+	log(LOG_DEBUG,"%s: from board: %6lu .. %6lu ns/byte\n",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_stats.mincopyin, sc->sc_stats.maxcopyin);
+	
+	log(LOG_DEBUG,"%s: send time: %6lu .. %6lu mics/byte\n",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_stats.minsend, sc->sc_stats.maxsend);
 
 	sc->sc_stats.minsend = 
 	    sc->sc_stats.mincopyout = 
-	    sc->sc_stats.mincopyin = 999999L;
+	    sc->sc_stats.mincopyin = ULONG_MAX;
 	sc->sc_stats.maxsend = 
 	    sc->sc_stats.maxcopyout = 
-	    sc->sc_stats.maxcopyin = 0L;
+	    sc->sc_stats.maxcopyin = 0;
 #endif
-
 }
 
-inline void 
-movepout(from,to,len)
+__inline void 
+movepout(from, to, len)
 	u_char *from;
-	volatile u_char *to;
+	__volatile u_char *to;
 	int len;
 {
 #ifdef BAHASMCOPY
 	u_short shortd;
-	u_long longd,longd1,longd2,longd3,longd4;
+	u_long longd, longd1, longd2, longd3, longd4;
 
-	if ((len>3) && ((int)from)&3) {
-		switch (((int)from) & 3) {
+	if ((len > 3) && ((long)from) & 3) {
+		switch (((long)from) & 3) {
 		case 3:
 			*to = *from++;
-			to+=2;--len;
+			to += 2; --len;
 			break;
 		case 1:
 			*to = *from++;
@@ -477,7 +481,7 @@ movepout(from,to,len)
 		default:
 		}
 
-		while (len>=32) {
+		while (len >= 32) {
 			longd1 = *((u_long *)from)++;
 			longd2 = *((u_long *)from)++;
 			longd3 = *((u_long *)from)++;
@@ -498,16 +502,16 @@ movepout(from,to,len)
 
 			to += 64; len -= 32;
 		}
-		while (len>0) {
+		while (len > 0) {
 			longd = *((u_long *)from)++;
 			asm("movepl %0,%1@(0)" : : "d"(longd), "a"(to));
 			to += 8; len -= 4;
 		}
 	}
 #endif
-	while (len>0) {
+	while (len > 0) {
 		*to = *from++;
-		to+=2;
+		to += 2;
 		--len;
 	}
 }
@@ -527,11 +531,10 @@ bah_start(ifp)
 {
 	struct bah_softc *sc;
 	struct mbuf *m,*mp;
-	volatile u_char *bah_ram_ptr;
+	__volatile u_char *bah_ram_ptr;
 	int i, len, tlen, offset, s, buffer;
-	
 #ifdef BAHTIMINGS
-	int copystart,lencopy,perbyte;
+	u_long copystart, lencopy, perbyte;
 #endif
 
 	sc = bahcd.cd_devs[ifp->if_unit];
@@ -577,13 +580,10 @@ bah_start(ifp)
 #ifdef BAH_DEBUG
 	m = m_pullup(m,3);	/* gcc does structure padding */
 	printf("%s: start: filling %ld from %ld to %ld type %ld\n",
-	    sc->sc_dev.dv_xname,
-	    buffer, 
-	    mtod(m, u_char *)[0],
-	    mtod(m, u_char *)[1],
-	    mtod(m, u_char *)[2]);
+	    sc->sc_dev.dv_xname, buffer, mtod(m, u_char *)[0],
+	    mtod(m, u_char *)[1], mtod(m, u_char *)[2]);
 #else
-	m = m_pullup(m,2);
+	m = m_pullup(m, 2);
 #endif
 	bah_ram_ptr = sc->sc_base->buffers + buffer*512*2;
 
@@ -594,44 +594,44 @@ bah_start(ifp)
 	 * (btw, timing code says usually 2 microseconds)
 	 * bah_ram_ptr[0*2] = mtod(m, u_char *)[0];
 	 */
-	bah_ram_ptr[1*2] = mtod(m, u_char *)[1];
+	bah_ram_ptr[1 * 2] = mtod(m, u_char *)[1];
 	m_adj(m, 2);
 		
 	/* correct total length for that */
 	tlen -= 2;
 	if (tlen < ARC_MIN_FORBID_LEN) {
-		offset = 256-tlen;
-		bah_ram_ptr[2*2] = offset;
+		offset = 256 - tlen;
+		bah_ram_ptr[2 * 2] = offset;
 	} else {
 		if (tlen <= ARC_MAX_FORBID_LEN) 
-			offset = 512-3-tlen;
+			offset = 512 - 3 - tlen;
 		else {
 			if (tlen > ARC_MAX_LEN)
 				tlen = ARC_MAX_LEN;
-			offset = 512-tlen;
+			offset = 512 - tlen;
 		}
 
-		bah_ram_ptr[2*2] = 0;
-		bah_ram_ptr[3*2] = offset;
+		bah_ram_ptr[2 * 2] = 0;
+		bah_ram_ptr[3 * 2] = offset;
 	}
-	bah_ram_ptr += offset*2;
+	bah_ram_ptr += offset * 2;
 
 	/* lets loop again through the mbuf chain */
 
-	for (mp = m; mp; mp=mp->m_next) {
+	for (mp = m; mp; mp = mp->m_next) {
 		if (len = mp->m_len) {		/* YAMS */
 #ifdef BAHTIMINGS
 			lencopy = len;
 			copystart = clkread();
 #endif
-			movepout(mtod(mp, caddr_t),bah_ram_ptr,len);
+			movepout(mtod(mp, caddr_t), bah_ram_ptr, len);
 
 #ifdef BAHTIMINGS
-			perbyte = 1000*(clkread() - copystart) / lencopy;
+			perbyte = 1000 * (clkread() - copystart) / lencopy;
 			sc->sc_stats.mincopyout = 
-			    MIN(sc->sc_stats.mincopyout,perbyte);
+			    ulmin(sc->sc_stats.mincopyout, perbyte);
 			sc->sc_stats.maxcopyout =
-			    max(sc->sc_stats.maxcopyout,perbyte);
+			    ulmax(sc->sc_stats.maxcopyout, perbyte);
 #endif
 			bah_ram_ptr += len*2;
 		}
@@ -696,9 +696,9 @@ callstart(sc, dummy)
 	bah_start(&sc->sc_arccom.ac_if);
 }
 
-inline void
-movepin(from,to,len)
-	volatile u_char *from;
+__inline void
+movepin(from, to, len)
+	__volatile u_char *from;
 	u_char *to;
 	int len;
 {
@@ -706,13 +706,13 @@ movepin(from,to,len)
 	unsigned long	longd, longd1, longd2, longd3, longd4;
 	ushort		shortd;
 
-	if ((len>3) && (((int)to) & 3)) {
-		switch (((int)to) & 3) {
+	if ((len > 3) && (((long)to) & 3)) {
+		switch (((long)to) & 3) {
 		case 3: *to++ = *from;
-			from+=2; --len;
+			from += 2; --len;
 			break;
 		case 1: *to++ = *from;
-			from+=2; --len;
+			from += 2; --len;
 		case 2:	asm ("movepw %1@(0),%0": "=d" (shortd) : "a" (from));
 			*((ushort *)to)++ = shortd;
 			from += 4; len -= 2;
@@ -720,7 +720,7 @@ movepin(from,to,len)
 		default:
 		}
 
-		while (len>=32) {
+		while (len >= 32) {
 			asm("movepl %1@(0),%0"  : "=d"(longd1) : "a" (from));
 			asm("movepl %1@(8),%0"  : "=d"(longd2) : "a" (from));
 			asm("movepl %1@(16),%0" : "=d"(longd3) : "a" (from));
@@ -741,7 +741,7 @@ movepin(from,to,len)
 
 			from += 64; len -= 32;
 		}
-		while (len>0) {
+		while (len > 0) {
 			asm("movepl %1@(0),%0" : "=d"(longd) : "a" (from));
 			*((unsigned long *)to)++ = longd;
 			from += 8; len -= 4;
@@ -749,9 +749,9 @@ movepin(from,to,len)
 
 	}
 #endif /* BAHASMCOPY */
-	while (len>0) {
+	while (len > 0) {
 		*to++ = *from;
-		from+=2;
+		from += 2;
 		--len;
 	}
 
@@ -762,22 +762,21 @@ movepin(from,to,len)
  * get the stuff out of any filled buffer we find.
  */
 void
-bah_srint(sc,dummy)
+bah_srint(sc, dummy)
 	struct bah_softc *sc;
 	void *dummy;
 {
 	int buffer, buffer1, len, len1, amount, offset, s, i;
-	u_char volatile *bah_ram_ptr;
+	u_char __volatile *bah_ram_ptr;
 	struct mbuf *m, *dst, *head;
 	struct arc_header *ah;
 	struct ifnet *ifp;
+#ifdef BAHTIMINGS
+	u_long copystart, lencopy, perbyte;
+#endif
 
 	head = 0;
 	ifp = &sc->sc_arccom.ac_if;
-
-#ifdef BAHTIMINGS
-	int copystart,lencopy,perbyte;
-#endif
 
 	s = splimp();
 	if (sc->sc_rx_fillcount <= 1)
@@ -791,11 +790,11 @@ bah_srint(sc,dummy)
 			buffer = 2;
 		else {
 			log(LOG_WARNING,
-			    "%s: rx srint: which is older, %ld or %ld?\
-(filled %ld)\n",
+			    "%s: rx srint: which is older, %ld or %ld?\nn",
 			    sc->sc_dev.dv_xname,
-			    sc->sc_bufstat[2], sc->sc_bufstat[3],
-			    sc->sc_rx_fillcount);
+			    sc->sc_bufstat[2], sc->sc_bufstat[3]);
+			log(LOG_WARNING, "%s: (filled %ld)\n",
+			    sc->sc_dev.dv_xname, sc->sc_rx_fillcount);
 			splx(s);
 			return;
 		}
@@ -827,7 +826,7 @@ bah_srint(sc,dummy)
 	 * possibly packet type dependent.
 	 */
 
-	m->m_data += 1;		/* sizeof(ulong) - ARC_HDRLEN */
+	m->m_data += 1;		/* sizeof(u_long) - ARC_HDRLEN */
 
 	head = m;
 
@@ -877,12 +876,14 @@ bah_srint(sc,dummy)
 		copystart = clkread();
 #endif
 
-		movepin(bah_ram_ptr,mtod(m, u_char *) + m->m_len, len1);
+		movepin(bah_ram_ptr, mtod(m, u_char *) + m->m_len, len1);
 
 #ifdef BAHTIMINGS
-		perbyte = 1000*(clkread() - copystart) / lencopy;
-		sc->sc_stats.mincopyin = MIN(sc->sc_stats.mincopyin,perbyte);
-		sc->sc_stats.maxcopyin = max(sc->sc_stats.maxcopyin,perbyte);
+		perbyte = 1000 * (clkread() - copystart) / lencopy;
+		sc->sc_stats.mincopyin =
+		    ulmin(sc->sc_stats.mincopyin, perbyte);
+		sc->sc_stats.maxcopyin =
+		    ulmax(sc->sc_stats.maxcopyin, perbyte);
 #endif
 
 		m->m_len += len1;
@@ -927,12 +928,12 @@ cleanup:
 	splx(s);
 }
 
-inline static void
+__inline static void
 bah_tint(sc)
 	struct bah_softc *sc;
 {
 	int buffer;
-	u_char volatile *bah_ram_ptr;
+	u_char __volatile *bah_ram_ptr;
 	int isr;
 	int clknow;
 
@@ -953,10 +954,10 @@ bah_tint(sc)
 #ifdef BAHTIMINGS
 	clknow = clkread();
 
-	sc->sc_stats.minsend = MIN(sc->sc_stats.minsend,
+	sc->sc_stats.minsend = ulmin(sc->sc_stats.minsend,
 	    clknow - sc->sc_stats.lasttxstart_mics);
 
-	sc->sc_stats.maxsend = max(sc->sc_stats.maxsend,
+	sc->sc_stats.maxsend = ulmax(sc->sc_stats.maxsend,
 	    clknow - sc->sc_stats.lasttxstart_mics);
 #endif
 
@@ -1050,18 +1051,25 @@ bahintr(sc)
 		 */
 		sc->sc_base->command = ARC_CLR(CLR_RECONFIG);
 		sc->sc_arccom.ac_if.if_collisions++;
-/*
- * if more than 2 seconds per reconfig, reset time and counter.
- * else
- * if more than ARC_EXCESSIVE_RECONFIGS reconfigs since last burst, complain
- * and set treshold for warnings to ARC_EXCESSIVE_RECONS_REWARN.
- * This allows for, e.g., new stations on the cable, or cable switching as long 
- * as it is over after (normally) 16 seconds.
- * XXX Todo: check timeout bits in status word and double time if necessary.
- */
+
+		/*
+		 * If more than 2 seconds per reconfig:
+		 *	Reset time and counter.
+		 * else:
+		 *	If more than ARC_EXCESSIVE_RECONFIGS reconfigs
+		 *	since last burst, complain and set treshold for
+		 *	warnings to ARC_EXCESSIVE_RECONS_REWARN.
+		 *
+		 * This allows for, e.g., new stations on the cable, or
+		 * cable switching as long as it is over after (normally)
+		 * 16 seconds.
+		 *
+		 * XXX TODO: check timeout bits in status word and double
+		 * time if necessary.
+		 */
 
 		newsec = time.tv_sec;
-		if (newsec - sc->sc_recontime > 2*sc->sc_reconcount) {
+		if (newsec - sc->sc_recontime > 2 * sc->sc_reconcount) {
 			sc->sc_recontime = newsec;
 			sc->sc_reconcount = 0;
 			sc->sc_reconcount_excessive = ARC_EXCESSIVE_RECONS;
@@ -1112,7 +1120,7 @@ bahintr(sc)
 
 #ifdef BAHSOFTCOPY
 		/* this one starts a soft int to copy out of the hw */
-		add_sicallback(bah_srint,sc,NULL);
+		add_sicallback(bah_srint, sc,NULL);
 #else
 		/* this one does the copy here */
 		bah_srint(sc,NULL);
@@ -1132,7 +1140,7 @@ bahintr(sc)
 int
 bah_ioctl(ifp, command, data)
 	register struct ifnet *ifp;
-	unsigned long command;
+	u_long command;
 	caddr_t data;
 {
 	struct bah_softc *sc;
@@ -1215,7 +1223,7 @@ int unit;
 	struct bah_softc *sc;
 	struct ifnet *ifp;
 
-	sc  = bahcd.cd_devs[unit];
+	sc = bahcd.cd_devs[unit];
 	ifp = &(sc->sc_arccom.ac_if);
 
 	sc->sc_base->command = ARC_TXDIS;
