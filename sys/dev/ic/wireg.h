@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.14 2002/01/05 20:10:53 explorer Exp $	*/
+/*	$NetBSD: wireg.h,v 1.15 2002/01/20 06:45:22 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -459,6 +459,11 @@ struct wi_ltv_pcf {
 };
 
 /*
+ * Scan Results Table
+ */
+struct wi_ltv_scanreq {
+	u_int16_t
+/*
  * Connection control characteristics. (0xFC00)
  * 1 == Basic Service Set (BSS)
  * 2 == Wireless Distribudion System (WDS)
@@ -513,6 +518,8 @@ struct wi_ltv_mcast {
 #define WI_INFO_SCAN_RESULTS	0xF101	/* Scan results */
 #define WI_INFO_LINK_STAT	0xF200	/* Link status */
 #define WI_INFO_ASSOC_STAT	0xF201	/* Association status */
+#define	WI_INFO_AUTH_REQUEST	0xF202	/* Authentication Request (AP) */
+#define	WI_INFO_POWERSAVE_COUNT	0xF203	/* PowerSave User Count (AP) */
 
 /*
  * Hermes transmit/receive frame structure
