@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.47 1998/11/04 00:29:28 fvdl Exp $	*/
+/*	$NetBSD: elink3.c,v 1.48 1998/11/16 19:13:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,9 +154,9 @@ struct ep_media ep_vortex_media[] = {
 	  ELINKMEDIA_10BASE_T },
 	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_PCI_AUI,		"10base5/AUI",	IFM_ETHER|IFM_10_5,
+	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
 	  ELINKMEDIA_AUI },
-	{ ELINK_PCI_BNC,		"10base2/BNC",	IFM_ETHER|IFM_10_2,
+	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
 	  ELINKMEDIA_10BASE_2 },
 	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER|IFM_100_TX,
 	  ELINKMEDIA_100BASE_TX },
@@ -164,7 +164,7 @@ struct ep_media ep_vortex_media[] = {
 	  ELINKMEDIA_100BASE_TX },
 	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER|IFM_100_FX,
 	  ELINKMEDIA_100BASE_FX },
-	{ ELINK_PCI_100BASE_MII,	"manual",	IFM_ETHER|IFM_MANUAL,
+	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER|IFM_MANUAL,
 	  ELINKMEDIA_MII },
 	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER|IFM_100_T4,
 	  ELINKMEDIA_100BASE_T4 },
@@ -177,11 +177,11 @@ struct ep_media ep_vortex_media[] = {
  * in the 3c509, 3c579, and 3c589.
  */
 struct ep_media ep_509_media[] = {
-	{ ELINK_W0_CC_UTP,		"10baseT",	IFM_ETHER|IFM_10_T,
+	{ ELINK_W0_CC_UTP,	"10baseT",	IFM_ETHER|IFM_10_T,
 	  ELINKMEDIA_10BASE_T },
-	{ ELINK_W0_CC_AUI,		"10base5/AUI",	IFM_ETHER|IFM_10_5,
+	{ ELINK_W0_CC_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
 	  ELINKMEDIA_AUI },
-	{ ELINK_W0_CC_BNC,		"10base2/BNC",	IFM_ETHER|IFM_10_2,
+	{ ELINK_W0_CC_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
 	  ELINKMEDIA_10BASE_2 },
 	{ 0,			NULL,		0,
 	  0 },
