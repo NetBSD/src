@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.55 2001/12/31 12:37:13 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.56 2002/01/02 16:20:14 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -19,8 +19,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.55 2001/12/31 12:37:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.56 2002/01/02 16:20:14 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,8 +356,8 @@ ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 			sce->ibuf = malloc(isize, M_USBDEV, M_WAITOK);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n",
 				     endpt, isize));
-                        if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
-                                return (ENOMEM);
+			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
+				return (ENOMEM);
 			err = usbd_open_pipe_intr(sce->iface,
 				  edesc->bEndpointAddress,
 				  USBD_SHORT_XFER_OK, &sce->pipeh, sce,
@@ -470,24 +470,23 @@ ugenclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		usbd_close_pipe(sce->pipeh);
 		sce->pipeh = NULL;
 
-                switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
-                case UE_INTERRUPT:
-                        ndflush(&sce->q, sce->q.c_cc);
-                        clfree(&sce->q);
-                        break;
-                case UE_ISOCHRONOUS:
-                        for (i = 0; i < UGEN_NISOREQS; ++i)
-                                usbd_free_xfer(sce->isoreqs[i].xfer);
+		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+		case UE_INTERRUPT:
+			ndflush(&sce->q, sce->q.c_cc);
+			clfree(&sce->q);
+			break;
+		case UE_ISOCHRONOUS:
+			for (i = 0; i < UGEN_NISOREQS; ++i)
+				usbd_free_xfer(sce->isoreqs[i].xfer);
 
-                default:
-                        break;
+		default:
+			break;
 		}
 
 		if (sce->ibuf != NULL) {
 			free(sce->ibuf, M_USBDEV);
 			sce->ibuf = NULL;
 			clfree(&sce->q);
-
 		}
 	}
 	sc->sc_is_open[endpt] = 0;
@@ -975,7 +974,7 @@ ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 		if (lenp)
 			*lenp = len;
 		cdesc = malloc(len, M_TEMP, M_WAITOK);
-		err = usbd_get_config_desc_full(sc->sc_udev, index, cdesc,len);
+		err = usbd_get_config_desc_full(sc->sc_udev, index, cdesc, len);
 		if (err) {
 			free(cdesc, M_TEMP);
 			return (0);
