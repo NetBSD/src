@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 1997/03/13 04:24:38 mikel Exp $
+#	$NetBSD: Makefile,v 1.19 1997/03/24 21:59:52 christos Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 CFLAGS += -I${.CURDIR} -I.
 LDADD += -lcurses -ltermcap -lcrypt
-DPADD += ${LIBCURSES} ${LIBTERMCAP} /usr/lib/libtelnet.a ${LIBCRYPT}
+DPADD += ${LIBCURSES} ${LIBTERMCAP} ${LIBCRYPT}
 
 SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
 SRCS += disp_asc.c ebc_disp.c

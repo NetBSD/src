@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 1997/01/30 07:29:11 mikel Exp $
+#	$NetBSD: Makefile,v 1.6 1997/03/24 22:00:00 christos Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
 
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
 
 LDADD+= -lcurses -ltermcap
+DPADD+= ${LIBCURSES} ${LIBTERMCAP}
 PROG=	vi
 SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	cut.c delete.c ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c \
@@ -29,10 +30,10 @@ LINKS=  ${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
 MLINKS= vi.1 ex.1 vi.1 view.1
 
 .PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
-.include <bsd.prog.mk>
-.include "../../Makefile.inc"
 
 cat=	dutch english german ru_SU.KOI8-R swedish
-datadir=	${DESTDIR}/usr/share
-afterinstall:
-	(cd ${.CURDIR}/../catalog && ${INSTALL} -m $(NONBINMODE) -c $(cat) $(datadir)/vi/catalog )
+FILES=${cat:S@^@${.CURDIR}/../catalog/@g}
+FILESDIR=/usr/share
+
+.include "../../Makefile.inc"
+.include <bsd.prog.mk>

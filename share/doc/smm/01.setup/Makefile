@@ -8,8 +8,4 @@ MACROS=	-ms
 paper.ps: ${SRCS}
 	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
 
-install: ${SRCS}
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
-
 .include <bsd.doc.mk>
