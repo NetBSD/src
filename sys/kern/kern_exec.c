@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.114 2000/07/13 01:24:05 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.115 2000/07/13 02:33:36 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -394,9 +394,6 @@ sys_execve(p, v, retval)
 			if (vcp->ev_flags & VMCMD_BASE)
 				panic("execve: illegal base & relative vmcmd");
 #endif
-			uprintf("vmcmd-b[%d] = %#lx/%#lx @ %#lx (%d)\n", i,
-			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset,
-			       vcp->ev_flags);
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
 		error = (*vcp->ev_proc)(p, vcp);
