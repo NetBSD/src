@@ -2589,7 +2589,8 @@ start_havetype:
 	 * We map in another couple of segments just to have some
 	 * more memory (512K, actually) guaranteed available for
 	 * bootstrap code (pmap_bootstrap needs memory to hold MMU
-	 * and context data structures).
+	 * and context data structures). Note: this is only relevant
+	 * for 2-level MMU sun4/sun4c machines.
 	 */
 	clr	%l0			! lowva
 	set	KERNBASE, %l1		! highva
@@ -2648,16 +2649,10 @@ start_havetype:
 	lduba	[%l3] ASI_CONTROL, %l3
 	cmp	%l3, 0x24 ! XXX - SUN4_400
 	bne	no_3mmu
-	 set	1 << 24, %l3		! region size in bytes
 	add	%l0, 2, %l0		! get to proper half-word in RG space
 	add	%l1, 2, %l1
-0:
 	lduha	[%l0] ASI_REGMAP, %l4	! regmap[highva] = regmap[lowva];
 	stha	%l4, [%l1] ASI_REGMAP
-	add	%l3, %l1, %l1		! highva += regsiz;
-	cmp	%l1, %l2		! done?
-	blu	0b			! no, loop
-	 add	%l3, %l0, %l0		! (and lowva += regsz)
 	b,a	remap_done
 
 no_3mmu:
