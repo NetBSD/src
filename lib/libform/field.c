@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.8 2001/03/25 12:21:06 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.9 2001/04/06 05:24:59 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -51,7 +51,6 @@ FIELD _formi_default_field = {
 	FALSE, /* set to true if field is in overlay mode */
 	0, /* starting char in string (horiz scroll) */
 	0, /* starting line in field (vert scroll) */
-	0, /* amount of horizontal scroll... */
 	0, /* number of rows actually used in field */
 	0, /* x pos of cursor in field */
 	0, /* y pos of cursor in field */

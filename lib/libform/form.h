@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.10 2001/03/25 12:27:22 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.11 2001/04/06 05:24:59 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -202,7 +202,6 @@ struct _form_field {
 	int overlay; /* set to true if field is in overlay mode */
 	unsigned int start_char; /* starting char in string (horiz scroll) */
 	unsigned int start_line; /* starting line in field (vert scroll) */
-	unsigned int hscroll; /* amount of horizontal scroll... */
 	unsigned int row_count; /* number of rows actually used in field */
 	unsigned int cursor_xpos; /* x pos of cursor in field */
 	unsigned int cursor_ypos; /* y pos of cursor in field */
