@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/09 17:39:31 tv Exp $
+#	$NetBSD: Makefile,v 1.8 1999/02/09 17:59:36 tv Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -30,7 +30,7 @@ LDADD+=		-L${BFDOBJ} -lbfd
 YHEADER=1
 
 DIST=		${.CURDIR}/../../dist
-BFDOBJ!=	cd ${.CURDIR}/../../lib/bfd; ${MAKE} print-objdir
+BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd; ${MAKE} print-objdir
 SCRIPTDIR=	/usr/share/ldscripts
 
 .PATH:		${DIST}/ld
