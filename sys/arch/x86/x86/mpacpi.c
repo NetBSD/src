@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.22 2004/04/25 07:55:06 christos Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.23 2004/04/25 11:25:35 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.22 2004/04/25 07:55:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.23 2004/04/25 11:25:35 tron Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -70,8 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.22 2004/04/25 07:55:06 christos Exp $")
 
 #include "pci.h"
 
+#ifdef ACPI_DEBUG_OUTPUT
 #define _COMPONENT ACPI_HARDWARE
 #define _THIS_MODULE "mpacpi"
+#endif
 
 #if NPCI > 0
 struct mpacpi_pcibus {
