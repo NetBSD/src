@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.10 2003/04/08 10:47:03 dsl Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.11 2003/07/14 09:24:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.10 2003/04/08 10:47:03 dsl Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.11 2003/07/14 09:24:00 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -156,7 +156,8 @@ tabify(int all, uint tabsize)
 				ocol++;
 			}
 			if (*cp == 0 || all == 0) {
-				strcpy(dp, cp);
+				strlcpy(dp, cp,
+				    sizeof(linebuf) - (dp - linebuf));
 				return;
 			}
 			*dp++ = *cp;
