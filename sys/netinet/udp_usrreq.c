@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.76 2001/05/08 10:15:14 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.77 2001/05/31 19:56:13 soda Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,6 +64,7 @@
  *	@(#)udp_usrreq.c	8.6 (Berkeley) 5/23/95
  */
 
+#include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_ipkdb.h"
 
