@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.5 2001/07/17 20:18:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.6 2001/07/17 20:22:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -206,18 +206,34 @@ void pthread__signal(pthread_t t, int sig, int code);
 
 #ifdef PTHREAD__DEBUG
 
+#define PTHREAD__DEBUG_SHMKEY	(0x000f)
+#define PTHREAD__DEBUG_SHMSIZE	(1<<18)
+
 extern int pthread__debug_counters[PTHREADD_NCOUNTERS];
 
 #define PTHREADD_ADD(x) (pthread__debug_counters[(x)]++)
 
+#define DPRINTF(x) pthread__debuglog_printf x
+
+struct	pthread_msgbuf {
+#define BUF_MAGIC	0x090976
+	int	msg_magic;
+	long	msg_bufw;
+	long	msg_bufr;
+	long	msg_bufs;
+	char	msg_bufc[1];
+};
+
+void pthread__debug_init(void);
+struct pthread_msgbuf* pthread__debuglog_init(void);
+void pthread__debuglog_printf(const char *fmt, ...);
+
 #else /* PTHREAD_DEBUG */
 
 #define PTHREADD_ADD(x)
+#define DPRINTF(x)
 
 #endif /* PTHREAD_DEBUG */
-
-
-
 
 #endif /* _LIB_PTHREAD_INT_H */
 
