@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.8 2002/10/02 15:45:13 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.8.2.1 2002/10/24 22:33:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,6 +50,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/event.h>
 #include <machine/rtc.h>
 #include <arm/iomd/iic.h>
 #include <arm/iomd/todclockvar.h>
@@ -260,7 +261,7 @@ dev_type_write(rtcwrite);
 
 const struct cdevsw rtc_cdevsw = {
 	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*

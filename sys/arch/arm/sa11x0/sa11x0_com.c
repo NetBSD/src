@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.11 2002/10/05 17:12:10 chs Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.11.2.1 2002/10/24 22:33:53 bjh21 Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ dev_type_poll(sacompoll);
 
 const struct cdevsw sacom_cdevsw = {
 	sacomopen, sacomclose, sacomread, sacomwrite, sacomioctl,
-	sacomstop, sacomtty, sacompoll, nommap, D_TTY
+	sacomstop, sacomtty, sacompoll, nommap, ttykqfilter, D_TTY
 };
 
 static	int	sacom_match(struct device *, struct cfdata *, void *);
