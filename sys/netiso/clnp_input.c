@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.7 1994/06/29 06:39:12 cgd Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.8 1995/06/13 05:52:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -173,7 +173,8 @@ next:
 		goto next;
 	} else {
 		register struct ifaddr *ifa;
-		for (ifa = m->m_pkthdr.rcvif->if_addrlist; ifa; ifa = ifa->ifa_next)
+		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first; ifa != 0;
+		    ifa = ifa->ifa_list.tqe_next)
 			if (ifa->ifa_addr->sa_family == AF_ISO)
 				break;
 		if (ifa == 0) {

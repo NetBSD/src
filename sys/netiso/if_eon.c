@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.9 1994/10/30 21:49:05 cgd Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.10 1995/06/13 05:52:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -151,7 +151,7 @@ eonattach()
 	ifp->if_hdrlen = EONIPLEN;
 	ifp->if_flags = IFF_BROADCAST;
 	if_attach(ifp);
-	eonioctl(ifp, SIOCSIFADDR, (caddr_t)ifp->if_addrlist);
+	eonioctl(ifp, SIOCSIFADDR, (caddr_t)ifp->if_addrlist.tqh_first);
 	eon_llinfo.el_qhdr.link = 
 		eon_llinfo.el_qhdr.rlink = &(eon_llinfo.el_qhdr);
 
