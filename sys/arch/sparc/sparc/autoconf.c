@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.164 2002/03/12 00:18:25 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.165 2002/03/27 16:05:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,8 @@
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
+
+#include "scsibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1882,6 +1884,7 @@ device_register(dev, aux)
 			return;
 		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+#if NSCSIBUS > 0
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
 		 * from parent and match with current bootpath component.
@@ -1933,7 +1936,7 @@ device_register(dev, aux)
 			    dev->dv_xname));
 			return;
 		}
-
+#endif /* NSCSIBUS */
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 
 		/* A Xylogic disk */
