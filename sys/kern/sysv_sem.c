@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.48 2003/10/26 10:32:24 jdolecek Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.49 2003/11/29 11:43:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.48 2003/10/26 10:32:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.49 2003/11/29 11:43:25 jdolecek Exp $");
 
 #define SYSVSEM
 
@@ -363,7 +363,7 @@ semctl1(p, semid, semnum, cmd, v, retval)
 	    semid, semnum, cmd, v));
 
 	ix = IPCID_TO_IX(semid);
-	if (ix < 0 || ix >= seminfo.semmsl)
+	if (ix < 0 || ix >= seminfo.semmni)
 		return (EINVAL);
 
 	semaptr = &sema[ix];
@@ -597,8 +597,7 @@ sys_semop(l, v, retval)
 	    (long long)nsops));
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
-
-	if (semid < 0 || semid >= seminfo.semmsl)
+	if (semid < 0 || semid >= seminfo.semmni)
 		return(EINVAL);
 
 	semaptr = &sema[semid];
