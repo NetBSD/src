@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.5 1998/02/17 03:02:30 thorpej Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.6 1998/08/15 01:59:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,17 +85,23 @@ typedef u_long physaddr;
 typedef u_long physlen;
 
 /*
- * AHA1740 EISA board mode registers (Offset from slot base)
+ * Offset of AHA1740 registers, relative from slot base.
  */
-#define PORTADDR	0xCC0
+#define	AHB_PORT_OFFSET	0xcc0
+#define	AHB_PORT_SIZE	32
+
+/*
+ * AHA1740 EISA board mode registers (relative to port offset)
+ */
+#define PORTADDR	0x00
 #define	 PORTADDR_ENHANCED	0x80
-#define BIOSADDR	0xCC1
-#define	INTDEF		0xCC2
-#define	SCSIDEF		0xCC3
-#define	BUSDEF		0xCC4
-#define	RESV0		0xCC5
-#define	RESV1		0xCC6
-#define	RESV2		0xCC7
+#define BIOSADDR	0x01
+#define	INTDEF		0x02
+#define	SCSIDEF		0x03
+#define	BUSDEF		0x04
+#define	RESV0		0x05
+#define	RESV1		0x06
+#define	RESV2		0x07
 /**** bit definitions for INTDEF ****/
 #define	INT9	0x00
 #define	INT10	0x01
@@ -114,24 +120,24 @@ typedef u_long physlen;
 #define	B8uS	0x02
 
 /*
- * AHA1740 ENHANCED mode mailbox control regs (Offset from slot base)
+ * AHA1740 ENHANCED mode mailbox control regs (relative to port offset)
  */
-#define MBOXOUT0	0xCD0
-#define MBOXOUT1	0xCD1
-#define MBOXOUT2	0xCD2
-#define MBOXOUT3	0xCD3
+#define MBOXOUT0	0x10
+#define MBOXOUT1	0x11
+#define MBOXOUT2	0x12
+#define MBOXOUT3	0x13
 
-#define	ATTN		0xCD4
-#define	G2CNTRL		0xCD5
-#define	G2INTST		0xCD6
-#define G2STAT		0xCD7
+#define	ATTN		0x14
+#define	G2CNTRL		0x15
+#define	G2INTST		0x16
+#define G2STAT		0x17
 
-#define	MBOXIN0		0xCD8
-#define	MBOXIN1		0xCD9
-#define	MBOXIN2		0xCDA
-#define	MBOXIN3		0xCDB
+#define	MBOXIN0		0x18
+#define	MBOXIN1		0x19
+#define	MBOXIN2		0x1A
+#define	MBOXIN3		0x1B
 
-#define G2STAT2		0xCDC
+#define G2STAT2		0x1C
 
 /*
  * Bit definitions for the 5 control/status registers
