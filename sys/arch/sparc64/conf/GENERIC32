@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.61 2003/04/05 13:36:15 tsutsui Exp $
+# 	$NetBSD: GENERIC32,v 1.62 2003/04/05 14:21:57 tsutsui Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 maxusers	64
 
@@ -426,7 +426,8 @@ esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
+# XXX lacks bus_dmamap_sync()
+#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
