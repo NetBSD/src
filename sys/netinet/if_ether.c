@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.16.2.1 1994/07/24 02:48:29 cgd Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.16.2.2 1994/07/28 05:19:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -467,7 +467,7 @@ in_arpinput(m)
 	}
 	if (isaddr.s_addr == myaddr.s_addr) {
 		log(LOG_ERR,
-		   "duplicate IP address %x!! sent from ethernet address: %s\n",
+		   "duplicate IP address %08x sent from ethernet address %s\n",
 		   ntohl(isaddr.s_addr), ether_sprintf(ea->arp_sha));
 		itaddr = myaddr;
 		goto reply;
@@ -476,8 +476,8 @@ in_arpinput(m)
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
 		    bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen))
-			log(LOG_INFO, "arp info overwritten for %x by %s\n",
-			    isaddr.s_addr, ether_sprintf(ea->arp_sha));
+			log(LOG_INFO, "arp info overwritten for %08x by %s\n",
+			    ntohl(isaddr.s_addr), ether_sprintf(ea->arp_sha));
 		bcopy((caddr_t)ea->arp_sha, LLADDR(sdl),
 		    sdl->sdl_alen = sizeof(ea->arp_sha));
 		if (rt->rt_expire)
