@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.2 2003/04/07 21:04:23 kleink Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3 2004/12/01 01:08:18 ws Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.2 2003/04/07 21:04:23 kleink Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3 2004/12/01 01:08:18 ws Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -59,9 +59,9 @@ ENTRY(swapcontext)
 #endif
 	testl	%eax,%eax
 	jnz	2f
-	movq	(%rsp),%r11
+	movq	16(%rsp),%r11
 	movq	%r11,(56 + 21 * 8)(%r12)
-	leaq	8(%rsp),%r11
+	leaq	24(%rsp),%r11
 	movq	%r11,(56 + 24 * 8)(%r12)
 	movq	%r13,%rdi
 #ifdef PIC
