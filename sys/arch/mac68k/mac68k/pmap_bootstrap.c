@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1 1995/06/21 03:19:35 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 1995/06/22 03:09:49 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -57,7 +57,8 @@ extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int maxmem, physmem;
-extern vm_offset_t avail_start, avail_next, avail_remaining, avail_range;
+extern int avail_remaining, avail_range, avail_end;
+extern vm_offset_t avail_start, avail_next;
 extern vm_offset_t virtual_avail, virtual_end;
 extern vm_size_t mem_size;
 extern int protection_codes[];
@@ -462,7 +463,9 @@ pmap_bootstrap(nextpa, firstpa)
 		high[numranges - 1] -= low[numranges] - high[numranges];
 	}
 
-	avail_remaining = mac68k_btop(mac68k_trunc_page(avail_remaining));
+	avail_remaining = mac68k_trunc_page(avail_remaining);
+	avail_end = avail_start + avail_remaining;
+	avail_remaining = mac68k_btop(avail_remaining);
 
 	mem_size = mac68k_ptob(physmem);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);

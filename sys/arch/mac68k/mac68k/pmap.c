@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1995/06/21 03:45:16 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1995/06/22 03:08:29 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -274,6 +274,8 @@ vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_next;	/* Next available physical page		*/
 int		avail_remaining;/* Number of physical free pages left	*/
 int		avail_range;	/* Range avail_next is in		*/
+vm_offset_t	avail_end;	/* Set for ps and friends as		*/
+				/*       avail_start + avail_remaining. */
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
