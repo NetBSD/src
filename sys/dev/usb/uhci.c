@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.80 2000/01/19 01:16:38 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.81 2000/01/25 17:31:05 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -972,12 +972,12 @@ uhci_intr(arg)
 	}
 	if (status & UHCI_STS_HSE) {
 		ack |= UHCI_STS_HSE;
-		printf("%s: host controller process error\n", 
-		       USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: host system error\n", USBDEVNAME(sc->sc_bus.bdev));
 	}
 	if (status & UHCI_STS_HCPE) {
 		ack |= UHCI_STS_HCPE;
-		printf("%s: host system error\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: host controller process error\n", 
+		       USBDEVNAME(sc->sc_bus.bdev));
 	}
 	if (status & UHCI_STS_HCH) {
 		/* no acknowledge needed */
