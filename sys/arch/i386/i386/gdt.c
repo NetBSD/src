@@ -1,7 +1,7 @@
-/*	$NetBSD: gdt.c,v 1.5 1995/11/17 06:47:27 jtc Exp $	*/
+/*	$NetBSD: gdt.c,v 1.6 1996/01/31 03:13:07 mycroft Exp $	*/
 
 /*
- *  Copyright (c) 1995 Charles M. Hannum.   All rights reserved.
+ *  Copyright (c) 1995, 1996 Charles M. Hannum.   All rights reserved.
  *  Copyright (c) 1995 John T. Kohl.   All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
 
 #include <machine/gdt.h>
 
-#define	GDTSTART	64
+#define	MINGDTSIZ	512
 #define	MAXGDTSIZ	8192
 
 union descriptor *dynamic_gdt = gdt;
@@ -139,30 +139,49 @@ gdt_compact()
  * Grow or shrink the GDT.
  */
 void
-gdt_resize(newsize)
-	int newsize;
+gdt_init()
 {
-	size_t old_len, new_len;
-	union descriptor *old_gdt, *new_gdt;
+	size_t max_len, min_len;
 	struct region_descriptor region;
 
-	old_len = gdt_size * sizeof(union descriptor);
-	old_gdt = dynamic_gdt;
-	gdt_size = newsize;
-	new_len = gdt_size * sizeof(union descriptor);
-	new_gdt = (union descriptor *)kmem_alloc(kernel_map, new_len);
-	if (new_len > old_len) {
-		bcopy(old_gdt, new_gdt, old_len);
-		bzero((caddr_t)new_gdt + old_len, new_len - old_len);
-	} else
-		bcopy(old_gdt, new_gdt, new_len);
-	dynamic_gdt = new_gdt;
+	max_len = MAXGDTSIZ * sizeof(union descriptor);
+	min_len = MINGDTSIZ * sizeof(union descriptor);
+	gdt_size = MINGDTSIZ;
 
-	setregion(&region, new_gdt, new_len - 1);
+	dynamic_gdt = (union descriptor *)kmem_alloc_pageable(kernel_map,
+	    max_len);
+	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt,
+	    (vm_offset_t)dynamic_gdt + min_len, FALSE);
+	bcopy(gdt, dynamic_gdt, NGDT * sizeof(union descriptor));
+
+	setregion(&region, dynamic_gdt, max_len - 1);
 	lgdt(&region);
+}
 
-	if (old_gdt != gdt)
-		kmem_free(kernel_map, (vm_offset_t)old_gdt, old_len);
+void
+gdt_grow()
+{
+	size_t old_len, new_len;
+
+	old_len = gdt_size * sizeof(union descriptor);
+	gdt_size <<= 1;
+	new_len = old_len << 1;
+
+	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + old_len,
+	    (vm_offset_t)dynamic_gdt + new_len, FALSE);
+}
+
+void
+gdt_shrink()
+{
+	size_t old_len, new_len;
+
+	old_len = gdt_size * sizeof(union descriptor);
+	gdt_size >>= 1;
+	new_len = old_len >> 1;
+
+	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + new_len,
+	    (vm_offset_t)dynamic_gdt + old_len, TRUE);
 }
 
 /*
@@ -190,9 +209,9 @@ gdt_get_slot()
 			if (gdt_size >= MAXGDTSIZ)
 				panic("gdt_get_slot botch 2");
 			if (dynamic_gdt == gdt)
-				gdt_resize(GDTSTART);
+				gdt_init();
 			else
-				gdt_resize(gdt_size * 2);
+				gdt_grow();
 		}
 		slot = gdt_next++;
 	}
@@ -220,9 +239,9 @@ gdt_put_slot(slot)
 	 * almost 2x as many processes as are now running without
 	 * having to grow the GDT.
 	 */
-	if (gdt_size > GDTSTART && gdt_count < gdt_size / 4) {
+	if (gdt_size > MINGDTSIZ && gdt_count <= gdt_size / 4) {
 		gdt_compact();
-		gdt_resize(gdt_size / 2);
+		gdt_shrink();
 	} else {
 		dynamic_gdt[slot].gd.gd_selector = gdt_free;
 		gdt_free = slot;
