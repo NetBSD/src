@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.5 1999/08/13 03:26:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -121,8 +121,7 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 
 
 /* mpsleep timeout value: secs = timo_val/hz.  'ticks' here is defined as cycle-counter ticks, not softclock ticks */
-#define MAX_RECON_EXEC_TICKS 15000000	/* 150 Mhz => this many ticks in 100
-					 * ms */
+#define MAX_RECON_EXEC_USECS (100 * 1000)  /* 100 ms */
 #define RECON_DELAY_MS 25
 #define RECON_TIMO     ((RECON_DELAY_MS * hz) / 1000)
 
@@ -136,10 +135,10 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 
 		RF_ETIMER_STOP(reconDesc->recon_exec_timer);
 		RF_ETIMER_EVAL(reconDesc->recon_exec_timer);
-		reconDesc->reconExecTicks += RF_ETIMER_VAL_TICKS(reconDesc->recon_exec_timer);
+		reconDesc->reconExecTicks += RF_ETIMER_VAL_US(reconDesc->recon_exec_timer);
 		if (reconDesc->reconExecTicks > reconDesc->maxReconExecTicks)
 			reconDesc->maxReconExecTicks = reconDesc->reconExecTicks;
-		if (reconDesc->reconExecTicks >= MAX_RECON_EXEC_TICKS) {
+		if (reconDesc->reconExecTicks >= MAX_RECON_EXEC_USECS) {
 			/* we've been running too long.  delay for
 			 * RECON_DELAY_MS */
 #if RF_RECON_STATS > 0
