@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.15 1999/01/14 22:48:19 kleink Exp $	*/
+/*	$NetBSD: gmon.c,v 1.16 2000/12/20 20:55:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.15 1999/01/14 22:48:19 kleink Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.16 2000/12/20 20:55:23 christos Exp $");
 #endif
 #endif
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: gmon.c,v 1.15 1999/01/14 22:48:19 kleink Exp $");
 #include <err.h>
 #include "extern.h"
 
+extern char *__progname;
+
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
 static u_int	s_scale;
@@ -68,6 +70,7 @@ void	moncontrol __P((int));
 void	monstartup __P((u_long, u_long));
 void	_mcleanup __P((void));
 static int hertz __P((void));
+
 
 void
 monstartup(lowpc, highpc)
@@ -95,7 +98,7 @@ monstartup(lowpc, highpc)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
 
-	cp = sbrk((int)(p->kcountsize + p->fromssize + p->tossize));
+	cp = sbrk((intptr_t)(p->kcountsize + p->fromssize + p->tossize));
 	if (cp == (char *)-1) {
 		ERR("monstartup: out of memory\n");
 		return;
@@ -109,7 +112,7 @@ monstartup(lowpc, highpc)
 	cp += (size_t)p->kcountsize;
 	p->froms = (u_short *)(void *)cp;
 
-	__minbrk = sbrk(0);
+	__minbrk = sbrk((intptr_t)0);
 	p->tos[0].link = 0;
 
 	o = p->highpc - p->lowpc;
@@ -178,7 +181,6 @@ _mcleanup()
 	moncontrol(0);
 
 	if ((profdir = getenv("PROFDIR")) != NULL) {
-		extern char *__progname;
 		char *s, *t;
 		pid_t pid;
 		long divisor;
