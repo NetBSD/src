@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpe - General Purpose Event handling and dispatch
- *              xRevision: 31 $
+ *              xRevision: 33 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpe.c,v 1.6 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evgpe.c,v 1.7 2004/02/14 16:57:24 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -490,7 +490,7 @@ AcpiEvGpeDispatch (
             return_VALUE (ACPI_INTERRUPT_NOT_HANDLED);
         }
 
-        /* 
+        /*
          * Execute the method associated with the GPE
          * NOTE: Level-triggered GPEs are cleared after the method completes.
          */

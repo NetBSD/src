@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exfldio - Aml Field I/O
- *              xRevision: 100 $
+ *              xRevision: 103 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfldio.c,v 1.10 2003/12/21 07:50:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfldio.c,v 1.11 2004/02/14 16:57:24 kochi Exp $");
 
 #define __EXFLDIO_C__
 
@@ -599,8 +599,8 @@ AcpiExFieldDatumIo (
 
     default:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "%p, Wrong object type - %s\n",
-            ObjDesc, AcpiUtGetObjectTypeName (ObjDesc)));
+        ACPI_REPORT_ERROR (("Wrong object type in field I/O %X\n",
+            ACPI_GET_OBJECT_TYPE (ObjDesc)));
         Status = AE_AML_INTERNAL;
         break;
     }
@@ -986,7 +986,7 @@ AcpiExExtractFromField (
         {
             /*
              * This is the last iteration of the loop.  We need to clear
-             * any unused bits (bits that are not part of this field) before 
+             * any unused bits (bits that are not part of this field) before
              * we store the final merged datum into the caller buffer.
              */
             ThisRawDatum &=

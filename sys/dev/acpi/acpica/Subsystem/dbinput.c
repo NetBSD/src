@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbinput - user front-end to the AML debugger
- *              xRevision: 97 $
+ *              xRevision: 98 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2004, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.11 2003/12/13 18:11:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.12 2004/02/14 16:57:24 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
