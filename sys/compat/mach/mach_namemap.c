@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_types.h,v 1.4 2002/11/10 02:18:03 manu Exp $	 */
+/*	$NetBSD: mach_namemap.c,v 1.1 2002/11/10 02:18:03 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Emmanuel Dreyfus
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,45 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACH_TYPES_H_
-#define	_MACH_TYPES_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.1 2002/11/10 02:18:03 manu Exp $");
 
-typedef int mach_port_t;
-typedef int mach_port_name_t;
-typedef int mach_kern_return_t;
-typedef int mach_clock_res_t;
-typedef int mach_boolean_t;
-typedef int mach_sleep_type_t;
-typedef int mach_timespec_t;
-typedef int mach_absolute_time_t;
-typedef int mach_integer_t;
-typedef int mach_cpu_type_t;
-typedef int mach_cpu_subtype_t;
-typedef unsigned int mach_msg_type_number_t;
-typedef unsigned int mach_vm_size_t;
-typedef unsigned long mach_vm_offset_t;
-typedef void *mach_cproc_t;	/* Unkown, see xnu/osfmk/ppc/hw_exception.s */
+#include <sys/types.h>
+#include <sys/param.h>
 
-typedef struct {
-	u_int32_t	numer;
-	u_int32_t	denom;
-} mach_timebase_info_t;
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+#include <compat/mach/mach_host.h>
 
-typedef struct {
-	u_int8_t       mig_vers;
-	u_int8_t       if_vers;
-	u_int8_t       reserved1;
-	u_int8_t       mig_encoding;
-	u_int8_t       int_rep;
-	u_int8_t       char_rep; 
-	u_int8_t       float_rep;
-	u_int8_t       reserved2;
-} mach_ndr_record_t;
+struct mach_subsystem_namemap mach_namemap[] = {
+	{ 200, mach_host_info, "host_info" },
+	{ 0, NULL, NULL },
+};
 
-#ifdef DEBUG_MACH
-#define DPRINTF(a) uprintf a
-#else
-#define DPRINTF(a)
-#endif /* DEBUG_MACH */
 
-#endif /* !_MACH_TYPES_H_ */
