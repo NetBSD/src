@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.20 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.21 2002/11/12 00:01:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.20 2002/10/27 21:41:50 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.21 2002/11/12 00:01:21 thorpej Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -908,7 +908,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 private void
 re__copy_and_pad(char *dst, const char *src, size_t width)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < width; i++) {
 		if (*src == '\0')
