@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.1 2001/12/17 21:39:52 fredette Exp $
+.\"	$NetBSD: xfer,v 1.2 2002/05/08 16:32:56 fredette Exp $
 .
 Installation is supported from several media types, including:
 .(bullet -compact -offset indent
@@ -84,8 +84,8 @@ on
 .Pp
 When instructed to boot over the network, your \*M expects to be
 able to download first and second stage bootstrap programs via
-.Tn ND .
-The
+.Tn ND ,
+the Network Disk protocol.  The
 .Xr ndbootd 8
 program will attempt to serve a second-stage bootstrap file using 
 a name derived from the machine's recently acquired IP
@@ -112,14 +112,22 @@ program, which should
 be located in a place where the
 .Xr ndbootd 8
 daemon can find it.
-The netboot program
-may be found in the install directory of this distribution.
+The
+.Pa netboot
+program may be found in the
+.Pa installation/netboot
+directory of this distribution.
 .Pp
 The netboot program will query a bootparamd server to find the
 NFS server address and path name for its root, and then load a
 kernel from that location. The server should have a copy of the
-netbsd-rd kernel in the root area for your client (no other files
-are needed in the client root) and
+.Pa netbsd.RAMDISK
+kernel in the root area for your client, hard-linked
+under the names
+.Pa netbsd
+and
+.Pa vmunix 
+(no other files are needed in the client root) and
 .Pa /etc/bootparams
 on the server
 should have an entry for your client and its root directory.
@@ -130,7 +138,9 @@ If you will be installing
 .Nx
 on several clients, it may be useful
 to know that you can use a single NFS root for all the clients as long
-as they only use the netbsd-rd kernel. There will be no conflict
+as they only use the 
+.Pa netbsd.RAMDISK
+kernel. There will be no conflict
 between clients because the RAM-disk kernel will not use the NFS root.
 No swap file is needed; the RAM-disk kernel does not use that either.
 .
@@ -151,8 +161,12 @@ work required to mount the CD-ROM and extract the files.
 This method requires that you boot from another device (i.e. tape
 or network, as described above). You may need to make a boot tape
 on another machine using the files in
-.Pa .../install
-(which you get via FTP). Once you have booted netbsd-rd (the RAM-disk kernel)
+.Pa installation/tapeimage
+and
+.Pa binary/kernel
+(which you get via FTP). Once you have booted 
+.Pa netbsd.RAMDISK 
+(the RAM-disk kernel)
 and loaded the miniroot, you can load any of the distribution sets
 over the net using FTP. The
 .Ic install
