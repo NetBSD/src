@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.24 2001/12/05 15:03:27 wiz Exp $
+.\"	$NetBSD: slattach.8,v 1.25 2002/10/03 15:41:47 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,23 +54,25 @@ The following operands are supported by
 .Nm "" :
 .Bl -tag -width Ar
 .It Fl H
-Turn on DTR/CTS flow control.  By default, no flow control is done.
+Turn on DTR/CTS flow control.
+By default, no flow control is done.
 .It Fl h
-Turn on RTS/CTS flow control.  By default, no flow control is done.
+Turn on RTS/CTS flow control.
+By default, no flow control is done.
 .It Fl l
 Turn on the CLOCAL flag, making it possible to run SLIP on a cable
 without modem control signals (e.g. DTR, DSR, DCD).
 .It Fl m
-Maintain modem control signals after closing the line.  Specifically,
-this disables HUPCL.
+Maintain modem control signals after closing the line.
+Specifically, this disables HUPCL.
 .It Fl n
 Don't detach from invoking tty.
 .It Fl s Ar baudrate
-Specifies the speed of the connection.  If not specified, the
-default of 9600 is used.
+Specifies the speed of the connection.
+If not specified, the default of 9600 is used.
 .It Fl t Ar ldisc
-Specifies the line discipline to use for the tty.  Supported line
-disciplines are
+Specifies the line discipline to use for the tty.
+Supported line disciplines are
 .Dq slip
 (creates a
 .Xr sl 4
