@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.15 2001/12/02 09:14:20 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.16 2001/12/11 11:18:17 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.15 2001/12/02 09:14:20 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.16 2001/12/11 11:18:17 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -47,26 +47,8 @@ __RCSID("$NetBSD: color.c,v 1.15 2001/12/02 09:14:20 blymn Exp $");
 /* Flags for colours and pairs */
 #define	__USED		0x01
 
-/* List of colours */
-/*struct color {
-	short	num;
-	short	red;
-	short	green;
-	short	blue;
-	int	flags;
-	} colors[MAX_COLORS];*/
-
-/* List of colour pairs */
-/*struct pair {
-	short	fore;
-	short	back;
-	int	flags;
-	} pairs[MAX_PAIRS];*/
-
 /* Attributes that clash with colours */
 attr_t	__nca;
-
-/*int	__color_type = COLOR_NONE;*/
 
 static void
 __change_pair __P((short));
