@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.86 2004/02/02 23:25:36 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.86.2.1 2004/06/22 07:24:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.86 2004/02/02 23:25:36 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.86.2.1 2004/06/22 07:24:55 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -578,7 +578,7 @@ install(char *from_name, char *to_name, u_int flags)
 			/* ensure that from_sb & tv are sane if !dolink */
 		if (stat(from_name, &from_sb))
 			err(1, "%s: stat", from_name);
-#ifdef BSD4_4
+#if BSD4_4 && !HAVE_NBTOOL_CONFIG_H
 		TIMESPEC_TO_TIMEVAL(&tv[0], &from_sb.st_atimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &from_sb.st_mtimespec);
 #else
