@@ -1,4 +1,4 @@
-/*	$NetBSD: s_copysignf.S,v 1.1 1996/06/26 07:30:01 jtc Exp $	*/
+/*	$NetBSD: s_copysignf.S,v 1.2 1996/08/13 17:00:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 LEAF(copysignf, 2)
 	cpys	fa1, fa0, fv0
