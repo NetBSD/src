@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.15 2002/04/23 03:33:13 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.16 2002/04/24 04:22:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.15 2002/04/23 03:33:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.16 2002/04/24 04:22:57 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1722,7 +1722,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigcatch, &p->p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
-	ki->p_stat = p->p_stat;
+	ki->p_stat = p->p_stat; /* Will likely be overridden by LWP status */
+	ki->p_realstat = p->p_stat;
 	ki->p_nice = p->p_nice;
 
 	ki->p_xstat = p->p_xstat;
@@ -1830,6 +1831,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
 	kl->l_forw = PTRTOINT64(l->l_forw);
 	kl->l_back = PTRTOINT64(l->l_back);
+	kl->l_laddr = PTRTOINT64(l);
 	kl->l_addr = PTRTOINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
