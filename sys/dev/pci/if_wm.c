@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.4.5 2002/08/17 15:46:27 lukem Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.4.6 2002/08/17 15:47:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,13 +40,6 @@
  * and i82544 (``Cordova'') Gigabit Ethernet chips.
  *
  * TODO (in order of importance):
- *
- *	- Fix TCP/UDP checksums.
- *		Status: Several successful transmissions with offloaded
- *		checksums occur.  After several successful transmissions,
- *		the chip goes catatonic.  The watchdog timer fires, which
- *		resets the chip, and gets things moving again, until the
- *		cycle repeats.
  *
  *	- Make GMII work on the i82543.
  *
