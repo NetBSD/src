@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2001/02/19 23:03:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -81,7 +81,6 @@ main(argc, argv)
 {
 	IFILE ifile;
 	char *s;
-	extern char *__progname;
 
 #ifdef __EMX__
 	_response(&argc, &argv);
@@ -121,7 +120,7 @@ main(argc, argv)
 	 * Process command line arguments and LESS environment arguments.
 	 * Command line arguments override environment arguments.
 	 */
-	if (strcmp(__progname, "more") == 0)
+	if (strcmp(getprogname(), "more") == 0)
 		more_mode = 1;
 
 	is_tty = isatty(1);

@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.15 2000/09/24 02:27:12 augustss Exp $ */
+/*      $NetBSD: usbhid.c,v 1.16 2001/02/19 23:03:52 cgd Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -590,12 +590,12 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 static void
 usage(void)
 {
-	extern char *__progname;
+	const char *progname = getprogname();
 
-	fprintf(stderr, "Usage: %s -f device [-t tablefile] [-l] [-v] -a\n", __progname);
-	fprintf(stderr, "       %s -f device [-t tablefile] [-v] -r\n", __progname);
-	fprintf(stderr, "       %s -f device [-t tablefile] [-l] [-n] [-v] name ...\n", __progname);
-	fprintf(stderr, "       %s -f device [-t tablefile] -w name=value ...\n", __progname);
+	fprintf(stderr, "Usage: %s -f device [-t tablefile] [-l] [-v] -a\n", progname);
+	fprintf(stderr, "       %s -f device [-t tablefile] [-v] -r\n", progname);
+	fprintf(stderr, "       %s -f device [-t tablefile] [-l] [-n] [-v] name ...\n", progname);
+	fprintf(stderr, "       %s -f device [-t tablefile] -w name=value ...\n", progname);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.21 2000/11/27 00:54:25 wiz Exp $ */
+/* $NetBSD: xlint.c,v 1.22 2001/02/19 23:03:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.21 2000/11/27 00:54:25 wiz Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.22 2001/02/19 23:03:53 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -284,16 +284,16 @@ appdef(lstp, def)
 static void
 usage()
 {
-	extern char *__progname;
+
 	(void)fprintf(stderr,
 	    "Usage: %s [-abceghprvwxzHF] [-s|-t] [-i|-nu] [-Dname[=def]]"
-	    " [-Uname] [-X <id>[,<id>]...\n", __progname);
+	    " [-Uname] [-X <id>[,<id>]...\n", getprogname());
 	(void)fprintf(stderr, 
 	    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile]"
 	    " file...\n");
 	(void)fprintf(stderr,
 	    "       %s [-abceghprvwzHF] [-s|-t] -Clibrary [-Dname[=def]]\n"
-	    " [-X <id>[,<id>]...\n", __progname);
+	    " [-X <id>[,<id>]...\n", getprogname());
 	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] [-Bpath] file"
 	    " ...\n");
 	terminate(-1);

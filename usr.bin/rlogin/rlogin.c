@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.24 2000/01/31 14:19:35 itojun Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.25 2001/02/19 23:03:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.24 2000/01/31 14:19:35 itojun Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.25 2001/02/19 23:03:51 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,8 +153,6 @@ void		warning __P((const char *, ...));
 int		get_window_size __P((int, struct winsize *));
 #endif
 
-extern char *__progname;
-
 int
 main(argc, argv)
 	int argc;
@@ -183,8 +181,11 @@ main(argc, argv)
 	one = 1;
 	host = user = NULL;
 
-	if (strcmp(__progname, "rlogin") != 0)
-		host = __progname;
+	if (strcmp(getprogname(), "rlogin") != 0) {
+		host = strdup(getprogname());
+		if (host == NULL)
+			err(1, NULL);
+	}
 
 	/* handle "rlogin host flags" */
 	if (!host && argc > 2 && argv[1][0] != '-') {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1998/10/14 00:58:48 wsanchez Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2001/02/19 23:03:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1998/10/14 00:58:48 wsanchez Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2001/02/19 23:03:53 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,6 @@ __RCSID("$NetBSD: main.c,v 1.9 1998/10/14 00:58:48 wsanchez Exp $");
 int	main __P((int, char **));
 void	usage __P((void));
 
-extern char *__progname;	/* from crt0.o */
-
 int
 main(argc, argv)
 	int argc;
@@ -81,7 +79,7 @@ main(argc, argv)
 	int ch;
 
 	escapec = ESCAPEC;	
-	debug = strcmp(__progname, "a.out") == 0;
+	debug = strcmp(getprogname(), "a.out") == 0;
 	while ((ch = getopt(argc, argv, "fc:e:tdDx")) != -1) {
 		switch (ch) {
 		case 'f':
@@ -202,6 +200,6 @@ usage()
 {
 	(void) fprintf(stderr,
 	    "Usage: %s [-e escape-char] [-c command] [-t] [-f] [-d]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
