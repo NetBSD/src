@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.10 1997/09/26 13:24:03 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.11 1997/10/08 13:17:00 mycroft Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -8,7 +8,7 @@ CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
 .endif
 
 .if defined(DESTDIR)
-CFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
+CPPFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
 
 # Helpers for cross-compiling
