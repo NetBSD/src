@@ -1,4 +1,4 @@
-.\"	$NetBSD: wait.2,v 1.15 2001/09/16 01:39:03 wiz Exp $
+.\"	$NetBSD: wait.2,v 1.16 2001/09/16 02:13:32 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -306,6 +306,9 @@ will fail and return immediately if:
 An invalid value was specified for
 .Fa options .
 .El
+.Sh SEE ALSO
+.Xr _exit 2 ,
+.Xr sigaction 2
 .Sh STANDARDS
 The
 .Fn wait
@@ -325,9 +328,6 @@ macro
 and the ability to restart a pending
 .Fn wait
 call are extensions to the POSIX interface.
-.Sh SEE ALSO
-.Xr _exit 2 ,
-.Xr sigaction 2
 .Sh HISTORY
 A
 .Fn wait

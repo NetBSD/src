@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.14 2001/09/16 01:39:02 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.15 2001/09/16 02:13:30 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -53,9 +53,7 @@ that the process expects to be traced by its parent.  All the other
 arguments are ignored.  (If the parent process does not expect to trace
 the child, it will probably be rather confused by the results; once the
 traced process stops, it cannot be made to continue except via
-.Eo \&
-.Fn ptrace
-.Ec \&.)
+.Fn ptrace . )
 When a process has used this request and calls
 .Xr execve 2
 or any of the routines built on it
