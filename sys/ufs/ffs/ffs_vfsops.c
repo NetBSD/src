@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.141 2004/04/18 03:30:23 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.142 2004/04/18 03:35:16 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.141 2004/04/18 03:30:23 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.142 2004/04/18 03:35:16 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1638,18 +1638,6 @@ ffs_sbupdate(mp, waitfor)
 	saveflag = fs->fs_flags & FS_INTERNAL;
 	fs->fs_flags &= ~FS_INTERNAL;
 	
-	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_sblockloc != SBLOCK_UFS1) {
-		printf("%s: correcting fs_sblockloc from %" PRId64 " to %d\n",
-		    fs->fs_fsmnt, fs->fs_sblockloc, SBLOCK_UFS1);
-		fs->fs_sblockloc = SBLOCK_UFS1;
-	}
-
-	if (fs->fs_magic == FS_UFS2_MAGIC && fs->fs_sblockloc != SBLOCK_UFS2) {
-		printf("%s: correcting fs_sblockloc from %" PRId64 " to %d\n",
-		    fs->fs_fsmnt, fs->fs_sblockloc, SBLOCK_UFS2);
-		fs->fs_sblockloc = SBLOCK_UFS2;
-	}
-
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 
 	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);
