@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.1.1.1 1997/01/14 20:57:02 gwr Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.2 1997/04/09 04:47:13 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,8 @@ struct fbdevice {
 
 	caddr_t	fb_pixels;		/* display RAM */
 	int	fb_linebytes;		/* bytes per display line */
+
+	volatile u_int32_t *fb_pfour;	/* pointer to pfour register */
 
 	/*
 	 * XXX - The "Raster console" stuff could be stored
