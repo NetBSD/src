@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.3 1997/11/12 21:56:05 thorpej Exp $	*/
+/*	$NetBSD: readline.c,v 1.4 1998/05/20 01:03:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.3 1997/11/12 21:56:05 thorpej Exp $");
+__RCSID("$NetBSD: readline.c,v 1.4 1998/05/20 01:03:06 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -155,13 +155,13 @@ rl_initialize()
 		rl_instream = stdin;
 	if (!rl_outstream)
 		rl_outstream = stdout;
-	e = el_init(rl_readline_name, rl_instream, rl_outstream);
+	e = el_init(rl_readline_name, rl_instream, rl_outstream, stderr);
 
 	h = history_init();
 	if (!e || !h)
 		return -1;
 
-	history(h, &ev, H_SETMAXSIZE, INT_MAX);	/* unlimited */
+	history(h, &ev, H_SETSIZE, INT_MAX);	/* unlimited */
 	history_length = 0;
 	max_input_history = INT_MAX;
 	el_set(e, EL_HIST, history, h);
@@ -405,21 +405,21 @@ _history_expand_command(command, len, result)
 		start = end = -1, cmd++;
 	else if (*cmd == '*')
 		start = 1, end = -1, cmd++;
-	else if (isdigit(*cmd)) {
+	else if (isdigit((unsigned char) *cmd)) {
 		const char *temp;
 		int shifted = 0;
 
 		start = atoi(cmd);
 		temp = cmd;
-		for (; isdigit(*cmd); cmd++);
+		for (; isdigit((unsigned char) *cmd); cmd++);
 		if (temp != cmd)
 			shifted = 1;
 		if (shifted && *cmd == '-') {
-			if (!isdigit(*(cmd + 1)))
+			if (!isdigit((unsigned char) *(cmd + 1)))
 				end = -2;
 			else {
 				end = atoi(cmd + 1);
-				for (; isdigit(*cmd); cmd++);
+				for (; isdigit((unsigned char) *cmd); cmd++);
 			}
 		} else if (shifted && *cmd == '*')
 			end = -1, cmd++;
@@ -566,7 +566,7 @@ _history_expand_command(command, len, result)
 		len += arr_len;
 		temp[len++] = ' ';	/* add a space */
 	}
-	while (len > 0 && isspace(temp[len - 1]))
+	while (len > 0 && isspace((unsigned char) temp[len - 1]))
 		len--;
 	temp[len] = '\0';
 
@@ -631,7 +631,7 @@ loop:
 					while (str[j] && str[++j] != '?');
 					if (str[j] == '?')
 						j++;
-				} else if (isspace(str[j]))
+				} else if (isspace((unsigned char) str[j]))
 					break;
 			}
 			if (str[j] == history_expansion_char
@@ -699,7 +699,7 @@ history_tokenize(str)
 	char **result = NULL, *temp, delim = '\0';
 
 	for (i = 0; str[i]; i++) {
-		while (isspace(str[i]))
+		while (isspace((unsigned char) str[i]))
 			i++;
 		start = i;
 		for (; str[i]; i++) {
@@ -708,7 +708,8 @@ history_tokenize(str)
 			else if (str[i] == delim)
 				delim = '\0';
 			else if (!delim &&
-			    (isspace(str[i]) || strchr("()<>;&|$", str[i])))
+			    (isspace((unsigned char) str[i]) ||
+			    strchr("()<>;&|$", str[i])))
 				break;
 			else if (!delim && strchr("'`\"", str[i]))
 				delim = str[i];
@@ -741,7 +742,7 @@ stifle_history(max)
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
-	if (history(h, &ev, H_SETMAXSIZE, max) == 0)
+	if (history(h, &ev, H_SETSIZE, max) == 0)
 		max_input_history = max;
 }
 
@@ -754,7 +755,7 @@ unstifle_history()
 	HistEvent ev;
 	int omax;
 
-	history(h, &ev, H_SETMAXSIZE, INT_MAX);
+	history(h, &ev, H_SETSIZE, INT_MAX);
 	omax = max_input_history;
 	max_input_history = INT_MAX;
 	return omax;		/* some value _must_ be returned */
@@ -1154,7 +1155,11 @@ filename_completion_function(text, state)
 		/* otherwise, get first entry where first */
 		/* filename_len characters are equal	  */
 		if (entry->d_name[0] == filename[0]
+#ifndef __SVR4
 		    && entry->d_namlen >= filename_len
+#else
+		    && strlen(entry->d_name) >= filename_len
+#endif
 		    && strncmp(entry->d_name, filename,
 			       filename_len) == 0)
 			break;
@@ -1163,7 +1168,11 @@ filename_completion_function(text, state)
 	if (entry) {		/* match found */
 
 		struct stat     stbuf;
+#ifndef __SVR4
 		len = entry->d_namlen +
+#else
+		len = strlen(entry->d_name) +
+#endif
 			((dirname) ? strlen(dirname) : 0) + 1 + 1;
 		temp = malloc(len);
 		(void)sprintf(temp, "%s%s",
@@ -1337,7 +1346,7 @@ rl_complete_internal(what_to_do)
 		} else
 			/* lcd is not a valid object - further specification */
 			/* is needed */
-			term_beep(e);
+			el_beep(e);
 
 		/* free elements of array and the array itself */
 		for (i = 0; arr[i]; i++)
