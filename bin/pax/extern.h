@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 2002/01/31 22:43:35 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.31 2002/10/12 15:39:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -54,6 +54,9 @@ extern int curdirfd;
 extern const char *gzip_program;
 extern time_t starttime;
 extern int force_one_volume;
+extern char *chdname;
+extern int forcelocal;
+
 int ar_open(const char *);
 void ar_close(void);
 void ar_drain(void);
@@ -172,10 +175,9 @@ int next_file(ARCHD *);
 /*
  * gen_subs.c
  */
-void ls_list(ARCHD *, time_t);
+void ls_list(ARCHD *, time_t, FILE *);
 void ls_tty(ARCHD *);
-void zf_strncpy(char *, const char *, int);
-int l_strncpy(char *, const char *, int);
+void safe_print(const char *, FILE *);
 u_long asc_ul(char *, int, int);
 int ul_asc(u_long, char *, int, int);
 #ifndef NET2_STAT
@@ -195,18 +197,18 @@ int getoldopt(int, char **, const char *, struct option *, int *);
  */
 extern FSUB fsub[];
 extern int ford[];
-extern int cpio_mode;
 void options(int, char **);
 OPLIST * opt_next(void);
 int opt_add(const char *);
-int opt_chdir(char *);
 int bad_opt(void);
+int mkpath(char *);
+char *chdname;
 
 /*
  * pat_rep.c
  */
 int rep_add(char *);
-int pat_add(char *, int);
+int pat_add(char *, char *);
 void pat_chk(void);
 int pat_sel(ARCHD *);
 int pat_match(ARCHD *);
@@ -220,6 +222,7 @@ extern int act;
 extern FSUB *frmt;
 extern int Aflag;
 extern int cflag;
+extern int cwdfd;
 extern int dflag;
 extern int iflag;
 extern int kflag;
@@ -239,13 +242,20 @@ extern int Zflag;
 extern int vfpart;
 extern int patime;
 extern int pmtime;
+extern int nodirs;
 extern int pfflags;
 extern int pmode;
 extern int pids;
+extern int rmleadslash;
 extern int exit_val;
 extern int docrc;
 extern char *dirptr;
+extern char *ltmfrmt;
 extern char *argv0;
+extern FILE *listf;
+extern char *tempfile;
+extern char *tempbase;
+
 int main(int, char **);
 void sig_cleanup(int);
 
@@ -268,7 +278,7 @@ int ftime_start(void);
 int chk_ftime(ARCHD *);
 int name_start(void);
 int add_name(char *, int, char *);
-void sub_name(char *, int *);
+void sub_name(char *, int *, size_t);
 int dev_start(void);
 int add_dev(ARCHD *);
 int map_dev(ARCHD *, u_long, u_long);
