@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.33 1999/03/24 05:51:02 mrg Exp $	*/
+/*	$NetBSD: copy.s,v 1.34 1999/05/01 19:17:06 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -411,7 +411,7 @@ ENTRY(fuswintr)
 	CHECK_SFC
 	movl	sp@(4),a0		| address to read
 	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#_fubail,a1@(PCB_ONFAULT)
+	movl	#_C_LABEL(fubail),a1@(PCB_ONFAULT)
 	moveq	#0,d0
 	movsw	a0@,d0			| do read from user space
 	bra	Lfdone
@@ -482,7 +482,7 @@ ENTRY(suswintr)
 	movl	sp@(4),a0		| address to write
 	movw	sp@(10),d0		| value to put there
 	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#_subail,a1@(PCB_ONFAULT)
+	movl	#_C_LABEL(subail),a1@(PCB_ONFAULT)
 	movsw	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
 	bra	Lsdone
