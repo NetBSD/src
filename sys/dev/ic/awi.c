@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.38 2001/09/18 23:19:08 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.39 2001/09/19 04:09:54 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -1302,8 +1302,27 @@ awi_init_mibs(struct awi_softc *sc)
 		    cs->cs_region == sc->sc_mib_phy.aCurrent_Reg_Domain)
 			break;
 	}
-	for (i = cs->cs_min; i <= cs->cs_max; i++)
-		setbit(sc->sc_ic.ic_chan_avail, i);
+	if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
+		for (i = cs->cs_min; i <= cs->cs_max; i++) {
+			setbit(sc->sc_ic.ic_chan_avail, 
+			    IEEE80211_FH_CHAN(i % 3 + 1, i));
+			/*
+			 * According to the IEEE 802.11 specification,
+			 * hop pattern parameter for FH phy should be
+			 * incremented by 3 for given hop chanset, i.e.,
+			 * the chanset parameter is calculated for given
+			 * hop patter.  However, BayStack 650 Access Points
+			 * apparently use fixed hop chanset parameter value
+			 * 1 for any hop pattern.  So we also try this
+			 * combination of hop chanset and pattern.
+			 */
+			setbit(sc->sc_ic.ic_chan_avail, 
+			    IEEE80211_FH_CHAN(1, i));
+		}
+	} else {
+		for (i = cs->cs_min; i <= cs->cs_max; i++)
+			setbit(sc->sc_ic.ic_chan_avail, i);
+	}
 	sc->sc_cur_chan = cs->cs_def;
 
 	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
@@ -1719,8 +1738,10 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 					bs->bs_rates[bs->bs_nrate++] =
 					    ic->ic_sup_rates[i];
 			}
-			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH)
-				bs->bs_dwell = 200;		/* XXX */
+			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
+				bs->bs_fhdwell = 200;		/* XXX */
+				bs->bs_fhindex = 1;
+			}
 			memcpy(bs->bs_macaddr, ic->ic_myaddr,
 			    IEEE80211_ADDR_LEN);
 			bs->bs_esslen = ic->ic_des_esslen;
@@ -1784,15 +1805,10 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			    (ic->ic_flags & IEEE80211_F_ASCAN) ?
 			    AWI_ASCAN_DURATION : AWI_PSCAN_DURATION);
 			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
-				if (bs->bs_chan < sc->sc_cur_chan)
-					sc->sc_fhset_one = ~sc->sc_fhset_one;
-				if (sc->sc_fhset_one)
-					awi_write_1(sc, AWI_CA_SCAN_SET, 1);
-				else
-					awi_write_1(sc, AWI_CA_SCAN_SET,
-					    bs->bs_chan % 3 + 1);
+				awi_write_1(sc, AWI_CA_SCAN_SET,
+				    IEEE80211_FH_CHANSET(bs->bs_chan));
 				awi_write_1(sc, AWI_CA_SCAN_PATTERN,
-				    bs->bs_chan);
+				    IEEE80211_FH_CHANPAT(bs->bs_chan));
 				awi_write_1(sc, AWI_CA_SCAN_IDX, 1);
 			} else {
 				awi_write_1(sc, AWI_CA_SCAN_SET, bs->bs_chan);
@@ -1859,23 +1875,21 @@ awi_newstate(void *arg, enum ieee80211_state nstate)
 			}
 			sc->sc_cmd_inprog = AWI_CMD_SYNC;
 			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
-				if (sc->sc_fhset_one)
-					awi_write_1(sc, AWI_CA_SYNC_SET, 1);
-				else
-					awi_write_1(sc, AWI_CA_SYNC_SET,
-					    bs->bs_chan % 3 + 1);
-				awi_write_1(sc, AWI_CA_SYNC_IDX, 1);
+				awi_write_1(sc, AWI_CA_SYNC_SET,
+				    IEEE80211_FH_CHANSET(bs->bs_chan));
+				awi_write_1(sc, AWI_CA_SYNC_PATTERN,
+				    IEEE80211_FH_CHANPAT(bs->bs_chan));
 			} else {
 				awi_write_1(sc, AWI_CA_SYNC_SET, bs->bs_chan);
 				awi_write_1(sc, AWI_CA_SYNC_PATTERN, 0);
-				awi_write_1(sc, AWI_CA_SYNC_IDX, 0);
 			}
+			awi_write_1(sc, AWI_CA_SYNC_IDX, bs->bs_fhindex);
 			if ((ic->ic_flags & IEEE80211_F_SIBSS) &&
 			    !sc->sc_no_bssid)
 				awi_write_1(sc, AWI_CA_SYNC_STARTBSS, 1);
 			else
 				awi_write_1(sc, AWI_CA_SYNC_STARTBSS, 0);
-			awi_write_2(sc, AWI_CA_SYNC_DWELL, bs->bs_dwell);
+			awi_write_2(sc, AWI_CA_SYNC_DWELL, bs->bs_fhdwell);
 			awi_write_2(sc, AWI_CA_SYNC_MBZ, 0);
 			awi_write_bytes(sc, AWI_CA_SYNC_TIMESTAMP,
 			    bs->bs_tstamp, 8);
