@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.19 2000/02/14 04:36:21 aidan Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.19.4.1 2002/02/26 22:09:26 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.19 2000/02/14 04:36:21 aidan Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.19.4.1 2002/02/26 22:09:26 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,21 +66,6 @@ static int force_local;
 
 char *tempname;
 
-static unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
-	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-void
-to64(s, v, n)
-	char *s;
-	long v;
-	int n;
-{
-	while (--n >= 0) {
-		*s++ = itoa64[v&0x3f];
-		v >>= 6;
-	}
-}
-
 static char *
 getnewpasswd(pw, min_pw_len)
 	struct passwd *pw;
@@ -88,7 +73,7 @@ getnewpasswd(pw, min_pw_len)
 {
 	int tries;
 	char *p, *t;
-	char buf[_PASSWORD_LEN+1], salt[9];
+	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN+1];
 	
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
 
@@ -127,15 +112,11 @@ getnewpasswd(pw, min_pw_len)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	/* grab a random printable character that isn't a colon */
-	(void)srandom((int)time((time_t *)NULL));
-#ifdef NEWSALT
-	salt[0] = _PASSWORD_EFMT1;
-	to64(&salt[1], (long)(29 * 25), 4);
-	to64(&salt[5], random(), 4);
-#else
-	to64(&salt[0], random(), 2);
-#endif
+
+	if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, 'l')) {
+		(void)printf("Couldn't generate salt.\n");
+		pw_error(NULL, 0, 0);
+	}
 	return(crypt(buf, salt));
 }
 
