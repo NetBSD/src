@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.477 2004/10/01 03:53:01 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.478 2004/10/01 03:57:09 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7685,3 +7685,8 @@ distrib/notes/common/main			patch
 	Correct a few minor issue and add a new section about important notes"
 	where the sendmail default startup is explained.
 	[he, ticket #883]
+
+sys/sys/param.h					patched by hand
+share/tmac/doc-common				patched by hand
+
+	Welcome to 2.0_RC2
