@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.6 2001/09/27 15:27:19 yamt Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.7 2004/01/18 08:40:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -78,8 +78,11 @@ struct domainbinding {
 	struct domainbinding *next;
 	char domainname[PATH_MAX];
 	char path[PATH_MAX];
+	char *codeset;
 	struct mohandle mohandle;
 };
 
 extern struct domainbinding *__bindings;
 extern char __current_domainname[PATH_MAX];
+
+const char *__gettext_iconv __P((const char *, struct domainbinding *));

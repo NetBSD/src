@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.17 2004/01/05 19:21:00 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.18 2004/01/18 08:40:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.17 2004/01/05 19:21:00 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.18 2004/01/18 08:40:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -60,7 +60,7 @@ static int unmapit __P((struct domainbinding *));
 static const char *lookup_hash __P((const char *, struct domainbinding *));
 static const char *lookup_bsearch __P((const char *, struct domainbinding *));
 static const char *lookup __P((const char *, struct domainbinding *));
-static const char *get_lang_env(const char *);
+static const char *get_lang_env __P((const char *));
 
 /*
  * shortcut functions.  the main implementation resides in dcngettext().
@@ -631,11 +631,13 @@ found:
 	v = lookup(msgid, db);
 	if (v) {
 		/*
-		 * XXX call iconv() here, if translated text is encoded
-		 * differently from currently-selected encoding (locale).
-		 * look at Content-type header in *.mo file, in string obtained
-		 * by gettext("").
+		 * convert the translated message's encoding.
+		 *
+		 * special case:
+		 *	a result of gettext("") shouldn't need any conversion.
 		 */
+		if (msgid[0])
+			v = __gettext_iconv(v, db);
 
 		/*
 		 * Given the amount of printf-format security issues, it may

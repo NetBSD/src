@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.9 2004/01/05 19:21:00 itojun Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.10 2004/01/18 08:40:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: textdomain.c,v 1.9 2004/01/05 19:21:00 itojun Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.10 2004/01/18 08:40:40 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -43,6 +43,8 @@ static struct domainbinding __default_binding = {
 };
 struct domainbinding *__bindings = &__default_binding;
 char __current_domainname[PATH_MAX] = DEFAULT_DOMAINNAME;
+
+static struct domainbinding *domainbinding_lookup __P((const char *, int));
 
 /*
  * set the default domainname for dcngettext() and friends.
@@ -90,10 +92,7 @@ bindtextdomain(domainname, dirname)
 	if (strlen(domainname) + 1 > sizeof(p->domainname))
 		return NULL;
 
-	/* lookup binding for the domainname */
-	for (p = __bindings; p; p = p->next)
-		if (strcmp(p->domainname, domainname) == 0)
-			break;
+	p = domainbinding_lookup(domainname, (dirname != NULL));
 
 	if (!dirname) {
 		if (p)
@@ -102,7 +101,47 @@ bindtextdomain(domainname, dirname)
 			return _PATH_TEXTDOMAIN;
 	}
 
-	if (!p) {
+	strlcpy(p->path, dirname, sizeof(p->path));
+	p->mohandle.mo.mo_magic = 0; /* invalidate current mapping */
+
+	return (p->path);
+}
+
+char *
+bind_textdomain_codeset(domainname, codeset)
+	const char *domainname;
+	const char *codeset;
+{
+	struct domainbinding *p;
+
+	p = domainbinding_lookup(domainname, (codeset != NULL));
+	if (p == NULL)
+		return NULL;
+
+	if (codeset) {
+		if (p->codeset)
+			free(p->codeset);
+		p->codeset = strdup(codeset);
+	}
+
+	return p->codeset;
+}
+
+/*
+ * lookup binding for the domainname
+ */
+static struct domainbinding *
+domainbinding_lookup(domainname, alloc)
+	const char *domainname;
+	int alloc;
+{
+	struct domainbinding *p;
+
+	for (p = __bindings; p; p = p->next)
+		if (strcmp(p->domainname, domainname) == 0)
+			break;
+
+	if (!p && alloc) {
 		p = (struct domainbinding *)malloc(sizeof(*p));
 		if (!p)
 			return NULL;
@@ -112,19 +151,5 @@ bindtextdomain(domainname, dirname)
 		__bindings = p;
 	}
 
-	strlcpy(p->path, dirname, sizeof(p->path));
-	p->mohandle.mo.mo_magic = 0; /* invalidate current mapping */
-
-	return (p->path);
-}
-
-/* ARGSUSED */
-char *
-bind_textdomain_codeset(domainname, codeset)
-	const char *domainname;
-	const char *codeset;
-{
-
-	/* yet to be done - always fail */
-	return NULL;
+	return p;
 }
