@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.9 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: reg.h,v 1.10 2002/11/30 01:52:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,8 @@
  *	@(#)reg.h	8.2 (Berkeley) 1/11/94
  */
 
-#ifndef _MACHINE_REG_H_
-#define _MACHINE_REG_H_
+#ifndef _MIPS_REG_H_
+#define _MIPS_REG_H_
 
 
 struct reg {
@@ -54,4 +54,4 @@ struct fpreg {
 	mips_fpreg_t	r_regs[33];
 };
 
-#endif /*_MACHINE_REG_H_*/
+#endif /*_MIPS_REG_H_*/
