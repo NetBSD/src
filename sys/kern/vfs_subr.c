@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.181 2002/10/23 09:14:30 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.182 2002/10/29 12:31:24 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.181 2002/10/23 09:14:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.182 2002/10/29 12:31:24 blymn Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -534,6 +534,9 @@ getnewvnode(tag, mp, vops, vpp)
 		KASSERT((vp->v_flag & VONWORKLST) == 0);
 		vp->v_flag = 0;
 		vp->v_socket = NULL;
+#ifdef VERIFIED_EXEC
+		vp->fp_status = FINGERPRINT_INVALID;
+#endif
 	}
 	vp->v_type = VNON;
 	vp->v_vnlock = &vp->v_lock;
