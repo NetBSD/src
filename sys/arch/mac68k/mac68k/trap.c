@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 1996/10/17 06:42:44 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 1996/10/21 05:42:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -139,7 +139,8 @@ static inline void userret __P((register struct proc *,
 #if defined(M68040)
 static int	writeback __P((struct frame *, int));
 #if DEBUG
-static int	dumpssw __P((register u_short));
+static void dumpssw __P((register u_short));
+static void dumpwb __P((int, u_short, u_int, u_int));
 #endif
 #endif
 
@@ -537,7 +538,7 @@ copyfault:
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 				map, va, ftype, rv);
 #endif
 		/*
@@ -839,7 +840,7 @@ writeback(fp, docachepush)
 }
 
 #ifdef DEBUG
-static int
+static void
 dumpssw(ssw)
 	register u_short ssw;
 {
@@ -866,7 +867,8 @@ dumpssw(ssw)
 	       f7tm[ssw & SSW4_TMMASK]);
 }
 
-int
+static
+void
 dumpwb(num, s, a, d)
 	int num;
 	u_short s;
@@ -883,7 +885,7 @@ dumpwb(num, s, a, d)
 	if (pa == 0)
 		printf("<invalid address>");
 	else
-		printf("%x, current value %x", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
 	printf("\n");
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.26 1996/10/13 03:21:25 christos Exp $	*/
+/*	$NetBSD: nubus.c,v 1.27 1996/10/21 05:42:23 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -166,7 +166,7 @@ probe_slot(slot, fmt)
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE) {
 		pa = pmap_extract(pmap_kernel(), (vm_offset_t) rom_probe - 1);
-		printf("probing slot %d, first probe at 0x%x (PA 0x%p).\n",
+		printf("probing slot %d, first probe at 0x%p (PA 0x%lx).\n",
 		    slot, rom_probe - 1, pa);
 	}
 #endif
@@ -231,7 +231,7 @@ probe_slot(slot, fmt)
 	hdr = IncPtr(fmt, hdr, -hdr_size);
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE)
-		printf("fmt->top is 0x%p, that minus 0x%x puts us at 0x%p.\n",
+		printf("fmt->top is 0x%lx, that minus 0x%x puts us at 0x%lx.\n",
 			fmt->top, hdr_size, hdr);
 #if 0
 	for (i=1 ; i < 8 ; i++) {
