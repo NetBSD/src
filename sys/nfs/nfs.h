@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.13 1996/12/10 10:07:22 mycroft Exp $	*/
+/*	$NetBSD: nfs.h,v 1.14 1997/05/12 23:36:04 fvdl Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 #define	NFS_MAXIOVEC	34
 #define NFS_TICKINTVL	5		/* Desired time for a tick (msec) */
 #define NFS_HZ		(hz / nfs_ticks) /* Ticks/sec */
-#define	NFS_TIMEO	(1 * NFS_HZ)	/* Default timeout = 1 second */
+#define	NFS_TIMEO	(3 * NFS_HZ)	/* Default timeout = 3 seconds */
 #define	NFS_MINTIMEO	(1 * NFS_HZ)	/* Min timeout to use */
 #define	NFS_MAXTIMEO	(60 * NFS_HZ)	/* Max timeout to backoff to */
 #define	NFS_MINIDEMTIMEO (5 * NFS_HZ)	/* Min timeout for non-idempotent ops*/
@@ -269,7 +269,7 @@ struct nfsreq {
 	int		r_retry;	/* max retransmission count */
 	int		r_rexmit;	/* current retrans count */
 	int		r_timer;	/* tick counter on reply */
-	int		r_procnum;	/* NFS procedure number */
+	u_int32_t	r_procnum;	/* NFS procedure number */
 	int		r_rtt;		/* RTT for rpc */
 	struct proc	*r_procp;	/* Proc that did I/O system call */
 };
@@ -414,7 +414,7 @@ struct nfsrv_descript {
 	struct mbuf		*nd_nam;	/* and socket addr */
 	struct mbuf		*nd_nam2;	/* return socket addr */
 	caddr_t			nd_dpos;	/* Current dissect pos */
-	int			nd_procnum;	/* RPC # */
+	u_int32_t		nd_procnum;	/* RPC # */
 	int			nd_stable;	/* storage type */
 	int			nd_flag;	/* nd_flag */
 	int			nd_len;		/* Length of this write */
