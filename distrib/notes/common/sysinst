@@ -1,6 +1,6 @@
-.\"	$NetBSD: sysinst,v 1.32.2.6 2002/06/29 08:03:00 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.32.2.7 2002/07/02 04:20:06 lukem Exp $
 .\"
-.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -51,10 +51,11 @@ Using
 .Ic sysinst ,
 installing
 .Nx
-is a relatively easy process. You
-still should read this document and have it in hand when doing the
-installation process. This document tries to be a good guideline
-for the installation and as such covers many details to be completed.
+is a relatively easy process.
+You still should read this document and have it in hand when doing the
+installation process.
+This document tries to be a good guideline for the installation and as such
+covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
@@ -65,8 +66,8 @@ to use.
 .Pp
 Machines with
 .Tn PCMCIA
-slots may have problems during installation. With the improvements of
-the
+slots may have problems during installation.
+With the improvements of the
 .Tn PCMCIA
 code in this release, this will not happen very frequently.
 If you do not have
@@ -76,14 +77,17 @@ on your machine
 is only really used on laptop machines),
 you can skip this section, and ignore the
 .Dq Bq Tn PCMCIA
-notes. If you do have
+notes.
+If you do have
 .Tn PCMCIA
 in your machine, you can safely ignore this section and the
 .Dq Bq Tn PCMCIA
-the first time, as you are likely to not have problems. Should troubles
+the first time, as you are likely to not have problems.
+Should troubles
 occur during floppy boot, they may be
 .Tn PCMCIA
-specific. You should then re-read this section and try again,
+specific.
+You should then re-read this section and try again,
 following the instructions in the
 .Dq Bq Tn PCMCIA
 notes.
@@ -91,14 +95,14 @@ notes.
 This section explains how to work around the installation problem.
 .Pp
 The kernel keeps careful track of what interrupts
-and I/O ports are in use during autoconfiguration. It then allows
-the
+and I/O ports are in use during autoconfiguration.
+It then allows the
 .Tn PCMCIA
 devices to pick unused interrupts and I/O ports.
 Unfortunately, the
 .Tn Li INSTALL
-kernel may not detect all devices in your system. This may
-be because the
+kernel may not detect all devices in your system.
+This may be because the
 .Tn Li INSTALL
 kernel only supports the minimum set of devices to install
 .Nx
@@ -109,13 +113,14 @@ does not have support for the device causing the conflict.
 For example, suppose your laptop has a
 soundblaster device built in; the
 .Tn Li INSTALL
-kernel has no sound support. The
-.Tn PCMCIA No code might allocate your soundblaster's
+kernel has no sound support.
+The
+.Tn PCMCIA
+code might allocate your soundblaster's
 .Tn IRQ No and I/O ports to
 .Tn PCMCIA
-devices, causing them not to work, or to lock up the system. This is
-especially bad if one of the devices in question is your ethernet
-card.
+devices, causing them not to work, or to lock up the system.
+This is especially bad if one of the devices in question is your ethernet card.
 .Pp
 As of
 .Nx 1.5 ,
@@ -123,9 +128,10 @@ the kernel attempts to probe for available interrupts that are
 usable by the
 .Tn PCIC
 .Tn ( PCMCIA
-interrupt controller). Assuming that this functions correctly, it
-should alleviate interrupt conflicts; however, I/O port conflicts are
-still possible.
+interrupt controller).
+Assuming that this functions correctly,
+it should alleviate interrupt conflicts;
+however, I/O port conflicts are still possible.
 .Pp
 This problem will impact some, but not all, users of
 .Tn PCMCIA .
@@ -135,7 +141,8 @@ notes that will appear in this document.
 .if r_i386 \{\
 .Pp
 It can be difficult to distinguish an interrupt conflict from
-an I/O space conflict. There are no hard-and-fast rules, but
+an I/O space conflict.
+There are no hard-and-fast rules, but
 interrupt conflicts are more likely to lock up the machine,
 and I/O space conflicts are more likely to result in misbehavior
 (e.g. a network card that cannot send or receive packets).
@@ -152,25 +159,28 @@ IRQ  Val     IRQ  Val     IRQ  Val      IRQ  Val
   3  0x0008    7  0x0080   11  0x0800    15  0x8000
 .disp)
 .Pp
-For example, 0x0a00 allows both IRQ 9 and IRQ 11. By default,
-the
+For example, 0x0a00 allows both IRQ 9 and IRQ 11.
+By default, the
 .Tn Li INSTALL
 kernel permits all IRQs other than IRQs 5 and 7, so the corresponding
-mask is 0xff5f. The
+mask is 0xff5f.
+The
 .Tn Li GENERIC
-kernel, however, allows all IRQs. (The presumption here
-is that IRQ 10 may be assigned to a device that the
+kernel, however, allows all IRQs.
+(The presumption here is that IRQ 10 may be assigned to a device that the
 .Tn Li GENERIC
 kernel
 supports, but that the
 .Tn Li INSTALL
-does not.) Because of support for interrupt probing, it is no
+does not.)
+Because of support for interrupt probing, it is no
 longer necessary to exclude IRQs 3 and 5 explicitly; if they are
 in use, they should not be assigned to
 .Tn PCMCIA .
 .Pp
 The kernel selects IO space by assigning cards IO space within a
-predefined range.  The range is specified as a base and size,
+predefined range.
+The range is specified as a base and size,
 specified by the kernel global variables
 .Va pcic_isa_alloc_iobase
 and
@@ -180,8 +190,8 @@ base of 0x400 and a size of 0xbff (a range of 0x400-0xfff).
 For systems with 10-bit addressing, the kernel defaults to a
 base of 0x300 and a size of 0xff (range of 0x300-0x3ff).
 .Pp
-Unfortunately, these ranges may conflict with some devices. In the
-event of a conflict, try a base of 0x330 with a size of 0x0bf (range
+Unfortunately, these ranges may conflict with some devices.
+In the event of a conflict, try a base of 0x330 with a size of 0x0bf (range
 of 0x330-0x3ff).
 .Pp
 In order to work around this at installation time, you may
@@ -208,7 +218,8 @@ the kernel, you may have to consult the matching
 .Pa .symbols
 file in the
 .Pa binary/kernel
-directory in the installation tree. Find the pcic_ symbols used above,
+directory in the installation tree.
+Find the pcic_ symbols used above,
 look at the hexadecimal value in the first column, and write, for
 example (if
 .Va pcic_isa_intr_alloc_mask
@@ -258,24 +269,26 @@ installed on your hard disk.
 .Ic sysinst
 is a menu driven
 installation system that allows for some freedom in doing the
-installation. Sometimes, questions will be asked and in many cases
+installation.
+Sometimes, questions will be asked and in many cases
 the default answer will be displayed in brackets
 .Pq Dq \&[\ ]
-after the question. If you wish to stop the installation, you may press
+after the question.
+If you wish to stop the installation, you may press
 .Key CONTROL-C
 at any time, but if you do, you'll have to begin the installation
-process again from scratch, by running the 
+process again from scratch, by running the
 .Pa /sysinst
 program from the command prompt, you do not need to reboot.
 .It
 .To 2 "Quick install"
 .Em Quick install
 .Pp
-First, let's describe a quick install. The other sections of
-this document go into the installation procedure in more
-detail, but you may find that you do not need this. If you
-want detailed instructions, skip to section 3. This section
-describes a basic installation, using a CD-ROM install as
+First, let's describe a quick install.
+The other sections of this document go into the installation procedure in more
+detail, but you may find that you do not need this.
+If you want detailed instructions, skip to section 3.
+This section describes a basic installation, using a CD-ROM install as
 an example.
 .Pp
 .(bullet
@@ -291,7 +304,8 @@ Some form of bootable media, described above.
 .\}
 .el .ie r_atari \{\
 A floppy disk containing a suitable boot.fs and a floppy with the
-sysinst.fs image. See the "prepare" section about obtaining those.
+sysinst.fs image.
+See the "prepare" section about obtaining those.
 .\} .el One 1.44 MB 3.5" floppy.
 .\} \" !\n[pmax]:\n[sgimips]
 .if r_i386 \{\
@@ -336,8 +350,8 @@ megabytes of
 space free, where
 .Em n
 is the number of megabytes of
-main memory in your system. If you wish to install
-the X Window System as well, you will need at least
+main memory in your system.
+If you wish to install the X Window System as well, you will need at least
 60 MB more.
 .bullet)
 .if \n[alpha]:\n[i386]:\n[news68k]:\n[newsmips] \{\
@@ -385,8 +399,8 @@ system, you would type something like:
 The Quick Installation
 .(bullet
 .ie \n[acorn26]:\n[atari]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
-Boot the system as described above.  You
-should be at the
+Boot the system as described above.
+You should be at the
 .Ic sysinst
 main menu.
 .\}
@@ -445,14 +459,16 @@ immediately by choosing the
 and then
 .Me Configure network .
 It isn't actually required at this point, but
-it may be more convenient. Go back to the main menu.
+it may be more convenient.
+Go back to the main menu.
 .It
 Choose
 .Me install .
 .It
 You will be guided through some steps regarding the
 setup of your disk, and the selection of distributed components
-to install. When in doubt, refer to the rest of this document for details.
+to install.
+When in doubt, refer to the rest of this document for details.
 .if r_atari \{\
 WARNING: If you want your disk to retain an AHDI compatible partitioning,
 make sure to use the 'existing' disk layout.
@@ -461,12 +477,15 @@ make sure to use the 'existing' disk layout.
 After your disk has been prepared, choose
 .if r_sgimips \{\
 .Me Unmounted filesystem
-as the medium.  The CD-ROM device is usually cd0 and the partition 'a'
+as the medium.
+The CD-ROM device is usually cd0 and the partition
+.Sq a
 .Pq i.e. cd0a .
 .\}
 .el \{\
 .Me CD-ROM
-as the medium. The default values for the path and device should be ok.
+as the medium.
+The default values for the path and device should be ok.
 .\}
 .It
 After all the files have been unpacked, go back to
@@ -493,12 +512,13 @@ PROM environment settings for SystemPartition, OSLoadPartition, OSLoader
 and OSLoadFilename and then boot the hard drive.
 .\}
 .Nx
-will now boot. If you haven't already done so in 
+will now boot.
+If you haven't already done so in
 .Ic sysinst ,
 you should log in as
 .Li root ,
-and set a password for that account. You are also
-advised to edit the file
+and set a password for that account.
+You are also advised to edit the file
 .Pa /etc/rc.conf
 to match your system needs.
 .It
@@ -533,16 +553,16 @@ devices, so that they won't be found by
 Boot the system as described in the previous section.
 .Pp
 You may want to read the
-boot messages, to notice your disk's name and capacity. Its name
-will be something like
+boot messages, to notice your disk's name and capacity.
+Its name will be something like
 .Li sd0
 .if \n[acorn26]:\n[cats]:\n[macppc]:\n[walnut] \{\
 or
 .Li wd0
 .\}
 and the geometry will be
-printed on a line that begins with its name. As mentioned above,
-you may need your disk's geometry when creating
+printed on a line that begins with its name.
+As mentioned above, you may need your disk's geometry when creating
 .Nx 's
 partitions.
 You will also need to know the name, to tell
@@ -571,42 +591,44 @@ the second, etc.
 Boot the system as described in the "Booting the installer" section above.
 .\}
 .el \{\
-Boot your machine. The boot loader will
-start, and will print a countdown and begin booting.
+Boot your machine.
+The boot loader will start, and will print a countdown and begin booting.
 .Pp
 If the boot loader messages do not appear in a reasonable
 amount of time, you either have a bad boot floppy or a
-hardware problem. Try writing the install floppy image to
+hardware problem.
+Try writing the install floppy image to
 a different disk, and using that.
 .\}
 .if r_i386 \{\
 .Pp
 If that doesn't work, try booting after disabling your CPU's
-internal and external caches (if any). If it still doesn't
-work,
+internal and external caches (if any).
+If it still doesn't work,
 .Nx
-probably can't be run on your hardware. This can
-probably be considered a bug, so you might want to report it.
+probably can't be run on your hardware.
+This can probably be considered a bug, so you might want to report it.
 If you do, please include as many details about your system
 configuration as you can.
 .\}
 .Pp
 It will take a while to load the kernel from the floppy,
 probably around a minute or so, then, the kernel boot messages
-will be displayed. This may take a little while also, as
+will be displayed.
+This may take a little while also, as
 .Nx
 will be probing your system to discover which hardware devices are
 installed.
 .if \n[atari]:\n[i386]  \{\
 You may want to read the
-boot messages, to notice your disk's name and geometry. Its name
-will be something like
+boot messages, to notice your disk's name and geometry.
+Its name will be something like
 .Li sd0
 or
 .Li wd0
 and the geometry will be
-printed on a line that begins with its name. As mentioned above,
-you may need your disk's geometry when creating
+printed on a line that begins with its name.
+As mentioned above, you may need your disk's geometry when creating
 .Nx 's
 partitions.
 You will also need to know the name, to tell
@@ -660,14 +682,15 @@ from floppy in the first part of the install.
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
-it is installed, you should first go to the 
+it is installed, you should first go to the
 .Me Utility menu ,
 and select the
-.Me Configure network 
+.Me Configure network
 option.
 If you only want to temporarily
 use networking during the installation, you can specify these
-parameters later. If you are not using the Domain Name System (DNS),
+parameters later.
+If you are not using the Domain Name System (DNS),
 you can give an empty response in reply to answers relating to
 this.
 .if r_macppc \{\
@@ -683,17 +706,18 @@ onto a dedicated drive.
 .Pp
 Go to the
 .Me "Utility Menu" No Ns ,
-and select the 
+and select the
 .Me "Run /bin/sh"
-option which will give you a shell prompt.  From this shell prompt, you
-will do some of the steps that the normal install procedure
-runs automatically.  Unfortunately, at the moment, our install tools
-aren't smart enough to deal with drives shared with 
+option which will give you a shell prompt.
+From this shell prompt, you will do some of the steps that the normal
+install procedure runs automatically.
+Unfortunately, at the moment, our install tools
+aren't smart enough to deal with drives shared with
 .Tn MacOS
 and will overwrite important information describing your partitions.
 .Pp
 You may need to type one of the following commands to get your delete key
-to work properly, depending on your keyboard: 
+to work properly, depending on your keyboard:
 .Dl # Ic "stty erase '^h'"
 .Dl # Ic "stty erase '^?'"
 .Pp
@@ -702,10 +726,10 @@ Type the following command (replacing
 with the name of your destination hard drive):
 .Dl # Ic "disklabel wd0"
 .Pp
-This will print out the partition info that was generated by Drive
-Setup.  Note that, as discussed above in the
+This will print out the partition info that was generated by Drive Setup.
+Note that, as discussed above in the
 .Sx Partitioning your hard drive for NetBSD
-section, your 
+section, your
 .Em "A/UX Root"
 typically is the first partition
 .No ( Ns Em a No Ns )
@@ -733,7 +757,7 @@ disklabel: boot block size 0
 disklabel: super block size 0
 .disp)
 .Pp
-Now, you need to create filesystems on the partitions that 
+Now, you need to create filesystems on the partitions that
 .Nx
 will be using.
 .Pp
@@ -765,8 +789,8 @@ super-block backups (for fsck -b #) at:
 newfs: ioctl (WDINFO): Invalid argument
 newfs: /dev/sd1a: can't rewrite disk label
 .disp)
-You can ignore the 
-.Pa Sq "not a character-special device" , 
+You can ignore the
+.Pa Sq "not a character-special device" ,
 .Pa Sq "sector(s) in last cylinder unallocated" ,
 .Pa Sq "ioctl (WDINFO): Invalid argument" ,
 and
@@ -776,12 +800,12 @@ warnings.
 Now you need to mount your destination root partition:
 .Dl # Ic "mount /dev/wd0a /mnt"
 .Pp
-Make an 
+Make an
 .Pa fstab
 file for your new system (right now, you only really need to include
 .Pa / No ,
-.Pa /usr No , 
-and 
+.Pa /usr No ,
+and
 .Pa swap No ),
 for example:
 .Dl # Ic "mkdir /mnt/etc"
@@ -800,7 +824,7 @@ Great, now create the mountpoints for the filesystems you listed in the
 .Pa fstab No Ns :
 .Dl # Ic "mkdir /mnt/usr"
 .Pp
-Clean up and return to 
+Clean up and return to
 .Ic sysinst :
 .Dl # Ic "cd /;umount /mnt"
 .Dl # Ic exit
@@ -833,9 +857,9 @@ install
 .Nx .
 .Ic sysinst
 will report a list of disks it finds
-and ask you for your selection. Depending on how many disks
-are found, you may get a different message. You should see
-disk names like
+and ask you for your selection.
+Depending on how many disks are found, you may get a different message.
+You should see disk names like
 .ie r_pmax \{\
 .Li rz0
 or
@@ -853,7 +877,8 @@ or
 .Pp
 .Ic sysinst
 next tries to figure out the real and BIOS geometry
-of your disk. It will present you with the values it found,
+of your disk.
+It will present you with the values it found,
 if any, and will give you a chance to change them.
 .\}
 .Pp
@@ -880,17 +905,18 @@ or
 drive, you'll be asked if your disk supports automatic sector forwarding.
 If you are
 .Em sure
-that it does, reply affirmatively. Otherwise, the install
-program will automatically reserve space for bad144 tables.
+that it does, reply affirmatively.
+Otherwise, the install program will automatically reserve space for
+bad144 tables.
 .\}
 .if r_macppc \{\
-If 
-.Ic sysinst 
-reports 
+If
+.Ic sysinst
+reports
 .Dl "I can not find any hard disk for use by NetBSD"
-or the drive you wish to install onto is missing, then you should look at 
+or the drive you wish to install onto is missing, then you should look at
 the FAQ entry
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#nodisk 
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#nodisk
 .\}
 .\}
 .It
@@ -910,17 +936,22 @@ on a dedicated drive, just answer 'no' and skip to the next section.
 .Pp
 If you answer 'yes', the
 .Ic ahdilabel
-program is started. You can now change the AHDI partition ID's on your root
-disk. Because NetBSD imposes a special ordering in disk partitions it uses
-for / (root) and swap. And because it wants to guard you against an unwanted
+program is started.
+You can now change the AHDI partition ID's on your root disk.
+Because NetBSD imposes a special ordering in disk partitions it uses
+for / (root) and swap.
+Also, because it wants to guard you against an unwanted
 demolition of partitions used by other systems, you have to tell it what
-partitions it is allowed to use. You have to mark the partition you want
-to use as swap SWP or (depricated!) NBS and the other partitions as NBD.
+partitions it is allowed to use.
+You have to mark the partition you want to use as swap SWP or
+(depricated!) NBS and the other partitions as NBD.
 Note that all the changes you make to the ID's are reversable as long as
-you remember the original value.  As of NetBSD 1.5 ahdilabel is capable of
-creating or changing an AHDI compatible partioning on the disk! In the
-partition-ID editor, the partitions are shown in the order that AHDI
-created them.  When you leave this editor and continue with
+you remember the original value.
+As of NetBSD 1.5, ahdilabel is capable of creating or changing an
+AHDI compatible partioning on the disk!
+In the partition-ID editor, the partitions are shown in the order that AHDI
+created them.
+When you leave this editor and continue with
 .Ic sysinst,
 your changes to the ID's do have consequences to the partition order!
 They will show up as follows:
@@ -936,7 +967,7 @@ the rest of the partitions in AHDI order
 .\} \" r_atari
 .if r_macppc \{\
 .Pp
-You can skip a few steps, down to 
+You can skip a few steps, down to
 .Em Sq "Getting the distribution sets" ,
 if you are installing onto a drive that will be used with
 .Tn MacOS
@@ -949,8 +980,8 @@ from the main menu).
 Which portion of the disk to use.
 .Pp
 You will be asked if you want to use the entire disk or
-only part of the disk. If you decide to use the entire disk
-for
+only part of the disk.
+If you decide to use the entire disk for
 .Nx ,
 it will be checked if there are already other
 systems present on the disk, and you will be asked to confirm
@@ -971,11 +1002,12 @@ You can either pick megabytes, cylinders or sectors.
 .Pp
 After this, you will be presented with the current values
 stored in the MBR, and will be given the opportunity to
-change, create or delete partitions. For each partition
-you can set the type, the start and the size. Setting the type to
+change, create or delete partitions.
+For each partition you can set the type, the start and the size.
+Setting the type to
 .Ic unused
-will delete a partition. You can
-also mark a partition as active, meaning that this is
+will delete a partition.
+You can also mark a partition as active, meaning that this is
 the one that the BIOS will start from at boot time.
 .Pp
 Be sure to mark the partition you want to boot from as active!
@@ -986,8 +1018,8 @@ Depending on the BIOS capabilities of your machine and the
 parameters of the
 .Nx
 partition you have specified, you
-may also be asked if you want to install newer bootcode in
-your MBR. If you have multiple operating systems on the
+may also be asked if you want to install newer bootcode in your MBR.
+If you have multiple operating systems on the
 disk that you are installing on, you will also be given
 the option to install a bootselector, that will allow you
 to pick the operating system to start up when your computer
@@ -1008,9 +1040,10 @@ The partition table of the
 part of a disk is called a
 .Em disklabel .
 .if r_macppc \{\
-In actuality, 
+In actuality,
 .Nx*M
-uses an Apple Partition Map.  The installer creates something like a real
+uses an Apple Partition Map.
+The installer creates something like a real
 Apple Partition Map, but it is not compatible with
 .Tn MacOS ,
 which is one of the reasons why you cannot use this installer to partition
@@ -1020,7 +1053,7 @@ a disk that can be used with
 .\}
 .if r_sparc \{\
 .Nx
-disklabels on \*M are compatible with the boot ROMs, and with 
+disklabels on \*M are compatible with the boot ROMs, and with
 .Tn SunOS
 and
 .Tn Solaris .
@@ -1031,12 +1064,12 @@ part of the disk that you can pick from:
 .Ic Standard, Standard with X, Custom
 and
 .Ic Use Existing .
-The first two use a set of default
-values (that you can change) suitable for a normal
-installation, possibly including X. With the
+The first two use a set of default values (that you can change)
+suitable for a normal installation, possibly including X.
+With the
 .Ic Custom
-option you can specify everything yourself. The last option uses
-the partition info already present on the disk.
+option you can specify everything yourself.
+The last option uses the partition info already present on the disk.
 .Pp
 .if r_atari \{\
 If you want to use
@@ -1049,8 +1082,8 @@ You will be presented with the current layout of the
 .Nx
 disklabel, and given a chance to change it.
 For each partition, you can set the type, offset and size,
-block and fragment size, and the mount point. The type
-that
+block and fragment size, and the mount point.
+The type that
 .Nx
 uses for normal file storage is called
 .Sy 4.2BSD .
@@ -1117,13 +1150,13 @@ but this is historical practice and not a fixed value.
 .tag)
 .
 .Pp
-You will then be asked to name your disk's disklabel. The
-default response is
+You will then be asked to name your disk's disklabel.
+The default response is
 .Sy mydisk .
 For most purposes this will be OK.
 If you choose to name it something different, make sure the name
-is a single word and contains no special characters. You don't
-need to remember this name.
+is a single word and contains no special characters.
+You don't need to remember this name.
 .bullet)
 .Pp
 .It
@@ -1134,8 +1167,8 @@ need to remember this name.
 .if r_atari \{\
 Apart from the changes you made with
 .Ic ahdilabel
-nothing has been modified on your disk yet. If you confirm that you want to
-install
+nothing has been modified on your disk yet.
+If you confirm that you want to install
 .Nx ,
 the partitions now assigned to
 .Nx
@@ -1153,15 +1186,15 @@ If you are sure you want to proceed, enter
 at the prompt.
 .Pp
 The install program will now label your disk and make the file
-systems you specified. The file systems will be initialized to
-contain
+systems you specified.
+The file systems will be initialized to contain
 .Nx
 bootstrapping binaries and configuration files.
 You will see messages on your screen from the various
 .Nx
-disk preparation tools that are running. There should be no
-errors in this section of the installation. If there are,
-restart from the beginning of the installation process.
+disk preparation tools that are running.
+There should be no errors in this section of the installation.
+If there are, restart from the beginning of the installation process.
 Otherwise, you can continue the installation program
 after pressing the return key.
 .if r_i386 \{\
@@ -1170,13 +1203,14 @@ after pressing the return key.
 In previous versions of
 .Nx ,
 the kernel from the
-install floppy was copied onto the hard drive in a special
-step. In the current install system, the kernel on the floppy is
-unsuited to being copied onto the hard drive. Instead, a new set,
+install floppy was copied onto the hard drive in a special step.
+In the current install system, the kernel on the floppy is
+unsuited to being copied onto the hard drive.
+Instead, a new set,
 .Sy kern ,
 has been added which contains a generic kernel to
-be unloaded onto the drive. So, you can not boot from your
-hard drive yet at this point.
+be unloaded onto the drive.
+So, you can not boot from your hard drive yet at this point.
 .Note)
 .\}
 .if r_macppc \{\
@@ -1184,7 +1218,8 @@ hard drive yet at this point.
 .(Note
 The bootstrapping code installed in this step will
 .Em not
-boot a machine with Open Firmware 3.  You will still need to have
+boot a machine with Open Firmware 3.
+You will still need to have
 .Pa ofwboot.xcf
 on an HFS or HFS+ partition.
 .Note)
@@ -1201,7 +1236,8 @@ set file)
 on to your hard disk, for example by mounting the
 hard disk first, copying the
 .Pa kern-GENERIC.tgz
-file from floppy and unpacking it. Example:
+file from floppy and unpacking it.
+Example:
 .Pp
 .Dl # Ic "mount /dev/wd0a /mnt"
 .Dl # Ic "cd /mnt"
@@ -1214,19 +1250,20 @@ file from floppy and unpacking it. Example:
 .Pp
 Then halt the machine using the
 .Ic halt
-command. Power
-the machine down, and re-insert all the
+command.
+Power the machine down, and re-insert all the
 .Tn PCMCIA
 devices.
 Remove any floppy from the floppy drive.
-Start the machine up. After booting
+Start the machine up.
+After booting
 .Nx ,
 you will
 be presented with the main
 .Ic sysinst
-menu. Choose the
-option to re-install sets. Wait for the file system
-checks that it will do to finish, and then proceed
+menu.
+Choose the option to re-install sets.
+Wait for the file system checks that it will do to finish, and then proceed
 as described below.
 .pcmcia)
 .\}
@@ -1235,19 +1272,19 @@ The
 .Nx
 distribution consists of a number of
 .Em sets ,
-that come in the form of gzipped tarfiles. A few sets must be
-installed for a working system, others are optional. At this
-point of the installation, you will be presented with a menu
+that come in the form of gzipped tarfiles.
+A few sets must be installed for a working system, others are optional.
+At this point of the installation, you will be presented with a menu
 which enables you to choose from one of the following methods
-of installing the sets. Some of these methods will first
-load the sets on your hard disk, others will extract the sets
-directly.
+of installing the sets.
+Some of these methods will first load the sets on your hard disk,
+others will extract the sets directly.
 .Pp
 For all these methods, the first step is making the sets
 available for extraction, and then do the actual installation.
-The sets can be made available in a few different ways. The
-following sections describe each of those methods. After
-reading the one about the method you will be using, you
+The sets can be made available in a few different ways.
+The following sections describe each of those methods.
+After reading the one about the method you will be using, you
 can continue to section labeled
 .Sq Extracting the distribution sets .
 .It
@@ -1259,8 +1296,8 @@ your network setup, if you haven't already at the start of
 the install procedure.
 .Ic sysinst
 will do this for you, asking you
-to provide some data, like IP address, hostname, etc. If you
-do not have name service set up for the machine that you
+to provide some data, like IP address, hostname, etc.
+If you do not have name service set up for the machine that you
 are installing on, you can just press
 .Key RETURN
 in answer to these questions, and DNS will not be used.
@@ -1286,17 +1323,17 @@ your network setup, if you haven't already at the start of
 the install procedure.
 .Ic sysinst
 will do this for you, asking you
-to provide some data, like IP address, hostname, etc. If you
-do not have name service set up for the machine that you
+to provide some data, like IP address, hostname, etc.
+If you do not have name service set up for the machine that you
 are installing on, you can just press
 .Key RETURN
 in answer to these questions, and DNS will not be used.
 .Pp
 You will also be asked to specify the host that you want
 to transfer the sets from, and the directory on that host
-that the files are in. This directory should be mountable
-by the machine you are installing on, i.e. correctly
-exported to your machine.
+that the files are in.
+This directory should be mountable by the machine you are installing on,
+i.e. correctly exported to your machine.
 .Pp
 If you did not set up DNS when answering the questions to
 configure networking, you will need to specify an IP address
@@ -1309,7 +1346,8 @@ instead of a hostname for the NFS server.
 The bootable CD-ROM distribution for
 .Nx*M
 is not ISO-9660 formatted.
-This function cannot be used for installation.  Use the 
+This function cannot be used for installation.
+Use the
 "Installation from an unmounted file system" selection.
 .\}
 .el \{\
@@ -1330,12 +1368,13 @@ extraction of the sets.
 .Pp
 Because the installation sets are too big to fit on one floppy,
 the floppies are expected to be filled with the split set
-files. The floppies are expected to be in
+files.
+The floppies are expected to be in
 .Tn MS-DOS
-format. You will be asked for a directory where the sets
-should be reassembled. Then you will be prompted to insert
-the floppies containing the split sets. This process
-will continue until all the sets have been loaded from floppy.
+format.
+You will be asked for a directory where the sets should be reassembled.
+Then you will be prompted to insert the floppies containing the split sets.
+This process will continue until all the sets have been loaded from floppy.
 .\}
 .It
 .To 2 "Installation from an unmounted file system"
@@ -1358,7 +1397,7 @@ CD-ROM player with partition letter 'a'
 .Pq usually cd0a .
 .\}
 .if r_macppc \{\
-Remember, 
+Remember,
 .Nx*M
 doesn't grok HFS or HFS+ partitions
 .\}
@@ -1367,7 +1406,8 @@ doesn't grok HFS or HFS+ partitions
 .Em Installation from a local directory
 .Pp
 This option assumes that you have already done some preparation
-yourself. The sets should be located in a directory on a
+yourself.
+The sets should be located in a directory on a
 file system that is already accessible.
 .Ic sysinst
 will ask you
@@ -1381,10 +1421,13 @@ After the install sets containing the
 distribution
 have been made available, you can either extract all the
 sets (a full installation), or only extract sets that
-you have selected. In the latter case, you will be shown the
-currently selected sets, and given the opportunity to select
-the sets you want. Some sets always need to be installed
-.Pq Sy kern, base No and Sy etc
+you have selected.
+In the latter case, you will be shown the currently selected sets,
+and given the opportunity to select the sets you want.
+Some sets always need to be installed
+.Pq Sy kern, base
+and
+.Sy etc
 they will not be shown in this selection menu.
 .Pp
 Before extraction begins, you can elect to watch the files being
@@ -1393,31 +1436,32 @@ This can slow down the installation process considerably, especially
 on machines with slow graphics consoles or serial consoles.
 .Pp
 .ie r_macppc \{\
-If you are installing using the 
+If you are installing using the
 .Me "Re-install sets or install additional sets"
 option, then you will need to create the device nodes in
 .Pa /dev ,
-otherwise, 
+otherwise,
 .\}
 .el After all the files have been extracted,
-all the necessary device node files will be created.  If you have already
-configured networking, you will be asked if you want to
-use this configuration for normal operation. If so, these
-values will be installed in the network configuration files.
+all the necessary device node files will be created.
+If you have already configured networking, you will be asked if you want to
+use this configuration for normal operation.
+If so, these values will be installed in the network configuration files.
 The next menu will allow you to select the time zone that you're in,
-to make sure your clock has the right offset from UTC. 
-Finally you can set a password for the "root" account, to prevent 
-the machine coming up without access restrictions.  
+to make sure your clock has the right offset from UTC.
+Finally you can set a password for the "root" account, to prevent
+the machine coming up without access restrictions.
 .if r_macppc \{\
 .It
 .To 2 "Making the device nodes"
 .Em Making the device nodes
 .Pp
-If you are installing using the 
+If you are installing using the
 .Me "Re-install sets or install additional sets"
 option, then you will need to create the device nodes in
-.Pa /dev 
-now.  Otherwise, skip this step.
+.Pa /dev
+now.
+Otherwise, skip this step.
 .Pp
 Go to the main installation menu, and select
 .Me "Utility menu"
@@ -1425,7 +1469,7 @@ and then select the
 .Me "Run /bin/sh"
 option, which will give you a shell prompt.
 You may need to type one of the following commands to get your delete key
-to work properly, depending on your keyboard: 
+to work properly, depending on your keyboard:
 .Dl # Ic "stty erase '^h'"
 .Dl # Ic "stty erase '^?'"
 .Pp
@@ -1444,9 +1488,31 @@ Now you need to mount your destination root partition:
 .Em Finalizing your installation
 .Pp
 Congratulations, you have successfully installed
-.Nx \*V .
+.Nx*V .
+.if r_cats \{\
+.Pp
+To finalize the installation of
+.Nx*M
+certain parameters on the Cyclone firmware need to changed. The reason
+is that the Cyclone firmware is unable to boot anything other than an
+a.out format kernels.
+.Pp
+Kernels created on a
+.Nx*V
+\*M system are natively ELF and converted to a.out. This conversion
+process loses the symbol information used for, amongst other things,
+kernel memory grovelers such as vmstat.  The workaround to the problem
+is to provide both the native ELF kernel (with all the symbol
+information) and the a.out kernel. These are available as /netbsd
+and /netbsd.aout respectively. As the a.out format kernel is not named
+in such a way that the Cyclone firmware will automatically find it the
+following command should be issued as the firmware prompt.
+.Pp
+.Dl boot> Ic "set boot wd0:/netbsd.aout"
+.Pp
+.\}
 .if !r_macppc \{\
-You can now reboot the machine, and boot 
+You can now reboot the machine, and boot
 .Nx
 from harddisk.
 .\} \" !r_macppc

@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.29 2002/02/10 20:43:33 is Exp $
+.\"	$NetBSD: install,v 1.29.2.1 2002/07/02 04:20:01 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,8 @@ detailed in the section on preparing your system for install.
 .Pp
 The following is a walk-through of the steps necessary to get
 .Nx
-installed on your hard disk.  If you wish to stop the installation,
-you may press
+installed on your hard disk.
+If you wish to stop the installation, you may press
 .Key CONTROL-C
 at any prompt, but if you do, you'll have to
 begin again from scratch.
@@ -65,11 +65,13 @@ directory on
 .Tn AmigaDOS .
 You also need to have the
 .Ic loadbsd
-program in your command path.  If
+program in your command path.
+If
 .Tn AmigaDOS
 complains about loadbsd not being an executable file, be sure that the
 .Em Execute
-protection bit is set.  If not, set it with the command:
+protection bit is set.
+If not, set it with the command:
 .Pp
 .Dl Ic "Protect loadbsd add e"
 .Pp
@@ -106,8 +108,9 @@ before using loadbsd, else the kernel will hang!
 .Nx ,
 with boot blocks installed
 .Pp
-[This description is for V40 (OS 3.1) ROMs. For older ROMs,
-there might be small differences. Check your
+[This description is for V40 (OS 3.1) ROMs.
+For older ROMs, there might be small differences.
+Check your
 .Tn AmigaDOS
 documentation
 to learn about the exact procedure.]
@@ -116,7 +119,8 @@ systems, and may require a mountable file system on others.
 .Pp
 Reboot your machine, holding down both mouse buttons if you
 have a 2-button mouse, the outer mouse buttons if you have
-a 3-button mouse. On the DraCo, press the left mouse button
+a 3-button mouse.
+On the DraCo, press the left mouse button
 instead, when the boot screen prompts you for it.
 .Pp
 From the boot menu, select
@@ -126,8 +130,9 @@ Select the swap partition with the miniroot, and then
 Select
 .Ic Boot No now .
 The machine will boot the bootblock, which
-will prompt your for a command line. You have a few seconds time
-to change the default. Entering an empty line will accept the default.
+will prompt your for a command line.
+You have a few seconds time to change the default.
+Entering an empty line will accept the default.
 .Pp
 The bootblock uses command lines of the form:
 .br
@@ -147,14 +152,15 @@ use
 .Dl "netbsd -bsSn2"
 .Ss2 Once your kernel boots
 You should see the screen clear and some information about
-your system as the kernel configures the hardware.  Note which
-hard disk device(s) are configured
+your system as the kernel configures the hardware.
+Note which hard disk device(s) are configured
 .Po
 .Li sd0 ,
 .Li sd1 ,
 etc.
 .Pc
-Then you will be prompted for a root device.  At this time type
+Then you will be prompted for a root device.
+At this time type
 .Li sd0b ,
 where
 .Li sd0
@@ -163,8 +169,8 @@ partition you created during the hard disk preparation.
 When prompted for a dump device, answer
 .Sq Ic none
 for the install
-(normally, you would tell it one of the swap devices). When
-prompted for the root file system type, confirm
+(normally, you would tell it one of the swap devices).
+When prompted for the root file system type, confirm
 .Sq Ic generic ,
 which will auto-detect it.
 .Pp
@@ -175,42 +181,46 @@ again with
 .Pp
 This disables synchronous transfer on all SCSI devices.
 .Pp
-The system should continue to boot.  For now ignore
+The system should continue to boot.
+For now ignore
 .Dq WARNING
 messages about bad dates in clocks, and a warning about
 .Pa /etc/rc
-not existing.  Eventually you will be be asked to enter the
-pathname of the shell, just press
+not existing.
+Eventually you will be be asked to enter the pathname of the shell, just press
 .Key RETURN .
-After a short while,
-you will be asked to select the type of your keyboard.  After
+After a short while, you will be asked to select the type of your keyboard.
+After
 you have entered a valid response here, the system asks you if
-you want to install or upgrade your system.  Since you are
-reading the
+you want to install or upgrade your system.
+Since you are reading the
 .Em install
 section,
 .Sq Ic i
 would be the proper response here...
 .Pp
-The installer starts with a nice welcome messages.  Read this
-message carefully, it also informs you of the risks involved
-in continuing!  If you still want to go on, type
+The installer starts with a nice welcome messages.
+Read this message carefully, it also informs you of the risks involved
+in continuing!
+If you still want to go on, type
 .Sq Ic y .
-The installer now continues by trying to figure out your disk
-configuration. 	When it is done, you will be prompted to
+The installer now continues by trying to figure out your disk configuration.
+When it is done, you will be prompted to
 select a root device from the list of disks it has found.
 .Pp
 You should know at this point that the disks are
 .Em not
-numbered according to their SCSI-ID! The
+numbered according to their SCSI-ID!
+The
 .Nx
 kernel numbers the SCSI
-drives (and other devices on the SCSI bus) sequentially as it
-finds them. The drive with the lowest SCSI-ID will be called
+drives (and other devices on the SCSI bus) sequentially as it finds them.
+The drive with the lowest SCSI-ID will be called
 .Li sd0 ,
 the next one
 .Li sd1 ,
-etc.  Also, any Amiga internal IDE disk drives
+etc.
+Also, any Amiga internal IDE disk drives
 will be configured as
 .Dq SCSI
 drives, and will be configured
@@ -220,7 +230,8 @@ SCSI drives (if any are present).
 .Pp
 The installer will offer you to look at the
 .Nx
-disk label of the disks at this point. You should do this, to find out
+disk label of the disks at this point.
+You should do this, to find out
 what partition letters the
 .Nx
 kernel assigned to the partitions you created, and as a check whether the
@@ -232,14 +243,15 @@ you want to install
 .Nx ,
 your hard drive will be modified,
 and perhaps its contents scrambled at the whim of the install
-program.  Type
+program.
+Type
 .Key Control-C
 .Em now
 if you don't want this.
 .Pp
 At this time, you will need to tell the installer which partition
-will be associated with the different file systems. Normally, you'll
-want to add a partition for
+will be associated with the different file systems.
+Normally, you'll want to add a partition for
 .Pa /usr ,
 at least.
 .(tag Caveat:
@@ -255,28 +267,31 @@ correspond to any Amiga partition!
 .tag)
 .Pp
 The install program will now make the file systems you
-specified.  There should be only one error per file system in
-this section of the installation.  It will look like this:
+specified.
+There should be only one error per file system in
+this section of the installation.
+It will look like this:
 .(disp
 newfs: ioctl (WDINFO): Invalid argument
 newfs: /dev/rsd0a: can't rewrite disk label
 .disp)
 .Pp
 If there are any others, restart from the beginning of
-the installation process.  This error is ok as the Amiga
-does not write disklabels currently.  You should expect
-this error whenever using newfs.
+the installation process.
+This error is ok as the Amiga does not write disklabels currently.
+You should expect this error whenever using newfs.
 .Pp
 The install will now ask you want to configure any network
-information.  It ill ask for the machine's host name, domain
+information.
+It ill ask for the machine's host name, domain
 name, and other network configuration information.
 .Pp
 Since the network configuration might have lead to additional (nfs)
 file system entries, you get another chance to modify your fstab.
 .Pp
 You are finally at the point where some real data will be put on
-your freshly made file systems. Select the device type you wish
-to install from and off you go....
+your freshly made file systems.
+Select the device type you wish to install from and off you go....
 .Pp
 Some notes:
 .(bullet -offset indent
@@ -304,9 +319,9 @@ you need the mount-point itself, use
 .Sq Pa \&. .
 .bullet)
 .Pp
-Next you will be asked to specify the timezone.  Just select the
-timezone you are in. The installer will make the correct setup
-on your root file system
+Next you will be asked to specify the timezone.
+Just select the timezone you are in.
+The installer will make the correct setup on your root file system
 .Pq Pa / .
 After the timezone-link is installed,
 the installer will proceed by creating the device nodes on your
@@ -320,17 +335,18 @@ After this, it will copy the kernel from the installation miniroot to
 the newly installed / upgraded system.
 If the installed system already has a kernel, it will ask you for
 confirmation.
-.Pp If you are doing an upgrade and you did not install the 
+.Pp If you are doing an upgrade and you did not install the
 kern.tgz distribution set, this is an old kernel, and you should answer
 "y" to install a working (although restricted) INSTALL kernel.
 .Pp
 If you did install the kern.tgz kernel, you normally should answer "n".
 .Pp
 Finally, the installer ask you if you want to install the bootblock
-code on your root disk. This is a matter of personal choice and can
-also be done from a running
+code on your root disk.
+This is a matter of personal choice and can also be done from a running
 .Nx
-system. See the
+system.
+See the
 .Xr installboot 8
 manual page about how to do this.
 .Pp
@@ -339,7 +355,8 @@ Once the installer is done, halt the system with the
 command
 (wait for
 .Li halted
-to be displayed) and reboot.  Then again boot
+to be displayed) and reboot.
+Then again boot
 .Nx
 this time with the command:
 .Pp
@@ -351,22 +368,23 @@ from the boot menu, and tell it to boot
 .Pp
 .Dl "netbsd -s"
 .Pp
-You need to do your final tweaks now.  First mount your file systems
-like so:
+You need to do your final tweaks now.
+First mount your file systems like so:
 .Pp
 .Dl Ic "mount -av"
 .Pp
 Your system is now complete but not completely configured; you
 should adjust the
-.Pa /etc/sendmail.cf No file as necessary to suit your
-site.  You should also examine and adjust the settings in
+.Pa /etc/sendmail.cf
+file as necessary to suit your site.
+You should also examine and adjust the settings in
 .Pa /etc/rc.conf .
 You can use
 .Xr vi 1
 or
 .Xr ed 1
-to edit the files. If you installed the man pages
-you can type
+to edit the files.
+If you installed the man pages you can type
 .Ic man vi No or Ic man ed
 for instructions on how to use these somewhat non-intuitive editors.
 .Pp
@@ -385,4 +403,5 @@ functional:
 When it boots off of the hard drive, you will have a complete
 .Nx
 system!
-.Em Congratulations! No (You really deserve them!!!)
+.Em Congratulations!
+(You really deserve them!!!)

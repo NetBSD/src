@@ -1,6 +1,6 @@
-.\"	$NetBSD: prep,v 1.4 2002/03/29 19:04:19 thorpej Exp $
+.\"	$NetBSD: prep,v 1.4.2.1 2002/07/02 04:20:07 lukem Exp $
 .\"
-.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.     
+.\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -34,24 +34,28 @@
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
-of any data on the target system that you wish to keep.  Mistakes in
+of any data on the target system that you wish to keep.
+Mistakes in
 e.g. partitioning your hard disk may lead to data loss.
 .
 .Ss2 Preparation for the Intel IQ80310
-The IQ80310 uses RedBoot firmware from Red Hat, Inc.  RedBoot
-supports loading the kernel via the serial port and the on-board
-Ethernet.  These notes assume that the Ethernet will be used to
-load the kernel.  RedBoot uses the Trivial File Transfer Protocol
+The IQ80310 uses RedBoot firmware from Red Hat, Inc.
+RedBoot supports loading the kernel via the serial port and the on-board
+Ethernet.
+These notes assume that the Ethernet will be used to load the kernel.
+RedBoot uses the Trivial File Transfer Protocol
 (TFTP) to load the kernel via the network.
 .Pp
 These notes also assume that the IQ80310 will be run as a diskless
-system; that an NFS server will provide the root file system.  The
+system; that an NFS server will provide the root file system.
+The
 .Nx
 kernel uses the Dynamic Host Configuration Protocol (DHCP) to
 obtain network address and root file system information.
 .Pp
 The first step is to configure your DHCP, NFS, and TFTP server
-software.  You will need the MAC address for the on-board Ethernet,
+software.
+You will need the MAC address for the on-board Ethernet,
 which RedBoot can provide; see the RedBoot documentation for more
 information.
 .Pp
@@ -63,7 +67,7 @@ see information similar to the following when the IQ80310 is reset
 or powered-up:
 .Bd -literal
 RedBoot(tm) debug environment - built 17:16:14, Feb 12 2001
-Platform: IQ80310 (XScale) 
+Platform: IQ80310 (XScale)
 Copyright (C) 2000, Red Hat, Inc.
 
 RAM: 0xa0000000-0xa2000000
@@ -73,8 +77,9 @@ RedBoot\*>
 .Ed
 .Pp
 A compressed kernel image and loader suitable for placing into
-flash is provided with the distribution.  Use of this image is
-optional; a kernel that can be directly loaded over the network
+flash is provided with the distribution.
+Use of this image is optional;
+a kernel that can be directly loaded over the network
 by RedBoot is also provided.
 .Pp
 The image for the IQ80310 can be found under the
@@ -82,7 +87,8 @@ The image for the IQ80310 can be found under the
 \*V distribution directory in
 .Pa \*M/binary/gzimg/gzimg_IQ80310_flash_0x00080000.gz ,
 and corresponds to the kernel in
-.Pa \*M/binary/kernel/netbsd-IQ80310.gz .  The following steps
+.Pa \*M/binary/kernel/netbsd-IQ80310.gz .
+The following steps
 describe how to copy the compressed kernel image into flash.
 .Pp
 .(enum
@@ -101,7 +107,8 @@ Raw file loaded 0xa0200000-0xa0305fe0
 .It
 Use the RedBoot
 .Ic fis
-command to copy the image into flash.  For more information on the RedBoot
+command to copy the image into flash.
+For more information on the RedBoot
 Flash Image System, see the RedBoot documentation.
 .Bd -literal
 RedBoot\*> fis create -b 0xa0200000 -f 0x00080000 -l 0x00200000 netbsd.gz
@@ -170,20 +177,23 @@ root device:
 .Ed
 .
 .Ss2 Preparation for the Intel IQ80321
-The IQ80321 uses RedBoot firmware from Red Hat, Inc.  RedBoot
-supports loading the kernel via the serial port and the on-board
-Ethernet.  These notes assume that the Ethernet will be used to
-load the kernel.  RedBoot uses the Trivial File Transfer Protocol
+The IQ80321 uses RedBoot firmware from Red Hat, Inc.
+RedBoot supports loading the kernel via the serial port and the on-board
+Ethernet.
+These notes assume that the Ethernet will be used to load the kernel.
+RedBoot uses the Trivial File Transfer Protocol
 (TFTP) to load the kernel via the network.
 .Pp
 These notes also assume that the IQ80321 will be run as a diskless
-system; that an NFS server will provide the root file system.  The
+system; that an NFS server will provide the root file system.
+The
 .Nx
 kernel uses the Dynamic Host Configuration Protocol (DHCP) to
 obtain network address and root file system information.
 .Pp
 The first step is to configure your DHCP, NFS, and TFTP server
-software.  You will need the MAC address for the on-board Ethernet,
+software.
+You will need the MAC address for the on-board Ethernet,
 which RedBoot can provide; see the RedBoot documentation for more
 information.
 .Pp
@@ -200,26 +210,28 @@ IP: 192.168.0.11, Default server: 192.168.0.1
 RedBoot(tm) bootstrap and debug environment [ROM]
 Non-certified release, version UNKNOWN - built 11:21:56, Feb  1 2002
 
-Platform: IQ80321 (XScale) 
+Platform: IQ80321 (XScale)
 Copyright (C) 2000, 2001, 2002, Red Hat, Inc.
 
 RAM: 0x00000000-0x08000000, 0x00017008-0x01ddd000 available
 FLASH: 0xf0000000 - 0xf0800000, 64 blocks of 0x00020000 bytes each.
-RedBoot\*> 
+RedBoot\*>
 .Ed
 .Pp
-A compressed kernel image and loader suitable for placing into  
-flash is provided with the distribution.  Use of this image is 
-optional; a kernel that can be directly loaded over the network  
+A compressed kernel image and loader suitable for placing into
+flash is provided with the distribution.
+Use of this image is optional;
+a kernel that can be directly loaded over the network
 by RedBoot is also provided.
-.Pp    
-The image for the IQ80321 can be found under the 
+.Pp
+The image for the IQ80321 can be found under the
 .Nx*M
 \*V distribution directory in
 .Pa \*M/binary/gzimg/gzimg_IQ80321_flash_0xf0080000.gz ,
 and corresponds to the kernel in
-.Pa \*M/binary/kernel/netbsd-IQ80321.gz .  The following steps
-describe how to copy the compressed kernel image into flash.  
+.Pa \*M/binary/kernel/netbsd-IQ80321.gz .
+The following steps
+describe how to copy the compressed kernel image into flash.
 .Pp
 .(enum
 Uncompress the gzimg file and place it into the TFTP server's
@@ -227,9 +239,9 @@ download area (note, the kernel inside the gzimg is still
 compressed after this step).
 .Pp
 .Dl server# Ic gzcat gzimg_IQ80321_flash_0xf0080000.gz > /tftpboot/gzimg_IQ80321_flash_0xf0080000
-.It 
+.It
 Load the gzimg from the TFTP server.
-.Pp 
+.Pp
 .Bd -literal
 RedBoot\*> load -r -b 0x00200000 gzimg_IQ80321_flash_0xf0080000
 Raw file loaded 0x00200000-0x00305fe4
@@ -237,7 +249,8 @@ Raw file loaded 0x00200000-0x00305fe4
 .It
 Use the RedBoot
 .Ic fis
-command to copy the image into flash.  For more information on the RedBoot
+command to copy the image into flash.
+For more information on the RedBoot
 Flash Image System, see the RedBoot documentation.
 .Bd -literal
 RedBoot\*> fis create -b 0x00200000 -f 0xf0080000 -l 0x00200000 netbsd.gz
@@ -299,5 +312,5 @@ makphy0 at wm0 phy 1: Marvell 88E1000 Gigabit PHY, rev. 0
 makphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, 1000baseT, 1000baseT-FDX, auto
 clock: hz=100 stathz=0 profhz=0
 boot device: \*<unknown\*>
-root device: 
+root device:
 .Ed

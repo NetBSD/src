@@ -1,18 +1,18 @@
-.\"	$NetBSD: hardware,v 1.18 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: hardware,v 1.18.2.1 2002/07/02 04:20:09 lukem Exp $
 .
 .Nx*M
 \*V runs on several of the older Macintosh computers.
 About 4 MB of RAM might be sufficient to boot, and the system can probably
 be squeezed onto a 40 MB hard disk by leaving off an unnecessary set or two.
 To actually do much compiling or anything more interesting than booting, at
-least 8 MB of RAM and more disk space is recommended. About 95 MB will be
-necessary to install all of the
+least 8 MB of RAM and more disk space is recommended.
+About 95 MB will be necessary to install all of the
 .Nx \*V
 binary system distribution
-sets (note that this does not count swap space!). An additional 30 MB or so
-is needed for the binary X11 distribution sets. Much more disk space is
-required to install the source and objects as well (at least another 300
-MB).
+sets (note that this does not count swap space!).
+An additional 30 MB or so is needed for the binary X11 distribution sets.
+Much more disk space is required to install the source and objects as well
+(at least another 300 MB).
 .
 .Ss2 Supported models
 .(bullet -compact -offset indent
@@ -37,7 +37,7 @@ Quadra/Centris 660AV, Quadra 840AV
 .(bullet -compact -offset indent
 Onboard SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
 .It
-Internal sound - enough to beep on some machines, anyway
+Internal sound \(em enough to beep on some machines, anyway
 .It
 Most basic NuBus video cards (there have been some
 problems with some 24-bit color cards and with most
@@ -50,7 +50,7 @@ multi-button mice and trackballs are supported)
 .It
 Ethernet cards based on the National Semiconductor 8390 and the
 SONIC (DP83932) chips
-(Asante, Apple, and a few others - problems still
+(Asante, Apple, and a few others \(em problems still
 with Ethernet and many NuBus video cards)
 .It
 Ethernet cards based on the SMC 91c92 and 91c100 (FEAST) chips.
@@ -62,6 +62,9 @@ Onboard Ethernet based on the MACE (Am79C940) chip for the Quadra
 AV-series Macs
 .It
 Comm-slot Ethernet should be working for most machines/cards
+.It
+Ethernet port on Asante NetDock and Newer Ether MicroDock,
+for PowerBook Duo series
 .bullet)
 .Pp
 If your 68030 system is not listed above, it may be because of a problem
@@ -74,8 +77,8 @@ PowerBook 100-series and Duo-series Macs
 .bullet)
 .Pp
 If your 68LC040 system is not listed above, it is due to a problem with
-floating point emulation (FPE) for this type of processor. Machines in
-this category include:
+floating point emulation (FPE) for this type of processor.
+Machines in this category include:
 .(bullet -compact -offset indent
 Newer LC-series machines
 .It
@@ -89,7 +92,8 @@ Some PowerBook 500-series Macs
 Macintosh IIfx
 .Pp
 This machine has unusual custom chips for the ADB and serial interfaces
-which make support for it difficult. Work is in progress on this, though.
+which make support for it difficult.
+Work is in progress on this, though.
 .It
 Quadra 900/950
 .Pp
@@ -98,9 +102,10 @@ those used in the IIfx and thus face similar support problems.
 .It
 PowerPC-based Macs
 .Pp
-This is a separate effort from the \*M port. PowerMacs use hardware that
-is often fairly different from that of the \*M port.  If you are
-interested in this, you might want to take a look at the new
+This is a separate effort from the \*M port.
+PowerMacs use hardware that is often fairly different from that of
+the \*M port.
+If you are interested in this, you might want to take a look at the new
 .Nx Ns /macppc
 port:
 .Lk http://www.netbsd.org/Ports/macppc/index.html
@@ -112,9 +117,10 @@ Real Time Clock
 .Pp
 Due to oddities of the Macintosh hardware interrupt priority scheme,
 .Nx*M
-keeps very poor time. Under a high interrupt load (e.g.
-SCSI or serial port activity) , a machine can lose several minutes
-per hour. A consequence of this problem is that attempting to run
+keeps very poor time.
+Under a high interrupt load (e.g. SCSI or serial port activity),
+a machine can lose several minutes per hour.
+A consequence of this problem is that attempting to run
 .Ic xntpd
 is rather pointless unless you periodically call
 .Ic ntpdate .
@@ -126,8 +132,8 @@ The
 SCSI drivers are not quite as
 robust as their
 .Tn MacOS
-counterparts. Symptoms of these
-problems are that some SCSI disks will not work under
+counterparts.
+Symptoms of these problems are that some SCSI disks will not work under
 NetBSD that work fine under
 .Tn MacOS .
 Other problems include

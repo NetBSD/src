@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.47 2002/05/03 05:22:27 mbw Exp $
+.\"	$NetBSD: install,v 1.47.2.1 2002/07/02 04:20:17 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -39,12 +39,14 @@ this document in hand it shouldn't be too much trouble.
 .Pp
 There are several ways to install
 .Nx
-onto your system. The easiest way is to use the
+onto your system.
+The easiest way is to use the
 .Pa miniroot.fs
 image copied to your local disk's swap partition or a scratch drive.
 If your Sparc is hooked up in a network, you may configure another
 .Ul
-machine as a netboot server for your Sparc.  Alternatively, there is a pair
+machine as a netboot server for your Sparc.
+Alternatively, there is a pair
 of floppy images that will boot your system and run the installer.
 .Pp
 For more information on the commands and variables available in
@@ -61,14 +63,16 @@ is a compressed, self-contained
 .Nx
 filesystem holding all utilities necessary to install
 .Nx
-onto a disk attached to your system. It is distributed as a compressed plain
-file you will transfer to a raw disk partition.  You will then boot
-this installer using the appropriate PROM command.  The simplest case is
-where you place the
+onto a disk attached to your system.
+It is distributed as a compressed plain
+file you will transfer to a raw disk partition.
+You will then boot this installer using the appropriate PROM command.
+The simplest case is where you place the
 .Pa miniroot.fs
-filesystem on the swap partition of your disk. Alternatively, you can place
-it on any other unused partition on any disk (such as a Zip disk).  Be
-forewarned that you will not be able to install
+filesystem on the swap partition of your disk.
+Alternatively, you can place
+it on any other unused partition on any disk (such as a Zip disk).
+Be forewarned that you will not be able to install
 .Nx
 onto the partition that contains the
 .Pa miniroot.fs
@@ -77,12 +81,14 @@ as this partition is needed during the install process.
 Loading the filesystem onto a raw partition is straightforward.
 First, download
 .Pa miniroot.fs
-to your system.  Next, reboot in single-user mode (i.e.
+to your system.
+Next, reboot in single-user mode (i.e.
 .Ic "boot -s" )
 to ensure that your system will not be swapping.
 Finally, place the
 .Pa miniroot.fs
-on your partition of choice.  On
+on your partition of choice.
+On
 .Nx
 or SunOS the commands are:
 .Pp
@@ -93,8 +99,8 @@ or SunOS the commands are:
 .Pp
 Here,
 .Li /dev/rsd0b
-is assumed to be your swap partition.  If you decide to
-place
+is assumed to be your swap partition.
+If you decide to place
 .Pa miniroot.fs
 on a non-swap partition, it will overwrite all of the contents of that
 partition, but you will not need to reboot into single-user mode to write it.
@@ -126,8 +132,10 @@ command at the PROM prompt (this example is for the swap partition):
 The monitor boot command will load the
 .Nx
 kernel contained in the
-filesystem image. After the initial probe messages you'll be
-asked to start the install or upgrade procedure. Proceed to the section
+filesystem image.
+After the initial probe messages you'll be
+asked to start the install or upgrade procedure.
+Proceed to the section
 .Sx Running the installation scripts.
 below.
 .
@@ -148,11 +156,12 @@ or created your own disk image, then you need to burn it to a CD-R.
 .Pp
 The CD-ROM attached to your Sparc must support 512 byte sectors to be
 bootable.
-All Sun brand CD-ROMs will work, as well as many other manufacturers.  See
-the Sun CD-ROM FAQ:
+All Sun brand CD-ROMs will work, as well as many other manufacturers.
+See the Sun CD-ROM FAQ:
 .Lk http://saturn.tlug.org/suncdfaq/
 .Pp
-Sun sets their CD-ROM drives to SCSI ID 6.  We recommend you do the same.
+Sun sets their CD-ROM drives to SCSI ID 6.
+We recommend you do the same.
 .Pp
 Boot the installer by typing the appropriate command at the PROM prompt:
 .Pp
@@ -172,7 +181,8 @@ Boot the installer by typing the appropriate command at the PROM prompt:
 .tag)
 .Pp
 After the initial probe messages you'll be asked to start the
-install or upgrade procedure. Proceed to the section
+install or upgrade procedure.
+Proceed to the section
 .Sx Running the installation scripts.
 below.
 .
@@ -184,8 +194,8 @@ install floppies only work on the sun4c and sun4m machines.
 Making the install floppies is fairly straightforward.
 .Pp
 .Nx
-and SunOS use the same commands.  First, get two 1.44 MB
-floppy disks and format them either using the
+and SunOS use the same commands.
+First, get two 1.44 MB floppy disks and format them either using the
 .Xr fdformat 8
 command or a PC.
 .Pp
@@ -213,7 +223,9 @@ or a
 .Tn Windows
 machine using
 .Nm rawrite.exe
-(available in the NetBSD/i386 distribution).
+(available in the
+.Nx Ns / Ns i386
+distribution).
 Insert the first floppy and run the following commands:
 .Pp
 .(disp
@@ -231,7 +243,7 @@ Insert the second floppy and run the following commands:
 .Pp
 Note that disk2 may be a symlink to .tgz file; do not uncompress it,
 just follow the instructions above, verbatim.
-After writing the two floppies, 
+After writing the two floppies,
 be sure to label them so you can later identify them.
 .Pp
 Insert the floppy made from
@@ -305,19 +317,23 @@ of the following forms:
 .tag)
 .Pp
 After the initial probe messages you'll be asked to start the
-install or upgrade procedure. Proceed to the section
+install or upgrade procedure.
+Proceed to the section
 .Sx Running the installation scripts.
 below.
 .
 .Ss2 Installing NetBSD by using a bootable tape
 .
-Sun sets their tape drives to SCSI ID 4. We recommend you do the same.
+Sun sets their tape drives to SCSI ID 4.
+We recommend you do the same.
 .Pp
 Get the tape images
 .Pq Pa installation/tape/tapefile1.gz No and Pa installation/tape/tapefile2
-and transfer them to a tape.  Make sure you use the
+and transfer them to a tape.
+Make sure you use the
 .Sq no rewind scsi tape
-device.  Run the following commands:
+device.
+Run the following commands:
 .Pp
 .(disp
 .No # Ic "gunzip tapefile1.gz"
@@ -334,7 +350,8 @@ to the tape by using a series of additional
 .(disp
 .No # Ic "dd if=\*<aset\*>.tgz of=/dev/nrst0 bs=4k"
 .disp)
-commands.  See also the section
+commands.
+See also the section
 .Sx Getting the NetBSD System on to Useful Media.
 Be sure to mark the location of these files on the tape; you'll need them
 during the installation procedure.
@@ -366,8 +383,8 @@ below.
 .Ss2 Running the installation scripts
 .
 The first thing that the installation scripts will inquire about is the
-type of console you're using on your machine. If you're using a Sun
-frame buffer display, choose the terminal type
+type of console you're using on your machine.
+If you're using a Sun frame buffer display, choose the terminal type
 .Ic sun
 .Pq this is presented as the default .
 .(Note
@@ -389,11 +406,13 @@ a new full-screen
 .Ic sysinst
 program, or the traditional script-based
 .Ic miniroot
-program. The
+program.
+The
 .Ic sysinst
 program is easier to use, but the
 .Ic miniroot
-program is more flexible.  Both of these installation methods will follow the
+program is more flexible.
+Both of these installation methods will follow the
 same set of procedures and will fully install
 .Nx
 on your Sparc.
@@ -403,7 +422,8 @@ with each phase of the installation process.
 .Pp
 Occasionally, you will have to provide a piece of information such as the
 name of the disk you want to install on, partitioning information,
-or IP addresses and domain names you want to assign. If your system has
+or IP addresses and domain names you want to assign.
+If your system has
 more than one disk, you may want to look at the output of the
 .Xr dmesg 8
 command to see how your disks have been identified by the kernel.
@@ -430,9 +450,11 @@ extraction of the distribution tar files
 installation of bootstrap programs
 .bullet)
 .Pp
-Now try a reboot.  Initially we'd suggest you
+Now try a reboot.
+Initially we'd suggest you
 .Ic "boot sd()netbsd -bs" ,
-then try multiuser after that. If you boot single-user the
+then try multiuser after that.
+If you boot single-user the
 .Nx
 incantation to make the root filesystem writable is
 .Pp

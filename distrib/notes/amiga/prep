@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.25 2001/02/11 11:30:54 is Exp $
+.\"	$NetBSD: prep,v 1.25.2.1 2002/07/02 04:20:02 lukem Exp $
 .
 You will need an
 .Tn AmigaDOS
@@ -16,8 +16,8 @@ Note that
 can't currently be installed on disks with a sector
 size other than 512 bytes (e.g.,
 .Dq 640 MB
-90mm M-O media). You can, however,
-mount ADOSFS partitions on such M-O's.
+90mm M-O media).
+You can, however, mount ADOSFS partitions on such M-O's.
 .
 .Ss2 Preparing your hard disk with HDToolBox
 .
@@ -27,19 +27,20 @@ A full explanation of HDToolBox can be found with your
 manuals and is beyond the scope of this document.
 .Pp
 The first time you partition a drive, you need to set its drive
-type so that you have working geometry parameters. To do this
-you enter the
+type so that you have working geometry parameters.
+To do this you enter the
 .Dq Change drive type
 menu, and either use
 .Dq read parameters from drive
 or set them manually.
 .Pp
-Note you will be modifying your HD's. If you mess something
-up here you could lose everything on all the drives that
-you configure.  It is therefore advised that you:
+Note you will be modifying your HD's.
+If you mess something up here you could lose everything on all the
+drives that you configure.
+It is therefore advised that you:
 .(enum -offset indent
-Write down your current configurations.  Do this
-by examining each partition on the drive and the
+Write down your current configurations.
+Do this by examining each partition on the drive and the
 drives parameters (from Change drive type.)
 .It
 Back up the partitions you are keeping.
@@ -52,8 +53,8 @@ partitions and possibly at least one more for
 .Pa /usr/local
 if you have the space.
 .Pp
-This should be done as the HDToolBox manual describes.  One thing
-to note is that if you are not using a Commodore controller you
+This should be done as the HDToolBox manual describes.
+One thing to note is that if you are not using a Commodore controller you
 will need to specify the device your SCSI controller uses, e.g.
 if you have a Warp Engine you would:
 .(tag From\ cli -offset indent
@@ -80,8 +81,8 @@ to boot the installation miniroot directly.
 .It
 Changing the file system parameters of the partitions to
 .Nx
-ones.  This must be done from the
-partitioning section and
+ones.
+This must be done from the partitioning section and
 .Dq Advanced options
 must
 be enabled.
@@ -175,11 +176,11 @@ installation or upgrade now uses a
 .Em miniroot
 file system which is installed on the partition used by
 .Nx
-for swapping.  This removes the requirement of using a floppy
-disk for the file system used by the installation or upgrade
-process.  It also allows more utilities to be present on the
-file system than would be available when using an 880 KB floppy
-disk.
+for swapping.
+This removes the requirement of using a floppy disk for the
+file system used by the installation or upgrade process.
+It also allows more utilities to be present on the file system
+than would be available when using an 880 KB floppy disk.
 .Pp
 Once the hard disk has been prepared for
 .Nx ,
@@ -187,22 +188,22 @@ the miniroot file system
 .Pq Pa miniroot.fs
 is transferred to the swap
 partition configured during the hard disk prep (or the existing
-swap partition in the case of an upgrade).  The xstreamtodev
-utility provided in the
+swap partition in the case of an upgrade).
+The xstreamtodev utility provided in the
 .Pa \*M/installation/misc
 directory can
 be used on
 .Tn AmigaDOS
 to transfer the file system for either a new
-installation or an upgrade.  The file system can also be
-transferred on an existing
+installation or an upgrade.
+The file system can also be transferred on an existing
 .Nx
-system for an update by
-using dd.  This should only be done after booting
+system for an update by using dd.
+This should only be done after booting
 .Nx
-into single-user state.  It may also be possible to shutdown
-to single-user, providing that the single-user state processes
-are not using the swap partition.
+into single-user state.
+It may also be possible to shutdown to single-user, providing that
+the single-user state processes are not using the swap partition.
 .Pp
 On
 .Tn AmigaDOS ,
@@ -212,7 +213,8 @@ the command:
 .Pp
 where \*<swap partition\*> is the name you gave to the
 .Nx
-partition to be used for swapping.  If
+partition to be used for swapping.
+If
 .Ic xstreamtodev
 is unable
 to determine the SCSI driver device name or the unit number
@@ -241,8 +243,8 @@ Then copy the miniroot using
 where
 .Li /dev/rsd0b
 should be the device path of the swap partition
-your system is configured to use.  Once the file is copied,
-reboot back to
+your system is configured to use.
+Once the file is copied, reboot back to
 .Tn AmigaDOS
 to boot the upgrade kernel.
 .(tag Caveat:

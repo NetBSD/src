@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1.2.2 2002/06/19 01:17:33 lukem Exp $
+.\"	$NetBSD: hardware,v 1.1.2.3 2002/07/02 04:20:11 lukem Exp $
 .
 .Nx*M
 runs on Brains mmEye, with Hitachi SH-3 CPU.

@@ -1,8 +1,8 @@
-.\"	$NetBSD: hardware,v 1.8.2.1 2002/06/18 14:45:45 lukem Exp $
+.\"	$NetBSD: hardware,v 1.8.2.2 2002/07/02 04:20:18 lukem Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
-Sbus-based UltraSPARC systems (the Ultra 1, Ultra 1 Creator/Ultra1 Creator3D, 
+Sbus-based UltraSPARC systems (the Ultra 1, Ultra 1 Creator/Ultra1 Creator3D,
 Ultra 2/Ultra 2 Creator/Ultra 2 Creator 3D)
 .It
 PCI-based UltraSPARC systems (known to work on the Ultra 5, Ultra 10, Ultra 30

@@ -1,20 +1,23 @@
-.\"	$NetBSD: upgrade,v 1.20 2000/11/16 17:12:08 tv Exp $
+.\"	$NetBSD: upgrade,v 1.20.2.1 2002/07/02 04:20:09 lukem Exp $
 .
 .so ../common/upgrade
 .Pp
 .Nx*M
 has switched its executable format from the old a.out format
-to ELF, the now more commonly used and supported format. Your old
-binaries will continue to work just fine. The installation procedure
-will try to take the necessary steps to accomplish this. The most
-important step is to move the old a.out shared libraries in
+to ELF, the now more commonly used and supported format.
+Your old binaries will continue to work just fine.
+The installation procedure will try to take the necessary steps to
+accomplish this.
+The most important step is to move the old a.out shared libraries in
 .Pa /usr/lib
 and
 .Pa /usr/X11R6/lib
 (if X was installed) to
 .Pa /emul/aout ,
 where they will be automatically found if an older a.out binary
-is executed. Sysinst will use an existing
+is executed.
+.Ic sysinst
+will use an existing
 .Pa /emul
 and / or
 .Pa /emul/aout
@@ -24,5 +27,6 @@ if necessary.
 .Pp
 If you already had a
 .Pa /emul
-directory, or a symbolic link by that name, sysinst should rename it
-and tell you about it.
+directory, or a symbolic link by that name,
+.Ic sysinst
+should rename it and tell you about it.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.17 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: xfer,v 1.17.2.1 2002/07/02 04:20:10 lukem Exp $
 .
 Installation is currently only supported from the local Macintosh hard
 drive, from a CD-ROM, or from an AppleShare volume (however, you may upgrade
@@ -9,8 +9,9 @@ If you are installing from a local hard drive, this means that you'll need
 at least enough room for the largest file that you will have to install.
 This is the 15.2 MB
 .Pa base.tgz
-file. There has been talk of allowing an install
-from split files. If you have the time, desire, and knowledge, please feel
+file.
+There has been talk of allowing an install from split files.
+If you have the time, desire, and knowledge, please feel
 free to add that functionality.
 .Pp
 If the install is being done from an AppleShare-mounted volume, the install
@@ -19,19 +20,20 @@ utility must be in the same folder as the binary distribution sets.
 Each distribution file is in
 .Em raw No archive format.
 .(bullet
-Distribution files must be downloaded in binary mode.  Common web
-browsers may not be suitable for this task; FTP clients such as
-Fetch and Anarchie work fine, but be sure to specify a binary file
-transfer.
+Distribution files must be downloaded in binary mode.
+Common web browsers may not be suitable for this task;
+FTP clients such as Fetch and Anarchie work fine,
+but be sure to specify a binary file transfer.
 .It
-The files should not be unpacked.  If you have the Internet Config
+The files should not be unpacked.
+If you have the Internet Config
 extension installed, you can disable this in the
 .Dq "Helpers"
 dialog
 by removing the entry associated with
 .Dq ".tgz"
-files.  Other FTP
-clients may require separate changes; consult your package's
+files.
+Other FTP clients may require separate changes; consult your package's
 documentation.
 .It
 If you are installing from a CD-ROM, the distribution sets are
@@ -48,7 +50,7 @@ Mkfs,
 .Nx*M
 Installer, and
 .Nx*M
-Booter. These three are
-in binhexed, self-extracting archives as Mkfs.sea.hqx, Installer.sea.hqx,
-and Booter.sea.hqx, respectively. Extract them as you would any other
-Macintosh application.
+Booter.
+These three are in binhexed, self-extracting archives as Mkfs.sea.hqx,
+Installer.sea.hqx, and Booter.sea.hqx, respectively.
+Extract them as you would any other Macintosh application.
