@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.116 2001/06/18 20:49:14 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.117 2001/06/18 22:26:15 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -359,7 +359,6 @@ file	arch/arm32/arm32/setcpsr.S
 file	arch/arm32/arm32/setstack.S
 file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/intr.c
-file	arch/arm32/dev/bus_space_notimpl.S
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk

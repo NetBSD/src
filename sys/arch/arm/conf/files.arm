@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.31 2001/06/05 09:25:06 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.32 2001/06/18 22:26:15 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -47,6 +47,7 @@ file	arch/arm/arm/disassem.c
 file	arch/arm/arm/arm_machdep.c
 file	arch/arm/arm/blockio.S
 file	arch/arm/arm/bootconfig.c
+file	arch/arm/arm/bus_space_notimpl.S	arm32
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
