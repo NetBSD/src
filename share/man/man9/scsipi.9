@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.9 2002/02/13 08:18:51 ross Exp $
+.\"	$NetBSD: scsipi.9,v 1.10 2002/05/15 11:17:32 bouyer Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -362,11 +362,13 @@ shall be ignored for
 holds the following bits:
 .Bl -tag -width xxxxxxxx -compact
 .It Dv PERIPH_CAP_SYNC
-synchronous transfers
+ST synchronous transfers
 .It Dv PERIPH_CAP_WIDE16
-16 bit wide transfers
+ST 16 bit wide transfers
 .It Dv PERIPH_CAP_WIDE32
-32 bit wide transfers
+ST 32 bit wide transfers
+.It Dv PERIPH_CAP_DT
+DT transfers
 .It Dv PERIPH_CAP_TQING
 tagged queueing
 .El
