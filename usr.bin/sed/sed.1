@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
-.\"	$Id: sed.1,v 1.5 1994/12/04 06:06:19 mycroft Exp $
+.\"	$Id: sed.1,v 1.6 1996/12/15 08:28:46 cjs Exp $
 .\"
 .Dd "December 30, 1993"
 .Dt SED 1
@@ -171,7 +171,8 @@ In a context address, any character other than a backslash
 .Po
 .Dq \e
 .Pc
-or newline character may be used to delimit the regular expression.
+or newline character may be used to delimit the regular expression
+by prefixing the first use of that delimiter with a backslash.
 Also, putting a backslash character before the delimiting character
 causes the character to be treated literally.
 For example, in the context address \exabc\exdefx, the RE delimiter
