@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.14 1997/10/19 14:38:04 mycroft Exp $	*/
+/*	$NetBSD: touch.c,v 1.15 1997/10/20 00:49:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: touch.c,v 1.14 1997/10/19 14:38:04 mycroft Exp $";
+__RCSID("$NetBSD: touch.c,v 1.15 1997/10/20 00:49:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,6 +60,7 @@ static char rcsid[] = "$NetBSD: touch.c,v 1.14 1997/10/19 14:38:04 mycroft Exp $
 #include <time.h>
 #include <unistd.h>
 
+int	main __P((int, char **));
 int	rw __P((char *, struct stat *, int));
 void	stime_arg1 __P((char *, struct timeval *));
 void	stime_arg2 __P((char *, int, struct timeval *));
@@ -84,7 +85,7 @@ main(argc, argv)
 	if (gettimeofday(&tv[0], NULL))
 		err(1, "gettimeofday");
 
-	while ((ch = getopt(argc, argv, "acfhmr:t:")) != EOF)
+	while ((ch = getopt(argc, argv, "acfhmr:t:")) != -1)
 		switch(ch) {
 		case 'a':
 			aflag = 1;
