@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.16 1998/08/25 00:54:08 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.17 1998/08/25 01:16:03 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.16 1998/08/25 00:54:08 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.17 1998/08/25 01:16:03 hubertf Exp $");
 #endif
 #endif
 
@@ -265,7 +265,10 @@ pkg_do(char *pkg)
 		    if (cp) {
 			if (Verbose)
 			    printf("Loading it from %s.\n", cp);
-			if (vsystem("pkg_add %s%s", Verbose ? "-v " : "", cp)) {
+		        if (vsystem("/usr/sbin/pkg_add %s%s %s%s",
+                                     Prefix ? "-p " : "",
+                                     Prefix ? Prefix : "",
+				     Verbose ? "-v " : "", cp)) {
 			    warnx("autoload of dependency `%s' failed%s",
 				cp, Force ? " (proceeding anyway)" : "!");
 			    if (!Force)
@@ -287,7 +290,11 @@ pkg_do(char *pkg)
 			if (!Force)
 			    ++code;
 		    }
-		    else if (vsystem("(pwd; cat %s) | pkg_add %s-S", CONTENTS_FNAME, Verbose ? "-v " : "")) {
+		    else if (vsystem("(pwd; cat %s) | pkg_add %s%s %s-S",
+                                     CONTENTS_FNAME, 
+                                     Prefix ? "-p " : "",
+                                     Prefix ? Prefix : "",
+				     Verbose ? "-v " : "")) {
 			warnx("add of dependency `%s' failed%s",
 				p->name, Force ? " (proceeding anyway)" : "!");
 			if (!Force)
