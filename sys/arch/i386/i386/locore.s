@@ -561,7 +561,6 @@ _bcopy:
  *	to is in userspace, so each page must be checked for
  *	user addressability and write protections.
  *	first check all pages, then copy it over.
- * Apr 1993 Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
  */
 	.globl	_copyout
 	ALIGN32
@@ -637,7 +636,6 @@ do_copyio:			/* now copy it over */
  *	src is in user space; check if user-addressable.
  *	This is the same code as copyout, but here the src is checked,
  *	and only for READ protection
- * Apr 1993 Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
  */
 	.globl	_copyin
 	ALIGN32
@@ -712,7 +710,6 @@ cpyflt:
  *	return ENAMETOOLONG if string is longer than maxlen, and
  *	EFAULT on protection violations. If lencopied is non-zero,
  *	return the actual length in *lencopied.
- * May 93 Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
  */
 	.globl	_copyoutstr
 	ALIGN32
@@ -780,7 +777,6 @@ _copyoutstr:
  *	return ENAMETOOLONG if string is longer than maxlen, and
  *	EFAULT on protection violations. If lencopied is non-zero,
  *	return the actual length in *lencopied.
- * May 93 Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
  */
 	.globl	_copyinstr
 	ALIGN32
@@ -1106,7 +1102,6 @@ _ssdtosd:
 
 /*
  * fubyte family: get a byte/word from userspace.
- * May 1993 Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
  */
 	ALIGN32
 	.globl	_fubyte, _fuibyte
@@ -1159,7 +1154,6 @@ fusufault:
 /*
  * subyte family: write a byte/word to userspace.
  * These routines differ only in one instruction (the data move).
- * May 1993 Christoph Robitschko <chmr@edvz.tu-graz.ac.at>
  */
 	ALIGN32
 	.globl	_subyte, _suibyte
