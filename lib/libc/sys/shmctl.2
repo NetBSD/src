@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmctl.2,v 1.1 1995/10/16 23:49:30 jtc Exp $	
+.\"	$NetBSD: shmctl.2,v 1.2 1996/12/22 10:35:20 cgd Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/ipc.h>
-.Fd #include <sys/msg.h>
+.Fd #include <sys/shm.h>
 .Ft int
 .Fn shmctl "int shmid" "int cmd" "struct shmid_ds *buf"
 .Sh DESCRIPTION
