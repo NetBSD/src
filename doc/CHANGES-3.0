@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.35 2005/04/06 10:53:27 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.36 2005/04/06 12:00:03 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -742,4 +742,28 @@ crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c	1.2
 
 	Fix a buffer overrun in ISAKMP mode config SET handler.
 	[manu, ticket #111]
+
+doc/3RDPARTY					1.316
+share/zoneinfo/antarctica			patch
+share/zoneinfo/asia				patch
+share/zoneinfo/etcetera				patch
+share/zoneinfo/iso3166.tab			patch
+
+	Update to tzdata2005h.
+	[kleink, ticket #110]
+
+sys/dev/ata/wd.c				1.299
+sys/dev/ccd.c					1.103
+sys/dev/cgd.c					1.23-1.24
+sys/dev/ld.c					1.36
+sys/dev/scsipi/cd.c				1.221
+sys/dev/scsipi/sd.c				1.238
+sys/dev/scsipi/ss.c				1.60
+sys/dev/scsipi/st.c				1.179
+sys/dev/vnd.c					1.113
+sys/kern/subr_disk.c				1.68
+sys/sys/bufq.h					1.3
+
+	Introduce a function to drain bufq and use it where appropriate.
+	[yamt, ticket #112]
 
