@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.7 1994/06/30 05:31:09 cgd Exp $
+#	$NetBSD: bsd.README,v 1.8 1994/12/22 09:20:40 cgd Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -87,7 +87,7 @@ MANMODE		Manual mode.
 MANSUBDIR	Subdirectory under the manual page section, i.e. "/vax"
 		or "/tahoe" for machine specific manual pages.
 
-MAN1 ... MAN8	The manual pages to be installed (use a .0 suffix).
+MAN		The manual pages to be installed (use a .1 - .8 suffix).
 
 MLINKS		List of manual page links (using a .1 - .8 suffix).  The
 		linked-to file must come first, the linked file second,
@@ -194,8 +194,8 @@ LINKS		The list of binary links; should be full pathnames, the
 
 			LINKS=	${DESTDIR}/bin/test ${DESTDIR}/bin/[
 
-MAN1...MAN8	Manual pages (should end in .0).  If no MAN variable is
-		defined, "MAN1=${PROG}.0" is assumed.
+MAN		Manual pages (should end in .1 - .8).  If no MAN variable is
+		defined, "MAN=${PROG}.1" is assumed.
 
 PROG		The name of the program to build.  If not supplied, nothing
 		is built.
@@ -293,7 +293,7 @@ LIBMODE		Library mode.
 
 LDADD		Additional loader objects.
 
-MAN1 ... MAN8	The manual pages to be installed (use a .0 suffix).
+MAN		The manual pages to be installed (use a .1 - .8 suffix).
 
 SRCS		List of source files to build the library.  Suffix types
 		.s, .c, and .f are supported.  Note, .s files are preferred

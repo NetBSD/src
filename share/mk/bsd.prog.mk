@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.48 1994/08/24 19:10:48 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.49 1994/12/22 09:20:45 cgd Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -74,12 +74,10 @@ ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
 .endif	# defined(DESTDIR)
 .endif	# defined(OBJS) && !empty(OBJS)
 
-.if	!defined(MAN1) && !defined(MAN2) && !defined(MAN3) && \
-	!defined(MAN4) && !defined(MAN5) && !defined(MAN6) && \
-	!defined(MAN7) && !defined(MAN8)
-MAN1=	${PROG}.0
-.endif
-.endif
+.if	!defined(MAN)
+MAN=	${PROG}.1
+.endif	# !defined(MAN)
+.endif	# defined(PROG)
 
 .MAIN: all
 all: ${PROG} _SUBDIRUSE
