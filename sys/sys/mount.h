@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.39 1995/03/26 20:24:24 jtc Exp $	*/
+/*	$NetBSD: mount.h,v 1.40 1995/04/21 21:59:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -396,8 +396,9 @@ struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
 	  __P((struct mount *, struct netexport *, struct mbuf *));
 int	vfs_lock __P((struct mount *));	    /* lock a vfs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
+void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
 void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
-void	vfs_unmountall __P((void));	    /* unmount all file systems */
+void	vfs_unmountall __P((void));	    /* unmount file systems */
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];		    /* filesystem type table */
 extern	int nvfssw;
