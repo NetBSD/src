@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.292 2001/01/12 05:14:37 itojun Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.293 2001/01/15 23:29:29 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.288 2001/01/09 23:19:03 rh Exp 
+ *	NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp 
  */
 
 /*
@@ -3470,6 +3470,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "53c1010",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010_2,
+	    0,
+	    "Symbios Logic",
+	    "53c1010 (66MHz)",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
