@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.240 2001/06/11 20:04:02 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.241 2001/06/11 22:56:26 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -700,7 +700,7 @@ begin:
 /*
  * XXX We need a comment here (lightly) explaining this. Probably a
  * detailed section 9 man page, too, explaining the proc_trampoline.
- * If it is part of the MI/MD interface, it needs documentation, IMHO.
+ * Almost every port has a proc_trampoline, so it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void proc_trampoline(void) */
@@ -715,7 +715,7 @@ NENTRY(proc_trampoline)
 
 /*
  * XXX No section 9 man page for sigcode or esigcode. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * -- Perry Metzger, May 7, 2001
  */
 /*
@@ -751,9 +751,8 @@ _C_LABEL(esigcode):
 
 /*
  * XXX No section 9 man page for fillw.
- * fillw seems to be very sparsely used, one wonders if a thing named
- * in the manner of memset wouldn't be better. It is defined in cpu.h
- * so it is technically MD but...
+ * fillw seems to be very sparsely used (only in pccons it seems.)
+ * One wonders if it couldn't be done without.
  * -- Perry Metzger, May 7, 2001
  */
 /*
@@ -782,7 +781,7 @@ ENTRY(fillw)
 
 /*
  * XXX No section 9 man page for kcopy. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * so far as I can tell it is used only in one function in the MI kernel,
  * but it still counts.
  * -- Perry Metzger, May 7, 2001
@@ -1552,7 +1551,7 @@ NENTRY(lgdt)
  * XXX We need a comment here (lightly) explaining this. Probably a
  * short section 9 man page, too, explaining how kernel setjmp differs
  * from userland.
- * If it is part of the MI/MD interface, it needs documentation, IMHO.
+ * Since it is part of the MI/MD interface, it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: int setjmp (label_t *l) */
@@ -1572,7 +1571,7 @@ ENTRY(setjmp)
  * XXX We need a comment here (lightly) explaining this. Probably a
  * short section 9 man page, too, explaining how kernel longjmp differs
  * from userland.
- * If it is part of the MI/MD interface, it needs documentation, IMHO.
+ * Since it is part of the MI/MD interface, it needs documentation, IMHO.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void longjmp (label_t *l) */
@@ -1609,7 +1608,7 @@ ENTRY(longjmp)
  */
 /*
  * XXX No section 9 man page for setrunqueue. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void setrunqueue(struct proc *p) */
@@ -1646,7 +1645,7 @@ NENTRY(setrunqueue)
  */
 /*
  * XXX No section 9 man page for remrunqueue. IMHO,
- * if it is part of the MI/MD interface, it needs documentation.
+ * Since it is part of the MI/MD interface, it needs documentation.
  * -- Perry Metzger, May 7, 2001
  */
 /* LINTSTUB: Func: void remrunqueue(struct proc *p) */
