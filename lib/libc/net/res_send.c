@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.29 2000/06/18 21:41:23 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.29.2.1 2000/08/07 16:53:36 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.29 2000/06/18 21:41:23 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.29.2.1 2000/08/07 16:53:36 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -624,7 +624,7 @@ read_len:
 			/*
 			 * Use datagrams.
 			 */
-			time_t seconds;
+			time_t seconds, now, timeout, finish;
 			struct pollfd dsfd;
 			struct sockaddr_storage from;
 			socklen_t fromlen;
@@ -734,13 +734,21 @@ read_len:
 				seconds /= _res.nscount;
 			if ((long) seconds <= 0)
 				seconds = 1;
+			now = time(NULL);
+			timeout = seconds;
+			finish = now + timeout;
 			dsfd.fd = s;
 			dsfd.events = POLLIN;
 wait:
-			n = poll(&dsfd, 1, (int)(seconds * 1000));
+			n = poll(&dsfd, 1, (int)(timeout * 1000));
 			if (n < 0) {
-				if (errno == EINTR)
-					goto wait;
+				if (errno == EINTR) {
+					now = time(NULL);
+					if (finish > now) {
+						timeout = finish - now;
+						goto wait;
+					}
+				}
 				Perror(stderr, "poll", errno);
 				res_close();
 				goto next_ns;
