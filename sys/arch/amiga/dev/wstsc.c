@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Michael L. Hitch
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -31,65 +32,156 @@
  * SUCH DAMAGE.
  *
  *	@(#)supradma.c
- *	$Id: wstsc.c,v 1.1 1994/05/08 05:53:50 chopps Exp $
+ *	$Id: wstsc.c,v 1.2 1994/05/29 04:50:25 chopps Exp $
  */
-
-/*
- * dummy Supra 5380 DMA driver
- */
-
-#include "suprascsi.h"
-
-#if NSUPRASCSI > 0
-
 #include <sys/param.h>
-
-#include <amiga/dev/device.h>
-#include <amiga/dev/scivar.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+#include <amiga/amiga/device.h>
 #include <amiga/dev/scireg.h>
+#include <amiga/dev/scivar.h>
+#include <amiga/dev/ztwobusvar.h>
 
-int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
+int wstscprint __P((void *auxp, char *));
+void wstscattach __P((struct device *, struct device *, void *));
+int wstscmatch __P((struct device *, struct cfdata *, void *));
+
+int wstsc_dma_xfer_in __P((struct sci_softc *dev, int len,
+    register u_char *buf, int phase));
+int wstsc_dma_xfer_out __P((struct sci_softc *dev, int len,
+    register u_char *buf, int phase));
+int wstsc_dma_xfer_in2 __P((struct sci_softc *dev, int len,
+    register u_short *buf, int phase));
+int wstsc_dma_xfer_out2 __P((struct sci_softc *dev, int len,
+    register u_short *buf, int phase));
+
+struct scsi_adapter wstsc_scsiswitch = {
+	sci_scsicmd,
+	sci_minphys,
+	0,			/* no lun support */
+	0,			/* no lun support */
+	sci_adinfo,
+	"wstsc",
+};
+
+struct scsi_device wstsc_scsidev = {
+	NULL,		/* use default error handler */
+	NULL,		/* do not have a start functio */
+	NULL,		/* have no async handler */
+	NULL,		/* Use default done routine */
+	"wstsc",
+	0,
+};
+
+#define QPRINTF
 
 #ifdef DEBUG
 extern int sci_debug;
-#define QUASEL
-#endif
-#define	HIST(h,w)
-
-#ifdef QUASEL
-#define QPRINTF(a) if (sci_debug > 1) printf a
-#else
-#define QPRINTF
 #endif
 
 extern int sci_data_wait;
 
-static int dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-static int dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-static int dma_xfer_in2 __P((struct sci_softc *dev, int len,
-    register u_short *buf, int phase));
-static int dma_xfer_out2 __P((struct sci_softc *dev, int len,
-    register u_short *buf, int phase));
-static int supra_intr __P((struct sci_softc *dev));
+int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
 
-void
-supradmainit (dev)
-	struct sci_softc *dev;
+struct cfdriver wstsccd = {
+	NULL, "wstsc", wstscmatch, wstscattach, 
+	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
+
+/*
+ * if this a Supra WordSync board
+ */
+int
+wstscmatch(pdp, cdp, auxp)
+	struct device *pdp;
+	struct cfdata *cdp;
+	void *auxp;
 {
-	if (supradma_pseudo == 2) {
-		dev->dma_xfer_in = dma_xfer_in2;
-		dev->dma_xfer_out = dma_xfer_out2;
-	} else if (supradma_pseudo == 1) {
-		dev->dma_xfer_in = dma_xfer_in;
-		dev->dma_xfer_out = dma_xfer_out;
-	}
-	dev->dma_intr = supra_intr;
+	struct ztwobus_args *zap;
+
+	zap = auxp;
+
+	/*
+	 * Check manufacturer and product id.
+	 */
+	if (zap->manid == 1056 && zap->prodid == 12)	/* add other boards? */
+		return(1);
+	else
+		return(0);
 }
 
-static int
-dma_xfer_in (dev, len, buf, phase)
+void
+wstscattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
+{
+	volatile u_char *rp;
+	struct sci_softc *sc;
+	struct ztwobus_args *zap;
+
+	zap = auxp;
+	
+	sc = (struct sci_softc *)dp;
+	rp = zap->va;
+	/*
+	 * set up 5380 register pointers
+	 * (Needs check on which Supra board this is - for now,
+	 *  just do the WordSync)
+	 */
+	sc->sci_data = rp + 0;
+	sc->sci_odata = rp + 0;
+	sc->sci_icmd = rp + 2;
+	sc->sci_mode = rp + 4;
+	sc->sci_tcmd = rp + 6;
+	sc->sci_bus_csr = rp + 8;
+	sc->sci_sel_enb = rp + 8;
+	sc->sci_csr = rp + 10;
+	sc->sci_dma_send = rp + 10;
+	sc->sci_idata = rp + 12;
+	sc->sci_trecv = rp + 12;
+	sc->sci_iack = rp + 14;
+	sc->sci_irecv = rp + 14;
+
+	if (supradma_pseudo == 2) {
+		sc->dma_xfer_in = wstsc_dma_xfer_in2;
+		sc->dma_xfer_out = wstsc_dma_xfer_out2;
+	}
+	else if (supradma_pseudo == 1) {
+		sc->dma_xfer_in = wstsc_dma_xfer_in;
+		sc->dma_xfer_out = wstsc_dma_xfer_out;
+	}
+
+	scireset(sc);
+
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter = &wstsc_scsiswitch;
+	sc->sc_link.device = &wstsc_scsidev;
+	TAILQ_INIT(&sc->sc_xslist);
+
+	/*
+	 * attach all scsi units on us
+	 */
+	config_found(dp, &sc->sc_link, wstscprint);
+}
+
+/*
+ * print diag if pnp is NULL else just extra
+ */
+int
+wstscprint(auxp, pnp)
+	void *auxp;
+	char *pnp;
+{
+	if (pnp == NULL)
+		return(UNCONF);
+	return(QUIET);
+}
+
+int
+wstsc_dma_xfer_in (dev, len, buf, phase)
 	struct sci_softc *dev;
 	int len;
 	register u_char *buf;
@@ -120,7 +212,6 @@ dma_xfer_in (dev, len, buf, phase)
 					printf("supradma2_in fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
-				HIST(ixin_wait, wait)
 				*dev->sci_mode = 0;
 				return 0;
 			}
@@ -205,7 +296,6 @@ dma_xfer_in (dev, len, buf, phase)
 					printf("supradma1_in fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
-				HIST(ixin_wait, wait)
 				*dev->sci_mode = 0;
 				return 0;
 			}
@@ -219,13 +309,12 @@ dma_xfer_in (dev, len, buf, phase)
 	  len, obp[0], obp[1], obp[2], obp[3], obp[4], obp[5],
 	  obp[6], obp[7], obp[8], obp[9]));
 
-	HIST(ixin_wait, wait)
 	*dev->sci_mode = 0;
 	return 0;
 }
 
-static int
-dma_xfer_out (dev, len, buf, phase)
+int
+wstsc_dma_xfer_out (dev, len, buf, phase)
 	struct sci_softc *dev;
 	int len;
 	register u_char *buf;
@@ -259,7 +348,6 @@ dma_xfer_out (dev, len, buf, phase)
 					printf("supradma_out fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
-				HIST(ixin_wait, wait)
 				*dev->sci_mode = 0;
 				return 0;
 			}
@@ -274,15 +362,14 @@ dma_xfer_out (dev, len, buf, phase)
 	  SCI_CSR_PHASE_MATCH && --wait);
 
 
-	HIST(ixin_wait, wait)
 	*dev->sci_mode = 0;
 	*dev->sci_icmd = 0;
 	return 0;
 }
 
 
-static int
-dma_xfer_in2 (dev, len, buf, phase)
+int
+wstsc_dma_xfer_in2 (dev, len, buf, phase)
 	struct sci_softc *dev;
 	int len;
 	register u_short *buf;
@@ -313,7 +400,6 @@ dma_xfer_in2 (dev, len, buf, phase)
 					printf("supradma2_in2 fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
-				HIST(ixin_wait, wait)
 				*dev->sci_mode &= ~SCI_MODE_DMA;
 				return 0;
 			}
@@ -370,7 +456,6 @@ dma_xfer_in2 (dev, len, buf, phase)
 					printf("supradma1_in2 fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
-				HIST(ixin_wait, wait)
 				*dev->sci_mode &= ~SCI_MODE_DMA;
 				return 0;
 			}
@@ -388,14 +473,13 @@ dma_xfer_in2 (dev, len, buf, phase)
 	  len, obp[0], obp[1], obp[2], obp[3], obp[4], obp[5],
 	  obp[6], obp[7], obp[8], obp[9]));
 
-	HIST(ixin_wait, wait)
 	*dev->sci_irecv = 0;
 	*dev->sci_mode = 0;
 	return 0;
 }
 
-static int
-dma_xfer_out2 (dev, len, buf, phase)
+int
+wstsc_dma_xfer_out2 (dev, len, buf, phase)
 	struct sci_softc *dev;
 	int len;
 	register u_short *buf;
@@ -430,7 +514,6 @@ dma_xfer_out2 (dev, len, buf, phase)
 					printf("supradma_out2 fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
-				HIST(ixin_wait, wait)
 				*dev->sci_mode = 0;
 				return 0;
 			}
@@ -472,7 +555,6 @@ dma_xfer_out2 (dev, len, buf, phase)
 #endif
 
 
-	HIST(ixin_wait, wait)
 	*dev->sci_irecv = 0;
 	*dev->sci_icmd &= ~SCI_ICMD_ACK;
 	*dev->sci_mode = 0;
@@ -480,18 +562,22 @@ dma_xfer_out2 (dev, len, buf, phase)
 	return 0;
 }
 
-static int
-supra_intr (dev)
-	struct sci_softc *dev;
+int
+wstsc_intr()
 {
-	if (*(dev->sci_csr + 0x10) & SCI_CSR_INT) {
-		char dummy;
-#if 0
-printf ("supra_intr\n");
-#endif
-		dummy = *(dev->sci_iack + 0x10);
-		return (1);
+	struct sci_softc *dev;
+	int i, found;
+	u_char stat;
+
+	found = 0;
+	for (i = 0; i < wstsccd.cd_ndevs; i++) {
+		dev = wstsccd.cd_devs[i];
+		if (dev == NULL)
+			continue;
+		if ((*(dev->sci_csr + 0x10) & SCI_CSR_INT) == 0)
+			continue;
+		++found;
+		stat = *(dev->sci_iack + 0x10);
 	}
-	return (0);
+	return (found);
 }
-#endif
