@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.8 1997/09/05 22:28:12 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -70,6 +70,42 @@
 #define CCR1	0xc1		/* configuration control register 1 */
 #define CCR1_RPL	0x01	/* enables RPLSET and RPLVAL# pins */
 /* the remaining 7 bits of this register are reserved */
+
+/*
+ * bits in the pentiums %cr4 register:
+ */
+
+#define CR4_VME	0x00000001	/* virtual 8086 mode extension enable */
+#define CR4_PVI 0x00000002	/* protected mode virtual interrupt enable */
+#define CR4_TSD 0x00000004	/* restrict RDTSC instruction to cpl 0 only */
+#define CR4_DE	0x00000008	/* debugging extension */
+#define CR4_PSE	0x00000010	/* large (4MB) page size enable */
+#define CR4_PAE 0x00000020	/* physical address extension enable */
+#define CR4_MCE	0x00000040	/* machine check enable */
+#define CR4_PGE	0x00000080	/* page global enable */
+#define CR4_PCE	0x00000100	/* enable RDPMC instruction for all cpls */
+
+/*
+ * CPUID "features" bits:
+ */
+
+#define CPUID_FPU	0x0001	/* processor has an FPU? */
+#define CPUID_VME	0x0002	/* has virtual mode (%cr4's VME/PVI) */
+#define CPUID_DE	0x0004	/* has debugging extension */
+#define CPUID_PSE	0x0008	/* has page 4MB page size extension */
+#define CPUID_TSC	0x0010	/* has time stamp counter */
+#define CPUID_MSR	0x0020	/* has mode specific registers */
+#define CPUID_PAE	0x0040	/* has phys address extension */
+#define CPUID_MCE	0x0080	/* has machine check exception */
+#define CPUID_CX8	0x0100	/* has CMPXCHG8B instruction */
+#define CPUID_APIC	0x0200	/* has enabled APIC */
+#define CPUID_B10	0x0400	/* reserved, MTRR */
+#define CPUID_B11	0x0800	/* has SYSENTER/SYSEXIT extension */
+#define CPUID_MTRR	0x1000	/* has memory type range register */
+#define CPUID_PGE	0x2000	/* has page global extension */
+#define CPUID_MCA	0x4000	/* has machine check architecture */
+#define CPUID_CMOV	0x8000	/* has CMOVcc instruction */
+/* bits 16->22: unknown, 23=MMX supported, 24-31 reserved */
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.
