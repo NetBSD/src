@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.h,v 1.2 2002/11/28 21:23:54 manu Exp $ */
+/*	$NetBSD: darwin_exec.h,v 1.3 2002/12/07 15:33:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,16 @@
 
 #ifndef	_DARWIN_EXEC_H_
 #define	_DARWIN_EXEC_H_
+
+#include <compat/mach/mach_exec.h>
+
+/* 
+ * Because it can be used by Mach emulation code as well as Darwin emulation
+ * code, this structure must begin with a struct mach_emuldata. 
+ */
+struct darwin_emuldata {
+	struct mach_emuldata ded_mach_emuldata;
+};
 
 int exec_darwin_copyargs(struct proc *, struct exec_package *, 
     struct ps_strings *, char **, void *);

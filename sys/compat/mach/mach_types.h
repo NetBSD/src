@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.7 2002/11/29 17:08:16 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.8 2002/12/07 15:33:01 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,15 @@ typedef int mach_vm_prot_t;
 typedef unsigned int mach_natural_t;
 typedef unsigned int mach_vm_size_t;
 typedef unsigned long mach_vm_offset_t;
-typedef void *mach_cproc_t;	/* Unkown, see xnu/osfmk/ppc/hw_exception.s */
+
+/* 
+ * This is called cproc_t in Mach (cthread_t in Darwin). It is a pointer to 
+ * a struct cproc (struct cthread in Darwin), which is stored in userland and
+ * seems to be opaque to the kernel. The kernel just has to store and restore
+ * it with cthread_self() (pthread_self() in Darwin) and _cthread_set_self()
+ * (_pthread_set_self() in Darwin). 
+ */
+typedef void *mach_cproc_t;	
 
 typedef struct mach_timebase_info {
 	u_int32_t	numer;

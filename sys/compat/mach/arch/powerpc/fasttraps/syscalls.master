@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2002/11/03 23:17:21 manu Exp $
+	$NetBSD: syscalls.master,v 1.2 2002/12/07 15:33:03 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -45,7 +45,7 @@
 
 0	UNIMPL	
 1	STD		{ void mach_sys_cthread_set_self(mach_cproc_t p); }
-2	STD		{ void mach_sys_cthread_info(void); }
+2	STD		{ mach_cproc_t mach_sys_cthread_self(void); }
 3	STD		{ void mach_sys_fp_status(void); }
 4	STD		{ void mach_sys_load_msr(void); }
 5	UNIMPL	
