@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: groff2netbsd,v 1.2 2003/06/30 18:02:48 wiz Exp $
+#	$NetBSD: groff2netbsd,v 1.3 2004/07/30 15:29:45 wiz Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,13 +42,14 @@
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/groff/release/tar/file
 #	$ sh /usr/src/gnu/dist/groff/groff2netbsd groff-1.x.y `pwd`
-#	$ cd gnusrc/gnu/dist/groff
-#	$ cvs import -m "Import groff 1.x.y" gnusrc/dist/groff FSF groff-1-x-y
+#	$ cd src/gnu/dist/groff
+#	$ cvs import -m "Import groff 1.x.y" src/gnu/dist/groff FSF groff-1-x-y
 # merge sources according to instructions given
+# e.g. cvs -d cvs.netbsd.org:/cvsroot checkout -jgroff-1-19 -jgroff-1-19-1 src/gnu/dist/groff
 #	$ cd ../../../groff-1.x.y
 #	$ run ./configure
-# merge newly generated src/include/defs.h with 
-# /usr/src/gnu/usr.bin/groff/include/defs.h; compare VARIABLES in Makefile
+# merge newly generated src/include/config.h with 
+# /usr/src/gnu/usr.bin/groff/include/config.h; compare VARIABLES in Makefile
 # with those in /usr/src/gnu/usr.bin/groff/Makefile.inc
 #	$ cd ..
 #	$ rm -r gnusrc groff-1.x.y
