@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evregion - ACPI AddressSpace (OpRegion) handler dispatch
- *              $Revision: 1.3 $
+ *              xRevision: 136 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.3 2002/06/15 01:47:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.4 2002/12/23 00:22:09 kanaoka Exp $");
 
 #define __EVREGION_C__
 
@@ -126,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.3 2002/06/15 01:47:17 thorpej Exp $")
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evregion")
-
 
 
 /*******************************************************************************
@@ -276,7 +275,7 @@ AcpiEvExecuteRegMethod (
     /*
      *  Execute the method, no return value
      */
-    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (RegionObj2->Extra.Method_REG, "  [Method]"));
+    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (ACPI_TYPE_METHOD, RegionObj2->Extra.Method_REG, NULL));
     Status = AcpiNsEvaluateByHandle (RegionObj2->Extra.Method_REG, Params, NULL);
 
     AcpiUtRemoveReference (Params[1]);

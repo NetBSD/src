@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psxface - Parser external interfaces
- *              $Revision: 1.3 $
+ *              xRevision: 66 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psxface.c,v 1.3 2002/06/15 01:47:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psxface.c,v 1.4 2002/12/23 00:22:14 kanaoka Exp $");
 
 #define __PSXFACE_C__
 
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: psxface.c,v 1.3 2002/06/15 01:47:25 thorpej Exp $");
 #include "acparser.h"
 #include "acdispat.h"
 #include "acinterp.h"
-#include "amlcode.h"
 #include "acnamesp.h"
 
 
@@ -208,7 +207,7 @@ AcpiPsxExecute (
 
     /* Create and init a Root Node */
 
-    Op = AcpiPsAllocOp (AML_SCOPE_OP);
+    Op = AcpiPsCreateScopeOp ();
     if (!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -252,7 +251,7 @@ AcpiPsxExecute (
 
     /* Create and init a Root Node */
 
-    Op = AcpiPsAllocOp (AML_SCOPE_OP);
+    Op = AcpiPsCreateScopeOp ();
     if (!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);

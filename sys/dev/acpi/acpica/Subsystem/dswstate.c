@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswstate - Dispatcher parse tree walk management routines
- *              $Revision: 1.3 $
+ *              xRevision: 71 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.3 2002/06/15 01:47:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.4 2002/12/23 00:22:09 kanaoka Exp $");
 
 #define __DSWSTATE_C__
 
@@ -161,7 +161,7 @@ AcpiDsResultInsert (
         return (AE_NOT_EXIST);
     }
 
-    if (Index >= OBJ_NUM_OPERANDS)
+    if (Index >= ACPI_OBJ_NUM_OPERANDS)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "Index out of range: %X Obj=%p State=%p Num=%X\n",
@@ -223,7 +223,7 @@ AcpiDsResultRemove (
         return (AE_NOT_EXIST);
     }
 
-    if (Index >= OBJ_MAX_OPERAND)
+    if (Index >= ACPI_OBJ_MAX_OPERAND)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "Index out of range: %X State=%p Num=%X\n",
@@ -275,7 +275,7 @@ AcpiDsResultPop (
     ACPI_OPERAND_OBJECT     **Object,
     ACPI_WALK_STATE         *WalkState)
 {
-    UINT32                  Index;
+    NATIVE_UINT             Index;
     ACPI_GENERIC_STATE      *State;
 
 
@@ -299,7 +299,7 @@ AcpiDsResultPop (
 
     State->Results.NumResults--;
 
-    for (Index = OBJ_NUM_OPERANDS; Index; Index--)
+    for (Index = ACPI_OBJ_NUM_OPERANDS; Index; Index--)
     {
         /* Check for a valid result object */
 
@@ -310,7 +310,7 @@ AcpiDsResultPop (
 
             ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Obj=%p [%s] Index=%X State=%p Num=%X\n",
                 *Object, (*Object) ? AcpiUtGetObjectTypeName (*Object) : "NULL",
-                Index -1, WalkState, State->Results.NumResults));
+                (UINT32) Index -1, WalkState, State->Results.NumResults));
 
             return (AE_OK);
         }
@@ -422,7 +422,7 @@ AcpiDsResultPush (
         return (AE_AML_INTERNAL);
     }
 
-    if (State->Results.NumResults == OBJ_NUM_OPERANDS)
+    if (State->Results.NumResults == ACPI_OBJ_NUM_OPERANDS)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "Result stack overflow: Obj=%p State=%p Num=%X\n",
@@ -457,7 +457,7 @@ AcpiDsResultPush (
  *
  * RETURN:      Status
  *
- * DESCRIPTION:
+ * DESCRIPTION: Push an object onto the WalkState result stack.
  *
  ******************************************************************************/
 
@@ -494,7 +494,7 @@ AcpiDsResultStackPush (
  *
  * RETURN:      Status
  *
- * DESCRIPTION:
+ * DESCRIPTION: Pop an object off of the WalkState result stack.
  *
  ******************************************************************************/
 
@@ -554,7 +554,7 @@ AcpiDsObjStackDeleteAll (
 
     /* The stack size is configurable, but fixed */
 
-    for (i = 0; i < OBJ_NUM_OPERANDS; i++)
+    for (i = 0; i < ACPI_OBJ_NUM_OPERANDS; i++)
     {
         if (WalkState->Operands[i])
         {
@@ -590,7 +590,7 @@ AcpiDsObjStackPush (
 
     /* Check for stack overflow */
 
-    if (WalkState->NumOperands >= OBJ_NUM_OPERANDS)
+    if (WalkState->NumOperands >= ACPI_OBJ_NUM_OPERANDS)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "overflow! Obj=%p State=%p #Ops=%X\n",
@@ -964,9 +964,11 @@ AcpiDsCreateWalkState (
     WalkState->MethodDesc       = MthDesc;
     WalkState->Thread           = Thread;
 
+    WalkState->ParserState.StartOp = Origin;
+
     /* Init the method args/local */
 
-#ifndef _ACPI_ASL_COMPILER
+#if (!defined (ACPI_NO_METHOD_EXECUTION) && !defined (ACPI_CONSTANT_EVAL_ONLY))
     AcpiDsMethodDataInit (WalkState);
 #endif
 
@@ -989,7 +991,6 @@ AcpiDsCreateWalkState (
 }
 
 
-#ifndef _ACPI_ASL_COMPILER
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDsInitAmlWalk
@@ -1015,6 +1016,7 @@ AcpiDsInitAmlWalk (
 {
     ACPI_STATUS             Status;
     ACPI_PARSE_STATE        *ParserState = &WalkState->ParserState;
+    ACPI_PARSE_OBJECT       *ExtraOp;
 
 
     ACPI_FUNCTION_TRACE ("DsInitAmlWalk");
@@ -1054,7 +1056,7 @@ AcpiDsInitAmlWalk (
 
         /* Init the method arguments */
 
-        Status = AcpiDsMethodDataInitArgs (Params, MTH_NUM_ARGS, WalkState);
+        Status = AcpiDsMethodDataInitArgs (Params, ACPI_METHOD_NUM_ARGS, WalkState);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -1062,9 +1064,26 @@ AcpiDsInitAmlWalk (
     }
     else
     {
-        /* Setup the current scope */
-
-        ParserState->StartNode = ParserState->StartOp->Common.Node;
+        /* 
+         * Setup the current scope.
+         * Find a Named Op that has a namespace node associated with it.
+         * search upwards from this Op.  Current scope is the first
+         * Op with a namespace node.
+         */
+        ExtraOp = ParserState->StartOp;
+        while (ExtraOp && !ExtraOp->Common.Node)
+        {
+            ExtraOp = ExtraOp->Common.Parent;
+        }
+        if (!ExtraOp)
+        {
+            ParserState->StartNode = NULL;
+        }
+        else
+        {
+            ParserState->StartNode = ExtraOp->Common.Node;
+        }
+        
         if (ParserState->StartNode)
         {
             /* Push start scope on scope stack and make it current  */
@@ -1081,7 +1100,6 @@ AcpiDsInitAmlWalk (
     Status = AcpiDsInitCallbacks (WalkState, PassNumber);
     return_ACPI_STATUS (Status);
 }
-#endif
 
 
 /*******************************************************************************

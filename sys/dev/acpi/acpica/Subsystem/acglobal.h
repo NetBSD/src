@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acglobal.h - Declarations for global variables
- *       $Revision: 1.2 $
+ *       xRevision: 134 $
  *
  *****************************************************************************/
 
@@ -163,6 +163,7 @@ extern      UINT32                      AcpiGbl_NestingLevel;
  *
  */
 ACPI_EXTERN UINT32                      AcpiGbl_TableFlags;
+ACPI_EXTERN UINT32                      AcpiGbl_RsdtTableCount;
 ACPI_EXTERN RSDP_DESCRIPTOR            *AcpiGbl_RSDP;
 ACPI_EXTERN XSDT_DESCRIPTOR            *AcpiGbl_XSDT;
 ACPI_EXTERN FADT_DESCRIPTOR            *AcpiGbl_FADT;
@@ -226,12 +227,14 @@ ACPI_EXTERN BOOLEAN                     AcpiGbl_GlobalLockAcquired;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_StepToNextCall;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_AcpiHardwarePresent;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_GlobalLockPresent;
+ACPI_EXTERN BOOLEAN                     AcpiGbl_EventsInitialized;
 
 extern BOOLEAN                          AcpiGbl_Shutdown;
 extern UINT32                           AcpiGbl_StartupFlags;
 extern const UINT8                      AcpiGbl_DecodeTo8bit[8];
-extern const NATIVE_CHAR                *AcpiGbl_DbSleepStates[ACPI_NUM_SLEEP_STATES];
+extern const NATIVE_CHAR               *AcpiGbl_DbSleepStates[ACPI_S_STATE_COUNT];
 extern const ACPI_OPCODE_INFO           AcpiGbl_AmlOpInfo[AML_NUM_OPCODES];
+extern const NATIVE_CHAR               *AcpiGbl_RegionTypes[ACPI_NUM_PREDEFINED_REGIONS];
 
 
 /*****************************************************************************
@@ -240,9 +243,13 @@ extern const ACPI_OPCODE_INFO           AcpiGbl_AmlOpInfo[AML_NUM_OPCODES];
  *
  ****************************************************************************/
 
-#define NUM_NS_TYPES                    INTERNAL_TYPE_INVALID+1
-#define NUM_PREDEFINED_NAMES            9
+#define NUM_NS_TYPES                    ACPI_TYPE_INVALID+1
 
+#if defined (ACPI_NO_METHOD_EXECUTION) || defined (ACPI_CONSTANT_EVAL_ONLY)
+#define NUM_PREDEFINED_NAMES            10
+#else
+#define NUM_PREDEFINED_NAMES            9
+#endif
 
 ACPI_EXTERN ACPI_NAMESPACE_NODE         AcpiGbl_RootNodeStruct;
 ACPI_EXTERN ACPI_NAMESPACE_NODE        *AcpiGbl_RootNode;
@@ -250,7 +257,7 @@ ACPI_EXTERN ACPI_NAMESPACE_NODE        *AcpiGbl_RootNode;
 extern const UINT8                      AcpiGbl_NsProperties[NUM_NS_TYPES];
 extern const ACPI_PREDEFINED_NAMES      AcpiGbl_PreDefinedNames [NUM_PREDEFINED_NAMES];
 
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 ACPI_EXTERN UINT32                      AcpiGbl_CurrentNodeCount;
 ACPI_EXTERN UINT32                      AcpiGbl_CurrentNodeSize;
 ACPI_EXTERN UINT32                      AcpiGbl_MaxConcurrentNodeCount;
@@ -327,19 +334,24 @@ ACPI_EXTERN ACPI_GPE_INDEX_INFO        *AcpiGbl_GpeNumberToIndex;
 
 ACPI_EXTERN UINT8                       AcpiGbl_DbOutputFlags;
 
+#ifdef ACPI_DISASSEMBLER
 
-#ifdef ENABLE_DEBUGGER
+ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_disasm;
+ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_verbose;
+#endif
+
+
+#ifdef ACPI_DEBUGGER
 
 extern      BOOLEAN                     AcpiGbl_MethodExecuting;
+extern      BOOLEAN                     AcpiGbl_AbortMethod;
 extern      BOOLEAN                     AcpiGbl_DbTerminateThreads;
 
 ACPI_EXTERN int                         optind;
 ACPI_EXTERN NATIVE_CHAR                *optarg;
 
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_tables;
-ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_disasm;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_stats;
-ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_verbose;
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOpt_ini_methods;
 
 
@@ -351,7 +363,6 @@ ACPI_EXTERN NATIVE_CHAR                 AcpiGbl_DbDebugFilename[40];
 ACPI_EXTERN BOOLEAN                     AcpiGbl_DbOutputToFile;
 ACPI_EXTERN NATIVE_CHAR                *AcpiGbl_DbBuffer;
 ACPI_EXTERN NATIVE_CHAR                *AcpiGbl_DbFilename;
-ACPI_EXTERN NATIVE_CHAR                *AcpiGbl_DbDisasmIndent;
 ACPI_EXTERN UINT32                      AcpiGbl_DbDebugLevel;
 ACPI_EXTERN UINT32                      AcpiGbl_DbConsoleDebugLevel;
 ACPI_EXTERN ACPI_TABLE_HEADER          *AcpiGbl_DbTablePtr;
@@ -360,8 +371,8 @@ ACPI_EXTERN ACPI_NAMESPACE_NODE        *AcpiGbl_DbScopeNode;
 /*
  * Statistic globals
  */
-ACPI_EXTERN UINT16                      AcpiGbl_ObjTypeCount[INTERNAL_TYPE_NODE_MAX+1];
-ACPI_EXTERN UINT16                      AcpiGbl_NodeTypeCount[INTERNAL_TYPE_NODE_MAX+1];
+ACPI_EXTERN UINT16                      AcpiGbl_ObjTypeCount[ACPI_TYPE_NS_NODE_MAX+1];
+ACPI_EXTERN UINT16                      AcpiGbl_NodeTypeCount[ACPI_TYPE_NS_NODE_MAX+1];
 ACPI_EXTERN UINT16                      AcpiGbl_ObjTypeCountMisc;
 ACPI_EXTERN UINT16                      AcpiGbl_NodeTypeCountMisc;
 ACPI_EXTERN UINT32                      AcpiGbl_NumNodes;
@@ -373,7 +384,7 @@ ACPI_EXTERN UINT32                      AcpiGbl_SizeOfMethodTrees;
 ACPI_EXTERN UINT32                      AcpiGbl_SizeOfNodeEntries;
 ACPI_EXTERN UINT32                      AcpiGbl_SizeOfAcpiObjects;
 
-#endif /* ENABLE_DEBUGGER */
+#endif /* ACPI_DEBUGGER */
 
 
 #endif /* __ACGLOBAL_H__ */

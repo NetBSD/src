@@ -3,7 +3,7 @@
  *
  * Module Name: hwregs - Read/write access functions for the various ACPI
  *                       control and status registers.
- *              $Revision: 1.4 $
+ *              xRevision: 137 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.4 2002/06/17 22:30:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.5 2002/12/23 00:22:12 kanaoka Exp $");
 
 #define __HWREGS_C__
 
@@ -246,6 +246,9 @@ AcpiGetSleepTypeData (
                     NULL, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "%s while evaluating SleepState [%s]\n",
+            AcpiFormatException (Status), AcpiGbl_DbSleepStates[SleepState]));
+
         return_ACPI_STATUS (Status);
     }
 
@@ -278,8 +281,7 @@ AcpiGetSleepTypeData (
     else if ((ACPI_GET_OBJECT_TYPE (ObjDesc->Package.Elements[0]) != ACPI_TYPE_INTEGER) ||
              (ACPI_GET_OBJECT_TYPE (ObjDesc->Package.Elements[1]) != ACPI_TYPE_INTEGER))
     {
-        ACPI_REPORT_ERROR (("Sleep State package elements are not both Integers\n"));
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Sleep State package elements are not both Integers (%s, %s)\n",
+        ACPI_REPORT_ERROR (("Sleep State package elements are not both Integers (%s, %s)\n",
             AcpiUtGetObjectTypeName (ObjDesc->Package.Elements[0]),
             AcpiUtGetObjectTypeName (ObjDesc->Package.Elements[1])));
         Status = AE_AML_OPERAND_TYPE;
@@ -295,8 +297,8 @@ AcpiGetSleepTypeData (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Bad Sleep object %p type %s\n",
-            ObjDesc, AcpiUtGetObjectTypeName (ObjDesc)));
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "While evaluating SleepState [%s], bad Sleep object %p type %s\n",
+            AcpiGbl_DbSleepStates[SleepState], ObjDesc, AcpiUtGetObjectTypeName (ObjDesc)));
     }
 
     AcpiUtRemoveReference (ObjDesc);
@@ -309,7 +311,7 @@ AcpiGetSleepTypeData (
  * FUNCTION:    AcpiHwGetRegisterBitMask
  *
  * PARAMETERS:  RegisterId          - Index of ACPI Register to access
- *  
+ *
  * RETURN:      The bit mask to be used when accessing the register
  *
  * DESCRIPTION: Map RegisterId into a register bit mask.
@@ -378,7 +380,7 @@ AcpiGetRegister (
         }
     }
 
-    Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK, 
+    Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK,
                     BitRegInfo->ParentRegister, &RegisterValue);
 
     if (Flags & ACPI_MTX_LOCK)
@@ -390,7 +392,7 @@ AcpiGetRegister (
     {
         /* Normalize the value that was read */
 
-        RegisterValue = ((RegisterValue & BitRegInfo->AccessBitMask) 
+        RegisterValue = ((RegisterValue & BitRegInfo->AccessBitMask)
                             >> BitRegInfo->BitPosition);
 
         *ReturnValue = RegisterValue;
@@ -451,7 +453,7 @@ AcpiSetRegister (
 
     /* Always do a register read first so we can insert the new bits  */
 
-    Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK, 
+    Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK,
                     BitRegInfo->ParentRegister, &RegisterValue);
     if (ACPI_FAILURE (Status))
     {
@@ -475,11 +477,11 @@ AcpiSetRegister (
          * information is the single bit we're interested in, all others should
          * be written as 0 so they will be left unchanged
          */
-        Value = ACPI_REGISTER_PREPARE_BITS (Value, 
+        Value = ACPI_REGISTER_PREPARE_BITS (Value,
                     BitRegInfo->BitPosition, BitRegInfo->AccessBitMask);
         if (Value)
         {
-            Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, 
+            Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK,
                         ACPI_REGISTER_PM1_STATUS, (UINT16) Value);
             RegisterValue = 0;
         }
@@ -488,10 +490,10 @@ AcpiSetRegister (
 
     case ACPI_REGISTER_PM1_ENABLE:
 
-        ACPI_REGISTER_INSERT_VALUE (RegisterValue, BitRegInfo->BitPosition, 
+        ACPI_REGISTER_INSERT_VALUE (RegisterValue, BitRegInfo->BitPosition,
                 BitRegInfo->AccessBitMask, Value);
 
-        Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, 
+        Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK,
                         ACPI_REGISTER_PM1_ENABLE, (UINT16) RegisterValue);
         break;
 
@@ -505,7 +507,7 @@ AcpiSetRegister (
          */
         ACPI_DEBUG_PRINT ((ACPI_DB_IO, "PM1 control: Read %X\n", RegisterValue));
 
-        ACPI_REGISTER_INSERT_VALUE (RegisterValue, BitRegInfo->BitPosition, 
+        ACPI_REGISTER_INSERT_VALUE (RegisterValue, BitRegInfo->BitPosition,
                 BitRegInfo->AccessBitMask, Value);
 
         Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, RegisterId,
@@ -515,7 +517,7 @@ AcpiSetRegister (
 
     case ACPI_REGISTER_PM2_CONTROL:
 
-        Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK, 
+        Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK,
                     ACPI_REGISTER_PM2_CONTROL, &RegisterValue);
         if (ACPI_FAILURE (Status))
         {
@@ -523,11 +525,11 @@ AcpiSetRegister (
         }
 
         ACPI_DEBUG_PRINT ((ACPI_DB_IO, "PM2 control: Read %X from %8.8X%8.8X\n",
-            RegisterValue, 
+            RegisterValue,
             ACPI_HIDWORD (ACPI_GET_ADDRESS (AcpiGbl_FADT->XPm2CntBlk.Address)),
             ACPI_LODWORD (ACPI_GET_ADDRESS (AcpiGbl_FADT->XPm2CntBlk.Address))));
 
-        ACPI_REGISTER_INSERT_VALUE (RegisterValue, BitRegInfo->BitPosition, 
+        ACPI_REGISTER_INSERT_VALUE (RegisterValue, BitRegInfo->BitPosition,
                 BitRegInfo->AccessBitMask, Value);
 
         ACPI_DEBUG_PRINT ((ACPI_DB_IO, "About to write %4.4X to %8.8X%8.8X\n",
@@ -851,7 +853,7 @@ AcpiHwLowLevelRead (
     {
     case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 
-        MemAddress = (ACPI_GET_ADDRESS (Reg->Address) 
+        MemAddress = (ACPI_GET_ADDRESS (Reg->Address)
                         + (ACPI_PHYSICAL_ADDRESS) Offset);
 
         Status = AcpiOsReadMemory (MemAddress, Value, Width);
@@ -860,7 +862,7 @@ AcpiHwLowLevelRead (
 
     case ACPI_ADR_SPACE_SYSTEM_IO:
 
-        IoAddress = (ACPI_IO_ADDRESS) (ACPI_GET_ADDRESS (Reg->Address) 
+        IoAddress = (ACPI_IO_ADDRESS) (ACPI_GET_ADDRESS (Reg->Address)
                                         + (ACPI_PHYSICAL_ADDRESS) Offset);
 
         Status = AcpiOsReadPort (IoAddress, Value, Width);
@@ -941,7 +943,7 @@ AcpiHwLowLevelWrite (
     {
     case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 
-        MemAddress = (ACPI_GET_ADDRESS (Reg->Address) 
+        MemAddress = (ACPI_GET_ADDRESS (Reg->Address)
                         + (ACPI_PHYSICAL_ADDRESS) Offset);
 
         Status = AcpiOsWriteMemory (MemAddress, (ACPI_INTEGER) Value, Width);
@@ -950,7 +952,7 @@ AcpiHwLowLevelWrite (
 
     case ACPI_ADR_SPACE_SYSTEM_IO:
 
-        IoAddress = (ACPI_IO_ADDRESS) (ACPI_GET_ADDRESS (Reg->Address) 
+        IoAddress = (ACPI_IO_ADDRESS) (ACPI_GET_ADDRESS (Reg->Address)
                                         + (ACPI_PHYSICAL_ADDRESS) Offset);
 
         Status = AcpiOsWritePort (IoAddress, (ACPI_INTEGER) Value, Width);
@@ -963,7 +965,7 @@ AcpiHwLowLevelWrite (
         PciId.Bus      = 0;
         PciId.Device   = ACPI_PCI_DEVICE (ACPI_GET_ADDRESS (Reg->Address));
         PciId.Function = ACPI_PCI_FUNCTION (ACPI_GET_ADDRESS (Reg->Address));
-        PciRegister    = (UINT16) (ACPI_PCI_REGISTER (ACPI_GET_ADDRESS (Reg->Address)) 
+        PciRegister    = (UINT16) (ACPI_PCI_REGISTER (ACPI_GET_ADDRESS (Reg->Address))
                                     + Offset);
 
         Status = AcpiOsWritePciConfiguration (&PciId, PciRegister, (ACPI_INTEGER) Value, Width);

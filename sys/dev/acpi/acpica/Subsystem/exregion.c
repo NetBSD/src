@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exregion - ACPI default OpRegion (address space) handlers
- *              $Revision: 1.3 $
+ *              xRevision: 81 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.3 2002/06/15 01:47:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.4 2002/12/23 00:22:11 kanaoka Exp $");
 
 #define __EXREGION_C__
 
@@ -227,16 +227,16 @@ AcpiExSystemMemorySpaceHandler (
                                 MemInfo->MappedLength);
         }
 
-        /* 
+        /*
          * Don't attempt to map memory beyond the end of the region, and
          * constrain the maximum mapping size to something reasonable.
          */
         WindowSize = (ACPI_SIZE) ((MemInfo->Address + MemInfo->Length) - Address);
-        if (WindowSize > SYSMEM_REGION_WINDOW_SIZE)
+        if (WindowSize > ACPI_SYSMEM_REGION_WINDOW_SIZE)
         {
-            WindowSize = SYSMEM_REGION_WINDOW_SIZE;
+            WindowSize = ACPI_SYSMEM_REGION_WINDOW_SIZE;
         }
-     
+
         /* Create a new mapping starting at the address given */
 
         Status = AcpiOsMapMemory (Address, WindowSize,
@@ -266,7 +266,7 @@ AcpiExSystemMemorySpaceHandler (
         "SystemMemory %d (%d width) Address=%8.8X%8.8X\n", Function, BitWidth,
         ACPI_HIDWORD (Address), ACPI_LODWORD (Address)));
 
-   /* 
+   /*
     * Perform the memory read or write
     *
     * Note: For machines that do not support non-aligned transfers, the target
@@ -325,7 +325,7 @@ AcpiExSystemMemorySpaceHandler (
             *(UINT64 *) LogicalAddrPtr = (UINT64) *Value;
             break;
 #endif
-        
+
         default:
             /* BitWidth was already validated */
             break;
