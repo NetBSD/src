@@ -30,12 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: microtime.s,v 1.5 1994/01/11 15:41:48 mycroft Exp $
+ *	$Id: microtime.s,v 1.6 1994/05/03 20:30:26 mycroft Exp $
  */
 
-#include "../include/asm.h"
-#include "../isa/isa.h"
-#include "../isa/timerreg.h"
+#include <machine/asm.h>
+#include <i386/isa/isareg.h>
+#include <i386/isa/timerreg.h>
 
 /*
  * Use a higher resolution version of microtime if HZ is not
@@ -47,7 +47,7 @@ ENTRY(microtime)
 	pushl	%esi
 	pushl	%ebx
 
-	movl	$(_time),%ebx
+	movl	$_time,%ebx		# get pointer to time
 
 	cli				# disable interrupts
 
@@ -57,65 +57,61 @@ ENTRY(microtime)
 	movl	$(TIMER_SEL0|TIMER_LATCH),%eax
 	outb	%al,$TIMER_MODE		# latch timer 0's counter
 
-	#	
 	# Read counter value into ebx, LSB first
-	#
+	xorl	%ebx,%ebx
 	inb	$TIMER_CNTR0,%al
-	movzbl	%al,%ebx
+	movb	%al,%bl
 	inb	$TIMER_CNTR0,%al
-	movzbl	%al,%eax
-	sall	$8,%eax
-	orl	%eax,%ebx
+	movb	%al,%bh
 
-	#
 	# Now check for counter overflow.  This is tricky because the
 	# timer chip doesn't let us atomically read the current counter
 	# value and the output state (i.e., overflow state).  We have
 	# to read the ICU interrupt request register (IRR) to see if the
 	# overflow has occured.  Because we lack atomicity, we use
-	# the (very accurate) heuristic that we only check for
-	# overflow if the value read is close to the interrupt period.
+	# the (very accurate) heuristic that we do not check for
+	# overflow if the value read is close to 0.
 	# E.g., if we just checked the IRR, we might read a non-overflowing
 	# value close to 0, experience overflow, then read this overflow
 	# from the IRR, and mistakenly add a correction to the "close
 	# to zero" value.
 	#
-	# We compare the counter value to heuristic constant 11890.
+	# We compare the counter value to heuristic constant 50.
 	# If the counter value is less than this, we assume the counter
 	# didn't overflow between disabling interrupts above and latching
 	# the counter value.  For example, we assume that the above 10 or so
-	# instructions take less than 11932 - 11890 = 42 microseconds to
-	# execute.
+	# instructions take less than 50 microseconds to execute.
+	#
+	# We used to check for overflow only if the value read was close to
+	# the timer limit, but this doesn't work very well if we're at the
+	# clock's ipl or higher.
 	#
 	# Otherwise, the counter might have overflowed.  We check for this
 	# condition by reading the interrupt request register out of the ICU.
 	# If it overflowed, we add in one clock period.
-	#
-	# The heuristic is "very accurate" because it works 100% if 
-	# we're called from an ipl less than the clock.  Otherwise,
-	# it might not work.  Currently, only gettimeofday and bpf
-	# call microtime so it's not a problem.
-	#
-	cmpl	$11890,%ebx
-	jle	2f
-	movl	$0x0a,%eax	# tell ICU we want IRR
-	outb	%al,$IO_ICU1
 
+	movl	$11932,%edx	# subtract counter value from limit since
+	subl	%ebx,%edx	#   it counts down
+
+	cmpl	$50,%ebx	# check for potential overflow
+	jle	1f
+	
 	inb	$IO_ICU1,%al	# read IRR in ICU
 	orb	_ipending,%al	# and soft intr reg
-	testb	$1,%al		# is a timer interrupt pending?
-	je	1f
-	addl	$-11932,%ebx	# yes, subtract one clock period
-1:
-	movl	$0x0b,%eax	# tell ICU we want ISR 
-	outb	%al,$IO_ICU1	#   (rest of kernel expects this)
-2:
-	sti			# enable interrupts
+	testb	$IRQ0,%al	# is a timer interrupt pending?
+	jz	1f
+	addl	$11932,%edx	# add another tick
+	
+1:	sti			# enable interrupts
 
-	movl	$11932,%eax	# subtract counter value from 11932 since
-	subl	%ebx,%eax	#   it is a count-down value
-	imull	$1000,%eax,%eax
-	movl	$0,%edx		# zero extend eax for div
+	movl	%edx,%eax	# movl %edx,%eax; imull $1000,%eax,%eax
+	sall	$10,%eax
+	sall	$3,%edx
+	subl	%edx,%eax
+	sall	$1,%edx
+	subl	%edx,%eax
+
+	xorl	%edx,%edx	# zero extend eax for div
 	movl	$1193,%ecx
 	idivl	%ecx		# convert to usecs: mult by 1000/1193
 
@@ -124,8 +120,8 @@ ENTRY(microtime)
 	jl	3f
 	subl	$1000000,%esi	# adjust usec
 	incl	%edi		# bump sec
-3:
-	movl	16(%esp),%ecx	# load timeval pointer arg
+	
+3:	movl	16(%esp),%ecx	# load timeval pointer arg
 	movl	%edi,(%ecx)	# tvp->tv_sec = sec
 	movl	%esi,4(%ecx)	# tvp->tv_usec = usec
 
