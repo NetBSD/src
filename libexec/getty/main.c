@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1997/04/29 21:01:54 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1997/08/06 05:40:28 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.20 1997/04/29 21:01:54 tls Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.21 1997/08/06 05:40:28 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,8 @@ static char rcsid[] = "$NetBSD: main.c,v 1.20 1997/04/29 21:01:54 tls Exp $";
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
+
 #include <errno.h>
-#include <signal.h>
 #include <fcntl.h>
 #include <time.h>
 #include <ctype.h>
