@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.1,v 1.13 1997/05/12 08:00:09 mikel Exp $
+.\"	$NetBSD: csh.1,v 1.14 1997/06/23 20:33:31 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -315,8 +315,9 @@ be set. It is an artifact from a
 implementation
 of the
 tty driver that allows generation of interrupt characters from
-the keyboard to tell jobs to stop.  See stty(1) for details
-on setting options in the new tty driver.
+the keyboard to tell jobs to stop.  See
+.Xr stty 1
+for details on setting options in the new tty driver.
 .Ss Status reporting
 This shell learns immediately whenever a process changes state.
 It normally informs you whenever a job becomes blocked so that
