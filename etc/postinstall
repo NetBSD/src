@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.16.2.3 2002/11/30 14:17:26 he Exp $
+# $NetBSD: postinstall,v 1.16.2.4 2002/12/12 21:46:32 he Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,7 +44,6 @@
 #
 # checks to add:
 #	- sysctl(8) renames
-#	- postfix config
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
 #	- support quiet/verbose mode ?
@@ -60,18 +59,18 @@ err()
 {
 	exitval=$1
 	shift
-	echo 1>&2 "${PROGNAME}: $*"
+	echo 1>&2 "${PROGNAME}: $@"
 	exit ${exitval}
 }
 
 warn()
 {
-	echo 1>&2 "${PROGNAME}: $*"
+	echo 1>&2 "${PROGNAME}: $@"
 }
 
 msg()
 {
-	echo "	$*"
+	echo "	$@"
 }
 
 # additem item description
@@ -118,7 +117,7 @@ check_ids()
 	_type=$2
 	_file=$3
 	shift 3
-	_ids=$*
+	_ids="$@"
 
 	if [ ! -f "${_file}" ]; then
 		msg "${_file} doesn't exist; can't check for missing ${_type}"
@@ -127,6 +126,10 @@ check_ids()
 	if [ ! -r "${_file}" ]; then
 		msg "${_file} is not readable; can't check for missing ${_type}"
 		return 1
+	fi
+	_notfixed=""
+	if [ "${_op}" = "fix" ]; then
+		_notfixed=${NOT_FIXED}
 	fi
 	_missing=$(awk -F: '
 		BEGIN {
@@ -145,7 +148,7 @@ check_ids()
 		}
 	' ${_ids} < ${_file})	|| return 1
 	if [ -n "${_missing}" ]; then
-		msg "Missing ${_type}:" $(echo ${_missing})
+		msg "Missing ${_type}${_notfixed}:" $(echo ${_missing})
 		return 1
 	fi
 	return 0
@@ -163,7 +166,7 @@ compare_dir()
 	_dest=$3
 	_mode=$4
 	shift 4
-	_files=$*
+	_files="$@"
 
 	if [ ! -d "${_src}" ]; then
 		msg "${_src} is not a directory; skipping check"
@@ -175,16 +178,16 @@ compare_dir()
 	for f in ${_files}; do
 		fs=${_src}/${f}
 		fd=${_dest}/${f}
-		error=""
+		_error=""
 		if [ ! -f "${fd}" ]; then
-			error="${fd} does not exist"
+			_error="${fd} does not exist"
 		elif ! cmp -s ${fs} ${fd} ; then
-			error="${fd} != ${fs}"
+			_error="${fs} != ${fd}"
 		else
 			continue
 		fi
 		if [ "${_op}" = "check" ]; then
-			msg ${error}
+			msg ${_error}
 			_cmpdir_rv=1
 		elif ! cp -f ${fs} ${fd}; then
 			msg "Can't copy ${fs} to ${fd}"
@@ -224,25 +227,31 @@ move_file()
 	return 0
 }
 
-# rcconf_is_set name var --
+# rcconf_is_set op name var --
 #	load the rcconf for name, and check if obsolete rc.conf(5) variable
 #	var is defined or not.
 #	returns 0 if defined (even to ""), otherwise 1.
 #
 rcconf_is_set()
 {
-	[ $# -eq 2 ] || err 2 "USAGE: rcconf_is_set name var"
-	_name=$1
-	_var=$2
+	[ $# -eq 3 ] || err 2 "USAGE: rcconf_is_set op name var"
+	_rcis_op=$1
+	_rcis_name=$2
+	_rcis_var=$3
+	_rcis_notfixed=""
+	if [ "${_rcis_op}" = "fix" ]; then
+		_rcis_notfixed=${NOT_FIXED}
+	fi
 	(
 		for f in \
 		    ${DEST_DIR}/etc/rc.conf \
-		    ${DEST_DIR}/etc/rc.conf.d/${_name}; do
+		    ${DEST_DIR}/etc/rc.conf.d/${_rcis_name}; do
 			[ -f "${f}" ] && . "${f}";
 		done
-		if eval "[ -n \"\${${_var}}\" \
-			    -o \"\${${_var}-UNSET}\" != \"UNSET\" ]"; then
-			msg "Obsolete rc.conf(5) variable '\$${_var}' found."
+		if eval "[ -n \"\${${_rcis_var}}\" \
+			    -o \"\${${_rcis_var}-UNSET}\" != \"UNSET\" ]"; then
+			msg \
+	"Obsolete rc.conf(5) variable '\$${_rcis_var}' found.${_rcis_notfixed}"
 			exit 0
 		else
 			exit 1
@@ -259,7 +268,7 @@ rcconf_is_set()
 #
 #	defaults
 #
-additem defaults "/etc/defaults being up to date"
+additem defaults "/etc/defaults/ being up to date"
 do_defaults()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_defaults  fix|check"
@@ -271,7 +280,7 @@ do_defaults()
 #
 #	mtree
 #
-additem mtree "/etc/mtree being up to date"
+additem mtree "/etc/mtree/ being up to date"
 do_mtree()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_mtree  fix|check"
@@ -290,7 +299,6 @@ do_gid()
 
 	check_ids $1 groups "${DEST_DIR}/etc/group" \
 	    named ntpd sshd
-	return $?
 }
 
 #
@@ -303,7 +311,6 @@ do_uid()
 
 	check_ids $1 users "${DEST_DIR}/etc/master.passwd" \
 	    named ntpd sshd
-	return $?
 }
 
 
@@ -350,7 +357,8 @@ do_rc()
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
-	for f in NETWORK gated; do
+	for f in NETWORK fsck.sh kerberos nfsiod servers systemfs \
+	    daemon gated login portmap sunndd xntpd; do
 		fd=${DEST_DIR}/etc/rc.d/${f}
 		[ ! -e "${fd}" ] && continue
 		if [ "${op}" = "check" ]; then
@@ -372,7 +380,7 @@ do_rc()
 		sysctl defcorename \
 		sysctl nfsiod_flags
 	while [ $# -gt 1 ]; do
-		if rcconf_is_set $1 $2; then
+		if rcconf_is_set ${op} $1 $2; then
 			failed=1
 		fi
 		shift 2
@@ -463,11 +471,30 @@ do_ssh()
 		fi
 	fi
 
+	dirsrc=${SRC_DIR}/crypto/dist/ssh
+	diretc=${SRC_DIR}/etc
+	modulidir=
+	if [ -f "${dirsrc}"/moduli ]; then
+		modulidir=$dirsrc
+	elif [ -f "${diretc}"/moduli ]; then
+		modulidir=$diretc
+		msg "Checking for moduli from ${modulidir} instead of ${dirsrc}"
+	else
+		msg "Can't find source directory for etc/moduli"
+		failed=1
+	fi
+	if [ -n "${modulidir}" ]; then
+		if ! compare_dir ${op} ${modulidir} \
+		    ${DEST_DIR}/etc 444 moduli; then
+			failed=1
+		fi
+	fi
+
 	if ! check_dir "${op}" "${DEST_DIR}/var/chroot/sshd" 755 ; then
 		failed=1
 	fi
 
-	if rcconf_is_set sshd sshd_conf_dir ; then
+	if rcconf_is_set ${op} sshd sshd_conf_dir ; then
 		failed=1
 	fi
 
@@ -486,13 +513,60 @@ do_wscons()
 	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
 
 	failed=0
+	notfixed=""
+	if [ "${op}" = "fix" ]; then
+		notfixed=${NOT_FIXED}
+	fi
 	while read _type _arg1 _rest; do
 		if [ "${_type}" = "mux" -a "${_arg1}" = "1" ]; then
 			msg \
-		"Obsolete wscons.conf(5) entry \""${_type} ${_arg1}"\" found."
+    "Obsolete wscons.conf(5) entry \""${_type} ${_arg1}"\" found.${notfixed}"
 			failed=1
 		fi
 	done < ${DEST_DIR}/etc/wscons.conf
+
+	return ${failed}
+}
+
+#
+#	makedev
+#
+additem makedev "/dev/MAKEDEV being up to date"
+do_makedev()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
+
+	compare_dir $1 ${SRC_DIR}/etc/etc.${MACHINE} \
+		${DEST_DIR}/dev 555 MAKEDEV || return 1
+}
+
+#
+#	postfix
+#
+additem postfix "/etc/postfix/ being up to date"
+do_postfix()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_postfix  fix|check"
+	op=$1
+	failed=0
+
+	dirsrc=${SRC_DIR}/gnu/dist/postfix/conf
+	dirshare=${DEST_DIR}/usr/share/examples/postfix
+	if [ -d "${dirsrc}" ]; then
+		pfdir=$dirsrc
+	elif [ -d "${dirshare}" ]; then
+		pfdir=$dirshare
+		msg "Checking from ${pfdir} instead of ${dirsrc}"
+	else
+		msg "Can't find source directory"
+		return 1
+	fi
+
+	compare_dir ${op} ${pfdir} ${DEST_DIR}/etc/postfix 555 postfix-script
+	failed=$(( ${failed} + $? ))
+	compare_dir ${op} ${pfdir} \
+	    ${DEST_DIR}/etc/postfix 444 post-install postfix-files
+	failed=$(( ${failed} + $? ))
 
 	return ${failed}
 }
@@ -513,8 +587,8 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] operation [item [...]]
 	or fixes are applied.
 
 	Options:
-	-s srcdir	Source directory to compare from.  [${SRC_DIR}]
-	-d destdir	Destination directory to check.    [${DEST_DIR}]
+	-s srcdir	Source directory to compare from.  [${SRC_DIR:-/}]
+	-d destdir	Destination directory to check.    [${DEST_DIR:-/}]
 
 	Operation may be one of:
 		help	display this help
@@ -554,8 +628,15 @@ main()
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
 
-	[ -d "${SRC_DIR}" ] || err 1 "${SRC_DIR} is not a directory"
-	[ -d "${DEST_DIR}" ] || err 1 "${DEST_DIR} is not a directory"
+	[ -d "${SRC_DIR}" ]	|| err 1 "${SRC_DIR} is not a directory"
+	[ -d "${DEST_DIR}" ]	|| err 1 "${DEST_DIR} is not a directory"
+
+		# If directories are /, clear them, so various messages
+		# don't have leading "//".   However, this requires
+		# the use of ${foo:-/} to display the variables.
+		#
+	[ "${SRC_DIR}" = "/" ]	&& SRC_DIR=""
+	[ "${DEST_DIR}" = "/" ]	&& DEST_DIR=""
 
 	op=$1
 	shift
@@ -567,13 +648,13 @@ main()
 		;;
 
 	list)
-		echo "Source directory: ${SRC_DIR}"
-		echo "Target directory: ${DEST_DIR}"
+		echo "Source directory: ${SRC_DIR:-/}"
+		echo "Target directory: ${DEST_DIR:-/}"
 		list
 		;;
 
 	check|fix)
-		todo=$*
+		todo="$@"
 		: ${todo:=${items}}
 
 		# ensure that all supplied items are valid
@@ -585,8 +666,8 @@ main()
 
 		# perform each check/fix
 		#
-		echo "Source directory: ${SRC_DIR}"
-		echo "Target directory: ${DEST_DIR}"
+		echo "Source directory: ${SRC_DIR:-/}"
+		echo "Target directory: ${DEST_DIR:-/}"
 		items_passed=
 		items_failed=
 		for i in ${todo}; do
@@ -640,9 +721,13 @@ mkdtemp ()
 PROGNAME=${0##*/}
 SRC_DIR="/usr/src"
 DEST_DIR="/"
+: ${MACHINE:=$( uname -m )}	# assume native build if $MACHINE is not set
+NOT_FIXED=" [NOT FIXED]"
+
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
+
 umask 022
 
-main $*
+main "$@"
 exit 0
