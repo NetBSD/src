@@ -1,4 +1,4 @@
-.\"	$NetBSD: apmd.8,v 1.9 1998/12/19 15:27:58 christos Exp $
+.\"	$NetBSD: apmd.8,v 1.10 1999/03/07 11:58:25 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,17 +41,23 @@
 .Nm apmd
 .Nd Advanced Power Management monitor daemon
 .Sh SYNOPSIS
-.Nm
-.Op Fl d
-.Op Fl s
-.Op Fl a
-.Op Fl l
-.Op Fl q
+.Nm ""
+.Op Fl adlqs
+.Bk -words
 .Op Fl t Ar seconds
+.Ek
+.Bk -words
 .Op Fl S Ar sockname
+.Ek
+.Bk -words
 .Op Fl m Ar sockmode
+.Ek
+.Bk -words
 .Op Fl o Ar sockowner:sockgroup
+.Ek
+.Bk -words
 .Op Fl f Ar devname
+.Ek
 .Sh DESCRIPTION
 .Nm
 monitors the advanced power management (APM) pseudo-device, acting on
