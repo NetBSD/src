@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.6 1996/04/30 22:58:31 jtc Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.7 1996/05/07 00:44:21 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypmatch.c,v 1.6 1996/04/30 22:58:31 jtc Exp $";
+static char rcsid[] = "$NetBSD: ypmatch.c,v 1.7 1996/05/07 00:44:21 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ char **argv;
 		switch(r) {
 		case 0:
 			if(key)
-				printf("%s ", inkey);
+				printf("%s: ", inkey);
 			printf("%*.*s\n", outbuflen, outbuflen, outbuf);
 			break;
 		case YPERR_YPBIND:
