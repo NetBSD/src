@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.8 2001/04/29 03:29:21 thorpej Exp $ */
+/* $NetBSD: in_cksum.c,v 1.9 2001/04/29 05:54:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.8 2001/04/29 03:29:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2001/04/29 05:54:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -199,6 +199,7 @@ in_cksum(register struct mbuf *m, register int len)
 	return (~sum & 0xffff);
 }
 
+#if 0
 int
 in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 {
@@ -251,3 +252,4 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	REDUCE16;
 	return (~sum & 0xffff);
 }
+#endif

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.138 2001/04/29 03:29:22 thorpej Exp $
+# $NetBSD: files.alpha,v 1.139 2001/04/29 05:54:29 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -505,6 +505,7 @@ file	dev/cons.c
 
 # Network protocol checksum routines
 file	arch/alpha/alpha/in_cksum.c		inet
+file	netinet/in4_cksum.c			inet
 file	netns/ns_cksum.c			ns
 
 # PROM console support (for ports that don't have native console support)
