@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.9 2003/01/18 06:23:35 thorpej Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.10 2003/01/22 22:20:23 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,6 +88,18 @@
 	lis	pmap,_C_LABEL(kernel_pmap_)@ha;	\
 	lwzu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap); \
 	RESTORE_SRS(pmap,sr)
+
+/*
+ * Save/restore MPC601 MQ register.
+ * Note: mpc6xx_init() relies on this instruction sequence.
+ */
+#define	SAVE_MQ(tf,b)							\
+	mfspr	b,SPR_MQ;						\
+	stw	b,FRAME_MQ+8(tf);
+
+#define	RESTORE_MQ(tf,b)						\
+	lwz	b,FRAME_MQ+8(tf);					\
+	mtspr	SPR_MQ,b;
 
 /*
  * This code gets copied to all the trap vectors
@@ -181,6 +193,60 @@ _C_LABEL(dsitrap):
 	mtsprg	1,1			/* save SP */
 	bla	disitrap
 _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
+
+/*
+ * Dedicated MPC601 version of the above.
+ * Considers different BAT format and combined implementation
+ * (being addressed as I-BAT).
+ */
+	.globl	_C_LABEL(dsi601trap),_C_LABEL(dsi601size)
+_C_LABEL(dsi601trap):
+	mtsprg	1,1
+	GET_CPUINFO(1)
+	stmw	28,CI_DISISAVE(1)	/* free r28-r31 */
+	mfsprg	1,1
+	mfcr	29			/* save CR */
+	mfxer	30			/* save XER */
+	mtsprg	2,30			/* in SPRG2 */
+	mfsrr1	31			/* test kernel mode */
+	mtcr	31
+	bc	12,17,1f		/* branch if PSL_PR is set */
+	mfdar	31			/* get fault address */
+	rlwinm	31,31,12,20,28		/* get "segment" battable offset */
+
+	/* get batl */
+	addis	31,31,_C_LABEL(battable)@ha
+	lwz	30,_C_LABEL(battable)+4@l(31)
+	mtcr	30
+	bc	4,25,1f			/* branch if Valid is is false,
+					   presently assumes supervisor only */
+
+	/* get batu */
+	lwz	31,_C_LABEL(battable)@l(31)
+/* We randomly use the highest two bat registers here */
+	mfspr	28,SPR_RTCL_R
+	andi.	28,28,128
+	bne	2f
+	mtibatu	2,31
+	mtibatl	2,30
+	b	3f
+2:
+	mtibatu	3,31
+	mtibatl	3,30
+3:
+	mfsprg	30,2			/* restore XER */
+	mtxer	30
+	mtcr	29			/* restore CR */
+	mtsprg	1,1
+	GET_CPUINFO(1)
+	lmw	28,CI_DISISAVE(1)	/* restore r28-r31 */
+	mfsprg	1,1
+	rfi				/* return to trapped code */
+1:
+	mflr	28			/* save LR */
+	mtsprg	1,1
+	bla	disitrap
+_C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 
 /*
  * This one for the external interrupt handler.
@@ -541,6 +607,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	4,FRAME_CTR+8(1);					\
 	stw	5,FRAME_EXC+8(1);					\
 	SAVE_VRSAVE(2,6);						\
+	SAVE_MQ(2,7);							\
 	stw	28,FRAME_DAR+8(1);					\
 	stw	29,FRAME_DSISR+8(1);					\
 	stw	30,FRAME_SRR0+8(1);					\
@@ -553,7 +620,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	4,FRAME_CTR+8(1);					\
 	lwz	5,FRAME_XER+8(1);					\
 	lwz	6,FRAME_LR+8(1);					\
-	RESTORE_VRSAVE(1,8);						\
+	RESTORE_MQ(1,8);						\
+	RESTORE_VRSAVE(1,9);						\
 	GET_CPUINFO(7);							\
 	stw	2,savearea(7);						\
 	stw	3,savearea+4(7);					\
