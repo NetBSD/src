@@ -1,10 +1,10 @@
-/*	$NetBSD: util.h,v 1.8 2002/03/16 22:36:42 kristerw Exp $	*/
+/*	$NetBSD: util.h,v 1.9 2003/05/30 18:14:13 kristerw Exp $	*/
 
 int move_file(char *, char *);
 void copy_file(char *, char *);
 void *xmalloc(size_t);
+void *xrealloc(void *, size_t);
 char *xstrdup(const char *);
-char *savestr(char *);
 void say(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
 void fatal(const char *, ...)

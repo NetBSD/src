@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.15 2003/05/30 18:14:13 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.14 2003/05/29 00:59:24 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.15 2003/05/30 18:14:13 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -178,7 +178,6 @@ main(int argc, char *argv[])
 	/* apply each hunk of patch */
 	hunk = 0;
 	failed = 0;
-	out_of_mem = FALSE;
 	while (another_hunk()) {
 	    hunk++;
 	    fuzz = Nulline;
@@ -270,19 +269,6 @@ main(int argc, char *argv[])
 	    }
 	}
 
-	if (out_of_mem && using_plan_a) {
-	    Argc = Argc_last;
-	    Argv = Argv_last;
-	    say("\n\nRan out of memory using Plan A--trying again...\n\n");
-	    if (ofp)
-	        Fclose(ofp);
-	    ofp = NULL;
-	    if (rejfp)
-	        Fclose(rejfp);
-	    rejfp = NULL;
-	    continue;
-	}
-    
 	assert(hunk);
     
 	/* finish spewing out the new file */
@@ -349,7 +335,7 @@ reinitialize_almost_everything(void)
     last_frozen_line = 0;
 
     filec = 0;
-    if (filearg[0] != NULL && !out_of_mem) {
+    if (filearg[0] != NULL) {
 	free(filearg[0]);
 	filearg[0] = NULL;
     }
