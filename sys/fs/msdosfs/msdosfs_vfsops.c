@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.14 2004/04/21 01:05:37 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.15 2004/04/27 17:25:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.14 2004/04/21 01:05:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.15 2004/04/27 17:25:50 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -277,6 +277,12 @@ msdosfs_mount(mp, path, data, ndp, p)
 		args.version = 1;
 		args.dirmask = args.mask;
 	}
+
+	/*
+	 * Reset GMT offset for pre-v3 mount structure args.
+	 */
+	if (args.version < 3)
+		args.gmtoff = 0;
 
 	/*
 	 * If updating, check whether changing from read-only to
