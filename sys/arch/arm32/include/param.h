@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15.8.2 2001/03/12 13:27:41 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.15.8.3 2001/03/23 11:38:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,5 +43,7 @@
 #define	MACHINE		"arm32"
 #define	_MACHINE_ARCH	arm32
 #define	MACHINE_ARCH	"arm32"
+
+#include <arm/arm32/param.h>
 
 #endif	/* _ARM32_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.3 2001/03/12 13:29:17 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.4 2001/03/23 11:38:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -369,52 +369,6 @@ mem_regions(mem, avail)
 {
 	*mem = physmemr;
 	*avail = availmemr;
-}
-
-void
-identifycpu()
-{
-	int pvr;
-
-	/*
-	 * Find cpu type
-	 */
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	switch (cpu) {
-	case 1:
-		sprintf(cpu_model, "601");
-		break;
-	case 3:
-		sprintf(cpu_model, "603");
-		break;
-	case 4:
-		sprintf(cpu_model, "604");
-		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
-		sprintf(cpu_model, "603e");
-		break;
-	case 7:
-		sprintf(cpu_model, "603ev");
-		break;
-	case 9:
-		sprintf(cpu_model, "604ev");
-		break;
-	case 20:
-		sprintf(cpu_model, "620");
-		break;
-	case 0x81:
-		sprintf(cpu_model, "8240");
-		break;
-	default:
-		sprintf(cpu_model, "Version %x", cpu);
-		break;
-	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf("CPU: %s %s\n", cpu_name, cpu_model);
 }
 
 void

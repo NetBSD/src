@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11.8.5 2001/03/12 13:29:11 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.8.6 2001/03/23 11:38:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -237,22 +237,6 @@ ofw_back:
  * Pull in common switch / setfault code.
  */
 #include <powerpc/powerpc/locore_subr.S>
-
-/*
- * Child comes here at the end of a fork.
- * Mostly similar to the above.
- */
-	.globl	_C_LABEL(fork_trampoline)
-_C_LABEL(fork_trampoline):
-	xor	3,3,3
-	lis	4,_C_LABEL(machine_interface)+SPLX@ha
-	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
-	mtlr	0
-	blrl
-	mtlr	31
-	mr	3,30
-	blrl				/* jump indirect to r31 */
-	b	trapexit
 
 /*
  * Pull in common trap vector code.
