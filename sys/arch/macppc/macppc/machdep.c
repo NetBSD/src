@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2002/02/16 08:30:27 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2002/03/02 00:44:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -190,22 +190,22 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Map PCI memory space.
 	 */
-	battable[0x8].batl = BATL(0x80000000, BAT_I, BAT_PP_RW);
+	battable[0x8].batl = BATL(0x80000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0x8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0x9].batl = BATL(0x90000000, BAT_I, BAT_PP_RW);
+	battable[0x9].batl = BATL(0x90000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0x9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0xa].batl = BATL(0xa0000000, BAT_I, BAT_PP_RW);
+	battable[0xa].batl = BATL(0xa0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xa].batu = BATU(0xa0000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0xb].batl = BATL(0xb0000000, BAT_I, BAT_PP_RW);
+	battable[0xb].batl = BATL(0xb0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xb].batu = BATU(0xb0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map obio devices.
 	 */
-	battable[0xf].batl = BATL(0xf0000000, BAT_I, BAT_PP_RW);
+	battable[0xf].batl = BATL(0xf0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xf].batu = BATU(0xf0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
