@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.10 1996/10/13 03:47:27 christos Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.11 1996/10/30 00:24:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,15 +86,8 @@ eeprom_match(parent, vcf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_EEPROM;
-	} else {
-		/* Validate the given PA. */
-		if (pa != OBIO_EEPROM)
-			return (0);
-	}
-	if (pa != ca->ca_paddr)
+	/* Validate the given address. */
+	if (ca->ca_paddr != OBIO_EEPROM)
 		return (0);
 
 	if (eeprom_va == NULL)

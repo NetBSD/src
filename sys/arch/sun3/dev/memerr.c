@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.4 1996/10/13 03:47:32 christos Exp $ */
+/*	$NetBSD: memerr.c,v 1.5 1996/10/30 00:24:37 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,22 +92,20 @@ memerr_match(parent, vcf, args)
 {
     struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	int pa, x;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
 		return (0);
 
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_MEMERR;
-	}
-	if (pa != ca->ca_paddr)
+	/* The peek returns -1 on bus error. */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
-	/* The peek returns -1 on bus error. */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
-	return (x != -1);
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = ME_PRI;
+
+	return (1);
 }
 
 static void
@@ -119,12 +117,6 @@ memerr_attach(parent, self, args)
 	struct memerr_softc *sc = (void *)self;
 	struct confargs *ca = args;
 	struct memerr *mer;
-
-	mer = (struct memerr *)
-	    obio_alloc(ca->ca_paddr, sizeof(*mer));
-	if (mer == NULL)
-		panic(": can not map register");
-	sc->sc_reg = mer;
 
 	/*
 	 * Which type of memory subsystem do we have?
@@ -143,11 +135,17 @@ memerr_attach(parent, self, args)
 		sc->sc_csrbits = ME_PAR_STR;
 		break;
 	}
+	printf(": (%s memory)\n", sc->sc_typename);
 
-	printf(" (%s memory)\n", sc->sc_typename);
+	mer = (struct memerr *)
+	    obio_alloc(ca->ca_paddr, sizeof(*mer));
+	if (mer == NULL)
+		panic("memerr: can not map register");
+	sc->sc_reg = mer;
 
 	/* Install interrupt handler. */
-	isr_add_autovect(memerr_interrupt, (void *)sc, ME_PRI);
+	isr_add_autovect(memerr_interrupt,
+		(void *)sc, ca->ca_intpri);
 
 	/* Enable error interrupt (and checking). */
 	if (sc->sc_type == ME_PAR)
