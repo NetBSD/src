@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.5.2.1 2000/11/20 19:58:30 bouyer Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.5.2.2 2001/03/29 09:02:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -137,7 +137,7 @@ cbiiiscattach(pdp, dp, auxp)
 
 	siopnginitialize(sc);
 
-	if (sc->sc_link.scsipi_scsi.max_target < 0)
+	if (sc->sc_channel.chan_ntargets < 0)
 		return;
 
 	sc->sc_isr.isr_intr = cbiiisc_dmaintr;

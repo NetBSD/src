@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.18.8.1 2000/11/20 19:58:44 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.18.8.2 2001/03/29 09:02:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,7 +88,6 @@ struct siop_acb {
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
 #define ACB_DONE	0x04
-#define ACB_CHKSENSE	0x08
 	struct scsi_generic cmd;  /* SCSI command block */
 	struct siop_ds ds;
 	void	*iob_buf;
@@ -114,7 +113,6 @@ struct siop_tinfo {
 	int	dconns;		/* #disconnects */
 	int	touts;		/* #timeouts */
 	int	perrs;		/* #parity errors */
-	int	senses;		/* #request sense commands sent */
 	ushort	lubusy;		/* What local units/subr. are busy? */
 	u_char  flags;
 	u_char  period;		/* Period suggestion */

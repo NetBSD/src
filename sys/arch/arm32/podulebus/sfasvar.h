@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.6.10.1 2001/03/27 15:30:32 bouyer Exp $ */
+/* $NetBSD: sfasvar.h,v 1.6.10.2 2001/03/29 09:02:59 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -129,16 +129,12 @@ struct nexus {
 #define SFAS_NS_RESELECTED	10	/* We was reselected */
 #define SFAS_NS_DONE		11	/* Done. Prephsase to FINISHED */
 #define SFAS_NS_FINISHED	12	/* Realy done. Call scsi_done */
-#define SFAS_NS_SENSE		13	/* We are requesting sense */
-#define SFAS_NS_RESET		14	/* We are reseting this unit */
+#define SFAS_NS_RESET		13	/* We are reseting this unit */
 
 /* SCSI nexus flags */
 #define SFAS_NF_UNIT_BUSY	0x0001	/* Unit is not available */
 
 #define SFAS_NF_SELECT_ME	0x0002	/* Nexus is set up, waiting for bus */
-
-#define SFAS_NF_REQUEST_SENSE	0x0004	/* We should request sense */
-#define SFAS_NF_SENSING		0x0008	/* We are sensing */
 
 #define SFAS_NF_HAS_MSG		0x0010	/* We have recieved a complete msg */
 
@@ -155,7 +151,7 @@ struct nexus {
 
 struct	sfas_softc {
 	struct	device		 sc_dev;	/* System required struct */
-	struct	scsipi_link	 sc_link;	/* For sub devices */
+	struct	scsipi_channel	 sc_channel;
 	struct	scsipi_adapter	 sc_adapter;
 	void		 	 *sc_ih;
 	struct evcnt		 sc_intrcnt;

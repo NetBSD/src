@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.16.10.2 2001/03/27 15:30:31 bouyer Exp $	*/
+/*	$NetBSD: oak.c,v 1.16.10.3 2001/03/29 09:02:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,14 +153,14 @@ oak_attach(parent, self, aux)
 	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
 
 	/* Provide an override for the host id */
-	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
+	sc->sc_ncr5380.sc_channel.chan_id = 7;
 	sprintf(hi_option, "%s.hostid", sc->sc_ncr5380.sc_dev.dv_xname);
 	(void)get_bootconf_option(boot_args, hi_option,
-	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
-	sc->sc_ncr5380.sc_adapter.scsipi_minphys = minphys;
+	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_channel.chan_id);
+	sc->sc_ncr5380.sc_adapter.adapter_minphys = minphys;
 
 	printf(": host=%d, using 8 bit PIO\n",
-	    sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
+	    sc->sc_ncr5380.sc_channel.chan_id);
 
 	ncr5380_attach(&sc->sc_ncr5380);
 }

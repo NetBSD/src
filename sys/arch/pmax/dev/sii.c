@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.36.2.1 2000/11/20 20:20:21 bouyer Exp $	*/
+/*	$NetBSD: sii.c,v 1.36.2.2 2001/03/29 09:03:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -201,23 +201,27 @@ siiattach(sc)
 	printf(": target %d\n", sc->sc_regs->id & SII_IDMSK);
 
 #if NXSII > 0
-	/*
-	 * fill in the prototype scsipi_link.
-	 */
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_regs->id * SII_IDMSK;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = dev;
-	sc->sc_link.openings = 1;	/* driver can't queue requests yet */
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+
+	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = 7; 
+	sc->sc_adapter.adapt_max_periph = 1;
+	sc->sc_adapter.adapt_ioctl = NULL; 
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = sii_scsi_request;
+
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = 8;
+	sc->sc_channel.chan_nluns = 8;
+	sc->sc_channel.chan_id = sc->sc_regs->id * SII_IDMSK;
+
 
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
 #endif
 }
 
@@ -228,50 +232,68 @@ siiattach(sc)
  */
 
 #if NXSII > 0
-int
-sii_scsi_cmd(xs)
-	struct scsipi_xfer *xs;
+void
+sii_scsi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	int target = xs->sc_link->scsipi_scsi.target;
-	struct siisoftc *sc = xs->sc_link->adapter_softc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct siisoftc *sc = (void *)chan->chan_adapter->adapt_dev;
+	int target;
 	int s;
 	int count;
 
-	s = splbio();
-	if (sc->sc_cmd[target]) {
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		target = periph->periph_target;
+		s = splbio();
+		if (sc->sc_cmd[target]) {
+			splx(s);
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			printf("[busy at start]\n");
+			return;
+		}
+		/*
+		 * Build a ScsiCmd for this command and start it.
+		 */
+		sc->sc_xs[target] = xs;
+		sc->sc_cmd[target] = &sc->sc_cmd_fake[target];	/* XXX */
+		sc->sc_cmd[target]->unit = 0;
+		sc->sc_cmd[target]->flags = 0;
+		sc->sc_cmd[target]->buflen = xs->datalen;
+		sc->sc_cmd[target]->buf = xs->data;
+		sc->sc_cmd[target]->cmdlen = xs->cmdlen;
+		sc->sc_cmd[target]->cmd = (u_char *)xs->cmd;
+		sc->sc_cmd[target]->lun = xs->xs_periph->periph_lun;
+		sii_StartCmd(sc, target);
 		splx(s);
-		printf("[busy at start]\n");
-		return (TRY_AGAIN_LATER);
+		if ((xs->xs_control & XS_CTL_POLL) == 0)
+			return;
+		count = xs->timeout;
+		while (count) {
+			if ((xs->xs_status & XS_STS_DONE) != 0)
+				return;
+			siiintr(sc);
+			/* XXX schedule another command? */
+			DELAY(1000);
+			--count;
+		}
+		xs->error = XS_TIMEOUT;
+		scsipi_done(xs);
+		return;
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
 	}
-	/*
-	 * Build a ScsiCmd for this command and start it.
-	 */
-	sc->sc_xs[target] = xs;
-	sc->sc_cmd[target] = &sc->sc_cmd_fake[target];	/* XXX */
-	sc->sc_cmd[target]->unit = 0;
-	sc->sc_cmd[target]->flags = 0;
-	sc->sc_cmd[target]->buflen = xs->datalen;
-	sc->sc_cmd[target]->buf = xs->data;
-	sc->sc_cmd[target]->cmdlen = xs->cmdlen;
-	sc->sc_cmd[target]->cmd = (u_char *)xs->cmd;
-	sc->sc_cmd[target]->lun = xs->sc_link->scsipi_scsi.lun;
-	sii_StartCmd(sc, target);
-	splx(s);
-	if ((xs->xs_control & XS_CTL_POLL) == 0)
-		return (SUCCESSFULLY_QUEUED);
-	count = xs->timeout;
-	while (count) {
-		if ((xs->xs_status & XS_STS_DONE) != 0)
-			return(COMPLETE);
-		siiintr(sc);
-		/* XXX schedule another command? */
-		DELAY(1000);
-		--count;
-	}
-	xs->error = XS_TIMEOUT;
-	xs->xs_status |= XS_STS_DONE;
-	scsipi_done(xs);
-	return (COMPLETE);
 }
 #else
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.47.2.1 2000/11/20 20:20:20 bouyer Exp $	*/
+/*	$NetBSD: rz.c,v 1.47.2.2 2001/03/29 09:03:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.47.2.1 2000/11/20 20:20:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.47.2.2 2001/03/29 09:03:02 bouyer Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -1471,7 +1471,7 @@ rzgetgeom(sc,  flags)
 
 	if ((error = rz_mode_sense(sc, &scsipi_sense, page = 4,
 		sizeof(scsipi_sense.pages.rigid_geometry), flags)) == 0) {
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(periph, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
 		    scsipi_sense.pages.rigid_geometry.nheads,
@@ -1529,7 +1529,7 @@ fake_it:
 	 * this depends on which controller (e.g. 1542C is
 	 * different. but we have to put SOMETHING here..)
 	 */
-	sectors = /*scsipi_size(sd->sc_link, flags);*/ sc->sc_blks;
+	sectors = /*scsipi_size(sd->sc_periph, flags);*/ sc->sc_blks;
 	dp->heads = 64;
 	dp->sectors = 32;
 	dp->cyls = sectors / (64 * 32);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14.14.2 2000/11/22 16:01:23 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14.14.3 2001/03/29 09:03:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -271,8 +271,9 @@ dk_establish(dk, dev)
 	    strncmp("cd", dev->dv_xname, 2) == 0) {
 		sbsc = (struct scsibus_softc *)dev->dv_parent;
 
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+		if (sbsc->sc_channel->chan_periphs[target][lun] != NULL &&
+		    sbsc->sc_channel->chan_periphs[target][lun]->periph_dev ==
+		     (void *)dev) {
 			booted_device = dev;
 			return;
 		}

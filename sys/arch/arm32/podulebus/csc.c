@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.6.2.2 2001/03/27 15:30:29 bouyer Exp $	*/
+/*	$NetBSD: csc.c,v 1.6.2.3 2001/03/29 09:02:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,14 +61,8 @@
 
 void cscattach   __P((struct device *, struct device *, void *));
 int  cscmatch    __P((struct device *, struct cfdata *, void *));
-int  csc_scsicmd __P((struct scsipi_xfer *));
-
-struct scsipi_device csc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
+void csc_scsi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 
 struct cfattach csc_ca = {
 	sizeof(struct csc_softc), cscmatch, cscattach
@@ -162,24 +156,26 @@ cscattach(pdp, dp, auxp)
 
 	sfasinitialize((struct sfas_softc *)sc);
 
-	sc->sc_softc.sc_adapter.scsipi_cmd = csc_scsicmd;
-	sc->sc_softc.sc_adapter.scsipi_minphys = sfas_minphys;
+	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_softc.sc_dev;
+	sc->sc_softc.sc_adapter.adapt_nchannels = 1;
+	sc->sc_softc.sc_adapter.adapt_openings = 7;
+	sc->sc_softc.sc_adapter.adapt_max_periph = 1;
+	sc->sc_softc.sc_adapter.adapt_ioctl = NULL;
+	sc->sc_softc.sc_adapter.adapt_minphys = sfas_minphys;
+	sc->sc_softc.sc_adapter.adapt_request = csc_scsi_request;
 
-	sc->sc_softc.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;	
-	sc->sc_softc.sc_link.adapter_softc  = sc;
-	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter	    = &sc->sc_softc.sc_adapter;
-	sc->sc_softc.sc_link.device	    = &csc_scsidev;
-	sc->sc_softc.sc_link.openings	    = 1;
-	sc->sc_softc.sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_softc.sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_softc.sc_link.type = BUS_SCSI;
+	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_softc.sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_softc.sc_channel.chan_channel = 0;
+	sc->sc_softc.sc_channel.chan_ntargets = 8;
+	sc->sc_softc.sc_channel.chan_nluns = 8;
+	sc->sc_softc.sc_channel.chan_id = sc->sc_softc.sc_host_id;
 
 	/* Provide an override for the host id */
 	(void)get_bootconf_option(boot_args, "csc.hostid",
-	    BOOTOPT_TYPE_INT, &sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
+	    BOOTOPT_TYPE_INT, &sc->sc_softc.sc_channel.chan_id);
 
-	printf(": host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
+	printf(": host=%d", sc->sc_softc.sc_channel.chan_id);
 
 	/* initialise the alatch */
 	sc->sc_specific.sc_alatch_defs = (CSC_POLL?0:CSC_ALATCH_DEFS_INTEN);
@@ -202,7 +198,7 @@ cscattach(pdp, dp, auxp)
 	printf("\n");
 
 	/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
+	config_found(dp, &sc->sc_softc.sc_channel, scsiprint);
 }
 
 
@@ -324,13 +320,21 @@ csc_led(sc, mode)
 	}
 }
 
-int
-csc_scsicmd(xs)
-	struct scsipi_xfer *xs;
+void
+csc_scsi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	/* ensure command is polling for the moment */
+	struct scsipi_xfer *xs;
+
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		/* ensure command is polling for the moment */
 #if CSC_POLL > 0
-	xs->xs_control |= XS_CTL_POLL;
+		xs->xs_control |= XS_CTL_POLL;
 #endif
-	return(sfas_scsicmd(xs));
+	}
+	sfas_scsi_request(chan, req, arg);
 }

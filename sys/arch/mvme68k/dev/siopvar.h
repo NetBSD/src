@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.2 1999/02/21 18:10:10 scw Exp $ */
+/*	$NetBSD: siopvar.h,v 1.2.8.1 2001/03/29 09:03:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,7 +88,6 @@ struct siop_acb {
 #define ACB_FREE	0x00
 #define ACB_ACTIVE	0x01
 #define ACB_DONE	0x04
-#define ACB_CHKSENSE	0x08
 	struct scsi_generic cmd;  /* SCSI command block */
 	struct siop_ds ds;
 	void	*iob_buf;
@@ -114,7 +113,6 @@ struct siop_tinfo {
 	int	dconns;		/* #disconnects */
 	int	touts;		/* #timeouts */
 	int	perrs;		/* #parity errors */
-	int	senses;		/* #request sense commands sent */
 	ushort	lubusy;		/* What local units/subr. are busy? */
 	u_char  flags;
 	u_char  period;		/* Period suggestion */
@@ -129,7 +127,7 @@ struct	siop_softc {
 	u_char	sc_sstat0;
 	u_char	sc_sstat1;
 	u_long	sc_intcode;
-	struct	scsipi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_channel sc_channel;
 	struct	scsipi_adapter sc_adapter;
 	u_long	sc_scriptspa;		/* physical address of scripts */
 	siop_regmap_p	sc_siopp;	/* the SIOP */
@@ -196,7 +194,8 @@ struct	siop_softc {
 #define	STS_EXT		0x80	/* Extended status valid */
 
 void siop_minphys __P((struct buf *bp));
-int siop_scsicmd __P((struct scsipi_xfer *));
+void siop_scsi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 void siopinitialize __P((struct siop_softc *));
 void siopintr __P((struct siop_softc *));
 #ifdef DEBUG
