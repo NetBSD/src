@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.3 2002/09/06 13:59:09 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <stdio.h>
-
+#include <string.h>
 #include <errno.h>
 
 #include "defs.h"
@@ -182,7 +182,6 @@ static int
 emitconv(FILE *fp)
 {
 	struct devm *dm;
-	int i;
 
 	if (fputs("\n/* device conversion table */\n"
 		  "struct devsw_conv devsw_conv0[] = {\n", fp) < 0)
