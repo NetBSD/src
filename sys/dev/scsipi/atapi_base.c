@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.9 1998/08/15 10:10:55 mycroft Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.10 1998/10/12 16:09:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,11 +183,11 @@ atapi_print_addr(sc_link)
 	struct scsipi_link *sc_link;
 {
 
-	printf("%s(%s:%d): ",
+	printf("%s(%s:%d:%d): ",
 	    sc_link->device_softc ?
 	    ((struct device *)sc_link->device_softc)->dv_xname : "probe",
 	    ((struct device *)sc_link->adapter_softc)->dv_xname,
-	    sc_link->scsipi_atapi.drive);
+	    sc_link->scsipi_atapi.channel, sc_link->scsipi_atapi.drive);
 }
 
 /*

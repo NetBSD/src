@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.1 1998/03/04 06:35:11 cgd Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.2 1998/10/12 16:09:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -37,18 +37,6 @@
  */
 
 struct device;
-struct pci_attach_args;
-
-/*
- * Attach args for devices that attach to pciide.  Really, that's just wdc.
- */
-struct pciide_attach_args {
-	int			channel;
-	bus_space_tag_t		cmd_iot, ctl_iot;
-	bus_space_handle_t	cmd_ioh, ctl_ioh;
-	int			(**ihandp) __P((void *));
-	void			**ihandargp;
-};
 
 /*
  * Functions defined by machine-dependent code.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.122 1998/10/03 23:17:03 fvdl Exp $
+#	$NetBSD: files.i386,v 1.123 1998/10/12 16:09:13 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -128,17 +128,6 @@ major	{wt = 3}
 
 attach	lpt at puc with lpt_puc
 file	dev/pci/lpt_puc.c	lpt_puc
-
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.  (when the conf/files
-# XXX and files.isa bogons are fixed, this can be fixed as well.)
-
-# PCI IDE controllers
-device	pciide {[channel = -1]}
-attach	pciide at pci
-file	dev/pci/pciide.c		pciide
-attach	wdc at pciide with wdc_pciide
-file	dev/pci/wdc_pciide.c		wdc_pciide
 
 file	arch/i386/isa/isa_machdep.c	isa
 

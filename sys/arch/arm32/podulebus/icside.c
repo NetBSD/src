@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.8 1998/09/22 00:40:37 mark Exp $	*/
+/*	$NetBSD: icside.c,v 1.9 1998/10/12 16:09:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -44,6 +44,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/irqhandler.h>
 #include <machine/io.h>
@@ -52,6 +53,7 @@
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/icsidereg.h>
 
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
 /*
@@ -69,33 +71,24 @@
  */
 
 struct icside_softc {
-	struct device		sc_dev;
+	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
 	podule_t 		*sc_podule;		/* Our podule */
 	int 			sc_podule_number;	/* Our podule number */
 	struct bus_space 	sc_tag;			/* custom tag */
+	struct podule_attach_args *sc_pa;		/* podule info */
+	struct icside_channel {
+		irqhandler_t		ic_ih;		/* interrupt handler */
+		bus_space_tag_t		ic_irqiot;	/* Bus space tag */
+		bus_space_handle_t	ic_irqioh;	/* handle for IRQ */
+	} *icside_channels;
 };
 
 int	icside_probe	__P((struct device *, struct cfdata *, void *));
 void	icside_attach	__P((struct device *, struct device *, void *));
+int	icside_intr	__P((void *));
 
 struct cfattach icside_ca = {
 	sizeof(struct icside_softc), icside_probe, icside_attach
-};
-
-/*
- * Attach arguments for child devices.
- * Pass the podule details, the parent softc and the channel
- */
-
-struct icside_attach_args {
-	struct podule_attach_args *ia_pa;	/* podule info */
-	struct icside_softc *ia_softc;		/* parent softc */
-	int ia_channel;      			/* IDE channel */
-	bus_space_tag_t ia_iot;			/* bus space tag */
-	bus_space_handle_t ia_ioh;		/* IDE drive regs */
-	bus_space_handle_t ia_auxioh;		/* Aux status regs */
-	bus_space_handle_t ia_irqioh;		/* IRQ regs */
-	u_int ia_irqstatus;			/* IRQ status address */
 };
 
 /*
@@ -140,21 +133,6 @@ struct ide_version {
 	}
 };
 
-/* Print function used during child config */
-
-int
-icside_print(aux, name)
-	void *aux;
-	const char *name;
-{
-	struct icside_attach_args *ia = aux;
-
-	if (!name)
-		printf(": %s channel", (ia->ia_channel == 0) ? "primary" : "secondary");
-
-	return(QUIET);
-}
-
 /*
  * Card probe function
  *
@@ -187,12 +165,13 @@ icside_attach(parent, self, aux)
 {
 	struct icside_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
-	struct icside_attach_args ia;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	irqhandler_t *ihp;
 	struct ide_version *ide = NULL;
 	u_int iobase;
 	int channel;
+	struct channel_softc *cp;
 	int loop;
 	int id;
 
@@ -251,140 +230,79 @@ icside_attach(parent, self, aux)
 	sc->sc_tag.bs_rm_2 = icside_bs_rm_2;
 	sc->sc_tag.bs_wm_2 = icside_bs_wm_2;
 
-	/* Configure the children */
-	ia.ia_softc = sc;
-	ia.ia_pa = pa;
-	ia.ia_iot = &sc->sc_tag;
+	/* Initialize wdc struct */
+	sc->sc_wdcdev.channels = malloc(
+	    sizeof(struct channel_softc) * ide->channels, M_DEVBUF, M_NOWAIT);
+	sc->icside_channels = malloc(
+	    sizeof(struct icside_channel) * ide->channels, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_wdcdev.channels == NULL || sc->icside_channels == NULL) {
+		printf("%s: can't allocate channel infos\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+		return;
+	}
+	sc->sc_wdcdev.nchannels = ide->channels;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_pa = pa;
 
 	for (channel = 0; channel < ide->channels; ++channel) {
+		cp = &sc->sc_wdcdev.channels[channel];
+		cp->channel = channel;
+		cp->wdc = &sc->sc_wdcdev;
+		cp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
+		    M_NOWAIT);
+		if (cp->ch_queue == NULL) {
+			printf("%s %s channel: "
+			    "can't allocate memory for command queue",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    (channel == 0) ? "primary" : "secondary");
+			continue;
+		}
+		cp->cmd_iot = &sc->sc_tag;
+		cp->ctl_iot = &sc->sc_tag;
 		if (ide->modspace)
 			iobase = pa->pa_podule->mod_base;
 		else
 			iobase = pa->pa_podule->fast_base;
-		ia.ia_channel = channel;
 
 		if (bus_space_map(iot, iobase + ide->ideregs[channel],
-		    IDE_REGISTER_SPACE, 0, &ia.ia_ioh))
+		    IDE_REGISTER_SPACE, 0, &cp->cmd_ioh))
 			return;
 		if (bus_space_map(iot, iobase + ide->auxregs[channel],
-		    AUX_REGISTER_SPACE, 0, &ia.ia_auxioh))
+		    AUX_REGISTER_SPACE, 0, &cp->ctl_ioh))
 			return;
+		sc->icside_channels[channel].ic_irqiot = iot;
 		if (bus_space_map(iot, iobase + ide->irqregs[channel],
-		    IRQ_REGISTER_SPACE, 0, &ia.ia_irqioh))
+		    IRQ_REGISTER_SPACE, 0,
+		    &sc->icside_channels[channel].ic_irqioh))
 			return;
-
-		ia.ia_irqstatus = iobase + ide->irqstatregs[channel];
-		config_found_sm(self, &ia, icside_print, NULL);
+		/* Disable interrupts */
+		(void)bus_space_read_1(iot,
+		    sc->icside_channels[channel].ic_irqioh, 0);
+		/* Call common attach routines */
+		wdcattach(cp);
+		/* Disable interrupts */
+		(void)bus_space_read_1(iot,
+		    sc->icside_channels[channel].ic_irqioh, 0);
+		pa->pa_podule->irq_addr = iobase + ide->irqstatregs[channel];
+		pa->pa_podule->irq_mask = IRQ_STATUS_REGISTER_MASK;
+		ihp = &sc->icside_channels[channel].ic_ih;
+		ihp->ih_func = icside_intr;
+		ihp->ih_arg = cp;
+		ihp->ih_level = IPL_BIO;
+		ihp->ih_name = "icside";
+		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
+		ihp->ih_maskbits = pa->pa_podule->irq_mask;
+		if (irq_claim(pa->pa_podule->interrupt, ihp)) {
+			printf("%s: Cannot claim interrupt %d\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    pa->pa_podule->interrupt);
+			continue;
+		}
+		/* Enable interrupts */
+		bus_space_write_1(iot, sc->icside_channels[channel].ic_irqioh,
+		    0, 0);
 	}
-}
-
-/*
- * ICS IDE probe and attach code for the wdc device.
- *
- * This provides a different pair of probe and attach functions
- * for attaching the wdc device (mainbus/wd.c) to the ICS IDE card.
- */
-
-struct wdc_ics_softc {
-	struct wdc_softc	sc_wdcdev;	/* Device node */
-	struct wdc_attachment_data	sc_ad;	/* Attachment data */
-	irqhandler_t		sc_ih;		/* interrupt handler */
-	bus_space_tag_t		sc_irqiot;	/* Bus space tag */
-	bus_space_handle_t	sc_irqioh;	/* handle for IRQ */
-};
-
-int	wdc_ics_probe	__P((struct device *, struct cfdata *, void *));
-void	wdc_ics_attach	__P((struct device *, struct device *, void *));
-int	wdc_ics_intr	__P((void *));
-void	wdc_ics_intcontrol	__P((void *wdc, int enable));
-
-struct cfattach wdc_ics_ca = {
-	sizeof(struct wdc_ics_softc), wdc_ics_probe, wdc_ics_attach
-};
-
-/*
- * Controller probe function
- *
- * Map all the required I/O space for this channel, make sure interrupts
- * are disabled and probe the bus.
- */
-
-int
-wdc_ics_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct icside_attach_args *ia = aux;
-	struct wdc_attachment_data ad;
-	int result;
-
-	bzero(&ad, sizeof ad);
-
-	ad.iot = ia->ia_iot;
-	ad.ioh = ia->ia_ioh;
-	ad.auxiot = ia->ia_iot;
-	ad.auxioh = ia->ia_auxioh;
-
-	/* Disable interrupts */
-	(void)bus_space_read_1(ia->ia_iot, ia->ia_irqioh, 0);
-
-	result = wdcprobe(&ad);
-
-	/* Disable interrupts */
-	(void)bus_space_read_1(ia->ia_iot, ia->ia_irqioh, 0);
-
-	return(result);
-}
-
-/*
- * Controller attach function
- *
- * Map all the required I/O space for this channel, disble interrupts
- * and attach the controller. The generic attach will probe and attach
- * any devices.
- * Install an interrupt handler and we are ready to rock.
- */    
-
-void
-wdc_ics_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct wdc_ics_softc *wdc = (void *)self;
-	struct icside_attach_args *ia = (void *)aux;
-	struct podule_attach_args *pa = ia->ia_pa;
-
-	printf("\n");
-
-	wdc->sc_irqiot = ia->ia_iot;
-	wdc->sc_irqioh = ia->ia_irqioh;
-	wdc->sc_ad.iot = ia->ia_iot;
-	wdc->sc_ad.ioh = ia->ia_ioh;
-	wdc->sc_ad.auxiot = ia->ia_iot;
-	wdc->sc_ad.auxioh = ia->ia_auxioh;
-
-	/* Disable interrupts */
-	(void)bus_space_read_1(wdc->sc_irqiot, wdc->sc_irqioh, 0);
-
-	wdcattach(&wdc->sc_wdcdev, &wdc->sc_ad);
-
-	pa->pa_podule->irq_addr = ia->ia_irqstatus;
-	pa->pa_podule->irq_mask = IRQ_STATUS_REGISTER_MASK;
-
-  	wdc->sc_ih.ih_func = wdc_ics_intr;
-   	wdc->sc_ih.ih_arg = wdc;
-   	wdc->sc_ih.ih_level = IPL_BIO;
-   	wdc->sc_ih.ih_name = "icside";
-	wdc->sc_ih.ih_maskaddr = pa->pa_podule->irq_addr;
-	wdc->sc_ih.ih_maskbits = pa->pa_podule->irq_mask;
-
-	if (irq_claim(pa->pa_podule->interrupt, &wdc->sc_ih))
-		printf("%s: Cannot claim interrupt %d\n", self->dv_xname,
-		    pa->pa_podule->interrupt);
-
-	/* Enable interrupts */
-	bus_space_write_1(wdc->sc_irqiot, wdc->sc_irqioh, 0, 0);
 }
 
 /*
@@ -393,15 +311,16 @@ wdc_ics_attach(parent, self, aux)
  * If the interrupt was from our card pass it on to the wdc interrupt handler
  */
 int
-wdc_ics_intr(arg)
+icside_intr(arg)
 	void *arg;
 {
-	struct wdc_ics_softc *wdc = arg;
-	volatile u_char *intraddr = (volatile u_char *)wdc->sc_ih.ih_maskaddr;
+	struct channel_softc *chp = arg;
+	struct icside_softc *sc = (struct icside_softc*)chp->wdc;
+	irqhandler_t *ihp = &sc->icside_channels[chp->channel].ic_ih;
+	volatile u_char *intraddr = (volatile u_char *)ihp->ih_maskaddr;
 
 	/* XXX - not bus space yet - should really be handled by podulebus */
-	if ((*intraddr) & wdc->sc_ih.ih_maskbits)
-		wdcintr(arg);
-
+	if ((*intraddr) & ihp->ih_maskbits)
+		wdcintr(chp);
 	return(0);
 }
