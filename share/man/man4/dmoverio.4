@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmoverio.4,v 1.1 2002/08/02 00:43:13 thorpej Exp $
+.\"	$NetBSD: dmoverio.4,v 1.2 2002/08/02 22:20:59 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Aug 1, 2002
+.Dd August 1, 2002
 .Dt DMOVERIO 4
 .Os
 .Sh NAME
@@ -45,26 +45,26 @@
 .Fd #include \*[Lt]dev/dmover/dmover_io.h\*[Gt]
 .Sh DESCRIPTION
 The
-.Nm dmoverio
-pesudo-device driver provides an interface to hardware-assisted
+.Nm
+pseudo-device driver provides an interface to hardware-assisted
 data movers, which the kernel supports using the
 .Xr dmover 9
 facility.  This can be used to copy data from one location in
 memory to another, clear a region of memory, fill a region of memory
-with a patter, and perform simple operations on multiple regions of
+with a pattern, and perform simple operations on multiple regions of
 memory, such as an XOR, without intervention by the CPU.
 .Pp
 A
-.Nm dmoverio
+.Nm
 function always has one output region.  A function may have zero or more
 input regions, or may use an immediate value as an input.  For functions
-which use input regions, the lenghts of each input region and the output
+which use input regions, the lengths of each input region and the output
 region must be the same.  All
-.Nm dmover
+.Nm
 functions with the same name will have the same number of and type inputs.
 .Pp
 To use
-.Nm dmoverio ,
+.Nm "" ,
 the client must first create a session.  This is achieved by performing
 the following steps:
 .Bl -bullet
@@ -74,7 +74,7 @@ Create a session handle by opening the
 device.
 .It
 Select the
-.Nm dmoverio
+.Nm
 function using the DMIO_SETFUNC ioctl, which takes the following
 argument:
 .Bd -literal -offset indent
@@ -163,12 +163,12 @@ received in the same order as requests were written.
 .El
 .Pp
 When a client is finished using a
-.Nm dmoverio
+.Nm
 session, the session is destroyed by closing the session handle using
 .Xr close 2 .
-.Ss EXAMPLE USAGE
+.Sh EXAMPLES
 The following is an example of a client using
-.Nm dmoverio
+.Nm
 to zero-fill a region of memory.  In this example, the application would
 be able to perform other work while the hardware-assisted data mover clears
 the specified block of memory.
@@ -231,12 +231,12 @@ hw_bzero(void *buf, size_t len)
 .Xr dmover 9
 .Sh HISTORY
 The
-.Nm dmoverio
+.Nm
 device first appeared in
 .Nx 2.0 .
 .Sh AUTHORS
 The
-.Nm dmoverio
+.Nm
 device was designed and implemented by
 .An Jason R. Thorpe
 .Aq thorpej@wasabisystems.com
