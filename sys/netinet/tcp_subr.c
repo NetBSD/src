@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.157 2003/10/22 05:55:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.158 2003/10/25 08:13:28 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.157 2003/10/22 05:55:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.158 2003/10/25 08:13:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1392,6 +1392,7 @@ tcp6_ctlinput(cmd, sa, d)
 		m = NULL;
 		ip6 = NULL;
 		sa6_src = &sa6_any;
+		off = 0;
 	}
 
 	if (ip6) {
