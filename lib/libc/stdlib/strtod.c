@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.27 1998/07/26 14:13:00 mycroft Exp $	*/
+/*	$NetBSD: strtod.c,v 1.28 1998/10/19 03:32:27 matt Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.27 1998/07/26 14:13:00 mycroft Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.28 1998/10/19 03:32:27 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -116,7 +116,7 @@ __RCSID("$NetBSD: strtod.c,v 1.27 1998/07/26 14:13:00 mycroft Exp $");
 #define IEEE_BIG_ENDIAN
 #endif
 
-#ifdef vax
+#ifdef __vax__
 #define VAX
 #endif
 
