@@ -1,4 +1,4 @@
-/* $NetBSD: majors+minors,v 1.9 1997/03/07 03:30:46 mark Exp $ */
+/* $NetBSD: majors+minors,v 1.10 1997/10/14 09:06:52 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1996 Mark Brinicombe.
@@ -256,3 +256,15 @@ same device driver even if the driver does not require both.
 48 C	- S/PDIF
 49 B	- reserved
 49 C	- reserved (generic midi device)
+50 B	- reserved
+50 C	- reserved
+51 B	- reserved
+51 C	- reserved
+52 B	- reserved
+52 C	- random device
+53 B	- reserved
+53 C	- reserved
+54 B	- reserved
+54 C	- reserved
+55 B	- reserved
+55 C	- reserved
