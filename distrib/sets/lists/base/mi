@@ -432,6 +432,7 @@
 ./usr/libexec/named-xfer
 ./usr/libexec/ntalkd
 ./usr/libexec/postfix
+./usr/libexec/sendmail
 ./usr/libexec/sendmail/sendmail
 ./usr/libexec/rexecd
 ./usr/libexec/rlogind
