@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.58 2000/04/05 04:03:21 enami Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.59 2000/05/03 18:28:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -292,7 +292,7 @@ static const char *const fscknames[] = {
 	NULL,		/* HFS */
 	NULL,		/* FILECORE */
 	"ext2fs",	/* Linux Ext2 */
-	"ntfs",		/* Windows/NT */
+	NULL,		/* Windows/NT */
 	NULL,		/* RAID Component */
 	NULL,		/* concatenated disk component */
 	NULL		/* NULL */
