@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.13 1997/01/22 07:09:10 mikel Exp $	*/
+/*	$NetBSD: dirent.h,v 1.14 1998/05/05 21:53:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,6 +38,8 @@
 #ifndef _SYS_DIRENT_H_
 #define _SYS_DIRENT_H_
 
+#include <sys/featuretest.h>
+
 /*
  * The dirent structure defines the format of directory entries returned by
  * the getdirentries(2) system call.
@@ -54,7 +56,7 @@ struct dirent {
 	u_int16_t d_reclen;		/* length of this record */
 	u_int8_t  d_type; 		/* file type, see below */
 	u_int8_t  d_namlen;		/* length of string in d_name */
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 	char	d_name[255 + 1];	/* name must be no longer than this */
 #else
 #define	MAXNAMLEN	255
@@ -62,6 +64,7 @@ struct dirent {
 #endif
 };
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * File types
  */
@@ -80,6 +83,7 @@ struct dirent {
  */
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
+#endif /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
 
 #ifdef _KERNEL
 /*
