@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisavar.h,v 1.1 1998/02/07 00:46:54 cgd Exp $	*/
+/*	$NetBSD: ofisavar.h,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -37,7 +37,7 @@
 #define	_DEV_OFISA_OFISAVAR_H_
 
 struct ofisa_attach_args {
-	struct ofprobe	ofp;		/* common */
+	struct ofbus_attach_args oba;	/* common */
 
 	bus_space_tag_t	iot;		/* i/o space tag */
 	bus_space_tag_t	memt;		/* mem space tag */
