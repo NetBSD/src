@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.17 2004/04/24 15:09:54 uwe Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.18 2004/04/30 02:45:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.17 2004/04/24 15:09:54 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.18 2004/04/30 02:45:37 christos Exp $");
 
 #include "opt_pcibios.h"
 
@@ -119,6 +119,20 @@ int	pcibios_get_intr_routing(struct pcibios_intr_routing *,
 int	pcibios_return_code(u_int16_t, const char *);
 
 void	pcibios_print_exclirq(void);
+
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+/* for Libretto L2/L3 hack */
+static void	pcibios_fixup_pir_table(void);
+static void	pcibios_fixup_pir_table_mask(struct pcibios_linkmap *);
+
+struct pcibios_linkmap pir_mask[] = {
+	{ 2,	0x0040 },
+	{ 7,	0x0080 },
+	{ 8,	0x0020 },
+	{ 0,	0x0000 }
+};
+#endif
+
 #ifdef PCIINTR_DEBUG
 void	pcibios_print_pir_table(void);
 #endif
@@ -301,6 +315,11 @@ pcibios_pir_init()
 		}
 		printf("\n");
 		pcibios_print_exclirq();
+
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+		/* for Libretto L2/L3 hack */
+		pcibios_fixup_pir_table();
+#endif
 #ifdef PCIINTR_DEBUG
 		pcibios_print_pir_table();
 #endif
@@ -333,6 +352,11 @@ pcibios_pir_init()
 	printf("PCI BIOS has %d Interrupt Routing table entries\n",
 	    pcibios_pir_table_nentries);
 	pcibios_print_exclirq();
+
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+	/* for Libretto L2/L3 hack */
+	pcibios_fixup_pir_table();
+#endif
 #ifdef PCIINTR_DEBUG
 	pcibios_print_pir_table();
 #endif
@@ -473,6 +497,34 @@ pcibios_print_exclirq()
 		printf("\n");
 	}
 }
+
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+/* for Libretto L2/L3 hack */
+static void 
+pcibios_fixup_pir_table()
+{
+	struct pcibios_linkmap *m;
+
+	for (m = pir_mask; m->link != 0; m++)
+		pcibios_fixup_pir_table_mask(m);
+}
+
+void 
+pcibios_fixup_pir_table_mask(mask)
+	struct pcibios_linkmap *mask;
+{
+	int i, j;
+
+	for (i = 0; i < pcibios_pir_table_nentries; i++) {
+		for (j = 0; j < 4; j++) {
+			if (pcibios_pir_table[i].linkmap[j].link == mask->link) {
+				pcibios_pir_table[i].linkmap[j].bitmap
+				    &= mask->bitmap; 
+			}
+		}
+	}
+}
+#endif
 
 #ifdef PCIINTR_DEBUG
 void
