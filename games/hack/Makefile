@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.22 1997/05/07 16:03:15 mycroft Exp $
+#	$NetBSD: Makefile,v 1.23 1997/10/12 14:21:46 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
+WARNS=	0
 PROG=	hack
 CFLAGS+=-I.
 SRCS+=	hack.onames.h
