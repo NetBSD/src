@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.29 2002/09/19 08:09:11 martti Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.30 2002/09/19 08:12:45 martti Exp $	*/
 
 /*
  * Copyright (C) 1998-2001 by Darren Reed & Guido van Rooij.
@@ -108,7 +108,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.29 2002/09/19 08:09:11 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.30 2002/09/19 08:12:45 martti Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.20 2002/06/04 14:40:42 darrenr Exp";
 #endif
@@ -503,7 +503,7 @@ fr_authioctlloop:
 		/*
 		 * If we experience an error which will result in the packet
 		 * not being processed, make sure we advance to the next one.
-		 */
+		 */ 
 		if (error == ENOBUFS) {
 			fr_authused--;
 			fra->fra_index = -1;
