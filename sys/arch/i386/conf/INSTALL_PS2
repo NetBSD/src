@@ -1,11 +1,11 @@
-#	$NetBSD: INSTALL_PS2,v 1.1 2001/07/21 13:16:23 jdolecek Exp $
+#	$NetBSD: INSTALL_PS2,v 1.2 2001/07/21 16:26:46 jdolecek Exp $
 #
 #	INSTALL_PS2 - PS/2 Installation kernel.
 #
 #	This kernel is derived from PS2 with MEMORY_DISK stuff added.
 #
 
-include "arch/i386/conf/PS2"
+include "arch/i386/conf/GENERIC_PS2"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
