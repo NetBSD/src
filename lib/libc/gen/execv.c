@@ -1,4 +1,4 @@
-/*	$NetBSD: execv.c,v 1.3 1997/07/21 14:06:56 jtc Exp $	*/
+/*	$NetBSD: execv.c,v 1.4 1998/09/11 21:03:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,23 +38,32 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execv.c,v 1.3 1997/07/21 14:06:56 jtc Exp $");
+__RCSID("$NetBSD: execv.c,v 1.4 1998/09/11 21:03:18 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <unistd.h>
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(execv,_execv);
 #endif
 
 extern char **environ;
+#ifdef _REENT
+extern rwlock_t __environ_lock;
+#endif
 
 int
 execv(name, argv)
 	const char *name;
 	char * const *argv;
 {
-	return execve(name, argv, environ);
+	int r;
+
+	rwlock_rdlock(&__environ_lock);
+	r = execve(name, argv, environ);
+	rwlock_unlock(&__environ_lock);
+	return (r);
 }

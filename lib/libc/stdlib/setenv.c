@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.13 1998/08/10 02:43:10 perry Exp $	*/
+/*	$NetBSD: setenv.c,v 1.14 1998/09/11 21:03:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.13 1998/08/10 02:43:10 perry Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.14 1998/09/11 21:03:18 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,10 +46,15 @@ __RCSID("$NetBSD: setenv.c,v 1.13 1998/08/10 02:43:10 perry Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(setenv,_setenv);
 __weak_alias(unsetenv,_unsetenv);
+#endif
+
+#ifdef _REENT
+extern rwlock_t __environ_lock;
 #endif
 
 /*
@@ -71,11 +76,15 @@ setenv(name, value, rewrite)
 	if (*value == '=')			/* no `=' in value */
 		++value;
 	l_value = strlen(value);
+	rwlock_wrlock(&__environ_lock);
 	if ((c = __findenv(name, &offset))) {	/* find if already exists */
-		if (!rewrite)
+		if (!rewrite) {
+			rwlock_unlock(&__environ_lock);
 			return (0);
+		}
 		if (strlen(c) >= l_value) {	/* old larger; copy over */
 			while ((*c++ = *value++) != '\0');
+			rwlock_unlock(&__environ_lock);
 			return (0);
 		}
 	} else {					/* create new slot */
@@ -86,14 +95,18 @@ setenv(name, value, rewrite)
 		if (alloced) {			/* just increase size */
 			environ = (char **)realloc((char *)environ,
 			    (size_t)(sizeof(char *) * (cnt + 2)));
-			if (!environ)
+			if (!environ) {
+				rwlock_unlock(&__environ_lock);
 				return (-1);
+			}
 		}
 		else {				/* get new space */
 			alloced = 1;		/* copy old entries into it */
 			p = malloc((size_t)(sizeof(char *) * (cnt + 2)));
-			if (!p)
+			if (!p) {
+				rwlock_unlock(&__environ_lock);
 				return (-1);
+			}
 			memcpy(p, environ, cnt * sizeof(char *));
 			environ = p;
 		}
@@ -102,10 +115,13 @@ setenv(name, value, rewrite)
 	}
 	for (c = (char *)name; *c && *c != '='; ++c);	/* no `=' in name */
 	if (!(environ[offset] =			/* name + `=' + value */
-	    malloc((size_t)((int)(c - name) + l_value + 2))))
+	    malloc((size_t)((int)(c - name) + l_value + 2)))) {
+		rwlock_unlock(&__environ_lock);
 		return (-1);
+	}
 	for (c = environ[offset]; (*c = *name++) && *c != '='; ++c);
 	for (*c++ = '='; (*c++ = *value++) != '\0'; );
+	rwlock_unlock(&__environ_lock);
 	return (0);
 }
 
@@ -121,8 +137,10 @@ unsetenv(name)
 	char **p;
 	int offset;
 
+	rwlock_wrlock(&__environ_lock);
 	while (__findenv(name, &offset))	/* if set multiple times */
 		for (p = &environ[offset];; ++p)
 			if (!(*p = *(p + 1)))
 				break;
+	rwlock_unlock(&__environ_lock);
 }
