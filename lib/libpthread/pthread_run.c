@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.7 2001/07/26 19:57:14 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.8 2001/07/31 00:17:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,14 +165,4 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 		}
 	}
 	pthread_spinunlock(self, &runqueue_lock);
-}
-
-
-void
-pthread__switch(pthread_t self, pthread_t next)
-{
-
-	ucontext_t uc;
-	self->pt_uc = &uc;
-	_swapcontext_u(&uc, next->pt_uc);
 }
