@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.538 2002/06/28 22:32:58 drochner Exp $
+#	$NetBSD: files,v 1.539 2002/06/28 23:27:13 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -920,6 +920,10 @@ defpseudo isdn:		isdndev, tty
 # ISDN network interfaces
 defpseudo irip:		isdndev, ifnet
 defpseudo ippp:		isdndev, sppp, ifnet
+
+# KTTCP network throughput testing pseudo-device
+defpseudo kttcp
+file	dev/kttcp.c			kttcp		needs-flag
 
 #
 # File systems
