@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.19 2003/04/16 13:35:20 wiz Exp $
+.\"	$NetBSD: tty.4,v 1.20 2003/05/06 19:05:35 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ and
 .Pp
 The
 .Pa /dev/ttyXX
-special file is used for dialin modems and terminals.
+special file is used for dial-in modems and terminals.
 When a user logs into
 the system on one of these hardware terminal ports, the system has already
 opened the associated device and prepared the line for normal interactive
@@ -64,12 +64,12 @@ use (see
 .Pp
 The
 .Pa /dev/dtyXX
-special file is a SunOS-compatible dialout device.  Unlike
-the dialin device, opening the dialout device never blocks.  If the
-corresponding dialin device is already opened (not blocked in the open waiting
-for carrier), then the dialout open will fail immediately; otherwise it will
-succeed immediately.  While the dialout device is open, the dialin device may
-not be opened.  If the dialin open is blocking, it will wait until the dialout
+special file is a SunOS-compatible dial-out device.  Unlike
+the dial-in device, opening the dial-out device never blocks.  If the
+corresponding dial-in device is already opened (not blocked in the open waiting
+for carrier), then the dial-out open will fail immediately; otherwise it will
+succeed immediately.  While the dial-out device is open, the dial-in device may
+not be opened.  If the dial-in open is blocking, it will wait until the dial-out
 device is closed (and carrier is detected); otherwise it will fail immediately.
 .Pp
 There is also a special case of a terminal file that connects not to
@@ -449,6 +449,6 @@ Return the current line discipline in the integer pointed to by
 .Xr getty 8 ,
 .Xr linedisc 9
 .Sh HISTORY
-Separate dialout device files were implemented in SunOS 4.  They were cloned
+Separate dial-out device files were implemented in SunOS 4.  They were cloned
 by Charles M. Hannum for
 .Nx 1.4 .

@@ -27,15 +27,14 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: dc.4,v 1.11 2002/01/15 01:52:26 wiz Exp $
+.\"	$NetBSD: dc.4,v 1.12 2003/05/06 19:05:35 wiz Exp $
 .\"
 .Dd February 20, 1998
 .Dt DC 4 pmax
 .Os
 .Sh NAME
 .Nm dc
-.Nd
-dc659, dc7085 DZ11-on-a-chip serial communications interface
+.Nd dc659, dc7085 DZ11-on-a-chip serial communications interface
 .Sh SYNOPSIS
 .Cd "dc* at ibus0 addr ?"
 .Sh DESCRIPTION
@@ -79,7 +78,7 @@ bring out modem flow-control signals (RTS/CTS) to the bulkhead;
 only modem carrier transition are provided.
 This is adequate for
 .Ux
-dialin and dialout detection, but without hardware flow control, the
+dial-in and dial-out detection, but without hardware flow control, the
 .Nm
 device is prone to input silo overruns when used for serial-line
 protocols at high speed.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scn.4,v 1.6 2002/01/15 01:51:15 wiz Exp $
+.\"	$NetBSD: scn.4,v 1.7 2003/05/06 19:05:35 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Philip L. Budne.
 .\" All rights reserved.
@@ -74,7 +74,7 @@ second (as well as some of the speeds listed above).
 .Pp
 Attempts to
 .Xr open 2
-tty0? (dialin) devices will block for the presence of Carrier
+tty0? (dial-in) devices will block for the presence of Carrier
 Detect (DCD) and are generally used by
 .Xr getty 8 .
 .Pp
@@ -85,12 +85,12 @@ not present and are meant for use for dialing out on a modem (for
 .Xr pppd 8 ,
 .Xr tip 1 ,
 kermit, etc).
-When the dialin device is in use, attempts to
+When the dial-in device is in use, attempts to
 .Xr open 2
 callout device will fail with
 .Dv EBUSY .
 .Pp
-When the callout device is in use, dialin device opens with
+When the callout device is in use, dial-in device opens with
 .Dv O_NONBLOCK
 will fail with
 .Dv EBUSY .
