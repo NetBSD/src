@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.17 1999/11/13 00:30:29 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.18 1999/12/06 16:06:25 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,84 @@ extern struct extent *iomem_ex;
 extern int iomem_malloc_safe;
 
 extern paddr_t avail_end;
+
+/*
+ * We need these for the early memory allocator. The idea is this:
+ * Allocate VA-space through ptextra (atari_init.c:startc()). When
+ * The VA & size of this space are known, call bootm_init().
+ * Until the VM-system is up, bus_mem_add_mapping() allocates it's virtual
+ * addresses from this extent-map.
+ *
+ * This allows for the console code to use the bus_space interface at a
+ * very early stage of the system configuration.
+ */
+static pt_entry_t	*bootm_ptep;
+static long		bootm_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) /
+								sizeof(long)];
+static struct extent	*bootm_ex;
+
+void bootm_init(vaddr_t, pt_entry_t *, u_long);
+static vaddr_t	bootm_alloc(paddr_t pa, u_long size, int flags);
+static int	bootm_free(vaddr_t va, u_long size);
+
+void
+bootm_init(va, ptep, size)
+vaddr_t		va;
+pt_entry_t	*ptep;
+u_long		size;
+{
+	bootm_ex = extent_create("bootmem", va, va + size, M_DEVBUF,
+	    (caddr_t)bootm_ex_storage, sizeof(bootm_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+	bootm_ptep = ptep;
+}
+
+vaddr_t
+bootm_alloc(pa, size, flags)
+paddr_t	pa;
+u_long	size;
+int	flags;
+{
+	pt_entry_t	*pg, *epg;
+	pt_entry_t	pg_proto;
+	vaddr_t		va, rva;
+
+	if (extent_alloc(bootm_ex, size, NBPG, 0, EX_NOWAIT, &rva)) {
+		printf("bootm_alloc fails! Not enough fixed extents?\n");
+		return 0;
+	}
+	
+	pg  = &bootm_ptep[btoc(rva - bootm_ex->ex_start)];
+	epg = &pg[btoc(size)];
+	va  = rva;
+	pg_proto = pa | PG_RW | PG_V;
+	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
+		pg_proto |= PG_CI;
+	while(pg < epg) {
+		*pg++     = pg_proto;
+		pg_proto += NBPG;
+#if defined(M68040) || defined(M68060)
+		if (mmutype == MMU_68040) {
+			DCFP(pa);
+			pa += NBPG;
+		}
+#endif
+		TBIS(va);
+		va += NBPG;
+	}
+	return rva;
+}
+
+int
+bootm_free(va, size)
+vaddr_t	va;
+u_long	size;
+{
+	if ((va < bootm_ex->ex_start) || ((va + size) > bootm_ex->ex_end))
+		return 0; /* Not for us! */
+	extent_free(bootm_ex, va, size, EX_NOWAIT);
+	return 1;
+}
 
 int
 bus_space_map(t, bpa, size, flags, mhp)
@@ -171,6 +249,18 @@ bus_space_handle_t	*bshp;
 		panic("bus_mem_add_mapping: overflow");
 #endif
 
+	if (kernel_map == NULL) {
+		/*
+		 * The VM-system is not yet operational, allocate from
+		 * a special pool.
+		 */
+		va = bootm_alloc(pa, endpa - pa, flags);
+		if (va == 0)
+			return (ENOMEM);
+		*bshp = (caddr_t)(va + (bpa & PGOFSET));
+		return (0);
+	}
+
 	va = uvm_km_valloc(kernel_map, endpa - pa);
 	if (va == 0)
 		return (ENOMEM);
@@ -208,7 +298,8 @@ bus_size_t		size;
 	/*
 	 * Free the kernel virtual mapping.
 	 */
-	uvm_km_free(kernel_map, va, endva - va);
+	if (!bootm_free(va, endva - va))
+		uvm_km_free(kernel_map, va, endva - va);
 
 	/*
 	 * Mark as free in the extent map.

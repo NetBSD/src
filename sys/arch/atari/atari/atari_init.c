@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.45 1999/12/06 15:34:42 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.46 1999/12/06 16:06:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -293,6 +293,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	if (machineid & ATARI_HADES)
 		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_VGA_SIZE);
+	ptextra += btoc(BOOTM_VA_POOL);
 
 	/*
 	 * The 'pt' (the initial kernel pagetable) has to map the kernel and
@@ -735,6 +736,12 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 			pg_proto += NBPG;
 		}
 	}
+
+	bootm_init(ioaddr, pg, BOOTM_VA_POOL);
+	/*
+	 * ioaddr += BOOTM_VA_POOL;
+	 * pg = &pg[btoc(BOOTM_VA_POOL)];
+	 */
 }
 
 /*
