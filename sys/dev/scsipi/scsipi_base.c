@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.59 2001/10/14 19:03:43 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.60 2001/10/14 20:31:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -269,8 +269,19 @@ scsipi_grow_resources(chan)
 {
 
 	if (chan->chan_flags & SCSIPI_CHAN_CANGROW) {
-		scsipi_adapter_request(chan, ADAPTER_REQ_GROW_RESOURCES, NULL);
-		return (scsipi_get_resource(chan));
+		if ((chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
+			scsipi_adapter_request(chan,
+			    ADAPTER_REQ_GROW_RESOURCES, NULL);
+			return (scsipi_get_resource(chan));
+		}
+		/*
+		 * ask the channel thread to do it. It'll have to thaw the
+		 * queue
+		 */
+		scsipi_channel_freeze(chan, 1);
+		chan->chan_tflags |= SCSIPI_CHANT_GROWRES;
+		wakeup(&chan->chan_complete);
+		return (0);
 	}
 
 	return (0);
@@ -1967,10 +1978,8 @@ scsipi_completion_thread(arg)
 	for (;;) {
 		s = splbio();
 		xs = TAILQ_FIRST(&chan->chan_complete);
-		if (xs == NULL &&
-		    (chan->chan_tflags &
-		     (SCSIPI_CHANT_SHUTDOWN | SCSIPI_CHANT_CALLBACK |
-		     SCSIPI_CHANT_KICK)) == 0) {
+		if (xs == NULL && chan->chan_tflags  == 0) {
+			/* nothing to do; wait */
 			(void) tsleep(&chan->chan_complete, PRIBIO,
 			    "sccomp", 0);
 			splx(s);
@@ -1980,6 +1989,15 @@ scsipi_completion_thread(arg)
 			/* call chan_callback from thread context */
 			chan->chan_tflags &= ~SCSIPI_CHANT_CALLBACK;
 			chan->chan_callback(chan, chan->chan_callback_arg);
+			splx(s);
+			continue;
+		}
+		if (chan->chan_tflags & SCSIPI_CHANT_GROWRES) {
+			/* attempt to get more openings for this channel */
+			chan->chan_tflags &= ~SCSIPI_CHANT_GROWRES;
+			scsipi_adapter_request(chan,
+			    ADAPTER_REQ_GROW_RESOURCES, NULL);
+			scsipi_channel_thaw(chan, 1);
 			splx(s);
 			continue;
 		}
