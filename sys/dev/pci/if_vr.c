@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.70 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.71 2005/01/13 14:51:28 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.70 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.71 2005/01/13 14:51:28 jmmv Exp $");
 
 #include "rnd.h"
 
@@ -959,7 +959,7 @@ vr_start(struct ifnet *ifp)
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
 		 * if the packet is too small, copy it too, so we're sure
-		 * so have enouth room for the pad buffer.
+		 * we have enough room for the pad buffer.
 		 */
 		if ((mtod(m0, uintptr_t) & 3) != 0 ||
 		    m0->m_pkthdr.len < VR_MIN_FRAMELEN ||
