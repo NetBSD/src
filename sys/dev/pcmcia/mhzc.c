@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.25 2004/08/10 15:29:56 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.26 2004/08/10 16:04:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.25 2004/08/10 15:29:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.26 2004/08/10 16:04:16 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -484,6 +484,7 @@ mhzc_enable(sc, flag)
 	error = pcmcia_function_enable(sc->sc_pf);
 	if (error) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 		return (error);
 	}
 
