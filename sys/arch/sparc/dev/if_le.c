@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.18 1995/02/16 21:50:45 pk Exp $ */
+/*	$NetBSD: if_le.c,v 1.19 1995/04/09 12:36:22 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -156,7 +156,7 @@ void	leattach(struct device *, struct device *, void *);
 void	lesetladrf(struct le_softc *);
 void	lereset(struct device *);
 int	leinit(int);
-int	lestart(struct ifnet *);
+void	lestart(struct ifnet *);
 int	leintr(void *);
 void	lexint(struct le_softc *);
 void	lerint(struct le_softc *);
@@ -264,7 +264,6 @@ leattach(parent, self, args)
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = "le";
 	ifp->if_ioctl = leioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef IFF_NOTRAILERS
@@ -474,7 +473,7 @@ leinit(unit)
  * off of the interface queue, and copy it to the interface
  * before starting the output.
  */
-int
+void
 lestart(ifp)
 	register struct ifnet *ifp;
 {
@@ -484,10 +483,10 @@ lestart(ifp)
 	register int len;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
-		return (0);
+		return;
 	IF_DEQUEUE(&sc->sc_if.if_snd, m);
 	if (m == 0)
-		return (0);
+		return;
 	len = leput(sc->sc_r2->ler2_tbuf[0], m);
 #if NBPFILTER > 0
 	/*
@@ -507,7 +506,7 @@ lestart(ifp)
 	tmd->tmd2 = -len | LE_XMD2_ONES;
 	tmd->tmd1_bits = LE_T1_OWN | LE_T1_STP | LE_T1_ENP;
 	sc->sc_if.if_flags |= IFF_OACTIVE;
-	return (0);
+	return;
 }
 
 int
