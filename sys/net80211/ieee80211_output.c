@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.4 2003/08/19 22:17:03 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.5 2003/09/01 02:55:09 sam Exp $");
 
 #include "opt_inet.h"
 
@@ -284,7 +284,8 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
 
-	if (pktlen > MHLEN)
+	KASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
+	if (pktlen <= MHLEN)
 		MGETHDR(m, flags, type);
 	else
 		m = m_getcl(flags, type, M_PKTHDR);
