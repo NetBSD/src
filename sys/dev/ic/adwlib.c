@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.8 2000/02/04 15:43:46 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.9 2000/02/04 16:23:14 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -2385,6 +2385,7 @@ AdvInquiryHandling(sc, scsiq)
 ADW_SOFTC	*sc;
 ADW_SCSI_REQ_Q *scsiq;
 {
+#ifndef FAILSAFE
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t		tid;
@@ -2436,7 +2437,6 @@ ADW_SCSI_REQ_Q *scsiq;
 		 * device's 'wdtr_able' bit and write the new value to the
 		 * microcode.
 		 */
-#ifndef FAILSAFE
 #ifdef SCSI_ADW_WDTR_DISABLE
 	if(!(tidmask & SCSI_ADW_WDTR_DISABLE))
 #endif /* SCSI_ADW_WDTR_DISABLE */
@@ -2524,8 +2524,8 @@ ADW_SCSI_REQ_Q *scsiq;
 					ASC_MC_NUMBER_OF_MAX_CMD + tid,
 					sc->max_dvc_qng);
 		}
-#endif /* FAILSAFE */
 	}
+#endif /* FAILSAFE */
 }
 
 
