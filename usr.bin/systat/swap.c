@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.6 1997/02/02 19:20:55 christos Exp $	*/
+/*	$NetBSD: swap.c,v 1.7 1997/04/03 06:07:40 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: swap.c,v 1.6 1997/02/02 19:20:55 christos Exp $";
+static char rcsid[] = "$NetBSD: swap.c,v 1.7 1997/04/03 06:07:40 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -244,6 +244,7 @@ showswap()
 		mvwprintw(wnd, i + 1, col, "%9d  ", used / div);
 		for (j = (100 * used / xsize + 1) / 2; j > 0; j--)
 			waddch(wnd, 'X');
+		wclrtoeol(wnd);
 		npfree++;
 		avail += xsize;
 	}
@@ -257,5 +258,6 @@ showswap()
 		    "Total", hlen, avail / div, used / div);
 		for (j = (100 * used / avail + 1) / 2; j > 0; j--)
 			waddch(wnd, 'X');
+		wclrtoeol(wnd);
 	}
 }
