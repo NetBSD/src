@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.1 1995/07/04 19:47:06 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.2 1995/07/04 23:00:11 christos Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -51,8 +51,29 @@
 #include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_sockio.h>
 
+static int bsd_to_svr4_flags __P((int));
 
-extern int if_index;
+#define bsd_to_svr4_flag(a) \
+	if (bf & __CONCAT(IFF_,a))	sf |= __CONCAT(SVR4_IFF_,a)
+
+static int
+bsd_to_svr4_flags(bf)
+	int bf;
+{
+	int sf = 0;
+	bsd_to_svr4_flag(UP);
+	bsd_to_svr4_flag(BROADCAST);
+	bsd_to_svr4_flag(DEBUG);
+	bsd_to_svr4_flag(LOOPBACK);
+	bsd_to_svr4_flag(POINTOPOINT);
+	bsd_to_svr4_flag(NOTRAILERS);
+	bsd_to_svr4_flag(RUNNING);
+	bsd_to_svr4_flag(NOARP);
+	bsd_to_svr4_flag(PROMISC);
+	bsd_to_svr4_flag(ALLMULTI);
+	bsd_to_svr4_flag(MULTICAST);
+	return sf;
+}
 
 int
 svr4_sockioctl(fp, cmd, data, p, retval)
@@ -63,20 +84,58 @@ svr4_sockioctl(fp, cmd, data, p, retval)
 	register_t	*retval;
 {
 	struct filedesc *fdp = p->p_fd;
+	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
 	int fd;
 	int num;
 	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
 			fp->f_ops->fo_ioctl;
 
-#undef DPRINTF
-#define DPRINTF(a) printf a
 	*retval = 0;
 
 	switch (cmd) {
 	case SVR4_SIOCGIFNUM:
-		DPRINTF(("SIOCGIFNUM %d\n", if_index));
-		return copyout(&if_index, data, sizeof(if_index));
+		{
+			extern int if_index;
+
+			DPRINTF(("SIOCGIFNUM %d\n", if_index));
+			return copyout(&if_index, data, sizeof(if_index));
+		}
+
+	case SVR4_SIOCGIFFLAGS:
+		{
+			struct ifreq br;
+			struct svr4_ifreq sr;
+
+			if ((error = copyin(data, &sr, sizeof(sr))) != 0)
+				return error;
+
+			(void) strcpy(br.ifr_name, sr.svr4_ifr_name);
+			if ((error = (*ctl)(fp, SIOCGIFFLAGS, 
+					    (caddr_t) &br, p)) != 0)
+				return error;
+
+			sr.svr4_ifr_flags = bsd_to_svr4_flags(br.ifr_flags);
+			DPRINTF(("SIOCGIFFLAGS %s = %d\n", 
+				sr.svr4_ifr_name, sr.svr4_ifr_flags));
+			return 0;
+		}
+
+	case SVR4_SIOCGIFCONF:
+		{
+			struct svr4_ifconf sc;
+
+			if ((error = copyin(data, &sc, sizeof(sc))) != 0)
+				return error;
+
+			if ((error = (*ctl)(fp, OSIOCGIFCONF,
+					    (caddr_t) &sc, p)) != 0)
+				return error;
+
+			DPRINTF(("SIOCGIFCONF\n"));
+			return 0;
+		}
+
 
 	default:
 		DPRINTF(("Unknown svr4 sockio %x\n", cmd));
