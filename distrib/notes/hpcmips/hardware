@@ -1,9 +1,9 @@
-.\"	$NetBSD: hardware,v 1.14 2002/05/06 11:33:20 takemura Exp $
+.\"	$NetBSD: hardware,v 1.15 2002/06/29 22:37:39 lukem Exp $
 .
 A H/PC machine contains a keyboard and a touch screen and
-generally has 8 MB or more of RAM.  The port supports the HPC
-form factor, as well as the H/PC Pro and PsPC (Palmsized PC)
-form factors.
+generally has 8 MB or more of RAM.
+The port supports the HPC form factor,
+as well as the H/PC Pro and PsPC (Palmsized PC) form factors.
 .
 .Ss2 Supported WindowsCE machines
 .(bullet -offset indent
@@ -128,7 +128,8 @@ Vr4122-based
 Vr4131-based
 .It
 TX3912-based: TX3912 machines are not supported with installation kernel and
-GENERIC kernel. Use special kernel for TX3912 (netbsd.TX3912.gz).
+GENERIC kernel.
+Use special kernel for TX3912 (netbsd.TX3912.gz).
 .It
 TX3922-based
 .bullet)
