@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.4 2000/08/26 15:31:49 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.5 2000/12/29 21:21:58 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -471,13 +471,14 @@ not2:
 }
 
 int
-pci_intr_map(pc, intrtag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t intrtag;
-	int pin, line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
 #if NIOAPIC > 0
+	pci_chipset_tag_t pc = pa->pa_pc;
 	struct mp_intr_map *mip;
 	int bus, dev, func;
 #endif
@@ -520,7 +521,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 		}
 	}
 #if NIOAPIC > 0
-	pci_decompose_tag (pc, intrtag, &bus, &dev, &func);
+	pci_decompose_tag (pc, pa->pa_tag, &bus, &dev, &func);
 #if 0
 	printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
 	    bus, dev, func, pin, line);
