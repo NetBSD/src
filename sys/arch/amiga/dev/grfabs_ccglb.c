@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs_ccglb.c,v 1.4 1994/06/29 13:13:05 chopps Exp $
+ *	$Id: grfabs_ccglb.c,v 1.5 1994/07/02 21:15:12 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -104,6 +104,25 @@ cop_t aga_copper_list[] = {
     { R_VBSTOP, 0x000f },
     { R_VTOTAL, 0x020c },
     { R_BEAMCON0, 0x0000 },
+    /* bit plane pointers */
+    { R_BPL0PTH, 0x0000 },    { R_BPL0PTL, 0x0000 },
+    { R_BPL1PTH, 0x0000 },    { R_BPL1PTL, 0x0000 },
+    { R_BPL2PTH, 0x0000 },    { R_BPL2PTL, 0x0000 },
+    { R_BPL3PTH, 0x0000 },    { R_BPL3PTL, 0x0000 },
+    { R_BPL4PTH, 0x0000 },    { R_BPL4PTL, 0x0000 },
+    { R_BPL5PTH, 0x0000 },    { R_BPL5PTL, 0x0000 },
+    { R_BPL6PTH, 0x0000 },    { R_BPL6PTL, 0x0000 },
+    { R_BPL7PTH, 0x0000 },    { R_BPL7PTL, 0x0000 },
+    /* view specific stuff. */
+    { R_BPL1MOD, 0x0000 },
+    { R_BPL2MOD, 0x0000 },
+    { R_DIWSTRT, 0xffff },
+    { R_BPLCON0, 0x0000 },
+    { R_DIWSTOP, 0x0000 },
+    { R_DIWHIGH, 0x0000 },
+    { R_DDFSTRT, 0x0000 },
+    { R_DDFSTOP, 0x0000 },
+    { R_BPLCON1, 0x0000 },
      /* colors - bank 0 high */
     { R_BPLCON3, 0x0020 },
     { R_COLOR00, 0x0779 },    { R_COLOR01, 0x0000 },    { R_COLOR02, 0x0FFF },    { R_COLOR03, 0x068B },
@@ -266,25 +285,6 @@ cop_t aga_copper_list[] = {
     { R_COLOR1C, 0x0ccc },    { R_COLOR1D, 0x0ddd },    { R_COLOR1E, 0x0eee },    { R_COLOR1F, 0x0fff },
     /* colors - whew! */
     { R_BPLCON3, 0x0020 },			  /* enable border blank */
-    /* bit plane pointers */
-    { R_BPL0PTH, 0x0000 },    { R_BPL0PTL, 0x0000 },
-    { R_BPL1PTH, 0x0000 },    { R_BPL1PTL, 0x0000 },
-    { R_BPL2PTH, 0x0000 },    { R_BPL2PTL, 0x0000 },
-    { R_BPL3PTH, 0x0000 },    { R_BPL3PTL, 0x0000 },
-    { R_BPL4PTH, 0x0000 },    { R_BPL4PTL, 0x0000 },
-    { R_BPL5PTH, 0x0000 },    { R_BPL5PTL, 0x0000 },
-    { R_BPL6PTH, 0x0000 },    { R_BPL6PTL, 0x0000 },
-    { R_BPL7PTH, 0x0000 },    { R_BPL7PTL, 0x0000 },
-    /* view specific stuff. */
-    { R_BPL1MOD, 0x0000 },
-    { R_BPL2MOD, 0x0000 },
-    { R_DIWSTRT, 0xffff },
-    { R_BPLCON0, 0x0000 },
-    { R_DIWSTOP, 0x0000 },
-    { R_DIWHIGH, 0x0000 },
-    { R_DDFSTRT, 0x0000 },
-    { R_DDFSTOP, 0x0000 },
-    { R_BPLCON1, 0x0000 },
     { R_COP1LCH, 0x0000 },    { R_COP1LCL, 0x0000 },
     { 0xffff, 0xfffe },       { 0xffff, 0xfffe }  /* COPEND, COPEND */
 };
