@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: script,v 1.2 2004/03/09 21:36:37 garbled Exp $
+# $NetBSD: script,v 1.3 2005/01/18 18:12:55 peter Exp $
 
 BACKUPDIR="/var/sushi"
 MAILERCONF="/etc/mailer.conf"
@@ -11,8 +11,12 @@ if [ ! -d $BACKUPDIR ]; then
 	chmod 700 $BACKUPDIR
 fi
 
-# backup
+# create a backup
 cp -p $MAILERCONF $BACKUP
+if [ $? -ne 0 ]; then
+	echo "Can't create a backup"
+	exit 1
+fi
 
 if [ "$1" = "sendmail" ]; then
 	sendmail=0
@@ -25,7 +29,7 @@ if [ "$1" = "sendmail" ]; then
 	fi
 
 	if [ $sendmail -eq 1 ]; then
-		echo "Sendmail is already your default mailer"
+		echo "Sendmail is already your default mailer."
 		exit 0
 	fi
 	echo "sendmail		/usr/libexec/sendmail/sendmail" >$MAILERCONF
@@ -51,7 +55,7 @@ if [ "$1" = "postfix" ]; then
 	fi
 
 	if [ $postfix -eq 1 ]; then
-		echo "Postfix is already your default mailer"
+		echo "Postfix is already your default mailer."
 		exit 0
 	fi
 	echo "sendmail		/usr/libexec/postfix/sendmail" >$MAILERCONF
@@ -70,7 +74,7 @@ if [ "$1" = "exim" ]; then
 	cp $LOCALBASE/etc/exim/mailer.conf.exim $MAILERCONF
 	chown root:wheel $MAILERCONF
 	chmod 644 $MAILERCONF
-	echo "$PKGNM has now been made your default mailer"
+	echo "$PKGNM has now been made your default mailer."
 	exit 0
 fi
 
@@ -80,7 +84,7 @@ if [ "$1" = "postfix-current" ]; then
 	cp $LOCALBASE/etc/mailer.conf.postfix $MAILERCONF
 	chown root:wheel $MAILERCONF
 	chmod 644 $MAILERCONF
-	echo "$PKGNM has now been made your default mailer"
+	echo "$PKGNM has now been made your default mailer."
 	exit 0
 fi
 
@@ -90,6 +94,6 @@ if [ "$1" = "sendmail88" ]; then
 	cp $LOCALBASE/etc/mailer.conf.sendmail $MAILERCONF
 	chown root:wheel $MAILERCONF
 	chmod 644 $MAILERCONF
-	echo "$PKGNM has now been made your default mailer"
+	echo "$PKGNM has now been made your default mailer."
 	exit 0
 fi
