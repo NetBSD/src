@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.38 2004/07/15 05:43:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.38 2004/07/15 05:43:50 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -126,10 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $");
  * scan
  *
  *    initialize rx/tx
- *
- * IBSS join/create
- *
- *    set ATW_NAR_EA (is set by ASIC?)
  *
  * BSS join: (re)association response
  *
@@ -1204,15 +1200,12 @@ atw_init(struct ifnet *ifp)
 	ic->ic_flags &= ~IEEE80211_F_IBSSON;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
-		sc->sc_opmode &= ~ATW_NAR_EA;
 		break;
 	case IEEE80211_M_AHDEMO: /* XXX */
 	case IEEE80211_M_IBSS:
 		ic->ic_flags |= IEEE80211_F_IBSSON;
 		/*FALLTHROUGH*/
 	case IEEE80211_M_HOSTAP: /* XXX */
-		/* EA bit seems important for ad hoc reception. */
-		sc->sc_opmode |= ATW_NAR_EA;
 		break;
 	case IEEE80211_M_MONITOR: /* XXX */
 		break;
