@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.17 2000/08/15 02:09:11 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.18 2000/12/22 02:52:47 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -377,7 +377,7 @@ write_menu_file (char *initcode)
 	if (error_act.code == NULL) {
 		(void) fprintf (out_file,
 			"\t(void) fprintf (stderr, "
-				"\"Could not initialize curses\\n\");\n"
+			"\"%%s: Could not initialize curses\\n\",prog_name);\n"
 			"\texit(1);\n"
 			"}\n");
 	} else {
