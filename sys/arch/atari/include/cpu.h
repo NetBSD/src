@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1995/05/05 03:41:56 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 1995/05/14 15:26:55 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,9 +57,7 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
-#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
-#define	BROKEN_SWAP
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+#define cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -139,7 +137,7 @@ extern int	want_resched;	/* resched() was called */
 #define MMU_68040	-2	/* 68040 on-chip subsubset		*/
 
 #ifdef _KERNEL
-extern int machineid, mmutype, cpu040;
+extern int machineid, mmutype, cpu040, fputype;
 #endif
 
 /*
