@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.24 2000/03/25 16:24:57 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.25 2000/03/26 22:38:29 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1090,3 +1090,35 @@ rf_remove_hot_spare(raidPtr,sparePtr)
 }
 
 
+int
+rf_delete_component(raidPtr,component)
+	RF_Raid_t *raidPtr;
+	RF_SingleComponent_t *component;
+{
+	RF_RaidDisk_t *disks;
+
+	if ((component->row < 0) || 
+	    (component->row >= raidPtr->numRow) ||
+	    (component->column < 0) || 
+	    (component->column >= raidPtr->numCol)) {
+		return(EINVAL);
+	}
+
+	disks = &raidPtr->Disks[component->row][component->column];
+
+	/* 1. This component must be marked as 'failed' */
+
+	return(EINVAL); /* Not implemented yet. */
+}
+
+int
+rf_incorporate_hot_spare(raidPtr,component)
+	RF_Raid_t *raidPtr;
+	RF_SingleComponent_t *component;
+{
+
+	/* Issues here include how to 'move' this in if there is IO 
+	   taking place (e.g. component queues and such) */
+
+	return(EINVAL); /* Not implemented yet. */
+}
