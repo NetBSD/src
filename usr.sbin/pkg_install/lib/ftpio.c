@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.11.2.4 2000/02/02 23:06:51 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.11.2.5 2000/02/02 23:09:11 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.11.2.4 2000/02/02 23:06:51 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.11.2.5 2000/02/02 23:09:11 he Exp $");
 #endif
 
 /*
@@ -476,6 +476,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	if (rc != 226) {
 	    if (Verbose)
 		    warnx("ls failed!");
+	    unlink(tmpname);	/* remove clutter */
 	    return -1;
 	}
 
@@ -483,6 +484,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	rc = ftp_cmd("cd .\n", "\n(550|250).*\n");
 	if (rc != 250) {
 	    warnx("chdir failed!");
+	    unlink(tmpname);	/* remove clutter */
 	    return -1;
 	}
 	
@@ -495,6 +497,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		f=fopen(tmpname, "r");
 		if (f == NULL) {
 		    warn("fopen");
+	            unlink(tmpname);	/* remove clutter */
 		    return -1;
 		}
 		matches=0;
