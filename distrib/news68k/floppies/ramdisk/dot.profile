@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1999/12/09 14:59:02 tsutsui Exp $
+#	$NetBSD: dot.profile,v 1.2 2000/01/21 12:32:55 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -47,7 +47,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 9600
 
 	# mount root read-write
-	mount -u /dev/md0 /
+	mount -u /dev/md0a /
 
 	# mount a /tmp on mfs, to avoid filling the md
 	mount -t mfs swap /tmp
