@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.56 1999/12/10 14:36:04 drochner Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.57 2000/02/14 22:00:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -886,9 +886,11 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = vp->v_mntvnodes.le_next;
 		ip = VTOI(vp);
-		if ((vp->v_type == VNON || (ip->i_flag &
-		    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0) &&
-		    (vp->v_dirtyblkhd.lh_first == NULL || waitfor == MNT_LAZY)){
+		if (vp->v_type == VNON ||
+		    ((ip->i_flag &
+		      (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
+		     vp->v_dirtyblkhd.lh_first == NULL))
+		{
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}

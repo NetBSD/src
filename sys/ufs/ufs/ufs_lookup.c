@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.27 1999/11/15 18:49:15 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.28 2000/02/14 22:00:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -491,7 +491,11 @@ found:
 			*vpp = vdp;
 			return (0);
 		}
+		if (flags & ISDOTDOT)
+			VOP_UNLOCK(vdp, 0); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		if (flags & ISDOTDOT)
+			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
 		/*
@@ -531,7 +535,11 @@ found:
 		 */
 		if (dp->i_number == dp->i_ino)
 			return (EISDIR);
+		if (flags & ISDOTDOT)
+			VOP_UNLOCK(vdp, 0); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		if (flags & ISDOTDOT)
+			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
 		*vpp = tdp;
@@ -970,17 +978,19 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 			     + dp->i_reclen, UFS_MPNEEDSWAP(dvp->v_mount));
 	}
 out:
-	if (ip) {
-		ip->i_ffs_effnlink--;
-		ip->i_flag |= IN_CHANGE;
-	}
 	if (DOINGSOFTDEP(dvp)) {
-		if (ip)
+		if (ip) {
+			ip->i_ffs_effnlink--;
+			softdep_change_linkcnt(ip);
 			softdep_setup_remove(bp, dp, ip, isrmdir);
+		}
 		bdwrite(bp);
 	} else {
-		if (ip)
+		if (ip) {
+			ip->i_ffs_effnlink--;
 			ip->i_ffs_nlink--;
+			ip->i_flag |= IN_CHANGE;
+		}
 		error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -1011,12 +1021,13 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
 	if (vdp->v_mount->mnt_maxsymlinklen > 0)
 		ep->d_type = newtype;
 	oip->i_ffs_effnlink--;
-	oip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(vdp)) {
+		softdep_change_linkcnt(oip);
 		softdep_setup_directory_change(bp, dp, oip, newinum, isrmdir);
 		bdwrite(bp);
 	} else {
 		oip->i_ffs_nlink--;
+		oip->i_flag |= IN_CHANGE;
 		error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;

@@ -192,11 +192,11 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 }
 
 void
-softdep_increase_linkcnt(ip)
+softdep_change_linkcnt(ip)
 	struct inode *ip;
 {
 
-	panic("softdep_increase_linkcnt called");
+	panic("softdep_change_linkcnt called");
 }
 
 void 
@@ -215,15 +215,6 @@ softdep_update_inodeblock(ip, bp, waitfor)
 {
 
 	panic("softdep_update_inodeblock called");
-}
-
-int
-softdep_fsync(vp)
-	struct vnode *vp;
-{
-
-	panic("softdep_fsync called");
-	return (EIO);
 }
 
 void

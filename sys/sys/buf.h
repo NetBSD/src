@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.40 2000/02/14 20:12:02 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.41 2000/02/14 22:00:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -160,6 +160,8 @@ extern struct bio_ops {
  	void	(*io_deallocate) __P((struct buf *));
  	int	(*io_fsync) __P((struct vnode *));
  	int	(*io_sync) __P((struct mount *));
+	void	(*io_movedeps) __P((struct buf *, struct buf *));
+	int	(*io_countdeps) __P((struct buf *, int));
 } bioops;
 
 /*
