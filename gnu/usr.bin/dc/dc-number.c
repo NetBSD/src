@@ -31,6 +31,9 @@
 #include "dc.h"
 #include "dc-proto.h"
 
+/* Variable needed by bc's number.c. */
+char std_only = FALSE;
+
 /* convert an opaque dc_num into a real bc_num */
 #define CastNum(x)	((bc_num)(x))
 
@@ -45,7 +48,7 @@ dc_add DC_DECLARG((a, b, kscale, result))
 	dc_num *result DC_DECLEND
 {
 	init_num((bc_num *)result);
-	bc_add(CastNum(a), CastNum(b), (bc_num *)result);
+	bc_add(CastNum(a), CastNum(b), (bc_num *)result, 0);
 	return DC_SUCCESS;
 }
 
@@ -60,7 +63,7 @@ dc_sub DC_DECLARG((a, b, kscale, result))
 	dc_num *result DC_DECLEND
 {
 	init_num((bc_num *)result);
-	bc_sub(CastNum(a), CastNum(b), (bc_num *)result);
+	bc_sub(CastNum(a), CastNum(b), (bc_num *)result, 0);
 	return DC_SUCCESS;
 }
 
@@ -248,7 +251,7 @@ dc_getnum DC_DECLARG((input, ibase, readahead))
 		c = (*input)();
 		int2num(&tmp, digit);
 		bc_multiply(result, base, &result, 0);
-		bc_add(result, tmp, &result);
+		bc_add(result, tmp, &result, 0);
 	}
 	if (c == '.'){
 		free_num(&build);
@@ -266,16 +269,16 @@ dc_getnum DC_DECLARG((input, ibase, readahead))
 				break;
 			int2num(&tmp, digit);
 			bc_multiply(build, base, &build, 0);
-			bc_add(build, tmp, &build);
+			bc_add(build, tmp, &build, 0);
 			bc_multiply(divisor, base, &divisor, 0);
 			++decimal;
 		}
 		bc_divide(build, divisor, &build, decimal);
-		bc_add(result, build, &result);
+		bc_add(result, build, &result, 0);
 	}
 	/* Final work. */
 	if (negative)
-		bc_sub(_zero_, result, &result);
+		bc_sub(_zero_, result, &result, 0);
 
 	free_num(&tmp);
 	free_num(&build);
