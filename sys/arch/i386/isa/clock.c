@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.9 1993/10/09 10:13:12 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.10 1993/10/09 10:15:20 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -336,16 +336,6 @@ findcpuspeed(iobase)
 }
 
 /*
- * Delay for some number of milliseconds.
- */
-void
-spinwait(int millisecs)
-{
-	/* XXXX */
-	delay(1000 * millisecs);
-}
-
-/*
  * Wait `n' microseconds.
  */
 void
@@ -365,7 +355,7 @@ delay(n)
 
 	otick = gettick(iobase);
 
-#if 1
+#ifdef __GNUC__
 	/*
 	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
 	 * we can take advantage of the intermediate 64-bit quantity to prevent
@@ -404,6 +394,16 @@ delay(n)
 			n -= otick - tick;
 		otick = tick;
 	}
+}
+
+/*
+ * Delay for some number of milliseconds.
+ */
+void
+spinwait(int millisecs)
+{
+	/* XXXX */
+	delay(1000 * millisecs);
 }
 
 int
