@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1994/12/20 06:15:56 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 1995/01/16 22:59:42 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -834,7 +834,7 @@ conf_init()
  */
 #include <dev/cons.h>
 
-#if	NKD
+#if NZS > 1
 int kdcnprobe(), kdcninit(), kdcngetc(), kdcnputc();
 #endif
 #if NPROM > 0
@@ -847,7 +847,7 @@ int zscnprobe_a(), zscnprobe_b(), zscninit(), zscngetc(), zscnputc();
 extern void nullcnpollc();
 
 struct	consdev constab[] = {
-#if	NKD
+#if NZS > 1
 	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc, nullcnpollc },
 #endif
 #if	NZS
