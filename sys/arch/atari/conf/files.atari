@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.84 2001/05/29 06:42:21 leo Exp $
+#	$NetBSD: files.atari,v 1.85 2001/05/29 10:39:56 leo Exp $
 
 maxpartitions 16
 
@@ -124,8 +124,9 @@ device	ite: tty
 attach	ite at grfcc,grfet 
 file	arch/atari/dev/ite.c		ite needs-flag
 file	arch/atari/dev/kbdmap.c		ite
-file	arch/atari/dev/font_8x8.c	ite
-file	arch/atari/dev/font_8x16.c	ite
+#					XXX  pci_vga needs to download the font
+file	arch/atari/dev/font_8x8.c	ite | pci
+file	arch/atari/dev/font_8x16.c	ite | pci
 
 
 defpseudo	view
