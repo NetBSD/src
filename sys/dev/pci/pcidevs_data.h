@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.155 1999/09/01 11:42:32 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.156 1999/09/08 21:34:34 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.150 1999/09/01 11:40:42 drochner Exp 
+ *	NetBSD: pcidevs,v 1.151 1999/09/08 21:33:59 thorpej Exp 
  */
 
 /*
@@ -1930,7 +1930,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "S3 805",
 	},
 	{
-	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC,
+	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168,
 	    0,
 	    "Lite-On Communications",
 	    "82C168/82C169 (PNIC) 10/100 Ethernet",
