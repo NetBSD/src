@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.42 2001/01/10 03:01:41 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.43 2001/06/18 01:38:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.42 2001/01/10 03:01:41 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.43 2001/06/18 01:38:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,11 +76,7 @@ __RCSID("$NetBSD: init.c,v 1.42 2001/01/10 03:01:41 lukem Exp $");
 #include <paths.h>
 #include <err.h>
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef SECURE
 #include <pwd.h>
@@ -185,9 +181,7 @@ static void msdosfs_root(void);
  * The mother of all processes.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct sigaction sa;
 	sigset_t mask;
@@ -297,25 +291,14 @@ main(argc, argv)
  * Associate a function with a signal handler.
  */
 void
-#ifdef __STDC__
 handle(sig_t handler, ...)
-#else
-handle(va_alist)
-	va_dcl
-#endif
 {
 	int sig;
 	struct sigaction sa;
 	sigset_t mask_everything;
 	va_list ap;
-#ifndef __STDC__
-	sig_t handler;
 
-	va_start(ap);
-	handler = va_arg(ap, sig_t);
-#else
 	va_start(ap, handler);
-#endif
 
 	sa.sa_handler = handler;
 	sigfillset(&mask_everything);
@@ -333,23 +316,12 @@ handle(va_alist)
  * Delete a set of signals from a mask.
  */
 void
-#ifdef __STDC__
 delset(sigset_t *maskp, ...)
-#else
-delset(va_alist)
-	va_dcl
-#endif
 {
 	int sig;
 	va_list ap;
-#ifndef __STDC__
-	sigset_t *maskp;
 
-	va_start(ap);
-	maskp = va_arg(ap, sigset_t *);
-#else
 	va_start(ap, maskp);
-#endif
 
 	while ((sig = va_arg(ap, int)) != 0)
 		sigdelset(maskp, sig);
@@ -362,22 +334,11 @@ delset(va_alist)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-#ifdef __STDC__
 stall(const char *message, ...)
-#else
-stall(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *message;
 
-	va_start(ap);
-	message = va_arg(ap, char *);
-#else
 	va_start(ap, message);
-#endif
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
 	closelog();
@@ -390,23 +351,11 @@ stall(va_alist)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-#ifdef __STDC__
 warning(const char *message, ...)
-#else
-warning(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *message;
 
-	va_start(ap);
-	message = va_arg(ap, char *);
-#else
 	va_start(ap, message);
-#endif
-
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
 	closelog();
@@ -417,23 +366,11 @@ warning(va_alist)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-#ifdef __STDC__
 emergency(const char *message, ...)
-#else
-emergency(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	char *message;
 
-	va_start(ap);
-	message = va_arg(ap, char *);
-#else
 	va_start(ap, message);
-#endif
-
 	vsyslog(LOG_EMERG, message, ap);
 	va_end(ap);
 	closelog();
@@ -461,8 +398,8 @@ badsys(int sig)
 void
 disaster(int sig)
 {
-	emergency("fatal signal: %s", strsignal(sig));
 
+	emergency("fatal signal: %s", strsignal(sig));
 	sleep(STALL_TIMEOUT);
 	_exit(sig);		/* reboot */
 }
@@ -525,6 +462,7 @@ setsecuritylevel(int newlevel)
 void
 transition(state_t s)
 {
+
 	for (;;)
 		s = (state_t) (*s)();
 }
@@ -818,6 +756,7 @@ runcom(void)
 int
 start_session_db(void)
 {
+
 	if (session_db && (*session_db->close)(session_db))
 		emergency("session database close: %s", strerror(errno));
 	if ((session_db = dbopen(NULL, O_RDWR, 0, DB_HASH, NULL)) == 0) {
@@ -865,12 +804,7 @@ del_session(session_t *sp)
  * Look up a login session by pid.
  */
 session_t *
-#ifdef __STDC__
 find_session(pid_t pid)
-#else
-find_session(pid)
-	pid_t pid;
-#endif
 {
 	DBT key;
 	DBT data;
@@ -908,6 +842,7 @@ construct_argv(char *command)
 void
 free_session(session_t *sp)
 {
+
 	free(sp->se_device);
 	if (sp->se_getty) {
 		free(sp->se_getty);
@@ -1111,12 +1046,7 @@ start_getty(session_t *sp)
  * If an exiting login, start a new login running.
  */
 void
-#ifdef __STDC__
 collect_child(pid_t pid)
-#else
-collect_child(pid)
-	pid_t pid;
-#endif
 {
 #ifndef LETS_GET_SMALL
 	session_t *sp, *sprev, *snext;
@@ -1301,6 +1231,7 @@ catatonia(void)
 void
 alrm_handler(int sig)
 {
+
 	clang = 1;
 }
 
