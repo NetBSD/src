@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2000/12/04 17:26:41 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.93 2000/12/04 20:12:10 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1252,6 +1252,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		bus_dmamap_load(t, map, buf, buflen, p, flags);
 	}
 	panic("_bus_dmamap_load_uio: not implemented");
+#else
+	return 0;
 #endif
 }
 
