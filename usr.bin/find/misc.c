@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2002/09/27 15:56:27 provos Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2003/05/22 15:47:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 2002/09/27 15:56:27 provos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2003/05/22 15:47:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,9 +155,9 @@ void
 show_path(sig)
 	int sig;
 {
-	extern FTSENT *entry;
+	extern FTSENT *g_entry;
 
 	write(STDERR_FILENO, "find path: ", 11);
-	write(STDERR_FILENO, entry->fts_path, entry->fts_pathlen);
+	write(STDERR_FILENO, g_entry->fts_path, g_entry->fts_pathlen);
 	write(STDERR_FILENO, "\n", 1);
 }
