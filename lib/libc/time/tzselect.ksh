@@ -1,6 +1,6 @@
 #! /bin/ksh
 #
-#	$NetBSD: tzselect.ksh,v 1.3 1998/01/22 07:07:00 jtc Exp $
+#	$NetBSD: tzselect.ksh,v 1.4 1998/09/10 15:58:40 kleink Exp $
 #
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
@@ -13,7 +13,7 @@
 # If your host lacks the Korn shell,
 # you can use either of the following free programs instead:
 #
-#	<a href=ftp://ftp.gnu.ai.mit.edu/pub/gnu/>
+#	<a href=ftp://ftp.gnu.org/pub/gnu/>
 #	Bourne-Again shell (bash)
 #	</a>
 #
@@ -25,7 +25,7 @@
 # If your host lacks awk, or has an old awk that does not conform to Posix.2,
 # you can use either of the following free programs instead:
 #
-#	<a href=ftp://ftp.gnu.ai.mit.edu/pub/gnu/>
+#	<a href=ftp://ftp.gnu.org/pub/gnu/>
 #	GNU awk (gawk)
 #	</a>
 #
