@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.11 1997/08/27 11:26:30 bouyer Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.12 1997/10/01 01:18:54 enami Exp $	*/
 
 /*
  * SCSI-specific insterface description.
@@ -10,7 +10,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -22,7 +22,7 @@
  */
 
 #ifndef	_SCSI_SCSI_ALL_H
-#define _SCSI_SCSI_ALL_H 1
+#define	_SCSI_SCSI_ALL_H 1
 
 /*
  * SCSI command format
@@ -31,9 +31,9 @@
 /*
  * Define dome bits that are in ALL (or a lot of) scsi commands
  */
-#define SCSI_CTL_LINK		0x01
-#define SCSI_CTL_FLAG		0x02
-#define SCSI_CTL_VENDOR		0xC0
+#define	SCSI_CTL_LINK		0x01
+#define	SCSI_CTL_FLAG		0x02
+#define	SCSI_CTL_VENDOR		0xC0
 
 
 /*
@@ -67,7 +67,7 @@ struct scsi_send_diag {
 	u_int8_t control;
 };
 
-#define SCSI_MODE_SENSE		0x1a
+#define	SCSI_MODE_SENSE		0x1a
 struct scsi_mode_sense {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -94,7 +94,7 @@ struct scsi_mode_sense_big {
 	u_int8_t control;
 };
 
-#define SCSI_MODE_SELECT		0x15
+#define	SCSI_MODE_SELECT		0x15
 struct scsi_mode_select {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -114,7 +114,7 @@ struct scsi_mode_select_big {
 	u_int8_t control;
 };
 
-#define SCSI_RESERVE      		0x16
+#define	SCSI_RESERVE      		0x16
 struct scsi_reserve {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -123,7 +123,7 @@ struct scsi_reserve {
 	u_int8_t control;
 };
 
-#define SCSI_RELEASE      		0x17
+#define	SCSI_RELEASE      		0x17
 struct scsi_release {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -142,8 +142,8 @@ struct scsi_changedef {
 	u_int8_t datalen;
 	u_int8_t control;
 };
-#define SC_SCSI_1 0x01
-#define SC_SCSI_2 0x03
+#define	SC_SCSI_1 0x01
+#define	SC_SCSI_2 0x03
 
 struct scsi_blk_desc {
 	u_int8_t density;
@@ -173,8 +173,8 @@ struct scsi_mode_header_big {
  */
 #define	SCSI_OK		0x00
 #define	SCSI_CHECK	0x02
-#define	SCSI_BUSY	0x08	
-#define SCSI_INTERM	0x10
-#define SCSI_QUEUE_FULL		0x28
+#define	SCSI_BUSY	0x08
+#define	SCSI_INTERM	0x10
+#define	SCSI_QUEUE_FULL	0x28
 
 #endif /* _SCSI_SCSI_ALL_H */

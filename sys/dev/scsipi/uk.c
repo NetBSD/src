@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.19 1997/08/27 11:27:18 bouyer Exp $	*/
+/*	$NetBSD: uk.c,v 1.20 1997/10/01 01:19:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Dummy driver for a device we can't identify.
  * Originally by Julian Elischer (julian@tfs.com)
  */
@@ -93,7 +93,7 @@ ukmatch(parent, match, aux)
 	void *aux;
 {
 
-	return 1;
+	return (1);
 }
 
 /*
@@ -138,28 +138,29 @@ ukopen(dev, flag, fmt, p)
 
 	unit = UKUNIT(dev);
 	if (unit >= uk_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	uk = uk_cd.cd_devs[unit];
-	if (!uk)
-		return ENXIO;
-		
+	if (uk == NULL)
+		return (ENXIO);
+
 	sc_link = uk->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit, uk_cd.cd_ndevs));
+	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
+		uk_cd.cd_ndevs));
 
 	/*
 	 * Only allow one at a time
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
 		printf("%s: already open\n", uk->sc_dev.dv_xname);
-		return EBUSY;
+		return (EBUSY);
 	}
 
 	sc_link->flags |= SDEV_OPEN;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
-	return 0;
+	return (0);
 }
 
 /*
@@ -177,7 +178,7 @@ ukclose(dev, flag, fmt, p)
 	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
 	uk->sc_link->flags &= ~SDEV_OPEN;
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -194,5 +195,5 @@ ukioctl(dev, cmd, addr, flag, p)
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
-	return scsipi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p);
+	return (scsipi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p));
 }

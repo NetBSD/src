@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.2 1997/08/27 11:26:17 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.3 1997/10/01 01:18:42 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -40,7 +40,7 @@
 #undef ATAPI_DEBUG_WDC
 
 struct atapi_identify {
-	struct	config_s {
+	struct config_s {
 		u_int8_t cmd_drq_rem;
 #define ATAPI_PACKET_SIZE_MASK	0x03
 #define ATAPI_PACKET_SIZE_12	0x00
@@ -67,23 +67,23 @@ struct atapi_identify {
 					/* 0x00 and 0x01 are ATA */
 #define ATAPI_GC_PROTO_TYPE_ATAPI 0x80
 #define ATAPI_GC_PROTO_TYPE_RESERVED 0xc0
-	} config;				/* general configuration */
+	} config;			/* general configuration */
 
-	u_int8_t	cylinders[2];
-	u_int8_t	reserved1[2];
-	u_int8_t	heads[2];
-	u_int8_t	unf_bytes_per_track[2];
-	u_int8_t	unf_bytes_per_sector[2];
-	u_int8_t	sectors_per_track[2];
-	u_int8_t	reserved2[6];
-	char		serial_number[20];
-	u_int8_t	buffer_type[2];
-	u_int8_t	buffer_size[2];
-	u_int8_t	ECC_bytes_available[2];
-	char		firmware_revision[8];
-	char		model[40];
-	u_int8_t	sector_count[2];
-	u_int8_t	double_word[2];		/* == 0 for CD-ROMs */
+	u_int8_t cylinders[2];
+	u_int8_t reserved1[2];
+	u_int8_t heads[2];
+	u_int8_t unf_bytes_per_track[2];
+	u_int8_t unf_bytes_per_sector[2];
+	u_int8_t sectors_per_track[2];
+	u_int8_t reserved2[6];
+	char	 serial_number[20];
+	u_int8_t buffer_type[2];
+	u_int8_t buffer_size[2];
+	u_int8_t ECC_bytes_available[2];
+	char	 firmware_revision[8];
+	char	 model[40];
+	u_int8_t sector_count[2];
+	u_int8_t double_word[2];		/* == 0 for CD-ROMs */
 
 	struct capabilities_s {
 		u_int8_t vendor;
@@ -94,40 +94,40 @@ struct atapi_identify {
 #define ATAPI_IORDY			0x08	/* IORDY supported */
 	} capabilities;
 
-	u_int8_t	reserved3[2];
-	u_int8_t	PIO_cycle_timing[2];
-	u_int8_t	DMA_cycle_timing[2];
-	u_int8_t	validity[2]; /* of words 54-58, 64-70 in this table */
+	u_int8_t reserved3[2];
+	u_int8_t PIO_cycle_timing[2];
+	u_int8_t DMA_cycle_timing[2];
+	u_int8_t validity[2];	/* of words 54-58, 64-70 in this table */
 
 #define ATAPI_VALID_FIRST	0x0	/* == 1 => words 54-58 are valid */
 #define ATAPI_VALID_SECOND	0x1	/* == 1 => words 64-70 are valid */
 
-	u_int8_t	current_chs[6];	/* cylinder/head/sector */
-	u_int8_t	current_capacity[4];
-	u_int8_t	reserved4[2];
-	u_int8_t	user_addressable_sectors[4];
-	u_int8_t	singleword_DMA_mode[2];
+	u_int8_t current_chs[6];	/* cylinder/head/sector */
+	u_int8_t current_capacity[4];
+	u_int8_t reserved4[2];
+	u_int8_t user_addressable_sectors[4];
+	u_int8_t singleword_DMA_mode[2];
 
 #define ATAPI_SW_DMA_MODE_AVAIL	0x00ff	/* Mode 0 is supported */
 #define ATAPI_SW_DMA_MODE_ACTIVE 0xff00	/* which mode is active */
 
-	u_int8_t	multiword_DMA_mode[2];
+	u_int8_t multiword_DMA_mode[2];
 
 #define ATAPI_MW_DMA_MODE_AVAIL	0x00ff	/* Mode 0 is supported */
 #define ATAPI_MW_DMA_MODE_ACTIVE 0xff00	/* which mode is active */
 
-	u_int8_t	enhanced_PIO_mode[2];
+	u_int8_t enhanced_PIO_mode[2];
 
 #define ATAPI_ENHANCED_PIO_AVAIL 0x0001	/* PIO Mode 3 is supported */
 
-	u_int8_t	blind_PIO_minimum_cycles[2];
-	u_int8_t	mw_dma_tct[2]; /* multi-word DMA transfer cycle time */
-	u_int8_t	min_PIO_tct_no_flow_control[2];
-	u_int8_t	min_PIO_tct_with_flow_control[2];
-	u_int8_t	reserved5[4];
-	u_int8_t	reserved6[114];
-	u_int8_t	vendor[64];	/* vendor unique */
-	u_int8_t	reserved7[192];
+	u_int8_t blind_PIO_minimum_cycles[2];
+	u_int8_t mw_dma_tct[2];	/* multi-word DMA transfer cycle time */
+	u_int8_t min_PIO_tct_no_flow_control[2];
+	u_int8_t min_PIO_tct_with_flow_control[2];
+	u_int8_t reserved5[4];
+	u_int8_t reserved6[114];
+	u_int8_t vendor[64];		/* vendor unique */
+	u_int8_t reserved7[192];
 };
 
 struct atapibus_attach_args {
