@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cd9660_vfsops.c	8.3 (Berkeley) 1/31/94
- *	$Id: cd9660_vfsops.c,v 1.1 1994/06/08 11:22:57 mycroft Exp $
+ *	$Id: cd9660_vfsops.c,v 1.2 1994/06/14 23:55:44 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -263,7 +263,7 @@ static iso_mountfs(devvp, mp, p, argp)
 				   iso_bsize, NOCRED, &bp))
 			goto out;
 		
-		vdp = (struct iso_volume_descriptor *)bp->b_un.b_addr;
+		vdp = (struct iso_volume_descriptor *)bp->b_data;
 		if (bcmp (vdp->id, ISO_STANDARD_ID, sizeof vdp->id) != 0) {
 			error = EINVAL;
 			goto out;
@@ -332,7 +332,7 @@ static iso_mountfs(devvp, mp, p, argp)
 				   isomp->logical_block_size,NOCRED,&bp))
 		    goto out;
 		
-		rootp = (struct iso_directory_record *)bp->b_un.b_addr;
+		rootp = (struct iso_directory_record *)bp->b_data;
 		
 		if ((isomp->rr_skip = cd9660_rrip_offset(rootp,isomp)) < 0) {
 		    argp->flags  |= ISOFSMNT_NORRIP;
@@ -616,7 +616,7 @@ cd9660_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 		return (error);
 	}
 	
-	dirp = (struct iso_directory_record *)(bp->b_un.b_addr + off);
+	dirp = (struct iso_directory_record *)(bp->b_data + off);
 	if (off + isonum_711(dirp->length) > imp->logical_block_size) {
 		brelse(bp);
 		printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",

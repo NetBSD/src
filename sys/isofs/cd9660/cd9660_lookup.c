@@ -37,7 +37,7 @@
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
  *	from: @(#)cd9660_lookup.c	8.2 (Berkeley) 1/23/94
- *	$Id: cd9660_lookup.c,v 1.1 1994/06/08 11:22:49 mycroft Exp $
+ *	$Id: cd9660_lookup.c,v 1.2 1994/06/14 23:54:44 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -250,7 +250,7 @@ searchloop:
 		 * Get pointer to next entry.
 		 */
 		ep = (struct iso_directory_record *)
-			(bp->b_un.b_addr + entryoffsetinblock);
+			(bp->b_data + entryoffsetinblock);
 		
 		reclen = isonum_711 (ep->length);
 		if (reclen == 0) {
@@ -341,8 +341,8 @@ foundino:
 				if (error = iso_blkatoff(dp, saveoffset, &bp))
 					return (error);
 			}
-			ep = (struct iso_directory_record *)(bp->b_un.b_addr
-							     + iso_blkoff(imp,saveoffset));
+			ep = (struct iso_directory_record *)
+				(bp->b_data + iso_blkoff(imp,saveoffset));
 			dp->i_offset = saveoffset;
 		}
 		goto found;
