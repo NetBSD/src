@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.23 2000/11/21 09:38:06 nisimura Exp $
+# $NetBSD: network,v 1.24 2000/11/21 09:59:02 lukem Exp $
 #
 
 # PROVIDE: network
@@ -103,7 +103,7 @@ network_start()
 		echo -n 'Configuring network interfaces:'
 		for int in $tmp; do
 			eval args=\$ifconfig_$int
-			f [ -n "$args" ]; then
+			if [ -n "$args" ]; then
 				echo -n " $int"
 				ifconfig $int $args
 			elif [ -f /etc/ifconfig.$int ]; then
