@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.57 1998/06/30 20:29:39 thorpej Exp $	*/
+/*	$NetBSD: kvm.c,v 1.58 1998/06/30 20:40:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.57 1998/06/30 20:29:39 thorpej Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.58 1998/06/30 20:40:44 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
 static int	clear_gap __P((kvm_t *, FILE *, int));
 static off_t	Lseek __P((kvm_t *, int, off_t, int));
-static ssize_t	Read __P(( kvm_t *, int, void *, size_t));
+static ssize_t	Pread __P((kvm_t *, int, void *, size_t, off_t));
 
 char *
 kvm_geterr(kd)
@@ -176,38 +176,46 @@ _kvm_malloc(kd, n)
 }
 
 /*
- * Wrappers for Lseek/Read system calls.  They check for errors and
- * call _kvm_syserr() if appropriate.
+ * Wrapper around the lseek(2) system call; calls _kvm_syserr() for us
+ * in the event of emergency.
  */
 static off_t
 Lseek(kd, fd, offset, whence)
-	kvm_t	*kd;
-	int	fd, whence;
-	off_t	offset;
+	kvm_t *kd;
+	int fd;
+	off_t offset;
+	int whence;
 {
-	off_t	off;
+	off_t off;
 
 	errno = 0;
+
 	if ((off = lseek(fd, offset, whence)) == -1 && errno != 0) {
 		_kvm_syserr(kd, kd->program, "Lseek");
-		return (-1);
+		return ((off_t)-1);
 	}
 	return (off);
 }
 
+/*
+ * Wrapper around the pread(2) system call; calls _kvm_syserr() for us
+ * in the event of emergency.
+ */
 static ssize_t
-Read(kd, fd, buf, nbytes)
-	kvm_t	*kd;
-	int	fd;
-	void	*buf;
-	size_t	nbytes;
+Pread(kd, fd, buf, nbytes, offset)
+	kvm_t *kd;
+	int fd;
+	void *buf;
+	size_t nbytes;
+	off_t offset;
 {
-	ssize_t	rv;
+	ssize_t rv;
 
 	errno = 0;
 
-	if ((rv = read(fd, buf, nbytes)) != nbytes && errno != 0)
-		_kvm_syserr(kd, kd->program, "Read");
+	if ((rv = pread(fd, buf, nbytes, offset)) != nbytes &&
+	    errno != 0)
+		_kvm_syserr(kd, kd->program, "Pread");
 	return (rv);
 }
 
@@ -363,9 +371,7 @@ _kvm_get_header(kd)
 	/*
 	 * Read the kcore_hdr_t
 	 */
-	if (Lseek(kd, kd->pmfd, (off_t)0, SEEK_SET) == -1)
-		return (-1);
-	sz = Read(kd, kd->pmfd, &kcore_hdr, sizeof(kcore_hdr));
+	sz = Pread(kd, kd->pmfd, &kcore_hdr, sizeof(kcore_hdr), (off_t)0);
 	if (sz != sizeof(kcore_hdr))
 		return (-1);
 
@@ -395,9 +401,7 @@ _kvm_get_header(kd)
 	/*
 	 * Read the CPU segment header
 	 */
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
-		goto fail;
-	sz = Read(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr));
+	sz = Pread(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr), (off_t)offset);
 	if (sz != sizeof(cpu_hdr))
 		goto fail;
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORESEG_MAGIC) ||
@@ -412,9 +416,7 @@ _kvm_get_header(kd)
 	kd->cpu_data = _kvm_malloc(kd, cpu_hdr.c_size);
 	if (kd->cpu_data == NULL)
 		goto fail;
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
-		goto fail;
-	sz = Read(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size);
+	sz = Pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size, (off_t)offset);
 	if (sz != cpu_hdr.c_size)
 		goto fail;
 	offset += cpu_hdr.c_size;
@@ -422,9 +424,7 @@ _kvm_get_header(kd)
 	/*
 	 * Read the next segment header: data segment
 	 */
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
-		goto fail;
-	sz = Read(kd, kd->pmfd, &mem_hdr, sizeof(mem_hdr));
+	sz = Pread(kd, kd->pmfd, &mem_hdr, sizeof(mem_hdr), (off_t)offset);
 	if (sz != sizeof(mem_hdr))
 		goto fail;
 	offset += kcore_hdr.c_seghdrsize;
@@ -476,9 +476,7 @@ off_t	dump_off;
 	/*
 	 * Validate new format crash dump
 	 */
-	if (Lseek(kd, kd->pmfd, dump_off, SEEK_SET) == -1)
-		return (-1);
-	sz = Read(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr));
+	sz = Pread(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr), dump_off);
 	if (sz != sizeof(cpu_hdr))
 		return (-1);
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
@@ -495,9 +493,8 @@ off_t	dump_off;
 	kd->cpu_data = _kvm_malloc(kd, kd->cpu_dsize);
 	if (kd->cpu_data == NULL)
 		goto fail;
-	if (Lseek(kd, kd->pmfd, dump_off+hdr_size, SEEK_SET) == -1)
-		goto fail;
-	sz = Read(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size);
+	sz = Pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size,
+	    dump_off + hdr_size);
 	if (sz != cpu_hdr.c_size)
 		goto fail;
 	hdr_size += kd->cpu_dsize;
