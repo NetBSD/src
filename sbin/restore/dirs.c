@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dirs.c	8.2 (Berkeley) 1/21/94";*/
-static char *rcsid = "$Id: dirs.c,v 1.7 1994/06/08 19:33:33 mycroft Exp $";
+static char *rcsid = "$Id: dirs.c,v 1.8 1994/06/18 18:14:07 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,8 @@ static char *rcsid = "$Id: dirs.c,v 1.7 1994/06/08 19:33:33 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <machine/endian.h>
 
 #include "pathnames.h"
 #include "restore.h"
@@ -351,7 +353,18 @@ putdir(buf, size)
 			dp = (struct direct *)(buf + loc);
 			if (oldinofmt) {
 				if (Bcvt) {
-					swabst((u_char *)"l2s", (u_char *) dp);
+					swabst((u_char *)"ls", (u_char *) dp);
+				}
+				if (dp->d_ino != 0) {
+#if BYTE_ORDER == BIG_ENDIAN
+					if (Bcvt) {
+#else
+					if (!Bcvt) {
+#endif
+						dp->d_namlen = dp->d_type;
+						dp->d_type = DT_UNKNOWN;
+					} else
+						dp->d_type = DT_UNKNOWN;
 				}
 			} else {
 				if (Bcvt) {
