@@ -65,6 +65,8 @@ cpp_lookup (pfile, name, len, hash)
 {
   register const U_CHAR *bp;
   register HASHNODE *bucket;
+  int hashsave = hash;
+  static int warned_unix = 0;
 
   if (len < 0)
     {
@@ -80,6 +82,11 @@ cpp_lookup (pfile, name, len, hash)
     if (bucket->length == len && strncmp (bucket->name, name, len) == 0)
       return bucket;
     bucket = bucket->next;
+  }
+  /* Lookups pass no hashcode.  #define passes one.  Look for no hashcode. */
+  if ((hashsave < 0) && !strncmp(name, "unix", len) && !warned_unix) {
+    warned_unix++;
+    warning("deprecated symbol \"unix\" is no longer predefined");
   }
   return (HASHNODE *) 0;
 }
