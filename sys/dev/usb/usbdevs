@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.116 2000/09/28 01:26:49 augustss Exp $
+$NetBSD: usbdevs,v 1.117 2000/10/04 02:09:07 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,21 @@ vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor RAINBOW		0x04b9	Rainbow Technologies
 vendor IODATA		0x04bb	I/O Data
 vendor 3COMUSR		0x04c1	U.S. Robotics
+vendor METHODE		0x04c2	Methode Electronics Far East PTE Ltd.
+vendor MAXISWITCH	0x04c3	Maxi Switch, Inc.
+vendor LOCKHEEDMER	0x04c4	Lockheed Martin Energy Research
+vendor FUJITSU		0x04c5	Fujitsu Ltd.
+vendor TOSHIBAAM	0x04c6	Toshiba America Electronic Components
+vendor MICROMACRO	0x04c7	Micro Macro Technologies
 vendor KONICA		0x04c8	Konica Corp.
+vendor LITEON		0x04ca	Lite-On Technology Corp.
+vendor FUJIPHOTO	0x04cb	Fuji Photo Film Co., Ltd.
+vendor PHILIPSSEMI	0x04cc	Philips Semiconductors
+vendor TATUNG		0x04cd	Tatung Co. Of America
+vendor SCANLOGIC	0x04ce	ScanLogic Corp.
+vendor MYSON		0x04cf	Myson Technology Inc.
+vendor DIGI2		0x04d0	Digi International
+vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing Technologies, Inc.
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor ANNABOOKS	0x04ed	Annabooks
