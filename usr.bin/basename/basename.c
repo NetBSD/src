@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)basename.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$Id: basename.c,v 1.6 1994/09/26 01:57:09 glass Exp $";
+static char rcsid[] = "$Id: basename.c,v 1.7 1994/09/26 06:01:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -95,8 +95,10 @@ main(argc, argv)
 	 * (3) If there are any trailing slash characters in string, they
 	 *     shall be removed.
 	 */
-	for (; *p; ++p);
-	while (*--p == '/');
+	for (; *p; ++p)
+		continue;
+	while (*--p == '/')
+		continue;
 	*++p = '\0';
 
 	/*
