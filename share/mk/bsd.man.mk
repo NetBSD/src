@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.55 2000/08/13 06:56:25 itojun Exp $
+#	$NetBSD: bsd.man.mk,v 1.56 2000/09/22 05:37:57 phil Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -12,13 +12,14 @@ __initialized__:
 .MAIN:		all
 .endif
 
-.PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
+.PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman html installhtml cleanhtml
 .if ${MKMAN} != "no"
 realinstall:	${MANINSTALL}
 .endif
 cleandir distclean: cleanman
 
 TMACDIR?=	${DESTDIR}/usr/share/tmac
+HTMLDIR?=	${DESTDIR}/usr/share/man
 CATDEPS?=	${TMACDIR}/tmac.andoc \
 		${TMACDIR}/tmac.doc \
 		${TMACDIR}/tmac.doc-ditroff \
@@ -29,8 +30,10 @@ MANTARGET?=	cat
 NROFF?=		nroff -Tascii
 TBL?=		tbl
 
+
 .SUFFIXES: .1 .2 .3 .4 .5 .6 .7 .8 .9 \
-	   .cat1 .cat2 .cat3 .cat4 .cat5 .cat6 .cat7 .cat8 .cat9
+	   .cat1 .cat2 .cat3 .cat4 .cat5 .cat6 .cat7 .cat8 .cat9 \
+	   .html1 .html2 .html3 .html4 .html5 .html6 .html7 .html8 .html9
 
 .9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1: \
     ${CATDEPS}
@@ -44,10 +47,25 @@ TBL?=		tbl
 	 (rm -f ${.TARGET}; false)
 .endif
 
+.9.html9 .8.html8 .7.html7 .6.html6 .5.html5 .4.html4 .3.html3 .2.html2 .1.html1: \
+    ${CATDEPS}
+.if !defined(USETBL)
+	@echo "${NROFF} -mdoc2html ${.IMPSRC} > ${.TARGET}"
+	@${NROFF} -mdoc2html ${.IMPSRC} > ${.TARGET} || \
+	 (rm -f ${.TARGET}; false)
+.else
+	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mdoc2html > ${.TARGET}"
+	@${TBL} ${.IMPSRC} | ${NROFF} -mdoc2html > ${.TARGET} || \
+	 (rm -f ${.TARGET}; false)
+.endif
+
 .if defined(MAN) && !empty(MAN)
 MANPAGES=	${MAN}
 CATPAGES=	${MANPAGES:C/(.*).([1-9])/\1.cat\2/}
 .NOPATH:	${CATPAGES}
+.if !defined(NOHTML)
+HTMLPAGES=	${MANPAGES:C/(.*).([1-9])/\1.html\2/}
+.endif
 .endif
 
 MINSTALL=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
@@ -147,6 +165,23 @@ manlinks: manpages
 		fi; \
 	done
 .endif
+
+# Html rules
+html: ${HTMLPAGES}
+
+.if defined(HTMLPAGES) && !empty(HTMLPAGES)
+.for P in ${HTMLPAGES} 
+${HTMLDIR}/${P:T:E}/${P:T:R}.html: ${P}
+	${MINSTALL} ${.ALLSRC} ${.TARGET}
+.endfor
+.endif
+installhtml: ${HTMLPAGES:@P@${HTMLDIR}/${P:T:E}/${P:T:R}.html@}
+
+cleanhtml:
+.if defined(HTMLPAGES) && !empty(HTMLPAGES)
+	rm -f ${HTMLPAGES}
+.endif
+
 
 .if defined(CATPAGES)
 .if ${MKCATPAGES} != "no" && ${MKMAN} != "no"
