@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.15 1996/05/05 17:19:04 briggs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.16 1996/06/11 02:56:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -88,7 +88,7 @@ fpu_attach(parent, self, args)
 	char *descr;
 
 	fpu_type = fpu_probe();
-	if ((0 <= fpu_type) && (fpu_type <= 2))
+	if ((0 <= fpu_type) && (fpu_type <= 3))
 		descr = fpu_descr[fpu_type];
 	else
 		descr = "unknown type";
