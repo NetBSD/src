@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/17 23:36:07 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3 2003/10/01 15:47:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ typedef struct {
 		} __fp_regs32;
 		union {
 			double	__fp64_dregs[32];
+			/* LONGLONG */
 			unsigned long long __fp64_regs[32];
 		} __fp_regs64;
 	} __fp_r;
