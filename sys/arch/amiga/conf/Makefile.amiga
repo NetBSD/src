@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.48 1996/08/12 00:51:27 mycroft Exp $
+#	$NetBSD: Makefile.amiga,v 1.49 1996/08/31 21:40:53 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 AMIGA=	$S/arch/amiga
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
