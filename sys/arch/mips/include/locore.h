@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.23 2000/01/09 10:05:55 simonb Exp $	*/
+/*	$NetBSD: locore.h,v 1.24 2000/01/28 15:08:36 takemura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -52,6 +52,7 @@
 
 extern u_int32_t mips_read_causereg __P((void));
 extern u_int32_t mips_read_statusreg __P((void));
+extern void mips_idle __P((void));
 
 extern void mips1_ConfigCache  __P((void));
 extern void mips1_FlushCache  __P((void));
@@ -122,6 +123,7 @@ typedef struct  {
 	void (*wbflush) __P((void));
 	void (*proc_trampoline) __P((void));
 	void (*cpu_switch_resume) __P((void));
+	void (*cpu_idle) __P((void));
 } mips_locore_jumpvec_t;
 
 /* Override writebuffer-drain method. */
