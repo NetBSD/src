@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.5 1998/06/21 18:41:07 christos Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.6 1998/06/23 02:19:25 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -160,8 +160,8 @@ com_dev_match(card)
 	 */
 	for (i = 0; i < 4; i++)
 		if (card->cis1_info[i] &&
-		    pmatch("*[Mm][Oo][Dd][Ee][Mm]*",
-		    card->cis1_info[i], NULL) > 0)
+		    pmatch(card->cis1_info[i],
+			   "*[Mm][Oo][Dd][Ee][Mm]*", NULL) > 0)
 			return &generic;
 
 	return NULL;
