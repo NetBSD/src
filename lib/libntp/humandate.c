@@ -1,4 +1,4 @@
-/*	$NetBSD: humandate.c,v 1.4 1998/03/06 18:17:15 christos Exp $	*/
+/*	$NetBSD: humandate.c,v 1.5 1998/03/07 05:20:06 lukem Exp $	*/
 
 /*
  * humandate - convert an NTP (or the current) time to something readable
@@ -13,6 +13,8 @@
 #ifdef TIME_WITH_SYS_TIME
 #include <time.h>
 #endif
+
+char *humanlogtime __P((void));
 
 static const char *months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
