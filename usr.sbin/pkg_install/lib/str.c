@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.31 2001/10/04 05:32:50 yamt Exp $	*/
+/*	$NetBSD: str.c,v 1.32 2002/01/09 16:17:08 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.31 2001/10/04 05:32:50 yamt Exp $");
+__RCSID("$NetBSD: str.c,v 1.32 2002/01/09 16:17:08 agc Exp $");
 #endif
 #endif
 
@@ -91,74 +91,203 @@ str_lowercase(char *s)
 	}
 }
 
-typedef enum deweyop_t {
-	GT,
-	GE,
+/* pull in definitions and macros for resizing arrays as we go */
+#include "defs.h"
+
+/* do not modify these values, or things will NOT work */
+enum {
+        RC = -1,
+        Dot = 0,
+        Patch = 1
+};
+
+/* this struct defines a version number */
+typedef struct arr_t {
+	unsigned	c;              /* # of version numbers */
+	unsigned	size;           /* size of array */
+	int64_t        *v;              /* array of decimal numbers */
+	int64_t		netbsd;         /* any "nb" suffix */
+} arr_t;
+
+/* this struct describes a test */
+typedef struct test_t {
+	const char     *s;              /* string representation */
+	unsigned	len;            /* length of string */
+	int		t;              /* enumerated type of test */
+} test_t;
+
+enum {
 	LT,
-	LE
-}       deweyop_t;
+	LE,
+	EQ,
+	GE,
+	GT,
+	NE
+};
+
+/* the tests that are recognised. */
+static test_t   tests[] = {
+        {	"<=",	2,	LE	},
+        {	"<",	1,	LT	},
+        {	">=",	2,	GE	},
+        {	">",	1,	GT	},
+        {	"==",	2,	EQ	},
+        {	"!=",	2,	NE	},
+        {	NULL,	0,	0	}
+};
+
+
+/* locate the test in the tests array */
+static int
+mktest(int *op, char *test)
+{
+	test_t  *tp;
+
+	for (tp = tests ; tp->s ; tp++) {
+		if (strncasecmp(test, tp->s, tp->len) == 0) {
+			*op = tp->t;
+			return tp->len;
+		}
+	}
+	warnx("relational tets not found `%.10s'", test);
+	return -1;
+}
+
+/*
+ * make a component of a version number.
+ * '.' encodes as Dot which is '0'
+ * '_' encodes as 'patch level', or 'Dot', which is 0.
+ * 'pl' encodes as 'patch level', or 'Dot', which is 0.
+ * 'rc' encodes as 'release candidate', or RC, which is -1.
+ * 'nb' encodes as 'netbsd version', which is used after all other tests
+ */
+static int
+mkcomponent(arr_t *ap, char *num)
+{
+	static const char       alphas[] = "abcdefghijklmnopqrstuvwxyz";
+	int64_t                 n;
+	char                   *cp;
+
+	if (*num == 0) {
+		return 0;
+	}
+	ALLOC(int64_t, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
+	if (*num == '_') {
+		num += 1;
+		if (isdigit(*(num + 1))) {
+			ap->v[ap->c++] = Dot;
+			return 1;
+		}
+	}
+	if (isdigit(*num)) {
+		for (cp = num, n = 0 ; isdigit(*num) ; num++) {
+			n = (n * 10) + (*num - '0');
+		}
+		ap->v[ap->c++] = n;
+		return (int)(num - cp);
+	}
+	if (strncasecmp(num, "rc", 2) == 0) {
+		ap->v[ap->c++] = RC;
+		return 2;
+	}
+	if (strncasecmp(num, "pl", 2) == 0) {
+		ap->v[ap->c++] = Dot;
+		return 2;
+	}
+	if (strncasecmp(num, "nb", 2) == 0) {
+		for (cp = num, num += 2, n = 0 ; isdigit(*num) ; num++) {
+			n = (n * 10) + (*num - '0');
+		}
+		ap->netbsd = n;
+		return (int)(num - cp);
+	}
+	if (*num == '.') {
+		ap->v[ap->c++] = Dot;
+		return 1;
+	}
+	if (isalpha(*num)) {
+		ap->v[ap->c++] = Dot;
+		cp = strchr(alphas, tolower(*num));
+		ALLOC(int64_t, ap->v, ap->size, ap->c, 62, "mkver", exit(EXIT_FAILURE));
+		ap->v[ap->c++] = (int64_t)(cp - alphas) + 1;
+		return 1;
+	}
+	warnx("`%c' not recognised", *num);
+	return 1;
+}
+
+/* make a version number string into an array of comparable 64bit ints */
+static int
+mkversion(arr_t *ap, char *num)
+{
+	(void) memset(ap, 0, sizeof(arr_t));
+	while (*num) {
+		num += mkcomponent(ap, num);
+	}
+	return 1;
+}
+
+#define DIGIT(v, c, n) (((n) < (c)) ? v[n] : 0)
+
+/* compare the result against the test we were expecting */
+static int
+result(int64_t cmp, int tst)
+{
+	switch(tst) {
+	case LT:
+		return cmp < 0;
+	case LE:
+		return cmp <= 0;
+	case GT:
+		return cmp > 0;
+	case GE:
+		return cmp >= 0;
+	case EQ:
+		return cmp == 0;
+	case NE:
+		return cmp != 0;
+	default:
+		warnx("result: unknown test %d", tst);
+		return 0;
+	}
+}
+
+/* do the test on the 2 vectors */
+static int
+vtest(arr_t *lhs, int tst, arr_t *rhs)
+{
+	int64_t cmp;
+	int     c;
+	int     i;
+
+	for (i = 0, c = MAX(lhs->c, rhs->c) ; i < c ; i++) {
+		if ((cmp = DIGIT(lhs->v, lhs->c, i) - DIGIT(rhs->v, rhs->c, i)) != 0) {
+			return result(cmp, tst);
+		}
+	}
+	return result(lhs->netbsd - rhs->netbsd, tst);
+}
 
 /*
  * Compare two dewey decimal numbers
  */
 static int
-deweycmp(char *a, deweyop_t op, char *b)
+deweycmp(char *lhs, int op, char *rhs)
 {
-	int     ad;
-	int     bd;
-	char	*a_nb;
-	char	*b_nb;
-	int	in_nb = 0;
-	int     cmp;
+	arr_t	right;
+	arr_t	left;
 
-	assert(a != NULL);
-	assert(b != NULL);
-
-	/* Null out 'n' in any "nb" suffixes for initial pass */
-	if ((a_nb = strstr(a, "nb")))
-	    *a_nb = 0;
-	if ((b_nb = strstr(b, "nb")))
-	    *b_nb = 0;
-
-	for (;;) {
-		if (*a == 0 && *b == 0) {
-			if (!in_nb && (a_nb || b_nb)) {
-				/*
-				 * If exact match on first pass, test
-				 * "nb<X>" suffixes in second pass
-				 */
-				in_nb = 1;
-				if (a_nb)
-				    a = a_nb + 2;	/* Skip "nb" suffix */
-				if (b_nb)
-				    b = b_nb + 2;	/* Skip "nb" suffix */
-			} else {
-				cmp = 0;
-				break;
-			}
-		}
-
-		ad = bd = 0;
-		for (; *a && *a != '.'; a++) {
-			ad = (ad * 10) + (*a - '0');
-		}
-		for (; *b && *b != '.'; b++) {
-			bd = (bd * 10) + (*b - '0');
-		}
-		if ((cmp = ad - bd) != 0) {
-			break;
-		}
-		if (*a == '.')
-			++a;
-		if (*b == '.')
-			++b;
+	(void) memset(&left, 0, sizeof(left));
+	if (!mkversion(&left, lhs)) {
+		warnx("Bad lhs version `%s'", lhs);
+		return 0;
 	}
-	/* Replace any nulled 'n' */
-	if (a_nb)
-		*a_nb = 'n';
-	if (b_nb)
-		*b_nb = 'n';
-	return (op == GE) ? cmp >= 0 : (op == GT) ? cmp > 0 : (op == LE) ? cmp <= 0 : cmp < 0;
+	(void) memset(&right, 0, sizeof(right));
+	if (!mkversion(&right, rhs)) {
+		warnx("Bad rhs version `%s'", rhs);
+		return 0;
+	}
+        return vtest(&left, op, &right);
 }
 
 /*
@@ -216,22 +345,26 @@ alternate_match(const char *pattern, const char *pkg)
 static int
 dewey_match(const char *pattern, const char *pkg)
 {
-	deweyop_t op;
 	char   *cp;
 	char   *sep;
 	char   *ver;
 	char    name[FILENAME_MAX];
+	int	op;
 	int     n;
 
 	if ((sep = strpbrk(pattern, "<>")) == NULL) {
 		errx(1, "dewey_match(): '<' or '>' expected in `%s'", pattern);
 	}
 	(void) snprintf(name, sizeof(name), "%.*s", (int) (sep - pattern), pattern);
-	op = (*sep == '>') ? (*(sep + 1) == '=') ? GE : GT : (*(sep + 1) == '=') ? LE : LT;
-	ver = (op == GE || op == LE) ? sep + 2 : sep + 1;
+        if ((n = mktest(&op, sep)) < 0) {
+                warnx("Bad comparison `%s'", sep);
+		return 0;
+        }
+	ver = sep + n;
 	n = (int) (sep - pattern);
 	if ((cp = strrchr(pkg, '-')) != (char *) NULL) {
-		if (strncmp(pkg, name, (size_t) (cp - pkg)) == 0 && n == cp - pkg) {
+		if (strncmp(pkg, name, (size_t) (cp - pkg)) == 0 &&
+		    n == (int)(cp - pkg)) {
 			if (deweycmp(cp + 1, op, ver)) {
 				return 1;
 			}
