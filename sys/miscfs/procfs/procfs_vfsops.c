@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.34 2000/06/10 18:27:03 assar Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.34.2.1 2001/03/30 21:49:49 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -94,6 +94,8 @@ procfs_mount(mp, path, data, ndp, p)
 {
 	size_t size;
 	struct procfsmount *pmnt;
+	struct procfs_args args;
+	int error;
 
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");
@@ -102,6 +104,16 @@ procfs_mount(mp, path, data, ndp, p)
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
+
+	if (data != NULL) {
+		error = copyin(data, &args, sizeof args);
+		if (error != 0)
+			return error;
+
+		if (args.version != PROCFS_ARGSVERSION)
+			return EINVAL;
+	} else
+		args.flags = 0;
 
 	mp->mnt_flag |= MNT_LOCAL;
 	pmnt = (struct procfsmount *) malloc(sizeof(struct procfsmount),
@@ -117,6 +129,7 @@ procfs_mount(mp, path, data, ndp, p)
 
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
 	pmnt->pmnt_mp = mp;
+	pmnt->pmnt_flags = args.flags;
 
 	return (0);
 }
