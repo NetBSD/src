@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.81 2003/03/16 03:33:28 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.82 2003/06/15 02:49:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.81 2003/03/16 03:33:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.82 2003/06/15 02:49:33 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -217,6 +217,7 @@ in_pcbbind(v, nam, p)
 	struct mbuf *nam;
 	struct proc *p;
 {
+	struct in_ifaddr *ia = NULL;
 	struct inpcb *inp = v;
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
@@ -250,7 +251,8 @@ in_pcbbind(v, nam, p)
 			reuseport = SO_REUSEADDR|SO_REUSEPORT;
 	} else if (!in_nullhost(sin->sin_addr)) {
 		sin->sin_port = 0;		/* yech... */
-		if (ifa_ifwithaddr(sintosa(sin)) == 0)
+		INADDR_TO_IA(sin->sin_addr, ia);
+		if (ia == NULL)
 			return (EADDRNOTAVAIL);
 	}
 	if (lport) {
@@ -280,7 +282,19 @@ in_pcbbind(v, nam, p)
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
 	}
+	if (!in_nullhost(inp->inp_laddr)) {
+		KASSERT(inp->inp_ia != NULL);
+		LIST_REMOVE(inp, inp_ialink);
+		IFAFREE(&inp->inp_ia->ia_ifa); 
+		inp->inp_ia = NULL; 
+	}
 	inp->inp_laddr = sin->sin_addr;
+	if (ia != NULL) {
+		inp->inp_ia = ia;
+		LIST_INSERT_HEAD(&ia->ia_inpcbs, inp, inp_ialink);
+		IFAREF(&ia->ia_ifa);
+	}
+
 
 noname:
 	if (lport == 0) {
@@ -317,8 +331,14 @@ noname:
 			    htons(lport), 1))
 				goto found;
 		}
-		if (!in_nullhost(inp->inp_laddr))
+		if (!in_nullhost(inp->inp_laddr)) {
+		       if (inp->inp_ia != NULL) {
+				LIST_REMOVE(inp, inp_ialink);
+				IFAFREE(&inp->inp_ia->ia_ifa);
+				inp->inp_ia = NULL;
+			}
 			inp->inp_laddr.s_addr = INADDR_ANY;
+		}
 		return (EAGAIN);
 	found:
 		inp->inp_flags |= INP_ANONPORT;
@@ -342,7 +362,7 @@ in_pcbconnect(v, nam)
 	struct mbuf *nam;
 {
 	struct inpcb *inp = v;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 	struct sockaddr_in *ifaddr = NULL;
 	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
 	int error;
@@ -396,6 +416,7 @@ in_pcbconnect(v, nam)
 				error = EADDRNOTAVAIL;
 			return error;
 		}
+		INADDR_TO_IA(ifaddr->sin_addr, ia);
 	}
 	if (in_pcblookup_connect(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    !in_nullhost(inp->inp_laddr) ? inp->inp_laddr : ifaddr->sin_addr,
@@ -414,6 +435,11 @@ in_pcbconnect(v, nam)
 			if (error == EAGAIN)
 				return (error);
 		}
+		KASSERT(inp->inp_ia == NULL);
+		inp->inp_laddr = ia->ia_addr.sin_addr;
+		inp->inp_ia = ia;
+		LIST_INSERT_HEAD(&ia->ia_inpcbs, inp, inp_ialink);
+		IFAREF(&ia->ia_ifa);
 		inp->inp_laddr = ifaddr->sin_addr;
 	}
 	inp->inp_faddr = sin->sin_addr;
@@ -460,6 +486,11 @@ in_pcbdetach(v)
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
 	ip_freemoptions(inp->inp_moptions);
+	if (inp->inp_ia != NULL) {
+		LIST_REMOVE(inp, inp_ialink);
+		IFAFREE(&inp->inp_ia->ia_ifa);
+		inp->inp_ia = NULL;
+	}
 	s = splnet();
 	in_pcbstate(inp, INP_ATTACHED);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
