@@ -9,7 +9,7 @@ define sunfb
 device mainbus at root {}
 device obio at mainbus {addr = -1, [level = -1]}
 device obmem at mainbus {addr, size, [level = -1]}
-device obctl at mainbus {addr, size}
+device obctl at mainbus {addr = -1, size = -1}
 
 #define obio { addr = -1, size = -1, priority = -1, dvma = -1, flags = -1}
 #define obmem { addr = -1, size = -1}
@@ -20,6 +20,9 @@ file arch/sun3/dev/if_le_subr.c		le
 
 device zs at obio: tty
 file arch/sun3/dev/zs.c			zs device-driver needs-count
+
+device clock at obio
+file arch/sun3/sun3/clock.c		clock device-driver
 
 device bwtwo at obmem: sunfb
 file arch/sun3/dev/bwtwo.c		bwtwo device-driver
@@ -35,10 +38,10 @@ file arch/sun3/dev/obio.c		obio device-driver
 file arch/sun3/dev/obctl.c		obctl device-driver
 file arch/sun3/dev/obmem.c		obmem device-driver
 
+
 #
 #
 file arch/sun3/sun3/autoconf.c
-file arch/sun3/sun3/clock.c		
 file arch/sun3/sun3/conf.c		
 file arch/sun3/sun3/cons.c		
 file arch/sun3/sun3/control.c	
