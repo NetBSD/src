@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.106 2001/09/15 20:36:46 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.107 2001/09/21 07:57:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -525,6 +525,12 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	UVMHIST_LOG(maphist, "(map=0x%x, *startp=0x%x, size=%d, flags=0x%x)",
 	    map, *startp, size, flags);
 	UVMHIST_LOG(maphist, "  uobj/offset 0x%x/%d", uobj, uoffset,0,0);
+
+	/*
+	 * detect a popular device driver bug.
+	 */
+
+	KASSERT(curproc != NULL || map->flags & VM_MAP_INTRSAFE);
 
 	/*
 	 * check sanity of protection code
