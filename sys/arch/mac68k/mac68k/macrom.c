@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.9 1995/09/03 14:37:16 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.10 1995/09/03 14:51:38 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -653,7 +653,8 @@ mrg_init()
 #endif
 }
 
-void setup_egret(void)
+void
+setup_egret(void)
 {
 	if (0 != mrg_InitEgret){
 
@@ -693,15 +694,38 @@ mrg_initadbintr()
 			HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
 	}
 
+	/*
+	 * If we think there is an Egret in the machine, attempt to
+	 * set it up.  If not, just enable the interrupts (only on
+	 * some machines, others are already on from ADBReInit?).
+	 */
 	if ( (HwCfgFlags3 & 0x0e) == 0x06 ) {
-printf("setup_egret:\n");
-	    setup_egret();
-printf("setup_egret: back\n");
-	} 
+		if (mac68k_machine.do_graybars)
+			printf("mrg: setup_egret:\n");
 
-	if (current_mac_model->class == MACH_CLASSII) {
-	    via_reg(VIA1, vIFR) = 0x4; /* XXX - why are we setting the flag?  */
-            via_reg(VIA1, vIER) = 0x84; /* enable ADB interrupt. */
+		setup_egret();
+
+		if (mac68k_machine.do_graybars)
+			printf("mrg: setup_egret: done.\n");
+
+	} else {
+
+		if (mac68k_machine.do_graybars)
+			printf("mrg: Not setting up egret.\n");
+
+		/*
+		 * Do we need this elsewhere?
+		 * This should enable ADB interrupts.
+		 */
+		if (   (current_mac_model->class == MACH_CLASSII)
+		    || (current_mac_model->class == MACH_CLASSIIci)) {
+
+			if (mac68k_machine.do_graybars)
+				printf("mrg: Enabling ADB interrupt.\n");
+
+			via_reg(VIA1, vIFR) = 0x4;
+			via_reg(VIA1, vIER) = 0x84;
+		}	
 	}	
 }
 
@@ -748,13 +772,12 @@ mrg_fixupROMBase(obase, nbase)
 		mrg_InitEgret = mrg_InitEgret - oldbase + newbase;
 }
 
-/*WRU 950828: begin */
-void ADBAlternateInit(void)
+void
+ADBAlternateInit(void)
 {
 	if (0 == mrg_ADBAlternateInit){
 		ADBReInit();
-	}
-	else {
+	} else {
  		asm("
 			movml	a0-a6/d0-d7, sp@-
 			movl	%0, a1
@@ -766,4 +789,3 @@ void ADBAlternateInit(void)
 			: "g" (mrg_ADBAlternateInit), "g" (ADBBase) );
 	}
 }
-/*WRU 950828: end */
