@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.196 2004/04/22 15:05:33 ragge Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.197 2004/04/24 23:59:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.196 2004/04/22 15:05:33 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.197 2004/04/24 23:59:13 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -843,7 +843,7 @@ tcp_input(m, va_alist)
 #endif
 
 	/*
-	 * Get IP and TCP header together in first mbuf.
+	 * Get IP and TCP header.
 	 * Note: IP leaves IP header in first mbuf.
 	 */
 	ip = mtod(m, struct ip *);
