@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.20 1996/09/07 12:40:43 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.21 1996/10/02 18:04:59 ws Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -1027,10 +1027,10 @@ ibcs2_sys_nice(p, v, retval)
 
 	SCARG(&sa, which) = PRIO_PROCESS;
 	SCARG(&sa, who) = 0;
-	SCARG(&sa, prio) = p->p_nice + SCARG(uap, incr);
+	SCARG(&sa, prio) = p->p_nice - NZERO + SCARG(uap, incr);
 	if ((error = sys_setpriority(p, &sa, retval)) != 0)
 		return EPERM;
-	*retval = p->p_nice;
+	*retval = p->p_nice - NZERO;
 	return 0;
 }
 
