@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.26 1999/01/04 16:37:28 kim Exp $	*/
+/*	$NetBSD: ps.c,v 1.27 1999/03/26 22:36:02 bgrayson Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.26 1999/01/04 16:37:28 kim Exp $");
+__RCSID("$NetBSD: ps.c,v 1.27 1999/03/26 22:36:02 bgrayson Exp $");
 #endif
 #endif /* not lint */
 
@@ -319,7 +319,45 @@ main(argc, argv)
 	 * select procs
 	 */
 	if ((kp = kvm_getprocs(kd, what, flag, &nentries)) == 0)
-		errx(1, "%s", kvm_geterr(kd));
+	{
+	  	/*  sysctl() ought to provide some sort of
+		 *  always-working-but-minimal-functionality
+		 *  method of providing at least some of the
+		 *  process information.  Unfortunately, such a
+		 *  change will require too much work to be put
+		 *  into 1.4.  For now, enable this experimental
+		 *  /proc-based support instead (if /proc is
+		 *  mounted) to grab as much information as we can.  
+		 *  The guts of emulating kvm_getprocs() is in
+		 *  the file procfs_ops.c.  */
+		warnx("%s.\n    %s", kvm_geterr(kd),
+		    "Attempting experimental, insecure /proc-based method.");
+		/*  procfs_getprocs supports all but the
+		 *  KERN_PROC_RUID flag.  */
+		kp=procfs_getprocs(what, flag, &nentries);
+		if (kp == 0) {
+		  errx(1, "/proc-based lookup also failed.  Giving up...");
+		}
+		/*  An intruder could have put an ordinary filesystem
+		 *  on /proc, and keep updating it to make
+		 *  it look like it's the real /proc, when in
+		 *  reality they are hiding information about
+		 *  some trojan processes that are running. 
+		 *  Should we walk the mounted-filesystems table
+		 *  to figure out whether /proc is mounted with
+		 *  nothing mounted on top of it?  For now, just
+		 *  print a verbose warning.  XXX  bgrayson  */
+		fprintf(stderr, "%s%s%s%s%s%s%s%s%s",
+		    "*****************************************\n",
+		    "Warning:  /proc does not provide sufficient ",
+		    "information to provide\n",
+		    "valid data for all fields.\n",
+		    "1.  Several fields (like ",
+		    "STAT and TIME) will be incorrect.\n",
+		    "2.  If your system may be compromised, ",
+		    "verify that /proc is secure\n",
+		    "    before trusting these results.\n");
+	}
 	if ((kinfo = malloc(nentries * sizeof(*kinfo))) == NULL)
 		err(1, "%s", "");
 	for (i = nentries; --i >= 0; ++kp) {
