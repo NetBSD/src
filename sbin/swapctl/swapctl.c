@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.20 2002/06/21 09:04:16 jdolecek Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.21 2002/09/18 10:18:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -409,6 +409,8 @@ get_dumpdev()
 
 	if (swapctl(SWAP_GETDUMPDEV, &dev, NULL) == -1)
 		warn("could not get dump device");
+	else if (dev == NODEV)
+		printf("no dump device set\n");
 	else {
 		name = devname(dev, S_IFBLK);
 		printf("dump device is ");
