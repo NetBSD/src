@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.12 1997/03/13 00:38:50 cgd Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.13 1997/04/10 02:48:41 cgd Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -70,15 +70,15 @@
 	outsl((ahc)->baseport+(port), valp, size)
 #elif defined(__NetBSD__)
 #define	AHC_INB(ahc, port)	\
-	bus_space_read_1((ahc)->sc_iot, (ahc)->sc_ioh, port)
+	bus_space_read_1((ahc)->sc_st, (ahc)->sc_sh, port)
 #define	AHC_INSB(ahc, port, valp, size)	\
-	bus_space_read_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, (u_int8_t *) valp, size)
+	bus_space_read_multi_1((ahc)->sc_st, (ahc)->sc_sh, port, (u_int8_t *) valp, size)
 #define	AHC_OUTB(ahc, port, val)	\
-	bus_space_write_1((ahc)->sc_iot, (ahc)->sc_ioh, port, val)
+	bus_space_write_1((ahc)->sc_st, (ahc)->sc_sh, port, val)
 #define	AHC_OUTSB(ahc, port, valp, size)	\
-	bus_space_write_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, (u_int8_t *) valp, size)
+	bus_space_write_multi_1((ahc)->sc_st, (ahc)->sc_sh, port, (u_int8_t *) valp, size)
 #define	AHC_OUTSL(ahc, port, valp, size)	\
-	bus_space_write_multi_4((ahc)->sc_iot, (ahc)->sc_ioh, port, (u_int32_t *) valp, size)
+	bus_space_write_multi_4((ahc)->sc_st, (ahc)->sc_sh, port, (u_int32_t *) valp, size)
 #endif
 
 #define	AHC_NSEG	256	/* number of dma segments supported */
@@ -211,8 +211,8 @@ struct ahc_data {
 #elif defined(__NetBSD__)
 	struct device sc_dev;
 	void	*sc_ih;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
+	bus_space_tag_t sc_st;
+	bus_space_handle_t sc_sh;
 	LIST_HEAD(, scsi_xfer) sc_xxxq;	/* XXX software request queue */
 	struct scsi_xfer *sc_xxxqlast;	/* last entry in queue */
 #endif
@@ -292,10 +292,10 @@ struct ahc_data *ahc_alloc __P((int unit, u_long io_base, ahc_type type, ahc_fla
 
 #define	ahc_name(ahc)	(ahc)->sc_dev.dv_xname
 
-void	ahc_reset __P((char *devname, bus_space_tag_t iot,
-	    bus_space_handle_t ioh));
-void	ahc_construct __P((struct ahc_data *ahc, bus_space_tag_t iot,
-	    bus_space_handle_t ioh, ahc_type type, ahc_flag flags));
+void	ahc_reset __P((char *devname, bus_space_tag_t st,
+	    bus_space_handle_t sh));
+void	ahc_construct __P((struct ahc_data *ahc, bus_space_tag_t st,
+	    bus_space_handle_t sh, ahc_type type, ahc_flag flags));
 #endif
 void	ahc_free __P((struct ahc_data *));
 int	ahc_init __P((struct ahc_data *));
