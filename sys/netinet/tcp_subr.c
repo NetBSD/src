@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.160.2.2 2004/04/20 20:27:47 jmc Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.160.2.3 2004/04/22 07:49:10 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.160.2.2 2004/04/20 20:27:47 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.160.2.3 2004/04/22 07:49:10 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -179,10 +179,10 @@ int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
-int	tcp_do_newreno = 0;	/* Use the New Reno algorithms */
+int	tcp_do_newreno = 1;	/* Use the New Reno algorithms */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 #ifndef TCP_INIT_WIN
-#define	TCP_INIT_WIN	1	/* initial slow start window */
+#define	TCP_INIT_WIN	0	/* initial slow start window */
 #endif
 #ifndef TCP_INIT_WIN_LOCAL
 #define	TCP_INIT_WIN_LOCAL 4	/* initial slow start window for local nets */
