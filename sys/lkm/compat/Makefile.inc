@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.6 2001/10/27 12:09:34 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2001/12/10 07:26:47 gmcgarry Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
+
+.include <bsd.own.mk>
 
 DPSRCS+= assym.h
 
 .if exists($S/arch/${MACHINE}/${MACHINE}/genassym.cf)
 GENASSYM_DIR?= $S/arch/${MACHINE}/${MACHINE}
-.elif exists($S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/genassym.cf)
-GENASSYM_DIR?= $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
+.elif exists($S/arch/${MACHINE_CPU}/${MACHINE_CPU}/genassym.cf)
+GENASSYM_DIR?= $S/arch/${MACHINE_CPU}/${MACHINE_CPU}
 .else
 GENASSYM_DIR?=
 .endif
