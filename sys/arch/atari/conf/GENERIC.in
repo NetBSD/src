@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.4 2001/07/08 16:32:15 abs Exp $
+#	$NetBSD: GENERIC.in,v 1.5 2001/07/09 13:37:06 leo Exp $
 #
 # Generic atari
 #
@@ -12,7 +12,7 @@ include "arch/atari/conf/std.hades"
 include "arch/atari/conf/std.milan"
 #endif
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -147,6 +147,9 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 options 	SYSVSHM			# System V shared memory
 options 	SYSVMSG			# System V messages
 options 	SYSVSEM			# System V semaphores
+#options 	SEMMNI=10		# number of semaphore identifiers
+#options 	SEMUME=10		# max number of undo entries per proc.
+#options 	SEMMNU=30		# number of undo structures in system
 #endif
 
 #ifndef INSTALL_KERNEL
