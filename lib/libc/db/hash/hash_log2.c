@@ -1,3 +1,5 @@
+/*	$NetBSD: hash_log2.c,v 1.5 1995/02/27 13:22:30 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)hash_log2.c	8.2 (Berkeley) 5/31/94";
+#else
+static char rcsid[] = "$NetBSD: hash_log2.c,v 1.5 1995/02/27 13:22:30 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
