@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.13 2002/09/23 12:48:02 mycroft Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.14 2002/12/06 02:01:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.13 2002/09/23 12:48:02 mycroft Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.14 2002/12/06 02:01:35 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ char	shell[PATH_MAX + 1] = "SHELL=";
 char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
 char	*envinit[] = { homedir, shell, path, username, 0 };
 char	**environ;
-int	log;
+int	dolog;
 
 /*
  * remote execute server:
@@ -97,7 +97,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "l")) != -1)
 		switch (ch) {
 		case 'l':
-			log = 1;
+			dolog = 1;
 			openlog("rexecd", LOG_PID, LOG_DAEMON);
 			break;
 		default:
@@ -139,7 +139,7 @@ doit(f, fromp)
 	for (;;) {
 		char c;
 		if (read(f, &c, 1) != 1) {
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR,
 				    "initial read failed");
 			exit(1);
@@ -152,7 +152,7 @@ doit(f, fromp)
 	if (port != 0) {
 		s = socket(fromp->sa_family, SOCK_STREAM, 0);
 		if (s < 0) {
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "socket: %m");
 			exit(1);
 		}
@@ -169,7 +169,7 @@ doit(f, fromp)
 			exit(1);
 		}
 		if (connect(s, (struct sockaddr *)fromp, fromp->sa_len) < 0) {
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "connect: %m");
 			exit(1);
 		}
@@ -182,7 +182,7 @@ doit(f, fromp)
 	pwd = getpwnam(user);
 	if (pwd == NULL) {
 		error("Login incorrect.\n");
-		if (log)
+		if (dolog)
 			syslog(LOG_ERR, "no such user %s", user);
 		exit(1);
 	}
@@ -191,7 +191,7 @@ doit(f, fromp)
 		namep = crypt(pass, pwd->pw_passwd);
 		if (strcmp(namep, pwd->pw_passwd)) {
 			error("Password incorrect.\n");	/* XXX: wrong! */
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "incorrect password for %s",
 				    user);
 			exit(1);
@@ -200,7 +200,7 @@ doit(f, fromp)
 		(void)crypt("dummy password", "PA");	/* must always crypt */
 	if (chdir(pwd->pw_dir) < 0) {
 		error("No remote directory.\n");
-		if (log)
+		if (dolog)
 			syslog(LOG_ERR, "%s does not exist for %s", pwd->pw_dir,
 			    user);
 		exit(1);
@@ -209,7 +209,7 @@ doit(f, fromp)
 	if (port) {
 		if (pipe(pv) < 0 || (pid = fork()) == -1) {
 			error("Try again.\n");
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR,"pipe or fork failed for %s: %m",
 				    user);
 			exit(1);
@@ -254,7 +254,7 @@ doit(f, fromp)
 		(void)close(pv[0]);
 		if (dup2(pv[1], 2) < 0) {
 			error("Try again.\n");
-			if (log)
+			if (dolog)
 				syslog(LOG_ERR, "dup2 failed for %s", user);
 			exit(1);
 		}
@@ -268,7 +268,7 @@ doit(f, fromp)
 	    setgid((gid_t)pwd->pw_gid) < 0 || 
 	    setuid((uid_t)pwd->pw_uid) < 0) {
 		error("Try again.\n");
-		if (log)
+		if (dolog)
 			syslog(LOG_ERR, "could not set permissions for %s: %m",
 			    user);
 		exit(1);
@@ -283,11 +283,11 @@ doit(f, fromp)
 		cp++;
 	else
 		cp = pwd->pw_shell;
-	if (log)
+	if (dolog)
 		syslog(LOG_INFO, "running command for %s: %s", user, cmdbuf);
 	execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
 	perror(pwd->pw_shell);
-	if (log)
+	if (dolog)
 		syslog(LOG_ERR, "execl failed for %s: %m", user);
 	exit(1);
 }

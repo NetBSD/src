@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.147 2002/11/29 14:40:00 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.148 2002/12/06 01:59:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.147 2002/11/29 14:40:00 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.148 2002/12/06 01:59:22 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1284,20 +1284,20 @@ retrieve(char *argv[], const char *name)
 	FILE *fin, *dout;
 	struct stat st;
 	int (*closefunc)(FILE *) = NULL;
-	int log, sendrv, closerv, stderrfd, isconversion, isdata, isls;
+	int dolog, sendrv, closerv, stderrfd, isconversion, isdata, isls;
 	struct timeval start, finish, td, *tdp;
 	struct rusage rusage_before, rusage_after;
 	const char *dispname;
 	char *error;
 
 	sendrv = closerv = stderrfd = -1;
-	isconversion = isdata = isls = log = 0;
+	isconversion = isdata = isls = dolog = 0;
 	tdp = NULL;
 	dispname = name;
 	fin = dout = NULL;
 	error = NULL;
 	if (argv == NULL) {		/* if not running a command ... */
-		log = 1;
+		dolog = 1;
 		isdata = 1;
 		fin = fopen(name, "r");
 		closefunc = fclose;
@@ -1330,7 +1330,7 @@ retrieve(char *argv[], const char *name)
 	if (fin == NULL) {
 		if (errno != 0) {
 			perror_reply(550, dispname);
-			if (log)
+			if (dolog)
 				logxfer("get", -1, name, NULL, NULL,
 				    strerror(errno));
 		}
@@ -1376,7 +1376,7 @@ retrieve(char *argv[], const char *name)
 	timersub(&finish, &start, &td);
 	tdp = &td;
  done:
-	if (log) {
+	if (dolog) {
 		logxfer("get", byte_count, name, NULL, tdp, error);
 		if (tdp != NULL)
 			logrusage(&rusage_before, &rusage_after);
