@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.1 2002/05/03 05:17:30 mbw Exp $
+.\"	$NetBSD: netboot,v 1.2 2002/05/04 20:39:32 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ process involves discovery, bootstrap, kernel and filesystem stages.
 In the first stage, the client discovers information
 about where to find the bootstrap program.
 Next, it downloads and executes the bootstrap program.
-The bootstrap program goes through another disovery phase to determine
+The bootstrap program goes through another discovery phase to determine
 where the kernel is located.
 The bootstrap program tries to mount the NFS share containing the kernel.
 Once the kernel is loaded, it starts executing.
@@ -496,7 +496,14 @@ filesystem.
 .No # Ic "gunzip miniroot.fs.gz"
 .No # Ic "vnconfig -c /dev/vnd0c /path/to/miniroot.fs"
 .No # Ic "mount -o ro /dev/vnd0c /export/client/root"
+.No # Ic "ls /export/client/root"
+.profile     dist/        install.md   mnt/         sbin/        usr/
+bin/         etc/         install.sub  mnt2/        tmp/         var/
+dev/         install*     kern/        netbsd*      upgrade*
 .disp)
+.Pp
+If there are no files present in your exported directory, then
+something is wrong.
 .Pp
 To use the RAM disk-based installer, uncompress and rename the kernel.
 Also, copy the distribution files to the client's root directory.
