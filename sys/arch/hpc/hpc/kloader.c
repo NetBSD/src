@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.1 2002/01/27 05:14:34 uch Exp $	*/
+/*	$NetBSD: kloader.c,v 1.1 2002/01/29 18:44:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "debug_hpcsh.h"
+#include "debug_kloader.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,73 +46,38 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <hpc/hpc/bootinfo.h>
-#include <hpcsh/hpcsh/kloader.h>
+#include <machine/kloader.h>
 
 #ifdef KLOADER_DEBUG
 #define DPRINTF_ENABLE
 #define DPRINTF_DEBUG	kloader_debug
 #endif
-#include <hpcsh/hpcsh/debug.h>
+#define USE_HPC_DPRINTF
+#define __DPRINTF_EXT
+#include <machine/debug.h>
 
-/* XXX-start should be in sh3/include */
-#define SH7709A_CCA			0xf0000000
-
-#define SH7709A_CACHE_LINESZ		16
-#define SH7709A_CACHE_ENTRY		256
-#define SH7709A_CACHE_WAY		4
-#define SH7709A_CACHE_SIZE						\
-	(SH7709A_CACHE_LINESZ * SH7709A_CACHE_ENTRY * SH7709A_CACHE_WAY)
-
-#define SH7709A_CACHE_ENTRY_SHIFT	4
-#define SH7709A_CACHE_ENTRY_MASK	0x00000ff0
-#define SH7709A_CACHE_WAY_SHIFT		12
-#define SH7709A_CACHE_WAY_MASK		0x00003000
-
-#define SH7709A_CACHE_FLUSH()						\
-do {									\
-	u_int32_t __e, __w, __wa, __a;					\
-									\
-	for (__w = 0; __w < SH7709A_CACHE_WAY; __w++) {			\
-		__wa = SH7709A_CCA | __w << SH7709A_CACHE_WAY_SHIFT;	\
-		for (__e = 0; __e < SH7709A_CACHE_ENTRY; __e++)	{	\
-			__a = __wa |(__e << SH7709A_CACHE_ENTRY_SHIFT);	\
-			 /* Clear U,V bit */				\
-			(*(__volatile__ u_int32_t *)__a) &= ~0x3;	\
-		}							\
-	}								\
-} while (/*CONSTCOND*/0)
-/* XXX-end should be in sh3/include */
-
-struct kloader_page_tag {
-	u_int32_t next;
-	u_int32_t src;
-	u_int32_t dst;
-	u_int32_t sz;
-};
-#define BUCKET_SIZE	(PAGE_SIZE - sizeof(struct kloader_page_tag))
-
-STATIC struct {
+struct kloader {
 	struct pglist pg_head;
-#define PG_VADDR(pg)	SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
 	struct vm_page *cur_pg;
 	struct vnode *vp;
 	struct kloader_page_tag *tagstart;
 	struct kloader_bootinfo *bootinfo;
 	vaddr_t loader_sp;
-	void (*loader)(struct kloader_bootinfo *, struct kloader_page_tag *);
+	kloader_bootfunc_t *loader;
 	int setuped;
-} kloader;
 
-extern paddr_t avail_start, avail_end;
+	struct kloader_ops *ops;
+};
 
-STATIC void kloader_boot(struct kloader_bootinfo *, struct kloader_page_tag *);
+#define BUCKET_SIZE	(PAGE_SIZE - sizeof(struct kloader_page_tag))
+#define KLOADER_PROC	(&proc0)
+STATIC struct kloader kloader;
+
 STATIC int kloader_load(void);
 STATIC int kloader_alloc_memory(size_t);
 STATIC void kloader_load_segment(vaddr_t, vsize_t, off_t, size_t);
 STATIC void kloader_load_segment_end(void);
 STATIC void kloader_load_bucket(vaddr_t, off_t, size_t);
-
 STATIC struct vnode *kloader_open(const char *);
 STATIC void kloader_close(void);
 STATIC int kloader_read(size_t, size_t, void *);
@@ -122,16 +87,20 @@ STATIC void kloader_pagetag_dump(void);
 STATIC void kloader_bootinfo_dump(void);
 #endif
 
-#define KLOADER_PROC	(&proc0)
-
 void
-kloader_reboot_setup(const char *filename)
+__kloader_reboot_setup(struct kloader_ops *ops, const char *filename)
 {
 
 	if (kloader.bootinfo == NULL) {
 		PRINTF("No bootinfo.\n");
 		return;
 	}
+
+	if (ops == NULL || ops->jump == NULL || ops->boot == NULL) {
+		PRINTF("No boot operations.\n");
+		return;
+	}
+	kloader.ops = ops;
 
 	PRINTF("kernel file name: %s\n", filename);
 	kloader.vp = kloader_open(filename);
@@ -161,60 +130,8 @@ kloader_reboot()
 #endif
 	PRINTF("Rebooting...\n");
 
-	SH7709A_CACHE_FLUSH();
-
-	__asm__ __volatile__(
-	    	"mov	%0, r4;"
-		"mov	%1, r5;"
-		"jmp	@%2;"
-		"mov	%3, sp"
-		: :
-		"r"(kloader.bootinfo),
-		"r"(kloader.tagstart),
-		"r"(kloader.loader),
-		"r"(kloader.loader_sp));
-	/* NOTREACHED */
-}
-
-/* 
- * 2nd-bootloader. Make sure that PIC and its size is lower than page size.
- */
-void
-kloader_boot(struct kloader_bootinfo *kbi, struct kloader_page_tag *p)
-{
-	int tmp;
-
-	/* Disable interrupt. block exception.(TLB exception don't occur) */
-	__asm__ __volatile__(
-		"stc	sr, %1;"
-		"or	%0, %1;"
-		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));
-	
-	/* Now I run on P1, TLB flush. and disable. */
-	SHREG_MMUCR = MMUCR_TF;
-
-	do {
-		u_int32_t *dst =(u_int32_t *)p->dst;
-		u_int32_t *src =(u_int32_t *)p->src;
-		u_int32_t sz = p->sz / sizeof (int);
-		while (sz--)
-			*dst++ = *src++;
-	} while ((p = (struct kloader_page_tag *)p->next) != 0);
-
-	SH7709A_CACHE_FLUSH();
-
-	/* jump to kernel entry. */
-	__asm__ __volatile__(
-		"mov	%0, r4;"
-		"mov	%1, r5;"
-		"jmp	@%3;"
-		"mov	%2, r6;"
-		: :
-		"r"(kbi->argc),
-		"r"(kbi->argv),
-		"r"(&kbi->bootinfo),
-		"r"(kbi->entry));
-	/* NOTREACHED */
+	(*kloader.ops->jump) (kloader.loader, kloader.loader_sp,
+	    kloader.bootinfo, kloader.tagstart);
 }
 
 int
@@ -250,7 +167,7 @@ kloader_load()
 		if (ph[i].p_type == PT_LOAD) {
 			size_t filesz = ph[i].p_filesz;
 			_DPRINTF("+0x%x", filesz);
-			sz += sh3_round_page(filesz);
+			sz += round_page(filesz);
 		}
 	}
 	_DPRINTF(" entry: %08x\n", eh.e_entry);
@@ -278,12 +195,10 @@ kloader_load()
 	/* copy loader code */
 	KDASSERT(kloader.cur_pg);
 	kloader.loader = (void *)PG_VADDR(kloader.cur_pg);
-	memcpy(kloader.loader, kloader_boot, PAGE_SIZE);
+	memcpy(kloader.loader, kloader.ops->boot, PAGE_SIZE);
 
 	/* loader stack */
-	kloader.cur_pg = TAILQ_NEXT(kloader.cur_pg, pageq);
-	KDASSERT(kloader.cur_pg);
-	kloader.loader_sp = (vaddr_t)PG_VADDR(kloader.cur_pg);
+	kloader.loader_sp = (vaddr_t)kloader.loader + PAGE_SIZE;
 
 	/* kernel entry point */
 	kloader.bootinfo->entry = eh.e_entry;
@@ -297,11 +212,11 @@ kloader_load()
 int
 kloader_alloc_memory(size_t sz)
 {
+	extern paddr_t avail_start, avail_end;
 	int i, n, error;
 
 	n = (sz + BUCKET_SIZE - 1) / BUCKET_SIZE	/* kernel */
-	    + 1		/* 2nd loader */
-	    + 1;	/* 2nd loader's stack */
+	    + 1;					/* 2nd loader */
 
 	TAILQ_INIT(&kloader.pg_head);
 
@@ -428,7 +343,7 @@ kloader_read(size_t ofs, size_t size, void *buf)
  */
 void
 kloader_bootinfo_set(struct kloader_bootinfo *kbi, int argc, char *argv[],
-    struct bootinfo *bi, boolean_t printok)
+    struct bootinfo *bi, int printok)
 {
 	char *p, *pend, *buf;
 	int i;
