@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.49 2002/04/09 22:37:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.50 2002/04/09 23:44:02 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -286,6 +286,8 @@ void	pmap_pte_init_xscale(void);
 #if defined(CPU_XSCALE_80200)
 void	pmap_pte_init_i80200(void);
 #endif /* CPU_XSCALE_80200 */
+
+void	xscale_setup_minidata(vaddr_t, vaddr_t, paddr_t);
 #else
 #define	ARM_MMU_XSCALE		0
 #endif
