@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.32 2003/04/28 23:16:29 bjh21 Exp $	*/
+/*	$NetBSD: shm.h,v 1.33 2003/05/30 20:31:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #define	SHMLBA		PAGE_SIZE
 #else
 /* Use libc's internal __sysconf() to retrieve the machine's page size */
+#include <sys/unistd.h> /* for _SC_PAGESIZE */
 long			__sysconf __P((int));
 #define	SHMLBA		(__sysconf(_SC_PAGESIZE))
 #endif
