@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.75 2004/11/10 04:20:26 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.76 2004/11/10 14:14:09 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.75 2004/11/10 04:20:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.76 2004/11/10 14:14:09 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1529,7 +1529,7 @@ auich_calibrate(struct auich_softc *sc)
 
 	/* Force the codec to a known state first. */
 	sc->codec_if->vtbl->set_clock(sc->codec_if, 48000);
-	rate = 48000;
+	rate = sc->sc_ac97_clock = 48000;
 	sc->codec_if->vtbl->set_rate(sc->codec_if, AC97_REG_PCM_LR_ADC_RATE,
 	    &rate);
 
