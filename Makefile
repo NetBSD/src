@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2000/05/06 07:53:53 sjg Exp $
+#	$NetBSD: Makefile,v 1.115 2000/05/09 00:17:10 thorpej Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -44,7 +44,7 @@ SRCTOP=.
 .endif
 
 MKOBJDIRS ?= no
-HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CXX} --version | egrep "^(2\.[89]|egcs)" ; echo
 
 .if defined(NBUILDJOBS)
 _J= -j${NBUILDJOBS}
@@ -128,7 +128,7 @@ build: buildmsg beforeinstall
 .if ${MKOBJDIRS} != "no"
 	${MAKE} obj
 .endif
-.if empty(HAVE_GCC28)
+.if empty(HAVE_EGCS)
 .if defined(DESTDIR)
 	@echo "*** CAPUTE!"
 	@echo "    You attempted to compile the world without egcs.  You must"
