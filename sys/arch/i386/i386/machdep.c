@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.387 2000/06/02 18:33:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.388 2000/06/03 17:33:25 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -210,6 +210,7 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
+extern	paddr_t hole_start, hole_end;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -1535,11 +1536,8 @@ init386(first_avail)
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
-	struct btinfo_memmap *bim;
 	struct region_descriptor region;
-	int x, first16q;
-	u_int64_t seg_start, seg_end;
-	u_int64_t seg_start1, seg_end1;
+	int x;
 
 	proc0.p_addr = proc0paddr;
 	curpcb = &proc0.p_addr->u_pcb;
@@ -1548,6 +1546,42 @@ init386(first_avail)
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
+	/*
+	 * Allocate the physical addresses used by RAM from the iomem
+	 * extent map.  This is done before the addresses are
+	 * page rounded just to make sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem), EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM IOMEM EXTENT MAP!\n");
+	}
+	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
+	    EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM IOMEM EXTENT MAP!\n");
+	}
+
+#if NISADMA > 0
+	/*
+	 * Some motherboards/BIOSes remap the 384K of RAM that would
+	 * normally be covered by the ISA hole to the end of memory
+	 * so that it can be used.  However, on a 16M system, this
+	 * would cause bounce buffers to be allocated and used.
+	 * This is not desirable behaviour, as more than 384K of
+	 * bounce buffers might be allocated.  As a work-around,
+	 * we round memory down to the nearest 1M boundary if
+	 * we're using any isadma devices and the remapped memory
+	 * is what puts us over 16M.
+	 */
+	if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
+		char pbuf[9];
+
+		format_bytes(pbuf, sizeof(pbuf), biosextmem - (15*1024));
+		printf("Warning: ignoring %s of remapped memory\n", pbuf);
+		biosextmem = (15*1024);
+	}
+#endif
+
 #if NBIOSCALL > 0
 	avail_start = 3*NBPG;	/* save us a page for trampoline code and
 				   one additional PT page! */
@@ -1555,331 +1589,14 @@ init386(first_avail)
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
 #endif
+	avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
 
-	/*
-	 * Initailize PAGE_SIZE-dependent variables.
-	 */
-	uvm_setpagesize();
+	hole_start = trunc_page(KBTOB(biosbasemem));
+	/* we load right after the I/O hole; adjust hole_end to compensate */
+	hole_end = round_page(first_avail);
 
-	/*
-	 * A quick sanity check.
-	 */
-	if (PAGE_SIZE != NBPG)
-		panic("init386: PAGE_SIZE != NBPG");
-
-	/*
-	 * Call pmap initialization to make new kernel address space.
-	 * We must do this before loading pages into the VM system.
-	 */
+	/* Call pmap initialization to make new kernel address space. */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
-
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL) {
-#if 0
-		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
-#endif
-		for (x = 0; x < bim->num; x++) {
-#if 0
-			printf("    addr 0x%qx  size 0x%qx  type 0x%x\n",
-			    bim->entry[x].addr,
-			    bim->entry[x].size,
-			    bim->entry[x].type);
-#endif
-
-			/*
-			 * If the segment is not memory, skip it.
-			 */
-			switch (bim->entry[x].type) {
-			case BIM_Memory:
-			case BIM_ACPI:
-			case BIM_NVS:
-				break;
-			default:
-				continue;
-			}
-
-			/*
-			 * Sanity check the entry.
-			 * XXX Need to handle uint64_t in extent code
-			 * XXX and 64-bit physical addresses in i386
-			 * XXX port.
-			 */
-			seg_start = bim->entry[x].addr;
-			seg_end = bim->entry[x].addr + bim->entry[x].size;
-
-			if (seg_end > 0x100000000ULL) {
-				printf("WARNING: skipping large "
-				    "memory map entry: "
-				    "0x%qx/0x%qx/0x%x\n",
-				    bim->entry[x].addr,
-				    bim->entry[x].size,
-				    bim->entry[x].type);
-				continue;
-			}
-
-			/*
-			 * XXX Chop the last page off the size so that
-			 * XXX it can fit in avail_end.
-			 */
-			if (seg_end == 0x100000000ULL)
-				seg_end -= PAGE_SIZE;
-
-			/*
-			 * Allocate the physical addresses used by RAM
-			 * from the iomem extent map.  This is done before
-			 * the addresses are page rounded just to make
-			 * sure we get them all.
-			 */
-			if (extent_alloc_region(iomem_ex, seg_start,
-			    seg_end - seg_start, EX_NOWAIT)) {
-				/* XXX What should we do? */
-				printf("WARNING: CAN'T ALLOCATE "
-				    "MEMORY SEGMENT %d "
-				    "(0x%qx/0x%qx/0x%x) FROM "
-				    "IOMEM EXTENT MAP!\n",
-				    x, seg_start, seg_end - seg_start,
-				    bim->entry[x].type);
-			}
-
-			/*
-			 * If it's not free memory, skip it.
-			 */
-			if (bim->entry[x].type != BIM_Memory)
-				continue;
-
-			/* XXX XXX XXX */
-			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-				panic("init386: too many memory segments");
-
-			seg_start = round_page(seg_start);
-			seg_end = trunc_page(seg_end);
-
-			if (seg_start == seg_end)
-				continue;
-
-			mem_clusters[mem_cluster_cnt].start = seg_start;
-			mem_clusters[mem_cluster_cnt].size =
-			    seg_end - seg_start;
-
-			if (avail_end < seg_end)
-				avail_end = seg_end;
-			physmem += atop(mem_clusters[mem_cluster_cnt].size);
-			mem_cluster_cnt++;
-		}
-	} else {
-		/*
-		 * Allocate the physical addresses used by RAM from the iomem
-		 * extent map.  This is done before the addresses are
-		 * page rounded just to make sure we get them all.
-		 */
-		if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
-		    EX_NOWAIT)) {
-			/* XXX What should we do? */
-			printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
-			    "IOMEM EXTENT MAP!\n");
-		}
-		mem_clusters[0].start = 0;
-		mem_clusters[0].size = trunc_page(KBTOB(biosbasemem));
-		physmem += atop(mem_clusters[0].size);
-		if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
-		    EX_NOWAIT)) {
-			/* XXX What should we do? */
-			printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
-			    "IOMEM EXTENT MAP!\n");
-		}
-#if NISADMA > 0
-		/*
-		 * Some motherboards/BIOSes remap the 384K of RAM that would
-		 * normally be covered by the ISA hole to the end of memory
-		 * so that it can be used.  However, on a 16M system, this
-		 * would cause bounce buffers to be allocated and used.
-		 * This is not desirable behaviour, as more than 384K of
-		 * bounce buffers might be allocated.  As a work-around,
-		 * we round memory down to the nearest 1M boundary if
-		 * we're using any isadma devices and the remapped memory
-		 * is what puts us over 16M.
-		 */
-		if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
-			char pbuf[9];
-
-			format_bytes(pbuf, sizeof(pbuf),
-			    biosextmem - (15*1024));
-			printf("Warning: ignoring %s of remapped memory\n",
-			    pbuf);
-			biosextmem = (15*1024);
-		}
-#endif
-		mem_clusters[1].start = IOM_END;
-		mem_clusters[1].size = trunc_page(KBTOB(biosextmem));
-		physmem += atop(mem_clusters[1].size);
-
-		mem_cluster_cnt = 2;
-
-		avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
-	}
-
-	/*
-	 * If we have 16M of RAM or less, just put it all on
-	 * the default free list.  Otherwise, put the first
-	 * 16M of RAM on a lower priority free list (so that
-	 * all of the ISA DMA'able memory won't be eaten up
-	 * first-off).
-	 */
-	if (avail_end <= (16 * 1024 * 1024))
-		first16q = VM_FREELIST_DEFAULT;
-	else
-		first16q = VM_FREELIST_FIRST16;
-
-	/* Make sure the end of the space used by the kernel is rounded. */
-	first_avail = round_page(first_avail);
-
-	/*
-	 * Now, load the memory clusters (which have already been
-	 * rounded and truncated) into the VM system.
-	 *
-	 * NOTE: WE ASSUME THAT MEMORY STARTS AT 0 AND THAT THE KERNEL
-	 * IS LOADED AT IOM_END (1M).
-	 */
-	for (x = 0; x < mem_cluster_cnt; x++) {
-		seg_start = mem_clusters[x].start;
-		seg_end = mem_clusters[x].start + mem_clusters[x].size;
-		seg_start1 = 0;
-		seg_end1 = 0;
-
-		/*
-		 * Skip memory before our available starting point.
-		 */
-		if (seg_end <= avail_start)
-			continue;
-
-		if (avail_start >= seg_start && avail_start < seg_end) {
-			if (seg_start != 0)
-				panic("init386: memory doesn't start at 0");
-			seg_start = avail_start;
-			if (seg_start == seg_end)
-				continue;
-		}
-
-		/*
-		 * If this segment contains the kernel, split it
-		 * in two, around the kernel.
-		 */
-		if (seg_start <= IOM_END && first_avail <= seg_end) {
-			seg_start1 = first_avail;
-			seg_end1 = seg_end;
-			seg_end = IOM_END;
-		}
-
-		/* First hunk */
-		if (seg_start != seg_end) {
-			if (seg_start <= (16 * 1024 * 1024) &&
-			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
-
-				if (seg_end > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
-				else
-					tmp = seg_end;
-#if 0
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start, tmp,
-				    atop(seg_start), atop(tmp));
-#endif
-				uvm_page_physload(atop(seg_start),
-				    atop(tmp), atop(seg_start),
-				    atop(tmp), first16q);
-				seg_start = tmp;
-				if (seg_start == seg_end)
-					continue;
-			}
-#if 0
-			printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-			    seg_start, seg_end,
-			    atop(seg_start), atop(seg_end));
-#endif
-			uvm_page_physload(atop(seg_start), atop(seg_end),
-			    atop(seg_start), atop(seg_end),
-			    VM_FREELIST_DEFAULT);
-		}
-
-		/* Second hunk */
-		if (seg_start1 != seg_end1) {
-			if (seg_start1 <= (16 * 1024 * 1024) &&
-			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
-
-				if (seg_end1 > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
-				else
-					tmp = seg_end1;
-#if 0
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start1, tmp,
-				    atop(seg_start1), atop(tmp));
-#endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(tmp), atop(seg_start1),
-				    atop(tmp), first16q);
-				seg_start1 = tmp;
-				if (seg_start1 == seg_end1)
-					continue;
-			}
-#if 0
-			printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-			    seg_start1, seg_end1,
-			    atop(seg_start1), atop(seg_end1));
-#endif
-			uvm_page_physload(atop(seg_start1), atop(seg_end1),
-			    atop(seg_start1), atop(seg_end1),
-			    VM_FREELIST_DEFAULT);
-		}
-	}
-
-	/*
-	 * Steal memory for the message buffer (at end of core).
-	 */
-	{
-		struct vm_physseg *vps;
-		psize_t sz = round_page(MSGBUFSIZE);
-		psize_t reqsz = sz;
-
-		for (x = 0; x < vm_nphysseg; x++) {
-			vps = &vm_physmem[x];
-			if (ptoa(vps->avail_end) == avail_end)
-				break;
-		}
-		if (x == vm_nphysseg)
-			panic("init386: can't find end of memory");
-
-		/* Shrink so it'll fit in the last segment. */
-		if ((vps->avail_end - vps->avail_start) < atop(sz))
-			sz = ptoa(vps->avail_end - vps->avail_start);
-
-		vps->avail_end -= atop(sz);
-		vps->end -= atop(sz);
-		msgbuf_paddr = vps->avail_end;
-
-		/* Remove the last segment if it now has no pages. */
-		if (vps->start == vps->end) {
-			for (vm_nphysseg--; x < vm_nphysseg; x++)
-				vm_physmem[x] = vm_physmem[x + 1];
-		}
-
-		/* Now find where the new avail_end is. */
-		for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-			if (vm_physmem[x].avail_end > avail_end)
-				avail_end = vm_physmem[x].avail_end;
-		avail_end = ptoa(avail_end);
-
-		/* Warn if the message buffer had to be shrunk. */
-		if (sz != reqsz)
-			printf("WARNING: %ld bytes not available for msgbuf "
-			    "in last cluster (%ld used)\n", reqsz, sz);
-	}
 
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
@@ -1991,6 +1708,17 @@ init386(first_avail)
 
 	splraise(-1);
 	enable_intr();
+
+	/* number of pages of physmem addr space */
+	physmem = btoc(KBTOB(biosbasemem)) + btoc(KBTOB(biosextmem));
+
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size  = trunc_page(KBTOB(biosbasemem));
+
+	mem_clusters[1].start = IOM_END;
+	mem_clusters[1].size  = trunc_page(KBTOB(biosextmem));
+
+	mem_cluster_cnt = 2;
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "

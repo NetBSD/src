@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2000/06/02 18:33:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2000/06/03 17:33:28 fvdl Exp $	*/
 
 /*
  *
@@ -317,6 +317,8 @@ int pmap_pg_g = 0;
  */
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
+paddr_t hole_start;	/* PA of start of "hole" */
+paddr_t hole_end;	/* PA of end of "hole" */
 
 /*
  * other data structures
@@ -712,6 +714,8 @@ pmap_kenter_pgs(va, pgs, npgs)
  * => on i386, locore.s has already enabled the MMU by allocating
  *	a PDP for the kernel, and nkpde PTP's for the kernel.
  * => kva_start is the first free virtual address in kernel space
+ * => we make use of the global vars from machdep.c:
+ *	avail_start, avail_end, hole_start, hole_end
  */
 
 void
@@ -721,6 +725,27 @@ pmap_bootstrap(kva_start)
 	struct pmap *kpm;
 	vaddr_t kva;
 	pt_entry_t *pte;
+	int first16q;
+
+	/*
+	 * set the page size (default value is 4K which is ok)
+	 */
+
+	uvm_setpagesize();
+
+	/*
+	 * a quick sanity check
+	 */
+
+	if (PAGE_SIZE != NBPG)
+		panic("pmap_bootstrap: PAGE_SIZE != NBPG");
+
+	/*
+	 * use the very last page of physical memory for the message buffer
+	 */
+
+	avail_end -= i386_round_page(MSGBUFSIZE);
+	msgbuf_paddr = avail_end;
 
 	/*
 	 * set up our local static global vars that keep track of the
@@ -800,8 +825,8 @@ pmap_bootstrap(kva_start)
 
 	pte = PTE_BASE + i386_btop(virtual_avail);
 
-	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;	/* allocate */
-	virtual_avail += NBPG; pte++;				/* advance */
+	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;  /* allocate */
+	virtual_avail += NBPG; pte++;			     /* advance */
 
 	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
 	virtual_avail += NBPG; pte++;
@@ -821,8 +846,8 @@ pmap_bootstrap(kva_start)
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += NBPG; pte++;
-	idt_paddr = avail_start;			/* steal a page */
-	avail_start += NBPG;
+	avail_end -= NBPG;
+	idt_paddr = avail_end;
 
 #if defined(I586_CPU)
 	/* pentium f00f bug stuff */
@@ -858,6 +883,40 @@ pmap_bootstrap(kva_start)
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
+	/*
+	 * we must call uvm_page_physload() after we are done playing with
+	 * virtual_avail but before we call pmap_steal_memory.  [i.e. here]
+	 * this call tells the VM system how much physical memory it
+	 * controls.  If we have 16M of RAM or less, just put it all on
+	 * the default free list.  Otherwise, put the first 16M of RAM
+	 * on a lower priority free list (so that all of the ISA DMA'able
+	 * memory won't be eaten up first-off).
+	 */
+
+	if (avail_end <= (16 * 1024 * 1024))
+		first16q = VM_FREELIST_DEFAULT;
+	else
+		first16q = VM_FREELIST_FIRST16;
+
+	if (avail_start < hole_start)   /* any free memory before the hole? */
+		uvm_page_physload(atop(avail_start), atop(hole_start),
+				  atop(avail_start), atop(hole_start),
+				  first16q);
+
+	if (first16q != VM_FREELIST_DEFAULT &&
+	    hole_end < 16 * 1024 * 1024) {
+		uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
+				  atop(hole_end), atop(16 * 1024 * 1024),
+				  first16q);
+		uvm_page_physload(atop(16 * 1024 * 1024), atop(avail_end),
+				  atop(16 * 1024 * 1024), atop(avail_end),
+				  VM_FREELIST_DEFAULT);
+	} else {
+		uvm_page_physload(atop(hole_end), atop(avail_end),
+				  atop(hole_end), atop(avail_end),
+				  VM_FREELIST_DEFAULT);
+	}
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
