@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2003/01/18 18:40:52 christos Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4 2003/01/18 19:11:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -135,8 +135,10 @@ pthread__sp(void)
 	(uc)->uc_mcontext.__gregs[_REG_EFL] = (reg)->r_eflags; 		\
 	(uc)->uc_mcontext.__gregs[_REG_UESP]= (reg)->r_esp;		\
 	(uc)->uc_mcontext.__gregs[_REG_SS]  = (reg)->r_ss; 		\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
+	/*LINTED precision loss */					\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER; 	\
 	} while (/*CONSTCOND*/0)
+
 
 #define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)		       		\
 	(void)memcpy((freg)->__data,					\
@@ -147,7 +149,8 @@ pthread__sp(void)
 	(void)memcpy(							\
         (uc)->uc_mcontext.__fpregs.__fp_reg_set.__fpchip_state.__fp_state, \
 	(freg)->__data, sizeof(struct fpreg));				\
-	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	/*LINTED precision loss */					\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;	\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_I386_MD_H */
