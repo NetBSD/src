@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# $NetBSD: syslogd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: syslogd
+# REQUIRE: systemfs
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="syslogd"
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/syslog.conf"
+start_precmd="syslogd_precmd"
+
+syslogd_precmd()
+{
+	#	Transitional symlink for old binaries
+	#
+	if [ ! -h /dev/log ]; then
+		ln -sf /var/run/log /dev/log
+	fi
+	rm -f /var/run/log
+	return 0
+}
+
+run_rc_command "$1" "reload"
