@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.5 1996/01/31 00:43:02 cgd Exp 
+ *	NetBSD: pcidevs,v 1.6 1996/02/19 20:08:25 christos Exp 
  */
 
 /*
@@ -401,6 +401,7 @@
 
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 */
+#define	PCI_PRODUCT_3COM_3C595	0x5950		/* 3c595 */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 */
