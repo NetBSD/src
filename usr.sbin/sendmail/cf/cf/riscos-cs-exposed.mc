@@ -33,16 +33,9 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)redirect.m4	8.2 (Berkeley) 12/27/93')
-divert(-1)
-
-
-PUSHDIVERT(3)
-# addresses sent to foo@host.REDIRECT will give a 551 error code
-R$* < @ $+ .REDIRECT. >	$# error $@ NOUSER $: "551 User not local; please try " <$1@$2>
-POPDIVERT
-
-PUSHDIVERT(6)
-CPREDIRECT
-POPDIVERT
+include(`../m4/cf.m4')
+VERSIONID(`@(#)riscos-cs-exposed.mc	8.1 (Berkeley) 12/1/93')
+OSTYPE(riscos4.5)dnl
+DOMAIN(cs.exposed)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl

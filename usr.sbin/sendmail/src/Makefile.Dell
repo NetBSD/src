@@ -10,11 +10,14 @@
 #	work on other SVR4 ports.
 #
 
+# make sure the shell constructs below use the right shell
+SHELL=	/bin/sh
+
 # use O=-O (usual) or O=-g (debugging)
-O=	-O
+O=	-O2
 
 CC=	gcc
-DESTDIR=/usr/local/sendmail
+#DESTDIR=/usr/local/sendmail
 
 # define the database mechanism used for alias lookups:
 #	-DNDBM -- use new DBM
@@ -26,7 +29,7 @@ DESTDIR=/usr/local/sendmail
 DBMDEF=	-DNEWDB -DNDBM
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF=	-DDELL_SVR4
+ENVDEF=	-D__svr4__
 
 # see also conf.h for additional compilation flags
 
@@ -40,13 +43,13 @@ LIBDIRS=
 LIBS=	-ldb -ldbm -lresolv -lsocket -lnsl -lelf
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
-BINDIR=	${DESTDIR}/bin
+BINDIR=	${DESTDIR}/usr/ucblib
 
 # location of sendmail.st file (usually /var/log or /usr/lib)
-STDIR=	${DESTDIR}/etc
+STDIR=	${DESTDIR}/usr/ucblib
 
 # location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
-HFDIR=	${DESTDIR}/etc
+HFDIR=	${DESTDIR}/usr/ucblib
 
 # additional .o files needed
 OBJADD=
@@ -63,7 +66,7 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 
 LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	root
-BINGRP=	sys
+BINGRP=	mail
 BINMODE=6555
 INSTALL=/usr/ucb/install
 
@@ -88,7 +91,7 @@ install: install-sendmail install-docs
 install-sendmail: sendmail
 	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${STDIR}/sendmail.st
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 

@@ -1,3 +1,6 @@
+#
+#  Makefile for FreeBSD
+#
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 PROG=	sendmail
@@ -12,7 +15,8 @@ PROG=	sendmail
 # spiral snail, but it will work.
 DBMDEF=	-DNEWDB
 
-CFLAGS+=-I${.CURDIR} ${DBMDEF} -DMIME
+# FreeBSD 1.0 RELEASE has uname(2) now. Use -DUSEUNAME in order to use it.
+CFLAGS+=-I${.CURDIR} ${DBMDEF} -DMIME -DUSEUNAME
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
@@ -21,9 +25,12 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	util.c version.c
 DPADD=	
 LDADD=	$(LIBUTIL)
-MAN1=	newaliases.0
-MAN5=	aliases.0
-MAN8=	sendmail.0 
+#
+# FreeBSD 1.0 RELEASE has GNU man and doesn't need preformatted man pages anymore
+#
+MAN1=	newaliases.1
+MAN5=	aliases.5
+MAN8=	sendmail.8 
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
 BINDIR=	/usr/sbin

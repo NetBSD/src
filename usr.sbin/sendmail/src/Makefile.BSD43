@@ -33,7 +33,7 @@ ENVDEF=	-DoldBSD43
 #LIBDIRS=-L/usr/sww/lib
 
 # libraries required on your system
-LIBS=	-ldbm -lresolv
+LIBS=	-ldbm -lresolv -ll
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
 BINDIR=	${DESTDIR}/usr/lib
@@ -48,7 +48,7 @@ HFDIR=	${DESTDIR}/usr/lib
 OBJADD=
 
 # additional pseudo-sources needed
-BEFORE=	unistd.h stddef.h stdlib.h
+BEFORE=	unistd.h stddef.h stdlib.h dirent.h sys/time.h
 
 ###################  end of user configuration flags  ######################
 
@@ -72,8 +72,17 @@ all: ${ALL}
 sendmail: ${BEFORE} ${OBJS}
 	${CC} -o sendmail ${OBJS} ${LIBDIRS} ${LIBS}
 
-unistd.h stddef.h stdlib.h:
+unistd.h stddef.h stdlib.h sys/time.h:
 	cp /dev/null $@
+
+sys/time.h: sys
+
+sys:
+	mkdir sys
+
+dirent.h:
+	echo "#include <sys/dir.h>" > dirent.h
+	echo "#define dirent	direct" >> dirent.h
 
 aliases.0: aliases.5
 	nroff -h -mandoc aliases.5 > aliases.0
@@ -89,7 +98,7 @@ install: install-sendmail install-docs
 install-sendmail: sendmail
 	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${STDIR}/sendmail.st
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 

@@ -16,6 +16,7 @@ Ultrix	4.3A	OK	93.07.19  Allan Johannesen
 HP-UX	8.07	OK	93.07.19  eric (on 7xx series)
 HP-UX	8.02	OK	93.07.19  Michael Corrigan (on 8xx series)
 HP-UX	8.00	OK	93.07.21  Michael Corrigan (on 3xx/4xx series)
+HP-UX	9.01	OK	93.11.19  Cassidy (on 7xx series)
 
 Solaris	2.1
 Solaris	2.2	FAIL	93.07.19  Bill Wisner
@@ -37,3 +38,8 @@ NeXT	2.1	OK	93.07.28  eric
 
 Linux	0.99p10	OK	93.08.08  Karl London
 Linux	0.99p13	OK	93.09.27  Christian Kuhtz
+Linux	0.99p14	OK	93.11.30  Christian Kuhtz <chk@data-hh.Hanse.DE>
+
+BSD/386	1.0	OK	93.11.13  Tony Sanders
+
+DELL	2.2	OK	93.11.15  Peter Wemm (using -DSETEUID)
