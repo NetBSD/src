@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/09/09 19:10:10 jhawk Exp $
+#	$NetBSD: Makefile,v 1.13 2000/09/10 21:59:00 jhawk Exp $
 
 .include "../../../../Makefile.inc"
 
@@ -17,7 +17,7 @@ all:
 	gzip -9f netbsd
 
 clean cleandir distclean:
-	rm -f netbsd netbsd.gz
+	rm -f netbsd netbsd.gz netbsd.symbols
 
 release:
 	-mkdir -p ${RELEASEDIR}/binary/kernel
