@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.12 2002/08/22 09:57:13 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.13 2002/10/23 09:14:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.12 2002/08/22 09:57:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.13 2002/10/23 09:14:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,7 @@ struct uirda_softc {
 	usbd_xfer_handle	sc_wr_xfer;
 	usbd_pipe_handle	sc_wr_pipe;
 	int			sc_wr_hdr;
+	struct selinfo		sc_wr_sel;
 
 	struct device		*sc_child;
 	struct irda_params	sc_params;
@@ -234,10 +235,12 @@ int uirda_set_params(void *h, struct irda_params *params);
 int uirda_get_speeds(void *h, int *speeds);
 int uirda_get_turnarounds(void *h, int *times);
 int uirda_poll(void *h, int events, usb_proc_ptr p);
+int uirda_kqfilter(void *h, struct knote *kn);
 
 struct irframe_methods uirda_methods = {
 	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll,
-	uirda_set_params, uirda_get_speeds, uirda_get_turnarounds
+	uirda_kqfilter, uirda_set_params, uirda_get_speeds,
+	uirda_get_turnarounds
 };
 
 void uirda_rd_cb(usbd_xfer_handle xfer,	usbd_private_handle priv,
@@ -679,6 +682,71 @@ uirda_poll(void *h, int events, usb_proc_ptr p)
 	return (revents);
 }
 
+static void
+filt_uirdardetach(struct knote *kn)
+{
+	struct uirda_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sc->sc_rd_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_uirdaread(struct knote *kn, long hint)
+{
+	struct uirda_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_rd_count;
+	return (kn->kn_data > 0);
+}
+
+static void
+filt_uirdawdetach(struct knote *kn)
+{
+	struct uirda_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sc->sc_wr_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static const struct filterops uirdaread_filtops =
+	{ 1, NULL, filt_uirdardetach, filt_uirdaread };
+static const struct filterops uirdawrite_filtops =
+	{ 1, NULL, filt_uirdawdetach, filt_seltrue };
+
+int
+uirda_kqfilter(void *h, struct knote *kn)
+{
+	struct uirda_softc *sc = kn->kn_hook;
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rd_sel.si_klist;
+		kn->kn_fop = &uirdaread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &sc->sc_wr_sel.si_klist;
+		kn->kn_fop = &uirdawrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splusb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 int
 uirda_set_params(void *h, struct irda_params *p)
 {
@@ -866,7 +934,7 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		    sc->sc_rd_err));
 	sc->sc_rd_count = size;
 	wakeup(&sc->sc_rd_count); /* XXX should use flag */
-	selwakeup(&sc->sc_rd_sel);
+	selnotify(&sc->sc_rd_sel, 0);
 }
 
 usbd_status

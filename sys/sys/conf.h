@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.105 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: conf.h,v 1.106 2002/10/23 09:14:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,6 +48,7 @@
  */
 
 struct buf;
+struct knote;
 struct proc;
 struct tty;
 struct uio;
@@ -86,6 +87,7 @@ struct cdevsw {
 	struct tty *	(*d_tty)(dev_t);
 	int		(*d_poll)(dev_t, int, struct proc *);
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
+	int		(*d_kqfilter)(dev_t dev, struct knote *kn);
 	int		d_type;
 };
 
@@ -112,6 +114,7 @@ int cdevsw_lookup_major(const struct cdevsw *);
 #define	dev_type_strategy(n)	void n (struct buf *)
 #define	dev_type_dump(n)	int n (dev_t, daddr_t, caddr_t, size_t)
 #define	dev_type_size(n)	int n (dev_t)
+#define	dev_type_kqfilter(n)	int n (dev_t, struct knote *)
 
 #define	noopen		((dev_type_open((*)))enodev)
 #define	noclose		((dev_type_close((*)))enodev)
@@ -124,6 +127,7 @@ int cdevsw_lookup_major(const struct cdevsw *);
 #define	nommap		((dev_type_mmap((*)))enodev)
 #define	nodump		((dev_type_dump((*)))enodev)
 #define	nosize		NULL
+#define	nokqfilter	seltrue_kqfilter
 
 #define	nullopen	((dev_type_open((*)))nullop)
 #define	nullclose	((dev_type_close((*)))nullop)
@@ -134,6 +138,7 @@ int cdevsw_lookup_major(const struct cdevsw *);
 #define	nullpoll	((dev_type_poll((*)))nullop)
 #define	nullmmap	((dev_type_mmap((*)))nullop)
 #define	nulldump	((dev_type_dump((*)))nullop)
+#define	nullkqfilter	((dev_type_kqfilter((*)))eopnotsupp)
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];

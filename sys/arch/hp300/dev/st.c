@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.35 2002/10/02 05:15:55 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.36 2002/10/23 09:11:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.35 2002/10/02 05:15:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.36 2002/10/23 09:11:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ const struct bdevsw st_bdevsw = {
 
 const struct cdevsw st_cdevsw = {
 	stopen, stclose, stread, stwrite, stioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.22 2002/10/02 16:02:24 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.23 2002/10/23 09:12:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ dev_type_mmap(bw2mmap);
 
 const struct cdevsw bwtwo_cdevsw = {
 	bw2open, nullclose, noread, nowrite, bw2ioctl,
-	nostop, notty, nopoll, bw2mmap,
+	nostop, notty, nopoll, bw2mmap, nokqfilter,
 };
 
 /* XXX we do not handle frame buffer interrupts */
@@ -106,7 +106,7 @@ static int bw2gvideo __P((struct fbdevice *, void *));
 static int bw2svideo __P((struct fbdevice *, void *));
 
 static struct fbdriver bw2fbdriver = {
-	bw2open, nullclose, bw2mmap,
+	bw2open, nullclose, bw2mmap, nokqfilter,
 	fb_noioctl,
 	bw2gvideo, bw2svideo,
 	fb_noioctl, fb_noioctl, };

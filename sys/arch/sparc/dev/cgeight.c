@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.30 2002/10/02 16:02:13 thorpej Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.31 2002/10/23 09:12:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -140,14 +140,14 @@ dev_type_mmap(cgeightmmap);
 
 const struct cdevsw cgeight_cdevsw = {
 	cgeightopen, nullclose, noread, nowrite, cgeightioctl,
-	nostop, notty, nopoll, cgeightmmap,
+	nostop, notty, nopoll, cgeightmmap, nokqfilter
 };
 
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
 	cgeightunblank, cgeightopen, nullclose, cgeightioctl, 
-	nopoll, cgeightmmap
+	nopoll, cgeightmmap, nokqfilter
 };
 
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.14 2002/10/02 16:34:34 thorpej Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.15 2002/10/23 09:13:30 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.14 2002/10/02 16:34:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.15 2002/10/23 09:13:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -61,7 +62,7 @@ dev_type_write(ofrtc_write);
 
 const struct cdevsw ofrtc_cdevsw = {
 	ofrtc_open, nullclose, ofrtc_read, ofrtc_write, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 static int

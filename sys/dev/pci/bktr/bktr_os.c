@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.32 2002/10/02 16:52:02 thorpej Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.33 2002/10/23 09:13:34 jdolecek Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.32 2002/10/02 16:52:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.33 2002/10/23 09:13:34 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -180,7 +180,7 @@ dev_type_mmap(bktr_mmap);
 
 const struct cdevsw bktr_cdevsw = {
 	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
-	nostop, notty, nopoll, bktr_mmap,
+	nostop, notty, nopoll, bktr_mmap, nokqfilter,
 };
 #endif /* __NetBSD __ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cfl.c,v 1.9 2002/10/23 09:12:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -94,7 +94,7 @@ dev_type_read(cflrw);
 
 const struct cdevsw cfl_cdevsw = {
 	cflopen, cflclose, cflrw, cflrw, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*ARGSUSED*/

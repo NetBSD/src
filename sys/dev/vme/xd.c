@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.45 2002/10/02 16:53:14 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.46 2002/10/23 09:14:04 jdolecek Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.45 2002/10/02 16:53:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.46 2002/10/23 09:14:04 jdolecek Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -301,7 +301,7 @@ const struct bdevsw xd_bdevsw = {
 
 const struct cdevsw xd_cdevsw = {
 	xdopen, xdclose, xdread, xdwrite, xdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */

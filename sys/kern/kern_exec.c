@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.158 2002/10/08 15:50:11 junyoung Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.159 2002/10/23 09:14:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.158 2002/10/08 15:50:11 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.159 2002/10/23 09:14:15 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -667,6 +667,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
+
+	/* notify others that we exec'd */
+	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
 	(*pack.ep_es->es_emul->e_setregs)(p, &pack, (u_long) stack);

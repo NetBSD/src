@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.12 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: crl.c,v 1.13 2002/10/23 09:12:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@ dev_type_read(crlrw);
 
 const struct cdevsw crl_cdevsw = {
 	crlopen, crlclose, crlrw, crlrw, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 struct	ivec_dsp crl_intr;

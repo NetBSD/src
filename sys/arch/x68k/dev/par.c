@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.16 2002/10/02 16:02:42 thorpej Exp $	*/
+/*	$NetBSD: par.c,v 1.17 2002/10/23 09:12:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@ dev_type_ioctl(parioctl);
 
 const struct cdevsw par_cdevsw = {
 	paropen, parclose, noread, parwrite, parioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 int

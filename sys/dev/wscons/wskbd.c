@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.65 2002/10/02 16:53:18 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.66 2002/10/23 09:14:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.65 2002/10/02 16:53:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.66 2002/10/23 09:14:08 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -246,10 +246,11 @@ dev_type_close(wskbdclose);
 dev_type_read(wskbdread);
 dev_type_ioctl(wskbdioctl);
 dev_type_poll(wskbdpoll);
+dev_type_kqfilter(wskbdkqfilter);
 
 const struct cdevsw wskbd_cdevsw = {
 	wskbdopen, wskbdclose, wskbdread, nowrite, wskbdioctl,
-	nostop, notty, wskbdpoll, nommap,
+	nostop, notty, wskbdpoll, nommap, wskbdkqfilter,
 };
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
@@ -1088,6 +1089,16 @@ wskbdpoll(dev_t dev, int events, struct proc *p)
 	if (sc->sc_base.me_evp == NULL)
 		return (EINVAL);
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));
+}
+
+int
+wskbdkqfilter(dev_t dev, struct knote *kn)
+{
+	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+
+	if (sc->sc_base.me_evp == NULL)
+		return (1);
+	return (wsevent_kqfilter(sc->sc_base.me_evp, kn));
 }
 
 #if NWSDISPLAY > 0

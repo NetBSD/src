@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.11 2002/10/02 05:05:29 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.12 2002/10/23 09:10:57 jdolecek Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -52,7 +52,7 @@ dev_type_ioctl(spkrioctl);
 
 const struct cdevsw spkr_cdevsw = {
 	spkropen, spkrclose, noread, spkrwrite, spkrioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /**************** MACHINE DEPENDENT PART STARTS HERE *************************

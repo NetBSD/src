@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.32 2002/10/02 05:15:48 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.33 2002/10/23 09:11:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.32 2002/10/02 05:15:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.33 2002/10/23 09:11:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ const struct bdevsw ct_bdevsw = {
 
 const struct cdevsw ct_cdevsw = {
 	ctopen, ctclose, ctread, ctwrite, ctioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 int	ctident __P((struct device *, struct ct_softc *,

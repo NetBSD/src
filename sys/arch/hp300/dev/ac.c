@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.17 2002/10/02 05:15:48 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.18 2002/10/23 09:11:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.17 2002/10/02 05:15:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.18 2002/10/23 09:11:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.17 2002/10/02 05:15:48 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
@@ -119,7 +120,7 @@ dev_type_ioctl(acioctl);
 
 const struct cdevsw ac_cdevsw = {
 	acopen, acclose, noread, nowrite, acioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void	acstart __P((void *));
