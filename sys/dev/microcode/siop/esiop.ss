@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.12 2002/04/27 18:46:50 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.13 2002/05/02 12:37:19 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -176,7 +176,6 @@ nextisn:
 	CLEAR ACK;
 	INT int_msgin, IF NOT 0x20; not a simple tag message, let host handle it
 	MOVE 1, abs_msgin2, WHEN MSG_IN; get tag
-	CLEAR ACK;
 	MOVE SFBR to SCRATCHA2;
 	MOVE SFBR to SCRATCHC3;
 	MOVE SCRATCHC0 | f_c_tag to SCRATCHC0; save TAG
@@ -197,12 +196,59 @@ nextisn:
 	MOVE DSA2 + 0x00 TO DSA2 with CARRY;
 	MOVE DSA3 + 0x00 TO DSA3 with CARRY; SCRACHA(2,3) + DSA to DSA
 	LOAD DSA0, 4, from 0; load DSA for this tag
-	JUMP REL(waitphase);
+msgin_ack:
+	CLEAR ACK;
+waitphase:
+	JUMP REL(msgout), WHEN MSG_OUT;
+	JUMP REL(msgin), WHEN MSG_IN;
+	JUMP REL(dataout), WHEN DATA_OUT;
+	JUMP REL(datain), WHEN DATA_IN;
+	JUMP REL(cmdout), WHEN CMD;
+	JUMP REL(status), WHEN STATUS;
+	INT int_err;
+
+handle_cmpl:
+	CALL REL(disconnect);
+	MOVE SCRATCHE1 to SFBR;
+	INT int_done, IF NOT 0x00; if status is not "done", let host handle it
+	MOVE SCRATCHF0 to SFBR; load pointer in done ring
+	MOVE SFBR to DSA0;
+	MOVE SCRATCHF1 to SFBR;
+	MOVE SFBR to DSA1;
+	MOVE SCRATCHF2 to SFBR;
+	MOVE SFBR to DSA2;
+	MOVE SCRATCHF3 to SFBR;
+	MOVE SFBR to DSA3;
+wait_free:
+	LOAD SCRATCHA0, 1, from 0;
+	MOVE SCRATCHA0 to SFBR;
+	JUMP REL(wait_free), if not 0; wait for slot to be free
+	STORE NOFLUSH SCRATCHC0, 4, from 0; save current target/lun/flag
+	MOVE SCRATCHF0 + 4 to SCRATCHF0; advance to next slot
+	MOVE SCRATCHF1 + 0 to SCRATCHF1 with carry;
+	MOVE SCRATCHF2 + 0 to SCRATCHF2 with carry;
+	MOVE SCRATCHF3 + 0 to SCRATCHF3 with carry;
+	MOVE SCRATCHE2 + 1 to SCRATCHE2;
+	MOVE SCRATCHE2 to SFBR;
+	JUMP REL(is_done), if not ndone_slots_last;
+doner0:
+	MOVE 0xff to SCRATCHF0; driver will change 0xff to base of ring
+doner1:
+	MOVE 0xff to SCRATCHF1;
+doner2:
+	MOVE 0xff to SCRATCHF2;
+doner3:
+	MOVE 0xff to SCRATCHF3;
+	MOVE 0  to SCRATCHE2;
+is_done:
+	LOAD SCRATCHB0, 4, abs_sem; signal that a command is done
+	MOVE SCRATCHB0 | sem_done TO SCRATCHB0;
+	STORE NOFLUSH SCRATCHB0, 4, abs_sem;
+; and attempt next command
 
 reselect_fail:
-	; check that host asserted SIGP, this'll clear SIGP in ISTAT
+	; clear SIGP in ISTAT
 	MOVE CTEST2 & 0x40 TO SFBR;
-	INT int_resfail,  IF 0x00;
 script_sched:
 ; Load ring DSA
 	MOVE SCRATCHD0 to SFBR;
@@ -281,17 +327,6 @@ msgout:
         MOVE FROM t_msg_out, WHEN MSG_OUT;
 	CLEAR ATN;  
 	JUMP REL(waitphase);
-
-msgin_ack:
-	CLEAR ACK;
-waitphase:
-	JUMP REL(msgout), WHEN MSG_OUT;
-	JUMP REL(msgin), WHEN MSG_IN;
-	JUMP REL(dataout), WHEN DATA_OUT;
-	JUMP REL(datain), WHEN DATA_IN;
-	JUMP REL(cmdout), WHEN CMD;
-	JUMP REL(status), WHEN STATUS;
-	INT int_err;
 
 
 handle_sdp:
@@ -380,45 +415,6 @@ disconnect:
 	CLEAR ACK;
 	WAIT DISCONNECT;
 	RETURN;
-
-handle_cmpl:
-	CALL REL(disconnect);
-	MOVE SCRATCHE1 to SFBR;
-	INT int_done, IF NOT 0x00; if status is not "done", let host handle it
-	MOVE SCRATCHF0 to SFBR; load pointer in done ring
-	MOVE SFBR to DSA0;
-	MOVE SCRATCHF1 to SFBR;
-	MOVE SFBR to DSA1;
-	MOVE SCRATCHF2 to SFBR;
-	MOVE SFBR to DSA2;
-	MOVE SCRATCHF3 to SFBR;
-	MOVE SFBR to DSA3;
-wait_free:
-	LOAD SCRATCHA0, 1, from 0;
-	MOVE SCRATCHA0 to SFBR;
-	JUMP REL(wait_free), if not 0; wait for slot to be free
-	STORE NOFLUSH SCRATCHC0, 4, from 0; save current target/lun/flag
-	MOVE SCRATCHF0 + 4 to SCRATCHF0; advance to next slot
-	MOVE SCRATCHF1 + 0 to SCRATCHF1 with carry;
-	MOVE SCRATCHF2 + 0 to SCRATCHF2 with carry;
-	MOVE SCRATCHF3 + 0 to SCRATCHF3 with carry;
-	MOVE SCRATCHE2 + 1 to SCRATCHE2;
-	MOVE SCRATCHE2 to SFBR;
-	JUMP REL(is_done), if not ndone_slots_last;
-doner0:
-	MOVE 0xff to SCRATCHF0; driver will change 0xff to base of ring
-doner1:
-	MOVE 0xff to SCRATCHF1;
-doner2:
-	MOVE 0xff to SCRATCHF2;
-doner3:
-	MOVE 0xff to SCRATCHF3;
-	MOVE 0  to SCRATCHE2;
-is_done:
-	LOAD SCRATCHB0, 4, abs_sem; signal that a command is done
-	MOVE SCRATCHB0 | sem_done TO SCRATCHB0;
-	STORE NOFLUSH SCRATCHB0, 4, abs_sem;
-	JUMP REL(script_sched); and attempt next command
 
 handle_extin:
 	CLEAR ACK;
