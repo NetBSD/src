@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.49 2002/12/20 06:39:55 lukem Exp $
+.\"	$NetBSD: hier.7,v 1.50 2003/01/02 22:24:49 jmmv Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ root directory of the system
 system copyright notice, most often put on
 .Tn CD-ROM
 distributions.
-.It Sy "/[a-z]"
+.It Sy "/[a-z]/"
 user filesystems
 .It Sy /altroot/
 alternate root filesystem, in case of disaster
@@ -328,13 +328,18 @@ see
 mount point for the automounter; see
 .Xr amd 8
 .It Sy /lib/
-dynamic linked libraries and shared linker used by dynamic linked programs
+dynamic linked libraries used by dynamic linked programs
 (such as those in
-.Pa /bin
+.Pa /bin/
 and
-.Pa /sbin )
+.Pa /sbin/ )
 that cannot rely upon
-.Pa /usr/lib
+.Pa /usr/lib/
+being available.
+.It Sy /libexec/
+system utilities (such as the dynamic linker) required by programs
+and libraries that cannot rely upon
+.Pa /usr/libexec/
 being available.
 .It Sy /mnt/
 empty directory commonly used by
