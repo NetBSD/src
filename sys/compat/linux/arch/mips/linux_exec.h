@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.7 2002/11/21 15:18:37 jdolecek Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.8 2002/11/21 15:32:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,33 +62,6 @@
 #define LINUX_GCC_SIGNATURE 1
 
 #define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))))
-
-typedef struct {
-	Elf32_Sword a_type;
-	Elf32_Word  a_v;
-} LinuxAux32Info;
-typedef struct {
-	Elf64_Sword a_type;
-	Elf64_Word  a_v;
-} LinuxAux64Info;
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define LinuxAuxInfo LinuxAux64Info
-#else
-#define LinuxAuxInfo LinuxAux32Info
-#endif
-
-#ifdef _KERNEL
-__BEGIN_DECLS
-#ifdef EXEC_ELF32
-int linux_elf32_copyargs __P((struct proc *, struct exec_package *,
-    struct ps_strings *, char **, void *)); 
-#endif
-#ifdef EXEC_ELF64
-int linux_elf64_copyargs __P((struct proc *, struct exec_package *,
-    struct ps_strings *, char **, void *)); 
-#endif
-__END_DECLS
-#endif /* _KERNEL */
+    ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr))))
 
 #endif /* !_MIPS_LINUX_EXEC_H */
