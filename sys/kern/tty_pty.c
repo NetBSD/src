@@ -31,13 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.12.2.6 1993/11/14 21:18:04 mycroft Exp $
+ *	$Id: tty_pty.c,v 1.12.2.7 1993/11/14 21:33:04 mycroft Exp $
  */
 
 /*
  * Pseudo-teletype Driver
  * (Actually two drivers, requiring two entries in 'cdevsw')
  */
+#include "pty.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
