@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.82 1999/08/01 00:23:48 matt Exp $
+#	$NetBSD: files.sparc,v 1.83 1999/08/09 18:34:43 matt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -63,6 +63,10 @@ device eccmemctl
 attach eccmemctl at mainbus
 file	arch/sparc/sparc/memecc.c		eccmemctl
 
+device tctrl
+attach tctrl at obio
+file	arch/sparc/dev/tctrl.c			tctrl needs-flag
+
 device zs {channel = -1}
 attach zs at mainbus with zs_mainbus
 attach zs at obio with zs_obio
@@ -81,6 +85,10 @@ include "dev/sbus/files.sbus"
 attach sbus at mainbus with sbus_mainbus
 attach sbus at iommu with sbus_iommu
 file	arch/sparc/dev/sbus.c			sbus
+
+device tpcic: pcmciabus
+attach tpcic at sbus
+file	arch/sparc/dev/ts102.c			tpcic
 
 # network devices MII bus
 include "dev/mii/files.mii"
