@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.54 1999/10/28 08:12:14 jun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.55 1999/10/28 09:22:57 jun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.52 1999/10/28 07:21:28 jun Exp 
+ *	NetBSD: pcmciadevs,v 1.54 1999/10/28 09:21:46 jun Exp 
  */
 
 /*-
@@ -221,6 +221,9 @@
 #define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0006
 #define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
+#define	PCMCIA_CIS_SOCEKT_LP_ETHER_CF	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF	0x0075
+#define	PCMCIA_STR_SOCEKT_LP_ETHER_CF	"Socket Communications Low Power Ethernet CF"
 
 /* TDK Products */
 #define	PCMCIA_CIS_TDK_LAK_CD021BX	{ NULL, NULL, NULL, NULL }
