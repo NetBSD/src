@@ -1,142 +1,161 @@
-#	$NetBSD: PAIN,v 1.41 1994/10/31 21:07:50 mycroft Exp $
+#	$NetBSD: PAIN,v 1.42 1994/11/03 19:00:14 mycroft Exp $
 #
-# PAIN
+#	PAIN -- mail server and test machine
 #
 
-machine		"i386"
-#cpu		"I386_CPU"
-cpu		"I486_CPU"
-options		"DUMMY_NOPS"
-options		"MACHINE_NONCONTIG"
+machine		i386		# architecture, used by config; REQUIRED
+
+#options	I386_CPU	# CPU classes; at least one is REQUIRED
+options		I486_CPU
+#options	I586_CPU
+#options	MATH_EMULATE	# floating point emulation
+
+options		DUMMY_NOPS	# speed hack; recommanded
 options		XSERVER,UCONSOLE
-options		"USER_LDT"
+options		MACHINE_NONCONTIG
 
-ident		PAIN
-maxusers	16
-timezone	5 dst
+maxusers	16		# estimated number of users
+options		TIMEZONE=300	# time zone to adjust RTC time by
+options		DST=1		# daylight savings time used by RTC
 
-options		SWAPPAGER
-options		VNODEPAGER,DEVPAGER
-options		DDB
-options		DIAGNOSTIC
-options		KTRACE
-options		SYSVSHM,SYSVSEM,SYSVMSG
-#options	"SHMMAXPGS=1024"
-options		LKM
+options		SWAPPAGER	# paging; REQUIRED
+options		VNODEPAGER	# mmap() of files
+options		DEVPAGER	# mmap() of devices
 
-options		"COMPAT_NOMID"
-options		"COMPAT_09"
-options		"COMPAT_10"
-options		"COMPAT_43"
-options		"TCP_COMPAT_42"
+options		DDB		# in-kernel debugger
+options		DIAGNOSTIC	# internally consistency checks
+options		KTRACE		# system call tracing, a la ktrace(1)
 
-#options	"COMPAT_SVR4"
-#options	"COMPAT_IBCS2"
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+#options	SHMMAXPGS=1024	# 1024 pages is the default
 
-options		FFS,QUOTA
-options		LFS
-options		MFS
+options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options		COMPAT_09	# NetBSD 0.9,
+options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_43	# and 4.3BSD
+options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
-options		NFSCLIENT
-options		NFSSERVER
+#options	COMPAT_SVR4	# binary compatibility with SVR4
+#options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 
-options		"CD9660"
-options		MSDOSFS
-options		FDESC
-options		FIFO
-options		KERNFS
-options		NULLFS
-options		PORTAL
-options		PROCFS
-options		UMAPFS
-options		UNION
+options		USER_LDT	# user-settable LDT; used by WINE
+options		LKM		# loadable kernel modules
 
-options		GATEWAY
-options		INET
+options		FFS,QUOTA	# UFS and quotas
+options		LFS		# log-structured file system
+options		MFS		# memory file system
 
-options		SCSI
+options		NFSCLIENT	# Network File System client
+options		NFSSERVER	# Network File System server
 
-#config		netbsd	root on wd0 swap on wd0 and sd0 and sd1 and sd2 and sd3
+options		CD9660		# ISO 9660 + Rock Ridge file system
+options		MSDOSFS		# MS-DOS file system
+options		FDESC		# /dev/fd
+options		FIFO		# FIFOs; RECOMMENDED
+options		KERNFS		# /kern
+#options	NULLFS		# loopback file system
+#options	PORTAL		# ?
+options		PROCFS		# /proc
+#options	UMAPFS		# NULLFS + uid and gid remapping
+options		UNION		# union file system
+
+options		GATEWAY		# packet forwarding
+options		INET		# IP + ICMP + TCP + UDP
+#options	NS		# XNS
+#options	ISO,TPIP	# OSI
+#options	EON		# OSI tunneling over IP
+#options	CCITT,LLC,HDLC	# X.25
+
 config		netbsd	swap generic
 options		GENERIC
 
-controller	isa0
+isa0	at root
+eisa0	at root
+#pci0	at root
 
-#device		pc0	at isa? port "IO_KBD" irq 1
-device		vt0	at isa? port "IO_KBD" irq 1
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
-device		com0	at isa? port "IO_COM1" irq 4
-device		com1	at isa? port "IO_COM2" irq 3
+#pc0	at isa? port 0x60 irq 1		# generic PC console device
+vt0	at isa? port 0x60 irq 1
 
-master		rtfps0	at isa? port 0x1230 irq 10
-device		com2	at rtfps0 slave 0
-#device		com3	at rtfps0 slave 1
-device		com4	at rtfps0 slave 2
-device		com5	at rtfps0 slave 3
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+#com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9
+#ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+#com*	at ast? slave ?
+rtfps0	at isa? port 0x3230 irq 10	# RT 4-port serial cards
+com2	at rtfps? slave 0
+#com3	at rtfps? slave ?
+com4	at rtfps? slave 2
+com5	at rtfps? slave 3
 
-master		rtfps1	at isa? port 0x3230 irq 10
-device		com6	at rtfps1 slave 0
-#device		com7	at rtfps1 slave 1
-device		com8	at rtfps1 slave 2
-device		com9	at rtfps1 slave 3
+#cy0	at isa? ...
 
-device		lpt0	at isa? port "IO_LPT1" irq 7
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+#lpt1	at isa? port 0x278
+#lpt2	at isa? port 0x3bc
 
-device		lms0	at isa? port "IO_BMS1" irq 5
-#device		mms0	at isa? port "IO_BMS1" irq 5
-#device		pms0	at isa? port "IO_KBD" irq 12
+lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#lms1	at isa? port 0x238 irq 5
+#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#mms1	at isa? port 0x238 irq 5
+#pms0	at isa? port 0x60 irq 5		# PS/2 auxiliary port mouse
 
-#controller	aha0	at isa? port "IO_AHA0" irq ? drq ?
-#master		scsibus0 at aha0
-#controller	bt0	at isa? port "IO_BT0" irq ? drq ?
-#master		scsibus0 at bt0
-#controller	uha0	at isa? port "IO_UHA0" irq ? drq ?
-#master		scsibus0 at uha0
-#controller	sea0	at isa? iomem 0xc8000 irq 5
-#master		scsibus0 at sea0
+#aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+#aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+#scsibus* at aha?
+ahb*	at eisa? slot ? irq ?		# Adaptec 174[024] SCSI controllers
+scsibus* at ahb?
+aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
+scsibus* at aic?
+#bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bt*	at eisa? slot ? irq ?
+#scsibus* at bt?
+#ncr*	at pci? bus ? dev ? function ?	# NCR 538XX SCSI controllers
+#scsibus* at ncr?
+#uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+#uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+#uha*	at eisa? slot ? irq ?		# UltraStor 24f SCSI controllers
+#scsibus* at uha?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
-controller	ahb0	at isa? irq ?
-master		scsibus0 at ahb0
-disk		sd0	at scsibus0 slave ?
-disk		sd1	at scsibus0 slave ?
-disk		sd2	at scsibus0 slave ?
-disk		sd3	at scsibus0 slave ?
-tape		st0	at scsibus0 slave ?
-tape		st1	at scsibus0 slave ?
-disk		cd0	at scsibus0 slave ?
-disk		cd1	at scsibus0 slave ?
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fdc1	at isa? port 0x370 irq ? drq ?
+fd*	at fdc? drive ?
 
-controller	aic0	at isa? port 0x340 irq 12
-master		scsibus1 at aic0
-disk		sd0	at scsibus1 slave ?
-disk		sd1	at scsibus1 slave ?
-disk		sd2	at scsibus1 slave ?
-disk		sd3	at scsibus1 slave ?
-tape		st0	at scsibus1 slave ?
-tape		st1	at scsibus1 slave ?
-disk		cd0	at scsibus1 slave ?
-disk		cd1	at scsibus1 slave ?
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
-controller	wdc0	at isa? port "IO_WD1" irq 14
-disk		wd0	at wdc0 drive ?
-disk		wd1	at wdc0 drive ?
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+#wdc1	at isa? port 0x170 irq ?
+wd*	at wdc? drive ?
 
-controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
-disk		fd0	at fdc0 drive ?
-disk		fd1	at fdc0 drive ?
+#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-#device		mcd0	at isa? port 0x300 irq 10
+ed0	at isa? port 0x300 irq 5 iomem 0xc8000 iosiz 16384	# WD/SMC, 3C503, and NE[12]000
+#ed1	at isa? port 0x250 irq 9 iomem 0xd8000	#   ethernet cards
+#ed2	at isa? port 0x300 irq 10 iomem 0xcc000
+#eg0	at isa? ...				# 3C505 ethernet cards
+#el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
+ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+#ie0	at isa? port 0x360 irq 7 iomem 0xd0000	# StarLAN & 3C507 ethernet cards
+le0	at isa? port 0x200 irq 5 iomem 0xd0000 iosiz 49152	# IsoLan, NE2100, and DEPCA
 
-device		ed0	at isa? port 0x300 iomem 0xc8000 iosiz 16384 irq 5
-device		ep0	at isa? port ? irq ?
-device		le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5
+#sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+#spkr0	at isa? ...
 
-device		npx0	at isa? port "IO_NPX" irq 13
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+#pseudo-device	sl	2		# CSLIP
+#pseudo-device	ppp	2		# PPP
+#pseudo-device	tun	2		# network tunneling over tty
 
-pseudo-device	loop
-pseudo-device	ether
-pseudo-device	bpfilter 8
-pseudo-device	log
-pseudo-device	pty	32
-pseudo-device	vn	4
-#pseudo-device	ppp	2
+pseudo-device	pty	32		# pseudo-terminals
+#pseudo-device	tb	1		# tablet line discipline
+pseudo-device	vn	4		# paging to files
