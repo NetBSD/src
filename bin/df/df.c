@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.35 2000/10/15 17:50:10 kleink Exp $	*/
+/*	$NetBSD: df.c,v 1.36 2000/12/30 16:20:58 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.35 2000/10/15 17:50:10 kleink Exp $");
+__RCSID("$NetBSD: df.c,v 1.36 2000/12/30 16:20:58 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ void	 maketypelist __P((char *));
 long	 regetmntinfo __P((struct statfs **, long));
 void	 usage __P((void));
 
-int	aflag, iflag, kflag, lflag, nflag, Pflag;
+int	aflag, iflag, kflag, lflag, mflag, nflag, Pflag;
 char	**typelist = NULL;
 struct	ufs_args mdev;
 
@@ -94,7 +94,7 @@ main(argc, argv)
 	int ch, i, maxwidth, width;
 	char *mntpt;
 
-	while ((ch = getopt(argc, argv, "aiklnPt:")) != -1)
+	while ((ch = getopt(argc, argv, "aiklmnPt:")) != -1)
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -107,6 +107,9 @@ main(argc, argv)
 			break;
 		case 'l':
 			lflag = 1;
+			break;
+		case 'm':
+			mflag = 1;
 			break;
 		case 'n':
 			nflag = 1;
@@ -350,6 +353,10 @@ prtstat(sfsp, maxwidth)
 			blocksize = 1024;
 			header = Pflag ? "1024-blocks" : "1K-blocks";
 			headerlen = strlen(header);
+		} else if (mflag) {
+			blocksize = 1024 * 1024;
+			header = Pflag ? "1048576-blocks" : "1M-blocks";
+			headerlen = strlen(header);
 		} else
 			header = getbsize(&headerlen, &blocksize);
 		(void)printf("%-*.*s %s     Used %9s Capacity",
@@ -463,7 +470,7 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-aiklnP] [-t type] [file | file_system ...]\n",
+	    "Usage: %s [-aiklmnP] [-t type] [file | file_system ...]\n",
 	    __progname);
 	exit(1);
 	/* NOTREACHED */
