@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.63 1994/11/04 03:57:32 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.64 1994/11/04 06:40:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -38,6 +38,8 @@
 
 #include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
+
+#include <machine/limits.h>
 
 /* sorry, has to be here, no place else really suitable */
 #include <machine/pc/display.h>
@@ -84,42 +86,37 @@ isaprint(aux, isa)
 }
 
 void
+isascan(parent, match)
+	struct device *parent;
+	void *match;
+{
+	struct device *dev = match;
+	struct cfdata *cf = dev->dv_cfdata;
+	struct isa_attach_args ia;
+
+	if (cf->cf_fstate == FSTATE_STAR)
+		panic("not bloody likely");
+
+	ia.ia_iobase = cf->cf_loc[0];
+	ia.ia_iosize = 0x666;
+	ia.ia_maddr = cf->cf_loc[2] - 0xa0000 + atdevbase;
+	ia.ia_msize = cf->cf_loc[3];
+	ia.ia_irq = (cf->cf_loc[4] == -1) ? IRQUNK : (1 << cf->cf_loc[4]);
+	ia.ia_drq = cf->cf_loc[5];
+
+	if ((*cf->cf_driver->cd_match)(parent, dev, &ia) > 0)
+		config_attach(parent, dev, &ia, isaprint);
+	else
+		free(dev, M_DEVBUF);
+}
+
+void
 isaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct cfdata *cf;
-	register short *p;
-	struct matchinfo m;
-	struct isa_attach_args ia;
-	extern struct cfdata cfdata[];
 
 	printf("\n");
 
-	m.fn = NULL;
-	m.parent = self;
-	m.aux = &ia;
-	m.indirect = 1;
-	for (cf = cfdata; cf->cf_driver; cf++) {
-		if (cf->cf_fstate == FSTATE_FOUND)
-			continue;
-		for (p = cf->cf_parents; *p >= 0; p++) {
-			if (self->dv_cfdata != &cfdata[*p])
-				continue;
-			m.match = NULL;
-			m.pri = 0;
-			ia.ia_iobase = cf->cf_loc[0];
-			ia.ia_iosize = 0x666;
-			ia.ia_maddr = cf->cf_loc[2] - 0xa0000 + atdevbase;
-			ia.ia_msize = cf->cf_loc[3];
-			ia.ia_irq =
-			  (cf->cf_loc[4] == -1) ? IRQUNK : (1 << cf->cf_loc[4]);
-			ia.ia_drq = cf->cf_loc[5];
-			config_mapply(&m, cf);
-			if (m.pri > 0) {
-				config_attach(self, m.match, &ia, isaprint);
-				break;
-			}
-		}
-	}
+	config_scan(isascan, self);
 }

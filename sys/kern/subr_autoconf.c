@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.15 1994/11/04 03:12:20 mycroft Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.16 1994/11/04 06:40:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <lib/libkern/libkern.h>
+#include <machine/limits.h>
 
 /*
  * Autoconfiguration subroutines.
@@ -66,36 +67,39 @@ extern short cfroots[];
 
 struct device *config_make_softc __P((struct device *, struct cfdata *));
 
+struct matchinfo {
+	cfmatch_t fn;
+	struct	device *parent;
+	void	*match, *aux;
+	int	indirect, pri;
+};
+
 /*
  * Apply the matching function and choose the best.  This is used
  * a few times and we want to keep the code small.
  */
-void
-config_mapply(m, cf)
+static void
+mapply(m, cf)
 	register struct matchinfo *m;
 	register struct cfdata *cf;
 {
 	register int pri;
 	void *match;
 
-	if (m->indirect) {
+	if (m->indirect)
 		match = config_make_softc(m->parent, cf);
-		cf->cf_driver->cd_devs[cf->cf_unit] = match;
-	} else
+	else
 		match = cf;
 
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, match, m->aux);
 	else {
 	        if (cf->cf_driver->cd_match == NULL) {
-			panic("config_mapply: no match function for '%s' device\n",
+			panic("mapply: no match function for '%s' device\n",
 			    cf->cf_driver->cd_name);
 		}
 		pri = (*cf->cf_driver->cd_match)(m->parent, match, m->aux);
 	}
-
-	if (m->indirect)
-		cf->cf_driver->cd_devs[cf->cf_unit] = NULL;
 
 	if (pri > m->pri) {
 		if (m->indirect && m->match)
@@ -144,9 +148,46 @@ config_search(fn, parent, aux)
 			continue;
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p])
-				config_mapply(&m, cf);
+				mapply(&m, cf);
 	}
 	return (m.match);
+}
+
+/*
+ * Iterate over all potential children of some device, calling the given
+ * function for each one.
+ *
+ * Note that this function is designed so that it can be used to apply
+ * an arbitrary function to all potential children (its return value
+ * can be ignored).
+ */
+void
+config_scan(fn, parent)
+	cfscan_t fn;
+	register struct device *parent;
+{
+	register struct cfdata *cf;
+	register short *p;
+	void *match;
+	int indirect;
+
+	indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
+	for (cf = cfdata; cf->cf_driver; cf++) {
+		/*
+		 * Skip cf if no longer eligible, otherwise scan through
+		 * parents for one matching `parent', and try match function.
+		 */
+		if (cf->cf_fstate == FSTATE_FOUND)
+			continue;
+		for (p = cf->cf_parents; *p >= 0; p++)
+			if (parent->dv_cfdata == &cfdata[*p]) {
+				if (indirect)
+					match = config_make_softc(parent, cf);
+				else
+					match = cf;
+				(*fn)(parent, match);
+			}
+	}
 }
 
 /*
@@ -177,7 +218,7 @@ config_rootsearch(fn, rootname, aux)
 	for (p = cfroots; *p >= 0; p++) {
 		cf = &cfdata[*p];
 		if (strcmp(cf->cf_driver->cd_name, rootname) == 0)
-			config_mapply(&m, cf);
+			mapply(&m, cf);
 	}
 	return (m.match);
 }
