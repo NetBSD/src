@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.10 2001/02/06 00:02:25 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.11 2001/02/10 14:55:18 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -1483,9 +1483,6 @@ _formi_validate_field(FORM *form)
 
 	cur = form->fields[form->cur_field];
 	
-	if (((cur->opts & O_PASSOK) == O_PASSOK) && (cur->buf0_status == 0))
-		return E_OK;
-
 	bp = cur->buffers[0].string;
 	count = _formi_skip_blanks(bp, 0);
 
@@ -1499,6 +1496,14 @@ _formi_validate_field(FORM *form)
 			return E_INVALID_FIELD;
 	}
 	
+	  /* check if an unmodified field is ok */
+	if (cur->buf0_status == 0) {
+		if ((cur->opts & O_PASSOK) == O_PASSOK)
+			return E_OK;
+		else
+			return E_INVALID_FIELD;
+	}
+
 	  /* if there is no type then just accept the field */
 	if (cur->type == NULL)
 		return E_OK;
