@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.6 2003/03/30 17:59:07 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.7 2003/04/08 03:49:45 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd November 28, 1999
+.Dd April 8, 2003
 .Dt BOOT 8 mvme68k
 .Os
 .Sh NAME
@@ -79,28 +79,27 @@ from the NFS root as determined by the procedure described in
 Note that the MVME147 is unable to boot directly from the
 network without the help of a small bootloader program
 .Pa ( /usr/mdec/sboot ) .
-.Pp
-The
-.Fl s
-flag to the boot loader will bring the system up in single-user mode.
-The
-.Fl a
-flag instructs the system to prompt for the location of the root filesystem
-and the primary swap partition.
-The
-.Fl d
-flag to the boot loader will bring the system up in debug mode.
+.Ss Boot program options
+.Bl -tag -width xxx
+.It Fl a
+Prompt for the root file system device, the system crash dump
+device, and the path to
+.Xr init 8 .
+.It Fl d
+Bring the system up in debug mode.
 Here it waits for a kernel debugger connect; see
 .Xr ddb 4 .
-The
-.Fl q
-flag to the boot loader would boot the system in
-quiet mode,
-.Fl v
-in verbose mode.
-Any extra flags or arguments, the after the -- separator,
+.It Fl q
+Boot the system in quiet mode.
+.It Fl s
+Bring the system up in single-user mode.
+.It Fl v
+Boot the system in verbose mode.
+.El
+.Pp
+Any extra flags or arguments, or the
 .Ar \*[Lt]boot string\*[Gt]
-are passed to the boot PROM.
+after the -- separator are passed to the boot PROM.
 Other flags are currently ignored.
 .Pp
 At any time you can break to the kernel debugger
