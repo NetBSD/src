@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 1997/07/11 20:16:01 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.14 1997/07/11 20:17:38 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -6,14 +6,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.13 1997/07/11 20:16:01 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.14 1997/07/11 20:17:38 christos Exp $");
 #endif
 
 #include <stdio.h>
 #include "make.h"
 #include <sys/param.h>
 
-#if !__STDC__
+#ifndef __STDC__
 # ifndef const
 #  define const
 # endif
