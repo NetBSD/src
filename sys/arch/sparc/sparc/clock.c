@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1995/02/01 12:37:51 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.20 1995/02/16 21:51:38 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -172,13 +172,7 @@ oclockattach(parent, self, aux)
 	i7 = (volatile struct intersil7170 *) mapiodev(ra->ra_paddr,
 		sizeof(*i7), ca->ca_bustype);
 
-#ifdef xxx
-	pmap_changeprot(kernel_pmap, (vm_offset_t) i7, VM_PROT_READ, 1);
-		/* ^^^ XXX not needed for old clock? */
-#endif
-
 	idp = &idprom;
-
 	h = idp->id_machine << 24;
 	h |= idp->id_hostid[0] << 16;
 	h |= idp->id_hostid[1] << 8;
