@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.5 1995/09/15 01:52:18 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.6 1995/09/16 11:45:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -594,7 +594,7 @@ main_exit:
 			else dma_ready();
 #else
 			else {
-				if (scsi_main_irq())
+				if (pdma_ready())
 					goto connected;
 				panic("Got DMA interrupt without DMA");
 			}
@@ -663,7 +663,7 @@ struct ncr_softc *sc;
 				return;
 			    }
 #else
-			    if (scsi_main_irq())
+			    if (pdma_ready())
 				return;
 			    panic("Got DMA interrupt without DMA\n");
 #endif
@@ -826,7 +826,7 @@ SC_REQ	*reqp;
 	 * 5380 which causes us to see our own BSY signal instead of that of
 	 * the target.
 	 */
-	SET_5380_REG(NCR5380_ICOM, SC_A_SEL | SC_A_ATN | SC_ADTB);
+	SET_5380_REG(NCR5380_ICOM, SC_A_SEL | atn_flag | SC_ADTB);
 	delay(1);
 
 	/*
@@ -846,7 +846,7 @@ SC_REQ	*reqp;
 		 * When BSY is asserted, we assume the selection succeeded,
 		 * otherwise we release the bus.
 		 */
-		SET_5380_REG(NCR5380_ICOM, SC_A_SEL | SC_A_ATN);
+		SET_5380_REG(NCR5380_ICOM, SC_A_SEL | atn_flag);
 		delay(201);
 		if (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)) {
 			SET_5380_REG(NCR5380_ICOM, 0);
@@ -858,7 +858,7 @@ SC_REQ	*reqp;
 			return (0);
 		}
 	}
-	SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+	SET_5380_REG(NCR5380_ICOM, atn_flag);
 
 	DBG_SELPRINT ("Target %d responding to select.\n", reqp->targ_id);
 
@@ -1197,7 +1197,7 @@ struct ncr_softc *sc;
 	 * choose something long enough to suit all targets.
 	 */
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
-	len = 100;
+	len = 1000;
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
 		delay(1);
 		len--;

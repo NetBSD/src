@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.7 1995/09/12 22:31:45 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.8 1995/09/16 11:45:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -238,7 +238,7 @@ pdma_cleanup(void)
 }
 
 static __inline__ int
-scsi_main_irq()
+pdma_ready()
 {
 	if (pdma_5380_dir) {
 #if DEBUG
@@ -277,7 +277,7 @@ ncr5380_irq_intr(p)
 {
 	struct ncr_softc	*sc = p;
 
-	if (scsi_main_irq()) {
+	if (pdma_ready()) {
 		return;
 	}
 	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
