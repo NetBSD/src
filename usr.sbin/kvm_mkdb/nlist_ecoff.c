@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.4 1997/10/17 10:15:24 lukem Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.5 1997/12/15 04:21:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.4 1997/10/17 10:15:24 lukem Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.5 1997/12/15 04:21:33 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,7 +111,8 @@ create_knlist_ecoff(name, db)
 	 * Map the file in its entirety.
 	 */
 	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_FILE|MAP_PRIVATE,
+	    fd, 0);
 	if (mappedfile == (char *)-1)
 		BAD;
 
