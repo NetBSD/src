@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/02/02 12:41:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2002/08/19 09:56:01 lukem Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -25,6 +25,8 @@
 # 		regex routines and must define NET2_REGEX.
 # 		Pax may not compile if this not (un)defined properly.
 
+.include <bsd.own.mk>
+
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
@@ -34,12 +36,12 @@ SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
 CPPFLAGS+=	-DSMALL
 .else
 SRCS+=		getid.c spec.c misc.c stat_flags.c pack_dev.c
-CPPFLAGS+=	-I${.CURDIR}/../../usr.sbin/mtree \
-		-I${.CURDIR}/../../sbin/mknod \
-		-I${.CURDIR}/../../bin/ls
-.PATH:		${.CURDIR}/../../usr.sbin/mtree \
-		${.CURDIR}/../../sbin/mknod \
-		${.CURDIR}/../../bin/ls
+CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree \
+		-I${NETBSDSRCDIR}/sbin/mknod \
+		-I${NETBSDSRCDIR}/bin/ls
+.PATH:		${NETBSDSRCDIR}/usr.sbin/mtree \
+		${NETBSDSRCDIR}/sbin/mknod \
+		${NETBSDSRCDIR}/bin/ls
 .endif
 
 # XXX not yet!

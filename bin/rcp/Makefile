@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/03/22 18:10:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 2002/08/19 09:56:02 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SRCS=		rcp.c util.c
 USE_KERBEROS=	no
 
 .if (${USE_KERBEROS} != "no")
-RLOGIN= 	${.CURDIR}/../../usr.bin/rlogin
+RLOGIN= 	${NETBSDSRCDIR}/usr.bin/rlogin
 .PATH:		${RLOGIN}
 
 SRCS+=		krcmd.c kcmd.c
