@@ -1,7 +1,8 @@
-/*	$NetBSD: puc.c,v 1.2 1998/12/21 20:40:01 drochner Exp $	*/
+/*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
- * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996, 1998, 1999
+ *	Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -234,6 +235,7 @@ puc_attach(parent, self, aux)
 
 	/* Configure each port. */
 	for (i = 0; PUC_PORT_VALID(sc->sc_desc, i); i++) {
+		bus_space_handle_t subregion_handle;
 
 		/* make sure the base address register is mapped */
 		barindex = PUC_PORT_BAR_INDEX(sc->sc_desc->ports[i].bar);
@@ -251,15 +253,25 @@ puc_attach(parent, self, aux)
 		paa.pc = pa->pa_pc;
 		paa.intrhandle = intrhandle;
 		paa.a = sc->sc_bar_mappings[barindex].a;
-		paa.s = sc->sc_bar_mappings[barindex].s;
 		paa.t = sc->sc_bar_mappings[barindex].t;
-		paa.h = sc->sc_bar_mappings[barindex].h;
+
+		if (bus_space_subregion(sc->sc_bar_mappings[barindex].t,
+		    sc->sc_bar_mappings[barindex].h,
+		    sc->sc_desc->ports[i].offset,
+		    sc->sc_bar_mappings[barindex].s - 
+		      sc->sc_desc->ports[i].offset,
+		    &subregion_handle)) {
+			printf("%s: couldn't get subregion for port %d\n",
+			    sc->sc_dev.dv_xname, i);
+			continue;
+		}
+		paa.h = subregion_handle;
 
 #if 0
-		printf("%s: port %d: %s @ (index %d) 0x%x/%d (0x%lx, 0x%lx)\n",
+		printf("%s: port %d: %s @ (index %d) 0x%x (0x%lx, 0x%lx)\n",
 		    sc->sc_dev.dv_xname, paa.port,
 		    puc_port_type_name(paa.type), barindex, (int)paa.a,
-		    (int)paa.s, (long)paa.t, (long)paa.h);
+		    (long)paa.t, (long)paa.h);
 #endif
 
 		/* and configure it */

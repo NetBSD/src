@@ -1,7 +1,7 @@
-/*	$NetBSD: pucdata.c,v 1.2 1998/07/12 02:21:56 cgd Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
- * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,8 +61,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x10b5,	0x9050,	0xd84d,	0x6810	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x20 },
-		{ PUC_PORT_TYPE_LPT, 0x24 },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x24, 0x00 },
 	    },
 	},
 
@@ -81,8 +81,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x10b5,	0x9050,	0xd84d,	0x6808	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18 },
-		{ PUC_PORT_TYPE_COM, 0x1c },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
 	    },
 	},
 
@@ -111,7 +111,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1000,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
 	    },
 	},
 
@@ -119,6 +119,24 @@ const struct puc_device_description puc_devices[] = {
 	 * XXX no entry because I have no data:
 	 * XXX SIIG Cyber 2S1P PCI (dual serial and single parallel)
 	 */
+
+	/*
+	 * XXX PLX Technology product 0x1076
+	 */
+	{   "VScom serial PCI",
+	    {	0x10b5,	0x1076,	0x10b5,	0x1076	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38 },
+	    },
+	},
 
 	{ 0 }
 };
