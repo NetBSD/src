@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.320 2001/02/04 17:30:36 ad Exp $
+# $NetBSD: mi,v 1.321 2001/02/06 19:32:47 tron Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1246,6 +1246,7 @@
 ./usr/share/man/cat8/mknetid.0			man-nis-catman
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman
+./usr/share/man/cat8/mlxctl.0			man-sysutil-man
 ./usr/share/man/cat8/modload.0			man-sysutil-catman
 ./usr/share/man/cat8/modstat.0			man-sysutil-catman
 ./usr/share/man/cat8/modunload.0		man-sysutil-catman
