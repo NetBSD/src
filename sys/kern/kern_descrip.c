@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.117 2003/11/09 07:52:26 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.118 2003/11/09 07:55:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.117 2003/11/09 07:52:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.118 2003/11/09 07:55:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1418,30 +1418,31 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 
 /*
  * Duplicate the specified descriptor to a free descriptor.
+ *
+ * 'indx' has been fdalloc'ed (and will be fdremove'ed on error) by the caller.
  */
 int
 dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 {
 	struct filedesc	*fdp;
-	struct file	*wfp, *fp;
+	struct file	*wfp;
 
 	fdp = p->p_fd;
+
+	/* should be cleared by the caller */
+	KASSERT(fdp->fd_ofiles[indx] == NULL);
+
 	/*
 	 * If the to-be-dup'd fd number is greater than the allowed number
 	 * of file descriptors, or the fd to be dup'd has already been
-	 * closed, reject.  Note, check for new == old is necessary as
-	 * falloc could allocate an already closed to-be-dup'd descriptor
-	 * as the new descriptor.
+	 * closed, reject.
 	 */
-	fp = fdp->fd_ofiles[indx];
 
+	/*
+	 * Note, in the case of indx == dfd, fd_getfile below returns NULL.
+	 */
 	if ((wfp = fd_getfile(fdp, dfd)) == NULL)
 		return (EBADF);
-
-	if (fp == wfp) {
-		simple_unlock(&fp->f_slock);
-		return (EBADF);
-	}
 
 	FILE_USE(wfp);
 
@@ -1470,7 +1471,7 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		fdp->fd_ofiles[indx] = wfp;
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
 		wfp->f_count++;
-		fd_used(fdp, indx);
+		/* 'indx' has beed fd_used'ed by caller */
 		FILE_UNUSE(wfp, p);
 		return (0);
 
@@ -1486,7 +1487,7 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		 * Complete the clean up of the filedesc structure by
 		 * recomputing the various hints.
 		 */
-		fd_used(fdp, indx);
+		/* 'indx' has beed fd_used'ed by caller */
 		fd_unused(fdp, dfd);
 		FILE_UNUSE(wfp, p);
 		return (0);
