@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.25 2001/11/09 09:05:52 lukem Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.26 2001/11/09 11:48:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.25 2001/11/09 09:05:52 lukem Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.26 2001/11/09 11:48:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ static	void	bwrite(daddr_t, char *, int, const char *);
 static	void	bread(daddr_t, char *, int, const char *);
 static	int	getnum(const char *, const char *, int, int);
 static	void	getsb(struct fs *, const char *);
+static	int	openpartition(const char *, int, char *, size_t);
 static	void	usage(void);
 int		main(int, char *[]);
 
@@ -101,9 +102,8 @@ main(int argc, char *argv[])
 #define	OPTSTRING	OPTSTRINGBASE
 #endif
 	int		i, ch, Aflag, Fflag, Nflag, openflags;
-	struct fstab	*fs;
 	const char	*special, *chg[2];
-	char		device[MAXPATHLEN], rawspec[MAXPATHLEN], *p;
+	char		device[MAXPATHLEN];
 	int		maxbpg, maxcontig, minfree, rotdelay, optim, trackskew;
 	int		avgfilesize, avgfpdir;
 
@@ -205,25 +205,14 @@ main(int argc, char *argv[])
 
 	special = argv[0];
 	openflags = Nflag ? O_RDONLY : O_RDWR;
-	if (Fflag) {
+	if (Fflag)
 		fi = open(special, openflags);
-		if (fi == -1)
-			err(1, "%s", special);
-	} else {
-		fs = getfsfile(special);
-		if (fs) {
-			if ((p = strrchr(fs->fs_spec, '/')) != NULL) {
-				snprintf(rawspec, sizeof(rawspec), "%.*s/r%s",
-				    (int)(p - fs->fs_spec), fs->fs_spec, p + 1);
-				special = rawspec;
-			} else
-				special = fs->fs_spec;
-		}
-		fi = opendisk(special, openflags, device, sizeof(device), 0);
-		if (fi == -1)
-			err(1, "%s", errno == ENOENT ? special : device);
+	else {
+		fi = openpartition(special, openflags, device, sizeof(device));
 		special = device;
 	}
+	if (fi == -1)
+		err(1, "%s", special);
 	getsb(&sblock, special);
 
 #define CHANGEVAL(old, new, type, suffix) do				\
@@ -405,4 +394,29 @@ bread(daddr_t blk, char *buffer, int cnt, const char *file)
 		err(4, "%s: seeking to %lld", file, (long long)offset);
 	if ((i = read(fi, buffer, cnt)) != cnt)
 		errx(5, "%s: short read", file);
+}
+
+static int
+openpartition(const char *name, int flags, char *device, size_t devicelen)
+{
+	char		rawspec[MAXPATHLEN], *p;
+	struct fstab	*fs;
+	int		fd, oerrno;
+
+	fs = getfsfile(name);
+	if (fs) {
+		if ((p = strrchr(fs->fs_spec, '/')) != NULL) {
+			snprintf(rawspec, sizeof(rawspec), "%.*s/r%s",
+			    (int)(p - fs->fs_spec), fs->fs_spec, p + 1);
+			name = rawspec;
+		} else
+			name = fs->fs_spec;
+	}
+	fd = opendisk(name, flags, device, devicelen, 0);
+	if (fd == -1 && errno == ENOENT) {
+		oerrno = errno;
+		strlcpy(device, name, devicelen);
+		errno = oerrno;
+	}
+	return (fd);
 }
