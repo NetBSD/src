@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.39 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.40 1999/12/01 18:27:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -66,6 +66,9 @@ typedef	u_long		cpuid_t;
 typedef	u_int64_t	u_quad_t;	/* quads */
 typedef	int64_t		quad_t;
 typedef	quad_t *	qaddr_t;
+
+typedef	quad_t		longlong_t;	/* ANSI long long type */
+typedef	u_quad_t	u_longlong_t;	/* ANSI unsigned long long type */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
 typedef	u_int32_t	blksize_t;	/* fs optimal block size */
