@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 1999/11/23 23:16:05 simonb Exp $
+#	$NetBSD: list,v 1.12 2000/06/07 20:44:33 thorpej Exp $
 
 LIBS	libhack.o -lz -lpcap -lbz2
 
@@ -102,6 +102,7 @@ COPY	${REALCURDIR}/termcap.src		usr/share/misc/termcap
 # various files that we need in /etc for the install
 COPY	${TOPDIR}/../../etc/group		etc/group
 COPY	${TOPDIR}/../../etc/protocols		etc/protocols
+COPY	${TOPDIR}/../../etc/netconfig		etc/netconfig
 COPY	${TOPDIR}/../../etc/services		etc/services
 
 # we use libhack (/etc/passwd hackery)
