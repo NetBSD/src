@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.34 1998/02/05 08:00:40 mrg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.35 1998/02/10 21:46:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -134,6 +134,7 @@
 #define M_UVMAMAP	82	/* UVM amap and related structs */
 #define M_UVMAOBJ	83	/* UVM aobj and related structs */
 #define	M_TEMP		84	/* misc temporary data buffers */
+#define	M_DMAMAP	85	/* bus_dma(9) structures */
 #define	M_LAST		87	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
@@ -222,7 +223,7 @@
 	"UVM amap",	/* 82 M_UVMAMAP */ \
 	"UVM aobj",	/* 83 M_UVMAOBJ */ \
 	"temp",		/* 84 M_TEMP */ \
-	NULL,		/* 85 */ \
+	"DMA map",	/* 85 M_DMAMAP */ \
 	NULL,		/* 86 */ \
 }
 
