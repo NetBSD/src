@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.512 2003/03/06 22:10:27 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.513 2003/03/06 22:25:44 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.511 2003/03/06 22:09:46 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.512 2003/03/06 22:25:23 bouyer Exp 
  */
 
 /*
@@ -6428,12 +6428,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 648 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
-	    0,
-	    "Silicon Integrated System",
-	    "SiS 645 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
