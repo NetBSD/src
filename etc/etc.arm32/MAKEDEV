@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 1996/03/14 20:17:22 mark Exp $
+#	$NetBSD: MAKEDEV,v 1.3 1996/04/26 20:10:24 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -76,6 +76,8 @@
 #	ch*	SCSI Auto changer
 #	uk*	SCSI Unknown device
 #	ss*	SCSI scanner device
+#	iic*	IIC bus device
+#	rtc*	RTC device
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -100,7 +102,7 @@ floppy)
 
 std)
 	rm -f console drum mem kmem null zero tty klog stdin stdout stderr kbd
-	rm -f vidcvideo0 vidc
+	rm -f kbdctl vidcvideo0 vidc iic rtc0
 	mknod mem		c 0 0	; chmod 640 mem	; chgrp kmem mem
 	mknod kmem		c 0 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod null		c 0 2	; chmod 666 null
@@ -116,6 +118,8 @@ std)
 	mknod stderr		c 34 2	; chmod 666 stderr
 	mknod vidcvideo0	c 37 0	; chmod 640 vidcvideo0
 	ln -s vidcvideo0 vidc
+	mknod iic		c 42 0	; chmod 600 iic
+	mknod rtc0		c 43 0	; chmod 644 rtc0
 	;;
 
 ttyv*)
