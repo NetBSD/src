@@ -105,6 +105,7 @@
 ./usr/share/man/cat1/jot.0
 ./usr/share/man/cat1/kdump.0
 ./usr/share/man/cat1/kill.0
+./usr/share/man/cat1/ksh.0
 ./usr/share/man/cat1/ktrace.0
 ./usr/share/man/cat1/lam.0
 ./usr/share/man/cat1/last.0
@@ -289,6 +290,9 @@
 ./usr/share/man/cat4/imp.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/ip.0
+./usr/share/man/cat4/ipf.0
+./usr/share/man/cat4/ipl.0
+./usr/share/man/cat4/ipnat.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
@@ -335,6 +339,7 @@
 ./usr/share/man/cat5/disklabel.0
 ./usr/share/man/cat5/disktab.0
 ./usr/share/man/cat5/dm.conf.0
+./usr/share/man/cat5/editrc.0
 ./usr/share/man/cat5/ethers.0
 ./usr/share/man/cat5/exports.0
 ./usr/share/man/cat5/fs.0
@@ -349,6 +354,8 @@
 ./usr/share/man/cat5/ifaliases.0
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/inode.0
+./usr/share/man/cat5/ipf.0
+./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/ld.so.conf.0
 ./usr/share/man/cat5/link.0
@@ -453,6 +460,10 @@
 ./usr/share/man/cat8/init.0
 ./usr/share/man/cat8/intro.0
 ./usr/share/man/cat8/iostat.0
+./usr/share/man/cat8/ipf.0
+./usr/share/man/cat8/ipfstat.0
+./usr/share/man/cat8/ipmon.0
+./usr/share/man/cat8/ipnat.0
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/lfs_cleanerd.0
@@ -572,6 +583,8 @@
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
+./usr/share/man/cat8/tcpdchk.0
+./usr/share/man/cat8/tcpdmatch.0
 ./usr/share/man/cat8/tcpdump.0
 ./usr/share/man/cat8/telnetd.0
 ./usr/share/man/cat8/tftpd.0

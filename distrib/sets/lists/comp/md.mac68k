@@ -19,6 +19,7 @@
 ./usr/include/m68k/setjmp.h
 ./usr/include/m68k/signal.h
 ./usr/include/m68k/stdarg.h
+./usr/include/m68k/sysctl.h
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
