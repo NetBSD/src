@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.60 2000/12/21 21:42:03 jdc Exp $	*/
+/*	$NetBSD: util.c,v 1.61 2000/12/22 10:12:14 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,11 +65,11 @@ struct  tarstats {
 	int nskipped;
 } tarstats;
 
-int	extract_file __P((char *path));
-int	extract_dist __P((void));
-int	cleanup_dist __P((const char *path));
-int	distribution_sets_exist_p __P((const char *path));
-static int check_for __P((unsigned int mode, const char *pathname));
+int	extract_file (char *path);
+int	extract_dist (void);
+int	cleanup_dist (const char *path);
+int	distribution_sets_exist_p (const char *path);
+static int check_for (unsigned int mode, const char *pathname);
 
 int
 dir_exists_p(path)

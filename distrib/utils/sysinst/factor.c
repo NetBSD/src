@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.10 1999/06/20 06:08:14 cgd Exp $ */
+/*	$NetBSD: factor.c,v 1.11 2000/12/22 10:12:12 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,8 +42,8 @@
 
 #include <stdio.h>
 
-static void build_primes __P((long max));
-void factor __P((long val, long *fact_list, int fact_size, int *num_fact));
+static void build_primes (long max);
+void factor (long val, long *fact_list, int fact_size, int *num_fact);
 
 /*
  * primes - prime table, built to include up to 46345 because

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2000/12/21 21:42:02 jdc Exp $ */
+/*	$NetBSD: md.c,v 1.13 2000/12/22 10:12:16 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ int md_nfreepart;
 int md_need_newdisk = 0;
 
 /* prototypes */
-static int md_newdisk __P((void));
+static int md_newdisk (void);
 
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.38 2000/12/06 04:53:37 mrg Exp $ */
+/*	$NetBSD: disks.c,v 1.39 2000/12/22 10:12:12 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,7 @@
 static void get_disks (void);
 static void foundffs (struct data *list, int num);
 static int do_fsck(const char *diskpart);
-static int fsck_root __P((void));
+static int fsck_root (void);
 static int 
     do_ffs_newfs(const char *partname, int part, const char *mountpoint);
 

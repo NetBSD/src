@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2000/10/01 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2000/12/22 10:12:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,7 +86,7 @@ typedef struct {
 
 EXTERN MAP map;
 
-int	edit_diskmap __P((void));		
+int	edit_diskmap (void);		
 void	disp_selected_part (int sel);
 int	part_type(int entry, char *fstyp, char *use, char *name);
 int	strnicmp(const char *c1, const char *c2, int n);

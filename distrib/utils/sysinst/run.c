@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.32 2000/10/11 23:47:56 fvdl Exp $	*/
+/*	$NetBSD: run.c,v 1.33 2000/12/22 10:12:13 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,10 +70,10 @@
 /*
  * local prototypes 
  */
-char* va_prog_cmdstr __P((const char *cmd, va_list ap));
-int launch_subwin __P((WINDOW *actionwin, char **args, struct winsize *win, int display));
-int log_flip __P((menudesc *));
-int script_flip __P((menudesc *));
+char* va_prog_cmdstr (const char *cmd, va_list ap);
+int launch_subwin (WINDOW *actionwin, char **args, struct winsize *win, int display);
+int log_flip (menudesc *);
+int script_flip (menudesc *);
 
 #define BUFSIZE 4096
 

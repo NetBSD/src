@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.25 2000/11/26 17:44:11 ad Exp $	*/
+/*	$NetBSD: md.h,v 1.26 2000/12/22 10:12:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -170,7 +170,7 @@ extern struct mbr_bootsel *mbs;
 
 extern int defbootselpart, defbootseldisk;
 
-void disp_bootsel __P((struct mbr_partition *, struct mbr_bootsel *));
+void disp_bootsel (struct mbr_partition *, struct mbr_bootsel *);
 
 /*
  *  prototypes for MD code.

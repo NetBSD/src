@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.24 2000/12/18 04:52:52 hubertf Exp $ */
+/*	$NetBSD: mbr.c,v 1.25 2000/12/22 10:12:13 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,10 +105,10 @@ struct part_id {
 
 int dosptyp_nbsd = MBR_PTYPE_NETBSD;
 
-static int get_mapping __P((struct mbr_partition *, int, int *, int *, int *,
-			    long *absolute));
-static void convert_mbr_chs __P((int, int, int, u_int8_t *, u_int8_t *,
-				 u_int8_t *, u_int32_t));
+static int get_mapping (struct mbr_partition *, int, int *, int *, int *,
+			    long *absolute);
+static void convert_mbr_chs (int, int, int, u_int8_t *, u_int8_t *,
+				 u_int8_t *, u_int32_t);
 
 
 /*

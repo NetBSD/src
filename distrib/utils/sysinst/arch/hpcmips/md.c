@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2000/12/21 21:42:01 jdc Exp $ */
+/*	$NetBSD: md.c,v 1.9 2000/12/22 10:12:14 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,13 +67,13 @@ int netbsd_mbr_installed = 0;
 int netbsd_bootsel_installed = 0;
 
 #ifdef __i386__
-static int md_read_bootcode __P((char *, char *, size_t));
-static int count_mbr_parts __P((struct mbr_partition *));
-static int mbr_part_above_chs __P((struct mbr_partition *));
-static int mbr_partstart_above_chs __P((struct mbr_partition *));
-static void configure_bootsel __P((void));
+static int md_read_bootcode (char *, char *, size_t);
+static int count_mbr_parts (struct mbr_partition *);
+static int mbr_part_above_chs (struct mbr_partition *);
+static int mbr_partstart_above_chs (struct mbr_partition *);
+static void configure_bootsel (void);
 #endif
-static void md_upgrade_mbrtype __P((void));
+static void md_upgrade_mbrtype (void);
 
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
