@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_m68k,v 1.1 1998/12/15 19:25:40 itohy Exp $
+#	$NetBSD: files.linux_m68k,v 1.2 2000/12/12 19:02:00 jdolecek Exp $
 #
 # Config file description for m68k-dependent Linux compat code.
 
@@ -9,6 +9,7 @@ file	compat/linux/arch/m68k/linux_sysent.c		compat_linux
 file	compat/linux/arch/m68k/linux_sigarray.c		compat_linux
 
 file	compat/linux/common/linux_pipe.c		compat_linux
+file	compat/linux/common/linux_file64.c		compat_linux
 file	compat/linux/common/linux_ipccall.c		compat_linux
 file	compat/linux/common/linux_misc_notalpha.c	compat_linux
 file	compat/linux/common/linux_sig_notalpha.c	compat_linux
