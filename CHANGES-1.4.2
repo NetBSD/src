@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.61 1999/10/18 05:23:01 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.62 1999/10/18 05:45:37 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -791,3 +791,12 @@ etc/rc.conf					1.59
   Add "-f /var/db/ntp.drift" to default xntpd parameters to make it
   more likely the clock frequency error learned by NTP will be
   retained across reboots.
+
+sys/dev/pci/ncr.c				1.87
+
+  Fix bugs in handling QUEUE FULL messages.  Also, when a QUEUE FULL
+  message is seen, disable tagged queueing completely for the target
+  which generated it.  This is (much) more conservative than necessary
+  for normal operation, but allows the driver to function properly
+  even with some broken drives at the cost of some performance on
+  drives that have a very low tagged command limit.
