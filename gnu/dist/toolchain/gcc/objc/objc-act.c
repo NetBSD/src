@@ -8399,8 +8399,11 @@ handle_class_ref (chain)
       pushdecl (decl);
       rest_of_decl_compilation (decl, 0, 0, 0);
 
-      /* Make following constant read-only (why not)?  */
-      readonly_data_section ();
+      /* Make following constant read-only, if not compiling PIC. */
+      if (flag_pic)
+	data_section();
+      else
+	readonly_data_section ();
 
       exp = build1 (ADDR_EXPR, string_type_node, decl);
 
