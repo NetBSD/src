@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/01/17 03:53:54 rtr Exp $
+#	$NetBSD: Makefile,v 1.8 2004/01/25 05:22:27 mhitch Exp $
 
 .include "../Makefile.serverlib"
 
@@ -23,12 +23,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext
-
-.include "../Makefile.common"
-
-.if ${XSERVER_XAMIGA} != "no"
-CPPFLAGS+=	-DNEED_SCREEN_REGIONS
-.endif
 
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miscrinit.c=	${X11FLAGS.EXTENSION}
