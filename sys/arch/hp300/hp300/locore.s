@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 1998/01/05 23:16:27 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.83 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -42,6 +42,8 @@
  *
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
+
+#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -458,7 +460,11 @@ Lehighcode:
 Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
+#else
 	jbsr	_C_LABEL(vm_set_page_size) | select software page size
+#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -963,7 +969,11 @@ Lbrkpt3:
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
@@ -971,7 +981,11 @@ ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
 	jbsr	_C_LABEL(hilint)
 	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(intrcnt)+4
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 2 through 5 */
@@ -1042,7 +1056,11 @@ Lnoleds0:
 	addql	#4,sp
 	CLKADDR(a0)
 Lrecheck:
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
+#else
 	addql	#1,_C_LABEL(cnt)+V_INTR	| chalk up another interrupt
+#endif
 	movb	a0@(CLKSR),d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
 	INTERRUPT_RESTOREREG
@@ -1188,7 +1206,11 @@ ENTRY(switch_exit)
 	movl	#USPACE,sp@-		| size of u-area
 	movl	a0@(P_ADDR),sp@-	| address of process's u-area
 	movl	_C_LABEL(kernel_map),sp@- | map it was allocated in
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_km_free)	| deallocate it
+#else
 	jbsr	_C_LABEL(kmem_free)	| deallocate it
+#endif
 	lea	sp@(12),sp		| pop args
 
 	jra	_C_LABEL(cpu_switch)
