@@ -405,13 +405,6 @@ main (argc, argv)
 
   p = argv[0] + strlen (argv[0]);
 
-  /* If we're called as g++ (or i386-aout-g++), link in libg++ as well.  */
-
-  if (strcmp (p - 3, "g++") == 0)
-    {
-      library = 2;
-    }
-
   while (p != argv[0] && p[-1] != '/')
     --p;
   programname = p;
@@ -541,9 +534,6 @@ main (argc, argv)
 	    }
 	}
 
-      /* Add `-lg++' if we haven't already done so.  */
-      if (library == 2)
-	arglist[j++] = "-lg++";
       if (library)
 	arglist[j++] = "-lstdc++";
       if (saw_math)
