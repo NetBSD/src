@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.29 2000/03/30 13:25:01 augustss Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.30 2000/04/16 20:58:53 chs Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.29 2000/03/30 13:25:01 augustss Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.30 2000/04/16 20:58:53 chs Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.2.2.12 2000/01/24 12:43:40 darrenr Exp";
@@ -242,11 +242,7 @@ int len;
 		return;
 	}
 #endif
-#ifdef sparc
-	sum1 = (~(*sp)) & 0xffff;
-#else
 	sum1 = (~ntohs(*sp)) & 0xffff;
-#endif
 	sum1 += ~(n) & 0xffff;
 	sum1 = (sum1 >> 16) + (sum1 & 0xffff);
 	/* Again */
@@ -740,11 +736,7 @@ int direction;
 					    np->in_outip)
 						in.s_addr = 0;
 					else
-#ifndef sparc
 						in.s_addr = ntohl(in.s_addr);
-#else
-						;
-#endif
 				}
 			}
 
