@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.8 1993/12/04 02:12:40 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.9 1993/12/15 18:26:40 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -97,7 +97,7 @@ Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 
 static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
-int			maxJobs;	/* -J argument */
+int			maxJobs;	/* -j argument */
 static int		maxLocal;	/* -L argument */
 Boolean			debug;		/* -d flag */
 Boolean			noExecute;	/* -n flag */
@@ -234,7 +234,7 @@ rearg:	while((c = getopt(argc, argv, "D:I:d:ef:ij:knqrst")) != EOF) {
 			break;
 		case 'j':
 			maxJobs = atoi(optarg);
-			Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		case 'k':
