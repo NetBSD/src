@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 1996/05/07 21:21:11 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 1996/05/08 01:06:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1869,6 +1869,32 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4081c406,	/* FixDiv for P550 */
 		(caddr_t) 0x4081c312,	/* FixMul for P550 */
 	},
+	/*
+	 * Vectors for the MacTV
+	 */
+	{			/* 12 */
+		"MacTV ROMs",
+		(caddr_t) 0x40acfed6,	/* ADB interrupt */
+		(caddr_t) 0x0,	/* PB ADB interrupt */
+		(caddr_t) 0x40ab2f84,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t) 0x40a0a360,	/* CountADBs */
+		(caddr_t) 0x40a0a37a,	/* GetIndADB */	
+		(caddr_t) 0x40a0a3a6,	/* GetADBInfo */
+		(caddr_t) 0x40a0a3ac,	/* SetADBInfo */
+		(caddr_t) 0x40a0a752,	/* ADBReInit */
+		(caddr_t) 0x40a0a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x40a0c05c,	/* WriteParam */
+		(caddr_t) 0x40a0c086,	/* SetDateTime */	/* not verified */
+		(caddr_t) 0x40a0c5cc,	/* InitUtil */
+		(caddr_t) 0x40a0b186,	/* ReadXPRam */
+		(caddr_t) 0x40a0b190,	/* WriteXPRam */
+		(caddr_t) 0x40ab3bf4,	/* jClkNoMem */
+		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40a147c4,	/* InitEgret */
+		(caddr_t) 0x40a1c406,	/* FixDiv */
+		(caddr_t) 0x40a1c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -1925,7 +1951,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
 	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[11]},
-	{MACH_MACTV,   "TV ",      "",      MACH_CLASSLC, &romvecs[11]},
+	{MACH_MACTV,   "TV ",      "",      MACH_CLASSLC, &romvecs[12]},
 
 /* The LCs... */
 	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
