@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.90.2.3 2004/09/11 11:14:22 he Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.90.2.4 2004/09/11 18:08:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -858,6 +858,9 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
 
+/* Inline routines. */
+static	u_int m_length(struct mbuf *);
+
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
 void	m_tag_free(struct m_tag *);
@@ -894,6 +897,23 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_SOCKET			22 /* IPSEC socket ref */
 #define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
 
+/*
+ * Return the number of bytes in the mbuf chain, m.
+ */
+static __inline u_int
+m_length(struct mbuf *m)
+{
+	struct mbuf *m0;
+	u_int pktlen;
+
+	if ((m->m_flags & M_PKTHDR) != 0) 
+		return m->m_pkthdr.len;
+
+	pktlen = 0;
+	for (m0 = m; m0 != NULL; m0 = m0->m_next)
+		pktlen += m0->m_len;
+	return pktlen;
+}
 
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */
