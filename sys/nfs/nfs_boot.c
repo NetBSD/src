@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.46 1998/06/13 04:28:46 tv Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.47 1998/06/13 14:13:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ nfs_boot_init(nd, procp)
 
 	error = EADDRNOTAVAIL; /* ??? */
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
-	if (nfs_boot_rfc951) {
+	if (error && nfs_boot_rfc951) {
 #if defined(NFS_BOOT_DHCP)
 		printf("nfs_boot: trying DHCP/BOOTP\n");
 #else
@@ -130,7 +130,7 @@ nfs_boot_init(nd, procp)
 	}
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
-	if (nfs_boot_bootparam) {
+	if (error && nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
 		error = nfs_bootparam(ifp, nd, procp);
 	}
