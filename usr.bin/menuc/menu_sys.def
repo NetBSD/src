@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.33 2003/05/08 16:20:57 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.34 2003/05/09 10:24:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -313,7 +313,7 @@ static void
 /*ARGSUSED*/
 process_help (struct menudesc *m, int num)
 {
-	char *help = m->helpstr;
+	const char *help = m->helpstr;
 	int lineoff = 0;
 	int curoff = 0;
 	int again;
