@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.16.2.1 2001/03/20 18:02:01 he Exp $	*/
+/*	$NetBSD: main.c,v 1.16.2.2 2002/03/20 22:06:18 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.16.2.1 2001/03/20 18:02:01 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.2.2 2002/03/20 22:06:18 he Exp $");
 #endif
 #endif
 
@@ -158,8 +158,12 @@ main(int argc, char **argv)
 				errx(1, "No matching pkg for %s in pkgdb.", *argv);
 		} else {
 			if (ispkgpattern(*argv)) {
-				if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, find_fn, NULL) == 0)
+				int rc;
+				rc = findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, find_fn, NULL);
+				if (rc == 0)
 					errx(1, "No matching pkg for %s.", *argv);
+				else if (rc == -1) 
+					errx(1, "error expanding '%s' ('%s' nonexistant?)\n", *argv, _pkgdb_getPKGDB_DIR());
 			} else {
 				lpp = alloc_lpkg(*argv);
 				TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
