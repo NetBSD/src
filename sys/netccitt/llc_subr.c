@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.10 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.11 1999/09/10 03:24:14 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -1940,7 +1940,7 @@ llc_state_AWAIT_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
  *                  sequence. Before the local LLC entered this state it was
  *                  performing a timer recovery operation and had sent a
  *                  command PDU with the P bit set to ``1'', and is still
- *                  awaiting an acknowledgment from the remote LLC. I PDUs may
+ *                  awaiting an acknowledgement from the remote LLC. I PDUs may
  *                  be received but not transmitted. Supervisory PDUs may be
  *                  both transmitted and received.
  */
