@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.1 2002/07/15 22:04:00 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.2 2002/07/16 10:12:28 agc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 	char buf[1024];
 	char *args[100];
 	char arg[100];
-	char nargs = -1;
+	int nargs = -1;
 	int c;
 
 	while ((line = fparseln(stdin, &len, &lineno, NULL, 0)) != NULL) {
