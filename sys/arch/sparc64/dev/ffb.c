@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.7 2004/05/21 21:45:04 heas Exp $	*/
+/*	$NetBSD: ffb.c,v 1.8 2004/07/19 01:04:35 heas Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.7 2004/05/21 21:45:04 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.8 2004/07/19 01:04:35 heas Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,9 +97,10 @@ struct wsdisplay_accessops ffb_accessops = {
 	ffb_free_screen,
 	ffb_show_screen,
 	NULL,	/* load font */
-	NULL,	/* scrollback */
-	NULL,	/* getchar */
-	NULL,	/* burner */
+	NULL,	/* pollc */
+	NULL,	/* getwschar */
+	NULL,	/* putwschar */
+	NULL,	/* scroll */
 };
 
 void
@@ -126,8 +127,6 @@ ffb_attach(struct ffb_softc *sc)
 	model = prom_getpropstring(sc->sc_node, "model");
 	if (model == NULL || strlen(model) == 0)
 		model = "unknown";
-
-	printf(", model %s\n", model);
 
 	sc->sc_depth = 24;
 	sc->sc_linebytes = 8192;
@@ -165,6 +164,14 @@ ffb_attach(struct ffb_softc *sc)
 	ffb_stdscreen.nrows = sc->sc_rasops.ri_rows;
 	ffb_stdscreen.ncols = sc->sc_rasops.ri_cols;
 	ffb_stdscreen.textops = &sc->sc_rasops.ri_ops;
+
+	/* collect DAC version, as Elite3D cursor enable bit is reversed */
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_GVERS);
+	sc->sc_dacrev = DAC_READ(sc, FFB_DAC_VALUE) >> 28;
+
+	if (sc->sc_type == FFB_AFB)
+		sc->sc_dacrev = 10;
+	printf(", model %s, dac %u\n", model, sc->sc_dacrev);
 
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &blank);
 
