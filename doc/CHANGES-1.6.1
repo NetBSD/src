@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.126 2003/03/20 09:49:03 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.127 2003/03/21 08:43:55 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3814,4 +3814,12 @@ crypto/dist/openssl/ssl/s3_srvr.c		1.4
 	OpenSSL Security Advisory [19 March 2003]
 	Klima-Pokorny-Rosa attack on RSA in SSL/TLS
 	[itojun, ticket #1222]
+
+include/rpc/xdr.h				1.20
+lib/libc/rpc/xdr_mem.c				1.16
+
+	CERT Advisory CA-2003-10:
+	Fix buffer overflow in Sun RPC implementation.
+
+	[david, ticket #1224]
 
