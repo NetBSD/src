@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.37 2003/08/18 08:00:52 dsl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.38 2003/08/18 15:45:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -152,15 +152,15 @@ struct file {
 	daddr_t		f_buf_blkno;	/* block number of data block */
 };
 
-static int	read_inode(ino_t, struct open_file *);
-static int	block_map(struct open_file *, daddr_t, daddr_t *);
-static int	buf_read_file(struct open_file *, char **, size_t *);
-static int	search_directory(const char *, struct open_file *, ino_t *);
+static int read_inode(ino_t, struct open_file *);
+static int block_map(struct open_file *, daddr_t, daddr_t *);
+static int buf_read_file(struct open_file *, char **, size_t *);
+static int search_directory(const char *, int, struct open_file *, ino_t *);
 #ifdef LIBSA_FFSv1
-static void	ffs_oldfscompat(struct fs *);
+static void ffs_oldfscompat(struct fs *);
 #endif
 #ifdef LIBSA_FFSv2
-static int	ffs_find_superblock(struct open_file *, struct fs *);
+static int ffs_find_superblock(struct open_file *, struct fs *);
 #endif
 
 #ifdef LIBSA_LFS
@@ -324,14 +324,13 @@ block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
 	 * nindir[2] = NINDIR**3
 	 *	etc
 	 */
-	for (level = 0; level < NIADDR; level++) {
+	for (level = 0; ; level++) {
+		if (level == NIADDR)
+			/* Block number too high */
+			return (EFBIG);
 		if (file_block < fp->f_nindir[level])
 			break;
 		file_block -= fp->f_nindir[level];
-	}
-	if (level == NIADDR) {
-		/* Block number too high */
-		return (EFBIG);
 	}
 
 	ind_block_num = fp->f_di.di_ib[level];
@@ -343,9 +342,8 @@ block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
 		}
 
 		if (fp->f_blkno[level] != ind_block_num) {
-			if (fp->f_blk[level] == (char *)0)
-				fp->f_blk[level] =
-					alloc(fs->fs_bsize);
+			if (fp->f_blk[level] == NULL)
+				fp->f_blk[level] = alloc(fs->fs_bsize);
 			twiddle();
 			rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
 				FSBTODB(fp->f_fs, ind_block_num),
@@ -402,7 +400,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 		if (rc)
 			return (rc);
 
-		if (fp->f_buf == (char *)0)
+		if (fp->f_buf == NULL)
 			fp->f_buf = alloc(fs->fs_bsize);
 
 		if (disk_block == 0) {
@@ -439,20 +437,19 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 
 /*
  * Search a directory for a name and return its
- * i_number.
+ * inode number.
  */
 static int
-search_directory(const char *name, struct open_file *f, ino_t *inumber_p)
+search_directory(const char *name, int length, struct open_file *f,
+    ino_t *inumber_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct direct *dp;
 	struct direct *edp;
 	char *buf;
 	size_t buf_size;
-	int namlen, length;
+	int namlen;
 	int rc;
-
-	length = strlen(name);
 
 	fp->f_seekp = 0;
 	while (fp->f_seekp < fp->f_di.di_size) {
@@ -462,9 +459,9 @@ search_directory(const char *name, struct open_file *f, ino_t *inumber_p)
 
 		dp = (struct direct *)buf;
 		edp = (struct direct *)(buf + buf_size);
-		while (dp < edp) {
+		for (;dp < edp; dp = (void *)((char *)dp + dp->d_reclen)) {
 			if (dp->d_ino == (ino_t)0)
-				goto next;
+				continue;
 #if BYTE_ORDER == LITTLE_ENDIAN
 			if (fp->f_fs->fs_maxsymlinklen <= 0)
 				namlen = dp->d_type;
@@ -472,13 +469,11 @@ search_directory(const char *name, struct open_file *f, ino_t *inumber_p)
 #endif
 				namlen = dp->d_namlen;
 			if (namlen == length &&
-			    !strcmp(name, dp->d_name)) {
+			    !memcmp(name, dp->d_name, length)) {
 				/* found entry */
 				*inumber_p = dp->d_ino;
 				return (0);
 			}
-		next:
-			dp = (struct direct *)((char *)dp + dp->d_reclen);
 		}
 		fp->f_seekp += buf_size;
 	}
@@ -514,10 +509,10 @@ ffs_find_superblock(struct open_file *f, struct fs *fs)
  * Open a file.
  */
 int
-ufs_open(char *path, struct open_file *f)
+ufs_open(const char *path, struct open_file *f)
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
-	char *cp, *ncp;
+	const char *cp, *ncp;
 	int c;
 #endif
 	ino_t inumber;
@@ -640,19 +635,9 @@ ufs_open(char *path, struct open_file *f)
 		/*
 		 * Get next component of path name.
 		 */
-		{
-			int len = 0;
-
-			ncp = cp;
-			while ((c = *cp) != '\0' && c != '/') {
-				if (++len > MAXNAMLEN) {
-					rc = ENOENT;
-					goto out;
-				}
-				cp++;
-			}
-			*cp = '\0';
-		}
+		ncp = cp;
+		while ((c = *cp) != '\0' && c != '/')
+			cp++;
 
 		/*
 		 * Look up component in current directory.
@@ -662,8 +647,7 @@ ufs_open(char *path, struct open_file *f)
 #ifndef LIBSA_NO_FS_SYMLINK
 		parent_inumber = inumber;
 #endif
-		rc = search_directory(ncp, f, &inumber);
-		*cp = c;
+		rc = search_directory(ncp, cp - ncp, f, &inumber);
 		if (rc)
 			goto out;
 
@@ -689,11 +673,10 @@ ufs_open(char *path, struct open_file *f)
 				goto out;
 			}
 
-			bcopy(cp, &namebuf[link_len], len + 1);
+			memmove(&namebuf[link_len], cp, len + 1);
 
 			if (link_len < fs->fs_maxsymlinklen) {
-				bcopy(fp->f_di.di_db, namebuf,
-				      (unsigned)link_len);
+				memcpy(namebuf, fp->f_di.di_db, link_len);
 			} else {
 				/*
 				 * Read file for symbolic link
@@ -714,7 +697,7 @@ ufs_open(char *path, struct open_file *f)
 				if (rc)
 					goto out;
 
-				bcopy(buf, namebuf, (unsigned)link_len);
+				memcpy(namebuf, buf, link_len);
 			}
 
 			/*
@@ -741,7 +724,7 @@ ufs_open(char *path, struct open_file *f)
 #else /* !LIBSA_FS_SINGLECOMPONENT */
 
 	/* look up component in the current (root) directory */
-	rc = search_directory(path, f, &inumber);
+	rc = search_directory(path, strlen(path), f, &inumber);
 	if (rc)
 		goto out;
 
@@ -758,10 +741,7 @@ out:
 		free(buf, fs->fs_bsize);
 #endif
 	if (rc) {
-		if (fp->f_buf)
-			free(fp->f_buf, fp->f_fs->fs_bsize);
-		free(fp->f_fs, SBLOCKSIZE);
-		free(fp, sizeof(struct file));
+		ufs_close(f);
 	}
 	return (rc);
 }
@@ -773,8 +753,8 @@ ufs_close(struct open_file *f)
 	struct file *fp = (struct file *)f->f_fsdata;
 	int level;
 
-	f->f_fsdata = (void *)0;
-	if (fp == (struct file *)0)
+	f->f_fsdata = NULL;
+	if (fp == NULL)
 		return (0);
 
 	for (level = 0; level < NIADDR; level++) {
@@ -815,7 +795,7 @@ ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 		if (csize > buf_size)
 			csize = buf_size;
 
-		bcopy(buf, addr, csize);
+		memcpy(addr, buf, csize);
 
 		fp->f_seekp += csize;
 		addr += csize;
