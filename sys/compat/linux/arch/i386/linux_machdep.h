@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.12 2000/06/11 09:21:16 veego Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.13 2000/12/02 16:05:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -125,5 +125,11 @@ __END_DECLS
 #define LINUX_VT_RELDISP    0x5605
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
+
+/*
+ * Does the port have separated linux_syscall() ?
+ */
+#define	LINUX_MACHDEP_HAS_SEPARATED_SYSCALL
+void linux_syscall __P((struct trapframe *));
 
 #endif /* _I386_LINUX_MACHDEP_H */
