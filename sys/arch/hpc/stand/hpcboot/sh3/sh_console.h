@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.3 2001/03/15 17:24:47 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,9 @@ public:
 		int16_t boot_console;
 	};
 	static struct console_info _console_info[];
+	static void SCIPrint(const char *);
 	static void SCIFPrint(const char *);
+	static void HD64461COMPrint(const char *);
 
 private:
 	static SHConsole *_instance;
