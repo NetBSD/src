@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.17 2005/01/02 04:23:03 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.18 2005/01/03 03:25:06 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -66,9 +66,12 @@ extern int rtw_debug;
 #define	DPRINTF(__sc, __flags, __x)				\
 	if (((__sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) != 0)	\
 		RTW_DPRINTF(__flags, __x)
+#define	RTW_PRINT_REGS(__regs, __dvname, __where)	\
+	rtw_print_regs((__regs), (__dvname), (__where))
 #else /* RTW_DEBUG */
 #define RTW_DPRINTF(__flags, __x)
 #define	DPRINTF(__sc, __flags, __x)
+#define	RTW_PRINT_REGS(__regs, __dvname, __where)
 #endif /* RTW_DEBUG */
 
 enum rtw_locale {
