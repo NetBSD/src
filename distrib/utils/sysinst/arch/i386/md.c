@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.99 2003/11/30 14:36:45 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.100 2004/03/22 07:11:00 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -167,13 +167,14 @@ edit:
 		bootcode = _PATH_MBR;
 
 	/* Look at what is installed */
-	if (mbr.mbr.mbr_bootsel.mbrbs_magic == htole16(MBR_MAGIC))
+	if (mbr.mbr.mbr_bootsel_magic == htole16(MBR_BS_MAGIC))
 		/* Netbsd bootcode, grab its features */
 		ofl = mbr.mbr.mbr_bootsel.mbrbs_flags;
 	else {
 		/* Not netbsd code, might be ok if we are booting the active
 		 * partition.
 		 */
+/* XXXLUKEM: unconditionally set ofl=0 with new bootsel code? */
 		if (mbr.mbr.mbr_magic == htole16(MBR_MAGIC) &&
 		    mbr.mbr.mbr_jmpboot[0] != 0 &&
 		    (fl & (MBR_BS_ACTIVE | MBR_BS_EXTLBA)) == 0 &&
@@ -229,17 +230,11 @@ md_read_bootcode(const char *path, struct mbr_sector *mbrs)
 	}
 	close(fd);
 
-	if (new_mbr.mbr_bootsel.mbrbs_magic != htole16(MBR_MAGIC))
+	if (new_mbr.mbr_bootsel_magic != htole16(MBR_BS_MAGIC))
 		return -1;
 
-	if (mbrs->mbr_bootsel.mbrbs_magic == htole16(MBR_MAGIC)) {
+	if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC)) {
 		len = offsetof(struct mbr_sector, mbr_bootsel);
-		if (!(mbrs->mbr_bootsel.mbrbs_flags & MBR_BS_NEWMBR))
-			/*
-			 * Meaning of keys has changed, force a sensible
-			 * default (old code didn't preseve the answer).
-			 */
-			mbrs->mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
 	} else
 		len = offsetof(struct mbr_sector, mbr_parts);
 
