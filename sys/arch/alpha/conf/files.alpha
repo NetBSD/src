@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.118.2.4 2001/10/25 18:00:12 he Exp $
+# $NetBSD: files.alpha,v 1.118.2.5 2002/01/29 22:33:32 he Exp $
 #
 # alpha-specific configuration info
 
@@ -519,7 +519,7 @@ file	arch/alpha/alpha/db_interface.c		ddb
 file	arch/alpha/alpha/db_trace.c		ddb
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/alpha/alpha/compat_13_machdep.c	compat_13
+file	arch/alpha/alpha/compat_13_machdep.c	compat_13 | compat_osf1
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
