@@ -23,7 +23,7 @@ or implied warranty.
 #include <base64.h>
 
 __RCSID("$KTH-KRB: send_to_kdc.c,v 1.73 2000/11/30 07:14:34 assar Exp $"
-      "$NetBSD: send_to_kdc.c,v 1.3 2002/09/12 12:33:15 joda Exp $");
+      "$NetBSD: send_to_kdc.c,v 1.4 2002/09/20 21:34:33 mycroft Exp $");
 
 struct host {
     struct sockaddr_in addr;
@@ -482,9 +482,14 @@ send_recv(KTEXT pkt, KTEXT rpkt, struct host *host)
 	return FALSE;
     }
     do{
+	int len;
+#ifdef HAVE_POLL
+	struct pollfd set[1];
+	set[0].fd = s;
+	set[0].events = POLLIN;
+#else
 	fd_set readfds;
 	struct timeval timeout;
-	int len;
 	timeout.tv_sec = client_timeout;
 	timeout.tv_usec = 0;
 	FD_ZERO(&readfds);
@@ -495,11 +500,18 @@ send_recv(KTEXT pkt, KTEXT rpkt, struct host *host)
 	    return FALSE;
 	}
 	FD_SET(s, &readfds);
+#endif
 	
 	/* select - either recv is ready, or timeout */
 	/* see if timeout or error or wrong descriptor */
+#ifdef HAVE_POLL
+	if(poll(set, 1, client_timeout * 1000) < 1 
+	   || !(set[0].revents & POLLIN))
+#else
 	if(select(s + 1, &readfds, 0, 0, &timeout) < 1 
-	   || !FD_ISSET(s, &readfds)) {
+	   || !FD_ISSET(s, &readfds))
+#endif
+	{
 	    if (krb_debug)
 		krb_warning("select failed: errno = %d\n", errno);
 	    close(s);
