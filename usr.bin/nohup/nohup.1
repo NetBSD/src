@@ -1,4 +1,4 @@
-.\"	$NetBSD: nohup.1,v 1.8 2001/12/01 16:43:22 wiz Exp $
+.\"	$NetBSD: nohup.1,v 1.9 2001/12/08 19:09:57 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,19 +62,6 @@ appended to the file
 in the current directory.
 If standard error is a terminal, it is directed to the same place
 as the standard output.
-.Sh ENVIRONMENT
-The following variable is utilized by
-.Nm "" .
-.Bl -tag -width flag
-.It Ev HOME
-If the output file
-.Pa nohup.out
-cannot be created in the current directory, the
-.Nm
-utility uses the directory named by
-.Ev HOME
-to create the file.
-.El
 .Sh EXIT STATUS
 The
 .Nm
@@ -95,6 +82,19 @@ Otherwise, the exit status of
 .Nm
 will be that of
 .Ar utility .
+.Sh ENVIRONMENT
+The following variable is utilized by
+.Nm "" .
+.Bl -tag -width flag
+.It Ev HOME
+If the output file
+.Pa nohup.out
+cannot be created in the current directory, the
+.Nm
+utility uses the directory named by
+.Ev HOME
+to create the file.
+.El
 .Sh SEE ALSO
 .Xr signal 3
 .Sh STANDARDS
