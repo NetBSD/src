@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/04/03 00:34:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.4.1 1996/08/16 02:04:24 jtc Exp $
 
 PROG=	chio
-SRCS=	chio.c
-BINOWN=	root
-BINMODE=4555
 
 .include <bsd.prog.mk>
