@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2001/02/25 03:54:25 jmc Exp $
+#	$NetBSD: Makefile,v 1.38 2001/10/10 05:13:54 enami Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -30,7 +30,7 @@ DISKTYPEARG=	-t ${DISKTYPE}
 
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
-MTREE=		${.CURDIR}/mtree.conf
+MTREECONF=	${.CURDIR}/mtree.conf
 ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 			-o root -g wheel -m ${NONBINMODE} 
 
@@ -49,7 +49,7 @@ all: ${CBIN}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	${BOOTINSTALL}
 	mount -o async ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} VND_RDEV=${VND_RDEV} \
 	    KERNOBJDIR=${KERNOBJDIR} \

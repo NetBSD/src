@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/10/05 01:19:44 jmc Exp $
+#	$NetBSD: Makefile,v 1.13 2001/10/10 05:13:53 enami Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -22,7 +22,7 @@ MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
-MTREE=		mtree.conf
+MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
 
@@ -33,7 +33,7 @@ DBG?=-Os
 
 realall: ${IMAGE}
 
-${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
+${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	rm -f ${IMAGE}.tmp
 	dd if=/dev/zero of=${IMAGE}.tmp count=${RAMDISKSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}.tmp \
@@ -42,7 +42,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	disklabel -r -R ${VND_CDEV} tmplabel
 	newfs -B le -m 0 -o space -i 3950 -c 80 ${VND_RDEV} 
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
+	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""

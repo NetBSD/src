@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/03/24 15:30:44 simonb Exp $
+#	$NetBSD: Makefile,v 1.16 2001/10/10 05:13:55 enami Exp $
 
 BINDIR=		/installation/netboot
 
@@ -23,7 +23,7 @@ CLEANFILES=	${IMAGE} ${DISKIMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 
 LISTS=		${.CURDIR}/list
 CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
-MTREE=		${.CURDIR}/mtree.conf
+MTREECONF=	${.CURDIR}/mtree.conf
 
 CRUNCHGEN?=	crunchgen
 
@@ -35,7 +35,7 @@ ${IMAGE}: ${CBIN}
 	disklabel -rw -f ${DISKTAB} ${VND} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${LISTS}

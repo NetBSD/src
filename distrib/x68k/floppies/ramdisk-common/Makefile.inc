@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/11/01 07:58:02 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/10/10 05:13:56 enami Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -16,7 +16,7 @@ MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
-MTREE=		mtree.conf
+MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
 
@@ -25,12 +25,12 @@ realall: ${IMAGE}
 RAMDISKSIZE!=	expr ${RAMDISKSPT} \* ${RAMDISKCYLS} \* ${RAMDISKHEADS}
 RAMDISKGEOM=	512/${RAMDISKSPT}/${RAMDISKHEADS}/${RAMDISKCYLS}
 
-${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
+${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	dd if=/dev/zero of=${IMAGE} count=${RAMDISKSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${RAMDISKGEOM}
 	newfs -B be -m 0 -o space -i ${RAMDISKBPI} -c ${RAMDISKCPG} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
+	mtree -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} COMMONDIR=${TOP}/ramdisk-common \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
