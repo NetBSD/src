@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.97 2000/10/12 21:27:13 christos Exp $
+#	$NetBSD: files.sparc,v 1.98 2000/11/11 11:19:52 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -35,11 +35,11 @@ device auxiotwo
 attach auxiotwo at obio with auxiotwo_obio
 file	arch/sparc/sparc/auxiotwo.c
 
-device clock
+device clock: mk48txx
 attach clock at mainbus with clock_mainbus
 attach clock at obio with clock_obio
 
-device oclock
+device oclock: intersil7170
 attach oclock at obio
 
 device timer
@@ -48,7 +48,9 @@ attach timer at obio with timer_obio
 
 device eeprom
 attach eeprom at obio
+
 file	arch/sparc/sparc/clock.c
+file	dev/clock_subr.c
 
 device power
 attach power at obio
