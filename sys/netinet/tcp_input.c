@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.30 1997/07/28 01:07:48 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.31 1997/07/28 22:07:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1546,7 +1546,6 @@ tcp_mss(tp, offer)
 	u_long bufsize;
 	struct inpcb *inp;
 	struct socket *so;
-	extern int tcp_mssdflt;
 
 	inp = tp->t_inpcb;
 	ro = &inp->inp_route;
@@ -1700,9 +1699,6 @@ u_int32_t syn_hash1, syn_hash2;
 	(scp)->sch_length--;						\
 	syn_cache_count--;						\
 }
-
-extern int tcp_syn_bucket_limit;
-extern int tcp_syn_cache_limit;
 
 void
 syn_cache_insert(sc, prevp, headp)
@@ -2225,7 +2221,6 @@ syn_cache_respond(sc, m, ti, win, ts)
 	int optlen;
 	u_int16_t mss;
 	extern unsigned long in_maxmtu;
-	extern int tcp_mssdflt;
 
 	mss = in_maxmtu - sizeof(struct tcpiphdr);
 	if (!in_localaddr(ti->ti_dst))
