@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.27 1998/08/12 07:19:10 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.28 1998/09/27 14:39:11 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -420,6 +420,7 @@ ae_nb_card_vendor(bst, bsh, na)
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_DAYNA2:
 	case NUBUS_DRSW_TECHWORKS:
+	case NUBUS_DRSW_TFLLAN:
 		if (na->drhw == NUBUS_DRHW_CABLETRON) {
 			vendor = DP8390_VENDOR_CABLETRON;
 		} else {
@@ -465,14 +466,27 @@ ae_nb_get_enaddr(bst, bsh, na, ep)
 {
 	nubus_dir dir;
 	nubus_dirent dirent;
+	int rv;
 
 	/*
-	 * XXX - note hardwired resource IDs here (0x80); these are
-	 * assumed to be used by all cards, but should be fixed when
-	 * we find out more about Ethernet card resources.
+	 * XXX - note hardwired resource IDs here; these are assumed to
+	 * be used by all cards, but should be fixed when we find out
+	 * more about Ethernet card resources.
 	 */
 	nubus_get_main_dir(na->fmt, &dir);
-	if (nubus_find_rsrc(bst, bsh, na->fmt, &dir, 0x80, &dirent) <= 0)
+	switch (ae_nb_card_vendor(bst, bsh, na)) {
+	case DP8390_VENDOR_APPLE:
+		if (na->drsw == NUBUS_DRSW_TFLLAN) {	/* TFL LAN E410/E420 */
+			rv = nubus_find_rsrc(bst, bsh, na->fmt,
+			    &dir, 0x08, &dirent);
+			break;
+		}
+		/*FALLTHROUGH*/
+	default:
+		rv = nubus_find_rsrc(bst, bsh, na->fmt, &dir, 0x80, &dirent);
+		break;
+	}
+	if (rv <= 0)
 		return 1;
 	nubus_get_dir_from_rsrc(na->fmt, &dirent, &dir);
 	if (nubus_find_rsrc(bst, bsh, na->fmt, &dir, 0x80, &dirent) <= 0)
