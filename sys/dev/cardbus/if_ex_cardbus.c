@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.5 1999/10/27 10:04:41 haya Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.6 1999/11/01 09:59:23 haya Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -361,7 +361,7 @@ ex_cardbus_enable(sc)
   cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
   cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
-  cardbus_function_enable(csc->sc_ct);
+  Cardbus_function_enable(csc->sc_ct);
   cardbus_restore_bar(csc->sc_ct);
 
   sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET, ex_intr, sc);
@@ -387,7 +387,7 @@ ex_cardbus_disable(sc)
 
   cardbus_save_bar(csc->sc_ct);
   
-  cardbus_function_disable(csc->sc_ct);
+  Cardbus_function_disable(csc->sc_ct);
 
   cardbus_intr_disestablish(cc, cf, sc->sc_ih);
 }
