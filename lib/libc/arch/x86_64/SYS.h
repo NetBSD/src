@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.1 2001/06/19 00:25:01 fvdl Exp $
+ *	$NetBSD: SYS.h,v 1.2 2002/01/14 00:55:57 thorpej Exp $
  */
 
 /*
@@ -92,5 +92,8 @@
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
 
+#define	WSYSCALL(weak,strong)						\
+	WEAK_ALIAS(weak,strong);					\
+	PSEUDO(strong,weak)
 
 	.globl	CERROR
