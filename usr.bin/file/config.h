@@ -90,7 +90,10 @@
 #define HAVE_LOCALE_H 1
 
 /* Define if you have the <stdint.h> header file.  */
+#include <sys/param.h>
+#if __NetBSD_Version__ > 106000000
 #define HAVE_STDINT_H 1
+#endif
 
 /* Define if you have the <sys/mman.h> header file.  */
 #define HAVE_SYS_MMAN_H 1
