@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2004/03/31 00:34:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/04/03 22:16:27 he Exp $
 
 PROG=		ippool
 SRCS=		ippool_y.c ippool_l.c kmem.c ippool.c
 MAN=		ippool.8
-DPADD+=		${LIBKVM}
-LDADD+=		-lkvm
 CPPFLAGS+=	-I.
 
 DPSRCS+=	ippool_l.h ippool_y.h
