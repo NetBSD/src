@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.51 1996/10/16 03:55:21 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.52 1996/10/21 01:59:31 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -292,7 +292,7 @@ add_nubus_intr(slot, func, client_data)
 	void (*func) __P((void *, int));
 	void *client_data;
 {
-	int	s = splhigh();
+	int	s;
 
 	/*
 	 * Map Nubus slot 0 to "slot" 15; see note on Nubus slot
@@ -302,6 +302,8 @@ add_nubus_intr(slot, func, client_data)
 		slot = 15;
 	if (slot < 9 || slot > 15)
 		return 0;
+
+	s = splhigh();
 
 	slotitab[slot-9] = func;
 	slotptab[slot-9] = client_data;
@@ -316,6 +318,7 @@ add_nubus_intr(slot, func, client_data)
 /*	enable_nubus_intr();	*/
 
 	splx(s);
+
 	return 1;
 }
 
