@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1997/03/25 03:07:46 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/04/16 13:29:59 christos Exp $
 
 PROG=	mopd
 SRCS=	mopd.c process.c print.c cmp.c get.c put.c mopdef.c nma.c device.c \
 	version.c pf.c loop-bsd.c dl.c rc.c file.c
 MAN=	mopd.8
-CFLAGS+= -I${.CURDIR} -I${.CURDIR}/.. -I${.CURDIR}/../common
+CFLAGS+= -I${.CURDIR}/../common
 CLEANFILES= version.c version.h
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
