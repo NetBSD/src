@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.S,v 1.2 2002/01/13 21:45:41 thorpej Exp $	*/
+/*	$NetBSD: fpgetmask.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -48,8 +48,4 @@ ENTRY(fpgetmask)
 	rfs	r0
 	mov	r0, r0, lsr #16
 	and	r0, r0, #0x1f
-#ifdef __APCS_26__
-	movs	r15, r14		/* return */ 
-#else
 	mov	r15, r14		/* return */
-#endif
