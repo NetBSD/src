@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.1.2.2 2002/07/11 18:49:49 thorpej Exp $
+# $NetBSD: md.hpcarm,v 1.1.2.3 2002/07/15 16:25:49 thorpej Exp $
 ./usr/include/hpcarm	comp-c-include
 ./usr/include/hpcarm/ansi.h	comp-c-include
 ./usr/include/hpcarm/aout_machdep.h	comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/hpcarm/signal.h	comp-c-include
 ./usr/include/hpcarm/stdarg.h	comp-c-include
 ./usr/include/hpcarm/sysarch.h	comp-c-include
+./usr/include/hpcarm/trap.h	comp-c-include
 ./usr/include/hpcarm/types.h	comp-c-include
 ./usr/include/hpcarm/varargs.h	comp-c-include
 ./usr/include/hpcarm/vmparam.h	comp-c-include
