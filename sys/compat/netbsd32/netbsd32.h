@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.9 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.10 1999/12/30 15:40:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -87,10 +87,11 @@ struct netbsd32_iovec {
 
 /* from <sys/time.h> */
 typedef int32_t netbsd32_timer_t;
+typedef	int32_t netbsd32_time_t;
 
 typedef u_int32_t netbsd32_timespecp_t;
 struct netbsd32_timespec {
-	time_t	tv_sec;			/* seconds */
+	netbsd32_time_t	tv_sec;			/* seconds */
 	netbsd32_long	tv_nsec;	/* and nanoseconds */
 };
 
@@ -206,9 +207,9 @@ struct netbsd32_msqid_ds {
 	netbsd32_msglen_t	msg_qbytes;	/* max # of bytes in the queue */
 	pid_t		msg_lspid;	/* process ID of last msgsend() */
 	pid_t		msg_lrpid;	/* process ID of last msgrcv() */
-	time_t		msg_stime;	/* time of last msgsend() */
-	time_t		msg_rtime;	/* time of last msgrcv() */
-	time_t		msg_ctime;	/* time of last change */
+	netbsd32_time_t		msg_stime;	/* time of last msgsend() */
+	netbsd32_time_t		msg_rtime;	/* time of last msgrcv() */
+	netbsd32_time_t		msg_ctime;	/* time of last change */
 
 	/*
 	 * These members are private and used only in the internal
@@ -227,11 +228,11 @@ struct netbsd32_msqid_ds14 {
 	netbsd32_u_long	msg_qbytes;	/* max # of bytes on the queue */
 	pid_t msg_lspid;		/* pid of last msgsnd() */
 	pid_t msg_lrpid;		/* pid of last msgrcv() */
-	time_t	msg_stime;		/* time of last msgsnd() */
+	netbsd32_time_t	msg_stime;		/* time of last msgsnd() */
 	netbsd32_long	msg_pad1;
-	time_t	msg_rtime;		/* time of last msgrcv() */
+	netbsd32_time_t	msg_rtime;		/* time of last msgrcv() */
 	netbsd32_long	msg_pad2;
-	time_t	msg_ctime;		/* time of last msgctl() */
+	netbsd32_time_t	msg_ctime;		/* time of last msgctl() */
 	netbsd32_long	msg_pad3;
 	netbsd32_long	msg_pad4[4];
 };
@@ -243,8 +244,8 @@ typedef u_int32_t netbsd32_semid_dsp_t;
 struct netbsd32_semid_ds {
 	struct netbsd32_ipc_perm	sem_perm;/* operation permission struct */
 	unsigned short	sem_nsems;	/* number of sems in set */
-	time_t		sem_otime;	/* last operation time */
-	time_t		sem_ctime;	/* last change time */
+	netbsd32_time_t		sem_otime;	/* last operation time */
+	netbsd32_time_t		sem_ctime;	/* last change time */
 
 	/*
 	 * These members are private and used only in the internal
@@ -257,9 +258,9 @@ struct netbsd32_semid_ds14 {
 	struct netbsd32_ipc_perm	sem_perm;/* operation permission struct */
 	netbsd32_semp_t	sem_base;	/* pointer to first semaphore in set */
 	unsigned short	sem_nsems;	/* number of sems in set */
-	time_t	sem_otime;		/* last operation time */
+	netbsd32_time_t	sem_otime;		/* last operation time */
 	netbsd32_long	sem_pad1;	/* SVABI/386 says I need this here */
-	time_t	sem_ctime;		/* last change time */
+	netbsd32_time_t	sem_ctime;		/* last change time */
 					/* Times measured in secs since */
 					/* 00:00:00 GMT, Jan. 1, 1970 */
 	netbsd32_long	sem_pad2;	/* SVABI/386 says I need this here */
@@ -288,13 +289,14 @@ struct netbsd32_shmid_ds {
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
 	short		shm_nattch;	/* number of current attaches */
-	time_t		shm_atime;	/* time of last shmat() */
-	time_t		shm_dtime;	/* time of last shmdt() */
-	time_t		shm_ctime;	/* time of last change by shmctl() */
+	netbsd32_time_t		shm_atime;	/* time of last shmat() */
+	netbsd32_time_t		shm_dtime;	/* time of last shmdt() */
+	netbsd32_time_t		shm_ctime;	/* time of last change by shmctl() */
 	netbsd32_voidp	_shm_internal;	/* sysv stupidity */
 };
 
 /* from <sys/signal.h> */
+typedef u_int32_t netbsd32_sigsetp_t;
 typedef u_int32_t netbsd32_sigactionp_t;
 struct	netbsd32_sigaction {
 	netbsd32_voidp sa_handler;	/* signal handler */
@@ -403,9 +405,9 @@ struct netbsd32_stat {
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-	struct	  timespec st_atimespec;/* time of last access */
-	struct	  timespec st_mtimespec;/* time of last data modification */
-	struct	  timespec st_ctimespec;/* time of last file status change */
+	struct	  netbsd32_timespec st_atimespec;/* time of last access */
+	struct	  netbsd32_timespec st_mtimespec;/* time of last data modification */
+	struct	  netbsd32_timespec st_ctimespec;/* time of last file status change */
 	off_t	  st_size;		/* file size, in bytes */
 	blkcnt_t  st_blocks;		/* blocks allocated for file */
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
@@ -505,6 +507,7 @@ typedef u_int32_t netbsd32_outsnamep_t;
 extern const char netbsd32_emul_path[];
   
 #define NETBSD32_CHECK_ALT_EXIST(p, sgp, path) \
-    emul_find(p, sgp, netbsd32_emul_path, (char *)path, (char **)&path, 0)
+    emul_find(p, sgp, netbsd32_emul_path, (const char *)path, \
+	(const char **)&path, 0)
 
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */

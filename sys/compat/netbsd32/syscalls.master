@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 1999/10/11 01:36:24 eeh Exp $
+	$NetBSD: syscalls.master,v 1.11 1999/12/30 15:40:46 eeh Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -173,7 +173,7 @@
 100	STD		{ int netbsd32_getpriority(int which, int who); }
 101	COMPAT_43	{ int netbsd32_osend(int s, netbsd32_caddr_t buf, int len, int flags); }
 102	COMPAT_43	{ int netbsd32_orecv(int s, netbsd32_caddr_t buf, int len, int flags); }
-103	STD		{ int netbsd32_sigreturn(netbsd32_sigcontextp_t sigcntxp); }
+103	COMPAT_13	{ int netbsd32_sigreturn(netbsd32_sigcontextp_t sigcntxp); } sigreturn13
 104	STD		{ int netbsd32_bind(int s, const netbsd32_sockaddrp_t name, int namelen); }
 105	STD		{ int netbsd32_setsockopt(int s, int level, int name, const netbsd32_voidp val, int valsize); }
 106	STD		{ int netbsd32_listen(int s, int backlog); }
@@ -368,7 +368,7 @@
 222	STD		{ int netbsd32_semop(int semid, netbsd32_sembufp_t sops, netbsd32_size_t nsops); }
 223	STD		{ int netbsd32_semconfig(int flag); }
 #else
-220	EXCL		netbsd32_semctl
+220	EXCL		compat_14_netbsd32_semctl
 221	EXCL		netbsd32_semget
 222	EXCL		netbsd32_semop
 223	EXCL		netbsd32_semconfig
@@ -379,7 +379,7 @@
 226	STD		{ int netbsd32_msgsnd(int msqid, const netbsd32_voidp msgp, netbsd32_size_t msgsz, int msgflg); }
 227	STD		{ netbsd32_ssize_t netbsd32_msgrcv(int msqid, netbsd32_voidp msgp, netbsd32_size_t msgsz, netbsd32_long msgtyp, int msgflg); }
 #else
-224	EXCL		netbsd32_msgctl
+224	EXCL		compat_14_netbsd32_msgctl
 225	EXCL		netbsd32_msgget
 226	EXCL		netbsd32_msgsnd
 227	EXCL		netbsd32_msgrcv
@@ -391,7 +391,7 @@
 231	STD		{ int netbsd32_shmget(netbsd32_key_t key, netbsd32_size_t size, int shmflg); }
 #else
 228	EXCL		netbsd32_shmat
-229	EXCL		netbsd32_shmctl
+229	EXCL		compat_14_netbsd32_shmctl
 230	EXCL		netbsd32_shmdt
 231	EXCL		netbsd32_shmget
 #endif
@@ -461,3 +461,38 @@
 #endif
 289	STD		{ netbsd32_ssize_t netbsd32_preadv(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
 290	STD		{ netbsd32_ssize_t netbsd32_pwritev(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
+291	STD		{ int netbsd32___sigaction14(int signum, \
+			    const netbsd32_sigactionp_t nsa, \
+			    netbsd32_sigactionp_t osa); }
+292	STD		{ int netbsd32___sigpending14(netbsd32_sigsetp_t set); }
+293	STD		{ int netbsd32___sigprocmask14(int how, \
+			    const netbsd32_sigsetp_t set, \
+			    netbsd32_sigsetp_t oset); }
+294	STD		{ int netbsd32___sigsuspend14(const netbsd32_sigsetp_t set); }
+295	STD		{ int netbsd32___sigreturn14(netbsd32_sigcontextp_t sigcntxp); }
+296	STD		{ int netbsd32___getcwd(netbsd32_charp bufp, netbsd32_size_t length); }
+297	STD		{ int netbsd32_fchroot(int fd); }
+298	STD		{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
+			   int flags); }
+299	STD		{ int netbsd32_fhstat(const netbsd32_fhandlep_t fhp, \
+			    netbsd32_statp_t sb); }
+300	STD		{ int netbsd32_fhstatfs(netbsd32_fhandlep_t fhp, \
+			    netbsd32_statp_t buf); }
+#if defined(SYSVSEM) || !defined(_KERNEL)
+301	STD		{ int netbsd32___semctl13(int semid, int semnum, int cmd, \
+			    union netbsd32_semun arg); }
+#else
+301	EXCL		__semctl13
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL)
+302	STD		{ int netbsd32___msgctl13(int msqid, int cmd, \
+			    netbsd32_msqid_dsp_t buf); }
+#else
+302	EXCL		__msgctl13
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL)
+303	STD		{ int netbsd32___shmctl13(int shmid, int cmd, \
+			    netbsd32_shmid_dsp_t buf); }
+#else
+303	EXCL		__shmctl13
+#endif
