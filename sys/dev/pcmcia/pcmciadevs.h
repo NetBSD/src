@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.205 2004/08/07 17:18:20 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.206 2004/08/10 03:03:29 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.204 2004/08/07 17:18:09 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.205 2004/08/10 03:03:11 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -56,6 +56,7 @@
 #define	PCMCIA_VENDOR_INTEL	0x0089	/* Intel */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
 #define	PCMCIA_VENDOR_SHARP	0x00b0	/* Sharp Corporation */
+#define	PCMCIA_VENDOR_DIGITAL	0x0100	/* Digital Equipment Corporation */
 #define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
@@ -724,7 +725,6 @@
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_CNET	-1	/* CNet */
-#define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital Equipment Corporation */
 #define	PCMCIA_VENDOR_DLINK	-1	/* D-Link */
 #define	PCMCIA_VENDOR_DYNALINK	-1	/* DynaLink */
 #define	PCMCIA_VENDOR_EIGERLABS	-1	/* Eiger labs,Inc. */
@@ -814,9 +814,6 @@
 #define	PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_WLCFL_11	-1
 #define	PCMCIA_STR_COREGA_WIRELESS_LAN_WLCFL_11	"Corega Wireless LAN WLCFL-11"
 
-#define	PCMCIA_CIS_DIGITAL_DEPCMXX	{ "DIGITAL", "DEPCM-XX", NULL, NULL }
-#define	PCMCIA_PRODUCT_DIGITAL_DEPCMXX	-1
-#define	PCMCIA_STR_DIGITAL_DEPCMXX	"DEC DEPCM-BA"
 #define	PCMCIA_CIS_DLINK_DE650	{ "D-Link", "DE-650", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE650	-1
 #define	PCMCIA_STR_DLINK_DE650	"D-Link DE-650"
