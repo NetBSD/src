@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2003/08/08 06:42:38 sjg Exp $
+# $Id: Makefile,v 1.8 2003/09/27 21:29:37 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -16,17 +16,22 @@
 
 UNIT_TESTS:= ${.PARSEDIR}
 
-all: mod-ts varcmd
+all: mod-ts varcmd modword
 
 LIST= one two three
 LIST+= four five six
 
 FU_mod-ts = a / b / cool
 
+AAA= a a a
+B.aaa= Baaa
+
 mod-ts:
 	@echo 'LIST="${LIST}"'
 	@echo 'LIST:ts,="${LIST:ts,}"'
 	@echo 'LIST:ts/:tu="${LIST:ts/:tu}"'
+	@echo 'LIST:ts::tu="${LIST:ts::tu}"'
+	@echo 'LIST:ts:tu="${LIST:ts:tu}"'
 	@echo 'LIST:tu:ts/="${LIST:tu:ts/}"'
 	@echo 'LIST:ts:="${LIST:ts:}"'
 	@echo 'LIST:ts="${LIST:ts}"'
@@ -41,10 +46,12 @@ mod-ts:
 	@echo 'LIST:ts/x:tu="${LIST:ts\x:tu}"'
 	@echo 'FU_$@="${FU_${@:ts}:ts}"'
 	@echo 'FU_$@:ts:T="${FU_${@:ts}:ts:T}" == cool?'
+	@echo 'B.$${AAA:ts}="${B.${AAA:ts}}" == Baaa?'
 
-.PHONY: varcmd
-varcmd:
-	@${.MAKE} -f ${UNIT_TESTS}/varcmd
+# Some tests are best handled via a sub-make
+.PHONY: varcmd modword
+varcmd modword:
+	@${.MAKE} -k -f ${UNIT_TESTS}/$@
 
 clean:
 	rm -f *.out *.fail *.core

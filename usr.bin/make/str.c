@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.20 2003/08/07 11:14:57 agc Exp $	*/
+/*	$NetBSD: str.c,v 1.21 2003/09/27 21:29:37 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: str.c,v 1.20 2003/08/07 11:14:57 agc Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.21 2003/09/27 21:29:37 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.20 2003/08/07 11:14:57 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.21 2003/09/27 21:29:37 sjg Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -129,8 +129,7 @@ str_concat(const char *s1, const char *s2, int flags)
  *	are ignored.
  *
  * returns --
- *	Pointer to the array of pointers to the words.  To make life easier,
- *	the first word is always the value of the .MAKE variable.
+ *	Pointer to the array of pointers to the words.
  */
 char **
 brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)

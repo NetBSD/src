@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.88 2003/09/10 18:04:23 jmmv Exp $
+.\"	$NetBSD: make.1,v 1.89 2003/09/27 21:29:37 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -471,7 +471,6 @@ i.e.
 .Ql \&$$
 expands to a single dollar
 sign.
-.Pq Va argv[0]
 .It Va .ALLTARGETS
 The list of all targets encountered in the Makefile.
 If evaluated during
@@ -483,7 +482,8 @@ was executed.
 .It Ev MAKE
 The name that
 .Nm
-was executed with.
+was executed with
+.Pq Va argv[0] .
 For compatibily
 .Nm
 also sets
@@ -637,10 +637,20 @@ If
 is omitted, then no separator is used.
 .It Cm tu
 Converts variable to upper-case letters.
+.It Cm tW
+Causes the value to be treated as a single word
+(possibly containing embedded white space).
+See also
+.Ql \&:[*] .
+.It Cm tw
+Causes the value to be treated as a sequence of
+words delimited by white space.
+See also
+.Ql \&:[@] .
 .Sm off
 .It Cm S No \&/ Ar old_string Xo
 .No \&/ Ar new_string
-.No \&/ Op Cm 1g
+.No \&/ Op Cm 1gW
 .Xc
 .Sm on
 Modify the first occurrence of
@@ -655,6 +665,11 @@ If a
 .Ql 1
 is appended to the last slash of the pattern, only the first word
 is affected.
+If a
+.Ql W
+is appended to the last slash of the pattern,
+then the value is treated as a single word
+(possibly containing embedded white space).
 If
 .Ar old_string
 begins with a caret
@@ -693,7 +708,7 @@ not a preceding dollar sign as is usual.
 .Sm off
 .It Cm C No \&/ Ar pattern Xo
 .No \&/ Ar replacement
-.No \&/ Op Cm 1g
+.No \&/ Op Cm 1gW
 .Xc
 .Sm on
 The
@@ -720,7 +735,10 @@ modifier causes the substitution to apply to at most one word; the
 modifier causes the substitution to apply to as many instances of the
 search pattern
 .Ar pattern
-as occur in the word or words it is found in.
+as occur in the word or words it is found in; the
+.Ql W
+modifier causes the value to be treated as a single word
+(possibly containing embedded white space).
 Note that
 .Ql 1
 and
@@ -849,6 +867,70 @@ to the variable.
 Assign the output of
 .Ar cmd
 to the variable.
+.It Cm \&[ Ns Ar range Ns Cm \&]
+Selects one or more words from the value,
+or performs other operations related to the way in which the
+value is divided into words.
+.Pp
+Ordinarily, a value is treated as a sequence of words
+delimited by white space.
+Some modifiers suppress this behaviour,
+causing a value to be treated as a single word
+(possibly containing embedded white space).
+An empty value, or a value that consists entirely of white-space,
+is treated as a single word.
+For the purposes of the
+.Ql \&:[]
+modifier, the words are indexed both forwards using positive integers
+(where index 1 represents the first word),
+and backwards using negative integers
+(where index -1 represents the last word).
+.Pp
+The
+.Ar range
+is subjected to variable expansion, and the expanded result is
+then interpreted as follows:
+.Bl -tag -width index
+\" :[n]
+.It Ar index
+Selects a single word from the value.
+\" :[start..end]
+.It Ar start Ns Cm \&.. Ns Ar end
+Selects all words from
+.Ar start
+to
+.Ar end ,
+inclusive.
+For example,
+.Ql \&:[2..-1]
+selects all words from the second word to the last word.
+If
+.Ar start
+is greater than
+.Ar end ,
+then the words are output in reverse order.  For example,
+.Ql \&:[-1..1]
+selects all the words from last to first.
+\" :[*]
+.It Cm \&*
+Causes subsequent modifiers to treat the value as a single word
+(possibly containing embedded white space).  Analogous to the effect of
+\&"$*\&" 
+in Bourne shell.
+\" :[0]
+.It 0
+Means the same as
+.Ql \&:[*] .
+\" :[*]
+.It Cm \&@
+Causes subsequent modifiers to treat the value as a sequence of words
+delimited by white space.  Analogous to the effect of
+\&"$@\&" 
+in Bourne shell.
+\" :[#]
+.It Cm \&#
+Returns the number of words in the value.
+.El \" :[range]
 .El
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
 Makefile inclusion, conditional structures and for loops  reminiscent
