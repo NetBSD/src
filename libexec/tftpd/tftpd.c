@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.18.8.2 2001/02/03 21:09:17 he Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.18.8.3 2001/02/26 16:59:15 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.18.8.2 2001/02/03 21:09:17 he Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.18.8.3 2001/02/26 16:59:15 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -592,7 +592,7 @@ sendfile(pf)
 	struct tftphdr *dp;
 	struct tftphdr *ap;    /* ack packet */
 	int size, n;
-	volatile int block;
+	volatile unsigned int block;
 
 	signal(SIGALRM, timer);
 	dp = r_init();
@@ -662,7 +662,7 @@ recvfile(pf)
 	struct tftphdr *dp;
 	struct tftphdr *ap;    /* ack buffer */
 	int n, size;
-	volatile int block;
+	volatile unsigned int block;
 
 	signal(SIGALRM, timer);
 	dp = w_init();
