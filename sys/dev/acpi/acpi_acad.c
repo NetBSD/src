@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.13 2004/03/24 11:32:09 kanaoka Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.14 2004/04/11 06:48:25 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.13 2004/03/24 11:32:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.14 2004/04/11 06:48:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +141,9 @@ acpiacad_match(struct device *parent, struct cfdata *match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
-	return (acpi_match_hid(aa->aa_node->ad_devinfo, acad_hid));
+	return acpi_match_hid(aa->aa_node->ad_devinfo, acad_hid);
 }
 
 /*
@@ -317,7 +317,7 @@ acpiacad_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	*tred = sc->sc_data[tred->sensor];
 	/* XXX locking */
 
-	return (0);
+	return 0;
 }
 
 
@@ -328,5 +328,5 @@ acpiacad_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 	/* XXX Not implemented */
 	binfo->validflags = 0;
 
-	return (0);
+	return 0;
 }

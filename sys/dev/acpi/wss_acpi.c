@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.10 2004/04/11 06:48:25 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.10 2004/04/11 06:48:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,9 @@ wss_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE ||
 	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.Value) == -1)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 /*

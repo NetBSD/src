@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.36 2004/03/24 11:32:09 kanaoka Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.37 2004/04/11 06:48:25 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.36 2004/03/24 11:32:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.37 2004/04/11 06:48:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,9 +245,9 @@ acpibat_match(struct device *parent, struct cfdata *match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
-	return (acpi_match_hid(aa->aa_node->ad_devinfo, bat_hid));
+	return acpi_match_hid(aa->aa_node->ad_devinfo, bat_hid);
 }
 
 /*
@@ -359,7 +359,7 @@ acpibat_battery_present(struct acpibat_softc *sc)
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate _STA: %s\n",
 		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		return (-1);
+		return -1;
 	}
 
 	sta = (u_int32_t)val;
@@ -374,7 +374,7 @@ acpibat_battery_present(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_PRESENT].validflags |= ENVSYS_FCURVALID;
 	ABAT_UNLOCK(sc, s);
 
-	return ((sta & ACPIBAT_STA_PRESENT)?1:0);
+	return (sta & ACPIBAT_STA_PRESENT) ? 1 : 0;
 }
 
 /*
@@ -395,7 +395,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate _BIF: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		return (rv);
+		return rv;
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
 
@@ -465,7 +465,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 
 out:
 	AcpiOsFree(buf.Pointer);
-	return (rv);
+	return rv;
 }
 
 /*
@@ -485,7 +485,7 @@ acpibat_get_status(struct acpibat_softc *sc)
 	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate _BST: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
-		return (rv);
+		return rv;
 	}
 	p1 = (ACPI_OBJECT *)buf.Pointer;
 
@@ -538,7 +538,7 @@ acpibat_get_status(struct acpibat_softc *sc)
 
 out:
 	AcpiOsFree(buf.Pointer);
-	return (rv);
+	return rv;
 }
 
 #define SCALE(x)	((x)/1000000), (((x)%1000000)/1000)
@@ -775,7 +775,7 @@ acpibat_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 	*tred = sc->sc_data[tred->sensor];
 	/* XXX locking */
 
-	return (0);
+	return 0;
 }
 
 int
@@ -785,5 +785,5 @@ acpibat_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 	/* XXX Not implemented */
 	binfo->validflags = 0;
 
-	return (0);
+	return 0;
 }
