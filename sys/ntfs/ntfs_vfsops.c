@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.25 2000/03/16 18:08:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.26 2000/03/30 02:47:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -32,7 +32,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
@@ -156,7 +155,6 @@ static int
 ntfs_mountroot()
 {
 	struct mount *mp;
-	extern struct vnode *rootvp;
 	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct ntfs_args args;
