@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.1 1997/07/31 22:33:17 augustss Exp $	*/
+/*	$NetBSD: auconv.c,v 1.2 1997/08/24 22:20:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,6 +115,37 @@ change_sign16_swap_bytes(v, p, cc)
 		t = p[LO];
 		p[LO] = p[HI] ^ 0x80;
 		p[HI] = t;
+		p += 2;
+	}
+}
+
+void
+linear8_to_linear16(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc * 2;
+	while (--cc >= 0) {
+		q -= 2;
+		q[HI] = *--p;
+		q[LO] = 0;
+	}
+}
+
+void
+linear16_to_linear8(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	u_char *q = p;
+
+	while ((cc -= 2) >= 0) {
+		*q++ = p[HI];
 		p += 2;
 	}
 }
