@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.7 2003/08/30 21:30:51 jmmv Exp $
+#	$NetBSD: TODO,v 1.8 2003/09/02 12:01:14 junyoung Exp $
 
 THINGS TO BE DONE:
 
@@ -42,7 +42,7 @@ User programs:
     clean up gas config files, set up common defines
 
 Pie-in-the-Sky:
-    someone should actually test all the netiso stuff.	
+    someone should actually test all the netiso stuff.
     SMB filesystem
 
 Documentation:
@@ -51,9 +51,12 @@ Documentation:
         version from the manpages again.
 
 i386 kernel support:
-     better ways of accessing BIOS, i/o space.  some exportable to
+    better ways of accessing BIOS, i/o space.  some exportable to
 	user space.  See mach3,linux dos emulator
-
+    i686 optimized versions of copyin/copyout/memcpy/memset/etc. lazy
+        floating-point context switching should be implemented as well.
+    make use of sysenter/sysexit instructions on PIII/4 and Athlon for
+        reducing syscall overhead.
 
 This is a list of suggested smaller projects (in no particular order):
 
@@ -72,7 +75,7 @@ This is a list of suggested smaller projects (in no particular order):
 + do a type-punned pointer sweep for gcc3 (and fix the problems, not
   the symptoms)
 + kernel fine-grained locking
-+ write a BSD-licensed web browser 
++ write a BSD-licensed web browser
 + write a BSD-licensed privacy guard like gnupg or pgp
 + perhaps look at putting wonka into src/ (with uuencoded class lib?)
 + investigate ProPolice
