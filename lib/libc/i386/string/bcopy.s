@@ -33,6 +33,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/asm.h>
+
 #if defined(LIBC_RCS) && !defined(lint)
 	.asciz "$ID$"
 #endif /* LIBC_RCS and not lint */
