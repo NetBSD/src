@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.15 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.16 1999/05/31 06:53:45 ross Exp $	*/
 
 /*
  * Mach Operating System
@@ -105,6 +105,10 @@ db_examine(addr, fmt, count)
 			case 'l':	/* long-word */
 				size = 4;
 				width = 12;
+				break;
+			case 'L':	/* implementation maximum */
+				size = sizeof value;
+				width = 12 * (sizeof value / 4);
 				break;
 			case 'a':	/* address */
 				db_printf("= 0x%lx\n", addr);
