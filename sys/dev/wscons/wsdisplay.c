@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.60 2001/11/13 06:17:46 lukem Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.61 2002/03/02 08:22:26 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.60 2001/11/13 06:17:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.61 2002/03/02 08:22:26 takemura Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -562,17 +562,17 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 #if NWSKBD > 0
 	struct wsevsrc *kme;
 #if NWSMUX > 0
-	struct wsevsrc *inp;
+	struct wsmux_softc *mux;
 
 	if (kbdmux >= 0)
-		inp = &wsmux_getmux(kbdmux)->sc_base;
+		mux = wsmux_getmux(kbdmux);
 	else
-		inp = &wsmux_create("dmux", sc->sc_dv.dv_unit)->sc_base;
+		mux = wsmux_create("dmux", sc->sc_dv.dv_unit);
 	/* XXX panic()ing isn't nice, but attach cannot fail */
-	if (inp == NULL)
+	if (mux == NULL)
 		panic("wsdisplay_common_attach: no memory\n");
-	sc->sc_input = inp;
-	inp->me_dispdv = &sc->sc_dv;
+	sc->sc_input = &mux->sc_base;
+	mux->sc_base.me_dispdv = &sc->sc_dv;
 	printf(" kbdmux %d", kbdmux);
 #else
 	if (kbdmux >= 0)
@@ -607,6 +607,10 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		start = 1;
 	}
 	printf("\n");
+
+#if NWSKBD > 0 && NWSMUX > 0
+	wsmux_set_display(mux, &sc->sc_dv);
+#endif
 
 	sc->sc_accessops = accessops;
 	sc->sc_accesscookie = accesscookie;
