@@ -1,9 +1,7 @@
-#	$NetBSD: list,v 1.9 2002/02/03 16:58:46 lukem Exp $
+#	$NetBSD: list,v 1.10 2002/02/08 05:02:17 lukem Exp $
 #
 
-SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin sys/arch/i386/stand
-
-PROG	sysinst
+SRCDIRS	usr.bin/less
 
 PROG	bin/cat
 PROG	bin/chio
@@ -68,29 +66,20 @@ PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 PROG	usr/sbin/wiconfig
 
-# init invokes the shell as -sh
-ARGVLN	sh -sh
-
 SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ftp		srcdir	distrib/utils/x_ftp
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	ping6		srcdir	distrib/utils/x_ping6
 SPECIAL	route		srcdir	distrib/utils/x_route
-SPECIAL	sh		srcdir	distrib/utils/x_sh
-SPECIAL	sysinst		srcdir	distrib/utils/sysinst/arch/i386
 
-# libhack.o is built by Makefile & included Makefile.inc
 LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
 
 # various files that we need in /etc for the install
-COPY	${_SRC_TOP_}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script
+COPY	${_SRC_TOP_}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
 
 # we need the boot block in /usr/mdec + the MBR copy
 COPY	${DESTDIR}/usr/mdec/biosboot_com0.sym	usr/mdec/biosboot_com0.sym
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
-
-# the lists of obsolete files used by sysinst
-CMD	sh ${_SRC_TOP_}/distrib/sets/makeobsolete -b -s ${_SRC_TOP_}/distrib/sets -t ./dist

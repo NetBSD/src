@@ -1,6 +1,4 @@
-#	$NetBSD: list,v 1.6 2002/02/03 16:58:47 lukem Exp $
-
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/i386/stand
+#	$NetBSD: list,v 1.7 2002/02/08 05:02:18 lukem Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -55,9 +53,6 @@ PROG	usr/sbin/bad144
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
-# init invokes the shell as -sh
-ARGVLN	sh -sh
-
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	ftp		srcdir	distrib/utils/x_ftp
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
@@ -65,8 +60,6 @@ SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	mount		srcdir	distrib/utils/x_mount
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
-SPECIAL	sh		srcdir	distrib/utils/x_sh
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-# libhack.o is built by Makefile & included Makefile.inc
 LIBS	libhack.o -lbz2 -ltermcap -lutil -lrmt -ll -lm
