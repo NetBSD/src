@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.1 1999/06/30 17:45:38 drochner Exp $ */
+/* $NetBSD: btvmei.c,v 1.2 2000/08/08 19:42:40 tv Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -282,8 +282,11 @@ b3_617_reset(sc)
 	write_csr_byte(sc, LOC_CMD1, LC1_CLR_ERROR);
 	status = read_csr_byte(sc, LOC_STATUS);
 	if (status & LSR_CERROR_MASK) {
-		printf("%s: interface error, lsr=%b\n", sc->sc_dev.dv_xname,
-		       status, BIT3_LSR_BITS);
+		char sbuf[sizeof(BIT3_LSR_BITS) + 8];
+
+		bitmask_snprintf(status, BIT3_LSR_BITS, sbuf, sizeof(sbuf));
+		printf("%s: interface error, lsr=%s\n", sc->sc_dev.dv_xname,
+		       sbuf);
 		return (-1);
 	}
 	return (0);
