@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.26.2.2 1997/11/04 23:34:57 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.26.2.3 1998/01/29 12:25:48 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -85,6 +85,20 @@ struct stat12 {				/* NetBSD-1.2 stat struct */
 	int64_t	  st_qspare[2];
 };
 
+/*
+ * On systems with 8 byte longs and 4 byte time_ts, padding the time_ts
+ * is required in order to have a consistent ABI.  This is because the
+ * stat structure used to contain timespecs, which had different
+ * alignment constraints than a time_t and a long alone.  The padding
+ * should be removed the next time the stat structure ABI is changed.
+ * (This will happen whever we change to 8 byte time_t.)
+ */
+#if defined(__alpha__)			/* XXX XXX XXX */
+#define	__STATPAD(x)	int x;
+#else
+#define	__STATPAD(x)	/* nothing */
+#endif
+
 struct stat {
 	dev_t	  st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
@@ -98,11 +112,15 @@ struct stat {
 	struct	  timespec st_mtimespec;/* time of last data modification */
 	struct	  timespec st_ctimespec;/* time of last file status change */
 #else
+	__STATPAD(__pad0)
 	time_t	  st_atime;		/* time of last access */
+	__STATPAD(__pad1)
 	long	  st_atimensec;		/* nsec of last access */
 	time_t	  st_mtime;		/* time of last data modification */
+	__STATPAD(__pad2)
 	long	  st_mtimensec;		/* nsec of last data modification */
 	time_t	  st_ctime;		/* time of last file status change */
+	__STATPAD(__pad3)
 	long	  st_ctimensec;		/* nsec of last file status change */
 #endif
 	off_t	  st_size;		/* file size, in bytes */
@@ -112,6 +130,8 @@ struct stat {
 	u_int32_t st_gen;		/* file generation number */
 	int64_t	  st_qspare[2];
 };
+
+#undef __STATPAD
 
 #ifndef _POSIX_SOURCE
 #define	st_atime	st_atimespec.tv_sec
