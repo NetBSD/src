@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.4 1996/03/09 17:22:12 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.5 1996/03/18 21:33:05 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -217,7 +217,7 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-int
+void
 Debugger()
 {
 	asm(".word	0xe7ffffff");
