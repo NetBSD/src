@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.12.2.3 2005/01/18 14:49:33 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.12.2.4 2005/01/19 10:23:27 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12.2.3 2005/01/18 14:49:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12.2.4 2005/01/19 10:23:27 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -92,7 +92,7 @@ extern struct cfdriver xbd_cd;
 
 #if NWD > 0
 int xbd_wd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(wd, sizeof(struct xbd_softc),
+CFATTACH_DECL(wd_xen, sizeof(struct xbd_softc),
     xbd_wd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver wd_cd;
@@ -100,7 +100,7 @@ extern struct cfdriver wd_cd;
 
 #if NSD > 0
 int xbd_sd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(sd, sizeof(struct xbd_softc),
+CFATTACH_DECL(sd_xen, sizeof(struct xbd_softc),
     xbd_sd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver sd_cd;
@@ -108,7 +108,7 @@ extern struct cfdriver sd_cd;
 
 #if NCD > 0
 int xbd_cd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(cd, sizeof(struct xbd_softc),
+CFATTACH_DECL(cd_xen, sizeof(struct xbd_softc),
     xbd_cd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver cd_cd;
