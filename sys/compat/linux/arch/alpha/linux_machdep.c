@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.16 2001/04/26 03:10:47 ross Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.17 2001/05/30 11:37:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #include <machine/alpha.h>
 #include <machine/reg.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "wsdisplay.h"
 #endif
 #if (NWSDISPLAY >0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.57 2001/02/08 13:19:34 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.58 2001/05/30 11:37:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_ntp.h"

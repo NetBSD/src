@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.31 2001/05/07 09:55:14 manu Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.32 2001/05/30 11:37:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
 

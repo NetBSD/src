@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.22 2001/04/10 11:12:12 kleink Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.23 2001/05/30 11:37:29 mrg Exp $ */
 
 /*
  * System call numbers.

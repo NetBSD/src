@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.4 2001/04/09 10:22:01 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.5 2001/05/30 11:37:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #endif
 

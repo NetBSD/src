@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.1 2001/02/06 16:37:58 eeh Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.2 2001/05/30 11:37:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 
