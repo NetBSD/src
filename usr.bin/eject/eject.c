@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.4 1997/10/18 13:38:15 lukem Exp $	*/
+/*	$NetBSD: eject.c,v 1.5 1997/11/07 09:01:29 mikel Exp $	*/
 /*
  * Copyright (c) 1995
  *	Matthieu Herrb.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.4 1997/10/18 13:38:15 lukem Exp $");
+__RCSID("$NetBSD: eject.c,v 1.5 1997/11/07 09:01:29 mikel Exp $");
 #endif
 
 /*
@@ -138,7 +138,7 @@ static void
 usage()
 {
 	fprintf(stderr,
-	    "usage: eject [-n][-f][-t devtype][[-d] raw device | nickname ]");
+	    "usage: eject [-n][-f][-t devtype][[-d] raw device | nickname ]\n");
 	exit(1);
 	/*NOTREACHED*/
 }
