@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: gvpbus.c,v 1.2 1994/05/25 21:55:07 chopps Exp $
+ *	$Id: gvpbus.c,v 1.3 1994/06/21 04:02:13 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,11 @@ gvpbusmatch(pdp, cdp, auxp)
 	/*
 	 * Check manufacturer and product id.
 	 */
+#if 0
 	if (zap->manid == 2017 && (zap->prodid == 11 || zap->prodid == 2))
+#else
+	if (zap->manid == 2017 && zap->prodid == 11)
+#endif
 		return(1);
 	return(0);
 }
@@ -79,10 +83,12 @@ gvpbusattach(pdp, dp, auxp)
 	 */
 	if (zap->prodid != 9)
 		ga.prod = *((u_char *)zap->va + 0x8001) & 0xf8;
+#if 0
 	else {
 		ga.prod = GVP_SERIESII;		/* really a series I */
 		ga.flags |= GVP_NOBANK;
 	}
+#endif
 	
 
 	switch (ga.prod) {

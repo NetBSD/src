@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.5 1994/02/13 21:10:39 chopps Exp $
+ *	$Id: if_le.c,v 1.6 1994/06/21 04:02:15 chopps Exp $
  */
 
 #include "le.h"
@@ -56,6 +56,7 @@
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -74,42 +75,11 @@
 #include <netns/ns_if.h>
 #endif
 
-#ifdef RMP
-#include <netrmp/rmp.h>
-#include <netrmp/rmp_var.h>
-#endif
-
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
-#include <amiga/dev/device.h>
+#include <amiga/amiga/device.h>
+#include <amiga/dev/ztwobusvar.h>
 #include <amiga/dev/if_lereg.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
-
-#if 0
-/* offsets for:	   ID,   REGS,    MEM,  NVRAM */
-int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
-#else
-/* offsets for:	   ID,   REGS,    MEM */
-int	lestd[] = { 0, 0x4000, 0x8000 };
-#endif
-
-int	leattach();
-struct	driver ledriver = {
-	leattach, "le",
-};
-
-#if 0
-struct	isr le_isr[NLE];
-#endif
-int	ledebug = 0;		/* console error messages */
-
-int	leintr(), leinit(), leioctl(), lestart(), ether_output();
-struct	mbuf *leget();
-extern	struct ifnet loif;
 
 /*
  * Ethernet software status per interface.
@@ -145,79 +115,109 @@ struct	le_softc {
 #endif
 } le_softc[NLE];
 
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
+
+/* offsets for:	   ID,   REGS,    MEM */
+int	lestd[] = { 0, 0x4000, 0x8000 };
+
+/* console error messages */
+int	ledebug = 0;
+
+int	leintr(), lestart(), leioctl(), ether_output();
+void	leinit();
+
+struct	mbuf *leget();
+extern	struct ifnet loif;
+
+void leattach __P((struct device *, struct device *, void *));
+int lematch __P((struct device *, struct cfdata *, void *args));
+
+struct cfdriver lecd = {
+	NULL, "le", lematch, leattach, DV_IFNET,
+	sizeof(struct le_softc), NULL, 0};
+
+int
+lematch(pdp, cfp, auxp)
+	struct device *pdp;
+	struct cfdata *cfp;
+	void *auxp;
+{
+
+	struct ztwobus_args *zap;
+
+	zap = (struct ztwobus_args *)auxp;
+
+	/* Commodore ethernet card */
+	if ( zap->manid == 514 && zap->prodid == 112)
+		return(1);
+
+	/* Ameristar ethernet card */
+	if ( zap->manid == 1053 && zap->prodid == 1)
+		return(1);
+
+	return (0);
+}
 
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-leattach(ad)
-	struct amiga_device *ad;
+void
+leattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
 {
 	register struct lereg0 *ler0;
 	register struct lereg2 *ler2;
+	struct ztwobus_args *zap;
 	struct lereg2 *lemem = (struct lereg2 *) 0x8000;
-	struct le_softc *le = &le_softc[ad->amiga_unit];
+	struct le_softc *le = &le_softc[dp->dv_unit];
 	struct ifnet *ifp = &le->sc_if;
 	char *cp;
 	int i;
 	unsigned long ser;
 	int s = splhigh ();
 
-	ler0 = le->sc_base = ad->amiga_addr;
-	le->sc_r1 = (struct lereg1 *)(lestd[1] + (int)ad->amiga_addr);
-	ler2 = le->sc_r2 = (struct lereg2 *)(lestd[2] + (int)ad->amiga_addr);
-
-#if 0
-	if (ler0->ler0_id == 0xff)
-	  goto noreset;
-	if (ler0->ler0_id != LEID)
-	  {
-		le->sc_base = 0;
-		splx (s);
-		printf ("le%d: ler0_id[%d] != LEID[%d], board ignored.\n",
-			ad->amiga_unit, ler0->ler0_id, LEID);
-		return(0);
-	  }
-	le_isr[ad->amiga_unit].isr_intr = leintr;
-	ad->amiga_ipl = le_isr[ad->amiga_unit].isr_ipl = LE_IPL(ler0->ler0_status);
-	le_isr[ad->amiga_unit].isr_arg = ad->amiga_unit;
-	ler0->ler0_id = 0xFF;
-	DELAY(100);
-noreset:
+	zap =(struct ztwobus_args *)auxp;
 
 	/*
-	 * Read the ethernet address off the board, one nibble at a time.
+	 * Make config msgs look nicer.
 	 */
-	cp = (char *)(lestd[3] + (int)ad->amiga_addr);
-	for (i = 0; i < sizeof(le->sc_addr); i++) {
-		le->sc_addr[i] = (*++cp & 0xF) << 4;
-		cp++;
-		le->sc_addr[i] |= *++cp & 0xF;
-		cp++;
-	}
-#else
-	/* serial number contains this information. Manufacturer decides
-	   the 3 first bytes. */
-	ser = (unsigned long) ad->amiga_serno;
-	if ((ser >> 24) == 1)
-	  {
-	    /* Commodore */
+	printf("\n");
+
+	ler0 = le->sc_base = zap->va;
+	le->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);
+	ler2 = le->sc_r2 = (struct lereg2 *)(lestd[2] + (int)zap->va);
+
+	/*
+	 * Manufacturer decides the 3 first bytes, i.e. ethernet vendor ID.
+	 */
+	if ( zap->manid == 514 && zap->prodid == 112) {
+	    /* Commodore 2065 */
 	    le->sc_addr[0] = 0x00;
 	    le->sc_addr[1] = 0x80;
 	    le->sc_addr[2] = 0x10;
-	  }
-	else if ((ser >> 24) == 2)
-	  {
+	}
+	if ( zap->manid == 1053 && zap->prodid == 1) {
 	    le->sc_addr[0] = 0x00;
 	    le->sc_addr[1] = 0x00;
 	    le->sc_addr[2] = 0x9f;
-	  }
+	}
+
+	/*
+	 * Serial number for board is used as host ID.
+	 */
+	ser = (unsigned long) zap->serno;
+
 	le->sc_addr[3] = (ser >> 16) & 0xff;
 	le->sc_addr[4] = (ser >>  8) & 0xff;
 	le->sc_addr[5] = (ser      ) & 0xff;
-#endif
-	printf("le%d: hardware address %s\n", ad->amiga_unit,
+
+	printf("le%d: hardware address %s\n", dp->dv_unit,
 		ether_sprintf(le->sc_addr));
 
 	/*
@@ -230,38 +230,30 @@ noreset:
 	ler2->ler2_padr[3] = le->sc_addr[2];
 	ler2->ler2_padr[4] = le->sc_addr[5];
 	ler2->ler2_padr[5] = le->sc_addr[4];
-#ifdef RMP
-	/*
-	 * Set up logical addr filter to accept multicast 9:0:9:0:0:4
-	 * This should be an ioctl() to the driver.  (XXX)
-	 */
-	ler2->ler2_ladrf0 = 0x00100000;
-	ler2->ler2_ladrf1 = 0x0;
-#else
 	ler2->ler2_ladrf0 = 0;
 	ler2->ler2_ladrf1 = 0;
-#endif
 	ler2->ler2_rlen = LE_RLEN;
 	ler2->ler2_rdra = (int)lemem->ler2_rmd;
 	ler2->ler2_tlen = LE_TLEN;
 	ler2->ler2_tdra = (int)lemem->ler2_tmd;
-#if 0
-	isrlink(&le_isr[ad->amiga_unit]);
-#endif
+
 	splx (s);
 
-	ifp->if_unit = ad->amiga_unit;
+	ifp->if_unit = dp->dv_unit;
 	ifp->if_name = "le";
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX;
+
 #if NBPFILTER > 0
 	bpfattach(&le->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	if_attach(ifp);
-	return (1);
+	ether_ifattach(ifp);
+
+	return;
 }
 
 ledrinit(ler2)
@@ -276,6 +268,7 @@ ledrinit(ler2)
 		ler2->ler2_rmd[i].rmd2 = -LEMTU;
 		ler2->ler2_rmd[i].rmd3 = 0;
 	}
+
 	for (i = 0; i < LETBUF; i++) {
 		ler2->ler2_tmd[i].tmd0 = (int)lemem->ler2_tbuf[i];
 		ler2->ler2_tmd[i].tmd1 = 0;
@@ -284,12 +277,20 @@ ledrinit(ler2)
 	}
 }
 
+void
 lereset(unit)
 	register int unit;
 {
 	register struct le_softc *le = &le_softc[unit];
 	register struct lereg1 *ler1 = le->sc_r1;
+	/*
+	 * This structure is referenced from the CARDS/LANCE point of
+	 * view, thus the 0x8000 address which is the buffer RAM area of
+	 * the Commodore and Ameristar cards. This pointer is manipulated
+	 * with the LANCE's view of memory and NOT the Amiga's. FYI.
+	 */
 	register struct lereg2 *lemem = (struct lereg2 *) 0x8000;
+
 	register int timo = 100000;
 	register int stat;
 
@@ -305,14 +306,17 @@ lereset(unit)
 #endif
 	 ler1->ler1_rap =  LE_CSR0;
 	 ler1->ler1_rdp =  LE_STOP;
-	ledrinit(le->sc_r2);
-	le->sc_rmd = 0;
+
+	 ledrinit(le->sc_r2);
+
+	 le->sc_rmd = 0;
 	 ler1->ler1_rap =  LE_CSR1;
 	 ler1->ler1_rdp =  (int)&lemem->ler2_mode;
 	 ler1->ler1_rap =  LE_CSR2;
 	 ler1->ler1_rdp =  0;
 	 ler1->ler1_rap =  LE_CSR0;
 	 ler1->ler1_rdp =  LE_INIT;
+
 	do {
 		if (--timo == 0) {
 			printf("le%d: init timeout, stat = 0x%x\n",
@@ -321,17 +325,21 @@ lereset(unit)
 		}
 		 stat =  ler1->ler1_rdp;
 	} while ((stat & LE_IDON) == 0);
+
 	 ler1->ler1_rdp =  LE_STOP;
 	 ler1->ler1_rap =  LE_CSR3;
 	 ler1->ler1_rdp =  LE_BSWP;
 	 ler1->ler1_rap =  LE_CSR0;
 	 ler1->ler1_rdp =  LE_STRT | LE_INEA;
-	le->sc_if.if_flags &= ~IFF_OACTIVE;
+	 le->sc_if.if_flags &= ~IFF_OACTIVE;
+
+	return;
 }
 
 /*
  * Initialization of interface
  */
+void
 leinit(unit)
 	int unit;
 {
@@ -342,6 +350,7 @@ leinit(unit)
 	/* not yet, if address still unknown */
 	if (ifp->if_addrlist == (struct ifaddr *)0)
 		return;
+
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splimp();
 		ifp->if_flags |= IFF_RUNNING;
@@ -349,6 +358,8 @@ leinit(unit)
 	        (void) lestart(ifp);
 		splx(s);
 	}
+
+	return;
 }
 
 /*
@@ -366,10 +377,13 @@ lestart(ifp)
 
 	if ((le->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (0);
+
 	IF_DEQUEUE(&le->sc_if.if_snd, m);
 	if (m == 0)
 		return (0);
+
 	len = leput(le->sc_r2->ler2_tbuf[0], m);
+
 #if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
@@ -378,11 +392,13 @@ lestart(ifp)
 	if (le->sc_bpf)
                 bpf_tap(le->sc_bpf, le->sc_r2->ler2_tbuf[0], len);
 #endif
+
 	tmd = le->sc_r2->ler2_tmd;
 	tmd->tmd3 = 0;
 	tmd->tmd2 = -len;
 	tmd->tmd1 = LE_OWN | LE_STP | LE_ENP;
 	le->sc_if.if_flags |= IFF_OACTIVE;
+
 	return (0);
 }
 
@@ -480,7 +496,9 @@ err:
 		le->sc_if.if_collisions += 2;
 	else
 		le->sc_if.if_opackets++;
+
 	le->sc_if.if_flags &= ~IFF_OACTIVE;
+
 	(void) lestart(&le->sc_if);
 }
 
@@ -532,24 +550,28 @@ lerint(unit)
 				rmd->rmd1 = LE_OWN;
 				LENEXTRMP;
 			} while (!(rmd->rmd1 & (LE_OWN|LE_ERR|LE_STP|LE_ENP)));
+
 			le->sc_rmd = bix;
 			lererror(unit, "chained buffer");
 			le->sc_rxlen++;
+
 			/*
 			 * If search terminated without successful completion
 			 * we reset the hardware (conservative).
 			 */
-			if ((rmd->rmd1 & (LE_OWN|LE_ERR|LE_STP|LE_ENP)) !=
-			    LE_ENP) {
+			if ((rmd->rmd1 & (LE_OWN|LE_ERR|LE_STP|LE_ENP)) != LE_ENP) {
 				lereset(unit);
 				return;
 			}
 		} else
 			leread(unit, le->sc_r2->ler2_rbuf[bix], len);
+
 		rmd->rmd3 = 0;
 		rmd->rmd1 = LE_OWN;
 		LENEXTRMP;
+
 	}
+
 	le->sc_rmd = bix;
 }
 
@@ -564,30 +586,12 @@ leread(unit, buf, len)
 	int off, resid;
 
 	le->sc_if.if_ipackets++;
+
 	et = (struct ether_header *)buf;
 	et->ether_type = ntohs((u_short)et->ether_type);
+
 	/* adjust input length to account for header and CRC */
 	len = len - sizeof(struct ether_header) - 4;
-
-#ifdef RMP
-	/*  (XXX)
-	 *
-	 *  If Ethernet Type field is < MaxPacketSize, we probably have
-	 *  a IEEE802 packet here.  Make sure that the size is at least
-	 *  that of the HP LLC.  Also do sanity checks on length of LLC
-	 *  (old Ethernet Type field) and packet length.
-	 *
-	 *  Provided the above checks succeed, change `len' to reflect
-	 *  the length of the LLC (i.e. et->ether_type) and change the
-	 *  type field to ETHERTYPE_IEEE so we can switch() on it later.
-	 *  Yes, this is a hack and will eventually be done "right".
-	 */
-	if (et->ether_type <= IEEE802LEN_MAX && len >= sizeof(struct amiga_llc) &&
-	    len >= et->ether_type && len >= IEEE802LEN_MIN) {
-		len = et->ether_type;
-		et->ether_type = ETHERTYPE_IEEE;	/* hack! */
-	}
-#endif
 
 #define	ledataaddr(et, off, type)	((type)(((caddr_t)((et)+1)+(off))))
 	if (et->ether_type >= ETHERTYPE_TRAIL &&
@@ -645,36 +649,7 @@ leread(unit, buf, len)
 	m = leget(buf, len, off, &le->sc_if);
 	if (m == 0)
 		return;
-#ifdef RMP
-	/*
-	 * (XXX)
-	 * This needs to be integrated with the ISO stuff in ether_input()
-	 */
-	if (et->ether_type == ETHERTYPE_IEEE) {
-		/*
-		 *  Snag the Logical Link Control header (IEEE 802.2).
-		 */
-		struct amiga_llc *llc = &(mtod(m, struct rmp_packet *)->amiga_llc);
 
-		/*
-		 *  If the DSAP (and HP's extended DXSAP) indicate this
-		 *  is an RMP packet, hand it to the raw input routine.
-		 */
-		if (llc->dsap == IEEE_DSAP_HP && llc->dxsap == HPEXT_DXSAP) {
-			static struct sockproto rmp_sp = {AF_RMP,RMPPROTO_BOOT};
-			static struct sockaddr rmp_src = {AF_RMP};
-			static struct sockaddr rmp_dst = {AF_RMP};
-
-			bcopy(et->ether_shost, rmp_src.sa_data,
-			      sizeof(et->ether_shost));
-			bcopy(et->ether_dhost, rmp_dst.sa_data,
-			      sizeof(et->ether_dhost));
-
-			raw_input(m, &rmp_sp, &rmp_src, &rmp_dst);
-			return;
-		}
-	}
-#endif
 	ether_input(&le->sc_if, et, m);
 }
 
@@ -697,11 +672,14 @@ leput(lebuf, m)
 		bcopy(mtod(mp, char *), lebuf, len);
 		lebuf += len;
 	}
+
 	m_freem(m);
+
 	if (tlen < LEMINSIZE) {
 		bzero(lebuf, LEMINSIZE - tlen);
 		tlen = LEMINSIZE;
 	}
+
 	return(tlen);
 }
 
@@ -729,13 +707,16 @@ leget(lebuf, totlen, off0, ifp)
 	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
+
 	if (m == 0)
 		return (0);
+
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 
 	while (totlen > 0) {
+
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
@@ -744,6 +725,7 @@ leget(lebuf, totlen, off0, ifp)
 			}
 			m->m_len = MLEN;
 		}
+
 		len = min(totlen, epkt - cp);
 		if (len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
@@ -762,14 +744,18 @@ leget(lebuf, totlen, off0, ifp)
 			} else
 				len = m->m_len;
 		}
+
 		bcopy(cp, mtod(m, caddr_t), (unsigned)len);
 		cp += len;
 		*mp = m;
 		mp = &m->m_next;
 		totlen -= len;
+
 		if (cp == epkt)
 			cp = lebuf;
+
 	}
+
 	return (top);
 }
 
@@ -831,24 +817,24 @@ leioctl(ifp, cmd, data)
 		    ifp->if_flags & IFF_RUNNING) {
 			 ler1->ler1_rdp =  LE_STOP;
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if (ifp->if_flags & IFF_UP &&
-		    (ifp->if_flags & IFF_RUNNING) == 0)
+		} else if (ifp->if_flags & IFF_UP && (ifp->if_flags & IFF_RUNNING) == 0)
 			leinit(ifp->if_unit);
+
 		/*
 		 * If the state of the promiscuous bit changes, the interface
 		 * must be reset to effect the change.
 		 */
-		if (((ifp->if_flags ^ le->sc_iflags) & IFF_PROMISC) &&
-		    (ifp->if_flags & IFF_RUNNING)) {
+		if (((ifp->if_flags ^ le->sc_iflags) & IFF_PROMISC) && (ifp->if_flags & IFF_RUNNING)) {
 			le->sc_iflags = ifp->if_flags;
 			lereset(ifp->if_unit);
-			lestart(ifp);
+			(void)lestart(ifp);
 		}
 		break;
 
 	default:
 		error = EINVAL;
 	}
+
 	splx(s);
 	return (error);
 }
@@ -866,6 +852,7 @@ leerror(unit, stat)
 	 */
 	if ((stat & LE_CERR) && le_softc[unit].sc_cerr)
 		return;
+
 	log(LOG_WARNING,
 	    "le%d: error: stat=%b\n", unit,
 	    stat,
@@ -885,6 +872,7 @@ lererror(unit, msg)
 
 	rmd = &le->sc_r2->ler2_rmd[le->sc_rmd];
 	len = rmd->rmd3;
+
 	log(LOG_WARNING,
 	    "le%d: ierror(%s): from %s: buf=%d, len=%d, rmd1=%b\n",
 	    unit, msg,
@@ -906,6 +894,7 @@ lexerror(unit)
 
 	tmd = le->sc_r2->ler2_tmd;
 	len = -tmd->tmd2;
+
 	log(LOG_WARNING,
 	    "le%d: oerror: to %s: buf=%d, len=%d, tmd1=%b, tmd3=%b\n",
 	    unit,
@@ -916,4 +905,7 @@ lexerror(unit)
 	    tmd->tmd3,
 	    "\20\20BUFF\17UFLO\16RES\15LCOL\14LCAR\13RTRY");
 }
+
 #endif
+
+
