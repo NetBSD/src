@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.1 2003/01/05 19:18:52 sommerfeld Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.2 2003/05/07 13:41:22 yamt Exp $
 
 # Resolve rpcgen's path, to allow it to be a dependency.
 
@@ -30,7 +30,7 @@ CLEANFILES += ${RPC_INCS}
 .if defined(RPC_XDRFILES)
 
 .for I in ${RPC_XDRFILES}
-${I}: ${I:_xdr.c=.x} ${_RPCGEN}
+${I}: ${RPC_XDIR}${I:_xdr.c=.x} ${_RPCGEN}
 	${RPCGEN} -C -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
 .endfor
 
