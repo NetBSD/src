@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.17 2001/07/19 16:00:59 itojun Exp $	*/
+/*	$NetBSD: state.c,v 1.18 2001/07/27 22:21:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.17 2001/07/19 16:00:59 itojun Exp $");
+__RCSID("$NetBSD: state.c,v 1.18 2001/07/27 22:21:46 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1566,11 +1566,13 @@ suboption()
 
 }  /* end of suboption */
 
+#ifdef LINEMODE
 	void
 doclientstat()
 {
 	clientstat(TELOPT_LINEMODE, WILL, 0);
 }
+#endif /* LINEMODE */
 
 	void
 send_status()
