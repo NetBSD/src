@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.188 2001/10/17 15:44:22 ichiro Exp $
+$NetBSD: usbdevs,v 1.189 2001/10/24 21:48:38 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -222,6 +222,7 @@ vendor BOSTON		0x06fd	Boston Acoustics
 vendor SMC		0x0707	Standard Microsystems Corp
 vendor PUTERCOM		0x0708	Putercom Co., Ltd.
 vendor MCT		0x0711	MCT Corp.
+vendor DIGITALSTREAM	0x074e	Digital Stream Corp.
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
 vendor GRIFFIN		0x077d	Griffin Technology, Inc.
@@ -506,6 +507,9 @@ product DIAMOND RIO500USB	0x0001	Rio 500 USB
 product DIGI ACCELEPORT2	0x0002	AccelePort USB 2
 product DIGI ACCELEPORT4	0x0004	AccelePort USB 4
 product DIGI ACCELEPORT8	0x0008	AccelePort USB 8
+
+/* Digital Stream Corp. products */
+product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
 
 /* EIZO products */
 product EIZO HUB		0x0000	hub
