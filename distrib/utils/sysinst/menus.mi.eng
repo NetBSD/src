@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.18 1997/12/26 01:58:45 fvdl Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.19 1998/02/09 07:03:38 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -236,29 +236,22 @@ menu distmedium, title "  Select medium";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
 	option "ftp",  action	{
 				  got_dist = get_via_ftp();
-				  if (got_dist) process_menu (MENU_distset);
 			        },
 				exit;
 	option "nfs",  action	{ 
 				  got_dist = get_via_nfs();
-				  if (got_dist) process_menu (MENU_distset);
 			 	}, exit;
 	option "cdrom", action  {
 				  got_dist = get_via_cdrom();
-				  if (got_dist) process_menu (MENU_distset);
 				}, exit; 
 	option "floppy", action {
 			          got_dist = get_via_floppy(); 
-				  if (got_dist) process_menu (MENU_distset); 
 				}, exit;
 	option "unmounted fs", action {
 				  got_dist = get_via_localfs(); 
-				  if (got_dist) process_menu (MENU_distset);
 				}, exit;
 	option "local dir", action {
 				   got_dist = get_via_localdir();
-				  if (got_dist) 
-					process_menu (MENU_distset);
 				 }, exit;
 	option "none",  action { nodist = 1; }, exit;
 

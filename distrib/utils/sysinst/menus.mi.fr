@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.5 1997/12/26 01:58:45 fvdl Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.6 1998/02/09 07:03:42 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -236,30 +236,23 @@ menu distmedium, title "  Sélection du media d'installation";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
 	option "ftp",  action   {
 				got_dist = get_via_ftp();
-				if (got_dist) process_menu (MENU_distset);
 				},
 				exit;
 	option "nfs",  action   {
 				got_dist = get_via_nfs();
-				if (got_dist) process_menu (MENU_distset);
 				}, exit;
 	option "cdrom", action  {
 				got_dist = get_via_cdrom();
-				if (got_dist) process_menu (MENU_distset);
 				}, exit;
 	option "disquette", action {
 				got_dist = get_via_floppy();
-				if (got_dist) process_menu (MENU_distset);
 				}, exit;
 	
 	option "systeme de fichier non-monté", action {
 				got_dist = get_via_localfs();
-				if (got_dist) process_menu (MENU_distset);
 				}, exit;
 	option "répertoire local", action {
 				got_dist = get_via_localdir();
-				if (got_dist)
-				process_menu (MENU_distset);
 				}, exit;
 	option "aucun",  action { nodist = 1; }, exit;
 
