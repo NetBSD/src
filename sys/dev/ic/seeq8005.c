@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.24 2001/06/22 20:31:55 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.25 2001/06/23 13:40:35 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -63,7 +63,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.24 2001/06/22 20:31:55 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.25 2001/06/23 13:40:35 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -168,7 +168,6 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int id;
-	int tmp;
 
 	KASSERT(myaddr != NULL);
 	printf(" address %s", ether_sprintf(myaddr));
@@ -177,20 +176,13 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 
 	ea_chipreset(sc);
 
-	SEEQ_WRITE16(sc, iot, ioh, SEEQ_RX_PTR, 0x1234);
-	sc->sc_flags |= SF_8BIT;
-	printf("[0x%04x]", SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR));
-
-
 	/* Work out data bus width. */
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_RX_PTR, 0x1234);
-	if ((tmp = SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR)) != 0x1234) {
-		printf("[0x%04x]", tmp);
+	if (SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR) != 0x1234) {
 		/* Try 8-bit mode */
 		sc->sc_flags |= SF_8BIT;
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_RX_PTR, 0x1234);
-		if ((tmp = SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR)) != 0x1234) {
-			printf("[0x%04x]", tmp);
+		if (SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR) != 0x1234) {
 			printf("\n%s: Cannot determine data bus width\n",
 			    sc->sc_dev.dv_xname);
 			return;
@@ -1362,10 +1354,11 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	u_int32_t crc;
-	int i;
-	struct ether_multistep step;
-	u_int8_t af[8];
+        u_int8_t *cp, c;
+        u_int32_t crc;
+        int i, len;
+        struct ether_multistep step;
+        u_int8_t af[8];
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
