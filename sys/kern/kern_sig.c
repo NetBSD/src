@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.136 2003/02/17 23:45:00 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.137 2003/03/06 15:31:14 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.136 2003/02/17 23:45:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.137 2003/03/06 15:31:14 darrenr Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1419,7 +1419,8 @@ proc_unstop(p)
 				cantake = 1;
 			}
 		} else {
-			setrunnable(l);
+			if (l != lr)
+				setrunnable(l);
 			cantake = 1;
 		}
 	}
