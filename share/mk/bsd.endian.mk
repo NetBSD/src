@@ -1,27 +1,30 @@
-#	$NetBSD: bsd.endian.mk,v 1.5 2003/07/27 11:16:30 lukem Exp $
+#	$NetBSD: bsd.endian.mk,v 1.6 2004/03/12 23:43:41 soren Exp $
 
-.ifndef TARGET_ENDIANNESS
+.if !defined(_BSD_ENDIAN_MK_)
+_BSD_ENDIAN_MK_=1
 
 .include <bsd.init.mk>
 
-# find out endianness of target and set proper flag for pwd_mkdb and such,
-# so that it creates database in same endianness.
-#
-.if exists(${DESTDIR}/usr/include/sys/endian.h) && exists(${CC:ts::C/:.*$//})
-TARGET_ENDIANNESS!= \
-	printf '\#include <sys/endian.h>\n_BYTE_ORDER\n' | \
-	${CC} -nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -E - | \
-	tail -1 | awk '{print $$1}'
+.if ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "mipsel" ||
+    ${MACHINE_ARCH} == "ns32k" || \
+    ${MACHINE_ARCH} == "sh5el" || \
+    ${MACHINE_ARCH} == "vax"
+TARGET_ENDIANNESS=	little
+.elif ${MACHINE_ARCH} == "armeb" || \
+      ${MACHINE_ARCH} == "hppa" || \
+      ${MACHINE_ARCH} == "m68k" || \
+      ${MACHINE_ARCH} == "mipseb" || \
+      ${MACHINE_ARCH} == "powerpc" || \
+      ${MACHINE_ARCH} == "sh5eb" || \
+      ${MACHINE_ARCH} == "sparc" || \
+      ${MACHINE_ARCH} == "sparc64" ||
+TARGET_ENDIANNESS=	big
 .else
-TARGET_ENDIANNESS=
+TARGET_ENDIANNESS=	unknown
 .endif
 
-#.if ${TARGET_ENDIANNESS} == "1234"
-#TARGET_ENDIANNESS=	little
-#.elif ${TARGET_ENDIANNESS} == "4321"
-#TARGET_ENDIANNESS=	big
-#.else
-#TARGET_ENDIANNESS=	unknown
-#.endif
-
-.endif	# TARGET_ENDIANNESS
+.endif  # !defined(_BSD_ENDIAN_MK_)
