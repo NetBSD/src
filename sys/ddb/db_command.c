@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_command.c,v 1.5 1993/08/02 17:53:12 mycroft Exp $
+ *	$Id: db_command.c,v 1.6 1993/09/13 14:08:54 brezak Exp $
  */
 
 /*
@@ -302,13 +302,13 @@ db_map_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-        extern void	vm_map_print();
+        extern void	_vm_map_print();
         boolean_t full = FALSE;
         
         if (modif[0] == 'f')
                 full = TRUE;
 
-        vm_map_print(addr, full);
+        _vm_map_print(addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -319,13 +319,13 @@ db_object_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-        extern void	vm_object_print();
+        extern void	_vm_object_print();
         boolean_t full = FALSE;
         
         if (modif[0] == 'f')
                 full = TRUE;
 
-        vm_object_print(addr, full);
+        _vm_object_print(addr, full, db_printf);
 }
 
 /*
@@ -364,31 +364,48 @@ void		db_help_cmd();
 void		db_fncall();
 
 struct command db_command_table[] = {
-	{ "print",	db_print_cmd,		0,	0 },
-	{ "examine",	db_examine_cmd,		CS_SET_DOT, 0 },
-	{ "x",		db_examine_cmd,		CS_SET_DOT, 0 },
+#ifdef DB_MACHINE_COMMANDS
+  /* this must be the first entry, if it exists */
+	{ "machine",    0,                      0,     		0},
+#endif
+	{ "print",	db_print_cmd,		0,		0 },
+	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	0 },
+	{ "x",		db_examine_cmd,		CS_SET_DOT, 	0 },
 	{ "search",	db_search_cmd,		CS_OWN|CS_SET_DOT, 0 },
-	{ "set",	db_set_cmd,		CS_OWN,	0 },
+	{ "set",	db_set_cmd,		CS_OWN,		0 },
 	{ "write",	db_write_cmd,		CS_MORE|CS_SET_DOT, 0 },
 	{ "w",		db_write_cmd,		CS_MORE|CS_SET_DOT, 0 },
-	{ "delete",	db_delete_cmd,		0,	0 },
-	{ "d",		db_delete_cmd,		0,	0 },
-	{ "break",	db_breakpoint_cmd,	0,	0 },
-	{ "dwatch",	db_deletewatch_cmd,	0,	0 },
-	{ "watch",	db_watchpoint_cmd,	CS_MORE,0 },
-	{ "step",	db_single_step_cmd,	0,	0 },
-	{ "s",		db_single_step_cmd,	0,	0 },
-	{ "continue",	db_continue_cmd,	0,	0 },
-	{ "c",		db_continue_cmd,	0,	0 },
-	{ "until",	db_trace_until_call_cmd,0,	0 },
-	{ "next",	db_trace_until_matching_cmd,0,	0 },
-	{ "match",	db_trace_until_matching_cmd,0,	0 },
-	{ "trace",	db_stack_trace_cmd,	0,	0 },
-	{ "call",	db_fncall,		CS_OWN,	0 },
-	{ "ps",		db_show_all_procs,	0,	0 },
-	{ "show",	0,			0,	db_show_cmds },
+	{ "delete",	db_delete_cmd,		0,		0 },
+	{ "d",		db_delete_cmd,		0,		0 },
+	{ "break",	db_breakpoint_cmd,	0,		0 },
+	{ "dwatch",	db_deletewatch_cmd,	0,		0 },
+	{ "watch",	db_watchpoint_cmd,	CS_MORE,	0 },
+	{ "step",	db_single_step_cmd,	0,		0 },
+	{ "s",		db_single_step_cmd,	0,		0 },
+	{ "continue",	db_continue_cmd,	0,		0 },
+	{ "c",		db_continue_cmd,	0,		0 },
+	{ "until",	db_trace_until_call_cmd,0,		0 },
+	{ "next",	db_trace_until_matching_cmd,0,		0 },
+	{ "match",	db_trace_until_matching_cmd,0,		0 },
+	{ "trace",	db_stack_trace_cmd,	0,		0 },
+	{ "call",	db_fncall,		CS_OWN,		0 },
+	{ "ps",		db_show_all_procs,	0,		0 },
+	{ "show",	0,			0,		db_show_cmds },
 	{ (char *)0, }
 };
+
+#ifdef DB_MACHINE_COMMANDS
+
+/* this function should be called to install the machine dependent
+   commands. It should be called before the debugger is enabled  */
+void db_machine_commands_install(ptr)
+struct db_command *ptr;
+{
+  db_command_table[0].more = ptr;
+  return;
+}
+
+#endif
 
 struct command	*db_last_command = 0;
 
