@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.17 1996/12/17 21:11:09 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.18 1997/01/18 16:28:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
  *
  */
 
-#define OBIO_KEYBD_MS     0x000000
-#define OBIO_ZS           0x020000
+#define OBIO_ZS_KBD_MS    0x000000
+#define OBIO_ZS_TTY_AB    0x020000
 #define OBIO_EEPROM       0x040000
 #define OBIO_CLOCK        0x060000
 #define OBIO_MEMERR       0x080000
