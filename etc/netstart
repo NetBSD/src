@@ -4,7 +4,7 @@
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
-sendmail_flags="-bd -q30m"
+sendmail_flags=NO	# for 'normal' use: sendmail_flags="-bd -q30m"
 timed_flags=
 
 # set the following to "YES" to turn them on
