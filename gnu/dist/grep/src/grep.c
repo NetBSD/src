@@ -1015,6 +1015,9 @@ main (argc, argv)
   FILE *fp;
   extern char *optarg;
   extern int optind;
+#ifdef __NetBSD__
+  extern char *__progname;
+#endif
 
   initialize_main (&argc, &argv);
   prog = argv[0];
@@ -1287,7 +1290,11 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"))
       usage (2);
 
   if (! matcher)
+#ifdef __NetBSD__
+    matcher = __progname;
+#else
     matcher = default_matcher;
+#endif
 
   if (!setmatcher (matcher) && !setmatcher ("default"))
     abort ();
