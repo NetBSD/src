@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.8 1996/12/20 21:35:10 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.9 1997/01/17 22:09:09 mycroft Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -82,8 +82,8 @@
 int     bha_debug = 0;
 #endif /* BHADEBUG */
 
-int	bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
-		     int, u_char *, int, u_char *));
+int bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
+		 int, u_char *, int, u_char *));
 integrate void bha_finish_ccbs __P((struct bha_softc *));
 integrate void bha_reset_ccb __P((struct bha_softc *, struct bha_ccb *));
 void bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
@@ -150,7 +150,6 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	int wait;
 	u_char sts;
 	u_char opcode = ibuf[0];
-	int rbytes;	/* bytes returned in obuf */
 
 	if (sc != NULL)
 		name = sc->sc_dev.dv_xname;
@@ -184,7 +183,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: bha_cmd, host not idle(0x%x)\n",
 			    name, sts);
-			return (-1);
+			return (1);
 		}
 	}
 	/*
@@ -211,9 +210,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 			if (opcode != BHA_INQUIRE_REVISION)
 				printf("%s: bha_cmd, cmd/data port full\n",
 				    name);
-			bus_space_write_1(iot, ioh, BHA_CTRL_PORT,
-			    BHA_CTRL_SRST);
-			return (-1);
+			goto bad;
 		}
 		bus_space_write_1(iot, ioh, BHA_CMD_PORT, *ibuf++);
 	}
@@ -221,8 +218,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 * If we expect input, loop that many times, each time,
 	 * looking for the data register to have valid data
 	 */
-	rbytes = 0;
-	while (rbytes < ocnt) {
+	while (ocnt--) {
 		for (i = wait; i; i--) {
 			sts = bus_space_read_1(iot, ioh, BHA_STAT_PORT);
 			if (sts & BHA_STAT_DF)
@@ -233,12 +229,9 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 			if (opcode != BHA_INQUIRE_REVISION)
 				printf("%s: bha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
-			bus_space_write_1(iot, ioh, BHA_CTRL_PORT,
-			    BHA_CTRL_SRST);
-			return (-1);
+			goto bad;
 		}
 		*obuf++ = bus_space_read_1(iot, ioh, BHA_DATA_PORT);
-		rbytes++;
 	}
 	/*
 	 * Wait for the board to report a finished instruction.
@@ -256,11 +249,15 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 		if (!i) {
 			printf("%s: bha_cmd, host not finished(0x%x)\n",
 			    name, sts);
-			return (-1);
+			return (1);
 		}
 	}
 	bus_space_write_1(iot, ioh, BHA_CTRL_PORT, BHA_CTRL_IRST);
-	return (rbytes);
+	return (0);
+
+bad:
+	bus_space_write_1(iot, ioh, BHA_CTRL_PORT, BHA_CTRL_SRST);
+	return (1);
 }
 
 /*
@@ -785,8 +782,8 @@ bha_find(iot, ioh, sc)
 	inquire.cmd.opcode = BHA_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
 	i = bha_cmd(iot, ioh, sc,
-		    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
-		    sizeof(inquire.reply), (u_char *)&inquire.reply);
+	    sizeof(inquire.cmd), (u_char *)&inquire.cmd,
+	    sizeof(inquire.reply), (u_char *)&inquire.reply);
 
 	/*
 	 * Some 1542Cs (CP, perhaps not CF, may depend on firmware rev)
@@ -794,7 +791,7 @@ bha_find(iot, ioh, sc)
 	 * BHA_INQUIRE_EXTENDED.  Make sure we never  match such cards,
 	 * by checking the size of the reply is what a BusLogic card returns.
 	 */
-	if (i != sizeof(inquire.reply)) {
+	if (i) {
 #ifdef BHADEBUG
 		printf("bha_find: board returned %d instead of %d to %s\n",
 		       i, sizeof(inquire.reply), "INQUIRE_EXTENDED");
