@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.14 1996/04/18 01:12:41 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.15 1996/04/29 16:06:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -93,7 +93,7 @@ tcattach(parent, self, aux)
 	tc_addr_t tcaddr;
 	int i;
 
-	printf("%s MHz clock\n",
+	printf(": %s MHz clock\n",
 	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");
 
 	/*
