@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/12/02 07:22:48 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/12/08 10:17:12 pk Exp $
 
 PROG=	ldd
 SRCS=	ldd.c
