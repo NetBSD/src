@@ -1,4 +1,4 @@
-/*	$NetBSD: protos.h,v 1.4 1998/06/08 06:53:48 lukem Exp $	*/
+/*	$NetBSD: protos.h,v 1.5 2002/07/06 21:39:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,4 +36,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	localhostname __P((char *, size_t));
+void	localhostname(char *, size_t);

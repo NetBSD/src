@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.17 2001/02/19 23:22:50 cgd Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.18 2002/07/06 21:33:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.17 2001/02/19 23:22:50 cgd Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.18 2002/07/06 21:33:25 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -57,18 +57,16 @@ __RCSID("$NetBSD: makedbm.c,v 1.17 2001/02/19 23:22:50 cgd Exp $");
 #include "ypdb.h"
 #include "ypdef.h"
 
-int	main __P((int, char *[]));
-void	usage __P((void));
-int	add_record __P((DBM *, char *, char *, int));
-char	*file_date __P((char *));
-void	list_database __P((char *));
-void	create_database __P((char *, char *, char *, char *,
-	    char *, char *, int, int, int));
+int	main(int, char *[]);
+void	usage(void);
+int	add_record(DBM *, char *, char *, int);
+char	*file_date(char *);
+void	list_database(char *);
+void	create_database(char *, char *, char *, char *, char *, char *,
+			int, int, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int aflag, uflag, bflag, lflag, sflag;
 	char *yp_input_file, *yp_output_file;
@@ -153,10 +151,7 @@ main(argc, argv)
 }
 
 int
-add_record(db, str1, str2, check)
-	DBM *db;
-	char *str1, *str2;
-	int check;
+add_record(DBM *db, char *str1, char *str2, int check)
 {
 	datum key, val;
 	int status;
@@ -182,8 +177,7 @@ add_record(db, str1, str2, check)
 }
 
 char *
-file_date(filename)
-	char *filename;
+file_date(char *filename)
 {
 	struct stat finfo;
 	static char datestr[11];
@@ -204,8 +198,7 @@ file_date(filename)
 }
 
 void
-list_database(database)
-	char *database;
+list_database(char *database)
 {
 	DBM *db;
 	datum key, val;
@@ -235,11 +228,9 @@ list_database(database)
 }
 
 void
-create_database(infile, database, yp_input_file, yp_output_file,
-    yp_master_name, yp_domain_name, bflag, lflag, sflag)
-	char *infile, *database, *yp_input_file, *yp_output_file;
-	char *yp_master_name, *yp_domain_name;
-	int bflag, lflag, sflag;
+create_database(char *infile, char *database, char *yp_input_file,
+		char *yp_output_file, char *yp_master_name,
+		char *yp_domain_name, int bflag, int lflag, int sflag)
 {
 	FILE *data_file;
 	char myname[MAXHOSTNAMELEN];
@@ -368,7 +359,7 @@ bad_record:
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s -u file\n", getprogname());
