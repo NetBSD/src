@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.64 2002/08/02 10:28:17 grant Exp $ */
+/*	$NetBSD: md.c,v 1.65 2002/09/04 14:22:20 jdolecek Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -342,6 +342,15 @@ custom:
 
 #define p l.d_partitions[i]
 		for (i = 0; i < maxpart; i++) {
+			/*
+			 * Make sure to not overwrite the NetBSD partition
+			 * with blank values. Might happen when MBR doesn't
+			 * contain any NetBSD entry yet, and the disklabel
+			 * is fabricated by kernel.
+			 */
+			if (i == 2 && p.p_size == 0)
+				continue;
+
 			bsdlabel[i].pi_size = p.p_size;
 			bsdlabel[i].pi_offset = p.p_offset;
 			bsdlabel[i].pi_fstype = p.p_fstype;
