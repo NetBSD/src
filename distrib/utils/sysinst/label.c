@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.7 1998/11/08 02:56:27 jonathan Exp $	*/
+/*	$NetBSD: label.c,v 1.8 1999/01/21 08:02:18 garbled Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.7 1998/11/08 02:56:27 jonathan Exp $");
+__RCSID("$NetBSD: label.c,v 1.8 1999/01/21 08:02:18 garbled Exp $");
 #endif
 
 #include <sys/types.h>
@@ -210,12 +210,18 @@ savenewlabel(lp, nparts)
 	f = fopen("/tmp/disktab", "a");
 #else
 	/* Create the disktab.preinstall */
-	run_prog("cp /etc/disktab.preinstall /etc/disktab");
+	run_prog(0, 0, "cp /etc/disktab.preinstall /etc/disktab");
 	f = fopen("/etc/disktab", "a");
 #endif
+	if (logging)
+		(void)fprintf(log, "Creating disklabel %s\n", bsddiskname);
+	if (scripting)
+		(void)fprintf(script, "cat <<EOF >>/etc/disktab\n");
 	if (f == NULL) {
 		endwin();
 		(void)fprintf(stderr, "Could not open /etc/disktab");
+		if (logging)
+			(void)fprintf(log, "Failed to open /etc/diskabel for appending.\n");
 		exit (1);
 	}
 	(void)fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
@@ -223,22 +229,47 @@ savenewlabel(lp, nparts)
 	(void)fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
 	(void)fprintf(f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
 	(void)fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
+	if (scripting) {
+		(void)fprintf(script, "%s|NetBSD installation generated:\\\n", bsddiskname);
+		(void)fprintf(script, "\t:dt=%s:ty=winchester:\\\n", disktype);
+		(void)fprintf(script, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
+		(void)fprintf(script, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
+		(void)fprintf(script, "\t:se#%d:%s\\\n", sectorsize, doessf);
+	}
 	for (i = 0; i < nparts; i++) {
 		(void)fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 		    'a'+i, bsdlabel[i][D_SIZE],
 		    'a'+i, bsdlabel[i][D_OFFSET],
 		    'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
+		if (scripting)
+			(void)fprintf(script, "\t:p%c#%d:o%c#%d:t%c=%s:",
+			    'a'+i, bsdlabel[i][D_SIZE],
+			    'a'+i, bsdlabel[i][D_OFFSET],
+			    'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
+		if (bsdlabel[i][D_FSTYPE] == T_42BSD) {
 			(void)fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
 				       'a'+i, bsdlabel[i][D_BSIZE],
 				       'a'+i, bsdlabel[i][D_FSIZE]);
+			if (scripting)
+				(void)fprintf (script, "b%c#%d:f%c#%d:ta=4.2BSD:",
+					       'a'+i, bsdlabel[i][D_BSIZE],
+					       'a'+i, bsdlabel[i][D_FSIZE]);
+		}
 		if (i < 7)
 			(void)fprintf(f, "\\\n");
 		else
 			(void)fprintf(f, "\n");
+		if (scripting) {
+			if (i < 7)
+				(void)fprintf(script, "\\\n");
+			else
+				(void)fprintf(script, "\n");
+		}
 	}
 	fclose (f);
-
+	if (scripting)
+		(void)fprintf(script, "EOF\n");
+	fflush(NULL);
 	return(0);
 }
 
@@ -300,7 +331,7 @@ incorelabel(dkname, lp)
 		return(errno);
 	}
 	close(fd);
-
+	touchwin(stdscr);
 	maxpart = getmaxpartitions();
 	if (maxpart > 16)
 		maxpart = 16;
