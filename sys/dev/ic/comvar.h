@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.30 1999/02/03 23:20:33 mycroft Exp $	*/
+/*	$NetBSD: comvar.h,v 1.31 2000/01/23 21:06:01 soda Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -53,6 +53,7 @@ int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
 #define	COM_HW_DEV_OK	0x20
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
+#define	COM_HW_TXFIFO_DISABLE	0x100
 
 /* Buffer size for character buffer */
 #define	COM_RING_SIZE	2048
@@ -137,9 +138,6 @@ int com_detach __P((struct device *, int));
 int com_activate __P((struct device *, enum devact));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
-#if defined(arc)
-#define	__NO_SOFT_SERIAL_INTERRUPT
-#endif
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 #define	IPL_SERIAL	IPL_TTY
 #define	splserial()	spltty()

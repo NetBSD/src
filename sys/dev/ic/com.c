@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.165 1999/12/21 11:04:36 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.166 2000/01/23 21:06:01 soda Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -484,6 +484,10 @@ com_attach_subr(sc)
 	else
 		printf(": ns8250 or ns16450, no fifo\n");
 	bus_space_write_1(iot, ioh, com_fifo, 0);
+	if (ISSET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE)) {
+		sc->sc_fifolen = 1;
+		printf("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
+	}
 #ifdef COM_HAYESP
 	}
 #endif
