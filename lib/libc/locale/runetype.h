@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.16 2003/03/11 17:23:07 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.17 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -50,7 +50,7 @@
 #define UINT32_C(c) ((uint32_t)(c##U))
 #endif
 
-typedef int32_t		__nbrune_t;
+typedef uint32_t	__nbrune_t;
 typedef uint64_t	__runepad_t;
 
 #define	_NB_CACHED_RUNES	(1 << 8)	/* Must be a power of 2 */

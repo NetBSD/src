@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsncmp.c,v 1.3 2001/01/05 12:13:13 itojun Exp $	*/
+/*	$NetBSD: wcsncmp.c,v 1.4 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)strncmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wcsncmp.c,v 1.3 2001/01/05 12:13:13 itojun Exp $");
+__RCSID("$NetBSD: wcsncmp.c,v 1.4 2003/04/06 18:33:23 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <wchar.h>
+#include "locale/runetype.h"
 
 int
 wcsncmp(s1, s2, n)
@@ -59,8 +60,8 @@ wcsncmp(s1, s2, n)
 	do {
 		if (*s1 != *s2++) {
 			/* XXX assumes wchar_t = int */
-			return (*(const unsigned int *)s1 -
-			    *(const unsigned int *)--s2);
+			return (*(const __nbrune_t *)s1 -
+			    *(const __nbrune_t *)--s2);
 		}
 		if (*s1++ == 0)
 			break;

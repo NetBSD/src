@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans.c,v 1.3 2003/03/11 17:23:07 tshiozak Exp $	*/
+/*	$NetBSD: _wctrans.c,v 1.4 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctrans.c,v 1.3 2003/03/11 17:23:07 tshiozak Exp $");
+__RCSID("$NetBSD: _wctrans.c,v 1.4 2003/04/06 18:33:23 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -102,14 +102,15 @@ _towctrans_ext(wint_t c, struct _WCTransEntry *te)
 	_RuneRange *rr = te->te_extmap;
 	_RuneEntry *re = rr->rr_rune_ranges;
 
-	if (c < 0 || c == WEOF)
+	if (c == WEOF)
 		return(c);
 
 	for (x = 0; x < rr->rr_nranges; ++x, ++re) {
-		if (c < re->re_min)
+		/* XXX assumes wchar_t = int */
+		if ((__nbrune_t)c < re->re_min)
 			return(c);
-		if (c <= re->re_max)
-			return(re->re_map + c - re->re_min);
+		if ((__nbrune_t)c <= re->re_max)
+			return(re->re_map + (__nbrune_t)c - re->re_min);
 	}
 	return(c);
 }
