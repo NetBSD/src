@@ -1,4 +1,4 @@
-/* $Id: pthread_sa.c,v 1.1.2.1 2001/03/05 23:51:59 nathanw Exp $ */
+/* $Id: pthread_sa.c,v 1.1.2.2 2001/07/13 02:16:24 nathanw Exp $ */
 
 /* Copyright */
 
@@ -16,7 +16,7 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
-extern struct pt_list_t allqueue;
+extern struct pt_queue_t allqueue;
 
 stack_t recyclable[2][(PT_UPCALLSTACKS/2)+1];
 int	recycle_count;
@@ -401,7 +401,7 @@ pthread__sa_start(void)
 		t->pt_flags = PT_FLAG_DETACHED;
 		sigfillset(&t->pt_sigmask); /* XXX hmmmmmm */
 		/* No locking needed, there are no threads yet. */
-		LIST_INSERT_HEAD(&allqueue, t, pt_allq);
+		PTQ_INSERT_HEAD(&allqueue, t, pt_allq);
 	}
 
 	recycle_threshold = PT_UPCALLSTACKS/2;
