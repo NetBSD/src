@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.79 1998/07/27 20:04:10 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.80 1998/07/27 21:37:17 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.72 1998/07/27 20:02:27 augustss Exp 
+ *	NetBSD: pcidevs,v 1.73 1998/07/27 21:34:11 tron Exp 
  */
 
 /*
@@ -624,6 +624,10 @@
 
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME Interface Mod. 617 */
+
+/* Brooktree products */
+#define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* Brooktree Bt848 Video Capture */
+#define	PCI_PRODUCT_BROOKTREE_BT849	0x0351		/* Brooktree Bt848 Video Capture */
 
 /* BusLogic products */
 #define	PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC	0x0140		/* MultiMaster NC */
