@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.61 2002/12/07 00:51:21 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.62 2002/12/07 23:30:40 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2095,3 +2095,223 @@ usr.sbin/mtrace/mtrace.c			deleted
 	Move mrouted out of basesrc, as it carries a non-BSD
 	license.
 	[itojun, tickets #886, #887, #888]
+
+sys/arch/arm/xscale/files.i80321		1.3
+sys/arch/arm/xscale/i80321.c			1.3
+sys/arch/arm/xscale/i80321var.h			1.2
+sys/arch/arm/xscale/i80321_local_dma.c		1.1 (new)
+
+	Add support for DMA to/from the on-chip devices of the
+	i80321.
+	[thorpej, ticket #568]
+
+sys/arch/arm/arm32/bus_dma.c			1.13-1.14
+sys/arch/arm/include/bus.h			1.5
+sys/arch/arm/xscale/i80312_pci_dma.c		1.4
+sys/arch/arm/xscale/i80321_pci_dma.c		1.4
+sys/arch/arm/xscale/i80321_local_dma.c		1.2
+sys/arch/evbarm/integrator/int_bus_dma.c	1.9
+
+	Remove warning from bus_dmamap_destroy().
+	Change the way DMA map syncs are done.  Instead of remembering
+	the virtual address for each DMA segment, just cache a
+	pointer to the original buffer/buftype used to load the
+	DMA map, and use that.  Shrinks bus_dma_segment_t from 12
+	to 8 bytes, and the cache flushing is also more efficient.
+	[thorpej, ticket #568]
+
+sys/arch/arm/arm32/bus_dma.c			1.16
+
+	When making a mapping ``coherent'', clear *all* the cache
+	bits, not just L2_B and L2_C.
+	[thorpej, ticket #678]
+
+sys/arch/arm/arm/cpufunc.c			1.53
+
+	Enable branch prediction and write coalescing on XScale.
+	[thorpej, ticket #703]
+
+sys/arch/arm/arm/bus_space_asm_generic.S	1.2
+
+	Add generic_bs_sr_4.
+	[briggs, ticket #748]
+
+sys/arch/arm/include/arm32/vmparam.h		1.10
+sys/arch/arm/arm32/pmap.c			1.105
+
+	Add code, conditional on PMAP_ALIAS_DEBUG, which can be
+	used to hunt for virtual aliases between managed (pmap_enter)
+	and unmanaged (pmap_kenter_pa) mappings.
+	[thorpej, ticket #714]
+
+sys/arch/arm/arm32/pmap.c			1.111
+
+	Use a pool cache for PT-PTs.
+	[thorpej, ticket #714]
+
+sys/arch/arm/xscale/i80312_space.c		1.4
+sys/arch/arm/xscale/i80321_space.c		1.3
+
+	Use generic_bs_sr_4 for bus_space_set_region_4.
+	[briggs, ticket #749]
+
+sys/arch/sparc64/sparc64/conf.c			patch
+etc/etc.sparc64/MAKEDEV				1.40
+share/man/man8/man8.sparc64/MAKEDEV.8		1.17
+
+	Add support for various USB devices.
+	[martin, ticket #873]
+
+sys/arch/vax/conf/GENERIC			1.104-1.105
+
+	Enable ppp and PPP_* options.
+	[abs, ticket #889]
+
+sys/arch/sparc64/dev/zs.c			1.36
+sys/arch/sparc64/include/z8530var.h		1.6
+
+	Allow sparc64 kernels to be compiled without kbd.
+	[abs, ticket #890]
+
+lib/libc/locale/towlower.3			1.4
+
+	Replace duplicate towlower with towupper.
+	[junyoung, ticket #893]
+
+sys/arch/vax/include/asm.h			1.15
+
+	Use the register prefix in the ELF case in _PROF_PROLOGUE.
+	[thorpej, ticket #894]
+
+gnu/dist/toolchain/gcc/config/vax/netbsd-elf.h	1.8
+
+	__mcount uses jsb linkage, so there is no need to skip the
+	(non-existent) register save mask.  Profiling now works.
+	Also, use asm_fprintf() in FUNCTION_PROFILER.
+	[thorpej, ticket #895]
+
+usr.sbin/cron/popen.c				1.7
+sys/dev/isa/spkr.c				1.11
+lib/libc/time/strftime.c			1.14
+
+	License / copyright clarifications.
+	[itojun, ticket #896]
+
+usr.sbin/lpr/lpd/lpd.8				1.27 via patch
+usr.sbin/lpr/lpd/printjob.c			1.35-1.36 via patch
+
+	When ``-r'' is given, actually pass the file through ``of'',
+	and also enable ``if''.
+	[abs, ticket #906]
+
+sys/arch/sparc/include/types.h			1.30
+sys/arch/sparc64/include/rnd.h			1.1 (new)
+
+	All sparc64 CPUs do __HAVE_CPU_COUNTER (aka %tick).
+	[martin, ticket #907]
+
+sys/arch/sparc/dev/zs.c				1.92
+
+	Check only the physical address of serial ports on a Sun4.
+	[jdc, ticket #908]
+
+etc/root/dot.profile				1.16
+
+	Use /root instead of ${HOME}, so that $ENV points to the
+	right place when in single user mode.
+	[abs, ticket #909]
+
+sys/dev/mii/pnaphy.c				1.9
+
+	Fix media detection on this PHY.  Part of fix for PR#18590.
+	[fair, ticket #912]
+
+share/misc/country				1.9
+
+	Update to 20 May 2002 version.
+	[kleink, ticket #913]
+
+share/misc/domains				1.4
+
+	Update list to 26 Nov 2002 data.  Re-sort, and capitalize
+	country names.
+	[kleink, ticket #914]
+
+lib/libc/gen/basename.3				1.8
+lib/libc/gen/dirname.3				1.8
+lib/libc/gen/basename.c				1.5
+lib/libc/gen/dirname.c				1.6
+
+	Change basename(3) and dirname(3) to return a pointer to
+	static storage instead of modifying their arguments.  Fixes
+	PR#18647.
+	[thorpej, ticket #918]
+
+share/zoneinfo/asia				1.1.1.23
+share/zoneinfo/australasia			1.1.1.22
+share/zoneinfo/iso3166.tab			1.1.1.7
+share/zoneinfo/southamerica			1.1.1.21
+share/zoneinfo/zone.tab				1.1.1.18
+
+	Update to tzdata2002d.
+	[kleink, ticket #919]
+
+gnu/dist/toolchain/gcc/config/alpha/alpha.c	1.4
+
+	In alpha_initialize_trampoline, use tramp, not addr, to
+	pass the trampoline address to __enable_execute_stack.
+	Otherwise, incorrect behaviour would result if the trampoline
+	happened to straddle a page boundary.
+	[thorpej, ticket #921]
+
+lib/libc/rpc/rpcb_clnt.c			1.11
+
+	Add missing __rpc_fixup_addr.  This is needed to make
+	mount_nfs -T work for scoped addresses.
+	[yamt, ticket #924]
+
+crypto/dist/kame/racoon/samples/racoon.conf.sample	1.6
+
+	Discourage the use of aggressive mode for identity disclosure.
+	[itojun, ticket #928]
+
+dist/tcpdump/print-atalk.c			1.5
+dist/tcpdump/print-ip.c				1.5 via patch
+dist/tcpdump/print-ip6.c			1.4
+usr.sbin/tcpdump/Makefile			1.30
+
+	Correct LBL_ALIGN behaviour, sync with tcpdump.org.
+	Enable LBL_ALIGN codepath to use byte-by-byte fetch
+	in extract.h.  Fixes PR#18688 and PR#18398.
+	[itojun, ticket #933]
+
+include/heimdal/version.h			patch
+
+	Bump version number by affixing ``-nb1''.  This is to signal
+	that we have a minor fix on-board relative to the original.
+	[joda, ticket #936]
+
+sys/dev/ic/tulip.c				1.121
+
+	Check existence of the default 10baseT media for 21140.
+	If none exists, fall back to the first.
+	[minoura, ticket #943]
+
+sys/arch/i386/pci/pci_machdep.c			1.46
+
+	Add a quirk for Connectix Virtual PC 5 (for Windows, at
+	least) emulated PCI bridge (440BX).
+	[minoura, ticket #944]
+
+usr.sbin/lpr/lpd/printjob.c			1.37
+usr.sbin/lpr/lpd/recvjob.c			1.17
+
+	Rather than relying on pure luck to get the log file on
+	STDERR_FILENO, explicitly dup2 the log file descriptor to
+	STDERR_FILENO and close the original.
+	[thorpej, ticket #947]
+
+usr.bin/pkill/pkill.c				1.5
+
+	Add missing ``-u euid'' option to opstring.  Fixes PR#18827.
+	[kleink, ticket #949]
