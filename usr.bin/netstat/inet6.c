@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.4 1999/11/19 10:44:33 bouyer Exp $	*/
+/*	$NetBSD: inet6.c,v 1.5 1999/12/13 15:22:55 itojun Exp $	*/
 
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
@@ -39,13 +39,14 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.4 1999/11/19 10:44:33 bouyer Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.5 1999/12/13 15:22:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 
@@ -60,6 +61,7 @@ __RCSID("$NetBSD: inet6.c,v 1.4 1999/11/19 10:44:33 bouyer Exp $");
 #include <netinet/ip_var.h>
 #endif
 #include <netinet6/in6_pcb.h>
+#include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #ifdef TCP6
 #include <netinet6/tcp6.h>
@@ -110,8 +112,6 @@ struct	socket sockb;
 char	*inet6name __P((struct in6_addr *));
 void	inet6print __P((struct in6_addr *, int, char *));
 
-static char ntop_buf[INET6_ADDRSTRLEN];
-
 /*
  * Print a summary of connections related to an Internet
  * protocol.  For TCP, also give state of connection.
@@ -143,7 +143,7 @@ ip6protopr(off, name)
 			printf("???\n");
 			break;
 		}
-		if (!aflag && IN6_IS_ADDR_ANY(&in6pcb.in6p_laddr)) {
+		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr)) {
 			prev = next;
 			continue;
 		}
@@ -657,8 +657,73 @@ ip6_stats(off, name)
 	p(ip6s_exthdrtoolong,
 		"\t%llu packet%s whose headers are not continuous\n");
 	p(ip6s_nogif, "\t%llu tunneling packet%s that can't find gif\n");
+	p(ip6s_toomanyhdr, "\t%qu packet%s discarded due to too many headers\n");
+	p(ip6s_pulldown, "\t%qu call%s to m_pulldown\n");
+	p(ip6s_pulldown_alloc, "\t%qu mbuf allocation%s in m_pulldown\n");
+	if (ip6stat.ip6s_pulldown_copy != 1) {
+		p1(ip6s_pulldown_copy, "\t%qu mbuf copies in m_pulldown\n");
+	} else {
+		p1(ip6s_pulldown_copy, "\t%qu mbuf copy in m_pulldown\n");
+	}
 #undef p
 #undef p1
+}
+
+/*
+ * Dump IPv6 per-interface statistics based on RFC 2465.
+ */
+void
+ip6_ifstats(ifname)
+	char *ifname;
+{
+	struct in6_ifreq ifr;
+	int s;
+#define	p(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
+    printf(m, ifr.ifr_ifru.ifru_stat.f, plural(ifr.ifr_ifru.ifru_stat.f))
+#define	p_5(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
+    printf(m, ip6stat.f)
+
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+		perror("Warning: socket(AF_INET6)");
+		return;
+	}
+
+	strcpy(ifr.ifr_name, ifname);
+	printf("ip6 on %s:\n", ifr.ifr_name);
+
+	if (ioctl(s, SIOCGIFSTAT_IN6, (char *)&ifr) < 0) {
+		perror("Warning: ioctl(SIOCGIFSTAT_IN6)");
+		goto end;
+	}
+
+	p(ifs6_in_receive, "\t%llu total input datagram%s\n");
+	p(ifs6_in_hdrerr, "\t%llu datagram%s with invalid header received\n");
+	p(ifs6_in_toobig, "\t%llu datagram%s exceeded MTU received\n");
+	p(ifs6_in_noroute, "\t%llu datagram%s with no route received\n");
+	p(ifs6_in_addrerr, "\t%llu datagram%s with invalid dst received\n");
+	p(ifs6_in_truncated, "\t%llu truncated datagram%s received\n");
+	p(ifs6_in_protounknown, "\t%llu datagram%s with unknown proto received\n");
+	p(ifs6_in_discard, "\t%llu input datagram%s discarded\n");
+	p(ifs6_in_deliver,
+	  "\t%llu datagram%s delivered to an upper layer protocol\n");
+	p(ifs6_out_forward, "\t%llu datagram%s forwarded to this interface\n");
+	p(ifs6_out_request,
+	  "\t%llu datagram%s sent from an upper layer protocol\n");
+	p(ifs6_out_discard, "\t%llu total discarded output datagram%s\n");
+	p(ifs6_out_fragok, "\t%llu output datagram%s fragmented\n");
+	p(ifs6_out_fragfail, "\t%llu output datagram%s failed on fragment\n");
+	p(ifs6_out_fragcreat, "\t%llu output datagram%s succeeded on fragment\n");
+	p(ifs6_reass_reqd, "\t%llu incoming datagram%s fragmented\n");
+	p(ifs6_reass_ok, "\t%llu datagram%s reassembled\n");
+	p(ifs6_reass_fail, "\t%llu datagram%s failed on reassembling\n");
+	p(ifs6_in_mcast, "\t%llu multicast datagram%s received\n");
+	p(ifs6_out_mcast, "\t%llu multicast datagram%s sent\n");
+
+  end:
+	close(s);
+
+#undef p
+#undef p_5
 }
 
 static	char *icmp6names[] = {
@@ -792,9 +857,9 @@ static	char *icmp6names[] = {
 	"#127",
 	"echo",
 	"echo reply",	
-	"group member query",
-	"group member report",
-	"group member termination",
+	"multicast listener query",
+	"multicast listener report",
+	"multicast listener done",
 	"router solicitation",
 	"router advertisment",
 	"neighbor solicitation",
@@ -921,7 +986,7 @@ static	char *icmp6names[] = {
 };
 
 /*
- * Dump ICMP6 statistics.
+ * Dump ICMPv6 statistics.
  */
 void
 icmp6_stats(off, name)
@@ -965,6 +1030,73 @@ icmp6_stats(off, name)
 				(unsigned long long)icmp6stat.icp6s_inhist[i]);
 		}
 	p(icp6s_reflect, "\t%llu message response%s generated\n");
+	p(icp6s_nd_toomanyopt, "\t%llu message%s with too many ND options\n");
+#undef p
+}
+
+/*
+ * Dump ICMPv6 per-interface statistics based on RFC 2466.
+ */
+void
+icmp6_ifstats(ifname)
+	char *ifname;
+{
+	struct in6_ifreq ifr;
+	int s;
+#define	p(f, m) if (ifr.ifr_ifru.ifru_icmp6stat.f || sflag <= 1) \
+    printf(m, (u_quad_t)ifr.ifr_ifru.ifru_icmp6stat.f, plural(ifr.ifr_ifru.ifru_icmp6stat.f))
+
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+		perror("Warning: socket(AF_INET6)");
+		return;
+	}
+
+	strcpy(ifr.ifr_name, ifname);
+	printf("icmp6 on %s:\n", ifr.ifr_name);
+
+	if (ioctl(s, SIOCGIFSTAT_ICMP6, (char *)&ifr) < 0) {
+		perror("Warning: ioctl(SIOCGIFSTAT_ICMP6)");
+		goto end;
+	}
+
+	p(ifs6_in_msg, "\t%llu total input message%s\n");
+	p(ifs6_in_error, "\t%llu total input error message%s\n"); 
+	p(ifs6_in_dstunreach, "\t%llu input destination unreachable error%s\n");
+	p(ifs6_in_adminprohib, "\t%llu input administratively prohibited error%s\n");
+	p(ifs6_in_timeexceed, "\t%llu input time exceeded error%s\n");
+	p(ifs6_in_paramprob, "\t%llu input parameter problem error%s\n");
+	p(ifs6_in_pkttoobig, "\t%llu input packet too big error%s\n");
+	p(ifs6_in_echo, "\t%llu input echo request%s\n");
+	p(ifs6_in_echoreply, "\t%llu input echo reply%s\n");
+	p(ifs6_in_routersolicit, "\t%llu input router solicitation%s\n");
+	p(ifs6_in_routeradvert, "\t%llu input router advertisement%s\n");
+	p(ifs6_in_neighborsolicit, "\t%llu input neighbor solicitation%s\n");
+	p(ifs6_in_neighboradvert, "\t%llu input neighbor advertisement%s\n");
+	p(ifs6_in_redirect, "\t%llu input redirect%s\n");
+	p(ifs6_in_mldquery, "\t%llu input MLD query%s\n");
+	p(ifs6_in_mldreport, "\t%llu input MLD report%s\n");
+	p(ifs6_in_mlddone, "\t%llu input MLD done%s\n");
+
+	p(ifs6_out_msg, "\t%llu total output message%s\n");
+	p(ifs6_out_error, "\t%llu total output error message%s\n");
+	p(ifs6_out_dstunreach, "\t%llu output destination unreachable error%s\n");
+	p(ifs6_out_adminprohib, "\t%llu output administratively prohibited error%s\n");
+	p(ifs6_out_timeexceed, "\t%llu output time exceeded error%s\n");
+	p(ifs6_out_paramprob, "\t%llu output parameter problem error%s\n");
+	p(ifs6_out_pkttoobig, "\t%llu output packet too big error%s\n");
+	p(ifs6_out_echo, "\t%llu output echo request%s\n");
+	p(ifs6_out_echoreply, "\t%llu output echo reply%s\n");
+	p(ifs6_out_routersolicit, "\t%llu output router solicitation%s\n");
+	p(ifs6_out_routeradvert, "\t%llu output router advertisement%s\n");
+	p(ifs6_out_neighborsolicit, "\t%llu output neighbor solicitation%s\n");
+	p(ifs6_out_neighboradvert, "\t%llu output neighbor advertisement%s\n");
+	p(ifs6_out_redirect, "\t%llu output redirect%s\n");
+	p(ifs6_out_mldquery, "\t%llu output MLD query%s\n");
+	p(ifs6_out_mldreport, "\t%llu output MLD report%s\n");
+	p(ifs6_out_mlddone, "\t%llu output MLD done%s\n");
+
+  end:
+	close(s);
 #undef p
 }
 
@@ -1007,19 +1139,22 @@ inet6print(in6, port, proto)
 	char *proto;
 {
 #define GETSERVBYPORT6(port, proto, ret)\
-{\
+do {\
 	if (strcmp((proto), "tcp6") == 0)\
 		(ret) = getservbyport((int)(port), "tcp");\
 	else if (strcmp((proto), "udp6") == 0)\
 		(ret) = getservbyport((int)(port), "udp");\
 	else\
 		(ret) = getservbyport((int)(port), (proto));\
-};
+} while (0)
 	struct servent *sp = 0;
 	char line[80], *cp;
 	int width;
 
-	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inet6name(in6));
+	width = Aflag ? 12 : 16;
+	if (vflag && width < strlen(inet6name(in6)))
+		width = strlen(inet6name(in6));
+	sprintf(line, "%.*s.", width, inet6name(in6));
 	cp = index(line, '\0');
 	if (!nflag && port)
 		GETSERVBYPORT6(port, proto, sp);
@@ -1028,6 +1163,8 @@ inet6print(in6, port, proto)
 	else
 		sprintf(cp, "%d", ntohs((u_short)port));
 	width = Aflag ? 18 : 22;
+	if (vflag && width < strlen(line))
+		width = strlen(line);
 	printf(" %-*.*s", width, width, line);
 }
 
@@ -1046,6 +1183,13 @@ inet6name(in6p)
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
+	char hbuf[NI_MAXHOST];
+	struct sockaddr_in6 sin6;
+#ifdef KAME_SCOPEID
+	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflag = NI_NUMERICHOST;
+#endif
 
 	if (first && !nflag) {
 		first = 0;
@@ -1069,10 +1213,24 @@ inet6name(in6p)
 		strcpy(line, "*");
 	else if (cp)
 		strcpy(line, cp);
-	else 
-		sprintf(line, "%s",
-			inet_ntop(AF_INET6, (void *)in6p, ntop_buf,
-				sizeof(ntop_buf)));
+	else  {
+		memset(&sin6, 0, sizeof(sin6));
+		sin6.sin6_len = sizeof(sin6);
+		sin6.sin6_family = AF_INET6;
+		sin6.sin6_addr = *in6p;
+#ifdef KAME_SCOPEID
+		if (IN6_IS_ADDR_LINKLOCAL(in6p)) {
+			sin6.sin6_scope_id =
+				ntohs(*(u_int16_t *)&in6p->s6_addr[2]);
+			sin6.sin6_addr.s6_addr[2] = 0;
+			sin6.sin6_addr.s6_addr[3] = 0;
+		}
+#endif
+		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+				hbuf, sizeof(hbuf), NULL, 0, niflag))
+			strcpy(hbuf, "?");
+		sprintf(line, "%s", hbuf);
+	}
 	return (line);
 }
 

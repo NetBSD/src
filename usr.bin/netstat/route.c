@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43 1999/11/27 02:19:34 soren Exp $	*/
+/*	$NetBSD: route.c,v 1.44 1999/12/13 15:22:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.43 1999/11/27 02:19:34 soren Exp $");
+__RCSID("$NetBSD: route.c,v 1.44 1999/12/13 15:22:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,8 +140,7 @@ static void ntreestuff __P((void));
 static u_long forgemask __P((u_long));
 static void domask __P((char *, size_t, u_long, u_long));
 #ifdef INET6
-char *netname6 __P((struct in6_addr *, struct in6_addr *));
-static char ntop_buf[INET6_ADDRSTRLEN];
+char *netname6 __P((struct sockaddr_in6 *, struct in6_addr *));
 #endif 
 
 /*
@@ -230,15 +229,9 @@ pr_family(af)
 #define	WID_GW(af)	18	/* width of gateway column */
 #else
 /* width of destination/gateway column */
-#ifdef KAME_SCOPEID
-/* strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4 */
-#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
-#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
-#else
 /* strlen("fe80::aaaa:bbbb:cccc:dddd") == 25, strlen("/128") == 4 */
 #define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 29 : 18) : 18)
 #define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 25 : 18) : 18)
-#endif
 #endif /* INET6 */
 
 /*
@@ -248,6 +241,7 @@ void
 pr_rthdr(af)
 	int af;
 {
+
 	if (Aflag)
 		printf("%-8.8s ","Address");
 	printf("%-*.*s %-*.*s %-6.6s  %6.6s%8.8s %6.6s  %s\n",
@@ -405,6 +399,10 @@ np_rtentry(rtm)
 		p_sockaddr(sa, NULL, 0, 36);
 	else {
 		p_sockaddr(sa, NULL, rtm->rtm_flags, 16);
+#if 0
+		if (sa->sa_len == 0)
+			sa->sa_len = sizeof(long);
+#endif
 		sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
 		p_sockaddr(sa, NULL, 0, 18);
 	}
@@ -440,16 +438,29 @@ p_sockaddr(sa, mask, flags, width)
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct in6_addr *in6 = &((struct sockaddr_in6 *)sa)->sin6_addr;
+		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+#ifdef KAME_SCOPEID
+		struct in6_addr *in6 = &sa6->sin6_addr;
+
+		/*
+		 * XXX: This is a special workaround for KAME kernels.
+		 * sin6_scope_id field of SA should be set in the future.
+		 */
+		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(in6)) {
+		    /* XXX: override is ok? */
+		    sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)&in6->s6_addr[2]);
+		    *(u_short *)&in6->s6_addr[2] = 0;
+		}
+#endif
 
 		if (flags & RTF_HOST)
-			cp = routename6((char *)in6);
+			cp = routename6(sa6);
 		else if (mask) {
-			cp = netname6(in6,
-				&((struct sockaddr_in6 *)mask)->sin6_addr);
+			cp = netname6(sa6,
+				      &((struct sockaddr_in6 *)mask)->sin6_addr);
 		} else
-			cp = (char *)inet_ntop(AF_INET6, in6, ntop_buf,
-						sizeof(ntop_buf));
+			cp = netname6(sa6, NULL);
 		break;
 	    }
 #endif 
@@ -785,89 +796,121 @@ netname(in, mask)
 
 #ifdef INET6
 char *
-netname6(in6, mask)
-	struct in6_addr *in6;
+netname6(sa6, mask)
+	struct sockaddr_in6 *sa6;
 	struct in6_addr *mask;
 {
-	static char line[MAXHOSTNAMELEN + 1];
-	struct in6_addr net6;
+	static char line[NI_MAXHOST];
 	u_char *p;
 	u_char *lim;
 	int masklen, final = 0, illegal = 0;
-	int i;
+#ifdef KAME_SCOPEID
+	int flag = NI_WITHSCOPEID;
+#else
+	int flag = 0;
+#endif
+	int error;
 
-	net6 = *in6;
-	for (i = 0; i < sizeof(net6); i++)
-		net6.s6_addr[i] &= mask->s6_addr[i];
-	
-	masklen = 0;
-	lim = (u_char *)mask + 16;
-	for (p = (u_char *)mask; p < lim; p++) {
-		if (final && *p) {
-			illegal++;
-			continue;
-		}
+	if (mask) {
+		masklen = 0;
+		lim = (u_char *)mask + 16;
+		for (p = (u_char *)mask; p < lim; p++) {
+			if (final && *p) {
+				illegal++;
+				continue;
+			}
 
-		switch (*p & 0xff) {
-		case 0xff:
-			masklen += 8;
-			break;
-		case 0xfe:
-			masklen += 7;
-			final++;
-			break;
-		case 0xfc:
-			masklen += 6;
-			final++;
-			break;
-		case 0xf8:
-			masklen += 5;
-			final++;
-			break;
-		case 0xf0:
-			masklen += 4;
-			final++;
-			break;
-		case 0xe0:
-			masklen += 3;
-			final++;
-			break;
-		case 0xc0:
-			masklen += 2;
-			final++;
-			break;
-		case 0x80:
-			masklen += 1;
-			final++;
-			break;
-		case 0x00:
-			final++;
-			break;
-		default:
-			final++;
-			illegal++;
-			break;
+			switch (*p & 0xff) {
+			 case 0xff:
+				 masklen += 8;
+				 break;
+			 case 0xfe:
+				 masklen += 7;
+				 final++;
+				 break;
+			 case 0xfc:
+				 masklen += 6;
+				 final++;
+				 break;
+			 case 0xf8:
+				 masklen += 5;
+				 final++;
+				 break;
+			 case 0xf0:
+				 masklen += 4;
+				 final++;
+				 break;
+			 case 0xe0:
+				 masklen += 3;
+				 final++;
+				 break;
+			 case 0xc0:
+				 masklen += 2;
+				 final++;
+				 break;
+			 case 0x80:
+				 masklen += 1;
+				 final++;
+				 break;
+			 case 0x00:
+				 final++;
+				 break;
+			 default:
+				 final++;
+				 illegal++;
+				 break;
+			}
 		}
 	}
+	else
+		masklen = 128;
 
-	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(in6))
+	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr))
 		return("default");
 
 	if (illegal)
 		fprintf(stderr, "illegal prefixlen\n");
-	sprintf(line, "%s/%d", inet_ntop(AF_INET6, &net6, ntop_buf,
-					sizeof(ntop_buf)),
-				masklen);
+	if (nflag)
+		flag |= NI_NUMERICHOST;
+	error = getnameinfo((struct sockaddr *)sa6, sa6->sin6_len,
+			line, sizeof(line), NULL, 0, flag);
+	if (error)
+		strcpy(line, "invalid");
+
+	if (nflag)
+		sprintf(&line[strlen(line)], "/%d", masklen);
+
 	return line;
 }
 
 char *
-routename6(in6)
-	char *in6;
+routename6(sa6)
+	struct sockaddr_in6 *sa6;
 {
-	static char line[MAXHOSTNAMELEN + 1];
-	sprintf(line, "%s", inet_ntop(AF_INET6, in6, ntop_buf,
-				sizeof(ntop_buf)));
+	static char line[NI_MAXHOST];
+#ifdef KAME_SCOPEID
+	int flag = NI_WITHSCOPEID;
+#else
+	int flag = 0;
+#endif
+	/* use local variable for safety */
+	struct sockaddr_in6 sa6_local;
+	int error;
+
+	memset(&sa6_local, 0, sizeof(sa6_local));
+	sa6_local.sin6_family = AF_INET6;
+	sa6_local.sin6_len = sizeof(struct sockaddr_in6);
+	sa6_local.sin6_addr = sa6->sin6_addr;
+	sa6_local.sin6_scope_id = sa6->sin6_scope_id;
+
+	if (nflag)
+		flag |= NI_NUMERICHOST;
+
+	error = getnameinfo((struct sockaddr *)&sa6_local, sa6_local.sin6_len,
+			line, sizeof(line), NULL, 0, flag);
+	if (error)
+		strcpy(line, "invalid");
+
 	return line;
 }
 #endif /*INET6*/
