@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2002/02/13 16:25:35 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2002/02/17 21:01:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include "biconsdev.h"
 #include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
+#include "hd64465if.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +58,12 @@
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
+#include <sh3/cpu.h>
+#include <sh3/mmu.h>
+
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
 #if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -157,6 +160,7 @@ static int	__check_dram(paddr_t, paddr_t);
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 int		physmem;
+u_int32_t __sh_BBRA; //XXX
 
 void main(void);
 void machine_startup(int, char *[], struct bootinfo *);
@@ -185,7 +189,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	struct kloader_bootinfo kbi;
 
-	/* symbol table size */
+	/* Symbol table size */
 	symbolsize = 0;
 	if (memcmp(&end, ELFMAG, SELFMAG) == 0) {
 		Elf_Ehdr *eh = (void *)end;
@@ -196,28 +200,50 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 				symbolsize = sh->sh_offset + sh->sh_size;
 	}
 
-	/* clear BSS */
+	/* Clear BSS */
 	memset(edata, 0, end - edata);
 
-	/* initialize INTC */
-	SHREG_IPRA = 0;
-	SHREG_IPRB = 0;
-	SHREG_IPRC = 0;
-#if defined(SH7709) || defined(SH7709A) //XXX
-	SHREG_IPRD = 0;
-	SHREG_IPRE = 0;
-#endif
-#if defined(SH4) //XXX
-	hd64465_intr_disable();
-#endif
-	/* start to determine heap area */
-	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
-
-	/* setup bootinfo */
+	/* Setup bootinfo */
 	bootinfo = &kbi.bootinfo;
 	memcpy(bootinfo, bi, sizeof(struct bootinfo));
+	if (bootinfo->magic == BOOTINFO_MAGIC) {
+		platid.dw.dw0 = bootinfo->platid_cpu;
+		platid.dw.dw1 = bootinfo->platid_machine;
+	}
 
-	/* setup bootstrap options */
+	/* CPU initialize */
+	if (platid_match(&platid, &platid_mask_CPU_SH_3))
+		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
+	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
+		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
+
+	__sh_BBRA = CPU_IS_SH3 ? 0xffffffb8 : 0xff200008; //XXX
+
+	/* ICU initiailze */
+	switch (cpu_product) {
+	case CPU_PRODUCT_7709:
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7709A:
+		_reg_write_2(0xfffffee2, 0); /* IPRA */
+		_reg_write_2(0xfffffee4, 0); /* IPRB */
+		_reg_write_2(0xa4000016, 0); /* IPRC */
+		_reg_write_2(0xa4000018, 0); /* IPRD */
+		_reg_write_2(0xa400001a, 0); /* IPRE */
+		break;
+	case CPU_PRODUCT_7750:
+		_reg_write_2(0xffd00004, 0); /* IPRA */
+		_reg_write_2(0xffd00008, 0); /* IPRB */
+		_reg_write_2(0xffd0000c, 0); /* IPRC */
+		break;
+	}
+#if NHD64465IF > 0
+	hd64465_intr_disable();
+#endif
+
+	/* Start to determine heap area */
+	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
+
+	/* Setup bootstrap options */
 	makebootdev("wd0"); /* default boot device */
 	boothowto = 0;
 	for (i = 1; i < argc; i++) { /* skip 1st arg (kernel name). */
@@ -254,19 +280,13 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #endif
 		kernend += fssz;
 	}
-#endif
+#endif /* MFS */
 
 	/* 
-	 * start console 
+	 * Console
 	 */
-	/* serial console requires PCLOCK. estimate here */
-	clock_init();
-
+	clock_init();	/* serial console requires PCLOCK. estimate here */
 	sh3_pclock = clock_get_pclock();
-	if (bootinfo->magic == BOOTINFO_MAGIC) {
-		platid.dw.dw0 = bootinfo->platid_cpu;
-		platid.dw.dw1 = bootinfo->platid_machine;
-	}
 	consinit();
 #ifdef HPC_DEBUG_LCD
 	dbg_lcd_test();
@@ -324,7 +344,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	pagedir[PDSLOT_PTE] = pte;
 
 	/* set PageDirReg */
-	SHREG_TTB = (u_int)pagedir;
+	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
 
 	/* install trap handler */
 	memcpy(trap_base + 0x100, MonTrap100, MonTrap100_end - MonTrap100);
@@ -334,11 +354,8 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(trap_base));
 
 	/* enable MMU */
-#ifdef SH4
-	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV | MMUCR_SQMD;
-#else
-	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
-#endif
+	sh_mmu_start();
+
 	/* enable exception */
 	splraise(-1);
 	enable_intr();
@@ -489,9 +506,10 @@ cpu_reboot(int howto, char *bootstr)
 #endif
 	}
 
-#ifdef SH4 //XXX	
+#if NHD64465IF > 0
 	hd64465_intr_reboot();
 #endif
+
 	goto *(u_int32_t *)0xa0000000;
 	while (1)
 		;

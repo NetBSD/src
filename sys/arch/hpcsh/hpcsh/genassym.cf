@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2001/02/07 15:29:21 uch Exp $
+#	$NetBSD: genassym.cf,v 1.3 2002/02/17 21:01:18 uch Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -94,8 +94,3 @@ define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
 define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
 define	SIGF_SC			offsetof(struct sigframe, sf_sc)
 define	SC_EFLAGS		offsetof(struct sigcontext, sc_ssr)
-
-# XXX SH4 only
-ifdef MMUCR_VALIDBITS
-define	MMUCR_VALIDBITS		MMUCR_VALIDBITS
-endif
