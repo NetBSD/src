@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2001/01/22 13:56:59 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2001/02/05 13:10:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2001/01/22 13:56:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2001/02/05 13:10:07 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -709,19 +709,3 @@ cpu_intr(status, cause, pc, ipending)
 		softclock(NULL);
 	}
 }
-
-#ifdef EXEC_ECOFF
-#include <sys/exec_ecoff.h>
-
-int
-cpu_exec_ecoff_hook(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	extern struct emul emul_netbsd;
-
-	epp->ep_emul = &emul_netbsd;
-
-	return 0;
-}
-#endif
