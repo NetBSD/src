@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.1 2001/02/22 18:37:55 uch Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.2 2001/03/17 14:59:33 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.1 2001/02/22 18:37:55 uch Exp $";
+    "$Id: hpcfb.c,v 1.2 2001/03/17 14:59:33 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,6 @@ int	hpcfb_debug = 0;
 /*
  * currently experimental
 #define HPCFB_JUMP
-#define HPCFB_MULTI
 */
 
 struct hpcfb_vchar {
@@ -143,10 +142,8 @@ struct hpcfb_devconfig {
 #define HPCFB_DC_SCRTHREAD		0x20	/* in scroll thread or callout */
 #define HPCFB_DC_UPDATEALL		0x40	/* need to redraw all */
 #define HPCFB_DC_ABORT			0x80	/* abort redrawing */
-#ifdef HPCFB_MULTI
 	int dc_scrno;
 	int	dc_memsize;
-#endif /* HPCFB_MULTI */
 	u_char *dc_fbaddr;
 };
 
@@ -156,9 +153,7 @@ struct hpcfb_devconfig {
 struct hpcfb_softc {
 	struct	device sc_dev;
 	struct	hpcfb_devconfig *sc_dc;	/* device configuration */
-#ifdef HPCFB_MULTI
 	struct	hpcfb_devconfig *screens[HPCFB_MAX_SCREEN];
-#endif /* HPCFB_MULTI */
 	const struct hpcfb_accessops	*sc_accessops;
 	void *sc_accessctx;
 	int nscreens;
@@ -320,19 +315,15 @@ hpcfbattach(parent, self, aux)
 	sc->sc_accessctx = ha->ha_accessctx;
 
 	if (hpcfbconsole) {
-#ifdef HPCFB_MULTI
 		sc->screens[0] = 
-#endif /* HPCFB_MULTI */
 		sc->sc_dc = &hpcfb_console_dc;
 		sc->nscreens = 1;
 		hpcfb_console_dc.dc_sc = sc;
 	} else {
-#ifdef HPCFB_MULTI
 		sc->screens[0] = 
-#endif /* HPCFB_MULTI */
 		sc->sc_dc = (struct hpcfb_devconfig *)
 		    malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
-		sc->nscreens = 1;
+		sc->nscreens = 0; /* XXXX */
 		bzero(sc->sc_dc, sizeof(struct hpcfb_devconfig));
 		if (hpcfb_init(&ha->ha_fbconflist[0], sc->sc_dc) != 0) {
 			return;
@@ -347,15 +338,12 @@ hpcfbattach(parent, self, aux)
 	hpcfb_stdscreen.nrows = sc->sc_dc->dc_rows;
         hpcfb_stdscreen.ncols = sc->sc_dc->dc_cols;
 	hpcfb_stdscreen.capabilities = sc->sc_dc->dc_rinfo.ri_caps;
-	printf(": hpcrasops %dx%d pixels, %d colors, %dx%d chars: ",
+	printf(": hpcrasops %dx%d pixels, %d colors, %dx%d chars: multi",
 	       sc->sc_dc->dc_rinfo.ri_width,
 	       sc->sc_dc->dc_rinfo.ri_height,
 	       pow(2, sc->sc_dc->dc_rinfo.ri_depth),
 	       sc->sc_dc->dc_rinfo.ri_cols,
 	       sc->sc_dc->dc_rinfo.ri_rows);
-#ifdef HPCFB_MULTI
-	printf(" multi");
-#endif /* HPCFB_MULTI */
 	printf("\n");
 
 	/* Set video chip dependent CLUT if any. */
@@ -519,12 +507,8 @@ hpcfb_init(fbconf, dc)
 	dc->dc_scroll = 0;
 	callout_init(&dc->dc_scroll_ch);
 #endif /* HPCFB_JUMP */
-#if defined(HPCFB_MULTI)
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
-#endif /*  defined(HPCFB_MULTI) */
-#ifdef HPCFB_MULTI
 	dc->dc_scrno = 0;
-#endif /* HPCFB_MULTI */
 	/* hook rasops in hpcfb_ops */
 	rasops_emul = ri->ri_ops; /* struct copy */
 	ri->ri_ops = hpcfb_emulops; /* struct copy */
@@ -750,13 +734,10 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	long *attrp;
 {
 	struct hpcfb_softc *sc = v;
-#ifdef HPCFB_MULTI
 	struct hpcfb_devconfig *dc;
-#endif /* HPCFB_MULTI */
 
 	DPRINTF(("%s(%d): hpcfb_alloc_screen()\n", __FILE__, __LINE__));
 
-#ifdef HPCFB_MULTI
 	if (!hpcfbconsole && sc->nscreens > 0)	/* XXXXX */
 		return ENOMEM;
 
@@ -806,16 +787,6 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	sc->nscreens++;
 	*cookiep = dc; 
 	hpcfb_alloc_attr(*cookiep, 7, 0, 0, attrp);
-#else /* HPCFB_MULTI */
-	if (sc->nscreens > 0)
-		return (ENOMEM);
-	*curxp = 0;
-	*curyp = 0;
-	sc->nscreens++;
-	*cookiep = &sc->sc_dc->dc_rinfo;
-	sc->sc_dc->dc_rinfo.ri_ops.alloc_attr(*cookiep, 
-					      7, 0, 0, attrp);
-#endif /* HPCFB_MULTI */
 	return (0);
 }
 
@@ -826,16 +797,9 @@ hpcfb_free_screen(v, cookie)
 {
 	struct hpcfb_softc *sc = v;
 
-#ifdef HPCFB_MULTI
 	if (sc->nscreens == 1 && sc->sc_dc == &hpcfb_console_dc)
 		panic("hpcfb_free_screen: console");
 	sc->nscreens--;
-#else /* HPCFB_MULTI */
-	if (sc->sc_dc == &hpcfb_console_dc)
-		panic("hpcfb_free_screen: console");
-
-	sc->nscreens--;
-#endif /* HPCFB_MULTI */
 }
 
 static int
@@ -847,14 +811,11 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *cbarg;
 {
 	struct hpcfb_softc *sc = v;
-#ifdef HPCFB_MULTI
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
 	struct hpcfb_devconfig *odc;
-#endif /* HPCFB_MULTI */
 
 	DPRINTF(("%s(%d): hpcfb_show_screen()\n", __FILE__, __LINE__));
 
-#ifdef HPCFB_MULTI
 	odc = sc->sc_dc;
 
 	if (dc == NULL || odc == dc) {
@@ -873,12 +834,6 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 
 	hpcfb_doswitch(sc);
 	return 0;
-#else /* HPCFB_MULTI */
-	/* redraw screen image */
-	hpcfb_refresh_screen(sc);
-
-	return (0);
-#endif /* HPCFB_MULTI */
 }
 
 void
