@@ -32,7 +32,7 @@
  *
  * from: Header: if_lereg.h,v 1.7 93/10/31 04:41:00 leres Locked
  * from: @(#)if_lereg.h	8.2 (Berkeley) 10/30/93
- * $Id: if_lereg.h,v 1.2 1994/05/13 20:11:09 deraadt Exp $
+ * $Id: if_lereg.h,v 1.3 1994/07/02 01:10:07 deraadt Exp $
  */
 
 #define	LEMTU		1518
@@ -160,6 +160,8 @@ struct lereg2 {
 #define	LE_T3_LCAR	0x0800		/* loss of carrier */
 #define	LE_T3_RTRY	0x0400		/* retry error */
 #define	LE_T3_TDR_MASK	0x03ff		/* time domain reflectometry counter */
+
+#define LE_XMD2_ONES	0xf000
 
 #define LE_T3_BITS \
     "\20\20BUFF\17UFLO\16RES\15LCOL\14LCAR\13RTRY"
