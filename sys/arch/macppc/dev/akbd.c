@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.8 1999/06/16 08:48:37 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.9 1999/09/05 05:30:30 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -495,10 +495,18 @@ kbd_intr(event)
 
 	type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 
-	if (key == 185) {	/* Caps Lock released */
+	switch (key) {
+	case 185:	/* Caps Lock released */
 		type = WSCONS_EVENT_KEY_DOWN;
 		wskbd_input(sc->sc_wskbddev, type, val);
 		type = WSCONS_EVENT_KEY_UP;
+		break;
+	case 245:
+		pm_eject_pcmcia(0);
+		break;
+	case 244:
+		pm_eject_pcmcia(1);
+		break;
 	}
 
 	if (adb_polling)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.7 1999/07/12 15:54:55 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.8 1999/09/05 05:30:30 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1267,7 +1267,7 @@ pm_eject_pcmcia(slot)
 	p.command = PMU_EJECT_PCMCIA;
 	p.num_data = 1;
 	p.s_buf = p.r_buf = p.data;
-	p.data[0] = slot * 18;	/* XXX */
+	p.data[0] = 5 + slot;	/* XXX */
 	pmgrop(&p);
 }
 
