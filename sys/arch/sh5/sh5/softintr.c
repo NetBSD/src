@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.3 2002/09/11 10:56:43 scw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.4 2002/10/01 21:04:59 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -262,9 +262,6 @@ softintr_dispatch(u_int oldspl, u_int softspl)
 		 */
 		(void) splhigh();
 
-		if (TAILQ_FIRST(&si->si_q) != NULL)
-			si->si_evcnt->ev_count++;
-
 		/*
 		 * Dispatch all soft interrupts at the current level
 		 */
@@ -272,6 +269,7 @@ softintr_dispatch(u_int oldspl, u_int softspl)
 			TAILQ_REMOVE(&si->si_q, sih, sih_q);
 			sih->sih_pending = 0;
 
+			si->si_evcnt->ev_count++;
 			uvmexp.softs++;
 
 			/*
