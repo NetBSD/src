@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.4 2001/08/18 21:16:34 thorpej Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.5 2001/08/20 02:07:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -576,7 +576,7 @@
 #define	CHIPID_VER(x)		(((x) >> 28) & 0x7)
 
 #define	PARTID_Am79c960		0x0003
-#deifne	PARTID_Am79c961		0x2260
+#define	PARTID_Am79c961		0x2260
 #define	PARTID_Am79c961A	0x2261
 #define	PARTID_Am79c965		0x2430
 #define	PARTID_Am79c970		0x0242
