@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15 2000/06/02 15:38:32 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.16 2000/06/24 04:26:45 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -172,10 +172,8 @@ u_int64_t frame;
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
 			db_printf("%llx %llx %llxsp %llxpc=",
 				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
-#if 0
 			/* Sometimes this don't work.  Dunno why. */
 			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
-#endif
 			db_printf("\n");
 		} else {
 			struct frame64 fr;
