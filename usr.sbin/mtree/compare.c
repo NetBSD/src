@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.34 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.35 2001/11/09 06:55:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.34 2001/11/07 08:01:52 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.35 2001/11/09 06:55:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -435,7 +435,7 @@ compare(NODE *s, FTSENT *p)
 const char *
 rlink(const char *name)
 {
-	static char lbuf[MAXPATHLEN + 1];
+	static char lbuf[MAXPATHLEN];
 	int len;
 
 	if ((len = readlink(name, lbuf, sizeof(lbuf) - 1)) == -1)
