@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.41 2000/01/04 22:35:57 mjacob Exp $	*/
+/*	$NetBSD: ch.c,v 1.42 2000/01/04 22:47:12 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -496,7 +496,7 @@ ch_interpret_sense(xs)
 		 * Enqueue an Element-Status-Changed event, and
 		 * wake up any processes waiting for them.
 		 */
-		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) == 0) {
+		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
 			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
 		}
 		/*
