@@ -1,7 +1,7 @@
 /*
  * Missing stuff from OS's
  *
- *	$Id: util.c,v 1.2 1994/05/09 06:36:22 glass Exp $
+ *	$Id: util.c,v 1.3 1994/09/23 09:33:23 mycroft Exp $
  */
 #include <stdio.h>
 #include "make.h"
@@ -99,33 +99,6 @@ long
 random()
 {
     return lrand48();
-}
-
-int
-setpriority(which, who, niceval)
-   int which, who, niceval;
-{
-#ifdef SYS_setpriority
-   return syscall(SYS_setpriority, which, who, niceval);
-#else
-   extern int errno;
-   errno = ENOSYS;
-   return -1;
-#endif
-}
-
-int
-setreuid(euid, ruid)
-   int euid, ruid;
-{
-   return setresuid(euid, ruid, -1);
-}
-    
-int
-setregid(egid, rgid)
-   int egid, rgid;
-{
-   return setresgid(egid, rgid, -1);
 }
 
 /* turn into bsd signals */

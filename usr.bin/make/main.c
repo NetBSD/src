@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91"; */
-static char *rcsid = "$Id: main.c,v 1.15 1994/06/16 18:50:13 jtc Exp $";
+static char *rcsid = "$Id: main.c,v 1.16 1994/09/23 09:33:21 mycroft Exp $";
 #endif /* not lint */
 
 /*-
@@ -382,8 +382,8 @@ main(argc, argv)
 	 * on a different machine with pmake.
 	 */
 	curdir = cdpath;
-	if (getwd(curdir) == NULL) {
-		(void)fprintf(stderr, "make: %s.\n", curdir);
+	if (getcwd(curdir, MAXPATHLEN) == NULL) {
+		(void)fprintf(stderr, "make: %s.\n", strerror(errno));
 		exit(2);
 	}
 
