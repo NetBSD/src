@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.16 1997/10/09 11:33:03 mycroft Exp $	*/
+/*	$NetBSD: errno.h,v 1.17 1998/02/06 08:20:35 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -172,7 +172,10 @@ __END_DECLS
 #define	EFTYPE		79		/* Inappropriate file type or format */
 #define	EAUTH		80		/* Authentication error */
 #define	ENEEDAUTH	81		/* Need authenticator */
-#define	ELAST		81		/* Must be equal largest errno */
+
+/* SystemV IPC */
+#define	EIDRM		82		/* Identifier removed */
+#define	ELAST		82		/* Must equal largest errno */
 #endif /* _POSIX_SOURCE */
 
 #ifdef _KERNEL
