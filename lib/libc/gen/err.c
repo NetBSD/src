@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)err.c	5.2 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: err.c,v 1.4 1993/08/26 00:44:27 jtc Exp $";
+static char *rcsid = "$Id: err.c,v 1.5 1993/10/13 18:42:31 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -50,7 +50,7 @@ static char *rcsid = "$Id: err.c,v 1.4 1993/08/26 00:44:27 jtc Exp $";
 
 extern char *__progname;		/* Program name, from crt0. */
 
-volatile void
+__dead void
 #ifdef __STDC__
 err(int eval, const char *fmt, ...)
 #else
@@ -70,7 +70,7 @@ err(eval, fmt, va_alist)
 	va_end(ap);
 }
 
-volatile void
+__dead void
 verr(eval, fmt, ap)
 	int eval;
 	const char *fmt;
@@ -88,7 +88,7 @@ verr(eval, fmt, ap)
 	exit(eval);
 }
 
-volatile void
+__dead void
 #if __STDC__
 errx(int eval, const char *fmt, ...)
 #else
@@ -108,7 +108,7 @@ errx(eval, fmt, va_alist)
 	va_end(ap);
 }
 
-volatile void
+__dead void
 verrx(eval, fmt, ap)
 	int eval;
 	const char *fmt;
