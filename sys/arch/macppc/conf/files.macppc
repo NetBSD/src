@@ -94,6 +94,7 @@ device adb {}
 attach adb at obio
 file arch/macppc/dev/adb.c			adb needs-flag
 file arch/macppc/dev/adb_direct.c		adb
+file arch/macppc/dev/pm_direct.c		adb
 
 device aed
 attach aed at adb
