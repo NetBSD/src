@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.7 1998/08/10 23:21:05 kim Exp $	*/
+/*	$NetBSD: field.c,v 1.8 2002/05/09 01:58:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: field.c,v 1.7 1998/08/10 23:21:05 kim Exp $");
+__RCSID("$NetBSD: field.c,v 1.8 2002/05/09 01:58:39 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ p_uid(p, pw, ep)
 	struct passwd *pw;
 	ENTRY *ep;
 {
-	uid_t id;
+	unsigned long id;
 	char *np;
 
 	if (!*p) {
@@ -125,11 +125,15 @@ p_uid(p, pw, ep)
 	}
 	errno = 0;
 	id = strtoul(p, &np, 10);
-	if (*np || (id == ULONG_MAX && errno == ERANGE)) {
+	/*
+	 * We don't need to check the return value of strtoul()
+	 * since ULONG_MAX is greater than UID_MAX.
+	 */
+	if (*np || id > UID_MAX) {
 		warnx("illegal uid");
 		return (1);
 	}
-	pw->pw_uid = id;
+	pw->pw_uid = (uid_t)id;
 	return (0);
 }
 
@@ -141,7 +145,7 @@ p_gid(p, pw, ep)
 	ENTRY *ep;
 {
 	struct group *gr;
-	gid_t id;
+	unsigned long id;
 	char *np;
 
 	if (!*p) {
@@ -158,11 +162,15 @@ p_gid(p, pw, ep)
 	}
 	errno = 0;
 	id = strtoul(p, &np, 10);
-	if (*np || (id == ULONG_MAX && errno == ERANGE)) {
+	/*
+	 * We don't need to check the return value of strtoul() 
+	 * since ULONG_MAX is greater than GID_MAX.
+	 */
+	if (*np || id > GID_MAX) {
 		warnx("illegal gid");
 		return (1);
 	}
-	pw->pw_gid = id;
+	pw->pw_gid = (gid_t)id;
 	return (0);
 }
 
