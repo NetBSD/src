@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.52 2000/09/19 22:11:47 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.53 2000/09/19 23:26:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -160,6 +160,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	}
 	do {
 
+#ifndef NFS_V2_ONLY
 	    /*
 	     * Get a valid lease. If cached data is stale, flush it.
 	     */
@@ -190,6 +191,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			return (error);
 		}
 	    }
+#endif
 	    /*
 	     * Don't cache symlinks.
 	     */
@@ -625,6 +627,7 @@ nfs_write(v)
 		 */
 		(void)uvm_vnp_uncache(vp);
 
+#ifndef NFS_V2_ONLY
 		/*
 		 * Check for a valid write lease.
 		 */
@@ -643,6 +646,7 @@ nfs_write(v)
 				np->n_brev = np->n_lrev;
 			}
 		}
+#endif
 		if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {
 		    iomode = NFSV3WRITE_FILESYNC;
 		    error = nfs_writerpc(vp, uio, cred, &iomode, &must_commit);
@@ -682,6 +686,7 @@ again:
 			goto again;
 		}
 
+#ifndef NFS_V2_ONLY
 		/*
 		 * Check for valid write lease and get one as required.
 		 * In case getblk() and/or bwrite() delayed us.
@@ -705,6 +710,7 @@ again:
 				goto again;
 			}
 		}
+#endif
 		error = uiomove((char *)bp->b_data + on, n, uio);
 		if (error) {
 			bp->b_flags |= B_ERROR;

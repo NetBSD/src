@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.60 2000/09/19 22:21:21 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.61 2000/09/19 23:26:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -773,10 +773,13 @@ nfs_reply(myrep)
 		nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 		rxid = *tl++;
 		if (*tl != rpc_reply) {
+#ifndef NFS_V2_ONLY
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
 				if (nqnfs_callback(nmp, mrep, md, dpos))
 					nfsstats.rpcinvalid++;
-			} else {
+			} else
+#endif
+			{
 				nfsstats.rpcinvalid++;
 				m_freem(mrep);
 			}
@@ -1127,6 +1130,7 @@ tryagain:
 			return (error);
 		}
 
+#ifndef NFS_V2_ONLY
 		/*
 		 * For nqnfs, get any lease in reply
 		 */
@@ -1145,6 +1149,7 @@ tryagain:
 				}
 			}
 		}
+#endif
 		*mrp = mrep;
 		*mdp = md;
 		*dposp = dpos;

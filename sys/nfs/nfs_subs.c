@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.83 2000/09/19 22:13:55 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.84 2000/09/19 23:26:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -608,6 +608,7 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	 */
 	if (vp) {
 		nmp = VFSTONFS(vp->v_mount);
+#ifndef NFS_V2_ONLY
 		if (nmp->nm_flag & NFSMNT_NQNFS) {
 			nqflag = NQNFS_NEEDLEASE(vp, procid);
 			if (nqflag) {
@@ -619,6 +620,7 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 				*tl = 0;
 			}
 		}
+#endif
 	}
 	/* Finally, return values */
 	*bposp = bpos;
@@ -1453,6 +1455,7 @@ nfs_init()
 	nfsrv_initcache();		/* Init the server request cache */
 #endif /* NFSSERVER */
 
+#if defined(NFSSERVER) || !defined(NFS_V2_ONLY)
 	/*
 	 * Initialize the nqnfs data structures.
 	 */
@@ -1463,6 +1466,7 @@ nfs_init()
 		CIRCLEQ_INIT(&nqtimerhead);
 		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, M_WAITOK, &nqfhhash);
 	}
+#endif
 
 	/*
 	 * Initialize reply list and start timer
