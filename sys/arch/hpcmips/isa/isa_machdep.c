@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.14 2001/05/06 14:25:16 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.15 2001/06/11 05:22:10 enami Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -171,9 +171,9 @@ vrisabattach(parent, self, aux)
 	/* Initialize ISA IRQ <-> GPIO mapping */
 	for (i = 0; i < INTR_NIRQS; i++)
 		sc->sc_intr_map[i] = -1;
-	printf (":ISA port %#x-%#x mem %#x-%#x\n",
-		iba.iba_iot->t_base, iba.iba_iot->t_base + iba.iba_iot->t_size,
-		iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_size);
+	printf(": ISA port %#x-%#x mem %#x-%#x\n",
+	    iba.iba_iot->t_base, iba.iba_iot->t_base + iba.iba_iot->t_size,
+	    iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_size);
 	config_found(self, &iba, vrisabprint);
 #endif
 
