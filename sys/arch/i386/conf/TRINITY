@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.12 1993/06/14 15:57:07 mycroft Exp $
+#	$Id: TRINITY,v 1.13 1993/07/02 03:23:17 mycroft Exp $
 #
 
 machine		"i386"
@@ -25,6 +25,7 @@ controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 disk		sd0	at aha0 flags 0 drive ?
 disk		sd1	at aha0 flags 0 drive ?
 tape		st0	at aha0 flags 1 drive ?
+tape		st1	at aha0 flags 1 drive ?
 
 controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
 disk		fd0	at fdc0 drive 0
