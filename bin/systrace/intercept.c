@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.15 2003/08/02 14:24:30 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.16 2003/08/02 14:29:33 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.15 2003/08/02 14:24:30 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.16 2003/08/02 14:29:33 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -571,17 +571,35 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 char *
 intercept_filename(int fd, pid_t pid, void *addr, int userp)
 {
-	static char cwd[2*MAXPATHLEN];
 	char *name;
-	int havecwd = 0;
 
-	name = intercept_get_string(fd, pid, addr);
-	if (name == NULL)
+	if ((name = intercept_get_string(fd, pid, addr)) == NULL)
 		goto abort;
 
-	if (intercept.setcwd(fd, pid) == -1) {
+	if ((name = normalize_filename(fd, pid, name, userp)) == NULL)
+		goto abort;
+
+	return (name);
+
+ abort:
+	ic_abort = 1;
+	return (NULL);
+}
+
+/*
+ * Normalizes a pathname so that Systrace policies entries are
+ * invariant to symlinks.
+ */
+
+char *
+normalize_filename(int fd, pid_t pid, char *name, int userp)
+{
+	static char cwd[2*MAXPATHLEN];
+	int havecwd = 0;
+
+	if (fd != -1 && intercept.setcwd(fd, pid) == -1) {
 		if (errno == EBUSY)
-			goto abort;
+			return (NULL);
 	getcwderr:
 		if (strcmp(name, "/") == 0)
 			return (name);
@@ -608,13 +626,16 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 	if (userp != ICLINK_NONE) {
 		static char rcwd[2*MAXPATHLEN];
+		char *file = basename(cwd);
 		int failed = 0;
 
-		if (userp == ICLINK_NOLAST) {
-			char *file = basename(cwd);
+ 		/* The dot may be used by rmdir("/tmp/something/.") */
+ 		if (strcmp(file, ".") == 0)
+ 			goto nolast;
 
+		if (userp == ICLINK_NOLAST) {
 			/* Check if the last component has special meaning */
-			if (strcmp(file, ".") == 0 || strcmp(file, "..") == 0)
+			if (strcmp(file, "..") == 0 || strcmp(file, "/") == 0)
 				userp = ICLINK_ALL;
 			else
 				goto nolast;
@@ -673,7 +694,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 
 	/* Restore working directory and change root space after realpath */
-	if (intercept.restcwd(fd) == -1)
+	if (fd != -1 && intercept.restcwd(fd) == -1)
 		err(1, "%s: restcwd", __func__);
 
 	return (name);
@@ -681,10 +702,6 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
  error:
 	errx(1, "%s: filename too long", __func__);
 	/* NOTREACHED */
-
- abort:
-	ic_abort = 1;
-	return (NULL);
 }
 
 void
