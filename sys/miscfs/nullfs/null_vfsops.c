@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.3 1994/09/15 03:42:40 mycroft Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.4 1994/12/15 20:00:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,7 +150,6 @@ nullfs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.target, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void)nullfs_statfs(mp, &mp->mnt_stat, p);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.19 1994/09/15 03:42:39 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.20 1994/12/15 20:00:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,7 +129,6 @@ kernfs_mount(mp, path, data, ndp, p)
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("kernfs", mp->mnt_stat.f_mntfromname, sizeof("kernfs"));
-	(void)kernfs_statfs(mp, &mp->mnt_stat, p);
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
 #endif
