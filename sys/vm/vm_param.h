@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.25 2000/03/26 20:42:45 kleink Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.26 2000/04/11 02:30:32 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -146,10 +146,8 @@ typedef int	boolean_t;
  * Round off or truncate to the nearest page.  These will work
  * for either addresses or counts (i.e., 1 byte rounds to 1 page).
  */
-#define	round_page(x) \
-	(((x) + PAGE_MASK) & ~PAGE_MASK)
-#define	trunc_page(x) \
-	(((x) & ~PAGE_MASK))
+#define	round_page(x)	(((x) + PAGE_MASK) & ~PAGE_MASK)
+#define	trunc_page(x)	((x) & ~PAGE_MASK)
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
 
