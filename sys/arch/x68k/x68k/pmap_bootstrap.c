@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.2 2005/02/23 10:03:04 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.3 2005/02/23 10:05:48 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.2 2005/02/23 10:03:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.3 2005/02/23 10:05:48 yamt Exp $");
 
 #include "opt_m680x0.h"
 
@@ -134,7 +134,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Clear all PTEs to zero
 	 */
-	for (pte = (pt_entry_t *)kstpa; pte < (pt_entry_t *)nexpta; pte++)
+	for (pte = (pt_entry_t *)kstpa; pte < (pt_entry_t *)nextpa; pte++)
 		*pte = 0;
 
 	/*
@@ -200,8 +200,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Initialize the final level 1 descriptor to map the last
 		 * block of level 2 descriptors.
 		 */
-		ste = ((u_int *)kstpa)[SG4_LEV1SIZE-1];
-		pte = ((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
+		ste = &((u_int *)kstpa)[SG4_LEV1SIZE-1];
+		pte = &((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
 		 * Now initialize the final portion of that block of
