@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.4 1999/02/19 16:10:44 mycroft Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.5 1999/03/30 20:07:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ sb_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_ih = isa_intr_establish(aa_ic, intr.irq, IST_EDGE, IPL_AUDIO,
+	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, IST_EDGE, IPL_AUDIO,
 	    sbdsp_intr, sc);
 
 	n = OF_getproplen(aa->oba.oba_phandle, "model");
