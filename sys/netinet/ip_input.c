@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.168 2003/06/30 01:21:11 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.169 2003/06/30 07:54:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.168 2003/06/30 01:21:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.169 2003/06/30 07:54:28 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -433,6 +433,7 @@ ip_input(struct mbuf *m)
 	int hlen = 0, mff, len;
 	int downmatch;
 	int checkif;
+	int srcrt = 0;
 
 	MCLAIM(m, &ip_rx_mowner);
 #ifdef	DIAGNOSTIC
@@ -590,6 +591,9 @@ ip_input(struct mbuf *m)
 	if (1)
 #endif
 	{
+		struct in_addr odst;
+
+		odst = ip->ip_dst;
 		if (pfil_run_hooks(&inet_pfil_hook, &m, m->m_pkthdr.rcvif,
 		    PFIL_IN) != 0)
 			return;
@@ -597,6 +601,7 @@ ip_input(struct mbuf *m)
 			return;
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
+		srcrt = (odst.s_addr != ip->ip_dst.s_addr);
 	}
 #endif /* PFIL_HOOKS */
 
@@ -763,7 +768,7 @@ ip_input(struct mbuf *m)
 		}
 #endif
 
-		ip_forward(m, 0);
+		ip_forward(m, srcrt);
 	}
 	return;
 
