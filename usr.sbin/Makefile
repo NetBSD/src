@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.186 2003/12/04 18:14:59 drochner Exp $
+#	$NetBSD: Makefile,v 1.187 2003/12/07 21:57:22 matt Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -35,8 +35,10 @@ SUBDIR+= mdsetimage
 .endif
 
 # IPv6
+.if (${MKINET6} != no)
 SUBDIR+=faithd ifmcstat mld6query ndp \
 	rip6query route6d rtadvd traceroute6 rtsold
+.endif
 
 # ATM PVC
 SUBDIR+=pvcsif pvctxctl
