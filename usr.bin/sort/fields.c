@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.11 2002/12/24 13:20:25 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.12 2003/04/09 09:30:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,11 +41,11 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.11 2002/12/24 13:20:25 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.12 2003/04/09 09:30:40 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
-#define blancmange(ptr) {					\
+#define SKIP_BLANKS(ptr) {					\
 	if (BLANK & d_mask[*(ptr)])				\
 		while (BLANK & d_mask[*(++(ptr))]);		\
 }
@@ -159,7 +159,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 	start = icol.p->start;
 	lineend = clist[ncols].end;
 	if (flags & BI)
-		blancmange(start);
+		SKIP_BLANKS(start);
 	start += icol.indent;
 	start = min(start, lineend);
 
@@ -169,7 +169,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 		if (tcol.indent) {
 			end = tcol.p->start;
 			if (flags & BT)
-				blancmange(end);
+				SKIP_BLANKS(end);
 			end += tcol.indent;
 			end = min(end, lineend);
 		} else
@@ -235,7 +235,7 @@ number(pos, bufend, line, lineend, Rflag)
 	 *	(-r: +/-)(sign: +/-)(expsign: +/-)
 	 */
 	or_sign = sign ^ expsign ^ Rflag;
-	blancmange(line);
+	SKIP_BLANKS(line);
 	if (*line == '-') {	/* set the sign */
 		or_sign ^= 1;
 		sign = 0;
