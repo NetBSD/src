@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.35 1999/12/20 02:12:23 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.36 1999/12/22 23:54:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ USB_ATTACH(usb)
 		 * until the USB event thread is running, which means that
 		 * the keyboard will not work until after cold boot.
 		 */
-		if (cold)
+		if (cold && (sc->sc_dev.dv_cfdata->cf_flags & 1))
 			dev->hub->explore(sc->sc_bus->root_hub);
 #endif
 	} else {
