@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.27 2001/11/11 21:36:06 tv Exp $	*/
+/*	$NetBSD: dir.c,v 1.28 2001/11/12 21:58:17 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.27 2001/11/11 21:36:06 tv Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.28 2001/11/12 21:58:17 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.27 2001/11/11 21:36:06 tv Exp $");
+__RCSID("$NetBSD: dir.c,v 1.28 2001/11/12 21:58:17 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -231,24 +231,6 @@ Dir_Init (cdname)
     openDirectories = Lst_Init (FALSE);
     Hash_InitTable(&mtimes, 0);
 
-    /*
-     * Since the Path structure is placed on both openDirectories and
-     * the path we give Dir_AddDir (which in this case is openDirectories),
-     * we need to remove "." from openDirectories and what better time to
-     * do it than when we have to fetch the thing anyway?
-     */
-    dot = Dir_AddDir (NULL, ".");
-    if (dot == NULL) {
-	Error("Cannot open `.' (%s)", strerror(errno));
-	exit(1);
-    }
-
-    /*
-     * We always need to have dot around, so we increment its reference count
-     * to make sure it's not destroyed.
-     */
-    dot->refCount += 1;
-
     if (cdname != NULL) {
 	/*
 	 * Our build directory is not the same as our source directory.
@@ -263,6 +245,43 @@ Dir_Init (cdname)
     dotLast->hits = 0;
     dotLast->name = estrdup(".DOTLAST");
     Hash_InitTable (&dotLast->files, -1);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Dir_InitDot --
+ *	(re)initialize "dot" (current/object directory) path hash
+ *
+ * Results:
+ *	none
+ *
+ * Side Effects:
+ *	some directories may be opened.
+ *-----------------------------------------------------------------------
+ */
+void
+Dir_InitDot()
+{
+    if (dot != NULL) {
+	LstNode ln;
+
+	/* Remove old entry from openDirectories, but do not destroy. */
+	ln = Lst_Member (openDirectories, (ClientData)dot);
+	(void) Lst_Remove (openDirectories, ln);
+    }
+
+    dot = Dir_AddDir (NULL, ".");
+
+    if (dot == NULL) {
+	Error("Cannot open `.' (%s)", strerror(errno));
+	exit(1);
+    }
+
+    /*
+     * We always need to have dot around, so we increment its reference count
+     * to make sure it's not destroyed.
+     */
+    dot->refCount += 1;
 }
 
 /*-
