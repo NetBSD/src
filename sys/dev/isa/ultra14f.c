@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.50 1995/07/24 07:17:29 cgd Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.51 1995/07/28 22:50:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -848,10 +848,10 @@ uha_get_mscp(uha, flags)
 				    uha->sc_dev.dv_xname);
 			}
 			break;
-		} else {
-			if ((flags & SCSI_NOSLEEP) == 0)
-				tsleep(&uha->free_mscp, PRIBIO, "uhamsc", 0);
 		}
+		if ((flags & SCSI_NOSLEEP) != 0)
+			break;
+		tsleep(&uha->free_mscp, PRIBIO, "uhamsc", 0);
 	}
 
 	splx(opri);
