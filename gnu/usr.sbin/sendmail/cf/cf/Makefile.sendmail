@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sendmail,v 1.1 2003/04/01 03:16:54 atatat Exp $
+# $NetBSD: Makefile.sendmail,v 1.2 2003/04/03 19:13:17 christos Exp $
 
 CFDIR?=		${.CURDIR}/..
 CHMOD=		chmod
@@ -6,10 +6,17 @@ M4?=		m4
 ROMODE=		444
 RM=		rm -f
 
-.SUFFIXES: .mc .cf
-
+.if !defined(FILES)
+.SUFFIXES: .cf .mc
 .mc.cf:
+.else
+__makemc: .USE
+.endif
 	${RM} $@
 	(cd ${CFDIR}/cf && \
 	    ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
 	${CHMOD} ${ROMODE} $@
+
+.for F in ${FILES:M*.mc}
+${F:S/.mc/.cf/}: ${F} __makemc
+.endfor
