@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.334 2003/05/18 08:09:25 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.335 2003/06/26 06:30:08 tshiozak Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -183,7 +183,9 @@ MAKEINFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}makeinfo
 MAKEWHATIS=	${TOOLDIR}/bin/${_TOOL_PREFIX}makewhatis
 MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
 MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
+MKCSMAPPER=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkcsmapper
 MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
+MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
 MKLOCALE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
 MKMAGIC=	${TOOLDIR}/bin/${_TOOL_PREFIX}file
 MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
