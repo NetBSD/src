@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.5 2000/02/25 09:19:07 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.6 2000/02/28 07:20:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,11 +73,21 @@ sockopen()
 	int on;
 	struct icmp6_filter filt;
 	static u_char answer[1500];
-	static u_char rcvcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-				CMSG_SPACE(sizeof(int))];
-	static u_char sndcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
-				CMSG_SPACE(sizeof(int))];
+	int rcvcmsglen, sndcmsglen;
+	static u_char *rcvcmsgbuf = NULL, *sndcmsgbuf = NULL;
 
+	sndcmsglen = rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+		CMSG_SPACE(sizeof(int));
+	if (rcvcmsgbuf == NULL && (rcvcmsgbuf = malloc(rcvcmsglen)) == NULL) {
+		warnmsg(LOG_ERR, __FUNCTION__,
+			"malloc for receive msghdr failed");
+		return(-1);
+	}
+	if (sndcmsgbuf == NULL && (sndcmsgbuf = malloc(sndcmsglen)) == NULL) { 
+		warnmsg(LOG_ERR, __FUNCTION__,
+			"malloc for send msghdr failed");
+		return(-1);
+	}
 	memset(&sin6_allrouters, 0, sizeof(struct sockaddr_in6));
 	if (inet_pton(AF_INET6, ALLROUTER,
 		      &sin6_allrouters.sin6_addr.s6_addr) != 1) {
@@ -145,14 +155,14 @@ sockopen()
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
 	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
-	rcvmhdr.msg_controllen = sizeof(rcvcmsgbuf);
+	rcvmhdr.msg_controllen = rcvcmsglen;
 
 	/* initialize msghdr for sending packets */
 	sndmhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmhdr.msg_iov = sndiov;
 	sndmhdr.msg_iovlen = 1;
 	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
-	sndmhdr.msg_controllen = sizeof(sndcmsgbuf);
+	sndmhdr.msg_controllen = sndcmsglen;
 
 	return(rssock);
 }
