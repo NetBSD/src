@@ -98,6 +98,13 @@
 #define mutex_lock(m)		pthread_mutex_lock(m)
 #define mutex_unlock(m)		pthread_mutex_unlock(m)
 
+#define rwlock_t		pthread_rwlock_t
+#define RWLOCK_INITIALIZER	PTHREAD_RWLOCK_INITIALIZER
+
+#define rwlock_rdlock(l)	pthread_rwlock_rdlock(l)
+#define rwlock_wrlock(l)	pthread_rwlock_wrlock(l)
+#define rwlock_unlock(l)	pthread_rwlock_unlock(l)
+
 #define FLOCKFILE(fp)		flockfile(fp)
 #define FUNLOCKFILE(fp)		funlockfile(fp)
 
@@ -107,6 +114,10 @@
 
 #define mutex_lock(m)		do { } while(0)
 #define mutex_unlock(m)		do { } while(0)
+
+#define rwlock_rdlock(l)	do { } while(0)
+#define rwlock_wrlock(l)	do { } while(0)
+#define rwlock_unlock(l)	do { } while(0)
 
 #define FLOCKFILE(fp)		do { } while(0)
 #define FUNLOCKFILE(fp)		do { } while(0)
