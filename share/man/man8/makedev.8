@@ -1,4 +1,4 @@
-.\"	$NetBSD: makedev.8,v 1.5 1999/03/17 20:31:19 garbled Exp $
+.\"	$NetBSD: makedev.8,v 1.6 2000/11/07 06:43:28 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,19 +37,20 @@
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
+.Nm MAKEDEV ,
 .Nm makedev
 .Nd make system special files
 .Sh SYNOPSIS
 .Nm MAKEDEV
 .Ar device ...
 .Sh DESCRIPTION
-.Nm MAKEDEV
+.Nm
 is a shell script normally used to install
 special files.  It resides in the 
 .Pa /dev
 directory, as this is the normal location of special files.
 Arguments to 
-.Nm MAKEDEV
+.Nm
 are usually of the form
 .Ar device-name Ns Sy \&?
 where

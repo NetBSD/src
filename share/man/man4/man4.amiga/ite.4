@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ite.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: ite.4,v 1.5 1999/03/16 01:19:20 garbled Exp $
+.\"	$NetBSD: ite.4,v 1.6 2000/11/07 06:43:26 lukem Exp $
 .\"
 .Dd August 30, 1994
 .Dt ITE 4 amiga
@@ -73,7 +73,7 @@ with the limitation that only
 one will have a keyboard (since only one keyboard is supported) and only
 one of each type can be used.
 .Pp
-.Nm Ite
+.Nm
 devices use the
 .Tn HP-UX
 .Sq Li 300h
@@ -81,7 +81,7 @@ devices use the
 entry.
 However, as currently implemented,
 the
-.Nm ite
+.Nm
 does not support the full range of
 .Tn HP-UX
 capabilities for this device.
@@ -90,14 +90,14 @@ programmable tabs, scrolling memory and keyboard arrow keys.
 The keyboard will use the left and right
 .Tn Em Amiga
 keys as meta keys, in that it will set the eighth bit of the character code.
-.Nm Ite
+.Nm
 devices also do a good job at emulating the
 .Sq Li vt100 
 .Xr termcap 5
 entry.
 .Pp
 Upon booting, the kernel will first look for an
-.Nm ite
+.Nm
 device
 to use as the system console
 .Pq Pa /dev/console .
@@ -107,7 +107,7 @@ hightest-numbered one).
 .Pp
 On most systems,
 a display is used both as an
-.Nm ite
+.Nm
 .Pf ( Pa /dev/ttye?
 aka
 .Pa /dev/console )
@@ -126,7 +126,7 @@ When the graphics application is finished and
 .Pa /dev/grf0
 closed,
 the
-.Nm 
+.Nm
 will be reinitialized with the frame buffer cleared
 and the
 old colormap installed.
