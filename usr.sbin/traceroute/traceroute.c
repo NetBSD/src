@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.35 1999/06/16 20:43:48 is Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.36 1999/06/19 05:07:44 kim Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.35 1999/06/16 20:43:48 is Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.36 1999/06/19 05:07:44 kim Exp $");
 #endif
 #endif
 
@@ -916,7 +916,7 @@ again:
 		}
 		putchar('\n');
 		if (got_there ||
-		    (unreachable > 0 && unreachable >= nprobes))
+		    (unreachable > 0 && unreachable >= ((nprobes + 1) / 2)))
 			break;
 	}
 	exit(0);
