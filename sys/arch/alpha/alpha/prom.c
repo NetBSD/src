@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.29 1998/10/06 21:10:46 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.30 1998/10/15 00:45:52 ross Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.29 1998/10/06 21:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.30 1998/10/15 00:45:52 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.29 1998/10/06 21:10:46 thorpej Exp $");
 #include <sys/user.h>
 
 #include <machine/rpb.h>
+#define	ENABLEPROM
 #include <machine/prom.h>
 
 #include <dev/cons.h>
