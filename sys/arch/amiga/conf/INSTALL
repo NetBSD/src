@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7 2000/09/25 13:54:50 abs Exp $
+# $NetBSD: INSTALL,v 1.8 2000/10/02 18:43:35 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -8,7 +8,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.7 $"
+#ident  		"GENERIC-$Revision: 1.8 $"
 
 makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -325,7 +325,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
