@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.4 2003/08/12 10:01:08 dsl Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.5 2003/12/29 02:38:17 oster Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -509,24 +509,23 @@ typedef struct RF_LayoutSW_s {
 
 	/* routine to map RAID sector address -> physical (row, col, offset) */
 	void    (*MapSector) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-			      RF_RowCol_t * row, RF_RowCol_t * col, 
+			      RF_RowCol_t * col, 
 			      RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to map RAID sector address -> physical (r,c,o) of parity
 	 * unit */
 	void    (*MapParity) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-			      RF_RowCol_t * row, RF_RowCol_t * col, 
+			      RF_RowCol_t * col, 
 			      RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to map RAID sector address -> physical (r,c,o) of Q unit */
 	void    (*MapQ) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector, 
-			 RF_RowCol_t * row, RF_RowCol_t * col, 
+			 RF_RowCol_t * col, 
 			 RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to identify the disks comprising a stripe */
 	void    (*IdentifyStripe) (RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-				   RF_RowCol_t ** diskids, 
-				   RF_RowCol_t * outRow);
+				   RF_RowCol_t ** diskids);
 
 	/* routine to select a dag */
 	void    (*SelectionFunc) (RF_Raid_t * raidPtr, RF_IoType_t type,

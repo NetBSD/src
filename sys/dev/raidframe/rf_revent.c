@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.11 2002/09/14 17:54:00 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.12 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.11 2002/09/14 17:54:00 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.12 2003/12/29 02:38:18 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -62,8 +62,7 @@ static RF_FreeList_t *rf_revent_freelist;
 static void rf_ShutdownReconEvent(void *);
 
 static RF_ReconEvent_t *
-GetReconEventDesc(RF_RowCol_t row, RF_RowCol_t col,
-    void *arg, RF_Revent_t type);
+GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type);
 
 static void rf_ShutdownReconEvent(ignored)
 	void   *ignored;
@@ -97,17 +96,15 @@ rf_ConfigureReconEvent(listp)
  * or will return an event if it is not */
 
 RF_ReconEvent_t *
-rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
+rf_GetNextReconEvent(reconDesc, continueFunc, continueArg)
 	RF_RaidReconDesc_t *reconDesc;
-	RF_RowCol_t row;
 	void    (*continueFunc) (void *);
 	void   *continueArg;
 {
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
-	RF_ReconCtrl_t *rctrl = raidPtr->reconControl[row];
+	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
 	RF_ReconEvent_t *event;
 
-	RF_ASSERT(row >= 0 && row <= raidPtr->numRow);
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
@@ -177,20 +174,19 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 }
 /* enqueues a reconstruction event on the indicated queue */
 void 
-rf_CauseReconEvent(raidPtr, row, col, arg, type)
+rf_CauseReconEvent(raidPtr, col, arg, type)
 	RF_Raid_t *raidPtr;
-	RF_RowCol_t row;
 	RF_RowCol_t col;
 	void   *arg;
 	RF_Revent_t type;
 {
-	RF_ReconCtrl_t *rctrl = raidPtr->reconControl[row];
-	RF_ReconEvent_t *event = GetReconEventDesc(row, col, arg, type);
+	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
+	RF_ReconEvent_t *event = GetReconEventDesc(col, arg, type);
 
 	if (type == RF_REVENT_BUFCLEAR) {
 		RF_ASSERT(col != rctrl->fcol);
 	}
-	RF_ASSERT(row >= 0 && row <= raidPtr->numRow && col >= 0 && col <= raidPtr->numCol);
+	RF_ASSERT(col >= 0 && col <= raidPtr->numCol);
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
@@ -203,8 +199,7 @@ rf_CauseReconEvent(raidPtr, row, col, arg, type)
 }
 /* allocates and initializes a recon event descriptor */
 static RF_ReconEvent_t *
-GetReconEventDesc(row, col, arg, type)
-	RF_RowCol_t row;
+GetReconEventDesc(col, arg, type)
 	RF_RowCol_t col;
 	void   *arg;
 	RF_Revent_t type;

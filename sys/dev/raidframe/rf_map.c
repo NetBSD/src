@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.22 2003/12/21 19:36:31 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.23 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.22 2003/12/21 19:36:31 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.23 2003/12/29 02:38:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -92,7 +92,7 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 							 * raidAddress along the
 							 * way */
 	RF_RaidAddr_t endAddress = raidAddress + numBlocks;
-	RF_RaidDisk_t **disks = raidPtr->Disks;
+	RF_RaidDisk_t *disks = raidPtr->Disks;
 
 	RF_PhysDiskAddr_t *pda_p, *pda_q;
 	RF_StripeCount_t numStripes = 0;
@@ -165,7 +165,7 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 			}
 
 			pda_p->type = RF_PDA_TYPE_DATA;
-			(layoutPtr->map->MapSector) (raidPtr, raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), remap);
+			(layoutPtr->map->MapSector) (raidPtr, raidAddress, &(pda_p->col), &(pda_p->startSector), remap);
 
 			/* mark any failures we find.  failedPDA is don't-care
 			 * if there is more than one failure */
@@ -179,10 +179,6 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 			pda_p->bufPtr = buffer + rf_RaidAddressToByte(raidPtr, (raidAddress - startAddress));
 			asm_p->totalSectorsAccessed += pda_p->numSector;
 			asm_p->numStripeUnitsAccessed++;
-			asm_p->origRow = pda_p->row;	/* redundant but
-							 * harmless to do this
-							 * in every loop
-							 * iteration */
 
 			raidAddress = RF_MIN(endAddress, nextStripeUnitAddress);
 		}
@@ -202,7 +198,7 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 			pda_p = asm_p->parityInfo = t_pda;
 			pda_p->type = RF_PDA_TYPE_PARITY;
 			(layoutPtr->map->MapParity) (raidPtr, rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe),
-			    &(pda_p->row), &(pda_p->col), &(pda_p->startSector), remap);
+			    &(pda_p->col), &(pda_p->startSector), remap);
 			pda_p->numSector = layoutPtr->sectorsPerStripeUnit;
 			/* raidAddr may be needed to find unit to redirect to */
 			pda_p->raidAddress = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe);
@@ -223,9 +219,9 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 			pda_q = asm_p->qInfo = t_pda;
 			pda_q->type = RF_PDA_TYPE_Q;
 			(layoutPtr->map->MapParity) (raidPtr, rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe),
-			    &(pda_p->row), &(pda_p->col), &(pda_p->startSector), remap);
+			    &(pda_p->col), &(pda_p->startSector), remap);
 			(layoutPtr->map->MapQ) (raidPtr, rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe),
-			    &(pda_q->row), &(pda_q->col), &(pda_q->startSector), remap);
+			    &(pda_q->col), &(pda_q->startSector), remap);
 			pda_q->numSector = pda_p->numSector = layoutPtr->sectorsPerStripeUnit;
 			/* raidAddr may be needed to find unit to redirect to */
 			pda_p->raidAddress = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe);
@@ -266,7 +262,7 @@ rf_MarkFailuresInASMList(raidPtr, asm_h)
 	RF_Raid_t *raidPtr;
 	RF_AccessStripeMapHeader_t *asm_h;
 {
-	RF_RaidDisk_t **disks = raidPtr->Disks;
+	RF_RaidDisk_t *disks = raidPtr->Disks;
 	RF_AccessStripeMap_t *asmap;
 	RF_PhysDiskAddr_t *pda;
 
@@ -276,20 +272,20 @@ rf_MarkFailuresInASMList(raidPtr, asm_h)
 		memset((char *) asmap->failedPDAs, 0,
 		    RF_MAX_FAILED_PDA * sizeof(RF_PhysDiskAddr_t *));
 		for (pda = asmap->physInfo; pda; pda = pda->next) {
-			if (RF_DEAD_DISK(disks[pda->row][pda->col].status)) {
+			if (RF_DEAD_DISK(disks[pda->col].status)) {
 				asmap->numDataFailed++;
 				asmap->failedPDAs[asmap->numFailedPDAs] = pda;
 				asmap->numFailedPDAs++;
 			}
 		}
 		pda = asmap->parityInfo;
-		if (pda && RF_DEAD_DISK(disks[pda->row][pda->col].status)) {
+		if (pda && RF_DEAD_DISK(disks[pda->col].status)) {
 			asmap->numParityFailed++;
 			asmap->failedPDAs[asmap->numFailedPDAs] = pda;
 			asmap->numFailedPDAs++;
 		}
 		pda = asmap->qInfo;
-		if (pda && RF_DEAD_DISK(disks[pda->row][pda->col].status)) {
+		if (pda && RF_DEAD_DISK(disks[pda->col].status)) {
 			asmap->numQFailed++;
 			asmap->failedPDAs[asmap->numFailedPDAs] = pda;
 			asmap->numFailedPDAs++;
@@ -535,13 +531,12 @@ rf_CheckStripeForFailures(raidPtr, asmap)
 	RF_Raid_t *raidPtr;
 	RF_AccessStripeMap_t *asmap;
 {
-	RF_RowCol_t trow, tcol, prow, pcol, *diskids, i;
+	RF_RowCol_t tcol, pcol, *diskids, i;
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_StripeCount_t stripeOffset;
 	int     numFailures;
 	RF_RaidAddr_t sosAddr;
 	RF_SectorNum_t diskOffset, poffset;
-	RF_RowCol_t testrow;
 
 	/* quick out in the fault-free case.  */
 	RF_LOCK_MUTEX(raidPtr->mutex);
@@ -551,23 +546,23 @@ rf_CheckStripeForFailures(raidPtr, asmap)
 		return (0);
 
 	sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
-	(layoutPtr->map->IdentifyStripe) (raidPtr, asmap->raidAddress, &diskids, &testrow);
-	(layoutPtr->map->MapParity) (raidPtr, asmap->raidAddress, &prow, &pcol, &poffset, 0);	/* get pcol */
+	(layoutPtr->map->IdentifyStripe) (raidPtr, asmap->raidAddress, &diskids);
+	(layoutPtr->map->MapParity) (raidPtr, asmap->raidAddress, &pcol, &poffset, 0);	/* get pcol */
 
 	/* this need not be true if we've redirected the access to a spare in
 	 * another row RF_ASSERT(row == testrow); */
 	stripeOffset = 0;
 	for (i = 0; i < layoutPtr->numDataCol + layoutPtr->numParityCol; i++) {
 		if (diskids[i] != pcol) {
-			if (RF_DEAD_DISK(raidPtr->Disks[testrow][diskids[i]].status)) {
-				if (raidPtr->status[testrow] != rf_rs_reconstructing)
+			if (RF_DEAD_DISK(raidPtr->Disks[diskids[i]].status)) {
+				if (raidPtr->status != rf_rs_reconstructing)
 					return (1);
-				RF_ASSERT(raidPtr->reconControl[testrow]->fcol == diskids[i]);
+				RF_ASSERT(raidPtr->reconControl->fcol == diskids[i]);
 				layoutPtr->map->MapSector(raidPtr,
 				    sosAddr + stripeOffset * layoutPtr->sectorsPerStripeUnit,
-				    &trow, &tcol, &diskOffset, 0);
-				RF_ASSERT((trow == testrow) && (tcol == diskids[i]));
-				if (!rf_CheckRUReconstructed(raidPtr->reconControl[testrow]->reconMap, diskOffset))
+				    &tcol, &diskOffset, 0);
+				RF_ASSERT(tcol == diskids[i]);
+				if (!rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, diskOffset))
 					return (1);
 				asmap->flags |= RF_ASM_REDIR_LARGE_WRITE;
 				return (0);
@@ -588,7 +583,7 @@ rf_NumFailedDataUnitsInStripe(raidPtr, asmap)
 	RF_AccessStripeMap_t *asmap;
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
-	RF_RowCol_t trow, tcol, i;
+	RF_RowCol_t tcol, i;
 	RF_SectorNum_t diskOffset;
 	RF_RaidAddr_t sosAddr;
 	int     numFailures;
@@ -605,7 +600,7 @@ rf_NumFailedDataUnitsInStripe(raidPtr, asmap)
 	for (i = 0; i < layoutPtr->numDataCol; i++) {
 		(layoutPtr->map->MapSector) (raidPtr, sosAddr + i * layoutPtr->sectorsPerStripeUnit,
 		    &trow, &tcol, &diskOffset, 0);
-		if (RF_DEAD_DISK(raidPtr->Disks[trow][tcol].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[tcol].status))
 			numFailures++;
 	}
 
@@ -646,15 +641,14 @@ rf_PrintFullAccessStripeMap(asm_h, prbuf)
 		    (int) asmap->numDataFailed,
 		    (int) asmap->numParityFailed);
 		if (asmap->parityInfo) {
-			printf("Parity [r%d c%d s%d-%d", asmap->parityInfo->row, asmap->parityInfo->col,
+			printf("Parity [c%d s%d-%d", asmap->parityInfo->col,
 			    (int) asmap->parityInfo->startSector,
 			    (int) (asmap->parityInfo->startSector +
 				asmap->parityInfo->numSector - 1));
 			if (prbuf)
 				printf(" b0x%lx", (unsigned long) asmap->parityInfo->bufPtr);
 			if (asmap->parityInfo->next) {
-				printf(", r%d c%d s%d-%d", asmap->parityInfo->next->row,
-				    asmap->parityInfo->next->col,
+				printf(", c%d s%d-%d", asmap->parityInfo->next->col,
 				    (int) asmap->parityInfo->next->startSector,
 				    (int) (asmap->parityInfo->next->startSector +
 					asmap->parityInfo->next->numSector - 1));
@@ -665,7 +659,7 @@ rf_PrintFullAccessStripeMap(asm_h, prbuf)
 			printf("]\n\t");
 		}
 		for (i = 0, p = asmap->physInfo; p; p = p->next, i++) {
-			printf("SU r%d c%d s%d-%d ", p->row, p->col, (int) p->startSector,
+			printf("SU c%d s%d-%d ", p->col, (int) p->startSector,
 			    (int) (p->startSector + p->numSector - 1));
 			if (prbuf)
 				printf("b0x%lx ", (unsigned long) p->bufPtr);
@@ -678,7 +672,7 @@ rf_PrintFullAccessStripeMap(asm_h, prbuf)
 			printf("[multiple failures]\n");
 		else
 			if (asm_h->stripeMap->numDataFailed + asm_h->stripeMap->numParityFailed > 0)
-				printf("\t[Failed PDA: r%d c%d s%d-%d]\n", p->row, p->col,
+				printf("\t[Failed PDA: c%d s%d-%d]\n", p->col,
 				    (int) p->startSector, (int) (p->startSector + p->numSector - 1));
 	}
 }
@@ -772,36 +766,34 @@ rf_ASMCheckStatus(
     RF_Raid_t * raidPtr,
     RF_PhysDiskAddr_t * pda_p,
     RF_AccessStripeMap_t * asm_p,
-    RF_RaidDisk_t ** disks,
+    RF_RaidDisk_t * disks,
     int parity)
 {
 	RF_DiskStatus_t dstatus;
-	RF_RowCol_t frow, fcol;
+	RF_RowCol_t fcol;
 
-	dstatus = disks[pda_p->row][pda_p->col].status;
+	dstatus = disks[pda_p->col].status;
 
 	if (dstatus == rf_ds_spared) {
 		/* if the disk has been spared, redirect access to the spare */
-		frow = pda_p->row;
 		fcol = pda_p->col;
-		pda_p->row = disks[frow][fcol].spareRow;
-		pda_p->col = disks[frow][fcol].spareCol;
+		pda_p->col = disks[fcol].spareCol;
 	} else
 		if (dstatus == rf_ds_dist_spared) {
 			/* ditto if disk has been spared to dist spare space */
 #if RF_DEBUG_MAP
-			RF_RowCol_t or = pda_p->row, oc = pda_p->col;
+			RF_RowCol_t oc = pda_p->col;
 			RF_SectorNum_t oo = pda_p->startSector;
 #endif
 			if (pda_p->type == RF_PDA_TYPE_DATA)
-				raidPtr->Layout.map->MapSector(raidPtr, pda_p->raidAddress, &pda_p->row, &pda_p->col, &pda_p->startSector, RF_REMAP);
+				raidPtr->Layout.map->MapSector(raidPtr, pda_p->raidAddress, &pda_p->col, &pda_p->startSector, RF_REMAP);
 			else
-				raidPtr->Layout.map->MapParity(raidPtr, pda_p->raidAddress, &pda_p->row, &pda_p->col, &pda_p->startSector, RF_REMAP);
+				raidPtr->Layout.map->MapParity(raidPtr, pda_p->raidAddress, &pda_p->col, &pda_p->startSector, RF_REMAP);
 
 #if RF_DEBUG_MAP
 			if (rf_mapDebug) {
-				printf("Redirected r %d c %d o %d -> r%d c %d o %d\n", or, oc, (int) oo,
-				    pda_p->row, pda_p->col, (int) pda_p->startSector);
+				printf("Redirected c %d o %d -> c %d o %d\n", oc, (int) oo,
+				    pda_p->col, (int) pda_p->startSector);
 			}
 #endif
 		} else

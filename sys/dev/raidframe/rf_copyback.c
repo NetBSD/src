@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.25 2003/06/29 22:30:32 fvdl Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.26 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.25 2003/06/29 22:30:32 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.26 2003/12/29 02:38:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -64,8 +64,7 @@ int     rf_copyback_in_progress;
 static int rf_CopybackReadDoneProc(RF_CopybackDesc_t * desc, int status);
 static int rf_CopybackWriteDoneProc(RF_CopybackDesc_t * desc, int status);
 static void rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
-			   RF_RaidAddr_t addr, RF_RowCol_t testRow, 
-			   RF_RowCol_t testCol,
+			   RF_RaidAddr_t addr, RF_RowCol_t testCol,
 			   RF_SectorNum_t testOffs);
 static void rf_CopybackComplete(RF_CopybackDesc_t * desc, int status);
 
@@ -90,9 +89,9 @@ rf_CopybackReconstructedData(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_ComponentLabel_t c_label;
-	int     done, retcode;
+	int     found, retcode;
 	RF_CopybackDesc_t *desc;
-	RF_RowCol_t frow, fcol;
+	RF_RowCol_t fcol;
 	RF_RaidDisk_t *badDisk;
 	char   *databuf;
 
@@ -103,51 +102,48 @@ rf_CopybackReconstructedData(raidPtr)
 
 	int ac;
 
-	done = 0;
 	fcol = 0;
-	for (frow = 0; frow < raidPtr->numRow; frow++) {
-		for (fcol = 0; fcol < raidPtr->numCol; fcol++) {
-			if (raidPtr->Disks[frow][fcol].status == rf_ds_dist_spared
-			    || raidPtr->Disks[frow][fcol].status == rf_ds_spared) {
-				done = 1;
-				break;
-			}
-		}
-		if (done)
+	found = 0;
+	for (fcol = 0; fcol < raidPtr->numCol; fcol++) {
+		if (raidPtr->Disks[fcol].status == rf_ds_dist_spared
+		    || raidPtr->Disks[fcol].status == rf_ds_spared) {
+			found = 1;
 			break;
+		}
 	}
 
-	if (frow == raidPtr->numRow) {
+	if (!found) {
 		printf("raid%d: no disks need copyback\n", raidPtr->raidid);
 		return;
 	}
-	badDisk = &raidPtr->Disks[frow][fcol];
+
+	badDisk = &raidPtr->Disks[fcol];
 
 	proc = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the first time. Close
 	 * it before trying to open it again.. */
 
-	if (raidPtr->raid_cinfo[frow][fcol].ci_vp != NULL) {
+	if (raidPtr->raid_cinfo[fcol].ci_vp != NULL) {
 		printf("Closed the open device: %s\n",
-		    raidPtr->Disks[frow][fcol].devname);
-		vp = raidPtr->raid_cinfo[frow][fcol].ci_vp;
-		ac = raidPtr->Disks[frow][fcol].auto_configured;
+		    raidPtr->Disks[fcol].devname);
+		vp = raidPtr->raid_cinfo[fcol].ci_vp;
+		ac = raidPtr->Disks[fcol].auto_configured;
 		rf_close_component(raidPtr, vp, ac);
-		raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
+		raidPtr->raid_cinfo[fcol].ci_vp = NULL;
 
 	}
 	/* note that this disk was *not* auto_configured (any longer) */
-	raidPtr->Disks[frow][fcol].auto_configured = 0;
+	raidPtr->Disks[fcol].auto_configured = 0;
 
 	printf("About to (re-)open the device: %s\n",
-	    raidPtr->Disks[frow][fcol].devname);
+	    raidPtr->Disks[fcol].devname);
 
-	retcode = raidlookup(raidPtr->Disks[frow][fcol].devname, proc, &vp);
+	retcode = raidlookup(raidPtr->Disks[fcol].devname, proc, &vp);
 
 	if (retcode) {
 		printf("raid%d: copyback: raidlookup on device: %s failed: %d!\n",
-		       raidPtr->raidid, raidPtr->Disks[frow][fcol].devname, 
+		       raidPtr->raidid, raidPtr->Disks[fcol].devname, 
 		       retcode);
 
 		/* XXX the component isn't responding properly... must be
@@ -167,21 +163,21 @@ rf_CopybackReconstructedData(raidPtr)
 		if (retcode) {
 			return;
 		}
-		raidPtr->Disks[frow][fcol].blockSize = dpart.disklab->d_secsize;
+		raidPtr->Disks[fcol].blockSize = dpart.disklab->d_secsize;
 
-		raidPtr->Disks[frow][fcol].numBlocks = dpart.part->p_size -
+		raidPtr->Disks[fcol].numBlocks = dpart.part->p_size -
 		    rf_protectedSectors;
 
-		raidPtr->raid_cinfo[frow][fcol].ci_vp = vp;
-		raidPtr->raid_cinfo[frow][fcol].ci_dev = va.va_rdev;
+		raidPtr->raid_cinfo[fcol].ci_vp = vp;
+		raidPtr->raid_cinfo[fcol].ci_dev = va.va_rdev;
 
-		raidPtr->Disks[frow][fcol].dev = va.va_rdev;	/* XXX or the above? */
+		raidPtr->Disks[fcol].dev = va.va_rdev;	/* XXX or the above? */
 
 		/* we allow the user to specify that only a fraction of the
 		 * disks should be used this is just for debug:  it speeds up
 		 * the parity scan */
-		raidPtr->Disks[frow][fcol].numBlocks =
-		    raidPtr->Disks[frow][fcol].numBlocks *
+		raidPtr->Disks[fcol].numBlocks =
+		    raidPtr->Disks[fcol].numBlocks *
 		    rf_sizePercentage / 100;
 	}
 
@@ -197,9 +193,7 @@ rf_CopybackReconstructedData(raidPtr)
 	RF_Malloc(desc, sizeof(*desc), (RF_CopybackDesc_t *));
 	desc->raidPtr = raidPtr;
 	desc->status = 0;
-	desc->frow = frow;
 	desc->fcol = fcol;
-	desc->spRow = badDisk->spareRow;
 	desc->spCol = badDisk->spareCol;
 	desc->stripeAddr = 0;
 	desc->sectPerSU = raidPtr->Layout.sectorsPerStripeUnit;
@@ -213,8 +207,8 @@ rf_CopybackReconstructedData(raidPtr)
 
 	/* adjust state of the array and of the disks */
 	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->Disks[desc->frow][desc->fcol].status = rf_ds_optimal;
-	raidPtr->status[desc->frow] = rf_rs_optimal;
+	raidPtr->Disks[desc->fcol].status = rf_ds_optimal;
+	raidPtr->status = rf_rs_optimal;
 	rf_copyback_in_progress = 1;	/* debug only */
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 
@@ -223,18 +217,18 @@ rf_CopybackReconstructedData(raidPtr)
 
 	/* Data has been restored.  Fix up the component label. */
 	/* Don't actually need the read here.. */
-	raidread_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
-				  raidPtr->raid_cinfo[frow][fcol].ci_vp,
+	raidread_component_label( raidPtr->raid_cinfo[fcol].ci_dev,
+				  raidPtr->raid_cinfo[fcol].ci_vp,
 				  &c_label);
 	
 	raid_init_component_label( raidPtr, &c_label );
 
-	c_label.row = frow;
+	c_label.row = 0;
 	c_label.column = fcol;
-	c_label.partitionSize = raidPtr->Disks[frow][fcol].partitionSize;
+	c_label.partitionSize = raidPtr->Disks[fcol].partitionSize;
 
-	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
-				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
+	raidwrite_component_label( raidPtr->raid_cinfo[fcol].ci_dev,
+				   raidPtr->raid_cinfo[fcol].ci_vp,
 				   &c_label);
 	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 }
@@ -251,7 +245,7 @@ rf_ContinueCopyback(desc)
 	RF_SectorNum_t testOffs, stripeAddr;
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_RaidAddr_t addr;
-	RF_RowCol_t testRow, testCol;
+	RF_RowCol_t testCol;
 #if RF_DEBUG_RECON
 	int     old_pctg, new_pctg;
 	struct timeval t, diff;
@@ -289,10 +283,10 @@ rf_ContinueCopyback(desc)
 		for (done = 0, addr = stripeAddr; addr < stripeAddr + desc->sectPerStripe; addr += desc->sectPerSU) {
 
 			/* map the SU, disallowing remap to spare space */
-			(raidPtr->Layout.map->MapSector) (raidPtr, addr, &testRow, &testCol, &testOffs, RF_DONT_REMAP);
+			(raidPtr->Layout.map->MapSector) (raidPtr, addr, &testCol, &testOffs, RF_DONT_REMAP);
 
-			if (testRow == desc->frow && testCol == desc->fcol) {
-				rf_CopybackOne(desc, RF_COPYBACK_DATA, addr, testRow, testCol, testOffs);
+			if (testCol == desc->fcol) {
+				rf_CopybackOne(desc, RF_COPYBACK_DATA, addr, testCol, testOffs);
 				done = 1;
 				break;
 			}
@@ -304,10 +298,10 @@ rf_ContinueCopyback(desc)
 
 			/* map the parity for this stripe, disallowing remap
 			 * to spare space */
-			(raidPtr->Layout.map->MapParity) (raidPtr, stripeAddr, &testRow, &testCol, &testOffs, RF_DONT_REMAP);
+			(raidPtr->Layout.map->MapParity) (raidPtr, stripeAddr, &testCol, &testOffs, RF_DONT_REMAP);
 
-			if (testRow == desc->frow && testCol == desc->fcol) {
-				rf_CopybackOne(desc, RF_COPYBACK_PARITY, stripeAddr, testRow, testCol, testOffs);
+			if (testCol == desc->fcol) {
+				rf_CopybackOne(desc, RF_COPYBACK_PARITY, stripeAddr, testCol, testOffs);
 			}
 		}
 		/* check to see if the last read/write pair failed */
@@ -323,26 +317,24 @@ rf_ContinueCopyback(desc)
 
 /* copyback one unit */
 static void 
-rf_CopybackOne(desc, typ, addr, testRow, testCol, testOffs)
+rf_CopybackOne(desc, typ, addr, testCol, testOffs)
 	RF_CopybackDesc_t *desc;
 	int     typ;
 	RF_RaidAddr_t addr;
-	RF_RowCol_t testRow;
 	RF_RowCol_t testCol;
 	RF_SectorNum_t testOffs;
 {
 	RF_SectorCount_t sectPerSU = desc->sectPerSU;
 	RF_Raid_t *raidPtr = desc->raidPtr;
-	RF_RowCol_t spRow = desc->spRow;
 	RF_RowCol_t spCol = desc->spCol;
 	RF_SectorNum_t spOffs;
 
 	/* find the spare spare location for this SU */
 	if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 		if (typ == RF_COPYBACK_DATA)
-			raidPtr->Layout.map->MapSector(raidPtr, addr, &spRow, &spCol, &spOffs, RF_REMAP);
+			raidPtr->Layout.map->MapSector(raidPtr, addr, &spCol, &spOffs, RF_REMAP);
 		else
-			raidPtr->Layout.map->MapParity(raidPtr, addr, &spRow, &spCol, &spOffs, RF_REMAP);
+			raidPtr->Layout.map->MapParity(raidPtr, addr, &spCol, &spOffs, RF_REMAP);
 	} else {
 		spOffs = testOffs;
 	}
@@ -356,7 +348,6 @@ rf_CopybackOne(desc, typ, addr, testRow, testCol, testOffs)
 	    sectPerSU, desc->databuf, 0L, 0,
 	    (int (*) (void *, int)) rf_CopybackWriteDoneProc, desc,
 	    NULL, NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL);
-	desc->frow = testRow;
 	desc->fcol = testCol;
 
 	/* enqueue the read.  the write will go out as part of the callback on
@@ -367,7 +358,7 @@ rf_CopybackOne(desc, typ, addr, testRow, testCol, testOffs)
 	RF_LOCK_MUTEX(desc->mcpair->mutex);
 	desc->mcpair->flag = 0;
 
-	rf_DiskIOEnqueue(&raidPtr->Queues[spRow][spCol], desc->readreq, RF_IO_NORMAL_PRIORITY);
+	rf_DiskIOEnqueue(&raidPtr->Queues[spCol], desc->readreq, RF_IO_NORMAL_PRIORITY);
 
 	while (!desc->mcpair->flag) {
 		RF_WAIT_MCPAIR(desc->mcpair);
@@ -390,7 +381,7 @@ rf_CopybackReadDoneProc(desc, status)
 		       desc->raidPtr->raidid);
 		(desc->writereq->CompleteFunc) (desc, -100);
 	} else {
-		rf_DiskIOEnqueue(&(desc->raidPtr->Queues[desc->frow][desc->fcol]), desc->writereq, RF_IO_NORMAL_PRIORITY);
+		rf_DiskIOEnqueue(&(desc->raidPtr->Queues[desc->fcol]), desc->writereq, RF_IO_NORMAL_PRIORITY);
 	}
 	return (0);
 }
@@ -427,7 +418,7 @@ rf_CopybackComplete(desc, status)
 			RF_ASSERT(raidPtr->Layout.map->parityConfig == 'D');
 			rf_FreeSpareTable(raidPtr);
 		} else {
-			raidPtr->Disks[desc->spRow][desc->spCol].status = rf_ds_spare;
+			raidPtr->Disks[desc->spCol].status = rf_ds_spare;
 		}
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
