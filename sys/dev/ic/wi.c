@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.54 2002/03/21 07:31:37 itohy Exp $	*/
+/*	$NetBSD: wi.c,v 1.55 2002/03/25 09:10:54 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.54 2002/03/21 07:31:37 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.55 2002/03/25 09:10:54 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1680,7 +1680,7 @@ wi_init(ifp)
 			 * It is under investigation for details.
 			 * (ichiro@netbsd.org)
 			 */
-			if (sc->sc_prism2_ver < 82 ) {
+			if (sc->sc_firmware_ver < 82 ) {
 				/* firm ver < 0.8 variant 2 */
 				WI_SETVAL(WI_RID_PROMISC, 1);
 			}
@@ -1988,25 +1988,23 @@ wi_get_id(sc)
 		sc->sc_prism2 = 0;
 		break;
 	default:
-		printf("Lucent chip or unknown chip\n");
+		printf("Lucent chip or unknown chip");
 		sc->sc_prism2 = 0;
 		break;
 	}
 
-	if (sc->sc_prism2) {
-		/* try to get prism2 firm version */
-		memset(&ver, 0, sizeof(ver));
-		ver.wi_type = WI_RID_STA_IDENTITY;
-		ver.wi_len = 5;
-		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
-		LE16TOH(ver.wi_ver[1]);
-		LE16TOH(ver.wi_ver[2]);
-		LE16TOH(ver.wi_ver[3]);
-		printf(", Firmware: %i.%i variant %i\n", ver.wi_ver[2],
-		       ver.wi_ver[3], ver.wi_ver[1]);
-		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
-				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
-	}
+	/* get firmware version */
+	memset(&ver, 0, sizeof(ver));
+	ver.wi_type = WI_RID_STA_IDENTITY;
+	ver.wi_len = 5;
+	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+	LE16TOH(ver.wi_ver[1]);
+	LE16TOH(ver.wi_ver[2]);
+	LE16TOH(ver.wi_ver[3]);
+	printf(", Firmware: %i.%i variant %i\n", ver.wi_ver[2],
+	       ver.wi_ver[3], ver.wi_ver[1]);
+	sc->sc_firmware_ver = ver.wi_ver[2] * 100 +
+	                      ver.wi_ver[3] *  10 + ver.wi_ver[1];
 
 	return;
 }
