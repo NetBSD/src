@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.8 2002/09/23 03:36:06 itojun Exp $       */
+/*      $NetBSD: run.c,v 1.9 2002/09/23 12:48:10 mycroft Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

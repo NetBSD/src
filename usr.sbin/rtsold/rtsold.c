@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.20 2002/09/20 22:04:31 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.21 2002/09/23 12:48:10 mycroft Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
