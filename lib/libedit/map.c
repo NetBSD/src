@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.6 1998/03/30 01:30:14 mrg Exp $	*/
+/*	$NetBSD: map.c,v 1.7 1998/07/29 02:26:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.6 1998/03/30 01:30:14 mrg Exp $");
+__RCSID("$NetBSD: map.c,v 1.7 1998/07/29 02:26:01 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1091,6 +1091,29 @@ map_set_editor(el, editor)
     }
     if (strcmp(editor, "vi") == 0) {
 	map_init_vi(el);
+	return 0;
+    }
+    return -1;
+}
+
+
+/* map_get_editor():
+ *	Retrieve the editor 
+ */
+protected int
+map_get_editor(el, editor)
+    EditLine *el;
+    const char **editor;
+{
+
+    if (editor == NULL)
+	return -1;
+    switch (el->el_map.type) {
+    case MAP_EMACS:
+	*editor = "emacs";
+	return 0;
+    case MAP_VI:
+	*editor = "vi";
 	return 0;
     }
     return -1;
