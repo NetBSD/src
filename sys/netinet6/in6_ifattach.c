@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.41.10.1 2003/09/01 07:39:51 tron Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.41.10.1 2003/09/01 07:39:51 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.41 2001/12/21 08:54:54 itojun Exp
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6_mroute.h>
 
 #include <net/net_osdep.h>
 
@@ -828,6 +829,9 @@ in6_ifdetach(ifp)
 	struct rtentry *rt;
 	short rtflags;
 	struct sockaddr_in6 sin6;
+
+	/* remove ip6_mrouter stuff */
+	ip6_mrouter_detach(ifp);
 
 	/* nuke prefix list.  this may try to remove some of ifaddrs as well */
 	in6_purgeprefix(ifp);
