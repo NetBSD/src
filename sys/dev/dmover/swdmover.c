@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.6 2003/07/25 13:59:09 briggs Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.7 2003/11/07 22:04:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.6 2003/07/25 13:59:09 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.7 2003/11/07 22:04:13 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -291,6 +291,7 @@ swdmover_func_xor_process(struct dmover_request *dreq)
 		aligned = 1;
 		if ((ulong) OUTBUF_L.l_addr & 0x3)
 			aligned = 0;
+		len = OUTBUF_L.l_len;
 		for (i = 0 ; i < ninputs ; i++) {
 			if (len != INBUF_L(i).l_len) {
 				/* XXXLOCK */
@@ -302,7 +303,6 @@ swdmover_func_xor_process(struct dmover_request *dreq)
 			if ((ulong) INBUF_L(i).l_addr & 0x3)
 				aligned = 0;
 		}
-		len = OUTBUF_L.l_len;
 		if (aligned) {
 			dst32 = (uint32_t *) OUTBUF_L.l_addr;
 			nwords = len / 4;
