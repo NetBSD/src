@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.32 2001/06/25 04:52:26 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.33 2001/06/28 14:37:56 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -157,6 +157,8 @@ static int  fwohci_parse_input(struct fwohci_softc *, void *,
 static int  fwohci_submatch(struct device *, struct cfdata *, void *);
 
 #ifdef FW_DEBUG
+static void fwohci_show_intr(struct fwohci_softc *, u_int32_t);
+static void fwohci_show_phypkt(struct fwohci_softc *, u_int32_t);
 
 /* 1 is normal debug, 2 is verbose debug, 3 is complete (packet dumps). */
 
@@ -284,54 +286,9 @@ fwohci_intr(void *arg)
 		OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
 		    intmask & ~OHCI_Int_BusReset);
 #ifdef FW_DEBUG
-		DPRINTFN(1, ("%s: intmask=0x%08x:",
-		    sc->sc_sc1394.sc1394_dev.dv_xname, intmask));
-		if (intmask & OHCI_Int_CycleTooLong)
-			DPRINTFN(1, (" CycleTooLong"));
-		if (intmask & OHCI_Int_UnrecoverableError)
-			DPRINTFN(1, (" UnrecoverableError"));
-		if (intmask & OHCI_Int_CycleInconsistent)
-			DPRINTFN(1, (" CycleInconsistent"));
-		if (intmask & OHCI_Int_BusReset)
-			DPRINTFN(1, (" BusReset"));
-		if (intmask & OHCI_Int_SelfIDComplete)
-			DPRINTFN(1, (" SelfIDComplete"));
-		if (intmask & OHCI_Int_LockRespErr)
-			DPRINTFN(1, (" LockRespErr"));
-		if (intmask & OHCI_Int_PostedWriteErr)
-			DPRINTFN(1, (" PostedWriteErr"));
-		if (intmask & OHCI_Int_ReqTxComplete)
-			DPRINTFN(1, (" ReqTxComplete(0x%04x)",
-			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_TX_REQUEST,
-				OHCI_SUBREG_ContextControlClear)));
-		if (intmask & OHCI_Int_RespTxComplete)
-			DPRINTFN(1, (" RespTxComplete(0x%04x)",
-			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_TX_RESPONSE,
-				OHCI_SUBREG_ContextControlClear)));
-		if (intmask & OHCI_Int_ARRS)
-			DPRINTFN(1, (" ARRS(0x%04x)",
-			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
-				OHCI_SUBREG_ContextControlClear)));
-		if (intmask & OHCI_Int_ARRQ)
-			DPRINTFN(1, (" ARRQ(0x%04x)",
-			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_REQUEST,
-				OHCI_SUBREG_ContextControlClear)));
-		if (intmask & OHCI_Int_IsochRx)
-			DPRINTFN(1, (" IsochRx(0x%08x)",
-			    OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear)));
-		if (intmask & OHCI_Int_IsochTx)
-			DPRINTFN(1, (" IsochTx(0x%08x)",
-			    OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntEventClear)));
-		if (intmask & OHCI_Int_RQPkt)
-			DPRINTFN(1, (" RQPkt(0x%04x)",
-			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_REQUEST,
-				OHCI_SUBREG_ContextControlClear)));
-		if (intmask & OHCI_Int_RSPkt)
-			DPRINTFN(1, (" RSPkt(0x%04x)",
-			    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
-				OHCI_SUBREG_ContextControlClear)));
-		DPRINTFN(1, ("\n"));
-#endif /* FW_DEBUG */
+		if (fwdebug > 1)
+			fwohci_show_intr(sc, intmask);
+#endif
 
 		if (intmask & OHCI_Int_BusReset) {
 			/*
@@ -815,7 +772,6 @@ static void
 fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 {
 	u_int32_t val;
-	u_int8_t key, phyid;
 
 	val = pkt->fp_hdr[1];
 	if (val != ~pkt->fp_hdr[2]) {
@@ -830,48 +786,10 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 		}
 		return;
 	}
-	key = (val & 0xc0000000) >> 30;
-	phyid = (val & 0x3f000000) >> 24;
-	switch (key) {
-	case 0:
 #ifdef FW_DEBUG
-		DPRINTFN(1, ("fwohci_phy_input: PHY Config from %d:", phyid));
-		if (val & 0x00800000)
-			DPRINTFN(1, (" ForceRoot"));
-		if (val & 0x00400000)
-			DPRINTFN(1, (" Gap=%x", (val & 0x003f0000) >> 16));
-		DPRINTFN(1, ("\n"));
+	if (fwdebug > 1)
+		fwohci_show_phypkt(sc, val);
 #endif
-		break;
-	case 1:
-		DPRINTFN(1, ("fwohci_phy_input: Link-on from %d\n", phyid));
-		break;
-	case 2:
-#ifdef FW_DEBUG
-		DPRINTFN(1, ("fwohci_phy_input: SelfID from %d:", phyid));
-		if (val & 0x00800000) {
-			DPRINTFN(1, (" #%d", (val & 0x00700000) >> 20));
-		} else {
-			if (val & 0x00400000)
-				DPRINTFN(1, (" LinkActive"));
-			DPRINTFN(1, (" Gap=%x", (val & 0x003f0000) >> 16));
-			DPRINTFN(1, (" Spd=S%d",
-			    100 << ((val & 0x0000c000) >> 14)));
-			if (val & 0x00000800)
-				DPRINTFN(1, (" Cont"));
-			if (val & 0x00000002)
-				DPRINTFN(1, (" InitiateBusReset"));
-		}
-		if (val & 0x00000001)
-			DPRINTFN(1, (" +"));
-		DPRINTFN(1, ("\n"));
-#endif
-		break;
-	default:
-		printf("%s: unknown PHY packet: 0x%08x\n",
-		    sc->sc_sc1394.sc1394_dev.dv_xname, val);
-		break;
-	}
 }
 
 /*
@@ -3349,3 +3267,103 @@ fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
 		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 	return 0;
 }
+
+#ifdef FW_DEBUG
+static void
+fwohci_show_intr(struct fwohci_softc *sc, u_int32_t intmask)
+{
+
+	printf("%s: intmask=0x%08x:", sc->sc_sc1394.sc1394_dev.dv_xname,
+	    intmask);
+	if (intmask & OHCI_Int_CycleTooLong)
+		printf(" CycleTooLong");
+	if (intmask & OHCI_Int_UnrecoverableError)
+		printf(" UnrecoverableError");
+	if (intmask & OHCI_Int_CycleInconsistent)
+		printf(" CycleInconsistent");
+	if (intmask & OHCI_Int_BusReset)
+		printf(" BusReset");
+	if (intmask & OHCI_Int_SelfIDComplete)
+		printf(" SelfIDComplete");
+	if (intmask & OHCI_Int_LockRespErr)
+		printf(" LockRespErr");
+	if (intmask & OHCI_Int_PostedWriteErr)
+		printf(" PostedWriteErr");
+	if (intmask & OHCI_Int_ReqTxComplete)
+		printf(" ReqTxComplete(0x%04x)",
+		    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_TX_REQUEST,
+		    OHCI_SUBREG_ContextControlClear));
+	if (intmask & OHCI_Int_RespTxComplete)
+		printf(" RespTxComplete(0x%04x)",
+		    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_TX_RESPONSE,
+		    OHCI_SUBREG_ContextControlClear));
+	if (intmask & OHCI_Int_ARRS)
+		printf(" ARRS(0x%04x)",
+		    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
+		    OHCI_SUBREG_ContextControlClear));
+	if (intmask & OHCI_Int_ARRQ)
+		printf(" ARRQ(0x%04x)",
+		    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_REQUEST,
+		    OHCI_SUBREG_ContextControlClear));
+	if (intmask & OHCI_Int_IsochRx)
+		printf(" IsochRx(0x%08x)",
+		    OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear));
+	if (intmask & OHCI_Int_IsochTx)
+		printf(" IsochTx(0x%08x)",
+		    OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntEventClear));
+	if (intmask & OHCI_Int_RQPkt)
+		printf(" RQPkt(0x%04x)",
+		    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_REQUEST,
+		    OHCI_SUBREG_ContextControlClear));
+	if (intmask & OHCI_Int_RSPkt)
+		printf(" RSPkt(0x%04x)",
+		    OHCI_ASYNC_DMA_READ(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
+		    OHCI_SUBREG_ContextControlClear));
+	printf("\n");
+}
+
+static void
+fwohci_show_phypkt(struct fwohci_softc *sc, u_int32_t val)
+{
+	u_int8_t key, phyid;
+
+	key = (val & 0xc0000000) >> 30;
+	phyid = (val & 0x3f000000) >> 24;
+	printf("%s: PHY packet from %d: ",
+	    sc->sc_sc1394.sc1394_dev.dv_xname, phyid);
+	switch (key) {
+	case 0:
+		printf("PHY Config:");
+		if (val & 0x00800000)
+			printf(" ForceRoot");
+		if (val & 0x00400000)
+			printf(" Gap=%x", (val & 0x003f0000) >> 16);
+		printf("\n");
+		break;
+	case 1:
+		printf("Link-on\n");
+		break;
+	case 2:
+		printf("SelfID:");
+		if (val & 0x00800000) {
+			printf(" #%d", (val & 0x00700000) >> 20);
+		} else {
+			if (val & 0x00400000)
+				printf(" LinkActive");
+			printf(" Gap=%x", (val & 0x003f0000) >> 16);
+			printf(" Spd=S%d", 100 << ((val & 0x0000c000) >> 14));
+			if (val & 0x00000800)
+				printf(" Cont");
+			if (val & 0x00000002)
+				printf(" InitiateBusReset");
+		}
+		if (val & 0x00000001)
+			printf(" +");
+		printf("\n");
+		break;
+	default:
+		printf("unknown: 0x%08x\n", val);
+		break;
+	}
+}
+#endif /* FW_DEBUG */
