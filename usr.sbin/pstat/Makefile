@@ -1,7 +1,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.3 1994/06/22 05:38:20 chopps Exp $
+#	$Id: Makefile,v 1.4 1994/12/25 12:22:03 pk Exp $
 
 PROG=	pstat
+MAN=	pstat.8
 BINGRP=	kmem
 BINMODE=2555
 DPADD=	${LIBKVM}
