@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.37 1999/03/26 07:00:37 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.38 1999/04/01 16:22:57 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -445,19 +445,25 @@ idescattach(pdp, dp, auxp)
 			sc->sc_ide[i].sc_flags |= IDEF_ATAPI;
 			if (idecommand(&sc->sc_ide[i], 0, 0, 0, 0, ATAPI_SOFT_RST)
 			    != 0) {
+#ifdef DEBUG_ATAPI
 				printf("\nATAPI_SOFT_RESET failed for drive %d",
 				    i);
+#endif
 				continue;
 			}
 			if (wait_for_unbusy(sc) != 0) {
+#ifdef DEBUG_ATAPI
 				printf("\nATAPI wait for unbusy failed");
+#endif
 				continue;
 			}
 			if (idecommand(&sc->sc_ide[i], 0, 0, 0,
 			    sizeof(struct ataparams), ATAPI_IDENTIFY) != 0 ||
 			    wait_for_drq(sc) != 0) {
+#ifdef DEBUG_ATAPI
 				printf("\nATAPI_IDENTIFY failed for drive %d",
 				    i);
+#endif
 				continue;
 			}
 			len = rp->ide_cyl_lo + rp->ide_cyl_hi * 256;
@@ -774,8 +780,10 @@ idewait (sc, mask)
 			break;
 #endif
 		if (++timeout > 10000) {
+#ifdef DEBUG_ATAPI
 			printf ("idewait timeout status %02x error %02x\n",
 			    status, regs->ide_error);
+#endif
 			return (-1);
 		}
 		delay (1000);
