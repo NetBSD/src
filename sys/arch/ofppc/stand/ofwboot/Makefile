@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/05/28 08:12:17 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.5 1998/06/09 04:27:53 sakamoto Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -6,11 +6,11 @@ PROG=		ofwboot
 SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
 .PATH:		${S}/arch/ofppc/ofppc
 SRCS+=		ofwmagic.S
+.PATH:		${S}/arch/powerpc/powerpc
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
 NOMAN=
 STRIPFLAG=
 BINMODE=	444
-OBJCOPY?=	objcopy
 
 NEWVERSWHAT=	"OpenFirmware Boot"
 
@@ -21,13 +21,20 @@ ENTRY=		_start
 
 CLEANFILES+=	vers.c vers.o
 
-CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. -I${.OBJDIR}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DPOWERPC_BOOT_AOUT
 CPPFLAGS+=	-DPOWERPC_BOOT_ELF
-CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
+
+.BEGIN: ${.OBJDIR}/machine
+depend all: ${.OBJDIR}/machine
+CLEANFILES+= ${.OBJDIR}/machine
+
+${.OBJDIR}/machine::
+	-rm -f $@
+	ln -s $S/arch/ofppc/include $@
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -50,8 +57,5 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${COMPILE.c} vers.c
 	${LD} -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
-	mv ${PROG} ${PROG}.elf
-	${OBJCOPY} --input-target=elf32-powerpc \
-	    --output-target=xcoff-powermac ${PROG}.elf ${PROG}.xcf
 
 .include <bsd.prog.mk>
