@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.9 1998/12/10 15:55:25 leo Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.10 1999/04/15 09:15:29 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -301,7 +301,7 @@ le_intr(lesc, sr)
 	struct lance_softc	*sc = &lesc->sc_am7990.lsc;
 	u_int16_t		csr0;
 
-	if ((sr & PSL_IPL) < IPL_NET)
+	if ((sr & PSL_IPL) < (IPL_NET & PSL_IPL))
 		am7990_intr(sc);
 	else {
 		sc->sc_saved_csr0 = csr0 = lerdcsr(sc, LE_CSR0);
