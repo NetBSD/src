@@ -943,6 +943,9 @@ case "${target}" in
   vax-*-*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libffi"
     ;;
+  x86_64-*-netbsd*)
+    noconfigdirs="$noconfigdirs gcc gdb"
+    ;;
   *-*-lynxos*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libffi"
     ;; 
