@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.10 1997/02/04 06:51:34 mark Exp $	*/
+/*	$NetBSD: genassym.c,v 1.10.2.1 1997/03/11 21:53:11 is Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -160,6 +160,7 @@ main()
 
 	def("CF_CACHE_PURGE_ID", &cf->cf_cache_purgeID);
 	def("CF_CONTEXT_SWITCH", &cf->cf_context_switch);
+	def("CF_SLEEP", &cf->cf_sleep);
 
 	exit(0);
 }

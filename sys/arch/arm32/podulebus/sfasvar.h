@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.3 1997/01/18 01:38:05 mark Exp $ */
+/* $NetBSD: sfasvar.h,v 1.3.2.1 1997/03/11 21:53:34 is Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -179,6 +179,9 @@ struct	sfas_softc {
 	int		       (*sc_setup_dma)();
 	int		       (*sc_build_dma_chain)();
 	int		       (*sc_need_bump)();
+
+/* Optional replacement ixfer */
+	void		       (*sc_ixfer)();
 
 /* Generic Led data */
 	int			 sc_led_status;

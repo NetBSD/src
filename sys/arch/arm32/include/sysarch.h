@@ -1,7 +1,7 @@
-/* $NetBSD: sysarch.h,v 1.1 1996/10/14 22:47:31 mark Exp $ */
+/*	$NetBSD: sysarch.h,v 1.1.4.1 1997/03/11 21:53:24 is Exp $	*/
 
 /*
- * Copyright (c) 1996 Mark Brinicombe.
+ * Copyright (c) 1996-1997 Mark Brinicombe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,13 @@
 
 #define ARM32_SYNC_ICACHE	0
 
+struct arm32_sync_icache_args {
+	u_int	addr;
+	int	len;
+};
+
 #ifndef _KERNEL
-int arm32_sync_icache __P(());
+int arm32_sync_icache __P((u_int addr, int len));
 #endif
 
 #endif /* !_ARM32_SYSARCH_H_ */

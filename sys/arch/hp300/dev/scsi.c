@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.15 1997/01/30 09:08:55 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.15.4.1 1997/03/11 20:59:37 is Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -299,6 +299,8 @@ scsiattach(parent, self, aux)
 		return;
 	}
 	ipl = DIO_IPL(hd);
+
+	printf(" ipl %d", ipl);
 
 	hs->sc_regs = hd;
 

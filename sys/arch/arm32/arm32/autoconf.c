@@ -1,7 +1,7 @@
-/* $NetBSD: autoconf.c,v 1.14 1997/01/31 19:10:27 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.14.4.1 1997/03/11 21:53:07 is Exp $	*/
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1997 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -67,8 +67,7 @@ extern dev_t dumpdev;
 
 extern int pmap_debug_level;
 
-char *	strstr	__P((char */*s1*/, char */*s2*/));
-long	strtoul __P((const char *, char **, int));
+char *	strstr	__P((char *s1, char *s2));
 void	dumpconf __P(());
 
 /* Table major numbers for the device names, NULL terminated */
@@ -150,27 +149,6 @@ set_root_device()
 }
 
 
-/* Set the swap devices from the swap specifiers in the boot ars */
-/* XXX no longer supported; will change with new vm_swap.c --thorpej */
-
-void
-set_swap_device()
-{
-	char *ptr;
-	int nswap = 0;
-	dev_t dev;
-            
-	if (boot_args) {
-		ptr = boot_args;
-		do {
-			ptr = strstr(ptr, "swap=");
-			if (ptr)
-				printf("WARNING: `%s' is obsolete; ignoring\n",
-				    ptr);
-		} while (ptr);
-	}
-}
-
 /*
  * Set up the root and swap device numbers, configure the swap space and
  * dump space
@@ -201,7 +179,6 @@ set_boot_devs()
 void
 configure()
 {
-
 	/*
 	 * Configure all the roots.
 	 * We have to have a mainbus
@@ -217,7 +194,7 @@ configure()
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_CLOCK]);
-	printf(" ipl_imp=%08x ipl_none=%08x\n", irqmasks[IPL_IMP],
+	printf("ipl_imp=%08x ipl_none=%08x\n", irqmasks[IPL_IMP],
 	    irqmasks[IPL_NONE]);
 
 	/* Time to start taking interrupts so lets open the flood gates .... */

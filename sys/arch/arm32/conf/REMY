@@ -66,8 +66,7 @@ options		INET		# IP + ICMP + TCP + UDP
 #options	ISO,TPIP	# OSI
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
-#options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
-				# if you enable the pseudo-device ipl).
+#options	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 # Compatibility options
 
@@ -344,6 +343,12 @@ uk30	at scsibus3 target 6 lun ?	# SCSI Unknown device
 ch*	at scsibus? target ? lun ?	# SCSI auto-changers
 
 #kie*	at podulebus? slot ? offset ?
+
+#icside*	at podulebus?			# ICS IDE card
+#wdc*	at icside?
+
+#rapide*	at podulebus?			# Yellowstone RapIDE card
+#wdc*	at rapide?
 
 #ea*	at podulebus?			# Ether3 podules
 #eb0	at podulebus?			# EtherB network slot cards

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25 1997/02/02 17:29:42 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.25.4.1 1997/03/11 20:59:35 is Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -30,7 +30,7 @@ options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
-options 	"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
+options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	LKM		# Loadable kernel modules
 
 # Filesystems
@@ -50,10 +50,10 @@ options 	NFSSERVER	# Network filesystem server
 
 # Networking options
 options 	INET		# Internet protocols
-options 	GATEWAY		# IP forwarding + larger mb_map
-options 	MROUTING	# Multicast routing
-options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options		PFIL_HOOKS	# packet filter hooks
+options  	GATEWAY		# IP forwarding + larger mb_map
+options  	MROUTING	# Multicast routing
+options  	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options 	PFIL_HOOKS	# packet filter hooks
 
 # Options for HP hardware
 options 	FPSP		# floating point interface for 68040
