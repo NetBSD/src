@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.2 1999/07/15 19:09:40 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.3 2000/02/12 23:58:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.2 1999/07/15 19:09:40 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.3 2000/02/12 23:58:09 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ main(argc, argv)
 	struct partition *pp;
 	struct disklabel *lp;
 	struct stat st;
-	int debug, lfs, fsi, fso, segsize, maxpartitions;
+	int debug, force, lfs, fsi, fso, segsize, maxpartitions;
 	char *cp, *opstring;
 
 	if ((progname = strrchr(*argv, '/')) != NULL)
@@ -123,9 +123,9 @@ main(argc, argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "B:DLNb:f:m:s:";
+	opstring = "B:DFLNb:f:m:s:";
 
-	debug = lfs = segsize = 0;
+	debug = force = lfs = segsize = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch(ch) {
 		case 'B':	/* LFS segment size */
@@ -134,6 +134,9 @@ main(argc, argv)
 			break;
 		case 'D':
 			debug = 1;
+			break;
+		case 'F':
+			force = 1;
 			break;
 		case 'L':	/* Create lfs */
 			lfs = 1;
@@ -224,6 +227,15 @@ main(argc, argv)
 		pp = &lp->d_partitions[*cp - 'a'];
 	if (pp->p_size == 0)
 		fatal("%s: `%c' partition is unavailable", argv[0], *cp);
+
+	/* If force, make the partition look like an LFS */
+	if(force) {
+		pp->p_fstype = FS_BSDLFS;
+		/* 0 means to use defaults */
+		pp->p_fsize  = 0;
+		pp->p_frag   = 0;
+		pp->p_sgs    = 0;
+	}
 
 	/* If we're making a LFS, we break out here */
 	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize));
