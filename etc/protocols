@@ -1,4 +1,4 @@
-#	$NetBSD: protocols,v 1.6 1998/05/11 18:55:13 fair Exp $
+#	$NetBSD: protocols,v 1.7 1998/08/16 18:27:43 tron Exp $
 #
 # Internet (IP) protocols
 #
@@ -24,6 +24,7 @@ xtp	36	XTP		# Xpress Tranfer Protocol
 idpr-cmtp	39	IDPR-CMTP	# IDPR Control Message Transport
 ipv6	41	IPv6		# Internet Protocol, version 6
 rsvp	46	RSVP		# Resource ReSerVation Protocol
+gre	47	GRE		# General Routing Encapsulation
 esp	50	ESP		# Encapsulating Security Payload
 ah	51	AH		# Authentication Header
 icmpv6	58	ICMPV6		# Internet Control Message Protocol version 6
