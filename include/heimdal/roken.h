@@ -39,7 +39,7 @@
  */
 
 /* $Heimdal: roken.h.in,v 1.169 2002/08/26 21:43:38 assar Exp $ 
-   $NetBSD: roken.h,v 1.7 2002/09/12 13:32:38 joda Exp $ */
+   $NetBSD: roken.h,v 1.8 2002/09/20 21:48:59 mycroft Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +68,9 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <time.h>
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 
 #include <paths.h>
 
