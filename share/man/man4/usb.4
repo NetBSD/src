@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.12 1999/05/11 21:05:09 augustss Exp $
+.\" $NetBSD: usb.4,v 1.13 1999/05/16 12:01:08 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,8 +46,8 @@
 .Cd "usb*    at uhci?"
 .Cd "usb*    at ohci?"
 .Cd "uhub*   at usb?"
-.Cd "uhub*   at uhub? port ? configuration ? interface ?"
-.Cd "XX*     at uhub? port ? configuration ? interface ?"
+.Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
+.Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Pp
 .Cd "#include <dev/usb/usb.h>"
 .Cd "#include <dev/usb/usbhid.h>"
@@ -130,7 +130,7 @@ and interfaces.
 Each device located on a hub has several
 .Xr config 8
 locators:
-.Bl -tag -compact -width xxxxxx
+.Bl -tag -compact -width xxxxxxx
 .It Cd port
 this is the number of the port on closest upstream hub.
 .It Cd configuration
@@ -140,7 +140,17 @@ enumeration.
 .It Cd interface
 this is the interface number within a device that an interface driver
 attaches to.
+.It Cd vendor
+this is the 16 bit vendor id of the device.
+.It Cd product
+this is the 16 bit product id of the device.
+.It Cd release
+this is the 16 bit release (revision) number of the device.
 .El
+The first locator can be used to pin down a particular device
+according to its physical position in the device tree.
+The last three locators can be used to pin down a particular
+device according to what device it actually is.
 .Pp
 The bus enumeration of the
 .Tn USB
@@ -293,6 +303,10 @@ The include file
 similarly contains the definitions for
 Human Interface Devices
 .Pq Tn HID .
+.Sh BUGS
+There should be a serial number locator, but
+.Nx
+does not have string valued locators.
 .Sh SEE ALSO
 The 
 .Tn USB 
