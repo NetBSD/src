@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_jazzio.c,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
+/*	$NetBSD: clock_jazzio.c,v 1.2 2001/02/17 04:27:55 tsutsui Exp $	*/
 /*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ clock_jazzio_match(parent, match, aux)
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		/* make sure that we're looking for this type of device. */
 		if (strcmp(ja->ja_name, "dallas_rtc") != 0)
 			return (0);
@@ -123,6 +124,7 @@ clock_jazzio_attach(parent, self, aux)
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
+	case NEC_JC94:
 		jazzio_intr_establish(ja->ja_intr,
 			(intr_handler_t)hardclock, self);
 		break;
