@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.94 1994/11/06 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.95 1994/11/07 05:09:04 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1405,13 +1405,13 @@ ENTRY(lgdt)
 	movl	%ax,%es
 	movl	%ax,%ss
 	/* Reload code selector by doing intersegment return. */
-	movl	(%esp),%eax
+	popl	%eax
+	pushl	$KCSEL
 	pushl	%eax
-	movl	$KCSEL,4(%esp)
 	lret
 
 ENTRY(rtcin)
-	movl	4(%esp),%eax
+	movb	4(%esp),%al
 	outb	%al,$0x70
 	xorl	%eax,%eax		# clear eax
 	inb	$0x71,%al
