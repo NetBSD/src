@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.11 1998/03/02 00:49:02 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.12 1998/03/07 00:42:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -86,9 +86,6 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	l2pte_index(va)	(((va) >> SEGSHIFT) & PTEMASK)
 #define l1pte_index(va) \
 	(((vm_offset_t)(va) >> (PGSHIFT + 2*(PGSHIFT-PTESHIFT))) & PTEMASK)
-
-#define	vatopa(va) \
-	((PG_PFNUM(*kvtopte(va)) << PGSHIFT) | ((vm_offset_t)(va) & PGOFSET))
 
 #define	ALPHA_STSIZE		((u_long)NBPG)			/* 8k */
 #define	ALPHA_MAX_PTSIZE	((u_long)(NPTEPG * NBPG))	/* 8M */
