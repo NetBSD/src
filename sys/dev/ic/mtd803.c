@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.1 2002/11/07 21:56:59 martin Exp $ */
+/* $NetBSD: mtd803.c,v 1.2 2003/01/06 12:14:29 wiz Exp $ */
 
 /*-
  *
@@ -370,7 +370,7 @@ mtd_init_desc(sc)
 	/* Fill in rx descriptors */
 	for (i = 0; i < MTD_NUM_RXD; ++i) {
 		sc->desc[i].stat = MTD_RXD_OWNER;
-		if (i == MTD_NUM_RXD - 1) {	/* Last desriptor */
+		if (i == MTD_NUM_RXD - 1) {	/* Last descriptor */
 			/* Link back to first rx descriptor */
 			sc->desc[i].next =
 				htole32(sc->desc_dma_map->dm_segs[0].ds_addr);
