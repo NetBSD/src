@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.S,v 1.2 2002/01/13 21:45:51 thorpej Exp $	*/
+/*	$NetBSD: fpgetmask.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -6,6 +6,12 @@
  */
 
 #include <machine/asm.h>
+
+/*
+ * XXX only read x87 control word here. If an application only
+ * uses the fp* interface to manipulate FP bits, it should
+ * always remain in sync with the SSE mxcsr register.
+ */
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(fpgetmask, _fpgetmask)
