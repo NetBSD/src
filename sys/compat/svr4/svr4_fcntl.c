@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.26 1998/07/01 01:23:25 thorpej Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.27 1998/07/02 02:20:21 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1997 Christos Zoulas.  All rights reserved.
@@ -490,11 +490,19 @@ svr4_sys_pread64(p, v, retval)
 	register_t *retval;
 {
 
+	struct svr4_sys_pread64_args *uap = v;
+	struct sys_pread_args pra;
+
 	/*
-	 * Just call the NetBSD native call; the arguments are
-	 * the same.
+	 * Just translate the args structure and call the NetBSD
+	 * pread(2) system call (offset type is 64-bit in NetBSD).
 	 */
-	return (sys_pread(p, v, retval));
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, off);
+
+	return (sys_pread(p, &pra, retval));
 }
 
 
@@ -526,12 +534,19 @@ svr4_sys_pwrite64(p, v, retval)
 	void *v; 
 	register_t *retval;
 {
+	struct svr4_sys_pwrite64_args *uap = v;
+	struct sys_pwrite_args pwa;
 
 	/*
-	 * Just call the NetBSD native call; the arguments are
-	 * the same.
+	 * Just translate the args structure and call the NetBSD
+	 * pwrite(2) system call (offset type is 64-bit in NetBSD).
 	 */
-	return (sys_pwrite(p, v, retval));
+	SCARG(&pwa, fd) = SCARG(uap, fd);
+	SCARG(&pwa, buf) = SCARG(uap, buf);
+	SCARG(&pwa, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pwa, offset) = SCARG(uap, off);
+
+	return (sys_pwrite(p, &pwa, retval));
 }
 
 
