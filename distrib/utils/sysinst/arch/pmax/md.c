@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.2.3 1997/11/10 19:24:08 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.3.2.4 1997/11/18 19:22:33 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,7 +171,7 @@ void	md_post_disklabel (void)
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c "unused", d /usr */
-	case 2: /* standard X: a root, b swap (big), c "unused", e /usr */
+	case 2: /* standard X: a root, b swap (big), c "unused", d /usr */
 		partstart = ptstart;
 
 		/* Root */
@@ -392,7 +392,7 @@ void	md_copy_filesystem (void)
 
 	/* Copy all the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - / |"
+	run_prog ("tar --one-file-system -cf - -C / . |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
 
 	/* Make sure target has a copy of install kernel. */
