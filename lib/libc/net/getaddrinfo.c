@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.9 1999/07/14 22:10:03 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.10 1999/08/13 09:45:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -532,6 +532,7 @@ get_addr(hostname, af, res0, pai, port0)
 
 	res = res0;
 	ekeep = 0;
+	error = 0;
 	for (i = 0; afdl[i].a_af; i++) {
 		retry = 0;
 		if (af == AF_UNSPEC) {
