@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,29 +32,34 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)nohup.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/signal.h>
-#include <sys/file.h>
-#include <unistd.h>
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-extern int errno;
+void dofile __P((void));
+void usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	char *strerror();
-
 	if (argc < 2)
 		usage();
 
@@ -75,28 +80,28 @@ main(argc, argv)
 	exit(1);
 }
 
+void
 dofile()
 {
 	int fd;
 	char *p, path[MAXPATHLEN];
-	off_t lseek();
-	char *getenv(), *strcpy(), *strcat(), *strerror();
 
 #define	FILENAME	"nohup.out"
 	p = FILENAME;
-	if ((fd = open(p, O_RDWR|O_CREAT, 0600)) >= 0)
+	if ((fd = open(p, O_RDWR|O_CREAT, S_IRUSR | S_IWUSR)) >= 0)
 		goto dupit;
 	if (p = getenv("HOME")) {
 		(void)strcpy(path, p);
 		(void)strcat(path, "/");
 		(void)strcat(path, FILENAME);
-		if ((fd = open(p = path, O_RDWR|O_CREAT, 0600)) >= 0)
+		if ((fd = open(p = path,
+		    O_RDWR|O_CREAT, S_IRUSR | S_IWUSR)) >= 0)
 			goto dupit;
 	}
 	(void)fprintf(stderr, "nohup: can't open a nohup.out file.\n");
 	exit(1);
 
-dupit:	(void)lseek(fd, 0L, SEEK_END);
+dupit:	(void)lseek(fd, (off_t)0, SEEK_END);
 	if (dup2(fd, STDOUT_FILENO) == -1) {
 		(void)fprintf(stderr, "nohup: %s\n", strerror(errno));
 		exit(1);
@@ -104,6 +109,7 @@ dupit:	(void)lseek(fd, 0L, SEEK_END);
 	(void)fprintf(stderr, "sending output to %s\n", p);
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: nohup command\n");

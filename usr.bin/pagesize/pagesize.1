@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,11 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)pagesize.1	6.5 (Berkeley) 3/14/91
+.\"	@(#)pagesize.1	8.1 (Berkeley) 6/6/93
 .\"
-.Vx
-.Vx
-.Dd March 14, 1991
+.Dd June 6, 1993
 .Dt PAGESIZE 1
 .Os BSD 4.2
 .Sh NAME
@@ -45,11 +43,14 @@
 .Nm Pagesize
 prints the size of a page of memory in bytes, as
 returned by
-.Xr getpagesize  2  .
+.Xr getpagesize 2 .
 This program is useful in constructing portable
 shell scripts.
 .Sh SEE ALSO
 .Xr getpagesize 2
 .Sh HISTORY
-.Nm Pagesize
-appeared in 4.2 BSD.
+The
+.Nm pagesize
+command
+appeared in
+.Bx 4.2 .
