@@ -1,4 +1,4 @@
-/*	$NetBSD: pal.s,v 1.3 1996/07/09 00:54:05 cgd Exp $	*/
+/*	$NetBSD: pal.s,v 1.4 1996/07/09 04:18:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -147,7 +147,7 @@ LEAF(alpha_pal_draina,0)
 	.text
 LEAF(alpha_pal_halt,0)
 	call_pal PAL_halt
-	br	zero,pal_halt	/* Just in case */
+	br	zero,alpha_pal_halt	/* Just in case */
 	RET
 	END(alpha_pal_halt)
 
