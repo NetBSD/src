@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.4.2.1 1998/02/07 06:26:25 mellon Exp $
+	$NetBSD: install,v 1.4.2.2 1999/02/04 07:29:01 cgd Exp $
 
 (IF you already have NetBSD/pc532 installed and you only want to update
 your system, see the next section.)
@@ -62,7 +62,7 @@ The Install Procedure:
 	Tape:
 	You will need to load a copy of floppy-144.fs into RAM.
 		- load the floppy-144.fs at 0x260000
-		- run at 0x3EB020
+		- run at 0x3BE020
 	The boot program will ask you now for a kernel to load. Answer
 		md0a:/netbsd.gz
 
