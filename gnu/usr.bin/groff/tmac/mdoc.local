@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.15 2004/03/29 13:59:47 perry Exp $
+.\" $NetBSD: mdoc.local,v 1.16 2004/07/12 14:23:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,6 +131,10 @@
 .as doc-str-St--isoC-tcor2      " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St], Technical Corrigendum 2\*[Rq])
 .ds doc-str-St--ieee1275-94     \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1275-1994
 .as doc-str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
+.
+.\" will be in next groff release (after 1.19.1)
+.ds str-St--p1003.1-2004        \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1003.1-2004
+.as str-St--p1003.1-2004        " (\*[Lq]\)\*[Px]\*[doc-str-St].1\*[Rq])
 .
 .\" Default .Os value
 .ds doc-operating-system NetBSD\~2.0
