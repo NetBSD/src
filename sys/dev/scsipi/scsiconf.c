@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.77 1997/04/01 04:05:03 mikel Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.78 1997/04/02 02:36:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -391,7 +391,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS},
+	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS|SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "0663H08",          ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
