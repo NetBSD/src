@@ -94,8 +94,7 @@ msdosfs_create(ndp, vap, p)
 		ndp->ni_vp = DETOV(dep);
 		if ((ndp->ni_nameiop & SAVESTART) == 0)
 			free(ndp->ni_pnbuf, M_NAMEI);
-	}
-	else {
+	} else {
 		free(ndp->ni_pnbuf, M_NAMEI);
 	}
 	deput(pdep);		/* release parent dir */
@@ -208,8 +207,7 @@ msdosfs_getattr(vp, vap, cred, p)
 	if (dep->de_Attributes & ATTR_DIRECTORY) {
 		if ((cn = dep->de_StartCluster) == MSDOSFSROOT)
 			cn = 1;
-	}
-	else {
+	} else {
 		if ((cn = dep->de_dirclust) == MSDOSFSROOT)
 			cn = 1;
 		cn = (cn << 16) | (dep->de_diroffset & 0xffff);
@@ -376,15 +374,13 @@ msdosfs_read(vp, uio, ioflag, cred)
 		if (isadir) {
 			error = bread(pmp->pm_devvp, lbn, pmp->pm_bpcluster,
 			    NOCRED, &bp);
-		}
-		else {
+		} else {
 			rablock = lbn + 1;
 			if (vp->v_lastr + 1 == lbn &&
 			    rablock * pmp->pm_bpcluster < dep->de_FileSize) {
 				error = breada(vp, lbn, pmp->pm_bpcluster,
 				    rablock, pmp->pm_bpcluster, NOCRED, &bp);
-			}
-			else {
+			} else {
 				error = bread(vp, lbn, pmp->pm_bpcluster, NOCRED,
 				    &bp);
 			}
@@ -519,8 +515,7 @@ msdosfs_write(vp, uio, ioflag, cred)
 		    (uio->uio_offset & pmp->pm_crbomask) == 0) {
 			if (error = extendfile(dep, &bp, 0))
 				break;
-		}
-		else {
+		} else {
 			/*
 			 * The block we need to write into exists, so just
 			 * read it in.
@@ -909,8 +904,7 @@ msdosfs_rename(fndp, tndp, p)
 				error = ENOTEMPTY;
 				goto bad;
 			}
-		}
-		else {		/* destination is file */
+		} else {		/* destination is file */
 			if (sourceisadirectory) {
 				error = EISDIR;
 				goto bad;
@@ -957,8 +951,7 @@ msdosfs_rename(fndp, tndp, p)
 		 * fdep locked fddep and tddep point to the same denode
 		 * which is locked tdep is unlocked and unreferenced
 		 */
-	}
-	else {
+	} else {
 		u_long dirsize;
 
 		/*
@@ -1018,8 +1011,7 @@ msdosfs_rename(fndp, tndp, p)
 		if (cn == MSDOSFSROOT) {
 			/* this should never happen */
 			panic("msdosfs_rename(): updating .. in root directory?\n");
-		}
-		else {
+		} else {
 			bn = cntobn(pmp, cn);
 		}
 		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
@@ -1037,8 +1029,7 @@ msdosfs_rename(fndp, tndp, p)
 			/* should really panic here, fs is corrupt */
 			goto bad;
 		}
-	}
-	else {
+	} else {
 		DEUNLOCK(fdep);
 	}
 bad:	;
@@ -1119,7 +1110,8 @@ msdosfs_mkdir(ndp, vap, p)
 	 * directory to be pointing at if there were a crash.
 	 */
 	bn = cntobn(pmp, newcluster);
-	bp = getblk(pmp->pm_devvp, bn, pmp->pm_bpcluster);	/* always succeeds */
+	/* always succeeds */
+	bp = getblk(pmp->pm_devvp, bn, pmp->pm_bpcluster, 0, 0);
 	bzero(bp->b_un.b_addr, pmp->pm_bpcluster);
 	bcopy(&dosdirtemplate, bp->b_un.b_addr, sizeof dosdirtemplate);
 	denp = (struct direntry *) bp->b_un.b_addr;
@@ -1154,8 +1146,7 @@ msdosfs_mkdir(ndp, vap, p)
 	error = createde(ndep, ndp, &ndep);
 	if (error) {
 		clusterfree(pmp, newcluster, NULL);
-	}
-	else {
+	} else {
 		ndp->ni_vp = DETOV(ndep);
 	}
 	free(ndp->ni_pnbuf, M_NAMEI);
@@ -1418,16 +1409,14 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 						ncookies++;
 						cookies--;
 					}
-				}
-				else {
+				} else {
 					prev = crnt;
 					prev->d_fileno = 0;
 					prev->d_reclen = sizeof(struct direntry);
 					prev->d_namlen = 0;
 					prev->d_name[0] = 0;
 				}
-			}
-			else {
+			} else {
 				/*
 				 * this computation of d_fileno must match
 				 * the computation of va_fileid in
@@ -1438,8 +1427,7 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 					fileno = getushort(dentp->deStartCluster);
 					if (fileno == MSDOSFSROOT)
 						fileno = 1;
-				}
-				else {
+				} else {
 					/*
 					 * if the file's dirent lives in
 					 * root dir

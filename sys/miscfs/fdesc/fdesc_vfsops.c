@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vfsops.c,v 1.9 1994/04/14 04:05:45 cgd Exp $
+ *	$Id: fdesc_vfsops.c,v 1.10 1994/04/21 07:48:40 cgd Exp $
  */
 
 /*
@@ -262,8 +262,8 @@ fdesc_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 #endif
 	sbp->f_flags = 0;
-	sbp->f_fsize = DEV_BSIZE;
 	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;

@@ -31,11 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.16 1994/03/27 09:09:59 cgd Exp $
+ *	$Id: vnode.h,v 1.17 1994/04/21 07:49:24 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
 #define _SYS_VNODE_H_
+#include <sys/queue.h>
 
 #ifndef KERNEL
 #include <machine/endian.h>
@@ -67,6 +68,7 @@ enum vtagtype	{ VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_LFS, VT_MSDOSFS, VT_ISOFS,
  * number of header files that must be included.
  */
 #define	VN_MAXPRIVATE	roundup(192, sizeof(quad_t))
+LIST_HEAD(buflists, buf);
 
 struct vnode {
 	u_long		v_flag;			/* vnode flags (see below) */
@@ -77,12 +79,10 @@ struct vnode {
 	u_long		v_id;			/* capability identifier */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	struct vnodeops	*v_op;			/* vnode operations */
-	struct vnode	*v_freef;		/* vnode freelist forward */
-	struct vnode	**v_freeb;		/* vnode freelist back */
-	struct vnode	*v_mountf;		/* vnode mountlist forward */
-	struct vnode	**v_mountb;		/* vnode mountlist back */
-	struct buf	*v_cleanblkhd;		/* clean blocklist head */
-	struct buf	*v_dirtyblkhd;		/* dirty blocklist head */
+	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
+	LIST_ENTRY(vnode) v_mntvnodes;		/* vnode mountlist */
+	struct buflists	v_cleanblkhd;		/* clean blocklist head */
+	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
 	long		v_numoutput;		/* num of writes in progress */
 	enum vtype	v_type;			/* vnode type */
 	union {

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_quota.c	7.11 (Berkeley) 6/21/91
- *	$Id: ufs_quota.c,v 1.4 1993/12/17 08:12:20 mycroft Exp $
+ *	$Id: ufs_quota.c,v 1.5 1994/04/21 07:49:28 cgd Exp $
  */
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -401,8 +401,8 @@ quotaon(p, mp, type, fname)
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
 again:
-	for (vp = mp->mnt_mounth; vp; vp = nextvp) {
-		nextvp = vp->v_mountf;
+	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nextvp) {
+		nextvp = vp->v_mntvnodes.le_next;
 		if (vp->v_writecount == 0)
 			continue;
 		if (vget(vp))
@@ -412,7 +412,7 @@ again:
 			break;
 		}
 		vput(vp);
-		if (vp->v_mountf != nextvp || vp->v_mount != mp)
+		if (vp->v_mntvnodes.le_next != nextvp || vp->v_mount != mp)
 			goto again;
 	}
 	ump->um_qflags[type] &= ~QTF_OPENING;
@@ -447,8 +447,8 @@ quotaoff(p, mp, type)
 	 * deleting any references to quota file being closed.
 	 */
 again:
-	for (vp = mp->mnt_mounth; vp; vp = nextvp) {
-		nextvp = vp->v_mountf;
+	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nextvp) {
+		nextvp = vp->v_mntvnodes.le_next;
 		if (vget(vp))
 			goto again;
 		ip = VTOI(vp);
@@ -456,7 +456,7 @@ again:
 		ip->i_dquot[type] = NODQUOT;
 		dqrele(vp, dq);
 		vput(vp);
-		if (vp->v_mountf != nextvp || vp->v_mount != mp)
+		if (vp->v_mntvnodes.le_next != nextvp || vp->v_mount != mp)
 			goto again;
 	}
 	dqflush(qvp);
@@ -623,8 +623,8 @@ qsync(mp)
 	 * synchronizing any modified dquot structures.
 	 */
 again:
-	for (vp = mp->mnt_mounth; vp; vp = nextvp) {
-		nextvp = vp->v_mountf;
+	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nextvp) {
+		nextvp = vp->v_mntvnodes.le_next;
 		if (VOP_ISLOCKED(vp))
 			continue;
 		if (vget(vp))
@@ -635,7 +635,7 @@ again:
 				dqsync(vp, dq);
 		}
 		vput(vp);
-		if (vp->v_mountf != nextvp || vp->v_mount != mp)
+		if (vp->v_mntvnodes.le_next != nextvp || vp->v_mount != mp)
 			goto again;
 	}
 	return (0);

@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_fat.c,v 1.3 1994/02/07 23:14:16 cgd Exp $
+ *	$Id: msdosfs_fat.c,v 1.4 1994/04/21 07:48:58 cgd Exp $
  */
 
 /*
@@ -139,8 +139,7 @@ pcbmap(dep, findcn, bnp, cnp)
 			if (cnp)
 				*cnp = MSDOSFSROOT;
 			return 0;
-		}
-		else {		/* just an empty file */
+		} else {		/* just an empty file */
 			if (cnp)
 				*cnp = 0;
 			return E2BIG;
@@ -291,7 +290,7 @@ updateotherfats(pmp, bp, fatbn)
 	for (i = 1; i < pmp->pm_FATs; i++) {
 		fatbn += pmp->pm_FATsecs;
 		/* getblk() never fails */
-		bpn = getblk(pmp->pm_devvp, fatbn, bp->b_bcount);
+		bpn = getblk(pmp->pm_devvp, fatbn, bp->b_bcount, 0, 0);
 		bcopy(bp->b_un.b_addr, bpn->b_un.b_addr,
 		    bp->b_bcount);
 		if (pmp->pm_waitonfat)
@@ -442,14 +441,12 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 			if (cn & 1) {
 				readcn &= 0x000f;
 				readcn |= (newcontents << 4);
-			}
-			else {
+			} else {
 				readcn &= 0xf000;
 				readcn |= (newcontents << 0);
 			}
 			putushort(&bp->b_un.b_addr[bo], readcn);
-		}
-		else
+		} else
 			putushort(&bp->b_un.b_addr[bo], newcontents);
 		updateotherfats(pmp, bp, bn);
 		/*
@@ -646,8 +643,7 @@ extendfile(dep, bpp, ncp)
 	if (dep->de_StartCluster == 0) {
 		dep->de_StartCluster = cn;
 		frcn = 0;
-	}
-	else {
+	} else {
 		error = fatentry(FAT_SET, pmp, dep->de_fc[FC_LASTFC].fc_fsrcn,
 		    0, cn);
 		if (error) {
@@ -667,14 +663,11 @@ extendfile(dep, bpp, ncp)
 	/*
 	 * Get the buf header for the new block of the file.
 	 */
-	if (dep->de_Attributes & ATTR_DIRECTORY) {
+	if (dep->de_Attributes & ATTR_DIRECTORY)
 		*bpp = getblk(pmp->pm_devvp, cntobn(pmp, cn),
-		    pmp->pm_bpcluster);
-	}
-	else {
-		*bpp = getblk(DETOV(dep), frcn,
-		    pmp->pm_bpcluster);
-	}
+		    pmp->pm_bpcluster, 0, 0);
+	else
+		*bpp = getblk(DETOV(dep), frcn, pmp->pm_bpcluster, 0, 0);
 	clrbuf(*bpp);
 
 	/*
