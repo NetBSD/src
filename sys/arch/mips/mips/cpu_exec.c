@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.32.8.1 2003/09/27 15:53:26 tron Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.32.8.2 2003/10/02 09:51:33 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,29 +94,16 @@ cpu_exec_aout_makecmds(p, epp)
 		return error;
 	}
 
-
-
 #ifdef COMPAT_09
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
+
 	epp->ep_taddr = 0x1000;
 	epp->ep_entry = hdr->a_entry;
 	epp->ep_tsize = hdr->a_text;
 	epp->ep_daddr = epp->ep_taddr + hdr->a_text;
 	epp->ep_dsize = hdr->a_data + hdr->a_bss;
-
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((hdr->a_text != 0 || hdr->a_data != 0)
-	    && epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr->a_text,
@@ -202,27 +189,17 @@ mips_elf_makecmds (p, epp)
 		return ENOEXEC;
 	}
 
-		/* See if we got any program header information... */
+	/* See if we got any program header information... */
 	if (!ex->e_phoff || !ex->e_phnum) {
 		return ENOEXEC;
 	}
 
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
+
 	/* Set the entry point... */
 	epp->ep_entry = ex->e_entry;
-
-	/*
-	 * Check if vnode is open for writing, because we want to
-	 * demand-page out of it.  If it is, don't do it.
-	 */
-	if (epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
-
 	epp->ep_taddr = 0;
 	epp->ep_tsize = 0;
 	epp->ep_daddr = 0;
