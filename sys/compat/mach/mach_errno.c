@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.6 2002/12/09 21:29:23 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.7 2002/12/09 21:53:28 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.6 2002/12/09 21:29:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.7 2002/12/09 21:53:28 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -156,8 +156,6 @@ mach_msg_error(p, msgh, req, rep, error, maxlen, dst)
 	rep->rep_msgh.msgh_id = req->msgh_id + 100;
 	rep->rep_retval = native_to_mach_errno[error];
 	rep->rep_trailer.msgh_trailer_size = 8;
-
-	DPRINTF(("mach_msg_error: error = %d\n", error));
 
 	return MACH_MSG_RETURN(p, rep, msgh, sizeof(*rep), maxlen, dst);
 }
