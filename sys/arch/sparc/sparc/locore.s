@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99 1998/10/12 21:51:54 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.100 1998/10/12 22:05:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4513,7 +4513,13 @@ ENTRY(switchexit)
 	wr	%g0, 2, %wim		! and make window 1 the trap window
 	st	%g5, [%g6 + %lo(_cpcb)]	! cpcb = &idle_u
 	st	%g7, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-	add	%g5, USPACE-CCFSZ, %sp	! set new %sp
+#if defined(MULTIPROCESSOR)
+	set	USPACE-CCFSZ, %o1	!
+	add	%g5, %o1, %sp		! set new %sp
+#else
+	set	_idle_u + USPACE-CCFSZ, %sp	! set new %sp
+#endif
+
 #ifdef DEBUG
 	mov	%g5, %l6		! %l6 = _idle_u
 	SET_SP_REDZONE(%l6, %l5)
