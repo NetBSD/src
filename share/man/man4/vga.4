@@ -1,4 +1,4 @@
-.\" $NetBSD: vga.4,v 1.13 2003/05/04 00:27:17 gmcgarry Exp $
+.\" $NetBSD: vga.4,v 1.14 2003/05/06 08:42:19 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 20, 1999
+.Dd May 4, 2003
 .Os
 .Dt VGA 4
 .Sh NAME
@@ -53,26 +53,29 @@ The
 .Nm
 driver supports text-mode hardware acceleration on the
 .Tn VGA
-hardware.  Currently, the driver runs the display with
-a 720\(mu400 pixel resolution.  The
+hardware.
+Currently, the driver runs the display with a 720\(mu400 pixel resolution.
+The
 .Tn VGA
 text-mode accelerator divides the display into fixed-size
-character cells.  The size of the character cells specifies
-the number of characters available on the screen and the
-resolution of the font.  The wsdisplay screen
+character cells.
+The size of the character cells specifies the number of characters available
+on the screen and the resolution of the font.
+The wsdisplay screen
 .Dq types
 supported by the
 .Nm
 driver are described by the number of character cells available
-on the screen.   See below for a complete list of supported
-screen modes in the
+on the screen.
+See below for a complete list of supported screen modes in the
 .Nm
 driver.
 .Pp
 Each screen mode requires a suitable font to be loaded into
 the kernel by the
 .Xr wsfontload 8
-utility, before the screen can be used.  The size of the font
+utility, before the screen can be used.
+The size of the font
 and the screen mode must match for use on the 720\(mu400 display.
 For example, a screen mode with 80 columns and 40 rows requires
 a font where each character is 8 pixels wide and 10 pixels high.
@@ -92,7 +95,7 @@ hardware supports the display of 16 different colours at the same
 time.
 It is possible with
 .Tn VGA
-colour systems to fonts with 512 characters at any one time.
+colour systems to use fonts with 512 characters at any one time.
 This is due to the fact that with VGA adapters one can specify an
 alternate font to be used instead of bright letters
 (used for highlighting on the screen).
