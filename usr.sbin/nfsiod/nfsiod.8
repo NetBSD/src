@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)nfsiod.8	5.6 (Berkeley) 3/16/91
-.\"	$Id: nfsiod.8,v 1.4 1993/08/01 07:38:38 mycroft Exp $
+.\"     from: @(#)nfsiod.8	8.2 (Berkeley) 2/22/94
+.\"	$Id: nfsiod.8,v 1.5 1994/06/08 19:32:07 mycroft Exp $
 .\"
-.Dd March 16, 1991
+.Dd February 22, 1994
 .Dt NFSIOD 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 asynchronous I/O server
 .Sh SYNOPSIS
 .Nm nfsiod
-.Op Ar numdaemons
+.Op Fl n Ar num_servers
 .Sh DESCRIPTION
 .Nm Nfsiod
 runs on an
@@ -50,27 +50,26 @@ runs on an
 client machine to service asynchronous I/O requests to its server.
 It improves performance but is not required for correct operation.
 .Pp
-Available options:
+Unless otherwise specified, a single server is started.
 .Pp
+The options are as follows:
 .Bl -tag -width Ds
-.It Ar numdaemons
-The option
-.Ar numdaemons
-defines how many
-.Nm nfsiod
-daemons to start;
-if unspecified, only a single daemon will be started.
-A client should typically run enough daemons to handle
-their maximum level of concurrency,
-typically four to six.
+.It Fl n
+Specify how many servers are to be started.
 .El
+.Pp
+A client should run enough daemons to handle its maximum
+level of concurrency, typically four to six.
+.Pp
+The
+.Nm nfsiod
+utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
-.Xr async_daemon 2 ,
+.Xr nfssvc 2 ,
 .Xr mountd 8 ,
 .Xr portmap 8
 .Sh HISTORY
 The
-.Nm
-command
-.Ud
+.Nm nfsiod
+utility first appeared in 4.4BSD.

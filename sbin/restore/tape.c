@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)tape.c	5.35 (Berkeley) 11/11/92"; */
-static char *rcsid = "$Id: tape.c,v 1.10 1994/05/17 04:14:39 cgd Exp $";
+/*static char sccsid[] = "from: @(#)tape.c	8.3 (Berkeley) 4/1/94";*/
+static char *rcsid = "$Id: tape.c,v 1.11 1994/06/08 19:33:45 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ static char *rcsid = "$Id: tape.c,v 1.10 1994/05/17 04:14:39 cgd Exp $";
 #include <sys/mtio.h>
 #include <sys/stat.h>
 
-#include <ufs/dinode.h>
+#include <ufs/ufs/dinode.h>
 #include <protocols/dumprestore.h>
 
 #include <errno.h>
@@ -182,7 +182,7 @@ setup()
 	vprintf(stdout, "Verify tape and initialize maps\n");
 #ifdef RRESTORE
 	if (host)
-		mt = rmtopen(magtape, O_RDONLY, 0);
+		mt = rmtopen(magtape, 0);
 	else
 #endif
 	if (pipein)
@@ -1036,7 +1036,6 @@ gethead(buf)
 	buf->c_magic = NFS_MAGIC;
 
 good:
-#ifdef BSD44
 	if ((buf->c_dinode.di_size == 0 || buf->c_dinode.di_size > 0xfffffff) &&
 	    (buf->c_dinode.di_mode & IFMT) == IFDIR && Qcvt == 0) {
 		qcvt.qval = buf->c_dinode.di_size;
@@ -1052,7 +1051,6 @@ good:
 		qcvt.val[0] = i;
 		buf->c_dinode.di_size = qcvt.qval;
 	}
-#endif
 
 	switch (buf->c_type) {
 
@@ -1083,7 +1081,6 @@ good:
 		panic("gethead: unknown inode type %d\n", buf->c_type);
 		break;
 	}
-#ifdef BSD44
 	/*
 	 * If we are restoring a filesystem with old format inodes, 
 	 * copy the uid/gid to the new location.
@@ -1092,7 +1089,6 @@ good:
 		buf->c_dinode.di_uid = buf->c_dinode.di_ouid;
 		buf->c_dinode.di_gid = buf->c_dinode.di_ogid;
 	}
-#endif
 	if (dflag)
 		accthdr(buf);
 	return(GOOD);
