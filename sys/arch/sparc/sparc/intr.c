@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
+/*	$NetBSD: intr.c,v 1.20.6.1 1997/11/15 00:57:17 mellon Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,8 +141,11 @@ soft01intr(fp)
 			splx(s);
 			sir.sir_which[SIR_NET] = 0;
 #ifdef INET
+#include "arp.h"
+#if NARP > 0
 			if (n & (1 << NETISR_ARP))
 				arpintr();
+#endif
 			if (n & (1 << NETISR_IP))
 				ipintr();
 #endif
