@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.56 2001/04/13 23:30:10 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.56.2.1 2001/07/10 13:48:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -51,6 +51,20 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
+#include <sys/event.h>
+
+static void	filt_sordetach(struct knote *kn);
+static int	filt_soread(struct knote *kn, long hint); 
+static void	filt_sowdetach(struct knote *kn);
+static int	filt_sowrite(struct knote *kn, long hint);
+static int	filt_solisten(struct knote *kn, long hint);
+
+static struct filterops solisten_filtops =
+	{ 1, NULL, filt_sordetach, filt_solisten };
+struct filterops soread_filtops =
+	{ 1, NULL, filt_sordetach, filt_soread };
+struct filterops sowrite_filtops =
+	{ 1, NULL, filt_sowdetach, filt_sowrite };
 
 struct pool	socket_pool;
 
@@ -1107,4 +1121,131 @@ sohasoutofband(struct socket *so)
 	else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
 		psignal(p, SIGURG);
 	selwakeup(&so->so_rcv.sb_sel);
+}
+
+
+int
+soo_kqfilter(struct file *fp, struct knote *kn)
+{
+	struct socket	*so;
+	struct sockbuf	*sb;
+	int		s;
+
+	so = (struct socket *)kn->kn_fp->f_data;
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		if (so->so_options & SO_ACCEPTCONN)
+			kn->kn_fop = &solisten_filtops;
+		else
+			kn->kn_fop = &soread_filtops;
+		sb = &so->so_rcv;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &sowrite_filtops;
+		sb = &so->so_snd;
+		break;
+	default:
+		return (1);
+	}
+	s = splnet();		/* XXXLUKEM: maybe splsoftnet() ? */
+	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, kn, kn_selnext);
+	sb->sb_flags |= SB_KNOTE;
+	splx(s);
+	return (0);
+}
+
+static void
+filt_sordetach(struct knote *kn)
+{
+	struct socket	*so;
+	int		s;
+
+	so = (struct socket *)kn->kn_fp->f_data;
+	s = splnet();		/* XXXLUKEM: maybe splsoftnet() ? */
+	SLIST_REMOVE(&so->so_rcv.sb_sel.si_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_klist))
+		so->so_rcv.sb_flags &= ~SB_KNOTE;
+	splx(s);
+}
+
+/*ARGSUSED*/
+static int
+filt_soread(struct knote *kn, long hint)
+{
+	struct socket	*so;
+
+	so = (struct socket *)kn->kn_fp->f_data;
+	kn->kn_data = so->so_rcv.sb_cc;
+	if (so->so_state & SS_CANTRCVMORE) {
+		kn->kn_flags |= EV_EOF; 
+		kn->kn_fflags = so->so_error;
+		return (1);
+	}
+	if (so->so_error)	/* temporary udp error */
+		return (1);
+	if (kn->kn_sfflags & NOTE_LOWAT)
+		return (kn->kn_data >= kn->kn_sdata);
+	return (kn->kn_data >= so->so_rcv.sb_lowat);
+}
+
+static void
+filt_sowdetach(struct knote *kn)
+{
+	struct socket	*so;
+	int		s;
+
+	so = (struct socket *)kn->kn_fp->f_data;
+	s = splnet();		/* XXXLUKEM: maybe splsoftnet() ? */
+	SLIST_REMOVE(&so->so_snd.sb_sel.si_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_klist))
+		so->so_snd.sb_flags &= ~SB_KNOTE;
+	splx(s);
+}
+
+/*ARGSUSED*/
+static int
+filt_sowrite(struct knote *kn, long hint)
+{
+	struct socket	*so;
+
+	so = (struct socket *)kn->kn_fp->f_data;
+	kn->kn_data = sbspace(&so->so_snd);
+	if (so->so_state & SS_CANTSENDMORE) {
+		kn->kn_flags |= EV_EOF; 
+		kn->kn_fflags = so->so_error;
+		return (1);
+	}
+	if (so->so_error)	/* temporary udp error */
+		return (1);
+	if (((so->so_state & SS_ISCONNECTED) == 0) &&
+	    (so->so_proto->pr_flags & PR_CONNREQUIRED))
+		return (0);
+	if (kn->kn_sfflags & NOTE_LOWAT)
+		return (kn->kn_data >= kn->kn_sdata);
+	return (kn->kn_data >= so->so_snd.sb_lowat);
+}
+
+/*ARGSUSED*/
+static int
+filt_solisten(struct knote *kn, long hint)
+{
+	struct socket	*so;
+
+	so = (struct socket *)kn->kn_fp->f_data;
+#if 0
+	/*
+	 * XXXLUKEM:	this was freebsd's code. it appears that they
+	 * XXXLUKEM:	modified the socket code to store the count
+	 * XXXLUKEM:	of all connections in so_qlen, and separately
+	 * XXXLUKEM:	track the number of incompletes in so_incqlen.
+	 * XXXLUKEM:	as we appear to keep only completed connections
+	 * XXXLUKEM:	on so_qlen we can just return that.
+	 * XXXLUKEM:	that said, a socket guru should double check for me :)
+	 */
+	kn->kn_data = so->so_qlen - so->so_incqlen;
+	return (! TAILQ_EMPTY(&so->so_comp));
+#else
+	kn->kn_data = so->so_qlen;
+	return (kn->kn_data > 0);
+#endif
 }
