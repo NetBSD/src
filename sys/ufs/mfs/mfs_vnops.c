@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.9 1996/09/01 23:49:35 mycroft Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.10 1996/09/07 12:41:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,7 +71,7 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_read_desc, mfs_read },			/* read */
 	{ &vop_write_desc, mfs_write },			/* write */
 	{ &vop_ioctl_desc, mfs_ioctl },			/* ioctl */
-	{ &vop_select_desc, mfs_select },		/* select */
+	{ &vop_poll_desc, mfs_poll },			/* poll */
 	{ &vop_mmap_desc, mfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, mfs_seek },			/* seek */

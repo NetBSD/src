@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.20 1996/05/22 14:57:53 mycroft Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.21 1996/09/07 12:41:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -214,7 +214,7 @@ int	soo_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
 int	soo_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
 int	soo_ioctl __P((struct file *fp, u_long cmd, caddr_t data,
 	    struct proc *p));
-int	soo_select __P((struct file *fp, int which, struct proc *p));
+int	soo_poll __P((struct file *fp, int events, struct proc *p));
 int 	soo_close __P((struct file *fp, struct proc *p));
 int	soo_stat __P((struct socket *, struct stat *));
 int	uipc_usrreq __P((struct socket *, int , struct mbuf *,

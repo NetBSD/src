@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.53 1996/09/05 15:47:07 mycroft Exp $	*/
+/*	$NetBSD: systm.h,v 1.54 1996/09/07 12:41:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -130,7 +130,7 @@ int	eopnotsupp __P((void));
 int	lkmenodev __P((void));
 #endif
 
-int	seltrue __P((dev_t dev, int which, struct proc *p));
+int	seltrue __P((dev_t dev, int events, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 

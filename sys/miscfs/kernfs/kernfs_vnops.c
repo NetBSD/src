@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.44 1996/09/01 23:48:12 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.45 1996/09/07 12:41:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,7 +121,7 @@ int	kernfs_setattr	__P((void *));
 int	kernfs_read	__P((void *));
 int	kernfs_write	__P((void *));
 #define	kernfs_ioctl	genfs_eopnotsupp
-#define	kernfs_select	genfs_select
+#define	kernfs_poll	genfs_poll
 #define	kernfs_mmap	genfs_eopnotsupp
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
@@ -168,7 +168,7 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_read_desc, kernfs_read },		/* read */
 	{ &vop_write_desc, kernfs_write },		/* write */
 	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, kernfs_select },		/* select */
+	{ &vop_poll_desc, kernfs_poll },		/* poll */
 	{ &vop_mmap_desc, kernfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, kernfs_fsync },		/* fsync */
 	{ &vop_seek_desc, kernfs_seek },		/* seek */

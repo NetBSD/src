@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.24 1996/05/12 23:12:18 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.25 1996/09/07 12:40:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -35,6 +35,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/poll.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -334,25 +335,21 @@ mmsintr(arg)
 }
 
 int
-mmsselect(dev, rw, p)
+mmspoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
-	int s;
-	int ret;
+	int revents = 0;
+	int s = spltty();
 
-	if (rw == FWRITE)
-		return 0;
+	if (events & (POLLIN | POLLRDNORM))
+		if (sc->sc_q.c_cc > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &sc->sc_rsel);
 
-	s = spltty();
-	if (!sc->sc_q.c_cc) {
-		selrecord(p, &sc->sc_rsel);
-		ret = 0;
-	} else
-		ret = 1;
 	splx(s);
-
-	return ret;
+	return (revents);
 }

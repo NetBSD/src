@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.3 1996/09/07 12:40:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -43,7 +43,7 @@ cdev_decl(fd);
 #define cdev_pc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 cdev_decl(pc);
 

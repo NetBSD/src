@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.37 1996/09/05 15:31:40 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.38 1996/09/07 12:41:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -53,6 +53,7 @@
 #include <sys/signalvar.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/poll.h>
 
 
 
@@ -244,7 +245,7 @@ ptswrite(dev, uio, flag)
 
 /*
  * Start output on pseudo-tty.
- * Wake up process selecting or sleeping for input from controlling tty.
+ * Wake up process polling or sleeping for input from controlling tty.
  */
 void
 ptsstart(tp)
@@ -510,58 +511,45 @@ block:
 }
 
 int
-ptcselect(dev, rw, p)
+ptcpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	register struct pt_softc *pti = &pt_softc[minor(dev)];
 	register struct tty *tp = pti->pt_tty;
-	int s;
+	int revents = 0;
+	int s = splsoftclock();
 
-	if (!ISSET(tp->t_state, TS_CARR_ON))
-		return (1);
-	switch (rw) {
-
-	case FREAD:
-		/*
-		 * Need to block timeouts (ttrstart).
-		 */
-		s = spltty();
+	if (events & (POLLIN | POLLRDNORM))
 		if (ISSET(tp->t_state, TS_ISOPEN) &&
-		     tp->t_outq.c_cc && !ISSET(tp->t_state, TS_TTSTOP)) {
-			splx(s);
-			return (1);
-		}
-		splx(s);
-		/* FALLTHROUGH */
-
-	case 0:					/* exceptional */
-		if (ISSET(tp->t_state, TS_ISOPEN) &&
-		    (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		    ((tp->t_outq.c_cc > 0 && !ISSET(tp->t_state, TS_TTSTOP)) ||
+		     ((pti->pt_flags & PF_PKT) && pti->pt_send) ||
 		     ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl)))
-			return (1);
-		selrecord(p, &pti->pt_selr);
-		break;
+			revents |= events & (POLLIN | POLLRDNORM);
 
+	if (events & (POLLOUT | POLLWRNORM))
+		if (ISSET(tp->t_state, TS_ISOPEN) &&
+		    ((pti->pt_flags & PF_REMOTE) ?
+		     (tp->t_canq.c_cc == 0) :
+		     ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2) ||
+		      (tp->t_canq.c_cc == 0 && ISSET(tp->t_iflag, ICANON)))))
+			revents |= events & (POLLOUT | POLLWRNORM);
 
-	case FWRITE:
-		if (ISSET(tp->t_state, TS_ISOPEN)) {
-			if (pti->pt_flags & PF_REMOTE) {
-			    if (tp->t_canq.c_cc == 0)
-				return (1);
-			} else {
-			    if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2)
-				    return (1);
-			    if (tp->t_canq.c_cc == 0 && ISSET(tp->t_iflag, ICANON))
-				    return (1);
-			}
-		}
-		selrecord(p, &pti->pt_selw);
-		break;
+	if (events & POLLHUP)
+		if (!ISSET(tp->t_state, TS_CARR_ON))
+			revents |= POLLHUP;
 
+	if (revents == 0) {
+		if (events & (POLLIN | POLLHUP | POLLRDNORM))
+			selrecord(p, &pti->pt_selr);
+
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &pti->pt_selw);
 	}
-	return (0);
+
+	splx(s);
+	return (revents);
 }
 
 

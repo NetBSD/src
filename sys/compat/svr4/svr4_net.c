@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.11 1996/08/30 23:06:24 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.12 1996/09/07 12:40:51 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -81,7 +81,7 @@ int svr4_netattach __P((int));
 static int svr4_soo_close __P((struct file *fp, struct proc *p));
 
 static struct fileops svr4_netops = {
-	soo_read, soo_write, soo_ioctl, soo_select, svr4_soo_close
+	soo_read, soo_write, soo_ioctl, soo_poll, svr4_soo_close
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.13 1996/09/01 23:48:31 mycroft Exp $	*/
+/*	$NetBSD: specdev.h,v 1.14 1996/09/07 12:41:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -94,7 +94,7 @@ int	spec_read	__P((void *));
 int	spec_write	__P((void *));
 #define	spec_lease_check genfs_nullop
 int	spec_ioctl	__P((void *));
-int	spec_select	__P((void *));
+int	spec_poll	__P((void *));
 #define	spec_mmap	genfs_badop
 int	spec_fsync	__P((void *));
 #define	spec_seek	genfs_badop

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.32 1996/05/30 22:00:20 cgd Exp $	*/
+/*	$NetBSD: tty.h,v 1.33 1996/09/07 12:41:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -223,7 +223,7 @@ int	 ttioctl __P((struct tty *tp, u_long com, caddr_t data, int flag,
 	    struct proc *p));
 int	 ttread __P((struct tty *tp, struct uio *uio, int flag));
 void	 ttrstrt __P((void *tp));
-int	 ttselect __P((dev_t device, int rw, struct proc *p));
+int	 ttpoll __P((dev_t device, int events, struct proc *p));
 void	 ttsetwater __P((struct tty *tp));
 int	 ttspeedtab __P((int speed, struct speedtab *table));
 int	 ttstart __P((struct tty *tp));
@@ -258,7 +258,7 @@ int	cttyopen __P((dev_t, int, int, struct proc *));
 int	cttyread __P((dev_t, struct uio *, int));
 int	cttywrite __P((dev_t, struct uio *, int));
 int	cttyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	cttyselect __P((dev_t, int, struct proc *));
+int	cttypoll __P((dev_t, int, struct proc *));
 
 int	clalloc __P((struct clist *, int, int));
 void	clfree __P((struct clist *));

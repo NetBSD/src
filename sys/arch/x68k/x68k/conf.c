@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1996/09/05 15:47:02 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1996/09/07 12:40:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -83,24 +83,24 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, read, write, ioctl, select */
+/* open, close, read, write, ioctl, poll */
 #define	cdev_gen_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
+/* open, close, ioctl, poll, mmap -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	dev_init(c,n,mmap) }
 
 /* open, close, read, write, ioctl, tty, mmap */
 #define cdev_ite_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	dev_init(c,n,tty), ttselect, (dev_type_mmap((*))) enodev, D_TTY }
+	dev_init(c,n,tty), ttpoll, (dev_type_mmap((*))) enodev, D_TTY }
 
 /* open, close, write, ioctl */
 #define	cdev_par_init(c,n) { \
@@ -112,21 +112,21 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define	cdev_sram_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
 #define	cdev_pow_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
 #define	cdev_bell_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
 /* open, close, read, ioctl */

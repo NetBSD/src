@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1996/09/05 15:46:53 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.23 1996/09/07 12:40:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,12 +147,12 @@ dev_decl(filedesc,open);
 
 
 /* a framebuffer with an attached mouse: */
-/* open, close, ioctl, select, mmap */
+/* open, close, ioctl, poll, mmap */
 
 #define	cdev_fbm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	dev_init(c,n,mmap) }
 
 

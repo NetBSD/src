@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.73 1996/06/06 15:31:24 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.74 1996/09/07 12:41:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -57,6 +57,7 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/poll.h>
 
 #include <vm/vm.h>
 
@@ -905,35 +906,38 @@ ttioctl(tp, cmd, data, flag, p)
 }
 
 int
-ttselect(device, rw, p)
-	dev_t device;
-	int rw;
+ttpoll(dev, events, p)
+	dev_t dev;
+	int events;
 	struct proc *p;
 {
-	register struct tty *tp;
-	int nread, s;
+	register struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
+	int revents = 0;
+	int s = spltty();
 
-	tp = (*cdevsw[major(device)].d_tty)(device);
+	if (events & (POLLIN | POLLRDNORM))
+		if (ttnread(tp) > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
 
-	s = spltty();
-	switch (rw) {
-	case FREAD:
-		nread = ttnread(tp);
-		if (nread > 0 || (!ISSET(tp->t_cflag, CLOCAL) &&
-				  !ISSET(tp->t_state, TS_CARR_ON)))
-			goto win;
-		selrecord(p, &tp->t_rsel);
-		break;
-	case FWRITE:
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-win:			splx(s);
-			return (1);
-		}
-		selrecord(p, &tp->t_wsel);
-		break;
+	if (events & (POLLOUT | POLLWRNORM))
+		if (tp->t_outq.c_cc <= tp->t_lowat)
+			revents |= events & (POLLOUT | POLLWRNORM);
+
+	if (events & POLLHUP)
+		if (!ISSET(tp->t_cflag, CLOCAL) &&
+		    !ISSET(tp->t_state, TS_CARR_ON))
+			revents |= POLLHUP;
+
+	if (revents == 0) {
+		if (events & (POLLIN | POLLHUP | POLLRDNORM))
+			selrecord(p, &tp->t_rsel);
+
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &tp->t_wsel);
 	}
+
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.18 1996/09/05 09:26:14 thorpej Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.19 1996/09/07 12:41:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@ int	dead_open	__P((void *));
 int	dead_read	__P((void *));
 int	dead_write	__P((void *));
 int	dead_ioctl	__P((void *));
-int	dead_select	__P((void *));
+int	dead_poll	__P((void *));
 #define dead_mmap	genfs_badop
 #define dead_fsync	genfs_nullop
 #define dead_seek	genfs_nullop
@@ -107,7 +107,7 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_read_desc, dead_read },			/* read */
 	{ &vop_write_desc, dead_write },		/* write */
 	{ &vop_ioctl_desc, dead_ioctl },		/* ioctl */
-	{ &vop_select_desc, dead_select },		/* select */
+	{ &vop_poll_desc, dead_poll },			/* poll */
 	{ &vop_mmap_desc, dead_mmap },			/* mmap */
 	{ &vop_fsync_desc, dead_fsync },		/* fsync */
 	{ &vop_seek_desc, dead_seek },			/* seek */
@@ -240,23 +240,19 @@ dead_ioctl(v)
 
 /* ARGSUSED */
 int
-dead_select(v)
+dead_poll(v)
 	void *v;
 {
-#if 0
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
+		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
-#endif
 
 	/*
 	 * Let the user find out that the descriptor is gone.
 	 */
-	return (1);
+	return (ap->a_events);
 }
 
 /*

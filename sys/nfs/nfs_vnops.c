@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.64 1996/09/01 23:49:10 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.65 1996/09/07 12:41:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -102,7 +102,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_write_desc, nfs_write },			/* write */
 	{ &vop_lease_desc, nfs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, nfs_ioctl },			/* ioctl */
-	{ &vop_select_desc, nfs_select },		/* select */
+	{ &vop_poll_desc, nfs_poll },			/* poll */
 #ifdef Lite2_integrated
 	{ &vop_revoke_desc, nfs_revoke },		/* revoke */
 #endif
@@ -158,7 +158,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_write_desc, nfsspec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_select_desc, spec_select },		/* select */
+	{ &vop_poll_desc, spec_poll },			/* poll */
 #ifdef Lite2_integrated
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 #endif
@@ -212,7 +212,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_write_desc, nfsfifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
-	{ &vop_select_desc, fifo_select },		/* select */
+	{ &vop_poll_desc, fifo_poll },			/* poll */
 #ifdef Lite2_integrated
 	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 #endif

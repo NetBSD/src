@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.3 1996/09/03 03:12:32 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.4 1996/09/07 12:40:46 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -35,7 +35,9 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 #include <sys/syscallargs.h>
+
 #include <compat/osf1/osf1_syscallargs.h>
 
 0	NOARGS		{ int sys_nosys(void); } syscall
@@ -145,7 +147,8 @@
 92	STD		{ int osf1_sys_fcntl(int fd, int cmd, void *arg); }
 93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
                             fd_set *ex, struct timeval *tv); }
-94	UNIMPL		poll
+94	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+			    int timeout); }
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int osf1_sys_socket(int domain, int type, \

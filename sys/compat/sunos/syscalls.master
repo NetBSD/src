@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 1996/08/30 23:07:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.37 1996/09/07 12:40:49 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -35,7 +35,9 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 #include <sys/syscallargs.h>
+
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
 
@@ -230,8 +232,8 @@
 			    int *alen); }
 151	UNIMPL		getmsg
 152	UNIMPL		putmsg
-153	STD		{ int sunos_sys_poll(struct sunos_pollfd *fds, \
-			    long nfds, int timeout); }
+153	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+			    int timeout); }
 154	UNIMPL		
 #ifdef NFSSERVER
 155	STD		{ int sunos_sys_nfssvc(int fd); }

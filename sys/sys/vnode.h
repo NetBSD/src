@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
+/*	$NetBSD: vnode.h,v 1.39 1996/09/07 12:41:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -390,7 +390,7 @@ int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, int *aresid, struct proc *p));
 int	vn_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
-int	vn_select __P((struct file *fp, int which, struct proc *p));
+int	vn_poll __P((struct file *fp, int events, struct proc *p));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
 int	vn_writechk __P((struct vnode *vp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28 1996/09/01 23:54:53 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.29 1996/09/07 12:40:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -56,7 +56,7 @@
 
 /*
  * Todo:
- * - Add softaudio() isr processing for wakeup, select and signals.
+ * - Add softaudio() isr processing for wakeup, poll and signals.
  * - Allow opens for READ and WRITE (one open each)
  * - Setup for single isr for full-duplex
  * - Add SIGIO generation for changes in the mixer device
@@ -71,6 +71,7 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/select.h>
+#include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -126,7 +127,7 @@ int	audio_close __P((dev_t, int, int, struct proc *));
 int	audio_read __P((dev_t, struct uio *, int));
 int	audio_write __P((dev_t, struct uio *, int));
 int	audio_ioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	audio_select __P((dev_t, int, struct proc *));
+int	audio_poll __P((dev_t, int, struct proc *));
 int	audio_mmap __P((dev_t, int, int));
 
 int	mixer_open __P((dev_t, int, int, struct proc *));
@@ -396,16 +397,16 @@ audioioctl(dev, cmd, addr, flag, p)
 }
 
 int
-audioselect(dev, rw, p)
+audiopoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		return (audio_select(dev, rw, p));
+		return (audio_poll(dev, events, p));
 	case MIXER_DEVICE:
 		return (0);
 	default:
@@ -1179,55 +1180,41 @@ audio_ioctl(dev, cmd, addr, flag, p)
 }
 
 int
-audio_select(dev, rw, p)
+audio_poll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_softc[unit];
+	int revents = 0;
 	int s = splaudio();
 
 #if 0
-	DPRINTF(("audio_select: rw=%d mode=%d rblks=%d rr.nblk=%d\n",
-	         rw, sc->sc_mode, sc->sc_rblks, sc->rr.nblk));
+	DPRINTF(("audio_poll: events=%d mode=%d rblks=%d rr.nblk=%d\n",
+	         events, sc->sc_mode, sc->sc_rblks, sc->rr.nblk));
 #endif
-	switch (rw) {
 
-	case FREAD:
-		if (sc->sc_mode & AUMODE_PLAY) {
-			if (sc->sc_rblks > 0) {
-				splx(s);
-				return (1);
-			}
-		} else if (sc->rr.nblk > 0) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &sc->sc_rsel);
-		break;
+	if (events & (POLLIN | POLLRDNORM))
+		if ((sc->sc_mode & AUMODE_PLAY) ?
+		    (sc->sc_rblks > 0) : (sc->rr.nblk > 0))
+			revents |= events & (POLLIN | POLLRDNORM);
 
-	case FWRITE:
-		/*
-		 * Can write if we're recording because it gets preempted.
-		 * Otherwise, can write when below low water.
-		 * XXX this won't work right if we're in 
-		 * record mode -- we need to note that a write
-		 * select has happed and flip the speaker.
-		 *
-		 * XXX The above XXX-comment is SoundBlaster-dependent,
-		 * right? Or maybe specific to half-duplex devices?
-		 */
-		if (sc->sc_mode & AUMODE_RECORD ||
-		    sc->pr.nblk < sc->sc_lowat) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &sc->sc_wsel);
-		break;
+	if (events & (POLLOUT | POLLWRNORM))
+		if ((sc->sc_mode & AUMODE_RECORD) ?
+		    1 : (sc->pr.nblk < sc->sc_lowat))
+			revents |= events & (POLLOUT | POLLWRNORM);
+
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM))
+			selrecord(p, &sc->sc_rsel);
+
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &sc->sc_wsel);
 	}
+
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 int

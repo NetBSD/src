@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.12 1996/09/07 12:40:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,6 +49,8 @@
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/conf.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 
 #define LOG_RDPRI	(PZERO + 1)
 
@@ -154,25 +156,22 @@ logread(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-logselect(dev, rw, p)
+logpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
+	int revents = 0;
 	int s = splhigh();
 
-	switch (rw) {
+	if (events & (POLLIN | POLLRDNORM))
+		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &logsoftc.sc_selp);
 
-	case FREAD:
-		if (msgbufp->msg_bufr != msgbufp->msg_bufx) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &logsoftc.sc_selp);
-		break;
-	}
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 void

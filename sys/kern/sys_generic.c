@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.27 1996/09/05 15:32:52 mycroft Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.28 1996/09/07 12:40:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -52,6 +52,7 @@
 #include <sys/kernel.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/poll.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -60,6 +61,7 @@
 #include <sys/syscallargs.h>
 
 int selscan __P((struct proc *, fd_mask *, fd_mask *, int, register_t *));
+int pollscan __P((struct proc *, struct pollfd *, int, register_t *));
 
 /*
  * Read system call.
@@ -642,7 +644,9 @@ selscan(p, ibitp, obitp, nfd, retval)
 	register fd_mask ibits, obits;
 	struct file *fp;
 	int n = 0;
-	static int flag[3] = { FREAD, FWRITE, 0 };
+	static int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
+			       POLLWRNORM | POLLHUP | POLLERR,
+			       POLLRDBAND };
 
 	for (msk = 0; msk < 3; msk++) {
 		for (i = 0; i < nfd; i += NFDBITS) {
@@ -653,7 +657,7 @@ selscan(p, ibitp, obitp, nfd, retval)
 				fp = fdp->fd_ofiles[fd];
 				if (fp == NULL)
 					return (EBADF);
-				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
+				if ((*fp->f_ops->fo_poll)(fp, flag[msk], p)) {
 					obits |= (1 << j);
 					n++;
 				}
@@ -665,15 +669,133 @@ selscan(p, ibitp, obitp, nfd, retval)
 	return (0);
 }
 
+/*
+ * Poll system call.
+ */
+int
+sys_poll(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_poll_args /* {
+		syscallarg(struct pollfd *) fds;
+		syscallarg(size_t) nfds;
+		syscallarg(int) timeout;
+	} */ *uap = v;
+	caddr_t bits;
+	char smallbits[32 * sizeof(struct pollfd)];
+	struct timeval atv;
+	int s, ncoll, error = 0, timo;
+	size_t ni;
+
+	if (SCARG(uap, nfds) > p->p_fd->fd_nfiles) {
+		/* forgiving; slightly wrong */
+		SCARG(uap, nfds) = p->p_fd->fd_nfiles;
+	}
+	ni = SCARG(uap, nfds) * sizeof(struct pollfd);
+	if (ni > sizeof(smallbits))
+		bits = malloc(ni, M_TEMP, M_WAITOK);
+	else
+		bits = smallbits;
+
+	error = copyin((caddr_t)SCARG(uap, fds), bits, ni);
+	if (error)
+		goto done;
+
+	if (SCARG(uap, timeout) != -1) {
+		atv.tv_sec = SCARG(uap, timeout) / 1000;
+		atv.tv_usec = (SCARG(uap, timeout) % 1000) * 1000;
+		if (itimerfix(&atv)) {
+			error = EINVAL;
+			goto done;
+		}
+		s = splclock();
+		timeradd(&atv, &time, &atv);
+		timo = hzto(&atv);
+		/*
+		 * Avoid inadvertently sleeping forever.
+		 */
+		if (timo == 0)
+			timo = 1;
+		splx(s);
+	} else
+		timo = 0;
+retry:
+	ncoll = nselcoll;
+	p->p_flag |= P_SELECT;
+	error = pollscan(p, (struct pollfd *)bits, SCARG(uap, nfds), retval);
+	if (error || *retval)
+		goto done;
+	s = splhigh();
+	if (timo && timercmp(&time, &atv, >=)) {
+		splx(s);
+		goto done;
+	}
+	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+		splx(s);
+		goto retry;
+	}
+	p->p_flag &= ~P_SELECT;
+	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
+	splx(s);
+	if (error == 0)
+		goto retry;
+done:
+	p->p_flag &= ~P_SELECT;
+	/* poll is not restarted after signals... */
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+	if (error == 0) {
+		error = copyout(bits, (caddr_t)SCARG(uap, fds), ni);
+		if (error)
+			goto out;
+	}
+out:
+	if (ni > sizeof(smallbits))
+		free(bits, M_TEMP);
+	return (error);
+}
+
+int
+pollscan(p, fds, nfd, retval)
+	struct proc *p;
+	struct pollfd *fds;
+	int nfd;
+	register_t *retval;
+{
+	register struct filedesc *fdp = p->p_fd;
+	int i;
+	struct file *fp;
+	int n = 0;
+
+	for (i = 0; i < nfd; i++, fds++) {
+		fp = fdp->fd_ofiles[fds->fd];
+		if (fp == 0) {
+			fds->revents = POLLNVAL;
+			n++;
+		} else {
+			fds->revents = (*fp->f_ops->fo_poll)(fp,
+			    fds->events | POLLERR | POLLHUP, p);
+			if (fds->revents != 0)
+				n++;
+		}
+	}
+	*retval = n;
+	return (0);
+}
+
 /*ARGSUSED*/
 int
-seltrue(dev, flag, p)
+seltrue(dev, events, p)
 	dev_t dev;
-	int flag;
+	int events;
 	struct proc *p;
 {
 
-	return (1);
+	return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 /*

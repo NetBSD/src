@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.19 1996/09/01 23:48:04 mycroft Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.20 1996/09/07 12:41:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,6 +49,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/un.h>
+#include <sys/poll.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -79,7 +80,7 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_write_desc, fifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
-	{ &vop_select_desc, fifo_select },		/* select */
+	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */
@@ -339,28 +340,29 @@ fifo_ioctl(v)
 
 /* ARGSUSED */
 int
-fifo_select(v)
+fifo_poll(v)
 	void *v;
 {
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
+		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct file filetmp;
-	int ready = 0;
+	int revents = 0;
 
-	if (ap->a_fflags & FREAD) {
+	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
-		ready |= soo_select(&filetmp, ap->a_which, ap->a_p);
+		if (filetmp.f_data)
+			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
-	if (ap->a_fflags & FWRITE) {
+	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
-		ready |= soo_select(&filetmp, ap->a_which, ap->a_p);
+		if (filetmp.f_data)
+			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
-	return (ready);
+
+	return (revents);
 }
 
 /*
