@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_start.S,v 1.3 2003/05/13 04:20:39 bsh Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.4 2003/06/18 03:17:49 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -35,6 +35,7 @@
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include <arm/arm32/pte.h>
+#include <arm/arm32/pmap.h>		/* for PMAP_DOMAIN_KERNEL */
 
 #include <arm/s3c2xx0/s3c2800reg.h>	/* for S3C2800_DBANK0_START */
 
@@ -127,7 +128,7 @@ smdk2800_start_ram:
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
 
 	/* Set the Domain Access register.  Very important! */
-	mov	r0, #(1<<30)|(1<<0)
+	mov	r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Enable MMU */
