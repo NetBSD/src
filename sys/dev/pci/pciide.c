@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.53 2000/03/06 18:02:26 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.54 2000/03/09 20:26:31 soren Exp $	*/
 
 
 /*
@@ -368,8 +368,6 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_AMD, pciide_amd_products },
 	{ 0, NULL }
 };
-
-#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
 /* options passed via the 'flags' config keyword */
 #define PCIIDE_OPTIONS_DMA	0x01
