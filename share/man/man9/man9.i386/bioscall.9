@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioscall.9,v 1.4 2001/09/10 23:36:57 wiz Exp $
+.\"	$NetBSD: bioscall.9,v 1.5 2001/12/26 01:10:32 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,7 +105,6 @@ regs.CX = regs.DX = 0;
 regs.ESI = regs.EDI = regs.EFLAGS = 0;
 bioscall(APM_SYSTEM_BIOS, &regs);
 .Ed
-.Pp
 .Sh CODE REFERENCES
 .Pa sys/arch/i386/i386/bioscall.s ,
 .Pa sys/arch/i386/bioscall/biostramp.S
