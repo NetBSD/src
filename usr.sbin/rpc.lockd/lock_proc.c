@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.1 1997/03/10 06:26:20 scottr Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.2 1997/10/18 04:01:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -33,15 +33,21 @@
  *
  */
 
-#include <stdio.h>
-#include <netdb.h>
-#include <string.h>
-#include <syslog.h>
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: lock_proc.c,v 1.2 1997/10/18 04:01:15 lukem Exp $");
+#endif
+
 #include <sys/param.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <syslog.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/sm_inter.h>
@@ -52,6 +58,10 @@
 
 #define	CLIENT_CACHE_SIZE	64	/* No. of client sockets cached */
 #define	CLIENT_CACHE_LIFETIME	120	/* In seconds */
+
+static CLIENT  *get_client __P((struct sockaddr_in *));
+static void	log_from_addr __P((char *, struct svc_req *));
+static void	transmit_result __P((int, nlm_res *, struct svc_req *));
 
 /* log_from_addr ----------------------------------------------------------- */
 /*
@@ -213,7 +223,7 @@ transmit_result(opcode, result, req)
 	int success;
 
 	addr = svc_getcaller(req->rq_xprt);
-	if (cli = get_client(addr)) {
+	if ((cli = get_client(addr)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
@@ -302,7 +312,7 @@ nlm_test_msg_1_svc(arg, rqstp)
 	 * can't use transmit_result() in this case
 	 */
 	addr = svc_getcaller(rqstp->rq_xprt);
-	if (cli = get_client(addr)) {
+	if ((cli = get_client(addr)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
