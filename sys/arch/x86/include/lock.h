@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2003/10/27 13:43:48 junyoung Exp $	*/
+/*	$NetBSD: lock.h,v 1.6 2004/10/23 21:25:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -92,8 +92,11 @@ __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 
 	while (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    != __SIMPLELOCK_UNLOCKED)
-		x86_pause();
+	    != __SIMPLELOCK_UNLOCKED) {
+		do {
+			x86_pause();
+		} while (*lockp == __SIMPLELOCK_LOCKED);
+	}
 	__lockbarrier();
 }
 
