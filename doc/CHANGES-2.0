@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.84 2004/04/12 05:12:10 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.85 2004/04/12 05:19:08 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -854,3 +854,22 @@ sys/arch/sparc/conf/GENERIC			1.151
 	Add comment to indicate that the SunSwift Sbus HME/FAS366 SCSI
 	combination board attaches esp* at sbus*; it's not just "older proms"
 	[fair, ticket #114]
+
+xfree/xc/programs/Xserver/hw/netbsd/amiga/s3/amigaCV.c	1.3
+
+	The XF4.4.0 import now checks previously unused REGION_* macro 
+	arguments; fix an error from the XF3->XF4 conversion.
+	[tron, ticket #125]
+
+xfree/xc/programs/Xserver/hw/netbsd/amiga/s3/amigaCVblt.c	1.3
+xfree/xc/programs/Xserver/hw/netbsd/amiga/retina/amigaGX.c	1.2
+
+	Fix a couple more XFree86 4.4.0 import changes.
+	[tron, ticket #126]
+
+xfree/xc/config/cf/xfree86.cf			1.13
+xfree/xc/config/cf/NetBSD.cf			1.67
+
+	Pull in an AMD64 specific configuration fix. 
+	Static X servers using the vesa driver also need AFB. PR#25112
+	[tron, ticket #127]
