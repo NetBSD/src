@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.7 2001/04/20 10:15:02 sato Exp $	*/
+/*	$NetBSD: platid.def,v 1.8 2001/05/05 05:45:29 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -185,6 +185,14 @@ Fujitsu {
   INTERTOP {
     ITXXX {
       CPU=MIPS_VR_4121 IT300 IT310
+    }
+  }
+  PenCentra {
+    CPU=MIPS_VR_4121 130 {
+      130TM 130RF
+    }
+    CPU=MIPS_TX_3922 200 {
+      200CTM 200CRF
     }
   }
 }
