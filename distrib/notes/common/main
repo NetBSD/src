@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.21 2000/02/13 22:58:17 he Exp $
+.\" $NetBSD: main,v 1.6.2.22 2000/02/24 22:37:01 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -269,6 +269,13 @@ Although LFS has been improved between 1.4.1 and 1.4.2, it can
 probably still be characterized as being of ``beta test'' quality,
 e.g. filling the file system still gives ``interesting'' effects.
 It should probably not be used to store critical data quite yet.
+.It
+The version of the IPF packet filtering software in
+.Nx
+1.4.2 must be enabled with
+.Dq ipf -E
+before filtering or NAT rules can be set.  Failure to do so may
+result in a panic.
 .El
 .Ss Major Changes Between 1.4 and 1.4.1
 The complete list of changes between
