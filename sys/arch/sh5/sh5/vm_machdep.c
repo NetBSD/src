@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2002/09/01 11:40:54 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 2002/09/04 14:02:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -194,7 +194,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 
 	/* Setup the child's initial kernel stack.  */
 	p2->p_md.md_regs = tf = (struct trapframe *)
-	    ((char *)p2->p_addr + (USPACE - (sizeof(*tf) + (sizeof(void*)*2))));
+	    ((char *)p2->p_addr + (USPACE - sizeof(*tf)));
 
 	/* Child inherits parent's trapframe */
 	memcpy(tf, p1->p_md.md_regs, sizeof(*tf));
