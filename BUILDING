@@ -102,7 +102,7 @@ CONFIGURATION
      MAKEOBJDIR        Directory to use as the .OBJDIR for the current direc-
                        tory.  Used only if MAKEOBJDIRPREFIX is not defined.
                        MAKEOBJDIR can only be provided in the environment or
-                       via the -M flag of build.sh.
+                       via the -O flag of build.sh.
 
      MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  If
                        this is defined, ${MAKEOBJDIRPREFIX}/${.CURDIR} is used
@@ -663,4 +663,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                           July 29, 2003                          NetBSD
+NetBSD                          August 7, 2003                          NetBSD
