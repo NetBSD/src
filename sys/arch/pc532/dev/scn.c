@@ -1,7 +1,7 @@
-/*	$NetBSD: scn.c,v 1.35 1997/03/01 09:50:44 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.36 1997/03/13 10:24:14 matthias Exp $ */
 
 /*
- * Copyright (c) 1996 Philip L. Budne.
+ * Copyright (c) 1996, 1997 Philip L. Budne.
  * Copyright (c) 1993 Philip A. Nelson.
  * Copyright (c) 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -119,6 +119,9 @@ static void scnintr __P((void *));
 static void scnrxintr __P((void *));
 static int scn_rxintr __P((struct scn_softc *, int));
 static void scnsoft __P((void *));
+static void scn_setchip __P((struct scn_softc *sc));
+static int scniter __P((int *, int, int*, int*, struct chan *, int));
+static int scn_config __P((int, int, int, u_char, u_char));
 
 static int scnsir = -1;		/* s/w intr number */
 #define setsoftscn()	softintr(scnsir)
@@ -137,74 +140,133 @@ int     scn_jitter[NJITTER];
 
 #define SCN_CLOCK	3686400		/* input clock */
 
-/*
- * Make some use of the counter/timer;
- * one speed can be chosen for all ports at compile time,
- * this can either be a rate not in the BRG table, or a rate
- * available on only one group (to make the rate available at
- * all times).  It would be more clever to use the C/T dynamicly
- * to generate rates on request, but this is a start!! -plb 6/2/94
- *
- * Could supply per channel in config file, or via defines
- */
-#ifndef SCN_CT_SPEED
-#define SCN_CT_SPEED 57600
-#endif
+/* speed table groups ACR[7] */
+#define GRP_A	0
+#define GRP_B	ACR_BRG
+
+/* combo of MR0[2:0] and ACR[7] */
+#define MODE0A	MR0_MODE_0
+#define MODE0B	(MR0_MODE_0|ACR_BRG)
+#define MODE1A	MR0_MODE_1
+#define MODE1B	(MR0_MODE_1|ACR_BRG)
+#define MODE2A	MR0_MODE_2
+#define MODE2B	(MR0_MODE_2|ACR_BRG)
+
+#define ANYMODE	-1
+#define DEFMODE(C92) MODE0A		/* use MODE4A if 26c92? */
+
+/* speed code for Counter/Timer (all modes, groups) */
+#define USE_CT 0xd
 
 /*
- * Timer supplies 16x clock; two timer cycles needed for each clock
- * and minimum counter/timer value for 2681 is 2 (highest possible
- * rate is 57600).  The 2692 is supposed to be able to handle a
- * counter value of 1 (115200 bps).
+ * Rate table, ordered by speed, then mode.
+ * NOTE: ordering of modes must be done carefully!
  */
-
-/*
- * XXX check CT_VALUE, rather than input??
- * XXX check that CT_VALUE multiplied out generates input rate??? (+/- epsilon)
- */
-
-#ifdef SCN_2692
-#define SCN_CT_MAXSPEED 115200
-#else
-#define SCN_CT_MAXSPEED 57600
-#endif
-
-#if SCN_CT_SPEED > SCN_CT_MAXSPEED
-#undef SCN_CT_SPEED
-#define SCN_CT_SPEED SCN_CT_MAXSPEED
-#endif
-
-/* round up */
-#define CT_VALUE ((SCN_CLOCK/16/2+SCN_CT_SPEED-1)/SCN_CT_SPEED)
-
-struct speedtab scnspeedtab[] = {
-	{0, 0x40},		/* code for line-hangup */
-#ifdef SCN_CT_SPEED
-	/* before any other speeds, since any C/T speed available in both
-	 * speed groups!! */
-	{SCN_CT_SPEED, SP_BOTH + 13},	/* timer (16x clock) */
-#endif
-	{50, SP_GRP0 + 0},
-	{75, SP_GRP1 + 0},
-	{110, SP_BOTH + 1},
-	{134, SP_BOTH + 2},		/* 134.5 */
-	{150, SP_GRP1 + 3},
-	{200, SP_GRP0 + 3},
-	{300, SP_BOTH + 4},
-	{600, SP_BOTH + 5},
-	{1050, SP_GRP0 + 7},
-	{1200, SP_BOTH + 6},
-	{1800, SP_GRP1 + 10},
-	{2000, SP_GRP1 + 7},
-	{2400, SP_BOTH + 8},
-	{4800, SP_BOTH + 9},
-	{7200, SP_GRP0 + 10},
-	{9600, SP_BOTH + 11},
-	{19200, SP_GRP1 + 12},
-	{38400, SP_GRP0 + 12},
-/*	{115200, SP_BOTH + 14},		/* 11/4/95; dave says CLK/2 on IP4! */
-	{-1, -1}
+struct tabent {
+	int32_t speed;
+	int16_t code;
+	int16_t mode;
+} table[] = {
+	{     50, 0x0, MODE0A },
+	{     75, 0x0, MODE0B },
+	{    110, 0x1, MODE0A },
+	{    110, 0x1, MODE0B },
+	{    110, 0x1, MODE1A },
+	{    110, 0x1, MODE1B },
+	{    134, 0x2, MODE0A },	/* 134.5 */
+	{    134, 0x2, MODE0B },	/* 134.5 */
+	{    134, 0x2, MODE1A },	/* 134.5 */
+	{    134, 0x2, MODE1B },	/* 134.5 */
+	{    150, 0x3, MODE0A },
+	{    150, 0x3, MODE0A },
+	{    200, 0x3, MODE0A },
+	{    300, 0x4, MODE0A },
+	{    300, 0x4, MODE0B },
+	{    300, 0x0, MODE1A },
+	{    450, 0x0, MODE1B },
+	{    600, 0x5, MODE0A },
+	{    600, 0x5, MODE0B },
+	{    880, 0x1, MODE2A },
+	{    880, 0x1, MODE2B },
+	{    900, 0x3, MODE1B },
+	{   1050, 0x7, MODE0A },
+	{   1050, 0x7, MODE1A },
+	{   1076, 0x2, MODE2A },
+	{   1076, 0x2, MODE2B },
+	{   1200, 0x6, MODE0A },
+	{   1200, 0x6, MODE0B },
+	{   1200, 0x3, MODE1A },
+	{   1800, 0xa, MODE0B },
+	{   1800, 0x4, MODE1A },
+	{   1800, 0x4, MODE1B },
+	{   2000, 0x7, MODE0B },
+	{   2000, 0x7, MODE1B },
+	{   2400, 0x8, MODE0A },
+	{   2400, 0x8, MODE0B },
+	{   3600, 0x5, MODE1A },
+	{   3600, 0x5, MODE1B },
+	{   4800, 0x9, MODE2A },
+	{   4800, 0x9, MODE2B },
+	{   4800, 0x9, MODE0A },
+	{   4800, 0x9, MODE0B },
+	{   7200, 0xa, MODE0A },
+	{   7200, 0x0, MODE2B },
+	{   7200, 0x6, MODE1A },
+	{   7200, 0x6, MODE1B },
+	{   9600, 0xb, MODE2A },
+	{   9600, 0xb, MODE2B },
+	{   9600, 0xb, MODE0A },
+	{   9600, 0xb, MODE0B },
+	{   9600, 0xd, MODE1A },	/* use C/T as entre' to mode1 */
+	{   9600, 0xd, MODE1B },	/* use C/T as entre' to mode1 */
+	{  14400, 0x3, MODE2B },
+	{  14400, 0x8, MODE1A },
+	{  14400, 0x8, MODE1B },
+	{  19200, 0x3, MODE2A },
+	{  19200, 0xc, MODE2B },
+	{  19200, 0xc, MODE0B },
+	{  19200, 0xd, MODE1A },	/* use C/T as entre' to mode1 */
+	{  19200, 0xd, MODE1B },	/* use C/T as entre' to mode1 */
+	{  28800, 0x4, MODE2A },
+	{  28800, 0x4, MODE2B },
+	{  28800, 0x9, MODE1A },
+	{  28800, 0x9, MODE1B },
+	{  38400, 0xc, MODE2A },
+	{  38400, 0xc, MODE0A },
+	{  57600, 0x5, MODE2A },
+	{  57600, 0x5, MODE2B },
+	{  57600, 0xb, MODE1A },
+	{  57600, 0xb, MODE1B },
+	{ 115200, 0x6, MODE2A },
+	{ 115200, 0x6, MODE2B },
+	{ 115200, 0xc, MODE1B },
+	{ 230400, 0xc, MODE1A }
 };
+#define TABENTRIES (sizeof(table)/sizeof(table[0]))
+
+/*
+ * boolean for speed codes which are identical in both A/B BRG groups
+ * in all modes
+ */
+static u_char bothgroups[16] = {
+	0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1
+};
+
+/*
+ * Manually constructed divisors table
+ * for minimum error (from some of Dave Rand's code)
+ */
+const struct {
+	u_int16_t speed;
+	u_int16_t div;
+} divs[] = {
+	{    50, 2303 },	/* 2304 is exact?? */
+	{   110, 1047 },	/* Should be 1047.27 */
+	{   134, 857 }, 	/* Should be 856.505576 */
+	{  1050, 110 }, 	/* Should be 109.7142857 */
+	{  2000, 57 }		/* Should be 57.6 */
+};
+#define DIVS (sizeof(divs)/sizeof(divs[0]))
 
 /*
  * minor unit bit decode:
@@ -227,168 +289,376 @@ extern int kgdb_rate;
 extern int kgdb_debug_init;
 int     scnkgdb = -1;
 #endif
+
+/* RS-232 configuration routines */
+
+/*
+ * set chip parameters, or mark for delayed change.
+ * called at spltty() or on TxEMPTY interrupt.
+ *
+ * Reads current values to avoid glitches from redundant sets.
+ * Perhaps should save last value set to avoid read/write?  NOTE:
+ * Would still need to do read if write not needed to advance MR
+ * pointer.
+ *
+ * new 2/97 -plb
+ */
+
+static void
+scn_setchip(sc)
+	struct scn_softc *sc;
+{
+	struct duart *dp;
+	u_char acr, csr, mr1, mr2;
+	int chan;
+
+	if (sc->sc_tty && (sc->sc_tty->t_state & TS_BUSY)) {
+		sc->sc_heldchanges = 1;
+		return;
+	}
+
+	chan = sc->sc_unit & 1;
+	dp = sc->sc_duart;
+	if (dp->type == SC26C92) {
+		u_char nmr0a, mr0a;
 
 #if 0
-/* Debug routine to print out the scn line structures. */
-void
-print_scn(unit)
-	int unit;
-{
-	struct scn_softc *sc = SOFTC(unit);
-	int channel = unit & 1;
-	printf("\nline frame overrun parity break\n");
-	printf("tty%1d f=%2d o=%2d p=%2d b=%2d in=%x, out=%x grp=%d\n",
-	    unit, sc->framing_errors, sc->overrun_errors,
-	    sc->parity_errors, sc->break_interrupts,
-	    sc->duart->i_speed[channel], sc->duart->o_speed[channel],
-	    sc->duart->speed_grp);
-}
+		/* input rate high enough so 64 bit time watchdog not onerous? */
+		if (dp->chan[chan].ispeed >= 1200) {
+			/* set FIFO threshold at 6 */
+			dp->chan[chan].mr0 |= MR0_RXWD | MR0_RXINT;
+		} else {
+			dp->chan[chan].mr0 &= ~(MR0_RXWD | MR0_RXINT);
+		}
 #endif
 
-static struct speedtab *
-getspeedcode(sc, speed)
-	struct scn_softc *sc;
-	int speed;
-{
-	register struct speedtab *sp;
+		/* select BRG mode (MR0A only) */
+		nmr0a = dp->chan[0].mr0 | (dp->mode & MR0_MODE);
+
+		dp->base[CH_CR] = CR_CMD_MR0;
+		RECOVER();
+
+		mr0a = dp->base[CH_MR];
+		if (mr0a != nmr0a) {
+			dp->base[CH_CR] = CR_CMD_MR0;
+			RECOVER();
+			dp->base[CH_MR] = nmr0a;
+		}
+
+		if (chan) {	 /* channel B? */
+			u_char mr0b;
+
+			sc->sc_chbase[CH_CR] = CR_CMD_MR0;
+			RECOVER();
+			mr0b = dp->base[CH_MR];
+
+			if (dp->chan[chan].mr0 != mr0b) {
+				sc->sc_chbase[CH_CR] = CR_CMD_MR0;
+				RECOVER();
+				sc->sc_chbase[CH_MR] = dp->chan[chan].mr0;
+			}
+		}
+	} else {
+		sc->sc_chbase[CH_CR] = CR_CMD_MR1;
+		RECOVER();
+	}
+
+	mr1 = sc->sc_chbase[CH_MR];
+	mr2 = sc->sc_chbase[CH_MR];
+	if (mr1 != dp->chan[chan].new_mr1 ||
+	    mr2 != dp->chan[chan].new_mr2) {
+		sc->sc_chbase[CH_CR] = CR_CMD_MR1;
+		RECOVER();
+		sc->sc_chbase[CH_MR] = dp->chan[chan].new_mr1;
+		sc->sc_chbase[CH_MR] = dp->chan[chan].new_mr2;
+	}
+
+	acr = dp->acr | (dp->mode & ACR_BRG);
+	dp->base[DU_ACR] = acr;		/* write-only reg! */
+
+	/* set speed codes */
+	csr = (dp->chan[chan].icode<<4) | dp->chan[chan].ocode;
+	if (sc->sc_chbase[CH_CSR] != csr) {
+		sc->sc_chbase[CH_CSR] = csr;
+	}
+
+	/* see if counter/timer in use */
+	if (dp->counter &&
+	    (dp->chan[0].icode == USE_CT || dp->chan[0].ocode == USE_CT ||
+	     dp->chan[1].icode == USE_CT || dp->chan[1].ocode == USE_CT)) {
+
+		/* program counter/timer only if necessary */
+		if (dp->counter != dp->ocounter) {
+			u_int16_t div;
+#ifdef DIVS
+			int i;
+
+			/* look for precalculated rate, for minimum error */
+			for (i = 0; i < DIVS && divs[i].speed <= dp->counter; i++) {
+				if (divs[i].speed == dp->counter) {
+					div = divs[i].div;
+					goto found;
+				}
+			}
+#endif
+
+			/* not found in table; calculate a value (rounding up) */
+			div = ((long)SCN_CLOCK/16/2 + dp->counter/2) / dp->counter;
+
+		found:
+			/* halt before loading? may ALWAYS glitch?
+			 * reload race may only sometimes glitch??
+			 */
+			dp->base[DU_CTUR] = div >> 8;
+			dp->base[DU_CTLR] = div & 255;
+			if (dp->ocounter == 0) {
+				/* not previously used? */
+				u_char temp;
+				/* start C/T running */
+				temp = dp->base[DU_CSTRT];
+			}
+			dp->ocounter = dp->counter;
+		}
+	} else {
+		/* counter not in use; mark as free */
+		dp->counter = 0;
+	}
+	sc->sc_heldchanges = 0;
 
 	/*
-	 * XXX could check here if rate matches per duart counter timer rate
-	 * (from config, defines or dynamic) and return group code 13
+	 * delay a tiny bit to try and avoid tx glitching.
+	 * I know we're at spltty(), but this is much better than the
+	 * old version used DELAY((96000 / out_speed) * 10000)
+	 * -plb
 	 */
-
-	for (sp = scnspeedtab; sp->sp_speed != -1; sp++)
-		if (sp->sp_speed == speed)
-			return sp;
-	return NULL;
+	DELAY(10);
 }
-/* Set various line control parameters for RS232 I/O. */
-static int
-scn_config(unit, in_speed, out_speed, new_mr1, new_mr2)
-	int unit;	/* which rs line */
-	int in_speed;	/* input speed: 110, 300, 1200, etc */
-	int out_speed;	/* output speed: 110, 300, 1200, etc */
-	char new_mr1;	/* new bits for MR1 */
-	char new_mr2;	/* new bits for MR2 */
 
+/*
+ * iterator function for speeds.
+ * (could be called "findnextcode")
+ * Returns sequence of possible speed codes for a given rate.
+ * should set index to zero before first call.
+ *
+ * Could be implemented as a "checkspeed()" function called
+ * to evaluate table entries, BUT this allows more variety in
+ * use of C/T with fewer table entries.
+ */
+
+static int
+scniter(index, wanted, counter, mode, other, c92)
+	int *index;		/* IN/OUT: index */
+	int wanted;		/* IN: speed wanted */
+	int *counter;		/* IN/OUT: counter/timer rate */
+	int *mode;		/* IN/OUT: mode */
+	struct chan *other;	/* IN: other channel, or NULL */
+	int c92;		/* IN: true for 26C92 */
+{
+	while (*index < TABENTRIES) {
+		struct tabent *tp;
+
+		tp = table + (*index)++;
+		if (tp->speed != wanted)
+			continue;
+
+		/* if not a 26C92 only look at MODE0 entries */
+		if (!c92 && (tp->mode & MR0_MODE) != MR0_MODE_0)
+			continue;
+
+		/*
+		 * check mode;
+		 * OK if this table entry for current mode, or mode not
+		 * yet set, or other channel's rates are available in both
+		 * A and B groups.
+		 */
+
+		if (tp->mode == *mode || *mode == ANYMODE ||
+		    (other != NULL && (tp->mode & MR0_MODE) == (*mode & MR0_MODE) &&
+		     bothgroups[other->icode] && bothgroups[other->ocode])) {
+			/*
+			 * for future table entries specifying
+			 * use of counter/timer
+			 */
+			if (tp->code == USE_CT) {
+				if (*counter != wanted && *counter != 0)
+					continue;	/* counter busy */
+				*counter = wanted;
+			}
+			*mode = tp->mode;
+			return tp->code;
+		}
+	}
+
+	/* here after returning all applicable table entries */
+	/* XXX return sequence of USE_CT with all possible modes?? */
+	if ((*index)++ == TABENTRIES) {
+		/* Max C/T rate (even on 26C92?) is 57600 */
+		if (wanted <= 57600 && (*counter == wanted || *counter == 0)) {
+			*counter = wanted;
+			return USE_CT;
+		}
+	}
+
+	return -1;			/* FAIL */
+}
+
+/*
+ * calculate configuration
+ * rewritten 2/97 -plb
+ */
+static int
+scn_config(unit, ispeed, ospeed, mr1, mr2)
+	int unit;
+	int ispeed;	/* input speed in bps */
+	int ospeed;	/* output speed in bps */
+	u_char mr1;	/* new bits for MR1 */
+	u_char mr2;	/* new bits for MR2 */
 {
 	register struct scn_softc *sc;
-	char mr1_val, mr2_val;
-	struct speedtab *sp;
-	int sp_grp, sp_both;
-	char set_speed;		/* Non zero if we need to set the speed. */
-	int channel;		/* Used for ease of access. */
-	int in_code;
-	int out_code;
+	struct duart *dp;
+	int chan;		/* 0 or 1 */
+	int other;		/* 1 or 0 */
+	int mode;
+	int counter;
+	int i, o;		/* input, output iterator indexes */
+	int ic, oc;		/* input, output codes */
+	struct chan *ocp;	/* other duart channel */
+	struct tty *otp;	/* other channel tty struct */
+	int c92;		/* true if duart is sc26c92 */
 	int s;
-
-	/* Get the speed codes. */
-	sp = getspeedcode(sc, in_speed);
-	/* XXX allow random speeds using C/T!! */
-	if (sp == NULL)
-		return (EINVAL);
-	in_code = sp->sp_code;
-
-	sp = getspeedcode(sc, out_speed);
-	/* XXX allow random speeds using C/T!! */
-	if (sp == NULL)
-		return (EINVAL);
-	out_code = sp->sp_code;
 
 	/* Set up softc pointer. */
 	if (unit >= scn_cd.cd_ndevs)
 		return ENXIO;
 	sc = SOFTC(unit);
-	channel = unit & 1;
+	chan = unit & 1;
+	other = chan ^ 1;
+	dp = sc->sc_duart;
+	ocp = &dp->chan[other];
+	c92 = (dp->type == SC26C92);
+
+	/* ugh; keep tty pointers in duart.chan[n].tty? */
+	otp = NULL;
+	if ((unit ^ 1) < scn_cd.cd_ndevs) {
+		struct scn_softc *osc;
+
+		osc = SOFTC(unit ^ 1);
+		if (osc) {
+			otp = osc->sc_tty;
+		}
+	}
 
 	/*
-         * Check out the Speeds;
-         *
-         * There are two groups of speeds.
-         *
-         * If the new speeds are not in the same group, or the other line
-         * is not the same speed of the other group, do not change the
-         * speeds.
-         *
-         * Also, if the in speed and the out speed are in different
-         * groups, use the in speed.
-         */
+	 * Right now the first combination that works is used.
+	 * Perhaps it should search entire solution space for "best"
+	 * combination. For example, use heuristic weighting of mode
+	 * preferences, and use of counter timer?
+	 *
+	 * For example right now with 2681/2692 when default rate is
+	 * 9600 and other channel is closed setting 19200 will pick
+	 * mode 0a and use counter/timer.  Better solution might be
+	 * mode 0b, leaving counter/timer free!
+	 *
+	 * When other channel is open might want to prefer
+	 * leaving counter timer free, or not flipping A/B group?
+	 */
+	if (otp && (otp->t_state & TS_ISOPEN)) {
+		/*
+		 * Other channel open;
+		 * Find speed codes compatible with current mode/counter.
+		 */
 
-	set_speed = FALSE;
-	sp_grp = 0;		/* keep gcc quiet */
-	if ((in_code != sc->duart->i_code[channel]) ||
-	    (out_code != sc->duart->o_code[channel])) {
-		/* We need to set the speeds. */
-		set_speed = TRUE;
+		i = 0;
+		for (;;) {
+			mode = dp->mode;
+			counter = dp->counter;
 
-		if (((in_code & SP_GRP1) != (out_code & SP_GRP1)) &&
-		    (((in_code | out_code) & SP_BOTH) != SP_BOTH)) {
-			/* Input speed and output speed are different groups. */
-			return (EINVAL);
-		}
-		sp_grp = (in_code | out_code) & SP_GRP1;
-		sp_both = in_code & out_code & SP_BOTH;
+			/* NOTE: pass other chan pointer to allow group flipping */
+			ic = scniter(&i, ispeed, &counter, &mode, ocp, c92);
+			if (ic == -1)
+				break;
 
-		/* Check for compatibility and set the uart values */
-		if (sp_both) {
-			sp_grp = sc->duart->speed_grp;
-		} else {
-			if ((sp_grp != sc->duart->speed_grp) &&
-			    !(sc->duart->i_code[1 - channel] &
-				sc->duart->o_code[1 - channel] & SP_BOTH)) {
+			o = 0;
+			if ((oc = scniter(&o, ospeed, &counter,
+					  &mode, NULL, c92)) != -1) {
 				/*
-				 * Can't change group, don`t change the speed
-				 * rates.
+				 * take first match
+				 *
+				 * Perhaps calculate heuristic "score",
+				 * save score,codes,mode,counter if score
+				 * better than previous best?
 				 */
-				return (EINVAL);
+				goto gotit;
 			}
 		}
-		sc->duart->i_code[channel] = in_code;
-		sc->duart->o_code[channel] = out_code;
-		sc->duart->i_speed[channel] = in_speed;
-		sc->duart->o_speed[channel] = out_speed;
-	}
-	/*
-	 * Add in any bits to new_mr1/2 that we don't want the caller to have
-	 * to know about (ie; interrupt settings) here -plb
-	 *
-	 * XXX wait for any any output in progress (avoid noise when
-	 * reprogramming line (like when logging in)! -plb
-	 *
-	 * Lock out interrupts while setting the parameters.
-	 * (Just for safety.)
-	 */
-	s = spltty();
-	sc->chbase[CH_CR] = CR_CMD_MR1;
-	RECOVER();
-	mr1_val = sc->chbase[CH_MR];
-	mr2_val = sc->chbase[CH_MR];
-	if (mr1_val != new_mr1 || mr2_val != new_mr2) {
-		sc->chbase[CH_CR] = CR_CMD_MR1;
-		RECOVER();
-		sc->chbase[CH_MR] = new_mr1;
-		sc->chbase[CH_MR] = new_mr2;
-	}
-	if (set_speed) {
-		if (sc->duart->speed_grp != sp_grp) {
-			/* Change the group! */
-			char    acr;
+		/* XXX try looping for ospeed? */
+	} else {
+		/* other channel closed */
+		int oo, oi;	/* other input, output iterators */
+		int oic, ooc;	/* other input, output codes */
 
-			sc->duart->speed_grp = sp_grp;
-			acr = sc->duart->acr_bits;
-			if (sp_grp)	/* group1? */
-				acr |= ACR_BRG;	/* yes; select alternate
-						 * group!! */
-			sc->duart->base[DU_ACR] = acr;
+		/*
+		 * Here when other channel closed.  Finds first
+		 * combination that will allow other channel to be opened
+		 * (with defaults) and fits our needs.
+		 */
+		oi = 0;
+		for (;;) {
+			mode = ANYMODE;
+			counter = 0;
+
+			oic = scniter(&oi, ocp->ispeed, &counter, &mode, NULL, c92);
+			if (oic == -1)
+				break;
+
+			oo = 0;
+			while ((ooc = scniter(&oo, ocp->ospeed, &counter,
+					   &mode, NULL, c92)) != -1) {
+				i = 0;
+				while ((ic = scniter(&i, ispeed, &counter,
+						  &mode, NULL, c92)) != -1) {
+					o = 0;
+					if ((oc = scniter(&o, ospeed, &counter,
+						       &mode, NULL, c92)) != -1) {
+						/*
+						 * take first match
+						 *
+						 * Perhaps calculate heuristic
+						 * "score", save
+						 *     score,codes,mode,counter
+						 * if score better than
+						 * previous best?
+						 */
+						s = spltty();
+						dp->chan[other].icode = oic;
+						dp->chan[other].ocode = ooc;
+						goto gotit2;
+					}
+				}
+			}
 		}
-		sc->chbase[CH_CSR] = ((in_code & 0xf) << 4) | (out_code & 0xf);
 	}
-	DELAY((96000 / out_speed) * 10000);	/* with tty ints off?!!! */
-	splx(s);
+	return EINVAL;	
 
+    gotit:
+	s = spltty();
+    gotit2:
+	dp->chan[chan].new_mr1 = mr1;
+	dp->chan[chan].new_mr2 = mr2;
+	dp->chan[chan].ispeed = ispeed;
+	dp->chan[chan].ospeed = ospeed;
+	dp->chan[chan].icode = ic;
+	dp->chan[chan].ocode = oc;
+	if (mode == ANYMODE)		/* no mode selected?? */
+		mode = DEFMODE(c92);
+	dp->mode = mode;
+	dp->counter = counter;
+
+	scn_setchip(sc);		/* set chip now, if possible */
+	splx(s);
 	return (0);
 }
-
+
 int
 scnprobe(parent, cf, aux)
 	struct device *parent;
@@ -439,36 +709,36 @@ static __inline void
 scn_rxenable(sc)
 	struct scn_softc *sc;
 {
-	struct duart_info *dp;
+	struct duart *dp;
 	int channel;
 
-	dp = sc->duart;
-	channel = sc->unit & 1;
+	dp = sc->sc_duart;
+	channel = sc->sc_unit & 1;
 
 	/* Outputs wire-ored and connected to ICU input for fast rx interrupt. */
 	if (channel == 0)
-		dp->opcr_bits |= OPCR_OP4_RXRDYA;
+		dp->opcr |= OPCR_OP4_RXRDYA;
 	else
-		dp->opcr_bits |= OPCR_OP5_RXRDYB;
-	dp->base[DU_OPCR] = dp->opcr_bits;
+		dp->opcr |= OPCR_OP5_RXRDYB;
+	dp->base[DU_OPCR] = dp->opcr;
 }
 
 static __inline void
 scn_rxdisable(sc)
 	struct scn_softc *sc;
 {
-	struct duart_info *dp;
+	struct duart *dp;
 	int channel;
 
-	dp = sc->duart;
-	channel = sc->unit & 1;
+	dp = sc->sc_duart;
+	channel = sc->sc_unit & 1;
 
 	/* Outputs wire-ored and connected to ICU input for fast rx interrupt. */
 	if (channel == 0)
-		dp->opcr_bits &= ~OPCR_OP4_RXRDYA;
+		dp->opcr &= ~OPCR_OP4_RXRDYA;
 	else
-		dp->opcr_bits &= ~OPCR_OP5_RXRDYB;
-	dp->base[DU_OPCR] = dp->opcr_bits;
+		dp->opcr &= ~OPCR_OP5_RXRDYB;
+	dp->base[DU_OPCR] = dp->opcr;
 }
 
 void
@@ -488,22 +758,22 @@ scnattach(parent, self, aux)
 	u_char unit;
 	u_char duart;
 	u_char delim = ':';
-	u_char duart_flags = 0;
+	enum scntype scntype;
 
 	sc = (void *) self;
-	unit = self->dv_unit;	/* sc->scn_dev.dv_unit ??? */
+	unit = self->dv_unit;	/* sc->sc_dev.dv_unit ??? */
 
 	duart = unit >> 1;	/* get chip number */
 	channel = unit & 1;	/* get channel on chip */
 
 	/* pick up "flags" (SCN_xxx) from config file */
 	if (self->dv_cfdata)	/* paranoia */
-		sc->scn_swflags = ca->ca_flags;
+		sc->sc_swflags = ca->ca_flags;
 	else
-		sc->scn_swflags = 0;
+		sc->sc_swflags = 0;
 
 	if (unit == scnconsole)	/* console? */
-		sc->scn_swflags |= SCN_SW_SOFTCAR;	/* ignore carrier */
+		sc->sc_swflags |= SCN_SW_SOFTCAR;	/* ignore carrier */
 
 	/*
          * Precalculate port numbers for speed.
@@ -551,9 +821,10 @@ scnattach(parent, self, aux)
 			/* if 2681, MR2 still selected */
 			if((ch_base[CH_MR] & 1) == 1) {
 				duart_type = "sc26c92";
-				duart_flags |= SCN_HW_26C92;
+				scntype = SC26C92;
 			} else {
-				ch_base[CH_CR] = CR_CMD_RTS_OFF; /* 2681 treats as MR1 Select */
+				/* 2681 treats as MR1 Select */
+				ch_base[CH_CR] = CR_CMD_RTS_OFF;
 				RECOVER();
 				ch_base[CH_MR] = 1;
 				ch_base[CH_MR] = 0;
@@ -561,13 +832,15 @@ scnattach(parent, self, aux)
 				RECOVER();
 				if (ch_base[CH_MR] == 1) {
 					duart_type = "scn2681";
+					scntype = SCN2681;
 				} else {
-					duart_type = "scc2692";
-					duart_flags |= SCN_HW_2692;
+					duart_type = "scn2692";
+					scntype = SCN2692;
 				}
 			}
 		} else {
 			duart_type = "Unknown";
+			scntype = SCNUNK;
 		}
 
 		/* If a 2681, the CR_CMD_MR0 is interpreted as a TX_RESET */
@@ -580,7 +853,7 @@ scnattach(parent, self, aux)
 		ch_base[CH_MR] = mr1;
 		ch_base[CH_MR] = mr2;
 		splx(s);
-	    
+
 		/* Arg 0 is special, so we must pass "unit + 1" */
 		intr_establish(scnints[duart], scnintr, (void *) (unit + 1),
 			       "scn", IPL_TTY, IPL_ZERO, LOW_LEVEL);
@@ -596,16 +869,16 @@ scnattach(parent, self, aux)
 			       "scnrx", IPL_ZERO, IPL_RTTY, LOW_LEVEL);
 	}
 	/* Record unit number, uart */
-	sc->unit = unit;
-	sc->chbase = ch_base;
+	sc->sc_unit = unit;
+	sc->sc_chbase = ch_base;
 
 	/* Initialize modem/interrupt bit masks */
 	if (channel == 0) {
-		sc->duart = malloc(sizeof(struct duart_info), M_DEVBUF, M_NOWAIT);
-		if (sc->duart == NULL)
+		sc->sc_duart = malloc(sizeof(struct duart), M_DEVBUF, M_NOWAIT);
+		if (sc->sc_duart == NULL)
 			panic("scn%d: memory allocation for duart structure failed", unit);
-  		sc->duart->base = duart_base;
-		sc->duart->hwflags = duart_flags;
+  		sc->sc_duart->base = duart_base;
+		sc->sc_duart->type = scntype;
 		sc->sc_op_rts = OP_RTSA;
 		sc->sc_op_dtr = OP_DTRA;
 		sc->sc_ip_cts = IP_CTSA;
@@ -613,7 +886,7 @@ scnattach(parent, self, aux)
 
 		sc->sc_tx_int = INT_TXA;
 	} else {
-		sc->duart = ((struct scn_softc *)SOFTC(unit - 1))->duart;
+		sc->sc_duart = ((struct scn_softc *)SOFTC(unit - 1))->sc_duart;
 
 		sc->sc_op_rts = OP_RTSB;
 		sc->sc_op_dtr = OP_DTRB;
@@ -623,11 +896,11 @@ scnattach(parent, self, aux)
 		sc->sc_tx_int = INT_TXB;
 	}
 
-	/* Initialize error counts */
-	sc->framing_errors = 0;
-	sc->overrun_errors = 0;
-	sc->parity_errors = 0;
-	sc->break_interrupts = 0;
+	/* Initialize counters */
+	sc->sc_framing_errors = 0;
+	sc->sc_fifo_overruns = 0;
+	sc->sc_parity_errors = 0;
+	sc->sc_breaks = 0;
 
 	if (unit == scnconsole) {
 		DELAY(5 * 10000);	/* Let the output go out.... */
@@ -662,33 +935,28 @@ scnattach(parent, self, aux)
 
 	/* Initialize the uart structure if this is channel A. */
 	if (channel == 0) {
-		u_char  temp;
-
 		/* Disable all interrupts. */
-		duart_base[DU_IMR] = sc->duart->imr_int_bits = 0;
+		duart_base[DU_IMR] = sc->sc_duart->imr = 0;
 
 		/* Output port config */
-		duart_base[DU_OPCR] = sc->duart->opcr_bits = 0;
+		duart_base[DU_OPCR] = sc->sc_duart->opcr = 0;
 
 		/* Speeds... */
-		sc->duart->speed_grp = 1;
-		/* Set initial speed to an illegal code that can be changed to
-		 * any other baud. */
-		sc->duart->i_code[0] = sc->duart->o_code[0] =
-		    sc->duart->i_code[1] = sc->duart->o_code[1] = 0x2f;
-		sc->duart->i_speed[0] = sc->duart->o_speed[0] =
-		    sc->duart->i_speed[1] = sc->duart->o_speed[1] = 0x0;
+		sc->sc_duart->mode = 0;
+		/*
+		 * Set initial speed to an illegal code that can be changed to
+		 * any other baud.
+		 */
+		sc->sc_duart->chan[0].icode = sc->sc_duart->chan[0].ocode = 0x2f;
+		sc->sc_duart->chan[1].icode = sc->sc_duart->chan[1].ocode = 0x2f;
+		sc->sc_duart->chan[0].ispeed = sc->sc_duart->chan[0].ospeed = 0;
+		sc->sc_duart->chan[1].ispeed = sc->sc_duart->chan[1].ospeed = 0;
 
-		sc->duart->acr_bits = 0;
-#ifdef CT_VALUE
-		sc->duart->acr_bits |= ACR_CT_TCLK1;	/* timer mode 1x clk */
-		duart_base[DU_CTUR] = CT_VALUE >> 8;
-		duart_base[DU_CTLR] = CT_VALUE & 255;
-		temp = duart_base[DU_CSTRT];	/* start C/T running */
-#endif
-		sc->duart->acr_bits |= ACR_DELTA_DCDA;	/* Set CD int */
+		sc->sc_duart->acr = 0;
+		sc->sc_duart->acr |= ACR_CT_TCLK1;	/* timer mode 1x clk */
+		sc->sc_duart->acr |= ACR_DELTA_DCDA;	/* Set CD int */
 	} else {
-		sc->duart->acr_bits |= ACR_DELTA_DCDB;	/* Set CD int */
+		sc->sc_duart->acr |= ACR_DELTA_DCDB;	/* Set CD int */
 	}
 
 	if (scnsir == -1) {
@@ -697,15 +965,14 @@ scnattach(parent, self, aux)
 				"softscn", IPL_TTY, IPL_TTY, 0);
 	}
 
-	duart_base[DU_ACR] =
-	    (sc->duart->speed_grp ? ACR_BRG : 0) | sc->duart->acr_bits;
+	duart_base[DU_ACR] = (sc->sc_duart->mode & ACR_BRG) | sc->sc_duart->acr;
 
 	if (unit == scnconsole)
 		speed = scnconsrate;
 	else
 		speed = scndefaultrate;
 
-	scn_config(unit, speed, speed, MR1_PNONE | MR1_BITS8, MR2_STOP1);
+	scn_config(unit, speed, speed, MR1_PNONE | MR1_CS8, MR2_STOP1);
 	if (scnconsole == unit)
 		shutdownhook_establish(scncnreinit, (void *) makedev(scnmajor, unit));
 
@@ -713,20 +980,19 @@ scnattach(parent, self, aux)
 	ch_base[CH_CR] = CR_ENA_RX | CR_ENA_TX;
 
 	/* Set up the interrupts. */
-	sc->duart->imr_int_bits |= INT_IP;
+	sc->sc_duart->imr |= INT_IP;
 	scn_rxdisable(sc);
 	splx(s);
 
-	if (sc->scn_swflags) {
-		printf("%c flags %d", delim, sc->scn_swflags);
+	if (sc->sc_swflags) {
+		printf("%c flags %d", delim, sc->sc_swflags);
 		delim = ',';
 	}
 		
 #ifdef KGDB
 	if (kgdb_dev == makedev(scnmajor, unit)) {
 		if (scnconsole == unit)
-			kgdb_dev = NODEV;	/* can't debug over console
-						 * port */
+			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
 			scninit(kgdb_dev, kgdb_rate);
 			scn_rxenable(sc);
@@ -766,11 +1032,11 @@ scnopen(dev, flag, mode, p)
 		return ENXIO;
 
 	s = spltty();
-	if (!sc->scn_tty) {
-		tp = sc->scn_tty = ttymalloc();
+	if (!sc->sc_tty) {
+		tp = sc->sc_tty = ttymalloc();
 		tty_attach(tp);
 	} else
-		tp = sc->scn_tty;
+		tp = sc->sc_tty;
 
 	tp->t_oproc = scnstart;
 	tp->t_param = scnparam;
@@ -786,9 +1052,9 @@ scnopen(dev, flag, mode, p)
 
 		sc->sc_rx_blocked = 0;
 
-		if (sc->scn_swflags & SCN_SW_CLOCAL)
+		if (sc->sc_swflags & SCN_SW_CLOCAL)
 			tp->t_cflag |= CLOCAL;
-		if (sc->scn_swflags & SCN_SW_CRTSCTS)
+		if (sc->sc_swflags & SCN_SW_CRTSCTS)
 			tp->t_cflag |= CCTS_OFLOW | CRTS_IFLOW;
 		tp->t_lflag = TTYDEF_LFLAG;
 		if (unit == scnconsole)
@@ -806,22 +1072,24 @@ scnopen(dev, flag, mode, p)
 		hwset = 1;
 
 		/* set carrier state; */
-		if ((sc->scn_swflags & SCN_SW_SOFTCAR) ||	/* check ttyflags */
-		    SCN_DCD(sc) ||	/* check h/w */
+		if ((sc->sc_swflags & SCN_SW_SOFTCAR) || /* check ttyflags */
+		    SCN_DCD(sc) ||			 /* check h/w */
 		    DEV_DIALOUT(dev))
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
-	} else
+	} else {
 		if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
 			splx(s);
 			return (EBUSY);
-		} else
+		} else {
 			if (DEV_DIALOUT(dev) && !SCN_DIALOUT(sc)) {
 				/* dialout attempt while someone dialed in */
 				splx(s);
 				return (EBUSY);
 			}
+		}
+	}
 	if (DEV_DIALOUT(dev)) {
 		/* dialout open and no one dialed in (see above) */
 		SCN_SETDIALOUT(sc);	/* mark line as dialed out */
@@ -859,8 +1127,10 @@ scnopen(dev, flag, mode, p)
 				if ((tp->t_cflag & CLOCAL) ||	/* "local" line? */
 				    (tp->t_state & TS_CARR_ON))	/* or carrier up */
 					break;	/* no (more) waiting */
-				/* "getty" on modem falls thru and waits for
-				 * carrier up */
+				/*
+				 *"getty" on modem falls thru and waits for
+				 * carrier up
+				 */
 			}
 			tp->t_state |= TS_WOPEN;
 			error = ttysleep(tp, (caddr_t) & tp->t_rawq,
@@ -898,10 +1168,10 @@ scnclose(dev, flag, mode, p)
 {
 	register int unit = DEV_UNIT(dev);
 	register struct scn_softc *sc = SOFTC(unit);
-	register struct tty *tp = sc->scn_tty;
+	register struct tty *tp = sc->sc_tty;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
-	        return 0;
+		return 0;
 
 	(*linesw[tp->t_line].l_close) (tp, flag);
 
@@ -912,7 +1182,7 @@ scnclose(dev, flag, mode, p)
 		if ((tp->t_state & TS_ISOPEN) == 0) {
 			scn_rxdisable(sc);
 		}
-	if ((tp->t_cflag & HUPCL) && (sc->scn_swflags & SCN_SW_SOFTCAR) == 0) {
+	if ((tp->t_cflag & HUPCL) && (sc->sc_swflags & SCN_SW_SOFTCAR) == 0) {
 		SCN_OP_BIC(sc, sc->sc_op_dtr);
 		/* hold low for 1 second */
 		(void) tsleep((caddr_t)sc, TTIPRI, ttclos, hz);
@@ -923,7 +1193,7 @@ scnclose(dev, flag, mode, p)
 #if 0
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttyfree(tp);
-		sc->scn_tty = (struct tty *) NULL;
+		sc->sc_tty = (struct tty *) NULL;
 	}
 #endif
 
@@ -937,7 +1207,7 @@ scnread(dev, uio, flag)
 	int flag;
 {
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->scn_tty;
+	register struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_read) (tp, uio, flag));
 }
@@ -949,7 +1219,7 @@ scnwrite(dev, uio, flag)
 	int flag;
 {
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->scn_tty;
+	register struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
 }
@@ -960,7 +1230,7 @@ scntty(dev)
 {
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 
-	return sc->scn_tty;
+	return sc->sc_tty;
 }
 
 /* Worker routines for interrupt processing */
@@ -970,22 +1240,22 @@ dcd_int(sc, tp, new)
 	struct tty *tp;
 	u_char new;
 {
-	if (sc->scn_swflags & SCN_SW_SOFTCAR)
+	if (sc->sc_swflags & SCN_SW_SOFTCAR)
 		return;
 
 #if 0
 	printf("scn%d: dcd_int ip %x SCN_DCD %x new %x ipcr %x\n",
 	    sc->unit,
-	    sc->duart->base[DU_IP],
+	    sc->sc_duart->base[DU_IP],
 	    SCN_DCD(sc),
 	    new,
-	    sc->duart->base[DU_IPCR]
+	    sc->sc_duart->base[DU_IPCR]
 	    );
 #endif
 
 /* XXX set some flag to have some lower (soft) int call line discipline? */
 	if (!(*linesw[(u_char) tp->t_line].l_modem) (tp, new == 0? 1: 0)) {
-	      SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
+		SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
 	}
 }
 
@@ -1036,10 +1306,10 @@ scnintr(arg)
 	register struct scn_softc *sc0 = SOFTC(line1 - 1);
 	register struct scn_softc *sc1 = SOFTC(line1);
 
-	register struct tty *tp0 = sc0->scn_tty;
-	register struct tty *tp1 = sc1->scn_tty;
+	register struct tty *tp0 = sc0->sc_tty;
+	register struct tty *tp1 = sc1->sc_tty;
 
-	register struct duart_info *duart = sc0->duart;
+	register struct duart *duart = sc0->sc_duart;
 
 	char rs_work;
 	u_char rs_stat;
@@ -1057,10 +1327,12 @@ scnintr(arg)
 				tp0->t_state &= ~(TS_BUSY | TS_FLUSH);
 
 				/* disable tx ints */
-				sc0->duart->imr_int_bits &= ~sc0->sc_tx_int;
-				sc0->duart->base[DU_IMR] = sc0->duart->imr_int_bits;
+				sc0->sc_duart->imr &= ~sc0->sc_tx_int;
+				sc0->sc_duart->base[DU_IMR] = sc0->sc_duart->imr;
 
-/* XXX perform any held line changes */
+				if (sc0->sc_heldchanges) {
+					scn_setchip(sc0);
+				}
 
 				(*linesw[tp0->t_line].l_start) (tp0);
 				rs_work = TRUE;
@@ -1073,10 +1345,12 @@ scnintr(arg)
 				tp1->t_state &= ~(TS_BUSY | TS_FLUSH);
 
 				/* disable tx ints */
-				sc1->duart->imr_int_bits &= ~sc1->sc_tx_int;
-				sc1->duart->base[DU_IMR] = sc1->duart->imr_int_bits;
+				sc1->sc_duart->imr &= ~sc1->sc_tx_int;
+				sc1->sc_duart->base[DU_IMR] = sc1->sc_duart->imr;
 
-/* XXX perform any held line changes */
+				if (sc1->sc_heldchanges) {
+					scn_setchip(sc1);
+				}
 
 				(*linesw[tp1->t_line].l_start) (tp1);
 				rs_work = TRUE;
@@ -1111,46 +1385,46 @@ scnintr(arg)
  * THIS ROUTINE SHOULD BE KEPT AS CLEAN AS POSSIBLE!!
  * IT'S A CANDIDATE FOR RECODING IN ASSEMBLER!!
  */
-static int
+static __inline int
 scn_rxintr(sc, line)
      struct scn_softc *sc;
      int line;
 {
 	register char sr;
-	register int i, n, put;
+	register int i, n;
 	int work;
 
 	work = 0;
 	i = sc->sc_rbput;
 	while (work <= 10) {
 #define SCN_GETCH(SC) \
-		sr = (SC)->chbase[CH_SR]; \
+		sr = (SC)->sc_chbase[CH_SR]; \
 		if ((sr & SR_RX_RDY) == 0) \
 			break; \
 		if (sr & (SR_PARITY | SR_FRAME | SR_BREAK | SR_OVERRUN)) \
 			goto exception; \
 		work++; \
-		(SC)->sc_rbuf[i++ & SCN_RING_MASK] = (SC)->chbase[CH_DAT]
+		(SC)->sc_rbuf[i++ & SCN_RING_MASK] = (SC)->sc_chbase[CH_DAT]
 
 		SCN_GETCH(sc); SCN_GETCH(sc); SCN_GETCH(sc);
-			
+		/* XXX more here if 26C92? -plb */
 		continue;
 	exception:
 #if defined(DDB)
 		if (line == scnconsole && (sr & SR_BREAK)) {
 			Debugger();
-			sr = sc->chbase[CH_SR];
+			sr = sc->sc_chbase[CH_SR];
 		}
 #endif
 #if defined(KGDB)
 		if (line == scnkgdb && (sr & SR_RX_RDY)) {
 			kgdb_connect(1);
-			sr = sc->chbase[CH_SR];
+			sr = sc->sc_chbase[CH_SR];
 		}
 #endif
 		work++;
-		sc->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc->chbase[CH_DAT];
-		sc->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+		sc->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc->sc_chbase[CH_DAT];
+		sc->sc_chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
 		RECOVER();
 	}
 	/*
@@ -1176,8 +1450,6 @@ static void
 scnrxintr(arg)
 	void *arg;
 {
-	register char sr;
-	register int i;
 	int work = 0;
 	int line1 = (int)arg;	/* NOTE: line _ONE_ */
 	int line0 = line1 - 1;
@@ -1243,9 +1515,10 @@ scnsoft(arg)
 		register int n, get;
 
 		sc = SOFTC(unit);
-		if (!sc)
+		if (sc == NULL) {
 			continue;
-		tp = sc->scn_tty;
+		}
+		tp = sc->sc_tty;
 #ifdef KGDB
 		if (tp == NULL) {
 			sc->sc_rbget = sc->sc_rbput;
@@ -1262,20 +1535,20 @@ scnsoft(arg)
 		/* NOTE: fetch from rbput is atomic */
 		while (get != (n = sc->sc_rbput)) {
 			/*
-		         * Compute the number of interrupts in the receive ring.
-		         * If the count is overlarge, we lost some events, and
-		         * must advance to the first valid one.  It may get
-		         * overwritten if more data are arriving, but this is
-		         * too expensive to check and gains nothing (we already
-		         * lost out; all we can do at this point is trade one
-		         * kind of loss for another).
-		         */
+			 * Compute the number of interrupts in the receive ring.
+			 * If the count is overlarge, we lost some events, and
+			 * must advance to the first valid one.  It may get
+			 * overwritten if more data are arriving, but this is
+			 * too expensive to check and gains nothing (we already
+			 * lost out; all we can do at this point is trade one
+			 * kind of loss for another).
+			 */
 			n -= get;
 			if (n > SCN_RING_SIZE) {
 				scnoverrun(unit, &sc->sc_rotime, "ring");
 				get += n - SCN_RING_SIZE;
 				n = SCN_RING_SIZE;
-				sc->ring_overruns++;
+				sc->sc_ring_overruns++;
 			}
 			while (--n >= 0) {
 				register int c, sr;
@@ -1292,12 +1565,16 @@ scnsoft(arg)
 
 				if (sr & SR_OVERRUN) {
 					scnoverrun(unit, &sc->sc_fotime, "fifo");
-					sc->overrun_errors++;
+					sc->sc_fifo_overruns++;
 				}
-				if (sr & SR_PARITY)
+				if (sr & SR_PARITY) {
 					c |= TTY_PE;
-				if (sr & SR_FRAME)
+					sc->sc_parity_errors++;
+				}
+				if (sr & SR_FRAME) {
 					c |= TTY_FE;
+					sc->sc_framing_errors++;
+				}
 				if (sr & SR_BREAK) {
 #if 0
 					/*
@@ -1308,6 +1585,7 @@ scnsoft(arg)
 						Debugger();
 #endif
 					c = TTY_FE | 0;
+					sc->sc_breaks++;
 				}
 				(*linesw[tp->t_line].l_rint) (c, tp);
 
@@ -1348,7 +1626,7 @@ scnioctl(dev, cmd, data, flag, p)
 {
 	register int unit = DEV_UNIT(dev);
 	register struct scn_softc *sc = SOFTC(unit);
-	register struct tty *tp = sc->scn_tty;
+	register struct tty *tp = sc->sc_tty;
 	register int error;
 
 	error = (*linesw[tp->t_line].l_ioctl) (tp, cmd, data, flag, p);
@@ -1360,11 +1638,11 @@ scnioctl(dev, cmd, data, flag, p)
 
 	switch (cmd) {
 	case TIOCSBRK:
-		sc->chbase[CH_CR] = CR_CMD_START_BRK;
+		sc->sc_chbase[CH_CR] = CR_CMD_START_BRK;
 		break;
 
 	case TIOCCBRK:
-		sc->chbase[CH_CR] = CR_CMD_STOP_BRK;
+		sc->sc_chbase[CH_CR] = CR_CMD_STOP_BRK;
 		break;
 
 	case TIOCSDTR:
@@ -1409,7 +1687,7 @@ scnioctl(dev, cmd, data, flag, p)
 			unsigned char ip, op;
 
 			/* s = spltty(); */
-			ip = sc->duart->base[DU_IP];
+			ip = sc->sc_duart->base[DU_IP];
 			/*
 			 * XXX sigh; cannot get op current state!! even if
 			 * maintained in private, RTS is done in h/w!!
@@ -1437,13 +1715,13 @@ scnioctl(dev, cmd, data, flag, p)
 	case TIOCGFLAGS:{
 			int     bits = 0;
 
-			if (sc->scn_swflags & SCN_SW_SOFTCAR)
+			if (sc->sc_swflags & SCN_SW_SOFTCAR)
 				bits |= TIOCFLAG_SOFTCAR;
-			if (sc->scn_swflags & SCN_SW_CLOCAL)
+			if (sc->sc_swflags & SCN_SW_CLOCAL)
 				bits |= TIOCFLAG_CLOCAL;
-			if (sc->scn_swflags & SCN_SW_CRTSCTS)
+			if (sc->sc_swflags & SCN_SW_CRTSCTS)
 				bits |= TIOCFLAG_CRTSCTS;
-			if (sc->scn_swflags & SCN_SW_MDMBUF)
+			if (sc->sc_swflags & SCN_SW_MDMBUF)
 				bits |= TIOCFLAG_MDMBUF;
 
 			*(int *) data = bits;
@@ -1466,7 +1744,7 @@ scnioctl(dev, cmd, data, flag, p)
 			if (userbits & TIOCFLAG_MDMBUF)
 				driverbits |= SCN_SW_MDMBUF;
 
-			sc->scn_swflags = driverbits;
+			sc->sc_swflags = driverbits;
 
 			break;
 		}
@@ -1514,17 +1792,17 @@ scnparam(tp, t)
 	/* Data bits. */
 	switch (cflag & CSIZE) {
 	case CS5:
-		mr1 |= MR1_BITS5;
+		mr1 |= MR1_CS5;
 		break;
 	case CS6:
-		mr1 |= MR1_BITS6;
+		mr1 |= MR1_CS6;
 		break;
 	case CS7:
-		mr1 |= MR1_BITS7;
+		mr1 |= MR1_CS7;
 		break;
 	case CS8:
 	default:
-		mr1 |= MR1_BITS8;
+		mr1 |= MR1_CS8;
 		break;
 	}
 
@@ -1572,12 +1850,13 @@ scnstart(tp)
 		selwakeup(&tp->t_wsel);
 	}
 	tp->t_state |= TS_BUSY;
-	if (sc->chbase[CH_SR] & SR_TX_RDY) {
+	if (sc->sc_chbase[CH_SR] & SR_TX_RDY) {
+		/* XXX load multiple characters if 26c92? -plb */
 		c = getc(&tp->t_outq);
-		sc->chbase[CH_DAT] = c;
+		sc->sc_chbase[CH_DAT] = c;
 
 		/* Enable transmit interrupts. */
-		sc->duart->base[DU_IMR] = (sc->duart->imr_int_bits |= sc->sc_tx_int);
+		sc->sc_duart->base[DU_IMR] = (sc->sc_duart->imr |= sc->sc_tx_int);
 	}
 out:
 	splx(s);
@@ -1659,7 +1938,7 @@ scninit(dev, rate)
 	int unit = DEV_UNIT(dev);
 
 	du_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
-	scn_config(unit, rate, rate, MR1_PNONE | MR1_BITS8, MR2_STOP1);
+	scn_config(unit, rate, rate, MR1_PNONE | MR1_CS8, MR2_STOP1);
 	return (0);
 }
 
@@ -1715,7 +1994,8 @@ scncnputc(dev, c)
 void scn_ei(enabled)
      int enabled;
 {
-	/* Ideas: to make this go faster, precompute addresses and bits to
+	/*
+	 * Ideas: to make this go faster, precompute addresses and bits to
 	 * set when channel is opened, blocked or unblocked or closed. Do
          * both channels of DUART at once.
 	 */
@@ -1724,7 +2004,7 @@ void scn_ei(enabled)
 		register struct scn_softc *sc;
 
 		sc = SOFTC(unit);
-		if (!sc->sc_rx_blocked && sc->scn_swflags & SCN_SW_CRTSCTS) {
+		if (!sc->sc_rx_blocked && sc->sc_swflags & SCN_SW_CRTSCTS) {
 			if (enabled) {
 				SCN_OP_BIS(sc, sc->sc_op_rts);
 			} else {

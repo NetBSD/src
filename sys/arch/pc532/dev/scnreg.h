@@ -1,7 +1,7 @@
-/*	$NetBSD: scnreg.h,v 1.8 1996/12/23 08:37:10 matthias Exp $	*/
+/*	$NetBSD: scnreg.h,v 1.9 1997/03/13 10:24:15 matthias Exp $	*/
 
 /*
- * Copyright (c) 1996 Phil Budne.
+ * Copyright (c) 1996, 1997 Philip L. Budne.
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
  *
@@ -67,25 +67,33 @@
  * MR (mode register) -- per channel
  */
 
-/* MR0 (scn26c92 only) */
-#define MR0_BR_EXTND1 1
-#define MR0_BR_EXTEND2 4
-#define MR0_TXINT 0x30
-#define MR0_RXINT 0x40
-#define MR0_RXWD  0x80
+/* MR0 (scn26c92 only) need to use CR_CMD_MR0 before access */
+#define MR0_MODE	0x07	/* extended baud rate mode (MR0A only) */
+#define MR0_TXINT	0x30	/* Tx int threshold */
+#define MR0_RXINT	0x40	/* Rx int threshold (along with MR1_FFULL) */
+#define MR0_RXWD	0x80	/* Rx watchdog (8 byte-times after last rx) */
+
+#define MR0_MODE_0	0x00	/* Normal mode */
+#define MR0_MODE_1	0x01	/* Extended mode 1 */
+#define MR0_MODE_2	0x04	/* Extended mode 2 */
+
+#define MR0_TXINT_EMPTY	0x00	/* TxInt when 8 FIFO bytes empty  (default) */
+#define MR0_TXINT_4	0x10	/* TxInt when 4 or more FIFO bytes empty */
+#define MR0_TXINT_6	0x20	/* TxInt when 6 or more FIFO bytes empty */
+#define MR0_TXINT_TXRDY	0x30	/* TxInt when 1 or more FIFO bytes empty */
 
 /* MR1 (need to use CR_CMD_MR1 before each access) */
-#define MR1_BITS5	0x00
-#define MR1_BITS6	0x01
-#define MR1_BITS7	0x02
-#define MR1_BITS8	0x03
+#define MR1_CS5		0x00
+#define MR1_CS6		0x01
+#define MR1_CS7		0x02
+#define MR1_CS8		0x03
 
 #define	MR1_PEVEN	0x00
 #define MR1_PODD	0x04
 #define MR1_PNONE	0x10
 
 #define MR1_RXBLK	0x20	/* "block" error mode */
-#define MR1_FFULL	0x40	/* wait until FIFO full for rxint */
+#define MR1_FFULL	0x40	/* wait until FIFO full for rxint (cf MR0) */
 #define MR1_RXRTS	0x80	/* auto RTS input flow ctrl */
 
 /* MR2 (any access to MR after MR1) */

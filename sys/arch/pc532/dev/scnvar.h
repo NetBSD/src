@@ -1,7 +1,7 @@
-/*	$NetBSD: scnvar.h,v 1.2 1996/12/23 08:37:11 matthias Exp $	*/
+/*	$NetBSD: scnvar.h,v 1.3 1997/03/13 10:24:16 matthias Exp $	*/
 
 /*
- * Copyright (c) 1996 Phil Budne.
+ * Copyright (c) 1996, 1997 Philip L. Budne.
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
  *
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	scnvar.h: definitions for pc532 2681/2692 duart driver
+ *	scnvar.h: definitions for pc532 2681/2692/26c96 duart driver
  */
 
 /* Constants. */
@@ -83,14 +83,10 @@
 #define IPCR_DELTA_DCDB	IPCR_DELTA_IP2
 #define IPCR_DELTA_DCDA	IPCR_DELTA_IP3
 
-#define SP_GRP0		0x00
-#define SP_GRP1		0x10
-#define SP_BOTH		0x20
+#define SCN_OP_BIS(SC,VAL) ((SC)->sc_duart->base[DU_OPSET] = (VAL))
+#define SCN_OP_BIC(SC,VAL) ((SC)->sc_duart->base[DU_OPCLR] = (VAL))
 
-#define SCN_OP_BIS(SC,VAL) ((SC)->duart->base[DU_OPSET] = (VAL))
-#define SCN_OP_BIC(SC,VAL) ((SC)->duart->base[DU_OPCLR] = (VAL))
-
-#define SCN_DCD(SC) (((SC)->duart->base[DU_IP] & (SC)->sc_ip_dcd) == 0)
+#define SCN_DCD(SC) (((SC)->sc_duart->base[DU_IP] & (SC)->sc_ip_dcd) == 0)
 
 /* pc532 duarts are auto-sized to byte-wide */
 #define CH_SZ		8
@@ -98,17 +94,22 @@
 #define SCN_REG(n)	(n)		/* n'th reg at n'th byte!! */
 
 /* The DUART description struct; for data common to both channels */
-struct duart_info {
+struct duart {
 	volatile u_char *base;
-	int	i_speed[2], o_speed[2];	/* Channel A and B speeds. */
-	char	i_code[2], o_code[2];	/* Channel A and B speeds. */
-	char	speed_grp;		/* BRG speed group */
-	char	acr_bits;		/* ACR bits 0-6 */
-	char	imr_int_bits;		/* IMR bits current set. */
-	char	opcr_bits;		/* OPCR bits to set */
-	char	hwflags;
-#define SCN_HW_2692 1
-#define SCN_HW_26C92 2
+	struct chan {
+	    int32_t ispeed, ospeed;
+	    u_char icode, ocode;
+	    u_char mr0;			/* MR0[7:3] */
+	    u_char new_mr1;		/* held changes */
+	    u_char new_mr2;		/* held changes */
+	} chan[2];
+	enum scntype { SCNUNK, SCN2681, SCN2692, SC26C92 } type;
+	u_int16_t counter;		/* C/T generated bps, or zero */
+	u_int16_t ocounter;		/* last C/T generated bps, or zero */
+	u_char	mode;			/* ACR[7] + MR0[2:0] */
+	u_char	acr;			/* ACR[6:0]*/
+	u_char	imr;			/* IMR bits */
+	u_char	opcr;			/* OPCR bits */
 };
 
 #define SCN_RING_BITS	9	/* 512 byte buffers */
@@ -119,24 +120,24 @@ struct duart_info {
 
 /* scn channel state */
 struct scn_softc {
-	struct device scn_dev;
-	struct tty *scn_tty;
-/* XXXPLB: prefix with scn_; */
-	int     unit;			/* unit number of this line (base 0) */
-	struct duart_info *duart;	/* pointer to duart struct */
-	volatile u_char *chbase;	/* per-channel registers (CH_xxx) */
-	u_char	lstatus;		/* last line status (sr) */
-	u_char	scn_swflags;		/* from config / TIOCxFLAGS */
+	struct device sc_dev;
+	struct tty *sc_tty;
+	int     sc_unit;		/* unit number of this line (base 0) */
+	struct duart *sc_duart;	/* pointer to duart struct */
+	volatile u_char *sc_chbase;	/* per-channel registers (CH_xxx) */
+	u_char	sc_swflags;		/* from config / TIOCxFLAGS */
 #define SCN_SW_SOFTCAR	0x01
 #define SCN_SW_CLOCAL	0x02
 #define SCN_SW_CRTSCTS	0x04
 #define SCN_SW_MDMBUF	0x08		/* not implemented */
 
 /* I wish there was a TS_DIALOUT flag! */
-	u_char  scn_dialout;		/* set if open for dialout */
-#define SCN_DIALOUT(SCN) ((SCN)->scn_dialout)
-#define SCN_SETDIALOUT(SCN) (SCN)->scn_dialout = 1
-#define SCN_CLRDIALOUT(SCN) (SCN)->scn_dialout = 0
+	u_char  sc_dialout;		/* set if open for dialout */
+#define SCN_DIALOUT(SCN) ((SCN)->sc_dialout)
+#define SCN_SETDIALOUT(SCN) (SCN)->sc_dialout = 1
+#define SCN_CLRDIALOUT(SCN) (SCN)->sc_dialout = 0
+
+	u_char	sc_heldchanges;		/* waiting for output done */
 
 /* bits in input port register */
 	u_char  sc_ip_dcd;
@@ -149,11 +150,11 @@ struct scn_softc {
 /* interrupt mask bits */
 	u_char  sc_tx_int;
 
-/* error counts */
-	u_long	framing_errors; 	/* NYI */
-	u_long	overrun_errors;
-	u_long	parity_errors;		/* NYI */
-	u_long  break_interrupts;	/* NYI */
+/* counters */
+	u_long	sc_framing_errors;
+	u_long	sc_parity_errors;
+	u_long	sc_fifo_overruns;
+	u_long  sc_breaks;
 
 /* ring buffer for rxrdy interrupt */
 	u_int	sc_rbget;		/* ring buffer `get' index */
@@ -162,7 +163,7 @@ struct scn_softc {
 	short   sc_rbuf[SCN_RING_SIZE];	/* status + data */
 	long	sc_fotime;		/* last fifo overrun message */
 	long	sc_rotime;		/* last ring overrun message */
-	u_long	ring_overruns;		/* number of ring buffer overruns */
+	u_long	sc_ring_overruns;	/* number of ring buffer overruns */
 	/* Flags to communicate with scntty_softint() */
 	volatile char sc_rx_blocked;	/* input block at ring */
 };
