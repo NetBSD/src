@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.57 1996/12/30 21:13:50 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.58 1997/01/27 17:14:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -55,10 +55,11 @@
 #include <machine/idprom.h>
 #include <machine/obio.h>
 #include <machine/obmem.h>
+#include <machine/machdep.h>
 
-#include "vector.h"
-#include "interreg.h"
-#include "machdep.h"
+#include <sun3/sun3/interreg.h>
+#include <sun3/sun3/sunmon.h>
+#include <sun3/sun3/vector.h>
 
 /* This is defined in locore.s */
 extern char kernel_text[];
@@ -69,7 +70,7 @@ char *esym;	/* DDB */
 
 
 /*
- * Globals shared between pmap.c and sun3_startup.c (sigh).
+ * Globals shared between pmap.c and here (sigh).
  * For simplicity, this interface retains the variables
  * that were used in the old interface (without NONCONTIG).
  */
@@ -83,7 +84,6 @@ int cache_size;
  * Now our own stuff.
  */
 int cold = 1;
-void **old_vector_table;
 
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
@@ -97,24 +97,23 @@ struct msgbuf *msgbufp = NULL;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
 
-vm_offset_t proc0_user_pa;
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
 extern vm_offset_t dumppage_pa;
 extern vm_offset_t dumppage_va;
 
-void sun3_bootstrap __P((struct exec));
+/* First C code called by locore.s */
+void _bootstrap __P((struct exec));
 
-static void sun3_mon_init __P((vm_offset_t sva, vm_offset_t eva, int keep));
-static void sun3_monitor_hooks __P((void));
-static void sun3_save_symtab __P((struct exec *kehp));
-static void sun3_verify_hardware __P((void));
-static void sun3_vm_init __P((struct exec *kehp));
-static void tracedump __P((int));
-static void v_handler __P((int addr, char *str));
+static void _mon_init __P((vm_offset_t sva, vm_offset_t eva, int keep));
+static void _verify_hardware __P((void));
+static void _vm_init __P((struct exec *kehp));
 
 
+/*
+ * XXX - This can go away soon...
+ */
 vm_offset_t
 high_segment_alloc(npages)
 	int npages;
@@ -130,81 +129,6 @@ high_segment_alloc(npages)
 	tmp = high_segment_free_start;
 	high_segment_free_start = va;
 	return tmp;
-}
-
-/*
- * Prepare for running the PROM monitor
- */
-static void
-sun3_mode_monitor __P((void))
-{
-	/* Install PROM vector table and enable NMI clock. */
-	/* XXX - Disable watchdog action? */
-	set_clk_mode(0, IREG_CLOCK_ENAB_5, 0);
-	setvbr(old_vector_table);
-	set_clk_mode(IREG_CLOCK_ENAB_7, 0, 1);
-}
-
-/*
- * Prepare for running the kernel
- */
-static void
-sun3_mode_normal __P((void))
-{
-	/* Install our vector table and disable the NMI clock. */
-	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
-	setvbr((void**)vector_table);
-	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
-}
-
-/*
- * This function takes care of restoring enough of the
- * hardware state to allow the PROM to run normally.
- * The PROM needs: NMI enabled, it's own vector table.
- * In case of a temporary "drop into PROM", this will
- * also put our hardware state back into place after
- * the PROM "c" (continue) command is given.
- */
-void sun3_mon_abort()
-{
-	int s = splhigh();
-
-	sun3_mode_monitor();
-	mon_printf("kernel stop: enter c to continue or g0 to panic\n");
-	delay(100000);
-
-	/*
-	 * Drop into the PROM in a way that allows a continue.
-	 * That's what the PROM function (romp->abortEntry) is for,
-	 * but that wants to be entered as a trap hander, so just
-	 * stuff it into the PROM interrupt vector for trap zero
-	 * and then do a trap.  Needs PROM vector table in RAM.
-	 */
-	old_vector_table[32] = (void*) romp->abortEntry;
-	asm(" trap #0 ; _sun3_mon_continued: nop");
-
-	/* We have continued from a PROM abort! */
-
-	sun3_mode_normal();
-	splx(s);
-}
-
-void sun3_mon_halt()
-{
-	(void) splhigh();
-	sun3_mode_monitor();
-	mon_exit_to_mon();
-	/*NOTREACHED*/
-}
-
-void sun3_mon_reboot(bootstring)
-	char *bootstring;
-{
-	(void) splhigh();
-	sun3_mode_monitor();
-	mon_reboot(bootstring);
-	mon_exit_to_mon();
-	/*NOTREACHED*/
 }
 
 /*
@@ -241,8 +165,12 @@ sun3_context_equiv __P((void))
 	}
 }
 
+/*
+ * Examine PMEGs used by the monitor, and either
+ * reserve them (keep=1) or clear them (keep=0)
+ */
 static void
-sun3_mon_init(sva, eva, keep)
+_mon_init(sva, eva, keep)
 	vm_offset_t sva, eva;
 	int keep;	/* true: steal, false: clear */
 {
@@ -278,11 +206,13 @@ sun3_mon_init(sva, eva, keep)
 }
 
 #if defined(DDB) && !defined(SYMTAB_SPACE)
+static void _save_symtab __P((struct exec *kehp));
+
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
 static void
-sun3_save_symtab(kehp)
+_save_symtab(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
 	int x, *symsz, *strsz;
@@ -292,8 +222,8 @@ sun3_save_symtab(kehp)
 	/*
 	 * First, sanity-check the exec header.
 	 */
-	mon_printf("sun3_save_symtab: ");
-	if ((kehp->a_midmag & 0xFFF0) != 0x100) {
+	mon_printf("_save_symtab: ");
+	if ((kehp->a_midmag & 0xFFF0) != 0x0100) {
 		errdesc = "magic";
 		goto err;
 	}
@@ -347,7 +277,7 @@ sun3_save_symtab(kehp)
 
 /*
  * This is called just before pmap_bootstrap()
- * (from sun3_bootstrap(), below) to initialize enough
+ * (from _bootstrap(), below) to initialize enough
  * to allow the VM system to run normally.  This involves
  * allocating some physical pages and virtual space for
  * special purposes, etc. by advancing avail_start and
@@ -357,11 +287,14 @@ sun3_save_symtab(kehp)
  * checked in trap.c for kernel-mode MMU faults.
  */
 static void
-sun3_vm_init(kehp)
+_vm_init(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
+	MachMonRomVector *rvec;
 	vm_offset_t va, eva, pte;
 	unsigned int sme;
+
+	rvec = romVectorPtr;
 
 	/*
 	 * Determine the range of kernel virtual space available.
@@ -371,7 +304,7 @@ sun3_vm_init(kehp)
 	esym = end;
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* This will advance esym past the symbols. */
-	sun3_save_symtab(kehp);
+	_save_symtab(kehp);
 #endif
 	virtual_avail = sun3_round_page(esym);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -381,14 +314,14 @@ sun3_vm_init(kehp)
 	 * Physical memory at zero was remapped to KERNBASE.
 	 */
 	avail_start = virtual_avail - KERNBASE;
-	if (romp->romvecVersion < 1) {
+	if (rvec->romvecVersion < 1) {
 		mon_printf("Warning: ancient PROM version=%d\n",
-				   romp->romvecVersion);
+				   rvec->romvecVersion);
 		/* Guess that PROM version 0.X used two pages. */
-		avail_end = *romp->memorySize - (2*NBPG);
+		avail_end = *rvec->memorySize - (2*NBPG);
 	} else {
 		/* PROM version 1 or later. */
-		avail_end = *romp->memoryAvail;
+		avail_end = *rvec->memoryAvail;
 	}
 	avail_end = sun3_trunc_page(avail_end);
 
@@ -404,19 +337,16 @@ sun3_vm_init(kehp)
 	 * is always in the same place after reboot.
 	 */
 	va = KERNBASE;
-	/* Make it non-cached. */
+	/* XXX: Make it non-cached? */
 	pte = get_pte(va);
 	pte |= PG_NC;
 	set_pte(va, pte);
-	/* offset by half a page to avoid PROM scribbles */
-	msgbufp = (struct msgbuf *)(va + 0x1000);
-	msgbufmapped = 1;
+	/* Initialize msgbufp later, in machdep.c */
 
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)
 	 */
 	proc0paddr = (struct user *) virtual_avail;
-	proc0_user_pa = avail_start;
 	virtual_avail += UPAGES*NBPG;
 	avail_start   += UPAGES*NBPG;
 
@@ -509,12 +439,12 @@ sun3_vm_init(kehp)
 	 *   free up any pmegs in this range which have no mappings
 	 *   deal with the awful MONSHORTSEG/MONSHORTPAGE
 	 */
-	sun3_mon_init(MONSTART, MONEND, TRUE);
+	_mon_init(MONSTART, MONEND, TRUE);
 
 	/*
 	 * Make sure the hole between MONEND, MONSHORTSEG is clear.
 	 */
-	sun3_mon_init(MONEND, MONSHORTSEG, FALSE);
+	_mon_init(MONEND, MONSHORTSEG, FALSE);
 
 	/*
 	 * MONSHORTSEG contains MONSHORTPAGE which is some stupid page
@@ -605,7 +535,7 @@ sun3_vm_init(kehp)
 int delay_divisor = 82;		/* assume the fastest (3/260) */
 
 static void
-sun3_verify_hardware()
+_verify_hardware()
 {
 	unsigned char machtype;
 	int cpu_match = 0;
@@ -673,180 +603,29 @@ sun3_verify_hardware()
 }
 
 /*
- * Print out a traceback for the caller - can be called anywhere
- * within the kernel or from the monitor by typing "g4" (for sun-2
- * compatibility) or "w trace".  This causes the monitor to call
- * the v_handler() routine which will call tracedump() for these cases.
- */
-struct funcall_frame {
-	struct funcall_frame *fr_savfp;
-	int fr_savpc;
-	int fr_arg[1];
-};
-/*VARARGS0*/
-static void
-tracedump(x1)
-	int x1;
-{
-	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
-	u_int stackpage = ((u_int)fp) & ~PGOFSET;
-
-	mon_printf("Begin traceback...fp = %x\n", fp);
-	do {
-		if (fp == fp->fr_savfp) {
-			mon_printf("FP loop at %x", fp);
-			break;
-		}
-		mon_printf("Called from %x, fp=%x, args=%x %x %x %x\n",
-				   fp->fr_savpc, fp->fr_savfp,
-				   fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3]);
-		fp = fp->fr_savfp;
-	} while ( (((u_int)fp) & ~PGOFSET) == stackpage);
-	mon_printf("End traceback...\n");
-}
-
-/*
- * Handler for monitor vector cmd -
- * For now we just implement the old "g0" and "g4"
- * commands and a printf hack.  [lifted from freed cmu mach3 sun3 port]
- */
-static void
-v_handler(addr, str)
-	int addr;
-	char *str;
-{
-
-	switch (*str) {
-	case '\0':
-		/*
-		 * No (non-hex) letter was specified on
-		 * command line, use only the number given
-		 */
-		switch (addr) {
-		case 0:			/* old g0 */
-		case 0xd:		/* 'd'ump short hand */
-			sun3_mode_normal();
-			panic("zero");
-			/*NOTREACHED*/
-
-		case 4:			/* old g4 */
-			goto do_trace;
-
-		default:
-			goto err;
-		}
-		break;
-
-	case 'p':			/* 'p'rint string command */
-	case 'P':
-		mon_printf("%s\n", (char *)addr);
-		break;
-
-	case '%':			/* p'%'int anything a la printf */
-		mon_printf(str, addr);
-		mon_printf("\n");
-		break;
-
-	do_trace:
-	case 't':			/* 't'race kernel stack */
-	case 'T':
-		tracedump(addr);
-		break;
-
-	case 'u':			/* d'u'mp hack ('d' look like hex) */
-	case 'U':
-		goto err;
-		break;
-
-	default:
-	err:
-		mon_printf("Don't understand 0x%x '%s'\n", addr, str);
-	}
-}
-
-/*
- * Set the PROM vector handler (for g0, g4, etc.)
- * and set boothowto from the PROM arg strings.
- *
- * Note, args are always:
- * argv[0] = boot_device	(i.e. "sd(0,0,0)")
- * argv[1] = options	(i.e. "-ds" or NULL)
- * argv[2] = NULL
- */
-static void
-sun3_monitor_hooks()
-{
-	MachMonBootParam *bpp;
-	char **argp;
-	char *p;
-
-	if (romp->romvecVersion >= 2)
-		*romp->vector_cmd = v_handler;
-
-	/* Set boothowto flags from PROM args. */
-	bpp = *romp->bootParam;
-	argp = bpp->argPtr;
-
-	/* Skip argp[0] (the device string) */
-	argp++;
-
-	/* Have options? */
-	if (*argp == NULL)
-		return;
-	p = *argp;
-	if (*p == '-') {
-		/* yes, parse options */
-#ifdef	DEBUG
-		mon_printf("boot option: %s\n", p);
-#endif
-		for (++p; *p; p++) {
-			switch (*p) {
-			case 'a':
-				boothowto |= RB_ASKNAME;
-				break;
-			case 's':
-				boothowto |= RB_SINGLE;
-				break;
-			case 'd':
-				boothowto |= RB_KDB;
-				break;
-			}
-		}
-		argp++;
-	}
-
-#ifdef	DEBUG
-	/* Have init name? */
-	if (*argp == NULL)
-		return;
-	p = *argp;
-	mon_printf("boot initpath: %s\n", p);
-#endif
-}
-
-/*
  * This is called from locore.s just after the kernel is remapped
- * to its proper address, but before the call to main().
+ * to its proper address, but before the call to main().  The work
+ * done here corresponds to various things done in locore.s on the
+ * hp300 port (and other m68k) but which we prefer to do in C code.
+ * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
 void
-sun3_bootstrap(keh)
+_bootstrap(keh)
 	struct exec keh;	/* kernel exec header */
 {
 
 	/* First, Clear BSS. */
 	bzero(edata, end - edata);
 
-	/* cold = 1; (now at compile time) */
+	sunmon_init();  	/* set v_handler, get boothowto */
 
-	sun3_monitor_hooks();	/* set v_handler, get boothowto */
+	_verify_hardware();	/* get CPU type, etc. */
 
-	sun3_verify_hardware();	/* get CPU type, etc. */
+	_vm_init(&keh);		/* handle kernel mapping, etc. */
 
-	sun3_vm_init(&keh);		/* handle kernel mapping, etc. */
+	pmap_bootstrap();	/* bootstrap pmap module */
 
-	pmap_bootstrap();		/* bootstrap pmap module */
-
-    obio_init();		/* stuff that can't wait for configure() */
+	obio_init();    	/* stuff that can't wait for configure() */
 
 	/*
 	 * Point interrupts/exceptions to our vector table.
@@ -856,8 +635,7 @@ sun3_bootstrap(keh)
 	 * the interrupt register and disables the NMI clock so
 	 * it will not cause "spurrious level 7" complaints.
 	 */
-	old_vector_table = getvbr();
 	setvbr((void **)vector_table);
 
-	/* Interrupts are enabled in locore.s just after this return. */
+	/* Interrupts are enabled later, after autoconfig. */
 }
