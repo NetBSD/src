@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.380 2003/10/26 02:17:46 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.381 2003/10/26 05:45:05 mycroft Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -33,6 +33,7 @@ TOOLCHAIN_MISSING=	no
 #
 # not working:
 #
+#    ${MACHINE_ARCH} == "armeb" ||
 #    ${MACHINE_ARCH} == "m68000" ||
 #    ${MACHINE_ARCH} == "sh3el" ||
 #    ${MACHINE_ARCH} == "sh3eb" ||
@@ -65,6 +66,8 @@ USE_TOOLS_TOOLCHAIN?=yes
 #
 # not ported:
 #	${MACHINE_ARCH} == "armeb"
+#	${MACHINE_ARCH} == "hppa"
+#	${MACHINE_ARCH} == "m68000"
 #	${MACHINE_ARCH} == "sh3eb"
 #	${MACHINE_ARCH} == "sh3el"
 # in progress:
