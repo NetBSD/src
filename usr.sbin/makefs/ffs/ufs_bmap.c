@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.3 2001/11/08 06:10:13 lukem Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.4 2001/11/22 02:47:26 lukem Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ufs_bmap.c,v 1.3 2001/11/08 06:10:13 lukem Exp $");
+__RCSID("$NetBSD: ufs_bmap.c,v 1.4 2001/11/22 02:47:26 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: ufs_bmap.c,v 1.3 2001/11/08 06:10:13 lukem Exp $");
 #include <assert.h>
 #include <errno.h>
 
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ffs/fs.h>
+#include "ufs/ufs/ufs_bswap.h"
+#include "ufs/ufs/inode.h"
+#include "ufs/ffs/fs.h"
 
 #include "ffs/buf.h"
 #include "ffs/ffs_extern.h"
