@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/10/07 07:23:57 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/03/09 19:06:47 jtc Exp $
 
 PROG=	diff
 SRCS=	diff.c analyze.c cmpbuf.o io.c context.c ed.c normal.c util.c dir.c \
@@ -7,6 +7,5 @@ SRCS=	diff.c analyze.c cmpbuf.o io.c context.c ed.c normal.c util.c dir.c \
 CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR} 
 LDADD+=	-lgnumalloc
 DPADD+=	/usr/lib/libgnumalloc.a
-NOMAN=noman
 
 .include <bsd.prog.mk>
