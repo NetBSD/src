@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.9 2004/07/16 02:38:34 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.9 2004/07/16 02:38:34 dyoung Exp $");
 #endif
 
 /*
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung E
 #include <net/if_ether.h>
 #endif
 #endif
+
+#include <net/route.h>
 
 #define	IEEE80211_RATE2MBS(r)	(((r) & IEEE80211_RATE_VAL) / 2)
 
@@ -338,6 +340,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
 	ieee80211_node_critsec_decl(s);
+	int linkstate = LINK_STATE_DOWN;
 
 	ostate = ic->ic_state;
 	IEEE80211_DPRINTF(("%s: %s -> %s\n", __func__,
@@ -517,6 +520,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 		}
 		break;
 	case IEEE80211_S_RUN:
+		linkstate = LINK_STATE_UP;
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_AUTH:
@@ -548,6 +552,12 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			break;
 		}
 		break;
+	}
+	if (ifp->if_link_state != linkstate) {
+		ifp->if_link_state = linkstate;
+		s = splnet();
+		rt_ifmsg(ifp);
+		splx(s);
 	}
 	return 0;
 }
