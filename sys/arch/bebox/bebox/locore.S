@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 1997/12/11 09:04:25 sakamoto Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 1998/01/13 03:52:49 sakamoto Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ GLOBAL(intrnames)
 	.asciz	"irq16", "irq17", "irq18", "irq19"
 	.asciz	"irq20", "irq21", "irq22", "irq23"
 	.asciz	"irq24", "irq25", "irq26", "irq27"
-	.asciz	"irq28", "softnet", "softclock", "softtty"
+	.asciz	"irq28", "softnet", "softclock", "softserial"
 GLOBAL(eintrnames)
 	.align	4
 GLOBAL(intrcnt)
@@ -109,12 +109,18 @@ __start:
 	b	__start_cpu0
 
 __start_cpu1:
-	addi	9, 9, 1
-#if 0
-	lis	7, 0x100
+#ifdef CPU1_SLEEP
+	lis	8, 0x0020	/* SLEEP */
+	mfspr	7, 1008		/* get HID0 */
+	or	7, 7, 8
+	mtspr	1008, 7		/* set HID0 */
+	lis	8, 0x0004	/* POW */
+	sync
+	mtmsr	8
+	isync			/* zzz... */
 #else
-	lis	7, 0x10
-#endif
+	addi	9, 9, 1
+	lis	7, 0x100
 __start_cpu1_loop:
 	subi	7, 7, 1
 	cmpi	0, 7, 0
@@ -124,6 +130,7 @@ __start_cpu1_loop:
 	lis	9,_C_LABEL(cpl)@ha
 	lwz	9,_C_LABEL(cpl)@l(9)
 	stb	9, 0(8)
+#endif
 	b	__start_cpu1
 
 __start_cpu0:
