@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.274.2.1 2004/05/09 08:19:18 jdc Exp $ */
+/*	$NetBSD: wd.c,v 1.274.2.2 2004/05/29 14:18:45 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.1 2004/05/09 08:19:18 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.2 2004/05/29 14:18:45 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -188,7 +188,7 @@ void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
-void  wd_flushcache(struct wd_softc *, int);
+int   wd_flushcache(struct wd_softc *, int);
 void  wd_shutdown(void *);
 
 int   wd_getcache(struct wd_softc *, int *);
@@ -1307,6 +1307,9 @@ bad:
 	case DIOCSCACHE:
 		return wd_setcache(wd, *(int *)addr);
 
+	case DIOCCACHESYNC:
+		return wd_flushcache(wd, AT_WAIT);
+
 	case ATAIOCCOMMAND:
 		/*
 		 * Make sure this command is (relatively) safe first
@@ -1643,13 +1646,13 @@ wd_setcache(struct wd_softc *wd, int bits)
 	return 0;
 }
 
-void
+int
 wd_flushcache(struct wd_softc *wd, int flags)
 {
 	struct wdc_command wdc_c;
 
 	if (wd->drvp->ata_vers < 4) /* WDCC_FLUSHCACHE is here since ATA-4 */
-		return;
+		return ENODEV;
 	memset(&wdc_c, 0, sizeof(struct wdc_command));
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
 	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0)
@@ -1663,20 +1666,28 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	if (wd->atabus->ata_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
 		    wd->sc_dev.dv_xname);
+		return EIO;
 	}
+	if (wdc_c.flags & ERR_NODEV)
+		return ENODEV;
 	if (wdc_c.flags & AT_TIMEOU) {
 		printf("%s: flush cache command timeout\n",
 		    wd->sc_dev.dv_xname);
+		return EIO;
+	}
+	if (wdc_c.flags & AT_ERROR) {
+		if (wdc_c.r_error == WDCE_ABRT) /* command not supported */
+			return ENODEV;
+		printf("%s: flush cache command: error 0x%x\n",
+		    wd->sc_dev.dv_xname, wdc_c.r_error);
+		return EIO;
 	}
 	if (wdc_c.flags & AT_DF) {
 		printf("%s: flush cache command: drive fault\n",
 		    wd->sc_dev.dv_xname);
+		return EIO;
 	}
-	/*
-	 * Ignore error register, it shouldn't report anything else
-	 * than COMMAND ABORTED, which means the device doesn't support
-	 * flush cache
-	 */
+	return 0;
 }
 
 void
