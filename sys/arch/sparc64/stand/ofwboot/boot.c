@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1999/05/09 18:32:14 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 1999/05/09 19:15:08 eeh Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -61,8 +61,6 @@
 #include <sparc64/stand/ofwboot/ofdev.h>
 #include <sparc64/stand/ofwboot/openfirm.h>
 
-#include "fcode.h"
-
 /*
  * Boot device is derived from ROM provided information, or if there is none,
  * this list is used in sequence, to find a kernel.
@@ -98,10 +96,6 @@ int	elf64_exec __P((int, Elf64_Ehdr *, u_int64_t *, void **, void **));
 
 #ifdef SPARC_BOOT_AOUT
 int	aout_exec __P((int, struct exec *, u_int64_t *, void **));
-#endif
-
-#ifdef SPARC_BOOT_FCODE
-int	fcode_exec __P((int, struct fcode *, u_int64_t *, void **, void **));
 #endif
 
 static void
@@ -376,89 +370,6 @@ aout_exec(fd, hdr, entryp, esymp)
 	return (0);
 }
 #endif /* SPARC_BOOT_AOUT */
-
-#ifdef SPARC_BOOT_FCODE
-/*
- * Boot an FCode file.
- *
- * Haven't finished this yet.  Use fakeboot from the Sun developer's
- * website until then.
- */
-int
-fcode_exec(fd, hdr, entryp, esymp)
-	int fd;
-	struct exec *hdr;
-	u_int64_t *entryp;
-	void **esymp;
-{
-	void *addr;
-	int n, *paddr;
-
-#ifdef DEBUG
-	printf("fcode_exec: ");
-#endif
-	/* Display the load address (entry point) for a.out. */
-	printf("Booting %s @ 0x%lx\n", opened_name, hdr->a_entry);
-	addr = (void *)(hdr->a_entry);
-
-	/*
-	 * Determine memory needed for kernel and allocate it from
-	 * the firmware.
-	 */
-	n = hdr->a_text + hdr->a_data + hdr->a_bss + hdr->a_syms + sizeof(int);
-	if ((paddr = OF_claim(addr, n, 0)) == (int *)-1)
-		panic("cannot claim memory");
-
-	/* Load text. */
-	lseek(fd, N_TXTOFF(*hdr), SEEK_SET);
-	printf("%lu", hdr->a_text);
-	if (read(fd, paddr, hdr->a_text) != hdr->a_text) {
-		printf("read text: %s\n", strerror(errno));
-		return (1);
-	}
-	syncicache((void *)paddr, hdr->a_text);
-
-	/* Load data. */
-	printf("+%lu", hdr->a_data);
-	if (read(fd, (void *)paddr + hdr->a_text, hdr->a_data) != hdr->a_data) {
-		printf("read data: %s\n", strerror(errno));
-		return (1);
-	}
-
-	/* Zero BSS. */
-	printf("+%lu", hdr->a_bss);
-	bzero((void *)paddr + hdr->a_text + hdr->a_data, hdr->a_bss);
-
-	/* Symbols. */
-	*esymp = paddr;
-	paddr = (int *)((void *)paddr + hdr->a_text + hdr->a_data + hdr->a_bss);
-	*paddr++ = hdr->a_syms;
-	if (hdr->a_syms) {
-		printf(" [%lu", hdr->a_syms);
-		if (read(fd, paddr, hdr->a_syms) != hdr->a_syms) {
-			printf("read symbols: %s\n", strerror(errno));
-			return (1);
-		}
-		paddr = (int *)((void *)paddr + hdr->a_syms);
-		if (read(fd, &n, sizeof(int)) != sizeof(int)) {
-			printf("read symbols: %s\n", strerror(errno));
-			return (1);
-		}
-		if (OF_claim((void *)paddr, n + sizeof(int), 0) == (void *)-1)
-			panic("cannot claim memory");
-		*paddr++ = n;
-		if (read(fd, paddr, n - sizeof(int)) != n - sizeof(int)) {
-			printf("read symbols: %s\n", strerror(errno));
-			return (1);
-		}
-		printf("+%d]", n - sizeof(int));
-		*esymp = paddr + (n - sizeof(int));
-	}
-
-	*entryp = hdr->a_entry;
-	return (0);
-}
-#endif /* SPARC_BOOT_FCODE */
 
 #ifdef SPARC_BOOT_ELF
 #if 1
