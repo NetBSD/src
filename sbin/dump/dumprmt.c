@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.14 1997/05/26 15:18:25 mrg Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.15 1997/05/27 08:35:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.14 1997/05/26 15:18:25 mrg Exp $";
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.15 1997/05/27 08:35:27 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,6 @@ rmtgetconn()
 #endif
 	char *tuser;
 	int size;
-	int throughput;
 
 	if (sp == NULL) {
 		sp = getservbyname("shell", "tcp");
@@ -148,10 +147,8 @@ rmtgetconn()
 	} else
 		tuser = pwd->pw_name;
 
-	(void) seteuid(euid);
-	rmtape = orcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
+	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
-	(void) setuid(uid);	/* Just to be Really Really safe */
 	if (rmtape < 0)
 		return;
 
@@ -164,15 +161,6 @@ rmtgetconn()
 	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) < 0)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
-	throughput = IPTOS_THROUGHPUT;
-	if (setsockopt(rmtape, IPPROTO_IP, IP_TOS,
-	    &throughput, sizeof(throughput)) < 0)
-		perror("IP_TOS:IPTOS_THROUGHPUT setsockopt");
-
-#ifdef notdef
-	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof (on)) < 0)
-		perror("TCP_NODELAY setsockopt");
-#endif
 }
 
 static int
