@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.10 2001/09/28 14:41:44 tv Exp $
+#	$NetBSD: lorder.sh,v 1.11 2002/05/12 09:01:45 bjh21 Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ if ! type "${NM:=nm}" > /dev/null 2>&1; then
         PATH=/bin:/usr/bin
         export PATH
         if ! type "${NM}" > /dev/null 2>&1; then
-                echo "lorder: ${NM}: not found"
+                echo "lorder: ${NM}: not found" >&2
                 exit 1
         fi
 fi
@@ -55,7 +55,7 @@ NM=`eval $cmd`
 # only one argument is a special case, just output the name twice
 case $# in
 	0)
-		echo "usage: lorder file ...";
+		echo "usage: lorder file ..." >&2;
 		exit ;;
 	1)
 		echo $1 $1;
