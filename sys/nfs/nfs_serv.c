@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.30 1997/02/10 12:20:49 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.31 1997/02/22 02:56:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3293,6 +3293,9 @@ nfsrv_noop(nfsd, slp, procp, mrq)
  *     break. I don't like this because it opens a security hole, but since
  *     the nfs server opens a security hole the size of a barn door anyhow,
  *     what the heck.
+ *
+ * The exception to rule 2 is EPERM. If a file is IMMUTABLE, VOP_ACCESS()
+ * will return EPERM instead of EACCESS. EPERM is always an error.
  */
 int
 nfsrv_access(vp, flags, cred, rdonly, p, override)
@@ -3337,8 +3340,7 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 	 * Allow certain operations for the owner (reads and writes
 	 * on files that are already open).
 	 */
-	if (override && (error == EPERM || error == EACCES) &&
-	    cred->cr_uid == vattr.va_uid)
+	if (override && error == EACCES && cred->cr_uid == vattr.va_uid)
 		error = 0;
 	return error;
 }
