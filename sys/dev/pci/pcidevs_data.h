@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.215 2000/04/22 18:07:19 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.216 2000/04/26 17:30:59 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.210 2000/04/22 17:32:02 augustss Exp 
+ *	NetBSD: pcidevs,v 1.211 2000/04/26 17:30:35 thorpej Exp 
  */
 
 /*
@@ -2720,6 +2720,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "PC Technology",
 	    "RZ1000",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
+	    0,
+	    "PLX Technology",
+	    "9060ES PCI bus controller",
 	},
 	{
 	    PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER,
