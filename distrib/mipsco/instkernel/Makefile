@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.10 2002/04/26 15:50:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/05/02 18:02:42 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -9,40 +9,22 @@ IMAGE=		diskimage
 IMAGESIZE=	2m
 LISTS=		${.CURDIR}/list
 IMAGEENDIAN=	be
-IMAGEDEPENDS=	install.gz ${DESTDIR}/usr/mdec/boot
+PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx_ffs
+IMAGEDEPENDS=	install.gz ${DESTDIR}/usr/mdec/boot ${PRIMARYBOOT}
+IMAGEPOSTBUILD=	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${PRIMARYBOOT}	# XXXDISTRIB
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 MDSETTARGETS=	RAMDISK ${RAMDISK} install
+
+MDSET_RELEASEDIR=	binary/kernel
+IMAGE_RELEASEDIR=	installation/diskimage
 
 .if defined(ECOFF_KERNEL)
 MDSET.install.suffixes=	ecoff
 MDSET.install.post=	${ELF2ECOFF} netbsd.tmp netbsd.ecoff && \
 			gzip -9f netbsd.ecoff
 .endif # ECOFF_KERNEL
-
-PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx_ffs
-
-${IMAGE}.gz:	${IMAGE} ${PRIMARYBOOT}
-# XXX	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${PRIMARYBOOT}
-		# XXXDISTRIB
-	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${PRIMARYBOOT}
-	gzip -9f ${IMAGE}
-
-CLEANFILES+=	${IMAGE}.gz
-
-
-realall: ${KERNELDEPS} ${IMAGE}.gz
-
-
-DISKBINDIR=	${RELEASEDIR}/installation/diskimage
-KERNBINDIR=	${RELEASEDIR}/binary/kernel
-
-release: check_RELEASEDIR .WAIT ${IMAGE}.gz ${KERNELDEPS}
-	-mkdir -p ${DISKBINDIR} ${KERNBINDIR}
-	${RELINSTALL} ${IMAGE}.gz ${DISKBINDIR}
-	${RELINSTALL} ${KERNELS} ${KERNBINDIR}
-
 
 .include "${DISTRIBDIR}/common/Makefile.image"
 .include "${DISTRIBDIR}/common/Makefile.mdset"

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2002/04/30 15:28:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/05/02 18:03:00 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -26,5 +26,8 @@ ${IMAGE}: ${IMAGEDEPENDS}
 	cat ${XXBOOT} > ${IMAGE}.tmp
 	${PAX} -w -x ustar boot.vax netbsd.gz | dd of=${IMAGE}.tmp seek=16
 	dd if=${IMAGE}.tmp of=${IMAGE} bs=${IMAGESIZE} conv=sync
+
+release: check_RELEASEDIR .WAIT ${IMAGE}
+	${RELEASE_INSTALL} ${IMAGE} ${RELEASEDIR}/installation/bootfs
 
 .include <bsd.prog.mk>

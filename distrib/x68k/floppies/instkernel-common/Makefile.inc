@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/04/26 15:08:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/05/02 18:03:03 lukem Exp $
 
-# XXXDISTRIB: NDWO
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -34,17 +35,10 @@ ${GZNAME}: ${KERNNAME}
 
 depend:
 
-release:
-	-mkdir -p ${RELEASEDIR}/installation/floppy
-	-mkdir -p ${RELEASEDIR}/installation/misc
+release: check_RELEASEDIR .WAIT ${KERNNAME} ${GZNAME}
 .ifndef NOKERNCOPY
-	${RELINSTALL} ${KERNNAME} ${GZNAME} ${RELEASEDIR}/binary/kernel
+	${RELEASE_INSTALL} ${KERNNAME} ${GZNAME} ${RELEASEDIR}/binary/kernel
 .endif
 
-clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES}
 
-includes:
-
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
+.include <bsd.prog.mk>

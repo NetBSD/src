@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/03/25 01:58:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/05/02 18:02:55 lukem Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
@@ -6,11 +6,13 @@
 # the exeption of the kernel and boot program.
 #
 
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../xminiroot
 
 .include "${TOP}/Makefile.inc"
-.include <bsd.own.mk>
 
 MINIROOT_DIR!=	cd ${MINIROOT} && ${PRINTOBJDIR}
 MINIROOT_IMAGE=	${MINIROOT_DIR}/miniroot.fs
@@ -28,9 +30,8 @@ ${INSTFS}: ${MINIROOT_IMAGE}
 clean cleandir distclean:
 	/bin/rm -f *.core ${INSTFS}
 
-release: check_RELEASEDIR .WAIT ${INSTFS}
-	cp ${INSTFS} $(RELEASEDIR)/installation/misc
+release: check_RELEASEDIR .WAIT ${INSTFS} ${MINIROOT_KERNEL}
+	${RELEASE_INSTALL} ${INSTFS} $(RELEASEDIR)/installation/misc
 	gzip -9 -c ${MINIROOT_KERNEL} > $(RELEASEDIR)/binary/kernel/netbsd.INSTALL.gz
 
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/04/16 20:46:19 heinz Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2002/05/02 18:02:24 lukem Exp $
 
 IMAGESIZE=	5m
 IMAGEENDIAN=	be
@@ -8,4 +8,4 @@ IMAGEDEPENDS+=	${ARCHDIR}/disktab.shadow ${ARCHDIR}/dot.profile \
 		${DESTDIR}/usr/mdec/boot.amiga ${DESTDIR}/etc/spwd.db \
 		${KERNOBJDIR}/INSTALL/netbsd
 
-IMAGE_MD_POST=	dd if=${DESTDIR}/usr/mdec/bootxx_ffs of=${IMAGE} bs=8192 conv=notrunc
+IMAGEPOSTBUILD=	dd if=${DESTDIR}/usr/mdec/bootxx_ffs of=${IMAGE} bs=8192 conv=notrunc

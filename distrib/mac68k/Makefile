@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2002/04/10 01:31:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/05/02 18:02:38 lukem Exp $
 
-SUBDIR=	instkernel
-TARGETS+= release
+SUBDIR=		instkernel
+TARGETS+=	release
 
 .include <bsd.subdir.mk>

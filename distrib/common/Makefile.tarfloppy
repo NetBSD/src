@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.tarfloppy,v 1.3 2002/04/26 15:50:28 lukem Exp $
+#	$NetBSD: Makefile.tarfloppy,v 1.4 2002/05/02 18:02:31 lukem Exp $
 #
 # Makefile snippet to create a set of ustar floppies.
 # Each floppy has an 8KB header, followed by part or all of the ustar archive.
@@ -19,13 +19,14 @@
 #	FLOPPY_BOOT		Bootstrap to use as "boot".
 #	FLOPPY_BOOT_STRIP	If yes, strip "boot" before use.
 #	FLOPPY_NETBSD		Kernel to to use as "netbsd".
-#
-#	FLOPPYMAX	Maximum number of floppies to build.
-#			If 1, final image is installed as ${FLOPPYBASE}.fs
-#	FLOPPYMETAFILE	Ustar metafile (optional)
-#	FLOPPYINSTBOOT	Installboot program to use.  ustar file is in @IMAGE@.
-#	FLOPPYPAD	If defined, pad the last floppy to ${FLOPPYSIZE}
-#	FLOPPYINSTDIR	Where to install release images.
+#	FLOPPYINSTBOOT		Installboot program to use.
+#				USTAR image file is in @IMAGE@.
+#	FLOPPYMAX		Maximum number of floppies to build.
+#				If 1, the final image is installed as
+#				${FLOPPYBASE}.fs instead of ${FLOPPYBASE}1.fs
+#	FLOPPYMETAFILE		USTAR metafile(s) (optional)
+#	FLOPPYPAD		If defined, pad the last floppy to ${FLOPPYSIZE}
+#	FLOPPY_RELEASEDIR	Where to install release floppies.
 #
 
 
@@ -71,14 +72,13 @@ CLEANFILES+=	${FLOPPYBASE}?.fs
 
 realall: ${FLOPPYBASE}1.fs
 
-.if defined(FLOPPYINSTDIR)
+.if defined(FLOPPY_RELEASEDIR)
 release: check_RELEASEDIR .WAIT ${FLOPPYBASE}1.fs
-	-mkdir -p ${RELEASEDIR}/${FLOPPYINSTDIR}
 	if [ -e ${FLOPPYBASE}2.fs ]; then \
-		${RELINSTALL} ${FLOPPYBASE}?.fs \
-		    ${RELEASEDIR}/${FLOPPYINSTDIR}; \
+		${RELEASE_INSTALL} ${FLOPPYBASE}?.fs \
+		    ${RELEASEDIR}/${FLOPPY_RELEASEDIR}; \
 	else \
-		${RELINSTALL} ${FLOPPYBASE}1.fs \
-		    ${RELEASEDIR}/${FLOPPYINSTDIR}/${FLOPPYBASE}.fs; \
+		${RELEASE_INSTALL} ${FLOPPYBASE}1.fs \
+		    ${RELEASEDIR}/${FLOPPY_RELEASEDIR}/${FLOPPYBASE}.fs; \
 	fi
 .endif

@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.15 2002/03/28 14:47:10 rafal Exp $
+#	$NetBSD: Makefile,v 1.16 2002/05/02 18:02:56 lukem Exp $
+
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.include <bsd.kernobj.mk>
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
 
 .include "${TOP}/Makefile.inc"
-
-.include <bsd.own.mk>	# So we use /etc/mk.conf.
-.include <bsd.kernobj.mk>
 
 SRCROOT=	${TOP}/../..
 WARNS=1
@@ -103,20 +105,8 @@ clean cleandir distclean:
 	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} netbsd.INSTALL ${CBIN} \
 		${CBIN}.mk ${CBIN}.cache *.o *.lo *.cro *.c
 
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release: $(IMAGE) netbsd.INSTALL
-	@mkdir -p $(RELEASEDIR)/installation/miniroot
-	gzip -c -9 < $(.OBJDIR)/miniroot.fs \
+release: check_RELEASEDIR .WAIT miniroot.fs
+	gzip -c -9 miniroot.fs \
 		> $(RELEASEDIR)/installation/miniroot/miniroot.fs.gz
-	@mkdir -p $(RELEASEDIR)/binary/kernels
-.endif	# RELEASEDIR check
 
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.include <bsd.sys.mk>
 .include <bsd.prog.mk>

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/30 15:37:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/05/02 18:02:17 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	1924k
@@ -26,8 +26,8 @@ HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}:	libhack.o
 
-MDSETTARGETS=	INSTALL		ramdisk.fs	-
-MDSETDIR=	installation/misc
+MDSETTARGETS=		INSTALL	${IMAGE} -
+MDSET_RELEASEDIR=	installation/misc
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"

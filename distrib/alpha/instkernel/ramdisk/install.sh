@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.5 2000/06/14 22:52:41 cgd Exp $
+# $NetBSD: install.sh,v 1.1 2002/05/02 18:02:21 lukem Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou

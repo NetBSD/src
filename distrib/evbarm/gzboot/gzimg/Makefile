@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2002/04/26 15:50:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/05/02 18:02:33 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -36,15 +36,11 @@ CLEANFILES+=	netbsd.tmp netbsd.tmp.gz gzboot.sym \
 		gzboot.bin gzboot.bin.gz ${GZIMGS}
 
 
-#	do the work
-#
 realall: ${GZIMGS}
 
-ITARGET=	${RELEASEDIR}/binary/gzimg
-
-release: check_RELEASEDIR
+release: check_RELEASEDIR .WAIT ${GZIMGS}
 .for img in ${GZIMGS}
-	${RELINSTALL} ${img} ${ITARGET}/.
+	${RELEASE_INSTALL} ${img} ${RELEASEDIR}/binary/gzimg
 .endfor
 
 .include <bsd.prog.mk>

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/26 15:50:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/05/02 18:02:57 lukem Exp $
 
 .include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 .include <bsd.kernobj.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	400k
@@ -20,8 +20,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab fstab passwd protocols services sshrc welcome \
 		${NETBSDSRCDIR}/etc/netconfig
 
-MDSETTARGETS=	RAMDISK ramdisk.fs -
-MDSETDIR=	binary/kernel
+MDSETTARGETS=		RAMDISK ramdisk.fs -
+MDSET_RELEASEDIR=	binary/kernel
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack

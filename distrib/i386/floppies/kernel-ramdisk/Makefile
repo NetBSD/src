@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.20 2002/04/26 15:50:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2002/05/02 18:02:37 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 #	create ${RAMDISK_*} variables
 #
@@ -20,7 +20,7 @@ MDSETTARGETS=	INSTALL		${RAMDISK_B}	-	\
 		INSTALL_TINY	${RAMDISK_T}	-	\
 		INSTALL_PS2	${RAMDISK_S}	-
 
-MDSETDIR=	binary/kernel
+MDSET_RELEASEDIR=	binary/kernel
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 

@@ -1,14 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2002/04/12 21:11:46 leo Exp $
+#	$NetBSD: Makefile,v 1.2 2002/05/02 18:02:29 lukem Exp $
 
-IMAGESIZE?=	1080k
-IMAGEENDIAN=	be
-#DISKTYPE?=	floppybt
-MAKEDEVTARGETS=	floppy
-ARCHDIR=	${.CURDIR}/.
 IMAGE=		prepare.fs
+IMAGESIZE?=	1080k
+MAKEDEVTARGETS=	floppy
 IMAGEDEPENDS+=	install.sh install.md
 
 .include "../common/Makefile.images"
-
-
-#.include <bsd.prog.mk>

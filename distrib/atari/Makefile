@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/12 21:39:18 leo Exp $
+#	$NetBSD: Makefile,v 1.4 2002/05/02 18:02:25 lukem Exp $
 
-SUBDIR=	floppies
-
-TARGETS+=release
+SUBDIR=		floppies
+TARGETS+=	release
 
 .include <bsd.subdir.mk>

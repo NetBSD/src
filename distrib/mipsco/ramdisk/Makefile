@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.12 2002/05/02 14:16:02 simonb Exp $
+#	$NetBSD: Makefile,v 1.13 2002/05/02 18:02:42 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
 IMAGETAR=	diskimage.tgz
@@ -25,18 +25,12 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
 		${NETBSDSRCDIR}/etc/services
 
+IMAGETAR_RELEASEDIR=	installation/netboot
+
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
 ${CRUNCHBIN}:	libhack.o
-
-
-realall: ${IMAGE} .WAIT ${IMAGETAR}
-
-release: check_RELEASEDIR .WAIT ${IMAGETAR}
-	-mkdir -p ${RELEASEDIR}/installation/netboot
-	${RELINSTALL} ${IMAGETAR} ${RELEASEDIR}/installation/netboot
-
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"

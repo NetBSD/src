@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2002/02/11 07:32:54 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2002/05/02 18:02:19 lukem Exp $
 
-SUBDIR=	ramdisk .WAIT instkernel .WAIT fdset cd-hd-tape
+SUBDIR=		ramdisk .WAIT instkernel .WAIT fdset cd-hd-tape
+
+TARGETS+=	release
 
 .include <bsd.subdir.mk>

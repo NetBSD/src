@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.28 2002/04/26 15:50:49 lukem Exp $
-
+#	$NetBSD: Makefile,v 1.29 2002/05/02 18:02:59 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 TOP=		${.CURDIR}/..
 
@@ -82,26 +81,12 @@ HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
 ${CBIN}:	libhack.o
 
-clean cleandir distclean:
-	-rm -f a.out core *.core *.o *.cro *.c
-	-rm -f ${CLEANFILES}
-
-.if !defined(RELEASEDIR)
-release:
-	@echo setenv RELEASEDIR before doing that!
-	@false
-.else	# RELEASEDIR
-release: $(KERNELS)
+release: check_RELEASEDIR .WAIT $(KERNELS)
 .for x in ${KERNELS}
 	gzip -c -9 < ${x} > \
 	 ${RELEASEDIR}/binary/kernel/${x}.gz
 .endfor # KERNELS
-.endif	# RELEASEDIR
 
 .INTERRUPT: unconfig
 
-# Standard rules needed by the above...
-.include <bsd.own.mk>
 .include <bsd.prog.mk>
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
