@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.712 2004/07/09 18:38:37 bouyer Exp $
+# $NetBSD: mi,v 1.713 2004/07/12 23:56:58 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -166,6 +166,7 @@
 ./usr/share/man/cat1/ident.0			man-util-catman		.cat
 ./usr/share/man/cat1/indent.0			man-c-catman		.cat
 ./usr/share/man/cat1/info.0			man-texinfo-catman	.cat
+./usr/share/man/cat1/infokey.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/innetgr.0			man-nis-catman		.cat
 ./usr/share/man/cat1/install-info.0		man-texinfo-catman	.cat
 ./usr/share/man/cat1/install.0			man-util-catman		.cat
@@ -2283,6 +2284,7 @@
 ./usr/share/man/man1/ident.1			man-util-man		.man
 ./usr/share/man/man1/indent.1			man-c-man		.man
 ./usr/share/man/man1/info.1			man-texinfo-man		.man
+./usr/share/man/man1/infokey.1			man-texinfo-man		.man
 ./usr/share/man/man1/innetgr.1			man-nis-man		.man
 ./usr/share/man/man1/install-info.1		man-texinfo-man		.man
 ./usr/share/man/man1/install.1			man-util-man		.man
