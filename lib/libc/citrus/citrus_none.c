@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.4.2.1 2002/05/24 21:55:23 perry Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.4.2.2 2003/06/02 14:59:32 tron Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.4.2.1 2002/05/24 21:55:23 perry Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.4.2.2 2003/06/02 14:59:32 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -144,31 +144,39 @@ _citrus_NONE_ctype_mbsinit(void * __restrict cl,
 
 static int
 /*ARGSUSED*/
-_citrus_NONE_ctype_mbsrtowcs(void * __restrict cl, wchar_t * __restrict wcs,
+_citrus_NONE_ctype_mbsrtowcs(void * __restrict cl, wchar_t * __restrict pwcs,
 			     const char ** __restrict s, size_t n,
 			     void * __restrict pspriv,
 			     size_t * __restrict nresult)
 {
-	size_t count;
+	int cnt;
 	const char *s0;
 
-	count = 0;
-	s0 = *s;
-	while (n>0) {
-		if (wcs != NULL)
-			*wcs++ = (wchar_t)(unsigned char)*s0;
+	/* if pwcs is NULL, ignore n */
+	if (pwcs == NULL)
+		n = 1; /* arbitrary >0 value */
+
+	cnt = 0;
+	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
+	while (n > 0) {
+		if (pwcs != NULL) {
+			*pwcs = (wchar_t)(unsigned char)*s0;
+		}
 		if (*s0 == '\0') {
 			s0 = NULL;
 			break;
 		}
-		count++;
-		n--;
 		s0++;
+		if (pwcs != NULL) {
+			pwcs++;
+			n--;
+		}
+		cnt++;
 	}
-	if (*wcs)
+	if (pwcs)
 		*s = s0;
 
-	*nresult = count;
+	*nresult = (size_t)cnt;
 
 	return (0);
 }
