@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.68 2002/03/08 21:41:59 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.69 2002/03/08 21:43:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.68 2002/03/08 21:41:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.69 2002/03/08 21:43:54 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -2020,6 +2020,7 @@ pool_allocator_free(struct pool *pp, void *v)
 			pp->pr_flags &= ~PR_WANTED;
 			wakeup(pp);
 		}
+		simple_unlock(&pp->pr_slock);
 	}
 	pa->pa_flags &= ~PA_WANT;
 	simple_unlock(&pa->pa_slock);
