@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.40 1996/10/13 02:59:59 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.41 1996/12/06 22:07:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -66,6 +66,7 @@
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
 #include <sparc/dev/dmavar.h>
+#include <sparc/dev/lebuffervar.h>
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
@@ -231,6 +232,7 @@ leattach(parent, self, aux)
 	u_long laddr;
 #if defined(SUN4C) || defined(SUN4M)
 	int sbuschild = strncmp(parent->dv_xname, "sbus", 4) == 0;
+	int lebufchild = strncmp(parent->dv_xname, "lebuffer", 8) == 0;
 #endif
 
 	/* XXX the following declarations should be elsewhere */
@@ -246,29 +248,29 @@ leattach(parent, self, aux)
 	lesc->sc_r1 = (struct lereg1 *)mapiodev(ca->ca_ra.ra_reg, 0,
 					      sizeof(struct lereg1),
 					      ca->ca_bustype);
-	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
-	laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
-#if defined (SUN4M)
-	if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
-		panic("if_le: Lance buffer crosses 16MB boundary");
+#if defined(SUN4C) || defined(SUN4M)
+	laddr = 0; /*XXX-gcc*/
+	if (lebufchild) {
+		sc->sc_mem = ((struct lebuf_softc *)parent)->sc_buffer;
+		sc->sc_memsize = ((struct lebuf_softc *)parent)->sc_bufsiz;
+		sc->sc_addr = 0; /* Lance view is offset by buffer location */
+
+		/* That old black magic... */
+		sc->sc_conf3 = getpropint(ca->ca_ra.ra_node,
+			 	"busmaster-regval",
+				LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
+	} else
 #endif
-	sc->sc_addr = laddr & 0xffffff;
-	sc->sc_memsize = MEMSIZE;
-
-	myetheraddr(sc->sc_arpcom.ac_enaddr);
-
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
-
-	sc->sc_rdcsr = lerdcsr;
-	sc->sc_wrcsr = lewrcsr;
-	sc->sc_hwinit = lehwinit;
-	sc->sc_nocarrier = lenocarrier;
-
-	am7990_config(sc);
+	{
+		laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
+#if defined (SUN4M)
+		if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
+			panic("if_le: Lance buffer crosses 16MB boundary");
+#endif
+		sc->sc_addr = laddr & 0xffffff;
+		sc->sc_memsize = MEMSIZE;
+		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
+	}
 
 	bp = ca->ca_ra.ra_bp;
 	switch (ca->ca_bustype) {
@@ -283,9 +285,14 @@ leattach(parent, self, aux)
 			lesc->sc_dma = NULL;
 			sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 		} else {
-			lesc->sc_dma = (struct dma_softc *)parent;
-			lesc->sc_dma->sc_le = lesc;
-			lesc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
+			if (lebufchild) {
+				lesc->sc_dma = NULL;
+			} else {
+				lesc->sc_dma = (struct dma_softc *)parent;
+				lesc->sc_dma->sc_le = lesc;
+				lesc->sc_dma->sc_regs->en_bar =
+					laddr & 0xff000000;
+			}
 			/* Assume SBus is grandparent */
 			sbus_establish(&lesc->sc_sd, parent);
 		}
@@ -303,9 +310,24 @@ leattach(parent, self, aux)
 		break;
 	}
 
+	myetheraddr(sc->sc_arpcom.ac_enaddr);
+
+	sc->sc_copytodesc = am7990_copytobuf_contig;
+	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+	sc->sc_copytobuf = am7990_copytobuf_contig;
+	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+	sc->sc_zerobuf = am7990_zerobuf_contig;
+
+	sc->sc_rdcsr = lerdcsr;
+	sc->sc_wrcsr = lewrcsr;
+	sc->sc_hwinit = lehwinit;
+	sc->sc_nocarrier = lenocarrier;
+
+	am7990_config(sc);
+
 	lesc->sc_ih.ih_fun = am7990_intr;
 #if defined(SUN4M) /*XXX*/
-	if (CPU_ISSUN4M)
+	if (CPU_ISSUN4M && lesc->sc_dma)
 		lesc->sc_ih.ih_fun = myleintr;
 #endif
 	lesc->sc_ih.ih_arg = sc;
