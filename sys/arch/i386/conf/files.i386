@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.61 1996/01/08 13:51:30 mycroft Exp $
+#	$NetBSD: files.i386,v 1.62 1996/02/22 05:53:16 scottr Exp $
 #
 # new style config file for i386 architecture
 #
@@ -99,7 +99,7 @@ major	{fd = 2}
 
 # PC speaker
 device	spkr at isa: tty
-file	arch/i386/isa/spkr.c		speaker needs-flag
+file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
