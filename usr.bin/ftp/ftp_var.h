@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.60 2001/02/19 23:03:46 cgd Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.61 2001/12/23 12:23:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -287,6 +287,7 @@ GLOBAL	int	unix_proxy;	/* proxy is unix, can use binary for ascii */
 GLOBAL	char	remotepwd[MAXPATHLEN];	/* remote dir */
 GLOBAL	char   *username;	/* name of user logged in as. (dynamic) */
 
+GLOBAL	sa_family_t family;	/* address family to use for connections */
 GLOBAL	char	*ftpport;	/* port number to use for FTP connections */
 GLOBAL	char	*httpport;	/* port number to use for HTTP connections */
 GLOBAL	char	*gateport;	/* port number to use for gateftp connections */
