@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.48 1999/09/04 21:48:33 fredb Exp $
+#	$NetBSD: bsd.man.mk,v 1.49 1999/09/14 01:31:11 perry Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -8,6 +8,7 @@ __initialized__:
 .endif
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+.include <bsd.depall.mk>
 .MAIN:		all
 .endif
 
