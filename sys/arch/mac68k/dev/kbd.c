@@ -1,4 +1,4 @@
-/*	$Id: kbd.c,v 1.2 1999/02/11 06:41:09 ender Exp $	*/
+/*	$NetBSD: kbd.c,v 1.3 1999/02/16 01:08:16 ender Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
