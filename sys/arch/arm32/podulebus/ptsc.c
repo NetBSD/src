@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.3 1996/04/26 22:38:18 mark Exp $ */
+/* $NetBSD: ptsc.c,v 1.4 1996/05/06 00:11:16 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -249,10 +249,11 @@ ptsc_set_dma_adr(sc, ptr)
 	struct sfas_softc *sc;
 	void		 *ptr;
 {
+#if 0
 	ptsc_regmap_p	rp;
 	unsigned int   *p;
 	unsigned int	d;
-
+#endif
 #if 0
 	printf("ptsc_set_dma_adr(sc = 0x%08x, ptr = 0x%08x)\n", (u_int)sc, (u_int)ptr);
 #endif
@@ -287,9 +288,9 @@ ptsc_set_dma_mode(sc, mode)
 	struct sfas_softc *sc;
 	int		  mode;
 {
+#if 0
 	struct csc_specific *spec;
 
-#if 0
 	spec = sc->sc_spec;
 
 	spec->portbits = (spec->portbits & ~FLSC_PB_DMA_BITS) | mode;
@@ -373,10 +374,11 @@ ptsc_build_dma_chain(sc, chain, p, l)
 	void			*p;
 	int			 l;
 {
+#if 0
 	vm_offset_t  pa, lastpa;
 	char	    *ptr;
 	int	     len, prelen, postlen, max_t, n;
-
+#endif
 #if 0
 	printf("ptsc_build_dma_chain()\n");
 #endif

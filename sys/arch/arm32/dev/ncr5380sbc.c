@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.3 1996/04/26 22:25:56 mark Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.4 1996/05/06 00:12:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Melvin Tang-Richardson (Modified for weird regs)
@@ -2527,8 +2527,8 @@ ncr5380_show_req(sr)
 
 	db_printf("TID=%d ",	sr->sr_target);
 	db_printf("LUN=%d ",	sr->sr_lun);
-	db_printf("dh=0x%x ",	sr->sr_dma_hand);
-	db_printf("dptr=0x%x ",	sr->sr_dataptr);
+	db_printf("dh=0x%x ",	(u_int)sr->sr_dma_hand);
+	db_printf("dptr=0x%x ",	(u_int)sr->sr_dataptr);
 	db_printf("dlen=0x%x ",	sr->sr_datalen);
 	db_printf("flags=%d ",	sr->sr_flags);
 	db_printf("stat=%d ",	sr->sr_status);
@@ -2541,7 +2541,7 @@ ncr5380_show_req(sr)
 #ifdef	SCSIDEBUG
 	show_scsi_xs(xs);
 #else
-	db_printf("xs=0x%x\n", xs);
+	db_printf("xs=0x%x\n", (u_int)xs);
 #endif
 }
 
@@ -2566,7 +2566,7 @@ ncr5380_show_state()
 		if (sr->sr_xs) {
 			if (sr == sc->sc_current)
 				k = i;
-			db_printf("req %d: (sr=0x%x)", i, (long)sr);
+			db_printf("req %d: (sr=0x%lx)", i, (long)sr);
 			ncr5380_show_req(sr);
 		}
 	}
@@ -2577,14 +2577,14 @@ ncr5380_show_state()
 		for (j = 0; j < 8; j++) {	/* LUN */
 			sr = sc->sc_matrix[i][j];
 			if (sr) {
-				db_printf("TID=%d LUN=%d sr=0x%x\n", i, j, (long)sr);
+				db_printf("TID=%d LUN=%d sr=0x%lx\n", i, j, (long)sr);
 			}
 		}
 	}
 
 	db_printf("sc_state=0x%x\n",	sc->sc_state);
-	db_printf("sc_current=0x%x\n",	sc->sc_current);
-	db_printf("sc_dataptr=0x%x\n",	sc->sc_dataptr);
+	db_printf("sc_current=0x%x\n",	(u_int)sc->sc_current);
+	db_printf("sc_dataptr=0x%x\n",	(u_int)sc->sc_dataptr);
 	db_printf("sc_datalen=0x%x\n",	sc->sc_datalen);
 
 	db_printf("sc_prevphase=%d\n",	sc->sc_prevphase);
