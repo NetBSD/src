@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.94 1998/01/12 09:49:15 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.95 1998/01/21 08:41:28 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -548,13 +548,15 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "UMAX S-12       ", "V2.1"}, SDEV_NOLUNS},
 
 	{{T_PROCESSOR, T_FIXED,
 	 "LITRONIC", "PCMCIA          ", ""},     SDEV_NOLUNS},
 };
 
 /*
- * given a target and lu, ask the device what
+ * given a target and lun, ask the device what
  * it is, and find the correct driver table
  * entry.
  */
