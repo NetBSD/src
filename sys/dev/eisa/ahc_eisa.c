@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.1 1996/05/16 03:48:14 mycroft Exp $
+ *	$Id: ahc_eisa.c,v 1.2 1996/05/16 06:30:22 mycroft Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -238,6 +238,7 @@ ahc_eisa_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
+	bus_chipset_tag_t bc = ea->ea_bc;
 	bus_io_handle_t ioh;
 	int irq;
 
@@ -248,25 +249,11 @@ ahc_eisa_match(parent, match, aux)
 	    strcmp(ea->ea_idstring, "ADP7757"))	  /* XXX - not EISA, but VL */
 		return (0);
 
-#ifdef notyet
-	if (bus_io_map(ea->ea_bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE,
-		       &ioh))
-		return (0);
-	/* This won't compile as-is, anyway. */
-	bus_io_write_1(ea->ea_bc, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
-	delay(10);
-	bus_io_write_1(ea->ea_bc, ioh, EISA_CONTROL, EISA_ENABLE);
-	/* Wait for reset? */
-	delay(1000);
-	bus_io_unmap(ea->ea_bc, ioh, EISA_SLOT_SIZE);
-#endif
-
-	if (bus_io_map(ea->ea_bc, 
-		       EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
 		       AHC_EISA_IOSIZE, &ioh))
 		return (0);
-	irq = ahc_eisa_irq(ea->ea_bc, ioh);
-	bus_io_unmap(ea->ea_bc, ioh, EISA_SLOT_SIZE);
+	irq = ahc_eisa_irq(bc, ioh);
+	bus_io_unmap(bc, ioh, EISA_SLOT_SIZE);
 	return (irq >= 0);
 }
 
@@ -336,18 +323,18 @@ ahc_eisa_attach(parent, self, aux)
 #elif defined(__NetBSD__)
 
 	struct ahc_data *ahc = (void *)self;
-	const char *model;
 	struct eisa_attach_args *ea = aux;
+	bus_chipset_tag_t bc = ea->ea_bc;
 	bus_io_handle_t ioh;
-	eisa_intr_handle_t ih;
-	const char *intrstr;
 	int irq;
+	eisa_chipset_tag_t ec = ea->ea_ec;
+	eisa_intr_handle_t ih;
+	const char *model, *intrstr;
 
-	if (bus_io_map(ea->ea_bc, 
-		       EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
 		       AHC_EISA_IOSIZE, &ioh))
 		panic("ahc_eisa_attach: could not map I/O addresses");
-	if ((irq = ahc_eisa_irq(ea->ea_bc, ioh)) < 0)
+	if ((irq = ahc_eisa_irq(bc, ioh)) < 0)
 		panic("ahc_eisa_attach: ahc_eisa_irq failed!");
 
 	if (strcmp(ea->ea_idstring, "ADP7770") == 0) {
@@ -368,8 +355,8 @@ ahc_eisa_attach(parent, self, aux)
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc, ea->ea_bc, ioh, type, AHC_FNONE);
-	if (eisa_intr_map(ea->ea_ec, irq, &ih)) {
+	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
+	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
 		       ahc->sc_dev.dv_xname, irq);
 		return;
@@ -501,12 +488,12 @@ ahc_eisa_attach(parent, self, aux)
 
 	e_dev->kdc->kdc_state = DC_BUSY; /* host adapters always busy */
 #elif defined(__NetBSD__)
-	intrstr = eisa_intr_string(ea->ea_ec, ih);
+	intrstr = eisa_intr_string(ec, ih);
 	/*
 	 * The IRQMS bit enables level sensitive interrupts only allow
 	 * IRQ sharing if its set.
 	 */
-	ahc->sc_ih = eisa_intr_establish(ea->ea_ec, ih,
+	ahc->sc_ih = eisa_intr_establish(ec, ih,
 	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc
 #ifdef __OpenBSD__
 	    , ahc->sc_dev.dv_xname
