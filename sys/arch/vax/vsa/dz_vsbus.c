@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.30 2002/12/29 20:12:19 ad Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.31 2003/01/01 02:29:39 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -100,14 +100,14 @@ dz_print(void *aux, const char *name)
 #if NDZKBD > 0 || NDZMS > 0
 	struct dz_attach_args *dz_args = aux;
 	if (name == NULL) {
-		printf (" line %d", dz_args->line);
+		aprint_normal (" line %d", dz_args->line);
 		if (dz_args->hwflags & DZ_HWFLAG_CONSOLE)
-			printf (" (console)");
+			aprint_normal (" (console)");
 	}
 	return (QUIET);
 #else
 	if (name)
-		printf ("lkc at %s", name);
+		aprint_normal ("lkc at %s", name);
 	return (UNCONF);
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.10 2002/12/10 13:44:49 pk Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.11 2003/01/01 02:20:47 thorpej Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -379,12 +379,12 @@ ebus_print(aux, p)
 	int i;
 
 	if (p)
-		printf("%s at %s", ea->ea_name, p);
+		aprint_normal("%s at %s", ea->ea_name, p);
 	for (i = 0; i < ea->ea_nreg; ++i)
-		printf("%s bar %x offset 0x%x", i == 0 ? "" : ",",
+		aprint_normal("%s bar %x offset 0x%x", i == 0 ? "" : ",",
 		       ea->ea_reg[i].hi, ea->ea_reg[i].lo);
 	for (i = 0; i < ea->ea_nintr; ++i)
-		printf(" line %d", ea->ea_intr[i]);
+		aprint_normal(" line %d", ea->ea_intr[i]);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.55 2002/12/10 13:44:50 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.56 2003/01/01 02:20:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -190,18 +190,18 @@ sbus_print(args, busname)
 	int i;
 
 	if (busname)
-		printf("%s at %s", sa->sa_name, busname);
-	printf(" slot %d offset 0x%x", sa->sa_slot, sa->sa_offset);
+		aprint_normal("%s at %s", sa->sa_name, busname);
+	aprint_normal(" slot %d offset 0x%x", sa->sa_slot, sa->sa_offset);
 	for (i = 0; i < sa->sa_nintr; i++) {
 		u_int32_t level = sa->sa_intr[i].oi_pri;
 		struct sbus_softc *sc =
 			(struct sbus_softc *) sa->sa_bustag->cookie;
 
-		printf(" level %d", level & ~SBUS_INTR_COMPAT);
+		aprint_normal(" level %d", level & ~SBUS_INTR_COMPAT);
 		if ((level & SBUS_INTR_COMPAT) == 0) {
 			int ipl = sc->sc_intr2ipl[level];
 			if (ipl != level)
-				printf(" (ipl %d)", ipl);
+				aprint_normal(" (ipl %d)", ipl);
 		}
 	}
 	return (UNCONF);
