@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.52 2003/02/20 12:47:29 lukem Exp $
+# $NetBSD: postinstall,v 1.53 2003/02/22 03:20:46 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -629,7 +629,7 @@ do_obsolete()
 	failed=0
 
 	find_file_in_dirlist base "obsolete set lists" \
-	    ${SRC_DIR}/etc/obsolete ${DEST_DIR}/etc/obsolete \
+	    ${SRC_DIR}/var/db/obsolete ${DEST_DIR}/var/db/obsolete \
 	    || return 1
 
 	for obssrcfile in ${dir}/*; do
