@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.59 2000/09/27 22:58:21 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.60 2000/09/28 07:15:28 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -884,64 +884,60 @@ u_char	ether_ipmulticast_max[6] = { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
 u_char	ether_ip6multicast_min[6] = { 0x33, 0x33, 0x00, 0x00, 0x00, 0x00 };
 u_char	ether_ip6multicast_max[6] = { 0x33, 0x33, 0xff, 0xff, 0xff, 0xff };
 #endif
+
 /*
- * Add an Ethernet multicast address or range of addresses to the list for a
- * given interface.
+ * Convert a sockaddr into an Ethernet address or range of Ethernet
+ * addresses.
  */
 int
-ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
+ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
+    u_int8_t addrhi[ETHER_ADDR_LEN])
 {
-	struct ether_multi *enm;
 #ifdef INET
 	struct sockaddr_in *sin;
 #endif /* INET */
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif /* INET6 */
-	u_char addrlo[6];
-	u_char addrhi[6];
-	int s = splimp();
 
-	switch (ifr->ifr_addr.sa_family) {
+	switch (sa->sa_family) {
 
 	case AF_UNSPEC:
-		bcopy(ifr->ifr_addr.sa_data, addrlo, 6);
-		bcopy(addrlo, addrhi, 6);
+		bcopy(sa->sa_data, addrlo, ETHER_ADDR_LEN);
+		bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
 		break;
 
 #ifdef INET
 	case AF_INET:
-		sin = (struct sockaddr_in *)&(ifr->ifr_addr);
+		sin = satosin(sa);
 		if (sin->sin_addr.s_addr == INADDR_ANY) {
 			/*
-			 * An IP address of INADDR_ANY means listen to all
-			 * of the Ethernet multicast addresses used for IP.
+			 * An IP address of INADDR_ANY means listen to
+			 * or stop listening to all of the Ethernet
+			 * multicast addresses used for IP.
 			 * (This is for the sake of IP multicast routers.)
 			 */
-			bcopy(ether_ipmulticast_min, addrlo, 6);
-			bcopy(ether_ipmulticast_max, addrhi, 6);
+			bcopy(ether_ipmulticast_min, addrlo, ETHER_ADDR_LEN);
+			bcopy(ether_ipmulticast_max, addrhi, ETHER_ADDR_LEN);
 		}
 		else {
 			ETHER_MAP_IP_MULTICAST(&sin->sin_addr, addrlo);
-			bcopy(addrlo, addrhi, 6);
+			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
 		}
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *)
-			&(((struct in6_ifreq *)ifr)->ifr_addr);
+		sin6 = satosin6(sa);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/*
-			 * An IP6 address of 0 means listen to all
-			 * of the Ethernet multicast address used for IP6.
+			 * An IP6 address of 0 means listen to or stop
+			 * listening to all of the Ethernet multicast
+			 * address used for IP6.
 			 * (This is used for multicast routers.)
 			 */
 			bcopy(ether_ip6multicast_min, addrlo, ETHER_ADDR_LEN);
 			bcopy(ether_ip6multicast_max, addrhi, ETHER_ADDR_LEN);
-#if 0
-			set_allmulti = 1;
-#endif
 		} else {
 			ETHER_MAP_IPV6_MULTICAST(&sin6->sin6_addr, addrlo);
 			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
@@ -950,8 +946,27 @@ ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
 #endif
 
 	default:
-		splx(s);
 		return (EAFNOSUPPORT);
+	}
+	return (0);
+}
+
+/*
+ * Add an Ethernet multicast address or range of addresses to the list for a
+ * given interface.
+ */
+int
+ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
+{
+	struct ether_multi *enm;
+	u_char addrlo[ETHER_ADDR_LEN];
+	u_char addrhi[ETHER_ADDR_LEN];
+	int s = splimp(), error;
+
+	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	if (error != 0) {
+		splx(s);
+		return (error);
 	}
 
 	/*
@@ -1003,62 +1018,14 @@ int
 ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
 {
 	struct ether_multi *enm;
-#ifdef INET
-	struct sockaddr_in *sin;
-#endif /* INET */
-#ifdef INET6
-	struct sockaddr_in6 *sin6;
-#endif /* INET6 */
-	u_char addrlo[6];
-	u_char addrhi[6];
-	int s = splimp();
+	u_char addrlo[ETHER_ADDR_LEN];
+	u_char addrhi[ETHER_ADDR_LEN];
+	int s = splimp(), error;
 
-	switch (ifr->ifr_addr.sa_family) {
-
-	case AF_UNSPEC:
-		bcopy(ifr->ifr_addr.sa_data, addrlo, 6);
-		bcopy(addrlo, addrhi, 6);
-		break;
-
-#ifdef INET
-	case AF_INET:
-		sin = (struct sockaddr_in *)&(ifr->ifr_addr);
-		if (sin->sin_addr.s_addr == INADDR_ANY) {
-			/*
-			 * An IP address of INADDR_ANY means stop listening
-			 * to the range of Ethernet multicast addresses used
-			 * for IP.
-			 */
-			bcopy(ether_ipmulticast_min, addrlo, 6);
-			bcopy(ether_ipmulticast_max, addrhi, 6);
-		}
-		else {
-			ETHER_MAP_IP_MULTICAST(&sin->sin_addr, addrlo);
-			bcopy(addrlo, addrhi, 6);
-		}
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *)&(ifr->ifr_addr);
-		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-			/*
-			 * An IP6 address of all 0 means stop listening
-			 * to the range of Ethernet multicast addresses used
-			 * for IP6
-			 */
-			bcopy(ether_ip6multicast_min, addrlo, ETHER_ADDR_LEN);
-			bcopy(ether_ip6multicast_max, addrhi, ETHER_ADDR_LEN);
-		} else {
-			ETHER_MAP_IPV6_MULTICAST(&sin6->sin6_addr, addrlo);
-			bcopy(addrlo, addrhi, ETHER_ADDR_LEN);
-		}
-		break;
-#endif
-
-	default:
+	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	if (error != 0) {
 		splx(s);
-		return (EAFNOSUPPORT);
+		return (error);
 	}
 
 	/*
