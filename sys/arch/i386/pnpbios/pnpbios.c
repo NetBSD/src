@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.32 2003/01/01 01:24:20 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.33 2003/01/08 23:50:23 soren Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -33,7 +33,7 @@
  *
  * http://www.microsoft.com/hwdev/download/respec/pnpbios.zip
  * http://www.microsoft.com/hwdev/download/respec/biosclar.zip
- * http://www.microsoft.com/hwdev/download/respec/devids.txt
+ * http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
  *
  * PNPBIOSEVENTS is unfinished.  After coding what I did I discovered
  * I had no platforms to test on so someone else will need to finish
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.32 2003/01/01 01:24:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.33 2003/01/08 23:50:23 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
