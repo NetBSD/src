@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.10 1999/01/29 22:24:24 drochner Exp $
+# $NetBSD: files.wscons,v 1.11 1999/03/22 16:50:54 sommerfe Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -19,6 +19,7 @@ defopt	opt_wskernattr.h WS_KERNEL_FG WS_KERNEL_BG
 defopt	opt_wsdisplay_compat.h WSDISPLAY_COMPAT_USL WSCOMPAT_USL_SYNCTIMEOUT
 	WSDISPLAY_COMPAT_RAWKBD
 	WSDISPLAY_COMPAT_PCVT WSDISPLAY_COMPAT_SYSCONS
+	WSDISPLAY_DEFAULTSCREENS
 
 # this loses, but there's no way to define attributes which have attributes
 device	wsdisplay #tty?
