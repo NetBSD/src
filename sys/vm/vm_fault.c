@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.11.2.1 1994/03/18 05:46:07 cgd Exp $
+ *	$Id: vm_fault.c,v 1.11.2.2 1994/04/15 04:24:27 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -271,14 +271,14 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 			if (m->flags & PG_INACTIVE) {
 				TAILQ_REMOVE(&vm_page_queue_inactive, m, pageq);
 				m->flags &= ~PG_INACTIVE;
-				vm_page_inactive_count--;
+				cnt.v_inactive_count--;
 				cnt.v_reactivated++;
 			} 
 
 			if (m->flags & PG_ACTIVE) {
 				TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
 				m->flags &= ~PG_ACTIVE;
-				vm_page_active_count--;
+				cnt.v_active_count--;
 			}
 			vm_page_unlock_queues();
 
