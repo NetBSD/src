@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.21 2002/03/07 14:37:02 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.22 2002/03/09 20:30:43 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  *	From: Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
  */
 
-#include "auconv.h"		/* for AUDIO_MAX_CHANNELS */
+#include "aurateconvproto.h"	/* for AUDIO_MAX_CHANNELS */
 
 /*
  * Initial/default block duration is both configurable and patchable.
@@ -119,13 +119,17 @@ struct audio_softc {
 	u_char	sc_input_fragment[MAX_SAMPLE_SIZE];
 	int	sc_pconvbuffer_size;
 	u_char	*sc_pconvbuffer;
+#if NAURATECONV > 0
 	struct auconv_context sc_pconv;
+#endif
 
 	int	sc_rconvbuffer_size;
 	int	sc_rconvbuffer_begin;
 	int	sc_rconvbuffer_end;
 	u_char	*sc_rconvbuffer;
+#if NAURATECONV > 0
 	struct auconv_context sc_rconv;
+#endif
 
 	u_char	sc_blkset;	/* Blocksize has been set */
 
