@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.20 2000/07/02 04:40:47 cgd Exp $ */
+/* $NetBSD: netisr.h,v 1.21 2000/07/02 17:40:18 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -93,9 +93,7 @@
 #include <netiso/clnp.h>
 #endif
 #ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
+#include <netccitt/x25isr.h>
 #endif
 #ifdef NATM
 #include <netnatm/natm.h>
