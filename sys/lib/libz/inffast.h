@@ -1,4 +1,4 @@
-/* $NetBSD: inffast.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
+/* $NetBSD: inffast.h,v 1.5 2003/03/18 20:00:48 mycroft Exp $ */
 
 /* inffast.h -- header to use inffast.c
  * Copyright (C) 1995-2002 Mark Adler
@@ -13,7 +13,7 @@
 extern int inflate_fast __P((
     uInt,
     uInt,
-    inflate_huft *,
-    inflate_huft *,
+    const inflate_huft *,
+    const inflate_huft *,
     inflate_blocks_statef *,
     z_streamp ));

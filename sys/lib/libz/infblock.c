@@ -1,4 +1,4 @@
-/* $NetBSD: infblock.c,v 1.4 2002/03/12 00:42:23 fvdl Exp $ */
+/* $NetBSD: infblock.c,v 1.5 2003/03/18 20:00:47 mycroft Exp $ */
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
@@ -157,7 +157,7 @@ int r;
                  s->last ? " (last)" : ""));
           {
             uInt bl, bd;
-            inflate_huft *tl, *td;
+            const inflate_huft *tl, *td;
 
             inflate_trees_fixed(&bl, &bd, &tl, &td, z);
             s->sub.decode.codes = inflate_codes_new(bl, bd, tl, td, z);
