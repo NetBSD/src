@@ -39,22 +39,30 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tput.c	5.7 (Berkeley) 6/7/90";*/
-static char rcsid[] = "$Id: tput.c,v 1.2 1993/08/01 18:04:38 mycroft Exp $";
+static char rcsid[] = "$Id: tput.c,v 1.3 1994/01/24 23:54:57 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/termios.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <curses.h>
 
+static void   prlongname __P((char *));
+static void   setospeed __P((void));
+static void   outc	 __P((int));
+static void   usage __P((void));
+static char **process __P((char *, char *, char **));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	extern char *optarg;
 	extern int optind;
-	int ch, exitval, n, outc();
+	int ch, exitval, n;
 	char *cptr, *p, *term, buf[1024], tbuf[1024];
-	char *getenv(), *tgetstr(), *realname();
 
 	term = NULL;
 	while ((ch = getopt(argc, argv, "T:")) != EOF)
@@ -78,7 +86,7 @@ main(argc, argv)
 		exit(2);
 	}
 	setospeed();
-	for (cptr = buf, exitval = 0; p = *argv; ++argv) {
+	for (exitval = 0; (p = *argv) != NULL; ++argv) {
 		switch(*p) {
 		case 'c':
 			if (!strcmp(p, "clear"))
@@ -97,16 +105,21 @@ main(argc, argv)
 				p = "rs";
 			break;
 		}
+		cptr = buf;
 		if (tgetstr(p, &cptr))
-			(void)tputs(buf, 1, outc);
+			argv = process(p, buf, argv);
 		else if ((n = tgetnum(p)) != -1)
 			(void)printf("%d\n", n);
 		else
 			exitval = !tgetflag(p);
+
+		if (argv == NULL)
+			break;
 	}
-	exit(exitval);
+	exit(argv ? exitval : 2);
 }
 
+static void
 prlongname(buf)
 	char *buf;
 {
@@ -114,18 +127,21 @@ prlongname(buf)
 	int savech;
 	char *savep;
 
-	for (p = buf; *p && *p != ':'; ++p);
+	for (p = buf; *p && *p != ':'; ++p)
+		continue;
 	savech = *(savep = p);
-	for (*p = '\0'; p >= buf && *p != '|'; --p);
+	for (*p = '\0'; p >= buf && *p != '|'; --p)
+		continue;
 	(void)printf("%s\n", p + 1);
 	*savep = savech;
 }
 
+static void
 setospeed()
 {
-	extern int errno, ospeed;
+#undef ospeed
+	extern short ospeed;
 	struct termios t;
-	char *strerror();
 
 	if (tcgetattr(STDOUT_FILENO, &t) != -1)
 		ospeed = 0;
@@ -133,14 +149,107 @@ setospeed()
 		ospeed = cfgetospeed(&t);
 }
 
+static void
 outc(c)
 	int c;
 {
 	putchar(c);
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: tput [-T term] attribute ...\n");
 	exit(1);
+}
+
+static char **
+process(cap, str, argv)
+	char *cap;
+	char *str;
+	char **argv;
+{
+	static char errfew[] =
+		 "tput: Not enough arguments (%d) for capability `%s'\n";
+	static char errmany[] =
+		 "tput: Too many arguments (%d) for capability `%s'\n";
+	static char erresc[] =
+		 "tput: Unknown %% escape `%c' for capability `%s'\n";
+	/*
+	 * Count home many values we need for this capability.
+	 */
+	char *cp;
+	int arg_need, arg_rows, arg_cols;
+	for (cp = str, arg_need = 0; *cp; cp++)
+		if (*cp == '%')
+			    switch (*++cp) {
+			    case 'd':
+			    case '2':
+			    case '3':
+			    case '.':
+			    case '+':
+				    arg_need++;
+				    break;
+
+			    case '%':
+			    case '>':
+			    case 'i':
+			    case 'r':
+			    case 'n':
+			    case 'B':
+			    case 'D':
+				    break;
+
+			    default:
+				/*
+				 * hpux has lot's of them, but we complain
+				 */
+			        (void)fprintf(stderr, erresc, *cp, cap);
+				return NULL;
+			    }
+
+	/*
+	 * And print them
+	 */
+	switch (arg_need) {
+	case 0:
+		(void) tputs(str, 1, outc);
+		break;
+
+	case 1:
+		arg_cols = 0;
+
+		argv++;
+		if (!*argv || *argv[0] == '\0') {
+			(void)fprintf(stderr, errfew, 1, cap);
+			return NULL;
+		}
+		arg_rows = atoi(*argv);
+
+		(void)tputs(tgoto(str, arg_cols, arg_rows), 1, outc);
+		break;
+
+	case 2:
+		argv++;
+		if (!*argv || *argv[0] == '\0') {
+			(void)fprintf(stderr, errfew, 2, cap);
+			return NULL;
+		}
+		arg_cols = atoi(*argv);
+
+		argv++;
+		if (!*argv || *argv[0] == '\0') {
+			(void)fprintf(stderr, errfew, 2, cap);
+			return NULL;
+		}
+		arg_rows = atoi(*argv);
+
+		(void) tputs(tgoto(str, arg_cols, arg_rows), arg_rows, outc);
+		break;
+
+	default:
+		(void)fprintf(stderr, errmany, arg_need, cap);
+		return NULL;
+	}
+	return argv;
 }
