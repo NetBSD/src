@@ -1,4 +1,4 @@
-/*	$NetBSD: box.c,v 1.10.6.1 2000/01/09 20:43:17 jdc Exp $	*/
+/*	$NetBSD: box.c,v 1.10.6.2 2000/03/05 23:26:33 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)box.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: box.c,v 1.10.6.1 2000/01/09 20:43:17 jdc Exp $");
+__RCSID("$NetBSD: box.c,v 1.10.6.2 2000/03/05 23:26:33 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,39 +47,12 @@ __RCSID("$NetBSD: box.c,v 1.10.6.1 2000/01/09 20:43:17 jdc Exp $");
 /*
  * box --
  *	Draw a box around the given window with "vert" as the vertical
- *	delimiting char, and "hor", as the horizontal one.
+ *	delimiting char, and "hor", as the horizontal one.  Uses wborder().
  */
 int
 box(win, vert, hor)
 	WINDOW	*win;
 	chtype	 vert, hor;
 {
-	int	 endy, endx, i;
-	__LDATA	*fp, *lp;
-
-	endx = win->maxx;
-	endy = win->maxy - 1;
-	fp = win->lines[0]->line;
-	lp = win->lines[endy]->line;
-	for (i = 0; i < endx; i++) {
-		fp[i].ch = lp[i].ch = (wchar_t) hor & __CHARTEXT;
-		fp[i].attr = (attr_t) hor & __ATTRIBUTES;
-		lp[i].attr = (attr_t) hor & __ATTRIBUTES;
-	}
-	endx--;
-	for (i = 0; i <= endy; i++) {
-		win->lines[i]->line[0].ch = (wchar_t) vert & __CHARTEXT;
-		win->lines[i]->line[endx].ch = (wchar_t) vert & __CHARTEXT;
-		win->lines[i]->line[0].attr = (attr_t) vert & __ATTRIBUTES;
-		win->lines[i]->line[endx].attr = (attr_t) vert & __ATTRIBUTES;
-	}
-	if (!(win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN)) {
-		fp[0].ch = fp[endx].ch = lp[0].ch = lp[endx].ch = ' ';
-		fp[0].attr &= ~__ATTRIBUTES;
-		fp[endx].attr &= ~__ATTRIBUTES;
-		lp[0].attr &= ~__ATTRIBUTES;
-		lp[endx].attr &= ~__ATTRIBUTES;
-	}
-	__touchwin(win);
-	return (OK);
+	return (wborder (win, hor, hor, vert, vert, 0, 0, 0, 0));
 }
