@@ -1,4 +1,4 @@
-.\"	$NetBSD: iso.4,v 1.4 2000/06/26 16:21:22 kleink Exp $
+.\"	$NetBSD: iso.4,v 1.5 2001/06/12 12:00:20 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ abstraction through the
 .Tn TP
 protocol
 .Pf ( Tn ISO
-8073), 
+8073),
 for the
 .Dv SOCK_DGRAM
 abstraction through the connectionless transport
@@ -70,14 +70,14 @@ and for the
 .Dv SOCK_RAW
 abstraction
 by providing direct access (for debugging) to the
-.Tn CLNP 
+.Tn CLNP
 .Pf ( Tn ISO
 8473) network layer protocol.
 .Sh ADDRESSING
 .Tn ISO
 addresses are based upon
 .Tn ISO
-8348/AD2, 
+8348/AD2,
 .%T "Addendum to the Network Service Definition Covering Network Layer Addressing."
 .Pp
 Sockets bound to the OSI protocol family use
@@ -103,23 +103,23 @@ struct sockaddr_iso {
 .Pp
 The fields of this structure are:
 .Bl -tag -width Ds
-.It Ar siso_len:
+.It Ar siso_len :
 Length of the entire address structure, in bytes, which may grow to
 be longer than the 32 bytes shown above.
-.It Ar siso_family:
+.It Ar siso_family :
 Identifies the domain:
 .Dv AF_ISO .
-.It Ar siso_tlen:
+.It Ar siso_tlen :
 Length of the transport selector.
-.It Ar siso_slen:
+.It Ar siso_slen :
 Length of the session selector.
 This is not currently supported by the kernel and is provided as
 a convenience for user level programs.
-.It Ar siso_plen:
+.It Ar siso_plen :
 Length of the presentation selector.
 This is not currently supported by the kernel and is provided as
 a convenience for user level programs.
-.It Ar siso_addr:
+.It Ar siso_addr :
 The network part of the address, described below.
 .El
 .Sh TRANSPORT ADDRESSING
@@ -137,7 +137,7 @@ domain, this is called a
 .Em transport selector
 (also known at one time as a
 .Em transport suffix ) .
-While ports are always 16 bits, 
+While ports are always 16 bits,
 transport selectors may be
 of (almost) arbitrary size.
 .Pp
@@ -146,11 +146,11 @@ length structures, we have separated the selector lengths
 from the data themselves.
 The network address and various selectors are stored contiguously,
 with the network address first, then the transport selector, and so
-on.  Thus, if you had a nework address of less then 20 bytes,
+on.  Thus, if you had a network address of less then 20 bytes,
 the transport selector would encroach on space normally reserved
 for the network address.
 .Pp
-.Sh NETWORK ADDRESSING.
+.Sh NETWORK ADDRESSING
 .Tn ISO
 network addresses are limited to 20 bytes in length.
 .Tn ISO
@@ -158,11 +158,11 @@ network addresses can take any format.
 .Sh PROTOCOLS
 The
 .Tn ARGO
-1.0 implementation of the 
+1.0 implementation of the
 .Tn ISO
 protocol family comprises
 the Connectionless-Mode Network Protocol
-.Pq Tn CLNP , 
+.Pq Tn CLNP ,
 and the Transport Protocol
 .Pq Tn TP ,
 classes 4 and 0,
