@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.170 1999/12/04 10:32:18 veego Exp $
+# $NetBSD: mi,v 1.171 1999/12/07 21:15:45 augustss Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -2483,6 +2483,7 @@
 ./usr/share/man/cat9/disk_resetstat.0
 ./usr/share/man/cat9/disk_unbusy.0
 ./usr/share/man/cat9/disklabel.0
+./usr/share/man/cat9/dopowerhooks.0
 ./usr/share/man/cat9/doshutdownhooks.0
 ./usr/share/man/cat9/ether_addmulti.0
 ./usr/share/man/cat9/ether_delmulti.0
@@ -2554,6 +2555,8 @@
 ./usr/share/man/cat9/pool_put.0
 ./usr/share/man/cat9/pool_sethiwat.0
 ./usr/share/man/cat9/pool_setlowat.0
+./usr/share/man/cat9/powerhook_disestablish.0
+./usr/share/man/cat9/powerhook_establish.0
 ./usr/share/man/cat9/printf.0
 ./usr/share/man/cat9/psignal.0
 ./usr/share/man/cat9/readdisklabel.0
@@ -3919,6 +3922,7 @@
 ./usr/share/man/man9/disk_resetstat.9
 ./usr/share/man/man9/disk_unbusy.9
 ./usr/share/man/man9/disklabel.9
+./usr/share/man/man9/dopowerhooks.9
 ./usr/share/man/man9/doshutdownhooks.9
 ./usr/share/man/man9/ether_addmulti.9
 ./usr/share/man/man9/ether_delmulti.9
@@ -3990,6 +3994,8 @@
 ./usr/share/man/man9/pool_put.9
 ./usr/share/man/man9/pool_sethiwat.9
 ./usr/share/man/man9/pool_setlowat.9
+./usr/share/man/man9/powerhook_disestablish.0
+./usr/share/man/man9/powerhook_establish.0
 ./usr/share/man/man9/printf.9
 ./usr/share/man/man9/psignal.9
 ./usr/share/man/man9/readdisklabel.9
