@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.167 2002/04/11 06:36:12 lukem Exp $
+.\"	$NetBSD: main,v 1.168 2002/04/14 13:12:37 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .
 .nr FOR_RELEASE 1
 .nr DOC_XR 1
-.ds MACHINE_LIST algor alpha amiga amigappc arc acorn26 arm32 atari bebox cats
+.ds MACHINE_LIST algor alpha amiga amigappc arc acorn26 atari bebox cats
 .as MACHINE_LIST " cobalt dreamcast evbarm evbmips evbsh3 hp300 hpcmips hpcsh i386
 .as MACHINE_LIST " luna68k mac68k macppc mmeye mvme68k mvmeppc news68k newsmips
 .as MACHINE_LIST " next68k ofppc pc532 playstation2 pmax prep sbmips sgimips

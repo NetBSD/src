@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.46 2002/04/10 19:01:59 scw Exp $
+.\"	$NetBSD: contents,v 1.47 2002/04/14 13:12:37 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -292,20 +292,6 @@ partitions.
 .\}
 .
 .
-.if r_arm32 \{\
-There are a collection of arm32 kernels in the
-.Pa arm32/kernels
-subdirectory of the
-.Nx \*V
-distribution. Some of these kernels
-contain a root file system image and should only be used for the
-initial installation. Some of the kernels only support a particular
-subset of the platforms that arm32 supports (See
-.Pa arm32/kernels/README
-for more details.)
-.\}
-.
-.
 .Ss2 Binary distribution sets
 The
 .Nx
@@ -338,7 +324,6 @@ everything described below.
 .if r_alpha .Em 22.7 MB gzipped, 59.8 MB uncompressed
 .if r_amiga .Em 15.6 MB gzipped, 41.4 MB uncompressed
 .if r_arc .Em 19.5 MB gzipped, 61.4 MB uncompressed
-.if r_arm32 .Em 19.2 MB gzipped, 47.4 MB uncompressed
 .if r_atari .Em 15.3 MB gzipped, 40.7 MB uncompressed
 .if r_hp300 .Em 15.7 MB gzipped, 41.5 MB uncompressed
 .if r_hpcmips .Em 19.5 MB gzipped, 61.4 MB uncompressed
@@ -372,7 +357,6 @@ system call and library manual pages.
 .if r_alpha .Em 18.1 MB gzipped, 81.2 MB uncompressed
 .if r_amiga .Em 11.8 MB gzipped, 39.5 MB uncompressed
 .if r_arc .Em 13.9 MB gzipped, 59.3 MB uncompressed
-.if r_arm32 .Em 13.8 MB gzipped, 45.4 MB uncompressed
 .if r_atari .Em 11.6 MB gzipped, 38.9 MB uncompressed
 .if r_hp300 .Em 11.8 MB gzipped, 39.5 MB uncompressed
 .if r_hpcmips .Em 13.8 MB gzipped, 59.4 MB uncompressed
@@ -410,7 +394,6 @@ This set includes the games and their manual pages.
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 3.1 MB gzipped, 7.6 MB uncompressed
 .if r_arm .Em 2.9 MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 3.0 MB gzipped, 7.5 MB uncompressed
 .if r_i386 .Em 2.9 MB gzipped, 7.0 MB uncompressed
 .if r_m68k .Em 2.9 MB gzipped, 6.8 MB uncompressed
 .if r_mips .Em 3.0 MB gzipped, 7.9 MB uncompressed
@@ -436,7 +419,6 @@ install this distribution set.
 .if r_alpha .Em 2.1 MB gzipped, 5.0 MB uncompressed
 .if r_amiga .Em 1.1 MB gzipped, 2.4 MB uncompressed
 .if r_arc .Em 1.5 MB gzipped, 3.7 MB uncompressed
-.if r_arm32 .Em 1.1 MB gzipped, 2.3 MB uncompressed
 .if r_hp300 .Em 0.7 MB gzipped, 1.6 MB uncompressed
 .if r_hpcmips .Em 1.0 MB gzipped, 2.6 MB uncompressed
 .if r_i386 .Em 2.2 MB gzipped, 4.7 MB uncompressed
@@ -479,7 +461,6 @@ all related programs, and their manual pages.
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 1.4 MB gzipped, 5.1 MB uncompressed
 .if r_arm .Em 1.5 MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 1.4 MB gzipped, 4.8 MB uncompressed
 .if r_i386 .Em 1.2 MB gzipped, 4.2 MB uncompressed
 .if r_m68k .Em 1.5 MB gzipped, 5.0 MB uncompressed
 .if r_mips .Em 1.3 MB gzipped, 5.6 MB uncompressed
@@ -513,7 +494,6 @@ the X servers.
 .\" Shareable within MACHINE_ARCH, except atari
 .if r_alpha .Em 3.6 MB gzipped, 13.7 MB uncompressed
 .if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 3.2 MB gzipped, 9.5 MB uncompressed
 .if r_i386 .Em 2.7 MB gzipped, 7.9 MB uncompressed
 .if r_atari .Em 2.6 MB gzipped, 8.4 MB uncompressed
 .ie r_m68k .Em 2.6 MB gzipped, 8.2 MB uncompressed
@@ -531,7 +511,6 @@ The extra libraries and include files needed to compile X source code.
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 2.6 MB gzipped, 13.9 MB uncompressed
 .if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 2.1 MB gzipped, 8.2 MB uncompressed
 .if r_i386 .Em 1.8 MB gzipped, 7.9 MB uncompressed
 .if r_m68k .Em 1.7 MB gzipped, 7.2 MB uncompressed
 .if r_mips .Em 2.1 MB gzipped, 9.5 MB uncompressed
@@ -548,7 +527,6 @@ Programs that were contributed to X.
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em 0.2 MB gzipped, 0.8 MB uncompressed
 .if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 0.2 MB gzipped, 0.7 MB uncompressed
 .if r_i386 .Em 0.2 MB gzipped, 0.5 MB uncompressed
 .if r_m68k .Em 0.2 MB gzipped, 0.7 MB uncompressed
 .if r_mips .Em 0.2 MB gzipped, 0.8 MB uncompressed
@@ -572,7 +550,6 @@ Miscellaneous X programs.
 .\" Shareable within MACHINE_ARCH
 .if r_alpha .Em ? MB gzipped, ? MB uncompressed
 .if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em ? MB gzipped, ? MB uncompressed
 .if r_i386 .Em ? MB gzipped, ? MB uncompressed
 .if r_m68k .Em ? MB gzipped, ? MB uncompressed
 .if r_mips .Em ? MB gzipped, ? MB uncompressed
@@ -594,12 +571,6 @@ Miscellaneous X programs.
 .It Sy xserver
 .br
 .Em 1.6 MB gzipped, 3.9 MB uncompressed
-.\}
-.
-.if r_arm32 \{\
-.It Sy xserver
-.br
-.Em 6.8 MB gzipped, 17.4 MB uncompressed
 .\}
 .
 .if r_atari \{\
@@ -720,22 +691,12 @@ command from
 .
 .if r_acorn26 \{\
 .Pp
-Additional kernels to those included in the distribution sets may be found
-in the
-.Pa acorn26/binary/kernel
-subdirectory of the
-.Nx \*V
-distribution tree. These kernels are generally named something like
-.Pa netbsd.BOOT.gz
-or some other suitable name. Please note that these kernels are simply
-gzipped and are not in tar archives.
-.Pp
 There is a copy of the
 .Nx Ns /acorn26
 bootloader,
 .Ic boot26 ,
 in the
-.Pa acorn26/installation
+.Pa installation/misc
 subdirectory.  This is a RISC OS relocatable module, and should have its file
 type set to ffa (Module) once it's been copied to a RISC OS system.
 .\}
