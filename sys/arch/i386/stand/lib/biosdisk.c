@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.20 2004/03/24 16:34:29 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.21 2004/10/23 17:20:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -65,6 +65,7 @@
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
+#include <sys/md5.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/saerrno.h>
@@ -87,6 +88,7 @@ struct biosdisk {
 
 #ifdef _STANDALONE
 static struct btinfo_bootdisk bi_disk;
+static struct btinfo_bootwedge bi_wedge;
 #endif
 
 #define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
@@ -343,6 +345,9 @@ biosdiskopen(struct open_file *f, ...)
 	bi_disk.biosdev = d->ll.dev;
 	bi_disk.partition = partition;
 	bi_disk.labelsector = -1;
+
+	bi_wedge.biosdev = d->ll.dev;
+	bi_wedge.matchblk = -1;
 #endif
 
 #ifndef NO_DISKLABEL
@@ -370,6 +375,18 @@ biosdiskopen(struct open_file *f, ...)
 	bi_disk.label.type = lp->d_type;
 	memcpy(bi_disk.label.packname, lp->d_packname, 16);
 	bi_disk.label.checksum = lp->d_checksum;
+
+	bi_wedge.startblk = lp->d_partitions[partition].p_offset;
+	bi_wedge.nblks = lp->d_partitions[partition].p_size;
+	bi_wedge.matchblk = d->boff + LABELSECTOR;
+	bi_wedge.matchnblks = 1;
+	{
+		MD5_CTX ctx;
+
+		MD5Init(&ctx);
+		MD5Update(&ctx, (void *) d->buf, 512);
+		MD5Final(bi_wedge.matchhash, &ctx);
+	}
 #endif
 	d->boff = lp->d_partitions[partition].p_offset;
 	if (lp->d_partitions[partition].p_fstype == FS_RAID)
@@ -383,6 +400,7 @@ nolabel:
 
 #ifdef _STANDALONE
 	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
+	BI_ADD(&bi_wedge, BTINFO_BOOTWEDGE, sizeof(bi_wedge));
 #endif
 
 	f->f_devdata = d;
