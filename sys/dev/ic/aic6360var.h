@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.3 1998/11/19 21:52:59 thorpej Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.4 1999/09/26 08:14:57 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -173,6 +173,8 @@ struct aic_softc {
 	int	sc_freq;		/* Clock frequency in MHz */
 	int	sc_minsync;		/* Minimum sync period / 4 */
 	int	sc_maxsync;		/* Maximum sync period / 4 */
+
+	struct device *sc_child;	/* Our child */
 };
 
 #if AIC_DEBUG
@@ -203,6 +205,9 @@ extern int aic_debug; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #define AIC_ISA_IOSIZE	0x20	/* XXX */
 
 void	aicattach	__P((struct aic_softc *));
+int	aic_activate	__P((struct device *, enum devact));
+int	aic_detach	__P((struct device *, int));
 int	aicintr		__P((void *));
 int	aic_find	__P((bus_space_tag_t, bus_space_handle_t));
 void	aic_isa_attach	__P((struct device *, struct device *, void *));
+void	aic_init	__P((struct aic_softc *, int));
