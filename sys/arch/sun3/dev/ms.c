@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.3 1994/11/21 21:31:09 gwr Exp $	*/
+/*	$NetBSD: ms.c,v 1.4 1994/12/01 22:46:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
- *	from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
  */
 
 /*
@@ -58,7 +57,7 @@
 #include <sys/systm.h>
 #include <sys/tty.h>
 
-#include "vuid_event.h"
+#include <machine/vuid_event.h>
 #include "event_var.h"
 
 /*
@@ -292,7 +291,7 @@ mswrite(dev, uio, flags)
 int
 msioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	register caddr_t data;
 	int flag;
 	struct proc *p;

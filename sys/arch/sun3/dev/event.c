@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.3 1994/11/21 21:30:46 gwr Exp $	*/
+/*	$NetBSD: event.c,v 1.4 1994/12/01 22:46:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,8 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)event.c	8.1 (Berkeley) 6/11/93
- *	from: Hdr: event.c,v 1.5 92/11/26 01:10:44 torek Exp  (LBL)
+ *	@(#)event.c	8.1 (Berkeley) 6/11/93
  */
 
 /*
@@ -56,7 +55,7 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
-#include "vuid_event.h"
+#include <machine/vuid_event.h>
 #include "event_var.h"
 
 /*

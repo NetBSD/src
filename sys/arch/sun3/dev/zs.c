@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 1994/11/21 21:31:26 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 1994/12/01 22:46:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,10 +72,10 @@
 #include <machine/obio.h>
 #include <machine/mon.h>
 #include <machine/eeprom.h>
+#include <machine/kbd.h>
 
 #include <dev/cons.h>
 
-#include "kbd.h"
 #include "zsreg.h"
 #include "zsvar.h"
 
@@ -110,7 +110,7 @@ struct zsinfo {
 struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch(struct device *, struct cfdata *, void *);
+static int	zsmatch(struct device *, void *, void *);
 static void	zsattach(struct device *, struct device *, void *);
 struct cfdriver zscd =
     { NULL, "zs", zsmatch, zsattach, DV_TTY, sizeof(struct zsinfo) };
@@ -181,8 +181,9 @@ void zs_init()
  * not set up the keyboard as ttya, etc.
  */
 static int
-zsmatch(struct device *parent, struct cfdata *cf, void *aux)
+zsmatch(struct device *parent, void *vcf, void *aux)
 {
+	struct cfdata *cf = vcf;
 	struct obio_cf_loc *obio_loc;
 	caddr_t zs_addr;
 
@@ -391,7 +392,7 @@ zscnprobe(struct consdev *cn, int unit)
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == zsopen)
+		if (cdevsw[maj].d_open == (void*)zsopen)
 			break;
 
 	cn->cn_dev = makedev(maj, unit);

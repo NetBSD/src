@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.5 1994/11/21 21:31:02 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.6 1994/12/01 22:46:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,8 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
- *	from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
+ *	@(#)kbd.c	8.2 (Berkeley) 10/30/93
  */
 
 /*
@@ -62,11 +61,12 @@
 #include <sys/tty.h>
 
 #include <machine/autoconf.h>
+#include <machine/kbd.h>
+#include <machine/kbio.h>
+#include <machine/vuid_event.h>
 
-#include "vuid_event.h"
 #include "event_var.h"
-#include "kbd.h"
-#include "kbio.h"
+
 /*
  * Sun keyboard definitions (from Sprite).
  * These apply to type 2, 3 and 4 keyboards.
@@ -223,7 +223,7 @@ int	kbdopen(dev_t, int, int, struct proc *);
 int	kbdclose(dev_t, int, int, struct proc *);
 int	kbdread(dev_t, struct uio *, int);
 int	kbdwrite(dev_t, struct uio *, int);
-int	kbdioctl(dev_t, int, caddr_t, int, struct proc *);
+int	kbdioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	kbdselect(dev_t, int, struct proc *);
 int	kbd_docmd(int, int);
 
@@ -516,7 +516,8 @@ kbdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-kbdioctl(dev_t dev, int cmd, register caddr_t data, int flag, struct proc *p)
+kbdioctl(dev_t dev, u_long cmd, register caddr_t data,
+	int flag, struct proc *p)
 {
 	register struct kbd_softc *k = &kbd_softc;
 
@@ -564,6 +565,10 @@ kbdioctl(dev_t dev, int cmd, register caddr_t data, int flag, struct proc *p)
 
 	case KIOCSDIRECT:
 		k->k_evmode = *(int *)data;
+		return (0);
+
+	case KIOCLAYOUT:
+		*data = 0;
 		return (0);
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
