@@ -2174,6 +2174,7 @@ winfixfill:
 	inc	%g7
 	stw	%g7, [%g4]
 #endif
+	wrpr	%g2, %g0, %tl				! Restore trap level -- we need to reuse it
 	set	return_from_trap, %g4
 	set	CTX_PRIMARY, %g7
 	wrpr	%g4, 0, %tpc
@@ -4300,6 +4301,7 @@ rft_user:
 !	sethi	%hi(_C_LABEL(want_ast)), %g7	! (done above)
 	lduw	[%g7 + %lo(_C_LABEL(want_ast))], %g7! want AST trap?
 	/* This is probably necessary */
+	wrpr	%g0, 1, %tl			! Sometimes we get here w/TL=0 (How?)
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
@@ -5489,7 +5491,7 @@ _C_LABEL(tlb_flush_pte):
 	mov	%i1, %o1
 	andn	%i0, 0xfff, %o3
 	or	%o3, 0x010, %o3
-	call	printf
+	call	db_printf
 	 mov	%i0, %o2
 	restore
 	set	KERNBASE, %o4
