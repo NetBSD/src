@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.81 2002/06/09 16:33:37 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.82 2002/06/24 08:06:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.81 2002/06/09 16:33:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.82 2002/06/24 08:06:22 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.81 2002/06/09 16:33:37 itojun Exp $");
 #include <net/if_token.h>
 #include <net/if_types.h>
 #include <net/route.h>
-
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -248,8 +247,7 @@ struct domain arpdomain =
  * while the arp table is locked, we punt and try again later.
  */
 
-int	arp_locked;
-
+static int	arp_locked;
 static __inline int arp_lock_try __P((int));
 static __inline void arp_unlock __P((void));
 
@@ -619,12 +617,28 @@ arprequest(ifp, sip, tip, enaddr)
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
-	m->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
-	    2*ifp->if_data.ifi_addrlen;
+	switch (ifp->if_type) {
+	case IFT_IEEE1394:
+		m->m_len = sizeof(*ah) + 2 * sizeof(struct in_addr) +
+		    ifp->if_data.ifi_addrlen;
+		break;
+	default:
+		m->m_len = sizeof(*ah) + 2 * sizeof(struct in_addr) +
+		    2 * ifp->if_data.ifi_addrlen;
+		break;
+	}
 	m->m_pkthdr.len = m->m_len;
 	MH_ALIGN(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
 	bzero((caddr_t)ah, m->m_len);
+	switch (ifp->if_type) {
+	case IFT_IEEE1394:
+		ah->ar_hrd = htons(ARPHRD_IEEE1394);
+		break;
+	default:
+		/* why we don't set ar_hrd in other cases? */
+		break;
+	}
 	ah->ar_pro = htons(ETHERTYPE_IP);
 	ah->ar_hln = ifp->if_data.ifi_addrlen;	/* hardware address length */
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
@@ -745,6 +759,7 @@ arpintr()
 	struct mbuf *m;
 	struct arphdr *ar;
 	int s;
+	int arplen;
 
 	while (arpintrq.ifq_head) {
 		s = splnet();
@@ -755,13 +770,22 @@ arpintr()
 
 		arpstat.as_rcvtotal++;
 
+		switch (m->m_pkthdr.rcvif->if_type) {
+		case IFT_IEEE1394:
+			arplen = sizeof(struct arphdr) +
+			    ar->ar_hln + 2 * ar->ar_pln;
+			break;
+		default:
+			arplen = sizeof(struct arphdr) +
+			    2 * ar->ar_hln + 2 * ar->ar_pln;
+			break;
+		}
+
 		if (m->m_len >= sizeof(struct arphdr) &&
 		    (ar = mtod(m, struct arphdr *)) &&
 		    /* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
-		    m->m_len >=
-		      sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln))
+		    m->m_len >= arplen)
 			switch (ntohs(ar->ar_pro)) {
-
 			case ETHERTYPE_IP:
 			case ETHERTYPE_IPTRAILERS:
 				in_arpinput(m);
@@ -812,6 +836,21 @@ in_arpinput(m)
 	op = ntohs(ah->ar_op);
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
+
+	switch (m->m_pkthdr.rcvif->if_type) {
+	case IFT_IEEE1394:
+		if (ntohs(ah->ar_hrd) == ARPHRD_IEEE1394)
+			;
+		else {
+			/* XXX this is to make sure we compute ar_tha right */
+			/* XXX check ar_hrd more strictly? */
+			ah->ar_hrd = htons(ARPHRD_IEEE1394);
+		}
+		break;
+	default:
+		/* XXX check ar_hrd? */
+		break;
+	}
 
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		arpstat.as_rcvmcast++;
@@ -1014,14 +1053,18 @@ reply:
 	arpstat.as_rcvrequest++;
 	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
-		bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah), ah->ar_hln);
+		if (ar_tha(ah))
+			bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah),
+			    ah->ar_hln);
 		bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	} else {
 		la = arplookup(m, &itaddr, 0, SIN_PROXY);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
-		bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah), ah->ar_hln);
+		if (ar_tha(ah))
+			bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah),
+			    ah->ar_hln);
 		sdl = SDL(rt->rt_gateway);
 		bcopy(LLADDR(sdl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	}
@@ -1159,7 +1202,6 @@ revarpinput(m)
 	if (m->m_len < sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln))
 		goto out;
 	switch (ntohs(ar->ar_pro)) {
-
 	case ETHERTYPE_IP:
 	case ETHERTYPE_IPTRAILERS:
 		in_revarpinput(m);
@@ -1193,6 +1235,15 @@ in_revarpinput(m)
 
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
+
+	switch (m->m_pkthdr.rcvif->if_type) {
+	case IFT_IEEE1394:
+		/* ARP without target hardware address is not supported */
+		goto out;
+	default:
+		break;
+	}
+
 	switch (op) {
 	case ARPOP_REQUEST:
 	case ARPOP_REPLY:	/* per RFC */
@@ -1410,4 +1461,3 @@ db_show_arptab(addr, have_addr, count, modif)
 }
 #endif
 #endif /* INET */
-
