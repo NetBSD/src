@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rmp.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: rmp.4,v 1.3 1997/10/13 11:23:04 lukem Exp $
+.\"	$NetBSD: rmp.4,v 1.4 2001/04/11 19:07:33 wiz Exp $
 .\"
 .Dd March 27, 1991
 .Dt RMP 4 hp300
@@ -151,13 +151,13 @@ This is either a bug or a feature, since the kernel is smaller at the
 price of greater complexity in the server.
 .It
 There is no support for
-.Xr bind Ns 'ing
+.Xr bind 2 Ns 'ing
 an address in the
 .Tn RMP
 domain.
 Something like an
 .Dv RMPADDR_ANY
 should be provided to prevent more than one
-.Xr rbootd
+.Xr rbootd 8
 server from running at the same time.
 .El
