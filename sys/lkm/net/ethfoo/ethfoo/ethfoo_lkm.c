@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.6 2004/11/14 20:05:42 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.7 2004/11/15 20:19:06 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -759,7 +759,7 @@ ethfoo_cdev_read(dev_t dev, struct uio *uio, int flags)
 	struct ethfoo_softc *sc =
 	    (struct ethfoo_softc *)device_lookup(&ethfoo_cd, minor(dev));
 	struct ifnet *ifp;
-	struct mbuf *m;
+	struct mbuf *m, *n;
 	int error = 0, s;
 
 	if (sc == NULL)
@@ -825,8 +825,12 @@ ethfoo_cdev_read(dev_t dev, struct uio *uio, int flags)
 	do {
 		error = uiomove(mtod(m, caddr_t),
 		    min(m->m_len, uio->uio_resid), uio);
-		m = m->m_next;
+		MFREE(m, n);
+		m = n;
 	} while (m != NULL && uio->uio_resid > 0 && error == 0);
+
+	if (m != NULL)
+		m_freem(m);
 
 out:
 	(void)lockmgr(&sc->sc_rdlock, LK_RELEASE, NULL);
