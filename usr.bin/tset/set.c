@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.9 2003/08/07 11:16:49 agc Exp $	*/
+/*	$NetBSD: set.c,v 1.10 2004/09/01 01:46:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
 #endif
-__RCSID("$NetBSD: set.c,v 1.9 2003/08/07 11:16:49 agc Exp $");
+__RCSID("$NetBSD: set.c,v 1.10 2004/09/01 01:46:28 chs Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -153,7 +153,7 @@ reset_mode()
  * entry and command line and update their values in 'mode'.
  */
 void
-set_control_chars()
+set_control_chars(int erasechar, int intrchar, int killchar)
 {
 	char *bp, *p, bs_char, buf[1024];
 
@@ -192,8 +192,7 @@ set_control_chars()
  * uppercase to internal lowercase.
  */
 void
-set_conversions(usingupper)
-	int usingupper;
+set_conversions(int usingupper)
 {
 	if (tgetflag("UC") || usingupper) {
 #ifdef IUCLC
