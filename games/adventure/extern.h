@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1998/08/24 22:07:37 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1998/08/24 22:26:23 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <string.h>
 
 /* crc.c */
 void crc_start __P((void));
@@ -116,9 +118,12 @@ int put __P((int, int, int));
 void carry __P((int, int));
 void drop __P((int, int));
 int vocab __P((char *, int, int));
-void copystr __P((char *, char *));
-int weq __P((char *, char *));
-int length __P((char *));
+
+/* These three used to be functions in vocab.c */
+#define copystr(src, dest)	strcpy((dest), (src))
+#define weq(str1, str2)		(!strncmp((str1), (str2), 5))
+#define length(str)		(strlen((str)) + 1)
+
 void prht __P((void));
 
 /* wizard.c */
