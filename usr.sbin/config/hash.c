@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.7 2000/10/02 19:48:34 cgd Exp $	*/
+/*	$NetBSD: hash.c,v 1.8 2000/10/02 19:51:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  * XXX - Why not just use malloc in here, anyway?
  */
 #ifndef	ALIGNBYTES
-#define	ALIGNBYTES 3
+#define	ALIGNBYTES 7
 #endif
 #ifndef ALIGN
 #define	ALIGN(p)	(((long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
