@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.61 2001/04/21 16:27:10 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.62 2001/04/24 20:03:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2001/04/21 16:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62 2001/04/24 20:03:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2001/04/21 16:27:10 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 
@@ -91,9 +92,6 @@ struct cpu_info cpu_info_primary;
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 #if defined(MULTIPROCESSOR)
-#include <sys/malloc.h>
-#include <sys/kthread.h>
-
 /*
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
@@ -290,20 +288,17 @@ recognized:
 		return;
 	}
 
-	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
+	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
 		ci = &cpu_info_primary;
-#if defined(MULTIPROCESSOR)
-		cpu_info[ma->ma_slot] = ci;
-#endif
-	}
-#if defined(MULTIPROCESSOR)
 	else {
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
 		memset(ci, 0, sizeof(*ci));
-		cpu_info[ma->ma_slot] = ci;
 	}
+#if defined(MULTIPROCESSOR)
+	cpu_info[ma->ma_slot] = ci;
 #endif
 	ci->ci_cpuid = ma->ma_slot;
+	ci->ci_softc = sc;
 
 	/*
 	 * Though we could (should?) attach the LCA cpus' PCI
@@ -380,11 +375,6 @@ recognized:
 		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
 		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
 	}
-
-	ci->ci_softc = sc;
-#else /* ! MULTIPROCESSOR */
-	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
-		ci->ci_softc = sc;
 #endif /* MULTIPROCESSOR */
 
 	evcnt_attach_dynamic(&sc->sc_evcnt_clock, EVCNT_TYPE_INTR,
