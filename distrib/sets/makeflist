@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.35 2001/09/08 11:09:26 thomas Exp $
+# $NetBSD: makeflist,v 1.36 2001/10/20 06:11:21 jmc Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -10,6 +10,7 @@
 : ${MAKE=make}
 machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
 arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
+tc=${USE_NEW_TOOLCHAIN:-`printf '.include <bsd.own.mk>\nxxx:\n\techo ${USE_NEW_TOOLCHAIN}' | /usr/bin/make -m /usr/src/share/mk -s -f-`}
 setd=`pwd`
 nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
@@ -94,6 +95,15 @@ for setname in $lists; do
 	if [ "$lintlibs" != no ]; then
 		if [ -f $setd/lists/$setname/lint.mi ]; then
 			cat $setd/lists/$setname/lint.mi
+		fi
+	fi
+	if [ "$tc" = "yes" ]; then
+		if [ -f $setd/lists/$setname/tc.mi ]; then
+			cat $setd/lists/$setname/tc.mi
+		fi
+	else
+		if [ -f $setd/lists/$setname/tc.old ]; then
+			cat $setd/lists/$setname/tc.old
 		fi
 	fi
 done | egrep -v '^#' | awk -- '{print $1}' | sort -u

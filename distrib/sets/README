@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.4 2000/06/20 06:00:28 thorpej Exp $
+# $NetBSD: README,v 1.5 2001/10/20 06:11:21 jmc Exp $
 
 To: "NetBSD Port Maintainers"
 Subject: distribution sets, etc...
@@ -41,6 +41,15 @@ and 'misc' sets, but that's explained later.)
 
 There is one machine-independent file, named "mi".  There are
 N machine-dependent files (one per architecture), named "md.${ARCH}".
+
+XXX - Temporarily (while USE_NEW_TOOLCHAIN is in effect) there are also tc.mi
+and tc.old files in some of the set lists. tc.mi lists files in the new 
+toolchain that didn't exist in the old toolchain. tc.old lists files removed
+and aren't present in the new toolchain. All other toolchain information was
+left for now in the various mi/md files. The makeflist script will check
+for USE_NEW_TOOLCHAIN and pull the appropriate one into place. Once all
+ports are converted to the new toolchain the entire toolchain should be pulled
+into tc.mi and/or tc.${MACHINE} and everything in tc.old moved to obsolete.
 
 the sets are as follows:
 
