@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.104 2003/08/13 06:01:02 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.105 2003/08/13 13:36:02 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1174,3 +1174,18 @@ usr.sbin/sup/source/supfilesrv.c		1.26
 	Debian bug id "sup 1.8-8, bug #175327" - temporary file symlink race
 	[itojun, ticket #1391]
 
+sys/arch/i386/include/param.h			1.55 via patch
+
+	Allow redefiniton of KERNBASE.  Because the type of this constant is
+	different for locore.S and the rest of the kernel, if you redefine
+	it from the default value, you must also define KERNBASE_LOCORE -- this
+	is ugly, but so is having the same constant with two different types
+	depending where in the kernel it's used...
+	[tls, ticket #1387]
+
+sys/arch/i386/i386/pmap.c			1.144
+
+	Fix a sign extension bug that caused pmap_growkernel() to fail with
+	>2GB KVA.
+	Symptom observed and verified fixed by tls.
+	[tls, ticket #1388]
