@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("@(#) pfkey.c $Revision: 1.2 $");
+#ifndef lint
+__RCSID("@(#) pfkey.c $Revision: 1.3 $");
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1146,7 +1148,16 @@ static caddr_t pfkey_setsadbaddr(caddr_t buf, u_int type,
 
 	((struct sockaddr *)p)->sa_len = _SALENBYAF(family);
 	((struct sockaddr *)p)->sa_family = family;
-	_INPORTBYSA(p) = port;
+	switch (family) {
+	case AF_INET:
+		((struct sockaddr_in *)p)->sin_port = port;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		((struct sockaddr_in6 *)p)->sin6_port = port;
+		break;
+#endif
+	}
 	memcpy(_INADDRBYSA(p), addr, _INALENBYAF(family));
 
 	return buf + len;

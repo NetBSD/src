@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.1 1999/07/01 20:15:27 itojun Exp $
+# $NetBSD: Makefile,v 1.2 1999/07/03 06:59:28 itojun Exp $
 
 LIB=	ipsec
-CFLAGS+=-g -DIPSEC_DEBUG
-CFLAGS+=-DIPSEC
-CFLAGS+=-DINET6
+#CFLAGS+=-g
+CPPFLAGS+=-DIPSEC_DEBUG
+CPPFLAGS+=-DIPSEC
+CPPFLAGS+=-DINET6
 
 .PATH:	${.CURDIR}/../../sys/netkey
 SRCS=	pfkey.c pfkey_dump.c
