@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.10 1995/03/29 22:10:18 briggs Exp $	*/
+/*	$NetBSD: uio.h,v 1.11 1995/06/14 05:24:46 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -52,7 +52,7 @@ enum	uio_rw { UIO_READ, UIO_WRITE };
 /* Segment flag values. */
 enum uio_seg {
 	UIO_USERSPACE,		/* from user data space */
-	UIO_SYSSPACE,		/* from system space */
+	UIO_SYSSPACE		/* from system space */
 };
 
 #ifdef _KERNEL
