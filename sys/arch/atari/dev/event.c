@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.4 1996/09/25 15:03:39 leo Exp $	*/
+/*	$NetBSD: event.c,v 1.5 1996/10/08 23:40:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,7 +162,6 @@ ev_poll(ev, events, p)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &ev->ev_sel);
-
 	}
 	splx(s);
 	return (revents);
