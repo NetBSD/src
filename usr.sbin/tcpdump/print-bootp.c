@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bootp.c,v 1.5 1998/07/08 22:14:10 cgd Exp $	*/
+/*	$NetBSD: print-bootp.c,v 1.6 1999/07/02 11:31:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: print-bootp.c,v 1.45 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-bootp.c,v 1.5 1998/07/08 22:14:10 cgd Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.6 1999/07/02 11:31:31 itojun Exp $");
 #endif
 #endif
 
@@ -160,8 +160,9 @@ bootp_print(register const u_char *cp, u_int length,
 			fputs(tstr + 1, stdout);
 			return;
 		}
+		putchar('"');
 	}
-	TCHECK2(bp->bp_file[0], 1);		/* check first char only */
+	TCHECK2(bp->bp_sname[0], 1);		/* check first char only */
 	if (*bp->bp_file) {
 		printf(" file \"");
 		if (fn_print(bp->bp_file, snapend)) {
@@ -169,6 +170,7 @@ bootp_print(register const u_char *cp, u_int length,
 			fputs(tstr + 1, stdout);
 			return;
 		}
+		putchar('"');
 	}
 
 	/* Decode the vendor buffer */
@@ -212,11 +214,69 @@ static struct tok tag2str[] = {
 	{ TAG_BOOTSIZE,		"sBS" },	/* 512 byte blocks */
 	{ TAG_END,		" END" },
 /* RFC1497 tags */
-	{ TAG_DUMPPATH,		"aDP" },
-	{ TAG_DOMAINNAME,	"aDN" },
-	{ TAG_SWAP_SERVER,	"iSS" },
-	{ TAG_ROOTPATH,		"aRP" },
-	{ TAG_EXTPATH,		"aEP" },
+	{ TAG_DUMPPATH,		"aDP" },	/* merit dump file */
+	{ TAG_DOMAINNAME,	"aDN" },	/* domain name */
+	{ TAG_SWAP_SERVER,	"iSS" },	/* swap server */
+	{ TAG_ROOTPATH,		"aRP" },	/* root path */
+	{ TAG_EXTPATH,		"aEP" },	/* extensions path */
+/* RFC1533 tags */
+	{ TAG_IP_FORWARD,	"bip-fw" },
+	{ TAG_IP_SRCRT,		"bip-sr" },
+	{ TAG_IP_FILTER,	"iip-fil" },
+	{ TAG_IP_REASS,		"sip-reass" },
+	{ TAG_IP_TTL,		"bip-ttl" },
+	{ TAG_IP_PMTUTO,	"lip-mtuto" },
+	{ TAG_IP_PMTUPTAB,	"sip-mtutab" },
+	{ TAG_IPIF_MTU,		"sif-mtu" },
+	{ TAG_IPIF_LSUBNET,	"bif-lsubnet" },
+	{ TAG_IPIF_BADDR,	"iif-bcast" },
+	{ TAG_IPIF_MDISC,	"bif-mdisc" },
+	{ TAG_IPIF_MSUPP,	"bif-msupp" },
+	{ TAG_IPIF_RDISC,	"bif-rdisc" },
+	{ TAG_IPIF_RSOLADDR,	"iif-rsoladdr" },
+	{ TAG_IPIF_SROUTE,	"iif-staticroute" },
+	{ TAG_LINK_TRAILER,	"blink-trailer" },
+	{ TAG_LINK_ARPTO,	"blink-arpto" },
+	{ TAG_LINK_ETHER802,	"blink-ether822" },
+	{ TAG_TCP_DEFTTL,	"btcp-defttl" },
+	{ TAG_TCP_KAINT,	"ltcp-kaint" },
+	{ TAG_TCP_KAGARBAGE,	"btcp-kagarbage" },
+	{ TAG_APP_NISDOM,	"anis-dom" },
+	{ TAG_APP_NISOPT,	"inis-srv" },
+	{ TAG_APP_NTPSRV,	"intp-srv" },
+	{ TAG_VENDOR,		"bvendor" },
+	{ TAG_APP_NB_NS_SERVER,	"inetbios-ns-srv" },
+	{ TAG_APP_NB_DD_SERVER,	"inetbios-dd-srv" },
+	{ TAG_APP_NB_NODETYPE,	"bnetbios-nodetype" },
+	{ TAG_APP_NB_SCOPE,	"inetbios-scope" },
+	{ TAG_APP_X_FS,		"ix-fs" },
+	{ TAG_APP_X_DM,		"ix-dm" },
+	{ TAG_APP_NISPDOM,	"anis+-dom" },
+	{ TAG_APP_NISPSRV,	"inis+-srv" },
+	{ TAG_APP_MIPHA,	"imip-ha" },
+	{ TAG_APP_SMTPSRV,	"ismtp-srv" },
+	{ TAG_APP_POP3SRV,	"ipop3-srv" },
+	{ TAG_APP_NNTPSRV,	"inntp-srv" },
+	{ TAG_APP_HTTPSRV,	"ihttp-srv" },
+	{ TAG_APP_FINGERSRV,	"ifinger-srv" },
+	{ TAG_APP_IRCSRV,	"iirc-srv" },
+	{ TAG_APP_STREETTALKSRV,"istreettalk-srv" },
+	{ TAG_APP_STREETTALKDA,	"istreettalk-da" },
+/* (post-)RFC1533 DHCP extensions */
+	{ TAG_DHCP_REQIPADDR,	"idhcp-reqipaddr" },
+	{ TAG_DHCP_LEASETIME,	"ldhcp-leasetime" },
+	{ TAG_DHCP_OVERLOAD,	"bdhcp-oerload" },
+	{ TAG_DHCP_TFTPSRV,	"adhcp-tftpsrv" },
+	{ TAG_DHCP_BOOTFILE,	"adhcp-bootfile" },
+	{ TAG_DHCP_MSGTYP,	"bdhcp-msgtyp" },
+	{ TAG_DHCP_SRVID,	"idhpc-srvid" },
+	{ TAG_DHCP_PRMREQ,	"bdhcp-prmreq" },
+	{ TAG_DHCP_MSG,		"adhcp-msg" },
+	{ TAG_DHCP_MAXSIZ,	"sdhpc-maxsiz" },
+	{ TAG_DHCP_T1,		"ldhcp-t1" },
+	{ TAG_DHCP_T2,		"ldhcp-t2" },
+	{ TAG_DHCP_CLASSID,	"bdhcp-classid" },
+	{ TAG_DHCP_CLIENTID,	"bdhcp-cliid" },
 	{ 0,			NULL }
 };
 
