@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.4 2003/02/23 22:31:18 jdolecek Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.5 2003/02/24 09:13:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -237,7 +237,8 @@ main(int argc, char *argv[])
 	error = mount(SMBFS_VFSNAME, mount_point, mntflags, (void*)&mdata);
 	smb_ctx_done(ctx);
 	if (error) {
-		smb_error("mount error: %s", error, mount_point);
+		smb_error("mount error for %s: %s", error, mount_point,
+			strerror(errno));
 		exit(1);
 	}
 	return 0;
