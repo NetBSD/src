@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.23 2003/01/17 02:59:29 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.24 2003/01/17 03:07:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,6 +136,29 @@ sys__lwp_self(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = l->l_lid;
+
+	return (0);
+}
+
+
+int
+sys__lwp_getprivate(struct lwp *l, void *v, register_t *retval)
+{
+
+	*retval = (uintptr_t) l->l_private;
+
+	return (0);
+}
+
+
+int
+sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys__lwp_setprivate_args /* {
+		syscallarg(void *) ptr;
+	} */ *uap = v;
+
+	l->l_private = SCARG(uap, ptr);
 
 	return (0);
 }
