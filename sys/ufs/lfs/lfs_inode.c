@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.85 2004/08/15 07:19:56 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.86 2004/08/15 16:17:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.85 2004/08/15 07:19:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.86 2004/08/15 16:17:37 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -299,19 +299,19 @@ lfs_truncate(void *v)
 			if (lblkno(fs, osize) < NDADDR &&
 			    lblkno(fs, osize) != lblkno(fs, length) &&
 			    blkroundup(fs, osize) != osize) {
+				off_t eob;
+
+				eob = blkroundup(fs, osize);
 				error = ufs_balloc_range(ovp, osize,
-							 blkroundup(fs, osize) -
-							 osize, ap->a_cred,
-							 aflags);
-				if (error) {
+				    eob - osize, ap->a_cred, aflags);
+				if (error)
 					return error;
-				}
 				if (ap->a_flags & IO_SYNC) {
-					ovp->v_size = blkroundup(fs, osize);
+					ovp->v_size = eob;
 					simple_lock(&ovp->v_interlock);
 					VOP_PUTPAGES(ovp,
 					    trunc_page(osize & fs->lfs_bmask),
-					    round_page(ovp->v_size),
+					    round_page(eob),
 					    PGO_CLEANIT | PGO_SYNCIO);
 				}
 			}
@@ -784,9 +784,8 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
 	simple_lock(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
-	if (error) {
+	if (error)
 		return error;
-	} 
 
 	fs = VTOI(vp)->i_lfs;
 	s = splbio();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.56 2004/08/15 07:19:58 mycroft Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.57 2004/08/15 16:24:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.56 2004/08/15 07:19:58 mycroft Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.57 2004/08/15 16:24:41 mycroft Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -43,6 +43,7 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.56 2004/08/15 07:19:58 mycroft E
 #define	WRITE			lfs_write
 #define	WRITE_S			"lfs_write"
 #define	fs_bsize		lfs_bsize
+#define	fs_bmask		lfs_bmask
 #define	fs_maxfilesize		lfs_maxfilesize
 #else
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -202,7 +203,7 @@ WRITE(void *v)
 	daddr_t lbn;
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
-	int bsize, aflag;
+	int aflag;
 	int ubc_alloc_flags;
 	int extended=0;
 	void *win;
@@ -274,7 +275,6 @@ WRITE(void *v)
 	origoff = uio->uio_offset;
 	resid = uio->uio_resid;
 	osize = ip->i_size;
-	bsize = fs->fs_bsize;
 	error = 0;
 
 	usepc = vp->v_type == VREG;
@@ -305,16 +305,17 @@ WRITE(void *v)
 	if (nsize > osize && lblkno(fs, osize) < NDADDR &&
 	    lblkno(fs, osize) != lblkno(fs, nsize) &&
 	    blkroundup(fs, osize) != osize) {
-		error = ufs_balloc_range(vp, osize, blkroundup(fs, osize) -
-		    osize, cred, aflag);
-		if (error) {
+		off_t eob;
+
+		eob = blkroundup(fs, osize);
+		error = ufs_balloc_range(vp, osize, eob - osize, cred, aflag);
+		if (error)
 			goto out;
-		}
 		if (flags & B_SYNC) {
-			vp->v_size = blkroundup(fs, osize);
+			vp->v_size = eob;
 			simple_lock(&vp->v_interlock);
-			VOP_PUTPAGES(vp, trunc_page(osize & ~(bsize - 1)),
-			    round_page(vp->v_size), PGO_CLEANIT | PGO_SYNCIO);
+			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
+			    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 		}
 	}
 
@@ -404,7 +405,7 @@ WRITE(void *v)
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
 		simple_lock(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(origoff & ~(bsize - 1)),
+		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
 		    round_page(blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO);
 	}
