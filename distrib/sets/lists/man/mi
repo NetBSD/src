@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243 2000/05/10 23:28:17 thorpej Exp $
+# $NetBSD: mi,v 1.244 2000/05/10 23:29:46 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -572,6 +572,8 @@
 ./usr/share/man/cat4/usb.0
 ./usr/share/man/cat4/uvisor.0
 ./usr/share/man/cat4/vga.0
+./usr/share/man/cat4/viaenv.0
+./usr/share/man/cat4/viapm.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
 ./usr/share/man/cat4/wd.0
@@ -1582,6 +1584,8 @@
 ./usr/share/man/man4/usb.4
 ./usr/share/man/man4/uvisor.4
 ./usr/share/man/man4/vga.4
+./usr/share/man/man4/viaenv.4
+./usr/share/man/man4/viapm.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/vr.4
 ./usr/share/man/man4/wd.4
