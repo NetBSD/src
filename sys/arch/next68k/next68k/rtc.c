@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $        */
+/*      $NetBSD: rtc.c,v 1.2 1999/01/27 11:27:17 dbj Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -30,6 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* These haven't been tested to see how they interact with NeXTstep's
+ * interpretation of the rtc.
+ */
+
 /* Now using this in the kernel.  This should be turned into a device
  * Darrin B Jewell <jewell@mit.edu>  Tue Jan 27 20:59:25 1998
  */
@@ -40,13 +44,19 @@
 
 #include <machine/cpu.h>
 
+#include <dev/clock_subr.h>
+
 #include <next68k/dev/clockreg.h>
+
+/* #define RTC_DEBUG */
 
 void rtc_init __P((void));
 u_char rtc_read __P((u_char));
 void rtc_write __P((u_char, u_char));
+void rtc_print __P((void));
 void poweroff __P((void));
 time_t getsecs __P((void));
+void setsecs __P((time_t));
 
 u_char new_clock;
 volatile u_int *scr2 = (u_int *)NEXT_P_SCR2; /* will get memory mapped in rtc_init */
@@ -56,23 +66,54 @@ rtc_init(void)
 {
 	u_char val;
 	
-        scr2 = (u_int *)IIOV(NEXT_P_SCR2);
+	scr2 = (u_int *)IIOV(NEXT_P_SCR2);
 	val = rtc_read(RTC_STATUS);
 	new_clock = (val & RTC_NEW_CLOCK) ? 1 : 0;
 
-#if 0
-        if (!new_clock) {
-          /* set up interrupts, this should be in clock.c */
-          rtc_write(RTC_INTRCTL,RTC_64HZ);
-        }
-#endif
+	printf("Looks like a %s clock chip.\n",
+			(new_clock?
+					"MCS1850 (new style)":
+					"MC68HC68T1 (old style)"));
 
-        printf("Looks like a %s clock chip.\n",
-               (new_clock?
-                "MCS1850 (new style)":
-                "MC68HC68T1 (old style)"));
-        print_rtc();
-        
+#ifdef RTC_DEBUG
+	rtc_print();
+#endif
+}
+
+void
+rtc_print(void)
+{
+
+#define RTC_PRINT(x)	printf("\t%16s= 0x%02x\n",#x, rtc_read(x))
+
+	if (new_clock) {
+		RTC_PRINT(RTC_RAM);
+		RTC_PRINT(RTC_CNTR0);
+		RTC_PRINT(RTC_CNTR1);
+		RTC_PRINT(RTC_CNTR2);
+		RTC_PRINT(RTC_CNTR3);
+		RTC_PRINT(RTC_ALARM0);
+		RTC_PRINT(RTC_ALARM1);
+		RTC_PRINT(RTC_ALARM2);
+		RTC_PRINT(RTC_ALARM3);
+		RTC_PRINT(RTC_STATUS);
+		RTC_PRINT(RTC_CONTROL);
+	} else {
+		RTC_PRINT(RTC_RAM);
+		RTC_PRINT(RTC_SEC);
+		RTC_PRINT(RTC_MIN);
+		RTC_PRINT(RTC_HRS);
+		RTC_PRINT(RTC_DAY);
+		RTC_PRINT(RTC_DATE);
+		RTC_PRINT(RTC_MON);
+		RTC_PRINT(RTC_YR);
+		RTC_PRINT(RTC_ALARM_SEC);
+		RTC_PRINT(RTC_ALARM_MIN);
+		RTC_PRINT(RTC_ALARM_HR);
+		RTC_PRINT(RTC_STATUS);
+		RTC_PRINT(RTC_CONTROL);
+		RTC_PRINT(RTC_INTRCTL);
+	}
 }
 
 
@@ -129,7 +170,7 @@ rtc_write(u_char reg, u_char v)
 	int i;
 	u_int tmp;
 	u_char val;
-    
+
 	*scr2 = (*scr2 & ~(SCR2_RTDATA | SCR2_RTCLK)) | SCR2_RTCE;
 	DELAY(1);
 
@@ -150,7 +191,7 @@ rtc_write(u_char reg, u_char v)
 		val <<= 1;
 	}
 
-        DELAY(1);
+	DELAY(1);
 
 	for (i=0; i<8; i++) {
 		tmp = *scr2 & ~(SCR2_RTDATA | SCR2_RTCLK);
@@ -177,10 +218,10 @@ poweroff(void)
 	int reg, t;
 
 	if(new_clock) {
-          reg = RTC_CNTR3;
-        } else {
-          reg = RTC_CNTR0;
-        }
+		reg = RTC_CNTR3;
+	} else {
+		reg = RTC_CNTR0;
+	}
 
 	t = rtc_read(reg);	/* seconds */
 	/* wait for clock to tick */
@@ -189,14 +230,14 @@ poweroff(void)
 	DELAY(850000);	/* hardware bug workaround ? */
 
 	if(new_clock) {
-          reg = RTC_CONTROL;
-        } else {
-          reg = RTC_INTRCTL;
-        }
+		reg = RTC_CONTROL;
+	} else {
+		reg = RTC_INTRCTL;
+	}
 
 	rtc_write(reg, rtc_read(reg)|(RTC_PDOWN));
 
-        panic("Failed to poweroff!\n");
+	panic("Failed to poweroff!\n");
 }
 
 
@@ -207,95 +248,98 @@ getsecs(void)
 	
 	if (new_clock) {
 		secs = rtc_read(RTC_CNTR3) << 24 |
-		       rtc_read(RTC_CNTR2) << 16 |
-		       rtc_read(RTC_CNTR1) << 8  |
-		       rtc_read(RTC_CNTR0);
+				rtc_read(RTC_CNTR2) << 16 |
+				rtc_read(RTC_CNTR1) << 8	 |
+				rtc_read(RTC_CNTR0);
 	} else {
+		struct clock_ymdhms val;
+		{
+			u_char y;
+			y = FROMBCD(rtc_read(RTC_YR));
+			if (y >= 69) {
+				val.dt_year = 1900+y;
+			} else {
+				val.dt_year = 2000+y;
+			}
+		}
+		val.dt_mon	= FROMBCD(rtc_read(RTC_MON)&0x1f);
+		val.dt_day	= FROMBCD(rtc_read(RTC_DATE)&0x3f);
+		val.dt_wday = FROMBCD(rtc_read(RTC_DAY)&0x7);
+		{
+			u_char h;
+			h = rtc_read(RTC_HRS);
+			if (h & 0x80) {					/* time is am/pm format */
+				val.dt_hour = FROMBCD(h&0x1f);
+				if (h & 0x20) { /* pm */
+					if (val.dt_hour < 12) val.dt_hour += 12;
+				} else {  /* am */
+					if (val.dt_hour == 12) val.dt_hour = 0;
+				}
+			} else {								/* time is 24 hour format */
+				val.dt_hour = FROMBCD(h & 0x3f);
+			}
+		}
+		val.dt_min	= FROMBCD(rtc_read(RTC_MIN)&0x7f);
+		val.dt_sec	= FROMBCD(rtc_read(RTC_SEC)&0x7f);
 
-		u_char y,o,d,t,h,m,s;
-#define BCD_DECODE(x) (((x) >> 4) * 10 + ((x) & 0xf))
-                y = rtc_read(RTC_YR);
-                o = rtc_read(RTC_MON);
-                t = rtc_read(RTC_DATE);
-		d = rtc_read(RTC_DAY);
-		h = rtc_read(RTC_HRS);
-		m = rtc_read(RTC_MIN);
-		s = rtc_read(RTC_SEC);
-                printf("RTC: years = %d, months = %d, date = %d, day = %d\n",
-                       BCD_DECODE(y),BCD_DECODE(o),
-                       BCD_DECODE(t),BCD_DECODE(d));
-                printf("RTC: hours = %d, minutes = %d, seconds = %d\n",
-                       BCD_DECODE(h),BCD_DECODE(m),BCD_DECODE(s));
-                printf ("WARNING: Don't really know how to convert rtc to secs\n");
-                secs = (d*24*60*60)+(h*60*60)+(m*60)+s;
+		secs = clock_ymdhms_to_secs(&val);
 	}
-	
+
 	return secs;
 }
 
 void
-setsecs(time_t t)
+setsecs(time_t secs)
 {
-  u_int secs = t;
 
-  /* Stop the clock */
-  rtc_write(RTC_CONTROL,rtc_read(RTC_CONTROL) & ~RTC_START);
-  if (new_clock) {
-    rtc_write(RTC_CNTR3, (secs << 24) & 0xff);
-    rtc_write(RTC_CNTR2, (secs << 16) & 0xff);
-    rtc_write(RTC_CNTR1, (secs <<  8) & 0xff);
-    rtc_write(RTC_CNTR0, (secs) & 0xff);
+	/* Stop the clock */
+	rtc_write(RTC_CONTROL,rtc_read(RTC_CONTROL) & ~RTC_START);
 
-  } else {
-    printf("WARNING: Don't know how to set old real time clock\n");
-#if 0
-    u_char yr, mn, dy, hr, mi, se;
-    
-#define BCD_ENCODE(v) ((v) % 10) | ((((v) / 10) % 10)<<4)
-
-    rtc_write(RTC_SEC,);
-    rtc_write(RTC_MIN,);
-    rtc_write(RTC_HRS,);
-    rtc_write(RTC_DAY,);
-    rtc_write(RTC_DATE,);
-    rtc_write(RTC_MON,);
-    rtc_write(RTC_YR,);
+#ifdef RTC_DEBUG
+	printf("Setting RTC to 0x%08x.  Regs before:\n",secs);
+	rtc_print();
 #endif
-  }
 
-}
+	if (new_clock) {
+		rtc_write(RTC_CNTR3, (secs << 24) & 0xff);
+		rtc_write(RTC_CNTR2, (secs << 16) & 0xff);
+		rtc_write(RTC_CNTR1, (secs <<	 8) & 0xff);
+		rtc_write(RTC_CNTR0, (secs) & 0xff);
 
-#define RTC_PRINT(x)  printf("\t%s = 0x%x\n",#x, rtc_read(x))
+	} else {
+		struct clock_ymdhms val;
+		clock_secs_to_ymdhms(secs,&val);
+		rtc_write(RTC_SEC,TOBCD(val.dt_sec));
+		rtc_write(RTC_MIN,TOBCD(val.dt_min));
+		{
+			u_char h;
+			h = rtc_read(RTC_HRS);
+			if (h & 0x80) {						/* time is am/pm format */
+				if (val.dt_hour == 0) {
+					rtc_write(RTC_HRS,TOBCD(12)|0x80);
+				} else if (val.dt_hour < 12) {	/* am */
+					rtc_write(RTC_HRS,TOBCD(val.dt_hour)|0x80);
+				} else if (val.dt_hour == 12) {
+						rtc_write(RTC_HRS,TOBCD(12)|0x80|0x20);
+				} else {								/* pm */
+					rtc_write(RTC_HRS,TOBCD(val.dt_hour-12)|0x80|0x20);
+				}
+			} else {									/* time is 24 hour format */
+				rtc_write(RTC_HRS,TOBCD(val.dt_hour));
+			}
+		}
+		rtc_write(RTC_DAY,TOBCD(val.dt_wday));
+		rtc_write(RTC_DATE,TOBCD(val.dt_day));
+		rtc_write(RTC_MON,TOBCD(val.dt_mon));
+		rtc_write(RTC_YR,TOBCD(val.dt_year%100));
+	}
 
-void
-print_rtc(void)
-{
-  if (new_clock) {
-    RTC_PRINT(RTC_RAM);
-    RTC_PRINT(RTC_CNTR0);
-    RTC_PRINT(RTC_CNTR1);
-    RTC_PRINT(RTC_CNTR2);
-    RTC_PRINT(RTC_CNTR3);
-    RTC_PRINT(RTC_ALARM0);
-    RTC_PRINT(RTC_ALARM1);
-    RTC_PRINT(RTC_ALARM2);
-    RTC_PRINT(RTC_ALARM3);
-    RTC_PRINT(RTC_STATUS);
-    RTC_PRINT(RTC_CONTROL);
-  } else {
-    RTC_PRINT(RTC_RAM);
-    RTC_PRINT(RTC_SEC);
-    RTC_PRINT(RTC_MIN);
-    RTC_PRINT(RTC_HRS);
-    RTC_PRINT(RTC_DAY);
-    RTC_PRINT(RTC_DATE);
-    RTC_PRINT(RTC_MON);
-    RTC_PRINT(RTC_YR);
-    RTC_PRINT(RTC_ALARM_SEC);
-    RTC_PRINT(RTC_ALARM_MIN);
-    RTC_PRINT(RTC_ALARM_HR);
-    RTC_PRINT(RTC_STATUS);
-    RTC_PRINT(RTC_CONTROL);
-    RTC_PRINT(RTC_INTRCTL);
-  }
+#ifdef RTC_DEBUG
+	printf("Regs after:\n",secs);
+	rtc_print();
+#endif
+
+	/* restart the clock */
+	rtc_write(RTC_CONTROL,rtc_read(RTC_CONTROL) | RTC_START);
+
 }
