@@ -1,4 +1,4 @@
-/*	$NetBSD: en_US.ISO_8859-4.src,v 1.1 2000/12/22 01:31:48 itojun Exp $	*/
+/*	$NetBSD: en_US.ISO_8859-4.src,v 1.2 2000/12/22 01:37:23 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for the iso_8859_4 Locale
@@ -29,6 +29,7 @@ UPPER		'A' - 'Z'
 XDIGIT		'a' - 'f' 'A' - 'F'
 BLANK		' ' '\t' 0xa0
 PRINT		0x20 - 0x7e 0xa0 - 0xff
+SWIDTH1		0x20 - 0x7e 0xa0 - 0xff
 # IDEOGRAM
 # SPECIAL
 # PHONEGRAM
