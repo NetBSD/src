@@ -1,4 +1,4 @@
-.\"     $NetBSD: et.4,v 1.7 1999/12/17 16:23:23 abs Exp $
+.\"     $NetBSD: et.4,v 1.8 1999/12/23 12:28:06 jdc Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,18 +38,27 @@
 .Dt ET 4 atari
 .Sh NAME
 .Nm et
-.Nd ET4000 graphics driver
+.Nd driver for ET4000 VME graphics cards
 .Sh SYNOPSIS
 .Cd "et0 at vme0"
 .Sh DESCRIPTION
 The
 .Nm ""
-device driver supports the Crazy Dots II VME graphics card, which is based
-on the Tseng ET4000 chipset.  It supports the minimal ioctl's needed to run
-X11.  The 8Kb control registers are mapped from offset 0x0 to offset 0x1fff
-and the 1MB frame buffer is mapped from offset 0x400000 to offset 0x4fffff.
-VGA compatible memory is mapped from offset 0xa0000 to offset 0xc0000.
+device driver supports VME graphics cards based on the Tseng ET4000 chipset.
+It supports the minimal ioctl's needed to run X11.  The 8Kb control registers
+are mapped from offset 0x0 to offset 0x1fff and the 1MB frame buffer is mapped
+from offset 0x400000 to offset 0x4fffff.  VGA compatible memory is mapped from
+offset 0xa0000 to offset 0xc0000.
+.Sh HARDWARE
+Cards supported by the
+.Nm
+driver include:
 .Pp
+.Bl -item -compact
+.It
+Crazy Dots II VME graphics card
+.El
+.Sh NOTES
 The clock generator on the Crazy Dots card is an ICS 1394M.  Setting the
 clock is done by writing to a register at offset 0x0.  This address cannot
 be read.  The values that can be written to the register and the associated
@@ -72,15 +81,6 @@ clock are:
 .It 0x07	56644
 .It 0x11	65028
 .It 0x1f	80000
-.El
-.Sh HARDWARE
-Cards supported by the
-.Nm
-driver include:
-.Pp
-.Bl -item -compact
-.It
-Crazy Dots II VME graphics card
 .El
 .Sh FILES
 .Bl -tag -width "xxxxxxxxxx" -compact
