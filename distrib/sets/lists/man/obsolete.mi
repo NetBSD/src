@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.6 2000/02/10 22:17:18 fair Exp $
+# $NetBSD: obsolete.mi,v 1.7 2000/02/18 10:05:41 veego Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/ld.so.0
 /usr/share/man/cat1/pstat.0
@@ -18,6 +18,7 @@
 /usr/share/man/cat4/i386/speaker.0
 /usr/share/man/cat4/imp.0
 /usr/share/man/cat4/pmax/le.0
+/usr/share/man/cat4/rtpphy.0
 /usr/share/man/cat4/sparc/le.0
 /usr/share/man/cat4/sun3/le.0
 /usr/share/man/cat5/inetd.0
@@ -38,7 +39,14 @@
 /usr/share/man/cat8/rdconfig.0
 /usr/share/man/cat8/sun3x
 /usr/share/man/cat8/sun3x/installboot.0
+/usr/share/man/cat8/usbd.0
 /usr/share/man/cat9/boot.0
+/usr/share/man/man1/amq.1
+/usr/share/man/man1/ld.so.1
+/usr/share/man/man1/pstat.1
+/usr/share/man/man1/rpc.rquotad.1
+/usr/share/man/man1/rtld.1
+/usr/share/man/man1/ttyflags.1
 /usr/share/man/man3/dlclose.3
 /usr/share/man/man3/dlctl.3
 /usr/share/man/man3/dlerror.3
@@ -50,16 +58,28 @@
 /usr/share/man/man4/i386/le.4
 /usr/share/man/man4/i386/pms.4
 /usr/share/man/man4/i386/speaker.4
+/usr/share/man/man4/imp.4
 /usr/share/man/man4/pmax/le.4
+/usr/share/man/man4/rtpphy.4
 /usr/share/man/man4/sparc/le.4
 /usr/share/man/man4/sun3/le.4
 /usr/share/man/man4/sun3/leds.4
+/usr/share/man/man5/inetd.5
+/usr/share/man/man5/pcfs.5
 /usr/share/man/man5/securenet.5
+/usr/share/man/man5/uuencode.format.5
 /usr/share/man/man5/ypserv.acl.5
+/usr/share/man/man8/fdisk.8
 /usr/share/man/man8/gettable.8
 /usr/share/man/man8/htable.8
 /usr/share/man/man8/i386/apmd.8
+/usr/share/man/man8/i386/bad144.8
+/usr/share/man/man8/i386/reboot.8
+/usr/share/man/man8/i386/reboot_i386.8
 /usr/share/man/man8/newlfs.8
 /usr/share/man/man8/pppd.cbcp.8
+/usr/share/man/man8/rdconfig.8
 /usr/share/man/man8/sun3x
 /usr/share/man/man8/sun3x/installboot.8
+/usr/share/man/man8/usbd.8
+/usr/share/man/man9/boot.9
