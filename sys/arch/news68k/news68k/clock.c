@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.4 2000/10/03 13:49:25 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.5 2000/10/05 21:20:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,6 @@
 
 #include <machine/cpu.h>
 
-static	int clock_attached;
 static	todr_chip_handle_t todr_handle;
 static	void (*cpu_initclocks_hook) __P((int, int));
 
@@ -68,10 +67,8 @@ clock_config(handle, initfunc)
 	void (*initfunc) __P((int, int));
 {
 
-	if (clock_attached)
+	if (todr_handle)
 		panic("clock_config: too many clocks configured");
-
-	clock_attached = 1;
 
 	todr_handle = handle;
 	cpu_initclocks_hook = initfunc;
@@ -87,7 +84,7 @@ void
 cpu_initclocks()
 {
 
-	if (clock_attached == 0)
+	if (cpu_initclocks_hook == NULL)
 		panic("clock not configured");
 
 	if (1000000 % hz) {
