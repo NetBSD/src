@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.30 1999/12/13 08:25:16 itohy Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.31 2000/02/03 02:20:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -162,6 +162,7 @@
 #endif /* NO_KERNEL_RCSIDS */
 #endif /* _KERNEL */
 
+#if !defined(_STANDALONE) && !defined(_KERNEL)
 #ifdef __GNUC__
 #define	__RENAME(x)	___RENAME(x)
 #else
@@ -171,5 +172,8 @@
  #error "No function renaming possible"
 #endif /* __lint__ */
 #endif /* __GNUC__ */
+#else /* _STANDALONE || _KERNEL */
+#define	__RENAME(x)	no renaming in kernel or standalone environment
+#endif
 
 #endif /* !_SYS_CDEFS_H_ */
