@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.87 2001/09/04 18:11:22 martin Exp $
+# $NetBSD: mi,v 1.88 2001/10/29 23:29:12 augustss Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -104,6 +104,7 @@
 ./etc/rc.d/mountcritlocal		etc-sys-rc
 ./etc/rc.d/mountcritremote		etc-sys-rc
 ./etc/rc.d/mountd			etc-nfsserver-rc
+./etc/rc.d/moused			etc-sysutil-rc
 ./etc/rc.d/mrouted			etc-router-rc
 ./etc/rc.d/named			etc-bind-rc
 ./etc/rc.d/ndbootd			etc-bootserver-rc
