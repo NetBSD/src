@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lpd.8	6.6 (Berkeley) 3/16/91
-.\"	$Id: lpd.8,v 1.2 1993/08/01 07:24:38 mycroft Exp $
+.\"	$Id: lpd.8,v 1.3 1994/01/14 16:22:53 jtc Exp $
 .\"
 .Dd March 16, 1991
 .Dt LPD 8
@@ -101,7 +101,7 @@ file can be edited with your favorite text editor.
 .Pp
 The daemon begins processing files
 after it has successfully set the lock for exclusive
-access (descibed a bit later),
+access (described a bit later),
 and scans the spool directory
 for files beginning with 
 .Em cf .
@@ -201,7 +201,7 @@ skip the file to be printed.
 uses
 .Xr flock 2
 to provide exclusive access to the lock file and to prevent multiple
-deamons from becoming active simultaneously.  If the daemon should be killed
+daemons from becoming active simultaneously.  If the daemon should be killed
 or die unexpectedly, the lock file need not be removed.
 The lock file is kept in a readable
 .Tn ASCII
