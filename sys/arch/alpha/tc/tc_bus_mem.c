@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.2.4.1 1996/06/03 20:28:16 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.2.4.2 1996/06/13 17:42:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,6 +44,8 @@ int		tc_mem_map __P((void *, bus_mem_addr_t, bus_mem_size_t,
 		    int, bus_mem_handle_t *));
 void		tc_mem_unmap __P((void *, bus_mem_handle_t,
 		    bus_mem_size_t));
+int		tc_mem_subregion __P((void *, bus_mem_handle_t, bus_mem_size_t,
+		    bus_mem_size_t, bus_mem_handle_t *));
 u_int8_t	tc_mem_read_1 __P((void *, bus_mem_handle_t,
 		    bus_mem_size_t));
 u_int16_t	tc_mem_read_2 __P((void *, bus_mem_handle_t,
@@ -74,6 +76,7 @@ tc_bus_mem_init(bc, memv)
 
 	bc->bc_m_map = tc_mem_map;
 	bc->bc_m_unmap = tc_mem_unmap;
+	bc->bc_m_subregion = tc_mem_subregion;
 
 	bc->bc_mr1 = tc_mem_read_1;
 	bc->bc_mr2 = tc_mem_read_2;
@@ -115,6 +118,25 @@ tc_mem_unmap(v, memh, memsize)
 {
 
 	/* XXX nothing to do. */
+}
+
+int
+tc_mem_subregion(v, memh, offset, size, nmemh)
+	void *v;
+	bus_mem_handle_t memh, *nmemh;
+	bus_mem_size_t offset, size;
+{
+
+	/* Disallow subregioning that would make the handle unaligned. */
+	if ((offset & 0x7) != 0)
+		return (1);
+
+	if ((memh & TC_SPACE_SPARSE) != 0)
+		*nmemh = memh + (offset << 1);
+	else
+		*nmemh = memh + offset;
+
+	return (0);
 }
 
 u_int8_t
