@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.1.1.1 1997/03/03 12:20:57 leo Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.2 1997/07/17 01:56:29 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,15 +73,17 @@ struct vme_attach_args {
 	void	*va_aux;		/* driver specific */
 };
 
-#define	IOBASEUNK	-1		/* i/o address is unknown */
-#define	IRQUNK		-1		/* interrupt request line is unknown */
-#define	MADDRUNK	-1		/* shared memory address is unknown */
+#include "locators.h"
 
-#define		cf_iobase		cf_loc[0]
-#define		cf_iosize		cf_loc[1]
-#define		cf_maddr		cf_loc[2]
-#define		cf_msize		cf_loc[3]
-#define		cf_irq			cf_loc[4]
+#define	IOBASEUNK	VMECF_IOPORT_DEFAULT	/* i/o address is unknown */
+#define	IRQUNK		VMECF_IRQ_DEFAULT	/* interrupt request line is unknown */
+#define	MADDRUNK	VMECF_MEM_DEFAULT	/* shared memory address is unknown */
+
+#define		cf_iobase		cf_loc[VMECF_IOPORT]
+#define		cf_iosize		cf_loc[VMECF_IOSIZE]
+#define		cf_maddr		cf_loc[VMECF_MEM]
+#define		cf_msize		cf_loc[VMECF_MEMSIZ]
+#define		cf_irq			cf_loc[VMECF_IRQ]
 
 /*
  * VME master bus
