@@ -1,7 +1,7 @@
-/*	$NetBSD: igsfb.c,v 1.7 2003/01/12 21:37:59 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.8 2003/05/10 01:51:56 uwe Exp $ */
 
 /*
- * Copyright (c) 2002 Valeriy E. Ushakov
+ * Copyright (c) 2002, 2003 Valeriy E. Ushakov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,9 @@
 
 /*
  * Integraphics Systems IGA 168x and CyberPro series.
- * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.7 2003/01/12 21:37:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.8 2003/05/10 01:51:56 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,13 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.7 2003/01/12 21:37:59 uwe Exp $");
 #include <machine/bus.h>
 
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
 
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
 
+
+struct igsfb_devconfig igsfb_console_dc;
 
 /*
  * wsscreen
@@ -103,74 +104,131 @@ static const struct wsdisplay_accessops igsfb_accessops = {
 /*
  * internal functions
  */
-static void	igsfb_common_init(struct igsfb_softc *);
-static void	igsfb_init_bit_tables(struct igsfb_softc *);
-static void	igsfb_blank_screen(struct igsfb_softc *, int);
-static int	igsfb_get_cmap(struct igsfb_softc *, struct wsdisplay_cmap *);
-static int	igsfb_set_cmap(struct igsfb_softc *, struct wsdisplay_cmap *);
-static void	igsfb_update_cmap(struct igsfb_softc *sc, u_int, u_int);
-static void	igsfb_set_curpos(struct igsfb_softc *,
-				 struct wsdisplay_curpos *);
-static void	igsfb_update_curpos(struct igsfb_softc *);
-static int	igsfb_get_cursor(struct igsfb_softc *,
-				 struct wsdisplay_cursor *);
-static int	igsfb_set_cursor(struct igsfb_softc *,
-				 struct wsdisplay_cursor *);
-static void	igsfb_update_cursor(struct igsfb_softc *, u_int);
-static void	igsfb_convert_cursor_data(struct igsfb_softc *, u_int, u_int);
-
-/*
- * bit expanders
- */
+static int	igsfb_init_video(struct igsfb_devconfig *);
+static void	igsfb_init_cmap(struct igsfb_devconfig *);
 static u_int16_t igsfb_spread_bits_8(u_int8_t);
+static void	igsfb_init_bit_tables(struct igsfb_devconfig *);
+static void	igsfb_init_wsdisplay(struct igsfb_devconfig *);
 
-static struct igs_bittab *igsfb_bittab = NULL;
-static struct igs_bittab *igsfb_bittab_bswap = NULL;
+static void	igsfb_blank_screen(struct igsfb_devconfig *, int);
+static int	igsfb_get_cmap(struct igsfb_devconfig *,
+			       struct wsdisplay_cmap *);
+static int	igsfb_set_cmap(struct igsfb_devconfig *,
+			       struct wsdisplay_cmap *);
+static void	igsfb_update_cmap(struct igsfb_devconfig *, u_int, u_int);
+static void	igsfb_set_curpos(struct igsfb_devconfig *,
+				 struct wsdisplay_curpos *);
+static void	igsfb_update_curpos(struct igsfb_devconfig *);
+static int	igsfb_get_cursor(struct igsfb_devconfig *,
+				 struct wsdisplay_cursor *);
+static int	igsfb_set_cursor(struct igsfb_devconfig *,
+				 struct wsdisplay_cursor *);
+static void	igsfb_update_cursor(struct igsfb_devconfig *, u_int);
+static void	igsfb_convert_cursor_data(struct igsfb_devconfig *,
+					  u_int, u_int);
+
+
+int
+igsfb_cnattach_subr(dc)
+	struct igsfb_devconfig *dc;
+{
+	struct rasops_info *ri;
+	long defattr;
+
+	KASSERT(dc == &igsfb_console_dc);
+
+	igsfb_init_video(dc);
+	igsfb_init_wsdisplay(dc);
+
+	ri = &dc->dc_ri;
+	(*ri->ri_ops.allocattr)(ri,
+				WSCOL_BLACK, /* fg */
+				WSCOL_BLACK, /* bg */
+				0,           /* wsattrs */
+				&defattr);
+
+	wsdisplay_cnattach(&igsfb_stdscreen,
+			   ri,   /* emulcookie */
+			   0, 0, /* cursor position */
+			   defattr);
+	return (0);
+}
 
 
 /*
  * Finish off the attach.  Bus specific attach method should have
- * enabled io and memory accesses and mapped io and cop registers.
+ * enabled io and memory accesses and mapped io (and cop?) registers.
  */
 void
-igsfb_common_attach(sc, isconsole)
+igsfb_attach_subr(sc, isconsole)
 	struct igsfb_softc *sc;
 	int isconsole;
+{
+	struct igsfb_devconfig *dc = sc->sc_dc;
+	struct wsemuldisplaydev_attach_args waa;
+
+	KASSERT(dc != NULL);
+
+	if (!isconsole) {
+		igsfb_init_video(dc);
+		igsfb_init_wsdisplay(dc);
+	}
+
+	printf("%s: %dMB, %s%dx%d, %dbpp\n",
+	       sc->sc_dev.dv_xname,
+	       (u_int32_t)(dc->dc_vmemsz >> 20),
+	       (dc->dc_hwflags & IGSFB_HW_BSWAP)
+		   ? (dc->dc_hwflags & IGSFB_HW_BE_SELECT)
+		       ? "hardware bswap, " : "software bswap, "
+		   : "",
+	       dc->dc_width, dc->dc_height, dc->dc_depth);
+
+	/* attach wsdisplay */
+	waa.console = isconsole;
+	waa.scrdata = &igsfb_screenlist;
+	waa.accessops = &igsfb_accessops;
+	waa.accesscookie = dc;
+
+	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+}
+
+
+static int
+igsfb_init_video(dc)
+	struct igsfb_devconfig *dc;
 {
 	bus_space_handle_t tmph;
 	u_int8_t *p;
 	int need_bswap;
-	char *bswap_msg;
-	bus_addr_t fbaddr;
-	bus_addr_t craddr;
+	bus_addr_t fbaddr, craddr;
 	off_t croffset;
-	struct rasops_info *ri;
-	struct wsemuldisplaydev_attach_args waa;
 	u_int8_t busctl, curctl;
 
-	busctl = igs_ext_read(sc->sc_iot, sc->sc_ioh, IGS_EXT_BUS_CTL);
+	/* Total amount of video memory. */
+	busctl = igs_ext_read(dc->dc_iot, dc->dc_ioh, IGS_EXT_BUS_CTL);
 	if (busctl & 0x2)
-		sc->sc_vmemsz = 4 << 20;
+		dc->dc_vmemsz = 4;
 	else if (busctl & 0x1)
-		sc->sc_vmemsz = 2 << 20;
+		dc->dc_vmemsz = 2;
 	else
-		sc->sc_vmemsz = 1 << 20;
+		dc->dc_vmemsz = 1;
+	dc->dc_vmemsz <<= 20;	/* megabytes -> bytes */
 
 	/*
-	 * Check for endianness mismatch by writing a word at the end
-	 * of video memory (off-screen) and reading it back byte-by-byte.
+	 * Check for endianness mismatch by writing a word at the end of
+	 * the video memory (off-screen) and reading it back byte-by-byte.
 	 */
-	if (bus_space_map(sc->sc_memt,
-			  sc->sc_memaddr + sc->sc_vmemsz - sizeof(u_int32_t),
+	if (bus_space_map(dc->dc_memt,
+			  dc->dc_memaddr + dc->dc_vmemsz - sizeof(u_int32_t),
 			  sizeof(u_int32_t),
-			  sc->sc_memflags | BUS_SPACE_MAP_LINEAR,
+			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &tmph) != 0)
 	{
 		printf("unable to map video memory for endianness test\n");
-		return;
+		return (1);
 	}
 
-	p = bus_space_vaddr(sc->sc_memt, tmph);
+	p = bus_space_vaddr(dc->dc_memt, tmph);
 #if BYTE_ORDER == BIG_ENDIAN
 	*((u_int32_t *)p) = 0x12345678;
 #else
@@ -181,112 +239,183 @@ igsfb_common_attach(sc, isconsole)
 	else
 		need_bswap = 1;
 
-	bus_space_unmap(sc->sc_memt, tmph, sizeof(u_int32_t));
+	bus_space_unmap(dc->dc_memt, tmph, sizeof(u_int32_t));
 
 	/*
 	 * On CyberPro we can use magic bswap bit in linear address.
 	 */
-	fbaddr = sc->sc_memaddr;
-	if (need_bswap)
-		if (sc->sc_is2k) {
+	fbaddr = dc->dc_memaddr;
+	if (need_bswap) {
+		dc->dc_hwflags |= IGSFB_HW_BSWAP;
+		if (dc->dc_id >= 0x2000) {
+			dc->dc_hwflags |= IGSFB_HW_BE_SELECT;
 			fbaddr |= IGS_MEM_BE_SELECT;
-			bswap_msg = ", hw bswap";
-		} else {
-			sc->sc_hwflags |= IGSFB_HW_BSWAP;
-			bswap_msg = ", sw bswap"; /* sic! */
 		}
-	else
-		bswap_msg = "";
+	}
 
 	/*
-	 * Don't map in all N megs, just the amount we need for wsscreen
+	 * XXX: TODO: make it possible to select the desired video mode.
+	 * For now - hardcode to 1024x768/8bpp.  This is what Krups OFW uses.
 	 */
-	sc->sc_fbsz = 1024 * 768; /* XXX: 8bpp specific */
-	if (bus_space_map(sc->sc_memt, fbaddr, sc->sc_fbsz,
-			  sc->sc_memflags | BUS_SPACE_MAP_LINEAR,
-			  &sc->sc_fbh) != 0)
+	igsfb_hw_setup(dc);
+
+	dc->dc_width = 1024;
+	dc->dc_height = 768;
+	dc->dc_depth = 8;
+
+	/*
+	 * Don't map in all N megs, just the amount we need for the wsscreen.
+	 */
+	dc->dc_fbsz = dc->dc_width * dc->dc_height; /* XXX: 8bpp specific */
+	if (bus_space_map(dc->dc_memt, fbaddr, dc->dc_fbsz,
+			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
+			  &dc->dc_fbh) != 0)
 	{
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, IGS_REG_SIZE);
+		bus_space_unmap(dc->dc_iot, dc->dc_ioh, IGS_REG_SIZE);
 		printf("unable to map framebuffer\n");
-		return;
+		return (1);
 	}
 
+	igsfb_init_cmap(dc);
+
 	/*
-	 * 1Kb for cursor sprite data at the very end of video memory
+	 * 1KB for cursor sprite data at the very end of the video memory.
 	 */
-	croffset = sc->sc_vmemsz - IGS_CURSOR_DATA_SIZE;
+	croffset = dc->dc_vmemsz - IGS_CURSOR_DATA_SIZE;
 	craddr = fbaddr + croffset;
-	if (bus_space_map(sc->sc_memt, craddr, IGS_CURSOR_DATA_SIZE,
-			  sc->sc_memflags | BUS_SPACE_MAP_LINEAR,
-			  &sc->sc_crh) != 0)
+	if (bus_space_map(dc->dc_memt, craddr, IGS_CURSOR_DATA_SIZE,
+			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
+			  &dc->dc_crh) != 0)
 	{
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, IGS_REG_SIZE);
-		bus_space_unmap(sc->sc_memt, sc->sc_fbh, sc->sc_fbsz);
+		bus_space_unmap(dc->dc_iot, dc->dc_ioh, IGS_REG_SIZE);
+		bus_space_unmap(dc->dc_memt, dc->dc_fbh, dc->dc_fbsz);
 		printf("unable to map cursor sprite region\n");
-		return;
+		return (1);
 	}
 
 	/*
-	 * Tell device where cursor sprite data are located in linear
-	 * space (it takes data offset in 1k units).
+	 * Tell the device where cursor sprite data are located in the
+	 * linear space (it takes data offset in 1KB units).
 	 */
-	croffset >>= 10;
-	igs_ext_write(sc->sc_iot, sc->sc_ioh,
+	croffset >>= 10;	/* bytes -> kilobytes */
+	igs_ext_write(dc->dc_iot, dc->dc_ioh,
 		      IGS_EXT_SPRITE_DATA_LO, croffset & 0xff);
-	igs_ext_write(sc->sc_iot, sc->sc_ioh,
+	igs_ext_write(dc->dc_iot, dc->dc_ioh,
 		      IGS_EXT_SPRITE_DATA_HI, (croffset >> 8) & 0xf);
 
-	memset(&sc->sc_cursor, 0, sizeof(struct igs_hwcursor));
-	memset(bus_space_vaddr(sc->sc_memt, sc->sc_crh),
-	       0xaa, IGS_CURSOR_DATA_SIZE); /* transparent */
+	/* init bit expanders for cursor sprite data */
+	igsfb_init_bit_tables(dc);
 
-	curctl = igs_ext_read(sc->sc_iot, sc->sc_ioh, IGS_EXT_SPRITE_CTL);
+	/* XXX: fill dc_cursor and use igsfb_update_cursor() instead? */
+	memset(&dc->dc_cursor, 0, sizeof(struct igs_hwcursor));
+	memset(bus_space_vaddr(dc->dc_memt, dc->dc_crh),
+	       /* transparent */ 0xaa, IGS_CURSOR_DATA_SIZE);
+
+	curctl = igs_ext_read(dc->dc_iot, dc->dc_ioh, IGS_EXT_SPRITE_CTL);
 	curctl |= IGS_EXT_SPRITE_64x64;
 	curctl &= ~IGS_EXT_SPRITE_VISIBLE;
-	igs_ext_write(sc->sc_iot, sc->sc_ioh, IGS_EXT_SPRITE_CTL, curctl);
+	igs_ext_write(dc->dc_iot, dc->dc_ioh, IGS_EXT_SPRITE_CTL, curctl);
+	dc->dc_curenb = 0;
 
-	/* bit expanders for cursor sprite data */
-	igsfb_init_bit_tables(sc);
+	/* make sure screen is not blanked */
+	dc->dc_blanked = 0;
+	igsfb_blank_screen(dc, dc->dc_blanked);
 
-	/* alloc and cross-link raster ops */
-	ri = malloc(sizeof(struct rasops_info), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ri == NULL)
-		panic("unable to allocate rasops");
-	ri->ri_hw = sc;
-	sc->sc_ri = ri;
+	return (0);
+}
 
-	igsfb_common_init(sc);
 
-	/*
-	 * XXX: console attachment needs rethinking
-	 */
-	sc->sc_nscreens = 0;
-	if (isconsole) {
-		long defattr;
+static void
+igsfb_init_cmap(dc)
+	struct igsfb_devconfig *dc;
+{
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
+	const u_int8_t *p;
+	int i;
 
-		sc->sc_nscreens = 1;
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-		wsdisplay_cnattach(&igsfb_stdscreen, ri, 0, 0, defattr);
+	p = rasops_cmap;	/* "ANSI" color map */
+
+	/* init software copy */
+	for (i = 0; i < IGS_CMAP_SIZE; ++i, p += 3) {
+		dc->dc_cmap.r[i] = p[0];
+		dc->dc_cmap.g[i] = p[1];
+		dc->dc_cmap.b[i] = p[2];
 	}
 
+	/* propagate to the device */
+	igsfb_update_cmap(dc, 0, IGS_CMAP_SIZE);
 
-	printf("%s: %dMB%s, %dx%d, %dbpp\n",
-	       sc->sc_dev.dv_xname,
-	       (u_int32_t)(sc->sc_vmemsz >> 20),
-	       bswap_msg,
-	       ri->ri_width, ri->ri_height, ri->ri_depth);
+	/* set overscan color (XXX: use defattr's background) */
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_RED,   0);
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_GREEN, 0);
+	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_BLUE,  0);
+}
 
-	/* attach wsdisplay */
-	waa.console = isconsole;
-	waa.scrdata = &igsfb_screenlist;
-	waa.accessops = &igsfb_accessops;
-	waa.accesscookie = sc;
 
-	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+static void
+igsfb_init_wsdisplay(dc)
+	struct igsfb_devconfig *dc;
+{
+	struct rasops_info *ri;
+	int wsfcookie;
+
+	ri = &dc->dc_ri;
+	ri->ri_hw = dc;
+
+	ri->ri_flg = RI_CENTER | RI_CLEAR;
+	if (IGSFB_HW_SOFT_BSWAP(dc))
+	    ri->ri_flg |= RI_BSWAP;
+
+	ri->ri_depth = dc->dc_depth;
+	ri->ri_width = dc->dc_width;
+	ri->ri_height = dc->dc_height;
+
+	ri->ri_stride = dc->dc_width; /* XXX: 8bpp specific */
+	ri->ri_bits = (u_char *)dc->dc_fbh;
+
+	/*
+	 * Initialize wsfont related stuff.
+	 */
+	wsfont_init();
+
+	/* prefer gallant that is identical to the one the prom uses */
+	wsfcookie = wsfont_find("Gallant", 12, 22, 0,
+				WSDISPLAY_FONTORDER_L2R,
+				WSDISPLAY_FONTORDER_L2R);
+	if (wsfcookie <= 0) {
+#ifdef DIAGNOSTIC
+		printf("unable to find font Gallant 12x22\n");
+#endif
+		wsfcookie = wsfont_find(NULL, 0, 0, 0, /* any font at all? */
+					WSDISPLAY_FONTORDER_L2R,
+					WSDISPLAY_FONTORDER_L2R);
+	}
+
+	if (wsfcookie <= 0) {
+		printf("unable to find any fonts\n");
+		return;
+	}
+
+	if (wsfont_lock(wsfcookie, &ri->ri_font) != 0) {
+		printf("unable to lock font\n");
+		return;
+	}
+	ri->ri_wsfcookie = wsfcookie;
+
+
+	/* XXX: TODO: compute term size based on font dimensions. */
+	rasops_init(ri, 34, 80);
+
+	igsfb_stdscreen.nrows = ri->ri_rows;
+	igsfb_stdscreen.ncols = ri->ri_cols;
+	igsfb_stdscreen.textops = &ri->ri_ops;
+	igsfb_stdscreen.capabilities = ri->ri_caps;
 }
 
 
 /*
+ * Spread a byte (abcd.efgh) into two (0a0b.0c0d 0e0f.0g0h).
  * Helper function for igsfb_init_bit_tables().
  */
 static u_int16_t
@@ -304,128 +433,25 @@ igsfb_spread_bits_8(b)
 
 /*
  * Cursor sprite data are in 2bpp.  Incoming image/mask are in 1bpp.
- * Prebuild tables to expand 1bpp->2bpp with bswapping if neccessary.
+ * Prebuild tables to expand 1bpp->2bpp, with bswapping if neccessary.
  */
 static void
-igsfb_init_bit_tables(sc)
-	struct igsfb_softc *sc;
+igsfb_init_bit_tables(dc)
+	struct igsfb_devconfig *dc;
 {
-	struct igs_bittab *tab;
+	struct igs_bittab *tab = &dc->dc_bittab;
+	int need_bswap = IGSFB_HW_SOFT_BSWAP(dc);
 	u_int i;
 
-	if (sc->sc_hwflags & IGSFB_HW_BSWAP) {
-		if (igsfb_bittab_bswap == NULL) {
-			tab = malloc(sizeof(struct igs_bittab),
-				     M_DEVBUF, M_NOWAIT);
-			for (i = 0; i < 256; ++i) {
-				u_int16_t s = igsfb_spread_bits_8(i);
-				tab->iexpand[i] = bswap16(s);
-				tab->mexpand[i] = bswap16((s << 1) | s);
-			}
-			igsfb_bittab_bswap = tab;
-		}
-		sc->sc_bittab = igsfb_bittab_bswap;
-	} else {
-		if (igsfb_bittab == NULL) {
-			tab = malloc(sizeof(struct igs_bittab),
-				     M_DEVBUF, M_NOWAIT);
-			for (i = 0; i < 256; ++i) {
-				u_int16_t s = igsfb_spread_bits_8(i);
-				tab->iexpand[i] = s;
-				tab->mexpand[i] = (s << 1) | s;
-			}
-			igsfb_bittab = tab;
-		}
-		sc->sc_bittab = igsfb_bittab;
+	for (i = 0; i < 256; ++i) {
+		u_int16_t s = igsfb_spread_bits_8(i);
+
+		if (need_bswap)
+			s = bswap16(s);
+
+		tab->iexpand[i] = s;
+		tab->mexpand[i] = (s << 1) | s;	/* invariant over bswap16(s) */
 	}
-}
-
-/*
- * I/O and memory are mapped, video enabled, structures allocated.
- */
-static void
-igsfb_common_init(sc)
-	struct igsfb_softc *sc;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	struct rasops_info *ri = sc->sc_ri;
-	int wsfcookie;
-	const u_int8_t *p;
-	int i;
-
-	sc->sc_blanked = 0;
-
-	ri->ri_flg = RI_CENTER | RI_CLEAR;
-	if (sc->sc_hwflags & IGSFB_HW_BSWAP)
-	    ri->ri_flg |= RI_BSWAP;
-
-	/* XXX: deduce these from chip registers */
-	ri->ri_depth = 8;
-	ri->ri_width = 1024;
-	ri->ri_height = 768;
-
-	ri->ri_stride = 1024;
-	ri->ri_bits = (u_char *)sc->sc_fbh;
-
-	/*
-	 * Initialize wsfont related stuff.
-	 */
-	wsfont_init();
-
-	/* prefer gallant that is identical to the one the prom uses */
-	wsfcookie = wsfont_find("Gallant", 12, 22, 0,
-				WSDISPLAY_FONTORDER_L2R,
-				WSDISPLAY_FONTORDER_L2R);
-	if (wsfcookie <= 0) {
-#ifdef DIAGNOSTIC
-		printf("%s: unable to find font Gallant 12x22\n",
-		       sc->sc_dev.dv_xname);
-#endif
-		/* any font at all? */
-		wsfcookie = wsfont_find(NULL, 0, 0, 0,
-					WSDISPLAY_FONTORDER_L2R,
-					WSDISPLAY_FONTORDER_L2R);
-	}
-
-	if (wsfcookie <= 0) {
-		printf("%s: unable to find any fonts\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	if (wsfont_lock(wsfcookie, &ri->ri_font) != 0) {
-		printf("%s: unable to lock font\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	ri->ri_wsfcookie = wsfcookie;
-
-
-	/*
-	 * Initialize colormap related stuff.
-	 */
-
-	/* ANSI color map */
-	p = rasops_cmap;
-	for (i = 0; i < IGS_CMAP_SIZE; ++i, p += 3) { /* software copy */
-		sc->sc_cmap.r[i] = p[0];
-		sc->sc_cmap.g[i] = p[1];
-		sc->sc_cmap.b[i] = p[2];
-	}
-	igsfb_update_cmap(sc, 0, IGS_CMAP_SIZE);
-
-	/* set overscan color r/g/b (XXX: use defattr's rgb?) */
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_RED,   0);
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_GREEN, 0);
-	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_BLUE,  0);
-
-
-	/* TODO: compute term size based on font dimensions? */
-	rasops_init(ri, 34, 80);
-
-	igsfb_stdscreen.nrows = ri->ri_rows;
-	igsfb_stdscreen.ncols = ri->ri_cols;
-	igsfb_stdscreen.textops = &ri->ri_ops;
-	igsfb_stdscreen.capabilities = ri->ri_caps;
 }
 
 
@@ -439,13 +465,13 @@ igsfb_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-	struct igsfb_softc *sc = v;
+	struct igsfb_devconfig *dc = v;
 
-	if (offset >= sc->sc_memsz || offset < 0)
+	if (offset >= dc->dc_memsz || offset < 0)
 		return (-1);
 
-	return (bus_space_mmap(sc->sc_memt, sc->sc_memaddr, offset, prot,
-			       sc->sc_memflags | BUS_SPACE_MAP_LINEAR));
+	return (bus_space_mmap(dc->dc_memt, dc->dc_memaddr, offset, prot,
+			       dc->dc_memflags | BUS_SPACE_MAP_LINEAR));
 }
 
 
@@ -460,8 +486,8 @@ igsfb_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct igsfb_softc *sc = v;
-	struct rasops_info *ri = sc->sc_ri;
+	struct igsfb_devconfig *dc = v;
+	struct rasops_info *ri;
 	int turnoff;
 
 	switch (cmd) {
@@ -471,6 +497,7 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_GINFO:
+		ri = &dc->dc_ri;
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
 		wsd_fbip->height = ri->ri_height;
 		wsd_fbip->width = ri->ri_width;
@@ -480,23 +507,23 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_GVIDEO:
-		*(u_int *)data = sc->sc_blanked ?
+		*(u_int *)data = dc->dc_blanked ?
 		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
 		return (0);
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF);
-		if (sc->sc_blanked != turnoff) {
-			sc->sc_blanked = turnoff;
-			igsfb_blank_screen(sc, sc->sc_blanked);
+		if (dc->dc_blanked != turnoff) {
+			dc->dc_blanked = turnoff;
+			igsfb_blank_screen(dc, dc->dc_blanked);
 		}
 		return (0);
 
 	case WSDISPLAYIO_GETCMAP:
-		return (igsfb_get_cmap(sc, (struct wsdisplay_cmap *)data));
+		return (igsfb_get_cmap(dc, (struct wsdisplay_cmap *)data));
 
 	case WSDISPLAYIO_PUTCMAP:
-		return (igsfb_set_cmap(sc, (struct wsdisplay_cmap *)data));
+		return (igsfb_set_cmap(dc, (struct wsdisplay_cmap *)data));
 
 	case WSDISPLAYIO_GCURMAX:
 		((struct wsdisplay_curpos *)data)->x = IGS_CURSOR_MAX_SIZE;
@@ -504,18 +531,18 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_GCURPOS:
-		*(struct wsdisplay_curpos *)data = sc->sc_cursor.cc_pos;
+		*(struct wsdisplay_curpos *)data = dc->dc_cursor.cc_pos;
 		return (0);
 
 	case WSDISPLAYIO_SCURPOS:
-		igsfb_set_curpos(sc, (struct wsdisplay_curpos *)data);
+		igsfb_set_curpos(dc, (struct wsdisplay_curpos *)data);
 		return (0);
 
 	case WSDISPLAYIO_GCURSOR:
-		return (igsfb_get_cursor(sc, (struct wsdisplay_cursor *)data));
+		return (igsfb_get_cursor(dc, (struct wsdisplay_cursor *)data));
 
 	case WSDISPLAYIO_SCURSOR:
-		return (igsfb_set_cursor(sc, (struct wsdisplay_cursor *)data));
+		return (igsfb_set_cursor(dc, (struct wsdisplay_cursor *)data));
 	}
 
 	return (EPASSTHROUGH);
@@ -526,12 +553,12 @@ igsfb_ioctl(v, cmd, data, flag, p)
  * wsdisplay_accessops: ioctl(WSDISPLAYIO_SVIDEO)
  */
 static void
-igsfb_blank_screen(sc, blank)
-	struct igsfb_softc *sc;
+igsfb_blank_screen(dc, blank)
+	struct igsfb_devconfig *dc;
 	int blank;
 {
 
-	igs_ext_write(sc->sc_iot, sc->sc_ioh,
+	igs_ext_write(dc->dc_iot, dc->dc_ioh,
 		      IGS_EXT_SYNC_CTL,
 		      blank ? IGS_EXT_SYNC_H0 | IGS_EXT_SYNC_V0
 			    : 0);
@@ -540,11 +567,11 @@ igsfb_blank_screen(sc, blank)
 
 /*
  * wsdisplay_accessops: ioctl(WSDISPLAYIO_GETCMAP)
- *   Served from software cmap copy.
+ *   Served from the software cmap copy.
  */
 static int
-igsfb_get_cmap(sc, p)
-	struct igsfb_softc *sc;
+igsfb_get_cmap(dc, p)
+	struct igsfb_devconfig *dc;
 	struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
@@ -557,9 +584,9 @@ igsfb_get_cmap(sc, p)
 	    !uvm_useracc(p->blue, count, B_WRITE))
 		return (EFAULT);
 
-	copyout(&sc->sc_cmap.r[index], p->red, count);
-	copyout(&sc->sc_cmap.g[index], p->green, count);
-	copyout(&sc->sc_cmap.b[index], p->blue, count);
+	copyout(&dc->dc_cmap.r[index], p->red, count);
+	copyout(&dc->dc_cmap.g[index], p->green, count);
+	copyout(&dc->dc_cmap.b[index], p->blue, count);
 
 	return (0);
 }
@@ -567,11 +594,11 @@ igsfb_get_cmap(sc, p)
 
 /*
  * wsdisplay_accessops: ioctl(WSDISPLAYIO_SETCMAP)
- *   Set software cmap copy and propagate changed range to device.
+ *   Set the software cmap copy and propagate changed range to the device.
  */
 static int
-igsfb_set_cmap(sc, p)
-	struct igsfb_softc *sc;
+igsfb_set_cmap(dc, p)
+	struct igsfb_devconfig *dc;
 	struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
@@ -584,22 +611,22 @@ igsfb_set_cmap(sc, p)
 	    !uvm_useracc(p->blue, count, B_READ))
 		return (EFAULT);
 
-	copyin(p->red, &sc->sc_cmap.r[index], count);
-	copyin(p->green, &sc->sc_cmap.g[index], count);
-	copyin(p->blue, &sc->sc_cmap.b[index], count);
+	copyin(p->red, &dc->dc_cmap.r[index], count);
+	copyin(p->green, &dc->dc_cmap.g[index], count);
+	copyin(p->blue, &dc->dc_cmap.b[index], count);
 
-	igsfb_update_cmap(sc, p->index, p->count);
+	igsfb_update_cmap(dc, p->index, p->count);
 
 	return (0);
 }
 
 
 /*
- * Propagate specified part of the software cmap copy to device.
+ * Propagate specified part of the software cmap copy to the device.
  */
 static void
-igsfb_update_cmap(sc, index, count)
-	struct igsfb_softc *sc;
+igsfb_update_cmap(dc, index, count)
+	struct igsfb_devconfig *dc;
 	u_int index, count;
 {
 	bus_space_tag_t t;
@@ -613,16 +640,16 @@ igsfb_update_cmap(sc, index, count)
 	if (last > IGS_CMAP_SIZE)
 		last = IGS_CMAP_SIZE;
 
-	t = sc->sc_iot;
-	h = sc->sc_ioh;
+	t = dc->dc_iot;
+	h = dc->dc_ioh;
 
 	/* start palette writing, index is autoincremented by hardware */
 	bus_space_write_1(t, h, IGS_DAC_PEL_WRITE_IDX, index);
 
 	for (i = index; i < last; ++i) {
-		bus_space_write_1(t, h, IGS_DAC_PEL_DATA, sc->sc_cmap.r[i]);
-		bus_space_write_1(t, h, IGS_DAC_PEL_DATA, sc->sc_cmap.g[i]);
-		bus_space_write_1(t, h, IGS_DAC_PEL_DATA, sc->sc_cmap.b[i]);
+		bus_space_write_1(t, h, IGS_DAC_PEL_DATA, dc->dc_cmap.r[i]);
+		bus_space_write_1(t, h, IGS_DAC_PEL_DATA, dc->dc_cmap.g[i]);
+		bus_space_write_1(t, h, IGS_DAC_PEL_DATA, dc->dc_cmap.b[i]);
 	}
 }
 
@@ -631,11 +658,11 @@ igsfb_update_cmap(sc, index, count)
  * wsdisplay_accessops: ioctl(WSDISPLAYIO_SCURPOS)
  */
 static void
-igsfb_set_curpos(sc, curpos)
-	struct igsfb_softc *sc;
+igsfb_set_curpos(dc, curpos)
+	struct igsfb_devconfig *dc;
 	struct wsdisplay_curpos *curpos;
 {
-	struct rasops_info *ri = sc->sc_ri;
+	struct rasops_info *ri = &dc->dc_ri;
 	int x = curpos->x, y = curpos->y;
 
 	if (y < 0)
@@ -646,37 +673,37 @@ igsfb_set_curpos(sc, curpos)
 		x = 0;
 	else if (x > ri->ri_width)
 		x = ri->ri_width;
-	sc->sc_cursor.cc_pos.x = x;
-	sc->sc_cursor.cc_pos.y = y;
+	dc->dc_cursor.cc_pos.x = x;
+	dc->dc_cursor.cc_pos.y = y;
 
-	igsfb_update_curpos(sc);
+	igsfb_update_curpos(dc);
 }
 
 
 static void
-igsfb_update_curpos(sc)
-	struct igsfb_softc *sc;
+igsfb_update_curpos(dc)
+	struct igsfb_devconfig *dc;
 {
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	int x, xoff, y, yoff;
 
 	xoff = 0;
-	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
+	x = dc->dc_cursor.cc_pos.x - dc->dc_cursor.cc_hot.x;
 	if (x < 0) {
-		x = 0;
 		xoff = -x;
+		x = 0;
 	}
 
 	yoff = 0;
-	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+	y = dc->dc_cursor.cc_pos.y - dc->dc_cursor.cc_hot.y;
 	if (y < 0) {
-		y = 0;
 		yoff = -y;
+		y = 0;
 	}
 
-	t = sc->sc_iot;
-	h = sc->sc_ioh;
+	t = dc->dc_iot;
+	h = dc->dc_ioh;
 
 	igs_ext_write(t, h, IGS_EXT_SPRITE_HSTART_LO, x & 0xff);
 	igs_ext_write(t, h, IGS_EXT_SPRITE_HSTART_HI, (x >> 8) & 0x07);
@@ -692,8 +719,8 @@ igsfb_update_curpos(sc)
  * wsdisplay_accessops: ioctl(WSDISPLAYIO_GCURSOR)
  */
 static int
-igsfb_get_cursor(sc, p)
-	struct igsfb_softc *sc;
+igsfb_get_cursor(dc, p)
+	struct igsfb_devconfig *dc;
 	struct wsdisplay_cursor *p;
 {
 
@@ -706,14 +733,14 @@ igsfb_get_cursor(sc, p)
  * wsdisplay_accessops: ioctl(WSDISPLAYIO_SCURSOR)
  */
 static int
-igsfb_set_cursor(sc, p)
-	struct igsfb_softc *sc;
+igsfb_set_cursor(dc, p)
+	struct igsfb_devconfig *dc;
 	struct wsdisplay_cursor *p;
 {
 	struct igs_hwcursor *cc;
 	u_int v, index, count, icount, iwidth;
 
-	cc = &sc->sc_cursor;
+	cc = &dc->dc_cursor;
 	v = p->which;
 
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -744,7 +771,7 @@ igsfb_set_cursor(sc, p)
 	/* arguments verified, do the processing */
 
 	if (v & WSDISPLAY_CURSOR_DOCUR)
-		sc->sc_curenb = p->enable;
+		dc->dc_curenb = p->enable;
 
 	if (v & WSDISPLAY_CURSOR_DOPOS)
 		cc->cc_pos = p->pos;
@@ -778,10 +805,10 @@ igsfb_set_cursor(sc, p)
 				mp += iwidth;
 			}
 		}
-		igsfb_convert_cursor_data(sc, iwidth, p->size.y);
+		igsfb_convert_cursor_data(dc, iwidth, p->size.y);
 	}
 
-	igsfb_update_cursor(sc, v);
+	igsfb_update_cursor(dc, v);
 	return (0);
 }
 
@@ -790,12 +817,12 @@ igsfb_set_cursor(sc, p)
  * Convert incoming 1bpp cursor image/mask into native 2bpp format.
  */
 static void
-igsfb_convert_cursor_data(sc, w, h)
-	struct igsfb_softc *sc;
+igsfb_convert_cursor_data(dc, w, h)
+	struct igsfb_devconfig *dc;
 	u_int w, h;
 {
-	struct igs_hwcursor *cc = &sc->sc_cursor;
-	struct igs_bittab *btab = sc->sc_bittab;
+	struct igs_hwcursor *cc = &dc->dc_cursor;
+	struct igs_bittab *btab = &dc->dc_bittab;
 	u_int8_t *ip, *mp;
 	u_int16_t *dp;
 	u_int line, i;
@@ -810,10 +837,11 @@ igsfb_convert_cursor_data(sc, w, h)
 
 	for (line = 0; line < h; ++line) {
 		for (i = 0; i < w; ++i) {
-			u_int16_t is = btab->iexpand[ip[i]];
-			u_int16_t ms = btab->mexpand[mp[i]];
-
 			/* NB: tables are pre-bswapped if needed */
+			u_int16_t is = btab->iexpand[ip[i]];
+			u_int16_t ms = btab->iexpand[mp[i]]; /* NB: _I_ */
+
+			ms |= (ms << 1);
 			dp[i] = (0xaaaa & ~ms) | (is & ms);
 		}
 
@@ -826,16 +854,16 @@ igsfb_convert_cursor_data(sc, w, h)
 
 
 /*
- * Propagate cursor changes to device.
- * "which" is composed from WSDISPLAY_CURSOR_DO* bits.
+ * Propagate cursor changes to the device.
+ * "which" is composed of WSDISPLAY_CURSOR_DO* bits.
  */
 static void
-igsfb_update_cursor(sc, which)
-	struct igsfb_softc *sc;
+igsfb_update_cursor(dc, which)
+	struct igsfb_devconfig *dc;
 	u_int which;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 	u_int8_t curctl;
 
 	/*
@@ -847,28 +875,29 @@ igsfb_update_cursor(sc, which)
 	}
 
 	if (which & WSDISPLAY_CURSOR_DOSHAPE) {
-		u_int8_t *dst = bus_space_vaddr(sc->sc_memt, sc->sc_crh);
+		u_int8_t *dst = bus_space_vaddr(dc->dc_memt, dc->dc_crh);
 
 		/*
 		 * memcpy between spaces of different endianness would
-		 * be ... special.  We cannot be sure if memset gonna
+		 * be ... special.  We cannot be sure if memcpy gonna
 		 * push data in 4-byte chunks, we can't pre-bswap it,
 		 * so do it byte-by-byte to preserve byte ordering.
 		 */
-		if (sc->sc_hwflags & IGSFB_HW_BSWAP) {
-			u_int8_t *src = (u_int8_t *)sc->sc_cursor.cc_sprite;
+		if (IGSFB_HW_SOFT_BSWAP(dc)) {
+			u_int8_t *src = (u_int8_t *)dc->dc_cursor.cc_sprite;
 			int i;
 
-			for (i = 0; i < 1024; ++i)
+			for (i = 0; i < IGS_CURSOR_DATA_SIZE; ++i)
 				*dst++ = *src++;
 		} else {
-			memcpy(dst, sc->sc_cursor.cc_sprite, 1024);
+			memcpy(dst, dc->dc_cursor.cc_sprite,
+			       IGS_CURSOR_DATA_SIZE);
 		}
 	}
 
 	if (which & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
 		/* code shared with WSDISPLAYIO_SCURPOS */
-		igsfb_update_curpos(sc);
+		igsfb_update_curpos(dc);
 	}
 
 	if (which & WSDISPLAY_CURSOR_DOCMAP) {
@@ -878,7 +907,7 @@ igsfb_update_cursor(sc, which)
 		igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL,
 			      curctl | IGS_EXT_SPRITE_DAC_PEL);
 
-		p = sc->sc_cursor.cc_color;
+		p = dc->dc_cursor.cc_color;
 
 		bus_space_write_1(iot, ioh, IGS_DAC_PEL_WRITE_IDX, 0);
 		bus_space_write_1(iot, ioh, IGS_DAC_PEL_DATA, p[0]);
@@ -890,17 +919,17 @@ igsfb_update_cursor(sc, which)
 		bus_space_write_1(iot, ioh, IGS_DAC_PEL_DATA, p[3]);
 		bus_space_write_1(iot, ioh, IGS_DAC_PEL_DATA, p[5]);
 
-		/* restore access to normal palette */
+		/* restore access to the normal palette */
 		igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL, curctl);
 	}
 
 	if (which & WSDISPLAY_CURSOR_DOCUR) {
 		if ((curctl & IGS_EXT_SPRITE_VISIBLE) == 0
-		    && sc->sc_curenb)
+		    && dc->dc_curenb)
 			igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL,
 				      curctl | IGS_EXT_SPRITE_VISIBLE);
 		else if ((curctl & IGS_EXT_SPRITE_VISIBLE) != 0
-			 && !sc->sc_curenb)
+			 && !dc->dc_curenb)
 			igs_ext_write(iot, ioh, IGS_EXT_SPRITE_CTL,
 				      curctl & ~IGS_EXT_SPRITE_VISIBLE);
 	}
@@ -918,17 +947,21 @@ igsfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	int *curxp, *curyp;
 	long *attrp;
 {
-	struct igsfb_softc *sc = v;
+	struct igsfb_devconfig *dc = v;
+	struct rasops_info *ri = &dc->dc_ri;
 
-	if (sc->sc_nscreens > 0) /* only do single screen for now */
+	if (dc->dc_nscreens > 0) /* only do single screen for now */
 		return (ENOMEM);
 
-	sc->sc_nscreens = 1;
+	dc->dc_nscreens = 1;
 
-	*cookiep = sc->sc_ri;	/* emulcookie */
-	*curxp = *curyp = 0;
-	(*sc->sc_ri->ri_ops.allocattr)(sc->sc_ri, 0, 0, 0, attrp);
-
+	*cookiep = ri;		/* emulcookie for igsgfb_stdscreen.textops */
+	*curxp = *curyp = 0;	/* cursor position */
+	(*ri->ri_ops.allocattr)(ri,
+				WSCOL_BLACK, /* fg */
+				WSCOL_BLACK, /* bg */
+				0,           /* wsattr */
+				attrp);
 	return (0);
 }
 
@@ -942,7 +975,7 @@ igsfb_free_screen(v, cookie)
 	void *cookie;
 {
 
-	/* TODO */
+	/* XXX */
 	return;
 }
 
@@ -959,5 +992,6 @@ igsfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *cbarg;
 {
 
+	/* XXX */
 	return (0);
 }
