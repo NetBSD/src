@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.4 1994/12/22 01:16:22 jtc Exp $	*/
+/*	$NetBSD: lock.c,v 1.5 1995/05/02 01:22:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: lock.c,v 1.4 1994/12/22 01:16:22 jtc Exp $";
+static char rcsid[] = "$NetBSD: lock.c,v 1.5 1995/05/02 01:22:58 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -61,11 +61,13 @@ static char rcsid[] = "$NetBSD: lock.c,v 1.4 1994/12/22 01:16:22 jtc Exp $";
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/signal.h>
-#include <sgtty.h>
+
+#include <ctype.h>
+#include <err.h>
 #include <pwd.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
+#include <termios.h>
 
 #define	TIMEOUT	15
 
@@ -73,7 +75,7 @@ void quit(), bye(), hi();
 
 struct timeval	timeout;
 struct timeval	zerotime;
-struct sgttyb	tty, ntty;
+struct termios	tty, ntty;
 long	nexttime;			/* keep the timeout time */
 
 /*ARGSUSED*/
@@ -96,20 +98,14 @@ main(argc, argv)
 	mypw = NULL;
 	usemine = 0;
 
-	if (!(pw = getpwuid(getuid()))) {
-		(void)fprintf(stderr,
-		    "lock: unknown uid %d.\n", getuid());
-		exit(1);
-	}
+	if (!(pw = getpwuid(getuid())))
+		errx(1, "unknown uid %d.", getuid());
 	
 	while ((ch = getopt(argc, argv, "pt:")) != EOF)
 		switch((char)ch) {
 		case 't':
-			if ((sectimeout = atoi(optarg)) <= 0) {
-				(void)fprintf(stderr,
-				    "lock: illegal timeout value.\n");
-				exit(1);
-			}
+			if ((sectimeout = atoi(optarg)) <= 0)
+				errx(1, "illegal timeout value: %s", optarg);
 			break;
 		case 'p':
 			usemine = 1;
@@ -125,18 +121,13 @@ main(argc, argv)
 
 	setuid(getuid());		/* discard privs */
 
-	if (ioctl(0, TIOCGETP, &tty))	/* get information for header */
+	if (tcgetattr(0, &tty) < 0)	/* get information for header */
 		exit(1);
 	gethostname(hostname, sizeof(hostname));
-	if (!(ttynam = ttyname(0))) {
-		(void)printf("lock: not a terminal?\n");
-		exit(1);
-	}
-	if (gettimeofday(&timval, (struct timezone *)NULL)) {
-		(void)fprintf(stderr,
-		    "lock: gettimeofday: %s\n", strerror(errno));
-		exit(1);
-	}
+	if (!(ttynam = ttyname(0)))
+		errx(1, "not a terminal?");
+	if (gettimeofday(&timval, (struct timezone *)NULL))
+		err(1, "gettimeofday");
 	nexttime = timval.tv_sec + (sectimeout * 60);
 	timp = localtime(&timval.tv_sec);
 	ap = asctime(timp);
@@ -144,8 +135,8 @@ main(argc, argv)
 
 	(void)signal(SIGINT, quit);
 	(void)signal(SIGQUIT, quit);
-	ntty = tty; ntty.sg_flags &= ~ECHO;
-	(void)ioctl(0, TIOCSETP, &ntty);
+	ntty = tty; ntty.c_lflag &= ~ECHO;
+	(void)tcsetattr(0, TCSADRAIN, &ntty);
 
 	if (!mypw) {
 		/* get key and check again */
@@ -160,8 +151,8 @@ main(argc, argv)
 		(void)fgets(s1, sizeof(s1), stdin);
 		(void)putchar('\n');
 		if (strcmp(s1, s)) {
-			(void)printf("\07lock: passwords didn't match.\n");
-			ioctl(0, TIOCSETP, &tty);
+			(void)printf("\alock: passwords didn't match.\n");
+			(void)tcsetattr(0, TCSADRAIN, &tty);
 			exit(1);
 		}
 		s[0] = NULL;
@@ -202,8 +193,8 @@ main(argc, argv)
 		}
 		else if (!strcmp(s, s1))
 			break;
-		(void)printf("\07\n");
-		if (ioctl(0, TIOCGETP, &ntty))
+		(void)printf("\a\n");
+		if (tcsetattr(0, TCSADRAIN, &ntty) < 0)
 			exit(1);
 	}
 	quit();
@@ -250,14 +241,14 @@ void
 quit()
 {
 	(void)putchar('\n');
-	(void)ioctl(0, TIOCSETP, &tty);
+	(void)tcsetattr(0, TCSADRAIN, &tty);
 	exit(0);
 }
 
 void
 bye()
 {
-	(void)ioctl(0, TIOCSETP, &tty);
+	(void)tcsetattr(0, TCSADRAIN, &tty);
 	(void)printf("lock: timeout\n");
 	exit(1);
 }
