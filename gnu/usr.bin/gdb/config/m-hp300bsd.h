@@ -6,7 +6,7 @@
  * Modified 1990 by Van Jacobson at Lawrence Berkeley Laboratory.
  *
  *	from: @(#)m-hp300bsd.h	6.8 (Berkeley) 5/8/91
- *	$Id: m-hp300bsd.h,v 1.2 1993/08/01 18:48:33 mycroft Exp $
+ *	$Id: m-hp300bsd.h,v 1.3 1993/08/14 04:33:22 mycroft Exp $
  */
 
 /* Parameters for execution on a Hewlett-Packard 9000/300, running bsd.
@@ -56,6 +56,10 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Watch out for NaNs */
 
 #define IEEE_FLOAT
+
+/* We do long longs.  */
+
+#define LONG_LONG
 
 /* Get rid of any system-imposed stack limit if possible.  */
 
@@ -151,10 +155,10 @@ read_memory_integer (read_register (SP_REGNUM), 4)
 #define INVALID_FLOAT(p, len) 0   /* Just a first guess; not checked */
 
 /* Largest integer type */
-#define LONGEST long
+#define LONGEST long long
 
 /* Name of the builtin type for the LONGEST type above. */
-#define BUILTIN_TYPE_LONGEST builtin_type_long
+#define BUILTIN_TYPE_LONGEST builtin_type_long_long
 
 /* Say how long (ordinary) registers are.  */
 
