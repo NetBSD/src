@@ -1,7 +1,10 @@
-/*	$NetBSD: version.c,v 1.28 1995/12/23 17:21:23 perry Exp $	*/
+/*	$NetBSD: version.c,v 1.28.4.1 1996/12/10 05:26:19 mycroft Exp $	*/
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.28 -> 1.28.2.1
+ *		various code cleanup. (mycroft)
  *
  *	1.27 -> 1.28
  *		fix gets to use real timeout instead of loop and do
@@ -54,4 +57,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "1.28";
+char *version = "1.28.2.1";
