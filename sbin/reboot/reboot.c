@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.30 2002/08/02 14:59:40 wiz Exp $	*/
+/*	$NetBSD: reboot.c,v 1.31 2002/08/02 15:05:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.30 2002/08/02 14:59:40 wiz Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.31 2002/08/02 15:05:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,12 @@ main(int argc, char *argv[])
 				syslog(LOG_CRIT, "rebooted by %s", user);
 		}
 	}
+#ifdef SUPPORT_UTMP
 	logwtmp("~", "shutdown", "");
+#endif
+#ifdef SUPPORT_UTMPX
+	logwtmpx("~", "shutdown", "", INIT_PROCESS, 0);
+#endif
 
 	/*
 	 * Do a sync early on, so disks start transfers while we're off
