@@ -5,17 +5,19 @@
 #	written by Yasha (ITOH Yasufumi)
 #	public domain
 #
-#	$NetBSD: makedoscalls.awk,v 1.1 1998/09/01 19:53:26 itohy Exp $
+#	$NetBSD: makedoscalls.awk,v 1.2 1999/11/11 08:14:43 itohy Exp $
 
 BEGIN {
 	errno_nomem = 8		# errno for "Cannot allocate memory"
 	argsiz["l"] = 4; argsiz["w"] = 2
 	argsiz["lb31"] = 4; argsiz["wb8"] = 2; argsiz["wb15"] = 2
+	print "#include \"dos_asm.h\""
 }
 
 $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 	funcnam=""
 	dosno=$2
+	ptrval=0
 	narg=0
 	ncarg=0		# number of 32bit C function argument
 	argbyte=0
@@ -75,8 +77,10 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 		printf " %s", $i
 		if ($i ~ /^\**DOS_[A-Z0-9_]*$/) {
 			funcnam = $i
-			while (funcnam ~ /^\*/)
+			while (funcnam ~ /^\*/) {
 				funcnam = substr(funcnam, 2, length(funcnam) -1)
+				ptrval = 1
+			}
 		}
 	}
 	print ""
@@ -86,15 +90,11 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 	}
 
 	# output assembly code
-	print "\t.text\n\t.even"
-	print "\t.globl\t_" funcnam
+	print "ENTRY_NOPROFILE(" funcnam ")"
 	if (alias) {
-		print "\t.globl\t_" alias
+		print "GLOBAL(" alias ")"
 	}
-	print "_" funcnam ":"
-	if (alias)	print "_" alias ":"
-
-	if (svreg)	print "\tmoveml\td2-d7/a2-a6,sp@-"
+	if (svreg)	print "\tmoveml\t%d2-%d7/%a2-%a6,%sp@-"
 
 	# PUSH ARGS
 	argoff = ncarg * 4
@@ -108,39 +108,39 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 				# optimize with movem
 				if (arg[i-1] == "l" && arg[i-2] == "l") {
 					if (arg[i-3] == "l") {
-						print "\tmoveml\tsp@(" argoff - 12 "),d0-d1/a0-a1"
-						print "\tmoveml\td0-d1/a0-a1,sp@-"
+						print "\tmoveml\t%sp@(" argoff - 12 "),%d0-%d1/%a0-%a1"
+						print "\tmoveml\t%d0-%d1/%a0-%a1,%sp@-"
 						asz = 16
 						i -= 3
 					} else if (arg[i-3] == "w") {
-						print "\tmoveml\tsp@(" argoff - 12 "),d0-d1/a0-a1"
-						print "\tmoveml\td1/a0-a1,sp@-"
-						print "\tmovew\td0,sp@-"
+						print "\tmoveml\t%sp@(" argoff - 12 "),%d0-%d1/%a0-%a1"
+						print "\tmoveml\t%d1/%a0-%a1,%sp@-"
+						print "\tmovew\t%d0,%sp@-"
 						asz = 14
 						i -= 3
 					} else {
-						print "\tmoveml\tsp@(" argoff - 8 "),d0-d1/a0"
-						print "\tmoveml\td0-d1/a0,sp@-"
+						print "\tmoveml\t%sp@(" argoff - 8 "),%d0-%d1/%a0"
+						print "\tmoveml\t%d0-%d1/%a0,%sp@-"
 						asz = 12
 						i -= 2
 					}
 				} else {
-					print "\tmovel\tsp@(" argoff "),sp@-"
+					print "\tmovel\t%sp@(" argoff "),%sp@-"
 				}
 			} else if (a == "w")
-				print "\tmovew\tsp@(" argoff + 2 "),sp@-"
+				print "\tmovew\t%sp@(" argoff + 2 "),%sp@-"
 			else if (a == "lb31") {
-				print "\tmovel\tsp@(" argoff "),d0"
-				print "\tbset\t#31,d0"
-				print "\tmovel\td0,sp@-"
+				print "\tmovel\t%sp@(" argoff "),%d0"
+				print "\tbset\t#31,%d0"
+				print "\tmovel\t%d0,%sp@-"
 			} else if (a == "wb8") {
-				print "\tmovew\tsp@(" argoff + 2 "),d0"
-				print "\torw\t#0x100,d0"
-				print "\tmovew\td0,sp@-"
+				print "\tmovew\t%sp@(" argoff + 2 "),%d0"
+				print "\torw\t#0x100,%d0"
+				print "\tmovew\t%d0,%sp@-"
 			} else if (a == "wb15") {
-				print "\tmovew\tsp@(" argoff + 2 "),d0"
-				print "\torw\t#0x8000,d0"
-				print "\tmovew\td0,sp@-"
+				print "\tmovew\t%sp@(" argoff + 2 "),%d0"
+				print "\torw\t#0x8000,%d0"
+				print "\tmovew\t%d0,%sp@-"
 			} else {
 				print "??? unknown type"
 				exit(1)
@@ -153,29 +153,29 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 			argoff += 2
 			val = substr(a, 1, length(a) - 2)
 			if (val == 0)
-				print "\tclrw\tsp@-"
+				print "\tclrw\t%sp@-"
 			else
-				print "\tmovew\t#" val ",sp@-"
+				print "\tmovew\t#" val ",%sp@-"
 		} else if (a ~ /^[0-9][0-9]*\.l$/) {
 			asz = 4;
 			argoff += 4
 			val = substr(a, 1, length(a) - 2)
 			if (val == 0)
-				print "\tclrl\tsp@-"
+				print "\tclrl\t%sp@-"
 			else if (val <= 32767)
 				print "\tpea\t" val ":w"
 			else
-				print "\tmovel\t#" val ",sp@-"
+				print "\tmovel\t#" val ",%sp@-"
 		} else if (a == "drvctrl" && narg == 1) {
 			# only for DOS_DRVCTRL
 			asz = 2
-			print "\tmoveb\tsp@(7),d0"
-			print "\tlslw\t#8,d0"
-			print "\tmoveb\tsp@(11),d0"
-			print "\tmovew\td0,sp@-"
+			print "\tmoveb\t%sp@(7),%d0"
+			print "\tlslw\t#8,%d0"
+			print "\tmoveb\t%sp@(11),%d0"
+			print "\tmovew\t%d0,%sp@-"
 		} else if (a == "super" && narg == 1) {
 			# only for DOS_SUPER
-			print "\tmoveal\tsp@+,a1"
+			print "\tmoveal\t%sp@+,%a1"
 		} else {
 			print FILENAME ":" NR ": unknown arg type:", a
 			exit(1)
@@ -184,8 +184,8 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 	}
 
 	if (super_jsr) {
-		print "\tmoveal\tsp@(" argoff + 8 "),a0	| inregs"
-		print "\tmoveml\ta0@,d0-d7/a0-a6"
+		print "\tmoveal\t%sp@(" argoff + 8 "),%a0	| inregs"
+		print "\tmoveml\t%a0@,%d0-%d7/%a0-%a6"
 	}
 
 	if (dosno ~ /^ff[8a]./) {
@@ -193,7 +193,7 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 			v2dosno = "ff5" substr(dosno, 4, 1)
 		else
 			v2dosno = "ff7" substr(dosno, 4, 1)
-		print "\tcmpiw	#0x200+14,__vernum+2	| 2.14"
+		print "\tcmpiw	#0x200+14,_C_LABEL(_vernum)+2	| 2.14"
 #		print "\tbcss\tLv2doscall"
 		print "\tbcss\t2f"
 		print "\t.word\t0x" dosno
@@ -215,47 +215,50 @@ $1 == "/*" && $2 ~ /^ff[0-9a-f][0-9a-f]$/ {
 		next
 
 	if (super_jsr) {
-		print "\tmovel\ta6,sp@"
-		print "\tmoveal\tsp@(" argoff + 12 "),a6	| outregs"
-		print "\tmovel\tsp@+,a6@(" 4 * 14 ")"
-		print "\tmoveml\td0-d7/a0-a5,a6@"
+		print "\tmovel\t%a6,%sp@"
+		print "\tmoveal\t%sp@(" argoff + 12 "),%a6	| outregs"
+		print "\tmovel\t%sp@+,%a6@(" 4 * 14 ")"
+		print "\tmoveml\t%d0-%d7/%a0-%a5,%a6@"
 	} else if (argbyte > 0) {
 		# POP ARGS
 		if (argbyte <= 8)
-			print "\taddql\t#" argbyte ",sp"
+			print "\taddql\t#" argbyte ",%sp"
 		else
-			print "\tlea\tsp@(" argbyte "),sp"
+			print "\tlea\t%sp@(" argbyte "),%sp"
 	}
 
-	if (svreg)	print "\tmoveml\tsp@+,d2-d7/a2-a6"
+	if (svreg)	print "\tmoveml\t%sp@+,%d2-%d7/%a2-%a6"
 	if (opt_e) {
 		if (e_strict) {
-			print "\tcmpil\t#0xffffff00,d0"
-			print "\tbcc\tDOS_CERROR"
+			print "\tcmpil\t#0xffffff00,%d0"
+			print "\tbcc\tCERROR"
 		} else  {
-			print "\ttstl\td0"
+			print "\ttstl\t%d0"
 			if (super) {
 #				print "\tbpls\tLnoerr"
 				print "\tbpls\t5f"
-				print "\tnegl\td0"
-				print "\tmovel\td0,_dos_errno"
-				print "\tnegl\td0"
+				print "\tnegl\t%d0"
+				print "\tmovel\t%d0,_C_LABEL(dos_errno)"
+				print "\tnegl\t%d0"
 #				print "Lnoerr:"
 				print "5:"
 			} else if (e_alloc) {
 #				print "\tbpls\tLnoerr"
 				print "\tbpls\t5f"
-				print "\tmovel\t#" errno_nomem ",_dos_errno"
+				print "\tmovel\t#" errno_nomem ",_C_LABEL(dos_errno)"
 #				print "Lnoerr:"
 				print "5:"
 			} else if (e_proc) {
-				print "\tbmi\tDOS_PRCERROR"
+				print "\tbmi\tPRCERROR"
 			} else
-				print "\tbmi\tDOS_CERROR"
+				print "\tbmi\tCERROR"
 		}
 	}
 	if (super)
-		print "\tjmp\ta1@"
-	else
+		print "\tjmp\t%a1@"
+	else {
+		if (ptrval)
+			print "#ifdef __SVR4_ABI__\n\tmoveal\t%d0,%a0\n#endif"
 		print "\trts"
+	}
 }
