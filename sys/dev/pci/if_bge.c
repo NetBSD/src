@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.3 2002/06/26 10:48:18 cjs Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.4 2002/06/27 22:10:11 fvdl Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2043,12 +2043,14 @@ bge_rxeof(sc)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+#if 0	/* XXX appears to be broken */
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM) {
 				m->m_pkthdr.csum_data =
 				    cur_rx->bge_tcp_udp_csum;
 				m->m_pkthdr.csum_flags |=
 				    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_DATA);
 			}
+#endif
 		}
 
 		/*
