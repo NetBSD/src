@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 2004/03/04 19:53:45 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.35 2004/12/15 04:56:13 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1156,7 +1156,7 @@ ASENTRY_NOPROFILE(debug_led)
 
 ASENTRY_NOPROFILE(debug_led2)
 	movl	_C_LABEL(intiobase),%d1
-	addl    #(0xe0dc0000-INTIOBASE1700),%d1
+	addl    #INTIOBASE1700_OFF,%d1
 	movl    %d1,%a0
 	movl	%d0,%a0@
 
