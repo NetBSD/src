@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.22 1993/11/14 04:40:44 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.23 1993/11/14 05:11:54 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -758,14 +758,16 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
+	register struct trapframe *tf;
 
-	p->p_regs[tEBP] = 0;	/* bottom of the fp chain */
-	p->p_regs[tEIP] = entry;
-	p->p_regs[tESP] = stack;
-	p->p_regs[tSS] = _udatasel;
-	p->p_regs[tDS] = _udatasel;
-	p->p_regs[tES] = _udatasel;
-	p->p_regs[tCS] = _ucodesel;
+	tf = (struct trapframe *)p->p_regs;
+	tf->tf_ebp = 0;		/* bottom of the fp chain */
+	tf->tf_eip = entry;
+	tf->tf_esp = stack;
+	tf->tf_ss = _udatasel;
+	tf->tf_ds = _udatasel;
+	tf->tf_es = _udatasel;
+	tf->tf_cs = _ucodesel;
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
 	lcr0(rcr0() | CR0_TS);	/* start emulating */
