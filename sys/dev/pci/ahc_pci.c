@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.5 1996/08/28 23:44:56 thorpej Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.6 1996/10/08 03:04:08 gibbs Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -92,6 +92,7 @@
 #define PCI_DEVICE_ID_ADAPTEC_3940U	0x82789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2944U	0x84789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2940U	0x81789004ul
+#define PCI_DEVICE_ID_ADAPTEC_2940AU	0x61789004ul
 #define PCI_DEVICE_ID_ADAPTEC_3940	0x72789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2944	0x74789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2940	0x71789004ul
@@ -227,6 +228,9 @@ aic7870_probe (pcici_t tag, pcidi_t type)
 		case PCI_DEVICE_ID_ADAPTEC_2940:
 			return ("Adaptec 2940 SCSI host adapter");
 			break;
+		case PCI_DEVICE_ID_ADAPTEC_2940AU:
+			return ("Adaptec 2940A Ultra SCSI host adapter");
+			break;
 		case PCI_DEVICE_ID_ADAPTEC_AIC7880:
 			return ("Adaptec aic7880 Ultra SCSI host adapter");
 			break;
@@ -269,6 +273,7 @@ ahc_pci_probe(parent, match, aux)
 	case PCI_DEVICE_ID_ADAPTEC_3940U:
 	case PCI_DEVICE_ID_ADAPTEC_2944U:
 	case PCI_DEVICE_ID_ADAPTEC_2940U:
+	case PCI_DEVICE_ID_ADAPTEC_2940AU:
 	case PCI_DEVICE_ID_ADAPTEC_3940:
 	case PCI_DEVICE_ID_ADAPTEC_2944:
 	case PCI_DEVICE_ID_ADAPTEC_2940:
@@ -355,6 +360,9 @@ ahc_pci_attach(parent, self, aux)
 		case PCI_DEVICE_ID_ADAPTEC_2944:
 		case PCI_DEVICE_ID_ADAPTEC_2940:
 			ahc_t = AHC_294;
+			break;
+		case PCI_DEVICE_ID_ADAPTEC_2940AU:
+			ahc_t = AHC_294AU;
 			break;
 		case PCI_DEVICE_ID_ADAPTEC_AIC7880:
 			ahc_t = AHC_AIC7880;
@@ -450,7 +458,12 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
+#if defined(__OpenBSD__)
+	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc,
+					ahc->sc_dev.dv_xname);
+#else
 	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
+#endif
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
@@ -494,14 +507,11 @@ ahc_pci_attach(parent, self, aux)
 			load_seeprom(ahc);
 			break;
 		   }
+		   case AHC_294AU:
 		   case AHC_AIC7860:
 		   {
 			id_string = "aic7860 ";
-			/*
-			 * Use defaults, if the chip wasn't initialized by
-			 * a BIOS.
-			 */
-			ahc->flags |= AHC_USEDEFAULTS;
+			load_seeprom(ahc);
 			break;
 		   }
 		   case AHC_AIC7850:
