@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.4 1993/07/31 15:29:28 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/09/30 23:31:23 jtc Exp $
 
 #Missing: 01.begin 02.learn 03.shell 05.dc 06.bc 08.mh 12.edtut 13.edadv
 #	  17.jove 18.sed 19.awk 20.msmacros 24.troff 25.trofftut 26.eqn
@@ -16,14 +16,9 @@ SUBDIR=	04.csh 07.Mail \
 	33.rogue 34.trek
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}${BINDIR} ]; then \
-                /bin/rm -f ${DESTDIR}${BINDIR} ; \
-                mkdir -p ${DESTDIR}${BINDIR} ; \
-                chown root.wheel ${DESTDIR}${BINDIR} ; \
-                chmod 755 ${DESTDIR}${BINDIR} ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}
+
+realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}
 
