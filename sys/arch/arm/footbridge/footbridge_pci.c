@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.9 2003/03/23 14:12:25 chris Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.10 2003/07/30 17:28:19 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.9 2003/03/23 14:12:25 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.10 2003/07/30 17:28:19 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ struct arm32_pci_chipset footbridge_pci_chipset = {
 struct arm32_bus_dma_tag footbridge_pci_bus_dma_tag = {
 	0,
 	0,
+	NULL,
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
