@@ -43,6 +43,7 @@
 #include <sys/user.h>
 #include <machine/cpu.h>
 #include <machine/trap.h>
+#include <machine/pmap.h>
 
 main()
 {
@@ -56,7 +57,13 @@ main()
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
 
 	def("SRUN", SRUN);
+
 	def("USRSTACK", USRSTACK);
+	def("UPTDI", UPTDI);
+	def("PTDPTDI", PTDPTDI);
+	def("KPTDI", KPTDI);
+	def("NKPDE", NKPDE);
+	def("APTDPTDI", APTDPTDI);
 
 	def("SIR_GENERIC", SIR_GENERIC);
 	def("SIR_NET", SIR_NET);
@@ -85,6 +92,7 @@ main()
 	def("PCB_SAVEFPU", &pcb->pcb_savefpu);
 	def("PCB_USERLDT", &pcb->pcb_ldt);
 
+	def("TF_CS", &tf->tf_cs);
 	def("TF_TRAPNO", &tf->tf_trapno);
 	def("TF_EFLAGS", &tf->tf_eflags);
 
