@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 2001/11/19 23:22:48 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -246,7 +246,7 @@ device_register(dev, aux)
 	} else if (DEVICE_IS(dev->dv_parent, "pciide")) {
 		struct ata_atapi_attach *aa = aux;
 
-		if (addr != aa->aa_channel)
+		if (addr != aa->aa_drv_data->drive)
 			return;
 
 		/*
@@ -263,7 +263,7 @@ device_register(dev, aux)
 	} else if (DEVICE_IS(dev->dv_parent, "wdc")) {
 		struct ata_atapi_attach *aa = aux;
 
-		if (addr != aa->aa_channel)
+		if (addr != aa->aa_drv_data->drive)
 			return;
 	} else
 		return;
@@ -280,6 +280,7 @@ device_register(dev, aux)
 			bp++;
 		return;
 	} else {
+		printf("%s -> %s\n", bootpath, dev->dv_xname);
 		booted_device = dev;
 		return;
 	}
