@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50 1998/07/04 22:18:30 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.51 1998/07/05 02:10:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,9 +86,10 @@
  *	assembly language support routines.
  */
 
-#include "opt_uvm.h"
-#include "opt_ddb.h"
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
+#include "opt_ccitt.h"
+#include "opt_ddb.h"
+#include "opt_uvm.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -836,7 +837,7 @@ LEAF(longjmp)
 END(longjmp)
 #endif
 
-#if 0 /* NOTUSED */
+#if defined(NS) || defined(ISO) || defined(CCITT)
 /*
  * Insert 'p' after 'q'.
  *	_insque(p, q)
