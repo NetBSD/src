@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.9 2000/01/15 01:11:45 christos Exp $	*/
+/*	$NetBSD: fopen.c,v 1.10 2000/11/29 15:30:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.9 2000/01/15 01:11:45 christos Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.10 2000/11/29 15:30:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,12 +73,14 @@ fopen(file, mode)
 	if (oflags & O_NONBLOCK) {
 		struct stat st;
 		if (fstat(f, &st) == -1) {
-			close(f);
+			int sverrno = errno;
+			(void)close(f);
+			errno = sverrno;
 			goto release;
 		}
 		if (!S_ISREG(st.st_mode)) {
+			(void)close(f);
 			errno = EFTYPE;
-			close(f);
 			goto release;
 		}
 	}
