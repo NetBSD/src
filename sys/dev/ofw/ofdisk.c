@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.15 2001/01/08 02:03:47 fvdl Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.16 2001/08/25 19:05:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/fcntl.h>
@@ -54,6 +55,9 @@ struct ofdisk_softc {
 	u_long max_transfer;
 	char sc_name[16];
 };
+
+bdev_decl(ofdisk_);
+cdev_decl(ofdisk_);
 
 /* sc_flags */
 #define OFDF_ISFLOPPY	0x01		/* we are a floppy drive */
@@ -289,17 +293,19 @@ ofminphys(bp)
 }
 
 int
-ofdisk_read(dev, uio)
+ofdisk_read(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 	return physio(ofdisk_strategy, NULL, dev, B_READ, ofminphys, uio);
 }
 
 int
-ofdisk_write(dev, uio)
+ofdisk_write(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 	return physio(ofdisk_strategy, NULL, dev, B_WRITE, ofminphys, uio);
 }
