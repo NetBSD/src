@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.6 2004/11/15 06:32:38 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.7 2004/11/15 17:16:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.6 2004/11/15 06:32:38 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.7 2004/11/15 17:16:10 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,7 @@ struct filed {
 	short	f_type;			/* entry type, see below */
 	short	f_file;			/* file descriptor */
 	time_t	f_time;			/* time this was last written */
+	char	*f_host;		/* host from which to record */
 	u_char	f_pmask[LOG_NFACILITIES+1];	/* priority mask */
 	char	*f_program;		/* program this applies to */
 	union {
@@ -229,7 +230,7 @@ int	NoRepeat = 0;		/* disable "repeated"; log always */
 int	SyncKernel = 0;		/* write kernel messages synchronously */
 volatile sig_atomic_t gothup = 0; /* got SIGHUP */
 
-void	cfline(char *, struct filed *, char *);
+void	cfline(char *, struct filed *, char *, char *);
 char   *cvthname(struct sockaddr_storage *);
 void	deadq_enter(pid_t, const char *);
 int	deadq_remove(pid_t);
@@ -845,6 +846,20 @@ logmsg(int pri, char *msg, char *from, int flags)
 		    f->f_pmask[fac] == INTERNAL_NOPRI)
 			continue;
 
+		/* skip messages with the incorrect host name */
+		if (f->f_host != NULL) {
+			switch (f->f_host[0]) {
+			case '+':
+				if (strcmp(from, f->f_host + 1) != 0)
+					continue;
+				break;
+			case '-':
+				if (strcmp(from, f->f_host + 1) == 0)
+					continue;
+				break;
+			}
+		}
+
 		/* skip messages with the incorrect program name */
 		if (f->f_program != NULL && strcmp(prog, f->f_program) != 0)
 			continue;
@@ -1326,6 +1341,7 @@ init(void)
 	char *p;
 	char cline[LINE_MAX];
 	char prog[NAME_MAX + 1];
+	char host[MAXHOSTNAMELEN + 1];
 
 	dprintf("init\n");
 
@@ -1359,6 +1375,8 @@ init(void)
 		next = f->f_next;
 		if (f->f_program != NULL)
 			free(f->f_program);
+		if (f->f_host != NULL)
+			free(f->f_host);
 		free((char *)f);
 	}
 	Files = NULL;
@@ -1387,9 +1405,9 @@ init(void)
 	if ((cf = fopen(ConfFile, "r")) == NULL) {
 		dprintf("Cannot open `%s'\n", ConfFile);
 		*nextp = (struct filed *)calloc(1, sizeof(*f));
-		cfline("*.ERR\t/dev/console", *nextp, "*");
+		cfline("*.ERR\t/dev/console", *nextp, "*", "*");
 		(*nextp)->f_next = (struct filed *)calloc(1, sizeof(*f));
-		cfline("*.PANIC\t*", (*nextp)->f_next, "*");
+		cfline("*.PANIC\t*", (*nextp)->f_next, "*", "*");
 		Initialized = 1;
 		return;
 	}
@@ -1399,6 +1417,7 @@ init(void)
 	 */
 	f = NULL;
 	strcpy(prog, "*");
+	strcpy(host, "*");
 	while (fgets(cline, sizeof(cline), cf) != NULL) {
 		/*
 		 * check for end-of-section, comments, strip off trailing
@@ -1411,8 +1430,27 @@ init(void)
 			continue;
 		if (*p == '#') {
 			p++;
-			if (*p != '!')
+			if (*p != '!' && *p != '+' && *p != '-')
 				continue;
+		}
+		if (*p == '+' || *p == '-') {
+			host[0] = *p++;
+			while (isspace((unsigned char)*p))
+				p++;
+			if (*p == '\0' || *p == '*') {
+				strcpy(host, "*");
+				continue;
+			}
+			if (*p == '@')
+				p = LocalHostName;
+			for (i = 1; i < MAXHOSTNAMELEN; i++) {
+				if (!isalnum((unsigned char)*p) &&
+				    *p != '.' && *p != '-')
+					break;
+				host[i] = *p++;
+			}
+			host[i] = '\0';
+			continue;
 		}
 		if (*p == '!') {
 			p++;
@@ -1436,7 +1474,7 @@ init(void)
 		f = (struct filed *)calloc(1, sizeof(*f));
 		*nextp = f;
 		nextp = &f->f_next;
-		cfline(cline, f, prog);
+		cfline(cline, f, prog, host);
 	}
 
 	/* close the configuration file */
@@ -1501,7 +1539,7 @@ init(void)
  * Crack a configuration file line
  */
 void
-cfline(char *line, struct filed *f, char *prog)
+cfline(char *line, struct filed *f, char *prog, char *host)
 {
 	struct addrinfo hints, *res;
 	int    error, i, pri;
@@ -1509,7 +1547,7 @@ cfline(char *line, struct filed *f, char *prog)
 	char   buf[MAXLINE];
 	int    sp_err;
 
-	dprintf("cfline(\"%s\", f, \"%s\")\n", line, prog);
+	dprintf("cfline(\"%s\", f, \"%s\", \"%s\")\n", line, prog, host);
 
 	errno = 0;	/* keep strerror() stuff out of logerror messages */
 
@@ -1569,6 +1607,12 @@ cfline(char *line, struct filed *f, char *prog)
 			if (*q == ' ')
 				*q='\t';	
 	}	
+
+	/* save host name, if any */
+	if (*host == '*')
+		f->f_host = NULL;
+	else
+		f->f_host = strdup(host);
 
 	/* save program name, if any */
 	if (*prog == '*')
