@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.77 2003/02/01 06:23:43 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.78 2003/02/14 21:51:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.77 2003/02/01 06:23:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.78 2003/02/14 21:51:36 pk Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -214,6 +214,8 @@ MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
 MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
 MALLOC_DEFINE(M_1394DATA, "1394data", "IEEE 1394 data buffers");
 
+struct simplelock malloc_slock = SIMPLELOCK_INITIALIZER;
+
 /*
  * Allocate a block of memory
  */
@@ -249,15 +251,18 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
 	s = splvm();
+	simple_lock(&malloc_slock);
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
+			simple_unlock(&malloc_slock);
 			splx(s);
 			return ((void *) NULL);
 		}
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;
-		tsleep((caddr_t)ksp, PSWP+2, ksp->ks_shortdesc, 0);
+		ltsleep((caddr_t)ksp, PSWP+2, ksp->ks_shortdesc, 0,
+			&malloc_slock);
 	}
 	ksp->ks_size |= 1 << indx;
 #endif
@@ -271,6 +276,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
+		simple_unlock(&malloc_slock);
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
 		    (vsize_t)ctob(npg),
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
@@ -289,6 +295,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			splx(s);
 			return (NULL);
 		}
+		simple_lock(&malloc_slock);
 #ifdef KMEMSTATS
 		kbp->kb_total += kbp->kb_elmpercl;
 #endif
@@ -414,6 +421,7 @@ out:
 #ifdef MALLOCLOG
 	domlog(va, size, type, 1, file, line);
 #endif
+	simple_unlock(&malloc_slock);
 	splx(s);
 	if ((flags & M_ZERO) != 0)
 		memset(va, 0, size);
@@ -462,6 +470,7 @@ free(void *addr, struct malloc_type *ksp)
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
 	s = splvm();
+	simple_lock(&malloc_slock);
 #ifdef MALLOCLOG
 	domlog(addr, 0, type, 2, file, line);
 #endif
@@ -491,6 +500,7 @@ free(void *addr, struct malloc_type *ksp)
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 #endif
+		simple_unlock(&malloc_slock);
 		splx(s);
 		return;
 	}
@@ -551,6 +561,7 @@ free(void *addr, struct malloc_type *ksp)
 		((struct freelist *)kbp->kb_last)->next = addr;
 	freep->next = NULL;
 	kbp->kb_last = addr;
+	simple_unlock(&malloc_slock);
 	splx(s);
 }
 
