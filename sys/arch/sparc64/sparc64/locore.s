@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.165 2003/01/31 19:05:56 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.166 2003/01/31 22:19:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8808,138 +8808,135 @@ ENTRY(pseg_get)
  * running!
  */
 ENTRY(pseg_set)
-#ifdef _LP64
-	save	%sp, -CC64FSZ, %sp
-#else
-	save	%sp, -CCFSZ, %sp
-	sllx	%i4, 32, %i4				! Put args into 64-bit format
-	sllx	%i2, 32, %i2				! Shift to high 32-bits
-	clruw	%i3					! Zero extend
-	clruw	%i5
-	clruw	%i1
-	or	%i2, %i3, %i2
-	or	%i4, %i5, %i3
+#ifndef _LP64
+	sllx	%o4, 32, %o4				! Put args into 64-bit format
+	sllx	%o2, 32, %o2				! Shift to high 32-bits
+	clruw	%o3					! Zero extend
+	clruw	%o5
+	clruw	%o1
+	or	%o2, %o3, %o2
+	or	%o4, %o5, %o3
 #endif
 	!!
 	!! However we managed to get here we now have:
 	!!
-	!! %i0 = *pmap
-	!! %i1 = addr
-	!! %i2 = tte
-	!! %i3 = paddr of spare page
+	!! %o0 = *pmap
+	!! %o1 = addr
+	!! %o2 = tte
+	!! %o3 = paddr of spare page
 	!!
-	srax	%i1, HOLESHIFT, %i4			! Check for valid address
-	brz,pt	%i4, 0f					! Should be zero or -1
-	 inc	%i4					! Make -1 -> 0
-	brz,pt	%i4, 0f
+	srax	%o1, HOLESHIFT, %o4			! Check for valid address
+	brz,pt	%o4, 0f					! Should be zero or -1
+	 inc	%o4					! Make -1 -> 0
+	brz,pt	%o4, 0f
 	 nop
 #ifdef DEBUG
 	ta	1					! Break into debugger
 #endif
-	ret
-	 restore %g0, -2, %o0				! Error -- in hole!
+	retl
+	 mov -2, %o0					! Error -- in hole!
 
 0:
-	ldx	[%i0 + PM_PHYS], %i4			! pmap->pm_segs
-	clr	%o0
-	srlx	%i1, STSHIFT, %i5
-	and	%i5, STMASK, %i5
-	sll	%i5, 3, %i5
-	add	%i4, %i5, %i4
+	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+	clr	%g1
+	srlx	%o1, STSHIFT, %o5
+	and	%o5, STMASK, %o5
+	sll	%o5, 3, %o5
+	add	%o4, %o5, %o4
 0:
-	DLFLUSH(%i4,%g1)
-	ldxa	[%i4] ASI_PHYS_CACHED, %i5		! Load page directory pointer
-	DLFLUSH2(%g1)
+	DLFLUSH(%o4,%g6)
+	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
+	DLFLUSH2(%g6)
 
-	brnz,a,pt %i5, 0f				! Null pointer?
-	 mov	%i5, %i4
-	brz,pn	%i3, 9f					! Have a spare?
-	 mov	%i3, %i5
-	casxa	[%i4] ASI_PHYS_CACHED, %g0, %i5
-	brnz,pn	%i5, 0b					! Something changed?
-	DLFLUSH(%i4, %i5)
-	mov	%i3, %i4
-	mov	2, %o0					! record spare used for L2
-	clr	%i3					! and not available for L3
+	brnz,a,pt %o5, 0f				! Null pointer?
+	 mov	%o5, %o4
+	brz,pn	%o3, 9f					! Have a spare?
+	 mov	%o3, %o5
+	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
+	brnz,pn	%o5, 0b					! Something changed?
+	DLFLUSH(%o4, %o5)
+	mov	%o3, %o4
+	mov	2, %g1					! record spare used for L2
+	clr	%o3					! and not available for L3
 0:
-	srlx	%i1, PDSHIFT, %i5
-	and	%i5, PDMASK, %i5
-	sll	%i5, 3, %i5
-	add	%i4, %i5, %i4
+	srlx	%o1, PDSHIFT, %o5
+	and	%o5, PDMASK, %o5
+	sll	%o5, 3, %o5
+	add	%o4, %o5, %o4
 0:
-	DLFLUSH(%i4,%g1)
-	ldxa	[%i4] ASI_PHYS_CACHED, %i5		! Load table directory pointer
-	DLFLUSH2(%g1)
+	DLFLUSH(%o4,%g6)
+	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
+	DLFLUSH2(%g6)
 
-	brnz,a,pt %i5, 0f				! Null pointer?
-	 mov	%i5, %i4
-	brz,pn	%i3, 9f					! Have a spare?
-	 mov	%i3, %i5
-	casxa	[%i4] ASI_PHYS_CACHED, %g0, %i5
-	brnz,pn	%i5, 0b					! Something changed?
-	DLFLUSH(%i4, %i4)
-	mov	%i3, %i4
-	mov	4, %o0					! record spare used for L3
+	brnz,a,pt %o5, 0f				! Null pointer?
+	 mov	%o5, %o4
+	brz,pn	%o3, 9f					! Have a spare?
+	 mov	%o3, %o5
+	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
+	brnz,pn	%o5, 0b					! Something changed?
+	DLFLUSH(%o4, %o4)
+	mov	%o3, %o4
+	mov	4, %g1					! record spare used for L3
 0:
-	srlx	%i1, PTSHIFT, %i5			! Convert to ptab offset
-	and	%i5, PTMASK, %i5
-	sll	%i5, 3, %i5
-	add	%i5, %i4, %i4
+	srlx	%o1, PTSHIFT, %o5			! Convert to ptab offset
+	and	%o5, PTMASK, %o5
+	sll	%o5, 3, %o5
+	add	%o5, %o4, %o4
 
-	DLFLUSH(%i4,%g1)
-	ldxa	[%i4] ASI_PHYS_CACHED, %o2		! save old value in %o2
-	stxa	%i2, [%i4] ASI_PHYS_CACHED		! Easier than shift+or
-	DLFLUSH2(%g1)
+	DLFLUSH(%o4,%g6)
+	ldxa	[%o4] ASI_PHYS_CACHED, %g4		! save old value in %g4
+	stxa	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
+	DLFLUSH2(%g6)
 
 	!! at this point we have:
-	!!  %o0 = return value
-	!!  %i0 = struct pmap * (where the counts are)
-	!!  %i2 = new TTE
-	!!  %o2 = old TTE
+	!!  %g1 = return value
+	!!  %o0 = struct pmap * (where the counts are)
+	!!  %o2 = new TTE
+	!!  %g4 = old TTE
 
 	!! see if stats needs an update
-	set	A_TLB_TSB_LOCK, %l4
-	xor	%i2, %o2, %l3			! %l3 - what changed
+	set	A_TLB_TSB_LOCK, %g5
+	xor	%o2, %g4, %o3			! %o3 - what changed
 
-	brgez,pn %l3, 5f			! has resident changed? (we predict it has)
-	 btst	%l4, %l3			! has wired changed?
+	brgez,pn %o3, 5f			! has resident changed? (we predict it has)
+	 btst	%g5, %o3			! has wired changed?
 
 #ifdef _LP64
-	ldx	[%i0 + PM_RESIDENT], %l6	! gonna update resident count
+	ldx	[%o0 + PM_RESIDENT], %g6	! gonna update resident count
 #else
-	ld	[%i0 + PM_RESIDENT], %l6
+	ld	[%o0 + PM_RESIDENT], %g6
 #endif
-	brlz	%i2, 0f
-	 mov	1, %l7
-	neg	%l7				! new is not resident -> decrement
-0:	add	%l6, %l7, %l6
+	brlz	%o2, 0f
+	 mov	1, %o4
+	neg	%o4				! new is not resident -> decrement
+0:	add	%g6, %o4, %g6
 #ifdef _LP64
-	stx	%l6, [%i0 + PM_RESIDENT]
+	stx	%g6, [%o0 + PM_RESIDENT]
 #else
-	st	%l6, [%i0 + PM_RESIDENT]
+	st	%g6, [%o0 + PM_RESIDENT]
 #endif
-	btst	%l4, %l3			! has wired changed?
+	btst	%g5, %o3			! has wired changed?
 5:	bz,pt	%xcc, 8f			! we predict it's not
-	 btst	%l4, %i2			! don't waste delay slot, check if new one is wired
+	 btst	%g5, %o2			! don't waste delay slot, check if new one is wired
 #ifdef _LP64
-	ldx	[%i0 + PM_WIRED], %l6		! gonna update wired count
+	ldx	[%o0 + PM_WIRED], %g6		! gonna update wired count
 #else
-	ld	[%i0 + PM_WIRED], %l6
+	ld	[%o0 + PM_WIRED], %g6
 #endif
 	bnz,pt	%xcc, 0f			! if wired changes, we predict it increments
-	 mov	1, %l7
-	neg	%l7				! new is not wired -> decrement
-0:	add	%l6, %l7, %l6
+	 mov	1, %o4
+	neg	%o4				! new is not wired -> decrement
+0:	add	%g6, %o4, %g6
 #ifdef _LP64
-	stx	%l6, [%i0 + PM_WIRED]
+	stx	%g6, [%o0 + PM_WIRED]
 #else
-	st	%l6, [%i0 + PM_WIRED]
+	st	%g6, [%o0 + PM_WIRED]
 #endif
-8:	ret
-	 restore %g0, %o0, %o0			! return %o0
+8:	retl
+	 mov	%g1, %o0			! return %g1
 
-9:	ret
-	 restore %g0, 1, %o0			! spare needed, return 1
+9:	retl
+	 mov	1, %o0				! spare needed, return 1
 
 
 /*
