@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.86 2002/09/26 23:47:57 martin Exp $	*/
+/*	$NetBSD: wi.c,v 1.87 2002/09/26 23:55:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.86 2002/09/26 23:47:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.87 2002/09/26 23:55:43 martin Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -3040,10 +3040,10 @@ wi_shutdown(sc)
 
 	s = splnet();
 	if (sc->sc_enabled) {
+		wi_stop(&sc->sc_ethercom.ec_if, 0);
 		if (sc->sc_disable)
 			(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
-		wi_stop(&sc->sc_ethercom.ec_if, 0);
 	}
 
 	splx(s);
