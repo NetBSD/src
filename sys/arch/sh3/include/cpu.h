@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1999/12/21 18:21:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,8 +134,6 @@ void	delay __P((int));
 #ifdef _KERNEL
 extern int cpu;
 extern int cpu_class;
-extern int cpu_feature;
-extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass sh3_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass sh3_cpuid_cpus[];
 
