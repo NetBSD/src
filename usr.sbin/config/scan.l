@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.4 1996/03/17 06:29:35 cgd Exp $	*/
+/*	$NetBSD: scan.l,v 1.5 1996/08/12 00:55:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,8 +110,6 @@ vector		{ return VECTOR; }
 with		{ return WITH; }
 
 		/* keywords with values */
-config-dependent { yylval.val = FI_CONFIGDEP; return FFLAG; }
-device-driver	{ yylval.val = FI_DRIVER; return FFLAG; }
 needs-count	{ yylval.val = FI_NEEDSCOUNT; return FFLAG; }
 needs-flag	{ yylval.val = FI_NEEDSFLAG; return FFLAG; }
 
