@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 1999/08/08 16:33:13 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 1999/09/15 18:10:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -66,7 +66,7 @@ struct device *booted_from;
 #define MAINBUS	0
 
 void
-configure()
+cpu_configure()
 {
 
 	if (config_rootfound("mainbus", NULL) == NULL)

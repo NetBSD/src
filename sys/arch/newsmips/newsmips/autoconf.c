@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1999/08/23 22:29:39 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1999/09/15 18:10:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@ void	findroot __P((struct device **, int *));
  * for attached scsi devices.
  */
 void
-configure()
+cpu_configure()
 {
 	int s;
 	extern struct idrom idrom;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1999/06/07 20:16:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1999/09/15 18:10:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -67,7 +67,7 @@ int x68k_realconfig;
  * called at boot time, configure all devices on system
  */
 void
-configure()
+cpu_configure()
 {
 	extern int x68k_realconfig;
 	

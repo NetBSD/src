@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.154 1999/07/22 21:08:31 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.155 1999/09/15 18:10:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -214,8 +214,7 @@ main()
 #if NRND > 0
 	rnd_init();
 #endif
-	config_init();		/* init autoconfiguration data structures */
-	configure();		/* ...and configure the hardware */
+	configure();		/* configure the hardware */
 
 	/*
 	 * Initialize process and pgrp structures.

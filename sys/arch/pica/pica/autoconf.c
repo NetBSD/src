@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1999/06/07 20:16:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1999/09/15 18:10:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,7 @@ int	getpno __P((char **cp));
  *  This is done at boot time.
  */
 void
-configure()
+cpu_configure()
 {
 
 	(void)splhigh();	/* To be really shure.. */

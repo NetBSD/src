@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1999/09/14 10:22:36 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 1999/09/15 18:10:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@ extern int	cold;		/* cold start flag initialized in locore.s */
  * Determine i/o configuration for a machine.
  */
 void
-configure()
+cpu_configure()
 {
 
 	startrtclock();

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1999/08/23 22:29:40 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.21 1999/09/15 18:10:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -466,7 +466,7 @@ st_crazymap(n)
  * command.
  */
 void
-configure()
+cpu_configure()
 {
 #if 0
 	extern struct user *proc0paddr;	/* XXX see below */

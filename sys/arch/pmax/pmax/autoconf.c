@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 1999/08/23 22:29:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39 1999/09/15 18:10:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 1999/08/23 22:29:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 1999/09/15 18:10:41 thorpej Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -97,7 +97,7 @@ void findroot __P((struct device **, int *));
  * for attached scsi devices.
  */
 void
-configure()
+cpu_configure()
 {
 	/* Kick off autoconfiguration. */
 	(void)splhigh();

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.52 1999/06/07 20:16:13 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53 1999/09/15 18:10:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ int cold = 1;
  * Called by machdep.c: cpu_startup()
  */
 void
-configure()
+cpu_configure()
 {
 
 	/* General device autoconfiguration. */

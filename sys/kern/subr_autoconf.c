@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.40 1999/06/20 00:51:37 ragge Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.41 1999/09/15 18:10:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,15 +91,23 @@ struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
 
 /*
- * Initialize autoconfiguration data structures.
+ * Configure the system's hardware.
  */
 void
-config_init()
+configure()
 {
 
 	TAILQ_INIT(&deferred_config_queue);
-	TAILQ_INIT(&alldevs);
+	TAILQ_INIT(&alldevs); 
 	TAILQ_INIT(&allevents);
+
+	/*
+	 * Do the machine-dependent portion of autoconfiguration.  This
+	 * sets the configuration machinery here in motion by "finding"
+	 * the root bus.  When this function returns, we expect interrupts
+	 * to be enabled.
+	 */
+	cpu_configure();
 }
 
 /*

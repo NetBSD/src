@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1999/06/07 20:16:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1999/09/15 18:10:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,7 +67,7 @@ struct device *booted_device;	/* boot device, set by dk_establish */
  * Determine i/o configuration for a machine.
  */
 void
-configure()
+cpu_configure()
 {
 	extern int safepri;
 	int i;

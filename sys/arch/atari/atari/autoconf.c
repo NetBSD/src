@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1999/06/07 20:16:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1999/09/15 18:10:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -55,7 +55,7 @@ int atari_realconfig;
  * called at boot time, configure all devices on system
  */
 void
-configure()
+cpu_configure()
 {
 	extern int atari_realconfig;
 	

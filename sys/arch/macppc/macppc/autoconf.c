@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1999/06/24 08:14:48 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1999/09/15 18:10:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -69,7 +69,7 @@ u_int *heathrow_FCR = NULL;
  * Determine device configuration for a machine.
  */
 void
-configure()
+cpu_configure()
 {
 	int node, reg[5];
 	int msr;

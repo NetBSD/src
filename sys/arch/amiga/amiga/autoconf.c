@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 1999/06/07 20:16:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.65 1999/09/15 18:10:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,7 +56,7 @@ u_long boot_partition;
  * called at boot time, configure all devices on system
  */
 void
-configure()
+cpu_configure()
 {
 	int s;
 #ifdef DEBUG_KERNEL_START
