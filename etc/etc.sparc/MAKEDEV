@@ -43,6 +43,8 @@
 #	cd*	SCSI cdrom drives
 #	st*	SCSI tape
 #	ch*	SCSI changer
+#	xy*	Xylogic 450/451 disks
+#	xd*	Xylogic 753/7053 disks
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
@@ -74,8 +76,9 @@ unit=`expr $i : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $i in
 
 all)
-	sh MAKEDEV std sd0 sd1 sd2 sd3 sd4 cd0 st0 st1 pty0
-	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
+	sh MAKEDEV std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
+	sh MAKEDEV cd0 st0 st1 fd0
+	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bwtwo0 cgthree0 cgfour0 cgsix0
 	sh MAKEDEV cgeight0
@@ -161,12 +164,14 @@ vnd*)
 	chmod 640 ${name}${unit}c r${name}${unit}c
 	;;
 
-ccd*|fd*|sd*)
+ccd*|fd*|sd*|xd*|xy*)
 	umask 2
 	case $i in
 	ccd*) name=ccd; blk=9; chr=23;;
 	fd*) name=fd; blk=16; chr=54;;
 	sd*) name=sd; blk=7; chr=17;;
+	xd*) name=xd; blk=10; chr=42;;
+	xy*) name=xy; blk=3; chr=9;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|\
