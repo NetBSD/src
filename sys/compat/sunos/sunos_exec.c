@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.10 1996/03/14 19:33:44 christos Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.11 1996/05/05 12:01:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -54,6 +54,7 @@
 #include <machine/exec.h>
 
 #include <compat/sunos/exec.h>
+#include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscall.h>
 
 #ifdef sparc
@@ -72,7 +73,6 @@ extern struct sysent sunos_sysent[];
 #ifdef SYSCALL_DEBUG
 extern char *sunos_syscallnames[];
 #endif
-extern void sunos_sendsig __P((sig_t, int, int, u_long));
 extern char sigcode[], esigcode[];
 const char sunos_emul_path[] = "/emul/sunos";
 
