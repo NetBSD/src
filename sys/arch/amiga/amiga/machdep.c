@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1994/12/29 22:35:47 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1995/01/05 07:36:15 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1420,6 +1420,7 @@ call_sicallbacks()
 	} while (si);
 #ifdef DIAGNOSTIC
 	if (ncbd) {
+		ncb += ncbd;
 		printf ("call_sicallback: %d more dynamic structures %d total\n",
 		    ncbd, ncb);
 		ncbd = 0;
