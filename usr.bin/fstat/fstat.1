@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.16 1999/11/19 22:29:24 kristerw Exp $
+.\"	$NetBSD: fstat.1,v 1.17 2001/05/06 23:48:31 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
-.\"	$NetBSD: fstat.1,v 1.16 1999/11/19 22:29:24 kristerw Exp $
+.\"	$NetBSD: fstat.1,v 1.17 2001/05/06 23:48:31 wiz Exp $
 .\"
 .Dd February 18, 1999
 .Dt FSTAT 1
@@ -201,13 +201,13 @@ For
 domain sockets, its the address of the socket pcb and the address
 of the connected pcb (if connected).
 Otherwise the protocol number and address of the socket itself are printed.
-The attempt is to make enough information available to 
+The attempt is to make enough information available to
 permit further analysis without duplicating
 .Xr netstat 1 .
 .Pp
 For example, the addresses mentioned above are the addresses which the
 .Dq Li netstat -A
-command would print for TCP, UDP, and 
+command would print for TCP, UDP, and
 .Ux
 domain.
 Note that since pipes are implemented using sockets, a pipe appears as a
@@ -250,9 +250,9 @@ symbolic names.
 .Xr nfsstat 1 ,
 .Xr ps 1 ,
 .Xr systat 1 ,
+.Xr vmstat 1 ,
 .Xr iostat 8 ,
-.Xr pstat 8 ,
-.Xr vmstat 8
+.Xr pstat 8
 .Sh HISTORY
 The
 .Nm
