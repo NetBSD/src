@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.15 2003/07/15 02:29:29 lukem Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.16 2003/10/25 17:59:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.15 2003/07/15 02:29:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.16 2003/10/25 17:59:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -354,7 +354,7 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 			 * It sleeps until you push the power button.
 			 */
 			__asm(".set noreorder");
-			__asm(__CONCAT(".word	",___STRING(VR_OPCODE_STANDBY)));
+			__asm(".word	" ___STRING(VR_OPCODE_STANDBY)));
 			__asm("nop");
 			__asm("nop");
 			__asm("nop");
@@ -394,7 +394,7 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 			 * It sleeps until you push the power button.
 			 */
 			__asm(".set noreorder");
-			__asm(__CONCAT(".word	",___STRING(VR_OPCODE_SUSPEND)));
+			__asm(".word	" ___STRING(VR_OPCODE_SUSPEND)));
 			__asm("nop");
 			__asm("nop");
 			__asm("nop");
