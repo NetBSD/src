@@ -1,4 +1,4 @@
-.\"	$NetBSD: setbuf.3,v 1.7 2000/12/29 15:22:52 kleink Exp $
+.\"	$NetBSD: setbuf.3,v 1.8 2001/09/16 02:08:55 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ output or input is read from any stream attached to a terminal device
 The function
 .Xr fflush 3
 may be used to force the block out early.
-(See 
+(See
 .Xr fclose 3 . )
 .Pp
 Normally all files are block buffered.
@@ -109,7 +109,7 @@ The
 parameter may be given as zero
 to obtain deferred optimal-size buffer allocation as usual.
 If it is not zero,
-then except for unbuffered files, the 
+then except for unbuffered files, the
 .Fa buf
 argument should point to a buffer at least
 .Fa size
@@ -136,7 +136,7 @@ but may have peculiar side effects
 (such as discarding input or flushing output)
 if the stream is ``active''.
 Portable applications should call it only once on any given stream,
-and before any 
+and before any
 .Tn I/O
 is performed.
 .Pp
