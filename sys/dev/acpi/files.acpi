@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.20 2003/05/15 21:29:50 fvdl Exp $
+#	$NetBSD: files.acpi,v 1.21 2004/01/25 11:46:49 jdolecek Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -51,7 +51,10 @@ file	dev/acpi/fdc_acpi.c		fdc_acpi
 
 # Parallel interface
 attach	lpt at acpi with lpt_acpi
-file	dev/acpi/lpt_acpi.c		lpt_acpi
+file	dev/acpi/lpt_acpi.c		lpt_acpi & !ppbus
+
+attach	atppc at acpi with atppc_acpi
+file	dev/acpi/atppc_acpi.c		atppc_acpi
 
 # Keyboard controller
 attach	pckbc at acpi with pckbc_acpi
