@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.99 1999/02/09 20:29:24 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.100 1999/03/22 17:30:37 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -716,38 +716,6 @@ sunos_sys_setsockopt(p, v, retval)
 	}
 	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m));
-}
-
-int
-sunos_sys_fchroot(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct sunos_sys_fchroot_args *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct vnode *vp;
-	struct file *fp;
-	int error;
-
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
-		return (error);
-	vp = (struct vnode *)fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (vp->v_type != VDIR)
-		error = ENOTDIR;
-	else
-		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-	VOP_UNLOCK(vp, 0);
-	if (error)
-		return (error);
-	VREF(vp);
-	if (fdp->fd_rdir != NULL)
-		vrele(fdp->fd_rdir);
-	fdp->fd_rdir = vp;
-	return (0);
 }
 
 /*
