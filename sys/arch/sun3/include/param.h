@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 1995/06/13 22:14:24 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.28 1995/06/26 06:56:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -112,21 +112,17 @@
 #define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
 #endif
 
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x)<<(PGSHIFT-DEV_BSHIFT))
-#define	dtoc(x)	((x)>>(PGSHIFT-DEV_BSHIFT))
-#define	dtob(x)	((x)<<DEV_BSHIFT)
+/* pages ("clicks") to disk blocks */
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* pages to bytes */
-#define	ctob(x)	((x)<<PGSHIFT)
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
 
-/* bytes to pages */
-#define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
-
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((db) << DEV_BSHIFT)
+/* bytes to disk blocks */
+#define	btodb(x)	((x) >> DEV_BSHIFT)
+#define	dbtob(x)	((x) << DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
