@@ -1,6 +1,7 @@
-/*	$NetBSD: profile.h,v 1.1 2001/02/23 21:23:48 reinoud Exp $	*/
+/*	$NetBSD: profile.h,v 1.2 2001/05/04 00:11:15 bjh21 Exp $	*/
 
 /*
+ * Copyright (c) 2001 Ben Harris
  * Copyright (c) 1995-1996 Mark Brinicombe
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,37 +37,55 @@
  * pushes a trapframe. Pity we cannot insert assembly before the function
  * prologue.
  */
+
+#ifdef __ELF__
+#define MCOUNT_ASM_NAME "__mcount"
+#else
+#define MCOUNT_ASM_NAME "mcount"
+#endif
+
 #define	MCOUNT								\
 	__asm__(".text");						\
 	__asm__(".align	0");						\
-	__asm__(".type	mcount,@function");				\
-	__asm__(".global	mcount");				\
-	__asm__("mcount:");						\
+	__asm__(".type	" MCOUNT_ASM_NAME ",%function");		\
+	__asm__(".global	" MCOUNT_ASM_NAME);			\
+	__asm__(MCOUNT_ASM_NAME ":");					\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
 	__asm__("stmfd	sp!, {r0-r3, ip, lr}");				\
+	/* Check what mode we're in.  EQ => 32, NE => 26 */		\
+	__asm__("teq	r0, r0");					\
+	__asm__("teq	pc, r15");					\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm__("mov	r0, ip");					\
+	__asm__("moveq	r0, ip");					\
+	__asm__("bicne	r0, ip, #0xfc000003");	       			\
 	/*								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm__("mov	r1, lr");					\
+	__asm__("moveq	r1, lr");					\
+	__asm__("bicne	r1, lr, #0xfc000003");				\
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
-	__asm__("bl	__mcount");					\
+	__asm__("bl	" ___STRING(_C_LABEL(_mcount)));		\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
 	__asm__("ldmfd	sp!, {r0-r3, lr, pc}");
 
 #ifdef _KERNEL
+#ifdef arm26
+extern int int_off_save(void);
+extern void int_restore(int);
+#define	MCOUNT_ENTER	(s = int_off_save())
+#define	MCOUNT_EXIT	int_restore(s)
+#else
 #include <machine/cpufunc.h>
 /*
  * splhigh() and splx() are heavyweight, and call mcount().  Therefore
@@ -76,4 +95,5 @@
  */
 #define	MCOUNT_ENTER	s = SetCPSR(0x0080, 0x0080);	/* set IRQ disable bit */
 #define	MCOUNT_EXIT	SetCPSR(0xffffffff, s);		/* restore old value */
+#endif /* !arm26 */
 #endif /* _KERNEL */
