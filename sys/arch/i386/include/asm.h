@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 2002/01/13 12:44:31 drochner Exp $	*/
+/*	$NetBSD: asm.h,v 1.21 2002/05/31 18:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,23 @@
 
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
+
+#ifdef _KERNEL
+/* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
+#ifdef __ELF__
+#ifdef __STDC__
+#define	IDTVEC(name)	ALIGN_TEXT; .globl X ## name; X ## name:
+#else 
+#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
+#endif /* __STDC__ */ 
+#else 
+#ifdef __STDC__
+#define	IDTVEC(name)	ALIGN_TEXT; .globl _X ## name; _X ## name: 
+#else
+#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
+#endif /* __STDC__ */
+#endif /* __ELF__ */
+#endif /* _KERNEL */
 
 #ifdef GPROF
 # ifdef __ELF__
