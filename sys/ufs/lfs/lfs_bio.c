@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.53 2002/12/29 14:08:12 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.54 2002/12/30 05:31:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.53 2002/12/29 14:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.54 2002/12/30 05:31:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,8 +195,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	int error, slept;
 
 	slept = 0;
-	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail) &&
-	    vp != fs->lfs_unlockvp) {
+	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail)) {
 #if 0
 		/*
 		 * XXX ideally, we should unlock vnodes here
@@ -263,7 +262,7 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	KASSERT(fsb < 0 || VOP_ISLOCKED(vp));
 	KASSERT(vp2 == NULL || fsb < 0 || VOP_ISLOCKED(vp2));
 
-	cantwait = (VTOI(vp)->i_flag & IN_ADIROP);
+	cantwait = (VTOI(vp)->i_flag & IN_ADIROP) || fs->lfs_unlockvp == vp;
 #ifdef DIAGNOSTIC
 	if (cantwait) {
 		if (fsb > 0)
