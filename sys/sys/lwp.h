@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.10 2003/09/13 08:32:18 jdolecek Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.11 2003/09/16 13:46:26 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ struct	lwp {
 	int	l_holdcnt;	/* If non-zero, don't swap. */
 	void	*l_ctxlink;	/* uc_link {get,set}context */
 	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
+	void	*l_upcallstack;	/* Upcall stack used during blocking upcall */
 
 #define l_endzero l_priority
 
@@ -119,6 +120,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_DETACHED	0x800000 /* Won't be waited for. */
 #define L_SA_WANTS_VP   0x1000000 /* SA LWP wants a virtual processor */
 #define	L_CANCELLED	0x2000000 /* tsleep should not sleep */
+#define L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
 
 /*
  * Status values.

@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.5 2003/07/17 18:16:59 fvdl Exp $	*/
+/*	$NetBSD: savar.h,v 1.6 2003/09/16 13:46:26 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,10 @@ struct sadata {
 
 	struct lwp	*sa_woken;	/* list of woken lwps */
 	struct lwp	*sa_idle;      	/* lwp in sawait */
+	vaddr_t	sa_vp_stacks_low;	/* SA upcall stack lowest address */
+	vaddr_t	sa_vp_stacks_high;	/* SA upcall stack highest address */
+	vaddr_t	sa_vp_faultaddr;	/* page fault address */
+	vaddr_t	sa_vp_ofaultaddr;	/* old page fault address */
 	int	sa_concurrency;		/* desired concurrency */
 	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
 	int	sa_ncached;		/* list length */
