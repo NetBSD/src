@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.19 1997/01/30 09:14:23 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.20 1997/03/22 00:17:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -1099,7 +1099,7 @@ stintr(arg, stat)
 		}
 #endif
 
-	stfinish(unit, sc, bp);
+	stfinish(sc, bp);
 }
 
 stcommand(dev, command, cnt)
