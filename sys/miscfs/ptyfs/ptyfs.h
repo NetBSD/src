@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.1 2004/11/11 01:40:32 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.2 2004/11/11 05:46:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ptyfs.h	8.9 (Berkeley) 5/14/95
+ *	@(#)procfs.h	8.9 (Berkeley) 5/14/95
  */
 
 /*
@@ -68,7 +68,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ptyfs.h	8.9 (Berkeley) 5/14/95
+ *	@(#)procfs.h	8.9 (Berkeley) 5/14/95
  */
 
 #ifdef _KERNEL
@@ -108,9 +108,6 @@ struct ptyfsnode {
  * Kernel stuff follows
  */
 #ifdef _KERNEL
-#define CNEQ(cnp, s, len) \
-	 ((cnp)->cn_namelen == (len) && \
-	  (memcmp((s), (cnp)->cn_nameptr, (len)) == 0))
 
 #define UIO_MX 32
 
@@ -132,13 +129,6 @@ int ptyfs_allocvp(struct mount *, struct vnode **, ptyfstype, int,
 void ptyfs_hashinit(void);
 void ptyfs_hashreinit(void);
 void ptyfs_hashdone(void);
-int ptyfs_getfp(struct ptyfsnode *, struct proc **, struct file **);
-
-/* functions to check whether or not files should be displayed */
-int ptyfs_validfile(struct proc *, struct mount *);
-int ptyfs_validfpregs(struct proc *, struct mount *);
-int ptyfs_validregs(struct proc *, struct mount *);
-int ptyfs_validmap(struct proc *, struct mount *);
 
 extern int (**ptyfs_vnodeop_p)(void *);
 extern struct vfsops ptyfs_vfsops;
