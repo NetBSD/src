@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/06 06:15:45 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/08 04:45:12 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -28,9 +28,8 @@ FILESMODE_xft-config=	${BINMODE}
 .PHONY:		xft.pc xft-config
 all dependall:	xft.pc xft-config
 
-# XXX this should be ${SHELL} but I'm not getting joy w/ it.
 XFTDIR=		${X11SRCDIR.xc}/lib/Xft
-CONFIG_SUBST=	sh ${XFTDIR}/config/config-subst \
+CONFIG_SUBST=	${HOST_SH} ${XFTDIR}/config/config-subst \
 		prefix="${X11ROOTDIR}" \
 		exec_prefix="${X11BINDIR}" \
 		libdir="${X11USRLIBDIR}" \
