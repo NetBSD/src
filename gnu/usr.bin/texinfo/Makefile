@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/01/09 03:13:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2001/07/25 16:47:50 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -17,11 +17,17 @@ FILESNAME_${F}= texinfo.mo
 .endfor
 .endif
 
+MAN=		info.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1 \
+		info.5 texinfo.5
+
 TEXINFO=	info-stnd.texi info.texi texinfo.txi
 
 DIST=		${.CURDIR}/../../dist
+INFOFLAGS=	-I${DIST}/texinfo/doc
+
 .PATH: ${DIST}/texinfo ${DIST}/texinfo/doc ${DIST}/texinfo/po
 
+.include <bsd.man.mk>
 .include <bsd.info.mk>
 .include <bsd.files.mk>
 .include <bsd.subdir.mk>
