@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.29 1998/02/15 21:18:45 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.30 1998/03/04 06:39:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Jason R. Thorpe.  All rights reserved.
@@ -318,11 +318,17 @@ Lcosfault:
 /*
  * kcopy(const void *src, void *dst, size_t len);
  *
- * Copy len bytes from src to dst, aborting if we encounter a page fault.
+ * Copy len bytes from src to dst, aborting if we encounter a fatal
+ * page fault.
+ *
+ * kcopy() _must_ save and restore the old fault handler since it is
+ * called by uiomove(), which may be in the path of servicing a non-fatal
+ * page fault.
  */
 ENTRY(kcopy)
-	link	a6,#0
-	movl	_C_LABEL(curpcb),a0	| set fault handler
+	link	a6,#-4
+	movl	_C_LABEL(curpcb),a0	 | set fault handler
+	movl	a0@(PCB_ONFAULT),a6@(-4) | save old handler first
 	movl	#Lkcfault,a0@(PCB_ONFAULT)
 	movl	a6@(16),sp@-		| push len
 	movl	a6@(12),sp@-		| push dst
@@ -331,8 +337,8 @@ ENTRY(kcopy)
 	addl	#12,sp			| pop args
 	clrl	d0			| success!
 Lkcdone:
-	movl	_C_LABEL(curpcb),a0	| clear fault handler
-	clrl	a0@(PCB_ONFAULT)
+	movl	_C_LABEL(curpcb),a0	| restore fault handler
+	movl	a6@(-4),a0@(PCB_ONFAULT)
 	unlk	a6
 	rts
 Lkcfault:
