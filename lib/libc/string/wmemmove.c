@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsspn.c,v 1.2 2000/12/21 05:12:19 itojun Exp $	*/
+/*	$NetBSD: wmemmove.c,v 1.1 2000/12/23 23:14:37 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,36 +25,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wcsspn.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
+ *	citrus Id: wmemmove.c,v 1.2 2000/12/20 14:08:31 itojun Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsspn.c,v 1.2 2000/12/21 05:12:19 itojun Exp $");
+__RCSID("$NetBSD: wmemmove.c,v 1.1 2000/12/23 23:14:37 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
+#include <string.h>
 
-size_t
-wcsspn(s, set)
+wchar_t *
+wmemmove(d, s, n)
+	wchar_t *d;
 	const wchar_t *s;
-	const wchar_t *set;
+	size_t n;
 {
-	const wchar_t *p;
-	const wchar_t *q;
-
-	p = s;
-	while (*p) {
-		q = set;
-		while (*q) {
-			if (*p == *q)
-				break;
-		}
-		if (!*q)
-			goto done;
-		p++;
-	}
-
-done:
-	return (p - s);
+	return (wchar_t *)memmove(d, s, n * sizeof(wchar_t));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wcscpy.c,v 1.2 2000/12/21 05:12:19 itojun Exp $	*/
+/*	$NetBSD: wmemset.c,v 1.1 2000/12/23 23:14:37 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,30 +25,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wcscpy.c,v 1.2 2000/12/21 04:51:09 itojun Exp
+ *	citrus Id: wmemset.c,v 1.2 2000/12/20 14:08:31 itojun Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscpy.c,v 1.2 2000/12/21 05:12:19 itojun Exp $");
+__RCSID("$NetBSD: wmemset.c,v 1.1 2000/12/23 23:14:37 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 
-wchar_t *
-wcscpy(s1, s2)
-	wchar_t *s1;
-	const wchar_t *s2;
+wchar_t	*
+wmemset(s, c, n)
+	wchar_t *s;
+	wchar_t c;
+	size_t n;
 {
+	size_t i;
 	wchar_t *p;
-	const wchar_t *q;
 
-	*s1 = '\0';
-	p = s1;
-	q = s2;
-	while (*q)
-		*p++ = *q++;
-	*p = '\0';
-
-	return s1;
+	p = (wchar_t *)s;
+	for (i = 0; i < n; i++) {
+		*p = c;
+		p++;
+	}
+	return s;
 }
