@@ -1,4 +1,4 @@
-/*	$NetBSD: nbtool_config.h.in,v 1.4 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: nbtool_config.h.in,v 1.5 2004/07/24 12:24:59 dbj Exp $	*/
 
 #ifndef	__NETBSD_NBTOOL_CONFIG_H__
 #define	__NETBSD_NBTOOL_CONFIG_H__
@@ -63,7 +63,6 @@
 #undef HAVE_STRUCT_STAT_ST_BIRTHTIME
 #undef HAVE_STRUCT_STAT_ST_ATIM
 #undef HAVE_STRUCT_STAT_ST_MTIMENSEC
-#undef HAVE_STRUCT_STATFS_F_IOSIZE
 
 #undef HAVE_DECL_OPTIND
 #undef HAVE_DECL_OPTRESET
