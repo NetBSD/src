@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.9 2000/06/14 15:24:08 assar Exp $
+#	$NetBSD: mi,v 1.10 2000/06/20 01:28:43 minoura Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./usr/bin/compile_et
@@ -114,19 +114,19 @@
 ./usr/lib/libhdb.a
 ./usr/lib/libhdb_p.a
 ./usr/lib/libkadm.a
-./usr/lib/libkadm_p.a
 ./usr/lib/libkadm5clnt.a
 ./usr/lib/libkadm5clnt_p.a
 ./usr/lib/libkadm5srv.a
 ./usr/lib/libkadm5srv_p.a
+./usr/lib/libkadm_p.a
 ./usr/lib/libkafs.a
 ./usr/lib/libkafs_p.a
 ./usr/lib/libkdb.a
 ./usr/lib/libkdb_p.a
 ./usr/lib/libkrb.a
-./usr/lib/libkrb_p.a
 ./usr/lib/libkrb5.a
 ./usr/lib/libkrb5_p.a
+./usr/lib/libkrb_p.a
 ./usr/lib/libroken.a
 ./usr/lib/libroken_p.a
 ./usr/lib/libsl.a
@@ -168,14 +168,14 @@
 ./usr/share/man/cat1/kinit.0
 ./usr/share/man/cat1/klist.0
 ./usr/share/man/cat1/kpasswd.0
-./usr/share/man/cat3/krb5_warn.0
-./usr/share/man/cat3/krb5_openlog.0
 ./usr/share/man/cat3/krb5_425_conv_principal.0
 ./usr/share/man/cat3/krb5_build_principal.0
 ./usr/share/man/cat3/krb5_free_principal.0
+./usr/share/man/cat3/krb5_openlog.0
 ./usr/share/man/cat3/krb5_parse_name.0
 ./usr/share/man/cat3/krb5_sname_to_principal.0
 ./usr/share/man/cat3/krb5_unparse_name.0
+./usr/share/man/cat3/krb5_warn.0
 ./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat8/hprop.0
 ./usr/share/man/cat8/hpropd.0
