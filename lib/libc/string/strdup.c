@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strdup.c	5.4 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strdup.c,v 1.5 1995/04/14 19:25:13 jtc Exp $";
+static char *rcsid = "$Id: strdup.c,v 1.6 1995/06/15 00:07:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -43,11 +43,11 @@ char *
 strdup(str)
 	const char *str;
 {
-	int len;
+	size_t len;
 	char *copy;
 
 	len = strlen(str) + 1;
-	if (!(copy = malloc((u_int)len)))
+	if (!(copy = malloc(len)))
 		return((char *)NULL);
 	memcpy(copy, str, len);
 	return(copy);
