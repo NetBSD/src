@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.8 2002/05/30 18:10:26 thorpej Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.9 2002/09/19 08:08:17 martti Exp $	*/
 
 /*
  * Copyright (C) 1999-2001 by Darren Reed.
@@ -47,8 +47,7 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] __attribute__((__unused__)) =
-    "@(#)Id: ipfs.c,v 2.6.2.9 2002/04/17 17:42:59 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.11 2002/06/04 14:44:05 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR
@@ -736,16 +735,16 @@ char *dirname;
 
 	devfd = opendevice(IPL_STATE);
 	if (devfd == -1)
-		return 1;
+		goto bad;
 	if (writestate(devfd, NULL))
-		return 1;
+		goto bad;
 	close(devfd);
 
 	devfd = opendevice(IPL_NAT);
 	if (devfd == -1)
-		return 1;
+		goto bad;
 	if (writenat(devfd, NULL))
-		return 1;
+		goto bad;
 	close(devfd);
 
 	if (setlock(fd, 0)) {
@@ -754,6 +753,11 @@ char *dirname;
 	}
 
 	return 0;
+
+bad:
+	setlock(fd, 0);
+	close(fd);
+	return 1;
 }
 
 

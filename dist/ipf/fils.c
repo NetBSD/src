@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.17 2002/05/30 18:10:25 thorpej Exp $	*/
+/*	$NetBSD: fils.c,v 1.18 2002/09/19 08:08:16 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -95,10 +95,8 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] __attribute__((__unused__)) =
-    "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] __attribute__((__unused__)) =
-    "@(#)Id: fils.c,v 2.21.2.35 2002/04/03 14:18:36 darrenr Exp";
+static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.21.2.36 2002/06/27 14:29:16 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -201,7 +199,7 @@ char *argv[];
 	ipfrstat_t *ifrstp = &ifrst;
 	char	*device = IPL_NAME, *memf = NULL;
 	char	*kern = NULL;
-	int	c, fd, myoptind;
+	int	c, myoptind;
 	struct protoent *proto;
 
 	int protocol = -1;		/* -1 = wild card for any protocol */
@@ -358,8 +356,8 @@ char *argv[];
 		bzero((char *)&ipsst, sizeof(ipsst));
 		bzero((char *)&ifrst, sizeof(ifrst));
 
-		fd = ipfstate_live(device, &fiop, &ipsstp, &ifrstp,
-				   &frauthstp, &frf);
+		ipfstate_live(device, &fiop, &ipsstp, &ifrstp,
+			      &frauthstp, &frf);
 	} else
 		ipfstate_dead(kern, &fiop, &ipsstp, &ifrstp, &frauthstp, &frf);
 
