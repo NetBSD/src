@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.3 2003/12/04 17:06:12 drochner Exp $	*/
 
 /*
  * Program to generate cryptographic keys for NTP clients and servers
@@ -241,6 +241,7 @@ main(
 	int	nid;		/* X509 digest/signature scheme */
 	FILE	*fstr = NULL;	/* file handle */
 	int	iffsw = 0;	/* IFF key switch */
+	const char *fnptr;
 #endif /* OPENSSL */
 	u_int	temp;
 
@@ -434,19 +435,20 @@ main(
 	 */
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_algorithms();
-	if (RAND_file_name(pathbuf, MAXFILENAME) == NULL) {
+	fnptr = RAND_file_name(pathbuf, MAXFILENAME);
+	if (fnptr == NULL) {
 		fprintf(stderr, "RAND_file_name %s\n",
 		    ERR_error_string(ERR_get_error(), NULL));
 		return (-1);
 	}
-	temp = RAND_load_file(pathbuf, -1);
+	temp = RAND_load_file(fnptr, -1);
 	if (temp == 0) {
 		fprintf(stderr,
-		    "RAND_load_file %s not found or empty\n", pathbuf);
+		    "RAND_load_file %s not found or empty\n", fnptr);
 		return (-1);
 	}
 	fprintf(stderr,
-	    "Random seed file %s %u bytes\n", pathbuf, temp);
+	    "Random seed file %s %u bytes\n", fnptr, temp);
 	RAND_add(&epoch, sizeof(epoch), 4.0);
 
 	/*
