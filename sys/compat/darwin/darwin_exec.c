@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.36 2004/07/03 00:14:30 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.37 2004/07/21 21:45:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.36 2004/07/03 00:14:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.37 2004/07/21 21:45:34 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -176,7 +176,8 @@ exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
 
 	dp = (char *) (cpp + argc + envc + 4);
 
-	if ((error = copyoutstr(emea->filename, dp, ARG_MAX, &len)) != 0)
+	if ((error = copyoutstr(emea->filename, dp, 
+	    (ARG_MAX < MAXPATHLEN) ? ARG_MAX : MAXPATHLEN, &len)) != 0)
 		return error;
 	progname = dp;
 	dp += len;
