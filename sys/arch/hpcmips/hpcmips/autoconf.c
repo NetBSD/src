@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2001/06/13 06:03:10 enami Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2001/09/15 11:13:20 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2001/06/13 06:03:10 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2001/09/15 11:13:20 uch Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -70,13 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2001/06/13 06:03:10 enami Exp $");
 
 #include <machine/config_hook.h>
 
-int	cpuspeed = 7;	/* approx # instr per usec. */
+int cpuspeed = 7;	/* approx # instr per usec. */
 
 struct device *booted_device;
 int booted_partition;
 
 static char booted_device_name[16];
-static void get_device __P((char *name));
+static void get_device(char *);
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -109,6 +109,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
+
 	get_device(booted_device_name);
 
 	printf("boot device: %s\n",
@@ -118,15 +119,14 @@ cpu_rootconf()
 }
 
 void
-makebootdev(cp)
-	char *cp;
+makebootdev(char *cp)
 {
+
 	strncpy(booted_device_name, cp, 16);
 }
 
 static void
-get_device(name)
-	char *name;
+get_device(char *name)
 {
 	int loop, unit, part;
 	char buf[32], *cp;
