@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1998/03/22 17:58:01 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1998/09/02 23:00:04 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -64,6 +64,12 @@ void	bus_space_write_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
 void	bus_space_write_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
 				int, caddr_t, int));
 void	bus_space_write_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+
+void	bus_space_read_region_1 __P((bus_space_tag_t, bus_space_handle_t,
+				int, caddr_t, int));
+
+void	bus_space_write_region_1 __P((bus_space_tag_t, bus_space_handle_t,
 				int, caddr_t, int));
 
 #if 0
@@ -178,4 +184,25 @@ bus_space_write_multi_8(t, h, o, a, c)
 }
 #endif
 
+extern __inline__ void
+bus_space_read_region_1(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a++, c--)
+		*(u_int8_t *)a = bus_space_read_1(t, h, o++);
+}
+
+extern __inline__ void
+bus_space_write_region_1(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	int			o, c;
+	caddr_t			a;
+{
+	for (; c; a++, c--)
+		 bus_space_write_1(t, h, o++, *(u_int8_t *)a);
+}
 #endif /* _AMIGA_BUS_H_ */
