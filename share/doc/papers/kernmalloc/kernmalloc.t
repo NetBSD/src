@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernmalloc.t,v 1.3 2000/03/13 23:03:37 soren Exp $
+.\"	$NetBSD: kernmalloc.t,v 1.4 2003/02/04 23:47:52 perry Exp $
 .\"
 .\" Copyright (c) 1988 The Regents of the University of California.
 .\" All rights reserved.
@@ -105,7 +105,7 @@ University of California, Berkeley
 Berkeley, California  94720
 .AB
 The 4.3BSD UNIX kernel uses many memory allocation mechanisms,
-each designed for the particular needs of the utilizing subsystem.
+each designed for the particular needs of the particular subsystem.
 This paper describes a general purpose dynamic memory allocator
 that can be used by all of the kernel subsystems.
 The design of this allocator takes advantage of known memory usage
