@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2000/02/20 03:11:12 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2000/02/20 03:38:04 mycroft Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -16,3 +16,4 @@ snap_md_post:
 .endif
 	cd ${.CURDIR}/../distrib/i386/floppies && \
 		${MAKE} depend && ${MAKE} ${_J} && ${MAKE} release
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/floppies '*.gz'
