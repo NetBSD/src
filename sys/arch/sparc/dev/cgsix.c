@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.17 1995/11/29 01:45:47 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.18 1995/12/11 12:43:16 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -96,7 +96,8 @@ struct cgsix_softc {
 	struct	device sc_dev;		/* base device */
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	volatile struct cg6_layout *sc_physadr;	/* phys addr of h/w */
+	struct	rom_reg sc_physadr;	/* phys addr of h/w */
+	int	sc_bustype;		/* type of bus we live on */
 	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
 	volatile int *sc_fhc;			/* FHC register */
 	volatile struct cg6_thc *sc_thc;	/* THC registers */
@@ -176,7 +177,6 @@ cgsixattach(parent, self, args)
 	register struct confargs *ca = args;
 	register int node, ramsize, i;
 	register volatile struct bt_regs *bt;
-	register volatile struct cg6_layout *p;
 	int isconsole, sbus = 1;
 	char *nam;
 	extern struct tty *fbconstty;
@@ -188,6 +188,13 @@ cgsixattach(parent, self, args)
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
+#if defined(SUN4M)
+		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+			node = ca->ca_ra.ra_node;
+			nam = getpropstring(node, "model");
+			break;
+		}
+#endif
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
@@ -221,19 +228,21 @@ cgsixattach(parent, self, args)
 	 * the video RAM mapped.  Just map what we care about for ourselves
 	 * (the FHC, THC, and Brooktree registers).
 	 */
-	sc->sc_physadr = p = (struct cg6_layout *)ca->ca_ra.ra_paddr;
+#define	O(memb) ((u_int)(&((struct cg6_layout *)0)->memb))
+	sc->sc_physadr = ca->ca_ra.ra_reg[0];
+	sc->sc_bustype = ca->ca_bustype;
 	sc->sc_bt = bt = (volatile struct bt_regs *)
-	    mapiodev((caddr_t)&p->cg6_bt_un.un_btregs, sizeof *sc->sc_bt,
-	    ca->ca_bustype);
+	    mapiodev(ca->ca_ra.ra_reg, O(cg6_bt_un.un_btregs),
+		     sizeof *sc->sc_bt, ca->ca_bustype);
 	sc->sc_fhc = (volatile int *)
-	    mapiodev((caddr_t)&p->cg6_fhc_un.un_fhc, sizeof *sc->sc_fhc,
-	    ca->ca_bustype);
+	    mapiodev(ca->ca_ra.ra_reg, O(cg6_fhc_un.un_fhc),
+		     sizeof *sc->sc_fhc, ca->ca_bustype);
 	sc->sc_thc = (volatile struct cg6_thc *)
-	    mapiodev((caddr_t)&p->cg6_thc_un.un_thc, sizeof *sc->sc_thc,
-	    ca->ca_bustype);
+	    mapiodev(ca->ca_ra.ra_reg, O(cg6_thc_un.un_thc),
+		     sizeof *sc->sc_thc, ca->ca_bustype);
 	sc->sc_tec = (volatile struct cg6_tec_xxx *)
-	    mapiodev((caddr_t)&p->cg6_tec_un.un_tec, sizeof *sc->sc_tec,
-	    ca->ca_bustype);
+	    mapiodev(ca->ca_ra.ra_reg, O(cg6_tec_un.un_tec),
+		     sizeof *sc->sc_tec, ca->ca_bustype);
 
 	sc->sc_fhcrev = (*sc->sc_fhc >> FHC_REV_SHIFT) &
 	    (FHC_REV_MASK >> FHC_REV_SHIFT);
@@ -254,8 +263,8 @@ cgsixattach(parent, self, args)
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
 		sc->sc_fb.fb_pixels = (caddr_t)
-			mapiodev((caddr_t)p->cg6_ram, sizeof(p->cg6_ram),
-				 ca->ca_bustype);
+			mapiodev(ca->ca_ra.ra_reg, O(cg6_ram[0]),
+				 ramsize, ca->ca_bustype);
 		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
@@ -675,8 +684,8 @@ cgsixmmap(dev, off, prot)
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
 		if (u < sz)
-			return ((int)sc->sc_physadr + u + mo->mo_physoff +
-			    PMAP_OBIO + PMAP_NC);
+			return (REG2PHYS(&sc->sc_physadr, u + mo->mo_physoff,
+					 sc->sc_bustype) | PMAP_NC);
 	}
 #ifdef DEBUG
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.6 1995/09/14 20:38:56 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.7 1995/12/11 12:43:31 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -189,7 +189,7 @@ si_attach(parent, self, aux)
 	struct bootpath *bp;
 
 	/* Map the controller registers. */
-	regs = (struct si_regs *)mapiodev(ra->ra_paddr,
+	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
 	    sizeof(struct si_regs), ca->ca_bustype);
 
 	/* Establish the interrupt. */
