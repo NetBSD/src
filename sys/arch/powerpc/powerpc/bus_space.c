@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2003/07/15 02:54:47 lukem Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2003/07/25 10:12:46 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.3 2003/07/15 02:54:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4 2003/07/25 10:12:46 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,6 +524,13 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
 		return (EOPNOTSUPP);
 
+#ifdef PPC_IBM4XX
+	/*
+	 * XXX: Temporary kludge.
+	 * Don't bother checking the extent during very early bootstrap.
+	 */
+	if (extent_flags) {
+#endif
 	/*
 	 * Before we go any further, let's make sure that this
 	 * region is available.
@@ -537,6 +544,9 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 #endif
 		return (error);
 	}
+#ifdef PPC_IBM4XX
+	}
+#endif
 
 	pa = t->pbs_offset + bpa;
 #ifdef PPC_OEA
@@ -552,6 +562,7 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		} 
 	}
 #endif
+#ifndef PPC_IBM4XX
 	if (extent_flags == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
 #ifdef DEBUG
@@ -560,6 +571,7 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 #endif
 		return (ENOMEM);
 	}
+#endif
 	/*
 	 * Map this into the kernel pmap.
 	 */

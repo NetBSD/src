@@ -1,4 +1,4 @@
-/* $NetBSD: plbvar.h,v 1.2 2002/08/23 15:01:08 scw Exp $ */
+/* $NetBSD: plbvar.h,v 1.3 2003/07/25 10:12:44 scw Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,7 +43,6 @@ struct plb_dev {
 
 struct plb_attach_args {
 	const char *plb_name;
-	bus_space_tag_t plb_bt;	/* Bus space tag */
 	bus_dma_tag_t plb_dmat;	/* DMA tag */
 	int plb_irq;
 };
