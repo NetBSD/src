@@ -1,20 +1,20 @@
-#	$NetBSD: Makefile,v 1.6 1998/05/06 11:59:09 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 1998/08/28 15:31:29 tv Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 .if (${HAVE_GCC28} != "")
-INCS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
-	csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime cwchar \
-	cwctype fstream iomanip iosfwd iostream stdexcept string strstream
-INCS+=	complex.h stl.h _G_config.h
-INCSDIR=/usr/include/g++
 
-SUBDIR=std stl io
+LIB=		stdc++
 
-LIB=	stdc++
+INCS=		cassert cctype cerrno cfloat ciso646 climits clocale cmath \
+		complex csetjmp csignal cstdarg cstddef cstdio cstdlib \
+		cstring ctime cwchar cwctype fstream iomanip iosfwd iostream \
+		stdexcept string strstream complex.h stl.h _G_config.h
+INCSDIR=	/usr/include/g++
 
-SRCS=	_G_config.h \
-	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
+SUBDIR=		config std stl io
+
+SRCS=	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
 	indstream.cc ioassign.cc ioextend.cc iomanip.cc iostream.cc \
 	isgetline.cc isgetsb.cc isscan.cc osform.cc parsestream.cc \
 	pfstream.cc procbuf.cc sbform.cc sbgetline.cc sbscan.cc \
@@ -29,111 +29,56 @@ SRCS=	_G_config.h \
 	iosetbuffer.c iosetvbuf.c iosprintf.c iosscanf.c iostrerror.c \
 	ioungetc.c iovfprintf.c iovfscanf.c iovsprintf.c iovsscanf.c \
 	outfloat.c peekc.c strops.c \
-	cmathi.cc cstdlibi.cc cstringi.cc stdexcepti.cc stlinst.cc \
-	cstrmain.cc cstrio.cc fcomplex.cc fcomio.cc dcomplex.cc dcomio.cc \
-	ldcomplex.cc ldcomio.cc 
+	cmathi.cc cstdlibi.cc cstringi.cc stdexcepti.cc stlinst.cc
 
-DIST=		$(.CURDIR)/../../dist
-CXXFLAGS+=	-nostdinc++ 
-CPPFLAGS+=	-I. -I$(DIST)/libstdc++ -I$(DIST)/libio \
-		-I$(DIST)/libstdc++/stl -I$(DIST)/gcc/cp/inc
-NOMAN=		noman
+DIST=		${.CURDIR}/../../dist
+CPPFLAGS+=	-I${DESTDIR}/usr/include/g++ -I${DIST}/libstdc++
+
+NOMAN=
 NOLINT=		nolint (c++)
 
-.PATH:	$(DIST)/libstdc++ $(DIST)/libstdc++/stl $(DIST)/libio
+.PATH:	${DIST}/libstdc++ ${DIST}/libstdc++/stl ${DIST}/libio
 
-.if (${MACHINE} != "alpha")
-LDADD=	${DESTDIR}/usr/lib/c++rt0.o
-DPADD=	${DESTDIR}/usr/lib/c++rt0.o
-.endif
+# W not yet supported
+.for _TYPE_ in C
+SRCS+=		${_TYPE_}inst.cc
+CLEANFILES+=	${_TYPE_}inst.cc
+${_TYPE_}inst.cc: sinst.cc
+	echo '#define ${_TYPE_}' >$@
+	@for func in \
+		REP MAIN TRAITS ADDSS ADDPS ADDCS ADDSP ADDSC EQSS EQPS EQSP \
+		NESS NEPS NESP LTSS LTPS LTSP GTSS GTPS GTSP LESS LEPS LESP \
+		GESS GEPS GESP EXTRACT INSERT GETLINE; do \
+			echo "#define $$func" >>$@; \
+	done
+	cat $> >>$@
+.endfor
 
-# XXX Workaround the .cc -> (NULL) extension rule
+.for _TYPE_ in F D LD
+SRCS+=		${_TYPE_}inst.cc
+CLEANFILES+=	${_TYPE_}inst.cc
+${_TYPE_}inst.cc: cinst.cc
+	echo '#define ${_TYPE_}' >$@
+	@for func in \
+		MAIN ADDCC ADDCF ADDFC SUBCC SUBCF SUBFC MULCC MULCF MULFC \
+		DIVCC DIVCF DIVFC PLUS MINUS EQCC EQCF EQFC NECC NECF NEFC \
+		ABS ARG POLAR CONJ NORM COS COSH EXP LOG POWCC POWCF POWCI \
+		POWFC SIN SINH SQRT EXTRACT INSERT; do \
+			echo "#define $$func" >>$@; \
+	done
+	cat $> >>$@
+.endfor
+
 .cc:
 	@true
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
 
-SINSTCC=	$(DIST)/libstdc++/sinst.cc
-CINSTCC=	$(DIST)/libstdc++/cinst.cc
-
-_G_config.h: Makefile
-	rootme=${.OBJDIR} CC="${CC}" CXX="${CXX}" CONFIG_NM="${NM}" \
-	    /bin/sh ${DIST}/libio/gen-params LIB_VERSION=2.8.0 >tmp-params.h
-	mv -f tmp-params.h _G_config.h
-CLEANFILES+=dummy.h tmp-params.h _G_config.h
-
-cstrmain.cc: Makefile
-	@echo Creating cstrmain.cc
-	@(for i in REP MAIN TRAITS ADDSS ADDPS ADDCS ADDSP ADDSC EQSS EQPS EQSP NESS NEPS NESP LTSS LTPS LTSP GTSS GTPS GTSP LESS LEPS LESP GESS GEPS GESP ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define C';\
-	cat $(SINSTCC)) > $(.TARGET)
-CLEANFILES+=cstrmain.cc
-
-cstrio.cc: Makefile
-	@echo Creating cstrio.cc
-	@(for i in EXTRACT INSERT GETLINE ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define C';\
-	cat $(SINSTCC)) > $(.TARGET)
-CLEANFILES+=cstrio.cc
-
-fcomplex.cc: Makefile
-	@echo Creating fcomplex.cc
-	@(for i in MAIN ADDCC ADDCF ADDFC SUBCC SUBCF SUBFC MULCC MULCF MULFC DIVCC DIVCF DIVFC PLUS MINUS EQCC EQCF EQFC NECC NECF NEFC ABS ARG POLAR CONJ NORM COS COSH EXP LOG POWCC POWCF POWCI POWFC SIN SINH SQRT ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define F';\
-	cat $(CINSTCC)) > $(.TARGET)
-CLEANFILES+=fcomplex.cc
-
-fcomio.cc: Makefile
-	@echo Creating fcomio.cc
-	@(for i in EXTRACT INSERT ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define F';\
-	cat $(CINSTCC)) > $(.TARGET)
-CLEANFILES+=fcomio.cc
-
-dcomplex.cc: Makefile
-	@echo Creating dcomplex.cc
-	@(for i in MAIN ADDCC ADDCF ADDFC SUBCC SUBCF SUBFC MULCC MULCF MULFC DIVCC DIVCF DIVFC PLUS MINUS EQCC EQCF EQFC NECC NECF NEFC ABS ARG POLAR CONJ NORM COS COSH EXP LOG POWCC POWCF POWCI POWFC SIN SINH SQRT ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define D';\
-	cat $(CINSTCC)) > $(.TARGET)
-CLEANFILES+=dcomplex.cc
-
-dcomio.cc: Makefile
-	@echo Creating dcomio.cc
-	@(for i in EXTRACT INSERT ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define D';\
-	cat $(CINSTCC)) > $(.TARGET)
-CLEANFILES+=dcomio.cc
-
-ldcomplex.cc: Makefile
-	@echo Creating ldcomplex.cc
-	@(for i in MAIN ADDCC ADDCF ADDFC SUBCC SUBCF SUBFC MULCC MULCF MULFC DIVCC DIVCF DIVFC PLUS MINUS EQCC EQCF EQFC NECC NECF NEFC ABS ARG POLAR CONJ NORM COS COSH EXP LOG POWCC POWCF POWCI POWFC SIN SINH SQRT ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define LD';\
-	cat $(CINSTCC)) > $(.TARGET)
-CLEANFILES+=ldcomplex.cc
-
-ldcomio.cc: Makefile
-	@echo Creating ldcomio.cc
-	@(for i in EXTRACT INSERT ; do \
-		echo "#define $$i"; \
-		done;\
-	echo '#define LD';\
-	cat $(CINSTCC)) > $(.TARGET)
-CLEANFILES+=ldcomio.cc
+.if (${OBJECT_FMT} == "a.out")
+LDADD=	${DESTDIR}/usr/lib/c++rt0.o
+DPADD=	${DESTDIR}/usr/lib/c++rt0.o
+.endif
 
 .else
 
