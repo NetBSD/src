@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.85 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.86 2005/01/26 21:53:42 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.85 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.86 2005/01/26 21:53:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,7 @@ struct auich_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
+	struct pci_conf_state sc_pciconf;
 
 	/* sysctl */
 	struct sysctllog *sc_log;
@@ -1420,6 +1421,7 @@ auich_powerhook(int why, void *addr)
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
 		sc->sc_suspend = why;
+		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
 		break;
 
 	case PWR_RESUME:
@@ -1431,6 +1433,7 @@ auich_powerhook(int why, void *addr)
 			sc->sc_suspend = why;
 			return;
 		}
+		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
 		sc->sc_suspend = why;
 		auich_reset_codec(sc);
 		DELAY(1000);
