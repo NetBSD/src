@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.8 2001/04/21 14:44:40 sato Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.9 2001/05/16 10:49:18 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -201,6 +201,23 @@ vrbcu_dump_regs()
 		}
 		break;
 #endif /* VR4121 */
+#if defined VR4122
+	case BCUREVID_RID_4122:
+		{
+			int vt;
+
+			tclock = cpuclock /
+			    (((spdreg & BCUCLKSPEED_TDIVMODE) >>
+				BCUCLKSPEED_TDIVSHFT) ? 4 : 2);
+			vt = ((spdreg & BCUCLKSPEED_VTDIVMODE) >>
+			    BCUCLKSPEED_VTDIVSHFT);
+			if (vt == 0 || vt > BCUCLKSPEED_VTDIV6)
+				vtclock = 0; /* XXX */
+			else
+				vtclock = cpuclock / vt;
+		}
+		break;
+#endif /* VR4122 */
 	default:
 		break;
 	}
@@ -387,6 +404,11 @@ vrbcu_vrip_getcpuclock(void)
 		break;
 	case BCUREVID_RID_4121:
 		cpuclock = CLKX / clksp * 64;
+		/* branch delay is 2 clock; 3 clock/loop */
+		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
+		break;
+	case BCUREVID_RID_4122:
+		cpuclock = CLKX / clksp * 98;
 		/* branch delay is 2 clock; 3 clock/loop */
 		cpuspeed = (cpuclock / 3 + MHZ / 2) / MHZ;
 		break;
