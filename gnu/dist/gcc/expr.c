@@ -1,5 +1,5 @@
 /* Convert tree expression to rtl instructions, for GNU compiler.
-   Copyright (C) 1988, 92-97, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1988, 92-98, 1999 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -1618,6 +1618,10 @@ emit_block_move (x, y, size, align)
      int align;
 {
   rtx retval = 0;
+#ifdef TARGET_MEM_FUNCTIONS
+  static tree fn;
+  tree call_expr, arg_list;
+#endif
 
   if (GET_MODE (x) != BLKmode)
     abort ();
@@ -1691,13 +1695,60 @@ emit_block_move (x, y, size, align)
 	}
 
 #ifdef TARGET_MEM_FUNCTIONS
-      retval
-	= emit_library_call_value (memcpy_libfunc, NULL_RTX, 0,
-				   ptr_mode, 3, XEXP (x, 0), Pmode,
-				   XEXP (y, 0), Pmode,
-				   convert_to_mode (TYPE_MODE (sizetype), size,
-						    TREE_UNSIGNED (sizetype)),
-				   TYPE_MODE (sizetype));
+      /* It is incorrect to use the libcall calling conventions to call
+	 memcpy in this context.
+
+	 This could be a user call to memcpy and the user may wish to
+	 examine the return value from memcpy.
+
+	 For targets where libcalls and normal calls have different conventions
+	 for returning pointers, we could end up generating incorrect code. 
+
+	 So instead of using a libcall sequence we build up a suitable
+	 CALL_EXPR and expand the call in the normal fashion.  */
+      if (fn == NULL_TREE)
+	{
+	  tree fntype;
+
+	  /* This was copied from except.c, I don't know if all this is
+	     necessary in this context or not.  */
+	  fn = get_identifier ("memcpy");
+	  push_obstacks_nochange ();
+	  end_temporary_allocation ();
+	  fntype = build_pointer_type (void_type_node);
+	  fntype = build_function_type (fntype, NULL_TREE);
+	  fn = build_decl (FUNCTION_DECL, fn, fntype);
+	  DECL_EXTERNAL (fn) = 1;
+	  TREE_PUBLIC (fn) = 1;
+	  DECL_ARTIFICIAL (fn) = 1;
+	  make_decl_rtl (fn, NULL_PTR, 1);
+	  assemble_external (fn);
+	  pop_obstacks ();
+	}
+
+      /* We need to make an argument list for the function call. 
+
+	 memcpy has three arguments, the first two are void * addresses and
+	 the last is a size_t byte count for the copy.  */
+      arg_list
+	= build_tree_list (NULL_TREE,
+			    make_tree (build_pointer_type (void_type_node),
+				       XEXP (x, 0)));
+      TREE_CHAIN (arg_list)
+	= build_tree_list (NULL_TREE,
+			   make_tree (build_pointer_type (void_type_node),
+				      XEXP (y, 0)));
+      TREE_CHAIN (TREE_CHAIN (arg_list))
+	 = build_tree_list (NULL_TREE, make_tree (sizetype, size));
+      TREE_CHAIN (TREE_CHAIN (TREE_CHAIN (arg_list))) = NULL_TREE;
+
+      /* Now we have to build up the CALL_EXPR itself.  */
+      call_expr = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (fn)), fn);
+      call_expr = build (CALL_EXPR, TREE_TYPE (TREE_TYPE (fn)),
+			 call_expr, arg_list, NULL_TREE);
+      TREE_SIDE_EFFECTS (call_expr) = 1;
+
+      retval = expand_expr (call_expr, NULL_RTX, VOIDmode, 0);
 #else
       emit_library_call (bcopy_libfunc, 0,
 			 VOIDmode, 3, XEXP (y, 0), Pmode,
@@ -2213,6 +2264,10 @@ clear_storage (object, size, align)
      rtx size;
      int align;
 {
+#ifdef TARGET_MEM_FUNCTIONS
+  static tree fn;
+  tree call_expr, arg_list;
+#endif
   rtx retval = 0;
 
   if (GET_MODE (object) == BLKmode)
@@ -2277,16 +2332,60 @@ clear_storage (object, size, align)
 
 
 #ifdef TARGET_MEM_FUNCTIONS
-	  retval
-	    = emit_library_call_value (memset_libfunc, NULL_RTX, 0,
-				       ptr_mode, 3,
-				       XEXP (object, 0), Pmode,
-				       const0_rtx,
-				       TYPE_MODE (integer_type_node),
-				       convert_to_mode
-				       (TYPE_MODE (sizetype), size,
-					TREE_UNSIGNED (sizetype)),
-				       TYPE_MODE (sizetype));
+      /* It is incorrect to use the libcall calling conventions to call
+	 memset in this context.
+
+	 This could be a user call to memset and the user may wish to
+	 examine the return value from memset.
+
+	 For targets where libcalls and normal calls have different conventions
+	 for returning pointers, we could end up generating incorrect code. 
+
+	 So instead of using a libcall sequence we build up a suitable
+	 CALL_EXPR and expand the call in the normal fashion.  */
+      if (fn == NULL_TREE)
+	{
+	  tree fntype;
+
+	  /* This was copied from except.c, I don't know if all this is
+	     necessary in this context or not.  */
+	  fn = get_identifier ("memset");
+	  push_obstacks_nochange ();
+	  end_temporary_allocation ();
+	  fntype = build_pointer_type (void_type_node);
+	  fntype = build_function_type (fntype, NULL_TREE);
+	  fn = build_decl (FUNCTION_DECL, fn, fntype);
+	  DECL_EXTERNAL (fn) = 1;
+	  TREE_PUBLIC (fn) = 1;
+	  DECL_ARTIFICIAL (fn) = 1;
+	  make_decl_rtl (fn, NULL_PTR, 1);
+	  assemble_external (fn);
+	  pop_obstacks ();
+	}
+
+      /* We need to make an argument list for the function call. 
+
+	 memset has three arguments, the first is a void * addresses, the
+	 second a integer with the initialization value, the last is a size_t
+	 byte count for the copy.  */
+      arg_list
+	= build_tree_list (NULL_TREE,
+			    make_tree (build_pointer_type (void_type_node),
+				       XEXP (object, 0)));
+      TREE_CHAIN (arg_list)
+	= build_tree_list (NULL_TREE,
+			   make_tree (integer_type_node, const0_rtx));
+      TREE_CHAIN (TREE_CHAIN (arg_list))
+	 = build_tree_list (NULL_TREE, make_tree (sizetype, size));
+      TREE_CHAIN (TREE_CHAIN (TREE_CHAIN (arg_list))) = NULL_TREE;
+
+      /* Now we have to build up the CALL_EXPR itself.  */
+      call_expr = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (fn)), fn);
+      call_expr = build (CALL_EXPR, TREE_TYPE (TREE_TYPE (fn)),
+			 call_expr, arg_list, NULL_TREE);
+      TREE_SIDE_EFFECTS (call_expr) = 1;
+
+      retval = expand_expr (call_expr, NULL_RTX, VOIDmode, 0);
 #else
 	  emit_library_call (bzero_libfunc, 0,
 			     VOIDmode, 2,
@@ -3457,10 +3556,21 @@ store_expr (exp, target, want_value)
 
   /* If value was not generated in the target, store it there.
      Convert the value to TARGET's type first if nec.  */
+  /* If TEMP and TARGET compare equal according to rtx_equal_p, but
+     one or both of them are volatile memory refs, we have to distinguish
+     two cases:
+     - expand_expr has used TARGET.  In this case, we must not generate
+       another copy.  This can be detected by TARGET being equal according
+       to == .
+     - expand_expr has not used TARGET - that means that the source just
+       happens to have the same RTX form.  Since temp will have been created
+       by expand_expr, it will compare unequal according to == .
+       We must generate a copy in this case, to reach the correct number
+       of volatile memory references.  */
 
   if ((! rtx_equal_p (temp, target)
-       || side_effects_p (temp)
-       || side_effects_p (target))
+       || (temp != target && (side_effects_p (temp)
+			      || side_effects_p (target))))
       && TREE_CODE (exp) != ERROR_MARK)
     {
       target = protect_from_queue (target, 1);
@@ -8703,7 +8813,7 @@ expand_builtin (exp, target, subtarget, mode, ignore)
 	      if (! can_handle_constant_p)
 		{
 		  warning ("Delayed evaluation of __builtin_constant_p not supported on this target.");
-		  warning ("Please report this as a bug to egcs-bugs@cygnus.com.");
+		  warning ("Please report this as a bug to egcs-bugs@egcs.cygnus.com.");
 		  return const0_rtx;
 		}
 	      return gen_rtx_CONSTANT_P_RTX (TYPE_MODE (integer_type_node),
