@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.27 2002/09/25 07:27:53 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.28 2002/09/25 21:11:18 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -63,10 +63,14 @@ _rtld_setup_pltgot(obj)
 	Elf_Word *jmptab;
 	int N = obj->pltrelalim - obj->pltrela;
 
+	/* Entries beyond 8192 take twice as much space. */
+	if (N > 8192)
+		N += N-8192;
+
 	pltcall = obj->pltgot;
+	jmptab = pltcall + 18 + N * 2;
 
 	memcpy(pltcall, _rtld_powerpc_pltcall, PLTCALL_SIZE);
-	jmptab = pltcall + 18 + N * 2;
 	pltcall[1] |= ha(jmptab);
 	pltcall[2] |= l(jmptab);
 
@@ -192,27 +196,30 @@ _rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
 {
 	const Elf_Rela *rela;
+	int reloff;
 
-	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
+	for (rela = obj->pltrela, reloff = 0; rela < obj->pltrelalim; rela++, reloff++) {
 		Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 		int distance;
 		Elf_Addr *pltresolve;
-		int reloff = rela - obj->pltrela;
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
 
-		if (reloff < 0 || reloff >= 0x8000)
-			return (-1);
-
 		pltresolve = obj->pltgot + 8;
 
-		distance = (Elf_Addr)pltresolve - (Elf_Addr)(where + 1);
-
-       		/* li	r11,reloff */
-		/* b	pltresolve   */
-		where[0] = 0x39600000 | reloff;
-		where[1] = 0x48000000 | (distance & 0x03fffffc);
-		/* __syncicache(where, 8); */
+		if (reloff < 32768) {
+	       		/* li	r11,reloff */
+			*where++ = 0x39600000 | reloff;
+		} else {
+			/* lis  r11,ha(reloff) */
+			/* addi	r11,l(reloff) */
+			*where++ = 0x3d600000 | ha(reloff);
+			*where++ = 0x396b0000 | l(reloff);
+		}
+		/* b	pltresolve */
+		distance = (Elf_Addr)pltresolve - (Elf_Addr)where;
+		*where++ = 0x48000000 | (distance & 0x03fffffc);
+		/* __syncicache(where - 12, 12); */
 	}
 
 	return 0;
@@ -247,18 +254,28 @@ _rtld_bind(obj, reloff)
 		Elf_Addr *pltcall, *jmptab;
 		int N = obj->pltrelalim - obj->pltrela;
 	
+		/* Entries beyond 8192 take twice as much space. */
+		if (N > 8192)
+			N += N-8192;
+
 		pltcall = obj->pltgot;
-	
 		jmptab = pltcall + 18 + N * 2;
+	
 		jmptab[reloff] = value;
 
-		distance = (Elf_Addr)pltcall - (Elf_Addr)(where + 1);
-	
-		/* li	r11,reloff */
-		/* b	pltcall		# use pltcall routine */
-		where[0] = 0x39600000 | reloff;
-		where[1] = 0x48000000 | (distance & 0x03fffffc);
-		__syncicache(where, 8);
+		if (reloff < 32768) {
+			/* li	r11,reloff */
+			*where++ = 0x39600000 | reloff;
+		} else {
+			/* lis  r11,ha(reloff) */
+			/* addi	r11,l(reloff) */
+			*where++ = 0x3d600000 | ha(reloff);
+			*where++ = 0x396b0000 | l(reloff);
+		}
+		/* b	pltcall	*/
+		distance = (Elf_Addr)pltcall - (Elf_Addr)where;
+		*where++ = 0x48000000 | (distance & 0x03fffffc);
+		__syncicache(where - 12, 12);
 	}
 
 	return (caddr_t)value;
