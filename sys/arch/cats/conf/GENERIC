@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2001/12/28 17:37:02 augustss Exp $
+# $NetBSD: GENERIC,v 1.17 2002/01/27 13:23:13 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -138,6 +138,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation

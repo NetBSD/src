@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.40 2001/11/17 23:56:21 gmcgarry Exp $
+#	$NetBSD: BASALT,v 1.41 2002/01/27 13:23:15 jdolecek Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 workstation.
 #
@@ -29,6 +29,7 @@ options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	LKM		# loadable kernel modules
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Filesystems
 file-system	FFS		# fast filesystem

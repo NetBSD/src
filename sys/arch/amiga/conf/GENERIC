@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2002/01/27 13:01:46 is Exp $
+# $NetBSD: GENERIC,v 1.172 2002/01/27 13:23:10 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.171 $"
+#ident 		"GENERIC-$Revision: 1.172 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -184,6 +184,9 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #ifndef INSTALL_CONFIGURATION
 options 	NTP		# NTP phase/frequency locked loop
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#else
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #endif
 
 #

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2002/01/19 18:45:12 oster Exp $
+# $NetBSD: GENERIC,v 1.96 2002/01/27 13:23:24 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.95 $"
+#ident		"GENERIC-$Revision: 1.96 $"
 
 maxusers	64
 
@@ -59,6 +59,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM			# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices

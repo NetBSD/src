@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.8 2001/11/20 12:56:33 lukem Exp $
+#	$NetBSD: MMTAROMNEW,v 1.9 2002/01/27 13:23:21 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -42,6 +42,8 @@ options 	HZ=10		# clock interrupt generates every 1/10 sec
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks

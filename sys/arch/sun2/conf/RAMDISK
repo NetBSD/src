@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.9 2001/12/15 22:22:13 fredette Exp $
+# $NetBSD: RAMDISK,v 1.10 2002/01/27 13:23:27 jdolecek Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -26,6 +26,7 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB

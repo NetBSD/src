@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15 2002/01/27 05:14:33 uch Exp $
+# $NetBSD: GENERIC,v 1.16 2002/01/27 13:23:17 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -45,6 +45,7 @@ options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
