@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.16 2003/12/29 05:22:16 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.17 2003/12/29 05:36:19 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.16 2003/12/29 05:22:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.17 2003/12/29 05:36:19 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -38,23 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.16 2003/12/29 05:22:16 oster Ex
 #include "rf_general.h"
 #include "rf_shutdown.h"
 
-static void cond_destroyer(void *);
-
 /*
  * Shared stuff
  */
-
-static void 
-cond_destroyer(arg)
-	void   *arg;
-{
-	int     rc;
-
-	rc = rf_cond_destroy(arg);
-	if (rc) {
-		RF_ERRORMSG1("RAIDFRAME: Error %d auto-destroying condition\n", rc);
-	}
-}
 
 #if 0
 int 
@@ -87,20 +73,9 @@ RF_DECLARE_COND(*c)
 	char   *file;
 	int     line;
 {
-	int     rc, rc1;
 
-	rc = rf_cond_init(c);
-	if (rc)
-		return (rc);
-	rc = _rf_ShutdownCreate(listp, cond_destroyer, (void *) c, file, line);
-	if (rc) {
-		RF_ERRORMSG1("RAIDFRAME: Error %d adding shutdown entry\n", rc);
-		rc1 = rf_cond_destroy(c);
-		if (rc1) {
-			RF_ERRORMSG1("RAIDFRAME: Error %d destroying cond\n", rc1);
-		}
-	}
-	return (rc);
+	c = 0;
+	return (0);
 }
 
 int 
@@ -119,40 +94,6 @@ _rf_init_managed_threadgroup(listp, g, file, line)
 	g->created = g->running = g->shutdown = 0;
 	return (0);
 }
-#if 0
-int 
-_rf_destroy_threadgroup(g, file, line)
-	RF_ThreadGroup_t *g;
-	char   *file;
-	int     line;
-{
-	int     rc1, rc2;
-
-	rc2 = rf_cond_destroy(&g->cond);
-	if (rc1)
-		return (rc1);
-	return (rc2);
-}
-
-int 
-_rf_init_threadgroup(g, file, line)
-	RF_ThreadGroup_t *g;
-	char   *file;
-	int     line;
-{
-	int     rc;
-
-	rc = rf_mutex_init(&g->mutex);
-	if (rc)
-		return (rc);
-	rc = rf_cond_init(&g->cond);
-	if (rc) {
-		return (rc);
-	}
-	g->created = g->running = g->shutdown = 0;
-	return (0);
-}
-#endif
 
 /*
  * Kernel
@@ -173,18 +114,3 @@ decl_lock_data(, *m)
 	return(0);
 }
 #endif
-
-int 
-rf_cond_init(c)
-RF_DECLARE_COND(*c)
-{
-	*c = 0;			/* no reason */
-	return (0);
-}
-
-int 
-rf_cond_destroy(c)
-RF_DECLARE_COND(*c)
-{
-	return (0);
-}
