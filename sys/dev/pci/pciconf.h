@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.7.6.1 2005/02/04 11:46:39 skrll Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.7.6.2 2005/04/01 14:30:10 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,5 +55,7 @@ void	pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 #define PCI_CONF_ENABLE_IO	0x08
 #define PCI_CONF_ENABLE_MEM	0x10
 #define PCI_CONF_ENABLE_BM	0x20
+#define PCI_CONF_ENABLE_PARITY	0x40
+#define PCI_CONF_ENABLE_SERR	0x80
 
-#define PCI_CONF_ALL		0x3f
+#define PCI_CONF_ALL		0xff

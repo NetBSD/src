@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.163.2.8 2005/03/04 16:50:36 skrll Exp $ */
+/*	$NetBSD: st.c,v 1.163.2.9 2005/04/01 14:30:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.8 2005/03/04 16:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.9 2005/04/01 14:30:33 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -439,7 +439,6 @@ int
 stdetach(struct device *self, int flags)
 {
 	struct st_softc *st = (struct st_softc *)self;
-	struct buf *bp;
 	int s, bmaj, cmaj, mn;
 
 	/* locate the major number */
@@ -452,12 +451,7 @@ stdetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = BUFQ_GET(&st->buf_queue)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
+	bufq_drain(&st->buf_queue);
 
 	bufq_free(&st->buf_queue);
 

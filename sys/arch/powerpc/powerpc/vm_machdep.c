@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52.2.5 2004/09/21 13:20:50 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.52.2.6 2005/04/01 14:28:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52.2.5 2004/09/21 13:20:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52.2.6 2005/04/01 14:28:04 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -301,7 +301,7 @@ vmaprange(struct proc *p, vaddr_t uaddr, vsize_t len, int prot)
 	faddr = trunc_page(uaddr);
 	off = uaddr - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	kaddr = taddr + off;
 	for (; len > 0; len -= PAGE_SIZE) {
 		(void) pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
@@ -326,7 +326,7 @@ vunmaprange(vaddr_t kaddr, vsize_t len)
 	off = kaddr - addr;
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 }
 #endif /* PPC_IBM4XX */
 
@@ -353,7 +353,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(taddr + off);
 	for (; len > 0; len -= PAGE_SIZE) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
@@ -391,7 +391,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	 */
 	pmap_kremove(addr, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

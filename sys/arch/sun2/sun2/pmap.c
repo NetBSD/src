@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23.2.4 2005/01/24 08:34:34 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23.2.5 2005/04/01 14:28:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23.2.4 2005/01/24 08:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23.2.5 2005/04/01 14:28:41 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1072,7 +1072,7 @@ pv_init(void)
 
 	/* Now allocate the whole thing. */
 	sz = m68k_round_page(sz);
-	p = (char *)uvm_km_alloc(kernel_map, sz);
+	p = (char *)uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED);
 	if (p == NULL)
 		panic("pmap:pv_init: alloc failed");
 	memset(p, 0, sz);

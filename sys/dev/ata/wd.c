@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.257.2.12 2005/03/09 08:23:06 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.257.2.13 2005/04/01 14:29:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.12 2005/03/09 08:23:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.13 2005/04/01 14:29:52 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -425,7 +425,6 @@ int
 wddetach(struct device *self, int flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
-	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
@@ -445,12 +444,7 @@ wddetach(struct device *self, int flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = BUFQ_GET(&sc->sc_q)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
+	bufq_drain(&sc->sc_q);
 
 	bufq_free(&sc->sc_q);
 	sc->atabus->ata_killpending(sc->drvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.40.2.8 2005/03/04 16:52:00 skrll Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.40.2.9 2005/04/01 14:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.8 2005/03/04 16:52:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.9 2005/04/01 14:30:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,8 @@ pipespace(pipe, size)
 	 * Allocate pageable virtual address space. Physical memory is
 	 * allocated on demand.
 	 */
-	buffer = (caddr_t) uvm_km_valloc(kernel_map, round_page(size));
+	buffer = (caddr_t) uvm_km_alloc(kernel_map, round_page(size), 0,
+	    UVM_KMF_PAGEABLE);
 	if (buffer == NULL)
 		return (ENOMEM);
 
@@ -635,7 +636,8 @@ pipe_loan_alloc(wpipe, npages)
 	vsize_t len;
 
 	len = (vsize_t)npages << PAGE_SHIFT;
-	wpipe->pipe_map.kva = uvm_km_valloc_wait(kernel_map, len);
+	wpipe->pipe_map.kva = uvm_km_alloc(kernel_map, len, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (wpipe->pipe_map.kva == 0)
 		return (ENOMEM);
 
@@ -656,7 +658,7 @@ pipe_loan_free(wpipe)
 	vsize_t len;
 
 	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
-	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len);
+	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len, UVM_KMF_VAONLY);
 	wpipe->pipe_map.kva = 0;
 	amountpipekva -= len;
 	free(wpipe->pipe_map.pgs, M_PIPE);
@@ -1255,6 +1257,8 @@ pipe_stat(fp, ub, l)
 	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
+	if (ub->st_blksize == 0 && pipe->pipe_peer)
+		ub->st_blksize = pipe->pipe_peer->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
@@ -1293,7 +1297,7 @@ pipe_free_kmem(pipe)
 		amountpipekva -= pipe->pipe_buffer.size;
 		uvm_km_free(kernel_map,
 			(vaddr_t)pipe->pipe_buffer.buffer,
-			pipe->pipe_buffer.size);
+			pipe->pipe_buffer.size, UVM_KMF_PAGEABLE);
 		pipe->pipe_buffer.buffer = NULL;
 	}
 #ifndef PIPE_NODIRECT

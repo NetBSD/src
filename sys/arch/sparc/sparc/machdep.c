@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228.2.5 2005/02/04 11:44:56 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.228.2.6 2005/04/01 14:28:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228.2.5 2005/02/04 11:44:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228.2.6 2005/04/01 14:28:21 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -226,7 +226,7 @@ cpu_startup()
 	pmap_update(pmap_kernel());
 
 	/* Allocate virtual memory space */
-	va0 = va = uvm_km_valloc(kernel_map, size);
+	va0 = va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		panic("cpu_start: no virtual memory for message buffer");
 
@@ -1544,10 +1544,11 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map = (struct sparc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_align = PAGE_SIZE;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -1721,7 +1722,9 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_kremove((vaddr_t)kva, size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*
@@ -1789,8 +1792,10 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	 * First, find a region large enough to contain any aligned chunk
 	 */
 	oversize = size + align - PAGE_SIZE;
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
+	sva = vm_map_min(kernel_map);
+	if (uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
+	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    UVM_ADV_RANDOM, UVM_FLAG_NOWAIT)))
 		return (0);
 
 	/*
@@ -2019,6 +2024,8 @@ sun4_dmamap_unload(t, map)
 	bus_size_t len;
 	int i, s, error;
 
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
+
 	if ((flags & _BUS_DMA_DIRECTMAP) != 0) {
 		/* Nothing to release */
 		map->dm_mapsize = 0;
@@ -2072,7 +2079,7 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 

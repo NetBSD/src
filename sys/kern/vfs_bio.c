@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.92.2.9 2005/03/04 16:52:03 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.92.2.10 2005/04/01 14:30:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.9 2005/03/04 16:52:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.10 2005/04/01 14:30:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,15 +213,17 @@ static void *
 bufpool_page_alloc(struct pool *pp, int flags)
 {
 
-	return (void *)uvm_km_kmemalloc1(buf_map,
-	    uvm.kernel_object, MAXBSIZE, MAXBSIZE, UVM_UNKNOWN_OFFSET,
-	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK);
+	return (void *)uvm_km_alloc(buf_map,
+	    MAXBSIZE, MAXBSIZE,
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)
+	    | UVM_KMF_WIRED);
 }
 
 static void
 bufpool_page_free(struct pool *pp, void *v)
 {
-	uvm_km_free(buf_map, (vaddr_t)v, MAXBSIZE);
+
+	uvm_km_free(buf_map, (vaddr_t)v, MAXBSIZE, UVM_KMF_WIRED);
 }
 
 static struct pool_allocator bufmempool_allocator = {
@@ -1609,22 +1611,24 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = &t;
-	t = *(int*)rnode->sysctl_data;
+	t = *(int *)rnode->sysctl_data;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
+	if (t < 0)
+		return EINVAL;
 	if (rnode->sysctl_data == &bufcache) {
-		if (t < 0 || t > 100)
+		if (t > 100)
 			return (EINVAL);
 		bufcache = t;
 		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
-		if (bufmem_hiwater - bufmem_lowater < 16)
+		if (bufmem_hiwater - t < 16)
 			return (EINVAL);
 		bufmem_lowater = t;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
-		if (bufmem_hiwater - bufmem_lowater < 16)
+		if (t - bufmem_lowater < 16)
 			return (EINVAL);
 		bufmem_hiwater = t;
 	} else
@@ -1632,7 +1636,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 
 	/* Drain until below new high water mark */
 	while ((t = bufmem - bufmem_hiwater) >= 0) {
-		if (buf_drain(t / (2*1024)) <= 0)
+		if (buf_drain(t / (2 * 1024)) <= 0)
 			break;
 	}
 

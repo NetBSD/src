@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.67.2.9 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.67.2.10 2005/04/01 14:30:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.9 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.10 2005/04/01 14:30:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -75,8 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.9 2005/03/04 16:51:58 skrll Exp 
 
 struct vm_map *lkm_map;
 
-#define	LKM_SPACE_ALLOC(size)		uvm_km_alloc(lkm_map, (size))
-#define	LKM_SPACE_FREE(addr, size)	uvm_km_free(lkm_map, (addr), (size))
+#define	LKM_SPACE_ALLOC(size) \
+	uvm_km_alloc(lkm_map, (size), 0, UVM_KMF_WIRED)
+#define	LKM_SPACE_FREE(addr, size) \
+	uvm_km_free(lkm_map, (addr), (size), UVM_KMF_WIRED)
 
 #if !defined(DEBUG) && defined(LKMDEBUG)
 # define DEBUG
@@ -404,6 +406,9 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (error)
 			break;
 
+#ifdef PMAP_NEED_PROCWR
+		pmap_procwr(&proc0, curp->area + curp->offset, i);
+#endif
 		if ((curp->offset + i) < curp->size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG

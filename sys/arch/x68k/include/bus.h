@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11.2.1 2005/01/24 08:35:18 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.11.2.2 2005/04/01 14:28:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -824,7 +824,7 @@ struct x68k_bus_dmamap {
 	 */
 	bus_size_t	x68k_dm_size;	/* largest DMA transfer mappable */
 	int		x68k_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	x68k_dm_maxsegsz; /* largest possible segment */
+	bus_size_t	x68k_dm_maxmaxsegsz; /* fixed largest possible segment*/
 	bus_size_t	x68k_dm_boundary; /* don't cross this */
 	bus_addr_t	x68k_dm_bounce_thresh; /* bounce threshold */
 	int		x68k_dm_flags;	/* misc. flags */
@@ -834,6 +834,7 @@ struct x68k_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */

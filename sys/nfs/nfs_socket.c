@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.92.2.9 2005/03/04 16:54:20 skrll Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.92.2.10 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.9 2005/03/04 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.10 2005/04/01 14:32:11 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2085,7 +2085,7 @@ nfsrv_rcv(so, arg, waitflag)
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;
-#ifdef notdef
+#if 1
 	/*
 	 * Define this to test for nfsds handling this under heavy load.
 	 */

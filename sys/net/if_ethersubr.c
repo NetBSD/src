@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.112.2.6 2005/03/04 16:52:57 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.112.2.7 2005/04/01 14:31:34 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.6 2005/03/04 16:52:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.7 2005/04/01 14:31:34 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.6 2005/03/04 16:52:57 skrll
 #include "bridge.h"
 #include "bpfilter.h"
 #include "arp.h"
+#include "agr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +119,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.6 2005/03/04 16:52:57 skrll
 
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
+#endif
+
+#if NAGR > 0
+#include <net/agr/ieee8023_slowprotocols.h>	/* XXX */
+#include <net/agr/ieee8023ad.h>
+#include <net/agr/if_agrvar.h>
 #endif
 
 #if NBRIDGE > 0
@@ -178,6 +185,8 @@ extern u_char	aarp_org_code[3];
 
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
+    { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
 #define senderr(e) { error = (e); goto bad;}
 
 #define SIN(x) ((struct sockaddr_in *)x)
@@ -196,7 +205,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
-	int s, len, error = 0, hdrcmplt = 0;
+	int error = 0, hdrcmplt = 0;
  	u_char esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
@@ -209,7 +218,6 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef NETATALK
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
-	short mflags;
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
@@ -530,26 +538,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		altq_etherclassify(&ifp->if_snd, m, &pktattr);
 #endif
 
-	mflags = m->m_flags;
-	len = m->m_pkthdr.len;
-	s = splnet();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
-	if (mflags & M_MCAST)
-		ifp->if_omcasts++;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
-	return (error);
+	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
 	if (m)
@@ -783,6 +772,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
+#if NAGR > 0
+	if (ifp->if_agrprivate &&
+	    __predict_true(etype != ETHERTYPE_SLOWPROTOCOLS)) {
+		m->m_flags &= ~M_PROMISC;
+		agr_input(ifp, m);
+		return;
+	}
+#endif /* NAGR > 0 */
+
 	/*
 	 * Handle protocols that expect to have the Ethernet header
 	 * (and possibly FCS) intact.
@@ -833,6 +831,42 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 		return;
 #endif /* NPPPOE > 0 */
+	case ETHERTYPE_SLOWPROTOCOLS: {
+		uint8_t subtype;
+
+#if defined(DIAGNOSTIC)
+		if (m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype)) {
+			panic("ether_input: too short slow protocol packet");
+		}
+#endif
+		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
+		switch (subtype) {
+#if NAGR > 0
+		case SLOWPROTOCOLS_SUBTYPE_LACP:
+			if (ifp->if_agrprivate) {
+				ieee8023ad_lacp_input(ifp, m);
+				return;
+			}
+			break;
+
+		case SLOWPROTOCOLS_SUBTYPE_MARKER:
+			if (ifp->if_agrprivate) {
+				ieee8023ad_marker_input(ifp, m);
+				return;
+			}
+			break;
+#endif /* NAGR > 0 */
+		default:
+			if (subtype == 0 || subtype > 10) {
+				/* illegal value */
+				m_freem(m);
+				return;
+			}
+			/* unknown subtype */
+			break;
+		}
+		/* FALLTHROUGH */
+	}
 	default:
 		if (m->m_flags & M_PROMISC) {
 			m_freem(m);

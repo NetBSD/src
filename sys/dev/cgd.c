@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.12.2.8 2005/03/04 16:40:53 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.12.2.9 2005/04/01 14:29:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.8 2005/03/04 16:40:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.12.2.9 2005/04/01 14:29:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -587,17 +587,11 @@ bail:
 static int
 cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 {
-	struct	buf *bp;
 	int	s;
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	while ((bp = BUFQ_GET(&cs->sc_dksc.sc_bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
+	bufq_drain(&cs->sc_dksc.sc_bufq);
 	splx(s);
 	bufq_free(&cs->sc_dksc.sc_bufq);
 

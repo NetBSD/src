@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.76.2.4 2004/09/21 13:22:39 skrll Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.76.2.5 2005/04/01 14:28:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.76.2.4 2004/09/21 13:22:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.76.2.5 2005/04/01 14:28:21 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -98,7 +98,7 @@ vmapbuf(bp, len)
 	uva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
-	kva = uvm_km_valloc_wait(kernel_map, len);
+	kva = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(kva + off);
 
 	/*
@@ -143,7 +143,7 @@ vunmapbuf(bp, len)
 	len = round_page(off + len);
 	pmap_remove(vm_map_pmap(kernel_map), kva, kva + len);
 	pmap_update(vm_map_pmap(kernel_map));
-	uvm_km_free_wakeup(kernel_map, kva, len);
+	uvm_km_free(kernel_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.12.6.3 2004/09/21 13:24:56 skrll Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.12.6.4 2005/04/01 14:29:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.12.6.3 2004/09/21 13:24:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.12.6.4 2005/04/01 14:29:35 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.12.6.3 2004/09/21 13:24:56 skrll
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/signalvar.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <compat/aoutm68k/aoutm68k_syscall.h>
 
@@ -91,4 +93,5 @@ const struct emul emul_netbsd_aoutm68k = {
 	aoutm68k_syscall_intern,
 	NULL,
 	NULL,
+	uvm_default_mapaddr,
 };

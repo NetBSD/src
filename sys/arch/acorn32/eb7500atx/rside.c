@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.3.2.5 2004/09/21 13:11:27 skrll Exp $	*/
+/*	$NetBSD: rside.c,v 1.3.2.6 2005/04/01 14:26:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.3.2.5 2004/09/21 13:11:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.3.2.6 2005/04/01 14:26:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ CFATTACH_DECL(rside, sizeof(struct rside_softc),
  * index = channel
  */
 
-struct {
+const struct {
 	u_int drive_registers;
 	u_int aux_register;
 } rside_info[] = {

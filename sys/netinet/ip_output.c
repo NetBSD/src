@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.107.2.9 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.107.2.10 2005/04/01 14:31:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.9 2005/03/08 13:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.107.2.10 2005/04/01 14:31:50 skrll Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -768,28 +768,17 @@ spd_done:
 	INADDR_TO_IA(ip->ip_src, ia);
 #endif
 
-	if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
-#if IFA_STATS
-		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
-#endif
-#ifdef IPSEC
-		/* clean ipsec history once it goes out of the node */
-		ipsec_delaux(m);
-#endif
-		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
-		goto done;
-	}
-
 	/* Maybe skip checksums on loopback interfaces. */
 	if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
 			   ip_do_loopback_cksum))
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 	/*
-	 * If small enough for mtu of path, can just send directly.
+	 * If small enough for mtu of path, or if using TCP segmentation
+	 * offload, can just send directly.
 	 */
-	if (ip_len <= mtu) {
+	if (ip_len <= mtu ||
+	    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 #if IFA_STATS
 		if (ia)
 			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
@@ -800,20 +789,23 @@ spd_done:
 		 */
 		ip->ip_sum = 0;
 
-		/*
-		 * Perform any checksums that the hardware can't do
-		 * for us.
-		 *
-		 * XXX Does any hardware require the {th,uh}_sum
-		 * XXX fields to be 0?
-		 */
-		if (sw_csum & M_CSUM_IPv4) {
-			ip->ip_sum = in_cksum(m, hlen);
-			m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
-		}
-		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(m);
-			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+			/*
+			 * Perform any checksums that the hardware can't do
+			 * for us.
+			 *
+			 * XXX Does any hardware require the {th,uh}_sum
+			 * XXX fields to be 0?
+			 */
+			if (sw_csum & M_CSUM_IPv4) {
+				ip->ip_sum = in_cksum(m, hlen);
+				m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+			}
+			if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+				in_delayed_cksum(m);
+				m->m_pkthdr.csum_flags &=
+				    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+			}
 		}
 
 #ifdef IPSEC
@@ -992,7 +984,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
 		} else {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			m->m_pkthdr.csum_data |= hlen << 16;
+			m->m_pkthdr.csum_data |= mhlen << 16;
 		}
 		ipstat.ips_ofragments++;
 		fragments++;
@@ -1012,7 +1004,8 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
 	} else {
 		KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
-		m->m_pkthdr.csum_data |= hlen << 16;
+		KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
+			sizeof(struct ip));
 	}
 sendorfree:
 	/*

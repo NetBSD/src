@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.6.24.5 2005/03/04 16:41:32 skrll Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.6.24.6 2005/04/01 14:29:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -465,6 +465,7 @@ struct rtk_desc {
 #define RTK_TDESC_CMD_UDPCSUM	0x00020000	/* UDP checksum enable */
 #define RTK_TDESC_CMD_IPCSUM	0x00040000	/* IP header checksum enable */
 #define RTK_TDESC_CMD_MSSVAL	0x07FF0000	/* Large send MSS value */
+#define RTK_TDESC_CMD_MSSVAL_SHIFT 16		/* Shift of the above */
 #define RTK_TDESC_CMD_LGSEND	0x08000000	/* TCP large send enb */
 #define RTK_TDESC_CMD_EOF	0x10000000	/* end of frame marker */
 #define RTK_TDESC_CMD_SOF	0x20000000	/* start of frame marker */
@@ -552,12 +553,11 @@ struct rtk_stats {
 };
 
 #define RTK_RX_DESC_CNT		64
-#define RTK_TX_DESC_CNT		64
+#define RTK_TX_DESC_CNT_8139	64
+#define RTK_TX_DESC_CNT_8169	1024
 #define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
-#define RTK_TX_LIST_SZ		(RTK_TX_DESC_CNT * sizeof(struct rtk_desc))
 #define RTK_RING_ALIGN		256
 #define RTK_IFQ_MAXLEN		512
-#define RTK_DESC_INC(x)		(x = (x + 1) % RTK_TX_DESC_CNT)
 #define RTK_OWN(x)		(le32toh((x)->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
 #define RTK_RXBYTES(x)		(le32toh((x)->rtk_cmdstat) & sc->rtk_rxlenmask)
 #define RTK_PKTSZ(x)		((x)/* >> 3*/)
@@ -567,5 +567,3 @@ struct rtk_stats {
 
 #define RTK_JUMBO_FRAMELEN	9018
 #define RTK_JUMBO_MTU		(RTK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
-
-#define RTK_NTXSEGS		32

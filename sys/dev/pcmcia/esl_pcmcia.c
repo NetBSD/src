@@ -1,7 +1,7 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.8.6.4 2005/01/17 19:31:52 skrll Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.8.6.5 2005/04/01 14:30:33 skrll Exp $	*/
 
 /*
- * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
+ * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8.6.4 2005/01/17 19:31:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8.6.5 2005/04/01 14:30:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

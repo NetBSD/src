@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.16.2.4 2005/03/04 16:52:58 skrll Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.16.2.5 2005/04/01 14:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.16.2.4 2005/03/04 16:52:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.16.2.5 2005/04/01 14:31:34 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -96,7 +96,7 @@ hippi_output(ifp, m0, dst, rt0)
 {
 	u_int16_t htype;
 	u_int32_t ifield = 0;
-	int s, len, error = 0;
+	int error = 0;
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct hippi_header *hh;
@@ -226,23 +226,7 @@ hippi_output(ifp, m0, dst, rt0)
 		m_copyback(m, m->m_pkthdr.len, 8 - d2_len % 8, (caddr_t) buffer);
 	}
 
-	len = m->m_pkthdr.len;
-	s = splnet();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
-		/* mbuf is already free */
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
-	return (error);
+	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
  bad:
 	if (m)

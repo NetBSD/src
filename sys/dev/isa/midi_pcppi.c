@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.8.6.4 2005/02/04 11:46:09 skrll Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.8.6.5 2005/04/01 14:29:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.8.6.4 2005/02/04 11:46:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.8.6.5 2005/04/01 14:29:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.8.6.4 2005/02/04 11:46:09 skrll Exp
 #include <sys/select.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
+
+#include <machine/bus.h>
 
 #include <dev/isa/pcppivar.h>
 
