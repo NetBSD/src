@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.10 1997/09/15 01:45:36 lukem Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.11 1997/10/14 15:06:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.10 1997/09/15 01:45:36 lukem Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.11 1997/10/14 15:06:59 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -233,6 +233,7 @@ cmdloop()
 	char  **cmd_argv;
 	struct cmdtable *cmdp;
 	History *hist;
+	HistEvent he;
 	EditLine *elptr;
 
 	curinode = ginode(ROOTINO);
@@ -240,7 +241,7 @@ cmdloop()
 	printactive();
 
 	hist = history_init();
-	history(hist, H_EVENT, 100);	/* 100 elt history buffer */
+	history(hist, &he, H_SETMAXSIZE, 100);	/* 100 elt history buffer */
 
 	elptr = el_init(__progname, stdin, stdout);
 	el_set(elptr, EL_EDITOR, "emacs");
@@ -252,7 +253,7 @@ cmdloop()
 		if (debug)
 			printf("command `%s'\n", elline);
 
-		history(hist, H_ENTER, elline);
+		history(hist, &he, H_ENTER, elline);
 
 		line = strdup(elline);
 		cmd_argv = crack(line, &cmd_argc);
