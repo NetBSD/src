@@ -5,6 +5,7 @@
 ./usr/include/hp300/asm.h
 ./usr/include/hp300/autoconf.h
 ./usr/include/hp300/bswap.h
+./usr/include/hp300/bus.h
 ./usr/include/hp300/cdefs.h
 ./usr/include/hp300/cpu.h
 ./usr/include/hp300/db_machdep.h
@@ -13,9 +14,11 @@
 ./usr/include/hp300/endian.h
 ./usr/include/hp300/float.h
 ./usr/include/hp300/frame.h
+./usr/include/hp300/hp300spu.h
 ./usr/include/hp300/hpux_machdep.h
 ./usr/include/hp300/ieeefp.h
 ./usr/include/hp300/intr.h
+./usr/include/hp300/kcore.h
 ./usr/include/hp300/limits.h
 ./usr/include/hp300/param.h
 ./usr/include/hp300/pcb.h
