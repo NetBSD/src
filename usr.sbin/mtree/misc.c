@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 1998/12/06 19:07:53 jwise Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2001/03/09 03:09:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,13 +37,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.8 1998/12/06 19:07:53 jwise Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2001/03/09 03:09:45 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <fts.h>
+#include <stdarg.h>
 #include <stdio.h>
+
 #include "mtree.h"
 #include "extern.h"
 
@@ -76,12 +79,10 @@ static KEY keylist[] = {
 	{"uname",	F_UNAME,	NEEDVALUE}
 };
 
-int keycompare __P((const void *, const void *));
+int keycompare(const void *, const void *);
 
 u_int
-parsekey(name, needvaluep)
-	char *name;
-	int *needvaluep;
+parsekey(char *name, int *needvaluep)
 {
 	KEY *k, tmp;
 
@@ -98,33 +99,18 @@ parsekey(name, needvaluep)
 }
 
 int
-keycompare(a, b)
-	const void *a, *b;
+keycompare(const void *a, const void *b)
 {
+
 	return (strcmp(((KEY *)a)->name, ((KEY *)b)->name));
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#if __STDC__
 mtree_err(const char *fmt, ...)
-#else
-mtree_err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "mtree: ");
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
