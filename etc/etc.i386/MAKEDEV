@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.85 1999/05/31 11:14:07 is Exp $
+#	$NetBSD: MAKEDEV,v 1.86 1999/06/09 01:39:29 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,12 +105,16 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
 
 # Check if we have fdesc mounted
-df fd | grep -q fdesc
-if [ $? = 0 ]; then
-	nofdesc=false
+if [ -d fd ]; then
+	df fd | grep -q fdesc
+	if [ $? = 0 ]; then
+		nofdesc=false
+	else
+		nofdesc=true
+	fi
 else
 	nofdesc=true
-fi
+di
 
 for i
 do
