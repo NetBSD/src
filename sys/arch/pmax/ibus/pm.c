@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.16 2000/02/03 09:46:49 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.17 2000/03/14 09:51:19 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.16 2000/02/03 09:46:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.17 2000/03/14 09:51:19 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,13 +44,15 @@ __KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.16 2000/02/03 09:46:49 nisimura Exp $");
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
-#include <dev/rcons/raster.h>
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_raster.h>
-#include <dev/wscons/wsdisplayvar.h>
-
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
+
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
+
 #include <pmax/ibus/ibusvar.h>
 
 extern void kn01_wbflush __P((void));
@@ -115,9 +117,9 @@ struct fb_devconfig {
 	int     dc_depth;		/* depth, bits per pixel */
 	int     dc_rowbytes;		/* bytes in a FB scan line */
 	vaddr_t	dc_videobase;		/* base of flat frame buffer */
-	struct raster	dc_raster;	/* raster description */
-	struct rcons	dc_rcons;	/* raster blitter control info */
 	int	    dc_blanked;		/* currently has video disabled */
+
+	struct rasops_info rinfo;
 };
 
 struct hwcmap256 {
@@ -167,21 +169,9 @@ static void pminit __P((struct fb_devconfig *));
 
 int  pm_cnattach __P((paddr_t));
 
-static const struct wsdisplay_emulops pm_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
-
 static struct wsscreen_descr pm_stdscreen = {
-	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
-	&pm_emulops,
+	"std", 0, 0,
+	0, /* textops */
 	0, 0,
 	WSSCREEN_REVERSE
 };
@@ -251,10 +241,8 @@ pm_getdevconfig(dense_addr, dc)
 	u_int32_t dense_addr;
 	struct fb_devconfig *dc;
 {
-	struct raster *rap;
-	struct rcons *rcp;
 	u_int16_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
-	int i;
+	int i, cookie;
 
 	dc->dc_wid = 1024;
 	dc->dc_ht = 864;
@@ -274,24 +262,36 @@ pm_getdevconfig(dense_addr, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0;
 
-	/* initialize the raster */
-	rap = &dc->dc_raster;
-	rap->width = dc->dc_wid;
-	rap->height = dc->dc_ht;
-	rap->depth = dc->dc_depth;
-	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
-	rap->pixels = (u_int32_t *)dc->dc_videobase;
+	dc->rinfo.ri_depth = dc->dc_depth;
+	dc->rinfo.ri_bits = (void *)dc->dc_videobase;
+	dc->rinfo.ri_width = dc->dc_wid;
+	dc->rinfo.ri_height = dc->dc_ht;
+	dc->rinfo.ri_stride = dc->dc_rowbytes;
+	dc->rinfo.ri_hw = NULL;
 
-	/* initialize the raster console blitter */
-	rcp = &dc->dc_rcons;
-	rcp->rc_sp = rap;
-	rcp->rc_crow = rcp->rc_ccol = -1;
-	rcp->rc_crowp = &rcp->rc_crow;
-	rcp->rc_ccolp = &rcp->rc_ccol;
-	rcons_init(rcp, 34, 80);
+	wsfont_init();
+	/* prefer 8 pixel wide font */
+	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0);
+	if (cookie <= 0) {
+		printf("pm: font table is empty\n");
+		return;
+	}
 
-	pm_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
-	pm_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
+	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
+	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
+		printf("pm: couldn't lock font\n");
+		return;
+	}
+	dc->rinfo.ri_wsfcookie = cookie;
+
+	rasops_init(&dc->rinfo, 80, 34); /* as large as possible */
+
+	/* XXX shouldn't be global */
+	pm_stdscreen.nrows = dc->rinfo.ri_rows;
+	pm_stdscreen.ncols = dc->rinfo.ri_cols;
+	pm_stdscreen.textops = &dc->rinfo.ri_ops;
+	pm_stdscreen.capabilities = dc->rinfo.ri_caps;
 }
 
 static void
@@ -318,11 +318,8 @@ pmattach(parent, self, aux)
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
-	cm = &sc->sc_cmap;
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;
-	for (i = 1; i < CMAP_SIZE; i++) {
-		cm->r[i] = cm->g[i] = cm->b[i] = 0xff;
-	}
+	memcpy(&sc->sc_cmap, rasops_cmap, sizeof(struct hwcmap256));
+
 	sc->magic_x = PCC_MAGIC_X;
 	sc->magic_y = PCC_MAGIC_Y;
 	sc->sc_pcc = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
@@ -351,9 +348,8 @@ pm_cnattach(addr)
 		return (0);
 
 	pm_getdevconfig(v, dcp);
-	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&pm_stdscreen, &dcp->dc_rcons,
-			   0, 0, defattr);
+	(*dcp->rinfo.ri_ops.alloc_attr)(&dcp->rinfo, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&pm_stdscreen, &dcp->rinfo, 0, 0, defattr);
 
 	pm_consaddr = v;
 	return (1);
@@ -432,7 +428,7 @@ pmioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return -1;
+	return (-1);
 }
 
 static int
@@ -444,7 +440,7 @@ pmmmap(v, offset, prot)
 	struct pm_softc *sc = v;
 
 	if (offset >= sc->sc_dc->dc_size)
-		return -1;
+		return (-1);
 	return mips_btop(sc->sc_dc->dc_paddr + offset);
 }
 
@@ -462,10 +458,10 @@ pm_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
+	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
