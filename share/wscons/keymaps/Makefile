@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2001/05/02 15:08:35 drochner Exp $
+# $NetBSD: Makefile,v 1.3 2001/05/07 16:37:34 jdolecek Exp $
 
-FILES= pckbd.sv.svascii
+FILES= pckbd.sv.svascii pckbd.ru.koi8-r
+
 FILESDIR= /usr/share/wscons/keymaps
 NOOBJ=	yes
 
