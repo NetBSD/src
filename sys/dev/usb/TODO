@@ -4,8 +4,6 @@ Some things that need to be done in no particular order:
 Before 1.5:
 -----------
 
-Add isoc to OHCI driver.
-
 Port FreeBSD umass driver.
 
 -----------
