@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdomainname.3,v 1.5 1998/05/06 19:53:41 kleink Exp $
+.\"	$NetBSD: getdomainname.3,v 1.6 1998/05/08 15:51:39 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,14 +83,14 @@ or
 parameter gave an
 invalid address.
 .It Bq Er EPERM
-The caller tried to set the hostname and was not the super-user.
+The caller tried to set the domain name and was not the super-user.
 .El
 .Sh SEE ALSO
 .Xr gethostid 3 ,
 .Xr gethostname 3 ,
 .Xr sysctl 3
 .Sh BUGS
-Host names are limited to
+Domain names are limited to
 .Dv MAXHOSTNAMELEN
 (from
 .Ao Pa sys/param.h Ac )
