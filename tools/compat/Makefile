@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/10/26 07:25:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2003/10/27 00:12:42 lukem Exp $
 
 HOSTLIB=	nbcompat
 
@@ -26,7 +26,7 @@ CPPFLAGS+=	-no-cpp-precomp
 # -D_NETBSD_SOURCE is necessary for some of the NetBSD headers that we
 # also use on the host system.
 
-CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_CONFIG_H \
+CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_NBTOOL_CONFIG_H=1 \
 		-D_FILE_OFFSET_BITS=64 -D_NETBSD_SOURCE
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
@@ -49,7 +49,7 @@ _CURDIR:=	${.CURDIR}
 
 SRCS:=		${SRCS:Nndbm.c}
 
-config.cache: include/.stamp configure config.h.in defs.mk.in
+config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
 	rm -f ${.TARGET}
 	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
 		${HOST_SH} ${.CURDIR}/configure --cache-file=config.cache
@@ -68,7 +68,7 @@ include/.stamp:
 cleandir: compat.clean
 compat.clean:
 	-rm -r -f include
-	-rm -f config.cache config.h
+	-rm -f config.cache nbtool_config.h
 
 HOST_CPPFLAGS:=	${CPPFLAGS}
 CPPFLAGS:=	# empty

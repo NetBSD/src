@@ -1,4 +1,4 @@
-/*	$NetBSD: md2c.c,v 1.3 2002/03/31 12:58:56 bjh21 Exp $	*/
+/*	$NetBSD: md2c.c,v 1.4 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 #include <md2.h>
 #include <string.h>
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #if !HAVE_MD2_H

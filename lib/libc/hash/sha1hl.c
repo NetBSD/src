@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1hl.c,v 1.8 2002/03/31 14:17:19 bjh21 Exp $	*/
+/*	$NetBSD: sha1hl.c,v 1.9 2003/10/27 00:12:42 lukem Exp $	*/
 
 /* sha1hl.c
  * ----------------------------------------------------------------------------
@@ -23,14 +23,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #if !HAVE_SHA1_H
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1hl.c,v 1.8 2002/03/31 14:17:19 bjh21 Exp $");
+__RCSID("$NetBSD: sha1hl.c,v 1.9 2003/10/27 00:12:42 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__weak_alias)

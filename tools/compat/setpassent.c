@@ -1,6 +1,6 @@
-/*	$NetBSD: setpassent.c,v 1.3 2002/02/26 22:29:39 tv Exp $	*/
+/*	$NetBSD: setpassent.c,v 1.4 2003/10/27 00:12:43 lukem Exp $	*/
 
-#include "config.h"
+#include "nbtool_config.h"
 
 #if !HAVE_SETPASSENT || !HAVE_DECL_SETPASSENT
 #include <pwd.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.11 2003/10/14 09:46:43 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.12 2003/10/27 00:12:44 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.11 2003/10/14 09:46:43 lukem Exp $");
-#endif /* __RCSID && !__lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+#if !defined(__lint)
+__RCSID("$NetBSD: i386.c,v 1.12 2003/10/27 00:12:44 lukem Exp $");
+#endif /* __RCSID && !__lint */
 
 #include <sys/param.h>
 

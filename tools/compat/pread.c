@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.2 2002/01/31 19:23:14 tv Exp $	*/
+/*	$NetBSD: pread.c,v 1.3 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /* Emulate pread() with lseek()/read()/lseek(). Not thread-safe, of course. */
 
-#include "config.h"
+#include "nbtool_config.h"
 
 #if !HAVE_PREAD
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.12 2003/08/07 16:42:42 agc Exp $	*/
+/*	$NetBSD: hash.h,v 1.13 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,8 +34,8 @@
  *	@(#)hash.h	8.3 (Berkeley) 5/31/94
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 /* Operations */

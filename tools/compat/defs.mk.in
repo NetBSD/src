@@ -1,4 +1,4 @@
-#	$NetBSD: defs.mk.in,v 1.7 2003/04/28 23:16:11 bjh21 Exp $
+#	$NetBSD: defs.mk.in,v 1.8 2003/10/27 00:12:43 lukem Exp $
 
 COMPATOBJ:=	${.PARSEDIR}
 HOSTEXEEXT=	@EXEEXT@
@@ -13,7 +13,7 @@ HOST_CPPFLAGS+=	-no-cpp-precomp
 .endif
 
 HOST_CPPFLAGS+=	-I${COMPATOBJ} -I${COMPATOBJ}/include \
-		-I${.CURDIR}/../compat -DHAVE_CONFIG_H \
+		-I${.CURDIR}/../compat -DHAVE_NBTOOL_CONFIG_H=1 \
 		-D_FILE_OFFSET_BITS=64 -D_NETBSD_SOURCE
 
 DPADD+=		${COMPATOBJ}/libnbcompat.a

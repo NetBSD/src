@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.12 2003/08/07 16:42:55 agc Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.13 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -29,13 +29,14 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #include "compat_pwd.h"
+
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.12 2003/08/07 16:42:55 agc Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.13 2003/10/27 00:12:42 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -55,7 +56,7 @@ __RCSID("$NetBSD: pw_scan.c,v 1.12 2003/08/07 16:42:55 agc Exp $");
 #ifdef _LIBC
 #include "pw_private.h"
 #endif
-#endif /* !HAVE_CONFIG_H */
+#endif /* ! HAVE_NBTOOL_CONFIG_H */
 
 int
 #ifdef _LIBC
@@ -140,7 +141,7 @@ pw_scan(bp, pw, flags)
 	if (!(pw->pw_shell = strsep(&bp, ":")))		/* shell */
 		goto fmt;
 
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 	p = pw->pw_shell;
 	if (root && *p)					/* empty == /bin/sh */
 		for (setusershell();;) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.79 2003/08/07 11:17:50 agc Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.80 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #else
 #define HAVE_FUTIMES 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.79 2003/08/07 11:17:50 agc Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.80 2003/10/27 00:12:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 		case 'D':
 			destdir = optarg;
 			break;
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 		case 'f':
 			fflags = optarg;
 			break;
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 		iflags |= HASUID;
 	}
 
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 	if (fflags && !dounpriv) {
 		if (string_to_flags(&fflags, &fileflags, NULL))
 			errx(1, "%s: invalid flag", fflags);
@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 		 * off the append/immutable bits -- if we fail, go ahead,
 		 * it might work.
 		 */
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 #define	NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
 		if (to_sb.st_flags & NOCHANGEBITS)
 			(void)chflags(to_name,
@@ -520,7 +520,7 @@ void
 install(char *from_name, char *to_name, u_int flags)
 {
 	struct stat	from_sb;
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 	struct stat	to_sb;
 #endif
 	struct timeval	tv[2];
@@ -567,7 +567,7 @@ install(char *from_name, char *to_name, u_int flags)
 	 * off the append/immutable bits -- if we fail, go ahead,
 	 * it might work.
 	 */
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 	if (stat(to_name, &to_sb) == 0 &&
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
@@ -679,7 +679,7 @@ install(char *from_name, char *to_name, u_int flags)
 	 * If provided a set of flags, set them, otherwise, preserve the
 	 * flags, except for the dump flag.
 	 */
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 	if (!dounpriv && chflags(to_name,
 	    flags & SETFLAGS ? fileflags : from_sb.st_flags & ~UF_NODUMP) == -1)
 	{

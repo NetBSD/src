@@ -1265,7 +1265,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-          ac_config_headers="$ac_config_headers config.h"
+          ac_config_headers="$ac_config_headers nbtool_config.h"
 
           ac_config_files="$ac_config_files defs.mk"
 
@@ -3980,7 +3980,7 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
 _ACEOF
 
 else
-  echo '#include "config.h"' >include/$ac_header.new
+  echo '#include "nbtool_config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
 		rm -f include/$ac_header.new
@@ -7476,7 +7476,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "defs.mk" ) CONFIG_FILES="$CONFIG_FILES defs.mk" ;;
-  "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+  "nbtool_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS nbtool_config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;

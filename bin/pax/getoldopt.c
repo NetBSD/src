@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.18 2003/06/24 16:23:31 christos Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.19 2003/10/27 00:12:41 lukem Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -9,9 +9,13 @@
  * in the Public Domain for your edification and enjoyment.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: getoldopt.c,v 1.18 2003/06/24 16:23:31 christos Exp $");
+#if !defined(lint)
+__RCSID("$NetBSD: getoldopt.c,v 1.19 2003/10/27 00:12:41 lukem Exp $");
 #endif /* not lint */
 
 #include <getopt.h>

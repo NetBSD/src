@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.50 2003/10/07 07:08:20 lukem Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.51 2003/10/27 00:12:43 lukem Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -31,13 +31,14 @@
  * Generates a Makefile and main C file for a crunched executable,
  * from specs given in a .conf file.  
  */
-#include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.50 2003/10/07 07:08:20 lukem Exp $");
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: crunchgen.c,v 1.51 2003/10/27 00:12:43 lukem Exp $");
 #endif
 
 #include <stdlib.h>

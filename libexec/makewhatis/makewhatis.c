@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.29 2003/07/13 12:04:45 itojun Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.30 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,19 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
+__RCSID("$NetBSD: makewhatis.c,v 1.30 2003/10/27 00:12:42 lukem Exp $");
 #endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.29 2003/07/13 12:04:45 itojun Exp $");
-#endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.16 2003/03/28 07:38:15 msaitoh Exp $ */
+/* $NetBSD: mkdep.c,v 1.17 2003/10/27 00:12:43 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,19 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
+__RCSID("$NetBSD: mkdep.c,v 1.17 2003/10/27 00:12:43 lukem Exp $");
 #endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mkdep.c,v 1.16 2003/03/28 07:38:15 msaitoh Exp $");
-#endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/wait.h>

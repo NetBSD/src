@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.17 2003/08/07 11:16:58 agc Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.18 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -29,22 +29,19 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
-#if defined(__RCSID) && !defined(lint)
+#include <sys/cdefs.h>
+#if !defined(lint)
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.17 2003/08/07 11:16:58 agc Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.18 2003/10/27 00:12:43 lukem Exp $");
 #endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 /*
  * uudecode [file ...]

@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.19 2003/10/16 06:43:52 itojun Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.20 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,21 +29,18 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.19 2003/10/16 06:43:52 itojun Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.20 2003/10/27 00:12:43 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

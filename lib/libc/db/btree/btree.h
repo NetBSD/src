@@ -1,4 +1,4 @@
-/*	$NetBSD: btree.h,v 1.13 2003/08/07 16:42:41 agc Exp $	*/
+/*	$NetBSD: btree.h,v 1.14 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,8 +34,8 @@
  *	@(#)btree.h	8.11 (Berkeley) 8/17/94
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 /* Macros to set/clear/test flags. */

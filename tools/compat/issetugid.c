@@ -1,11 +1,11 @@
-/*	$NetBSD: issetugid.c,v 1.1 2002/04/18 15:31:53 bjh21 Exp $	*/
+/*	$NetBSD: issetugid.c,v 1.2 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*
  * Written by Ben Harris, 2002
  * This file is in the Public Domain
  */
 
-#include "config.h"
+#include "nbtool_config.h"
 
 #if !HAVE_ISSETUGID
 int

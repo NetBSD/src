@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.12 2003/08/07 11:17:52 agc Exp $	*/
+/*	$NetBSD: defs.h,v 1.13 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,8 +34,8 @@
  *	@(#)defs.h	5.6 (Berkeley) 5/24/93
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <assert.h>

@@ -1,10 +1,10 @@
-#	$NetBSD: configure.ac,v 1.40 2003/07/26 20:24:00 salo Exp $
+#	$NetBSD: configure.ac,v 1.41 2003/10/27 00:12:43 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
 
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
-AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 AC_PATH_PROG(BSHELL, sh, )
@@ -42,7 +42,7 @@ AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/endian.h sys/featuretest.h \
 	err.h inttypes.h libgen.h paths.h stdint.h util.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
 AC_CHECK_HEADERS(rpc/types.h getopt.h netconfig.h,,
-	[echo '#include "config.h"' >include/$ac_header.new
+	[echo '#include "nbtool_config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
 		rm -f include/$ac_header.new

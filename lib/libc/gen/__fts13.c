@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.41 2003/08/07 16:42:45 agc Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.42 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.41 2003/08/07 16:42:45 agc Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.42 2003/10/27 00:12:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: __fts13.c,v 1.41 2003/08/07 16:42:45 agc Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 #define HAVE_STRUCT_DIRENT_D_NAMLEN 1
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.2 2002/09/20 21:11:11 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.3 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,13 +33,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.2 2002/09/20 21:11:11 christos Exp $");
-#endif
+__RCSID("$NetBSD: snprintb.c,v 1.3 2003/10/27 00:12:42 lukem Exp $");
 #endif
 
 /*

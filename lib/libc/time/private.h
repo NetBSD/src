@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.22 2002/05/26 11:49:58 wiz Exp $	*/
+/*	$NetBSD: private.h,v 1.23 2003/10/27 00:12:42 lukem Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -10,8 +10,8 @@
 #define HAVE_LONG_DOUBLE 1
 
 /* For when we build zic as a host tool. */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 /*

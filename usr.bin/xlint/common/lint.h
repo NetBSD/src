@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.6 2002/03/07 19:19:14 tv Exp $	*/
+/*	$NetBSD: lint.h,v 1.7 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #else
 #define HAVE_DECL_SYS_SIGNAME 1
 #endif

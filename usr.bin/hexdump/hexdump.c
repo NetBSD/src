@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.11 2003/10/22 12:30:39 dmcmahill Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.12 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -29,23 +29,20 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.11 2003/10/22 12:30:39 dmcmahill Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.12 2003/10/27 00:12:43 lukem Exp $");
 #endif
 #endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 

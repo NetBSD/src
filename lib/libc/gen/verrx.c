@@ -1,4 +1,4 @@
-/*	$NetBSD: verrx.c,v 1.11 2003/08/07 16:43:00 agc Exp $	*/
+/*	$NetBSD: verrx.c,v 1.12 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -29,20 +29,21 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verrx.c,v 1.11 2003/08/07 16:43:00 agc Exp $");
+__RCSID("$NetBSD: verrx.c,v 1.12 2003/10/27 00:12:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef __NO_NAMESPACE_H	/* XXX */
 #include "namespace.h"
-#endif
-#if HAVE_CONFIG_H
-#include "config.h"
 #endif
 #include <err.h>
 #include <stdarg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2003/08/07 11:14:31 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2003/10/27 00:12:43 lukem Exp $	*/
 /*	$OpenBSD: extern.h,v 1.28 2001/10/10 18:12:00 espie Exp $	*/
 
 /*-
@@ -35,8 +35,8 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <err.h>

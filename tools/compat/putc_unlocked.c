@@ -1,4 +1,4 @@
-/*	$NetBSD: putc_unlocked.c,v 1.2 2003/03/21 14:40:26 pooka Exp $	*/
+/*	$NetBSD: putc_unlocked.c,v 1.3 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /* Emulate putc_unlocked(). */
 
-#include "config.h"
+#include "nbtool_config.h"
 
 #if !HAVE_PUTC_UNLOCKED
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.6 2003/03/06 00:26:10 thorpej Exp $ */
+/* $NetBSD: dbsym.c,v 1.7 2003/10/27 00:12:41 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -30,20 +30,17 @@
  * <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__COPYRIGHT) && !defined(lint)
+#if !defined(lint)
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou, 2001 Simon Burge.\
   All rights reserved.\n");
+__RCSID("$NetBSD: dbsym.c,v 1.7 2003/10/27 00:12:41 lukem Exp $");
 #endif /* not lint */
-
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: dbsym.c,v 1.6 2003/03/06 00:26:10 thorpej Exp $");
-#endif /* not lint */
-
-#if HAVE_CONFIG_H 
-#include "config.h" 
-#endif
 
 #include <sys/param.h>
 #include <sys/mman.h>

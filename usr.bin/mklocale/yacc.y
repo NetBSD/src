@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.22 2003/08/07 11:15:15 agc Exp $	*/
+/*	$NetBSD: yacc.y,v 1.23 2003/10/27 00:12:43 lukem Exp $	*/
 
 %{
 /*-
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
@@ -43,9 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-#ifdef __RCSID
-__RCSID("$NetBSD: yacc.y,v 1.22 2003/08/07 11:15:15 agc Exp $");
-#endif
+__RCSID("$NetBSD: yacc.y,v 1.23 2003/10/27 00:12:43 lukem Exp $");
 #endif
 #endif /* not lint */
 

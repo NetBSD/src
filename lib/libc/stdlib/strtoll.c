@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.5 2003/08/07 16:43:44 agc Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.6 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoll.c,v 1.5 2003/08/07 16:43:44 agc Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.6 2003/10/27 00:12:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,10 +56,6 @@ __RCSID("$NetBSD: strtoll.c,v 1.5 2003/08/07 16:43:44 agc Exp $");
 #ifdef __weak_alias
 __weak_alias(strtoll, _strtoll)
 #endif
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
 #endif
 
 #if !HAVE_STRTOLL

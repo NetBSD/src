@@ -1,4 +1,4 @@
-/*	$NetBSD: pack_dev.c,v 1.5 2003/05/08 13:29:39 christos Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.6 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: pack_dev.c,v 1.5 2003/05/08 13:29:39 christos Exp $");
+#if !defined(lint)
+__RCSID("$NetBSD: pack_dev.c,v 1.6 2003/10/27 00:12:42 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,10 +54,6 @@ __RCSID("$NetBSD: pack_dev.c,v 1.5 2003/05/08 13:29:39 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "pack_dev.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.21 2003/10/05 17:48:50 bouyer Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.22 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -30,14 +30,12 @@
  *
  */
 
-#include <sys/cdefs.h>
-#if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.21 2003/10/05 17:48:50 bouyer Exp $");
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.22 2003/10/27 00:12:42 lukem Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
