@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.7 2000/10/31 08:06:15 eeh Exp $ */
+/*	$NetBSD: bpp.c,v 1.8 2000/11/01 06:17:32 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -358,7 +358,7 @@ bppwrite(dev, uio, flags)
 #ifdef DEBUG
 			if (bppdebug) { 
 				int i;
-				printf("bpp: writing %d : ", len);
+				printf("bpp: writing %ld : ", len);
 				for (i=0; i<len; i++) printf("%c(0x%x)", bp[i], bp[i]);
 				printf("\n");
 			}
