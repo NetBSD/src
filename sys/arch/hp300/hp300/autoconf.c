@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2002/03/04 02:25:21 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56 2002/03/15 05:52:54 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -97,6 +97,9 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2002/03/15 05:52:54 gmcgarry Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -401,11 +404,11 @@ device_register(dev, aux)
 	 * Note that we only really care about devices that
 	 * we can mount as root.
 	 */
-	dd = (struct dev_data *)malloc(sizeof(struct dev_data),
-	    M_DEVBUF, M_NOWAIT);
+
+	MALLOC(dd, struct dev_data *, sizeof(struct dev_data),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dd == NULL)
 		panic("device_register: can't allocate dev_data");
-	memset(dd, 0, sizeof(struct dev_data));
 
 	dd->dd_dev = dev;
 
