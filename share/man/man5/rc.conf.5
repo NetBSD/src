@@ -1,9 +1,9 @@
-.\"	$NetBSD: rc.conf.5,v 1.53 2002/02/24 13:00:41 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.54 2002/02/25 04:23:20 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
 .\" Copyright (c) 1997 Michael W. Long
-.\" Copyright (c) 1998-2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This document is derived from works contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 24, 2001
+.Dd February 25, 2002
 .Dt RC.CONF 5
 .Os
 .\" turn off hyphenation
@@ -88,11 +88,7 @@ If not set to
 .Sq YES
 then the system will drop into single-user mode during boot.
 .It Sy rc_fast_and_loose
-.Sq YES
-or
-.Sq NO .
-If set to
-.Sq YES ,
+If set to a non-empty string,
 each script in
 .Pa /etc/rc.d
 will be executed in the current shell rather than a sub shell.
