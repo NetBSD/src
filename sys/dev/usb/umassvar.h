@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.13 2001/12/24 19:24:33 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.14 2001/12/29 13:46:23 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -178,12 +178,12 @@ struct umass_softc {
 #define UMASS_CPROTO_ISD_ATA	5
 
 	u_int32_t		sc_quirks;
-#define	UMASS_QUIRK_NO_TEST_UNIT_READY	0x00000001
 #define	UMASS_QUIRK_RS_NO_CLEAR_UA	0x00000002
 #define	UMASS_QUIRK_NO_START_STOP	0x00000004
 #define	UMASS_QUIRK_FORCE_SHORT_INQUIRY	0x00000008
 #define	UMASS_QUIRK_WRONG_CSWSIG	0x00000010
-#define	UMASS_QUIRK_NO_REQUEST_SENSE	0x00000020
+
+	u_int32_t		sc_busquirks;
 
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */

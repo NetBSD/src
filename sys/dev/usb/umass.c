@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.81 2001/12/24 19:24:33 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.82 2001/12/29 13:46:23 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.81 2001/12/24 19:24:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.82 2001/12/29 13:46:23 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -282,6 +282,7 @@ USB_ATTACH(umass)
 		sc->sc_wire = quirk->uq_wire;
 		sc->sc_cmd = quirk->uq_cmd;
 		sc->sc_quirks = quirk->uq_flags;
+		sc->sc_busquirks = quirk->uq_busquirks;
 
 		if (quirk->uq_fixup != NULL)
 			(*quirk->uq_fixup)(sc);
@@ -289,6 +290,7 @@ USB_ATTACH(umass)
 		sc->sc_wire = UMASS_WPROTO_UNSPEC;
 		sc->sc_cmd = UMASS_CPROTO_UNSPEC;
 		sc->sc_quirks = 0;
+		sc->sc_busquirks = 0;
 	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);

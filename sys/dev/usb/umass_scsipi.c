@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.1 2001/12/24 13:25:52 augustss Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.2 2001/12/29 13:46:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.1 2001/12/24 13:25:52 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.2 2001/12/29 13:46:23 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -160,10 +160,7 @@ umass_atapi_attach(struct umass_softc *sc)
 	scbus->sc_channel.chan_ntargets = 2;
 	scbus->sc_channel.chan_nluns = 1;
 
-	if (sc->sc_quirks & UMASS_QUIRK_NO_TEST_UNIT_READY)
-		scbus->sc_channel.chan_defquirks |= PQUIRK_NOTUR;
-	if (sc->sc_quirks & UMASS_QUIRK_NO_REQUEST_SENSE)
-		scbus->sc_channel.chan_defquirks |= PQUIRK_NOSENSE;
+	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n",
 			     USBDEVNAME(sc->sc_dev)));
 	scbus->base.sc_child =
@@ -197,6 +194,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 	scbus->sc_channel.chan_flags = SCSIPI_CHAN_OPENINGS;
 	scbus->sc_channel.chan_openings = 1;
 	scbus->sc_channel.chan_max_periph = 1;
+	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
 
 	return (scbus);
 }
