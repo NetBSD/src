@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_error.c,v 1.4 1998/02/10 14:37:38 kleink Exp $	*/
+/*	$NetBSD: ibcs2_error.c,v 1.5 1998/10/18 16:59:14 christos Exp $	*/
 
 /*
  * ibcs2_errno.c
@@ -33,7 +33,7 @@
 
 #include <compat/ibcs2/ibcs2_errno.h>
 
-int bsd2ibcs_errno[] = {
+int ibcs2_error[] = {
 	0,			/* 0 */
 	IBCS2_EPERM,		/* 1 */
 	IBCS2_ENOENT,		/* 2 */
