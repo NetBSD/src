@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.26 1999/10/27 10:16:00 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.27 1999/11/07 09:14:34 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.26 1999/10/27 10:16:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.27 1999/11/07 09:14:34 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,7 +163,10 @@ ioasicattach(parent, self, aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
-	u_long i, ssr, imsk;
+#ifdef DEC_3000_300
+	u_long ssr;
+#endif
+	u_long i, imsk;
 
 	ioasicfound = 1;
 
