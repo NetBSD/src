@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.15 1999/08/27 10:49:20 hannken Exp $ */
+/*	$NetBSD: tcx.c,v 1.16 2000/03/19 15:38:45 pk Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -106,8 +106,6 @@ static struct fbdriver tcx_fbdriver = {
 	tcx_unblank, tcxopen, tcxclose, tcxioctl, tcxpoll, tcxmmap
 };
 
-extern int fbnode;
-
 static void tcx_reset __P((struct tcx_softc *));
 static void tcx_loadcmap __P((struct tcx_softc *, int, int));
 
@@ -141,7 +139,6 @@ tcxattach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int isconsole;
-	extern struct tty *fbconstty;
 
 	sc->sc_bustag = sa->sa_bustag;
 	node = sa->sa_node;
@@ -208,8 +205,7 @@ tcxattach(parent, self, args)
 	}
 	sc->sc_bt = bt = (volatile struct bt_regs *)bh;
 
-
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = fb_is_console(node);
 
 	printf(", id %d, rev %d, sense %d",
 		(sc->sc_thc->thc_config & THC_CFG_FBID) >> THC_CFG_FBID_SHIFT,
@@ -233,8 +229,7 @@ tcxattach(parent, self, args)
 		printf("\n");
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	if (node == fbnode)
-		fb_attach(&sc->sc_fb, isconsole);
+	fb_attach(&sc->sc_fb, isconsole);
 }
 
 int
