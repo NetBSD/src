@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.1 1996/09/30 16:34:47 ws Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.2 2000/06/08 06:50:46 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,8 @@
  */
 #include <sys/param.h>
 #include <sys/mbuf.h>
+
+#include <netinet/in.h>
 
 /*
  * First cut for in_cksum.
