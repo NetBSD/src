@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.307 2001/02/18 05:59:23 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.308 2001/02/18 17:54:50 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.301 2001/02/18 05:58:41 matt Exp 
+ *	NetBSD: pcidevs,v 1.302 2001/02/18 17:54:18 bouyer Exp 
  */
 
 /*
@@ -1193,6 +1193,7 @@
 #define	PCI_PRODUCT_INTEL_82801BA_ACA	0x2445		/* 82801BA AC-97 Audio Controller */
 #define	PCI_PRODUCT_INTEL_82801BA_ACM	0x2446		/* 82801BA AC-97 PCI Modem */
 #define	PCI_PRODUCT_INTEL_82801BA_LAN	0x2449		/* 82801BA LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801BAM_IDE	0x244a		/* 82801BAM IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801BA_IDE	0x244B		/* 82801BA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801BA_HPB	0x244E		/* 82801BA Hub-to-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
