@@ -1,7 +1,7 @@
-/*	$NetBSD: stpcide.c,v 1.4 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.4.2.1 2004/08/22 13:08:44 tron Exp $	*/
 
 /*
- * Copyright (c) 2003 Toru Nishimura
+ * Copyright (c) 2003 Tohru Nishimura
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
