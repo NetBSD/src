@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.1.1.2 1998/05/23 12:31:04 matthias Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.1.1.3 1998/08/31 21:17:43 matthias Exp $	*/
 
 /*
  *
@@ -279,7 +279,7 @@ struct pv_head {
 struct pv_entry {		/* all fields locked by their pvh_lock */
   struct pv_entry *pv_next;	/* next entry */
   struct pmap *pv_pmap;		/* the pmap */
-  vm_offset_t pv_va;		/* the virtual address */
+  vaddr_t pv_va;		/* the virtual address */
   struct vm_page *pv_ptp;	/* the vm_page of the PTP */
 };
 
@@ -322,7 +322,7 @@ struct pv_page {
 
 struct pmap_remove_record {
   int prr_npages;
-  vm_offset_t prr_vas[PMAP_RR_MAX];
+  vaddr_t prr_vas[PMAP_RR_MAX];
 };
 
 /*
@@ -332,7 +332,7 @@ struct pmap_remove_record {
  */
 
 struct pmap_transfer_location {
-  vm_offset_t addr;		/* the address (page-aligned) */
+  vaddr_t addr;			/* the address (page-aligned) */
   pt_entry_t *pte;		/* the PTE that maps address */
   struct vm_page *ptp;		/* the PTP that the PTE lives in */
 };
@@ -371,24 +371,24 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  */
 
 void		pmap_activate __P((struct proc *));
-void		pmap_bootstrap __P((vm_offset_t));
+void		pmap_bootstrap __P((vaddr_t));
 boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
 void		pmap_deactivate __P((struct proc *));
-static void	pmap_kenter_pa __P((vm_offset_t, vm_offset_t, vm_prot_t));
+static void	pmap_kenter_pa __P((vaddr_t, paddr_t, vm_prot_t));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
-static void	pmap_protect __P((struct pmap *, vm_offset_t, 
-				vm_offset_t, vm_prot_t));
-void		pmap_remove __P((struct pmap *, vm_offset_t, vm_offset_t));
+static void	pmap_protect __P((struct pmap *, vaddr_t, 
+				vaddr_t, vm_prot_t));
+void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
 boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_transfer __P((struct pmap *, struct pmap *, vm_offset_t, 
-				   vm_size_t, vm_offset_t, boolean_t));
-static void	pmap_update_pg __P((vm_offset_t));
-static void	pmap_update_2pg __P((vm_offset_t,vm_offset_t));
-void		pmap_write_protect __P((struct pmap *, vm_offset_t, 
-				vm_offset_t, vm_prot_t));
+void		pmap_transfer __P((struct pmap *, struct pmap *, vaddr_t, 
+				   vsize_t, vaddr_t, boolean_t));
+static void	pmap_update_pg __P((vaddr_t));
+static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
+void		pmap_write_protect __P((struct pmap *, vaddr_t, 
+				vaddr_t, vm_prot_t));
 
-vm_offset_t reserve_dumppages __P((vm_offset_t)); /* XXX: not a pmap fn */
+vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
@@ -403,7 +403,7 @@ vm_offset_t reserve_dumppages __P((vm_offset_t)); /* XXX: not a pmap fn */
 
 __inline static void pmap_update_pg(va)
 
-vm_offset_t va;
+vaddr_t va;
 
 {
 #if defined(I386_CPU)
@@ -420,7 +420,7 @@ vm_offset_t va;
 
 __inline static void pmap_update_2pg(va, vb)
 
-vm_offset_t va, vb;
+vaddr_t va, vb;
 
 {
 #if defined(I386_CPU)
@@ -469,7 +469,7 @@ vm_prot_t prot;
 __inline static void pmap_protect(pmap, sva, eva, prot)
 
 struct pmap *pmap;
-vm_offset_t sva, eva;
+vaddr_t sva, eva;
 vm_prot_t prot;
 
 {
@@ -491,7 +491,8 @@ vm_prot_t prot;
                                               
 __inline static void pmap_kenter_pa(va, pa, prot)
                                                
-vm_offset_t va, pa;
+vaddr_t va;
+paddr_t pa;
 vm_prot_t prot;
   
 {
@@ -505,7 +506,7 @@ vm_prot_t prot;
     pmap_update_pg(va);                         
 }                                               
 
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 #endif /* _KERNEL */
 #endif	/* _I386_PMAP_H_ */
