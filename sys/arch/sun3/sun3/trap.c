@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 1995/03/26 08:04:24 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.45 1995/03/26 19:38:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -268,9 +268,7 @@ trap(type, code, v, frame)
 		sig = SIGBUS;
 		break;
 
-#ifdef	FPCOPROC
 	case T_COPERR:		/* kernel coprocessor violation */
-#endif	/* FPCOPROC */
 	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
 	case T_FMTERR:		/* ...just in case... */
 		/*
@@ -290,7 +288,6 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;
 		break;
 
-#ifdef	FPCOPROC
 	case T_COPERR|T_USER:	/* user coprocessor violation */
 		/* What is a proper response here? */
 		ucode = 0;
@@ -310,7 +307,6 @@ trap(type, code, v, frame)
 		ucode = code;
 		sig = SIGFPE;
 		break;
-#endif	/* FPCOPROC */
 
 	case T_FPEMULI:		/* FPU faults in supervisor mode */
 	case T_FPEMULD:

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.s,v 1.15 1995/02/11 21:08:45 gwr Exp $	*/
+/*	$NetBSD: m68k.s,v 1.16 1995/03/26 19:38:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -172,7 +172,6 @@ ENTRY(longjmp)
 	moveq	#1,d0
 	rts
 
-#ifdef FPCOPROC
 /*
  * Save and restore 68881 state.
  * Pretty awful looking since our assembler does not
@@ -197,4 +196,4 @@ ENTRY(m68881_restore)
 Lm68881rdone:
 	frestore a0@			| restore state
 	rts
-#endif
+

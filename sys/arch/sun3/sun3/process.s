@@ -1,4 +1,4 @@
-/*	$NetBSD: process.s,v 1.20 1995/02/11 21:08:48 gwr Exp $	*/
+/*	$NetBSD: process.s,v 1.21 1995/03/26 19:38:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -254,7 +254,7 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
-#ifdef FPCOPROC
+	/* Do we need to save FPU state? */
 	tstl	_fpu_type
 	jeq	Lswnofpsave
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
@@ -264,7 +264,6 @@ Lsw2:
 	fmovem	fp0-fp7,a2@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
 Lswnofpsave:
-#endif
 
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
@@ -302,7 +301,7 @@ Lcxswdone:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
-#ifdef FPCOPROC
+	/* Do we need to restore FPU state? */
 	tstl	_fpu_type
 	jeq	Lres_skip
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
@@ -313,7 +312,6 @@ Lcxswdone:
 Lresfprest:
 	frestore a0@			| restore state
 Lres_skip:
-#endif
 	movw	a1@(PCB_PS),sr		| no, restore PS
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
@@ -329,7 +327,7 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-#ifdef FPCOPROC
+	/* Need to save FPU state? */
 	tstl	_fpu_type
 	jeq	Lsvnofpsave
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
@@ -339,7 +337,6 @@ ENTRY(savectx)
 	fmovem	fp0-fp7,a0@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lsvnofpsave:
-#endif
 	tstl	sp@(8)			| altreturn?
 	jeq	Lsavedone
 	movl	sp,d0			| relocate current sp relative to a1

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1995/03/26 19:32:31 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1995/03/26 19:38:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -451,13 +451,13 @@ setregs(p, entry, stack, retval)
 
 	frame->f_pc = entry & ~1;
 	frame->f_regs[SP] = stack;
-#ifdef FPCOPROC
+
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	if (fpu_type) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
-#endif
+
 #ifdef COMPAT_HPUX
 	if (p->p_flag & SHPUX) {
 		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
@@ -717,7 +717,7 @@ sendsig(catcher, sig, mask, code)
 			       p->p_pid, exframesize[ft], ft);
 #endif
 	}
-#ifdef FPCOPROC
+
 	if (fpu_type) {
 		kfp->sf_state.ss_flags |= SS_FPSTATE;
 		m68881_save(&kfp->sf_state.ss_fpstate);
@@ -728,7 +728,7 @@ sendsig(catcher, sig, mask, code)
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
 #endif
-#endif
+
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
@@ -1078,7 +1078,7 @@ sigreturn(p, uap, retval)
 			       p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
-#ifdef FPCOPROC
+
 	/*
 	 * Finally we restore the original FP context
 	 */
@@ -1089,9 +1089,6 @@ sigreturn(p, uap, retval)
 		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
-#endif
-#endif
-#ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
