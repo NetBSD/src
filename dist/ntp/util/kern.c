@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.c,v 1.1.1.2 2003/12/04 16:05:34 drochner Exp $	*/
+/*	$NetBSD: kern.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
 
 /*
  * This program simulates a first-order, type-II phase-lock loop using

@@ -1,4 +1,4 @@
-/*	$NetBSD: page.c,v 1.1.1.1 2003/12/04 16:05:20 drochner Exp $	*/
+/*	$NetBSD: page.c,v 1.2 2003/12/04 16:23:34 drochner Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

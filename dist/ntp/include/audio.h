@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.h,v 1.1.1.2 2003/12/04 16:05:21 drochner Exp $	*/
+/*	$NetBSD: audio.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * Header file for audio drivers

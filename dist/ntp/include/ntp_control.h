@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.h,v 1.1.1.3 2003/12/04 16:05:22 drochner Exp $	*/
+/*	$NetBSD: ntp_control.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * ntp_control.h - definitions related to NTP mode 6 control messages

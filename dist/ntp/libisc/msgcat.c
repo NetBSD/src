@@ -1,4 +1,4 @@
-/*	$NetBSD: msgcat.c,v 1.1.1.1 2003/12/04 16:05:23 drochner Exp $	*/
+/*	$NetBSD: msgcat.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * Copyright (C) 1999-2001  Internet Software Consortium.

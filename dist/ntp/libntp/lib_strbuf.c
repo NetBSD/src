@@ -1,4 +1,4 @@
-/*	$NetBSD: lib_strbuf.c,v 1.2 2000/04/17 05:49:11 simonb Exp $	*/
+/*	$NetBSD: lib_strbuf.c,v 1.3 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * lib_strbuf - library string storage
