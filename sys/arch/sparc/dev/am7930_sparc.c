@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.40 1998/08/17 21:16:10 augustss Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.41 1998/08/28 08:57:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -53,9 +53,7 @@
 #define AUDIO_ROM_NAME "audio"
 
 #ifdef AUDIO_DEBUG
-extern void Dprintf __P((const char *, ...));
-
-#define DPRINTF(x)      if (am7930debug) Dprintf x
+#define DPRINTF(x)      if (am7930debug) printf x
 #else
 #define DPRINTF(x)
 #endif	/* AUDIO_DEBUG */
@@ -310,7 +308,7 @@ am7930_start_output(addr, p, cc, intr, arg)
 
 #ifdef AUDIO_DEBUG
 	if (am7930debug > 1)
-		Dprintf("sa_start_output: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
+		printf("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg);
 #endif
 
 	if (!sc->sc_locked) {
@@ -342,7 +340,7 @@ am7930_start_input(addr, p, cc, intr, arg)
 
 #ifdef AUDIO_DEBUG
 	if (am7930debug > 1)
-		Dprintf("sa_start_input: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
+		printf("sa_start_input: cc=%d %p (%p)\n", cc, intr, arg);
 #endif
 
 	if (!sc->sc_locked) {
@@ -360,8 +358,8 @@ am7930_start_input(addr, p, cc, intr, arg)
 	sc->sc_au.au_rend = p + cc -1;
 	return(0);
 }
-/* 
- * halt routines: on Sparc, just use MI chipset halt. 
+/*
+ * halt routines: on Sparc, just use MI chipset halt.
  */
 
 
@@ -390,7 +388,7 @@ am7930hwintr(au0)
 		if (d == e) {
 #ifdef AUDIO_DEBUG
 		        if (am7930debug > 1)
-                		Dprintf("am7930hwintr: swintr(r) requested");
+                		printf("am7930hwintr: swintr(r) requested");
 #endif
 			AUDIO_SET_SWINTR;
 		}
@@ -405,7 +403,7 @@ am7930hwintr(au0)
 		if (d == e) {
 #ifdef AUDIO_DEBUG
 		        if (am7930debug > 1)
-                		Dprintf("am7930hwintr: swintr(p) requested");
+                		printf("am7930hwintr: swintr(p) requested");
 #endif
 			AUDIO_SET_SWINTR;
 		}
@@ -426,7 +424,7 @@ am7930swintr(sc0)
 
 #ifdef AUDIO_DEBUG
 	if (am7930debug > 1)
-		Dprintf("audiointr: sc=0x%x\n",sc);
+		printf("audiointr: sc=%p\n", sc);
 #endif
 
 	au = &sc->sc_au;
@@ -447,7 +445,7 @@ am7930swintr(sc0)
 }
 
 /*
- * Attach-dependent channel set/query 
+ * Attach-dependent channel set/query
  */
 int
 am7930_set_port(addr, cp)
@@ -461,7 +459,7 @@ am7930_set_port(addr, cp)
 	if (cp->dev == SUNAUDIO_SOURCE || cp->dev == SUNAUDIO_OUTPUT) {
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return(EINVAL);
-	} else if (cp->type != AUDIO_MIXER_VALUE || 
+	} else if (cp->type != AUDIO_MIXER_VALUE ||
 					cp->un.value.num_channels != 1) {
 		return(EINVAL);
 	}
@@ -506,7 +504,7 @@ am7930_get_port(addr, cp)
 	if (cp->dev == SUNAUDIO_SOURCE || cp->dev == SUNAUDIO_OUTPUT) {
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return(EINVAL);
-	} else if (cp->type != AUDIO_MIXER_VALUE || 
+	} else if (cp->type != AUDIO_MIXER_VALUE ||
 					cp->un.value.num_channels != 1) {
 		return(EINVAL);
 	}
