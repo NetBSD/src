@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.9 1998/05/24 23:41:43 thorpej Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.10 1998/05/26 23:43:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@ struct tcds_slotconfig {
 	bus_space_tag_t sc_bst;			/* to frob TCDS regs */
 	bus_space_handle_t sc_bsh;
 
-	struct asc_softc *sc_asc;		/* to frob child's regs */
+	struct asc_tcds_softc *sc_asc;		/* to frob child's regs */
 
 	int	(*sc_intrhand) __P((void *));	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
@@ -62,6 +62,8 @@ struct tcds_slotconfig {
 	/*
 	 * DMA bookkeeping information.
 	 */
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap;
 	int	sc_active;                      /* DMA active ? */
 	int	sc_iswrite;			/* DMA into main memory? */
 	size_t	sc_dmasize;
@@ -76,7 +78,9 @@ struct tcdsdev_attach_args {
 	int	tcdsda_chip;			/* chip number */
 	int	tcdsda_id;			/* SCSI ID */
 	u_int	tcdsda_freq;			/* chip frequency */
+	int	tcdsda_period;			/* min. sync period */
 	int	tcdsda_variant;			/* NCR chip variant */
+	int	tcdsda_fast;			/* chip does Fast mode */
 };
 
 /*
@@ -101,3 +105,8 @@ int	tcds_dma_setup __P((struct tcds_slotconfig *, caddr_t *, size_t *,
 	    int, size_t *));
 void	tcds_dma_go __P((struct tcds_slotconfig *));
 int	tcds_dma_isactive __P((struct tcds_slotconfig *));
+
+/*
+ * TCDS DMA functions (private to TCDS)
+ */
+int	tcds_dma_init __P((struct tcds_slotconfig *));
