@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.14 2000/12/09 19:51:44 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.15 2000/12/10 14:09:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ __END_DECLS
 #define LINUX_VT_RELDISP    0x5605
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
+#define LINUX_VT_DISALLOCATE	0x5608
 
 /*
  * Does the port have separated linux_syscall() ?
