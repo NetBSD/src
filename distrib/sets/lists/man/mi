@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.144 1999/06/13 22:40:51 tron Exp $
+# $NetBSD: mi,v 1.145 1999/06/18 14:26:39 ad Exp $
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
@@ -50,6 +50,7 @@
 ./usr/share/man/cat1/cap_mkdb.0
 ./usr/share/man/cat1/cat.0
 ./usr/share/man/cat1/cd.0
+./usr/share/man/cat1/cdplay.0
 ./usr/share/man/cat1/chflags.0
 ./usr/share/man/cat1/chfn.0
 ./usr/share/man/cat1/chgrp.0
@@ -1166,6 +1167,7 @@
 ./usr/share/man/man1/cap_mkdb.1
 ./usr/share/man/man1/cat.1
 ./usr/share/man/man1/cd.1
+./usr/share/man/man1/cdplay.1
 ./usr/share/man/man1/chflags.1
 ./usr/share/man/man1/chfn.1
 ./usr/share/man/man1/chgrp.1

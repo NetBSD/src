@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.115 1999/05/11 20:13:50 veego Exp $
+# $NetBSD: mi,v 1.116 1999/06/18 14:26:38 ad Exp $
 .
 ./altroot
 ./bin
@@ -148,6 +148,7 @@
 ./usr/bin/cal
 ./usr/bin/calendar
 ./usr/bin/cap_mkdb
+./usr/bin/cdplay
 ./usr/bin/chflags
 ./usr/bin/chfn
 ./usr/bin/chgrp
