@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.10 1997/02/28 00:14:22 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $";
+static char *rcsid = "$NetBSD: mbuf.c,v 1.10 1997/02/28 00:14:22 jonathan Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,12 +75,15 @@ bool seen[256];			/* "have we seen this type yet?" */
  * Print mbuf statistics.
  */
 void
-mbpr(mbaddr)
+mbpr(mbaddr, msizeaddr, mclbaddr)
 	u_long mbaddr;
+	u_long msizeaddr, mclbaddr;
 {
 	register int totmem, totfree, totmbufs;
 	register int i;
 	register struct mbtypes *mp;
+
+	int	mclbytes,	msize;
 
 	if (nmbtypes != 256) {
 		fprintf(stderr,
@@ -93,6 +96,17 @@ mbpr(mbaddr)
 		    __progname);
 		return;
 	}
+/*XXX*/
+	if (msizeaddr != 0)
+		kread(msizeaddr, (char *)&msize, sizeof (msize));
+	else
+		msize = MSIZE;
+	if (mclbaddr != 0)
+		kread(mclbaddr, (char *)&mclbytes, sizeof (mclbytes));
+	else
+		mclbytes = MCLBYTES;
+/*XXX*/
+
 	if (kread(mbaddr, (char *)&mbstat, sizeof (mbstat)))
 		return;
 	totmbufs = 0;
@@ -113,8 +127,8 @@ mbpr(mbaddr)
 		}
 	printf("%u/%u mapped pages in use\n",
 		mbstat.m_clusters - mbstat.m_clfree, mbstat.m_clusters);
-	totmem = totmbufs * MSIZE + mbstat.m_clusters * MCLBYTES;
-	totfree = mbstat.m_clfree * MCLBYTES;
+	totmem = totmbufs * msize + mbstat.m_clusters * mclbytes;
+	totfree = mbstat.m_clfree * mclbytes;
 	printf("%u Kbytes allocated to network (%d%% in use)\n",
 		totmem / 1024, (totmem - totfree) * 100 / totmem);
 	printf("%u requests for memory denied\n", mbstat.m_drops);

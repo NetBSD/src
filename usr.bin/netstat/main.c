@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1997/02/28 00:14:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $";
+static char *rcsid = "$NetBSD: main.c,v 1.10 1997/02/28 00:14:21 jonathan Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,10 @@ struct nlist nl[] = {
 	{ "_mfchash" },
 #define N_VIFTABLE	31
 	{ "_viftable" },
+#define N_MSIZE		32
+	{ "_msize" },
+#define N_MCLBYTES	33
+	{ "_mclbytes" },
 	"",
 };
 
@@ -326,7 +330,8 @@ main(argc, argv)
 		exit(1);
 	}
 	if (mflag) {
-		mbpr(nl[N_MBSTAT].n_value);
+		mbpr(nl[N_MBSTAT].n_value,  nl[N_MSIZE].n_value,
+		    nl[N_MCLBYTES].n_value);
 		exit(0);
 	}
 	if (pflag) {
