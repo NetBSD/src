@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 2001/03/30 23:45:18 wdk Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2 2001/04/02 09:54:16 wdk Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -239,9 +239,6 @@ isa_intr(arg)
 
 	ic->ic_intrcnt.ev_count++;
 
-	/* Clear ISA interrupt latch */
-	bus_space_write_4(ic->ic_bst, ic->ic_bsh, 0, 0);
-
 	handled = 0;
 	LIST_FOREACH(ih, &ic->intr_q, ih_q) {
 		/*
@@ -254,6 +251,9 @@ isa_intr(arg)
 		rv = (*ih->ih_fun)(ih->ih_arg);
 		handled |= (rv != 0);
 	}
+
+	/* Clear ISA interrupt latch */
+	bus_space_write_4(ic->ic_bst, ic->ic_bsh, 0, 0);
 
 	return handled;
 }
