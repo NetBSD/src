@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/08/30 23:51:49 jhawk Exp $
+#	$NetBSD: Makefile,v 1.4 2001/04/22 02:04:22 shin Exp $
 
 .include "../Makefile.inc"
 
@@ -16,6 +16,8 @@ PBSDBOOTDIR = ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
 PBSDBOOT = ${PBSDBOOTDIR}/pbsdboot.exe
 PBSDBOOT1 = ${PBSDBOOTDIR}/pbsdboot1.exe
 
+INSTKERNELS = TX3912 TX3922
+
 .ifndef RELEASEDIR
 release:
 	@echo setenv RELEASEDIR first
@@ -30,7 +32,14 @@ release:
 	mdsetimage netbsd ${MINIROOTOBJ}/miniroot.fs
 	gzip -9 netbsd
 	${IINST} netbsd.gz ${ITARGET}/.
-	cd ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot; ${MAKE}
+.for instkern in ${INSTKERNELS}
+	rm -f netbsd netbsd.gz
+	cp ${KERNOBJDIR}/INSTALL_${instkern}/netbsd .
+	mdsetimage netbsd ${MINIROOTOBJ}/miniroot.fs
+	gzip -9 netbsd
+	${IINST} netbsd.gz ${ITARGET}/netbsd.${instkern}.gz
+.endfor
+	cd ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot; make
 	${IINST} ${PBSDBOOT} ${ITARGET}/.
 	${IINST} ${PBSDBOOT1} ${ITARGET}/.
 	${.CURDIR}/../sets/makesums -t ${ITARGET} '*.gz' '*.exe'
