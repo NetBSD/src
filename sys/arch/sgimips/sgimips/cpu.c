@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2001/11/17 01:19:58 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2001/11/19 17:33:02 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -67,14 +67,14 @@ sgimips_find_l2cache(struct arcbios_component *comp,
 
 	switch (comp->Type) {
 	case COMPONENT_TYPE_SecondaryICache:
-		mips_sicache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
-		/* XXX */
-		printf("%s: split L2 cache, no bets!\n", self->dv_xname);
-		break;
-
+		panic("%s: split L2 cache", self->dv_xname);
 	case COMPONENT_TYPE_SecondaryDCache:
 	case COMPONENT_TYPE_SecondaryCache:
 		mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+		mips_sdcache_line_size =
+		    COMPONENT_KEY_Cache_LineSize(comp->Key);
+		/* XXX */
+		mips_sdcache_ways = 1;
 		break;
 	}
 }
@@ -94,8 +94,6 @@ cpu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	u_int32_t config;
-
 	/*
 	 * Walk the ARCBIOS device tree to find the L2 cache.
 	 *
@@ -103,12 +101,6 @@ cpu_attach(parent, self, aux)
 	 * XXX etc, but we don't currently do that.
 	 */
 	arcbios_tree_walk(sgimips_find_l2cache, self);
-
-#if 1	/* XXX XXX XXX */
-	config = mips3_cp0_config_read();
-	config &= ~MIPS3_CONFIG_SC;
-	mips3_cp0_config_write(config);
-#endif
 
 	printf(": ");
 	cpu_identify();
