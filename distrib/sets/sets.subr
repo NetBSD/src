@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.11 2004/01/03 02:38:58 lukem Exp $
+#	$NetBSD: sets.subr,v 1.12 2004/01/03 12:23:11 lukem Exp $
 #
 
 #
@@ -22,27 +22,30 @@
 #	MKKERBEROS
 #	MKKERBEROS4
 #	MKLINT
+#	MKPOSTFIX
 #	MKSENDMAIL
+
+MKVARS="MKKERBEROS MKKERBEROS4 MKLINT MKPOSTFIX MKSENDMAIL"
 
 oIFS=$IFS
 IFS="
 "
 for x in $(
-${MAKE:-make} -B -f- all <<'EOF'
+${MAKE:-make} -B -f- all <<EOMAKE
 .include <bsd.own.mk>
 all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
 		HAVE_GCC3 OBJECT_FMT TOOLCHAIN_MISSING \
-		MKKERBEROS MKKERBEROS4 MKLINT MKSENDMAIL
-	@echo "export $i=${$i}"
+		${MKVARS}
+	@echo "export \$i=\${\$i}"
 .endfor
-.if defined(USE_XF86_4) && (${USE_XF86_4} != "no")
+.if defined(USE_XF86_4) && (\${USE_XF86_4} != "no")
 	@echo x11_version=4
 .else
 	@echo x11_version=3
 .endif
 
-EOF
+EOMAKE
 ); do
 #	echo 1>&2 "DEBUG: read $x"
 	eval $x
@@ -80,7 +83,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.11 2004/01/03 02:38:58 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.12 2004/01/03 12:23:11 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -100,6 +103,7 @@ fi
 #	kerberos		<bsd.own.mk> ${MKKERBEROS} != no
 #	kerberos4		<bsd.own.mk> ${MKKERBEROS4} != no
 #	lint			<bsd.own.mk> ${MKLINT} != no
+#	postfix			<bsd.own.mk> ${MKPOSTFIX} != no
 #	sendmail		<bsd.own.mk> ${MKSENDMAIL} != no
 #	obsolete		file is obsolete, and only printed if 
 #				${obsolete} != 0
@@ -112,12 +116,12 @@ list_set_files()
 	awk -v obsolete=${obsolete} '
 		BEGIN {
 			if (! obsolete) {
-				split("kerberos4 kerberos lint sendmail",
-				    needvars)
+				split("'"${MKVARS}"'", needvars)
 				for (vi in needvars) {
 					nv = needvars[vi]
-					if (ENVIRON["MK" toupper(nv)] != "no")
-						wanted[nv] = 1 
+					kw = tolower(substr(nv, 3))
+					if (ENVIRON[nv] != "no")
+						wanted[kw] = 1 
 				}
 			}
 		}
@@ -285,9 +289,9 @@ list_set_lists()
 #
 arch_to_cpu()
 {
-	MACHINE_ARCH=${1} ${MAKE:-make} -f- all <<EOF
+	MACHINE_ARCH=${1} ${MAKE:-make} -f- all <<EOMAKE
 .include <bsd.own.mk>
 all:
 	@echo \${MACHINE_CPU}
-EOF
+EOMAKE
 }
