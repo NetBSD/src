@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.8 2002/09/18 02:44:04 lukem Exp $
+# 	$NetBSD: DEJIKO,v 1.9 2003/10/25 13:21:13 simonb Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -36,6 +36,7 @@ options 	NFS_BOOTPARAM_NOGATEWAY
 # Compatibility options
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_14		# NetBSD 1.4 binary compatibility
+options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
