@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.118 2004/06/11 12:26:31 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.119 2004/07/18 07:43:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.118 2004/06/11 12:26:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.119 2004/07/18 07:43:00 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -894,19 +894,18 @@ nfs_doio_read(bp, uiop)
 			int diff, len;
 
 			/*
-			 * If len > 0, there is a hole in the file and
+			 * If uio_resid > 0, there is a hole in the file and
 			 * no writes after the hole have been pushed to
-			 * the server yet.
+			 * the server yet or the file has been truncated
+			 * on the server.
 			 * Just zero fill the rest of the valid area.
 			 */
 
+			KASSERT(vp->v_size >=
+			    uiop->uio_offset + uiop->uio_resid);
 			diff = bp->b_bcount - uiop->uio_resid;
-			len = np->n_size - ((((off_t)bp->b_blkno) << DEV_BSHIFT)
-				+ diff);
-			if (len > 0) {
-				len = MIN(len, uiop->uio_resid);
-				memset((char *)bp->b_data + diff, 0, len);
-			}
+			len = uiop->uio_resid;
+			memset((char *)bp->b_data + diff, 0, len);
 		}
 		if (uiop->uio_procp && (vp->v_flag & VTEXT) &&
 		    (((nmp->nm_flag & NFSMNT_NQNFS) &&
