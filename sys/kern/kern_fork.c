@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.33 1998/01/03 02:49:30 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.34 1998/01/04 03:52:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -53,14 +53,13 @@
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/ktrace.h>
+#include <sys/vmmeter.h>
 
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
 
 int	nprocs = 1;		/* process 0 */
-
-int fork1 __P((struct proc *, int, register_t *));
 
 /*ARGSUSED*/
 int
@@ -73,6 +72,10 @@ sys_fork(p, v, retval)
 	return (fork1(p, 0, retval));
 }
 
+/*
+ * vfork(2) system call compatible with 4.4BSD (i.e. BSD with Mach VM).
+ * Address space is not shared, but parent is blocked until child exit.
+ */
 /*ARGSUSED*/
 int
 sys_vfork(p, v, retval)
@@ -81,13 +84,28 @@ sys_vfork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, 1, retval));
+	return (fork1(p, FORK_PPWAIT, retval));
+}
+
+/*
+ * New vfork(2) system call for NetBSD, which implements original 3BSD vfork(2)
+ * semantics.  Address space is shared, and parent is blocked until child exit.
+ */
+/*ARGSUSED*/
+int
+sys___vfork14(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, retval));
 }
 
 int
-fork1(p1, isvfork, retval)
+fork1(p1, flags, retval)
 	register struct proc *p1;
-	int isvfork;
+	int flags;
 	register_t *retval;
 {
 	register struct proc *p2;
@@ -222,7 +240,7 @@ again:
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		p2->p_flag |= P_CONTROLT;
-	if (isvfork)
+	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
@@ -251,7 +269,7 @@ again:
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
-	vm_fork(p1, p2, FALSE);
+	vm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
@@ -269,11 +287,20 @@ again:
 	PRELE(p1);
 
 	/*
+	 * Update stats now that we know the fork was successful.
+	 */
+	cnt.v_forks++;
+	if (flags & FORK_PPWAIT)
+		cnt.v_forks_ppwait++;
+	if (flags & FORK_SHAREVM)
+		cnt.v_forks_sharevm++;
+
+	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
 	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
 	 * proc (in case of exit).
 	 */
-	if (isvfork)
+	if (flags & FORK_PPWAIT)
 		while (p2->p_flag & P_PPWAIT)
 			tsleep(p1, PWAIT, "ppwait", 0);
 
