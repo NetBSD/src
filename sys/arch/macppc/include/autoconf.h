@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 1998/09/01 17:33:04 tsubai Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 2001/06/08 00:32:03 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -31,6 +31,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MACHINE_AUTOCONF_H_
+#define _MACHINE_AUTOCONF_H_
+
 struct confargs {
 	char *ca_name;
 	u_int ca_node;
@@ -43,6 +46,46 @@ struct confargs {
 	/* bus_space_tag_t ca_tag; */
 };
 
-extern void *mapiodev __P((paddr_t, psize_t));
-extern int kvtop __P((caddr_t));
-extern void *intr_establish __P((int, int, int, int (*)(void *), void *));
+/* there are in locore.S */
+void ofbcopy __P((void *, void *, size_t));
+int badaddr __P((void *, int));
+
+/* these are in autoconf.c */
+int getnodebyname __P((int, const char *));
+int OF_interpret __P((char *cmd, int nreturns, ...));
+
+/* these are in clock.c */
+void calc_delayconst __P((void));
+void decr_intr __P((struct clockframe *));
+
+/* these are in cpu.c */
+void identifycpu __P((char *));
+
+/* these are in machdep.c */
+void initppc __P((u_int, u_int, char *));
+void install_extint __P((void (*) __P((void)))); 
+void *mapiodev __P((paddr_t, psize_t));
+int kvtop __P((caddr_t));
+
+/* these are in extintr.c */
+void ext_intr __P((void));
+void init_interrupt __P((void));
+void *intr_establish __P((int, int, int, int (*)(void *), void *));
+void intr_disestablish __P((void *));
+char *intr_typename __P((int));
+
+/* these are in dev/akbd.c */
+int kbd_intr __P((void *));
+int akbd_cnattach __P((void));
+
+/* these are in dev/ofb.c */
+int ofb_is_console __P((void));
+int ofb_cnattach __P((void));
+
+/* these are in dev/zs.c */
+int zssoft __P((void *));
+
+/* these are in ../../dev/ic/com.c */
+void comsoft __P((void));
+
+#endif /* _MACHINE_AUTOCONF_H_ */

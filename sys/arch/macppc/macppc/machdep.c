@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2001/06/06 17:50:16 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2001/06/08 00:32:03 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,10 @@
 
 #include <net/netisr.h>
 
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+
+#include <machine/autoconf.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
@@ -70,6 +74,8 @@
 #include <dev/wscons/wscons_callbacks.h>
 
 #include <dev/usb/ukbdvar.h>
+
+#include <macppc/dev/adbvar.h>
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -110,31 +116,29 @@ struct ofw_translations {
 int ofkbd_cngetc(dev_t);
 void cninit_kd(void);
 int lcsplx(int);
-void install_extint(void (*)(void));
 int save_ofmap(struct ofw_translations *, int);
 void restore_ofmap(struct ofw_translations *, int);
+static void dumpsys(void);
 
 void
 initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-	extern trapcode, trapsize;
-	extern alitrap, alisize;
-	extern dsitrap, dsisize;
-	extern isitrap, isisize;
-	extern decrint, decrsize;
-	extern tlbimiss, tlbimsize;
-	extern tlbdlmiss, tlbdlmsize;
-	extern tlbdsmiss, tlbdsmsize;
+	extern int trapcode, trapsize;
+	extern int alitrap, alisize;
+	extern int dsitrap, dsisize;
+	extern int isitrap, isisize;
+	extern int decrint, decrsize;
+	extern int tlbimiss, tlbimsize;
+	extern int tlbdlmiss, tlbdlmsize;
+	extern int tlbdsmiss, tlbdsmsize;
 #ifdef DDB
-	extern ddblow, ddbsize;
+	extern int ddblow, ddbsize;
 #endif
 #ifdef IPKDB
-	extern ipkdblow, ipkdbsize;
+	extern int ipkdblow, ipkdbsize;
 #endif
-	extern void callback(void *);
-	extern void ext_intr(void);
 	int exc, scratch;
 	struct mem_region *allmem, *availmem, *mp;
 	struct ofw_translations *ofmap;
@@ -410,7 +414,7 @@ void
 install_extint(handler)
 	void (*handler) __P((void));
 {
-	extern extint, extsize;
+	extern int extint, extsize;
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
 	int omsr, msr;
@@ -592,13 +596,14 @@ void
 softserial()
 {
 #if NZSC > 0
-	zssoft();
+	zssoft(NULL);
 #endif
 #if NCOM > 0
 	comsoft();
 #endif
 }
 
+#if 0
 /*
  * Stray interrupts.
  */
@@ -608,6 +613,7 @@ strayintr(irq)
 {
 	log(LOG_ERR, "stray interrupt %d\n", irq);
 }
+#endif
 
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
@@ -686,6 +692,7 @@ cpu_reboot(howto, what)
 	ppc_exit();
 }
 
+#if 0
 /*
  * OpenFirmware callback routine
  */
@@ -695,6 +702,7 @@ callback(p)
 {
 	panic("callback");	/* for now			XXX */
 }
+#endif
 
 int
 lcsplx(ipl)

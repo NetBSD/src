@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.16 2001/04/01 10:40:45 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.17 2001/06/08 00:32:01 matt Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -71,6 +71,7 @@
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/adbvar.h>
+#include <macppc/dev/pm_direct.h>
 
 #define printf_intr printf
 
@@ -293,6 +294,8 @@ int	adb_prog_switch_enable __P((void));
 int	adb_prog_switch_disable __P((void));
 /* we should create this and it will be the public version */
 int	send_adb __P((u_char *, void *, void *));
+
+int	setsoftadb __P((void));
 
 #ifdef ADB_DEBUG
 /*
@@ -2173,7 +2176,7 @@ adb_cuda_autopoll()
 }
 
 void
-adb_restart()
+adb_restart(void)
 {
 	int result;
 	u_char output[16];

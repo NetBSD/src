@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 2001/02/28 03:02:29 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 2001/06/08 00:32:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -510,7 +510,6 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	char *msg = NULL;
-	struct disklabel *dlp;
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;

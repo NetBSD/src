@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbvar.h,v 1.3 2000/06/19 19:35:21 tsubai Exp $	*/
+/*	$NetBSD: ofbvar.h,v 1.4 2001/06/08 00:32:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,17 +27,17 @@
  * rights to redistribute these changes.
  */
 
-struct ofb_devconfig {
+struct offb_devconfig {
 	paddr_t	dc_paddr;		/* physcal address */
 	int	dc_node;		/* phandle of this node */
 	int	dc_ih;			/* ihandle of this node */
 	struct rasops_info dc_ri;
 };
 
-struct ofb_softc {
+struct offb_softc {
 	struct	device sc_dev;
 
-	struct ofb_devconfig *sc_dc;	/* device configuration */
+	struct offb_devconfig *sc_dc;	/* device configuration */
 	int nscreens;
 	u_int32_t sc_addrs[30];		/* "assigned-addresses" storage */
 	u_char sc_cmap_red[256];

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.13 2000/12/28 22:59:09 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.14 2001/06/08 00:32:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,3 +92,4 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
  * Internal functions.
  */
 void		pci_init(int);
+int		pcidev_to_ofdev (pci_chipset_tag_t, pcitag_t);

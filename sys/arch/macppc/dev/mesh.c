@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.10 2001/04/26 15:27:05 tsubai Exp $	*/
+/*	$NetBSD: mesh.c,v 1.11 2001/06/08 00:32:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -674,8 +674,6 @@ mesh_msgin(sc, scb)
 	struct mesh_softc *sc;
 	struct mesh_scb *scb;
 {
-	int i;
-
 	DPRINTF("mesh_msgin\n");
 
 	if (mesh_read_reg(sc, MESH_FIFO_COUNT) == 0) {	/* XXX cheat */

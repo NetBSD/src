@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.11 2000/11/08 17:50:44 wrstuden Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.12 2001/06/08 00:32:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include <macppc/dev/dbdma.h>
 
@@ -213,9 +215,9 @@ static struct {
 	int cycle;	/* minimum cycle time [ns] */
 	int active;	/* minimum command active time [ns] */
 } dma_timing[3] = {
-	480, 215,	/* Mode 0 */
-	150,  80,	/* Mode 1 */
-	120,  70,	/* Mode 2 */
+	{ 480, 215 },	/* Mode 0 */
+	{ 150,  80 },	/* Mode 1 */
+	{ 120,  70 },	/* Mode 2 */
 };
 
 #define TIME_TO_TICK(time) howmany((time), 30)
@@ -275,7 +277,6 @@ wdc_obio_detach(self, flags)
 	int flags;
 {
 	struct wdc_obio_softc *sc = (void *)self;
-	struct channel_softc *chp = &sc->wdc_channel;
 	int error;
 
 	if ((error = wdcdetach(self, flags)) != 0)
