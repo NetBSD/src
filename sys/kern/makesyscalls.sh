@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.56 2004/07/31 00:55:51 lukem Exp $
+#	$NetBSD: makesyscalls.sh,v 1.57 2004/09/12 11:24:15 jdolecek Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -74,12 +74,12 @@ trap "rm $sysdcl $sysprotos $sysent $sysnamesbottom" 0
 # Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
 awk=${AWK:-awk}
 
-# Does this awk have a "toupper" function? (i.e. is it GNU awk)
-isgawk=`$awk 'BEGIN { print toupper("true"); exit; }' 2>/dev/null`
+# Does this awk have a "toupper" function?
+have_toupper=`$awk 'BEGIN { print toupper("true"); exit; }' 2>/dev/null`
 
 # If this awk does not define "toupper" then define our own.
-if [ "$isgawk" = TRUE ] ; then
-	# GNU awk provides it.
+if [ "$have_toupper" = TRUE ] ; then
+	# Used awk (GNU awk or nawk) provides it
 	toupper=
 else
 	# Provide our own toupper()
