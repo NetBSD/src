@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.192 2002/07/08 18:00:29 lukem Exp $
+.\"	$NetBSD: main,v 1.193 2002/07/09 11:16:53 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -659,6 +659,10 @@ system call.
 .Ss2 Miscellaneous
 .
 .(bullet
+Support for multibyte LC_CTYPE locales has been integrated from the
+Citrus project.
+Many Chinese, Japanese, Korean, and other encodings are now available.
+.It
 Full support for cross-compilation of the base system!
 .Pa src/build.sh
 is available for doing arbitrary cross-builds; see
