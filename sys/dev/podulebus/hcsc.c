@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.4 2001/06/02 12:07:34 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.5 2001/06/02 20:13:50 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -72,7 +72,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.4 2001/06/02 12:07:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.5 2001/06/02 20:13:50 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.4 2001/06/02 12:07:34 bjh21 Exp $");
 
 #include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
+
+#include <dev/podulebus/hcscreg.h>
 
 void hcsc_attach (struct device *, struct device *, void *);
 int  hcsc_match  (struct device *, struct cfdata *, void *);
@@ -162,7 +164,8 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef NCR5380_USE_BUS_SPACE
 	sc->sc_ncr5380.sc_regt = pa->pa_fast_t;
-	bus_space_map(sc->sc_ncr5380.sc_regt, pa->pa_fast_base + 0x2000, 8, 0,
+	bus_space_map(sc->sc_ncr5380.sc_regt,
+	    pa->pa_fast_base + HCSC_DP8490_OFFSET, 8, 0,
 	    &sc->sc_ncr5380.sc_regh);
 	sc->sc_ncr5380.sci_r0 = 0;
 	sc->sc_ncr5380.sci_r1 = 1;
@@ -173,7 +176,7 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ncr5380.sci_r6 = 6;
 	sc->sc_ncr5380.sci_r7 = 7;
 #else
-	iobase = (u_char *)pa->pa_fast_base + 0x2000;
+	iobase = (u_char *)pa->pa_fast_base + HCSC_DP8490_OFFSET;
 	sc->sc_ncr5380.sci_r0 = iobase + 0;
 	sc->sc_ncr5380.sci_r1 = iobase + 4;
 	sc->sc_ncr5380.sci_r2 = iobase + 8;
@@ -184,7 +187,8 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ncr5380.sci_r7 = iobase + 28;
 #endif
 	sc->sc_pdmat = pa->pa_mod_t;
-	bus_space_map(sc->sc_pdmat, pa->pa_mod_base, 1, 0, &sc->sc_pdmah);
+	bus_space_map(sc->sc_pdmat, pa->pa_mod_base + HCSC_PDMA_OFFSET, 1, 0,
+	    &sc->sc_pdmah);
 
 	sc->sc_ncr5380.sc_rev = NCR_VARIANT_DP8490;
 
