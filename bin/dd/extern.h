@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2001/11/25 06:53:48 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2001/11/25 10:50:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -56,16 +56,16 @@ void unblock(void);
 void unblock_close(void);
 ssize_t bwrite(int, const void *, size_t);
 
-extern IO in, out;
-extern STAT st;
-extern void (*cfunc)(void);
-extern u_long cpy_cnt;
-extern u_int cbsz;
-extern u_int ddflags;
-extern u_int files_cnt;
-extern int progress;
-extern const u_char *ctab;
-extern const u_char a2e_32V[], a2e_POSIX[];
-extern const u_char e2a_32V[], e2a_POSIX[];
-extern const u_char a2ibm_32V[], a2ibm_POSIX[];
-extern u_char casetab[];
+extern IO		in, out;
+extern STAT		st;
+extern void		(*cfunc)(void);
+extern u_longlong_t	cpy_cnt;
+extern u_longlong_t	cbsz;
+extern u_int		ddflags;
+extern u_int		files_cnt;
+extern int		progress;
+extern const u_char	*ctab;
+extern const u_char	a2e_32V[], a2e_POSIX[];
+extern const u_char	e2a_32V[], e2a_POSIX[];
+extern const u_char	a2ibm_32V[], a2ibm_POSIX[];
+extern u_char		casetab[];

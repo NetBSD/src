@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2001/11/25 06:53:48 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2001/11/25 10:50:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.12 2001/11/25 06:53:48 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2001/11/25 10:50:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,25 +77,28 @@ summary(void)
 		mS = 1;
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
 	(void)snprintf(buf, sizeof(buf),
-	    "%lu+%lu records in\n%lu+%lu records out\n",
-	    st.in_full, st.in_part, st.out_full, st.out_part);
+	    "%llu+%llu records in\n%llu+%llu records out\n",
+	    (unsigned long long)st.in_full,  (unsigned long long)st.in_part,
+	    (unsigned long long)st.out_full, (unsigned long long)st.out_part);
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 	if (st.swab) {
-		(void)snprintf(buf, sizeof(buf), "%lu odd length swab %s\n",
-		     st.swab, (st.swab == 1) ? "block" : "blocks");
+		(void)snprintf(buf, sizeof(buf), "%llu odd length swab %s\n",
+		     (unsigned long long)st.swab,
+		     (st.swab == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	if (st.trunc) {
-		(void)snprintf(buf, sizeof(buf), "%lu truncated %s\n",
-		     st.trunc, (st.trunc == 1) ? "block" : "blocks");
+		(void)snprintf(buf, sizeof(buf), "%llu truncated %s\n",
+		     (unsigned long long)st.trunc,
+		     (st.trunc == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	(void)snprintf(buf, sizeof(buf),
 	    "%llu bytes transferred in %lu.%03d secs (%llu bytes/sec)\n",
-	    (long long) st.bytes,
+	    (unsigned long long) st.bytes,
 	    (long) (mS / 1000),
 	    (int) (mS % 1000),
-	    (long long unsigned) (st.bytes * 1000LL / mS));
+	    (unsigned long long) (st.bytes * 1000LL / mS));
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 }
 

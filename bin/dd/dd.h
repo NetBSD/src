@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.7 2001/11/25 06:53:48 lukem Exp $	*/
+/*	$NetBSD: dd.h,v 1.8 2001/11/25 10:50:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,37 +41,32 @@
 
 /* Input/output stream state. */
 typedef struct {
-	u_char	*db;			/* buffer address */
-	u_char	*dbp;			/* current buffer I/O address */
-	u_long	dbcnt;			/* current buffer byte count */
-	int	dbrcnt;			/* last read byte count */
-	u_long	dbsz;			/* buffer size */
+	u_char		*db;		/* buffer address */
+	u_char		*dbp;		/* current buffer I/O address */
+	u_longlong_t	dbcnt;		/* current buffer byte count */
+	u_longlong_t	dbrcnt;		/* last read byte count */
+	u_longlong_t	dbsz;		/* buffer size */
 
 #define	ISCHR		0x01		/* character device (warn on short) */
 #define	ISPIPE		0x02		/* pipe (not truncatable) */
 #define	ISTAPE		0x04		/* tape (not seekable) */
 #define	NOREAD		0x08		/* not readable */
-	u_int	flags;
+	u_int		flags;
 
-	const char  *name;		/* name */
-	int	fd;			/* file descriptor */
-	u_long	offset;			/* # of blocks to skip */
-
-	u_long	f_stats;		/* # of full blocks processed */
-	u_long	p_stats;		/* # of partial blocks processed */
-	u_long	s_stats;		/* # of odd swab blocks */
-	u_long	t_stats;		/* # of truncations */
+	const char  	*name;		/* name */
+	int		fd;		/* file descriptor */
+	u_longlong_t	offset;		/* # of blocks to skip */
 } IO;
 
 typedef struct {
-	u_long	in_full;		/* # of full input blocks */
-	u_long	in_part;		/* # of partial input blocks */
-	u_long	out_full;		/* # of full output blocks */
-	u_long	out_part;		/* # of partial output blocks */
-	u_long	trunc;			/* # of truncated records */
-	u_long	swab;			/* # of odd-length swab blocks */
-	u_quad_t bytes;			/* # of bytes written */
-	struct timeval start;		/* start time of dd */
+	u_longlong_t	in_full;	/* # of full input blocks */
+	u_longlong_t	in_part;	/* # of partial input blocks */
+	u_longlong_t	out_full;	/* # of full output blocks */
+	u_longlong_t	out_part;	/* # of partial output blocks */
+	u_longlong_t	trunc;		/* # of truncated records */
+	u_longlong_t	swab;		/* # of odd-length swab blocks */
+	u_longlong_t	bytes;		/* # of bytes written */
+	struct timeval	start;		/* start time of dd */
 } STAT;
 
 /* Flags (in ddflags). */

@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.18 2001/11/25 06:57:55 lukem Exp $	*/
+/*	$NetBSD: args.c,v 1.19 2001/11/25 10:50:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.18 2001/11/25 06:57:55 lukem Exp $");
+__RCSID("$NetBSD: args.c,v 1.19 2001/11/25 10:50:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: args.c,v 1.18 2001/11/25 06:57:55 lukem Exp $");
 
 #include "dd.h"
 #include "extern.h"
+#include "strsuftoull.h"
 
 static int	c_arg(const void *, const void *);
 #ifndef	NO_CONV
@@ -75,7 +76,6 @@ static void	f_of(char *);
 static void	f_seek(char *);
 static void	f_skip(char *);
 static void	f_progress(char *);
-static u_long	get_bsz(const char *);
 
 static const struct arg {
 	const char *name;
@@ -98,8 +98,6 @@ static const struct arg {
 	{ "skip",	f_skip,		C_SKIP,	 C_SKIP },
 };
 
-static char *oper;
-
 /*
  * args -- parse JCL syntax of dd.
  */
@@ -107,7 +105,7 @@ void
 jcl(char **argv)
 {
 	struct arg *ap, tmp;
-	char *arg;
+	char *oper, *arg;
 
 	in.dbsz = out.dbsz = 512;
 
@@ -153,8 +151,6 @@ jcl(char **argv)
 	if (ddflags & (C_BLOCK|C_UNBLOCK)) {
 		if (!(ddflags & C_CBS))
 			errx(1, "record operations require cbs");
-		if (cbsz == 0)
-			errx(1, "cbs cannot be zero");
 		cfunc = ddflags & C_BLOCK ? block : unblock;
 	} else if (ddflags & C_CBS) {
 		if (ddflags & (C_ASCII|C_EBCDIC)) {
@@ -168,19 +164,8 @@ jcl(char **argv)
 		} else
 			errx(1,
 			    "cbs meaningless if not doing record operations");
-		if (cbsz == 0)
-			errx(1, "cbs cannot be zero");
 	} else
 		cfunc = def;
-
-	if (in.dbsz == 0 || out.dbsz == 0)
-		errx(1, "buffer sizes cannot be zero");
-
-	/*
-	 * Check to make sure that the buffers are not too large.
-	 */
-	if (in.dbsz > INT_MAX || out.dbsz > INT_MAX)
-		errx(1, "buffer sizes cannot be greater than %d", INT_MAX);
 
 	/* Read, write and seek calls take off_t as arguments. 
 	 *
@@ -204,21 +189,21 @@ static void
 f_bs(char *arg)
 {
 
-	in.dbsz = out.dbsz = (int)get_bsz(arg);
+	in.dbsz = out.dbsz = strsuftoull("block size", arg, 1, UINT_MAX);
 }
 
 static void
 f_cbs(char *arg)
 {
 
-	cbsz = (int)get_bsz(arg);
+	cbsz = strsuftoull("conversion record size", arg, 1, UINT_MAX);
 }
 
 static void
 f_count(char *arg)
 {
 
-	cpy_cnt = (u_int)get_bsz(arg);
+	cpy_cnt = strsuftoull("block count", arg, 0, ULLONG_MAX);
 	if (!cpy_cnt)
 		terminate(0);
 }
@@ -227,7 +212,9 @@ static void
 f_files(char *arg)
 {
 
-	files_cnt = (int)get_bsz(arg);
+	files_cnt = (u_int)strsuftoull("file count", arg, 0, UINT_MAX);
+	if (!files_cnt)
+		terminate(0);
 }
 
 static void
@@ -235,7 +222,7 @@ f_ibs(char *arg)
 {
 
 	if (!(ddflags & C_BS))
-		in.dbsz = (int)get_bsz(arg);
+		in.dbsz = strsuftoull("input block size", arg, 1, UINT_MAX);
 }
 
 static void
@@ -250,7 +237,7 @@ f_obs(char *arg)
 {
 
 	if (!(ddflags & C_BS))
-		out.dbsz = (int)get_bsz(arg);
+		out.dbsz = strsuftoull("output block size", arg, 1, UINT_MAX);
 }
 
 static void
@@ -264,14 +251,14 @@ static void
 f_seek(char *arg)
 {
 
-	out.offset = (u_int)get_bsz(arg);
+	out.offset = strsuftoull("seek blocks", arg, 0, ULLONG_MAX);
 }
 
 static void
 f_skip(char *arg)
 {
 
-	in.offset = (u_int)get_bsz(arg);
+	in.offset = strsuftoull("skip blocks", arg, 0, ULLONG_MAX);
 }
 
 static void
@@ -342,73 +329,3 @@ c_conv(const void *a, const void *b)
 }
 
 #endif	/* NO_CONV */
-
-/*
- * Convert an expression of the following forms to an unsigned long.
- * 	1) A positive decimal number.
- *	2) A positive decimal number followed by a b (mult by 512).
- *	3) A positive decimal number followed by a k (mult by 1024).
- *	4) A positive decimal number followed by a m (mult by 1048576).
- *	5) A positive decimal number followed by a w (mult by sizeof int)
- *	6) Two or more positive decimal numbers (with/without k,b or w).
- *	   separated by x (also * for backwards compatibility), specifying
- *	   the product of the indicated values.
- */
-static u_long
-get_bsz(const char *val)
-{
-	u_long num, t;
-	char *expr;
-
-	num = strtoul(val, &expr, 0);
-	if (num == ULONG_MAX)			/* Overflow. */
-		err(1, "%s", oper);
-	if (expr == val)			/* No digits. */
-		errx(1, "%s: illegal numeric value", oper);
-
-	switch (*expr) {
-	case 'b':
-		t = num;
-		num *= 512;
-		if (t > num)
-			goto erange;
-		++expr;
-		break;
-	case 'k':
-		t = num;
-		num *= 1024;
-		if (t > num)
-			goto erange;
-		++expr;
-		break;
-	case 'm':
-		t = num;
-		num *= 1048576;
-		if (t > num)
-			goto erange;
-		++expr;
-		break;
-	case 'w':
-		t = num;
-		num *= sizeof(int);
-		if (t > num)
-			goto erange;
-		++expr;
-		break;
-	}
-
-	switch (*expr) {
-	case '\0':
-		break;
-	case '*':				/* Backward compatible. */
-	case 'x':
-		t = num;
-		num *= get_bsz(expr + 1);
-		if (t > num)
-erange:			errx(1, "%s: %s", oper, strerror(ERANGE));
-		break;
-	default:
-		errx(1, "%s: illegal numeric value", oper);
-	}
-	return (num);
-}
