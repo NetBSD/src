@@ -1,6 +1,6 @@
 #
 # GENERIC DEC Station
-# $Id: AMSTEL,v 1.2 1994/01/14 04:57:44 deraadt Exp $
+# $Id: AMSTEL,v 1.3 1994/01/14 19:50:45 deraadt Exp $
 machine		pmax
 
 cpu		"DS3100"
@@ -14,11 +14,12 @@ options		INET
 #options	NS
 #options	KADB
 options		QUOTA
-#options		FIFO
-options		NFS
+#options	FIFO
+options		SWAPPAGER, VNODEPAGER, DEVPAGER
+options		NFSSERVER,NFSCLIENT
 options		MFS
 options		FFS
-#options		LFS
+#options	LFS
 options		DIAGNOSTIC
 options		"TCP_COMPAT_42"
 options		"COMPAT_43"
@@ -53,6 +54,3 @@ pseudo-device	ite
 pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

@@ -1,6 +1,6 @@
 #
 # GENERIC DECstation 3100
-# $Id: ECSTASY,v 1.2 1994/01/14 04:57:46 deraadt Exp $
+# $Id: ECSTASY,v 1.3 1994/01/14 19:50:46 deraadt Exp $
 machine		pmax
 
 cpu		"DS3100"
@@ -15,7 +15,8 @@ options		INET
 #options	KADB
 options		QUOTA
 options		FIFO
-options		NFS
+options		SWAPPAGER, VNODEPAGER, DEVPAGER
+options		NFSSERVER,NFSCLIENT
 options		MFS
 options		FFS
 options		DIAGNOSTIC
@@ -52,6 +53,3 @@ pseudo-device	ite
 pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
