@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.130.2.3 2001/08/24 00:12:25 nathanw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.130.2.4 2001/09/21 22:36:48 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -459,7 +459,7 @@ ip_input(struct mbuf *m)
 	}
 
 	switch (m->m_pkthdr.csum_flags &
-		((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_IPv4) |
+		((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_IPv4) |
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
 		INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad);

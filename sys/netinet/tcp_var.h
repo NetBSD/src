@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.77.2.3 2001/08/24 00:12:33 nathanw Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.77.2.4 2001/09/21 22:36:51 nathanw Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -125,16 +125,18 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * Kernel variables for tcp.
  */
 
+#include <sys/callout.h>
+
 /*
  * Tcp control block, one per tcp; fields:
  */
 struct tcpcb {
 	int	t_family;		/* address family on the wire */
 	struct ipqehead segq;		/* sequencing queue */
-	u_int	t_timer[TCPT_NTIMERS];	/* tcp timers */
+	struct callout t_timer[TCPT_NTIMERS];/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
-	short	t_rxtcur;		/* current retransmit value */
+	uint32_t t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
 	u_short	t_peermss;		/* peer's maximum segment size */
 	u_short	t_ourmss;		/* our's maximum segment size */
@@ -160,7 +162,7 @@ struct tcpcb {
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
 	struct	in6pcb *t_in6pcb;	/* back pointer to internet pcb */
-	LIST_ENTRY(tcpcb) t_delack;	/* delayed ACK queue */
+	struct	callout t_delack_ch;	/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC783, Dec. 1981, page 21.
@@ -198,12 +200,12 @@ struct tcpcb {
  * transmit timing stuff.  See below for scale of srtt and rttvar.
  * "Variance" is actually smoothed difference.
  */
-	short	t_idle;			/* inactivity time */
-	short	t_rtt;			/* round trip time */
+	uint32_t t_rcvtime;		/* time last segment received */
+	uint32_t t_rtttime;		/* time we started measuring rtt */
 	tcp_seq	t_rtseq;		/* sequence number being timed */
-	short	t_srtt;			/* smoothed round-trip time */
-	short	t_rttvar;		/* variance in round-trip time */
-	short	t_rttmin;		/* minimum rtt allowed */
+	int32_t	t_srtt;			/* smoothed round-trip time */
+	int32_t	t_rttvar;		/* variance in round-trip time */
+	uint32_t t_rttmin;		/* minimum rtt allowed */
 	u_long	max_sndwnd;		/* largest window peer has offered */
 
 /* out-of-band data */
@@ -298,25 +300,29 @@ do {									\
 /*
  * Queue for delayed ACK processing.
  */
-LIST_HEAD(tcp_delack_head, tcpcb);
 #ifdef _KERNEL
-extern struct tcp_delack_head tcp_delacks;
+extern int tcp_delack_ticks;
+void	tcp_delack(void *);
 
-#define	TCP_SET_DELACK(tp) \
-do { \
-	if (((tp)->t_flags & TF_DELACK) == 0) { \
-		(tp)->t_flags |= TF_DELACK; \
-		LIST_INSERT_HEAD(&tcp_delacks, (tp), t_delack); \
-	} \
-} while (0)
+#define TCP_RESTART_DELACK(tp)						\
+	callout_reset(&(tp)->t_delack_ch, tcp_delack_ticks,		\
+	    tcp_delack, tp)
 
-#define	TCP_CLEAR_DELACK(tp) \
-do { \
-	if ((tp)->t_flags & TF_DELACK) { \
-		(tp)->t_flags &= ~TF_DELACK; \
-		LIST_REMOVE((tp), t_delack); \
-	} \
-} while (0)
+#define	TCP_SET_DELACK(tp)						\
+do {									\
+	if (((tp)->t_flags & TF_DELACK) == 0) {				\
+		(tp)->t_flags |= TF_DELACK;				\
+		TCP_RESTART_DELACK(tp);					\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	TCP_CLEAR_DELACK(tp)						\
+do {									\
+	if ((tp)->t_flags & TF_DELACK) {				\
+		(tp)->t_flags &= ~TF_DELACK;				\
+		callout_stop(&(tp)->t_delack_ch);			\
+	}								\
+} while (/*CONSTCOND*/0)
 #endif /* _KERNEL */
 
 /*
@@ -346,8 +352,8 @@ union syn_cache_sa {
 };
 
 struct syn_cache {
-	LIST_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
-	TAILQ_ENTRY(syn_cache) sc_timeq;	/* link on timer queue */
+	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
+	struct callout sc_timer;		/* rexmt timer */
 	union {					/* cached route */
 		struct route route4;
 #ifdef INET6
@@ -367,7 +373,6 @@ struct syn_cache {
 	union syn_cache_sa sc_dst;
 	tcp_seq sc_irs;
 	tcp_seq sc_iss;
-	u_int sc_rexmt;				/* retransmit timer */
 	u_int sc_rxtcur;			/* current rxt timeout */
 	u_int sc_rxttot;			/* total time spend on queues */
 	u_short sc_rxtshift;			/* for computing backoff */
@@ -387,7 +392,7 @@ struct syn_cache {
 };
 
 struct syn_cache_head {
-	LIST_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
+	TAILQ_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
 	u_short sch_length;			/* # entries in bucket */
 };
 
@@ -531,7 +536,9 @@ struct	tcpstat {
 #define	TCPCTL_MSSDFLT		4	/* default seg size */
 #define	TCPCTL_SYN_CACHE_LIMIT	5	/* max size of comp. state engine */
 #define	TCPCTL_SYN_BUCKET_LIMIT	6	/* max size of hash bucket */
+#if 0	/*obsoleted*/
 #define	TCPCTL_SYN_CACHE_INTER	7	/* interval of comp. state timer */
+#endif
 #define	TCPCTL_INIT_WIN		8	/* initial window */
 #define	TCPCTL_MSS_IFMTU	9	/* mss from interface, not in_maxmtu */
 #define	TCPCTL_SACK		10	/* RFC2018 selective acknowledgement */
@@ -551,7 +558,8 @@ struct	tcpstat {
 #define	TCPCTL_RSTRATELIMIT	23	/* RST rate limit */
 #endif
 #define	TCPCTL_RSTPPSLIMIT	24	/* RST pps limit */
-#define	TCPCTL_MAXID		25
+#define	TCPCTL_DELACK_TICKS	25	/* # ticks to delay ACK */
+#define	TCPCTL_MAXID		26
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -561,7 +569,7 @@ struct	tcpstat {
 	{ "mssdflt",	CTLTYPE_INT }, \
 	{ "syn_cache_limit", CTLTYPE_INT }, \
 	{ "syn_bucket_limit", CTLTYPE_INT }, \
-	{ "syn_cache_interval", CTLTYPE_INT },\
+	{ 0, 0 },\
 	{ "init_win", CTLTYPE_INT }, \
 	{ "mss_ifmtu", CTLTYPE_INT }, \
 	{ "sack", CTLTYPE_INT }, \
@@ -579,6 +587,7 @@ struct	tcpstat {
 	{ "log_refused",CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "rstppslimit", CTLTYPE_INT }, \
+	{ "delack_ticks", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -602,7 +611,6 @@ extern	int tcp_cwm_burstsize;	/* burst size allowed by CWM */
 extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
-extern	int tcp_syn_cache_interval; /* compressed state timer */
 extern	int tcp_log_refused;	/* log refused connections */
 
 extern	int tcp_rst_ppslim;
@@ -619,7 +627,7 @@ extern	u_long syn_cache_count;
 	{ 1, 0, &tcp_mssdflt },			\
 	{ 1, 0, &tcp_syn_cache_limit },		\
 	{ 1, 0, &tcp_syn_bucket_limit },	\
-	{ 1, 0, &tcp_syn_cache_interval },	\
+	{ 0 },					\
 	{ 1, 0, &tcp_init_win },		\
 	{ 1, 0, &tcp_mss_ifmtu },		\
 	{ 1, 0, &tcp_do_sack },			\
@@ -637,6 +645,7 @@ extern	u_long syn_cache_count;
 	{ 1, 0, &tcp_log_refused },		\
 	{ 0 },					\
 	{ 1, 0, &tcp_rst_ppslim },		\
+	{ 1, 0, &tcp_delack_ticks },		\
 }
 
 int	 tcp_attach __P((struct socket *));
@@ -656,7 +665,6 @@ void	 tcp_dooptions __P((struct tcpcb *,
 	    u_char *, int, struct tcphdr *, struct tcp_opt_info *));
 void	 tcp_drain __P((void));
 void	 tcp_established __P((struct tcpcb *));
-void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
 #ifdef INET6
 int	 tcp6_input __P((struct mbuf **, int *, int));
@@ -686,15 +694,13 @@ void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
 struct mbuf *
 	 tcp_template __P((struct tcpcb *));
-struct tcpcb *
-	 tcp_timers __P((struct tcpcb *, int));
 void	 tcp_trace __P((int, int, struct tcpcb *, struct mbuf *, int));
 struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));
 int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
-void	 tcp_xmit_timer __P((struct tcpcb *, int));
+void	 tcp_xmit_timer __P((struct tcpcb *, uint32_t));
 tcp_seq	 tcp_new_iss __P((struct tcpcb *, tcp_seq));
 tcp_seq  tcp_new_iss1 __P((void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq));
@@ -714,7 +720,7 @@ struct syn_cache *syn_cache_lookup __P((struct sockaddr *, struct sockaddr *,
 void	 syn_cache_reset __P((struct sockaddr *, struct sockaddr *,
 		struct tcphdr *));
 int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *));
-void	 syn_cache_timer __P((void));
+void	 syn_cache_timer __P((void *));
 void	 syn_cache_cleanup __P((struct tcpcb *));
 
 int	tcp_newreno __P((struct tcpcb *, struct tcphdr *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.56.2.2 2001/06/21 19:25:40 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.56.2.3 2001/09/21 22:35:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_perfctrs.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +66,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/sysarch.h>
+#include <machine/mtrr.h>
 
 #ifdef VM86
 #include <machine/vm86.h>
@@ -79,6 +81,8 @@ extern struct vm_map *kernel_map;
 int i386_iopl __P((struct lwp *, void *, register_t *));
 int i386_get_ioperm __P((struct lwp *, void *, register_t *));
 int i386_set_ioperm __P((struct lwp *, void *, register_t *));
+int i386_get_mtrr __P((struct lwp *, void *, register_t *));
+int i386_set_mtrr __P((struct lwp *, void *, register_t *));
 
 #ifdef USER_LDT
 int
@@ -361,6 +365,63 @@ i386_set_ioperm(l, args, retval)
 	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
 }
 
+#ifdef MTRR
+i386_get_mtrr(struct lwp *l, void *args, register_t *retval)
+{
+	struct i386_get_mtrr_args ua;
+	int error, n;
+	struct proc *p = l->l_proc;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = copyin(args, &ua, sizeof ua);
+	if (error != 0)
+		return error;
+
+	error = copyin(ua.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	error = mtrr_get(ua.mtrrp, &n, p, MTRR_GETSET_USER);
+
+	copyout(&n, ua.n, sizeof (int));
+
+	return error;
+}
+
+int
+i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
+{
+	int error, n;
+	struct i386_set_mtrr_args ua;
+	struct proc *p = l->l_proc;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = suser(p->p_ucred, &p->p_acflag);
+	if (error != 0)
+		return error;
+
+	error = copyin(args, &ua, sizeof ua);
+	if (error != 0)
+		return error;
+
+	error = copyin(ua.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	error = mtrr_set(ua.mtrrp, &n, p, MTRR_GETSET_USER);
+	if (n != 0)
+		mtrr_commit();
+
+	copyout(&n, ua.n, sizeof n);
+
+	return error;
+}
+#endif
+
 int
 sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
@@ -398,8 +459,14 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 		error = i386_vm86(l, SCARG(uap, parms), retval);
 		break;
 #endif
-
-
+#ifdef MTRR
+	case I386_GET_MTRR:
+		error = i386_get_mtrr(l, SCARG(uap, parms), retval);
+		break;
+	case I386_SET_MTRR:
+		error = i386_set_mtrr(l, SCARG(uap, parms), retval);
+		break;
+#endif
 #ifdef PERFCTRS
 	case I386_PMC_INFO:
 		error = pmc_info(l, SCARG(uap, parms), retval);

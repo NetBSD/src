@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.6 2000/08/14 20:14:51 thorpej Exp $ */
+/* $NetBSD: vgavar.h,v 1.6.2.1 2001/09/21 22:35:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,8 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/callout.h>
+
 struct vga_handle {
 	struct pcdisplay_handle vh_ph;
 	bus_space_handle_t vh_ioh_vga, vh_allmemh;
@@ -36,6 +38,43 @@ struct vga_handle {
 #define vh_memt vh_ph.ph_memt
 #define vh_ioh_6845 vh_ph.ph_ioh_6845
 #define vh_memh vh_ph.ph_memh
+
+struct vga_funcs {
+	int (*vf_ioctl)(void *, u_long, caddr_t, int, struct proc *);
+	paddr_t (*vf_mmap)(void *, off_t, int);
+};
+
+struct vga_config {
+	struct vga_handle hdl;
+	struct vga_softc *softc;
+
+	int nscreens;
+	LIST_HEAD(, vgascreen) screens;
+	struct vgascreen *active; /* current display */
+	const struct wsscreen_descr *currenttype;
+	int currentfontset1, currentfontset2;
+
+	int vc_biosmapped;
+	bus_space_tag_t vc_biostag;
+	bus_space_handle_t vc_bioshdl;
+
+	struct egavga_font *vc_fonts[8]; /* currently loaded */
+	TAILQ_HEAD(, egavga_font) vc_fontlist; /* LRU queue */
+
+	struct vgascreen *wantedscreen;
+	void (*switchcb) __P((void *, int, int));
+	void *switchcbarg;
+
+	int vc_type;
+	const struct vga_funcs *vc_funcs;
+
+	struct callout vc_switch_callout;
+};
+
+struct vga_softc {
+	struct device sc_dev;
+	struct vga_config *sc_vc;
+};
 
 static inline u_int8_t _vga_attr_read __P((struct vga_handle *, int));
 static inline void _vga_attr_write __P((struct vga_handle *, int, u_int8_t));
@@ -136,9 +175,9 @@ static inline void _vga_gdc_write(vh, reg, val)
 	pcdisplay_6845_write(&(vh)->vh_ph, reg, val)
 
 int	vga_common_probe __P((bus_space_tag_t, bus_space_tag_t));
-void	vga_common_attach __P((struct device *, bus_space_tag_t,
+void	vga_common_attach __P((struct vga_softc *, bus_space_tag_t,
 			       bus_space_tag_t, int,
-			       paddr_t (*)(void *, off_t, int)));
+			       const struct vga_funcs *));
 int	vga_is_console __P((bus_space_tag_t, int));
 
 int	vga_cnattach __P((bus_space_tag_t, bus_space_tag_t, int, int));

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1.4.1 2001/06/21 20:07:29 nathanw Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.4.2 2001/09/21 22:36:35 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ static struct execsw exec_netbsd32_elf =
 	  { ELFNAME2(netbsd32,probe) },
 	  NULL, EXECSW_PRIO_FIRST,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
-	  netbsd32_elf32_copyargs, netbsd32_setregs }; /* NetBSD32 32bit ELF bins */
+	  netbsd32_elf32_copyargs }; /* NetBSD32 32bit ELF bins */
 
 /*
  * declare the exec

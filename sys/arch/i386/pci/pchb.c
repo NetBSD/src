@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.23 2000/11/03 17:28:02 ad Exp $	*/
+/*	$NetBSD: pchb.c,v 1.23.4.1 2001/09/21 22:35:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,9 @@
 
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/agpreg.h>
+#include <dev/pci/agpvar.h>
+
 #include <arch/i386/pci/pchbvar.h>
 
 #include "rnd.h"
@@ -76,16 +79,14 @@ int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
 
 int	pchb_print __P((void *, const char *));
+int	agp_print __P((void *, const char *));
 
 struct cfattach pchb_ca = {
 	sizeof(struct pchb_softc), pchbmatch, pchbattach
 };
 
 int
-pchbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pchbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -98,9 +99,7 @@ pchbmatch(parent, match, aux)
 }
 
 void
-pchbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pchbattach(struct device *parent, struct device *self, void *aux)
 {
 #if NRND > 0
 	struct pchb_softc *sc = (void *) self;
@@ -108,13 +107,16 @@ pchbattach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
+	struct agpbus_attach_args apa;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
-	int doattach;
+	int doattach, attachflags, has_agp;
 
 	printf("\n");
 	doattach = 0;
+	has_agp = 0;
+	attachflags = pa->pa_flags;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -136,6 +138,16 @@ pchbattach(parent, self, aux)
 		 * Configure it.
 		 */
 		doattach = 1;
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_SERVERWORKS_XX5:
+		case PCI_PRODUCT_SERVERWORKS_CNB20HE:
+		case PCI_PRODUCT_SERVERWORKS_CIOB20:
+			if ((attachflags &
+			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
+			    PCI_FLAGS_MEM_ENABLED)
+				attachflags |= PCI_FLAGS_IO_ENABLED;
+			break;
+		}
 		break;
 
 	case PCI_VENDOR_INTEL:
@@ -236,19 +248,24 @@ pchbattach(parent, self, aux)
 			if (pbnum != 0)
 				doattach = 1;
 			break;
+
+		case PCI_PRODUCT_INTEL_82810_MCH:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810E_MCH:
+		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+			/*
+			 * The host bridge is either in GFX mode (internal
+			 * graphics) or in AGP mode. In GFX mode, we pretend
+			 * to have AGP because the graphics memory access
+			 * is very similar and the AGP GATT code will
+			 * deal with this. In the latter case, the
+			 * pci_get_capability(PCI_CAP_AGP) test below will
+			 * fire, so we do no harm by already setting the flag.
+			 */
+			has_agp = 1;
+			break;
 		}
 		break;
-	}
-
-	if (doattach) {
-		pba.pba_busname = "pci";
-		pba.pba_iot = pa->pa_iot;
-		pba.pba_memt = pa->pa_memt;
-		pba.pba_dmat = pa->pa_dmat;
-		pba.pba_bus = pbnum;
-		pba.pba_flags = pa->pa_flags;
-		pba.pba_pc = pa->pa_pc;
-		config_found(self, &pba, pchb_print);
 	}
 
 #if NRND > 0
@@ -257,17 +274,47 @@ pchbattach(parent, self, aux)
 	 */
 	pchb_attach_rnd(sc, pa);
 #endif
+
+	/*
+	 * If we haven't detected AGP yet (via a product ID),
+	 * then check for AGP capability on the device.
+	 */
+	if (has_agp ||
+	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+			       NULL, NULL) != 0) {
+		apa.apa_busname = "agp";
+		apa.apa_pci_args = *pa;
+		config_found(self, &apa, agp_print);
+	}
+
+	if (doattach) {
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_bus = pbnum;
+		pba.pba_flags = attachflags;
+		pba.pba_pc = pa->pa_pc;
+		config_found(self, &pba, pchb_print);
+	}
 }
 
 int
-pchb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+pchb_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
+	return (UNCONF);
+}
+
+int
+agp_print(void *aux, const char *pnp)
+{
+	struct agpbus_attach_args *apa = aux;
+	if (pnp)
+		printf("%s at %s", apa->apa_busname, pnp);
 	return (UNCONF);
 }

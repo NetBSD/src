@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.47.2.2 2001/08/24 00:09:23 nathanw Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.47.2.3 2001/09/21 22:35:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1365,7 +1365,7 @@ ex_getstats(sc)
 	ifp->if_collisions += bus_space_read_1(iot, ioh, TX_COLLISIONS);
 	/*
 	 * There seems to be no way to get the exact number of collisions,
-	 * this is the number that occured at the very least.
+	 * this is the number that occurred at the very least.
 	 */
 	ifp->if_collisions += 2 * bus_space_read_1(iot, ioh,
 	    TX_AFTER_X_COLLISIONS);

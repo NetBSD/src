@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.3 2001/06/21 20:07:07 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.4 2001/09/21 22:36:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -737,6 +737,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
 			s = splsoftnet();
+			if (error)
+				goto release;
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {

@@ -1,21 +1,20 @@
-#	$NetBSD: files.linux_powerpc,v 1.1 2001/01/19 01:51:16 manu Exp $
+#	$NetBSD: files.linux_powerpc,v 1.1.4.1 2001/09/21 22:35:17 nathanw Exp $
 #
 # Config file description for powerpc-dependent Linux compat code.
 
-file	compat/linux/arch/powerpc/linux_machdep.c				compat_linux
-file	compat/linux/arch/powerpc/linux_ptrace.c				compat_linux
-file	compat/linux/arch/powerpc/linux_syscalls.c			compat_linux
-file	compat/linux/arch/powerpc/linux_sysent.c				compat_linux
-file	compat/linux/arch/powerpc/linux_sigarray.c			compat_linux
+file	compat/linux/arch/powerpc/linux_machdep.c		compat_linux
+file	compat/linux/arch/powerpc/linux_ptrace.c		compat_linux
+file	compat/linux/arch/powerpc/linux_syscalls.c		compat_linux
+file	compat/linux/arch/powerpc/linux_sysent.c		compat_linux
+file	compat/linux/arch/powerpc/linux_sigarray.c		compat_linux
 file	compat/linux/arch/powerpc/linux_exec_powerpc.c		compat_linux
-file	compat/linux/arch/powerpc/linux_mmap_powerpc.c		compat_linux
 file	compat/linux/arch/powerpc/linux_sp_wrap_powerpc.S	compat_linux
 
-file	compat/linux/common/linux_pipe.c		   	compat_linux
-file	compat/linux/common/linux_ipccall.c			compat_linux
+file	compat/linux/common/linux_pipe.c		compat_linux
+file	compat/linux/common/linux_ipccall.c		compat_linux
 file	compat/linux/common/linux_misc_notalpha.c	compat_linux
 file	compat/linux/common/linux_sig_notalpha.c	compat_linux
 file	compat/linux/common/linux_sigaction.c		compat_linux
 file	compat/linux/common/linux_socketcall.c		compat_linux
-file	compat/linux/common/linux_llseek.c			compat_linux
+file	compat/linux/common/linux_llseek.c		compat_linux
 file	compat/linux/common/linux_olduname.c		compat_linux

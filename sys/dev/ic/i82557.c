@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.44.2.2 2001/08/24 00:09:24 nathanw Exp $	*/
+/*	$NetBSD: i82557.c,v 1.44.2.3 2001/09/21 22:35:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -1179,7 +1179,7 @@ fxp_tick(void *arg)
 	    le32toh(sp->rx_rnr_errors) +
 	    le32toh(sp->rx_overrun_errors);
 	/*
-	 * If any transmit underruns occured, bump up the transmit
+	 * If any transmit underruns occurred, bump up the transmit
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {

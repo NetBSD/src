@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.2 2000/06/28 15:39:37 mrg Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.2.2.1 2001/09/21 22:35:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -49,8 +49,14 @@
 
 #include <compat/vax1k/vax1k_exec.h>
 
-int	exec_vax1k_prep_anymagic
-	    __P((struct proc *, struct exec_package *, int));
+#if defined(_KERNEL_OPT)
+#include "opt_compat_43.h"
+#else
+#define COMPAT_43	/* enable 4.3BSD binaries for lkm */
+#endif
+
+int	exec_vax1k_prep_anymagic __P((struct proc *p, struct exec_package *epp,
+				      int, int));
 
 /*
  * exec_vax1k_makecmds(): Check if it's an a.out-format executable
@@ -86,18 +92,46 @@ exec_vax1k_makecmds(p, epp)
 
 	switch (midmag) {
 	case (MID_VAX1K << 16) | ZMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, 0);
-		break;
+		error = exec_vax1k_prep_anymagic(p, epp, 0, 0);
+		goto done;
 
 	case (MID_VAX1K << 16) | NMAGIC:
-	case (MID_VAX1K << 16) | OMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, sizeof(struct exec));
-		break;
+		error = exec_vax1k_prep_anymagic(p, epp,
+						 sizeof(struct exec), 1);
+		goto done;
 
-	default:
-		error = ENOEXEC;
+	case (MID_VAX1K << 16) | OMAGIC:
+		error = exec_vax1k_prep_anymagic(p, epp,
+						 sizeof(struct exec), 0);
+		goto done;
 	}
 
+#ifdef COMPAT_43
+	/*
+	 * 4.3BSD pre-dates cpu midmag (e.g. MID_VAX1K).   instead, we 
+	 * expect a magic number in native byte order.
+	 */
+	switch (execp->a_midmag) {
+	case ZMAGIC:
+		error = exec_vax1k_prep_anymagic(p, epp, VAX1K_LDPGSZ, 0);
+		goto done;
+	
+	case NMAGIC:
+		error = exec_vax1k_prep_anymagic(p, epp, 
+					 	sizeof(struct exec), 1);
+		goto done;
+
+	case OMAGIC:
+		error = exec_vax1k_prep_anymagic(p, epp, 
+					 	sizeof(struct exec), 0);
+		goto done;
+	}
+#endif
+
+	/* failed... */
+	error = ENOEXEC;
+
+done:
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
 
@@ -113,32 +147,45 @@ exec_vax1k_makecmds(p, epp)
  *
  */
 int
-exec_vax1k_prep_anymagic(p, epp, off)
-        struct proc *p;
-        struct exec_package *epp;
-	int off;
+exec_vax1k_prep_anymagic(p, epp, text_foffset, textpad)
+	struct proc *p;
+	struct exec_package *epp;
+	int text_foffset, textpad;
 {
-	long etmp, tmp;
         struct exec *execp = epp->ep_hdr;
 
-        epp->ep_taddr = execp->a_entry & ~(VAX1K_USRTEXT - 1);
-	epp->ep_tsize = execp->a_text + execp->a_data;
-	epp->ep_daddr = epp->ep_tsize + epp->ep_taddr;
-	epp->ep_dsize = execp->a_bss;
-        epp->ep_entry = execp->a_entry;
+	epp->ep_taddr = execp->a_entry & ~(VAX1K_USRTEXT - 1);
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + epp->ep_tsize;
+	if (textpad)			/* pad for NMAGIC? */
+		epp->ep_daddr = (epp->ep_daddr + (VAX1K_LDPGSZ - 1)) & 
+						~(VAX1K_LDPGSZ - 1);
+	epp->ep_dsize = execp->a_data;
+	epp->ep_entry = execp->a_entry;
 
-        /* set up command for text segment */
-        NEW_VMCMD(&epp->ep_vmcmds, vax1k_map_readvn,
-	    epp->ep_tsize,  epp->ep_taddr, epp->ep_vp, off,
-	    VM_PROT_WRITE|VM_PROT_READ|VM_PROT_EXECUTE);
+	/* first allocate memory for text+data+bss */
+        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, 
+		round_page(epp->ep_daddr + epp->ep_dsize + execp->a_bss) -
+			trunc_page(epp->ep_taddr),	/* size */
+		trunc_page(epp->ep_taddr), NULLVP,	/* addr, vnode */
+		0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	tmp = round_page(epp->ep_daddr);
-	etmp = execp->a_bss - (tmp - epp->ep_daddr);
+	/* then read the text in the area we just allocated */
+       	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_readvn,
+		epp->ep_tsize, epp->ep_taddr, epp->ep_vp, text_foffset,
+    	VM_PROT_WRITE|VM_PROT_READ|VM_PROT_EXECUTE);
 
-        /* set up command for bss segment */
-	if (etmp > 0)
-	        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, etmp, tmp, NULLVP, 0,
-		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	/* next read the data */
+	if (epp->ep_dsize) {
+        	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_readvn,
+			epp->ep_dsize, epp->ep_daddr, epp->ep_vp, 
+			text_foffset + epp->ep_tsize,
+			VM_PROT_WRITE|VM_PROT_READ|VM_PROT_EXECUTE);
+	}
 
+	/* now bump up the dsize to include the bss so that sbrk works */
+	epp->ep_dsize += execp->a_bss;
+
+	/* finally, setup the stack ... */
         return exec_aout_setup_stack(p, epp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.4 2001/01/10 16:45:56 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.4.2.1 2001/09/21 22:37:05 nathanw Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -65,6 +65,13 @@ softdep_mount(devvp, mp, fs, cred)
 
 void 
 softdep_initialize()
+{
+
+	return;
+}
+
+void
+softdep_reinitialize()
 {
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.25.2.1 2001/06/21 20:04:17 nathanw Exp $	*/
+/*	$NetBSD: exphy.c,v 1.25.2.2 2001/09/21 22:35:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -84,26 +84,23 @@
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-int	exphymatch __P((struct device *, struct cfdata *, void *));
-void	exphyattach __P((struct device *, struct device *, void *));
+int	exphymatch(struct device *, struct cfdata *, void *);
+void	exphyattach(struct device *, struct device *, void *);
 
 struct cfattach exphy_ca = {
 	sizeof(struct mii_softc), exphymatch, exphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	exphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	exphy_reset __P((struct mii_softc *));
+int	exphy_service(struct mii_softc *, struct mii_data *, int);
+void	exphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs exphy_funcs = {
 	exphy_service, ukphy_status, exphy_reset,
 };
 
 int
-exphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+exphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -124,9 +121,7 @@ exphymatch(parent, match, aux)
 }
 
 void
-exphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+exphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -165,10 +160,7 @@ exphyattach(parent, self, aux)
 }
 
 int
-exphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
@@ -220,8 +212,7 @@ exphy_service(sc, mii, cmd)
 }
 
 void
-exphy_reset(sc)
-	struct mii_softc *sc;
+exphy_reset(struct mii_softc *sc)
 {
 
 	mii_phy_reset(sc);

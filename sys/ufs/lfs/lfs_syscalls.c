@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.2.3 2001/08/24 04:20:10 nathanw Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.2.4 2001/09/21 22:37:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1210,15 +1210,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	 * Initialize the vnode from the inode, check for aliases.  In all
 	 * cases re-init ip, the underlying vnode/inode may have changed.
 	 */
-	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
-	if (error) {
-		/* This CANNOT happen (see ufs_vinit) */
-		printf("lfs_fastvget: ufs_vinit returned %d for ino %d\n", error, ino);
-		lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
-		lfs_vunref(vp);
-		*vpp = NULL;
-		return (error);
-	}
+	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 #ifdef DEBUG_LFS
 	if(vp->v_type == VNON) {
 		printf("lfs_fastvget: ino %d is type VNON! (ifmt=%o, dinp=%p)\n",

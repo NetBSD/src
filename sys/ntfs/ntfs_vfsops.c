@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.4 2001/08/24 00:13:01 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.5 2001/09/21 22:36:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -95,6 +95,7 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 int *, struct ucred **));
 #elif defined(__NetBSD__)
 static void	ntfs_init __P((void));
+static void	ntfs_reinit __P((void));
 static void	ntfs_done __P((void));
 static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 struct vnode **));
@@ -199,6 +200,12 @@ ntfs_init()
 {
 	ntfs_nthashinit();
 	ntfs_toupper_init();
+}
+
+static void
+ntfs_reinit()
+{
+	ntfs_nthashreinit();
 }
 
 static void
@@ -1053,6 +1060,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_fhtovp,
 	ntfs_vptofh,
 	ntfs_init,
+	ntfs_reinit,
 	ntfs_done,
 	ntfs_sysctl,
 	ntfs_mountroot,
@@ -1060,5 +1068,3 @@ struct vfsops ntfs_vfsops = {
 	ntfs_vnodeopv_descs,
 };
 #endif
-
-

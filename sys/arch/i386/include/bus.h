@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.30.4.3 2001/08/24 00:08:34 nathanw Exp $	*/
+/*	$NetBSD: bus.h,v 1.30.4.4 2001/09/21 22:35:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -207,6 +207,19 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 #define bus_space_vaddr(t, h) \
 	((t) == I386_BUS_SPACE_MEM ? (void *)(h) : (void *)0)
+
+/*
+ *	paddr_t bus_space_mmap __P((bus_space_tag_t t, bus_addr_t base,
+ *	    off_t offset, int prot, int flags));
+ *
+ * Mmap an area of bus space.
+ */
+
+paddr_t	i386_memio_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+	    int, int));
+
+#define	bus_space_mmap(t, b, o, p, f)					\
+	i386_memio_mmap((t), (b), (o), (p), (f))
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

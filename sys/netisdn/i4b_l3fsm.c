@@ -27,7 +27,7 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.2.2.2 2001/08/24 00:12:47 nathanw Exp $ 
+ *	$Id: i4b_l3fsm.c,v 1.2.2.3 2001/09/21 22:36:53 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -945,7 +945,7 @@ static void F_DLEI(call_desc_t *cd)
 }
 
 /*---------------------------------------------------------------------------*
- *	L3 FSM any state event illegal event occured
+ *	L3 FSM any state event illegal event occurred
  *---------------------------------------------------------------------------*/	
 static void F_ILL(call_desc_t *cd)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.1.4.2 2001/04/09 01:55:53 nathanw Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.1.4.3 2001/09/21 22:35:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ adv_cardbus_attach(parent, self, aux)
 	printf("%s: chip ver=%x\n", DEVNAME(sc), sc->chip_version);
 #endif
 	/*
-	 * Initalize the board
+	 * Initialize the board
 	 */
 	if (adv_init(sc)) {
 		printf("adv_init failed\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.27.2.3 2001/08/24 00:09:11 nathanw Exp $	 */
+/* $NetBSD: adw.c,v 1.27.2.4 2001/09/21 22:35:32 nathanw Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -278,8 +278,8 @@ adw_init_ccb(ADW_SOFTC *sc, ADW_CCB *ccb)
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	ccb->hashkey = sc->sc_dmamap_control->dm_segs[0].ds_addr +
-	    ADW_CCB_OFF(ccb);
+	ccb->hashkey = htole32(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    ADW_CCB_OFF(ccb));
 	hashnum = CCB_HASH(ccb->hashkey);
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
@@ -663,8 +663,8 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 	scsiqp->target_lun = periph->periph_lun;
 
 	scsiqp->vsense_addr = &ccb->scsi_sense;
-	scsiqp->sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
-			ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense);
+	scsiqp->sense_addr = htole32(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+			ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense));
 	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
 
 	/*
@@ -720,9 +720,9 @@ out_bad:
 		/*
 		 * Build scatter-gather list.
 		 */
-		scsiqp->data_cnt = xs->datalen;
+		scsiqp->data_cnt = htole32(xs->datalen);
 		scsiqp->vdata_addr = xs->data;
-		scsiqp->data_addr = ccb->dmamap_xfer->dm_segs[0].ds_addr;
+		scsiqp->data_addr = htole32(ccb->dmamap_xfer->dm_segs[0].ds_addr);
 		memset(ccb->sg_block, 0,
 		    sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
 		adw_build_sglist(ccb, scsiqp, ccb->sg_block);
@@ -753,9 +753,9 @@ adw_build_sglist(ADW_CCB *ccb, ADW_SCSI_REQ_Q *scsiqp, ADW_SG_BLOCK *sg_block)
 
 
 	sg_block_next_addr = (u_long) sg_block;	/* allow math operation */
-	sg_block_physical_addr = ccb->hashkey +
+	sg_block_physical_addr = le32toh(ccb->hashkey) +
 	    offsetof(struct adw_ccb, sg_block[0]);
-	scsiqp->sg_real_addr = sg_block_physical_addr;
+	scsiqp->sg_real_addr = htole32(sg_block_physical_addr);
 
 	/*
 	 * If there are more than NO_OF_SG_PER_BLOCK dma segments (hw sg-list)
@@ -764,8 +764,8 @@ adw_build_sglist(ADW_CCB *ccb, ADW_SCSI_REQ_Q *scsiqp, ADW_SG_BLOCK *sg_block)
 
 	do {
 		for (i = 0; i < NO_OF_SG_PER_BLOCK; i++) {
-			sg_block->sg_list[i].sg_addr = sg_list->ds_addr;
-			sg_block->sg_list[i].sg_count = sg_list->ds_len;
+			sg_block->sg_list[i].sg_addr = htole32(sg_list->ds_addr);
+			sg_block->sg_list[i].sg_count = htole32(sg_list->ds_len);
 
 			if (--sg_elem_cnt == 0) {
 				/* last entry, get out */
@@ -779,7 +779,7 @@ adw_build_sglist(ADW_CCB *ccb, ADW_SCSI_REQ_Q *scsiqp, ADW_SG_BLOCK *sg_block)
 		sg_block_physical_addr += sizeof(ADW_SG_BLOCK);
 
 		sg_block->sg_cnt = NO_OF_SG_PER_BLOCK;
-		sg_block->sg_ptr = sg_block_physical_addr;
+		sg_block->sg_ptr = htole32(sg_block_physical_addr);
 		sg_block = (ADW_SG_BLOCK *) sg_block_next_addr;	/* virt. addr */
 	} while (1);
 }
@@ -1079,7 +1079,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 				adw_print_info(sc, scsiq->target_id);
 			}
 			xs->error = XS_NOERROR;
-			xs->resid = scsiq->data_cnt;
+			xs->resid = le32toh(scsiq->data_cnt);
 			sc->sc_freeze_dev[scsiq->target_id] = 0;
 			break;
 

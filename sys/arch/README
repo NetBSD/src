@@ -12,24 +12,27 @@ cesfic:  	FIC8234 VME processor board (m68k)
 cobalt:		Cobalt Networks Microservers (mips)
 dnard:		Digital "Shark" DNARD machines (arm)
 dreamcast:	SEGA Dreamcast (sh3)
+evbarm:		ARM-based eval boards (arm)
 evbsh3:		Hitachi SuperH(TM) sh3 and sh4 eval boards (sh3)
 hp300:		Hewlett Packard 300- and 400-series machines (m68k)
 hpcarm:		ARM based handheld PCs (arm)
 hpcmips:	MIPS based handheld PCs (mips)
 hpcsh:		Hitachi SuperH(TM) based handheld PCs (sh3)
 i386:		Intel/AMD etc. x86 processor line (i386)
+ibmnws:		IBM Network Station Thin Clients (powerpc)
 luna68k:	LUNA product line of OMRON Tateishi Electric (m68k)
 mac68k:		Apple Macintosh (m68k)
-macppc:		Apple Macintosh (powerpc)
+macppc:		Apple Power Macintosh and clones (powerpc)
 mipsco:		MIPS Corp Magnum 3000 computers (mips)
 mmeye:		Hitachi SuperH(TM) computer controlled camera (sh3)
-mvme68k:	Motorola's VMEbus single board computers (m68k)
+mvme68k:	Motorola's VMEbus 68K based single board computers (m68k)
+mvme88k:	Motorola's VMEbus 88K based single board computers (m88k)
 netwinder:	StrongARM based Netwinder machines (arm)
 news68k:	Sony's NET WORK STATION (m68k)
 newsmips:	Sony's NET WORK STATION (mips)
 next68k:	NeXT Computer's cubes and slabs (m68k)
 ofppc:		Open Firmware based PowerPC machines (powerpc)
-pc532:		"PC-532" kit computer, based on NS 32532 CPU (pc532)
+pc532:		"PC-532" kit computer, based on NS 32532 CPU (ns32k)
 pmax:		Digital Equipment Corp. MIPS based machines (mips)
 prep:		PowerPC Reference Platform machines (powerpc)
 sandpoint:	Motorola Sandpoint reference platform (powerpc)
@@ -42,3 +45,13 @@ vax:		Digital Equipment Corp. VAX machines (vax)
 walnut:		IBM's PowerPC 405GP Reference Board (powerpc)
 x68k:		Sharp X68000, X68030 (m68k)
 x86_64:		AMD's x86 64 bit architecture on the simics simulator (x86_64)
+
+Generic architectural features shared among multiple ports
+arm:		ARM cpu based platform files
+hpc:		Handheld PC reference platform files
+m68k:		Motorola 680x0 cpu based platform files
+m88k:		Motorola 88xxx cpu based platform files
+mips:		MIPS cpu based platform files
+powerpc:	PowerPC cpu based platform files
+sh3:		Hitachi SuperH cpu based platform files
+sun68k:		Sun68k cpu based platform files

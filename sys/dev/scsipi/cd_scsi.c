@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.18.4.1 2001/06/21 20:05:45 nathanw Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.18.4.2 2001/09/21 22:36:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ cd_scsibus_set_pa_immed(cd, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
@@ -186,7 +186,7 @@ cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
@@ -209,7 +209,7 @@ cd_scsibus_getvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
@@ -229,7 +229,7 @@ cd_scsibus_setvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, AUDIO_PAGE,
 	    &data.header, AUDIOPAGESIZE,
 	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);

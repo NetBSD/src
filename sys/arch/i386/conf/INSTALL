@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.163.2.2 2001/08/24 00:08:27 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.163.2.3 2001/09/21 22:35:02 nathanw Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -180,13 +180,13 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # EISA bus support
-eisa*	at mainbus?
-eisa*	at pceb?
+eisa0	at mainbus?
+eisa0	at pceb?
 
 # ISA bus support
-isa*	at mainbus?
-isa*	at pceb?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pceb?
+isa0	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
@@ -445,7 +445,7 @@ fd*	at fdc? drive ?			# the drives themselves
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[B]
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI

@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.31.2.2 2001/08/24 00:09:28 nathanw Exp $ */
+/* $NetBSD: ispmbox.h,v 1.31.2.3 2001/09/21 22:35:41 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -104,6 +104,7 @@
 #define MBOX_GET_ACT_NEG_STATE		0x0025
 #define MBOX_GET_ASYNC_DATA_SETUP_TIME	0x0026
 #define MBOX_GET_SBUS_PARAMS		0x0027
+#define		MBOX_GET_PCI_PARAMS	MBOX_GET_SBUS_PARAMS
 #define MBOX_GET_TARGET_PARAMS		0x0028
 #define MBOX_GET_DEV_QUEUE_PARAMS	0x0029
 #define	MBOX_GET_RESET_DELAY_PARAMS	0x002a
@@ -145,7 +146,10 @@
 
 /* These are for the ISP2100 FC cards */
 #define	MBOX_GET_LOOP_ID		0x20
+#define	MBOX_GET_FIRMWARE_OPTIONS	0x28
+#define	MBOX_SET_FIRMWARE_OPTIONS	0x38
 #define	MBOX_GET_RESOURCE_COUNT		0x42
+#define	MBOX_ENHANCED_GET_PDB		0x47
 #define	MBOX_EXEC_COMMAND_IOCB_A64	0x54
 #define	MBOX_INIT_FIRMWARE		0x60
 #define	MBOX_GET_INIT_CONTROL_BLOCK	0x61
@@ -212,6 +216,7 @@ typedef struct {
 #define	ASYNC_LOOP_RESET		0x8013
 #define	ASYNC_PDB_CHANGED		0x8014
 #define	ASYNC_CHANGE_NOTIFY		0x8015
+#define	ASYNC_LIP_F8			0x8016
 #define	ASYNC_CMD_CMPLT			0x8020
 #define	ASYNC_CTIO_DONE			0x8021
 #define	ASYNC_IP_XMIT_DONE		0x8022
@@ -245,16 +250,16 @@ typedef struct {
  */
 
 #define	WRITE_REQUEST_QUEUE_IN_POINTER(isp, value)	\
-	ISP_WRITE(isp, INMAILBOX4, value)
+	ISP_WRITE(isp, isp->isp_rqstinrp, value)
 
-#define	READ_REQUEST_QUEUE_OUT_POINTER(isp)	\
-	ISP_READ(isp, OUTMAILBOX4)
+#define	READ_REQUEST_QUEUE_OUT_POINTER(isp)		\
+	ISP_READ(isp, isp->isp_rqstoutrp)
 
-#define	WRITE_RESPONSE_QUEUE_IN_POINTER(isp, value)	\
-	ISP_WRITE(isp, INMAILBOX5, value)
+#define	READ_RESPONSE_QUEUE_IN_POINTER(isp)		\
+	ISP_READ(isp, isp->isp_respinrp)
 
-#define	READ_RESPONSE_QUEUE_OUT_POINTER(isp)	\
-	ISP_READ(isp, OUTMAILBOX5)
+#define	WRITE_RESPONSE_QUEUE_OUT_POINTER(isp, value)	\
+	ISP_WRITE(isp, isp->isp_respoutrp, value)
 
 /*
  * Command Structure Definitions
@@ -266,7 +271,8 @@ typedef struct {
 } ispds_t;
 
 typedef struct {
-	u_int64_t	ds_base;
+	u_int32_t	ds_base;
+	u_int32_t	ds_basehi;
 	u_int32_t	ds_count;
 } ispds64_t;
 
@@ -379,7 +385,7 @@ typedef struct {
 #define	ISP_SBUSIFY_ISPREQ(a, b)
 #endif
 
-#define	ISP_RQDSEG_T2	3
+#define	ISP_RQDSEG_T2		3
 typedef struct {
 	isphdr_t	req_header;
 	u_int32_t	req_handle;
@@ -394,6 +400,22 @@ typedef struct {
 	u_int32_t	req_totalcnt;
 	ispds_t		req_dataseg[ISP_RQDSEG_T2];
 } ispreqt2_t;
+
+#define	ISP_RQDSEG_T3		2
+typedef struct {
+	isphdr_t	req_header;
+	u_int32_t	req_handle;
+	u_int8_t	req_lun_trn;
+	u_int8_t	req_target;
+	u_int16_t	req_scclun;
+	u_int16_t	req_flags;
+	u_int16_t	_res2;
+	u_int16_t	req_time;
+	u_int16_t	req_seg_count;
+	u_int32_t	req_cdb[4];
+	u_int32_t	req_totalcnt;
+	ispds64_t	req_dataseg[ISP_RQDSEG_T3];
+} ispreqt3_t;
 
 /* req_flag values */
 #define	REQFLAG_NODISCON	0x0001
@@ -435,6 +457,12 @@ typedef struct {
 	u_int32_t	_res1;
 	ispds_t		req_dataseg[ISP_CDSEG];
 } ispcontreq_t;
+
+#define	ISP_CDSEG64	5
+typedef struct {
+	isphdr_t	req_header;
+	ispds64_t	req_dataseg[ISP_CDSEG64];
+} ispcontreq64_t;
 
 typedef struct {
 	isphdr_t	req_header;
@@ -656,6 +684,10 @@ typedef struct isp_icb {
 #define	ICBXOPT_RIO_16BIT_DELAY	3
 #define	ICBXOPT_RIO_32BIT_DELAY	4
 
+/* These 3 only apply to the 2300 */
+#define	ICBXOPT_RATE_ONEGB	(0 << 14)
+#define	ICBXOPT_RATE_TWOGB	(1 << 14)
+#define	ICBXOPT_RATE_AUTO	(2 << 14)
 
 
 #define	ICB_MIN_FRMLEN		256

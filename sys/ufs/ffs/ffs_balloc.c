@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.23.2.3 2001/08/24 00:13:16 nathanw Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.23.2.4 2001/09/21 22:37:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -463,39 +463,26 @@ fail:
 
 
 int
-ffs_ballocn(v)
-	void *v;
+ffs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
 {
-	struct vop_ballocn_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		off_t a_length;
-		struct ucred *a_cred;
-		int a_flags;
-	} */ *ap = v;
-
-	off_t off, len;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	int error, delta, bshift, bsize;
+	UVMHIST_FUNC("ffs_gop_alloc"); UVMHIST_CALLED(ubchist);
 
 	error = 0;
 	bshift = fs->fs_bshift;
 	bsize = 1 << bshift;
-
-	off = ap->a_offset;
-	len = ap->a_length;
 
 	delta = off & (bsize - 1);
 	off -= delta;
 	len += delta;
 
 	while (len > 0) {
-		bsize = min(bsize, len);
+		bsize = MIN(bsize, len);
 
-		error = VOP_BALLOC(vp, off, bsize, ap->a_cred, ap->a_flags,
-				   NULL);
+		error = VOP_BALLOC(vp, off, bsize, cred, flags, NULL);
 		if (error) {
 			goto out;
 		}
@@ -506,10 +493,9 @@ ffs_ballocn(v)
 		 */
 
 		if (ip->i_ffs_size < off + bsize) {
+			UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
+			    vp, ip->i_ffs_size, off + bsize, 0);
 			ip->i_ffs_size = off + bsize;
-			if (vp->v_uvm.u_size < ip->i_ffs_size) {
-				uvm_vnp_setsize(vp, ip->i_ffs_size);
-			}
 		}
 
 		off += bsize;

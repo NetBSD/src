@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.65.2.2 2001/08/24 00:12:23 nathanw Exp $	*/
+/*	$NetBSD: in.c,v 1.65.2.3 2001/09/21 22:36:47 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -917,7 +917,7 @@ in_addprefix(target, flags)
 
 		/*
 		 * if we got a matching prefix route inserted by other
-		 * interface adderss, we don't need to bother
+		 * interface address, we don't need to bother
 		 */
 		if (ia->ia_flags & IFA_ROUTE)
 			return 0;

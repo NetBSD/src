@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.39.2.1 2001/06/21 20:02:22 nathanw Exp $	*/
+/*	$NetBSD: comvar.h,v 1.39.2.2 2001/09/21 22:35:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -118,6 +118,10 @@ struct com_softc {
 	    sc_mcr_active, sc_lcr, sc_ier, sc_fifo, sc_dlbl, sc_dlbh, sc_efr;
 	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
 
+#ifdef COM_HAYESP
+	u_char sc_prescaler;
+#endif
+
 	/* power management hooks */
 	int (*enable) __P((struct com_softc *));
 	void (*disable) __P((struct com_softc *));
@@ -146,8 +150,6 @@ struct com_softc {
 int comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
-int cominit __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
-	bus_space_handle_t *));
 int com_detach __P((struct device *, int));
 int com_activate __P((struct device *, enum devact));
 

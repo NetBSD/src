@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59.2.3 2001/08/24 00:13:04 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.4 2001/09/21 22:37:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -173,8 +173,9 @@
 #define	M_1394CTL	116	/* IEEE 1394 control structures */
 #define	M_1394DATA	117	/* IEEE 1394 data buffers */
 #define	M_PIPE		118	/* Pipe structures */
-#define M_SA		119	/* Scheduler activation structures */
-#define	M_LAST		120	/* Must be last type + 1 */
+#define M_AGP		119	/* AGP memory */
+#define M_SA		120	/* Scheduler activation structures */
+#define	M_LAST		121	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -297,8 +298,9 @@
 	"1394ctl",	/* 116 M_1394CTL */ \
 	"1394data",	/* 117 M_1394DATA */ \
 	"pipe",		/* 118 M_PIPE */ \
-	"sa",		/* 119 M_SA */ \
-	NULL,		/* 120 */ \
+	"AGP",		/* 119 M_AGP */ \
+	"sa",		/* 120 M_SA */ \
+	NULL,		/* 121 */ \
 }
 
 struct kmemstats {

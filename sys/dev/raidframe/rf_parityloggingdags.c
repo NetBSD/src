@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.4 2000/01/07 03:41:04 oster Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.4.6.1 2001/09/21 22:36:08 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -332,7 +332,9 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	int     (*qfunc) (RF_DagNode_t * node);
 	char   *name, *qname;
 	RF_StripeNum_t parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout), asmap->raidAddress, &which_ru);
+#ifdef RAID_DIAGNOSTIC
 	long    nfaults = qfuncs ? 2 : 1;
+#endif /* RAID_DIAGNOSTIC */
 	int     lu_flag = (rf_enableAtomicRMW) ? 1 : 0;	/* lock/unlock flag */
 
 	if (rf_dagDebug)

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.1 2000/07/04 02:22:19 nisimura Exp $ */
+/* $NetBSD: tcds.c,v 1.1.4.1 2001/09/21 22:36:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1 2000/07/04 02:22:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1.4.1 2001/09/21 22:36:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -172,7 +172,6 @@ tcdsattach(parent, self, aux)
 	bus_space_handle_t sbsh[2];
 	int i, gpi2;
 	const struct evcnt *pevcnt;
-	char *cp;
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
@@ -235,14 +234,13 @@ tcdsattach(parent, self, aux)
 
 	/* fill in common information first */
 	for (i = 0; i < 2; i++) {
-		slotc = &sc->sc_slots[i];
+		char *cp;
 
+		slotc = &sc->sc_slots[i];
 		bzero(slotc, sizeof *slotc);	/* clear everything */
 
-		cp = malloc(12, M_DEVBUF, M_NOWAIT);
-		if (cp == NULL)
-			panic("tcdsattach");
-		sprintf(cp, "chip %d", i);
+		cp = slotc->sc_name;
+		snprintf(cp, sizeof(slotc->sc_name), "chip %d", i);
 		evcnt_attach_dynamic(&slotc->sc_evcnt, EVCNT_TYPE_INTR,
 		    pevcnt, sc->sc_dv.dv_xname, cp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.107.2.3 2001/08/24 00:10:20 nathanw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.107.2.4 2001/09/21 22:36:01 nathanw Exp $	*/
 
 
 /*
@@ -3922,6 +3922,18 @@ acard_setup_channel(chp)
 		idetime &= ~ATP860_SETTIME_MASK(channel);
 		udma_mode = pci_conf_read(sc->sc_pc, sc->sc_tag, ATP860_UDMA);
 		udma_mode &= ~ATP860_UDMA_MASK(channel);
+
+		/* check 80 pins cable */
+		if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA)) {
+			if (pci_conf_read(sc->sc_pc, sc->sc_tag, ATP8x0_CTRL)
+			    & ATP860_CTRL_80P(chp->channel)) {
+				if (chp->ch_drive[0].UDMA_mode > 2)
+					chp->ch_drive[0].UDMA_mode = 2;
+				if (chp->ch_drive[1].UDMA_mode > 2)
+					chp->ch_drive[1].UDMA_mode = 2;
+			}
+		}
 	}
 
 	idedma_ctl = 0;

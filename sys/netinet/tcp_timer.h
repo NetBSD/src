@@ -1,4 +1,40 @@
-/*	$NetBSD: tcp_timer.h,v 1.10 1998/09/10 10:47:00 mouse Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.10.24.1 2001/09/21 22:36:51 nathanw Exp $	*/
+
+/*-
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -108,25 +144,28 @@
 
 #define	TCP_MAXRXTSHIFT	12			/* maximum retransmits */
 
+#define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
+
 #ifdef	TCPTIMERS
 char *tcptimers[] =
     { "REXMT", "PERSIST", "KEEP", "2MSL" };
 #endif
 
 /*
- * Arm, disarm, and test TCP timers.
+ * Init, arm, disarm, and test TCP timers.
  */
-#define	TCP_TIMER_ARM(tp, timer, nticks) \
-	PRT_SLOW_ARM((tp)->t_timer[(timer)], (nticks))
+#define	TCP_TIMER_INIT(tp, timer)					\
+	callout_init(&(tp)->t_timer[(timer)])
 
-#define	TCP_TIMER_DISARM(tp, timer) \
-	PRT_SLOW_DISARM((tp)->t_timer[(timer)])
+#define	TCP_TIMER_ARM(tp, timer, nticks)				\
+	callout_reset(&(tp)->t_timer[(timer)],				\
+	    (nticks) * (hz / PR_SLOWHZ), tcp_timer_funcs[(timer)], tp)
 
-#define	TCP_TIMER_ISARMED(tp, timer) \
-	PRT_SLOW_ISARMED((tp)->t_timer[(timer)])
+#define	TCP_TIMER_DISARM(tp, timer)					\
+	callout_stop(&(tp)->t_timer[(timer)])
 
-#define	TCP_TIMER_ISEXPIRED(tp, timer) \
-	PRT_SLOW_ISEXPIRED((tp)->t_timer[(timer)])
+#define	TCP_TIMER_ISARMED(tp, timer)					\
+	callout_active(&(tp)->t_timer[(timer)])
 
 /*
  * Force a time value to be in a certain range.
@@ -140,12 +179,19 @@ char *tcptimers[] =
 }
 
 #ifdef _KERNEL
+typedef void (*tcp_timer_func_t)(void *);
+
+extern tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS];
+
 extern int tcp_keepidle;		/* time before keepalive probes begin */
 extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_keepcnt;			/* number of keepalives, 0=infty */
+extern int tcp_maxpersistidle;		/* max idle time in persist */
 extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
+
+void	tcp_timer_init(void);
 #endif
 
 #endif /* _NETINET_TCP_TIMER_H_ */

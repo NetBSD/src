@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.92.2.2 2001/06/21 20:09:35 nathanw Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.92.2.3 2001/09/21 22:36:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1489,14 +1489,13 @@ nfs_init()
 void
 nfs_vfs_init()
 {
-	int i;
-
-	/* Ensure async daemons disabled */
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		nfs_iodwant[i] = (struct proc *)0;
-		nfs_iodmount[i] = (struct nfsmount *)0;
-	}
 	nfs_nhinit();			/* Init the nfsnode table */
+}
+
+void
+nfs_vfs_reinit()
+{
+	nfs_nhreinit();
 }
 
 void
@@ -2404,11 +2403,11 @@ nfs_clearcommit(mp)
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-		TAILQ_FOREACH(pg, &vp->v_uvm.u_obj.memq, listq) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
-		simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+		simple_unlock(&vp->v_uobj.vmobjlock);
 	}
 	splx(s);
 }

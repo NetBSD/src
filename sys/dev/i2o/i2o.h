@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.2.2.3 2001/08/24 00:09:08 nathanw Exp $	*/
+/*	$NetBSD: i2o.h,v 1.2.2.4 2001/09/21 22:35:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -873,6 +873,18 @@ struct i2o_param_rbs_operation {
 	u_int32_t	atomicwritesize;
 } __attribute__ ((__packed__));
 
+#define	I2O_PARAM_RBS_OPERATION_autoreass		0
+#define	I2O_PARAM_RBS_OPERATION_reasstolerance		1
+#define	I2O_PARAM_RBS_OPERATION_numretries		2
+#define	I2O_PARAM_RBS_OPERATION_reserved0		3
+#define	I2O_PARAM_RBS_OPERATION_reasssize		4
+#define	I2O_PARAM_RBS_OPERATION_expectedtimeout		5
+#define	I2O_PARAM_RBS_OPERATION_rwvtimeout		6
+#define	I2O_PARAM_RBS_OPERATION_rwvtimeoutbase		7
+#define	I2O_PARAM_RBS_OPERATION_timeoutbase		8
+#define	I2O_PARAM_RBS_OPERATION_orderedreqdepth		9
+#define	I2O_PARAM_RBS_OPERATION_atomicwritesize		10
+
 #define	I2O_PARAM_RBS_CACHE_CONTROL	0x0003
 struct i2o_param_rbs_cache_control {
 	u_int32_t	totalcachesize;
@@ -1063,6 +1075,19 @@ struct i2o_lan_receive_reply {
 	u_int32_t	bucketsleft;
 } __attribute__ ((__packed__));
 
+#define	I2O_LAN_RECEIVE_REPLY_PDB	0x80
+
+#define	I2O_LAN_PDB_ERROR_NONE		0x00
+#define	I2O_LAN_PDB_ERROR_BAD_CRC	0x01
+#define	I2O_LAN_PDB_ERROR_ALIGNMENT	0x02
+#define	I2O_LAN_PDB_ERROR_TOO_LONG	0x03
+#define	I2O_LAN_PDB_ERROR_TOO_SHORT	0x04
+#define	I2O_LAN_PDB_ERROR_RX_OVERRUN	0x05
+#define	I2O_LAN_PDB_ERROR_L3_CKSUM_BAD	0x40
+#define	I2O_LAN_PDB_ERROR_L4_CKSUM_BAD	0x80
+#define	I2O_LAN_PDB_ERROR_CKSUM_MASK	0xc0
+#define	I2O_LAN_PDB_ERROR_OTHER		0xff
+
 #define	I2O_LAN_RESET			0x35
 struct i2o_lan_reset {
 	u_int32_t	msgflags;
@@ -1132,12 +1157,30 @@ struct i2o_param_lan_mac_address {
 	u_int8_t	activeaddr[8];
 	u_int8_t	localaddr[8];
 	u_int8_t	addrmask[8];
-	u_int8_t	filtermask[4];
-	u_int8_t	hwfiltermask[4];
+	u_int32_t	filtermask;
+	u_int32_t	hwfiltercaps;
 	u_int32_t	maxmcastaddr;
 	u_int32_t	maxfilterperfect;
 	u_int32_t	maxfilterimperfect;
 } __attribute__ ((__packed__));
+
+#define	I2O_PARAM_LAN_MAC_ADDRESS_activeaddr		0
+#define	I2O_PARAM_LAN_MAC_ADDRESS_localaddr		1
+#define	I2O_PARAM_LAN_MAC_ADDRESS_addrmask		2
+#define	I2O_PARAM_LAN_MAC_ADDRESS_filtermask		3
+#define	I2O_PARAM_LAN_MAC_ADDRESS_hwfiltercaps		4
+#define	I2O_PARAM_LAN_MAC_ADDRESS_maxmcastaddr		5
+#define	I2O_PARAM_LAN_MAC_ADDRESS_maxfilterperfect	6
+#define	I2O_PARAM_LAN_MAC_ADDRESS_maxfilterimperfect	7
+
+#define	I2O_LAN_FILTERMASK_UNICAST_DISABLE	0x0001
+#define	I2O_LAN_FILTERMASK_PROMISC_ENABLE	0x0002
+#define	I2O_LAN_FILTERMASK_PROMISC_MCAST_ENABLE	0x0004
+#define	I2O_LAN_FILTERMASK_BROADCAST_DISABLE	0x0100
+#define	I2O_LAN_FILTERMASK_MCAST_DISABLE	0x0200
+#define	I2O_LAN_FILTERMASK_FUNCADDR_DISABLE	0x0400
+#define	I2O_LAN_FILTERMASK_MACMODE_0		0x0800
+#define	I2O_LAN_FILTERMASK_MACMODE_1		0x1000
 
 #define	I2O_PARAM_LAN_MCAST_MAC_ADDRESS	0x0002
 /*
@@ -1157,6 +1200,16 @@ struct i2o_param_lan_batch_control {
 	u_int32_t	maxtxbatchcount;	/* 2.0 only */
 } __attribute__ ((__packed__));
 
+#define	I2O_PARAM_LAN_BATCH_CONTROL_batchflags		0
+#define	I2O_PARAM_LAN_BATCH_CONTROL_risingloaddly	1
+#define	I2O_PARAM_LAN_BATCH_CONTROL_risingloadthresh	2
+#define	I2O_PARAM_LAN_BATCH_CONTROL_fallingloaddly	3
+#define	I2O_PARAM_LAN_BATCH_CONTROL_fallingloadthresh	4
+#define	I2O_PARAM_LAN_BATCH_CONTROL_maxrxbatchcount	5
+#define	I2O_PARAM_LAN_BATCH_CONTROL_maxrxbatchdelay	6
+#define	I2O_PARAM_LAN_BATCH_CONTROL_maxtxbatchdelay	7
+#define	I2O_PARAM_LAN_BATCH_CONTROL_maxtxbatchcount	8
+
 #define	I2O_PARAM_LAN_OPERATION		0x0004
 struct i2o_param_lan_operation {
 	u_int32_t	pktprepad;
@@ -1165,6 +1218,12 @@ struct i2o_param_lan_operation {
 	u_int32_t	txmodesenable;		/* 2.0 only */
 	u_int32_t	rxmodesenable;		/* 2.0 only */
 } __attribute__ ((__packed__));
+
+#define	I2O_PARAM_LAN_OPERATION_pktprepad		0
+#define	I2O_PARAM_LAN_OPERATION_userflags		1
+#define	I2O_PARAM_LAN_OPERATION_pktorphanlimit		2
+#define	I2O_PARAM_LAN_OPERATION_txmodesenable		3
+#define	I2O_PARAM_LAN_OPERATION_rxmodesenable		4
 
 #define	I2O_PARAM_LAN_MEDIA_OPERATION	0x0005
 struct i2o_param_lan_media_operation {
@@ -1179,6 +1238,17 @@ struct i2o_param_lan_media_operation {
 	u_int32_t	connectortarget;	/* v2.0 only */
 	u_int32_t	connectiontarget;	/* v2.0 only */
 } __attribute__ ((__packed__));
+
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_connectortype	0
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_connectiontype	1
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_curtxbps		2
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_currxbps		3
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_fullduplex	4
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_linkstatus	5
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_badpkthandling	6
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_duplextarget	7
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_connectortarget	8
+#define	I2O_PARAM_LAN_MEDIA_OPERATION_connectiontarget	9
 
 #define	I2O_LAN_CONNECTOR_OTHER		0x00
 #define	I2O_LAN_CONNECTOR_UNKNOWN	0x01
@@ -1282,6 +1352,20 @@ struct i2o_param_lan_802_3_stats {
 	u_int64_t	maxcollisions;
 	u_int64_t	carrierlost;
 	u_int64_t	excessivedeferrals;
+} __attribute__ ((__packed__));
+
+#define	I2O_PARAM_LAN_FDDI_STATS	0x0400
+struct i2o_param_lan_fddi_stats {
+	u_int64_t	configstate;
+	u_int64_t	upstreamnode;
+	u_int64_t	downstreamnode;
+	u_int64_t	frameerrors;
+	u_int64_t	frameslost;
+	u_int64_t	ringmgmtstate;
+	u_int64_t	lctfailures;
+	u_int64_t	lemrejects;
+	u_int64_t	lemcount;
+	u_int64_t	lconnectionstate;
 } __attribute__ ((__packed__));
 
 #endif	/* !defined _I2O_I2O_H_ */

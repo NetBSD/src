@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.28.2.2 2001/06/21 20:04:24 nathanw Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.28.2.3 2001/09/21 22:35:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,16 +88,16 @@
 
 #include <dev/mii/nsphyreg.h>
 
-int	nsphymatch __P((struct device *, struct cfdata *, void *));
-void	nsphyattach __P((struct device *, struct device *, void *));
+int	nsphymatch(struct device *, struct cfdata *, void *);
+void	nsphyattach(struct device *, struct device *, void *);
 
 struct cfattach nsphy_ca = {
 	sizeof(struct mii_softc), nsphymatch, nsphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	nsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	nsphy_status __P((struct mii_softc *));
+int	nsphy_service(struct mii_softc *, struct mii_data *, int);
+void	nsphy_status(struct mii_softc *);
 
 const struct mii_phy_funcs nsphy_funcs = {
 	nsphy_service, nsphy_status, mii_phy_reset,
@@ -112,10 +112,7 @@ const struct mii_phydesc nsphys[] = {
 };
 
 int
-nsphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+nsphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -126,9 +123,7 @@ nsphymatch(parent, match, aux)
 }
 
 void
-nsphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -158,10 +153,7 @@ nsphyattach(parent, self, aux)
 }
 
 int
-nsphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -258,8 +250,7 @@ nsphy_service(sc, mii, cmd)
 }
 
 void
-nsphy_status(sc)
-	struct mii_softc *sc;
+nsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

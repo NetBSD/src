@@ -1,7 +1,6 @@
-#	$NetBSD: files.vax1k,v 1.1 1998/08/21 13:25:47 ragge Exp $
+#	$NetBSD: files.vax1k,v 1.1.24.1 2001/09/21 22:35:23 nathanw Exp $
 #
 # Config file description for vax1k compat code.  Included by
 # sys/arch/vax/conf/files.vax
 
 file	compat/vax1k/vax1k_exec.c		compat_vax1k
-file	compat/vax1k/vax1k_subr.c		compat_vax1k

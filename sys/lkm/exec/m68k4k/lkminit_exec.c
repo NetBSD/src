@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:42 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.4.1 2001/09/21 22:36:34 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int exec_m68k4k_lkmentry __P((struct lkm_table *, int, int));
 static struct execsw exec_m68k4k =
 	{ sizeof(struct exec), exec_m68k4k_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs, setregs };	/* m68k4k a.out */
+	  0, copyargs };	/* m68k4k a.out */
 
 /*
  * declare the exec

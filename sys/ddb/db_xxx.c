@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.11.2.2 2001/08/24 00:09:02 nathanw Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.11.2.3 2001/09/21 22:35:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -113,7 +113,7 @@ db_show_all_procs(addr, haddr, count, modif)
 	char *mode;
 	struct proc *p, *pp, *cp;
 	struct lwp *l, *cl;
-	struct timeval tv[3];
+	struct timeval tv[2];
 	const struct proclist_desc *pd;
     
 	if (modif[0] == 0)
@@ -154,11 +154,12 @@ db_show_all_procs(addr, haddr, count, modif)
 	pd = proclists;
 	cp = curproc ? curproc->l_proc : 0;
 	cl = curproc;
- loop:
-	for (p = LIST_FIRST(pd->pd_list); p != NULL;
-	     p = LIST_NEXT(p, p_list)) {
-		pp = p->p_pptr;
-		if (p->p_stat) {
+	for (pd = proclists; pd->pd_list != NULL; pd++) {
+		LIST_FOREACH(p, pd->pd_list, p_list) {
+			pp = p->p_pptr;
+			if (p->p_stat == 0) {
+				continue;
+			}
 			l = LIST_FIRST(&p->p_lwps);
 			db_printf("%c%-10d", " >"[cp == p], p->p_pid);
 
@@ -195,14 +196,14 @@ db_show_all_procs(addr, haddr, count, modif)
 			case 'w':
 				db_printf("%10s %8s %4d", p->p_comm,
 				    p->p_emul->e_name,l->l_priority);
-				calcru(p, tv+0, tv+1, tv+2);
-				for(i = 0; i < 2; ++i) {
+				calcru(p, &tv[0], &tv[1], NULL);
+				for (i = 0; i < 2; ++i) {
 					db_printf("%4ld.%1ld",
 					    (long)tv[i].tv_sec,
 					    (long)tv[i].tv_usec/100000);
 				}
-				if(p->p_nlwps <= 1) {
-				if(l->l_wchan && l->l_wmesg) {
+				if (p->p_nlwps <= 1) {
+				if (l->l_wchan && l->l_wmesg) {
 					db_printf(" %-12s", l->l_wmesg);
 					db_printsym((db_expr_t)l->l_wchan,
 					    DB_STGY_XTRN, db_printf);
@@ -215,9 +216,6 @@ db_show_all_procs(addr, haddr, count, modif)
 			}
 		}
 	}
-	pd++;
-	if (pd->pd_list != NULL)
-		goto loop;
 }
 
 void
@@ -229,20 +227,30 @@ db_show_callout(addr, haddr, count, modif)
 {
 	extern struct callout_queue *callwheel;
 	extern int callwheelsize;
+	uint64_t hint;
 	int i;
 
 	for (i = 0; i < callwheelsize; i++) {
 		struct callout_queue *bucket = &callwheel[i];
-		struct callout *c = TAILQ_FIRST(bucket);
+		struct callout *c = TAILQ_FIRST(&bucket->cq_q);
 
-		if (c) db_printf("bucket %d:\n", i);
-		while (c) {
-			db_printf("%p: time %llx arg %p flags %x func %p: ",
-				  c, (long long) c->c_time, c->c_arg,
-				  c->c_flags, c->c_func);
-			db_printsym((u_long)c->c_func, DB_STGY_PROC, db_printf);
-			db_printf("\n");
-			c = TAILQ_NEXT(c, c_link);
+		if (c) {
+			db_printf("bucket %d (hint %llx):\n", i,
+			    (long long) bucket->cq_hint);
+			hint = UQUAD_MAX;
+			while (c) {
+				if (c->c_time < hint)
+					hint = c->c_time;
+				db_printf("%p: time %llx arg %p flags %x "
+				    "func %p: ", c, (long long) c->c_time,
+				    c->c_arg, c->c_flags, c->c_func);
+				db_printsym((u_long)c->c_func, DB_STGY_PROC,
+				    db_printf);
+				db_printf("\n");
+				c = TAILQ_NEXT(c, c_link);
+			}
+			if (bucket->cq_hint < hint)
+				printf("** HINT IS STALE\n");
 		}
 	}
 }

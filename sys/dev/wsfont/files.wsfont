@@ -1,4 +1,4 @@
-# 	$NetBSD: files.wsfont,v 1.8 2000/11/24 15:47:15 tsutsui Exp $
+# 	$NetBSD: files.wsfont,v 1.8.2.1 2001/09/21 22:36:21 nathanw Exp $
 
 file	dev/wsfont/wsfont.c	rasterconsole | wsdisplay
 
@@ -11,3 +11,7 @@ defopt	opt_wsfont.h		FONT_BOLD8x16
 				FONT_SONY8x16
 				FONT_SONY12x24
 				FONT_OMRON12x20
+
+defpseudo wsfont
+
+file	dev/wsfont/wsfontdev.c	wsfont needs-flag

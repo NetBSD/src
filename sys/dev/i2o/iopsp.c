@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.4.2.4 2001/08/24 00:09:10 nathanw Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.4.2.5 2001/09/21 22:35:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -103,8 +103,8 @@ iopsp_match(struct device *parent, struct cfdata *match, void *aux)
 	if (ia->ia_class != I2O_CLASS_BUS_ADAPTER_PORT)
 		return (0);
 
-	if (iop_param_op((struct iop_softc *)parent, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_HBA_CTLR_INFO, &param, sizeof(param)) != 0)
+	if (iop_field_get_all((struct iop_softc *)parent, ia->ia_tid,
+	    I2O_PARAM_HBA_CTLR_INFO, &param, sizeof(param), NULL) != 0)
 		return (0);
 
 	return (param.ci.bustype == I2O_HBA_BUS_SCSI ||
@@ -147,13 +147,10 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ii.ii_adjqparam = iopsp_adjqparam;
 	iop_initiator_register(iop, &sc->sc_ii);
 
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_HBA_CTLR_INFO,
-	    &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-	    	    sc->sc_dv.dv_xname, I2O_PARAM_HBA_CTLR_INFO, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_HBA_CTLR_INFO,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		goto bad;
-	}
 
 	fc = (param.p.ci.bustype == I2O_HBA_BUS_FCA);
 
@@ -165,13 +162,10 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	iop_print_ident(iop, ia->ia_tid);
 	printf("\n");
 
-	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
-	    I2O_PARAM_HBA_SCSI_CTLR_INFO, &param, sizeof(param));
-	if (rv != 0) {
-		printf("%s: unable to get parameters (0x%04x; %d)\n",
-		    sc->sc_dv.dv_xname, I2O_PARAM_HBA_SCSI_CTLR_INFO, rv);
+	rv = iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_HBA_SCSI_CTLR_INFO,
+	    &param, sizeof(param), NULL);
+	if (rv != 0)
 		goto bad;
-	}
 
 #ifdef I2OVERBOSE
 	printf("%s: ", sc->sc_dv.dv_xname);
@@ -291,14 +285,10 @@ iopsp_reconfig(struct device *dv)
 			continue;
 		tid = le16toh(le->localtid) & 4095;
 
-		rv = iop_param_op(iop, tid, NULL, 0, I2O_PARAM_SCSI_DEVICE_INFO,
-		    &param, sizeof(param));
-		if (rv != 0) {
-			printf("%s: unable to get parameters (0x%04x; %d)\n",
-			    sc->sc_dv.dv_xname, I2O_PARAM_SCSI_DEVICE_INFO,
-			    rv);
+		rv = iop_field_get_all(iop, tid, I2O_PARAM_SCSI_DEVICE_INFO,
+		    &param, sizeof(param), NULL);
+		if (rv != 0)
 			continue;
-		}
 		targ = le32toh(param.sdi.identifier);
 		lun = param.sdi.luninfo[1];
 #if defined(DIAGNOSTIC) || defined(I2ODEBUG)

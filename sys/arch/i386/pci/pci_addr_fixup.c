@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.7.6.2 2001/08/24 00:08:37 nathanw Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.7.6.3 2001/09/21 22:35:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -308,7 +308,7 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ctx, type, addr, size)
 		PCIBIOS_PRINTV(("No available resources. fixup failed\n"));
 		return (1);
 	}
-	error = extent_alloc_subregion(ex, start, start + size - 1, size,
+	error = extent_alloc_subregion(ex, start, ex->ex_end, size,
 				       size, 0,
 				       EX_FAST|EX_NOWAIT|EX_MALLOCOK, addr);
 	if (error) {

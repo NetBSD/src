@@ -1,4 +1,4 @@
-/*	$NetBSD: hayespreg.h,v 1.1 1996/02/10 20:23:40 christos Exp $	*/
+/*	$NetBSD: hayespreg.h,v 1.1.42.1 2001/09/21 22:35:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995  Sean E. Fagin, John M Vinopal.
@@ -57,6 +57,7 @@
 #define	HAYESP_SETFLOWTYPE	0x08	/* set type of flow-control (2b) */
 #define	HAYESP_SETRXFLOW	0x0a	/* set Rx FIFO " levels (4b) */
 #define	HAYESP_SETMODE		0x10	/* set board mode (1b) */
+#define	HAYESP_SETPRESCALER	0x23	/* set UART clock prescaler (1b) */
 
 /* Mode bits (HAYESP_SETMODE). */
 #define	HAYESP_MODE_FIFO	0x02	/* act like a 16550 (compat mode) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.11.2.2 2001/08/24 00:13:36 nathanw Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.11.2.3 2001/09/21 22:37:13 nathanw Exp $	*/
 
 /*
  *
@@ -222,7 +222,7 @@ uvmfault_relock(ufi)
 	}
 
 	uvmexp.fltrelckok++;
-	return(TRUE);		/* got it! */
+	return(TRUE);
 }
 
 #endif /* _UVM_UVM_FAULT_I_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.14.2.1 2001/08/24 00:11:25 nathanw Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.14.2.2 2001/09/21 22:36:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 
 
 #include "opt_bufcache.h"
+#include "opt_callout.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>

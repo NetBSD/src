@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticreg.h,v 1.4 2001/03/04 13:32:25 ad Exp $	*/
+/* 	$NetBSD: sticreg.h,v 1.4.2.1 2001/09/21 22:36:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@
 /*
  * Command word.
  */
+
+/* Base command */
 #define	STAMP_CMD_POINTS        (0x0000)
 #define	STAMP_CMD_LINES         (0x0001)
 #define	STAMP_CMD_TRIANGLES     (0x0002)
@@ -75,24 +77,29 @@
 #define	STAMP_CMD_WRITESPANS    (0x0007)
 #define	STAMP_CMD_VIDEO         (0x0008)
 
+/* Color */
 #define	STAMP_RGB_NONE          (0x0000)
 #define	STAMP_RGB_CONST         (0x0010)
 #define	STAMP_RGB_FLAT          (0x0020)
 #define	STAMP_RGB_SMOOTH        (0x0030)
 
+/* Z */
 #define	STAMP_Z_NONE            (0x0000)
 #define	STAMP_Z_CONST           (0x0040)
 #define	STAMP_Z_FLAT            (0x0080)
 #define	STAMP_Z_SMOOTH          (0x00c0)
 
+/* XYMASK */
 #define	STAMP_XY_NONE           (0x0000)
 #define	STAMP_XY_PERPACKET      (0x0100)
 #define	STAMP_XY_PERPRIMATIVE   (0x0200)
 
+/* Line width */
 #define	STAMP_LW_NONE           (0x0000)
 #define	STAMP_LW_PERPACKET      (0x0400)
 #define	STAMP_LW_PERPRIMATIVE   (0x0800)
 
+/* Miscellaneous flags */
 #define	STAMP_CLIPRECT          (0x00080000)
 #define	STAMP_MESH              (0x00200000)
 #define	STAMP_AALINE            (0x00800000)
@@ -101,6 +108,8 @@
 /*
  * Update word.
  */
+
+/* XXX What does this do? Perhaps for 96-bit boards? */
 #define	STAMP_PLANE_8X3		(0 << 5)
 #define	STAMP_PLANE_24		(1 << 5)
 
@@ -110,6 +119,7 @@
 #define	STAMP_WE_CLIPRECT	(0x01 << 8)
 #define	STAMP_WE_NONE		(0x00 << 8)
 
+/* Pixel write method */
 #define	STAMP_METHOD_CLEAR	(0x60 << 12)
 #define	STAMP_METHOD_AND	(0x14 << 12)
 #define	STAMP_METHOD_ANDREV	(0x15 << 12)
@@ -136,6 +146,7 @@
 #define	STAMP_DB_12		(0x02 << 28)
 #define	STAMP_DB_02		(0x04 << 28)
 
+/* Miscellaneous flags */
 #define	STAMP_UPDATE_ENABLE	(1 << 0)
 #define	STAMP_SAVE_SIGN		(1 << 6)
 #define	STAMP_SAVE_ALPHA	(1 << 7)
@@ -149,7 +160,7 @@
 #define	STAMP_INITIALIZE	(1 << 31)
 
 /*
- * Mask address calculation.
+ * XYMASK address calculation.
  */
 #define	XMASKADDR(sw, sx, a)	(((a)-((sx) % (sw))) & 15)
 #define	YMASKADDR(sh, sy, b)	(((b)-((sy) % (sh))) & 15)
@@ -162,6 +173,9 @@
 #define	STIC_MAGIC_X	370
 #define	STIC_MAGIC_Y	37
 
+/*
+ * Poll register magic values.
+ */
 #define	STAMP_OK		(0)
 #define	STAMP_BUSY		(1)
 #define	STAMP_RETRIES		(100000)
@@ -187,7 +201,7 @@ struct stic_regs {
 	u_int32_t	sr_pad3;
 	u_int32_t	sr_buscsr;
 	u_int32_t	sr_modcl;
-};
+} __attribute__ ((__packed__));
 
 /*
  * Bit definitions for stic_regs::sticsr.
@@ -205,9 +219,10 @@ struct stic_regs {
 
 /*
  * Bit definitions for stic_regs::int.  Three four-bit wide fields, for
- * error (E), vertical-blank (V), and packetbuf-done (P) intererupts,
- * respectively.  The low-order three bits of each field are enable,
- * requested, and acknowledge bits.  The top bit of each field is unused.
+ * error (E), vertical-blank (V), and packet-done (P) intererupts,
+ * respectively.  The low-order three bits of each field are interrupt
+ * enable, condition flagged, and nybble write enable.  The top bit of each
+ * field is unused.
  */
 #define	STIC_INT_E_EN		0x00000001
 #define	STIC_INT_E		0x00000002

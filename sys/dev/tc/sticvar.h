@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.8 2001/03/04 13:32:25 ad Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.8.2.1 2001/09/21 22:36:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
 #ifndef _TC_STICVAR_H_
 #define	_TC_STICVAR_H_
 
-#ifdef _KERNEL
-
 #if defined(pmax)
 #define	STIC_KSEG_TO_PHYS(x)	MIPS_KSEG0_TO_PHYS(x)
 #elif defined(alpha)
 #define	STIC_KSEG_TO_PHYS(x)	ALPHA_K0SEG_TO_PHYS((vaddr_t)x)
 #else No support for your architecture
 #endif
+
+#define	STIC_MAXDV	5
 
 struct stic_hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
@@ -77,17 +77,21 @@ struct stic_screen {
 #define	SS_CURENB		0x04
 
 struct stic_info {
+	struct device	*si_dv;
+
 	u_int32_t	*si_stamp;
 	u_int32_t	*si_buf;
 	u_int32_t	*si_vdac;
 	u_int32_t	*si_vdac_reset;
 	volatile struct	stic_regs *si_stic;
+	volatile struct stic_xcomm *si_sxc;
 
 	u_int32_t	*(*si_pbuf_get)(struct stic_info *);
 	int	(*si_pbuf_post)(struct stic_info *, u_int32_t *);
 	int	(*si_ioctl)(struct stic_info *, u_long, caddr_t, int,
 			   struct proc *);
 	int	si_pbuf_select;
+	int	si_hwflags;
 
 	struct	stic_screen *si_curscreen;
 	struct	wsdisplay_font *si_font;
@@ -99,9 +103,11 @@ struct stic_info {
 	int	si_stamph;
 	int	si_stampw;
 	int	si_depth;
+	int	si_disptype;
+	int	si_dispmode;
+	int	si_unit;
 
 	tc_addr_t si_slotbase;
-	int	si_disptype;
 	paddr_t	si_buf_phys;
 	size_t	si_buf_size;
 
@@ -119,6 +125,7 @@ struct stic_info {
 #define	SI_CURSHAPE_CHANGED	0x0004
 #define	SI_CMAP_CHANGED		0x0008
 #define	SI_ALL_CHANGED		0x000f
+#define	SI_DVOPEN		0x0010
 
 void	stic_init(struct stic_info *);
 void	stic_attach(struct device *, struct stic_info *, int);
@@ -127,28 +134,5 @@ void	stic_reset(struct stic_info *);
 void	stic_flush(struct stic_info *);
 
 extern struct stic_info stic_consinfo;
-
-#endif	/* _KERNEL */
-
-#define	STIC_PACKET_SIZE	4096
-#define	STIC_IMGBUF_SIZE	1280*4
-
-struct stic_xinfo {
-	int	sxi_stampw;
-	int	sxi_stamph;
-	u_long	sxi_buf_size;
-	u_long	sxi_buf_phys;
-};
-
-#define	STICIO_GXINFO	_IOR('S', 0, struct stic_xinfo)
-#define	STICIO_RESET	_IO('S', 1)
-#define	STICIO_START860	_IO('S', 2)
-#define	STICIO_RESET860	_IO('S', 3)
-
-struct stic_xmap {
-	u_int8_t	sxm_stic[NBPG];
-	u_int8_t	sxm_poll[0x0c0000];
-	u_int8_t	sxm_buf[256 * 1024];
-};
 
 #endif	/* !_TC_STICVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_types.h,v 1.2.20.1 2001/06/21 20:04:47 nathanw Exp $	*/
+/*	$NetBSD: if_lmc_types.h,v 1.2.20.2 2001/09/21 22:35:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -55,6 +55,22 @@
 #endif
 
 #if defined(LMC_IS_KERNEL)
+
+/*
+ * LMC has weird endianness issues, so we can't use the tulip_desc_t.
+ */
+typedef struct {
+    u_int32_t d_status;
+    u_int32_t d_ctl;
+    u_int32_t d_addr1;
+    u_int32_t d_addr2;
+} lmc_desc_t;
+
+#define	LMC_CTL_FLGS(x)		(((x)>>22)&0x3ff)
+#define	LMC_CTL_LEN1(x)		(((x)>>11)&0x7ff)
+#define	LMC_CTL_LEN2(x)		((x)&0x7ff)
+#define	LMC_CTL(f,l1,l2)	((((f)&0x3ff)<<22)|(((l2)&0x7ff)<<11)|((l1)&0x7ff))
+
 #if defined(__NetBSD__)
 typedef bus_addr_t lmc_csrptr_t;
 #else

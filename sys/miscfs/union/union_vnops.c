@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.50.2.3 2001/08/24 00:12:01 nathanw Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.50.2.4 2001/09/21 22:36:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1993,8 +1993,8 @@ union_getpages(v)
 	 */
 
 	ap->a_vp = OTHERVP(vp);
-	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
-	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
+	simple_unlock(&vp->v_uobj.vmobjlock);
+	simple_lock(&ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 	return error;
 }

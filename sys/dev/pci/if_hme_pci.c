@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.3.2.1 2001/09/21 22:35:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -47,8 +47,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

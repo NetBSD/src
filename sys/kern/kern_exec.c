@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.3 2001/08/24 00:11:27 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.4 2001/09/21 22:36:24 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -141,6 +141,7 @@ const struct emul emul_netbsd = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,
@@ -647,7 +648,9 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
+	(*pack.ep_es->es_emul->e_setregs)(l, &pack, (u_long) stack);
+	if (pack.ep_es->es_setregs)
+		(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);

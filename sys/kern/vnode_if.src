@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.26.2.2 2001/08/24 00:11:47 nathanw Exp $
+#	$NetBSD: vnode_if.src,v 1.26.2.3 2001/09/21 22:36:29 nathanw Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 #     
 # The locking value can take the following values:
 # L: locked.
-# U: unlocked/
+# U: unlocked.
 # -: not applicable.  vnode does not yet (or no longer) exists.
 # =: the same on input and output, may be either L or U.
 # X: locked if not nil.
@@ -236,7 +236,7 @@ vop_revoke {
 };
 
 #     
-# XXX - not used
+#% mmap      vp      = = =
 #
 vop_mmap {
 	IN struct vnode *vp;
@@ -499,17 +499,6 @@ vop_balloc {
 };
 
 #
-#% ballocn    vp      L L L
-#
-vop_ballocn {
-	IN struct vnode *vp;
-	IN off_t offset;
-	IN off_t length;
-	IN struct ucred *cred;
-	IN int flags;
-};
-
-#
 #% reallocblks        vp      L L L
 #
 vop_reallocblks {
@@ -592,21 +581,11 @@ vop_getpages {
 };
 
 #
-#% putpages	vp L L L
+#% putpages	vp = = =
 #
 vop_putpages {
 	IN struct vnode *vp;
-	IN struct vm_page **m;
-	IN int count;
+	IN voff_t offlo;
+	IN voff_t offhi;
 	IN int flags;
-	IN int *rtvals;
-};
-
-#
-#% size		vp = = =
-#
-vop_size {
-	IN struct vnode *vp;
-	IN off_t size;
-	OUT off_t *eobp;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.76.2.3 2001/08/24 00:13:31 nathanw Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.76.2.4 2001/09/21 22:37:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -316,7 +316,7 @@ ufs_getattr(void *v)
 	vap->va_gid = ip->i_ffs_gid;
 	vap->va_rdev = ufs_rw32((dev_t)ip->i_ffs_rdev,
 	    UFS_MPNEEDSWAP(vp->v_mount));
-	vap->va_size = ip->i_ffs_size;
+	vap->va_size = vp->v_size;
 	vap->va_atime.tv_sec = ip->i_ffs_atime;
 	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
 	vap->va_mtime.tv_sec = ip->i_ffs_mtime;
@@ -919,7 +919,7 @@ ufs_rename(void *v)
 	/*
 	 * If ".." must be changed (ie the directory gets a new
 	 * parent) then the source directory must not be in the
-	 * directory heirarchy above the target, as this would
+	 * directory hierarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
 	 * as to be able to change "..". We must repeat the call 
@@ -1896,7 +1896,7 @@ ufs_advlock(void *v)
  * Initialize the vnode associated with a new inode, handle aliased
  * vnodes.
  */
-int
+void
 ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	struct vnode **vpp)
 {
@@ -1949,7 +1949,6 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	SETHIGH(ip->i_modrev, mono_time.tv_sec);
 	SETLOW(ip->i_modrev, mono_time.tv_usec * 4294);
 	*vpp = vp;
-	return (0);
 }
 
 /*

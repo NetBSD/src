@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.15 2000/03/23 07:01:27 thorpej Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.15.6.1 2001/09/21 22:35:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ sequencerread(dev, uio, ioflag)
 	int error, s;
 
 	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n", 
-		     sc, uio->uio_resid, ioflag));
+		     sc, (int) uio->uio_resid, ioflag));
 
 	if (sc->mode == SEQ_OLD) {
 		DPRINTFN(-1,("sequencerread: old read\n"));
@@ -434,7 +434,7 @@ sequencerwrite(dev, uio, ioflag)
 	seq_event_rec cmdbuf;
 	int size;
 
-	DPRINTFN(2, ("sequencerwrite: %p, count=%d\n", sc, uio->uio_resid));
+	DPRINTFN(2, ("sequencerwrite: %p, count=%d\n", sc, (int) uio->uio_resid));
 
 	error = 0;
 	size = sc->mode == SEQ_NEW ? sizeof cmdbuf : SEQOLD_CMDSIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.45.2.2 2001/06/21 20:07:13 nathanw Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.45.2.3 2001/09/21 22:36:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -200,8 +200,8 @@ vn_marktext(vp)
 	struct vnode *vp;
 {
 	if ((vp->v_flag & VTEXT) == 0) {
-		uvmexp.vnodepages -= vp->v_uvm.u_obj.uo_npages;
-		uvmexp.vtextpages += vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages -= vp->v_uobj.uo_npages;
+		uvmexp.vtextpages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag |= VTEXT;
 }
@@ -248,8 +248,13 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	struct iovec aiov;
 	int error;
 
-	if ((ioflg & IO_NODELOCKED) == 0)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		if (rw == UIO_READ) {
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+		} else {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		}
+	}
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	aiov.iov_base = base;
@@ -299,7 +304,7 @@ unionread:
 	auio.uio_segflg = segflg;
 	auio.uio_procp = p;
 	auio.uio_resid = count;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
@@ -384,7 +389,7 @@ vn_read(fp, offset, uio, cred, flags)
 		ioflag |= IO_SYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);
@@ -602,13 +607,17 @@ vn_lock(vp, flags)
 		if ((flags & LK_INTERLOCK) == 0)
 			simple_lock(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK) {
+			if (flags & LK_NOWAIT) {
+				simple_unlock(&vp->v_interlock);
+				return EBUSY;
+			}
 			vp->v_flag |= VXWANT;
-			ltsleep((caddr_t)vp, PINOD | PNORELOCK,
+			ltsleep(vp, PINOD | PNORELOCK,
 			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
 		} else {
 			error = VOP_LOCK(vp, flags | LK_INTERLOCK);
-			if (error == 0 || error == EDEADLK)
+			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}
 		flags &= ~LK_INTERLOCK;

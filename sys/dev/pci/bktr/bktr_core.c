@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.17 2001/03/03 00:08:05 mjl Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.17.2.1 2001/09/21 22:36:04 nathanw Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -558,7 +558,7 @@ bktr_store_address(unit, BKTR_MEM_BUF,          buf);
 	}
 		
 
-	bktr->flags = METEOR_INITALIZED | METEOR_AUTOMODE |
+	bktr->flags = METEOR_INITIALIZED | METEOR_AUTOMODE |
 		      METEOR_DEV0 | METEOR_RGB16;
 	bktr->dma_prog_loaded = FALSE;
 	bktr->cols = 640;
@@ -601,7 +601,7 @@ bktr_store_address(unit, BKTR_MEM_BUF,          buf);
 	bktr->clr_on_start = FALSE;
 
 	/* defaults for the tuner section of the card */
-	bktr->tflags = TUNER_INITALIZED;
+	bktr->tflags = TUNER_INITIALIZED;
 	bktr->tuner.frequency = 0;
 	bktr->tuner.channel = 0;
 	bktr->tuner.chnlset = DEFAULT_CHNLSET;
@@ -1077,7 +1077,7 @@ vbi_open( bktr_ptr_t bktr )
 int
 tuner_open( bktr_ptr_t bktr )
 {
-	if ( !(bktr->tflags & TUNER_INITALIZED) )	/* device not found */
+	if ( !(bktr->tflags & TUNER_INITIALIZED) )	/* device not found */
 		return( ENXIO );	
 
 	if ( bktr->tflags & TUNER_OPEN )		/* already open */

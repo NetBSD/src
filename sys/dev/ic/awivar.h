@@ -1,7 +1,7 @@
-/* $NetBSD: awivar.h,v 1.13.2.1 2001/08/24 00:09:17 nathanw Exp $ */
+/*	$NetBSD: awivar.h,v 1.13.2.2 2001/09/21 22:35:34 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_IC_AWIVAR_H
+#define	_DEV_IC_AWIVAR_H
+
 /* timer values in msec */
 #define	AWI_SELFTEST_TIMEOUT	5000
 #define	AWI_CMD_TIMEOUT		2000
@@ -44,96 +47,55 @@
 #define	AWI_ASCAN_WAIT		3000
 #define	AWI_PSCAN_DURATION	200
 #define	AWI_PSCAN_WAIT		5000
-#define	AWI_TRANS_TIMEOUT	2000
+#define	AWI_TRANS_TIMEOUT	5000
 
 #define	AWI_NTXBUFS		4
-#define	AWI_MAX_KEYLEN		16
 
-enum awi_status {
-	AWI_ST_INIT,
-	AWI_ST_SCAN,
-	AWI_ST_SETSS,
-	AWI_ST_SYNC,
-	AWI_ST_AUTH,
-	AWI_ST_ASSOC,
-	AWI_ST_RUNNING
+enum awi_sub_state {
+	AWI_ST_NONE,
+	AWI_ST_SCAN_INIT,
+	AWI_ST_SCAN_SETMIB,
+	AWI_ST_SCAN_SCCMD,
+	AWI_ST_SUB_INIT,
+	AWI_ST_SUB_SETSS,
+	AWI_ST_SUB_SYNC
 };
 
-struct awi_bss 
-{
-	TAILQ_ENTRY(awi_bss)	list;
-	u_int8_t	esrc[ETHER_ADDR_LEN];
-	u_int8_t	chanset;	/* channel set to use */
-	u_int8_t	pattern;	/* hop pattern to use */
-	u_int8_t	index;		/* index to use */
-	u_int8_t	rssi;		/* strength of this beacon */
-	u_int16_t	dwell_time;	/* dwell time */
-	u_int8_t	timestamp[8];	/* timestamp of this bss */
-	u_int8_t	bssid[ETHER_ADDR_LEN];
-	u_int16_t	capinfo;
-	u_int32_t	rxtime;		/* unit's local time */
-	u_int16_t	interval;	/* beacon interval */
-	u_int8_t	txrate;
-	u_int8_t	fails;
-	u_int8_t	essid[IEEE80211_NWID_LEN + 2];
+#define	AWI_WAIT		0		/* must wait for completion */
+#define	AWI_NOWAIT		1		/* do not wait */
+
+struct awi_chanset {
+	u_int8_t	cs_type;
+	u_int8_t	cs_region;
+	u_int8_t	cs_min;
+	u_int8_t	cs_max;
+	u_int8_t	cs_def;
 };
 
-struct awi_wep_algo {
-	char		*awa_name;
-	int		(*awa_ctxlen) __P((void));
-	void		(*awa_setkey) __P((void *, u_char *, int));
-	void		(*awa_encrypt) __P((void *, u_char *, u_char *, int));
-	void		(*awa_decrypt) __P((void *, u_char *, u_char *, int));
-};
-
-struct awi_softc 
-{
-#ifdef __NetBSD__
-	struct device 		sc_dev;
-	struct ethercom		sc_ec;
-	void			*sc_ih; /* interrupt handler */
-#endif
-#ifdef __FreeBSD__
-#if __FreeBSD__ >= 4
-	struct {
-		char	dv_xname[64];	/*XXX*/
-	}			sc_dev;
-#else
+struct awi_softc {
 	struct device		sc_dev;
-#endif
-	struct arpcom		sc_ec;
-#endif
 	struct am79c930_softc 	sc_chip;
-	struct ifnet		*sc_ifp;
-	int			(*sc_enable) __P((struct awi_softc *));
-	void			(*sc_disable) __P((struct awi_softc *));
-
-	struct ifmedia		sc_media;
-	enum awi_status		sc_status;
-	unsigned int		sc_enabled:1,
+	struct ieee80211com	sc_ic;
+	u_char			sc_banner[AWI_BANNER_LEN];
+	int			(*sc_enable)(struct awi_softc *);
+	void			(*sc_disable)(struct awi_softc *);
+	void			(*sc_power)(struct awi_softc *, int);
+	void			*sc_sdhook;	/* shutdown hook */
+	void			*sc_powerhook;	/* power management hook */
+	unsigned int		sc_attached:1,
+				sc_enabled:1,
 				sc_busy:1,
 				sc_cansleep:1,
-				sc_invalid:1,
 				sc_enab_intr:1,
-				sc_format_llc:1,
-				sc_start_bss:1,
-				sc_rawbpf:1,
 				sc_no_bssid:1,
-				sc_active_scan:1,
-				sc_attached:1;	/* attach has succeeded */
-	u_int8_t		sc_cmd_inprog;
+				sc_adhoc_ap:1,
+				sc_invalid:1;
+	struct ifmedia		sc_media;
+	enum ieee80211_state	sc_nstate;
+	enum awi_sub_state	sc_substate;
 	int			sc_sleep_cnt;
-
-	int			sc_mgt_timer;
-
-	TAILQ_HEAD(, awi_bss)	sc_scan;
-	u_int8_t		sc_scan_cur;
-	u_int8_t		sc_scan_min;
-	u_int8_t		sc_scan_max;
-	u_int8_t		sc_scan_set;
-	struct awi_bss		sc_bss;
-	u_int8_t		sc_ownssid[IEEE80211_NWID_LEN + 2];
-	u_int8_t		sc_ownch;
+	u_int8_t		sc_cmd_inprog;
+	u_int8_t		sc_cur_chan;
 
 	int			sc_rx_timer;
 	u_int32_t		sc_rxdoff;
@@ -141,20 +103,11 @@ struct awi_softc
 	struct mbuf		*sc_rxpend;
 
 	int			sc_tx_timer;
-	u_int8_t		sc_tx_rate;
-	struct ifqueue		sc_mgtq;
 	u_int32_t		sc_txbase;
 	u_int32_t		sc_txend;
 	u_int32_t		sc_txnext;
 	u_int32_t		sc_txdone;
 
-	int			sc_wep_keylen[IEEE80211_WEP_NKID]; /* keylen */
-	u_int8_t		sc_wep_key[IEEE80211_WEP_NKID][AWI_MAX_KEYLEN];
-	int			sc_wep_defkid;
-	void			*sc_wep_ctx;	/* work area */
-	const struct awi_wep_algo	*sc_wep_algo;
-
-	u_char			sc_banner[AWI_BANNER_LEN];
 	struct awi_mib_local	sc_mib_local;
 	struct awi_mib_addr	sc_mib_addr;
 	struct awi_mib_mac	sc_mib_mac;
@@ -166,7 +119,8 @@ struct awi_softc
 #define awi_read_1(sc, off) ((sc)->sc_chip.sc_ops->read_1)(&sc->sc_chip, off)
 #define awi_read_2(sc, off) ((sc)->sc_chip.sc_ops->read_2)(&sc->sc_chip, off)
 #define awi_read_4(sc, off) ((sc)->sc_chip.sc_ops->read_4)(&sc->sc_chip, off)
-#define awi_read_bytes(sc, off, ptr, len) ((sc)->sc_chip.sc_ops->read_bytes)(&sc->sc_chip, off, ptr, len)
+#define awi_read_bytes(sc, off, ptr, len) \
+	((sc)->sc_chip.sc_ops->read_bytes)(&sc->sc_chip, off, ptr, len)
 
 #define awi_write_1(sc, off, val) \
 	((sc)->sc_chip.sc_ops->write_1)(&sc->sc_chip, off, val)
@@ -181,57 +135,11 @@ struct awi_softc
 	awi_write_1(sc, AWI_DRIVERSTATE, \
 	    ((state) | AWI_DRV_AUTORXLED|AWI_DRV_AUTOTXLED))
 
-/* unalligned little endian access */
-#define	LE_READ_2(p)							\
-	(((u_int8_t *)(p))[0] | (((u_int8_t *)(p))[1] << 8))
-#define	LE_READ_4(p)							\
-	(((u_int8_t *)(p))[0] | (((u_int8_t *)(p))[1] << 8) |		\
-	 (((u_int8_t *)(p))[2] << 16) | (((u_int8_t *)(p))[3] << 24))
-#define	LE_WRITE_2(p, v)						\
-	((((u_int8_t *)(p))[0] = ((u_int32_t)(v) & 0xff)),		\
-	 (((u_int8_t *)(p))[1] = (((u_int32_t)(v) >> 8) & 0xff)))
-#define	LE_WRITE_4(p, v)						\
-	((((u_int8_t *)(p))[0] = ((u_int32_t)(v) & 0xff)),		\
-	 (((u_int8_t *)(p))[1] = (((u_int32_t)(v) >> 8) & 0xff)),	\
-	 (((u_int8_t *)(p))[2] = (((u_int32_t)(v) >> 16) & 0xff)),	\
-	 (((u_int8_t *)(p))[3] = (((u_int32_t)(v) >> 24) & 0xff)))
+int	awi_attach(struct awi_softc *);
+int	awi_detach(struct awi_softc *);
+int	awi_activate(struct device *, enum devact);
+void	awi_power(int, void *);
+void	awi_shutdown(void *);
+int	awi_intr(void *);
 
-#define	AWI_80211_RATE(rate)	(((rate) & 0x7f) * 5)
-
-int	awi_attach __P((struct awi_softc *));
-int	awi_intr __P((void *));
-void	awi_reset __P((struct awi_softc *));
-int	awi_init __P((struct ifnet *));
-void	awi_stop __P((struct ifnet *, int));
-#ifdef __NetBSD__
-int	awi_activate __P((struct device *, enum devact));
-int	awi_detach __P((struct awi_softc *));
-void	awi_power __P((struct awi_softc *, int));
-#endif
-
-int awi_init_region __P((struct awi_softc *));
-int awi_wicfg __P((struct ifnet *, u_long, caddr_t));
-
-int awi_wep_setnwkey __P((struct awi_softc *, struct ieee80211_nwkey *));
-int awi_wep_getnwkey __P((struct awi_softc *, struct ieee80211_nwkey *));
-int awi_wep_getalgo __P((struct awi_softc *));
-int awi_wep_setalgo __P((struct awi_softc *, int));
-int awi_wep_setkey __P((struct awi_softc *, int, unsigned char *, int));
-int awi_wep_getkey __P((struct awi_softc *, int, unsigned char *, int *));
-struct mbuf *awi_wep_encrypt __P((struct awi_softc *, struct mbuf *, int));
-
-#ifdef __FreeBSD__
-/* Provide mem* for compat with NetBSD to fix LINT */
-static __inline int
-memcmp(const void *b1, const void *b2, size_t len)
-{
-	return (bcmp(b1, b2, len));
-}
-
-static __inline void *
-memset(void *b, int c, size_t len)
-{
-	bzero(b, len);
-	return (b);
-}
-#endif
+#endif /* _DEV_IC_AWIVAR_H */

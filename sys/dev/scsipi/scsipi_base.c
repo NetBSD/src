@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.38.4.2 2001/08/24 00:10:48 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38.4.3 2001/09/21 22:36:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2410,6 +2410,7 @@ struct scsipi_syncparam {
 	int	ss_factor;
 	int	ss_period;	/* ns * 10 */
 } scsipi_syncparams[] = {
+	{ 0x09,		125 },
 	{ 0x0a,		250 },
 	{ 0x0b,		303 },
 	{ 0x0c,		500 },

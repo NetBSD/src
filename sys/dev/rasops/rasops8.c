@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.9.4.1 2001/08/24 00:10:40 nathanw Exp $	*/
+/* 	$NetBSD: rasops8.c,v 1.9.4.2 2001/09/21 22:36:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.9.4.1 2001/08/24 00:10:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.9.4.2 2001/09/21 22:36:09 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,7 @@ static int	stamp_mutex;	/* XXX see note in README */
 #define STAMP_READ(o)		(*(int32_t *)((caddr_t)stamp + (o)))
 
 /*
- * Initalize a 'rasops_info' descriptor for this depth.
+ * Initialize a 'rasops_info' descriptor for this depth.
  */
 void
 rasops8_init(ri)

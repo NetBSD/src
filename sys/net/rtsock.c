@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.45.2.4 2001/08/24 04:20:09 nathanw Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.45.2.5 2001/09/21 22:36:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -675,7 +675,7 @@ again:
 
 /*
  * This routine is called to generate a message from the routing
- * socket indicating that a redirect has occured, a routing lookup
+ * socket indicating that a redirect has occurred, a routing lookup
  * has failed, or that a protocol has detected timeouts to a particular
  * destination.
  */

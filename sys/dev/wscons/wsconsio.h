@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.37.2.2 2001/08/24 00:11:18 nathanw Exp $ */
+/* $NetBSD: wsconsio.h,v 1.37.2.3 2001/09/21 22:36:21 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -149,6 +149,9 @@ struct wskbd_map_data {
 #define WSKBDIO_GETMODE		_IOR('W', 20, int)
 #define		WSKBD_TRANSLATED	0
 #define		WSKBD_RAW		1
+
+#define	WSKBDIO_SETKEYCLICK	_IOW('W', 21, int)
+#define	WSKBDIO_GETKEYCLICK	_IOR('W', 22, int)
 
 /*
  * Mouse ioctls (32 - 63)
@@ -306,6 +309,7 @@ struct wsdisplay_font {
 #define WSDISPLAY_FONTENC_IBM 1
 #define WSDISPLAY_FONTENC_PCVT 2
 #define WSDISPLAY_FONTENC_ISO7 3 /* greek */
+#define WSDISPLAY_FONTENC_ISO2 4 /* east european */
 	u_int fontwidth, fontheight, stride;
 #define WSDISPLAY_MAXFONTSZ	(512*1024)
 	int bitorder, byteorder;

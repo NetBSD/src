@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.4.2.2 2001/08/24 00:09:10 nathanw Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.4.2.3 2001/09/21 22:35:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -163,8 +163,6 @@ struct iop_attach_args {
 void	iop_init(struct iop_softc *, const char *);
 int	iop_intr(void *);
 int	iop_lct_get(struct iop_softc *);
-int	iop_param_op(struct iop_softc *, int, struct iop_initiator *, int,
-		     int, void *, int);
 int	iop_print_ident(struct iop_softc *, int);
 int	iop_simple_cmd(struct iop_softc *, int, int, int, int, int);
 void	iop_strvis(struct iop_softc *, const char *, int, char *, int);
@@ -181,6 +179,14 @@ int	iop_msg_map_bio(struct iop_softc *, struct iop_msg *, u_int32_t *,
 			void *, int, int);
 int	iop_msg_post(struct iop_softc *, struct iop_msg *, void *, int);
 void	iop_msg_unmap(struct iop_softc *, struct iop_msg *);
+
+int	iop_field_get_all(struct iop_softc *, int, int, void *, int,
+			  struct iop_initiator *);
+int	iop_field_set(struct iop_softc *, int, int, void *, int, int);
+int	iop_table_add_row(struct iop_softc *, int, int, void *, int, int);
+int	iop_table_clear(struct iop_softc *, int, int);
+int	iop_table_del_row(struct iop_softc *, int, int, int);
+int	iop_table_get_row(struct iop_softc *, int, int, void *, int, int);
 
 int	iop_util_abort(struct iop_softc *, struct iop_initiator *, int, int,
 		      int);

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.39.2.3 2001/08/24 00:09:27 nathanw Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.39.2.4 2001/09/21 22:35:39 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -178,14 +178,23 @@ isp_attach(struct ispsoftc *isp)
 static void
 isp_config_interrupts(struct device *self)
 {
+#if	0
         struct ispsoftc *isp = (struct ispsoftc *) self;
 
 	/*
 	 * After this point, we'll be doing the new configuration
-	 * schema which allows interrups, so we can do tsleep/wakeup
+	 * schema which allows interrupts, so we can do tsleep/wakeup
 	 * for mailbox stuff at that point.
 	 */
+
+	/*
+	 * Argh. We cannot use this until we know whether isprequest
+	 * was *not* called via a hardclock (timed thaw). So- we'll
+	 * only allow a window of the FC kernel thread doing this
+	 * when calling isp_fc_runstate.
+	 */
 	isp->isp_osinfo.no_mbox_ints = 0;
+#endif
 }
 
 
@@ -452,8 +461,8 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		if (xm->xm_mode & PERIPH_CAP_SYNC)
 			dflags |= DPARM_SYNC;
 		ISP_LOCK(isp);
-		sdp->isp_devparam[xm->xm_target].dev_flags |= dflags;
-		dflags = sdp->isp_devparam[xm->xm_target].dev_flags;
+		sdp->isp_devparam[xm->xm_target].goal_flags |= dflags;
+		dflags = sdp->isp_devparam[xm->xm_target].goal_flags;
 		sdp->isp_devparam[xm->xm_target].dev_update = 1;
 		isp->isp_update |= (1 << chan->chan_channel);
 		ISP_UNLOCK(isp);
@@ -500,7 +509,9 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 		infinite = 1;
 
 	while (mswait || infinite) {
-		if (isp_intr((void *)isp)) {
+		u_int16_t isr, sema, mbox;
+		if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
+			isp_intr(isp, isr, sema, mbox);
 			if (XS_CMD_DONE_P(xs)) {
 				break;
 			}
@@ -569,7 +580,7 @@ isp_dog(void *arg)
 	 */
 	handle = isp_find_handle(isp, xs);
 	if (handle) {
-		u_int16_t r, r1, i;
+		u_int16_t isr, mbox, sema;
 
 		if (XS_CMD_DONE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
@@ -587,21 +598,18 @@ isp_dog(void *arg)
 
 		XS_CMD_S_WDOG(xs);
 
-		i = 0;
-		do {
-			r = ISP_READ(isp, BIU_ISR);
-			USEC_DELAY(1);
-			r1 = ISP_READ(isp, BIU_ISR);
-		} while (r != r1 && ++i < 1000);
+		if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
+			isp_intr(isp, isr, sema, mbox);
 
-		if (INT_PENDING(isp, r) && isp_intr(isp) && XS_CMD_DONE_P(xs)) {
-			isp_prt(isp, ISP_LOGDEBUG1, "watchdog cleanup (%x, %x)",
-			    handle, r);
+		}
+		if (XS_CMD_DONE_P(xs)) {
+			isp_prt(isp, ISP_LOGDEBUG1,
+			    "watchdog cleanup for handle 0x%x", handle);
 			XS_CMD_C_WDOG(xs);
 			isp_done(xs);
 		} else if (XS_CMD_GRACE_P(xs)) {
-			isp_prt(isp, ISP_LOGDEBUG1, "watchdog timeout (%x, %x)",
-			    handle, r);
+			isp_prt(isp, ISP_LOGDEBUG1,
+			    "watchdog timeout for handle 0x%x", handle);
 			/*
 			 * Make sure the command is *really* dead before we
 			 * release the handle (and DMA resources) for reuse.
@@ -622,7 +630,7 @@ isp_dog(void *arg)
 			u_int16_t iptr, optr;
 			ispreq_t *mp;
 			isp_prt(isp, ISP_LOGDEBUG2,
-			    "possible command timeout (%x, %x)", handle, r);
+			    "possible command timeout on handle %x", handle);
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
 			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
@@ -674,9 +682,19 @@ isp_fc_worker(void *arg)
 		 */
 		s = splbio();
 		while (isp->isp_osinfo.threadwork) {
+			int omb, r;
 			isp->isp_osinfo.threadwork = 0;
-			if (isp_fc_runstate(isp, 10 * 1000000) == 0) {
+			omb = isp->isp_osinfo.no_mbox_ints;
+			isp->isp_osinfo.no_mbox_ints = 0;
+			r = isp_fc_runstate(isp, 10 * 1000000);
+			isp->isp_osinfo.no_mbox_ints = omb;
+			if (r) {
 				break;
+			}
+			if  (isp->isp_osinfo.loop_checked &&
+			     FCPARAM(isp)->loop_seen_once == 0) {
+				splx(s);
+				goto skip;
 			}
 			isp->isp_osinfo.threadwork = 1;
 			splx(s);
@@ -693,14 +711,16 @@ isp_fc_worker(void *arg)
 
 		if (isp->isp_osinfo.blocked) {
 			isp->isp_osinfo.blocked = 0;
-			isp_prt(isp, /* ISP_LOGDEBUG0 */ ISP_LOGALL, "restarting queues (freeze count %d)", isp->isp_chanA.chan_qfreeze);
-			
+			isp_prt(isp, ISP_LOGDEBUG0,
+			    "restarting queues (freeze count %d)",
+			    isp->isp_chanA.chan_qfreeze);
 			scsipi_channel_thaw(&isp->isp_chanA, 1);
 		}
 
 		if (isp->isp_osinfo.thread == NULL)
 			break;
 
+skip:
 		(void) tsleep(&isp->isp_osinfo.thread, PRIBIO, "fcclnup", 0);
 
 		splx(s);
@@ -746,11 +766,11 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		bus = (tgt >> 16) & 0xffff;
 		tgt &= 0xffff;
 		sdp += bus;
-		flags = sdp->isp_devparam[tgt].cur_dflags;
+		flags = sdp->isp_devparam[tgt].actv_flags;
 
 		xm.xm_mode = 0;
-		xm.xm_period = sdp->isp_devparam[tgt].cur_period;
-		xm.xm_offset = sdp->isp_devparam[tgt].cur_offset;
+		xm.xm_period = sdp->isp_devparam[tgt].actv_period;
+		xm.xm_offset = sdp->isp_devparam[tgt].actv_offset;
 		xm.xm_target = tgt;
 
 		if ((flags & DPARM_SYNC) && xm.xm_period && xm.xm_offset)
@@ -992,7 +1012,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			mbox6 = 0;
 		}
                 isp_prt(isp, ISP_LOGERR,
-                    "Internal Firmware on bus %d Error @ RISC Address 0x%x",
+                    "Internal Firmware Error on bus %d @ RISC Address 0x%x",
                     mbox6, mbox1);
 		isp_reinit(isp);
 		break;

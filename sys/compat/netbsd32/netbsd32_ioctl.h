@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.4.2.1 2001/06/21 20:00:02 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.4.2.2 2001/09/21 22:35:21 nathanw Exp $	*/
 
 /*
- * Copyright (c) 1998 Matthew R. Green
+ * Copyright (c) 1998, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

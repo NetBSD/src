@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.73.2.2 2001/08/30 23:43:42 nathanw Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.73.2.3 2001/09/21 22:34:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.2 2001/08/30 23:43:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.3 2001/09/21 22:34:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,8 +185,6 @@ cpu_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	if (l1 != curproc && l1 != &lwp0)
 		panic("cpu_fork: curproc");
-	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
-		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
 #endif
 
 	/*
@@ -344,7 +342,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 }
 
 /*
@@ -361,7 +359,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

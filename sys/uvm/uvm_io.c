@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.12.2.2 2001/06/21 20:10:31 nathanw Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.12.2.3 2001/09/21 22:37:14 nathanw Exp $	*/
 
 /*
  *
@@ -91,7 +91,7 @@ uvm_io(map, uio)
 		togo = togo - (endva - VM_MAXUSER_ADDRESS + 1);
 	pageoffset = baseva & PAGE_MASK;
 	baseva = trunc_page(baseva);
-	chunksz = min(round_page(togo + pageoffset), MAXBSIZE);
+	chunksz = MIN(round_page(togo + pageoffset), MAXBSIZE);
 	error = 0;
 
 	/*

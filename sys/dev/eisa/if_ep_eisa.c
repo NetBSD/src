@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.22 2000/05/07 13:57:16 martin Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.22.6.1 2001/09/21 22:35:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,6 +160,10 @@ struct ep_eisa_product {
 	  0,				EISA_PRODUCT_TCM5093 },
 	{ "TCM5094",			ELINK_CHIPSET_3C509,
 	  0,				EISA_PRODUCT_TCM5094 },
+	{ "TCM5095",			ELINK_CHIPSET_3C509,
+	  0,				EISA_PRODUCT_TCM5095 },
+	{ "TCM5098",			ELINK_CHIPSET_3C509,
+	  0,				EISA_PRODUCT_TCM5098 },
 
 	/*
 	 * Note: The 3c597 Fast Etherlink MII (TCM5972) is an
@@ -242,7 +246,7 @@ ep_eisa_attach(parent, self, aux)
 	/* Reset card. */
 	bus_space_write_1(iot, ioh_cfg, EP_EISA_CFG_CONTROL, 
 	    EISA_ENABLE | EISA_RESET);
-	delay(10);
+	delay(4000);
 	bus_space_write_1(iot, ioh_cfg, EP_EISA_CFG_CONTROL, EISA_ENABLE);
 	/* Wait for reset? */
 	delay(1000);

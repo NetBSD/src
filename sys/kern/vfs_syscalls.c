@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.164.2.3 2001/08/24 00:11:45 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.164.2.4 2001/09/21 22:36:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1923,20 +1923,21 @@ sys_access(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct ucred *cred = p->p_ucred;
+	struct ucred *cred = crget();
 	struct vnode *vp;
-	int error, flags, t_gid, t_uid;
+	int error, flags;
 	struct nameidata nd;
 
-	t_uid = cred->cr_uid;
-	t_gid = cred->cr_gid;
+	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
+	cred->cr_ref = 1;
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
+	/* Override default credentials */
+	nd.ni_cnd.cn_cred = cred;
 	if ((error = namei(&nd)) != 0)
-		goto out1;
+		goto out;
 	vp = nd.ni_vp;
 
 	/* Flags == 0 means only check for existence. */
@@ -1954,9 +1955,8 @@ sys_access(l, v, retval)
 			error = vn_writechk(vp);
 	}
 	vput(vp);
-out1:
-	cred->cr_uid = t_uid;
-	cred->cr_gid = t_gid;
+out:
+	crfree(cred);
 	return (error);
 }
 

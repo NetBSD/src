@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.4.6.1 2001/08/24 00:10:11 nathanw Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.4.6.2 2001/09/21 22:35:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -56,6 +56,7 @@ struct tl_softc {
 	mii_data_t tl_mii;		/* mii bus */
 	bus_dma_segment_t ctrl_segs; /* bus-dma memory for control blocks */
 	int ctrl_nsegs;
+	char *ctrl;			/* vaddr for ctrl_segs */
 	struct Rx_list *Rx_list;	/* Receive and transmit lists */
 	struct tl_Rx_list *hw_Rx_list;	/* and assocoated hw descriptor */
 	bus_dmamap_t Rx_dmamap;		/* and associated DMA maps */

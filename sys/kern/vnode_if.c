@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.33.2.2 2001/08/24 00:11:47 nathanw Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.33.2.3 2001/09/21 22:36:29 nathanw Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.28 2001/05/26 21:33:11 chs Exp 
+ *	NetBSD: vnode_if.src,v 1.30 2001/09/15 20:36:37 chs Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
  */
@@ -1367,47 +1367,12 @@ VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
 }
 #endif
 
-const int vop_ballocn_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_ballocn_args,a_vp),
-	VDESC_NO_OFFSET
-};
-const struct vnodeop_desc vop_ballocn_desc = {
-	41,
-	"vop_ballocn",
-	0,
-	vop_ballocn_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_ballocn_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-#ifdef VNODE_OP_NOINLINE
-int
-VOP_BALLOCN(vp, offset, length, cred, flags)
-	struct vnode *vp;
-	off_t offset;
-	off_t length;
-	struct ucred *cred;
-	int flags;
-{
-	struct vop_ballocn_args a;
-	a.a_desc = VDESC(vop_ballocn);
-	a.a_vp = vp;
-	a.a_offset = offset;
-	a.a_length = length;
-	a.a_cred = cred;
-	a.a_flags = flags;
-	return (VCALL(vp, VOFFSET(vop_ballocn), &a));
-}
-#endif
-
 const int vop_reallocblks_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reallocblks_args,a_vp),
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_reallocblks_desc = {
-	42,
+	41,
 	"vop_reallocblks",
 	0,
 	vop_reallocblks_vp_offsets,
@@ -1436,7 +1401,7 @@ const int vop_vfree_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_vfree_desc = {
-	43,
+	42,
 	"vop_vfree",
 	0,
 	vop_vfree_vp_offsets,
@@ -1467,7 +1432,7 @@ const int vop_truncate_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_truncate_desc = {
-	44,
+	43,
 	"vop_truncate",
 	0,
 	vop_truncate_vp_offsets,
@@ -1502,7 +1467,7 @@ const int vop_update_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_update_desc = {
-	45,
+	44,
 	"vop_update",
 	0,
 	vop_update_vp_offsets,
@@ -1535,7 +1500,7 @@ const int vop_lease_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_lease_desc = {
-	46,
+	45,
 	"vop_lease",
 	0,
 	vop_lease_vp_offsets,
@@ -1568,7 +1533,7 @@ const int vop_whiteout_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_whiteout_desc = {
-	47,
+	46,
 	"vop_whiteout",
 	0,
 	vop_whiteout_vp_offsets,
@@ -1599,7 +1564,7 @@ const int vop_getpages_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_getpages_desc = {
-	48,
+	47,
 	"vop_getpages",
 	0,
 	vop_getpages_vp_offsets,
@@ -1640,7 +1605,7 @@ const int vop_putpages_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_putpages_desc = {
-	49,
+	48,
 	"vop_putpages",
 	0,
 	vop_putpages_vp_offsets,
@@ -1652,52 +1617,19 @@ const struct vnodeop_desc vop_putpages_desc = {
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_PUTPAGES(vp, m, count, flags, rtvals)
+VOP_PUTPAGES(vp, offlo, offhi, flags)
 	struct vnode *vp;
-	struct vm_page **m;
-	int count;
+	voff_t offlo;
+	voff_t offhi;
 	int flags;
-	int *rtvals;
 {
 	struct vop_putpages_args a;
 	a.a_desc = VDESC(vop_putpages);
 	a.a_vp = vp;
-	a.a_m = m;
-	a.a_count = count;
+	a.a_offlo = offlo;
+	a.a_offhi = offhi;
 	a.a_flags = flags;
-	a.a_rtvals = rtvals;
 	return (VCALL(vp, VOFFSET(vop_putpages), &a));
-}
-#endif
-
-const int vop_size_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_size_args,a_vp),
-	VDESC_NO_OFFSET
-};
-const struct vnodeop_desc vop_size_desc = {
-	50,
-	"vop_size",
-	0,
-	vop_size_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-#ifdef VNODE_OP_NOINLINE
-int
-VOP_SIZE(vp, size, eobp)
-	struct vnode *vp;
-	off_t size;
-	off_t *eobp;
-{
-	struct vop_size_args a;
-	a.a_desc = VDESC(vop_size);
-	a.a_vp = vp;
-	a.a_size = size;
-	a.a_eobp = eobp;
-	return (VCALL(vp, VOFFSET(vop_size), &a));
 }
 #endif
 
@@ -1746,7 +1678,6 @@ const struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_blkatoff_desc,
 	&vop_valloc_desc,
 	&vop_balloc_desc,
-	&vop_ballocn_desc,
 	&vop_reallocblks_desc,
 	&vop_vfree_desc,
 	&vop_truncate_desc,
@@ -1755,7 +1686,6 @@ const struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_whiteout_desc,
 	&vop_getpages_desc,
 	&vop_putpages_desc,
-	&vop_size_desc,
 	NULL
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.2 1996/02/27 04:20:34 jonathan Exp $	*/
+/*	$NetBSD: timex.h,v 1.2.42.1 2001/09/21 22:37:01 nathanw Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -240,7 +240,7 @@
 #define TIME_INS	1	/* insert leap second warning */
 #define TIME_DEL	2	/* delete leap second warning */
 #define TIME_OOP	3	/* leap second in progress */
-#define TIME_WAIT	4	/* leap second has occured */
+#define TIME_WAIT	4	/* leap second has occurred */
 #define TIME_ERROR	5	/* clock not synchronized */
 
 /*
@@ -299,4 +299,13 @@ __END_DECLS
 #endif /* not _KERNEL */
 
 #endif /* __FreeBSD__ || __NetBSD__ */
+
+#ifdef __NetBSD__
+#ifdef _KERNEL
+__BEGIN_DECLS
+int   ntp_settime1 __P((struct timex *, register_t *));
+int   ntp_adjtime1 __P((struct timex *, void *, register_t *));
+__END_DECLS
+#endif /* _KERNEL */
+#endif __NetBSD__
 #endif /* _SYS_TIMEX_H_ */

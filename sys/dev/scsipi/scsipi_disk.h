@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.5 1998/02/13 08:28:55 enami Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.5.26.1 2001/09/21 22:36:14 nathanw Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -59,6 +59,8 @@ struct scsipi_rw_big {
 	u_int8_t opcode;
 	u_int8_t byte2;
 #define	SRWB_RELADDR	0x01
+#define	SRWB_FUA	0x08	/* force unit access */
+#define	SRWB_DPO	0x10	/* disable page out */
 	u_int8_t addr[4];
 	u_int8_t reserved;
 	u_int8_t length[2];

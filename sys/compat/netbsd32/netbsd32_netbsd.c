@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.57.2.1 2001/06/21 20:00:04 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.57.2.2 2001/09/21 22:35:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -120,6 +120,7 @@ const struct emul emul_netbsd32 = {
 	trapsignal,
 	netbsd32_sigcode,
 	netbsd32_esigcode,
+	netbsd32_setregs,
 	NULL,
 	NULL,
 	NULL,

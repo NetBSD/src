@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.4 2001/08/24 00:09:09 nathanw Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.5 2001/09/21 22:35:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -375,7 +375,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		SLIST_INSERT_HEAD(&sc->sc_im_freelist, im, im_chain);
 	}
 
-	/* Initalise the IOP's outbound FIFO. */
+	/* Initialise the IOP's outbound FIFO. */
 	if (iop_ofifo_init(sc) != 0) {
 		printf("%s: unable to init oubound FIFO\n",
 		    sc->sc_dv.dv_xname);
@@ -946,7 +946,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 }
 
 /*
- * Initalize and populate the IOP's outbound FIFO.
+ * Initialize and populate the IOP's outbound FIFO.
  */
 static int
 iop_ofifo_init(struct iop_softc *sc)
@@ -1190,13 +1190,13 @@ iop_lct_get(struct iop_softc *sc)
  * pointer to the parameter group op in the wrapper's `im_dvcontext' field.
  */
 int
-iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
-	     int write, int group, void *buf, int size)
+iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
+		  int size, struct iop_initiator *ii)
 {
 	struct iop_msg *im;
 	struct i2o_util_params_op *mf;
 	struct i2o_reply *rf;
-	int rv, func, op;
+	int rv;
 	struct iop_pgop *pgop;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
@@ -1213,24 +1213,16 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 	im->im_dvcontext = pgop;
 	im->im_rb = rf;
 
-	if (write) {
-		func = I2O_UTIL_PARAMS_SET;
-		op = I2O_PARAMS_OP_FIELD_SET;
-	} else {
-		func = I2O_UTIL_PARAMS_GET;
-		op = I2O_PARAMS_OP_FIELD_GET;
-	}
-
 	mf = (struct i2o_util_params_op *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
-	mf->msgfunc = I2O_MSGFUNC(tid, func);
+	mf->msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_GET);
 	mf->msgictx = IOP_ICTX;
 	mf->msgtctx = im->im_tctx;
 	mf->flags = 0;
 
 	pgop->olh.count = htole16(1);
 	pgop->olh.reserved = htole16(0);
-	pgop->oat.operation = htole16(op);
+	pgop->oat.operation = htole16(I2O_PARAMS_OP_FIELD_GET);
 	pgop->oat.fieldcount = htole16(0xffff);
 	pgop->oat.group = htole16(group);
 
@@ -1239,7 +1231,7 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1, NULL);
-	iop_msg_map(sc, im, mb, buf, size, write, NULL);
+	iop_msg_map(sc, im, mb, buf, size, 0, NULL);
 	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
 
 	if (ii == NULL)
@@ -1252,6 +1244,10 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 			rv = 0;
 		else
 			rv = (rf->reqstatus != 0 ? EIO : 0);
+
+		if (rv != 0)
+			printf("%s: FIELD_GET failed for tid %d group %d\n",
+			    sc->sc_dv.dv_xname, tid, group);
 	}
 
 	if (ii == NULL || rv != 0) {
@@ -1261,6 +1257,146 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 		free(rf, M_DEVBUF);
 	}
 
+	return (rv);
+}
+
+/*
+ * Set a single field in a scalar parameter group.
+ */
+int
+iop_field_set(struct iop_softc *sc, int tid, int group, void *buf,
+	      int size, int field)
+{
+	struct iop_msg *im;
+	struct i2o_util_params_op *mf;
+	struct iop_pgop *pgop;
+	int rv, totsize;
+	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
+
+	totsize = sizeof(*pgop) + size;
+
+	im = iop_msg_alloc(sc, IM_WAIT);
+	if ((pgop = malloc(totsize, M_DEVBUF, M_WAITOK)) == NULL) {
+		iop_msg_free(sc, im);
+		return (ENOMEM);
+	}
+
+	mf = (struct i2o_util_params_op *)mb;
+	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
+	mf->msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_SET);
+	mf->msgictx = IOP_ICTX;
+	mf->msgtctx = im->im_tctx;
+	mf->flags = 0;
+
+	pgop->olh.count = htole16(1);
+	pgop->olh.reserved = htole16(0);
+	pgop->oat.operation = htole16(I2O_PARAMS_OP_FIELD_SET);
+	pgop->oat.fieldcount = htole16(1);
+	pgop->oat.group = htole16(group);
+	pgop->oat.fields[0] = htole16(field);
+	memcpy(pgop + 1, buf, size);
+
+	iop_msg_map(sc, im, mb, pgop, totsize, 1, NULL);
+	rv = iop_msg_post(sc, im, mb, 30000);
+	if (rv != 0)
+		printf("%s: FIELD_SET failed for tid %d group %d\n",
+		    sc->sc_dv.dv_xname, tid, group);
+
+	iop_msg_unmap(sc, im);
+	iop_msg_free(sc, im);
+	free(pgop, M_DEVBUF);
+	return (rv);
+}
+
+/*
+ * Delete all rows in a tablular parameter group.
+ */
+int
+iop_table_clear(struct iop_softc *sc, int tid, int group)
+{
+	struct iop_msg *im;
+	struct i2o_util_params_op *mf;
+	struct iop_pgop pgop;
+	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
+	int rv;
+
+	im = iop_msg_alloc(sc, IM_WAIT);
+
+	mf = (struct i2o_util_params_op *)mb;
+	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
+	mf->msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_SET);
+	mf->msgictx = IOP_ICTX;
+	mf->msgtctx = im->im_tctx;
+	mf->flags = 0;
+
+	pgop.olh.count = htole16(1);
+	pgop.olh.reserved = htole16(0);
+	pgop.oat.operation = htole16(I2O_PARAMS_OP_TABLE_CLEAR);
+	pgop.oat.fieldcount = htole16(0);
+	pgop.oat.group = htole16(group);
+	pgop.oat.fields[0] = htole16(0);
+
+	PHOLD(curproc);
+	iop_msg_map(sc, im, mb, &pgop, sizeof(pgop), 1, NULL);
+	rv = iop_msg_post(sc, im, mb, 30000);
+	if (rv != 0)
+		printf("%s: TABLE_CLEAR failed for tid %d group %d\n",
+		    sc->sc_dv.dv_xname, tid, group);
+
+	iop_msg_unmap(sc, im);
+	PRELE(curproc);
+	iop_msg_free(sc, im);
+	return (rv);
+}
+
+/*
+ * Add a single row to a tabular parameter group.  The row can have only one
+ * field.
+ */
+int
+iop_table_add_row(struct iop_softc *sc, int tid, int group, void *buf,
+		  int size, int row)
+{
+	struct iop_msg *im;
+	struct i2o_util_params_op *mf;
+	struct iop_pgop *pgop;
+	int rv, totsize;
+	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
+
+	totsize = sizeof(*pgop) + sizeof(u_int16_t) * 2 + size;
+
+	im = iop_msg_alloc(sc, IM_WAIT);
+	if ((pgop = malloc(totsize, M_DEVBUF, M_WAITOK)) == NULL) {
+		iop_msg_free(sc, im);
+		return (ENOMEM);
+	}
+
+	mf = (struct i2o_util_params_op *)mb;
+	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
+	mf->msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_SET);
+	mf->msgictx = IOP_ICTX;
+	mf->msgtctx = im->im_tctx;
+	mf->flags = 0;
+
+	pgop->olh.count = htole16(1);
+	pgop->olh.reserved = htole16(0);
+	pgop->oat.operation = htole16(I2O_PARAMS_OP_ROW_ADD);
+	pgop->oat.fieldcount = htole16(1);
+	pgop->oat.group = htole16(group);
+	pgop->oat.fields[0] = htole16(0);	/* FieldIdx */
+	pgop->oat.fields[1] = htole16(1);	/* RowCount */
+	pgop->oat.fields[2] = htole16(row);	/* KeyValue */
+	memcpy(&pgop->oat.fields[3], buf, size);
+
+	iop_msg_map(sc, im, mb, pgop, totsize, 1, NULL);
+	rv = iop_msg_post(sc, im, mb, 30000);
+	if (rv != 0)
+		printf("%s: ADD_ROW failed for tid %d group %d row %d\n",
+		    sc->sc_dv.dv_xname, tid, group, row);
+
+	iop_msg_unmap(sc, im);
+	iop_msg_free(sc, im);
+	free(pgop, M_DEVBUF);
 	return (rv);
 }
 
@@ -2195,8 +2331,8 @@ iop_print_ident(struct iop_softc *sc, int tid)
 	char buf[32];
 	int rv;
 
-	rv = iop_param_op(sc, tid, NULL, 0, I2O_PARAM_DEVICE_IDENTITY, &p,
-	    sizeof(p));
+	rv = iop_field_get_all(sc, tid, I2O_PARAM_DEVICE_IDENTITY, &p,
+	    sizeof(p), NULL);
 	if (rv != 0)
 		return (rv);
 

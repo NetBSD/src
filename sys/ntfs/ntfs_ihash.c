@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.6 2000/03/16 18:08:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.6.6.1 2001/09/21 22:36:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -56,7 +56,7 @@ MALLOC_DEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
  */
 static LIST_HEAD(nthashhead, ntnode) *ntfs_nthashtbl;
 static u_long	ntfs_nthash;		/* size of hash table - 1 */
-#define	NTNOHASH(device, inum)	(&ntfs_nthashtbl[(minor(device) + (inum)) & ntfs_nthash])
+#define	NTNOHASH(device, inum)	((minor(device) + (inum)) & ntfs_nthash)
 #ifndef NULL_SIMPLELOCKS
 static struct simplelock ntfs_nthash_slock;
 #endif
@@ -75,6 +75,36 @@ ntfs_nthashinit()
 }
 
 #ifdef __NetBSD__
+/*
+ * Reinitialize inode hash table.
+ */
+
+void
+ntfs_nthashreinit()
+{
+	struct ntnode *ip;
+	struct nthashhead *oldhash, *hash;
+	u_long oldmask, mask, val;
+	int i;
+
+	hash = HASHINIT(desiredvnodes, M_NTFSNTHASH, M_WAITOK, &mask);
+
+	simple_lock(&ntfs_nthash_slock);
+	oldhash = ntfs_nthashtbl;
+	oldmask = ntfs_nthash;
+	ntfs_nthashtbl = hash;
+	ntfs_nthash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((ip = LIST_FIRST(&oldhash[i])) != NULL) {
+			LIST_REMOVE(ip, i_hash);
+			val = NTNOHASH(ip->i_dev, ip->i_number);
+			LIST_INSERT_HEAD(&hash[val], ip, i_hash);
+		}
+	}
+	simple_unlock(&ntfs_nthash_slock);
+	hashdone(oldhash, M_NTFSNTHASH);
+}
+
 /*
  * Free the inode hash table. Called from ntfs_done(), only needed
  * on NetBSD.
@@ -96,11 +126,14 @@ ntfs_nthashlookup(dev, inum)
 	ino_t inum;
 {
 	struct ntnode *ip;
+	struct nthashhead *ipp;
 
 	simple_lock(&ntfs_nthash_slock);
-	for (ip = NTNOHASH(dev, inum)->lh_first; ip; ip = ip->i_hash.le_next)
+	ipp = &ntfs_nthashtbl[NTNOHASH(dev, inum)];
+	LIST_FOREACH(ip, ipp, i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev)
 			break;
+	}
 	simple_unlock(&ntfs_nthash_slock);
 
 	return (ip);
@@ -116,7 +149,7 @@ ntfs_nthashins(ip)
 	struct nthashhead *ipp;
 
 	simple_lock(&ntfs_nthash_slock);
-	ipp = NTNOHASH(ip->i_dev, ip->i_number);
+	ipp = &ntfs_nthashtbl[NTNOHASH(ip->i_dev, ip->i_number)];
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	ip->i_flag |= IN_HASHED;
 	simple_unlock(&ntfs_nthash_slock);
@@ -133,10 +166,6 @@ ntfs_nthashrem(ip)
 	if (ip->i_flag & IN_HASHED) {
 		ip->i_flag &= ~IN_HASHED;
 		LIST_REMOVE(ip, i_hash);
-#ifdef DIAGNOSTIC
-		ip->i_hash.le_next = NULL;
-		ip->i_hash.le_prev = NULL;
-#endif
 	}
 	simple_unlock(&ntfs_nthash_slock);
 }

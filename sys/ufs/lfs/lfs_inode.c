@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.50.2.2 2001/08/24 00:13:26 nathanw Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.50.2.3 2001/09/21 22:37:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -275,7 +275,6 @@ lfs_truncate(void *v)
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_ffs_size;
-	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the

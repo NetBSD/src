@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7.2.2 2001/08/24 00:11:33 nathanw Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7.2.3 2001/09/21 22:36:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -406,7 +406,7 @@ kgdb_trap(type, regs)
 #endif
 		kgdb_active = 1;
 	} else {
-		/* Tell remote host that an exception has occured. */
+		/* Tell remote host that an exception has occurred. */
 		sprintf(buffer, "S%02x", kgdb_signal(type));
 		kgdb_send(buffer);
 	}

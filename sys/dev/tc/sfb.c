@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.44.2.2 2001/08/24 00:11:02 nathanw Exp $ */
+/* $NetBSD: sfb.c,v 1.44.2.3 2001/09/21 22:36:16 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.44.2.2 2001/08/24 00:11:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.44.2.3 2001/09/21 22:36:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ sfbattach(parent, self, aux)
 
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, sfbintr, sc);
 
-	asic = (caddr_t)(sc->sc_vaddr + SFB_ASIC_OFFSET);
+	asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
 	*(u_int32_t *)(asic + SFB_ASIC_CLEAR_INTR) = 0;
 	*(u_int32_t *)(asic + SFB_ASIC_ENABLE_INTR) = 1;
 
@@ -327,9 +327,9 @@ sfb_common_init(ri)
 	*(u_int32_t *)(asic + SFB_ASIC_VIDEO_BASE) = vbase = 1;
 	*(u_int32_t *)(asic + SFB_ASIC_PLANEMASK) = ~0;
 	*(u_int32_t *)(asic + SFB_ASIC_PIXELMASK) = ~0;
-	*(u_int32_t *)(asic + SFB_ASIC_MODE) = 0; /* MODE_SIMPLE */
-	*(u_int32_t *)(asic + SFB_ASIC_ROP) = 3;  /* ROP_COPY */
-	*(u_int32_t *)(asic + 0x180000) = 0; /* Bt459 reset */
+	*(u_int32_t *)(asic + SFB_ASIC_MODE) = 0;	/* MODE_SIMPLE */
+	*(u_int32_t *)(asic + SFB_ASIC_ROP) = 3; 	/* ROP_COPY */
+	*(u_int32_t *)(asic + 0x180000) = 0; 		/* Bt459 reset */
 
 	/* initialize colormap and cursor hardware */
 	sfbhwinit(base);
@@ -412,7 +412,7 @@ sfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
 		if (sc->sc_blanked ^ turnoff) {
-			vaddr_t asic = sc->sc_vaddr + SFB_ASIC_OFFSET;
+			caddr_t asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
 			*(u_int32_t *)(asic + SFB_ASIC_VIDEO_VALID)
 				= !turnoff;
 			tc_wmb();
@@ -531,17 +531,18 @@ sfbintr(arg)
 	void *arg;
 {
 	struct sfb_softc *sc = arg;
-	caddr_t asic, vdac;
+	caddr_t base, asic, vdac;
 	int v;
 	
-	asic = (caddr_t)sc->sc_vaddr + SFB_ASIC_OFFSET;
+	base = (caddr_t)sc->sc_ri->ri_hw;
+	asic = base + SFB_ASIC_OFFSET;
 	*(u_int32_t *)(asic + SFB_ASIC_CLEAR_INTR) = 0;
 	/* *(u_int32_t *)(asic + SFB_ASIC_ENABLE_INTR) = 1; */
 
 	if (sc->sc_changed == 0)
-		goto finish;
+		goto done;
 
-	vdac = (caddr_t)sc->sc_vaddr + SFB_RAMDAC_OFFSET;
+	vdac = base + SFB_RAMDAC_OFFSET;
 	v = sc->sc_changed;
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		SELECT(vdac, BT459_IREG_CCR);
@@ -620,7 +621,7 @@ sfbintr(arg)
 		}
 	}
 	sc->sc_changed = 0;
-finish:
+done:
 	return (1);
 }
 

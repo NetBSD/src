@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.33.2.2 2001/04/09 01:58:09 nathanw Exp $	*/
+/*	$NetBSD: procfs.h,v 1.33.2.3 2001/09/21 22:36:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -151,6 +151,7 @@ int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *,
 int procfs_checkioperm __P((struct proc *, struct proc *));
 void procfs_revoke_vnodes __P((struct proc *, void *));
 void procfs_hashinit __P((void));
+void procfs_hashreinit __P((void));
 void procfs_hashdone __P((void));
 
 /* functions to check whether or not files should be displayed */

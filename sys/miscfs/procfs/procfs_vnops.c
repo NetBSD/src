@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.78.2.3 2001/06/21 20:07:44 nathanw Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.78.2.4 2001/09/21 22:36:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -621,6 +621,7 @@ procfs_getattr(v)
 		 * they may be read in one pass.
 		 */
 		vap->va_blocksize = 4 * PAGE_SIZE;
+		vap->va_bytes = vap->va_size = 0;
 		break;
 
 	default:

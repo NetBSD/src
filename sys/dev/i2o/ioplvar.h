@@ -1,4 +1,4 @@
-/*	$NetBSD: ioplvar.h,v 1.2.2.2 2001/08/24 00:09:10 nathanw Exp $	*/
+/*	$NetBSD: ioplvar.h,v 1.2.2.3 2001/09/21 22:35:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #define	IOPL_DESCRIPTORS	128
 #define	IOPL_MAX_SEGS		8		/* XXX */
 #define	IOPL_MAX_BATCH		4
+#define	IOPL_MAX_MULTI		256
 #define	IOPL_BATCHING_ENABLED	1
 
 struct iopl_media {
@@ -86,17 +87,24 @@ struct iopl_softc {
 	struct iopl_tx		*sc_tx;		/* Transmit descriptors */
 	SLIST_HEAD(,iopl_tx)	sc_tx_free;	/* Free TX descriptor list */
 	u_int			sc_tx_freecnt;	/* # of free TX descriptors */
-	u_int			sc_tx_cnt;	/* # of TX descriptors */
 	u_int			sc_tx_maxout;	/* Max outstanding xmits */
 	u_int			sc_tx_maxsegs;	/* Max segments per xmit */
 	u_int			sc_tx_maxreq;	/* Max xmits per message */
 	u_int			sc_tx_ohead;	/* S/G list overhead */
+	u_int			sc_tx_tcw;	/* Transmit control word */
 
 	struct iopl_rx		*sc_rx;		/* Receive descriptors */
 	SLIST_HEAD(,iopl_rx)	sc_rx_free;	/* Free RX descriptor list */
 	u_int			sc_rx_freecnt;	/* # of free RX descriptors */
-	u_int			sc_rx_cnt;	/* # of RX descriptors */
 	u_int			sc_rx_maxbkt;	/* Max receive buckets */
+	u_int			sc_rx_prepad;	/* Pre-padding for alignment */
+	u_int			sc_rx_csumflgs;	/* Checksum flags */
+
+	u_int			sc_mcast_max;	/* Maximum multicast addrs */
+	u_int			sc_mcast_cnt;	/* Active multicast addrs */
+
+	/* Pull dst address from a packet and insert into buffer context. */
+	void			(*sc_munge)(struct mbuf *, u_int8_t *);
 
 	/*
 	 * Interface info
@@ -118,6 +126,7 @@ struct iopl_softc {
 		union {
 			struct	i2o_param_lan_stats ls;
 			struct	i2o_param_lan_802_3_stats les;
+			struct	i2o_param_lan_fddi_stats lfs;
 			struct	i2o_param_lan_media_operation lmo;
 		} p;
 	} __attribute__ ((__packed__)) sc_pb;
@@ -125,5 +134,6 @@ struct iopl_softc {
 #define	IOPL_MEDIA_CHANGE	0x01
 #define	IOPL_LINK		0x02
 #define	IOPL_FDX		0x04
+#define	IOPL_INITTED		0x08
 
 #endif	/* !_I2O_IOPLVAR_H_ */
