@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.2 1999/10/19 20:02:23 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.3 1999/10/19 21:05:06 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -526,14 +526,21 @@ isp_async(isp, cmd, arg)
 	ispasync_t cmd;
 	void *arg;
 {
-	int bus;
+	int bus, tgt;
 	int s = splbio();
 	switch (cmd) {
-	case ISPASYNC_NEW_TGT_PARAMS:
-		/*
-		 * XXX Should we really do anything here?
-		 */
+	case ISPASYNC_NEW_TGT_PARAMS: {
+		struct scsipi_xfer_mode xm;
+
+		tgt = *((int *) arg);
+		bus = (tgt >> 16) & 0xffff;
+		tgt &= 0xffff;
+
+		xm.xm_target = tgt;
+		scsipi_async_event(&isp->isp_osinfo._channels[bus],
+		    ASYNC_EVENT_XFER_MODE, &xm);
 		break;
+	}
 	case ISPASYNC_BUS_RESET:
 		if (arg)
 			bus = *((int *) arg);
