@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.7.6.1 1997/05/23 20:16:28 lukem Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.7.6.2 1999/01/14 08:27:48 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd May 24, 1997
+.Dd January 14, 1999
 .Dt RESOLV.CONF 5
 .Os BSD 4
 .Sh NAME
@@ -83,7 +83,7 @@ If no
 .Sy domain
 entry is present, the domain is determined
 from the local host name returned by
-.Xr gethostname 2 ;
+.Xr gethostname 3 ;
 the domain part is taken to be everything after the first `.'.
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
@@ -130,7 +130,13 @@ The syntax is:
 where option is one of the following:
 .Bl -tag -width ndots:n
 .It Sy debug
-sets RES_DEBUG in _res.options.
+enable debugging information, by setting RES_DEBUG in _res.options
+(see
+.Xr resolver 3 ).
+.It Sy inet6
+enable support for IPv6 addresses, by setting RES_USE_INET6 in
+_res.options (see
+.Xr resolver 3 ).
 .It Sy ndots:n
 sets a threshold for the number of dots which
 must appear in a name given to res_query (see
