@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defines.h	8.1 (Berkeley) 6/6/93
- *	$Id: defines.h,v 1.3 1994/02/25 03:00:24 cgd Exp $
+ *	$NetBSD: defines.h,v 1.4 1996/02/24 01:18:35 jtk Exp $
  */
 
 #define	settimer(x)	clocks.x = clocks.system++

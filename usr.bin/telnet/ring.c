@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: ring.c,v 1.4 1994/12/24 17:50:06 cgd Exp $";
+/* from: static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95"; */
+static char rcsid[] = "$NetBSD: ring.c,v 1.5 1996/02/24 01:18:44 jtk Exp $";
 #endif /* not lint */
 
 /*
@@ -48,10 +48,6 @@ static char *rcsid = "$Id: ring.c,v 1.4 1994/12/24 17:50:06 cgd Exp $";
  */
 
 #include	<stdio.h>
-#ifndef NO_STRING_H
-#include	<string.h>
-#endif
-#include	<strings.h>
 #include	<errno.h>
 
 #ifdef	size_t
@@ -288,7 +284,7 @@ ring_supply_data(ring, buffer, count)
 
     while (count) {
 	i = MIN(count, ring_empty_consecutive(ring));
-	memcpy(ring->supply, buffer, i);
+	memmove(ring->supply, buffer, i);
 	ring_supplied(ring, i);
 	count -= i;
 	buffer += i;
@@ -310,7 +306,7 @@ ring_consume_data(ring, buffer, count)
 
     while (count) {
 	i = MIN(count, ring_full_consecutive(ring));
-	memcpy(buffer, ring->consume, i);
+	memmove(buffer, ring->consume, i);
 	ring_consumed(ring, i);
 	count -= i;
 	buffer += i;

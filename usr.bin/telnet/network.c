@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)network.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: network.c,v 1.3 1994/02/25 03:00:31 cgd Exp $";
+/* from: static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93"; */
+static char rcsid[] = "$NetBSD: network.c,v 1.4 1996/02/24 01:18:43 jtk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
