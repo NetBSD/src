@@ -1,12 +1,9 @@
-#	@(#)Makefile	5.7 (Berkeley) 9/30/90
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # -DLOG		log games
 PROG=	dm
 MAN8=	dm.0
 MAN5=	dm.conf.0
-BINGRP=	kmem
-BINMODE=6555
-DPADD=	${LIBUTIL}
-LDADD=	-lutil
+BINMODE=4555
 
 .include <bsd.prog.mk>

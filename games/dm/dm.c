@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,24 +32,29 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)dm.c	5.16 (Berkeley) 2/28/91";
+static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <pwd.h>
-#include <utmp.h>
-#include <nlist.h>
-#include <stdio.h>
+
 #include <ctype.h>
+#include <nlist.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <utmp.h>
+
 #include "pathnames.h"
 
 extern int errno;
@@ -58,13 +63,12 @@ static int	priority = 0;		/* priority game runs at */
 static char	*game,			/* requested game */
 		*gametty;		/* from tty? */
 
-/*ARGSUSED*/
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	char *cp, *rindex(), *ttyname();
-	time_t time();
+	char *cp;
 
 	nogamefile();
 	game = (cp = rindex(*argv, '/')) ? ++cp : *argv;
@@ -89,7 +93,7 @@ main(argc, argv)
 play(args)
 	char **args;
 {
-	char pbuf[MAXPATHLEN], *strcpy(), *strerror();
+	char pbuf[MAXPATHLEN];
 
 	(void)strcpy(pbuf, _PATH_HIDE);
 	(void)strcpy(pbuf + sizeof(_PATH_HIDE) - 1, game);
@@ -176,7 +180,6 @@ c_tty(tty)
 {
 	static int first = 1;
 	static char *p_tty;
-	char *rindex();
 
 	if (first) {
 		p_tty = rindex(gametty, '/');
@@ -298,11 +301,10 @@ hour(h)
  */
 logfile()
 {
-	struct passwd *pw, *getpwuid();
+	struct passwd *pw;
 	FILE *lp;
 	uid_t uid;
 	int lock_cnt;
-	char *ctime();
 
 	if (lp = fopen(_PATH_LOG, "a")) {
 		for (lock_cnt = 0;; ++lock_cnt) {

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.1 (Berkeley) 5/1/90
+ *	@(#)pathnames.h	8.1 (Berkeley) 5/31/93
  */
 
+#define	_PATH_INSTR	"/usr/share/games/cribbage.instr"
 #define	_PATH_LOG	"/var/games/criblog"
 #define	_PATH_MORE	"/usr/bin/more"
-#define	_PATH_INSTR	"/usr/share/games/cribbage.instr"

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Eamonn McManus of Trinity College Dublin.
@@ -35,13 +35,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)arithmetic.c	5.5 (Berkeley) 2/27/91";
+static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -102,7 +102,6 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 	int ch, cnt;
-	time_t time();
 	void intr();
 
 	while ((ch = getopt(argc, argv, "r:o:")) != EOF)
