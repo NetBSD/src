@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.6 1996/02/19 00:06:07 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.7 1996/03/05 00:15:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -149,6 +149,8 @@ ssattach(parent, self, aux)
 	ss->buf_queue.b_active = 0;
 	ss->buf_queue.b_actf = 0;
 	ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
+
+	printf("\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.61 1996/02/18 20:30:53 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.62 1996/03/05 00:15:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -360,7 +360,8 @@ stattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	printf(": %s", st->quirkdata ? "rogue, " : "");
+	printf("\n");
+	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
 	if (scsi_test_unit_ready(sc_link,
 	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
 	    st_mode_sense(st,
