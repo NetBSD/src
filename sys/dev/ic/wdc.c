@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.122 2003/01/27 18:21:25 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.123 2003/05/17 21:52:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.122 2003/01/27 18:21:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.123 2003/05/17 21:52:04 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -321,7 +321,7 @@ wdcattach(chp)
 	callout_init(&chp->ch_callout);
 
 	if ((error = wdc_addref(chp)) != 0) {
-		printf("%s: unable to enable controller\n",
+		aprint_error("%s: unable to enable controller\n",
 		    chp->wdc->sc_dev.dv_xname);
 		return;
 	}
@@ -447,7 +447,7 @@ wdcattach(chp)
 		/*
 		 * Fake the autoconfig "not configured" message
 		 */
-		printf("atapibus at %s channel %d not configured\n",
+		aprint_normal("atapibus at %s channel %d not configured\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel);
 		chp->atapibus = NULL;
 #endif
@@ -505,7 +505,7 @@ wdcattach(chp)
 				bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
 				    wd_sdh, WDSD_IBM | (i << 4));
 				if (wait_for_unbusy(chp, 10000) < 0)
-					printf("%s:%d:%d: device busy\n",
+					aprint_error("%s:%d:%d: device busy\n",
 					    chp->wdc->sc_dev.dv_xname,
 					    chp->channel, i);
 			}
@@ -1036,7 +1036,8 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: 32-bit data port", drv_dev->dv_xname);
+			aprint_normal("%s: 32-bit data port",
+			    drv_dev->dv_xname);
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
@@ -1045,10 +1046,11 @@ wdc_probe_caps(drvp)
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
 				if ((drvp->drive_flags & DRIVE_CAP32) == 0)
-					printf("%s: ", drv_dev->dv_xname);
+					aprint_normal("%s: ",
+					    drv_dev->dv_xname);
 				else
-					printf(", ");
-				printf("ATA version %d\n", i);
+					aprint_normal(", ");
+				aprint_normal("ATA version %d\n", i);
 				drvp->ata_vers = i;
 				break;
 			}
@@ -1056,7 +1058,7 @@ wdc_probe_caps(drvp)
 	} else 
 #endif
 	if (drvp->drive_flags & DRIVE_CAP32)
-		printf("\n");
+		aprint_normal("\n");
 
 	/* An ATAPI device is at last PIO mode 3 */
 	if (drvp->drive_flags & DRIVE_ATAPI)
@@ -1091,7 +1093,7 @@ wdc_probe_caps(drvp)
 				   AT_POLL) != CMD_OK)
 					continue;
 			if (!printed) { 
-				printf("%s: drive supports PIO mode %d",
+				aprint_normal("%s: drive supports PIO mode %d",
 				    drv_dev->dv_xname, i + 3);
 				sep = ",";
 				printed = 1;
@@ -1125,7 +1127,7 @@ wdc_probe_caps(drvp)
 				    != CMD_OK)
 					continue;
 			if (!printed) {
-				printf("%s DMA mode %d", sep, i);
+				aprint_normal("%s DMA mode %d", sep, i);
 				sep = ",";
 				printed = 1;
 			}
@@ -1151,15 +1153,16 @@ wdc_probe_caps(drvp)
 					    AT_POLL) != CMD_OK)
 						continue;
 				if (!printed) {
-					printf("%s Ultra-DMA mode %d", sep, i);
+					aprint_normal("%s Ultra-DMA mode %d",
+					    sep, i);
 					if (i == 2)
-						printf(" (Ultra/33)");
+						aprint_normal(" (Ultra/33)");
 					else if (i == 4)
-						printf(" (Ultra/66)");
+						aprint_normal(" (Ultra/66)");
 					else if (i == 5)
-						printf(" (Ultra/100)");
+						aprint_normal(" (Ultra/100)");
 					else if (i == 6)
-						printf(" (Ultra/133)");
+						aprint_normal(" (Ultra/133)");
 					sep = ",";
 					printed = 1;
 				}
@@ -1174,7 +1177,7 @@ wdc_probe_caps(drvp)
 				break;
 			}
 		}
-		printf("\n");
+		aprint_normal("\n");
 	}
 
 	/* Try to guess ATA version here, if it didn't get reported */
@@ -1759,23 +1762,25 @@ wdc_print_modes(struct channel_softc *chp)
 		drvp = &chp->ch_drive[drive];
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		printf("%s(%s:%d:%d): using PIO mode %d",
+		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
 			drvp->drv_softc->dv_xname,
 			chp->wdc->sc_dev.dv_xname,
 			chp->channel, drive, drvp->PIO_mode);
 		if (drvp->drive_flags & DRIVE_DMA)
-			printf(", DMA mode %d", drvp->DMA_mode);
+			aprint_normal(", DMA mode %d", drvp->DMA_mode);
 		if (drvp->drive_flags & DRIVE_UDMA) {
-			printf(", Ultra-DMA mode %d", drvp->UDMA_mode);
+			aprint_normal(", Ultra-DMA mode %d", drvp->UDMA_mode);
 			if (drvp->UDMA_mode == 2)
-				printf(" (Ultra/33)");
+				aprint_normal(" (Ultra/33)");
 			else if (drvp->UDMA_mode == 4)
-				printf(" (Ultra/66)");
+				aprint_normal(" (Ultra/66)");
 			else if (drvp->UDMA_mode == 5)
-				printf(" (Ultra/100)");
+				aprint_normal(" (Ultra/100)");
+			else if (drvp->UDMA_mode == 6)
+				aprint_normal(" (Ultra/133)");
 		}
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
-			printf(" (using DMA data transfers)");
-		printf("\n");
+			aprint_normal(" (using DMA data transfers)");
+		aprint_normal("\n");
 	}
 }

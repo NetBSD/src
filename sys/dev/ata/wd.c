@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.252 2003/05/10 23:12:44 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.253 2003/05/17 21:52:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.252 2003/05/10 23:12:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.253 2003/05/17 21:52:03 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -302,9 +302,11 @@ wdattach(parent, self, aux)
 	/* give back our softc to our caller */
 	wd->drvp->drv_softc = &wd->sc_dev;
 
+	aprint_naive("\n");
+
 	/* read our drive info */
 	if (wd_get_params(wd, AT_POLL, &wd->sc_params) != 0) {
-		printf("%s: IDENTIFY failed\n", wd->sc_dev.dv_xname);
+		aprint_error("\n%s: IDENTIFY failed\n", wd->sc_dev.dv_xname);
 		return;
 	}
 
@@ -324,7 +326,7 @@ wdattach(parent, self, aux)
 	}
 	*q++ = '\0';
 
-	printf(": <%s>\n", buf);
+	aprint_normal(": <%s>\n", buf);
 
 	wdq = wd_lookup_quirks(buf);
 	if (wdq != NULL)
@@ -336,7 +338,7 @@ wdattach(parent, self, aux)
 		wd->sc_multi = 1;
 	}
 
-	printf("%s: drive supports %d-sector PIO transfers,",
+	aprint_normal("%s: drive supports %d-sector PIO transfers,",
 	    wd->sc_dev.dv_xname, wd->sc_multi);
 
 	/* 48-bit LBA addressing */
@@ -354,26 +356,26 @@ wdattach(parent, self, aux)
 #endif
 
 	if ((wd->sc_flags & WDF_LBA48) != 0) {
-		printf(" LBA48 addressing\n");
+		aprint_normal(" LBA48 addressing\n");
 		wd->sc_capacity =
 		    ((u_int64_t) wd->sc_params.__reserved6[11] << 48) |
 		    ((u_int64_t) wd->sc_params.__reserved6[10] << 32) |
 		    ((u_int64_t) wd->sc_params.__reserved6[9]  << 16) |
 		    ((u_int64_t) wd->sc_params.__reserved6[8]  << 0);
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
-		printf(" LBA addressing\n");
+		aprint_normal(" LBA addressing\n");
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
 	} else {
-		printf(" chs addressing\n");
+		aprint_normal(" chs addressing\n");
 		wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
 	}
 	format_bytes(pbuf, sizeof(pbuf), wd->sc_capacity * DEV_BSIZE);
-	printf("%s: %s, %d cyl, %d head, %d sec, "
+	aprint_normal("%s: %s, %d cyl, %d head, %d sec, "
 	    "%d bytes/sect x %llu sectors\n",
 	    self->dv_xname, pbuf, wd->sc_params.atap_cylinders,
 	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
@@ -391,7 +393,7 @@ wdattach(parent, self, aux)
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
 	if (wd->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    wd->sc_dev.dv_xname); 
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
