@@ -1,26 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2000/11/22 00:36:22 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.5 2000/11/25 13:32:52 bjh21 Exp $
 
-.if !defined(BASTOK)
-.ifnmake(print-objdir)
-BASTOKDIR!=	cd ${.CURDIR}/../bastok; ${MAKE} print-objdir
-BASTOK=		${BASTOKDIR}/bastok
-BASTOKTARG=	${BASTOK}
-
-${BASTOK}:
-	(cd ${.CURDIR}/../bastok; ${MAKE})
-
-.endif
-.else
-BASTOKTARG=
-.endif
-
-clean cleandir distclean: bbbbclean
-realall: BBBB,ffb
-
-bbbbclean:
-	rm -f BBBB,ffb
-
-BBBB,ffb: BBBB,fd1 ${BASTOKTARG}
-	${BASTOK} ${.CURDIR}/BBBB,fd1 > BBBB,ffb
+FILESDIR=	/usr/mdec
+FILES=		BBBB
 
 .include <bsd.prog.mk>

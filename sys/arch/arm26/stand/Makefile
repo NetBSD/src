@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2000/11/21 23:47:37 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2000/11/25 13:32:51 bjh21 Exp $
 
-SUBDIR=	bastok BBBB
+SUBDIR=	BBBB
 
 .include <bsd.subdir.mk>
