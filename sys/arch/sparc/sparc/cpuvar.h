@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.28 2000/06/06 07:56:40 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.29 2000/06/27 16:51:44 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -137,10 +137,6 @@ struct xpmsg {
 
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
 
 	/*
 	 * SPARC cpu_info structures live at two VAs: one global
@@ -288,7 +284,7 @@ struct cpu_info {
 	void	(*zero_page)__P((paddr_t));
 	void	(*copy_page)__P((paddr_t, paddr_t));
 
-#ifdef SUN4M
+#if 0
 	/* hardware-assisted block operation routines */
 	void		(*hwbcopy)
 				__P((const void *from, void *to, size_t len));
@@ -306,6 +302,11 @@ struct cpu_info {
 
 	/* Inter-processor message area */
 	struct xpmsg msg;
+
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long ci_spin_locks;		/* # of spin locks held */
+	u_long ci_simple_locks;		/* # of simple locks held */
+#endif
 };
 
 /*
