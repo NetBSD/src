@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2002 Greg Hughes (greg@netbsd.org). All rights reserved.
+ * Copyright (c) 2001, 2002 Greg Hughes (greg@NetBSD.org). All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,13 +26,13 @@
 
 /*
  * Wscons mouse driver for DSIU TrackPoint on IBM WorkPad z50 by
- * Greg Hughes (greg@netbsd.org).
+ * Greg Hughes (greg@NetBSD.org).
  *
  * Template for interrupt/device registration taken from vrdsu.c.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.5 2003/10/23 20:25:40 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.6 2003/12/04 13:05:16 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
