@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.34 1999/02/01 14:08:36 he Exp $	*/
+/*	$NetBSD: defs.h,v 1.35 1999/03/14 14:19:05 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -103,9 +103,21 @@ EXTERN int  rammb   INIT(0);
 /* Disk descriptions */
 #define MAX_DISKS 15
 struct disk_desc {
-	char name[SSTRSIZE];
-	int  geom[5];
+	char dd_name[SSTRSIZE];
+	struct disk_geom {
+		int  dg_cyl;
+		int  dg_head;
+		int  dg_sec;
+		int  dg_secsize;
+		int  dg_totsec;
+	} dg;
 };
+#define dd_cyl dg.dg_cyl
+#define dd_head dg.dg_head
+#define dd_sec dg.dg_sec
+#define dd_secsize dg.dg_secsize
+#define dd_totsec dg.dg_totsec
+
 EXTERN struct disk_desc disks[MAX_DISKS];
 
 EXTERN struct disk_desc *disk;

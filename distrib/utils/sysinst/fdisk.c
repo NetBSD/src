@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.11 1999/01/23 06:11:51 garbled Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.12 1999/03/14 14:19:05 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,10 +105,10 @@ get_fdisk_info()
 	 * Check for it.
 	 */
 	/* XXX should warn user about this, and maybe ask! */
-	if (bcyl > 1024 && disk->geom[1] == bhead && disk->geom[2] == bsec)
+	if (bcyl > 1024 && disk->dd_head == bhead && disk->dd_sec == bsec)
 		bcyl = 1024;
 	else if (bcyl > 1024 && bsec < 64) {
-		t1 = disk->geom[0] * disk->geom[1] * disk->geom[2];
+		t1 = disk->dd_cyl * disk->dd_head * disk->dd_sec;
 		t2 = bhead * bsec;
 		if (bcyl * t2 > t1) {
 			t2 = t1 / t2;
