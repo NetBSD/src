@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.279 2002/03/30 21:53:27 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.280 2002/03/31 14:59:04 bjh21 Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -320,7 +320,7 @@ MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 .endif
 
 # CPU model, derived from MACHINE_ARCH
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[bl]/sh3/:S/m68000/m68k/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm32/arm/:C/sh3e[bl]/sh3/:S/m68000/m68k/}
 
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html installhtml cleanhtml
