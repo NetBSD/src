@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.6 2000/10/09 05:02:14 nisimura Exp $
+# $NetBSD: sysdb,v 1.7 2000/10/14 07:33:39 nisimura Exp $
 #
 
 # PROVIDE: sysdb
@@ -19,7 +19,7 @@ sysdb_start()
 	#	will run work when we boot /netbsd.new, etc.
 	#
 	echo "Building databases..."
-	booted_kernel=`sysctl machdep.booted_kernel 2>/dev/null`
+	booted_kernel=`sysctl -n machdep.booted_kernel 2>/dev/null`
 	kvm_mkdb ${booted_kernel:-/netbsd}
 	dev_mkdb
 
