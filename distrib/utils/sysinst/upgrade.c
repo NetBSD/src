@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.4.2.1 1997/10/27 19:36:28 thorpej Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.4.2.2 1997/11/02 20:56:38 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,35 +71,5 @@ void do_upgrade(void)
 	if (!md_update ())
 		return;
 
-	/* Get the distribution files */
-	process_menu (MENU_distmedium);
-	if (nodist)
-		return;
-
-	if (got_dist) {
-		/* Extract the distribution */
-		extract_dist ();
-
-		/* Configure the system */
-		run_makedev ();
-
-		/* Network configuration. */
-		/* process_menu (MENU_confignet); */
-		
-		/* Clean up ... */
-		if (clean_dist_dir)
-			run_prog ("/bin/rm -rf %s", dist_dir);
-
-		/* Mounted dist dir? */
-		if (mnt2_mounted)
-			run_prog ("/sbin/umoount /mnt2");
-		
-		/* Install complete ... reboot */
-		msg_display (MSG_upgrcomplete);
-		process_menu (MENU_ok);
-	} else {
-		msg_display (MSG_abortupgr);
-		process_menu (MENU_ok);
-	}
+	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
 }
-
