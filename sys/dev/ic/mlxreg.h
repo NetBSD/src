@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxreg.h,v 1.2 2001/05/06 19:53:04 ad Exp $	*/
+/*	$NetBSD: mlxreg.h,v 1.3 2001/07/26 12:38:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
 #define	MLX_STATUS_RDWROFFLINE	0x0002	/* read/write claims drive is offline */
 #define	MLX_STATUS_WEDGED	0xdeaf	/* controller not listening */
 #define	MLX_STATUS_LOST		0xdead	/* never came back */
-#define	MLX_STATUS_BUSY		0xdeed	/* command is in controller */
+#define	MLX_STATUS_BUSY		0xbabe	/* command is in controller */
 
 /*
  * V1 (EISA) interface.
