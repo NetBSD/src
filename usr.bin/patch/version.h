@@ -1,3 +1,3 @@
-/*	$NetBSD: version.h,v 1.3 1996/09/19 06:27:18 thorpej Exp $	*/
+/*	$NetBSD: version.h,v 1.4 1998/02/22 13:33:51 christos Exp $	*/
 
-void version();
+void version __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.4 1996/09/19 06:27:07 thorpej Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.5 1998/02/22 13:33:48 christos Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -13,8 +13,9 @@
 /* David MacKenzie <djm@ai.mit.edu>.
    Some algorithms adapted from GNU Emacs. */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: backupfile.c,v 1.4 1996/09/19 06:27:07 thorpej Exp $";
+__RCSID("$NetBSD: backupfile.c,v 1.5 1998/02/22 13:33:48 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -72,13 +73,17 @@ enum backup_type backup_type = none;
    to numbered) backup file name. */
 char *simple_backup_suffix = "~";
 
-char *basename ();
-char *dirname ();
-static char *concat ();
-char *find_backup_file_name ();
-static char *make_version_name ();
-static int max_backup_version ();
-static int version_number ();
+/* backupfile.c */
+char *find_backup_file_name __P((char *));
+static int max_backup_version __P((char *, char *));
+static char *make_version_name __P((char *, int));
+static int version_number __P((char *, char *, int));
+static char *concat __P((char *, char *));
+char *basename __P((char *));
+char *dirname __P((char *));
+int argmatch __P((char *, char **));
+void invalid_arg __P((char *, char *, int));
+enum backup_type get_version __P((char *));
 
 #ifndef NODIR
 /* Return the name of the new backup file for file FILE,

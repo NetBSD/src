@@ -1,4 +1,4 @@
-/*	$NetBSD: gprof.c,v 1.9 1997/01/30 09:20:55 matthias Exp $	*/
+/*	$NetBSD: gprof.c,v 1.10 1998/02/22 12:55:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,23 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: gprof.c,v 1.9 1997/01/30 09:20:55 matthias Exp $";
+__RCSID("$NetBSD: gprof.c,v 1.10 1998/02/22 12:55:44 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "gprof.h"
 
-char	*whoami = "gprof";
+extern char *__progname;
+
+char	*whoami;
 
     /*
      *	things which get -E excluded by default.
@@ -58,6 +60,9 @@ char	*defaultEs[] = { "mcount" , "__mcleanup" , 0 };
 
 static struct gmonhdr	gmonhdr;
 
+int main __P((int, char **));
+
+int
 main(argc, argv)
     int argc;
     char **argv;
@@ -65,6 +70,7 @@ main(argc, argv)
     char	**sp;
     nltype	**timesortnlp;
 
+    whoami = __progname;
     --argc;
     argv++;
     debug = 0;
@@ -95,11 +101,11 @@ main(argc, argv)
 	    setlinebuf(stdout);
 	    debug |= atoi( *++argv );
 	    debug |= ANYDEBUG;
-#	    ifdef DEBUG
+#ifdef DEBUG
 		printf("[main] debug = %d\n", debug);
 #	    else not DEBUG
 		printf("%s: -d ignored\n", whoami);
-#	    endif DEBUG
+#endif /* DEBUG */
 	    break;
 	case 'E':
 	    ++argv;
@@ -206,6 +212,7 @@ main(argc, argv)
 	 */
     printindex();	
     done();
+    return 0;
 }
 
     /*
@@ -213,10 +220,10 @@ main(argc, argv)
      *	and optionally the text space.
      * On return symbol table is sorted by value.
      */
+void
 getnfile()
 {
     FILE	*nfile;
-    int		valcmp();
 
     nfile = fopen( a_outname ,"r");
     if (nfile == NULL) {
@@ -233,7 +240,7 @@ getnfile()
     gettextspace( nfile );
     qsort(nl, nname, sizeof(nltype), valcmp);
     fclose(nfile);
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & AOUTDEBUG ) {
 	    register int j;
 
@@ -241,9 +248,10 @@ getnfile()
 		printf("[getnfile] 0X%08x\t%s\n", nl[j].value, nl[j].name);
 	    }
 	}
-#   endif DEBUG
+#endif /* DEBUG */
 }
 
+void
 getstrtab(nfile)
     FILE	*nfile;
 {
@@ -256,7 +264,7 @@ getstrtab(nfile)
     }
     strtab = calloc(ssiz, 1);
     if (strtab == NULL) {
-	fprintf(stderr, "%s: %s: no room for %d bytes of string table\n",
+	fprintf(stderr, "%s: %s: no room for %ld bytes of string table\n",
 		whoami , a_outname , ssiz);
 	done();
     }
@@ -270,6 +278,7 @@ getstrtab(nfile)
     /*
      * Read in symbol table
      */
+void
 getsymtab(nfile)
     FILE	*nfile;
 {
@@ -306,22 +315,22 @@ getsymtab(nfile)
     for (i = xbuf.a_syms; i > 0; i -= sizeof(struct nlist)) {
 	fread(&nbuf, sizeof(nbuf), 1, nfile);
 	if ( ! funcsymbol( &nbuf ) ) {
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & AOUTDEBUG ) {
 		    printf( "[getsymtab] rejecting: 0x%x %s\n" ,
 			    nbuf.n_type , strtab + nbuf.n_un.n_strx );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	    continue;
 	}
 	npe->value = nbuf.n_value;
 	npe->name = strtab+nbuf.n_un.n_strx;
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & AOUTDEBUG ) {
 		printf( "[getsymtab] %d %s 0x%08x\n" ,
 			nname , npe -> name , npe -> value );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	npe++;
 	nname++;
     }
@@ -331,6 +340,7 @@ getsymtab(nfile)
     /*
      *	read in the text space of an a.out file
      */
+void
 gettextspace( nfile )
     FILE	*nfile;
 {
@@ -340,7 +350,7 @@ gettextspace( nfile )
     }
     textspace = (u_char *) malloc( xbuf.a_text );
     if ( textspace == 0 ) {
-	fprintf( stderr , "%s: ran out room for %d bytes of text space:  " ,
+	fprintf( stderr , "%s: ran out room for %ld bytes of text space:  " ,
 			whoami , xbuf.a_text );
 	fprintf( stderr , "can't do -c\n" );
 	return;
@@ -359,11 +369,11 @@ gettextspace( nfile )
      *	an array of sampling hits within pc ranges,
      *	and the arcs.
      */
+void
 getpfile(filename)
     char *filename;
 {
     FILE		*pfile;
-    FILE		*openpfile();
     struct rawarc	arc;
 
     pfile = openpfile(filename);
@@ -373,12 +383,12 @@ getpfile(filename)
 	 *	a bunch of <from,self,count> tuples.
 	 */
     while ( fread( &arc , sizeof arc , 1 , pfile ) == 1 ) {
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & SAMPLEDEBUG ) {
 		printf( "[getpfile] frompc 0x%x selfpc 0x%x count %d\n" ,
 			arc.raw_frompc , arc.raw_selfpc , arc.raw_count );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	    /*
 	     *	add this arc
 	     */
@@ -420,7 +430,7 @@ openpfile(filename)
 	hz = rate;
     } else if (hz != rate) {
 	fprintf(stderr,
-	    "%s: profile clock rate (%d) %s (%d) in first gmon file\n",
+	    "%s: profile clock rate (%d) %s (%ld) in first gmon file\n",
 	    filename, rate, "incompatible with clock rate", hz);
 	done();
     }
@@ -430,7 +440,7 @@ openpfile(filename)
     highpc = (unsigned long)gmonhdr.hpc / sizeof(UNIT);
     sampbytes = gmonhdr.ncnt - size;
     nsamples = sampbytes / sizeof (UNIT);
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & SAMPLEDEBUG ) {
 	    printf( "[openpfile] hdr.lpc 0x%x hdr.hpc 0x%x hdr.ncnt %d\n",
 		gmonhdr.lpc , gmonhdr.hpc , gmonhdr.ncnt );
@@ -442,10 +452,11 @@ openpfile(filename)
 		sampbytes , nsamples );
 	    printf( "[openpfile] sample rate %d\n" , hz );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     return(pfile);
 }
 
+void
 tally( rawp )
     struct rawarc	*rawp;
 {
@@ -462,18 +473,19 @@ tally( rawp )
 	return;
     }
     childp -> ncall += rawp -> raw_count;
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & TALLYDEBUG ) {
 	    printf( "[tally] arc from %s to %s traversed %d times\n" ,
 		    parentp -> name , childp -> name , rawp -> raw_count );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     addarc( parentp , childp , rawp -> raw_count );
 }
 
 /*
  * dump out the gmon.sum file
  */
+void
 dumpsum( sumfile )
     char *sumfile;
 {
@@ -512,20 +524,22 @@ dumpsum( sumfile )
 		perror( sumfile );
 		done();
 	    }
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & SAMPLEDEBUG ) {
 		    printf( "[dumpsum] frompc 0x%x selfpc 0x%x count %d\n" ,
 			    arc.raw_frompc , arc.raw_selfpc , arc.raw_count );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	}
     }
     fclose( sfile );
 }
 
-valcmp(p1, p2)
-    nltype *p1, *p2;
+int
+valcmp(v1, v2)
+	const void *v1, *v2;
 {
+    const nltype *p1 = v1, *p2 = v2;
     if ( p1 -> value < p2 -> value ) {
 	return LESSTHAN;
     }
@@ -535,6 +549,7 @@ valcmp(p1, p2)
     return EQUALTO;
 }
 
+void
 readsamples(pfile)
     FILE	*pfile;
 {
@@ -595,6 +610,7 @@ readsamples(pfile)
  *	only one sample for every four bytes of text space and never
  *	have any overlap (the two end cases, above).
  */
+void
 asgnsamples()
 {
     register int	j;
@@ -616,12 +632,12 @@ asgnsamples()
 	pcl = lowpc + scale * i;
 	pch = lowpc + scale * (i + 1);
 	time = ccnt;
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & SAMPLEDEBUG ) {
 		printf( "[asgnsamples] pcl 0x%x pch 0x%x ccnt %d\n" ,
 			pcl , pch , ccnt );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
 	totime += time;
 	for (j = j - 1; j < nname; j++) {
 	    svalue0 = nl[j].svalue;
@@ -640,25 +656,25 @@ asgnsamples()
 		    continue;
 	    overlap = min(pch, svalue1) - max(pcl, svalue0);
 	    if (overlap > 0) {
-#		ifdef DEBUG
+#ifdef DEBUG
 		    if (debug & SAMPLEDEBUG) {
 			printf("[asgnsamples] (0x%x->0x%x-0x%x) %s gets %f ticks %d overlap\n",
 				nl[j].value/sizeof(UNIT), svalue0, svalue1,
 				nl[j].name, 
 				overlap * time / scale, overlap);
 		    }
-#		endif DEBUG
+#endif /* DEBUG */
 		nl[j].time += overlap * time / scale;
 		if ( onlist( Elist , nl[j].name ) )
 			totime -= overlap * time / scale;
 	    }
 	}
     }
-#   ifdef DEBUG
+#ifdef DEBUG
 	if (debug & SAMPLEDEBUG) {
 	    printf("[asgnsamples] totime %f\n", totime);
 	}
-#   endif DEBUG
+#endif /* DEBUG */
 }
 
 
@@ -686,6 +702,7 @@ max(a, b)
      *	if it turns out that the entry point is in one bucket and the code
      *	for a routine is in the next bucket.
      */
+void
 alignentries()
 {
     register struct nl	*nlp;
@@ -697,12 +714,12 @@ alignentries()
 	bucket_of_entry = (nlp->svalue - lowpc) / scale;
 	bucket_of_code = (nlp->svalue + UNITS_TO_CODE - lowpc) / scale;
 	if (bucket_of_entry < bucket_of_code) {
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if (debug & SAMPLEDEBUG) {
 		    printf("[alignentries] pushing svalue 0x%x to 0x%x\n",
 			    nlp->svalue, nlp->svalue + UNITS_TO_CODE);
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	    nlp->svalue += UNITS_TO_CODE;
 	}
     }
@@ -744,7 +761,7 @@ funcsymbol( nlistp )
 		return TRUE;
     }
 #endif
-    while ( c = *name++ ) {
+    while ( (c = *name++) != '\0' ) {
 	if ( c == '.' || c == '$' ) {
 	    return FALSE;
 	}
@@ -752,6 +769,7 @@ funcsymbol( nlistp )
     return TRUE;
 }
 
+void
 done()
 {
 

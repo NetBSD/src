@@ -1,4 +1,4 @@
-/*	$NetBSD: mips.c,v 1.4 1995/04/19 07:16:11 cgd Exp $	*/
+/*	$NetBSD: mips.c,v 1.5 1998/02/22 12:55:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,11 +39,12 @@
  * From: sparc.c 5.1 (Berkeley) 7/7/92
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mips.c,v 1.4 1995/04/19 07:16:11 cgd Exp $";
+__RCSID("$NetBSD: mips.c,v 1.5 1998/02/22 12:55:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +77,7 @@ nltype	indirectchild = {
 	(arctype *) 0 			/* list of callee arcs */
 };
 
+void
 findcall(parentp, p_lowpc, p_highpc)
 	nltype		*parentp;
 	unsigned long	p_lowpc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.5 1997/03/22 03:38:06 lukem Exp $	*/
+/*	$NetBSD: patch.c,v 1.6 1998/02/22 13:33:49 christos Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -8,8 +8,9 @@
  * money off of it, or pretend that you wrote it.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: patch.c,v 1.5 1997/03/22 03:38:06 lukem Exp $";
+__RCSID("$NetBSD: patch.c,v 1.6 1998/02/22 13:33:49 christos Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -22,23 +23,27 @@ static char rcsid[] = "$NetBSD: patch.c,v 1.5 1997/03/22 03:38:06 lukem Exp $";
 #include "backupfile.h"
 
 #include <stdlib.h>
+#include <unistd.h>
+
+int main __P((int, char **));
 
 /* procedures */
-
-void reinitialize_almost_everything();
-void get_some_switches();
-LINENUM locate_hunk();
-void abort_hunk();
-void apply_hunk();
-void init_output();
-void init_reject();
-void copy_till();
-void spew_output();
-void dump_line();
-bool patch_match();
-bool similar();
-void re_input();
-void my_exit();
+static void reinitialize_almost_everything __P((void));
+static char *nextarg __P((void));
+struct option;
+static int optcmp __P((const void *, const void *));
+static char decode_long_option __P((char *));
+static void get_some_switches __P((void));
+static LINENUM locate_hunk __P((LINENUM));
+static void abort_hunk __P((void));
+static void apply_hunk __P((LINENUM));
+static void init_output __P((char *));
+static void init_reject __P((char *));
+static void copy_till __P((Reg1 LINENUM));
+static void spew_output __P((void));
+static void dump_line __P((LINENUM));
+static bool patch_match __P((LINENUM, LINENUM, LINENUM));
+static bool similar __P((Reg1 char *, Reg2 char *, Reg3 int));
 
 /* TRUE if -E was specified on command line.  */
 static int remove_empty_files = FALSE;
@@ -53,7 +58,7 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-    LINENUM where;
+    LINENUM where = 0;
     LINENUM newwhere;
     LINENUM fuzz;
     LINENUM mymaxfuzz;
@@ -333,7 +338,7 @@ char **argv;
 
 /* Prepare to find the next patch to do in the patch file. */
 
-void
+static void
 reinitialize_almost_everything()
 {
     re_patch();
@@ -386,16 +391,17 @@ struct option {
     char short_opt;
 };
 
-int
-optcmp(a, b)
-    struct option *a, *b;
+static int
+optcmp(va, vb)
+    const void *va, *vb;
 {
+    const struct option *a = va, *b = vb;
     return strcmp (a->long_opt, b->long_opt);
 }
 
 /* Decode Long options beginning with "--" to their short equivalents. */
 
-char
+static char
 decode_long_option(opt)
     char *opt;
 {
@@ -442,7 +448,7 @@ decode_long_option(opt)
 
 /* Process switches and filenames up to next '+' or end of list. */
 
-void
+static void
 get_some_switches()
 {
     Reg1 char *s;
@@ -577,7 +583,7 @@ Options:\n\
 
 /* Attempt to find the right place to apply this hunk of patch. */
 
-LINENUM
+static LINENUM
 locate_hunk(fuzz)
 LINENUM fuzz;
 {
@@ -622,7 +628,7 @@ LINENUM fuzz;
 
 /* We did not find the pattern, dump out the hunk so they can handle it. */
 
-void
+static void
 abort_hunk()
 {
     Reg1 LINENUM i;
@@ -668,7 +674,7 @@ abort_hunk()
 
 /* We found where to apply it (we hope), so do it. */
 
-void
+static void
 apply_hunk(where)
 LINENUM where;
 {
@@ -788,7 +794,7 @@ LINENUM where;
 
 /* Open the new file. */
 
-void
+static void
 init_output(name)
 char *name;
 {
@@ -799,7 +805,7 @@ char *name;
 
 /* Open a file to put hunks we can't locate. */
 
-void
+static void
 init_reject(name)
 char *name;
 {
@@ -810,7 +816,7 @@ char *name;
 
 /* Copy input file to output, up to wherever hunk is to be applied. */
 
-void
+static void
 copy_till(lastline)
 Reg1 LINENUM lastline;
 {
@@ -826,7 +832,7 @@ Reg1 LINENUM lastline;
 
 /* Finish copying the input file to the output file. */
 
-void
+static void
 spew_output()
 {
 #ifdef DEBUGGING
@@ -841,7 +847,7 @@ spew_output()
 
 /* Copy one line from input to output. */
 
-void
+static void
 dump_line(line)
 LINENUM line;
 {
@@ -854,7 +860,7 @@ LINENUM line;
 
 /* Does the patch pattern match at line base+offset? */
 
-bool
+static bool
 patch_match(base, offset, fuzz)
 LINENUM base;
 LINENUM offset;
@@ -881,7 +887,7 @@ LINENUM fuzz;
 
 /* Do two lines match with canonicalized white space? */
 
-bool
+static bool
 similar(a,b,len)
 Reg1 char *a;
 Reg2 char *b;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dfn.c,v 1.5 1995/04/19 07:15:56 cgd Exp $	*/
+/*	$NetBSD: dfn.c,v 1.6 1998/02/22 12:55:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dfn.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: dfn.c,v 1.5 1995/04/19 07:15:56 cgd Exp $";
+__RCSID("$NetBSD: dfn.c,v 1.6 1998/02/22 12:55:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +57,7 @@ int	dfn_depth;
 
 int	dfn_counter;
 
+void
 dfn_init()
 {
 
@@ -66,18 +68,19 @@ dfn_init()
     /*
      *	given this parent, depth first number its children.
      */
+void
 dfn( parentp )
     nltype	*parentp;
 {
     arctype	*arcp;
 
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & DFNDEBUG ) {
 	    printf( "[dfn] dfn(" );
 	    printname( parentp );
 	    printf( ")\n" );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
 	/*
 	 *	if we're already numbered, no need to look any furthur.
 	 */
@@ -112,6 +115,7 @@ dfn( parentp )
     /*
      *	push a parent onto the stack and mark it busy
      */
+void
 dfn_pre_visit( parentp )
     nltype	*parentp;
 {
@@ -124,13 +128,13 @@ dfn_pre_visit( parentp )
     dfn_stack[ dfn_depth ].nlentryp = parentp;
     dfn_stack[ dfn_depth ].cycletop = dfn_depth;
     parentp -> toporder = DFN_BUSY;
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & DFNDEBUG ) {
 	    printf( "[dfn_pre_visit]\t\t%d:" , dfn_depth );
 	    printname( parentp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
 }
 
     /*
@@ -161,6 +165,7 @@ dfn_busy( childp )
     /*
      *	MISSING: an explanation
      */
+void
 dfn_findcycle( childp )
     nltype	*childp;
 {
@@ -183,14 +188,14 @@ dfn_findcycle( childp )
 	fprintf( stderr , "[dfn_findcycle] couldn't find head of cycle\n" );
 	exit( 1 );
     }
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & DFNDEBUG ) {
 	    printf( "[dfn_findcycle] dfn_depth %d cycletop %d " ,
 		    dfn_depth , cycletop  );
 	    printname( cycleheadp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
     if ( cycletop == dfn_depth ) {
 	    /*
 	     *	this is previous function, e.g. this calls itself
@@ -206,13 +211,13 @@ dfn_findcycle( childp )
 	     */
 	for ( tailp = cycleheadp ; tailp -> cnext ; tailp = tailp -> cnext ) {
 	    /* void: chase down to tail of things already glommed */
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & DFNDEBUG ) {
 		    printf( "[dfn_findcycle] tail " );
 		    printname( tailp );
 		    printf( "\n" );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	}
 	    /*
 	     *	if what we think is the top of the cycle
@@ -221,13 +226,13 @@ dfn_findcycle( childp )
 	     */	
 	if ( cycleheadp -> cyclehead != cycleheadp ) {
 	    cycleheadp = cycleheadp -> cyclehead;
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & DFNDEBUG ) {
 		    printf( "[dfn_findcycle] new cyclehead " );
 		    printname( cycleheadp );
 		    printf( "\n" );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	}
 	for ( index = cycletop + 1 ; index <= dfn_depth ; index += 1 ) {
 	    childp = dfn_stack[ index ].nlentryp;
@@ -238,7 +243,7 @@ dfn_findcycle( childp )
 		     */
 		tailp -> cnext = childp;
 		childp -> cyclehead = cycleheadp;
-#		ifdef DEBUG
+#ifdef DEBUG
 		    if ( debug & DFNDEBUG ) {
 			printf( "[dfn_findcycle] glomming " );
 			printname( childp );
@@ -246,10 +251,10 @@ dfn_findcycle( childp )
 			printname( cycleheadp );
 			printf( "\n" );
 		    }
-#		endif DEBUG
+#endif /* DEBUG */
 		for ( tailp = childp ; tailp->cnext ; tailp = tailp->cnext ) {
 		    tailp -> cnext -> cyclehead = cycleheadp;
-#		    ifdef DEBUG
+#ifdef DEBUG
 			if ( debug & DFNDEBUG ) {
 			    printf( "[dfn_findcycle] and its tail " );
 			    printname( tailp -> cnext );
@@ -257,7 +262,7 @@ dfn_findcycle( childp )
 			    printname( cycleheadp );
 			    printf( "\n" );
 			}
-#		    endif DEBUG
+#endif /* DEBUG */
 		}
 	    } else if ( childp -> cyclehead != cycleheadp /* firewall */ ) {
 		fprintf( stderr ,
@@ -271,6 +276,7 @@ dfn_findcycle( childp )
      *	deal with self-cycles
      *	for lint: ARGSUSED
      */
+void
 dfn_self_cycle( parentp )
     nltype	*parentp;
 {
@@ -278,13 +284,13 @@ dfn_self_cycle( parentp )
 	 *	since we are taking out self-cycles elsewhere
 	 *	no need for the special case, here.
 	 */
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & DFNDEBUG ) {
 	    printf( "[dfn_self_cycle] " );
 	    printname( parentp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
 }
 
     /*
@@ -292,18 +298,19 @@ dfn_self_cycle( parentp )
      *	[MISSING: an explanation]
      *	and pop it off the stack
      */
+void
 dfn_post_visit( parentp )
     nltype	*parentp;
 {
     nltype	*memberp;
 
-#   ifdef DEBUG
+#ifdef DEBUG
 	if ( debug & DFNDEBUG ) {
 	    printf( "[dfn_post_visit]\t%d: " , dfn_depth );
 	    printname( parentp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#endif /* DEBUG */
 	/*
 	 *	number functions and things in their cycles
 	 *	unless the function is itself part of a cycle
@@ -312,20 +319,20 @@ dfn_post_visit( parentp )
 	dfn_counter += 1;
 	for ( memberp = parentp ; memberp ; memberp = memberp -> cnext ) {
 	    memberp -> toporder = dfn_counter;
-#	    ifdef DEBUG
+#ifdef DEBUG
 		if ( debug & DFNDEBUG ) {
 		    printf( "[dfn_post_visit]\t\tmember " );
 		    printname( memberp );
 		    printf( " -> toporder = %d\n" , dfn_counter );
 		}
-#	    endif DEBUG
+#endif /* DEBUG */
 	}
     } else {
-#	ifdef DEBUG
+#ifdef DEBUG
 	    if ( debug & DFNDEBUG ) {
 		printf( "[dfn_post_visit]\t\tis part of a cycle\n" );
 	    }
-#	endif DEBUG
+#endif /* DEBUG */
     }
     dfn_depth -= 1;
 }
