@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/06/20 13:31:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 1998/09/05 14:46:16 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,7 +63,7 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 	gzip netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
-clean cleandir:
+clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
 
 real-floppy:
