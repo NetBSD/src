@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.2 1998/12/03 13:25:45 bouyer Exp $	*/
+/*	$NetBSD: pciide_sis_reg.h,v 1.3 1998/12/03 14:06:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 
 /*
  * Registers definitions for SiS SiS5597/98 PCI IDE controller.
- * Available from ?
+ * Available from http://www.sis.com.tw/html/databook.html
  */
 
 /* IDE timing control registers (32 bits) */
