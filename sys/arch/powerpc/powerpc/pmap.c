@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2001/03/26 18:52:29 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2001/03/26 19:56:32 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1420,7 +1420,7 @@ pmap_activate(p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap, rpm;
-	int psl, i, ksr, seg;
+	int psl, i, seg;
 
 	/*
 	 * XXX Normally performed in cpu_fork().
