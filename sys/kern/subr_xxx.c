@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
- *	$Id: subr_xxx.c,v 1.3 1993/05/20 02:55:05 cgd Exp $
+ *	$Id: subr_xxx.c,v 1.4 1993/06/06 03:35:39 cgd Exp $
  */
 
 /*
@@ -198,10 +198,11 @@ bcmp(v1, v2, len)
 #endif /* NEED_BCMP */
 
 #ifdef NEED_STRLEN
+size_t
 strlen(s1)
-	const register char *s1;
+	register const char *s1;
 {
-	register int len;
+	register size_t len;
 
 	for (len = 0; *s1++ != '\0'; len++)
 		;
