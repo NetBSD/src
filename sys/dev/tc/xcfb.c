@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.33 2003/11/13 03:09:29 chs Exp $ */
+/* $NetBSD: xcfb.c,v 1.34 2003/12/13 23:02:50 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.33 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.34 2003/12/13 23:02:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -591,7 +591,6 @@ set_cmap(sc, p)
 	memcpy(&sc->sc_cmap.r[index], &cmap.r[index], count);
 	memcpy(&sc->sc_cmap.g[index], &cmap.g[index], count);
 	memcpy(&sc->sc_cmap.b[index], &cmap.b[index], count);
-	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
 	return (0);
 }
 
