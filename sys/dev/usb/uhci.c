@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.89 2000/03/23 07:01:46 thorpej Exp $	*/
+/*	$NetBSD: uhci.c,v 1.90 2000/03/23 18:59:10 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -853,6 +853,9 @@ uhci_alloc_intr_info(sc)
 		ii = malloc(sizeof(uhci_intr_info_t), M_USBHC, M_NOWAIT);
 	}
 	ii->sc = sc;
+#if defined(__NetBSD__)
+	callout_init(&ii->timeout_handle);
+#endif
 #if defined(__FreeBSD__)
 	callout_handle_init(&ii->timeout_handle);
 #endif
@@ -864,6 +867,10 @@ void
 uhci_free_intr_info(ii)
 	uhci_intr_info_t *ii;
 {
+#if defined(__NetBSD__) && defined(DIAGNOSTIC)
+	if (callout_pending(&ii->timeout_handle))
+		panic("uhci_free_intr_info: pending callout");
+#endif
 	LIST_INSERT_HEAD(&uhci_ii_free, ii, list); /* and put on free list */
 }
 
