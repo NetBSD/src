@@ -1,13 +1,15 @@
-#	$NetBSD: Makefile,v 1.4 1996/01/30 19:47:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1996/06/26 17:44:42 thorpej Exp $
 
 LIB=	sa
 
 .PATH:	${.CURDIR}/../../../../lib/libsa
+.PATH:	${.CURDIR}/..
 
 # Don't need these now...
 # DEBUGFLAGS=-DNETIF_DEBUG -DRPC_DEBUG -DNFS_DEBUG -DRARP_DEBUG -DNET_DEBUG
 
-CFLAGS+=-DSTANDALONE -DCOMPAT_UFS ${DEBUGFLAGS}
+CFLAGS+=-DSTANDALONE -DCOMPAT_UFS -DNO_LSEEK ${DEBUGFLAGS}
+CFLAGS+=-I${.CURDIR}/..
 CFLAGS+=-I${.CURDIR}/../../../..  -I${.CURDIR}/../../../../lib/libsa
 
 # stand routines
@@ -25,7 +27,7 @@ SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
 SRCS+=	bootp.c bootparam.c rarp.c
 
 # boot filesystems
-SRCS+=	ufs.c nfs.c
+SRCS+=	ufs.c nfs.c rawfs.o
 
 NOPROFILE=
 NOPIC=
