@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 2002/09/28 10:57:44 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 2002/10/01 07:55:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2002/09/28 10:57:44 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2002/10/01 07:55:18 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2002/09/28 10:57:44 scw Exp $");
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/bus.h>
+#include <machine/cacheops.h>
 
 static int _bus_dmamap_create(void *, bus_size_t, int, bus_size_t,
 		bus_size_t, int, bus_dmamap_t *);
@@ -80,6 +81,8 @@ static paddr_t _bus_dmamem_mmap(void *, bus_dma_segment_t *, int,
 static int _bus_dmamap_load_buffer_direct_common(void *,
     bus_dmamap_t, void *, bus_size_t, struct proc *, int,
     paddr_t *, int *, int);
+
+static void _bus_dmamap_sync_helper(vaddr_t, paddr_t, vsize_t, int);
 
 const struct sh5_bus_dma_tag _sh5_bus_dma_tag = {
 	NULL,
@@ -173,26 +176,20 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	paddr_t paddr;
+	pmap_t pm;
 	int seg, cacheable, coherent = BUS_DMA_COHERENT;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
 
+	pm = p ? p->p_vmspace->vm_map.pmap : pmap_kernel();
+
 	for (seg = *segp; buflen > 0 ; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL) {
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
-			    vaddr, &paddr);
-			cacheable =
-			    pmap_page_is_cacheable(p->p_vmspace->vm_map.pmap,
-				vaddr);
-		} else {
-			(void) pmap_extract(pmap_kernel(),vaddr, &paddr);
-			cacheable =
-			    pmap_page_is_cacheable(pmap_kernel(), vaddr);
-		}
+		(void) pmap_extract(pm, vaddr, &paddr);
+		cacheable = pmap_page_is_cacheable(pm, vaddr);
 
 		curaddr = (bus_addr_t) paddr;
 
@@ -223,6 +220,7 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 			map->dm_segs[seg].ds_addr =
 			    map->dm_segs[seg]._ds_cpuaddr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
+			map->dm_segs[seg]._ds_vaddr = vaddr;
 			map->dm_segs[seg]._ds_flags =
 			    cacheable ? 0 : BUS_DMA_COHERENT;
 			first = 0;
@@ -240,6 +238,7 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 				map->dm_segs[seg].ds_addr =
 				    map->dm_segs[seg]._ds_cpuaddr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
+				map->dm_segs[seg]._ds_vaddr = vaddr;
 				map->dm_segs[seg]._ds_flags =
 				    cacheable ? 0 : BUS_DMA_COHERENT;
 			}
@@ -465,11 +464,124 @@ static void
 _bus_dmamap_sync(void *cookie, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
+	vsize_t seglen;
+	vaddr_t va;
+	paddr_t pa;
+	int i;
 
+	/* If the whole DMA map is uncached, do nothing */
 	if (map->_dm_flags & BUS_DMA_COHERENT)
 		return;
 
-	/* XXX: Flesh this out */
+	/* Short-circuit for unsupported `ops' */
+	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
+		return;
+
+	for (i = 0; i < map->dm_nsegs && len > 0; i++) {
+		if (map->dm_segs[i].ds_len <= offset) {
+			/* Segment irrelevant - before requested offset */
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
+
+		seglen = (vsize_t)(map->dm_segs[i].ds_len - offset);
+		if (seglen > (vsize_t)len)
+			seglen = (vsize_t)len;
+		len -= (bus_size_t)seglen;
+
+		/* Ignore cache-inhibited segments */
+		if (map->dm_segs[i]._ds_flags & BUS_DMA_COHERENT)
+			continue;
+
+		pa = (paddr_t)(map->dm_segs[i]._ds_cpuaddr + offset);
+		va = map->dm_segs[i]._ds_vaddr + offset;
+
+		switch (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD)) {
+		case BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD:
+			_bus_dmamap_sync_helper(va, pa, seglen, 0);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+			_bus_dmamap_sync_helper(va, pa, seglen, 1);
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			_bus_dmamap_sync_helper(va, pa, seglen, 0);
+			break;
+		}
+	}
+}
+
+static void
+_bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
+{
+	void (*op)(vaddr_t, paddr_t, vsize_t);
+	vsize_t bytes;
+
+	KDASSERT((int)(va & (NBPG - 1)) == (int)(pa & (NBPG - 1)));
+
+	if (len == 0)
+		return;
+
+	op = inv ? __cpu_cache_dinv : __cpu_cache_dpurge;
+
+	/*
+	 * Align the region to a cache-line boundary by always purging
+	 * the first partial cache-line.
+	 */
+	if ((va & (SH5_CACHELINE_SIZE - 1)) != 0) {
+		bytes = min((vsize_t)va & (SH5_CACHELINE_SIZE - 1), len);
+		__cpu_cache_dpurge(va & ~SH5_CACHELINE_SIZE,
+		    pa & ~SH5_CACHELINE_SIZE, SH5_CACHELINE_SIZE);
+		len -= bytes;
+		pa += bytes;
+		va += bytes;
+	}
+
+	/*
+	 * Align the length to a multiple of the cache-line size by always
+	 * purging the last partial cache-line
+	 */
+	if ((len & (SH5_CACHELINE_SIZE - 1)) != 0) {
+		bytes = min((vsize_t)len & (SH5_CACHELINE_SIZE - 1), len);
+		__cpu_cache_dpurge(va + (len - bytes), pa + (len - bytes),
+		    SH5_CACHELINE_SIZE);
+		len -= bytes;
+	}
+
+	if (len == 0)
+		return;
+
+	/*
+	 * For KSEG0, we don't need to flush the cache on a page-by-page
+	 * basis.
+	 */
+	if (va < SH5_KSEG1_BASE && va >= SH5_KSEG0_BASE) {
+		(*op)(va, pa, len);
+		return;
+	}
+
+	/*
+	 * Align the region to a page boundary
+	 */
+	if ((va & (NBPG-1)) != 0) {
+		bytes = min(NBPG - (vsize_t)(va & (NBPG - 1)), len);
+		(*op)(va, pa, bytes);
+		len -= bytes;
+		pa += bytes;
+		va += bytes;
+	}
+
+	/*
+	 * Do things one page at a time
+	 */
+	while (len) {
+		bytes = min(NBPG, len);
+		(*op)(va, pa, bytes);
+		len -= bytes;
+		pa += bytes;
+		va += bytes;
+	}
 }
 
 /*
