@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.4 2000/11/22 16:07:16 nonaka Exp $	*/
+/*	$NetBSD: extintr.c,v 1.5 2000/11/27 08:53:55 matt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ volatile int cpl, ipending, astpending, tickspending;
 int imask[NIPL];
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
+unsigned intrcnt2[ICU_LEN];
 
 int
 fakeintr(arg)
@@ -140,6 +141,7 @@ ext_intr()
 	pcpl = splhigh();	/* Turn off all */
 
 	irq = isa_intr();
+	intrcnt2[irq]++;
 
 	r_imen = 1 << irq;
 
@@ -188,8 +190,8 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 	case IST_NONE:
 		intrtype[irq] = type;
 		break;
-	case IST_EDGE:
 	case IST_LEVEL:
+	case IST_EDGE:
 		if (type == intrtype[irq])
 			break;
 	case IST_PULSE:
