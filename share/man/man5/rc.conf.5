@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.65 2002/08/26 17:46:58 abs Exp $
+.\"	$NetBSD: rc.conf.5,v 1.66 2002/08/27 14:16:02 takemura Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -284,6 +284,15 @@ Run
 to trim logfiles before syslogd starts.  Intended for laptop users.
 Passes
 .Sy newsyslog_flags .
+.It Sy tpctl
+.Sq YES
+or
+.Sq NO .
+Run
+.Xr tpctl 8
+to calibrate touch panel device.
+Passes
+.Sy tpctl_flags .
 .El
 .Ss System security setting
 .Bl -tag -width net_interfaces
