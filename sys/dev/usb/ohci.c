@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.74 2000/02/29 21:37:00 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.75 2000/03/16 00:41:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -464,10 +464,10 @@ ohci_free_std(sc, std)
 }
 
 usbd_status
-ohci_alloc_std_chain(opipe, sc, len, rd, flags, dma, sp, ep)
+ohci_alloc_std_chain(opipe, sc, alen, rd, flags, dma, sp, ep)
 	struct ohci_pipe *opipe;
 	ohci_softc_t *sc;
-	int len, rd;
+	int alen, rd;
 	u_int16_t flags;
 	usb_dma_t *dma;
 	ohci_soft_td_t *sp, **ep;
@@ -475,9 +475,11 @@ ohci_alloc_std_chain(opipe, sc, len, rd, flags, dma, sp, ep)
 	ohci_soft_td_t *next, *cur;
 	ohci_physaddr_t dataphys, dataphysend;
 	u_int32_t intr, tdflags;
-	int curlen;
+	int len, curlen;
 
-	DPRINTFN(len < 4096,("ohci_alloc_std_chain: start len=%d\n", len));
+	DPRINTFN(alen < 4096,("ohci_alloc_std_chain: start len=%d\n", alen));
+
+	len = alen;
 	cur = sp;
 	dataphys = DMAADDR(dma);
 	dataphysend = OHCI_PAGE(dataphys + len - 1);
@@ -488,7 +490,7 @@ ohci_alloc_std_chain(opipe, sc, len, rd, flags, dma, sp, ep)
 
 	for (;;) {
 		next = ohci_alloc_std(sc);
-		if (next == 0)
+		if (next == NULL)
 			goto nomem;
 
 		/* The OHCI hardware can handle at most one page crossing. */
@@ -524,23 +526,26 @@ ohci_alloc_std_chain(opipe, sc, len, rd, flags, dma, sp, ep)
 		cur = next;
 	}
 	if ((flags & USBD_FORCE_SHORT_XFER) &&
-	    len % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize) == 0) {
+	    alen % UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize) == 0) {
 		/* Force a 0 length transfer at the end. */
+
+		cur->td.td_flags = LE(tdflags | OHCI_TD_NOINTR);
+		cur = next;
+
 		next = ohci_alloc_std(sc);
-		if (next == 0)
+		if (next == NULL)
 			goto nomem;
 
 		cur->td.td_flags = LE(tdflags | OHCI_TD_SET_DI(1));
 		cur->td.td_cbp = 0; /* indicate 0 length packet */
 		cur->nexttd = next;
 		cur->td.td_nexttd = LE(next->physaddr);
-		cur->td.td_be = LE(dataphys - 1);
+		cur->td.td_be = ~0;
 		cur->len = 0;
 		cur->flags = 0;
-		cur = next;
 		DPRINTFN(2,("ohci_alloc_std_chain: add 0 xfer\n"));
 	}
-	cur->flags = OHCI_CALL_DONE | OHCI_ADD_LEN;
+	cur->flags |= OHCI_CALL_DONE;
 	*ep = next;
 
 	return (USBD_NORMAL_COMPLETION);
@@ -1170,6 +1175,8 @@ ohci_softintr(bus)
 			if (std->td.td_cbp != 0)
 				len -= LE(std->td.td_be) -
 				       LE(std->td.td_cbp) + 1;
+			DPRINTFN(10, ("ohci_process_done: len=%d, flags=0x%x\n",
+				      len, std->flags));
 			if (std->flags & OHCI_ADD_LEN)
 				xfer->actlen += len;
 			if (std->flags & OHCI_CALL_DONE) {
@@ -2509,7 +2516,7 @@ ohci_device_bulk_start(xfer)
 		    (int)LE(data->td.td_cbp), (int)LE(data->td.td_be)));
 
 #ifdef OHCI_DEBUG
-	if (ohcidebug > 4) {
+	if (ohcidebug > 5) {
 		ohci_dump_ed(sed);
 		ohci_dump_tds(data);
 	}
@@ -2531,8 +2538,8 @@ ohci_device_bulk_start(xfer)
 
 #if 0
 /* This goes wrong if we are too slow. */
-	if (ohcidebug > 5) {
-		usb_delay_ms(&sc->sc_bus, 5);
+	if (ohcidebug > 10) {
+		delay(10000);
 		DPRINTF(("ohci_device_intr_transfer: status=%x\n",
 			 OREAD4(sc, OHCI_COMMAND_STATUS)));
 		ohci_dump_ed(sed);
@@ -2826,6 +2833,7 @@ ohci_device_isoc_enter(xfer)
 	sitd->itd.itd_bp0 = LE(buf & OHCI_ITD_PAGE_MASK);
 	nframes = xfer->nframes;
 	offs = buf & OHCI_ITD_OFFSET_MASK;
+	ncross = 0;
 	for (i = ncur = 0; i < nframes; i++, ncur++) {
 		if (ncur == OHCI_ITD_NOFFSET ||	/* all offsets used */
 		    ncross > 1) {	/* too many page crossings */
