@@ -1,7 +1,7 @@
-/*	$NetBSD: cdefs.h,v 1.3 2001/12/16 18:11:12 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.4 2002/03/17 17:55:24 uch Exp $	*/
 
-#ifndef _MACHINE_CDEFS_H_
-#define _MACHINE_CDEFS_H_
+#ifndef _SH3_CDEFS_H_
+#define _SH3_CDEFS_H_
 
 /*
  * The old NetBSD/sh3 ELF toolchain used underscores.  The new
@@ -13,4 +13,4 @@
 #define __LEADING_UNDERSCORE
 #endif
 
-#endif /* !_MACHINE_CDEFS_H_ */
+#endif /* !_SH3_CDEFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfcreg.h,v 1.4 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: pfcreg.h,v 1.5 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -26,8 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PFCREG_H_
-#define _PFCREG_H_
+#ifndef _SH3_PFCREG_H_
+#define _SH3_PFCREG_H_
 #include <sh3/devreg.h>
 
 /* address definitions for pin function controller (PFC)*/
@@ -70,5 +70,5 @@
 #define SH4_SCSPTR1		0xffe0001c	/*  8bit */
 #define SH4_SCSPTR2		0xffe80020	/* 16bit */
 
-#endif /* _PFCREG_H_ */
+#endif /* !_SH3_PFCREG_H_ */
 

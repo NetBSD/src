@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 2002/03/17 14:02:04 uch Exp $	*/
+/*	$NetBSD: pcb.h,v 1.5 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -73,4 +73,4 @@ struct md_coredump {
 extern struct pcb *curpcb;		/* our current running pcb */
 #endif
 
-#endif /* _SH3_PCB_H_ */
+#endif /* !_SH3_PCB_H_ */

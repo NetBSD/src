@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2000/05/02 04:41:10 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.3 2002/03/17 17:55:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,4 +48,4 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
-#endif /* _SH3_LOCK_H_ */
+#endif /* !_SH3_LOCK_H_ */

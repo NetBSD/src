@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2002/03/17 14:05:12 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2002/03/17 17:55:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -324,7 +324,7 @@ cpu_startup()
 	cpuclock = sh_clock_get_cpuclock();
 	pclock = sh_clock_get_pclock();
 
-	sh3_startup();
+	sh_startup();
 
 	memcpy(&cpu, &platid, sizeof(platid_t));
 	cpu.dw.dw1 = 0;	/* clear platform */
