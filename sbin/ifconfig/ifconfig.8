@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.25 1999/07/01 13:19:20 itojun Exp $
+.\"	$NetBSD: ifconfig.8,v 1.26 1999/07/02 15:45:46 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,6 +146,12 @@ Internet
 addresses and 10Mb/s Ethernet addresses.
 .It Fl arp
 Disable the use of the Address Resolution Protocol.
+.It Cm anycast
+(inet6 only)
+Set the IPv6 anycast address bit.
+.It Fl anycast
+(inet6 only)
+Clear the IPv6 anycast address bit.
 .It Cm broadcast Ar mask
 (Inet only)
 Specify the address to use to represent broadcasts to the
@@ -229,7 +235,7 @@ Set the maximum transmission unit of the interface to
 .Ar n .
 Most interfaces don't support this option.
 .It Cm netmask Ar mask
-(Inet and ISO)
+(Inet, inet6 and ISO)
 Specify how much of the address to reserve for subdividing
 networks into sub-networks.
 The mask includes the network part of the local address
@@ -271,6 +277,20 @@ There is some evidence that a number different from 1 may be useful
 for
 .Tn AFI
 37 type addresses.
+.It Cm pltime Ar n
+(inet6 only)
+Set preferred lifetime for the address.
+.It Cm prefixlen Ar n
+(inet6 only)
+Effect is similar to
+.Cm netmask .
+but you can specify by prefix length by digits.
+.It Cm tentative
+(inet6 only)
+Set the IPv6 tentative address bit.
+.It Fl tentative
+(inet6 only)
+Clear the IPv6 tentative address bit.
 .It Cm trailers
 Request the use of a ``trailer'' link level encapsulation when
 sending (default).
@@ -305,6 +325,9 @@ This may be used to enable an interface after an ``ifconfig down.''
 It happens automatically when setting the first address on an interface.
 If the interface was reset when previously marked down,
 the hardware will be re-initialized.
+.It Cm vltime Ar n
+(inet6 only)
+Set valid lifetime for the address.
 .El
 .Pp
 .Nm
