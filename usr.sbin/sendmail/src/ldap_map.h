@@ -1,3 +1,5 @@
+/*	$NetBSD: ldap_map.h,v 1.3 1998/01/09 08:11:12 perry Exp $	*/
+
 /*
 **  Support for LDAP.
 **

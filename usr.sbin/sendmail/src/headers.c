@@ -1,3 +1,5 @@
+/*	$NetBSD: headers.c,v 1.19 1998/01/09 08:11:11 perry Exp $	*/
+
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
  * Copyright (c) 1988, 1993

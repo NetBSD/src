@@ -1,3 +1,5 @@
+/*	$NetBSD: dumptab.c,v 1.4 1998/01/09 08:09:07 perry Exp $	*/
+
 /*
  * dumptab.c - handles dumping the database
  */

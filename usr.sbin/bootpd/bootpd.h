@@ -1,3 +1,5 @@
+/*	$NetBSD: bootpd.h,v 1.4 1998/01/09 08:09:02 perry Exp $	*/
+
 /************************************************************************
           Copyright 1988, 1991 by Carnegie Mellon University
 

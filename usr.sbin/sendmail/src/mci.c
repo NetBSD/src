@@ -1,3 +1,5 @@
+/*	$NetBSD: mci.c,v 1.15 1998/01/09 08:11:18 perry Exp $	*/
+
 /*
  * Copyright (c) 1995-1997 Eric P. Allman
  * Copyright (c) 1988, 1993

@@ -1,3 +1,5 @@
+/*	$NetBSD: dovend.c,v 1.2 1998/01/09 08:09:06 perry Exp $	*/
+
 /*
  * dovend.c : Inserts all but the first few vendor options.
  */

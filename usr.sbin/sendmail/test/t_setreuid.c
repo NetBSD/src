@@ -1,3 +1,5 @@
+/*	$NetBSD: t_setreuid.c,v 1.4 1998/01/09 08:11:45 perry Exp $	*/
+
 /*
 **  This program checks to see if your version of setreuid works.
 **  Compile it, make it setuid root, and run it as yourself (NOT as

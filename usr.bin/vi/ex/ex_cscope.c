@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_cscope.c,v 1.2 1998/01/09 08:07:45 perry Exp $	*/
+
 /*-
  * Copyright (c) 1994, 1996
  *	Rob Mayoff.  All rights reserved.

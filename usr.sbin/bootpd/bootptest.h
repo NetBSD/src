@@ -1,3 +1,5 @@
+/*	$NetBSD: bootptest.h,v 1.2 1998/01/09 08:09:04 perry Exp $	*/
+
 /* bootptest.h */
 /*
  * Hacks for sharing print-bootp.c between tcpdump and bootptest.

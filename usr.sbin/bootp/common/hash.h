@@ -1,3 +1,5 @@
+/*	$NetBSD: hash.h,v 1.2 1998/01/09 08:09:10 perry Exp $	*/
+
 #ifndef	HASH_H
 #define HASH_H
 /* hash.h */

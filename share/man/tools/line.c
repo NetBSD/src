@@ -1,3 +1,5 @@
+/*	$NetBSD: line.c,v 1.2 1998/01/09 08:05:00 perry Exp $	*/
+
 /*	@(#)line.c	1.1	*/
 /*
 	This program reads a single line from the standard input

@@ -1,3 +1,5 @@
+/*	$NetBSD: pages.c,v 1.2 1998/01/09 08:05:09 perry Exp $	*/
+
 #include <stdio.h>
 
 #define T_INIT	0100

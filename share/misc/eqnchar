@@ -1,3 +1,5 @@
+.\"	$NetBSD: eqnchar,v 1.2 1998/01/09 08:05:15 perry Exp $
+.\"
 .EQ
 tdefine ciplus % "\o'\(pl\(ci'" %
 ndefine ciplus % O+ %

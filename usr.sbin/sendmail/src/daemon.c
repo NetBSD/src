@@ -1,3 +1,5 @@
+/*	$NetBSD: daemon.c,v 1.23 1998/01/09 08:11:06 perry Exp $	*/
+
 /*
  * Copyright (c) 1983, 1995-1997 Eric P. Allman
  * Copyright (c) 1988, 1993

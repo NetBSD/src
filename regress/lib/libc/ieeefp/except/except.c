@@ -1,3 +1,5 @@
+/*	$NetBSD: except.c,v 1.3 1998/01/09 08:03:49 perry Exp $	*/
+
 #include <stdio.h>
 #include <signal.h>
 #include <assert.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: scaffold.h,v 1.3 1998/01/09 08:11:48 perry Exp $	*/
+
  /*
   * @(#) scaffold.h 1.3 94/12/31 18:19:19
   * 

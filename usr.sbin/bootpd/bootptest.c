@@ -1,3 +1,5 @@
+/*	$NetBSD: bootptest.c,v 1.4 1998/01/09 08:09:03 perry Exp $	*/
+
 /*
  * bootptest.c - Test out a bootp server.
  *

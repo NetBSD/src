@@ -1,4 +1,7 @@
 #! /bin/sh
+#
+#	$NetBSD: yearistype.sh,v 1.2 1998/01/09 08:05:17 perry Exp $
+#
 
 : '@(#)yearistype.sh	7.4'
 

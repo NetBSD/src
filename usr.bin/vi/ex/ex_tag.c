@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_tag.c,v 1.8 1998/01/09 08:08:06 perry Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: noso.c,v 1.3 1998/01/09 08:05:06 perry Exp $	*/
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>

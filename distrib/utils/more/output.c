@@ -1,3 +1,5 @@
+/*	$NetBSD: output.c,v 1.3 1998/01/09 08:03:33 perry Exp $	*/
+
 /*
  * Copyright (c) 1988 Mark Nudleman
  * Copyright (c) 1988, 1993
