@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.20 2003/11/02 09:52:33 wiz Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.21 2003/11/07 04:10:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -102,6 +102,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
+	struct lock sc_lock;
 	struct bufq_state sc_q;
 	struct callout sc_restart_ch;
 	int sc_quirks;			/* any quirks drive might have */
@@ -113,8 +114,6 @@ struct wd_softc {
 	int openings;
 	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;	  
-#define	WDF_LOCKED	0x001
-#define	WDF_WANTED	0x002
 #define	WDF_WLABEL	0x004 /* label is writable */
 #define	WDF_LABELLING	0x008 /* writing label */
 /*
