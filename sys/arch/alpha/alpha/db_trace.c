@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.3 1999/07/11 22:28:15 ross Exp $ */
+/* $NetBSD: db_trace.c,v 1.4 1999/07/12 07:37:14 ross Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 1999/07/11 22:28:15 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4 1999/07/12 07:37:14 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ decode_syscall(number, p)
 	db_printf(" (%d", number); /* ) */
 	if (!p)
 		goto out;
-	if (0 <= number && number <= p->p_emul->e_nsysent) {
+	if (0 <= number && number < p->p_emul->e_nsysent) {
 		ename = p->p_emul->e_name;
 		f = p->p_emul->e_sysent[number].sy_call;
 		sym = db_search_symbol((db_addr_t)f, DB_STGY_ANY, &diff);
