@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.14 2001/01/30 13:29:58 enami Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.15 2001/07/03 01:36:07 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.14 2001/01/30 13:29:58 enami Exp $
+ * $Id: m_netbsd15.c,v 1.15 2001/07/03 01:36:07 christos Exp $
  */
 
 #include <sys/param.h>
@@ -453,6 +453,7 @@ format_next_process(handle, get_userid)
 #endif
 	char wmesg[KI_WMESGLEN + 1];
 	static char fmt[128];		/* static area where result is built */
+	char *pretty = "";
 
 	/* find and remember the next proc structure */
 	hp = (struct handle *)handle;
@@ -460,18 +461,24 @@ format_next_process(handle, get_userid)
 	hp->remaining--;
 
 	/* get the process's user struct and set cputime */
-	if ((pp->p_flag & P_INMEM) == 0) {
+	if ((pp->p_flag & P_INMEM) == 0)
+		pretty = "<>";
+	else if ((pp->p_flag & P_SYSTEM) != 0)
+		pretty = "[]";
+
+	if (pretty[0] != '\0') {
 		/*
-		 * Print swapped processes as <pname>
+		 * Print swapped processes as <pname> and
+		 * system processes as [pname]
 		 */
 		char *comm = pp->p_comm;
 #define COMSIZ sizeof(pp->p_comm)
 		char buf[COMSIZ];
 		(void) strncpy(buf, comm, COMSIZ);
-		comm[0] = '<';
+		comm[0] = pretty[0];
 		(void) strncpy(&comm[1], buf, COMSIZ - 2);
 		comm[COMSIZ - 2] = '\0';
-		(void) strncat(comm, ">", COMSIZ - 1);
+		(void) strncat(comm, &pretty[1], COMSIZ - 1);
 		comm[COMSIZ - 1] = '\0';
 	}
 
