@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.130 1998/01/12 09:23:19 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.131 1998/02/01 23:33:01 marc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -117,6 +117,7 @@ int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 static void com_enable_debugport __P((struct com_softc *));
 #endif
 void	com_attach_subr	__P((struct com_softc *sc));
+void	com_config	__P((struct com_softc *));
 int	comspeed	__P((long, long));
 static	u_char	cflag2lcr __P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
@@ -370,7 +371,7 @@ com_attach_subr(sc)
 
 	/* Disable interrupts before configuring the device. */
 	sc->sc_ier = 0;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 
 	if (iot == comconstag && iobase == comconsaddr) {
 		comconsattached = 1;
@@ -393,34 +394,12 @@ com_attach_subr(sc)
 			sc->sc_hayespioh = hayespioh;
 			sc->sc_fifolen = 1024;
 
-			/* Set 16550 compatibility mode */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETMODE);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
-			     HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
-			     HAYESP_MODE_SCALE);
-
-			/* Set RTS/CTS flow control */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETFLOWTYPE);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, HAYESP_FLOW_RTS);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, HAYESP_FLOW_CTS);
-
-			/* Set flow control levels */
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD1, HAYESP_SETRXFLOW);
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2, 
-			     HAYESP_HIBYTE(HAYESP_RXHIWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_LOBYTE(HAYESP_RXHIWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_HIBYTE(HAYESP_RXLOWMARK));
-			bus_space_write_1(iot, hayespioh, HAYESP_CMD2,
-			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
-
 			break;
 		}
 		bus_space_unmap(iot, hayespioh, HAYESP_NPORTS);
 	}
 	/* No ESP; look for other things. */
-	if (*hayespp == 0) {
+	if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
 #endif
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
@@ -502,9 +481,7 @@ com_attach_subr(sc)
 				break;
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
-#ifdef DDB
-		com_enable_debugport(sc);
-#endif
+
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
@@ -517,7 +494,6 @@ com_attach_subr(sc)
 		com_kgdb_attached = 1;
 
 		SET(sc->sc_hwflags, COM_HW_KGDB);
-		com_enable_debugport(sc);
 		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
 	}
 #endif
@@ -529,6 +505,73 @@ com_attach_subr(sc)
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_TTY);
+#endif
+
+	/* if there are no enable/disable functions, assume the device
+	   is always enabled */
+	if (!sc->enable)
+		sc->enabled = 1;
+
+	com_config(sc);
+}
+
+void
+com_config(sc)
+	struct com_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	/* Disable interrupts before configuring the device. */
+	sc->sc_ier = 0;
+	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+
+#ifdef COM_HAYESP
+	/* Look for a Hayes ESP board. */
+	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+		sc->sc_fifolen = 1024;
+
+		/* Set 16550 compatibility mode */
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+				  HAYESP_SETMODE);
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2, 
+				  HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
+				  HAYESP_MODE_SCALE);
+
+		/* Set RTS/CTS flow control */
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+				  HAYESP_SETFLOWTYPE);
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+				  HAYESP_FLOW_RTS);
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+				  HAYESP_FLOW_CTS);
+
+		/* Set flow control levels */
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+				  HAYESP_SETRXFLOW);
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2, 
+				  HAYESP_HIBYTE(HAYESP_RXHIWMARK));
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+				  HAYESP_LOBYTE(HAYESP_RXHIWMARK));
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+				  HAYESP_HIBYTE(HAYESP_RXLOWMARK));
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+				  HAYESP_LOBYTE(HAYESP_RXLOWMARK));
+	}
+#endif
+
+#ifdef DDB
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		com_enable_debugport(sc);
+#endif
+
+#ifdef KGDB
+	/*
+	 * Allow kgdb to "take over" this port.  If this is
+	 * the kgdb device, it has exclusive use.
+	 */
+	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
+		com_enable_debugport(sc);
 #endif
 }
 
@@ -579,6 +622,16 @@ comopen(dev, flag, mode, p)
 		tp->t_dev = dev;
 
 		s2 = splserial();
+
+		if (sc->enable) {
+			if ((*sc->enable)(sc)) {
+				printf("%s: device enable failed\n",
+				       sc->sc_dev.dv_xname);
+				return (EIO);
+			}
+			sc->enabled = 1;
+			com_config(sc);
+		}
 
 		/* Turn on interrupts. */
 		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
@@ -718,6 +771,13 @@ comclose(dev, flag, mode, p)
 #endif
 		sc->sc_ier = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+
+	if (sc->disable) {
+		if (sc->enabled) {
+			(*sc->disable)(sc);
+			sc->enabled = 0;
+		}
+	}
 
 	splx(s);
 	
@@ -1142,10 +1202,29 @@ com_iflush(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+#ifdef DIAGNOSTIC
+	int reg;
+#endif
+	int timo;
 
+#ifdef DIAGNOSTIC
+	reg = 0xffff;
+#endif
+	timo = 50000;
 	/* flush any pending I/O */
-	while (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
-		(void) bus_space_read_1(iot, ioh, com_data);
+	while (ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY)
+	    && --timo)
+#ifdef DIAGNOSTIC
+		reg =
+#else
+		    (void)
+#endif
+		    bus_space_read_1(iot, ioh, com_data);
+#ifdef DIAGNOSTIC
+	if (!timo)
+		printf("%s: com_iflush timeout %02x\n", sc->sc_dev.dv_xname,
+		       reg);
+#endif
 }
 
 void
@@ -1486,6 +1565,9 @@ comsoft(arg)
 	struct com_softc *sc = arg;
 	struct tty *tp;
 
+	if (!sc->enabled)
+		return;
+
 	{
 #else
 void
@@ -1509,6 +1591,9 @@ comsoft(arg)
 	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
 		sc = com_cd.cd_devs[unit];
 		if (sc == NULL)
+			continue;
+
+		if (!sc->enabled)
 			continue;
 
 		tp = sc->sc_tty;
@@ -1550,6 +1635,9 @@ comintr(arg)
 	u_char *put, *end;
 	u_int cc;
 	u_char lsr, iir;
+
+	if (!sc->enabled)
+		return (0);
 
 	iir = bus_space_read_1(iot, ioh, com_iir);
 	if (ISSET(iir, IIR_NOPEND))
@@ -1731,9 +1819,16 @@ com_common_getc(iot, ioh)
 {
 	int s = splserial();
 	u_char stat, c;
+	int timo;
 
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
+	timo = 50000;
+	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY)
+	    && --timo)
 		;
+#ifdef DIAGNOSTIC
+	if (!timo)
+		printf("com_common_getc timeout\n");
+#endif
 	c = bus_space_read_1(iot, ioh, com_data);
 	stat = bus_space_read_1(iot, ioh, com_iir);
 	splx(s);
@@ -1755,12 +1850,20 @@ com_common_putc(iot, ioh, c)
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY)
 	    && --timo)
 		;
+#ifdef DIAGNOSTIC
+	if (!timo)
+		printf("com_common_putc flush timeout\n");
+#endif
 	bus_space_write_1(iot, ioh, com_data, c);
 	/* wait for this transmission to complete */
 	timo = 1500000;
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY)
 	    && --timo)
 		;
+#ifdef DIAGNOSTIC
+	if (!timo)
+		printf("com_common_putc wait timeout\n");
+#endif
 	/* clear any interrupts generated by this transmission */
 	stat = bus_space_read_1(iot, ioh, com_iir);
 	splx(s);
