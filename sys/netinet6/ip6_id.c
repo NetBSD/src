@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.8 2003/09/15 23:38:58 itojun Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.9 2003/09/16 00:31:23 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.8 2003/09/15 23:38:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.9 2003/09/16 00:31:23 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,13 +151,13 @@ static u_int32_t randomid(struct randomtab *);
  */
 
 static u_int32_t
-pmod(u_int32_t gen, u_int32_t exp, u_int32_t mod)
+pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
 {
 	u_int64_t s, t, u;
 
 	s = 1;
 	t = gen;
-	u = exp;
+	u = expo;
 
 	while (u) {
 		if (u & 1)
