@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.45 2002/01/21 15:57:40 abs Exp $	*/
+/*	$NetBSD: init.c,v 1.46 2002/01/23 01:45:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.45 2002/01/21 15:57:40 abs Exp $");
+__RCSID("$NetBSD: init.c,v 1.46 2002/01/23 01:45:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1292,6 +1292,11 @@ mfs_dev(void)
 	off_t makedev_size;
 	off_t makedev_local_size;
 	dev_t dev;
+#ifdef CPU_CONSDEV
+	static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
+	size_t olen;
+#endif
+
 
 	/* If we have /dev/console, assume all is OK  */
 	if (access(_PATH_CONSOLE, F_OK) != -1)
@@ -1337,15 +1342,11 @@ mfs_dev(void)
 	}
 
 #ifdef CPU_CONSDEV
-	int s = sizeof(dev);
-	static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
-
-	if (sysctl(name, sizeof(name) / sizeof(name[0]), &dev, &s,
+	olen = sizeof(dev);
+	if (sysctl(name, sizeof(name) / sizeof(name[0]), &dev, &olen,
 	    NULL, 0) == -1)
-		dev = makedev(0, 0);
-#else
-	dev = makedev(0, 0);
 #endif
+		dev = makedev(0, 0);
 
 	/* Make a console for us, so we can see things happening */
 	if (mknod(_PATH_CONSOLE, 0666 | S_IFCHR, dev) == -1)
