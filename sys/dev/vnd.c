@@ -172,6 +172,7 @@ vnclose(dev, flags, mode, p)
  * Note that this driver can only be used for swapping over NFS on the hp
  * since nfs_strategy on the vax cannot handle u-areas and page tables.
  */
+void
 vnstrategy(bp)
 	register struct buf *bp;
 {
