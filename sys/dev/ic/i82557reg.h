@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.4 2001/05/21 23:58:44 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.5 2001/05/22 00:07:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,15 +75,16 @@
 /*
  * Control/status registers.
  */
-#define	FXP_CSR_SCB_RUSCUS	0	/* scb_rus/scb_cus (1 byte) */
-#define	FXP_CSR_SCB_STATACK	1	/* scb_statack (1 byte) */
-#define	FXP_CSR_SCB_COMMAND	2	/* scb_command (1 byte) */
-#define	FXP_CSR_SCB_INTRCNTL	3	/* scb_intrcntl (1 byte) */
-#define	FXP_CSR_SCB_GENERAL	4	/* scb_general (4 bytes) */
-#define	FXP_CSR_PORT		8	/* port (4 bytes) */
-#define	FXP_CSR_FLASHCONTROL	12	/* flash control (2 bytes) */
-#define	FXP_CSR_EEPROMCONTROL	14	/* eeprom control (2 bytes) */
-#define	FXP_CSR_MDICONTROL	16	/* mdi control (4 bytes) */
+#define	FXP_CSR_SCB_RUSCUS	0x00	/* scb_rus/scb_cus (1 byte) */
+#define	FXP_CSR_SCB_STATACK	0x01	/* scb_statack (1 byte) */
+#define	FXP_CSR_SCB_COMMAND	0x02	/* scb_command (1 byte) */
+#define	FXP_CSR_SCB_INTRCNTL	0x03	/* scb_intrcntl (1 byte) */
+#define	FXP_CSR_SCB_GENERAL	0x04	/* scb_general (4 bytes) */
+#define	FXP_CSR_PORT		0x08	/* port (4 bytes) */
+#define	FXP_CSR_FLASHCONTROL	0x0c	/* flash control (2 bytes) */
+#define	FXP_CSR_EEPROMCONTROL	0x0e	/* eeprom control (2 bytes) */
+#define	FXP_CSR_MDICONTROL	0x10	/* mdi control (4 bytes) */
+#define	FXP_CSR_FLOWCONTROL	0x19	/* flow control (2 bytes) */
 
 /*
  * FOR REFERENCE ONLY, the old definition of FXP_CSR_SCB_RUSCUS:
@@ -109,6 +110,15 @@
 #define FXP_SCB_CUS_IDLE		0
 #define FXP_SCB_CUS_SUSPENDED		1
 #define FXP_SCB_CUS_ACTIVE		2
+
+#define	FXP_SCB_INTR_DISABLE		0x01	/* disable all interrupts */
+#define	FXP_SCB_INTR_SWI		0x02	/* generate SWI */
+#define	FXP_SCB_INTMASK_FCP		0x04
+#define	FXP_SCB_INTMASK_ER		0x08
+#define	FXP_SCB_INTMASK_RNR		0x10
+#define	FXP_SCB_INTMASK_CNA		0x20
+#define	FXP_SCB_INTMASK_FR		0x40
+#define	FXP_SCB_INTMASK_CXTNO		0x80
 
 #define FXP_SCB_STATACK_SWI		0x04
 #define FXP_SCB_STATACK_MDI		0x08
