@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 1997/06/29 06:07:39 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.81 1997/06/29 19:02:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -335,85 +335,105 @@ GLOBAL(proc_trampoline)
 GLOBAL(m68k_fault_addr)
 	.long	0
 
-ENTRY_NOPROFILE(buserr)
-	tstl	_C_LABEL(nofault)	| device probe?
-	jeq	Lberr			| no, handle as usual
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lberrfault30		| no, handle as 030
-	movl	sp@(0x14),_C_LABEL(m68k_fault_addr)
-	movl	_C_LABEL(nofault),sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-#endif
-Lberrfault30:
-	movl	sp@(0x10),_C_LABEL(m68k_fault_addr)
-	movl	_C_LABEL(nofault),sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-Lberr:
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	_C_LABEL(addrerr)	| no, skip
+#if defined(M68040) || defined(M68060)
+ENTRY_NOPROFILE(addrerr4060)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
-	lea	sp@(FR_HW),a1		| grab base of HW berr frame
-	moveq	#0,d0
-	movw	a1@(12),d0		| grab SSW
-	movl	a1@(20),d1		| and fault VA
-	btst	#11,d0			| check for mis-aligned access
-	jeq	Lberr2			| no, skip
-	addl	#3,d1			| yes, get into next page
-	andl	#PG_FRAME,d1		| and truncate
-Lberr2:
-	movl	d1,sp@-			| push fault VA
-	movl	d0,sp@-			| and padded SSW
-	btst	#10,d0			| ATC bit set?
-	jeq	Lisberr			| no, must be a real bus error
-	movc	dfc,d1			| yes, get MMU fault
-	movc	d0,dfc			| store faulting function code
-	movl	sp@(4),a0		| get faulting address
-	.word	0xf568			| ptestr a0@
-	movc	d1,dfc
-	.long	0x4e7a0805		| movc mmusr,d0
-	movw	d0,sp@			| save (ONLY LOW 16 BITS!)
-	jra	Lismerr
+	movl	sp@(FR_HW+8),sp@-
+	clrl	sp@-			| dummy code
+	jra	Lisaerr
 #endif
 
-ENTRY_NOPROFILE(addrerr)
-	clrl	sp@-			| pad SR to longword
+#if defined(M68060)
+ENTRY_NOPROFILE(buserr60)
+	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
-	lea	sp@(FR_HW),a1		| grab base of HW berr frame
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jne	Lbenot040		| no, skip
-	movl	a1@(8),sp@-		| yes, push fault address
-	clrl	sp@-			| no SSW for address fault
-	jra	Lisaerr			| go deal with it
-Lbenot040:
+	movel	sp@(FR_HW+12),d0	| FSLW
+	btst	#2,d0			| branch prediction error?
+	jeq	Lnobpe			
+	movc	cacr,d2
+	orl	#IC60_CABC,d2		| clear all branch cache entries
+	movc	d2,cacr
+	movl	d0,d1
+	andl	#0x7ffd,d1
+	addql	#1,L60bpe
+	jeq	_ASM_LABEL(faultstkadjnotrap2)
+Lnobpe:
+| we need to adjust for misaligned addresses
+	movl	sp@(FR_HW+8),d1		| grab VA
+	btst	#27,d0			| check for mis-aligned access
+	jeq	Lberr3			| no, skip
+	addl	#28,d1			| yes, get into next page
+					| operand case: 3,
+					| instruction case: 4+12+12
+	andl	#PG_FRAME,d1            | and truncate
+Lberr3:
+	movl	d1,sp@-
+	movl	d0,sp@-			| code is FSLW now.
+	andw	#0x1f80,d0 
+	jne	Lismerr
+	tstl	_C_LABEL(nofault)	| device probe?
+	jeq	Lisberr			| no, handle as usual
+	movl	sp@(FR_HW+8+8),_C_LABEL(m68k_fault_addr) | save fault addr
+	jra	Lcatchberr
 #endif
+#if defined(M68040)
+ENTRY_NOPROFILE(buserr40)
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save user registers
+	movl	usp,a0			| save the user SP
+	movl	a0,sp@(FR_SP)		|   in the savearea
+	movl	sp@(FR_HW+20),d1	| get fault address
 	moveq	#0,d0
-	movw	a1@(10),d0		| grab SSW for fault processing
+	movw	sp@(FR_HW+12),d0	| get SSW
+	btst	#11,d0			| check for mis-aligned
+	jeq	Lbe1stpg		| no skip
+	addl	#3,d1			| get into next page
+	andl	#PG_FRAME,d1		| and truncate
+Lbe1stpg:
+	movl	d1,sp@-			| pass fault address.
+	movl	d0,sp@-			| pass SSW as code
+	btst	#10,d0			| test ATC
+	jne	Lismerr			| it is a bus error
+	tstl	_C_LABEL(nofault)	| device probe?
+	jeq	Lisberr			| no, handle as usual
+	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
+	jra	Lcatchberr
+#endif
+
+_buserr:
+_addrerr:
+#if !(defined(M68020) || defined(M68030))
+	jra	_badtrap
+#else
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save user registers
+	movl	usp,a0			| save the user SP
+	movl	a0,sp@(FR_SP)		|   in the savearea
+	moveq	#0,d0
+	movw	sp@(FR_HW+10),d0	| grab SSW for fault processing
 	btst	#12,d0			| RB set?
 	jeq	LbeX0			| no, test RC
 	bset	#14,d0			| yes, must set FB
-	movw	d0,a1@(10)		| for hardware, too
+	movw	d0,sp@(FR_HW+10)	| for hardware too
 LbeX0:
 	btst	#13,d0			| RC set?
 	jeq	LbeX1			| no, skip
 	bset	#15,d0			| yes, must set FC
-	movw	d0,a1@(10)		| for hardware, too
+	movw	d0,sp@(FR_HW+10)	| for hardware too
 LbeX1:
 	btst	#8,d0			| data fault?
 	jeq	Lbe0			| no, check for hard cases
-	movl	a1@(16),d1		| fault address is as given in frame
-	jra	Lbe10			| that's it!
+	movl	sp@(FR_HW+16),d1	| fault address is as given in frame
+	jra	Lbe10			| thats it
 Lbe0:
-	btst	#4,a1@(6)		| long (type B) stack frame?
+	btst	#4,sp@(FR_HW+6)		| long (type B) stack frame?
 	jne	Lbe4			| yes, go handle
-	movl	a1@(2),d1		| no, can use save PC
+	movl	sp@(FR_HW+2),d1		| no, can use save PC
 	btst	#14,d0			| FB set?
 	jeq	Lbe3			| no, try FC
 	addql	#4,d1			| yes, adjust address
@@ -424,14 +444,14 @@ Lbe3:
 	addql	#2,d1			| yes, adjust address
 	jra	Lbe10			| done
 Lbe4:
-	movl	a1@(36),d1		| long format, use stage B address
+	movl	sp@(FR_HW+36),d1	| long format, use stage B address
 	btst	#15,d0			| FC set?
 	jeq	Lbe10			| no, all done
 	subql	#2,d1			| yes, adjust address
 Lbe10:
 	movl	d1,sp@-			| push fault VA
 	movl	d0,sp@-			| and padded SSW
-	movw	a1@(6),d0		| get frame format/vector offset
+	movw	sp@(FR_HW+8+6),d0	| get frame format/vector offset
 	andw	#0x0FFF,d0		| clear out frame format
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
@@ -441,7 +461,7 @@ Lbe10:
 	jne	Lbe10a
 	movql	#1,d0			| user program access FC
 					| (we dont seperate data/program)
-	btst	#5,a1@			| supervisor mode?
+	btst	#5,sp@(FR_HW+8)		| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,d0			| else supervisor program access
 Lbe10a:
@@ -459,17 +479,25 @@ Lmightnotbemerr:
 	movl	sp@,d0			| ssw into low word of d0
 	andw	#0xc0,d0		| Write protect is set on page:
 	cmpw	#0x40,d0		| was it read cycle?
-	jeq	Lisberr1		| yes, was not WPE, must be bus err
-Lismerr:
-	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	jne	Lismerr			| no, was not WPE, must be MMU fault
+Lisberr1:
+	clrw	sp@			| re-clear pad word
+	tstl	_C_LABEL(nofault)	| device probe?
+	jeq	Lisberr			| no, handle as usual
+	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
+#endif
+Lcatchberr:
+	movl	_C_LABEL(nofault),sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
+	/* NOTREACHED */
+Lisberr:				| also used by M68040/60
+	movl	#T_BUSERR,sp@-		| mark bus error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisaerr:
 	movl	#T_ADDRERR,sp@-		| mark address error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-Lisberr1:
-	clrw	sp@			| re-clear pad word
-Lisberr:
-	movl	#T_BUSERR,sp@-		| mark bus error
+Lismerr:
+	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 1997/06/29 00:26:12 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.151 1997/06/29 19:02:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -223,10 +223,10 @@ static	iomem_malloc_safe;
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
 
+void	initcpu __P((void));
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
-
 void	dumpsys __P((void));
 
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
@@ -466,6 +466,11 @@ again:
 	    nbuf, bufpages * CLBYTES);
 
 	/*
+	 * Set up CPU-specific registers, cache, etc.
+	 */
+	initcpu();
+
+	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
@@ -475,6 +480,39 @@ again:
 	 */
 	iomem_malloc_safe = 1;
 	configure();
+}
+
+void
+initcpu()
+{
+#if defined(M68040) || defined(M68060)
+	extern void (*vectab[256]) __P((void));
+	void addrerr4060 __P((void));
+#endif
+#ifdef M68040
+	void buserr40 __P((void));
+#endif
+#ifdef M68060
+	void buserr60 __P((void));
+#endif
+
+	switch (cputype) {
+#ifdef M68040
+	case CPU_68040:
+		vectab[2] = adderr4060;
+		vectab[3] = buserr40;
+		break;
+#endif
+#ifdef M68060
+	case CPU_68060:
+		vectab[2] = adderr4060;
+		vectab[3] = buserr60;
+		break;
+#endif
+	default:
+		break;
+	}
+	DCIS();
 }
 
 void doboot __P((void))
