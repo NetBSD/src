@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.7 1995/11/21 05:00:36 briggs Exp $
+#	$NetBSD: PUMA,v 1.8 1996/03/07 02:48:33 briggs Exp $
 #
 # PUMA
 
@@ -64,3 +64,8 @@ pseudo-device	vnd		4
 pseudo-device	loop
 pseudo-device	ppp
 pseudo-device	sl
+
+# Puma-specific options
+
+# Try linked commands on all targets
+options		TRY_SCSI_LINKED_COMMANDS=0x7f
