@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.1 2001/04/14 20:39:23 bjh21 Exp $ */
+/* $NetBSD: acemidi.c,v 1.2 2001/06/12 11:49:18 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.1 2001/04/14 20:39:23 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.2 2001/06/12 11:49:18 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -113,3 +113,28 @@ com_acemidi_attach(struct device *parent, struct device *self, void *aux)
 	podulebus_irq_establish(pa->pa_ih, IPL_SERIAL, comintr, sc,
 	    &sc->sc_intrcnt);
 }
+
+/*
+ * Stray IRQ bug:
+ * 
+ * Occasionally, when receiving, we get a stray IRQ.  Sometimes, the interrupt
+ * bit on the unixbp reads as clear.  In any case, comintr() gets an IIR
+ * of 0xc1 (no interrupts pending).
+ *
+ * The behaviour can be observed with a logic probe:
+ *
+ * Channel 1 to PIRQ* (pin 19 on IC3 on A540 backplane)
+ * Channel 2 to INTR on 16550
+ * trigger on ch1 low, ch2 falling
+ * 2 us/div
+ *
+ * This catches cases where the 16550 de-asserts the interrupt before
+ * irq_handler is entered and disables the interrupt at unixbp (by calling
+ * splhigh()).
+ *
+ * This gets us 5us pulses on INTR and PIRQ*.  Now to work out why.
+ *
+ * Connecting channel 3 to the CS2* pin on the 16550 shows it high throughout,
+ * so the interrupt isn't being cleared by the host.  MR, similarly, is low
+ * throughout, so it's not being cleared by a reset.
+ */
