@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.h,v 1.2 1998/01/09 08:07:38 perry Exp $	*/
+/*	$NetBSD: ex.h,v 1.3 1999/01/08 06:16:55 abs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -164,6 +164,9 @@ struct _excmd {
 #define	E_NEWLINE	0x00800000	/* Found ending <newline>. */
 #define	E_USELASTCMD	0x01000000	/* Use the last command. */
 #define	E_VISEARCH	0x02000000	/* It's really a vi search command. */
+#ifdef GTAGS
+#define	E_REFERENCE	0x04000000	/* locate function references */
+#endif
 	u_int32_t flags;		/* Current flags. */
 };
 

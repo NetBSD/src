@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cmd.c,v 1.2 1998/01/09 08:07:44 perry Exp $	*/
+/*	$NetBSD: ex_cmd.c,v 1.3 1999/01/08 06:16:55 abs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -304,6 +304,13 @@ EXCMDLIST const cmds[] = {
 	    "!",
 	    "rew[ind][!]",
 	    "re-edit all the files in the file argument list"},
+#ifdef GTAGS
+/* C_RTAG */
+	{"rtag",        ex_rtag_push,   E_NEWSCREEN,
+	    "!w1o",
+	    "rta[g][!] [string]",
+	    "edit the file containing the tag"},
+#endif
 /*
  * !!!
  * Adding new commands starting with 's' may break the substitute command code
