@@ -58,6 +58,8 @@ static char sccsid[] = "@(#)fortune.c	5.13 (Berkeley) 4/8/91";
 # include	<stdio.h>
 # include	<assert.h>
 # include	<stdlib.h>
+# include	<string.h>
+# include	<time.h>
 # include	"strfile.h"
 # include	"pathnames.h"
 
@@ -154,10 +156,6 @@ STRFILE		Noprob_tbl;		/* sum of data for all no prob files */
 char	*do_malloc(), *copy(), *off_name();
 
 FILEDESC	*pick_child(), *new_fp();
-
-extern char	*malloc(), *index(), *rindex(), *strcpy(), *strcat();
-
-extern time_t	time();
 
 #ifndef NO_REGEX
 char	*conv_pat();
