@@ -14,7 +14,7 @@ FILES="defaultdomain fstab ifconfig.* inetd.conf mrouted.conf \
 	rc.conf rc.conf.d resolv.conf"
 
 if [ $dir = init ] ; then
-	if [ -d /etc/etc.network -o -e /etc/etc/current ] ; then
+	if [ -d /etc/etc.network -o -e /etc/etc.current ] ; then
 		echo "Error: multi-configuration already initialized"
 		exit 1
 	fi
