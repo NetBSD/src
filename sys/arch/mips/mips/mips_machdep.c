@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.50 1999/04/24 15:04:32 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.51 1999/04/25 02:56:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.50 1999/04/24 15:04:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.51 1999/04/25 02:56:28 simonb Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
@@ -1148,9 +1148,6 @@ allocsys(v)
 #define valloc(name, type, num) \
 	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
 
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
 	valloc(callout, struct callout, ncallout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
