@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104 2001/03/26 21:58:34 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.105 2001/06/08 09:40:32 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -455,7 +455,7 @@ badtrap:
 				simple_lock(&cpi->fplock);
 				simple_lock(&cpi->msg.lock);
 				cpi->msg.tag = XPMSG_SAVEFPU;
-				raise_ipi(cpi);
+				raise_ipi_wait_and_unlock(cpi);
 			}
 			loadfpstate(fs);
 			cpuinfo.fpproc = p;		/* now we do have it */
