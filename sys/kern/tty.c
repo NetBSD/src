@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.57 1994/11/17 20:27:13 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.58 1995/04/19 18:46:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -907,7 +907,7 @@ ttselect(device, rw, p)
 	register struct tty *tp;
 	int nread, s;
 
-	tp = cdevsw[major(device)].d_ttys[minor(device)];
+	tp = (*cdevsw[major(device)].d_tty)(device);
 
 	s = spltty();
 	switch (rw) {
