@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.16 1998/07/09 20:53:42 thorpej Exp $
+.\"	$NetBSD: ccd.4,v 1.17 1998/11/13 00:28:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,61 +135,6 @@ of the largest component sector divided by
 Note that best performance is achieved if all component disks have the same
 geometry and size.
 Optimum striping cannot occur with different disk types.
-.Pp
-The
-.Nm
-also supports primitive data mirroring.
-To enable this mirroring support, the
-.Nm
-must be configured with the
-.Dv CCDF_MIRROR
-flag set.
-Note that the
-.Dv CCDF_MIRROR
-flag implies the
-.Dv CCDF_UNIFORM
-flag and requires an interleaved even number of components.
-.Pp
-Mirroring functions by making the second n/2 components exact duplicates
-of the first n/2.
-For example, in a mirrored
-.Nm
-with components sd0g, sd1g, sd2g, and sd3g, sd2g would mirror sd0g and
-sd3g would mirror sd1g.
-Reads will come from the first n/2 components (in this example:
-sd0g and sd1g) while writes will go to all components.
-.Pp
-If a component of a mirrored
-.Nm
-should fail, the
-.Nm
-can be reconfigured as a non-mirrored
-.Nm
-until the failed component can be replaced.
-For example, using the hypothetical
-.Nm
-above, the recovery process might look like this:
-.Bl -enum
-.It
-Component sd1g fails.
-.It
-Reconfigure
-.Nm
-without mirroring using the same interleave factor with components
-sd0g and sd3g.
-.Nm
-can still be used until replacement drive arrives.
-.It
-Replace failed component.
-.It
-Using
-.Xr dd 1 ,
-copy the contents of sd3g to the new sd1g.
-.It
-Restore
-.Nm
-configuration to that of before the component failure.
-.El
 .Pp
 There is a run-time utility that is used for configuring
 .Nm Ns s.
