@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.106.2.1 2004/04/20 20:28:00 jmc Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.106.2.2 2004/09/18 19:35:55 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -661,6 +661,8 @@ extern	int tcp_ackdrop_ppslim;
 extern	int tcp_syn_cache_size;
 extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
+
+extern	struct pool tcpipqent_pool;
 
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
