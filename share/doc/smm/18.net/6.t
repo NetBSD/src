@@ -1,4 +1,4 @@
-.\"	$NetBSD: 6.t,v 1.2 1998/01/09 06:55:44 perry Exp $
+.\"	$NetBSD: 6.t,v 1.3 2003/02/05 00:02:29 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -499,7 +499,7 @@ UNIBUS interfaces
 All hardware related interfaces currently reside on the UNIBUS.
 Consequently a common set of utility routines for dealing
 with the UNIBUS has been developed.  Each UNIBUS interface
-utilizes a structure of the following form:
+uses a structure of the following form:
 .DS
 .ta \w'#define 'u +\w'ifw_xtofree 'u +\w'pte ifu_wmap[IF_MAXNUBAMR];    'u
 struct	ifubinfo {

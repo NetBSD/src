@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.13 2002/10/24 20:54:41 christos Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.14 2003/02/05 00:02:38 perry Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.13 2002/10/24 20:54:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.14 2003/02/05 00:02:38 perry Exp $");
 
 #include "opt_llc.h"
 
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.13 2002/10/24 20:54:41 christos Exp
  *
  * 	{X.121_a, X.121_b, X.121_c, ..., X.121_i} -> pkcb_0
  *
- * LLC2 utilizes the DTE-DTE model of X.25, resulting effectively in a
+ * LLC2 uses the DTE-DTE model of X.25, resulting effectively in a
  * one-to-one relationship, i.e.:
  *
  *	{X.121_j} 	->	pkcb_1a

@@ -1,4 +1,4 @@
-.\"	$NetBSD: 4.me,v 1.1 1998/07/15 00:34:54 thorpej Exp $
+.\"	$NetBSD: 4.me,v 1.2 2003/02/05 00:02:27 perry Exp $
 .\"
 .\" Copyright (c) 1998 Jason R. Thorpe.
 .\" All rights reserved.
@@ -247,7 +247,7 @@ special DMA requirements.  This may change in future versions of the
 system.
 .)f
 All of the common interface methods may be called directly from the
-DMA tag's function switch.  Both the PCI and EISA DMA tags utilize
+DMA tag's function switch.  Both the PCI and EISA DMA tags use
 this feature; they provide no bus-specific DMA methods.  The ISA DMA
 front-ends provide support for DMA bouncing if the system has more
 than 16MB of physical memory.  If the system has 16MB of physical
