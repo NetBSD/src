@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.56 1994/10/20 04:22:43 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.57 1994/10/24 05:32:34 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -246,7 +246,9 @@ execve(p, uap, retval)
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
-	pack.ep_setup = NULL;	/* assume no setup function */
+	pack.ep_setup = NULL;		/* assume no setup function */
+	pack.ep_setup_arg = NULL;
+	pack.ep_setup_arglen = 0;
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
@@ -332,8 +334,9 @@ execve(p, uap, retval)
 	}
 
 	/* Now check if args & environ fit into new stack */
-	len = ((argc + envc + 2) * sizeof(char *) + sizeof(int) +
-	    dp + STACKGAPLEN + szsigcode + sizeof(struct ps_strings)) - argp;
+	len = ((argc + envc + 2 + pack.ep_setup_arglen) * sizeof(char *) +
+	    sizeof(int) + dp + STACKGAPLEN + szsigcode +
+	    sizeof(struct ps_strings)) - argp;
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
@@ -393,7 +396,7 @@ execve(p, uap, retval)
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		goto exec_abort;
-	dp = (char *) (cpp + argc + envc + 2);
+	dp = (char *) (cpp + argc + envc + 2 + pack.ep_setup_arglen);
 
 	/* XXX don't copy them out, remap them! */
 	arginfo.ps_argvstr = dp; /* remember location of argv for later */
@@ -414,8 +417,12 @@ execve(p, uap, retval)
 		    || copyoutstr(sp, dp, len, 0))
 			goto exec_abort;
 	}
-	if (copyout(&np, cpp, sizeof(np)))
+
+	if (copyout(&np, cpp++, sizeof(np)))
 		goto exec_abort;
+
+	if (pack.ep_setup != NULL)
+		(*pack.ep_setup)(EXEC_SETUP_ADDARGS, p, &pack, cpp);
 
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo)))
@@ -489,7 +496,7 @@ execve(p, uap, retval)
 	/* setup new registers and do misc. setup. */
 	setregs(p, pack.ep_entry, (u_long) stack, retval);
 	if (pack.ep_setup != NULL)
-		 (*pack.ep_setup)(p, &pack);
+		 (*pack.ep_setup)(EXEC_SETUP_FINISH, p, &pack, NULL);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -499,6 +506,8 @@ execve(p, uap, retval)
 	return 0;
 
 bad:
+	if (pack.ep_setup != NULL)
+		(*pack.ep_setup)(EXEC_SETUP_CLEANUP, p, &pack, dp);
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
