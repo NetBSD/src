@@ -1,11 +1,11 @@
-#	$Id: Makefile,v 1.5 1993/10/07 07:23:44 cgd Exp $
+#	$Id: Makefile,v 1.6 1993/12/02 18:18:21 jtc Exp $
 
 PROG=	bc
 CFLAGS+=-D_POSIX_SOURCE -I${.CURDIR}/obj -I${.CURDIR}
 SRCS=	bc.c scan.c util.c main.c number.c storage.c load.c execute.c global.c
 
-LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
+LDADD+=	-ll -lgnumalloc
+DPADD+=	${LIBL} /usr/lib/libgnumalloc.a
 
 CLEANFILES+= bc.c scan.c y.tab.h
 
