@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.68.4.3 2000/10/17 21:43:45 tv Exp $	*/
+/*	$NetBSD: tulip.c,v 1.68.4.4 2000/12/31 20:15:05 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -499,6 +499,11 @@ tlp_attach(sc, enaddr)
 	ifp->if_ioctl = tlp_ioctl;
 	ifp->if_start = tlp_start;
 	ifp->if_watchdog = tlp_watchdog;
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Attach the interface.
@@ -1340,8 +1345,13 @@ tlp_rxintr(sc)
 		 * If an error occured, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
+	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
+		 * error.
 		 */
-		if (rxstat & TDSTAT_ES) {
+		if (rxstat & TDSTAT_ES &&
+		    ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
+		    (rxstat & (TDSTAT_Rx_DE | TDSTAT_Rx_RF | TDSTAT_Rx_RE |
+		    TDSTAT_Rx_DB | TDSTAT_Rx_CE)) != 0)) {
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
