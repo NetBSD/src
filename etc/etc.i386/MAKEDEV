@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.127 2000/11/26 17:44:11 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.128 2000/11/30 07:33:52 jmc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -682,6 +682,7 @@ sysmon)
 	chown root.wheel sysmon
 	chmod 644 sysmon
 
+	rm -f watchdog
 	mknod watchdog c $major 1
 	chown root.wheel watchdog
 	chmod 644 watchdog
