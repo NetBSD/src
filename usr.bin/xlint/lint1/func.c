@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.18 2002/09/13 14:59:24 christos Exp $	*/
+/*	$NetBSD: func.c,v 1.19 2002/10/22 13:48:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.18 2002/09/13 14:59:24 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.19 2002/10/22 13:48:50 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -464,7 +464,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 			 * get the value of the expression and convert it
 			 * to the type of the switch expression
 			 */
-			v = constant(tn);
+			v = constant(tn, 1);
 			(void) memset(&nv, 0, sizeof nv);
 			cvtcon(CASE, 0, ci->c_swtype, &nv, v);
 			free(v);
