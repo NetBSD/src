@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.65 2004/09/04 10:48:57 dsl Exp $	*/
+/*	$NetBSD: gzip.c,v 1.66 2004/09/05 21:32:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.65 2004/09/04 10:48:57 dsl Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.66 2004/09/05 21:32:30 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -114,13 +114,12 @@ enum filetype {
 #define OS_CODE		3	/* Unix */
 
 typedef struct {
-    char	zipped[8];
+    const char	*zipped;
     int		ziplen;
-    char	normal[8];
-    int		norlen;
+    const char	*normal;	/* for unzip - must not be longer than zipped */
 } suffixes_t;
 static suffixes_t suffixes[] = {
-#define	SUFFIX(Z, N) {Z, sizeof Z - 1, N, sizeof N - 0}
+#define	SUFFIX(Z, N) {Z, sizeof Z - 1, N}
 	SUFFIX(GZ_SUFFIX,	""),	/* Overwritten by -S .xxx */
 #ifndef SMALL
 	SUFFIX(GZ_SUFFIX,	""),
@@ -159,6 +158,7 @@ static	int	tflag;			/* test */
 static	int	vflag;			/* verbose mode */
 #else
 #define		qflag	0
+#define		tflag	0
 #endif
 
 static	int	exit_value = 0;		/* exit value */
@@ -167,8 +167,10 @@ static	char	*infile;		/* name of file coming in */
 
 static	void	maybe_err(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
+#ifndef NO_BZIP2_SUPPORT
 static	void	maybe_errx(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
+#endif
 static	void	maybe_warn(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 static	void	maybe_warnx(const char *fmt, ...)
@@ -181,7 +183,6 @@ static	off_t	gz_compress(int, int, off_t *, const char *, uint32_t);
 static	off_t	gz_uncompress(int, int, char *, size_t, off_t *, const char *);
 static	off_t	file_compress(char *, char *, size_t);
 static	off_t	file_uncompress(char *, char *, size_t);
-static	off_t	cat_fd(unsigned char *, size_t, off_t *, int fd);
 static	void	handle_pathname(char *);
 static	void	handle_file(char *, struct stat *);
 static	void	handle_stdin(void);
@@ -195,6 +196,7 @@ static	const suffixes_t *check_suffix(char *, int);
 #ifdef SMALL
 #define unlink_input(f, sb) unlink(f)
 #else
+static	off_t	cat_fd(unsigned char *, size_t, off_t *, int fd);
 static	void	prepend_gzip(char *, int *, char ***);
 static	void	handle_dir(char *, struct stat *);
 static	void	print_verbage(const char *, const char *, off_t, off_t);
@@ -320,14 +322,11 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			len = strlen(optarg);
-			if (len >= sizeof suffixes[0].zipped)
-				/* 7 bytes of suffix is enough for anyone... */
-				usage();
 			if (len != 0) {
-				memcpy(suffixes[0].zipped, optarg, len + 1);
+				suffixes[0].zipped = optarg;
 				suffixes[0].ziplen = len;
 			} else {
-				suffixes[NUM_SUFFIXES - 1].zipped[0] = 0;
+				suffixes[NUM_SUFFIXES - 1].zipped = "";
 				suffixes[NUM_SUFFIXES - 1].ziplen = 0;
 			}
 			break;
@@ -409,6 +408,7 @@ maybe_err(const char *fmt, ...)
 	exit(2);
 }
 
+#ifndef NO_BZIP2_SUPPORT
 /* ... without an errno. */
 void
 maybe_errx(const char *fmt, ...)
@@ -422,6 +422,7 @@ maybe_errx(const char *fmt, ...)
 	}
 	exit(2);
 }
+#endif
 
 #ifndef SMALL
 /* split up $GZIP and prepend it to the argument list */
@@ -1219,11 +1220,12 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	struct stat isb, osb;
 	off_t size;
 	ssize_t rbytes;
-	unsigned char header1[4], name[PATH_MAX + 1];
+	unsigned char header1[4];
 	enum filetype method;
 	int fd, zfd = -1;
 #ifndef SMALL
 	time_t timestamp = 0;
+	unsigned char name[PATH_MAX + 1];
 #endif
 
 	/* gather the old name info */
@@ -1308,8 +1310,6 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		}
 		if (nflag == 0 && timestamp)
 			isb.st_mtime = timestamp;
-#endif
-#ifndef SMALL
 		if (check_outfile(outfile, &osb) == 0)
 			goto lose;
 #endif
@@ -1365,14 +1365,15 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		}
 
 		size = zuncompress(in, out, NULL, 0, NULL);
-		if (ferror(in) || fclose(in) != 0) {
+		/* need to fclose() if ferror() is true... */
+		if (ferror(in) | fclose(in)) {
+			maybe_warn("failed infile fclose");
 			unlink(outfile);
 			(void)fclose(out);
-			maybe_warn("failed infile fclose");
 		}
 		if (fclose(out) != 0) {
-			unlink(outfile);
 			maybe_warn("failed outfile fclose");
+			unlink(outfile);
 			goto lose;
 		}
 	} else
@@ -1698,37 +1699,42 @@ handle_dir(char *dir, struct stat *sbp)
 }
 #endif
 
-/* print a ratio */
+/* print a ratio - size reduction as a fraction of uncompressed size */
 static void
 print_ratio(off_t in, off_t out, FILE *where)
 {
-	int64_t percent10;	/* 10 * percent */
-	off_t diff = in - out;
-	char ch;
+	int percent10;	/* 10 * percent */
+	off_t diff;
+	char buff[8];
+	int len;
 
-	if (in == 0)
-		percent10 = 0;
-	else if (diff > 0x400000) 	/* anything with 22 or more bits */
-		percent10 = diff / (in / 1000);
-	else
-		percent10 = (1000 * diff) / in;
+	diff = in - out/2;
+	if (diff <= 0)
+		/*
+		 * Output is more than double size of input! print -99.9%
+		 * Quite possibly we've failed to get the original size.
+		 */
+		percent10 = -999;
+	else {
+		/*
+		 * We only need 12 bits of result from the final division,
+		 * so reduce the values until a 32bit division will suffice.
+		 */
+		while (in > 0x100000) {
+			diff >>= 1;
+			in >>= 1;
+		}
+		if (in != 0)
+			percent10 = ((u_int)diff * 2000) / (u_int)in - 1000;
+		else
+			percent10 = 0;
+	}
 
-	if (percent10 < 0) {
-		percent10 = -percent10;
-		ch = '-';
-	} else
-		ch = ' ';
-
-	/*
-	 * ugh.  for negative percentages < 10, we need to avoid printing a
-	 * a space between the "-" and the single number.
-	 */
-	if (ch == '-' && percent10 / 10LL < 10)
-		fprintf(where, " -%1d.%1u%%", (unsigned)(percent10 / 10LL),
-					      (unsigned)(percent10 % 10LL));
-	else
-		fprintf(where, "%c%2d.%1u%%", ch, (unsigned)(percent10 / 10LL),
-					          (unsigned)(percent10 % 10LL));
+	len = snprintf(buff, sizeof buff, "%2.2d.", percent10);
+	/* Move the '.' to before the last digit */
+	buff[len - 1] = buff[len - 2];
+	buff[len - 2] = '.';
+	fprintf(where, "%5s%%", buff);
 }
 
 #ifndef SMALL
