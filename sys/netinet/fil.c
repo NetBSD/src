@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.19 1998/05/01 03:28:14 thorpej Exp $	*/
+/*	$NetBSD: fil.c,v 1.20 1998/05/17 17:07:24 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.3 1997/11/12 10:44:22 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.12 1998/04/25 15:46:36 darrenr Exp ";
 #endif
 
 #include <sys/errno.h>
@@ -78,7 +78,7 @@ extern	int	opts;
 							  second; }
 # define	FR_VERBOSE(verb_pr)			verbose verb_pr
 # define	FR_DEBUG(verb_pr)			debug verb_pr
-# define	SEND_RESET(ip, qif, if)		send_reset(ip, if)
+# define	SEND_RESET(ip, qif, if, m)		send_reset(ip, if)
 # define	IPLLOG(a, c, d, e)		ipllog()
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
 # if SOLARIS
@@ -103,7 +103,12 @@ extern	kmutex_t	ipf_mutex, ipf_auth;
 			icmp_error(ip, t, c, if, src)
 # else /* SOLARIS */
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
-#  define	SEND_RESET(ip, qif, if)	send_reset((struct tcpiphdr *)ip)
+#  ifdef linux
+#   define	SEND_RESET(ip, qif, if)		send_reset((tcpiphdr_t *)ip,\
+							   ifp)
+#  else
+#   define	SEND_RESET(ip, qif, if)		send_reset((tcpiphdr_t *)ip)
+#  endif
 #  ifdef __sgi
 #   define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(b, t, c, if, src, if)
@@ -194,6 +199,7 @@ fr_info_t *fin;
 {
 	struct optlist *op;
 	tcphdr_t *tcp;
+	icmphdr_t *icmp;
 	fr_ip_t *fi = &fin->fin_fi;
 	u_short optmsk = 0, secmsk = 0, auth = 0;
 	int i, mv, ol, off;
@@ -214,6 +220,7 @@ fr_info_t *fin;
 	fin->fin_hlen = hlen;
 	fin->fin_dlen = ip->ip_len - hlen;
 	tcp = (tcphdr_t *)((char *)ip + hlen);
+	icmp = (icmphdr_t *)tcp;
 	fin->fin_dp = (void *)tcp;
 	(*(((u_short *)fi) + 1)) = (*(((u_short *)ip) + 4));
 	(*(((u_32_t *)fi) + 1)) = (*(((u_32_t *)ip) + 3));
@@ -226,12 +233,20 @@ fr_info_t *fin;
 	switch (ip->ip_p)
 	{
 	case IPPROTO_ICMP :
-		if ((!IPMINLEN(ip, icmp) && !off) ||
+	{
+		int minicmpsz = sizeof(struct icmp);
+
+		if (!off && ip->ip_len > ICMP_MINLEN + hlen &&
+		    (icmp->icmp_type == ICMP_ECHOREPLY ||
+		     icmp->icmp_type == ICMP_UNREACH))
+			minicmpsz = ICMP_MINLEN;
+		if ((!(ip->ip_len >= hlen + minicmpsz) && !off) ||
 		    (off && off < sizeof(struct icmp)))
 			fi->fi_fl |= FI_SHORT;
 		if (fin->fin_dlen > 1)
 			fin->fin_data[0] = *(u_short *)tcp;
 		break;
+	}
 	case IPPROTO_TCP :
 		fi->fi_fl |= FI_TCPUDP;
 		if ((!IPMINLEN(ip, tcphdr) && !off) ||
@@ -418,7 +433,7 @@ void *m;
 	off = ip->ip_off & 0x1fff;
 	pass |= (fi->fi_fl << 24);
 
-	if ((fi->fi_fl & FI_TCPUDP) && (fin->fin_dlen > 3) && !off)
+	 if ((fi->fi_fl & FI_TCPUDP) && (fin->fin_dlen > 3) && !off)
 		portcmp = 1;
 
 	for (rulen = 0; fr; fr = fr->fr_next, rulen++) {
@@ -475,24 +490,22 @@ void *m;
 		 * If a fragment, then only the first has what we're looking
 		 * for here...
 		 */
+		if (!portcmp && (fr->fr_dcmp || fr->fr_scmp || fr->fr_tcpf ||
+				 fr->fr_tcpfm))
+			continue;
 		if (fi->fi_fl & FI_TCPUDP) {
-			if (portcmp) {
-				if (!fr_tcpudpchk(fr, fin))
-					continue;
-			} else if (fr->fr_dcmp || fr->fr_scmp || fr->fr_tcpf ||
-				   fr->fr_tcpfm)
+			if (!fr_tcpudpchk(fr, fin))
 				continue;
-		} else if (fi->fi_p == IPPROTO_ICMP) {
-			if (!off && (fin->fin_dlen > 1)) {
-				if ((fin->fin_data[0] & fr->fr_icmpm) !=
-				    fr->fr_icmp) {
-					FR_DEBUG(("i. %#x & %#x != %#x\n",
-						 fin->fin_data[0],
-						 fr->fr_icmpm, fr->fr_icmp));
-					continue;
-				}
-			} else if (fr->fr_icmpm || fr->fr_icmp)
+		} else if (fr->fr_icmpm || fr->fr_icmp) {
+			if ((fi->fi_p != IPPROTO_ICMP) || off ||
+			    (fin->fin_dlen < 2))
 				continue;
+			if ((fin->fin_data[0] & fr->fr_icmpm) != fr->fr_icmp) {
+				FR_DEBUG(("i. %#x & %#x != %#x\n",
+					 fin->fin_data[0], fr->fr_icmpm,
+					 fr->fr_icmp));
+				continue;
+			}
 		}
 		FR_VERBOSE(("*"));
 		/*
@@ -558,7 +571,7 @@ int out;
 	fr_info_t frinfo, *fc;
 	register fr_info_t *fin = &frinfo;
 	frentry_t *fr = NULL;
-	int pass, changed, apass;
+	int pass, changed, apass, error = EHOSTUNREACH;
 #if !SOLARIS || !defined(_KERNEL)
 	register mb_t *m = *mp;
 #endif
@@ -781,10 +794,11 @@ logit:
 # else
 #  ifndef linux
 		mc = m_copy(m, 0, M_COPYALL);
+#  else
+		;
 #  endif
 # endif
 #endif
-
 	if (pass & FR_PASS)
 		frstats[out].fr_pass++;
 	else if (pass & FR_BLOCK) {
@@ -825,6 +839,9 @@ logit:
 				frstats[1].fr_ret++;
 			}
 #endif
+		} else {
+			if (pass & FR_RETRST)
+				error = ECONNRESET;
 		}
 	}
 
@@ -856,8 +873,8 @@ logit:
 		m_copyback(m, 0, up, hbuf);
 #   endif
 #  endif /* !linux */
-	return (pass & FR_PASS) ? 0 : -1;
-#  else /* !SOLARIS */
+	return (pass & FR_PASS) ? 0 : error;
+# else /* !SOLARIS */
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 
@@ -869,7 +886,7 @@ logit:
 		if (mc)
 			ipfr_fastroute(qif, ip, mc, mp, fin, &fr->fr_dif);
 	}
-	return (pass & FR_PASS) ? changed : -1;
+	return (pass & FR_PASS) ? changed : error;
 # endif /* !SOLARIS */
 #else /* _KERNEL */
 	if (pass & FR_NOMATCH)
@@ -886,6 +903,7 @@ logit:
 /*
  * ipf_cksum
  * addr should be 16bit aligned and len is in bytes.
+ * length is in bytes
  */
 u_short ipf_cksum(addr, len)
 register u_short *addr;
@@ -914,10 +932,11 @@ register int len;
  * and the TCP header.  We also assume that data blocks aren't allocated in
  * odd sizes.
  */
-u_short fr_tcpsum(m, ip, tcp)
+u_short fr_tcpsum(m, ip, tcp, len)
 mb_t *m;
 ip_t *ip;
 tcphdr_t *tcp;
+int len;
 {
 	union {
 		u_char	c[2];
@@ -925,7 +944,6 @@ tcphdr_t *tcp;
 	} bytes;
 	u_long sum;
 	u_short	*sp;
-	int len;
 # if SOLARIS || defined(__sgi)
 	int add, hlen;
 # endif
@@ -940,9 +958,9 @@ tcphdr_t *tcp;
 	/*
 	 * Add up IP Header portion
 	 */
-	len = ip->ip_len - (ip->ip_hl << 2);
 	bytes.c[0] = 0;
 	bytes.c[1] = IPPROTO_TCP;
+	len -= (ip->ip_hl << 2);
 	sum = bytes.s;
 	sum += htons((u_short)len);
 	sp = (u_short *)&ip->ip_src;
@@ -1024,7 +1042,7 @@ tcphdr_t *tcp;
 		if (len < 2)
 			break;
 		if((u_long)sp & 1) {
-			bcopy(sp++, &bytes.s, sizeof(bytes.s));
+			bcopy((char *)sp++, (char *)&bytes.s, sizeof(bytes.s));
 			sum += bytes.s;
 		} else
 			sum += *sp++;
@@ -1077,7 +1095,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.0.2.41.2.3 1997/11/12 10:44:22 darrenr Exp 
+ * Id: fil.c,v 2.0.2.41.2.12 1998/04/25 15:46:36 darrenr Exp 
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -1276,11 +1294,11 @@ frentry_t *list, **listp;
 }
 
 
-void frflush(unit, data)
+void frflush(unit, result)
 int unit;
-caddr_t data;
+int *result;
 {
-	int flags = *(int *)data, flushed = 0, set = fr_active;
+	int flags = *result, flushed = 0, set = fr_active;
 
 	bzero((char *)frcache, sizeof(frcache[0]) * 2);
 
@@ -1304,5 +1322,5 @@ caddr_t data;
 		}
 	}
 
-	*(int *)data = flushed;
+	*result = flushed;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.11 1997/11/14 12:47:21 mrg Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.12 1998/05/17 17:07:26 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24.2.3 1997/11/12 10:55:34 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24.2.6 1998/04/25 15:49:18 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL) && !defined(__KERNEL__)
@@ -106,7 +106,6 @@ ips_stat_t *fr_statetstats()
 	return &ips_stats;
 }
 
-int fr_state_flush __P((int));
 
 /*
  * flush state tables.  two actions currently defined:
@@ -138,9 +137,9 @@ int which;
 			case 1 :
 				if ((is->is_p == IPPROTO_TCP) &&
 				    (((is->is_state[0] <= TCPS_ESTABLISHED) &&
-				     (is->is_state[1] > TCPS_ESTABLISHED)) ||
-				    ((is->is_state[1] <= TCPS_ESTABLISHED) &&
-				     (is->is_state[0] > TCPS_ESTABLISHED))))
+				      (is->is_state[1] > TCPS_ESTABLISHED)) ||
+				     ((is->is_state[1] <= TCPS_ESTABLISHED) &&
+				      (is->is_state[0] > TCPS_ESTABLISHED))))
 					delete = 1;
 				break;
 			}
@@ -182,9 +181,7 @@ int mode;
 	case SIOCIPFFL :
 		IRCOPY(data, (caddr_t)&arg, sizeof(arg));
 		if (arg == 0 || arg == 1) {
-			MUTEX_ENTER(&ipf_state);
 			ret = fr_state_flush(arg);
-			MUTEX_EXIT(&ipf_state);
 			IWCOPY((caddr_t)&ret, data, sizeof(ret));
 		} else
 			error = EINVAL;
@@ -390,7 +387,7 @@ u_short sport;
 		swin = is->is_dwin;
 	}
 
-	if ((seqskew <= swin) && (ackskew <= dwin)) {
+	if ((seqskew <= dwin) && (ackskew <= swin)) {
 		if (source) {
 			is->is_seq = seq;
 			is->is_ack = ack;

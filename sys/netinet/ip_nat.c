@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.17 1998/03/29 22:56:00 scottr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.18 1998/05/17 17:07:25 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.7 1997/12/02 13:54:27 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.8 1998/05/08 15:10:17 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -458,7 +458,7 @@ struct in_addr *inp;
 	struct in_addr in;
 
 #if SOLARIS
-	in.s_addr = ill->ill_ipif->ipif_local_addr;
+	in.s_addr = ntohl(ill->ill_ipif->ipif_local_addr);
 #else /* SOLARIS */
 # if linux
 	;

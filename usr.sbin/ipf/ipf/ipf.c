@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.12 1998/03/03 07:35:51 thorpej Exp $	*/
+/*	$NetBSD: ipf.c,v 1.13 1998/05/17 16:50:15 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.2 1997/11/06 21:23:36 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.3 1998/04/08 13:44:53 darrenr Exp ";
 #endif
 
 static	void	frsync __P((void));
@@ -300,22 +300,13 @@ FILE	*file;
 			if (fgets(p, s, file) == NULL)
 				return (NULL);
 			len = strlen(p);
-			/*
-			 * if there was no room to put newline or there was
-			 * no room to put entire line, return NULL.
-			 */
-			if (len == 0 || p[--len] != '\n')
-				return (NULL);
-			p[len] = '\0';
-			/*
-			 * if the line just read has only newline or does not
-			 * end with '\\', we have read whole line.
-			 */
-			if (len == 0 || p[--len] != '\\')
+			p[len - 1] = '\0';
+			if (p[len - 1] != '\\')
 				break;
+			size -= len;
 		}
-	} while (*str == '\0');
-	return(str);
+	} while (*str == '\0' || *str == '\n');
+	return (str);
 }
 
 

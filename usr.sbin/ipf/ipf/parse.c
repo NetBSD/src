@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.11 1997/10/30 16:10:06 mrg Exp $	*/
+/*	$NetBSD: parse.c,v 1.12 1998/05/17 16:50:16 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -37,7 +37,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: parse.c,v 2.0.2.18 1997/10/19 15:39:29 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: parse.c,v 2.0.2.18.2.2 1998/02/28 02:04:40 darrenr Exp ";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -477,7 +477,8 @@ char	*line;
 	/*
 	 * lazy users...
 	 */
-	if (!fil.fr_proto && (fil.fr_dcmp || fil.fr_scmp || fil.fr_tcpf)) {
+	if (!fil.fr_proto && !(fil.fr_ip.fi_fl & FI_TCPUDP) &&
+	    (fil.fr_dcmp || fil.fr_scmp || fil.fr_tcpf)) {
 		(void)fprintf(stderr,
 			"no protocol given for TCP/UDP comparisons\n");
 		return NULL;
@@ -543,7 +544,7 @@ u_char	*cp;
 	/*
 	 * is it possibly hostname/num ?
 	 */
-	if ((s = index(**seg, '/'))) {
+	if ((s = index(**seg, '/')) || (s = index(**seg, ':'))) {
 		*s++ = '\0';
 		if (!isdigit(*s))
 			return -1;
@@ -622,7 +623,7 @@ int	*resolved;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
 		}
-		return np->n_net;
+		return htonl(np->n_net);
 	}
 	return *(u_32_t *)hp->h_addr;
 }
