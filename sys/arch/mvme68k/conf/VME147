@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.1.1.1 1995/07/25 23:12:05 chuck Exp $
+#	$NetBSD: VME147,v 1.2 1996/04/18 18:14:32 chuck Exp $
 
 machine		mvme68k m68k
 
@@ -13,7 +13,7 @@ maxusers	2
 options		TIMEZONE=0, DST=0
 
 options		DIAGNOSTIC, DEBUG
-#options	FFS
+options		FFS
 options		NFSCLIENT
 #options	NFSSERVER
 #options 	SYSVSHM
@@ -48,4 +48,13 @@ iio0	at mainbus0
 pcc0	at iio0 offset 0x1000
 zs0	at iio0 offset 0x3000 ipl 4
 clock0	at iio0 offset 0x07f8 ipl 5
-le0	at iio0 offset 0x1800 ipl 2
+le0	at iio0 offset 0x1800 ipl 3
+wdsc0   at iio0 offset 0x4000 ipl 2
+
+#
+# SCSI infrastructure
+#
+scsibus0 at wdsc0
+sd* at scsibus0 target ? lun ?
+st* at scsibus0 target ? lun ?
+cd* at scsibus0 target ? lun ?
