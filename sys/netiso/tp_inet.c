@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.19 2000/03/30 13:10:13 augustss Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.20 2001/11/04 20:52:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -664,7 +664,6 @@ tpip_ctlinput(cmd, sa, dummy)
 	struct sockaddr *sa;
 	void *dummy;
 {
-	extern int      inetctlerrmap[];
 	void            (*notify) __P((struct inpcb *, int));
 	int             errno;
 
