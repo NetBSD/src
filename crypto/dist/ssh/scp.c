@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.53 2001/02/04 23:56:22 deraadt Exp $");
+RCSID("$OpenBSD: scp.c,v 1.55 2001/02/08 14:38:54 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -312,7 +312,8 @@ main(argc, argv)
 
 	remin = remout = -1;
 	/* Command to be executed on remote system using "ssh". */
-	(void) sprintf(cmd, "scp%s%s%s%s", verbose_mode ? " -v" : "",
+	(void) snprintf(cmd, sizeof cmd, "scp%s%s%s%s",
+	    verbose_mode ? " -v" : "",
 	    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 	    targetshouldbedirectory ? " -d" : "");
 
@@ -383,16 +384,18 @@ toremote(targ, argc, argv)
 					suser = pwd->pw_name;
 				else if (!okname(suser))
 					continue;
-				sprintf(bp,
-				    "%s%s -x -o'FallBackToRsh no' -n -l %s %s %s %s '%s%s%s:%s'",
+				snprintf(bp, len,
+				    "%s%s -x -o'FallBackToRsh no' -n "
+				    "-l %s %s %s %s '%s%s%s:%s'",
 				    ssh_program, verbose_mode ? " -v" : "",
 				    suser, host, cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
 				    thost, targ);
 			} else {
 				host = cleanhostname(argv[i]);
-				sprintf(bp,
-				    "exec %s%s -x -o'FallBackToRsh no' -n %s %s %s '%s%s%s:%s'",
+				snprintf(bp, len,
+				    "exec %s%s -x -o'FallBackToRsh no' -n %s "
+				    "%s %s '%s%s%s:%s'",
 				    ssh_program, verbose_mode ? " -v" : "",
 				    host, cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
@@ -406,7 +409,7 @@ toremote(targ, argc, argv)
 			if (remin == -1) {
 				len = strlen(targ) + CMDNEEDS + 20;
 				bp = xmalloc(len);
-				(void) sprintf(bp, "%s -t %s", cmd, targ);
+				(void) snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = cleanhostname(thost);
 				if (do_cmd(host, tuser, bp, &remin,
 				    &remout, argc) < 0)
@@ -433,7 +436,7 @@ tolocal(argc, argv)
 			len = strlen(_PATH_CP) + strlen(argv[i]) +
 			    strlen(argv[argc - 1]) + 20;
 			bp = xmalloc(len);
-			(void) sprintf(bp, "exec %s%s%s %s %s", _PATH_CP,
+			(void) snprintf(bp, len, "exec %s%s%s %s %s", _PATH_CP,
 			    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 			    argv[i], argv[argc - 1]);
 			if (verbose_mode)
@@ -460,7 +463,7 @@ tolocal(argc, argv)
 		host = cleanhostname(host);
 		len = strlen(src) + CMDNEEDS + 20;
 		bp = xmalloc(len);
-		(void) sprintf(bp, "%s -f %s", cmd, src);
+		(void) snprintf(bp, len, "%s -f %s", cmd, src);
 		if (do_cmd(host, suser, bp, &remin, &remout, argc) < 0) {
 			(void) xfree(bp);
 			++errs;
@@ -517,7 +520,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			 * Make it compatible with possible future
 			 * versions expecting microseconds.
 			 */
-			(void) sprintf(buf, "T%lu 0 %lu 0\n",
+			(void) snprintf(buf, sizeof buf, "T%lu 0 %lu 0\n",
 			    (u_long) stb.st_mtime,
 			    (u_long) stb.st_atime);
 			(void) atomic_write(remout, buf, strlen(buf));
@@ -525,7 +528,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 				goto next;
 		}
 #define	FILEMODEMASK	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
-		sprintf(buf, "C%04o %lu %s\n",
+		snprintf(buf, sizeof buf, "C%04o %lu %s\n",
 		    (u_int) (stb.st_mode & FILEMODEMASK),
 		    (u_long) stb.st_size, last);
 		if (verbose_mode) {
@@ -594,7 +597,7 @@ rsource(name, statp)
 	else
 		last++;
 	if (pflag) {
-		(void) sprintf(path, "T%lu 0 %lu 0\n",
+		(void) snprintf(path, sizeof(path), "T%lu 0 %lu 0\n",
 		    (u_long) statp->st_mtime,
 		    (u_long) statp->st_atime);
 		(void) atomic_write(remout, path, strlen(path));
@@ -603,7 +606,7 @@ rsource(name, statp)
 			return;
 		}
 	}
-	(void) sprintf(path, "D%04o %d %.1024s\n",
+	(void) snprintf(path, sizeof path, "D%04o %d %.1024s\n",
 	    (u_int) (statp->st_mode & FILEMODEMASK), 0, last);
 	if (verbose_mode)
 		fprintf(stderr, "Entering directory: %s", path);
@@ -621,7 +624,7 @@ rsource(name, statp)
 			run_err("%s/%s: name too long", name, dp->d_name);
 			continue;
 		}
-		(void) sprintf(path, "%s/%s", name, dp->d_name);
+		(void) snprintf(path, sizeof path, "%s/%s", name, dp->d_name);
 		vect[0] = path;
 		source(1, vect);
 	}
@@ -751,9 +754,13 @@ sink(argc, argv)
 			size_t need;
 
 			need = strlen(targ) + strlen(cp) + 250;
-			if (need > cursize)
+			if (need > cursize) {
+				if (namebuf)
+					xfree(namebuf);
 				namebuf = xmalloc(need);
-			(void) sprintf(namebuf, "%s%s%s", targ,
+				cursize = need;
+			}
+			(void) snprintf(namebuf, need, "%s%s%s", targ,
 			    *targ ? "/" : "", cp);
 			np = namebuf;
 		} else
