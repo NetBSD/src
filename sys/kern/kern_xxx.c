@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.7 1993/12/18 04:21:21 mycroft Exp $
+ *	$Id: kern_xxx.c,v 1.8 1994/02/15 06:40:34 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -198,3 +198,37 @@ oquota()
 	return (ENOSYS);
 }
 #endif
+
+#ifdef SYSCALL_DEBUG
+void
+scdebug_call(code, narg, args)
+	int code, narg, args[];
+{
+	int i;
+
+	printf("syscall ");
+	if (code < 0 || code >= nsysent) {
+		printf("OUT OF RANGE (%d)", code);
+		code = 0;
+	} else
+		printf("%d", code);
+	printf("called: %s(", syscallnames[code]);
+	for (i = 0; i < narg; i++)
+		printf("0x%x, ", args[i]);
+	printf(")\n");
+}
+
+void
+scdebug_ret(code, error, retval)
+	int code, error, retval;
+{
+	printf("syscall ");
+	if (code < 0 || code >= nsysent) {
+
+		printf("OUT OF RANGE (%d)", code);
+		code = 0;
+	} else
+		printf("%d", code);
+	printf("return: error = %d, retval = %d\n", error, retval);
+}
+#endif /* SYSCALL_DEBUG */
