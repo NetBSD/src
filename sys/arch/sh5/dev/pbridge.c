@@ -1,4 +1,4 @@
-/*	$NetBSD: pbridge.c,v 1.3 2002/09/27 20:35:29 thorpej Exp $	*/
+/*	$NetBSD: pbridge.c,v 1.4 2002/09/28 10:43:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -162,7 +162,7 @@ pbridgeprint(void *arg, const char *cp)
 	if (pa->pa_ipl != -1)
 		printf(" ipl %d", pa->pa_ipl);
 	if (pa->pa_intevt != -1)
-		printf(" intevt %d", pa->pa_intevt);
+		printf(" intevt 0x%x", pa->pa_intevt);
 
 	return (UNCONF);
 }
