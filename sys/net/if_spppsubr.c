@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.18 2001/01/15 13:40:35 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.19 2001/01/16 15:28:27 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -408,7 +408,13 @@ static const struct cp lcp = {
 };
 
 static const struct cp ipcp = {
-	PPP_IPCP, IDX_IPCP, CP_NCP, "ipcp",
+	PPP_IPCP, IDX_IPCP,
+#ifdef INET
+	CP_NCP,	/*don't run IPCP if there's no IPv4 support*/
+#else
+	0,
+#endif
+	"ipcp",
 	sppp_ipcp_up, sppp_ipcp_down, sppp_ipcp_open, sppp_ipcp_close,
 	sppp_ipcp_TO, sppp_ipcp_RCR, sppp_ipcp_RCN_rej, sppp_ipcp_RCN_nak,
 	sppp_ipcp_tlu, sppp_ipcp_tld, sppp_ipcp_tls, sppp_ipcp_tlf,
