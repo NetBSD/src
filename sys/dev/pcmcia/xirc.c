@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.6 2004/08/09 18:30:51 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.7 2004/08/09 19:34:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.6 2004/08/09 18:30:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.7 2004/08/09 19:34:00 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -254,6 +254,26 @@ xirc_attach(parent, self, aux)
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 
+	if (sc->sc_id & (XIMEDIA_MODEM << 8)) {
+		if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO8,
+		    &sc->sc_modem_pcioh, &sc->sc_modem_io_window)) {
+			aprint_error("%s: unable to map I/O space\n",
+			    self->dv_xname);
+			goto fail;
+		}
+		sc->sc_flags |= XIRC_MODEM_MAPPED;
+	}
+
+	if (sc->sc_id & (XIMEDIA_ETHER << 8)) {
+		if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_AUTO,
+		    &sc->sc_ethernet_pcioh, &sc->sc_ethernet_io_window)) {
+			aprint_error("%s: unable to map I/O space\n",
+			    self->dv_xname);
+			goto fail;
+		}
+		sc->sc_flags |= XIRC_ETHERNET_MAPPED;
+	}
+
 	if (xirc_enable(sc, XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED,
 	    sc->sc_id & (XIMEDIA_MODEM|XIMEDIA_ETHER))) {
 		aprint_error("%s: enable failed\n", self->dv_xname);
@@ -272,12 +292,8 @@ xirc_attach(parent, self, aux)
 	return;
 
 fail:
-	/* Free our i/o spaces. */
-	if (sc->sc_flags & XIRC_ETHERNET_ALLOCED)
-		pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
-	if (sc->sc_flags & XIRC_MODEM_ALLOCED)
-		pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
-	sc->sc_flags = 0;
+	/* I/O spaces will be freed by detach. */
+	;
 }
 
 int
@@ -596,13 +612,6 @@ com_xirc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_IO8, &msc->sc_modem_pcioh,
-	    &msc->sc_modem_io_window)) {
-		aprint_error("%s: unable to map I/O space\n", self->dv_xname);
-		return;
-	}
-	msc->sc_flags |= XIRC_MODEM_MAPPED;
-
 	sc->sc_iot = msc->sc_modem_pcioh.iot;
 	sc->sc_ioh = msc->sc_modem_pcioh.ioh;
 
@@ -680,13 +689,6 @@ xi_xirc_attach(parent, self, aux)
 	u_int8_t myla[ETHER_ADDR_LEN];
 
 	aprint_normal("\n");
-
-	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_AUTO, &msc->sc_ethernet_pcioh,
-	    &msc->sc_ethernet_io_window)) {
-		aprint_error("%s: unable to map I/O space\n", self->dv_xname);
-		return;
-	}
-	msc->sc_flags |= XIRC_ETHERNET_MAPPED;
 
 	sc->sc_bst = msc->sc_ethernet_pcioh.iot;
 	sc->sc_bsh = msc->sc_ethernet_pcioh.ioh;
