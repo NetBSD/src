@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.75 2000/03/20 21:10:03 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.76 2000/04/03 03:54:42 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.75 2000/03/20 21:10:03 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.76 2000/04/03 03:54:42 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,23 +308,31 @@ struct afswtch {
 	void (*af_getprefix) __P((char *, int));
 	u_long af_difaddr;
 	u_long af_aifaddr;
+	u_long af_gifaddr;
 	caddr_t af_ridreq;
 	caddr_t af_addreq;
 } afs[] = {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr, NULL,
-	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
+	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, C(ridreq), C(addreq) },
 #ifdef INET6
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
-	     SIOCDIFADDR_IN6, SIOCAIFADDR_IN6, C(in6_ridreq), C(in6_addreq) },
+	     SIOCDIFADDR_IN6, SIOCAIFADDR_IN6,
+	     /*
+	      * Deleting the first address before setting new one is
+	      * not prefered way in this protocol.
+	      */
+	     0,
+	     C(in6_ridreq), C(in6_addreq) },
 #endif
 #ifndef INET_ONLY	/* small version, for boot media */
 	{ "atalk", AF_APPLETALK, at_status, at_getaddr, NULL,
-	     SIOCDIFADDR, SIOCAIFADDR, C(addreq), C(addreq) },
+	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, C(addreq), C(addreq) },
 	{ "ns", AF_NS, xns_status, xns_getaddr, NULL,
-	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
+	     SIOCDIFADDR, SIOCAIFADDR, SIOCGIFADDR, C(ridreq), C(addreq) },
 	{ "iso", AF_ISO, iso_status, iso_getaddr, NULL,
-	     SIOCDIFADDR_ISO, SIOCAIFADDR_ISO, C(iso_ridreq), C(iso_addreq) },
+	     SIOCDIFADDR_ISO, SIOCAIFADDR_ISO, SIOCGIFADDR_ISO,
+	     C(iso_ridreq), C(iso_addreq) },
 #endif	/* INET_ONLY */
 	{ 0,	0,	    0,		0 }
 };
@@ -536,14 +544,9 @@ main(argc, argv)
 #endif	/* INET_ONLY */
 
 	if (clearaddr) {
-		int ret;
 		(void) strncpy(afp->af_ridreq, name, sizeof ifr.ifr_name);
-		if ((ret = ioctl(s, afp->af_difaddr, afp->af_ridreq)) < 0) {
-			if (errno == EADDRNOTAVAIL && (doalias >= 0)) {
-				/* means no previous address for interface */
-			} else
-				warn("SIOCDIFADDR");
-		}
+		if (ioctl(s, afp->af_difaddr, afp->af_ridreq) < 0)
+			err(1, "SIOCDIFADDR");
 	}
 	if (newaddr > 0) {
 		(void) strncpy(afp->af_addreq, name, sizeof ifr.ifr_name);
@@ -749,6 +752,8 @@ setifaddr(addr, param)
 	char *addr;
 	int param;
 {
+	struct ifreq *ifr;		/* XXX */
+
 	/*
 	 * Delay the ioctl to set the interface addr until flags are all set.
 	 * The address interpretation may depend on the flags,
@@ -757,8 +762,19 @@ setifaddr(addr, param)
 	setaddr++;
 	if (newaddr == -1)
 		newaddr = 1;
-	if (doalias == 0)
-		clearaddr = 1;
+	if (doalias == 0 && afp->af_gifaddr != 0) {
+		ifr = (struct ifreq *)afp->af_ridreq;
+		(void) strncpy(ifr->ifr_name, name, sizeof(ifr->ifr_name));
+		ifr->ifr_addr.sa_family = afp->af_af;
+		if (ioctl(s, afp->af_gifaddr, afp->af_ridreq) == 0)
+			clearaddr = 1;
+		else if (errno == EADDRNOTAVAIL)
+			/* No address was assigned yet. */
+			;
+		else
+			err(1, "SIOCGIFADDR");
+	}
+
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
 }
 
