@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 1998/09/09 00:07:55 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.36 1999/03/26 23:41:34 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -280,8 +280,8 @@ boolean_t	pmap_next_page __P((paddr_t *));
 void		pmap_clear_modify4_4c __P((paddr_t pa));
 void		pmap_clear_reference4_4c __P((paddr_t pa));
 void		pmap_copy_page4_4c __P((paddr_t, paddr_t));
-void		pmap_enter4_4c __P((pmap_t,
-				    vaddr_t, paddr_t, vm_prot_t, boolean_t));
+void		pmap_enter4_4c __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
+		    boolean_t, vm_prot_t));
 paddr_t		pmap_extract4_4c __P((pmap_t, vaddr_t));
 boolean_t	pmap_is_modified4_4c __P((paddr_t pa));
 boolean_t	pmap_is_referenced4_4c __P((paddr_t pa));
@@ -298,8 +298,8 @@ void		pmap_changeprot4_4c __P((pmap_t, vaddr_t, vm_prot_t, int));
 void		pmap_clear_modify4m __P((paddr_t pa));
 void		pmap_clear_reference4m __P((paddr_t pa));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
-void		pmap_enter4m __P((pmap_t,
-				  vaddr_t, paddr_t, vm_prot_t, boolean_t));
+void		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
+		    boolean_t, vm_prot_t));
 paddr_t		pmap_extract4m __P((pmap_t, vaddr_t));
 boolean_t	pmap_is_modified4m __P((paddr_t pa));
 boolean_t	pmap_is_referenced4m __P((paddr_t pa));
@@ -343,8 +343,8 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 extern void	(*pmap_clear_modify_p) __P((paddr_t pa));
 extern void	(*pmap_clear_reference_p) __P((paddr_t pa));
 extern void	(*pmap_copy_page_p) __P((paddr_t, paddr_t));
-extern void	(*pmap_enter_p) __P((pmap_t,
-				     vaddr_t, paddr_t, vm_prot_t, boolean_t));
+extern void	(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
+		    boolean_t, vm_prot_t));
 extern paddr_t	(*pmap_extract_p) __P((pmap_t, vaddr_t));
 extern boolean_t(*pmap_is_modified_p) __P((paddr_t pa));
 extern boolean_t(*pmap_is_referenced_p) __P((paddr_t pa));

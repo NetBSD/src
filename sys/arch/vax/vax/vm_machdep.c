@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 1999/03/24 05:51:17 mrg Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:38 mycroft Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -302,7 +302,7 @@ vmapbuf(bp, len)
 			panic("vmapbuf: null page frame for %x", (u_int)faddr);
 
 		pmap_enter(tmap, taddr, pa & ~(VAX_NBPG - 1),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		faddr += VAX_NBPG;
 		taddr += VAX_NBPG;
 	}

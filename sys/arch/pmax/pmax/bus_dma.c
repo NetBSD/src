@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 1999/03/25 01:17:51 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 1999/03/26 23:41:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -685,7 +685,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE);
 #else
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 #endif
 			/* XXX Do something about COHERENT here. */
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1999/03/24 14:11:47 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1999/03/26 23:41:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -271,7 +271,8 @@ cpu_startup()
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -431,7 +432,8 @@ again:
 			pmap_kenter_pgs(curbuf, &pg, 1);
 #else
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 #endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
@@ -935,7 +937,7 @@ dumpsys()
 			maddr = m->ram_segs[seg].start;
 		}
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
+		    VM_PROT_READ, TRUE, VM_PROT_READ);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
@@ -1294,14 +1296,14 @@ mem_exists(mem, basemax)
 	DPRINTF (("Enter mem_exists(%p, %x)\n", mem, basemax));
 	DPRINTF ((" pmap_enter(%p, %p) for target... ", mem_v, mem));
 	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
-		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ);
 	DPRINTF ((" done.\n"));
 
 	/* only 24bits are significant on normal X680x0 systems */
 	base = (caddr_t)((u_long)mem & 0x00FFFFFF);
 	DPRINTF ((" pmap_enter(%p, %p) for shadow... ", base_v, base));
 	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
-		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ);
 	DPRINTF ((" done.\n"));
 
 	m = (void*)mem_v;

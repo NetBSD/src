@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1998/10/19 22:49:04 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1999/03/26 23:41:33 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -834,12 +834,13 @@ pmap_page_cache(pa,mode)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vm_offset_t va;
 	register vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register pt_entry_t *pte;
 	register u_int npte;

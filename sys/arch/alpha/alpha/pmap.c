@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.85 1999/03/26 00:15:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.86 1999/03/26 23:41:26 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 1999/03/26 00:15:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 1999/03/26 23:41:26 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1560,12 +1560,13 @@ pmap_protect(pmap, sva, eva, prot)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	boolean_t managed;
 	pt_entry_t *pte, npte;
