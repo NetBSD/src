@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.19 1999/03/25 22:26:52 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.20 1999/03/25 22:38:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,6 +135,7 @@ int	 lfs_writevnodes __P((struct lfs *fs, struct mount *mp,
 
 int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;             /* whether to flush indir on non-ckp */
+int	lfs_clean_vnhead = 1;		/* Allow freeing to head of vn list */
 
 /* Statistics Counters */
 int lfs_dostats = 1;
@@ -280,7 +281,7 @@ lfs_writevnodes(fs, mp, sp, op)
 {
 	struct inode *ip;
 	struct vnode *vp;
-	int inodes_written=0;
+	int inodes_written=0, only_cleaning;
 
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
@@ -350,6 +351,8 @@ lfs_writevnodes(fs, mp, sp, op)
 		     (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE | IN_CLEANING) ||
 		     vp->v_dirtyblkhd.lh_first != NULL))
 		{
+			only_cleaning = ((ip->i_flag & (IN_ACCESS|IN_CHANGE|IN_MODIFIED|IN_UPDATE|IN_CLEANING))==IN_CLEANING);
+
 			if(ip->i_number != LFS_IFILE_INUM
 			   && vp->v_dirtyblkhd.lh_first != NULL)
 			{
@@ -379,20 +382,14 @@ lfs_writevnodes(fs, mp, sp, op)
 			lfs_vunref(vp);
 		}
 
-		lfs_vunref(vp);
+		if(lfs_clean_vnhead && only_cleaning)
+			lfs_vunref_head(vp);
+		else
+			lfs_vunref(vp);
 	}
 	return inodes_written;
 }
 
-/*
- * There is a distinct difference in the interpretation of SEGM_CLEAN,
- * depending on whether it is passed *directly* to lfs_segwrite (i.e., we
- * were called from lfs_markv), or whether it was just in the segment flags
- * (we were called indirectly through getnewvnode/lfs_vflush).  In the former
- * case, we only want to write vnodes where cleaning is in progress; but
- * in the latter case, we might want to write all empty vnodes, or possibly
- * all vnodes.
- */
 int
 lfs_segwrite(mp, flags)
 	struct mount *mp;
