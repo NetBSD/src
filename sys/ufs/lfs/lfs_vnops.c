@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.120 2003/10/18 15:52:42 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.121 2003/10/21 00:39:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.120 2003/10/18 15:52:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.121 2003/10/21 00:39:03 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ restart:
 		wakeup(&lfs_writer_daemon);
 		simple_unlock(&lfs_subsys_lock);
 		simple_unlock(&fs->lfs_interlock);
-		preempt(NULL);
+		preempt(1);
 		goto restart;
 	}
 
@@ -1677,7 +1677,7 @@ lfs_putpages(void *v)
 			return r;
 
 		/* Start over. */
-		preempt(NULL);
+		preempt(1);
 		simple_lock(&vp->v_interlock);
 	} while(1);
 		
@@ -1760,7 +1760,7 @@ lfs_putpages(void *v)
 #endif
 			/* If nothing to write, short-circuit */
 			if (sp->cbpp - sp->bpp == 1) {
-				preempt(NULL);
+				preempt(1);
 				simple_lock(&vp->v_interlock);
 				goto again;
 			}
@@ -1778,7 +1778,7 @@ lfs_putpages(void *v)
 				sizeof(struct finfo) - sizeof(int32_t);
 
 			/* Give the write a chance to complete */
-			preempt(NULL);
+			preempt(1);
 
 			/* We've lost the interlock.  Start over. */
 			simple_lock(&vp->v_interlock);
@@ -1844,7 +1844,7 @@ lfs_putpages(void *v)
 #endif
 		/* If nothing to write, short-circuit */
 		if (sp->cbpp - sp->bpp == 1) {
-			preempt(NULL);
+			preempt(1);
 			goto again2;
 		}
 		/* Write gathered pages */
@@ -1864,7 +1864,7 @@ lfs_putpages(void *v)
 			sizeof(struct finfo) - sizeof(int32_t);
 
 		/* Give the write a chance to complete */
-		preempt(NULL);
+		preempt(1);
 
 		/* We've lost the interlock.  Start over. */
 		goto again2;
