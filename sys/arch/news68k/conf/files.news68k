@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.11 2001/01/25 14:33:31 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.12 2001/03/04 16:14:21 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -124,6 +124,9 @@ file	dev/md_root.c				memory_disk_hooks
 
 # RAIDframe
 major {raid = 32}
+
+# NetBSD m68k a.out binary compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include	"compat/svr4/files.svr4"
