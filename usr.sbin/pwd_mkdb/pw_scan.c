@@ -1,6 +1,7 @@
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Portions Copyright(C) 1995, Jason Downs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pw_scan.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: pw_scan.c,v 1.3 1994/08/28 23:32:49 mycroft Exp $";
+static char *rcsid = "$Id: pw_scan.c,v 1.4 1995/07/28 07:11:30 phil Exp $";
 #endif /* not lint */
 
 /*
@@ -55,13 +56,17 @@ static char *rcsid = "$Id: pw_scan.c,v 1.3 1994/08/28 23:32:49 mycroft Exp $";
 #include "pw_scan.h"
 
 int
-pw_scan(bp, pw)
+pw_scan(bp, pw, flags)
 	char *bp;
 	struct passwd *pw;
+	int *flags;
 {
 	long id;
 	int root;
 	char *p, *sh;
+
+	if (flags != (int *)NULL)
+		*flags = 0;
 
 	if (!(pw->pw_name = strsep(&bp, ":")))		/* login */
 		goto fmt;
@@ -82,6 +87,8 @@ pw_scan(bp, pw)
 		return (0);
 	}
 	pw->pw_uid = id;
+	if ((*p == '\0') && (flags != (int *)NULL))
+		*flags |= _PASSWORD_NOUID;
 
 	if (!(p = strsep(&bp, ":")))			/* gid */
 		goto fmt;
@@ -91,14 +98,20 @@ pw_scan(bp, pw)
 		return (0);
 	}
 	pw->pw_gid = id;
+	if ((*p == '\0') && (flags != (int *)NULL))
+		*flags |= _PASSWORD_NOGID;
 
 	pw->pw_class = strsep(&bp, ":");		/* class */
 	if (!(p = strsep(&bp, ":")))			/* change */
 		goto fmt;
 	pw->pw_change = atol(p);
+	if ((*p == '\0') && (flags != (int *)NULL))
+		*flags |= _PASSWORD_NOCHG;
 	if (!(p = strsep(&bp, ":")))			/* expire */
 		goto fmt;
 	pw->pw_expire = atol(p);
+	if ((*p == '\0') && (flags != (int *)NULL))
+		*flags |= _PASSWORD_NOEXP;
 	pw->pw_gecos = strsep(&bp, ":");		/* gecos */
 	pw->pw_dir = strsep(&bp, ":");			/* directory */
 	if (!(pw->pw_shell = strsep(&bp, ":")))		/* shell */
@@ -119,5 +132,6 @@ pw_scan(bp, pw)
 fmt:		warnx("corrupted entry");
 		return (0);
 	}
+
 	return (1);
 }
