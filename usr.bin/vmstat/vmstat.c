@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.39 1997/11/01 06:51:49 lukem Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.40 1998/01/04 03:59:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.39 1997/11/01 06:51:49 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.40 1998/01/04 03:59:05 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,15 +105,13 @@ struct nlist namelist[] = {
 #ifdef notdef
 #define	X_DEFICIT	13
 	{ "_deficit" },
-#define	X_FORKSTAT	14
-	{ "_forkstat" },
-#define X_REC		15
+#define X_REC		14
 	{ "_rectime" },
-#define X_PGIN		16
+#define X_PGIN		15
 	{ "_pgintime" },
-#define	X_XSTATS	17
+#define	X_XSTATS	16
 	{ "_xstats" },
-#define X_END		18
+#define X_END		17
 #else
 #define X_END		13
 #endif
@@ -163,9 +161,9 @@ long	getuptime __P((void));
 void	printhdr __P((void));
 long	pct __P((long, long));
 void	usage __P((void));
+void	doforkst __P((void));
 #ifdef notdef
 void	dotimes __P((void));
-void	doforkst __P((void));
 #endif
 
 int	main __P((int, char **));
@@ -197,11 +195,9 @@ main(argc, argv)
 		case 'c':
 			reps = atoi(optarg);
 			break;
-#ifndef notdef
 		case 'f':
 			todo |= FORKSTAT;
 			break;
-#endif
 		case 'i':
 			todo |= INTRSTAT;
 			break;
@@ -293,10 +289,8 @@ main(argc, argv)
 	} else if (reps)
 		interval = 1;
 
-#ifdef notdef
 	if (todo & FORKSTAT)
 		doforkst();
-#endif
 	if (todo & MEMSTAT)
 		domem();
 	if (todo & SUMSTAT)
@@ -640,19 +634,16 @@ dosum()
 #endif
 }
 
-#ifdef notdef
 void
 doforkst()
 {
-	struct forkstat fks;
 
-	kread(X_FORKSTAT, &fks, sizeof(struct forkstat));
-	(void)printf("%d forks, %d pages, average %.2f\n",
-	    fks.cntfork, fks.sizfork, (double)fks.sizfork / fks.cntfork);
-	(void)printf("%d vforks, %d pages, average %.2f\n",
-	    fks.cntvfork, fks.sizvfork, (double)fks.sizvfork / fks.cntvfork);
+	kread(X_SUM, &sum, sizeof(sum));
+	(void)printf("%u forks total\n", sum.v_forks);
+	(void)printf("%u forks blocked parent\n", sum.v_forks_ppwait);
+	(void)printf("%u forks shared address space with parent\n",
+	    sum.v_forks_sharevm);
 }
-#endif
 
 void
 dkstats()
