@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.37 2004/02/19 11:58:30 ragge Exp $	*/
+/*	$NetBSD: if_media.h,v 1.38 2004/03/10 14:42:10 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -394,6 +394,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
 	{ IFM_ETHER|IFM_10G_LR,		"10GbaseLR" },			\
 	{ IFM_ETHER|IFM_10G_LR,		"10GLR" },			\
+	{ IFM_ETHER|IFM_10G_LR,		"10GBASE-LR" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
