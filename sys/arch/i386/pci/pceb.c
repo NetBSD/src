@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.2 1998/02/06 08:00:52 thorpej Exp $	*/
+/*	$NetBSD: pceb.c,v 1.3 1998/06/08 06:45:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -54,11 +54,7 @@
 #include "eisa.h"
 #include "isa.h"
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pcebmatch __P((struct device *, void *, void *));
-#else
 int	pcebmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	pcebattach __P((struct device *, struct device *, void *));
 
 struct cfattach pceb_ca = {
@@ -77,11 +73,7 @@ union pceb_attach_args {
 int
 pcebmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
