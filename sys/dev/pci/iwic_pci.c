@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.5 2002/10/23 14:57:15 pooka Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.6 2003/05/08 21:18:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.5 2002/10/23 14:57:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.6 2003/05/08 21:18:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -408,9 +408,8 @@ iwic_mph_command_req(isdn_layer1token t, int command, void *parm)
 		break;
 
 	case CMR_SETTRACE:
-		NDBGL1(L1_PRIM, "CMR_SETTRACE, parm = %d", (unsigned int
-		    ) parm);
-		sc->sc_trace = (unsigned int) parm;
+		sc->sc_trace = (int)(intptr_t)parm;
+		NDBGL1(L1_PRIM, "CMR_SETTRACE, parm = %d", sc->sc_trace);
 		break;
 
 	default:
