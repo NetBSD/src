@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.6 2002/01/07 21:47:06 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.7 2002/05/21 02:47:04 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.6 2002/01/07 21:47:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.7 2002/05/21 02:47:04 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ cs_isa_probe(parent, cf, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t ioh, memh;
+	struct cs_softc sc;
 	int rv = 0, have_io = 0, have_mem = 0;
 	u_int16_t isa_cfg, isa_membase;
 	int maddr, irq;
@@ -109,15 +110,18 @@ cs_isa_probe(parent, cf, aux)
 		goto out;
 	have_io = 1;
 
+	memset(&sc, 0, sizeof sc);
+	sc.sc_iot = iot;
+	sc.sc_ioh = ioh;
 	/* Verify that it's a Crystal product. */
-	if (CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_EISA_NUM) !=
+	if (CS_READ_PACKET_PAGE_IO(&sc, PKTPG_EISA_NUM) !=
 	    EISA_NUM_CRYSTAL)
 		goto out;
 
 	/*
 	 * Verify that it's a supported chip.
 	 */
-	switch (CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_PRODUCT_ID) &
+	switch (CS_READ_PACKET_PAGE_IO(&sc, PKTPG_PRODUCT_ID) &
 	    PROD_ID_MASK) {
 	case PROD_ID_CS8900:
 #ifdef notyet
@@ -133,11 +137,11 @@ cs_isa_probe(parent, cf, aux)
 	 */
 	if (maddr == ISACF_IOMEM_DEFAULT ||
 	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
-		if (cs_verify_eeprom(iot, ioh) == CS_ERROR) {
+		if (cs_verify_eeprom(&sc) == CS_ERROR) {
 			printf("cs_isa_probe: EEPROM bad or missing\n");
 			goto out;
 		}
-		if (cs_read_eeprom(iot, ioh, EEPROM_ISA_CFG, &isa_cfg)
+		if (cs_read_eeprom(&sc, EEPROM_ISA_CFG, &isa_cfg)
 		    == CS_ERROR) {
 			printf("cs_isa_probe: unable to read ISA_CFG\n");
 			goto out;
@@ -164,7 +168,7 @@ cs_isa_probe(parent, cf, aux)
 			/* EEPROM says don't use memory mode. */
 			goto out;
 		}
-		if (cs_read_eeprom(iot, ioh, EEPROM_MEM_BASE, &isa_membase)
+		if (cs_read_eeprom(&sc, EEPROM_MEM_BASE, &isa_membase)
 		    == CS_ERROR) {
 			printf("cs_isa_probe: unable to read MEM_BASE\n");
 			goto out;
