@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_pmc_info.2,v 1.6 2002/10/01 15:58:39 wiz Exp $
+.\"     $NetBSD: i386_pmc_info.2,v 1.7 2002/10/01 16:02:42 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -151,7 +151,8 @@ struct i386_pmc_read_args {
 The counter to read should be specified by the
 .Em counter
 member.
-Counters are numbered from 0 to PMC_NCOUNTERS.
+Counters are numbered from 0 to
+.Dv PMC_NCOUNTERS .
 The value of the counter is returned in the
 .Em val
 member.
@@ -159,5 +160,5 @@ The time since epoch, measured in CPU clock cycles, is returned in the
 .Em time
 member.
 .Sh RETURN VALUES
-Upon successful completion zero is returned, otherwise -1 is returned
+Upon successful completion zero is returned, otherwise \-1 is returned
 on failure.
