@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.8 1996/12/29 12:36:43 jonathan Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.9 1996/12/30 19:18:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -40,7 +40,7 @@ struct ep_softc {
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
-	u_short    ep_connectors;	/* Connectors on this card.	*/
+	u_int	    ep_connectors;	/* Connectors on this card.	*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
@@ -59,6 +59,6 @@ struct ep_softc {
 };
 
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-void	epconfig __P((struct ep_softc *, u_int16_t));
+void	epconfig __P((struct ep_softc *, u_int));
 int	epintr __P((void *));
 void	epstop __P((struct ep_softc *));

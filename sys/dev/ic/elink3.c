@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.16 1996/12/29 17:01:58 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.17 1996/12/30 19:18:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -104,7 +104,7 @@ static int epbusyeeprom __P((struct ep_softc *));
 void
 epconfig(sc, conn)
 	struct ep_softc *sc;
-	u_int16_t conn;
+	u_int conn;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
