@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: mcache.c,v 1.3 2000/08/10 15:51:20 thorpej Exp $");
+RCSID("$Id: mcache.c,v 1.4 2000/08/10 16:18:00 thorpej Exp $");
 
 typedef struct krb5_mcache {
     struct krb5_mcache *next;
@@ -180,7 +180,7 @@ mcc_destroy(krb5_context context,
 
 #if 0
     if (m->refcnt == 0)
-	krb5_abortx("mcc_close: refcnt already 0");
+	krb5_abortx(context, "mcc_destroy: refcnt already 0");
     if (--m->refcnt != 0)
 	return 0;
 #endif
