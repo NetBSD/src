@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 1995/06/26 06:55:51 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.8 1995/06/28 02:43:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,8 +209,6 @@
 void delay __P((int));
 
 #define	DELAY(n)	delay(n)
-#else
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif /* _KERNEL */
 
 #endif /* !_MACHINE_PARAM_H_ */
