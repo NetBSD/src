@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.8 1996/09/21 15:57:22 perry Exp $	*/
+/*	$NetBSD: lpd.c,v 1.9 1996/12/09 09:57:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -151,7 +151,7 @@ main(argc, argv)
 
 	openlog("lpd", LOG_PID, LOG_LPR);
 	syslog(LOG_INFO, "restarted");
-	(void) umask(0);
+	(void)umask(0);
 	lfd = open(_PATH_MASTERLOCK, O_WRONLY|O_CREAT, 0644);
 	if (lfd < 0) {
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
@@ -167,7 +167,7 @@ main(argc, argv)
 	/*
 	 * write process id for others to know
 	 */
-	sprintf(line, "%u\n", getpid());
+	(void)snprintf(line, sizeof(line), "%u\n", getpid());
 	f = strlen(line);
 	if (write(lfd, line, f) != f) {
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
@@ -178,7 +178,7 @@ main(argc, argv)
 	 * Restart all the printers.
 	 */
 	startup();
-	(void) unlink(_PATH_SOCKETNAME);
+	(void)unlink(_PATH_SOCKETNAME);
 	funix = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
@@ -192,7 +192,7 @@ main(argc, argv)
 	signal(SIGTERM, mcleanup);
 	memset(&un, 0, sizeof(un));
 	un.sun_family = AF_UNIX;
-	strcpy(un.sun_path, _PATH_SOCKETNAME);
+	strncpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path) - 1);
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
@@ -267,11 +267,11 @@ main(argc, argv)
 			signal(SIGINT, SIG_IGN);
 			signal(SIGQUIT, SIG_IGN);
 			signal(SIGTERM, SIG_IGN);
-			(void) close(funix);
+			(void)close(funix);
 			if (!sflag)
-				(void) close(finet);
+				(void)close(finet);
 			dup2(s, 1);
-			(void) close(s);
+			(void)close(s);
 			if (domain == AF_INET) {
 				from_remote = 1;
 				chkhost(&frominet);
@@ -280,7 +280,7 @@ main(argc, argv)
 			doit();
 			exit(0);
 		}
-		(void) close(s);
+		(void)close(s);
 	}
 }
 
@@ -485,7 +485,7 @@ chkhost(f)
 		fatal("Host name for your address (%s) unknown",
 			inet_ntoa(f->sin_addr));
 
-	(void) strncpy(fromb, hp->h_name, sizeof(fromb));
+	(void)strncpy(fromb, hp->h_name, sizeof(fromb) - 1);
 	from[sizeof(fromb) - 1] = '\0';
 	from = fromb;
 
@@ -494,10 +494,10 @@ again:
 	if (hostf) {
 		if (__ivaliduser(hostf, f->sin_addr.s_addr,
 		    DUMMY, DUMMY) == 0) {
-			(void) fclose(hostf);
+			(void)fclose(hostf);
 			return;
 		}
-		(void) fclose(hostf);
+		(void)fclose(hostf);
 	}
 	if (first == 1) {
 		first = 0;
