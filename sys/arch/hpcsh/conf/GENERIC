@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.39 2004/07/03 12:49:21 uch Exp $
+# $NetBSD: GENERIC,v 1.40 2004/07/05 00:09:45 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -31,25 +31,79 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
 
-options		SH3
+
+# System options specific to hpcsh
+
+# CPU support.  At least one is REQUIRED.
+options 	SH3
+#options 	SH4
+
+# Example of how to set gcc optimization options (XXX: not tested)
+#makeoptions	COPTS="-Os"		# generic
+#makeoptions	CPUFLAGS="-m3"		# CPU specific
+
 #
 # PCLOCK is estimated by kernel.
 #				PCLOCK		CPU CLOCK
 #	HP Jornada 680/690	22.22MHz	133MHz
-#	HP HP620LX		18.75MHz	75MMHz
+#	HP HP620LX		18.75MHz	 75MHz
 #	HITACHI HPW50PA		25MHz		100MHz
 #
+#options 	PCLOCK=...
 
+# in-kernel bootloader, see kloader(4)
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
+
+#options	HPC_DEBUG_INTERRUPT_MONITOR
+#options	KSTACK_DEBUG
+
 
 # Standard system options
+
 #options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 				# (overrides tz info that hpcboot.exe passes)
 
+options 	KTRACE		# system call tracing via ktrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
+
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+#options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
+#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
+#options 	LKM		# loadable kernel modules
+
 options 	USERCONF		# userconf(4) support
-options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiveness under
+# high disk I/O load. Likely stable but not yet the default.
+#options 	NEW_BUFQ_STRATEGY
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	KGDB_DEVRATE=19200
+#options 	"KGDB_DEVNAME=\"scif\""		# HP Jornada
+#options 	"KGDB_DEVNAME=\"hd64461uart\""	# HITACHI PERSONA (SH3)
+#options 	"KGDB_DEVNAME=\"hd64465uart\""	# HITACHI PERSONA (SH4)
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
+options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
 #options 	BSDDISKLABEL_EI	# endian independent disklabel support
 
 # Executable format options
@@ -58,13 +112,25 @@ options 	EXEC_ELF32	# 32-bit ELF executables
 
 # File systems
 file-system 	FFS		# UFS
+#file-system 	MFS		# memory file system (requires FFS)
+#file-system 	EXT2FS		# second extended file system (linux)
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
-file-system 	UNION		# union file system
+#file-system 	NULLFS		# loopback file system
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+#file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # File system options
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -87,14 +153,21 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+
 options 	NFS_BOOT_DHCP
 
-# Kernel root file system and dump configuration.
-config		netbsd	root on ? type ?
-
+#
+# wscons options
+#
+# builtin terminal emulations
 options 	WSEMUL_VT100
+# allocate a number of virtual screens at autoconfiguration time
 options 	WSDISPLAY_DEFAULTSCREENS=4
-options 	FONT_VT220L8x10
+# different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_BROWN
 options 	WS_KERNEL_BG=WSCOL_BLUE
 # compatibility to other console drivers
@@ -102,6 +175,12 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+options 	FONT_VT220L8x10			# the console font
+
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
 
 #
 # Device configuration
@@ -147,13 +226,14 @@ wskbd1		at j6x0tp? mux 1	# - "hard icons" as keys
 # Do not convert hard icons to key presses while serving mouse input.
 options 	J6X0TP_WSMOUSE_EXCLUSIVE
 # Customization for the mini-keymap of hard icons.
-options 	J6X0TP_SETTINGS_ICON_KEYSYM="KS_Home"
-options 	J6X0TP_PGUP_ICON_KEYSYM="KS_Prior"
-options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
-options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
+#options 	J6X0TP_SETTINGS_ICON_KEYSYM="KS_Home"
+#options 	J6X0TP_PGUP_ICON_KEYSYM="KS_Prior"
+#options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
+#options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
 
 hd64461if* at shb?
 hd64461pcmcia*	at hd64461if?
+#options 	HD64461PCMCIA_REORDER_ATTACH	# attach channel 1 (CF) first
 hd64461video*	at hd64461if?
 
 #
@@ -164,45 +244,66 @@ com0		at hd64461if?
 #
 # machine independent part
 #
+
 # PCMCIA bus support
+#pcmcia* at hd64461pcmcia? controller ? socket ?
 pcmcia0 at hd64461pcmcia? controller 0 socket ?	# I/O card, memory card
 pcmcia1 at hd64461pcmcia? controller 1 socket ? # memory card only
+
+# PCMCIA IDE controllers
+#wdc*	at pcmcia? function ?
+wdc0	at pcmcia1 function ?		# CF slot
+wdc1	at pcmcia0 function ?		# PC Card slot
+
+# ATA (IDE) bus support
+#atabus* at ata?
+atabus0 at wdc0 channel ?		# CF slot
+atabus1 at wdc1 channel ?		# PC Card slot
+
+# IDE drives
+wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
 mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
 ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
 wi*	at pcmcia0 function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 
+# MII/PHY support
+nsphyter* at mii? phy ?			# NS83843 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
-
-# PCMCIA IDE disk
-# PC-Card slot
-wdc1	at pcmcia0 function ?
-atabus1 at wdc1 channel ?
-wd*	at atabus1 drive ? flags 0x0000
-# Compact Flash slot (only memory mapped mode CF can attach)
-wdc0	at pcmcia1 function ?
-atabus0 at wdc0 channel ?
-wd*	at atabus0 drive ? flags 0x0000
 
 # PCMCIA Serial Devices
 com*	at pcmcia? function ?		# Modems and serial cards
 
-# Network Interfaces
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		1	# serial-line IP ports
 pseudo-device	bpfilter	2	# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter, NAT
+#pseudo-device	ipfilter		# IP filter, NAT
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	ksyms			# kernel symbol table interface
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+#pseudo-device	nsmb			# experimental - SMB requester
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont			# dynamic font loading support
+#pseudo-device	hpf1275a		# HP F1275A external keyboard
+#wskbd* at hpf1275a? mux 1
