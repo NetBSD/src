@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.166 2003/09/28 08:16:51 tsutsui Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.167 2003/10/05 17:31:09 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.166 2003/09/28 08:16:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.167 2003/10/05 17:31:09 tsutsui Exp $");
 
 #include "opt_cputype.h"
 
@@ -263,7 +263,7 @@ static const struct pridtab cputab[] = {
 	  MIPS_NOT_SUPP,			"MIPS R6000 CPU"	},
 
 	/*
-	 * rev 0x00 and 0x30 are R4000, 0x40, 0x50 and 0x60 are R4400.
+	 * rev 0x00, 0x22 and 0x30 are R4000, 0x40, 0x50 and 0x60 are R4400.
 	 * should we allow ranges and use 0x00 - 0x3f for R4000 and
 	 * 0x40 - 0xff for R4400?
 	 */
