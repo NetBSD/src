@@ -1,55 +1,54 @@
-# @(#)etcetera	7.1
+# @(#)etcetera	7.4
 
 # All of these are set up just so people can "zic -l" to a timezone
-# that's right for their area, even if it doesn't have a name or dst rules
+# that's right for their area, even if it doesn't have a name or DST rules
 # (half hour zones are too much to bother with -- when someone asks!)
 
-Zone	GMT		0	-	GMT
+Zone	Etc/GMT		0	-	GMT
+Link	Etc/GMT				Etc/UTC
+Link	Etc/GMT				Etc/UCT
+Link	Etc/GMT				Etc/Universal
+Link	Etc/GMT				Etc/Greenwich
+Link	Etc/GMT				Etc/Zulu
+Link	Etc/GMT				Etc/GMT-0
+Link	Etc/GMT				Etc/GMT+0
+Link	Etc/GMT				Etc/GMT0
 
-Zone	GMT-12		-12	-	GMT-1200
-Zone	GMT-11		-11	-	GMT-1100
-Zone	GMT-10		-10	-	GMT-1000
-Zone	GMT-9		-9	-	GMT-0900
-Zone	GMT-8		-8	-	GMT-0800
-Zone	GMT-7		-7	-	GMT-0700
-Zone	GMT-6		-6	-	GMT-0600
-Zone	GMT-5		-5	-	GMT-0500
-Zone	GMT-4		-4	-	GMT-0400
-Zone	GMT-3		-3	-	GMT-0300
-Zone	GMT-2		-2	-	GMT-0200
-Zone	GMT-1		-1	-	GMT-0100
-Zone	GMT+1		1	-	GMT+0100
-Zone	GMT+2		2	-	GMT+0200
-Zone	GMT+3		3	-	GMT+0300
-Zone	GMT+4		4	-	GMT+0400
-Zone	GMT+5		5	-	GMT+0500
-Zone	GMT+6		6	-	GMT+0600
-Zone	GMT+7		7	-	GMT+0700
-Zone	GMT+8		8	-	GMT+0800
-Zone	GMT+9		9	-	GMT+0900
-Zone	GMT+10		10	-	GMT+1000
-Zone	GMT+11		11	-	GMT+1100
-Zone	GMT+12		12	-	GMT+1200
-Zone	GMT+13		13	-	GMT+1300	# GMT+12 with DST
+# We use POSIX-style signedness in the names and output,
+# internal-style signedness in the specifications.
+# For example, TZ=Etc/GMT+4 corresponds to 4 hours _behind_ GMT;
+# it is equivalent to TZ=GMT+4, which is implemented directly as per POSIX.
 
-Link	GMT		UTC
-Link	GMT		UCT
-Link	GMT		Universal
-Link	GMT		Greenwich
-Link	GMT		Zulu
-Link	GMT		GMT-0
-Link	GMT		GMT+0
-Link	GMT		GMT0
-Link	GMT+1		GMT1
-Link	GMT+2		GMT2
-Link	GMT+3		GMT3
-Link	GMT+4		GMT4
-Link	GMT+5		GMT5
-Link	GMT+6		GMT6
-Link	GMT+7		GMT7
-Link	GMT+8		GMT8
-Link	GMT+9		GMT9
-Link	GMT+10		GMT10
-Link	GMT+11		GMT11
-Link	GMT+12		GMT12
-Link	GMT+13		GMT13
+# Earlier incarnations of this package were not POSIX-compliant,
+# and had lines such as
+#		Zone	GMT-12		-12	-	GMT-1200
+# We did not want things to change quietly if someone accustomed to the old
+# way does a
+#		zic -l GMT-12
+# so we moved the names into the Etc subdirectory.
+
+Zone	Etc/GMT-13	13	-	GMT-13 # 12 hours ahead of GMT, plus DST
+Zone	Etc/GMT-12	12	-	GMT-12
+Zone	Etc/GMT-11	11	-	GMT-11
+Zone	Etc/GMT-10	10	-	GMT-10
+Zone	Etc/GMT-9	9	-	GMT-9
+Zone	Etc/GMT-8	8	-	GMT-8
+Zone	Etc/GMT-7	7	-	GMT-7
+Zone	Etc/GMT-6	6	-	GMT-6
+Zone	Etc/GMT-5	5	-	GMT-5
+Zone	Etc/GMT-4	4	-	GMT-4
+Zone	Etc/GMT-3	3	-	GMT-3
+Zone	Etc/GMT-2	2	-	GMT-2
+Zone	Etc/GMT-1	1	-	GMT-1
+Zone	Etc/GMT+1	-1	-	GMT+1
+Zone	Etc/GMT+2	-2	-	GMT+2
+Zone	Etc/GMT+3	-3	-	GMT+3
+Zone	Etc/GMT+4	-4	-	GMT+4
+Zone	Etc/GMT+5	-5	-	GMT+5
+Zone	Etc/GMT+6	-6	-	GMT+6
+Zone	Etc/GMT+7	-7	-	GMT+7
+Zone	Etc/GMT+8	-8	-	GMT+8
+Zone	Etc/GMT+9	-9	-	GMT+9
+Zone	Etc/GMT+10	-10	-	GMT+10
+Zone	Etc/GMT+11	-11	-	GMT+11
+Zone	Etc/GMT+12	-12	-	GMT+12
