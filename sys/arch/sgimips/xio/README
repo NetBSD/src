@@ -1,0 +1,7 @@
+$NetBSD: README,v 1.1 2000/06/14 15:49:07 soren Exp $
+
+By reading this file you are agreeing to one or more of the following:
+
+* Write XIO bus support.
+* Send a machine with XIO to Soren.
+* Send documentation for a machine with XIO to Soren.
