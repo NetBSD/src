@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.14 2002/10/02 04:09:15 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.15 2002/11/09 18:53:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -1068,7 +1068,7 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 void
 sq_dump_buffer(u_int32_t addr, u_int32_t len)
 {
-	int i;
+	u_int i;
 	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1((caddr_t)addr);
 
 	if (len == 0)
