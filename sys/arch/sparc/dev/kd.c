@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.28 2003/08/25 17:50:26 uwe Exp $	*/
+/*	$NetBSD: kd.c,v 1.29 2003/08/27 00:23:32 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.28 2003/08/25 17:50:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.29 2003/08/27 00:23:32 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -100,8 +100,8 @@ static struct kd_softc kd_softc;
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
-static void kd_init __P((struct kd_softc *));
-static void kd_cons_input __P((int));
+static void kd_init(struct kd_softc *);
+static void kd_cons_input(int);
 
 dev_type_open(kdopen);
 dev_type_close(kdclose);
@@ -500,9 +500,9 @@ kd_attach_input(cc)
  * Since the PROM does not notify us when data is available on the
  * input channel these functions periodically poll the PROM.
  */
-static int kd_rom_iopen __P((struct cons_channel *));
-static int kd_rom_iclose __P((struct cons_channel *));
-static void kd_rom_intr __P((void *));
+static int kd_rom_iopen(struct cons_channel *);
+static int kd_rom_iclose(struct cons_channel *);
+static void kd_rom_intr(void *);
 
 static struct cons_channel prom_cons_channel;
 
@@ -552,11 +552,11 @@ int prom_stdout_node;
 char prom_stdin_args[16];
 char prom_stdout_args[16];
 
-extern void prom_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-extern void prom_cnpollc __P((dev_t, int));
+extern void prom_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+static int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+extern void prom_cnpollc(dev_t, int);
 
 /*
  * The console is set to this one initially,
@@ -637,7 +637,7 @@ prom_cnputc(dev, c)
 
 /*****************************************************************/
 
-static void prom_get_device_args __P((const char *, char *, unsigned int));
+static void prom_get_device_args(const char *, char *, unsigned int);
 
 void
 prom_get_device_args(prop, args, sz)
