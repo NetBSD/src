@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.105 2004/08/12 13:42:17 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.106 2004/08/15 20:19:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.105 2004/08/12 13:42:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.106 2004/08/15 20:19:14 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2445,8 +2445,12 @@ pccbb_pcmcia_socket_enable(pch)
 	intr &= ~PCIC_INTR_RESET;
 	Pcic_write(ph, PCIC_INTR, intr);
 
+	/* power up the socket */
 	if (pccbb_power(sc, voltage) == 0)
 		return;
+
+	power |= PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_VPP1_VCC;
+	Pcic_write(ph, PCIC_PWRCTL, power);
 
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
@@ -2459,9 +2463,6 @@ pccbb_pcmcia_socket_enable(pch)
 
 	power |= PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
-
-	if (pccbb_power(sc, voltage) == 0)
-		return;
 
 	/* 
 	 * hold RESET at least 10us, this is a min allow for slop in
