@@ -73,7 +73,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *   from: @(#)clock.c   7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.7 1994/07/29 00:52:18 grantham Exp $
+ *	$Id: clock.c,v 1.8 1994/08/02 16:39:57 grantham Exp $
  */
 
 #if !defined(STANDALONE)
@@ -323,7 +323,8 @@ void inittodr(time_t base)
       timbuf = macos_boottime;
 
 	/* GMT bias is passwd in from Booter */
-   timbuf += macos_gmtbias;
+	/* To get GMT, *subtract* GMTBIAS from *our* time */
+   timbuf -= macos_gmtbias;
 
    if (base < 5*SECYR) {
       printf("WARNING: file system time earlier than 1975\n");
