@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.73 2002/06/09 04:16:39 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.74 2002/12/19 08:30:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.73 2002/06/09 04:16:39 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.74 2002/12/19 08:30:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.73 2002/06/09 04:16:39 lukem Exp $");
 
 #include "pathnames.h"
 #include "stat_flags.h"
+#include "mtree.h"
 
 #define STRIP_ARGS_MAX 32
 #define BACKUP_SUFFIX ".old"
@@ -132,7 +133,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "a:cbB:df:g:l:m:M:o:prsS:T:U")) != -1)
+	while ((ch = getopt(argc, argv, "a:cbB:df:g:l:m:M:N:o:prsS:T:U")) != -1)
 		switch((char)ch) {
 		case 'a':
 			afterinstallcmd = strdup(optarg);
@@ -211,6 +212,12 @@ main(int argc, char *argv[])
 		case 'M':
 			metafile = optarg;
 			break;
+		case 'N':
+			if (! setup_getid(optarg))
+				errx(1,
+			    "Unable to use user and group databases in `%s'",
+				    optarg);
+			break;
 		case 'o':
 			owner = optarg;
 			break;
@@ -256,20 +263,12 @@ main(int argc, char *argv[])
 
 	/* get group and owner id's */
 	if (group && !dounpriv) {
-		struct group *gp;
-
-		if ((gp = getgrnam(group)) != NULL)
-			gid = gp->gr_gid;
-		else if (! parseid(group, &gid))
+		if (gid_from_group(group, &gid) == -1 && ! parseid(group, &gid))
 			errx(1, "unknown group %s", group);
 		iflags |= HASGID;
 	}
 	if (owner && !dounpriv) {
-		struct passwd *pp;
-
-		if ((pp = getpwnam(owner)) != NULL)
-			uid = pp->pw_uid;
-		else if (! parseid(owner, &uid))
+		if (uid_from_user(owner, &uid) == -1 && ! parseid(owner, &uid))
 			errx(1, "unknown user %s", owner);
 		iflags |= HASUID;
 	}
@@ -1007,13 +1006,13 @@ usage(void)
 
 	(void)fprintf(stderr,
 "usage: %s [-Ubcprs] [-M log] [-T tags] [-B suffix] [-a afterinstallcmd]\n"
-"           [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags]\n"
+"           [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group] [-l linkflags]\n"
 "           [-S stripflags] file1 file2\n"
 "       %s [-Ubcprs] [-M log] [-T tags] [-B suffix] [-a afterinstallcmd]\n"
-"           [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags]\n"
+"           [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group] [-l linkflags]\n"
 "           [-S stripflags] file1 ... fileN directory\n"
 "       %s -d [-Up] [-M log] [-T tags] [-a afterinstallcmd] [-m mode]\n"
-"           [-o owner] [-g group] directory ...\n",
+"           [-N dbdir] [-o owner] [-g group] directory ...\n",
 	    prog, prog, prog);
 	exit(1);
 }
