@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)df.c	5.30 (Berkeley) 4/23/92";*/
-static char rcsid[] = "$Id: df.c,v 1.13 1994/06/13 06:39:17 chopps Exp $";
+static char rcsid[] = "$Id: df.c,v 1.14 1994/07/12 07:58:27 glass Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ main(argc, argv)
 
 	mntsize = getmntinfo(&mntbuf, (nflag ? MNT_NOWAIT : MNT_WAIT));
 	if (mntsize == 0)
-	        err(1, "retrieving informaation on mounted file systems");
+	        err(1, "retrieving information on mounted file systems");
 	maxwidth = 0;
 	for (i = 0; i < mntsize; i++) {
 		width = strlen(mntbuf[i].f_mntfromname);
