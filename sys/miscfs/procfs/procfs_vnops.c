@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vnops.c,v 1.6 1993/09/07 15:41:27 ws Exp $
+ *	$Id: procfs_vnops.c,v 1.7 1993/09/16 22:08:30 cgd Exp $
  */
 
 /*
@@ -682,7 +682,7 @@ pfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 		count += 2*dent.d_reclen;
 	}
 
-	p = allproc;
+	p = (struct proc *)allproc;
 	for (pcnt = 0; p && uio->uio_resid && (!cookies || ncookies > 0); pcnt++) {
 		if (pcnt < skipcnt) {
 			p = p->p_nxt;
