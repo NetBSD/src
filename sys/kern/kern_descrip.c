@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.129 2005/01/14 00:25:12 cube Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.130 2005/02/12 23:14:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.129 2005/01/14 00:25:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.130 2005/02/12 23:14:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1845,10 +1845,10 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 }
 
 int
-fdclone(struct proc *p, struct file *fp, int fd, const struct fileops *fops,
-    void *data)
+fdclone(struct proc *p, struct file *fp, int fd, int flag,
+    const struct fileops *fops, void *data)
 {
-	fp->f_flag = FREAD | FWRITE;
+	fp->f_flag = flag;
 	fp->f_type = DTYPE_MISC;
 	fp->f_ops = fops;
 	fp->f_data = data;
