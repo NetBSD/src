@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.22 2001/04/27 18:03:40 jdolecek Exp $
+#	$NetBSD: PS2,v 1.23 2001/05/02 13:20:31 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -6,8 +6,7 @@
 #
 #	BEWARE:
 #	 MCA support in NetBSD is still experimental at this
-#	 stage and should be used with caution. MCA-enabled
-#	 kernels won't currently work on non-MCA machines.
+#	 stage and should be used with caution.
 #
 #	 See also sys/dev/mca/TODO for list of problems and current list of
 #	 projects.
