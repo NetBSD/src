@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.29 1996/03/16 23:17:04 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.30 1996/03/30 22:24:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -53,8 +53,7 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/syscallargs.h>
-
-#include <kern/kern_conf.h>
+#include <sys/conf.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.41 1996/03/29 00:25:30 cgd Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -56,13 +56,12 @@
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
+#include <sys/conf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-
-#include <kern/kern_conf.h>
 
 /*
  * Descriptor management.
