@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.82 2005/04/01 21:59:46 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.83 2005/04/06 04:30:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.82 2005/04/01 21:59:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.83 2005/04/06 04:30:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,14 +546,15 @@ lfs_flush_fs(struct lfs *fs, int flags)
  * XXX need to think more about the multiple filesystem case.
  *
  * Called and return with lfs_subsys_lock held.
+ * If fs != NULL, we hold the segment lock for fs.
  */
 void
 lfs_flush(struct lfs *fs, int flags, int only_onefs)
 {
 	extern u_int64_t locked_fakequeue_count;
 	struct mount *mp, *nmp;
+	struct lfs *tfs;
 
-	ASSERT_NO_SEGLOCK(fs);
 	LOCK_ASSERT(simple_lock_held(&lfs_subsys_lock));
 	KDASSERT(fs == NULL || !LFS_SEGLOCK_HELD(fs));
 
@@ -572,9 +573,13 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 	simple_unlock(&lfs_subsys_lock);
 
 	if (only_onefs) {
-		if (vfs_busy(fs->lfs_ivnode->v_mount, LK_NOWAIT, &mountlist_slock))
+		KASSERT(fs != NULL);
+		if (vfs_busy(fs->lfs_ivnode->v_mount, LK_NOWAIT,
+			     &mountlist_slock))
 			goto errout;
+		simple_lock(&fs->lfs_interlock);
 		lfs_flush_fs(fs, flags);
+		simple_unlock(&fs->lfs_interlock);
 		vfs_unbusy(fs->lfs_ivnode->v_mount);
 	} else {
 		locked_fakequeue_count = 0;
@@ -587,8 +592,12 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				continue;
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
-			    MFSNAMELEN) == 0)
-				lfs_flush_fs(VFSTOUFS(mp)->um_lfs, flags);
+			    MFSNAMELEN) == 0) {
+				tfs = VFSTOUFS(mp)->um_lfs;
+				simple_lock(&tfs->lfs_interlock);
+				lfs_flush_fs(tfs, flags);
+				simple_unlock(&tfs->lfs_interlock);
+			}
 			simple_lock(&mountlist_slock);
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			vfs_unbusy(mp);
@@ -681,6 +690,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
+		simple_unlock(&fs->lfs_interlock);
 		lfs_flush(fs, flags, 0);
 	} else if (lfs_fs_pagetrip && fs->lfs_pages > lfs_fs_pagetrip) {
 		/*
@@ -689,7 +699,9 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 */
 		++fs->lfs_pdflush;
 		wakeup(&lfs_writer_daemon);
-	}
+		simple_unlock(&fs->lfs_interlock);
+	} else
+		simple_unlock(&fs->lfs_interlock);
 
 	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
 		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
@@ -717,7 +729,6 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		}
 	}
 	simple_unlock(&lfs_subsys_lock);
-	simple_unlock(&fs->lfs_interlock);
 	return (error);
 }
 
