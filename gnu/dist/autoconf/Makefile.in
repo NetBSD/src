@@ -69,7 +69,7 @@ VERSION = @VERSION@
 
 AUTOMAKE_OPTIONS = check-news 1.4 readme-alpha
 
-SUBDIRS = . config m4 man doc tests
+SUBDIRS = . config m4 man tests
 
 SUFFIXES = .m4 .m4f
 ACLOCAL_AMFLAGS = --version >/dev/null && touch aclocal.m4
