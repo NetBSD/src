@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.8 2002/12/06 03:39:13 thorpej Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.9 2003/07/04 21:56:48 wiz Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -71,7 +71,7 @@ get_last_login_time(uid_t uid, const char *logname,
 
 	buf[0] = '\0';
 #ifdef SUPPORT_UTMPX
-	if ((llxp = getlastlogx(uid, &llx)) != NULL) {
+	if ((llxp = getlastlogx(_PATH_LASTLOGX, uid, &llx)) != NULL) {
 		if (bufsize > sizeof(llxp->ll_host) + 1)
 			bufsize = sizeof(llxp->ll_host) + 1;
 		strncpy(buf, llxp->ll_host, bufsize - 1);
