@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.16 2004/01/01 19:32:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.16 2004/01/01 19:32:55 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -225,7 +225,6 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 		pssPtr->flags |= RF_PSS_BUFFERWAIT;
 		cb = rf_AllocCallbackDesc();	/* append to buf wait list in
 						 * recon ctrl structure */
-		cb->row = rbuf->row;
 		cb->col = rbuf->col;
 		cb->callbackArg.v = rbuf->parityStripeID;
 		cb->callbackArg2.v = rbuf->which_ru;
@@ -251,12 +250,10 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 
 	/* initialize the buffer */
 	if (t != rbuf) {
-		t->row = rbuf->row;
 		t->col = reconCtrlPtr->fcol;
 		t->parityStripeID = rbuf->parityStripeID;
 		t->which_ru = rbuf->which_ru;
 		t->failedDiskSectorOffset = rbuf->failedDiskSectorOffset;
-		t->spRow = rbuf->spRow;
 		t->spCol = rbuf->spCol;
 		t->spOffset = rbuf->spOffset;
 

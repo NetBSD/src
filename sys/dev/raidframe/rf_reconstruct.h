@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.12 2004/01/01 19:27:36 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.13 2004/01/01 19:32:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@ struct RF_ReconBuffer_s {
 	int     which_ru;	/* which reconstruction unit within the PSS */
 	RF_SectorNum_t failedDiskSectorOffset;	/* the offset into the failed
 						 * disk */
-	RF_RowCol_t row, col;	/* which disk this buffer belongs to or is
+	RF_RowCol_t col;	/* which disk this buffer belongs to or is
 				 * targeted at */
 	RF_StripeCount_t count;	/* counts the # of SUs installed so far */
 	int     priority;	/* used to force hi priority recon */
