@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.25 1997/07/04 21:02:16 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.26 1998/05/02 18:04:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.25 1997/07/04 21:02:16 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.26 1998/05/02 18:04:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -441,7 +441,7 @@ atend:
 				err |= setvarsafe("OPTARG", s, 0);
 			}
 			else {
-				out1fmt("Illegal option -%c\n", c);
+				outfmt(&errout, "Illegal option -%c\n", c);
 				(void) unsetvar("OPTARG");
 			}
 			c = '?';
@@ -460,7 +460,7 @@ atend:
 				c = ':';
 			}
 			else {
-				out1fmt("No arg for -%c option\n", c);
+				outfmt(&errout, "No arg for -%c option\n", c);
 				(void) unsetvar("OPTARG");
 				c = '?';
 			}
