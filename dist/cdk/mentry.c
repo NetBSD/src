@@ -2,8 +2,8 @@
 
 /*
  * $Author: dsl $
- * $Date: 2004/10/27 20:26:26 $
- * $Revision: 1.4 $
+ * $Date: 2004/10/28 20:52:20 $
+ * $Revision: 1.5 $
  */
 
 /*
@@ -708,7 +708,7 @@ static void CDKMentryCallBack (CDKMENTRY *mentry, chtype character)
    /* Check the type of character we are looking for. */
    if ((mentry->dispType == vINT ||
 	mentry->dispType == vHINT) &&
-	!isdigit(plainchar & 0xff))
+	!isdigit((unsigned char)plainchar))
    {
       Beep();
    }
@@ -717,7 +717,7 @@ static void CDKMentryCallBack (CDKMENTRY *mentry, chtype character)
 		mentry->dispType == vLCHAR ||
 		mentry->dispType == vUHCHAR ||
 		mentry->dispType == vLHCHAR) &&
-		isdigit(plainchar & 0xff))
+		isdigit((unsigned char)plainchar))
    {
       Beep();
    }
@@ -738,17 +738,17 @@ static void CDKMentryCallBack (CDKMENTRY *mentry, chtype character)
 		mentry->dispType == vUHCHAR ||
 		mentry->dispType == vUMIXED ||
 		mentry->dispType == vUHMIXED) &&
-		!isdigit(plainchar & 0xff))
+		!isdigit((unsigned char)plainchar))
 	 {
-	    plainchar = toupper (plainchar & 0xff);
+	    plainchar = toupper ((unsigned char)plainchar);
 	 }
 	 else if ((mentry->dispType == vLCHAR ||
 			mentry->dispType == vLHCHAR ||
 			mentry->dispType == vLMIXED ||
 			mentry->dispType == vLHMIXED) &&
-			!isdigit(plainchar & 0xff))
+			!isdigit((unsigned char)plainchar))
 	 {
-	    plainchar = tolower (plainchar & 0xff);
+	    plainchar = tolower ((unsigned char)plainchar);
 	 }
 
 	 /*
