@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 2000/07/18 22:33:56 eeh Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 2001/04/25 12:24:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -117,7 +117,7 @@ _rtld_bind_start_0:	# (obj, reloff)
 	 ldx     [%o1 + (10*4)], %l7
 	mov	%o0, %l5
 	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_RelA which */
+	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
 	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
 	sllx	%l5, 3, %o1		/*  So multiply by 24. */
 	
@@ -145,7 +145,7 @@ _rtld_bind_start_0:	# (obj, reloff)
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
 	add	%l5, %l6, %l5
 	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_RelA which */
+	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
 	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
 	sllx	%l5, 3, %l5		/*  So multiply by 24. */
 	
@@ -180,7 +180,7 @@ _rtld_bind_start_0:	# (obj, reloff)
 _rtld_bind_start_1:	# (obj, reloff)
 	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
 	
-	sllx	%o2, 1, %o3		/* Each element is an Elf_RelA which */
+	sllx	%o2, 1, %o3		/* Each element is an Elf_Rela which */
 	add	%o3, %o2, %o2		/*  is 3 longwords or 24 bytes. */
 	sllx	%o2, 3, %o2		/*  So multiply by 24. */
 	
