@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.119 1995/04/07 22:29:39 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.120 1995/04/12 15:38:13 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -544,7 +544,7 @@ begin:	/* Now running relocated at KERNBASE. */
 	movl	%edx,_Crtat
 
 	/* Set up bootstrap stack. */
-	movl	$(_kstack+UPAGES*NBPG-4*12),%esp # bootstrap stack end location
+	movl	$(_kstack+USPACE-4*12),%esp # bootstrap stack end location
 	xorl	%eax,%eax		# mark end of frames
 	movl	%eax,%ebp
 	movl	_proc0paddr,%eax
@@ -1822,7 +1822,7 @@ ENTRY(switch_exit)
 	/* Thoroughly nuke the old process's resources. */
 	pushl	P_VMSPACE(%edi)
 	call	_vmspace_free
-	pushl	$(UPAGES << PGSHIFT)
+	pushl	$USPACE
 	pushl	P_ADDR(%edi)
 	pushl	_kernel_map
 	call	_kmem_free
@@ -1860,7 +1860,7 @@ ENTRY(savectx)
 	movl	%esp,%eax		# eax = stack pointer
 	movl	%eax,%edx		# edx = stack offset from bottom
 	subl	$_kstack,%edx
-	movl	$(UPAGES << PGSHIFT),%ecx	# ecx = ctob(UPAGES) - offset
+	movl	$USPACE,%ecx		# ecx = USPACE - offset
 	subl	%edx,%ecx
 	pushl	%ecx
 	addl	%edx,%esi		# esi = stack in p2
