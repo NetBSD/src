@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.378 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.379 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -144,3 +144,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		Daniel Hartmeier for OpenBSD.  [augustss 20041022]
 	axe(4): The uax(4) driver has been replaced by the axe driver.
 		[augustss 20041023]
+	bind: Bind-9.3.0 imported. [christos 20041106]
