@@ -1,7 +1,7 @@
-/*	$NetBSD: index.c,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
+/*	$NetBSD: index.c,v 1.1.1.3 2003/02/13 08:50:55 wiz Exp $	*/
 
 /* index.c -- indexing for Texinfo.
-   Id: index.c,v 1.3 2002/11/07 22:16:20 karl Exp
+   Id: index.c,v 1.4 2002/11/26 22:54:31 karl Exp
 
    Copyright (C) 1998, 1999, 2002 Free Software Foundation, Inc.
 
@@ -336,7 +336,6 @@ init_indices ()
   /* If there were existing indices, get rid of them now. */
   for (i = 0; i < defined_indices; i++)
     {
-      undefindex (name_index_alist[i]->name);
       if (name_index_alist[i])
         { /* Suppose we're called with two input files, and the first
              does a @synindex pg cp.  Then, when we get here to start
@@ -344,6 +343,7 @@ init_indices ()
              undefindex (because it's pointing to "cp").  So free it
              here; otherwise, when we try to define the pg index again
              just below, it will still point to cp.  */
+          undefindex (name_index_alist[i]->name);
           free (name_index_alist[i]->name);
           free (name_index_alist[i]);
           name_index_alist[i] = NULL;
