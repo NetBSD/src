@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.38 2003/10/30 02:07:38 simonb Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.39 2004/06/25 02:52:46 petrov Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.38 2003/10/30 02:07:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.39 2004/06/25 02:52:46 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1584,6 +1584,7 @@ coda_symlink(v)
     struct proc *p = cnp->cn_proc;
 /* locals */
     int error;
+    u_long saved_cn_flags;
     /* 
      * XXX I'm assuming the following things about coda_symlink's
      * arguments: 
@@ -1629,26 +1630,28 @@ coda_symlink(v)
     /* Invalidate the parent's attr cache, the modification time has changed */
     tdcp->c_flags &= ~C_VATTR;
 
-    if (!error)
-    {
-	struct nameidata nd;
-	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_SYSSPACE, nm, p);
-	nd.ni_cnd.cn_cred = cred;
-	nd.ni_loopcnt = 0;
-	nd.ni_startdir = tdvp;
-	nd.ni_cnd.cn_pnbuf = (char *)nm;
-	nd.ni_cnd.cn_nameptr = nd.ni_cnd.cn_pnbuf;
-	nd.ni_pathlen = len;
-	vput(tdvp);
-	error = lookup(&nd);
-	*ap->a_vpp = nd.ni_vp;
-    }
-
-    /* 
-     * Free the name buffer 
-     */
-    if ((cnp->cn_flags & SAVESTART) == 0) {
-	PNBUF_PUT(cnp->cn_pnbuf);
+    if (!error) {
+	/*
+	 * VOP_SYMLINK is not defined to pay attention to cnp->cn_flags;
+	 * these are defined only for VOP_LOOKUP.   We desire to reuse
+	 * cnp for a VOP_LOOKUP operation, and must be sure to not pass
+	 * stray flags passed to us.  Such stray flags can occur because
+	 * sys_symlink makes a namei call and then reuses the
+	 * componentname structure.
+	 */
+	/*
+	 * XXX Arguably we should create our own componentname structure
+	 * and not reuse the one that was passed in.
+	 */
+	saved_cn_flags = cnp->cn_flags;
+	cnp->cn_flags &= ~(MODMASK | OPMASK);
+	cnp->cn_flags |= LOOKUP;
+	error = VOP_LOOKUP(tdvp, ap->a_vpp, cnp);
+	cnp->cn_flags = saved_cn_flags;
+	/* Either an error occurs, or ap->a_vpp is locked. */
+    } else {
+	/* error, so unlock and deference parent */
+        vput(tdvp);
     }
 
  exit:    
