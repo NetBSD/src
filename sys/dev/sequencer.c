@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.8 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.9 1998/08/20 10:59:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1338,5 +1338,55 @@ midiseq_putc(md, data)
 	return midiseq_out(md, &c, 1, 0);
 }
 
+#include "midi.h"
+#if NMIDI == 0
+/*
+ * If someone has a sequencer, but no midi devices there will
+ * be unresolved references, so we provide little stubs.
+ */
 
-#endif
+int
+midi_unit_count()
+{
+	return (0);
+}
+
+int
+midiopen(dev, flags, ifmt, p)
+	dev_t dev;
+	int flags, ifmt;
+	struct proc *p;
+{
+	return (ENXIO);
+}
+
+struct cfdriver midi_cd;
+
+void
+midi_getinfo(dev, mi)
+	dev_t dev;
+	struct midi_info *mi;
+{
+}
+
+int
+midiclose(dev, flags, ifmt, p)
+	dev_t dev;
+	int flags, ifmt;
+	struct proc *p;
+{
+	return (ENXIO);
+}
+
+int
+midiwrite(dev, uio, ioflag)
+	dev_t dev;
+	struct uio *uio;
+	int ioflag;
+{
+	return (ENXIO);
+}
+#endif /* NMIDI == 0 */
+
+#endif /* NSEQUENCER > 0 */
+
