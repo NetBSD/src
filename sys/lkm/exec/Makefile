@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2001/10/10 12:48:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2001/10/27 12:11:17 jdolecek Exp $
 
-# XXX only linux_elf is actually tested for now; build LKMs on all platforms
-# as appropriate, but only install linux_elf on i386
+# only install actually tested LKMs
 .if make(install)
 .if ${MACHINE} == "i386"
-SUBDIR+=	linux_elf
+SUBDIR+=	freebsd_aout freebsd_elf linux_elf
 .endif
 .else # !make(install)
 
