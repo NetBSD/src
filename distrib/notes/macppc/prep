@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.31 2002/06/14 11:28:33 wiz Exp $
+.\"	$NetBSD: prep,v 1.32 2002/06/20 20:06:20 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -272,6 +272,11 @@ and
 variables to 
 .Sq ttyb
 (which is the Printer serial port) or remove the internal modem.
+.Pp
+Open Firmware seems to ignore the settings on most DB15 to VGA adapters.  
+Depending on your model, it will default to either 640 x 480 at 60 Hz or
+to the resolution previously selected in MacOS.  Make sure that your
+monitor can handle these resolutions.
 .Pp
 Now would be a good time to look at the 
 .Nx*M
@@ -948,7 +953,10 @@ Load the
 bootloader from an MS-DOS filesystem (such as a floppy or Zip disk).  It
 can then load a
 .Nx
-kernel from the same MS-DOS filesystem or elsewhere.
+kernel from the same MS-DOS filesystem or elsewhere.  This has only been 
+thoroughly tested on floppy disks, but may work on FDISK-formatted hard drives.
+This does not work for MS-DOS partitions on a hard drive with an Apple 
+Partition Map.
 .Pp
 .
 .It
