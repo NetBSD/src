@@ -1,7 +1,0 @@
-#	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/11/91
-#	$Id: Makefile.hp300,v 1.2 1993/08/01 05:42:24 mycroft Exp $
-
-CONFIGSRCS=	hp300bsd-dep.c m68k-pinsn.c
-
-param.h:
-	ln -s $(.CURDIR)/config/m-hp300bsd.h param.h
