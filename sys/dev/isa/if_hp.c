@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.28 1999/02/28 17:09:26 explorer Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.29 1999/03/25 23:21:38 thorpej Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -111,9 +111,6 @@ struct isa_driver hpdriver =
 };
 
 struct mbuf *hpget();
-
-#define ETHER_MIN_LEN 64
-#define ETHER_MAX_LEN 1536
 
 /*
  * Ethernet software status per interface.
