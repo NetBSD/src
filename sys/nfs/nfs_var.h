@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.7 1997/06/24 23:39:34 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.8 1997/07/14 20:46:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -231,7 +231,9 @@ int nfsm_disct __P((struct mbuf **, caddr_t *, int, int, caddr_t *));
 int nfs_adv __P((struct mbuf **, caddr_t *, int, int));
 int nfsm_strtmbuf __P((struct mbuf **, char **, const char *, long));
 void nfs_init __P((void));
-int nfs_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
+int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
+			   struct vattr *));
+int nfs_loadattrcache __P((struct vnode **, struct nfs_fattr *,
 			   struct vattr *));
 int nfs_getattrcache __P((struct vnode *, struct vattr *));
 int nfs_namei __P((struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
