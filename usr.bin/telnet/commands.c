@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.19 1998/03/05 08:10:06 thorpej Exp $	*/
+/*	$NetBSD: commands.c,v 1.20 1998/03/30 02:30:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.19 1998/03/05 08:10:06 thorpej Exp $");
+__RCSID("$NetBSD: commands.c,v 1.20 1998/03/30 02:30:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ static int margc;
 static char *margv[20];
 
 static void makeargv P((void));
-static special P((char *));
+static int special P((char *));
 static char *control P((cc_t));
 static int sendcmd P((int, char **));
 static int send_esc P((char *));
@@ -147,10 +147,10 @@ static int modecmd P((int, char *[]));
 static int display P((int, char *[]));
 static int setescape P((int, char *[]));
 static int togcrmod P((int, char *[]));
-static bye P((int, char *[]));
+static int bye P((int, char *[]));
 static void slc_help P((int));
 static struct slclist *getslc P((char *));
-static slccmd P((int, char *[]));
+static int slccmd P((int, char *[]));
 static struct env_lst *env_help P((unsigned char *, unsigned char *));
 static struct envlist *getenvcmd P((char *));
 #ifdef AUTHENTICATION
@@ -159,11 +159,11 @@ static int auth_help P((void));
 #if	defined(unix) && defined(TN3270)
 static void filestuff P((int));
 #endif
-static status P((int, char *[]));
+static int status P((int, char *[]));
 typedef int (*intrtn_t) P((int, char **));
 static int call P((intrtn_t, ...));
 static Command *getcmd P((char *));
-static help P((int, char *[]));
+static int help P((int, char *[]));
 
     static void
 makeargv()
