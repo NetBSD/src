@@ -1,4 +1,4 @@
-/*	$NetBSD: LintAlphaGen.c,v 1.1 1996/12/22 11:44:55 cgd Exp $	*/
+/*	$NetBSD: LintAlphaGen.c,v 1.2 1997/07/13 18:35:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,6 +32,7 @@
  */
 
 #include <sys/types.h>
+#include <stdlib.h>
 
 /*
  * gen
