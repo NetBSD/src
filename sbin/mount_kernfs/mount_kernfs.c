@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.9 1997/09/15 04:47:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
@@ -37,17 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $";
+__RCSID("$NetBSD: mount_kernfs.c,v 1.9 1997/09/15 04:47:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 int
@@ -77,7 +78,7 @@ main(argc, argv)
 	int ch, mntflags;
 
 	mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != EOF)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
@@ -93,7 +94,7 @@ main(argc, argv)
 		usage();
 
 	if (mount(MOUNT_KERNFS, argv[1], mntflags, NULL))
-		err(1, NULL);
+		err(1, "%s", "");
 	exit(0);
 }
 
