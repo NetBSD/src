@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/07 12:43:44 cdi Exp $
+#	$NetBSD: Makefile,v 1.6 2004/01/27 21:03:18 cdi Exp $
 
 NOMAN= # defined
 
@@ -35,8 +35,12 @@ CLEANFILES+=	machine cobalt mips
 
 realall: machine-links ${PROG}
 
-# PRIMARY_LOAD_ADDRESS?=	0x80600000
-LOAD_ADDRESS?=0x81000000
+# Load @15Mb boundary as most (all?) of the Cobalt boxes
+# had been shipped with at least 16Mb.
+#
+# XXX The proper fix is to load at the kernel base address
+# and to relocate itself at the end of available memory.
+LOAD_ADDRESS?=0x80F00000
 
 COMPORT?=0x0
 COMBASE?=0xbc800000
