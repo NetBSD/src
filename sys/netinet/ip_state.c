@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.14 1998/05/29 20:28:17 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.15 1998/07/12 15:24:00 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24.2.14 1998/05/24 03:53:04 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24.2.18 1998/06/12 16:31:29 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL) && !defined(__KERNEL__)
@@ -84,7 +84,8 @@ ipstate_t *ips_table[IPSTATE_SIZE];
 int	ips_num = 0;
 ips_stat_t ips_stats;
 #if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
-extern	kmutex_t	ipf_state;
+extern	krwlock_t	ipf_state;
+extern	kmutex_t	ipf_rw;
 #endif
 
 static int fr_matchsrcdst __P((ipstate_t *, struct in_addr, struct in_addr,
@@ -129,7 +130,7 @@ int which;
 	int delete, removed = 0;
 
 	SPL_NET(s);
-	MUTEX_ENTER(&ipf_state);
+	WRITE_ENTER(&ipf_state);
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		for (isp = &ips_table[i]; (is = *isp); ) {
 			delete = 0;
@@ -164,7 +165,7 @@ int which;
 			} else
 				isp = &is->is_next;
 		}
-	MUTEX_EXIT(&ipf_state);
+	RWLOCK_EXIT(&ipf_state);
 	SPL_X(s);
 	return removed;
 }
@@ -256,7 +257,7 @@ u_int pass;
 		default :
 			return -1;
 		}
-		ips_stats.iss_icmp++;
+		ATOMIC_INC(ips_stats.iss_icmp);
 		is->is_age = fr_icmptimeout;
 		break;
 	    }
@@ -274,7 +275,6 @@ u_int pass;
 		is->is_ack = ntohl(tcp->th_ack);
 		is->is_swin = ntohs(tcp->th_win);
 		is->is_dwin = is->is_swin;	/* start them the same */
-		ips_stats.iss_tcp++;
 		/*
 		 * If we're creating state for a starting connection, start the
 		 * timer on it as we'll never see an error if it fails to
@@ -282,8 +282,11 @@ u_int pass;
 		 */
 		if ((tcp->th_flags & (TH_SYN|TH_ACK)) == TH_SYN)
 			is->is_ack = 0;	/* Trumpet WinSock 'ism */
+		MUTEX_ENTER(&ipf_rw);
+		ips_stats.iss_tcp++;
 		fr_tcp_age(&is->is_age, is->is_state, ip, fin,
 			   tcp->th_sport == is->is_sport);
+		MUTEX_EXIT(&ipf_rw);
 		break;
 	    }
 	case IPPROTO_UDP :
@@ -292,7 +295,7 @@ u_int pass;
 
 		hv += (is->is_dport = tcp->th_dport);
 		hv += (is->is_sport = tcp->th_sport);
-		ips_stats.iss_udp++;
+		ATOMIC_INC(ips_stats.iss_udp);
 		is->is_age = fr_udptimeout;
 		break;
 	    }
@@ -302,27 +305,30 @@ u_int pass;
 
 	KMALLOC(is, ipstate_t *, sizeof(*is));
 	if (is == NULL) {
-		ips_stats.iss_nomem++;
+		ATOMIC_INC(ips_stats.iss_nomem);
 		return -1;
 	}
 	bcopy((char *)&ips, (char *)is, sizeof(*is));
 	hv %= IPSTATE_SIZE;
-	MUTEX_ENTER(&ipf_state);
+	WRITE_ENTER(&ipf_state);
 
 	is->is_pass = pass;
 	is->is_pkts = 1;
 	is->is_bytes = ip->ip_len;
 	/*
-	 * Copy these from the rule itself.
+	 * We want to check everything that is a property of this packet,
+	 * but we don't (automatically) care about it's fragment status as
+	 * this may change.
 	 */
-	is->is_opt = fin->fin_fr->fr_ip.fi_optmsk;
-	is->is_optmsk = fin->fin_fr->fr_mip.fi_optmsk;
-	is->is_sec = fin->fin_fr->fr_ip.fi_secmsk;
-	is->is_secmsk = fin->fin_fr->fr_mip.fi_secmsk;
-	is->is_auth = fin->fin_fr->fr_ip.fi_auth;
-	is->is_authmsk = fin->fin_fr->fr_mip.fi_auth;
-	is->is_flags = fin->fin_fr->fr_ip.fi_fl;
-	is->is_flags |= fin->fin_fr->fr_mip.fi_fl << 4;
+	is->is_opt = fin->fin_fi.fi_optmsk;
+	is->is_optmsk = 0xffffffff;
+	is->is_sec = fin->fin_fi.fi_secmsk;
+	is->is_secmsk = 0xffff;
+	is->is_auth = fin->fin_fi.fi_auth;
+	is->is_authmsk = 0xffff;
+	is->is_flags = fin->fin_fi.fi_fl;
+	is->is_flags |= FI_OPTIONS|FI_TCPUDP|FI_SHORT;
+	is->is_flags |= fin->fin_fi.fi_fl << 4;
 	/*
 	 * add into table.
 	 */
@@ -337,11 +343,11 @@ u_int pass;
 	}
 	if (pass & FR_LOGFIRST)
 		is->is_pass &= ~(FR_LOGFIRST|FR_LOG);
-	ips_num++;
+	ATOMIC_INC(ips_num);
 #ifdef	IPFILTER_LOG
 	ipstate_log(is, ISL_NEW);
 #endif
-	MUTEX_EXIT(&ipf_state);
+	RWLOCK_EXIT(&ipf_state);
 	if (fin->fin_fi.fi_fl & FI_FRAG)
 		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
 	return 0;
@@ -423,13 +429,15 @@ tcphdr_t *tcp;
 			is->is_ack = seq;
 			is->is_dwin = ntohs(tcp->th_win);
 		}
-		ips_stats.iss_hits++;
+		ATOMIC_INC(ips_stats.iss_hits);
 		is->is_pkts++;
 		is->is_bytes += ip->ip_len;
 		/*
 		 * Nearing end of connection, start timeout.
 		 */
+		MUTEX_ENTER(&ipf_rw);
 		fr_tcp_age(&is->is_age, is->is_state, ip, fin, source);
+		MUTEX_EXIT(&ipf_rw);
 		return 1;
 	}
 	return 0;
@@ -496,8 +504,8 @@ u_short sp, dp;
 		if (((fin->fin_fi.fi_optmsk & is->is_optmsk) != is->is_opt) ||
 		    ((fin->fin_fi.fi_secmsk & is->is_secmsk) != is->is_sec) ||
 		    ((fin->fin_fi.fi_auth & is->is_authmsk) != is->is_auth) ||
-		    ((fin->fin_fi.fi_fl & (is->is_flags >> 4)) !=
-		     (is->is_flags & 0xf)))
+		    ((fin->fin_fi.fi_fl & (is->is_flags & 0xf)) !=
+		     (is->is_flags >> 4)))
 			ret = 0;
 	}
 	return ret;
@@ -537,7 +545,7 @@ fr_info_t *fin;
 		hv += ic->icmp_id;
 		hv += ic->icmp_seq;
 		hv %= IPSTATE_SIZE;
-		MUTEX_ENTER(&ipf_state);
+		READ_ENTER(&ipf_state);
 		for (isp = &ips_table[hv]; (is = *isp); isp = &is->is_next)
 			if ((is->is_p == pr) &&
 			    (ic->icmp_id == is->is_icmp.ics_id) &&
@@ -545,15 +553,20 @@ fr_info_t *fin;
 			    fr_matchsrcdst(is, src, dst, fin, NULL, 0, 0)) {
 				if (is->is_icmp.ics_type != ic->icmp_type)
 					continue;
+				pass = is->is_pass;
+				RWLOCK_EXIT(&ipf_state);
+				if (fin->fin_fi.fi_fl & FI_FRAG)
+					ipfr_newfrag(ip, fin,
+						   pass ^ FR_KEEPSTATE);
+				WRITE_ENTER(&ipf_state);
 				is->is_age = fr_icmptimeout;
-				is->is_pkts++;
 				is->is_bytes += ip->ip_len;
 				ips_stats.iss_hits++;
-				pass = is->is_pass;
-				MUTEX_EXIT(&ipf_state);
+				is->is_pkts++;
+				RWLOCK_EXIT(&ipf_state);
 				return pass;
 			}
-		MUTEX_EXIT(&ipf_state);
+		RWLOCK_EXIT(&ipf_state);
 		break;
 	case IPPROTO_TCP :
 	    {
@@ -562,7 +575,7 @@ fr_info_t *fin;
 		hv += dport;
 		hv += sport;
 		hv %= IPSTATE_SIZE;
-		MUTEX_ENTER(&ipf_state);
+		WRITE_ENTER(&ipf_state);
 		for (isp = &ips_table[hv]; (is = *isp); isp = &is->is_next)
 			if ((is->is_p == pr) &&
 			    fr_matchsrcdst(is, src, dst, fin, tcp,
@@ -570,7 +583,7 @@ fr_info_t *fin;
 				if (fr_tcpstate(is, fin, ip, tcp)) {
 					pass = is->is_pass;
 #ifdef	_KERNEL
-					MUTEX_EXIT(&ipf_state);
+					RWLOCK_EXIT(&ipf_state);
 #else
 
 					if (tcp->th_flags & TCP_CLOSE) {
@@ -579,10 +592,13 @@ fr_info_t *fin;
 						KFREE(is);
 					}
 #endif
+					if (fin->fin_fi.fi_fl & FI_FRAG)
+						ipfr_newfrag(ip, fin,
+							   pass ^ FR_KEEPSTATE);
 					return pass;
 				}
 			}
-		MUTEX_EXIT(&ipf_state);
+		RWLOCK_EXIT(&ipf_state);
 		break;
 	    }
 	case IPPROTO_UDP :
@@ -595,26 +611,31 @@ fr_info_t *fin;
 		/*
 		 * Nothing else to match on but ports. and IP#'s
 		 */
-		MUTEX_ENTER(&ipf_state);
+		READ_ENTER(&ipf_state);
 		for (is = ips_table[hv]; is; is = is->is_next)
 			if ((is->is_p == pr) &&
 			    fr_matchsrcdst(is, src, dst, fin,
 					   tcp, sport, dport)) {
-				ips_stats.iss_hits++;
-				is->is_pkts++;
+				pass = is->is_pass;
+				MUTEX_ENTER(&ipf_rw);
 				is->is_bytes += ip->ip_len;
 				is->is_age = fr_udptimeout;
-				pass = is->is_pass;
-				MUTEX_EXIT(&ipf_state);
+				ips_stats.iss_hits++;
+				is->is_pkts++;
+				MUTEX_EXIT(&ipf_rw);
+				RWLOCK_EXIT(&ipf_state);
+				if (fin->fin_fi.fi_fl & FI_FRAG)
+					ipfr_newfrag(ip, fin,
+						     pass ^ FR_KEEPSTATE);
 				return pass;
 			}
-		MUTEX_EXIT(&ipf_state);
+		RWLOCK_EXIT(&ipf_state);
 		break;
 	    }
 	default :
 		break;
 	}
-	ips_stats.iss_miss++;
+	ATOMIC_INC(ips_stats.iss_miss);
 	return 0;
 }
 
@@ -627,13 +648,13 @@ void fr_stateunload()
 	register int i;
 	register ipstate_t *is, **isp;
 
-	MUTEX_ENTER(&ipf_state);
+	WRITE_ENTER(&ipf_state);
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		for (isp = &ips_table[i]; (is = *isp); ) {
 			*isp = is->is_next;
 			KFREE(is);
 		}
-	MUTEX_EXIT(&ipf_state);
+	RWLOCK_EXIT(&ipf_state);
 }
 
 
@@ -650,7 +671,7 @@ void fr_timeoutstate()
 #endif
 
 	SPL_NET(s);
-	MUTEX_ENTER(&ipf_state);
+	WRITE_ENTER(&ipf_state);
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		for (isp = &ips_table[i]; (is = *isp); )
 			if (is->is_age && !--is->is_age) {
@@ -666,7 +687,7 @@ void fr_timeoutstate()
 				ips_num--;
 			} else
 				isp = &is->is_next;
-	MUTEX_EXIT(&ipf_state);
+	RWLOCK_EXIT(&ipf_state);
 	SPL_X(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.13 1998/05/29 20:27:18 veego Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.14 1998/07/12 15:24:00 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.7 1998/05/18 11:15:22 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.9 1998/06/06 14:38:15 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -81,7 +81,8 @@ static ap_session_t *ap_find __P((ip_t *, tcphdr_t *));
 static ap_session_t *ap_new_session __P((aproxy_t *, ip_t *, tcphdr_t *,
 					 fr_info_t *, nat_t *));
 static int ap_matchsrcdst __P((ap_session_t *, struct in_addr,
-				struct in_addr, void *, u_short, u_short));
+			       struct in_addr, void *, u_short, u_short));
+
 
 #define	AP_SESS_SIZE	53
 
@@ -233,6 +234,7 @@ nat_t *nat;
 {
 	ap_session_t *aps;
 	aproxy_t *apr;
+	u_32_t sum;
 	int err;
 
 	if (!(fin->fin_fi.fi_fl & FI_TCPUDP))
@@ -245,8 +247,13 @@ nat_t *nat;
 			 * verify that the checksum is correct.  If not, then
 			 * don't do anything with this packet.
 			 */
-			if (tcp->th_sum != fr_tcpsum(*(mb_t **)fin->fin_mp,
-						     ip, tcp, ip->ip_len)) {
+#if SOLARIS && defined(_KERNEL)
+			sum = fr_tcpsum(fin->fin_qfm, ip, tcp, ip->ip_len);
+#else
+			sum = fr_tcpsum(*(mb_t **)fin->fin_mp,
+					ip, tcp, ip->ip_len);
+#endif
+			if (tcp->th_sum != sum) {
 				frstats[fin->fin_out].fr_tcpbad++;
 				return -1;
 			}
@@ -266,8 +273,13 @@ nat_t *nat;
 							aps, nat);
 		}
 		if (err == 2) {
+#if SOLARIS && defined(_KERNEL)
+			tcp->th_sum = fr_tcpsum(fin->fin_qfm, ip,
+						tcp, ip->ip_len);
+#else
 			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip,
 						tcp, ip->ip_len);
+#endif
 			err = 0;
 		}
 		return err;
