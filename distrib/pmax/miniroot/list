@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 1998/11/18 11:01:01 simonb Exp $
+#	$NetBSD: list,v 1.5 1998/11/18 11:22:35 simonb Exp $
 
 # pmax extra's: mountpoint for kernfs
 SPECIAL mkdir			kern
@@ -47,6 +47,11 @@ SPECIAL	ln -s ../../instbin	usr.install/sbin/chroot
 SPECIAL	ln -s ../../instbin	usr.install/sbin/chown
 SPECIAL	ln -s ../../instbin	usr.install/sbin/update
 
+# XXX temporary extra (for 1.3.X).  We need "tar" in the path but not
+# under /usr until we copy the contents of /usr.install into /usr.
+# Maybe a better idea is to use pax, which lives in /bin anyway...
+# Should go away soon in whatever will become 1.4.
+SPECIAL	ln -s ../instbin	bin/tar
 
 # crunchgen source directory specials: progs built in nonstandard places
 CRUNCHSPECIAL	vi	srcdir usr.bin/vi/build
