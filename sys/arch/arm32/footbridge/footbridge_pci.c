@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.6 2001/02/08 13:59:38 tsutsui Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.7 2001/04/20 16:52:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,6 +35,7 @@
  */
 
 #include "opt_ebsa285.h"
+#include "opt_netwinder.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +58,10 @@
 #include <dev/isa/isavar.h>
 #endif
 
+#ifdef NETWINDER
+void		netwinder_pci_attach_hook __P((struct device *,
+		    struct device *, struct pcibus_attach_args *));
+#endif
 void		footbridge_pci_attach_hook __P((struct device *,
 		    struct device *, struct pcibus_attach_args *));
 int		footbridge_pci_bus_maxdevs __P((void *, int));
@@ -77,7 +82,11 @@ void		footbridge_pci_intr_disestablish __P((void *, void *));
 
 struct arm32_pci_chipset footbridge_pci_chipset = {
 	NULL,	/* conf_v */
+#ifdef NETWINDER
+	netwinder_pci_attach_hook,
+#else
 	footbridge_pci_attach_hook,
+#endif
 	footbridge_pci_bus_maxdevs,
 	footbridge_pci_make_tag,
 	footbridge_pci_decompose_tag,
@@ -310,7 +319,8 @@ footbridge_pci_intr_map(pa, ihp)
 		else if (line >= 0x80 && line <= 0x8f)
 			intr = line;
 		else {
-	                printf("footbridge_pci_intr_map: out of range interrupt pin %d\n", pin);
+	                printf("footbridge_pci_intr_map: out of range interrupt"
+			       "pin %d line %d (%#x)\n", pin, line, line);
 			*ihp = -1;
 			return(1);
 		}
