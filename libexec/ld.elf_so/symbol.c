@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.34 2003/10/21 01:19:10 fvdl Exp $	 */
+/*	$NetBSD: symbol.c,v 1.35 2003/12/07 09:36:06 mrauch Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -224,12 +224,10 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 		}
 	}
 	
-	/* Search all dlopened DAGs containing the referencing object. */
-	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
-		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
-			break;
-		rdbg(("search DAG with root %p (%s)", elm->obj, elm->obj->path));
-		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj, in_plt);
+	/* Search all RTLD_GLOBAL objects. */
+	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		rdbg(("search _rtld_list_global"));
+		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -237,10 +235,12 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 		}
 	}
 	
-	/* Search all RTLD_GLOBAL objects. */
-	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		rdbg(("search _rtld_list_global"));
-		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj, in_plt);
+	/* Search all dlopened DAGs containing the referencing object. */
+	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
+		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
+			break;
+		rdbg(("search DAG with root %p (%s)", elm->obj, elm->obj->path));
+		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
