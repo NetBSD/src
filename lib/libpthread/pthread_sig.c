@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.32 2003/12/31 16:45:48 cl Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.33 2004/01/02 19:24:44 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.32 2003/12/31 16:45:48 cl Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.33 2004/01/02 19:24:44 cl Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -109,15 +109,17 @@ pthread__signal_tramp(void (*)(int, siginfo_t *, void *),
 static int firstsig(const sigset_t *);
 
 int _sys_execve(const char *, char *const [], char *const []);
+int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
 __strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
+__strong_alias(__sigprocmask14,pthread_sigmask)
 __strong_alias(__exeve,execve)
 
 void
 pthread__signal_init(void)
 {
 	SDPRINTF(("(signal_init) setting process sigmask\n"));
-	__sigprocmask14(0, NULL, &pt_process_sigmask);
+	_sys___sigprocmask14(0, NULL, &pt_process_sigmask);
 
 	PTQ_INIT(&pt_sigsuspended);
 	PTQ_INIT(&pt_sigwaiting);
@@ -573,8 +575,10 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 		 * blocked by all threads will be done
 		 * lazily, at signal delivery time.
 		 */
-		pthread_spinunlock(self, &self->pt_siglock);
-		return 0;
+		if (__predict_true(pthread__started)) {
+			pthread_spinunlock(self, &self->pt_siglock);
+			return 0;
+		}
 	} else if (how == SIG_UNBLOCK)
 		__sigminusset(set, &self->pt_sigmask);
 	else if (how == SIG_SETMASK)
@@ -582,6 +586,13 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 	else {
 		pthread_spinunlock(self, &self->pt_siglock);
 		return EINVAL;
+	}
+
+	if (__predict_false(pthread__started == 0)) {
+		pt_process_sigmask = self->pt_sigmask;
+		_sys___sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+		pthread_spinunlock(self, &self->pt_siglock);
+		return 0;
 	}
 
 	/* See if there are any signals to take */
@@ -604,7 +615,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 	__sigandset(&self->pt_sigmask, &tmp);
 	if (!__sigsetequal(&tmp, &pt_process_sigmask)) {
 		pt_process_sigmask = tmp;
-		__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+		_sys___sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 	}
 	pthread_spinunlock(self, &pt_process_siglock);
 
@@ -689,7 +700,7 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 			__sigaddset14(&pt_process_sigmask, si->si_signo);
 			SDPRINTF(("(pt_signal %p) lazily setting proc sigmask to "
 			    "%08x\n", self, pt_process_sigmask.__bits[0]));
-			__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+			_sys___sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 			__sigaddset14(&pt_process_siglist, si->si_signo);
 			pthread_spinunlock(self, &pt_process_siglock);
 			return;
@@ -711,7 +722,7 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 	pthread_spinlock(self, &pt_process_siglock);
 	SDPRINTF(("(pt_signal %p) setting proc sigmask to "
 	    "%08x\n", self, pt_process_sigmask.__bits[0]));
-	__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+	_sys___sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 	pthread_spinunlock(self, &pt_process_siglock);
 
 	pthread__kill(self, target, si);
@@ -964,11 +975,11 @@ execve(const char *path, char *const argv[], char *const envp[])
 	 * routine between the sigprocmask and the _sys_execve()
 	 * call. I don't have much sympathy for such a program.
 	 */
-	__sigprocmask14(SIG_SETMASK, &self->pt_sigmask, NULL);
+	_sys___sigprocmask14(SIG_SETMASK, &self->pt_sigmask, NULL);
 	ret = _sys_execve(path, argv, envp);
 
 	/* Normally, we shouldn't get here; this is an error condition. */
-	__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+	_sys___sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 
 	return ret;
 }
