@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.104 2003/02/25 20:35:33 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.105 2003/02/25 21:25:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2104,13 +2104,15 @@ fdformat(dev, finfo, p)
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
-	int rv = 0;
+	int rv = 0, s;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
+	s = splbio();
 	bp = (struct buf *)pool_get(&bufpool, PR_NOWAIT);
+	splx(s);
 	if (bp == NULL)
 		return (ENOBUFS);
 
@@ -2161,7 +2163,9 @@ fdformat(dev, finfo, p)
 
 	/* ...and wait for it to complete */
 	rv = biowait(bp);
+	s = splbio();
 	pool_put(&bufpool, bp);
+	splx(s);
 	return (rv);
 }
 

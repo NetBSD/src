@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.58 2003/02/25 20:35:39 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.59 2003/02/25 21:25:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -261,7 +261,11 @@ extern	struct buf *buf;	/* The buffer headers. */
 extern	char *buffers;		/* The buffer contents. */
 extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
 
-extern	struct pool bufpool;	/* I/O buf pool */
+/*
+ * Pool of I/O buffers.  Access to this pool must be protected with
+ * splbio().
+ */
+extern	struct pool bufpool;
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));

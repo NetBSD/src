@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.3 2003/02/25 20:35:35 thorpej Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.4 2003/02/25 21:25:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -293,9 +293,11 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *buf,
     size_t size, int bflags)
 {
 	struct buf *bp;
-	int error;
+	int error, s;
 
+	s = splbio();
 	bp = pool_get(&bufpool, PR_WAITOK);
+	splx(s);
 	BUF_INIT(bp);
 
 	bp->b_vp = vp;
@@ -309,6 +311,8 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *buf,
 	VOP_STRATEGY(bp);
 	error = biowait(bp);
 
+	s = splbio();
 	pool_put(&bufpool, bp);
+	splx(s);
 	return (error);
 }
