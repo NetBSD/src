@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2000/02/08 12:49:06 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2000/07/05 16:02:38 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -31,25 +31,54 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
+
 #include <machine/autoconf.h>
+#include <machine/bat.h>
+#include <machine/pcb.h>
+#include <machine/pio.h>
 
-static int cpumatch __P((struct device *, struct cfdata *, void *));
-static void cpuattach __P((struct device *, struct device *, void *));
+int cpumatch(struct device *, struct cfdata *, void *);
+void cpuattach(struct device *, struct device *, void *);
 
-static void ohare_init __P((void));
-static void display_l2cr __P((void));
+void identifycpu(char *);
+static void ohare_init(void);
+static void display_l2cr(void);
+int cpu_spinup(void);
+void cpu_hatch(void);
+
+void cpu_spinup_trampoline(void);
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
 
+int ncpus;
+
 extern struct cfdriver cpu_cd;
 extern int powersave;
+
+#define HAMMERHEAD	0xf8000000
+#define HH_ARBCONF	(HAMMERHEAD + 0x90)
+#define HH_INTR		(HAMMERHEAD + 0xc0)
+
+/* XXX for now */
+#undef cpu_number
+static inline int
+cpu_number()
+{
+	int pir;
+
+	asm ("mfspr %0,1023" : "=r"(pir));
+	return pir;
+}
 
 int
 cpumatch(parent, cf, aux)
@@ -58,11 +87,23 @@ cpumatch(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+	int *reg = ca->ca_reg;
+	int hammerhead;
 
 	if (strcmp(ca->ca_name, cpu_cd.cd_name))
 		return 0;
 
-	return 1;
+	switch (reg[0]) {
+	case 0:	/* master CPU */
+		return 1;
+	case 1:	/* secondary CPU */
+		hammerhead = OF_finddevice("/hammerhead");
+		if (hammerhead == -1)
+			return 0;
+		if (in32rb(HH_ARBCONF) & 0x02)
+			return 1;
+	}
+	return 0;
 }
 
 #define MPC601		1
@@ -83,7 +124,29 @@ cpuattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct confargs *ca = aux;
+	int *reg = ca->ca_reg;
 	int hid0, pvr;
+	char model[80];
+
+	ncpus++;
+
+	switch (reg[0]) {
+	case 0:
+		asm volatile ("mtspr 1023,%0" :: "r"(0));	/* PIR */
+		identifycpu(model);
+		printf(": %s, ID %d (primary)", model, cpu_number());
+		break;
+/* #ifdef MULTIPROCESSOR */
+	case 1:
+		cpu_spinup();
+		printf("\n");
+		return;
+/* #endif */
+	default:
+		printf(": more than 2 cpus?\n");
+		panic("cpuattach");
+	}
 
 	__asm __volatile ("mfpvr %0" : "=r"(pvr));
 	switch (pvr >> 16) {
@@ -114,6 +177,47 @@ cpuattach(parent, self, aux)
 		ohare_init();
 	else
 		printf("\n");
+}
+
+struct cputab {
+	int version;
+	char *name;
+};
+static struct cputab models[] = {
+	{  1, "601" },
+	{  3, "603" },
+	{  4, "604" },
+	{  5, "602" },
+	{  6, "603e" },
+	{  7, "603ev" },
+	{  8, "750" },
+	{  9, "604ev" },
+	{ 12, "7400" },
+	{ 20, "620" },
+	{  0, NULL }
+};
+
+void
+identifycpu(cpu_model)
+	char *cpu_model;
+{
+	int pvr, vers, rev;
+	struct cputab *cp = models;
+
+	asm ("mfpvr %0" : "=r"(pvr));
+	vers = pvr >> 16;
+	rev = pvr & 0xffff;
+
+	while (cp->name) {
+		if (cp->version == vers)
+			break;
+		cp++;
+	}
+	if (cp->name)
+		strcpy(cpu_model, cp->name);
+	else
+		sprintf(cpu_model, "Version %x", vers);
+	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", rev);
 }
 
 #define CACHE_REG 0xf8000000
@@ -210,3 +314,162 @@ display_l2cr()
 	}
 	printf("\n");
 }
+
+/* #ifdef MULTIPROCESSOR */
+struct cpu_hatch_data {
+	int running;
+	int pir;
+	int hid0;
+	int sdr1;
+	int sr[16];
+	int tbu, tbl;
+};
+
+volatile struct cpu_hatch_data *cpu_hatch_data;
+volatile int cpu_hatchstack;
+
+int
+cpu_spinup()
+{
+	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
+	int i;
+	struct pcb *pcb;
+	struct pglist mlist;
+	int error;
+
+	/*
+	 * Allocate UPAGES contiguous pages for the idle PCB and stack
+	 * from the lowest 256MB (because bat0 always maps it va == pa).
+	 */
+	TAILQ_INIT(&mlist);
+	error = uvm_pglistalloc(USPACE, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
+	if (error) {
+		printf(": unable to allocate idle stack");
+		return -1;
+	}
+
+	pcb = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
+	bzero(pcb, USPACE);
+
+	/*
+	 * Initialize the idle stack pointer, reserving space for an
+	 * (empty) trapframe (XXX is the trapframe really necessary?)
+	 */
+	pcb->pcb_sp = (paddr_t)pcb + USPACE - sizeof(struct trapframe);
+
+	cpu_hatch_data = h;
+	h->running = 0;
+	h->pir = 1;
+	cpu_hatchstack = pcb->pcb_sp;
+
+	/* copy special registers */
+	asm volatile ("mfspr %0,1008" : "=r"(h->hid0));
+	asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
+	for (i = 0; i < 16; i++)
+		asm ("mfsrin %0,%1" : "=r"(h->sr[i]) : "r"(i << ADDR_SR_SHFT));
+
+	asm volatile ("sync; isync");
+
+	/* Start secondary cpu and stop timebase. */
+	out32(0xf2800000, (int)cpu_spinup_trampoline);
+	out32(HH_INTR, ~0);
+	out32(HH_INTR, 0);
+
+	/* sync timebase (XXX shouldn't be zero'ed) */
+	asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+
+	/*
+	 * wait for secondary spin up (1.5ms @ 604/200MHz)
+	 * XXX we cannot use delay() here because timebase is not running.
+	 */
+	for (i = 0; i < 100000; i++)
+		if (h->running)
+			break;
+
+	/* Start timebase. */
+	out32(0xf2800000, 0x100);
+	out32(HH_INTR, ~0);
+	out32(HH_INTR, 0);
+
+	delay(100000);		/* wait for secondary printf */
+
+	if (h->running == 0) {
+		printf(": secondary cpu didn't start");
+		return -1;
+	}
+
+	return 0;
+}
+
+void
+cpu_hatch()
+{
+	volatile struct cpu_hatch_data *h = cpu_hatch_data;
+	u_int msr;
+	int i;
+	char model[80];
+
+	/* Initialize timebase. */
+	asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+
+	/* Set PIR (Processor Identification Register).  i.e. whoami */
+	asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
+
+	/* Initialize MMU. */
+	asm ("mtibatu 0,%0" :: "r"(0));
+	asm ("mtibatu 1,%0" :: "r"(0));
+	asm ("mtibatu 2,%0" :: "r"(0));
+	asm ("mtibatu 3,%0" :: "r"(0));
+	asm ("mtdbatu 0,%0" :: "r"(0));
+	asm ("mtdbatu 1,%0" :: "r"(0));
+	asm ("mtdbatu 2,%0" :: "r"(0));
+	asm ("mtdbatu 3,%0" :: "r"(0));
+
+	asm ("mtspr 1008,%0" :: "r"(h->hid0));
+
+	asm ("mtibatl 0,%0; mtibatu 0,%1;"
+	     "mtdbatl 0,%0; mtdbatu 0,%1;"
+		:: "r"(battable[0].batl), "r"(battable[0].batu));
+
+	/* XXX obio (for now) */
+	asm ("mtibatl 1,%0; mtibatu 1,%1;"
+	     "mtdbatl 1,%0; mtdbatu 1,%1;"
+		:: "r"(battable[0xf].batl), "r"(battable[0xf].batu));
+
+	for (i = 0; i < 16; i++)
+		asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
+	asm ("mtsdr1 %0" :: "r"(h->sdr1));
+
+	asm volatile ("isync");
+
+	/* Enable I/D address translations. */
+	asm volatile ("mfmsr %0" : "=r"(msr));
+	msr |= PSL_IR|PSL_DR|PSL_ME|PSL_RI;
+	asm volatile ("mtmsr %0" :: "r"(msr));
+
+	asm volatile ("sync; isync");
+	h->running = 1;
+
+	identifycpu(model);
+	printf(": %s, ID %d", model, cpu_number());
+
+	/* XXX Enter power-saving mode and never return. */
+	asm volatile ("
+	    1:
+		sync
+		mtmsr %0
+		isync
+		b 1b
+	" :: "r"(PSL_POW));
+
+	for (;;);
+}
+/* #endif MULTIPROCESSOR */
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors()
+{
+	/* currently noop */
+}
+#endif /* MULTIPROCESSOR */
