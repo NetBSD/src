@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.19 1998/09/29 10:24:58 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.20 1998/10/23 00:33:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -389,6 +389,7 @@ ext2fs_reload(mountp, cred, p)
 	struct ext2fs *newfs;
 	struct partinfo dpart;
 	int i, size, error;
+	caddr_t cp;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -446,7 +447,7 @@ ext2fs_reload(mountp, cred, p)
 	fs->e2fs_bmask = ~fs->e2fs_qbmask;
 	fs->e2fs_ngdb = howmany(fs->e2fs_ncg,
 			fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / sizeof(struct ext2fs_dinode);
+	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE;
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg/fs->e2fs_ipb;
 
 	/*
@@ -496,9 +497,9 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		e2fs_iload((struct ext2fs_dinode *)bp->b_data +
-			ino_to_fsbo(fs, ip->i_number),
-					&ip->i_din.e2fs_din);
+		cp = (caddr_t)bp->b_data +
+		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
+		e2fs_iload((struct ext2fs_dinode *)cp, &ip->i_din.e2fs_din);
 		brelse(bp);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -555,7 +556,7 @@ ext2fs_mountfs(devvp, mp, p)
 
 #ifdef DEBUG_EXT2
 	printf("sb size: %d ino size %d\n", sizeof(struct ext2fs),
-			sizeof(struct ext2fs_dinode));
+	    EXT2_DINODE_SIZE);
 #endif
 	error = bread(devvp, (SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
 	if (error)
@@ -610,7 +611,7 @@ ext2fs_mountfs(devvp, mp, p)
 	m_fs->e2fs_bmask = ~m_fs->e2fs_qbmask;
 	m_fs->e2fs_ngdb = howmany(m_fs->e2fs_ncg,
 		m_fs->e2fs_bsize / sizeof(struct ext2_gd));
-	m_fs->e2fs_ipb = m_fs->e2fs_bsize / sizeof(struct ext2fs_dinode);
+	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE;
 	m_fs->e2fs_itpg = m_fs->e2fs.e2fs_ipg/m_fs->e2fs_ipb;
 
 	m_fs->e2fs_gd = malloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize,
@@ -863,6 +864,7 @@ ext2fs_vget(mp, ino, vpp)
 	struct vnode *vp;
 	dev_t dev;
 	int error;
+	caddr_t cp;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -912,8 +914,9 @@ ext2fs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	e2fs_iload((struct ext2fs_dinode*)bp->b_data + ino_to_fsbo(fs, ino),
-				&ip->i_din.e2fs_din);
+	cp = (caddr_t)bp->b_data +
+	    (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE);
+	e2fs_iload((struct ext2fs_dinode *)cp, &ip->i_din.e2fs_din);
 	brelse(bp);
 
 	/* If the inode was deleted, reset all fields */

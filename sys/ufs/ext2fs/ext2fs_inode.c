@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.9 1998/09/29 10:24:58 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.10 1998/10/23 00:33:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -141,6 +141,7 @@ ext2fs_update(v)
 	struct inode *ip;
 	int error;
 	struct timespec ts;
+	caddr_t cp;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -158,8 +159,9 @@ ext2fs_update(v)
 		brelse(bp);
 		return (error);
 	}
-	e2fs_isave(&ip->i_din.e2fs_din,
-		(struct ext2fs_dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number));
+	cp = (caddr_t)bp->b_data +
+	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
+	e2fs_isave(&ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
 	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {
