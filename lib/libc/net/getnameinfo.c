@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.29 2001/10/04 23:09:04 bjh21 Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.30 2001/10/05 01:39:38 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.29 2001/10/04 23:09:04 bjh21 Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.30 2001/10/05 01:39:38 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,7 +53,9 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.29 2001/10/04 23:09:04 bjh21 Exp $");
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#if 0
 #include <net/if_ieee1394.h>
+#endif
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -449,7 +451,9 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
     char *host, size_t hostlen, char *serv, size_t servlen, int flags)
 {
 	const struct sockaddr_dl *sdl = (const struct sockaddr_dl *)sa;
+#if 0
 	struct ieee1394_hwaddr *iha;
+#endif
 	int n;
 
 	if (serv != NULL && servlen > 0)
@@ -480,12 +484,14 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 		} else
 			return 0;
 #endif
+#if 0
 	case IFT_IEEE1394:
 		if (sdl->sdl_alen < sizeof(iha->iha_uid))
 			return EAI_FAMILY;
 		iha = (struct ieee1394_hwaddr *)LLADDR(sdl);
 		return hexname(iha->iha_uid, sizeof(iha->iha_uid),
 		    host, hostlen);
+#endif
 	/*
 	 * The following have zero-length addresses.
 	 * IFT_ATM	(net/if_atmsubr.c)
@@ -524,7 +530,11 @@ hexname(cp, len, host, hostlen)
 
 	*outp = '\0';
 	for (i = 0; i < len; i++) {
-		n = snprintf(outp, hostlen, "%s%02x", i ? ":" : "", cp[i]);
+		n = snprintf(outp, space, "%s%02x", i ? ":" : "", cp[i]);
+		if (n < 0 || n >= space) {
+			*host = '\0';
+			return EAI_MEMORY;
+		}
 		outp += n;
 		space -= n;
 		if (space <= 0) {
