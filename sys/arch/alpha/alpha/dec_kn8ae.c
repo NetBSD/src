@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.31 2004/02/13 11:36:09 wiz Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.32 2004/06/28 03:53:40 mycroft Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.31 2004/02/13 11:36:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.32 2004/06/28 03:53:40 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.31 2004/02/13 11:36:09 wiz Exp $");
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/tlsb/tlsbvar.h>
 #include <alpha/tlsb/kftxxreg.h>
+#include <alpha/tlsb/kftxxvar.h>
 #define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 
@@ -119,8 +120,8 @@ dec_kn8ae_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	static int found, initted, scsiboot, netboot;
-	static struct device *pcidev, *scsidev;
+	static int found, initted, diskboot, netboot;
+	static struct device *primarydev, *pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
@@ -130,9 +131,9 @@ dec_kn8ae_device_register(dev, aux)
 		return;
 
 	if (!initted) {
-		scsiboot = (strcmp(b->protocol, "scsi") == 0);
-		netboot = (strcmp(b->protocol, "bootp") == 0) ||
-		    (strcmp(b->protocol, "mop") == 0);
+		diskboot = (strcasecmp(b->protocol, "SCSI") == 0);
+		netboot = (strcasecmp(b->protocol, "BOOTP") == 0) ||
+		    (strcasecmp(b->protocol, "MOP") == 0);
 #if	BDEBUG
 		printf("proto:%s bus:%d slot:%d chan:%d", b->protocol,
 		    b->bus, b->slot, b->channel);
@@ -143,13 +144,40 @@ dec_kn8ae_device_register(dev, aux)
 			printf(" cdt:%s\n", b->ctrl_dev_type);
 		else
 			printf("\n");
-		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+		printf("diskboot = %d, netboot = %d\n", diskboot, netboot);
 #endif
 		initted = 1;
 	}
 
+	if (primarydev == NULL) {
+		if (strcmp(name, "dwlpx"))
+			return;
+		else {
+			struct kft_dev_attach_args *ka = aux;
+
+			if (b->bus != ka->ka_hosenum)
+				return;
+			primarydev = dev;
+#ifdef BDEBUG
+			printf("\nprimarydev = %s\n", dev->dv_xname);
+#endif
+			return;
+		}
+	}
+
 	if (pcidev == NULL) {
 		if (strcmp(name, "pci"))
+			return;
+		/*
+		 * Try to find primarydev anywhere in the ancestry.  This is
+		 * necessary if the PCI bus is hidden behind a bridge.
+		 */
+		while (parent) {
+			if (parent == primarydev)
+				break;
+			parent = parent->dv_parent;
+		}
+		if (!parent)
 			return;
 		else {
 			struct pcibus_attach_args *pba = aux;
@@ -159,81 +187,63 @@ dec_kn8ae_device_register(dev, aux)
 	
 			pcidev = dev;
 #if	BDEBUG
-			printf("\npcidev = %s\n", pcidev->dv_xname);
+			printf("\npcidev = %s\n", dev->dv_xname);
 #endif
 			return;
 		}
 	}
 
-	if (scsiboot && (scsidev == NULL)) {
+	if (ctrlrdev == NULL) {
 		if (parent != pcidev)
 			return;
 		else {
 			struct pci_attach_args *pa = aux;
+			int slot;
 
-			if ((b->slot % 1000) != pa->pa_device)
+			slot = pa->pa_bus * 1000 + pa->pa_function * 100 +
+			    pa->pa_device;
+			if (b->slot != slot)
 				return;
-
-			/* XXX function? */
 	
-			scsidev = dev;
-#if	BDEBUG
-			printf("\nscsidev = %s\n", scsidev->dv_xname);
+			if (netboot) {
+				booted_device = dev;
+#ifdef BDEBUG
+				printf("\nbooted_device = %s\n", dev->dv_xname);
 #endif
-
+				found = 1;
+			} else {
+				ctrlrdev = dev;
+#if	BDEBUG
+				printf("\nctrlrdev = %s\n", dev->dv_xname);
+#endif
+			}
 			return;
 		}
 	}
 
-	if (scsiboot &&
-	    (!strcmp(name, "sd") ||
-	     !strcmp(name, "st") ||
-	     !strcmp(name, "cd"))) {
+	if (!diskboot)
+		return;
+
+	if (!strcmp(name, "sd") || !strcmp(name, "st") || !strcmp(name, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
+		struct scsipi_periph *periph = sa->sa_periph;
+		int unit;
 
-		if (parent->dv_parent != scsidev)
+		if (parent->dv_parent != ctrlrdev)
 			return;
 
-		if (b->unit / 100 != sa->sa_periph->periph_target)
+		unit = periph->periph_target * 100 + periph->periph_lun;
+		if (b->unit != unit)
 			return;
-
-		/* XXX LUN! */
-
-		/*
-		 * the value in boot_dev_type is some weird number
-		 * XXX: Only support SD booting for now.
-		 */
-		if (strcmp(name, "sd") &&
-		    strcmp(name, "cd") &&
-		    strcmp(name, "st"))
+		if (b->channel != periph->periph_channel->chan_channel)
 			return;
 
 		/* we've found it! */
 		booted_device = dev;
 #if	BDEBUG
-		printf("\nbooted_device = %s\n", booted_device->dv_xname);
+		printf("\nbooted_device = %s\n", dev->dv_xname);
 #endif
 		found = 1;
-	}
-
-	if (netboot) {
-		if (parent != pcidev)
-			return;
-		else {
-			struct pci_attach_args *pa = aux;
-
-			if ((b->slot % 1000) != pa->pa_device)
-				return;
-
-			/* XXX function? */
-	
-			booted_device = dev;
-#if	BDEBUG
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
-#endif
-			found = 1;
-			return;
-		}
 	}
 }
 
