@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.15 1997/12/01 03:40:52 lukem Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.16 1997/12/05 20:01:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.15 1997/12/01 03:40:52 lukem Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.16 1997/12/05 20:01:51 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -70,12 +70,12 @@ __RCSID("$NetBSD: ccdconfig.c,v 1.15 1997/12/01 03:40:52 lukem Exp $");
 
 extern	char *__progname;
 
-static	int lineno = 0;
-static	int verbose = 0;
+static	size_t lineno;
+static	int verbose;
 static	char *ccdconf = _PATH_CCDCONF;
 
-static	char *core = NULL;
-static	char *kernel = NULL;
+static	char *core;
+static	char *kernel;
 
 struct	flagval {
 	char	*fv_flag;
@@ -245,7 +245,8 @@ do_single(argc, argv, action)
 			noflags = 1;
 		} else {
 			if (action == CCD_CONFIGALL) {
-				warnx("%s: bad line: %d", ccdconf, lineno);
+				warnx("%s: bad line: %lu", ccdconf,
+				    (u_long)lineno);
 				return (1);
 			} else
 				usage();
@@ -332,7 +333,8 @@ do_all(action)
 {
 	FILE *f;
 	char *line, *cp, *vp, **argv;
-	int argc, rval, len;
+	int argc, rval;
+	size_t len;
 
 	rval = 0;
 
