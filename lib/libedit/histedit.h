@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.22 2003/08/07 16:44:31 agc Exp $	*/
+/*	$NetBSD: histedit.h,v 1.23 2003/09/26 17:44:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #define	_HISTEDIT_H_
 
 #define	LIBEDIT_MAJOR 2
-#define	LIBEDIT_MINOR 6
+#define	LIBEDIT_MINOR 8
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -127,6 +127,7 @@ int		 el_get(EditLine *, int, void *);
 #define	EL_RPROMPT	12	/* , el_pfunc_t);		*/
 #define	EL_GETCFN	13	/* , el_rfunc_t);		*/
 #define	EL_CLIENTDATA	14	/* , void *);			*/
+#define	EL_UNBUFFERED	15	/* , int);			*/
 
 #define EL_BUILTIN_GETCFN	(NULL)
 
