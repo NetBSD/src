@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.20 1995/06/02 13:43:30 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.21 1995/07/13 12:45:22 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -615,12 +615,15 @@ esp_scsi_cmd(xs)
  * Adjust transfer size in buffer structure
  *
  * We have no max transfer size, since the DMA driver will break it
- * down into watever is needed.
+ * down into watever is needed. However, we may end up allocating
+ * a chunk of DVMA space which is limited in size, so do the transfer
+ * in MAXPHYS chunks.
  */
 void 
 esp_minphys(bp)
 	struct buf *bp;
 {
+	bp->b_bcount = min(MAXPHYS, bp->b_bcount);
 }
 
 /*
