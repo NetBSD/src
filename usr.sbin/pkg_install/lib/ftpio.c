@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.60 2003/10/06 00:44:15 grant Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.61 2003/12/20 02:37:49 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.60 2003/10/06 00:44:15 grant Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.61 2003/12/20 02:37:49 grant Exp $");
 #endif
 
 /*-
@@ -1163,7 +1163,8 @@ unpackURL(const char *url, const char *dir)
 #if 0
 		path_create(pkg_path); /* XXX */
 #endif
-		printf("setenv PKG_PATH='%s'\n",pkg_path);
+		if (Verbose)
+			printf("setenv PKG_PATH='%s'\n", pkg_path);
 	}
 
 	if (strncmp(url, "http://", 7) == 0)
