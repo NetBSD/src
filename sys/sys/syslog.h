@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.20 1999/03/19 00:15:45 perry Exp $	*/
+/*	$NetBSD: syslog.h,v 1.21 1999/08/27 01:14:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -198,6 +198,7 @@ __END_DECLS
 void	logpri __P((int));
 void	log __P((int, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
+void	vlog __P((int, const char *, _BSD_VA_LIST_));
 void	addlog __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	logwakeup __P((void));
