@@ -514,3 +514,5 @@
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/yppoll.0
 ./usr/share/man/cat8/ypset.0
+./usr/share/man/cat8/zdump.0
+./usr/share/man/cat8/zic.0
