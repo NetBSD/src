@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.116 1998/11/19 22:25:57 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.117 1998/11/19 22:28:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -735,7 +735,7 @@ scsibusopen(dev, flag, fmt, p)
 	struct proc *p;
 {
 	struct scsibus_softc *sc;
-	int unit = minor(dev);
+	int error, unit = minor(dev);
 
 	if (unit >= scsibus_cd.cd_ndevs ||
 	    (sc = scsibus_cd.cd_devs[unit]) == NULL)
@@ -743,7 +743,10 @@ scsibusopen(dev, flag, fmt, p)
 
 	if (sc->sc_flags & SCSIBUSF_OPEN)
 		return (EBUSY);
-	
+
+	if ((error = scsipi_adapter_addref(sc->adapter_link)) != 0)
+		return (error);
+
 	sc->sc_flags |= SCSIBUSF_OPEN;
 
 	return (0);
@@ -756,6 +759,8 @@ scsibusclose(dev, flag, fmt, p)
 	struct proc *p;
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
+
+	scsipi_adapter_delref(sc->adapter_link);
 
 	sc->sc_flags &= ~SCSIBUSF_OPEN;
 
