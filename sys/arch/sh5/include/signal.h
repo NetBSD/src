@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2002/07/10 15:55:01 scw Exp $	*/
+/*	$NetBSD: signal.h,v 1.3 2002/07/11 14:16:42 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,21 +62,14 @@ typedef long	sig_atomic_t;
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
  */
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-struct sigcontext13 {
-	int	sc_onstack;		/* sigstack state to restore */
-	long	sc_mask;		/* signal mask to restore (old style) */
-	struct reg sc_regs;		/* saved register state */
-	int	sc_fpstate;
-};
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
 
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
-	long	__sc_mask13;		/* signal mask to restore (old style) */
+	int	__sc_mask13;		/* signal mask to restore (old style) */
+	int	sc_fpstate;		/* saved fp state flags */
+	int	sc_pad;
 	struct reg sc_regs;		/* saved register state */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
-	int	sc_fpstate;
 };
 
 #endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
