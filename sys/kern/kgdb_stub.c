@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.1 1997/02/12 00:51:47 gwr Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.2 1997/02/18 16:45:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -88,19 +88,6 @@ static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
 
 #define GETC()	((*kgdb_getc)(kgdb_ioarg))
 #define PUTC(c)	((*kgdb_putc)(kgdb_ioarg, c))
-#define PUTESC(c) do { \
-	if (c == FRAME_END) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_END; \
-	} else if (c == FRAME_ESCAPE) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_ESCAPE; \
-	} else if (c == FRAME_START) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_START; \
-	} \
-	PUTC(c); \
-} while (0)
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
@@ -355,9 +342,23 @@ kgdb_trap(type, regs)
 	}
 
 	/*
+	 * The first entry to this function is normally through
+	 * a breakpoint trap in kgdb_connect(), in which case we
+	 * must advance past the breakpoint because gdb will not.
+	 *
+	 * Machines vary as to where they leave the PC after a
+	 * breakpoint trap.  Those that leave the PC set to the
+	 * address of the trap instruction (i.e. pc532) will not
+	 * define FIXUP_PC_AFTER_BREAK(), and therefore will just
+	 * advance the PC.  On machines that leave the PC set to
+	 * the instruction after the trap, FIXUP_PC_AFTER_BREAK
+	 * will be defined to back-up the PC, so that after the
+	 * "first-time" part of the if statement below has run,
+	 * the PC will be the same as it was on entry.
+	 *
 	 * On the first entry here, we expect that gdb is not yet
 	 * listening to us, so just enter the interaction loop.
-	 * After the debugger is "active" (connected) it wil be
+	 * After the debugger is "active" (connected) it will be
 	 * waiting for a "signaled" message from us.
 	 */
 	if (kgdb_active == 0) {
@@ -365,6 +366,12 @@ kgdb_trap(type, regs)
 			/* No debugger active -- let trap handle this. */
 			return (0);
 		}
+		/* Make the PC point at the breakpoint... */
+#ifdef	FIXUP_PC_AFTER_BREAK
+		FIXUP_PC_AFTER_BREAK(regs);
+#endif
+		/* ... and then advance past it. */
+		PC_REGS(regs) += BKPT_SIZE;
 		kgdb_active = 1;
 	} else {
 		/* Tell remote host that an exception has occured. */
