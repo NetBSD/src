@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2003/07/10 10:34:16 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2003/07/25 08:26:21 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -53,7 +53,7 @@ CPPFLAGS+=	-DSYSINST_CDROM_DIR=\"${SYSINST_CDROM_DIR}\"
 .endif
 
 
-WARNS=		1
+WARNS=		3
 
 CLEANFILES=	menu_defs.c menu_defs.h menus.def \
 		msg_defs.c msg_defs.h msg.def msgtouch \

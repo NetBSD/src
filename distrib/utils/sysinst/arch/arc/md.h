@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2003/06/13 22:27:05 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2003/07/25 08:26:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,7 +79,7 @@
  * Default fileystem type for floppy disks.
  * On arc, that is msdos.
  */
-EXTERN	char *fdtype INIT("msdos");
+EXTERN	const char *fdtype INIT("msdos");
 
 
 /*

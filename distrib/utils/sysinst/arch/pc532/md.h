@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 2003/06/11 21:35:46 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.15 2003/07/25 08:26:31 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,4 +63,4 @@
 
 #define MD_SETS_VALID SET_SYSTEM
 
-EXTERN char *fdtype INIT("");
+EXTERN const char *fdtype INIT("");

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.106 2003/07/22 08:30:11 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.107 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -267,7 +267,7 @@ get_via_floppy(void)
 			first = 1;
 			while (!mounted || stat(full_name, &sb)) {
  				if (mounted) 
-				  run_prog(0, NULL, "/sbin/umount /mnt2");
+					run_prog(0, NULL, "/sbin/umount /mnt2");
 				if (first)
 					msg_display(MSG_fdmount, fname);
 				else
@@ -415,27 +415,19 @@ again:
 int
 get_via_localdir(void)
 {
+	msg errmsg;
 
 	/* Get device, filesystem, and filepath */
 	process_menu(MENU_localdirsource, NULL);
 
-again:
-	/* Complain if not a directory */
-	if (dir_exists_p(localfs_dir) == 0) {
-		process_menu(MENU_localdirbad, (void *)MSG_badlocalsetdir);
+	/* Complain if not a directory or distribution files absent */
+	while ((dir_exists_p(localfs_dir) == 0 && (errmsg = MSG_badlocalsetdir)) ||
+	    (distribution_sets_exist_p(localfs_dir) == 0 && (errmsg = MSG_badsetdir))) {
+		process_menu(MENU_localdirbad, &errmsg);
 		if (!yesno)
 			return (0);
-		if (!ignorerror)
-			goto again;
-	}
-	
-	/* Verify distribution files exist.  */
-	if (distribution_sets_exist_p(localfs_dir) == 0) {
-		process_menu(MENU_localdirbad, (void *)MSG_badsetdir);
-		if (!yesno)
-			return (0);
-		if (!ignorerror)
-			goto again;
+		if (ignorerror)
+			break;
 	}
 
 	/* return location, don't clean... */
@@ -447,7 +439,7 @@ again:
 
 
 void
-cd_dist_dir(char *forwhat)
+cd_dist_dir(const char *forwhat)
 {
 
 	/* ask user for the mountpoint. */
@@ -1234,7 +1226,7 @@ timezone_sig(int sig)
 static int
 tz_sort(const void *a, const void *b)
 {
-	return strcmp(((menu_ent *)a)->opt_name, ((menu_ent *)b)->opt_name);
+	return strcmp(((const menu_ent *)a)->opt_name, ((const menu_ent *)b)->opt_name);
 }
 
 static void

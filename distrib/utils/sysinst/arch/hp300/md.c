@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2003/06/16 10:42:48 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.11 2003/07/25 08:26:27 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,25 +57,25 @@ md_get_info(void)
 {
 	char buf[1024];
 	int fd;
-	char devname[100];
+	char dev_name[100];
 	struct disklabel disklabel;
 
-	snprintf(devname, 100, "/dev/r%sc", diskdev);
+	snprintf(dev_name, 100, "/dev/r%sc", diskdev);
 
-	fd = open(devname, O_RDONLY, 0);
+	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
 		if (logging)
-			(void)fprintf(logfp, "Can't open %s\n", devname);
+			(void)fprintf(logfp, "Can't open %s\n", dev_name);
 		endwin();
-		fprintf(stderr, "Can't open %s\n", devname);
+		fprintf(stderr, "Can't open %s\n", dev_name);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 		if (logging)
 			(void)fprintf(logfp, "Can't read disklabel on %s.\n",
-				devname);
+				dev_name);
 		endwin();
-		fprintf(stderr, "Can't read disklabel on %s.\n", devname);
+		fprintf(stderr, "Can't read disklabel on %s.\n", dev_name);
 		close(fd);
 		exit(1);
 	}
@@ -95,7 +95,7 @@ md_get_info(void)
 
 	if (read(fd, buf, 1024) < 0) {
 		endwin();
-		fprintf(stderr, "Can't read %s\n", devname);
+		fprintf(stderr, "Can't read %s\n", dev_name);
 		close(fd);
 		exit(1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.19 2003/07/07 12:30:19 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.20 2003/07/25 08:26:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -342,7 +342,7 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 }
 
 static void
-get_ptn_sizes(int layoutkind, int part_start, int sectors)
+get_ptn_sizes(int layout_kind, int part_start, int sectors)
 {
 	int i;
 	int maxpart = getmaxpartitions();

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2003/06/13 11:57:32 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2003/07/25 08:26:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,4 +80,4 @@
  *
  * On NetBSD/mipsco, we don't currently support a dedicated floppy-disk drive
  */
-EXTERN char *fdtype INIT("");
+EXTERN const char *fdtype INIT("");

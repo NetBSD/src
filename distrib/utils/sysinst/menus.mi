@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.8 2003/07/18 10:29:36 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.9 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ menu localdirsource, title MSG_Change;
 menu localdirbad, title MSG_What_do_you_want_to_do;
 	display action
 		{ msg_display(MSG_localdir, localfs_dir);
-		  msg_display_add(arg, localfs_dir); };
+		  msg_display_add(*(msg *)arg, localfs_dir); };
 	option MSG_Change_directory_path, exit,  action
 	    { yesno = 1;
 	      msg_prompt_win(MSG_dir, -1, 12, 0, 0, NULL, localfs_dir, 60); };

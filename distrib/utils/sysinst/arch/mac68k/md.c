@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.37 2003/07/11 15:29:03 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.38 2003/07/25 08:26:28 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -238,7 +238,7 @@ getName(part, len_name, name)
 	EBZB *bzb;
 	int fd;
 	off_t seek;
-	char devname[100], macosblk[512];
+	char dev_name[100], macosblk[512];
 
 	*name = '\0';
 	bzb = (EBZB *)&part->pmBootArgs[0];
@@ -254,11 +254,11 @@ getName(part, len_name, name)
 		/*
 		 * OK, this is stupid but it's damn nice to know!
 		 */
-		snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
+		snprintf (dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
 		/*
 		 * Open the disk as a raw device
 		 */
-		if ((fd = open(devname, O_RDONLY, 0)) >= 0) {
+		if ((fd = open(dev_name, O_RDONLY, 0)) >= 0) {
 		    seek = (off_t)part->pmPyPartStart + (off_t)2;
 		    seek *= (off_t)blk_size;
 		    lseek(fd, seek, SEEK_SET);
@@ -653,19 +653,19 @@ md_get_info()
 {
 	struct disklabel disklabel;
 	int fd, i;
-	char devname[100];
+	char dev_name[100];
 	struct apple_part_map_entry block;
 
-	snprintf(devname, sizeof(devname), "/dev/r%s%c",
+	snprintf(dev_name, sizeof(dev_name), "/dev/r%s%c",
 		diskdev, 'a' + getrawpartition());
 
 	/*
 	 * Open the disk as a raw device
 	 */
-	fd = open(devname, O_RDONLY, 0);
+	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
 		endwin();
-		fprintf (stderr, "Can't open %s\n", devname);
+		fprintf (stderr, "Can't open %s\n", dev_name);
 		exit(1);
 	}
 	/*
@@ -673,7 +673,7 @@ md_get_info()
 	 */
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 		endwin();
-		fprintf (stderr, "Can't read disklabel on %s\n", devname);
+		fprintf (stderr, "Can't read disklabel on %s\n", dev_name);
 		close(fd);
 		exit(1);
 	}
@@ -753,7 +753,7 @@ int
 md_pre_disklabel()
 {
     int fd;
-    char devname[100];
+    char dev_name[100];
     struct disklabel lp;
     Block0 new_block0 = {APPLE_DRVR_MAP_MAGIC, 512, 0};
 
@@ -763,13 +763,13 @@ md_pre_disklabel()
      */
     printf ("%s", msg_string (MSG_dodiskmap));
 
-    snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
+    snprintf (dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
     /*
      * Open the disk as a raw device
      */
-    if ((fd = open(devname, O_WRONLY, 0)) < 0) {
+    if ((fd = open(dev_name, O_WRONLY, 0)) < 0) {
 	endwin();
-	fprintf(stderr, "Can't open %s to rewrite the Disk Map\n", devname);
+	fprintf(stderr, "Can't open %s to rewrite the Disk Map\n", dev_name);
 	exit (1);
     }
     /*
@@ -840,17 +840,17 @@ md_post_disklabel(void)
 {
     struct disklabel updated_label;
     int fd, i, no_match;
-    char devname[100], buf[80];
-    char *fst[] = {"free", "swap", " v6 ", " v7 ", "sysv", "v71k", 
-                   " v8 ", "ffs ", "dos ", "lfs ", "othr", "hpfs",
-                   "9660", "boot", "ados", "hfs ", "fcor", "ex2f",
-                   "ntfs", "raid", "ccd "};
-  
-    snprintf(devname, sizeof(devname), "/dev/r%sc", diskdev);
+    char dev_name[100], buf[80];
+    const char *fst[] = {"free", "swap", " v6 ", " v7 ", "sysv", "v71k", 
+			" v8 ", "ffs ", "dos ", "lfs ", "othr", "hpfs",
+			"9660", "boot", "ados", "hfs ", "fcor", "ex2f",
+			"ntfs", "raid", "ccd "};
+      
+    snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
     /*
      * Open the disk as a raw device
      */
-    if ((fd = open(devname, O_RDONLY, 0)) < 0)
+    if ((fd = open(dev_name, O_RDONLY, 0)) < 0)
        return 0;
     /*
      * Get the "new" label to see if we were successful.  If we aren't

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2003/06/11 21:35:39 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2003/07/25 08:26:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,7 +76,7 @@
  * Default fileystem type for floppy disks.
  * On bebox, that is  msdos.
  */
-EXTERN	char *fdtype INIT("msdos");
+EXTERN	const char *fdtype INIT("msdos");
 
 
 
