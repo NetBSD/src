@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.36 2000/12/18 17:21:11 abs Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.37 2000/12/20 09:56:34 haya Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,6 +130,12 @@ struct wdc_pcmcia_product {
 	{ -1, -1, 0,
 	  { "PCMCIA", "CD-ROM", NULL, NULL},
 	  "PCMCIA CD-ROM"
+	},
+
+	/* IO DATA CBIDE2, with neither vendor ID nor product ID */
+	{ -1, -1, 0,
+	  PCMCIA_CIS_IODATA_CBIDE2,
+	  PCMCIA_STR_IODATA_CBIDE2
 	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
