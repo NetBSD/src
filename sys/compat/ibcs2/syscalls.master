@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 2000/01/10 03:10:15 matt Exp $
+	$NetBSD: syscalls.master,v 1.21.4.1 2000/09/05 01:00:54 matt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,7 +82,7 @@
 30	STD		{ int ibcs2_sys_utime(const char *path, \
 			    struct ibcs2_utimbuf *buf); }
 31	UNIMPL		was stty
-32	UNIMPL		was gtty
+32	STD		{ int ibcs2_sys_gtty(int fd, struct ibcs2_sgttyb *tb); }
 33	STD		{ int ibcs2_sys_access(const char *path, int flags); }
 34	STD		{ int ibcs2_sys_nice(int incr); }
 35	STD		{ int ibcs2_sys_statfs(const char *path, \
