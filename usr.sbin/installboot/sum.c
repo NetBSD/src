@@ -1,4 +1,4 @@
-/*	$NetBSD: sum.c,v 1.1 2002/04/03 05:21:17 lukem Exp $	*/
+/*	$NetBSD: sum.c,v 1.2 2002/04/19 07:08:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sum.c,v 1.1 2002/04/03 05:21:17 lukem Exp $");
+__RCSID("$NetBSD: sum.c,v 1.2 2002/04/19 07:08:53 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -79,10 +79,10 @@ __RCSID("$NetBSD: sum.c,v 1.1 2002/04/03 05:21:17 lukem Exp $");
 #include "installboot.h"
 
 
-u_int16_t
-compute_sunsum(const u_int16_t *bb16)
+uint16_t
+compute_sunsum(const uint16_t *bb16)
 {
-	u_int16_t	i, s;
+	uint16_t	i, s;
 
 	assert(bb16 != NULL);
 
@@ -93,7 +93,7 @@ compute_sunsum(const u_int16_t *bb16)
 }
 
 int
-set_sunsum(ib_params *params, u_int16_t *bb16, u_int16_t sum)
+set_sunsum(ib_params *params, uint16_t *bb16, uint16_t sum)
 {
 
 	assert(params != NULL);

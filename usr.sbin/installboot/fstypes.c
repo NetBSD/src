@@ -1,11 +1,11 @@
-/*	$NetBSD: machines.c,v 1.6 2002/04/19 07:08:53 lukem Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.1 2002/04/19 07:08:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn of Wasabi Systems.
+ * by Matt Fredette.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,12 +39,7 @@
 #include <sys/types.h>
 #include "installboot.h"
 
-struct ib_mach machines[] = {
-	{ "alpha",	alpha_parseopt,	alpha_setboot,	alpha_clearboot },
-	{ "i386",	no_parseopt,	no_setboot,	no_clearboot },
-	{ "pmax",	pmax_parseopt,	pmax_setboot,	pmax_clearboot },
-	{ "shark",	no_parseopt,	no_setboot,	no_clearboot },
-	{ "sparc64",	no_parseopt,	sparc64_setboot, sparc64_clearboot },
-	{ "vax",	vax_parseopt,	vax_setboot,	vax_clearboot },
-	{ 0, 0, 0, 0 },
+struct ib_fs fstypes[] = {
+	{ "ffs",	ffs_match,	ffs_findstage2 },
+	{ 0, 0, 0 }
 };

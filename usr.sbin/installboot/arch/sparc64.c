@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.7 2002/04/17 04:00:44 fredette Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.8 2002/04/19 07:08:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.7 2002/04/17 04:00:44 fredette Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.8 2002/04/19 07:08:54 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -81,9 +81,6 @@ __RCSID("$NetBSD: sparc64.c,v 1.7 2002/04/17 04:00:44 fredette Exp $");
 #include <unistd.h>
 
 #include "installboot.h"
-
-int	sparc64_setboot(ib_params *);
-int	sparc64_clearboot(ib_params *);
 
 #define SPARC64_BOOT_BLOCK_OFFSET	DEV_BSIZE
 #define SPARC64_BOOT_BLOCK_BLOCKSIZE	DEV_BSIZE
@@ -139,7 +136,8 @@ sparc64_setboot(ib_params *params)
 {
 	struct stat	bootstrapsb;
 	char		bb[SPARC64_BOOT_BLOCK_MAX_SIZE];
-	int		startblock, retval;
+	uint32_t	startblock;
+	int		retval;
 	ssize_t		rv;
 
 	assert(params != NULL);
