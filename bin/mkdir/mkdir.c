@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.32 2003/08/13 07:34:09 itojun Exp $ */
+/* $NetBSD: mkdir.c,v 1.33 2003/09/11 17:38:12 christos Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.32 2003/08/13 07:34:09 itojun Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.33 2003/09/11 17:38:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,12 +113,15 @@ main(int argc, char *argv[])
 	stdout_ok = isatty(STDOUT_FILENO);
 
 	for (exitval = EXIT_SUCCESS; *argv != NULL; ++argv) {
+#ifdef notdef
 		char *slash;
 
+		/* Kernel takes care of this */
 		/* Remove trailing slashes, per POSIX. */
 		slash = strrchr(*argv, '\0');
 		while (--slash > *argv && *slash == '/')
 			*slash = '\0';
+#endif
 
 		if (pflag) {
 			if (mkpath(*argv, mode, dir_mode) < 0)
