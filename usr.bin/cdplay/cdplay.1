@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.3 1999/09/28 18:36:33 ad Exp $
+.\"	$NetBSD: cdplay.1,v 1.4 2000/04/15 18:11:00 mrg Exp $
 .\"
 .\" From: Id: cdcontrol.1,v 1.16.2.2 1999/01/31 15:36:01 billf Exp
 .\"
@@ -45,16 +45,15 @@ The available commands are listed below.  Only as many
 characters as are required to uniquely identify a command
 need be specified. The word
 .Em play
-can be omitted.
+can be omitted in all cases.
 .Bl -tag -width Cm
-.It Cm play Ar first_track Op Ar last_track
+.It Cm play Op Ar first_track Op Ar last_track
 Play from track 
 .Ar first_track
 to track
 .Ar last_track .
 The first track has number 1.
-Can be omitted in all cases.
-.It Cm play Ar start_m:start_s.start_f Op Ar end_m:end_s.end_f
+.It Cm play Op Ar start_m:start_s.start_f Op Ar end_m:end_s.end_f
 Play from the absolute address
 (MSF) defined by 
 .Ar start_m
