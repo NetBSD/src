@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 1999/03/15 09:47:36 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127 1999/03/24 01:49:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 1999/03/15 09:47:36 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 1999/03/24 01:49:10 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 1999/03/15 09:47:36 jonathan Exp $
 #include <sys/tty.h>
 #include <sys/device.h>
 #include <sys/user.h>
-#include <sys/exec.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
@@ -94,11 +93,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 1999/03/15 09:47:36 jonathan Exp $
 #include <machine/autoconf.h>
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
+#include <machine/bootinfo.h>
 #include <mips/locore.h>		/* wbflush() */
 #include <mips/mips/mips_mcclock.h>	/* mclock CPU setimation */
 
 #ifdef DDB
-#include <mips/db_machdep.h>
+#include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
+#include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -152,6 +153,8 @@ struct platform  platform = {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[40];	 
+
+char	*bootinfo;			/* pointer to bootinfo structure */
 
 /*  maps for VM objects */
 
@@ -212,7 +215,7 @@ int	initcpu __P((void));
 /* initialize bss, etc. from kernel start, before main() is called. */
 extern	void
 mach_init __P((int argc, char *argv[], u_int code,
-    const struct callback *cv));
+    const struct callback *cv, u_int bim, char *bip));
 
 
 void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
@@ -242,24 +245,59 @@ extern void mips_vector_init  __P((void));
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, code, cv)
+mach_init(argc, argv, code, cv, bim, bip)
 	int argc;
 	char *argv[];
 	u_int code;
 	const struct callback *cv;
+	u_int bim;
+	char *bip;
 {
-	register char *cp;
-	register int i;
+	char *cp, *bootinfo_msg;
 	u_long first, last;
-	caddr_t kernend, v;
+	int i, nsym;
+	caddr_t kernend, v, ssym;
 	unsigned size;
+	struct btinfo_symtab *bi_syms;
+	struct exec *aout;		/* XXX backwards compatilbity for DDB */
+
 	extern char edata[], end[];
+
+	/* Set up bootinfo structure.  Note that we can't print messages yet! */
+	if (bim == BOOTINFO_MAGIC) {
+		struct btinfo_magic *bi_magic;
+
+		bootinfo = bip;
+		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
+		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
+			bootinfo_msg =
+			    "invalid magic number in bootinfo structure.\n";
+		else
+			bootinfo_msg = NULL;
+	}
+	else
+		bootinfo_msg = "invalid bootinfo pointer (old bootblocks?)\n";
 
 	/* clear the BSS segment */
 #ifdef DDB
-	if (((struct exec *)edata)->a_midmag == 0x07018b00 &&	/* exec hdr? */
-	    (i = ((struct exec *)edata)->a_syms) != 0) {	/* a_syms */
-		*(long *)end = i;
+	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+	aout = (struct exec *)edata;
+
+	/* Valid bootinfo symtab info? */
+	if (bi_syms != NULL) {
+		nsym = bi_syms->nsym;
+		ssym = (caddr_t)bi_syms->ssym;
+		esym = (caddr_t)bi_syms->esym;
+		kernend = (caddr_t)mips_round_page(esym);
+		bzero(edata, end - edata);
+	}
+	/* XXX: Backwards compatibility with old bootblocks - this should
+	 * go soon...
+	 */
+	/* Exec header and symbols? */
+	else if (aout->a_midmag == 0x07018b00 && (i = aout->a_syms) != 0) {
+		nsym = *(long *)end = i;
+		ssym = end;
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;
 		kernend = (caddr_t)mips_round_page(esym);
@@ -280,6 +318,12 @@ mach_init(argc, argv, code, cv)
 
 	/* Use PROM console output until we initialize a console driver. */
 	cn_tab = &promcd;
+
+#if 0
+	/* Print out bootinfo messages now that the console is initialised. */
+	if (bootinfo_msg != NULL)
+		printf(bootinfo_msg);
+#endif
 
 	/* check for direct boot from DS5000 PROM */
 	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
@@ -355,8 +399,8 @@ mach_init(argc, argv, code, cv)
 	 */
 	db_machine_init();
 	/* init symbols if present */
-	if (esym)
-		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
+	if (nsym && ssym && esym)
+		ddb_init(nsym, (int *)ssym, (int *)esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -688,6 +732,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+	struct btinfo_bootpath *bibp;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -697,10 +742,37 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_CONSDEV:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
+	case CPU_BOOTED_KERNEL:
+	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	        if(!bibp)
+			return(ENOENT); /* ??? */
+		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
 	default:
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+/*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = (char *)bootinfo;
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
 }
 
 /*
