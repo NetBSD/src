@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.51 2003/10/04 15:43:05 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.51 2003/10/04 15:43:05 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp 
 
 #include "ksyms.h"
 #include "opt_ipkdb.h"
+#include "opt_ableelf.h"
 
 #include "isa.h"
 #if NISA > 0
@@ -358,9 +359,7 @@ initarm(bootargs)
 	struct ebsaboot *bootinfo = bootargs;
 	int loop;
 	int loop1;
-	u_int logical;
 	u_int l1pagetable;
-	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	pv_addr_t kernel_l1pt;
 	extern u_int cpu_get_control(void);
 
@@ -478,13 +477,16 @@ initarm(bootargs)
 	 */
 
 #ifdef VERBOSE_INIT_ARM
-	printf("Allocating page tables\n");
+	printf("Allocating page tables");
 #endif
 
 	/* Update the address of the first free page of physical memory */
 	physical_freestart = ebsabootinfo.bt_memavail;
 	free_pages -= (physical_freestart - physical_start) / PAGE_SIZE;
-
+	
+#ifdef VERBOSE_INIT_ARM
+	printf(" above %p\n", (void *)physical_freestart);
+#endif
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)			\
 	alloc_pages((var).pv_pa, (np));	\
@@ -575,29 +577,52 @@ initarm(bootargs)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
+#ifdef ABLEELF
+	{
+		extern char etext[], _end[];
+		size_t textsize = (uintptr_t) etext - KERNEL_BASE;
+		size_t totalsize = (uintptr_t) _end - KERNEL_BASE;
+		u_int logical;
+		
+		textsize = round_page(textsize);
+		totalsize = round_page(totalsize);
 
-	if (N_GETMAGIC(kernexec[0]) != ZMAGIC)
-		panic("Illegal kernel format");
-	else {
-		extern int end;
+		logical = pmap_map_chunk(l1pagetable, KERNEL_BASE,
+		    physical_start, textsize,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
-		logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
-			physical_start, kernexec->a_text,
-			VM_PROT_READ, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable,
-			KERNEL_TEXT_BASE + logical,
-			physical_start + logical, kernexec->a_data,
-			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable,
-			KERNEL_TEXT_BASE + logical,
-			physical_start + logical, kernexec->a_bss,
-			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable,
-			KERNEL_TEXT_BASE + logical,
-			physical_start + logical, kernexec->a_syms + sizeof(int)
-			+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
-			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		(void) pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
+		    physical_start + logical, totalsize - textsize,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
+#else
+	{
+		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
+		if (N_GETMAGIC(kernexec[0]) != ZMAGIC)
+			panic("Illegal kernel format");
+		else {
+			extern int end;
+			u_int logical;
+			
+			logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
+					physical_start, kernexec->a_text,
+					VM_PROT_READ, PTE_CACHE);
+			logical += pmap_map_chunk(l1pagetable,
+					KERNEL_TEXT_BASE + logical,
+					physical_start + logical, kernexec->a_data,
+					VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+			logical += pmap_map_chunk(l1pagetable,
+					KERNEL_TEXT_BASE + logical,
+					physical_start + logical, kernexec->a_bss,
+					VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+			logical += pmap_map_chunk(l1pagetable,
+					KERNEL_TEXT_BASE + logical,
+					physical_start + logical, kernexec->a_syms + sizeof(int)
+					+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
+					VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		}
+	}
+#endif
 
 	/*
 	 * PATCH PATCH ...
