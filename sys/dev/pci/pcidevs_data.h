@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.483 2002/11/07 20:55:14 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.484 2002/11/08 05:43:23 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.482 2002/11/07 20:49:57 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.483 2002/11/08 05:42:38 msaitoh Exp 
  */
 
 /*
@@ -2726,6 +2726,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Distributed Processing Technology",
 	    "SmartRAID (I2O)",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2000S,
+	    0,
+	    "Distributed Processing Technology",
+	    "Zero channel SmartRAID(I2O)",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2005S,
+	    0,
+	    "Distributed Processing Technology",
+	    "Zero channel SmartRAID(I2O) SO-DIMM",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,
