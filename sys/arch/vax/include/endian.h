@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.4 1995/03/28 18:21:21 jtc Exp $	*/
+/*	$NetBSD: endian.h,v 1.5 1995/07/05 08:22:22 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -35,6 +35,14 @@
  *      @(#)endian.h    7.8 (Berkeley) 4/3/91
  */
 
+#ifndef _VAX_ENDIAN_H_
+#define _VAX_ENDIAN_H_
+
+#define _QUAD_HIGHWORD  1
+#define _QUAD_LOWWORD   0
+
+#ifndef _POSIX_SOURCE
+
 /*
  * Definitions for byte order, according to byte significance from low
  * address to high.
@@ -43,45 +51,60 @@
 #define BIG_ENDIAN      4321    /* MSB first: 68000, ibm, net */
 #define PDP_ENDIAN      3412    /* LSB first in word, MSW first in long */
 
-#define _QUAD_HIGHWORD  1
-#define _QUAD_LOWWORD   0
-
 #define BYTE_ORDER      LITTLE_ENDIAN
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#if defined(_KERNEL)||defined(STANDALONE)
-static	unsigned long   htonl __P((unsigned long));
-static	unsigned short  htons __P((unsigned short));
-static	unsigned long   ntohl __P((unsigned long));
-static	unsigned short  ntohs __P((unsigned short));
-#else
 unsigned long   htonl __P((unsigned long));
 unsigned short  htons __P((unsigned short));
 unsigned long   ntohl __P((unsigned long));
 unsigned short  ntohs __P((unsigned short));
-#endif
 __END_DECLS
+
+
+#ifdef	__GNUC__
+
+#define	__byte_swap_long_variable(x)	\
+({ register unsigned long __x,__y = (x);\
+					\
+	__asm ("rotl	$-8,%1,%0;   	\
+		insv	%0,$16,$8,%0;	\
+		rotl	$8,%1,%1; 	\
+		movb	%1,%0"		\
+		: "&=r" (__x)		\
+		: "r" (__y)		\
+		: "cc" );		\
+	__x; })
+
+#define __byte_swap_word_variable(x)	\
+({ register unsigned short __x = (x);	\
+	__asm ("insv	%1,$16,$8,%1;	\
+		rotl	$-8,%1,%1"	\
+		: "=r" (__x)		\
+		: "0" (__x)		\
+		: "cc");		\
+	__x; })
+
+
+#define __byte_swap_long(x)     __byte_swap_long_variable(x)
+#define __byte_swap_word(x)     __byte_swap_word_variable(x)
+
+#define	ntohl(x)        __byte_swap_long(x)
+#define ntohs(x)        __byte_swap_word(x)
+#define htonl(x)        __byte_swap_long(x)
+#define htons(x)        __byte_swap_word(x)
+
+#endif /* __GNUC__ */
 
 /*
  * Macros for network/external number representation conversion.
  */
-#if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
-#define ntohl(x)        (x)
-#define ntohs(x)        (x)
-#define htonl(x)        (x)
-#define htons(x)        (x)
+#define NTOHL(x)        (x) = ntohl((unsigned long)(x))
+#define NTOHS(x)        (x) = ntohs((unsigned long)(x))
+#define HTONL(x)        (x) = htonl((unsigned long)(x))
+#define HTONS(x)        (x) = htons((unsigned long)(x))
 
-#define NTOHL(x)        (x)
-#define NTOHS(x)        (x)
-#define HTONL(x)        (x)
-#define HTONS(x)        (x)
+#endif	/* _POSIX_SOURCE */
 
-#else
-
-#define NTOHL(x)        (x) = ntohl((u_long)x)
-#define NTOHS(x)        (x) = ntohs((u_short)x)
-#define HTONL(x)        (x) = htonl((u_long)x)
-#define HTONS(x)        (x) = htons((u_short)x)
-#endif
+#endif /* _VAX_ENDIAN_H_ */
