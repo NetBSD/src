@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.150 2003/03/19 11:36:32 dsl Exp $	*/
+/*	$NetBSD: tty.c,v 1.151 2003/04/10 22:05:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,9 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.150 2003/03/19 11:36:32 dsl Exp $");
-
-#include "opt_uconsole.h"
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.151 2003/04/10 22:05:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.150 2003/03/19 11:36:32 dsl Exp $");
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
 #include <sys/kprintf.h>
+#include <sys/namei.h>
 
 #include <machine/stdarg.h>
 
@@ -771,6 +770,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	extern struct tty *constty;	/* Temporary virtual console. */
 	struct linesw	*lp;
 	int		s, error;
+	struct nameidata nd;
 
 	/* If the ioctl involves modification, hang if in the background. */
 	switch (cmd) {
@@ -862,11 +862,17 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			if (constty && constty != tp &&
 			    ISSET(constty->t_state, TS_CARR_ON | TS_ISOPEN) ==
 			    (TS_CARR_ON | TS_ISOPEN))
-				return (EBUSY);
-#ifndef	UCONSOLE
-			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-				return (error);
-#endif
+				return EBUSY;
+
+			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
+			    "/dev/console", p);  
+			if ((error = namei(&nd)) != 0)
+				return error;
+			error = VOP_ACCESS(nd.ni_vp, VWRITE, p->p_ucred, p); 
+			vput(nd.ni_vp);
+			if (error)
+				return error;
+
 			constty = tp;
 		} else if (tp == constty)
 			constty = NULL;
