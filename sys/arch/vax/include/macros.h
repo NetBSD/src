@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.19 2000/07/01 06:43:43 matt Exp $	*/
+/*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -70,7 +70,7 @@ _insque(void *p, void *q)
 }
 
 static __inline__ void *
-memcpy(void *toe, const void *from, u_int len)
+memcpy(void *toe, const void *from, size_t len)
 {
 	__asm__ __volatile ("movc3 %0,(%1),(%2)"
 			:
@@ -79,7 +79,7 @@ memcpy(void *toe, const void *from, u_int len)
 	return toe;
 }
 static __inline__ void *
-memmove(void *toe, const void *from, u_int len)
+memmove(void *toe, const void *from, size_t len)
 {
 	__asm__ __volatile ("movc3 %0,(%1),(%2)"
 			:
@@ -89,7 +89,7 @@ memmove(void *toe, const void *from, u_int len)
 }
 
 static __inline__ void
-bcopy(const void *from, void *toe, u_int len)
+bcopy(const void *from, void *toe, size_t len)
 {
 	__asm__ __volatile ("movc3 %0,(%1),(%2)"
 			:
@@ -97,7 +97,7 @@ bcopy(const void *from, void *toe, u_int len)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 }
 
-void	blkclr __P((void *, u_int));
+void	blkclr __P((void *, size_t));
 
 static __inline__ void *
 memset(void *block, int c, size_t len)
@@ -114,7 +114,7 @@ memset(void *block, int c, size_t len)
 }
 
 static __inline__ void
-bzero(void *block, u_int len)
+bzero(void *block, size_t len)
 {
 	if (len > 65535)
 		blkclr(block, len);
@@ -234,7 +234,7 @@ strcmp(const char *cp, const char *c2)
 /* End nya */
 
 #if 0 /* unused, but no point in deleting it since it _is_ an instruction */
-static __inline__ int locc(int mask, char *cp,u_int size){
+static __inline__ int locc(int mask, char *cp, size_t size){
 	register ret;
 
 	__asm__ __volatile("locc %1,%2,(%3);movl r0,%0"
