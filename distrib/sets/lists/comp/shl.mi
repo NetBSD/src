@@ -1,6 +1,7 @@
-# $NetBSD: shl.mi,v 1.11 2000/02/03 05:28:02 jwise Exp $
+# $NetBSD: shl.mi,v 1.12 2000/02/20 03:26:15 mycroft Exp $
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
+./usr/lib/libcompat_pic.a	comp-c-piclib
 ./usr/lib/libcrypt_pic.a	comp-c-piclib
 ./usr/lib/libcurses_pic.a	comp-c-piclib
 ./usr/lib/libedit_pic.a		comp-c-piclib
