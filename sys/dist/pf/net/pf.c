@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.8 2004/12/05 13:32:17 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.9 2004/12/21 05:55:23 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.457.2.4 2004/11/28 06:21:44 brad Exp $ */
 
 /*
@@ -5423,7 +5423,28 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 		return (1);
 	if (m->m_pkthdr.len < off + len)
 		return (1);
-		switch (af) {
+#ifdef __NetBSD__
+	switch (p) {
+	case IPPROTO_TCP: {
+			struct tcphdr th; /* XXX */
+			int thlen;
+
+			m_copydata(m, off, sizeof(th), &th); /* XXX */
+			thlen = th.th_off << 2;
+			return tcp_input_checksum(af, m, &th, off,
+			    thlen, len - thlen) != 0;
+		}
+
+	case IPPROTO_UDP: {
+			struct udphdr uh; /* XXX */
+
+			m_copydata(m, off, sizeof(uh), &uh); /* XXX */
+			return udp_input_checksum(af, m, &uh, off, len) != 0;
+		}
+		break;
+	}
+#endif /* __NetBSD__ */
+	switch (af) {
 #ifdef INET
 	case AF_INET:
 		if (p == IPPROTO_ICMP) {
