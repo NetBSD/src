@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.15 2003/03/03 22:07:39 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.16 2003/06/03 06:48:48 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ struct mach_trap_args {
 	struct lwp *l;
 	void *smsg;
 	void *rmsg;
+	size_t ssize;
 	size_t *rsize;
 };
 

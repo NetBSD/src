@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.19 2003/05/22 22:07:36 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.20 2003/06/03 06:48:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.19 2003/05/22 22:07:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.20 2003/06/03 06:48:47 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -992,9 +992,69 @@ mach_io_registry_entry_from_path(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	struct mach_iokit_devclass *mid; 
+	int i, len;
 
 #ifdef DEBUG_MACH
 	printf("mach_io_registry_entry_from_path: path = %s\n", req->req_path);
+#endif
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+	if (sizeof(*req) - 512 + req->req_pathcount > args->ssize) {
+#ifdef DEBUG_MACH
+		printf("pathcount too big, truncating\n");
+#endif
+		req->req_pathcount = args->ssize - (sizeof(*req) - 512);
+	}
+
+	i = 0;
+	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
+		len = strlen(mid->mid_name);
+#ifdef DEBUG_MACH
+		printf("trying \"%s\" vs \"%s\"\n", 
+		    &req->req_path[req->req_pathcount - 1 - len], 
+		    mid->mid_name);
+#endif
+		if (memcmp(&req->req_path[req->req_pathcount - 1 - len], 
+		    mid->mid_name, len) == 0) {
+			mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
+			mp->mp_data = mid;
+			break;
+		}
+	}
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_entry.name = (mach_port_t)mr->mr_name;
+	rep->rep_entry.disposition = 0x11; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_registry_entry_get_parent_iterator(args)
+	struct mach_trap_args *args;
+{
+	mach_io_registry_entry_get_parent_iterator_request_t *req = args->smsg;
+	mach_io_registry_entry_get_parent_iterator_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+
+#ifdef DEBUG_MACH
+	printf("mach_io_registry_entry_get_parent_iterator: plane = %s\n", 
+	    req->req_plane);
 #endif
 
 	mp = mach_port_get();
@@ -1008,8 +1068,8 @@ mach_io_registry_entry_from_path(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_entry.name = (mach_port_t)mr->mr_name;
-	rep->rep_entry.disposition = 0x11; /* XXX */
+	rep->rep_iterator.name = (mach_port_t)mr->mr_name;
+	rep->rep_iterator.disposition = 0x11; /* XXX */
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);

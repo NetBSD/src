@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.24 2003/02/05 23:58:10 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.25 2003/06/03 06:48:48 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.24 2003/02/05 23:58:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.25 2003/06/03 06:48:48 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -228,6 +228,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			args.smsg = sm;
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
+			args.ssize = send_size;
 			if ((*retval = (*map->map_handler)(&args)) != 0) 
 				goto out1;
 			
