@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2001/04/22 00:34:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2001/04/22 17:37:55 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -361,7 +361,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 /* XXX XXX XXX */
 #ifdef SH4
-#define	TLBFLUSH()			((cacheflush(), tlbflush())
+#define	TLBFLUSH()			(cacheflush(), tlbflush())
 #else
 #define	TLBFLUSH()			tlbflush()
 #endif
