@@ -68,6 +68,7 @@
 ./var/log/maillog
 ./var/log/messages
 ./var/log/sendmail.st
+./var/log/secure
 ./var/log/wtmp
 ./var/msgs/bounds
 ./var/run/utmp
