@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.6 1997/04/07 23:40:34 cgd Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.7 1997/08/16 01:16:33 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.6 1997/04/07 23:40:34 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.7 1997/08/16 01:16:33 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.6 1997/04/07 23:40:34 cgd Exp $");
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/pci/dwlpxreg.h>
 #include <alpha/pci/dwlpxvar.h>
-
-#define	DO_SECONDARIES	1
 
 #define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 
@@ -149,7 +147,6 @@ dwlpx_conf_read(cpv, tag, offset)
 	sc = ccp->cc_sc;
 	secondary = tag >> 24;
 	if (secondary) {
-#ifdef	DO_SECONDARIES
 		tag &= 0x1fffff;
 		tag |= (secondary << 21);
 
@@ -164,14 +161,12 @@ dwlpx_conf_read(cpv, tag, offset)
 		 * Set up HPCs for type 1 cycles.
 		 */
 		for (i = 0; i < sc->dwlpx_nhpc; i++) {
-			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) | 1;
+			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) |
+				PCIA_CTL_T1CYC;
 			alpha_mb();
 			REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) = rvp;
 			alpha_mb();
 		}
-#else
-		return (data);
-#endif
 	}
 	paddr = (unsigned long) tag;
 	paddr |= DWLPX_PCI_CONF;
@@ -188,16 +183,15 @@ dwlpx_conf_read(cpv, tag, offset)
 	if (secondary) {
 		alpha_pal_draina();
 		for (i = 0; i < sc->dwlpx_nhpc; i++) {
-			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) & ~1;
+			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) &
+				~PCIA_CTL_T1CYC;
 			alpha_mb();
 			REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) = rvp;
 			alpha_mb();
 		}
 		(void) splx(s);
-#ifdef	DO_SECONDARIES
 #if	0
 		printf("=%x\n", data);
-#endif
 #endif
 	}
 	return (data);
@@ -236,7 +230,8 @@ dwlpx_conf_write(cpv, tag, offset, data)
 		 * Set up HPCs for type 1 cycles.
 		 */
 		for (i = 0; i < sc->dwlpx_nhpc; i++) {
-			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) | 1;
+			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) |
+				PCIA_CTL_T1CYC;
 			alpha_mb();
 			REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) = rvp;
 			alpha_mb();
@@ -256,7 +251,8 @@ dwlpx_conf_write(cpv, tag, offset, data)
 	if (secondary) {
 		alpha_pal_draina();
 		for (i = 0; i < sc->dwlpx_nhpc; i++) {
-			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) & ~1;
+			rvp = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) &
+				~PCIA_CTL_T1CYC;
 			alpha_mb();
 			REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) = rvp;
 			alpha_mb();
