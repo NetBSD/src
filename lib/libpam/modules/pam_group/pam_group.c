@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_group.c,v 1.2 2004/12/12 08:18:44 christos Exp $	*/
+/*	$NetBSD: pam_group.c,v 1.3 2005/02/01 22:55:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_group/pam_group.c,v 1.4 2003/12/11 13:55:15 des Exp $");
 #else
-__RCSID("$NetBSD: pam_group.c,v 1.2 2004/12/12 08:18:44 christos Exp $");
+__RCSID("$NetBSD: pam_group.c,v 1.3 2005/02/01 22:55:11 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,13 +50,16 @@ __RCSID("$NetBSD: pam_group.c,v 1.2 2004/12/12 08:18:44 christos Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <login_cap.h>
 
 #define PAM_SM_AUTH
 
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
+#include <security/pam_mod_misc.h>
 #include <security/openpam.h>
 
+static int authenticate(pam_handle_t *, struct passwd *, int);
 
 PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
@@ -67,6 +70,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	char *const *list;
 	struct passwd *pwd;
 	struct group *grp;
+	int pam_err;
 
 	/* get target account */
 	if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS ||
@@ -102,6 +106,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		return (PAM_SUCCESS);
 	return (PAM_AUTH_ERR);
  found:
+	if (openpam_get_option(pamh, "authenticate"))
+		if ((pam_err = authenticate(pamh, pwd, flags)) != PAM_SUCCESS)
+			return pam_err;
+
 	if (openpam_get_option(pamh, "deny"))
 		return (PAM_AUTH_ERR);
 	return (PAM_SUCCESS);
@@ -119,5 +127,27 @@ pam_sm_setcred(pam_handle_t * pamh __unused, int flags __unused,
 
 	return (PAM_SUCCESS);
 }
+
+static int
+authenticate(pam_handle_t *pamh, struct passwd *pwd, int flags)
+{
+	int retval;
+	login_cap_t *lc;
+	const char *pass;
+
+	lc = login_getpwclass(pwd);
+	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, NULL);
+	login_close(lc);
+
+	if (retval != PAM_SUCCESS)
+		return retval;
+        PAM_LOG("Got password"); 
+        if (strcmp(crypt(pass, pwd->pw_passwd), pwd->pw_passwd) == 0)
+                return PAM_SUCCESS;
+                
+        PAM_VERBOSE_ERROR("UNIX authentication refused");
+        return PAM_AUTH_ERR;
+}
+
 
 PAM_MODULE_ENTRY("pam_group");
