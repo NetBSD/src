@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 1996/11/16 20:45:13 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.50 1996/12/01 23:21:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -506,6 +506,7 @@ badtrap:
 		break;
 
 	case T_DIV0:
+	case T_IDIV0:
 		ADVANCE;
 		trapsignal(p, SIGFPE, FPE_INTDIV_TRAP);
 		break;
