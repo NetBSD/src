@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.1,v 1.1 2003/07/04 06:59:55 tshiozak Exp $
+.\" $NetBSD: iconv.1,v 1.2 2003/07/04 07:58:10 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd July 4, 2003
-.Dt iconv 1
+.Dt ICONV 1
 .Os
 .\" ----------------------------------------------------------------------
 .Sh NAME
@@ -46,35 +46,33 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility converts the codeset of inputs (specified by
-.Ar file ,
-or the standard input unless it is specified) and puts the converted
-texts to the standard output.
+utility converts the codeset of
+.Ar file
+(or from standard input if no file is specified) from codeset
+.Ar from_name
+to codeset
+.Ar to_name
+and outputs the
+converted text on standard output.
 .Pp
 The following options are available:
 .Bl -tag -width 0123
 .It Fl c
-Prevent to put any invalid characters.  By default,
+Prevent output of any invalid characters.
+By default,
 .Nm
-puts "invalid character" specified by
+outputs an
+.Dq invalid character
+specified by the
 .Ar to_name
-codeset when it encounts a character
-which is valid in
+codeset when it encounts a character which is valid in the
 .Ar from_name
-codeset but not corresponding to
+codeset but does not have a corresponding character in the
 .Ar to_name
 codeset.
-.It Fl s
-Silent.  By default,
-.Nm
-puts the number of "invalid characters" to the standard error if they exist.
-This option prevents this behaviour.
 .It Fl f
 Specifies the source codeset name as
 .Ar from_name .
-.It Fl t
-Specifies the destination codeset name as
-.Ar to_name .
 .It Fl l
 Lists available codeset names.
 Note that not all combinations of
@@ -82,24 +80,31 @@ Note that not all combinations of
 and
 .Ar to_name
 are valid.
+.It Fl s
+Silent.
+By default,
+.Nm
+outputs the number of
+.Dq invalid characters
+to standard error if they exist.
+This option prevents this behaviour.
+.It Fl t
+Specifies the destination codeset name as
+.Ar to_name .
 .El
 .\" ----------------------------------------------------------------------
 .Sh EXIT STATUS
-.Nm
-exits with 0 on success, and with non-zero if an error occurs.
+.Ex -std iconv
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr iconv_open 3 ,
-.Xr iconv_close 3
-and
-.Xr iconv 3 .
-.\" ----------------------------------------------------------------------
-.Sh HISTORY
-.Nm
-first appeared in
-.Nx 2.0 .
+.Xr iconv 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 .Nm
 conform to
 .St -p1003.1-2001 .
+.\" ----------------------------------------------------------------------
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 2.0 .
