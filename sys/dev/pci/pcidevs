@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.435 2002/06/03 19:52:18 briggs Exp $
+$NetBSD: pcidevs,v 1.436 2002/06/04 08:53:47 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -787,6 +787,7 @@ product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
 product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
 product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
 product AMD PBC768_USB	0x7449	AMD768 USB Controller
+product AMD PBC8111_IDE	0x7469	AMD8111 IDE Controller
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
