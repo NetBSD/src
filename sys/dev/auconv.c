@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.9 2002/03/09 20:30:42 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.10 2002/03/15 14:55:03 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.9 2002/03/09 20:30:42 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.10 2002/03/15 14:55:03 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -153,7 +153,7 @@ linear16_to_linear8_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while ((cc -= 2) >= 0) {
+	while (--cc >= 0) {
 		*q++ = p[1];
 		p += 2;
 	}
@@ -164,7 +164,7 @@ linear16_to_linear8_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while ((cc -= 2) >= 0) {
+	while (--cc >= 0) {
 		*q++ = p[0];
 		p += 2;
 	}
@@ -203,7 +203,7 @@ slinear16_to_ulinear8_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while ((cc -= 2) >= 0) {
+	while (--cc >= 0) {
 		*q++ = p[1] ^ 0x80;
 		p += 2;
 	}
@@ -214,7 +214,7 @@ slinear16_to_ulinear8_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
-	while ((cc -= 2) >= 0) {
+	while (--cc >= 0) {
 		*q++ = p[0] ^ 0x80;
 		p += 2;
 	}
