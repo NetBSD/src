@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciavar.h,v 1.3 1999/04/15 22:27:40 thorpej Exp $ */
+/* $NetBSD: mcpciavar.h,v 1.4 1999/04/16 02:18:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -57,8 +57,10 @@ struct mcpcia_config {
 	long				cc_smem_exstorage[_FSTORE];
 	unsigned long			cc_sysbase;	/* shorthand */
 	struct alpha_bus_dma_tag	cc_dmat_direct;
-	struct alpha_bus_dma_tag	cc_dmat_sgmap;
-	struct alpha_sgmap		cc_sgmap;
+	struct alpha_bus_dma_tag	cc_dmat_pci_sgmap;
+	struct alpha_bus_dma_tag	cc_dmat_isa_sgmap;
+	struct alpha_sgmap		cc_pci_sgmap;
+	struct alpha_sgmap		cc_isa_sgmap;
 };
 
 struct mcpcia_softc {
