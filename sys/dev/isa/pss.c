@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.34 1997/08/19 23:50:04 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.35 1997/09/14 09:03:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1179,7 +1179,7 @@ pss_from_vol(cp, vol)
 
 int
 pss_set_master_gain(sc, gp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     struct ad1848_volume *gp;
 {
     DPRINTF(("pss_set_master_gain: %d:%d\n", gp->left, gp->right));
@@ -1206,7 +1206,7 @@ pss_set_master_gain(sc, gp)
 
 int
 pss_set_master_mode(sc, mode)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     int mode;
 {
     short phillips_mode;
@@ -1236,7 +1236,7 @@ pss_set_master_mode(sc, mode)
 
 int
 pss_set_treble(sc, treb)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_int treb;
 {
     DPRINTF(("pss_set_treble: %d\n", treb));
@@ -1257,7 +1257,7 @@ pss_set_treble(sc, treb)
 
 int
 pss_set_bass(sc, bass)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_int bass;
 {
     DPRINTF(("pss_set_bass: %d\n", bass));
@@ -1278,7 +1278,7 @@ pss_set_bass(sc, bass)
 	
 int
 pss_get_master_gain(sc, gp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->master_volume;
@@ -1287,7 +1287,7 @@ pss_get_master_gain(sc, gp)
 
 int
 pss_get_master_mode(sc, mode)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_int *mode;
 {
     *mode = sc->master_mode;
@@ -1296,7 +1296,7 @@ pss_get_master_mode(sc, mode)
 
 int
 pss_get_treble(sc, tp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_char *tp;
 {
     *tp = sc->monitor_treble;
@@ -1305,7 +1305,7 @@ pss_get_treble(sc, tp)
 
 int
 pss_get_bass(sc, bp)
-    register struct pss_softc *sc;
+    struct pss_softc *sc;
     u_char *bp;
 {
     *bp = sc->monitor_bass;
@@ -1324,7 +1324,7 @@ int
 pssintr(arg)
 	void *arg;
 {
-    register struct pss_softc *sc = arg;
+    struct pss_softc *sc = arg;
     u_short sr;
     
     sr = inw(sc->sc_iobase+PSS_STATUS);
@@ -1348,7 +1348,7 @@ int
 mpuintr(arg)
 	void *arg;
 {
-    register struct mpu_softc *sc = arg;
+    struct mpu_softc *sc = arg;
     u_char sr;
     
     sr = inb(sc->sc_iobase+MIDI_STATUS_REG);
@@ -1376,8 +1376,8 @@ pss_set_out_port(addr, port)
     void *addr;
     int port;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct pss_softc *sc = ac->parent;
 	
     DPRINTF(("pss_set_out_port: %d\n", port));
 
@@ -1393,8 +1393,8 @@ int
 pss_get_out_port(addr)
     void *addr;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct pss_softc *sc = ac->parent;
 
     DPRINTF(("pss_get_out_port: %d\n", sc->out_port));
 
@@ -1406,7 +1406,7 @@ pss_set_in_port(addr, port)
     void *addr;
     int port;
 {
-    register struct ad1848_softc *ac = addr;
+    struct ad1848_softc *ac = addr;
 	
     DPRINTF(("pss_set_in_port: %d\n", port));
 
@@ -1432,7 +1432,7 @@ int
 pss_get_in_port(addr)
     void *addr;
 {
-    register struct ad1848_softc *ac = addr;
+    struct ad1848_softc *ac = addr;
     int port = PSS_MIC_IN_LVL;
     
     switch(ad1848_get_rec_port(ac)) {
@@ -1457,8 +1457,8 @@ pss_mixer_set_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     int error = EINVAL;
     
@@ -1567,8 +1567,8 @@ pss_mixer_get_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct pss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct pss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     u_char eq;
     int error = EINVAL;
@@ -1684,7 +1684,7 @@ pss_mixer_get_port(addr, cp)
 int
 pss_query_devinfo(addr, dip)
     void *addr;
-    register mixer_devinfo_t *dip;
+    mixer_devinfo_t *dip;
 {
     DPRINTF(("pss_query_devinfo: index=%d\n", dip->index));
 
