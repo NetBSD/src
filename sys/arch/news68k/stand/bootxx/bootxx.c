@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1 1999/12/09 14:53:23 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 2002/04/27 10:19:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -30,13 +30,15 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <machine/romcall.h>
+#include <machine/bbinfo.h>
 
-#define MAXBLOCKNUM 64
-
-void (*entry_point)() = (void *)0x3e0000;
-int block_size = 8192;
-int block_count = MAXBLOCKNUM;
-int block_table[MAXBLOCKNUM] = { 0 };
+struct bbinfo bbinfo = {
+	{ BBINFO_MAGIC },	/* bbi_magic[] */
+	0,			/* bbi_block_size */
+	MAXBLOCKNUM,		/* bbi_block_count */
+	{ 0 },			/* bbi_block_table[] */
+	0x3e0000		/* bbi_entry_point */
+};
 
 #ifdef BOOTXX_DEBUG
 # define DPRINTF printf
@@ -55,6 +57,7 @@ bootxx(d4, d5, d6, d7)
 	int i;
 	int bootdev = d6;
 	char *addr;
+	void (*entry_point)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 	char devname[32];
 
 	printf("NetBSD/news68k Primary Boot\n");
@@ -65,9 +68,9 @@ bootxx(d4, d5, d6, d7)
 	DPRINTF("d6 %x\n", d6);
 	DPRINTF("d7 %x\n", d7);
 
-	DPRINTF("block_size  = %d\n", block_size);
-	DPRINTF("block_count = %d\n", block_count);
-	DPRINTF("entry_point = %x\n", (int)entry_point);
+	DPRINTF("block_size  = %d\n", bbinfo.bbi_block_size);
+	DPRINTF("block_count = %d\n", bbinfo.bbi_block_count);
+	DPRINTF("entry_point = %x\n", bbinfo.bbi_entry_point);
 
 	/* sd(ctlr, lun, part, bus?, host) */
 
@@ -89,11 +92,12 @@ bootxx(d4, d5, d6, d7)
 		return;
 	}
 
+	entry_point = (void *)bbinfo.bbi_entry_point;
 	addr = (char *)entry_point;
-	bs = block_size;
+	bs = bbinfo.bbi_block_size;
 	DPRINTF("reading block:");
-	for (i = 0; i < block_count; i++) {
-		blk = block_table[i];
+	for (i = 0; i < bbinfo.bbi_block_count; i++) {
+		blk = bbinfo.bbi_block_table[i];
 
 		DPRINTF(" %d", blk);
 

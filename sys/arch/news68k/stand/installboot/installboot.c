@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 2001/01/30 14:11:01 tsutsui Exp $ */
+/*	$NetBSD: installboot.c,v 1.5 2002/04/27 10:19:59 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,47 +43,21 @@
 #include <err.h>
 #include <a.out.h>
 #include <fcntl.h>
-#include <nlist.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "loadfile.h"
+#include "byteorder.h"
+#include "machine/bbinfo.h"
+#include "machine/disklabel.h"
 
 int	verbose, nowrite;
 char	*boot, *proto, *dev;
 
-#define BOOTSECTOR_OFFSET 512
-#define LABELOFFSET 64
-
-#if 0
-#ifdef __ELF__
-#define	SYMNAME(a)	a
-#else
-#define	SYMNAME(a)	__CONCAT("_",a)
-#endif
-#else
-/* XXX: Hack in libc nlist works with both formats */
-#define	SYMNAME(a)	__CONCAT("_",a)
-#endif
-
-struct nlist nl[] = {
-#define X_BLOCKTABLE	0
-	{ {SYMNAME("block_table")} },
-#define X_BLOCKCOUNT	1
-	{ {SYMNAME("block_count")} },
-#define X_BLOCKSIZE	2
-	{ {SYMNAME("block_size")} },
-#define X_ENTRY_POINT	3
-	{ {SYMNAME("entry_point")} },
-	{ {NULL} }
-};
-
-daddr_t	*block_table;		/* block number array in prototype image */
-int32_t	*block_count_p;		/* size of this array */
-int32_t	*block_size_p;		/* filesystem block size */
-int32_t	*entry_point_p;		/* entry_point */
+struct bbinfo *bbinfo_p;
 int32_t	max_block_count;
 
 char		*loadprotoblocks __P((char *, size_t *));
@@ -109,7 +83,7 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	size_t	protosize;
-	u_int32_t boot00[BOOTSECTOR_OFFSET / sizeof(u_int32_t)];
+	uint32_t boot00[BOOTSECTOR_OFFSET / sizeof(uint32_t)];
 
 	while ((c = getopt(argc, argv, "vn")) != EOF) {
 		switch (c) {
@@ -171,7 +145,8 @@ main(argc, argv)
 	/* Sync filesystems (to clean in-memory superblock?) */
 	sync(); sync(); sync();
 
-	if (write(devfd, protostore, protosize) != protosize)
+	if (write(devfd, protostore + BOOTSECTOR_OFFSET,
+	    protosize - BOOTSECTOR_OFFSET) != protosize - BOOTSECTOR_OFFSET)
 		err(1, "write bootstrap");
 
 	/* Write boot00 */
@@ -180,9 +155,7 @@ main(argc, argv)
 	if (read(devfd, boot00, sizeof(boot00)) != sizeof(boot00))
 		err(1, "read boot00");
 
-	memset(boot00, 0, LABELOFFSET);
-	boot00[0] = 0x600001fe;	/* jra +0x200 */
-	boot00[2] = 0x0;
+	memcpy(boot00, protostore, LABELOFFSET);
 	if (lseek(devfd, 0, SEEK_SET) != 0)
 		err(1, "lseek 0b");
 	if (write(devfd, boot00, sizeof(boot00)) != sizeof(boot00))
@@ -198,30 +171,8 @@ loadprotoblocks(fname, size)
 	size_t *size;
 {
 	int	fd, sz;
-	u_long	ap, bp, st;
+	u_long	ap, bp, st, bbi;
 	u_long	marks[MARK_MAX];
-
-	/* Locate block number array in proto file */
-	if (nlist(fname, nl) != 0) {
-		warnx("nlist: %s: symbols not found", fname);
-		return NULL;
-	}
-	if (nl[X_BLOCKTABLE].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKTABLE].n_un.n_name);
-		return NULL;
-	}
-	if (nl[X_BLOCKCOUNT].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKCOUNT].n_un.n_name);
-		return NULL;
-	}
-	if (nl[X_BLOCKSIZE].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKSIZE].n_un.n_name);
-		return NULL;
-	}
-	if (nl[X_ENTRY_POINT].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_ENTRY_POINT].n_un.n_name);
-		return NULL;
-	}
 
 	marks[MARK_START] = 0;
 	if ((fd = loadfile(fname, marks, COUNT_TEXT|COUNT_DATA)) == -1)
@@ -243,47 +194,27 @@ loadprotoblocks(fname, size)
 		return NULL;
 	(void)close(fd);
 
-	block_table = (daddr_t *)(bp + nl[X_BLOCKTABLE].n_value - st);
-	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value - st);
-	block_size_p = (int32_t *)(bp + nl[X_BLOCKSIZE].n_value - st);
-	entry_point_p = (int32_t *)(bp + nl[X_ENTRY_POINT].n_value - st);
+	/* Look for the bbinfo structure. */
+	for (bbi = bp; bbi < (bp + sz); bbi += sizeof(uint32_t)) {
+		bbinfo_p = (void *)bbi;
+		if (memcmp(bbinfo_p->bbi_magic, BBINFO_MAGIC,
+		    BBINFO_MAGICSIZE) == 0)
+			break;
+	}
+	if (bbi >= (bp + sz)) {
+		warn("%s: unable to locate bbinfo structure; "
+		    "make sure your bootxx is updated.\n", fname);
+		free((void *)ap);
+		return NULL;
+	}
 
-	if ((int)block_table & 3) {
-		warn("%s: invalid address: block_table = %p",
-		     fname, block_table);
-		free((void *)bp);
-		close(fd);
-		return NULL;
-	}
-	if ((int)block_count_p & 3) {
-		warn("%s: invalid address: block_count_p = %p",
-		     fname, block_count_p);
-		free((void *)bp);
-		close(fd);
-		return NULL;
-	}
-	if ((int)block_size_p & 3) {
-		warn("%s: invalid address: block_size_p = %p",
-		     fname, block_size_p);
-		free((void *)bp);
-		close(fd);
-		return NULL;
-	}
-	if ((int)entry_point_p & 3) {
-		warn("%s: invalid address: entry_point_p = %p",
-		     fname, entry_point_p);
-		free((void *)bp);
-		close(fd);
-		return NULL;
-	}
-	max_block_count = *block_count_p;
+	max_block_count = sa_be32toh(bbinfo_p->bbi_block_count);
 
 	if (verbose) {
 		printf("proto bootblock size: %d\n", sz);
 	}
 
 	*size = sz;
-	ap += BOOTSECTOR_OFFSET; /* XXX */
 	return (char *)ap;
 }
 
@@ -356,7 +287,7 @@ int	devfd;
 	/*
 	 * Register filesystem block size.
 	 */
-	*block_size_p = fs->fs_bsize;
+	bbinfo_p->bbi_block_size = sa_htobe32(fs->fs_bsize);
 
 	/*
 	 * Get the block numbers; we don't handle fragments
@@ -366,19 +297,20 @@ int	devfd;
 		errx(1, "%s: Too many blocks", boot);
 
 	if (verbose)
-		printf("entry point: 0x%08x\n", *entry_point_p);
+		printf("entry point: 0x%08x\n",
+		    sa_be32toh(bbinfo_p->bbi_entry_point));
 
 	/*
 	 * Register block count.
 	 */
-	*block_count_p = ndb;
+	bbinfo_p->bbi_block_count = sa_htobe32(ndb);
 
 	if (verbose)
 		printf("%s: block numbers: ", boot);
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		block_table[i] = blk;
+		bbinfo_p->bbi_block_table[i] = sa_htobe32(blk);
 		if (verbose)
 			printf("%d ", blk);
 	}
@@ -399,7 +331,7 @@ int	devfd;
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
 		blk = fsbtodb(fs, *ap);
-		block_table[i] = blk;
+		bbinfo_p->bbi_block_table[i] = sa_htobe32(blk);
 		if (verbose)
 			printf("%d ", blk);
 	}
