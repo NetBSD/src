@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.1.2.3 1998/12/28 14:30:21 minoura Exp $	*/
+/*	$NetBSD: neptune.c,v 1.1.2.4 1999/02/13 17:57:50 minoura Exp $	*/
 
 /*
  *
@@ -51,29 +51,7 @@
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/neptunevar.h>
 
-
-/*
- * We currently implement only some, to support NE2000 and clones.
- */
-
-#define neptune_bus_space_read_4 ((u_int32_t(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_read_multi_4 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_read_region_1 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_read_region_2 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_read_region_4 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_write_4 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t))) neptune_dummy)
-#define neptune_bus_space_write_multi_4 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_write_region_1 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_write_region_2 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_write_region_4 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t*, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_set_region_1 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_set_region_2 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_set_region_4 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_copy_region_1 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_copy_region_2 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t))) neptune_dummy)
-#define neptune_bus_space_copy_region_4 ((void(*) __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t))) neptune_dummy)
-
-
+/* bus_space stuff */
 static int neptune_bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				      int, bus_space_handle_t*));
 static void neptune_bus_space_unmap __P((bus_space_tag_t,
@@ -81,25 +59,6 @@ static void neptune_bus_space_unmap __P((bus_space_tag_t,
 static int neptune_bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t,
 					    bus_size_t, bus_size_t,
 					    bus_space_handle_t*));
-u_int8_t neptune_bus_space_read_1 __P((bus_space_tag_t,
-				       bus_space_handle_t, bus_size_t));
-u_int16_t neptune_bus_space_read_2 __P((bus_space_tag_t,
-				       bus_space_handle_t, bus_size_t));
-void neptune_bus_space_write_1 __P((bus_space_tag_t,
-				    bus_space_handle_t, bus_size_t, u_int8_t));
-void neptune_bus_space_write_2 __P((bus_space_tag_t,
-				    bus_space_handle_t, bus_size_t, u_int16_t));
-void neptune_bus_space_read_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
-					 bus_size_t, u_int8_t *, bus_size_t));
-void neptune_bus_space_read_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
-					 bus_size_t, u_int16_t *, bus_size_t));
-void neptune_bus_space_write_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
-					  bus_size_t, u_int8_t *, bus_size_t));
-void neptune_bus_space_write_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
-					  bus_size_t, u_int16_t *, bus_size_t));
-
-
-void neptune_dummy __P((void));
 
 static struct x68k_bus_space neptune_bus = {
 #if 0
@@ -109,39 +68,33 @@ static struct x68k_bus_space neptune_bus = {
 	neptune_bus_space_subregion,
 	x68k_bus_space_alloc, x68k_bus_space_free,
 
-	neptune_bus_space_read_1,
-	neptune_bus_space_read_2,
-	neptune_bus_space_read_4,
-	neptune_bus_space_read_multi_1,
-	neptune_bus_space_read_multi_2,
-	neptune_bus_space_read_multi_4,
-	neptune_bus_space_read_region_1,
-	neptune_bus_space_read_region_2,
-	neptune_bus_space_read_region_4,
+	x68k_bus_space_read_1,
+	x68k_bus_space_read_2,
+	x68k_bus_space_read_4,
+	x68k_bus_space_read_multi_1,
+	x68k_bus_space_read_multi_2,
+	x68k_bus_space_read_multi_4,
+	x68k_bus_space_read_region_1,
+	x68k_bus_space_read_region_2,
+	x68k_bus_space_read_region_4,
 
-	neptune_bus_space_write_1,
-	neptune_bus_space_write_2,
-	neptune_bus_space_write_4,
-	neptune_bus_space_write_multi_1,
-	neptune_bus_space_write_multi_2,
-	neptune_bus_space_write_multi_4,
-	neptune_bus_space_write_region_1,
-	neptune_bus_space_write_region_2,
-	neptune_bus_space_write_region_4,
+	x68k_bus_space_write_1,
+	x68k_bus_space_write_2,
+	x68k_bus_space_write_4,
+	x68k_bus_space_write_multi_1,
+	x68k_bus_space_write_multi_2,
+	x68k_bus_space_write_multi_4,
+	x68k_bus_space_write_region_1,
+	x68k_bus_space_write_region_2,
+	x68k_bus_space_write_region_4,
 
-	neptune_bus_space_set_region_1,
-	neptune_bus_space_set_region_2,
-	neptune_bus_space_set_region_4,
-	neptune_bus_space_copy_region_1,
-	neptune_bus_space_copy_region_2,
-	neptune_bus_space_copy_region_4
+	x68k_bus_space_set_region_1,
+	x68k_bus_space_set_region_2,
+	x68k_bus_space_set_region_4,
+	x68k_bus_space_copy_region_1,
+	x68k_bus_space_copy_region_2,
+	x68k_bus_space_copy_region_4
 };
-
-void
-neptune_dummy (void)
-{
-	panic ("neptune: Unimplemented bus_space operation");
-}
 
 
 static int neptune_match __P((struct device *, struct cfdata *, void *));
@@ -264,6 +217,8 @@ neptune_bus_space_map(t, bpa, size, flags, bshp)
 		return 1;
 	}
 
+	*bshp |= 0x80000000;	/* higher byte (= even address) only */
+
 	return (0);
 }
 
@@ -286,98 +241,4 @@ neptune_bus_space_subregion(t, bsh, offset, size, nbshp)
 
 	*nbshp = bsh + offset*2;
 	return (0);
-}
-
-u_int8_t
-neptune_bus_space_read_1(t, bsh, offset)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-{
-	return (*((volatile u_int8_t *) (bsh + offset*2)));
-}
-
-u_int16_t
-neptune_bus_space_read_2(t, bsh, offset)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-{
-	return (*((volatile u_int16_t *) (bsh + offset*2)));
-}
-
-void
-neptune_bus_space_write_1(t, bsh, offset, value)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t value;
-{
-	*(volatile u_int8_t *) (bsh + offset*2) = value;
-}
-
-void
-neptune_bus_space_write_2(t, bsh, offset, value)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t value;
-{
-	*(volatile u_int16_t *) (bsh + offset*2) = value;
-}
-
-void
-neptune_bus_space_read_multi_1(t, bsh, offset, datap, count)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t *datap;
-	bus_size_t count;
-{
-	offset *= 2;
-	while (count-- > 0) {
-		*datap++ = *(volatile u_int8_t *) (bsh + offset);
-	}
-}
-
-void
-neptune_bus_space_read_multi_2(t, bsh, offset, datap, count)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t *datap;
-	bus_size_t count;
-{
-	offset *= 2;
-	while (count-- > 0) {
-		*datap++ = *(volatile u_int16_t *) (bsh + offset);
-	}
-}
-
-void
-neptune_bus_space_write_multi_1(t, bsh, offset, datap, count)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int8_t *datap;
-	bus_size_t count;
-{
-	offset *= 2;
-	while (count-- > 0) {
-		*(volatile u_int8_t *) (bsh + offset) = *datap++;
-	}
-}
-
-void
-neptune_bus_space_write_multi_2(t, bsh, offset, datap, count)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset;
-	u_int16_t *datap;
-	bus_size_t count;
-{
-	offset *= 2;
-	while (count-- > 0) {
-		*(volatile u_int16_t *) (bsh + offset) = *datap++;
-	}
 }
