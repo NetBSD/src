@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.24 2003/12/31 18:32:47 dbj Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.25 2003/12/31 18:40:23 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.24 2003/12/31 18:32:47 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.25 2003/12/31 18:40:23 dbj Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -74,7 +74,11 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	n->fs_swuid = bswap64(o->fs_swuid);
 	n->fs_cgrotor = bswap32(o->fs_cgrotor); /* Unused */
 	n->fs_old_cpc = bswap32(o->fs_old_cpc);
-			/* fs_snapinum[20] - ignore for now */
+
+	/* These fields overlap with a possible location for the
+	 * historic FS_DYNAMICPOSTBLFMT postbl table, and with the
+	 * first half of the historic FS_42POSTBLFMT postbl table.
+	 */
 	n->fs_maxbsize = bswap32(o->fs_maxbsize);
 	n->fs_sblockloc = bswap64(o->fs_sblockloc);
 	ffs_csumtotal_swap(&o->fs_cstotal, &n->fs_cstotal);
@@ -82,11 +86,16 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	n->fs_size = bswap64(o->fs_size);
 	n->fs_dsize = bswap64(o->fs_dsize);
 	n->fs_csaddr = bswap64(o->fs_csaddr);
-	n->fs_avgfilesize = bswap32(o->fs_avgfilesize);
-	n->fs_avgfpdir = bswap32(o->fs_avgfpdir);
-			/* fs_sparecon[28] - ignore for now */
 	n->fs_pendingblocks = bswap64(o->fs_pendingblocks);
 	n->fs_pendinginodes = bswap32(o->fs_pendinginodes);
+	
+	/* These fields overlap with the second half of the
+	 * historic FS_42POSTBLFMT postbl table
+	 */
+	/* fs_snapinum[20] - ignore for now */
+	n->fs_avgfilesize = bswap32(o->fs_avgfilesize);
+	n->fs_avgfpdir = bswap32(o->fs_avgfpdir);
+	/* fs_sparecon[28] - ignore for now */
 	n->fs_flags = bswap32(o->fs_flags);
 	n->fs_contigsumsize = bswap32(o->fs_contigsumsize);
 	n->fs_maxsymlinklen = bswap32(o->fs_maxsymlinklen);
@@ -99,6 +108,7 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	n->fs_old_nrpos = bswap32(o->fs_old_nrpos);
 	n->fs_old_postbloff = bswap32(o->fs_old_postbloff);
 	n->fs_old_rotbloff = bswap32(o->fs_old_rotbloff);
+
 	n->fs_magic = bswap32(o->fs_magic);
 }
 
