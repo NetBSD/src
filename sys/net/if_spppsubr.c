@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.4.8 2003/02/07 18:14:54 tron Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.4.9 2003/02/07 18:16:43 tron Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.8 2003/02/07 18:14:54 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.9 2003/02/07 18:16:43 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -889,7 +889,8 @@ nosupport:
 			if (rv == 0)
 				rv = ENOBUFS;
 		}
-		IF_ENQUEUE(ifq, m);
+		else
+			IF_ENQUEUE(ifq, m);
 	} else
 		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, rv);
 	if (rv != 0) {
@@ -1287,6 +1288,8 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 		IF_DROP (&sp->pp_fastq);
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
+		++ifp->if_oerrors;
+		return;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
@@ -1352,6 +1355,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
+		return;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
@@ -4612,6 +4616,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
+		return;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
