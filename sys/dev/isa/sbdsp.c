@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.97 1999/03/22 07:37:35 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.98 1999/03/22 14:38:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -867,7 +867,7 @@ sbdsp_open(addr, flags)
 	int flags;
 {
 	struct sbdsp_softc *sc = addr;
-	int error;
+	int error, state;
 
 	DPRINTF(("sbdsp_open: sc=%p\n", sc));
 
@@ -875,6 +875,7 @@ sbdsp_open(addr, flags)
 		return (EBUSY);
 	sc->sc_open = SB_OPEN_AUDIO;
 	sc->sc_openflags = flags;
+	state = 0;
 
 	if (sc->sc_drq8 != -1) {
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
@@ -884,6 +885,7 @@ sbdsp_open(addr, flags)
 			    sc->sc_dev.dv_xname, sc->sc_drq8);
 			goto bad;
 		}
+		state |= 1;
 	}
 	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
@@ -893,6 +895,7 @@ sbdsp_open(addr, flags)
 			    sc->sc_dev.dv_xname, sc->sc_drq16);
 			goto bad;
 		}
+		state |= 2;
 	}
 
 	if (sbdsp_reset(sc) != 0) {
@@ -917,6 +920,11 @@ sbdsp_open(addr, flags)
 	return (0);
 
 bad:
+	if (state & 1)
+		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq8);
+	if (state & 2)
+		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq16);
+
 	sc->sc_open = SB_CLOSED;
 	return (error);
 }
