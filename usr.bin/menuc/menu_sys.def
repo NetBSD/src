@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.11 1998/07/01 07:46:02 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.12 1998/07/01 23:02:50 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -447,7 +447,8 @@ static void process_req (struct menudesc *m, int num, int req)
 			m->cursel++;
 			scroll_sel = 1;
 			refresh = 1;
-			if (m->cursel >= m->topline + m->h -1 )
+			if (m->mopt & SCROLL && 
+			    m->cursel >= m->topline + m->h -1 )
 				m->topline += 1;
 		} else
 			mbeep();
