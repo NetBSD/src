@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.164 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.165 2005/03/04 22:19:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.164 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.165 2005/03/04 22:19:05 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.164 2005/02/26 22:32:20 perry Exp $
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
@@ -120,6 +121,7 @@ static boolean_t lfs_issequential_hole(const struct ufsmount *,
 static int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
 static daddr_t check_segsum(struct lfs *, daddr_t, u_int64_t,
     struct ucred *, int, int *, struct proc *);
+static void warn_ifile_size(struct lfs *);
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
@@ -1346,16 +1348,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	vput(vp);
 
 	/* Comment on ifile size if it is too large */
-	if (fs->lfs_ivnode->v_size / fs->lfs_bsize > LFS_MAX_BUFS) {
-		fs->lfs_flags |= LFS_WARNED;
-		printf("lfs_mountfs: please consider increasing NBUF to at least %lld\n",
-			(long long)LFS_INVERSE_MAX_BUFS((fs->lfs_ivnode->v_size / fs->lfs_bsize) - fs->lfs_segtabsz));
-	}
-	if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
-		fs->lfs_flags |= LFS_WARNED;
-		printf("lfs_mountfs: please consider increasing BUFPAGES to at least %lld\n",
-			(long long)LFS_INVERSE_MAX_BYTES((fs->lfs_ivnode->v_size - fs->lfs_segtabsz * fs->lfs_bsize) >> PAGE_SHIFT));
-	}
+	warn_ifile_size(fs);
 
 	/* Start the pagedaemon-anticipating daemon */
 	if (lfs_writer_daemon == 0 &&
@@ -1432,19 +1425,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	splx(s);
 
 	/* Comment on ifile size if it has become too large */
-	if (!(fs->lfs_flags & LFS_WARNED)) {
-		if (fs->lfs_ivnode->v_size / fs->lfs_bsize > LFS_MAX_BUFS)
-			printf("lfs_unmount: please consider increasing"
-				" NBUF to at least %lld\n",
-				(long long)(fs->lfs_ivnode->v_size /
-					    fs->lfs_bsize) *
-				(long long)(nbuf / LFS_MAX_BUFS));
-		if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES)
-			printf("lfs_unmount: please consider increasing"
-				" BUFPAGES to at least %lld\n",
-				(long long)(fs->lfs_ivnode->v_size *
-				bufpages / LFS_MAX_BYTES));
-	}
+	if (!(fs->lfs_flags & LFS_WARNED))
+		warn_ifile_size(fs);
 
 	/* Explicitly write the superblock, to update serial and pflags */
 	fs->lfs_pflags |= LFS_PF_CLEAN;
@@ -2208,4 +2190,67 @@ inconsistent:
 	uvm_vnp_setsize(vp, ip->i_size);
 
 	*vpp = vp;
+}
+
+/*
+ * Warn if the inode portion of the Ifile is too large to be contained
+ * in the buffer cache, according to LFS_MAX_BUFS / LFS_MAX_BYTES.
+ * XXX the estimates don't take multiple LFSs into account.
+ */
+static void
+warn_ifile_size(struct lfs *fs)
+{
+	KASSERT(LFS_MAX_BUFS > 0);
+	KASSERT(LFS_MAX_BYTES > 0);
+	if (((fs->lfs_ivnode->v_size >> fs->lfs_bshift) - fs->lfs_segtabsz) >
+	    LFS_MAX_BUFS) {
+		fs->lfs_flags |= LFS_WARNED;
+		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
+			         PRId64 " cannot fit in %d buffers\n",
+			         fs->lfs_ivnode->v_size -
+			         (fs->lfs_segtabsz << fs->lfs_bshift),
+			         LFS_MAX_BUFS);
+		log(LOG_WARNING, "lfs_mountfs: please consider increasing NBUF"
+			         " to at least %" PRId64 "\n",
+			         LFS_INVERSE_MAX_BUFS((fs->lfs_ivnode->v_size >>
+						       fs->lfs_bshift) -
+						      fs->lfs_segtabsz));
+	} else if ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) > LFS_MAX_BUFS) {
+		/* Same thing but LOG_NOTICE */
+		fs->lfs_flags |= LFS_WARNED;
+		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %"
+			        PRId64 " cannot fit in %d buffers\n",
+			        fs->lfs_ivnode->v_size, LFS_MAX_BUFS);
+		log(LOG_NOTICE, "lfs_mountfs: please consider increasing NBUF"
+			        " to at least %" PRId64 "\n",
+			        LFS_INVERSE_MAX_BUFS(fs->lfs_ivnode->v_size >>
+						     fs->lfs_bshift));
+	}
+
+	if (fs->lfs_ivnode->v_size - (fs->lfs_segtabsz << fs->lfs_bshift) >
+	    LFS_MAX_BYTES) {
+		fs->lfs_flags |= LFS_WARNED;
+		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
+			         PRId64 " cannot fit in %lu bytes\n",
+			         fs->lfs_ivnode->v_size - (fs->lfs_segtabsz <<
+						           fs->lfs_bshift),
+			         LFS_MAX_BYTES);
+		log(LOG_WARNING, "lfs_mountfs: please consider increasing"
+			         " BUFPAGES to at least %" PRId64 "\n",
+			         LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
+						       (fs->lfs_segtabsz <<
+						        fs->lfs_bshift)) >>
+				 PAGE_SHIFT);
+	} else if(fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
+		fs->lfs_flags |= LFS_WARNED;
+		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %" PRId64
+			        " cannot fit in %lu buffer bytes\n",
+			        fs->lfs_ivnode->v_size, LFS_MAX_BYTES);
+		log(LOG_NOTICE, "lfs_mountfs: please consider increasing"
+			        " BUFPAGES to at least %" PRId64 "\n",
+			        LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
+						      (fs->lfs_segtabsz <<
+						       fs->lfs_bshift)) >>
+				PAGE_SHIFT);
+	}
 }
