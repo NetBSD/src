@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.31 1997/06/18 04:23:14 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.32 1997/06/18 04:23:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Matthew R. Green for
+ *      This product includes software developed by Jonathan R. Stone for
  *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
