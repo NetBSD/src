@@ -1,6 +1,6 @@
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.3 1994/02/14 21:49:08 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.4 1994/02/22 00:57:26 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -11,9 +11,9 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsi_disk.h>
+#include <arch/mac68k/scsi/scsiconf.h>
 
 #ifdef DDB
 int     Debugger();

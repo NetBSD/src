@@ -13,8 +13,8 @@
 #include <sys/proc.h>
 #include <sys/device.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsiconf.h>
 #include <sys/scsiio.h>
 
 #define	b_screq b_driver1	/* XXX */
