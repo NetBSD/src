@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.13 1998/02/10 00:25:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ktrace.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_KTRACE_H_
+#define _SYS_KTRACE_H_
 
 /*
  * operations to ktrace system call  (KTROP(op))
@@ -173,3 +176,5 @@ void ktrsyscall __P((struct vnode *, register_t, size_t, register_t []));
 void ktrsysret __P((struct vnode *, register_t, int, register_t));
 
 #endif	/* !_KERNEL */
+
+#endif /* _SYS_KTRACE_H_ */

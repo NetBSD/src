@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.h,v 1.7 1996/05/03 21:13:41 cgd Exp $	*/
+/*	$NetBSD: mpool.h,v 1.8 1998/02/10 00:29:57 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)mpool.h	8.2 (Berkeley) 7/14/94
  */
+
+#ifndef _MPOOL_H_
+#define _MPOOL_H_
 
 #include <sys/queue.h>
 
@@ -99,3 +102,5 @@ int	 mpool_close __P((MPOOL *));
 void	 mpool_stat __P((MPOOL *));
 #endif
 __END_DECLS
+
+#endif /* _MPOOL_H_ */
