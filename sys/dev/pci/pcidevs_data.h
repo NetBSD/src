@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.12 2004/08/30 09:19:43 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.13 2004/08/30 09:43:46 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.12 2004/08/30 09:16:10 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.13 2004/08/30 09:43:14 tron Exp 
  */
 
 /*
@@ -70,24 +70,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "3c450-TX 10/100 Ethernet",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575TX,
-	    0,
-	    "3Com",
-	    "3c575-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575BTX,
-	    0,
-	    "3Com",
-	    "3CCFE575BT 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575CTX,
-	    0,
-	    "3Com",
-	    "3CCFE575CT 10/100 Ethernet",
-	},
-	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
 	    0,
 	    "3Com",
@@ -128,42 +110,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c556B 10/100 MiniPCI Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_E,
-	    0,
-	    "3Com",
-	    "3CCFEM656 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_M,
-	    0,
-	    "3Com",
-	    "3CCFEM656 56k Modem",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_E,
-	    0,
-	    "3Com",
-	    "3CCFEM656B 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_M,
-	    0,
-	    "3Com",
-	    "3CCFEM656B 56k Modem",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_E,
-	    0,
-	    "3Com",
-	    "3CXFEM656C 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_M,
-	    0,
-	    "3Com",
-	    "3CXFEM656C 56k Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSOHO100TX,
@@ -422,30 +368,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3ware",
 	    "Escalade IDE RAID (ASIC)",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
-	    0,
-	    "AboCom Systems",
-	    "FE2500 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_PCM200,
-	    0,
-	    "AboCom Systems",
-	    "PCM200 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2000VX,
-	    0,
-	    "AboCom Systems",
-	    "FE2000VX 10/100 Ethernet (OEM)",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500MX,
-	    0,
-	    "AboCom Systems",
-	    "FE2500MX 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -914,12 +836,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ADMtek",
 	    "ADMtek AN985 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985_2,
-	    0,
-	    "ADMtek",
-	    "ADMtek AN985 10/100 Ethernet (OEM)",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
@@ -3076,18 +2992,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82C693 PCI-ISA Bridge",
 	},
 	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CB_TXD,
-	    0,
-	    "Corega",
-	    "FEther CB-TXD 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_2CB_TXD,
-	    0,
-	    "Corega",
-	    "FEther II CB-TXD 10/100 Ethernet",
-	},
-	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
 	    0,
 	    "Corrollary",
@@ -3452,12 +3356,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "D-Link Systems",
 	    "DFE-530TXPLUS 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD,
-	    0,
-	    "D-Link Systems",
-	    "DFE-690TXD 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL4000,
@@ -3940,12 +3838,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MAXIRADIO",
 	},
 	{
-	    PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX,
-	    0,
-	    "Hawking Technology",
-	    "PN672TX 10/100 Ethernet",
-	},
-	{
 	    PCI_VENDOR_HEURICON, PCI_PRODUCT_HEURICON_PMPPC,
 	    0,
 	    "Heurikon/Computer Products",
@@ -4070,12 +3962,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "HiNT",
 	    "HB4 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SWC,
-	    0,
-	    "Hitachi",
-	    "MSVCC01/02/03/04 Video Capture Cards",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
@@ -4370,12 +4256,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "i82453GC Gigabit Ethernet (1000BASE-X)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
-	    0,
-	    "Intel",
-	    "56k Modem",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_COPPER,
@@ -5804,18 +5684,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Invertex",
 	    "AEON",
-	},
-	{
-	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBIDE2,
-	    0,
-	    "I-O Data Device",
-	    "CBIDE2 IDE controller",
-	},
-	{
-	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBSCII,
-	    0,
-	    "I-O Data Device",
-	    "CBSCII NinjaSCSI-32Bi SCSI",
 	},
 	{
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
@@ -7456,10 +7324,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82C822",
 	},
 	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C861,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_RM861HA,
 	    0,
 	    "Opti",
-	    "82C861",
+	    "RM861HA",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C700,
@@ -7496,18 +7364,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Peak System Technik",
 	    "PCAN CAN controller",
-	},
-	{
-	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX,
-	    0,
-	    "Planex Communications, Inc.",
-	    "FNW-3603-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3800_TX,
-	    0,
-	    "Planex Communications, Inc.",
-	    "FNW-3800-TX 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
@@ -7754,12 +7610,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "8129 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
-	    0,
-	    "Realtek Semiconductor",
-	    "8138 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139B,
@@ -10762,24 +10612,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "W6692 ISDN",
 	},
 	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI,
-	    0,
-	    "Workbit",
-	    "NinjaSCSI-32Bi SCSI",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE,
-	    0,
-	    "Workbit",
-	    "NinjaSCSI-32UDE SCSI",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI_KME,
-	    0,
-	    "Workbit",
-	    "NinjaSCSI-32Bi SCSI (KME)",
-	},
-	{
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA,
 	    0,
 	    "Workbit",
@@ -13618,12 +13450,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_COREGA, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Corega",
-	    NULL,
-	},
-	{
 	    PCI_VENDOR_ASIX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ASIX Electronics",
@@ -13822,12 +13648,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_ABOCOM, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "AboCom Systems",
-	    NULL,
-	},
-	{
 	    PCI_VENDOR_NETBOOST, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NetBoost",
@@ -13924,12 +13744,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_PLANEX, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Planex Communications, Inc.",
-	    NULL,
-	},
-	{
 	    PCI_VENDOR_CONEXANT, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Conexant Systems",
@@ -13996,6 +13810,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_CAVIUM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Cavium",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ANTARES, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Antares Microsystems, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SYMPHONY2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Symphony Labs (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TEKRAM2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Tekram Technology (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_MYSON, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Myson-Century Technology",
@@ -14038,45 +13876,15 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_ANTARES, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Antares Microsystems, Inc.",
-	    NULL,
-	},
-	{
-	    PCI_VENDOR_CAVIUM, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Cavium",
-	    NULL,
-	},
-	{
 	    PCI_VENDOR_FZJZEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "FZ Juelich / ZEL",
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_HAWKING, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Hawking Technology",
-	    NULL,
-	},
-	{
 	    PCI_VENDOR_SANDBURST, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Sandburst, Inc.",
-	    NULL,
-	},
-	{
-	    PCI_VENDOR_SYMPHONY2, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Symphony Labs (2nd PCI Vendor ID)",
-	    NULL,
-	},
-	{
-	    PCI_VENDOR_TEKRAM2, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Tekram Technology (2nd PCI Vendor ID)",
 	    NULL,
 	},
 	{
