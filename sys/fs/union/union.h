@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.13 2002/09/21 18:09:31 christos Exp $	*/
+/*	$NetBSD: union.h,v 1.1 2003/03/16 08:26:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
