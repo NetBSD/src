@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.73.2.1 2004/06/22 07:28:58 tron Exp $	*/
+/*	$NetBSD: options.c,v 1.73.2.1.2.1 2005/01/30 13:20:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.73.2.1 2004/06/22 07:28:58 tron Exp $");
+__RCSID("$NetBSD: options.c,v 1.73.2.1.2.1 2005/01/30 13:20:27 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -1404,7 +1404,6 @@ cpio_options(int argc, char **argv)
 			 * pax does this by default ..
 			 */
 			nodirs = 0;
-			flg |= RF;
 			break;
 		case 'f':
 			/*
@@ -1473,6 +1472,7 @@ cpio_options(int argc, char **argv)
 			 */
 			act = LIST;
 			listf = stdout;
+			flg &= ~RF;
 			break;
 		case 'u':
 			/*
