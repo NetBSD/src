@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.24 2003/05/21 13:53:18 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.25 2003/05/21 13:55:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.24 2003/05/21 13:53:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.25 2003/05/21 13:55:28 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.24 2003/05/21 13:53:18 yamt Exp $
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
@@ -75,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.24 2003/05/21 13:53:18 yamt Exp $
 extern struct nfsstats nfsstats;
 extern const int nfsv2_procid[NFS_NPROCS];
 long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
+struct pool nfs_reqcache_pool;
 
 #define	NFSRCHASH(xid) \
 	(&nfsrvhashtbl[((xid) + ((xid) >> 24)) & nfsrvhash])
@@ -149,6 +151,8 @@ nfsrv_initcache()
 	nfsrvhashtbl = hashinit(desirednfsrvcache, HASH_LIST, M_NFSD,
 	    M_WAITOK, &nfsrvhash);
 	TAILQ_INIT(&nfsrvlruhead);
+	pool_init(&nfs_reqcache_pool, sizeof(struct nfsrvcache), 0, 0, 0,
+	    "nfsreqcachepl", &pool_allocator_nointr);
 }
 
 /*
@@ -229,8 +233,7 @@ loop:
 	}
 	nfsstats.srvcache_misses++;
 	if (numnfsrvcache < desirednfsrvcache) {
-		rp = (struct nfsrvcache *)malloc((u_long)sizeof *rp,
-		    M_NFSD, M_WAITOK);
+		rp = pool_get(&nfs_reqcache_pool, PR_WAITOK);
 		memset((char *)rp, 0, sizeof *rp);
 		numnfsrvcache++;
 		rp->rc_flag = RC_LOCKED;
@@ -337,7 +340,7 @@ nfsrv_cleancache()
 		nextrp = TAILQ_NEXT(rp, rc_lru);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
-		free(rp, M_NFSD);
+		pool_put(&nfs_reqcache_pool, rp);
 	}
 	numnfsrvcache = 0;
 }
