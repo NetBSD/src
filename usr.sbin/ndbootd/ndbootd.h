@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.h,v 1.3 2002/04/09 02:39:14 thorpej Exp $	*/
+/*	$NetBSD: ndbootd.h,v 1.4 2003/08/17 22:34:17 itojun Exp $	*/
 
 /* ndbootd.h - header file for the Sun Network Disk (nd) daemon: */
 
@@ -86,6 +86,7 @@ static const char _ndbootd_h_rcsid[] = "<<Id: ndbootd.h,v 1.3 2001/05/22 13:13:2
 #include <net/if_dl.h>
 #endif				/* HAVE_NET_IF_DL_H */
 #include <arpa/inet.h>
+#include <ifaddrs.h>
 
 /* macros: */
 #ifdef __STDC__
