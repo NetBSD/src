@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.497 2002/02/27 01:16:30 christos Exp $
+#	$NetBSD: files,v 1.498 2002/02/27 05:03:24 jmc Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -815,6 +815,11 @@ file	dev/usb/ehci.c			ehci			needs-flag
 # radio devices, attaches to radio hardware driver
 device	radio
 attach	radio at radiodev
+
+#
+# IEEE 1212 routines
+define	ieee1212
+file	dev/std/ieee1212.c		ieee1212
 
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)
