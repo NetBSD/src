@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.9 1998/10/04 00:02:26 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.10 1999/10/04 17:46:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@ struct linux_sigcontext {
 	int	sc_esp_at_signal;
 	int	sc_ss;
 	int	sc_387;
-/* XXX XAX is this sigset_t? old_sigset_t? */
-/* XXX XAX what happens with RT sigs? */
-	linux_sigset_t sc_mask;
+	/* XXX check this */
+	linux_old_sigset_t sc_mask;
 	int	sc_cr2;
 };
 

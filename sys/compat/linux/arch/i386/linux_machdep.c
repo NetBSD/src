@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.46 1999/01/08 11:59:38 kleink Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.47 1999/10/04 17:46:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ linux_sendsig(catcher, sig, mask, code)
 	/* XXX Linux doesn't support the signal stack. */
 
 	/* Save signal mask. */
-	native_to_linux_sigset(mask, &frame.sf_sc.sc_mask);
+	native_to_linux_old_sigset(mask, &frame.sf_sc.sc_mask);
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -302,7 +302,7 @@ linux_sys_sigreturn(p, v, retval)
 	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_to_native_sigset(&context.sc_mask, &mask);
+	linux_old_to_native_sigset(&context.sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
