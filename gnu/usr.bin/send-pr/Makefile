@@ -18,7 +18,7 @@ GNATS_ROOT =
 GNATS_ADDR = gnats-bugs@NetBSD.ORG
 
 # The default release for this send-pr.
-DEFAULT_RELEASE =
+DEFAULT_RELEASE = <NetBSD-current source date>
 
 # The default organization for this send-pr.
 DEFAULT_ORGANIZATION =

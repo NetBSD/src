@@ -433,8 +433,18 @@ while [ -z "$REQUEST_ID" ]; do
     ""|sw-bug|doc-bug|change-request|support) CNT=`expr $CNT + 1` ;;
     *)  echo "$COMMAND: \`$CLASS' is not a valid value for \`Class'."
   esac
+  #
+  # 6) Release
+  #
+  PATTERN=">Release:"
+  RELEASE=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
+  if [ -z "$RELEASE" ]; then
+    echo "$COMMAND: you must include a Release: field in your report."
+  else
+    CNT=`expr $CNT + 1`
+  fi
 
-  [ $CNT -lt 5 -a -z "$BATCH" ] && 
+  [ $CNT -lt 6 -a -z "$BATCH" ] && 
     echo "Errors were found with the problem report."
 
   while true; do
