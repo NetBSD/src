@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/02/03 16:22:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/02/08 04:40:07 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -7,7 +7,7 @@ TOP=	${.CURDIR}/..
 BASENAME=boot-com
 BOOTCODE=      ${MDEC}/biosboot_com0.sym       # Serial output
 
-KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
+KERN!=	cd ${TOP}/kernel-ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL.gz\n" | \
 	${MAKE} -s -f-
 
