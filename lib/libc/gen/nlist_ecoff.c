@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.4 1997/07/13 19:46:07 christos Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.5 1997/12/15 05:43:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.4 1997/07/13 19:46:07 christos Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.5 1997/12/15 05:43:52 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,8 @@ __fdnlist_ecoff(fd, list)
 		BAD;
 	}
 	mappedsize = st.st_size;
-	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE,
+	    fd, 0);
 	if (mappedfile == (char *)-1)
 		BAD;
 
