@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.53 2002/04/04 23:38:46 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.54 2002/06/08 16:59:27 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.53 2002/04/04 23:38:46 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.54 2002/06/08 16:59:27 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -912,9 +912,9 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		break;
 	case ISPASYNC_PROMENADE:
 	if (IS_FC(isp) && isp->isp_dblev) {
-		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
+		static const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "(role %s) %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
-		const static char *roles[4] = {
+		const static char *const roles[4] = {
 		    "None", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;
