@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.5 2002/09/13 15:28:44 thorpej Exp $ */
+/* $NetBSD: dbsym.c,v 1.6 2003/03/06 00:26:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: dbsym.c,v 1.5 2002/09/13 15:28:44 thorpej Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.6 2003/03/06 00:26:10 thorpej Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H 
@@ -63,14 +63,13 @@ __RCSID("$NetBSD: dbsym.c,v 1.5 2002/09/13 15:28:44 thorpej Exp $");
 
 struct symbols {
 	char *name;
-	bfd_vma vma;
 	size_t offset;
 } db_symtab_symbols[] = {
 #define	X_DB_SYMTAB	0
-	{ "_db_symtab", 0, 0 },
+	{ "_db_symtab", 0 },
 #define	X_DB_SYMTABSIZE	1
-	{ "_db_symtabsize", 0, 0 },
-	{ NULL }
+	{ "_db_symtabsize", 0 },
+	{ NULL, 0 }
 };
 
 int	main(int, char **);
@@ -167,7 +166,7 @@ main(int argc, char **argv)
 	if (verbose)
 		fprintf(stderr, "done copying image to file offset %#lx\n",
 		    (long)db_symtab_symbols[X_DB_SYMTAB].offset);
-	
+
 	bfd_put_32(abfd, symtabsize,
 	    &mappedkfile[db_symtab_symbols[X_DB_SYMTABSIZE].offset]);
 
@@ -177,7 +176,7 @@ main(int argc, char **argv)
 	if (verbose)
 		fprintf(stderr, "exiting\n");
 
-	bfd_close(abfd);
+	bfd_close_all_done(abfd);
 	exit(0);
 }
 
@@ -204,7 +203,6 @@ find_symtab(bfd *abfd, struct symbols *symbols)
 	long number_of_symbols;
 	asymbol **symbol_table = NULL;
 	struct symbols *s;
-	struct sec *p;
 
 	storage_needed = bfd_get_symtab_upper_bound(abfd);
 	if (storage_needed <= 0)
@@ -221,7 +219,7 @@ find_symtab(bfd *abfd, struct symbols *symbols)
 
 	for (i = 0; i < number_of_symbols; i++) {
 		for (s = symbols; s->name != NULL; s++) {
-			const char *sym = bfd_asymbol_name(symbol_table[i]);
+		  const char *sym = symbol_table[i]->name;
 
 			/*
 			 * match symbol prefix '_' or ''.
@@ -229,7 +227,10 @@ find_symtab(bfd *abfd, struct symbols *symbols)
 			 */
 			if (!strcmp(s->name, sym) ||
 			    !strcmp(s->name + 1, sym)) {
-				s->vma = bfd_asymbol_value(symbol_table[i]);
+				s->offset = (size_t)
+				    (symbol_table[i]->section->filepos
+                                    + symbol_table[i]->value);
+				    
 			}
 		}
 	}
@@ -237,16 +238,6 @@ find_symtab(bfd *abfd, struct symbols *symbols)
 	free(symbol_table);
 
 	for (s = symbols; s->name != NULL; s++) {
-		if (s->vma == 0)
-			return (1);
-
-		for (p = abfd->sections; p != NULL; p = p->next) {
-			if (p->vma > s->vma || p->vma + p->_raw_size < s->vma)
-				continue;
-
-			s->offset = (size_t)(p->filepos + (s->vma - p->vma));
-		}
-
 		if (s->offset == 0)
 			return (1);
 	}
