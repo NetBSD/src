@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.115 2001/05/29 18:19:20 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.116 2001/05/30 09:06:28 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.115 2001/05/29 18:19:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.116 2001/05/30 09:06:28 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -439,6 +439,7 @@ mips_vector_init()
 		break;
 #if 0	/* not ready yet */
 	case MIPS_RC32364:
+	case MIPS_RC32334:
 		/* 
 		 * the IDT RC32364 core is a 32 bit MIPS2 processor with
 		 * MIPS3/MIPS4 extensions (e.g. it has an R4000-style TLB).
