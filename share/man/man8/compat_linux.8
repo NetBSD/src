@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.20 2001/09/05 23:51:53 wiz Exp $
+.\"	$NetBSD: compat_linux.8,v 1.21 2001/09/09 22:07:38 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -458,10 +458,11 @@ Extract the files from these gzipped tarfiles in your /emul/linux directory
 (possibly omitting or afterwards removing files you don't need), and you
 are done.
 .Ss Programs using SVGAlib
-SVGAlib binaries require some extra care. The
-.Xr pcvt 4
-virtual console driver
-has to be in the kernel for them to work, and you will also have to create
+SVGAlib binaries require some extra care.  You need to have
+.Cd options WSDISPLAY_COMPAT_USL
+in your kernel (see
+.Xr wscons 4 ) ,
+and you will also have to create
 some symbolic links in the
 .Pa /emul/linux/dev
 directory, namely:
