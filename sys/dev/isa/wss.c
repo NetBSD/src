@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.55 1999/02/17 02:37:42 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.56 1999/02/17 23:05:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -87,12 +87,12 @@ struct audio_hw_if wss_hw_if = {
 	NULL,
 	ad1848_query_encoding,
 	ad1848_set_params,
-	ad1848_isa_round_blocksize,
+	ad1848_round_blocksize,
 	ad1848_commit_settings,
-	ad1848_isa_dma_init_output,
-	ad1848_isa_dma_init_input,
-	ad1848_isa_dma_output,
-	ad1848_isa_dma_input,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	ad1848_halt_out,
 	ad1848_halt_in,
 	NULL,
@@ -106,6 +106,8 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_isa_round_buffersize,
 	ad1848_isa_mappage,
 	ad1848_isa_get_props,
+	ad1848_isa_trigger_output,
+	ad1848_isa_trigger_input,
 };
 
 /*

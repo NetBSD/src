@@ -1,4 +1,4 @@
-/*	$NetBSD: wssvar.h,v 1.4 1998/08/25 22:34:31 pk Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.5 1999/02/17 23:05:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -57,10 +57,10 @@
 
 struct wss_softc {
 	struct  ad1848_isa_softc sc_ad1848;
-#define	wss_ic	   sc_ad1848.sc_ic
-#define wss_irq    sc_ad1848.sc_irq
-#define wss_drq    sc_ad1848.sc_drq
-#define wss_recdrq sc_ad1848.sc_recdrq
+#define	wss_ic	    sc_ad1848.sc_ic
+#define wss_irq     sc_ad1848.sc_irq
+#define wss_playdrq sc_ad1848.sc_playdrq
+#define wss_recdrq  sc_ad1848.sc_recdrq
 
 #if 0
 	struct	isadev sc_id;		/* ISA device */
