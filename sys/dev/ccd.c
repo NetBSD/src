@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.65 1999/11/15 18:49:08 fvdl Exp $	*/
+/*	$NetBSD: ccd.c,v 1.66 2000/02/08 12:56:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -192,8 +192,6 @@ ccdattach(num)
 	    M_DEVBUF, M_NOWAIT);
 	if (ccd_softc == NULL) {
 		printf("WARNING: no memory for concatenated disks\n");
-		if (ccd_softc != NULL)
-			free(ccd_softc, M_DEVBUF);
 		return;
 	}
 	numccd = num;
