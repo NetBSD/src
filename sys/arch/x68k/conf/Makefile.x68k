@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.14 1997/03/14 23:27:36 mycroft Exp $
+#	$NetBSD: Makefile.x68k,v 1.15 1997/07/14 14:42:52 oki Exp $
 
 # Makefile for NetBSD
 #
@@ -41,7 +41,7 @@ CMACHFLAGS=	-m68030
 .else
 CMACHFLAGS=	-m68060
 .endif
-CWARNFLAGS=	-Werror
+CWARNFLAGS=	-Werror -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CMACHFLAGS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
@@ -112,14 +112,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${X68K}/x68k/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${X68K}/x68k/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${X68K}/x68k/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -139,11 +135,11 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${X68K}/x68k/Locore.c ${CFILES} ioconf.c param.c | \
+	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
@@ -166,8 +162,6 @@ depend: .depend
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${X68K}/x68k/genassym.c
 
 
 # depend on root or device configuration
@@ -177,10 +171,10 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
-dma.o genassym.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
 
 
 locore.o: ${X68K}/x68k/locore.s assym.h
