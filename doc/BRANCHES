@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.37 2005/03/17 02:19:00 jmc Exp $
+#	$NetBSD: BRANCHES,v 1.38 2005/03/19 18:20:25 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -734,7 +734,6 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			src/sys/arch/evbarm/conf/TS7200
 			src/sys/arch/evbppc/conf/WALNUT
 			src/sys/arch/evbsh3/conf/COMPUTEXEVB
-			(with a patch in port-evbsh3/29334)
 			src/sys/arch/evbsh5/conf/CAYMAN64
 			src/sys/arch/hp300/conf/GENERIC
 			src/sys/arch/hp700/conf/GENERIC
