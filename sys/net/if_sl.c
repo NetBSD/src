@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.78 2001/11/12 23:49:42 lukem Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.79 2002/01/14 18:19:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.78 2001/11/12 23:49:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.79 2002/01/14 18:19:16 kleink Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -89,9 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.78 2001/11/12 23:49:42 lukem Exp $");
 #endif
 
 #include <machine/cpu.h>
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
