@@ -4,6 +4,8 @@ usr/X11R6/lib/libICE.so.6
 usr/X11R6/lib/libICE.so.6.3
 usr/X11R6/lib/libPEX5.so.6
 usr/X11R6/lib/libPEX5.so.6.0
+usr/X11R6/lib/libSM.so.6
+usr/X11R6/lib/libSM.so.6.0
 usr/X11R6/lib/libX11.so.6
 usr/X11R6/lib/libX11.so.6.1
 usr/X11R6/lib/libXIE.so.6
