@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.62 1996/10/17 19:41:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -184,7 +184,9 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
+#ifdef USER_LDT
 	struct pcb *pcb;
+#endif
 	struct vmspace *vm;
 
 #if NNPX > 0
