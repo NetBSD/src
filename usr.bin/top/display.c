@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.12 2004/11/04 07:35:15 dsl Exp $	*/
+/*	$NetBSD: display.c,v 1.13 2005/01/24 10:38:47 simonb Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.12 2004/11/04 07:35:15 dsl Exp $");
+__RCSID("$NetBSD: display.c,v 1.13 2005/01/24 10:38:47 simonb Exp $");
 #endif
 
 #include "os.h"
@@ -277,9 +277,9 @@ time_t *tod;
      *  Display the current time.
      *  "ctime" always returns a string that looks like this:
      *  
-     *	Sun Sep 16 01:03:52 1973
+     *      Sun Sep 16 01:03:52 1973
      *      012345678901234567890123
-     *	          1         2
+     *                1         2
      *
      *  We want indices 11 thru 18 (length 8).
      */
