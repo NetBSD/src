@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2000/10/01 10:24:57 itojun Exp $
+#	$NetBSD: Makefile,v 1.7 2000/10/01 22:13:37 itojun Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.6 2000/10/01 10:24:57 itojun Exp $
+#	$Id: Makefile,v 1.7 2000/10/01 22:13:37 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -33,6 +33,16 @@ SRCS+=	app_rand.c apps.c asn1pars.c ca.c ciphers.c crl.c crl2p7.c dgst.c \
 LDADD+=	-lssl -lcrypto
 
 CPPFLAGS+= -DMONOLITH -DUSE_SSL
+
+# with normal OpenSSL, NO_{RC5,IDEA} changes ABI due to change in struct/union.
+# we nuked all of them in our header files and it is now safe.
+.if ${MKCRYPTO_RC5} == "no"
+CPPFLAGS+= -DNO_RC5
+.endif
+.if ${MKCRYPTO_IDEA} == "no"
+CPPFLAGS+= -DNO_IDEA
+.endif
+
 MKMAN=	no
 
 CRYPTODIST=	${.CURDIR}/../../crypto/dist
