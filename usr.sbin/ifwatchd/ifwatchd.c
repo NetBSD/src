@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.9 2002/04/15 21:08:41 tron Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.10 2003/03/05 09:03:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,12 +65,14 @@
 #include <err.h>
 #include <ifaddrs.h>
 
+enum event { ARRIVAL, DEPARTURE, UP, DOWN };
 /* local functions */
 static void usage(void);
 static void dispatch(void*, size_t);
-static void check_addrs(char *cp, int addrs, int is_up);
-static void invoke_script(struct sockaddr *sa, struct sockaddr *dst, int is_up, int ifindex);
+static void check_addrs(char *cp, int addrs, enum event ev);
+static void invoke_script(struct sockaddr *sa, struct sockaddr *dst, enum event ev, int ifindex, const char *ifname_hint);
 static void list_interfaces(const char *ifnames);
+static void check_announce(struct if_announcemsghdr *ifan);
 static void rescan_interfaces(void);
 static void free_interfaces(void);
 static int find_interface(int index);
@@ -90,10 +92,18 @@ static int if_is_connected(const char * ifname);
 /* global variables */
 static int verbose = 0;
 static int inhibit_initial = 0;
+static const char *arrival_script = NULL;
+static const char *departure_script = NULL;
 static const char *up_script = NULL;
 static const char *down_script = NULL;
 static char DummyTTY[] = _PATH_DEVNULL;
 static char DummySpeed[] = "9600";
+static const char **scripts[] = {
+	&arrival_script,
+	&departure_script,
+	&up_script,
+	&down_script
+    };
 
 struct interface_data {
 	SLIST_ENTRY(interface_data) next;
@@ -109,7 +119,7 @@ main(int argc, char **argv)
 	int errs = 0;
 	char msg[2048], *msgp;
 
-	while ((c = getopt(argc, argv, "vhiu:d:")) != -1)
+	while ((c = getopt(argc, argv, "vhiu:d:A:D:")) != -1)
 		switch (c) {
 		case 'h':
 			usage();
@@ -129,6 +139,14 @@ main(int argc, char **argv)
 			down_script = optarg;
 			break;
 
+		case 'A':
+			arrival_script = optarg;
+			break;
+
+		case 'D':
+			departure_script = optarg;
+			break;
+
 		default:
 			errs++;
 			break;
@@ -146,6 +164,8 @@ main(int argc, char **argv)
 	if (verbose) {
 		printf("up_script: %s\ndown_script: %s\n",
 			up_script, down_script);
+		printf("arrival_script: %s\ndeparture_script: %s\n",
+			arrival_script, departure_script);
 		printf("verbosity = %d\n", verbose);
 	}
 
@@ -186,14 +206,16 @@ usage()
 {
 	fprintf(stderr, 
 	    "usage:\n"
-	    "\tifwatchd [-h] [-v] [-u up-script] [-d down-script] ifname(s)\n"
+	    "\tifwatchd [-h] [-v] [-u up-script] [-d down-script] [-A arrival-script] [-D departure-script] ifname(s)\n"
 	    "\twhere:\n"
 	    "\t -h       show this help message\n"
 	    "\t -v       verbose/debug output, don't run in background\n"
 	    "\t -i       no (!) initial run of the up script if the interface\n"
 	    "\t          is already up on ifwatchd startup\n"
 	    "\t -u <cmd> specify command to run on interface up event\n"
-	    "\t -d <cmd> specify command to run on interface down event\n");
+	    "\t -d <cmd> specify command to run on interface down event\n"
+	    "\t -A <cmd> specify command to run on interface arrival event\n"
+	    "\t -D <cmd> specify command to run on interface departure event\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -202,19 +224,19 @@ dispatch(void *msg, size_t len)
 {
 	struct rt_msghdr *hd = msg;
 	struct ifa_msghdr *ifam;
-	int is_up;
+	enum event ev;
 
-	is_up = 0;
 	switch (hd->rtm_type) {
 	case RTM_NEWADDR:
-		is_up = 1;
+		ev = UP;
 		goto work;
 	case RTM_DELADDR:
-		is_up = 0;
+		ev = DOWN;
 		goto work;
 	case RTM_IFANNOUNCE:
 		rescan_interfaces();
-		break;
+		check_announce((struct if_announcemsghdr *)msg);
+		return;
 	}
 	if (verbose)
 		printf("unknown message ignored\n");
@@ -222,13 +244,14 @@ dispatch(void *msg, size_t len)
 
 work:
 	ifam = (struct ifa_msghdr *)msg;
-	check_addrs((char *)(ifam + 1), ifam->ifam_addrs, is_up);
+	check_addrs((char *)(ifam + 1), ifam->ifam_addrs, ev);
 }
 
 static void
-check_addrs(cp, addrs, is_up)
+check_addrs(cp, addrs, ev)
 	char    *cp;
-	int     addrs, is_up;
+	int     addrs;
+	enum event ev;
 {
 	struct sockaddr *sa, *ifa = NULL, *brd = NULL;
 	int ifndx = 0, i;
@@ -255,20 +278,26 @@ check_addrs(cp, addrs, is_up)
 	    }
 	}
 	if (ifa != NULL)
-	    invoke_script(ifa, brd, is_up, ifndx);
+	    invoke_script(ifa, brd, ev, ifndx, NULL);
 }
 
 static void
-invoke_script(sa, dest, is_up, ifindex)
+invoke_script(sa, dest, ev, ifindex, ifname_hint)
 	struct sockaddr *sa, *dest;
-	int is_up, ifindex;
+	enum event ev;
+	int ifindex;
+	const char *ifname_hint;
 {
-	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ],
-	     *ifname;
+	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ];
+	const char *ifname;
 	const char *script;
 	int status;
 
-	if (sa->sa_family == AF_INET6) {
+	if (sa != NULL && sa->sa_len == 0) {
+	    fprintf(stderr, "illegal socket address (sa_len == 0)\n");
+	    return;
+	}
+	if (sa != NULL && sa->sa_family == AF_INET6) {
 		struct sockaddr_in6 sin6;
 
 		(void) memcpy(&sin6, (struct sockaddr_in6 *)sa, sizeof (sin6));
@@ -276,17 +305,18 @@ invoke_script(sa, dest, is_up, ifindex)
 			return;
 	}
 
-	daddr[0] = 0;
+	addr[0] = daddr[0] = 0;
 	ifname = if_indextoname(ifindex, ifname_buf);
-	if (sa->sa_len == 0) {
-	    fprintf(stderr, "illegal socket address (sa_len == 0)\n");
+	ifname = ifname ? ifname : ifname_hint;
+	if (ifname == NULL)
 	    return;
-	}
 
+	if (sa != NULL) {
 	if (getnameinfo(sa, sa->sa_len, addr, sizeof addr, NULL, 0, NI_NUMERICHOST)) {
 	    if (verbose)
 		printf("getnameinfo failed\n");
 	    return;	/* this address can not be handled */
+	}
 	}
 	if (dest != NULL) {
 	    if (getnameinfo(dest, dest->sa_len, daddr, sizeof daddr, NULL, 0, NI_NUMERICHOST)) {
@@ -296,7 +326,7 @@ invoke_script(sa, dest, is_up, ifindex)
 	    }
 	}
 
-	script = is_up? up_script : down_script;
+	script = *scripts[ev];
 	if (script == NULL) return;
 
 	if (verbose)
@@ -332,6 +362,31 @@ static void list_interfaces(const char *ifnames)
 		printf("interface \"%s\" has index %d\n", p->ifname, p->index);
 	}
 	free(names);
+}
+
+static void
+check_announce(struct if_announcemsghdr *ifan)
+{
+	struct interface_data * p;
+	const char *ifname = ifan->ifan_name;
+
+	SLIST_FOREACH(p, &ifs, next) {
+	    if (strcmp(p->ifname, ifname) == 0) {
+	        switch (ifan->ifan_what) {
+		case IFAN_ARRIVAL:
+		    invoke_script(NULL, NULL, ARRIVAL, p->index, NULL);
+		    break;
+		case IFAN_DEPARTURE:
+		    invoke_script(NULL, NULL, DEPARTURE, p->index, p->ifname);
+		    break;
+		default:
+		    if (verbose)
+			(void) printf("unknown announce: what=%d\n", ifan->ifan_what);
+		    break;
+		}
+		return;
+	    }
+	}
 }
 
 static void rescan_interfaces()
@@ -384,7 +439,7 @@ static void run_initial_ups()
 		SLIST_FOREACH(ifd, &ifs, next) {
 		    if (strcmp(ifd->ifname, p->ifa_name) == 0) {
 		    	if (if_is_connected(ifd->ifname))
-			    invoke_script(p->ifa_addr, p->ifa_dstaddr, 1, ifd->index);
+			    invoke_script(p->ifa_addr, p->ifa_dstaddr, UP, ifd->index, ifd->ifname);
 			break;
 		    }
 		}
