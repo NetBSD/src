@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.55 2002/06/07 05:59:06 cjs Exp $
+#	$NetBSD: services,v 1.56 2002/06/11 02:17:33 lukem Exp $
 #
 # Network services, Internet style
 #
@@ -7,6 +7,8 @@
 # even if the protocol doesn't support UDP operations.
 # Updated from RFC 1340, ``Assigned Numbers'' (July 1992).  Not all ports
 # are included, only the more common ones.
+# The latest IANA list is available from:
+#	http://www.iana.org/assignments/port-numbers
 #
 #	from: @(#)services	8.2 (Berkeley) 3/26/95
 #
@@ -198,8 +200,10 @@ ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp		# Prospero non-privileged
 prospero-np	1525/udp
-radius		1645/udp
-radacct		1646/udp
+radius		1812/tcp
+radius		1812/udp
+radius-acct	1813/tcp		radacct
+radius-acct	1813/udp		radacct
 cvspserver	2401/tcp
 cvspserver	2401/udp
 mysql		3306/tcp		# MySQL
