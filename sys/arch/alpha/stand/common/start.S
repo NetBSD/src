@@ -1,4 +1,34 @@
-/* $NetBSD: start.S,v 1.11 1999/04/02 03:11:57 cgd Exp $ */
+/* $NetBSD: start.S,v 1.12 1999/04/11 03:36:21 cgd Exp $ */
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*  
  * Mach Operating System
@@ -32,11 +62,27 @@
  * start --
  *	Entry point for boot/standalone programs.
  *
- * Arguments:
- *	a0				long (first free physical page)
+ * Unified and Primary Bootstrap arguments:
+ *	None.
  *
- * This is where the prom comes to.  Leaves all exception and interrupts
- * to prom, runs off prom's stack too.  No return values.
+ * Secondary Bootstrap arguments:
+ *	a0		first free physical page
+ *
+ * Standalone program arguments:
+ *
+ *	a0		first free physical page
+ *	a1		page table base register (PTBR)
+ *	a2		bootinfo magic number
+ *	a3		pointer to the bootinfo structure
+ *	a4		bootinfo version number
+ *
+ * All bootstrap and standalone programs leave exception and interrupt
+ * handling to the firmware, and run from the firmware-provided stack.
+ * To return to the firmware, these programs simply invoke the 'halt'
+ * PALcode operation.
+ *
+ * Bootstrap programs have to clear their own BSS.  Standalone programs
+ * have their BSS cleared by the bootstraps.
  */
 	.text
 	.set	noreorder		/* don't reorder instructions */
@@ -47,6 +93,26 @@ NESTED(start, 1, ENTRY_FRAME, ra, 0, 0)
 	br	pv,Lstartgp
 Lstartgp:
 	LDGP(pv)
+
+#if defined(STANDALONE_PROGRAM)
+
+	/*
+	 * save the arguments, invoke init_prom_calls() to set up console
+	 * callbacks and output, then restore the arguments.
+	 */
+	mov	a0, s0
+	mov	a1, s1
+	mov	a2, s2
+	mov	a3, s3
+	mov	a4, s4
+	CALL(init_prom_calls)
+	mov	s0, a0
+	mov	s1, a1
+	mov	s2, a2
+	mov	s3, a3
+	mov	s4, a4
+
+#else /* defined(STANDALONE_PROGRAM) */
 
 #if !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK)
 	lda	sp,start		/* start stack below text */
@@ -61,6 +127,8 @@ Lstartgp:
 #if !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK)
 	or	s0,zero,a0
 #endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
+
+#endif /* defined(STANDALONE_PROGRAM) */
 
 	CALL(main)			/* transfer to C */
 
