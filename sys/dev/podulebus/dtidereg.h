@@ -1,4 +1,4 @@
-/* $NetBSD: dtidereg.h,v 1.1 2000/05/09 21:56:03 bjh21 Exp $ */
+/* $NetBSD: dtidereg.h,v 1.1 2001/06/08 20:13:24 bjh21 Exp $ */
 
 /* This file is in the public domain */
 
