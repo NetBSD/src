@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.666 2004/11/17 03:06:03 junyoung Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.667 2004/11/17 11:18:27 jdarrow Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.665 2004/11/17 03:04:45 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.666 2004/11/17 11:15:03 jdarrow Exp 
  */
 
 /*
@@ -592,6 +592,7 @@
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
+#define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
@@ -2318,6 +2319,9 @@
 /* Rainbow Technologies products */
 #define	PCI_PRODUCT_RAINBOW_CS200	0x0200		/* CryptoSwift 200 PKI Accelerator */
 
+/* Ralink Technologies products */
+#define	PCI_PRODUCT_RALINK_RT2460	0x0101		/* RT2460 802.11b */
+
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
 
@@ -2632,6 +2636,7 @@
 #define	PCI_PRODUCT_TI_PCI4520LYNX	0x802A		/* PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI7410LYNX	0x802B		/* PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_ACX100	0x8400		/* ACX100 802.11b */
+#define	PCI_PRODUCT_TI_ACX111	0x9066		/* ACX111 802.11b/g */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 PCI-CardBus Bridge */
