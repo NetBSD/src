@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2002/05/02 18:03:02 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.1 2002/05/07 13:55:41 isaki Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"

@@ -6,7 +6,7 @@
 #	requires /bin/sh /bin/dd (x_dd) /bin/mkdir /bin/rm /bin/test
 #		 /sbin/disklabel
 #
-#	$NetBSD: installboot.sh,v 1.1 2000/09/12 16:42:51 minoura Exp $
+#	$NetBSD: installboot.sh,v 1.1 2002/05/07 13:55:43 isaki Exp $
 #
 #
 #    originally from:
