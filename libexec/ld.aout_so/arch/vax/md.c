@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 1998/09/05 13:08:39 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.9 1998/10/12 01:33:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@ unsigned char		*addr;
 	case 1:
 		return get_short(addr);
 	case 2:
+		if (rp->r_baserel)
+			return 0;
 		return get_long(addr);
 	default:
 		errx(1, "Unsupported relocation size: %x",
@@ -81,12 +83,6 @@ long			relocation;
 unsigned char		*addr;
 int			relocatable_output;
 {
-	/*
-	 * 
-	 */
-	if (rp->r_baserel && rp->r_pcrel && !relocatable_output)
-		relocation += got_symbol->value - (rp->r_address + 4);
-
 	switch (RELOC_TARGET_SIZE(rp)) {
 	case 0:
 		put_byte(addr, relocation);
@@ -95,6 +91,10 @@ int			relocatable_output;
 		put_short(addr, relocation);
 		break;
 	case 2:
+#ifndef RTLD
+		if (rp->r_baserel)
+			relocation += got_symbol->value + get_long(addr);
+#endif
 		put_long(addr, relocation);
 		break;
 	default:
@@ -222,17 +222,6 @@ struct relocation_info	*rp, *r;
 int			type;
 got_t			*gotp;
 {
-	/*
-	 * this is a fixup from text space.
-	 *    consider that addend is really -pc_offset + addend.
-	 *    so remove -pc_offset from addend (which is stored in
-	 *    the got).
-	 *    movl l^datum+4, r0 --> movl @_datum@GOT, r0
-	 *			     _datum@GOT: .long 4
-	 */
-	if (rp->r_baserel && rp->r_pcrel)
-		*gotp += (rp->r_address + 4);
-
 	r->r_baserel = 1;
 	if (type & RELTYPE_RELATIVE)
 		r->r_relative = 1;
