@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.6 1995/12/20 00:40:29 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.7 1996/03/17 01:06:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -55,8 +55,14 @@ struct tcds_softc {
 int	tcdsmatch __P((struct device *, void *, void *));
 void	tcdsattach __P((struct device *, struct device *, void *));
 int     tcdsprint(void *, char *);
-struct cfdriver tcdscd =
-    { NULL, "tcds", tcdsmatch, tcdsattach, DV_DULL, sizeof(struct tcds_softc) };
+
+struct cfattach tcds_ca = {
+	sizeof(struct tcds_softc), tcdsmatch, tcdsattach
+};
+
+struct cfdriver tcds_cd = {
+	NULL, "tcds", DV_DULL
+};
 
 /*static*/ int	tcds_intr __P((void *));
 /*static*/ int	tcds_intrnull __P((void *));

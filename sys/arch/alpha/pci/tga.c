@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.3 1995/11/23 02:38:25 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.4 1996/03/17 01:06:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -52,8 +52,12 @@
 int	tgamatch __P((struct device *, void *, void *));
 void	tgaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver tgacd = {
-	NULL, "tga", tgamatch, tgaattach, DV_DULL, sizeof(struct tga_softc)
+struct cfdriver tga_ca = {
+	tgamatch, tgaattach
+};
+
+struct cfdriver tga_cd = {
+	NULL, "tga", DV_DULL, sizeof(struct tga_softc)
 };
 
 int	tga_identify __P((tga_reg_t *));
@@ -447,7 +451,7 @@ tgaioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct tga_softc *sc = tgacd.cd_devs[TGAUNIT(dev)];
+	struct tga_softc *sc = tga_cd.cd_devs[TGAUNIT(dev)];
 
 	return (ENOTTY);
 }
@@ -458,7 +462,7 @@ tgammap(dev, offset, nprot)
 	int offset;
 	int nprot;
 {
-	struct tga_softc *sc = tgacd.cd_devs[TGAUNIT(dev)];
+	struct tga_softc *sc = tga_cd.cd_devs[TGAUNIT(dev)];
 
 	if (offset > sc->sc_dc->dc_tgaconf->tgac_cspace_size)
 		return -1;
