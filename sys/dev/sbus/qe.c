@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.6 1999/05/18 23:52:59 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.7 1999/06/24 19:59:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
  * and a loan of a card from Paul Southworth of the Internet Engineering
  * Group (www.ieng.com).
  */
+
+#define QEDEBUG
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -151,6 +153,10 @@ struct qe_softc {
 
 	/* MAC address */
 	u_int8_t sc_enaddr[6];
+
+#ifdef QEDEBUG
+	int	sc_debug;
+#endif
 };
 
 int	qematch __P((struct device *, struct cfdata *, void *));
@@ -553,7 +559,7 @@ qewatchdog(ifp)
 	struct qe_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	ifp->if_oerrors++;
 
 	qereset(sc);
 }
@@ -575,6 +581,11 @@ qeintr(arg)
 #endif
 	/* Read QEC status and channel status */
 	qecstat = bus_space_read_4(t, sc->sc_qr, QEC_QRI_STAT);
+#ifdef QEDEBUG
+	if (sc->sc_debug) {
+		printf("qe%d: intr: qecstat=%x\n", sc->sc_channel, qecstat);
+	}
+#endif
 
 	/* Filter out status for this channel */
 	qecstat = qecstat >> (4 * sc->sc_channel);
@@ -583,7 +594,30 @@ qeintr(arg)
 
 	qestat = bus_space_read_4(t, sc->sc_cr, QE_CRI_STAT);
 
+#ifdef QEDEBUG
+	if (sc->sc_debug) {
+		char bits[64]; int i;
+		bus_space_tag_t t = sc->sc_bustag;
+		bus_space_handle_t mr = sc->sc_mr;
+
+		printf("qe%d: intr: qestat=%s\n", sc->sc_channel,
+		bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits, sizeof(bits)));
+
+		printf("MACE registers:\n");
+		for (i = 0 ; i < 32; i++) {
+			printf("  m[%d]=%x,", i, bus_space_read_1(t, mr, i));
+			if (((i+1) & 7) == 0)
+				printf("\n");
+		}
+	}
+#endif
+
 	if (qestat & QE_CR_STAT_ALLERRORS) {
+#ifdef QEDEBUG
+		char bits[64];
+		printf("qe%d: eint: qestat=%s\n", sc->sc_channel,
+		bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits, sizeof(bits)));
+#endif
 		r |= qe_eint(sc, qestat);
 		if (r == -1)
 			return (1);
@@ -648,6 +682,9 @@ qe_rint(sc)
 	struct qec_xd *xd = sc->sc_rb.rb_rxd;
 	unsigned int bix, len;
 	unsigned int nrbuf = sc->sc_rb.rb_nrbuf;
+#ifdef QEDEBUG
+	int npackets = 0;
+#endif
 
 	bix = sc->sc_rb.rb_rdtail;
 
@@ -658,6 +695,10 @@ qe_rint(sc)
 		len = xd[bix].xd_flags;
 		if (len & QEC_XD_OWN)
 			break;
+
+#ifdef QEDEBUG
+		npackets++;
+#endif
 
 		len &= QEC_XD_LENGTH;
 		len -= 4;
@@ -670,6 +711,11 @@ qe_rint(sc)
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
 	}
+#ifdef QEDEBUG
+	if (npackets == 0)
+		printf("%s: rint: no packets; rb index %d; status 0x%x\n",
+			sc->sc_dev.dv_xname, bix, len);
+#endif
 
 	sc->sc_rb.rb_rdtail = bix;
 
@@ -922,10 +968,7 @@ qeioctl(ifp, cmd, data)
 			qeinit(sc);
 		}
 #ifdef QEDEBUG
-		if (ifp->if_flags & IFF_DEBUG)
-			sc->sc_debug = 1;
-		else
-			sc->sc_debug = 0;
+		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
 #endif
 		break;
 
@@ -971,12 +1014,13 @@ qeinit(sc)
 	struct qec_softc *qec = sc->sc_qec;
 	u_int32_t qecaddr;
 	u_int8_t *ea;
-	int i, s;
+	int s;
 
 #if defined(SUN4U) || defined(__GNUC__)
 	(void)&t;
 #endif
 	s = splimp();
+
 	qestop(sc);
 
 	/*
@@ -1005,8 +1049,14 @@ qeinit(sc)
 	bus_space_write_1(t, mr, QE_MRI_PHYCC, QE_MR_PHYCC_ASEL);
 	bus_space_write_1(t, mr, QE_MRI_XMTFC, QE_MR_XMTFC_APADXMT);
 	bus_space_write_1(t, mr, QE_MRI_RCVFC, 0);
+
+	/*
+	 * Mask MACE's receive interrupt, since we're being notified
+	 * by the QEC after DMA completes.
+	 */
 	bus_space_write_1(t, mr, QE_MRI_IMR,
 			  QE_MR_IMR_CERRM | QE_MR_IMR_RCVINTM);
+
 	bus_space_write_1(t, mr, QE_MRI_BIUCC,
 			  QE_MR_BIUCC_BSWAP | QE_MR_BIUCC_64TS);
 
@@ -1022,32 +1072,26 @@ qeinit(sc)
 	ea = sc->sc_enaddr;
 	bus_space_write_1(t, mr, QE_MRI_IAC,
 			  QE_MR_IAC_ADDRCHG | QE_MR_IAC_PHYADDR);
-	bus_space_write_1(t, mr, QE_MRI_PADR, ea[0]);
-	bus_space_write_1(t, mr, QE_MRI_PADR, ea[1]);
-	bus_space_write_1(t, mr, QE_MRI_PADR, ea[2]);
-	bus_space_write_1(t, mr, QE_MRI_PADR, ea[3]);
-	bus_space_write_1(t, mr, QE_MRI_PADR, ea[4]);
-	bus_space_write_1(t, mr, QE_MRI_PADR, ea[5]);
+	bus_space_write_multi_1(t, mr, QE_MRI_PADR, ea, 6);
 
 	/* Apply media settings */
 	qe_ifmedia_upd(ifp);
 
 	/*
-	 * Logical address filter
+	 * Clear Logical address filter
 	 */
 	bus_space_write_1(t, mr, QE_MRI_IAC,
 			  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
-	for (i = 0; i < 8; i++)
-		bus_space_write_1(t, mr, QE_MRI_LADRF, 0);
+	bus_space_set_multi_1(t, mr, QE_MRI_LADRF, 0, 8);
 	bus_space_write_1(t, mr, QE_MRI_IAC, 0);
 
 	/* Clear missed packet count (register cleared on read) */
 	(void)bus_space_read_1(t, mr, QE_MRI_MPC);
 
-	/* Enable transmitter & receiver */
-	bus_space_write_1(t, mr, QE_MRI_MACCC,
-			  QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV |
-			  ((ifp->if_flags&IFF_PROMISC) ? QE_MR_MACCC_PROM : 0));
+#if 0
+	/* test register: */
+	bus_space_write_1(t, mr, QE_MRI_UTR, 0);
+#endif
 
 	/* Reset multicast filter */
 	qe_mcreset(sc);
@@ -1079,6 +1123,7 @@ qe_mcreset(sc)
 	(void)&t;
 #endif
 
+	/* We also enable transmitter & receiver here */
 	maccc = QE_MR_MACCC_ENXMT | QE_MR_MACCC_ENRCV;
 
 	if (ifp->if_flags & IFF_PROMISC) {
@@ -1090,8 +1135,7 @@ qe_mcreset(sc)
 	if (ifp->if_flags & IFF_ALLMULTI) {
 		bus_space_write_1(t, mr, QE_MRI_IAC,
 				  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
-		for (i = 0; i < 8; i++)
-			bus_space_write_1(t, mr, QE_MRI_LADRF, 0xff);
+		bus_space_set_multi_1(t, mr, QE_MRI_LADRF, 0xff, 8);
 		bus_space_write_1(t, mr, QE_MRI_IAC, 0);
 		bus_space_write_1(t, mr, QE_MRI_MACCC, maccc);
 		return;
@@ -1115,9 +1159,7 @@ qe_mcreset(sc)
 			 */
 			bus_space_write_1(t, mr, QE_MRI_IAC,
 				 QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
-			for (i = 0; i < 8; i++)
-				bus_space_write_1(t, mr, QE_MRI_LADRF,
-						  0xff);
+			bus_space_set_multi_1(t, mr, QE_MRI_LADRF, 0xff, 8);
 			bus_space_write_1(t, mr, QE_MRI_IAC, 0);
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;
@@ -1146,10 +1188,8 @@ qe_mcreset(sc)
 
 	bus_space_write_1(t, mr, QE_MRI_IAC,
 			  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
-	for (i = 0; i < 8; i++)
-		bus_space_write_1(t, mr, QE_MRI_LADRF, ladrp[i]);
+	bus_space_write_multi_1(t, mr, QE_MRI_LADRF, ladrp, 8);
 	bus_space_write_1(t, mr, QE_MRI_IAC, 0);
-
 	bus_space_write_1(t, mr, QE_MRI_MACCC, maccc);
 }
 
