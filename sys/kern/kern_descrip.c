@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.121 2003/11/30 18:16:45 provos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.122 2004/01/05 00:36:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.121 2003/11/30 18:16:45 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.122 2004/01/05 00:36:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,9 +339,26 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 
 	p = l->l_proc;
 	fd = SCARG(uap, fd);
+	cmd = SCARG(uap, cmd);
 	fdp = p->p_fd;
 	error = 0;
 	flg = F_POSIX;
+
+	switch (cmd) {
+	case F_CLOSEM:
+		if (fd < 0)
+			return EBADF;
+		while (fdp->fd_lastfile >= fd)
+			fdrelease(p, fdp->fd_lastfile);
+		return 0;
+
+	case F_MAXFD:
+		return fdp->fd_lastfile;
+
+	default:
+		/* Handled below */
+		break;
+	}
 
  restart:
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
@@ -349,7 +366,6 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 
 	FILE_USE(fp);
 
-	cmd = SCARG(uap, cmd);
 	if ((cmd & F_FSCTL)) {
 		error = fcntl_forfs(fd, p, cmd, SCARG(uap, arg));
 		goto out;
