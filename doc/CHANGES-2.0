@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.140 2004/04/28 06:00:57 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.141 2004/04/28 06:01:50 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1454,3 +1454,8 @@ usr.sbin/makefs/ffs.c				1.28
 	created filesystem.  Otherwise this fails when asked for 63 inodes for
 	i386 ramdisk-big.
 	[dsl, ticket #200]
+
+sbin/fsck_ffs/inode.c				1.46
+
+	Fix 64bit bug in chkrange().
+	[dbj, ticket #202]
