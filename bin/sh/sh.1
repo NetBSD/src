@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.33.4.5 2001/03/18 03:20:12 wulf Exp $
+.\"	$NetBSD: sh.1,v 1.33.4.6 2001/04/04 16:15:24 he Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -39,9 +39,10 @@
 .Os
 .Dt SH 1
 .Sh NAME
-sh \- command interpreter (shell)
-.Sh SYNOPSIS
 .Nm sh
+.Nd command interpreter (shell)
+.Sh SYNOPSIS
+.Nm
 .Op Fl /+aCefnuvxIimqsVEbc
 .Op Fl o Ar longname
 .Bk -words
@@ -83,7 +84,7 @@ If no args are present and if the standard input of the shell
 is connected to a terminal (or if the
 .Fl i
 flag is set),
-and the 
+and the
 .Fl c
 option is not present, the shell is considered an interactive shell.  An
 interactive shell generally prompts before each command and handles
@@ -165,7 +166,7 @@ turns the option on, while using a plus
 disables the option.
 The following options can be set from the command line or
 with the
-.Xr set 1
+.Ic set
 builtin (described later).
 .Bl -tag -width aaaallexportfoo -offset indent
 .It Fl a Em allexport
@@ -231,7 +232,7 @@ Turn on job control (set automatically when interactive).
 Read commands from standard input (set automatically if no file arguments
 are present).  This option has no effect when set after the shell has
 already started running (i.e. with
-.Xr set 1 ) .
+.Ic set ) .
 .It Fl V Em vi
 Enable the built-in
 .Xr vi 1
@@ -709,7 +710,7 @@ character as explained below.
 A positional parameter is a parameter denoted by a number (n > 0). The
 shell sets these initially to the values of its command line arguments
 that follow the name of the shell script. The
-.Xr set 1
+.Ic set
 builtin can also be used to set or reset them.
 .Ss Special Parameters
 A special parameter is a parameter denoted by one of the following special
@@ -955,7 +956,7 @@ this: first, a pattern cannot match a string containing a slash, and
 second, a pattern cannot match a string starting with a period unless the
 first character of the pattern is a period. The next section describes the
 patterns used for both Pathname Expansion and the
-.Xr case 1
+.Ic case
 command.
 .Ss Shell Patterns
 A pattern consists of normal characters, which match themselves,
@@ -1343,7 +1344,7 @@ will clear all the positional parameters (equivalent to executing
 Assigns value to variable. (In general it is better to write
 variable=value rather than using
 .Ic setvar .
-.Ic setvar 
+.Ic setvar
 is intended to be used in
 functions that assign values to variables whose names are passed as
 parameters.)
@@ -1557,9 +1558,9 @@ The number of lines in the history buffer for the shell.
 .Xr login 1 ,
 .Xr test 1 ,
 .Xr getopt 3 ,
-.Xr passwd 4 ,
-.Xr profile 4 ,
-.Xr environ 5
+.Xr passwd 5 ,
+.\" .Xr profile 4 ,
+.Xr environ 7 ,
 .Xr sysctl 8
 .Sh HISTORY
 A
