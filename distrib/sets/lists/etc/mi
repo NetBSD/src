@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60.2.12 2001/04/23 22:39:06 he Exp $
+# $NetBSD: mi,v 1.60.2.13 2001/05/27 09:16:01 he Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -59,6 +59,7 @@
 ./etc/postfix/main.cf
 ./etc/postfix/master.cf
 ./etc/postfix/postfix-script
+./etc/primes
 ./etc/printcap
 ./etc/profile
 ./etc/protocols
