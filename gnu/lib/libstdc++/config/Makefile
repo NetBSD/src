@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/28 01:32:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2001/12/30 17:21:19 mrg Exp $
 
 # Makefile for _G_config.h, a machine-dependent automatically generated
 # configuration file.
@@ -29,7 +29,7 @@ _G_config.h: Makefile ${DIST}/libio/gen-params
 	rootme=${.OBJDIR} CC="${CC}" CXX="${CXX}" CONFIG_NM="${NM}" \
 	    CPP="${CC} -E" CPPFLAGS="${CPPFLAGS}" LDPRE="${LDPRE}" \
 	    LDSUF="${LDSUF}" \
-	    /bin/sh ${DIST}/libio/gen-params LIB_VERSION=2.9.0 >$@
+	    /bin/sh ${DIST}/libio/gen-params LIB_VERSION=2.8.0 >$@
 
 all: ${DPSRCS}
 
