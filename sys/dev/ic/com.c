@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.207 2003/05/18 15:10:08 fvdl Exp $	*/
+/*	$NetBSD: com.c,v 1.208 2003/06/05 13:40:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.207 2003/05/18 15:10:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.208 2003/06/05 13:40:38 scw Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -404,6 +404,10 @@ com_enable_debugport(struct com_softc *sc)
 	s = splserial();
 	COM_LOCK(sc);
 	sc->sc_ier = IER_ERXRDY;
+#ifdef COM_PXA2X0
+	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
+#endif
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
@@ -425,6 +429,7 @@ com_attach_subr(struct com_softc *sc)
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
+	const char *fifo_msg = NULL;
 
 	callout_init(&sc->sc_diag_callout);
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
@@ -432,7 +437,12 @@ com_attach_subr(struct com_softc *sc)
 #endif
 
 	/* Disable interrupts before configuring the device. */
-	sc->sc_ier = 0;
+#ifdef COM_PXA2X0
+	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+		sc->sc_ier = IER_EUART;
+	else
+#endif
+		sc->sc_ier = 0;
 	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 
 	if (iot == comconstag && iobase == comconsaddr) {
@@ -508,17 +518,25 @@ com_attach_subr(struct com_softc *sc)
 #ifdef COM16650
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 			if (sc->sc_fifolen == 0)
-				aprint_normal(": st16650, broken fifo\n");
+				fifo_msg = "st16650, broken fifo";
 			else if (sc->sc_fifolen == 32)
-				aprint_normal(": st16650a, working fifo\n");
+				fifo_msg = "st16650a, working fifo";
 			else
 #endif
-				aprint_normal(": ns16550a, working fifo\n");
+				fifo_msg = "ns16550a, working fifo";
 		} else
-			aprint_normal(": ns16550, broken fifo\n");
+			fifo_msg = "ns16550, broken fifo";
 	else
-		aprint_normal(": ns8250 or ns16450, no fifo\n");
+		fifo_msg = "ns8250 or ns16450, no fifo";
 	bus_space_write_1(iot, ioh, com_fifo, 0);
+	/*
+	 * Some chips will clear down both Tx and Rx FIFOs when zero is
+	 * written to com_fifo. If this chip is the console, writing zero
+	 * results in some of the chip/FIFO description being lost, so delay
+	 * printing it until now.
+	 */
+	delay(10);
+	aprint_normal(": %s\n", fifo_msg);
 	if (ISSET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
 		aprint_normal("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
@@ -602,7 +620,12 @@ com_config(struct com_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* Disable interrupts before configuring the device. */
-	sc->sc_ier = 0;
+#ifdef COM_PXA2X0
+	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+		sc->sc_ier = IER_EUART;
+	else
+#endif
+		sc->sc_ier = 0;
 	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 
 #ifdef COM_HAYESP
@@ -755,10 +778,20 @@ com_shutdown(struct com_softc *sc)
 	}
 
 	/* Turn off interrupts. */
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
-	else
+#ifdef COM_PXA2X0
+		if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+			sc->sc_ier |= IER_ERXTOUT;
+#endif
+	} else
 		sc->sc_ier = 0;
+
+#ifdef COM_PXA2X0
+	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+		sc->sc_ier |= IER_EUART;
+#endif
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 
 	if (sc->disable) {
@@ -832,6 +865,10 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		/* Turn on interrupts. */
 		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
+#ifdef COM_PXA2X0
+		if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+			sc->sc_ier |= IER_EUART | IER_ERXTOUT;
+#endif
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 
 		/* Fetch the current modem control status, needed later. */
@@ -1291,7 +1328,13 @@ com_to_tiocm(struct com_softc *sc)
 	if (ISSET(combits, MSR_RI | MSR_TERI))
 		SET(ttybits, TIOCM_RI);
 
-	if (sc->sc_ier != 0)
+#ifdef COM_PXA2X0
+	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0)) {
+		if ((sc->sc_ier & 0x0f) != 0)
+			SET(ttybits, TIOCM_LE);
+	} else
+#endif
+	if ((sc->sc_ier & 0xbf) != 0)
 		SET(ttybits, TIOCM_LE);
 
 	return (ttybits);
@@ -1556,7 +1599,12 @@ com_loadchannelregs(struct com_softc *sc)
 	/* XXXXX necessary? */
 	com_iflush(sc);
 
-	bus_space_write_1(iot, ioh, com_ier, 0);
+#ifdef COM_PXA2X0
+	if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+		bus_space_write_1(iot, ioh, com_ier, IER_EUART);
+	else
+#endif
+		bus_space_write_1(iot, ioh, com_ier, 0);
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FLOW)) {
 		bus_space_write_1(iot, ioh, com_lcr, LCR_EERS);
@@ -1840,6 +1888,10 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				SET(sc->sc_ier, IER_ERXRDY);
+#ifdef COM_PXA2X0
+				if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+					SET(sc->sc_ier, IER_ERXTOUT);
+#endif
 				bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 			}
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
@@ -2070,11 +2122,21 @@ again:	do {
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				CLR(sc->sc_ier, IER_ERXRDY);
+#ifdef COM_PXA2X0
+				if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+					CLR(sc->sc_ier, IER_ERXTOUT);
+#endif
 				bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 			}
 		} else {
 			if ((iir & IIR_IMASK) == IIR_RXRDY) {
-				bus_space_write_1(iot, ioh, com_ier, 0);
+#ifdef COM_PXA2X0
+				if (ISSET(sc->sc_hwflags, COM_HW_PXA2X0))
+					bus_space_write_1(iot, ioh, com_ier,
+					    IER_EUART);
+				else
+#endif
+					bus_space_write_1(iot, ioh, com_ier, 0);
 				delay(10);
 				bus_space_write_1(iot, ioh, com_ier,sc->sc_ier);
 				continue;
