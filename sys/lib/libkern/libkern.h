@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.40 2002/05/28 10:09:24 itojun Exp $	*/
+/*	$NetBSD: libkern.h,v 1.41 2002/08/21 01:27:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -286,8 +286,10 @@ int	 strncmp __P((const char *, const char *, size_t));
 char	*strchr __P((const char *, int));
 char	*strrchr __P((const char *, int));
 
-/* This exists in GCC 3.x, but we don't bother (yet). */
 int	 ffs __P((int));
+#if __GNUC_PREREQ__(2, 95)
+#define	ffs(x)			__builtin_ffs(x)
+#endif
 
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
