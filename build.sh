@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.115 2003/09/10 18:05:52 jmmv Exp $
+#	$NetBSD: build.sh,v 1.116 2003/09/20 10:14:41 jmmv Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -139,6 +139,11 @@ initdefaults()
 	mkdir "${tmpdir}" || bomb "Cannot mkdir: ${tmpdir}"
 	trap "cd /; rm -r -f \"${tmpdir}\"" 0
 	results="${tmpdir}/build.sh.results"
+
+	# Set source directories
+	#
+	setmakeenv BSDSRCDIR "${TOP}"
+	setmakeenv NETBSDSRCDIR "${TOP}"
 }
 
 getarch()
@@ -802,7 +807,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.115 2003/09/10 18:05:52 jmmv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.116 2003/09/20 10:14:41 jmmv Exp $
 #
 
 EOF
