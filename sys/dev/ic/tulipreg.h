@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.6 1999/09/20 19:26:54 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.7 1999/09/24 18:27:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -260,6 +260,13 @@ struct tulip_desc {
 #define	TULIP_ROM_MB_CSR15		5			/* W */
 
 #define	TULIP_ROM_MB_SIZE(mc)		(((mc) & TULIP_ROM_MB_EXT) ? 7 : 1)
+
+#define	TULIP_ROM_MB_21140_GPR		0	/* 21140[A] GPR block */
+#define	TULIP_ROM_MB_21140_MII		1	/* 21140[A] MII block */
+#define	TULIP_ROM_MB_21142_SIA		2	/* 2114[23] SIA block */
+#define	TULIP_ROM_MB_21142_MII		3	/* 2114[23] MII block */
+#define	TULIP_ROM_MB_21143_SYM		4	/* 21143 SYM block */
+#define	TULIP_ROM_MB_21143_RESET	5	/* 21143 reset block */
 
 #define	TULIP_ROM_GETW(data, off) ((data)[(off)] | ((data)[(off) + 1]) << 8)
 
