@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.21 2002/02/21 05:25:23 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.22 2002/02/21 21:58:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rpc_machdep.c,v 1.21 2002/02/21 05:25:23 thorpej Exp $");
+__RCSID("$NetBSD: rpc_machdep.c,v 1.22 2002/02/21 21:58:00 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -173,7 +173,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
-pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
+pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
@@ -615,7 +615,10 @@ initarm(void *cookie)
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
 		} else {
-			alloc_pages(kernel_pt_table[loop1], PT_SIZE / NBPG);
+			alloc_pages(kernel_pt_table[loop1].pv_pa,
+			    PT_SIZE / NBPG);
+			kernel_pt_table[loop1].pv_va =
+			    kernel_pt_table[loop1].pv_pa;
 			++loop1;
 		}
 	}
@@ -683,16 +686,16 @@ initarm(void *cookie)
 
 	/* Map the L2 pages tables in the L1 page table */
 	pmap_link_l2pt(l1pagetable, 0x00000000,
-	    kernel_pt_table[KERNEL_PT_SYS]);
+	    &kernel_pt_table[KERNEL_PT_SYS]);
 	pmap_link_l2pt(l1pagetable, KERNEL_BASE,
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	    &kernel_pt_table[KERNEL_PT_KERNEL]);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
-	    kernel_ptpt.pv_pa);
+	    &kernel_ptpt);
 	pmap_link_l2pt(l1pagetable, VMEM_VBASE,
-	    kernel_pt_table[KERNEL_PT_VMEM]);
+	    &kernel_pt_table[KERNEL_PT_VMEM]);
 
 
 #ifdef VERBOSE_INIT_ARM
@@ -700,7 +703,7 @@ initarm(void *cookie)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel code/data */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
+	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL].pv_pa;
 
 	/*
 	 * The defines are a workaround for a recent problem that occurred
@@ -709,15 +712,15 @@ initarm(void *cookie)
 	 */
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
-		logical = pmap_map_chunk(l1pagetable, l2pagetable,
-		    KERNEL_TEXT_BASE, physical_start, kernexec->a_text,
+		logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
+		    physical_start, kernexec->a_text,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #else	/* CPU_ARM6 || CPU_ARM7 */
-		logical = pmap_map_chunk(l1pagetable, l2pagetable,
-		    KERNEL_TEXT_BASE, physical_start, kernexec->a_text,
+		logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
+		    physical_start, kernexec->a_text,
 		    VM_PROT_READ, PTE_CACHE);
 #endif	/* CPU_ARM6 || CPU_ARM7 */
-		logical += pmap_map_chunk(l1pagetable, l2pagetable,
+		logical += pmap_map_chunk(l1pagetable,
 		    KERNEL_TEXT_BASE + logical, physical_start + logical,
 		    kerneldatasize - kernexec->a_text,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
@@ -726,7 +729,7 @@ initarm(void *cookie)
 		 * Most likely an ELF kernel ...
 		 * XXX no distinction yet between read only and read/write area's ...
 		 */
-		pmap_map_chunk(l1pagetable, l2pagetable, KERNEL_TEXT_BASE,
+		pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
 		    physical_start, kerneldatasize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	};
@@ -737,20 +740,16 @@ initarm(void *cookie)
 #endif
 
 	/* Map the stack pages */
-	pmap_map_chunk(l1pagetable, l2pagetable, irqstack.pv_va,
-	    irqstack.pv_pa, IRQ_STACK_SIZE * NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, l2pagetable, abtstack.pv_va,
-	    abtstack.pv_pa, ABT_STACK_SIZE * NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, l2pagetable, undstack.pv_va,
-	    undstack.pv_pa, UND_STACK_SIZE * NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, l2pagetable, kernelstack.pv_va,
-	    kernelstack.pv_pa, UPAGES * NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
+	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
+	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
+	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
+	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
-	pmap_map_chunk(l1pagetable, l2pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
@@ -767,14 +766,11 @@ initarm(void *cookie)
 	 * it but we would need the page tables if DRAM was in use.
 	 * XXX please map two adjacent virtual areas to ONE physical area
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_VMEM];
-
-	pmap_map_chunk(l1pagetable, l2pagetable, VMEM_VBASE,
+	pmap_map_chunk(l1pagetable, VMEM_VBASE, videomemory.vidm_pbase,
+	    videomemory.vidm_size, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1pagetable, VMEM_VBASE + videomemory.vidm_size,
 	    videomemory.vidm_pbase, videomemory.vidm_size,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, l2pagetable,
-	    VMEM_VBASE + videomemory.vidm_size, videomemory.vidm_pbase,
-	    videomemory.vidm_size, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 
 	/*
@@ -784,20 +780,20 @@ initarm(void *cookie)
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	l2pagetable = kernel_ptpt.pv_pa;
 	pmap_map_entry(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL], VM_PROT_READ|VM_PROT_WRITE,
+	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 	pmap_map_entry(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l2pagetable, (VMEM_VBASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMEM], VM_PROT_READ|VM_PROT_WRITE,
+	    kernel_pt_table[KERNEL_PT_VMEM].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 	pmap_map_entry(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_SYS], VM_PROT_READ|VM_PROT_WRITE,
+	    kernel_pt_table[KERNEL_PT_SYS].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
 		pmap_map_entry(l2pagetable, ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop],
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
 
@@ -805,7 +801,7 @@ initarm(void *cookie)
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_SYS];
+	l2pagetable = kernel_pt_table[KERNEL_PT_SYS].pv_pa;
 	pmap_map_entry(l2pagetable, 0x0000000, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
