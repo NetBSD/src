@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.9 1999/09/19 21:42:23 is Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.10 1999/09/20 02:35:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,6 +75,8 @@ laddr_to_eui64(dst, src, len)
 	case 1:
 		bzero(dst, 7);
 		dst[7] = src[0];
+		/* raise u bit to indicate that this is not globally unique */
+		dst[0] |= 0x02;
 		break;
 	case 6:
 		dst[0] = src[0];
@@ -131,8 +133,6 @@ in6_ifattach_getifid(ifp0)
 			case IFT_ETHER:
 			case IFT_FDDI:
 			case IFT_ATM:
-			case IFT_ARCNET:
-			/* what others? */
 				/* IEEE802/EUI64 cases - what others? */
 				addr = LLADDR(sdl);
 				addrlen = sdl->sdl_alen;
@@ -143,6 +143,13 @@ in6_ifattach_getifid(ifp0)
 				if ((addr[0] & 0x02) != 0)
 					break;
 				goto found;
+			case IFT_ARCNET:
+				/*
+				 * ARCnet interface token cannot be used as
+				 * globally unique identifier due to its
+				 * small bitwidth.
+				 */
+				break;
 			default:
 				break;
 			}
