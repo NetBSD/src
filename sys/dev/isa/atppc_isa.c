@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.5 2004/01/28 13:51:16 drochner Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.6 2004/09/14 20:20:46 drochner Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.5 2004/01/28 13:51:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.6 2004/09/14 20:20:46 drochner Exp $");
 
 #include "opt_atppc.h"
 
@@ -107,7 +107,7 @@ atppc_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, IO_LPTSIZE, 0, &ioh))
@@ -156,7 +156,7 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Assign interrupt handler */
 	if (!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_INTR)
-	   && ia->ia_irq->ir_irq != ISACF_IRQ_DEFAULT
+	   && ia->ia_irq->ir_irq != ISA_UNKNOWN_IRQ
 	   && ia->ia_nirq >= 1) {
 		sc->sc_irq = ia->ia_irq[0].ir_irq;
 	} else
@@ -172,7 +172,7 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Configure DMA */
 	if (!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_DMA)
-	    && ia->ia_drq->ir_drq != ISACF_DRQ_DEFAULT
+	    && ia->ia_drq->ir_drq != ISA_UNKNOWN_DRQ
 	    && ia->ia_ndrq >= 1)
 		sc->sc_drq = ia->ia_drq[0].ir_drq;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.62 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.63 2004/09/14 20:20:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.62 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.63 2004/09/14 20:20:47 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -342,11 +342,11 @@ egprobe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/* Disallow wildcarded IRQ. */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	if ((ia->ia_io[0].ir_addr & ~0x07f0) != 0) {

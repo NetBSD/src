@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.58 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: pas.c,v 1.59 2004/09/14 20:20:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.58 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.59 2004/09/14 20:20:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ pasfind(parent, sc, ia, probing)
 	}
 
         if (sc->model >= 0) {
-                if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+                if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
                         printf("pas: sb emulation requires known irq\n");
 			goto unmap1;
                 } 

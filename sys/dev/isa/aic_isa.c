@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.13 2002/10/02 03:10:45 thorpej Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.14 2004/09/14 20:20:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.13 2002/10/02 03:10:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.14 2004/09/14 20:20:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,11 +117,11 @@ aic_isa_probe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/* Disallow wildcarded IRQ. */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AIC_ISA_IOSIZE, 0, &ioh))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.11 2004/08/04 18:53:55 drochner Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.12 2004/09/14 20:20:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.11 2004/08/04 18:53:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.12 2004/09/14 20:20:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ ess_isa_probe(parent, match, aux)
 		ia->ia_nirq = 1;
 
 		if (ia->ia_ndrq > 1 &&
-		    ia->ia_drq[1].ir_drq != ISACF_DRQ_DEFAULT)
+		    ia->ia_drq[1].ir_drq != ISA_UNKNOWN_DRQ)
 			ia->ia_ndrq = 2;
 		else
 			ia->ia_ndrq = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.7 2003/08/07 16:31:05 agc Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.8 2004/09/14 20:20:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.7 2003/08/07 16:31:05 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.8 2004/09/14 20:20:46 drochner Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -140,7 +140,7 @@ depca_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
 
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	/* Disallow impossible i/o address. */
@@ -151,7 +151,7 @@ depca_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh))
 		return 0;
 
-	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT ||
+	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM ||
 	    (ia->ia_iomem[0].ir_size != 32*1024 &&
 	     ia->ia_iomem[0].ir_size != 64*1024))
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.22 2003/05/09 23:51:29 fvdl Exp $	*/
+/*	$NetBSD: satlink.c,v 1.23 2004/09/14 20:20:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.22 2003/05/09 23:51:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.23 2004/09/14 20:20:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +141,9 @@ satlinkprobe(parent, match, aux)
 		return (0);
 
 	/* Don't allow wildcarding of iobase or drq. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	if (ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SATLINK_IOSIZE, 0, &ioh))

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.2 2002/10/05 17:52:32 tsutsui Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.3 2004/09/14 20:20:47 drochner Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.2 2002/10/05 17:52:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.3 2004/09/14 20:20:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ fmv_isa_match(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded values. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/*
@@ -157,7 +157,7 @@ fmv_isa_match(parent, match, aux)
 		goto out;
 	}
 
-	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT) {
+	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ) {
 		if (ia->ia_irq[0].ir_irq != irq) {
 			printf("fmv_match: irq mismatch; "
 			    "kernel configured %d != board configured %d\n",

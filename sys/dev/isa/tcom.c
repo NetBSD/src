@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.8 2004/09/14 17:19:34 drochner Exp $	*/
+/*	$NetBSD: tcom.c,v 1.9 2004/09/14 20:20:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.8 2004/09/14 17:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.9 2004/09/14 20:20:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,9 +144,9 @@ tcomprobe(parent, self, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	/* if the first port is in use as console, then it. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.5 2002/01/07 21:47:09 thorpej Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.6 2004/09/14 20:20:48 drochner Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.5 2002/01/07 21:47:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.6 2004/09/14 20:20:48 drochner Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -346,10 +346,10 @@ bus_probed:
 			continue;
 		if (tcmcards[i].available == 0)
 			continue;
-		if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+		if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 		    ia->ia_io[0].ir_addr != tcmcards[i].iobase)
 			continue;
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != tcmcards[i].irq)
 			continue;
 		goto good;

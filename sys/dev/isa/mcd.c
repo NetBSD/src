@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.85 2003/11/07 04:10:57 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.86 2004/09/14 20:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.85 2003/11/07 04:10:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.86 2004/09/14 20:20:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -935,9 +935,9 @@ mcdprobe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	/* Map i/o space */

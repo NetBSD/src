@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.6 2004/09/14 20:20:49 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.6 2004/09/14 20:20:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ nsclpcsio_isa_match(parent, match, aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
 
-	if (ia->ia_nio > 0 && ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT) {
+	if (ia->ia_nio > 0 && ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) {
 		/* XXX check for legal iobase ??? */
 		if (nscheck(ia->ia_iot, ia->ia_io[0].ir_addr)) {
 			iobase = ia->ia_io[0].ir_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.8 2004/09/14 17:19:34 drochner Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.9 2004/09/14 20:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.8 2004/09/14 17:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.9 2004/09/14 20:20:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ ioat66probe(parent, self, aux)
 	 */
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_iobase == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/* if the first port is in use as console, then it. */

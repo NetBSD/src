@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.12 2003/10/29 01:10:12 mycroft Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.13 2004/09/14 20:20:47 drochner Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.12 2003/10/29 01:10:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.13 2004/09/14 20:20:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,13 +93,13 @@ cs_isa_probe(parent, cf, aux)
 	/*
 	 * Disallow wildcarded I/O base.
 	 */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	if (ia->ia_niomem > 0)
 		maddr = ia->ia_iomem[0].ir_addr;
 	else
-		maddr = ISACF_IOMEM_DEFAULT;
+		maddr = ISA_UNKNOWN_IOMEM;
 
 	/*
 	 * Map the I/O space.
@@ -137,8 +137,8 @@ cs_isa_probe(parent, cf, aux)
 	 * If the IRQ or memory address were not specified, read the
 	 * ISA_CFG EEPROM location.
 	 */
-	if (maddr == ISACF_IOMEM_DEFAULT ||
-	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+	if (maddr == ISA_UNKNOWN_IOMEM ||
+	    ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		if (cs_verify_eeprom(&sc) == CS_ERROR) {
 			printf("cs_isa_probe: EEPROM bad or missing\n");
 			goto out;
@@ -153,7 +153,7 @@ cs_isa_probe(parent, cf, aux)
 	/*
 	 * If the IRQ wasn't specified, get it from the EEPROM.
 	 */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		irq = isa_cfg & ISA_CFG_IRQ_MASK;
 		if (irq == 3)
 			irq = 5;
@@ -165,7 +165,7 @@ cs_isa_probe(parent, cf, aux)
 	/*
 	 * If the memory address wasn't specified, get it from the EEPROM.
 	 */
-	if (maddr == ISACF_IOMEM_DEFAULT) {
+	if (maddr == ISA_UNKNOWN_IOMEM) {
 		if ((isa_cfg & ISA_CFG_MEM_MODE) == 0) {
 			/* EEPROM says don't use memory mode. */
 			goto out;
@@ -186,14 +186,14 @@ cs_isa_probe(parent, cf, aux)
 	if (bus_space_map(ia->ia_memt, maddr, CS8900_MEMSIZE, 0, &memh)) {
 		/* Can't map it; fall back on i/o-only mode. */
 		printf("cs_isa_probe: unable to map memory space\n");
-		maddr = ISACF_IOMEM_DEFAULT;
+		maddr = ISA_UNKNOWN_IOMEM;
 	} else
 		have_mem = 1;
 
 	ia->ia_nio = 1;
 	ia->ia_io[0].ir_size = CS8900_IOSIZE;
 
-	if (maddr == ISACF_IOMEM_DEFAULT)
+	if (maddr == ISA_UNKNOWN_IOMEM)
 		ia->ia_niomem = 0;
 	else {
 		ia->ia_niomem = 1;
@@ -259,7 +259,7 @@ cs_isa_attach(parent, self, aux)
 	 * we set ourselves up to use memory mode forever.  Otherwise,
 	 * we fall back on I/O mode.
 	 */
-	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	if (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 	    ia->ia_iomem[0].ir_size == CS8900_MEMSIZE &&
 	    CS8900_MEMBASE_ISVALID(ia->ia_iomem[0].ir_addr)) {
 		if (bus_space_map(sc->sc_memt, ia->ia_iomem[0].ir_addr,

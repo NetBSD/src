@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.5 2003/12/04 12:42:54 keihan Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.6 2004/09/14 20:20:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.5 2003/12/04 12:42:54 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.6 2004/09/14 20:20:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ joy_isa_probe(parent, match, aux)
 	if (ia->ia_nio < 1)
 		return (0);
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, JOY_NPORTS, 0, &ioh))

@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.10 2004/03/13 17:31:34 bjh21 Exp $ */
+/* $NetBSD: pcppi.c,v 1.11 2004/09/14 20:20:49 drochner Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.10 2004/03/13 17:31:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.11 2004/09/14 20:20:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,20 +93,20 @@ pcppi_match(parent, match, aux)
 
 	/* If values are hardwired to something that they can't be, punt. */
 	if (ia->ia_nio < 1 ||  
-	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	    ia->ia_io[0].ir_addr != IO_PPI))
 		return (0);
 
 	if (ia->ia_niomem > 0 &&
-	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM))
 		return (0);
 
 	if (ia->ia_nirq > 0 &&
-	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT))
+	    (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ))
 		return (0);
 
 	if (ia->ia_ndrq > 0 &&
-	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
+	    (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ))
 		return (0);
 
 	rv = 0;

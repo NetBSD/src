@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.57 2003/04/03 15:35:41 christos Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.58 2004/09/14 20:20:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.57 2003/04/03 15:35:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.58 2004/09/14 20:20:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ lpt_isa_probe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	iot = ia->ia_iot;
@@ -231,7 +231,7 @@ lpt_isa_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 
 	if (ia->ia_nirq < 1 ||
-	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+	    ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		sc->sc_irq = -1;
 		printf(": polled\n");
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.24 2002/10/02 03:10:46 thorpej Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.25 2004/09/14 20:20:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.24 2002/10/02 03:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.25 2004/09/14 20:20:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ bha_isa_probe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, BHA_ISA_IOSIZE, 0, &ioh))
@@ -102,10 +102,10 @@ bha_isa_probe(parent, match, aux)
 	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != bpd.sc_irq)
 			return (0);
-		if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT &&
+		if (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ &&
 		    ia->ia_drq[0].ir_drq != bpd.sc_drq)
 			return (0);
 
