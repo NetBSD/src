@@ -1,4 +1,4 @@
-.\"	$NetBSD: sl.4,v 1.2 1997/04/09 04:36:34 mikel Exp $
+.\"	$NetBSD: sl.4,v 1.3 1998/04/30 05:42:40 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,17 +38,41 @@
 .Os NetBSD
 .Sh NAME
 .Nm sl
-.Nd slip network interface
+.Nd Serial Line IP (SLIP) network interface
 .Sh SYNOPSIS
 .Cd pseudo-device sl Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
-interface allows serial lines to be used as network interfaces using the
-.Em SLIP
-protocol.  The
+interface allows asynchronous serial lines to be used as
+.Tn IP 
+network interfaces using the
+.Tn SLIP
+protocol.
+The
 .Nm
-interface can use Van Jacobson TCP header compression and ICMP filtering.
+interface can use Van Jacobson
+.Tn TCP
+header compression and
+.Tn ICMP
+filtering.
+.Pp
+However,
+.Tn SLIP
+can only transmit
+.Tn IP
+packets between preconfigured hosts on an asynchronous serial link.
+It has no provision for address negotiation,
+carriage of additional protocols (e.g.
+.Tn XNS ,
+.Tn AppleTalk ,
+.Tn DECNET ) ,
+and is not designed for synchronous serial links.
+This is why
+.Tn SLIP
+has been superceded by the Point-to-Point Protocol
+.Pq Tn PPP ,
+which does all of those things, and much more.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It sl%d: af%d not supported.
@@ -59,9 +83,17 @@ family; the packet was dropped.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr inet 4 ,
+.Xr ppp 4 ,
 .Xr slattach 8 ,
 .Xr sliplogin 8 ,
 .Xr slstats 8
+.Rs
+.%J RFC
+.%N 1055
+.%A John Romkey
+.%D June 1988
+.%T "A Nonstandard for Transmission of IP Datagrams over Serial Lines: SLIP"
+.Re
 .Sh HISTORY
 The
 .Nm
