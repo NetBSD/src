@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_ufs.c,v 1.5 1997/10/26 00:25:18 christos Exp $	*/
+/*	$NetBSD: ops_ufs.c,v 1.6 1998/08/08 22:33:32 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,8 @@
 #include <am_defs.h>
 #include <amd.h>
 
-static char * ufs_match(am_opts *fo);
+/* forward declarations */
+static char *ufs_match(am_opts *fo);
 static int ufs_fmount(mntfs *mf);
 static int ufs_fumount(mntfs *mf);
 
@@ -66,16 +67,16 @@ am_ops ufs_ops =
   "ufs",
   ufs_match,
   0,				/* ufs_init */
-  auto_fmount,
+  amfs_auto_fmount,
   ufs_fmount,
-  auto_fumount,
+  amfs_auto_fumount,
   ufs_fumount,
-  efs_lookuppn,
-  efs_readdir,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
   0,				/* ufs_readlink */
   0,				/* ufs_mounted */
   0,				/* ufs_umounted */
-  find_afs_srvr,
+  find_amfs_auto_srvr,
   FS_MKMNT | FS_NOTIMEOUT | FS_UBACKGROUND | FS_AMQINFO
 };
 
@@ -108,7 +109,7 @@ mount_ufs(char *dir, char *fs_name, char *opts)
 {
   ufs_args_t ufs_args;
   mntent_t mnt;
-  int flags;
+  int genflags;
 
   /*
    * Figure out the name of the file system type.
@@ -126,19 +127,28 @@ mount_ufs(char *dir, char *fs_name, char *opts)
   mnt.mnt_type = MNTTAB_TYPE_UFS;
   mnt.mnt_opts = opts;
 
-  flags = compute_mount_flags(&mnt);
+  genflags = compute_mount_flags(&mnt);
 
 #ifdef HAVE_FIELD_UFS_ARGS_T_FLAGS
-  ufs_args.flags = 0;		/* XXX: fix this to correct flags */
+  ufs_args.flags = genflags;	/* XXX: is this correct? */
 #endif /* HAVE_FIELD_UFS_ARGS_T_FLAGS */
+
+#ifdef HAVE_FIELD_UFS_ARGS_T_UFS_FLAGS
+  ufs_args.ufs_flags = genflags; /* XXX: is this correct? */
+#endif /* HAVE_FIELD_UFS_ARGS_T_UFS_FLAGS */
+
 #ifdef HAVE_FIELD_UFS_ARGS_T_FSPEC
   ufs_args.fspec = fs_name;
 #endif /* HAVE_FIELD_UFS_ARGS_T_FSPEC */
 
+#ifdef HAVE_FIELD_UFS_ARGS_T_UFS_PGTHRESH
+  ufs_args.ufs_pgthresh = hasmntval(&mnt, MNTTAB_OPT_PGTHRESH);
+#endif /* HAVE_FIELD_UFS_ARGS_T_UFS_PGTHRESH */
+
   /*
    * Call generic mount routine
    */
-  return mount_fs(&mnt, flags, (caddr_t) &ufs_args, 0, type, 0, NULL, mnttab_file_name);
+  return mount_fs(&mnt, genflags, (caddr_t) &ufs_args, 0, type, 0, NULL, mnttab_file_name);
 }
 
 
@@ -155,7 +165,6 @@ ufs_fmount(mntfs *mf)
   }
 
   return 0;
-
 }
 
 

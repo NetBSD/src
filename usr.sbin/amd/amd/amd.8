@@ -1,7 +1,7 @@
-.\" $NetBSD: amd.8,v 1.10 1997/10/26 00:24:47 christos Exp $
+.\" $NetBSD: amd.8,v 1.11 1998/08/08 22:33:28 christos Exp $
 .\"
 .\"
-.\" Copyright (c) 1997 Erez Zadok
+.\" Copyright (c) 1997-1998 Erez Zadok
 .\" Copyright (c) 1989 Jan-Simon Pendry
 .\" Copyright (c) 1989 Imperial College of Science, Technology & Medicine
 .\" Copyright (c) 1989 The Regents of the University of California.
@@ -47,6 +47,14 @@
 amd \- automatically mount file systems
 .SH SYNOPSIS
 .B amd
+.B \-H
+.br
+.B amd
+[
+.BI \-F " conf_file"
+]
+.br
+.B amd
 [
 .B \-nprvHS
 ] [
@@ -60,7 +68,7 @@ amd \- automatically mount file systems
 ] [
 .BI \-l " logfile"
 ] [
-.BI \-o " op_sys_name"
+.BI \-o " op_sys_ver"
 ] [
 .BI \-t " interval.interval"
 ] [
@@ -75,6 +83,8 @@ amd \- automatically mount file systems
 .BI \-D " option"
 ] [
 .BI \-F " conf_file"
+] [
+.BI \-O " op_sys_name"
 ] [
 .BI \-T " tag"
 ]
@@ -104,6 +114,19 @@ which uses the map defined by
 to determine how to resolve the lookup.
 Generally, this will be a host name, some filesystem information
 and some mount options for the given filesystem.
+.LP
+In the first form depicted above,
+.B amd
+will print a short help string.  In the second form, if no options are
+specified, or the
+.B -F
+is used,
+.B amd
+will read configuration parameters from the file
+.I conf_file
+which defaults to
+.BR /etc/amd.conf .
+The last form is described below.
 .SH OPTIONS
 
 .\"*******************************************************"
@@ -140,6 +163,17 @@ is the string
 .B syslog
 then the log messages will be sent to the system log daemon by
 .IR syslog (3).
+The default syslog facility used is LOG_DAEMON.  If you
+wish to change it, append its name to the log file name, delimited by a
+single colon.  For example, if
+.I logfile
+is the string
+.B syslog:local7
+then
+.B Amd
+will log messages via
+.IR syslog (3)
+using the LOG_LOCAL7 facility (if it exists on the system).
 
 .TP
 .B \-n
@@ -149,11 +183,11 @@ host database before being used.  The effect is to translate
 aliases into ``official'' names.
 
 .TP
-.BI \-o " op_sys_name"
-Override the compiled-in name of the operating system.  Useful when the
-built in name is not desired for backward compatibility reasons.  For
-example, if the build in name is ``sunos5'', you can override it to
-``sos5'', and use older maps which were written with the latter in mind.
+.BI \-o " op_sys_ver"
+Override the compiled-in version number of the operating system.  Useful
+when the built in version is not desired for backward compatibility reasons.
+For example, if the build in version is ``2.5.1'', you can override it to
+``5.5.1'', and use older maps that were written with the latter in mind.
 
 .TP
 .B \-p
@@ -232,11 +266,21 @@ for description of this file's format.  This configuration file is used to
 specify any options in lieu of typing many of them on the command line.  The
 .I amd.conf
 file includes directives for every command line option amd has, and many
-more that are only available via the configuration file facility.
+more that are only available via the configuration file facility.  The
+configuration file specified by this option is processed after all other
+options had been processed, regardless of the actual location of this option
+on the command line.
 
 .TP
 .B \-H
 Print help and usage string.
+
+.TP
+.BI \-O " op_sys_name"
+Override the compiled-in name of the operating system.  Useful when the
+built in name is not desired for backward compatibility reasons.  For
+example, if the build in name is ``sunos5'', you can override it to
+``sos5'', and use older maps which were written with the latter in mind.
 
 .TP
 .B \-S
@@ -268,8 +312,8 @@ will not be processed.
 .B /a
 directory under which filesystems are dynamically mounted
 .TP 5
-.B amd.conf
-amd configuration file
+.B /etc/amd.conf
+default configuration file
 .PD
 .SH CAVEATS
 Some care may be required when creating a mount map.
@@ -296,6 +340,7 @@ the features.
 .BR mount (8),
 .BR umount (8),
 .BR mtab (5),
+.BR syslog (3).
 .LP
 .I "Amd \- The 4.4 BSD Automounter"
 .SH AUTHORS

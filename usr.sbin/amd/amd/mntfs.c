@@ -1,7 +1,7 @@
-/*	$NetBSD: mntfs.c,v 1.7 1997/10/26 00:25:03 christos Exp $	*/
+/*	$NetBSD: mntfs.c,v 1.8 1998/08/08 22:33:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,21 +120,21 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
       /*
        * Handle cases where error ops are involved
        */
-      if (ops == &efs_ops) {
+      if (ops == &amfs_error_ops) {
 	/*
-	 * If the existing ops are not efs_ops
+	 * If the existing ops are not amfs_error_ops
 	 * then continue...
 	 */
-	if (mf->mf_ops != &efs_ops)
+	if (mf->mf_ops != &amfs_error_ops)
 	  continue;
 	else
 	  return dup_mntfs(mf);
-      } else {			/* ops != &efs_ops */
+      } else {			/* ops != &amfs_error_ops */
 	/*
-	 * If the existing ops are efs_ops
+	 * If the existing ops are amfs_error_ops
 	 * then continue...
 	 */
-	if (mf->mf_ops == &efs_ops)
+	if (mf->mf_ops == &amfs_error_ops)
 	  continue;
       }
 
@@ -142,7 +142,7 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 	/*
 	 * Restart a previously mounted filesystem.
 	 */
-	mntfs *mf2 = alloc_mntfs(&ifs_ops, mo, mp, info, auto_opts, mopts, remopts);
+	mntfs *mf2 = alloc_mntfs(&amfs_inherit_ops, mo, mp, info, auto_opts, mopts, remopts);
 #ifdef DEBUG
 	dlog("Restarting filesystem %s", mf->mf_mount);
 #endif /* DEBUG */
@@ -186,23 +186,21 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 mntfs *
 new_mntfs(void)
 {
-  return alloc_mntfs(&efs_ops, (am_opts *) 0, "//nil//", ".", "", "", "");
+  return alloc_mntfs(&amfs_error_ops, (am_opts *) 0, "//nil//", ".", "", "", "");
 }
 
 
 static void
 uninit_mntfs(mntfs *mf, int rmd)
 {
-  if (mf->mf_mount)
-    free((voidp) mf->mf_mount);
   if (mf->mf_auto)
-    free((voidp) mf->mf_auto);
+    XFREE(mf->mf_auto);
   if (mf->mf_mopts)
-    free((voidp) mf->mf_mopts);
+    XFREE(mf->mf_mopts);
   if (mf->mf_remopts)
-    free((voidp) mf->mf_remopts);
+    XFREE(mf->mf_remopts);
   if (mf->mf_info)
-    free((voidp) mf->mf_info);
+    XFREE(mf->mf_info);
   if (mf->mf_private && mf->mf_prfree)
     (*mf->mf_prfree) (mf->mf_private);
 
@@ -211,6 +209,9 @@ uninit_mntfs(mntfs *mf, int rmd)
    */
   if (rmd && (mf->mf_flags & MFF_MKMNT))
     rmdirs(mf->mf_mount);
+  /* free mf_mount _AFTER_ removing the directories */
+  if (mf->mf_mount)
+    XFREE(mf->mf_mount);
 
   /*
    * Clean up the file server
@@ -239,7 +240,7 @@ discard_mntfs(voidp v)
    * Free memory
    */
   uninit_mntfs(mf, TRUE);
-  free((voidp) mf);
+  XFREE(mf);
 
   --mntfs_allocated;
 }
@@ -311,7 +312,7 @@ realloc_mntfs(mntfs *mf, am_ops *ops, am_opts *mo, char *mp, char *info, char *a
 {
   mntfs *mf2;
 
-  if (mf->mf_refc == 1 && mf->mf_ops == &ifs_ops && STREQ(mf->mf_mount, mp)) {
+  if (mf->mf_refc == 1 && mf->mf_ops == &amfs_inherit_ops && STREQ(mf->mf_mount, mp)) {
     /*
      * If we are inheriting then just return
      * the same node...
@@ -323,7 +324,7 @@ realloc_mntfs(mntfs *mf, am_ops *ops, am_opts *mo, char *mp, char *info, char *a
    * Re-use the existing mntfs if it is mounted.
    * This traps a race in nfsx.
    */
-  if (mf->mf_ops != &efs_ops &&
+  if (mf->mf_ops != &amfs_error_ops &&
       (mf->mf_flags & MFF_MOUNTED) &&
       !FSRV_ISDOWN(mf->mf_server)) {
     mf->mf_fo = mo;

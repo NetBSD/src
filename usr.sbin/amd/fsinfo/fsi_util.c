@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_util.c,v 1.8 1997/10/26 00:25:40 christos Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.9 1998/08/08 22:33:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -387,7 +387,7 @@ set_host(host *hp, int k, char *v)
       hp->h_hostname = v;
       domain_strip(p, hostname);
       if (strchr(p, '.') != 0)
-	free(p);
+	XFREE(p);
       else
 	hp->h_lochost = p;
     }
@@ -467,7 +467,7 @@ set_ether_if(ether_if *ep, int k, char *v)
       ep->e_inaddr.s_addr = inet_addr(v);
       if (ep->e_inaddr.s_addr == (u_long) - 1)
 	yyerror("malformed IP dotted quad: %s", v);
-      free(v);
+      XFREE(v);
     }
     break;
 
@@ -478,7 +478,7 @@ set_ether_if(ether_if *ep, int k, char *v)
 	ep->e_netmask = htonl(nm);
       else
 	yyerror("malformed netmask: %s", v);
-      free(v);
+      XFREE(v);
     }
     break;
 
@@ -524,12 +524,12 @@ set_disk_fs(disk_fs *dp, int k, char *v)
 
   case DF_PASSNO:
     dp->d_passno = atoi(v);
-    free(v);
+    XFREE(v);
     break;
 
   case DF_FREQ:
     dp->d_freq = atoi(v);
-    free(v);
+    XFREE(v);
     break;
 
   case DF_MOUNT:

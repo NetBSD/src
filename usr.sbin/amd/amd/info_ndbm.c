@@ -1,7 +1,7 @@
-/*	$NetBSD: info_ndbm.c,v 1.6 1997/10/26 00:24:57 christos Exp $	*/
+/*	$NetBSD: info_ndbm.c,v 1.7 1998/08/08 22:33:29 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.

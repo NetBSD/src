@@ -1,7 +1,7 @@
-/*	$NetBSD: fsinfo.c,v 1.8 1998/07/27 00:52:00 mycroft Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.9 1998/08/08 22:33:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.

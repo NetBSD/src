@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_svc.c,v 1.5 1997/10/26 00:25:03 christos Exp $	*/
+/*	$NetBSD: nfs_prot_svc.c,v 1.6 1998/08/08 22:33:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -134,7 +134,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
     xdr_result = (xdrproc_t) xdr_diropres;
     local = (nfssvcproc_t) nfsproc_lookup_2_svc;
     /*
-     * Cheap way to pass transp down to afs_lookuppn so it can
+     * Cheap way to pass transp down to amfs_auto_lookuppn so it can
      * be stored in the am_node structure and later used for
      * quick_reply().
      */

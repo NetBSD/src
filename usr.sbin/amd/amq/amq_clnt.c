@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_clnt.c,v 1.5 1997/10/26 00:25:28 christos Exp $	*/
+/*	$NetBSD: amq_clnt.c,v 1.6 1998/08/08 22:33:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
