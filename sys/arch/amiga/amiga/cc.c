@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc.c,v 1.5 1994/06/04 11:58:40 chopps Exp $
+ *	$Id: cc.c,v 1.6 1994/06/23 05:31:24 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -45,13 +45,13 @@
 
 /* init all the "custom chips" */
 void
-custom_chips_init ()
+custom_chips_init()
 {
-	cc_init_chipmem ();
-	cc_init_vbl ();
-	cc_init_audio ();
-	cc_init_blitter ();
-	cc_init_copper ();
+	cc_init_chipmem();
+	cc_init_vbl();
+	cc_init_audio();
+	cc_init_blitter();
+	cc_init_copper();
 }
 
 /*
@@ -60,26 +60,27 @@ custom_chips_init ()
 LIST_HEAD(vbllist, vbl_node) vbl_list;
 
 void 
-turn_vbl_function_off (n)
+turn_vbl_function_off(n)
 	struct vbl_node *n;
 {
-	if (!(n->flags & VBLNF_OFF)) {
-		n->flags |= VBLNF_TURNOFF;
-		while (!(n->flags & VBLNF_OFF)) 
-			;
-	}
+	if (n->flags & VBLNF_OFF)
+		return;
+
+	n->flags |= VBLNF_TURNOFF;
+	while ((n->flags & VBLNF_OFF) == 0) 
+		;
 }
 
 /* allow function to be called on next vbl interrupt. */
 void
-turn_vbl_function_on (n)
+turn_vbl_function_on(n)
 	struct vbl_node *n;
 {
 	n->flags &= (short) ~(VBLNF_OFF);
 }
 
 void                    
-add_vbl_function (add, priority, data)
+add_vbl_function(add, priority, data)
 	struct vbl_node *add;
 	short priority;
 	void *data;
@@ -113,7 +114,7 @@ add_vbl_function (add, priority, data)
 }
 
 void
-remove_vbl_function (n)
+remove_vbl_function(n)
 	struct vbl_node *n;
 {
 	int s;
@@ -125,7 +126,7 @@ remove_vbl_function (n)
 
 /* Level 3 hardware interrupt */
 void
-vbl_handler ()
+vbl_handler()
 {
 	struct vbl_node *n;
 
@@ -143,10 +144,12 @@ vbl_handler ()
 }
 
 void
-cc_init_vbl ()
+cc_init_vbl()
 {
 	LIST_INIT(&vbl_list);
-	/* init vertical blank interrupts */
+	/*
+	 * enable vertical blank interrupts
+	 */
 	custom.intena = INTF_SETCLR | INTF_VERTB; 
 }
 
@@ -156,44 +159,48 @@ cc_init_vbl ()
  */
 
 void
-cc_init_blitter ()
+cc_init_blitter()
 {
 }
 
 /* test twice to cover blitter bugs if BLTDONE (BUSY) is set it is not done. */
 int
-is_blitter_busy ()
+is_blitter_busy()
 {
-	volatile u_short bb = (custom.dmaconr & DMAF_BLTDONE);
+	u_short bb;
+
+	bb = (custom.dmaconr & DMAF_BLTDONE);
 	if ((custom.dmaconr & DMAF_BLTDONE) || bb) 
 		return (1);
 	return (0);
 }
 
 void
-wait_blit ()
+wait_blit()
 {
-	/* V40 state this covers all blitter bugs. */
-	while (is_blitter_busy ()) 
+	/*
+	 * V40 state this covers all blitter bugs.
+	 */
+	while (is_blitter_busy()) 
 		;
 }
 
 void
-blitter_handler ()
+blitter_handler()
 {
 	custom.intreq = INTF_BLIT;
 }
 
 
 void
-do_blit (size)
+do_blit(size)
 	u_short size;
 {
 	custom.bltsize = size;
 }
 
 void
-set_blitter_control (con0, con1)
+set_blitter_control(con0, con1)
 	u_short con0, con1;
 {
 	custom.bltcon0 = con0;
@@ -201,7 +208,7 @@ set_blitter_control (con0, con1)
 }
 
 void
-set_blitter_mods (a, b, c, d)
+set_blitter_mods(a, b, c, d)
 	u_short a, b, c, d;
 {
 	custom.bltamod = a;
@@ -211,7 +218,7 @@ set_blitter_mods (a, b, c, d)
 }
 
 void
-set_blitter_masks (fm, lm)
+set_blitter_masks(fm, lm)
 	u_short fm, lm;
 {
 	custom.bltafwm = fm;
@@ -219,7 +226,7 @@ set_blitter_masks (fm, lm)
 }
 
 void
-set_blitter_data (da, db, dc)
+set_blitter_data(da, db, dc)
 	u_short da, db, dc;
 {
 	custom.bltadat = da;
@@ -228,7 +235,7 @@ set_blitter_data (da, db, dc)
 }
 
 void
-set_blitter_pointers (a, b, c, d)
+set_blitter_pointers(a, b, c, d)
 	void *a, *b, *c, *d;
 {
 	custom.bltapt = a;
@@ -242,27 +249,37 @@ set_blitter_pointers (a, b, c, d)
  */
 
 
-/* Wait till end of frame. We should probably better use the
- * sleep/wakeup system newly introduced in the vbl manager (ch?) */
+/*
+ * Wait till end of frame. We should probably better use the
+ * sleep/wakeup system newly introduced in the vbl manager
+ */
 void
-wait_tof ()
+wait_tof()
 {
-	/* wait until bottom of frame. */
-	while (!(custom.vposr & 0x0007))
+	/*
+	 * wait until bottom of frame.
+	 */
+	while ((custom.vposr & 0x0007) == 0)
 		;
 	
-	/* wait until until top of frame. */
+	/*
+	 * wait until until top of frame.
+	 */
 	while (custom.vposr & 0x0007) 
 		;
 	
-	
-	if (!custom.vposr & 0x8000) 
-		while (!(custom.vposr & 0x8000)) /* we are on short frame. */	
-			;	/* wait for long frame bit set. */
+	if (custom.vposr & 0x8000)
+		return;
+	/*
+	 * we are on short frame.
+	 * wait for long frame bit set
+	 */
+	while ((custom.vposr & 0x8000) == 0)
+		;
 }
 
 cop_t *
-find_copper_inst (l, inst)
+find_copper_inst(l, inst)
 	cop_t *l;
 	u_short inst;
 {
@@ -278,7 +295,7 @@ find_copper_inst (l, inst)
 }
 
 void
-install_copper_list (l)
+install_copper_list(l)
 	cop_t *l;
 {
 	wait_tof();
@@ -288,13 +305,15 @@ install_copper_list (l)
 
 
 void
-cc_init_copper ()
+cc_init_copper()
 {
 }
 
-/* level 3 interrupt */
+/*
+ * level 3 interrupt
+ */
 void
-copper_handler ()
+copper_handler()
 {
 	custom.intreq = INTF_COPER;  
 }
@@ -315,90 +334,114 @@ static struct audio_channel channel[4];
 struct vbl_node audio_vbl_node;    
 
 void
-cc_init_audio ()
+cc_init_audio()
 {
 	int i;
 
-	/* disable all audio interupts */
+	/*
+	 * disable all audio interupts
+	 */
 	custom.intena = INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3;
 
-	/* initialize audio channels to off. */
-	for (i=0; i < 4; i++) {
+	/*
+	 * initialize audio channels to off.
+	 */
+	for (i=0; i < 4; i++)
 		channel[i].play_count = 0;
-	};
 }
 
 
-/* Audio Interrupt Handler */
+/*
+ * Audio Interrupt Handler
+ */
 void
-audio_handler ()
+audio_handler()
 {
-	u_short audio_dma = custom.dmaconr;
-	u_short disable_dma = 0;
+	u_short audio_dma, disable_dma, flag, ir;
 	int i;
 
-	/* only check channels who have DMA enabled. */
+	audio_dma = custom.dmaconr;
+	disable_dma = 0;
+
+	/*
+	 * only check channels who have DMA enabled.
+	 */
 	audio_dma &= (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3);
 
-	/* disable all audio interupts with DMA set */
+	/*
+	 * disable all audio interupts with DMA set
+	 */
 	custom.intena = (audio_dma << 7);
 
-	/* if no audio dma enabled then exit quick. */
+	/*
+	 * if no audio dma enabled then exit quick.
+	 */
 	if (!audio_dma) {
-		/* clear all interrupts. */
+		/*
+		 * clear all interrupts.
+		 */
 		custom.intreq = INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3; 
-		goto end_int;		/* cleanup. */
+		goto out;
 	}
 
 	for (i = 0; i < 4; i++) {
-		u_short flag = (1 << i);
-		u_short ir = custom.intreqr;
-		/* check if this channel's interrupt is set */
-		if (ir & (flag << 7)) {
-			if (channel[i].play_count) {
-				channel[i].play_count--;
-			} else {
-				/* disable DMA to this channel. */
-				custom.dmacon = flag;
-		
-				/* disable interrupts to this channel. */
-				custom.intena = (flag << 7);
-			}
-			 /* clear this channels interrupt. */
-			custom.intreq = (flag << 7);
+		flag = (1 << i);
+		ir = custom.intreqr;
+		/*
+		 * is this channel's interrupt is set?
+		 */
+		if ((ir & (flag << 7)) == 0)
+			continue;
+
+		if (channel[i].play_count)
+			channel[i].play_count--;
+		else {
+			/*
+			 * disable DMA to this channel and
+			 * disable interrupts to this channel
+			 */
+			custom.dmacon = flag;
+			custom.intena = (flag << 7);
 		}
+		/*
+		 * clear this channels interrupt.
+		 */
+		custom.intreq = (flag << 7);
 	}
 
-	end_int:
-	/* enable audio interupts with dma still set. */
+out:
+	/*
+	 * enable audio interupts with dma still set.
+	 */
 	audio_dma = custom.dmaconr;
 	audio_dma &= (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3);
-	custom.intena = INTF_SETCLR| (audio_dma << 7);
+	custom.intena = INTF_SETCLR | (audio_dma << 7);
 }
 
 void
-play_sample (len, data, period, volume, channels, count)
+play_sample(len, data, period, volume, channels, count)
 	u_short len, *data, period, volume, channels;
 	u_long count;
 {
-	u_short dmabits = channels & 0xf;
-	u_short ch;
+	u_short dmabits, ch;
 
+	dmabits = channels & 0xf;
 	custom.dmacon = dmabits;	/* turn off the correct channels */
 
 	/* load the channels */
 	for (ch = 0; ch < 4; ch++) {
-		if (dmabits & (ch << ch)) {
-			custom.aud[ch].len = len;
-			custom.aud[ch].lc = data;
-			custom.aud[ch].per = period;
-			custom.aud[ch].vol = volume;
-			channel[ch].play_count = count;
-		}
+		if ((dmabits & (ch << ch)) == 0)
+			continue;
+		custom.aud[ch].len = len;
+		custom.aud[ch].lc = data;
+		custom.aud[ch].per = period;
+		custom.aud[ch].vol = volume;
+		channel[ch].play_count = count;
 	}
-	/* turn on interrupts for channels */
+	/*
+	 * turn on interrupts and enable dma for channels and
+	 */
 	custom.intena = INTF_SETCLR | (dmabits << 7);
-	 /* turn on the correct channels */
 	custom.dmacon = DMAF_SETCLR | dmabits;
 }
 
@@ -412,7 +455,7 @@ static u_long   chip_total;		/* total free. */
 static u_long   chip_size;		/* size of it all. */
 
 void
-cc_init_chipmem ()
+cc_init_chipmem()
 {
 	int s = splhigh ();
 	struct mem_node *mem;
@@ -428,11 +471,11 @@ cc_init_chipmem ()
     
 	CIRCLEQ_INSERT_HEAD(&chip_list, mem, link);
 	CIRCLEQ_INSERT_HEAD(&free_list, mem, free_link);
-	splx (s);
+	splx(s);
 }
 
 void *
-alloc_chipmem (size)
+alloc_chipmem(size)
 	u_long size;
 {
 	void *mem;
@@ -447,11 +490,13 @@ alloc_chipmem (size)
 	if (size & ~(CM_BLOCKMASK)) 
 		size = (size & CM_BLOCKMASK) + CM_BLOCKSIZE;
 
-	/* walk list of available nodes. */
+	/*
+	 * walk list of available nodes.
+	 */
 	mn = free_list.cqh_first;
-	while (size > mn->size && mn != (void *)&free_list) {
+	while (size > mn->size && mn != (void *)&free_list)
 		mn = mn->free_link.cqe_next;
-	}
+
 	if (mn == (void *)&free_list)
 		return(NULL);
 
@@ -462,34 +507,38 @@ alloc_chipmem (size)
 		 */
 		CIRCLEQ_REMOVE(&free_list, mn, free_link);
 		mn->free_link.cqe_next = NULL;
-		size = mn->size; /* increase size. (or same) */
+		size = mn->size;	 /* increase size. (or same) */
 		chip_total -= mn->size;
-		splx (s);
-		return((void *)&mn[1]);
+		splx(s);
+		return ((void *)&mn[1]);
 	}
 
-	/* split the node's memory. */
+	/*
+	 * split the node's memory.
+	 */
 	new = mn;
 	new->size -= size + sizeof(struct mem_node);
 	mn = (struct mem_node *)(MNODES_MEM(new) + new->size);
 	mn->size = size;
 
-	/* add split node to node list */
+	/*
+	 * add split node to node list
+	 * and mark as not on free list
+	 */
 	CIRCLEQ_INSERT_AFTER(&chip_list, new, mn, link);
-	/* and mark as not on free list */
 	mn->free_link.cqe_next = NULL;
 
 	chip_total -= size + sizeof(struct mem_node);
-	splx (s);
-	return((void *)&mn[1]);
+	splx(s);
+	return ((void *)&mn[1]);
 }
 
 void
 free_chipmem(mem)
 	void *mem;
 {
-	int s;
 	struct mem_node *mn, *next, *prev;
+	int s;
 
 	if (mem == NULL)
 		return;
@@ -499,10 +548,14 @@ free_chipmem(mem)
 	next = mn->link.cqe_next;
 	prev = mn->link.cqe_prev;
 
-	/* check ahead of us. */
+	/*
+	 * check ahead of us.
+	 */
 	if (next->link.cqe_next != (void *)&chip_list && 
 	    next->free_link.cqe_next) {
-		/* if next is: a valid node and a free node. ==> merge */
+		/*
+		 * if next is: a valid node and a free node. ==> merge
+		 */
 		CIRCLEQ_INSERT_BEFORE(&free_list, next, mn, free_link);
 		CIRCLEQ_REMOVE(&chip_list, next, link);
 		CIRCLEQ_REMOVE(&chip_list, next, free_link);
@@ -511,7 +564,9 @@ free_chipmem(mem)
 	}
 	if (prev->link.cqe_prev != (void *)&chip_list &&
 	    prev->free_link.cqe_prev) {
-		/* if prev is: a valid node and a free node. ==> merge */
+		/*
+		 * if prev is: a valid node and a free node. ==> merge
+		 */
 		if (mn->free_link.cqe_next == NULL)
 			chip_total += mn->size + sizeof(struct mem_node);
 		else {
@@ -554,39 +609,41 @@ free_chipmem(mem)
 		}
 		chip_total += mn->size;	/* add our helpings to the pool. */
 	}
-	splx (s);
+	splx(s);
 }
 
 u_long
-sizeof_chipmem (mem)
+sizeof_chipmem(mem)
 	void *mem;
 {
-	if (mem) {
-		struct mem_node *mn = mem;
-		mn--;
-		return (mn->size);
-	}
-	return (0);
+	struct mem_node *mn;
+
+	if (mem == NULL)
+		return (0);
+	mn = mem;
+	mn--;
+	return (mn->size);
 }
 
 u_long
-avail_chipmem (largest)
+avail_chipmem(largest)
 	int largest;
 {
-	u_long val = 0;
-	
-	if (largest) {
-		int s = splhigh ();
-		struct mem_node *mn;
+	struct mem_node *mn;
+	u_long val;
+	int s;
 
+	val = 0;
+	if (largest == 0)
+		val = chip_total;
+	else {
+		s = splhigh();
 		for (mn = free_list.cqh_first; mn != (void *)&free_list;
 		     mn = mn->free_link.cqe_next) {
 			if (mn->size > val) 
 				val = mn->size;
 		}
-		splx (s);
-	} else 
-		val = chip_total;
+		splx(s);
+	}
 	return (val);
 }	      
-

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.21 1994/06/13 08:12:35 chopps Exp $
+ *	$Id: trap.c,v 1.22 1994/06/23 05:31:30 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -881,7 +881,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		    wb_addr + wb_extra_page, wb_sts & WBS_TMMASK, mmusr);
 #endif
 
-		if(!(mmusr & MMUSR_R)) {
+		if((mmusr & (MMUSR_R | MMUSR_W)) != MMUSR_R) {
 #ifdef DEBUG
 			if (mmudebug)
 				printf("wb3: need to bring in first page\n");
@@ -912,7 +912,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 			    wb_sts & WBS_TMMASK,mmusr);
 #endif
 
-		if(!(mmusr & MMUSR_R)) {
+		if((mmusr & (MMUSR_R | MMUSR_W)) != MMUSR_R) {
 #ifdef DEBUG
 			if (mmudebug)
 				printf("wb%d: page boundary crossed."
