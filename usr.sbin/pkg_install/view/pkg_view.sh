@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.17 2003/07/25 18:47:48 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.18 2003/07/28 21:55:36 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -71,7 +71,7 @@ checkpkg() {
 stowdir=""
 prefix=${PREFIX:-/usr/pkg}
 view=${PKG_VIEW:-""}
-ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig"}
+ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
 dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
 
 while [ $# -gt 0 ]; do
