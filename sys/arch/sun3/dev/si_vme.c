@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.19 2002/10/02 16:02:27 thorpej Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.20 2002/10/08 21:29:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ static void si_vme_reset __P((struct ncr5380_softc *));
 static int	si_vme_match __P((struct device *, struct cfdata *, void *));
 static void	si_vme_attach __P((struct device *, struct device *, void *));
 
-CFATTACH_DECL(si_vmw, sizeof(struct si_softc),
+CFATTACH_DECL(si_vme, sizeof(struct si_softc),
     si_vme_match, si_vme_attach, NULL, NULL);
 
 /*
