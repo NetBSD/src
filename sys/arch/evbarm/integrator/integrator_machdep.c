@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.15 2002/02/22 04:49:20 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.16 2002/02/22 17:26:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -682,7 +682,7 @@ initarm(bootinfo)
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
