@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.83 1999/04/01 11:02:20 tsubai Exp $	*/
+/*	$NetBSD: if_de.c,v 1.84 1999/04/12 04:31:55 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -2372,6 +2372,45 @@ tulip_identify_asante_nic(
     }
 }
 
+static void
+tulip_identify_compex_nic(
+    tulip_softc_t * const sc)
+{
+    strcpy(sc->tulip_boardid, "COMPEX ");
+    if (sc->tulip_chipid == TULIP_21140A) {
+	int root_unit;
+	tulip_softc_t *root_sc = NULL;
+
+	strcat(sc->tulip_boardid, "400TX/PCI ");
+	/*
+	 * All 4 chips on these boards share an interrupt.  This code
+	 * copied from tulip_read_macaddr.
+	 */
+	sc->tulip_features |= TULIP_HAVE_SHAREDINTR;
+	for (root_unit = sc->tulip_unit - 1; root_unit >= 0; root_unit--) {
+	    root_sc = TULIP_UNIT_TO_SOFTC(root_unit);
+	    if (root_sc == NULL
+		|| !(root_sc->tulip_features & TULIP_HAVE_SLAVEDINTR))
+		break;
+	    root_sc = NULL;
+	}
+	if (root_sc != NULL
+	    && root_sc->tulip_chipid == sc->tulip_chipid
+	    && root_sc->tulip_pci_busno == sc->tulip_pci_busno) {
+	    sc->tulip_features |= TULIP_HAVE_SLAVEDINTR;
+	    sc->tulip_slaves = root_sc->tulip_slaves;
+	    root_sc->tulip_slaves = sc;
+	} else if(sc->tulip_features & TULIP_HAVE_SLAVEDINTR) {
+	    printf("\nCannot find master device for de%d interrupts",
+		   sc->tulip_unit);
+	}
+    } else {
+	strcat(sc->tulip_boardid, "unknown ");
+    }
+    /*      sc->tulip_boardsw = &tulip_21140_eb_boardsw; */
+    return;
+}
+
 static int
 tulip_srom_decode(
     tulip_softc_t * const sc)
@@ -2746,6 +2785,7 @@ static const struct {
     { tulip_identify_cogent_nic,	{ 0x00, 0x00, 0x92 } },
     { tulip_identify_asante_nic,	{ 0x00, 0x00, 0x94 } },
     { tulip_identify_accton_nic,	{ 0x00, 0x00, 0xE8 } },
+    { tulip_identify_compex_nic,        { 0x00, 0x80, 0x48 } },
     { NULL }
 };
 
@@ -2800,7 +2840,7 @@ tulip_read_macaddr(
 	     * it's the best we can do until every one switches to
 	     * the new SROM format.
 	     */
-	     
+
 	    sc->tulip_boardsw = &tulip_21140_eb_boardsw;
 	}
 	tulip_srom_read(sc);
