@@ -1,4 +1,4 @@
-.\"	$NetBSD: if_indextoname.3,v 1.10 2003/04/16 13:34:42 wiz Exp $
+.\"	$NetBSD: if_indextoname.3,v 1.11 2005/03/11 16:13:13 ginsbach Exp $
 .\"	$KAME: if_indextoname.3,v 1.10 2000/11/24 08:13:51 itojun Exp $
 .\"	BSDI	Id: if_indextoname.3,v 2.2 2000/04/17 22:38:05 dab Exp
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 11, 1997
+.Dd March 11, 2005
 .Dt IF_NAMETOINDEX 3
 .Os
 .Sh NAME
@@ -129,7 +129,10 @@ The
 .Fn if_nameindex ,
 and
 .Fn if_freenameindex
-functions conform to RFC 2553.
+functions conform to
+.St -p1003.1-2001 ,
+.St -xns5.2 ,
+and RFC 3493.
 .Sh HISTORY
 The implementation first appeared in
 .Bsx .
