@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.289 2000/12/03 02:43:18 minoura Exp $
+# $NetBSD: mi,v 1.290 2000/12/09 18:33:45 bjh21 Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -452,6 +452,8 @@
 ./usr/share/man/cat4/arm26/dtide.0
 ./usr/share/man/cat4/arm26/ea.0
 ./usr/share/man/cat4/arm26/ei.0
+./usr/share/man/cat4/arm26/podulebus.0
+./usr/share/man/cat4/arm26/unixbp.0
 ./usr/share/man/cat4/arm32/asc.0
 ./usr/share/man/cat4/arm32/autoconf.0
 ./usr/share/man/cat4/arm32/beep.0
@@ -1879,6 +1881,8 @@
 ./usr/share/man/man4/arm26/dtide.4
 ./usr/share/man/man4/arm26/ea.4
 ./usr/share/man/man4/arm26/ei.4
+./usr/share/man/man4/arm26/podulebus.4
+./usr/share/man/man4/arm26/unixbp.4
 ./usr/share/man/man4/arm32/asc.4
 ./usr/share/man/man4/arm32/autoconf.4
 ./usr/share/man/man4/arm32/beep.4
