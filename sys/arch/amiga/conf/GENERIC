@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.143.2.3 2000/08/11 20:18:00 mason Exp $
+#	$NetBSD: GENERIC,v 1.143.2.4 2000/10/04 08:24:25 itojun Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.143.2.3 $"
+#ident 		"GENERIC-$Revision: 1.143.2.4 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -449,7 +449,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # rnd is EXPERIMENTAL at this point.
-#pseudo-device  rnd                     # /dev/random and in-kernel generator
+pseudo-device  rnd                     # /dev/random and in-kernel generator
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.27.2.2 2000/08/11 20:18:06 mason Exp $
+#	$NetBSD: GENERIC,v 1.27.2.3 2000/10/04 08:24:27 itojun Exp $
 #
 # First try for PPC config file
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.27.2.2 $"
+#ident 		"GENERIC-$Revision: 1.27.2.3 $"
 
 maxusers	32
 
@@ -86,5 +86,5 @@ pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	gre		2	# generic L3 over IP tunnel
