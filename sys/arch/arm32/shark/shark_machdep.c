@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.3 1998/05/01 21:18:41 cgd Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.4 1998/06/21 23:23:40 tv Exp $	*/
 
 /*
  * Copyright 1997
@@ -147,8 +147,6 @@ int cpu_cache;
 u_int memory_disc_size;
 #endif
 
-vm_offset_t cache_clean_vms[2] = {0, 0}; /* vms = plural of vm, not VMS! :-) */
-
 int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
 
 /*
@@ -160,6 +158,17 @@ int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
  */
 
 u_int cpu_reset_address = 0;
+
+/*
+ * For faster cache cleaning we need two 16K banks of virtual address
+ * space that NOTHING else will access and then we alternate the cache
+ * cleaning between the two banks.
+ * The cache cleaning code requires requires 2 banks aligned
+ * on total size boundry so the banks can be alternated by
+ * eorring the size bit (assumes the bank size is a power of 2)
+ */
+extern unsigned int sa110_cache_clean_addr;
+extern unsigned int sa110_cache_clean_size;
 
 struct cfattach ofbus_root_ca = {
 	sizeof(struct device), ofbus_match, ofbus_attach
@@ -219,7 +228,7 @@ vm_offset_t
 initarm(ofw_handle)
     ofw_handle_t ofw_handle;
 {
-  vm_offset_t  pclean, clean0, clean1;
+  vm_offset_t  pclean;
   vm_offset_t  isa_io_physaddr, isa_mem_physaddr;
   vm_offset_t  isa_io_virtaddr, isa_mem_virtaddr;
   vm_offset_t  isadmaphysbufs;
@@ -267,13 +276,8 @@ initarm(ofw_handle)
 
     /* allocate a cache clean space */
     if ((pclean = ofw_getcleaninfo()) != -1) {
-      clean0 = ofw_map(pclean, NBPD, PT_B | PT_C);
-      /* ...and another one: see the comment in the cache flush code =
-	 arm32/arm32/cpufunc_asm.S */
-      clean1 = ofw_map(pclean, NBPD, PT_B | PT_C);
-      /* don't set cache_clean_vm until after it is mapped */
-      cache_clean_vms[0] = clean0;
-      cache_clean_vms[1] = clean1;
+      sa110_cache_clean_addr = ofw_map(pclean, 0x4000 * 2, PT_B | PT_C);
+      sa110_cache_clean_size = 0x4000;
     }
 
     /* Configure memory. */
