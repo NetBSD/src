@@ -25,11 +25,6 @@ unix300|300 Baud dial-out to another UNIX system:\
 
 # General dialer definitions used below
 #
-# COURIER switch settings:
-# switch:	1 2 3 4 5 6 7 8 9 10
-# setting:	D U D U D D U D U U
-# Rackmount:	U U D U D U D D U D
-#
 dial2400|2400 Baud Hayes attributes:\
         :dv=/dev/tty00:br#2400:cu=/dev/tty00:at=hayes:du:
 dial1200|1200 Baud Hayes attributes:\
