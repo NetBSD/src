@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.52 2003/05/03 18:11:29 wiz Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.53 2003/07/08 10:06:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -228,7 +228,7 @@ int	sbdsp_reset __P((struct sbdsp_softc *));
 void	sbdsp_spkron __P((struct sbdsp_softc *));
 void	sbdsp_spkroff __P((struct sbdsp_softc *));
 
-int	sbdsp_wdsp __P((struct sbdsp_softc *, int v));
+int	sbdsp_wdsp __P((struct sbdsp_softc *, int));
 int	sbdsp_rdsp __P((struct sbdsp_softc *));
 
 int	sbdsp_intr __P((void *));
