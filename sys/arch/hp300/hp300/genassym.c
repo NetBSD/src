@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.3 1993/05/27 11:37:20 deraadt Exp $
+ *	$Id: genassym.c,v 1.4 1993/08/14 14:29:07 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -44,11 +44,11 @@
 #include "../include/trap.h"
 #include "../include/psl.h"
 #include "../include/reg.h"
+#include "../include/pte.h"
 #include "clockreg.h"
 #include "sys/syscall.h"
 #include "vm/vm.h"
 #include "sys/user.h"
-#include "pte.h"
 
 main()
 {

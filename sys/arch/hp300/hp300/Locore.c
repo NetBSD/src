@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)Locore.c	7.4 (Berkeley) 5/7/91
- *	$Id: Locore.c,v 1.2 1993/05/22 07:57:08 cgd Exp $
+ *	$Id: Locore.c,v 1.3 1993/08/14 14:29:06 mycroft Exp $
  */
 
-#include "../includepte.h"
+#include "../include/pte.h"
 #include "../includecpu.h"
 
 #include "sys/param.h"

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.7 1993/08/08 00:11:06 mycroft Exp $
+ *	$Id: machdep.c,v 1.8 1993/08/14 14:29:09 mycroft Exp $
  */
 
 #include "param.h"
@@ -67,8 +67,8 @@
 #include "../include/cpu.h"
 #include "../include/reg.h"
 #include "../include/psl.h"
+#include "../include/pte.h"
 #include "isr.h"
-#include "pte.h"
 #include "net/netisr.h"
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
