@@ -1,11 +1,9 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.3 2001/04/03 13:10:26 jdolecek Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.4 2001/04/05 09:58:05 tsubai Exp $	*/
 
-/*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+/*
+ * Copyright (C) 1995, 1996 Wolfgang Solfrank.
+ * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas <matt@3am-software.com>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,47 +15,37 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.3 2001/04/03 13:10:26 jdolecek Exp $");
-
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/conf.h>
-#include <sys/exec.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/sysctl.h>
 #include <sys/disklabel.h>
-#include <uvm/uvm_extern.h>
-
-#include <machine/frame.h>
-#include <machine/pcb.h>
+#include <sys/exec.h>
+#include <sys/sysctl.h>
+#include <sys/user.h>
 
 /*
  * Set set up registers on exec.
  */
 void
-setregs(struct proc *p, struct exec_package *pack, u_long stack)
+setregs(p, pack, stack)
+	struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
 {
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;
@@ -69,7 +57,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	 * XXX Machine-independent code has already copied arguments and
 	 * XXX environment to userland.  Get them back here.
 	 */
-	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof(arginfo));
+	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof (arginfo));
 
 	/*
 	 * Set up arguments for _start():
@@ -122,25 +110,20 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 }
 
-
 /*
  * Crash dump handling.
  */
 u_long dumpmag = 0x8fca0101;		/* magic number */
-long dumplo = -1;			/* blocks */
 int dumpsize = 0;			/* size of dump in pages */
+long dumplo = -1;			/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
- * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end to
- * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf(void)
+cpu_dumpconf()
 {
-	int nblks;	/* size of dump area */
+	int nblks;		/* size of dump device */
 	int skip;
 	int maj;
 
@@ -157,15 +140,14 @@ cpu_dumpconf(void)
 
 	dumpsize = physmem;
 
-	/* Skip enough block at the start of disk to preserve an eventual disklabel */
-	skip = LABELSECTOR + ctod(1);
+	/* Skip enough blocks at start of disk to preserve an eventual disklabel. */
+	skip = LABELSECTOR + 1;
+	skip += ctod(1) - 1;
 	skip = ctod(dtoc(skip));
-
-	/* Always skip the first NBPG, in case there is a label there. */
 	if (dumplo < skip)
 		dumplo = skip;
 
-	/* Put dump at end of partition, and make it fit. */
+	/* Put dump at end of partition */
 	if (dumpsize > dtoc(nblks - dumplo))
 		dumpsize = dtoc(nblks - dumplo);
 	if (dumplo < nblks - ctod(dumpsize))
