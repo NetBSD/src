@@ -2,7 +2,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: unbzip2.c,v 1.2 1999/08/20 00:08:57 simonb Exp $";
+static char rcsid[] = "$Id: unbzip2.c,v 1.3 2000/11/17 01:32:27 simonb Exp $";
 #endif
 
 #define BZ_NO_STDIO
@@ -53,6 +53,7 @@ int unbzip2(in, out)
 				n = write(out, outbuf, OUTBUFSIZ - bzs.avail_out);
 				if (n < 0)
 					write_error();
+				bytes_out += n;
 			}
 			break;
 		}
@@ -61,6 +62,7 @@ int unbzip2(in, out)
 				read_error();
 			if (!test)
 				n = write(out, outbuf, OUTBUFSIZ - bzs.avail_out);
+			bytes_out += n;
 		}
 		else {
 			switch (ret) {
