@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.117 2002/06/14 10:01:27 wiz Exp $
+#	$NetBSD: DEVNAMES,v 1.118 2002/07/22 01:24:41 ichiro Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -546,6 +546,9 @@ ivsc			amiga
 ivsc			amigappc
 iwm			mac68k
 ix			MI		
+ixpsip			arm32
+ixpio			arm32
+ixpclk			arm32
 iy			MI		
 joy			arc
 joy			arm32
@@ -941,11 +944,11 @@ ry			vax
 rz			pmax
 sab			MI
 sableio			alpha
-sacc			hpcarm
-sacom			hpcarm
-sacpcic			hpcarm
-saip			hpcarm
-saost			hpcarm
+sacc			arm32
+sacom			arm32
+sacpcic			arm32
+saip			arm32
+saost			arm32
 satlink			MI		
 sb			MI		
 sbc			mac68k
