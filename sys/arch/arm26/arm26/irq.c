@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.7 2000/12/09 17:52:45 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.8 2001/01/07 15:56:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.7 2000/12/09 17:52:45 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.8 2001/01/07 15:56:01 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -91,6 +91,7 @@ struct irq_handler {
 	int	irqnum;
 	int	ipl;
 	int	enabled;
+	char	const *name;
 };
 
 volatile static int current_spl = IPL_HIGH;
@@ -179,7 +180,8 @@ irq_handler(struct irqframe *irqf)
 }
 
 struct irq_handler *
-irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
+irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
+    char const *name)
 {
 	struct irq_handler *h, *new;
 
@@ -198,6 +200,7 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
 	new->ipl = ipl;
 	new->func = func;
 	new->arg = arg;
+	new->name = name;
 	new->enabled = 1;
 	if (irq_list_head.lh_first == NULL ||
 	    irq_list_head.lh_first->ipl <= ipl)

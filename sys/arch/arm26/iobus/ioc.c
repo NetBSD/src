@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.6 2001/01/07 15:36:34 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.7 2001/01/07 15:56:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.6 2001/01/07 15:36:34 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.7 2001/01/07 15:56:02 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -362,7 +362,7 @@ cpu_initclocks(void)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
 	ioc_counter_start(self, 0, t0_count);
 	sc->sc_clkirq = irq_establish(IOC_IRQ_TM0, IPL_CLOCK, ioc_irq_clock,
-	    NULL);
+	    NULL, "hardclock");
 	if (bootverbose)
 		printf("%s: %d Hz clock interrupting at %s\n",
 		    self->dv_xname, hz, irq_string(sc->sc_clkirq));
@@ -370,7 +370,7 @@ cpu_initclocks(void)
 	if (stathz) {
 		setstatclockrate(stathz);
 		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_STATCLOCK,
-						   ioc_irq_statclock, NULL);
+		    ioc_irq_statclock, NULL, "statclock");
 		if (bootverbose)
 			printf("%s: %d Hz statclock interrupting at %s\n",
 			    self->dv_xname, stathz, irq_string(sc->sc_sclkirq));

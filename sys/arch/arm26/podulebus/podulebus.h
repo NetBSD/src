@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.2 2000/12/20 10:57:38 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.3 2001/01/07 15:56:03 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -79,7 +79,7 @@ struct podulebus_attach_args {
 #ifdef _KERNEL
 
 extern struct irq_handler *podulebus_irq_establish(struct device *, int, int,
-						   int (*)(void *), void *);
+    int (*)(void *), void *, char const *name);
 extern int podulebus_initloader(struct podulebus_attach_args *);
 extern int podloader_readbyte(struct podulebus_attach_args *, u_int);
 extern void podloader_writebyte(struct podulebus_attach_args *, u_int, int);
