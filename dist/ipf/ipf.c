@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.2 2000/05/03 10:55:44 veego Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.3 2000/08/09 20:49:28 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.10 2000/03/13 22:10:23 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.10.2.3 2000/08/07 14:54:05 darrenr Exp";
 #endif
 
 #if	SOLARIS
@@ -297,9 +297,10 @@ char	*name, *file;
 
 			if ((opts & OPT_ZERORULEST) &&
 			    !(opts & OPT_DONOTHING)) {
-				if (ioctl(fd, add, &fr) == -1)
+				if (ioctl(fd, add, &fr) == -1) {
+					fprintf(stderr, "%d:", linenum);
 					perror("ioctl(SIOCZRLST)");
-				else {
+				} else {
 #ifdef	USE_QUAD_T
 					printf("hits %qd bytes %qd ",
 						(long long)fr->fr_hits,
@@ -312,11 +313,15 @@ char	*name, *file;
 				}
 			} else if ((opts & OPT_REMOVE) &&
 				   !(opts & OPT_DONOTHING)) {
-				if (ioctl(fd, del, &fr) == -1)
+				if (ioctl(fd, del, &fr) == -1) {
+					fprintf(stderr, "%d:", linenum);
 					perror("ioctl(delete rule)");
+				}
 			} else if (!(opts & OPT_DONOTHING)) {
-				if (ioctl(fd, add, &fr) == -1)
+				if (ioctl(fd, add, &fr) == -1) {
+					fprintf(stderr, "%d:", linenum);
 					perror("ioctl(add/insert rule)");
+				}
 			}
 		}
 	}
@@ -341,7 +346,7 @@ FILE	*file;
 	int s, len;
 
 	do {
-		for (p = str, s = size;; p += len, s -= len) {
+		for (p = str, s = size;; p += (len - 1), s -= (len - 1)) {
 			/*
 			 * if an error occured, EOF was encounterd, or there
 			 * was no room to put NUL, return NULL.
@@ -349,12 +354,21 @@ FILE	*file;
 			if (fgets(p, s, file) == NULL)
 				return (NULL);
 			len = strlen(p);
-			p[len - 1] = '\0';
-			if (p[len - 1] != '\\')
+			if (p[len - 1] != '\n') {
+				p[len] = '\0';
 				break;
-			size -= len;
+			}
+			p[len - 1] = '\0';
+			if (len < 2 || p[len - 2] != '\\')
+				break;
+			else
+				/*
+				 * Convert '\\' to a space so words don't
+				 * run together
+				 */
+				p[len - 2] = ' ';
 		}
-	} while (*str == '\0' || *str == '\n');
+	} while (*str == '\0');
 	return (str);
 }
 
@@ -546,13 +560,21 @@ static void showversion()
 	struct friostat *fiop=&fio;
 	u_32_t flags;
 	char *s;
+	int vfd;
 
 	printf("ipf: %s (%d)\n", IPL_VERSION, (int)sizeof(frentry_t));
 
-	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCGETFS, &fiop)) {
-		perror("ioctl(SIOCGETFS");
+	if ((vfd = open(ipfname, O_RDONLY)) == -1) {
+		perror("open device");
 		return;
 	}
+
+	if (ioctl(vfd, SIOCGETFS, &fiop)) {
+		perror("ioctl(SIOCGETFS");
+		close(vfd);
+		return;
+	}
+	close(vfd);
 	flags = get_flags();
 
 	printf("Kernel: %-*.*s\n", (int)sizeof(fio.f_version),

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.18 2000/06/12 10:23:07 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.1.1.19 2000/08/09 20:53:20 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.10 2000/05/25 20:16:44 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.15 2000/08/05 14:49:08 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -694,6 +694,10 @@ caddr_t data;
 	if (error)
 		return EFAULT;
 	fp->fr_ref = 0;
+#if (BSD >= 199306) && defined(_KERNEL)
+	if ((securelevel > 0) && (fp->fr_func != NULL))
+		return EPERM;
+#endif
 
 	/*
 	 * Check that the group number does exist and that if a head group
@@ -766,7 +770,7 @@ caddr_t data;
 	 * interface pointer in the comparison (fr_next, fr_ifa).
 	 */
 	for (fp->fr_cksum = 0, p = (u_int *)&fp->fr_ip, pp = &fp->fr_cksum;
-	     p != pp; p++)
+	     p < pp; p++)
 		fp->fr_cksum += *p;
 
 	for (; (f = *ftail); ftail = &f->fr_next)
@@ -1137,8 +1141,10 @@ int dst;
 			return ENOBUFS;
 
 		MCLGET(m, M_DONTWAIT);
-		if (!m)
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
 			return ENOBUFS;
+		}
 		avail = (m->m_flags & M_EXT) ? MCLBYTES : MHLEN;
 		xtra = MIN(ntohs(oip6->ip6_plen) + sizeof(ip6_t),
 			   avail - hlen - sizeof(*icmp) - max_linkhdr);
@@ -1340,10 +1346,9 @@ frdest_t *fdp;
 			ATOMIC_INCL(frstats[1].fr_acct);
 		}
 		fin->fin_fr = NULL;
-		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
+		if (!fr || !(fr->fr_flags & FR_RETMASK))
 			(void) fr_checkstate(ip, fin);
-			(void) ip_natout(ip, fin);
-		}
+		(void) ip_natout(ip, fin);
 	} else
 		ip->ip_sum = 0;
 	/*
@@ -1600,15 +1605,29 @@ int v;
 
 	if (!ifneta) {
 		ifneta = (struct ifnet **)malloc(sizeof(ifp) * 2);
+		if (!ifneta)
+			return NULL;
 		ifneta[1] = NULL;
 		ifneta[0] = (struct ifnet *)calloc(1, sizeof(*ifp));
+		if (!ifneta[0]) {
+			free(ifneta);
+			return NULL;
+		}
 		nifs = 1;
 	} else {
 		nifs++;
 		ifneta = (struct ifnet **)realloc(ifneta,
 						  (nifs + 1) * sizeof(*ifa));
+		if (!ifneta) {
+			nifs = 0;
+			return NULL;
+		}
 		ifneta[nifs] = NULL;
 		ifneta[nifs - 1] = (struct ifnet *)malloc(sizeof(*ifp));
+		if (!ifneta[nifs - 1]) {
+			nifs--;
+			return NULL;
+		}
 	}
 	ifp = ifneta[nifs - 1];
 

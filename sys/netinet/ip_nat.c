@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.19 2000/06/12 10:23:08 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.1.20 2000/08/09 20:53:27 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.13 2000/06/10 15:52:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.20 2000/08/08 16:01:01 darrenr Exp";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -128,7 +128,7 @@ hostmap_t	**maptable  = NULL;
 
 u_long	fr_defnatage = DEF_NAT_AGE,
 	fr_defnaticmpage = 6;		/* 3 seconds */
-static natstat_t nat_stats;
+natstat_t nat_stats;
 int	fr_nat_lock = 0;
 #if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
 extern	kmutex_t	ipf_rw, ipf_hostmap;
@@ -405,8 +405,11 @@ int mode;
 	KMALLOC(nt, ipnat_t *);
 	if ((cmd == SIOCADNAT) || (cmd == SIOCRMNAT))
 		error = IRCOPYPTR(data, (char *)&natd, sizeof(natd));
-	else if (cmd == SIOCIPFFL)	/* SIOCFLNAT & SIOCCNATL */
+	else if (cmd == SIOCIPFFL) {	/* SIOCFLNAT & SIOCCNATL */
 		error = IRCOPY(data, (char *)&arg, sizeof(arg));
+		if (error)
+			error = EFAULT;
+	}
 
 	if (error)
 		goto done;
@@ -500,7 +503,7 @@ int mode;
 		 * mapping range.  In all cases, the range is inclusive of
 		 * the start and ending IP addresses.
 		 * If to a CIDR address, lose 2: broadcast + network address
-		 *                               (so subtract 1)
+		 *			         (so subtract 1)
 		 * If to a range, add one.
 		 * If to a single IP address, set to 1.
 		 */
@@ -643,7 +646,8 @@ int mode;
 					sizeof(fr_nat_lock));
 			if (!error)
 				fr_nat_lock = arg;
-		}
+		} else
+			error = EFAULT;
 		break;
 	case SIOCSTPUT :
 		if (fr_nat_lock)
@@ -668,6 +672,8 @@ int mode;
 		MUTEX_DOWNGRADE(&ipf_nat);
 		error = IWCOPY((caddr_t)&iplused[IPL_LOGNAT], (caddr_t)data,
 			       sizeof(iplused[IPL_LOGNAT]));
+		if (error)
+			error = EFAULT;
 #endif
 		break;
 	default :
@@ -734,7 +740,7 @@ caddr_t data;
 static int fr_natgetent(data)
 caddr_t data;
 {
-	nat_save_t ipn, *ipnp, *ipnn;
+	nat_save_t ipn, *ipnp, *ipnn = NULL;
 	register nat_t *n, *nat;
 	ap_session_t *aps;
 	int error;
@@ -787,33 +793,33 @@ caddr_t data;
 			ipn.ipn_dsize += aps->aps_psiz;
 		KMALLOCS(ipnn, nat_save_t *, sizeof(*ipnn) + ipn.ipn_dsize);
 		if (ipnn == NULL)
-			return NULL;
+			return ENOMEM;
 		bcopy((char *)&ipn, (char *)ipnn, sizeof(ipn));
 
-		bcopy((char *)aps, ipn.ipn_data, sizeof(*aps));
+		bcopy((char *)aps, ipnn->ipn_data, sizeof(*aps));
 		if (aps->aps_data) {
-			bcopy(aps->aps_data, ipn.ipn_data + sizeof(*aps),
+			bcopy(aps->aps_data, ipnn->ipn_data + sizeof(*aps),
 			      aps->aps_psiz);
-			ipn.ipn_dsize += aps->aps_psiz;
+			ipnn->ipn_dsize += aps->aps_psiz;
 		}
 		error = IWCOPY((caddr_t)ipnn, ipnp,
 			       sizeof(ipn) + ipn.ipn_dsize);
 		if (error)
-			return EFAULT;
+			error = EFAULT;
 		KFREES(ipnn, sizeof(*ipnn) + ipn.ipn_dsize);
 	} else {
 		error = IWCOPY((caddr_t)&ipn, ipnp, sizeof(ipn));
 		if (error)
-			return EFAULT;
+			error = EFAULT;
 	}
-	return 0;
+	return error;
 }
 
 
 static int fr_natputent(data)
 caddr_t data;
 {
-	nat_save_t ipn, *ipnp, *ipnn;
+	nat_save_t ipn, *ipnp, *ipnn = NULL;
 	register nat_t *n, *nat;
 	ap_session_t *aps;
 	frentry_t *fr;
@@ -827,6 +833,7 @@ caddr_t data;
 	error = IRCOPY((caddr_t)ipnp, (caddr_t)&ipn, sizeof(ipn));
 	if (error)
 		return EFAULT;
+	nat = NULL;
 	if (ipn.ipn_dsize) {
 		KMALLOCS(ipnn, nat_save_t *, sizeof(ipn) + ipn.ipn_dsize);
 		if (ipnn == NULL)
@@ -834,14 +841,18 @@ caddr_t data;
 		bcopy((char *)&ipn, (char *)ipnn, sizeof(ipn));
 		error = IRCOPY((caddr_t)ipnp, (caddr_t)ipn.ipn_data,
 			       ipn.ipn_dsize);
-		if (error)
-			return EFAULT;
+		if (error) {
+			error = EFAULT;
+			goto junkput;
+		}
 	} else
 		ipnn = NULL;
 
 	KMALLOC(nat, nat_t *);
-	if (nat == NULL)
-		return ENOMEM;
+	if (nat == NULL) {
+		error = EFAULT;
+		goto junkput;
+	}
 
 	bcopy((char *)&ipn.ipn_nat, (char *)nat, sizeof(*nat));
 	/*
@@ -1460,7 +1471,7 @@ int dir;
 	icmphdr_t *icmp;
 	tcphdr_t *tcp = NULL;
 	ip_t *oip;
-	int flags = 0, type;
+	int flags = 0, type, minlen;
 
 	icmp = (icmphdr_t *)fin->fin_dp;
 	/*
@@ -1480,13 +1491,43 @@ int dir;
 		return NULL;
 
 	oip = (ip_t *)((char *)fin->fin_dp + 8);
-	if (ip->ip_len < ICMPERR_MAXPKTLEN + ((oip->ip_hl - 5) << 2))
+	minlen = (oip->ip_hl << 2);
+	if (ip->ip_len < ICMPERR_MINPKTLEN + minlen)
 		return NULL;
+	/*
+	 * Is the buffer big enough for all of it ?  It's the size of the IP
+	 * header claimed in the encapsulated part which is of concern.  It
+	 * may be too big to be in this buffer but not so big that it's
+	 * outside the ICMP packet, leading to TCP deref's causing problems.
+	 * This is possible because we don't know how big oip_hl is when we
+	 * do the pullup early in fr_check() and thus can't gaurantee it is
+	 * all here now.
+	 */
+#ifdef  _KERNEL
+	{
+	mb_t *m;
+
+# if SOLARIS
+	m = fin->fin_qfm;
+	if ((char *)oip + fin->fin_dlen - ICMPERR_ICMPHLEN > (char *)m->b_wptr)
+		return NULL;
+# else
+	m = *(mb_t **)fin->fin_mp;
+	if ((char *)oip + fin->fin_dlen - ICMPERR_ICMPHLEN >
+	    (char *)ip + m->m_len)
+		return NULL;
+# endif
+	}
+#endif
+
 	if (oip->ip_p == IPPROTO_TCP)
 		flags = IPN_TCP;
 	else if (oip->ip_p == IPPROTO_UDP)
 		flags = IPN_UDP;
 	if (flags & IPN_TCPUDP) {
+		minlen += 8;		/* + 64bits of data to get ports */
+		if (ip->ip_len < ICMPERR_MINPKTLEN + minlen)
+			return NULL;
 		tcp = (tcphdr_t *)((char *)oip + (oip->ip_hl << 2));
 		if (dir == NAT_INBOUND)
 			return nat_inlookup(fin->fin_ifp, flags,
@@ -1523,6 +1564,8 @@ int dir;
 	ip_t *oip;
 	int flags = 0;
 
+	if ((fin->fin_fi.fi_fl & FI_SHORT) || (ip->ip_off & IP_OFFMASK))
+		return NULL;
 	if ((ip->ip_v != 4) || !(nat = nat_icmplookup(ip, fin, dir)))
 		return NULL;
 	*nflags = IPN_ICMPERR;
@@ -1565,18 +1608,21 @@ int dir;
 		fix_outcksum(&icmp->icmp_cksum, sumd, 0);
 	} else {
 		fix_outcksum(&oip->ip_sum, sumd, 0);
-
+#if !SOLARIS && !defined(__sgi)
 		sumd += (sumd & 0xffff);
 		while (sumd > 0xffff)
 			sumd = (sumd & 0xffff) + (sumd >> 16);
-/*		fix_incksum(&icmp->icmp_cksum, sumd, 0); */
+		fix_incksum(&icmp->icmp_cksum, sumd, 0);
+#endif
 	}
-
 
 	if ((flags & IPN_TCPUDP) != 0) {
 		tcphdr_t *tcp;
 
-		/* XXX - what if this is bogus hl and we go off the end ? */
+		/*
+		 * XXX - what if this is bogus hl and we go off the end ?
+		 * In this case, nat_icmpinlookup() will have returned NULL.
+		 */
 		tcp = (tcphdr_t *)((((char *)oip) + (oip->ip_hl << 2)));
 
 		if (nat->nat_dir == NAT_OUTBOUND) {
@@ -1740,7 +1786,8 @@ ip_t *ip;
 	}
 
 	ft = &np->in_tuc;
-	if (!(fin->fin_fi.fi_fl & FI_TCPUDP)) {
+	if (!(fin->fin_fi.fi_fl & FI_TCPUDP) ||
+	    (fin->fin_fi.fi_fl & FI_SHORT) || (ip->ip_off & IP_OFFMASK)) {
 		if (ft->ftu_scmp || ft->ftu_dcmp)
 			return 0;
 		return 1;
@@ -1877,7 +1924,6 @@ maskloop:
 		np = nat->nat_ptr;
 		if (natadd && fin->fin_fi.fi_fl & FI_FRAG)
 			ipfr_nat_newfrag(ip, fin, 0, nat);
-		ip->ip_src = nat->nat_outip;
 		MUTEX_ENTER(&nat->nat_lock);
 		nat->nat_age = fr_defnatage;
 		nat->nat_bytes += ip->ip_len;
@@ -1888,12 +1934,27 @@ maskloop:
 		 * Fix up checksums, not by recalculating them, but
 		 * simply computing adjustments.
 		 */
+		if (nflags == IPN_ICMPERR) {
+			u_32_t s1, s2, sumd;
+
+			s1 = LONG_SUM(ntohl(ip->ip_src.s_addr));
+			s2 = LONG_SUM(ntohl(nat->nat_outip.s_addr));
+			CALC_SUMD(s1, s2, sumd);
+
+			if (nat->nat_dir == NAT_OUTBOUND)
+				fix_incksum(&ip->ip_sum, sumd, 0);
+			else
+				fix_outcksum(&ip->ip_sum, sumd, 0);
+		}
 #if SOLARIS || defined(__sgi)
-		if (nat->nat_dir == NAT_OUTBOUND)
-			fix_outcksum(&ip->ip_sum, nat->nat_ipsumd, 0);
-		else
-			fix_incksum(&ip->ip_sum, nat->nat_ipsumd, 0);
+		else {
+			if (nat->nat_dir == NAT_OUTBOUND)
+				fix_outcksum(&ip->ip_sum, nat->nat_ipsumd, 0);
+			else
+				fix_incksum(&ip->ip_sum, nat->nat_ipsumd, 0);
+		}
 #endif
+		ip->ip_src = nat->nat_outip;
 
 		if (!(ip->ip_off & IP_OFFMASK) &&
 		    !(fin->fin_fi.fi_fl & FI_SHORT)) {
@@ -1931,6 +1992,7 @@ maskloop:
 			} else if (ip->ip_p == IPPROTO_ICMP) {
 				nat->nat_age = fr_defnaticmpage;
 			}
+
 			if (csump) {
 				if (nat->nat_dir == NAT_OUTBOUND)
 					fix_outcksum(csump, nat->nat_sumd[1],
@@ -2000,7 +2062,7 @@ fr_info_t *fin;
 	if ((ip->ip_p == IPPROTO_ICMP) &&
 	    (nat = nat_icmp(ip, fin, &nflags, NAT_INBOUND)))
 		;
-	else if ((ip->ip_off & IP_OFFMASK) &&
+	else if ((ip->ip_off & (IP_OFFMASK|IP_MF)) &&
 		 (nat = ipfr_nat_knownfrag(ip, fin)))
 		natadd = 0;
 	else if ((nat = nat_inlookup(fin->fin_ifp, nflags, (u_int)ip->ip_p,

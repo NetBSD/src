@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.1.1.17 2000/06/12 10:23:09 veego Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.1.1.18 2000/08/09 20:53:29 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.17.2.3 2000/06/10 15:52:25 darrenr Exp
+ * Id: ip_nat.h,v 2.17.2.6 2000/07/15 14:50:06 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -105,11 +105,11 @@ typedef	struct	ipnat	{
 	u_int	in_hits;
 	struct	in_addr	in_nextip;
 	u_short	in_pnext;
-	u_short	in_ppip;	/* ports per IP */
 	u_short	in_ippip;	/* IP #'s per IP# */
-	u_short	in_port[2];	/* correctly in IPN_CMPSIZ */
-	u_short	in_spare;
 	u_32_t	in_flags;	/* From here to in_dport must be reflected */
+	u_short	in_spare;
+	u_short	in_ppip;	/* ports per IP */
+	u_short	in_port[2];	/* correctly in IPN_CMPSIZ */
 	struct	in_addr	in_in[2];
 	struct	in_addr	in_out[2];
 	struct	in_addr	in_src[2];
@@ -241,6 +241,8 @@ typedef	struct	natlog {
 
 #define	NL_NEWMAP	NAT_MAP
 #define	NL_NEWRDR	NAT_REDIRECT
+#define	NL_NEWBIMAP	NAT_BIMAP
+#define	NL_NEWBLOCK	NAT_MAPBLK
 #define	NL_EXPIRE	0xffff
 
 #define	NAT_HASH_FN(k,l,m)	(((k) + ((k) >> 12) + l) % (m))

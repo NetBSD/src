@@ -1,4 +1,4 @@
-/*	$NetBSD: natparse.c,v 1.1.1.3 2000/06/12 10:21:29 veego Exp $	*/
+/*	$NetBSD: natparse.c,v 1.1.1.4 2000/08/09 20:49:45 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -56,7 +56,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: natparse.c,v 1.17.2.4 2000/06/10 16:06:30 darrenr Exp";
+static const char rcsid[] = "@(#)Id: natparse.c,v 1.17.2.6 2000/07/08 02:14:40 darrenr Exp";
 #endif
 
 
@@ -108,26 +108,32 @@ void *ptr;
 		if (np->in_flags & IPN_NOTSRC)
 			printf("! ");
 		printf("from ");
-		if (np->in_redir == NAT_REDIRECT)
+		if (np->in_redir == NAT_REDIRECT) {
 			printhostmask(4, (u_32_t *)&np->in_srcip,
 				      (u_32_t *)&np->in_srcmsk);
-		else
+			if (np->in_scmp)
+				printportcmp(np->in_p, &np->in_tuc.ftu_src);
+		} else {
 			printhostmask(4, (u_32_t *)&np->in_inip,
 				      (u_32_t *)&np->in_inmsk);
-		if (np->in_scmp)
-			printportcmp(np->in_p, &np->in_tuc.ftu_src);
+			if (np->in_dcmp)
+				printportcmp(np->in_p, &np->in_tuc.ftu_dst);
+		}
 
 		if (np->in_flags & IPN_NOTDST)
 			printf(" !");
 		printf(" to ");
-		if (np->in_redir == NAT_REDIRECT)
+		if (np->in_redir == NAT_REDIRECT) {
 			printhostmask(4, (u_32_t *)&np->in_outip,
 				      (u_32_t *)&np->in_outmsk);
-		else
+			if (np->in_dcmp)
+				printportcmp(np->in_p, &np->in_tuc.ftu_dst);
+		} else {
 			printhostmask(4, (u_32_t *)&np->in_srcip,
 				      (u_32_t *)&np->in_srcmsk);
-		if (np->in_dcmp)
-			printportcmp(np->in_p, &np->in_tuc.ftu_dst);
+			if (np->in_scmp)
+				printportcmp(np->in_p, &np->in_tuc.ftu_src);
+		}
 	}
 
 	if (np->in_redir == NAT_REDIRECT) {
@@ -351,8 +357,8 @@ int linenum;
 		} else {
 				if (hostmask(&cpp, (u_32_t *)&ipn.in_inip,
 					     (u_32_t *)&ipn.in_inmsk,
-					     &ipn.in_dport, &ipn.in_dcmp,
-					     &ipn.in_dtop, linenum)) {
+					     &ipn.in_sport, &ipn.in_scmp,
+					     &ipn.in_stop, linenum)) {
 					return NULL;
 				}
 		}
@@ -391,8 +397,8 @@ int linenum;
 		} else {
 				if (hostmask(&cpp, (u_32_t *)&ipn.in_srcip,
 					     (u_32_t *)&ipn.in_srcmsk,
-					     &ipn.in_sport, &ipn.in_scmp,
-					     &ipn.in_stop, linenum)) {
+					     &ipn.in_dport, &ipn.in_dcmp,
+					     &ipn.in_dtop, linenum)) {
 					return NULL;
 				}
 		}
@@ -798,10 +804,15 @@ int opts;
 				printnat(np, opts, NULL);
 			if (!(opts & OPT_NODO)) {
 				if (!(opts & OPT_REMOVE)) {
-					if (ioctl(fd, SIOCADNAT, &np) == -1)
+					if (ioctl(fd, SIOCADNAT, &np) == -1) {
+						fprintf(stderr, "%d:",
+							linenum);
 						perror("ioctl(SIOCADNAT)");
-				} else if (ioctl(fd, SIOCRMNAT, &np) == -1)
+					}
+				} else if (ioctl(fd, SIOCRMNAT, &np) == -1) {
+					fprintf(stderr, "%d:", linenum);
 					perror("ioctl(SIOCRMNAT)");
+				}
 			}
 		}
 	}

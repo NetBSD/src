@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.1.1.4 2000/05/23 06:11:20 veego Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.1.1.5 2000/08/09 20:49:11 veego Exp $	*/
 
 /*
  * Copyright (C) 1998-2000 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.2 2000/05/22 10:26:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.4 2000/08/05 14:48:50 darrenr Exp";
 #endif
 
 #include <sys/errno.h>
@@ -48,7 +48,7 @@ static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.2 2000/05/22 10:26:11 da
 # include <sys/stream.h>
 # include <sys/kmem.h>
 #endif
-#if _BSDI_VERSION >= 199802
+#if (_BSDI_VERSION >= 199802) || (__FreeBSD_version >= 400000)
 # include <sys/queue.h>
 #endif
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(bsdi)

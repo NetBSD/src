@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.6 2000/06/12 10:21:29 veego Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.7 2000/08/09 20:49:48 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.15.2.4 2000/06/10 15:13:58 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.15.2.7 2000/08/05 14:50:30 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -53,6 +53,7 @@
 #include "ipl.h"
 #include "ip_fil.h"
 #include "ip_nat.h"
+#include "ip_state.h"
 
 
 char	_depends_on[] = "drv/ip";
@@ -627,15 +628,28 @@ tryagain:
 	sap = qif->qf_ill->ill_sap;
 
 	if (sap == 0x800) {
+		u_short tlen;
+
 		hlen = sizeof(*ip);
-		plen = ntohs(ip->ip_len);
+
+		/* XXX - might not be aligned (from ppp?) */
+		((char *)&tlen)[0] = ((char *)&ip->ip_len)[0];
+		((char *)&tlen)[1] = ((char *)&ip->ip_len)[1];
+
+		plen = ntohs(tlen);
+
 		sap = 0;
 	}
 #if SOLARIS2 >= 8
 	else if (sap == IP6_DL_SAP) {
+		u_short tlen;
+
 		hlen = sizeof(ip6_t);
 		ip6 = (ip6_t *)ip;
-		plen = ntohs(ip6->ip6_plen);
+		/* XXX - might not be aligned (from ppp?) */
+		((char *)&tlen)[0] = ((char *)&ip->ip_len)[0];
+		((char *)&tlen)[1] = ((char *)&ip->ip_len)[1];
+		plen = ntohs(tlen);
 		sap = IP6_DL_SAP;
 	}
 #endif
@@ -680,7 +694,6 @@ fixalign:
 		synced = 1;
 		off = 0;
 		goto tryagain;
-
 	}
 
 	if (((sap == 0) && (ip->ip_v != IP_VERSION))
@@ -1721,10 +1734,9 @@ frdest_t *fdp;
 				ATOMIC_INCL(frstats[1].fr_acct);
 			}
 			fin->fin_fr = NULL;
-			if (!fr || !(fr->fr_flags & FR_RETMASK)) {
+			if (!fr || !(fr->fr_flags & FR_RETMASK))
 				(void) fr_checkstate(ip, fin);
-				(void) ip_natout(ip, fin);
-			}
+			(void) ip_natout(ip, fin);
 		}
 #ifndef	sparc
 		if (fin->fin_v == 4) {

@@ -1,82 +1,16 @@
 i pkginfo
-i copyright
+#i preinstall=../preinstall
+i copyright=../copyright
 !default 0755 root root
-i postinstall
-i postremove
-d none /opt ? root sys
-d none /opt/ipf
-d none /opt/ipf/man
-d none /opt/ipf/man/man1
-d none /opt/ipf/man/man1m
-d none /opt/ipf/man/man4
-d none /opt/ipf/man/man5
-d none /opt/ipf/man/man8
-d none /opt/ipf/bin
-f none /opt/ipf/bin/ipftest=root/opt/ipf/bin/ipftest
-f none /opt/ipf/bin/ipmon=root/opt/ipf/bin/ipmon
-f none /opt/ipf/bin/ipsend=root/opt/ipf/bin/ipsend
-f none /opt/ipf/bin/ipresend=root/opt/ipf/bin/ipresend
-f none /opt/ipf/bin/mkfilters=root/opt/ipf/bin/mkfilters
-d none /opt/ipf/examples
 d none /usr ? root sys
-d none /usr/include ? root bin
-d none /usr/include/netinet ? bin bin
 d none /usr/kernel ? root sys
 d none /usr/kernel/drv ? root sys
-f none /usr/kernel/drv/ipf=root/usr/kernel/drv/ipf
-l none /usr/kernel/drv/sparcv9/ipf=/usr/kernel/drv/ipf
-d none /sbin ? root sys
-f none /sbin/ipfstat=root/sbin/ipfstat
-f none /sbin/ipf=root/sbin/ipf
-f none /sbin/ipnat=root/sbin/ipnat
-d none /etc ? root sys
-d none /etc/init.d ? root sys
-f none /etc/init.d/ipfboot=root/etc/init.d/ipfboot
-d none /etc/rc2.d ? root sys
-l none /etc/rc2.d/S65ipfboot=/etc/init.d/ipfboot
-d none /etc/opt ? root sys
-d none /etc/opt/ipf 755 root sys
-!default 0444 root root
-f none /opt/ipf/man/man8/ipfstat.8=root/opt/ipf/man/man8/ipfstat.8
-f none /opt/ipf/man/man8/ipmon.8=root/opt/ipf/man/man8/ipmon.8
-f none /opt/ipf/man/man8/ipf.8=root/opt/ipf/man/man8/ipf.8
-f none /opt/ipf/man/man1/ipnat.1=root/opt/ipf/man/man1/ipnat.1
-f none /opt/ipf/man/man1/ipftest.1=root/opt/ipf/man/man1/ipftest.1
-f none /opt/ipf/man/man1/mkfilters.1=root/opt/ipf/man/man1/mkfilters.1
-f none /opt/ipf/man/man4/ipf.4=root/opt/ipf/man/man4/ipf.4
-f none /opt/ipf/man/man4/ipl.4=root/opt/ipf/man/man4/ipl.4
-f none /opt/ipf/man/man4/ipnat.4=root/opt/ipf/man/man4/ipnat.4
-f none /opt/ipf/man/man5/ipf.5=root/opt/ipf/man/man5/ipf.5
-f none /opt/ipf/man/man5/ipnat.5=root/opt/ipf/man/man5/ipnat.5
-f none /usr/kernel/drv/ipf.conf=root/usr/kernel/drv/ipf.conf
-f none /usr/include/netinet/ip_fil.h=root/usr/include/netinet/ip_fil.h
-f none /usr/include/netinet/ip_auth.h=root/usr/include/netinet/ip_auth.h
-f none /usr/include/netinet/ip_compat.h=root/usr/include/netinet/ip_compat.h
-f none /usr/include/netinet/ip_frag.h=root/usr/include/netinet/ip_frag.h
-f none /usr/include/netinet/ip_nat.h=root/usr/include/netinet/ip_nat.h
-f none /usr/include/netinet/ip_proxy.h=root/usr/include/netinet/ip_proxy.h
-f none /usr/include/netinet/ip_state.h=root/usr/include/netinet/ip_state.h
-f none /opt/ipf/examples/example.1=root/opt/ipf/examples/example.1
-f none /opt/ipf/examples/example.2=root/opt/ipf/examples/example.2
-f none /opt/ipf/examples/example.3=root/opt/ipf/examples/example.3
-f none /opt/ipf/examples/example.4=root/opt/ipf/examples/example.4
-f none /opt/ipf/examples/example.5=root/opt/ipf/examples/example.5
-f none /opt/ipf/examples/example.6=root/opt/ipf/examples/example.6
-f none /opt/ipf/examples/example.7=root/opt/ipf/examples/example.7
-f none /opt/ipf/examples/example.8=root/opt/ipf/examples/example.8
-f none /opt/ipf/examples/example.9=root/opt/ipf/examples/example.9
-f none /opt/ipf/examples/example.10=root/opt/ipf/examples/example.10
-f none /opt/ipf/examples/example.11=root/opt/ipf/examples/example.11
-f none /opt/ipf/examples/example.12=root/opt/ipf/examples/example.12
-f none /opt/ipf/examples/example.13=root/opt/ipf/examples/example.13
-f none /opt/ipf/examples/example.sr=root/opt/ipf/examples/example.sr
-f none /opt/ipf/examples/nat.eg=root/opt/ipf/examples/nat.eg
-f none /opt/ipf/examples/server=root/opt/ipf/examples/server
-f none /opt/ipf/examples/tcpstate=root/opt/ipf/examples/tcpstate
-f none /opt/ipf/examples/BASIC.NAT=root/opt/ipf/examples/BASIC.NAT
-f none /opt/ipf/examples/BASIC_1.FW=root/opt/ipf/examples/BASIC_1.FW
-f none /opt/ipf/examples/BASIC_2.FW=root/opt/ipf/examples/BASIC_2.FW
-f none /opt/ipf/examples/firewall=root/opt/ipf/examples/firewall
-f none /opt/ipf/examples/ftp-proxy=root/opt/ipf/examples/ftp-proxy
-f none /opt/ipf/examples/ftppxy=root/opt/ipf/examples/ftppxy
-f none /opt/ipf/examples/nat-setup=root/opt/ipf/examples/nat-setup
+d none /usr/kernel/drv/sparcv9 ? root sys
+f none /usr/kernel/drv/sparcv9/ipf=root/usr/kernel/drv/sparcv9/ipf
+d none /usr/sbin ? root sys
+d none /usr/sbin/sparcv9 ? ? ?
+f none /usr/sbin/sparcv9/ipfstat=root/sbin/sparcv9/ipfstat
+f none /usr/sbin/sparcv9/ipf=root/sbin/sparcv9/ipf
+f none /usr/sbin/sparcv9/ipfs=root/sbin/sparcv9/ipfs
+f none /usr/sbin/sparcv9/ipnat=root/sbin/sparcv9/ipnat
+f none /usr/sbin/sparcv9/ipmon=root/opt/ipf/bin/sparcv9/ipmon
