@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.15 1993/10/26 14:17:55 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.16 1993/10/27 09:04:49 mycroft Exp $
  */
 
 /*
@@ -146,7 +146,7 @@ struct	cfdriver pccd =
 static u_short *Crtat,		/* pointer to backing store */
 	       *crtat;		/* pointer to current char */
 static u_char ack, nak, async,	/* Don't ask. */
-	      kernel;		/* Really, you don't want to know. */
+	      kernel, polling;	/* Really, you don't want to know. */
 static u_char leds,		/* all off */
 	      typematic = 0xff;	/* don't update until set by software */
 
@@ -181,7 +181,10 @@ kbc_8042cmd(val)
 
 	if (!kbd_wait())
 		return 0;
-	outb(KBCMDP, val);
+	outb(KBCMDP, K_LDCMDBYTE);
+	if (!kbd_wait())
+		return 0;
+	outb(KBOUTP, val);
 	return 1;
 }
 
@@ -361,19 +364,14 @@ pcprobe(parent, cf, aux)
 
 #ifdef DIAGNOSTIC
 	if (cf->cf_unit != 0)
-		panic("pcprobe: you are a fool");
+		panic("pcprobe: heh");
 #endif
 
 	/* enable interrupts and keyboard, etc. */
-	if (!kbc_8042cmd(K_LDCMDBYTE)) {
-		printf("pcprobe: command error 1\n");
+	if (!kbc_8042cmd(CMDBYTE)) {
+		printf("pcprobe: command error\n");
 		return 0;
 	}
-	if (!kbd_wait()) {
-		printf("pcprobe: command error 2\n");
-		return 0;
-	}
-	outb(KBOUTP, CMDBYTE);
 
 	/* reset the keyboard */
 	if (!kbd_cmd(KBC_RESET, 1))
@@ -540,8 +538,10 @@ pcintr(sc)
 	struct tty *tp = pc_tty[unit];
 	u_char *cp;
 
+	if (polling)
+		return 1;
 	cp = sget(&pc_state[unit], 1);
-	if ((tp->t_state & TS_ISOPEN) == 0)
+	if (!tp || (tp->t_state & TS_ISOPEN) == 0)
 		return 0;
 	if (cp)
 		do
@@ -1705,16 +1705,14 @@ pccngetc(dev)
 	struct pc_state *ps = &pc_state[PCUNIT(dev)];
 	register int s;
 	register char *cp;
-	u_char oldkernel = kernel;
+	u_char oldpolling = polling;
 
 	if (ps->ps_flags & PSF_RAW)
 		return 0;
 
-	s = spltty();		/* block pcrint while we poll */
-	kernel = 1;
+	polling = 1;
 	cp = sget(ps, 0);
-	kernel = oldkernel;
-	splx(s);
+	polling = oldpolling;
 	if (*cp == '\r')
 		return '\n';
 	return *cp;
