@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1.2.2 2002/11/20 09:29:17 wdk Exp $ */
+/*	$NetBSD: SYS.h,v 1.1.2.3 2002/11/23 10:41:17 wdk Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan Stone
@@ -86,7 +86,10 @@
 #else
 # define PIC_PROLOGUE(x,sr)
 #endif
-#define  PIC_CALL(l,sr)		la sr, _C_LABEL(l); jr sr
+#define PIC_CALL(l,sr)		  \
+	la sr, _C_LABEL(l)	; \
+	jalr sr			; \
+	nop
 
 
 #ifdef __STDC__
