@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	8.1 (Berkeley) 6/6/93
- *	$Id: names.c,v 1.12 1994/05/30 17:10:14 hpeyerl Exp $
+ *	$Id: names.c,v 1.13 1994/06/09 05:36:29 phil Exp $
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(vax) && \
@@ -40,6 +40,14 @@ char *defdrives[] = { 0 };
 #endif
 
 #if defined(i386)
+int
+read_names()
+{
+	return 1;
+}
+#endif
+
+#if defined(pc532)
 int
 read_names()
 {
