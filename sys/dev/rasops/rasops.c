@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.18 1999/09/17 00:22:07 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.19 1999/10/04 22:52:13 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.18 1999/09/17 00:22:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19 1999/10/04 22:52:13 ad Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -768,7 +768,7 @@ rasops_do_cursor(ri)
 	
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
-	mask = ri->ri_devcmap[15];
+	mask = ri->ri_devcmap[(ri->ri_flg & RI_FORCEMONO) != 0 ? 1 : 15];
 	
 	slop1 = (4 - ((int)rp & 3)) & 3;
 	
