@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.522 2004/11/12 06:19:20 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.523 2004/11/12 06:21:10 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7987,3 +7987,9 @@ sys/compat/linux/common/linux_misc.c		1.133
 	Prevent linux processes from losing their children and creating
 	tons of zombie processes.
 	[christos, ticket #950]
+
+sys/arch/macppc/conf/GENERIC_MD			1.8
+
+	Now that we have ofwboot load at 0xe00000, it doesnt make sense
+	for this kernel to load at 0x800000.
+	[wrstuden, ticket #951]
