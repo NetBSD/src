@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 1997/10/17 21:10:48 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.6 1997/10/20 06:13:42 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -236,5 +236,27 @@ int get_via_floppy (void)
 #ifndef DEBUG
 	chdir("/");
 #endif
+	return 1;
+}
+
+int
+get_via_cdrom(void)
+{
+	/* Get server and filepath */
+	process_menu (MENU_cdromsource);
+
+	/* Mount it */
+	while (!run_prog ("/sbin/mount -rt cd9660 %s /mnt2", cdrom_dev)) {
+		process_menu (MENU_cdrombadmount);
+		if (!yesno)
+			return 0;
+		/* Verify distribution files exist.  XXX */
+	}
+
+	/* return location, don't clean... */
+	strcpy (dist_dir, "/mnt2");
+	strncat (dist_dir, cdrom_dir, STRSIZE-strlen(dist_dir)-1);
+	clean_dist_dir = 0;
+	mnt2_mounted = 1;
 	return 1;
 }
