@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.26 1999/02/25 05:43:04 dean Exp $	*/
+/*	$NetBSD: cp.c,v 1.27 1999/03/01 18:57:29 mjl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.26 1999/02/25 05:43:04 dean Exp $");
+__RCSID("$NetBSD: cp.c,v 1.27 1999/03/01 18:57:29 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,16 +68,11 @@ __RCSID("$NetBSD: cp.c,v 1.26 1999/02/25 05:43:04 dean Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/time.h>
 
-#include <dirent.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <fts.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -85,7 +80,7 @@ __RCSID("$NetBSD: cp.c,v 1.26 1999/02/25 05:43:04 dean Exp $");
 
 #define	STRIP_TRAILING_SLASH(p) {					\
         while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
-                *--(p).p_end = 0;					\
+                *--(p).p_end = '\0';					\
 }
 
 PATH_T to = { to.p_path, "" };
@@ -173,7 +168,7 @@ main(argc, argv)
 		}
 	} else {
 		fts_options &= ~FTS_PHYSICAL;
-		fts_options |= FTS_LOGICAL;
+		fts_options |= FTS_LOGICAL | FTS_COMFOLLOW;
 	}
 
 	myuid = getuid();
@@ -274,6 +269,7 @@ copy(argv, type, fts_options)
 	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
 		switch (curr->fts_info) {
 		case FTS_NS:
+		case FTS_DNR:
 		case FTS_ERR:
 			warnx("%s: %s",
 			    curr->fts_path, strerror(curr->fts_errno));
@@ -369,8 +365,15 @@ copy(argv, type, fts_options)
 
 		switch (curr->fts_statp->st_mode & S_IFMT) {
 		case S_IFLNK:
-			if (copy_link(curr, !dne))
-				rval = 1;
+			/* Catch special case of a non dangling symlink */
+			if((fts_options & FTS_LOGICAL) ||
+			   ((fts_options & FTS_COMFOLLOW) && curr->fts_level == 0)) {
+				if (copy_file(curr, dne))
+					rval = 1;
+			} else {	
+				if (copy_link(curr, !dne))
+					rval = 1;
+			}
 			break;
 		case S_IFDIR:
 			if (!Rflag && !rflag) {
