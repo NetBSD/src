@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.67 2003/01/19 10:42:54 tron Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.68 2003/02/16 17:35:15 augustss Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.67 $"
+#ident 		"GENERIC-$Revision: 1.68 $"
 
 maxusers	32		# estimated number of users
 
@@ -599,6 +599,8 @@ irframe* at ustir?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+uax*	at uhub? port ?		# ASIX AX88172 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolofic PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1 2002/12/05 02:06:44 fvdl Exp $
+# $NetBSD: INSTALL,v 1.2 2003/02/16 17:35:18 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/x86_64/conf/std.x86_64"
 
-#ident 		"INSTALL-$Revision: 1.1 $"
+#ident 		"INSTALL-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -501,6 +501,7 @@ umidi* at uhub? port ? configuration ?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter

@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.8 2002/09/18 02:44:06 lukem Exp $
+# 	$NetBSD: DEBUG,v 1.9 2003/02/16 17:35:17 augustss Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -69,6 +69,8 @@ umidi* at uhub? port ? configuration ?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+uax*	at uhub? port ?		# ASIX AX88172 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolofic PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?

@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.47 2002/11/27 07:33:03 shin Exp $
+#	$NetBSD: TX3922,v 1.48 2003/02/16 17:35:15 augustss Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -210,6 +210,8 @@ audio*	at uaudio?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+uax*	at uhub? port ?		# ASIX AX88172 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolofic PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
