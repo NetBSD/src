@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.30 2001/08/22 15:39:06 hubertf Exp $
+#	$NetBSD: DR-EVIL,v 1.31 2001/11/04 07:39:40 itohy Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -718,6 +718,7 @@ ugen*	at uhub? port ? configuration ? interface ?
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+#opl*	at cmpci? flags 1
 #opl*	at eso?
 #opl*	at ess?
 #opl*	at fms?
@@ -747,6 +748,7 @@ audio* at uaudio?
 
 # MPUI 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
+#mpu*	at cmpci?
 #mpu*	at eso?
 #mpu*	at fms?
 #mpu*	at sb?
