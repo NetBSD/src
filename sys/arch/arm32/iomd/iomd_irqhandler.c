@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irqhandler.c,v 1.3 1996/03/27 20:16:30 mark Exp $ */
+/* $NetBSD: iomd_irqhandler.c,v 1.4 1996/03/28 21:43:52 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -152,6 +152,11 @@ irq_claim(irq, handler)
 	irqhandler_t *handler;
 {
 	int level;
+
+/* IRQ_INSTRUCT indicates that we should get the irq number from the irq structure */
+
+	if (irq == IRQ_INSTRUCT)
+		irq = handler->ih_num;
     
 /* Make sure the irq number is valid */
 
@@ -257,6 +262,11 @@ irq_release(irq, handler)
 
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
+
+/* IRQ_INSTRUCT indicates that we should get the irq number from the irq structure */
+
+	if (irq == IRQ_INSTRUCT)
+		irq = handler->ih_num;
 
 /* Make sure the irq number is valid */
 
