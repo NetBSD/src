@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1994/11/20 20:54:29 deraadt Exp $ */
+/*	$NetBSD: machdep.c,v 1.35 1994/11/23 07:00:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -791,10 +791,13 @@ dumpsys()
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, int));
 	int error = 0;
 
-	if (dumpdev == NODEV)
-		return;
 	/* copy registers to memory */
 	snapshot(cpcb);
+	stackdump();
+
+	if (dumpdev == NODEV)
+		return;
+
 	/*
 	 * For dumps during autoconfiguration,
 	 * if dump device has already configured...
@@ -860,6 +863,26 @@ dumpsys()
 	default:
 		printf("error %d\n", error);
 		break;
+	}
+}
+
+/*
+ * get the fp and dump the stack as best we can.  don't leave the
+ * current stack page
+ */
+stackdump()
+{
+	struct frame *fp = (struct frame *)getfp(), *sfp;
+
+	sfp = fp;
+	printf("Frame pointer is at 0x%x\n", fp);
+	printf("Call traceback:\n");
+	while (fp && ((u_long)fp >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
+		printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x) fp = %x\n",
+		    fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
+		    fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
+		    fp->fr_fp);
+		fp = fp->fr_fp;
 	}
 }
 
