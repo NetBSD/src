@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.43 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.44 2004/06/05 07:36:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.43 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.44 2004/06/05 07:36:25 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -413,12 +413,10 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 	sbp->f_iosize = SSTOVC(ssp)->vc_txmax;		/* optimal transfer block size */
 	smb_makescred(&scred, p, p->p_ucred);
 
-	if (SMB_DIALECT(SSTOVC(ssp)) >= SMB_DIALECT_LANMAN2_0)
-		error = smbfs_smb_statvfs2(ssp, sbp, &scred);
-	else
-		error = smbfs_smb_statvfs(ssp, sbp, &scred);
+	error = smbfs_smb_statvfs(ssp, sbp, &scred);
 	if (error)
 		return error;
+
 	sbp->f_flag = 0;		/* copy of mount exported flags */
 	sbp->f_owner = mp->mnt_stat.f_owner;	/* user that mounted the filesystem */
 	sbp->f_namemax = MAXNAMLEN;
