@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.56 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.56.2.1 2004/04/08 03:13:19 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -158,12 +158,11 @@ static void
 shm_deallocate_segment(shmseg)
 	struct shmid_ds *shmseg;
 {
-	struct shm_handle *shm_handle;
-	size_t size;
+	struct shm_handle *shm_handle = shmseg->_shm_internal;
+	struct uvm_object *uobj = shm_handle->shm_object;
+	size_t size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 
-	shm_handle = shmseg->_shm_internal;
-	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
-	uao_detach(shm_handle->shm_object);
+	(*uobj->pgops->pgo_detach)(uobj);
 	free((caddr_t)shm_handle, M_SHM);
 	shmseg->_shm_internal = NULL;
 	shm_committed -= btoc(size);
@@ -236,7 +235,7 @@ sys_shmat(p, v, retval)
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
 	struct shmmap_state *shmmap_s = NULL;
-	struct shm_handle *shm_handle;
+	struct uvm_object *uobj;
 	vaddr_t attach_va;
 	vm_prot_t prot;
 	vsize_t size;
@@ -284,13 +283,14 @@ sys_shmat(p, v, retval)
 		    round_page((vaddr_t)p->p_vmspace->vm_taddr +
 			MAXTSIZ + MAXDSIZ);
 	}
-	shm_handle = shmseg->_shm_internal;
-	uao_reference(shm_handle->shm_object);
+	uobj = ((struct shm_handle *)shmseg->_shm_internal)->shm_object;
+	(*uobj->pgops->pgo_reference)(uobj);
 	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
-		     shm_handle->shm_object, 0,
+		     uobj, 0,
 		     UVM_MAPFLAG(prot, prot, UVM_INH_SHARE,
 				 UVM_ADV_RANDOM, 0));
 	if (rv != KERN_SUCCESS) {
+	    (*uobj->pgops->pgo_detach)(uobj);
 	    return ENOMEM;
 	}
 
