@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.49 2002/09/21 18:33:51 mycroft Exp $	*/
+/*	$NetBSD: ping6.c,v 1.50 2002/09/23 12:52:30 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.160 2002/09/08 14:28:18 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.49 2002/09/21 18:33:51 mycroft Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.50 2002/09/23 12:52:30 itojun Exp $");
 #endif
 #endif
 
@@ -1076,8 +1076,9 @@ main(argc, argv)
 		if (options & F_FLOOD) {
 			(void)pinger();
 			timeout = 10;
-		} else
+		} else {
 			timeout = INFTIM;
+		}
 		fdmaskp[0].fd = s;
 		fdmaskp[0].events = POLLIN;
 		cc = poll(fdmaskp, 1, timeout);
