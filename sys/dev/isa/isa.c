@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28 1993/08/28 00:13:00 brezak Exp $
+ *	$Id: isa.c,v 1.29 1993/11/05 23:18:04 cgd Exp $
  */
 
 /*
@@ -124,7 +124,7 @@ isa_configure() {
 	/* biomask |= ttymask ;  can some tty devices use buffers? */
 	printf("biomask %x ttymask %x netmask %x impmask %x\n",
 	       biomask, ttymask, netmask, impmask);
-	splnone();
+	splnone();	/* XXX -- probably shouldn't use 'splnone()' */
 }
 
 /*
