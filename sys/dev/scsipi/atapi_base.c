@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.7 1998/07/11 00:52:09 mjacob Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.8 1998/07/15 20:13:31 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -74,7 +74,7 @@ atapi_interpret_sense(xs)
 		SC_DEBUG(sc_link, SDEV_DB2,
 		    ("calling private err_handler()\n"));
 		error = (*sc_link->device->err_handler) (xs);
-		if (error != -1)
+		if (error != SCSIRET_CONTINUE)
 			return (error);		/* error >= 0  better ? */
 	}
 	/* otherwise use the default */
