@@ -1,9 +1,16 @@
-#	$NetBSD: Makefile,v 1.6 1998/03/02 19:59:20 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1998/09/12 20:17:43 wrstuden Exp $
 
 PROG=	doexec
 NOMAN=	noman, no way, man
 
 LDSTATIC= -static		# only static compilation makes sense here
+
+.if (defined(DESTDIR))
+LDLIBS+= ${LIBCRT0} -lgcc -lc
+GOODAOUT_LIB= -nostdlib -L${DESTDIR}/usr/lib ${LDSTATIC}
+.else
+GOODAOUT_LIB= ${LDSTATIC}
+.endif
 
 RP=	${.OBJDIR}/${PROG}
 TD=	${.CURDIR}/tests
@@ -42,7 +49,7 @@ test-scriptarg-nospace: ${PROG} ${TD}/scriptarg-nospace
 	${RP} ${TD}/scriptarg-nospace 2>&1 | diff - ${OD}/scriptarg-nospace
 
 goodaout: ${TD}/goodaout.c
-	${LINK.c} ${LDSTATIC} -o ${.TARGET} ${TD}/goodaout.c ${LDLIBS}
+	${LINK.c} ${GOODAOUT_LIB} -o ${.TARGET} ${TD}/goodaout.c ${LDLIBS}
 
 test-goodaout: ${PROG} goodaout
 	${RP} ${.OBJDIR}/goodaout | diff - ${OD}/goodaout
