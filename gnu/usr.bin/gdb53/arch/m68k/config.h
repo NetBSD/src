@@ -186,7 +186,7 @@
 /* #undef GDB_MULTI_ARCH */
 
 /* hostfile */
-#define GDB_XM_FILE config/m68k/xm-nbsd.h
+/* #undef GDB_XM_FILE */
 
 /* targetfile */
 #define GDB_TM_FILE config/m68k/tm-nbsd.h
