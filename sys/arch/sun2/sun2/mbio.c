@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.2 2001/04/10 12:37:49 fredette Exp $	*/
+/*	$NetBSD: mbio.c,v 1.3 2001/05/03 03:13:03 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
-
-/*
- * mbio is 64k long.
- */
-#define MBIO_SIZE	0x010000
+#include <sun2/sun2/mbio.h>
 
 /* Does this machine have a Multibus? */
 extern int cpu_has_multibus;

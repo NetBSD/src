@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.3 2001/04/18 03:34:54 fredette Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.4 2001/05/03 03:13:03 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,11 +49,7 @@
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
-
-/*
- * mbmem is 64k long.
- */
-#define	MBMEM_SIZE	0x100000
+#include <sun2/sun2/mbmem.h>
 
 /* Does this machine have a Multibus? */
 extern int cpu_has_multibus;
