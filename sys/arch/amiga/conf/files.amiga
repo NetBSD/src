@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.87 1999/06/07 20:31:28 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.88 1999/07/07 00:05:28 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -109,7 +109,7 @@ attach	grfcc at mainbus
 file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
 file	arch/amiga/dev/ite_cc.c		grfcc & ite
 
-pseudo-device	view
+defpseudo	view
 file	arch/amiga/dev/view.c		view | grfcc needs-count
 file	arch/amiga/dev/grfabs.c		grfcc | view
 file	arch/amiga/dev/grfabs_cc.c	grfcc | view

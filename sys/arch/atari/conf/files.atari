@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.63 1999/06/07 20:31:29 thorpej Exp $
+#	$NetBSD: files.atari,v 1.64 1999/07/07 00:05:29 thorpej Exp $
 
 maxpartitions 16
 
@@ -119,10 +119,10 @@ file	arch/atari/dev/font_8x8.c	ite
 file	arch/atari/dev/font_8x16.c	ite
 
 
-pseudo-device	view
+defpseudo	view
 file	arch/atari/dev/view.c		view | grfcc | grfet needs-count
 
-pseudo-device	mouse
+defpseudo	mouse
 file	arch/atari/dev/ms.c		mouse needs-count
 
 #
