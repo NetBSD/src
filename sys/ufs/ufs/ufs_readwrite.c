@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.25 2000/05/13 23:43:16 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.26 2000/05/27 00:19:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -219,6 +219,13 @@ WRITE(v)
 	if (uio->uio_offset < 0 ||
 	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->fs_maxfilesize)
 		return (EFBIG);
+#ifdef LFS_READWRITE
+	/* Disallow writes to the Ifile, even if noschg flag is removed */
+	/* XXX can this go away when the Ifile is no longer in the namespace? */
+	if (vp == fs->lfs_ivnode)
+		return (EPERM);
+#endif
+
 	/*
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.31 2000/01/19 00:03:04 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.32 2000/05/27 00:19:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -230,6 +230,10 @@ lfs_valloc(v)
 	vp->v_flag |= VDIROP;
 	VREF(ip->i_devvp);
 	
+	if(!(ip->i_flag & IN_ADIROP))
+		++fs->lfs_nadirop;
+	ip->i_flag |= IN_ADIROP;
+
 	/* Set superblock modified bit and increment file count. */
 	fs->lfs_fmod = 1;
 	++fs->lfs_nfiles;
