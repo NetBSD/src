@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho_bus.c,v 1.4 1999/11/13 00:32:16 thorpej Exp $	*/
+/*	$NetBSD: psycho_bus.c,v 1.5 1999/11/24 01:53:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -346,9 +346,8 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
  * interrupt mapping.
  *
  * this table is from the UltraSPARC IIi users manual, table 11-4.
- * we may not need it.
  */
-int ino_to_ipl_table[] = {
+static int pci_ino_to_ipl_table[] = {
 	7,		/* PCI A, Slot 0, INTA# */
 	5,		/* PCI A, Slot 0, INTB# */
 	5,		/* PCI A, Slot 0, INTC# */
@@ -499,7 +498,7 @@ psycho_intr_establish(t, level, flags, handler, arg)
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_number = ino;
-	ih->ih_pil = ino_to_ipl_table[ino];
+	ih->ih_pil = pci_ino_to_ipl_table[ino];
 	DPRINTF(PDB_INTR, ("; installing handler %p with ino %u pil %u\n", handler, (u_int)ino, (u_int)ih->ih_pil));
 	intr_establish(ih->ih_pil, ih);
 	return (ih);
