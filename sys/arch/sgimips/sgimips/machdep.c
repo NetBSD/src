@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2001/09/10 21:19:34 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2001/09/18 05:19:29 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -599,13 +599,25 @@ haltsys:
 
 	doshutdownhooks();
 
-#if 0
-	if (howto & RB_POWERDOWN) {
+	/*
+	 * Calling ARCBIOS->PowerDown() results in a "CP1 unusable trap"
+	 * which lands me back in DDB, at least on my Indy.  So, enable 
+	 * the FPU before asking the PROM to power down to avoid this.. 
+	 * It seems to want the FPU to play the `poweroff tune' 8-/
+	 */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* Set CP1 usable bit in SR */
+	 	mips_cp0_status_write(mips_cp0_status_read() | 
+					MIPS_SR_COP_1_BIT);	
+
 		printf("powering off...\n\n");
+		delay(500000);
 		ARCBIOS->PowerDown();
 		printf("WARNING: powerdown failed\n");
+		/*
+		 * RB_POWERDOWN implies RB_HALT... fall into it...
+		 */
 	}
-#endif
 
 	if (howto & RB_HALT) {
 		printf("halting...\n\n");
