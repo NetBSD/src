@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.204 2000/12/31 07:32:33 itojun Exp $
+# $NetBSD: mi,v 1.205 2001/01/04 20:35:35 garbled Exp $
 .
 ./altroot
 ./bin
@@ -432,6 +432,7 @@
 ./usr/games/hide
 ./usr/include
 ./usr/include/arpa
+./usr/include/cdk
 ./usr/include/compat
 ./usr/include/dev
 ./usr/include/dev/microcode
