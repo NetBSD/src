@@ -64,6 +64,7 @@
 ./usr/include/dev/ic/cyvar.h
 ./usr/include/dev/ic/dc21040reg.h
 ./usr/include/dev/ic/dp8390reg.h
+./usr/include/dev/ic/dp8390var.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/hayespreg.h
@@ -73,6 +74,7 @@
 ./usr/include/dev/ic/i82586reg.h
 ./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/ics2101reg.h
+./usr/include/dev/ic/intersil7170.h
 ./usr/include/dev/ic/ispmbox.h
 ./usr/include/dev/ic/ispreg.h
 ./usr/include/dev/ic/ispvar.h
@@ -97,10 +99,12 @@
 ./usr/include/dev/ic/z8530sc.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
+./usr/include/dev/isa/com_multi.h
 ./usr/include/dev/isa/comreg.h
 ./usr/include/dev/isa/comvar.h
 ./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/elink.h
+./usr/include/dev/isa/espvar.h
 ./usr/include/dev/isa/gusreg.h
 ./usr/include/dev/isa/ics2101var.h
 ./usr/include/dev/isa/if_edreg.h
@@ -116,6 +120,7 @@
 ./usr/include/dev/isa/isareg.h
 ./usr/include/dev/isa/isavar.h
 ./usr/include/dev/isa/lptreg.h
+./usr/include/dev/isa/madreg.h
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/pasreg.h
 ./usr/include/dev/isa/pssreg.h
@@ -515,6 +520,27 @@
 ./usr/include/md4.h
 ./usr/include/md5.h
 ./usr/include/memory.h
+./usr/include/miscfs
+./usr/include/miscfs/fdesc
+./usr/include/miscfs/fdesc/fdesc.h
+./usr/include/miscfs/fifofs
+./usr/include/miscfs/fifofs/fifo.h
+./usr/include/miscfs/genfs
+./usr/include/miscfs/genfs/genfs.h
+./usr/include/miscfs/kernfs
+./usr/include/miscfs/kernfs/kernfs.h
+./usr/include/miscfs/nullfs
+./usr/include/miscfs/nullfs/null.h
+./usr/include/miscfs/portal
+./usr/include/miscfs/portal/portal.h
+./usr/include/miscfs/procfs
+./usr/include/miscfs/procfs/procfs.h
+./usr/include/miscfs/specfs
+./usr/include/miscfs/specfs/specdev.h
+./usr/include/miscfs/umapfs
+./usr/include/miscfs/umapfs/umap.h
+./usr/include/miscfs/union
+./usr/include/miscfs/union/union.h
 ./usr/include/mpool.h
 ./usr/include/ndbm.h
 ./usr/include/net/bpf.h
@@ -580,6 +606,7 @@
 ./usr/include/netinet/ip_icmp.h
 ./usr/include/netinet/ip_mroute.h
 ./usr/include/netinet/ip_nat.h
+./usr/include/netinet/ip_proxy.h
 ./usr/include/netinet/ip_state.h
 ./usr/include/netinet/ip_var.h
 ./usr/include/netinet/tcp.h
@@ -769,6 +796,7 @@
 ./usr/include/sys/malloc.h
 ./usr/include/sys/map.h
 ./usr/include/sys/mbuf.h
+./usr/include/sys/md5.h
 ./usr/include/sys/mman.h
 ./usr/include/sys/mount.h
 ./usr/include/sys/msg.h
@@ -851,6 +879,7 @@
 ./usr/include/ufs/ufs/quota.h
 ./usr/include/ufs/ufs/ufs_extern.h
 ./usr/include/ufs/ufs/ufsmount.h
+./usr/include/unctrl.h
 ./usr/include/unistd.h
 ./usr/include/util.h
 ./usr/include/utime.h
@@ -1542,6 +1571,7 @@
 ./usr/share/man/cat3/opendir.0
 ./usr/share/man/cat3/openlog.0
 ./usr/share/man/cat3/openpty.0
+./usr/share/man/cat3/orcmd.0
 ./usr/share/man/cat3/pause.0
 ./usr/share/man/cat3/pcap.0
 ./usr/share/man/cat3/pclose.0
@@ -1701,6 +1731,7 @@
 ./usr/share/man/cat3/strncmp.0
 ./usr/share/man/cat3/strncpy.0
 ./usr/share/man/cat3/strpbrk.0
+./usr/share/man/cat3/strptime.0
 ./usr/share/man/cat3/strrchr.0
 ./usr/share/man/cat3/strsep.0
 ./usr/share/man/cat3/strsignal.0
@@ -1898,4 +1929,4 @@
 ./usr/share/mk/bsd.prog.mk
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
-./var/db/libc.tags
+./var/db/tags
