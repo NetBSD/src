@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.11 2000/09/06 03:28:36 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.12 2000/11/18 22:48:10 sommerfeld Exp $	*/
 
 /*
  *
@@ -265,6 +265,8 @@ simple_lock_data_t pmaps_lock;
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
 
 #endif
+
+#define COUNT(x)	/* nothing */
 
 #ifndef I386_MAXPROCS
 #define I386_MAXPROCS 0
@@ -635,6 +637,7 @@ pmap_map_ptes(pmap)
 	}
 
 	/* need to load a new alternate pt space into curpmap? */
+	COUNT(apdp_pde_map);
 	opde = *APDP_PDE;
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
 		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V);
@@ -665,6 +668,7 @@ pmap_unmap_ptes(pmap)
 		pmap_update();
 		/* XXX MP need floosh here? */
 #endif
+		COUNT(apdp_pde_unmap);
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 		simple_unlock(&curpcb->pcb_pmap->pm_obj.vmobjlock);
 	}
@@ -1044,7 +1048,7 @@ pmap_bootstrap(kva_start)
 
 	pool_init(&pmap_tlb_shootdown_job_pool,
 	    sizeof(struct pmap_tlb_shootdown_job),
-	    0,			/* align.  XXX cache-line align these?? */
+	    32,			/* cache-line align XXX magic number*/
 	    0,			/* ioff */
 	    PR_STATIC,
 	    "pmaptlbpl",
@@ -1393,6 +1397,7 @@ pmap_try_steal_pv(pvh, cpv, prevpv)
 	    !simple_lock_try(&cpv->pv_pmap->pm_obj.vmobjlock))
 		return(FALSE);
 
+	COUNT(try_steal_pv);
 	/*
 	 * yes, we can try and steal it.   first we need to remove the
 	 * mapping from the pmap.
@@ -1816,6 +1821,7 @@ pmap_steal_ptp(obj, offset)
 #ifdef MULTIPROCESSOR
 				/* XXX XXX MP */
 				/* BARF */
+				printf("pmap: stealing PTP!\n");
 #endif
 				
 				if (pmap_is_curpmap(pmaps_hand))
@@ -2335,8 +2341,6 @@ pmap_copy_page(srcpa, dstpa)
  * worthy of flushing.  If we don't have space to save it, either flush
  * it immediately (for global mappings), or mark the prr so we do a
  * complete TLB flush when done.
- *
- * XXX this could probably be trivially merged with the TLB flush pool.
  */
 
 __inline static void
@@ -4041,7 +4045,7 @@ pmap_tlb_ipispin(void)
 		}
 		if (count == 0)
 			break;
-		DELAY(10);	/* XXX MP safe? */
+		DELAY(10);
 	}
 	printf("escaped after %d spins\n", spincount);
 	
@@ -4140,8 +4144,12 @@ pmap_tlb_dshootdown(pmap, va, pte)
 static __inline void
 tlbflushg(void)
 {
-	u_int cr3, ocr4, tcr4;
-	
+#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU)
+	u_int cr3;
+#endif
+#if defined(I686_CPU)
+	u_int ocr4, tcr4;
+#endif
 	/*
 	 * Big hammer: flush all TLB entries from PTE's with the G bit set.
 	 * This should only be necessary if MP TLB invalidation falls
@@ -4156,17 +4164,22 @@ tlbflushg(void)
 	 * "(P6 family processors only): Writing to control register CR4 to
 	 * modify the PSE, PGE, or PAE flag."
 	 *
-	 * The following is coded defensively, and is probably mega-overkill.
-	 * We also reload CR3 for the benefit of pre-P6-family processors.
+	 * If appropriate, we also reload CR3 for the benefit of
+	 * pre-P6-family processors.
 	 */
 	 
-	__asm __volatile("movl %%cr3,%0" : "=r" (cr3));
-	__asm __volatile("movl %%cr4,%0" : "=r" (ocr4));
+#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU)
+	cr3 = rcr3();
+#endif
+#if defined(I686_CPU)
+	ocr4 = rcr4();
 	tcr4 = ocr4 & ~CR4_PGE;
-	__asm __volatile("movl %0,%%cr4" : "=r" (tcr4));	
-	__asm __volatile("movl %0,%%cr3" : : "r" (cr3)); /* is this needed? */
-	__asm __volatile("movl %0,%%cr4" : "=r" (ocr4));
-	__asm __volatile("movl %0,%%cr3" : : "r" (cr3));
+	lcr4(tcr4);
+	lcr4(ocr4);
+#endif
+#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU)
+	lcr3(cr3);
+#endif
 }
 
 
@@ -4217,11 +4230,13 @@ pmap_do_tlb_shootdown(struct cpu_info *ci)
 	simple_lock(&pq->pq_slock);
 	
 	if (pq->pq_flushg) {
+		COUNT(flushg);
 		tlbflushg();
 		pq->pq_flushg = 0;
 		pq->pq_flushu = 0;
 		pmap_tlb_shootdown_q_drain(pq);
 	} else if (pq->pq_flushu) {
+		COUNT(flushu);
 		tlbflush();
 		pq->pq_flushu = 0;
 		pmap_tlb_shootdown_q_drain(pq);
