@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.51 2002/10/06 03:02:04 provos Exp $
+# $NetBSD: FALCON,v 1.52 2002/10/14 18:39:27 elric Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.6 2002/09/02 12:10:46 leo Exp $
-#		NetBSD: GENERIC.in,v 1.26 2002/10/06 02:58:21 provos Exp $
+#		NetBSD: GENERIC.in,v 1.27 2002/10/14 18:24:33 elric Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -185,6 +185,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	ccd		4	# concatenating disk driver
+#pseudo-device	cgd		4	# cryptographic disk driver
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.

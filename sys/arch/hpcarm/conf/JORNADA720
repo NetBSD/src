@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.28 2002/09/18 02:43:58 lukem Exp $
+#	$NetBSD: JORNADA720,v 1.29 2002/10/14 18:39:31 elric Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 # estimated number of users
 maxusers	32
@@ -245,6 +245,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 #pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	cgd	2		# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
