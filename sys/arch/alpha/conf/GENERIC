@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.63 1997/08/20 18:35:55 mjacob Exp $
+# $NetBSD: GENERIC,v 1.64 1997/08/23 19:16:06 mjacob Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -66,7 +66,7 @@ options 	EISAVERBOSE		# recognize "unknown" EISA devices
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
-#options	SCSIVERBOSE		# Verbose SCSI errors
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs
