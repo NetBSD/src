@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.6 1995/05/28 10:16:32 mycroft Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.7 1995/05/28 10:20:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -45,6 +45,7 @@
 #include <sys/socketvar.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
