@@ -301,6 +301,8 @@
 #include <regexp.h>
 #include <resolv.h>
 #include <rmd160.h>
+/* without this rmt.h re-defines ioctl which is also defined in soundcard.h */
+#define __RMTLIB_PRIVATE
 #include <rmt.h>
 #include <sa.h>
 #include <sched.h>
