@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.4 2002/12/01 12:09:56 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.5 2002/12/03 06:11:31 explorer Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.4 2002/12/01 12:09:56 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.5 2002/12/03 06:11:31 explorer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -902,7 +902,9 @@ sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
 			statorb->lun->state = SBP2_STATE_DEAD;
 		}
 		if (!found) {
+#ifdef SBP2_DEBUG
 			u_int32_t i = ntohl(abuf->ab_data[0]);
+#endif
 			DPRINTF(("Got a status block for an unknown orb addr:"
 			    " 0x%016qx\n", addr));
 			DPRINTF(("resp: 0x%x status: 0x%x len: 0x%x",
