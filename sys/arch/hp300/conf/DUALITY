@@ -1,7 +1,7 @@
 #
 # DUALITY (mycroft's hp370 test machine)
 #
-#	$Id: DUALITY,v 1.8 1994/05/17 10:26:43 cgd Exp $
+#	$Id: DUALITY,v 1.9 1994/05/20 18:22:44 mycroft Exp $
 #
 machine		"hp300"
 cpu		"HP320"
@@ -29,10 +29,11 @@ options		"TCP_COMPAT_42"
 options		"COMPAT_09"
 
 # Options for all HP machines
-#options		SYSVSHM
+#options	SYSVSHM
 options		COMPAT_HPUX
 
 # Options specific to this host.
+options		"LABELSECTOR=0","LABELOFFSET=64"
 options		DDB
 options		DEBUG,DIAGNOSTIC
 options		PANICBUTTON,PANICWAIT
