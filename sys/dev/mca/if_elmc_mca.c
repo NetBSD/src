@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.5 2001/04/23 06:10:08 jdolecek Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.6 2001/05/03 11:17:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -382,7 +382,7 @@ elmc_mca_attn(sc, why)
 
     bus_space_write_1(asc->sc_regt, asc->sc_regh, ELMC_CTRL,
 		ELMC_CTRL_RST | ELMC_CTRL_BS3 | ELMC_CTRL_CHA | intr);
-    delay(16);	/* should be > 500 ns */
+    delay(1);	/* should be > 500 ns */
     bus_space_write_1(asc->sc_regt, asc->sc_regh, ELMC_CTRL,
 		ELMC_CTRL_RST | ELMC_CTRL_BS3 | intr);
 }
@@ -410,7 +410,7 @@ elmc_mca_hwreset(sc, why)
     /* toggle the RST bit low then high */
     bus_space_write_1(asc->sc_regt, asc->sc_regh, ELMC_CTRL,
 		ELMC_CTRL_BS3 | ELMC_CTRL_LOOP);
-    delay(16);	/* should be > 500 ns */
+    delay(1);	/* should be > 500 ns */
     bus_space_write_1(asc->sc_regt, asc->sc_regh, ELMC_CTRL,
 		ELMC_CTRL_BS3 | ELMC_CTRL_LOOP | ELMC_CTRL_RST);
 
