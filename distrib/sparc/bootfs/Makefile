@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2002/07/29 14:23:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.38 2002/12/21 13:01:20 lukem Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -19,7 +19,10 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	be
 PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx
 IMAGEDEPENDS=	netbsd.ram.gz ${DESTDIR}/usr/mdec/boot ${PRIMARYBOOT}
-IMAGEPOSTBUILD=	${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} ${PRIMARYBOOT} /boot
+IMAGEPOSTBUILD=	\
+	${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} ${PRIMARYBOOT} /boot && \
+	printf 'V nhead 2\nV pcyl 80\nV ncyl 80\nV nsect 18\na 0 80/0/0\nW\n' \
+	    | ${SUNLABEL} -nq ${IMAGE}
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
