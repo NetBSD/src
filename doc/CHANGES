@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.413 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.414 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -191,5 +191,6 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		chipsets. [reinoud 20050112]
 	seq(1): Add BSD licensed version of this Plan 9 and GNU/Linux command,
 		which prints sequences of numbers.  [ginsbach 20050120]
-	kernel: switch domain initialization to use link sets.  Bump
-		kernel version to 2.99.15 [matt 20050123]
+	kernel: Save kernel memory by switching IPC domain initialization to
+		use link sets, see <sys/cdefs.h>.  Bump kernel version to
+		2.99.15 [matt 20050123]
