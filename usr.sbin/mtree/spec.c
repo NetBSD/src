@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.38 2001/11/01 02:15:41 tv Exp $	*/
+/*	$NetBSD: spec.c,v 1.39 2001/11/03 12:51:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.38 2001/11/01 02:15:41 tv Exp $");
+__RCSID("$NetBSD: spec.c,v 1.39 2001/11/03 12:51:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,8 @@ __RCSID("$NetBSD: spec.c,v 1.38 2001/11/01 02:15:41 tv Exp $");
 #include "extern.h"
 #include "pack_dev.h"
 
-size_t lineno;				/* Current spec line number. */
+size_t	mtree_lineno;			/* Current spec line number */
+int	Wflag;				/* Don't "whack" permissions */
 
 static dev_t	 parsedev(char *);
 static void	 set(char *, NODE *);
@@ -117,8 +118,8 @@ spec(FILE *fp)
 	tname = NULL;
 	tnamelen = 0;
 	memset(&ginfo, 0, sizeof(ginfo));
-	for (lineno = 0;
-	    (buf = fparseln(fp, NULL, &lineno, NULL,
+	for (mtree_lineno = 0;
+	    (buf = fparseln(fp, NULL, &mtree_lineno, NULL,
 		FPARSELN_UNESCCOMM | FPARSELN_UNESCCONT | FPARSELN_UNESCESC));
 	    free(buf)) {
 		/* Skip leading whitespace. */
@@ -130,7 +131,8 @@ spec(FILE *fp)
 			continue;
 
 #ifdef DEBUG
-		(void)fprintf(stderr, "line %lu: {%s}\n", (u_long)lineno, p);
+		(void)fprintf(stderr, "line %lu: {%s}\n",
+		    (u_long)mtree_lineno, p);
 #endif
 		/* Grab file name, "$", "set", or "unset". */
 		next = buf;
@@ -206,7 +208,7 @@ noparent:		mtree_err("no parent node");
 		if ((centry = calloc(1, sizeof(NODE) + strlen(p))) == NULL)
 			mtree_err("%s", strerror(errno));
 		*centry = ginfo;
-		centry->lineno = lineno;
+		centry->lineno = mtree_lineno;
 		strcpy(centry->name, p);
 #define	MAGIC	"?*["
 		if (strpbrk(p, MAGIC))
@@ -395,8 +397,10 @@ set(char *t, NODE *ip)
 				mtree_err("invalid gid `%s'", val);
 			break;
 		case F_GNAME:
+			if (Wflag)	/* don't parse if whacking */
+				break;
 			if (gid_from_group(val, &gid) == -1)
-			    mtree_err("unknown group `%s'", val);
+				mtree_err("unknown group `%s'", val);
 			ip->st_gid = gid;
 			break;
 		case F_IGN:
@@ -458,8 +462,10 @@ set(char *t, NODE *ip)
 				mtree_err("invalid uid `%s'", val);
 			break;
 		case F_UNAME:
+			if (Wflag)	/* don't parse if whacking */
+				break;
 			if (uid_from_user(val, &uid) == -1)
-			    mtree_err("unknown user `%s'", val);
+				mtree_err("unknown user `%s'", val);
 			ip->st_uid = uid;
 			break;
 		default:
