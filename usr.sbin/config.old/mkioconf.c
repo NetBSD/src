@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.21 1994/02/01 02:07:32 cgd Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.22 1994/02/18 06:10:46 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -711,6 +711,7 @@ i386_ioconf()
     isa_devtab(fp, "bio");
     isa_devtab(fp, "tty");
     isa_devtab(fp, "net");
+    isa_devtab(fp, "high");
     isa_devtab(fp, "null");
 
     fprintf(fp, "\nstruct isa_device isa_subdev[] = {\n");

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.8 1994/02/01 02:07:26 cgd Exp $
+ *	$Id: lang.l,v 1.9 1994/02/18 06:10:44 mycroft Exp $
  */
 
 #include <ctype.h>
@@ -68,6 +68,9 @@ struct kt {
 	{ "dst",	DST },
 	{ "dumps",	DUMPS },
 	{ "flags",	FLAGS },
+#if MACHINE_I386
+	{ "high",	HIGH },
+#endif MACHINE_I386
 	{ "hz",		HZ },
 	{ "ident",	IDENT },
 #if MACHINE_I386
