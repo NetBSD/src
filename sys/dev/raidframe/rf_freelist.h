@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_freelist.h,v 1.5 2001/10/04 15:58:53 oster Exp $	*/
+/*	$NetBSD: rf_freelist.h,v 1.6 2002/08/08 02:53:01 oster Exp $	*/
 /*
  * rf_freelist.h
  */
@@ -152,18 +152,20 @@ struct RF_FreeList_s {
 #define RF_FREELIST_PRIME(_fl_,_cnt_,_nextp_,_cast_) { \
 	void *_p; \
 	int _i; \
-	RF_LOCK_MUTEX((_fl_)->lock); \
 	for(_i=0;_i<(_cnt_);_i++) { \
 		RF_Calloc(_p,1,(_fl_)->obj_size,(void *)); \
 		if (_p) { \
+			RF_LOCK_MUTEX((_fl_)->lock); \
 			(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
 			(_fl_)->objlist = _p; \
 			(_fl_)->free_cnt++; \
+			RF_UNLOCK_MUTEX((_fl_)->lock); \
 		} \
 		else { \
 			break; \
 		} \
 	} \
+	RF_LOCK_MUTEX((_fl_)->lock); \
 	RF_FREELIST_STAT_FREE_UPDATE(_fl_); \
 	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
@@ -188,7 +190,6 @@ struct RF_FreeList_s {
 #define RF_FREELIST_PRIME_INIT(_fl_,_cnt_,_nextp_,_cast_,_init_) { \
 	void *_p; \
 	int _i; \
-	RF_LOCK_MUTEX((_fl_)->lock); \
 	for(_i=0;_i<(_cnt_);_i++) { \
 		RF_Calloc(_p,1,(_fl_)->obj_size,(void *)); \
 		if (_init_ (_cast_ _p)) { \
@@ -196,14 +197,17 @@ struct RF_FreeList_s {
 			_p = NULL; \
 		} \
 		if (_p) { \
+			RF_LOCK_MUTEX((_fl_)->lock); \
 			(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
 			(_fl_)->objlist = _p; \
 			(_fl_)->free_cnt++; \
+			RF_UNLOCK_MUTEX((_fl_)->lock); \
 		} \
 		else { \
 			break; \
 		} \
 	} \
+	RF_LOCK_MUTEX((_fl_)->lock); \
 	RF_FREELIST_STAT_FREE_UPDATE(_fl_); \
 	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
@@ -219,7 +223,6 @@ struct RF_FreeList_s {
 #define RF_FREELIST_PRIME_INIT_ARG(_fl_,_cnt_,_nextp_,_cast_,_init_,_arg_) { \
 	void *_p; \
 	int _i; \
-	RF_LOCK_MUTEX((_fl_)->lock); \
 	for(_i=0;_i<(_cnt_);_i++) { \
 		RF_Calloc(_p,1,(_fl_)->obj_size,(void *)); \
 		if (_init_ (_cast_ _p,_arg_)) { \
@@ -227,14 +230,17 @@ struct RF_FreeList_s {
 			_p = NULL; \
 		} \
 		if (_p) { \
+			RF_LOCK_MUTEX((_fl_)->lock); \
 			(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
 			(_fl_)->objlist = _p; \
 			(_fl_)->free_cnt++; \
+			RF_UNLOCK_MUTEX((_fl_)->lock); \
 		} \
 		else { \
 			break; \
 		} \
 	} \
+	RF_LOCK_MUTEX((_fl_)->lock); \
 	RF_FREELIST_STAT_FREE_UPDATE(_fl_); \
 	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
@@ -255,8 +261,10 @@ struct RF_FreeList_s {
 		_obj_ = _cast_((_fl_)->objlist); \
 		(_fl_)->objlist = (void *)((_obj_)->_nextp_); \
 		(_fl_)->free_cnt--; \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 	} \
 	else { \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 		/* \
 		 * Allocate one at a time so we can free \
 		 * one at a time without cleverness when arena \
@@ -277,8 +285,10 @@ struct RF_FreeList_s {
 							_p = NULL; \
 							break; \
 						} \
+						RF_LOCK_MUTEX((_fl_)->lock); \
 						(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
 						(_fl_)->objlist = _p; \
+						RF_UNLOCK_MUTEX((_fl_)->lock); \
 					} \
 					else { \
 						break; \
@@ -286,8 +296,11 @@ struct RF_FreeList_s {
 				} \
 			} \
 		} \
+		RF_LOCK_MUTEX((_fl_)->lock); \
 		RF_FREELIST_STAT_GROW(_fl_); \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 	} \
+	RF_LOCK_MUTEX((_fl_)->lock); \
 	RF_FREELIST_STAT_ALLOC(_fl_); \
 	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
@@ -309,8 +322,10 @@ struct RF_FreeList_s {
 		_obj_ = _cast_((_fl_)->objlist); \
 		(_fl_)->objlist = (void *)((_obj_)->_nextp_); \
 		(_fl_)->free_cnt--; \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 	} \
 	else { \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 		/* \
 		 * Allocate one at a time so we can free \
 		 * one at a time without cleverness when arena \
@@ -331,8 +346,10 @@ struct RF_FreeList_s {
 							_p = NULL; \
 							break; \
 						} \
+						RF_LOCK_MUTEX((_fl_)->lock); \
 						(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
 						(_fl_)->objlist = _p; \
+						RF_UNLOCK_MUTEX((_fl_)->lock); \
 					} \
 					else { \
 						break; \
@@ -340,8 +357,11 @@ struct RF_FreeList_s {
 				} \
 			} \
 		} \
+		RF_LOCK_MUTEX((_fl_)->lock); \
 		RF_FREELIST_STAT_GROW(_fl_); \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 	} \
+	RF_LOCK_MUTEX((_fl_)->lock); \
 	RF_FREELIST_STAT_ALLOC(_fl_); \
 	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
@@ -413,8 +433,10 @@ struct RF_FreeList_s {
 		_obj_ = _cast_((_fl_)->objlist); \
 		(_fl_)->objlist = (void *)((_obj_)->_nextp_); \
 		(_fl_)->free_cnt--; \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 	} \
 	else { \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 		/* \
 		 * Allocate one at a time so we can free \
 		 * one at a time without cleverness when arena \
@@ -425,16 +447,21 @@ struct RF_FreeList_s {
 			for(_i=1;_i<(_fl_)->obj_inc;_i++) { \
 				RF_Calloc(_p,1,(_fl_)->obj_size,(void *)); \
 				if (_p) { \
+					RF_LOCK_MUTEX((_fl_)->lock); \
 					(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
 					(_fl_)->objlist = _p; \
+					RF_UNLOCK_MUTEX((_fl_)->lock); \
 				} \
 				else { \
 					break; \
 				} \
 			} \
 		} \
+		RF_LOCK_MUTEX((_fl_)->lock); \
 		RF_FREELIST_STAT_GROW(_fl_); \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 	} \
+	RF_LOCK_MUTEX((_fl_)->lock); \
 	RF_FREELIST_STAT_ALLOC(_fl_); \
 	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
@@ -451,15 +478,17 @@ struct RF_FreeList_s {
 	int _i, _n; \
 	_l = _f = NULL; \
 	_n = 0; \
-	RF_LOCK_MUTEX((_fl_)->lock); \
 	RF_ASSERT(sizeof(*(_obj_))==((_fl_)->obj_size)); \
 	for(_n=0;_n<_num_;_n++) { \
+		RF_LOCK_MUTEX((_fl_)->lock); \
 		if (_fl_->objlist) { \
 			_obj_ = _cast_((_fl_)->objlist); \
 			(_fl_)->objlist = (void *)((_obj_)->_nextp_); \
 			(_fl_)->free_cnt--; \
+			RF_UNLOCK_MUTEX((_fl_)->lock); \
 		} \
 		else { \
+			RF_UNLOCK_MUTEX((_fl_)->lock); \
 			/* \
 			 * Allocate one at a time so we can free \
 			 * one at a time without cleverness when arena \
@@ -470,16 +499,21 @@ struct RF_FreeList_s {
 				for(_i=1;_i<(_fl_)->obj_inc;_i++) { \
 					RF_Calloc(_p,1,(_fl_)->obj_size,(void *)); \
 					if (_p) { \
+						RF_LOCK_MUTEX((_fl_)->lock); \
 						(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
 						(_fl_)->objlist = _p; \
+						RF_UNLOCK_MUTEX((_fl_)->lock); \
 					} \
 					else { \
 						break; \
 					} \
 				} \
 			} \
+			RF_LOCK_MUTEX((_fl_)->lock); \
 			RF_FREELIST_STAT_GROW(_fl_); \
+			RF_UNLOCK_MUTEX((_fl_)->lock); \
 		} \
+		RF_LOCK_MUTEX((_fl_)->lock); \
 		if (_f == NULL) \
 			_f = _obj_; \
 		if (_obj_) { \
@@ -492,8 +526,8 @@ struct RF_FreeList_s {
 			(_fl_)->objlist = _l; \
 			_n = _num_; \
 		} \
+		RF_UNLOCK_MUTEX((_fl_)->lock); \
 	} \
-	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
 
 /*
