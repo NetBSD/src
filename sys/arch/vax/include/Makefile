@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2000/06/04 21:06:18 matt Exp $
+#	$NetBSD: Makefile,v 1.12 2000/06/11 23:32:55 matt Exp $
 
 KDIR=	/sys/arch/vax/include
 INCSDIR= /usr/include/vax
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bswap.h byte_swap.h \
+	bswap.h bus.h byte_swap.h \
 	cdefs.h clock.h coff_machdep.h cpu.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
