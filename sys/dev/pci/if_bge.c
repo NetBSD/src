@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.2 2002/06/24 01:23:11 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.3 2002/06/26 10:48:18 cjs Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1540,7 +1540,8 @@ bge_probe(parent, match, aux)
 		return (1);
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTIMA &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTIMA_AC1000)
+	    ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTIMA_AC1000) ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTIMA_AC9100))
 		return (1);
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
