@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.43 2003/01/10 11:55:46 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.44 2003/03/15 20:49:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.43 2003/01/10 11:55:46 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.44 2003/03/15 20:49:26 agc Exp $");
 #endif
 #endif
 
@@ -325,18 +325,10 @@ pkg_perform(lpkg_head_t *pkghead)
 			return 1;
 
 		if (File2Pkg) {
-			/* Show all files with the package they belong to */
-			char   *file, *pkg;
 
-			/* pkg_info -Fa => Dump pkgdb */
-			if (!pkgdb_open(ReadOnly)) {
-				err(EXIT_FAILURE, "cannot open pkgdb");
-			}
-			while ((file = pkgdb_iter())) {
-				pkg = pkgdb_retrieve(file);
-				printf("%-50s %s\n", file, pkg);
-			}
-			pkgdb_close();
+			/* Show all files with the package they belong to */
+			pkgdb_dump();
+
 		} else {
 			/* Show all packges with description */
 			if ((dirp = opendir(tmp)) != (DIR *) NULL) {
