@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2000/12/07 20:19:05 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2000/12/07 21:53:46 thorpej Exp $	*/
 
 /*
  *
@@ -69,6 +69,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/user.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm.h>
 
@@ -1739,6 +1740,11 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa;
 
+	/*
+	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
+	 * WE MUST NOT BLOCK!
+	 */
+
 	/* fetch the physical address of the page directory. */
 	(void) pmap_extract(pmap_kernel(), (vaddr_t) pdir, &pdirpa);
 
@@ -1748,14 +1754,6 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	/* put in recursibve PDE to map the PTEs */
 	pdir[PDSLOT_PTE] = pdirpa | PG_V | PG_KW;
 
-	/*
-	 * we need to lock pmaps_lock to prevent nkpde from changing on
-	 * us.  note that there is no need to splimp to protect us from
-	 * malloc since malloc allocates out of a submap and we should
-	 * have already allocated kernel PTPs to cover the range...
-	 */
-	simple_lock(&pmaps_lock);
-
 	/* put in kernel VM PDEs */
 	memcpy(&pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
 	    nkpde * sizeof(pd_entry_t));
@@ -1763,8 +1761,6 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	/* zero the rest */
 	memset(&pdir[PDSLOT_KERN + nkpde], 0,
 	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
-
-	simple_unlock(&pmaps_lock);
 
 	return (0);
 }
@@ -1794,17 +1790,33 @@ pmap_create()
 	pmap->pm_ptphint = NULL;
 	pmap->pm_flags = 0;
 
-	/* allocate PDP */
-	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
-	pmap->pm_pdirpa = pmap->pm_pdir[PDSLOT_PTE] & PG_FRAME;
-
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
 	pmap->pm_ldt_len = 0;
 	pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 
+	/* allocate PDP */
+
+	/*
+	 * we need to lock pmaps_lock to prevent nkpde from changing on
+	 * us.  note that there is no need to splimp to protect us from
+	 * malloc since malloc allocates out of a submap and we should
+	 * have already allocated kernel PTPs to cover the range...
+	 *
+	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock'!
+	 */
+
 	simple_lock(&pmaps_lock);
+
+	/* XXX Need a generic "I want memory" wchan */
+	while ((pmap->pm_pdir =
+	    pool_cache_get(&pmap_pdp_cache, PR_NOWAIT)) == NULL)
+		(void) ltsleep(&lbolt, PVM, "pmapcr", hz >> 3, &pmaps_lock);
+
+	pmap->pm_pdirpa = pmap->pm_pdir[PDSLOT_PTE] & PG_FRAME;
+
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
+
 	simple_unlock(&pmaps_lock);
 
 	return (pmap);
