@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 2000/02/19 17:49:49 aidan Exp $
+#	$NetBSD: Makefile,v 1.107 2000/02/26 17:42:53 mycroft Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -126,17 +126,14 @@ build: beforeinstall
 .endif
 	${MAKE} includes
 	(cd ${.CURDIR}/lib/csu && \
-	    ${MAKE} ${_J} dependall MKMAN=no && \
+	    ${MAKE} ${_J} MKMAN=no dependall && \
 	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/lib && \
-	    ${MAKE} ${_J} dependall MKMAN=no && \
+	    ${MAKE} ${_J} MKMAN=no dependall && \
 	    ${MAKE} MKMAN=no install)
 	(cd ${.CURDIR}/gnu/lib && \
-	    ${MAKE} ${_J} dependall MKMAN=no MKINFO=no && \
+	    ${MAKE} ${_J} MKMAN=no MKINFO=no dependall && \
 	    ${MAKE} MKMAN=no MKINFO=no install)
-.if ${MKSHARE} != "no"
-	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
-.endif
 .if target(cryptobuild)
 	${MAKE} ${_J} cryptobuild
 .endif
