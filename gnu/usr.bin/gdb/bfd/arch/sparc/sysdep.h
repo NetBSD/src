@@ -1,4 +1,4 @@
-/*	$Id: sysdep.h,v 1.3 1994/05/25 11:24:16 pk Exp $ */
+/*	$Id: sysdep.h,v 1.4 1994/05/31 20:54:14 pk Exp $ */
 
 #ifndef hosts_sparc_H
 #define hosts_sparc_H
@@ -14,6 +14,7 @@
 #include <sys/file.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>
+#include <machine/reg.h>
 
 #ifndef	O_ACCMODE
 #define O_ACCMODE (O_RDONLY | O_WRONLY | O_RDWR)
