@@ -1,4 +1,4 @@
-#	$NetBSD: Make.crunch,v 1.3 1995/11/21 21:18:48 gwr Exp $
+#	$NetBSD: Make.crunch,v 1.4 1999/05/18 07:41:21 gwr Exp $
 #
 # This is included by subdirectories building a crunched binary.
 # Assume the following are already defined:  TOP, CBIN
@@ -11,6 +11,7 @@ CLEANFILES+= *.lo *_stub.o *_stub.c
 
 # Keep a copy that is not stripped so I can debug...
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+	-rm -f ${CBIN}
 	make -f ${CBIN}.mk all STRIP=true
 	cp -p ${CBIN} ${CBIN}.syms
 	strip ${CBIN}
