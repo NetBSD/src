@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_message.h,v 1.5 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: scsi_message.h,v 1.6 2001/11/03 15:52:03 tsutsui Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -29,7 +29,8 @@
 /* Identify message */		     /* M/M */	
 #define MSG_IDENTIFYFLAG	0x80 
 #define MSG_IDENTIFY_DISCFLAG	0x40
-#define MSG_IDENTIFY(lun, disc)	(((disc) ? 0xc0 : MSG_IDENTIFYFLAG) | (lun))
+#define MSG_IDENTIFY(lun, disc)	\
+	(MSG_IDENTIFYFLAG | ((disc) ? MSG_IDENTIFY_DISCFLAG : 0) | (lun))
 #define MSG_ISIDENTIFY(m)	((m) & MSG_IDENTIFYFLAG)
 
 /* Extended messages (opcode and length) */
