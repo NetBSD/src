@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33 2003/02/13 09:53:20 pk Exp $ */
+/*	$NetBSD: vmparam.h,v 1.34 2003/04/09 16:27:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,10 +48,34 @@
 #define _SPARC_VMPARAM_H_
 
 /*
- * Machine dependent constants for Sun-4c SPARC
+ * Machine dependent constants for SPARC
  */
 
-#include <machine/param.h>
+#include <machine/cpuconf.h>
+
+/*
+ * Sun4 systems have a 8K page size.  All other platforms have a
+ * 4K page size.  We need to define these upper and lower limits
+ * for machine-independent code.  We also try to make PAGE_SIZE,
+ * PAGE_SHIFT, and PAGE_MASK into compile-time constants, if we can.
+ *
+ * XXX Should garbage-collect the version of this from <machine/param.h>.
+ */
+#define	PAGE_SHIFT_SUN4		13
+#define	PAGE_SHIFT_SUN4CM	12
+
+#define	MIN_PAGE_SIZE		(1 << PAGE_SHIFT_SUN4CM)
+#define	MAX_PAGE_SIZE		(1 << PAGE_SHIFT_SUN4)
+
+#if CPU_NTYPES != 0 && !defined(SUN4)
+#define	PAGE_SHIFT		PAGE_SHIFT_SUN4CM
+#define	PAGE_SIZE		(1 << PAGE_SHIFT)
+#define	PAGE_MASK		(PAGE_SIZE - 1)
+#elif CPU_NTYPES == 1 && defined(SUN4)
+#define	PAGE_SHIFT		PAGE_SHIFT_SUN4
+#define	PAGE_SIZE		(1 << PAGE_SHIFT)
+#define	PAGE_MASK		(PAGE_SIZE - 1)
+#endif
 
 /*
  * USRSTACK is the top (end) of the user stack.
@@ -105,17 +129,6 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-#if !defined(_LKM)
-/*
- * Make the VM PAGE_* macros constants, if possible.
- */
-#if NBPG == 4096 || NBPG == 8192
-#define PAGE_SIZE	NBPG
-#define PAGE_SHIFT	PGSHIFT
-#define PAGE_MASK	(NBPG-1)
-#endif
-#endif /* _LKM */
 
 #define __HAVE_VM_PAGE_MD
 
