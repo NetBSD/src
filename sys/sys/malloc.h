@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.48 1999/11/15 18:49:12 fvdl Exp $	*/
+/*	$NetBSD: malloc.h,v 1.49 1999/12/03 04:52:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -169,7 +169,9 @@
 #define M_DIRADD	109	/* New directory entry */
 #define M_MKDIR		110	/* New directory */
 #define M_DIRREM	111 	/* Directory entry deleted */
-#define M_LAST		112	/* Must be last type + 1 */
+#define	M_IP6RR		112	/* IPv6 Router Renumbering Prefix */
+#define	M_RR_ADDR	113	/* IPv6 Router Renumbering Ifid */
+#define M_LAST		114	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -284,6 +286,8 @@
 	"diradd",	/* 109 M_DIRADD */ \
 	"mkdir",	/* 110 M_MKDIR */ \
 	"dirrem",	/* 111 M_DIRREM */ \
+	"ip6rr",	/* 112 M_IP6RR */ \
+	"rp_addr",	/* 113 M_RR_ADDR */ \
 	NULL,		/* 112 */ \
 }
 
