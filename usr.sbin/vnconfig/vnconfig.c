@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.13 1997/09/29 05:44:19 enami Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.14 1997/09/29 06:43:14 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ config(dev, file, geom, action)
 
 	fd = opendisk(dev, O_RDWR, rdev, sizeof(rdev), 0);
 	if (fd < 0) {
-		warn("%s", dev);
+		warn("%s: opendisk", rdev);
 		return (1);
 	}
 
@@ -196,9 +196,9 @@ config(dev, file, geom, action)
 	if (action == VND_UNCONFIG) {
 		rv = ioctl(fd, VNDIOCCLR, &vndio);
 		if (rv)
-			warn("VNDIOCCLR");
+			warn("%s: VNDIOCCLR", rdev);
 		else if (verbose)
-			printf("%s: cleared\n", dev);
+			printf("%s: cleared\n", rdev);
 	}
 	/*
 	 * Configure the device
@@ -206,9 +206,9 @@ config(dev, file, geom, action)
 	if (action == VND_CONFIG) {
 		rv = ioctl(fd, VNDIOCSET, &vndio);
 		if (rv)
-			warn("VNDIOCSET");
+			warn("%s: VNDIOCSET", rdev);
 		else if (verbose) {
-			printf("%s: %d bytes on %s", dev, vndio.vnd_size,
+			printf("%s: %d bytes on %s", rdev, vndio.vnd_size,
 			    file);
 			if (vndio.vnd_flags & VNDIOF_HASGEOM)
 				printf(" using geometry %d/%d/%d/%d",
