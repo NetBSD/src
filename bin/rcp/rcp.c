@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.28 2001/09/24 13:22:25 wiz Exp $	*/
+/*	$NetBSD: rcp.c,v 1.28.2.1 2002/11/22 23:03:31 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.28 2001/09/24 13:22:25 wiz Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.28.2.1 2002/11/22 23:03:31 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -547,9 +547,10 @@ sink(argc, argv)
 	BUF *bp;
 	off_t i, j;
 	int amt, count, exists, first, mask, mode, ofd, omode;
-	int setimes, size, targisdir;
+	int setimes, targisdir;
 	int wrerrno = 0;	/* pacify gcc */
 	char ch, *cp, *np, *targ, *why, *vect[1], buf[BUFSIZ];
+	off_t size;
 
 #define	atime	tv[0]
 #define	mtime	tv[1]
