@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.5 2003/07/15 00:24:54 lukem Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.6 2003/10/06 15:43:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.5 2003/07/15 00:24:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.6 2003/10/06 15:43:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,8 @@ i80321_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 	}
 	pmap_update(pmap_kernel());
 
