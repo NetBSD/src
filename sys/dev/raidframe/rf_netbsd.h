@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.15 2004/03/08 02:25:27 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.16 2004/03/18 16:40:05 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ struct RF_Pools_s {
 	struct pool callback;    /* Callback descriptors */
 	struct pool cbuf;        /* Component buffers */
 	struct pool dagh;        /* DAG headers */
+	struct pool dagnode;     /* DAG nodes */
 	struct pool daglist;     /* DAG lists */
 	struct pool dqd;         /* Disk Queue Data */
 	struct pool funclist;    /* Function Lists */
