@@ -1,6 +1,6 @@
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.7 1994/02/14 21:44:13 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.8 1994/02/16 00:47:35 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ scsi_start_unit(sc_link, flags)
 	scsi_cmd.how = SSS_START;
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 2, 2000, NULL, flags);
+			     sizeof(scsi_cmd), 0, 0, 2, 6000, NULL, flags);
 }
 
 /*
