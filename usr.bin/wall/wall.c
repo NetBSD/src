@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.20 2002/08/16 20:21:49 itojun Exp $	*/
+/*	$NetBSD: wall.c,v 1.21 2003/03/27 13:16:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.20 2002/08/16 20:21:49 itojun Exp $");
+__RCSID("$NetBSD: wall.c,v 1.21 2003/03/27 13:16:19 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: wall.c,v 1.20 2002/08/16 20:21:49 itojun Exp $");
 #include <sys/uio.h>
 
 #include <err.h>
+#include <grp.h>
 #include <errno.h>
 #include <paths.h>
 #include <pwd.h>
@@ -68,8 +69,17 @@ __RCSID("$NetBSD: wall.c,v 1.20 2002/08/16 20:21:49 itojun Exp $");
 
 #include "utmpentry.h"
 
+void	addgroup(char *);
 void	makemsg(const char *);
 int	main(int, char **);
+void	usage(void);
+
+struct wallgroup {
+	gid_t	gid;
+	char	*name;
+	char	**mem;
+	struct wallgroup *next;
+} *grouplist;
 
 int nobanner;
 size_t mbufsize;
@@ -81,33 +91,36 @@ main(int argc, char **argv)
 {
 	int ch;
 	struct iovec iov;
-	char *p;
-	struct passwd *pep;
+	char *p, **mem;
 	struct utmpentry *ep;
 	gid_t egid;
+	struct wallgroup *wg;
+	struct passwd *pw;
 
+	setprogname(argv[0]);
 	egid = getegid();
 	if (setegid(getgid()) == -1)
 		err(1, "setegid");
-	pep = getpwnam("nobody");
+	pw = getpwnam("nobody");
 
-	while ((ch = getopt(argc, argv, "n")) != -1)
+	while ((ch = getopt(argc, argv, "g:n")) != -1)
 		switch (ch) {
 		case 'n':
 			/* undoc option for shutdown: suppress banner */
-			if (geteuid() == 0 || (pep && getuid() == pep->pw_uid))
+			if (geteuid() == 0 || (pw && getuid() == pw->pw_uid))
 				nobanner = 1;
+			break;
+		case 'g':
+			addgroup(optarg);
 			break;
 		case '?':
 		default:
-usage:
-			(void)fprintf(stderr, "usage: wall [file]\n");
-			exit(1);
+			usage();
 		}
 	argc -= optind;
 	argv += optind;
 	if (argc > 1)
-		goto usage;
+		usage();
 
 	makemsg(*argv);
 
@@ -115,10 +128,59 @@ usage:
 	iov.iov_len = mbufsize;
 	(void)getutentries(NULL, &ep);
 	(void)setegid(egid);
-	for (; ep; ep = ep->next)
+	for (; ep; ep = ep->next) {
+		if (grouplist) {
+			int ingroup;
+
+			ingroup = 0;
+			pw = getpwnam(ep->name);
+			if (!pw)
+				continue;
+			for (wg = grouplist; wg && !ingroup; wg = wg->next) {
+				if (wg->gid == pw->pw_gid)
+					ingroup = 1;
+				for (mem = wg->mem; *mem && !ingroup; mem++)
+					if (strcmp(ep->name, *mem) == 0)
+						ingroup = 1;
+			}
+			if (ingroup == 0)
+				continue;
+		}
 		if ((p = ttymsg(&iov, 1, ep->line, 60*5)) != NULL)
 			warnx("%s", p);
+	}
 	exit(0);
+}
+
+void
+addgroup(char *name)
+{
+	int i;
+	struct group *grp;
+	struct wallgroup *g;
+
+	grp = getgrnam(optarg);
+	if ((grp = getgrnam(optarg)) == NULL)
+		errx(1, "unknown group `%s'", optarg);
+	for (i = 0; grp->gr_mem[i]; i++)
+		continue;
+
+	g = (struct wallgroup *)malloc(sizeof *g);
+	if (g == NULL)
+		err(1, "malloc");
+	g->gid = grp->gr_gid;
+	g->name = name;
+	g->mem = (char **)malloc(i + 1);
+	if (g->mem == NULL)
+		err(1, "malloc");
+	for (i = 0; grp->gr_mem[i] != NULL; i++) {
+		g->mem[i] = strdup(grp->gr_mem[i]);
+		if (g->mem[i] == NULL)
+			err(1, "malloc");
+	}
+	g->mem[i] = NULL;
+	g->next = grouplist;
+	grouplist = g;
 }
 
 void
@@ -132,7 +194,8 @@ makemsg(const char *fname)
 	FILE *fp;
 	int fd;
 	const char *whom;
-	char *p, *tty, tmpname[32], lbuf[100], hostname[MAXHOSTNAMELEN+1];
+	char *p, *tty, tmpname[MAXPATHLEN], lbuf[100],
+	    hostname[MAXHOSTNAMELEN+1];
 
 	(void)snprintf(tmpname, sizeof tmpname, "%s/wall.XXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(tmpname)) == -1)
@@ -164,8 +227,8 @@ makemsg(const char *fname)
 		if (tty == NULL)
 			tty = "??";
 		(void)snprintf(lbuf, sizeof lbuf,
-		    "        (%s) at %d:%02d ...", tty, lt->tm_hour,
-		    lt->tm_min);
+		    "        (%s) at %d:%02d %s...", tty,
+		    lt->tm_hour, lt->tm_min, lt->tm_zone);
 		(void)fprintf(fp, "%-79.79s\r\n", lbuf);
 	}
 	(void)fprintf(fp, "%79s\r\n", " ");
@@ -197,4 +260,12 @@ makemsg(const char *fname)
 	if (fread(mbuf, 1, mbufsize, fp) != mbufsize)
 		err(1, "can't read temporary file");
 	(void)fclose(fp);
+}
+
+void
+usage(void)
+{
+
+	(void)fprintf(stderr, "usage: %s [-g group] [file]\n", getprogname());
+	exit(1);
 }
