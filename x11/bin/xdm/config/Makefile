@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/02 17:19:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/01 14:56:51 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,15 @@ CPPSCRIPTS=	Xresources Xservers.ws xdm-config
 CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11LIBDIR}/xdm/pixmaps \
 				-DXDM_PIXMAP=XFree86.xpm \
 				-DXDM_BWPIXMAP=XFree86bw.xpm
-CPPSCRIPTFLAGS_Xservers.ws=	-DBINDIR=${X11BINDIR} -DDEFAULTVT=vt05
+
+# XXX native only gives DEFAULTVT for i386.
+.if ${MACHINE} != "i386"
+DEFAULTVT=	# defined empty
+.else
+DEFAULTVT=vt05
+.endif
+
+CPPSCRIPTFLAGS_Xservers.ws=	-DBINDIR=${X11BINDIR} -DDEFAULTVT=${DEFAULTVT}
 CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${X11LIBDIR}/xdm -DXDMLOGDIR=/var/log \
 				-DXDMPIDDIR=/var/run -DSU="su -m"
 
