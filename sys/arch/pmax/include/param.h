@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 1997/06/08 10:46:01 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.20 1997/06/15 18:02:20 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
-#define	UADDR		0xffffd000	/* address of u */
+#define	UADDR		0xffffc000	/* address of u */
 #define USPACE          (UPAGES*NBPG)   /* size of u-area in bytes */
 #define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
 #define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */

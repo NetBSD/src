@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.4 1994/10/26 21:09:54 cgd Exp $	*/
+/*	$NetBSD: psl.h,v 1.5 1997/06/15 18:02:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,37 @@
 
 #include <machine/machConst.h>
 
+#ifdef MIPS3		/* OUCH! */
+
+#define	PSL_LOWIPL	(MACH_INT_MASK | MACH_SR_INT_ENAB)
+
+#define	PSL_USERSET (	\
+	MACH_SR_KSU_USER |	\
+	MACH_SR_INT_ENAB |	\
+	MACH_SR_EXL |	\
+	MACH_INT_MASK)
+
+#define	PSL_USERCLR (	\
+	MACH_SR_COP_USABILITY |	\
+	MACH_SR_BOOT_EXC_VEC |	\
+	MACH_SR_TLB_SHUTDOWN |	\
+	MACH_SR_PARITY_ERR |	\
+	MACH_SR_CACHE_MISS |	\
+	MACH_SR_PARITY_ZERO |	\
+	MACH_SR_SWAP_CACHES |	\
+	MACH_SR_ISOL_CACHES |	\
+	MACH_SR_KU_CUR |	\
+	MACH_SR_INT_ENA_CUR |	\
+	MACH_SR_MBZ)
+
+/*
+ * Macros to decode processor status word.
+ */
+#define	USERMODE(ps)	(((ps) & MACH_SR_KSU_MASK) == MACH_SR_KSU_USER)
+#define	BASEPRI(ps)	(((ps) & (MACH_INT_MASK | MACH_SR_INT_ENA_PREV)) \
+			== (MACH_INT_MASK | MACH_SR_INT_ENA_PREV))
+#else
+
 #define	PSL_LOWIPL	(MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
 
 #define	PSL_USERSET (	\
@@ -68,3 +99,4 @@
 #define	USERMODE(ps)	((ps) & MACH_SR_KU_PREV)
 #define	BASEPRI(ps)	(((ps) & (MACH_INT_MASK | MACH_SR_INT_ENA_PREV)) \
 			== (MACH_INT_MASK | MACH_SR_INT_ENA_PREV))
+#endif
