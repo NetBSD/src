@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpreg.h,v 1.5 1998/01/28 07:26:44 thorpej Exp $	*/
+/*	$NetBSD: if_fxpreg.h,v 1.6 1998/02/04 08:26:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,6 +219,13 @@ struct fxp_cb_config {
 				:4;
 };
 
+/*
+ * Size of the hardware portion of a given transmit descriptor, including
+ * the DMA segment array. 
+ */
+#define	FXP_MCSDESCSIZE							\
+	(sizeof(struct fxp_cb_mcs) - offsetof(struct fxp_cb_mcs, cb_status))
+
 #define MAXMCADDR 80
 struct fxp_cb_mcs {
 	struct fxp_cb_soft cb_soft;
@@ -256,6 +263,21 @@ struct fxp_cb_tx {
 	 */
 	volatile struct fxp_tbd tbd[FXP_NTXSEG];
 };
+
+/*
+ * Offset of the hardware portion of a given transmit descriptor from the 
+ * base of the control data DMA mapping.
+ */
+#define	FXP_TXDESCOFF(sc, txd)						\
+	((u_long)((txd) - (sc)->control_data->fcd_txcbs) +		\
+	 offsetof(struct fxp_cb_tx, cb_status))
+
+/*
+ * Size of the hardware portion of a given transmit descriptor, including
+ * the DMA segment array. 
+ */
+#define	FXP_TXDESCSIZE							\
+	(sizeof(struct fxp_cb_tx) - offsetof(struct fxp_cb_tx, cb_status))
 
 /*
  * Control Block (CB) definitions
