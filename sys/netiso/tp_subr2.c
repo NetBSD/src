@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.6 1994/06/29 06:40:35 cgd Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.7 1995/06/13 07:13:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -825,11 +825,11 @@ dump_addr (addr)
 {
 	switch( addr->sa_family ) {
 		case AF_INET:
-			dump_inaddr((struct sockaddr_in *)addr);
+			dump_inaddr(satosin(addr));
 			break;
 #ifdef ISO
 		case AF_ISO:
-			dump_isoaddr((struct sockaddr_iso *)addr);
+			dump_isoaddr(satosiso(addr));
 			break;
 #endif /* ISO */
 		default:
