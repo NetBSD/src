@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.118 2004/04/26 04:39:17 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.119 2004/05/10 09:30:23 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118 2004/04/26 04:39:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.119 2004/05/10 09:30:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -7746,9 +7746,10 @@ key_sp_unlink(sp)
 {
 
 	/* remove from SP index */
-	if (__LIST_CHAINED(sp))
+	if (__LIST_CHAINED(sp)) {
 		LIST_REMOVE(sp, chain);
-	key_freesp(sp);
+		key_freesp(sp);
+	}
 }
 
 /* XXX too much? */
