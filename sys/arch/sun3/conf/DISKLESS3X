@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS3X,v 1.4 1997/03/21 07:30:01 jeremy Exp $
+#	$NetBSD: DISKLESS3X,v 1.5 1997/03/24 17:39:04 gwr Exp $
 
 #
 # DISKLESS Sun3x (3/80, 3/470)
@@ -19,7 +19,6 @@ options 	KTRACE			# system call tracing support
 
 # Debugging options.  Uncomment either these:
 options 	DDB
-options 	SYMTAB_SPACE=0x18000
 # ... or these for KGDB (gdb remote target)
 #makeoptions DEBUG="-g"			# debugging symbols for gdb
 #options 	KGDB

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC3X,v 1.3 1997/03/21 07:28:36 jeremy Exp $
+#	$NetBSD: GENERIC3X,v 1.4 1997/03/24 17:39:05 gwr Exp $
 #
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -17,7 +17,6 @@ options 	KTRACE			# system call tracing support
 
 # Debugging options.  Uncomment either these:
 options 	DDB
-options 	SYMTAB_SPACE=0x1C000
 # ... or these for KGDB (gdb remote target)
 #makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB
