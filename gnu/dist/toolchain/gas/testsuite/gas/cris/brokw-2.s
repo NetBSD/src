@@ -11,6 +11,7 @@ sym2:	moveq 0,r0
 ;	nop
 ;	.skip	2,0
 ; Secondary jump table inserted here :
+;	jump	sym3
 ;	jump	sym1
 next_label:
 	moveq 2,r0

@@ -1,6 +1,6 @@
 /*-
    tc-pj.c -- Assemble code for Pico Java
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -22,6 +22,7 @@
 /* Contributed by Steve Chamberlain of Transmeta <sac@pobox.com>.  */
 
 #include "as.h"
+#include "safe-ctype.h"
 #include "opcode/pj.h"
 
 extern const pj_opc_info_t pj_opc_info[512];
@@ -312,7 +313,7 @@ md_assemble (str)
 	  pending_reloc = 0;
 	}
 
-      while (isspace (*op_end))
+      while (ISSPACE (*op_end))
 	op_end++;
 
       if (*op_end != 0)
@@ -382,7 +383,7 @@ md_atof (type, litP, sizeP)
   return NULL;
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 
 struct option md_longopts[] = {
 
@@ -426,13 +427,14 @@ PJ options:\n\
 
 /* Apply a fixup to the object file.  */
 
-int
-md_apply_fix (fixP, valp)
+void
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     valueT *valp;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-  long val = *valp;
+  long val = * (long *) valP;
   long max, min;
   int shift;
 
@@ -451,7 +453,7 @@ md_apply_fix (fixP, valp)
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_VTABLE_ENTRY:
       fixP->fx_done = 0;
-      return 0;
+      return;
 
     case BFD_RELOC_PJ_CODE_REL16:
       if (val < -0x8000 || val >= 0x7fff)
@@ -525,7 +527,8 @@ md_apply_fix (fixP, valp)
   if (max != 0 && (val < min || val > max))
     as_bad_where (fixP->fx_file, fixP->fx_line, _("offset out of range"));
 
-  return 0;
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 /* Put number into target byte order.  Always put values in an

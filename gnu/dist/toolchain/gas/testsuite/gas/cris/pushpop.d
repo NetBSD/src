@@ -4,7 +4,7 @@
 .*:[ 	]+file format .*-cris
 
 Disassembly of section \.text:
-00000000 <start>:
+0+ <start>:
 [	 ]+0:[	 ]+fce1 ee1f[ 	]+push[ ]+r1
 [	 ]+4:[	 ]+fce1 ee0f[ 	]+push[ ]+r0
 [	 ]+8:[	 ]+fce1 ee4f[ 	]+push[ ]+r4
@@ -87,4 +87,3 @@ Disassembly of section \.text:
 [	 ]+13c:[	 ]+6e2e[ 	]+pop[ ]+r2
 [	 ]+13e:[	 ]+6e3e[ 	]+pop[ ]+r3
 [	 ]+140:[	 ]+fce1 eedf[ 	]+push[ ]+r13
-

@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lb-xgot-ilocks
-#as: -mips1 -KPIC -xgot -mcpu=r3900
+#as: -mips1 -KPIC -xgot -mtune=r3900 -march=r3900
 #source: lb-pic.s
 
 # Test the lb macro with -KPIC -xgot.

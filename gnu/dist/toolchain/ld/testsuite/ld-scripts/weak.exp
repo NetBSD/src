@@ -21,22 +21,10 @@ set testname "weak symbols"
 
 # This test only works for ELF targets.  It ought to work for some
 # a.out targets, but it doesn't.
-
-if { ![istarget *-*-sysv4*] \
-     && ![istarget *-*-unixware*] \
-     && ![istarget *-*-elf*] \
-     && ![istarget *-*-eabi*] \
-     && ![istarget *-*-linux*] \
-     && ![istarget *-*-irix5*] \
-     && ![istarget *-*-irix6*] \
-     && ![istarget *-*-solaris2*] } then {
+if ![is_elf_format] {
     return
 }
 
-if { [istarget *-*-linux*aout*] \
-     || [istarget *-*-linux*oldld*] } {
-    return
-}
 
 if {! [ld_assemble $as $srcdir/$subdir/weak1.s tmpdir/weak1.o]
     || ! [ld_assemble $as $srcdir/$subdir/weak2.s tmpdir/weak2.o]} then {

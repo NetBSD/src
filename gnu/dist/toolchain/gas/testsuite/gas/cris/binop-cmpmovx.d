@@ -6,11 +6,11 @@
 .*:     file format .*-cris
 
 Disassembly of section \.text:
-00000000 <notstart>:
+0+ <notstart>:
    0:	0000[ ]+	bcc ( 0x2|\.\+2)
 	\.\.\.
 
-00000004 <start>:
+0+4 <start>:
 [	 ]+4:[	 ]+@IM+4058@[ 	]+@OC@\.b \[r0\],r5
 [	 ]+6:[	 ]+@IM+55d8@[ 	]+@OC@\.w \[r5\],r13
 [	 ]+8:[	 ]+@IM+405c@[ 	]+@OC@\.b \[r0\+\],r5
@@ -131,10 +131,10 @@ Disassembly of section \.text:
 [	 ]+1e8:[	 ]+6f2d 0180 0000 @IM+5dd8@[	 ]+@OC@\.w \[r2\+(32769|8001 <three2767\+0x2>)\],r13
 [	 ]+1f0:[	 ]+5f2d 0180 @IM+5dd8@[ 	]+@OC@\.w \[r2-32767\],r13
 [	 ]+1f6:[	 ]+5f2d 0080 @IM+5dd8@[ 	]+@OC@\.w \[r2-32768\],r13
-[	 ]+1fc:[	 ]+6f2d ff7f ffff @IM+5558@[	 ]+@OC@\.w \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+1fc:[	 ]+6f2d ff7f ffff @IM+5558@[	 ]+@OC@\.w \[r2\+[^]]+\],r5
 [	 ]+204:[	 ]+5f2d 0180 @IM+5dd8@[ 	]+@OC@\.w \[r2-32767\],r13
 [	 ]+20a:[	 ]+5f2d 0080 @IM+5dd8@[ 	]+@OC@\.w \[r2-32768\],r13
-[	 ]+210:[	 ]+6f2d ff7f ffff @IM+5558@[	 ]+@OC@\.w \[r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+210:[	 ]+6f2d ff7f ffff @IM+5558@[	 ]+@OC@\.w \[r2\+[^]]+\],r5
 [	 ]+218:[	 ]+6f2d ffff 0000 @IM+5558@[	 ]+@OC@\.w \[r2\+(65535|ffff <six5535>)\],r5
 [	 ]+220:[	 ]+6f2d 0000 0000 @IM+5558@[	 ]+@OC@\.w \[r2\+0( <notstart>)?\],r5
 [ 	]+222:[ 	]+(R_CRIS_)?32[ 	]+externalsym
@@ -211,10 +211,10 @@ Disassembly of section \.text:
 [	 ]+360:[	 ]+6f2d 0180 0000 @IM+5cdc@[	 ]+@OC@\.w \[r12=r2\+(32769|8001 <three2767\+0x2>)\],r13
 [	 ]+368:[	 ]+5f2d 0180 @IM+5cdc@[ 	]+@OC@\.w \[r12=r2-32767\],r13
 [	 ]+36e:[	 ]+5f2d 0080 @IM+5cdc@[ 	]+@OC@\.w \[r12=r2-32768\],r13
-[	 ]+374:[	 ]+6f2d ff7f ffff @IM+5c5c@[	 ]+@OC@\.w \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+374:[	 ]+6f2d ff7f ffff @IM+5c5c@[	 ]+@OC@\.w \[r12=r2\+[^]]+\],r5
 [	 ]+37c:[	 ]+5f2d 0180 @IM+5cdc@[ 	]+@OC@\.w \[r12=r2-32767\],r13
 [	 ]+382:[	 ]+5f2d 0080 @IM+5cdc@[ 	]+@OC@\.w \[r12=r2-32768\],r13
-[	 ]+388:[	 ]+6f2d ff7f ffff @IM+5c5c@[	 ]+@OC@\.w \[r12=r2\+(0xffff7fff|ffff7fff <const_int_m32\+0xd166d04a>)\],r5
+[	 ]+388:[	 ]+6f2d ff7f ffff @IM+5c5c@[	 ]+@OC@\.w \[r12=r2\+[^]]+\],r5
 [	 ]+390:[	 ]+6f2d ffff 0000 @IM+5c5c@[	 ]+@OC@\.w \[r12=r2\+(65535|ffff <six5535>)\],r5
 [	 ]+398:[	 ]+6f2d 0000 0000 @IM+5c5c@[	 ]+@OC@\.w \[r12=r2\+0( <notstart>)?\],r5
 [ 	]+39a:[ 	]+(R_CRIS_)?32[ 	]+externalsym
@@ -230,4 +230,3 @@ Disassembly of section \.text:
 [ 	]+3c2:[ 	]+(R_CRIS_)?32[ 	]+\.text
 [	 ]+3c8:[	 ]+7f0d 0000 0000 @IM+5448@[	 ]+@OC@\.w \[(0x0|0 <notstart>)\],r4
 [ 	]+3ca:[ 	]+(R_CRIS_)?32[ 	]+\.text
-

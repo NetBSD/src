@@ -19,8 +19,8 @@
    Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/fr30-desc.h"
@@ -387,7 +387,6 @@ md_convert_frag (abfd, sec, fragP)
     {
       /* Address we want to reach in file space.  */
       target_address = S_GET_VALUE (fragP->fr_symbol) + fragP->fr_offset;
-      target_address += symbol_get_frag (fragP->fr_symbol)->fr_address;
       addend = (target_address - (opcode_address & -4)) >> 2;
     }
 
@@ -615,7 +614,7 @@ fr30_is_colon_insn (start)
 		continue;
 
 	      while (len --)
-		if (tolower (start [len]) != insn [len])
+		if (TOLOWER (start [len]) != insn [len])
 		  break;
 
 	      if (len == -1)

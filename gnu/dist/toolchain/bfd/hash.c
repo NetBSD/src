@@ -1,5 +1,5 @@
 /* hash.c -- hash table routines for BFD
-   Copyright 1993, 1994, 1995, 1997, 1999, 2001
+   Copyright 1993, 1994, 1995, 1997, 1999, 2001, 2002
    Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
@@ -375,8 +375,8 @@ bfd_hash_lookup (table, string, create, copy)
     {
       hash += c + (c << 17);
       hash ^= hash >> 2;
-      ++len;
     }
+  len = (s - (const unsigned char *) string) - 1;
   hash += len + (len << 17);
   hash ^= hash >> 2;
 
@@ -407,7 +407,7 @@ bfd_hash_lookup (table, string, create, copy)
 	  bfd_set_error (bfd_error_no_memory);
 	  return (struct bfd_hash_entry *) NULL;
 	}
-      strcpy (new, string);
+      memcpy (new, string, len + 1);
       string = new;
     }
   hashp->string = string;
@@ -582,9 +582,9 @@ struct bfd_strtab_hash *
 _bfd_stringtab_init ()
 {
   struct bfd_strtab_hash *table;
+  bfd_size_type amt = sizeof (struct bfd_strtab_hash);
 
-  table = ((struct bfd_strtab_hash *)
-	   bfd_malloc (sizeof (struct bfd_strtab_hash)));
+  table = (struct bfd_strtab_hash *) bfd_malloc (amt);
   if (table == NULL)
     return NULL;
 
@@ -711,8 +711,8 @@ _bfd_stringtab_emit (abfd, tab)
 
   for (entry = tab->first; entry != NULL; entry = entry->next)
     {
-      register const char *str;
-      register size_t len;
+      const char *str;
+      size_t len;
 
       str = entry->root.string;
       len = strlen (str) + 1;
@@ -722,12 +722,12 @@ _bfd_stringtab_emit (abfd, tab)
 	  bfd_byte buf[2];
 
 	  /* The output length includes the null byte.  */
-	  bfd_put_16 (abfd, len, buf);
-	  if (bfd_write ((PTR) buf, 1, 2, abfd) != 2)
+	  bfd_put_16 (abfd, (bfd_vma) len, buf);
+	  if (bfd_bwrite ((PTR) buf, (bfd_size_type) 2, abfd) != 2)
 	    return false;
 	}
 
-      if (bfd_write ((PTR) str, 1, len, abfd) != len)
+      if (bfd_bwrite ((PTR) str, (bfd_size_type) len, abfd) != len)
 	return false;
     }
 

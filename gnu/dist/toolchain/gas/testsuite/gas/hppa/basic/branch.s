@@ -1,3 +1,4 @@
+	.level 1.1
 	.code
 	.align 4
 ; More branching instructions than you ever knew what to do with.

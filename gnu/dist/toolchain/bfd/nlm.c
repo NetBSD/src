@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2001 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,8 +29,8 @@ boolean
 nlm_mkobject (abfd)
      bfd * abfd;
 {
-  nlm_tdata (abfd) =
-    (struct nlm_obj_tdata *) bfd_zalloc (abfd, sizeof (struct nlm_obj_tdata));
+  bfd_size_type amt = sizeof (struct nlm_obj_tdata);
+  nlm_tdata (abfd) = (struct nlm_obj_tdata *) bfd_zalloc (abfd, amt);
   if (nlm_tdata (abfd) == NULL)
     return (false);
 

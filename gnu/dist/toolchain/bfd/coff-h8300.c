@@ -1,6 +1,6 @@
 /* BFD back-end for Hitachi H8/300 COFF binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000
+   2000, 2001, 2002
    Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "coff/h8300.h"
 #include "coff/internal.h"
 #include "libcoff.h"
+#include "libiberty.h"
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (1)
 
@@ -38,25 +39,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    the offset where we'll add the next entry.  */
 
 struct funcvec_hash_entry
-{
-  /* The basic hash table entry.  */
-  struct bfd_hash_entry root;
+  {
+    /* The basic hash table entry.  */
+    struct bfd_hash_entry root;
 
-  /* The offset within the vectors section where
-     this entry lives.  */
-  bfd_vma offset;
-};
+    /* The offset within the vectors section where
+       this entry lives.  */
+    bfd_vma offset;
+  };
 
 struct funcvec_hash_table
-{
-  /* The basic hash table.  */
-  struct bfd_hash_table root;
+  {
+    /* The basic hash table.  */
+    struct bfd_hash_table root;
 
-  bfd *abfd;
+    bfd *abfd;
 
-  /* Offset at which we'll add the next entry.  */
-  unsigned int offset;
-};
+    /* Offset at which we'll add the next entry.  */
+    unsigned int offset;
+  };
 
 static struct bfd_hash_entry *
 funcvec_hash_newfunc
@@ -68,6 +69,15 @@ funcvec_hash_table_init
            struct bfd_hash_entry *(*) PARAMS ((struct bfd_hash_entry *,
                                                struct bfd_hash_table *,
                                                const char *))));
+
+static bfd_reloc_status_type special PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+static int select_reloc PARAMS ((reloc_howto_type *));
+static void rtype2howto PARAMS ((arelent *, struct internal_reloc *));
+static void reloc_processing PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
+static boolean h8300_symbol_address_p PARAMS ((bfd *, asection *, bfd_vma));
+static int h8300_reloc16_estimate PARAMS ((bfd *, asection *, arelent *, unsigned int, struct bfd_link_info *));
+static void h8300_reloc16_extra_cases PARAMS ((bfd *, struct bfd_link_info *, struct bfd_link_order *, arelent *, bfd_byte *, unsigned int *, unsigned int *));
+static boolean h8300_bfd_link_add_symbols PARAMS ((bfd *, struct bfd_link_info *));
 
 /* To lookup a value in the function vector hash table.  */
 #define funcvec_hash_lookup(table, string, create, copy) \
@@ -175,13 +185,15 @@ h8300_coff_link_hash_table_create (abfd)
      bfd *abfd;
 {
   struct h8300_coff_link_hash_table *ret;
-  ret = ((struct h8300_coff_link_hash_table *)
-         bfd_alloc (abfd, sizeof (struct h8300_coff_link_hash_table)));
+  bfd_size_type amt = sizeof (struct h8300_coff_link_hash_table);
+
+  ret = (struct h8300_coff_link_hash_table *) bfd_malloc (amt);
   if (ret == NULL)
     return NULL;
-  if (!_bfd_link_hash_table_init (&ret->root.root, abfd, _bfd_generic_link_hash_newfunc))
+  if (!_bfd_link_hash_table_init (&ret->root.root, abfd,
+				  _bfd_generic_link_hash_newfunc))
     {
-      bfd_release (abfd, ret);
+      free (ret);
       return NULL;
     }
 
@@ -266,8 +278,8 @@ static reloc_howto_type howto_table[] =
 #define __A_MAGIC_SET__
 
 /* Code to swap in the reloc.  */
-#define SWAP_IN_RELOC_OFFSET   bfd_h_get_32
-#define SWAP_OUT_RELOC_OFFSET bfd_h_put_32
+#define SWAP_IN_RELOC_OFFSET	H_GET_32
+#define SWAP_OUT_RELOC_OFFSET	H_PUT_32
 #define SWAP_OUT_RELOC_EXTRA(abfd, src, dst) \
   dst->r_stuff[0] = 'S'; \
   dst->r_stuff[1] = 'C';
@@ -474,6 +486,13 @@ h8300_reloc16_estimate (abfd, input_section, reloc, shrink, link_info)
 	 closer if we do relax this branch.  */
       if ((int)gap >= -128 && (int)gap <= 128 )
 	{
+	  bfd_byte code;
+
+	  if (!bfd_get_section_contents (abfd, input_section, & code,
+					 reloc->address, 1))
+	    break;
+	  code = bfd_get_8 (abfd, & code);
+
 	  /* It's possible we may be able to eliminate this branch entirely;
 	     if the previous instruction is a branch around this instruction,
 	     and there's no label at this instruction, then we can reverse
@@ -485,9 +504,25 @@ h8300_reloc16_estimate (abfd, input_section, reloc, shrink, link_info)
 		lab1:				lab1:
 
 	     This saves 4 bytes instead of two, and should be relatively
-	     common.  */
+	     common.
 
-	  if (gap <= 126
+	     Only perform this optimisation for jumps (code 0x5a) not
+	     subroutine calls, as otherwise it could transform:
+
+	     	             mov.w   r0,r0
+	     	             beq     .L1
+	           	     jsr     @_bar
+	              .L1:   rts
+	              _bar:  rts
+	     into:
+	     	             mov.w   r0,r0
+	     	             bne     _bar
+	     	             rts
+	     	      _bar:  rts
+
+	     which changes the call (jsr) into a branch (bne).  */
+	  if (code == 0x5a
+	      && gap <= 126
 	      && last_reloc
 	      && last_reloc->howto->type == R_PCRBYTE)
 	    {
@@ -710,7 +745,7 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
       /* Everything looks OK.  Apply the relocation and update the
 	 src/dst address appropriately.  */
 
-      bfd_put_16 (abfd, gap, data + dst_address);
+      bfd_put_16 (abfd, (bfd_vma) gap, data + dst_address);
       dst_address += 2;
       src_address += 2;
 
@@ -1046,10 +1081,28 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 	/* We need to find the symbol so we can determine it's
 	   address in the function vector table.  */
 	asymbol *symbol;
-	bfd_vma value;
 	const char *name;
+	struct funcvec_hash_table *ftab;
 	struct funcvec_hash_entry *h;
-	asection *vectors_sec = h8300_coff_hash_table (link_info)->vectors_sec;
+	struct h8300_coff_link_hash_table *htab;
+	asection *vectors_sec;
+
+	if (link_info->hash->creator != abfd->xvec)
+	  {
+	    (*_bfd_error_handler)
+	      (_("cannot handle R_MEM_INDIRECT reloc when using %s output"),
+	       link_info->hash->creator->name);
+
+	    /* What else can we do?  This function doesn't allow return
+	       of an error, and we don't want to call abort as that
+	       indicates an internal error.  */
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 1
+#endif
+	    xexit (EXIT_FAILURE);
+	  }
+	htab = h8300_coff_hash_table (link_info);
+	vectors_sec = htab->vectors_sec;
 
 	/* First see if this is a reloc against the absolute symbol
 	   or against a symbol with a nonnegative value <= 0xff.  */
@@ -1088,7 +1141,7 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 	name = symbol->name;
 	if (symbol->flags & BSF_LOCAL)
 	  {
-	    char *new_name = bfd_malloc (strlen (name) + 9);
+	    char *new_name = bfd_malloc ((bfd_size_type) strlen (name) + 9);
 	    if (new_name == NULL)
 	      abort ();
 
@@ -1098,12 +1151,12 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 	    name = new_name;
 	  }
 
-	h = funcvec_hash_lookup (h8300_coff_hash_table (link_info)->funcvec_hash_table,
-				 name, false, false);
+	ftab = htab->funcvec_hash_table;
+	h = funcvec_hash_lookup (ftab, name, false, false);
 
 	/* This shouldn't ever happen.  If it does that means we've got
 	   data corruption of some kind.  Aborting seems like a reasonable
-	   think to do here.  */
+	   thing to do here.  */
 	if (h == NULL || vectors_sec == NULL)
 	  abort ();
 
@@ -1138,7 +1191,7 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 	bfd_set_section_contents (vectors_sec->output_section->owner,
 				  vectors_sec->output_section,
 				  vectors_sec->contents,
-				  vectors_sec->output_offset,
+				  (file_ptr) vectors_sec->output_offset,
 				  vectors_sec->_raw_size);
 	break;
       }
@@ -1171,29 +1224,36 @@ h8300_bfd_link_add_symbols (abfd, info)
 {
   asection *sec;
   struct funcvec_hash_table *funcvec_hash_table;
+  bfd_size_type amt;
+  struct h8300_coff_link_hash_table *htab;
+
+  /* Add the symbols using the generic code.  */
+  _bfd_generic_link_add_symbols (abfd, info);
+
+  if (info->hash->creator != abfd->xvec)
+    return true;
+
+  htab = h8300_coff_hash_table (info);
 
   /* If we haven't created a vectors section, do so now.  */
-  if (!h8300_coff_hash_table (info)->vectors_sec)
+  if (!htab->vectors_sec)
     {
       flagword flags;
 
       /* Make sure the appropriate flags are set, including SEC_IN_MEMORY.  */
       flags = (SEC_ALLOC | SEC_LOAD
 	       | SEC_HAS_CONTENTS | SEC_IN_MEMORY | SEC_READONLY);
-      h8300_coff_hash_table (info)->vectors_sec = bfd_make_section (abfd,
-								    ".vectors");
+      htab->vectors_sec = bfd_make_section (abfd, ".vectors");
 
       /* If the section wasn't created, or we couldn't set the flags,
-	 quit quickly now, rather than dieing a painful death later.  */
-      if (! h8300_coff_hash_table (info)->vectors_sec
-	  || ! bfd_set_section_flags (abfd,
-				      h8300_coff_hash_table(info)->vectors_sec,
-				      flags))
+	 quit quickly now, rather than dying a painful death later.  */
+      if (! htab->vectors_sec
+	  || ! bfd_set_section_flags (abfd, htab->vectors_sec, flags))
 	return false;
 
       /* Also create the vector hash table.  */
-      funcvec_hash_table = ((struct funcvec_hash_table *)
-	bfd_alloc (abfd, sizeof (struct funcvec_hash_table)));
+      amt = sizeof (struct funcvec_hash_table);
+      funcvec_hash_table = (struct funcvec_hash_table *) bfd_alloc (abfd, amt);
 
       if (!funcvec_hash_table)
 	return false;
@@ -1207,14 +1267,11 @@ h8300_bfd_link_add_symbols (abfd, info)
 	}
 
       /* Store away a pointer to the funcvec hash table.  */
-      h8300_coff_hash_table (info)->funcvec_hash_table = funcvec_hash_table;
+      htab->funcvec_hash_table = funcvec_hash_table;
     }
 
   /* Load up the function vector hash table.  */
-  funcvec_hash_table = h8300_coff_hash_table (info)->funcvec_hash_table;
-
-  /* Add the symbols using the generic code.  */
-  _bfd_generic_link_add_symbols (abfd, info);
+  funcvec_hash_table = htab->funcvec_hash_table;
 
   /* Now scan the relocs for all the sections in this bfd; create
      additional space in the .vectors section as needed.  */
@@ -1229,7 +1286,7 @@ h8300_bfd_link_add_symbols (abfd, info)
       if (reloc_size <= 0)
 	continue;
 
-      relocs = (arelent **) bfd_malloc ((size_t) reloc_size);
+      relocs = (arelent **) bfd_malloc ((bfd_size_type) reloc_size);
       if (!relocs)
 	return false;
 
@@ -1260,13 +1317,15 @@ h8300_bfd_link_add_symbols (abfd, info)
 	      && symbol != bfd_abs_section_ptr->symbol)
 
 	    {
+	      struct funcvec_hash_table *ftab;
 	      struct funcvec_hash_entry *h;
 
 	      name = symbol->name;
 	      if (symbol->flags & BSF_LOCAL)
 		{
-		  char *new_name = bfd_malloc (strlen (name) + 9);
+		  char *new_name;
 
+		  new_name = bfd_malloc ((bfd_size_type) strlen (name) + 9);
 		  if (new_name == NULL)
 		    abort ();
 
@@ -1277,15 +1336,14 @@ h8300_bfd_link_add_symbols (abfd, info)
 		}
 
 	      /* Look this symbol up in the function vector hash table.  */
-	      h = funcvec_hash_lookup (h8300_coff_hash_table (info)->funcvec_hash_table,
-				       name, false, false);
+	      ftab = htab->funcvec_hash_table;
+	      h = funcvec_hash_lookup (ftab, name, false, false);
 
 	      /* If this symbol isn't already in the hash table, add
 		 it and bump up the size of the hash table.  */
 	      if (h == NULL)
 		{
-		  h = funcvec_hash_lookup (h8300_coff_hash_table (info)->funcvec_hash_table,
-					   name, true, true);
+		  h = funcvec_hash_lookup (ftab, name, true, true);
 		  if (h == NULL)
 		    {
 		      free (relocs);
@@ -1295,10 +1353,10 @@ h8300_bfd_link_add_symbols (abfd, info)
 		  /* Bump the size of the vectors section.  Each vector
 		     takes 2 bytes on the h8300 and 4 bytes on the h8300h.  */
 		  if (bfd_get_mach (abfd) == bfd_mach_h8300)
-		    h8300_coff_hash_table (info)->vectors_sec->_raw_size += 2;
+		    htab->vectors_sec->_raw_size += 2;
 		  else if (bfd_get_mach (abfd) == bfd_mach_h8300h
 			   || bfd_get_mach (abfd) == bfd_mach_h8300s)
-		    h8300_coff_hash_table (info)->vectors_sec->_raw_size += 4;
+		    htab->vectors_sec->_raw_size += 4;
 		}
 	    }
 	}
@@ -1309,15 +1367,15 @@ h8300_bfd_link_add_symbols (abfd, info)
 
   /* Now actually allocate some space for the function vector.  It's
      wasteful to do this more than once, but this is easier.  */
-  if (h8300_coff_hash_table (info)->vectors_sec->_raw_size != 0)
+  sec = htab->vectors_sec;
+  if (sec->_raw_size != 0)
     {
       /* Free the old contents.  */
-      if (h8300_coff_hash_table (info)->vectors_sec->contents)
-	free (h8300_coff_hash_table (info)->vectors_sec->contents);
+      if (sec->contents)
+	free (sec->contents);
 
       /* Allocate new contents.  */
-      h8300_coff_hash_table (info)->vectors_sec->contents
-	= bfd_malloc (h8300_coff_hash_table (info)->vectors_sec->_raw_size);
+      sec->contents = bfd_malloc (sec->_raw_size);
     }
 
   return true;

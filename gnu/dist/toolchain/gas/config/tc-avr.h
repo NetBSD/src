@@ -1,5 +1,5 @@
 /* This file is tc-avr.h
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
 
    Contributed by Denis Chertykov <denisc@overta.ru>
 
@@ -89,10 +89,6 @@ void avr_cons_fix_new(fragS *frag,int where, int nbytes, expressionS *exp);
      anywhere in the function), You should define
      `md_create_short_jump' to create a short jump around a long jump,
      and define `md_create_long_jump' to create a long jump.  */
-
-#define MD_APPLY_FIX3
-
-#define TC_HANDLES_FX_DONE
 
 #undef RELOC_EXPANSION_POSSIBLE
 /*   If you define this macro, it means that `tc_gen_reloc' may return

@@ -1,13 +1,116 @@
-This is ld.info, produced by makeinfo version 4.0 from ./ld.texinfo.
+This is ld.info, produced by makeinfo version 4.3 from ./ld.texinfo.
 
 START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
 END-INFO-DIR-ENTRY
 
-   This file documents the GNU linker LD version 2.11.2.
+   This file documents the GNU linker LD version 2.13.2.1.
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
-Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
+
+
+File: ld.info,  Node: Canonical format,  Prev: BFD information loss,  Up: BFD outline
+
+The BFD canonical object-file format
+------------------------------------
+
+   The greatest potential for loss of information occurs when there is
+the least overlap between the information provided by the source
+format, that stored by the canonical format, and that needed by the
+destination format. A brief description of the canonical form may help
+you understand which kinds of data you can count on preserving across
+conversions.
+
+_files_
+     Information stored on a per-file basis includes target machine
+     architecture, particular implementation format type, a demand
+     pageable bit, and a write protected bit.  Information like Unix
+     magic numbers is not stored here--only the magic numbers' meaning,
+     so a `ZMAGIC' file would have both the demand pageable bit and the
+     write protected text bit set.  The byte order of the target is
+     stored on a per-file basis, so that big- and little-endian object
+     files may be used with one another.
+
+_sections_
+     Each section in the input file contains the name of the section,
+     the section's original address in the object file, size and
+     alignment information, various flags, and pointers into other BFD
+     data structures.
+
+_symbols_
+     Each symbol contains a pointer to the information for the object
+     file which originally defined it, its name, its value, and various
+     flag bits.  When a BFD back end reads in a symbol table, it
+     relocates all symbols to make them relative to the base of the
+     section where they were defined.  Doing this ensures that each
+     symbol points to its containing section.  Each symbol also has a
+     varying amount of hidden private data for the BFD back end.  Since
+     the symbol points to the original file, the private data format
+     for that symbol is accessible.  `ld' can operate on a collection
+     of symbols of wildly different formats without problems.
+
+     Normal global and simple local symbols are maintained on output,
+     so an output file (no matter its format) will retain symbols
+     pointing to functions and to global, static, and common variables.
+     Some symbol information is not worth retaining; in `a.out', type
+     information is stored in the symbol table as long symbol names.
+     This information would be useless to most COFF debuggers; the
+     linker has command line switches to allow users to throw it away.
+
+     There is one word of type information within the symbol, so if the
+     format supports symbol type information within symbols (for
+     example, COFF, IEEE, Oasys) and the type is simple enough to fit
+     within one word (nearly everything but aggregates), the
+     information will be preserved.
+
+_relocation level_
+     Each canonical BFD relocation record contains a pointer to the
+     symbol to relocate to, the offset of the data to relocate, the
+     section the data is in, and a pointer to a relocation type
+     descriptor. Relocation is performed by passing messages through
+     the relocation type descriptor and the symbol pointer. Therefore,
+     relocations can be performed on output data using a relocation
+     method that is only available in one of the input formats. For
+     instance, Oasys provides a byte relocation format.  A relocation
+     record requesting this relocation type would point indirectly to a
+     routine to perform this, so the relocation may be performed on a
+     byte being written to a 68k COFF file, even though 68k COFF has no
+     such relocation type.
+
+_line numbers_
+     Object formats can contain, for debugging purposes, some form of
+     mapping between symbols, source line numbers, and addresses in the
+     output file.  These addresses have to be relocated along with the
+     symbol information.  Each symbol with an associated list of line
+     number records points to the first record of the list.  The head
+     of a line number list consists of a pointer to the symbol, which
+     allows finding out the address of the function whose line number
+     is being described. The rest of the list is made up of pairs:
+     offsets into the section and line numbers. Any format which can
+     simply derive this information can pass it successfully between
+     formats (COFF, IEEE and Oasys).
+
+
+File: ld.info,  Node: Reporting Bugs,  Next: MRI,  Prev: BFD,  Up: Top
+
+Reporting Bugs
+**************
+
+   Your bug reports play an essential role in making `ld' reliable.
+
+   Reporting a bug may help you by bringing a solution to your problem,
+or it may not.  But in any case the principal function of a bug report
+is to help the entire community by making the next version of `ld' work
+better.  Bug reports are your contribution to the maintenance of `ld'.
+
+   In order for a bug report to serve its purpose, you must include the
+information that enables us to fix the bug.
+
+* Menu:
+
+* Bug Criteria::                Have you found a bug?
+* Bug Reporting::               How to report bugs
 
 
 File: ld.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: Reporting Bugs
@@ -52,12 +155,13 @@ leave it out, state it!
    Often people omit facts because they think they know what causes the
 problem and assume that some details do not matter.  Thus, you might
 assume that the name of a symbol you use in an example does not matter.
-Well, probably it does not, but one cannot be sure.  Perhaps the bug is
-a stray memory reference which happens to fetch from the location where
-that name is stored in memory; perhaps, if the name were different, the
-contents of that location would fool the linker into doing the right
-thing despite the bug.  Play it safe and give a specific, complete
-example.  That is the easiest thing for you to do, and the most helpful.
+Well, probably it does not, but one cannot be sure.  Perhaps the bug
+is a stray memory reference which happens to fetch from the location
+where that name is stored in memory; perhaps, if the name were
+different, the contents of that location would fool the linker into
+doing the right thing despite the bug.  Play it safe and give a
+specific, complete example.  That is the easiest thing for you to do,
+and the most helpful.
 
    Keep in mind that the purpose of a bug report is to enable us to fix
 the bug if it is new to us.  Therefore, always write your bug reports
@@ -94,9 +198,12 @@ to respond to them_ except to chide the sender to report bugs properly.
 
    * A complete input file, or set of input files, that will reproduce
      the bug.  It is generally most helpful to send the actual object
-     files, uuencoded if necessary to get them through the mail system.
-     Making them available for anonymous FTP is not as good, but may
-     be the only reasonable choice for large object files.
+     files provided that they are reasonably small.  Say no more than
+     10K.  For bigger files you can either make them available by FTP
+     or HTTP or else state that you are willing to send the object
+     file(s) to whomever requests them.  (Note - your email will be
+     going to a mailing list, so we do not want to clog it up with
+     large attachments).  But small attachments are best.
 
      If the source files were assembled using `gas' or compiled using
      `gcc', then it may be OK to send the source files rather than the

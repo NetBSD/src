@@ -1,5 +1,5 @@
 /* tc-w65.c -- Assemble code for the W65816
-   Copyright 1995, 1998, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1995, 1998, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,10 +26,9 @@
 #include "subsegs.h"
 #define DEFINE_TABLE
 #include "../opcodes/w65-opc.h"
-#include <ctype.h>
 
 const char comment_chars[] = "!";
-CONST char line_separator_chars[] = ";";
+const char line_separator_chars[] = ";";
 const char line_comment_chars[] = "!#";
 
 /* This table describes all the machine specific pseudo-ops the assembler
@@ -847,7 +846,7 @@ md_parse_option (c, a)
      int c;
      char *a;
 {
-  return 1;
+  return 0;
 }
 
 void
@@ -979,10 +978,12 @@ md_section_align (seg, size)
 }
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
   int addr = fixP->fx_frag->fr_address + fixP->fx_where;
 
@@ -1031,9 +1032,12 @@ md_apply_fix (fixP, val)
     default:
       abort ();
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
-/* Put number into target byte order */
+/* Put number into target byte order.  */
 
 void
 md_number_to_chars (ptr, use, nbytes)
@@ -1182,7 +1186,7 @@ md_estimate_size_before_relax (fragP, segment_type)
   return fragP->fr_var;
 }
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 struct option md_longopts[] = {
 #define OPTION_RELAX (OPTION_MD_BASE)
   {NULL, no_argument, NULL, 0}

@@ -1,4 +1,5 @@
 #objdump: -dr --prefix-addresses -mmips:4000
+#as:-march=4000
 #name: MIPS abs
 
 # Test the abs macro.

@@ -16,9 +16,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
   4 vectors       00000002  00000000  00000000  0000....  2..0
                   CONTENTS, ALLOC, LOAD, CODE, BLOCK
   5 clink         00000002  00000000  00000000  0000....  2..0
-                  CONTENTS, ALLOC, LOAD, CODE, CLINK
+                  CONTENTS, ALLOC, LOAD, DATA, CLINK
   6 blksect       00000002  00000000  00000000  0000....  2..0
-                  CONTENTS, ALLOC, LOAD, CODE, BLOCK
+                  CONTENTS, ALLOC, LOAD, DATA, BLOCK
 Disassembly of section .text:
 
 00000000 <.text>:
@@ -72,15 +72,5 @@ Disassembly of section .text:
 Disassembly of section vectors:
 
 00000000 <vectors>:
-   0:	0011.*
-   1:	0033.*
-Disassembly of section clink:
-
-00000000 <clink>:
-   0:	0022.*
-   1:	0044.*
-Disassembly of section blksect:
-
-00000000 <blksect>:
-   0:	1234.*
-   1:	4321.*
+   0:	f495.*
+   1:	f495.*

@@ -1,6 +1,6 @@
 /* as.c - GAS main program.
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001
+   1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -208,7 +208,7 @@ print_version_id ()
 
 #ifdef BFD_ASSEMBLER
   fprintf (stderr, _("GNU assembler version %s (%s) using BFD version %s"),
-	   VERSION, TARGET_ALIAS, BFD_VERSION);
+	   VERSION, TARGET_ALIAS, BFD_VERSION_STRING);
 #else
   fprintf (stderr, _("GNU assembler version %s (%s)"), VERSION, TARGET_ALIAS);
 #endif
@@ -350,7 +350,7 @@ parse_args (pargc, pargv)
      as if it were the argument of an option with character code 1.  */
 
   char *shortopts;
-  extern CONST char *md_shortopts;
+  extern const char *md_shortopts;
   static const char std_shortopts[] = {
     '-', 'J',
 #ifndef WORKING_DOT_WORD
@@ -374,6 +374,10 @@ parse_args (pargc, pargv)
   static const struct option std_longopts[] = {
 #define OPTION_HELP (OPTION_STD_BASE)
     {"help", no_argument, NULL, OPTION_HELP},
+    /* getopt allows abbreviations, so we do this to stop it from
+       treating -k as an abbreviation for --keep-locals.  Some
+       ports use -k to enable PIC assembly.  */
+    {"keep-locals", no_argument, NULL, 'L'},
     {"keep-locals", no_argument, NULL, 'L'},
     {"mri", no_argument, NULL, 'M'},
 #define OPTION_NOCPP (OPTION_STD_BASE + 1)
@@ -500,8 +504,8 @@ parse_args (pargc, pargv)
 	  break;
 
 	case OPTION_TARGET_HELP:
-          md_show_usage (stdout);
-          exit (EXIT_SUCCESS);
+	  md_show_usage (stdout);
+	  exit (EXIT_SUCCESS);
 
 	case OPTION_HELP:
 	  show_usage (stdout);
@@ -524,8 +528,12 @@ parse_args (pargc, pargv)
 
 	case OPTION_VERSION:
 	  /* This output is intended to follow the GNU standards document.  */
+#ifdef BFD_ASSEMBLER
+	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
+#else
 	  printf (_("GNU assembler %s\n"), VERSION);
-	  printf (_("Copyright 2001 Free Software Foundation, Inc.\n"));
+#endif
+	  printf (_("Copyright 2002 Free Software Foundation, Inc.\n"));
 	  printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License.  This program has absolutely no warranty.\n"));
@@ -587,7 +595,7 @@ the GNU General Public License.  This program has absolutely no warranty.\n"));
 
 	    if (optarg == NULL)
 	      {
-		as_warn (_("No file name following -t option\n"));
+		as_warn (_("no file name following -t option"));
 		break;
 	      }
 
@@ -602,11 +610,8 @@ the GNU General Public License.  This program has absolutely no warranty.\n"));
 	       internal table.  */
 	    itbl_files->name = xstrdup (optarg);
 	    if (itbl_parse (itbl_files->name) != 0)
-	      {
-		fprintf (stderr, _("Failed to read instruction table %s\n"),
-			 itbl_files->name);
-		exit (EXIT_SUCCESS);
-	      }
+	      as_fatal (_("failed to read instruction table %s\n"),
+			itbl_files->name);
 	  }
 	  break;
 
@@ -765,9 +770,15 @@ the GNU General Public License.  This program has absolutely no warranty.\n"));
 
   *pargc = new_argc;
   *pargv = new_argv;
+
+#ifdef md_after_parse_args
+  md_after_parse_args ();
+#endif
 }
 
 static long start_time;
+
+int main PARAMS ((int, char **));
 
 int
 main (argc, argv)
@@ -783,17 +794,14 @@ main (argc, argv)
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
 #endif
+#if defined (HAVE_SETLOCALE)
+  setlocale (LC_CTYPE, "");
+#endif
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
   if (debug_memory)
-    {
-#ifdef BFD_ASSEMBLER
-      extern long _bfd_chunksize;
-      _bfd_chunksize = 64;
-#endif
-      chunksize = 64;
-    }
+    chunksize = 64;
 
 #ifdef HOST_SPECIAL_INIT
   HOST_SPECIAL_INIT (argc, argv);
