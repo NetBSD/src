@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.434 2002/05/27 08:52:37 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.435 2002/05/28 17:08:58 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.431 2002/05/27 08:52:13 drochner Exp 
+ *	NetBSD: pcidevs,v 1.432 2002/05/28 17:08:19 tron Exp 
  */
 
 /*
@@ -3746,6 +3746,54 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82820 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_HB,
+	    0,
+	    "Intel",
+	    "82850 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
+	    0,
+	    "Intel",
+	    "82850/82860 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_HB,
+	    0,
+	    "Intel",
+	    "82860 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
+	    0,
+	    "Intel",
+	    "82850/82860 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI2,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI3,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4,
+	    0,
+	    "Intel",
+	    "82860 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HB,
