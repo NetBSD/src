@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25.4.1 2001/09/12 19:04:01 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.25.4.2 2002/06/17 18:48:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,6 +85,8 @@
 #define	ite_off(u,f)
 #define ite_reinit(d)
 #endif
+
+cdev_decl(grf);
 
 int grfon __P((dev_t));
 int grfoff __P((dev_t));

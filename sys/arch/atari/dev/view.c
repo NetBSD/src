@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.4.1 2001/09/12 19:04:01 thorpej Exp $	*/
+/*	$NetBSD: view.c,v 1.17.4.2 2002/06/17 18:48:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -52,6 +52,8 @@
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
 #include "view.h"
+
+cdev_decl(view);
 
 static void view_display __P((struct view_softc *));
 static void view_remove __P((struct view_softc *));
