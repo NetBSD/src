@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.86 1997/07/28 22:58:21 perry Exp $
+#	$NetBSD: GENERIC,v 1.86.2.1 1997/07/30 07:36:07 marc Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -217,6 +217,17 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
+
+# PCMCIA controllers, sockets, and devices.
+
+pcic0	at isa? port 0x3E0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3E2 iomem 0xd4000 iosiz 0x4000
+
+pcmcia*	at pcic? controller ? socket ?
+
+ep*	at pcmcia? function ?
+ed*	at pcmcia? function ?
+com*	at pcmcia? function ?
 
 # PnP bus and devices should be declared last 
 isapnp0	at isa? 

@@ -1,0 +1,24 @@
+# Config.new file and device description for machine-independent PCMCIA code.
+# Included by ports that need it.
+
+device	pcmcia {[function = -1], [irq = -1]}
+file	dev/pcmcia/pcmcia.c
+file	dev/pcmcia/pcmcia_cis.c
+
+# 3Com 3c589 Ethernet and 3c562 multifunction Ethernet controllers
+# device declaration in sys/conf/files
+attach	ep at pcmcia with ep_pcmcia
+file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
+
+# National Semiconductor DS8390/WD83C690-based boards
+# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
+attach	ed at pcmcia with ed_pcmcia
+file	dev/pcmcia/if_ed_pcmcia.c		ed_pcmcia
+
+# Adaptec APA-1460 SCSI Host Adapter
+device	aicx
+attach	aicx at pcmcia with aic_pcmcia
+file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
+
+attach	com at pcmcia with com_pcmcia
+file	dev/pcmcia/com_pcmcia.c			com_pcmcia
