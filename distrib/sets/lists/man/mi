@@ -102,6 +102,7 @@
 ./usr/share/man/cat1/ipcrm.0
 ./usr/share/man/cat1/ipcs.0
 ./usr/share/man/cat1/ipftest.0
+./usr/share/man/cat1/ipresend.0
 ./usr/share/man/cat1/ipsend.0
 ./usr/share/man/cat1/iptest.0
 ./usr/share/man/cat1/jobs.0
@@ -1025,6 +1026,7 @@
 ./usr/share/man/man1/ipcrm.1
 ./usr/share/man/man1/ipcs.1
 ./usr/share/man/man1/ipftest.1
+./usr/share/man/man1/ipresend.1
 ./usr/share/man/man1/ipsend.1
 ./usr/share/man/man1/iptest.1
 ./usr/share/man/man1/jobs.1
