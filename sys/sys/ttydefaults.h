@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydefaults.h,v 1.9 1996/09/02 16:27:52 mycroft Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.10 2000/08/05 01:27:12 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -63,7 +63,7 @@
 #define	CEOL		((unsigned char)'\377')	/* XXX avoid _POSIX_VDISABLE */
 #define	CERASE		0177
 #define	CINTR		CTRL('c')
-#define	CSTATUS		((unsigned char)'\377')	/* XXX avoid _POSIX_VDISABLE */
+#define	CSTATUS		CTRL('t')
 #define	CKILL		CTRL('u')
 #define	CMIN		1
 #define	CQUIT		034		/* FS, ^\ */
