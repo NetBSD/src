@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7 1996/03/14 21:09:03 christos Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.8 1996/03/30 21:13:02 christos Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -887,13 +887,13 @@ db_disasm(loc, altfmt)
 			db_printf("%%%s", regs[((insn >> 25) & 0x1f)]);
 			break;
 		case '3':
-			db_printf("%%f%d", ((insn >> 14) & 0x1f));
+			db_printf("%%f%ld", ((insn >> 14) & 0x1f));
 			break;
 		case '4':
-			db_printf("%%f%d", (insn & 0x1f));
+			db_printf("%%f%ld", (insn & 0x1f));
 			break;
 		case 'e':
-			db_printf("%%f%d", ((insn >> 25) & 0x1f));
+			db_printf("%%f%ld", ((insn >> 25) & 0x1f));
 			break;
 		case 'i':
 			db_printf("0x%lx", (insn & 0x1fff));
@@ -927,7 +927,7 @@ db_disasm(loc, altfmt)
 			db_printf("0x%-2.2lx", ((insn >> 5) & 0xff));
 			break;
 		case 'o':
-			db_printf("%%fcc%d", ((insn >> 25) & 0x3));
+			db_printf("%%fcc%ld", ((insn >> 25) & 0x3));
 			break;
 		case 'p':
 		case '7':
@@ -935,7 +935,7 @@ db_disasm(loc, altfmt)
 				  regs[((insn >> 14) & 0x1f)],
 				  regs[(insn & 0x1f)]);
 			if (*f_ptr == '7')
-				db_printf(" %d", ((insn >> 5) & 0xff));
+				db_printf(" %ld", ((insn >> 5) & 0xff));
 			break;
 		case 'q':
 		case '8':
@@ -952,7 +952,7 @@ db_disasm(loc, altfmt)
 			db_printf("%%fsr");
 			break;
 		case '9':
-			db_printf("0x%xl",
+			db_printf("0x%lxl",
 				  ((insn & 0xf) | ((insn >> 4) & 0x7)));
 			break;
 		case '0':
