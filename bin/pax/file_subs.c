@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.41.2.3 2004/04/28 03:31:11 grant Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.41.2.4 2004/05/06 05:29:31 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.41.2.3 2004/04/28 03:31:11 grant Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.41.2.4 2004/05/06 05:29:31 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ file_creat(ARCHD *arcn)
 	 */
 	if (arcn->nlen != 0 && arcn->name[arcn->nlen - 1] == '/') {
 		if (!warn_broken) {
-			tty_warn(1, "Archive was created with a broken tar;"
+			tty_warn(0, "Archive was created with a broken tar;"
 			    " file `%s' is a directory, but marked as plain.",
 			    arcn->name);
 			warn_broken = 1;
@@ -190,11 +190,6 @@ file_close(ARCHD *arcn, int fd)
 		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS(0));
 	if (patime || pmtime)
 		set_ftime(arcn->tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
-#if HAVE_STRUCT_STAT_ST_FLAGS
-	if (pfflags && arcn->type != PAX_SLK)
-		set_chflags(arcn->tmp_name, arcn->sb.st_flags);
-#endif
-
 	/*
 	 * Finally, now the temp file is fully instantiated rename it to
 	 * the desired file name.
@@ -204,6 +199,11 @@ file_close(ARCHD *arcn, int fd)
 		    arcn->tmp_name, arcn->name);
 		(void)unlink(arcn->tmp_name);
 	}
+
+#if HAVE_STRUCT_STAT_ST_FLAGS
+	if (pfflags && arcn->type != PAX_SLK)
+		set_chflags(arcn->name, arcn->sb.st_flags);
+#endif
 
 	free(arcn->tmp_name);
 	arcn->tmp_name = NULL;
