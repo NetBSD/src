@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.11 2001/07/31 00:17:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.12 2001/08/01 23:33:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,6 +84,11 @@ struct	pthread_st {
 	 */
 	pthread_t	pt_switchto;
 	ucontext_t*	pt_switchtouc;
+
+	/* The context we saved in pthread__locked_switch but which
+	 * was trashed when we were new_preempted.
+	 */
+	ucontext_t*	pt_sleepuc;
 
 	/* Threads that are preempted with spinlocks held will be
 	 * continued until they unlock their spinlock. When they do
@@ -180,6 +185,7 @@ int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 
 #define pthread__self() (pthread__id(pthread__sp()))
 
+/* These three routines are defined in processor-specific code. */
 void	pthread__upcall_switch(pthread_t self, pthread_t next);
 void	pthread__switch(pthread_t self, pthread_t next);
 void	pthread__locked_switch(pthread_t self, pthread_t next, 
