@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1997/07/20 06:35:39 thorpej Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -28,17 +28,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char *copyright =
+__COPYRIGHT(
 "@(#) Copyright (c) 1993 Andrew Moore, Talke Studio. \n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $";
+__RCSID("$NetBSD: main.c,v 1.4 1997/07/20 06:35:39 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,11 +108,13 @@ extern char errmsg[];
 extern int optind;
 extern char *optarg;
 
+int main __P((int, char *[]));
+
 /* ed: line editor */
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int c, n;
 	long status = 0;
@@ -158,9 +161,9 @@ top:
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, signal_int);
 #ifdef _POSIX_SOURCE
-	if (status = sigsetjmp(env, 1))
+	if ((status = sigsetjmp(env, 1)) != 0)
 #else
-	if (status = setjmp(env))
+	if ((status = setjmp(env)) != 0)
 #endif
 	{
 		fputs("\n?\n", stderr);
@@ -217,9 +220,9 @@ top:
 		isglobal = 0;
 		if ((status = extract_addr_range()) >= 0 &&
 		    (status = exec_command()) >= 0)
-			if (!status || status &&
+			if (!status || (status &&
 			    (status = display_lines(current_addr, current_addr,
-			        status)) >= 0)
+			        status))) >= 0)
 				continue;
 		switch (status) {
 		case EOF:
@@ -548,7 +551,7 @@ exec_command()
 			return ERR;
 		else if (build_active_list(c == 'g' || c == 'G') < 0)
 			return ERR;
-		else if (n = (c == 'G' || c == 'V'))
+		else if ((n = (c == 'G' || c == 'V')) != 0)
 			GET_COMMAND_SUFFIX();
 		isglobal++;
 		if (exec_global(n, gflag) < 0)
@@ -844,7 +847,7 @@ exec_command()
 		break;
 	case '=':
 		GET_COMMAND_SUFFIX();
-		printf("%d\n", addr_cnt ? second_addr : addr_last);
+		printf("%ld\n", addr_cnt ? second_addr : addr_last);
 		break;
 	case '!':
 		if (addr_cnt > 0) {
@@ -906,7 +909,8 @@ get_matching_node_addr(pat, dir)
 
 	if (!pat) return ERR;
 	do {
-		if (n = dir ? INC_MOD(n, addr_last) : DEC_MOD(n, addr_last)) {
+		if ((n = dir ? INC_MOD(n, addr_last) :
+		    DEC_MOD(n, addr_last)) != 0) {
 			lp = get_addressed_line_node(n);
 			if ((s = get_sbuf_line(lp)) == NULL)
 				return ERR;
@@ -1343,7 +1347,7 @@ strip_escapes(s)
 
 	REALLOC(file, filesz, MAXPATHLEN + 1, NULL);
 	/* assert: no trailing escape */
-	while (file[i++] = (*s == '\\') ? *++s : *s)
+	while ((file[i++] = (*s == '\\')) != '\0' ? *++s : *s)
 		s++;
 	return file;
 }
