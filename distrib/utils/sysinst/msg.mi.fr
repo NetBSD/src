@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.12.2.3 1999/06/18 17:24:14 perry Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.12.2.4 1999/06/24 23:01:22 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -249,14 +249,12 @@ laissant votre disque intact. On continue ?
 }
 
 message disksetupdone
-{Bien, la première partie de la procédure est terminée. Sysinst a écrit,
-sur votre disque de destination, un disklabel, créé (newfs) et testé (fsck)
-vos nouvelles partitions.
-Si vous voyez ci dessus des messages d'erreurs sur votre disque de
-destination et plus particulièrement sur les partitions / et /usr
-abandonnez maintenant.
-Si les systèmes de fichiers cibles semblent bons, l'étape suivant consiste a
-recopier les différents composants. Appuyer sur <entrée> pour continuer.
+{Bien, la première partie de la procédure est terminée.
+Sysinst a écrit, sur votre disque de destination, un disklabel,
+créé (newfs) et testé (fsck) vos nouvelles partitions.
+
+L'étape suivant consiste a recopier les différents composants.
+Appuyer sur <entrée> pour continuer.
 }
 
 message openfail
@@ -465,25 +463,25 @@ suivantes :
 }
 
 message net_domain
-{Votre domaine (DNS) }
+{Votre domaine (DNS)}
 
 message net_host
-{Votre nom de machine }
+{Votre nom de machine}
 
 message net_ip
-{Votre numéro IP }
+{Votre numéro IP}
 
 message net_mask
-{Votre masque de réseau (netmask) }
+{Votre masque de réseau (netmask)}
 
 message net_namesrv
-{L'adresse IP de votre serveur de nom }
+{L'adresse IP de votre serveur de nom}
 
 message net_defroute
 {L'adresee IP de votre passerelle ("gateway")}
 
 message net_media
-{Type de réseau (media) }
+{Type de réseau (media)}
 
 message netok
 {Vous avez spécifié les valeurs suivantes. Sont elles exactes?
@@ -531,8 +529,9 @@ L'installation a échoué.
 }
 
 message notarfile
-{La distribution %s n'existe pas.
-}
+{Le composant %s n'existe pas.
+
+Voulez-vous continuer à extraire les composants ?}
 
 message endtarok
 {Tous les fichiers ont étés extraits. SVP appuyer sur <entrée> pour continuer.}
@@ -540,9 +539,10 @@ message endtarok
 message endtar
 {Il y a eu des problèmes au décompactage des composants. Votre installation
 est incomplète.
-Sur les %d composants sélectionnés, %d n'ont pas pu etre trouvés du tout.
-Sur les %d qui ont été trouvés, %d se sont décompactés sans erreur et %d
-avec erreur.
+
+Vous aviez selectionné %d composants. %d n'ont pas été trouvés et
+%d ont été ignorés après qu'une erreur se soit produite. Sur les %d
+qui ont été traités, %d ont été extrait sans erreurs et %d avec erreurs.
 
 La procédure d'installation a échoué. Vérifiez vos composants et
 envisagez une réinstallation des composants depuis le menu principal.}
@@ -685,22 +685,11 @@ message cur_distsets
 }
 
 message tarerror
-{Il y a eu des erreurs lors de l'extraction du fichier %s. Ceci signifie que
-certains fichiers n'ont pas étés extraits correctement et que votre système 
-n'est pas complet.
-Arrêt de la mise à jour.
+{Il y a eu des erreurs lors de l'extraction du fichier %s.
+Ceci signifie que certains fichiers n'ont pas étés extraits
+correctement et que votre système n'est pas complet.
 
-Appuyer sur <entrée> pour continuer après un court délais.
-}
-
-message etc_hosts
-{
-#
-#Added by NetBSD sysinst
-#
-%s %s.%s %s
-127.0.0.1 localhost
-}
+Voulez-vous continuer à extraire les composants ?}
 
 message partitions_overlap
 {Les partitions %c et %c se recouvrent.}
