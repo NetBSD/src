@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.8 2002/03/20 18:39:45 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.9 2002/03/21 00:48:43 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,14 @@
 
 #include <machine/bus.h>
 
+/*
+ * Macro to convert a PROM virtual address to a bus_space_handle_t.
+ * 
+ * Since this is SBus it's, always big-endian, so use ASI_PRIMARY.
+ */
+#define	sbus_promaddr_to_handle(tag, promaddr, hp)	\
+	sparc_promaddr_to_handle(tag, promaddr, hp)
+
 #include <sparc64/dev/iommuvar.h>
 
 /*
@@ -114,13 +122,5 @@ struct sbus_softc {
 	int			sc_ign;		/* Interrupt group number for this sysio */
 	struct iommu_state	sc_is;		/* IOMMU state, see iommureg.h */
 };
-
-/*
- * Macro to convert a PROM virtual address to a bus_space_handle_t.
- * 
- * Since this is SBus it's, always big-endian, so use ASI_PRIMARY.
- */
-#define	sbus_promaddr_to_handle(tag, promaddr, hp)	\
-	sparc_promaddr_to_handle(tag, promaddr, hp)
 
 #endif /* _SBUS_VAR_SPARC64_H_ */
