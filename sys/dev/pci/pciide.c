@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.114 2001/05/04 18:38:36 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.115 2001/05/06 14:32:35 fvdl Exp $	*/
 
 
 /*
@@ -2032,6 +2032,7 @@ apollo_chip_map(sc, pa)
 			printf("ATA66 controller\n");
 			sc->sc_wdcdev.UDMA_cap = 4;
 		}
+		break;
 	default:
 		printf("unknown ATA controller\n");
 		sc->sc_wdcdev.UDMA_cap = 0;
