@@ -1,3 +1,5 @@
+.\" $NetBSD: ppi.9,v 1.3 2004/01/23 19:50:43 wiz Exp $
+.\"
 .\" Copyright (c) 1997
 .\"      Michael Smith
 .\"
@@ -36,15 +38,15 @@
 .In dev/ppbus/ppi.h
 .In dev/ppbus/ppbus_conf.h
 .Sh DESCRIPTION
-.Pp
 All I/O on the
 .Nm
 interface is performed using
 .Fn ioctl
-calls.  Each command takes a single
+calls.
+Each command takes a single
 .Ft u_int8_t
-argument, transferring one byte of data.  The following commands are
-available:
+argument, transferring one byte of data.
+The following commands are available:
 .Bl -tag -width indent
 .It Dv PPIGDATA , PPISDATA
 Get and set the contents of the data register.
@@ -52,8 +54,9 @@ Get and set the contents of the data register.
 Get and set the contents of the status register.
 .It Dv PPIGCTRL , PPISCTRL
 Get and set the contents of the control register.
-The following defines correspond to bits in this register.  Setting
-a bit in the control register drives the corresponding output low.
+The following defines correspond to bits in this register.
+Setting a bit in the control register drives the corresponding
+output low.
 .Bl -tag -width indent -compact
 .It Dv STROBE
 .It Dv AUTOFEED
@@ -69,20 +72,19 @@ Get and set the contents of the ECP control register.
 Read and write the ECP FIFO (8-bit operations only).
 .El
 .Sh EXAMPLES
-To present the value 0x5a to the data port, drive STROBE low and then high
-again, the following code fragment can be used:
+To present the value 0x5a to the data port, drive STROBE low and
+then high again, the following code fragment can be used:
 .Bd -literal -compact
-
 	int		fd;
 	u_int8_t	val;
 
 	val = 0x5a;
-	ioctl(fd, PPISDATA, &val);
-	ioctl(fd, PPIGCTRL, &val);
+	ioctl(fd, PPISDATA, \*[Am]val);
+	ioctl(fd, PPIGCTRL, \*[Am]val);
 	val |= STROBE;
-	ioctl(fd, PPISCTRL, &val);
-	val &= ~STROBE;
-	ioctl(fd, PPISCTRL, &val);
+	ioctl(fd, PPISCTRL, \*[Am]val);
+	val \*[Am]= ~STROBE;
+	ioctl(fd, PPISCTRL, \*[Am]val);
 
 .Ed
 .Sh SEE ALSO
@@ -98,8 +100,10 @@ originally appeared in
 .Sh AUTHORS
 This manual page is based on the
 .Fx
-.Xr ppi 4
-manual page and was updated for NetBSD's port by
+.Nm ppi
+manual page and was updated for the
+.Nx
+port by
 .An Gary Thorpe .
 .Sh BUGS
 The inverse sense of signals is confusing.
