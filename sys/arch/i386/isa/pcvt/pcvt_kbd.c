@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_kbd.c,v 1.6 1995/04/19 19:12:18 mycroft Exp $	*/
+/*	$NetBSD: pcvt_kbd.c,v 1.7 1995/06/02 02:48:44 brezak Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -865,7 +865,7 @@ xlatkey2ascii(U_short key)
 			if(altgr_down)
 				more_chars = (u_char *)thisdef.altgr;
 	
-			else if(shift_down || vsp->shift_lock)
+			else if(!ctrl_down && (shift_down || vsp->shift_lock))
 			{
 				if(key2ascii[key].shift.subtype == STR)
 					more_chars = (u_char *)thisdef.shift;
@@ -2107,6 +2107,8 @@ sfkey1(void)
 		else
 			more_chars = (u_char *)"\033[23~"; /* F11 */
 	}
+	else
+		do_vgapage(4);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2123,6 +2125,8 @@ sfkey2(void)
 		else
 			more_chars = (u_char *)"\033[24~"; /* F12 */
 	}
+	else
+		do_vgapage(5);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2139,6 +2143,8 @@ sfkey3(void)
 		else
 			more_chars = (u_char *)"\033[25~"; /* F13 */
 	}
+	else
+		do_vgapage(6);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2155,6 +2161,8 @@ sfkey4(void)
 		else
 			more_chars = (u_char *)"\033[26~"; /* F14 */
 	}
+	else
+		do_vgapage(7);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2170,6 +2178,13 @@ sfkey5(void)
 				&(vsp->udkbuf[vsp->ukt.first[11]]);
 		else
 			more_chars = (u_char *)"\033[28~"; /* Help */
+	}
+	else
+	{
+		if(current_video_screen <= 0)
+			do_vgapage(totalscreens-1);
+		else
+			do_vgapage(current_video_screen - 1);
 	}
 }
 
@@ -2316,6 +2331,8 @@ sfkey12(void)
 static void
 cfkey1(void)
 {
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_columns(vsp);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2324,6 +2341,8 @@ cfkey1(void)
 static void
 cfkey2(void)
 {
+	if(vsp->which_fkl == SYS_FKL)
+		vt_ris(vsp);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2332,6 +2351,8 @@ cfkey2(void)
 static void
 cfkey3(void)
 {
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_24l(vsp);
 }
 
 /*---------------------------------------------------------------------------*
@@ -2340,6 +2361,10 @@ cfkey3(void)
 static void
 cfkey4(void)
 {
+#if PCVT_SHOWKEYS
+	if(vsp->which_fkl == SYS_FKL)
+		toggl_kbddbg(vsp);
+#endif /* PCVT_SHOWKEYS */
 }
 
 /*---------------------------------------------------------------------------*
