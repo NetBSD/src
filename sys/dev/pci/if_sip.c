@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.11.4.7 2002/03/09 17:02:19 he Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.11.4.8 2002/03/27 09:50:43 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1978,7 +1978,8 @@ sip_dp83815_set_filter(sc)
 	struct ether_multi *enm;
 	u_int8_t *cp;    
 	struct ether_multistep step; 
-	u_int32_t crc, mchash[16];
+	u_int32_t crc;
+	u_int16_t mchash[32];
 	int i;
 
 	/*
@@ -2025,13 +2026,13 @@ sip_dp83815_set_filter(sc)
 				goto allmulti;
 			}
 
-			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 			/* Just want the 9 most significant bits. */
 			crc >>= 23;
 
 			/* Set the corresponding bit in the hash table. */
-			mchash[crc >> 5] |= 1 << (crc & 0x1f);
+			mchash[crc >> 4] |= 1 << (crc & 0xf);
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
@@ -2063,11 +2064,9 @@ sip_dp83815_set_filter(sc)
 		/*
 		 * Program the multicast hash table.
 		 */
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 32; i++) {
 			FILTER_EMIT(RFCR_NS_RFADDR_FILTMEM + (i * 2),
 			    mchash[i] & 0xffff);
-			FILTER_EMIT(RFCR_NS_RFADDR_FILTMEM + (i * 2) + 2,
-			    (mchash[i] >> 16) & 0xffff);
 		}
 	}
 #undef FILTER_EMIT
