@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.9 1995/03/26 20:32:27 jtc Exp $	*/
+/*	$NetBSD: in_var.h,v 1.10 1995/03/29 22:09:30 briggs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -76,7 +76,7 @@ struct	in_aliasreq {
 	((ntohl((in).s_addr) & ~((struct in_ifaddr *)(ifa)->ia_subnetmask))
 			
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 extern	struct	in_ifaddr *in_ifaddr;
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 void	in_socktrim __P((struct sockaddr_in *));

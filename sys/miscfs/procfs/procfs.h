@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.12 1994/10/29 07:58:53 cgd Exp $	*/
+/*	$NetBSD: procfs.h,v 1.13 1995/03/29 22:08:30 briggs Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -75,7 +75,7 @@ struct pfsnode {
 /*
  * Kernel stuff follows
  */
-#ifdef KERNEL
+#ifdef _KERNEL
 #define CNEQ(cnp, s, len) \
 	 ((cnp)->cn_namelen == (len) && \
 	  (bcmp((s), (cnp)->cn_nameptr, (len)) == 0))
@@ -178,4 +178,4 @@ int	procfs_print __P((struct vop_print_args *));
 #define procfs_vfree ((int (*) __P((struct vop_vfree_args *))) nullop)
 #define procfs_truncate ((int (*) __P((struct vop_truncate_args *))) procfs_badop)
 #define procfs_update ((int (*) __P((struct vop_update_args *))) nullop)
-#endif /* KERNEL */
+#endif /* _KERNEL */

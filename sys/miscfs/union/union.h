@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.6 1994/12/29 22:48:16 mycroft Exp $	*/
+/*	$NetBSD: union.h,v 1.7 1995/03/29 22:08:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -57,7 +57,7 @@ struct union_mount {
 	int		um_op;		/* Operation mode */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /*
  * DEFDIRMODE is the mode bits used to create a shadow directory.
@@ -128,4 +128,4 @@ extern void union_newsize __P((struct vnode *, off_t, off_t));
 
 extern int (**union_vnodeop_p)();
 extern struct vfsops union_vfsops;
-#endif /* KERNEL */
+#endif /* _KERNEL */

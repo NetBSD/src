@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.13 1995/03/26 20:32:21 jtc Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.14 1995/03/29 22:09:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -146,7 +146,7 @@ struct sockaddr_inarp {
 #define	RTF_USETRAILERS	RTF_PROTO1	/* use trailers */
 #define	RTF_ANNOUNCE	RTF_PROTO2	/* announce new arp entry */
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 u_char	etherbroadcastaddr[6];
 u_char	ether_ipmulticast_min[6];
 u_char	ether_ipmulticast_max[6];

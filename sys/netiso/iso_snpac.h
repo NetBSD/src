@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.h,v 1.6 1995/03/26 20:35:25 jtc Exp $	*/
+/*	$NetBSD: iso_snpac.h,v 1.7 1995/03/29 22:09:47 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -109,6 +109,6 @@ struct llinfo_llc {
 #define	SIOCSSTYPE 	_IOW('a', 39, struct systype_req) /* set system type */
 #define	SIOCGSTYPE 	_IOR('a', 40, struct systype_req) /* get system type */
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 struct llinfo_llc llinfo_llc;	/* head for linked lists */
 #endif	/* _KERNEL */

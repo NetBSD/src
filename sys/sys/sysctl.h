@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.7 1995/03/26 20:24:49 jtc Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.8 1995/03/29 22:10:15 briggs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -288,7 +288,7 @@ struct kinfo_proc {
 #define	CTL_DEBUG_VALUE		1	/* int: variable value */
 #define	CTL_DEBUG_MAXID		20
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 #ifdef	DEBUG
 /*
  * CTL_DEBUG variables.

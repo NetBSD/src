@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.8 1994/06/29 06:34:26 cgd Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.9 1995/03/29 22:08:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 
 #define	_PATH_KERNFS	"/kern"		/* Default mountpoint */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct kernfs_mount {
 	struct vnode	*kf_root;	/* Root node */
 };
@@ -55,4 +55,4 @@ struct kernfs_node {
 extern int (**kernfs_vnodeop_p)();
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
-#endif /* KERNEL */
+#endif /* _KERNEL */

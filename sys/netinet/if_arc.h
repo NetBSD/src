@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.2 1995/03/02 09:14:38 chopps Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.3 1995/03/29 22:09:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,7 @@ struct	arccom {
 	struct	in_addr ac_ipaddr;	/* copy of ip address- XXX */
 };
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 u_char	arcbroadcastaddr;
 
 void arc_ifattach __P((struct ifnet *));

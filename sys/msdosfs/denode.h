@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.13 1995/01/04 06:32:19 mycroft Exp $	*/
+/*	$NetBSD: denode.h,v 1.14 1995/03/29 22:08:46 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -193,7 +193,7 @@ struct denode {
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
@@ -276,4 +276,4 @@ int readde __P((struct denode *, struct buf **, struct direntry **));
 int readep __P((struct msdosfsmount *, u_long, u_long, struct buf **, struct direntry **));
 void reinsert __P((struct denode *));
 int removede __P((struct denode *, struct denode *));
-#endif	/* KERNEL */
+#endif	/* _KERNEL */

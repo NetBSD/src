@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.7 1995/03/26 20:35:13 jtc Exp $	*/
+/*	$NetBSD: clnp.h,v 1.8 1995/03/29 22:09:39 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -453,7 +453,7 @@ struct clnp_cache {
 	((struct sockaddr_iso *)(sa))
 #endif
 
-#ifdef	KERNEL
+#ifdef	_KERNEL
 caddr_t			clnp_insert_addr();
 struct iso_addr	*clnp_srcaddr();
 struct mbuf		*clnp_reass();
