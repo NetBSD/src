@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wireg.h,v 1.7 2001/01/11 11:54:21 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.1 2001/05/06 03:26:39 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -37,7 +37,7 @@
  * Oslo IETF plenary meeting.
  */
 
-#define WI_TIMEOUT	70000
+#define WI_TIMEOUT	65536
 
 #define WI_PORT0	0
 #define WI_PORT1	1
@@ -92,18 +92,18 @@
  * register space access macros
  */
 #define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->wi_btag, sc->wi_bhandle, reg, val)
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, val)
 #define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->wi_btag, sc->wi_bhandle, reg, val)
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, reg, val)
 #define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->wi_btag, sc->wi_bhandle, reg, val)
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val)
 
 #define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->wi_btag, sc->wi_bhandle, reg)
+	bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg)
 #define CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->wi_btag, sc->wi_bhandle, reg)
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)
 #define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->wi_btag, sc->wi_bhandle, reg)
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg)
 
 /*
  * The WaveLAN/IEEE cards contain an 802.11 MAC controller which Lucent
@@ -147,7 +147,7 @@
 /*
  * Size of Hermes I/O space.
  */
-#define WI_IOSIZ		0x40
+#define WI_IOSIZE		0x40
 
 /*
  * Hermes register definitions and what little I know about them.

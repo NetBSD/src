@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.37 2001/02/24 02:13:33 lukem Exp $
+#	$NetBSD: files.pcmcia,v 1.38 2001/05/06 03:26:39 ichiro Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -72,11 +72,6 @@ device	cnw: arp, ether, ifnet
 attach	cnw at pcmcia
 file	dev/pcmcia/if_cnw.c			cnw
 
-# Lucent WaveLan IEEE (802.11)
-device	wi: arp, ether, ifnet
-attach	wi at pcmcia
-file	dev/pcmcia/if_wi.c			wi
-
 # Megaherz combo cards
 device	mhzc { }
 attach	mhzc at pcmcia
@@ -93,6 +88,10 @@ file	dev/pcmcia/if_ray.c			ray
 # AMD 79c930-based 802.11 cards (including BayStack 650 FH card).
 attach	awi at pcmcia with awi_pcmcia
 file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
+
+# Lucent & Intersil WaveLan IEEE (802.11)
+attach	wi at pcmcia with wi_pcmcia
+file	dev/pcmcia/if_wi_pcmcia.c		wi_pcmcia
 
 # Xircom Ethernet cards
 device	xi: arp, ether, ifnet, mii
