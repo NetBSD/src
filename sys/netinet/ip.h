@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
+/*	$NetBSD: ip.h,v 1.10 1996/09/06 05:07:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -159,6 +159,35 @@ struct	ip_timestamp {
 #define	IPOPT_SECUR_RESTR	0xaf13
 #define	IPOPT_SECUR_SECRET	0xd788
 #define	IPOPT_SECUR_TOPSECRET	0x6bc5
+
+/* we need this for the packet filter structure */
+#include <sys/queue.h>
+struct ifnet;
+
+/*
+ * The packet filter hooks are designed for anything to call them to
+ * possibly intercept the packet.
+ */
+struct packet_filter_hook {
+        LIST_ENTRY(packet_filter_hook) pfil_link;
+        int	(*pfil_func) __P((void *, int, struct ifnet *, int,
+				  struct mbuf **));
+	int	pfil_flags;
+};
+
+#define PFIL_IN		0x00000001
+#define PFIL_OUT	0x00000002
+#define PFIL_BAD	0x00000004
+#define PFIL_WAITOK	0x00000008
+#define PFIL_ALL	(PFIL_IN|PFIL_OUT|PFIL_BAD)
+
+#ifdef _KERNEL
+struct packet_filter_hook *pfil_hook_get __P((int));
+void	pfil_add_hook __P((int (*func) __P((void *, int,
+	    struct ifnet *, int, struct mbuf **)), int));
+void	pfil_remove_hook __P((int (*func) __P((void *, int,
+	    struct ifnet *, int, struct mbuf **)), int));
+#endif /* _KERNEL */
 
 /*
  * Internet implementation parameters.

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.29 1996/06/23 12:12:44 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.30 1996/09/06 05:07:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -43,12 +43,14 @@
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/route.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_mroute.h>
@@ -62,6 +64,14 @@
 #define	SUBNETSARELOCAL	1
 #endif
 int subnetsarelocal = SUBNETSARELOCAL;
+
+#ifdef PACKET_FILTER
+LIST_HEAD(, packet_filter_hook) pfil_in_list;
+LIST_HEAD(, packet_filter_hook) pfil_out_list;
+LIST_HEAD(, packet_filter_hook) pfil_bad_list;
+static int done_pfil_init;
+#endif /* PACKET_FILTER */
+
 /*
  * Return 1 if an internet address is for a ``local'' host
  * (one to which we have a connection).  If subnetsarelocal
@@ -555,5 +565,118 @@ in_delmulti(inm)
 	}
 	splx(s);
 }
-
 #endif
+
+#ifdef PACKET_FILTER
+void pfil_init __P((void));
+int pfil_list_remove(struct packet_filter_hook *,
+    int (*) __P((void *, int, struct ifnet *, int, struct mbuf **)), int,
+		 int);
+
+void
+pfil_init()
+{
+	LIST_INIT(&pfil_in_list);
+	LIST_INIT(&pfil_out_list);
+	LIST_INIT(&pfil_bad_list);
+	done_pfil_init = 1;
+}
+
+/*
+ * pfil_add_hook() adds a function to the packet filter hook.  the
+ * flags are:
+ *	PFIL_IN		call me on incoming packets
+ *	PFIL_OUT	call me on outgoing packets
+ *	PFIL_BAD	call me when rejecting a packet (that was
+ *			not already reject by in/out filters).
+ *	PFIL_ALL	call me on all of the above
+ *	PFIL_WAITOK	OK to call malloc with M_WAITOK.
+ */
+void
+pfil_add_hook(func, flags)
+	int	(*func) __P((void *, int, struct ifnet *, int,
+			     struct mbuf **));
+	int	flags;
+{
+	struct packet_filter_hook *pfh;
+
+	if (done_pfil_init == 0)
+		pfil_init();
+
+	pfh = (struct packet_filter_hook *)malloc(sizeof(*pfh), M_IFADDR,
+	    flags & PFIL_WAITOK ? M_WAITOK : M_NOWAIT);
+	if (pfh == NULL)
+		panic("no memory for packet filter hook");
+
+	pfh->pfil_flags = flags;
+	pfh->pfil_func = func;
+	if (flags & PFIL_IN)
+		LIST_INSERT_HEAD(&pfil_in_list, pfh, pfil_link);
+	if (flags & PFIL_OUT)
+		LIST_INSERT_HEAD(&pfil_out_list, pfh, pfil_link);
+	if (flags & PFIL_BAD)
+		LIST_INSERT_HEAD(&pfil_bad_list, pfh, pfil_link);
+}
+
+/*
+ * pfil_remove_hook removes a specific function from the packet filter
+ * hook list.
+ */
+void
+pfil_remove_hook(func, flags)
+	int	(*func) __P((void *, int, struct ifnet *, int,
+			     struct mbuf **));
+	int	flags;
+{
+
+	if (done_pfil_init == 0)
+		pfil_init();
+
+	if (flags & PFIL_IN &&
+	    pfil_list_remove(pfil_in_list.lh_first, func, flags, PFIL_IN))
+		return;
+	if (flags & PFIL_OUT &&
+	    pfil_list_remove(pfil_out_list.lh_first, func, flags, PFIL_OUT))
+		return;
+	if (flags & PFIL_BAD &&
+	    pfil_list_remove(pfil_bad_list.lh_first, func, flags, PFIL_BAD))
+		return;
+}
+
+int
+pfil_list_remove(list, func, flags, flag)
+	struct packet_filter_hook *list;
+	int	(*func) __P((void *, int, struct ifnet *, int,
+			     struct mbuf **));
+	int	flags, flag;
+{
+	struct packet_filter_hook *pfh;
+
+	for (pfh = list; pfh; pfh = pfh->pfil_link.le_next)
+		if (pfh->pfil_func == func) {
+			pfh->pfil_flags &= ~flag;
+			LIST_REMOVE(pfh, pfil_link);
+			if ((flags & PFIL_ALL) == 0) {
+				free(pfh, M_IFADDR);
+				return 1;
+			}
+		}
+	return 0;
+}
+
+struct packet_filter_hook *
+pfil_hook_get(flag)
+	int flag;
+{
+	if (done_pfil_init)
+		switch (flag) {
+		case PFIL_IN:
+			return (pfil_in_list.lh_first);
+		case PFIL_OUT:
+			return (pfil_out_list.lh_first);
+		case PFIL_BAD:
+			return (pfil_bad_list.lh_first);
+		}
+	return NULL;
+}
+#endif /* PACKET_FILTER */
