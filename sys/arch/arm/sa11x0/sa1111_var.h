@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.2 2002/12/18 04:16:09 bsh Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.3 2002/12/18 04:25:56 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,5 @@ struct sa1111_attach_args {
 void *sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
 			  int (*)(void *), void *);
 void sacc_intr_disestablish(sacc_chipset_tag_t *, void *);
-int sacc_probe(struct device *, struct cfdata *, void *);
-int sa1111_search(struct device *, struct cfdata *, void *);
 
 #endif /* _SA1111_VAR_H */
