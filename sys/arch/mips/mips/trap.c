@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 1997/11/13 10:37:52 veego Exp $	*/
+/*	$NetBSD: trap.c,v 1.80 1998/02/05 21:48:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 1997/11/13 10:37:52 veego Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 1998/02/05 21:48:23 wrstuden Exp $");
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
@@ -949,6 +949,16 @@ trap(status, cause, vaddr, opc, frame)
 #include "arp.h"
 #include "ppp.h"
 
+#ifdef NETATALK
+void	atintr		__P((void));
+#endif
+#ifdef NS
+void	nsintr		__P((void));
+#endif
+#ifdef ISO
+void	clnlintr	__P((void));
+#endif
+
 /*
  * Handle an interrupt.
  * Called from MachKernIntr() or MachUserIntr()
@@ -1002,6 +1012,9 @@ interrupt(status, cause, pc, frame)
 		if (isr & (1 << NETISR_ARP)) arpintr();
 #endif
 		if (isr & (1 << NETISR_IP)) ipintr();
+#endif
+#ifdef NETATALK
+		if (isr & (1 << NETISR_ATALK)) atintr();
 #endif
 #ifdef NS
 		if (isr & (1 << NETISR_NS)) nsintr();
