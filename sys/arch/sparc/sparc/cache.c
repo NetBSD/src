@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.45 1999/01/20 15:25:29 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.46 1999/01/24 10:11:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -188,7 +188,6 @@ hypersparc_cache_enable()
 	ts = CACHEINFO.c_totalsize;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
-	pcr &= ~(HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
 
 	/*
 	 * Setup the anti-aliasing constants and DVMA alignment constraint.
@@ -201,6 +200,9 @@ hypersparc_cache_enable()
 	if ((pcr & HYPERSPARC_PCR_CE) == 0)
 		for (i = 0; i < ts; i += ls)
 			sta(i, ASI_DCACHETAG, 0);
+
+	pcr &= ~(HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
+	hypersparc_cache_flush_all();
 
 	/* Enable write-back cache */
 	pcr |= HYPERSPARC_PCR_CE;
