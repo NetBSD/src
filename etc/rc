@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.138 1999/11/23 15:12:43 hubertf Exp $
+#	$NetBSD: rc,v 1.139 2000/01/04 05:20:51 lukem Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -549,7 +549,7 @@ fi
 
 # Start xfs before boot daemons, so its ready before client xterminals.
 if checkyesno xfs; then
-	echo -n ' xfs';			xfs $xfs_flags &
+	echo -n ' xfs';			xfs $xfs_flags
 	sleep 2
 fi
 
