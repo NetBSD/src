@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.37 1996/05/05 06:16:00 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.38 1996/05/11 16:12:20 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -150,7 +150,7 @@ links:
 
 SRCS=	${MAC68K}/mac68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${MAC68K}/mac68k/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

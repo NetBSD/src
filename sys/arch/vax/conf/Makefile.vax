@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.20 1996/02/29 20:57:46 cgd Exp $
+#	$NetBSD: Makefile.vax,v 1.21 1996/05/11 16:13:17 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -138,7 +138,7 @@ links:
 
 SRCS=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s lim.c \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} lim.c
