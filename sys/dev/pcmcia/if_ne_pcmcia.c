@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.121 2004/07/09 03:36:01 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.122 2004/07/09 03:41:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.121 2004/07/09 03:36:01 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.122 2004/07/09 03:41:23 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,17 +218,17 @@ static const struct ne2000dev {
       0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
 
     /*
-     * This entry should be here so that above two cards doesn't
+     * This FNW-3700T entry should be here so that above two cards doesn't
      * match with this.  FNW-3700T won't match above entries due to
      * MAC address check.
      */
-    { PCMCIA_VENDOR_LANTECH, PCMCIA_PRODUCT_LANTECH_FASTNETTX,
-      PCMCIA_CIS_LANTECH_FASTNETTX,
-      0, -1, { 0x00, 0x04, 0x1c }, NE2000DVF_AX88190 },
-
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3700T, 
       0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_AX88190 },
+
+    { PCMCIA_VENDOR_LANTECH, PCMCIA_PRODUCT_LANTECH_FASTNETTX,
+      PCMCIA_CIS_LANTECH_FASTNETTX,
+      0, -1, { 0x00, 0x04, 0x1c }, NE2000DVF_AX88190 },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
