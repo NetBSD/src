@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.14 1995/06/27 19:54:49 mellon Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15 1995/08/10 04:27:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,6 +62,10 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 
+#include <sys/device.h>
+#include <machine/autoconf.h>
+#include <machine/machConst.h>
+
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
@@ -100,10 +104,21 @@ extern llc_ctlinput(), cons_rtrequest();
 #include <net/bpfdesc.h>
 #endif
 
-int	leprobe();
-void	leintr();
-struct	driver ledriver = {
-	"le", leprobe, 0, 0, leintr,
+/*
+ * Autoconfiguration data for config.new.
+ * Use the statically-allocated softc until old autoconfig code and
+ * config.old are completely gone.
+ * 
+ */
+int	lematch  __P((struct device * parent, void *cfdata, void *aux));
+void	leattach __P((struct device *parent, struct device *self, void *aux));
+void	leintr __P((int unit));
+
+int le_doprobe __P((void *addr, int unit, int flags, int priority));
+
+extern struct cfdriver lecd;
+struct  cfdriver lecd = {
+	NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct device), 0
 };
 
 int	ledebug = 1;		/* console error messages */
@@ -170,24 +185,73 @@ void leinit __P((int));
 void lereset __P((int));
 
 /*
+ * Match driver based on name
+ */
+int
+lematch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+	static int nunits = 0;
+
+	if (!BUS_MATCHNAME(ca, "PMAD-BA ") &&
+	    !BUS_MATCHNAME(ca, "PMAD-AA ") &&	
+	    !BUS_MATCHNAME(ca, "le") &&	
+	    !BUS_MATCHNAME(ca, "lance"))
+		return (0);
+	/*
+	 * Use statically-allocated softc and attach code until
+	 * old config is completely gone.  Don't  over-run softc.
+	 */
+	if (nunits > NLE) {
+		printf("le: too many units for old config\n");
+		return (0);
+	}
+	nunits++;
+	return(1);
+}
+
+void
+leattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+
+	(void) le_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+			   self->dv_unit, self->dv_cfdata->cf_flags,
+			   ca->ca_slot);
+
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, leintr, self->dv_unit);
+	printf("\n");
+}
+
+
+/*
  * Test to see if device is present.
  * Return true if found and initialized ok.
  * If interface exists, make available by filling in network interface
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-leprobe(dp)
-	struct pmax_ctlr *dp;
+le_doprobe(addr, unit, flags, priority)
+	void *addr;
+	int unit, flags, priority;
 {
 	volatile struct lereg1 *ler1;
-	struct le_softc *le = &le_softc[dp->pmax_unit];
+	struct le_softc *le = &le_softc[unit];
 	struct ifnet *ifp = &le->sc_if;
 	u_char *cp;
 	int i;
 
 	switch (pmax_boardtype) {
 	case DS_PMAX:
-		le->sc_r1 = ler1 = (volatile struct lereg1 *)dp->pmax_addr;
+		le->sc_r1 = ler1 = (volatile struct lereg1 *)addr;
 		le->sc_r2 = (volatile void *)MACH_PHYS_TO_UNCACHED(0x19000000);
 		cp = (u_char *)(MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 		le->sc_ler2pad = 1;
@@ -198,7 +262,7 @@ leprobe(dp)
 	case DS_3MIN:
 	case DS_MAXINE:
 	case DS_3MAXPLUS:
-		if (dp->pmax_unit == 0) {
+		if (unit == 0) {
 			volatile u_int *ssr, *ldp;
 
 			le->sc_r1 = ler1 = (volatile struct lereg1 *)
@@ -227,9 +291,9 @@ leprobe(dp)
 		 */
 	case DS_3MAX:
 		le->sc_r1 = ler1 = (volatile struct lereg1 *)
-			(dp->pmax_addr + LE_OFFSET_LANCE);
-		le->sc_r2 = (volatile void *)(dp->pmax_addr + LE_OFFSET_RAM);
-		cp = (u_char *)(dp->pmax_addr + LE_OFFSET_ROM + 2);
+			(addr + LE_OFFSET_LANCE);
+		le->sc_r2 = (volatile void *)(addr + LE_OFFSET_RAM);
+		cp = (u_char *)(addr + LE_OFFSET_ROM + 2);
 		le->sc_ler2pad = 0;
 		le->sc_copytobuf = copytobuf_contig;
 		le->sc_copyfrombuf = copyfrombuf_contig;
@@ -252,7 +316,7 @@ leprobe(dp)
 	LEWREG(LE_CSR0, ler1->ler1_rap);
 	LEWREG(LE_STOP, ler1->ler1_rdp);
 
-	ifp->if_unit = dp->pmax_unit;
+	ifp->if_unit = unit;
 	ifp->if_name = "le";
 	ifp->if_ioctl = leioctl;
 	ifp->if_start = lestart;
@@ -267,8 +331,7 @@ leprobe(dp)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf("le%d at nexus0 csr 0x%x priority %d ethernet address %s\n",
-		dp->pmax_unit, dp->pmax_addr, dp->pmax_pri,
+	printf(": ethernet address %s",
 		ether_sprintf(le->sc_addr));
 	return (1);
 }
