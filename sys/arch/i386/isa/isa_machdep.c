@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19 1997/03/21 04:34:21 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.20 1997/05/19 01:13:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -275,6 +275,9 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		panic("intr_establish: bogus irq or type");
 
 	switch (intrtype[irq]) {
+	case IST_NONE:
+		intrtype[irq] = type;
+		break;
 	case IST_EDGE:
 	case IST_LEVEL:
 		if (type == intrtype[irq])
