@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.4 2000/12/04 20:40:07 fvdl Exp $ */
+/*	$NetBSD: cache.c,v 1.5 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -102,9 +102,9 @@ cache_flush_page(pa)
 
 #ifdef DEBUG
 	if (cachedebug)
-		printf("cache_flush_page %llx\n", pa);
+		printf("cache_flush_page %llx\n", (unsigned long long)pa);
 	if (pa & PGOFSET)
-		panic("cache_flush_page: asked to flush misaligned pa %llx", pa);
+		panic("cache_flush_page: asked to flush misaligned pa %llx", (unsigned long long)pa);
 #endif
 
 	/* Don't flush if not enabled or not probed. */
@@ -148,7 +148,7 @@ cache_flush(base, len)
 
 #ifdef DEBUG
 	if (cachedebug)
-		printf("cache_flush %p %x\n", base, len);
+		printf("cache_flush %p %x\n", (void *)(u_long)base, (u_int)len);
 #endif
 
 	/* Don't flush if not enabled or not probed. */
