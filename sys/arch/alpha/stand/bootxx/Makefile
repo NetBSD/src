@@ -1,45 +1,45 @@
-#	$NetBSD: Makefile,v 1.8 1997/01/18 00:35:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1997/01/23 22:31:34 cgd Exp $
 
-.PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
+S=	${.CURDIR}/../../../..
 
-BOOT_PROG = bootxx
+.PATH: ${.CURDIR}/..
+
+PROG = bootxx
+
+SRCS = start.S bootxx.c prom.c prom_disp.S puts.c
+NOMAN=
+STRIP=
+BINMODE= 444
+
 BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
-
-BOOT_SRCS = start.S bootxx.c prom.c prom_disp.S bzero.c puts.c
-BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
-
 HEADERSIZE_PROG = headersize
 
 AFLAGS += -DASSEMBLER
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../.. -DPRIMARY_BOOTBLOCK
 CFLAGS = -Werror -mno-fp-regs -g
 
-.PATH: ${.CURDIR}/../../../../lib/libkern
+CLEANFILES+= ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 
-all: ${BOOT_PROG}
+${PROG}.nosym: ${PROG}.sym
+	cp ${PROG}.sym ${PROG}.nosym
+	strip ${PROG}.nosym
 
-${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.hdr \
-	    ${BOOT_OBJS}
-	size ${BOOT_PROG}.hdr
-	strip ${BOOT_PROG}.hdr
-	dd if=${BOOT_PROG}.hdr of=${BOOT_PROG}.nohdr \
-	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${BOOT_PROG}.hdr` skip=1
-	dd if=${BOOT_PROG}.nohdr of=${BOOT_PROG} bs=`expr 15 \* 512` conv=sync
+${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
+	dd if=${PROG}.nosym of=${PROG} \
+	    ibs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1 \
+	    obs=`expr 15 \* 512` conv=osync
 
-install:
-	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
-	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
+# no lint here (yet?)
+lint:
 
-clean:
-	rm -f a.out [Ee]rrs mklog core *.core \
-	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
-	    ${BOOT_PROG}.hdr ${BOOT_PROG}.nohdr ${HEADERSIZE_PROG}
+.include <bsd.prog.mk>
 
-cleandir: clean
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
 
-depend:
-
-.include "${.CURDIR}/../Makefile.inc"
-.include <bsd.obj.mk>
-.include <bsd.dep.mk>
+${PROG}.sym: ${OBJS} ${LIBKERN}
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS} \
+	    ${LIBKERN}
+	size ${PROG}.sym
