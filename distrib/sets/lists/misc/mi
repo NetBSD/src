@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.104 2004/07/06 19:46:28 mycroft Exp $
+# $NetBSD: mi,v 1.105 2004/09/04 22:56:16 lukem Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -134,6 +134,7 @@
 ./usr/share/doc/html/postfix/MAILDROP_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MYSQL_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/NFS_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/OVERVIEW.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/PACKAGE_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/PCRE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/PGSQL_README.html		misc-postfix-htmldoc	postfix,doc
@@ -192,6 +193,7 @@
 ./usr/share/doc/html/postfix/postalias.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postcat.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postconf.1.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/postconf.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postdrop.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postkick.1.html	misc-postfix-htmldoc	postfix,doc
