@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.21 1998/08/22 22:50:53 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.22 1998/09/05 04:13:51 mycroft Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -303,12 +303,13 @@ lpt*|lpa*)
 	;;
 
 
-bpf*|tun*|pms*|qms*)
+bpf*|tun*|pms*|qms*|joy*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=32;;
 	tun*) name=tun;	unit=${i#tun};	chr=33;;
 	pms*) name=pms;	unit=${i#pms};	chr=40;;
 	qms*) name=qms;	unit=${i#qms};	chr=9;;
+	joy*) name=joy;	unit=${i#joy};	chr=56;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
