@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.10 2000/05/17 20:24:12 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.11 2000/05/18 19:45:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.10 2000/05/17 20:24:12 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.11 2000/05/18 19:45:46 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -570,7 +570,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	off += dblksize(lfsp,dip,0);
 
 	/* Write Superblock */
-	lfsp->lfs_offset = (off + lfsp->lfs_bsize) / lp->d_secsize;
+	lfsp->lfs_offset = off / lp->d_secsize;
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	put(fd, (off_t)LFS_LABELPAD, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 
@@ -665,7 +665,6 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	free(dpagep);
 
 	/* Now write the summary block for the next partial so it's invalid */
-	off += lfsp->lfs_bsize;
 	sp->ss_sumsum =
 	    cksum(&sp->ss_datasum, LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum));
 	put(fd, off, sp, LFS_SUMMARY_SIZE);
