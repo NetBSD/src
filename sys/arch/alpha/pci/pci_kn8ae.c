@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.19 2001/07/27 00:25:20 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.20 2001/08/13 23:36:30 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.19 2001/07/27 00:25:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.20 2001/08/13 23:36:30 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -178,7 +178,7 @@ dec_kn8ae_intr_establish(ccv, ih, level, func, arg)
 	pin = IH_PIN(ih);
 	vec = IH_VEC(ih);
 
-	scb = &scb_iovectab[SCB_VECTOIDX(vec) - SCB_IOVECBASE];
+	scb = &scb_iovectab[SCB_VECTOIDX(vec - SCB_IOVECBASE)];
 
 	if (scb->scb_func != kn8ae_spurious) {
 		printf("dec_kn8ae_intr_establish: vector 0x%lx not mapped\n",
@@ -225,7 +225,7 @@ dec_kn8ae_intr_disestablish(ccv, cookie)
 
 	vec = IH_VEC(ih);
 
-	scb = &scb_iovectab[SCB_VECTOIDX(vec) - SCB_IOVECBASE];
+	scb = &scb_iovectab[SCB_VECTOIDX(vec - SCB_IOVECBASE)];
 
 	kn8ae_enadis_intr(ccp, ih, 0);
 
@@ -235,9 +235,7 @@ dec_kn8ae_intr_disestablish(ccv, cookie)
 void
 kn8ae_spurious(void *arg, u_long vec)
 {
-
-	printf("Spurious interrupt on temporary interrupt vector 0x%lx\n",
-	    vec);
+	printf("Spurious interrupt on temporary interrupt vector 0x%lx\n", vec);
 }
 
 void
