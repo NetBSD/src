@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_isapnp.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: pcnet_isapnp.c,v 1.2 1997/03/15 22:20:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
 
 char etherdev[20];
 
-int rap, rdp;
+int lance_rap, lance_rdp;
 
 u_char eth_myaddr[6];
 
@@ -68,8 +68,8 @@ char *myadr;
 
   printf("printf using PCNET @ %x\n", iobase);
 
-  rap = iobase + 0x12;
-  rdp = iobase + 0x10;
+  lance_rap = iobase + 0x12;
+  lance_rdp = iobase + 0x10;
 
   /* make sure it's stopped */
   am7990_stop();
