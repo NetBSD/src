@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gprof.h	5.10 (Berkeley) 4/24/91
- *	$Id: gprof.h,v 1.5 1993/12/06 05:28:39 cgd Exp $
+ *	$Id: gprof.h,v 1.6 1994/03/09 00:25:14 phil Exp $
  */
 
 #include <sys/types.h>
@@ -59,7 +59,9 @@
 #if sparc
 #   include "sparc.h"
 #endif
-
+#if ns32k
+#   include "ns32k.h"
+#endif
 
     /*
      *	who am i, for error messages.
