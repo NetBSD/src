@@ -34,8 +34,6 @@
  *	@(#)less.h	8.1 (Berkeley) 6/6/93
  */
 
-#define	RECOMP
-
 #define	NULL_POSITION	((off_t)(-1))
 
 #define	EOI		(0)
