@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.127 2003/07/23 14:53:57 lukem Exp $
+#	$NetBSD: bsd.README,v 1.128 2003/07/26 14:58:10 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -757,6 +757,9 @@ PROG_CXX	If defined, the name of the program to build.  Also
 		causes <bsd.prog.mk> to link the program with the C++
 		compiler rather than the C compiler.  PROG_CXX overrides
 		the value of PROG if PROG is also set.
+
+CXX_SUPCXX	If defined, the support libraries needed for this C++ program
+		are set to `-lsupc++ -lm', rather than `-lstdc++ -lm'.
 
 PROGNAME	The name that the above program will be installed as, if
 		different from ${PROG}.
