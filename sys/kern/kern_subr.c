@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.86 2002/08/25 22:32:02 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.87 2002/09/04 01:32:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.86 2002/08/25 22:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.87 2002/09/04 01:32:37 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -427,7 +427,7 @@ hook_destroy(list)
 {
 	struct hook_desc *hd;
 
-	while ((hd = list->lh_first) != NULL) {
+	while ((hd = LIST_FIRST(list)) != NULL) {
 		LIST_REMOVE(hd, hk_list);
 		free(hd, M_DEVBUF);
 	}
@@ -487,7 +487,7 @@ doshutdownhooks()
 {
 	struct hook_desc *dp;
 
-	while ((dp = shutdownhook_list.lh_first) != NULL) {
+	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
 		(*dp->hk_fn)(dp->hk_arg);
 #if 0
