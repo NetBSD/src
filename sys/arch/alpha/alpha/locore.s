@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.55 1998/11/19 02:27:29 ross Exp $ */
+/* $NetBSD: locore.s,v 1.56 1998/11/26 20:26:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.55 1998/11/19 02:27:29 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.56 1998/11/26 20:26:52 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1267,6 +1267,11 @@ NESTED(kcopy, 3, 16, ra, 0, 0)
 
 LEAF(kcopyerr, 0)
 	LDGP(pv)
+	.set noat
+	ldq	at_reg, curproc			/* restore the old handler.  */
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	s0, U_PCB_ONFAULT(at_reg)
+	.set at
 	ldq	ra, (16-16)(sp)			/* restore ra.		     */
 	ldq	s0, (16-8)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
