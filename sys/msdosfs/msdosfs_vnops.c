@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.33 1995/06/02 14:52:34 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.34 1995/06/02 14:54:53 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -333,7 +333,7 @@ msdosfs_setattr(ap)
 	}
 	if (vap->va_mtime.ts_sec != VNOVAL) {
 		if (cred->cr_uid != dep->de_pmp->pm_uid &&
-		    (error = suser(cred, &p->ap->a_p_acflag)) &&
+		    (error = suser(cred, &ap->a_p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
