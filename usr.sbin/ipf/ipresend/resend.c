@@ -1,4 +1,4 @@
-/*	$NetBSD: resend.c,v 1.1.1.6 1998/05/17 16:29:53 veego Exp $	*/
+/*	$NetBSD: resend.c,v 1.1.1.7 1998/07/12 14:48:11 veego Exp $	*/
 
 /*
  * resend.c (C) 1995-1997 Darren Reed

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.1.1.7 1998/05/29 20:14:23 veego Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.1.1.8 1998/07/12 14:48:12 veego Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1997 Darren Reed

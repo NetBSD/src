@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.1.1.9 1998/05/17 16:29:44 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.1.1.10 1998/07/12 14:48:02 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -48,7 +48,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: fils.c,v 2.0.2.25.2.2 1997/11/20 12:41:04 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.0.2.25.2.4 1998/06/08 06:58:12 darrenr Exp ";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -448,6 +448,13 @@ ips_stat_t *ipsp;
 			PRINTF("\n");
 			/* ... phil@ultimate.com */
 
+			PRINTF("\tpkt_flags & %x = %x,\t", ips.is_flags & 0xf,
+				ips.is_flags >> 4);
+			PRINTF("\tpkt_options & %x = %x\n", ips.is_optmsk,
+				ips.is_opt);
+			PRINTF("\tpkt_security & %x = %x, pkt_auth & %x = %x\n",
+				ips.is_secmsk, ips.is_sec, ips.is_authmsk,
+				ips.is_auth);
 			istab[i] = ips.is_next;
 		}
 }

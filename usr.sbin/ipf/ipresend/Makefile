@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.8 1998/05/17 16:29:53 veego Exp $
+#	$NetBSD: Makefile,v 1.1.1.9 1998/07/12 14:48:11 veego Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c ipft_pc.c
