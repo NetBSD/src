@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.323 1999/10/14 18:42:15 jdolecek Exp $
+#	$NetBSD: files,v 1.324 1999/10/15 06:09:29 haya Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -409,6 +409,8 @@ define	tcbus { }			# TurboChannel attachment
 define	usbus { }			# USB attachment
 define	vmebus { }			# VME bus attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
+define	cbbus {[slot = -1]}		# CardBus attachment
+define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself:
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
