@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1997/01/23 22:44:43 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1997/01/27 22:23:38 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ int bus_peek(bustype, paddr, sz)
 #endif
 
 
-char *
+void *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
@@ -343,7 +343,7 @@ bus_mapin(bustype, paddr, sz)
 	} while ((sz -= NBPG) > 0);
 #endif
 
-	return ((char*)retval);
+	return ((void*)retval);
 }
 
 int
