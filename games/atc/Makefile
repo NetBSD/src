@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/11/29 19:31:51 veego Exp $
+#	$NetBSD: Makefile,v 1.16 1998/02/18 22:37:30 jtc Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
@@ -6,8 +6,8 @@ CPPFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT
 SRCS=	extern.c grammar.c graphics.c input.c lex.c list.c log.c \
 	main.c tunable.c update.c
 MAN=	atc.6
-LDADD=	-ll -lm -lcurses -ltermcap
-DPADD=	${LIBL} ${LIBM} ${LIBTERM} ${LIBCURSES}
+LDADD=	-ll -lm -lcurses
+DPADD=	${LIBL} ${LIBM} ${LIBCURSES}
 GAMES=	ATC_scores Game_List Killer crossover default easy game_2 \
 	Atlantis OHare Tic-Tac-Toe airports box crosshatch game_3 \
 	game_4 novice two-corners
