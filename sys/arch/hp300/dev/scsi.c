@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.20 1997/04/27 20:58:58 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.21 1997/05/05 21:08:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -319,8 +319,7 @@ scsiattach(parent, self, aux)
 	hs->sc_regs = hd;
 
 	/* Establish the interrupt handler. */
-	(void) intr_establish(scsiintr, hs, ipl, IPL_BIO);
-	dmacomputeipl();
+	(void) dio_intr_establish(scsiintr, hs, ipl, IPL_BIO);
 
 	/* Reset the controller. */
 	scsireset(unit);
