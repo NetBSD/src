@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 1999/03/23 18:39:38 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 1999/03/24 02:45:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2716,11 +2716,11 @@ pmap_modified_emulation(pmap, va)
 
 	PDEBUG(0, printf("pmap_modified_emulation: Got a hit va=%08lx, pte = %p (%08x)\n",
 	    va, pte, *pte));
-	*pte = (*pte) | PT_AP(AP_W);
+	*pte = ((*pte) & ~L2_MASK) | L2_SPAGE | PT_AP(AP_W);
 	PDEBUG(0, printf("->(%08x)\n", *pte));
 	cpu_tlb_flushID_SE(va);
     
-	vm_physmem[bank].pmseg.attrs[off] |= PT_M | PT_H;
+	vm_physmem[bank].pmseg.attrs[off] |= PT_H | PT_M;
 
 	/* Return, indicating the problem has been dealt with */
 	return(1);
