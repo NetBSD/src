@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.36 2001/10/16 18:50:12 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.37 2002/01/27 01:50:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.36 2001/10/16 18:50:12 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.37 2002/01/27 01:50:54 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.36 2001/10/16 18:50:12 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.37 2002/01/27 01:50:54 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -162,7 +162,7 @@ CompatRunCommand (cmdp, gnp)
     int 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
     int	    	  cpid;	    	/* Child actually found */
-    ReturnStatus  stat;	    	/* Status of fork */
+    ReturnStatus  retstat;    	/* Status of fork */
     LstNode 	  cmdNode;  	/* Node where current command is located */
     char    	  **av;	    	/* Argument vector for thing to exec */
     int	    	  argc;	    	/* Number of arguments in av or 0 if not
@@ -304,13 +304,13 @@ CompatRunCommand (cmdp, gnp)
      */
     while (1) {
 
-	while ((stat = wait(&reason)) != cpid) {
-	    if (stat == -1 && errno != EINTR) {
+	while ((retstat = wait(&reason)) != cpid) {
+	    if (retstat == -1 && errno != EINTR) {
 		break;
 	    }
 	}
 
-	if (stat > -1) {
+	if (retstat > -1) {
 	    if (WIFSTOPPED(reason)) {
 		status = WSTOPSIG(reason);		/* stopped */
 	    } else if (WIFEXITED(reason)) {
@@ -345,7 +345,7 @@ CompatRunCommand (cmdp, gnp)
 	    }
 	    break;
 	} else {
-	    Fatal ("error in wait: %d: %s", stat, strerror(errno));
+	    Fatal ("error in wait: %d: %s", retstat, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.24 2001/11/12 01:33:49 tv Exp $	*/
+/*	$NetBSD: targ.c,v 1.25 2002/01/27 01:50:55 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.24 2001/11/12 01:33:49 tv Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.25 2002/01/27 01:50:55 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.24 2001/11/12 01:33:49 tv Exp $");
+__RCSID("$NetBSD: targ.c,v 1.25 2002/01/27 01:50:55 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -503,13 +503,13 @@ Targ_PrintCmd (cmd, dummy)
  *-----------------------------------------------------------------------
  */
 char *
-Targ_FmtTime (time)
-    time_t    time;
+Targ_FmtTime (tm)
+    time_t    tm;
 {
     struct tm	  	*parts;
     static char	  	buf[128];
 
-    parts = localtime(&time);
+    parts = localtime(&tm);
     (void)strftime(buf, sizeof buf, "%k:%M:%S %b %d, %Y", parts);
     return(buf);
 }
