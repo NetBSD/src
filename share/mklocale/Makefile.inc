@@ -1,9 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.4 2000/12/22 01:11:48 itojun Exp $
+# $NetBSD: Makefile.inc,v 1.5 2000/12/23 22:48:26 itojun Exp $
 # $FreeBSD: src/usr.bin/mklocale/data/Makefile,v 1.17.2.3 1999/08/29 15:31:04 peter Exp $
 
 NOMAN=YES
-
-MKLOCALE=	/usr/bin/mklocale
 
 LOCALES += da_DK.ISO8859-1
  LOCALESRC_da_DK.ISO8859-1 = en_US.ISO_8859-1
