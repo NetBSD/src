@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.435 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.436 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -230,3 +230,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	gem(4), hme(4): IPv4 TCP/UDP hardware checksumming added.
 		[heas 20050220]
 	file(1): update to 4.13.  [pooka 20050221]
+	openpam(3): update to 20050201 (feterita) [christos 20050226]
