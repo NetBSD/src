@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.4 1994/06/29 06:45:35 cgd Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.5 1994/09/16 23:57:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -179,16 +179,7 @@ struct kinfo_proc {
 		struct	session *e_sess;	/* session pointer */
 		struct	pcred e_pcred;		/* process credentials */
 		struct	ucred e_ucred;		/* current credentials */
-#ifdef sparc
-		struct {
-			segsz_t	vm_rssize;	/* resident set size */
-			segsz_t	vm_tsize;	/* text size */
-			segsz_t	vm_dsize;	/* data size */
-			segsz_t	vm_ssize;	/* stack size */
-		} e_vm;
-#else
 		struct	vmspace e_vm;		/* address space */
-#endif
 		pid_t	e_ppid;			/* parent process id */
 		pid_t	e_pgid;			/* process group id */
 		short	e_jobc;			/* job control counter */
