@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.10 1997/05/23 18:54:18 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.11 1997/06/29 06:34:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.10 1997/05/23 18:54:18 lukem Exp $";
+static char rcsid[] = "$NetBSD: fetch.c,v 1.11 1997/06/29 06:34:50 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -86,7 +86,7 @@ url_get(origline, proxyenv)
 	const char *proxyenv;
 {
 	struct sockaddr_in sin;
-	int i, out, port, s;
+	int i, out, port, s, isftpurl;
 	size_t buflen, len;
 	char c, *cp, *cp2, *savefile, *portnum, *path, buf[4096];
 	char *line, *proxy, *host;
@@ -95,25 +95,31 @@ url_get(origline, proxyenv)
 
 	s = -1;
 	proxy = NULL;
+	isftpurl = 0;
 
 	line = strdup(origline);
 	if (line == NULL)
 		errx(1, "Can't allocate memory to parse URL");
 	if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0)
 		host = line + sizeof(HTTP_URL) - 1;
-	else if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0)
+	else if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 		host = line + sizeof(FTP_URL) - 1;
-	else
+		isftpurl = 1;
+	} else
 		errx(1, "url_get: Invalid URL '%s'", line);
 
 	path = strchr(host, '/');		/* find path */
 	if (EMPTYSTRING(path)) {
-		warnx("Invalid URL: %s", origline);
+		if (isftpurl)
+			goto noftpautologin;
+		warnx("Invalid URL (no `/' after host): %s", origline);
 		goto cleanup_url_get;
 	}
 	*path++ = '\0';
 	if (EMPTYSTRING(path)) {
-		warnx("Invalid URL: %s", origline);
+		if (isftpurl)
+			goto noftpautologin;
+		warnx("Invalid URL (no file after host): %s", origline);
 		goto cleanup_url_get;
 	}
 
@@ -123,7 +129,9 @@ url_get(origline, proxyenv)
 	else
 		savefile = path;
 	if (EMPTYSTRING(savefile)) {
-		warnx("Invalid URL: %s", origline);
+		if (isftpurl)
+			goto noftpautologin;
+		warnx("Invalid URL (no file after directory): %s", origline);
 		goto cleanup_url_get;
 	}
 
@@ -337,8 +345,14 @@ url_get(origline, proxyenv)
 	free(line);
 	return (0);
 
+noftpautologin:
+	warnx(
+	    "Auto-login using ftp URLs isn't supported when using $ftp_proxy");
+	goto cleanup_url_get;
+
 improper:
 	warnx("Improper response from %s", host);
+
 cleanup_url_get:
 	if (s != -1)
 		close(s);
