@@ -1,22 +1,21 @@
-# $NetBSD: Makefile.booters,v 1.1 2001/11/21 19:09:06 thorpej Exp $
+# $NetBSD: Makefile.booters,v 1.2 2001/11/22 00:58:07 thorpej Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
 
-.BEGIN: machine sgimips mips
-${PROG} realdepend realall: machine sgimips mips
-CLEANFILES+= machine sgimips mips
-machine:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-sgimips:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-mips:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/mips/include mips
-
 BINMODE?=	444
+
+.PHONY: machine-links
+beforedepend: machine-links
+# ${MACHINE} then ${MACHINE_ARCH}
+machine-links:
+	-rm -f machine && \
+	    ln -s $S/arch/${MACHINE}/include machine
+	-rm -f mips && \
+	    ln -s $S/arch/mips/include mips
+CLEANFILES+= machine mips
+
+realall: machine-links ${PROG}
 
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL
@@ -32,9 +31,22 @@ CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 # PROG set by parent.
 MKMAN=		no
-LOAD_ADDRESS?=	0x89000000
+
+# We load the kernel at 512K in from the start of RAM to give the boot
+# loader plenty of breathing room.  Load the boot loader starting at
+# the second page of RAM.
+LOAD_ADDRESS?=		0x88002000
+
+# if there is a 'version' file, add rule for vers.c and add it to SRCS
+# and CLEANFILES
+.if exists(version)
+.PHONY: vers.c
+vers.c: ${.CURDIR}/version
+	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
+
 SRCS+=	vers.c
 CLEANFILES+= vers.c
+.endif
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -55,21 +67,6 @@ SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
 LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
-
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
-
-${PROG}: machine mips sgimips ${OBJS} ${LIBS}
-	${LD} -Map ${PROG}.map -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
-	    -e start -o ${PROG} ${OBJS} ${LIBS}
-	@${SIZE} ${PROG}
-.if defined(CHECKSIZE_CMD)
-	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} ${PRIMARY_MAX_TOTAL} || \
-	    (rm -f ${PROG} ; false)
-.endif
-
-CLEANFILES+=	${PROG}.map
 
 cleandir distclean: cleanlibdir
 
