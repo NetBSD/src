@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.10 2002/10/31 21:31:08 matt Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.11 2003/02/28 05:24:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -231,7 +231,7 @@ OF_seek(handle, pos)
 static __inline int
 OF_write(handle, addr, len)
 	int handle;
-	void *addr;
+	const void *addr;
 	int len;
 {
 	static struct {
@@ -239,7 +239,7 @@ OF_write(handle, addr, len)
 		int nargs;
 		int nreturns;
 		int ihandle;
-		void *addr;
+		const void *addr;
 		int len;
 		int actual;
 	} args = {
@@ -273,7 +273,8 @@ startup(arg1, arg2, openfirm)
 	int arg1, arg2;
 	void *openfirm;
 {
-	int fd, blk, chosen, options, i;
+	int fd, blk, chosen, options, j;
+	size_t i;
 	char *addr;
 	char bootpath[128];
 
@@ -307,10 +308,10 @@ startup(arg1, arg2, openfirm)
 
 	addr = (char *)entry_point;
 	putstr("\r\nread stage 2 blocks: ");
-	for (i = 0; i < bbinfo.bbi_block_count; i++) {
-		if ((blk = bbinfo.bbi_block_table[i]) == 0)
+	for (j = 0; j < bbinfo.bbi_block_count; j++) {
+		if ((blk = bbinfo.bbi_block_table[j]) == 0)
 			break;
-		putc('0' + i % 10);
+		putc('0' + j % 10);
 		OF_seek(fd, (u_quad_t)blk * 512);
 		OF_read(fd, addr, bbinfo.bbi_block_size);
 		addr += bbinfo.bbi_block_size;
@@ -320,14 +321,14 @@ startup(arg1, arg2, openfirm)
 	/*
 	 * enable D/I cache
 	 */
-	asm("
-		mtdbatu	3,%0
-		mtdbatl	3,%1
-		mtibatu	3,%0
-		mtibatl	3,%1
-		isync
-	" :: "r"(BATU(0, BAT_BL_256M, BAT_Vs)),
-	     "r"(BATL(0, 0, BAT_PP_RW)));
+	asm(
+		"mtdbatu	3,%0\n\t"
+		"mtdbatl	3,%1\n\t"
+		"mtibatu	3,%0\n\t"
+		"mtibatl	3,%1\n\t"
+		"isync"
+	   ::	"r"(BATU(0, BAT_BL_256M, BAT_Vs)),
+		"r"(BATL(0, 0, BAT_PP_RW)));
 
 	entry_point(0, 0, openfirm);
 	for (;;);			/* just in case */
