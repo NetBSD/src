@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.125 2001/05/16 12:57:27 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.126 2001/05/17 13:14:19 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -160,6 +160,7 @@ product IBM ETHERJET		0x003f IBM EtherJet Ethernet
 
 /* Intel Products */
 product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
+product INTEL PRO_WLAN_2011	0x0001 Intel PRO/Wireless 2011 LAN PC Card
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
