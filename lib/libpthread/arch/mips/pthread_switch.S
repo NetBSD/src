@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2002/11/24 07:01:27 wdk Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.4 2002/12/01 10:26:05 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,13 +60,13 @@
 
 # define PIC_CALL(l,sr)		  \
 	la sr, _C_LABEL(l)	; \
-	jalr sr			; \
-	nop
+	jalr sr
+
 #else
 # define PIC_PROLOGUE(x,sr)
 # define PIC_CALL(l,sr)		  \
-	jal  _C_LABEL(l)	; \
-	nop
+	jalr  _C_LABEL(l)
+
 #endif
 	
 /* Force an error when "notreached" code is reached. */
@@ -75,9 +75,9 @@
 	/* NOTREACHED */
 
 NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PIC_PROLOGUE(pthread__switch, t9)
 	subu	sp, sp, (CALLFRAME_SIZ+CONTEXTSIZE)
-	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	sw	ra, CALLFRAME_RA(sp)
 	la	t0, CALLFRAME_SIZ(sp)
 	sw	t0, PT_UC(a0)
@@ -87,7 +87,6 @@ NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	lw	ra, CALLFRAME_RA(sp)
 	addiu	sp, (CALLFRAME_SIZ+CONTEXTSIZE)
 	j	ra
-	nop
 	END(pthread__switch)
 
 /* 		*** WARNING ***
@@ -115,7 +114,6 @@ NESTED(pthread__switch_away, CALLFRAME_SIZ, ra)
 	 * using the old stack.  
 	 */
 	beqz	a2, 1f
-	nop
 	lw	t0, PT_SPINLOCKS(a0)
 	subu	t0, t0, 1
 	sw	t0, PT_SPINLOCKS(a0)
@@ -126,9 +124,9 @@ NESTED(pthread__switch_away, CALLFRAME_SIZ, ra)
 	END(pthread__switch_away)
 	
 NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
+	.mask	0x80000070, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PIC_PROLOGUE(pthread__locked_switch, t9)
 	subu	sp, sp, (CALLFRAME_SIZ+CONTEXTSIZE)
-	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	sw	ra, CALLFRAME_RA(sp)
 	sw	a0, 0(sp)
 	sw	a1, 4(sp)
@@ -149,9 +147,9 @@ NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	lw	a2, 8(sp)
 
 	/* Edit the context to make it continue below, rather than here */
-	la	t0, CALLFRAME_SIZ(sp)
+	la	t3, CALLFRAME_SIZ(sp)
 	la	t1, locked_return_point
-	sw	t1, UC_EPC(t0)
+	sw	t1, UC_EPC(t3)
 	
 	STACK_SWITCH(a1, t2)
 
@@ -184,8 +182,8 @@ NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 
 	move	a0, a1
 	move	a1, t0
+	li	a2, 1
 	j	pthread__switch_away
-	li	a2, 1		# bdslot
 	NOTREACHED
 
 	/* No locked old-preemption */
@@ -214,17 +212,18 @@ NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
 	sw	t2, PT_SWITCHTOUC(a1)
 	move	a0, a1
 	move	a1, t0
+	li	a2, 0
 	j	pthread__switch_away
-	li	a2, 0		# bdslot
 	NOTREACHED
 
-2:	move	 a0, t2
+2:	move	a0, t2
 	PIC_CALL(_setcontext_u, t9)
-locked_return_point:	
+	NOTREACHED
+
+locked_return_point:
 	lw	ra, CALLFRAME_RA(sp)
 	addiu	sp, sp, (CALLFRAME_SIZ+CONTEXTSIZE)
 	j	ra
-	nop
 	END(pthread__locked_switch)
 
 /*
@@ -236,6 +235,7 @@ locked_return_point:
 NESTED(pthread__upcall_switch, 0, ra)
 	.mask	0x00000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PIC_PROLOGUE(pthread__upcall_switch, t9)
+
 	/* Loading the global pointer is unnecessary;  this routine
 	 * is only ever called from the pthreads module, and the C
 	 * code will have gp set up.
@@ -255,7 +255,6 @@ NESTED(pthread__upcall_switch, 0, ra)
 	/* Check if the upcall code was preempted and continued to here. */
 	lw	t0, PT_NEXT(a0)
 	beqz	t0, 1f
-	nop
 
 	/* Yes, it was. Stash the thread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
@@ -266,15 +265,14 @@ NESTED(pthread__upcall_switch, 0, ra)
 	sw	t1, PT_STATE(a0)
 	move	a0, a1
 	move	a1, t0
+	li	a2, 1
 	j	pthread__switch_away
-	li	a2, 1		# bdslot
 	NOTREACHED
 	
 	/* No old-upcall-preemption */
 1:	move	s0, a0
 	move	s1, a1
 	PIC_CALL(pthread__sa_recycle, t9)
-	nop
 	move	a0, s0
 	move	a1, s1
 	
@@ -286,7 +284,6 @@ NESTED(pthread__upcall_switch, 0, ra)
 	/* Check if we were preempted and continued while faking the lock */
 	lw	t0, PT_NEXT(a1)
 	beqz	t0, 2f
-	nop
 
 	/* Yes, we were. Stash the to-be-switched-to context in our thread
 	 * structure and go to the next link in the chain.
@@ -295,12 +292,11 @@ NESTED(pthread__upcall_switch, 0, ra)
 	sw	s2, PT_SWITCHTOUC(a1)
 	move	a0, a1
 	move	a1, t0
+	li	a2, 0
 	j	pthread__switch_away	
-	li	a2, 0			# bdslot
 
 	/* No new-upcall-preemption */
 2:	move	a0, s2
 	PIC_CALL(_setcontext_u, t9)
-	nop
 	NOTREACHED
 	END(pthread__upcall_switch)
