@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2001/03/04 05:08:09 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2001/03/04 07:30:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -139,12 +139,12 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 
 int pv_nfree = 0;
 
-vm_size_t npages;
+vsize_t npages;
 
-extern vaddr_t physical_start;
-extern vaddr_t physical_freestart;
-extern vaddr_t physical_end;
-extern vaddr_t physical_freeend;
+extern paddr_t physical_start;
+extern paddr_t physical_freestart;
+extern paddr_t physical_end;
+extern paddr_t physical_freeend;
 extern unsigned int free_pages;
 extern int max_processes;
 
@@ -173,10 +173,10 @@ int l1pt_reuse_count;			/* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
 pt_entry_t *pmap_pte __P((pmap_t pmap, vaddr_t va));
-int pmap_page_index __P((vaddr_t pa)); 
+int pmap_page_index __P((paddr_t pa)); 
 void map_pagetable __P((vaddr_t pagetable, vaddr_t va,
-    vaddr_t pa, unsigned int flags));
-void pmap_copy_on_write __P((vaddr_t pa));
+    paddr_t pa, unsigned int flags));
+void pmap_copy_on_write __P((paddr_t pa));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
@@ -215,8 +215,8 @@ pmap_debug(level)
 bus_dma_segment_t *pmap_isa_dma_ranges;
 int pmap_isa_dma_nranges;
 
-boolean_t pmap_isa_dma_range_intersect __P((vaddr_t, vm_size_t,
-	    vaddr_t *, vm_size_t *));
+boolean_t pmap_isa_dma_range_intersect __P((paddr_t, psize_t,
+	    paddr_t *, psize_t *));
 
 /*
  * Check if a memory range intersects with an ISA DMA range, and
@@ -225,10 +225,10 @@ boolean_t pmap_isa_dma_range_intersect __P((vaddr_t, vm_size_t,
  */
 boolean_t
 pmap_isa_dma_range_intersect(pa, size, pap, sizep)
-	vaddr_t pa;
-	vm_size_t size;
-	vaddr_t *pap;
-	vm_size_t *sizep;
+	paddr_t pa;
+	psize_t size;
+	paddr_t *pap;
+	psize_t *sizep;
 {
 	bus_dma_segment_t *ds;
 	int i;
@@ -667,8 +667,8 @@ pmap_map(va, spa, epa, prot)
  * to zero physical pages of memory.
  * It also initialises the start and end address of the kernel data space.
  */
-extern vaddr_t physical_freestart;
-extern vaddr_t physical_freeend;
+extern paddr_t physical_freestart;
+extern paddr_t physical_freeend;
 
 struct pv_entry *boot_pvent;
 char *boot_attrs;
@@ -679,10 +679,10 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	pv_addr_t kernel_ptpt;
 {
 	int loop;
-	vaddr_t start, end;
+	paddr_t start, end;
 #if NISADMA > 0
-	vaddr_t istart;
-	vm_size_t isize;
+	paddr_t istart;
+	psize_t isize;
 #endif
 	vsize_t size;
 
@@ -702,7 +702,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	npages = 0;
 	loop = 0;
 	while (loop < bootconfig.dramblocks) {
-		start = (vaddr_t)bootconfig.dram[loop].address;
+		start = (paddr_t)bootconfig.dram[loop].address;
 		end = start + (bootconfig.dram[loop].pages * NBPG);
 		if (start < physical_freestart)
 			start = physical_freestart;
@@ -936,7 +936,8 @@ pmap_create()
 struct l1pt *
 pmap_alloc_l1pt(void)
 {
-	vaddr_t va, pa;
+	paddr_t pa;
+	vaddr_t va;
 	struct l1pt *pt;
 	int error;
 	vm_page_t m;
@@ -1029,7 +1030,7 @@ int
 pmap_allocpagedir(pmap)
 	struct pmap *pmap;
 {
-	vaddr_t pa;
+	paddr_t pa;
 	struct l1pt *pt;
 	pt_entry_t *pte;
 
@@ -1378,7 +1379,7 @@ pmap_clean_page(pv)
  */
 static __inline struct pv_entry *
 pmap_find_pv(phys)
-	vaddr_t phys;
+	paddr_t phys;
 {
 	int bank, off;
 	struct pv_entry *pv;
@@ -1404,7 +1405,7 @@ pmap_find_pv(phys)
  */
 void
 pmap_zero_page(phys)
-	vaddr_t phys;
+	paddr_t phys;
 {
 	struct pv_entry *pv;
 
@@ -1431,8 +1432,8 @@ pmap_zero_page(phys)
  */
 void
 pmap_copy_page(src, dest)
-	vaddr_t src;
-	vaddr_t dest;
+	paddr_t src;
+	paddr_t dest;
 {
 	struct pv_entry *src_pv, *dest_pv;
 	
@@ -1457,15 +1458,15 @@ pmap_copy_page(src, dest)
 }
 
 /*
- * int pmap_next_phys_page(vaddr_t *addr)
+ * int pmap_next_phys_page(paddr_t *addr)
  *
  * Allocate another physical page returning true or false depending
  * on whether a page could be allocated.
  */
  
-vaddr_t
+paddr_t
 pmap_next_phys_page(addr)
-	vaddr_t addr;
+	paddr_t addr;
 	
 {
 	int loop;
@@ -1500,7 +1501,7 @@ pmap_pte_addref(pmap, va)
 	vaddr_t va;
 {
 	pd_entry_t *pde;
-	vaddr_t pa;
+	paddr_t pa;
 	struct vm_page *m;
 
 	if (pmap == pmap_kernel())
@@ -1522,7 +1523,7 @@ pmap_pte_delref(pmap, va)
 	vaddr_t va;
 {
 	pd_entry_t *pde;
-	vaddr_t pa;
+	paddr_t pa;
 	struct vm_page *m;
 
 	if (pmap == pmap_kernel())
@@ -1649,7 +1650,7 @@ pmap_remove(pmap, sva, eva)
 		pt_entry_t *pte;
 	} cleanlist[PMAP_REMOVE_CLEAN_LIST_SIZE];
 	pt_entry_t *pte = 0;
-	vaddr_t pa;
+	paddr_t pa;
 	int pmap_active;
 	struct pv_entry *pv;
 
@@ -1786,7 +1787,7 @@ pmap_remove(pmap, sva, eva)
 
 void
 pmap_remove_all(pa)
-	vaddr_t pa;
+	paddr_t pa;
 {
 	struct pv_entry *ph, *pv, *npv;
 	pmap_t pmap;
@@ -1868,7 +1869,7 @@ pmap_protect(pmap, sva, eva, prot)
 	pt_entry_t *pte = NULL;
 	int armprot;
 	int flush = 0;
-	vaddr_t pa;
+	paddr_t pa;
 	int bank, off;
 	struct pv_entry *pv;
 
@@ -1951,7 +1952,7 @@ next:
 }
 
 /*
- * void pmap_enter(pmap_t pmap, vaddr_t va, vaddr_t pa, vm_prot_t prot,
+ * void pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
  * int flags)
  *  
  *      Insert the given physical page (p) at
@@ -1970,7 +1971,7 @@ int
 pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
-	vaddr_t pa;
+	paddr_t pa;
 	vm_prot_t prot;
 	int flags;
 {
@@ -1978,7 +1979,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	u_int npte;
 	int bank, off;
 	struct pv_entry *pv = NULL;
-	vaddr_t opa;
+	paddr_t opa;
 	int nflags;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
@@ -2011,7 +2012,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 */
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
-		vaddr_t l2pa;
+		paddr_t l2pa;
 		struct vm_page *m;
 	
 		/* Allocate a page table */
@@ -2250,7 +2251,7 @@ pmap_unwire(pmap, va)
 	vaddr_t va;
 {
 	pt_entry_t *pte;
-	vaddr_t pa;
+	paddr_t pa;
 	int bank, off;
 	struct pv_entry *pv;
 
@@ -2443,7 +2444,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	pmap_t dst_pmap;
 	pmap_t src_pmap;
 	vaddr_t dst_addr;
-	vm_size_t len;
+	vsize_t len;
 	vaddr_t src_addr;
 {
 	PDEBUG(0, printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
@@ -2481,7 +2482,7 @@ pmap_dump_pvlist(phys, m)
 
 boolean_t
 pmap_testbit(pa, setbits)
-	vaddr_t pa;
+	paddr_t pa;
 	int setbits;
 {
 	int bank, off;
@@ -2512,7 +2513,7 @@ pmap_testbit(pa, setbits)
 
 void
 pmap_clearbit(pa, maskbits)
-	vaddr_t pa;
+	paddr_t pa;
 	int maskbits;
 {
 	struct pv_entry *pv;
@@ -2595,7 +2596,7 @@ pmap_clear_reference(pg)
 
 void
 pmap_copy_on_write(pa)
-	vaddr_t pa;
+	paddr_t pa;
 {
 	PDEBUG(0, printf("pmap_copy_on_write pa=%08lx\n", pa));
 	pmap_clearbit(pa, PT_Wr);
@@ -2634,7 +2635,7 @@ pmap_modified_emulation(pmap, va)
 	vaddr_t va;
 {
 	pt_entry_t *pte;
-	vaddr_t pa;
+	paddr_t pa;
 	int bank, off;
 	struct pv_entry *pv;
 	u_int flags;
@@ -2696,7 +2697,7 @@ pmap_handled_emulation(pmap, va)
 	vaddr_t va;
 {
 	pt_entry_t *pte;
-	vaddr_t pa;
+	paddr_t pa;
 	int bank, off;
 
 	PDEBUG(2, printf("pmap_handled_emulation\n"));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2001/03/04 03:50:33 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2001/03/04 07:30:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -61,7 +61,7 @@ struct pmap {
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
 	struct l1pt		*pm_l1pt;	/* L1 descriptor */
 	void			*pm_unused1;	/* Reserved for l2 map */
-	vaddr_t			pm_pptpt;	/* PA of pt's page table */
+	paddr_t			pm_pptpt;	/* PA of pt's page table */
 	vaddr_t			pm_vptpt;	/* VA of pt's page table */
 	short			pm_dref;	/* page directory ref count */
 	short			pm_count;	/* pmap reference count */
@@ -125,7 +125,7 @@ typedef struct {
  * addresses of various pages
  */
 typedef struct {
-	vaddr_t pv_pa;
+	paddr_t pv_pa;
 	vaddr_t pv_va;
 } pv_addr_t;
 
@@ -155,8 +155,8 @@ extern struct pmap	kernel_pmap_store;  /* kernel_pmap points to this */
 /*
  * Functions that we need to export
  */
-extern boolean_t pmap_testbit __P((vaddr_t, int));
-extern void pmap_changebit __P((vaddr_t, int, int));
+extern boolean_t pmap_testbit __P((paddr_t, int));
+extern void pmap_changebit __P((paddr_t, int, int));
 extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
 void	pmap_procwr __P((struct proc *, vaddr_t, u_long));
 #define	PMAP_NEED_PROCWR
