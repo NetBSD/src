@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.h,v 1.2 2001/12/24 21:36:54 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.h,v 1.3 2001/12/29 13:46:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct umass_quirk {
 	u_int8_t		uq_wire;
 	u_int8_t		uq_cmd;
 	u_int32_t		uq_flags;
+	u_int32_t		uq_busquirks;
 	int			uq_match;
 
 	umass_init_quirk	uq_init;
