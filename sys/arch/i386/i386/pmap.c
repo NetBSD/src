@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.12 1994/01/04 00:15:26 mycroft Exp $
+ *	$Id: pmap.c,v 1.13 1994/02/12 07:14:15 mycroft Exp $
  */
 
 /*
@@ -303,7 +303,7 @@ pmap_bootstrap(virtual_start)
 	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
 #endif
 
-	/* undo temporary double mapping */
+	/* XXX undo temporary double mapping */
 	*(int *)PTD = 0;
 	tlbflush();
 }
@@ -972,8 +972,10 @@ validate:
 		printf("enter: new pte value %x ", npte);
 #endif
 
-	*(int *)pte = npte;
-	tlbflush();
+	if (*(int *)pte != npte) {
+		*(int *)pte = npte;
+		tlbflush();
+	}
 }
 
 /*
@@ -1526,13 +1528,13 @@ pmap_changebit(pa, setbits, maskbits)
 
 			pte = (int *) pmap_pte(pv->pv_pmap, va);
 			npte = (*pte & maskbits) | setbits;
-			if (*pte != npte)
+			if (*pte != npte) {
 				*pte = npte;
+				if (curproc && pv->pv_pmap == &curproc->p_vmspace->vm_pmap)
+					tlbflush();
+			}
 			va += NBPG;
 			pte++;
-
-			if (curproc && pv->pv_pmap == &curproc->p_vmspace->vm_pmap)
-				tlbflush();
 		}
 #ifdef somethinglikethis
 		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
