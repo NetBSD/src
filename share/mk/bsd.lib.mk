@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.135 1998/04/17 13:34:55 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.136 1998/05/02 15:19:04 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -344,7 +344,7 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
+	    ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
 .endif
 .endif
 
