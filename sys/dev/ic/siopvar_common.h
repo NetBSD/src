@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.19 2002/04/23 20:41:16 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.20 2002/05/04 18:11:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -170,6 +170,7 @@ struct siop_common_softc {
 #define SF_CHIP_10REGS	0x00010000 /* 10 scratch registers */
 #define SF_CHIP_DFBC	0x00020000 /* Use DFBC register */
 #define SF_CHIP_DT	0x00040000 /* DT clocking */
+#define SF_CHIP_GEBUG	0x00080000 /* SCSI gross error bug */
 
 #define SF_PCI_RL	0x01000000 /* PCI read line */
 #define SF_PCI_RM	0x02000000 /* PCI read multiple */
