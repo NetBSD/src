@@ -95,6 +95,7 @@
 Huh? Slip without inet?
 #endif
 
+#include <machine/cpu.h>		/* XXX */
 #include <machine/mtpr.h>
 
 #include <net/slcompress.h>
