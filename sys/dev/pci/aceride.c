@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.3 2003/10/24 00:24:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -66,7 +66,9 @@ aceride_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI) {
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
 		if (pciide_lookup_product(pa->pa_id, pciide_acer_products))
 			return (2);
 	}
