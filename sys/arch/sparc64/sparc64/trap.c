@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 2003/11/25 05:14:58 cdi Exp $ */
+/*	$NetBSD: trap.c,v 1.104 2003/12/03 20:23:41 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2003/11/25 05:14:58 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2003/12/03 20:23:41 petrov Exp $");
 
 #define NEW_FPSTATE
 
@@ -955,11 +955,6 @@ badtrap:
 		printf("trap: done\n");
 		/* if (type != T_BREAKPOINT) Debugger(); */
 	}
-#if 0
-	if (trapdebug & TDB_FRAME) {
-		print_trapframe(tf);
-	}
-#endif
 #endif
 }
 
@@ -1858,15 +1853,15 @@ out:
  */
 void
 syscall(tf, code, pc)
-	register_t code;
 	struct trapframe64 *tf;
+	register_t code;
 	register_t pc;
 {
 	int i, nsys, nap;
 	int64_t *ap;
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
-	struct proc *p = curproc;
+	struct proc *p = l->l_proc;
 	int error = 0, new;
 	union args {
 		register32_t i[8];
@@ -1874,7 +1869,6 @@ syscall(tf, code, pc)
 	} args;
 	register_t rval[2];
 	u_quad_t sticks;
-	vaddr_t dest;
 	vaddr_t opc, onpc;
 
 #ifdef DEBUG
@@ -1925,13 +1919,11 @@ syscall(tf, code, pc)
 	onpc = tf->tf_npc;
 
 	if (new)
-		dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+		tf->tf_pc = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
 	else
-		dest = tf->tf_npc;
+		tf->tf_pc = tf->tf_npc;
 
-	tf->tf_pc = dest;
-	tf->tf_npc = dest + 4;
-
+	tf->tf_npc = tf->tf_pc + 4;
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -2003,26 +1995,8 @@ syscall(tf, code, pc)
 		/* 64-bit stack -- not really supported on 32-bit kernels */
 		callp += code;
 		i = callp->sy_narg; /* Why divide? */
-#ifdef DEBUG
-		if (i != (long)callp->sy_argsize / sizeof(register64_t))
-			printf("syscall %s: narg=%hd, argsize=%hd, call=%p, "
-			       "argsz/reg64=%ld\n",
-			       p->p_emul->e_syscallnames ?
-			       ((code < 0 || code >= nsys) ? 
-				"illegal syscall" : 
-				p->p_emul->e_syscallnames[code])
-			       : "unknown syscall", 
-			       callp->sy_narg, callp->sy_argsize,
-			       callp->sy_call,
-			       (long)callp->sy_argsize / sizeof(register64_t));
-#endif
+
 		if (i > nap) {	/* usually false */
-#ifdef DEBUG
-			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW) || i > 8) {
-				printf("Args64 %d>%d -- need to copyin\n",
-				       i, nap);
-			}
-#endif
 			if (i > 8)
 				panic("syscall nargs");
 			/* Read the whole block in */
@@ -2038,7 +2012,7 @@ syscall(tf, code, pc)
 		
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p, code, code, NULL, (register_t *)args.l);
+			ktrsyscall(p, code, code, NULL, (register_t *)&args);
 #endif
 		if (error)
 			goto bad;
@@ -2055,26 +2029,21 @@ syscall(tf, code, pc)
 #endif
 	} else {
 		register32_t *argp;
-		int j = 0;
+		int j;
 
 		/* 32-bit stack */
 		callp += code;
 
-#if defined(__arch64__) && defined(DEBUG)
-		if ((curproc->p_flag & P_32) == 0) {
+#ifdef DIAGNOSTIC
+#if defined(__arch64__)
+		if ((curproc->p_flag & P_32) == 0)
 			printf("syscall(): 32-bit stack but no P_32\n");
-			Debugger();
-		}
+#endif
 #endif
 
 		i = (long)callp->sy_argsize / sizeof(register32_t);
 		if (i > nap) {	/* usually false */
 			register32_t temp[6];
-#ifdef DEBUG
-			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW) || i > 8)
-				printf("Args %d>%d -- need to copyin\n",
-				       i, nap);
-#endif
 			if (i > 8)
 				panic("syscall nargs");
 			/* Read the whole block in */
@@ -2117,9 +2086,9 @@ syscall(tf, code, pc)
 #endif
 		}
 #endif /* KTRACE */
-		if (error) {
+		if (error)
 			goto bad;
-		}
+
 #ifdef DEBUG
 		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) {
 			for (i = 0; i < (long)callp->sy_argsize /
@@ -2147,6 +2116,7 @@ syscall(tf, code, pc)
 		       "unknown syscall");
 	}
 #endif
+
         /* Lock the kernel if the syscall isn't MP-safe. */
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_LOCK(l);
@@ -2161,50 +2131,10 @@ syscall(tf, code, pc)
 		/* Note: fork() does not return here in the child */
 		tf->tf_out[0] = rval[0];
 		tf->tf_out[1] = rval[1];
-		if (new) {
-#if 0
-			/* jmp %g2 (or %g7, deprecated) on success */
-			dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
-#endif
-#ifdef DEBUG
-			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
-				printf("syscall: return tstate=%llx new "
-				       "success to %p retval %lx:%lx\n", 
-				       (unsigned long long)tf->tf_tstate,
-				       (void *)(u_long)dest,
-				       (u_long)rval[0], (u_long)rval[1]);
-#endif
-#if 0
-			if (dest & 3) {
-				error = EINVAL;
-				goto bad;
-			}
-#endif
-		} else {
+		if (!new)
 			/* old system call convention: clear C on success */
 			tf->tf_tstate &= ~(((int64_t)(ICC_C | XCC_C)) <<
 					   TSTATE_CCR_SHIFT);	/* success */
-#if 0
-			dest = tf->tf_npc;
-#endif
-#ifdef DEBUG
-			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
-				printf("syscall: return tstate=%llx old "
-				       "success to %p retval %lx:%lx\n", 
-				       (unsigned long long)tf->tf_tstate,
-				       (void *)(u_long)dest,
-				       (u_long)rval[0], (u_long)rval[1]);
-			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
-				printf("old pc=%p npc=%p dest=%p\n",
-				    (void *)(u_long)tf->tf_pc,
-				    (void *)(u_long)tf->tf_npc,
-				    (void *)(u_long)dest);
-#endif
-		}
-#if 0
-		tf->tf_pc = dest;
-		tf->tf_npc = dest + 4;
-#endif
 		break;
 
 	case ERESTART:
@@ -2225,12 +2155,6 @@ syscall(tf, code, pc)
 				  TSTATE_CCR_SHIFT);	/* fail */
 		tf->tf_pc = onpc;
 		tf->tf_npc = tf->tf_pc + 4;
-#ifdef DEBUG
-		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) 
-			printf("syscall: return tstate=%llx fail %d to %p\n", 
-			       (unsigned long long)tf->tf_tstate, error,
-			       (void *)(long)dest);
-#endif
 		break;
 	}
 
@@ -2245,8 +2169,6 @@ syscall(tf, code, pc)
 	if (trapdebug & (TDB_STOPCALL | TDB_SYSTOP)) { 
 		Debugger();
 	}
-#endif
-#ifdef DEBUG
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
