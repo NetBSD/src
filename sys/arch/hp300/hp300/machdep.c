@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.74 92/12/20$
  *
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
- *	$Id: machdep.c,v 1.37 1994/05/23 06:15:09 mycroft Exp $
+ *	$Id: machdep.c,v 1.38 1994/07/05 17:08:16 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -71,9 +71,6 @@
 #endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
-#endif
-#ifdef COMPAT_HPUX
-#include <hp300/hpux/hpux.h>
 #endif
 
 #include <machine/cpu.h>
@@ -433,8 +430,8 @@ setregs(p, entry, stack, retval)
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
 #ifdef COMPAT_HPUX
+	p->p_md.md_flags &= ~MDP_HPUXMMAP;
 	if (p->p_emul == EMUL_HPUX) {
-
 		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
 #ifdef FPCOPROC
