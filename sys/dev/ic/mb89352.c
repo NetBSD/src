@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.30 2004/08/11 14:22:34 mycroft Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.31 2004/08/11 14:28:44 mycroft Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.30 2004/08/11 14:22:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.31 2004/08/11 14:28:44 mycroft Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1640,9 +1640,14 @@ spc_datain_pio(sc, p, n)
 	 */
 	if (in == 0) {
 		for (;;) {
-			/* XXX needs timeout */
-			if (bus_space_read_1(iot, ioh, INTS) != 0)
-				break;
+			sstat = bus_space_read_1(iot, ioh, SSTS);
+			if ((sstat & SSTS_DREG_EMPTY) == 0) {
+				(void) bus_space_read_1(iot, ioh, DREG);
+			} else {
+				intstat = bus_space_read_1(iot, ioh, INTS);
+				if (intstat != 0)
+					goto phasechange;
+			}
 		}
 		SPC_MISC(("extra data  "));
 	}
