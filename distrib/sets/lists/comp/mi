@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.527 2003/01/28 20:31:41 kleink Exp $
+#	$NetBSD: mi,v 1.528 2003/02/01 06:32:10 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -297,6 +297,7 @@
 ./usr/include/login_cap.h		comp-c-include
 ./usr/include/lwp.h			comp-c-include
 ./usr/include/malloc.h			comp-c-include
+./usr/include/mallocvar.h		comp-c-include
 ./usr/include/math.h			comp-c-include
 ./usr/include/md2.h			comp-c-include
 ./usr/include/md4.h			comp-c-include
