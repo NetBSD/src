@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.62 2000/12/01 07:59:47 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.63 2000/12/18 02:32:51 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd December 1, 2000
+.Dd December 18, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl dHlqQrsuUwW
+.Op Fl dHlqQrsuUwWX
 .Op Fl a Ar anondir
 .Op Fl c Ar confdir
 .Op Fl C Ar user
@@ -103,11 +103,24 @@ as the directory to
 .Xr chroot 2
 into for anonymous logins.
 Default is the home directory for the ftp user.
+This can also be specified with the
+.Xr ftpd.conf 5
+.Sy chroot
+directive.
 .It Fl c Ar confdir
 Change the root directory of the configuration files from
 .Dq Pa /etc
 to
 .Ar confdir .
+This changes the directory for the following files:
+.Pa /etc/ftpchroot ,
+.Pa /etc/ftpusers ,
+.Pa /etc/ftpwelcome ,
+.Pa /etc/motd ,
+and the file specified by the
+.Xr ftpd.conf 5
+.Sy limit
+directive.
 .It Fl C Ar user
 Check whether
 .Ar user
@@ -119,7 +132,7 @@ and exit without attempting a connection.
 exits with an exit code of 0 if access would be granted, or 1 otherwise.
 This can be useful for testing configurations.
 .It Fl d
-Debugging information is written to the syslog using
+Debugging information is written to the syslog using a facility of
 .Dv LOG_FTP .
 .It Fl e Ar emailaddr
 Use
@@ -156,8 +169,8 @@ Each successful and failed
 .Tn FTP
 session is logged using syslog with a facility of
 .Dv LOG_FTP .
-If this option is specified twice, the retrieve (get), store (put), append,
-delete, make directory, remove directory and rename operations and
+If this option is specified more than once, the retrieve (get), store (put),
+append, delete, make directory, remove directory and rename operations and
 their file name arguments are also logged.
 .It Fl P Ar dataport
 Use
@@ -228,6 +241,23 @@ Don't log each
 .Tn FTP
 session to
 .Pa /var/log/wtmp .
+.It Fl X
+Log
+.Tn wu-ftpd
+style
+.Sq xferlog
+entries to the syslog, prefixed with
+.Dq "xferlog:\ " ,
+using a facility of
+.Dv LOG_FTP .
+These syslog entries can be converted to a
+.Tn wu-ftpd
+style
+.Pa xferlog
+file suitable for input into a third-party log analysis tool with a command
+similar to:
+.Dl "grep 'xferlog: ' /var/log/xferlog | \e"
+.Dl "\ \ \ sed -e 's/^.*xferlog: //' > wuxferlog"
 .El
 .Pp
 The file
@@ -247,13 +277,13 @@ prints it before issuing the
 message.
 If the file
 .Pa /etc/motd
-exists,
+exists (under the chroot directory if applicable),
 .Nm
 prints it after a successful login.
-(This may be changed with the
+This may be changed with the
 .Xr ftpd.conf 5
 directive
-.Sy upload . )
+.Sy motd .
 .Pp
 The
 .Nm

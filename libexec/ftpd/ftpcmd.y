@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.58 2000/11/30 02:59:11 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.59 2000/12/18 02:32:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.58 2000/11/30 02:59:11 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.59 2000/12/18 02:32:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ cmd
 			reply(221,
 			    "Thank you for using the FTP service on %s.",
 			    hostname);
-			if (logged_in) {
+			if (logged_in && logging) {
 				syslog(LOG_INFO,
 		"Data traffic: " LLF " byte%s in " LLF " file%s",
 				    (LLT)total_data, PLURAL(total_data),
@@ -862,7 +862,7 @@ rcmd
 		{
 			if ($2) {
 				fromname = NULL;
-				restart_point = $4; /* XXX $4 is only "int" */
+				restart_point = $4; /* XXX: $4 is only "int" */
 				reply(350,
     "Restarting at " LLF ". Send STORE or RETRIEVE to initiate transfer.",
 				    (LLT)restart_point);
@@ -955,7 +955,7 @@ host_long_port6
 			 a[8] = $21;  a[9] = $23; a[10] = $25; a[11] = $27;
 			a[12] = $29; a[13] = $31; a[14] = $33; a[15] = $35;
 			if (his_addr.su_family == AF_INET6) {
-				/* XXX more sanity checks! */
+				/* XXX: more sanity checks! */
 				data_dest.su_scope_id = his_addr.su_scope_id;
 			}
 #else

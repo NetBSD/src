@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 2000/11/16 13:15:13 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 2000/12/18 02:32:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,17 +38,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.36 2000/11/16 13:15:13 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.37 2000/12/18 02:32:50 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <netdb.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -71,6 +73,13 @@ static char *strend(const char *, char *);
 static int filetypematch(char *, int);
 
 
+		/* class defaults */
+#define DEFAULT_LIMIT		-1		/* unlimited connections */
+#define DEFAULT_MAXFILESIZE	-1		/* unlimited file size */
+#define DEFAULT_MAXTIMEOUT	7200		/* 2 hours */
+#define DEFAULT_TIMEOUT		900		/* 15 minutes */
+#define DEFAULT_UMASK		027		/* 15 minutes */
+
 /*
  * Initialise curclass to an `empty' state
  */
@@ -88,26 +97,28 @@ init_curclass(void)
 		free(conv);
 	}
 
+	memset((char *)&curclass.advertise, 0, sizeof(curclass.advertise));
+	curclass.advertise.su_len = 0;		/* `not used' */
 	REASSIGN(curclass.chroot, NULL);
 	REASSIGN(curclass.classname, NULL);
 	curclass.conversions =	NULL;
 	REASSIGN(curclass.display, NULL);
 	REASSIGN(curclass.homedir, NULL);
-	curclass.limit =	-1;		/* unlimited connections */
+	curclass.limit =	DEFAULT_LIMIT;	
 	REASSIGN(curclass.limitfile, NULL);
-	curclass.maxfilesize =	-1;		/* unlimited file size */
+	curclass.maxfilesize =	DEFAULT_MAXFILESIZE;
 	curclass.maxrateget =	0;
 	curclass.maxrateput =	0;
-	curclass.maxtimeout =	7200;		/* 2 hours */
+	curclass.maxtimeout =	DEFAULT_MAXTIMEOUT;
 	REASSIGN(curclass.motd, xstrdup(_PATH_FTPLOGINMESG));
 	REASSIGN(curclass.notify, NULL);
 	curclass.portmin =	0;
 	curclass.portmax =	0;
 	curclass.rateget =	0;
 	curclass.rateput =	0;
-	curclass.timeout =	900;		/* 15 minutes */
+	curclass.timeout =	DEFAULT_TIMEOUT;
 	    /* curclass.type is set elsewhere */
-	curclass.umask =	027;
+	curclass.umask =	DEFAULT_UMASK;
 
 	CURCLASS_FLAGS_SET(checkportcmd);
 	CURCLASS_FLAGS_SET(modify);
@@ -137,6 +148,7 @@ parse_conf(const char *findclass)
 
 	init_curclass();
 	REASSIGN(curclass.classname, xstrdup(findclass));
+			/* set more guest defaults */
 	if (strcasecmp(findclass, "guest") == 0) {
 		CURCLASS_FLAGS_CLR(modify);
 		curclass.umask = 0707;
@@ -192,7 +204,58 @@ parse_conf(const char *findclass)
 		REASSIGN(curclass.x, arg); \
 	} while (0)
 
-		if (strcasecmp(word, "checkportcmd") == 0) {
+
+		if (0)  {
+			/* no-op */
+
+		} else if (strcasecmp(word, "advertise") == 0) {
+			struct addrinfo	hints, *res;
+			int		error;
+
+			memset((char *)&curclass.advertise, 0,
+			    sizeof(curclass.advertise));
+			curclass.advertise.su_len = 0;
+			if (none || EMPTYSTR(arg))
+				continue;
+			res = NULL;
+			memset(&hints, 0, sizeof(hints));
+					/*
+					 * only get addresses of the family
+					 * that we're listening on
+					 */
+			hints.ai_family = ctrl_addr.su_family;
+			hints.ai_socktype = SOCK_STREAM;
+			error = getaddrinfo(arg, "0", &hints, &res);
+			if (error) {
+				syslog(LOG_WARNING, "%s line %d: %s",
+				    infile, (int)line, gai_strerror(error));
+ advertiseparsefail:
+				if (res)
+					freeaddrinfo(res);
+				continue;
+			}
+			if (res->ai_next) {
+				syslog(LOG_WARNING,
+    "%s line %d: multiple addresses returned for `%s'; please be more specific",
+				    infile, (int)line, arg);
+				goto advertiseparsefail;
+			}
+			if (sizeof(curclass.advertise) < res->ai_addrlen || (
+#ifdef INET6
+			    res->ai_family != AF_INET6 &&
+#endif
+			    res->ai_family != AF_INET)) {
+				syslog(LOG_WARNING,
+    "%s line %d: unsupported protocol %d for `%s'",
+				    infile, (int)line, res->ai_family, arg);
+				goto advertiseparsefail;
+			}
+			memcpy(&curclass.advertise, res->ai_addr,
+			    res->ai_addrlen);
+			curclass.advertise.su_len = res->ai_addrlen;
+			freeaddrinfo(res);
+
+		} else if (strcasecmp(word, "checkportcmd") == 0) {
 			CONF_FLAG(checkportcmd);
 
 		} else if (strcasecmp(word, "chroot") == 0) {
@@ -272,21 +335,11 @@ parse_conf(const char *findclass)
 		} else if (strcasecmp(word, "homedir") == 0) {
 			CONF_STRING(homedir);
 
-		} else if (strcasecmp(word, "maxfilesize") == 0) {
-			if (none || EMPTYSTR(arg))
-				continue;
-			llval = strsuftoll(arg);
-			if (llval == -1) {
-				syslog(LOG_WARNING,
-				    "%s line %d: invalid maxfilesize %s",
-				    infile, (int)line, arg);
-				continue;
-			}
-			curclass.maxfilesize = llval;
-
 		} else if (strcasecmp(word, "limit") == 0) {
 			int limit;
 
+			curclass.limit = DEFAULT_LIMIT;
+			REASSIGN(curclass.limitfile, NULL);
 			if (none || EMPTYSTR(arg))
 				continue;
 			limit = (int)strtol(arg, &endp, 10);
@@ -300,7 +353,21 @@ parse_conf(const char *findclass)
 			REASSIGN(curclass.limitfile,
 			    EMPTYSTR(p) ? NULL : xstrdup(p));
 
+		} else if (strcasecmp(word, "maxfilesize") == 0) {
+			curclass.maxfilesize = DEFAULT_MAXFILESIZE;
+			if (none || EMPTYSTR(arg))
+				continue;
+			llval = strsuftoll(arg);
+			if (llval == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid maxfilesize %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.maxfilesize = llval;
+
 		} else if (strcasecmp(word, "maxtimeout") == 0) {
+			curclass.maxtimeout = DEFAULT_MAXTIMEOUT;
 			if (none || EMPTYSTR(arg))
 				continue;
 			timeout = (unsigned int)strtoul(arg, &endp, 10);
@@ -341,12 +408,9 @@ parse_conf(const char *findclass)
 			int minport, maxport;
 			char *min, *max;
 
-			if (none) {
-				curclass.portmin = 0;
-				curclass.portmax = 0;
-				continue;
-			}
-			if (EMPTYSTR(arg))
+			curclass.portmin = 0;
+			curclass.portmax = 0;
+			if (none || EMPTYSTR(arg))
 				continue;
 			min = arg;
 			NEXTWORD(p, max);
@@ -382,6 +446,8 @@ parse_conf(const char *findclass)
 			curclass.portmax = maxport;
 
 		} else if (strcasecmp(word, "rateget") == 0) {
+			curclass.maxrateget = 0;
+			curclass.rateget = 0;
 			if (none || EMPTYSTR(arg))
 				continue;
 			llval = strsuftoll(arg);
@@ -395,6 +461,8 @@ parse_conf(const char *findclass)
 			curclass.rateget = llval;
 
 		} else if (strcasecmp(word, "rateput") == 0) {
+			curclass.maxrateput = 0;
+			curclass.rateput = 0;
 			if (none || EMPTYSTR(arg))
 				continue;
 			llval = strsuftoll(arg);
@@ -411,6 +479,7 @@ parse_conf(const char *findclass)
 			CONF_FLAG(sanenames);
 
 		} else if (strcasecmp(word, "timeout") == 0) {
+			curclass.timeout = DEFAULT_TIMEOUT;
 			if (none || EMPTYSTR(arg))
 				continue;
 			timeout = (unsigned int)strtoul(arg, &endp, 10);
@@ -443,6 +512,7 @@ parse_conf(const char *findclass)
 		} else if (strcasecmp(word, "umask") == 0) {
 			mode_t umask;
 
+			curclass.umask = DEFAULT_UMASK;
 			if (none || EMPTYSTR(arg))
 				continue;
 			umask = (mode_t)strtoul(arg, &endp, 8);
@@ -472,8 +542,9 @@ parse_conf(const char *findclass)
 
 /*
  * Show file listed in curclass.display first time in, and list all the
- * files named in curclass.notify in the current directory.  Send back
- * responses with the prefix `code' + "-".
+ * files named in curclass.notify in the current directory.
+ * Send back responses with the prefix `code' + "-".
+ * If code == -1, flush the internal cache of directory names and return.
  */
 void
 show_chdir_messages(int code)
@@ -488,6 +559,13 @@ show_chdir_messages(int code)
 	char	 cwd[MAXPATHLEN];
 	char	*cp, **rlist;
 
+	if (code == -1) {
+		if (slist != NULL)
+			sl_free(slist, 1);
+		slist = NULL;
+		return;
+	}
+		
 	if (quietmessages)
 		return;
 
@@ -669,7 +747,6 @@ format_path(char *dst, const char *src)
 	len = 0;
 	if (src == NULL)
 		return;
-
 	for (p = src; *p && len < MAXPATHLEN; p++) {
 		if (*p == '%') {
 			p++;
