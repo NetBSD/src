@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.12 2003/10/16 09:31:08 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.13 2003/10/21 01:00:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.12 2003/10/16 09:31:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.13 2003/10/21 01:00:57 yamt Exp $");
 #endif
 
 /*
@@ -470,8 +470,8 @@ ath_detach(struct ath_softc *sc)
 #endif
 	ath_softc_critsect_end(sc, s);
 #ifdef __NetBSD__
-	powerhook_disestablish(sc->sc_sdhook);
-	shutdownhook_disestablish(sc->sc_powerhook);
+	powerhook_disestablish(sc->sc_powerhook);
+	shutdownhook_disestablish(sc->sc_sdhook);
 #endif
 	return 0;
 }
