@@ -1,4 +1,4 @@
-/*	$NetBSD: caltontp.c,v 1.4 1999/07/02 15:58:36 simonb Exp $	*/
+/*	$NetBSD: caltontp.c,v 1.5 1999/07/03 12:30:29 simonb Exp $	*/
 
 /*
  * caltontp - convert a date to an NTP time
@@ -17,7 +17,7 @@ caltontp(jt)
     u_long ntp_days;
     int    prior_years;
     u_long ntp_time;
-
+    
     /*
      * First convert today's date to absolute days past 12/1/1 BC
      */
@@ -36,7 +36,7 @@ caltontp(jt)
     /*
      * Do the obvious:
      */
-    ntp_time =
+    ntp_time = 
 	ntp_days*SECSPERDAY+SECSPERMIN*(MINSPERHR*jt->hour + jt->minute);
 
     return ntp_time;

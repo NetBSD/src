@@ -1,7 +1,7 @@
-/*	$NetBSD: tcpd.h,v 1.6 1999/07/02 16:15:34 simonb Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.7 1999/07/03 12:30:42 simonb Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
-  *
+  * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 

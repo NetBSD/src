@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.3 1999/07/02 15:55:41 simonb Exp $
+$NetBSD: README,v 1.4 1999/07/03 12:30:16 simonb Exp $
 
 
 This is the README for bzip2, a block-sorting file compressor, version
@@ -26,7 +26,7 @@ tests went ok.
 
 To install bzip2 properly:
 
-* Copy the binaries "bzip2" and "bzip2recover" to a publically visible
+* Copy the binaries "bzip2" and "bzip2recover" to a publically visible 
   place, possibly /usr/bin or /usr/local/bin.
 
 * In that directory, make "bunzip2" and "bzcat" be symbolic links
@@ -37,7 +37,7 @@ To install bzip2 properly:
 
 If you want to program with the library, you'll need to copy libbz2.a
 and bzlib.h to /usr/lib and /usr/include respectively.
-
+  
 
 HOW TO BUILD -- Windows 95, NT, DOS, Mac, etc.
 
@@ -121,7 +121,7 @@ comments, suggestions and patches after the releases of bzip-0.15,
 bzip-0.21 and bzip2-0.1pl2, and the changes in bzip2 are largely a
 result of this feedback.  I thank you for your comments.
 
-At least for the time being, bzip2's "home" is
+At least for the time being, bzip2's "home" is 
 http://www.muraroa.demon.co.uk.
 
 Julian Seward
