@@ -1,4 +1,4 @@
-#	$NetBSD: srcs.inc,v 1.7 2000/09/30 12:21:53 itojun Exp $
+#	$NetBSD: srcs.inc,v 1.8 2000/10/04 05:58:15 itojun Exp $
 
 CRYPTOINCS=	asn1.inc crypto.inc bf.inc bio.inc bn.inc buffer.inc \
 		cast.inc comp.inc conf.inc des.inc dh.inc dsa.inc \
@@ -10,6 +10,8 @@ CRYPTOINCS=	asn1.inc crypto.inc bf.inc bio.inc bn.inc buffer.inc \
 # patented algorithms - see ../libcrypto_*
 CRYPTOINCS+=	idea.inc
 CRYPTOINCS+=	rc5.inc
+
+CRYPTOINCS+=	man.inc
 
 .for cryptoinc in ${CRYPTOINCS}
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH:C/mipse[bl]/mips/}/${cryptoinc})
