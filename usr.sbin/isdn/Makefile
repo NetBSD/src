@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/01/06 13:00:10 martin Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/10 17:22:10 martin Exp $
 
 SUBDIR= daicctl dtmfdecode g711conv isdnd isdnmonitor isdntel \
-	isdntelctl isdntrace ispppcontrol
+	isdntelctl isdntrace
 
 .include <bsd.subdir.mk>
