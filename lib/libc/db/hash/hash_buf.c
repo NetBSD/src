@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.6 1996/05/03 21:43:51 cgd Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.7 1997/07/13 18:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-static char rcsid[] = "$NetBSD: hash_buf.c,v 1.6 1996/05/03 21:43:51 cgd Exp $";
+__RCSID("$NetBSD: hash_buf.c,v 1.7 1997/07/13 18:52:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -116,8 +117,8 @@ __get_buf(hashp, addr, prev_bp, newpage)
 {
 	register BUFHEAD *bp;
 	register u_int32_t is_disk_mask;
-	register int is_disk, segment_ndx;
-	SEGMENT segp;
+	register int is_disk, segment_ndx = 0;	/* pacify gcc */
+	SEGMENT segp = NULL;	/* pacify gcc */
 
 	is_disk = 0;
 	is_disk_mask = 0;

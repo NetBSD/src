@@ -1,4 +1,4 @@
-/*	$NetBSD: hsearch.c,v 1.10 1996/05/03 22:16:32 cgd Exp $	*/
+/*	$NetBSD: hsearch.c,v 1.11 1997/07/13 18:52:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hsearch.c	8.4 (Berkeley) 7/21/94";
 #else
-static char rcsid[] = "$NetBSD: hsearch.c,v 1.10 1996/05/03 22:16:32 cgd Exp $";
+__RCSID("$NetBSD: hsearch.c,v 1.11 1997/07/13 18:52:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

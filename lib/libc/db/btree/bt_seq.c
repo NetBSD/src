@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_seq.c,v 1.8 1997/05/17 19:28:11 pk Exp $	*/
+/*	$NetBSD: bt_seq.c,v 1.9 1997/07/13 18:51:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)bt_seq.c	8.7 (Berkeley) 7/20/94";
 #else
-static char rcsid[] = "$NetBSD: bt_seq.c,v 1.8 1997/05/17 19:28:11 pk Exp $";
+__RCSID("$NetBSD: bt_seq.c,v 1.9 1997/07/13 18:51:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -250,7 +251,7 @@ __bt_seqadv(t, ep, flags)
 {
 	CURSOR *c;
 	PAGE *h;
-	indx_t index;
+	indx_t index = 0;	/* pacify gcc */
 	pgno_t pg;
 	int exact;
 

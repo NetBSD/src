@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_log2.c,v 1.6 1996/05/03 21:43:54 cgd Exp $	*/
+/*	$NetBSD: hash_log2.c,v 1.7 1997/07/13 18:52:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,17 +36,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hash_log2.c	8.2 (Berkeley) 5/31/94";
 #else
-static char rcsid[] = "$NetBSD: hash_log2.c,v 1.6 1996/05/03 21:43:54 cgd Exp $";
+__RCSID("$NetBSD: hash_log2.c,v 1.7 1997/07/13 18:52:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
 #include <db.h>
+#include "hash.h"
+#include "page.h"
+#include "extern.h"
 
 u_int32_t
 __log2(num)

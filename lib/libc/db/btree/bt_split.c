@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.6 1996/05/03 21:50:56 cgd Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.7 1997/07/13 18:51:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)bt_split.c	8.9 (Berkeley) 7/26/94";
 #else
-static char rcsid[] = "$NetBSD: bt_split.c,v 1.6 1996/05/03 21:50:56 cgd Exp $";
+__RCSID("$NetBSD: bt_split.c,v 1.7 1997/07/13 18:51:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,14 +94,14 @@ __bt_split(t, sp, key, data, flags, ilen, argskip)
 	size_t ilen;
 	u_int32_t argskip;
 {
-	BINTERNAL *bi;
-	BLEAF *bl, *tbl;
+	BINTERNAL *bi = NULL;	/* pacify gcc */
+	BLEAF *bl = NULL, *tbl;	/* pacify gcc */
 	DBT a, b;
 	EPGNO *parent;
 	PAGE *h, *l, *r, *lchild, *rchild;
 	indx_t nxtindex;
 	u_int16_t skip;
-	u_int32_t n, nbytes, nksize;
+	u_int32_t n, nbytes, nksize = 0; /* pacify gcc */
 	int parentsplit;
 	char *dest;
 
@@ -543,7 +544,7 @@ bt_broot(t, h, l, r)
 	BTREE *t;
 	PAGE *h, *l, *r;
 {
-	BINTERNAL *bi;
+	BINTERNAL *bi = NULL;	/* pacify gcc */
 	BLEAF *bl;
 	u_int32_t nbytes;
 	char *dest;
@@ -627,7 +628,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 	CURSOR *c;
 	RLEAF *rl;
 	PAGE *rval;
-	void *src;
+	void *src = NULL;	/* pacify gcc */
 	indx_t full, half, nxt, off, skip, top, used;
 	u_int32_t nbytes;
 	int bigkeycnt, isbigkey;

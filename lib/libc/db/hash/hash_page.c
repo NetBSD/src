@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.8 1996/05/03 21:43:55 cgd Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.9 1997/07/13 18:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-static char rcsid[] = "$NetBSD: hash_page.c,v 1.8 1996/05/03 21:43:55 cgd Exp $";
+__RCSID("$NetBSD: hash_page.c,v 1.9 1997/07/13 18:52:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -671,7 +672,7 @@ static u_int16_t
 overflow_page(hashp)
 	HTAB *hashp;
 {
-	register u_int32_t *freep;
+	register u_int32_t *freep = NULL;
 	register int max_free, offset, splitnum;
 	u_int16_t addr;
 	int bit, first_page, free_bit, free_page, i, in_use_bits, j;

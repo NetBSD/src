@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_open.c,v 1.7 1996/05/03 21:38:49 cgd Exp $	*/
+/*	$NetBSD: rec_open.c,v 1.8 1997/07/13 18:52:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rec_open.c	8.10 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$NetBSD: rec_open.c,v 1.7 1996/05/03 21:38:49 cgd Exp $";
+__RCSID("$NetBSD: rec_open.c,v 1.8 1997/07/13 18:52:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +70,8 @@ __rec_open(fname, flags, mode, openinfo, dflags)
 	DB *dbp;
 	PAGE *h;
 	struct stat sb;
-	int rfd, sverrno;
+	int rfd = -1;	/* pacify gcc */
+	int sverrno;
 
 	/* Open the user's file -- if this fails, we're done. */
 	if (fname != NULL && (rfd = open(fname, flags, mode)) < 0)

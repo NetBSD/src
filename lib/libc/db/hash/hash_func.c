@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_func.c,v 1.6 1996/05/03 21:43:52 cgd Exp $	*/
+/*	$NetBSD: hash_func.c,v 1.7 1997/07/13 18:52:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)hash_func.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: hash_func.c,v 1.6 1996/05/03 21:43:52 cgd Exp $";
+__RCSID("$NetBSD: hash_func.c,v 1.7 1997/07/13 18:52:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,10 +52,10 @@ static char rcsid[] = "$NetBSD: hash_func.c,v 1.6 1996/05/03 21:43:52 cgd Exp $"
 #include "page.h"
 #include "extern.h"
 
-static u_int32_t hash1 __P((const void *, size_t));
-static u_int32_t hash2 __P((const void *, size_t));
-static u_int32_t hash3 __P((const void *, size_t));
-static u_int32_t hash4 __P((const void *, size_t));
+static u_int32_t hash1 __P((const void *, size_t)) __attribute__((__unused__));
+static u_int32_t hash2 __P((const void *, size_t)) __attribute__((__unused__));
+static u_int32_t hash3 __P((const void *, size_t)) __attribute__((__unused__));
+static u_int32_t hash4 __P((const void *, size_t)) __attribute__((__unused__));
 
 /* Global default hash function */
 u_int32_t (*__default_hash) __P((const void *, size_t)) = hash4;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.8 1996/05/03 21:50:46 cgd Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.9 1997/07/13 18:51:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-static char rcsid[] = "$NetBSD: bt_open.c,v 1.8 1996/05/03 21:50:46 cgd Exp $";
+__RCSID("$NetBSD: bt_open.c,v 1.9 1997/07/13 18:51:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,7 +132,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 		 */
 		if (b.psize &&
 		    (b.psize < MINPSIZE || b.psize > MAX_PAGE_OFFSET + 1 ||
-		    b.psize & sizeof(indx_t) - 1))
+		    b.psize & (sizeof(indx_t) - 1)))
 			goto einval;
 
 		/* Minimum number of keys per page; absolute minimum is 2. */
@@ -251,7 +252,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 		if (m.magic != BTREEMAGIC || m.version != BTREEVERSION)
 			goto eftype;
 		if (m.psize < MINPSIZE || m.psize > MAX_PAGE_OFFSET + 1 ||
-		    m.psize & sizeof(indx_t) - 1)
+		    m.psize & (sizeof(indx_t) - 1))
 			goto eftype;
 		if (m.flags & ~SAVEMETA)
 			goto eftype;
@@ -284,8 +285,8 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	t->bt_psize = b.psize;
 
 	/* Set the cache size; must be a multiple of the page size. */
-	if (b.cachesize && b.cachesize & b.psize - 1)
-		b.cachesize += (~b.cachesize & b.psize - 1) + 1;
+	if (b.cachesize && b.cachesize & (b.psize - 1))
+		b.cachesize += (~b.cachesize & (b.psize - 1)) + 1;
 	if (b.cachesize < b.psize * MINCACHE)
 		b.cachesize = b.psize * MINCACHE;
 
