@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.13 1994/06/29 06:35:52 cgd Exp $	*/
+/*	$NetBSD: bpf.c,v 1.14 1994/06/29 21:23:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -41,12 +41,6 @@
  */
 
 #include "bpfilter.h"
-
-#ifndef __GNUC__
-#define inline
-#else
-#define inline __inline
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
