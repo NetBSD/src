@@ -33,28 +33,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.13 1993/11/20 01:57:07 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.14 1993/12/18 03:56:12 mycroft Exp $
  */
 
 /*
  * Kernel parameter filesystem
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "types.h"
-#include "time.h"
-#include "proc.h"
-#include "file.h"
-#include "vnode.h"
-#include "stat.h"
-#include "mount.h"
-#include "namei.h"
-#include "buf.h"
-#include "miscfs/kernfs/kernfs.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/vnode.h>
+#include <sys/stat.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/buf.h>
 
-#include "../ufs/dir.h"		/* For readdir() XXX */
+#include <ufs/dir.h>		/* For readdir() XXX */
+
+#include <miscfs/kernfs/kernfs.h>
 
 struct kernfs_target kernfs_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */

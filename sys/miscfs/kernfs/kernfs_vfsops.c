@@ -33,24 +33,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vfsops.c,v 1.8 1993/08/23 05:02:14 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.9 1993/12/18 03:55:47 mycroft Exp $
  */
 
 /*
  * Kernel params Filesystem
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "types.h"
-#include "proc.h"
-#include "vnode.h"
-#include "mount.h"
-#include "namei.h"
-#include "malloc.h"
-#include "conf.h"
-#include "miscfs/kernfs/kernfs.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/malloc.h>
+#include <sys/conf.h>
+
+#include <miscfs/kernfs/kernfs.h>
 
 /* bring in the spec vnodeops for cdevvp */
 extern struct vnodeops spec_vnodeops;
