@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
+/*	$NetBSD: split.c,v 1.6 1997/10/19 23:26:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-static char rcsid[] = "$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $";
+__RCSID("$NetBSD: split.c,v 1.6 1997/10/19 23:26:58 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ int	 ifd = -1, ofd = -1;		/* Input/output file descriptors. */
 char	 bfr[MAXBSIZE];			/* I/O buffer. */
 char	 fname[MAXPATHLEN];		/* File name prefix. */
 
+int  main __P((int, char **));
 void newfile __P((void));
 void split1 __P((void));
 void split2 __P((void));
@@ -78,7 +79,7 @@ main(argc, argv)
 	int ch;
 	char *ep, *p;
 
-	while ((ch = getopt(argc, argv, "-0123456789b:l:")) != EOF)
+	while ((ch = getopt(argc, argv, "-0123456789b:l:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -105,7 +106,7 @@ main(argc, argv)
 			break;
 		case 'b':		/* Byte count. */
 			if ((bytecnt = strtol(optarg, &ep, 10)) <= 0 ||
-			    *ep != '\0' && *ep != 'k' && *ep != 'm')
+			    (*ep != '\0' && *ep != 'k' && *ep != 'm'))
 				errx(1, "%s: illegal byte count.", optarg);
 			if (*ep == 'k')
 				bytecnt *= 1024;
