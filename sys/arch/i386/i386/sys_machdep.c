@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.47.2.2 2001/07/29 18:20:14 he Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.47.2.3 2002/01/16 09:36:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -394,7 +394,7 @@ i386_set_ldt(p, args, retval)
 
 	/* Now actually replace the descriptors. */
 	for (i = 0, n = ua.start; i < ua.num; i++, n++)
-		pmap->pm_ldt[n] = descv[i];
+		pcb->pcb_ldt[n] = descv[i];
 
 	*retval = ua.start;
 
