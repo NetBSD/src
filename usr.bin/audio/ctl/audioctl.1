@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
+.\" $NetBSD: audioctl.1,v 1.8 1998/08/21 19:45:37 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -71,7 +71,7 @@ attempts to set the specified variables to the given values.
 The
 .Fl f
 flag can be used to give an alternative audio control device, the default is
-.Pa /dev/audioctl .
+.Pa /dev/audioctl0 .
 .Pp
 The
 .Fl n
@@ -84,12 +84,12 @@ with
 .Nm
 are reset when the device is opened.  This can be circumvented
 like this
-.Dl (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio
+.Dl (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio0
 or
-.Dl (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
+.Dl (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio0
 .Sh FILES
-.Bl -tag -width /dev/audioctl
-.It Pa /dev/audioctl
+.Bl -tag -width /dev/audioctl0
+.It Pa /dev/audioctl0
 audio control device
 .El
 .Sh ENVIRONMENT
