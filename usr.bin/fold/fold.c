@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
+/*	$NetBSD: fold.c,v 1.7 1997/10/18 15:02:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $";
+__RCSID("$NetBSD: fold.c,v 1.7 1997/10/18 15:02:18 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,8 +57,10 @@ static char rcsid[] = "$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $";
 
 #define	DEFLINEWIDTH	80
 
-static void fold ();
-static int new_column_position ();
+	int	main __P((int, char **));
+static	void	fold __P((int));
+static	int	new_column_position __P((int, int));
+
 int count_bytes = 0;
 int split_words = 0;
 
@@ -67,7 +69,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int ch;
+	int ch;
 	int width;
 	char *p;
 
@@ -132,12 +134,12 @@ main(argc, argv)
  */
 static void
 fold(width)
-	register int width;
+	int width;
 {
 	static char *buf = NULL;
 	static int   buf_max = 0;
-	register int ch, col;
-	register int indx;
+	int ch, col;
+	int indx;
 
 	col = indx = 0;
 	while ((ch = getchar()) != EOF) {
@@ -183,7 +185,7 @@ fold(width)
 			/* Allocate buffer in LINE_MAX increments */
 			buf_max += 2048;
 			if((buf = realloc (buf, buf_max)) == NULL) {
-				err (1, NULL);
+				err (1, "realloc");
 				/* NOTREACHED */
 			}
 		}
