@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.19 1998/08/26 17:50:32 christos Exp $
+#	$NetBSD: Makefile,v 1.20 1999/02/23 10:47:39 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/19/93
 
+WARNS=1
 PROG=	routed
 SRCS=	if.c input.c main.c output.c parms.c radix.c rdisc.c table.c trace.c
 MAN=	routed.8

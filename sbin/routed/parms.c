@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.12 1998/10/25 14:56:08 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.13 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,10 +34,10 @@
  */
 
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parms.c,v 1.12 1998/10/25 14:56:08 christos Exp $");
+__RCSID("$NetBSD: parms.c,v 1.13 1999/02/23 10:47:40 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -78,8 +78,8 @@ get_parms(struct interface *ifp)
 				    || num_passwds >= MAX_AUTH_KEYS)
 					break;
 				memcpy(&ifp->int_auth[num_passwds++],
-				    &parmp->parm_auth[i],
-				    sizeof(ifp->int_auth[0]));
+				       &parmp->parm_auth[i],
+				       sizeof(ifp->int_auth[0]));
 			}
 			if (parmp->parm_rdisc_pref != 0)
 				ifp->int_rdisc_pref = parmp->parm_rdisc_pref;
@@ -166,6 +166,7 @@ gwkludge(void)
 {
 	FILE *fp;
 	char *p, *lptr;
+	const char *cp;
 	char lbuf[200], net_host[5], dname[64+1+64+1];
 	char gname[GNAME_LEN+1], qual[9];
 	struct interface *ifp;
@@ -173,7 +174,7 @@ gwkludge(void)
 	int metric, n, lnum;
 	struct stat sb;
 	u_int state;
-	char *type;
+	const char *type;
 
 
 	fp = fopen(_PATH_GATEWAYS, "r");
@@ -187,7 +188,7 @@ gwkludge(void)
 	}
 
 	for (lnum = 1; ; lnum++) {
-		if (0 == fgets(lbuf, sizeof(lbuf)-1, fp))
+		if (0 == fgets(lbuf, sizeof(lbuf), fp))
 			break;
 		lptr = lbuf;
 		while (*lptr == ' ')
@@ -204,12 +205,12 @@ gwkludge(void)
 		 */
 		if (strncasecmp("net", lptr, 3)
 		    && strncasecmp("host", lptr, 4)) {
-			p = parse_parms(lptr,
-					(sb.st_uid == 0
-					 && !(sb.st_mode&(S_IRWXG|S_IRWXO))));
-			if (p != 0)
+			cp = parse_parms(lptr,
+					 (sb.st_uid == 0
+					  && !(sb.st_mode&(S_IRWXG|S_IRWXO))));
+			if (cp != 0)
 				msglog("%s in line %d of "_PATH_GATEWAYS,
-				       p, lnum);
+				       cp, lnum);
 			continue;
 		}
 
@@ -251,7 +252,7 @@ gwkludge(void)
 			HTONL(dst);	/* make network # into IP address */
 		} else {
 			msglog("bad \"%s\" in "_PATH_GATEWAYS
-			       " entry \"%s\"", lptr);
+			       " entry \"%s\"", net_host, lptr);
 			continue;
 		}
 
@@ -366,12 +367,13 @@ gwkludge(void)
  */
 static int				/* 0=ok, -1=bad */
 parse_quote(char **linep,		/* look here */
-	    char *delims,		/* for these delimiters */
+	    const char *delims,		/* for these delimiters */
 	    char *delimp,		/* 0 or put found delimiter here */
 	    char *buf,			/* copy token to here */
 	    int	lim)			/* at most this many bytes */
 {
-	char c = '\0', *pc, *p;
+	char c = '\0', *pc;
+	const char *p;
 
 
 	pc = *linep;
@@ -479,7 +481,7 @@ parse_ts(time_t *tp,
 /* Get a password, key ID, and expiration date in the format
  *	passwd|keyID|year/mon/day@hour:min|year/mon/day@hour:min
  */
-static char *				/* 0 or error message */
+static const char *			/* 0 or error message */
 get_passwd(char *tgt,
 	   char *val,
 	   struct parm *parmp,
@@ -558,8 +560,8 @@ get_passwd(char *tgt,
 }
 
 
-static char *
-bad_str(char *estr)
+static const char *
+bad_str(const char *estr)
 {
 	static char buf[100+8];
 
@@ -570,7 +572,7 @@ bad_str(char *estr)
 
 /* Parse a set of parameters for an interface.
  */
-char *					/* 0 or error message */
+const char *					/* 0 or error message */
 parse_parms(char *line,
 	    int safe)			/* 1=from secure file */
 {
@@ -584,6 +586,7 @@ parse_parms(char *line,
 	struct tgate *tg;
 	naddr addr, mask;
 	char delim, *val0 = 0, *tgt, *val, *p;
+	const char *msg;
 	char buf[BUFSIZ], buf2[BUFSIZ];
 	int i;
 
@@ -643,7 +646,6 @@ parse_parms(char *line,
 
 	memset(&parm, 0, sizeof(parm));
 
-	tgt = "null";
 	for (;;) {
 		tgt = line + strspn(line, " ,\n\r");
 		if (*tgt == '\0' || *tgt == '#')
@@ -692,17 +694,17 @@ parse_parms(char *line,
 			/* since cleartext passwords are so weak allow
 			 * them anywhere
 			 */
-			tgt = get_passwd(tgt,val0,&parm,RIP_AUTH_PW,1);
-			if (tgt) {
+			msg = get_passwd(tgt,val0,&parm,RIP_AUTH_PW,1);
+			if (msg) {
 				*val0 = '\0';
-				return bad_str(tgt);
+				return bad_str(msg);
 			}
 
 		} else if (PARSEQ("md5_passwd")) {
-			tgt = get_passwd(tgt,val0,&parm,RIP_AUTH_MD5,safe);
-			if (tgt) {
+			msg = get_passwd(tgt,val0,&parm,RIP_AUTH_MD5,safe);
+			if (msg) {
 				*val0 = '\0';
-				return bad_str(tgt);
+				return bad_str(msg);
 			}
 
 		} else if (PARS("no_ag")) {
@@ -829,7 +831,7 @@ parse_parms(char *line,
 
 
 /* check for duplicate parameter specifications */
-char *					/* 0 or error message */
+const char *				/* 0 or error message */
 check_parms(struct parm *new)
 {
 	struct parm *parmp, **parmpp;
@@ -925,7 +927,7 @@ getnet(char *name,
 	 */
 	if (0 != (mname = strrchr(name,'/'))) {
 		i = (int)(mname - name);
-		if (i > sizeof(hname)-1)	/* name too long */
+		if (i > (int)sizeof(hname)-1)	/* name too long */
 			return 0;
 		memmove(hname, name, i);
 		hname[i] = '\0';

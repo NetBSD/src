@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.8 1998/10/25 14:56:08 christos Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.9 1999/02/23 10:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,21 +34,16 @@
  */
 
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
+static char sccsid[] __attribute__((unused)) = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rdisc.c,v 1.8 1998/10/25 14:56:08 christos Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.9 1999/02/23 10:47:40 christos Exp $");
 #endif
 
 #include "defs.h"
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#if defined(sgi) && !defined(PRE_KUDZU)
-#include <cap_net.h>
-#else
-#define cap_socket socket
-#endif
 
 /* router advertisement ICMP packet */
 struct icmp_ad {
@@ -102,7 +97,7 @@ struct dr {				/* accumulated advertisements */
 #define UNSIGN_PREF(p) SIGN_PREF(p)
 /* adjust unsigned preference by interface metric,
  * without driving it to infinity */
-#define PREF(p, ifp) ((p) <= (ifp)->int_metric ? ((p) != 0 ? 1 : 0) \
+#define PREF(p, ifp) ((int)(p) <= (ifp)->int_metric ? ((p) != 0 ? 1 : 0) \
 		      : (p) - ((ifp)->int_metric))
 
 static void rdisc_sort(void);
@@ -111,7 +106,7 @@ static void rdisc_sort(void);
 /* dump an ICMP Router Discovery Advertisement Message
  */
 static void
-trace_rdisc(char	*act,
+trace_rdisc(const char	*act,
 	    naddr	from,
 	    naddr	to,
 	    struct interface *ifp,
@@ -159,7 +154,7 @@ static void
 get_rdisc_sock(void)
 {
 	if (rdisc_sock < 0) {
-		rdisc_sock = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+		rdisc_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 		if (rdisc_sock < 0)
 			BADERR(1,"rdisc_sock = socket()");
 		fix_sock(rdisc_sock,"rdisc_sock");
@@ -700,7 +695,7 @@ send_rdisc(union ad_u *p,
 {
 	struct sockaddr_in sin;
 	int flags;
-	char *msg;
+	const char *msg;
 	naddr tgt_mcast;
 
 
@@ -903,14 +898,14 @@ rdisc_sol(void)
 
 /* check the IP header of a possible Router Discovery ICMP packet */
 static struct interface *		/* 0 if bad */
-ck_icmp(char	*act,
+ck_icmp(const char *act,
 	naddr	from,
 	struct interface *ifp,
 	naddr	to,
 	union ad_u *p,
 	u_int	len)
 {
-	char *type;
+	const char *type;
 
 
 	if (p->icmp.icmp_type == ICMP_ROUTERADVERT) {
@@ -1016,7 +1011,7 @@ read_d(void)
 		switch (p->icmp.icmp_type) {
 		case ICMP_ROUTERADVERT:
 			if (p->ad.icmp_ad_asize*4
-			    < sizeof(p->ad.icmp_ad_info[0])) {
+			    < (int)sizeof(p->ad.icmp_ad_info[0])) {
 				msglim(&bad_asize, from.sin_addr.s_addr,
 				       "intolerable rdisc address size=%d",
 				       p->ad.icmp_ad_asize);
@@ -1026,9 +1021,10 @@ read_d(void)
 				trace_pkt("    empty?");
 				continue;
 			}
-			if (cc != (sizeof(p->ad) - sizeof(p->ad.icmp_ad_info)
-				   + (p->ad.icmp_ad_num
-				      * sizeof(p->ad.icmp_ad_info[0])))) {
+			if (cc != (int)(sizeof(p->ad)
+					- sizeof(p->ad.icmp_ad_info)
+					+ (p->ad.icmp_ad_num
+					   * sizeof(p->ad.icmp_ad_info[0])))) {
 				msglim(&bad_len, from.sin_addr.s_addr,
 				       "rdisc length %d does not match ad_num"
 				       " %d", cc, p->ad.icmp_ad_num);
