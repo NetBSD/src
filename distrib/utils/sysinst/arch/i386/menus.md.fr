@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.29.2.1 2002/07/29 14:47:46 lukem Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.29.2.2 2003/02/08 07:02:56 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,6 +142,7 @@ menu chooseid, title  "Type de Partition?";
 	{
 		part[editpart].mbrp_typ = 0;
 	};
+	option "ne pas modifier",	exit;
 
 menu cyl1024;
     display action {
