@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.23.4.2 2001/05/01 10:55:25 he Exp $
+.\" $NetBSD: pkg_create.1,v 1.23.4.3 2002/02/23 18:05:44 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -25,14 +25,14 @@
 .\" better integration with FreeBSD's new ports collection.
 .\"
 .Dd April 21, 1995
-.Dt pkg_create 1
+.Dt PKG_CREATE 1
 .Os
 .Sh NAME
 .Nm pkg_create
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl hlORVv
+.Op Fl hlORUVv
 .Bk -words
 .Op Fl B Ar build-info-file
 .Ek
@@ -56,6 +56,9 @@
 .Ek
 .Bk -words
 .Op Fl i Ar iscript
+.Ek
+.Bk -words
+.Op Fl I Ar realprefix
 .Ek
 .Bk -words
 .Op Fl k Ar dscript
@@ -161,6 +164,9 @@ is a
 .It Fl h
 Force tar to follow symbolic links, so that the files they point to
 are dumped, rather than the links themselves.
+.It Fl I Ar realprefix
+Provide the real prefix, as opposed to the staging prefix, for use in
+staged installations of packages.
 .It Fl i Ar iscript
 Set
 .Ar iscript
@@ -257,6 +263,8 @@ directory is limited.  Be sure to leave some number of `X' characters
 for
 .Xr mktemp 3
 to fill in with a unique ID.
+.It Fl U
+Do not update the package file database with any file information.
 .It Fl V
 Print version number and exit.
 .It Fl v
@@ -276,7 +284,6 @@ with
 .Fl -help
 flag) for further information on using this flag.
 .El
-.Pp
 .Sh PACKING LIST DETAILS
 The ``packing list'' format (see
 .Fl f )
