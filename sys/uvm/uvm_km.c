@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.25 1999/05/26 19:16:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.26 1999/05/26 19:27:49 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -827,11 +827,11 @@ uvm_km_kmemalloc(map, obj, size, flags)
 			    VM_PROT_ALL);
 #else
 			pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-			    UVM_PROT_ALL, TRUE, 0);
+			    UVM_PROT_ALL, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 #endif
 		} else {
 			pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-			    UVM_PROT_ALL, TRUE, 0);
+			    UVM_PROT_ALL, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 		}
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
@@ -964,7 +964,7 @@ uvm_km_alloc1(map, size, zeroit)
 		 * object, so we always use regular old pmap_enter().
 		 */
 		pmap_enter(map->pmap, loopva, VM_PAGE_TO_PHYS(pg),
-		    UVM_PROT_ALL, TRUE, 0);
+		    UVM_PROT_ALL, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
