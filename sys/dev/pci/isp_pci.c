@@ -1,38 +1,34 @@
-/* $NetBSD: isp_pci.c,v 1.40 1999/05/12 18:59:23 mjacob Exp $ */
-/* release_5_11_99 */
+/* $NetBSD: isp_pci.c,v 1.41 1999/07/05 20:28:11 mjacob Exp $ */
+/* release_6_5_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
- *
- *---------------------------------------
- * Copyright (c) 1997, 1998 by Matthew Jacob
- * NASA/Ames Research Center
+ * Matthew Jacob (mjacob@nas.nasa.gov)
+ */
+/*
+ * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
- *---------------------------------------
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <dev/ic/isp_netbsd.h>
@@ -114,6 +110,25 @@ static struct ispmdvec mdvec_2100 = {
 };
 #endif
 
+#ifndef	ISP_DISABLE_2200_SUPPORT
+static struct ispmdvec mdvec_2200 = {
+	isp_pci_rd_reg,
+	isp_pci_wr_reg,
+	isp_pci_mbxdma,
+	isp_pci_dmasetup,
+	isp_pci_dmateardown,
+	NULL,
+	isp_pci_reset1,
+	isp_pci_dumpregs,
+	ISP2200_RISC_CODE,
+	ISP2200_CODE_LENGTH,
+	ISP2200_CODE_ORG,
+	ISP2200_CODE_VERSION,
+	0,				/* Irrelevant to the 2200 */
+	0
+};
+#endif
+
 #ifndef	PCI_VENDOR_QLOGIC
 #define	PCI_VENDOR_QLOGIC	0x1077
 #endif
@@ -134,6 +149,10 @@ static struct ispmdvec mdvec_2100 = {
 #define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP2200
+#define	PCI_PRODUCT_QLOGIC_ISP2200	0x2200
+#endif
+
 #define	PCI_QLOGIC_ISP	((PCI_PRODUCT_QLOGIC_ISP1020 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP1080	\
@@ -144,6 +163,9 @@ static struct ispmdvec mdvec_2100 = {
 
 #define	PCI_QLOGIC_ISP2100	\
 	((PCI_PRODUCT_QLOGIC_ISP2100 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP2200	\
+	((PCI_PRODUCT_QLOGIC_ISP2200 << 16) | PCI_VENDOR_QLOGIC)
 
 #define IO_MAP_REG	0x10
 #define MEM_MAP_REG	0x14
@@ -196,6 +218,10 @@ isp_pci_probe(parent, match, aux)
 	case PCI_QLOGIC_ISP2100:
 		return (1);
 #endif
+#ifndef	ISP_DISABLE_2200_SUPPORT
+	case PCI_QLOGIC_ISP2200:
+		return (1);
+#endif
 	default:
 		return (0);
 	}
@@ -220,6 +246,7 @@ isp_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int ioh_valid, memh_valid, i;
+	long foo;
 	ISP_LOCKVAL_DECL;
 
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
@@ -315,6 +342,21 @@ isp_pci_attach(parent, self, aux)
 		}
 	}
 #endif
+#ifndef	ISP_DISABLE_2200_SUPPORT
+	if (pa->pa_id == PCI_QLOGIC_ISP2200) {
+		isp->isp_mdvec = &mdvec_2200;
+		isp->isp_type = ISP_HA_FC_2200;
+		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf(nomem, isp->isp_name);
+			return;
+		}
+		bzero(isp->isp_param, sizeof (fcparam));
+		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
+		    PCI_MBOX_REGS2100_OFF;
+		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
+	}
+#endif
 
 	/*
 	 * Make sure that command register set sanely.
@@ -371,6 +413,18 @@ isp_pci_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
+
+	/*
+	 * This isn't very random, but it's the best we can do for
+	 * the real edge case of cards that don't have WWNs.
+	 */
+	foo = (long) isp;
+	foo >>= 4;
+	foo &= 0x7;
+	while (version[foo])
+		isp->isp_osinfo.seed += (int) version[foo++];
+	isp->isp_osinfo.seed <<= 8;
+	isp->isp_osinfo.seed += (isp->isp_osinfo._dev.dv_unit + 1);
 
 	ISP_LOCK(isp);
 	isp_reset(isp);
@@ -565,7 +619,7 @@ isp_pci_mbxdma(isp)
 		return (1);
 	isp->isp_result_dma = pci->pci_result_dmap->dm_segs[0].ds_addr;
 
-	if (isp->isp_type & ISP_HA_SCSI) {
+	if (IS_SCSI(isp)) {
 		return (0);
 	}
 
@@ -615,7 +669,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		drq = REQFLAG_DATA_OUT;
 	}
 
-	if (isp->isp_type & ISP_HA_FC) {
+	if (IS_FC(isp)) {
 		seglim = ISP_RQDSEG_T2;
 		((ispreqt2_t *)rq)->req_totalcnt = xs->datalen;
 		((ispreqt2_t *)rq)->req_flags |= drq;
@@ -635,7 +689,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	for (seg = 0, rq->req_seg_count = 0;
 	     seg < segcnt && rq->req_seg_count < seglim;
 	     seg++, rq->req_seg_count++) {
-		if (isp->isp_type & ISP_HA_FC) {
+		if (IS_FC(isp)) {
 			ispreqt2_t *rq2 = (ispreqt2_t *)rq;
 			rq2->req_dataseg[rq2->req_seg_count].ds_count =
 			    dmap->dm_segs[seg].ds_len;
