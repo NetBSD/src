@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.5 2002/04/14 07:53:46 martin Exp $
+.\"	$NetBSD: ipnat.5,v 1.6 2002/04/14 14:35:05 wiz Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -210,13 +210,13 @@ map pppoe0 10.0.0.0/8 -> 209.1.2.0/24 mssclamp 1452
 .PP
 The mssclamp clause tells the NAT processor to scan for TCP packets in the
 three-way handshake and limit their negotiated MSS value to the number
-given in the rule. This is usefull to make hosts behind a connection with
+given in the rule. This is useful to make hosts behind a connection with
 low MTU (like PPPoE or tunnels) communicate without any outside proxies
 with broken sides that use a misconfigured firewall. Unfortunately such
 sites are not rare.
 .PP
-The value for the clamping clause is calculated as interface-mtu less
-40 bytes (size of IP header plus maximum IP options size), so for
+The value for the clamping clause is calculated as interface-MTU less
+40 bytes (size of IP header plus maximal IP options size), so for a
 PPPoE interface it is 1492 - 40 = 1452. Some sites seem to require clamping
 to even smaller values, but there is no rationale for this behaviour.
 .SH FILES
