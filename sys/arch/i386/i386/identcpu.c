@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.15 2004/07/11 15:22:05 msaitoh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.16 2004/08/08 05:21:01 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.15 2004/07/11 15:22:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.16 2004/08/08 05:21:01 briggs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -465,12 +465,12 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, "C3 Samuel",
 				"C3 Samuel 2/Ezra", "C3 Ezra-T",
-				0, 0, 0, 0, 0, 0, 0,
+				"C3 Nehemiah", 0, 0, 0, 0, 0, 0,
 				"C3"	/* Default */
 			},
 			NULL,
 			via_cpu_probe,
-			NULL,
+			via_cpu_cacheinfo,
 		},
 		/* Family > 6, not yet available from VIA */
 		{
@@ -612,7 +612,7 @@ via_cpu_probe(struct cpu_info *ci)
 	 */
 	if (lfunc >= 0x80000001) {
 		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
-		ci->ci_feature_flags = descs[3];
+		ci->ci_feature_flags |= descs[3];
 	}
 }
 
