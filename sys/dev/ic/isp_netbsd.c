@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.17 1999/10/14 02:31:11 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18 1999/10/17 01:23:21 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -62,7 +62,7 @@ isp_attach(isp)
 	isp->isp_osinfo._link.device = &isp_dev;
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
 	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
-	TAILQ_INIT(&isp->isp_osinfo.waitq);
+	TAILQ_INIT(&isp->isp_osinfo.waitq);	/* XXX 2nd Bus? */
 
 	if (IS_FC(isp)) {
 		/*
@@ -104,10 +104,11 @@ isp_attach(isp)
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
 		    sdp->isp_initiator_id;
 		isp->isp_osinfo.discovered[0] = 1 << sdp->isp_initiator_id;
-		isp->isp_osinfo.discovered[1] = 1 << sdp->isp_initiator_id;
 		if (IS_12X0(isp)) {
 			isp->isp_osinfo._link_b = isp->isp_osinfo._link;
 			sdp++;
+			isp->isp_osinfo.discovered[1] =
+			    1 << sdp->isp_initiator_id;
 			isp->isp_osinfo._link_b.scsipi_scsi.adapter_target =
 			    sdp->isp_initiator_id;
 			isp->isp_osinfo._link_b.scsipi_scsi.channel = 1;
@@ -442,7 +443,7 @@ isp_command_requeue(arg)
 	int s = splbio();
 	switch (ispcmd_slow(xs)) {
 	case SUCCESSFULLY_QUEUED:
-		printf("%s: isp_command_reque: queued %d.%d\n",
+		printf("%s: isp_command_requeue: requeued for %d.%d\n",
 		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
 		break;
 	case TRY_AGAIN_LATER:
@@ -450,6 +451,7 @@ isp_command_requeue(arg)
 		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
 		/* FALLTHROUGH */
 	case COMPLETE:
+		/* can only be an error */
 		xs->xs_status |= XS_STS_DONE;
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_BOTCH);
@@ -459,6 +461,7 @@ isp_command_requeue(arg)
 	}
 	(void) splx(s);
 }
+
 /*
  * Restart function after a LOOP UP event (e.g.),
  * done as a timeout for some hysteresis.
@@ -492,7 +495,7 @@ isp_internal_restart(arg)
 	}
 	(void) splx(s);
 }
-	
+
 int
 isp_async(isp, cmd, arg)
 	struct ispsoftc *isp;
