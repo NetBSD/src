@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: pppstats.c,v 1.6 1994/05/08 12:16:52 paulus Exp $";
+static char rcsid[] = "$Id: pppstats.c,v 1.7 1994/05/14 19:00:35 cgd Exp $";
 #endif
 
 #include <ctype.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: pppstats.c,v 1.6 1994/05/08 12:16:52 paulus Exp $";
 #include <net/if_ppp.h>
 
 char	*kmemf;
+kvm_t	*kd;
 
 struct nlist nl[] = {
 #define N_SOFTC 0
@@ -107,12 +108,11 @@ main(argc, argv)
 		}
 	}
 	/* BSD4.3+ */
-	if (kvm_openfiles(system, kmemf, (char *)0) == -1) {
-	    fprintf(stderr, "kvm_openfiles: %s", kvm_geterr());
+	kd = kvm_open(system, kmemf, (char *)0, O_RDONLY, "pppstats");
+	if (kd == NULL)
 	    exit(1);
-	}
 
-	if (kvm_nlist(nl)) {
+	if (kvm_nlist(kd, nl)) {
 	    fprintf(stderr, "pppstats: can't find symbols in nlist\n");
 	    exit(1);
 	}
@@ -159,7 +159,7 @@ intpr()
 	bzero((char *)osc, sizeof(STRUCT));
 
 	while (1) {
-	    if (kvm_read((void *) nl[N_SOFTC].n_value, sc,
+	    if (kvm_read(kd, nl[N_SOFTC].n_value, sc,
 			 sizeof(STRUCT)) != sizeof(STRUCT)) {
 		perror("kvm_read");
 		exit(1);
