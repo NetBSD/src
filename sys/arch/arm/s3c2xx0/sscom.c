@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.3 2003/05/13 06:12:45 bsh Exp $ */
+/*	$NetBSD: sscom.c,v 1.4 2003/05/13 06:26:57 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -151,6 +151,7 @@
 #include <machine/bus.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
+#include <arm/s3c2xx0/s3c2xx0var.h>
 #include <arm/s3c2xx0/sscom_var.h>
 #include <dev/cons.h>
 
@@ -387,7 +388,6 @@ sscom_read_modem_status(struct sscom_softc *sc)
 	return (msts & UMSTAT_CTS) | MSTS_DCD | MSTS_DSR;
 }
 
-
 void
 sscom_attach_subr(struct sscom_softc *sc)
 {
@@ -439,22 +439,11 @@ sscom_attach_subr(struct sscom_softc *sc)
 		sc->sc_ucon = UCON_DEBUGPORT;
 	}
 
-	sc->sc_fifolen = 16;
-
 	bus_space_write_1(iot, ioh, SSCOM_UFCON,
 	    UFCON_TXTRIGGER_8|UFCON_RXTRIGGER_8|UFCON_FIFO_ENABLE|
 	    UFCON_TXFIFO_RESET|UFCON_RXFIFO_RESET);
 
 	bus_space_write_1(iot, ioh, SSCOM_UCON, sc->sc_ucon);
-
-	printf("%s: ", sc->sc_dev.dv_xname);
-	if (sc->sc_fifolen > 1) {
-		SET(sc->sc_hwflags, SSCOM_HW_FIFO);
-		printf("txfifo length = %d\n", sc->sc_fifolen);
-	}
-	else {
-		printf("txfifo disabled\n");
-	}
 
 #ifdef KGDB
 	if (ISSET(sc->sc_hwflags, SSCOM_HW_KGDB)) {
@@ -1457,6 +1446,10 @@ sscom_rxsoft(struct sscom_softc *sc, struct tty *tp)
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				sscom_enable_rxint(sc);
+				sc->sc_ucon |= UCON_ERRINT;
+				bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, 
+						  sc->sc_ucon);
+
 			}
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -1576,7 +1569,7 @@ sscomintr(void *arg)
 
 		/* XXX: break interrupt with no character? */
 
-		if ( (ufstat & UFSTAT_RXCOUNT) != 0 &&
+		if ( (ufstat & (UFSTAT_RXCOUNT|UFSTAT_RXFULL)) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 			while (cc > 0) {
 				int cn_trapped = 0;
@@ -1612,7 +1605,7 @@ sscomintr(void *arg)
 				}
 
 				ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
-				if ( (ufstat & UFSTAT_RXCOUNT) == 0 )
+				if ( (ufstat & (UFSTAT_RXFULL|UFSTAT_RXCOUNT)) == 0 )
 					break;
 			}
 
@@ -1644,6 +1637,8 @@ sscomintr(void *arg)
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				sscom_disable_rxint(sc);
+				sc->sc_ucon &= ~UCON_ERRINT;
+				bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 			}
 		}
 
@@ -1743,7 +1738,7 @@ sscomintr(void *arg)
 		 * See if data can be transmitted as well. Schedule tx
 		 * done event if no data left and tty was marked busy.
 		 */
-		if ( !ISSET(ufstat,UFSTAT_TXFULL)) {
+		if (!ISSET(ufstat,UFSTAT_TXFULL)) {
 			/* 
 			 * Output the next chunk of the contiguous
 			 * buffer, if any.
