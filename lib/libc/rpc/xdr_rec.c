@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.15 1998/11/15 17:32:47 christos Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.16 1999/03/04 05:26:48 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.15 1998/11/15 17:32:47 christos Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.16 1999/03/04 05:26:48 lukem Exp $");
 #endif
 #endif
 
@@ -584,6 +584,16 @@ set_input_fragment(rstrm)
 		return (FALSE);
 	header = ntohl(header);
 	rstrm->last_frag = ((header & LAST_FRAG) == 0) ? FALSE : TRUE;
+	/*
+	 * Sanity check. Try not to accept wildly incorrect
+	 * record sizes. Unfortunately, the only record size
+	 * we can positively identify as being 'wildly incorrect'
+	 * is zero. Ridiculously large record sizes may look wrong,
+	 * but we don't have any way to be certain that they aren't
+	 * what the client actually intended to send us.
+	 */
+	if ((header & (~LAST_FRAG)) == 0)
+		return(FALSE);
 	rstrm->fbtbc = header & (~LAST_FRAG);
 	return (TRUE);
 }
