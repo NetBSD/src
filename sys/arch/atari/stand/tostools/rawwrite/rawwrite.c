@@ -1,4 +1,4 @@
-/*	$NetBSD: rawwrite.c,v 1.7 1998/01/16 09:19:37 leo Exp $	*/
+/*	$NetBSD: rawwrite.c,v 1.8 1999/03/26 08:24:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,7 +53,7 @@ int	v_flag = 0;	/* Verbose (a dot for each track copied)	*/
 int	V_flag = 0;	/* Show version					*/
 char	*progname;
 
-const char version[] = "$Revision: 1.7 $";
+const char version[] = "$Revision: 1.8 $";
 
 int
 main(argc, argv)
@@ -114,7 +114,7 @@ char	*argv[];
 	for (i = 0; i < NTRK; i++) {
 		n = read(fd, buf, nsect * SECT_SIZE);
 		if (n == 0) {
-			eprintf("Only %d sectors in input file\r\n", i);
+			eprintf("Only %d tracks in input file\r\n", i);
 			break;
 		}
 		if (n < 0)
