@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.27 2001/04/12 06:08:44 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.28 2001/04/29 22:17:24 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -316,10 +316,10 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 			nargs--; /* reduce by one for formatting niceties */
 			arg_base++; /* skip past the actual number of arguments */
 			while (nargs--)
-				(*pr)("0x%x,", tmp_frame->vax_args[arg_base++]);
+				(*pr)("%#x,", tmp_frame->vax_args[arg_base++]);
 
 			/* now print out the last arg with closing brace and \n */
-			(*pr)("0x%x)\n", tmp_frame->vax_args[++arg_base]);
+			(*pr)("%#x)\n", tmp_frame->vax_args[arg_base]);
 		} else
 			(*pr)("void)\n");
 		/* move to the next frame */
