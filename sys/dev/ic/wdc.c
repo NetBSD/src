@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.9 1997/12/24 02:01:00 fvdl Exp $ */
+/*	$NetBSD: wdc.c,v 1.10 1998/01/07 08:47:54 mikel Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -300,14 +300,14 @@ wdcattach(parent, self, aux)
 		}
 	}
 #endif /* NWD > 0 */
-	/* explicitely select an existing drive, to avoid spurious interrupts */
+	/* explicitly select an existing drive, to avoid spurious interrupts */
 	if (wdc->sc_flags & WDCF_ONESLAVE)
 		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
 	else
 		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM); /* master */
 	/*
 	 * Reset controller. The probe, with some combinations of ATA/ATAPI
-	 * device keep it in a mostly working, but strange state (with busy
+	 * devices keep it in a mostly working, but strange state (with busy
 	 * led on)
 	 */
 	wdcreset(wdc, VERBOSE);
@@ -497,7 +497,7 @@ wdc_ata_start(wdc, xfer)
 				}
 				break;
 			}
-			/* Tranfer is okay now. */
+			/* Transfer is okay now. */
 		}
 
 		if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
@@ -1212,7 +1212,7 @@ wdccommandshort(wdc, drive, command)
 
 #if defined(DIAGNOSTIC) && defined(WDCDEBUG)
 	if ((wdc->sc_flags & WDCF_ACTIVE) == 0)
-		printf("wdccommandshort: controler not active (drive %d)\n",
+		printf("wdccommandshort: controller not active (drive %d)\n",
 		    drive);
 #endif
 
@@ -1388,7 +1388,7 @@ wdc_atapi_start(wdc, xfer)
 	if (wdccommand(wdc, (struct wd_link*)xfer->d_link, ATAPI_PACKET_COMMAND,
 	    sc_xfer->sc_link->scsipi_atapi.drive, sc_xfer->datalen,
 		0, 0, 0) != 0) {
-		printf("wdc_atapi_start: can't send atapi paket command\n");
+		printf("wdc_atapi_start: can't send atapi packet command\n");
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		wdc_atapi_done(wdc, xfer);
 		return;
@@ -1404,7 +1404,7 @@ wdc_atapi_start(wdc, xfer)
 			delay(10);
 		}
 		if (phase != PHASE_CMDOUT ) {
-			printf("wdc_atapi_start: timout waiting PHASE_CMDOUT");
+			printf("wdc_atapi_start: timeout waiting PHASE_CMDOUT");
 			sc_xfer->error = XS_SELTIMEOUT;
 			wdc_atapi_done(wdc, xfer);
 			return;
@@ -1572,7 +1572,7 @@ wdc_atapi_send_command_packet(sc_xfer)
 		if (wdccommand(wdc, (struct wd_link*)(&sc_link->scsipi_atapi),
 		    ATAPI_PACKET_COMMAND, sc_link->scsipi_atapi.drive, sc_xfer->datalen,
 		    0, 0, 0) != 0) {
-			printf("can't send atapi paket command\n");
+			printf("can't send atapi packet command\n");
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			splx(s);
 			return COMPLETE;
