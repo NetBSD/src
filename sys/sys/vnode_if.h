@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.h,v 1.17 1999/07/07 23:33:51 wrstuden Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.18 1999/08/03 18:20:23 wrstuden Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.18 1999/07/07 23:32:50 wrstuden Exp 
+ *	NetBSD: vnode_if.src,v 1.19 1999/08/03 18:19:08 wrstuden Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp 
  */
@@ -325,6 +325,37 @@ static __inline int VOP_IOCTL(vp, command, data, fflag, cred, p)
 	a.a_cred = cred;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_ioctl), &a));
+}
+
+struct vop_fcntl_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	u_int a_command;
+	caddr_t a_data;
+	int a_fflag;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+extern struct vnodeop_desc vop_fcntl_desc;
+static __inline int VOP_FCNTL __P((struct vnode *, u_int, caddr_t, int, 
+    struct ucred *, struct proc *)) __attribute__((__unused__));
+static __inline int VOP_FCNTL(vp, command, data, fflag, cred, p)
+	struct vnode *vp;
+	u_int command;
+	caddr_t data;
+	int fflag;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_fcntl_args a;
+	a.a_desc = VDESC(vop_fcntl);
+	a.a_vp = vp;
+	a.a_command = command;
+	a.a_data = data;
+	a.a_fflag = fflag;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_fcntl), &a));
 }
 
 struct vop_poll_args {
