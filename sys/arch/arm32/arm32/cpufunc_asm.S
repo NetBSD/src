@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.10 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.11 2001/03/09 16:17:19 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -660,7 +660,7 @@ sa110_cache_cleanD_rng_loop:
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeID_rng)
-	cmp	r1, #0x2000
+	cmp	r1, #0x4000
 	bcs	_C_LABEL(sa110_cache_purgeID)
 
 	and	r2, r0, #0x1f
@@ -679,7 +679,7 @@ sa110_cache_purgeID_rng_loop:
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeD_rng)
-	cmp	r1, #0x2000
+	cmp	r1, #0x4000
 	bcs	_C_LABEL(sa110_cache_purgeD)
 
 	and	r2, r0, #0x1f
