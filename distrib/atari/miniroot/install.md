@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.9 1997/01/08 10:05:03 leo Exp $
+#	$NetBSD: install.md,v 1.10 1997/04/04 20:57:23 leo Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ md_makerootwritable() {
 md_get_diskdevs() {
 	# return available disk devices
 	__mount_kernfs
-	sed -n -e '/^sd[0-9] /s/ .*//p' \
+	sed -n -e '/^[sw]d[0-9] /s/ .*//p' \
 		< /kern/msgbuf | sort -u
 }
 
