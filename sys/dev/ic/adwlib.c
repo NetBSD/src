@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.26 2003/10/21 00:57:47 fvdl Exp $        */
+/* $NetBSD: adwlib.c,v 1.27 2003/10/25 18:35:42 christos Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.26 2003/10/21 00:57:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.27 2003/10/25 18:35:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1072,6 +1072,11 @@ AdwLoadMCode(iot, ioh, bios_mem, chip_type)
 		mcode_size = (u_int16_t)adw_asc38C1600_mcode_data.mcode_size;
 		adw_memsize = ADW_38C1600_MEMSIZE;
 		break;
+	default:
+		mcode_data = NULL;
+		mcode_chksum = 0;
+		mcode_size = 0;
+		adw_memsize = 0;
 	}
 
 	/*

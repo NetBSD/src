@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.38 2003/06/29 22:30:08 fvdl Exp $	*/
+/*	$NetBSD: iop.c,v 1.39 2003/10/25 18:36:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.38 2003/06/29 22:30:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.39 2003/10/25 18:36:35 christos Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -294,7 +294,8 @@ void
 iop_init(struct iop_softc *sc, const char *intrstr)
 {
 	struct iop_msg *im;
-	int rv, i, j, state, nsegs;
+	int rv, j, state, nsegs;
+	int i = 0; /* XXX: gcc */
 	u_int32_t mask;
 	char ident[64];
 

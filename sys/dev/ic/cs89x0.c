@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.9 2003/05/03 18:11:16 wiz Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.10 2003/10/25 18:35:42 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.9 2003/05/03 18:11:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.10 2003/10/25 18:35:42 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1492,7 +1492,7 @@ cs_process_receive(struct cs_softc *sc)
 	int totlen;
 	u_int16_t *pBuff, *pBuffLimit;
 	int pad;
-	unsigned int frameOffset;
+	unsigned int frameOffset = 0;	/* XXX: gcc */
 
 #ifdef SHARK
 	ledNetActive();
