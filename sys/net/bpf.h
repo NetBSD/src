@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.32 2003/08/07 16:32:47 agc Exp $	*/
+/*	$NetBSD: bpf.h,v 1.33 2004/01/22 00:32:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -56,7 +56,8 @@ typedef	u_int bpf_u_int32;
 #define BPF_WORDALIGN(x) (((x)+(BPF_ALIGNMENT-1))&~(BPF_ALIGNMENT-1))
 
 #define BPF_MAXINSNS 512
-#define BPF_MAXBUFSIZE 0x8000
+#define BPF_DFLTBUFSIZE (1024*1024)	/* default static upper limit */
+#define BPF_MAXBUFSIZE (1024*1024*16)	/* hard limit on sysctl'able value */
 #define BPF_MINBUFSIZE 32
 
 /*

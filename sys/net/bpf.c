@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.88 2004/01/21 23:59:12 jonathan Exp $	*/
+/*	$NetBSD: bpf.c,v 1.89 2004/01/22 00:32:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.88 2004/01/21 23:59:12 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.89 2004/01/22 00:32:41 jonathan Exp $");
 
 #include "bpfilter.h"
 
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.88 2004/01/21 23:59:12 jonathan Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/poll.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 
@@ -90,12 +91,12 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.88 2004/01/21 23:59:12 jonathan Exp $");
 #define PRINET  26			/* interruptible */
 
 /*
- * The default read buffer size, and limit for BIOCSBLEN, is patchable.
- * XXX both should be made sysctl'able, and the defaults computed
- * dynamically based on available memory size and available mbuf clusters.
+ * The default read buffer size, and limit for BIOCSBLEN, is sysctl'able.
+ * XXX the default values should be computed dynamically based
+ * on available memory size and available mbuf clusters.
  */
 int bpf_bufsize = BPF_BUFSIZE;
-int bpf_maxbufsize = (1024 *  1024);	/* XXX set dynamically, see above */
+int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
@@ -1492,4 +1493,46 @@ bpf_setdlt(d, dlt)
 	}
 	splx(s);
 	return 0;
+}
+
+static int
+sysctl_net_bpf_maxbufsize(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &newsize;
+	newsize = bpf_maxbufsize;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (newsize < BPF_MINBUFSIZE || newsize > BPF_MAXBUFSIZE)
+		return (EINVAL);
+
+	bpf_maxbufsize = newsize;
+
+	return (0);
+}
+
+SYSCTL_SETUP(sysctl_net_bfp_setup, "sysctl net.bpf subtree setup")
+{
+	struct sysctlnode *node;
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+
+	node = NULL;
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "bpf", &node,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_CREATE, CTL_EOL);
+	if (node != NULL)
+		sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+			CTLTYPE_INT, "maxbufsize", NULL,
+			sysctl_net_bpf_maxbufsize, 0, &bpf_maxbufsize, 0,
+			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }
