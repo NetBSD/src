@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.h,v 1.6 1995/07/04 23:47:43 paulus Exp $
+ * $Id: ipcp.h,v 1.7 1996/03/15 03:03:49 paulus Exp $
  */
 
 /*
@@ -25,6 +25,9 @@
 #define CI_ADDRS	1	/* IP Addresses */
 #define CI_COMPRESSTYPE	2	/* Compression Type */
 #define	CI_ADDR		3
+
+#define CI_MS_DNS1	129	/* Primary DNS value */
+#define CI_MS_DNS2	131	/* Secondary DNS value */
 
 #define MAX_STATES 16		/* from slcompress.h */
 
@@ -50,6 +53,7 @@ typedef struct ipcp_options {
     u_short vj_protocol;	/* protocol value to use in VJ option */
     u_char maxslotindex, cflag;	/* values for RFC1332 VJ compression neg. */
     u_int32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
+    u_int32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
 } ipcp_options;
 
 extern fsm ipcp_fsm[];
@@ -60,9 +64,14 @@ extern ipcp_options ipcp_hisoptions[];
 
 void ipcp_init __P((int));
 void ipcp_open __P((int));
-void ipcp_close __P((int));
+void ipcp_close __P((int, char *));
 void ipcp_lowerup __P((int));
 void ipcp_lowerdown __P((int));
 void ipcp_input __P((int, u_char *, int));
 void ipcp_protrej __P((int));
 int  ipcp_printpkt __P((u_char *, int, void (*)(), void *));
+void ip_check_options __P((void));
+int  ip_demand_conf __P((int));
+char *ip_ntoa __P((u_int32_t));
+
+extern struct protent ipcp_protent;
