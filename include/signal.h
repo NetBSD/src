@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 1997/11/29 18:38:20 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.12 1998/05/25 21:55:48 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,10 +35,11 @@
  *	@(#)signal.h	8.3 (Berkeley) 3/30/94
  */
 
-#ifndef _USER_SIGNAL_H
-#define _USER_SIGNAL_H
+#ifndef _SIGNAL_H_
+#define _SIGNAL_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #if !defined(_ANSI_SOURCE)
 #include <sys/types.h>
@@ -46,7 +47,8 @@
 
 #include <sys/signal.h>
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 extern __const char *__const sys_signame[_NSIG];
 extern __const char *__const sys_siglist[_NSIG];
 #endif
@@ -103,24 +105,30 @@ extern __inline int sigismember(const sigset_t *set, int signo) {
 #define	sigemptyset(set)	(*(set) = 0, 0)
 #define	sigfillset(set)		(*(set) = ~(sigset_t)0, 0)
 
-#ifndef _POSIX_SOURCE
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500
 int	killpg __P((pid_t, int));
-int	sigblock __P((int));
 int	siginterrupt __P((int, int));
 int	sigpause __P((int));
-int	sigreturn __P((struct sigcontext *));
-int	sigsetmask __P((int));
 int	sigstack __P((const struct sigstack *, struct sigstack *));
-int	sigvec __P((int, struct sigvec *, struct sigvec *));
-void	psignal __P((unsigned int, const char *));
 #ifdef __LIBC12_SOURCE__
 int	sigaltstack __P((const struct sigaltstack13 *, struct sigaltstack13 *));
 int	__sigaltstack14 __P((const stack_t *, stack_t *));
 #else
 int	sigaltstack __P((const stack_t *, stack_t *)) __RENAME(__sigaltstack14);
 #endif
-#endif	/* !_POSIX_SOURCE */
+#endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+void	psignal __P((unsigned int, const char *));
+int	sigblock __P((int));
+int	sigreturn __P((struct sigcontext *));
+int	sigsetmask __P((int));
+int	sigvec __P((int, struct sigvec *, struct sigvec *));
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
 #endif	/* !_ANSI_SOURCE */
 __END_DECLS
 
-#endif	/* !_USER_SIGNAL_H */
+#endif	/* !_SIGNAL_H_ */
