@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$NetBSD: kdump.c,v 1.14 1996/11/21 06:25:26 mikel Exp $";
+static char *rcsid = "$NetBSD: kdump.c,v 1.15 1997/01/27 21:39:50 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -283,9 +283,9 @@ ioctldecode(cmd)
 {
 	char dirbuf[4], *dir = dirbuf;
 
-	if (cmd & IOC_OUT)
-		*dir++ = 'W';
 	if (cmd & IOC_IN)
+		*dir++ = 'W';
+	if (cmd & IOC_OUT)
 		*dir++ = 'R';
 	*dir = '\0';
 
