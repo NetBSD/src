@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.45 2004/05/07 00:04:40 ross Exp $	*/
+/*	$NetBSD: suff.c,v 1.46 2004/12/29 00:43:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.45 2004/05/07 00:04:40 ross Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.46 2004/12/29 00:43:02 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.45 2004/05/07 00:04:40 ross Exp $");
+__RCSID("$NetBSD: suff.c,v 1.46 2004/12/29 00:43:02 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1505,7 +1505,6 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
 {
     GNode   	*cgn = (GNode *) Lst_Datum(prevLN);
     GNode	*gn;	    /* New source 8) */
-    LstNode	ln;	    /* List element for old source */
     char	*cp;	    /* Expanded value */
 
     /*
@@ -1633,37 +1632,9 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
     } else if (Dir_HasWildcards(cgn->name)) {
 	Lst 	explist;    /* List of expansions */
 	Lst 	path;	    /* Search path along which to expand */
-	SuffixCmpData sd;   /* Search string data */
 
-	/*
-	 * Find a path along which to expand the word.
-	 *
-	 * If the word has a known suffix, use that path.
-	 * If it has no known suffix and we're allowed to use the null
-	 *   suffix, use its path.
-	 * Else use the default system search path.
-	 */
-	sd.len = strlen(cgn->name);
-	sd.ename = cgn->name + sd.len;
-	ln = Lst_Find(sufflist, (ClientData)&sd, SuffSuffIsSuffixP);
+	path = Suff_FindPath(cgn);
 
-	if (DEBUG(SUFF)) {
-	    printf("Wildcard expanding \"%s\"...", cgn->name);
-	}
-
-	if (ln != NILLNODE) {
-	    Suff    *s = (Suff *)Lst_Datum(ln);
-
-	    if (DEBUG(SUFF)) {
-		printf("suffix is \"%s\"...", s->name);
-	    }
-	    path = s->searchPath;
-	} else {
-	    /*
-	     * Use default search path
-	     */
-	    path = dirSearchPath;
-	}
 
 	/*
 	 * Expand the word along the chosen path
@@ -1710,6 +1681,47 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
     }
 
     return(0);
+}
+
+/*
+ * Find a path along which to expand the word.
+ *
+ * If the word has a known suffix, use that path.
+ * If it has no known suffix and we're allowed to use the null
+ *   suffix, use its path.
+ * Else use the default system search path.
+ */
+Lst
+Suff_FindPath(GNode* gn)
+{
+    Suff *suff = gn->suffix;
+
+    if (suff == NULL) {
+	SuffixCmpData sd;   /* Search string data */
+	LstNode ln;
+	sd.len = strlen(gn->name);
+	sd.ename = gn->name + sd.len;
+	ln = Lst_Find(sufflist, (ClientData)&sd, SuffSuffIsSuffixP);
+
+	if (DEBUG(SUFF)) {
+	    printf("Wildcard expanding \"%s\"...", gn->name);
+	}
+	if (ln != NILLNODE)
+	    suff = (Suff *)Lst_Datum(ln);
+	/* XXX: Here we can save the suffix so we don't have to do this again */
+    }
+
+    if (suff != NULL) {
+	if (DEBUG(SUFF)) {
+	    printf("suffix is \"%s\"...", suff->name);
+	}
+	return suff->searchPath;
+    } else {
+	/*
+	 * Use default search path
+	 */
+	return dirSearchPath;
+    }
 }
 
 /*-
