@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1995/01/10 16:50:50 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.29 1995/01/11 21:21:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,13 +267,18 @@ struct pmap	kernel_pmap_store;	/* the kernel's pmap */
 struct ksegmap	kernel_segmap_store;	/* the kernel's segmap */
 pmap_t		kernel_pmap;
 
-/*
- * We need to know real physical memory ranges (for /dev/mem).
- */
+#ifdef MACHINE_NONCONTIG
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
 struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
-
+int	cpmemarr;		/* pmap_next_page() state */
+/*static*/ vm_offset_t	avail_start;	/* first free physical page */
+/*static*/ vm_offset_t	avail_end;	/* last free physical page */
+/*static*/ vm_offset_t	avail_next;	/* pmap_next_page() state:
+					   next free physical page */
+/*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
+/*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
+#else
 /*
  * The following four global variables are set in pmap_bootstrap
  * for the vm code to find.  This is Wrong.
@@ -282,6 +287,10 @@ vm_offset_t	avail_start;	/* first free physical page number */
 vm_offset_t	avail_end;	/* last free physical page number */
 vm_offset_t	virtual_avail;	/* first free virtual page number */
 vm_offset_t	virtual_end;	/* last free virtual page number */
+#endif
+
+vm_offset_t prom_vstart;	/* For /dev/kmem */
+vm_offset_t prom_vend;
 
 /*
  * pseudo-functions for mnemonic value
@@ -310,6 +319,7 @@ vm_offset_t	virtual_end;	/* last free virtual page number */
 
 /*----------------------------------------------------------------*/
 
+#ifndef MACHINE_NONCONTIG
 /*
  * Translations from dense (contiguous) pseudo physical addresses
  * (fed to the VM code, to keep it happy) to sparse (real, hardware)
@@ -349,6 +359,10 @@ int	pmap_stod[BTSIZE];		/* sparse to dense */
 
 #define	HWTOSW(pg) (pmap_stod[(pg) >> BSHIFT] | ((pg) & BOFFSET))
 #define	SWTOHW(pg) (pmap_dtos[(pg) >> BSHIFT] | ((pg) & BOFFSET))
+#else
+#define	HWTOSW(pg) (pg)
+#define	SWTOHW(pg) (pg)
+#endif
 
 /*
  * Sort a memory array by address.
@@ -377,6 +391,8 @@ sortm(mp, n)
 		mpj->len = len;
 	}
 }
+
+#ifndef MACHINE_NONCONTIG
 
 #ifdef DEBUG
 struct	memarr pmap_ama[MA_SIZE];
@@ -453,6 +469,121 @@ init_translations()
 	return (pages);
 }
 
+#else /* MACHINE_NONCONTIG */
+
+/*
+ * For our convenience, vm_page.c implements:
+ *       pmap_startup(), pmap_steal_memory()
+ * using the functions:
+ *       pmap_virtual_space(), pmap_free_pages(), pmap_next_page(),
+ * which are much simpler to implement.
+ */
+
+/*
+ * How much virtual space does this kernel have?
+ * (After mapping kernel text, data, etc.)
+ */
+void
+pmap_virtual_space(v_start, v_end)
+        vm_offset_t *v_start;
+        vm_offset_t *v_end;
+{
+        *v_start = virtual_avail;
+        *v_end   = virtual_end;
+}
+
+/*
+ * Return the number of page indices in the range of
+ * possible return values for pmap_page_index() for
+ * all addresses provided by pmap_next_page().  This
+ * return value is used to allocate per-page data.
+ *
+ */
+u_int
+pmap_free_pages()
+{
+	int long bytes;
+	int nmem;
+	register struct memarr *mp;
+
+	for (bytes = 0, mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++)
+		bytes += mp->len;
+
+        return atop(bytes);
+}
+
+/*
+ * If there are still physical pages available, put the address of
+ * the next available one at paddr and return TRUE.  Otherwise,
+ * return FALSE to indicate that there are no more free pages.
+ * Note that avail_next is set to avail_start in pmap_bootstrap().
+ *
+ * Imporant:  The page indices of the pages returned here must be
+ * in ascending order.
+ */
+int
+pmap_next_page(paddr)
+        vm_offset_t *paddr;
+{
+
+        /* Is it time to skip over a hole? */
+	if (avail_next == pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len) {
+		if (++cpmemarr == npmemarr)
+			return FALSE;
+		printf("HOLE %d: skipping to addr %x\n",
+				cpmemarr-1, pmemarr[cpmemarr].addr);
+		avail_next = pmemarr[cpmemarr].addr;
+	}
+
+#ifdef DIAGNOSTIC
+        /* Any available memory remaining? */
+        if (avail_next >= avail_end) {
+		printf("pmap_next_page: too much memory?!\n");
+		callrom();
+	}
+#endif
+
+        /* Have memory, will travel... */
+        *paddr = avail_next;
+        avail_next += NBPG;
+	physmem += 1; /* XXX */
+        return TRUE;
+}
+
+/*
+ * pmap_page_index()
+ *
+ * Given a physical address, return a page index.
+ *
+ * There can be some values that we never return (i.e. a hole)
+ * as long as the range of indices returned by this function
+ * is smaller than the value returned by pmap_free_pages().
+ * The returned index does NOT need to start at zero.
+ *
+ */
+u_long
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+	int idx;
+	int nmem;
+	register struct memarr *mp;
+
+#ifdef  DIAGNOSTIC
+	if (pa < avail_start || pa >= avail_end)
+		panic("pmap_page_index: pa=0x%x", pa);
+#endif
+
+	for (idx = 0, mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
+		if (pa >= mp->addr && pa < mp->addr + mp->len)
+			break;
+		idx += atop(mp->len);
+	}
+
+	return (idx + atop(pa - mp->addr));
+}
+#endif /* MACHINE_NONCONTIG */
+
 #if 0
 /*
  * Pages are physically contiguous, and hardware PFN == software PFN.
@@ -486,14 +617,14 @@ mmu_reservemon(nmmu)
 
 #if defined(SUN4)
 	if (cputyp==CPU_SUN4) {
-		va = OLDMON_STARTVADDR;
-		eva = OLDMON_ENDVADDR;
+		prom_vstart = va = OLDMON_STARTVADDR;
+		prom_vend = eva = OLDMON_ENDVADDR;
 	}
 #endif
 #if defined(SUN4C)
 	if (cputyp==CPU_SUN4C) {
-		va = OPENPROM_STARTVADDR;
-		eva = OPENPROM_ENDVADDR;
+		prom_vstart = va = OPENPROM_STARTVADDR;
+		prom_vend = eva = OPENPROM_ENDVADDR;
 	}
 #endif
 	while (va < eva) {
@@ -1290,7 +1421,9 @@ pmap_bootstrap(nmmu, nctx)
 	 */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	avail_start = (int)p - KERNBASE;
+#ifndef MACHINE_NONCONTIG
 	avail_end = init_translations() << PGSHIFT;
+#endif
 	i = (int)p;
 	vpage[0] = p, p += NBPG;
 	vpage[1] = p, p += NBPG;
@@ -1422,12 +1555,22 @@ pmap_bootstrap(nmmu, nctx)
 			setpte(p, getpte(p) & mask);
 	}
 
+#ifdef MACHINE_NONCONTIG
 	/*
-	 * Grab physical memory list (for /dev/mem).
+	 * Grab physical memory list, so pmap_next_page() can do its bit.
 	 */
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_TOTALPHYS);
+	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
+	sortm(pmemarr, npmemarr);
+	if (pmemarr[0].addr != 0)
+		panic("pmap_bootstrap: no kernel memory?!\n");
+
+	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
+	avail_next = avail_start;
+	physmem = btoc(avail_start); /* XXX */
+#endif
 }
 
+#ifndef MACHINE_NONCONTIG
 /*
  * Bootstrap memory allocator. This function allows for early dynamic
  * memory allocation until the virtual memory system has been bootstrapped.
@@ -1453,13 +1596,18 @@ pmap_bootstrap_alloc(size)
 	bzero((void *)mem, size);
 	return (mem);
 }
+#endif
 
 /*
  * Initialize the pmap module.
  */
 void
+#ifndef MACHINE_NONCONTIG
 pmap_init(phys_start, phys_end)
 	register vm_offset_t phys_start, phys_end;
+#else
+pmap_init()
+#endif
 {
 	register vm_size_t s;
 
@@ -1468,12 +1616,21 @@ pmap_init(phys_start, phys_end)
 	/*
 	 * Allocate and clear memory for the pv_table.
 	 */
+#ifndef MACHINE_NONCONTIG
 	s = sizeof(struct pvlist) * atop(phys_end - phys_start);
+#else
+	s = sizeof(struct pvlist) * atop(avail_end - avail_start); /*XXX*/
+#endif
 	s = round_page(s);
 	pv_table = (struct pvlist *)kmem_alloc(kernel_map, s);
 	bzero((caddr_t)pv_table, s);
+#ifndef MACHINE_NONCONTIG
 	vm_first_phys = phys_start;
 	vm_num_phys = phys_end - phys_start;
+#else
+	vm_first_phys = avail_start;		/*XXX*/
+	vm_num_phys = avail_end - avail_start;	/*XXX*/
+#endif
 }
 
 /*
