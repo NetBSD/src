@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.7 1996/02/02 19:08:38 mycroft Exp $	*/
+/*	$NetBSD: macros.h,v 1.8 1996/03/17 22:44:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -137,7 +137,7 @@ static __inline__ int scanc(u_int size, u_char *cp,u_char *table, int mask){
 	return ret;
 }
 
-static __inline__ int skpc(int mask, int size, char *cp){
+static __inline__ int skpc(int mask, size_t size, u_char *cp){
 	register ret;
 
 	asm __volatile("skpc %1,%2,(%3);movl r0,%0"
