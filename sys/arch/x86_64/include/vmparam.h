@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2002/11/29 22:14:58 fvdl Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2002/12/10 05:14:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,15 +54,13 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack. Immediately above the user stack
- * resides the user structure, which is UPAGES long and contains the
- * kernel stack.
+ * USRSTACK is the top (end) of the user stack. Immediately above the
+ * user stack resides the user structure, which is UPAGES long and contains
+ * the kernel stack.
  *
  * Immediately after the user structure is the page table map, and then
  * kernal address space.
  */
-#define	USRTEXT		NBPG
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #define USRSTACK32	VM_MAXUSER_ADDRESS32
