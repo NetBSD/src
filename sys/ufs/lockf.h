@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lockf.h	7.1 (Berkeley) 2/1/91
- *	$Id: lockf.h,v 1.3 1993/05/20 03:53:25 cgd Exp $
+ *	$Id: lockf.h,v 1.4 1993/05/22 09:01:13 cgd Exp $
  */
 
 #ifndef _UFS_LOCKF_H_
@@ -52,7 +52,7 @@ struct lockf {
 	off_t	lf_start;	 /* The byte # of the start of the lock */
 	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
 	caddr_t	lf_id;		 /* The id of the resource holding the lock */
-	struct	inode *lf_inode; /* Back pointer to the inode */
+	struct	lockf **lf_head; /* Back pointer to the head of lockf list */
 	struct	lockf *lf_next;	 /* A pointer to the next lock on this inode */
 	struct	lockf *lf_block; /* The list of blocked locks */
 };
