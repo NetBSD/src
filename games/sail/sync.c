@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.19 2001/01/04 05:34:56 jwise Exp $	*/
+/*	$NetBSD: sync.c,v 1.20 2001/02/05 01:10:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.19 2001/01/04 05:34:56 jwise Exp $");
+__RCSID("$NetBSD: sync.c,v 1.20 2001/02/05 01:10:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,17 +56,6 @@ __RCSID("$NetBSD: sync.c,v 1.19 2001/01/04 05:34:56 jwise Exp $");
 
 #define BUFSIZE 4096
 
-void	fmtship(char *, size_t, const char *, struct ship *);
-void	makesignal(struct ship *, const char *, struct ship *, ...)
-		__attribute__((__format__(__printf__,2,4)));
-void	makemsg(struct ship *, const char *, ...)
-		__attribute__((__format__(__printf__,2,3)));
-int	sync_exists(int);
-int	sync_open(void);
-void	sync_close(int);
-void	Write(int, struct ship *, long, long, long, long);
-void	Writestr(int, struct ship *, const char *);
-int	Sync(void);
 static int	sync_update(int, struct ship *, const char *, long, long, long, long);
 
 static const char SF[] = _PATH_SYNC;

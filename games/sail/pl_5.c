@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.14 2001/01/04 06:33:18 itojun Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.15 2001/02/05 01:10:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.14 2001/01/04 06:33:18 itojun Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.15 2001/02/05 01:10:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,6 @@ __RCSID("$NetBSD: pl_5.c,v 1.14 2001/01/04 06:33:18 itojun Exp $");
 
 #define turnfirst(x) (*x == 'r' || *x == 'l')
 
-void	acceptmove(void);
-void	acceptboard(void);
 static void	parties(struct ship *, int *, int, int);
 
 void
