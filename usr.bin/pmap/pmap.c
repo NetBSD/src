@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2003/04/04 03:49:20 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.16 2003/05/04 15:09:45 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.15 2003/04/04 03:49:20 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.16 2003/05/04 15:09:45 atatat Exp $");
 #endif
 
 #include <string.h>
@@ -94,6 +94,7 @@ PMAPFUNC(process_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 		memcpy(D(vm_map, vm_map), &D(vmspace, vmspace)->vm_map,
 		       S(vm_map));
 	} else {
+		memset(vmspace, 0, sizeof(*vmspace));
 		A(vm_map) = kernel_map_addr;
 		KDEREF(kd, vm_map);
 	}
@@ -564,7 +565,7 @@ PMAPFUNC(dump_amap,VERSION)(kvm_t *kd, struct kbit *amap)
 
 	if (S(amap) == -1) {
 		heapfound = 1;
-                S(amap) = sizeof(struct vm_amap);
+		S(amap) = sizeof(struct vm_amap);
 		KDEREF(kd, amap);
 	}
 
