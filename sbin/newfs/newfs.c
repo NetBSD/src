@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.27 1997/09/16 14:05:43 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.28 1997/09/29 05:18:00 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.27 1997/09/16 14:05:43 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.28 1997/09/29 05:18:00 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,12 +371,12 @@ main(argc, argv)
 	} else {
 		fso = open(special, O_WRONLY);
 		if (fso < 0)
-			err(1, "%s: ", special);
+			err(1, "%s: open", special);
 
 		/* Bail if target special is mounted */
 		n = getmntinfo(&mp, MNT_NOWAIT);
 		if (n == 0)
-			err(1, "%s: getmntinfo: ", special);
+			err(1, "%s: getmntinfo", special);
 
 		len = sizeof(_PATH_DEV) - 1;
 		s1 = special;
@@ -403,9 +403,9 @@ main(argc, argv)
 	} else {
 		fsi = open(special, O_RDONLY);
 		if (fsi < 0)
-			err(1, "%s: ", special);
+			err(1, "%s: open", special);
 		if (fstat(fsi, &st) < 0)
-			err(1, "%s: ", special);
+			err(1, "%s: fstat", special);
 		if (!S_ISCHR(st.st_mode) && !mfs)
 			warnx("%s: not a character-special device", special);
 		cp = strchr(argv[0], '\0') - 1;
@@ -532,7 +532,7 @@ havelabel:
 		args.base = membase;
 		args.size = fssize * sectorsize;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
-			err(1, "%s: ", argv[1]);
+			err(1, "%s: mount", argv[1]);
 	}
 #endif
 	exit(0);
@@ -603,7 +603,7 @@ rewritelabel(s, fd, lp)
 			*cp = 'c';
 		cfd = open(specname, O_WRONLY);
 		if (cfd < 0)
-			err(1, "%s: ", specname);
+			err(1, "%s: open", specname);
 		memset(blk, 0, sizeof(blk));
 		*(struct disklabel *)(blk + LABELOFFSET) = *lp;
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
