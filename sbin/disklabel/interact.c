@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.16 2000/12/24 05:59:11 lukem Exp $	*/
+/*	$NetBSD: interact.c,v 1.17 2000/12/24 07:08:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.16 2000/12/24 05:59:11 lukem Exp $");
+__RCSID("$NetBSD: interact.c,v 1.17 2000/12/24 07:08:03 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -126,8 +126,8 @@ static void
 cmd_printall(struct disklabel *lp, char *s, int fd)
 {
 
-	showinfo(stdout, lp);
-	showpartitions(stdout, lp);
+	showinfo(stdout, lp, specname);
+	showpartitions(stdout, lp, Cflag);
 }
 
 
@@ -135,7 +135,7 @@ static void
 cmd_print(struct disklabel *lp, char *s, int fd)
 {
 
-	showpartitions(stdout, lp);
+	showpartitions(stdout, lp, Cflag);
 }
 
 
@@ -148,7 +148,7 @@ cmd_info(struct disklabel *lp, char *s, int fd)
 	u_int32_t u;
 
 	printf("# Current values:\n");
-	showinfo(stdout, lp);
+	showinfo(stdout, lp, specname);
 
 	/* d_type */
 	for (;;) {
