@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.82 1998/04/16 22:01:42 drochner Exp $
+#	$NetBSD: INSTALL,v 1.83 1998/04/20 10:58:01 drochner Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -368,7 +368,7 @@ iy0	at isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
 lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
 #le*	at depca?
-#nele0	at isa? port 0x320 irq 10 drq 7		# NE2100
+#nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
 #le*	at nele?
 #bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 #le*	at bicc?
