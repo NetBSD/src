@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.52 1998/01/05 22:01:04 cgd Exp $	*/
+/*	$NetBSD: rtld.c,v 1.53 1998/02/17 23:07:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -859,11 +859,18 @@ reloc_map(smp)
 				relocation -= (long)smp->som_addr;
 
 			if (RELOC_COPY_P(r) && src_map) {
+				if (p->nz_size != np->nz_size)
+					warnx("symbol %s at %#x in %s changed "
+					      "size: expected %d, actual %d\n",
+					      sym,
+					      src_map->som_addr + np->nz_value,
+					      src_map->som_path,
+					      p->nz_size, np->nz_size);
 				(void)enter_rts(sym,
 					(long)addr,
 					N_DATA + N_EXT,
 					src_map->som_addr + np->nz_value,
-					np->nz_size, src_map);
+					p->nz_size, src_map);
 				continue;
 			}
 			md_relocate(r, relocation, addr, 0);
