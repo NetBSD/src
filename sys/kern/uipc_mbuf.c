@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.72 2003/09/04 04:10:32 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.73 2003/09/07 12:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.72 2003/09/04 04:10:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.73 2003/09/07 12:04:13 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -634,6 +634,8 @@ m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 void
 m_cat(struct mbuf *m, struct mbuf *n)
 {
+
+	KASSERT(n == NULL || m->m_type == n->m_type);
 
 	while (m->m_next)
 		m = m->m_next;
