@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.3 1997/03/20 16:01:40 gwr Exp $	*/
+/*	$NetBSD: esp.c,v 1.4 1997/06/27 02:07:32 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -126,6 +126,8 @@ static struct ncr53c9x_glue esp_glue = {
 	esp_dma_isactive,
 	NULL,			/* gl_clear_latched_intr */
 };
+
+extern int ncr53c9x_dmaselect;	/* Used in dev/ic/ncr53c9x.c */
 
 static int
 espmatch(parent, cf, aux)
@@ -281,6 +283,8 @@ espattach(parent, self, aux)
 	case NCR_VARIANT_ESP100:
 		sc->sc_maxxfer = 64 * 1024;
 		sc->sc_minsync = 0;	/* No synch on old chip? */
+		/* Avoid hardware bug by using DMA when selecting targets */
+		/* ncr53c9x_dmaselect = 1; */
 		break;
 
 	case NCR_VARIANT_ESP100A:
