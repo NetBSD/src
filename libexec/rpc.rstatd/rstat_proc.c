@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.4 1993/09/23 18:42:39 jtc Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.5 1993/12/07 09:09:12 mycroft Exp $";
 #endif
 
 /*
@@ -58,6 +58,7 @@ static char rcsid[] = "$Id: rstat_proc.c,v 1.4 1993/09/23 18:42:39 jtc Exp $";
 
 #undef FSHIFT			 /* Use protocol's shift and scale values */
 #undef FSCALE
+#undef DK_NDRIVE
 #include <rpcsvc/rstat.h>
 
 struct nlist nl[] = {
