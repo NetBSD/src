@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1993/08/02 17:52:45 mycroft Exp $
+#	$Id: Makefile,v 1.3 1993/10/26 15:52:55 brezak Exp $
 
 # uncomment one of these as appropriate for the board being used
 #ETH_OBJ = ne2100.o
@@ -34,11 +34,6 @@ ROM_SIZE = 16384
 		$(AS) $*.i -a -o /dev/null > $@;	\
 	fi
 
-#AS = as
-#CC = cc
-#LD = ld
-
-
 # the relocation address (hex)
 RELOC = 98000
 CFLAGS = -O $(DEFINES) -nostdinc
@@ -51,7 +46,7 @@ OBJS = start.o main.o cga.o kbd.o packet.o tftp.o arp.o \
 all: boot.bin
 
 boot.bin: $(OBJS) genprom
-	${LD} -N -T ${RELOC} $(OBJS)
+	${LD} -e _start -N -T ${RELOC} $(OBJS)
 	cp a.out boot.sym
 	rm -f $@
 	strip a.out

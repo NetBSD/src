@@ -27,7 +27,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: main.c,v 1.3 1993/08/02 17:52:56 mycroft Exp $
+ *	$Id: main.c,v 1.4 1993/10/26 15:52:57 brezak Exp $
  */
 
 /*
@@ -66,6 +66,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "proto.h"
 
+
 u_long work_area_org = RELOC;
 u_long kernel_size;
 u_short real_cs;
@@ -100,7 +101,7 @@ LoadProgFromServer(ipaddr_t server, ipaddr_t gateway, char *file_name) {
   if (Read(&head, sizeof(head)) != sizeof(head))
     return load_bad_size;
 
-  if (head.a_magic != 0413 ) {
+  if (N_GETMAGIC(head) != ZMAGIC) {
     printf("Invalid format!\n");
     return load_bad_format;
   }

@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: nbtypes.h,v 1.2 1993/08/02 17:52:58 mycroft Exp $
+ *	$Id: nbtypes.h,v 1.3 1993/10/26 15:52:59 brezak Exp $
  */
 
 #ifndef __nbtypes_h_
@@ -50,7 +50,7 @@ typedef	unsigned long	u_long;
 typedef int jmp_buf[_JBLEN];
 
 struct exec {
-	 long	a_magic;	/* magic number */
+	 long	a_midmag;	/* magic number */
 unsigned long	a_text;		/* text segment size */
 unsigned long	a_data;		/* initialized data size */
 unsigned long	a_bss;		/* uninitialized data size */
@@ -59,6 +59,11 @@ unsigned long	a_entry;	/* entry point */
 unsigned long	a_trsize;	/* text relocation size */
 unsigned long	a_drsize;	/* data relocation size */
 };
+
+#define N_GETMAGIC(ex) \
+            ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : ((ex).a_midmag))
+
+#define ZMAGIC          0413    /* demand load format */
 
 #if 0
 typedef char *va_list;

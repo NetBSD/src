@@ -1,4 +1,4 @@
-/*	$Id: start.s,v 1.2 1993/08/02 17:53:03 mycroft Exp $ */
+/*	$Id: start.s,v 1.3 1993/10/26 15:52:59 brezak Exp $ */
 
 #include "asm.h"
 
@@ -11,6 +11,7 @@
 	.byte	0			/* no. of 512B blocks */
 	jmp	1f			/* enter from bios here */
 	.byte	0			/* checksum */
+ENTRY(start)
 1:
 	cli
 	# save the bios return address in these registers until protected
