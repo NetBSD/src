@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cat.c	5.15 (Berkeley) 5/23/91";*/
-static char rcsid[] = "$Id: cat.c,v 1.6 1993/08/01 19:01:07 mycroft Exp $";
+static char rcsid[] = "$Id: cat.c,v 1.7 1993/09/10 18:36:17 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,9 +59,13 @@ int bflag, eflag, nflag, sflag, tflag, vflag;
 int rval;
 char *filename;
 
-void cook_args(), cook_buf(), raw_args(), raw_cat();
-void err __P((int, const char *, ...));
+void cook_args	__P((char **));
+void cook_buf	__P((FILE *));
+void raw_args	__P((char **));
+void raw_cat	__P((int));
+void err	__P((int, const char *, ...));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -69,7 +73,7 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "benstuv")) != EOF)
+	while ((ch = getopt(argc, argv, "benstuv")) != -1)
 		switch (ch) {
 		case 'b':
 			bflag = nflag = 1;	/* -b implies -n */
@@ -92,6 +96,7 @@ main(argc, argv)
 		case 'v':
 			vflag = 1;
 			break;
+		default:
 		case '?':
 			(void)fprintf(stderr,
 			    "usage: cat [-benstuv] [-] [file ...]\n");
@@ -189,7 +194,7 @@ cook_buf(fp)
 			break;
 	}
 	if (ferror(fp)) {
-		err(0, "%s: %s", strerror(errno));
+		err(0, "%s: %s", filename, strerror(errno));
 		clearerr(fp);
 	}
 	if (ferror(stdout))
