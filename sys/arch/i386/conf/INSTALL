@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54 1997/10/18 02:01:36 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.55 1997/10/19 00:00:20 perry Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -41,7 +41,7 @@ options 	MATH_EMULATE	# floating point emulation
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
-# values.  Note that the BIOS may *correctly* report less that 640k of base
+# values.  Note that the BIOS may *correctly* report less than 640k of base
 # memory if the extended BIOS data area is located at the top of base memory
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=...	# size of base memory
