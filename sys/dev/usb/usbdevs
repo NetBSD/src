@@ -1,4 +1,4 @@
-a$NetBSD: usbdevs,v 1.33 1999/06/26 15:20:53 tron Exp $
+a$NetBSD: usbdevs,v 1.34 1999/06/26 16:26:20 tron Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ vendor GENIUS		0x0458	KYE Systems Corp.
 vendor MICROSOFT	0x045e	Microsoft
 vendor KENSINGTON	0x0461	Primax Electronics
 vendor CHERRY		0x046a	Cherry Mikroschalter GMBH
+vendor LOGITECH		0x046d	Logitech Inc.
 vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
 vendor CONNECTIX	0x0478	Connectix Corp.
@@ -71,7 +72,7 @@ vendor EIZO		0x056d	EIZO
 vendor AGILER		0x056e	Elecom Co., Ltd.
 vendor IOMEGA		0x059b	Iomega Corporation
 vendor BELKIN		0x05ab	In-System Design
-vendor LOGITECH		0x05ac	Logitech
+vendor APPLE		0x05ac	Apple Computer
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
