@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200var.h,v 1.1 2002/01/23 21:00:12 thorpej Exp $	*/
+/*	$NetBSD: i80200var.h,v 1.2 2002/01/24 01:12:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,5 +42,8 @@
 void	i80200_intr_init(void);
 void	i80200_intr_enable(uint32_t);
 void	i80200_intr_disable(uint32_t);
+
+struct clockframe;
+void	(*i80200_extirq_dispatch)(struct clockframe *);
 
 #endif /* _ARM_XSCALE_I80200VAR_H_ */

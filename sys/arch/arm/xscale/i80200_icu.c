@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_icu.c,v 1.1 2002/01/23 21:00:12 thorpej Exp $	*/
+/*	$NetBSD: i80200_icu.c,v 1.2 2002/01/24 01:12:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -50,6 +50,16 @@
 /* Software shadow copy of INTCTL. */
 static uint32_t intctl;
 
+/* Pointer to board-specific external IRQ dispatcher. */
+void	(*i80200_extirq_dispatch)(struct clockframe *);
+
+static void
+i80200_default_extirq_dispatch(struct clockframe *framep)
+{
+
+	panic("external IRQ with no dispatch routine");
+}
+
 /*
  * i80200_intr_init:
  *
@@ -69,6 +79,8 @@ i80200_intr_init(void)
 	__asm __volatile("mcr p13, 0, %0, c2, c0"
 		:
 		: "r" (0));
+
+	i80200_extirq_dispatch = i80200_default_extirq_dispatch;
 }
 
 /*
