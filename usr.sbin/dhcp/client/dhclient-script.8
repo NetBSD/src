@@ -1,20 +1,39 @@
 .\"	dhclient-script.8
 .\"
-.\" Copyright (c) 1996-1999 Internet Software Consortium.
-.\" Use is subject to license terms which appear in the file named
-.\" ISC-LICENSE that should have accompanied this file when you
-.\" received it.   If a file named ISC-LICENSE did not accompany this
-.\" file, or you are not sure the one you have is correct, you may
-.\" obtain an applicable copy of the license at:
+.\" Copyright (c) 1996-2001 Internet Software Consortium.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
 .\"
-.\"             http://www.isc.org/isc-license-1.0.html. 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" This file is part of the ISC DHCP distribution.   The documentation
-.\" associated with this file is listed in the file DOCUMENTATION,
-.\" included in the top-level directory of this release.
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
 .\"
-.\" Support and other services are available for ISC products - see
-.\" http://www.isc.org for more information.
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about the Internet Software Consortium, see
+.\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
 .TH dhclient-script 8
 .SH NAME
 dhclient-script - DHCP client network configuration script
@@ -60,16 +79,22 @@ is available to this script, which may modify the environment if needed
 to change the behaviour of the script.   If an error occurs during the
 execution of the script, it can set the exit_status variable to a nonzero
 value, and
-.B /etc/dhclient-script
+.B /sbin/dhclient-script
 will exit with that error code immediately after the client script exits.
 .PP
 After all processing has completed,
-.B /etc/dhclient-script
+.B /sbin/dhclient-script
 checks for the presence of an executable
 .B /etc/dhclient-exit-hooks
-script, which if present is invoked using the '.' command.   The exit status
-is passed in the exit_status shell variable, and will always be zero if the
-script succeeded at the task for which it was invoked.
+script, which if present is invoked using the '.' command.  The exit
+status of dhclient-script will be passed to dhclient-exit-hooks in the
+exit_status shell variable, and will always be zero if the script
+succeeded at the task for which it was invoked.   The rest of the
+environment as described previously for dhclient-enter-hooks is also
+present.   The
+.B /etc/dhclient-exit-hooks
+script can modify the valid of exit_status to change the exit status
+of dhclient-script.
 .SH OPERATION
 When dhclient needs to invoke the client configuration script, it
 writes a shell script into /tmp which defines a variety of variables.
