@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: dma.c,v 1.3 1993/10/17 05:34:23 mycroft Exp $
+ *	$Id: dma.c,v 1.4 1993/10/22 20:24:14 mycroft Exp $
  */
 
 /*
@@ -86,17 +86,45 @@ static u_short dmapageport[8] =
 	{ 0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a };
 
 /*
+ * at_setup_dmachan(): allocate bounce buffer and check for conflicts.
+ *
+ * XXX
+ * This sucks.  We should be able to bounce more than NBPG bytes, but I
+ * don't feel like writing the code to do contiguous allocation right now.
+ */
+void
+at_setup_dmachan(chan, max)
+	int chan;
+	u_long max;
+{
+
+#ifdef DIAGNOSTIC
+	if (chan > 7 || chan < 0)
+		panic("at_setup_dmachan: impossible request"); 
+	if (max > NBPG)
+		panic("at_setup_dmachan: what a lose");
+#endif
+
+	/* XXX check for drq conflict? */
+
+	bouncebuf[chan] = (caddr_t) isaphysmem + NBPG*chan;
+}
+
+/*
  * at_dma_cascade(): program 8237 DMA controller channel to accept
  * external dma control by a board.
  */
 void
 at_dma_cascade(chan)
-	unsigned chan;
+	int chan;
 {
+
 #ifdef DIAGNOSTIC
-	if (chan > 7)
+	if (chan > 7 || chan < 0)
 		panic("at_dma_cascade: impossible request"); 
 #endif
+
+	/* XXX check for drq conflict? */
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
@@ -117,22 +145,26 @@ at_dma(read, addr, nbytes, chan)
 	int read;
 	caddr_t addr;
 	vm_size_t nbytes;
-	unsigned chan;
+	int chan;
 {
 	vm_offset_t phys;
 	int waport;
 	caddr_t newaddr;
 
-	if (chan > 7 ||
+#ifdef DIAGNOSTIC
+	if (chan > 7 || chan < 0 ||
 	    (chan < 4 && nbytes > (1<<16)) ||
 	    (chan >= 4 && (nbytes > (1<<17) || nbytes & 1 || (u_int)addr & 1)))
 		panic("at_dma: impossible request"); 
+#endif
 
 	if (at_dma_rangecheck((vm_offset_t)addr, nbytes, chan)) {
-		/* XXX totally braindead; NBPG is not enough */
 		if (bouncebuf[chan] == 0)
-			bouncebuf[chan] =
-				(caddr_t) isaphysmem + NBPG*chan;
+			/* some twit forgot to call at_setup_dmachan() */
+			panic("at_dma: no bounce buffer");
+		/* XXX totally braindead; NBPG is not enough */
+		if (nbytes > NBPG)
+			panic("at_dma: transfer too large");
 		bouncesize[chan] = nbytes;
 		newaddr = bouncebuf[chan];
 		/* copy bounce buffer on write */
@@ -204,11 +236,11 @@ at_dma(read, addr, nbytes, chan)
  */
 void
 at_dma_abort(chan)
-	unsigned chan;
+	int chan;
 {
 
 #ifdef DIAGNOSTIC
-	if (chan > 7)
+	if (chan > 7 || chan < 0)
 		panic("at_dma_abort: impossible request");
 #endif
 
@@ -232,7 +264,7 @@ at_dma_terminate(chan)
 	u_char tc;
 
 #ifdef DIAGNOSTIC
-	if (chan > 7)
+	if (chan > 7 || chan < 0)
 		panic("at_dma_terminate: impossible request");
 #endif
 
@@ -267,8 +299,8 @@ at_dma_terminate(chan)
 int
 at_dma_rangecheck(va, length, chan)
 	vm_offset_t va;
-	unsigned length;
-	unsigned chan;
+	u_long length;
+	int chan;
 {
 	vm_offset_t phys, priorpage = 0, endva;
 	u_int dma_pgmsk = (chan&4) ?  ~(128*1024-1) : ~(64*1024-1);
@@ -277,7 +309,7 @@ at_dma_rangecheck(va, length, chan)
 	for (; va < endva ; va += NBPG) {
 		phys = trunc_page(pmap_extract(pmap_kernel(), va));
 		if (phys == 0)
-			panic("isa_dmacheck: no physical page present");
+			panic("at_dma_rangecheck: no physical page present");
 		if (phys >= (1<<24))
 			return 1;
 		if (priorpage) {
