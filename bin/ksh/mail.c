@@ -1,9 +1,15 @@
-/*	$NetBSD: mail.c,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: mail.c,v 1.4 2003/06/23 11:39:00 agc Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
  * John R. MacMillan
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: mail.c,v 1.4 2003/06/23 11:39:00 agc Exp $");
+#endif
+
 
 #include "config.h"
 
