@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.1 2001/11/15 23:12:56 thorpej Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.2 2001/11/16 19:20:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.1 2001/11/15 23:12:56 thorpej Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2001/11/16 19:20:39 kleink Exp $");
 #endif
 
 #include <stddef.h>
@@ -58,7 +58,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 
 	/* Compute and align stack pointer. */
 	sp = (unsigned int *)
-	    (((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size) & ~3);
+	    (((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size) & ~7);
 	/* Allocate necessary stack space for arguments exceeding r0-3. */
 	if (argc > 4)
 		sp -= argc - 4;
