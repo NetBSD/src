@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.14 1998/05/24 20:06:08 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.15 1998/08/03 14:16:04 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,8 +71,10 @@
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
 #define	_POSIX_VDISABLE		((unsigned char)'\377')
-				/* file syncronization is available */
+				/* file synchronization is available */
 #define	_POSIX_FSYNC		1
+				/* synchronized I/O is available */
+#define	_POSIX_SYNCHRONIZED_IO	1
 
 
 /* access function */
@@ -103,6 +105,7 @@
 #define	_PC_CHOWN_RESTRICTED	 7
 #define	_PC_NO_TRUNC		 8
 #define	_PC_VDISABLE		 9
+#define	_PC_SYNC_IO		10
 
 /* configurable system variables */
 #define	_SC_ARG_MAX		 1
@@ -136,6 +139,8 @@
 #define	_SC_PAGE_SIZE		_SC_PAGESIZE	/* 1170 compatibility */
 #define	_SC_FSYNC		29
 #define	_SC_XOPEN_SHM		30
+#define	_SC_SYNCHRONIZED_IO	31
+#define	_SC_IOV_MAX		32
 
 /* configurable system strings */
 #define	_CS_PATH		 1
