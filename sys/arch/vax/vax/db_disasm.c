@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 1996/10/11 01:51:07 christos Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.9 1996/10/13 03:35:38 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -127,7 +127,7 @@ void add_xint	__P((inst_buffer * ib, int i));
 void add_sym	__P((inst_buffer * ib, int i));
 void add_off	__P((inst_buffer * ib, int i));
 
-#define err_print  kprintf
+#define err_print  printf
 
 /*
  * Disassemble instruction at 'loc'.  'altfmt' specifies an
@@ -320,7 +320,7 @@ get_operand(ib, size)
 		break;
 
 	case 4:		/* indexed */
-		ksprintf(buf, "[%s]", my_db_regs[reg].name);
+		sprintf(buf, "[%s]", my_db_regs[reg].name);
 		get_operand(ib, 0);
 		add_str(ib, buf);
 		break;
@@ -491,9 +491,9 @@ add_int(ib, i)
 {
 	char		buf[32];
 	if (i < 100 && i > -100)
-		ksprintf(buf, "%d", i);
+		sprintf(buf, "%d", i);
 	else
-		ksprintf(buf, "0x%x", i);
+		sprintf(buf, "0x%x", i);
 	add_str(ib, buf);
 }
 
@@ -503,7 +503,7 @@ add_xint(ib, val)
 	int		val;
 {
 	char		buf[32];
-	ksprintf(buf, "0x%x", val);
+	sprintf(buf, "0x%x", val);
 	add_str(ib, buf);
 }
 

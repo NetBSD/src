@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.5 1996/10/11 01:51:25 christos Exp $	*/
+/*	$NetBSD: ka860.c,v 1.6 1996/10/13 03:35:53 christos Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -151,9 +151,9 @@ ka86_memerr()
 		mstat2 = reg11;
 		array = M8600_ARRAY(mear);
 
-		kprintf("mcr0: ecc error, addr %x (array %d) syn %x\n",
+		printf("mcr0: ecc error, addr %x (array %d) syn %x\n",
 			M8600_ADDR(mear), array, M8600_SYN(mdecc));
-		kprintf("\tMSTAT1 = %b\n\tMSTAT2 = %b\n",
+		printf("\tMSTAT1 = %b\n\tMSTAT2 = %b\n",
 			    mstat1, M8600_MSTAT1_BITS,
 			    mstat2, M8600_MSTAT2_BITS);
 		mtpr(0, PR_EHSR);
@@ -235,21 +235,21 @@ ka86_mchk(cmcf)
 		mcf->mc86_ehmsts |= MC_MBOX1D;
 
 	type = mcf->mc86_ehmsts & 0x7;
-	kprintf("machine check %x: %s\n", type,
+	printf("machine check %x: %s\n", type,
 	    type < NMC8600 ? mc8600[type] : "???");
-	kprintf("\tehm.sts %x evmqsav %x ebcs %x edpsr %x cslint %x\n",
+	printf("\tehm.sts %x evmqsav %x ebcs %x edpsr %x cslint %x\n",
 	    mcf->mc86_ehmsts, mcf->mc86_evmqsav, mcf->mc86_ebcs,
 	    mcf->mc86_edpsr, mcf->mc86_cslint);
-	kprintf("\tibesr %x ebxwd %x %x ivasav %x vibasav %x\n",
+	printf("\tibesr %x ebxwd %x %x ivasav %x vibasav %x\n",
 	    mcf->mc86_ibesr, mcf->mc86_ebxwd1, mcf->mc86_ebxwd2,
 	    mcf->mc86_ivasav, mcf->mc86_vibasav);
-	kprintf("\tesasav %x isasav %x cpc %x mstat %x %x mdecc %x\n",
+	printf("\tesasav %x isasav %x cpc %x mstat %x %x mdecc %x\n",
 	    mcf->mc86_esasav, mcf->mc86_isasav, mcf->mc86_cpc,
 	    mcf->mc86_mstat1, mcf->mc86_mstat2, mcf->mc86_mdecc);
-	kprintf("\tmerg %x cshctl %x mear %x medr %x accs %x cses %x\n",
+	printf("\tmerg %x cshctl %x mear %x medr %x accs %x cses %x\n",
 	    mcf->mc86_merg, mcf->mc86_cshctl, mcf->mc86_mear,
 	    mcf->mc86_medr, mcf->mc86_accs, mcf->mc86_cses);
-	kprintf("\tpc %x psl %x\n", mcf->mc86_pc, mcf->mc86_psl);
+	printf("\tpc %x psl %x\n", mcf->mc86_pc, mcf->mc86_psl);
 	mtpr(0, PR_EHSR);
 	return (MCHK_PANIC);
 }
@@ -305,14 +305,14 @@ ka86_conf(parent, self, aux)
 	strcpy(cpu_model,"VAX 8600");
 	if (ka86->v8650)
 		cpu_model[5] = '5';
-	kprintf(": %s, serial number %d(%d), hardware ECO level %d(%d)\n",
+	printf(": %s, serial number %d(%d), hardware ECO level %d(%d)\n",
 	    &cpu_model[4], ka86->snr, ka86->plant, ka86->eco >> 4, ka86->eco);
-	kprintf("%s: ", self->dv_xname);
+	printf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
-		kprintf("FPA present, type %d, serial number %d, enabling.\n", 
+		printf("FPA present, type %d, serial number %d, enabling.\n", 
 		    mfpr(PR_ACCS) & 255, mfpr(PR_ACCS) >> 16);
 		mtpr(0x8000, PR_ACCS);
 	} else
-		kprintf("no FPA\n");
+		printf("no FPA\n");
 	crlattach();
 }

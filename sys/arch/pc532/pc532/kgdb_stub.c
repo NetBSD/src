@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.2 1996/10/11 00:41:19 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.3 1996/10/13 03:30:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -326,10 +326,10 @@ kgdb_connect(verbose)
 		return;
 
 	if (verbose)
-		kprintf("kgdb waiting...");
+		printf("kgdb waiting...");
 	Debugger();
 	if (verbose)
-		kprintf("connected.\n");
+		printf("connected.\n");
 }
 
 /*
@@ -374,7 +374,7 @@ kgdb_trap(type, regs)
 		kgdb_active = 1;
 	} else {
 		/* Tell remote host that an exception has occured. */
-		ksprintf(buffer, "S%02x", kgdb_signal(type));
+		sprintf(buffer, "S%02x", kgdb_signal(type));
 		kgdb_send(buffer);
 	}
 	/* Stick frame regs into our reg cache. */
@@ -396,7 +396,7 @@ kgdb_trap(type, regs)
 			 * knowing if we're in or out of this loop
 			 * when he issues a "remote-signal".
 			 */
-			ksprintf(buffer, "S%02x", kgdb_signal(type));
+			sprintf(buffer, "S%02x", kgdb_signal(type));
 			kgdb_send(buffer);
 			continue;
 
@@ -472,7 +472,7 @@ kgdb_trap(type, regs)
 
 		case KGDB_KILL:
 			kgdb_active = 0;
-			kprintf("kgdb detached\n");
+			printf("kgdb detached\n");
 			db_clear_single_step(regs);
 			return(1);
 

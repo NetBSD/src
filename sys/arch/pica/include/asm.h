@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3 1996/10/10 23:45:12 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 1996/10/13 03:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,7 +143,7 @@ x: ; \
 #define STAND_RA_OFFSET		20
 
 /*
- * Macros to panic and kprintf from assembly language.
+ * Macros to panic and printf from assembly language.
  */
 #define PANIC(msg) \
 	la	a0, 9f; \
@@ -152,7 +152,7 @@ x: ; \
 
 #define	PRINTF(msg) \
 	la	a0, 9f; \
-	jal	kprintf; \
+	jal	printf; \
 	MSG(msg)
 
 #define	MSG(msg) \

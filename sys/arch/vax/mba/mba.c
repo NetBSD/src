@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.9 1996/10/11 01:50:35 christos Exp $ */
+/*	$NetBSD: mba.c,v 1.10 1996/10/13 03:35:00 christos Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -125,7 +125,7 @@ mbaattach(parent, self, aux)
 	extern  struct  ivec_dsp idsptch;
 	int	i, j;
 
-	kprintf("\n");
+	printf("\n");
 	/*
 	 * Set up interrupt vectors for this MBA.
 	 */
@@ -249,12 +249,12 @@ mbaprint(aux, mbaname)
 
 	if (mbaname) {
 		if (ma->name)
-			kprintf("%s", ma->name);
+			printf("%s", ma->name);
 		else
-			kprintf("device type %o", ma->type);
-		kprintf(" at %s", mbaname);
+			printf("device type %o", ma->type);
+		printf(" at %s", mbaname);
 	}
-	kprintf(" drive %d", ma->unit);
+	printf(" drive %d", ma->unit);
 	return (ma->name ? UNCONF : UNSUPP);
 }
 

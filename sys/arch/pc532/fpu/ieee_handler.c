@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.3 1996/10/11 00:41:08 christos Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.4 1996/10/13 03:30:25 christos Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -178,29 +178,29 @@ static void print_op(struct operand *op)
   if (op->type == op_type_float) {
     if (invalid_float(&op->data, op->size)) {
       if (op->size == sizeof(double)) {
-	kprintf("s: %d, e: %x, m1: %x, m2: %x", op->data.d_bits.sign, op->data.d_bits.exp, op->data.d_bits.mantissa, op->data.d_bits.mantissa2);
+	printf("s: %d, e: %x, m1: %x, m2: %x", op->data.d_bits.sign, op->data.d_bits.exp, op->data.d_bits.mantissa, op->data.d_bits.mantissa2);
       }
       else {
-	kprintf("s: %d, e: %x, m1: %x", op->data.f_bits.sign, op->data.f_bits.exp, op->data.f_bits.mantissa);
+	printf("s: %d, e: %x, m1: %x", op->data.f_bits.sign, op->data.f_bits.exp, op->data.f_bits.mantissa);
       }
     }
     else {
       if (op->size == sizeof(double))
-	kprintf("%25.17e", op->data.d);
+	printf("%25.17e", op->data.d);
       else
-	kprintf("%18.10e", op->data.f);
+	printf("%18.10e", op->data.f);
     }
   }
   else
     switch(op->size) {
     case 1:
-      kprintf("%d", op->data.c);
+      printf("%d", op->data.c);
       break;
     case 2:
-      kprintf("%d", op->data.s);
+      printf("%d", op->data.s);
       break;
     case 4:
-      kprintf("%d", op->data.i);
+      printf("%d", op->data.i);
       break;
     }
 }
@@ -692,8 +692,8 @@ int ieee_handle_exception(state *state)
 
 #ifdef DEBUG
   if (ieee_handler_debug > 1) {
-    kprintf( "op1 = "); print_op(&op1); kprintf("\n");
-    kprintf( "op2 = "); print_op(&op2); kprintf("\n");
+    printf( "op1 = "); print_op(&op1); printf("\n");
+    printf( "op2 = "); print_op(&op2); printf("\n");
   }
 #endif
 
@@ -754,7 +754,7 @@ int ieee_handle_exception(state *state)
     if(res) {
 #ifdef DEBUG
       if (ieee_handler_debug > 1) {
-	kprintf( "res = "); print_op(res); kprintf("\n");
+	printf( "res = "); print_op(res); printf("\n");
       }
 #endif
       store_result(res);

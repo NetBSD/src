@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_internal.h,v 1.2 1996/10/11 00:41:09 christos Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.3 1996/10/13 03:30:26 christos Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -36,7 +36,7 @@
 
 #ifdef DEBUG
 extern int ieee_handler_debug;
-#define DP(n, format, args...)  if (ieee_handler_debug >= n) kprintf(format, ## args)
+#define DP(n, format, args...)  if (ieee_handler_debug >= n) printf(format, ## args)
 #else
 #define DP(n, format, args...)
 #endif

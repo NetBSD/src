@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 1996/10/11 00:41:13 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 1996/10/13 03:30:35 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -69,12 +69,12 @@ void
 kdbprinttrap(type, code)
 	int	type, code;
 {
-	kprintf("kernel: ");
+	printf("kernel: ");
 	if (type >= trap_types || type < 0)
 		db_printf("type %d", type);
 	else
 		db_printf("%s", trap_type[type]);
-	kprintf(" trap, code=%x\n", code);
+	printf(" trap, code=%x\n", code);
 }
 
 /*

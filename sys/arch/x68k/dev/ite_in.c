@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_in.c,v 1.2 1996/10/11 00:39:32 christos Exp $	*/
+/*	$NetBSD: ite_in.c,v 1.3 1996/10/13 03:34:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Masaru Oki.
@@ -295,7 +295,7 @@ ite_8n_windowmove (src, srcx, srcy, srcmod,
 	dst += dstmod * dsty + (dstx >> 3);
 
 #if 0
-	kprintf("ccwm: %x-%x-%x-%x-%c\n", src, dst, h, w,
+	printf("ccwm: %x-%x-%x-%x-%c\n", src, dst, h, w,
 	       op == RR_XOR ? '^' : op == RR_COPY ? '|' : op == RR_CLEAR ? 'C' : 'I');
 #endif
 

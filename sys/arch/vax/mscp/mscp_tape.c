@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.2 1996/10/11 01:50:43 christos Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.3 1996/10/13 03:35:09 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -395,10 +395,10 @@ mtioerror(usc, mp, bp)
 		mt->mt_serex = 2;
 	else {
 		if (st && st < 17)
-			kprintf("%s: error %d (%s)\n", mt->mt_dev.dv_xname, st,
+			printf("%s: error %d (%s)\n", mt->mt_dev.dv_xname, st,
 			    mt_ioerrs[st-1]);
 		else
-			kprintf("%s: error %d\n", mt->mt_dev.dv_xname, st);
+			printf("%s: error %d\n", mt->mt_dev.dv_xname, st);
 		bp->b_flags |= B_ERROR;
 	}
 
@@ -511,7 +511,7 @@ mtcmd(mt, cmd)
 		break;
 
 	default:
-		kprintf("Bad ioctl %x\n", cmd);
+		printf("Bad ioctl %x\n", cmd);
 		mp->mscp_opcode = M_OP_POS;
 		break;
 	}
@@ -531,7 +531,7 @@ mtcmddone(usc, mp)
 	struct mt_softc *mt = (void *)usc;
 
 	if (mp->mscp_status)
-		kprintf("%s: bad status %x\n", mt->mt_dev.dv_xname,
+		printf("%s: bad status %x\n", mt->mt_dev.dv_xname,
 		    mp->mscp_status);
 	wakeup(&mt->mt_inuse);
 }
