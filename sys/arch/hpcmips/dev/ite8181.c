@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.1 2000/10/02 03:57:54 sato Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.2 2000/10/23 09:03:31 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -32,6 +32,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/boot_flag.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -50,6 +51,7 @@
 #if NBIVIDEO > 0
 #include <hpcmips/dev/bivideovar.h>
 #endif
+#include <hpcmips/dev/hpccmapvar.h>
 
 
 #define ITE8181DEBUG
@@ -75,8 +77,25 @@ int ite8181_lcd_control_disable = 1;
 int ite8181_lcd_control_disable = 0;
 #endif /* ITE8181_LCD_CONTROL_ENABLE */
 
+#define ITE8181_WINCE_CMAP
+
+/*
+ * XXX:
+ * IBM WorkPad z50 power unit has too weak power.
+ * So we must wait too many times to access some device
+ * after LCD panel and BackLight on.
+ * Currently delay is not enough ??? FIXME 
+ */
+#ifndef ITE8181_LCD_ON_SELF_DELAY
+#define ITE8181_LCD_ON_SELF_DELAY 10
+#endif /* ITE8181_LCD_ON__SELF_DELAY */
+#ifndef ITE8181_LCD_ON_DELAY
+#define ITE8181_LCD_ON_DELAY 2000
+#endif /* ITE8181_LCD_ON_DELAY */
+int ite8181_lcd_on_self_delay = ITE8181_LCD_ON_SELF_DELAY; /* msec */
+int ite8181_lcd_on_delay = ITE8181_LCD_ON_DELAY; /* msec */
+
 #define MSEC	1000
-#define SEC	(MSEC*1000)
 /*
  * function prototypes
  */
@@ -324,7 +343,7 @@ int ite8181_lcd_power(sc, on)
 			 * after LCD panel and BackLight on.
 			 * Currently delay is not enough ??? FIXME 
 			 */
-			delay(5*MSEC);
+			delay(ite8181_lcd_on_self_delay*MSEC);
 			while (loop--) {
 				lcd_p = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWER);
 				lcd_s = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSTAT);
@@ -419,7 +438,7 @@ ite8181_hardpower(ctx, type, id, msg)
 		 * So we must wait too many times to access other devices
 		 * after LCD panel and BackLight on.
 		 */
-		delay(2*SEC);	
+		delay(ite8181_lcd_on_delay*MSEC);	
 		break;
 	}
 
@@ -568,18 +587,19 @@ ite8181_ioctl(v, cmd, data, flag, p)
 		    256 < (cmap->index + cmap->count))
 			return (EINVAL);
 
-#if 0
 		if (!uvm_useracc(cmap->red, cmap->count, B_WRITE) ||
 		    !uvm_useracc(cmap->green, cmap->count, B_WRITE) ||
 		    !uvm_useracc(cmap->blue, cmap->count, B_WRITE))
 			return (EFAULT);
 
+#ifdef ITE8181_WINCE_CMAP
 		copyout(&bivideo_cmap_r[cmap->index], cmap->red, cmap->count);
 		copyout(&bivideo_cmap_g[cmap->index], cmap->green,cmap->count);
 		copyout(&bivideo_cmap_b[cmap->index], cmap->blue, cmap->count);
-#endif
-
 		return (0);
+#else /* ITE8181_WINCE_CMAP */
+		return EINVAL;
+#endif /* ITE8181_WINCE_CMAP */
 
 	case WSDISPLAYIO_PUTCMAP:
 		/*
