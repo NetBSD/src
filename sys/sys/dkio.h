@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.6 2002/01/09 04:12:13 thorpej Exp $	*/
+/*	$NetBSD: dkio.h,v 1.7 2003/04/15 14:11:00 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -87,5 +87,9 @@
 
 		/* sync disk cache */
 #define	DIOCCACHESYNC	_IOW('d', 118, int)	/* sync cache (force?) */
+
+		/* bad sector list */
+#define	DIOCBSLIST	_IOWR('d', 119, caddr_t)	/* get list */
+#define	DIOCBSFLUSH	_IO('d', 120)			/* flush list */
 
 #endif /* _SYS_DKIO_H_ */
