@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.4 1998/02/09 17:43:49 perry Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.5 1998/07/28 12:25:53 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -107,9 +107,7 @@ int	ether_delmulti __P((struct ifreq *, struct ethercom *));
  * Ethernet multicast address structure.  There is one of these for each
  * multicast address or range of multicast addresses that we are supposed
  * to listen to on a particular interface.  They are kept in a linked list,
- * rooted in the interface's ethercom structure.  (This really has nothing to
- * do with ARP, or with the Internet address family, but this appears to be
- * the minimally-disrupting place to put it.)
+ * rooted in the interface's ethercom structure.
  */
 struct ether_multi {
 	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
