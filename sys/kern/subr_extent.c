@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.26 1999/06/06 22:14:53 pk Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.27 1999/06/07 02:25:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@
 #define	pool_get(pool, flags)		malloc(pool->pr_size,0,0)
 #define	pool_put(pool, rp)		free(rp,0)
 #define	panic(a)			printf(a)
+#define	splhigh()			(1)
+#define	splx(s)				((void)(s))
 #endif
 
 static	pool_handle_t expool_create __P((void));
