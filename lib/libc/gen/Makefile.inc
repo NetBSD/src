@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.64 1995/02/25 17:05:19 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.65 1995/02/25 17:08:29 cgd Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -28,7 +28,7 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 #	_setjmp() fabs() frexp() infinity isinf() ldexp() modf()
 #	setjmp() sigsetjmp()
 
-.include "${.CURDIR}/${MACHINE}/gen/Makefile.inc"
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
 
 .ifdef _NOTDEF_XXX_
 # VAX
