@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.30 1997/05/02 14:24:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.30 1997/05/02 14:24:30 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -626,7 +626,7 @@ ParseFindMain(gnp, dummy)
     ClientData    dummy;
 {
     GNode   	  *gn = (GNode *) gnp;
-    if ((gn->type & (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)) == 0) {
+    if ((gn->type & OP_NOTARGET) == 0) {
 	mainNode = gn;
 	Targ_SetMain(gn);
 	return (dummy ? 1 : 1);
@@ -1116,7 +1116,7 @@ ParseDoDependency (line)
 	    *cp = '\0';
 	    switch (specType) {
 		case Suffixes:
-		    Suff_AddSuffix (line);
+		    Suff_AddSuffix (line, &mainNode);
 		    break;
 		case ExPath:
 		    Lst_ForEach(paths, ParseAddDir, (ClientData)line);
