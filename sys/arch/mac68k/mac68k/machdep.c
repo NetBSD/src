@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.6 1998/11/23 04:45:07 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.7 1998/11/23 04:59:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1260,6 +1260,11 @@ getenvvars(flag, buf)
 	    (flag & 0x40000)) && bootdev == 0)
 		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
 
+	/*
+	 * Booter 1.11.3 and later pass a BOOTHOWTO variable with the
+	 * appropriate bits set.
+	 */
+	boothowto = getenv("BOOTHOWTO");
 	if (boothowto == 0)
 		boothowto = getenv("SINGLE_USER");
 
