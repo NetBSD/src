@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2001/05/19 18:15:14 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2001/06/01 23:26:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -54,10 +54,10 @@
 int errno;
 extern int boot_biosdev;
 
-extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
+extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
 
-char *names[] = {
+static const char * const names[] = {
     "netbsd", "netbsd.gz",
     "netbsd.old", "netbsd.old.gz",
     "onetbsd", "onetbsd.gz",
@@ -76,7 +76,7 @@ int boottimeout = TIMEOUT; /* patchable */
 
 static char *default_devname;
 static int default_unit, default_partition;
-static char *default_filename;
+static const char *default_filename;
 
 char *sprint_bootsel __P((const char *));
 void bootit __P((const char *, int, int));
@@ -90,7 +90,7 @@ void	command_boot __P((char *));
 void	command_dev __P((char *));
 void	command_consdev __P((char *));
 
-struct bootblk_command commands[] = {
+const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
 	{ "ls",		command_ls },
@@ -256,11 +256,7 @@ main()
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
 
-	printf(
-#ifdef COMPAT_OLDBOOT
-	       "Use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
-#endif
-	       "Press return to boot now, any other key for boot menu\n");
+	printf("Press return to boot now, any other key for boot menu\n");
 	currname = 0;
 	for (;;) {
 		printf("booting %s - starting in ",
@@ -315,7 +311,7 @@ void
 command_ls(arg)
 	char *arg;
 {
-	char *save = default_filename;
+	const char *save = default_filename;
 
 	default_filename = "/";
 	ufs_ls(arg);
