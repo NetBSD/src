@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.58 1997/01/31 02:50:36 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.59 1997/01/31 19:10:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -615,7 +615,7 @@ reassignbuf(bp, newvp)
 
 /*
  * Create a vnode for a block device.
- * Used for root filesystem, argdev, and swap areas.
+ * Used for root filesystem and swap areas.
  * Also used for memory file system special devices.
  */
 int
