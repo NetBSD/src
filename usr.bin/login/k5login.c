@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.12.2.1 2000/08/02 21:16:03 thorpej Exp $	*/
+/*	$NetBSD: k5login.c,v 1.12.2.2 2000/08/09 17:49:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.12.2.1 2000/08/02 21:16:03 thorpej Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.12.2.2 2000/08/09 17:49:40 thorpej Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -299,7 +299,8 @@ k5login(pw, instance, localhost, password)
 					       ccache,
 					       &my_creds, 0);
 
-	krb5_free_principal(kcontext, server);
+	if (my_creds.server != NULL)
+		krb5_free_principal(kcontext, my_creds.server);
 
 	if (chown(&tkt_location[5], pw->pw_uid, pw->pw_gid) < 0)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", &tkt_location[5]);
