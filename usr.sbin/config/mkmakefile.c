@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.38 1999/03/30 12:36:50 mycroft Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.39 1999/05/23 19:30:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -246,14 +246,17 @@ emitobjs(fp)
 	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
-		len = strlen(oi->oi_path) + 3;
+		len = strlen(oi->oi_path);
+		if (*oi->oi_path != '/')
+			len += 3;
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
 				return (1);
 			sp = '\t';
 			lpos = 7;
 		}
-		if (fprintf(fp, "%c$S/%s", sp, oi->oi_path) < 0)
+		if (fprintf(fp, "%c%s%s", sp, *oi->oi_path != '/' ? "$S/" : "",
+		    oi->oi_path) < 0)
 			return (1);
 		lpos += len + 1;
 		sp = ' ';
