@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 1996/07/11 05:31:30 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 1996/07/14 04:15:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,12 +106,18 @@ u_int64_t want_resched;		/* resched() was called */
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_ROOT_DEVICE		2	/* string: root device name */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define	CPU_UNALIGNED_PRINT	3	/* int: print unaligned accesses */
+#define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
+#define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
+#define	CPU_MAXID		6	/* 5 valid machdep IDs */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "root_device", CTLTYPE_STRING }, \
+	{ "unaligned_print", CTLTYPE_INT }, \
+	{ "unaligned_fix", CTLTYPE_INT }, \
+	{ "unaligned_sigbus", CTLTYPE_INT }, \
 }
 
 #endif /* _ALPHA_CPU_H_ */
