@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.387 2002/01/15 20:14:47 thorpej Exp $
+$NetBSD: pcidevs,v 1.388 2002/01/21 17:19:23 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -536,6 +536,7 @@ vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics, Inc.
 vendor TITAN		0x14d2  Titan Electronics, Inc.
 vendor INVERTEX		0x14e1	Invertex
+vendor BROADCOM		0x14e4	Broadcom Corporation
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
 vendor TERRATEC		0x153b	TerraTec Electronic
@@ -583,6 +584,7 @@ vendor INVALID		0xffff	INVALID VENDOR ID
 
 /* 3COM Products */
 product 3COM 3C985	0x0001	3c985 Gigabit Ethernet
+product 3COM 3C996	0x0003	3c996 10/100/1000 Ethernet
 product 3COM 3C556MODEM	0x1007	3c556 V.90 MiniPCI Modem
 product 3COM 3C450TX	0x4500	3c450-TX 10/100 Ethernet
 product 3COM 3C590	0x5900	3c590 Ethernet
@@ -732,6 +734,8 @@ product	ALLIANCE AT25	0x643d	AT25
 /* Alteon products */
 product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Gigabit Ethernet
 product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
+product ALTEON BCM5700		0x0003	ACEnic BCM5700 10/100/1000 Ethernet
+product ALTEON BCM5701		0x0004	ACEnic BCM5701 10/100/1000 Ethernet
 
 /* AMD products */
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
@@ -896,6 +900,10 @@ product STALLION EASYIO		0x0003	EasyIO
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
 product BIT3 PCIVME618		0x0010	PCI-VME Interface Mod. 618
 product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
+
+/* Broadcom Corporation products */
+product BROADCOM BCM5700	0x1644	BCM5700 10/100/1000 Ethernet
+product BROADCOM BCM5701	0x1645	BCM5701 10/100/1000 Ethernet
 
 /* Brooktree products */
 product	BROOKTREE BT848		0x0350	Bt848 Video Capture
@@ -1795,6 +1803,10 @@ product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
 /* Schneider & Koch (really SysKonnect) products */
 product	SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
 product	SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
+product SCHNEIDERKOCH	ALTIMA		0x4400	SK-NET Altima Gigabit Ethernet
+/* These next two are are really subsystem IDs */
+product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
+product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
 
 /* Tamarack Microelectronics, Inc. */
 product TAMARACK	TC9021		0x1021	Tamarack TC9021 Gigabit Ethernet
