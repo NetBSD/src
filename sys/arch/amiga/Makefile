@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.5 1994/02/23 20:23:30 chopps Exp $
+#	$Id: Makefile,v 1.6 1994/03/08 07:36:26 chopps Exp $
 S=../..
 COMM=	$S/net/*.[ch] $S/netimp/*.[ch] $S/netinet/*.[ch] $S/netns/*.[ch] \
 	$S/netiso/*.[ch] $S/netccitt/*.[ch] \
@@ -28,5 +28,5 @@ tags:
 links:
 	-for i in ${DAMIGA}; do \
 	    rm -f $$i/tags; ln -s ../tags $$i/tags; done
-install:
 
+.include <bsd.prog.mk>
