@@ -102,10 +102,14 @@ const pseudo_typeS obj_pseudo_table[] =
 
 #ifdef BFD_ASSEMBLER
 
+/* Do NetBSD specific things to the symbols. This includes adding SIZE
+ * symbols and making weak symbols global (The MI code clears global
+ * flags when setting weak symbols.) */
 void
-obj_aout_add_size_symbols()
+obj_aout_nbsd_frob_file()
 {
-  /* We don't generate N_SIZE symbols unless we are working with PIC code. */
+  /* We don't generate N_SIZE symbols unless we are working with PIC code. 
+   * (and the non global weak symbol is only troublesome for PIC code) */
   if (!aout_pic_flag)
     return;
 
@@ -116,6 +120,12 @@ obj_aout_add_size_symbols()
       for (sym = symbol_rootP; sym; sym = symbol_next (sym))
 	{
 	  int type, other;
+
+	  if (S_IS_WEAK (sym))
+	    {
+	      /* All weak symbols are global. */
+	      sym->bsym->flags |= BSF_GLOBAL;
+	    }
 
 	  type = S_GET_TYPE (sym);
 	  other = S_GET_OTHER (sym);
@@ -140,7 +150,9 @@ obj_aout_add_size_symbols()
 	      new_sym = symbol_make(S_GET_NAME(sym));
 	      S_SET_TYPE(new_sym, new_type);
 	      new_sym->bsym->section = bfd_abs_section_ptr;
-	      new_sym->bsym->flags = sym->bsym->flags;
+
+	      /* N_SIZE symbols cannot be weak. */
+	      new_sym->bsym->flags = sym->bsym->flags & ~BSF_WEAK;
 
 	      size = exp->X_add_number;
 
