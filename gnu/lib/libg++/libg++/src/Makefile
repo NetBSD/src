@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/26 03:56:03 cjs Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/31 21:21:23 cjs Exp $
 
 LIB=		g++
 
@@ -13,8 +13,6 @@ bitset1.c bitxor.c builtin.cc compare.cc error.cc fmtq.cc \
 gcd.cc hash.cc ioob.cc lg.cc pow.cc sqrt.cc \
 timer.c 
 
-.include <bsd.own.mk>	# for BUILDDIR
-
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../../include \
 		  -I$(.CURDIR)/../../libio -I$(.CURDIR)/../../libstdc++
 CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
@@ -22,12 +20,12 @@ CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
 LDADD=		-lcurses
 DPADD=		${LIBCURSES}
 .else
-LDADD=		${BUILDDIR}/usr/lib/c++rt0.o -lcurses
-DPADD=		${BUILDDIR}/usr/lib/c++rt0.o ${LIBCURSES}
+LDADD=		${DESTDIR}/usr/lib/c++rt0.o -lcurses
+DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
 .endif
 NOMAN=		noman
 NOLINT=		nolint
-LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
-			$(MAKE) -r -s -f - xxx | grep curses
+LIBCURSES!=	printf "xxx: .MAKE\n\t@echo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
+			$(MAKE) -s -f- xxx
 
 .include <bsd.lib.mk>
