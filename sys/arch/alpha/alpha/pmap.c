@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.45 1998/05/20 04:05:50 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.46 1998/05/23 22:23:09 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 1998/05/20 04:05:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 1998/05/23 22:23:09 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2946,14 +2946,14 @@ pmap_pv_enter(pmap, pa, va, dolock)
 	boolean_t dolock;
 {
 	struct pv_head *pvh;
-	pv_entry_t pv;
+	pv_entry_t pv, newpv;
 
 	/*
 	 * Allocate and fill in the new pv_entry.
 	 */
-	pv = pmap_pv_alloc();
-	pv->pv_va = va;
-	pv->pv_pmap = pmap;
+	newpv = pmap_pv_alloc();
+	newpv->pv_va = va;
+	newpv->pv_pmap = pmap;
 
 	pvh = pa_to_pvh(pa);
 
@@ -2981,7 +2981,7 @@ pmap_pv_enter(pmap, pa, va, dolock)
 	else if (LIST_NEXT(LIST_FIRST(&pvh->pvh_list)) == NULL)
 		enter_stats.secondpv++;
 #endif
-	LIST_INSERT_HEAD(&pvh->pvh_list, pv, pv_list);
+	LIST_INSERT_HEAD(&pvh->pvh_list, newpv, pv_list);
 
 	if (dolock)
 		simple_unlock(&pvh->pvh_slock);
