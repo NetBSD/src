@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.38 2002/12/26 20:56:52 matt Exp $ */
+/*      $NetBSD: ac97.c,v 1.39 2003/01/20 07:22:15 simonb Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.38 2002/12/26 20:56:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.39 2003/01/20 07:22:15 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -659,7 +659,6 @@ ac97_read(as, reg, val)
 	u_int8_t reg;
 	u_int16_t *val;
 {
-	int error;
 
 	if (as->host_flags & AC97_HOST_DONT_READ &&
 	    (reg != AC97_REG_VENDOR_ID1 && reg != AC97_REG_VENDOR_ID2 &&
@@ -668,7 +667,7 @@ ac97_read(as, reg, val)
 		return;
 	}
 
-	if ((error = as->host_if->read(as->host_if->arg, reg, val))) {
+	if (as->host_if->read(as->host_if->arg, reg, val)) {
 		*val = as->shadow_reg[reg >> 1];
 	}
 }
