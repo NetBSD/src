@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.25 2004/05/26 17:15:17 kochi Exp $
+#	$NetBSD: files.acpi,v 1.26 2004/05/27 11:26:33 kochi Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -9,7 +9,7 @@ attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi		needs-flag
 file	dev/acpi/acpi_resource.c	acpi
 file	dev/acpi/acpi_powerres.c	acpi
-file	dev/acpi/acpi_madt.c		acpi
+file	dev/acpi/acpi_madt.c		acpi & mpacpi
 file	dev/acpi/acpi_quirks.c		acpi
 
 # ACPI Embedded Controller
