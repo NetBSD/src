@@ -1,4 +1,6 @@
-/* $Id: sockmisc.h,v 1.1.1.1 2005/02/12 11:13:05 manu Exp $ */
+/*	$NetBSD: sockmisc.h,v 1.1.1.2 2005/02/23 14:54:28 manu Exp $	*/
+
+/* Id: sockmisc.h,v 1.5 2004/07/12 20:43:51 ludvigm Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

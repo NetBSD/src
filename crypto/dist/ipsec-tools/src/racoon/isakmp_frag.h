@@ -1,4 +1,6 @@
-/*	$Id: isakmp_frag.h,v 1.1.1.1 2005/02/12 11:12:20 manu Exp $ */
+/*	$NetBSD: isakmp_frag.h,v 1.1.1.2 2005/02/23 14:54:19 manu Exp $	*/
+
+/*	Id: isakmp_frag.h,v 1.2 2004/10/24 16:51:24 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus 

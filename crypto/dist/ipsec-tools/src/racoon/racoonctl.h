@@ -1,4 +1,6 @@
-/* $Id: racoonctl.h,v 1.1.1.1 2005/02/12 11:12:58 manu Exp $ */
+/*	$NetBSD: racoonctl.h,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+
+/* Id: racoonctl.h,v 1.2 2004/12/30 11:08:32 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
