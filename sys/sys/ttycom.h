@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.5 1997/07/19 15:44:39 kleink Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.6 1997/10/20 08:04:28 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -127,6 +127,7 @@ struct winsize {
 #define		TIOCFLAG_CLOCAL		0x02	/* set clocal on open */
 #define		TIOCFLAG_CRTSCTS	0x04	/* set crtscts on open */
 #define		TIOCFLAG_MDMBUF		0x08	/* set mdmbuf on open */
+#define		TIOCFLAG_CDTRCTS	0x10	/* set cdtrcts on open */
 
 #define	TTYDISC		0		/* termios tty line discipline */
 #define	TABLDISC	3		/* tablet discipline */

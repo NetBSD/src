@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.15 1997/04/02 03:10:51 kleink Exp $	*/
+/*	$NetBSD: termios.h,v 1.16 1997/10/20 08:04:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -136,8 +136,9 @@
 #define	CRTSCTS		0x00010000	/* RTS/CTS full-duplex flow control */
 #define	CRTS_IFLOW	CRTSCTS		/* XXX compat */
 #define	CCTS_OFLOW	CRTSCTS		/* XXX compat */
+#define	CDTRCTS		0x00020000	/* DTR/CTS full-duplex flow control */
 #define	MDMBUF		0x00100000	/* DTR/DCD hardware flow control */
-#define	CHWFLOW		(MDMBUF|CRTSCTS) /* all types of hw flow control */
+#define	CHWFLOW		(MDMBUF|CRTSCTS|CDTRCTS) /* all types of hw flow control */
 #endif
 
 
