@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.2 1998/07/24 20:59:57 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.3 1998/07/25 01:46:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/hid.h>
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsmousevar.h>
+
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (umsdebug) printf x
 #define DPRINTFN(n,x)	if (umsdebug>(n)) printf x
@@ -97,6 +100,9 @@ struct ums_softc {
 	u_char sc_status;	/* mouse button status */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 	int sc_disconnected;	/* device is gone */
+
+	int sc_enabled;
+	struct device *sc_wsmousedev;
 };
 
 #define	UMSUNIT(dev)	(minor(dev))
@@ -116,6 +122,16 @@ int umsioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int umspoll __P((dev_t, int, struct proc *));
 void ums_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 void ums_disco __P((void *));
+
+int	ums_enable __P((void *));
+int	ums_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+void	ums_disable __P((void *));
+
+const struct wsmouse_accessops ums_accessops = {
+	ums_enable,
+	ums_ioctl,
+	ums_disable,
+};
 
 extern struct cfdriver ums_cd;
 
@@ -166,6 +182,7 @@ ums_attach(parent, self, aux)
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
+	struct wsmousedev_attach_args a;
 	int size;
 	void *desc;
 	usbd_status r;
@@ -245,6 +262,11 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 	sc->sc_ep_addr = ed->bEndpointAddress;
 	sc->sc_disconnected = 0;
 	free(desc, M_TEMP);
+
+	a.accessops = &ums_accessops;
+	a.accesscookie = sc;
+
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
 void
@@ -304,19 +326,23 @@ ums_intr(reqh, addr, status)
 		sc->sc_x += dx;
 		sc->sc_y += dy;
 		
-		/* Add this event to the queue. */
-		buffer[0] = 0x80 | (buttons ^ BUTSTATMASK);
-		buffer[1] = dx;
-		buffer[2] = dy;
-		buffer[3] = buffer[4] = 0;
-		(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
-		
-		if (sc->sc_state & UMS_ASLP) {
-			sc->sc_state &= ~UMS_ASLP;
-			DPRINTFN(5, ("ums_intr: waking %p\n", sc));
-			wakeup((caddr_t)sc);
+		if (sc->sc_wsmousedev) {
+			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy);
+		} else {
+			/* Add this event to the queue. */
+			buffer[0] = 0x80 | (buttons ^ BUTSTATMASK);
+			buffer[1] = dx;
+			buffer[2] = dy;
+			buffer[3] = buffer[4] = 0;
+			(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
+			
+			if (sc->sc_state & UMS_ASLP) {
+				sc->sc_state &= ~UMS_ASLP;
+				DPRINTFN(5, ("ums_intr: waking %p\n", sc));
+				wakeup((caddr_t)sc);
+			}
+			selwakeup(&sc->sc_rsel);
 		}
-		selwakeup(&sc->sc_rsel);
 	}
 }
 
@@ -332,21 +358,24 @@ umsopen(dev, flag, mode, p)
 	usbd_status r;
 
 	if (unit >= ums_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	sc = ums_cd.cd_devs[unit];
 	if (!sc)
-		return ENXIO;
+		return (ENXIO);
 
 	DPRINTF(("umsopen: sc=%p, disco=%d\n", sc, sc->sc_disconnected));
+
+	if (sc->sc_wsmousedev)
+		return (ENXIO);
 
 	if (sc->sc_disconnected)
 		return (EIO);
 
 	if (sc->sc_state & UMS_OPEN)
-		return EBUSY;
+		return (EBUSY);
 
 	if (clalloc(&sc->sc_q, UMS_BSIZE, 0) == -1)
-		return ENOMEM;
+		return (ENOMEM);
 
 	sc->sc_state |= UMS_OPEN;
 	sc->sc_status = 0;
@@ -487,3 +516,65 @@ umspoll(dev, events, p)
 	splx(s);
 	return (revents);
 }
+
+/* wscons routines */
+int
+ums_enable(v)
+	void *v;
+{
+	struct ums_softc *sc = v;
+	usbd_status r;
+
+	if (sc->sc_enabled)
+		return EBUSY;
+
+	sc->sc_enabled = 1;
+	sc->sc_status = 0;
+
+	/* Set up interrupt pipe. */
+	r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
+				USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, 
+				sc->sc_ibuf, sc->sc_isize, ums_intr);
+	if (r != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("ums_enable: usbd_open_pipe_intr failed, error=%d\n",
+			 r));
+		sc->sc_enabled = 0;
+		return (EIO);
+	}
+	usbd_set_disco(sc->sc_intrpipe, ums_disco, sc);
+	return (0);
+}
+
+void
+ums_disable(v)
+	void *v;
+{
+	struct ums_softc *sc = v;
+
+	/* Disable interrupts. */
+	usbd_abort_pipe(sc->sc_intrpipe);
+	usbd_close_pipe(sc->sc_intrpipe);
+
+	sc->sc_enabled = 0;
+}
+
+int
+ums_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+#if 0
+	struct ums_softc *sc = v;
+#endif
+
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_PS2;
+		return (0);
+	}
+	return (-1);
+}
+
