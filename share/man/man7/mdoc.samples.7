@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.6 1996/10/11 14:53:03 explorer Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.7 1996/10/15 20:15:35 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1394,6 +1394,18 @@ callable. It accepts at most two arguments.
 .Pp
 The
 .Ql \&.Bx
+macro is parsed and is callable.
+.Ss NetBSD Macro
+.Dl Usage: .Nx [Version/release] ... \*(Pu
+.Bl -tag -width ".Nx 1.2 ) ," -compact -offset 14n
+.It Li ".Nx"
+.Nx
+.It Li ".Nx 1.2 ."
+.Nx 1.2 .
+.El
+.Pp
+The
+.Ql \&.Nx
 macro is parsed and is callable.
 .Ss UNIX Macro
 .Dl Usage: .Ux ... \*(Pu
