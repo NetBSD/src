@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.272 2002/03/05 03:53:58 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.273 2002/03/09 15:17:45 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -12,9 +12,6 @@ MAKECONF?=	/etc/mk.conf
 NEED_OWN_INSTALL_TARGET?=	yes
 
 # Temporary; this will become default when all platforms have migrated.
-.if defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "no"
-.undef USE_NEW_TOOLCHAIN
-.else
 # List all the platforms that have NOT switched, since the majority have.
 .if !(${MACHINE_ARCH} == "arm32" || \
       ${MACHINE_ARCH} == "ns32k" || \
@@ -22,7 +19,6 @@ NEED_OWN_INSTALL_TARGET?=	yes
       ${MACHINE_ARCH} == "vax"   || \
       ${MACHINE} == "mac68k")
 USE_NEW_TOOLCHAIN=nowarn
-.endif
 .endif
 
 .if defined(USE_NEW_TOOLCHAIN)
