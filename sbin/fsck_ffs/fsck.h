@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.36 2003/10/20 12:04:38 dsl Exp $	*/
+/*	$NetBSD: fsck.h,v 1.37 2004/01/09 19:12:31 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -137,10 +137,11 @@ struct bufarea *pbp;		/* current inode block */
 struct fs *sblock;
 struct fs *altsblock;
 struct cg *cgrp;
+struct fs *sblocksave;
 #define	sbdirty() \
 	do { \
 		memmove(sblk.b_un.b_fs, sblock, SBLOCKSIZE); \
-		sb_oldfscompat_write(sblk.b_un.b_fs); \
+		sb_oldfscompat_write(sblk.b_un.b_fs, sblocksave); \
 		if (needswap) \
 			ffs_sb_swap(sblk.b_un.b_fs, sblk.b_un.b_fs); \
 		sblk.b_dirty = 1; \
