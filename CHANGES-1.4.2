@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.54 1999/10/10 23:22:58 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.55 1999/10/11 05:42:11 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -730,3 +730,21 @@ sys/arch/alpha/alpha/clock.c			1.26
 
   Patch time_precision so we report a realistic NTP "precision"
   value to userland.
+
+libexec/lfs_cleanerd/library.c			1.13-1.14
+
+  Remove incorrect partial-segment timestamp optimization from
+  lfs_segmapv which would cause continuous cleaning and eventual
+  panics with "no clean segments."  Don't complain if fstat() fails
+  on the Ifile when the file system has been unmounted (avoids
+  expected errors every time an LFS is unmounted).
+
+usr.sbin/tcpdump/Makefile			1.16
+usr.sbin/tcpdump/interface.h			1.10
+usr.sbin/tcpdump/print-tcp.c			1.15
+usr.sbin/tcpdump/tcpdump.c			1.12 via patch
+usr.sbin/tcpdump/tcpdump.8			1.10 via patch
+usr.sbin/tcpdump/print-ascii.c			1.1 (new)
+usr.sbin/tcpdump/print-telnet.c			1.1 (new)
+
+  Add telnet option printing and hex/ascii dumps to tcpdump.
