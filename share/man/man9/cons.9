@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.5 2001/07/05 18:49:20 jdolecek Exp $
+.\"	$NetBSD: cons.9,v 1.6 2002/02/13 08:18:39 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nm cnputc
 .Nd console access interface
 .Sh SYNOPSIS
-.Fd #include <dev/cons.h>
+.Fd #include \*[Lt]dev/cons.h\*[Gt]
 .Ft void
 .Fn cnbell "u_int pitch" "u_int period" "u_int volume"
 .Ft int
@@ -100,8 +100,8 @@ and
 Number of read characters is
 .Fa size
 at maximum, user is notified by console bell when the end
-of input buffer is reached. <Backspace> key
-works as expected. <@> or <CTRL>-u make
+of input buffer is reached. \*[Lt]Backspace\*[Gt] key
+works as expected. \*[Lt]@\*[Gt] or \*[Lt]CTRL\*[Gt]-u make
 .Fn cngetsn
 discard input read so far, print newline and
 wait for next input.
@@ -128,7 +128,7 @@ Console kernel output character routine. Commonly, kernel code uses
 rather than using this low-level interface.
 .El
 .Sh EXAMPLES
-This waits until a <Enter> key is pressed:
+This waits until a \*[Lt]Enter\*[Gt] key is pressed:
 .Pp
 .Bd -literal -compact
 int c;

@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
+.\"     $NetBSD: lock.9,v 1.13 2002/02/13 08:18:44 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .Nm spinlockmgr
 .Nd kernel lock functions
 .Sh SYNOPSIS
-.Fd #include <sys/lock.h>
+.Fd #include \*[Lt]sys/lock.h\*[Gt]
 .Ft void
 .Fn simple_lock_init "struct simplelock *slock"
 .Ft void
@@ -333,7 +333,7 @@ in
 .Pa sys/sys/lock.h .
 Machine-dependent simplelock primitives are implemented within the
 file
-.Pa sys/arch/<arch>/include/lock.h .
+.Pa sys/arch/\*[Lt]arch\*[Gt]/include/lock.h .
 .Sh SEE ALSO
 .Xr pmap 9 ,
 .Xr spl 9 ,

@@ -1,4 +1,4 @@
-.\" $NetBSD: ratecheck.9,v 1.6 2001/06/21 11:59:01 wiz Exp $
+.\" $NetBSD: ratecheck.9,v 1.7 2002/02/13 08:18:50 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm ratecheck
 .Nd function to help implement rate-limited actions
 .Sh SYNOPSIS
-.Fd #include <sys/time.h>
+.Fd #include \*[Lt]sys/time.h\*[Gt]
 .Ft int
 .Fn ratecheck "struct timeval *lasttime" "const struct timeval *mininterval"
 .Sh DESCRIPTION
@@ -109,8 +109,8 @@ drv_errhandler(int err1, int err2)
 		...
 
 		drv_err1count++;
-		if (ratecheck(&drv_lasterr1notice,
-		    &drv_errinterval)) {
+		if (ratecheck(\*[Am]drv_lasterr1notice,
+		    \*[Am]drv_errinterval)) {
 			printf("drv: %ld err1 errors occurred",
 			    drv_err1count);
 			drv_err1count = 0;
@@ -121,8 +121,8 @@ drv_errhandler(int err1, int err2)
 		...
 
 		drv_err2count++;
-		if (ratecheck(&drv_lasterr2notice,
-		    &drv_errinterval)) {
+		if (ratecheck(\*[Am]drv_lasterr2notice,
+		    \*[Am]drv_errinterval)) {
 			printf("drv: %ld err2 errors occurred",
 			    drv_err2count);
 			drv_err2count = 0;

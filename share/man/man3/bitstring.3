@@ -1,4 +1,4 @@
-.\"	$NetBSD: bitstring.3,v 1.8 2001/09/11 22:46:50 wiz Exp $
+.\"	$NetBSD: bitstring.3,v 1.9 2002/02/13 08:17:28 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 .Nm bit_test
 .Nd bit-string manipulation macros
 .Sh SYNOPSIS
-.Fd #include <bitstring.h>
+.Fd #include \*[Lt]bitstring.h\*[Gt]
 .Ft bitstr_t *
 .Fn bit_alloc "int nbits"
 .Fn bit_decl "bit_str name" "int nbits"
@@ -149,8 +149,8 @@ The arguments to these macros are evaluated only once and may safely
 have side effects.
 .Sh EXAMPLES
 .Bd -literal -offset indent
-#include <limits.h>
-#include <bitstring.h>
+#include \*[Lt]limits.h\*[Gt]
+#include \*[Lt]bitstring.h\*[Gt]
 
 ...
 #define	LPR_BUSY_BIT		0

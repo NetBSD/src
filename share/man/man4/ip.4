@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.11 2001/09/22 00:57:41 wiz Exp $
+.\"	$NetBSD: ip.4,v 1.12 2002/02/13 08:17:37 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@
 .Nm ip
 .Nd Internet Protocol
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
-.Fd #include <netinet/in.h>
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.Fd #include \*[Lt]netinet/in.h\*[Gt]
 .Ft int
 .Fn socket AF_INET SOCK_RAW proto
 .Sh DESCRIPTION
@@ -98,11 +98,11 @@ and
 sockets.
 For example,
 .Bd -literal
-int tos = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
-setsockopt(s, IPPROTO_IP, IP_TOS, &tos, sizeof(tos));
+int tos = IPTOS_LOWDELAY;       /* see \*[Lt]netinet/in.h\*[Gt] */
+setsockopt(s, IPPROTO_IP, IP_TOS, \*[Am]tos, sizeof(tos));
 
 int ttl = 60;                   /* max = 255 */
-setsockopt(s, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+setsockopt(s, IPPROTO_IP, IP_TTL, \*[Am]ttl, sizeof(ttl));
 .Ed
 .Pp
 .Dv IP_PORTRANGE
@@ -112,8 +112,8 @@ and
 .Dv SOCK_DGRAM
 sockets. For example,
 .Bd -literal
-int range = IP_PORTRANGE_LOW;       /* see <netinet/in.h> */
-setsockopt(s, IPPROTO_IP, IP_PORTRANGE, &range, sizeof(range));
+int range = IP_PORTRANGE_LOW;       /* see \*[Lt]netinet/in.h\*[Gt] */
+setsockopt(s, IPPROTO_IP, IP_PORTRANGE, \*[Am]range, sizeof(range));
 .Ed
 .Pp
 If the
@@ -176,7 +176,7 @@ option changes the time-to-live (TTL) for outgoing multicast datagrams
 in order to control the scope of the multicasts:
 .Bd -literal
 u_char ttl;	/* range: 0 to 255, default = 1 */
-setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
+setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, \*[Am]ttl, sizeof(ttl));
 .Ed
 .Pp
 Datagrams with a TTL of 1 are not forwarded beyond the local network.
@@ -195,7 +195,7 @@ option overrides the default for
 subsequent transmissions from a given socket:
 .Bd -literal
 struct in_addr addr;
-setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &addr, sizeof(addr));
+setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, \*[Am]addr, sizeof(addr));
 .Ed
 .Pp
 where "addr" is the local
@@ -220,7 +220,7 @@ option gives the sender explicit control
 over whether or not subsequent datagrams are looped back:
 .Bd -literal
 u_char loop;	/* 0 = disable, 1 = enable (default) */
-setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop));
+setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, \*[Am]loop, sizeof(loop));
 .Ed
 .Pp
 This option
@@ -244,7 +244,7 @@ To join a multicast group, use the
 option:
 .Bd -literal
 struct ip_mreq mreq;
-setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, \*[Am]mreq, sizeof(mreq));
 .Ed
 .Pp
 where
@@ -274,7 +274,7 @@ Up to
 To drop a membership, use:
 .Bd -literal
 struct ip_mreq mreq;
-setsockopt(s, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+setsockopt(s, IPPROTO_IP, IP_DROP_MEMBERSHIP, \*[Am]mreq, sizeof(mreq));
 .Ed
 .Pp
 where
@@ -329,10 +329,10 @@ be used only with the
 .Dv SOCK_RAW
 type.
 .Bd -literal
-#include <netinet/ip.h>
+#include \*[Lt]netinet/ip.h\*[Gt]
 
 int hincl = 1;                  /* 1 = on, 0 = off */
-setsockopt(s, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof(hincl));
+setsockopt(s, IPPROTO_IP, IP_HDRINCL, \*[Am]hincl, sizeof(hincl));
 .Ed
 .Pp
 Unlike previous
@@ -340,10 +340,10 @@ Unlike previous
 releases, the program must set all
 the fields of the IP header, including the following:
 .Bd -literal
-ip->ip_v = IPVERSION;
-ip->ip_hl = hlen >> 2;
-ip->ip_id = 0;  /* 0 means kernel set appropriate value */
-ip->ip_off = offset;
+ip-\*[Gt]ip_v = IPVERSION;
+ip-\*[Gt]ip_hl = hlen \*[Gt]\*[Gt] 2;
+ip-\*[Gt]ip_id = 0;  /* 0 means kernel set appropriate value */
+ip-\*[Gt]ip_off = offset;
 .Ed
 .Pp
 If the header source address is set to

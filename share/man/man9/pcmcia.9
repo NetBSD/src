@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.7 2002/01/21 17:38:21 wiz Exp $
+.\"     $NetBSD: pcmcia.9,v 1.8 2002/02/13 08:18:48 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,10 +60,10 @@
 .Nm pcmcia_scan_cis
 .Nd support for PCMCIA PC-Card devices
 .Sh SYNOPSIS
-.Fd #include <machine/bus.h>
-.Fd #include <dev/pcmcia/pcmciareg.h>
-.Fd #include <dev/pcmcia/pcmciavar.h>
-.Fd #include <dev/pcmcia/pcmciadevs.h>
+.Fd #include \*[Lt]machine/bus.h\*[Gt]
+.Fd #include \*[Lt]dev/pcmcia/pcmciareg.h\*[Gt]
+.Fd #include \*[Lt]dev/pcmcia/pcmciavar.h\*[Gt]
+.Fd #include \*[Lt]dev/pcmcia/pcmciadevs.h\*[Gt]
 .Ft void
 .Fn pcmcia_function_init "struct pcmcia_function *pf" \
 "struct pcmcia_config_entry *cfe"

@@ -1,4 +1,4 @@
-.\"     $NetBSD: si.4,v 1.7 2001/09/22 16:21:42 wiz Exp $
+.\"     $NetBSD: si.4,v 1.8 2002/02/13 08:17:46 ross Exp $
 .\"
 .\" written from a reading of config files and driver source code
 .\" Erik E. Fair <fair@netbsd.org>
@@ -55,11 +55,11 @@ The values are bits in a bitfield, and are interpreted as follows:
 .Pp
 .Bl -tag -offset indent -compact -width 0x000ff
 .It 0x000ff
-Set bit (1<<target) to disable
+Set bit (1\*[Lt]\*[Lt]target) to disable
 .Tn SCSI
 disconnect/reselect
 .It 0x0ff00
-Set bit (1<<(target+8)) to disable
+Set bit (1\*[Lt]\*[Lt](target+8)) to disable
 .Tn SCSI
 parity checking
 .It 0x10000

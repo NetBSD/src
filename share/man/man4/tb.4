@@ -1,4 +1,4 @@
-.\"	$NetBSD: tb.4,v 1.5 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: tb.4,v 1.6 2002/02/13 08:17:47 ross Exp $
 .\"
 .\" Copyright (c) 1986, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -52,9 +52,9 @@ handler.
 .Pp
 The line discipline is enabled by a sequence:
 .Bd -literal -offset indent
-#include <sys/tablet.h>
+#include \*[Lt]sys/tablet.h\*[Gt]
 int ldisc = TABLDISC, fildes; ...
-ioctl(fildes, TIOCSETD, &ldisc);
+ioctl(fildes, TIOCSETD, \*[Am]ldisc);
 .Ed
 .Pp
 A typical application program then polls the digitizing device by

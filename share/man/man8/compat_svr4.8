@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.19 2001/09/05 23:47:15 wiz Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.20 2002/02/13 08:18:22 ross Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -162,7 +162,7 @@ Copy files from an svr4 system:
 .br
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
-.It rsh netbsd 'cd /emul/svr4/usr/lib && tar -xpf -'
+.It rsh netbsd 'cd /emul/svr4/usr/lib \*[Am]\*[Am] tar -xpf -'
 .in -5
 .El
 .Pp
@@ -173,13 +173,13 @@ If you are running openwindows:
 .br
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
-.It rsh netbsd 'cd /emul/svr4/usr/openwin/lib && tar -xpf -'
+.It rsh netbsd 'cd /emul/svr4/usr/openwin/lib \*[Am]\*[Am] tar -xpf -'
 .in -5
 .It (me@svr4) cd /usr/dt/lib
 .br
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
-.It rsh netbsd 'cd /emul/svr4/usr/dt/lib && tar -xpf -'
+.It rsh netbsd 'cd /emul/svr4/usr/dt/lib \*[Am]\*[Am] tar -xpf -'
 .in -5
 .El
 .It
@@ -195,11 +195,11 @@ system, otherwise emulated binaries will run on UTC time.
 .br
 .It (me@solaris) tar -cf - . | \e
 .in +5
-.It rsh netbsd 'cd /emul/svr4/usr/share/lib/zoneinfo &&
+.It rsh netbsd 'cd /emul/svr4/usr/share/lib/zoneinfo \*[Am]\*[Am]
 .It tar -xpf -'
 .in -5
 .br
-.It (me@netbsd) echo TZ=US/Pacific > /emul/svr4/etc/default/init
+.It (me@netbsd) echo TZ=US/Pacific \*[Gt] /emul/svr4/etc/default/init
 .br
 .El
 .It
@@ -212,7 +212,7 @@ Setup the configuration files and devices:
 .br
 .It (me@netbsd) cp SVR4_MAKEDEV /emul/svr4/dev
 .br
-.It (me@netbsd) cd /emul/svr4/dev && sh SVR4_MAKEDEV all
+.It (me@netbsd) cd /emul/svr4/dev \*[Am]\*[Am] sh SVR4_MAKEDEV all
 .El
 .Pp
 As the major number allocated for emulation of SVR4 devices may vary between
@@ -235,7 +235,7 @@ and
 Many system calls are still not emulated. The streams emulation is
 incomplete (socketpair does not work yet).
 .Pp
-Most SVR4 executables can not handle directory offset cookies > 32
+Most SVR4 executables can not handle directory offset cookies \*[Gt] 32
 bits. More recent ones, compiled for large file support (Solaris 2.6
 and up) can. With older programs, you will see the message
 .Dq svr4_getdents: dir offset too large for emulated program"

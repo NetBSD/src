@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.9,v 1.5 2001/10/29 23:04:29 jdolecek Exp $
+.\"	$NetBSD: altq.9,v 1.6 2002/02/13 08:18:34 ross Exp $
 .\"	$OpenBSD: altq.9,v 1.4 2001/07/12 12:41:42 itojun Exp $
 .\"
 .\" Copyright (C) 2001
@@ -33,9 +33,9 @@
 .Nm ALTQ
 .Nd kernel interfaces for manipulating output queues on network interfaces
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <net/if.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.Fd #include \*[Lt]net/if.h\*[Gt]
 .Ft void \"macro
 .Fn IFQ_ENQUEUE "struct ifaltq *ifq" "struct mbuf *m" "int error"
 .Ft void \"macro
@@ -253,24 +253,24 @@ looks as follows:
  {                                     | {
      ......                            |     ......
                                        |
-                                       |     mflags = m->m_flags;
-                                       |     len = m->m_pkthdr.len;
+                                       |     mflags = m-\*[Gt]m_flags;
+                                       |     len = m-\*[Gt]m_pkthdr.len;
      s = splimp();                     |     s = splimp();
-     if (IF_QFULL(&ifp->if_snd)) {     |     IFQ_ENQUEUE(&ifp->if_snd, m,
+     if (IF_QFULL(\*[Am]ifp-\*[Gt]if_snd)) {     |     IFQ_ENQUEUE(\*[Am]ifp-\*[Gt]if_snd, m,
                                        |                 error);
-         IF_DROP(&ifp->if_snd);        |     if (error != 0) {
+         IF_DROP(\*[Am]ifp-\*[Gt]if_snd);        |     if (error != 0) {
          splx(s);                      |         splx(s);
          senderr(ENOBUFS);             |         return (error);
      }                                 |     }
-     IF_ENQUEUE(&ifp->if_snd, m);      |
-     ifp->if_obytes +=                 |     ifp->if_obytes += len;
-                    m->m_pkthdr.len;   |
-     if (m->m_flags & M_MCAST)         |     if (mflags & M_MCAST)
-         ifp->if_omcasts++;            |         ifp->if_omcasts++;
+     IF_ENQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);      |
+     ifp-\*[Gt]if_obytes +=                 |     ifp-\*[Gt]if_obytes += len;
+                    m-\*[Gt]m_pkthdr.len;   |
+     if (m-\*[Gt]m_flags \*[Am] M_MCAST)         |     if (mflags \*[Am] M_MCAST)
+         ifp-\*[Gt]if_omcasts++;            |         ifp-\*[Gt]if_omcasts++;
                                        |
-     if ((ifp->if_flags & IFF_OACTIVE) |     if ((ifp->if_flags & IFF_OACTIVE)
+     if ((ifp-\*[Gt]if_flags \*[Am] IFF_OACTIVE) |     if ((ifp-\*[Gt]if_flags \*[Am] IFF_OACTIVE)
          == 0)                         |         == 0)
-         (*ifp->if_start)(ifp);        |         (*ifp->if_start)(ifp);
+         (*ifp-\*[Gt]if_start)(ifp);        |         (*ifp-\*[Gt]if_start)(ifp);
      splx(s);                          |     splx(s);
      return (error);                   |     return (error);
                                        |
@@ -298,12 +298,12 @@ ether_output(ifp, m0, dst, rt0)
 	......
 
 	/* classify the packet before prepending link-headers */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(\*[Am]ifp-\*[Gt]if_snd, m, dst-\*[Gt]sa_family, \*[Am]pktattr);
 
 	/* prepend link-level headers */
 	......
 
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	IFQ_ENQUEUE(\*[Am]ifp-\*[Gt]if_snd, m, \*[Am]pktattr, error);
 
 	......
 }
@@ -325,7 +325,7 @@ to see whether the queue is empty or not, use
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- if (ifp->if_snd.ifq_head != NULL)     | if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+ if (ifp-\*[Gt]if_snd.ifq_head != NULL)     | if (IFQ_IS_EMPTY(\*[Am]ifp-\*[Gt]if_snd) == 0)
                                        |
 .Ed
 Note that
@@ -365,7 +365,7 @@ due to rate-limiting.
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- IF_DEQUEUE(&ifp->if_snd, m);          | IFQ_DEQUEUE(&ifp->if_snd, m);
+ IF_DEQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);          | IFQ_DEQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);
                                        | if (m == NULL)
                                        |     return;
                                        |
@@ -382,14 +382,14 @@ and
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- m = ifp->if_snd.ifq_head;             | IFQ_POLL(&ifp->if_snd, m);
+ m = ifp-\*[Gt]if_snd.ifq_head;             | IFQ_POLL(\*[Am]ifp-\*[Gt]if_snd, m);
  if (m != NULL) {                      | if (m != NULL) {
                                        |
      /* use m to get resources */      |     /* use m to get resources */
      if (something goes wrong)         |     if (something goes wrong)
          return;                       |         return;
                                        |
-     IF_DEQUEUE(&ifp->if_snd, m);      |     IFQ_DEQUEUE(&ifp->if_snd, m);
+     IF_DEQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);      |     IFQ_DEQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);
                                        |
      /* kick the hardware */           |     /* kick the hardware */
  }                                     | }
@@ -415,11 +415,11 @@ You have to convert the logic into poll-and-dequeue.
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- IF_DEQUEUE(&ifp->if_snd, m);          | IFQ_POLL(&ifp->if_snd, m);
+ IF_DEQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);          | IFQ_POLL(\*[Am]ifp-\*[Gt]if_snd, m);
  if (m != NULL) {                      | if (m != NULL) {
                                        |
      if (something_goes_wrong) {       |     if (something_goes_wrong) {
-         IF_PREPEND(&ifp->if_snd, m);  |
+         IF_PREPEND(\*[Am]ifp-\*[Gt]if_snd, m);  |
          return;                       |         return;
      }                                 |     }
                                        |
@@ -427,7 +427,7 @@ You have to convert the logic into poll-and-dequeue.
                                        |      * is committed to send this
                                        |      * packet.
                                        |      */
-                                       |     IFQ_DEQUEUE(&ifp->if_snd, m);
+                                       |     IFQ_DEQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);
                                        |
      /* kick the hardware */           |     /* kick the hardware */
  }                                     | }
@@ -441,8 +441,8 @@ Note that a non-work conserving queue cannot be emptied by a dequeue loop.
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- while (ifp->if_snd.ifq_head != NULL) {|  IFQ_PURGE(&ifp->if_snd);
-     IF_DEQUEUE(&ifp->if_snd, m);      |
+ while (ifp-\*[Gt]if_snd.ifq_head != NULL) {|  IFQ_PURGE(\*[Am]ifp-\*[Gt]if_snd);
+     IF_DEQUEUE(\*[Am]ifp-\*[Gt]if_snd, m);      |
      m_freem(m);                       |
  }                                     |
                                        |
@@ -461,8 +461,8 @@ to show this driver is converted to the new style.
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- ifp->if_snd.ifq_maxlen = qsize;       | IFQ_SET_MAXLEN(&ifp->if_snd, qsize);
-                                       | IFQ_SET_READY(&ifp->if_snd);
+ ifp-\*[Gt]if_snd.ifq_maxlen = qsize;       | IFQ_SET_MAXLEN(\*[Am]ifp-\*[Gt]if_snd, qsize);
+                                       | IFQ_SET_READY(\*[Am]ifp-\*[Gt]if_snd);
  if_attach(ifp);                       | if_attach(ifp);
                                        |
 .Ed
@@ -471,11 +471,11 @@ The new macros for statistics:
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- IF_DROP(&ifp->if_snd);                | IFQ_INC_DROPS(&ifp->if_snd);
+ IF_DROP(\*[Am]ifp-\*[Gt]if_snd);                | IFQ_INC_DROPS(\*[Am]ifp-\*[Gt]if_snd);
                                        |
- ifp->if_snd.ifq_len++;                | IFQ_INC_LEN(&ifp->if_snd);
+ ifp-\*[Gt]if_snd.ifq_len++;                | IFQ_INC_LEN(\*[Am]ifp-\*[Gt]if_snd);
                                        |
- ifp->if_snd.ifq_len--;                | IFQ_DEC_LEN(&ifp->if_snd);
+ ifp-\*[Gt]if_snd.ifq_len--;                | IFQ_DEC_LEN(\*[Am]ifp-\*[Gt]if_snd);
                                        |
 .Ed
 Some drivers instruct the hardware to invoke transmission complete
@@ -502,7 +502,7 @@ is no longer a type of
 .Dv struct ifqueue
 .Pc .
 .Bd -literal
-	struct ifqueue *ifq = &ifp->if_snd;
+	struct ifqueue *ifq = \*[Am]ifp-\*[Gt]if_snd;
 .Ed
 A simple way is to use the original
 .Fn IF_XXX
@@ -516,31 +516,31 @@ The enqueue operation looks like:
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- struct ifqueue *ifq = &ifp->if_snd;   | struct ifqueue *ifq = NULL;
+ struct ifqueue *ifq = \*[Am]ifp-\*[Gt]if_snd;   | struct ifqueue *ifq = NULL;
                                        |
- if (ip->ip_tos & IPTOS_LOWDELAY)      | if ((ip->ip_tos & IPTOS_LOWDELAY) &&
-     ifq = &sc->sc_fastq;              | !ALTQ_IS_ENABLED(&sc->sc_if.if_snd)) {
-                                       |     ifq = &sc->sc_fastq;
+ if (ip-\*[Gt]ip_tos \*[Am] IPTOS_LOWDELAY)      | if ((ip-\*[Gt]ip_tos \*[Am] IPTOS_LOWDELAY) \*[Am]\*[Am]
+     ifq = \*[Am]sc-\*[Gt]sc_fastq;              | !ALTQ_IS_ENABLED(\*[Am]sc-\*[Gt]sc_if.if_snd)) {
+                                       |     ifq = \*[Am]sc-\*[Gt]sc_fastq;
  if (IF_QFULL(ifq)) {                  |     if (IF_QFULL(ifq)) {
      IF_DROP(ifq);                     |         IF_DROP(ifq);
      m_freem(m);                       |         m_freem(m);
      splx(s);                          |         error = ENOBUFS;
-     sc->sc_if.if_oerrors++;           |     } else {
+     sc-\*[Gt]sc_if.if_oerrors++;           |     } else {
      return (ENOBUFS);                 |         IF_ENQUEUE(ifq, m);
  }                                     |         error = 0;
  IF_ENQUEUE(ifq, m);                   |     }
                                        | } else
-                                       |     IFQ_ENQUEUE(&sc->sc_if.if_snd,
+                                       |     IFQ_ENQUEUE(\*[Am]sc-\*[Gt]sc_if.if_snd,
                                        |                 m, error);
                                        |
                                        | if (error) {
                                        |     splx(s);
-                                       |     sc->sc_if.if_oerrors++;
+                                       |     sc-\*[Gt]sc_if.if_oerrors++;
                                        |     return (error);
                                        | }
- if ((sc->sc_oqlen =                   | if ((sc->sc_oqlen =
-      sc->sc_ttyp->t_outq.c_cc) == 0)  |      sc->sc_ttyp->t_outq.c_cc) == 0)
-     slstart(sc->sc_ttyp);             |     slstart(sc->sc_ttyp);
+ if ((sc-\*[Gt]sc_oqlen =                   | if ((sc-\*[Gt]sc_oqlen =
+      sc-\*[Gt]sc_ttyp-\*[Gt]t_outq.c_cc) == 0)  |      sc-\*[Gt]sc_ttyp-\*[Gt]t_outq.c_cc) == 0)
+     slstart(sc-\*[Gt]sc_ttyp);             |     slstart(sc-\*[Gt]sc_ttyp);
  splx(s);                              | splx(s);
                                        |
 .Ed
@@ -549,9 +549,9 @@ The dequeue operations looks like:
             ##old-style##                           ##new-style##
                                        |
  s = splimp();                         | s = splimp();
- IF_DEQUEUE(&sc->sc_fastq, m);         | IF_DEQUEUE(&sc->sc_fastq, m);
+ IF_DEQUEUE(\*[Am]sc-\*[Gt]sc_fastq, m);         | IF_DEQUEUE(\*[Am]sc-\*[Gt]sc_fastq, m);
  if (m == NULL)                        | if (m == NULL)
-     IF_DEQUEUE(&sc->sc_if.if_snd, m); |     IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
+     IF_DEQUEUE(\*[Am]sc-\*[Gt]sc_if.if_snd, m); |     IFQ_DEQUEUE(\*[Am]sc-\*[Gt]sc_if.if_snd, m);
  splx(s);                              | splx(s);
                                        |
 .Ed

@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.7 2002/02/07 03:15:07 ross Exp $
+.\"     $NetBSD: agp.4,v 1.8 2002/02/13 08:17:30 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ calls.  The calls supported are:
 .It Dv AGPIOC_INFO
 Get AGP information, setting the members in the
 .Em agp_info
-structure as defined in <sys/agpio.h>:
+structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_info {
         agp_version version;    /* version of the driver        */
@@ -101,7 +101,7 @@ Release AGP.
 .It Dv AGPIOC_SETUP
 Setup AGP, using the members in the
 .Em agp_setup
-structure as defined in <sys/agpio.h>:
+structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_setup {
         u_int32_t agp_mode;     /* mode info of bridge          */
@@ -110,7 +110,7 @@ typedef struct _agp_setup {
 .It Dv AGPIOC_ALLOCATE
 Allocate AGP space, using and setting the members in the
 .Em agp_allocate
-structure as defined in <sys/agpio.h>:
+structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_allocate {
         int key;                /* tag of allocation            */
@@ -127,7 +127,7 @@ Deallocate AGP space.
 .It Dv AGPIOC_BIND
 Bind AGP space, using the members in the
 .Em agp_bind
-structure as defined in <sys/agpio.h>:
+structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_bind {
         int key;                /* tag of allocation            */
@@ -137,7 +137,7 @@ typedef struct _agp_bind {
 .It Dv AGPIOC_UNBIND
 Unbind AGP space, using the members in the
 .Em agp_unbind
-structure as defined in <sys/agpio.h>:
+structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_unbind {
         int key;                /* tag of allocation            */
@@ -156,11 +156,11 @@ AGP GART device special file
 This short code fragment is an example of opening the AGP device
 and performing some basic operations:
 .Bd -literal
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/agpio.h>
-#include <fcntl.h>
-#include <err.h>
+#include \*[Lt]sys/types.h\*[Gt]
+#include \*[Lt]sys/ioctl.h\*[Gt]
+#include \*[Lt]sys/agpio.h\*[Gt]
+#include \*[Lt]fcntl.h\*[Gt]
+#include \*[Lt]err.h\*[Gt]
 
 int
 main(int argc, char **argv)
@@ -173,10 +173,10 @@ main(int argc, char **argv)
 	agp_unbind unbind;
 
 	fd = open("/dev/agp0", O_RDWR);
-	if (fd < 0)
+	if (fd \*[Lt] 0)
 		err(1, "open");
 
-	if (ioctl(fd, AGPIOC_INFO, &info) < 0)
+	if (ioctl(fd, AGPIOC_INFO, \*[Am]info) \*[Lt] 0)
 		err(2, "ioctl AGPIOC_INFO");
 
 	printf("version:	%u.%u\\n", info.version.major,
@@ -192,26 +192,26 @@ main(int argc, char **argv)
 
 	setup.agp_mode = info.agp_mode;
 
-	if (ioctl(fd, AGPIOC_SETUP, &setup) < 0)
+	if (ioctl(fd, AGPIOC_SETUP, \*[Am]setup) \*[Lt] 0)
 		err(3, "ioctl AGPIOC_SETUP");
 
-	if (ioctl(fd, AGPIOC_ACQUIRE, 0) < 0)
+	if (ioctl(fd, AGPIOC_ACQUIRE, 0) \*[Lt] 0)
 		err(3, "ioctl AGPIOC_ACQUIRE");
 
 	alloc.type = 0;
 	alloc.pg_count = 64;
 
-	if (ioctl(fd, AGPIOC_ALLOCATE, &alloc) < 0)
+	if (ioctl(fd, AGPIOC_ALLOCATE, \*[Am]alloc) \*[Lt] 0)
 		err(4, "ioctl AGPIOC_ALLOCATE");
 
 	printf("alloc key %d, paddr %x\\n", alloc.key, alloc.physical);
-	if (ioctl(fd, AGPIOC_INFO, &info) < 0)
+	if (ioctl(fd, AGPIOC_INFO, \*[Am]info) \*[Lt] 0)
 		err(5, "ioctl AGPIOC_INFO");
 
 	bind.key = alloc.key;
 	bind.pg_start = 0x1000;
 
-	if (ioctl(fd, AGPIOC_BIND, &bind) < 0)
+	if (ioctl(fd, AGPIOC_BIND, \*[Am]bind) \*[Lt] 0)
 		err(6, "ioctl AGPIOC_BIND");
 
 	printf("used mem now:	%u\\n\\n", info.pg_used);
@@ -219,13 +219,13 @@ main(int argc, char **argv)
 	unbind.key = alloc.key;
 	unbind.priority = 0;
 
-	if (ioctl(fd, AGPIOC_UNBIND, &unbind) < 0)
+	if (ioctl(fd, AGPIOC_UNBIND, \*[Am]unbind) \*[Lt] 0)
 		err(6, "ioctl AGPIOC_BIND");
 
-	if (ioctl(fd, AGPIOC_DEALLOCATE, &alloc.key) < 0)
+	if (ioctl(fd, AGPIOC_DEALLOCATE, \*[Am]alloc.key) \*[Lt] 0)
 		err(6, "ioctl AGPIOC_DEALLOCATE");
 
-	if (ioctl(fd, AGPIOC_RELEASE, 0) < 0)
+	if (ioctl(fd, AGPIOC_RELEASE, 0) \*[Lt] 0)
 		err(7, "ioctl AGPIOC_RELEASE");
 
 	close(fd);

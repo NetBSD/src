@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.8 2002/02/07 03:15:10 ross Exp $
+.\"     $NetBSD: vnodeops.9,v 1.9 2002/02/13 08:18:56 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,16 +89,16 @@
 .Nm VOP_BWRITE
 .Nd vnode operations
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/buf.h>
-.Fd #include <sys/dirent.h>
-.Fd #include <sys/lock.h>
-.Fd #include <sys/vnode.h>
-.Fd #include <sys/mount.h>
-.Fd #include <sys/namei.h>
-.Fd #include <sys/unistd.h>
-.Fd #include <sys/fcntl.h>
-.Fd #include <sys/lockf.h>
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/buf.h\*[Gt]
+.Fd #include \*[Lt]sys/dirent.h\*[Gt]
+.Fd #include \*[Lt]sys/lock.h\*[Gt]
+.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.Fd #include \*[Lt]sys/mount.h\*[Gt]
+.Fd #include \*[Lt]sys/namei.h\*[Gt]
+.Fd #include \*[Lt]sys/unistd.h\*[Gt]
+.Fd #include \*[Lt]sys/fcntl.h\*[Gt]
+.Fd #include \*[Lt]sys/lockf.h\*[Gt]
 .Ft int
 .Fn VOP_LOOKUP "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp"
@@ -358,7 +358,7 @@ mask for operation
 .El
 .Pp
 Valid values for
-.Em cn->cn_flags
+.Em cn-\*[Gt]cn_flags
 are:
 .Pp
 .Bl  -tag -offset indent -width LOCKPARENT -compact
@@ -400,7 +400,7 @@ component is found, the address of the resulting locked vnode is
 returned in
 .Fa vpp .
 The operation specified in
-.Em cnp->cn_nameiop
+.Em cnp-\*[Gt]cn_nameiop
 gives
 .Fn VOP_LOOKUP
 hints about the reason for requesting the lookup and uses it to cache
@@ -417,7 +417,7 @@ If the pathname component being search for is ".." (ISDOTDOT),
 is unlocked, the ".." node is locked and then
 .Fa dvp
 is relocked if and only if LOCKPARENT and ISLASTCN is set in
-.Em cnp->cn_flags .
+.Em cnp-\*[Gt]cn_flags .
 If LOCKPARENT or ISLATCN is not set,
 .Fa dvp
 is returned unlocked on a successful lookup.  This process preserves
@@ -442,7 +442,7 @@ is left locked.  If there was an error relocking
 .Fa dvp
 (for instance in the ISDOTDOT case) the error is returned with
 PDIRUNLOCK set in
-.Em cnp->cn_flags .
+.Em cnp-\*[Gt]cn_flags .
 This flag signals to the caller that
 .Fa dvp ' s
 lock state has changed.  If the operation is successful
@@ -471,13 +471,13 @@ This function is called after
 when a file is being created.  Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp->cn_flags
+.Em cnp-\*[Gt]cn_flags
 to keep the memory pointed to by
-.Em cnp->cn_pnbuf
+.Em cnp-\*[Gt]cn_pnbuf
 valid.  If an error is detected when creating the file, this memory is
 released.  If the file is created successfully it will be released
 unless the SAVESTART flags in specified in
-.Em cnp->cn_flags .
+.Em cnp-\*[Gt]cn_flags .
 .It Fn VOP_MKNOD "dvp" "vpp" "cnp" "vap"
 Make a new device-special file in a given directory.  The argument
 .Fa dvp
@@ -498,14 +498,14 @@ This function is called after
 when a device-special file is being created.  Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp->cn_flags
+.Em cnp-\*[Gt]cn_flags
 to keep the memory pointed to by
-.Em cnp->cn_pnbuf
+.Em cnp-\*[Gt]cn_pnbuf
 valid.  If an error is detected when creating the device-special file,
 this memory is released.  If the device-special file is created
 successfully it will be released unless the SAVESTART flags in
 specified in
-.Em cnp->cn_flags .
+.Em cnp-\*[Gt]cn_flags .
 .It Fn VOP_OPEN "vp" "mode" "cred" "p"
 Open a file.  The argument
 .Fa vp
@@ -576,11 +576,11 @@ and
 specifies the calling process and its credentials respectively.
 .Fn VOP_GETATTR
 uses the file system type specific data object
-.Em vp->v_data
+.Em vp-\*[Gt]v_data
 to reference the underlying file attributes.
 Attributes associated with the file are collected by setting the
 required attribute bits in
-.Em vap->va_mask .
+.Em vap-\*[Gt]va_mask .
 The attributes are returned in
 .Fa vap .
 Attributes which are not available are set to the value VNOVAL.
@@ -598,13 +598,13 @@ and
 specifies the calling process and its credentials respectively.
 .Fn VOP_SETATTR
 uses the file system type specific data object
-.Em vp->v_data
+.Em vp-\*[Gt]v_data
 to reference the underlying file attributes.  The new attributes are
 defined in
 .Fa vap .
 Attributes associated with the file are set by setting the required
 attribute bits in
-.Em vap->va_mask .
+.Em vap-\*[Gt]va_mask .
 Attributes which are not being modified by
 .Fn VOP_SETATTR
 should be set to the value VNOVAL.  If the operation is successful
@@ -853,13 +853,13 @@ This function is called after
 when a directory is being created.  Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp->cn_flags
+.Em cnp-\*[Gt]cn_flags
 to keep the memory pointed to by
-.Em cnp->cn_pnbuf
+.Em cnp-\*[Gt]cn_pnbuf
 valid.  If an error is detected when creating the directory, this
 memory is released.  If the directory is created successfully it will
 be released unless the SAVESTART flags in specified in
-.Em cnp->cn_flags .
+.Em cnp-\*[Gt]cn_flags .
 .It Fn VOP_RMDIR "dvp" "vp" "cnp"
 Remove a directory in a given directory.  The argument
 .Fa dvp
@@ -895,13 +895,13 @@ This function is called after
 when a symbolic link is being created.  Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp->cn_flags
+.Em cnp-\*[Gt]cn_flags
 to keep the memory pointed to by
-.Em cnp->cn_pnbuf
+.Em cnp-\*[Gt]cn_pnbuf
 valid.  If an error is detected when creating the symbolic link, this
 memory is released.  If the symbolic link is created successfully it
 will be released unless the SAVESTART flags in specified in
-.Em cnp->cn_flags .
+.Em cnp-\*[Gt]cn_flags .
 .It Fn VOP_READDIR "vp" "uio" "cred" "eofflag" "cookies" "ncookies"
 Read directory entry.  The argument
 .Fa vp
@@ -1160,7 +1160,7 @@ argument
 .Fa flags
 is a set of flags controlling the low-level allocation when the buffer
 is written.  Valid values defined in
-.Pa <sys/buf.h>
+.Pa \*[Lt]sys/buf.h\*[Gt]
 are:
 .Pp
 .Bl -tag -offset indent  -width B_CLRBUF -compact
@@ -1289,7 +1289,7 @@ Read/write a file system buffer.  The argument
 is the buffer to be read or written.
 .Fn VOP_STRATEGY
 will either read or write data to the file depending on the value of
-.Em vp->b_flags .
+.Em vp-\*[Gt]b_flags .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn VOP_BWRITE "bp"

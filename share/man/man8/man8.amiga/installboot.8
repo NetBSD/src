@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.17 2001/12/17 06:01:23 mhitch Exp $
+.\"	$NetBSD: installboot.8,v 1.18 2002/02/13 08:18:25 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,7 +120,7 @@ Some third-party disk controllers don't support bootblock booting.
 .Pp
 DraCo ROMs don't support bootblock booting from floppy disks.
 .Pp
-Most 68060 boards, unlike the DraCo, don't set the SysBase->AttnFlags
+Most 68060 boards, unlike the DraCo, don't set the SysBase-\*[Gt]AttnFlags
 bit for the 68060 CPU (a patch program which is called during
 AmigaOS startup does this). You need to add options BB060STUPIDROM
 to your kernel to boot on such a machine.

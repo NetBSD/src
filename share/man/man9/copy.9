@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.10 2001/06/21 11:59:00 wiz Exp $
+.\"	$NetBSD: copy.9,v 1.11 2002/02/13 08:18:39 ross Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -44,8 +44,8 @@
 .Nm copyoutstr
 .Nd kernel space to/from user space copy functions
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/systm.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/systm.h\*[Gt]
 .Ft int
 .Fn copyin "const void *uaddr" "void *kaddr" "size_t len"
 .Ft int

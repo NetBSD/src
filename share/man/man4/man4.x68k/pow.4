@@ -1,4 +1,4 @@
-.\"	$NetBSD: pow.4,v 1.8 2002/01/15 02:12:30 wiz Exp $
+.\"	$NetBSD: pow.4,v 1.9 2002/02/13 08:18:08 ross Exp $
 .\"
 .\" Copyright (c) 1995 MINOURA Makoto.
 .\" All rights reserved.
@@ -56,10 +56,10 @@ Setting signal number which is sent at changing the power status
 .El
 .Sh GETTING POWER SWITCH STATUS
 .Bd -literal
-.Fd #include <sys/ioctl.h>
-.Fd #include <machine/powioctl.h>
+.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
+.Fd #include \*[Lt]machine/powioctl.h\*[Gt]
 
-.Fd ioctl (fd, POWIOCGPOWERINFO, &powerinfo);
+.Fd ioctl (fd, POWIOCGPOWERINFO, \*[Am]powerinfo);
 .Fd struct x68k_powerinfo powerinfo;
 .Ed
 .Pp
@@ -78,7 +78,7 @@ Each member means:
 .Bl -hang
 .It pow_switch_boottime :
 The power switch status at the system start time.
-The status is known by applying logical and (&) with:
+The status is known by applying logical and (\*[Am]) with:
 .Pp
 .Bl -tag -compact -width POW_EXTERNALSW
 .It POW_ALARMSW
@@ -102,10 +102,10 @@ Total usage in count (pow_bootcount) and second (pow_usedtotal).
 .El
 .Sh ACCESSING RTC ALARM TIMER
 .Bd -literal
-.Fd #include <sys/ioctl.h>
-.Fd #include <machine/powioctl.h>
+.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
+.Fd #include \*[Lt]machine/powioctl.h\*[Gt]
 
-.Fd ioctl (fd, POWIOCGALARMINFO, &alarminfo);
+.Fd ioctl (fd, POWIOCGALARMINFO, \*[Am]alarminfo);
 .Fd struct x68k_alarminfo alarminfo;
 .Ed
 .Pp
@@ -137,7 +137,7 @@ and the like as these require minute time units. 0 indicates an infinity.
 .El
 .Pp
 .Bd -literal
-.Fd ioctl (fd, POWIOCSALARMINFO, &alarminfo);
+.Fd ioctl (fd, POWIOCSALARMINFO, \*[Am]alarminfo);
 .Fd struct x68k_alarminfo alarminfo;
 .Ed
 .Pp
@@ -146,10 +146,10 @@ Sets the alarm timer according to the argument
 (see above).
 .Sh SIGNAL
 .Bd -literal
-.Fd #include <sys/ioctl.h>
-.Fd #include <machine/powioctl.h>
+.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
+.Fd #include \*[Lt]machine/powioctl.h\*[Gt]
 
-.Fd ioctl (fd, POWIOCSSIGNAL, &signum);
+.Fd ioctl (fd, POWIOCSSIGNAL, \*[Am]signum);
 .Fd int signum;
 .Ed
 .Pp
@@ -171,7 +171,7 @@ Note that this function is not provided with
 .Sh AUTHORS
 .An Minoura Makoto Aq minoura@flab.fujitsu.co.jp .
 .Sh SPECIAL THANKS
-Liam Hahne Minn <hahne@sail.t.u-tokyo.ac.jp>.
+Liam Hahne Minn \*[Lt]hahne@sail.t.u-tokyo.ac.jp\*[Gt].
 .Sh BUGS
 The file
 .Pa /dev/pow

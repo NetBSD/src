@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.12 2001/12/26 01:11:51 wiz Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.13 2002/02/13 08:18:21 ross Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -133,11 +133,11 @@ needs by running
 .It me@freebsd% ldd /usr/local/lib/SimCity/res/sim
 .nf
 /usr/local/lib/SimCity/res/sim:
-	-lXext.6 => /usr/X11R6/lib/libXext.so.6.0 (0x100c1000)
-	-lX11.6 => /usr/X11R6/lib/libX11.so.6.0 (0x100c9000)
-	-lc.2 => /usr/lib/libc.so.2.1 (0x10144000)
-	-lm.2 => /usr/lib/libm.so.2.0 (0x101a7000)
-	-lgcc.261 => /usr/lib/libgcc.so.261.0 (0x101bf000)
+	-lXext.6 =\*[Gt] /usr/X11R6/lib/libXext.so.6.0 (0x100c1000)
+	-lX11.6 =\*[Gt] /usr/X11R6/lib/libX11.so.6.0 (0x100c9000)
+	-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x10144000)
+	-lm.2 =\*[Gt] /usr/lib/libm.so.2.0 (0x101a7000)
+	-lgcc.261 =\*[Gt] /usr/lib/libgcc.so.261.0 (0x101bf000)
 .fi
 .El
 .Pp
@@ -181,7 +181,7 @@ and you find that the ldd output for a new binary you want to
 install is:
 .Pp
 .nf
-\-lc.2 => /usr/lib/libc.so.2.1 (0x10144000)
+\-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x10144000)
 .fi
 .Pp
 You won't need to worry about copying
@@ -303,7 +303,7 @@ it should produce something like:
 .It me@netbsd% ldd-freebsd `which ldd-freebsd`
 .nf
 /usr/local/bin/ldd-freebsd:
-	-lc.2 => /usr/lib/libc.so.2.1 (0x1001a000)
+	-lc.2 =\*[Gt] /usr/lib/libc.so.2.1 (0x1001a000)
 .fi
 .El
 .Pp
@@ -326,18 +326,18 @@ on the new program, and watch its output.
 .Xr ldd 1 )
 will print a list
 of shared libraries that the program depends on, in the
-form -l<majorname> => <fullname>.
+form -l\*[Lt]majorname\*[Gt] =\*[Gt] \*[Lt]fullname\*[Gt].
 .Pp
 If it prints
 .Dq not found
-instead of <fullname> it means that you need an extra library.
+instead of \*[Lt]fullname\*[Gt] it means that you need an extra library.
 Which library this is, is shown
-in <majorname>, which will be of the form XXXX.<N>
-You will need to find a libXXXX.so.<N>.<mm> on a
+in \*[Lt]majorname\*[Gt], which will be of the form XXXX.\*[Lt]N\*[Gt]
+You will need to find a libXXXX.so.\*[Lt]N\*[Gt].\*[Lt]mm\*[Gt] on a
 .Fx
 ftp site, and install it on your system.
-The XXXX (name) and <N> (major
-revision number) should match; the minor number(s) <mm> are
+The XXXX (name) and \*[Lt]N\*[Gt] (major
+revision number) should match; the minor number(s) \*[Lt]mm\*[Gt] are
 less important, though it is advised to take the most
 recent version.
 .Pp

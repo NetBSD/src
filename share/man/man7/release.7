@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.15 2002/02/11 10:44:38 wiz Exp $
+.\"	$NetBSD: release.7,v 1.16 2002/02/13 08:18:20 ross Exp $
 .\"
 .\" Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,15 +48,15 @@ This layout should be consistent between FTP servers and CD-ROMs,
 except possibly the path that leads to the release hierarchy.
 .Pp
 In this document, the following special words have these definitions:
-.Bl -tag -width "<machine_arch>"
-.It Em <machine>
+.Bl -tag -width "\*[Lt]machine_arch\*[Gt]"
+.It Em \*[Lt]machine\*[Gt]
 The platform for which the release was built, corresponding to the
 .Em hw.machine
 sysctl variable, e.g.
 .Em i386
 or
 .Em amiga .
-.It Em <machine_arch>
+.It Em \*[Lt]machine_arch\*[Gt]
 The architecture for which a particular installation set was built,
 corresponding to the
 .Em hw.machine_arch
@@ -64,7 +64,7 @@ sysctl variable, e.g.
 .Em i386
 or
 .Em m68k .
-.It Em <rel>
+.It Em \*[Lt]rel\*[Gt]
 The target release.
 .El
 .Pp
@@ -80,19 +80,19 @@ files are historic
 .Bx
 checksums for the various files in that directory,
 in the format produced by the command:
-.Sy cksum -o 1 <file> .
+.Sy cksum -o 1 \*[Lt]file\*[Gt] .
 .Pp
 All
 .Sy CKSUM
 files are POSIX checksums for the various files in that directory, in the
 format produced by the command:
-.Sy cksum <file> .
+.Sy cksum \*[Lt]file\*[Gt] .
 .Pp
 All
 .Sy MD5
 files are MD5 digests for the various files in that directory, in the
 format produced by the command:
-.Sy cksum -m <file> .
+.Sy cksum -m \*[Lt]file\*[Gt] .
 .Pp
 All
 .Sy SYSVSUM
@@ -100,7 +100,7 @@ files are historic
 .At V
 checksums for the various files in
 that directory, in the format produced by the command:
-.Sy cksum -o 2 <file> .
+.Sy cksum -o 2 \*[Lt]file\*[Gt] .
 .Pp
 The MD5 digest is the safest checksum, followed by the POSIX checksum.
 The other two checksums are provided only to ensure that the widest possible
@@ -130,36 +130,36 @@ The root of the release hierarchy is
 .Sm off
 .Xo
 .Sy .../NetBSD-
-.Em <rel>
+.Em \*[Lt]rel\*[Gt]
 .Sy /
-.Em <machine>
+.Em \*[Lt]machine\*[Gt]
 .Sy / .
 .Xc
 .Sm on
 .Pp
 Files which may be shared by all systems of the same
-.Em <machine_arch>
+.Em \*[Lt]machine_arch\*[Gt]
 will be located in
 .Sm off
 .Xo
 .Sy .../NetBSD-
-.Em <rel>
+.Em \*[Lt]rel\*[Gt]
 .Sy /shared/
-.Em <machine_arch>
+.Em \*[Lt]machine_arch\*[Gt]
 .Sy /
 .Xc
 .Sm on
 with symbolic links pointing to these files from the
-.Em <machine>
+.Em \*[Lt]machine\*[Gt]
 subdirectory.  Files which are completely machine-independent will be
 located in
-.Sy .../NetBSD- Ns Em <rel> Ns Sy /shared/ALL/
+.Sy .../NetBSD- Ns Em \*[Lt]rel\*[Gt] Ns Sy /shared/ALL/
 with symbolic links pointing to these files from the
-.Em <machine>
+.Em \*[Lt]machine\*[Gt]
 subdirectory.
 .Pp
 Sources should be put into
-.Sy .../NetBSD- Ns Em <rel> Ns Sy /source/
+.Sy .../NetBSD- Ns Em \*[Lt]rel\*[Gt] Ns Sy /source/
 using the following layout:
 .Pp
 .Bl -tag -width "source/"
@@ -179,9 +179,9 @@ Other patches may exist for fixing critical problems.
 .It Xo
 .Sm off
 .Sy diff-
-.Em <lastrel>
+.Em \*[Lt]lastrel\*[Gt]
 .Sy -
-.Em <rel>
+.Em \*[Lt]rel\*[Gt]
 .Sy .gz
 .Sm on
 .Xc
@@ -242,9 +242,9 @@ The release in
 .Sm off
 .Xo
 .Sy .../NetBSD-
-.Em <rel>
+.Em \*[Lt]rel\*[Gt]
 .Sy /
-.Em <machine>
+.Em \*[Lt]machine\*[Gt]
 .Sy /
 .Xc
 .Sm on
@@ -339,7 +339,7 @@ sources.
 .It Sy xfont.tgz
 This set includes the X11 fonts.
 .It Sy xserver.tgz
-This set includes the X servers and manual pages for <machine>.
+This set includes the X servers and manual pages for \*[Lt]machine\*[Gt].
 .Em "Note: this set may not be available on some platforms" .
 .El
 .It Sy kernel/
@@ -380,7 +380,7 @@ and
 .It Xo
 .Sm off
 .Sy netbsd-
-.Em <machine_arch>
+.Em \*[Lt]machine_arch\*[Gt]
 .Sy .iso
 .Sm on
 .Xc

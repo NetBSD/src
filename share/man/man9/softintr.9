@@ -1,4 +1,4 @@
-.\" $NetBSD: softintr.9,v 1.8 2001/12/26 01:07:45 wiz Exp $
+.\" $NetBSD: softintr.9,v 1.9 2002/02/13 08:18:51 ross Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nm softintr_schedule
 .Nd machine-independent software interrupt framework
 .Sh SYNOPSIS
-.Fd #include <machine/intr.h>
+.Fd #include \*[Lt]machine/intr.h\*[Gt]
 .Ft void *
 .Fn softintr_establish "int level" "void (*fun)(void *)" "void *arg"
 .Ft void
@@ -138,4 +138,4 @@ However, it did not gain wider implementation until
 The
 .Nx
 machine-independent software interrupt framework was designed by
-Charles Hannum <mycroft@NetBSD.ORG>.
+Charles Hannum \*[Lt]mycroft@NetBSD.ORG\*[Gt].

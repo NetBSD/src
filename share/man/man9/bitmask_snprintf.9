@@ -1,4 +1,4 @@
-.\"     $NetBSD: bitmask_snprintf.9,v 1.2 2001/09/04 02:51:15 wiz Exp $
+.\"     $NetBSD: bitmask_snprintf.9,v 1.3 2002/02/13 08:18:36 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm bitmask_snprintf
 .Nd bitmask output conversion
 .Sh SYNOPSIS
-.Fd #include <sys/systm.h>
+.Fd #include \*[Lt]sys/systm.h\*[Gt]
 .Ft void
 .Fn "bitmask_snprintf" "u_quad_t val" "const char *fmt" "char *buf" "size_t buflen"
 .Sh DESCRIPTION
@@ -91,7 +91,7 @@ The remaining characters in a bit-position\(endescription pair are the
 characters to print should the bit being described be set.
 Description strings are delimited by the next bit position value character
 encountered
-.Pq "distinguishable by its value being \(<= 32" ,
+.Pq "distinguishable by its value being \*[Le] 32" ,
 or the end of the decoding directive string itself.
 .Sh RETURN VALUES
 The
@@ -103,14 +103,14 @@ The returned string is always NULL-terminated.
 Two examples of the old formatting style:
 .Bd -literal -offset indent
 bitmask_snprintf(3, "\e10\e2BITTWO\e1BITONE", buf, buflen)
-\(rA "3<BITTWO,BITONE>"
+\(rA "3\*[Lt]BITTWO,BITONE\*[Gt]"
 
 bitmask_snprintf(0xe860,
        "\e20\ex10NOTBOOT\ex0fFPP\ex0eSDVMA\ex0cVIDEO"
        "\ex0bLORES\ex0aFPA\ex09DIAG\ex07CACHE"
        "\ex06IOCACHE\ex05LOOPBACK\ex04DBGCACHE",
         buf, buflen)
-\(rA "e860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
+\(rA "e860\*[Lt]NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE\*[Gt]"
 .Ed
 .Sh ERRORS
 If the buffer

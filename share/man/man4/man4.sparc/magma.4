@@ -1,4 +1,4 @@
-.\"     $NetBSD: magma.4,v 1.6 2002/01/15 02:00:07 wiz Exp $
+.\"     $NetBSD: magma.4,v 1.7 2002/02/13 08:18:03 ross Exp $
 .\"
 .\" Copyright (c) 1998 Iain Hibbert
 .\" All rights reserved.
@@ -53,13 +53,13 @@ The device minor numbers for this driver are encoded as follows:
     | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
     +---+---+---+---+---+---+---+---+
       |   |   |   |   |   |   |   |
-      |   |   |   |   +---+---+---+---> port number
+      |   |   |   |   +---+---+---+---\*[Gt] port number
       |   |   |   |
-      |   |   |   +-------------------> dialout (on tty ports)
+      |   |   |   +-------------------\*[Gt] dialout (on tty ports)
       |   |   |
-      |   |   +-----------------------> unused
+      |   |   +-----------------------\*[Gt] unused
       |   |
-      +---+---------------------------> card number
+      +---+---------------------------\*[Gt] card number
 .Ed
 .Pp
 Up to four cards are supported in the system.

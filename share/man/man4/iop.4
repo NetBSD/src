@@ -1,4 +1,4 @@
-.\"	$NetBSD: iop.4,v 1.14 2001/11/28 17:41:46 ad Exp $
+.\"	$NetBSD: iop.4,v 1.15 2002/02/13 08:17:37 ross Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,7 +172,7 @@ iovec.
 struct iop_tidmap {
 	u_short	it_tid;
 	u_short	it_flags;
-	char	it_dvname[sizeof(((struct device *)NULL)->dv_xname)];
+	char	it_dvname[sizeof(((struct device *)NULL)-\*[Gt]dv_xname)];
 };
 #define	IT_CONFIGURED	0x02	/* target configured */
 .Ed

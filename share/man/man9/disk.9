@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.16 2001/12/26 01:07:45 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.17 2002/02/13 08:18:40 ross Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .Nm disk_resetstat
 .Nd generic disk framework
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/disklabel.h>
-.Fd #include <sys/disk.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/disklabel.h\*[Gt]
+.Fd #include \*[Lt]sys/disk.h\*[Gt]
 .Ft void
 .Fn disk_init "void"
 .Ft void
@@ -212,9 +212,9 @@ fooattach(parent, self, aux)
 	[ . . . ]
 
 	/* Initialize and attach the disk structure. */
-	sc->sc_dk.dk_driver = &foodkdriver;
-	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-	disk_attach(&sc->sc_dk);
+	sc-\*[Gt]sc_dk.dk_driver = \*[Am]foodkdriver;
+	sc-\*[Gt]sc_dk.dk_name = sc-\*[Gt]sc_dev.dv_xname;
+	disk_attach(\*[Am]sc-\*[Gt]sc_dk);
 
 	/* Read geometry and fill in pertinent parts of disklabel. */
 	[ . . . ]
@@ -258,7 +258,7 @@ foostart(sc)
 	[ . . . ]
 
 	/* Tell the disk framework we're going busy. */
-	disk_busy(&sc->sc_dk);
+	disk_busy(\*[Am]sc-\*[Gt]sc_dk);
 
 	/* Send command to the drive. */
 	[ . . . ]
@@ -292,8 +292,8 @@ void
 foodone(xfer)
 	struct foo_xfer *xfer;
 {
-	struct foo_softc = (struct foo_softc *)xfer->xf_softc;
-	struct buf *bp = xfer->xf_buf;
+	struct foo_softc = (struct foo_softc *)xfer-\*[Gt]xf_softc;
+	struct buf *bp = xfer-\*[Gt]xf_buf;
 	long nbytes;
 	[ . . . ]
 
@@ -305,12 +305,12 @@ foodone(xfer)
 	if (bp == NULL)
 		nbytes = 0;
 	else
-		nbytes = bp->b_bcount - bp->b_resid;
+		nbytes = bp-\*[Gt]b_bcount - bp-\*[Gt]b_resid;
 
 	[ . . . ]
 
 	/* Notify the disk framework that we've completed the transfer. */
-	disk_unbusy(&sc->sc_dk, nbytes);
+	disk_unbusy(\*[Am]sc-\*[Gt]sc_dk, nbytes);
 
 	[ . . . ]
 }
@@ -370,4 +370,4 @@ generic disk framework appeared in
 The
 .Nx
 generic disk framework was architected and implemented by
-Jason R. Thorpe <thorpej@NetBSD.ORG>.
+Jason R. Thorpe \*[Lt]thorpej@NetBSD.ORG\*[Gt].

@@ -1,4 +1,4 @@
-.\" $NetBSD: todr.9,v 1.2 2001/09/11 05:41:37 uwe Exp $
+.\" $NetBSD: todr.9,v 1.3 2002/02/13 08:18:52 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .Nm clock_secs_to_ymdhms
 .Nd time-of-day clock support
 .Sh SYNOPSIS
-.Fd #include <dev/clock_subr.h>
+.Fd #include \*[Lt]dev/clock_subr.h\*[Gt]
 .Ft int
 .Fn todr_gettime "todr_chip_handle_t" "struct timeval *"
 .Ft int

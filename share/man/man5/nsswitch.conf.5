@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.19 2001/09/08 01:29:07 wiz Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.20 2002/02/13 08:18:14 ross Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -126,16 +126,16 @@ A
 description of the syntax of
 .Nm
 is:
-.Bl -column "<criterion>" -offset indent
-.It <entry>	::=
-<database> ":" [<source> [<criteria>]]*
-.It <criteria>	::=
-"[" <criterion>+ "]"
-.It <criterion>	::=
-<status> "=" <action>
-.It <status>	::=
+.Bl -column "\*[Lt]criterion\*[Gt]" -offset indent
+.It \*[Lt]entry\*[Gt]	::=
+\*[Lt]database\*[Gt] ":" [\*[Lt]source\*[Gt] [\*[Lt]criteria\*[Gt]]]*
+.It \*[Lt]criteria\*[Gt]	::=
+"[" \*[Lt]criterion\*[Gt]+ "]"
+.It \*[Lt]criterion\*[Gt]	::=
+\*[Lt]status\*[Gt] "=" \*[Lt]action\*[Gt]
+.It \*[Lt]status\*[Gt]	::=
 "success" | "notfound" | "unavail" | "tryagain"
-.It <action>	::=
+.It \*[Lt]action\*[Gt]	::=
 "return" | "continue"
 .El
 .Pp

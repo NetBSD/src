@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.so.conf.5,v 1.15 2001/09/11 01:01:57 wiz Exp $
+.\"	$NetBSD: ld.so.conf.5,v 1.16 2002/02/13 08:18:13 ross Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -68,7 +68,7 @@ lines that do not begin with a '/' are parsed as hardware dependent per
 library directives:
 .sp
 .nf
-<library_name> <sysctl_variable> <variable_value>[,...]:<library_name>[,...] ...
+\*[Lt]library_name\*[Gt] \*[Lt]sysctl_variable\*[Gt] \*[Lt]variable_value\*[Gt][,...]:\*[Lt]library_name\*[Gt][,...] ...
 .fi
 .sp
 If there is no match, the standard action is taken.

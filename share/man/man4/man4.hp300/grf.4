@@ -1,4 +1,4 @@
-.\"	$NetBSD: grf.4,v 1.7 2002/01/15 01:35:27 wiz Exp $
+.\"	$NetBSD: grf.4,v 1.8 2002/02/13 08:17:57 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -114,7 +114,7 @@ Get Graphics Info
 .Pp
 Get info about device, setting the entries in the
 .Em grfinfo
-structure, as defined in <hpdev/grfioctl.h>:
+structure, as defined in \*[Lt]hpdev/grfioctl.h\*[Gt]:
 .Bd -literal
 struct	grfinfo {
 	int	gd_id;		/* HPUX identifier */
@@ -172,7 +172,7 @@ interface special files
 This short code fragment is an example of opening some graphics device and
 mapping in the control and frame buffer space:
 .Bd -literal
-#define GRF_DEV <some_graphics_device>  /* /dev/grfN */
+#define GRF_DEV \*[Lt]some_graphics_device\*[Gt]  /* /dev/grfN */
 {
 	struct fbstruct *regs;  /*  fbstruct = gboxfb, rboxfb, etc. */
 	u_char *Addr, frame_buffer;
@@ -180,11 +180,11 @@ mapping in the control and frame buffer space:
 	int disp_fd;
 
 	disp_fd = open(GRF_DEV,1);
-	if (ioctl (disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
+	if (ioctl (disp_fd, GRFIOCGINFO, \*[Am]gi) \*[Lt] 0) return -1;
 	(void) ioctl (disp_fd, GRFIOCON, 0);
 
 	Addr = (u_char *) 0;
-	if (ioctl (disp_fd, GRFIOCMAP, &Addr) < 0) {
+	if (ioctl (disp_fd, GRFIOCMAP, \*[Am]Addr) \*[Lt] 0) {
 		(void) ioctl (disp_fd, GRFIOCOFF, 0);
 		return -1;
 	}

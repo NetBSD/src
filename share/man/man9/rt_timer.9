@@ -1,4 +1,4 @@
-.\"	$NetBSD: rt_timer.9,v 1.7 2001/09/04 03:01:50 wiz Exp $
+.\"	$NetBSD: rt_timer.9,v 1.8 2002/02/13 08:18:50 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .Nm rt_timer_remove_all
 .Nd route callout functions
 .Sh SYNOPSIS
-.Fd #include <net/route.h>
+.Fd #include \*[Lt]net/route.h\*[Gt]
 .Ft "struct rttimer_queue *"
 .Fn rt_timer_queue_create "time_t timeout"
 .Ft void

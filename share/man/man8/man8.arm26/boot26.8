@@ -1,4 +1,4 @@
-.\" $NetBSD: boot26.8,v 1.4 2001/12/26 01:19:11 wiz Exp $
+.\" $NetBSD: boot26.8,v 1.5 2002/02/13 08:18:26 ross Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Ben Harris
 .\" All rights reserved.
@@ -118,15 +118,15 @@ map indicate what the memory's being used for (actually where it's
 logically mapped):
 .Pp
 .Bd -literal -offset indent
-0 -> zero-page
-+ -> boot26 workspace
-* -> Free space (boot26 wants to put the kernel here)
-d -> RAM disc
-s -> System sprite area
-m -> RMA
-h -> System heap/stack
-f -> Font cache
-S -> Screen memory
+0 -\*[Gt] zero-page
++ -\*[Gt] boot26 workspace
+* -\*[Gt] Free space (boot26 wants to put the kernel here)
+d -\*[Gt] RAM disc
+s -\*[Gt] System sprite area
+m -\*[Gt] RMA
+h -\*[Gt] System heap/stack
+f -\*[Gt] Font cache
+S -\*[Gt] Screen memory
 .Ed
 .Pp
 On a machine with 32k pages (which is all

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.12 2001/09/04 02:51:15 wiz Exp $
+.\"	$NetBSD: ethersubr.9,v 1.13 2002/02/13 08:18:40 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .Nm fddi_delmulti
 .Nd Ethernet and FDDI driver support functions and macros
 .Sh SYNOPSIS
-.Fd #include <net/if_ether.h>
+.Fd #include \*[Lt]net/if_ether.h\*[Gt]
 .Ft void
 .Fn ether_ifattach "struct ifnet *ifp" "u_int8_t *lla"
 .Ft int
@@ -63,7 +63,7 @@
 .Fn ETHER_NEXT_MULTI  "struct ether_multistep step" "struct ether_multi *enm"
 .Ft int
 .Fn ETHER_IS_MULTICAST "u_int8_t *addr"
-.Fd #include <net/if_fddi.h>
+.Fd #include \*[Lt]net/if_fddi.h\*[Gt]
 .Ft void
 .Fn fddi_ifattach "struct ifnet *ifp" "u_int8_t *lla"
 .Ft int

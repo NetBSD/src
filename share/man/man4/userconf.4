@@ -1,4 +1,4 @@
-.\"     $NetBSD: userconf.4,v 1.8 2001/09/20 12:34:28 yamt Exp $
+.\"     $NetBSD: userconf.4,v 1.9 2002/02/13 08:17:51 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,10 +65,10 @@ number defined in the lines variable, then
 displays
 .Dq "-- more --"
 and waits for a response, which may be one of:
-.Bl -tag -offset indent -width "<return>"
-.It <return>
+.Bl -tag -offset indent -width "\*[Lt]return\*[Gt]"
+.It \*[Lt]return\*[Gt]
 one more line.
-.It <space>
+.It \*[Lt]space\*[Gt]
 one more page.
 .It Ic q
 abort the current command, and return to the command input mode.

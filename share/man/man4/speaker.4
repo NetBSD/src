@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.8 2002/01/21 17:58:19 wiz Exp $
+.\" $NetBSD: speaker.4,v 1.9 2002/02/13 08:17:46 ross Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nd console speaker audio device driver
 .Sh SYNOPSIS
 .Cd "spkr0	at pcppi?"
-.Fd #include <machine/spkr.h>
+.Fd #include \*[Lt]machine/spkr.h\*[Gt]
 .Pa /dev/speaker
 .Sh DESCRIPTION
 The speaker device driver allows applications to control the console
@@ -61,7 +61,7 @@ tones. Other processes may emit beeps while the driver is running.
 .Pp
 Applications may call ioctl() on a speaker file descriptor to control the
 speaker driver directly; definitions for the ioctl() interface are in
-<machine/spkr.h>. The tone_t structure used in these calls has two fields,
+\*[Lt]machine/spkr.h\*[Gt]. The tone_t structure used in these calls has two fields,
 specifying a frequency (in hz) and a duration (in 1/100ths of a second).
 A frequency of zero is interpreted as a rest.
 .Pp
@@ -91,28 +91,28 @@ half-tone, the last causes it to be flatted one half-tone. It may also be
 followed by a time value number and by sustain dots (see below). Time values
 are interpreted as for the L command below;.
 .Pp
-O <n> -- if <n> is numeric, this sets the current octave. <n> may also be one
+O \*[Lt]n\*[Gt] -- if \*[Lt]n\*[Gt] is numeric, this sets the current octave. \*[Lt]n\*[Gt] may also be one
 of 'L' or 'N' to enable or disable octave-tracking (it is disabled by default).
 When octave-tracking is on, interpretation of a pair of letter notes will
 change octaves if necessary in order to make the smallest possible jump between
-notes. Thus "olbc" will be played as "olb>c", and "olcb" as "olc<b". Octave
-locking is disabled for one letter note following by >, < and O[0123456].
+notes. Thus "olbc" will be played as "olb\*[Gt]c", and "olcb" as "olc\*[Lt]b". Octave
+locking is disabled for one letter note following by \*[Gt], \*[Lt] and O[0123456].
 .Pp
-> -- bump the current octave up one.
+\*[Gt] -- bump the current octave up one.
 .Pp
-< -- drop the current octave down one.
+\*[Lt] -- drop the current octave down one.
 .Pp
-N <n> -- play note n, n being 1 to 84 or 0 for a rest of current time value.
+N \*[Lt]n\*[Gt] -- play note n, n being 1 to 84 or 0 for a rest of current time value.
 May be followed by sustain dots.
 .Pp
-L <n> -- sets the current time value for notes. The default is L4, quarter
+L \*[Lt]n\*[Gt] -- sets the current time value for notes. The default is L4, quarter
 notes. The lowest possible value is 1; values up to 64 are accepted. L1 sets
 whole notes, L2 sets half notes, L4 sets quarter notes, etc..
 .Pp
-P <n> -- pause (rest), with <n> interpreted as for L. May be followed by
+P \*[Lt]n\*[Gt] -- pause (rest), with \*[Lt]n\*[Gt] interpreted as for L. May be followed by
 sustain dots. May also be written '~'.
 .Pp
-T <n> -- Sets the number of quarter notes per minute; default is 120. Musical
+T \*[Lt]n\*[Gt] -- Sets the number of quarter notes per minute; default is 120. Musical
 names for common tempi are:
 .Bl -column Description Tempo BPM -offset indent
 .Em 	Tempo		Beats per Minute

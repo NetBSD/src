@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.12 2002/01/15 01:44:58 wiz Exp $
+.\" $NetBSD: pcibios.4,v 1.13 2002/02/13 08:18:00 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,7 +163,7 @@ you have to specify
 to make kernel with DDB):
 .Dl Ic boot -d
 And type the following command on
-.Qq Sy db>
+.Qq Sy db\*[Gt]
 prompt:
 .Dl Ic write pcibios_irqs_hint 0x0a00
 Then type the following to continue to boot:

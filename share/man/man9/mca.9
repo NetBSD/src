@@ -1,4 +1,4 @@
-.\"     $NetBSD: mca.9,v 1.3 2001/10/26 17:10:22 jdolecek Exp $
+.\"     $NetBSD: mca.9,v 1.4 2002/02/13 08:18:45 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,9 +46,9 @@
 .Nm mca_conf_write
 .Nd MicroChannel Architecture bus
 .Sh SYNOPSIS
-.Fd #include <machine/bus.h>
-.Fd #include <dev/mca/mcavar.h>
-.Fd #include <dev/mca/mcadevs.h>
+.Fd #include \*[Lt]machine/bus.h\*[Gt]
+.Fd #include \*[Lt]dev/mca/mcavar.h\*[Gt]
+.Fd #include \*[Lt]dev/mca/mcadevs.h\*[Gt]
 .Ft void *
 .Fn mca_intr_establish "mca_chipset_tag_t mc" "mca_intr_handle_t hdl" \
 "int level" "int (*handler)(void *)" "void *arg"
@@ -171,7 +171,7 @@ relative to
 The MCA subsystem itself is implemented within the file
 .Pa sys/dev/mca/mca_subr.c .
 Machine-dependent portions can be found in
-.Pa sys/arch/<arch>/mca/mca_machdep.c .
+.Pa sys/arch/\*[Lt]arch\*[Gt]/mca/mca_machdep.c .
 The database of known devices exists within the file
 .Fa sys/dev/mca/mcadevs_data.h
 and is generated automatically from the file

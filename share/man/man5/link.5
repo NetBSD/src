@@ -1,4 +1,4 @@
-.\"	$NetBSD: link.5,v 1.15 2001/11/28 16:49:02 wiz Exp $
+.\"	$NetBSD: link.5,v 1.16 2002/02/13 08:18:13 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm link
 .Nd dynamic loader and link editor interface
 .Sh SYNOPSIS
-.Fd #include <link.h>
+.Fd #include \*[Lt]link.h\*[Gt]
 .Sh DESCRIPTION
 The include file
 .Aq Pa link.h
@@ -270,7 +270,7 @@ see also
 .Xr ldconfig 8
 .Pc
 for a shared object matching
-.Em lib\&<sod_name>\&.so.n.m .
+.Em lib\&\*[Lt]sod_name\*[Gt]\&.so.n.m .
 If not set,
 .Fa sod_name
 should point at a full path name for the desired shared object.

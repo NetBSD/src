@@ -1,4 +1,4 @@
-.\" $NetBSD: ipip.4,v 1.8 2001/09/22 00:57:41 wiz Exp $
+.\" $NetBSD: ipip.4,v 1.9 2002/02/13 08:17:38 ross Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,7 @@ On Host D (Cisco):
     ip unnumbered D   ! e.g. address from Ethernet interface
     tunnel source D   ! e.g. address from Ethernet interface
     tunnel destination A
-   ip route C <some interface and mask>
+   ip route C \*[Lt]some interface and mask\*[Gt]
    ip route A mask C
    ip route X mask tunnelX
 .Ed
@@ -103,7 +103,7 @@ If all goes well, you should see packets flowing ;-)
 .Pp
 If you want to reach Host A over the tunnel (from the Cisco D), then
 you have to have an alias on Host A for e.g. the Ethernet interface like:
-.Ic ifconfig Ar <etherif> alias Y
+.Ic ifconfig Ar \*[Lt]etherif\*[Gt] alias Y
 and on the cisco
 .Ic ip Ar route Y mask tunnelX .
 .Sh NOTES

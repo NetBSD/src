@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.9 2001/09/11 22:52:54 wiz Exp $
+.\"	$NetBSD: unix.4,v 1.10 2002/02/13 08:17:50 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@
 .Nm unix
 .Nd UNIX-domain protocol family
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/un.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/un.h\*[Gt]
 .Sh DESCRIPTION
 The
 .Tn UNIX Ns -domain
@@ -185,7 +185,7 @@ receive the credentials of the process as a
 control message.  The msg_control field in the msghdr structure points
 to a buffer that contains a cmsghdr structure followed by a variable
 length sockcred structure, defined in
-.Pa <sys/socket.h>
+.Pa \*[Lt]sys/socket.h\*[Gt]
 as follows:
 .Bd -literal
 struct sockcred {

@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.5 2001/12/05 13:51:43 enami Exp $
+.\"     $NetBSD: kthread.9,v 1.6 2002/02/13 08:18:43 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nm kthread_create
 .Nd kernel threads
 .Sh SYNOPSIS
-.Fd #include <sys/kthread.h>
+.Fd #include \*[Lt]sys/kthread.h\*[Gt]
 .Ft void
 .Fn kthread_create "void (*func)(void)" "void *arg"
 .Ft void

@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.13 2001/12/26 02:09:22 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.14 2002/02/13 08:18:30 ross Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@ system bootstrapping procedures
 .Op Fl q
 .Op Fl d
 .Oo
-.Ar -- <boot string>
+.Ar -- \*[Lt]boot string\*[Gt]
 .Oc
 .Sh DESCRIPTION
 .Sy Power fail and crash recovery
@@ -83,7 +83,7 @@ quiet mode,
 .Op Fl v
 in verbose mode.
 Any extra flags or arguments, the after the -- separator,
-.Ar <boot string>
+.Ar \*[Lt]boot string\*[Gt]
 are passed to the boot prom.
 Other flags are currently ignored.
 .Pp
@@ -91,7 +91,7 @@ The Sparc boot rom comes in two flavours: an ``old-style'' rom is used in
 sun4 machines, while A ``new-style'' rom can be found on sun4c and sun4m models.
 The ``new-style'' Sparc boot rom is a full-featured Forth system with emacs
 key bindings. It can be put in ``old-style'' user-interface compatibility
-mode (in which case it shows a simple `>' prompt), but this is essentially
+mode (in which case it shows a simple `\*[Gt]' prompt), but this is essentially
 useless. However, by default the rom runs in old-mode; to enter new-mode type `n'.
 The rom then shows a Forth-style `ok' prompt. It is recommended to have
 the rom always start in its native ``new-style'' mode. Utter the following

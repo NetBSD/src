@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.3 2001/12/27 13:20:53 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.4 2002/02/13 08:18:54 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,9 +56,9 @@
 .Nm VFS_CHECKEXP
 .Nd kernel file system interface
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/mount.h>
-.Fd #include <sys/vnode.h>
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/mount.h\*[Gt]
+.Fd #include \*[Lt]sys/vnode.h\*[Gt]
 .Ft int
 .Fn vfs_rootmountalloc "char *fstypename" "char *devname" \
 "struct mount **mpp"
@@ -199,7 +199,7 @@ Get a new unique file system id type for the file system specified by
 the mount structure
 .Fa mp .
 The file system id type is stored in
-.Em mp->mnt_stat.f_fsid .
+.Em mp-\*[Gt]mnt_stat.f_fsid .
 .It Fn VFS_MOUNT "mp" "path" "data" "ndp" "p"
 Mount a file system specified by the mount structure
 .Fa mp
@@ -224,9 +224,9 @@ records the list of vnodes associated with the file system.  This
 function is invoked both to mount new file systems and to change the
 attributes of an existing file system.  If the MNT_UPDATE flag is set
 in
-.Em mp->mnt_flag
+.Em mp-\*[Gt]mnt_flag
 then the filesystem should update its internal state from the value of
-.Em mp->mnt_flag .
+.Em mp-\*[Gt]mnt_flag .
 This can be used, for instance, to convert a read-only filesystem to
 read-write.  If the MNT_UPDATE flag is not specified, then this is a
 newly mounted filesystem.

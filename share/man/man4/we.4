@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.12 2001/09/11 23:18:55 wiz Exp $
+.\"	$NetBSD: we.4,v 1.13 2002/02/13 08:17:51 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,15 +105,15 @@ or
 media type.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "we0: overriding IRQ <n> to <m>"
+.It "we0: overriding IRQ \*[Lt]n\*[Gt] to \*[Lt]m\*[Gt]"
 The IRQ specified in the kernel configuration file is different from that
 found in the card's configuration registers.  The value in the kernel
 configuration file is being overridden by the one configured into the card.
-.It "we0: can't wildcard IRQ on a <model>"
+.It "we0: can't wildcard IRQ on a \*[Lt]model\*[Gt]"
 The IRQ was wildcarded in the kernel configuration file, and the card is
 a WD8003S, WD8003E, or WD8013EBT, which do not support software IRQ
 configuration.
-.It "we0: failed to clear shared memory at offset <off>"
+.It "we0: failed to clear shared memory at offset \*[Lt]off\*[Gt]"
 The memory test was unable to clear the interface's shared memory
 region.  This often indicates that the card is configured at a conflicting
 .Em iomem

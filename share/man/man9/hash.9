@@ -1,4 +1,4 @@
-.\"     $NetBSD: hash.9,v 1.1 2001/12/05 07:31:25 lukem Exp $
+.\"     $NetBSD: hash.9,v 1.2 2002/02/13 08:18:42 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,8 +44,8 @@
 .Nm hash32_strn
 .Nd kernel hash functions
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/hash.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/hash.h\*[Gt]
 .Ft uint32_t
 .Fn hash32_buf "const void *buf" "size_t len" "uint32_t ihash"
 .Ft uint32_t

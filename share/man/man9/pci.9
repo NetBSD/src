@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.5 2001/09/24 12:15:11 hubertf Exp $
+.\"     $NetBSD: pci.9,v 1.6 2002/02/13 08:18:47 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,10 +61,10 @@
 .Nm PCI_REVISION
 .Nd Peripheral Component Interconnect
 .Sh SYNOPSIS
-.Fd #include <machine/bus.h>
-.Fd #include <dev/pci/pcivar.h>
-.Fd #include <dev/pci/pcireg.h>
-.Fd #include <dev/pci/pcidevs.h>
+.Fd #include \*[Lt]machine/bus.h\*[Gt]
+.Fd #include \*[Lt]dev/pci/pcivar.h\*[Gt]
+.Fd #include \*[Lt]dev/pci/pcireg.h\*[Gt]
+.Fd #include \*[Lt]dev/pci/pcidevs.h\*[Gt]
 .Ft pcireg_t
 .Fn pci_conf_read "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
 .Ft void
@@ -455,7 +455,7 @@ The PCI subsystem itself is implemented within the files
 and
 .Pa sys/dev/pci/pciconf.c .
 Machine-dependent portions are implemented within the file
-.Pa sys/arch/<arch>/pci/pci_machdep.c .
+.Pa sys/arch/\*[Lt]arch\*[Gt]/pci/pci_machdep.c .
 .Pp
 The database of known devices exists within the file
 .Pa sys/dev/pci/pcidevs_data.h

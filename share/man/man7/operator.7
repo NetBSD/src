@@ -1,4 +1,4 @@
-.\"	$NetBSD: operator.7,v 1.4 1999/06/01 15:24:07 chopps Exp $
+.\"	$NetBSD: operator.7,v 1.5 2002/02/13 08:18:20 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,17 +44,17 @@
 .Bl -column "Operator    Associativity   "
 .It Operator	Associativity
 .It --------	-------------
-.It \&() [] -> .	left to right
-.It "! ~ ++ -- - (type) * & sizeof"	right to left
+.It \&() [] -\*[Gt] .	left to right
+.It "! ~ ++ -- - (type) * \*[Am] sizeof"	right to left
 .It \&* / %	left to right
 .It \&+ -	left to right
-.It \&<< >>	left to right
-.It \&< <= > >=	left to right
+.It \&\*[Lt]\*[Lt] \*[Gt]\*[Gt]	left to right
+.It \&\*[Lt] \*[Le] \*[Gt] \*[Ge]	left to right
 .It \&== !=	left to right
-.It \&&	left to right
+.It \&\*[Am]	left to right
 .It \&^	left to right
 .It \&|	left to right
-.It \&&&	left to right
+.It \&\*[Am]\*[Am]	left to right
 .It \&||	left to right
 .It \&?:	right to left
 .It \&= += -= etc.	right to left

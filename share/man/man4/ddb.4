@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.55 2002/01/01 08:03:43 mrg Exp $
+.\"	$NetBSD: ddb.4,v 1.56 2002/02/13 08:17:33 ross Exp $
 .\"
 .\" Copyright (c) 1997 - 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,47 +100,47 @@ There are also key sequences for each port that will activate
 from the keyboard:
 .Bl -tag -offset indent -width "mvme68k" -compact
 .It alpha
-<Ctrl>-<Alt>-<Esc> on PC style keyboards.
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
 .It amiga
-<LAlt>-<LAmiga>-<F10>
+\*[Lt]LAlt\*[Gt]-\*[Lt]LAmiga\*[Gt]-\*[Lt]F10\*[Gt]
 .It atari
-<Alt>-<LeftShift>-<F9>
+\*[Lt]Alt\*[Gt]-\*[Lt]LeftShift\*[Gt]-\*[Lt]F9\*[Gt]
 .It hp300
-<Shift>-<Reset>
+\*[Lt]Shift\*[Gt]-\*[Lt]Reset\*[Gt]
 .It hpcmips
-<Ctrl>-<Alt>-<Esc>
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It i386
-<Ctrl>-<Alt>-<Esc>
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .br
-<Break> on serial console.
+\*[Lt]Break\*[Gt] on serial console.
 .It mac68k
-<Command>-<Power>, or the Interrupt switch.
+\*[Lt]Command\*[Gt]-\*[Lt]Power\*[Gt], or the Interrupt switch.
 .It mvme68k
 Abort switch on CPU card.
 .It pmax
-<Do> on
+\*[Lt]Do\*[Gt] on
 .Tn LK-201
 rcons console.
 .br
-<Break> on serial console.
+\*[Lt]Break\*[Gt] on serial console.
 .It sparc
-<L1>-A, or <Stop>-A on a
+\*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
 .Tn Sun
 keyboard.
 .br
-<Break> on serial console.
+\*[Lt]Break\*[Gt] on serial console.
 .It sun3
-<L1>-A, or <Stop>-A on a
+\*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
 .Tn Sun
 keyboard.
 .br
-<Break> on serial console.
+\*[Lt]Break\*[Gt] on serial console.
 .It sun3x
-<L1>-A, or <Stop>-A on a
+\*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
 .Tn Sun
 keyboard.
 .br
-<Break> on serial console.
+\*[Lt]Break\*[Gt] on serial console.
 .It x68k
 Interrupt switch on the body.
 .El
@@ -217,10 +217,10 @@ variable, then
 displays
 .Dq "--db more--"
 and waits for a response, which may be one of:
-.Bl -tag -offset indent -width "<return>"
-.It <return>
+.Bl -tag -offset indent -width "\*[Lt]return\*[Gt]"
+.It \*[Lt]return\*[Gt]
 one more line.
-.It <space>
+.It \*[Lt]space\*[Gt]
 one more page.
 .It Ic q
 abort the current command, and return to the command input mode.
@@ -234,10 +234,10 @@ kernel option), then a history of the last
 .Cm num
 commands is kept.
 The history can be manipulated with the following key sequences:
-.Bl -tag -offset indent -width "<Ctrl>-P"
-.It <Ctrl>-P
+.Bl -tag -offset indent -width "\*[Lt]Ctrl\*[Gt]-P"
+.It \*[Lt]Ctrl\*[Gt]-P
 retrieve previous command in history (if any).
-.It <Ctrl>-N
+.It \*[Lt]Ctrl\*[Gt]-N
 retrieve next command in history (if any).
 .El
 .Sh COMMANDS
@@ -667,7 +667,7 @@ object symbols display
 function symbols display
 .Sy * ,
 section symbols display
-.Sy & ,
+.Sy \*[Am] ,
 and file symbols display
 .Sy / .
 .Pp
@@ -1017,7 +1017,7 @@ Almost all expression operators in C are supported, except
 .Sq \&~ ,
 .Sq \&^ ,
 and unary
-.Sq \&& .
+.Sq \&\*[Am] .
 Special rules in
 .Nm
 are:
