@@ -1,4 +1,4 @@
-/*	$NetBSD: random.s,v 1.4 1994/10/26 07:51:16 cgd Exp $	*/
+/*	$NetBSD: random.s,v 1.5 1995/01/15 22:32:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -49,18 +49,11 @@ randseed:
 ENTRY(random)
 	movl	#16807, d0
 	mulsl	randseed, d1:d0
-	lsll	#1, d1
-	movl	d0, a0
-	roll	#1, d0
-	andil	#1, d0
-	orl	d0, d1
-	movl	a0, d0
-	andil	#0x7fffffff, d0
+	lsll	#1, d0
+	roxll	#2, d1
 	addl	d1, d0
-	bmi	L1
-	movl	d0, randseed
-	rts
-L1:
-	subil	#0x7fffffff, d0
+	moveql	#1, d1
+	addxl	d1, d0
+	lsrl	#1, d0
 	movl	d0, randseed
 	rts
