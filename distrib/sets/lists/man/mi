@@ -1766,6 +1766,7 @@
 ./usr/share/man/man8/lastlogin.8
 ./usr/share/man/man8/ldconfig.8
 ./usr/share/man/man8/lfs_cleanerd.8
+./usr/share/man/man8/lmcctl.8
 ./usr/share/man/man8/lockd.8
 ./usr/share/man/man8/lpc.8
 ./usr/share/man/man8/lpd.8
