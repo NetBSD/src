@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.h,v 1.1.1.1 2005/02/19 23:56:35 manu Exp $ */
+/* $NetBSD: radlib.h,v 1.2 2005/02/20 00:28:20 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -52,30 +52,30 @@
 #define RAD_NAS_IP_ADDRESS		4	/* IP address */
 #define RAD_NAS_PORT			5	/* Integer */
 #define RAD_SERVICE_TYPE		6	/* Integer */
-	#define RAD_LOGIN			1
-	#define RAD_FRAMED			2
-	#define RAD_CALLBACK_LOGIN		3
-	#define RAD_CALLBACK_FRAMED		4
-	#define RAD_OUTBOUND			5
-	#define RAD_ADMINISTRATIVE		6
-	#define RAD_NAS_PROMPT			7
-	#define RAD_AUTHENTICATE_ONLY		8
-	#define RAD_CALLBACK_NAS_PROMPT		9
+#define		RAD_LOGIN			1
+#define		RAD_FRAMED			2
+#define		RAD_CALLBACK_LOGIN		3
+#define		RAD_CALLBACK_FRAMED		4
+#define		RAD_OUTBOUND			5
+#define		RAD_ADMINISTRATIVE		6
+#define		RAD_NAS_PROMPT			7
+#define		RAD_AUTHENTICATE_ONLY		8
+#define		RAD_CALLBACK_NAS_PROMPT		9
 #define RAD_FRAMED_PROTOCOL		7	/* Integer */
-	#define RAD_PPP				1
-	#define RAD_SLIP			2
-	#define RAD_ARAP			3	/* Appletalk */
-	#define RAD_GANDALF			4
-	#define RAD_XYLOGICS			5
+#define		RAD_PPP				1
+#define		RAD_SLIP			2
+#define		RAD_ARAP			3	/* Appletalk */
+#define		RAD_GANDALF			4
+#define		RAD_XYLOGICS			5
 #define RAD_FRAMED_IP_ADDRESS		8	/* IP address */
 #define RAD_FRAMED_IP_NETMASK		9	/* IP address */
 #define RAD_FRAMED_ROUTING		10	/* Integer */
 #define RAD_FILTER_ID			11	/* String */
 #define RAD_FRAMED_MTU			12	/* Integer */
 #define RAD_FRAMED_COMPRESSION		13	/* Integer */
-	#define RAD_COMP_NONE			0
-	#define RAD_COMP_VJ			1
-	#define RAD_COMP_IPXHDR			2
+#define		RAD_COMP_NONE			0
+#define		RAD_COMP_VJ			1
+#define		RAD_COMP_IPXHDR			2
 #define RAD_LOGIN_IP_HOST		14	/* IP address */
 #define RAD_LOGIN_SERVICE		15	/* Integer */
 #define RAD_LOGIN_TCP_PORT		16	/* Integer */
@@ -108,26 +108,26 @@
 
 #define RAD_CHAP_CHALLENGE		60	/* String */
 #define RAD_NAS_PORT_TYPE		61	/* Integer */
-	#define RAD_ASYNC			0
-	#define RAD_SYNC			1
-	#define RAD_ISDN_SYNC			2
-	#define RAD_ISDN_ASYNC_V120		3
-	#define RAD_ISDN_ASYNC_V110		4
-	#define RAD_VIRTUAL			5
-	#define RAD_PIAFS			6
-	#define RAD_HDLC_CLEAR_CHANNEL		7
-	#define RAD_X_25			8
-	#define RAD_X_75			9
-	#define RAD_G_3_FAX			10
-	#define RAD_SDSL			11
-	#define RAD_ADSL_CAP			12
-	#define RAD_ADSL_DMT			13
-	#define RAD_IDSL			14
-	#define RAD_ETHERNET			15
-	#define RAD_XDSL			16
-	#define RAD_CABLE			17
-	#define RAD_WIRELESS_OTHER		18
-	#define RAD_WIRELESS_IEEE_802_11	19
+#define		RAD_ASYNC			0
+#define		RAD_SYNC			1
+#define		RAD_ISDN_SYNC			2
+#define		RAD_ISDN_ASYNC_V120		3
+#define		RAD_ISDN_ASYNC_V110		4
+#define		RAD_VIRTUAL			5
+#define		RAD_PIAFS			6
+#define		RAD_HDLC_CLEAR_CHANNEL		7
+#define		RAD_X_25			8
+#define		RAD_X_75			9
+#define		RAD_G_3_FAX			10
+#define		RAD_SDSL			11
+#define		RAD_ADSL_CAP			12
+#define		RAD_ADSL_DMT			13
+#define		RAD_IDSL			14
+#define		RAD_ETHERNET			15
+#define		RAD_XDSL			16
+#define		RAD_CABLE			17
+#define		RAD_WIRELESS_OTHER		18
+#define		RAD_WIRELESS_IEEE_802_11	19
 #define RAD_PORT_LIMIT			62	/* Integer */
 #define RAD_LOGIN_LAT_PORT		63	/* Integer */
 #define RAD_CONNECT_INFO		77	/* String */
@@ -143,43 +143,43 @@
 
 /* Accounting attribute types and values */
 #define RAD_ACCT_STATUS_TYPE		40	/* Integer */
-	#define RAD_START			1
-	#define RAD_STOP			2
-	#define RAD_UPDATE			3
-	#define RAD_ACCOUNTING_ON		7
-	#define RAD_ACCOUNTING_OFF		8
+#define		RAD_START			1
+#define		RAD_STOP			2
+#define		RAD_UPDATE			3
+#define		RAD_ACCOUNTING_ON		7
+#define		RAD_ACCOUNTING_OFF		8
 #define RAD_ACCT_DELAY_TIME		41	/* Integer */
 #define RAD_ACCT_INPUT_OCTETS		42	/* Integer */
 #define RAD_ACCT_OUTPUT_OCTETS		43	/* Integer */
 #define RAD_ACCT_SESSION_ID		44	/* String */
 #define RAD_ACCT_AUTHENTIC		45	/* Integer */
-	#define RAD_AUTH_RADIUS			1
-	#define RAD_AUTH_LOCAL			2
-	#define RAD_AUTH_REMOTE			3
+#define		RAD_AUTH_RADIUS			1
+#define		RAD_AUTH_LOCAL			2
+#define		RAD_AUTH_REMOTE			3
 #define RAD_ACCT_SESSION_TIME		46	/* Integer */
 #define RAD_ACCT_INPUT_PACKETS		47	/* Integer */
 #define RAD_ACCT_OUTPUT_PACKETS		48	/* Integer */
 #define RAD_ACCT_TERMINATE_CAUSE	49	/* Integer */
-        #define RAD_TERM_USER_REQUEST		1
-        #define RAD_TERM_LOST_CARRIER		2
-        #define RAD_TERM_LOST_SERVICE		3
-        #define RAD_TERM_IDLE_TIMEOUT		4
-        #define RAD_TERM_SESSION_TIMEOUT	5
-        #define RAD_TERM_ADMIN_RESET		6
-        #define RAD_TERM_ADMIN_REBOOT		7
-        #define RAD_TERM_PORT_ERROR		8
-        #define RAD_TERM_NAS_ERROR		9
-        #define RAD_TERM_NAS_REQUEST		10
-        #define RAD_TERM_NAS_REBOOT		11
-        #define RAD_TERM_PORT_UNNEEDED		12
-        #define RAD_TERM_PORT_PREEMPTED		13
-        #define RAD_TERM_PORT_SUSPENDED		14
-        #define RAD_TERM_SERVICE_UNAVAILABLE    15
-        #define RAD_TERM_CALLBACK		16
-        #define RAD_TERM_USER_ERROR		17
-        #define RAD_TERM_HOST_REQUEST		18
-#define	RAD_ACCT_MULTI_SESSION_ID	50	/* String */
-#define	RAD_ACCT_LINK_COUNT		51	/* Integer */
+#define		RAD_TERM_USER_REQUEST		1
+#define		RAD_TERM_LOST_CARRIER		2
+#define		RAD_TERM_LOST_SERVICE		3
+#define		RAD_TERM_IDLE_TIMEOUT		4
+#define		RAD_TERM_SESSION_TIMEOUT	5
+#define		RAD_TERM_ADMIN_RESET		6
+#define		RAD_TERM_ADMIN_REBOOT		7
+#define		RAD_TERM_PORT_ERROR		8
+#define		RAD_TERM_NAS_ERROR		9
+#define		RAD_TERM_NAS_REQUEST		10
+#define		RAD_TERM_NAS_REBOOT		11
+#define		RAD_TERM_PORT_UNNEEDED		12
+#define		RAD_TERM_PORT_PREEMPTED		13
+#define		RAD_TERM_PORT_SUSPENDED		14
+#define		RAD_TERM_SERVICE_UNAVAILABLE	15
+#define		RAD_TERM_CALLBACK		16
+#define		RAD_TERM_USER_ERROR		17
+#define		RAD_TERM_HOST_REQUEST		18
+#define RAD_ACCT_MULTI_SESSION_ID	50	/* String */
+#define RAD_ACCT_LINK_COUNT		51	/* Integer */
 
 struct rad_handle;
 struct timeval;

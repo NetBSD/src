@@ -1,4 +1,4 @@
-/* $NetBSD: radlib_private.h,v 1.1.1.1 2005/02/19 23:56:32 manu Exp $ */
+/* $NetBSD: radlib_private.h,v 1.2 2005/02/20 00:28:20 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -79,7 +79,7 @@ struct rad_handle {
 	char		 errmsg[ERRSIZE];	/* Most recent error message */
 	unsigned char	 request[MSGSIZE];	/* Request to send */
 	char	 	 request_created; /* rad_create_request() called? */
-	int		 req_len;	/* Length of request */
+	size_t		 req_len;	/* Length of request */
 	char		 pass[PASSSIZE];	/* Cleartext password */
 	size_t		 pass_len;	/* Length of cleartext password */
 	int		 pass_pos;	/* Position of scrambled password */

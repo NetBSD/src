@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.1.1.1 2005/02/19 23:56:34 manu Exp $ */
+/* $NetBSD: radlib.c,v 1.2 2005/02/20 00:28:20 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.1.1.1 2005/02/19 23:56:34 manu Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.2 2005/02/20 00:28:20 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -44,8 +44,10 @@ __RCSID("$NetBSD: radlib.c,v 1.1.1.1 2005/02/19 23:56:34 manu Exp $");
 #define MD5Init MD5_Init
 #define MD5Update MD5_Update
 #define MD5Final MD5_Final
+#define MD5Len unsigned long
 #else
 #define MD5_DIGEST_LENGTH 16
+#define MD5Len unsigned int
 #include <md5.h>
 #endif
 
@@ -88,7 +90,7 @@ static int	 put_password_attr(struct rad_handle *, int,
 		    const void *, size_t);
 static int	 put_raw_attr(struct rad_handle *, int,
 		    const void *, size_t);
-static int	 split(char *, char *[], int, char *, size_t);
+static int	 split(char *, const char *[], int, char *, size_t);
 
 static void
 clear_password(struct rad_handle *h)
@@ -128,8 +130,9 @@ insert_scrambled_password(struct rad_handle *h, int srv)
 
 		/* Calculate the new scrambler */
 		MD5Init(&ctx);
-		MD5Update(&ctx, srvp->secret, strlen(srvp->secret));
-		MD5Update(&ctx, md5, 16);
+		MD5Update(&ctx, srvp->secret,
+		    (MD5Len)strlen(srvp->secret));
+		MD5Update(&ctx, md5, (MD5Len)16);
 		MD5Final(md5, &ctx);
 
 		/*
@@ -154,10 +157,14 @@ insert_request_authenticator(struct rad_handle *h, int srv)
 
 	/* Create the request authenticator */
 	MD5Init(&ctx);
-	MD5Update(&ctx, &h->request[POS_CODE], POS_AUTH - POS_CODE);
-	MD5Update(&ctx, memset(&h->request[POS_AUTH], 0, LEN_AUTH), LEN_AUTH);
-	MD5Update(&ctx, &h->request[POS_ATTRS], h->req_len - POS_ATTRS);
-	MD5Update(&ctx, srvp->secret, strlen(srvp->secret));
+	MD5Update(&ctx, &h->request[POS_CODE],
+	    (MD5Len)(POS_AUTH - POS_CODE));
+	MD5Update(&ctx, memset(&h->request[POS_AUTH], 0, (size_t)LEN_AUTH),
+	    (MD5Len)LEN_AUTH);
+	MD5Update(&ctx, &h->request[POS_ATTRS],
+	    (MD5Len)(h->req_len - POS_ATTRS));
+	MD5Update(&ctx, srvp->secret,
+	    (MD5Len)strlen(srvp->secret));
 	MD5Final(&h->request[POS_AUTH], &ctx);
 }
 
@@ -173,11 +180,12 @@ insert_message_authenticator(struct rad_handle *h, int srv)
 
 	if (h->authentic_pos != 0) {
 		HMAC_CTX_init(&ctx);
-		HMAC_Init(&ctx, srvp->secret, strlen(srvp->secret), EVP_md5());
+		HMAC_Init(&ctx, srvp->secret,
+		    (int)strlen(srvp->secret), EVP_md5());
 		HMAC_Update(&ctx, &h->request[POS_CODE], POS_AUTH - POS_CODE);
 		HMAC_Update(&ctx, &h->request[POS_AUTH], LEN_AUTH);
 		HMAC_Update(&ctx, &h->request[POS_ATTRS],
-		    h->req_len - POS_ATTRS);
+		    (int)(h->req_len - POS_ATTRS));
 		HMAC_Final(&ctx, md, &md_len);
 		HMAC_CTX_cleanup(&ctx);
 		HMAC_cleanup(&ctx);
@@ -201,7 +209,8 @@ is_valid_response(struct rad_handle *h, int srv,
 #ifdef WITH_SSL
 	HMAC_CTX hctx;
 	u_char resp[MSGSIZE], md[EVP_MAX_MD_SIZE];
-	int pos, md_len;
+	int pos;
+	u_int md_len;
 #endif
 
 	srvp = &h->servers[srv];
@@ -221,10 +230,14 @@ is_valid_response(struct rad_handle *h, int srv,
 
 	/* Check the response authenticator */
 	MD5Init(&ctx);
-	MD5Update(&ctx, &h->response[POS_CODE], POS_AUTH - POS_CODE);
-	MD5Update(&ctx, &h->request[POS_AUTH], LEN_AUTH);
-	MD5Update(&ctx, &h->response[POS_ATTRS], len - POS_ATTRS);
-	MD5Update(&ctx, srvp->secret, strlen(srvp->secret));
+	MD5Update(&ctx, &h->response[POS_CODE],
+	    (MD5Len)(POS_AUTH - POS_CODE));
+	MD5Update(&ctx, &h->request[POS_AUTH],
+	    (MD5Len)LEN_AUTH);
+	MD5Update(&ctx, &h->response[POS_ATTRS],
+	    (MD5Len)(len - POS_ATTRS));
+	MD5Update(&ctx, srvp->secret,
+	    (MD5Len)strlen(srvp->secret));
 	MD5Final(md5, &ctx);
 	if (memcmp(&h->response[POS_AUTH], md5, sizeof md5) != 0)
 		return 0;
@@ -248,13 +261,13 @@ is_valid_response(struct rad_handle *h, int srv,
 
 				HMAC_CTX_init(&hctx);
 				HMAC_Init(&hctx, srvp->secret,
-				    strlen(srvp->secret), EVP_md5());
+				    (int)strlen(srvp->secret), EVP_md5());
 				HMAC_Update(&hctx, &h->response[POS_CODE],
 				    POS_AUTH - POS_CODE);
 				HMAC_Update(&hctx, &h->request[POS_AUTH],
 				    LEN_AUTH);
 				HMAC_Update(&hctx, &resp[POS_ATTRS],
-				    h->resp_len - POS_ATTRS);
+				    (int)(h->resp_len - POS_ATTRS));
 				HMAC_Final(&hctx, md, &md_len);
 				HMAC_CTX_cleanup(&hctx);
 				HMAC_cleanup(&hctx);
@@ -273,8 +286,8 @@ is_valid_response(struct rad_handle *h, int srv,
 static int
 put_password_attr(struct rad_handle *h, int type, const void *value, size_t len)
 {
-	int padded_len;
-	int pad_len;
+	size_t padded_len;
+	size_t pad_len;
 
 	if (h->pass_pos != 0) {
 		generr(h, "Multiple User-Password attributes specified");
@@ -282,7 +295,7 @@ put_password_attr(struct rad_handle *h, int type, const void *value, size_t len)
 	}
 	if (len > PASSSIZE)
 		len = PASSSIZE;
-	padded_len = len == 0 ? 16 : (len+15) & ~0xf;
+	padded_len = len == 0 ? 16 : (len + 15) & ~0xf;
 	pad_len = padded_len - len;
 
 	/*
@@ -294,9 +307,9 @@ put_password_attr(struct rad_handle *h, int type, const void *value, size_t len)
 	h->pass_pos = h->req_len - padded_len;
 
 	/* Save the cleartext password, padded as necessary */
-	memcpy(h->pass, value, len);
+	(void)memcpy(h->pass, value, len);
 	h->pass_len = len;
-	memset(h->pass + len, 0, pad_len);
+	(void)memset(h->pass + len, 0, pad_len);
 	return 0;
 }
 
@@ -313,7 +326,7 @@ put_raw_attr(struct rad_handle *h, int type, const void *value, size_t len)
 	}
 	h->request[h->req_len++] = type;
 	h->request[h->req_len++] = len + 2;
-	memcpy(&h->request[h->req_len], value, len);
+	(void)memcpy(&h->request[h->req_len], value, len);
 	h->req_len += len;
 	return 0;
 }
@@ -402,17 +415,18 @@ rad_config(struct rad_handle *h, const char *path)
 	linenum = 0;
 	while (fgets(buf, sizeof buf, fp) != NULL) {
 		int len;
-		char *fields[5];
+		const char *fields[5];
 		int nfields;
 		char msg[ERRSIZE];
-		char *type;
-		char *host, *res;
-		char *port_str;
-		char *secret;
-		char *timeout_str;
-		char *maxtries_str;
+		const char *type;
+		const char *host;
+		char *res;
+		const char *port_str;
+		const char *secret;
+		const char *timeout_str;
+		const char *maxtries_str;
 		char *end;
-		char *wanttype;
+		const char *wanttype;
 		unsigned long timeout;
 		unsigned long maxtries;
 		int port;
@@ -434,7 +448,8 @@ rad_config(struct rad_handle *h, const char *path)
 		buf[len - 1] = '\0';
 
 		/* Extract the fields from the line. */
-		nfields = split(buf, fields, 5, msg, sizeof msg);
+		nfields = split(buf, fields, sizeof(fields) / sizeof(fields[0]),
+		    msg, sizeof msg);
 		if (nfields == -1) {
 			generr(h, "%s:%d: %s", path, linenum, msg);
 			retval = -1;
@@ -479,7 +494,7 @@ rad_config(struct rad_handle *h, const char *path)
 			continue;
 
 		/* Parse and validate the fields. */
-		res = host;
+		res = __UNCONST(host);
 		host = strsep(&res, ":");
 		port_str = strsep(&res, ":");
 		if (port_str != NULL) {
@@ -513,9 +528,9 @@ rad_config(struct rad_handle *h, const char *path)
 		} else
 			maxtries = MAXTRIES;
 
-		if (rad_add_server(h, host, port, secret, timeout, maxtries) ==
-		    -1) {
-			strcpy(msg, h->errmsg);
+		if (rad_add_server(h, host, port, secret, (int)timeout,
+		    (int)maxtries) == -1) {
+			(void)strcpy(msg, h->errmsg);
 			generr(h, "%s:%d: %s", path, linenum, msg);
 			retval = -1;
 			break;
@@ -543,15 +558,18 @@ rad_continue_send_request(struct rad_handle *h, int selected, int *fd,
 
 	if (selected) {
 		struct sockaddr_in from;
-		int fromlen;
+		socklen_t fromlen;
+		ssize_t rv;
 
 		fromlen = sizeof from;
-		h->resp_len = recvfrom(h->fd, h->response,
-		    MSGSIZE, MSG_WAITALL, (struct sockaddr *)&from, &fromlen);
-		if (h->resp_len == -1) {
+		rv = recvfrom(h->fd, h->response,
+		    MSGSIZE, MSG_WAITALL, (struct sockaddr *)(void *)&from,
+		    &fromlen);
+		if (rv == -1) {
 			generr(h, "recvfrom: %s", strerror(errno));
 			return -1;
 		}
+		h->resp_len = rv;
 		if (is_valid_response(h, h->srv, &from)) {
 			h->resp_len = h->response[POS_LENGTH] << 8 |
 			    h->response[POS_LENGTH+1];
@@ -586,8 +604,8 @@ rad_continue_send_request(struct rad_handle *h, int selected, int *fd,
 
 	/* Send the request */
 	n = sendto(h->fd, h->request, h->req_len, 0,
-	    (const struct sockaddr *)&h->servers[h->srv].addr,
-	    sizeof h->servers[h->srv].addr);
+	    (const struct sockaddr *)(void *)&h->servers[h->srv].addr,
+	    (socklen_t)sizeof h->servers[h->srv].addr);
 	if (n != h->req_len) {
 		if (n == -1)
 			generr(h, "sendto: %s", strerror(errno));
@@ -614,8 +632,8 @@ rad_create_request(struct rad_handle *h, int code)
 	h->request[POS_IDENT] = ++h->ident;
 	/* Create a random authenticator */
 	for (i = 0;  i < LEN_AUTH;  i += 2) {
-		long r;
-		r = random();
+		uint32_t r;
+		r = (uint32_t)random();
 		h->request[POS_AUTH+i] = (u_char)r;
 		h->request[POS_AUTH+i+1] = (u_char)(r >> 8);
 	}
@@ -703,7 +721,7 @@ rad_init_send_request(struct rad_handle *h, int *fd, struct timeval *tv)
 		saddr.sin_family = AF_INET;
 		saddr.sin_addr.s_addr = INADDR_ANY;
 		saddr.sin_port = htons(0);
-		if (bind(h->fd, (const struct sockaddr *)&saddr,
+		if (bind(h->fd, (const struct sockaddr *)(void *)&saddr,
 		    sizeof saddr) == -1) {
 			generr(h, "bind: %s", strerror(errno));
 			close(h->fd);
@@ -968,7 +986,7 @@ rad_strerror(struct rad_handle *h)
  * On a syntax error, places a message in the msg string, and returns -1.
  */
 static int
-split(char *str, char *fields[], int maxfields, char *msg, size_t msglen)
+split(char *str, const char *fields[], int maxfields, char *msg, size_t msglen)
 {
 	char *p;
 	int i;
@@ -1034,9 +1052,9 @@ split(char *str, char *fields[], int maxfields, char *msg, size_t msglen)
 int
 rad_get_vendor_attr(u_int32_t *vendor, const void **data, size_t *len)
 {
-	struct vendor_attribute *attr;
+	const struct vendor_attribute *attr;
 
-	attr = (struct vendor_attribute *)*data;
+	attr = (const struct vendor_attribute *)*data;
 	*vendor = ntohl(attr->vendor_value);
 	*data = attr->attrib_data;
 	*len = attr->attrib_len - 2;
@@ -1070,7 +1088,7 @@ rad_put_vendor_attr(struct rad_handle *h, int vendor, int type,
 		return -1;
 	}
 
-	attr->vendor_value = htonl(vendor);
+	attr->vendor_value = htonl((uint32_t)vendor);
 	attr->attrib_type = type;
 	attr->attrib_len = len + 2;
 	memcpy(attr->attrib_data, value, len);
@@ -1119,7 +1137,8 @@ rad_demangle(struct rad_handle *h, const void *mangled, size_t mlen)
 	const char *S;
 	int i, Ppos;
 	MD5_CTX Context;
-	u_char b[MD5_DIGEST_LENGTH], *C, *demangled;
+	u_char b[MD5_DIGEST_LENGTH], *demangled;
+	const u_char *C;
 
 	if ((mlen % 16 != 0) || mlen > 128) {
 		generr(h, "Cannot interpret mangled data of length %lu",
@@ -1127,7 +1146,7 @@ rad_demangle(struct rad_handle *h, const void *mangled, size_t mlen)
 		return NULL;
 	}
 
-	C = (u_char *)mangled;
+	C = (const u_char *)mangled;
 
 	/* We need the shared secret as Salt */
 	S = rad_server_secret(h);
@@ -1143,8 +1162,8 @@ rad_demangle(struct rad_handle *h, const void *mangled, size_t mlen)
 		return NULL;
 
 	MD5Init(&Context);
-	MD5Update(&Context, S, strlen(S));
-	MD5Update(&Context, R, LEN_AUTH);
+	MD5Update(&Context, S, (MD5Len)strlen(S));
+	MD5Update(&Context, R, (MD5Len)LEN_AUTH);
 	MD5Final(b, &Context);
 	Ppos = 0;
 	while (mlen) {
@@ -1155,8 +1174,8 @@ rad_demangle(struct rad_handle *h, const void *mangled, size_t mlen)
 
 		if (mlen) {
 			MD5Init(&Context);
-			MD5Update(&Context, S, strlen(S));
-			MD5Update(&Context, C, 16);
+			MD5Update(&Context, S, (MD5Len)strlen(S));
+			MD5Update(&Context, C, (MD5Len)16);
 			MD5Final(b, &Context);
 		}
 
@@ -1175,7 +1194,7 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 	u_char b[MD5_DIGEST_LENGTH], *demangled;
 	const u_char *A, *C;
 	MD5_CTX Context;
-	int Slen, i, Clen, Ppos;
+	size_t Slen, Clen, i, Ppos;
 	u_char *P;
 
 	if (mlen % 16 != SALT_LEN) {
@@ -1198,9 +1217,9 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 	P = alloca(Clen);        /* We derive our plaintext */
 
 	MD5Init(&Context);
-	MD5Update(&Context, S, Slen);
-	MD5Update(&Context, R, LEN_AUTH);
-	MD5Update(&Context, A, SALT_LEN);
+	MD5Update(&Context, S, (MD5Len)Slen);
+	MD5Update(&Context, R, (MD5Len)LEN_AUTH);
+	MD5Update(&Context, A, (MD5Len)SALT_LEN);
 	MD5Final(b, &Context);
 	Ppos = 0;
 
@@ -1212,8 +1231,8 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 
 		if (Clen) {
 			MD5Init(&Context);
-			MD5Update(&Context, S, Slen);
-			MD5Update(&Context, C, 16);
+			MD5Update(&Context, S, (MD5Len)Slen);
+			MD5Update(&Context, C, (MD5Len)16);
 			MD5Final(b, &Context);
 		}
 
