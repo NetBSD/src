@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1995/06/28 02:56:05 cgd Exp $ */
+/*	$NetBSD: cpu.h,v 1.18 1996/03/14 00:49:20 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,15 +71,6 @@
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-
-/*
- * See syscall() for an explanation of the following.  Note that the
- * locore bootstrap code follows the syscall stack protocol.  The
- * framep argument is unused.
- */
-#define cpu_set_init_frame(p, fp) \
-	(p)->p_md.md_tf = (struct trapframe *) \
-	    ((caddr_t)(p)->p_addr + USPACE - sizeof(struct trapframe))
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
