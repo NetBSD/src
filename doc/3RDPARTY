@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.247 2004/10/21 10:17:42 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.248 2004/10/26 08:05:25 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -486,7 +486,7 @@ if we need to keep it we need to maintain it ourselves.
 
 Package:	OpenSSL
 Version:	0.9.7d
-Current Vers:	0.9.7d
+Current Vers:	0.9.7e
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Mailing List:	openssl-announce@openssl.org
