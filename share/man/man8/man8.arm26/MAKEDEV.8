@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.1 2001/04/16 08:11:17 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.2 2001/04/22 15:04:29 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,6 +132,15 @@ Alias for PC COM ports, this is what the system really wants, see
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr pty 4
+. El
+.It Printers:
+. Bl -tag -width 0123456789 -compact
+. It Ar lpt#
+Stock lp
+. It Ar lpa#
+Interruptless lp
+. It Ar arcpp#
+Archimedes parallel port
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
