@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.21 1997/04/02 16:36:25 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.22 1997/04/04 09:51:26 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -954,7 +954,7 @@ plipoutput(arg)
 		untimeout(plipoutput, sc);
 
 	for (;;) {
-		s = splnet();
+		s = splimp();
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		splx(s);
 		if (!m0)
@@ -1029,7 +1029,7 @@ retry:
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == (IFF_RUNNING | IFF_UP)
 	    && sc->sc_ifoerrs < PLIPMXRETRY) {
-		s = splnet();
+		s = splimp();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
 		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
