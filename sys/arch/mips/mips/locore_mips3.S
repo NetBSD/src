@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.58 2000/10/24 03:23:19 castor Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.59 2000/10/29 08:01:29 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2280,6 +2280,9 @@ LEAF_NOPROFILE(mips3_TBIAP)
 	nop
 	nop
 	tlbr					# obtain an entry
+	nop
+	nop
+	nop
 	dmfc0	a0, MIPS_COP_0_TLB_LO1
 	#nop					# -slip-
 	#nop					# -slip-
