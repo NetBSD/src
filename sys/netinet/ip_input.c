@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.114 2000/05/10 03:31:30 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.115 2000/06/28 03:01:16 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -120,7 +120,8 @@
 #include <sys/proc.h>
 #include <sys/pool.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <sys/sysctl.h>
 
 #include <net/if.h>

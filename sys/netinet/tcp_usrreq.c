@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.51 2000/06/05 06:38:22 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.52 2000/06/28 03:01:17 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,7 +118,7 @@
 #include <sys/ucred.h>
 #include <sys/domain.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
