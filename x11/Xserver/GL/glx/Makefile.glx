@@ -1,15 +1,14 @@
-#	$NetBSD: Makefile.glx,v 1.4 2004/02/07 06:52:04 lukem Exp $
+#	$NetBSD: Makefile.glx,v 1.5 2004/03/06 03:31:05 rtr Exp $
 
 LIB=		glx
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/GL/${LIB}
 
-SRCS+=		g_disptab.c g_disptab_EXT.c g_render.c g_renderswap.c \
-		g_single.c g_singleswap.c global.c glxbuf.c glxcmds.c \
-		glxcmdsswap.c glxext.c glxfb.c glximports.c glxmem.c \
-		glxpix.c glxscreens.c glxutil.c render2.c render2swap.c \
-		renderpix.c renderpixswap.c rensize.c rensizetab.c \
-		single2.c single2swap.c singlepix.c singlepixswap.c \
-		singlesize.c xfont.c
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/GL/glx
+SRCS+=	global.c glxbuf.c glxcmds.c glxcmdsswap.c glxext.c glxfb.c \
+	glximports.c glxmem.c glxpix.c glxscreens.c glxutil.c \
+	render2.c render2swap.c renderpix.c renderpixswap.c \
+	rensize.c rensizetab.c single2.c single2swap.c singlepix.c \
+	singlepixswap.c singlesize.c xfont.c g_disptab.c \
+	g_disptab_EXT.c g_render.c g_renderswap.c g_single.c g_singleswap.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/glx \
 		-I${X11SRCDIR.xc}/programs/Xserver/GL/include \
@@ -19,6 +18,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/glx \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/include/fonts \
+		-I${X11SRCDIR.xc}/extras/Mesa/src \
 		-I${X11SRCDIR.xc}/lib/GL/include
 
 CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA
