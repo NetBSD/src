@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 1999/12/24 17:02:14 minoura Exp $
+#	$NetBSD: Makefile,v 1.7 1999/12/25 14:30:24 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=		boot.fs
-KERNDIR=	${.CURDIR}/../../../../sys/arch/x68k/compile/INSTALL_SMALL
+KERNOBJDIR?=	${.CURDIR}/../../../../sys/arch/x68k/compile
+KERNDIR=	${KERNOBJDIR}/INSTALL_SMALL
 KERN=		${KERNDIR}/netbsd
 KERNNAME=	netbsd
 
