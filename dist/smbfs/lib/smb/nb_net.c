@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nb_net.c,v 1.4 2003/04/04 08:05:34 jdolecek Exp $");
+__RCSID("$NetBSD: nb_net.c,v 1.5 2004/02/21 10:09:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -71,33 +71,30 @@ nb_getlocalname(char *name)
 int
 nb_resolvehost_in(const char *name, struct sockaddr **dest)
 {
-	struct hostent* h;
+	struct addrinfo *res, hints;
 	struct sockaddr_in *sinp;
-	int len;
+	int error;
+	char port[6];
 
-	h = gethostbyname(name);
-	if (!h) {
-		warnx("can't get server address `%s': ", name);
-		herror(NULL);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	snprintf(port, sizeof(port), "%d", SMB_TCP_PORT);
+
+	error = getaddrinfo(name, port, &hints, &res);
+	if (error) {
+		warnx("server address `%s': %s", name, gai_strerror(error));
 		return ENETDOWN;
 	}
-	if (h->h_addrtype != AF_INET) {
-		warnx("address for `%s' is not in the AF_INET family", name);
-		return EAFNOSUPPORT;
-	}
-	if (h->h_length != 4) {
-		warnx("address for `%s' has invalid length", name);
-		return EAFNOSUPPORT;
-	}
-	len = sizeof(struct sockaddr_in);
-	sinp = malloc(len);
+
+	/* Use first address as the address to connect to */
+	sinp = malloc(res[0].ai_addrlen);
 	if (sinp == NULL)
 		return ENOMEM;
-	bzero(sinp, len);
-	sinp->sin_len = len;
-	sinp->sin_family = h->h_addrtype;
-	memcpy(&sinp->sin_addr.s_addr, h->h_addr, 4);
-	sinp->sin_port = htons(SMB_TCP_PORT);
+	memcpy(sinp, res[0].ai_addr, res[0].ai_addrlen);
+
+	freeaddrinfo(res);
+
 	*dest = (struct sockaddr*)sinp;
 	return 0;
 }
@@ -145,39 +142,3 @@ nb_enum_if(struct nb_ifdesc **iflist, int maxif)
 	freeifaddrs(ifp);
 	return 0;
 }
-
-/*ARGSUSED*/
-/*int
-nbns_resolvename(const char *name, struct sockaddr **dest)
-{
-	printf("NetBIOS name resolver is not included in this distribution.\n");
-	printf("Please use '-I' option to specify an IP address of server.\n");
-	return EHOSTUNREACH;
-}*/
-/*
-int
-nb_hostlookup(struct nb_name *np, const char *server, const char *hint,
-	struct sockaddr_nb **dst)
-{
-	struct sockaddr_nb *snb;
-	int error;
-
-	error = nb_sockaddr(NULL, np, &snb);
-	if (error)
-		return error;
-	do {
-		if (hint) {
-			error = nb_resolvehost_in(host, snb);
-			if (error)
-				break;
-		} else {
-			error = nb_resolvename(server);
-		}
-	} while(0);
-	if (!error) {
-		*dst = snb;
-	} else
-		nb_snbfree(snb);
-	return error;
-}
-*/
