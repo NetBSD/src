@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.2 1999/04/01 20:40:07 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.3 1999/06/30 18:19:26 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,14 +40,10 @@
 #include "lib/libsa/stand.h"
 
 #include "../include/pte.h"
-/*#include "../include/macros.h"*/
 #include "../include/sid.h"
 
-#include "../uba/ubareg.h"
-#include "../uba/udareg.h"
-
-#include "../mscp/mscp.h"
-#include "../mscp/mscpreg.h"
+#include "dev/mscp/mscp.h"
+#include "dev/mscp/mscpreg.h"
 
 #include "../bi/bireg.h"
 #include "../bi/kdbreg.h"
@@ -55,6 +51,8 @@
 #include "vaxstand.h"
 
 static command(int);
+
+
 
 /*
  * These routines for RA disk standalone boot is wery simple,
@@ -81,7 +79,6 @@ volatile struct uda {
 } uda;
 
 volatile struct uda *ubauda;
-volatile struct udadevice *udacsr;
 struct	disklabel ralabel;
 struct ra_softc ra_softc;
 char io_buf[MAXBSIZE];
@@ -93,10 +90,9 @@ raopen(f, adapt, ctlr, unit, part)
 	char *msg;
 	struct disklabel *lp = &ralabel;
 	volatile struct ra_softc *ra = &ra_softc;
-	volatile struct uba_regs *mr = (void *)ubaaddr[adapt];
 	volatile u_int *nisse;
 	unsigned short johan, johan2;
-	int i,err;
+	int i,err, udacsr;
 
 #ifdef DEV_DEBUG
 	printf("raopen: adapter %d ctlr %d unit %d part %d\n", 
@@ -110,17 +106,17 @@ raopen(f, adapt, ctlr, unit, part)
 			return(EADAPT);
 		if (ctlr > nuda)
 			return(ECTLR);
-		nisse = (u_int *)&mr->uba_map[0];
+		nisse = ((u_int *)ubaaddr[adapt]) + 512;
 		nisse[494] = PG_V | (((u_int)&uda) >> 9);
 		nisse[495] = nisse[494] + 1;
-		udacsr = (void*)uioaddr[adapt] + udaaddr[ctlr];
+		udacsr = (int)uioaddr[adapt] + udaaddr[ctlr];
 		ubauda = (void*)0x3dc00 + (((u_int)(&uda))&0x1ff);
 		johan = (((u_int)ubauda) & 0xffff) + 8;
 		johan2 = 3;
-		ra->ra_ip = (short *)&udacsr->udaip;
-		ra->ra_sa = ra->ra_sw = (short *)&udacsr->udasa;
+		ra->ra_ip = (short *)udacsr;
+		ra->ra_sa = ra->ra_sw = (short *)udacsr + 1;
 		ra->udaddr = uioaddr[adapt] + udaaddr[ctlr];
-		ra->ubaddr = (int)mr;
+		ra->ubaddr = (int)ubaaddr[adapt];
 		*ra->ra_ip = 0; /* Start init */
 	} else {
 		struct bi_node *bi = (void *)biaddr[adapt];
@@ -221,17 +217,13 @@ rastrategy(ra, func, dblk, size, buf, rsize)
 	char	*buf;
 	u_int	size, *rsize;
 {
-	volatile struct uba_regs *ur;
-	volatile struct udadevice *udadev;
 	volatile u_int *ptmapp;
 	struct	disklabel *lp;
 	u_int	i, j, pfnum, mapnr, nsize;
 	volatile int hej;
 
 	if (vax_cputype != VAX_8200) {
-		ur = (void *)ra->ubaddr;
-		udadev = (void*)ra->udaddr;
-		ptmapp = (u_int *)&ur->uba_map[0];
+		ptmapp = ((u_int *)ra->ubaddr) + 512;
 
 		pfnum = (u_int)buf >> VAX_PGSHIFT;
 
