@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.6 1994/03/03 13:17:43 deraadt Exp $
+ * $Id: kbd.c,v 1.7 1994/04/09 22:29:21 deraadt Exp $
  */
 
 /*
@@ -211,6 +211,7 @@ struct kbd_softc {
 	int	k_evmode;		/* set if we should produce events */
 	struct	kbd_state k_state;	/* ASCII decode state */
 	struct	evvar k_events;		/* event queue state */
+	char	k_repeatc;		/* repeated character */
 } kbd_softc;
 
 /* Prototypes */
@@ -380,12 +381,31 @@ kbd_translate(register int c, register struct kbd_state *ks)
 	return (c);
 }
 
+
+void
+kbd_repeat(caddr_t arg)
+{
+	struct kbd_softc *k = (struct kbd_softc *)arg;
+	int s = spltty();
+
+	if (k->k_repeatc >= 0 && k->k_cons != NULL) {
+		ttyinput(k->k_repeatc, k->k_cons);
+		timeout(kbd_repeat, (caddr_t)k, hz/20);
+	}
+	splx(s);
+}
+
 void
 kbd_rint(register int c)
 {
 	register struct kbd_softc *k = &kbd_softc;
 	register struct firm_event *fe;
 	register int put;
+
+	if (k->k_repeatc) {
+		k->k_repeatc = 0;
+		untimeout(kbd_repeat, (caddr_t)k);
+	}
 
 	/*
 	 * Reset keyboard after serial port overrun, so we can resynch.
@@ -421,8 +441,11 @@ kbd_rint(register int c)
 	 */
 	if (!k->k_evmode) {
 		c = kbd_translate(c, &k->k_state);
-		if (c >= 0 && k->k_cons != NULL)
+		if (c >= 0 && k->k_cons != NULL) {
 			ttyinput(c, k->k_cons);
+			k->k_repeatc = c;
+			timeout(kbd_repeat, (caddr_t)k, hz/5);
+		}
 		return;
 	}
 
