@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2003/01/05 19:26:17 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.123 2003/01/06 14:16:10 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -361,7 +361,7 @@ trap(type, psr, pc, tf)
 		if (cpuinfo.fpproc != p)
 			panic("FPU enabled but wrong proc (0)");
 		savefpstate(p->p_md.md_fpstate);
-		p->p_md.md_fpumid = -1;
+		p->p_md.md_fpu = NULL;
 		cpuinfo.fpproc = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
@@ -1320,7 +1320,8 @@ syscall(code, tf, pc)
 		KERNEL_PROC_LOCK(p);
 
 	if ((error = trace_enter(p, code, code, NULL, args.i, rval)) != 0) {
-		KERNEL_PROC_UNLOCK(p);
+		if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+			KERNEL_PROC_UNLOCK(p);
 		goto bad;
 	}
 
