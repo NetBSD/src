@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.6 1994/12/21 07:19:52 jtc Exp $	*/
+/*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$NetBSD: vacation.c,v 1.6 1994/12/21 07:19:52 jtc Exp $";
+static char rcsid[] = "$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -133,7 +133,7 @@ main(argc, argv)
 					usage();
 			}
 			else
-				interval = LONG_MAX;
+				interval = (time_t)LONG_MAX;	/* XXX */
 			break;
 		case '?':
 		default:
@@ -346,7 +346,8 @@ recent()
 	key.size = strlen(from);
 	if (!(db->get)(db, &key, &data, 0)) {
 		bcopy(data.data, &then, sizeof(then));
-		if (next == LONG_MAX || then + next > time(NULL))
+		if (next == (time_t)LONG_MAX ||			/* XXX */
+		    then + next > time(NULL))
 			return(1);
 	}
 	return(0);
