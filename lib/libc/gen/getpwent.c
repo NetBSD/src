@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.21.2.4 1998/11/02 03:33:14 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.21.2.5 1998/11/22 23:53:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.21.2.4 1998/11/02 03:33:14 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.21.2.5 1998/11/22 23:53:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1071,7 +1071,9 @@ endpwent()
 		(void)(_pw_db->close)(_pw_db);
 		_pw_db = (DB *)NULL;
 	}
+#if defined(YP) || defined(HESIOD)
 	__pwmode = PWMODE_NONE;
+#endif
 #ifdef YP
 	if(__ypcurrent)
 		free(__ypcurrent);
