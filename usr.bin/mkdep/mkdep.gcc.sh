@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: mkdep.gcc.sh,v 1.12 1997/07/22 05:20:06 cgd Exp $
+#	$NetBSD: mkdep.gcc.sh,v 1.13 1998/03/31 04:25:30 perry Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 # default path so that other commands we use are picked properly.
 
 if ! type "${CC:=cc}" > /dev/null 2>&1; then
-	PATH=/bin:/usr/bin:/usr/ucb
+	PATH=/bin:/usr/bin
 	export PATH
 	if ! type "${CC}" > /dev/null 2>&1; then
 		echo "mkdep: ${CC}: not found"
@@ -53,7 +53,7 @@ fi
 cmd='set -- `type "${CC}"` ; eval echo \$$#'
 CC=`eval $cmd`
 export CC
-PATH=/bin:/usr/bin:/usr/ucb
+PATH=/bin:/usr/bin
 export PATH
 
 D=.depend			# default dependency file is .depend
