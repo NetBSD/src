@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.5 1998/06/26 01:53:50 lukem Exp $
+#	$NetBSD: SHARK,v 1.6 1998/07/02 23:39:22 tv Exp $
 #
 #	SHARK
 #
@@ -125,7 +125,7 @@ options 	DDB		# in-kernel debugger
 
 config		netbsd_netboot	root on cs0 type nfs
 config		netbsd_wdboot	root on wd0a type ffs
-config		netbsd		root on ? type ?
+#config		netbsd		root on ? type ?	# cannot yet detect
 
 # The main bus device
 mainbus0 at root
