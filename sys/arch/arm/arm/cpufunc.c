@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.67 2004/04/03 04:34:40 bsh Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.68 2004/12/22 19:18:13 joff Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.67 2004/04/03 04:34:40 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.68 2004/12/22 19:18:13 joff Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1869,6 +1869,9 @@ arm9_setup(args)
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
