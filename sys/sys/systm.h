@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.68 1997/06/14 04:19:48 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.69 1997/06/15 23:42:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -107,6 +107,11 @@ extern struct vnode *rootvp;	/* vnode equivalent to above */
 extern struct device *root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
 
+/*
+ * These represent the swap pseudo-device (`sw').  This device
+ * is used by the swap pager to indirect through the routines
+ * in sys/vm/vm_swap.c.
+ */
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
