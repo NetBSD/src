@@ -1,8 +1,13 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.34 1993/10/27 00:58:31 pk Exp $
+#	$Id: bsd.lib.mk,v 1.35 1993/11/02 22:02:12 pk Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
+.endif
+
+.if exists(${.CURDIR}/shlib_version)
+MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
+MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .endif
 
 .MAIN: all
@@ -62,6 +67,9 @@ _LIBS=lib${LIB}.a
 
 .if !defined(NOPIC)
 _LIBS+=lib${LIB}_pic.a
+.if defined(MAJOR) && defined(MINOR)
+_LIBS+=lib${LIB}.so.${MAJOR}.${MINOR}
+.endif
 .endif
 
 .if !defined(PICFLAG)
@@ -91,6 +99,10 @@ lib${LIB}_pic.a:: ${SOBJS}
 	@rm -f lib${LIB}_pic.a
 	@${AR} cTq lib${LIB}_pic.a `lorder ${SOBJS} | tsort` ${LDADD}
 	${RANLIB} lib${LIB}_pic.a
+
+lib${LIB}.so.${MAJOR}.${MINOR}:
+	@rm -f lib${LIB}.so.${MAJOR}.${MINOR}
+	$(LD) -Bforcearchive -o lib${LIB}.so.${MAJOR}.${MINOR} lib${LIB}_pic.a
 
 llib-l${LIB}.ln: ${SRCS}
 	${LINT} -C${LIB} ${CFLAGS} ${.ALLSRC:M*.c}
@@ -137,12 +149,9 @@ realinstall:
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
-.if !defined(NOPIC) && exists (${.CURDIR}/shlib_version)
-	. ${.CURDIR}/shlib_version; \
-	$(LD) -Bshareable -Bforcearchive -o lib${LIB}.so.$$major.$$minor lib${LIB}_pic.a
-	. ${.CURDIR}/shlib_version; \
+.if !defined(NOPIC) && defined(MAJOR) && defined(MINOR)
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    lib${LIB}.so.$$major.$$minor ${DESTDIR}${LIBDIR}
+	    lib${LIB}.so.${MAJOR}.${MINOR} ${DESTDIR}${LIBDIR}
 .endif
 #	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 #	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
