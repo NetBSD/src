@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 1995/01/18 17:13:57 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.24 1995/04/07 04:30:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -83,20 +83,6 @@ struct cfdriver clockcd = {
 	NULL, "clock", clockmatch, clockattach,
 	DV_DULL, sizeof(struct device), 0 };
 
-/* Called very early by internal_configure. */
-void clock_init()
-{
-	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
-	if (!clock_va)
-		mon_panic("clock_init: clock_va\n");
-	if (!interrupt_reg)
-		mon_panic("clock_init: interrupt_reg\n");
-	/* Turn off clock interrupts until cpu_initclocks() */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
-}
-
 int clockmatch(parent, vcf, args)
     struct device *parent;
     void *vcf, *args;
@@ -125,9 +111,10 @@ void clockattach(parent, self, args)
 	printf("\n");
 	if (ca->ca_intpri != 5)
 		panic("clock: level != 5");
-
-	isr_add_custom(5, level5intr_clock);
-	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 0);
+	/*
+	 * Can not hook up the ISR until cpu_initclock()
+	 * because hardclock is not ready until then.
+	 */
 }
 
 /*
@@ -140,9 +127,14 @@ set_clk_mode(on, off, enable)
 	int enable;
 {
 	register u_char interreg;
+	register int s;
+
+	s = getsr();
+	if ((s & PSL_IPL) < PSL_IPL7)
+		panic("set_clk_mode: ipl");
 
 	if (!intersil_clock)
-		panic("set_clk_mode");
+		panic("set_clk_mode: map");
 
 	/*
 	 * make sure that we are only playing w/ 
@@ -184,22 +176,54 @@ set_clk_mode(on, off, enable)
 	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
 }
 
+/* Called very early by internal_configure. */
+void clock_init()
+{
+	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
+
+	if (!clock_va)
+		mon_panic("clock_init: clock_va\n");
+	if (!interrupt_reg)
+		mon_panic("clock_init: interrupt_reg\n");
+
+	/* Turn off clock interrupts until cpu_initclocks() */
+	/* isr_init() already set the interrupt reg to zero. */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+	intersil_clear();
+}
+
+#ifdef	DIAGNOSTIC
+static int clk_intr_ready;
+#endif
+
 /*
- * Set up the real-time clock.  Leave stathz 0 since there is no
- * secondary clock available.
+ * Set up the real-time clock (enable clock interrupts).
+ * Leave stathz 0 since there is no secondary clock available.
+ * Note that clock interrupts MUST STAY DISABLED until here.
  */
 void
 cpu_initclocks(void)
 {
-	struct timer_softc *clock;
+	int s;
 
 	if (!intersil_clock)
 		panic("cpu_initclocks");
+	s = splhigh();
 
-	intersil_clear();
+	isr_add_custom(5, level5intr_clock);
+#ifdef	DIAGNOSTIC
+	clk_intr_ready = 1;
+#endif
+
+	/* Set the clock to interrupt 100 time per second. */
 	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+
+	*interrupt_reg |= IREG_CLOCK_ENAB_5;	/* enable clock */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
+	splx(s);
 }
 
 /*
@@ -222,6 +246,11 @@ void clock_intr(frame)
 	struct clockframe *frame;
 {
 	static unsigned char led_pattern = 0xFE;
+
+#ifdef	DIAGNOSTIC
+	if (!clk_intr_ready)
+		panic("clock_intr");
+#endif
 
 	/* XXX - Move this LED frobbing to the idle loop? */
 	clock_count++;
