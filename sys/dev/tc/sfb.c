@@ -1,7 +1,7 @@
-/* $NetBSD: sfb.c,v 1.2 1998/10/30 00:53:12 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $ */
 
 /*
- * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.2 1998/10/30 00:53:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.2 1998/10/30 00:53:12 nisimura Exp $");
 
 /*
  * N.B., Bt459 registers are 8bit width.  Some of TC framebuffers have
- * weird register layout such as each of 2nd and 3rd Bt459 registers
- * is adjacent each other in a word, i.e.,
- *
+ * obscure register layout such as 2nd and 3rd Bt459 registers are
+ * adjacent each other in a word, i.e.,
  *	struct bt459triplet {
  * 		struct {
  *			u_int8_t u0;
@@ -87,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.2 1998/10/30 00:53:12 nisimura Exp $");
  *			unsigned :8; 
  *		} bt_lo;
  *		...
- *
  * Although HX has single Bt459, 32bit R/W can be done w/o any trouble.
  */
 struct bt459reg {
@@ -142,6 +140,9 @@ struct sfb_softc {
 #define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
 #define	DATA_ALL_CHANGED	0x0f
 	int nscreens;
+	short magic_x, magic_y;		/* HX cursor location offset */
+#define	HX_MAGIC_X 368
+#define	HX_MAGIC_Y 38
 };
 
 int  sfbmatch __P((struct device *, struct cfdata *, void *));
@@ -213,10 +214,52 @@ static void bt459_set_curpos __P((struct sfb_softc *));
 /* XXX XXX XXX */
 #define	BT459_SELECT(vdac, regno) do {		\
 	vdac->bt_lo = (regno) & 0x00ff;		\
-	vdac->bt_hi = ((regno)& 0xff00) >> 8 ;	\
+	vdac->bt_hi = ((regno)& 0x0f00) >> 8 ;	\
 	tc_wmb();				\
    } while (0)
 /* XXX XXX XXX */
+
+/*
+ * Compose 2 bit/pixel cursor image.  Bit order will be reversed.
+ *   M M M M I I I I		M I M I M I M I
+ *	[ before ]		   [ after ]
+ *   3 2 1 0 3 2 1 0		0 0 1 1 2 2 3 3
+ *   7 6 5 4 7 6 5 4		4 4 5 5 6 6 7 7
+ */
+const static u_int8_t shuffle[256] = {
+	0x00, 0x40, 0x10, 0x50, 0x04, 0x44, 0x14, 0x54,
+	0x01, 0x41, 0x11, 0x51, 0x05, 0x45, 0x15, 0x55,
+	0x80, 0xc0, 0x90, 0xd0, 0x84, 0xc4, 0x94, 0xd4,
+	0x81, 0xc1, 0x91, 0xd1, 0x85, 0xc5, 0x95, 0xd5,
+	0x20, 0x60, 0x30, 0x70, 0x24, 0x64, 0x34, 0x74,
+	0x21, 0x61, 0x31, 0x71, 0x25, 0x65, 0x35, 0x75,
+	0xa0, 0xe0, 0xb0, 0xf0, 0xa4, 0xe4, 0xb4, 0xf4,
+	0xa1, 0xe1, 0xb1, 0xf1, 0xa5, 0xe5, 0xb5, 0xf5,
+	0x08, 0x48, 0x18, 0x58, 0x0c, 0x4c, 0x1c, 0x5c,
+	0x09, 0x49, 0x19, 0x59, 0x0d, 0x4d, 0x1d, 0x5d,
+	0x88, 0xc8, 0x98, 0xd8, 0x8c, 0xcc, 0x9c, 0xdc,
+	0x89, 0xc9, 0x99, 0xd9, 0x8d, 0xcd, 0x9d, 0xdd,
+	0x28, 0x68, 0x38, 0x78, 0x2c, 0x6c, 0x3c, 0x7c,
+	0x29, 0x69, 0x39, 0x79, 0x2d, 0x6d, 0x3d, 0x7d,
+	0xa8, 0xe8, 0xb8, 0xf8, 0xac, 0xec, 0xbc, 0xfc,
+	0xa9, 0xe9, 0xb9, 0xf9, 0xad, 0xed, 0xbd, 0xfd,
+	0x02, 0x42, 0x12, 0x52, 0x06, 0x46, 0x16, 0x56,
+	0x03, 0x43, 0x13, 0x53, 0x07, 0x47, 0x17, 0x57,
+	0x82, 0xc2, 0x92, 0xd2, 0x86, 0xc6, 0x96, 0xd6,
+	0x83, 0xc3, 0x93, 0xd3, 0x87, 0xc7, 0x97, 0xd7,
+	0x22, 0x62, 0x32, 0x72, 0x26, 0x66, 0x36, 0x76,
+	0x23, 0x63, 0x33, 0x73, 0x27, 0x67, 0x37, 0x77,
+	0xa2, 0xe2, 0xb2, 0xf2, 0xa6, 0xe6, 0xb6, 0xf6,
+	0xa3, 0xe3, 0xb3, 0xf3, 0xa7, 0xe7, 0xb7, 0xf7,
+	0x0a, 0x4a, 0x1a, 0x5a, 0x0e, 0x4e, 0x1e, 0x5e,
+	0x0b, 0x4b, 0x1b, 0x5b, 0x0f, 0x4f, 0x1f, 0x5f,
+	0x8a, 0xca, 0x9a, 0xda, 0x8e, 0xce, 0x9e, 0xde,
+	0x8b, 0xcb, 0x9b, 0xdb, 0x8f, 0xcf, 0x9f, 0xdf,
+	0x2a, 0x6a, 0x3a, 0x7a, 0x2e, 0x6e, 0x3e, 0x7e,
+	0x2b, 0x6b, 0x3b, 0x7b, 0x2f, 0x6f, 0x3f, 0x7f,
+	0xaa, 0xea, 0xba, 0xfa, 0xae, 0xee, 0xbe, 0xfe,
+	0xab, 0xeb, 0xbb, 0xfb, 0xaf, 0xef, 0xbf, 0xff,
+};
 
 int
 sfbmatch(parent, match, aux)
@@ -282,6 +325,7 @@ sfb_getdevconfig(dense_addr, dc)
 
 	sfb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
 	sfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
+
 }
 
 void
@@ -314,6 +358,7 @@ sfbattach(parent, self, aux)
 	for (i = 1; i < CMAP_SIZE; i++) {
 		cm->r[i] = cm->g[i] = cm->b[i] = 0xff;
 	}
+	sc->magic_x = HX_MAGIC_X; sc->magic_y = HX_MAGIC_Y;
 
         tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, sfbintr, sc);
 
@@ -364,8 +409,8 @@ sfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
 		if ((dc->dc_blanked == 0) ^ turnoff) {
-			/* sc->sc_changed |= DATA_ALL_CHANGED; */
 			dc->dc_blanked = turnoff;
+			/* XXX later XXX */
 		}
 		return (0);
 
@@ -480,7 +525,6 @@ sfb_cnattach(addr)
         return(0);
 }
 
-
 int
 sfbintr(arg)
 	void *arg;
@@ -513,20 +557,43 @@ sfbintr(arg)
 		vdac->bt_reg = cp[3];	tc_wmb();
 		vdac->bt_reg = cp[5];	tc_wmb();
 
-		BT459_SELECT(vdac, BT459_REG_CCOLOR_3);
 		vdac->bt_reg = cp[0];	tc_wmb();
 		vdac->bt_reg = cp[2];	tc_wmb();
 		vdac->bt_reg = cp[4];	tc_wmb();
 	}
 	if (v & DATA_CURSHAPE_CHANGED) {
-		u_int8_t *bp;
-		int i;
+		u_int8_t *ip, *mp, img, msk;
+		u_int8_t u;
+		int bcnt;
 
-		bp = (u_int8_t *)&sc->sc_cursor.cc_image;
-		BT459_SELECT(vdac, BT459_REG_CRAM_BASE);
-		for (i = 0; i < sizeof(sc->sc_cursor.cc_image); i++) {
-			vdac->bt_reg = *bp++;
-			tc_wmb();
+		ip = (u_int8_t *)sc->sc_cursor.cc_image;
+		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
+
+		bcnt = 0;
+		BT459_SELECT(vdac, BT459_REG_CRAM_BASE+0);
+		/* 64 pixel scan line is consisted with 16 byte cursor ram */
+		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
+			/* pad right half 32 pixel when smaller than 33 */
+			if ((bcnt & 0x8) && sc->sc_cursor.cc_size.x < 33) {
+				vdac->bt_reg = 0; tc_wmb();
+				vdac->bt_reg = 0; tc_wmb();
+			}
+			else {
+				img = *ip++;
+				msk = *mp++;
+				img &= msk;	/* cookie off image */
+				u = (msk & 0x0f) << 4 | (img & 0x0f);
+				vdac->bt_reg = shuffle[u];	tc_wmb();
+				u = (msk & 0xf0) | (img & 0xf0) >> 4;
+				vdac->bt_reg = shuffle[u];	tc_wmb();
+			}
+			bcnt += 2;
+		}
+		/* pad unoccupied scan lines */
+		while (bcnt < CURSOR_MAX_SIZE * 16) {
+			vdac->bt_reg = 0; tc_wmb();
+			vdac->bt_reg = 0; tc_wmb();
+			bcnt += 2;
 		}
 	}
 	if (v & DATA_CMAP_CHANGED) {
@@ -558,16 +625,6 @@ sfbinit(dc)
 	
 	*(u_int32_t *)(sfbasic + 0x180000) = 0; /* Bt459 reset */
 
-	BT459_SELECT(vdac, 0);
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-	for (i = 1; i < CMAP_SIZE; i++) {
-		vdac->bt_cmap = 0xff;	tc_wmb();
-		vdac->bt_cmap = 0xff;	tc_wmb();
-		vdac->bt_cmap = 0xff;	tc_wmb();
-	}
-
 	BT459_SELECT(vdac, BT459_REG_COMMAND_0);
 	vdac->bt_reg = 0x40; /* CMD0 */	tc_wmb();
 	vdac->bt_reg = 0x0;  /* CMD1 */	tc_wmb();
@@ -595,6 +652,40 @@ sfbinit(dc)
 	vdac->bt_reg = 0x0;	tc_wmb();
 	vdac->bt_reg = 0x0;	tc_wmb();
 	vdac->bt_reg = 0x0;	tc_wmb();
+
+	/* build sane colormap */
+	BT459_SELECT(vdac, 0);
+	vdac->bt_cmap = 0;	tc_wmb();
+	vdac->bt_cmap = 0;	tc_wmb();
+	vdac->bt_cmap = 0;	tc_wmb();
+	for (i = 1; i < CMAP_SIZE; i++) {
+		vdac->bt_cmap = 0xff;	tc_wmb();
+		vdac->bt_cmap = 0xff;	tc_wmb();
+		vdac->bt_cmap = 0xff;	tc_wmb();
+	}
+
+	/* clear out cursor image */
+	BT459_SELECT(vdac, BT459_REG_CRAM_BASE);
+	for (i = 0; i < 1024; i++)
+		vdac->bt_reg = 0xff;	tc_wmb();
+
+	/*
+	 * 2 bit/pixel cursor.  Assign MSB for cursor mask and LSB for
+	 * cursor image.  CCOLOR_2 for mask color, while CCOLOR_3 for
+	 * image color.  CCOLOR_1 will be never used.
+	 */
+	BT459_SELECT(vdac, BT459_REG_CCOLOR_1);
+	vdac->bt_reg = 0xff;	tc_wmb();
+	vdac->bt_reg = 0xff;	tc_wmb();
+	vdac->bt_reg = 0xff;	tc_wmb();
+
+	vdac->bt_reg = 0;	tc_wmb();
+	vdac->bt_reg = 0;	tc_wmb();
+	vdac->bt_reg = 0;	tc_wmb();
+
+	vdac->bt_reg = 0xff;	tc_wmb();
+	vdac->bt_reg = 0xff;	tc_wmb();
+	vdac->bt_reg = 0xff;	tc_wmb();
 }
 
 static int
@@ -643,6 +734,7 @@ set_cmap(sc, p)
 	return (0);
 }
 
+
 static int
 set_cursor(sc, p)
 	struct sfb_softc *sc;
@@ -666,7 +758,7 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
-		count = (CURSOR_MAX_SIZE / NBBY) * p->size.y;
+		count = ((p->size.x < 33) ? 4 : 8) * p->size.y;
 		if (!useracc(p->image, count, B_READ) ||
 		    !useracc(p->mask, count, B_READ))
 			return (EFAULT);
@@ -695,7 +787,7 @@ set_cursor(sc, p)
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
 		copyin(p->image, cc->cc_image, count);
-		copyin(p->mask, &cc->cc_image[CURSOR_MAX_SIZE], count);
+		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, count);
 		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
 
@@ -721,12 +813,12 @@ set_curpos(sc, curpos)
 
 	if (y < 0)
 		y = 0;
-	else if (y > dc->dc_ht - sc->sc_cursor.cc_size.y - 1)
-		y = dc->dc_ht - sc->sc_cursor.cc_size.y - 1;	
+	else if (y > dc->dc_ht)
+		y = dc->dc_ht;
 	if (x < 0)
 		x = 0;
-	else if (x > dc->dc_wid - sc->sc_cursor.cc_size.x - 1)
-		x = dc->dc_wid - sc->sc_cursor.cc_size.x - 1;
+	else if (x > dc->dc_wid)
+		x = dc->dc_wid;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
 }
@@ -737,11 +829,11 @@ bt459_set_curpos(sc)
 {
 	caddr_t sfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
 	struct bt459reg *vdac = (void *)(sfbbase + SFB_RAMDAC_OFFSET);
-	int x = 219, y = 34; /* magic offset of HX coordinate */
-	int s;
+	int x, y, s;
 
-	x += sc->sc_cursor.cc_pos.x;
-	y += sc->sc_cursor.cc_pos.y;
+	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
+	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+	x += sc->magic_x; y += sc->magic_y; /* magic offset of HX coordinate */
 	
 	s = spltty();
 
