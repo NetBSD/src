@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.93 2000/06/30 16:33:38 joda Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.94 2000/07/18 14:48:11 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -808,6 +808,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Sohoware ND5100E NE2000 Compatible Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_INTERSIL_PRISM2,
+	    PCMCIA_CIS_INTERSIL_PRISM2,
+	    0,
+	    "Intersil",
+	    "Intersil Prism II"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1183,6 +1190,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "AMD",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_INTERSIL, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Intersil",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
