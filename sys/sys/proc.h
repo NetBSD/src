@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.170 2003/09/06 22:01:20 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.171 2003/09/13 15:55:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -201,7 +201,6 @@ struct proc {
 	fixpt_t		p_pctcpu;	/* %cpu for this process during p_swtime */
 
 	struct proc	*p_opptr;	/* Save parent during ptrace. */
-	int		p_dupfd;	/* Sideways return value from filedescopen XXX */
 	struct ptimers	*p_timers;	/* Timers: real, virtual, profiling */
 	struct timeval 	p_rtime;	/* Real time */
 	u_quad_t 	p_uticks;	/* Statclock hits in user mode */
