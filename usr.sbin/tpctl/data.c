@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.1 2002/08/27 14:12:16 takemura Exp $	*/
+/*	$NetBSD: data.c,v 1.2 2002/12/15 09:13:21 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -41,7 +41,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: data.c,v 1.1 2002/08/27 14:12:16 takemura Exp $");
+__RCSID("$NetBSD: data.c,v 1.2 2002/12/15 09:13:21 takemura Exp $");
 #endif /* not lint */
 
 static void *
@@ -148,6 +148,42 @@ read_data(char *filename, struct tpctl_data *data)
 		TAILQ_INSERT_TAIL(&data->list, elem, link);
 		p = p2 + 1;
 
+		/*
+		 * minX, maxX, minY, maxY
+		 */
+		for (i = 0; i < 4; i++) {
+			t = strtol(p, &p2, 0);
+			if (p == p2) {
+				res = ERR_SYNTAX;
+				goto exit_func;
+			}
+			p = p2;
+			while (*p != '\0' && strchr(" \t", *p) != NULL)
+				p++;
+			if (*p != ',') {
+				res = ERR_SYNTAX;
+				goto exit_func;
+			}
+			p++;
+			switch (i % 4) {
+			case 0:
+				elem->calibcoords.minx = t;
+				break;
+			case 1:
+				elem->calibcoords.miny = t;
+				break;
+			case 2:
+				elem->calibcoords.maxx = t;
+				break;
+			case 3:
+				elem->calibcoords.maxy = t;
+				break;
+			}
+		}
+
+		/*
+		 * number of samples
+		 */
 		n = strtol(p, &p2, 0);
 		if (p == p2) {
 			res = ERR_SYNTAX;
@@ -161,8 +197,11 @@ read_data(char *filename, struct tpctl_data *data)
 			res = ERR_SYNTAX;
 			goto exit_func;
 		}
-			
 		elem->calibcoords.samplelen = n;
+
+		/*
+		 * samples
+		 */
 		for (i = 0; i < n * 4; i++) {
 			if (*p != ',') {
 				res = ERR_SYNTAX;
@@ -278,7 +317,10 @@ write_coords(FILE *fp, char *name, struct wsmouse_calibcoords *coords)
 {
 	int i;
 
-	fprintf(fp, "%s,%d", name, coords->samplelen);
+	fprintf(fp, "%s,%d,%d,%d,%d,%d", name,
+		coords->minx, coords->miny,
+		coords->maxx, coords->maxy,
+		coords->samplelen);
 	for (i = 0; i < coords->samplelen; i++) {
 		fprintf(fp, ",%d,%d,%d,%d",
 		    coords->samples[i].rawx,
