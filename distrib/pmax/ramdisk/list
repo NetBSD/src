@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2002/05/02 13:31:43 simonb Exp $
+#	$NetBSD: list,v 1.15 2002/05/27 11:02:21 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/pmax/stand
 
@@ -47,7 +47,7 @@ PROG	usr/bin/sed
 PROG	usr/bin/tip
 PROG	usr/bin/tset
 
-PROG	usr/mdec/installboot
+PROG	usr/sbin/installboot
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
