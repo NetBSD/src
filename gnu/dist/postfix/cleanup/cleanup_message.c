@@ -240,7 +240,7 @@ static void cleanup_header(void)
 
 	if ((value = maps_find(cleanup_header_checks, header, 0)) != 0) {
 	    if (strcasecmp(value, "REJECT") == 0) {
-		msg_warn("%s: reject: header %.100s", cleanup_queue_id, header);
+		msg_warn("%s: reject: header %.200s", cleanup_queue_id, header);
 		cleanup_errs |= CLEANUP_STAT_CONT;
 	    }
 	}
@@ -460,6 +460,28 @@ void    cleanup_message(void)
 	    if (in_header) {
 		vstring_strcpy(cleanup_header_buf, start);
 	    } else {
+
+		/*
+		 * Crude message body content filter for emergencies. This
+		 * code has several problems: it sees one line at a time, and
+		 * therefore does not recognize multi-line MIME headers in
+		 * the body; it looks at long lines only in chunks of
+		 * line_length_limit (2048) characters; it is easily bypassed
+		 * with encodings and with multi-line tricks.
+		 */
+		if ((cleanup_flags & CLEANUP_FLAG_FILTER)
+		    && cleanup_body_checks) {
+		    char   *body = vstring_str(cleanup_inbuf);
+		    const char *value;
+
+		    if ((value = maps_find(cleanup_body_checks, body, 0)) != 0) {
+			if (strcasecmp(value, "REJECT") == 0) {
+			    msg_warn("%s: reject: body %.200s",
+				     cleanup_queue_id, body);
+			    cleanup_errs |= CLEANUP_STAT_CONT;
+			}
+		    }
+		}
 		CLEANUP_OUT_BUF(type, cleanup_inbuf);
 	    }
 	}
