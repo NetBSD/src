@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.43 2001/12/10 12:11:05 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.44 2002/06/19 15:56:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.43 2001/12/10 12:11:05 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.44 2002/06/19 15:56:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ __RCSID("$NetBSD: termcap.c,v 1.43 2001/12/10 12:11:05 blymn Exp $");
  * doesn't, and because living w/o it is not hard.
  */
 
-static	char *tbuf;	/* termcap buffer */
-static  struct tinfo *fbuf;     /* untruncated termcap buffer */
+static char *tbuf = NULL;		/* termcap buffer */
+static struct tinfo *fbuf = NULL;	/* untruncated termcap buffer */
 
 /*
  * Set the termcap entry to the arbitrary string passed in, this can
@@ -133,12 +133,14 @@ t_getent(bp, name)
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char  *termpath;
 	char  capability[256], *cap_ptr;
+	int error;
 	
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(name != NULL);
 
-	if ((*bp = malloc(sizeof(struct tinfo))) == NULL) return 0;
+	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
+		return 0;
 	
 	fname = pathvec;
 	p = pathbuf;
@@ -208,8 +210,10 @@ t_getent(bp, name)
 	did_getset = 0;
 	if (cp && *cp && *cp != '/' && strstr(cp, ":ZZ") == NULL) {
 		did_getset = 1;
-		if (cgetset(cp) < 0)
-			return (-2);
+		if (cgetset(cp) < 0) {
+			error = -2;
+			goto out;
+		}
 	}
 	
 	/*
@@ -227,19 +231,24 @@ t_getent(bp, name)
 	 */
 	if ((i < 0) && (did_getset == 0)) {
 		if (cp && *cp && *cp != '/')
-			if (cgetset(cp) < 0)
-				return (-2);
+			if (cgetset(cp) < 0) {
+				error = -2;
+				goto out;
+			}
 		i = cgetent(&((*bp)->info), pathvec, name);      
 	}
 
 	/* no tc reference loop return code in libterm XXX */
-	if (i == -3)
-		return (-1);
+	if (i == -3) {
+		error = -1;
+		goto out;
+	}
 
-	  /* fill in t_goto capabilities - this prevents memory leaks
-	   * and is more efficient than fetching these capabilities
-	   * every time t_goto is called.
-	   */
+	/*
+	 * fill in t_goto capabilities - this prevents memory leaks
+	 * and is more efficient than fetching these capabilities
+	 * every time t_goto is called.
+	 */
 	if (i >= 0) {
 		cap_ptr = capability;
 		limit = 255;
@@ -252,9 +261,16 @@ t_getent(bp, name)
 		if ((*bp)->bc)
 			(*bp)->bc = strdup((*bp)->bc);
 		(*bp)->tbuf = NULL;
+	} else {
+		error = i + 1;
+		goto out;
 	}
 		
 	return (i + 1);
+out:
+	free(*bp);
+	*bp = NULL;
+	return error;
 }
 
 /*
@@ -329,7 +345,7 @@ int
 tgetnum(id)
 	const char *id;
 {
-	return t_getnum(fbuf, id);
+	return fbuf ? t_getnum(fbuf, id) : -1;
 }
 
 /*
@@ -352,7 +368,7 @@ int
 tgetflag(id)
 	const char *id;
 {
-	return t_getflag(fbuf, id);
+	return fbuf ? t_getflag(fbuf, id) : 0;
 }
 
 /*
@@ -429,6 +445,10 @@ tgetstr(id, area)
 	char ids[3];
 
 	_DIAGASSERT(id != NULL);
+
+	if (fbuf == NULL)
+		return NULL;
+		
 	/*
 	 * XXX
 	 * This is for all the boneheaded programs that relied on tgetstr
