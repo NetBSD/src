@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.23 1999/01/06 23:43:30 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.24 1999/01/17 11:49:56 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -137,6 +137,7 @@ wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
 mc0	at obio0			# MACE ethernet
+bm0	at obio0			# bmac ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI
 
 scsibus* at esp0
