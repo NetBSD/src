@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.37 2004/10/30 19:29:27 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.38 2005/03/20 21:38:17 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.37 2004/10/30 19:29:27 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.38 2005/03/20 21:38:17 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,7 +275,8 @@ setparam(char **argv)
 	char **ap;
 	int nparam;
 
-	for (nparam = 0 ; argv[nparam] ; nparam++);
+	for (nparam = 0 ; argv[nparam] ; nparam++)
+		continue;
 	ap = newparam = ckmalloc((nparam + 1) * sizeof *ap);
 	while (*argv) {
 		*ap++ = savestr(*argv++);
