@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.132 2001/10/01 17:19:17 mason Exp $
+#	$NetBSD: Makefile,v 1.133 2001/10/04 17:59:49 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -57,7 +57,7 @@
 #   do-whatisdb: build & install the `whatis.db' man database.
 #   buildendmsg: displays the end time of the build.
 
-.include <bsd.own.mk>
+.include "${.CURDIR}/share/mk/bsd.own.mk"
 
 MKOBJDIRS ?= no
 
@@ -215,6 +215,6 @@ includes-sbin includes-usr.sbin:
 	@false
 .endif
 
-.include <bsd.subdir.mk>
+.include "${.CURDIR}/share/mk/bsd.subdir.mk"
 
 _M:=	-m ${.CURDIR}/share/mk
