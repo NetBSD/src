@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: file.c,v 1.2 2002/10/12 11:15:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@ main(int argc, char **argv)
 	}
 	
 	if (argc == 4) {
-		if (strcmp(argv[2], "-n") == 0)
-			n = atoi(argv[3]);
+		if (strcmp(argv[1], "-n") == 0)
+			num = atoi(argv[2]);
 		else
 			goto usg;	
+		argv += 2;
 	}
 
 	fd = open(argv[1], O_RDONLY|O_CREAT, 0644);
@@ -103,7 +104,7 @@ main(int argc, char **argv)
 
 		n = read(fd, buffer, 128);
 		buffer[n] = '\0';
-		printf("%s", buffer);
+		printf("file(%d): %s", num, buffer);
 	}
 
 	printf("read: successful end\n");
