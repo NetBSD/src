@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 1996/12/17 21:11:42 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 1996/12/17 21:35:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -602,10 +602,13 @@ syscall(code, frame)
 			 * remember that we adjusted the SP,
 			 * might have to undo this if the system call
 			 * returns ERESTART.
+			 * XXX - Use a local variable for this? -gwr
 			 */
 			p->p_md.md_flags |= MDP_STACKADJ;
-		} else
+		} else {
+			/* XXX - This may be redundant (see below). */
 			p->p_md.md_flags &= ~MDP_STACKADJ;
+		}
 	}
 #endif
 
@@ -696,8 +699,11 @@ syscall(code, frame)
 #endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
-	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
-		frame.f_regs[SP] -= sizeof (int);
+	if (p->p_md.md_flags & MDP_STACKADJ) {
+		p->p_md.md_flags &= ~MDP_STACKADJ;
+		if (error == ERESTART)
+			frame.f_regs[SP] -= sizeof (int);
+	}
 #endif
 	userret(p, &frame, sticks);
 #ifdef KTRACE

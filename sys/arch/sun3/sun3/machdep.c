@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 1996/12/17 21:11:33 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 1996/12/17 21:35:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -385,6 +385,7 @@ setregs(p, pack, stack, retval)
 	if (fpu_type) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
+	p->p_md.md_flags = 0;
 	/* XXX - HPUX sigcode hack would go here... */
 }
 
