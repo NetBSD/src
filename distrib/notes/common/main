@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.52 2000/04/13 17:53:58 jhawk Exp $
+.\" $NetBSD: main,v 1.53 2000/04/16 03:46:28 david Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -888,6 +888,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Warner Losh Ta Mt imp@NetBSD.ORG
 .It Ta Brett Lymn Ta Mt blymn@NetBSD.ORG
 .It Ta Paul Mackerras Ta Mt paulus@NetBSD.ORG
+.It Ta David Maxwell Ta Mt david@NetBSD.ORG
 .It Ta Dan McMahill Ta Mt dmcmahill@NetBSD.ORG
 .It Ta Neil J. McRae Ta Mt neil@NetBSD.ORG
 .It Ta Perry Metzger Ta Mt perry@NetBSD.ORG
