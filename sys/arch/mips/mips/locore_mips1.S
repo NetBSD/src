@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.4 1999/01/16 08:45:53 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.5 1999/02/16 08:35:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,9 +60,9 @@
 #include "assym.h"
 
 	.set	noreorder
+	.text
 
-	.globl	_C_LABEL(mips1_exceptionentry_start)
-_C_LABEL(mips1_exceptionentry_start):
+EXPORT(mips1_exceptionentry_start)
 
 /*
  * mips1_UTLBMiss
@@ -72,8 +72,7 @@ _C_LABEL(mips1_exceptionentry_start):
  * at 0x80000000 and total length must be less than 32 instructions.
  * No pc relative jump instruction is allowed.
  */
-	.globl	_C_LABEL(mips1_UTLBMiss)
-_C_LABEL(mips1_UTLBMiss):
+VECTOR(mips1_UTLBMiss, unknown)
 	.set	noat
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, _C_LABEL(curpcb)
@@ -103,8 +102,7 @@ _C_LABEL(mips1_UTLBMiss):
 	j	mips1_SlowFault			# handle the rest
 	nop
 	.set	at
-	.globl	_C_LABEL(mips1_UTLBMissEnd)
-_C_LABEL(mips1_UTLBMissEnd):
+VECTOR_END(mips1_UTLBMiss)
 
 
 /*
@@ -114,8 +112,7 @@ _C_LABEL(mips1_UTLBMissEnd):
  * is copied down at 0x80000080 and total length must be less than 32
  * instructions.  No pc relative jump instruction is allowed.
  */
-	.globl	_C_LABEL(mips1_exception)
-_C_LABEL(mips1_exception):
+VECTOR(mips1_exception, unknown)
 /*
  * Find out what mode we came from and jump to the proper handler.
  */
@@ -138,8 +135,8 @@ _C_LABEL(mips1_exception):
 	j	k0				# jump to the function
 	nop
 	.set	at
-	.globl	_C_LABEL(mips1_exceptionEnd)
-_C_LABEL(mips1_exceptionEnd):
+VECTOR_END(mips1_exception)
+
 
 /*
  * mips1_SlowFault
