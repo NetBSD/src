@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2000/01/14 21:02:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -481,7 +481,6 @@ paddr_t vtophys __P((vaddr_t));
 void pmap_emulate_reference __P((struct proc *, vaddr_t, int, int));
 
 /* XXX */
-#define SH3_PHYS_TO_P1SEG(pa)	(((pa) & 0x1fffffff) | SH3_P1SEG_BASE)
 #define PG_U 0		/* referenced bit */
 
 #endif /* _KERNEL */
