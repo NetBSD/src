@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.32 2003/04/26 14:10:09 ragge Exp $
+# $NetBSD: GENERIC,v 1.33 2003/06/01 00:03:59 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -229,8 +229,9 @@ wskbd*		at pckbd? console ?
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
 
-#igsfb*		at pci? dev ? function ?
-#wsdisplay*	at igsfb? console ?
+# XXX: cannot be used as console yet
+igsfb*		at pci? dev ? function ?
+wsdisplay*	at igsfb? console ?
 
 
 # ISA Devices
