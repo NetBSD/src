@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.14 2000/11/15 14:04:05 tsubai Exp $
+#	$NetBSD: files.newsmips,v 1.15 2000/11/15 14:29:40 tsubai Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -71,7 +71,7 @@ file arch/newsmips/apbus/ms_ap.c		ms_ap
 
 device fb: wsemuldisplaydev, rasops1
 attach fb at hb
-file arch/newsmips/dev/fb.c			fb needs-count
+file arch/newsmips/dev/fb.c			fb needs-flag
 
 device fdc {}
 attach fdc at hb
@@ -124,7 +124,7 @@ include "dev/rasops/files.rasops"
 
 device xafb: wsemuldisplaydev, rasops8
 attach xafb at ap
-file arch/newsmips/apbus/xafb.c			xafb
+file arch/newsmips/apbus/xafb.c			xafb needs-flag
 
 # network devices MII bus
 include "dev/mii/files.mii"
