@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.99 1998/09/25 11:40:16 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.100 1998/09/26 18:15:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -168,6 +168,7 @@ str2hex(str, vp)
 
 #ifdef SUN4
 struct promvec promvecdat;
+void **promvec_synchookdat;
 struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 #endif
 
@@ -205,6 +206,7 @@ bootstrap()
 		promvec->pv_setctxt = oldpvec->setcxsegmap;
 		promvec->pv_v0bootargs = (struct v0bootargs **)(oldpvec->bootParam);
 		promvec->pv_halt = oldpvec->exitToMon;
+		promvec->pv_synchook = promvec_synchookdat;
 
 		/*
 		 * Discover parts of the machine memory organization
@@ -914,6 +916,15 @@ mainbus_match(parent, cf, aux)
 
 int autoconf_nzs = 0;	/* must be global so obio.c can see it */
 
+/* 
+ * Helper routines to get some of the more common properties. These
+ * only get the first item in case the property value is an array.
+ * Drivers that "need to know it all" can call getprop() directly.
+ */
+static int	getprop_reg1 __P((int, struct openprom_addr *));
+static int	getprop_intr1 __P((int, int *));
+static int	getprop_address1 __P((int, void **));
+
 /*
  * Attach the mainbus.
  *
@@ -1073,7 +1084,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		panic("no options in OPENPROM");
 
 	for (ssp = openboot_special; *(sp = *ssp) != 0; ssp++) {
-		struct rom_reg romreg;
+		struct openprom_addr romreg;
 
 		if ((node = findnode(node0, sp)) == 0) {
 			printf("could not find %s in OPENPROM\n", sp);
@@ -1088,9 +1099,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (bus_addr_t)romreg.rr_paddr;
-		ma.ma_iospace = (bus_type_t)romreg.rr_iospace;
-		ma.ma_size = romreg.rr_len;
+		ma.ma_paddr = (bus_addr_t)romreg.oa_base;
+		ma.ma_iospace = (bus_type_t)romreg.oa_space;
+		ma.ma_size = romreg.oa_size;
 		if (getprop_intr1(node, &ma.ma_pri) != 0)
 			continue;
 		if (getprop_address1(node, &ma.ma_promvaddr) != 0)
@@ -1110,7 +1121,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 */
 	for (node = node0; node; node = nextsibling(node)) {
 		const char *cp;
-		struct rom_reg romreg;
+		struct openprom_addr romreg;
 
 #if defined(SUN4M)
 		if (CPU_ISSUN4M) /* skip the CPUs */
@@ -1134,9 +1145,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (bus_addr_t)romreg.rr_paddr;
-		ma.ma_iospace = (bus_type_t)romreg.rr_iospace;
-		ma.ma_size = romreg.rr_len;
+		ma.ma_paddr = (bus_addr_t)romreg.oa_base;
+		ma.ma_iospace = (bus_type_t)romreg.oa_space;
+		ma.ma_size = romreg.oa_size;
 
 		if (getprop_intr1(node, &ma.ma_pri) != 0)
 			continue;
@@ -1368,60 +1379,23 @@ overflow:
 #endif
 }
 
-/*
- *
- */
-int
-getprop(node, name, size, nitem, bufp)
-	int	node;
-	char	*name;
-	int	size;
-	int	*nitem;
-	void	**bufp;
-{
-	struct	nodeops *no;
-	void	*buf;
-	int	len;
-
-	no = promvec->pv_nodeops;
-	len = no->no_proplen(node, name);
-	if (len <= 0)
-		return (ENOENT);
-
-	if ((len % size) != 0)
-		return (EINVAL);
-
-	buf = *bufp;
-	if (buf == NULL) {
-		/* No storage provided, so we allocate some */
-		buf = malloc(len, M_DEVBUF, M_NOWAIT);
-		if (buf == NULL)
-			return (ENOMEM);
-	}
-
-	no->no_getprop(node, name, buf);
-	*bufp = buf;
-	*nitem = len / size;
-	return (0);
-}
-
 int
 getprop_reg1(node, rrp)
 	int node;
-	struct rom_reg *rrp;
+	struct openprom_addr *rrp;
 {
 	int error, n;
-	struct rom_reg *rrp0 = NULL;
+	struct openprom_addr *rrp0 = NULL;
 	char buf[32];
 
-	error = getprop(node, "reg", sizeof(struct rom_reg),
+	error = getprop(node, "reg", sizeof(struct openprom_addr),
 			&n, (void **)&rrp0);
 	if (error != 0) {
 		if (error == ENOENT &&
 		    node_has_property(node, "device_type") &&
 		    strcmp(getpropstringA(node, "device_type", buf),
 			   "hierarchical") == 0) {
-			bzero(rrp, sizeof(struct rom_reg));
+			bzero(rrp, sizeof(struct openprom_addr));
 			error = 0;
 		}
 		return (error);
@@ -1477,164 +1451,7 @@ getprop_address1(node, vpp)
 	return (0);
 }
 
-/*
- * Internal form of proplen().  Returns the property length.
- */
-int
-getproplen(node, name)
-	int node;
-	char *name;
-{
-	register struct nodeops *no = promvec->pv_nodeops;
-
-	return (no->no_proplen(node, name));
-}
-
-/*
- * Return a string property.  There is a (small) limit on the length;
- * the string is fetched into a static buffer which is overwritten on
- * subsequent calls.
- */
-char *
-getpropstring(node, name)
-	int node;
-	char *name;
-{
-	static char stringbuf[32];
-
-	return (getpropstringA(node, name, stringbuf));
-}
-
-/* Alternative getpropstring(), where caller provides the buffer */
-char *
-getpropstringA(node, name, buffer)
-	int node;
-	char *name;
-	char *buffer;
-{
-	int blen;
-
-	if (getprop(node, name, 1, &blen, (void **)&buffer) != 0)
-		blen = 0;
-
-	buffer[blen] = '\0';	/* usually unnecessary */
-	return (buffer);
-}
-
-/*
- * Fetch an integer (or pointer) property.
- * The return value is the property, or the default if there was none.
- */
-int
-getpropint(node, name, deflt)
-	int node;
-	char *name;
-	int deflt;
-{
-	int intbuf, *ip = &intbuf;
-	int len;
-
-	if (getprop(node, name, sizeof(int), &len, (void **)&ip) != 0)
-		return (deflt);
-
-	return (*ip);
-}
-
-/*
- * OPENPROM functions.  These are here mainly to hide the OPENPROM interface
- * from the rest of the kernel.
- */
-int
-firstchild(node)
-	int node;
-{
-
-	return (promvec->pv_nodeops->no_child(node));
-}
-
-int
-nextsibling(node)
-	int node;
-{
-
-	return (promvec->pv_nodeops->no_nextnode(node));
-}
-
-u_int      hexatoi __P((const char *));
-
-/* The following recursively searches a PROM tree for a given node */
-int
-search_prom(rootnode, name)
-        register int rootnode;
-        register char *name;
-{
-	int rtnnode;
-	int node = rootnode;
-	char buf[32];
-
-	if (node == findroot() ||
-	    !strcmp("hierarchical", getpropstringA(node, "device_type", buf)))
-		node = firstchild(node);
-
-	if (node == 0)
-		panic("search_prom: null node");
-
-	do {
-		if (strcmp(getpropstringA(node, "name", buf), name) == 0)
-			return (node);
-
-		if (node_has_property(node,"device_type") &&
-		    (strcmp(getpropstringA(node, "device_type", buf),
-			     "hierarchical") == 0
-		     || strcmp(getpropstringA(node, "name", buf), "iommu") == 0)
-		    && (rtnnode = search_prom(node, name)) != 0)
-			return (rtnnode);
-
-	} while ((node = nextsibling(node)));
-
-	return (0);
-}
-
-/* The following are used primarily in consinit() */
-
-int
-opennode(path)		/* translate phys. device path to node */
-	register char *path;
-{
-	register int fd;
-
-	if (promvec->pv_romvec_vers < 2) {
-		printf("WARNING: opennode not valid on sun4! %s\n", path);
-		return (0);
-	}
-	fd = promvec->pv_v2devops.v2_open(path);
-	if (fd == 0)
-		return 0;
-	return promvec->pv_v2devops.v2_fd_phandle(fd);
-}
-
-int
-node_has_property(node, prop)	/* returns 1 if node has given property */
-	register int node;
-	register const char *prop;
-{
-
-	return ((*promvec->pv_nodeops->no_proplen)(node, (caddr_t)prop) != -1);
-}
-
 #ifdef RASTERCONSOLE
-/* Pass a string to the FORTH PROM to be interpreted */
-void
-rominterpret(s)
-	register char *s;
-{
-
-	if (promvec->pv_romvec_vers < 2)
-		promvec->pv_fortheval.v0_eval(strlen(s), s);
-	else
-		promvec->pv_fortheval.v2_eval(s);
-}
-
 /*
  * Try to figure out where the PROM stores the cursor row & column
  * variables.  Returns nonzero on error.
@@ -1664,50 +1481,6 @@ romgetcursoraddr(rowp, colp)
 }
 #endif
 
-void
-romhalt()
-{
-
-	if (CPU_ISSUN4COR4M)
-		*promvec->pv_synchook = NULL;
-
-#if defined(SUN4M)
-	if (0 && CPU_ISSUN4M) {
-		extern void srmmu_restore_prom_ctx __P((void));
-		srmmu_restore_prom_ctx();
-	}
-#endif
-
-	promvec->pv_halt();
-	panic("PROM exit failed");
-}
-
-void
-romboot(str)
-	char *str;
-{
-	if (CPU_ISSUN4COR4M)
-		*promvec->pv_synchook = NULL;
-
-	promvec->pv_reboot(str);
-	panic("PROM boot failed");
-}
-
-void
-callrom()
-{
-
-#if 0			/* sun4c FORTH PROMs do this for us */
-	if (CPU_ISSUN4)
-#if NFB > 0
-		fb_unblank();
-#else
-		;
-#endif
-#endif
-	promvec->pv_abort();
-}
-
 /*
  * find a device matching "name" and unit number
  */
@@ -1735,13 +1508,3 @@ getdevunit(name, unit)
 	}
 	return dev;
 }
-
-u_int
-hexatoi(nptr)			/* atoi assuming hex, no 0x */
-	const char *nptr;
-{
-	u_int retval;
-	str2hex((char *)nptr, &retval);
-	return retval;
-}
-
