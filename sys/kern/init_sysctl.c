@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.4 2003/12/06 20:06:11 fvdl Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.5 2003/12/06 21:33:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1031,11 +1031,24 @@ static int
 sysctl_kern_cptime(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
-	u_int64_t *cp_time = NULL;
-	int error;
 
-#ifdef MULTIPROCESSOR
-	int n = sysctl_ncpus(), i;
+#ifndef MULTIPROCESSOR
+
+	if (namelen == 1 && name[0] == 0) {
+		/*
+		 * you're allowed to ask for the zero'th processor
+		 */
+		name++;
+		namelen--;
+	}
+	node.sysctl_data = curcpu()->ci_schedstate.spc_cp_time;
+	node.sysctl_size = sizeof(curcpu()->ci_schedstate.spc_cp_time);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+
+#else /* MULTIPROCESSOR */
+
+	u_int64_t *cp_time = NULL;
+	int error, n = sysctl_ncpus(), i;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
@@ -1049,25 +1062,19 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 	 */
 	switch (namelen) {
 	case 0:
-	    	if (*oldlenp == sizeof(*cp_time) * CPUSTATES || oldp == NULL) {
-			node.sysctl_size = sizeof(cp_time) * CPUSTATES;
-			cp_time = malloc(node.sysctl_size,
-					 M_TEMP, M_WAITOK|M_CANFAIL);
+	    	if (*oldlenp == sizeof(u_int64_t) * CPUSTATES || oldp == NULL) {
+			node.sysctl_size = sizeof(u_int64_t) * CPUSTATES;
 			n = -1; /* SUM */
 		}
 		else {
-			node.sysctl_size = n * sizeof(cp_time) * CPUSTATES;
-			cp_time = malloc(node.sysctl_size,
-					 M_TEMP, M_WAITOK|M_CANFAIL);
+			node.sysctl_size = n * sizeof(u_int64_t) * CPUSTATES;
 			n = -2; /* ALL */
 		}
 		break;
 	case 1:
 		if (name[0] < 0 || name[0] >= n)
 			return (EINVAL); /* ENOSUCHPROCESSOR */
-		node.sysctl_size = sizeof(cp_time) * CPUSTATES;
-		cp_time = malloc(node.sysctl_size,
-				 M_TEMP, M_WAITOK|M_CANFAIL);
+		node.sysctl_size = sizeof(u_int64_t) * CPUSTATES;
 		n = name[0];
 		/*
 		 * adjust these so that sysctl_lookup() will be happy
@@ -1078,16 +1085,14 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
+	cp_time = malloc(node.sysctl_size, M_TEMP, M_WAITOK|M_CANFAIL);
 	if (cp_time == NULL)
 		return (ENOMEM);
 	node.sysctl_data = cp_time;
 	memset(cp_time, 0, node.sysctl_size);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		/*
-		 * doing a sum or doing just this processor
-		 */
-		if (n == -1 || n == 0)
+		if (n <= 0)
 			for (i = 0; i < CPUSTATES; i++)
 				cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
 		/*
@@ -1109,20 +1114,11 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 			n--;
 	}
 
-#else /* MULTIPROCESSOR */
-	if (namelen == 1 && name[0] == 0) {
-		name++;
-		namelen--;
-	}
-	node.sysctl_data = curcpu()->ci_schedstate.spc_cp_time;
-	node.sysctl_size = sizeof(curcpu()->ci_schedstate.spc_cp_time);
-#endif /* MULTIPROCESSOR */
-
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (cp_time != NULL)
-		free(cp_time, M_TEMP);
-
+	free(node.sysctl_data, M_TEMP);
 	return (error);
+
+#endif /* MULTIPROCESSOR */
 }
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
