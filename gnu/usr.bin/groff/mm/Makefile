@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/08/02 17:44:26 mycroft Exp $
+#	$Id: Makefile,v 1.6 1994/02/10 02:18:08 cgd Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
@@ -14,13 +14,11 @@ MAN7=		groff_mm.0 groff_mmse.0
 MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
 
 afterinstall:
-	install -d -o $(TMACOWN) -g $(TMACGRP) -m 755 $(DESTDIR)$(TMACDIR)
 	install -c -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
 		$(.CURDIR)/tmac.m $(DESTDIR)$(TMACDIR)/tmac.m
 	install -c -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
 		$(.CURDIR)/tmac.m $(DESTDIR)$(TMACDIR)/tmac.mse
 
-	install -d -o $(TMACOWN) -g $(TMACGRP) -m 755 $(DESTDIR)$(TMACDIR)/mm
 	for f in $(FILES); do \
 		rm -f $(TMACDIR)/mm/$$f; \
 		install -c -o $(TMACOWN) -g $(TMACGRP) -m $(TMACMODE) \
