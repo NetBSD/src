@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 1997/10/16 23:54:17 christos Exp $
+	$NetBSD: syscalls.master,v 1.44 1997/10/19 18:48:16 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -97,7 +97,7 @@
 50	UNIMPL		reserved for USG
 51	NOARGS		{ int sys_acct(char *path); }
 52	UNIMPL		
-53	STD		{ int sunos_sys_mctl(caddr_t addr, int len, int func, \
+53	STD		{ int sunos_sys_mctl(void *addr, int len, int func, \
 			    void *arg); }
 54	STD		{ int sunos_sys_ioctl(int fd, u_long com, \
 			    caddr_t data); }
@@ -119,17 +119,17 @@
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(int incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
-71	STD		{ int sunos_sys_mmap(caddr_t addr, size_t len, \
+71	STD		{ void *sunos_sys_mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, long pos); }
 72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
-73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
-74	NOARGS		{ int sys_mprotect(caddr_t addr, size_t len, \
+73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
+74	NOARGS		{ int sys_mprotect(void *addr, size_t len, \
 			    int prot); }
-75	NOARGS		{ int sys_madvise(caddr_t addr, size_t len, \
+75	NOARGS		{ int sys_madvise(void *addr, size_t len, \
 			    int behav); }
 76	STD		{ int sunos_sys_vhangup(void); }
 77	UNIMPL		vlimit
-78	NOARGS		{ int sys_mincore(caddr_t addr, size_t len, \
+78	NOARGS		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
 79	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 80	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
