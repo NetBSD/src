@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.4 1998/08/19 01:43:22 thorpej Exp $	*/
+/*	$NetBSD: lex.c,v 1.5 1998/11/04 18:27:21 christos Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -841,7 +841,7 @@ getsc__()
 				source->flags |= s->flags & SF_ALIAS;
 				s = source;
 			} else if (*s->u.tblp->val.s
-				 && isspace(strchr(s->u.tblp->val.s, 0)[-1]))
+				 && isspace((unsigned char)strchr(s->u.tblp->val.s, 0)[-1]))
 			{
 				source = s = s->next;	/* pop source stack */
 				/* Note that this alias ended with a space,

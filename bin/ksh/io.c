@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.3 1998/08/19 01:43:22 thorpej Exp $	*/
+/*	$NetBSD: io.c,v 1.4 1998/11/04 18:27:21 christos Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -284,7 +284,7 @@ check_fd(name, mode, emsgp)
 {
 	int fd, fl;
 
-	if (isdigit(name[0]) && !name[1]) {
+	if (isdigit((unsigned char)name[0]) && !name[1]) {
 		fd = name[0] - '0';
 		if ((fl = fcntl(fd = name[0] - '0', F_GETFL, 0)) < 0) {
 			if (emsgp)
