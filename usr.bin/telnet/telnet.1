@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.6 1996/11/11 00:22:47 lukem Exp $
+.\"	$NetBSD: telnet.1,v 1.7 1997/05/11 07:22:35 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,13 +136,12 @@ command on this man page.)
 Sets the initial value of the
 .Ic debug
 toggle to
-.Dv TRUE
+.Dv TRUE .
 .It Fl e Ar escape char 
 Sets the initial
-.Nm
 .Nm telnet
 escape character to
-.Ar escape char.
+.Ar escape char .
 If
 .Ar escape char
 is omitted, then
@@ -183,7 +182,9 @@ Specifies a user interface similar to
 .Xr rlogin 1 .
 In this
 mode, the escape character is set to the tilde (~) character,
-unless modified by the -e option.
+unless modified by the
+.Fl e
+option.
 .It Fl x
 Turns on encryption of the data stream if possible.  This
 option is not available outside of the United States and
@@ -263,7 +264,7 @@ and
 is sent as a 
 .Dv TELNET ABORT
 instead of 
-.Dv BREAK
+.Dv BREAK .
 There are options (see
 .Ic toggle
 .Ic autoflush
@@ -342,7 +343,7 @@ Note:  Because of export controls, the
 .Dv TELNET ENCRYPT
 option is not supported outside of the United States and Canada.
 .Pp
-Valid arguments for the encrypt command are as follows:
+Valid arguments for the encrypt command are:
 .Bl -tag -width Ar
 .It Ic disable Ar type Ic [input|output]
 Disables the specified type of encryption.  If you
@@ -415,7 +416,7 @@ variable is also exported if the
 or
 .Fl l
 options are used.
-.br
+.Pp
 Valid arguments for the
 .Ic environ
 command are:
@@ -1135,8 +1136,8 @@ option is not supported, the user's login
 name are propagated through the
 .Dv TELNET ENVIRON
 option.
-This command is the same as specifying
-.Ar a
+This command is the same as specifying the
+.Fl a
 option on the
 .Ic open
 command.
