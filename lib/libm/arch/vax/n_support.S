@@ -1,4 +1,4 @@
-/*	$NetBSD: n_support.S,v 1.2 1999/07/02 15:37:35 simonb Exp $	*/
+/*	$NetBSD: n_support.S,v 1.3 2000/07/14 04:51:00 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,10 +33,11 @@
  *
  *	@(#)support.s	8.1 (Berkeley) 6/4/93
  */
-	.data
-	.align	2
+#include <machine/asm.h>
+
+	.text
 _sccsid:
-.asciz	"@(#)support.s	1.3 (Berkeley) 8/21/85; 8.1 (ucb.elefunt) 6/4/93"
+	.asciz "@(#)support.s\t1.3 (Berkeley) 8/21/85; 8.1 (ucb.elefunt) 6/4/93"
 
 /*
  * copysign(x,y),
@@ -49,14 +50,10 @@ _sccsid:
  */
 
 /*
- * double copysign(x,y)
- * double x,y;
+ * double copysign(double x,double y)
  */
-	.globl	_copysign
-	.text
-	.align	1
-_copysign:
-	.word	0x4
+
+ENTRY(copysign, 0)
 	movq	4(ap),r0		# load x into r0
 	bicw3	$0x807f,r0,r2		# mask off the exponent of x
 	beql	Lz			# if zero or reserved op then return x
@@ -66,14 +63,9 @@ _copysign:
 Lz:	ret
 
 /*
- * double logb(x)
- * double x;
+ * double logb(double x);
  */
-	.globl	_logb
-	.text
-	.align	1
-_logb:
-	.word	0x0
+ENTRY(logb, 0)
 	bicl3	$0xffff807f,4(ap),r0	# mask off the exponent of x
 	beql    Ln
 	ashl	$-7,r0,r0		# get the bias exponent
@@ -86,14 +78,9 @@ Ln:	movq	4(ap),r0		# r0:1 = x (zero or reserved op)
 1:	ret
 
 /*
- * long finite(x)
- * double x;
+ * long finite(double x);
  */
-	.globl	_finite
-	.text
-	.align	1
-_finite:
-	.word	0x0000
+ENTRY(finite, 0)
 	bicw3	$0x7f,4(ap),r0		# mask off the mantissa
 	cmpw	r0,$0x8000		# to see if x is the reserved op
 	beql	1f			# if so, return FALSE (0)
@@ -102,16 +89,27 @@ _finite:
 1:	clrl	r0
 	ret
 
+/* int isnan(double x);
+ */
+#if 0
+ENTRY(isnan, 0)
+	clrl	r0
+	ret
+#endif
+
+/* int isnanf(float x);
+ */
+ENTRY(isnanf, 0)
+	clrl	r0
+	ret
+
 /*
  * double scalb(x,N)
  * double x; double N;
  */
-	.globl	_scalb
 	.set	ERANGE,34
-	.text
-	.align	1
-_scalb:
-	.word	0x3c
+
+ENTRY(scalb, 0)
 	movq	4(ap),r0
 	bicl3	$0xffff807f,r0,r3
 	beql	ret1			# 0 or reserved operand
@@ -129,7 +127,7 @@ _scalb:
 	addl2	r2,r0
 	ret
 ovfl:	pushl	$ERANGE
-	calls	$1,_infnan		# if it returns
+	calls	$1,_C_LABEL(infnan)	# if it returns
 	bicw3	$0x7fff,4(ap),r2	# get the sign of input arg
 	bisw2	r2,r0			# re-attach the sign to r0/1
 	ret
@@ -142,12 +140,9 @@ ret1:	ret
  * DOUBLE PRECISION (VAX D format 56 bits)
  * CODED IN VAX ASSEMBLY LANGUAGE BY K.C. NG, 4/8/85.
  */
-	.globl	_drem
 	.set	EDOM,33
-	.text
-	.align	1
-_drem:
-	.word	0xffc
+
+ENTRY(drem, 0x0fc0)
 	subl2	$12,sp
 	movq	4(ap),r0		#r0=x
 	movq	12(ap),r2		#r2=y
@@ -192,13 +187,13 @@ C2:
 	muld2	r8,r6			#n*t1
 	subd2	r6,r0			#x-n*t1
 	subd2	r4,r0			#(x-n*t1)-n*(t-t1)
-	brb	loop
+	jbr	loop
 E1:
 	movw	-4(fp),r6		#r6=nx
 	beql	C3			#if nx=0 goto C3
 	addw2	r6,r0			#x:=x*2**57 scale up x by nx
 	movw	$0,-4(fp)		#clear nx
-	brb	loop
+	jbr	loop
 C3:
 	movq	r2,r4			#r4 = y
 	subw2	$0x80,r4		#r4 = y/2
@@ -223,7 +218,7 @@ C5:
 	ret
 Rop:					#Reserved operand
 	pushl	$EDOM
-	calls	$1,_infnan		#generate reserved op fault
+	calls	$1,_C_LABEL(infnan)	#generate reserved op fault
 	ret
 Ret:
 	movq	$0x8000,r0		#propagate reserved op

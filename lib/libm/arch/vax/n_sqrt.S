@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sqrt.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
+/*	$NetBSD: n_sqrt.S,v 1.3 2000/07/14 04:50:58 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,8 @@
  *	@(#)sqrt.s	8.1 (Berkeley) 6/4/93
  */
 
+#include <machine/asm.h>
+
 /*
  * double sqrt(arg)   revised August 15,1982
  * double arg;
@@ -45,31 +47,27 @@
  * entry points:_d_sqrt		address of double arg is on the stack
  *		_sqrt		double arg is on the stack
  */
-	.text
-	.align	1
-	.globl	_sqrt
-	.type	_sqrt,@function
-	.globl	_d_sqrt
-	.type	_d_sqrt,@function
-	.globl	libm$dsqrt_r5
-	.type	libm$dsqrt_r5,@label
 	.set	EDOM,33
 
-_d_sqrt:
-	.word	0x003c          # save r5,r4,r3,r2
+ENTRY(d_sqrt, 0x003c)		# save r5,r4,r3,r2
 	movq	*4(ap),r0
-	jmp  	dsqrt2
-_sqrt:
-	.word	0x003c          # save r5,r4,r3,r2
+	jbr  	dsqrt2
+
+ENTRY(sqrt, 0x003c)		# save r5,r4,r3,r2
 	movq    4(ap),r0
+
 dsqrt2:	bicw3	$0x807f,r0,r2	# check exponent of input
 	jeql	noexp		# biased exponent is zero -> 0.0 or reserved
-	bsbb	libm$dsqrt_r5
+	bsbb	_C_LABEL(__libm_dsqrt_r5)+2
 noexp:	ret
 
 /* **************************** internal procedure */
 
-libm$dsqrt_r5:			/* ENTRY POINT FOR cdabs and cdsqrt	*/
+
+ALTENTRY(__libm_dsqrt_r5)
+	nop
+	nop
+				/* ENTRY POINT FOR cdabs and cdsqrt	*/
 				/* returns double square root scaled by	*/
 				/* 2^r6	*/
 
@@ -117,8 +115,8 @@ libm$dsqrt_r5:			/* ENTRY POINT FOR cdabs and cdsqrt	*/
 	rsb				# DONE!
 nonpos:
 	jneq	negarg
-	ret			# argument and root are zero
+	ret				# argument and root are zero
 negarg:
 	pushl	$EDOM
-	calls	$1,_infnan	# generate the reserved op fault
+	calls	$1,_C_LABEL(infnan)	# generate the reserved op fault
 	ret

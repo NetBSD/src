@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cabs.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
+/*	$NetBSD: n_cabs.S,v 1.3 2000/07/14 04:50:58 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,9 @@
  *	@(#)cabs.s	8.1 (Berkeley) 6/4/93
  */
 
+#include <machine/asm.h>
+
+	.globl	_C_LABEL(__libm_dsqrt_r5)
 /*
  * double precision complex absolute value
  * CABS by W. Kahan, 9/7/80.
@@ -43,29 +46,15 @@
  * output is in r0:r1 (error less than 0.86 ulps)
  */
 
-	.text
-	.align	1
-	.globl  _cabs
-	.type	_cabs,@function
-	.globl  _hypot
-	.type	_hypot,@function
-	.globl	_z_abs
-	.type	_z_abs,@function
-	.globl	libm$cdabs_r6
-	.type	libm$cdabs_r6,@label
-	.globl	libm$dsqrt_r5
-	.type	libm$dsqrt_r5,@label
-
 /*	entry for c functions cabs and hypot */
-_cabs:
-_hypot:
-	.word	0x807c		# save r2-r6, enable floating overflow
+ALTENTRY(cabs)
+ENTRY(hypot, 0x8040) 		# save r6, enable floating overflow
 	movq	4(ap),r0	# r0:1 = x
 	movq	12(ap),r2	# r2:3 = y
-	jmp	cabs2
+	jbr	cabs2
+
 /*	entry for Fortran use, call by:   d = abs(z) */
-_z_abs:
-	.word	0x807c		# save r2-r6, enable floating overflow
+ENTRY(z_abs, 0x8040)		# save r6, enable floating overflow
 	movl	4(ap),r2	# indirect addressing is necessary here
 	movq	(r2)+,r0	# r0:1 = x
 	movq	(r2),r2		# r2:3 = y
@@ -89,7 +78,7 @@ cont:
 return:
 	ret
 
-libm$cdabs_r6:			# ENTRY POINT for cdsqrt
+ENTRY(__libm_cdabs_r6,0)	# ENTRY POINT for cdsqrt
 				# calculates a scaled (factor in r6)
 				# complex absolute value
 
@@ -133,6 +122,7 @@ ordered:
 	addl2	r5,r4
 	cvtld	r4,r2
 	addd2	r2,r0		# r0:1 = scaled x^2 + y^2
-	jmp	libm$dsqrt_r5	# r0:1 = dsqrt(x^2+y^2)/2^r6
+	jmp	_C_LABEL(__libm_dsqrt_r5)+2
+				# r0:1 = dsqrt(x^2+y^2)/2^r6
 retsb:
 	rsb			# error < 0.86 ulp

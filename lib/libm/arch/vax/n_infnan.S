@@ -1,4 +1,4 @@
-/*      $NetBSD: n_infnan.S,v 1.3 1999/07/02 15:37:35 simonb Exp $ */
+/*      $NetBSD: n_infnan.S,v 1.4 2000/07/14 04:50:58 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,10 +33,11 @@
  *
  *	@(#)infnan.s	8.1 (Berkeley) 6/4/93
  */
-	.data
-	.align	2
+#include <machine/asm.h>
+
+	.text
 _sccsid:
-.asciz	"@(#)infnan.s	1.1 (Berkeley) 8/21/85; 8.1 (ucb.elefunt) 6/4/93"
+	.asciz	"@(#)infnan.s\t1.1 (Berkeley) 8/21/85; 8.1 (ucb.elefunt) 6/4/93"
 
 /*
  * infnan(arg) int arg;
@@ -48,16 +49,12 @@ _sccsid:
  */
 	.set	EDOM,33
 	.set	ERANGE,34
-	.text
-	.align 1
-	.globl	_infnan
-	.type	_infnan,@function
-_infnan:
-	.word	0x0
+
+ENTRY(infnan, 0)
 	cmpl	4(ap),$ERANGE
 	bneq	1f
-	movl	$ERANGE,_errno
+	movl	$ERANGE,_C_LABEL(errno)
 	brb	2f
-1:	movl	$EDOM,_errno
+1:	movl	$EDOM,_C_LABEL(errno)
 2:	emodd	$0,$0,$0x8000,r0,r0	# generates the reserved operand fault
 	ret

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.4 1999/07/02 15:37:35 simonb Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.5 2000/07/14 04:50:58 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,8 @@
  *	@(#)argred.s	8.1 (Berkeley) 6/4/93
  */
 
+#include <machine/asm.h>
+
 /*
  *  libm$argred implements Bob Corbett's argument reduction and
  *  libm$sincos implements Peter Tang's double precision sin/cos.
@@ -44,14 +46,8 @@
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-	.text
-	.globl	libm$argred
-	.type	libm$argred,@label
-	.globl	libm$sincos
-	.type	libm$sincos,@label
-	.align	1
 
-libm$argred:
+ENTRY(__libm_argred, 0)
 /*
  *  Compare the argument with the largest possible that can
  *  be reduced by table lookup.  r3 := |x|  will be used in  table_lookup .
@@ -74,7 +70,8 @@ small_arg:
  *  	   r3  contains a F-format extension to the reduced argument;
  *          r4  contains a  0 or 1  corresponding to a  sin or cos  entry.
  */
-libm$sincos:
+
+ENTRY(__libm_sincos, 0)
 /*
  *  Compensate for a cosine entry by adding one to the quadrant number.
  */
@@ -109,7 +106,7 @@ sine:
 /*	cvtfd	r4,r4		... r5 = 0 after a polyd. */
 	addd2	r4,r0		# S(X) = beta + S(X)
 	addd2	r6,r0		# S(X) = X + S(X)
-	brb	done
+	jbr	done
 cosine:
 	muld2	r6,r6		# Xsq = X * X
 	beql	zero_arg
@@ -126,8 +123,7 @@ done:
 even:
 	rsb
 
-.data
-.align	2
+	_ALIGN_TEXT
 
 sin_coef:
 	.double	0d-7.53080332264191085773e-13	# s7 = 2^-29 -1.a7f2504ffc49f8..
@@ -264,8 +260,9 @@ leading:
 
 twoOverPi:
 	.double	0d+6.36619772367581343076e-01
+
 	.text
-	.align	1
+	_ALIGN_TEXT
 
 table_lookup:
 	muld3	r3,twoOverPi,r0
@@ -298,7 +295,7 @@ abs2:
  *						p.0
  */
 	.text
-	.align	2
+	_ALIGN_TEXT
 /*
  * Only 256 (actually 225) bits of 2/pi are needed for VAX double
  * precision; this was determined by enumerating all the nearest
@@ -450,7 +447,7 @@ more1:
 	addl2	r1,r5
 	emul	r0,r6,r5,r5
 	addl2	r0,r6
-	brb	addbits1
+	jbr	addbits1
 
 signoff4:
 	emul	r1,r6,$0,r4
@@ -484,7 +481,7 @@ more2:
 
 	emul	r0,r6,r4,r5
 	addl2	r0,r6
-	brb	addbits2
+	jbr	addbits2
 
 signoff5:
 	emul	r0,r6,r4,r5
@@ -557,7 +554,7 @@ small:
  */
 	ashq	r6,r9,r10
 	ashq	r6,r8,r9
-	brb	mult
+	jbr	mult
 /*						p.13
  *
  *  Test to see if the sign bit of  r9  is on.
@@ -571,7 +568,7 @@ tiny:
 	movl	$32,r6
 	movq	r8,r10
 	tstl	r10
-	brb	mult
+	jbr	mult
 /*						p.14
  *
  *  Test whether  r9  is zero.  It is probably
@@ -597,7 +594,7 @@ tinier:
  */
 	ashq	r1,r8,r10
 	ashq	r1,r7,r9
-	brb	mult
+	jbr	mult
 /*						p.15
  *
  *  The following code sets the reduced
@@ -607,7 +604,7 @@ zero:
 	clrl	r1
 	clrl	r2
 	clrl	r3
-	brw	return
+	jbr	return
 /*						p.16
  *
  *  At this point,  r0  contains the octant number,
@@ -735,7 +732,7 @@ chop:
 /*	subw2	$217,r6		-S.McD */
 	subw2	$64,r6
 	insv	r6,$7,$8,r3
-	brb	return
+	jbr	return
 /*						p.21
  *
  *  The following code generates the appropriate

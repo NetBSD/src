@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.S,v 1.3 1999/07/02 15:37:35 simonb Exp $	*/
+/*	$NetBSD: n_cbrt.S,v 1.4 2000/07/14 04:50:58 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,8 @@
  *	@(#)cbrt.s	8.1 (Berkeley) 6/4/93
  */
 
+#include <machine/asm.h>
+
 /*
  * double cbrt(double arg)
  * W. Kahan, 10/13/80. revised 1/13/84 for keeping sign symmetry
@@ -42,22 +44,12 @@
  * Max error less than 0.667 ulps (unit in the last places)
  */
 
-	.globl	_cbrt
-	.type	_cbrt,@function
-	.globl	_d_cbrt
-	.type	_d_cbrt,@function
-	.globl	_dcbrt_
-	.type	_dcbrt_,@function
-	.text
-	.align	1
-
-_cbrt:
-_d_cbrt:
-	.word	0x00fc		# save r2 to r7
+ALTENTRY(cbrt)
+ENTRY(d_cbrt, 0x00c0)		# save r6 & r7
 	movq	4(ap),r0	# r0 = argument x
-	jmp 	dcbrt2
-_dcbrt_:
-	.word	0x00fc		# save r2 to r7
+	jbr 	dcbrt2
+
+ENTRY(dcbrt_, 0x00c0)		# save r6 & r7
 	movq	*4(ap),r0	# r0 = argument x
 
 dcbrt2:	bicw3	$0x807f,r0,r2	# biased exponent of x
@@ -93,12 +85,10 @@ dcbrt2:	bicw3	$0x807f,r0,r2	# biased exponent of x
 return:
 	ret			# error less than 0.667 ulps
 
-.data
-.align	2
+	_ALIGN_TEXT
 B :	.long		 721142941		# (86-0.03306235651)*(2^23)
 C :	.float		0f0.5428571429		# 19/35
 D :	.float		0f-0.7053061224		# -864/1225
 E :	.float		0f1.414285714		# 99/70
 F :	.float		0f1.607142857		# 45/28
 G :	.float		0f0.3571428571		# 5/14
-
