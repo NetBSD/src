@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 1995/02/13 23:07:17 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 1995/03/24 15:07:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -142,20 +142,12 @@ cpu_fork(p1, p2)
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
 
 	/*
-	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switch() can quickly map in
-	 * the user struct and kernel stack. Note: if the virtual address
-	 * translation changes (e.g. swapout) we have to update this.
-	 * Also cache the physical address of the pcb, so we can
+	 * Cache the physical address of the pcb, so we can
 	 * swap to it easily.
 	 */
 	ptep = kvtopte(up);
 	p2->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
-	for (i = 0; i < UPAGES; i++) {
-		p2->p_md.md_upte[i] = *ptep & ~PG_ASM;
-		ptep++;
-	}
 
 	/*
 	 * Copy floating point state from the FP chip to the PCB
@@ -185,13 +177,67 @@ cpu_fork(p1, p2)
 	if (up->u_pcb.pcb_fen != 0)
 		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
 #endif
-	if (copykstack(up)) {
+
+	/*
+	 * create the child's kernel stack, from scratch.
+	 */
+	{
+		struct trapframe *p2tf;
+		extern void rei();
+
 		/*
-		 * Return 1 in child.
+		 * Pick a stack pointer, leaving room for a trapframe;
+		 * copy trapframe from parent so return to user mode
+		 * will be to right address, with correct registers.
 		 */
-		return (1);
+		p2tf = p2->p_md.md_tf = (struct trapframe *)
+		    ((char *)p2->p_addr + USPACE - sizeof(struct trapframe));
+		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
+		    sizeof(struct trapframe));
+
+		/*
+		 * Set up return-value registers as fork() libc stub expects.
+		 */
+		p2tf->tf_regs[FRAME_V0] = p1->p_pid;	/* parent's pid */
+		p2tf->tf_regs[FRAME_A3] = 0;		/* no error */
+		p2tf->tf_regs[FRAME_A4] = 1;		/* is child */
+
+		/*
+		 * Arrange for continuation at rei().  Note that the
+		 * child process doesn't stay in the kernel for long!
+		 */
+		up->u_pcb.pcb_ksp = (u_int64_t)p2tf;
+		up->u_pcb.pcb_context[7] = (u_int64_t)rei;
+		up->u_pcb.pcb_context[8] = 0;
 	}
+
 	return (0);
+}
+
+/*
+ * cpu_set_pc:
+ *
+ * Arrange for in-kernel execution of a process to continue at the
+ * named pc, as if the code at that address were called as a function
+ * with argument, the current process's process pointer.
+ *
+ * Note that it's assumed that when the named process returns, rei()
+ * should be invoked, to return to user mode.
+ */
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	u_int64_t pc;
+{
+	struct pcb *pcbp;
+	extern void proc_trampoline();
+	extern void rei();
+
+	pcbp = &p->p_addr->u_pcb;
+	pcbp->pcb_context[0] = pc;		/* s0 - pc to invoke */
+	pcbp->pcb_context[1] = (u_int64_t)rei;	/* s1 - return address */
+	pcbp->pcb_context[7] =
+	    (u_int64_t)proc_trampoline;		/* ra - assembly magic */
 }
 
 /*
@@ -208,18 +254,12 @@ cpu_swapin(p)
 	int i;
 
 	/*
-	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switch() can quickly map in
-	 * the user struct and kernel stack.  Also cache the physical
-	 * address of the pcb, so we can swap to it easily.
+	 * Cache the physical address of the pcb, so we can swap to
+	 * it easily.
 	 */
 	ptep = kvtopte(up);
 	p->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
-	for (i = 0; i < UPAGES; i++) {
-		p->p_md.md_upte[i] = *ptep & ~PG_ASM;
-		ptep++;
-	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.1 1995/02/13 23:06:57 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.2 1995/03/24 15:07:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -145,7 +145,6 @@ main()
 	off("P_VMSPACE", struct proc, p_vmspace);
 	off("P_MD_FLAGS", struct proc, p_md.md_flags);
 	off("P_MD_PCBPADDR", struct proc, p_md.md_pcbpaddr);
-	off("P_MD_UPTE", struct proc, p_md.md_upte[0]);
 	off("PH_LINK", struct prochd, ph_link);
 	off("PH_RLINK", struct prochd, ph_rlink);
 
@@ -155,9 +154,6 @@ main()
 
 	/* Important offsets into the user struct & associated constants */
 	def("UPAGES", UPAGES);
-	def("SYSMAP_UPTES", SYSMAP_UPTES);
-	def("UADDR", UADDR);
-	def("KSTACKTOP", KSTACKTOP);
 	off("U_PCB", struct user, u_pcb);
 	off("U_PCB_KSP", struct user, u_pcb.pcb_ksp);
 	off("U_PCB_CONTEXT", struct user, u_pcb.pcb_context[0]);

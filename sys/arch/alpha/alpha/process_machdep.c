@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 1995/02/13 23:07:08 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2 1995/03/24 15:07:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -73,8 +73,7 @@ process_read_regs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	frame = (struct trapframe *)
-	    ((char *)p->p_addr + ((char *)p->p_md.md_tf - (char *)KSTACK));
+	frame = p->p_md.md_tf;
 
 	frametoreg(frame, regs);
 
@@ -91,8 +90,7 @@ process_write_regs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	frame = (struct trapframe *)
-	    ((char *)p->p_addr + ((char *)p->p_md.md_tf - (char *)KSTACK));
+	frame = p->p_md.md_tf;
 
 	regtoframe(regs, frame);
 
@@ -121,8 +119,7 @@ process_set_pc(p, addr)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	frame = (struct trapframe *)
-	    ((char *)p->p_addr + ((char *)p->p_md.md_tf - (char *)KSTACK));
+	frame = p->p_md.md_tf;
 
 	frame->tf_pc = (u_int64_t)addr;
 
