@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.83 2001/05/15 14:14:48 leo Exp $
+#	$NetBSD: files.atari,v 1.84 2001/05/29 06:42:21 leo Exp $
 
 maxpartitions 16
 
@@ -145,6 +145,7 @@ file	arch/atari/pci/pci_hades.c	pci & _atarihw_
 file 	arch/atari/pci/pci_milan.c	pci & _milanhw_
 file	arch/atari/pci/pci_vga.c	pci
 file	arch/atari/pci/pci_tseng.c	pci
+file	arch/atari/pci/pciide_machdep.c	pciide
 
 device	pcibus
 attach	pcibus at mainbus
