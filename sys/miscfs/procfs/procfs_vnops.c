@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.12 1994/01/09 19:44:10 ws Exp $
+ *	$Id: procfs_vnops.c,v 1.13 1994/01/20 21:23:10 ws Exp $
  */
 
 /*
@@ -387,9 +387,13 @@ procfs_getattr(vp, vap, cred, p)
 		break;
 
 	case Pctl:
+		vap->va_bytes = vap->va_size = PROCFS_CTLLEN;
 		break;
 
 	case Pnote:
+		vap->va_bytes = vap->va_size = PROCFS_NOTELEN;
+		break;
+		
 	case Pnotepg:
 		break;
 
@@ -622,6 +626,15 @@ procfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	int count;
 	int i;
 
+	/*
+	 * NFS mounting of procfs doesn't work correctly.
+	 * The files in procfs are more similar to devices
+	 * than to regular files.
+	 * See also procfs_vptofh & procfs_fhtovp in procfs_vfsops.c
+	 */
+	if (cookies)
+		panic("procfs_readdir");
+	
 	pfs = VTOPFS(vp);
 
 	if (uio->uio_resid < UIO_MX)
