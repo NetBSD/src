@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.10 1995/01/18 06:37:01 mellon Exp $
+#	$NetBSD: files.pmax,v 1.11 1995/02/01 04:49:40 mellon Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard
@@ -28,6 +28,7 @@ arch/pmax/dev/scc.c			optional scc device-driver
 arch/pmax/dev/sii.c			optional sii device-driver
 arch/pmax/dev/tz.c			optional tz device-driver
 arch/pmax/dev/xcfb.c			optional xcfb device-driver
+arch/pmax/dev/if_tt.c			optional tt device-driver
 compat/ultrix/ultrix_misc.c		optional compat_ultrix
 compat/ultrix/ultrix_syscalls.c		optional compat_ultrix
 compat/ultrix/ultrix_sysent.c		optional compat_ultrix
