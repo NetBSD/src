@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39.2.3 2001/01/05 17:33:54 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.39.2.4 2001/03/28 18:20:25 bouyer Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.39.2.3 $"
+#ident		"GENERIC-$Revision: 1.39.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -251,8 +251,8 @@ wd*		at pciide? channel ? drive ? flags 0x0000
 atapibus*	at pciide? channel ?
 
 tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
-ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-scsibus*	at ahc?
+#ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+#scsibus*	at ahc?
 
 #### MII/PHY support
 
