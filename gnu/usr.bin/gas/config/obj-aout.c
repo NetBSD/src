@@ -514,11 +514,10 @@ object_headers *headers;
 			|| S_IS_EXTERNAL(symbolP)
 #endif /* TC_I960 */
 			|| (S_GET_NAME(symbolP)[0] != '\001' &&
-				(flagseen['L'] || ! S_LOCAL_NAME(symbolP)
+				(flagseen['L'] || ! S_LOCAL_NAME(symbolP))
 #ifdef PIC
-				|| flagseen['k'] && symbolP->sy_forceout
+				|| (flagseen['k'] && symbolP->sy_forceout)
 #endif
-				)
 			   )
 			)
 #ifdef PIC
