@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlregs.h,v 1.1 1997/10/17 18:38:36 bouyer Exp $	*/
+/*	$NetBSD: if_tlregs.h,v 1.2 1997/11/17 01:44:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(_TLVAR_H)
-#define _TLVAR_H
+#if !defined(_DEV_PCI_IF_TLREGS_H_)
+#define _DEV_PCI_IF_TLREGS_H_
 
 #define PCI_CFID    0x00    /* Configuration ID */
 #define PCI_CFCS    0x04    /* Configurtion Command/Status */
@@ -196,4 +196,4 @@ struct Rx_list {
 	struct tl_Rx_list hw_list;
 };
 
-#endif /* !defined(_TLVAR_H) */
+#endif /* ! _DEV_PCI_IF_TLREGS_H_ */
