@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.24 1996/05/15 03:23:10 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.24.4.1 1996/06/01 03:39:15 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -79,6 +79,30 @@ u_char mrg_adbstore3[512];
 u_char mrg_ExpandMem[512];			/* 0x1ea Bytes minimum */
 u_char mrg_adbstore4[32];			/* 0x16 bytes was the largest I found yet */
 u_char mrg_adbstore5[80];			/* 0x46 bytes minimum */
+
+/*
+ * InitEgret in the AV ROMs requires a low memory global at 0x2010 to be
+ * pointed at this jump table, which can be found at 0x40803280. It's
+ * included here so we can do mrg_fixupROMBase on it.
+ */
+
+u_int32_t mrg_AVInitEgretJT[] = {
+	0x408055D0, 0x4083985A, 0x40839AB6, 0x4080F180,
+	0x4080C0B6, 0x4080C30A, 0x4080C380, 0x4080C482,
+	0x4080C496, 0x4080C82E, 0x4080C9FE, 0x4080CA16,
+	0x4081D1D6, 0x4085CDDE, 0x4080DF28, 0x4080DFC6,
+	0x4080E292, 0x4080E2C0, 0x4080E348, 0x4080E600,
+	0x4080E632, 0x4080E6B8, 0x4080E6E4, 0x4080E750,
+	0x4080E776, 0x4080E7B4, 0x408B90E0, 0x40852490,
+	0x40852280, 0x40852410, 0x4080E8F0, 0x4080E940,
+	0x4080E960, 0x4080E9B0, 0x4080E9E0, 0x4080EA50,
+	0x4080EA70, 0x4080EB14, 0x4080EBC0, 0x4081D1D6,
+	0x40810AB0, 0x40810BDA, 0x40810CCA, 0x40810FF2,
+	0x4080FF8C, 0x40810292, 0x40812CE2, 0x40813AAE,
+	0x40813AE0, 0x408113DE, 0x40811EB0, 0x40811FA0,
+	0x40811DD0, 0x4083B720, 0x408412E0, 0x40841300,
+	0x40841380, 0x4083A390, 0x408411F0
+};
 
 caddr_t	mrg_romadbintr = (caddr_t)0;	/* ROM ADB interrupt */
 caddr_t	mrg_rompmintr = 0;			/* ROM PM (?) interrupt */
@@ -871,6 +895,9 @@ mrg_init()
 	mrg_VIA2 = (caddr_t)(Via1Base + VIA2 * 0x2000);	/* see via.h */
 	SCCRd = (caddr_t)(IOBase + sccA);   /* ser.c ; we run before serinit */
 
+	/* AV ROMs want this low memory vector to point to a jump table */
+	InitEgretJTVec = (u_int32_t **)&mrg_AVInitEgretJT;
+
 	switch(mach_cputype()){
 		case MACH_68020:	CPUFlag = 2;	break;
 		case MACH_68030:	CPUFlag = 3;	break;
@@ -1040,6 +1067,7 @@ mrg_fixupROMBase(obase, nbase)
 {
 	u_int32_t oldbase, newbase;
 	romvec_t *rom;
+	int i;
 
 	oldbase = (u_int32_t) obase;
 	newbase = (u_int32_t) nbase;
@@ -1157,6 +1185,10 @@ t:  walter@ghpc8.ihf.rwth-aachen.de\n");
          */
         ROMResourceMap = rom->ROMResourceMap == 0 ?
                 0 : (void (*))rom->ROMResourceMap - oldbase + newbase;
+
+	for (i = 0; i < sizeof(mrg_AVInitEgretJT) / sizeof(mrg_AVInitEgretJT[0]); i++)
+		mrg_AVInitEgretJT[i] = mrg_AVInitEgretJT[i] == 0 ?
+		    0 : mrg_AVInitEgretJT[i] - oldbase + newbase;
 
 #if defined(MRG_DEBUG)
         printf("mrg: ROM adbintr 0x%08lx -> 0x%08lx\n",
