@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.2 2003/03/25 22:40:54 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.3 2003/03/25 23:41:17 pooka Exp $	*/
 
 
 #include "magic.h"
@@ -41,7 +41,7 @@
 #if 0
 FILE_RCSID("@(#)Id: magic.c,v 1.5 2003/03/24 01:34:21 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.2 2003/03/25 22:40:54 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.3 2003/03/25 23:41:17 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -185,7 +185,7 @@ magic_file(struct magic_set *ms, const char *inname)
 	if ((fd = open(inname, O_RDONLY)) < 0) {
 		/* We can't open it, but we were able to stat it. */
 		if (sb.st_mode & 0002)
-			if (file_printf(ms, "writeable, ") == -1)
+			if (file_printf(ms, "writable, ") == -1)
 				return NULL;
 		if (sb.st_mode & 0111)
 			if (file_printf(ms, "executable, ") == -1)
