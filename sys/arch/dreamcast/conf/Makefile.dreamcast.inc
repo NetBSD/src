@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile.dreamcast.inc,v 1.4 2001/02/14 18:06:50 msaitoh Exp $
+#	$NetBSD: Makefile.dreamcast.inc,v 1.5 2001/10/23 19:55:56 thorpej Exp $
 
-MACHINE=dreamcast
 MACHINE_ARCH=sh3el
 
 TEXTADDR=8c010000 
