@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.8 1998/07/05 00:51:21 jonathan Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.9 1998/07/05 06:49:13 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,6 +33,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

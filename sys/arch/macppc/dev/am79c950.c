@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.4 1998/07/05 03:14:42 jonathan Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.5 1998/07/05 06:49:06 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,6 +36,7 @@
 #include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_llc.h"
+#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.18 1998/07/05 00:51:07 jonathan Exp $ */
+/* $NetBSD: if_ea.c,v 1.19 1998/07/05 06:49:04 jonathan Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,6 +52,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

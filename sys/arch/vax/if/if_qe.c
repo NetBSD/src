@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.30 1998/07/05 04:37:40 jonathan Exp $ */
+/*	$NetBSD: if_qe.c,v 1.31 1998/07/05 06:49:09 jonathan Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -143,6 +143,7 @@
 #include "opt_ccitt.h"
 #include "opt_llc.h"
 #include "opt_iso.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

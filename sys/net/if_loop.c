@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.24 1998/07/05 04:37:41 jonathan Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.25 1998/07/05 06:49:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
+#include "opt_ns.h"
 
 #include "bpfilter.h"
 #include "loop.h"
