@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 1998/02/27 09:15:21 scottr Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 1998/03/02 22:40:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -90,6 +90,7 @@ struct drvr_descriptor {
 #define	DRVR_TYPE_MACINTOSH	1
 
 struct drvr_map {
+#define DRIVER_MAP_MAGIC	0x4552
 	u_int16_t	sbSig;		/* map signature */
 	u_int16_t	sbBlockSize;	/* block size of device */
 	u_int32_t	sbBlkCount;	/* number of blocks on device */
@@ -152,7 +153,7 @@ struct part_map_entry {
 
 /*
  * "pmBootArgs" for APPLE_UNIX_SVR2 partition.
- * NetBSD/Mac68k only uses Magic, Cluster, Type, and Flags.
+ * NetBSD/mac68k only uses Magic, Cluster, Type, and Flags.
  */
 struct blockzeroblock {
 	u_int32_t       bzbMagic;
