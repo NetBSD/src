@@ -1,7 +1,7 @@
-/*	$NetBSD: bootblock.h,v 1.21 2003/11/13 20:14:27 simonb Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.22 2004/02/16 07:37:06 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2002,2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -139,6 +139,54 @@
 /* ------------------------------------------
  * MBR (Master Boot Record) --
  *	definitions for systems that use MBRs
+ */
+
+/*
+ * Layout of boot records:
+ *
+ *	Byte range	Use	Description
+ *	----------	---	-----------
+ *
+ *	000 - 002	FMP	JMP xxx, NOP
+ *	003 - 010	FP	OEM Name
+ *
+ *	011 - 061	FMP	FAT12/16 BPB
+ *				Whilst not strictly necessary for MBR,
+ *				GRUB reserves this area
+ *
+ *	011 - 089	P	FAT32 BPB
+ *				(are we ever going to boot off this?)
+ *
+ *
+ *	62 - 217	FMP	Boot code
+ *
+ *	90 - 217	P	FAT32 boot code
+ *
+ *	218 - 223	M	Win95b/98/me "drive time"
+ *		http://www.geocities.com/thestarman3/asm/mbr/95BMEMBR.htm#MYST
+ *				only changed if all 6 bytes are 0
+ *
+ *	224 - 436	FMP	boot code (continued)
+ *
+ *	437 - 439	M	WinNT/2K/XP MBR "boot language"
+ *		http://www.geocities.com/thestarman3/asm/mbr/Win2kmbr.htm
+ *				not needed by us
+ *
+ *	440 - 443	M	WinNT/2K/XP Drive Serial Number (NT DSN)
+ *		http://www.geocities.com/thestarman3/asm/mbr/Win2kmbr.htm
+ *
+ *	444 - 445	FMP	bootcode or unused
+ *
+ *	446 - 509	M	partition table
+ *
+ *	510 - 511	FMP	magic number (0xAA55)
+ *
+ *	Use:
+ *	----
+ *	F	Floppy boot sector
+ *	M	Master Boot Record
+ *	P	Partition Boot record
+ *
  */
 
 /*
