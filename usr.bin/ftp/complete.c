@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.31 1999/09/27 23:09:43 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.32 1999/09/28 06:47:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.31 1999/09/27 23:09:43 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.32 1999/09/28 06:47:40 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -189,23 +189,17 @@ complete_local(word, list)
 		if (file == word) {
 			dir[0] = '/';
 			dir[1] = '\0';
-		} else {
-			(void)strncpy(dir, word, file - word);
-			dir[file - word] = '\0';
-		}
+		} else
+			(void)strlcpy(dir, word, file - word + 1);
 		file++;
 	}
 	if (dir[0] == '~') {
 		char *p;
 
-		p = dir;
-		if (!globulize(&p))
+		if ((p = globulize(dir)) == NULL)
 			return (CC_ERROR);
-		if (p != dir) {
-			strncpy(dir, p, sizeof(dir));
-			dir[sizeof(dir)-1] = '\0';
-			free(p);
-		}
+		(void)strlcpy(dir, p, sizeof(dir));
+		free(p);
 	}
 
 	if ((dd = opendir(dir)) == NULL)
@@ -240,9 +234,9 @@ complete_local(word, list)
 		struct stat sb;
 		char path[MAXPATHLEN];
 
-		strlcpy(path, dir,		sizeof(path));
-		strlcat(path, "/",		sizeof(path));
-		strlcat(path, words->sl_str[0],	sizeof(path));
+		(void)strlcpy(path, dir,		sizeof(path));
+		(void)strlcat(path, "/",		sizeof(path));
+		(void)strlcat(path, words->sl_str[0],	sizeof(path));
 
 		if (stat(path, &sb) >= 0) {
 			char suffix[2] = " ";
@@ -284,8 +278,7 @@ complete_remote(word, list)
 		cp = file;
 		while (*cp == '/' && cp > word)
 			cp--;
-		(void)strncpy(dir, word, cp - word + 1);
-		dir[cp - word + 1] = '\0';
+		(void)strlcpy(dir, word, cp - word + 2);
 		file++;
 	}
 
@@ -319,7 +312,7 @@ complete_remote(word, list)
 			fprintf(ttyout, "\n%s\n", emesg);
 			return (CC_REDISPLAY);
 		}
-		(void)strcpy(lastdir, dir);
+		(void)strlcpy(lastdir, dir, sizeof(lastdir));
 		dirchange = 0;
 	}
 
@@ -356,8 +349,7 @@ complete(el, ch)
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
 		return (CC_ERROR);
-	(void)strncpy(line, lf->buffer, len);
-	line[len] = '\0';
+	(void)strlcpy(line, lf->buffer, len + 1);
 	cursor_pos = line + (lf->cursor - lf->buffer);
 	lastc_argc = cursor_argc;	/* remember last cursor pos */
 	lastc_argo = cursor_argo;
@@ -372,7 +364,7 @@ complete(el, ch)
 	    && strncmp(word, margv[cursor_argc], cursor_argo) == 0)
 		dolist = 1;
 	else if (cursor_argc < margc)
-		(void)strncpy(word, margv[cursor_argc], cursor_argo);
+		(void)strlcpy(word, margv[cursor_argc], cursor_argo + 1);
 	word[cursor_argo] = '\0';
 
 	if (cursor_argc == 0)

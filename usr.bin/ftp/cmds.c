@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.62 1999/09/27 23:09:42 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.63 1999/09/28 06:47:38 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.62 1999/09/27 23:09:42 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.63 1999/09/28 06:47:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ settype(argc, argv)
 	else
 		comret = command("TYPE %s", p->t_mode);
 	if (comret == COMPLETE) {
-		(void)strcpy(typename, p->t_name);
+		(void)strlcpy(typename, p->t_name, sizeof(typename));
 		curtype = type = p->t_type;
 	}
 }
@@ -333,7 +333,7 @@ put(argc, argv)
 {
 	char *cmd;
 	int loc = 0;
-	char *oldargv1, *oldargv2;
+	char *locfile, *remfile;
 
 	if (argc == 2) {
 		argc++;
@@ -349,30 +349,21 @@ usage:
 		code = -1;
 		return;
 	}
-	oldargv1 = argv[1];
-	oldargv2 = argv[2];
-	if (!globulize(&argv[1])) {
+	if ((locfile = globulize(argv[1])) == NULL) {
 		code = -1;
 		return;
 	}
-	/*
-	 * If "globulize" modifies argv[1], and argv[2] is a copy of
-	 * the old argv[1], make it a copy of the new argv[1].
-	 */
-	if (argv[1] != oldargv1 && argv[2] == oldargv1) {
-		argv[2] = argv[1];
-	}
+	remfile = argv[2];
+	if (loc)	/* If argv[2] is a copy of the old argv[1], update it */
+		remfile = locfile;
 	cmd = (argv[0][0] == 'a') ? "APPE" : ((sunique) ? "STOU" : "STOR");
-	if (loc && ntflag) {
-		argv[2] = dotrans(argv[2]);
-	}
-	if (loc && mapflag) {
-		argv[2] = domap(argv[2]);
-	}
-	sendrequest(cmd, argv[1], argv[2],
-	    argv[1] != oldargv1 || argv[2] != oldargv2);
-	if (oldargv1 != argv[1])	/* free up after globulize() */
-		free(argv[1]);
+	if (loc && ntflag)
+		remfile = dotrans(remfile);
+	if (loc && mapflag)
+		remfile = domap(remfile);
+	sendrequest(cmd, locfile, remfile,
+	    locfile != argv[1] || remfile != argv[2]);
+	free(locfile);
 }
 
 /*
@@ -398,7 +389,7 @@ mput(argc, argv)
 	oldintr = xsignal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	if (proxy) {
-		char *cp, *tp2, tmpbuf[MAXPATHLEN];
+		char *cp;
 
 		while ((cp = remglob(argv, 0, NULL)) != NULL) {
 			if (*cp == '\0') {
@@ -407,31 +398,12 @@ mput(argc, argv)
 			}
 			if (mflag && confirm(argv[0], cp)) {
 				tp = cp;
-				if (mcase) {
-					while (*tp &&
-					       !islower((unsigned char)*tp)) {
-						tp++;
-					}
-					if (!*tp) {
-						tp = cp;
-						tp2 = tmpbuf;
-						while ((*tp2 = *tp) != '\0') {
-						     if (isupper((unsigned char)*tp2)) {
-							    *tp2 =
-								tolower(*tp2);
-						     }
-						     tp++;
-						     tp2++;
-						}
-					}
-					tp = tmpbuf;
-				}
-				if (ntflag) {
+				if (mcase)
+					tp = docase(tp);
+				if (ntflag)
 					tp = dotrans(tp);
-				}
-				if (mapflag) {
+				if (mapflag)
 					tp = domap(tp);
-				}
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    cp, tp, cp != tp || !interactive);
 				if (!mflag && fromatty) {
@@ -530,7 +502,7 @@ getit(argc, argv, restartit, mode)
 {
 	int loc = 0;
 	int rval = 0;
-	char *oldargv1, *oldargv2, *globargv2;
+	char *remfile, *locfile, *olocfile;
 
 	if (argc == 2) {
 		argc++;
@@ -546,44 +518,26 @@ usage:
 		code = -1;
 		return (0);
 	}
-	oldargv1 = argv[1];
-	oldargv2 = argv[2];
-	if (!globulize(&argv[2])) {
+	remfile = argv[1];
+	if ((olocfile = globulize(argv[2])) == NULL) {
 		code = -1;
 		return (0);
 	}
-	globargv2 = argv[2];
-	if (loc && mcase) {
-		char *tp = argv[1], *tp2, tmpbuf[MAXPATHLEN];
-
-		while (*tp && !islower((unsigned char)*tp)) {
-			tp++;
-		}
-		if (!*tp) {
-			tp = argv[2];
-			tp2 = tmpbuf;
-			while ((*tp2 = *tp) != '\0') {
-				if (isupper((unsigned char)*tp2)) {
-					*tp2 = tolower(*tp2);
-				}
-				tp++;
-				tp2++;
-			}
-			argv[2] = tmpbuf;
-		}
-	}
+	locfile = olocfile;
+	if (loc && mcase)
+		locfile = docase(locfile);
 	if (loc && ntflag)
-		argv[2] = dotrans(argv[2]);
+		locfile = dotrans(locfile);
 	if (loc && mapflag)
-		argv[2] = domap(argv[2]);
+		locfile = domap(locfile);
 	if (restartit) {
 		struct stat stbuf;
 		int ret;
 
-		ret = stat(argv[2], &stbuf);
+		ret = stat(locfile, &stbuf);
 		if (restartit == 1) {
 			if (ret < 0) {
-				warn("local: %s", argv[2]);
+				warn("local: %s", locfile);
 				goto freegetit;
 			}
 			restart_point = stbuf.st_size;
@@ -602,12 +556,11 @@ usage:
 		}
 	}
 
-	recvrequest("RETR", argv[2], argv[1], mode,
-	    argv[1] != oldargv1 || argv[2] != oldargv2, loc);
+	recvrequest("RETR", locfile, remfile, mode,
+	    remfile != argv[1] || locfile != argv[2], loc);
 	restart_point = 0;
 freegetit:
-	if (oldargv2 != globargv2)	/* free up after globulize() */
-		free(globargv2);
+	(void)free(olocfile);
 	return (rval);
 }
 
@@ -967,8 +920,7 @@ setgate(argc, argv)
 		else {
 			if (argc == 3)
 				gateport = strdup(argv[2]);
-			strncpy(gsbuf, argv[1], sizeof(gsbuf) - 1);
-			gsbuf[sizeof(gsbuf) - 1] = '\0';
+			(void)strlcpy(gsbuf, argv[1], sizeof(gsbuf));
 			gateserver = gsbuf;
 			gatemode = 1;
 		}
@@ -1088,7 +1040,7 @@ lcd(argc, argv)
 	char *argv[];
 {
 	char buf[MAXPATHLEN];
-	char *oldargv1;
+	char *locdir;
 
 	if (argc < 2)
 		argc++, argv[1] = home;
@@ -1097,23 +1049,21 @@ lcd(argc, argv)
 		code = -1;
 		return;
 	}
-	oldargv1 = argv[1];
-	if (!globulize(&argv[1])) {
+	if ((locdir = globulize(argv[1])) == NULL) {
 		code = -1;
 		return;
 	}
-	if (chdir(argv[1]) < 0) {
-		warn("local: %s", argv[1]);
+	if (chdir(locdir) < 0) {
+		warn("local: %s", locdir);
 		code = -1;
 	} else {
 		if (getcwd(buf, sizeof(buf)) != NULL)
 			fprintf(ttyout, "Local directory now %s\n", buf);
 		else
-			warn("getcwd: %s", argv[1]);
+			warn("getcwd: %s", locdir);
 		code = 0;
 	}
-	if (oldargv1 != argv[1])	/* free up after globulize() */
-		free(argv[1]);
+	(void)free(locdir);
 }
 
 /*
@@ -1205,37 +1155,63 @@ ls(argc, argv)
 	char *argv[];
 {
 	const char *cmd;
-	char *oldargv2, *globargv2;
+	char *remdir, *locfile;
+	int freelocfile, pagecmd;
 
-	if (argc < 2)
-		argc++, argv[1] = NULL;
-	if (argc < 3)
-		argc++, argv[2] = "-";
-	if (argc > 3) {
-		fprintf(ttyout, "usage: %s remote-directory local-file\n",
-		    argv[0]);
+	remdir = NULL;
+	locfile = "-";
+	freelocfile = pagecmd = 0;
+			/*
+			 * assume all `pager' versions of the commands
+			 * are the only ones that start with `p'
+			 */
+	if (argv[0][0] == 'p')
+		pagecmd = 1;
+
+	cmd = "NLST";
+	if (strcmp(argv[0] + pagecmd, "dir") == 0)
+		cmd = "LIST";
+
+	if (argc > 1)
+		remdir = argv[1];
+	if (argc > 2)
+		locfile = argv[2];
+	if (argc > 3 || (pagecmd && argc > 2)) {
+		if (pagecmd)
+			fprintf(ttyout,
+			    "usage: %s [remote-directory]\n", argv[0]);
+		else
+			fprintf(ttyout,
+			    "usage: %s [remote-directory [local-file]]\n",
+			    argv[0]);
 		code = -1;
-		return;
+		goto freels;
 	}
-	cmd = strcmp(argv[0], "dir") == 0 ? "LIST" : "NLST";
-	oldargv2 = argv[2];
-	if (strcmp(argv[2], "-") && !globulize(&argv[2])) {
-		code = -1;
-		return;
-	}
-	globargv2 = argv[2];
-	if (strcmp(argv[2], "-") && *argv[2] != '|')
-		if (!globulize(&argv[2]) || !confirm("output to local-file:",
-		    argv[2])) {
+
+	if (pagecmd) {
+		char *p;
+		int len;
+
+		p = getenv("PAGER");
+		if (p == NULL || p[0] == '\0')
+			p = PAGER;
+		len = strlen(p) + 2;
+		locfile = xmalloc(len);
+		locfile[0] = '|';
+		(void)strlcpy(locfile + 1, p, len - 1);
+		freelocfile = 1;
+	} else if ((strcmp(locfile, "-") != 0) && *locfile != '|') {
+		if ((locfile = globulize(locfile)) == NULL ||
+		    !confirm("output to local-file:", locfile)) {
 			code = -1;
 			goto freels;
+		}
+		freelocfile = 1;
 	}
-	recvrequest(cmd, argv[2], argv[1], "w", 0, 0);
+	recvrequest(cmd, locfile, remdir, "w", 0, 0);
 freels:
-	if (argv[2] != globargv2)		/* free up after globulize() */
-		free(argv[2]);
-	if (globargv2 != oldargv2)
-		free(globargv2);
+	if (freelocfile && locfile)
+		(void)free(locfile);
 }
 
 /*
@@ -1262,7 +1238,7 @@ usage:
 	odest = dest = argv[argc - 1];
 	argv[argc - 1] = NULL;
 	if (strcmp(dest, "-") && *dest != '|')
-		if (!globulize(&dest) ||
+		if (((dest = globulize(dest)) == NULL) ||
 		    !confirm("output to local-file:", dest)) {
 			code = -1;
 			return;
@@ -1319,8 +1295,7 @@ shell(argc, argv)
 		if (namep == NULL)
 			namep = shell;
 		shellnam[0] = '-';
-		(void)strncpy(shellnam + 1, ++namep, sizeof(shellnam) - 2);
-		shellnam[sizeof(shellnam) - 1] = '\0';
+		(void)strlcpy(shellnam + 1, ++namep, sizeof(shellnam) - 1);
 		if (strcmp(namep, "sh") != 0)
 			shellnam[0] = '+';
 		if (debug) {
@@ -1535,23 +1510,15 @@ quote1(initial, argc, argv)
 	int argc;
 	char *argv[];
 {
-	int i, len;
+	int i;
 	char buf[BUFSIZ];		/* must be >= sizeof(line) */
 
-	(void)strncpy(buf, initial, sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
-	if (argc > 1) {
-		len = strlen(buf);
-		len += strlen(strncpy(&buf[len], argv[1],
-		    sizeof(buf) - len - 1));
-		for (i = 2; i < argc && len < sizeof(buf); i++) {
-			buf[len++] = ' ';
-			len += strlen(strncpy(&buf[len], argv[i],
-			    sizeof(buf) - len) - 1);
-		}
+	(void)strlcpy(buf, initial, sizeof(buf));
+	for (i = 1; i < argc; i++) {
+		(void)strlcat(buf, argv[i], sizeof(buf));
+		if (i < (argc - 1))
+			(void)strlcat(buf, " ", sizeof(buf));
 	}
-		/* Ensure buf is NUL terminated */
-	buf[sizeof(buf) - 1] = '\0';
 	if (command("%s", buf) == PRELIM) {
 		while (getreply(0) == PRELIM)
 			continue;
@@ -1762,6 +1729,33 @@ setcase(argc, argv)
 	code = togglevar(argc, argv, &mcase, "Case mapping");
 }
 
+/*
+ * convert the given name to lower case if it's all upper case, into
+ * a static buffer which is returned to the caller
+ */
+char *
+docase(name)
+	char *name;
+{
+	static char new[MAXPATHLEN];
+	int i, dochange;
+
+	dochange = 1;
+	for (i = 0; name[i] != '\0' && i < sizeof(new) - 1; i++) {
+		new[i] = name[i];
+		if (islower((unsigned char)new[i]))
+			dochange = 0;
+	}
+	new[i] = '\0';
+
+	if (dochange) {
+		for (i = 0; new[i] != '\0'; i++)
+			if (isupper((unsigned char)new[i]))
+				new[i] = tolower(new[i]);
+	}
+	return (new);
+}
+
 void
 setcr(argc, argv)
 	int argc;
@@ -1784,14 +1778,12 @@ setntrans(argc, argv)
 	}
 	ntflag++;
 	code = ntflag;
-	(void)strncpy(ntin, argv[1], sizeof(ntin) - 1);
-	ntin[sizeof(ntin) - 1] = '\0';
+	(void)strlcpy(ntin, argv[1], sizeof(ntin));
 	if (argc == 2) {
 		ntout[0] = '\0';
 		return;
 	}
-	(void)strncpy(ntout, argv[2], sizeof(ntout) - 1);
-	ntout[sizeof(ntout) - 1] = '\0';
+	(void)strlcpy(ntout, argv[2], sizeof(ntout));
 }
 
 char *
@@ -1851,10 +1843,10 @@ setnmap(argc, argv)
 		cp = strchr(altarg, ' ');
 	}
 	*cp = '\0';
-	(void)strncpy(mapin, altarg, MAXPATHLEN - 1);
+	(void)strlcpy(mapin, altarg, MAXPATHLEN);
 	while (*++cp == ' ')
 		continue;
-	(void)strncpy(mapout, cp, MAXPATHLEN - 1);
+	(void)strlcpy(mapout, cp, MAXPATHLEN);
 }
 
 char *
@@ -2239,9 +2231,8 @@ macdef(argc, argv)
 		fputs(
 		"Enter macro line by line, terminating it with a null line.\n",
 		    ttyout);
-	(void)strncpy(macros[macnum].mac_name, argv[1],
-	    sizeof(macros[macnum].mac_name) - 1);
-	macros[macnum].mac_name[sizeof(macros[macnum].mac_name) - 1] = '\0';
+	(void)strlcpy(macros[macnum].mac_name, argv[1],
+	    sizeof(macros[macnum].mac_name));
 	if (macnum == 0)
 		macros[macnum].mac_start = macbuf;
 	else
@@ -2355,7 +2346,40 @@ newer(argc, argv)
 }
 
 /*
- * Display one file through $PAGER (defaults to "more").
+ * Display one local file through $PAGER (defaults to "more").
+ */
+void
+lpage(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int len;
+	char *p, *pager, *locfile;
+
+	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
+		fprintf(ttyout, "usage: %s filename\n", argv[0]);
+		code = -1;
+		return;
+	}
+	if ((locfile = globulize(argv[1])) == NULL) {
+		code = -1;
+		return;
+	}
+	p = getenv("PAGER");
+	if (p == NULL || p[0] == '\0')
+		p = PAGER;
+	len = strlen(p) + strlen(locfile) + 2;
+	pager = xmalloc(len);
+	(void)strlcpy(pager, p,		len);
+	(void)strlcat(pager, " ",	len);
+	(void)strlcat(pager, locfile,	len);
+	system(pager);
+	(void)free(pager);
+	(void)free(locfile);
+}
+
+/*
+ * Display one remote file through $PAGER (defaults to "more").
  */
 void
 page(argc, argv)
@@ -2363,15 +2387,10 @@ page(argc, argv)
 	char *argv[];
 {
 	int ohash, orestart_point, overbose, len;
-	char *p, *pager, *oldargv1;
+	char *p, *pager;
 
 	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
 		fprintf(ttyout, "usage: %s filename\n", argv[0]);
-		code = -1;
-		return;
-	}
-	oldargv1 = argv[1];
-	if (!globulize(&argv[1])) {
 		code = -1;
 		return;
 	}
@@ -2381,19 +2400,17 @@ page(argc, argv)
 	len = strlen(p) + 2;
 	pager = xmalloc(len);
 	pager[0] = '|';
-	strlcpy(pager + 1, p, len - 1);
+	(void)strlcpy(pager + 1, p, len - 1);
 
 	ohash = hash;
 	orestart_point = restart_point;
 	overbose = verbose;
 	hash = restart_point = verbose = 0;
 	recvrequest("RETR", pager, argv[1], "r+w", 1, 0);
-	(void)free(pager);
 	hash = ohash;
 	restart_point = orestart_point;
 	verbose = overbose;
-	if (oldargv1 != argv[1])	/* free up after globulize() */
-		free(argv[1]);
+	(void)free(pager);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.37 1999/09/27 23:32:31 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.38 1999/09/28 06:47:40 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -93,6 +93,7 @@ void	delete __P((int, char **));
 void	disconnect __P((int, char **));
 void	do_chmod __P((int, char **));
 void	do_umask __P((int, char **));
+char   *docase __P((char *));
 void	domacro __P((int, char **));
 char   *domap __P((char *));
 void	doproxy __P((int, char **));
@@ -104,7 +105,7 @@ void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
 int	getreply __P((int));
-int	globulize __P((char **));
+char   *globulize __P((const char *));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
 char   *hookup __P((char *, char *));
@@ -115,6 +116,7 @@ int	isipv6addr __P((const char *));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
 void	lostpeer __P((void));
+void	lpage __P((int, char **));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
 void	mabort __P((int));

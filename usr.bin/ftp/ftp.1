@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.47 1999/09/22 07:18:34 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.48 1999/09/28 06:47:41 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd September 22, 1999
+.Dd September 28, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -816,6 +816,22 @@ traffic.
 (Note that though ftp servers are required to support the
 .Dv PASV
 command by RFC 1123, some do not.)
+.It Ic pdir Op Ar remote-directory
+Perform
+.Ic dir
+.Op Ar remote-directory ,
+and display it with your
+.Ev PAGER
+(c.f.
+.Ic page ) .
+.It Ic pls Op Ar remote-directory
+Perform
+.Ic ls
+.Op Ar remote-directory ,
+and display it with your
+.Ev PAGER
+(c.f.
+.Ic page ) .
 .It Ic preserve
 Toggle preservation of modification times on retrieved files.
 .It Ic progress
