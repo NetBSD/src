@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.86.2.1 2002/06/21 16:03:48 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -824,6 +824,9 @@ more secure.
 
 If you have a network and intend to use NIS, please bear in mind the
 capabilities of other machines on your network.
+
+If you are upgrading and would like to keep configuration unchanged,
+choose the last option "do not change".
 }
 
 message swapactive

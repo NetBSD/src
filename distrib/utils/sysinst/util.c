@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67.2.1 2002/06/06 09:58:45 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.67.2.2 2002/06/21 16:03:49 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1060,17 +1060,28 @@ set_crypt_type(void)
 	msg_display(MSG_choose_crypt);
 	process_menu(MENU_crypttype);
 	fn = strdup(target_expand("/etc/passwd.conf"));
-	rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
 
-	if (!yesno) {
+	switch (yesno) {
+	case 0:
+		break;
+	case 1:	/* DES */
+		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
 		pwc = fopen(fn, "w");
-
+		fprintf(pwc,
+		    "default:\n"
+		    "  localcipher = old\n"
+		    "  ypcipher = old\n");
+		fclose(pwc);
+		break;
+	case 2:	/* MD5 */
+		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
+		pwc = fopen(fn, "w");
 		fprintf(pwc,
 		    "default:\n"
 		    "  localcipher = md5\n"
 		    "  ypcipher = md5\n");
-
 		fclose(pwc);
+		break;
 	}
 
 	free(fn);

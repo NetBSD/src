@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.3 2002/04/16 02:20:17 mycroft Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.3.2.1 2002/06/21 16:03:48 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -327,8 +327,9 @@ menu fdok, title "Nacisnij enter aby kontynuowac";
 	option "Przerwac instalacje", exit, action { yesno = 0; };
 
 menu crypttype, title "Kodowanie hasel";
-	option "MD5", exit, action { yesno = 0; };
 	option "DES", exit, action { yesno = 1; };
+	option "MD5", exit, action { yesno = 2; };
+	option "nie zmieniaj", exit, action { yesno = 0; };
 
 menu cdromsource, title "Zmien";
 	display action

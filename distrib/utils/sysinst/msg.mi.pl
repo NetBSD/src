@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.1 2002/04/09 19:47:58 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.1.2.1 2002/06/21 16:03:48 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -824,6 +824,9 @@ bezpieczna.
 
 Jesli posiadasz siec oraz zamierasz korzystac z NIS, pamietaj o mozliwosciach
 innych maszyn w twojej sieci.
+
+Jezeli uaktualniasz swoj system i nie chcesz, aby zostaly dokonane zmiany w
+konfiguracji, wybierz ostatnia opcje "nie zmieniaj".
 }
 
 message swapactive
