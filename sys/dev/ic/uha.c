@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.19 1998/11/19 21:53:00 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.20 1998/12/05 19:43:54 mjacob Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -187,6 +187,7 @@ uha_attach(sc, upd)
 	sc->sc_link.device = &uha_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 #define	MSCPSIZE	(UHA_MSCP_MAX * sizeof(struct uha_mscp))

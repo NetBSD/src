@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.36 1998/11/19 21:53:32 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.37 1998/12/05 19:43:55 mjacob Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -444,6 +444,7 @@ wds_attach(sc, wpd)
 	/* It gives Vendor Error 26 whenever I try it.     */
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.34 1998/11/19 21:44:36 thorpej Exp $	*/
+/*	$NetBSD: idesc.c,v 1.35 1998/12/05 19:43:36 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -407,6 +407,7 @@ idescattach(pdp, dp, auxp)
 	sc->sc_link.device = &idesc_scsidev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 	TAILQ_INIT(&sc->sc_xslist);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.18 1998/11/19 21:50:30 thorpej Exp $	*/
+/*	$NetBSD: spc.c,v 1.19 1998/12/05 19:43:47 mjacob Exp $	*/
 
 #define	integrate	__inline static
 
@@ -476,6 +476,7 @@ spcattach(parent, self, aux)
 	sc->sc_link.device = &spc_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	printf("\n");

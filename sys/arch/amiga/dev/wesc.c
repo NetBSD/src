@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.23 1998/11/19 21:44:37 thorpej Exp $	*/
+/*	$NetBSD: wesc.c,v 1.24 1998/12/05 19:43:38 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -123,6 +123,7 @@ wescattach(pdp, dp, auxp)
 	sc->sc_link.device = &wesc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	siopinitialize(sc);

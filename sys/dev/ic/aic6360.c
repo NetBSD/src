@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.60 1998/11/19 21:52:59 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.61 1998/12/05 19:43:50 mjacob Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -288,6 +288,7 @@ aicattach(sc)
 	sc->sc_link.device = &aic_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	/*

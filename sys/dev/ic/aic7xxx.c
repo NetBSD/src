@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.32 1998/11/19 21:52:59 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.33 1998/12/05 19:43:50 mjacob Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -681,6 +681,7 @@ ahc_attach(ahc)
 	 * Set up max_target.
 	 */
 	ahc->sc_link.scsipi_scsi.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
+	ahc->sc_link.scsipi_scsi.max_lun = 7;
 #endif
 	ahc->sc_link.adapter_softc = ahc;
 #if defined(__NetBSD__)
