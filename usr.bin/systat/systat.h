@@ -34,7 +34,7 @@
 #include <curses.h>
 
 struct  mode {
-        char    *c_name;			/* command name */
+        const char    *c_name;			/* command name */
         void    (*c_refresh)(void);		/* display refresh */
         void    (*c_fetch)(void);		/* sets up data structures */
         void    (*c_label)(void);		/* label display */
@@ -46,9 +46,9 @@ struct  mode {
 };
 
 struct	command {
-	char	*c_name;
+	const char	*c_name;
 	void	(*c_cmd)(char *args);
-	char	*helptext;
+	const char	*helptext;
 };
 
 #define	CF_INIT		0x1		/* been initialized */

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2005/02/16 03:45:41 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,14 +42,14 @@ extern struct	mode *curmode;
 extern struct	mode modes[];
 extern struct	text *xtext;
 extern WINDOW	*wnd;
-extern char	c, *namp, hostname[];
+extern char	*namp, hostname[];
 extern double	avenrun[3];
 extern float	*dk_mspw;
 extern kvm_t	*kd;
 extern long	ntext, textp;
 extern int	CMDLINE;
 extern int	hz, stathz, maxslp;
-extern int	naptime, col;
+extern int	naptime;
 extern int	nhosts;
 extern int	nports;
 extern int	protos;

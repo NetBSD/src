@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.17 2003/10/13 14:22:20 agc Exp $	*/
+/*	$NetBSD: swap.c,v 1.18 2005/02/26 22:12:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.17 2003/10/13 14:22:20 agc Exp $");
+__RCSID("$NetBSD: swap.c,v 1.18 2005/02/26 22:12:34 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -136,12 +136,12 @@ labelswap(void)
 void
 showswap(void)
 {
-	int	col, div, i, avail, used, xsize, free;
+	int	col, blk_div, i, avail, used, xsize, swp_free;
 	struct	swapent *sep;
 	char	*p;
 
-	div = blocksize / 512;
-	free = avail = 0;
+	blk_div = blocksize / 512;
+	swp_free = avail = 0;
 	for (sep = swap_devices, i = 0; i < nswap; i++, sep++) {
 		if (sep == NULL)
 			continue;
@@ -152,22 +152,22 @@ showswap(void)
 		mvwprintw(wnd, i + 1, 0, "%-5s", p);
 
 		col = 5;
-		mvwprintw(wnd, i + 1, col, "%*d", hlen, sep->se_nblks / div);
+		mvwprintw(wnd, i + 1, col, "%*d", hlen, sep->se_nblks / blk_div);
 
 		col += hlen;
 		xsize = sep->se_nblks;
 		used = sep->se_inuse;
 		avail += xsize;
-		free += xsize - used;
-		mvwprintw(wnd, i + 1, col, "%9d  ", used / div);
+		swp_free += xsize - used;
+		mvwprintw(wnd, i + 1, col, "%9d  ", used / blk_div);
 		wclrtoeol(wnd);
 		whline(wnd, 'X', (100 * used / xsize + 1) / 2);
 	}
 	/* do total if necessary */
 	if (nswap > 1) {
-		used = avail - free;
+		used = avail - swp_free;
 		mvwprintw(wnd, i + 1, 0, "%-5s%*d%9d  ",
-		    "Total", hlen, avail / div, used / div);
+		    "Total", hlen, avail / blk_div, used / blk_div);
 		wclrtoeol(wnd);
 		whline(wnd, 'X', (100 * used / avail + 1) / 2);
 	}
