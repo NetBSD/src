@@ -1,4 +1,4 @@
-/*	$NetBSD: print-hdlc.c,v 1.1 1998/07/25 11:30:45 explorer Exp $	*/
+/*	$NetBSD: print-hdlc.c,v 1.2 1998/07/25 11:39:53 explorer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994
@@ -21,7 +21,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifdef HDLC
+#ifdef HAVE_HDLC
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
