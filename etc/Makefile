@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.186 2001/10/24 02:43:13 tv Exp $
+#	$NetBSD: Makefile,v 1.187 2001/10/26 06:45:33 jmc Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -41,6 +41,8 @@
 
 # For NO_SENDMAIL, INSTPRIV, MKCRYPTO
 .include <bsd.own.mk>
+
+.MAKEOVERRIDES+=	USETOOLS
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	UTC

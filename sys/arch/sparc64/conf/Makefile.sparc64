@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.41 2001/10/24 19:12:18 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.42 2001/10/26 06:45:40 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -20,6 +20,8 @@ MACHINE_ARCH=sparc64
 .else
 MACHINE_ARCH=sparc
 .endif
+
+USETOOLS?=	no
 
 .include <bsd.own.mk>
 
