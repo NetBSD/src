@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/06/01 06:56:55 matt Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2000/06/22 17:34:42 matt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -40,8 +40,8 @@ all:	netbsd.ram.gz
 	# vnconfig -v -c ${VND} ${IMAGE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 \
-	    -f 1024 -b 8192 ${VND_RDEV}
+	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 4 -t 5 -u 144 \
+	    -f 512 -b 4096 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    KERNOBJDIR=${KERNOBJDIR} \
