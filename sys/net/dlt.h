@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.8 2004/06/22 12:50:41 itojun Exp $	*/
+/*	$NetBSD: dlt.h,v 1.9 2004/09/28 03:34:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -62,17 +62,59 @@
 #define DLT_HDLC	16	/* HDLC framing */
 
 #define DLT_PFSYNC	18	/* Packet filter state syncing */
+#define DLT_ATM_CLIP	19	/* Linux Classical-IP over ATM */
+#define DLT_ENC		109	/* Encapsulated packets for IPsec */
+#define DLT_LINUX_SLL	113	/* Linux cooked sockets */
+#define DLT_LTALK	114	/* Apple LocalTalk hardware */
 #define DLT_PFLOG	117	/* Packet filter logging, by pcap people */
+#define DLT_CISCO_IOS	118	/* Registered for Cisco-internal use */
 
 /* NetBSD-specific types */
 #define	DLT_PPP_SERIAL	50	/* PPP over serial (async and sync) */
 #define	DLT_PPP_ETHER	51	/* XXX - deprecated! PPP over Ethernet; session only, w/o ether header */
 
+/* Axent Raptor / Symantec Enterprise Firewall */
+#define DLT_SYMANTEC_FIREWALL	99
+
+#define DLT_C_HDLC		104	/* Cisco HDLC */
 #define DLT_IEEE802_11		105	/* IEEE 802.11 wireless */
+#define DLT_FRELAY		107	/* Frame Relay */
+#define DLT_LOOP		108	/* OpenBSD DLT_LOOP */
 #define DLT_ECONET		115	/* Acorn Econet */
 #define DLT_PRISM_HEADER	119	/* 802.11 header plus Prism II info. */
 #define DLT_AIRONET_HEADER 	120	/* 802.11 header plus Aironet info. */
+#define DLT_HHDLC		121	/* Reserved for Siemens HiPath HDLC */
+#define DLT_IP_OVER_FC		122	/* RFC 2625 IP-over-Fibre Channel */
+#define DLT_SUNATM		123	/* Solaris+SunATM */
+#define DLT_RIO                 124     /* RapidIO */
+#define DLT_PCI_EXP             125     /* PCI Express */
+#define DLT_AURORA              126     /* Xilinx Aurora link layer */
 #define DLT_IEEE802_11_RADIO 	127	/* 802.11 header plus radio info. */
+#define DLT_TZSP                128     /* Tazmen Sniffer Protocol */
+#define DLT_ARCNET_LINUX	129	/* ARCNET */
+#define DLT_JUNIPER_MLPPP       130	/* Juniper-private data link types. */
+#define DLT_JUNIPER_MLFR        131
+#define DLT_JUNIPER_ES          132
+#define DLT_JUNIPER_GGSN        133
+#define DLT_JUNIPER_MFR         134
+#define DLT_JUNIPER_ATM2        135
+#define DLT_JUNIPER_SERVICES    136
+#define DLT_JUNIPER_ATM1        137
+#define DLT_APPLE_IP_OVER_IEEE1394	138	/* Apple IP-over-IEEE 1394 */
+
+/*
+ * 139 through 142 are reserved for SS7.
+ */
+
+#define DLT_DOCSIS		143	/* Reserved for DOCSIS MAC frames. */
+#define DLT_LINUX_IRDA		144	/* Linux-IrDA packets */
+
+/* Reserved for IBM SP switch and IBM Next Federation switch. */
+#define DLT_IBM_SP		145
+#define DLT_IBM_SN		146
+
+#define DLT_IEEE802_11_RADIO_AVS	163	/* 802.11 plus AVS header */
+#define DLT_JUNIPER_MONITOR     164	/* Juniper-private data link type */
 
 /*
  * NetBSD-specific generic "raw" link type.  The upper 16-bits indicate
