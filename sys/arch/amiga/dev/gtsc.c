@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: gtsc.c,v 1.5 1994/06/16 14:28:48 chopps Exp $
+ *	$Id: gtsc.c,v 1.6 1994/10/06 19:06:41 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ gtscattach(pdp, dp, auxp)
 	if (gtsc_dmabounce || kvtop(sc) & sc->sc_dmamask) {
 		sc->sc_dmabuffer = (char *) alloc_z2mem(MAXPHYS);
 		if (isztwomem(sc->sc_dmabuffer))
-			printf(" bounce pa 0x%x", ztwopa(sc->sc_dmabuffer));
+			printf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
 		else if (gtsc_maxdma == 0) {
 			gtsc_maxdma = 1024;
 			printf(" bounce pa 0x%x", 
