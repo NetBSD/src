@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2001/06/14 12:57:16 fredette Exp $ */
+/*	$NetBSD: boot.c,v 1.1.18.1 2003/09/09 19:11:09 tron Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,8 +50,9 @@
  *   segment 1:  netbsd.sun3  (RAMDISK3)
  *   segment 2:  netbsd.sun3x (RAMDISK3X)
  *   segment 3:  miniroot image
- * Therefore, the default name is "1" or "2"
- * for sun3 and sun3x respectively.
+ *   segment 4:  netbsd.sun2  (RAMDISK)
+ * Therefore, the default name is "1" or "2" or "4"
+ * for sun3, sun3x, and sun2, respectively.
  */
 
 char	defname[32] = "1";
@@ -63,6 +64,7 @@ main()
 	char *cp, *file;
 	void *entry;
 	u_long marks[MARK_MAX];
+	u_long mark_start;
 	int fd;
 
 	printf(">> %s tapeboot [%s]\n", bootprog_name, bootprog_rev);
@@ -74,9 +76,23 @@ main()
 	 * its position-to-segment on open.
 	 */
 
+	/* Assume the Sun3/Sun3x load start. */
+	memset(marks, 0, sizeof(marks));
+	mark_start = 0;
+
 	/* If running on a Sun3X, use segment 2. */
 	if (_is3x)
 		defname[0] = '2';
+
+	/*
+	 * If running on a Sun2, use segment 4 and
+	 * do the special MMU setup.
+	 */
+	else if (_is2) {
+		defname[0] = '4';
+		mark_start = sun2_map_mem_load();
+	}
+
 	file = defname;
 
 	cp = prom_bootfile;
@@ -94,7 +110,7 @@ main()
 		} else
 			printf("tapeboot: loading segment %s\n", file);
 
-		marks[MARK_START] = KERN_LOADADDR;
+		marks[MARK_START] = mark_start;
 		if ((fd = loadfile(file, marks, LOAD_KERNEL)) != -1) {
 			break;
 		}
@@ -104,6 +120,10 @@ main()
 	close(fd);
 
 	entry = (void *)marks[MARK_ENTRY];
+	if (_is2) {
+		printf("relocating program...");
+		entry = sun2_map_mem_run(entry);
+	}
 	printf("Starting program at 0x%x\n", entry);
 	chain_to(entry);
 }

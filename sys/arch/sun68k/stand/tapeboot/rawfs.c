@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.1 2001/06/14 12:57:17 fredette Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.1.18.1 2003/09/09 19:11:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,6 +53,7 @@ extern int debug;
  */
 struct file {
 	daddr_t		fs_nextblk;	/* block number to read next */
+	off_t		fs_off;		/* seek offset in file */
 	int			fs_len;		/* amount left in f_buf */
 	char *		fs_ptr;		/* read pointer into f_buf */
 	char		fs_buf[RAWFS_BSIZE];
@@ -73,6 +74,7 @@ rawfs_open(path, f)
 	 */
 	fs = alloc(sizeof(struct file));
 	fs->fs_nextblk = 0;
+	fs->fs_off = 0;
 	fs->fs_len = 0;
 	fs->fs_ptr = fs->fs_buf;
 
@@ -132,6 +134,7 @@ rawfs_read(f, start, size, resid)
 			csize = fs->fs_len;
 
 		bcopy(fs->fs_ptr, addr, csize);
+		fs->fs_off += csize;
 		fs->fs_ptr += csize;
 		fs->fs_len -= csize;
 		addr += csize;
@@ -161,10 +164,41 @@ rawfs_seek(f, offset, where)
 	off_t offset;
 	int where;
 {
-#ifdef	DEBUG_RAWFS
-	panic("rawfs_seek");
-#endif
-	return (EFTYPE);
+	struct file *fs = (struct file *)f->f_fsdata;
+	off_t csize;
+
+	switch (where) {
+	case SEEK_SET:
+		offset -= fs->fs_off;
+		/* FALLTHROUGH */
+	case SEEK_CUR:
+		if (offset >= 0)
+			break;
+		/* FALLTHROUGH */
+	case SEEK_END:
+	default:
+		return (-1);
+	}
+
+	while (offset != 0) {
+
+		if (fs->fs_len == 0)
+			if (rawfs_get_block(f) != 0)
+				return (-1);
+
+		if (fs->fs_len <= 0)
+			break;	/* EOF */
+
+		csize = offset;
+		if (csize > fs->fs_len)
+			csize = fs->fs_len;
+
+		fs->fs_off += csize;
+		fs->fs_ptr += csize;
+		fs->fs_len -= csize;
+		offset -= csize;
+	}
+	return (fs->fs_off);
 }
 
 int
