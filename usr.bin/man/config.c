@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.15 2002/03/22 18:20:58 bouyer Exp $	*/
+/*	$NetBSD: config.c,v 1.16 2002/06/11 04:39:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
 #if defined(__RCSID)
-__RCSID("$NetBSD: config.c,v 1.15 2002/03/22 18:20:58 bouyer Exp $");
+__RCSID("$NetBSD: config.c,v 1.16 2002/06/11 04:39:52 lukem Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -104,9 +104,7 @@ config(fname)
 			continue;
 		*t = '\0';
 
-		tp = getlist(p);
-		if (tp == NULL)		/* Create a new tag. */
-			tp = addlist(p);
+		tp = getlist(p, 1);
 
 		/*
 		 * Attach new records. Check to see if it is a
@@ -164,38 +162,30 @@ config(fname)
 }
 
 /*
- * addlist --
- *	Add a tag to the list.   caller should check for duplicate
- *	before calling (we don't).
- */
-TAG *
-addlist(name)
-	const char *name;
-{
-	TAG *tp;
-
-	if ((tp = malloc(sizeof(TAG))) == NULL ||
-	    (tp->s = strdup(name)) == NULL)
-		err(1, "malloc");
-	TAILQ_INIT(&tp->list);
-	TAILQ_INSERT_TAIL(&head, tp, q);
-	return (tp);
-}
-
-/*
  * getlist --
  *	Return the linked list of entries for a tag if it exists.
+ *	If it doesn't exist and create is non zero, create new tag
+ *	and return that, otherwise return NULL.
  */
 TAG *
-getlist(name)
+getlist(name, create)
 	const char *name;
+	int create;
 {
 	TAG *tp;
 
-	for (tp = head.tqh_first; tp != NULL; tp = tp->q.tqe_next)
+	TAILQ_FOREACH(tp, &head, q)
 		if (!strcmp(name, tp->s))
 			return (tp);
-	return (NULL);
+	if (create) {
+		if ((tp = malloc(sizeof(TAG))) == NULL ||
+		    (tp->s = strdup(name)) == NULL)
+			err(1, "malloc");
+		TAILQ_INIT(&tp->list);
+		TAILQ_INSERT_TAIL(&head, tp, q);
+		return (tp);
+	} else
+		return (NULL);
 }
 
 /*
@@ -228,9 +218,9 @@ debug(l)
 	ENTRY *ep;
 
 	(void)printf("%s ===============\n", l);
-	for (tp = head.tqh_first; tp != NULL; tp = tp->q.tqe_next) {
+	TAILQ_FOREACH(tp, &head, q) {
 		printf("%s\n", tp->s);
-		for (ep = tp->list.tqh_first; ep != NULL; ep = ep->q.tqe_next)
+		TAILQ_FOREACH(ep, &tp->list, q)
 			printf("\t%s\n", ep->s);
 	}
 }
