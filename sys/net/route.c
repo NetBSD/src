@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.30 2000/02/01 22:52:05 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.31 2000/02/02 18:02:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -245,7 +245,9 @@ ifafree(ifa)
 	if (ifa->ifa_refcnt != 0)
 		panic("ifafree: ifa_refcnt != 0 (%d)", ifa->ifa_refcnt);
 #endif
-printf("ifafree: freeing ifaddr %p\n", ifa);
+#ifdef IFAREF_DEBUG
+	printf("ifafree: freeing ifaddr %p\n", ifa);
+#endif
 	free(ifa, M_IFADDR);
 }
 
