@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.4 1997/10/17 13:49:49 lukem Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.5 1999/01/18 18:01:26 christos Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.4 1997/10/17 13:49:49 lukem Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.5 1999/01/18 18:01:26 christos Exp $");
 #endif
 #endif
 
@@ -53,6 +53,14 @@ __RCSID("$NetBSD: tcpdchk.c,v 1.4 1997/10/17 13:49:49 lukem Exp $");
 #include "tcpd.h"
 #include "inetcf.h"
 #include "scaffold.h"
+
+#ifdef NO_NETGRENT
+	/* SCO has no *netgrent() support */
+#else
+# ifdef NETGROUP
+#  include <netgroup.h>
+# endif
+#endif
 
  /*
   * Stolen from hosts_access.c...
@@ -419,9 +427,9 @@ char   *pat;
 	/* SCO has no *netgrent() support */
 #else
 #ifdef NETGROUP
-	char   *machinep;
-	char   *userp;
-	char   *domainp;
+	const char   *machinep;
+	const char   *userp;
+	const char   *domainp;
 
 	setnetgrent(pat + 1);
 	if (getnetgrent(&machinep, &userp, &domainp) == 0)
