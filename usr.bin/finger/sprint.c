@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.5 1997/01/09 20:19:24 tls Exp $	*/
+/*	$NetBSD: sprint.c,v 1.6 1997/03/28 02:15:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$NetBSD: sprint.c,v 1.5 1997/01/09 20:19:24 tls Exp $";
+static char rcsid[] = "$NetBSD: sprint.c,v 1.6 1997/03/28 02:15:21 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,8 +78,8 @@ sflag_print()
 	 */
 #define	MAXREALNAME	20
 #define	MAXHOSTNAME	20
-	(void)printf("%-*s %-*s %s  %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
-	    "Name", "Tty  Idle   Login Time",
+	(void)printf("%-*s %-*s %s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
+	    "Name", "Tty  Idle  Login Time  ",
 	    (oflag) ? "Office     Office Phone" : "Where");
 	for (cnt = 0; cnt < entries; ++cnt) {
 		pn = list[cnt];
@@ -106,11 +106,11 @@ sflag_print()
 				(void)printf("    *  ");
 			p = ctime(&w->loginat);
 			if (now - w->loginat < SECSPERDAY * (DAYSPERWEEK - 1))
-				(void)printf("  %.3s ", p);
+				(void)printf("   %.3s", p);
 			else
 				(void)printf("%.6s", p + 4);
 			if (now - w->loginat >= SECSPERDAY * DAYSPERNYEAR / 2)
-				(void)printf("  %.4s", p + 20);
+				(void)printf(" %.4s ", p + 20);
 			else
 				(void)printf(" %.5s", p + 11);
 office:
