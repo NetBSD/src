@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.11 2001/02/10 14:55:18 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.12 2001/02/15 05:21:26 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -235,11 +235,16 @@ _formi_wrap_field(FIELD *field, unsigned int pos)
 	
 	strcpy(str,field->buffers[0].string);
 	
-	if ((field->opts & O_STATIC) == O_STATIC)
+	if ((field->opts & O_STATIC) == O_STATIC) {
 		width = field->cols + 1;
-	else
+		if ((field->rows + field->nrows) == 1)
+			return E_OK; /* cannot wrap a single line */
+	} else {
+		if ((field->drows + field->nrows) == 1)
+			return E_OK;
 		width = field->dcols;
-
+	}
+	
 	while (str[pos] != '\0') {
 		row_count++;
 		sol = _formi_find_bol(str, pos);
@@ -752,15 +757,18 @@ _formi_redraw_field(FORM *form, int field)
 			wattrset(form->subwin, cur->back);
 
 #ifdef DEBUG
-		fprintf(dbg, "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, hscroll=%d\n",
-			start, pre, slen, flen, post, cur->hscroll);
-		if (str != NULL) {
-			strncpy(buffer, &str[cur->start_char], flen);
-		} else {
-			strcpy(buffer, "(null)");
+		if (_formi_create_dbg_file() == E_OK) {
+			fprintf(dbg,
+     "redraw_field: start=%d, pre=%d, slen=%d, flen=%d, post=%d, hscroll=%d\n",
+				start, pre, slen, flen, post, cur->hscroll);
+			if (str != NULL) {
+				strncpy(buffer, &str[cur->start_char], flen);
+			} else {
+				strcpy(buffer, "(null)");
+			}
+			buffer[flen] = '\0';
+			fprintf(dbg, "redraw_field: %s\n", buffer);
 		}
-		buffer[flen] = '\0';
-		fprintf(dbg, "redraw_field: %s\n", buffer);
 #endif
 		
 		for (i = start + cur->hscroll; i < pre; i++)
