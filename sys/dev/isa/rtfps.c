@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.27 1996/10/21 22:41:18 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.28 1997/04/09 16:44:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,6 +44,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
 #include <dev/isa/comvar.h>
+#include <dev/isa/com_multi.h>
 
 #define	NSLAVES	4
 
@@ -188,7 +189,7 @@ rtfpsattach(parent, self, aux)
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_TTY, rtfpsintr, sc);
+	    IPL_SERIAL, rtfpsintr, sc);
 }
 
 int
