@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2004/05/21 03:40:51 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2004/06/02 14:07:07 pooka Exp $
 #
 
 WARNS=	2
@@ -124,6 +124,7 @@ MLINKS+=	pthread_rwlockattr.3 pthread_rwlockattr_init.3
 MLINKS+=	pthread_rwlockattr.3 pthread_rwlockattr_destroy.3
 MLINKS+=	pthread_schedparam.3 pthread_setschedparam.3
 MLINKS+=	pthread_schedparam.3 pthread_getschedparam.3
+MLINKS+=	pthread_spin_lock.3 pthread_spin_trylock.3
 MLINKS+=	pthread_suspend_np.3 pthread_resume_np.3
 MLINKS+=	pthread_testcancel.3 pthread_setcancelstate.3
 MLINKS+=	pthread_testcancel.3 pthread_setcanceltype.3
