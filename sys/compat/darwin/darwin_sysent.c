@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.22 2003/01/24 21:37:02 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.23 2003/04/20 00:09:41 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.22 2003/01/24 21:37:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.23 2003/04/20 00:09:41 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -71,8 +71,8 @@ struct sysent darwin_sysent[] = {
 	    sys_obreak },			/* 17 = break */
 	{ 3, s(struct sys_getfsstat_args), 0,
 	    sys_getfsstat },			/* 18 = getfsstat */
-	{ 3, s(struct sys_lseek_args), 0,
-	    sys_lseek },			/* 19 = olseek */
+	{ 3, s(struct compat_43_sys_lseek_args), 0,
+	    compat_43_sys_lseek },		/* 19 = olseek */
 	{ 0, 0, 0,
 	    darwin_sys_getpid },		/* 20 = getpid */
 	{ 4, s(struct bsd_sys_mount_args), 0,
@@ -456,8 +456,8 @@ struct sysent darwin_sysent[] = {
 	    sys_mmap },				/* 197 = mmap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 198 = unimplemented */
-	{ 4, s(struct compat_43_sys_lseek_args), 0,
-	    compat_43_sys_lseek },		/* 199 = lseek */
+	{ 4, s(struct darwin_sys_lseek_args), 0,
+	    darwin_sys_lseek },			/* 199 = lseek */
 	{ 3, s(struct bsd_sys_truncate_args), 0,
 	    bsd_sys_truncate },			/* 200 = truncate */
 	{ 3, s(struct sys_ftruncate_args), 0,
