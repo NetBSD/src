@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.11 2004/05/25 20:42:41 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.12 2004/06/04 21:15:00 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.11 2004/05/25 20:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.12 2004/06/04 21:15:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -413,6 +413,9 @@ pciide_mapreg_dma(sc, pa)
 		aprint_normal(
 		    ", but unsupported register maptype (0x%x)", maptype);
 	}
+
+	if (sc->sc_dma_ok == 0)
+		return;
 
 	/*
 	 * Set up the default handles for the DMA registers.
