@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.6 1996/03/27 22:08:37 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.7 1996/03/28 21:55:15 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -634,7 +634,7 @@ kbdprobe(parent, match, aux)
 
 	switch (id) {
 	case RPC600_IOMD_ID:
-	case ARM7500_IOMD_ID:
+	case RC7500_IOC_ID:
 		return(1);
 		break;
 	default:
