@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.28 1996/02/29 02:48:53 jonathan Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.29 1996/03/07 14:31:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -363,7 +363,10 @@ hardclock(frame)
 	register int delta, needsoft;
 	extern int tickdelta;
 	extern long timedelta;
-	register int time_update, ltemp;
+	register int time_update;
+#ifdef NTP
+	register int ltemp;
+#endif
 
 	/*
 	 * Update real-time timeout queue.
