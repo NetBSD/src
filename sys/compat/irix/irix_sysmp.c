@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_sysmp.c,v 1.5 2002/03/25 18:43:59 manu Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.6 2002/03/26 10:54:40 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.5 2002/03/25 18:43:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.6 2002/03/26 10:54:40 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.5 2002/03/25 18:43:59 manu Exp $");
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
 
 #include <machine/vmparam.h>
 
@@ -57,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.5 2002/03/25 18:43:59 manu Exp $");
 
 /* IRIX /dev/kmem diggers emulation */
 static int irix_sysmp_kernaddr __P((int, register_t *));
+static int irix_sysmp_sasz __P((int, register_t *));
+static int irix_sysmp_saget __P((int, char *, size_t));
 extern struct loadavg averunnable;
 extern long irix_kernel_var[32];
 
@@ -101,6 +105,16 @@ irix_sys_sysmp(p, v, retval)
 		return irix_sysmp_kernaddr((int)SCARG(uap, arg1), retval);
 		break;
 
+	case IRIX_MP_SASZ: 	/* System accounting structure size */
+		return irix_sysmp_sasz((int)SCARG(uap, arg1), retval);
+		break;
+
+	case IRIX_MP_SAGET1: /* Get system accounting structure for one CPU */
+	case IRIX_MP_SAGET:  /* Get system accounting structure for all CPU */
+		return irix_sysmp_saget((int)SCARG(uap, arg1), 
+		    (char *)SCARG(uap, arg2), (size_t)SCARG(uap, arg3));
+		break;
+
 	default:
 		printf("Warning: call to unimplemented sysmp() command %d\n",
 		    cmd);
@@ -132,4 +146,69 @@ irix_sysmp_kernaddr(kernaddr, retval)
 	}
 
 	return 0;
+}
+
+static int
+irix_sysmp_sasz(cmd, retval)
+	int cmd;
+	register_t *retval;
+{
+	switch (cmd) {
+	case IRIX_MPSA_RMINFO:
+		*retval = sizeof(struct irix_sysmp_rminfo);
+		break;
+	default:
+		printf("Warning: sysmp(SASZ) unimplemented struct %d\n", 
+		    cmd);
+		return EINVAL;
+		break;
+	}
+	return 0;
+}
+
+static int
+irix_sysmp_saget(cmd, buf, len)
+	int cmd;
+	char *buf;
+	size_t len;
+{
+	void *kbuf;
+	int error = 0;
+
+	if (!uvm_useracc(buf, len, B_WRITE))
+		return EINVAL;
+
+	kbuf = malloc(len, M_TEMP, M_WAITOK);
+
+	switch (cmd) {
+	case IRIX_MPSA_RMINFO: {
+		struct irix_sysmp_rminfo *irm = 
+		    (struct irix_sysmp_rminfo *)kbuf;
+
+		irm->freemem = 0;
+		irm->availsmem = 0;
+		irm->availrmem = 0;
+		irm->bufmem = 0;
+		irm->physmem = 0;
+		irm->dchunkpages = 0;
+		irm->pmapmem = 0;
+		irm->strmem = 0;
+		irm->chunkpages = 0;
+		irm->dpages = 0;
+		irm->emptymem = 0;
+		irm->ravailrmem = 0;
+		break;
+	}
+	default:
+		printf("Warning: sysmp(SAGET) unimplemented struct %d\n", 
+		    cmd);
+		error = EINVAL;
+		break;
+	}
+
+	if (error != 0)
+		(void)copyout((void *)kbuf, (void *)buf, len);
+
+	free(kbuf, M_TEMP);
+	return error;
 }
