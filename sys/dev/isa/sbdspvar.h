@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.38 1999/02/17 02:37:42 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.39 1999/02/18 07:08:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -211,8 +211,8 @@ int	sbdsp_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *));
 int	sbdsp_trigger_input __P((void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *));
-
-int	sbdsp_haltdma __P((void *));
+int	sbdsp_halt_output __P((void *));
+int	sbdsp_halt_input __P((void *));
 
 void	sbdsp_compress __P((int, u_char *, int));
 void	sbdsp_expand __P((int, u_char *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.64 1999/02/17 02:37:41 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.65 1999/02/18 07:08:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -110,8 +110,8 @@ struct audio_hw_if sb_hw_if = {
 	0,
 	0,
 	0,
-	sbdsp_haltdma,
-	sbdsp_haltdma,
+	sbdsp_halt_output,
+	sbdsp_halt_input,
 	sbdsp_speaker_ctl,
 	sb_getdev,
 	0,
