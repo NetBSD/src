@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.42 2002/02/14 07:08:05 chs Exp $ */
+/* $NetBSD: except.c,v 1.43 2002/02/14 11:49:15 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.42 2002/02/14 07:08:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.43 2002/02/14 11:49:15 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -206,18 +206,6 @@ do_fault(struct trapframe *tf, struct proc *p,
 	}
 
 	if (error != 0) {
-#ifdef DEBUG
-		printf("unhandled fault at %p (error = %d)\n",
-		    (void *)va, error);
-		printregs(tf);
-		if ((tf->tf_r15 & R15_PC) != va) {
-			printf("pc -> ");
-			disassemble(tf->tf_r15 & R15_PC);
-		}
-#ifdef DDB
-		Debugger();
-#endif
-#endif
 		curpcb = &p->p_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
 			tf->tf_r0 = error;
@@ -452,15 +440,6 @@ address_exception_handler(struct trapframe *tf)
 		panic("address exception in kernel mode");
 	}
 
-#ifdef DEBUG
-	printf("Address exception:\n");
-	printregs(tf);
-	printf("pc -> ");
-	disassemble(pc);
-#ifdef DDB
-	Debugger();
-#endif
-#endif
 	trapsignal(p, SIGBUS, pc);
 	userret(p);
 }
