@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.5 1996/04/01 05:16:52 scottr Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.6 2001/06/05 05:19:16 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -54,7 +54,7 @@
  * into integer overflow problems.  Also note:  do *not* define HZ to be
  * less than 12; overflow will occur, yielding invalid results.
  */
-#define CLK_INTERVAL	((int)((((100000000L / HZ) * 100) / 12766)))
+#define CLK_INTERVAL	((int)((((100000000L / hz) * 100) / 12766)))
 
 #define CLK_INTH	((CLK_INTERVAL >> 8) & 0xff)	/* high byte */
 #define CLK_INTL	(CLK_INTERVAL & 0xff)		/* low byte */
