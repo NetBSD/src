@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.11 2000/11/15 19:09:29 tv Exp $
+.\"	$NetBSD: main,v 1.61.2.12 2000/11/16 17:17:15 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,7 +124,7 @@ is a completely integrated system.
 In addition to its highly portable, high performance kernel,
 .Nx
 features a complete set of user utilities, compilers for several
-languages, The X Window System, firewall software
+languages, the X Window System, firewall software
 and numerous other tools, all accompanied by full source code.
 .Pp
 .\" XXX Should we include some text here about NetBSD's license
