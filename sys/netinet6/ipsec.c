@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.95.2.1 2004/05/28 07:24:28 tron Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.95.2.1.2.1 2005/01/30 13:25:07 he Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.95.2.1 2004/05/28 07:24:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.95.2.1.2.1 2005/01/30 13:25:07 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1682,6 +1682,7 @@ ipsec_get_reqlevel(isr, af)
 				level = ah_net_deflev;
 			else
 				level = ah_trans_deflev;
+			break;
 		case IPPROTO_IPCOMP:
 			/*
 			 * we don't really care, as IPcomp document says that
