@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldconfig.c,v 1.3 1994/01/13 19:35:38 pk Exp $
+ *	$Id: ldconfig.c,v 1.4 1994/01/28 20:53:25 pk Exp $
  */
 
 #include <sys/param.h>
@@ -316,16 +316,26 @@ build_hints()
 		return -1;
 	}
 
-	mywrite(&hdr, 1, sizeof(struct hints_header), fd);
-	mywrite(blist, hdr.hh_nbucket, sizeof(struct hints_bucket), fd);
-	mywrite(strtab, strtab_sz, 1, fd);
-
+	if (write(fd, &hdr, sizeof(struct hints_header)) !=
+						sizeof(struct hints_header)) {
+		perror(_PATH_LD_HINTS);
+		return -1;
+	}
+	if (write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
+				hdr.hh_nbucket * sizeof(struct hints_bucket)) {
+		perror(_PATH_LD_HINTS);
+		return -1;
+	}
+	if (write(fd, strtab, strtab_sz) != strtab_sz) {
+		perror(_PATH_LD_HINTS);
+		return -1;
+	}
 	if (close(fd) != 0) {
 		perror(_PATH_LD_HINTS);
 		return -1;
 	}
 
-	/* Now, install real file */
+	/* Install it */
 	if (unlink(_PATH_LD_HINTS) != 0 && errno != ENOENT) {
 		perror(_PATH_LD_HINTS);
 		return -1;
