@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.127 2004/08/13 04:42:23 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.128 2004/08/22 14:30:00 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1376,3 +1376,9 @@ share/man/man4/cardbus.4			1.17-1.18
 	  cbb0: NOT USED because of unconfigured interrupt
 	on an i386-family system.
 	[briggs, ticket #1729]
+
+lib/libc/net/gethnamaddr.c			1.62 via patch
+
+	Now that e.f.f.3.ip6.arpa is ready, we no longer need to query ip6.int.
+	[itojun, ticket #1731]
+
