@@ -41,6 +41,7 @@
 #include <sys/vmmeter.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/resourcevar.h>
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
@@ -52,6 +53,7 @@ main()
 	struct pcb *pcb = 0;
 	struct trapframe *tf = 0;
 	struct sigframe *sigf = 0;
+	struct uprof *uprof = 0;
 	register unsigned i;
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
@@ -98,6 +100,11 @@ main()
 
 	def("SIGF_HANDLER", &sigf->sf_handler);
 	def("SIGF_SC", &sigf->sf_sc);
+
+	def("PR_BASE", &uprof->pr_base);
+	def("PR_SIZE", &uprof->pr_size);
+	def("PR_OFF", &uprof->pr_off);
+	def("PR_SCALE", &uprof->pr_scale);
 
 	exit(0);
 }
