@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)termios.c	5.9 (Berkeley) 5/20/91";*/
-static char *rcsid = "$Id: termios.c,v 1.5 1993/08/26 00:45:13 jtc Exp $";
+static char *rcsid = "$Id: termios.c,v 1.6 1993/12/22 18:59:39 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -93,6 +93,7 @@ tcsetpgrp(fd, pgrp)
 
 pid_t
 tcgetpgrp(fd)
+	int fd;
 {
 	int s;
 
@@ -163,6 +164,7 @@ cfmakeraw(t)
 	/* set MIN/TIME */
 }
 
+int
 tcsendbreak(fd, len)
 	int fd, len;
 {
@@ -179,6 +181,7 @@ tcsendbreak(fd, len)
 	return (0);
 }
 
+int
 tcdrain(fd)
 	int fd;
 {
@@ -188,6 +191,7 @@ tcdrain(fd)
 	return (0);
 }
 
+int
 tcflush(fd, which)
 	int fd, which;
 {
@@ -213,6 +217,7 @@ tcflush(fd, which)
 	return (0);
 }
 
+int
 tcflow(fd, action)
 	int fd, action;
 {
