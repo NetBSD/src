@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.3 1995/08/20 18:17:10 leo Exp $
+#	$NetBSD: BOOT,v 1.4 1995/09/30 12:48:13 leo Exp $
 #
 # BOOT
 #
@@ -39,6 +39,7 @@ options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem
 options		NULLFS		# Loopback filesystem
 options		MSDOSFS		# MSDOS filesystem
+options		CD9660		# ISO 9660 filesystem with Rock Ridge
 
 options		FIFO		# FIFO operations on vnodes
 
