@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 1998/06/04 08:28:35 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 1998/07/10 04:39:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -36,6 +36,7 @@
  */
 
 struct fd_set;
+struct sockaddr;
 
 void    abort_remote __P((FILE *));
 void    abortpt __P((int));
@@ -72,6 +73,7 @@ void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
 int	getreply __P((int));
+int	getsockbufsize __P((const char *));
 int	globulize __P((char **));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
@@ -110,6 +112,7 @@ void	pwd __P((int, char **));
 void	quit __P((int, char **));
 void	quote __P((int, char **));
 void	quote1 __P((const char *, int, char **));
+void	rcvbuf __P((int, char **));
 void    recvrequest __P((const char *, const char *, const char *,
 	    const char *, int, int));
 void	reget __P((int, char **));
@@ -119,6 +122,7 @@ time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
 void    reset __P((int, char **));
+void	resetsockbufsize __P((void));
 void	restart __P((int, char **));
 void	rmthelp __P((int, char **));
 void	rmtstatus __P((int, char **));
@@ -151,16 +155,20 @@ void	settenex __P((int, char **));
 void	settrace __P((int, char **));
 void	setttywidth __P((int));
 void	settype __P((int, char **));
+void	setupsockbufsize __P((int));
 void	setverbose __P((int, char **));
 void	shell __P((int, char **));
 void	site __P((int, char **));
 void	sizecmd __P((int, char **));
 char   *slurpstring __P((void));
+void	sndbuf __P((int, char **));
 void	status __P((int, char **));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
 void	usage __P((void));
 void	user __P((int, char **));
+int	xconnect __P((int, const struct sockaddr *, int));
+int	xlisten __P((int, int));
 
 extern struct	cmd cmdtab[];
 extern FILE    *cout;
