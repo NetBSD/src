@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.8.2.5 2001/07/25 21:24:12 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.6 2001/07/25 23:56:54 nathanw Exp $
 #
+
+WARNS=	2
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
