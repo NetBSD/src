@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.13 2000/07/20 20:44:50 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.14 2000/11/01 23:54:57 eeh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -584,7 +584,7 @@ clmpccopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error)
 		goto bad;
 
@@ -617,7 +617,7 @@ clmpccclose(dev, flag, mode, p)
 	if ( ISCLR(tp->t_state, TS_ISOPEN) )
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 
 	s = spltty();
 
@@ -646,7 +646,7 @@ clmpccread(dev, uio, flag)
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
@@ -658,7 +658,7 @@ clmpccwrite(dev, uio, flag)
 	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -683,7 +683,7 @@ clmpccioctl(dev, cmd, data, flag, p)
 	struct tty *tp = ch->ch_tty;
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 
@@ -1436,7 +1436,7 @@ clmpcc_softintr(arg)
 		tp = ch->ch_tty;
 
 		get = ch->ch_ibuf_rd;
-		rint = linesw[tp->t_line].l_rint;
+		rint = tp->t_linesw->l_rint;
 
 		/* Squirt buffered incoming data into the tty layer */
 		while ( get != ch->ch_ibuf_wr ) {
@@ -1482,7 +1482,7 @@ clmpcc_softintr(arg)
 				 * explicit request.
 				 */
 				reg = clmpcc_rd_msvr(sc) & CLMPCC_MSVR_CD;
-				(*linesw[tp->t_line].l_modem)(tp, reg != 0);
+				(*tp->t_linesw->l_modem)(tp, reg != 0);
 			}
 
 			CLR(tp->t_state, TS_BUSY);
@@ -1492,7 +1492,7 @@ clmpcc_softintr(arg)
 				ndflush(&tp->t_outq,
 				     (int)(ch->ch_obuf_addr - tp->t_outq.c_cf));
 
-			(*linesw[tp->t_line].l_start)(tp);
+			(*tp->t_linesw->l_start)(tp);
 		}
 	}
 }
