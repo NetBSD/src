@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.5 1997/06/22 07:44:05 jonathan Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.6 1997/07/21 05:39:05 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -34,7 +34,7 @@
 /*
  * Autoconfiguration data for config.
  */
-int asc_tc_match __P((struct device *, void *, void *));
+int asc_tc_match __P((struct device *, struct cfdata *, void *));
 void asc_tc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_tc_ca = {
@@ -57,7 +57,7 @@ tc_dma_end __P((struct asc_softc *asc, struct scsi_state *state,
 int
 asc_tc_match(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct tc_attach_args *t = aux;

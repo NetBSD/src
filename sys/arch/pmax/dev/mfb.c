@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.28 1997/07/20 03:57:18 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.29 1997/07/21 05:39:17 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -199,7 +199,7 @@ struct fbdriver mfb_driver = {
  * code is completely gone.
  */
 
-int mfbmatch __P((struct device *, void *, void *));
+int mfbmatch __P((struct device *, struct cfdata *, void *));
 void mfbattach __P((struct device *, struct device *, void *));
 int mfb_intr __P((void *sc));
 
@@ -214,7 +214,7 @@ struct cfdriver mfb_cd = {
 int
 mfbmatch(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.21 1997/06/16 02:53:55 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.22 1997/07/21 05:39:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -123,7 +123,7 @@ static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
  * Definition of driver for autoconfiguration.
  */
 
-int old_pmmatch __P((struct device *, void *, void *));
+int old_pmmatch __P((struct device *, struct cfdata *, void *));
 void old_pmattach __P((struct device *, struct device *, void *));
 
 struct cfattach old_pm_ca = {
@@ -151,7 +151,7 @@ struct fbdriver pm_driver = {
 int
 old_pmmatch(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct confargs *ca = aux;

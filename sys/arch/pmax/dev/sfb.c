@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.21 1997/06/30 22:09:00 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.22 1997/07/21 05:39:22 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -126,7 +126,7 @@ int sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
-int sfbmatch __P((struct device *, void *, void *));
+int sfbmatch __P((struct device *, struct cfdata *, void *));
 void sfbattach __P((struct device *, struct device *, void *));
 int sfb_intr __P((void *sc));
 
@@ -155,10 +155,9 @@ struct fbdriver sfb_driver = {
 int
 sfbmatch(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
-	/*struct cfdata *cf = match;*/
 	struct tc_attach_args *ta = aux;
 
 	/* make sure that we're looking for this type of device. */

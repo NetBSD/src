@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 1996/10/13 03:39:48 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 1997/07/21 05:39:36 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include <machine/autoconf.h>
 
 /* Definition of the driver for autoconfig. */
-static int	cpumatch(struct device *, void *, void *);
+static int	cpumatch(struct device *, struct cfdata *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
@@ -50,9 +50,9 @@ extern void cpu_identify __P((void));
 
 
 static int
-cpumatch(parent, cfdata, aux)
+cpumatch(parent, cf, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *cf;
 	void *aux;
 {
 	struct confargs *ca = aux;
@@ -76,23 +76,3 @@ cpuattach(parent, dev, aux)
 
 	cpu_identify();
 }
-
-
-
-#if 0
-static int
-cpuprint(aux, pnp)
-	void *aux;
-	char *pnp;
-{
-	register struct confargs *ca = aux;
-
-/*XXX*/ printf("debug: cpuprint\n");
-
-#if 0
-	if (pnp)
-		printf("%s at %s", ca->ca_name, pnp);
-#endif
-	return (UNCONF);
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.21 1997/07/17 01:26:15 jtk Exp $	*/
+/*	$NetBSD: asic.c,v 1.22 1997/07/21 05:39:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -66,7 +66,7 @@ struct asic_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-int	asicmatch __P((struct device *, void *, void *));
+int	asicmatch __P((struct device *, struct cfdata *, void *));
 void	asicattach __P((struct device *, struct device *, void *));
 int     asicprint(void *, const char *);
 
@@ -115,12 +115,11 @@ struct asic_slot *asic_slots;
 #endif
 
 int
-asicmatch(parent, cfdata, aux)
+asicmatch(parent, cf, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct tc_attach_args *ta = aux;
 
 	IOASIC_DPRINTF(("asicmatch: %s slot %d offset 0x%x pri %d\n",
@@ -264,7 +263,7 @@ ioasic_submatch(match, d)
 {
 
 	return ((match->ioasiccf_offset == d->iada_offset) ||
-		(match->ioasiccf_offset == IOASIC_OFFSET_DEFAULT));
+		(match->ioasiccf_offset == IOASICCF_OFFSET_DEFAULT));
 }
 
 /*

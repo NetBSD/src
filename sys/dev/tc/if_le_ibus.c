@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.6 1997/03/17 03:19:12 thorpej Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.7 1997/07/21 05:39:06 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -54,7 +54,7 @@ extern void le_dec_copyfrombuf_gap2 __P((struct am7990_softc *, void *,
 hide void le_dec_zerobuf_gap2 __P((struct am7990_softc *, int, int));
 
 
-int	le_pmax_match __P((struct device *, void *, void *));
+int	le_pmax_match __P((struct device *, struct cfdata *, void *));
 void	le_pmax_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_pmax_ca = {
@@ -65,7 +65,8 @@ struct cfattach le_pmax_ca = {
 int
 le_pmax_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 	  	struct confargs *d = aux;

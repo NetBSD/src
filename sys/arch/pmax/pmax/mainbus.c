@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19 1997/06/16 01:45:27 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20 1997/07/21 05:39:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -51,7 +51,7 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, void *, void *));
+static int	mbmatch __P((struct device *, struct cfdata *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, const char *));
 
@@ -81,12 +81,11 @@ static void	kn01_attach __P((struct device *, struct device *, void *));
 
 
 static int
-mbmatch(parent, cfdata, aux)
+mbmatch(parent, cf, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 
 	/*
 	 * Only one mainbus, but some people are stupid...
@@ -122,8 +121,7 @@ mbattach(parent, self, aux)
 	 *
 	 * For now, we only have one. Attach it directly.
 	 */
-	/*nca.ca_name = "cpu";*/
-	bcopy("cpu", nca.ca_name, sizeof(nca.ca_name));
+ 	nca.ca_name = "cpu";
 	nca.ca_slot = 0;
 	nca.ca_offset = 0;
 	nca.ca_addr = 0;
