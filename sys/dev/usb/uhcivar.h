@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.10 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.11 1999/08/22 23:19:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,11 @@
 typedef struct uhci_soft_qh uhci_soft_qh_t;
 typedef struct uhci_soft_td uhci_soft_td_t;
 
+typedef union {
+	struct uhci_soft_qh *sqh;
+	struct uhci_soft_td *std;
+} uhci_soft_td_qh_t;
+
 /*
  * An interrupt info struct contains the information needed to
  * execute a requested routine when the controller generates an
@@ -80,24 +85,32 @@ typedef struct uhci_intr_info {
  * Extra information that we need for a TD.
  */
 struct uhci_soft_td {
-	uhci_td_t *td;			/* The real TD */
-	uhci_physaddr_t physaddr;	/* and its physical address. */
+	uhci_td_t td;			/* The real TD, must be first */
+	uhci_soft_td_qh_t link; 	/* soft version of the td_link field */
+	uhci_physaddr_t physaddr;	/* TD's physical address. */
 };
-#define UHCI_TD_CHUNK 128 /*(PAGE_SIZE / UHCI_TD_SIZE)*/
+/* 
+ * Make the size such that it is a multiple of UHCI_TD_ALIGN.  This way
+ * we can pack a number of soft TD together and have the real TS well
+ * aligned.
+ */
+#define UHCI_STD_SIZE ((sizeof (struct uhci_soft_td) + UHCI_TD_ALIGN - 1) / UHCI_TD_ALIGN * UHCI_TD_ALIGN)
+#define UHCI_STD_CHUNK 128 /*(PAGE_SIZE / UHCI_TD_SIZE)*/
 
 /*
  * Extra information that we need for a QH.
  */
 struct uhci_soft_qh {
-	uhci_qh_t *qh;			/* The real QH */
-	uhci_physaddr_t physaddr;	/* and its physical address. */
+	uhci_qh_t qh;			/* The real QH, must be first */
+	uhci_soft_qh_t *hlink;		/* soft version of qh_hlink */
+	uhci_soft_td_t *elink;		/* soft version of qh_elink */
+	uhci_physaddr_t physaddr;	/* QH's physical address. */
 	int pos;			/* Timeslot position */
 	uhci_intr_info_t *intr_info;	/* Who to call on completion. */
 };
-#define UHCI_QH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
-
-#define UHCI_BUFFER_SIZE 64
-#define UHCI_BUFFER_CHUNK 64 	/*(PAGE_SIZE / UHCI_BUFFER_SIZE)*/
+/* See comment about UHCI_STD_SIZE. */
+#define UHCI_SQH_SIZE ((sizeof (struct uhci_soft_td) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
+#define UHCI_SQH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
 
 /*
  * Information about an entry in the virtial frame list.
@@ -150,10 +163,6 @@ typedef struct uhci_softc {
 	char sc_vflock;
 #define UHCI_HAS_LOCK 1
 #define UHCI_WANT_LOCK 2
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	usb_dma_t *sc_mallocs;
-#endif
 
 	char sc_vendor[16];
 	int sc_id_vendor;
