@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.236 2004/07/29 04:27:18 kochi Exp $
+#	$NetBSD: 3RDPARTY,v 1.237 2004/07/30 15:34:06 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -279,7 +279,7 @@ needs some tuning before it can replace gnu grep.
 	(cf.	http://www.vocito.com/downloads/software/grep/)
 
 Package:	groff
-Version:	1.19
+Version:	1.19.1
 Current Vers:	1.19.1
 Maintainer:	Werner Lemberg/FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/groff/
