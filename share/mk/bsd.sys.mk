@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.40 2000/07/25 06:29:44 cgd Exp $
+#	$NetBSD: bsd.sys.mk,v 1.41 2000/10/04 19:27:45 sommerfeld Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -14,6 +14,13 @@ CFLAGS+=-Wreturn-type -Wcast-qual -Wpointer-arith -Wwrite-strings
 CFLAGS+=-Wswitch -Wshadow
 .endif
 .endif
+
+.if defined(WFORMAT)
+.if ${WFORMAT} > 1 && defined(FORMAT_AUDIT)
+CFLAGS+=-Wnetbsd-format-audit
+.endif
+.endif
+
 .if !defined(NOGCCERROR)
 CFLAGS+= -Werror
 .endif
