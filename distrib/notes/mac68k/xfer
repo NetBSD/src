@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.14 1999/01/13 07:30:06 ross Exp $	
+.\"	$NetBSD: xfer,v 1.15 1999/05/07 03:30:44 ender Exp $	
 .
 Installation is currently only supported from the local Macintosh hard
 drive, from a CD-ROM, or from an AppleShare volume (however, you may upgrade
@@ -7,7 +7,7 @@ a system from within
 ; see the section on upgrading for more details).
 If you are installing from a local hard drive, this means that you'll need
 at least enough room for the largest file that you will have to install.
-This is the 8.6M base.tgz file. There has been talk of allowing an install
+This is the 10.2M base.tgz file. There has been talk of allowing an install
 from split files. If you have the time, desire, and knowledge, please feel
 free to add that functionality.
 .Pp
