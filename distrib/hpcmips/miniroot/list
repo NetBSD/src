@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 1999/11/23 23:16:06 simonb Exp $
+#	$NetBSD: list,v 1.3 2000/01/21 11:25:59 shin Exp $
 
 # hpcmips extra's: mountpoint for kernfs
 SPECIAL mkdir			kern
@@ -11,6 +11,7 @@ LINK	instbin			bin/rcmd
 
 # extras in sbin
 LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/fdisk
 LINK	instbin			sbin/mount_ext2fs
 LINK	instbin			sbin/fsck_ext2fs
 LINK	instbin			sbin/mount_kernfs
@@ -49,7 +50,7 @@ SPECIAL	ln -s ../../instbin	usr.install/sbin/chown
 
 # crunchgen source directory specials: progs built in nonstandard places
 CRUNCHSPECIAL	vi	srcdir usr.bin/vi/build
-
+CRUNCHSPECIAL	sysinst srcdir distrib/utils/sysinst/arch/hpcmips
 
 
 # Minimize use of MFS
@@ -68,15 +69,17 @@ COPYDIR	${DESTDIR}/usr/mdec	/usr/mdec
 # the zoneinfo (dont use)
 #COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
-# a subset termcap file
-COPY	${ARCHDIR}/termcap.rcons usr/share/misc/termcap
+# and the termcap file
+COPY	${CURDIR}/../hpcmips/miniroot/termcap.vt100 usr/share/misc/termcap
 
 # copy the kernel(s)
-COPY	${CURDIR}/../../sys/arch/hpcmips/compile/GENERIC/netbsd  netbsd
+#COPY	${CURDIR}/../../sys/arch/hpcmips/compile/GENERIC/netbsd  netbsd
 
 
 # various files that we need in /etc for the install
 #COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+LINK	etc/spwd.db			etc/pwd.db
 #SYMLINK	/tmp/disktab.shadow		etc/disktab
 #SYMLINK	/tmp/fstab.shadow		etc/fstab
 #SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
@@ -87,7 +90,7 @@ COPY	${DESTDIR}/etc/disktab		etc/disktab.preinstall
 
 # and the installation tools
 COPY	${ARCHDIR}/dot.profile		.profile
-#LINK	instbin				sbin/sysinst
+LINK	instbin				sbin/sysinst
 
 # and a spare .profile
 COPY	${DESTDIR}/.profile		tmp/.hdprofile
