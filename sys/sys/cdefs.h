@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.40.2.3 2002/10/18 02:45:39 nathanw Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.40.2.4 2002/11/01 23:04:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -271,5 +271,54 @@
 #define	__predict_true(exp)	((exp) != 0)
 #define	__predict_false(exp)	((exp) != 0)
 #endif
+
+/*
+ * Macros for manipulating "link sets".  Link sets are arrays of pointers
+ * to objects, which are gathered up by the linker.
+ *
+ * Object format-specific code has provided us with the following macros:
+ *
+ *	__link_set_add_text(set, sym)
+ *		Add a reference to the .text symbol `sym' to `set'.
+ *
+ *	__link_set_add_rodata(set, sym)
+ *		Add a reference to the .rodata symbol `sym' to `set'.
+ *
+ *	__link_set_add_data(set, sym)
+ *		Add a reference to the .data symbol `sym' to `set'.
+ *
+ *	__link_set_add_bss(set, sym)
+ *		Add a reference to the .bss symbol `sym' to `set'.
+ *
+ *	__link_set_decl(set, ptype)
+ *		Provide an extern declaration of the set `set', which
+ *		contains an array of the pointer type `ptype'.  This
+ *		macro must be used by any code which wishes to reference
+ *		the elements of a link set.
+ *
+ *	__link_set_start(set)
+ *		This points to the first slot in the link set.
+ *
+ *	__link_set_end(set)
+ *		This points to the (non-existent) slot after the last
+ *		entry in the link set.
+ *
+ *	__link_set_count(set)
+ *		Count the number of entries in link set `set'.
+ *
+ * In addition, we provide the following macros for accessing link sets:
+ *
+ *	__link_set_foreach(pvar, set)
+ *		Iterate over the link set `set'.  Because a link set is
+ *		an array of pointers, pvar must be declared as "type **pvar",
+ *		and the actual entry accessed as "*pvar".
+ *
+ *	__link_set_entry(set, idx)
+ *		Access the link set entry at index `idx' from set `set'.
+ */
+#define	__link_set_foreach(pvar, set)					\
+	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
+
+#define	__link_set_entry(set, idx)	(__link_set_begin(set)[idx])
 
 #endif /* !_SYS_CDEFS_H_ */
