@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.11.2.1 2004/12/29 17:53:48 kent Exp $	*/
+/*	$NetBSD: auconv.h,v 1.11.2.2 2004/12/30 15:15:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,12 @@
 /* common routines for stream_filter_t */
 extern void stream_filter_set_fetcher(stream_filter_t *, stream_fetcher_t *);
 extern void stream_filter_set_inputbuffer(stream_filter_t *, audio_stream_t *);
+extern void stream_filter_list_append(stream_filter_list_t *,
+				      stream_filter_factory_t,
+				      const audio_params_t *);
+extern void stream_filter_list_prepend(stream_filter_list_t *,
+				       stream_filter_factory_t,
+				       const audio_params_t *);
 extern stream_filter_t *auconv_nocontext_filter_factory
 	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
 extern void auconv_nocontext_filter_dtor(struct stream_filter *);
@@ -141,7 +147,8 @@ struct audio_format {
 
 struct audio_encoding_set;
 extern int auconv_set_converter(const struct audio_format *, int,
-				int, struct audio_params *, int);
+				int, const audio_params_t *, int,
+				stream_filter_list_t *);
 extern int auconv_create_encodings(const struct audio_format *, int,
 				   struct audio_encoding_set **);
 extern int auconv_delete_encodings(struct audio_encoding_set *);
