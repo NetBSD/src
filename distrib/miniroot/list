@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 1997/11/13 13:56:52 leo Exp $
+#	$NetBSD: list,v 1.9 1999/01/31 09:28:26 mrg Exp $
 
 SRCDIRS distrib/utils usr.bin bin sbin usr.sbin gnu/usr.bin
 
@@ -19,6 +19,7 @@ LINK	instbin			bin/mkdir
 LINK	instbin			bin/mt
 LINK	instbin			bin/mv
 LINK	instbin			bin/pwd
+LINK	instbin			bin/pax usr/bin/tar usr/bin/cpio
 LINK	instbin			bin/rm
 LINK	instbin			bin/sh
 LINK	instbin			bin/stty
@@ -40,16 +41,15 @@ LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
-SYMLINK	../../instbin		usr/bin/chflags
-SYMLINK	../../instbin		usr/sbin/chown usr/bin/chgrp
-SYMLINK	../../instbin		usr/sbin/chroot
-SYMLINK	../../instbin		usr/bin/ftp
-SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
-SYMLINK	../../instbin		usr/bin/sed
-SYMLINK	../../instbin		usr/bin/sort
-SYMLINK	../../instbin		usr/bin/tar
-SYMLINK	../../instbin		usr/bin/tip
-SYMLINK	../../instbin		usr/sbin/update
+LINK	instbin			usr/bin/chflags
+LINK	instbin			usr/sbin/chown usr/bin/chgrp
+LINK	instbin			usr/sbin/chroot
+LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin			usr/bin/sed
+LINK	instbin			usr/bin/sort
+LINK	instbin			usr/bin/tip
+LINK	instbin			usr/sbin/update
 
 # `internal' crunchgen links
 ARGVLINK mount_ffs	ffs
