@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.38 1999/08/01 15:25:41 ragge Exp $ */
+/*      $NetBSD: if_qe.c,v 1.39 2000/01/24 02:40:29 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -105,7 +105,7 @@ static	int	qematch __P((struct device *, struct cfdata *, void *));
 static	void	qeattach __P((struct device *, struct device *, void *));
 static	void	qeinit __P((struct qe_softc *));
 static	void	qestart __P((struct ifnet *));
-static	void	qeintr __P((int));
+static	void	qeintr __P((void *));
 static	int	qeioctl __P((struct ifnet *, u_long, caddr_t));
 static	int	qe_add_rxbuf __P((struct qe_softc *, int));
 static	void	qe_setup __P((struct qe_softc *));
@@ -204,7 +204,6 @@ qematch(parent, cf, aux)
 	 */
 	bus_dmamap_unload(sc->sc_dmat, cmap);
 	bus_dmamap_destroy(sc->sc_dmat, cmap);
-	ua->ua_ivec = qeintr;
 	return 1;
 }
 
@@ -347,6 +346,8 @@ qeattach(parent, self, aux)
 		ether_sprintf(enaddr));
 
 	QE_WCSR(QE_CSR_VECTOR, QE_RCSR(QE_CSR_VECTOR) & ~1); /* ??? */
+
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr, sc);
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
@@ -571,11 +572,11 @@ out:	if (sc->sc_inq)
 	splx(s);
 }
 
-void
-qeintr(unit)
-	int	unit;
+static void
+qeintr(arg)
+	void *arg;
 {
-	struct qe_softc *sc = qe_cd.cd_devs[unit];
+	struct qe_softc *sc = arg;
 	struct qe_cdata *qc = sc->sc_qedata;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;

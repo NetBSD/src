@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.31 2000/01/21 23:39:59 thorpej Exp $	*/
+/*	$NetBSD: uda.c,v 1.32 2000/01/24 02:40:30 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -85,9 +85,7 @@ static	void	udaattach __P((struct device *, struct device *, void *));
 static	void	udareset __P((int));
 static	void	mtcreset __P((int));
 static	void	reset __P((struct uda_softc *));
-static	void	udaintr __P((int));
-static	void	mtcintr __P((int));
-static	void	intr __P((struct uda_softc *));
+static	void	intr __P((void *));
 int	udaready __P((struct uba_unit *));
 void	udactlrdone __P((struct device *));
 int	udaprint __P((void *, const char *));
@@ -175,10 +173,8 @@ again:
 
 	/* should have interrupted by now */
 	if (strcmp(cf->cf_driver->cd_name, mtc_cd.cd_name)) {
-		ua->ua_ivec = udaintr;
 		ua->ua_reset = udareset;
 	} else {
-		ua->ua_ivec = mtcintr;
 		ua->ua_reset = mtcreset;
 	}
 
@@ -204,6 +200,8 @@ udaattach(parent, self, aux)
 	printf("\n");
 
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
+
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, intr, sc);
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_iph = ua->ua_ioh;
@@ -419,24 +417,11 @@ udasaerror(usc, doreset)
  * interrupts, and process responses.
  */
 static void
-udaintr(ctlr)
-	int ctlr;
+intr(arg)
+	void *arg;
 {
-	intr(uda_cd.cd_devs[ctlr]);
-}
-
-static void
-mtcintr(ctlr)
-	int ctlr;
-{
-	intr(mtc_cd.cd_devs[ctlr]);
-}
-
-static void
-intr(sc)
-	struct uda_softc *sc;
-{
-	struct	uba_softc *uh;
+	struct uda_softc *sc = arg;
+	struct uba_softc *uh;
 	struct mscp_pack *ud;
 
 	sc->sc_wticks = 0;	/* reset interrupt watchdog */

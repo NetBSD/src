@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.16 1999/06/06 19:14:48 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.17 2000/01/24 02:40:28 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -136,8 +136,8 @@ static struct speedtab dhuspeedtab[] = {
 
 static int	dhu_match __P((struct device *, struct cfdata *, void *));
 static void	dhu_attach __P((struct device *, struct device *, void *));
-static	void	dhurint __P((int));
-static	void	dhuxint __P((int));
+static	void	dhurint __P((void *));
+static	void	dhuxint __P((void *));
 static	void	dhustart __P((struct tty *));
 static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
@@ -193,10 +193,6 @@ dhu_match(parent, cf, aux)
 	    DHU_CSR_DIAG_FAIL) != 0)
 		return 0;
 
-	/* Register the RX interrupt handler */
-
-	ua->ua_ivec = dhurint;
-
        	return 1;
 }
 
@@ -247,17 +243,19 @@ dhu_attach(parent, self, aux)
 			
 	}
 
-	/* Now stuff TX interrupt handler in place */
-	scb_vecalloc(ua->ua_cvec + 4, dhuxint, self->dv_unit, SCB_ISTACK);
+	/* Now establish RX & TX interrupt handlers */
+
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec    , dhurint, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 4, dhuxint, sc);
 }
 
 /* Receiver Interrupt */
 
 static void
-dhurint(unit)
-	int unit;
+dhurint(arg)
+	void *arg;
 {
-	struct	dhu_softc *sc = dhu_cd.cd_devs[unit];
+	struct	dhu_softc *sc = arg;
 	register struct tty *tp;
 	register int cc, line;
 	register unsigned c, delta;
@@ -327,10 +325,10 @@ dhurint(unit)
 /* Transmitter Interrupt */
 
 static void
-dhuxint(unit)
-	int unit;
+dhuxint(arg)
+	void *arg;
 {
-	register struct	dhu_softc *sc = dhu_cd.cd_devs[unit];
+	register struct	dhu_softc *sc = arg;
 	register struct tty *tp;
 	register int line;
 

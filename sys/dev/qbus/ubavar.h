@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.25 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.26 2000/01/24 02:40:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *	@(#)ubavar.h	7.7 (Berkeley) 6/28/90
  */
+#ifndef _QBUS_UBAVAR_H
+#define	_QBUS_UBAVAR_H
 
 /*
  * This file contains definitions related to the kernel structures
@@ -107,8 +109,7 @@ struct uba_attach_args {
 	bus_space_tag_t	ua_iot;		/* Tag for this bus I/O-space */
 	bus_addr_t	ua_ioh;		/* I/O regs addr */
 	bus_dma_tag_t	ua_dmat;
-		    /* Pointer to int routine, filled in by probe*/
-	void		(*ua_ivec) __P((int));
+	void		*ua_icookie;	/* Cookie for interrupt establish */
 		    /* UBA reset routine, filled in by probe */
 	void		(*ua_reset) __P((int));
 	int		ua_iaddr;	/* Full CSR address of device */
@@ -135,9 +136,12 @@ struct uba_attach_args {
 #ifdef _KERNEL
 #define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
 
+void	uba_intr_establish __P((void *, int, void (*)(void *), void *));
 void	uba_attach __P((struct uba_softc *, unsigned long));
 void	uba_enqueue __P((struct uba_unit *));
 void	uba_done __P((struct uba_softc *));
 void	ubareset __P((int));
 
 #endif /* _KERNEL */
+
+#endif /* _QBUS_UBAVAR_H */
