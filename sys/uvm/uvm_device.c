@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.14 1999/03/25 18:48:50 mrg Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.15 1999/03/26 21:58:39 mycroft Exp $	*/
 
 /*
  *
@@ -476,7 +476,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
 		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);
-		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0);
+		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0,
+		    access_type);
 
 	}
 
