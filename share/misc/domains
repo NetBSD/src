@@ -1,4 +1,4 @@
-# $NetBSD: domains,v 1.2 1999/01/06 04:41:49 hubertf Exp $
+# $NetBSD: domains,v 1.3 2000/04/05 15:58:40 hubertf Exp $
 # ISO 3166 country codes, from http://www.iana.org/country-codes.txt
 # Latest change: Thu Aug 7 17:59:51 MET DST 1997
 #
@@ -225,7 +225,7 @@ tv tuvalu
 ug uganda
 ua ukraine
 ae united arab emirates
-gb united kingdom
+uk united kingdom
 us united states
 um united states minor outlying islands
 uy uruguay
