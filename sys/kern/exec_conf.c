@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.13 1995/06/22 21:29:47 fvdl Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.14 1995/10/10 01:26:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -72,6 +72,10 @@
 #include <compat/linux/linux_exec.h>
 #endif
 
+#ifdef COMPAT_FREEBSD
+#include <compat/freebsd/freebsd_exec.h>
+#endif
+
 struct execsw execsw[] = {
 #ifdef LKM
 	{ 0, NULL, },					/* entries for LKMs */
@@ -98,6 +102,9 @@ struct execsw execsw[] = {
 #ifdef COMPAT_IBCS2
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
 	{ XOUT_HDR_SIZE, exec_ibcs2_xout_makecmds, },	/* x.out binaries */
+#endif
+#ifdef COMPAT_FREEBSD
+	{ FREEBSD_AOUT_HDR_SIZE, exec_freebsd_aout_makecmds, },	/* a.out */
 #endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));

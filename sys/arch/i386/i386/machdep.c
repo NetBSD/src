@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.174 1995/10/09 06:34:11 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175 1995/10/10 01:26:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1227,7 +1227,7 @@ cpu_exec_aout_makecmds(p, epp)
 	return error;
 }
 
-#ifdef COMPAT_NOMID
+#if defined(COMPAT_NOMID) || defined(COMPAT_FREEBSD)
 /*
  * cpu_exec_aout_prep_oldzmagic():
  *	Prepare the vmcmds to build a vmspace for an old (386BSD) ZMAGIC
@@ -1283,7 +1283,7 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 
 	return exec_aout_setup_stack(p, epp);
 }
-#endif /* COMPAT_NOMID */
+#endif /* COMPAT_NOMID || COMPAT_FREEBSD */
 
 u_int
 pmap_free_pages()
