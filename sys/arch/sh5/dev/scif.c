@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.12 2003/08/07 16:29:30 agc Exp $	*/
+/*	$NetBSD: scif.c,v 1.13 2003/11/09 12:19:54 scw Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.12 2003/08/07 16:29:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.13 2003/11/09 12:19:54 scw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1075,6 +1075,10 @@ scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 
 	end = sc->sc_ebuf;
 	get = sc->sc_rbget;
+
+	if (end == NULL || get == NULL)
+		return;
+
 	scc = cc = scif_rbuf_size - sc->sc_rbavail;
 
 	if (cc == scif_rbuf_size) {
