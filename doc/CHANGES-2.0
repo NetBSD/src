@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.468 2004/10/01 02:37:58 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.469 2004/10/01 02:40:46 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7623,3 +7623,8 @@ sys/arch/amiga/amiga/pmap.c			1.109-1.110
 
 	Fix issues so debug kernels can build
 	[tron, ticket #873]
+
+sys/arch/arm/arm/disksubr.c			1.12
+
+	Fix cd installation issue on arm based machines.
+	[chris, ticket #874]
