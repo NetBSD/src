@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.10 2003/12/21 15:56:20 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.11 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.10 2003/12/21 15:56:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.11 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -43,11 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.10 2003/12/21 15:56:20 oster Exp $
 #include "rf_threadstuff.h"
 #include "rf_callback.h"
 #include "rf_debugMem.h"
-#include "rf_freelist.h"
+#include "rf_general.h"
 #include "rf_shutdown.h"
 
 static struct pool rf_callback_pool;
-
 #define RF_MAX_FREE_CALLBACK 64
 #define RF_CALLBACK_INC       4
 #define RF_CALLBACK_INITIAL  32
@@ -85,7 +84,7 @@ rf_AllocCallbackDesc()
 {
 	RF_CallbackDesc_t *p;
 
-	p = pool_get(&rf_callback_pool, PR_NOWAIT);
+	p = pool_get(&rf_callback_pool, PR_WAITOK);
 	return (p);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.11 2003/07/01 22:43:59 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.12 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.11 2003/07/01 22:43:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.12 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -206,8 +206,9 @@ rf_CommonCreateLargeWriteDAG(
 
 	/* alloc the nodes: Wnd, xor, commit, block, term, and  Wnp */
 	nWndNodes = asmap->numStripeUnitsAccessed;
-	RF_CallocAndAdd(nodes, nWndNodes + 4 + nfaults, sizeof(RF_DagNode_t),
-	    (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, 
+			(nWndNodes + 4 + nfaults) * sizeof(RF_DagNode_t),
+			(RF_DagNode_t *), allocList);
 	i = 0;
 	wndNodes = &nodes[i];
 	i += nWndNodes;
@@ -230,8 +231,8 @@ rf_CommonCreateLargeWriteDAG(
 	rf_MapUnaccessedPortionOfStripe(raidPtr, layoutPtr, asmap, dag_h, new_asm_h,
 	    &nRodNodes, &sosBuffer, &eosBuffer, allocList);
 	if (nRodNodes > 0) {
-		RF_CallocAndAdd(rodNodes, nRodNodes, sizeof(RF_DagNode_t),
-		    (RF_DagNode_t *), allocList);
+		RF_MallocAndAdd(rodNodes, nRodNodes * sizeof(RF_DagNode_t),
+				(RF_DagNode_t *), allocList);
 	} else {
 		rodNodes = NULL;
 	}
@@ -316,9 +317,9 @@ rf_CommonCreateLargeWriteDAG(
 		}
 	}
 	if ((!allowBufferRecycle) || (i == nRodNodes)) {
-		RF_CallocAndAdd(xorNode->results[0], 1,
-		    rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit),
-		    (void *), allocList);
+		RF_MallocAndAdd(xorNode->results[0],
+				rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit),
+				(void *), allocList);
 	} else {
 		xorNode->results[0] = rodNodes[i].params[1].p;
 	}
@@ -340,9 +341,9 @@ rf_CommonCreateLargeWriteDAG(
 	         * to get smashed during the P and Q calculation, guaranteeing
 	         * one would be wrong.
 	         */
-		RF_CallocAndAdd(xorNode->results[1], 1,
-		    rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit),
-		    (void *), allocList);
+		RF_MallocAndAdd(xorNode->results[1],
+				rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit),
+				(void *), allocList);
 		rf_InitNode(wnqNode, rf_wait, RF_FALSE, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 		    rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, "Wnq", allocList);
 		wnqNode->params[0].p = asmap->qInfo;
@@ -532,8 +533,8 @@ rf_CommonCreateSmallWriteDAG(
 	/*
          * Step 2. create the nodes
          */
-	RF_CallocAndAdd(nodes, totalNumNodes, sizeof(RF_DagNode_t),
-	    (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, totalNumNodes * sizeof(RF_DagNode_t),
+			(RF_DagNode_t *), allocList);
 	i = 0;
 	blockNode = &nodes[i];
 	i += 1;
@@ -1098,8 +1099,9 @@ rf_CreateRaidOneWriteDAG(
 
 	/* total number of nodes = nWndNodes + nWmirNodes + (commit + unblock
 	 * + terminator) */
-	RF_CallocAndAdd(nodes, nWndNodes + nWmirNodes + 3, sizeof(RF_DagNode_t),
-	    (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, 
+			(nWndNodes + nWmirNodes + 3) * sizeof(RF_DagNode_t),
+			(RF_DagNode_t *), allocList);
 	i = 0;
 	wndNode = &nodes[i];
 	i += nWndNodes;
