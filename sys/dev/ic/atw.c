@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.38 2004/07/15 05:43:50 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.38 2004/07/15 05:43:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -146,11 +146,6 @@ int atw_beacon_len_adjust = 4;
 int atw_dwelltime = 200;
 
 #ifdef ATW_DEBUG
-int atw_xhdrctl = 0;
-int atw_xrtylmt = ~0;
-int atw_xservice = IEEE80211_PLCP_SERVICE;
-int atw_xpaylen = 0;
-
 int atw_debug = 0;
 
 #define ATW_DPRINTF(x)	if (atw_debug > 0) printf x
@@ -159,10 +154,21 @@ int atw_debug = 0;
 #define	DPRINTF(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) printf x
 #define	DPRINTF2(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) ATW_DPRINTF2(x)
 #define	DPRINTF3(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) ATW_DPRINTF3(x)
+
 static void atw_print_regs(struct atw_softc *, const char *);
-static void atw_rf3000_print(struct atw_softc *);
-static void atw_si4126_print(struct atw_softc *);
 static void atw_dump_pkt(struct ifnet *, struct mbuf *);
+
+/* Note well: I never got atw_rf3000_read or atw_si4126_read to work. */
+#	ifdef ATW_BBPDEBUG 
+static int atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
+static void atw_rf3000_print(struct atw_softc *);
+#	endif /* ATW_BBPDEBUG */
+
+#	ifdef ATW_SYNDEBUG 
+static int atw_si4126_read(struct atw_softc *, u_int, u_int *);
+static void atw_si4126_print(struct atw_softc *);
+#	endif /* ATW_SYNDEBUG */
+
 #else
 #define ATW_DPRINTF(x)
 #define ATW_DPRINTF2(x)
@@ -3460,17 +3466,7 @@ atw_start(struct ifnet *ifp)
 		hh->atw_paylen = htole16(m0->m_pkthdr.len -
 		    sizeof(struct atw_frame));
 
-#if 0
-		/* this virtually guaranteed that WEP-encrypted frames
-		 * are fragmented. oops.
-		 */
-		hh->atw_fragthr = htole16(m0->m_pkthdr.len -
-		    sizeof(struct atw_frame) + sizeof(struct ieee80211_frame));
-		hh->atw_fragthr &= htole16(ATW_FRAGTHR_FRAGTHR_MASK);
-#else
 		hh->atw_fragthr = htole16(ATW_FRAGTHR_FRAGTHR_MASK);
-#endif
-
 		hh->atw_rtylmt = 3;
 		hh->atw_hdrctl = htole16(ATW_HDRCTL_UNKNOWN1);
 		if (do_encrypt) {
@@ -3491,15 +3487,6 @@ atw_start(struct ifnet *ifp)
 		}
 
 #ifdef ATW_DEBUG
-		/* experimental stuff */
-		if (atw_xrtylmt != ~0)
-			hh->atw_rtylmt = atw_xrtylmt;
-		if (atw_xhdrctl != 0)
-			hh->atw_hdrctl |= htole16(atw_xhdrctl);
-		if (atw_xservice != IEEE80211_PLCP_SERVICE)
-			hh->atw_service = atw_xservice;
-		if (atw_xpaylen != 0)
-			hh->atw_paylen = htole16(atw_xpaylen);
 		hh->atw_fragnum = 0;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 && atw_debug > 2) {
