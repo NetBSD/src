@@ -1,3 +1,4 @@
+/*	$NetBSD: pf_norm.c,v 1.2 2004/06/22 14:17:08 itojun Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.80 2004/03/09 21:44:41 mcbride Exp $ */
 
 /*
@@ -25,6 +26,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
+
 #include "pflog.h"
 
 #include <sys/param.h>
@@ -37,7 +42,11 @@
 #include <sys/time.h>
 #include <sys/pool.h>
 
+#ifdef __OpenBSD__
 #include <dev/rndvar.h>
+#else
+#include <sys/rnd.h>
+#endif
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/bpf.h>
@@ -126,9 +135,19 @@ struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
 struct pool		 pf_state_scrub_pl;
 int			 pf_nfrents, pf_ncache;
 
+#ifdef __NetBSD__
+POOL_INIT(pf_frent_pl, sizeof(struct pf_frent), 0, 0, 0, "pffrent", NULL);
+POOL_INIT(pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag", NULL);
+POOL_INIT(pf_cache_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrcache", NULL);
+POOL_INIT(pf_cent_pl, sizeof(struct pf_frcache), 0, 0, 0, "pffrcent", NULL);
+POOL_INIT(pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
+    "pfstscr", NULL);
+#endif
+
 void
 pf_normalize_init(void)
 {
+#ifdef __OpenBSD__
 	pool_init(&pf_frent_pl, sizeof(struct pf_frent), 0, 0, 0, "pffrent",
 	    NULL);
 	pool_init(&pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag",
@@ -139,6 +158,7 @@ pf_normalize_init(void)
 	    NULL);
 	pool_init(&pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
 	    "pfstscr", NULL);
+#endif
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
@@ -619,7 +639,11 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 				 * than this mbuf magic.  For my next trick,
 				 * I'll pull a rabbit out of my laptop.
 				 */
+#ifdef __OpenBSD__
 				*m0 = m_copym2(m, 0, h->ip_hl << 2, M_NOWAIT);
+#else
+				*m0 = m_dup(m, 0, h->ip_hl << 2, M_NOWAIT);
+#endif
 				if (*m0 == NULL)
 					goto no_mem;
 				KASSERT((*m0)->m_next == NULL);
@@ -1290,7 +1314,7 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 
 	/* copy back packet headers if we sanitized */
 	if (rewrite)
-		m_copyback(m, off, sizeof(*th), th);
+		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 
 	return (PF_PASS);
 
@@ -1482,8 +1506,8 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			/* Copyback the options, caller copys back header */
 			*writeback = 1;
 			m_copyback(m, off + sizeof(struct tcphdr),
-			    (th->th_off << 2) - sizeof(struct tcphdr), hdr +
-			    sizeof(struct tcphdr));
+			    (th->th_off << 2) - sizeof(struct tcphdr),
+			    (caddr_t)hdr + sizeof(struct tcphdr));
 		}
 	}
 
