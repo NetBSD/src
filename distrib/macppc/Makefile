@@ -1,19 +1,18 @@
-#	$NetBSD: Makefile,v 1.10 2002/03/31 06:44:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/04/12 02:19:30 lukem Exp $
 
-.include <bsd.own.mk>		# Use /etc/mk.conf.
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
+.include <bsd.kernobj.mk>
 
 SUBDIR=	floppies
+TARGETS+=release
 
-.include <bsd.subdir.mk>
-
-BOOTFLOPOBJ != cd ${.CURDIR}/floppies/bootfloppy && ${PRINTOBJDIR}
-BOOTOBJ != cd ${.CURDIR}/../../sys/arch/macppc/stand/ofwboot && ${PRINTOBJDIR}
+BOOTOBJ!=	cd ${KERNSRCDIR}/arch/macppc/stand/ofwboot && ${PRINTOBJDIR}
+ITARGET=	${RELEASEDIR}/installation
 
 release: check_RELEASEDIR
-	${IINST} ${BOOTOBJ}/ofwboot.elf ${ITARGET}/
-	${IINST} ${BOOTOBJ}/ofwboot.xcf ${ITARGET}/
-	${IINST} ${BOOTFLOPOBJ}/boot.fs ${ITARGET}/
-	cd ${.CURDIR}/floppies/md-kernel && ${MAKE} release
+	-mkdir -p ${ITARGET}
+	${RELINSTALL} ${BOOTOBJ}/ofwboot.elf ${BOOTOBJ}/ofwboot.xcf ${ITARGET}
+
+.include <bsd.subdir.mk>
