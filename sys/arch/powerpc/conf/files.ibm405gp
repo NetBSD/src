@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm405gp,v 1.2 2003/10/06 16:15:46 scw Exp $
+#	$NetBSD: files.ibm405gp,v 1.3 2003/10/06 18:15:08 shige Exp $
 #
 # IBM 405GPx specific configuration info
 
@@ -19,3 +19,6 @@ file	arch/powerpc/ibm4xx/dev/ibm405gp.c
 device	gpiic: i2cbus, i2c_bitbang
 attach	gpiic at opb
 file	arch/powerpc/ibm4xx/dev/gpiic_opb.c	gpiic
+
+# Real time clock support
+file	arch/powerpc/ibm4xx/dev/rtc.c
