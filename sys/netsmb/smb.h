@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.5 2003/02/18 10:18:53 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.6 2003/03/02 18:55:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -225,6 +225,16 @@ enum smb_dialects {
 #define	SMB_COM_WRITE_BULK_DATA         0xDA
 
 /*
+ * SMB_COM_NT_TRANSACT subcommands
+ */
+#define SMB_NTTRANS_CREATE		0x01
+#define SMB_NTTRANS_IOCTL		0x02
+#define SMB_NTTRANS_SET_SEC_DESC	0x03	/* Set Security Descriptor */
+#define SMB_NTTRANS_NOTIFY_CHANGE	0x04	/* Directory Change Notify */
+#define SMB_NTTRANS_RENAME		0x05
+#define SMB_NTTRANS_QUERY_SEC_DESC	0x06	/* Query Security Descriptor */
+
+/*
  * TRANS2 commands
  */
 #define	SMB_TRANS2_OPEN2			0x00
@@ -237,7 +247,9 @@ enum smb_dialects {
 #define	SMB_TRANS2_SET_FILE_INFORMATION		0x08
 #define	SMB_TRANS2_FSCTL			0x09
 #define	SMB_TRANS2_IOCTL2			0x0A
+/* Start monitoring a directory for changes */
 #define	SMB_TRANS2_FIND_NOTIFY_FIRST		0x0B
+/* Continue monitoring a directory for changes */
 #define	SMB_TRANS2_FIND_NOTIFY_NEXT		0x0C
 #define	SMB_TRANS2_CREATE_DIRECTORY		0x0D
 #define	SMB_TRANS2_SESSION_SETUP		0x0E
