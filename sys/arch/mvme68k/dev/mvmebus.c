@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.7 2001/05/31 18:46:08 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.8 2001/08/07 17:25:19 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -471,7 +471,7 @@ mvmebus_intr_disestablish(vsc, handle)
 	}
 #endif
 
-	last = (sc->sc_irqref[level]-- == 0);
+	last = (--(sc->sc_irqref[level]) == 0);
 
 	(*sc->sc_intr_disestablish)(sc->sc_chip, level, vector, last,
 	    &sc->sc_evcnt[level - 1]);
