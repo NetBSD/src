@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.21 1995/07/12 03:45:14 cgd Exp $	*/
+/*	$NetBSD: mount.c,v 1.22 1995/07/12 06:05:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.21 1995/07/12 03:45:14 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.22 1995/07/12 06:05:04 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ int	hasopt __P((const char *, const char *));
 void	maketypelist __P((char *));
 void	mangle __P((char *, int *, const char **));
 int	mountfs __P((const char *, const char *, const char *,
-			int, const char *, const char *));
+			int, const char *, const char *, int));
 void	prmount __P((struct statfs *));
 void	usage __P((void));
 
@@ -105,14 +105,17 @@ main(argc, argv)
 	struct statfs *mntbuf;
 	FILE *mountdfp;
 	pid_t pid;
-	int all, ch, i, init_flags, mntsize, rval;
+	int all, ch, forceall, i, init_flags, mntsize, rval;
 	char *options;
 
-	all = init_flags = 0;
+	all = forceall = init_flags = 0;
 	options = NULL;
 	vfstype = "ufs";
-	while ((ch = getopt(argc, argv, "adfo:rwt:uv")) != EOF)
+	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != EOF)
 		switch (ch) {
+		case 'A':
+			all = forceall = 1;
+			break;
 		case 'a':
 			all = 1;
 			break;
@@ -169,7 +172,7 @@ main(argc, argv)
 					continue;
 				if (mountfs(fs->fs_vfstype, fs->fs_spec,
 				    fs->fs_file, init_flags, options,
-				    fs->fs_mntops))
+				    fs->fs_mntops, !forceall))
 					rval = 1;
 			}
 		else {
@@ -209,7 +212,7 @@ main(argc, argv)
 			mntonname = fs->fs_file;
 		}
 		rval = mountfs(fs->fs_vfstype, fs->fs_spec,
-		    mntonname, init_flags, options, fs->fs_mntops);
+		    mntonname, init_flags, options, fs->fs_mntops, 0);
 		break;
 	case 2:
 		/*
@@ -220,7 +223,7 @@ main(argc, argv)
 		if (typelist == NULL && strpbrk(argv[0], ":@") != NULL)
 			vfstype = "nfs";
 		rval = mountfs(vfstype,
-		    argv[0], argv[1], init_flags, options, NULL);
+		    argv[0], argv[1], init_flags, options, NULL, 0);
 		break;
 	default:
 		usage();
@@ -268,9 +271,9 @@ hasopt(mntopts, option)
 }
 
 int
-mountfs(vfstype, spec, name, flags, options, mntopts)
+mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	const char *vfstype, *spec, *name, *options, *mntopts;
-	int flags;
+	int flags, skipmounted;
 {
 	/* List of directories containing mount_xxx subcommands. */
 	static const char *edirs[] = {
@@ -305,7 +308,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts)
 
 	if (strcmp(name, "/") == 0)
 		flags |= MNT_UPDATE;
-	else {
+	else if (skipmounted) {
 		if (statfs(name, &sf) < 0) {
 			warn("statfs %s", name);
 			return (1);
