@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)externs.h	8.1 (Berkeley) 6/6/93
- *	$Id: externs.h,v 1.4 1994/12/24 17:50:05 cgd Exp $
+ *	$Id: externs.h,v 1.5 1995/03/17 18:03:06 mycroft Exp $
  */
 
 #ifndef	BSD
@@ -146,7 +146,8 @@ extern int
 #endif	/* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
 #endif	/* defined(unix) */
-    debug;			/* Debug level */
+    debug,			/* Debug level */
+    clienteof;		/* Client received EOF */
 
 extern cc_t escape;	/* Escape to command mode */
 extern cc_t rlogin;	/* Rlogin mode escape character */

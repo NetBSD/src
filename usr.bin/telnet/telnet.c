@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)telnet.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: telnet.c,v 1.3 1994/02/25 03:00:46 cgd Exp $";
+static char *rcsid = "$Id: telnet.c,v 1.4 1995/03/17 18:03:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -105,7 +105,8 @@ int
 	donelclchars,	/* the user has set "localchars" */
 	donebinarytoggle,	/* the user has put us in binary */
 	dontlecho,	/* do we suppress local echoing right now? */
-	globalmode;
+	globalmode,
+	clienteof = 0;
 
 char *prompt = 0;
 
@@ -2098,9 +2099,9 @@ Scheduler(block)
     ttyout = ring_full_count(&ttyoring);
 
 #if	defined(TN3270)
-    ttyin = ring_empty_count(&ttyiring) && (shell_active == 0);
+    ttyin = ring_empty_count(&ttyiring) && (clienteof == 0) && (shell_active == 0);
 #else	/* defined(TN3270) */
-    ttyin = ring_empty_count(&ttyiring);
+    ttyin = ring_empty_count(&ttyiring) && (clienteof == 0);
 #endif	/* defined(TN3270) */
 
 #if	defined(TN3270)
