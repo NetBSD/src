@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.76 2002/12/03 16:11:11 kenh Exp $	*/
+/*	$NetBSD: clock.c,v 1.77 2002/12/10 23:24:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76 2002/12/03 16:11:11 kenh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.77 2002/12/10 23:24:33 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.76 2002/12/03 16:11:11 kenh Exp $");
 #include <i386/isa/nvram.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
+
+#include "config_time.h"		/* for CONFIG_TIME */
 
 #include "mca.h"
 #if NMCA > 0
@@ -764,14 +766,12 @@ inittodr(base)
 	 */
 
 	/*
-	 * XXX Traditionally, the dates in this code snippet get
-	 * updated every few years. It would be neater if they could
-	 * somehow be automatically set when the kernel was built.
+	 * if the file system time is more than a year older than the
+	 * kernel, warn and then set the base time to the CONFIG_TIME.
 	 */
-	if (base && base < 30*SECYR) {	/* if before 2000, something's odd. */
+	if (base && base < (CONFIG_TIME-SECYR)) {
 		printf("WARNING: preposterous time in file system\n");
-		/* Since the fs time is silly, set the base time to 2002 */
-		base = 32*SECYR;
+		base = CONFIG_TIME;
 	}
 
 	s = splclock();
