@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2001/06/03 18:32:34 chris Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2001/09/05 16:13:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -299,7 +299,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9TDMI",	NULL },		/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },		/* CPU_CLASS_ARM9ES */
 	{ "SA-1",	"CPU_SA110" },	/* CPU_CLASS_SA1 */
-	{ "Xscale",	NULL },		/* CPU_CLASS_XSCALE */
+	{ "Xscale",	"CPU_XSCALE" },	/* CPU_CLASS_XSCALE */
 };
 
 /*
@@ -348,6 +348,7 @@ identify_arm_cpu(dv, cpu_number)
 			strcat(cpu->cpu_model, " IDC enabled");
 		break;
 	case CPU_CLASS_SA1:
+	case CPU_CLASS_XSCALE:
 		if ((cpu->cpu_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " DC disabled");
 		else
@@ -399,6 +400,9 @@ identify_arm_cpu(dv, cpu_number)
 #endif
 #ifdef CPU_SA110
 	case CPU_CLASS_SA1:
+#endif
+#ifdef CPU_XSCALE
+	case CPU_CLASS_XSCALE:
 #endif
 		break;
 	default:
