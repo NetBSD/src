@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.38 1997/06/12 14:51:20 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.39 1997/06/13 15:37:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1107,6 +1107,8 @@ swapinit()
 #endif
 	nswap = 0;
 	nswapdev = 0;
+	if (bdevvp(swapdev, &swapdev_vp))
+		panic("swapinit: can setup swapdev_vp");
 
 	LIST_INIT(&swap_priority);
 
