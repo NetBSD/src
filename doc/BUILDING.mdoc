@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.5 2002/12/08 22:14:02 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.6 2002/12/18 19:46:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,8 @@ from source code.
 .
 .Sh STATUS
 .
-This document is a work-in-progress.  As such, the information described
+This document is a work-in-progress.
+As such, the information described
 here may not match the reality of the build system as of this writing.
 Once this document is completely in sync with reality, this paragraph
 will be removed.
@@ -84,7 +85,8 @@ architecture) or
 This source tree contains a special subtree,
 .Dq tools ,
 which uses the host system to create a build toolchain for the target
-architecture.  The host system must have at least C and C++
+architecture.
+The host system must have at least C and C++
 compilers in order to create the toolchain
 .Nm ( make
 is not required); all other tools are created as part of the
@@ -94,9 +96,10 @@ build process.
 .Bd -ragged -offset indent
 .Em Note :
 A couple host toolchain components are not yet available in the tools
-directory.  Also, some tools use non-POSIX, non-ANSI C extensions
-and need to be standardized.  As a result, cross-compiling from
-systems other than
+directory.
+Also, some tools use non-POSIX, non-ANSI C extensions
+and need to be standardized.
+As a result, cross-compiling from systems other than
 .Nx
 is not currently supported.
 .Ed
@@ -129,13 +132,14 @@ source tree.
 Bourne-compatible shell script used for building the host build tools
 and the
 .Nx
-system from scratch.  Can be used for both native and cross builds, and
-should be used instead of
+system from scratch.
+Can be used for both native and cross builds, and should be used instead of
 .Xr make 1
 for any source tree that is updated and recompiled regularly.
 .It Sy crypto/dist/ , dist/ , gnu/dist/
 Sources imported verbatim from third parties, without mangling the
-existing build structure.  Other source trees in
+existing build structure.
+Other source trees in
 .Sy bin
 through
 .Sy usr.sbin
@@ -150,19 +154,20 @@ files installed in
 .Sy /etc
 on the destination system, boot media, and release notes.
 .It Sy regress/
-Regression test harness.  Can be cross-compiled, but only run natively.
+Regression test harness.
+Can be cross-compiled, but only run natively.
 .It Sy sys/
 .Nx
 kernel sources.
 .It Sy tools/
 .Dq Reachover
-build structure for the host build tools.  This has a special method of
-determining out-of-date status.
+build structure for the host build tools.
+This has a special method of determining out-of-date status.
 .It Sy bin/ ... usr.sbin/
 Sources to the
 .Nx
-userland (non-kernel) programs.  If any of these directories are
-missing, they will be skipped during the build.
+userland (non-kernel) programs.
+If any of these directories are missing, they will be skipped during the build.
 .El
 .
 .Ss Build tree layout
@@ -250,7 +255,8 @@ Unset.
 ..
 Several variables control the behavior of
 .Nx
-builds.  Unless otherwise specified, these variables may be set in
+builds.
+Unless otherwise specified, these variables may be set in
 either the process environment or the
 .Xr make 1
 configuration file specified by
@@ -259,7 +265,8 @@ configuration file specified by
 .Bl -tag -width "MKCATPAGES"
 .
 .It Sy BUILDID
-Identifier for the build.  The identifier will be appended to
+Identifier for the build.
+The identifier will be appended to
 object directory names, and can be consulted in the
 .Xr make 1
 configuration file in order to set additional build parameters,
@@ -268,10 +275,12 @@ such as compiler flags.
 .It Sy DESTDIR
 Directory to contain the built
 .Nx
-system.  If set, special options are passed to the compilation tools to
+system.
+If set, special options are passed to the compilation tools to
 prevent their default use of the host system's
 .Sy /usr/include , /usr/lib ,
-and so forth.  This pathname should
+and so forth.
+This pathname should
 .Em not
 end with a slash
 .Pq /
@@ -305,8 +314,8 @@ during a build.
 .YorN
 Indicates whether cryptographic code will be included in a build;
 provided for the benefit of countries that do not allow strong
-cryptography.  Will not affect use of the standard low-security password
-encryption system,
+cryptography.
+Will not affect use of the standard low-security password encryption system,
 .Xr crypt 3 .
 .DFLTy
 .
@@ -373,11 +382,13 @@ then all built files will be located inside the regular source tree.
 .It Sy MKPIC
 .YorN
 Indicates whether shared objects and libraries will be created and
-installed during a build.  If set to
+installed during a build.
+If set to
 .Dq no ,
 the entire built system will be statically linked.
 .DFLT
-Platform dependent.  As of this writing, all platforms except
+Platform dependent.
+As of this writing, all platforms except
 .Sy sh3
 default to
 .Dq yes .
@@ -406,7 +417,8 @@ by default at times due to toolchain problems with profiled code.
 .YorN
 Indicates whether files destined to reside in
 .Sy /usr/share
-will be built and installed during a build.  If set to
+will be built and installed during a build.
+If set to
 .Dq no ,
 then all of
 .Sy MKCATPAGES , MKDOC , MKINFO , MKMAN ,
@@ -418,10 +430,11 @@ unconditionally.
 .DFLTy
 .
 .It Sy TOOLDIR
-Directory to hold the host tools, once built.  This directory should be
-unique to a given host system and
+Directory to hold the host tools, once built.
+This directory should be unique to a given host system and
 .Nx
-source tree.  (However, multiple targets may share the same
+source tree.
+(However, multiple targets may share the same
 .Sy TOOLDIR ;
 the target-dependent files have unique names.)  If unset, a default based
 on the
@@ -429,7 +442,7 @@ on the
 information of the host platform will be created in the
 .Sy .OBJDIR
 of
-.Sy src/tools .
+.Pa src/tools .
 .DFLTu
 .
 .It Sy UNPRIVED
@@ -450,14 +463,15 @@ that the appropriate file ownership is stored.
 If set, then all install operations intended to write to
 .Sy DESTDIR
 will compare file timestamps before installing, and skip the install
-phase if the destination files are up-to-date.  This also has
-implications on full builds (see next subsection).
+phase if the destination files are up-to-date.
+This also has implications on full builds (see next subsection).
 .DFLTu
 .
 .It Sy USETOOLS
 Indicates whether the tools specified by
 .Sy TOOLDIR
-should be used as part of a build in progress.  Must be set to
+should be used as part of a build in progress.
+Must be set to
 .Dq yes
 if cross-compiling.
 .Bl -tag -width "never"
@@ -472,14 +486,14 @@ version-specific for that tool.
 .It Sy never
 Do not use the tools from
 .Sy TOOLDIR ,
-even when building native tool components.  This is similar to the
-traditional
+even when building native tool components.
+This is similar to the traditional
 .Nx
 build method, but does
 .Em not
 verify that the compilation tools in use are up-to-date enough in order
-to build the tree successfully.  This may cause build or runtime
-problems when building the whole
+to build the tree successfully.
+This may cause build or runtime problems when building the whole
 .Nx
 source tree.
 .El
@@ -514,7 +528,8 @@ pass) at the start of a build.
 .DFLTy
 .
 .It Sy NBUILDJOBS
-Now obsolete.  Use the 
+Now obsolete.
+Use the 
 .Xr make 1
 option
 .Fl j ,
@@ -524,15 +539,17 @@ instead (see below)
 .It Sy NOCLEANDIR
 If set, avoids the
 .Dq make cleandir
-phase of a full build.  This has the effect of allowing only changed
-files in a source tree to be recompiled.  This can speed up builds when
-updating only a few files in the tree.
+phase of a full build.
+This has the effect of allowing only changed
+files in a source tree to be recompiled.
+This can speed up builds when updating only a few files in the tree.
 .DFLTu
 .
 .It Sy NODISTRIBDIRS
 If set, avoids the
 .Dq make distrib-dirs
-phase of a full build.  This skips running
+phase of a full build.
+This skips running
 .Xr mtree 8
 on
 .Sy DESTDIR ,
@@ -543,11 +560,12 @@ known that the system-wide mtree files have not changed.
 .It Sy NOINCLUDES
 If set, avoids the
 .Dq make includes
-phase of a full build.  This has the effect of preventing
+phase of a full build.
+This has the effect of preventing
 .Xr make 1
 from thinking that some programs are out-of-date simply because the
-system include files have changed.  However, this option should not be
-used when updating the entire
+system include files have changed.
+However, this option should not be used when updating the entire
 .Nx
 source tree arbitrarily; it is suggested to use
 .Sy UPDATE
@@ -593,16 +611,18 @@ so the failures can be analyzed.
 Specify the default directory for searching for system Makefile
 segments, mainly the
 .Aq bsd.*.mk
-files.  When building any full
+files.
+When building any full
 .Nx
 source tree, this should be set to the
 .Dq share/mk
-directory in the source tree.  (This is set automatically when building
-from the top level.)
+directory in the source tree.
+(This is set automatically when building from the top level.)
 .
 .It Fl n
 Display the commands that would have been executed, but do not
-actually execute them.  This will still cause recursion to take place.
+actually execute them.
+This will still cause recursion to take place.
 .
 .It Fl v Ar var
 Print
@@ -628,7 +648,8 @@ These default targets may be built by running
 .Xr make 1
 in any subtree of the
 .Nx
-source code.  It is recommended that none of these be used from the top
+source code.
+It is recommended that none of these be used from the top
 level Makefile; as a specific exception,
 .Dq make obj
 and
@@ -658,8 +679,8 @@ convention.
 Create dependency files
 .Sy ( .depend )
 containing more detailed information about the dependencies of source
-code on header files.  Allows programs to be recompiled automatically
-when a dependency changes.
+code on header files.
+Allows programs to be recompiled automatically when a dependency changes.
 .
 .It Sy dependall
 Does a
@@ -670,8 +691,8 @@ This improves cache locality of the build since both passes read the source
 files in their entirety.
 .
 .It Sy includes
-Build and install system header files.  Typically needed before any
-system libraries or programs can be built.
+Build and install system header files.
+Typically needed before any system libraries or programs can be built.
 .
 .It Sy install
 Install programs, libraries, and documentation into
@@ -718,7 +739,8 @@ source tree.
 .It Sy build
 Build the entire
 .Nx
-system.  This orders portions of the source tree such that prerequisites
+system.
+This orders portions of the source tree such that prerequisites
 will be built in the proper order.
 .
 .It Sy release
@@ -744,8 +766,8 @@ entire
 .Nx
 system on any host with a Bourne shell in
 .Sy /bin/sh ,
-including many that are not POSIX compliant.  Note that if a host
-system's
+including many that are not POSIX compliant.
+Note that if a host system's
 .Sy /bin/sh
 is unusually old and broken, the Korn Shell
 .Sy ( /bin/ksh ) ,
@@ -768,8 +790,8 @@ When compiling the entire system via
 many
 .Xr make 1
 variables are set for you in order to help encapsulate the build
-process.  In the list of options below, variables that are automatically
-set by
+process.
+In the list of options below, variables that are automatically set by
 .Sy build.sh
 are noted where applicable.
 .Pp
@@ -888,7 +910,8 @@ in the process environment with a value deduced from
 .Ar mach ,
 unless
 .Fl a
-is specified.  All cross builds require
+is specified.
+All cross builds require
 .Fl m ,
 but if unset on a NetBSD host, the host's value of MACHINE will be
 detected and used automatically.
@@ -896,7 +919,8 @@ detected and used automatically.
 .It Fl n
 Show the commands that would be executed by
 .Sy build.sh ,
-but do not make any changes.  This is similar in concept to
+but do not make any changes.
+This is similar in concept to
 .Dq make -n .
 .
 .It Fl O Ar obj
@@ -933,7 +957,8 @@ Remove the contents of
 .Sy DESTDIR
 and
 .Sy TOOLDIR
-before building (provides a clean starting point).  This will skip deleting
+before building (provides a clean starting point).
+This will skip deleting
 .Sy DESTDIR
 if building on a native system to the root directory.
 .
@@ -950,8 +975,9 @@ change).
 .
 .It Fl t
 Build and install the host tools from
-.Sy src/tools
-only.  This option implies
+.Pa src/tools
+only.
+This option implies
 .Fl b .
 .
 .It Fl U
@@ -970,7 +996,8 @@ specified by
 .Ar wrapper .
 This allows, for instance, to place the wrapper in
 .Sy PATH
-automatically.  Note that
+automatically.
+Note that
 .Ar wrapper
 is the full name of the file, not just a directory name.
 .
