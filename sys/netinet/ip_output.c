@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.141 2005/02/12 12:31:07 manu Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.142 2005/02/12 23:25:29 heas Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.141 2005/02/12 12:31:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.142 2005/02/12 23:25:29 heas Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -799,6 +799,37 @@ spd_done:
 		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		} else if (ifp->if_csum_flags_tx & M_CSUM_NO_PSEUDOHDR &&
+			 m->m_pkthdr.csum_flags & (M_CSUM_UDPv4|M_CSUM_TCPv4)) {
+			/* add pseudo-header sum */
+			uint16_t sum;
+
+			ip = mtod(m, struct ip *);
+			hlen = ip->ip_hl << 2;
+			m->m_pkthdr.csum_data = (hlen << 16) |
+					(m->m_pkthdr.csum_data & 0xffff);
+
+			if (ip->ip_p == IPPROTO_TCP) {
+				sum = in_cksum_phdr(ip->ip_src.s_addr,
+					     ip->ip_dst.s_addr,
+					     htons(ntohs(ip->ip_len) - hlen +
+					     IPPROTO_TCP));
+				/* offset of TCP checksum field */
+				hlen += (m->m_pkthdr.csum_data & 0xffff);
+			} else if (ip->ip_p == IPPROTO_UDP) {
+				sum = in_cksum_phdr(ip->ip_src.s_addr,
+					     ip->ip_dst.s_addr,
+					     htons(ntohs(ip->ip_len) - hlen +
+					     IPPROTO_UDP));
+				/* offset of UDP checksum field */
+				hlen += (m->m_pkthdr.csum_data & 0xffff);
+			}
+			if ((hlen + sizeof(uint16_t)) > m->m_len) {
+				/* This happens when ip options were inserted */
+				m_copyback(m, hlen, sizeof(sum), (caddr_t)&sum);
+			} else
+				*(u_int16_t *)(mtod(m, caddr_t) + hlen) = sum;
+
 		}
 
 #ifdef IPSEC
