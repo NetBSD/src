@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.49 2002/03/13 00:18:40 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.50 2002/03/13 00:55:02 uwe Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -621,19 +621,26 @@ For
 mixer control types,
 the enumeration values and their corresponding names are filled in.
 For example, a mute control would return appropriate values paired with
-AudioNon and AudioNoff.
+.Dv AudioNon
+and
+.Dv AudioNoff .
 For
 .Dv AUDIO_MIXER_VALUE
 and
 .Dv AUDIO_MIXER_SET
 mixer control types, the channel count is
 returned; the units name specifies what the level controls (typical
-values are AudioNvolume, AudioNtreble, AudioNbass).
+values are
+.Dv AudioNvolume ,
+.Dv AudioNtreble ,
+.Dv AudioNbass ) .
 .\" For AUDIO_MIXER_SET mixer control types, what is what?
 .El
 .Pp
 By convention, all the mixer devices can be distinguished from other
-mixer controls because they use a name from one of the AudioC* string values.
+mixer controls because they use a name from one of the
+.Dv AudioC*
+string values.
 .Sh FILES
 .Bl -tag -width /dev/audioctl -compact
 .It Pa /dev/audio
