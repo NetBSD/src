@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.13 2000/06/19 23:30:35 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.14 2000/06/24 20:48:40 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -230,6 +230,9 @@ main()
 	off("IH_MAP", struct intrhand, ih_map);
 	off("IH_CLR", struct intrhand, ih_clr);
 	siz("IH_SIZE", struct intrhand);
+
+	off("NO_NEXTNODE", struct nodeops, no_nextnode);
+	off("NO_GETPROP", struct nodeops, no_getprop);
 
 	/* floppy trap handler fields */
 	off("FDC_REG_MSR", struct fdcio, fdcio_reg_msr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 1999/12/30 16:22:12 eeh Exp $ */
+/*	$NetBSD: pcb.h,v 1.5 2000/06/24 20:48:39 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,11 +135,7 @@ struct pcb {
 	char	pcb_cwp;	/* %cwp when switch() was called */
 	char	pcb_pil;	/* %pil when switch() was called -- prolly not needed */
 
-#ifdef notdef
-	int	pcb_winof;	/* number of window overflow traps */
-	int	pcb_winuf;	/* number of window underflow traps */
-#endif
-	char*	lastcall;	/* DEBUG -- name of last system call */
+	char	*lastcall;	/* DEBUG -- name of last system call */
 	/* the following MUST be aligned on a 64-bit boundary */
 	struct	rwindow64 pcb_rw[PCB_MAXWIN];	/* saved windows */
 };

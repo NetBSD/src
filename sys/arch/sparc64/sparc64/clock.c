@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 2000/06/24 04:21:04 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.21 2000/06/24 20:48:40 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,6 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
-#include <machine/ctlreg.h>
 
 #include <sparc64/sparc64/clockreg.h>
 #include <sparc64/sparc64/intreg.h>

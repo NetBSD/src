@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2000/06/24 16:51:34 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.70 2000/06/24 20:48:43 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,6 @@
 #include <machine/pmap.h>
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
-#include <machine/ctlreg.h>
 
 #include <sparc64/sparc64/cache.h>
 
@@ -897,6 +896,7 @@ dumpsys()
 			i += NBPG;
 			blkno += btodb(NBPG);
 		}
+printf("dumping segment at %llx\n", maddr);
 
 		for (; i < mp->size; i += n) {
 			n = mp->size - i;
@@ -906,11 +906,12 @@ dumpsys()
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
 				printf("%d ", i / (1024*1024));
-
+printf("dumping page %llx...", maddr);
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
+printf("done\n");
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
 			if (error)
 				break;
