@@ -176,16 +176,20 @@ here_we_go:	/* This is the actual start of the locore code! */
 	lprd	sp, KERN_INT_SP # use the idle/interrupt stack.
 	lprd	fp, KERN_INT_SP # use the idle/interrupt stack.
 
-	/* We are assuming the cfg register is bF7 (IC,DC,DE,M,F,I) */
+	/* Load cfg register is bF7 (IC,DC,DE,M,F,I) or bF5 */
 	sprd	cfg, r0
 	tbitb	1, r0		/* Test the F bit! */
 	bfc	cfg_no_fpu
 	movqd	1, __have_fpu(pc)
-
+	lprd	cfg, 0xbf7
+	br	jmphi
+	
 cfg_no_fpu:
+	lprd	cfg, 0xbf5
 
 /* Now jump to high addresses after starting mapping! */
 
+jmphi:	
 	addr here(pc), r0
 	ord  KERNBASE, r0
 	jump 0(r0)
@@ -204,22 +208,25 @@ here:
 	lprd	usp, USRSTACK	/* starting stack for the user. */
 
 	/* Build the "trap" frame to return to address 0 in user space! */
-	movw	PSR_I|PSR_S|PSR_U, tos	/* psr -- user/user stack/interrupts */
-	movw	0, tos			/* mod -- 0! */
-	movd	16, tos			/* pc  -- 16 after module table */
-	enter	[],4		/* Extra space is for USP */
-	movqd	0,tos		/* Put fake registers in the pcb. */
-	movqd	1,tos
-	movqd	2,tos
-	movqd	3,tos
-	movqd	4,tos
-	movqd	5,tos
-	movqd	6,tos
-	movqd	7,tos
+	movw	PSR_I|PSR_S|PSR_U, tos	/* psr - user/user stack/interrupts */
+	movw	0, tos			/* mod - 0! */
+	movd	0, tos			/* pc  - 0 after module table */
+	enter	[],8		/* Extra space is for USP */
+	movqd	0, tos		/* Zero the registers in the pcb. */
+	movqd	0, tos
+	movqd	0, tos
+	movqd	0, tos
+	movqd	0, tos
+	movqd	0, tos
+	movqd	0, tos
+	movqd	0, tos
+	movqd	0, REGS_SB(sp)
 
 	/* Now things should be ready to start _main! */
 
+	addr	0(sp), tos
 	bsr 	_main		/* Start the kernel! */
+	movd	tos, r0		/* Pop addr */
 
 	/* We should only get here in proc 1. */
 	movd	_curproc(pc), r1
@@ -228,9 +235,9 @@ here:
 	movd	P_PID(r1),r0
 	cmpqd	1, r0
 	bne	main_panic
-	lprd	usp, USRSTACK
+	lprd	usp, REGS_USP(sp)
+	lprd	sb, REGS_SB(sp)
 
-	/* Start the user code! */
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	rett	0	
 
@@ -307,8 +314,7 @@ ENTRY(low_level_reboot)
 xxxlow:
 	lmr	mcr, 0 			/* Turn off mapping. */
 	lprd	sp, __save_sp(pc)  	/* get monitor's sp. */
-	movd	0x10000000, tos		/* The ROM Address */
-	ret	0			/* Jump to the ROM! */
+	jump	0x10000000		/* Jump to the ROM! */
 
 
 /* To get back to the rom monitor .... */
