@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.31 2002/11/02 06:32:10 enami Exp $	*/
+/*	$NetBSD: iostat.c,v 1.32 2002/11/02 06:35:30 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.31 2002/11/02 06:32:10 enami Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.32 2002/11/02 06:35:30 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,15 +277,15 @@ disk_stats(double etime)
 			continue;
 					/* average Kbytes per transfer. */
 		if (cur.dk_rxfer[dn] + cur.dk_wxfer[dn])
-			mbps = ((cur.dk_rbytes[dn] + cur.dk_rbytes[dn]) /
-			    1024.0) / (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]);
+			mbps = ((cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) /
+			    1024.0) / (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]);
 		else
 			mbps = 0.0;
 		(void)printf(" %5.2f", mbps);
 
 					/* average transfers per second. */
 		(void)printf(" %3.0f",
-		    (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]) / etime);
+		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 
 					/* time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
@@ -313,12 +313,11 @@ disk_stats2(double etime)
 
 					/* average kbytes per second. */
 		(void)printf(" %4.0f",
-		    (cur.dk_rbytes[dn] + cur.dk_rbytes[dn]) /
-		    1024.0 / etime);
+		    (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / 1024.0 / etime);
 
 					/* average transfers per second. */
 		(void)printf(" %3.0f",
-		    (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]) / etime);
+		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 
 					/* average time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
