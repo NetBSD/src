@@ -1,4 +1,4 @@
-# $NetBSD: display_manager,v 1.1 2005/02/27 03:40:14 thorpej Exp $
+# $NetBSD: display_manager,v 1.2 2005/02/27 21:35:59 thorpej Exp $
 #
 # PAM configuration for the display manager services.  Specific display
 # manager service configurations can include this one.
@@ -7,7 +7,8 @@
 # auth
 auth		required	pam_nologin.so		no_warn
 auth		sufficient	pam_krb5.so		no_warn try_first_pass
-auth		sufficient	pam_ssh.so		no_warn try_first_pass
+# pam_ssh has potential security risks.  See pam_ssh(8).
+#auth		sufficient	pam_ssh.so		no_warn try_first_pass
 auth		required	pam_unix.so		no_warn try_first_pass
 
 # account
@@ -16,5 +17,6 @@ account		required	pam_unix.so
 
 # session
 # XXX pam_lastlog.so?
-session 	optional	pam_ssh.so
+# pam_ssh has potential security risks.  See pam_ssh(8).
+#session 	optional	pam_ssh.so
 session		required	pam_permit.so
