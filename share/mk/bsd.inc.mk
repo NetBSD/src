@@ -1,9 +1,10 @@
-#	$NetBSD: bsd.inc.mk,v 1.5 1997/05/07 15:53:29 mycroft Exp $
+#	$NetBSD: bsd.inc.mk,v 1.6 1997/05/09 05:17:29 mycroft Exp $
 
 .PHONY:		incinstall
 includes:	incinstall
 
 .if defined(INCS)
+includes: ${INCS}
 .for I in ${INCS}
 incinstall:: ${DESTDIR}${INCSDIR}/$I
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.76 1997/05/08 21:21:25 gwr Exp $
+#	$NetBSD: bsd.prog.mk,v 1.77 1997/05/09 05:17:31 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -112,6 +112,7 @@ cleanprog:
 	    ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
 .if defined(SRCS)
+depend all: ${SRCS}
 afterdepend: .depend
 	@(TMP=/tmp/_depend$$$$; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.ln:/' \

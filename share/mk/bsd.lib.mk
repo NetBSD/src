@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.98 1997/05/07 17:06:22 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.99 1997/05/09 05:17:30 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -210,6 +210,7 @@ cleanlib:
 	rm -f llib-l${LIB}.ln ${LOBJS}
 
 .if defined(SRCS)
+depend all: ${SRCS}
 afterdepend: .depend
 	@(TMP=/tmp/_depend$$$$; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.ln:/' \
