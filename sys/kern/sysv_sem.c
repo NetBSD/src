@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.43 2002/03/05 23:28:58 nathanw Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.44 2002/03/17 22:21:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.43 2002/03/05 23:28:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.44 2002/03/17 22:21:58 christos Exp $");
 
 #define SYSVSEM
 
@@ -97,6 +97,7 @@ seminit()
 		suptr->un_proc = NULL;
 	}
 	semu_list = NULL;
+	exithook_establish(semexit, NULL);
 }
 
 /*
@@ -807,9 +808,11 @@ done:
  * Go through the undo structures for this process and apply the adjustments to
  * semaphores.
  */
+/*ARGSUSED*/
 void
-semexit(p)
+semexit(p, v)
 	struct proc *p;
+	void *v;
 {
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;
