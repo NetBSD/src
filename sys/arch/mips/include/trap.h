@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6 1996/03/24 08:12:53 jonathan Exp $	*/
+/*	$NetBSD: trap.h,v 1.7 1998/03/26 12:46:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,20 @@
  *
  *	@(#)trap.h	8.1 (Berkeley) 6/10/93
  */
+
+/*
+ * special trap-handling support
+ */
+
+/* Return the resulting PC as if the branch was executed.  */
+extern u_int MachEmulateBranch  __P((u_int* regs, u_int instPC,
+				     u_int fpcCSR, int allowNonBranch));
+
+#ifdef DEBUG
+extern int cpu_singlestep __P((register struct proc *p)); 
+extern int kdbpeek __P((int addr));
+#endif
+
 
 /*
  * Trap codes

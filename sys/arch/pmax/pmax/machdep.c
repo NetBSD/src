@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 1998/03/26 06:32:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 1998/03/26 12:46:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 1998/03/26 06:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 1998/03/26 12:46:35 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 1998/03/26 06:32:38 thorpej Exp $"
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/trap.h>		/* mboard-specific interrupt fns */
 #include <pmax/dev/promiovar.h>		/* prom console I/O vector */
 
 #include <pmax/pmax/machdep.h>		/*  splXXX() function pointer hack */
