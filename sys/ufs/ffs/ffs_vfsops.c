@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.133 2004/01/12 05:49:03 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.134 2004/01/12 16:19:36 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.133 2004/01/12 05:49:03 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.134 2004/01/12 16:19:36 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -976,7 +976,7 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		    "Test your filesystem by running fsck_ffs -n -f on it.\n"
 		    "If it reports:\n"
 		    "``VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE''\n"
-		    "you should be able to recover with fsck_ffs -f -b 32\n"
+		    "you should be able to recover with fsck_ffs -b 32 -c 4\n"
 		    "See the file src/UPDATING or\n"
 		    "http://mail-index.netbsd.org/current-users/2004/01/11/0022.html\n"
 		    "for more details\n",
