@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2000/07/08 05:04:01 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2000/07/14 21:04:17 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -100,13 +100,17 @@
 #endif
 #include <machine/asm.h>
 
-#ifndef MULTIPROCESSOR
 #undef	CURPROC
 #undef	CPCB
 #undef	FPPROC
+#ifndef MULTIPROCESSOR
 #define	CURPROC	_C_LABEL(curproc)
 #define CPCB	_C_LABEL(cpcb)
 #define	FPPROC	_C_LABEL(fpproc)
+#else
+#define	CURPROC	(CPUINFO_VA+CI_CURPROC)
+#define CPCB	(CPUINFO_VA+CI_CPCB)
+#define	FPPROC	(CPUINFO_VA+CI_FPPROC)
 #endif
 
 /* Let us use same syntax as C code */
@@ -5435,7 +5439,7 @@ _C_LABEL(cpu_initialize):
 #ifdef	NO_VCACHE
 	!! Turn off D$ in LSU
 	ldxa	[%g0] ASI_LSU_CONTROL_REGISTER, %g1
-	bclr	%g1, MCCR_DCACHE_EN
+	bclr	MCCR_DCACHE_EN, %g1
 	stxa	%g1, [%g0] ASI_LSU_CONTROL_REGISTER
 	membar	#Sync
 #endif
