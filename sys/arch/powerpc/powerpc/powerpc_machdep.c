@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.26 2004/03/24 15:34:51 atatat Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.27 2004/04/04 17:05:31 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.26 2004/03/24 15:34:51 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.27 2004/04/04 17:05:31 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -98,11 +98,11 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->fixreg[8] = (register_t)p->p_psstr;	/* NetBSD extension */
 
 	tf->srr0 = pack->ep_entry;
-	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
+	tf->srr1 = PSL_MBO | PSL_USERSET;
 #ifdef ALTIVEC
 	tf->tf_xtra[TF_VRSAVE] = 0;
 #endif
-	l->l_addr->u_pcb.pcb_flags = 0;
+	l->l_addr->u_pcb.pcb_flags = PSL_FE_DFLT;
 }
 
 /*
