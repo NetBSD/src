@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/04/03 06:38:26 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/04/12 03:21:11 lukem Exp $
 
 IMAGESIZE=	32m
 MAKEFS_FLAGS=	-f 15
@@ -13,5 +13,4 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.rcons \
 		${KERNOBJDIR}/GENERIC/netbsd.ecoff \
 		${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff
 
-image_md_post:
-	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
+IMAGE_MD_POST=	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
