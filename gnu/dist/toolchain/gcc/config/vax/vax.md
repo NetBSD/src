@@ -1031,12 +1031,14 @@
 
 (define_insn "*pushaddimmdi3"
   [(set (match_operand:DI 0 "push_operand" "=g")
-	(plus:DI (match_operand:DI 1 "general_operand" "g")
+	(plus:DI (match_operand:DI 1 "general_operand" "ro")
 		 (match_operand:DI 2 "const_int_operand" "i")))]
   ""
   "*
 {
+  int subtract = 0;
   rtx lo, hi;
+
   if (operands[2] == const0_rtx)
     return \"movq %D1,%0\";
   output_asm_insn (\"movq %D1,%0\", operands);
@@ -1046,10 +1048,15 @@
     {
       if (lo == const1_rtx)
 	output_asm_insn (\"incl (sp)\", operands);
-      else if (lo == constm1_rtx)
-	output_asm_insn (\"decl (sp)\", operands);
-      else if (INTVAL (lo) < 0)
-	output_asm_insn (\"subl2 $%n0,(sp)\", &lo);
+      else if (INTVAL (hi) == -1 && INTVAL (lo) != 0x80000000 &&
+	       INTVAL (lo) < 0)
+	{
+	  if (lo == constm1_rtx)
+	    output_asm_insn (\"decl (sp)\", operands);
+	  else
+	    output_asm_insn (\"subl2 $%n0,(sp)\", &lo);
+	  subtract = 1;
+	}
       else
 	output_asm_insn (\"addl2 %0,(sp)\", &lo);
     }
@@ -1060,15 +1067,15 @@
 	return \"incl 4(sp)\";
       else if (hi == constm1_rtx)
 	return \"decl 4(sp)\";
-      else if (INTVAL (hi) < 0)
+      else if (INTVAL (hi) < 0 && INTVAL (hi) != 0x80000000)
 	return \"subl2 $%n2,4(sp)\";
       else
 	return \"addl2 %2,4(sp)\";
     }
-  if (hi != constm1_rtx)
+  if (subtract)
+    return \"sbwc $0,4(sp)\";
+  else
     return \"adwc %2,4(sp)\";
-  output_asm_insn (\"adwc $0,4(sp)\", operands);
-  return \"decl 4(sp)\";
 }")
 
 (define_insn "*addgendi3"
@@ -1081,8 +1088,15 @@
   rtx low[3];
   const char *pattern;
   int carry = 1;
+  int subtract = 0;
 
   split_quadword_operands (operands, low, 3);
+
+  if (GET_CODE (operands[2]) == CONST_INT &&
+      INTVAL (operands[2]) == -1 &&
+      INTVAL (low[2]) != 0x80000000 && INTVAL (low[2]) < 0)
+    subtract = 1;
+
   /* Add low parts.  */
   if (rtx_equal_p (operands[0], operands[1]))
     {
@@ -1091,8 +1105,13 @@
 	pattern = \"tstl %0\", carry = 0;
       else if (low[2] == const1_rtx)
         pattern = \"incl %0\";
-      else if (low[2] == constm1_rtx)
-        pattern = \"decl %0\";
+      else if (subtract)
+	{
+	  if (low[2] == constm1_rtx)
+	    pattern = \"decl %0\";
+	  else
+	    pattern = \"subl2 $%n2,%0\";
+	}
       else
         pattern = \"addl2 %2,%0\";
     }
@@ -1100,7 +1119,7 @@
     {
       if (low[2] == const0_rtx)
 	pattern = \"movq %1,%0\";
-      else if (GET_CODE (low[2]) == CONST_INT && INTVAL (low[2]) < 0)
+      else if (subtract)
 	pattern = \"subl3 $%n2,%1,%0\";
       else
 	pattern = \"addl3 %2,%1,%0\";
@@ -1110,16 +1129,14 @@
   if (!carry)
     /* If CARRY is 0, we don't have any carry value to worry about.  */
     return OUT_FCN (CODE_FOR_addsi3) (operands, insn);
-  /* %0 = C + %1 + %2 */
+  /* %0 = %1 + %2 + C */
+  /* %0 = %1 - %2 - C (negative constant int) */
   if (!rtx_equal_p (operands[0], operands[1]))
     output_asm_insn ((operands[1] == const0_rtx
 		      ? \"clrl %0\"
 		      : \"movl %1,%0\"), operands);
-  if (operands[2] == constm1_rtx && GET_CODE (operands[0]) != POST_INC)
-    {
-      output_asm_insn (\"adwc $0,%0\", operands);
-      return \"decl %0\";
-    }
+  if (subtract)
+      return \"sbwc $0,%0\";
   return \"adwc %2,%0\";
 }")
 
@@ -2725,6 +2742,8 @@
    (set (match_operand:SI 3 "vax_nonsymbolic_operand" "=g")
         (match_dup 0))]
   "dead_or_set_p (insn, operands[0])
+   && !vax_reg_used_p (operands[2], REGNO (operands[0]))
+   && !vax_reg_used_p (operands[3], REGNO (operands[0]))
    && GET_CODE (operands[2]) != SYMBOL_REF
    && !rtx_equal_p (operands[0], operands[2])"
   "addl3 %2,%1,%3")
@@ -2744,7 +2763,9 @@
    (set (match_operand:SI 2 "push_operand" "=g")
         (plus:SI (match_dup 0)
                  (match_operand:SI 3 "vax_nonsymbolic_operand" "g")))]
-  "!rtx_equal_p (operands[0], operands[3]) && dead_or_set_p (insn, operands[0])"
+  "!rtx_equal_p (operands[0], operands[3]) &&
+   dead_or_set_p (insn, operands[0]) &&
+   !vax_reg_used_p (operands[2], REGNO (operands[0]))"
   "*
 {
   if (GET_CODE (operands[3]) == CONST_INT && INTVAL (operands[3]) < 0)
@@ -2758,7 +2779,9 @@
    (set (match_dup 0)
         (plus:SI (match_dup 0)
                  (match_operand:SI 2 "vax_nonsymbolic_operand" "g")))]
-  "!rtx_equal_p (operands[0], operands[2])"
+  "!rtx_equal_p (operands[0], operands[2]) &&
+   dead_or_set_p (insn, operands[0]) &&
+   !vax_reg_used_p (operands[2], REGNO (operands[0]))"
   "addl3 %2,%1,%0")
 
 (define_peephole
@@ -2920,7 +2943,8 @@
 		 (const_int -1)))
    (set (match_operand:SI 1 "vax_lvalue_operand" "=g")
         (match_dup 0))]
-  "dead_or_set_p (insn, operands[0])"
+  "dead_or_set_p (insn, operands[0]) &&
+   !vax_reg_used_p (operands[1], REGNO (operands[0]))"
   "subl3 $1,%0,%1")
 
 ;;(define_peephole2
