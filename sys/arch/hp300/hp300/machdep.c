@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 1997/01/31 23:01:23 carrel Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 1997/02/02 05:33:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1148,9 +1148,8 @@ boot(howto, bootstr)
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
-		printf("System halted.\n\n");
-		asm("	stop	#0x2700");
-		/* NOTREACHED */
+		printf("System halted.  Hit any key to reboot.\n\n");
+		(void)cngetc();
 	}
 
 	printf("rebooting...\n");
