@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.22.2.1 1998/11/09 06:06:39 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.22.2.2 1999/02/25 04:37:58 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -171,7 +171,6 @@ struct swappri {
 struct swapbuf {
 	struct buf sw_buf;		/* a buffer structure */
 	struct uvm_aiodesc sw_aio;	/* aiodesc structure, used if ASYNC */
-	SIMPLEQ_ENTRY(swapbuf) sw_sq;	/* free list pointer */
 };
 
 /*
@@ -1710,7 +1709,7 @@ uvm_swap_get(page, swslot, flags)
 	result = uvm_swap_io(&page, swslot, 1, B_READ | 
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
 
-	if (result != 0) {
+	if (result != VM_PAGER_OK) {
 		/*
 		 * oops, the read failed so it really is still only in swap.
 		 */
@@ -1890,7 +1889,7 @@ uvm_swap_bufdone(bp)
 	TAILQ_INSERT_TAIL(&uvm.aio_done, &sbp->sw_aio, aioq);
 	simple_unlock(&uvm.pagedaemon_lock);
 
-	thread_wakeup(&uvm.pagedaemon);
+	wakeup(&uvm.pagedaemon);
 	splx(s);
 }
 
