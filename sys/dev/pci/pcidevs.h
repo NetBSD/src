@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.97 1998/11/27 10:43:52 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.98 1998/11/29 01:54:16 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.90 1998/11/27 10:39:16 drochner Exp 
+ *	NetBSD: pcidevs,v 1.92 1998/11/29 01:54:02 thorpej Exp 
  */
 
 /*
@@ -489,7 +489,6 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
-#define	PCI_VENDOR_REALTEK2	0x1211		/* Realtek Semiconductor (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3Dfx Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
@@ -967,7 +966,6 @@
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
-#define	PCI_PRODUCT_REALTEK2_RT8139_2	0x1211		/* 8139 10/100 Ethernet (2nd PCI Device ID) */
 
 /* RISCom (SDL Communications, Inc?) products */
 #define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */
@@ -1110,6 +1108,9 @@
 #define	PCI_PRODUCT_VIATECH_VT82C586_IDE	0x1571		/* VT82C586 (Apollo VP) IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C595_2	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
+/* XXX What was the original Rhine's part number? */
+#define	PCI_PRODUCT_VIATECH_RHINE	0x3043		/* VIA Rhine 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 
 /* Vortex Computer Systems products */
