@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.4 1995/12/13 22:17:54 thorpej Exp $	*/
+/*	$NetBSD: cerror.S,v 1.5 1996/11/07 05:16:41 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,13 +43,26 @@
 #if 0
 	RCSID("from: @(#)cerror.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.4 1995/12/13 22:17:54 thorpej Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.5 1996/11/07 05:16:41 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 	.even
 	.globl	_errno
 cerror:
+#ifdef	__REENTRANT
+	movl	d0,sp@-
+#ifdef	PIC
+	movl	#__GLOBAL_OFFSET_TABLE_,a0
+	lea	pc@(0,a0:l),a0
+	movl	a0@(___errno:l),a0
+	jsr	a0@
+#else
+	jbsr	___errno
+#endif
+	movl	d0,a0
+	movl	sp@+,a0@
+#else
 #ifdef	PIC
 	movl	#__GLOBAL_OFFSET_TABLE_,a0
 	lea	pc@(0,a0:l),a0
@@ -58,6 +71,7 @@ cerror:
 #else
 	movl	d0,_errno
 #endif
+#endif	/* __REENTRANT */
 	movl	#-1,d0
 	movl	#-1,d1
 	rts
