@@ -1,4 +1,4 @@
-#	$NetBSD: crontab,v 1.11 1997/01/04 14:04:34 mrg Exp $
+#	$NetBSD: crontab,v 1.12 1997/08/20 07:18:41 mikel Exp $
 #
 # /var/cron/tabs/root - root's crontab for NetBSD
 #
@@ -14,6 +14,6 @@ HOME=/var/log
 0	*	*	*	*	/usr/bin/newsyslog
 #
 # do daily/weekly/monthly maintenance
-0	2	*	*	*	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "daily output" root
-30	3	*	*	6	/bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | mail -s "weekly output" root
-#30	5	1	*	*	/bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | mail -s "monthly output" root
+0	2	*	*	*	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "`/bin/hostname` daily output" root
+30	3	*	*	6	/bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | mail -s "`/bin/hostname` weekly output" root
+#30	5	1	*	*	/bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | mail -s "`/bin/hostname` monthly output" root
