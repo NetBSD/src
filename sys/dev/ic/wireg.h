@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.44 2003/04/08 04:31:25 kml Exp $	*/
+/*	$NetBSD: wireg.h,v 1.45 2003/05/13 08:35:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -37,7 +37,8 @@
  * Oslo IETF plenary meeting.
  */
 
-#define WI_TIMEOUT	65536
+#define WI_DELAY       5
+#define WI_TIMEOUT     (500000/WI_DELAY)       /* 500 ms */
 
 #define WI_PORT0	(0 << 8)
 #define WI_PORT1	(1 << 8)
