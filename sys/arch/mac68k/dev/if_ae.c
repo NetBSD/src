@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.37 1995/12/24 02:30:37 mycroft Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.38 1996/01/12 04:53:02 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -218,6 +218,9 @@ ae_id_card(slot, sc)
 	case NUBUS_DRSW_FARALLON:
 		sc->vendor = AE_VENDOR_FARALLON;
 		break;
+	case NUBUS_DRSW_FOCUS:
+		sc->vendor = AE_VENDOR_FOCUS;
+		break;
 	case NUBUS_DRSW_GATOR:
 		switch (slottype.drhw) {
 		default:
@@ -356,6 +359,8 @@ aeprobe(parent, match, aux)
 			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i);
 		break;
 
+	case AE_VENDOR_FOCUS:
+		print("Focus EtherLAN card detected, but not supported.\n");
 	default:
 		return (0);
 		break;
