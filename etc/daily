@@ -90,17 +90,6 @@ echo ""
 echo "Running calendar:"
 calendar -a
 
-echo ""
-echo "Making 'whatis' database:" 
-if [ -d /usr/share/man -a -f /usr/share/man/makewhatis.sed ]; then
-	for file in `find /usr/share/man -type f -name '*.0' -print`; do \
-		sed -n -f /usr/share/man/makewhatis.sed $file; \
-	done | sort -u > /tmp/whatis.db.$$
-	cp /tmp/whatis.db.$$ /usr/share/man/whatis.db
-	chmod 644 /usr/share/man/whatis.db
-	rm -f /tmp/whatis.db.$$	
-fi
-
 # Rotation of mail log now handled automatically by cron and 'newsyslog'
 
 if [ -d /var/spool/uucp -a -f /etc/uuclean.daily ]; then
