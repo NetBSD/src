@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.16 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: sushi.c,v 1.17 2004/03/09 20:16:16 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ main(int argc, char **argv)
 	int i;
 	MTREE_ENTRY *mte = NULL;
 	
+	parse_config();
+
 	catalog = catopen("sushi", 0);
 	if (getenv("LANG") == NULL)
 		lang_id = NULL;
@@ -98,7 +100,6 @@ main(int argc, char **argv)
 	initCDKColor();
 	raw();
 
-	parse_config();
 	tree_init();
 	i = 0;
 	for (p = searchpaths[i]; p != NULL; i++) {
@@ -171,23 +172,10 @@ parse_config(void)
 	size_t len;
 	int i, j;
 	char *p, *t, *word;
-	char *key;
+	char *key, *env;
 	char **n;
 
-	conf = fopen("/etc/sushi.conf", "r");
-	if (conf == NULL) {
-		searchpaths = (char **)malloc(sizeof(char *) * 6);
-		if (searchpaths == NULL)
-			bailout("malloc: %s", strerror(errno));
-		searchpaths[0] = "/usr/share/sushi";
-		searchpaths[1] = "/usr/pkg/share/sushi";
-		searchpaths[2] = "/usr/X11R6/share/sushi";
-		searchpaths[3] = "/etc/sushi";
-		i = 4;
-	} else {
-		searchpaths = (char **)malloc(sizeof(char *));
-		if (searchpaths == NULL)
-			bailout("malloc: %s", strerror(errno));
+	if ((conf = fopen("/etc/sushi.conf", "r")) != NULL) {
 		i = 0;
 		while ((p = fgetln(conf, &len))) {
 			if (len == 1 || p[len - 1] == '#' || p[len - 1] != '\n')
@@ -208,12 +196,12 @@ parse_config(void)
 				n = (char **)realloc(searchpaths,
 				    sizeof(char *) * (i + 2));
 				if (n == NULL)
-					bailout("malloc: %s", strerror(errno));
+					err(1, "realloc");
 				searchpaths = n;
 				searchpaths[i] = (char *)malloc(sizeof(char)
 				    * len + 1);
 				if (searchpaths[i] == NULL)
-					bailout("malloc: %s", strerror(errno));
+					err(1, "malloc");
 				searchpaths[i] = strdup(word);
 				for (j = 0; j < len; j++)
 					if (searchpaths[i][j] == '\n' ||
@@ -231,15 +219,33 @@ parse_config(void)
 				/* now get the string */
 				word = next_word(&p);
 				keylabel[j] = strdup(word);
+			} else if (strcmp(key, "env") == 0) {
+				env = next_word(&p);
+				word = next_word(&p);
+				if (strcmp(word, "") == 0)
+					errx(1, "Invalid env value");
+				setenv(env, word, 1);
 			} else {
-				bailout("%s: %s", catgets(catalog, 1, 21,
+				errx(1, "%s: %s", catgets(catalog, 1, 21,
 				    "Bad keyword in config file"), key);
 			}
 		} /* while */
 	}
+
+	if (searchpaths == NULL) {
+		searchpaths = (char **)malloc(sizeof(char *) * 6);
+		if (searchpaths == NULL)
+			err(1, "malloc");
+		searchpaths[0] = "/usr/share/sushi";
+		searchpaths[1] = "/usr/pkg/share/sushi";
+		searchpaths[2] = "/usr/X11R6/share/sushi";
+		searchpaths[3] = "/etc/sushi";
+		i = 4;
+	}
+
 	searchpaths[i] = (char *)malloc(sizeof(char) * PATH_MAX);
 	if (searchpaths[i] == NULL)
-		bailout("malloc: %s", strerror(errno));
+		err(1, "malloc");
 	if (getenv("HOME") != NULL) {
 		strlcpy(searchpaths[i], getenv("HOME"), PATH_MAX);
 		strlcat(searchpaths[i], "/sushi", PATH_MAX);
