@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2000/05/31 12:05:04 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.39 2000/06/03 20:43:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,8 +76,9 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	curcpu()	(cpuinfo.ci_self)
-#define	curproc		(curcpu()->ci_curproc)
+#define	curcpu()		(cpuinfo.ci_self)
+#define	curproc			(curcpu()->ci_curproc)
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_master)
 
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
