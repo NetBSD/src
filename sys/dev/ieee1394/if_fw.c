@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.1 2000/11/05 17:17:15 onoe Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.2 2000/11/10 03:45:09 enami Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -183,7 +183,6 @@ fw_detach(struct device *self, int flags)
 {
 	struct fw_softc *sc = (struct fw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s;
 
 	/* Succeed if there is no work to do. */
 	if ((sc->sc_flags & FWF_ATTACHED) == 0)
@@ -199,7 +198,6 @@ fw_detach(struct device *self, int flags)
 			(*sc->sc_disable)(sc);
 		sc->sc_flags &= ~FWF_ENABLED;
 	}
-	splx(s);
 	return 0;
 }
 
