@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.11 2004/01/13 23:37:30 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.12 2004/04/30 23:58:17 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.9 2003/10/17 23:15:30 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.11 2004/01/13 23:37:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.12 2004/04/30 23:58:17 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -194,9 +194,13 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	}
 	memcpy(&eh, mtod(m, caddr_t), sizeof(struct ether_header));
 
-	if ((ni = ieee80211_find_txnode(ic, eh.ether_dhost)) == NULL)
+	ni = ieee80211_find_txnode(ic, eh.ether_dhost);
+	if (ni == NULL) {
+		IEEE80211_DPRINTF(("%s: no node for dst %s, discard frame\n",
+			__func__, ether_sprintf(eh.ether_dhost)));
+		ic->ic_stats.is_tx_nonode++; 
 		goto bad;
-
+	}
 	ni->ni_inact = 0;
 
 	m_adj(m, sizeof(struct ether_header) - sizeof(struct llc));
