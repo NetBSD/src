@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.15 1996/09/16 06:43:39 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.16 1996/09/25 15:10:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,7 +62,6 @@
 #include <machine/cpu.h>
 
 #include <atari/atari/device.h>
-#include <atari/atari/kdassert.h>
 #include <atari/dev/event_var.h>
 #include <atari/dev/kbdmap.h>
 #include <atari/dev/kbdvar.h>
