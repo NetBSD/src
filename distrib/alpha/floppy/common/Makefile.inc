@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1998/01/26 23:50:54 bad Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/03/19 00:07:27 thorpej Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -63,5 +63,6 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
 
+.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
