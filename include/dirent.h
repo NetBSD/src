@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.12 1997/10/10 02:21:02 fvdl Exp $	*/
+/*	$NetBSD: dirent.h,v 1.13 1997/10/10 13:18:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -99,6 +99,7 @@ int scandir __P((const char *, struct dirent ***,
     int (*)(struct dirent *), int (*)(const void *, const void *)));
 int alphasort __P((const void *, const void *));
 int getdirentries __P((int, char *, int, long *));
+int getdents __P((int, char *, size_t));
 #endif /* not POSIX */
 __END_DECLS
 
