@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.107 1998/09/01 02:40:36 mhitch Exp $
+#	$NetBSD: GENERIC,v 1.108 1998/10/28 22:41:25 is Exp $
 
 #
 # GENERIC AMIGA
@@ -105,8 +105,6 @@ options 	SCSIVERBOSE	# Verbose SCSI errors
 
 options 	NTP		# NTP phase/frequency locked loop
 
-#options 	UVM		# Use UVM instead of Mach VM.
-
 #
 # Misc. debugging options
 #
@@ -211,6 +209,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp1		at mfc1 unit 0
 
 hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
+hyper*		at mainbus0		# HyperCom1 + HyperCom3
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 #lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
 
