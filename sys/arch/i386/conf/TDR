@@ -6,10 +6,10 @@ cpu		"i386"
 ident		TDR
 timezone	7 dst
 maxusers	10
-options		INET,NFS,GATEWAY
+options		INET,NFSSERVER,NFSCLIENT,GATEWAY,NFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
-#options	SCSI
+options		SCSI,ISOFS
 options 	DDB
 
 config		vmunix	root on wd0 swap on wd0
@@ -29,28 +29,28 @@ disk		fd2	at fdc0 drive 2
 disk		fd3	at fdc0 drive 3
 
 #controller	wds0	at isa? port "IO_WDS" bio irq 15 drq 6 vector wdsintr
-#controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
-#controller	aha1	at isa? port "IO_AHA1" bio irq 12 drq 7 vector ahaintr
-#controller     bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
-
-#device          sd0
-#device          sd1
-#device          sd2
-#device          sd3
-#device          st1
-#device          st2
-#device          cd0
-#device          cd1
+controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 7 vector ahaintr
+disk		sd0	at aha0 flags 0 drive 000
+disk		sd1	at aha0 flags 0 drive 010
+disk		sd2	at aha0 flags 0 drive 020
+disk		sd3	at aha0 flags 0 drive 040
+tape		st0	at aha0 flags 1 drive 030
+tape		st1	at aha0 flags 1 drive 050
+disk		cd0	at aha0	flags 2 drive 060
+disk		sd4	at aha0 flags 0 drive ?
+disk		sd5	at aha0 flags 0 drive ?
+tape		st2	at aha0 flags 1 drive ?
+disk		cd1	at aha0	flags 2 drive ?
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 #device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 #device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
-device we0 at isa? port 0x280 net irq 2 iomem 0xd0000 iosiz 8192 vector weintr
-#device ne0 at isa? port 0x300 net irq 2 vector neintr
-#device ec0 at isa? port 0x250 net irq 2 iomem 0xd8000 iosiz 8192 vector ecintr
-#device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
+device		we0 at isa? port 0x280 net irq 2 iomem 0xd0000 iosiz 8192 vector weintr
+#device		ne0 at isa? port 0x300 net irq 2 vector neintr
+#device		ec0 at isa? port 0x250 net irq 2 iomem 0xd8000 iosiz 8192 vector ecintr
+#device		is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
 
 #device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
 

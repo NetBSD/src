@@ -30,20 +30,16 @@ device		com2	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 #controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 #controller	aha1	at isa? port "IO_AHA1" bio irq 12 drq 7 vector ahaintr
+
 controller	bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
-
-device		sd0
-device		sd1
-device		sd2
-device		sd3
-
-device		st0
-device		st1
-device		st2
-device		st3
-
-device		cd0
-device		cd1
+disk		sd0	at bt0 flags 0 drive ?
+disk		sd1	at bt0 flags 0 drive ?
+disk		sd2	at bt0 flags 0 drive ?
+disk		sd3	at bt0 flags 0 drive ?
+tape		st0	at bt0 flags 1 drive ?
+tape		st1	at bt0 flags 1 drive ?
+disk		cd0	at bt0 flags 2 drive ?
+disk		cd1	at bt0 flags 2 drive ?
 
 device		we0 at isa? port 0x280 net irq 2 iomem 0xd0000 iosiz 8192 vector weintr
 
