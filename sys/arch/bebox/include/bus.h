@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 1998/02/04 14:13:46 sakamoto Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 1998/03/26 23:41:51 sakamoto Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -788,7 +788,7 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 	!!! bus_space_set_region_stream_8 unimplemented !!!
 
 /*
- *	void bus_space_copy_N __P((bus_space_tag_t tag,
+ *	void bus_space_copy_region_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
  *	    size_t count));
@@ -797,61 +797,109 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-static __inline void
-bus_space_copy_1(tag, bsh1, off1, bsh2, off2, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh1;
-	bus_size_t off1;
-	bus_space_handle_t bsh2;
-	bus_size_t off2;
-	size_t count;
-{
-	volatile u_int8_t *s, *d;
+static __inline void bus_space_copy_region_1 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	bus_size_t, size_t));
+static __inline void bus_space_copy_region_2 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	bus_size_t, size_t));
+static __inline void bus_space_copy_region_4 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	bus_size_t, size_t));
 
-	s = (volatile u_int8_t *)(bsh1 + off1);
-	d = (volatile u_int8_t *)(bsh2 + off2);
-	while (count--)
-		*d++ = *s++;
-	__asm__ volatile("eieio; sync");
+static __inline void
+bus_space_copy_region_1(t, h1, o1, h2, o2, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h1;
+	bus_size_t o1;
+	bus_space_handle_t h2;
+	bus_size_t o2;
+	size_t c;
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1++, addr2++)
+			*(volatile u_int8_t *)(addr2) =
+			    *(volatile u_int8_t *)(addr1);
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += (c - 1), addr2 += (c - 1);
+		    c != 0; c--, addr1--, addr2--)
+			*(volatile u_int8_t *)(addr2) =
+			    *(volatile u_int8_t *)(addr1);
+	}
 }
 
 static __inline void
-bus_space_copy_2(tag, bsh1, off1, bsh2, off2, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh1;
-	bus_size_t off1;
-	bus_space_handle_t bsh2;
-	bus_size_t off2;
-	size_t count;
+bus_space_copy_region_2(t, h1, o1, h2, o2, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h1;
+	bus_size_t o1;
+	bus_space_handle_t h2;
+	bus_size_t o2;
+	size_t c;
 {
-	volatile u_int16_t *s, *d;
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
 
-	s = (volatile u_int16_t *)(bsh1 + off1);
-	d = (volatile u_int16_t *)(bsh2 + off2);
-	while (count--)
-		*d++ = *s++;
-	__asm__ volatile("eieio; sync");
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1 += 2, addr2 += 2)
+			*(volatile u_int16_t *)(addr2) =
+			    *(volatile u_int16_t *)(addr1);
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
+		    c != 0; c--, addr1 -= 2, addr2 -= 2)
+			*(volatile u_int16_t *)(addr2) =
+			    *(volatile u_int16_t *)(addr1);
+	}
 }
 
 static __inline void
-bus_space_copy_4(tag, bsh1, off1, bsh2, off2, count)
-	bus_space_tag_t tag;
-	bus_space_handle_t bsh1;
-	bus_size_t off1;
-	bus_space_handle_t bsh2;
-	bus_size_t off2;
-	size_t count;
+bus_space_copy_region_4(t, h1, o1, h2, o2, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h1;
+	bus_size_t o1;
+	bus_space_handle_t h2;
+	bus_size_t o2;
+	size_t c;
 {
-	volatile u_int32_t *s, *d;
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
 
-	s = (volatile u_int32_t *)(bsh1 + off1);
-	d = (volatile u_int32_t *)(bsh2 + off2);
-	while (count--)
-		*d++ = *s++;
-	__asm__ volatile("eieio; sync");
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1 += 4, addr2 += 4)
+			*(volatile u_int32_t *)(addr2) =
+			    *(volatile u_int32_t *)(addr1);
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
+		    c != 0; c--, addr1 -= 4, addr2 -= 4)
+			*(volatile u_int32_t *)(addr2) =
+			    *(volatile u_int32_t *)(addr1);
+	}
 }
 
-#define	bus_space_copy_8 !!! bus_space_copy_8 unimplemented !!!
+#if 0	/* Cause a link error for bus_space_copy_8 */
+#define	bus_space_copy_region_8	!!! bus_space_copy_region_8 unimplemented !!!
+#endif
+
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
+#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#endif
 
 /*
  * Bus read/write barrier methods.
