@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.1.2.8 1997/10/14 20:19:15 thorpej Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.1.2.9 1997/10/15 02:41:47 enami Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -556,7 +556,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		PCMCIA_CFE_BVD_ACTIVE, PCMCIA_IFTYPE_MEMORY,
 	};
 
-	struct cis_state *state = (struct cis_state *) arg;
+	struct cis_state *state = arg;
 
 	switch (tuple->code) {
 	case PCMCIA_CISTPL_LONGLINK_MFC:
