@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.72 2003/09/23 05:26:49 yamt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.73 2004/08/14 01:08:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.72 2003/09/23 05:26:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.73 2004/08/14 01:08:03 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -136,7 +136,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 		else if (ip->i_gen < version) {
 			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 			ip->i_gen = ip->i_ffs1_gen = version;
-			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;
 		} else {
 			/* printf("ino %d: asked for version %d but got %d\n",
@@ -369,7 +369,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
 
 	ip = VTOI(vp);
-	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
+	LFS_SET_UINO(ip, IN_CHANGE);
 	/* on-disk structure has been zeroed out by lfs_vcreate */
 	ip->i_din.ffs1_din->di_inumber = new_ino;
 
