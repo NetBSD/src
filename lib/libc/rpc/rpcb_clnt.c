@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.1 2000/06/02 23:11:14 fvdl Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.2 2000/06/07 21:46:01 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -338,8 +338,10 @@ getclnthandle(host, nconf, targaddr)
 		rwlock_unlock(&rpcbaddr_cache_lock);
 		free(addr_to_delete.buf);
 	}
-	if (!__rpc_nconf2sockinfo(nconf, &si))
+	if (!__rpc_nconf2sockinfo(nconf, &si)) {
+		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 		return NULL;
+	}
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = si.si_af;
@@ -351,8 +353,10 @@ getclnthandle(host, nconf, targaddr)
 	    nconf->nc_netid, si.si_af, si.si_proto, si.si_socktype);
 #endif
 
-	if (getaddrinfo(host, "sunrpc", &hints, &res) != 0)
+	if (getaddrinfo(host, "sunrpc", &hints, &res) != 0) {
+		rpc_createerr.cf_stat = RPC_UNKNOWNHOST;
 		return NULL;
+	}
 
 	for (tres = res; tres != NULL; tres = tres->ai_next) {
 		taddr.buf = tres->ai_addr;
@@ -376,7 +380,7 @@ getclnthandle(host, nconf, targaddr)
 				taddr.len, taddr.maxlen);
 			fprintf(stderr, "\tAddress is ");
 			for (i = 0; i < taddr.len; i++)
-				fprintf(stderr, "%u.", taddr.buf[i]);
+				fprintf(stderr, "%u.", ((char *)(taddr.buf))[i]);
 			fprintf(stderr, "\n");
 		}
 #endif
@@ -680,19 +684,13 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 		 */
 		if (strcmp(nconf->nc_proto, NC_TCP) == 0) {
 			struct netconfig *newnconf;
-			void *handle;
 
-			if ((handle = __rpc_setconf("udp")) == NULL) {
-				rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
-				return (NULL);
-			}
-			if ((newnconf = __rpc_getconf(handle)) == NULL) {
-				__rpc_endconf(handle);
+			if ((newnconf = getnetconfigent("udp")) == NULL) {
 				rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 				return (NULL);
 			}
 			client = getclnthandle(host, newnconf, &parms.r_addr);
-			__rpc_endconf(handle);
+			freenetconfigent(newnconf);
 		} else {
 			client = getclnthandle(host, nconf, &parms.r_addr);
 		}
