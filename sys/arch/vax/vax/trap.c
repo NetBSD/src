@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 2003/01/18 07:10:35 thorpej Exp $     */
+/*	$NetBSD: trap.c,v 1.77 2003/01/20 04:45:57 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -257,7 +257,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			ftype = VM_PROT_READ;
 
 		if (umode)
-			KERNEL_PROC_LOCK(p);
+			KERNEL_PROC_LOCK(l);
 		else
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
@@ -299,7 +299,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				vm->vm_ssize = nss;
 		}
 		if (umode) 
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 		else
 			KERNEL_UNLOCK();
 		break;
@@ -345,9 +345,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
 #endif
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		trapsignal(l, sig, frame->code);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 
 	if (umode == 0)
@@ -408,7 +408,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 
 	rval[0] = 0;
 	rval[1] = frame->r1;
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
 		if (err)
@@ -419,7 +419,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 		goto bad;
 
 	err = (*callp->sy_call)(curlwp, args, rval);
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 	exptr = l->l_addr->u_pcb.framep;
 
 #ifdef TRAPDEBUG
@@ -459,16 +459,15 @@ void
 child_return(void *arg)
 {
         struct lwp *l = arg;
-	struct proc *p = l->l_proc;
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 	userret(l, l->l_addr->u_pcb.framep, 0);
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(l);
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
 }
