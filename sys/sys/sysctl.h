@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60 2001/01/09 21:30:25 fvdl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.61 2001/05/04 15:50:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,7 +173,7 @@ struct ctlname {
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
-#define	KERN_MAXID		57	/* number of valid kern ids */
+#define	KERN_MAXID		56	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
