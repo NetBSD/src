@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)main.c	8.1 (Berkeley) 6/6/93
- *	$Id: main.c,v 1.6 1995/01/25 03:58:57 cgd Exp $
+ *	$Id: main.c,v 1.7 1995/01/25 20:44:42 cgd Exp $
  */
 
 #ifndef lint
@@ -391,12 +391,12 @@ cfcrosscheck(cf, what, nv)
 		if (dev == NULL)
 			panic("cfcrosscheck(%s)", nv->nv_name);
 		if (has_instances(dev, STAR) ||
-		    has_instances(dev, minor(nv->nv_int) >> 3))
+		    has_instances(dev, minor(nv->nv_int) / maxpartitions))
 			continue;
 		for (pd = allpseudo; pd != NULL; pd = pd->i_next)
 			if (pd->i_base == dev &&
-			    minor(nv->nv_int) >> 3 < dev->d_umax &&
-			    minor(nv->nv_int) >> 3 >= 0)
+			    (minor(nv->nv_int) / maxpartitions) < dev->d_umax &&
+			    (minor(nv->nv_int) / maxpartitions) >= 0)
 				goto loop;
 		(void)fprintf(stderr,
 		    "%s%d: %s says %s on %s, but there's no %s\n",

@@ -41,7 +41,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scan.l	8.1 (Berkeley) 6/6/93
- *	$Id: scan.l,v 1.5 1994/08/08 19:24:54 deraadt Exp $
+ *	$Id: scan.l,v 1.6 1995/01/25 20:44:43 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -97,6 +97,7 @@ machine		{ return XMACHINE; }
 major		{ return MAJOR; }
 makeoptions	{ return MAKEOPTIONS; }
 maxusers	{ return MAXUSERS; }
+maxpartitions	{ return MAXPARTITIONS; }
 minor		{ return MINOR; }
 on		{ return ON; }
 options		{ return OPTIONS; }
