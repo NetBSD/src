@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.21 1995/04/12 21:24:12 mycroft Exp $	*/
+/*	$NetBSD: setup.c,v 1.22 1995/07/12 01:49:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.21 1995/04/12 21:24:12 mycroft Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.22 1995/07/12 01:49:23 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,8 +147,9 @@ setup(dev)
 	if (debug)
 		printf("clean = %d\n", sblock.fs_clean);
 	if (sblock.fs_clean & FS_ISCLEAN) {
-		if (preen && doskipclean) {
-			pwarn("file system is clean; not checking\n");
+		if (doskipclean) {
+			pwarn("%sile system is clean; not checking\n",
+			    preen ? "f" : "** F");
 			return (-1);
 		}
 		if (!preen)
