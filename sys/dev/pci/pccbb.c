@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.93 2003/12/10 02:55:48 briggs Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.94 2003/12/19 18:16:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.93 2003/12/10 02:55:48 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.94 2003/12/19 18:16:43 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -484,8 +484,8 @@ pccbbattach(parent, self, aux)
 		/* The address must be valid. */
 		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL)) {
-			printf("%s: can't map socket base address 0x%x\n",
-			    sc->sc_dev.dv_xname, sock_base);
+			printf("%s: can't map socket base address 0x%lx\n",
+			    sc->sc_dev.dv_xname, (unsigned long)sock_base);
 			/*
 			 * I think it's funny: socket base registers must be
 			 * mapped on memory space, but ...
@@ -502,7 +502,7 @@ pccbbattach(parent, self, aux)
 				sc->sc_flags |= CBB_MEMHMAPPED;
 		} else {
 			DPRINTF(("%s: socket base address 0x%lx\n",
-			    sc->sc_dev.dv_xname, sockbase));
+			    sc->sc_dev.dv_xname, (unsigned long)sockbase));
 			sc->sc_flags |= CBB_MEMHMAPPED;
 		}
 	}
@@ -624,8 +624,9 @@ pccbb_pci_callback(self)
 		}
 		sc->sc_base_memt = sc->sc_memt;
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%x\n",
-		    sc->sc_dev.dv_xname, sockbase, pci_conf_read(pc, sc->sc_tag,
+		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%lx\n",
+		    sc->sc_dev.dv_xname, (unsigned long)sockbase,
+		    (unsigned long)pci_conf_read(pc, sc->sc_tag,
 		    PCI_SOCKBASE)));
 #else
 		sc->sc_base_memt = sc->sc_memt;
@@ -638,8 +639,9 @@ pccbb_pci_callback(self)
 			return;
 		}
 		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus resister address 0x%x -> 0x%x\n",
-		    sc->sc_dev.dv_xname, sock_base, pci_conf_read(pc,
+		DPRINTF(("%s: CardBus resister address 0x%lx -> 0x%lx\n",
+		    sc->sc_dev.dv_xname, (unsigned long)sock_base,
+		    (unsigned long)pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
 		sc->sc_sockbase = sockbase;
 #endif
