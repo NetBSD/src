@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.5 2005/02/27 00:27:31 perry Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.6 2005/03/23 13:27:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.5 2005/02/27 00:27:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.6 2005/03/23 13:27:20 wiz Exp $");
 
 
 /*
@@ -83,6 +83,8 @@ static const struct mii_phydesc rgephys[] = {
 	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8169S,
 	  MII_STR_REALTEK_RTL8169S },
 
+	{ 0,				0,
+	  NULL }
 };
 
 static int
