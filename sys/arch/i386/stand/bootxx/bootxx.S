@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.3 2003/10/09 10:29:39 dsl Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.4 2004/02/28 23:01:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -94,13 +94,22 @@ bootparams:				/* space for patchable variables */
 	lcall	$SECONDARY_LOAD_ADDRESS/16, $0
 
 boot_fail:
-	push	%ax
-	movw	$1f, %si
-	call	message
+	push	%ax			/* error string from boot1 */
+	movw	errno, %ax
+	aam				/* largest errno is < 100 */
+	addw	$('0' << 8) | '0', %ax	/* to ascii */
+	rorw	$8, %ax
+	cmpb	$'0', %al		/* supress leading zero */
+	jne	10f
+	movb	$' ', %al
+10:	movw	%ax, 12f
+	movw	$11f, %si
+	call	message			/* output boot failed message */
 	pop	%si
-	call	message
+	call	message			/* and text from boot1 */
 	jmp	loopstop
-1:	.asciz	"Boot failed: "
+11:	.ascii	"Boot failed (errno "
+12:	.asciz	"xx): "
 
 ENTRY(_rtt)
 	.code32
@@ -111,7 +120,7 @@ loopstop:
 	movw	$16, %cx
 	int	$0x15
 	int	$0x18			/* might be a boot fail entry */
-1:	sti
+1:	sti				/* if not loopstop */
 	hlt
 	jmp	1b
 
