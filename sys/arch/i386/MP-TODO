@@ -2,10 +2,22 @@ TODO list for MP branch (incomplete):
 
 showstoppers for merge back to -current:
 
+ - change splraise/spllower to not touch local apic, since that's very
+slow (requires cheap per-cpu storage).
+
+ - per-cpu GDT and MP-safing of gdt.c.  this seems like severe
+overkill so just one descriptor is different.  While we're in there,
+we *might* want to use per-cpu, more ephemeral, descriptors for TSS
+and LDT.
+
+ - quad cpu ppro sporadically jumps into the stack; need to diagnose
+this.
+
+ - implement per cpu ring buffer with trap logs (including the "last
+branch from/to" MSR contents) to allow for sane debugging.
+
  - rewrite interrupt dispatch so that multi-level shared interrupts
    are no longer broken.
-
- - implement MI softint API
 
  - figure out why ahc on serverworks fails to find its interrupt.
 
@@ -23,16 +35,10 @@ showstoppers for merge back to -current:
 
  - make sure BSP always attaches first!
 
- - stop all cpu's on shutdown.
-
  - try out mpbios+ioapic w/o MULTIPROCESSOR
 
- - figure out why cpu time accounting screws up bigtime:
-
-> ld -Ttext c0100000 -e start -X -o netbsd ${SYSTEM_OBJ} vers.o
-> text    data    bss     dec     hex     filename
-> 3839853 369428  322400  4531681 4525e1  netbsd
-> -1787494046.7u 681459032.2s 7:26.71 2421928.1% 0+0k 17+11379io 99pf+0w
+ - turn off rdtsc-based microtime on uniprocessor systems which might
+have variable-speed TSC.
 
 -----
 
@@ -50,3 +56,20 @@ fixed three bugs; !MP kernel now comes up multiuser.
    information to struct cpu_info
 [2001/01/09  22:27:38  sommerfeld]
 completed.  significant rewrite of cpu spinup required.
+
+ - stop all cpu's on shutdown.
+
+ - implement MI softint API
+
+ - implement MP-safe microtime
+
+ - figure out why cpu time accounting screws up bigtime:
+
+> ld -Ttext c0100000 -e start -X -o netbsd ${SYSTEM_OBJ} vers.o
+> text    data    bss     dec     hex     filename
+> 3839853 369428  322400  4531681 4525e1  netbsd
+> -1787494046.7u 681459032.2s 7:26.71 2421928.1% 0+0k 17+11379io 99pf+0w
+
+[2001/05/26  20:03:41  sommerfeld]
+answer: microtime was just doing the wrong thing.  fixed.
+
