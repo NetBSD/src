@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.58 2000/08/08 22:58:30 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.59 2000/08/11 21:31:20 tls Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -2190,7 +2190,11 @@ isp_start(xs)
 			if (XS_CDBP(xs)[0] == 0x3)	/* REQUEST SENSE */
 				t2reqp->req_flags = REQFLAG_HTAG;
 			else
-				t2reqp->req_flags = REQFLAG_OTAG;
+				if((xs->bp != NULL) &&
+				    xs->bp->b_flags & B_ASYNC)
+					t2reqp->req_flags = REQFLAG_STAG;
+				else
+					t2reqp->req_flags = REQFLAG_OTAG;
 		}
 	} else {
 		sdparam *sdp = (sdparam *)isp->isp_param;
