@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.42 1999/07/14 22:24:07 sommerfeld Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.43 1999/07/22 20:58:18 hwr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.39 1999/07/14 22:13:27 sommerfeld Exp 
+ *	NetBSD: pcmciadevs,v 1.40 1999/07/22 20:56:38 hwr Exp 
  */
 
 /*-
@@ -49,7 +49,7 @@
 
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu Corporation */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
-#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
+#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* New Media Corporation */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola Corporation */
 #define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com Corporation */
@@ -230,13 +230,13 @@
 #define	PCMCIA_PRODUCT_TDK_XIR_CNW	0x0802
 #define	PCMCIA_STR_TDK_XIR_CNW	"Xircom CreditCard Netwave"
 
-/* NewMedia Products */
+/* New Media Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
-#define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
+#define	PCMCIA_STR_NEWMEDIA_BASICS	"New Media BASICS Ethernet"
 #define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER	0xc102
-#define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"NewMedia BusToaster SCSI Host Adapter"
+#define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"New Media BusToaster SCSI Host Adapter"
 
 /* Standard Microsystems Corporation Products */
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
