@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.4 1999/07/02 07:36:33 itojun Exp $
+$NetBSD: TODO,v 1.5 1999/08/14 19:17:19 itojun Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -51,14 +51,8 @@ This is related to the above two items (in6pcb and port number issues).
 As we share tcp4 and tcp6 code (sys/netinet/tcp*) we have implemented
 AF_INET6 wildcard bind socket behavior (AF_INET6 wildcard bind socket 
 will receive IPv4 packets, with get{peer,sock}name translated into
-IPv6 address liek ::ffff:10.1.1.1).  At this moment there is no way to
+IPv6 address like ::ffff:10.1.1.1).  At this moment there is no way to
 disable this behavior.  We may want to add setsockopt() for this.
-
-* ipsec compilation tree design
-
-How should we get ESP and crypto code from cryptosrc-{intl,us}/sys?
-By tricky sys/conf/files, or making some symlink to cryptosrc-{intl,us}/sys?
-How can we keep cryptosrc-{intl,us}/sys in sync?
 
 * net/if_types.h
 
@@ -96,21 +90,12 @@ Should we have GENERIC.v6 and GENERIC, or IPv6 items should be integrated into
 GENERIC?  How can we maintain IPv6 items efficiently?  Is there good place to
 list MI compilation options?
 
-* opt_inet6.h
-
-Currently IPv6 and IPsec related kernel config options are not defopt'ed.
-Should they be in opt_inet.h, or should they be separte?
-
 * mbuf flags
 
 KAME code introduces 5 mbuf flags, which should be decreased.  M_ANYCAST6
 is local to IPv6 code so it should be M_PROTO0 or something like that.
 Others (IPsec items) are used across IPv4 and IPv6 so they cannot be in
 M_PROTO0 kind of thing.
-
-* s/splnet/splsoftnet/
-
-as Jason pointed out.
 
 
 USERLAND
@@ -154,3 +139,7 @@ Should we hide if index (s6_addr16[1] in in6_addr) from the user, on "ifconfig"
 or "netstat -in"?  Those numbers are just for kernel internal
 and should never be used from standard userland applications.
 (see 1.3 in sys/netinet6/IMPLEMENTATION)
+
+* more IPv6 support
+
+libwrap, ppp, you-name-it.
