@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.293 2001/01/09 23:16:18 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.294 2001/01/09 23:20:22 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.287 2001/01/09 23:15:39 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.288 2001/01/09 23:19:03 rh Exp 
  */
 
 /*
@@ -533,6 +533,7 @@
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
+#define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics, Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
@@ -918,6 +919,9 @@
 
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX PCI Fast Ethernet Adapter */
+
+/* COMPAL products */
+#define	PCI_PRODUCT_COMPAL_38W2	0x0011		/* COMPAL 38W2 OEM Notebook */
 
 /* Compaq products */
 #define	PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE	0x0001		/* PCI-EISA Bridge */
