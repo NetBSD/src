@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.25 1997/05/09 22:16:37 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.26 1997/05/10 18:58:33 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2785,7 +2785,7 @@ gus_init_cs4231(sc)
 			gusmax_close,
 			NULL,				/* drain */
 
-			ad1848_query_encoding, /* query encoding */
+			gus_query_encoding, /* query encoding */
 
 			gusmax_set_params,
 
@@ -4241,11 +4241,11 @@ gus_query_encoding(addr, fp)
 		strcpy(fp->name, AudioEmulaw);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
-		fp->flags = 0;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 1:
-		strcpy(fp->name, AudioElinear_le);
-		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		strcpy(fp->name, AudioElinear);
+		fp->encoding = AUDIO_ENCODING_LINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
@@ -4256,8 +4256,8 @@ gus_query_encoding(addr, fp)
 		fp->flags = 0;
 		break;
 	case 3:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		strcpy(fp->name, AudioEulinear);
+		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
