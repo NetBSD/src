@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.13 1999/03/26 19:20:42 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.14 2000/01/12 08:53:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -544,6 +544,7 @@ et_sv_reg_t		*regs;
 	regs->crt[CRT_ID_START_ADDR_LOW]   = 0x00;
 	regs->crt[CRT_ID_LINE_COMPARE]     = 0xff;
 	regs->crt[CRT_ID_UNDERLINE_LOC]    = 0x00;
+	regs->crt[CRT_ID_PRESET_ROW_SCAN]  = 0x00;
 	regs->crt[CRT_ID_OFFSET]           = mode->disp_width/16;
 	regs->crt[CRT_ID_MAX_ROW_ADDRESS]  =
 		0x40 |
