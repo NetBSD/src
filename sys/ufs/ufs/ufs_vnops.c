@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.29 1997/10/03 16:45:49 enami Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.30 1997/10/10 02:13:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1394,7 +1394,7 @@ ufs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int ncookies;
 	} */ *ap = v;
 	register struct uio *uio = ap->a_uio;
@@ -1454,7 +1454,7 @@ ufs_readdir(v)
 #	endif
 	if (!error && ap->a_ncookies) {
 		register struct dirent *dp;
-		register u_long *cookies = ap->a_cookies;
+		register off_t *cookies = ap->a_cookies;
 		register int ncookies = ap->a_ncookies;
 
 		/*
