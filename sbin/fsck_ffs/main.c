@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2003/08/07 10:04:20 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.47 2003/10/20 12:04:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.46 2003/08/07 10:04:20 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.47 2003/10/20 12:04:38 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(argc, argv)
 	forceimage = 0;
 	endian = 0;
 	isappleufs = 0;
-	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npy")) != -1) {
+	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npqy")) != -1) {
 		switch (ch) {
 		case 'a':
 			isappleufs = 1;
@@ -145,6 +145,10 @@ main(argc, argv)
 
 		case 'p':
 			preen++;
+			break;
+
+		case 'q':
+			quiet++;
 			break;
 
 		case 'y':
@@ -241,10 +245,10 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * 1: scan inodes tallying blocks used
 	 */
 	if (preen == 0) {
-		printf("** Last Mounted on %s\n", sblock->fs_fsmnt);
+		pwarn("** Last Mounted on %s\n", sblock->fs_fsmnt);
 		if (hotroot())
-			printf("** Root file system\n");
-		printf("** Phase 1 - Check Blocks and Sizes\n");
+			pwarn("** Root file system\n");
+		pwarn("** Phase 1 - Check Blocks and Sizes\n");
 	}
 	pass1();
 
@@ -256,7 +260,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			pfatal("INTERNAL ERROR: dups with -p\n");
 		if (usedsoftdep)
 			pfatal("INTERNAL ERROR: dups with softdep\n");
-		printf("** Phase 1b - Rescan For More DUPS\n");
+		pwarn("** Phase 1b - Rescan For More DUPS\n");
 		pass1b();
 	}
 
@@ -264,28 +268,28 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * 2: traverse directories from root to mark all connected directories
 	 */
 	if (preen == 0)
-		printf("** Phase 2 - Check Pathnames\n");
+		pwarn("** Phase 2 - Check Pathnames\n");
 	pass2();
 
 	/*
 	 * 3: scan inodes looking for disconnected directories
 	 */
 	if (preen == 0)
-		printf("** Phase 3 - Check Connectivity\n");
+		pwarn("** Phase 3 - Check Connectivity\n");
 	pass3();
 
 	/*
 	 * 4: scan inodes looking for disconnected files; check reference counts
 	 */
 	if (preen == 0)
-		printf("** Phase 4 - Check Reference Counts\n");
+		pwarn("** Phase 4 - Check Reference Counts\n");
 	pass4();
 
 	/*
 	 * 5: check and repair resource counts in cylinder groups
 	 */
 	if (preen == 0)
-		printf("** Phase 5 - Check Cyl groups\n");
+		pwarn("** Phase 5 - Check Cyl groups\n");
 	pass5();
 
 	/*
@@ -362,9 +366,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	if (!fsmodified)
 		return (0);
 	if (!preen)
-		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
+		pwarn("\n***** FILE SYSTEM WAS MODIFIED *****\n");
 	if (rerun)
-		printf("\n***** PLEASE RERUN FSCK *****\n");
+		pwarn("\n***** PLEASE RERUN FSCK *****\n");
 	if (hotroot()) {
 		struct statfs stfs_buf;
 		/*
@@ -387,7 +391,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			}
 		}
 		if (!preen)
-			printf("\n***** REBOOT NOW *****\n");
+			pwarn("\n***** REBOOT NOW *****\n");
 		sync();
 		return (4);
 	}
@@ -399,7 +403,7 @@ usage()
 {
 
 	(void) fprintf(stderr,
-	    "Usage: %s [-dFfnpy] [-B be|le] [-b block] [-c level] [-m mode]"
+	    "Usage: %s [-dFfnpqy] [-B be|le] [-b block] [-c level] [-m mode]"
 	    " filesystem ...\n",
 	    getprogname());
 	exit(1);
