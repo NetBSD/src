@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.9 2000/01/13 19:10:23 ad Exp $
+#	$NetBSD: UNDERWORLD,v 1.10 2000/01/17 17:47:07 augustss Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -510,6 +510,11 @@ uhid*	at uhub? port ? configuration ? interface ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # USB Generic driver
 ugen*	at uhub? port ? configuration ? interface ?
