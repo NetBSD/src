@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.62 2000/12/09 07:04:47 mycroft Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.63 2000/12/09 07:17:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -57,6 +57,13 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+int	sys_getpid(struct proc *, void *, register_t *);
+int	sys_getpid_with_ppid(struct proc *, void *, register_t *);
+int	sys_getuid(struct proc *, void *, register_t *);
+int	sys_getuid_with_euid(struct proc *, void *, register_t *);
+int	sys_getgid(struct proc *, void *, register_t *);
+int	sys_getgid_with_egid(struct proc *, void *, register_t *);
 
 /* ARGSUSED */
 int
