@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 2001/08/22 17:53:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2 2001/08/22 17:53:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -218,21 +218,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
-
-	/*
-	 * The Alpha requires that the boot block be checksummed.
-	 * The first 63 8-bit quantites are summed into the 64th.
-	 */
-	{
-		int i;
-		u_long *dp, sum;
-
-		dp = (u_long *)bp->b_data;
-		sum = 0;
-		for (i = 0; i < 63; i++)
-			sum += dp[i];
-		dp[63] = sum;
-	}
 
 	bp->b_flags &= ~(B_READ|B_DONE);
 	bp->b_flags |= B_WRITE;
