@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.27 1996/05/11 16:12:51 mycroft Exp $
+#	$NetBSD: Makefile.pmax,v 1.28 1996/05/19 17:17:48 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -110,7 +110,7 @@ assym.h: genassym
 genassym: genassym.o
 	${CC} -o $@ genassym.o
 
-genassym.o: ${PMAX}/pmax/genassym.c
+genassym.o: ${S}/arch/mips/mips/genassym.c
 	${NORMAL_C_C}
 
 param.c: $S/conf/param.c
