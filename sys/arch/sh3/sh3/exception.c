@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.13 2003/10/31 02:46:58 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.14 2003/10/31 02:59:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.13 2003/10/31 02:46:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.14 2003/10/31 02:59:29 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -168,6 +168,7 @@ general_exception(struct lwp *l, struct trapframe *tf)
 	case EXPEVT_TRAPA | EXP_USER:
 		/* Check for debugger break */
 		if (_reg_read_4(SH_(TRA)) == (_SH_TRA_BREAK << 2)) {
+			tf->tf_spc -= 2; /* back to the breakpoint address */
 			trapsignal(l, SIGTRAP, tf->tf_expevt);
 		} else {
 			syscall(l, tf);
