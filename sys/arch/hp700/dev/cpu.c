@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2003/11/23 17:09:29 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2004/07/25 21:52:56 jkunz Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.8 2000/08/15 20:38:24 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2003/11/23 17:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2004/07/25 21:52:56 jkunz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,5 +173,5 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	 * or below 27.
 	 */
 	int_reg_cpu.int_reg_allocatable_bits =
-		(1 << 28) | (1 << 27);
+		(1 << 28) | (1 << 27) | (1 << 26);
 }
