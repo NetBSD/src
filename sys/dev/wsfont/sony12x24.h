@@ -1,4 +1,4 @@
-/*	$NetBSD: sony12x24.h,v 1.4 2003/02/09 10:29:37 jdolecek Exp $	*/
+/*	$NetBSD: sony12x24.h,v 1.5 2003/02/10 14:28:20 jdolecek Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 
 /* This font data is generated from sys/arch/newsmips/dev/fnt24.c */
 
-extern const u_char sony12x24_data[];
+extern u_char sony12x24_data[];
 
 struct wsdisplay_font sony12x24 = {
 	"sony12x24",			/* typeface name */
@@ -56,7 +56,7 @@ struct wsdisplay_font sony12x24 = {
 	sony12x24_data			/* data */
 };
 
-static const u_char sony12x24_data[] = {
+static u_char sony12x24_data[] = {
 
 #if 0
 	/* 0x00 */
