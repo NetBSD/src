@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2001/03/27 00:48:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.28 2001/03/27 00:53:43 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CPPFLAGS+=	-DMAGIC='"$(MAGIC)"' -DHAVE_CONFIG_H -I${.CURDIR}
 CPPFLAGS+=	-DQUICK -DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
-CLEANFILES+=	magic
+CLEANFILES+=	magic magic.mgc
 realall:		file magic
 
 MAGDIRF:sh=	echo $(.CURDIR)/magdir/[0-9a-z]*
