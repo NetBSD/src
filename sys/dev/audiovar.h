@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.26 2002/03/17 23:36:08 christos Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.27 2002/03/18 00:42:36 enami Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -123,6 +123,15 @@ struct au_mixer_ports {
 	u_int	miport[AUDIO_N_PORTS];
 };
 
+#if NAURATECONV > 0
+struct auconv_context {
+	long	count;
+	int32_t	prev[AUDIO_MAX_CHANNELS];
+	uint8_t	*ring_start;
+	uint8_t	*ring_end;
+};
+#endif
+
 /*
  * Software state, per audio device.
  */
@@ -207,13 +216,6 @@ struct audio_softc {
 extern int auconv_check_params(const struct audio_params *);
 
 #if NAURATECONV > 0
-struct auconv_context {
-	long	count;
-	int32_t	prev[AUDIO_MAX_CHANNELS];
-	uint8_t	*ring_start;
-	uint8_t	*ring_end;
-};
-
 extern void auconv_init_context(struct auconv_context *, long, long, uint8_t *,
 				uint8_t *);
 extern int auconv_play(struct auconv_context *, const struct audio_params *,
