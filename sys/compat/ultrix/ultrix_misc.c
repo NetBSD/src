@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.36 1997/09/24 02:13:11 mhitch Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.37 1997/10/10 08:31:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Matthew R. Green for
+ *      This product includes software developed by Jonathan Stone for
  *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
