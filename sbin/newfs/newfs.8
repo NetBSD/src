@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.52 2003/08/07 10:04:34 agc Exp $
+.\"	$NetBSD: newfs.8,v 1.53 2003/08/12 10:29:07 dsl Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -203,6 +203,8 @@ FFS; normal fast-filesystem (default).
 UFS2; enhanced fast-filesystem (suited for more than 1 Terabyte capacity,
 access control lists).
 .El
+To create an LFS filesystem see
+.Xr newfs_lfs 8 .
 .It Fl o Ar optimization
 Optimization preference; either
 .Dq space
@@ -283,6 +285,10 @@ unless
 or
 .Fl I
 is used.
+.Pp
+To create and populate a filesystem image within a file use the
+.Xr makefs 8
+utility.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,
@@ -292,8 +298,10 @@ is used.
 .\" .Xr format 8 ,
 .Xr fsck_ffs 8 ,
 .Xr fsirand 8 ,
+.Xr makefs 8 ,
 .Xr mount 8 ,
 .Xr mount_mfs 8 ,
+.Xr newfs_lfs 8 ,
 .Xr tunefs 8
 .Rs
 .%A M. McKusick
