@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.54 2003/01/18 06:45:02 thorpej Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.55 2003/01/20 20:51:34 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ struct module_info {
 	void (*hotfix)(struct cpu_info *);
 	void (*mmu_enable)(void);
 	void (*cache_enable)(void);
+	int  (*getmid)(void);		/* Get MID of current CPU */
 	int  ncontext;			/* max. # of contexts (that we use) */
 
 	void (*get_syncflt)(void);
@@ -436,6 +437,9 @@ void xcall(xcall_func_t, int, int, int, int, u_int);
 #define XCALL2(f,a1,a2,cpuset)		/**/
 #define XCALL3(f,a1,a2,a3,cpuset)	/**/
 #endif /* MULTIPROCESSOR */
+
+extern int bootmid;			/* Module ID of boot CPU */
+#define CPU_MID2CPUNO(mid)		((mid) != 0 ? (mid) - 8 : 0)
 
 extern struct cpu_info **cpus;
 
