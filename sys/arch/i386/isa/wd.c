@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.87 1994/08/15 08:22:20 mycroft Exp $
+ *	$Id: wd.c,v 1.88 1994/08/15 14:50:33 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -1318,7 +1318,7 @@ wddump(dev)
 	char *addr;
 	static wddoingadump = 0;
 	extern caddr_t CADDR1;
-	extern struct pte *CMAP1;
+	extern pt_entry_t *CMAP1;
 	
 	addr = (char *)0;	/* starting address */
     
@@ -1412,7 +1412,7 @@ wddump(dev)
 #ifdef notdef	/* Cannot use this since this address was mapped differently. */
 		pmap_enter(kernel_pmap, CADDR1, trunc_page(addr), VM_PROT_READ, TRUE);
 #else
-		*(int *)CMAP1 = PG_V | PG_KW | ctob((long)addr);
+		*CMAP1 = PG_V | PG_KW | ctob((long)addr);
 		tlbflush();
 #endif
 	
