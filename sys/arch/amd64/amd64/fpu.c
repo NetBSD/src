@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5 2003/10/06 22:53:47 fvdl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 2003/10/08 19:21:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2003/10/06 22:53:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2003/10/08 19:21:52 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -175,7 +175,7 @@ fputrap(frame)
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
-	memset(&ksi, 0, sizeof (ksi));
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->tf_rip;
 	KERNEL_PROC_LOCK(l);
