@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152.2.8 1998/07/27 19:02:46 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.152.2.9 1998/08/13 14:37:52 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -202,7 +202,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	FRENCH_KBD
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
-#options 	NORVEGIAN_KBD
+#options 	NORWEGIAN_KBD
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
@@ -398,13 +398,11 @@ sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
-# MII bus support
-mii*	at tl?
-
-# MII PHY network interfaces
-tlphy*	at mii? dev ?			# ThunderLAN PHYs
-nsphy*	at mii? dev ?			# NS and compatible PHYs
-
+# MII/PHY support
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
 
 # USB Controller and Devices
 
@@ -443,8 +441,10 @@ ulpt*	at uhub? port ?
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
 # ISA Plug-and-Play audio devices
+ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
+wss*	at isapnp?			# Windows Sound System
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 
 # ISA audio devices
@@ -470,6 +470,11 @@ audio*	at sp?
 #audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
+audio*	at ess?
+
+# MIDI support
+midi*	at pcppi?		# MIDI interface to the PC speaker
+midi*	at sb?			# SB MPU401 port
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -524,6 +529,7 @@ pseudo-device	tun		2	# network tunneling over tty
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	tb		1	# tablet line discipline
+pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator

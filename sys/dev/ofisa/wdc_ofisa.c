@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.2.2.1 1998/06/04 16:54:51 bouyer Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.2.2.2 1998/08/13 14:37:53 bouyer Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -127,7 +127,7 @@ wdc_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	bzero(&osc->sc_ad, sizeof osc->sc_ad);
+	memset(&osc->sc_ad, 0, sizeof osc->sc_ad);
 	osc->wdc_channel.cmd_iot =
 	    (reg[0].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
 	osc->wdc_channel.ctl_iot =

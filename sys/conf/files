@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.188.2.6 1998/07/27 19:02:47 bouyer Exp $
+#	$NetBSD: files,v 1.188.2.7 1998/08/13 14:37:53 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -50,6 +50,7 @@ defopt	CCITT				#
 defopt	HDLC				# CCITT over HDLC
 defopt	LLC				# CCITT over LLC2 (also IEEE LLC?)
 defopt	NATM				# "native" ATM protocols
+defopt	PFIL_HOOKS			# pfil(9)
 
 # networking options
 defopt	GATEWAY
@@ -96,19 +97,23 @@ devclass tty
 
 # generic attributes
 define	audio { }
+define	midibus { }
+define	midisyn
 define  wdc_base
 define	scsi {[channel = -1]}
 define	ata {[channel = -1], [drive = -1]}
 define	atapi {[channel = -1]}
-define  miibus { }
+define  mii {[phy = -1]}
 
 # audio device attributes
 define	mulaw
 define	auconv
 
-# audio device, attaches to audio hardware driver
+# audio and midi devices, attaches to audio hardware driver
 device	audio
 attach	audio at audio
+device	midi
+attach	midi at midibus
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, and atm.
@@ -177,7 +182,7 @@ device	uha: scsi
 file	dev/ic/uha.c			uha
 
 # 3Com Etherlink-III Ethernet controller
-device	ep: arp, ether, ifnet
+device	ep: arp, ether, ifnet, mii
 file	dev/ic/elink3.c			ep
 
 # DEC EtherWORKS III (LEMAC) Ethernet controllers
@@ -230,7 +235,7 @@ device	sm: arp, ether, ifnet
 file	dev/ic/smc91cxx.c		sm
 
 # SMC 83C170 EPIC/100 Fast Ethernet Controller
-device	epic: arp, ether, ifnet, miibus 
+device	epic: arp, ether, ifnet, mii
 file	dev/ic/smc83c170.c		epic
 
 # MB8696x Ethernet Controller
@@ -328,6 +333,8 @@ pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device ipfilter: ifnet
 
+pseudo-device sequencer
+
 # kernel sources
 file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
@@ -362,7 +369,10 @@ file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-count
+file dev/midi.c				midi			needs-flag
+file dev/midisyn.c			midisyn
 file dev/mulaw.c			mulaw
+file dev/sequencer.c			sequencer		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c				rnd			needs-flag
 file dev/rndpool.c			rnd			needs-flag
