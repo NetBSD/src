@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.46 2003/01/18 10:40:41 thorpej Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.47 2003/02/02 02:29:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.46 2003/01/18 10:40:41 thorpej Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.47 2003/02/02 02:29:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -387,7 +387,8 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 		/* Fill in the old-style proc.p_wmesg by copying the wmesg
 		 * from the first avaliable LWP.
 		 */
-		kl = kvm_getlwps(kd, proc.p_pid, PTRTOINT64(eproc.e_paddr), 
+		kl = kvm_getlwps(kd, proc.p_pid,
+		    (u_long)PTRTOINT64(eproc.e_paddr), 
 		    sizeof(struct kinfo_lwp), &nlwps);
 		if (kl) {
 			if (nlwps > 0) {
@@ -527,7 +528,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		kp2p = &kp2;
 		for (i = 0; i < nprocs; i++, kp++) {
 			kl = kvm_getlwps(kd, kp->kp_proc.p_pid, 
-			    PTRTOINT64(kp->kp_eproc.e_paddr),
+			    (u_long)PTRTOINT64(kp->kp_eproc.e_paddr),
 			    sizeof(struct kinfo_lwp), &nlwps);
 			/* We use kl[0] as the "representative" LWP */
 			memset(kp2p, 0, sizeof(kp2));
@@ -745,7 +746,7 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 		    nlwps * sizeof(struct kinfo_lwp));
 		if (kd->lwpbase == NULL)
 			return NULL;
-		laddr = PTRTOINT64(p.p_lwps.lh_first);
+		laddr = (u_long)PTRTOINT64(p.p_lwps.lh_first);
 		for (i = 0; (i < nlwps) && (laddr != 0); i++) {
 			st = kvm_read(kd, laddr, &l, sizeof(l));
 			if (st == -1) {
@@ -771,7 +772,7 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 				(void)kvm_read(kd, (u_long)l.l_wmesg,
 				    kl->l_wmesg, WMESGLEN);
 			kl->l_cpuid = KI_NOCPU;
-			laddr = PTRTOINT64(l.l_sibling.le_next);
+			laddr = (u_long)PTRTOINT64(l.l_sibling.le_next);
 		}
 	}
 
