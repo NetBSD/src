@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.14 2003/04/25 21:54:29 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.15 2003/07/14 22:13:10 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2003/07/14 22:13:10 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"

@@ -1,4 +1,7 @@
-/* $NetBSD: vesa_text.c,v 1.4 2002/10/02 05:47:11 thorpej Exp $ */
+/* $NetBSD: vesa_text.c,v 1.5 2003/07/14 22:13:09 lukem Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vesa_text.c,v 1.5 2003/07/14 22:13:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
