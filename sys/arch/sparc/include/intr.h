@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2002/12/06 15:36:45 pk Exp $ */
+/*	$NetBSD: intr.h,v 1.5 2002/12/09 16:11:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,10 +60,33 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 void *
-softintr_establish __P((int level, void (*fun)(void *), void *arg));
+softintr_establish(int level, void (*fun)(void *), void *arg);
 
 void
-softintr_disestablish __P((void *cookie));
+softintr_disestablish(void *cookie);
 
-#define softintr_schedule(cookie)	setsoftint()
+/*
+ * NB that softintr_schedule() casts the cookie to an int *.
+ * This is to get the sic_pilreq member of the softintr_cookie
+ * structure, which is otherwise internal to intr.c.
+ */
+#if defined(SUN4M) || defined(SUN4D)
+extern void	raise __P((int, int));
+#if !(defined(SUN4) || defined(SUN4C))
+#define softintr_schedule(cookie)	raise(0, *((int *) (cookie)))
+#else /* both defined */
+#define softintr_schedule(cookie) do {		\
+	if (CPU_ISSUN4M || CPU_ISSUN4D)		\
+		raise(0, *((int *)(cookie)));	\
+	else					\
+		ienab_bis(*((int *)(cookie)));	\
+} while (0)
+#endif	/* SUN4  || SUN4C */
+#else	/* SUN4M || SUN4D */
+#define softintr_schedule(cookie)	ienab_bis(*((int *) (cookie)))
+#endif	/* SUN4M || SUN4D */
+
+#if 0
+void softintr_schedule(void *cookie);
+#endif
 #endif /* KERNEL && !_LOCORE */
