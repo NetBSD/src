@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1028,9 +1028,6 @@ mpbios_int(ent, enttype, mpi)
 	mpi->bus_pin = dev;
 	mpi->global_int = -1;
 
-	mpi->ioapic_ih = APIC_INT_VIA_APIC |
-	    ((id<<APIC_INT_APIC_SHIFT) | ((pin<<APIC_INT_PIN_SHIFT)));
-
 	mpi->type = type;
 	mpi->flags = flags;
 	mpi->redir = 0;
@@ -1089,6 +1086,10 @@ mpbios_int(ent, enttype, mpi)
 			mpi->cpu_id = id;
 		}
 	}
+
+	mpi->ioapic_ih = APIC_INT_VIA_APIC |
+	    ((id<<APIC_INT_APIC_SHIFT) | ((pin<<APIC_INT_PIN_SHIFT)));
+
 	if (mp_verbose) {
 		char buf[256];
 
