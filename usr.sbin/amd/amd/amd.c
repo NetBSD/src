@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.c,v 1.11 1999/02/01 19:05:09 christos Exp $	*/
+/*	$NetBSD: amd.c,v 1.11.2.1 1999/09/21 04:54:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amd.c,v 1.4 1999/01/13 23:30:57 ezk Exp 
+ * Id: amd.c,v 1.5 1999/02/04 07:24:14 ezk Exp 
  *
  */
 
@@ -57,13 +57,7 @@
 struct amu_global_options gopt;	/* where global options are stored */
 
 char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
-#if 0
-char *progname;			/* "amd" */
-#endif
 char *hostdomain = "unknown.domain";
-#if 0
-char hostname[MAXHOSTNAMELEN + 1] = "localhost"; /* Hostname */
-#endif
 char hostd[2 * MAXHOSTNAMELEN + 1]; /* Host+domain */
 char *endian = ARCH_ENDIAN;	/* Big or Little endian */
 char *cpu = HOST_CPU;		/* CPU type */
@@ -75,11 +69,6 @@ int orig_umask = 022;
 int select_intr_valid;
 
 jmp_buf select_intr;
-#if 0
-pid_t mypid;			/* Current process id */
-serv_state amd_state;
-int foreground = 1;		/* This is the top-level server */
-#endif
 struct amd_stats amd_stats;	/* Server statistics */
 struct in_addr myipaddr;	/* (An) IP address of this host */
 time_t do_mapc_reload = 0;	/* mapc_reload() call required? */
