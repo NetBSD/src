@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.21 2000/06/16 03:49:12 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.21.2.1 2000/08/10 23:10:28 soda Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -237,8 +237,9 @@ pci*	at ppb? bus ?
 options 	PCIBIOS			# PCI BIOS support
 options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
 options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
-#options 	PCIBIOS_IRQS_HINT="0x0a00" # PCI interrupts hint. IRQ 9 or 11
-#options 	PCIINTR_DEBUG		# super-verbse PCI interrupt fixup
+#options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
+#options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
+#options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 #options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
 
@@ -268,7 +269,7 @@ isa*	at pcib?
 #pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 #tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x4000
 
-#options 	PCIC_ISA_INTR_ALLOC_MASK="0x8200"
+#options 	PCIC_ISA_INTR_ALLOC_MASK=0x8200
 
 # PCI PCMCIA controllers
 #pcic*	at pci? dev? function ?
