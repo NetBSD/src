@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.2 2001/03/21 14:06:25 toshii Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.3 2001/05/08 18:51:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ ElfLoader::load()
 	Elf_Shdr *sh, *shstr, *shsym;
 	off_t stroff = 0, symoff = 0, off;
 	vaddr_t kv;
+
 	size_t shstrsize;
 	char buf[1024];
 	int i;
@@ -120,7 +121,7 @@ ElfLoader::load()
 			kv = ph->p_vaddr;
 			off_t fileofs = ph->p_offset;
 			DPRINTF((TEXT("[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
-				 i, kv, filesz, memsz));
+			    i, kv, filesz, memsz));
 			_load_segment(kv, memsz, fileofs, filesz);
 			kv += memsz;
 		}
@@ -194,7 +195,7 @@ ElfLoader::read_header(void)
 	if (_eh.e_ident[EI_DATA] != ELFDATA2LSB ||
 	    _eh.e_ident[EI_CLASS] != ELFCLASS32) {
 		DPRINTF((TEXT("invalid class/data(%d/%d)\n"),
-			 _eh.e_ident[EI_CLASS], _eh.e_ident[EI_DATA]));
+		    _eh.e_ident[EI_CLASS], _eh.e_ident[EI_DATA]));
 		return FALSE;
 	}
 
@@ -203,14 +204,14 @@ ElfLoader::read_header(void)
 		ELF32_MACHDEP_ID_CASES;
 	default:
 		DPRINTF((TEXT("not a native architecture. machine = %d\n"),
-			 _eh.e_machine));
+		    _eh.e_machine));
 		return FALSE;
 	}
   
 	/* Check object type */
 	if (_eh.e_type != ET_EXEC) {
 		DPRINTF((TEXT("not a executable file. type = %d\n"),
-			 _eh.e_type));
+		    _eh.e_type));
 		return FALSE;
 	}
   

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.4 2001/04/30 13:43:31 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.5 2001/05/08 18:51:22 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,17 +54,17 @@ HttpFile::HttpFile(Console *&cons)
 	  _req_host(" HTTP/1.0\r\nHOST: "),
 	  _req_ua("\r\nUser-Agent: HPCBOOT/ZERO(1st impact; Windows CE; "
 #if defined MIPS
-		  "MIPS"
+	      "MIPS"
 #elif defined ARM
-		  "ARM"
+	      "ARM"
 #elif defined SH3
-		  "SH3"
+	      "SH3"
 #elif defined SH4
-		  "SH4"
+	      "SH4"
 #else
-		  "Unknown"
+	      "Unknown"
 #endif
-		  ")\r\n\r\n")
+	      ")\r\n\r\n")
 {
 	_server_name[0] = '\0';
 	_debug = TRUE;
@@ -135,7 +135,7 @@ HttpFile::setRoot(TCHAR *server)
 	h = socket(AF_INET, SOCK_STREAM, 0);
 	if (h == INVALID_SOCKET) {
 		DPRINTF((TEXT("can't open socket. cause=%d\n"),
-			 WSAGetLastError()));
+		    WSAGetLastError()));
 		return FALSE;
 	}
 
@@ -153,18 +153,18 @@ HttpFile::setRoot(TCHAR *server)
 		u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
 		DPRINTF((TEXT("%d.%d.%d.%d "), b[0], b[1], b[2], b[3]));
 		if (connect(h,(const struct sockaddr *)&_sockaddr,
-			    sizeof(struct sockaddr_in)) == 0)
+		    sizeof(struct sockaddr_in)) == 0)
 			goto connected;
 	} else {
 		for (u_int8_t **addr_list =(u_int8_t **)entry->h_addr_list;
-		     *addr_list; addr_list++) {
+		    *addr_list; addr_list++) {
 			u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
 			for (int i = 0; i < 4; i++)
 				b[i] = addr_list[0][i];
       
 			DPRINTF((TEXT("%d.%d.%d.%d "), b[0], b[1], b[2],b[3]));
 			if (connect(h,(const struct sockaddr *)&_sockaddr,
-				    sizeof(struct sockaddr_in)) == 0)
+			    sizeof(struct sockaddr_in)) == 0)
 				goto connected;
 		}
 	}
@@ -286,7 +286,7 @@ HttpFile::_parse_header(size_t &header_size)
 	int cnt, ret;
 
 	for (cnt = 0;
-	     ret = _recv_buffer(h, __buf, TMP_BUFFER_SIZE); cnt += ret) {
+	    ret = _recv_buffer(h, __buf, TMP_BUFFER_SIZE); cnt += ret) {
 		char sep[] = " :\r\n";
 		char *token = strtok(__buf, sep);
 		while (token) {
@@ -313,7 +313,7 @@ HttpFile::_recv_buffer(SOCKET h, char *buf, size_t size)
 		cnt = recv(h, buf + total, size - total, 0);
 		total += cnt;
 		DPRINTFN(2,(TEXT("size %d readed %d byte(+%d)\n"),
-			    size, total, cnt));
+		    size, total, cnt));
 	} while (total < size && cnt > 0);
   
 
@@ -334,9 +334,9 @@ static int
 __stricmp(const char *s1, const char *s2)
 {
 	const unsigned char *us1 = 
-		reinterpret_cast <const unsigned char *>(s1);
+	    reinterpret_cast <const unsigned char *>(s1);
 	const unsigned char *us2 = 
-		reinterpret_cast <const unsigned char *>(s2);
+	    reinterpret_cast <const unsigned char *>(s2);
   
 	while (tolower(*us1) == tolower(*us2++))
 		if (*us1++ == '\0')
@@ -350,8 +350,8 @@ Socket::Socket(struct sockaddr_in &sock)
 	_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socket != INVALID_SOCKET)
 		connect(_socket,
-			reinterpret_cast <const struct sockaddr *>(&_sockaddr),
-			sizeof(struct sockaddr_in));
+		    reinterpret_cast <const struct sockaddr *>(&_sockaddr),
+		    sizeof(struct sockaddr_in));
 }
 
 Socket::~Socket(void)

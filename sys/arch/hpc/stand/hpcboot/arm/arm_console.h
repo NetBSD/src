@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.h,v 1.2 2001/04/24 19:28:00 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.h,v 1.3 2001/05/08 18:51:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,8 @@ private:
 
 	void __putc(const char s) {
 		__tx_busy(); // wait until previous transmit done.
-		VOLATILE_REF8(_uart_transmit) = static_cast <u_int8_t>(0xff & s);
+		VOLATILE_REF8(_uart_transmit) = 
+		    static_cast <u_int8_t>(0xff & s);
 	}
 
 public:
