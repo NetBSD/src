@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.389.2.1 2000/08/16 23:18:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.389.2.2 2000/08/17 18:52:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+#include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
 
@@ -277,7 +278,8 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
-	identifycpu();
+
+	printf("cpu0: %s\n", cpu_model);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -647,8 +649,6 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	}
 };
 
-#define CPUDEBUG
-
 void
 cyrix6x86_cpu_setup()
 {
@@ -664,6 +664,12 @@ cyrix6x86_cpu_setup()
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+
+	/*	
+	 * XXX disable page zero in the idle loop, it seems to
+	 * cause panics on these CPUs.
+	 */
+	vm_page_zero_enable = FALSE;
 }
 
 void
@@ -756,7 +762,6 @@ identifycpu()
 
 	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
 		classnames[class]);
-	printf("cpu0: %s\n", cpu_model);
 
 	cpu_class = class;
 
@@ -1727,6 +1732,8 @@ init386(first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
+
+	identifycpu();
 }
 
 struct queue {
