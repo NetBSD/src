@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.16 1994/12/15 20:00:14 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.17 1995/01/18 09:34:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,7 +232,7 @@ fdesc_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
