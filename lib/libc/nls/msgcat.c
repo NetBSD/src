@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.2 1994/05/29 21:24:05 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.3 1994/05/29 22:10:56 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -98,7 +98,7 @@ int type;
     } else {
 	if ((lang = (char *) getenv("LANG")) == NULL) lang = "C";
 	if ((nlspath = (char *) getenv("NLSPATH")) == NULL) {
-	    nlspath = "/usr/share/nls/%L/%N.cat";
+	    nlspath = "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L";
 	}
 	if (MCAppPath) {
 	    tmppath = (char *) malloc(strlen(nlspath) + strlen(MCAppPath) + 3);
