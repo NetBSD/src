@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.154 2001/03/28 18:36:07 ichiro Exp $
+$NetBSD: usbdevs,v 1.155 2001/04/01 14:50:22 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,21 @@ $NetBSD: usbdevs,v 1.154 2001/03/28 18:36:07 ichiro Exp $
 
 /*
  * List of known USB vendors
+ *
+ * Please note that these IDs do not do anything. Adding an ID here and
+ * regenerating the usbdevs.h and usbdevs_data.h only makes a symbolic name
+ * available to the source code and does not change any functionality, nor
+ * does it make your device available to a specific driver.
+ * It will however make the descriptive string available if a device does not
+ * provide the string itself.
+ *
+ * After adding a vendor ID VNDR and a product ID PRDCT you will have the
+ * following extra defines:
+ * #define USB_VENDOR_VNDR              0x????
+ * #define USB_PRODUCT_VNDR_PRDCT       0x????
+ *
+ * You may have to add these defines to the respective probe routines to
+ * make the device recognised by the appropriate device driver.
  */
 
 vendor AOX		0x03e8	AOX, Inc.
@@ -474,6 +489,7 @@ product EPSON 610		0x0103	Perfection 610 scanner
 product EPSON 1200		0x0104	Perfection 1200U / 1200Photo scanner
 product EPSON 1600		0x0107	Expression 1600 scanner
 product EPSON 1640		0x010a	Perfection 1640SU scanner
+product EPSON 1240		0x010b	Perfection 1240U / 1240Photo scanner
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial port
