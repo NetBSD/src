@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -312,6 +312,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	port = srvp->s_port;
+	bzero(&server, sizeof(server));
 	server.sin_port = srvp->s_port;
 	server.sin_family = AF_INET;
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
