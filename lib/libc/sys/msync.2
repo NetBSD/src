@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)msync.2	6.1 (Berkeley) 5/27/91
-.\"	$Id: msync.2,v 1.3 1993/08/05 21:31:44 jtc Exp $
+.\"	$Id: msync.2,v 1.4 1993/12/15 18:08:17 jtc Exp $
 .\"
 .Dd May 27, 1991
 .Dt MSYNC 2
@@ -39,6 +39,9 @@
 .Nm msync 
 .Nd synchronize a mapped region
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/mman.h>
+.Ft int
 .Fn msync "caddr_t addr" "int len"
 .Sh DESCRIPTION
 The 
