@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.11 1999/05/11 07:15:16 nisimura Exp $ */
+/*	$NetBSD: machdep.c,v 1.120.2.12 1999/05/12 05:46:41 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.11 1999/05/11 07:15:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.12 1999/05/12 05:46:41 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -760,19 +760,16 @@ delay(n)
         DELAY(n);
 }
 
-/*
- *  Ensure all platform vectors are always initialized.
- */
-void
-unimpl_os_init()
-{
-	panic("sysconf.init didnt set os_init");
-}
-
 void
 unimpl_bus_reset()
 {
 	panic("sysconf.init didnt set bus_reset");
+}
+
+void
+unimpl_cons_init()
+{
+	panic("sysconf.init didnt set cons_init");
 }
 
 void
