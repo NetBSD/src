@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.8 1998/06/03 06:43:04 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.9 1998/06/03 21:52:36 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -39,51 +39,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
- * Copyright (c) 1993, 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)isa.c	7.2 (Berkeley) 5/13/91
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/mbuf.h>
 
 #define _BEBOX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -140,7 +102,6 @@ void	_isa_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
  */
 struct bebox_bus_dma_tag isa_bus_dma_tag = {
 	ISA_DMA_BOUNCE_THRESHOLD,
-	NULL,			/* _cookie */
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
 	_isa_bus_dmamap_load,
@@ -342,6 +303,7 @@ _isa_bus_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	cookie->id_origbuf = buf;
 	cookie->id_origbuflen = buflen;
+	cookie->id_buftype = ID_BUFTYPE_LINEAR;
 	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
 	    p, flags);
 	if (error) {
@@ -363,14 +325,76 @@ _isa_bus_dmamap_load(t, map, buf, buflen, p, flags)
  * Like _isa_bus_dmamap_load(), but for mbufs.
  */
 int
-_isa_bus_dmamap_load_mbuf(t, map, m, flags)  
+_isa_bus_dmamap_load_mbuf(t, map, m0, flags)  
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	struct mbuf *m;
+	struct mbuf *m0;
 	int flags;
 {
+	struct bebox_isa_dma_cookie *cookie = map->_dm_cookie;
+	int error;
 
-	panic("_isa_bus_dmamap_load_mbuf: not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+#ifdef DIAGNOSTIC
+	if ((m0->m_flags & M_PKTHDR) == 0)
+		panic("_isa_bus_dmamap_load_mbuf: no packet header");
+#endif
+
+	if (m0->m_pkthdr.len > map->_dm_size)
+		return (EINVAL);
+
+	/*
+	 * Try to load the map the normal way.  If this errors out,
+	 * and we can bounce, we will.
+	 */
+	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
+	if (error == 0 ||
+	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
+		return (error);
+
+	/*
+	 * First attempt failed; bounce it.
+	 */
+
+	STAT_INCR(isa_dma_stats_bounces);
+
+	/*
+	 * Allocate bounce pages, if necessary.
+	 */
+	if ((cookie->id_flags & ID_HAS_BOUNCE) == 0) {
+		error = _isa_dma_alloc_bouncebuf(t, map, m0->m_pkthdr.len,
+		    flags);
+		if (error)
+			return (error);
+	}
+
+	/*
+	 * Cache a pointer to the caller's buffer and load the DMA map
+	 * with the bounce buffer.
+	 */
+	cookie->id_origbuf = m0;
+	cookie->id_origbuflen = m0->m_pkthdr.len;	/* not really used */
+	cookie->id_buftype = ID_BUFTYPE_MBUF;
+	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf,
+	    m0->m_pkthdr.len, NULL, flags);
+	if (error) {
+		/*
+		 * Free the bounce pages, unless our resources
+		 * are reserved for our exclusive use.
+		 */
+		if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0)
+			_isa_dma_free_bouncebuf(t, map);
+		return (error);
+	}
+
+	/* ...so _isa_bus_dmamap_sync() knows we're bouncing */
+	cookie->id_flags |= ID_IS_BOUNCING;
+	return (0);
 }
 
 /*
@@ -423,6 +447,7 @@ _isa_bus_dmamap_unload(t, map)
 		_isa_dma_free_bouncebuf(t, map);
 
 	cookie->id_flags &= ~ID_IS_BOUNCING;
+	cookie->id_buftype = ID_BUFTYPE_INVALID;
 
 	/*
 	 * Do the generic bits of the unload.
@@ -460,37 +485,106 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 #endif
 
 	/*
-	 * Nothing to do for pre-read.
+	 * If we're not bouncing, just return; nothing to do.
 	 */
+	if ((cookie->id_flags & ID_IS_BOUNCING) == 0)
+		return;
 
-	if (ops & BUS_DMASYNC_PREWRITE) {
+	switch (cookie->id_buftype) {
+	case ID_BUFTYPE_LINEAR:
 		/*
-		 * If we're bouncing this transfer, copy the
-		 * caller's buffer to the bounce buffer.
+		 * Nothing to do for pre-read.
 		 */
-		if (cookie->id_flags & ID_IS_BOUNCING)
+
+		if (ops & BUS_DMASYNC_PREWRITE) {
+			/*
+			 * Copy the caller's buffer to the bounce buffer.
+			 */
 			bcopy(cookie->id_origbuf + offset,
 			    cookie->id_bouncebuf + offset, len);
-	}
+		}
 
-	if (ops & BUS_DMASYNC_POSTREAD) {
-		/*
-		 * If we're bouncing this transfer, copy the
-		 * bounce buffer to the caller's buffer.
-		 */
-		if (cookie->id_flags & ID_IS_BOUNCING)
+		if (ops & BUS_DMASYNC_POSTREAD) {
+			/*
+			 * Copy the bounce buffer to the caller's buffer.
+			 */
 			bcopy(cookie->id_bouncebuf + offset,
 			    cookie->id_origbuf + offset, len);
+		}
+
+		/*
+		 * Nothing to do for post-write.
+		 */
+		break;
+
+	case ID_BUFTYPE_MBUF:
+	    {
+		struct mbuf *m, *m0 = cookie->id_origbuf;
+		bus_size_t minlen, moff;
+
+		/*
+		 * Nothing to do for pre-read.
+		 */
+
+		if (ops & BUS_DMASYNC_PREWRITE) {
+			/*
+			 * Copy the caller's buffer to the bounce buffer.
+			 */
+			m_copydata(m0, offset, len,
+			    cookie->id_bouncebuf + offset);
+		}
+
+		if (ops & BUS_DMASYNC_POSTREAD) {
+			/*
+			 * Copy the bounce buffer to the caller's buffer.
+			 */
+			for (moff = offset, m = m0; m != NULL && len != 0;
+			    m = m->m_next) {
+				/* Find the beginning mbuf. */
+				if (moff >= m->m_len) {
+					moff -= m->m_len;
+					continue;
+				}
+
+				/*
+				 * Now at the first mbuf to sync; nail
+				 * each one until we have exhausted the
+				 * length.
+				 */
+				minlen = len < m->m_len - moff ?
+				    len : m->m_len - moff;
+
+				bcopy(cookie->id_bouncebuf + offset,
+				    mtod(m, caddr_t) + moff, minlen);
+
+				moff = 0;
+				len -= minlen;
+				offset += minlen;
+			}
+		}
+
+		/*
+		 * Nothing to do for post-write.
+		 */
+		break;
+	    }
+	
+	case ID_BUFTYPE_UIO:
+		panic("_isa_bus_dmamap_sync: ID_BUFTYPE_UIO");
+		break;
+
+	case ID_BUFTYPE_RAW:
+		panic("_isa_bus_dmamap_sync: ID_BUFTYPE_RAW");
+		break;
+
+	case ID_BUFTYPE_INVALID:
+		panic("_isa_bus_dmamap_sync: ID_BUFTYPE_INVALID");
+		break;
+
+	default:
+		printf("unknown buffer type %d\n", cookie->id_buftype);
+		panic("_isa_bus_dmamap_sync");
 	}
-
-	/*
-	 * Nothing to do for post-write.
-	 */
-
-#if 0
-	/* This is a noop anyhow, so why bother calling it? */
-	_bus_dmamap_sync(t, map, offset, len, ops);
-#endif
 }
 
 /*
