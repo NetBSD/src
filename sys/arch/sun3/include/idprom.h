@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.17 1998/02/05 04:56:52 gwr Exp $	*/
+/*	$NetBSD: idprom.h,v 1.18 1999/03/04 05:57:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,11 +47,13 @@ struct idprom {
     long          idp_date;
     unsigned char idp_serialnum[3];
     unsigned char idp_checksum;
+    /* Note: The rest is excluded from the checksum! */
     unsigned char idp_reserved[16];
 };
 
 #define IDPROM_VERSION 1
 #define IDPROM_SIZE (sizeof(struct idprom))
+#define IDPROM_CKSUM_SIZE 16
 
 /* values for cpu_machine_id */
 
