@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.1.4.1 1997/05/23 21:14:45 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.1.4.2 1997/05/24 15:53:50 lukem Exp $	*/
 
 /* This file is part of the Hesiod library.
  *
@@ -342,13 +342,13 @@ char **
 hes_resolve(HesiodName, HesiodNameType)
 	char *HesiodName, *HesiodNameType;
 {
-	char			**retvec;
-	int			  vecsiz = 5;
-	char			 *cp, *ocp, *dst;
-	int			  i, n;
-	struct nsmsg		 *ns;
-	rr_t			 *rp;
-	struct stringlist	 *sl;
+	char		**retvec;
+	int		  vecsiz = 5;
+	char		 *cp, *ocp, *dst;
+	int		  i, n;
+	struct nsmsg	 *ns;
+	rr_t		 *rp;
+	StringList	 *sl;
 
 	sl = sl_init();
 
