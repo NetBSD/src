@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.16 1996/10/13 02:59:50 christos Exp $	*/
+/*	$NetBSD: espvar.h,v 1.17 1996/11/12 21:06:23 cgd Exp $	*/
 
 #if defined(__sparc__) && !defined(SPARC_DRIVER)
 #define	SPARC_DRIVER
@@ -286,6 +286,7 @@ struct esp_softc {
 	} while (0)
 #else /* ! SPARC_DRIVER */
 #if 1
+static inline u_char ESP_READ_REG __P((struct esp_softc *sc, int));
 static inline u_char
 ESP_READ_REG(sc, reg)
 	struct esp_softc *sc;
