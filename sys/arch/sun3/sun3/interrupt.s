@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.s,v 1.14 1994/10/26 09:12:33 cgd Exp $	*/
+/*	$NetBSD: interrupt.s,v 1.15 1994/11/21 21:38:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

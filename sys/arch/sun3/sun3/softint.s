@@ -1,4 +1,4 @@
-/*	$NetBSD: softint.s,v 1.8 1994/10/26 09:13:03 cgd Exp $	*/
+/*	$NetBSD: softint.s,v 1.9 1994/11/21 21:39:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	from: Utah $Hdr: locore.s 1.58 91/04/22$
+ *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
 /*
@@ -48,6 +47,7 @@
  * except that sun machines do not need a simulated SIR
  * because they have a real software interrupt register.
  */
+
 /*
  * Emulation of VAX REI instruction.
  *
@@ -150,17 +150,4 @@ Ldorte2:
 Ldorte1:
 #endif
 	rte				| real return
-
-
-| Set processor priority level calls.  Most are implemented with
-| inline asm expansions.  However, we need one instantiation here
-| in case some non-optimized code makes external references.
-| Most places will use the inlined function param.h supplies.
-	.globl	__spl
-__spl:
-	movl	sp@(4),d1
-	clrl	d0
-	movw	sr,d0
-	movw	d1,sr
-	rts
 

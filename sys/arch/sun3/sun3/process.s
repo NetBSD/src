@@ -1,7 +1,8 @@
-/*	$NetBSD: process.s,v 1.18 1994/10/26 09:12:59 cgd Exp $	*/
+/*	$NetBSD: process.s,v 1.19 1994/11/21 21:38:58 gwr Exp $	*/
 
 /*
- * Copyright (c) 1993 Adam Glass	
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	from: Utah $Hdr: locore.s 1.58 91/04/22$
+ *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
  */
 
 /*
@@ -145,7 +146,6 @@ mdpflag:
  * The mapping of the pcb at p->p_addr has already been deleted,
  * and the memory for the pcb+stack has been freed.
  * The ipl is high enough to prevent the memory from being reallocated.
- * XXX - Should this use p->p_addr instead of _curpcb? -gwr
  */
 ENTRY(switch_exit)
 	movl	sp@(4),a0		| struct proc *p
@@ -163,14 +163,14 @@ ENTRY(switch_exit)
 _Idle_count:
 	.long   0
 	.text
-	.globl	idle
-idle:
+	.globl	Idle
+Lidle:
 	stop	#PSL_LOWIPL
 Idle:
 	movw	#PSL_HIGHIPL,sr
 	addql   #1, _Idle_count
 	tstl	_whichqs
-	jeq	idle
+	jeq	Lidle
 	movw	#PSL_LOWIPL,sr
 	jra	Lsw1
 
@@ -179,8 +179,6 @@ Lbadsw:
 	jbsr	_panic
 	/*NOTREACHED*/
 
-
-.globl _load_u_area;
 /*
  * cpu_switch()
  * Hacked for sun3	
@@ -273,18 +271,18 @@ Lswnofpsave:
 	jne	Lbadsw
 #endif
 	clrl	a0@(P_BACK)		| clear back link
-	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
+	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
 
 	/* see if pmap_activate needs to be called; should remove this */
 	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
-/*#ifdef DIAGNOSTIC XXX*/
+#ifdef DIAGNOSTIC
 	tstl	a0			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
-/*#endif*/
+#endif
 	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
-#ifdef notdef
+#if 0
 	tstl	a0@(PM_STCHG)		| pmap->st_changed?
 	jeq	Lswnochg		| no, skip
 #endif
@@ -292,14 +290,11 @@ Lswnofpsave:
 	pea	a0@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap, pcb)
 	addql	#8,sp
-	movl	_curpcb,a1		| restore p_addr
+
 Lswnochg:
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
-	pea 	a1@			| push essentially p_addr
-	jbsr    _load_u_area		| load_u_area(pcb_addr)
-	addql	#4,sp			| pop argument
-	movl	_curpcb,a1		| restore p_addr (just in case
-					| load_u_area() trashes a1
+	jbsr    _load_u_area		| load_u_area()
+	movl	_curpcb,a1		| restore p_addr
 
 Lcxswdone:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers

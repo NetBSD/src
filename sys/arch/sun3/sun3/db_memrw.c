@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1994/11/17 05:08:55 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 1994/11/21 21:38:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -31,6 +31,9 @@
  * Interface to the debugger for writing in the kernel.
  * To write in the text segment, we have to first make
  * the page writable, do the write, then restore the PTE.
+ *
+ * XXX - Should do db_read_bytes() here too so it can
+ * make sure the address is valid (mapped) first...
  */
 
 #include <sys/param.h>

@@ -1,6 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1994/10/26 09:13:23 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1994/11/21 21:39:23 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -38,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
- *
- *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
+ *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
  */
 
 #include <sys/param.h>
@@ -70,15 +71,15 @@
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
+	/* kernel virtual address of new u-area */
 	register struct user *up = p2->p_addr;
 	int offset;
 	extern caddr_t getsp();
 	extern char kstack[];
-	
-	/* copy over the machdep part of struct proc, so we don't lose
-	   any emulator-properties of processes. */
+
+	/* copy over the machdep part of struct proc */
 	p2->p_md.md_regs = p1->p_md.md_regs;
-	p2->p_md.md_flags = (p1->p_md.md_flags & ~(MDP_HPUXTRACE));
+	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 
@@ -90,13 +91,23 @@ cpu_fork(p1, p2)
 	 * This should be done differently, with a single call
 	 * that copies and updates the pcb+stack,
 	 * replacing the bcopy and savectx.
+	 *
+	 * XXX - Need to flush cache for kstack first?
+	 * XXX - Note that all proc->p_addr mappings are
+	 *       NON-CACHEABLE aliases of kstack...
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	offset = getsp() - kstack;
 	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
 	    (unsigned) ctob(UPAGES) - offset);
-	save_u_area(&p2->p_addr->u_pcb, p2->p_addr);
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
+
+	/*
+	 * Cache the PTEs for the user area in the machine dependent
+	 * part of the proc struct so cpu_switch() can quickly map in
+	 * the user struct and kernel stack. Note: if the virtual address
+	 * translation changes (e.g. swapout) we have to update this.
+	 */
+	save_u_area(p2, p2->p_addr);
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -112,6 +123,23 @@ cpu_fork(p1, p2)
 }
 
 /*
+ * Finish a swapin operation.
+ * We neded to update the cached PTEs for the user area in the
+ * machine dependent part of the proc structure.
+ */
+void
+cpu_swapin(p)
+	register struct proc *p;
+{
+	/*
+	 * Cache the PTEs for the user area in the machine dependent
+	 * part of the proc struct so cpu_switch() can quickly map in
+	 * the user struct and kernel stack.
+	 */
+	save_u_area(p, p->p_addr);
+}
+
+/*
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
  * including the memory for the user structure and kernel stack.
@@ -119,7 +147,7 @@ cpu_fork(p1, p2)
  * pcb and stack and never returns.  We block memory allocation
  * until switch_exit has made things safe again.
  */
-volatile void
+void
 cpu_exit(p)
 	struct proc *p;
 {

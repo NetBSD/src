@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1994/10/26 09:12:47 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1994/11/21 21:38:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -39,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: machdep.c 1.63 91/04/24
- *
- *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
+ *	from: Utah Hdr: machdep.c 1.63 91/04/24
+ *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
+ *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
  */
 
 #include <sys/param.h>
@@ -66,7 +66,6 @@
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
-#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -134,7 +133,8 @@ char	cpu_model[120];
 extern	char version[];
 
 
-void identifycpu()
+void
+identifycpu()
 {
     /*
      * actual identification done earlier because i felt like it,
@@ -149,25 +149,44 @@ void identifycpu()
 	printf("Model: %s\n", cpu_model);
 }
 
-/* The following two functions assume UPAGES == 3 */
-#if	UPAGES != 3
-#error "UPAGES changed?"
-#endif
-void save_u_area(pcbp, va)
-     struct pcb *pcbp;
-     vm_offset_t va;
+void
+save_u_area(procp, va)
+	struct proc *procp;
+	register vm_offset_t va;
 {
-    pcbp->pcb_upte[0] = get_pte(va);
-    pcbp->pcb_upte[1] = get_pte(va+NBPG);
-    pcbp->pcb_upte[2] = get_pte(va+NBPG+NBPG);
-}
-void load_u_area(pcbp)
-     struct pcb *pcbp;
-{
+	register int pte, *ptep, *limit;
 
-    set_pte(u_area_va, pcbp->pcb_upte[0]);
-    set_pte(u_area_va+NBPG, pcbp->pcb_upte[1]);
-    set_pte(u_area_va+NBPG+NBPG, pcbp->pcb_upte[2]);
+	ptep = &procp->p_md.md_upte[0];
+	limit = &ptep[UPAGES];
+
+	do {
+		pte = get_pte(va);
+		pte &= ~(PG_NC | PG_MODREF);
+		*ptep = pte;
+		va += NBPG;
+		ptep++;
+	} while (ptep < limit);
+}
+
+void
+load_u_area()
+{
+	register vm_offset_t va;
+	register int pte, *ptep, *limit;
+
+	va = (vm_offset_t) UADDR;
+	ptep = &curproc->p_md.md_upte[0];
+	limit = &ptep[UPAGES];
+
+	do {
+#ifdef	HAVECACHE
+		cache_flush_page(va);
+#endif
+		pte = *ptep;
+		set_pte(va, pte);
+		va += NBPG;
+		ptep++;
+	} while (ptep < limit);
 }
 
 
@@ -412,7 +431,7 @@ setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
 	u_long stack;
-	register_t *retval;
+	int retval[2];
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
@@ -858,6 +877,10 @@ sun_sendsig(catcher, sig, mask, code)
 
 #endif	/* COMPAT_SUNOS */
 
+struct sigreturn_args {
+    struct sigcontext *sigcntxp;
+};
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -871,10 +894,8 @@ sun_sendsig(catcher, sig, mask, code)
 
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sigreturn_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap;
-	register_t *retval;
+	struct sigreturn_args *uap;
+	int *retval;
 {
 	register struct sigcontext *scp;
 	register struct frame *frame;
@@ -883,7 +904,7 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	int flags;
 
-	scp = SCARG(uap, sigcntxp);
+	scp = uap->sigcntxp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
@@ -994,7 +1015,7 @@ sigreturn(p, uap, retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
+		       p->p_pid, &flags, scp->sc_sp, uap->sigcntxp,
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
@@ -1108,8 +1129,12 @@ static int reboot2(howto, user_boot_string)
 	/*
 	 * If we've been adjusting the clock, the todr
 	 * will be out of synch; adjust it now.
+	 *
+	 * XXX - However, if the kernel has been sitting in ddb,
+	 * the time will be way off, so don't set the HW clock!
+	 * XXX - Should do sanity check against HW clock. -gwr
 	 */
-	resettodr();
+	/* resettodr(); */
 
 	/* Write out a crash dump if asked. */
 	splhigh();
@@ -1391,11 +1416,8 @@ straytrap(pc, evec)
 int
 sysarch(p, uap, retval)
 	struct proc *p;
-	struct sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(char *) parms;
-	} */ *uap;
-	register_t *retval;
+	void *uap;
+	int *retval;
 {
 	return ENOSYS;
 }

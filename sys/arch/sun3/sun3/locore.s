@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.21 1994/10/26 09:12:43 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.22 1994/11/21 21:38:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -38,26 +38,31 @@
 
 | remember this is a fun project :)
 
-| Internal stack used during process switch.
-.globl tmpstk
-.data
-tmpstk_low:
-.space NBPG
-tmpstk:		|tmpstk_end
+| Define some addresses, mostly so DDB can print useful info.
+.set	_kernbase,KERNBASE
+.globl	_kernbase
 
-| This is where the UPAGES get mapped.
-.set	_kstack,MONSHORTSEG
-.globl _kstack
-
-| Some other handy addresses, mostly so DDB can print meaningful things.
 .set	_prom_start,MONSTART
 .globl	_prom_start
 .set	_prom_base,PROM_BASE
 .globl	_prom_base
 
-.text
-.globl start; .globl _start
+| This is where the UPAGES get mapped.
+.set	_kstack,UADDR
+.globl _kstack
 
+| This is for kvm_mkdb, and should be the address of the beginning
+| of the kernel text segment (not necessarily the same as kernbase).
+	.text
+	.globl	_kernel_text
+_kernel_text:
+
+| This is the entry point, as well as the end of the temporary stack
+| used during process switch (two pages at kernbase).
+	.globl tmpstk
+tmpstk:
+	.globl start
+	.globl _start
 start: _start:
 /*
  * First we need to set it up so we can access the sun MMU, and be otherwise
@@ -120,8 +125,8 @@ final_before_main:
 
 	lea tmpstk, sp			| switch to tmpstack
 	jsr _sun3_bootstrap		| init everything but calling main()
-	lea _kstack, a1			| proc0 kernel stack
-	lea a1@(UPAGES*NBPG-4),sp	| set kernel stack to end of area
+	lea _kstack, a1			| proc0 kernel stack (low end)
+	lea a1@(UPAGES*NBPG-4),sp	| set stack pointer to last word
 	pea _kstack_fall_off		| push something to fall back on :)
 	movl #USRSTACK-4, a2		
 	movl a2, usp			| set user stack

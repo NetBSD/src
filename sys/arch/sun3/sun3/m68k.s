@@ -1,6 +1,7 @@
-/*	$NetBSD: m68k.s,v 1.13 1994/10/26 09:12:45 cgd Exp $	*/
+/*	$NetBSD: m68k.s,v 1.14 1994/11/21 21:38:45 gwr Exp $	*/
 
-/* XXXX some code at the bottom is from the hp300, should be moved to lib.s
+/*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -30,6 +31,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/*
+ *
+ * XXX - Some code at the bottom is from the hp300, should be
+ * moved to lib.s  (Which and why, Adam? -gwr)
+ *
+ * Set processor priority level calls.  Most are implemented with
+ * inline asm expansions.  However, we need one instantiation here
+ * in case some non-optimized code makes external references.
+ * Most places will use the inlined function param.h supplies.
+ */
+
+ENTRY(_spl)
+	movl	sp@(4),d1
+	clrl	d0
+	movw	sr,d0
+	movw	d1,sr
+	rts
 
 ENTRY(getvbr)
 	movc vbr, d0
