@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.28 2002/12/10 21:50:32 bouyer Exp $ */
+/*	$NetBSD: if_xi.c,v 1.29 2003/02/22 05:06:36 tsutsui Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.28 2002/12/10 21:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.29 2003/02/22 05:06:36 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1618,7 +1618,7 @@ xi_full_reset(sc)
 		PAGE(sc, 4);
 		/*
 		 * Drive GP1 low to power up ML6692 and GP2 high to power up
-		 * the 10Mhz chip.  XXX What chip is that?  The phy?
+		 * the 10MHz chip.  XXX What chip is that?  The phy?
 		 */
 		bus_space_write_1(bst, bsh, offset + GP0,
 		    GP1_OUT | GP2_OUT | GP2_WR);

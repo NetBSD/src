@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.6 2002/12/10 12:17:36 pk Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.7 2003/02/22 05:11:16 tsutsui Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -89,7 +89,7 @@ struct magma_board_info {
 struct cd1400 {
 	__volatile u_char *cd_reg;	/* chip registers */
 	int cd_chiprev;			/* chip revision */
-	int cd_clock;			/* clock speed in Mhz */
+	int cd_clock;			/* clock speed in MHz */
 	int cd_parmode;			/* parallel mode operation */
 };
 

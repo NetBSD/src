@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.22 2002/10/02 16:53:00 thorpej Exp $ */
+/* $NetBSD: asc_tc.c,v 1.23 2003/02/22 05:13:35 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.22 2002/10/02 16:53:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.23 2003/02/22 05:13:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ asc_tc_attach(parent, self, aux)
 	sc->sc_id = 7;
 	sc->sc_freq = (ta->ta_busspeed) ? 25000000 : 12500000;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	/*

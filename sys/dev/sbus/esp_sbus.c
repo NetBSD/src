@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.27 2002/12/10 13:44:47 pk Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.28 2003/02/22 05:11:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.27 2002/12/10 13:44:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.28 2003/02/22 05:11:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,7 @@ espattach(esc, gluep)
 	 */
 	sc->sc_glue = gluep;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	/*
