@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.19 1999/12/04 03:04:59 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.20 1999/12/05 18:20:53 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -195,17 +195,17 @@ ispcmd_slow(xs)
 	ISP_SCSI_XFER_T *xs;
 {
 	sdparam *sdp;
-	int tgt, chan;
+	int tgt, chan, s;
 	u_int16_t f;
 	struct ispsoftc *isp = XS_ISP(xs);
 
 	/*
 	 * Have we completed discovery for this target on this adapter?
 	 */
-	sdp = isp->isp_param;
-	sdp += chan;
 	tgt = XS_TGT(xs);
 	chan = XS_CHANNEL(xs);
+	sdp = isp->isp_param;
+	sdp += chan;
 	if ((xs->xs_control & XS_CTL_DISCOVERY) != 0 ||
 	    (isp->isp_osinfo.discovered[chan] & (1 << tgt)) != 0) {
 		return (ispcmd(xs));
@@ -240,6 +240,7 @@ ispcmd_slow(xs)
 	 * Okay, we know about this device now,
 	 * so mark parameters to be updated for it.
 	 */
+	s = splbio();
 	sdp->isp_devparam[tgt].dev_flags = f;
 	sdp->isp_devparam[tgt].dev_update = 1;
 	isp->isp_update |= (1 << chan);
@@ -271,6 +272,7 @@ ispcmd_slow(xs)
 			isp->isp_update |= 2;
 	}
 #endif
+	splx(s);
 	return (ispcmd(xs));
 }
 
