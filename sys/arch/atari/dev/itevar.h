@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.6 1996/10/11 20:50:37 leo Exp $	*/
+/*	$NetBSD: itevar.h,v 1.7 2000/03/27 14:08:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -171,6 +171,13 @@ enum tab_size { TABSIZE = 8 };
 #define attrset(ip, attr)
 
 #ifdef _KERNEL
+
+extern int ite_default_x;
+extern int ite_default_y;
+extern int ite_default_width;
+extern int ite_default_depth;
+extern int ite_default_height;
+
 
 struct proc;
 struct consdev;
