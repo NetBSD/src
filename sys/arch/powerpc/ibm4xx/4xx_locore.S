@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_locore.S,v 1.2 2002/12/19 19:37:25 thorpej Exp $	*/
+/*	$NetBSD: 4xx_locore.S,v 1.3 2003/07/25 10:12:42 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,6 +81,11 @@
  */
 #include <powerpc/ibm4xx/trap_subr.S>
 #include <powerpc/ibm4xx/4xx_trap_subr.S>
+
+/*
+ * Include PIO routines
+ */
+#include <powerpc/powerpc/pio_subr.S>
 
 	.globl	_C_LABEL(ppc4xx_reset)
 _C_LABEL(ppc4xx_reset):

@@ -1,4 +1,4 @@
-/* $NetBSD: opbvar.h,v 1.1 2002/08/12 02:06:20 simonb Exp $ */
+/* $NetBSD: opbvar.h,v 1.2 2003/07/25 10:12:44 scw Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,3 +44,6 @@ struct opb_attach_args {
 	bus_space_tag_t opb_bt;		/* Bus space tag */
 	bus_dma_tag_t opb_dmat;		/* DMA tag */
 };
+
+/* For use before opb_attach() is called */
+extern bus_space_tag_t opb_get_bus_space_tag(void);
