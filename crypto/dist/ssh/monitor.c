@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.2 2002/04/22 07:59:40 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.3 2002/05/13 02:58:18 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.9 2002/03/30 18:51:15 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.10 2002/05/12 23:53:45 djm Exp $");
 
 #include <openssl/dh.h>
 
@@ -97,6 +97,7 @@ struct {
 int mm_answer_moduli(int, Buffer *);
 int mm_answer_sign(int, Buffer *);
 int mm_answer_pwnamallow(int, Buffer *);
+int mm_answer_auth2_read_banner(int, Buffer *);
 int mm_answer_authserv(int, Buffer *);
 int mm_answer_authpassword(int, Buffer *);
 int mm_answer_bsdauthquery(int, Buffer *);
@@ -144,6 +145,7 @@ struct mon_table mon_dispatch_proto20[] = {
     {MONITOR_REQ_SIGN, MON_ONCE, mm_answer_sign},
     {MONITOR_REQ_PWNAM, MON_ONCE, mm_answer_pwnamallow},
     {MONITOR_REQ_AUTHSERV, MON_ONCE, mm_answer_authserv},
+    {MONITOR_REQ_AUTH2_READ_BANNER, MON_ONCE, mm_answer_auth2_read_banner},
     {MONITOR_REQ_AUTHPASSWORD, MON_AUTH, mm_answer_authpassword},
 #ifdef BSD_AUTH
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
@@ -506,10 +508,27 @@ mm_answer_pwnamallow(int socket, Buffer *m)
 	/* For SSHv1 allow authentication now */
 	if (!compat20)
 		monitor_permit_authentications(1);
-	else
+	else {
 		/* Allow service/style information on the auth context */
 		monitor_permit(mon_dispatch, MONITOR_REQ_AUTHSERV, 1);
+		monitor_permit(mon_dispatch, MONITOR_REQ_AUTH2_READ_BANNER, 1);
+	}
 
+
+	return (0);
+}
+
+int mm_answer_auth2_read_banner(int socket, Buffer *m)
+{
+	char *banner;
+
+	buffer_clear(m);
+	banner = auth2_read_banner();
+	buffer_put_cstring(m, banner != NULL ? banner : "");
+	mm_request_send(socket, MONITOR_ANS_AUTH2_READ_BANNER, m);
+
+	if (banner != NULL)
+		free(banner);
 
 	return (0);
 }
