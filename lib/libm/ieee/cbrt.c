@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cbrt.c	5.9 (Berkeley) 2/13/91";*/
-static char rcsid[] = "$Id: cbrt.c,v 1.3 1993/08/14 13:43:24 mycroft Exp $";
+static char rcsid[] = "$Id: cbrt.c,v 1.4 1993/10/21 00:42:05 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
+#include <machine/endian.h>
 
 /* kahan's cube root (53 bits IEEE double precision)
  * for IEEE machines only
@@ -74,11 +75,11 @@ double x;
 	              *pt = (unsigned long *) &t,
 		      mexp,sign;
 
-#ifdef national /* ordering of words in a floating points number */
+#if BYTE_ORDER == LITTLE_ENDIAN 
 	const int n0=1,n1=0;
-#else	/* national */
+#else
 	const int n0=0,n1=1;
-#endif	/* national */
+#endif
 
 	mexp=px[n0]&0x7ff00000;
 	if(mexp==0x7ff00000) return(x); /* cbrt(NaN,INF) is itself */
