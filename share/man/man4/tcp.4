@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.13 2003/08/07 10:31:03 agc Exp $
+.\"	$NetBSD: tcp.4,v 1.14 2003/11/23 07:25:11 jhawk Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd November 23, 2003
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -153,6 +153,35 @@ or
 .Xr ip6 4 .
 Incoming connection requests that are source-routed are noted,
 and the reverse source route is used in responding.
+.Pp
+There are many adjustable parameters that control various aspects
+of the
+.Nx
+TCP behavior; these parameters are documented in
+.Xr sysctl 3 ,
+and they include:
+.Bl -bullet -compact
+.It
+RFC 1323 extensions for high performance
+.It
+Send/receive buffer sizes
+.It
+Default maximum segment size (MSS)
+.It
+SYN cache parameters
+.It
+Initial window size
+.It
+Hughes/Touch/Heidemann Congestion Window Monitoring algorithm
+.It
+Keepalive parameters
+.It
+newReno algorithm for congestion control
+.It
+Logging of connection refusals
+.It
+RST packet rate limits
+.El
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EADDRNOTAVAIL]
@@ -184,6 +213,7 @@ exists.
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
 .Xr socket 2 ,
+.Xr sysctl 3 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr intro 4 ,
