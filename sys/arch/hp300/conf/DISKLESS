@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.2 1995/09/21 07:27:53 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.3 1995/10/10 02:12:37 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -60,6 +60,7 @@ options		DDB		# Kernel Dynamic Debugger
 config		netbsd swap nfs
 
 device		dca0	at scode9 flags 1
+device		dca1	at scode? flags 1
 
 device		dcm0	at scode? flags 0xe
 device		dcm1	at scode? flags 0xe
@@ -68,6 +69,7 @@ device		le0	at scode?
 device		le1	at scode?
 
 device		grf0	at scode?
+device		grf1	at scode?
 
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# Berkeley packet filter
