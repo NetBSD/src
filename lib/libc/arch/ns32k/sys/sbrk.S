@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.6 1999/01/14 22:48:21 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.6.10.1 2000/08/22 07:15:17 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,12 +24,12 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sbrk.S,v 1.6 1999/01/14 22:48:21 kleink Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.6.10.1 2000/08/22 07:15:17 kleink Exp $")
 #endif
 
 ASDATA_D(curbrk, _C_LABEL(end))
 
-ENTRY(sbrk)
+ENTRY(_sbrk)
 	PIC_PROLOGUE
 	addd	PIC_GOT(_ASM_LABEL(curbrk)),PIC_S_ARG0
 	PIC_EPILOGUE
