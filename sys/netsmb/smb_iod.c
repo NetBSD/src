@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.17 2003/03/31 20:59:35 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.18 2003/04/05 11:12:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.17 2003/03/31 20:59:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.18 2003/04/05 11:12:23 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ smb_iod_connect(struct smbiod *iod)
 	SMBIODEBUG("%d\n", iod->iod_state);
 	switch(iod->iod_state) {
 	case SMBIOD_ST_VCACTIVE:
-		SMBERROR("called for already opened connection\n");
+		SMBIODEBUG("called for already opened connection\n");
 		return EISCONN;
 	case SMBIOD_ST_DEAD:
 		return ENOTCONN;	/* XXX: last error code ? */
@@ -349,7 +349,7 @@ smb_iod_recvall(struct smbiod *iod)
 					md_append_record(&rqp->sr_rp, m);
 				} else {
 					SMBRQ_SUNLOCK(rqp);
-					SMBERROR("duplicate response %d (ignored)\n", mid);
+					SMBIODEBUG("duplicate response %d (ignored)\n", mid);
 					break;
 				}
 			}
@@ -359,7 +359,7 @@ smb_iod_recvall(struct smbiod *iod)
 		}
 		SMB_IOD_RQUNLOCK(iod);
 		if (rqp == NULL) {
-			SMBERROR("drop resp with mid %d\n", (u_int)mid);
+			SMBIODEBUG("drop resp with mid %d\n", (u_int)mid);
 /*			smb_printrqlist(vcp);*/
 			m_freem(m);
 		}
@@ -452,10 +452,10 @@ smb_iod_addrq(struct smb_rq *rqp)
 
 	SMB_IOD_RQLOCK(iod);
 	for (;;) {
-		if (vcp->vc_maxmux == 0) {
-			SMBERROR("maxmux == 0\n");
-			break;
-		}
+#ifdef DIAGNOSTIC
+		if (vcp->vc_maxmux == 0)
+			panic("%s: vc maxmum == 0", __func__);
+#endif
 		if (iod->iod_muxcnt < vcp->vc_maxmux)
 			break;
 		iod->iod_muxwant++;
@@ -688,7 +688,7 @@ smb_iod_create(struct smb_vc *vcp)
 	    RFNOWAIT, "smbiod%d", iod->iod_id);
 #endif
 	if (error) {
-		SMBERROR("can't start smbiod: %d", error);
+		SMBIODEBUG("can't start smbiod: %d", error);
 		free(iod, M_SMBIOD);
 		return error;
 	}
