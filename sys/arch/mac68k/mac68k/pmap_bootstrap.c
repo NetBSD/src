@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.24 1996/05/14 03:57:32 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.25 1996/05/15 02:34:33 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -566,6 +566,7 @@ bootstrap_mac68k(tc)
 		printf("Bootstrapping NetBSD/mac68k.\n");
 
 	oldROMBase = ROMBase;
+	mac68k_vidphys = videoaddr;
 
 	if ((tc & 0x80000000) && (mmutype == MMU_68030)) {
 
