@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.18 1998/09/01 02:27:21 mark Exp $
+#	$NetBSD: RISCPC,v 1.19 1998/09/05 01:14:43 mark Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -97,7 +97,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
-#options 	MINIROOT_SIZE=2880	# Size in blocks
+#options 	MINIROOTSIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
