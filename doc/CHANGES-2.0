@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.299 2004/06/24 14:24:58 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.300 2004/06/24 17:25:16 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4475,3 +4475,9 @@ xsrc/xc/programs/Xserver/hw/netbsd/hpc/hpcInit.c	1.7
 	For hpcarm, use wskbd, as the keyboard will not work
 	otherwise.
 	[manu, ticket #546]
+
+usr.bin/gzip/gzip.c				1.50
+
+	If there are zero bytes to output, this isn't an error. It's probably
+	a zero length file. Don't return an error. PR#25994
+	[mrg, ticket #547]
