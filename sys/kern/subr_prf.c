@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.41 1997/06/16 15:02:27 drochner Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.42 1997/06/26 00:43:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -70,6 +70,7 @@
 #include <machine/kdbparam.h>
 #endif
 #ifdef KGDB
+#include <sys/kgdb.h>
 #include <machine/cpu.h>
 #endif
 
