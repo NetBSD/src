@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.39 2002/11/11 20:55:28 martin Exp $	*/
+/*	$NetBSD: ehci.c,v 1.40 2002/11/19 19:18:09 martin Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.39 2002/11/11 20:55:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.40 2002/11/19 19:18:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1055,6 +1055,10 @@ ehci_dump_regs(ehci_softc_t *sc)
 		       EOREAD4(sc, EHCI_PORTSC(i)));
 }
 
+/*
+ * Unused function - this is meant to be called from a kernel
+ * debugger.
+ */
 void
 ehci_dump()
 {
