@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdate.8,v 1.8 2002/12/21 12:32:24 wiz Exp $
+.\"	$NetBSD: ntpdate.8,v 1.9 2003/02/25 10:36:15 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -88,7 +88,7 @@ doing so once every hour or two will result in precise enough timekeeping
 to avoid stepping the clock.
 .Pp
 If NetInfo support is compiled into
-.Nm "" ,
+.Nm ,
 then the
 .Pa server
 argument is optional if
@@ -103,7 +103,7 @@ server in the NetInfo configuration for
 Enable the authentication function and specify the key identifier to be
 used for authentication as the argument
 .Ar key
-.Nm "" .
+.Nm .
 The
 keys and key identifiers must match in both the client and server key files.
 The default is to disable the authentication function.
@@ -189,7 +189,7 @@ string to be logged.
 .Bl -tag -width /etc/ntp.keys -compact
 .It Pa /etc/ntp.keys
 encryption keys used by
-.Nm "" .
+.Nm .
 .El
 .Sh AUTHORS
 David L. Mills (mills@udel.edu)

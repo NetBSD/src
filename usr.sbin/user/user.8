@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.15 2003/02/14 16:11:37 grant Exp $ */
+.\" $NetBSD: user.8,v 1.16 2003/02/25 10:36:21 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -38,7 +38,7 @@
 .Nm user
 .Nd manage user login information on the system
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Cm add
 .Fl D
 .Op Fl b Ar base-dir
@@ -47,7 +47,7 @@
 .Op Fl g Ar gid/name/=uid
 .Op Fl L Ar login-class
 .Op Fl r Ar low..high
-.Nm ""
+.Nm
 .Cm add
 .Op Fl mov
 .Op Fl G Ar secondary-group
@@ -64,19 +64,19 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
-.Nm ""
+.Nm
 .Cm del
 .Fl D
 .Op Fl p Ar preserve-value
-.Nm ""
+.Nm
 .Cm del
 .Op Fl prv
 .Ar user
-.Nm ""
+.Nm
 .Cm info
 .Op Fl ev
 .Ar user
-.Nm ""
+.Nm
 .Cm mod
 .Op Fl mov
 .Op Fl G Ar secondary-group
@@ -113,7 +113,7 @@ utility exits 0 on success, and \*[Gt]0 if an error occurs.
 Skeleton files for new user
 .It Pa /etc/usermgmt.conf
 Configuration file for
-.Nm "" ,
+.Nm ,
 .Xr group 8
 and those backend commands
 .It Pa /usr/share/examples/usermgmt

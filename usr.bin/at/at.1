@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.19 2002/09/30 11:08:56 grant Exp $
+.\" $NetBSD: at.1,v 1.20 2003/02/25 10:35:35 wiz Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd October 15, 2000
@@ -17,13 +17,13 @@
 .Op Fl f Ar file
 .Op Fl mldrbv
 .Fl t Ar [[CC]YY]MMDDhhmm[.SS]
-.Nm ""
+.Nm
 .Op Fl V
 .Op Fl q Ar queue
 .Op Fl f Ar file
 .Op Fl mldrbv
 .Ar time
-.Nm ""
+.Nm
 .Op Fl V
 .Fl c Ar job Op Ar job ...
 .Nm atq
@@ -173,7 +173,7 @@ and
 If the file
 .Pa /var/at/at.allow
 exists, only usernames mentioned in it are allowed to use
-.Nm "" .
+.Nm .
 .Pp
 If
 .Pa /var/at/at.allow
@@ -181,10 +181,10 @@ does not exist,
 .Pa /var/at/at.deny
 is checked, every username not mentioned in it is then allowed
 to use
-.Nm "" .
+.Nm .
 .Pp
 If neither exists, only the superuser is allowed use of
-.Nm "" .
+.Nm .
 .Pp
 An empty
 .Pa /var/at/at.deny

@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.3 2003/01/19 21:25:39 atatat Exp $
+.\" $NetBSD: cgd.4,v 1.4 2003/02/25 10:35:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,7 @@ and also defines the following:
 .Bl -tag -width CGDIOCSET
 .It CGDIOCSET
 configure the
-.Nm "" .
+.Nm .
 This
 .Xr ioctl 2
 sets up the encryption parameters and points the
@@ -106,7 +106,7 @@ sets up the encryption parameters and points the
 at the underlying disk.
 .It CGDIOCCLR
 unconfigures the
-.Nm "" .
+.Nm .
 .El
 .Pp
 These
@@ -116,7 +116,7 @@ and their associated data structures are defined in
 .Sh WARNINGS
 It goes without saying that if you forget the passphrase that you used
 to configure a
-.Nm "" ,
+.Nm ,
 then you have irrevocably lost all of the data on the disk.
 Please ensure that you are using an appropriate backup strategy.
 .Sh FILES

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipkdb.4,v 1.5 2001/09/22 00:57:41 wiz Exp $
+.\"	$NetBSD: ipkdb.4,v 1.6 2003/02/25 10:35:14 wiz Exp $
 .\"
 .\"
 .\" Copyright (C) 2000 Wolfgang Solfrank.
@@ -59,14 +59,14 @@ the
 .Li "options IPKDB_NE_PCISLOT" .
 .Pp
 To use
-.Nm "" ,
+.Nm ,
 you have to setup a DHCP server,
 from which
 .Nm
 can get the IP address for the interface that is used for debugging.
 .Pp
 To enter
-.Nm "" ,
+.Nm ,
 the remote debugger has to send the protocol start packet.
 E.g., gdb will do this on the command
 .Dl target ipkdb debuggee IPKDB key for remote debugging
@@ -131,7 +131,7 @@ It's configuration and setup changed quite a bit in
 Since the kernel includes the definition of IPKDBKEY,
 anyone who can read the kernel can extract it and
 use it to enter
-.Nm "" .
+.Nm .
 .Pp
 There is no support for
 .Xr ip6 4 .

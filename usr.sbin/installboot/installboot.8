@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.24 2003/01/15 06:33:58 mhitch Exp $
+.\"	$NetBSD: installboot.8,v 1.25 2003/02/25 10:36:09 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nd install disk bootstrap software
 .
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl nv
 .Bk -words
 .Op Fl m Ar machine
@@ -62,7 +62,7 @@
 .Ar filesystem
 .Ar primary
 .Op Ar secondary
-.Nm ""
+.Nm
 .Fl c
 .Op Fl nv
 .Bk -words
@@ -96,7 +96,7 @@ disk bootstrap software consists of two parts: a
 .Dq primary
 bootstrap program usually written into the disklabel area of the
 file system by
-.Nm "" ,
+.Nm ,
 and a
 .Dq secondary
 bootstrap program that usually resides as an ordinary file in the file system.
@@ -204,7 +204,7 @@ The default machine is determined from
 and then
 .Ev MACHINE .
 The following machines are currently supported by
-.Nm "" :
+.Nm :
 .Bd -ragged -offset indent
 .Sy alpha ,
 .Sy amiga ,
@@ -274,7 +274,7 @@ as the type of
 .Ar filesystem .
 The default operation is to attempt to auto-detect this setting.
 The following file system types are currently supported by
-.Nm "" :
+.Nm :
 .
 .Bl -tag -offset indent -width ffs
 .
@@ -323,7 +323,7 @@ ports will contain variations of the following files:
 Primary bootstrap for file system type
 .Sy FSTYPE .
 Installed into the bootstrap area of the file system by
-.Nm "" .
+.Nm .
 .
 .It Pa /usr/mdec/boot. Ns Sy MACHINE
 Secondary bootstrap for machine type

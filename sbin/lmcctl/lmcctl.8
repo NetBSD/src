@@ -1,4 +1,4 @@
-.\"     $NetBSD: lmcctl.8,v 1.9 2002/10/01 13:40:35 wiz Exp $
+.\"     $NetBSD: lmcctl.8,v 1.10 2003/02/25 10:34:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -40,18 +40,18 @@
 .Nm lmcctl
 .Nd "configuration utility for Lan Media SSI, HSSI, and DS3 cards"
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl i Ar interface
 .Op Fl l Ar speed
 .Op Fl cCeEkKsSoO
 .Sh DESCRIPTION
-.Nm ""
+.Nm
 is the user-land control program for the Lan Media SSI,
 HSSI, and DS3 network interfaces.
 The SSI is the LMC1000, and runs at various speeds up to 10Mbps.
 The DS3 is the LMC5245 and runs at a speed of 45Mbps.
 The HSSI is the LMC5200, and has no internal clock generator.
-.Nm ""
+.Nm
 is used to configure various media and protocol options dealing with HDLC
 serial links and hardware configurations.
 .Pp
@@ -59,7 +59,7 @@ When no change is specified on the command line, the interface status is
 displayed.
 .Pp
 The command-line options for
-.Nm ""
+.Nm
 are as follows:
 .Bl -tag -width indent
 .It Fl i Ar interface

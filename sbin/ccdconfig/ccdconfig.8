@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.21 2002/10/01 13:40:26 wiz Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.22 2003/02/25 10:34:52 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,20 +48,20 @@
 .Op Ar flags
 .Ar dev
 .Op Ar ...
-.Nm ""
+.Nm
 .Fl C
 .Op Fl v
 .Op Fl f Ar config_file
-.Nm ""
+.Nm
 .Fl u
 .Op Fl v
 .Ar ccd
 .Op Ar ...
-.Nm ""
+.Nm
 .Fl U
 .Op Fl v
 .Op Fl f Ar config_file
-.Nm ""
+.Nm
 .Fl g
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -81,7 +81,7 @@ The options are as follows:
 .It Fl c
 Configure a ccd.
 This is the default behavior of
-.Nm "" .
+.Nm .
 .It Fl C
 Configure all ccd devices listed in the ccd configuration file.
 .It Fl f Ar config_file
