@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.rpc.mk,v 1.4 2003/07/10 10:34:37 lukem Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.5 2003/07/14 00:52:12 lukem Exp $
+
+.include <bsd.init.mk>
 
 RPC_XDIR?=	${.CURDIR}/
 
@@ -47,5 +49,9 @@ ${I}: ${RPC_XDIR}${I:_svc.c=.x}
 CLEANFILES += ${RPC_SVCFILES}
 
 .depend: ${RPC_SVCFILES}
+
+##### Pull in related .mk logic
+.include <bsd.obj.mk>
+.include <bsd.sys.mk>
 
 .endif
