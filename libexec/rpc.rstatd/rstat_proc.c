@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.11 1995/01/13 19:37:52 mycroft Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.12 1995/06/19 21:59:31 cgd Exp $";
 #endif
 
 /*
@@ -94,7 +94,7 @@ struct nlist nl[] = {
 #endif
 	"",
 };
-long firstifnet;		/* chain of ethernet interfaces */
+struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
 int numintfs;
 int stats_service();
 
@@ -285,7 +285,7 @@ updatestat()
 	stats_all.s1.if_ierrors = 0;
 	stats_all.s1.if_oerrors = 0;
 	stats_all.s1.if_collisions = 0;
-	for (off = firstifnet, i = 0; off && i < numintfs; i++) {
+	for (off = (long)ifnetq.tqh_first, i = 0; off && i < numintfs; i++) {
 		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
 		    sizeof ifnet) {
 			syslog(LOG_ERR, "can't read ifnet from kmem");
@@ -296,7 +296,7 @@ updatestat()
 		stats_all.s1.if_ierrors += ifnet.if_data.ifi_ierrors;
 		stats_all.s1.if_oerrors += ifnet.if_data.ifi_oerrors;
 		stats_all.s1.if_collisions += ifnet.if_data.ifi_collisions;
-		off = (long)ifnet.if_next;
+		off = (long)ifnet.if_list.tqe_next;
 	}
 	gettimeofday((struct timeval *)&stats_all.s3.curtime,
 		(struct timezone *) 0);
@@ -320,21 +320,21 @@ setup()
 		exit (1);
         }
 
-	if (kvm_read(kfd, (long)nl[X_IFNET].n_value, &firstifnet,
-                     sizeof(long)) != sizeof(long))  {
-		syslog(LOG_ERR, "can't read firstifnet from kmem");
+	if (kvm_read(kfd, (long)nl[X_IFNET].n_value, &ifnetq,
+                     sizeof ifnetq) != sizeof ifnetq)  {
+		syslog(LOG_ERR, "can't read ifnet queue head from kmem");
 		exit(1);
         }
 
 	numintfs = 0;
-	for (off = firstifnet; off;) {
+	for (off = (long)ifnetq.tqh_first; off;) {
 		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
 		    sizeof ifnet) {
 			syslog(LOG_ERR, "can't read ifnet from kmem");
 			exit(1);
 		}
 		numintfs++;
-		off = (long)ifnet.if_next;
+		off = (long)ifnet.if_list.tqe_next;
 	}
 }
 
