@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.100 2000/05/30 15:17:18 augustss Exp $
+$NetBSD: usbdevs,v 1.101 2000/05/31 16:12:08 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ vendor AIWA		0x0677	Aiwa Co., Ltd.
 vendor ACARD		0x0678	ACARD Technology Corp.
 vendor PROLIFIC		0x067b	Prolific Technology Inc.
 vendor ADVANCELOGIC	0x0680	Avance Logic, Inc.
+vendor CTX		0x0698	Chuntex
 vendor ASKEY		0x069a	Askey Computer Corp.
 vendor ALCATELT		0x06b9	Alcatel Telecom
 vendor AGFA		0x06bd	AGFA-Gevaert NV
@@ -322,6 +323,9 @@ product CONNECTIX QUICKCAM	0x0001	QuickCam
 /* Corega products */
 product COREGA ETHER_USB_T	0x0001	Ether USB-T
 product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
+
+/* CTX products */
+product CTX EX1300		0x9999	Ex1300 hub
 
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
