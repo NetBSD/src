@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.1.1.1 1999/11/20 18:54:12 veego Exp $	*/
+/*	$NetBSD: herror.c,v 1.1.1.1.10.1 2002/06/28 11:57:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -52,7 +52,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: herror.c,v 8.11 1999/10/13 16:39:39 vixie Exp";
+static const char rcsid[] = "Id: herror.c,v 8.13 2001/06/18 14:44:06 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -91,20 +91,24 @@ int	h_errno;
 void
 herror(const char *s) {
 	struct iovec iov[4], *v = iov;
-	extern int * __h_errno();
+	char *t;
 
 	if (s != NULL && *s != '\0') {
-		v->iov_base = (/*noconst*/ char *)s;
-		v->iov_len = strlen(s);
+		DE_CONST(s, t);
+		v->iov_base = t;
+		v->iov_len = strlen(t);
 		v++;
-		v->iov_base = ": ";
+		DE_CONST(": ", t);
+		v->iov_base = t;
 		v->iov_len = 2;
 		v++;
 	}
-	v->iov_base = (char *)hstrerror(*__h_errno());
+	DE_CONST(hstrerror(*__h_errno()), t);
+	v->iov_base = t;
 	v->iov_len = strlen(v->iov_base);
 	v++;
-	v->iov_base = "\n";
+	DE_CONST("\n", t);
+	v->iov_base = t;
 	v->iov_len = 1;
 	writev(STDERR_FILENO, iov, (v - iov) + 1);
 }
