@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 1998/08/22 06:06:05 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212 1998/08/25 03:59:01 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -228,6 +228,7 @@ unsigned short	mac68k_ttyipl = PSL_S | PSL_IPL1;
 unsigned short	mac68k_bioipl = PSL_S | PSL_IPL2;
 unsigned short	mac68k_netipl = PSL_S | PSL_IPL2;
 unsigned short	mac68k_impipl = PSL_S | PSL_IPL2;
+unsigned short	mac68k_audioipl = PSL_S | PSL_IPL2;
 unsigned short	mac68k_clockipl = PSL_S | PSL_IPL2;
 unsigned short	mac68k_statclockipl = PSL_S | PSL_IPL2;
 unsigned short	mac68k_schedipl = PSL_S | PSL_IPL3;
