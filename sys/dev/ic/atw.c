@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.44 2004/07/15 06:31:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.44 2004/07/15 06:31:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2627,9 +2627,6 @@ atw_intr(void *arg)
 		if (status)
 			ATW_WRITE(sc, ATW_STSR, status);
 
-		if (sc->sc_intr_ack != NULL)
-			(*sc->sc_intr_ack)(sc);
-
 #ifdef ATW_DEBUG
 #define PRINTINTR(flag) do { \
 	if ((status & flag) != 0) { \
@@ -3297,11 +3294,6 @@ atw_start(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-
-#if 0 /* TBD ??? */
-	if ((sc->sc_flags & ATWF_LINK_UP) == 0 && ifp->if_snd.ifq_len < 10)
-		return;
-#endif
 
 	/*
 	 * Remember the previous number of free descriptors and
