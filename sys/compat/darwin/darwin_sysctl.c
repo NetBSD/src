@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.8 2003/01/03 14:47:27 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.9 2003/01/22 17:47:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.8 2003/01/03 14:47:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.9 2003/01/22 17:47:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,7 @@ static int darwin_user_sysctl
     (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 int
-darwin_sys___sysctl(struct proc *p, void *v, register_t *retval)
+darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys___sysctl_args /* {
 		syscallarg(int *) name;
@@ -97,6 +97,7 @@ darwin_sys___sysctl(struct proc *p, void *v, register_t *retval)
 	size_t *oldlenp = SCARG(uap, oldlenp);
 	void *newp = SCARG(uap, newp);
 	size_t newlen = SCARG(uap, newlen);
+	struct proc *p = l->l_proc;
 
 	/*
 	 * all top-level sysctl names are non-terminal
@@ -404,19 +405,18 @@ darwin_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
  * of course). 
  */
 int 
-darwin_sys_getpid(p, v, retval)
-	struct proc *p;
+darwin_sys_getpid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct darwin_emuldata *ded;
+	struct proc *p = l->l_proc;
 
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 
-#ifdef DEBUG_DARWIN
 	printf("pid %d: fakepid = %d, mach_init_pid = %d\n", 
 	    p->p_pid, ded->ded_fakepid, darwin_init_pid);
-#endif
 	if (ded->ded_fakepid != 0)
 		*retval = ded->ded_fakepid;
 	else
