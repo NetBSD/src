@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.1 2000/06/13 20:03:47 soren Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.2 2000/06/14 22:54:37 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -113,6 +113,8 @@ static int	tr_pcmcia_match(struct device *, struct cfdata *, void *);
 static void	tr_pcmcia_attach(struct device *, struct device *, void *);
 static int	tr_pcmcia_detach(struct device *, int);
 static int	tr_pcmcia_enable(struct tr_softc *);
+static int	tr_pcmcia_mediachange(struct tr_softc *);
+static void	tr_pcmcia_mediastatus(struct tr_softc *, struct ifmediareq *);
 static void	tr_pcmcia_disable(struct tr_softc *);
 static void	tr_pcmcia_setup(struct tr_softc *);
 
@@ -209,16 +211,17 @@ tr_pcmcia_attach(parent, self, aux)
 
 	sc->sc_piot = psc->sc_pioh.iot;
 	sc->sc_pioh = psc->sc_pioh.ioh;
-        sc->sc_memt = psc->sc_sramh.memt;
-        sc->sc_sramh = psc->sc_sramh.memh;
-        sc->sc_mmioh = psc->sc_mmioh.memh;
-        sc->sc_memwinsz = TR_SRAM_SIZE;
-        sc->sc_memsize = TR_SRAM_SIZE;
-        sc->sc_memreserved = 0;
-        sc->sc_aca = TR_ACA_OFFSET;
+	sc->sc_memt = psc->sc_sramh.memt;
+	sc->sc_sramh = psc->sc_sramh.memh;
+	sc->sc_mmioh = psc->sc_mmioh.memh;
+	sc->sc_init_status = RSP_16;
+	sc->sc_memwinsz = TR_SRAM_SIZE;
+	sc->sc_memsize = TR_SRAM_SIZE;
+	sc->sc_memreserved = 0;
+	sc->sc_aca = TR_ACA_OFFSET;
 	sc->sc_maddr = TR_PCMCIA_SRAM_ADDR;
-	sc->sc_mediastatus = NULL;
-	sc->sc_mediachange = NULL;
+	sc->sc_mediastatus = tr_pcmcia_mediastatus;
+	sc->sc_mediachange = tr_pcmcia_mediachange;
 	sc->sc_enable = tr_pcmcia_enable;
 	sc->sc_disable = tr_pcmcia_disable;
 
@@ -270,6 +273,55 @@ tr_pcmcia_disable(sc)
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 }
 
+static int
+tr_pcmcia_mediachange(sc)
+	struct tr_softc *sc;
+{
+	int setspeed = 0;
+
+	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_TOKEN)
+		return EINVAL;
+
+	switch (IFM_SUBTYPE(sc->sc_media.ifm_media)) {
+	case IFM_TOK_STP16:
+	case IFM_TOK_UTP16:
+		if ((sc->sc_init_status & RSP_16) == 0)
+			setspeed = 1;
+		break;
+	case IFM_TOK_STP4:
+	case IFM_TOK_UTP4:
+		if ((sc->sc_init_status & RSP_16) != 0)
+			setspeed = 1;
+		break;
+	}
+	if (setspeed != 0) {
+		tr_stop(sc);
+		if (sc->sc_enabled)
+			tr_pcmcia_disable(sc);
+		sc->sc_init_status ^= RSP_16;		/* XXX 100 Mbit/s */
+		if (sc->sc_enabled)
+			tr_pcmcia_enable(sc);
+	}
+	/*
+	 * XXX Handle Early Token Release !!!!
+	 */
+
+	return 0;
+}
+
+/*
+ * XXX Copy of tropic_mediastatus()
+ */
+static void
+tr_pcmcia_mediastatus(sc, ifmr)
+	struct tr_softc *sc;
+	struct ifmediareq *ifmr;
+{
+	struct ifmedia	*ifm = &sc->sc_media;
+
+	ifmr->ifm_active = ifm->ifm_cur->ifm_media;
+}
+
 int
 tr_pcmcia_detach(self, flags)
 	struct device *self;
@@ -296,6 +348,8 @@ static void
 tr_pcmcia_setup(sc)
 	struct tr_softc *sc;
 {
+	int s;
+
 	bus_space_write_1(sc->sc_piot, sc->sc_pioh, 0,
 	    (TR_PCMCIA_MMIO_ADDR >> 16) & 0x0f);
 
@@ -305,8 +359,11 @@ tr_pcmcia_setup(sc)
 	/* XXX Magick */
 	bus_space_write_1(sc->sc_piot, sc->sc_pioh, 0, 0x20 | 0x06);
 
-	/* 0 << 2 for 8K, 1 << 2 for 16K, 2 << 2 for 32K, 3 << 2 for 64K*/
-	bus_space_write_1(sc->sc_piot, sc->sc_pioh, 0, 0x30 | 0x04);
+	/* 0 << 2 for 8K, 1 << 2 for 16K, 2 << 2 for 32K, 3 << 2 for 64K */
+	/* 0 << 1 for 4Mbit/s, 1 << 1 for 16Mbit/s */
+	/* 0 for primary, 1 for alternate */
+	s = sc->sc_init_status & RSP_16 ? (1 << 1) : (0 << 1);
+	bus_space_write_1(sc->sc_piot, sc->sc_pioh, 0, 0x30 | 0x04 | s);
 
 	/* Release the card. */
 	bus_space_write_1(sc->sc_piot, sc->sc_pioh, 0, 0x40);
