@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.81 2002/11/09 20:11:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.82 2003/01/27 02:10:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.81 2002/11/09 20:11:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.82 2003/01/27 02:10:20 enami Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1332,7 +1332,7 @@ uvm_page_unbusy(pgs, npgs)
 
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
-		if (pg == NULL) {
+		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
 		if (pg->flags & PG_WANTED) {
