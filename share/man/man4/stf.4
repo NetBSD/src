@@ -1,5 +1,5 @@
-.\"     $NetBSD: stf.4,v 1.3 2000/05/14 03:44:03 itojun Exp $
-.\"     $KAME: stf.4,v 1.21 2000/05/13 23:15:28 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.4 2000/05/17 02:27:51 itojun Exp $
+.\"     $KAME: stf.4,v 1.22 2000/05/17 02:26:09 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -117,8 +117,6 @@ fabricated IPv6 packet to your node.
 Also, malicious party can inject an IPv6 packet with fabricated source address
 to make your node generate improper tunnelled packet.
 Administrators must take caution when enabling the interface.
-It is recommended to filter/audit
-incoming IPv4 packet with IP protocol number 41, as necessary.
 To prevent possible attacks,
 .Nm
 interface filters out the following packets.
@@ -148,9 +146,9 @@ The same set of rules are appplied against the IPv4 address embedded into
 inner IPv6 address, if the IPv6 address matches 6to4 prefix.
 .El
 .Pp
-You may also want to reject encapsulated IPv6 packets with
-suspicious 6to4 addresses, like
-.Li 2002:7f00::/24.
+It is recommended to filter/audit
+incoming IPv4 packet with IP protocol number 41, as necessary.
+It is also recommended to filter/audit encapsulated IPv6 packets as well.
 You may also want to run normal ingress filter against inner IPv6 address
 to avoid spoofing.
 .\"
