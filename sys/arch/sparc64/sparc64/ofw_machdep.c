@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.17 2003/07/15 03:36:09 lukem Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.18 2003/09/08 03:33:52 petrov Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.17 2003/07/15 03:36:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.18 2003/09/08 03:33:52 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.17 2003/07/15 03:36:09 lukem Exp $
 #include <sys/systm.h>
 
 #include <machine/openfirm.h>
+
+#include <dev/ofw/ofw_pci.h>
 
 #if defined(FFS) && defined(CD9660)
 #include <ufs/ffs/fs.h>
@@ -664,6 +666,27 @@ compare_cells(int *cell1, int *cell2, int *mask, int ncells)
 }
 
 /*
+ * Find top pci bus host controller for a node.
+ */
+static int
+find_pci_host_node(int node)
+{
+	char dev_type[16];
+	int pch = 0;
+	int len;
+
+	for (; node; node = OF_parent(node)) {
+		len = OF_getprop(node, "device_type",
+				 &dev_type, sizeof(dev_type));
+		if (len <= 0)
+			continue;
+		if (!strcmp(dev_type, "pci"))
+			pch = node;
+	}
+	return pch;
+}
+
+/*
  * Follow the OFW algorithm and return an interrupt specifier.
  *
  * Pass in the interrupt specifier you want mapped and the node
@@ -679,6 +702,13 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	int interrupt_map[100];
 	int interrupt_map_mask[10];
 	int reg[10];
+	char dev_type[32];
+	int phc_node;
+	int rc = -1;
+
+	/* Don't need to map OBP interrupt, it's already */
+	if (*interrupt & 0x20)
+		return validlen;
 
 	/*
 	 * If there is no interrupt map in the bus node, we 
@@ -699,20 +729,36 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		return (-1);
 	}
 
+	phc_node = find_pci_host_node(node);
+
 	for (; node; node = OF_parent(node)) {
 #ifdef DEBUG
 		char name[40];
 
 		if (ofmapintrdebug) {
 			OF_getprop(node, "name", &name, sizeof(name));
-			printf("Node %s\n", name);
+			printf("Node %s (%x), host %x\n", name,
+			       node, phc_node);
 		}
 #endif
 
 		if ((interrupt_map_len = OF_getprop(node,
 			"interrupt-map", &interrupt_map,
 			sizeof(interrupt_map))) <= 0) {
+
+			/* Swizzle interrupt if this is a PCI bridge. */
+			if (((len = OF_getprop(node, "device_type", &dev_type,
+					      sizeof(dev_type))) > 0) &&
+			    !strcmp(dev_type, "pci") &&
+			    (node != phc_node)) {
+				*interrupt = ((*interrupt +
+				    OFW_PCI_PHYS_HI_DEVICE(reg[0]) - 1) & 3) + 1;
+				DPRINTF(("OF_mapintr: interrupt %x, reg[0] %x\n",
+					 *interrupt, reg[0]));
+			}
+
 			/* Get reg for next level compare. */
+			reg[0] = 0;
 			OF_getprop(node, "reg", &reg, sizeof(reg));
 			continue;
 		}
@@ -801,7 +847,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 #endif
 				for (i=0; i<pintr_cells; i++)
 					interrupt[i] = parent[i];
-				validlen = pintr_cells;
+				rc = validlen = pintr_cells;
 				break;
 			}
 			/* Move on to the next interrupt_map entry. */
@@ -824,5 +870,5 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		DPRINTF(("reg len %d\n", len));
 
 	} 
-	return (validlen);
+	return (rc);
 }
