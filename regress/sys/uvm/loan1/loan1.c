@@ -1,4 +1,4 @@
-/*	$Id: loan1.c,v 1.1 2004/02/15 12:20:26 yamt Exp $	*/
+/*	$Id: loan1.c,v 1.2 2004/02/15 12:49:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
 #define	BUFSIZE	(32 * 1024)	/* enough size to trigger sosend_loan */
 
 void
-testloan(void *vp, int docheck)
+testloan(void *vp, char pat, int docheck)
 {
 	char buf[BUFSIZE];
 	char backup[BUFSIZE];
@@ -70,7 +70,7 @@ testloan(void *vp, int docheck)
 		err(EXIT_FAILURE, "write");
 
 	/* break loan */
-	memset(vp, 'X', BUFSIZE);
+	memset(vp, pat, BUFSIZE);
 
 	nread = read(fds[1], buf, BUFSIZE);
 	if (nread == (ssize_t)-1)
@@ -101,8 +101,8 @@ main(int argc, char *argv[])
 	if (vp == MAP_FAILED)
 		err(EXIT_FAILURE, "mmap");
 
-	testloan(vp, 0);
-	testloan(vp, 1);
+	testloan(vp, 'A', 0);
+	testloan(vp, 'B', 1);
 
 	if (munmap(vp, BUFSIZE))
 		err(EXIT_FAILURE, "munmap");
@@ -112,8 +112,8 @@ main(int argc, char *argv[])
 	if (vp == MAP_FAILED)
 		err(EXIT_FAILURE, "mmap");
 
-	testloan(vp, 0);
-	testloan(vp, 1);
+	testloan(vp, 'C', 0);
+	testloan(vp, 'D', 1);
 
 	if (munmap(vp, BUFSIZE))
 		err(EXIT_FAILURE, "munmap");
