@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.h,v 1.6 1998/02/10 03:52:19 lukem Exp $	*/
+/*	$NetBSD: svc_auth.h,v 1.7 1998/02/11 23:01:28 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -33,7 +33,7 @@
  */
 
 /*
- * svc_auth.h, Service side of RPC authentication.
+ * svc_auth.h, Service side of rpc authentication.
  * 
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */

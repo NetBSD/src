@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 1998/02/10 03:52:20 lukem Exp $	*/
+/*	$NetBSD: types.h,v 1.11 1998/02/11 23:01:29 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -33,17 +33,13 @@
  */
 
 /*
- * RPC additions to <sys/types.h>
+ * Rpc additions to <sys/types.h>
  */
-#ifndef _RPC_TYPES_H
-#define _RPC_TYPES_H
+#ifndef _RPC_TYPES_H_
+#define _RPC_TYPES_H_
 
-#include <sys/types.h>
-#include <sys/time.h>
-
-typedef	int32_t		bool_t;
-typedef	int32_t		enum_t;
-
+#define	bool_t	int32_t
+#define	enum_t	int32_t
 #define __dontcare__	-1
 
 #ifndef FALSE
@@ -57,6 +53,11 @@ typedef	int32_t		enum_t;
 #endif
 
 #define mem_alloc(bsize)	malloc(bsize)
-#define mem_free(ptr, bsize)	free((void *)ptr)
+#define mem_free(ptr, bsize)	free(ptr)
 
-#endif /* !_RPC_TYPES_H */
+#ifndef makedev /* ie, we haven't already included it */
+#include <sys/types.h>
+#endif
+#include <sys/time.h>
+
+#endif /* !_RPC_TYPES_H_ */
