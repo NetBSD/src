@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.h,v 1.4 2002/11/29 13:17:23 manu Exp $ */
+/*	$NetBSD: darwin_signal.h,v 1.5 2003/02/03 20:46:55 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DARWIN_DARWIN_H_
-#define	_DARWIN_DARWIN_H_
+#ifndef	_DARWIN_SIGNAL_H_
+#define	_DARWIN_SIGNAL_H_
 
 #define DARWIN_SA_USERTRAMP 0x0100
 #define DARWIN_SA_ALLBITS   0x017f
@@ -81,5 +81,5 @@ struct darwin___sigaction {
 
 void darwin_sendsig(int, sigset_t *, u_long);
 
-#endif /* _DARWIN_DARWIN_H_ */
+#endif /* _DARWIN_SIGNAL_H_ */
 
