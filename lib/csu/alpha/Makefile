@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/10/08 00:29:48 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
 .include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
 
@@ -40,7 +40,7 @@ crtend.o: crtend.c
 	@rm -f ${.TARGET}.o
 
 install:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
 .include <bsd.prog.mk>
