@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.51 2002/02/26 22:30:50 he Exp $
+.\"	$NetBSD: main,v 1.61.2.52 2002/03/06 21:29:18 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,14 +125,17 @@ and
 if installing on a laptop.
 .\}
 .if r_macppc \{\
-boot floppy image
+bootloader
+.Pa installation/ofwboot.xcf 
+and the installation kernel
+.Pa installation/netbsd.ram.gz .
+Alternatively, you can fetch the CD image,
+.Pa macppc_bootable.iso 
+or the boot floppy image
 .Pa installation/boot.fs
-and bootloader
-.Pa installation/ofwboot.xcf ,
-or the CD image,
-.Pa macppc_bootable.iso .
-You only need the floppy image and bootloader, or the CD image to boot
-your system.
+which include the bootloader and installation kernel.
+You only need the installation kernel and bootloader, or the CD image to
+boot your system.
 .\}
 .if r_sparc \{\
 CD image,
@@ -153,13 +156,13 @@ The actual binary distribution is in the
 directory.
 When you boot the install
 .if r_i386 floppies,
-.if r_macppc floppy or CD-ROM,
+.if r_macppc kernel from floppy, hard drive, or CD-ROM,
 .if r_sparc floppies or CD-ROM,
 the installation program
 can fetch these files for you (using e.g. ftp),
 if you have a network connection.
 There are several other methods to get the binary sets onto
-the machine you install.
+your machine.
 .Pp
 You will at a minimum need
 .ie r_i386 \{\
@@ -193,15 +196,14 @@ directory may be of help.
 .\}
 .if \n[macppc] \{
 .It
-If your mac has a floppy drive,
-write the floppy image directly to a floppy disk.
-Otherwise, drag the uncompressed floppy image and bootloader to your
-hard drive icon (the top level of the drive, not the desktop).  If you are
-making a CD, burn it now.
-If you have problems writing a raw image to a floppy, the
-.Ic suntar
-.Tn MacOS
-program may be of help.
+If your mac has a floppy drive, copy
+.Pa ofwboot.xcf No and Pa netbsd.ram.gz
+to an MS-DOS formatted floppy disk and rename
+.Pa netbsd.ram.gz No to Pa netbsd.gz .
+Otherwise, drag 
+.Pa ofwboot.xcf No and Pa netbsd.ram.gz
+to your hard drive icon (the top level of the drive, not the desktop).  If 
+you are making a CD, burn it now.
 .\}
 .if \n[sparc] \{
 .It
@@ -260,18 +262,17 @@ prompt on your screen before attempting to boot
 .\}
 .if r_macppc \{\
 .It
-At the Open Firmware prompt, type the command to boot.  For the boot
+At the Open Firmware prompt, type the command to boot.  To boot from a
 floppy, the command is
-.Dq Ic "boot fd:0" .
-For the boot floppy image and bootloader on your hard drive (Open Firmware
-3), the command is something like
-.Dq Ic "boot hd:9,ofwboot.xcf hd:9,boot.fs" .
-You may need to replace both 9's with your drive's partition number.
+.Dq Ic "boot fd:,\eofwboot.xcf netbsd.gz" .
+For the install kernel and bootloader on your hard drive (Open Firmware
+3), the command is
+.Dq Ic "boot hd:\e,ofwboot.xcf netbsd.ram.gz" .
 .Pp
 For boot CDs, the command is something like
 .Dq Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
 (for Open Firmware 3) or
-.Dq Ic "boot scsi-int/sd@3:0,\eOFWBOOT.XCF NETBSD.MACPPC"
+.Dq Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
 (for earlier Open Firmware versions).
 You will need to use the correct case for
 .Ic OFWBOOT.XCF No and Ic NETBSD.MACPPC
@@ -1686,6 +1687,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Julian Assange Ta Mt proff@netbsd.org
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
 .It Ta Christoph Badura Ta Mt bad@netbsd.org
+.It Ta Bang Jun-Young Ta Mt junyoung@netbsd.org
 .It Ta Dieter Baron Ta Mt dillo@netbsd.org
 .It Ta Robert V. Baron Ta Mt rvb@netbsd.org
 .It Ta Jason Beegan Ta Mt jtb@netbsd.org
@@ -1714,6 +1716,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matt DeBergalis Ta Mt deberg@netbsd.org
 .It Ta Rob Deker Ta Mt deker@netbsd.org
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
+.It Ta Tracy Di Marco White Ta Mt gendalia@netbsd.org
 .It Ta Jarom\('ir Dolecek Ta Mt jdolecek@netbsd.org
 .It Ta Andy Doran Ta Mt ad@netbsd.org
 .It Ta Roland Dowdeswell Ta Mt elric@netbsd.org
@@ -1721,6 +1724,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matthias Drochner Ta Mt drochner@netbsd.org
 .It Ta Jun Ebihara Ta Mt jun@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
+.It Ta Stoned Elipot Ta Mt seb@netbsd.org
 .It Ta Enami Tsugutomo Ta Mt enami@netbsd.org
 .It Ta Bernd Ernesti Ta Mt veego@netbsd.org
 .It Ta Erik Fair Ta Mt fair@netbsd.org
@@ -1752,6 +1756,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Martin Husemann Ta Mt martin@netbsd.org
 .It Ta Dean Huxley Ta Mt dean@netbsd.org
 .It Ta Bernardo Innocenti Ta Mt bernie@netbsd.org
+.It Ta Tetsuya Isaki Ta Mt isaki@netbsd.org
 .It Ta ITOH Yasufumi Ta Mt itohy@netbsd.org
 .It Ta IWAMOTO Toshihiro Ta Mt toshii@netbsd.org
 .It Ta Matthew Jacob Ta Mt mjacob@netbsd.org
@@ -1767,6 +1772,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Klaus Klein Ta Mt kleink@netbsd.org
 .It Ta Wayne Knowles Ta Mt wdk@netbsd.org
 .It Ta John Kohl Ta Mt jtk@netbsd.org
+.It Ta Martti Kuparinen Ta Mt martti@netbsd.org
 .It Ta Kevin Lahey Ta Mt kml@netbsd.org
 .It Ta Johnny C. Lam Ta Mt jlam@netbsd.org
 .It Ta Martin J. Laubach Ta Mt mjl@netbsd.org
@@ -1782,6 +1788,7 @@ them, and would like to mentioned, tell us!)
 .It Ta David Maxwell Ta Mt david@netbsd.org
 .It Ta Dan McMahill Ta Mt dmcmahill@netbsd.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@netbsd.org
+.It Ta Jared D. McNeill Ta Mt jmcneill@netbsd.org
 .It Ta Neil J. McRae Ta Mt neil@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
 .It Ta der Mouse Ta Mt mouse@netbsd.org
@@ -1797,6 +1804,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Greg Oster Ta Mt oster@netbsd.org
 .It Ta Herb Peyerl Ta Mt hpeyerl@netbsd.org
 .It Ta Matthias Pfaller Ta Mt matthias@netbsd.org
+.It Ta Chris Pinnock Ta Mt cjep@netbsd.org
 .It Ta Dante Profeta Ta Mt dante@netbsd.org
 .It Ta Chris Provenzano Ta Mt proven@netbsd.org
 .It Ta Michael Rauch Ta Mt mrauch@netbsd.org
@@ -1821,6 +1829,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Chuck Silvers Ta Mt chs@netbsd.org
 .It Ta Thor Lancelot Simon Ta Mt tls@netbsd.org
 .It Ta Jeff Smith Ta Mt jeffs@netbsd.org
+.It Ta SOMEYA Yoshihiko Ta Mt someya@netbsd.org
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@netbsd.org
 .It Ta Bill Squier Ta Mt groo@netbsd.org
 .It Ta Bill Studenmund Ta Mt wrstuden@netbsd.org
