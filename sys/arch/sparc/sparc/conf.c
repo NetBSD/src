@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1995/01/25 04:48:25 cgd Exp $ */
+/*	$NetBSD: conf.c,v 1.22 1995/02/15 14:27:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,6 +140,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/*  9: */
 	bdev_notdef(),			/* 10: */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
+	bdev_notdef(),			/* 12: */
 	bdev_notdef(),			/* 13: */
 	bdev_notdef(),			/* 14: */
 	bdev_notdef(),			/* 15: */
