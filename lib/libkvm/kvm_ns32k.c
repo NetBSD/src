@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_ns32k.c,v 1.7 1997/08/15 02:22:01 mikel Exp $	*/
+/*	$NetBSD: kvm_ns32k.c,v 1.7.2.1 1997/10/28 23:17:04 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_ns32k.c,v 1.7 1997/08/15 02:22:01 mikel Exp $");
+__RCSID("$NetBSD: kvm_ns32k.c,v 1.7.2.1 1997/10/28 23:17:04 mellon Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: kvm_ns32k.c,v 1.7 1997/08/15 02:22:01 mikel Exp $");
 #include <sys/exec_aout.h>
 #include <sys/kcore.h>
 
+#include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
 #include <nlist.h>
