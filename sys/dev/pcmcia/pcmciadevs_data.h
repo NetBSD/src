@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.110 2001/01/20 01:58:12 imp Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.111 2001/01/20 08:50:30 taca Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -604,13 +604,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Allied Telesis K.K.",
 	    "Allied Telesis LA-PCM"	},
-	},
-	{
-	    PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_R280,
-	    PCMCIA_CIS_RATOC_REX_R280,
-	    0,
-	    "RATOC System Inc.",
-	    "RATOC REX-R280"	},
 	},
 	{
 	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
