@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.2 1996/03/17 01:06:44 thorpej Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.3 1996/04/12 01:31:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -41,11 +41,11 @@ int	tcasicmatch(struct device *, void *, void *);
 void	tcasicattach(struct device *, struct device *, void *);
 
 struct cfattach tcasic_ca = {
-	sizeof(struct device), tcasicmatch, tcasicattach
+	sizeof (struct device), tcasicmatch, tcasicattach,
 };
 
 struct cfdriver tcasic_cd = {
-	NULL, "tcasic", DV_DULL
+	NULL, "tcasic", DV_DULL,
 };
 
 int	tcasicprint __P((void *, char *));
@@ -83,54 +83,56 @@ tcasicattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct tc_attach_args tc;
+	struct tcbus_attach_args tba;
 	void (*intr_setup) __P((void));
 	void (*iointr) __P((void *, int));
 
+	printf("\n");
 	tcasicfound = 1;
 
 	switch (cputype) {
 #ifdef DEC_3000_500
 	case ST_DEC_3000_500:
-		printf(": 25MHz\n");
 
 		intr_setup = tc_3000_500_intr_setup;
 		iointr = tc_3000_500_iointr;
 
-		tc.tca_nslots = tc_3000_500_nslots;
-		tc.tca_slots = tc_3000_500_slots;
-		tc.tca_nbuiltins = tc_3000_500_nbuiltins;
-		tc.tca_builtins = tc_3000_500_builtins;
-		tc.tca_intr_establish = tc_3000_500_intr_establish;
-		tc.tca_intr_disestablish = tc_3000_500_intr_disestablish;
+		tba.tba_busname = "tc";
+		tba.tba_speed = TC_SPEED_25_MHZ;
+		tba.tba_nslots = tc_3000_500_nslots;
+		tba.tba_slots = tc_3000_500_slots;
+		tba.tba_nbuiltins = tc_3000_500_nbuiltins;
+		tba.tba_builtins = tc_3000_500_builtins;
+		tba.tba_intr_establish = tc_3000_500_intr_establish;
+		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
 		break;
 #endif /* DEC_3000_500 */
 
 #ifdef DEC_3000_300
 	case ST_DEC_3000_300:
-		printf(": 12.5MHz\n");
 
 		intr_setup = tc_3000_300_intr_setup;
 		iointr = tc_3000_300_iointr;
 
-		tc.tca_nslots = tc_3000_300_nslots;
-		tc.tca_slots = tc_3000_300_slots;
-		tc.tca_nbuiltins = tc_3000_300_nbuiltins;
-		tc.tca_builtins = tc_3000_300_builtins;
-		tc.tca_intr_establish = tc_3000_300_intr_establish;
-		tc.tca_intr_disestablish = tc_3000_300_intr_disestablish;
+		tba.tba_busname = "tc";
+		tba.tba_speed = TC_SPEED_12_5_MHZ;
+		tba.tba_nslots = tc_3000_300_nslots;
+		tba.tba_slots = tc_3000_300_slots;
+		tba.tba_nbuiltins = tc_3000_300_nbuiltins;
+		tba.tba_builtins = tc_3000_300_builtins;
+		tba.tba_intr_establish = tc_3000_300_intr_establish;
+		tba.tba_intr_disestablish = tc_3000_300_intr_disestablish;
 		break;
 #endif /* DEC_3000_300 */
 
 	default:
-		printf("\n");
 		panic("tcasicattach: bad cputype");
 	}
 
 	(*intr_setup)();
 	set_iointr(iointr);
 
-	config_found(self, &tc, tcasicprint);
+	config_found(self, &tba, tcasicprint);
 }
 
 int
