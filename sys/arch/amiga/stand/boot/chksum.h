@@ -1,5 +1,5 @@
 /*
- *	$NetBSD: bzero.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
+ * $NetBSD: chksum.h,v 1.1 1997/01/21 18:26:13 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -30,20 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Lightweight bzero.
  */
 
-#include <sys/types.h>
-#include <string.h>
+#define CHKSUMOFFS 1
 
-void
-bzero(p, len)
-	void *p;
-	size_t len;
-{
-	char *s = p;
-	while (len > 0) {
-		*s++ = 0;
-		--len;
-	}
-}
+u_int32_t chksum __P((u_int32_t *, int));
+

@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
+ * $NetBSD: xd.c,v 1.2 1997/01/21 18:26:16 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -42,15 +42,14 @@
 #include "libstubs.h"
 
 static int xdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-static int xdopen __P((struct open_file *, ...));
-static int xdclose __P((struct open_file *));
+static int xdopenclose __P((struct open_file *));
 static int xdioctl __P((struct open_file *, u_long, void *));
 
 static u_int32_t aio_base;
 static struct AmigaIO *aio_save;
 
 static struct devsw devsw[] = {
-        { "xd", xdstrategy, xdopen, xdclose, xdioctl }
+        { "xd", xdstrategy, (void *)xdopenclose, (void *)xdopenclose, xdioctl }
 };              
 
 struct fs_ops file_system[] = {
@@ -133,14 +132,7 @@ xdstrategy (devd, flag, dblk, size, buf, rsize)
 /* nothing do do for these: */
 
 static int
-xdopen(f)
-	struct open_file *f;
-{
-	return 0;
-}
-
-static int
-xdclose(f)
+xdopenclose(f)
 	struct open_file *f;
 {
 	return 0;
