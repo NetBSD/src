@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.9 2005/01/19 20:37:52 xtraeme Exp $ */
+/*	$NetBSD: display.c,v 1.10 2005/02/27 15:26:16 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -51,6 +51,9 @@
 static int border;
 static int dpytype;
 static struct wsdisplay_usefontdata font;
+static struct wsdisplay_param backlight;
+static struct wsdisplay_param brightness;
+static struct wsdisplay_param contrast;
 static struct wsdisplay_scroll_data scroll_l;
 static int msg_default_attrs, msg_default_bg, msg_default_fg;
 static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
@@ -59,6 +62,9 @@ struct field display_field_tab[] = {
     { "border",			&border,	FMT_COLOR,	FLG_MODIFY },
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
     { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
+    { "backlight",		&backlight.curval,  FMT_UINT,	0 },
+    { "brightness",		&brightness.curval, FMT_UINT,	FLG_MODIFY },
+    { "contrast",		&contrast.curval,   FMT_UINT,	FLG_MODIFY },
     { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT, FLG_MODIFY },
     { "scroll.slowlines",	&scroll_l.slowlines, FMT_UINT, FLG_MODIFY },
     { "msg.default.attrs",	&msg_default_attrs, FMT_ATTRS,	FLG_MODIFY },
@@ -83,6 +89,24 @@ display_get_values(int fd)
 		if (ioctl(fd, WSDISPLAYIO_GBORDER, &border) < 0)
 			field_disable_by_value(&border);
 	
+	if (field_by_value(&backlight.curval)->flags & FLG_GET) {
+		backlight.param = WSDISPLAYIO_PARAM_BACKLIGHT;
+		if (ioctl(fd, WSDISPLAYIO_GETPARAM, &backlight) < 0)
+			field_disable_by_value(&backlight.curval);
+	}
+
+	if (field_by_value(&brightness.curval)->flags & FLG_GET) {
+		brightness.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+		if (ioctl(fd, WSDISPLAYIO_GETPARAM, &brightness))
+			field_disable_by_value(&brightness.curval);
+	}
+
+	if (field_by_value(&contrast.curval)->flags & FLG_GET) {
+		contrast.param = WSDISPLAYIO_PARAM_CONTRAST;
+		if (ioctl(fd, WSDISPLAYIO_GETPARAM, &contrast))
+			field_disable_by_value(&contrast.curval);
+	}
+
 	if (field_by_value(&msg_default_attrs)->flags & FLG_GET ||
 	    field_by_value(&msg_default_bg)->flags & FLG_GET ||
 	    field_by_value(&msg_default_fg)->flags & FLG_GET ||
@@ -138,6 +162,27 @@ display_put_values(fd)
 		if (ioctl(fd, WSDISPLAYIO_SBORDER, &border) < 0)
 			err(1, "WSDISPLAYIO_SBORDER");
 		pr_field(field_by_value(&border), " -> ");
+	}
+
+	if (field_by_value(&backlight.curval)->flags & FLG_SET) {
+		backlight.param = WSDISPLAYIO_PARAM_BACKLIGHT;
+		if (ioctl(fd, WSDISPLAYIO_SETPARAM, &backlight) < 0)
+			err(1, "WSDISPLAYIO_PARAM_BACKLIGHT");
+		pr_field(field_by_value(&backlight.curval), " -> ");
+	}
+
+	if (field_by_value(&brightness.curval)->flags & FLG_SET) {
+		brightness.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+		if (ioctl(fd, WSDISPLAYIO_SETPARAM, &brightness) < 0)
+			err(1, "WSDISPLAYIO_PARAM_BRIGHTNESS");
+		pr_field(field_by_value(&brightness.curval), " -> ");
+	}
+
+	if (field_by_value(&contrast.curval)->flags & FLG_SET) {
+		contrast.param = WSDISPLAYIO_PARAM_CONTRAST;
+		if (ioctl(fd, WSDISPLAYIO_SETPARAM, &contrast) < 0)
+			err(1, "WSDISPLAYIO_PARAM_CONTRAST");
+		pr_field(field_by_value(&contrast.curval), " -> ");
 	}
 
 	if (field_by_value(&msg_default_attrs)->flags & FLG_SET ||
