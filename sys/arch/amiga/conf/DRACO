@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.2 1996/05/16 17:52:22 is Exp $
+#	$NetBSD: DRACO,v 1.3 1996/08/11 09:48:17 veego Exp $
 
 #
 # Macro System GmbH "DraCo"
@@ -94,7 +94,6 @@ options		DEBUG		# Add debugging statements
 options		DDB		# Kernel debugger
 #options	SYSCALL_DEBUG	# debug all syscalls.
 #options	SCSIDEBUG	# Add SCSI debugging statements
-#options	KGDB		# Kernel debugger (KGDB) support
 #options	PANICBUTTON	# Forced crash via keypress (???)
 
 #
@@ -117,6 +116,8 @@ options		RETINACONSOLE	# enable code to allow retina to be console
 #options	RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
 #options	RETINA_SPEED_HACK
+# enables the Hardwarecursor which does not work on some systems.
+#options	RH_HARDWARECURSOR
 
 grfrh0		at zbus0		# Altais looks just like the Retina Z3
 grful0		at zbus0		# A2410, for poor ZZA
