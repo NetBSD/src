@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 1998/05/21 01:40:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.55 1998/05/21 11:53:49 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -66,21 +66,6 @@ build: beforeinstall
 	(cd ${.CURDIR}/lib/csu && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.if	(${MACHINE_ARCH} == "arm32") || \
-	(${MACHINE_ARCH} == "i386") || \
-	(${MACHINE_ARCH} == "mips") || \
-	(${MACHINE_ARCH} == "m68k") || \
-	(${MACHINE_ARCH} == "ns32k") || \
-	(${MACHINE_ARCH} == "sparc") || \
-	(${MACHINE_ARCH} == "vax")
-.if defined(USE_EGCS)
-	(cd ${.CURDIR}/gnu/usr.bin/egcs/libgcc &&\
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.else
-	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc &&\
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.endif # USE_EGCS
-.endif # MACHINE_ARCH
 	(cd ${.CURDIR}/usr.bin/lex &&\
 	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/usr.bin/yacc && \
@@ -106,6 +91,21 @@ build: beforeinstall
 	    ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
+.if	(${MACHINE_ARCH} == "arm32") || \
+	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "mips") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax")
+.if defined(USE_EGCS)
+	(cd ${.CURDIR}/gnu/usr.bin/egcs/libgcc &&\
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.else
+	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc &&\
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.endif # USE_EGCS
+.endif # MACHINE_ARCH
 	@echo -n "Build finished at: "
 	@date
 
