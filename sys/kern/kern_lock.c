@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.13 1998/12/02 10:41:01 bouyer Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.14 1999/01/22 07:55:17 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -615,7 +615,8 @@ void *start, *end;
 	     alp != NULL;
 	     alp = LIST_NEXT(alp, list)) {
 		if ((void *)alp >= start && (void *)alp < end) {
-			printf("freeing simple_lock %p\n", alp);
+			printf("freeing simple_lock %p %s:%d\n",
+			       alp, alp->lock_file, alp->lock_line);
 #ifdef DDB
 			Debugger();
 #endif
