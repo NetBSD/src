@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.11 2000/07/17 19:57:49 jeffs Exp $ */
+/* $NetBSD: db_machdep.h,v 1.12 2001/11/09 06:52:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -82,7 +82,6 @@ db_addr_t  db_disasm_insn __P((int insn, db_addr_t loc,  boolean_t altfmt));
 void 	kdb_kbd_trap __P((db_regs_t *));
 void 	db_set_ddb_regs __P((int type, mips_reg_t *));
 int 	kdb_trap __P((int type, mips_reg_t *));
-void	db_machine_init __P((void));
 
 
 /*
