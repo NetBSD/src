@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.671 2004/02/14 00:00:56 hannken Exp $
+#	$NetBSD: mi,v 1.672 2004/02/16 02:40:52 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4197,6 +4197,7 @@
 ./usr/share/man/cat3/svcraw_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/svctcp_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/svcudp_bufcreate.0		comp-c-catman		.cat
+./usr/share/man/cat3/svcudp_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/svis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swab.0			comp-c-catman		.cat
 ./usr/share/man/cat3/swapcontext.0		comp-c-catman		.cat
@@ -7807,6 +7808,7 @@
 ./usr/share/man/man3/svcraw_create.3		comp-c-man		.man
 ./usr/share/man/man3/svctcp_create.3		comp-c-man		.man
 ./usr/share/man/man3/svcudp_bufcreate.3		comp-c-man		.man
+./usr/share/man/man3/svcudp_create.3		comp-c-man		.man
 ./usr/share/man/man3/svis.3			comp-c-man		.man
 ./usr/share/man/man3/swab.3			comp-c-man		.man
 ./usr/share/man/man3/swapcontext.3		comp-c-man		.man
