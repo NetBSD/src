@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11 2001/09/15 14:08:15 uch Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12 2001/09/28 12:36:49 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
