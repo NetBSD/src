@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.12 2002/01/29 18:53:09 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.13 2002/05/03 07:31:24 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -745,9 +745,9 @@ it8368_chip_socket_disable(pcmcia_chipset_handle_t pch)
 
 #ifdef IT8368DEBUG
 #define PRINTGPIO(m) __dbg_bit_print(it8368_reg_read(csregt, csregh,		\
-	IT8368_GPIO##m##_REG), 0, IT8368_GPIO_MAX, #m, 1)
+	IT8368_GPIO##m##_REG), 0, IT8368_GPIO_MAX, #m, DBG_BIT_PRINT_COUNT)
 #define PRINTMFIO(m) __dbg_bit_print(it8368_reg_read(csregt, csregh,		\
-	IT8368_MFIO##m##_REG), 0, IT8368_MFIO_MAX, #m, 1)
+	IT8368_MFIO##m##_REG), 0, IT8368_MFIO_MAX, #m, DBG_BIT_PRINT_COUNT)
 void
 it8368_dump(struct it8368e_softc *sc)
 {
@@ -772,8 +772,8 @@ it8368_dump(struct it8368e_softc *sc)
 	PRINTMFIO(POSINTSTAT);
 	PRINTMFIO(NEGINTSTAT);
 	__dbg_bit_print(it8368_reg_read(csregt, csregh, IT8368_CTRL_REG), 0, 15,
-	    "CTRL", 1);
+	    "CTRL", DBG_BIT_PRINT_COUNT);
 	__dbg_bit_print(it8368_reg_read(csregt, csregh, IT8368_GPIODATAIN_REG),
-	    8, 11, "]CRDDET/SENSE[", 1);
+	    8, 11, "]CRDDET/SENSE[", DBG_BIT_PRINT_COUNT);
 }
 #endif /* IT8368DEBUG */
