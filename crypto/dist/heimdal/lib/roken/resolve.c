@@ -46,7 +46,7 @@
 #include <assert.h>
 
 __RCSID("$Heimdal: resolve.c,v 1.36 2002/09/09 21:39:19 joda Exp $"
-        "$NetBSD: resolve.c,v 1.3 2002/09/12 13:19:21 joda Exp $");
+        "$NetBSD: resolve.c,v 1.4 2002/09/12 14:10:25 joda Exp $");
 
 #undef HAVE_RES_NSEARCH
 #if (defined(HAVE_RES_SEARCH) || defined(HAVE_RES_NSEARCH)) && defined(HAVE_DN_EXPAND)
@@ -531,6 +531,19 @@ dns_srv_order(struct dns_reply *r)
     free(srvs);
     return;
 }
+
+#if defined(__NetBSD__) && defined(__weak_alias)
+#undef dns_lookup
+#undef dns_free_data
+#undef dns_srv_order
+#undef dns_string_to_type
+#undef dns_type_to_string
+__weak_alias(dns_lookup, rk_dns_lookup);
+__weak_alias(dns_free_data, rk_dns_free_data);
+__weak_alias(dns_srv_order, rk_dns_srv_order);
+__weak_alias(dns_string_to_type, rk_dns_string_to_type);
+__weak_alias(dns_type_to_string, rk_dns_type_to_string);
+#endif
 
 #else /* NOT defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND) */
 
