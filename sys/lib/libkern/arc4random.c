@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.5 2002/10/04 02:37:23 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.6 2002/10/04 07:33:26 itojun Exp $	*/
 
 /*-
  * THE BEER-WARE LICENSE
@@ -12,7 +12,11 @@
  * $FreeBSD: src/sys/libkern/arc4random.c,v 1.9 2001/08/30 12:30:58 bde Exp $
  */
 
+#ifdef _KERNEL
 #include "rnd.h"
+#else
+#define NRND 0
+#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
