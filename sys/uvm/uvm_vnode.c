@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.4 1998/02/10 14:12:33 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.5 1998/02/18 06:35:46 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -470,18 +470,29 @@ struct uvm_object *uobj;
 /*
  * uvm_vnp_terminate: external hook to clear out a vnode's VM
  *
- * called when a persisting vnode vm object (i.e. one with zero
- * reference count) needs to be freed so that a vnode can be reused.
- * this happens under "getnewvnode" in vfs_subr.c.  if the vnode (from
- * the free list) is still attached (i.e. not VBAD) then vgone is
- * called.  as part of the vgone trace this should get called to free
- * the vm object.  note that the vnode must be XLOCK'd before calling
- * here.   the XLOCK protects us from getting a vnode which is already
- * in the DYING state.
+ * called in two cases:
+ *  [1] when a persisting vnode vm object (i.e. one with a zero reference
+ *      count) needs to be freed so that a vnode can be reused.  this
+ *      happens under "getnewvnode" in vfs_subr.c.   if the vnode from
+ *      the free list is still attached (i.e. not VBAD) then vgone is
+ *	called.   as part of the vgone trace this should get called to
+ *	free the vm object.   this is the common case.
+ *  [2] when a filesystem is being unmounted by force (MNT_FORCE, 
+ *	"umount -f") the vgone() function is called on active vnodes
+ *	on the mounted file systems to kill their data (the vnodes become
+ *	"dead" ones [see src/sys/miscfs/deadfs/...]).  that results in a
+ *	call here (even if the uvn is still in use -- i.e. has a non-zero
+ *	reference count).  this case happens at "umount -f" and during a
+ *	"reboot/halt" operation.
  *
- * => the vnode must be XLOCK'd _and_ VOP_LOCK()'d by caller
- * => unlike uvn_detach, this function must not return until the
- *	old uvm_object is dead.
+ * => the caller must XLOCK and VOP_LOCK the vnode before calling us
+ *	[protects us from getting a vnode that is already in the DYING
+ *	 state...]
+ * => unlike uvn_detach, this function must not return until all the
+ *	uvn's pages are disposed of.
+ * => in case [2] the uvn is still alive after this call, but all I/O
+ *	ops will fail (due to the backing vnode now being "dead").  this
+ *	will prob. kill any process using the uvn due to pgo_get failing.
  */
 
 void uvm_vnp_terminate(vp)
@@ -490,6 +501,7 @@ struct vnode *vp;
 
 {
   struct uvm_vnode *uvn = &vp->v_uvm;
+  int oldflags;
   UVMHIST_FUNC("uvm_vnp_terminate"); UVMHIST_CALLED(maphist);
 
   /*
@@ -505,25 +517,18 @@ struct vnode *vp;
   }
 
   /*
-   * must be a valid, persisting vnode that is not already dying.
-   * can't be ALOCK because that would require someone else having
-   * a valid reference to the underlying vnode (and if that was true
-   * then the kernel wouldn't want to terminate it).
+   * must be a valid uvn that is not already dying (because XLOCK
+   * protects us from that).   the uvn can't in the the ALOCK state
+   * because it is valid, and uvn's that are in the ALOCK state haven't
+   * been marked valid yet.
    */
-  if ((uvn->u_flags & 
-      (UVM_VNODE_VALID|UVM_VNODE_CANPERSIST|UVM_VNODE_ALOCK)) != 
-      (UVM_VNODE_VALID|UVM_VNODE_CANPERSIST)) {
-    printf("uvm_vnp_terminate: flags = 0x%x, refs=%d\n", uvn->u_flags,
-	   uvn->u_obj.uo_refs);
-    panic("uvm_vnp_terminate: uvn in unexpected state");
-  }
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
   /*
-   * diagnostic check: is uvn persisting? 
+   * debug check: are we yanking the vnode out from under our uvn?
    */
   if (uvn->u_obj.uo_refs) {
-    printf("uvm_vnp_terminate(%p): warning: object still active with %d refs\n",
+    printf("uvm_vnp_terminate(%p): terminating active vnode (refs=%d)\n",
            uvn, uvn->u_obj.uo_refs);
   } 
 #endif
@@ -533,7 +538,8 @@ struct vnode *vp;
    * state [i.e. waiting for async i/o to finish so that releasepg can
    * kill object].  we take over the vnode now and cancel the relkill.
    * we want to know when the i/o is done so we can recycle right
-   * away.
+   * away.   note that a uvn can only be in the RELKILL state if it
+   * has a zero reference count.
    */
   
   if (uvn->u_flags & UVM_VNODE_RELKILL)
@@ -546,6 +552,11 @@ struct vnode *vp;
    *
    * also, note that we tell I/O that we are already VOP_LOCK'd so
    * that uvn_io doesn't attempt to VOP_LOCK again.
+   *
+   * XXXCDC: setting VNISLOCKED on an active uvn which is being terminated
+   *	due to a forceful unmount might not be a good idea.  maybe we need
+   *	a way to pass in this info to uvn_flush through a pager-defined
+   *	PGO_ constant [currently there are none].
    */
   uvn->u_flags |= UVM_VNODE_DYING|UVM_VNODE_VNISLOCKED;
 
@@ -579,20 +590,43 @@ struct vnode *vp;
   }
 
   /*
-   * free the uvn now.   note that the VREF reference is already gone
-   * [it is dropped when we enter the persist state].
+   * done.   now we free the uvn if its reference count is zero
+   * (true if we are zapping a persisting uvn).   however, if we are
+   * terminating a uvn with active mappings we let it live ... future
+   * calls down to the vnode layer will fail.
    */
-  if (uvn->u_flags & UVM_VNODE_IOSYNCWANTED)
-    panic("uvm_vnp_terminate: io sync wanted bit set");
 
-  if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
-    simple_lock(&uvn_wl_lock);
-    LIST_REMOVE(uvn, u_wlist);
-    simple_unlock(&uvn_wl_lock);
+  oldflags = uvn->u_flags;
+  if (uvn->u_obj.uo_refs) {
+
+    /*
+     * uvn must live on it is dead-vnode state until all references 
+     * are gone.   restore flags.    clear CANPERSIST state.
+     */
+
+    uvn->u_flags &= ~(UVM_VNODE_DYING|UVM_VNODE_VNISLOCKED|
+		      UVM_VNODE_WANTED|UVM_VNODE_CANPERSIST);
+  
+  } else {
+
+    /*
+     * free the uvn now.   note that the VREF reference is already gone
+     * [it is dropped when we enter the persist state].
+     */
+    if (uvn->u_flags & UVM_VNODE_IOSYNCWANTED)
+      panic("uvm_vnp_terminate: io sync wanted bit set");
+
+    if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
+      simple_lock(&uvn_wl_lock);
+      LIST_REMOVE(uvn, u_wlist);
+      simple_unlock(&uvn_wl_lock);
+    }
+    uvn->u_flags = 0;		/* uvn is history, clear all bits */
   }
-  if (uvn->u_flags & UVM_VNODE_WANTED)
+
+  if (oldflags & UVM_VNODE_WANTED)
     wakeup(uvn);		/* object lock still held */
-  uvn->u_flags = 0;
+
   simple_unlock(&uvn->u_obj.vmobjlock);
   UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
 
