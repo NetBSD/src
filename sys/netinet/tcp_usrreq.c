@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.38 1998/09/10 10:47:01 mouse Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.39 1998/09/10 19:53:28 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -617,13 +617,14 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (ENOTDIR);
 
 	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
-	    && tcp_ctlvars[name[0]].valid)
+	    && tcp_ctlvars[name[0]].valid) {
 		if (tcp_ctlvars[name[0]].rdonly)
 			return (sysctl_rdint(oldp, oldlenp, newp, 
 			    tcp_ctlvars[name[0]].val));
 		else
 			return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    tcp_ctlvars[name[0]].var));
+	}
 
 	return (ENOPROTOOPT);
 }
