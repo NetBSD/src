@@ -133,11 +133,16 @@ struct	disk {
 #endif
 };
 
+struct board {
+	short dkc_port;
+};
+
 #ifdef TIHBAD144
 void bad144intern(struct disk *);
 #endif
 void wddisksort();
 
+struct	board	wdcontroller[NWDC];
 struct	disk	*wddrives[NWD];		/* table of units */
 struct	buf	wdtab[NWDC];		/* various per-controller info */
 struct	buf	wdutab[NWD];		/* head of queue per drive */
@@ -183,6 +188,7 @@ wdprobe(struct isa_device *dvp)
 	du->dk_ctrlr = dvp->id_unit;
 	du->dk_unit = 0;
 	du->dk_lunit = 0;
+	wdcontroller[dvp->id_unit].dkc_port = dvp->id_iobase;
 
 	wdc = du->dk_port = dvp->id_iobase;
 
@@ -217,73 +223,67 @@ nodevice:
 }
 
 /*
+ * Called for the controller too
  * Attach each drive if possible.
  */
 int
 wdattach(struct isa_device *dvp)
 {
 	int unit, lunit;
-	extern struct isa_device isa_biotab_dktp[];
 	struct isa_device *wdup;
 	struct disk *du;
 	int first = 0;
 
-	if (dvp->id_unit >= NWDC)
+	if (dvp->id_masunit == -1)
+		return(0);
+	if (dvp->id_masunit >= NWDC)
 		return(0);
     
-	for (wdup = isa_biotab_dktp; wdup->id_driver != 0; wdup++) {
-		if (wdup->id_driver != &wdcdriver)
-			continue;
-		if (wdup->id_masunit != dvp->id_unit)
-			continue;
-		lunit = wdup->id_unit;
-		if (lunit >= NWD)
-			continue;
-		unit = wdup->id_physid;
+	lunit = dvp->id_unit;
+	if (lunit >= NWD)
+		return(0);
+	unit = dvp->id_physid;
 	
-		du = wddrives[lunit] = (struct disk *)
-			malloc(sizeof(struct disk), M_TEMP, M_NOWAIT);
-		bzero(du, sizeof(struct disk));
-		bzero(&wdutab[lunit], sizeof(struct buf));
-		bzero(&rwdbuf[lunit], sizeof(struct buf));
-		wdxfer[lunit] = 0;
+	du = wddrives[lunit] = (struct disk *)
+		malloc(sizeof(struct disk), M_TEMP, M_NOWAIT);
+	bzero(du, sizeof(struct disk));
+	bzero(&wdutab[lunit], sizeof(struct buf));
+	bzero(&rwdbuf[lunit], sizeof(struct buf));
+	wdxfer[lunit] = 0;
 
-		du->dk_ctrlr = dvp->id_unit;
-		du->dk_unit = unit;
-		du->dk_lunit = lunit;
-		du->dk_port = dvp->id_iobase;
+	du->dk_ctrlr = dvp->id_masunit;
+	du->dk_unit = unit;
+	du->dk_lunit = lunit;
+	du->dk_port = wdcontroller[dvp->id_masunit].dkc_port;
 
-		if(wdgetctlr(unit, du) == 0)  {
-			int i, blank;
-			if(first==0) {
-				first = 1;
-				printf("wdc%d: <", dvp->id_unit);
+	if(wdgetctlr(unit, du) == 0)  {
+		int i, blank;
 
-				for (i=blank=0; i<sizeof(du->dk_params.wdp_model); i++) {
-					char c = du->dk_params.wdp_model[i];
-					if (blank && c == ' ')
-						continue;
-					if (blank && c != ' ') {
-						printf(" %c", c);
-						blank = 0;
-						continue;
-					} 
-					if (c == ' ')
-						blank = 1;
-					else
-						printf("%c", c);
-				}
-				printf(">\n");
-			}
-			printf("wd%d at wdc%d slave %d\n", lunit, dvp->id_unit, unit);
-		} else {
-			/*printf("wd%d at wdc%d slave %d -- error\n",
-				lunit, dvp->id_unit, unit);*/
-			wddrives[lunit] = 0;
-			free(du, M_TEMP);
+		printf("wd%d at wdc%d slave %d: <",
+			lunit, dvp->id_masunit, unit);
+		for (i=blank=0; i<sizeof(du->dk_params.wdp_model); i++) {
+			char c = du->dk_params.wdp_model[i];
+			if (blank && c == ' ')
+				continue;
+			if (blank && c != ' ') {
+				printf(" %c", c);
+				blank = 0;
+				continue;
+			} 
+			if (c == ' ')
+				blank = 1;
+			else
+				printf("%c", c);
 		}
+		printf(">\n");
+	} else {
+		printf("wd%d at wdc%d slave %d -- error\n",
+			lunit, dvp->id_masunit, unit);
+		wddrives[lunit] = 0;
+		free(du, M_TEMP);
+		return 0;
 	}
-	return(1);
+	return 1;
 }
 
 /* Read/write routine for a buffer.  Finds the proper unit, range checks
@@ -1139,12 +1139,12 @@ wdgetctlr(int u, struct disk *du)
 	if (stat & WDCS_ERR) {
 		stat = wdcommand(du, WDCC_RESTORE | WD_STEP);
 	        if(stat & WDCS_ERR) {
-			splx(x);
-			return(inb(wdc+wd_error));
+	                splx(x);
+	                return(inb(wdc+wd_error));
 		}
 		stat = 0x7f; /* MFM/RLL marker for later. */
 	}
-
+    
 	/* obtain parameters */
 	wp = &du->dk_params;
 	insw(wdc+wd_data, tb, sizeof(tb)/sizeof(short));
@@ -1176,7 +1176,8 @@ wdgetctlr(int u, struct disk *du)
 		strncpy(du->dk_dd.d_typename, "ST506", sizeof du->dk_dd.d_typename);
 		for(i=0; i<sizeof(wp->wdp_model); i++)
 			wp->wdp_model[i] = ' ';
-		strncpy(wp->wdp_model, "KrUsTy DiSk", sizeof wp->wdp_model);
+		strncpy(du->dk_params.wdp_model, "KrUsTy DiSk",
+			sizeof du->dk_params.wdp_model);
 		du->dk_dd.d_type = DTYPE_ST506;
 	} else {
 		strncpy(du->dk_dd.d_typename, "ESDI/IDE", sizeof du->dk_dd.d_typename);
