@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.19 2001/01/09 04:31:18 joff Exp $	*/
+/*	$NetBSD: library.c,v 1.20 2001/01/10 01:13:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.19 2001/01/09 04:31:18 joff Exp $");
+__RCSID("$NetBSD: library.c,v 1.20 2001/01/10 01:13:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -410,7 +410,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 		pseg_addr += btodb(ssize); /* XXX was bytetoda(fsp,ssize) */
 	}
 	if(nsegs < sup->su_nsums) {
-		syslog(LOG_NOTICE,"only %d segment summaries in seg %d (expected %d)",
+		syslog(LOG_WARNING,"only %d segment summaries in seg %d (expected %d)",
 		       nsegs, seg, sup->su_nsums);
 		goto err0;
 	}
@@ -600,7 +600,7 @@ pseg_valid (fsp, ssp, addr)
 #endif
 
 	if (ssp->ss_magic != SS_MAGIC) {
-                syslog(LOG_DEBUG, "Bad magic number: 0x%x instead of 0x%x", ssp->ss_magic, SS_MAGIC);
+                syslog(LOG_WARNING, "Bad magic number: 0x%x instead of 0x%x", ssp->ss_magic, SS_MAGIC);
 		return(0);
         }
 
@@ -617,7 +617,7 @@ pseg_valid (fsp, ssp, addr)
 		p += fsp->fi_lfs.lfs_bsize;
 	}
 	if (cksum ((void *)datap, nblocks * sizeof(u_long)) != ssp->ss_datasum) {
-                syslog(LOG_DEBUG, "Bad data checksum");
+                syslog(LOG_WARNING, "Bad data checksum");
 		free(datap);
 		return 0;
         }
@@ -751,7 +751,7 @@ bi_compare(a, b)
 	}
 	if ((diff = (int)(ba->bi_daddr - bb->bi_daddr)))
 		return (diff);
-	if(ba->bi_inode != LFS_IFILE_INUM)
+	if(ba->bi_inode != LFS_IFILE_INUM && debug)
 		syslog(LOG_DEBUG,"bi_compare: using kludge on ino %d!", ba->bi_inode);
 	diff = ba->bi_size - bb->bi_size;
 	return diff;
