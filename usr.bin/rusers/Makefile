@@ -1,7 +1,5 @@
-#	$Id: Makefile,v 1.5 1993/11/21 19:01:01 brezak Exp $
-.PATH:  ${.CURDIR}/../../libexec/rpc.rusersd
+#	$Id: Makefile,v 1.6 1993/11/21 20:18:22 brezak Exp $
 
-SRCS = rusers.c rusersxdr.c
 PROG = rusers
 MAN1 = rusers.0
 
