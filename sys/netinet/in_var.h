@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.52 2004/04/18 21:00:35 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.53 2004/04/21 17:49:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -292,22 +292,22 @@ struct in_multistep {
 
 struct ifaddr;
 
-int	in_ifinit (struct ifnet *,
+int	in_ifinit(struct ifnet *,
 	    struct in_ifaddr *, struct sockaddr_in *, int);
-void	in_savemkludge (struct in_ifaddr *);
-void	in_restoremkludge (struct in_ifaddr *, struct ifnet *);
-void	in_purgemkludge (struct ifnet *);
-struct	in_multi *in_addmulti (struct in_addr *, struct ifnet *);
-void	in_delmulti (struct in_multi *);
-void	in_ifscrub (struct ifnet *, struct in_ifaddr *);
-void	in_setmaxmtu (void);
-const char *in_fmtaddr (struct in_addr);
-int	in_control (struct socket *, u_long, caddr_t, struct ifnet *,
+void	in_savemkludge(struct in_ifaddr *);
+void	in_restoremkludge(struct in_ifaddr *, struct ifnet *);
+void	in_purgemkludge(struct ifnet *);
+struct	in_multi *in_addmulti(struct in_addr *, struct ifnet *);
+void	in_delmulti(struct in_multi *);
+void	in_ifscrub(struct ifnet *, struct in_ifaddr *);
+void	in_setmaxmtu(void);
+const char *in_fmtaddr(struct in_addr);
+int	in_control(struct socket *, u_long, caddr_t, struct ifnet *,
 	    struct proc *);
-void	in_purgeaddr (struct ifaddr *, struct ifnet *);
-void	in_purgeif (struct ifnet *);
-void	ip_input (struct mbuf *);
-int	ipflow_fastforward (struct mbuf *);
+void	in_purgeaddr(struct ifaddr *, struct ifnet *);
+void	in_purgeif(struct ifnet *);
+void	ip_input(struct mbuf *);
+int	ipflow_fastforward(struct mbuf *);
 
 #endif
 

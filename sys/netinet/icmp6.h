@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.29 2004/04/18 21:00:35 matt Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.30 2004/04/21 17:49:46 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -629,20 +629,20 @@ struct	rtentry;
 struct	rttimer;
 struct	in6_multi;
 
-void	icmp6_init (void);
-void	icmp6_paramerror (struct mbuf *, int);
-void	icmp6_error (struct mbuf *, int, int, int);
-int	icmp6_input (struct mbuf **, int *, int);
-void	icmp6_fasttimo (void);
-void	icmp6_reflect (struct mbuf *, size_t);
-void	icmp6_prepare (struct mbuf *);
-void	icmp6_redirect_input (struct mbuf *, int);
-void	icmp6_redirect_output (struct mbuf *, struct rtentry *);
-int	icmp6_sysctl (int *, u_int, void *, size_t *, void *, size_t);
+void	icmp6_init(void);
+void	icmp6_paramerror(struct mbuf *, int);
+void	icmp6_error(struct mbuf *, int, int, int);
+int	icmp6_input(struct mbuf **, int *, int);
+void	icmp6_fasttimo(void);
+void	icmp6_reflect(struct mbuf *, size_t);
+void	icmp6_prepare(struct mbuf *);
+void	icmp6_redirect_input(struct mbuf *, int);
+void	icmp6_redirect_output(struct mbuf *, struct rtentry *);
+int	icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 struct	ip6ctlparam;
-void	icmp6_mtudisc_update (struct ip6ctlparam *, int);
-void	icmp6_mtudisc_callback_register (void (*)(struct in6_addr *));
+void	icmp6_mtudisc_update(struct ip6ctlparam *, int);
+void	icmp6_mtudisc_callback_register(void (*)(struct in6_addr *));
 
 /* XXX: is this the right place for these macros? */
 #define icmp6_ifstat_inc(ifp, tag) \

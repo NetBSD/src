@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.19 2004/04/18 21:00:36 matt Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.20 2004/04/21 17:49:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -175,15 +175,15 @@ struct icmp {
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
 
 #ifdef _KERNEL
-void	icmp_error (struct mbuf *, int, int, n_long, struct ifnet *);
-void	icmp_mtudisc (struct icmp *, struct in_addr);
-void	icmp_input (struct mbuf *, ...);
-void	icmp_init (void);
-void	icmp_reflect (struct mbuf *);
-void	icmp_send (struct mbuf *, struct mbuf *);
-int	icmp_sysctl (int *, u_int, void *, size_t *, void *, size_t);
+void	icmp_error(struct mbuf *, int, int, n_long, struct ifnet *);
+void	icmp_mtudisc(struct icmp *, struct in_addr);
+void	icmp_input(struct mbuf *, ...);
+void	icmp_init(void);
+void	icmp_reflect(struct mbuf *);
+void	icmp_send(struct mbuf *, struct mbuf *);
+int	icmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-void	icmp_mtudisc_callback_register (void (*)(struct in_addr));
+void	icmp_mtudisc_callback_register(void (*)(struct in_addr));
 #endif
 
 
