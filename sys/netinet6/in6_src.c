@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_src.c,v 1.4 2000/08/26 11:03:46 itojun Exp $	*/
-/*	$KAME: in6_src.c,v 1.34 2000/08/26 10:00:45 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.5 2001/02/08 14:56:16 itojun Exp $	*/
+/*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,9 +102,9 @@
 extern struct ifnet loif[NLOOP];
 
 /*
- * Return an IPv6 address, which is the most appropriate for given
+ * Return an IPv6 address, which is the most appropriate for a given
  * destination and user specified options.
- * If necessary, this function lookups the routing table and return
+ * If necessary, this function lookups the routing table and returns
  * an entry to the caller for later use.
  */
 struct in6_addr *
@@ -246,12 +246,15 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 		}
 		if (ro->ro_rt == (struct rtentry *)0 ||
 		    ro->ro_rt->rt_ifp == (struct ifnet *)0) {
+			struct sockaddr_in6 *sa6;
+
 			/* No route yet, so try to acquire one */
 			bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
-			ro->ro_dst.sin6_family = AF_INET6;
-			ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
-			ro->ro_dst.sin6_addr = *dst;
-			ro->ro_dst.sin6_scope_id = dstsock->sin6_scope_id;
+			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
+			sa6->sin6_family = AF_INET6;
+			sa6->sin6_len = sizeof(struct sockaddr_in6);
+			sa6->sin6_addr = *dst;
+			sa6->sin6_scope_id = dstsock->sin6_scope_id;
 			if (IN6_IS_ADDR_MULTICAST(dst)) {
 				ro->ro_rt = rtalloc1(&((struct route *)ro)
 						     ->ro_dst, 0);
@@ -512,4 +515,16 @@ in6_recoverscope(sin6, in6, ifp)
 	}
 
 	return 0;
+}
+
+/*
+ * just clear the embedded scope identifer.
+ * XXX: currently used for bsdi4 only as a supplement function.
+ */
+void
+in6_clearscope(addr)
+	struct in6_addr *addr;
+{
+	if (IN6_IS_SCOPE_LINKLOCAL(addr))
+		addr->s6_addr16[1] = 0;
 }
