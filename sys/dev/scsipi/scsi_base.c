@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.67 1999/06/12 11:19:00 pk Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.68 1999/08/28 22:28:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,8 +102,16 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 #endif
 
 	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,
-	    datalen, retries, timeout, bp, flags)) == NULL)
+	    datalen, retries, timeout, bp, flags)) == NULL) {
+		if (bp != NULL) {
+			s = splbio();
+			bp->b_flags |= B_ERROR;
+			bp->b_error = ENOMEM;
+			biodone(bp);
+			splx(s);
+		}
 		return (ENOMEM);
+	}
 
 	/*
 	 * Set the LUN in the CDB if we have an older device.  We also
