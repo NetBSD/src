@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.12 2001/02/26 21:48:59 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.13 2001/03/20 17:24:03 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.11 2000/12/31 21:20:01 jhawk Exp 
+ *	NetBSD: pcidevs,v 1.236.2.13 2001/03/20 17:23:32 he Exp 
  */
 
 /*
@@ -74,6 +74,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c595-MII 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
+	    0,
+	    "3Com",
+	    "3c555 10/100 MiniPCI Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
+	    0,
+	    "3Com",
+	    "3c556 10/100 MiniPCI Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556B,
+	    0,
+	    "3Com",
+	    "3c556B 10/100 MiniPCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSOHO100TX,
