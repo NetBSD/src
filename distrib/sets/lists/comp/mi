@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.154 1999/08/26 08:02:10 mrg Exp $
+# $NetBSD: mi,v 1.155 1999/09/05 00:16:26 soren Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -215,12 +215,14 @@
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
 ./usr/include/dev/mii
 ./usr/include/dev/mii/inphyreg.h
+./usr/include/dev/mii/iophyreg.h
 ./usr/include/dev/mii/mii.h
 ./usr/include/dev/mii/miivar.h
 ./usr/include/dev/mii/nsphyreg.h
 ./usr/include/dev/mii/qsphyreg.h
 ./usr/include/dev/mii/tlphyreg.h
 ./usr/include/dev/mii/tlphyvar.h
+./usr/include/dev/mii/tqphyreg.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofisa
 ./usr/include/dev/ofisa/ofisavar.h
