@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.8 1998/12/28 00:38:18 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.9 1998/12/29 05:17:27 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -263,9 +263,9 @@ zsc_attach(parent, self, aux)
 
 	for (channel = 0; channel < 2; channel++) {
 		if (OF_getprop(node, "AAPL,interrupts",
-			       intr[channel], sizeof(int)) == -1 &&
+			       intr[channel], sizeof(intr[0])) == -1 &&
 		    OF_getprop(node, "interrupts",
-			       intr[channel], sizeof(int)) == -1) {
+			       intr[channel], sizeof(intr[0])) == -1) {
 			printf(": cannot find interrupt property\n");
 			return;
 		}
