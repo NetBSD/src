@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 1994/12/10 11:43:56 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.25 1994/12/14 06:59:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -2852,12 +2852,11 @@ pmap_prefer(pa, va)
 	register struct pvlist	*pv;
 	register long		m, d;
 
-	if (cputyp == CPU_SUN4)
-		m = 0x20000;
-	else if (cputyp == CPU_SUN4C)
-		m = 0x10000;
-	else
+	if (cputyp == CPU_SUN4M)
+		/* does the sun4m have the cache alias problem? */
 		return va;
+
+	m = CACHE_ALIAS_DIST;
 
 	if (!managed(pa))
 		return va;
