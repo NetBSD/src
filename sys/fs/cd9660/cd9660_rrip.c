@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.24 2001/11/15 09:48:20 lukem Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.24 2001/11/15 09:48:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.24 2001/11/15 09:48:20 lukem Exp $
 
 #include <sys/time.h>
 
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
-#include <isofs/cd9660/cd9660_node.h>
-#include <isofs/cd9660/cd9660_rrip.h>
-#include <isofs/cd9660/iso_rrip.h>
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
+#include <fs/cd9660/cd9660_node.h>
+#include <fs/cd9660/cd9660_rrip.h>
+#include <fs/cd9660/iso_rrip.h>
 
 typedef struct {
 	char type[2];

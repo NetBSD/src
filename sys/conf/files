@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.585 2002/12/23 17:38:19 jdolecek Exp $
+#	$NetBSD: files,v 1.586 2002/12/23 17:52:03 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -967,7 +967,7 @@ include "fs/adosfs/files.adosfs"
 include "coda/files.coda"
 include "fs/filecorefs/files.filecorefs"
 include "fs/smbfs/files.smbfs"
-include "isofs/cd9660/files.cd9660"
+include "fs/cd9660/files.cd9660"
 include "miscfs/fdesc/files.fdesc"
 include "miscfs/kernfs/files.kernfs"
 include "miscfs/nullfs/files.nullfs"
