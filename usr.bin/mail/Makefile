@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.9 1996/10/18 06:17:36 thorpej Exp $
-#	@(#)Makefile	8.2 (Berkeley) 1/25/94
+#	$NetBSD: Makefile,v 1.10 1996/12/28 07:10:57 tls Exp $
+#	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 PROG=	mail
 SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c dotlock.c \

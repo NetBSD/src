@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.4 1996/06/08 19:48:30 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.5 1996/12/28 07:11:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)list.c	8.2 (Berkeley) 4/19/94";
+static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: list.c,v 1.4 1996/06/08 19:48:30 christos Exp $";
+static char rcsid[] = "$NetBSD: list.c,v 1.5 1996/12/28 07:11:05 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -677,6 +677,46 @@ matchsender(str, mesg)
 }
 
 /*
+ * See if the passed name received the passed message number.  Return true
+ * if so.
+ */
+
+static char *to_fields[] = { "to", "cc", "bcc", 0 };
+
+matchto(str, mesg)
+	char *str;
+{
+	register struct message *mp;
+	register char *cp, *cp2, *backup, **to;
+
+	str++;
+
+	if (*str == 0)	/* null string matches nothing instead of everything */
+		return(0);
+
+	mp = &message[mesg-1];
+
+	for (to = to_fields; *to; to++) {
+		cp = str;
+		cp2 = hfield(*to, mp);
+		if (cp2 != NOSTR) {
+			backup = cp2;
+			while (*cp2) {
+				if (*cp == 0)
+					return(1);
+				if (raise(*cp++) != raise(*cp2++)) {
+					cp2 = ++backup;
+					cp = str;
+				}
+			}
+			if (*cp == 0)
+				return(1);
+		}
+	}
+	return(0);
+}
+
+/*
  * See if the given string matches inside the subject field of the
  * given message.  For the purpose of the scan, we ignore case differences.
  * If it does, return true.  The string search argument is assumed to
@@ -705,8 +745,12 @@ matchsubj(str, mesg)
 	 */
 
 	if (value("searchheaders") && (cp = index(str, ':'))) {
+		/* Check for special case "/To:" */
+		if (raise(str[0]) == 'T' && raise(str[1]) == 'O' &&
+		    str[2] == ':')
+			return(matchto(cp, mesg));
 		*cp++ = '\0';
-		cp2 = hfield(str, mp);
+		cp2 = hfield(*str ? str : "subject", mp);
 		cp[-1] = ':';
 		str = cp;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.8 1996/06/08 19:48:18 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)def.h	8.2 (Berkeley) 3/21/94
- *	$NetBSD: def.h,v 1.8 1996/06/08 19:48:18 christos Exp $
+ *	@(#)def.h	8.4 (Berkeley) 4/20/95
+ *	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $
  */
 
 /*
@@ -70,10 +70,10 @@
 
 struct message {
 	short	m_flag;			/* flags, see below */
-	short	m_block;		/* block number of this message */
+	long	m_block;		/* block number of this message */
 	short	m_offset;		/* offset in block of message */
 	long	m_size;			/* Bytes in the message */
-	short	m_lines;		/* Lines in the message */
+	long	m_lines;		/* Lines in the message */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.5 1996/06/08 19:48:26 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)head.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: head.c,v 1.5 1996/06/08 19:48:26 christos Exp $";
+static char rcsid[] = "$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,18 +169,18 @@ copyin(src, space)
  * 'N'	A new line
  */
 char ctype[] = "Aaa Aaa O0 00:00:00 0000";
-char ctype_without_secs[] = "Aaa Aaa O0 00:00 0000";
+char SysV_ctype[] = "Aaa Aaa O0 00:00 0000";
 char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
-char tmztype_without_secs[] = "Aaa Aaa O0 00:00 AAA 0000";
+char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
 
 int
 isdate(date)
 	char date[];
 {
 
-	return cmatch(date, ctype_without_secs) || 
-	       cmatch(date, tmztype_without_secs) || 
-	       cmatch(date, ctype) || cmatch(date, tmztype);
+	return cmatch(date, ctype) || 
+	       cmatch(date, tmztype) || 
+	       cmatch(date, SysV_tmztype) || cmatch(date, SysV_ctype);
 }
 
 /*

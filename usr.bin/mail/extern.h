@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1996/06/08 19:48:21 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1996/12/28 07:11:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,8 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.4 1996/06/08 19:48:21 christos Exp $
+ *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
+ *	$NetBSD: extern.h,v 1.5 1996/12/28 07:11:01 tls Exp $
  */
 
 struct name;
@@ -157,6 +157,7 @@ struct ignoretab;
 int	 ignore1 __P((char *[], struct ignoretab *, char *));
 int	 igshow __P((struct ignoretab *, char *));
 void	 intr __P((int));
+int	 inc __P((void *));
 int	 isdate __P((char []));
 int	 isdir __P((char []));
 int	 isfileaddr __P((char *));
@@ -172,7 +173,7 @@ struct var *
 int	 mail __P((struct name *,
 	    struct name *, struct name *, struct name *, char *));
 void	 mail1 __P((struct header *, int));
-void	 makemessage __P((FILE *));
+void	 makemessage __P((FILE *, int));
 void	 mark __P((int));
 int	 markall __P((char [], int));
 int	 matchsender __P((char *, int));
@@ -184,7 +185,7 @@ void	 mespipe __P((FILE *, char []));
 int	 messize __P((void *));
 int	 metamess __P((int, int));
 int	 more __P((void *));
-int	 newfileinfo __P((void));
+int	 newfileinfo __P((int));
 int	 next __P((void *));
 int	 null __P((void *));
 void	 panic __P((const char *, ...))
@@ -229,7 +230,7 @@ int	 sendmail __P((void *));
 int	 set __P((void *));
 int	 setfile __P((char *));
 void	 setmsize __P((int));
-void	 setptr __P((FILE *));
+void	 setptr __P((FILE *, off_t));
 void	 setscreensize __P((void));
 int	 shell __P((void *));
 void	 sigchild __P((int));

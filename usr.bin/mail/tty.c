@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.5 1996/06/08 19:48:43 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.6 1996/12/28 07:11:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: tty.c,v 1.5 1996/06/08 19:48:43 christos Exp $";
+static char rcsid[] = "$NetBSD: tty.c,v 1.6 1996/12/28 07:11:08 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,8 @@ grabh(hp, gflags)
 	sig_t saveint;
 #ifndef TIOCSTI
 	sig_t savequit;
+#else
+	int extproc, flag;
 #endif
 	sig_t savetstp;
 	sig_t savettou;
@@ -103,6 +105,14 @@ grabh(hp, gflags)
 	if ((savequit = signal(SIGQUIT, SIG_IGN)) == SIG_DFL)
 		signal(SIGQUIT, SIG_DFL);
 #else
+# ifdef		TIOCEXT
+	extproc = ((ttybuf.c_lflag & EXTPROC) ? 1 : 0);
+	if (extproc) {
+		flag = 0;
+		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+			perror("TIOCEXT: off");
+	}
+# endif	/* TIOCEXT */
 	if (setjmp(intjmp))
 		goto out;
 	saveint = signal(SIGINT, ttyint);
@@ -148,6 +158,14 @@ out:
 	if (ttyset)
 		tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 	signal(SIGQUIT, savequit);
+#else
+# ifdef		TIOCEXT
+	if (extproc) {
+		flag = 1;
+		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+			perror("TIOCEXT: on");
+	}
+# endif	/* TIOCEXT */
 #endif
 	signal(SIGINT, saveint);
 	return(errs);

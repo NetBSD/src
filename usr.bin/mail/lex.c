@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.7 1996/06/08 19:48:28 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.8 1996/12/28 07:11:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: lex.c,v 1.7 1996/06/08 19:48:28 christos Exp $";
+static char rcsid[] = "$NetBSD: lex.c,v 1.8 1996/12/28 07:11:04 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,8 +148,14 @@ setfile(name)
 	}
 	(void) fcntl(fileno(itf), F_SETFD, 1);
 	rm(tempMesg);
-	setptr(ibuf);
+	setptr(ibuf, 0);
 	setmsize(msgCount);
+	/*
+	 * New mail mail have arrived while we were reading
+	 * up the mail file, so reset mailsize to be where
+	 * we really are in the file...
+	 */
+	mailsize = ftell(ibuf);
 	Fclose(ibuf);
 	relsesigs();
 	sawcom = 0;
@@ -159,6 +165,36 @@ nomail:
 		return -1;
 	}
 	return(0);
+}
+
+/*
+ * Incorporate any new mail that has arrived since we first
+ * started reading mail.
+ */
+int
+incfile()
+{
+	int newsize;
+	int omsgCount = msgCount;
+	FILE *ibuf;
+
+	ibuf = Fopen(mailname, "r");
+	if (ibuf == NULL)
+		return -1;
+	holdsigs();
+	newsize = fsize(ibuf);
+	if (newsize == 0)
+		return -1;		 /* mail box is now empty??? */
+	if (newsize < mailsize)
+		return -1;              /* mail box has shrunk??? */
+	if (newsize == mailsize)
+		return 0;               /* no new mail */
+	setptr(ibuf, mailsize);
+	setmsize(msgCount);
+	mailsize = ftell(ibuf);
+	Fclose(ibuf);
+	relsesigs();
+	return(msgCount - omsgCount);
 }
 
 int	*msgvec;
@@ -195,6 +231,8 @@ commands()
 		 * string space, and flush the output.
 		 */
 		if (!sourcing && value("interactive") != NOSTR) {
+			if ((value("autoinc") != NOSTR) && (incfile() > 0))
+				printf("New mail has arrived.\n");
 			reset_on_stop = 1;
 			printf(prompt);
 		}
@@ -570,7 +608,7 @@ announce()
 {
 	int vec[2], mdot;
 
-	mdot = newfileinfo();
+	mdot = newfileinfo(0);
 	vec[0] = mdot;
 	vec[1] = 0;
 	dot = &message[mdot - 1];
@@ -586,23 +624,24 @@ announce()
  * Return a likely place to set dot.
  */
 int
-newfileinfo()
+newfileinfo(omsgCount)
+	int omsgCount;
 {
 	register struct message *mp;
 	register int u, n, mdot, d, s;
 	char fname[BUFSIZ], zname[BUFSIZ], *ename;
 
-	for (mp = &message[0]; mp < &message[msgCount]; mp++)
+	for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
 		if (mp->m_flag & MNEW)
 			break;
 	if (mp >= &message[msgCount])
-		for (mp = &message[0]; mp < &message[msgCount]; mp++)
+		for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
 			if ((mp->m_flag & MREAD) == 0)
 				break;
 	if (mp < &message[msgCount])
 		mdot = mp - &message[0] + 1;
 	else
-		mdot = 1;
+		mdot = omsgCount + 1;
 	s = d = 0;
 	for (mp = &message[0], n = 0, u = 0; mp < &message[msgCount]; mp++) {
 		if (mp->m_flag & MNEW)

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1996/06/08 19:48:31 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/06/08 19:48:31 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1996/12/28 07:11:07 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ main(argc, argv)
 	char *ef;
 	char nosrc = 0;
 	sig_t prevint;
+	char *rc;
 
 	/*
 	 * Set up a reasonable environment.
@@ -218,7 +219,9 @@ Usage: mail [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	 * Expand returns a savestr, but load only uses the file name
 	 * for fopen, so it's safe to do this.
 	 */
-	load(expand("~/.mailrc"));
+	if ((rc = getenv("MAILRC")) == 0)
+		rc = "~/.mailrc";
+	load(expand(rc));
 	if (!rcvmode) {
 		mail(to, cc, bcc, smopts, subject);
 		/*

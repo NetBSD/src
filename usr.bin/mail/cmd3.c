@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.5 1996/06/08 19:48:14 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.6 1996/12/28 07:10:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cmd3.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: cmd3.c,v 1.5 1996/06/08 19:48:14 christos Exp $";
+static char rcsid[] = "$NetBSD: cmd3.c,v 1.6 1996/12/28 07:10:59 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -562,7 +562,7 @@ file(v)
 	char **argv = v;
 
 	if (argv[0] == NOSTR) {
-		newfileinfo();
+		newfileinfo(0);
 		return 0;
 	}
 	if (setfile(*argv) < 0)
