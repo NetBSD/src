@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 1997/10/04 03:59:36 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 1997/10/18 10:50:50 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,6 @@
 #include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/vnode.h>
 #include <sys/queue.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
@@ -77,12 +76,15 @@
 #endif
 #include <net/netisr.h>
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <sys/sysctl.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
