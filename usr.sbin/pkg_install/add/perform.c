@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.81 2003/04/22 01:17:03 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.82 2003/04/23 10:02:23 seb Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.81 2003/04/22 01:17:03 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.82 2003/04/23 10:02:23 seb Exp $");
 #endif
 #endif
 
@@ -485,6 +485,11 @@ ignore_replace_depends_check:
 
 			if ((s = strpbrk(p->name, "<>")) != NULL) {
 				skip = 0;
+			} else if (((s = strstr(p->name, "-[0-9]*")) != NULL) &&
+				    (*(s + sizeof("-[0-9]*") - 1) == '\0')) {
+				/* -[0-9]* already present so no need to */
+				/* add it a second time */
+				skip = -1;
 			} else if ((s = strrchr(p->name, '-')) != NULL) {
 				skip = 1;
 			}
