@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.5 2002/09/24 13:06:07 mycroft Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.6 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -33,30 +33,30 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-void    *xcalloc __P((size_t));
-void    *xmalloc __P((size_t));
-char    *xstrdup __P((const char *));
+void    *xcalloc(size_t);
+void    *xmalloc(size_t);
+char    *xstrdup(const char *);
 
 #ifdef RTLD_LOADER
-void xprintf __P((const char *, ...))
+void xprintf(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-void xvprintf __P((const char *, va_list))
+void xvprintf(const char *, va_list)
     __attribute__((__format__(__printf__, 1, 0)));
-void xsnprintf __P((char *, size_t, const char *, ...))
+void xsnprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__, 3, 4)));
-size_t xvsnprintf __P((char *, size_t, const char *, va_list))
+size_t xvsnprintf(char *, size_t, const char *, va_list)
     __attribute__((__format__(__printf__, 3, 0)));
-void xwarn __P((const char *, ...))
+void xwarn(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-void xwarnx __P((const char *, ...))
+void xwarnx(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-void xerr __P((int, const char *, ...))
+void xerr(int, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
-void xerrx __P((int, const char *, ...))
+void xerrx(int, const char *, ...)
     __attribute__((__format__(__printf__, 2, 3)));
 
-void     xassert __P((const char *, int, const char *));
-const char *xstrerror __P((int));
+void     xassert(const char *, int, const char *);
+const char *xstrerror(int);
 
 # ifdef DEBUG
 #  define assert(cond)	((cond) ? (void) 0 : xassert(__FILE__, __LINE__, #cond))

@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.16 2002/11/14 21:07:46 nathanw Exp $	 */
+/*	$NetBSD: search.c,v 1.17 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -57,16 +57,12 @@
  */
 Search_Path    *_rtld_invalid_paths;
 
-static Obj_Entry *_rtld_search_library_path __P((const char *, size_t,
-    const char *, size_t, int));
+static Obj_Entry *_rtld_search_library_path(const char *, size_t,
+    const char *, size_t, int);
 
 static Obj_Entry *
-_rtld_search_library_path(name, namelen, dir, dirlen, mode)
-	const char *name;
-	size_t namelen;
-	const char *dir;
-	size_t dirlen;
-	int mode;
+_rtld_search_library_path(const char *name, size_t namelen,
+    const char *dir, size_t dirlen, int mode)
 {
 	char *pathname;
 	size_t pathnamelen;
@@ -111,10 +107,7 @@ _rtld_search_library_path(name, namelen, dir, dirlen, mode)
  * loaded shared object, whose library search path will be searched.
  */
 Obj_Entry *
-_rtld_load_library(name, refobj, mode)
-	const char *name;
-	const Obj_Entry *refobj;
-	int mode;
+_rtld_load_library(const char *name, const Obj_Entry *refobj, int mode)
 {
 	char tmperror[512], *tmperrorp;
 	Search_Path *sp;

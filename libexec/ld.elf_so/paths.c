@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.26 2003/06/05 10:41:32 simonb Exp $	 */
+/*	$NetBSD: paths.c,v 1.27 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -52,16 +52,13 @@
 #include "debug.h"
 #include "rtld.h"
 
-static Search_Path *_rtld_find_path __P((Search_Path *, const char *, size_t));
-static Search_Path **_rtld_append_path __P((Search_Path **, Search_Path **,
-    const char *, size_t));
-static void _rtld_process_mapping __P((Library_Xform **, char *, size_t));
+static Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
+static Search_Path **_rtld_append_path(Search_Path **, Search_Path **,
+    const char *, size_t);
+static void _rtld_process_mapping(Library_Xform **, char *, size_t);
 
 static Search_Path *
-_rtld_find_path(path, pathstr, pathlen)
-	Search_Path *path;
-	const char *pathstr;
-	size_t pathlen;
+_rtld_find_path(Search_Path *path, const char *pathstr, size_t pathlen)
 {
 
 	for (; path != NULL; path = path->sp_next) {
@@ -73,10 +70,8 @@ _rtld_find_path(path, pathstr, pathlen)
 }
 
 static Search_Path **
-_rtld_append_path(head_p, path_p, bp, len)
-	Search_Path **head_p, **path_p;
-	const char *bp;
-	size_t len;
+_rtld_append_path(Search_Path **head_p, Search_Path **path_p,
+    const char *bp, size_t len)
 {
 	char *cp;
 	Search_Path *path;
@@ -99,9 +94,7 @@ _rtld_append_path(head_p, path_p, bp, len)
 }
 
 void
-_rtld_add_paths(path_p, pathstr)
-	Search_Path **path_p;
-	const char *pathstr;
+_rtld_add_paths(Search_Path **path_p, const char *pathstr)
 {
 	Search_Path **head_p = path_p;
 
@@ -185,10 +178,7 @@ const struct list *lists[] = {
  *	<library_name>	<machdep_variable> <value,...:library_name,...> ... 
  */
 static void
-_rtld_process_mapping(lib_p, bp, len)
-	Library_Xform **lib_p;
-	char *bp;
-	size_t len;
+_rtld_process_mapping(Library_Xform **lib_p, char *bp, size_t len)
 {
 	static const char WS[] = " \t\n";
 	Library_Xform *hwptr = NULL;
@@ -316,10 +306,7 @@ cleanup:
 }
 
 void
-_rtld_process_hints(path_p, lib_p, fname)
-	Search_Path **path_p;
-	Library_Xform **lib_p;
-	const char *fname;
+_rtld_process_hints(Search_Path **path_p, Library_Xform **lib_p, const char *fname)
 {
 	int fd;
 	char *buf, *b, *ebuf;

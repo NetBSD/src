@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.17 2002/10/05 11:59:03 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.18 2003/07/24 10:12:25 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -58,8 +58,7 @@
  * information in its Obj_Entry structure.
  */
 void
-_rtld_digest_dynamic(obj)
-	Obj_Entry *obj;
+_rtld_digest_dynamic(Obj_Entry *obj)
 {
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
@@ -243,17 +242,17 @@ _rtld_digest_dynamic(obj)
 
 #if defined(RTLD_LOADER) && defined(__HAVE_FUNCTION_DESCRIPTORS)
 	if (init != 0)
-		obj->init = (void (*) __P((void)))
+		obj->init = (void (*)(void))
 		    _rtld_function_descriptor_alloc(obj, NULL, init);
 	if (fini != 0)
-		obj->fini = (void (*) __P((void)))
+		obj->fini = (void (*)(void))
 		    _rtld_function_descriptor_alloc(obj, NULL, fini);
 #else
 	if (init != 0)
-		obj->init = (void (*) __P((void)))
+		obj->init = (void (*)(void))
 		    (obj->relocbase + init);
 	if (fini != 0)
-		obj->fini = (void (*) __P((void)))
+		obj->fini = (void (*)(void))
 		    (obj->relocbase + fini);
 #endif
 
@@ -270,10 +269,7 @@ _rtld_digest_dynamic(obj)
  * returns an Obj_Entry structure.
  */
 Obj_Entry *
-_rtld_digest_phdr(phdr, phnum, entry)
-	const Elf_Phdr *phdr;
-	int phnum;
-	caddr_t entry;
+_rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 {
 	Obj_Entry      *obj;
 	const Elf_Phdr *phlimit = phdr + phnum;

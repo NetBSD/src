@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.97 2003/07/21 15:17:55 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.98 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -63,10 +63,10 @@
 /*
  * Function declarations.
  */
-static void     _rtld_init __P((caddr_t, caddr_t));
-static void     _rtld_exit __P((void));
+static void     _rtld_init(caddr_t, caddr_t);
+static void     _rtld_exit(void);
 
-Elf_Addr        _rtld __P((Elf_Addr *, Elf_Addr));
+Elf_Addr        _rtld(Elf_Addr *, Elf_Addr);
 
 
 /*
@@ -98,19 +98,18 @@ char          **environ;
 extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
 extern Elf_Dyn  _DYNAMIC;
 
-static void _rtld_call_fini_functions __P((Obj_Entry *));
-static void _rtld_call_init_functions __P((Obj_Entry *));
-static Obj_Entry *_rtld_dlcheck __P((void *));
-static void _rtld_init_dag __P((Obj_Entry *));
-static void _rtld_init_dag1 __P((Obj_Entry *, Obj_Entry *));
-static void _rtld_objlist_remove __P((Objlist *, Obj_Entry *));
-static void _rtld_unload_object __P((Obj_Entry *, bool));
-static void _rtld_unref_dag __P((Obj_Entry *));
-static Obj_Entry *_rtld_obj_from_addr __P((const void *));
+static void _rtld_call_fini_functions(Obj_Entry *);
+static void _rtld_call_init_functions(Obj_Entry *);
+static Obj_Entry *_rtld_dlcheck(void *);
+static void _rtld_init_dag(Obj_Entry *);
+static void _rtld_init_dag1(Obj_Entry *, Obj_Entry *);
+static void _rtld_objlist_remove(Objlist *, Obj_Entry *);
+static void _rtld_unload_object(Obj_Entry *, bool);
+static void _rtld_unref_dag(Obj_Entry *);
+static Obj_Entry *_rtld_obj_from_addr(const void *);
 
 static void
-_rtld_call_fini_functions(first)
-	Obj_Entry *first;
+_rtld_call_fini_functions(Obj_Entry *first)
 {
 	Obj_Entry *obj;
 
@@ -120,8 +119,7 @@ _rtld_call_fini_functions(first)
 }
 
 static void
-_rtld_call_init_functions(first)
-	Obj_Entry *first;
+_rtld_call_init_functions(Obj_Entry *first)
 {
 
 	if (first != NULL) {
@@ -137,8 +135,7 @@ _rtld_call_init_functions(first)
  * this function is to relocate the dynamic linker.
  */
 static void
-_rtld_init(mapbase, relocbase)
-	caddr_t mapbase, relocbase;
+_rtld_init(caddr_t mapbase, caddr_t relocbase)
 {
 
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
@@ -181,7 +178,7 @@ _rtld_init(mapbase, relocbase)
  * before the process exits.
  */
 static void
-_rtld_exit()
+_rtld_exit(void)
 {
 
 	dbg(("rtld_exit()"));
@@ -204,9 +201,7 @@ _rtld_exit()
  * sp[1].
  */
 Elf_Addr
-_rtld(sp, relocbase)
-	Elf_Addr *sp;
-	Elf_Addr relocbase;
+_rtld(Elf_Addr *sp, Elf_Addr relocbase)
 {
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
 	               *pAUX_phent, *pAUX_phnum, *pAUX_euid, *pAUX_egid,
@@ -461,7 +456,7 @@ _rtld(sp, relocbase)
 }
 
 void
-_rtld_die()
+_rtld_die(void)
 {
 	const char *msg = _rtld_dlerror();
 
@@ -471,8 +466,7 @@ _rtld_die()
 }
 
 static Obj_Entry *
-_rtld_dlcheck(handle)
-	void *handle;
+_rtld_dlcheck(void *handle)
 {
 	Obj_Entry *obj;
 
@@ -488,17 +482,14 @@ _rtld_dlcheck(handle)
 }
 
 static void
-_rtld_init_dag(root)
-	Obj_Entry *root;
+_rtld_init_dag(Obj_Entry *root)
 {
 
 	_rtld_init_dag1(root, root);
 }
 
 static void
-_rtld_init_dag1(root, obj)
-	Obj_Entry *root;
-	Obj_Entry *obj;
+_rtld_init_dag1(Obj_Entry *root, Obj_Entry *obj)
 {
 	const Needed_Entry *needed;
 
@@ -519,9 +510,7 @@ _rtld_init_dag1(root, obj)
  * Note, this is called only for objects loaded by dlopen().
  */
 static void
-_rtld_unload_object(root, do_fini_funcs)
-	Obj_Entry *root;
-	bool do_fini_funcs;
+_rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
 {
 
 	_rtld_unref_dag(root);
@@ -566,8 +555,7 @@ _rtld_unload_object(root, do_fini_funcs)
 }
 
 static void
-_rtld_unref_dag(root)
-	Obj_Entry *root;
+_rtld_unref_dag(Obj_Entry *root)
 {
 
 	assert(root);
@@ -585,8 +573,7 @@ _rtld_unref_dag(root)
 }
 
 int
-_rtld_dlclose(handle)
-	void *handle;
+_rtld_dlclose(void *handle)
 {
 	Obj_Entry *root = _rtld_dlcheck(handle);
 
@@ -606,7 +593,7 @@ _rtld_dlclose(handle)
 }
 
 char *
-_rtld_dlerror()
+_rtld_dlerror(void)
 {
 	char *msg = error_message;
 
@@ -615,9 +602,7 @@ _rtld_dlerror()
 }
 
 void *
-_rtld_dlopen(name, mode)
-	const char *name;
-	int mode;
+_rtld_dlopen(const char *name, int mode)
 {
 	Obj_Entry **old_obj_tail = _rtld_objtail;
 	Obj_Entry *obj = NULL;
@@ -657,8 +642,7 @@ _rtld_dlopen(name, mode)
  * Find a symbol in the main program.
  */
 void *
-_rtld_objmain_sym(name)
-	const char *name;
+_rtld_objmain_sym(const char *name)
 {
 	unsigned long hash;
 	const Elf_Sym *def;
@@ -675,9 +659,7 @@ _rtld_objmain_sym(name)
 }
 
 void *
-_rtld_dlsym(handle, name)
-	void *handle;
-	const char *name;
+_rtld_dlsym(void *handle, const char *name)
 {
 	const Obj_Entry *obj;
 	unsigned long hash;
@@ -763,9 +745,7 @@ _rtld_dlsym(handle, name)
 }
 
 int
-_rtld_dladdr(addr, info)
-	const void *addr;
-	Dl_info *info;
+_rtld_dladdr(const void *addr, Dl_info *info)
 {
 	const Obj_Entry *obj;
 	const Elf_Sym *def, *best_def;
@@ -847,15 +827,14 @@ _rtld_error(const char *fmt,...)
 }
 
 void
-_rtld_debug_state()
+_rtld_debug_state(void)
 {
 
 	/* do nothing */
 }
 
 void
-_rtld_linkmap_add(obj)
-	Obj_Entry *obj;
+_rtld_linkmap_add(Obj_Entry *obj)
 {
 	struct link_map *l = &obj->linkmap;
 	struct link_map *prev;
@@ -879,8 +858,7 @@ _rtld_linkmap_add(obj)
 }
 
 void
-_rtld_linkmap_delete(obj)
-	Obj_Entry *obj;
+_rtld_linkmap_delete(Obj_Entry *obj)
 {
 	struct link_map *l = &obj->linkmap;
 
@@ -908,9 +886,7 @@ _rtld_obj_from_addr(const void *addr)
 }
 
 static void
-_rtld_objlist_remove(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
+_rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
 	

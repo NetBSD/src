@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.18 2002/10/03 20:39:22 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.19 2003/07/24 10:12:28 skrll Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -8,7 +8,7 @@
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -18,9 +18,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 void
-_rtld_relocate_nonplt_self(dynp, relocbase)
-	Elf_Dyn *dynp;
-	Elf_Addr relocbase;
+_rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rel *rel = 0, *rellim;
 	Elf_Addr relsz = 0;
@@ -44,8 +42,7 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 #define COMBRELOC
@@ -154,8 +151,7 @@ _rtld_relocate_nonplt_objects(obj)
 }
 
 int
-_rtld_relocate_plt_lazy(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 
@@ -176,9 +172,7 @@ _rtld_relocate_plt_lazy(obj)
 }
 
 caddr_t
-_rtld_bind(obj, reloff)
-	const Obj_Entry *obj;
-	Elf_Word reloff;
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rel *rel = (const Elf_Rel *)((caddr_t)obj->pltrel + reloff);
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);

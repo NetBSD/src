@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.29 2003/06/05 10:41:32 simonb Exp $	 */
+/*	$NetBSD: map_object.c,v 1.30 2003/07/24 10:12:25 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -43,7 +43,7 @@
 
 #include "rtld.h"
 
-static int protflags __P((int));	/* Elf flags -> mmap protection */
+static int protflags(int);	/* Elf flags -> mmap protection */
 
 /*
  * Map a shared object into memory.  The argument is a file descriptor,
@@ -53,10 +53,7 @@ static int protflags __P((int));	/* Elf flags -> mmap protection */
  * for the shared object.  Returns NULL on failure.
  */
 Obj_Entry *
-_rtld_map_object(path, fd, sb)
-	char *path;
-	int fd;
-	const struct stat *sb;
+_rtld_map_object(char *path, int fd, const struct stat *sb)
 {
 	Obj_Entry	*obj;
 	Elf_Ehdr	*ehdr;
@@ -300,8 +297,7 @@ bad:
 }
 
 void
-_rtld_obj_free(obj)
-	Obj_Entry *obj;
+_rtld_obj_free(Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
 
@@ -338,8 +334,7 @@ _rtld_obj_new(void)
  * flags for MMAP.
  */
 static int
-protflags(elfflags)
-	int elfflags;
+protflags(int elfflags)
 {
 	int prot = 0;
 

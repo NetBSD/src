@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.33 2003/05/23 20:13:50 petrov Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34 2003/07/24 10:12:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -208,7 +208,7 @@ static const long reloc_target_bitmask[] = {
 void _rtld_bind_start_0(long, long);
 void _rtld_bind_start_1(long, long);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 
 /*
  * Install rtld function call into this PLT slot.
@@ -222,12 +222,10 @@ caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 #define	JMPL_l0_o0	0x91c42000
 #define	MOV_g1_o1	0x92100001
 
-void _rtld_install_plt __P((Elf_Word *pltgot,	Elf_Addr proc));
+void _rtld_install_plt(Elf_Word *pltgot, Elf_Addr proc);
 
 void
-_rtld_install_plt(pltgot, proc)
-	Elf_Word *pltgot;
-	Elf_Addr proc;
+_rtld_install_plt(Elf_Word *pltgot, Elf_Addr proc)
 {
 	pltgot[0] = SAVE;
 	pltgot[1] = SETHI_l0  | HIVAL(proc, 42);
@@ -275,9 +273,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 void
-_rtld_relocate_nonplt_self(dynp, relocbase)
-	Elf_Dyn *dynp;
-	Elf_Addr relocbase;
+_rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rela *rela = 0, *relalim;
 	Elf_Addr relasz = 0;
@@ -301,8 +297,7 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
@@ -443,16 +438,13 @@ _rtld_relocate_nonplt_objects(obj)
 }
 
 int
-_rtld_relocate_plt_lazy(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
 	return (0);
 }
 
 caddr_t
-_rtld_bind(obj, reloff)
-	const Obj_Entry *obj;
-	Elf_Word reloff;
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = obj->pltrela + reloff;
 	const Elf_Sym *def;

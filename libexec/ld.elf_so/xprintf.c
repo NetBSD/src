@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.14 2003/06/05 10:41:33 simonb Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.15 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -47,11 +47,7 @@
  * deals withs formats %x, %p, %s, and %d.
  */
 size_t
-xvsnprintf(buf, buflen, fmt, ap)
-	char *buf;
-	size_t buflen;
-	const char *fmt;
-	va_list ap;
+xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)
 {
 	char *bp = buf;
 	char *const ep = buf + buflen - 4;
@@ -184,9 +180,7 @@ va_arg(ap, unsigned int))
 }
 
 void
-xvprintf(fmt, ap)
-	const char *fmt;
-	va_list ap;
+xvprintf(const char *fmt, va_list ap)
 {
 	char buf[256];
 
@@ -218,8 +212,7 @@ xsnprintf(char *buf, size_t buflen, const char *fmt, ...)
 }
 
 const char *
-xstrerror(error)
-	int error;
+xstrerror(int error)
 {
 
 	if (error >= sys_nerr || error < 0) {
@@ -284,10 +277,7 @@ xwarnx(const char *fmt, ...)
 
 #ifdef DEBUG
 void
-xassert(file, line, failedexpr)
-	const char *file;
-	int line;
-	const char *failedexpr;
+xassert(const char *file, int line, const char *failedexpr)
 {
 
 	xprintf("assertion \"%s\" failed: file \"%s\", line %d\n",

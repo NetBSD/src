@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.32 2002/09/26 20:42:12 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.33 2003/07/24 10:12:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ static const int reloc_target_bitmask[] = {
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -186,9 +186,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 void
-_rtld_relocate_nonplt_self(dynp, relocbase)
-	Elf_Dyn *dynp;
-	Elf_Addr relocbase;
+_rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rela *rela = 0, *relalim;
 	Elf_Addr relasz = 0;
@@ -212,8 +210,7 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
@@ -320,16 +317,13 @@ _rtld_relocate_nonplt_objects(obj)
 }
 
 int
-_rtld_relocate_plt_lazy(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
 	return (0);
 }
 
 caddr_t
-_rtld_bind(obj, reloff)
-	const Obj_Entry *obj;
-	Elf_Word reloff;
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
 	const Elf_Sym *def;

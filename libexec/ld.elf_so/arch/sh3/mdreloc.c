@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.18 2003/07/05 20:48:39 marcus Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.19 2003/07/24 10:12:29 skrll Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -42,8 +42,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
@@ -161,8 +160,7 @@ _rtld_relocate_nonplt_objects(obj)
 }
 
 int
-_rtld_relocate_plt_lazy(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
@@ -183,9 +181,7 @@ _rtld_relocate_plt_lazy(obj)
 }
 
 caddr_t
-_rtld_bind(obj, reloff)
-	const Obj_Entry *obj;
-	Elf_Word reloff;
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);

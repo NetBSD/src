@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.79 2003/07/21 15:34:35 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.80 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -53,12 +53,10 @@
 #include "rtld.h"
 
 #ifndef RTLD_INHIBIT_COPY_RELOCS
-static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_Rela *));
+static int _rtld_do_copy_relocation(const Obj_Entry *, const Elf_Rela *);
 
 static int
-_rtld_do_copy_relocation(dstobj, rela)
-	const Obj_Entry *dstobj;
-	const Elf_Rela *rela;
+_rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 {
 	void           *dstaddr = (void *)(dstobj->relocbase + rela->r_offset);
 	const Elf_Sym  *dstsym = dstobj->symtab + ELF_R_SYM(rela->r_info);
@@ -96,8 +94,7 @@ _rtld_do_copy_relocation(dstobj, rela)
  * Returns 0 on success, -1 on failure.
  */
 int
-_rtld_do_copy_relocations(dstobj)
-	const Obj_Entry *dstobj;
+_rtld_do_copy_relocations(const Obj_Entry *dstobj)
 {
 #ifndef RTLD_INHIBIT_COPY_RELOCS
 
@@ -139,9 +136,7 @@ _rtld_do_copy_relocations(dstobj)
  * or -1 on failure.
  */
 int
-_rtld_relocate_objects(first, bind_now)
-	Obj_Entry *first;
-	bool bind_now;
+_rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 {
 	Obj_Entry *obj;
 	int ok = 1;
