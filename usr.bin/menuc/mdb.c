@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.19 2000/12/28 02:07:00 mrg Exp $	*/
+/*	$NetBSD: mdb.c,v 1.20 2001/01/07 06:09:19 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -216,7 +216,8 @@ write_menu_file (char *initcode)
 			"int new_menu (char * title, menu_ent * opts, "
 				"int numopts, \n"
 				"\tint x, int y, int h, int w, int mopt,\n"
-				"\tvoid (*post_act)(void), void (*exit_act), "
+				"\tvoid (*post_act)(void), "
+				"void (*exit_act)(void), "
 				"char * help);\n"
 			"void free_menu (int menu_no);\n"
 			);
@@ -379,7 +380,8 @@ write_menu_file (char *initcode)
 	if (error_act.code == NULL) {
 		(void) fprintf (out_file,
 			"\t(void) fprintf (stderr, "
-			"\"%%s: Could not initialize curses\\n\",__progname);\n"
+			"\"%%s: Could not initialize curses\\n\", "
+			"__progname);\n"
 			"\texit(1);\n"
 			"}\n");
 	} else {
