@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1994/08/22 19:54:44 pk Exp $
+#	$Id: Makefile,v 1.8 1994/12/22 09:45:04 cgd Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
@@ -10,7 +10,7 @@ TMACMODE?=	444
 FILES=		0.MT 5.MT 4.MT ms.cov se_ms.cov 
 LOCALE=		locale se_locale
 
-MAN7=		groff_mm.0 groff_mmse.0
+MAN=		groff_mm.7 groff_mmse.7
 MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
 
 afterinstall:

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:45:24 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 09:45:20 cgd Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
@@ -7,7 +7,7 @@ TMACOWN?=	bin
 TMACGRP?=	bin
 TMACMODE?=	444
 
-MAN7=		groff_ms.0 
+MAN=		groff_ms.7
 MLINKS=		groff_ms.7 ms.7
 
 FILES=		tmac.pic tmac.ps tmac.psnew tmac.psold tmac.pspic tmac.psatk\
