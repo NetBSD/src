@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $");
+RCSID("$Id: get_krbrlm.c,v 1.1.1.1.2.1 2000/08/02 21:14:01 thorpej Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
@@ -130,8 +130,16 @@ krb_get_default_realm(void)
 
 	gethostname(hostname, sizeof(hostname));
 	t = krb_realmofhost(hostname);
-	if (t && strcmp(t, no_default_realm) != 0)
-	    strlcpy(local_realm, t, sizeof(local_realm));
+	if (t && strcmp(t, no_default_realm) != 0) {
+	    /*
+	     * Before just assuming this can be the default
+	     * realm, make sure there's a KDC.  If not, it
+	     * can't possibly be, and should therefore
+	     * return NO.DEFAULT.REALM.
+	     */
+	    if (krb_get_host(1, t, 0) != NULL)
+		strlcpy(local_realm, t, sizeof(local_realm));
+	}
     }
     return local_realm;
 }
