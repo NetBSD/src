@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.2 2001/12/28 05:46:56 nathanw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.3 2002/08/14 18:26:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -84,7 +84,10 @@ typedef struct {
 			char	__fp_emul[246];
 			char	__fp_epad[2];
 		} __fp_emul_space;
-		int	__fp_fpregs[62];
+		struct {
+			char	__fp_xmm[512];
+		} __fp_xmm_state;
+		int	__fp_fpregs[128];
 	} __fp_reg_set;
 	long	__fp_wregs[33];			/* Weitek? */
 } __fpregset_t;
@@ -93,6 +96,8 @@ typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
 } mcontext_t;
+
+#define _UC_FXSAVE	0x20	/* FP state is in FXSAVE format in XMM space */
 
 #define _UC_MACHINE_PAD	5	/* Padding appended to ucontext_t */
 
