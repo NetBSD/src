@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.2 2002/02/25 12:49:33 lukem Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.3 2002/02/25 13:16:45 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -232,7 +232,7 @@ Otherwise
 should be
 .Sq remote ) ,
 use
-.Sy critical_filesystems.
+.Sy critical_filesystems .
 .It Ic rc_usage Ar command Op Ar ...
 Print a usage message for
 .Va $0 ,
@@ -307,7 +307,7 @@ Not required if
 is defined for each supported keyword.
 .It Sy command_args
 Optional arguments and/or shell directives for
-.Sy command.
+.Sy command .
 .It Sy extra_commands
 Extra commands/keywords/arguments supported.
 .It Sy pidfile
@@ -427,7 +427,7 @@ For a given method
 if
 .Ar arg Ns Sy _cmd
 is not defined, then a default method is provided by
-.Sy run_rc_command:
+.Sy run_rc_command :
 .Bl -tag -width "argument" -offset indent
 .It Sy Argument
 .Sy Default method
