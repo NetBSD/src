@@ -71,6 +71,15 @@
 #define LINK_SPEC \
   "%{nostdlib:-nostdlib} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 
+#undef SELECT_RTX_SECTION
+#define SELECT_RTX_SECTION(MODE,RTX)					\
+{									\
+  if (flag_pic && symbolic_operand (RTX))				\
+    data_section ();							\
+  else									\
+    readonly_data_section ();						\
+}
+
 /* #endif NETBSD_AOUT */
 
 /* This defines which switch letters take arguments. */
