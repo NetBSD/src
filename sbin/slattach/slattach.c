@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.21 1998/03/23 04:41:16 fair Exp $	*/
+/*	$NetBSD: slattach.c,v 1.22 1999/09/03 13:31:29 proff Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.21 1998/03/23 04:41:16 fair Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.22 1999/09/03 13:31:29 proff Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,8 +90,9 @@ main(argc, argv)
 	tcflag_t cflag = HUPCL;
 	int ch;
 	sigset_t sigset;
+	int opt_detach = 1;
 
-	while ((ch = getopt(argc, argv, "hHlms:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "hHlmns:t:")) != -1) {
 		switch (ch) {
 		case 'h':
 			cflag |= CRTSCTS;
@@ -104,6 +105,9 @@ main(argc, argv)
 			break;
 		case 'm':
 			cflag &= ~HUPCL;
+			break;
+		case 'n':
+			opt_detach = 0;
 			break;
 		case 's':
 			speed = atoi(optarg);
@@ -128,10 +132,8 @@ main(argc, argv)
 		    "%s%s", _PATH_DEV, dev);
 		dev = devicename;
 	}
-	if ((fd = open(dev, O_RDWR | O_NDELAY)) < 0) {
-		perror(dev);
-		exit(1);
-	}
+	if ((fd = open(dev, O_RDWR | O_NDELAY)) < 0)
+		err(1, "%s", dev);
 	tty.c_cflag = CREAD | CS8 | cflag;
 	tty.c_iflag = 0;
 	tty.c_lflag = 0;
@@ -145,9 +147,8 @@ main(argc, argv)
 		err(1, "TIOCSDTR");
 	if (ioctl(fd, TIOCSETD, &slipdisc) < 0)
 		err(1, "TIOCSETD");
-
-	if (fork() > 0)
-		exit(0);
+	if (opt_detach && daemon(0, 0) != 0)
+		err(1, "couldn't detach");
 	sigemptyset(&sigset);
 	for (;;)
 		sigsuspend(&sigset);
