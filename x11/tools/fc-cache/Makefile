@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/15 13:47:05 dbj Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/06 02:55:20 rtr Exp $
 
 NOMAN=		1
 
 .include <bsd.own.mk>
 
 HOSTPROG=	fc-cache
-FONTCONFIGSRC=	${X11SRCDIR.xc}/lib/fontconfig
+.PATH:		${X11SRCDIR.xc}/extras/fontconfig/src
+FONTCONFIGSRC=	${X11SRCDIR.xc}/extras/fontconfig
 FREETYPESRC=	${X11SRCDIR.xc}/extras/freetype2/src
 
 .PATH:		${FONTCONFIGSRC}/${HOSTPROG}
@@ -21,6 +22,7 @@ SRCS+=		fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
 .PATH:		${FREETYPESRC}/bdf
 .PATH:		${FREETYPESRC}/cff
 .PATH:		${FREETYPESRC}/cid
+.PATH:		${FREETYPESRC}/gzip
 .PATH:		${FREETYPESRC}/pcf
 .PATH:		${FREETYPESRC}/pfr
 .PATH:		${FREETYPESRC}/psaux
@@ -36,7 +38,8 @@ SRCS+=		fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
 SRCS+=		autohint.c bdf.c cff.c ftbase.c ftbbox.c ftbdf.c ftdebug.c \
 		ftglyph.c ftinit.c ftmm.c ftsynth.c ftsystem.c fttype1.c \
 		ftxf86.c pcf.c pfr.c psaux.c pshinter.c psnames.c raster.c \
-		sfnt.c smooth.c truetype.c type1.c type1cid.c type42.c winfnt.c
+		sfnt.c smooth.c truetype.c type1.c type1cid.c type42.c \
+		winfnt.c ftgzip.c
 
 .PATH:		${X11SRCDIR.xc}/extras/expat/lib
 SRCS+=		xmlparse.c xmlrole.c xmltok.c
@@ -46,6 +49,7 @@ SRCS+=		xmlparse.c xmlrole.c xmltok.c
 HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.xc}/lib/expat \
+		-I${X11SRCDIR.xc}/extras/expat/lib \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' -DHAVE_EXPAT \
 		${EXPAT_FLAGS}
 
