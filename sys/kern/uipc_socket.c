@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.44 1999/03/23 10:45:37 lukem Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.45 1999/05/15 16:42:48 tv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -435,82 +435,88 @@ restart:
 		mp = &top;
 		space -= clen;
 		do {
-		    if (uio == NULL) {
-			/*
-			 * Data is prepackaged in "top".
-			 */
-			resid = 0;
-			if (flags & MSG_EOR)
-				top->m_flags |= M_EOR;
-		    } else do {
-			if (top == 0) {
-				MGETHDR(m, M_WAIT, MT_DATA);
-				mlen = MHLEN;
-				m->m_pkthdr.len = 0;
-				m->m_pkthdr.rcvif = (struct ifnet *)0;
-			} else {
-				MGET(m, M_WAIT, MT_DATA);
-				mlen = MLEN;
-			}
-			if (resid >= MINCLSIZE && space >= MCLBYTES) {
-				MCLGET(m, M_WAIT);
-				if ((m->m_flags & M_EXT) == 0)
-					goto nopages;
-				mlen = MCLBYTES;
-#ifdef	MAPPED_MBUFS
-				len = min(MCLBYTES, resid);
-#else
-				if (atomic && top == 0) {
-					len = min(MCLBYTES - max_hdr, resid);
-					m->m_data += max_hdr;
-				} else
-					len = min(MCLBYTES, resid);
-#endif
-				space -= len;
-			} else {
-nopages:
-				len = min(min(mlen, resid), space);
-				space -= len;
+			if (uio == NULL) {
 				/*
-				 * For datagram protocols, leave room
-				 * for protocol headers in first mbuf.
+				 * Data is prepackaged in "top".
 				 */
-				if (atomic && top == 0 && len < mlen)
-					MH_ALIGN(m, len);
-			}
-			error = uiomove(mtod(m, caddr_t), (int)len, uio);
-			resid = uio->uio_resid;
-			m->m_len = len;
-			*mp = m;
-			top->m_pkthdr.len += len;
-			if (error)
-				goto release;
-			mp = &m->m_next;
-			if (resid <= 0) {
+				resid = 0;
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
-				break;
-			}
-		    } while (space > 0 && atomic);
-		    if (dontroute)
-			    so->so_options |= SO_DONTROUTE;
-		    if (resid > 0)
-			    so->so_state |= SS_MORETOCOME;
-		    s = splsoftnet();				/* XXX */
-		    error = (*so->so_proto->pr_usrreq)(so,
-			(flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
-			top, addr, control, p);
-		    splx(s);
-		    if (dontroute)
-			    so->so_options &= ~SO_DONTROUTE;
-		    if (resid > 0)
-			    so->so_state &= ~SS_MORETOCOME;
-		    clen = 0;
-		    control = 0;
-		    top = 0;
-		    mp = &top;
-		    if (error)
-			goto release;
+			} else do {
+				if (top == 0) {
+					MGETHDR(m, M_WAIT, MT_DATA);
+					mlen = MHLEN;
+					m->m_pkthdr.len = 0;
+					m->m_pkthdr.rcvif = (struct ifnet *)0;
+				} else {
+					MGET(m, M_WAIT, MT_DATA);
+					mlen = MLEN;
+				}
+				if (resid >= MINCLSIZE && space >= MCLBYTES) {
+					MCLGET(m, M_WAIT);
+					if ((m->m_flags & M_EXT) == 0)
+						goto nopages;
+					mlen = MCLBYTES;
+#ifdef	MAPPED_MBUFS
+					len = min(MCLBYTES, resid);
+#else
+					if (atomic && top == 0) {
+						len = min(MCLBYTES - max_hdr, resid);
+						m->m_data += max_hdr;
+					} else
+						len = min(MCLBYTES, resid);
+#endif
+					space -= len;
+				} else {
+nopages:
+					len = min(min(mlen, resid), space);
+					space -= len;
+					/*
+					 * For datagram protocols, leave room
+					 * for protocol headers in first mbuf.
+					 */
+					if (atomic && top == 0 && len < mlen)
+						MH_ALIGN(m, len);
+				}
+				error = uiomove(mtod(m, caddr_t), (int)len, uio);
+				resid = uio->uio_resid;
+				m->m_len = len;
+				*mp = m;
+				top->m_pkthdr.len += len;
+				if (error)
+					goto release;
+				mp = &m->m_next;
+				if (resid <= 0) {
+					if (flags & MSG_EOR)
+						top->m_flags |= M_EOR;
+					break;
+				}
+			} while (space > 0 && atomic);
+
+			if (dontroute)
+				so->so_options |= SO_DONTROUTE;
+			if (resid > 0)
+				so->so_state |= SS_MORETOCOME;
+
+			s = splsoftnet();			/* XXX */
+			if (so->so_state & SS_CANTSENDMORE)
+				error = EPIPE;
+			else
+				error = (*so->so_proto->pr_usrreq)(so,
+					(flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
+					top, addr, control, p);
+			splx(s);
+
+			if (dontroute)
+				so->so_options &= ~SO_DONTROUTE;
+			if (resid > 0)
+				so->so_state &= ~SS_MORETOCOME;
+			clen = 0;
+			control = 0;
+			top = 0;
+			mp = &top;
+			if (error)
+				goto release;
 		} while (resid && space > 0);
 	} while (resid);
 
@@ -691,7 +697,7 @@ dontblock:
 				if (pr->pr_domain->dom_externalize &&
 				    mtod(m, struct cmsghdr *)->cmsg_type ==
 				    SCM_RIGHTS)
-				   error = (*pr->pr_domain->dom_externalize)(m);
+					error = (*pr->pr_domain->dom_externalize)(m);
 				*controlp = m;
 				so->so_rcv.sb_mb = m->m_next;
 				m->m_next = 0;
