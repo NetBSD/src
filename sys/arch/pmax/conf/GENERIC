@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.18 1997/08/23 19:18:51 mjacob Exp $
+# 	$NetBSD: GENERIC,v 1.18.4.1 1997/11/20 08:44:41 mellon Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -143,3 +143,5 @@ pseudo-device   ccd             4       # concatenated disks
 
 pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
 pseudo-device	fb		1	# up to 3 framebuffers
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
