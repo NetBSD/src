@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.154.2.6 2000/10/16 21:25:51 tv Exp $
+#	$NetBSD: Makefile,v 1.154.2.7 2000/10/20 17:01:14 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -239,6 +239,7 @@ distribution: distrib-dirs
 	(cd etc.${MACHINE}; ${INSTALL} ${INSTPRIV} -c -o ${BINOWN} \
 	    -g ${BINGRP} -m 444 fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
+	(cd skel; ${MAKE} distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 	(cd ../usr.bin/ssh; ${MAKE} distribution)
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
