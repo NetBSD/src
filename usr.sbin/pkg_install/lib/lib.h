@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.23 1999/08/20 09:20:20 agc Exp $ */
+/* $NetBSD: lib.h,v 1.24 1999/08/23 15:17:04 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -156,6 +156,10 @@ typedef struct _lpkg_head_t lpkg_head_t;
 /* type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
 typedef int (*matchfn)(const char *found, char *data);
+
+/* if URLlength()>0, then there is a ftp:// or http:// in the string,
+ * and this must be an URL. Hide this behind a more obvious name. */
+#define IS_URL(str)	(URLlength(str) > 0)
 
 /* Prototypes */
 /* Misc */
