@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.740 2004/11/20 03:07:50 christos Exp $
+#	$NetBSD: mi,v 1.741 2004/12/03 03:35:53 atatat Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4962,6 +4962,7 @@
 ./usr/share/man/cat9/driver.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dumpsys.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dupfdopen.0		comp-sys-catman		.cat
+./usr/share/man/cat9/errno.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_addmulti.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_delmulti.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_ifattach.0		comp-sys-catman		.cat
@@ -8726,6 +8727,7 @@
 ./usr/share/man/man9/driver.9			comp-sys-man		.man
 ./usr/share/man/man9/dumpsys.9			comp-sys-man		.man
 ./usr/share/man/man9/dupfdopen.9		comp-sys-man		.man
+./usr/share/man/man9/errno.9			comp-sys-man		.man
 ./usr/share/man/man9/ether_addmulti.9		comp-sys-man		.man
 ./usr/share/man/man9/ether_delmulti.9		comp-sys-man		.man
 ./usr/share/man/man9/ether_ifattach.9		comp-sys-man		.man
