@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.4 1996/05/27 12:41:54 leo Exp $
+#	$NetBSD: install.md,v 1.5 1996/06/19 14:18:40 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ md_get_partition_range() {
 
 md_installboot() {
 	echo "Installing boot block..."
-	/usr/mdec/binstall -v ffs /mnt
+	/usr/mdec/binstall ffs /mnt
 }
 
 md_native_fstype() {
@@ -120,6 +120,8 @@ in case you have defined less than eight partitions.
 [End of example]
 
 __md_prep_disklabel_1
+	echo -n "Press [Enter] to continue "
+	getresp ""
 	disklabel -W ${ROOTDISK}
 	disklabel -e ${ROOTDISK}
 }
