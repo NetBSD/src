@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 1997/07/31 00:19:31 mark Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.15 1997/08/07 16:24:34 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -201,7 +201,7 @@ db_write_text(dst, ch)
 	*dst = (unsigned char)ch;
 
 	/* make sure the caches and memory are in sync */
-	cpu_cache_syncI_rng(dst, 4);
+	cpu_cache_syncI_rng((u_int)dst, 4);
 
 	WriteWord(ptep, pteo);
 	tlb_flush();
