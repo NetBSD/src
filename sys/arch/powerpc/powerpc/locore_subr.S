@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.7 2002/12/19 19:50:59 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.8 2002/12/19 19:58:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -490,11 +490,16 @@ ENTRY(cpu_preempt)
 #endif
 
 /* Lock the scheduler. */
+#if defined(PPC_IBM4XX)
+	wrteei	0			/* disable interrupts while
+					   manipulating runque */
+#else /* PPC_MPC6XX */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
 	isync
+#endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
