@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 4/3/94";*/
-static char *rcsid = "$Id: main.c,v 1.5 1994/08/29 03:09:18 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.6 1994/08/31 21:32:33 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -78,8 +78,8 @@ main(argc, argv)
 	interactive = 1;
 	autologin = 1;
 
-	while ((ch = getopt(argc, argv, "dgintv")) != EOF) {
-		switch (*cp) {
+	while ((ch = getopt(argc, argv, "dgintv")) != -1) {
+		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
 			debug++;
