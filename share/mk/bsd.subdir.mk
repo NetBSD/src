@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.41 2001/01/09 02:08:32 sommerfeld Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.42 2001/08/14 09:02:26 tv Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -38,9 +38,15 @@ __recurse: .USE
 		;;							\
 	esac
 
+.if make(cleandir)
+__RECURSETARG=	${TARGETS:Nclean}
+.else
+__RECURSETARG=	${TARGETS}
+.endif
+
 # for obscure reasons, we can't do a simple .if ${dir} == ".WAIT"
 # but have to assign to __TARGDIR first.
-.for targ in ${TARGETS}
+.for targ in ${__RECURSETARG}
 .for dir in ${__REALSUBDIR}
 __TARGDIR := ${dir}
 .if ${__TARGDIR} == ".WAIT"
