@@ -64,7 +64,7 @@
  * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
-/* $Header: /cvsroot/src/sys/net/if_sl.c,v 1.4 1993/03/25 10:08:55 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/net/if_sl.c,v 1.5 1993/04/09 20:42:06 cgd Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "sl.h"
@@ -154,7 +154,7 @@ Huh? Slip without inet?
 #endif
 #define	SLMAX		(MCLBYTES - BUFOFFSET)
 #define	SLBUFSIZE	(SLMAX + BUFOFFSET)
-#define	SLMTU		408	/* try 1006 later */
+#define	SLMTU		296	/* try 1006 later */
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
 
 /*
