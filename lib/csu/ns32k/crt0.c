@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.16 2002/02/22 13:46:30 matthias Exp $	*/
+/*	$NetBSD: crt0.c,v 1.17 2002/05/16 19:38:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ start(arg0)
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&eprol, (u_long)&etext);
-#endif MCRT0
+#endif /* MCRT0 */
 
 __asm("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(argc, argv, environ));
@@ -103,7 +103,7 @@ __asm("__callmain:");		/* Defined for the benefit of debuggers */
  *  is the entrypoint. (Not really necessary, just to avoid confusion).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.16 2002/02/22 13:46:30 matthias Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.17 2002/05/16 19:38:20 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef DYNAMIC
