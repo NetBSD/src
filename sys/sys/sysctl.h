@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.130 2005/03/09 05:02:17 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.131 2005/03/10 05:41:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -674,7 +674,6 @@ struct kinfo_file {
 	uint64_t	ki_vdata;	/* PTR: private data for fs */
 
 	/* process information when retrieved via KERN_FILE_BYPID */
-	char ki_ocomm[roundup(MAXCOMLEN, 8)]; /* command name */
 	uint32_t	ki_pid;		/* PID_T: process id */
 	int32_t		ki_fd;		/* INT: descriptor number */
 	uint32_t	ki_ofileflags;	/* CHAR: open file flags */
