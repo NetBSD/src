@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.23 2003/07/20 14:53:10 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.24 2003/07/28 01:00:52 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -39,3 +39,5 @@ linksinstall::	realinstall
 		${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
 	done ; )
 .endif
+
+.include <bsd.sys.mk>
