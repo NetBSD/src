@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax.newconf,v 1.6 1995/01/25 20:45:58 cgd Exp $
+#       $NetBSD: files.vax.newconf,v 1.7 1995/02/13 00:41:57 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -8,27 +8,33 @@ maxpartitions 8
 
 maxusers 8 32 64
 
+device	backplane at root { }
+device	sbi at backplane { tr=-1 }
+device	bi at backplane { node=-1 }
 
-device	nexus at root { }
+device	cpu at backplane, bi, sbi
+device	mem at backplane, bi, sbi
 
-device	mba at nexus { drive = -1 }
+file	arch/vax/vax/sbi.c		sbi needs-flag
+file	arch/vax/vax/bi.c		bi needs-flag
+
+device	mba at sbi { drive = -1 }
 file	arch/vax/mba/mba.c		mba needs-count
 
 device  hp at mba
 file    arch/vax/mba/hp.c		hp needs-count
 
-device	uba at nexus { csr }		
+device	uba at sbi, bi { csr }
 file	arch/vax/uba/uba.c		uba needs-count
 
 device	uda at uba { drive=-1 }
 file    arch/vax/uba/uda.c		uda needs-count
 
-device	ra at uda
-file	arch/vax/vax/mscp.c		ra needs-count
-
 device	de at uba:ifnet, ether
-file	arch/vax/if/if_uba.c		de
 file	arch/vax/if/if_de.c		de needs-count
+
+device	ra at uda	
+file	arch/vax/vax/mscp.c		ra needs-count
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
@@ -65,13 +71,10 @@ file	arch/vax/uba/ts.c		ts needs-count
 device	mu at mba
 file	arch/vax/mba/mt.c		mu needs-count
 
-# BI-bus on root
-device	bi at root { node=-1 }
-file	arch/vax/bi/bi.c		bi needs-count
-
 # KDB50 on BI
-device	kra at bi
-file	arch/vax/bi/kdb.c		kra needs-count
+device	kdb at bi { drive=-1 }
+file	arch/vax/bi/kdb.c		kdb needs-count
+
 
 # DMF32 on UBA
 device	dmf at uba
@@ -181,21 +184,22 @@ file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
 file	arch/vax/vax/gencons.c
 file	arch/vax/vax/pmap.c
-file	arch/vax/vax/skit.c
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka750.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
 file	arch/vax/vax/rootfil.c
-file	arch/vax/vax/bcopy.s
 file	arch/vax/vax/trap.c
 
 file	arch/vax/vax/vm_machdep.c
-file	arch/vax/vax/cpu_machdep.c
-file	arch/vax/vax/in_cksum.c		inet
-file	arch/vax/vax/disksubr.c		ffs
+file	arch/vax/vax/autoconf.c
+#file	arch/vax/vax/cpu_machdep.c
+#file	arch/vax/vax/in_cksum.c		inet
+file	netinet/in_cksum.c		inet
 file	arch/vax/vax/random.s		inet
+file	arch/vax/vax/disksubr.c		ffs
+file	arch/vax/if/if_uba.c		de
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/crl.c           standard
