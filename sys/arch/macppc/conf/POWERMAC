@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.11 1998/07/29 05:38:04 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.12 1998/09/03 15:11:52 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -9,7 +9,6 @@ maxusers	32
 
 # Standard system options
 options 	BUFPAGES=1200
-options 	UVM
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -61,7 +60,7 @@ pci0	at mainbus0 bus ?
 pci1	at mainbus0 bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 
-#macofcons0	at pci? dev ? function ?	# Openfirmware console
+#macofcons0 at pci? dev ? function ?	# Openfirmware console
 
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?
