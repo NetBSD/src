@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.102 2003/06/29 22:32:48 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.103 2003/08/05 15:45:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102 2003/06/29 22:32:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.103 2003/08/05 15:45:48 pk Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1101,7 +1101,7 @@ ufs_rename(void *v)
 		}
 		if ((error = ufs_dirrewrite(dp, xp, ip->i_number, 
 		    IFTODT(ip->i_mode), doingdirectory && newparent ?
-		    newparent : doingdirectory)) != 0)
+		    newparent : doingdirectory, IN_CHANGE|IN_UPDATE)) != 0)
 			goto bad;
 		if (doingdirectory) {
 			if (!newparent) {
@@ -1186,7 +1186,7 @@ ufs_rename(void *v)
 		 */
 		if (doingdirectory && newparent) {
 			xp->i_offset = mastertemplate.dot_reclen;
-			ufs_dirrewrite(xp, dp, newparent, DT_DIR, 0);
+			ufs_dirrewrite(xp, dp, newparent, DT_DIR, 0, IN_CHANGE);
 			cache_purge(fdvp);
 		}
 		error = ufs_dirremove(fdvp, xp, fcnp->cn_flags, 0);

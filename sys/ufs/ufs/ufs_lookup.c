@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.48 2003/07/23 13:56:53 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.49 2003/08/05 15:45:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.48 2003/07/23 13:56:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.49 2003/08/05 15:45:48 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1041,11 +1041,12 @@ out:
  * set up by a call to namei.
  */
 int
-ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
+ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir, iflags)
 	struct inode *dp, *oip;
 	ino_t newinum;
 	int newtype;
 	int isrmdir;
+	int iflags;
 {
 	struct buf *bp;
 	struct direct *ep;
@@ -1069,7 +1070,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
 		oip->i_flag |= IN_CHANGE;
 		error = VOP_BWRITE(bp);
 	}
-	dp->i_flag |= IN_CHANGE | IN_UPDATE;
+	dp->i_flag |= iflags;
 	return (error);
 }
 
