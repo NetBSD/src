@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.185 2003/04/16 21:44:21 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.186 2003/04/20 07:06:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.185 2003/04/16 21:44:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.186 2003/04/20 07:06:33 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -798,6 +798,7 @@ sys_getfsstat(l, v, retval)
 		if (sfsp && count < maxcount) {
 			error = dostatfs(mp, &sbuf, p, SCARG(uap, flags), 0);
 			if (error) {
+				simple_lock(&mountlist_slock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
 				continue;
@@ -811,6 +812,7 @@ sys_getfsstat(l, v, retval)
 			root |= strcmp(sbuf.f_mntonname, "/") == 0;
 		}
 		count++;
+		simple_lock(&mountlist_slock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
