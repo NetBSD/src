@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.3 2001/05/30 11:37:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.4 2001/06/15 17:24:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -371,10 +371,21 @@ netbsd32_execve2(p, uap, retval)
 
 	/*
 	 * deal with set[ug]id.
-	 * MNT_NOSUID and P_TRACED have already been used to disable s[ug]id.
+	 * MNT_NOSUID has already been used to disable s[ug]id.
 	 */
-	if (((attr.va_mode & S_ISUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
-	 || ((attr.va_mode & S_ISGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){
+	if ((p->p_flag & P_TRACED) == 0 &&
+
+	    (((attr.va_mode & S_ISUID) != 0 &&
+	      p->p_ucred->cr_uid != attr.va_uid) ||
+
+	     ((attr.va_mode & S_ISGID) != 0 &&
+	      p->p_ucred->cr_gid != attr.va_gid))) {
+		/*
+		 * Mark the process as SUGID before we do
+		 * anything that might block.
+		 */
+		p_sugid(p);
+
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
 		/*
@@ -388,7 +399,6 @@ netbsd32_execve2(p, uap, retval)
 			p->p_ucred->cr_uid = attr.va_uid;
 		if (attr.va_mode & S_ISGID)
 			p->p_ucred->cr_gid = attr.va_gid;
-		p_sugid(p);
 	} else
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
