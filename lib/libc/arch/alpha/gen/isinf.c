@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.1 1995/02/10 17:50:23 cgd Exp $	*/
+/*	$NetBSD: isinf.c,v 1.1.2.1 1995/04/18 04:18:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,6 +27,7 @@
  * rights to redistribute these changes.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <math.h>

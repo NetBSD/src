@@ -39,8 +39,11 @@ static char rcsid[] = "";
 
 /* I have not verified that this is correct for the ns32532 -- PAN */
 
+#include "namespace.h"
 #include <sys/types.h>
+#include <math.h>
 
+int
 isnan(d)
 	double d;
 {
@@ -54,6 +57,7 @@ isnan(d)
 	return(p->exp == 2047 && (p->manh || p->manl));
 }
 
+int
 isinf(d)
 	double d;
 {
