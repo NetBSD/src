@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.184 2003/05/02 07:17:18 gmcgarry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.185 2003/07/26 10:40:33 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.183 2003/05/02 07:16:40 gmcgarry Exp 
+ *	NetBSD: pcmciadevs,v 1.184 2003/07/26 10:39:32 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -600,6 +600,9 @@
 #define	PCMCIA_CIS_SOCKET_LP_ETHER_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF	0x0075
 #define	PCMCIA_STR_SOCKET_LP_ETHER_CF	"Socket Communications LP-E CF"
+#define	PCMCIA_CIS_SOCKET_LP_ETH_10_100_CF	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_LP_ETH_10_100_CF	0x0145
+#define	PCMCIA_STR_SOCKET_LP_ETH_10_100_CF	"Socket Communications 10/100 Ethernet"
 
 /* Symbol */
 #define	PCMCIA_CIS_SYMBOL_LA4100	{ NULL, NULL, NULL, NULL }
