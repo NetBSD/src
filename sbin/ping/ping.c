@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.66 2002/08/12 18:24:53 matt Exp $	*/
+/*	$NetBSD: ping.c,v 1.67 2002/09/21 18:24:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.66 2002/08/12 18:24:53 matt Exp $");
+__RCSID("$NetBSD: ping.c,v 1.67 2002/09/21 18:24:40 mycroft Exp $");
 #endif
 
 #include <stdio.h>
@@ -77,6 +77,7 @@ __RCSID("$NetBSD: ping.c,v 1.66 2002/08/12 18:24:53 matt Exp $");
 #include <termios.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <poll.h>
 #include <limits.h>
 #include <math.h>
 #include <string.h>
@@ -664,9 +665,7 @@ doit(void)
 	struct sockaddr_in from;
 	int fromlen;
 	double sec, last, d_last;
-	struct timeval timeout;
-	fd_set *fdmaskp;
-	size_t nfdmask;
+	struct pollfd fdmaskp[1];
 
 	(void)gettimeofday(&clear_cache,0);
 	if (maxwait != 0) {
@@ -677,10 +676,6 @@ doit(void)
 		d_last = 365*24*60*60;
 	}
 
-	nfdmask = howmany(s + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdmaskp = malloc(nfdmask)) == NULL)
-		err(1, "malloc");
-	memset(fdmaskp, 0, nfdmask);
 	do {
 		(void)gettimeofday(&now,0);
 
@@ -713,10 +708,9 @@ doit(void)
 		}
 
 
-		sec_to_timeval(sec, &timeout);
-
-		FD_SET(s, fdmaskp);
-		cc = select(s+1, fdmaskp, 0, 0, &timeout);
+		fdmaskp[0].fd = s;
+		fdmaskp[0].events = POLLIN;
+		cc = poll(fdmaskp, 1, (int)(sec * 1000));
 		if (cc <= 0) {
 			if (cc < 0) {
 				if (errno == EINTR)
@@ -744,7 +738,6 @@ doit(void)
 
 	} while (nreceived < npackets
 		 && (nreceived == 0 || !(pingflags & F_ONCE)));
-	free(fdmaskp);
 
 	finish(0);
 }
