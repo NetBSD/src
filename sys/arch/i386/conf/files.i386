@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.76 1996/08/05 21:16:02 soda Exp $
+#	$NetBSD: files.i386,v 1.77 1996/08/25 23:39:31 jtk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -50,7 +50,8 @@ major	{rd = 17}
 # System bus types
 #
 
-device	mainbus: isabus, eisabus, pcibus
+define mainbus { }
+device	mainbus: isabus, eisabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -145,6 +146,16 @@ file	arch/i386/isa/ahc_isa.c		ahc_isa
 
 include "../../../dev/eisa/files.eisa"
 file	arch/i386/eisa/eisa_machdep.c	eisa
+
+
+#
+# Other mainbus-attached devices
+#
+
+# Advanced Power Management support (APM)
+device apm
+attach apm at mainbus
+file	arch/i386/i386/apm.c		apm needs-count
 
 #
 # Compatibility modules
