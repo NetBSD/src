@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.76 2003/06/30 02:18:38 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.77 2003/06/30 02:23:06 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -892,3 +892,10 @@ sys/netinet/in.c				1.87
 
 	purge rti structure (in igmp.c) for removed ifp on if_detach().
 	[itojun, ticket #1341]
+
+sys/netinet/in.c				1.89
+sys/netinet/ip_mroute.c				1.72
+sys/netinet/ip_mroute.h				1.21
+
+	cleanup multicast routing stuff on if_detach().
+	[itojun, ticket #1342]
