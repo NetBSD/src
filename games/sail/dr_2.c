@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.5 1997/10/13 19:43:23 christos Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.6 1997/10/13 21:03:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.5 1997/10/13 19:43:23 christos Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.6 1997/10/13 21:03:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,13 +99,13 @@ checkup()
 			foreachship(sq)
 				cleansnag(sp, sq, 1);
 		if (sink != 1) {
-			makesignal(sp, "exploding!", (struct ship *)0);
+			makemsg(sp, "exploding!");
 			foreachship(sq) {
 				if (sp != sq && sq->file->dir && range(sp, sq) < 4)
 					table(RIGGING, L_EXPLODE, sp->specs->guns/13, sq, sp, 6);
 			}
 		} else
-			makesignal(sp, "sinking!", (struct ship *)0);
+			makemsg(sp, "sinking!");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.5 1997/10/13 19:43:05 christos Exp $	*/
+/*	$NetBSD: assorted.c,v 1.6 1997/10/13 21:02:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.5 1997/10/13 19:43:05 christos Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.6 1997/10/13 21:02:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ int rig, shot, hittable, roll;
 		rigg[3] -= rhits;
 	}
 	if (rig && !rigg[2] && (!rigg[3] || rigg[3] == -1))
-		makesignal(on, "dismasted!", (struct ship *)0);
+		makemsg(on, "dismasted!");
 	if (portside(from, on, 0)) {
 		guns = on->specs->gunR;
 		car = on->specs->carR;
@@ -152,19 +152,19 @@ int rig, shot, hittable, roll;
 		Write(W_RIGG, on, 0, rigg[0], rigg[1], rigg[2], rigg[3]);
 	switch (shot) {
 	case L_ROUND:
-		message = "firing round shot on %s (%c%c)";
+		message = "firing round shot on $$";
 		break;
 	case L_GRAPE:
-		message = "firing grape shot on %s (%c%c)";
+		message = "firing grape shot on $$";
 		break;
 	case L_CHAIN:
-		message = "firing chain shot on %s (%c%c)";
+		message = "firing chain shot on $$";
 		break;
 	case L_DOUBLE:
-		message = "firing double shot on %s (%c%c)";
+		message = "firing double shot on $$";
 		break;
 	case L_EXPLODE:
-		message = "exploding shot on %s (%c%c)";
+		message = "exploding shot on $$";
 		break;
 	default:
 		errx(1, "Unknown shot type %d", shot);
@@ -197,7 +197,7 @@ int rig, shot, hittable, roll;
 		default:
 			errx(1, "Bad Rhit = %d", Rhit);
 		}
-		makesignal(on, message, (struct ship *)0);
+		makemsg(on, message);
 	} else if (roll == 6) {
 		switch (Hhit) {
 		case 0:
@@ -225,17 +225,17 @@ int rig, shot, hittable, roll;
 		default:
 			errx(1, "Bad Hhit = %d", Hhit);
 		}
-		makesignal(on, message, (struct ship *)0);
+		makemsg(on, message);
 	}
 	/*
 	if (Chit > 1 && on->file->readyL&R_INITIAL && on->file->readyR&R_INITIAL) {
 		on->specs->qual--;
 		if (on->specs->qual <= 0) {
-			makesignal(on, "crew mutinying!", (struct ship *)0);
+			makemsg(on, "crew mutinying!");
 			on->specs->qual = 5;
 			Write(W_CAPTURED, on, 0, on->file->index, 0, 0, 0);
 		} else 
-			makesignal(on, "crew demoralized", (struct ship *)0);
+			makemsg(on, "crew demoralized");
 		Write(W_QUAL, on, 0, on->specs->qual, 0, 0, 0);
 	}
 	*/

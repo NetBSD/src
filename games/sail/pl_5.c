@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.5 1997/10/13 19:45:26 christos Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.6 1997/10/13 21:04:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.5 1997/10/13 19:45:26 christos Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.6 1997/10/13 21:04:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,11 +182,11 @@ acceptboard()
 		if (ms->nationality == capship(sp)->nationality)
 			continue;
 		if (meleeing(ms, sp) && crew[2]) {
-			c = sgetch("How many more to board the %s (%c%c)? ",
+			c = sgetch("How many more to board the $$? ",
 				sp, 1);
 			parties(crew, sp, 0, c);
 		} else if ((fouled2(ms, sp) || grappled2(ms, sp)) && crew[2]) {
-			c = sgetch("Crew sections to board the %s (%c%c) (3 max) ?", sp, 1);
+			c = sgetch("Crew sections to board the $$ (3 max) ?", sp, 1);
 			parties(crew, sp, 0, c);
 		}
 	}
@@ -238,8 +238,7 @@ char buf;
 					else
 						(void) wmove(slot_w, 2, 1 + k);
 				(void) mvwaddstr(slot_w, 3, 0, "DBP");
-				makesignal(ms, "repelling boarders",
-					(struct ship *)0);
+				makemsg(ms, "repelling boarders");
 			} else {
 				(void) wmove(slot_w, 0, 0);
 				for (k=0; k < NBP; k++)
@@ -248,7 +247,7 @@ char buf;
 					else
 						(void) wmove(slot_w, 0, 1 + k);
 				(void) mvwaddstr(slot_w, 1, 0, "OBP");
-				makesignal(ms, "boarding the %s (%c%c)", to);
+				makesignal(ms, "boarding the $$", to);
 			}
 			blockalarm();
 			(void) wrefresh(slot_w);
