@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.27 2005/01/14 16:12:46 thorpej Exp $
+.\"	$NetBSD: mountd.8,v 1.28 2005/01/17 15:20:09 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mountd.8	8.4 (Berkeley) 4/28/95
 .\"
-.Dd April 28, 1995
+.Dd January 14, 2005
 .Dt MOUNTD 8
 .Os
 .Sh NAME
@@ -39,8 +39,8 @@
 mount requests
 .Sh SYNOPSIS
 .Nm
+.Op Fl dNn
 .Op Fl P Ar policy
-.Op Fl dn
 .Op Ar exportsfile
 .Sh DESCRIPTION
 .Nm
@@ -59,17 +59,11 @@ Appendix I.
 Options and operands available for
 .Nm mountd :
 .Bl -tag -width Ds
-.It Fl P Ar policy
-IPsec
-.Ar policy
-string,
-as described in
-.Xr ipsec_set_policy 3 .
-Multiple IPsec policy strings may be specified by using a semicolon as
-a separator. If conflicting policy strings are found in a single line,
-the last string will take effect. If an invalid IPsec policy string is used
+.It Fl d
+Enable debugging mode.
 .Nm
-logs an error message and terminates itself.
+will not detach from the controlling terminal and will print
+debugging messages to stderr.
 .It Fl N
 Do not require privileged ports for mount or NFS RPC calls.
 This option is equivalent to specifying
@@ -78,11 +72,6 @@ on every export.
 See
 .Xr exports 5
 for more information.
-.It Fl d
-Enable debugging mode.
-.Nm
-will not detach from the controlling terminal and will print
-debugging messages to stderr.
 .It Fl n
 This flag used to indicate that clients were required to make requests
 from reserved ports, but it is now no longer functional. It
@@ -94,6 +83,17 @@ The
 .Ar exportsfile
 argument specifies an alternative location
 for the exports file.
+.It Fl P Ar policy
+IPsec
+.Ar policy
+string,
+as described in
+.Xr ipsec_set_policy 3 .
+Multiple IPsec policy strings may be specified by using a semicolon as
+a separator. If conflicting policy strings are found in a single line,
+the last string will take effect. If an invalid IPsec policy string is used
+.Nm
+logs an error message and terminates itself.
 .El
 .Pp
 When
