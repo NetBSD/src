@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.9 2005/03/09 22:39:21 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.10 2005/03/10 22:10:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.9 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.10 2005/03/10 22:10:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,13 @@ union hypervisor_attach_cookie {
 #endif
 };
 
+/* 
+ * This is set when the ISA bus is attached.  If it's not set by the
+ * time it's checked below, then mainbus attempts to attach an ISA. 
+ */   
+int     isa_has_been_seen;
+struct  x86_isa_chipset x86_isa_chipset;
+
 /*
  * Probe for the hypervisor; always succeeds.
  */
@@ -167,7 +174,9 @@ hypervisor_attach(parent, self, aux)
 {
 #ifdef DOM0OPS
 	struct pcibus_attach_args pba;
+#if NISA > 0
 	struct isabus_attach_args iba;
+#endif
 #endif
 	union hypervisor_attach_cookie hac;
 
@@ -230,12 +239,16 @@ hypervisor_attach(parent, self, aux)
 				    pcibusprint);
 			}
 		}
-		iba._iba_busname = "isa";
-		iba.iba_iot = X86_BUS_SPACE_IO;
-		iba.iba_memt = X86_BUS_SPACE_MEM;
-		iba.iba_dmat = &isa_bus_dma_tag;
-		iba.iba_ic = NULL; /* No isa DMA yet */
-		config_found_ia(self, "isabus", &iba, isabusprint);
+#if NISA > 0
+		if (isa_has_been_seen == 0) {
+			iba._iba_busname = "isa";
+			iba.iba_iot = X86_BUS_SPACE_IO;
+			iba.iba_memt = X86_BUS_SPACE_MEM;
+			iba.iba_dmat = &isa_bus_dma_tag;
+			iba.iba_ic = NULL; /* No isa DMA yet */
+			config_found_ia(self, "isabus", &iba, isabusprint);
+		}
+#endif
 
 		xenkernfs_init();
 		xenprivcmd_init();
