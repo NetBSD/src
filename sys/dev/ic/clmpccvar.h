@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.6 2001/01/14 23:50:28 thorpej Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.7 2001/06/10 08:27:42 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ struct clmpcc_softc {
 	bus_space_handle_t sc_ioh;	/* Handle for chip's regs */
 	void		*sc_data;	/* MD-specific data */
 	int		sc_clk;		/* Clock-rate, in Hz */
+	struct evcnt	*sc_evcnt;	/* Parent Event Counter (or NULL) */
 	u_char		sc_vector_base;	/* Vector base reg, or 0 for auto */
 	u_char		sc_rpilr;	/* Receive Priority Interupt Level */
 	u_char		sc_tpilr;	/* Transmit Priority Interupt Level */
