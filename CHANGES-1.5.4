@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.23 2002/09/04 03:40:49 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.24 2002/09/04 03:43:55 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1375,3 +1375,6 @@ sys/uvm/uvm_amap_i.h				1.18
   In amap_ref, only increment the amap's refcnt after we have established
   the ppref array.  Otherwise, the newly ref'ed pages will be doubly
   counted and thus never freed because the pprefcnt can't fall to 0.
+
+sys/kern/exec_aout.c				1.23
+  only create a vmcmd for the BSS if there is any BSS.  fixes PR 17834.

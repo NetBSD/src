@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.17 2000/06/13 06:21:51 chs Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.17.2.1 2002/09/04 03:43:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -138,9 +138,10 @@ exec_aout_prep_zmagic(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (execp->a_bss > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		    epp->ep_daddr + execp->a_data, NULLVP, 0,
+		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
 }
