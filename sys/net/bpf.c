@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.58 2000/07/04 18:46:49 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.59 2000/12/12 17:55:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -1203,8 +1203,7 @@ bpf_freed(d)
  * size of the link header (variable length headers not yet supported).
  */
 void
-bpfattach(driverp, ifp, dlt, hdrlen)
-	caddr_t *driverp;
+bpfattach(ifp, dlt, hdrlen)
 	struct ifnet *ifp;
 	u_int dlt, hdrlen;
 {
@@ -1214,7 +1213,7 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 		panic("bpfattach");
 
 	bp->bif_dlist = 0;
-	bp->bif_driverp = (struct bpf_if **)driverp;
+	bp->bif_driverp = (struct bpf_if **)&ifp->if_bpf;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
 
@@ -1283,14 +1282,14 @@ bpfdetach(ifp)
  * Change the data link type of a BPF instance.
  */
 void
-bpf_change_type(driverp, dlt, hdrlen)
-	caddr_t *driverp;
+bpf_change_type(ifp, dlt, hdrlen)
+	struct ifnet *ifp;
 	u_int dlt, hdrlen;
 {
 	struct bpf_if *bp;
 
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		if (bp->bif_driverp == (struct bpf_if **)driverp)
+		if (bp->bif_driverp == (struct bpf_if **)&ifp->if_bpf)
 			break;
 	}
 	if (bp == NULL)
