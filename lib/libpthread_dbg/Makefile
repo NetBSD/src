@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2002/10/07 02:17:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2002/10/15 11:32:07 skrll Exp $
 #
 
 WARNS=	2
 
 .include <bsd.own.mk>
+
+LIBPDIR=	${.CURDIR}/../libpthread
 
 .if exists(${LIBPDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
@@ -17,7 +19,6 @@ ARCHSUBDIR=	${MACHINE_CPU}
 .if defined(ARCHSUBDIR)
 
 LIB=	pthread_dbg
-LIBPDIR=	${.CURDIR}/../libpthread
 
 ARCHDIR=	${LIBPDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
