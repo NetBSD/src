@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.160 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.161 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -402,3 +402,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		when writing a database or deleting entries from a database.
 		[seb 20030519]
 	file(1): update to 4.03. [pooka 20030525]
+	sendmail(8): update to 8.12.9.  [atatat 20030601]
