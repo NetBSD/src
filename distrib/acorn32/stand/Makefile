@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/03/19 08:07:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.10 2004/03/20 02:55:21 jmc Exp $
 #
 
 .include <bsd.own.mk>
@@ -30,24 +30,9 @@ UUDECODE_FILES_RENAME_Sprites=tmp/BtNetBSD/!BtNetBSD/!Sprites
 UUDECODE_FILES_RENAME_Sprites22=tmp/BtNetBSD/!BtNetBSD/!Sprites22
 UUDECODE_FILES_RENAME_MemFix=tmp/BtNetBSD/!BtNetBSD/MemFix
 
-# Annoying, but since they're buried under BtNetBSD and need to end up in tmp
-# this is the simplest way to manage it. The other choice is moving all the 
-# .uue files into this directory.
-unixfs_res.uue:
-	cp ${.CURDIR}/'BtNetBSD/!BtNetBSD/native/unixfs_res.uue' unixfs_res.uue
-Sprite.uue:
-	cp ${.CURDIR}/'BtNetBSD/!BtNetBSD/src/Banner/sprite.uue' Sprite.uue
-Banner.uue:
-	cp ${.CURDIR}/'BtNetBSD/!BtNetBSD/Banner.uue' Banner.uue
-Sprites.uue:
-	cp ${.CURDIR}/'BtNetBSD/!BtNetBSD/!Sprites.uue' Sprites.uue
-Sprites22.uue:
-	cp ${.CURDIR}/'BtNetBSD/!BtNetBSD/!Sprites22.uue' Sprites22.uue
-MemFix.uue:
-	cp ${.CURDIR}/'BtNetBSD/!BtNetBSD/MemFix.uue' MemFix.uue
-
-CLEANFILES+=unixfs_res.uue Sprite.uue Banner.uue Sprites.uue Sprites22.uue \
-	    MemFix.uue
+.PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD/native 
+.PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD/src/Banner
+.PATH: ${.CURDIR}/BtNetBSD/!BtNetBSD
 
 ${UUDECODE_FILES}: setup_tmp
 
