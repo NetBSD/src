@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.1 2003/05/16 19:15:00 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.2 2003/06/06 18:57:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,9 +122,11 @@ message ovrwrite
 overwrite that partition with NetBSD?
 }
 
+.if 0
 message parttable
 {The partition table on your disk currently looks like the following:
 }
+.endif
 
 message editpart
 {You are editing partition %d. The highlighted partition is the partition

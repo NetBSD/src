@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.6 2003/06/06 14:31:29 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.7 2003/06/06 18:57:19 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,6 @@ disklabel:	%d cylinders, %d heads, %d sectors
 real geometry:	%d cylinders, %d heads, %d sectors 
 }
 
-/* the %s's will expand into three character strings */
 message dobad144
 {Installing the bad block table ...
 }
@@ -110,72 +109,3 @@ your machine can address. Booting from it may not be possible. Are you
 sure you that you want to do this?
 
 (Answering 'no' will take you back to the partition edit menu.)}
-
-message installbootsel
-{You appear to have more than one operating system installed on your
-disk. Do you want to install a bootselector so that you can select
-which system to start up when your computer is (re)started?}
-
-message installmbr
-{The start of the NetBSD part of the disk lies outside of the range
-that the BIOS can address. The initial bootcode in the Master Boot
-Record needs to be able to use the extended BIOS interface to boot
-off this partition. Do you want to install the NetBSD bootcode into
-the Master Boot Record so that this is ensured? Note that this will
-overwrite the existing code in the MBR, like some bootselectors.}
-
-message configbootsel
-{Configure the different bootselection menu items. You can change the
-simple menu entries for the matching partition entries that are displayed
-when the system boots. Also, you can specify the timeout and default
-action to be taken (if no selection is made in the bootmenu).\n}
-
-message bootseltimeout
-{Boot menu timeout: %d\n}
-
-message defbootselopt
-{Default boot menu action: }
-
-message defbootseloptactive
-{boot the first active partition.}
-
-message defbootseloptpart
-{boot off partition %d.\n}
-
-message defbootseloptdisk
-{boot off hard disk %d.\n}
-
-message bootselitemname
-{Enter name for menu item}
-
-message bootseltimeoutval
-{Timeout value in seconds (0-3600)}
-
-message bootsel_header
-{Number Type                             Menu entry
------- -------------------------------- ----------
-}
-
-message bootsel_row
-{%-6d %-32s %s\n}
-
-message askfsroot
-{I will be asking for partition sizes and on some, mount points.
-
-First the root partition.  You have %d %s left on your disk.
-Root partition size? }
-
-message askfsswap
-{
-Next the swap partition.  You have %d %s left on your disk.
-Swap partition size? }
-
-message askfsusr
-{
-Next the /usr partition.  You have %d %s left on your disk.
-/usr partition size? }
-
-message askfspart
-{The next partition is /dev/%s%c.  You have %d %s left on your disk.
-Partition size? }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.49 2003/06/06 14:31:23 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.50 2003/06/06 18:57:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -154,9 +154,6 @@ message size
 
 message start
 {début}
-
-message offset
-{offset}
 
 message bsize
 {taille de block}
@@ -356,13 +353,6 @@ point de montage.
 message mountfail
 {Le montage de %s sur %s a échoué.
 }
-
-message dotar
-{Installation des programmes d'ammorcage et fichiers de configuration ...\n}
-
-message dotarfail
-{L'installation des programmes d'ammorcage et fichiers de configuration a
-échoué. Impossible de continuer ...}
 
 message extractcomplete	/* XXX translate */
 {The extraction of the selected sets for NetBSD-@@VERSION@@ is complete.
@@ -600,11 +590,6 @@ message verboseextract
 voir pendant qu'ils seront extraits ?
 }
 
-message badls
-{Impossible d'exécuter /bin/ls. Cette erreur n'aurait pas du arriver.
-L'installation a échoué.
-}
-
 message notarfile
 {Le composant %s n'existe pas.
 
@@ -647,29 +632,6 @@ composants et essayer à nouveau.
 
 message openmsgbuf
 {Impossible d'ouvrir /kern/msgbuf.
-}
-
-message anonprog
-{sysinst: exécution de "%s"
-}
-
-message anonprogfailed
-{Le programme "%s" c'est interrompu avec un code retour %s.
-
-Ceci est probablement du à un mauvais choix d'option d'installation - tel que
-tenter une mise à jour sur un disque vide, ou réaliser une installation à
-partir d'un système en cours de fonctionnement. Ou encore d'une mauvaise
-disquette d'installation. Quelle que soit la cause, sysinst ne s'attend pas à
-ce qu'une erreur ce produise à ce stade de l'installation et celle ci s'est
-sans doute mal terminée.
-
-Vérifier les messages d'erreurs ci dessus et procéder avec une extrême
-attention. Appuyer sur <entrée> pour continuer.
-}
-
-message progdie
-{sysinst : Exécution de "%s" s'est interrompu avec le code d'erreur %s .
-Rétablissement impossible, j'abandonne.
 }
 
 message createfstab
@@ -737,12 +699,6 @@ La mise à jour a été interrompue avec un code erreur %d.
 message badmount
 {Le système de fichiers %s%s n'a pas été monté correctement.
 Arrêt de la mise à jour
-}
-
-message upgrinode
-{Votre système de fichiers %s utilise un vieux format d'inodes. Si vous
-l'utiliser uniquement avec NetBSD, il est recommandé de le mettre à niveau.
-Voulez vous mettre à niveau ce système de fichiers ?
 }
 
 message rootmissing
@@ -913,25 +869,13 @@ Special values that can be entered for the offset value:
 
 }
 
-/* XXX translate me all below here */
-message postuseexisting
+message postuseexisting		/* XXX translate */
 {
 Don't forget to fill in the file system mount points for each of the
 file systems that are to be mounted.  Press <return> to continue.
 }
 
-message cur_fs
-{Currently selected file-systems
-
-}
-
-message cur_fs_header
-{    Mount-point   Selected\n}
-
-message cur_fs_row
-{    %s         %s\n}
-
-message no_root_fs
+message no_root_fs		/* XXX translate */
 {
 There is no defined root file system.  You need to define at least
 one mount point with "/".

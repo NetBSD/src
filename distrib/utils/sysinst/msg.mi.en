@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.99 2003/06/06 14:31:23 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.100 2003/06/06 18:57:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -152,9 +152,6 @@ message size
 
 message start
 {start}
-
-message offset
-{offset}
 
 message bsize
 {block size}
@@ -350,13 +347,6 @@ a mount point.}
 message mountfail
 {mount of device %s on %s failed.
 }
-
-message dotar
-{Populating file systems with bootstrapping binaries and config files...\n}
-
-message dotarfail
-{The bootstrapping binaries and config file installation failed.
-Can't continue ...}
 
 message extractcomplete
 {The extraction of the selected sets for NetBSD-@@VERSION@@ is complete.
@@ -596,10 +586,6 @@ message verboseextract
 each file is extracted?
 }
 
-message badls
-{Could not run /bin/ls.  This error should not have happened. Install aborted.
-}
-
 message notarfile
 {Release set %s does not exist.
 
@@ -637,29 +623,6 @@ message abortunpack
 {Unpacking additional sets was not successful.  You will need to
 proceed by hand, or choose a different source for release sets and try
 again.
-}
-
-message anonprog
-{sysinst: running "%s"
-}
-
-message anonprogfailed
-{
-The program "%s" failed unexpectedly with return code %s.
-
-This is probably due to choosing the incorrect top-level install
-option---like trying to do an Upgrade on a bare disk, or doing a fresh
-Install on an already-running system.  Or it might be due to a
-mispackaged miniroot.  Whatever the cause, sysinst did not expect any
-errors here and the installation has almost certainly failed.
-
-Check the error messages above and proceed with *extreme* caution.
-Press <return> to continue.}
-
-message progdie
-{
-sysinst: Execution of "%s" failed unexpectedly with error code %s.
-Cannot recover, aborting.
 }
 
 message createfstab
@@ -723,12 +686,6 @@ not successful.  The upgrade has been aborted.  (Error number %d.)
 
 message badmount
 {Your file system %s%s was not successfully mounted.  Upgrade aborted.}
-
-message upgrinode
-{Your file system, %s, is using an old inode format.  If you are
-using only NetBSD on these file systems, it is recommended that
-they are upgraded.  Do you want this file system upgraded?
-}
 
 message rootmissing
 { target root is missing %s.
@@ -905,17 +862,6 @@ message postuseexisting
 Don't forget to fill in the file system mount points for each of the
 file systems that are to be mounted.  Press <return> to continue.
 }
-
-message cur_fs
-{Currently selected file-systems
-
-}
-
-message cur_fs_header
-{    Mount-point   Selected\n}
-
-message cur_fs_row
-{    %s         %s\n}
 
 message no_root_fs
 {

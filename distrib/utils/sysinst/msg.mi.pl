@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.12 2003/06/06 14:31:23 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.13 2003/06/06 18:57:14 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -154,9 +154,6 @@ message size
 
 message start
 {start}
-
-message offset
-{przesuniecie}
 
 message bsize
 {rozmiar bloku}
@@ -351,13 +348,6 @@ message nomount
 message mountfail
 {zamountowanie urzadzenia %s na %s nie powiodlo sie.
 }
-
-message dotar
-{Wypelnianie dysku binariami bootowalnymi i plikami konfiguraciyjnymi...\n}
-
-message dotarfail
-{Nie powiodla sie instalacja binarii bootowalnych oraz plikow konfiguracyjnych.
-Nie moge kontynuowac ...}
 
 message extractcomplete
 {Rozpakowywanie wybranych pakietow dla NetBSD-@@VERSION@@ zakonczone.
@@ -590,11 +580,6 @@ message verboseextract
 wypakowywanego pliku ?
 }
 
-message badls
-{Nie moge uruchomic /bin/ls.  Ten blad nie powinien sie wydarzyc.
-Instalacja przerwana.
-}
-
 message notarfile
 {Pakiet %s nie istnieje.
 
@@ -632,30 +617,6 @@ Aktualizacja zostala przerwana.
 message abortunpack
 {Rozpakowanie dodatkowych pakietow nie udalo sie. Bedziesz musial
 to zrobic recznie, albo wybierz inne zrodlo pakietow i sprobuj ponownie.
-}
-
-message anonprog
-{sysinst: uruchamanie "%s"
-}
-
-message anonprogfailed
-{
-Program "%s" zakonczyl sie nie spodziewanie z kodem bledu: %s.
-
-Stalo sie to prawdopodobnie poprzez wybranie nieprawidlowej opcji
-instalacji pierwszego-poziomu---jak np proba Aktualizacji na pustym
-dysku lub proba nowej Instalacji na aktualnie dzialajacym systemie.
-Moze to byc tez wina zle skomponowanego miniroot. Cokolwiek jest
-przyczyna, sysinst nie oczekiwal w tym miejscu zadnych bledow i
-z tego powodu instalacja prawie napewno sie nie powiodla.
-
-Sprawdz informacje o bledach i kontynuuj z *ekstremalna* ostroznoscia.
-Nacisnij <enter> aby kontynuowac.}
-
-message progdie
-{
-sysinst: Wykonywanie "%s" nieoczekiwanie sie niepowiodlo z kodem %s.
-Nie mozna odzyskac, zaniechanie.
 }
 
 message createfstab
@@ -719,12 +680,6 @@ jego sprawdzenie. Aktualizacja zostala przerwana. (Blad numer %d.)
 
 message badmount
 {System plikow %s%s nie zostal pomyslnie zamountowany. Aktualizacja przerwana.}
-
-message upgrinode
-{System plikow, %s, uzywa starego formatu inode. Jesli uzywasz
-tylko NetBSD na tych systemach plikow, jest zalecane aby to
-zaktualizowac. Czy chcesz zaktualizowac te systemy plikow?
-}
 
 message rootmissing
 { docelowy / jest zagubiony %s.
@@ -895,17 +850,6 @@ message postuseexisting
 Nie zapomnij zamountowac wszystkich systemow plikow, ktorych chcesz
 uzywac w systemie. Nacisnij <enter> aby kontynuowac.
 }
-
-message cur_fs
-{Aktualnie wybrane systemy-plikow
-
-}
-
-message cur_fs_header
-{   Mountpoint Wybrane\n}
-
-message cur_fs_row
-{    %s         %s\n}
 
 message no_root_fs
 {

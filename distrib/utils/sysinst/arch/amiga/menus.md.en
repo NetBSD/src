@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.7 2003/06/03 11:54:49 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.8 2003/06/06 18:57:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,40 +36,7 @@
  *
  */
 
-/* Menu definitions for sysinst. i386 version, machine dependent. */
-
-menu wdtype, title  "Select type";
-	display action { msg_display (MSG_wdtype, diskdev); };
-	option "IDE", 	exit;
-	option "ESDI", 	exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-	option "ST506", exit, action
-		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno, NULL);
-		  if (yesno)
-			doessf = "sf:";
-		};
-
-
-menu dlgeom, title "Choose an option";
-	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
-				dlsec, disk->dd_cyl, disk->dd_head,
-				disk->dd_sec);
-			};
-	option "Use real geometry", exit, action {
-			dlcyl  = disk->dd_cyl;
-			dlhead = disk->dd_head;
-			dlsec  = disk->dd_sec;
-		};
-	option "Use disklabel geometry", exit, action {
-			disk->dd_cyl = dlcyl;
-			disk->dd_head = dlhead;
-			disk->dd_sec = dlsec;
-		};
+/* Menu definitions for sysinst. amiga version, machine dependent. */
 
 menu editfsparts, y=13, exit;
 	display action  {
