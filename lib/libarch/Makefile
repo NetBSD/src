@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/07/14 03:18:33 matt Exp $
+#	$NetBSD: Makefile,v 1.16 2001/07/28 19:17:11 bjh21 Exp $
 
 ARCHDIRS= alpha arm32 i386 m68k
 
@@ -13,7 +13,7 @@ CLEANFILES+= ${ASM} ${POBJS}
 
 # Build the library if SRCS is now defined ...
 .if defined(SRCS)
-LIB=    ${MACHINE_ARCH:C/mipse[bl]/mips/:C/arm*/arm32/}
+LIB=    ${MACHINE_ARCH:C/mipse[bl]/mips/:C/arm.*/arm32/}
 SHLIB_VERSION_FILE= ${.CURDIR}/${LIB}/shlib_version
 
 .include <bsd.lib.mk>
