@@ -1,4 +1,4 @@
-/* $NetBSD: ramdac.h,v 1.1 2000/03/04 10:23:39 elric Exp $ */
+/* $NetBSD: ramdac.h,v 1.2 2000/04/02 18:54:33 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -47,6 +47,10 @@ struct ramdac_cookie;
 
 struct ramdac_funcs {
 	char	*ramdac_name;
+	struct ramdac_cookie *(*ramdac_register) __P((void *,
+		    int (*)(void *, void (*)(void *)),
+		    void (*)(void *, u_int, u_int8_t),
+		    u_int8_t (*)(void *, u_int)));	      
 	void	(*ramdac_init) __P((struct ramdac_cookie *));
 
 	int	(*ramdac_set_cmap) __P((struct ramdac_cookie *,
