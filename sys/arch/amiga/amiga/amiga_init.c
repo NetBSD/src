@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.69 2000/01/23 21:08:16 aymeric Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.70 2000/06/27 04:18:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,8 +51,6 @@
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
-#include <vm/pmap.h>
-#include <machine/vmparam.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cc.h>

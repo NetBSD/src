@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.40 2000/06/26 14:20:30 mrg Exp $	*/
+/*	$NetBSD: sbic.c,v 1.41 2000/06/27 04:18:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -57,7 +57,6 @@
 #include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
-#include <machine/pmap.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
@@ -69,8 +68,6 @@
 /* These are for bounce buffers */
 #include <amiga/amiga/cc.h>
 #include <amiga/dev/zbusvar.h>
-
-#include <vm/pmap.h>
 
 /* Since I can't find this in any other header files */
 #define SCSI_PHASE(reg)	(reg&0x07)
