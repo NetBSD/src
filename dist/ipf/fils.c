@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.21 2002/09/29 08:14:32 martti Exp $	*/
+/*	$NetBSD: fils.c,v 1.22 2003/08/15 08:10:09 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -113,7 +113,8 @@ extern	int	optind;
 #define	FPRINTF	(void)fprintf
 #define	F_IN	0
 #define	F_OUT	1
-#define	F_AC	2
+#define	F_ACIN	2
+#define	F_ACOUT	3
 static	char	*filters[4] = { "ipfilter(in)", "ipfilter(out)",
 				"ipacct(in)", "ipacct(out)" };
 
@@ -782,13 +783,22 @@ struct	friostat	*fiop;
 	if (opts & OPT_INACTIVE)
 		set = 1 - set;
 	if (opts & OPT_ACCNT) {
-		i = F_AC;
+#ifdef USE_INET6
+		if ((use_inet6) && (opts & OPT_OUTQUE)) {
+			i = F_ACOUT;
+			fp = (struct frentry *)fiop->f_acctout6[set];
+		} else if ((use_inet6) && (opts & OPT_INQUE)) {
+			i = F_ACIN;
+			fp = (struct frentry *)fiop->f_acctin6[set];
+		} else
+#endif
 		if (opts & OPT_OUTQUE) {
+			i = F_ACOUT;
 			fp = (struct frentry *)fiop->f_acctout[set];
-			i++;
-		} else if (opts & OPT_INQUE)
+		} else if (opts & OPT_INQUE) {
+			i = F_ACIN;
 			fp = (struct frentry *)fiop->f_acctin[set];
-		else {
+		} else {
 			FPRINTF(stderr, "No -i or -o given with -a\n");
 			return;
 		}
