@@ -1,7 +1,7 @@
-/* $NetBSD: intr.h,v 1.44 2001/04/15 23:26:05 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.45 2001/04/20 16:22:34 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -157,17 +157,18 @@ _splraise(int s)
 /*
  * Interprocessor interrupts.  In order how we want them processed.
  */
-#define	ALPHA_IPI_HALT		0x0000000000000001UL
-#define	ALPHA_IPI_TBIA		0x0000000000000002UL
-#define	ALPHA_IPI_TBIAP		0x0000000000000004UL
-#define	ALPHA_IPI_SHOOTDOWN	0x0000000000000008UL
-#define	ALPHA_IPI_IMB		0x0000000000000010UL
-#define	ALPHA_IPI_AST		0x0000000000000020UL
-#define	ALPHA_IPI_SYNCH_FPU	0x0000000000000040UL
-#define	ALPHA_IPI_DISCARD_FPU	0x0000000000000080UL
-#define	ALPHA_IPI_PAUSE		0x0000000000000100UL
+#define	ALPHA_IPI_HALT			0x0000000000000001UL
+#define	ALPHA_IPI_TBIA			0x0000000000000002UL
+#define	ALPHA_IPI_TBIAP			0x0000000000000004UL
+#define	ALPHA_IPI_SHOOTDOWN		0x0000000000000008UL
+#define	ALPHA_IPI_IMB			0x0000000000000010UL
+#define	ALPHA_IPI_AST			0x0000000000000020UL
+#define	ALPHA_IPI_SYNCH_FPU		0x0000000000000040UL
+#define	ALPHA_IPI_DISCARD_FPU		0x0000000000000080UL
+#define	ALPHA_IPI_PAUSE			0x0000000000000100UL
+#define	ALPHA_IPI_PMAP_REACTIVATE	0x0000000000000200UL
 
-#define	ALPHA_NIPIS		9	/* must not exceed 64 */
+#define	ALPHA_NIPIS		10	/* must not exceed 64 */
 
 struct cpu_info;
 struct trapframe;
