@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.5 2001/07/15 00:30:17 ichiro Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.6 2001/08/01 13:18:44 ichiro Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -178,6 +178,14 @@ static void
 ipaqpcic_init(sc)
 	struct ipaqpcic_softc *sc;
 {
+	int cr;
+
+	/* All those are inputs */
+	cr = bus_space_read_4(sc->sc_pc.sc_iot, sc->sc_parent->sc_gpioh, SAGPIO_PDR);
+	cr &= ~(GPIO_H3600_PCMCIA_CD0 | GPIO_H3600_PCMCIA_CD1 | GPIO_H3600_PCMCIA_IRQ0 |
+		GPIO_H3600_PCMCIA_IRQ1);
+	bus_space_write_4(sc->sc_pc.sc_iot, sc->sc_parent->sc_gpioh, SAGPIO_PDR, cr);
+
 	sc->sc_parent->ipaq_egpio |=
 		EGPIO_H3600_OPT_NVRAM_ON | EGPIO_H3600_OPT_ON ;
 	sc->sc_parent->ipaq_egpio &=
@@ -198,15 +206,18 @@ ipaqpcic_read(so, reg)
 
 	switch (reg) {
 	case SAPCIC_STATUS_CARD:
-	case SAPCIC_STATUS_READY:
-		bit = (so->socket ? GPIO_H3600_PCMCIA_CD1 :
-				GPIO_H3600_PCMCIA_CD0) & cr;
-		if (bit)
+		bit = (so->socket ? GPIO_H3600_PCMCIA_CD0 :
+				GPIO_H3600_PCMCIA_CD1) & cr;
+		if (!bit)
 			return SAPCIC_CARD_INVALID;
 		else
 			return SAPCIC_CARD_VALID;
 	case SAPCIC_STATUS_VS1:
         case SAPCIC_STATUS_VS2:
+	case SAPCIC_STATUS_READY:
+		bit = (so->socket ? GPIO_H3600_PCMCIA_IRQ0:
+				GPIO_H3600_PCMCIA_IRQ1);
+		return (bit & cr);
 	default:
 		panic("ipaqpcic_read: bogus register\n");
 	}
