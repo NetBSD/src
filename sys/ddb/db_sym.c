@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.41 2003/05/17 09:48:05 scw Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.42 2003/09/03 10:45:10 ragge Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41 2003/05/17 09:48:05 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.42 2003/09/03 10:45:10 ragge Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -90,7 +90,7 @@ boolean_t
 db_value_of_name(char *name, db_expr_t *valuep)
 {
 	char *mod, *sym;
-	long val;
+	unsigned long val;
 
 #ifdef DB_AOUT_SYMBOLS
 	db_sym_t	ssym;
@@ -292,7 +292,7 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 {
 	char  *name;
 	const char *mod;
-	long val;
+	unsigned long val;
 
 #ifdef DB_AOUT_SYMBOLS
 	if (using_aout_symtab) {
@@ -358,7 +358,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 {
 	char  *name;
 	const char *mod;
-	long val;
+	unsigned long val;
 #ifdef notyet
 	char *filename;
 	int  linenum;
