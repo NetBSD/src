@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.7 2002/05/26 22:53:38 wiz Exp $	*/
+/*	$NetBSD: args.c,v 1.8 2003/07/14 09:44:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: args.c,v 1.7 2002/05/26 22:53:38 wiz Exp $");
+__RCSID("$NetBSD: args.c,v 1.8 2003/07/14 09:44:00 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -292,7 +292,7 @@ set_profile(void)
 	char    fname[BUFSIZ];
 	static char prof[] = ".indent.pro";
 
-	sprintf(fname, "%s/%s", getenv("HOME"), prof);
+	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), prof);
 	if ((f = fopen(option_source = fname, "r")) != NULL) {
 		scan_profile(f);
 		(void) fclose(f);
@@ -391,8 +391,9 @@ found:
 			if (*param_start == 0)
 				goto need_param;
 			{
-				char   *str = (char *) malloc(strlen(param_start) + 1);
-				strcpy(str, param_start);
+				char   *str;
+
+				str = strdup(param_start);
 				addkey(str, 4);
 			}
 			break;
