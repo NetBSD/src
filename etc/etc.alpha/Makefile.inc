@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1999/06/30 18:39:37 ross Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/05/28 18:21:13 he Exp $
 
 BUILD_KERNELS+=		INSTALL
 INSTALLATION_DIRS+=	installation/floppy	\
@@ -15,3 +15,4 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/alpha && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
+	cd ${.CURDIR}/../sys/arch/alpha/stand/netboot && ${MAKE} release
