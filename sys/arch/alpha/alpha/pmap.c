@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.163 2001/04/22 17:22:57 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.164 2001/04/22 18:21:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2001/04/22 17:22:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2001/04/22 18:21:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -846,7 +846,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
 	 */
 	kernel_lev1map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * NPTEPG);
 
 	/*
 	 * Allocate a level 2 PTE table for the kernel.
@@ -855,14 +855,14 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	lev2mapsize = roundup(howmany(lev3mapsize, NPTEPG), NPTEPG);
 	lev2map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * lev2mapsize, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * lev2mapsize);
 
 	/*
 	 * Allocate a level 3 PTE table for the kernel.
 	 * Contains lev3mapsize PTEs.
 	 */
 	lev3map = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * lev3mapsize, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * lev3mapsize);
 
 	/*
 	 * Allocate memory for the pv_heads.  (A few more of the latter
@@ -875,8 +875,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	pv_table_npages = physmem;
 	pv_table = (struct pv_head *)
-	    pmap_steal_memory(sizeof(struct pv_head) * pv_table_npages,
-	    NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(struct pv_head) * pv_table_npages);
 
 	/*
 	 * ...and intialize the pv_entry list headers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2001/04/22 17:22:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.122 2001/04/22 18:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2001/04/22 17:22:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2001/04/22 18:21:50 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -278,7 +278,7 @@ pmap_bootstrap()
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
 	Sysmap = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * Sysmapsize, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
 	/*
 	 * Allocate memory for the pv_heads.  (A few more of the latter
@@ -291,8 +291,7 @@ pmap_bootstrap()
 	 */
 	pv_table_npages = physmem;
 	pv_table = (struct pv_entry *)
-	    pmap_steal_memory(sizeof(struct pv_entry) * pv_table_npages,
-		NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(struct pv_entry) * pv_table_npages);
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
