@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.75 2004/04/11 03:03:31 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.76 2004/04/11 03:05:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -776,3 +776,8 @@ sys/arch/hp300/dev/grf_dv.c			1.27
 	Check mapped device VA by badaddr() in cnattach functions for 
 	framebuffers.
 	[tsutsui, ticket #117]
+
+sys/arch/hp300/dev/itevar.h			1.19
+
+	Don't panic when kernel tries to print a horizontal tab via itecnputc().
+	[tsutsui, ticket #118]
