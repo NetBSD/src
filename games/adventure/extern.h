@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1998/08/24 22:26:23 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1998/08/29 22:40:07 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -49,7 +49,6 @@ void startup __P((void));
 
 /* io.c */
 void getin __P((char **, char **));
-int confirm __P((char *));
 int yes __P((int, int, int));
 int yesm __P((int, int, int));
 int next __P((void));
@@ -57,7 +56,9 @@ void rdata __P((void));
 int rnum __P((void));
 void rdesc __P((int));
 void rtrav __P((void));
-int twrite __P((int));
+#ifdef DEBUG
+void twrite __P((int));
+#endif
 void rvoc __P((void));
 void rlocs __P((void));
 void rdflt __P((void));
@@ -75,9 +76,6 @@ int main __P((int, char **));
 /* save.c */
 int save __P((char *));
 int restore __P((char *));
-
-/* setup.c */
-int main __P((int, char *[]));
 
 /* subr.c */
 int toting __P((int));
