@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.42 2003/05/09 23:51:28 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.43 2003/06/12 14:44:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.42 2003/05/09 23:51:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.43 2003/06/12 14:44:37 drochner Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.42 2003/05/09 23:51:28 fvdl Exp $");
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>

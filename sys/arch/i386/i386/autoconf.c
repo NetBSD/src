@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.69 2003/05/12 14:59:51 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.70 2003/06/12 14:44:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,14 +48,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.69 2003/05/12 14:59:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70 2003/06/12 14:44:37 drochner Exp $");
 
 #include "opt_compat_oldboot.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #ifdef COMPAT_OLDBOOT
