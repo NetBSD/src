@@ -1,0 +1,115 @@
+@(#) Header: INSTALL,v 1.5 94/06/20 18:56:52 leres Exp (LBL)
+
+To build libpcap, first customize any paths in Makefile.in, then run
+./configure (a shell script).  "configure" will determine your system
+attributes and generate an appropriate Makefile from Makefile.in.  Next
+run "make", and if everything goes well, su and run "make install".
+(If you're system is not listed in the README as one which we have
+tested, you may have to modify the configure script and Makefile.in;
+please send us patches for any modifications you need to make.)  You
+need not install libpcap if you just want to build tcpdump (but make
+sure tcpdump and libpcap have the same parent directory during the
+build).
+
+You will need an ANSI C compiler to build libpcap.  If your compiler is
+not ANSI compliant, use the GNU C compiler, available via anonymous
+ftp:
+
+	ftp://prep.ai.mit.edu/pub/gnu/gcc-*.tar.gz
+
+If you use flex, version 2.4.6 or higher is recommended.  The current
+version of flex is available via anonymous ftp:
+
+	ftp://ftp.ee.lbl.gov/flex-*.tar.Z
+
+Earlier versions of 2.4 require declarations for some internal memory
+allocator routines.  Version 2.3 and earlier caused typedef conflicts
+with sys/types.h.  If you don't have a version of flex that works,
+plain old lex works ok.  But if you use lex/yacc, libpcap will have
+symbols that will conflict with other yacc/lex generated code (yes,
+this can be fixed with a script that maps the yy* identifiers, but flex
+and bison do this automatically so we haven't bothered).  Note that the
+stock version of flex under DEC OSF/1 is 2.3.
+
+If you use Solaris, there is a bug with bufmod(7) that is supposed to
+be fixed in 5.3.2.  Setting a snapshot length with the broken bufmod(7)
+results in data be truncated from the FRONT of the packet instead of
+the end.  The work around is to not set a snapshot length but this
+results in performance problems since the entire packet is copied to
+user space.  There is a patch available from Sun; ask for bugid
+1149065.  After installing the patch, use "setenv BUFMOD_FIXED" to
+enable use of bufmod(7).
+
+If linking tcpdump fails with "Undefined: _alloca" when using bison on
+a Sun4, your version of bison is broken.  Either pick up a current
+version from:
+
+	ftp://prep.ai.mit.edu/pub/gnu/bison-*.tar.gz
+
+or hack around it by inserting the lines:
+
+	#ifdef __GNUC__
+	#define alloca __builtin_alloca
+	#else
+	#ifdef sparc
+	#include <alloca.h>
+	#else
+	char *alloca ();
+	#endif
+	#endif
+
+right after the (100 line!) GNU license comment in bison.simple, remove
+sun4-sunos4/tcpgram.[co], and fire up make again.
+
+If you are running a version of SunOS earlier than 4.1, you will need
+to replace the Sun supplied /sys/sun{3,4,4c}/OBJ/nit_if.o with the
+appropriate version from this distribution's SUNOS4 subdirectory and
+build a new kernel:
+
+       nit_if.o.sun3-sunos4		(any flavor of sun3)
+       nit_if.o.sun4c-sunos4.0.3c	(SS1, SS1+, IPC, SLC, etc.)
+       nit_if.o.sun4-sunos4		(Sun4's not covered by
+					    nit_if.o.sun4c-sunos4.0.3c)
+
+These nit replacements fix a bug that makes nit essentially unusable in
+pre-SunOS 4.1.  In addition, our sun4c-sunos4.0.3c nit gives you
+timestamps to the resolution of the SS-1 clock (1 us) rather than the
+lousy 20ms timestamps Sun gives you  (tcpdump will print out the full
+timestamp resolution if it finds it's running on a SS-1).
+
+FILES
+-----
+CHANGES		- description of differences between releases
+INSTALL		- this file
+Makefile.in	- compilation rules (input to the configure script)
+README		- description of distribution
+RELEASE		- version of this release
+RUNSON		- list of supported hardware and operating systems
+bpf		- a copy of the current BPF distribution
+bpf_image.c	- BPF disassembly routine
+configure	- configure script (run this first)
+etherent.c	- /etc/ethers support routines
+ethertype.h	- ethernet protocol types and names definitions
+gencode.c	- BPF code generation routines
+gencode.h	- BPF code generation definitions
+grammar.y	- filter string grammar
+inet.c		- network routines
+mkdep		- construct Makefile dependency list
+nametoaddr.c	- hostname to address routines
+optimize.c	- BPF optimization routines
+pcap-bpf.c	- BSD Packet Filter support
+pcap-dlpi.c	- Data Link Provider Interface support
+pcap-enet.c	- enet support
+pcap-int.h	- internal libpcap definitions
+pcap-namedb.h	- public libpcap name database definitions
+pcap-nit.c	- Network Interface Tap support
+pcap-nit.h	- Network Interface Tap definitions
+pcap-pf.c	- Packet Filter support
+pcap-pf.h	- Packet Filter definitions
+pcap-snit.c	- Streams based Network Interface Tap support
+pcap-snoop.c	- Snoop network monitoring support
+pcap.3		- manual entry
+pcap.c		- pcap utility routines
+pcap.h		- public libpcap definitions
+savefile.c	- offline support
+scanner.l	- filter string scanner
