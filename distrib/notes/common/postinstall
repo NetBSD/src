@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.22 2001/04/07 17:21:30 jhawk Exp $
+.\"	$NetBSD: postinstall,v 1.23 2001/04/10 01:39:06 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -260,7 +260,7 @@ usually in the
 .Pa \*V/\*M/All
 subdir.  You can install them with the following commands:
 .Pp
-.Bd -literal
+.Bd -unfilled
 .Ic # export\ PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v cvs
