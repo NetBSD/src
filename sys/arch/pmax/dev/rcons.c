@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.24 1999/04/24 08:01:06 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.25 1999/04/24 15:22:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -77,6 +77,7 @@
 #include <pmax/dev/lk201var.h>
 
 #include "fb.h"
+#include "px.h"
 
 /*
  * Console I/O is redirected to the appropriate device, either a screen and
