@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.49 2001/07/01 20:42:48 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.49.2.1 2001/07/10 13:27:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -109,6 +109,8 @@ struct socket {
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_UPCALL	0x20		/* someone wants an upcall */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
+    	/* XXXLUKEM: 0x80 left for FreeBSD's SB_AIO */
+#define	SB_KNOTE	0x100		/* kernel note attached */
 
 	void		*so_internal;	/* Space for svr4 stream data */
 	void		(*so_upcall) __P((struct socket *so, caddr_t arg,
@@ -154,7 +156,7 @@ struct socket {
  * Do we need to notify the other side when I/O is possible?
  */
 #define	sb_notify(sb)	(((sb)->sb_flags & \
-	(SB_WAIT | SB_SEL | SB_ASYNC | SB_UPCALL)) != 0)
+	(SB_WAIT | SB_SEL | SB_ASYNC | SB_UPCALL | SB_KNOTE)) != 0)
 
 /*
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?
@@ -249,6 +251,7 @@ struct sockaddr;
 struct proc;
 struct msghdr;
 struct stat;
+struct knote;
 
 /*
  * File operations on sockets.
@@ -260,6 +263,7 @@ int	soo_write(struct file *fp, off_t *offset, struct uio *uio,
 int	soo_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p);
 int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p);
 int	soo_poll(struct file *fp, int events, struct proc *p);
+int	soo_kqfilter(struct file *fp, struct knote *kn);
 int 	soo_close(struct file *fp, struct proc *p);
 int	soo_stat(struct file *fp, struct stat *ub, struct proc *p);
 int	uipc_usrreq(struct socket *, int , struct mbuf *,
