@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.14 2000/01/17 04:55:28 matt Exp $ */
+/*	$NetBSD: ts.c,v 1.15 2000/01/18 19:51:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -402,11 +402,11 @@ tscommand (dev, cmd, count)
 	 * This is the only case where count can be 0.
 	 */
 	if (count == 0) {
-		debug (("tscommand: direct return, no iowait.\n"));
+		debug (("tscommand: direct return, no biowait.\n"));
 		return;
 	}
-	debug (("tscommand: calling iowait ...\n"));;
-	iowait (bp);
+	debug (("tscommand: calling biowait ...\n"));;
+	biowait (bp);
 	if (bp->b_flags & B_WANTED)
 		wakeup ((caddr_t)bp);
 	bp->b_flags &= B_ERROR;
@@ -438,7 +438,7 @@ tsstart (sc, bp)
 		/* bertram: ubarelse ??? */
 		ts_wtab[ctlr] = NULL;
 		dp->b_flags |= B_ERROR;
-		iodone (dp);
+		biodone (dp);
 
 		if (tsreg->tssr & TS_SC) {	/* Special Condition; Error */
 			log (TS_PRI, "%s: tssr 0x%x, state %d\n",
@@ -566,7 +566,7 @@ tsstart (sc, bp)
 		/*
 		 * we are already waiting for something ...
 		 * this should not happen, so we have a problem now.
-		 * bertram: set error-flag and call iodone() ???
+		 * bertram: set error-flag and call biodone() ???
 		 */
 	}
 	ts_wtab[ctlr] = bp;
@@ -930,9 +930,9 @@ tsintr(ctlr)
 #endif
 			}
 			bp->b_resid = tsmsgp->rbpcr;
-			debug (("tsintr: iodone(NORM) [%d,%d,%d]\n",
+			debug (("tsintr: biodone(NORM) [%d,%d,%d]\n",
 				bp->b_resid, bp->b_bcount, tsmsgp->rbpcr));
-			iodone (bp); /* bertram: ioctl ??? */
+			biodone (bp); /* bertram: ioctl ??? */
 		}
 		return;
 
@@ -1080,8 +1080,8 @@ tsintr(ctlr)
 		debug (("resid:%d, count:%d, rbpcr:%d\n",
 			bp->b_resid, bp->b_bcount, tsmsgp->rbpcr));
 		bp->b_resid = tsmsgp->rbpcr; /* XXX */
-		debug (("tsintr: iodone(%x)\n", bp->b_flags));
-		iodone (bp);
+		debug (("tsintr: biodone(%x)\n", bp->b_flags));
+		biodone (bp);
 	}
 	if ((sr & TS_TC) > TS_TC_FR)
 		tsreset (ctlr);
