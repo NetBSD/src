@@ -1,3 +1,3 @@
-/*	$NetBSD: aout_machdep.h,v 1.6 1996/03/19 03:06:28 jonathan Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.7 1996/10/08 13:07:36 cgd Exp $	*/
 
-#include <mips/exec.h>
+#include <mips/aout_machdep.h>
