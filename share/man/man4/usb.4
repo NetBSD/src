@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.20 1999/11/23 01:46:32 augustss Exp $
+.\" $NetBSD: usb.4,v 1.21 1999/12/06 14:52:08 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,6 +110,8 @@ keyboard driver
 printer driver.
 .It umass
 driver for mass storage devices, such as disks.
+.It umodem
+driver for communication devices that use the Abstract Control Model.
 .It ums
 mouse driver
 .El
@@ -140,7 +142,7 @@ such as descriptors, from the device.
 Each endpoint, except the control endpoint, is unidirectional.
 .Pp
 The endpoints in a device are grouped into interfaces.
-An interface is a logical unit within a device; e.g.
+An interface is a logical unit within a device; e.g.,
 a compound device with both a keyboard and a trackball would present
 one interface for each.
 An interface can sometimes be set into different modes,
@@ -156,7 +158,7 @@ and interfaces.
 Each device located on a hub has several
 .Xr config 8
 locators:
-.Bl -tag -compact -width xxxxxxx
+.Bl -tag -compact -width xxxxxxxxx
 .It Cd port
 this is the number of the port on closest upstream hub.
 .It Cd configuration
