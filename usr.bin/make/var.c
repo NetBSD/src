@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.54 2000/08/13 22:47:01 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.55 2000/09/05 17:57:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.54 2000/08/13 22:47:01 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.55 2000/09/05 17:57:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.54 2000/08/13 22:47:01 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.55 2000/09/05 17:57:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -215,6 +215,7 @@ static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
 						ClientData),
 			    ClientData));
 static char *VarSort __P((char *));
+static char *VarUniq __P((char *));
 static int VarWordCompare __P((const void *, const void *));
 static void VarPrintVar __P((ClientData));
 
@@ -1359,6 +1360,55 @@ VarSort (str)
 
 /*-
  *-----------------------------------------------------------------------
+ * VarUniq --
+ *	Remove adjacent duplicate words.
+ *
+ * Results:
+ *	A string containing the resulting words.
+ *
+ * Side Effects:
+ *	None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static char *
+VarUniq(str)
+    char 	 *str;	    	    /* String whose words should be sorted */
+				    /* Function to use to modify them */
+{
+    Buffer	  buf;	    	    /* Buffer for new string */
+    char 	**av;		    /* List of words to affect */
+    char 	 *as;		    /* Word list memory */
+    int 	  ac, i, j;
+
+    buf = Buf_Init(0);
+    av = brk_string(str, &ac, FALSE, &as);
+
+    if (ac > 1) {
+	for (j = 0, i = 1; i < ac; i++)
+	    if (strcmp(av[i], av[j]) != 0 && (++j != i))
+		av[j] = av[i];
+	ac = j + 1;
+    }
+
+    for (i = 0; i < ac; i++) {
+	Buf_AddBytes(buf, strlen(av[i]), (Byte *)av[i]);
+	if (i != ac - 1)
+	    Buf_AddByte(buf, ' ');
+    }
+
+    free(as);
+    free(av);
+
+    Buf_AddByte(buf, '\0');
+    str = (char *)Buf_GetAll(buf, (int *)NULL);
+    Buf_Destroy(buf, FALSE);
+    return str;
+}
+
+
+/*-
+ *-----------------------------------------------------------------------
  * VarGetPattern --
  *	Pass through the tstr looking for 1) escaped delimiters,
  *	'$'s and backslashes (place the escaped character in
@@ -1832,7 +1882,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *  	  	    	each word
      *  	  :R	    	Substitute the root of each word
      *  	  	    	(pathname minus the suffix).
-     *		  :O		Sort words in variable.
+     *		  :O		("Order") Sort words in variable.
+     *		  :U		("Uniq") Remove adjacent duplicate words.
      *		  :?<true-value>:<false-value>
      *				If the variable evaluates to true, return
      *				true value, else return the second value.
@@ -2377,6 +2428,15 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			termc = *cp;
 			break;
 		    }
+		    /*FALLTHRU*/
+		case 'u':
+		    if (tstr[1] == endc || tstr[1] == ':') {
+			newStr = VarUniq (str);
+			cp = tstr + 1;
+			termc = *cp;
+			break;
+		    }
+		    /*FALLTHRU*/
 #ifdef SUNSHCMD
 		case 's':
 		    if (tstr[1] == 'h' && (tstr[2] == endc || tstr[2] == ':')) {
