@@ -1,7 +1,6 @@
-#	$Id: Makefile,v 1.1 1994/04/04 21:53:24 cgd Exp $
+#	$Id: Makefile,v 1.2 1997/01/31 23:06:52 carrel Exp $
 
 PROG=	grfinfo
-NOMAN=
 CFLAGS+= -I${.CURDIR}/../../sys/arch/hp300
 
 .include <bsd.prog.mk>
