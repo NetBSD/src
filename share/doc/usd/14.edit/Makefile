@@ -17,4 +17,4 @@ ${DOC}.${PRINTER}: ${SRCS}
 # you should just use the index in edit.tut, and ignore editvindex.
 
 editvindex:
-	${TROFF} ${MACROS} -n22 edit.vindex
+	( cd ${.CURDIR} ; ${TROFF} ${MACROS} -n22 edit.vindex

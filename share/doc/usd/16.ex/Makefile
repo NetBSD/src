@@ -10,7 +10,7 @@ CLEANFILES=summary.*
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS} ${DOC}.summary.${PRINTER}
-	${ROFF} ${SRCS} > ${.TARGET}
+	( cd ${.CURDIR} ; ${ROFF} ${SRCS} ) > ${.TARGET}
 
 ${DOC}.summary.${PRINTER}: ex.summary
-	${TBL} ex.summary | ${ROFF} > ${.TARGET}
+	( cd ${.CURDIR} ; ${TBL} ex.summary ) | ${ROFF} > ${.TARGET}
