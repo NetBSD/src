@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.10 1998/07/02 21:46:18 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.11 1998/07/16 07:08:26 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,9 +45,14 @@
 #include "defs.h"
 
 /* Data */
-#define MAX 500
+#define MAX 1000
 static int menu_no = 0;
 static id_rec *menus[MAX];
+
+/* Other defines */
+#define OPT_SUB    1
+#define OPT_ENDWIN 2
+#define OPT_EXIT   4
 
 
 /* get_menu returns a pointer to a newly created id_rec or an old one. */
@@ -106,7 +111,6 @@ write_menu_file (char *initcode)
 
 	int nlen;
 
-	char opt_ch;
 	int ch;
 
 	optn_info *toptn;
@@ -150,51 +154,48 @@ write_menu_file (char *initcode)
 		"#include <stdlib.h>\n"
 		"#include <string.h>\n"
 		"#include <ctype.h>\n"
-		"#include <curses.h>\n"
-		"\n");
+		"#include <curses.h>\n\n"
+		);
 
 	if (do_dynamic)
-		(void) fprintf (out_file,
-			"\n#define DYNAMIC_MENUS\n\n"
-			"typedef\n"
-			"struct dyn_menu_ent {\n"
-			"	char   *optname;\n"
-			"	int	nextmenu;\n"
-			"	int	submenu;\n"
-			"	void	(*action)(void);\n"
-			"} dyn_menu_ent ;\n\n");
+		(void) fprintf (out_file, "#define DYNAMIC_MENUS\n\n");
 
-	(void) fprintf (out_file, "%s",
+	(void) fprintf (out_file,
+		"typedef\n"
+		"struct menu_ent {\n"
+		"	char   *opt_name;\n"
+		"	int	opt_menu;\n"
+		"	int	opt_flags;\n"
+		"	void	(*opt_action)(void);\n"
+		"} menu_ent ;\n\n"
+		"#define OPT_SUB    1\n"
+		"#define OPT_ENDWIN 2\n"
+		"#define OPT_EXIT   4\n"
+		"#define OPT_NOMENU -1\n\n"
 		"typedef\n"
 		"struct menudesc {\n"
-		"	char   *title;\n"
-		"	int     y, x;\n"
-		"	int	h, w;\n"
-		"	int	mopt;\n"
-		"	int     numopts;\n"
-		"	int	cursel;\n"
-		"	int	topline;\n"
-		"	char   **opts;\n"
-		"	WINDOW *mw;\n"
-		"	char   *helpstr;\n");
-
-	if (do_dynamic)
-		(void) fprintf (out_file, 
-			"	dyn_menu_ent   *dyn_opts;\n"
-			"	void   (*post_act)(void);\n"
-			"	void   (*exit_act)(void);\n");
-
-	(void) fprintf (out_file, "%s",
+		"	char     *title;\n"
+		"	int      y, x;\n"
+		"	int	 h, w;\n"
+		"	int	 mopt;\n"
+		"	int      numopts;\n"
+		"	int	 cursel;\n"
+		"	int	 topline;\n"
+		"	menu_ent *opts;\n"
+		"	WINDOW   *mw;\n"
+		"	char     *helpstr;\n"
+		"	void    (*post_act)(void);\n"
+		"	void    (*exit_act)(void);\n"
 		"} menudesc ;\n"
 		"\n"
 		"/* defines for mopt field. */\n"
-		"#define NOEXITOPT 1\n"
-		"#define NOBOX 2\n"
-		"#define SCROLL 4\n");
+		"#define MC_NOEXITOPT 1\n"
+		"#define MC_NOBOX 2\n"
+		"#define MC_SCROLL 4\n"
+		);
 
 	if (do_dynamic)
-		(void) fprintf (out_file,
-			"#define DYNAMIC 8\n");
+		(void) fprintf (out_file, "#define MC_VALID 8\n");
 
 	(void) fprintf (out_file, "%s",
 		"\n"
@@ -203,17 +204,31 @@ write_menu_file (char *initcode)
 		"\n"
 		"/* Prototypes */\n"
 		"void process_menu (int num);\n"
-		"void __menu_initerror (void);\n"    
-		"\n"
-		"/* Menu names */\n"
-	      );
+		"void __menu_initerror (void);\n"
+		);
+
+	if (do_dynamic)
+		(void) fprintf (out_file, "%s",
+			"int new_menu (char * title, menu_ent * opts, "
+				"int numopts, \n"
+				"\tint x, int y, int h, int w, int mopt,\n"
+				"\tvoid (*post_act)(void), void (*exit_act), "
+				"char * help);\n"
+			"void free_menu (int menu_no);\n"
+			);
+
+	(void) fprintf (out_file, "\n/* Menu names */\n");
 	for (i=0; i<menu_no; i++) {
 		(void) fprintf (out_file, "#define MENU_%s\t%d\n",
 				menus[i]->id, i);
 	}
-	(void) fprintf (out_file, "\n#define MAX_STRLEN %d\n", max_strlen);
 
-	(void) fprintf (out_file, "#endif\n");
+	if (do_dynamic)
+		(void) fprintf (out_file, "\n#define DYN_MENU_START\t%d",
+				menu_no);
+
+	(void) fprintf (out_file, "\n#define MAX_STRLEN %d\n"
+			"#endif\n", max_strlen);
 	fclose (out_file);
 
 	/* Now the C file */
@@ -230,36 +245,83 @@ write_menu_file (char *initcode)
 
 	/* data definitions */
 
-	/* optstrX */
+	/* func defs */
 	for (i=0; i<menu_no; i++) {
-		(void) fprintf (out_file, "static char *optstr%d[] = {\n", i);
-		toptn = menus[i]->info->optns;
-		opt_ch = 'a';
-		while (toptn != NULL) {
-			if (opt_ch > 'Z' && opt_ch < 'a') {
-				(void) fprintf (stderr, "Menu %s has "
-					"too many options.\n",
-					menus[i]->info->title);
-				exit (1);
-			}
-			(void) fprintf (out_file, "\t\"%c: %s,\n", opt_ch,
-					toptn->name+1);
-			toptn = toptn->next;
-			if (opt_ch == 'z')
-				opt_ch = 'A';
-			else if (opt_ch == 'w')
-				opt_ch = 'y';
-			else
-				opt_ch++;
+		if (strlen(menus[i]->info->postact.code)) {
+			(void) fprintf (out_file,
+				"void menu_%d_postact(void);\n"
+				"void menu_%d_postact(void)\n{", i, i);
+			if (menus[i]->info->postact.endwin)
+				(void) fprintf (out_file, "\tendwin();\n"
+					"\t__m_endwin = 1;\n");
+			(void) fprintf (out_file,
+					"\t%s\n}\n",
+					menus[i]->info->postact.code);
 		}
-		(void) fprintf (out_file, "\t(char *)NULL\n};\n\n");
+		if (strlen(menus[i]->info->exitact.code)) {
+			(void) fprintf (out_file,
+				"void menu_%d_exitact(void);\n"
+				"void menu_%d_exitact(void)\n{", i, i);
+			if (menus[i]->info->exitact.endwin)
+				(void) fprintf (out_file, "\tendwin();\n"
+					"\t__m_endwin = 1;\n");
+			(void) fprintf (out_file, "\t%s\n}\n\n",
+					menus[i]->info->exitact.code);
+		}
+		j = 0;
+		toptn = menus[i]->info->optns;
+		while (toptn != NULL) {
+			if (strlen(toptn->optact.code)) {
+				(void) fprintf (out_file,
+					"void opt_act_%d_%d(void);\n"
+					"void opt_act_%d_%d(void)\n"
+					"{\t%s\n}\n\n",
+					i, j, i, j, toptn->optact.code);
+			}
+			j++;
+			toptn = toptn->next;
+		}
+
 	}
 
+	/* optentX */
+	for (i=0; i<menu_no; i++) {
+		if (menus[i]->info->numopt > 53) {
+			(void) fprintf (stderr, "Menu %s has "
+				"too many options.\n",
+				menus[i]->info->title);
+			exit (1);
+		}
+		toptn = menus[i]->info->optns;
+		j = 0;
+		(void) fprintf (out_file,
+				"static menu_ent optent%d[] = {\n", i);
+		while (toptn != NULL) {
+			(void) fprintf (out_file, "\t{\"%s,%d,%d,",
+				toptn->name+1, toptn->menu,
+				(toptn->issub ? OPT_SUB : 0)
+				+(toptn->doexit ? OPT_EXIT : 0)
+				+(toptn->optact.endwin ? OPT_ENDWIN : 0));
+			if (strlen(toptn->optact.code)) 
+				(void) fprintf (out_file, "opt_act_%d_%d}",
+					i, j);
+			else
+				(void) fprintf (out_file, "NULL}");
+			(void) fprintf (out_file, "%s\n",
+				(toptn->next ? "," : ""));
+			j++;
+			toptn = toptn->next;
+		}
+		(void) fprintf (out_file, "\t};\n\n");
+
+	}
+
+
 	/* menus */
-	(void) fprintf (out_file, "static struct menudesc menus[] = {\n");
+	(void) fprintf (out_file, "static struct menudesc menu_def[] = {\n");
 	for (i=0; i<menu_no; i++) {
 		(void) fprintf (out_file,
-			"\t{%s,%d,%d,%d,%d,%d,%d,0,0,optstr%d,NULL,",
+			"\t{%s,%d,%d,%d,%d,%d,%d,0,0,optent%d,NULL,",
 			menus[i]->info->title, 	menus[i]->info->y,
 			menus[i]->info->x, menus[i]->info->h,
 			menus[i]->info->w, menus[i]->info->mopt,
@@ -281,78 +343,20 @@ write_menu_file (char *initcode)
 				}
 			(void) fprintf (out_file, "\"");
 		}
-		if (do_dynamic)
-			(void) fprintf (out_file, ",NULL,NULL,NULL},\n");
+		if (strlen(menus[i]->info->postact.code))
+			(void) fprintf (out_file, ",menu_%d_postact", i);
 		else
-			(void) fprintf (out_file, "},\n");
+			(void) fprintf (out_file, ",NULL");
+		if (strlen(menus[i]->info->exitact.code))
+			(void) fprintf (out_file, ",menu_%d_exitact", i);
+		else
+			(void) fprintf (out_file, ",NULL");
+
+		(void) fprintf (out_file, "},\n");
 
 	}
 	(void) fprintf (out_file, "{NULL}};\n\n");
 
-	/* num_menus */
-	(void) fprintf (out_file, "int num_menus = %d;\n\n", menu_no);
-
-	/* action code */
-	(void) fprintf (out_file, "%s",
-		"static int process_item (int *menu_no, int sel)\n"
-		"{\n"
-		"\tint retval = FALSE;\n"
-		"\n"
-		"\tswitch (*menu_no) {\n"
-	);
-	for (i=0; i<menu_no; i++) {
-		(void) fprintf (out_file, "\tcase MENU_%s:\n",
-				menus[i]->id);
-		(void) fprintf (out_file, "\t\tswitch (sel) {\n"
-				"\t\tcase -2:\n");
-		if (menus[i]->info->postact.endwin)
-			(void) fprintf (out_file, "\t\t\tendwin();\n"
-					"\t\t__m_endwin = 1;\n");
-		if (strlen(menus[i]->info->postact.code))
-			(void) fprintf (out_file, "\t\t\t{%s}\n",
-					menus[i]->info->postact.code);
-		(void) fprintf (out_file, "\t\t\tbreak;\n");
-		(void) fprintf (out_file, "\t\tcase -1:\n");
-		if (menus[i]->info->exitact.endwin)
-			(void) fprintf (out_file, "\t\t\tendwin();\n"
-					"\t\t__m_endwin = 1;\n");
-		if (strlen(menus[i]->info->exitact.code))
-			(void) fprintf (out_file, "\t\t\t{%s}\n",
-					menus[i]->info->exitact.code);
-		(void) fprintf (out_file, "\t\t\tbreak;\n");
-		j = 0;
-		toptn = menus[i]->info->optns;
-		while (toptn != NULL) {
-			(void) fprintf (out_file, "\t\tcase %d:\n", j++);
-			if (toptn->optact.endwin)
-				(void) fprintf (out_file, "\t\t\tendwin();\n"
-						"\t\t__m_endwin = 1;\n");
-			if (strlen(toptn->optact.code))
-				(void) fprintf (out_file, "\t\t\t{%s}\n",
-						toptn->optact.code);
-			if (toptn->menu >= 0)
-				if (toptn->issub)
-					(void) fprintf (out_file,
-						"\t\t\tprocess_menu(%d);\n",
-						toptn->menu);
-				else
-					(void) fprintf (out_file,
-						"\t\t\t*menu_no = %d;\n",
-						toptn->menu);
-			if (toptn->doexit)
-				(void) fprintf (out_file,
-						"\t\t\tretval = TRUE;\n");
-			(void) fprintf (out_file, "\t\t\tbreak;\n");
-			toptn = toptn->next;
-		}
-
-		(void) fprintf (out_file, "\t\t}\n\t\tbreak;\n");
-	}
-	(void) fprintf (out_file, "\t}\n\t return retval;\n}\n\n");
-
-	while ((ch = fgetc(sys_file)) != EOF)
-		fputc(ch, out_file);     	
-	
 	/* __menu_initerror: initscr failed. */
 	(void) fprintf (out_file, 
 		"/* __menu_initerror: initscr failed. */\n"
@@ -369,6 +373,17 @@ write_menu_file (char *initcode)
 		(void) fprintf (out_file, "%s\n}\n", error_act.code);
 	}
 
+	/* Copy menu_sys.def file. */
+	while ((ch = fgetc(sys_file)) != '\014')  /* Control-L */
+		fputc(ch, out_file);     	
+
+	if (do_dynamic) {
+		while ((ch = fgetc(sys_file)) != '\n')
+			/* skip it */;
+		while ((ch = fgetc(sys_file)) != EOF)
+			fputc(ch, out_file);
+	}
+		
 	fclose (out_file);
 	fclose (sys_file);
 }
