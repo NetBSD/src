@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.44 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.45 1999/09/13 19:49:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -668,7 +668,7 @@ ohci_intr(p)
 	if (!eintrs)
 		return (0);
 
-	sc->sc_bus.intr_context = 1;
+	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 	DPRINTFN(7, ("ohci_intr: sc=%p intrs=%x(%x) eintr=%x\n", 
 		     sc, (u_int)intrs, OREAD4(sc, OHCI_INTERRUPT_STATUS),
@@ -704,7 +704,7 @@ ohci_intr(p)
 		ohci_rhsc_able(sc, 0);
 	}
 
-	sc->sc_bus.intr_context = 0;
+	sc->sc_bus.intr_context--;
 
 	/* Block unprocessed interrupts. XXX */
 	OWRITE4(sc, OHCI_INTERRUPT_DISABLE, intrs);
@@ -1212,7 +1212,10 @@ ohci_timeout(addr)
 	usbd_request_handle reqh = addr;
 
 	DPRINTF(("ohci_timeout: reqh=%p\n", reqh));
+
+	reqh->device->bus->intr_context++;
 	ohci_abort_req(reqh, USBD_TIMEOUT);
+	reqh->device->bus->intr_context--;
 }
 
 #ifdef USB_DEBUG
