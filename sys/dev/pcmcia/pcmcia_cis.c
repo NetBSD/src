@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.15 2000/01/20 08:47:59 enami Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.16 2000/01/25 06:36:17 chopps Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -970,6 +970,10 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			if (intface) {
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
+				cfe->flags &= ~(PCMCIA_CFE_MWAIT_REQUIRED
+				    | PCMCIA_CFE_RDYBSY_ACTIVE
+				    | PCMCIA_CFE_WP_ACTIVE
+				    | PCMCIA_CFE_BVD_ACTIVE);
 				if (reg & PCMCIA_TPCE_IF_MWAIT)
 					cfe->flags |= PCMCIA_CFE_MWAIT_REQUIRED;
 				if (reg & PCMCIA_TPCE_IF_RDYBSY)
@@ -1038,6 +1042,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &=
+				    ~(PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16);
 				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_8BIT)
 					cfe->flags |= PCMCIA_CFE_IO8;
 				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_16BIT)
@@ -1115,6 +1121,9 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &= ~(PCMCIA_CFE_IRQSHARE
+				    | PCMCIA_CFE_IRQPULSE
+				    | PCMCIA_CFE_IRQLEVEL);
 				if (reg & PCMCIA_TPCE_IR_SHARE)
 					cfe->flags |= PCMCIA_CFE_IRQSHARE;
 				if (reg & PCMCIA_TPCE_IR_PULSE)
@@ -1237,6 +1246,9 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &= ~(PCMCIA_CFE_POWERDOWN
+				    | PCMCIA_CFE_READONLY
+				    | PCMCIA_CFE_AUDIO);
 				if (reg & PCMCIA_TPCE_MI_PWRDOWN)
 					cfe->flags |= PCMCIA_CFE_POWERDOWN;
 				if (reg & PCMCIA_TPCE_MI_READONLY)
