@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.136 2000/03/17 11:45:49 soren Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.137 2000/03/19 10:33:26 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -494,6 +494,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "JVC     ", "R2626",            ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "YAMAHA", "CRW8424S",           ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
