@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1996/10/13 21:37:53 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 1996/10/14 04:31:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -288,7 +288,12 @@ mach_init(argc, argv, code, cv)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
+#ifdef notyet
+	/* XXX locore doesn't set up cpu type early enough for this */
 	mips_vector_init();
+#else
+	mips1_vector_init();
+#endeif
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
