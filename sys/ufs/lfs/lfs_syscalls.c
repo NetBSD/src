@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.17 1998/06/09 07:46:33 scottr Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.18 1998/06/24 20:58:48 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -555,7 +555,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 	 * Initialize the vnode from the inode, check for aliases.  In all
 	 * cases re-init ip, the underlying vnode/inode may have changed.
 	 */
-	error = ufs_vinit(mp, lfs_specop_p, LFS_FIFOOPS, &vp);
+	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
 		lfs_vunref(vp);
 		*vpp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.17 1998/06/22 22:01:10 sommerfe Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.18 1998/06/24 20:58:48 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993, 1995
@@ -34,8 +34,6 @@
  *
  *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
-
-#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +167,6 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 struct vnodeopv_desc lfs_specop_opv_desc =
 	{ &lfs_specop_p, lfs_specop_entries };
 
-#ifdef FIFO
 int (**lfs_fifoop_p) __P((void *));
 struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -219,7 +216,6 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 };
 struct vnodeopv_desc lfs_fifoop_opv_desc =
 	{ &lfs_fifoop_p, lfs_fifoop_entries };
-#endif /* FIFO */
 
 #define	LFS_READWRITE
 #include <ufs/ufs/ufs_readwrite.c>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.4 1998/06/23 23:15:50 sommerfe Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.5 1998/06/24 20:58:47 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,10 +36,6 @@
  *	@(#)ffs_extern.h	8.3 (Berkeley) 4/16/94
  * Modified for ext2fs by Manuel Bouyer.
  */
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_fifo.h"
-#endif
 
 struct buf;
 struct fid;
@@ -152,9 +148,5 @@ __END_DECLS
 
 extern int (**ext2fs_vnodeop_p) __P((void *));
 extern int (**ext2fs_specop_p) __P((void *));
-#ifdef FIFO
 extern int (**ext2fs_fifoop_p) __P((void *));
-#define EXT2FS_FIFOOPS ext2fs_fifoop_p
-#else
-#define EXT2FS_FIFOOPS NULL
-#endif
+

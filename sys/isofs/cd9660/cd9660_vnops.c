@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.45 1998/06/22 22:01:03 sommerfe Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.46 1998/06/24 20:58:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,10 +39,6 @@
  *
  *	@(#)cd9660_vnops.c	8.15 (Berkeley) 5/27/95
  */
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_fifo.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,9 +929,7 @@ cd9660_setattr(v)
 	if (vap->va_size != VNOVAL
 	    && vp->v_type != VCHR
 	    && vp->v_type != VBLK
-#ifdef	FIFO
 	    && vp->v_type != VFIFO
-#endif
 	    )
 		return EOPNOTSUPP;
 	
@@ -1073,7 +1067,6 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 struct vnodeopv_desc cd9660_specop_opv_desc =
 	{ &cd9660_specop_p, cd9660_specop_entries };
 
-#ifdef FIFO
 int (**cd9660_fifoop_p) __P((void *));
 struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -1123,4 +1116,3 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 };
 struct vnodeopv_desc cd9660_fifoop_opv_desc =
 	{ &cd9660_fifoop_p, cd9660_fifoop_entries };
-#endif /* FIFO */

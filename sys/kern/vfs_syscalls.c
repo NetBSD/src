@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.118 1998/06/22 22:01:04 sommerfe Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.119 1998/06/24 20:58:46 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,6 @@
  */
 
 #include "opt_uvm.h"
-#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -970,9 +969,6 @@ sys_mkfifo(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#ifndef FIFO
-	return (EOPNOTSUPP);
-#else
 	register struct sys_mkfifo_args /* {
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
@@ -998,7 +994,6 @@ sys_mkfifo(p, v, retval)
 	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	return (VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr));
-#endif /* FIFO */
 }
 
 /*
@@ -1208,10 +1203,7 @@ sys_lseek(p, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE
-#ifdef FIFO
-	    || vp->v_type == VFIFO
-#endif
-	)
+	    || vp->v_type == VFIFO)
 		return (ESPIPE);
 
 	switch (SCARG(uap, whence)) {

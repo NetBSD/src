@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.42 1998/06/22 22:01:11 sommerfe Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.43 1998/06/24 20:58:49 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -42,7 +42,6 @@
 
 #include "opt_quota.h"
 #include "opt_uvm.h"
-#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1698,10 +1697,8 @@ ufs_print(v)
 
 	printf("tag VT_UFS, ino %d, on dev %d, %d", ip->i_number,
 	    major(ip->i_dev), minor(ip->i_dev));
-#ifdef FIFO
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
-#endif /* FIFO */
 	lockmgr_printinfo(&ip->i_lock);
 	printf("\n");
 	return (0);
@@ -1777,7 +1774,6 @@ ufsspec_close(v)
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
-#ifdef FIFO
 /*
  * Read wrapper for fifo's
  */
@@ -1850,7 +1846,6 @@ ufsfifo_close(v)
 	simple_unlock(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
-#endif /* FIFO */
 
 /*
  * Return POSIX pathconf information applicable to ufs filesystems.
@@ -1951,12 +1946,8 @@ ufs_vinit(mntp, specops, fifoops, vpp)
 		}
 		break;
 	case VFIFO:
-#ifdef FIFO
 		vp->v_op = fifoops;
 		break;
-#else
-		return (EOPNOTSUPP);
-#endif
 	case VNON:
 	case VBAD:
 	case VSOCK:
