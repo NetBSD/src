@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsload - namespace loading/expanding/contracting procedures
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -118,7 +118,6 @@
 
 #include "acpi.h"
 #include "acnamesp.h"
-#include "acparser.h"
 #include "acdispat.h"
 
 
@@ -171,10 +170,12 @@ AcpiNsLoadTable (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "AML block at %p\n", TableDesc->AmlStart));
 
+    /* Ignore table if there is no AML contained within */
+
     if (!TableDesc->AmlLength)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Zero-length AML block\n"));
-        return_ACPI_STATUS (AE_BAD_PARAMETER);
+        ACPI_REPORT_WARNING (("Zero-length AML block in table [%4.4s]\n", TableDesc->Pointer->Signature));
+        return_ACPI_STATUS (AE_OK);
     }
 
     /*

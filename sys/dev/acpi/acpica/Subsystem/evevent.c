@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,6 @@
 
 #include "acpi.h"
 #include "acevents.h"
-#include "acnamesp.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evevent")
@@ -255,7 +254,7 @@ ACPI_STATUS
 AcpiEvFixedEventInitialize (
     void)
 {
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
     ACPI_STATUS             Status;
 
 
@@ -304,7 +303,7 @@ AcpiEvFixedEventDetect (
     UINT32                  IntStatus = ACPI_INTERRUPT_NOT_HANDLED;
     UINT32                  FixedStatus;
     UINT32                  FixedEnable;
-    NATIVE_UINT_MAX32       i;
+    ACPI_NATIVE_UINT        i;
 
 
     ACPI_FUNCTION_NAME ("EvFixedEventDetect");
@@ -333,7 +332,7 @@ AcpiEvFixedEventDetect (
         {
             /* Found an active (signalled) event */
 
-            IntStatus |= AcpiEvFixedEventDispatch (i);
+            IntStatus |= AcpiEvFixedEventDispatch ((UINT32) i);
         }
     }
 

@@ -12,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -141,7 +141,7 @@
 #define ACPI_SIGNAL_FATAL           0
 #define ACPI_SIGNAL_BREAKPOINT      1
 
-typedef struct AcpiFatalInfo
+typedef struct acpi_signal_fatal_info
 {
     UINT32                  Type;
     UINT32                  Code;
@@ -343,9 +343,9 @@ AcpiOsWritePciConfiguration (
  */
 void
 AcpiOsDerivePciId(
-    ACPI_HANDLE	            rhandle,
+    ACPI_HANDLE             rhandle,
     ACPI_HANDLE             chandle,
-    ACPI_PCI_ID	            **PciId);
+    ACPI_PCI_ID             **PciId);
 
 /*
  * Miscellaneous
@@ -376,12 +376,12 @@ AcpiOsSignal (
 
 void ACPI_INTERNAL_VAR_XFACE
 AcpiOsPrintf (
-    const NATIVE_CHAR       *Format,
+    const char              *Format,
     ...);
 
 void
 AcpiOsVprintf (
-    const NATIVE_CHAR       *Format,
+    const char              *Format,
     va_list                 Args);
 
 void
@@ -395,8 +395,33 @@ AcpiOsRedirectOutput (
 
 UINT32
 AcpiOsGetLine (
-    NATIVE_CHAR             *Buffer);
+    char                    *Buffer);
 
+
+/*
+ * Directory manipulation
+ */
+
+void *
+AcpiOsOpenDirectory (
+    char                    *Pathname,
+    char                    *WildcardSpec,
+    char                    RequestedFileType);
+
+/* RequesteFileType values */
+
+#define REQUEST_FILE_ONLY                   0
+#define REQUEST_DIR_ONLY                    1
+
+
+
+char *
+AcpiOsGetNextFilename (
+    void                    *DirHandle);
+
+void
+AcpiOsCloseDirectory (
+    void                    *DirHandle);
 
 /*
  * Debug
@@ -407,7 +432,7 @@ AcpiOsDbgAssert(
     void                    *FailedAssertion,
     void                    *FileName,
     UINT32                  LineNumber,
-    NATIVE_CHAR             *Message);
+    char                    *Message);
 
 
 #endif /* __ACPIOSXF_H__ */

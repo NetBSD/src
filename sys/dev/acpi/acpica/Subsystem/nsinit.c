@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsinit - namespace initialization
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -380,7 +380,7 @@ AcpiNsInitOneObject (
 
     if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
     {
-        AcpiOsPrintf (".");
+        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT, "."));
     }
 
     /*
@@ -424,7 +424,7 @@ AcpiNsInitOneDevice (
 
     if ((AcpiDbgLevel <= ACPI_LV_ALL_EXCEPTIONS) && (!(AcpiDbgLevel & ACPI_LV_INFO)))
     {
-        AcpiOsPrintf (".");
+        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT, "."));
     }
 
     Info->DeviceCount++;
@@ -483,7 +483,7 @@ AcpiNsInitOneDevice (
             /* Ignore error and move on to next device */
 
     #ifdef ACPI_DEBUG_OUTPUT
-            NATIVE_CHAR *ScopeName = AcpiNsGetExternalPathname (ObjHandle);
+            char        *ScopeName = AcpiNsGetExternalPathname (ObjHandle);
 
             ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "%s._INI failed: %s\n",
                     ScopeName, AcpiFormatException (Status)));

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbxface - AML Debugger external interfaces
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -125,6 +125,113 @@
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbxface")
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbStartCommand
+ *
+ * PARAMETERS:  WalkState       - Current walk
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Enter debugger command loop
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiDbStartCommand (
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_PARSE_OBJECT       *Op)
+{
+    ACPI_STATUS             Status;
+
+
+    /* TBD: [Investigate] what are the namespace locking issues here */
+
+    /* AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE); */
+
+    /* Go into the command loop and await next user command */
+
+
+    AcpiGbl_MethodExecuting = TRUE;
+    Status = AE_CTRL_TRUE;
+    while (Status == AE_CTRL_TRUE)
+    {
+        if (AcpiGbl_DebuggerConfiguration == DEBUGGER_MULTI_THREADED)
+        {
+            /* Handshake with the front-end that gets user command lines */
+
+            Status = AcpiUtReleaseMutex (ACPI_MTX_DEBUG_CMD_COMPLETE);
+            if (ACPI_FAILURE (Status))
+            {
+                return (Status);
+            }
+            Status = AcpiUtAcquireMutex (ACPI_MTX_DEBUG_CMD_READY);
+            if (ACPI_FAILURE (Status))
+            {
+                return (Status);
+            }
+        }
+        else
+        {
+            /* Single threaded, we must get a command line ourselves */
+
+            /* Force output to console until a command is entered */
+
+            AcpiDbSetOutputDestination (ACPI_DB_CONSOLE_OUTPUT);
+
+            /* Different prompt if method is executing */
+
+            if (!AcpiGbl_MethodExecuting)
+            {
+                AcpiOsPrintf ("%1c ", ACPI_DEBUGGER_COMMAND_PROMPT);
+            }
+            else
+            {
+                AcpiOsPrintf ("%1c ", ACPI_DEBUGGER_EXECUTE_PROMPT);
+            }
+
+            /* Get the user input line */
+
+            (void) AcpiOsGetLine (AcpiGbl_DbLineBuf);
+        }
+
+        Status = AcpiDbCommandDispatch (AcpiGbl_DbLineBuf, WalkState, Op);
+    }
+
+    /* AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE); */
+
+    return (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbMethodEnd
+ *
+ * PARAMETERS:  WalkState       - Current walk
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION:
+ *
+ ******************************************************************************/
+
+void
+AcpiDbMethodEnd (
+    ACPI_WALK_STATE         *WalkState)
+{
+
+    if (!AcpiGbl_CmSingleStep)
+    {
+        return;
+    }
+
+    AcpiOsPrintf ("<Method Terminating>\n");
+
+    AcpiDbStartCommand (WalkState, NULL);
+}
 
 
 /*******************************************************************************
@@ -346,59 +453,8 @@ AcpiDbSingleStep (
         WalkState->MethodBreakpoint = 1;  /* Must be non-zero! */
     }
 
-    /* TBD: [Investigate] what are the namespace locking issues here */
 
-    /* AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE); */
-
-    /* Go into the command loop and await next user command */
-
-    AcpiGbl_MethodExecuting = TRUE;
-    Status = AE_CTRL_TRUE;
-    while (Status == AE_CTRL_TRUE)
-    {
-        if (AcpiGbl_DebuggerConfiguration == DEBUGGER_MULTI_THREADED)
-        {
-            /* Handshake with the front-end that gets user command lines */
-
-            Status = AcpiUtReleaseMutex (ACPI_MTX_DEBUG_CMD_COMPLETE);
-            if (ACPI_FAILURE (Status))
-            {
-                return (Status);
-            }
-            Status = AcpiUtAcquireMutex (ACPI_MTX_DEBUG_CMD_READY);
-            if (ACPI_FAILURE (Status))
-            {
-                return (Status);
-            }
-        }
-        else
-        {
-            /* Single threaded, we must get a command line ourselves */
-
-            /* Force output to console until a command is entered */
-
-            AcpiDbSetOutputDestination (ACPI_DB_CONSOLE_OUTPUT);
-
-            /* Different prompt if method is executing */
-
-            if (!AcpiGbl_MethodExecuting)
-            {
-                AcpiOsPrintf ("%1c ", ACPI_DEBUGGER_COMMAND_PROMPT);
-            }
-            else
-            {
-                AcpiOsPrintf ("%1c ", ACPI_DEBUGGER_EXECUTE_PROMPT);
-            }
-
-            /* Get the user input line */
-
-            (void) AcpiOsGetLine (AcpiGbl_DbLineBuf);
-        }
-
-        Status = AcpiDbCommandDispatch (AcpiGbl_DbLineBuf, WalkState, Op);
-    }
-
-    /* AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE); */
+    Status = AcpiDbStartCommand (WalkState, Op);
 
     /* User commands complete, continue execution of the interrupted method */
 

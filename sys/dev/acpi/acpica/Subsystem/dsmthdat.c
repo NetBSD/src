@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -398,9 +398,9 @@ AcpiDsMethodDataSetValue (
     ACPI_FUNCTION_TRACE ("DsMethodDataSetValue");
 
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, 
-        "obj %p op %X, ref count = %d [%s]\n", Object, 
-        Opcode, Object->Common.ReferenceCount, 
+    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+        "obj %p op %X, ref count = %d [%s]\n", Object,
+        Opcode, Object->Common.ReferenceCount,
         AcpiUtGetTypeName (Object->Common.Type)));
 
     /* Get the namespace node for the arg/local */
@@ -424,7 +424,7 @@ AcpiDsMethodDataSetValue (
             return_ACPI_STATUS (Status);
         }
 
-       ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Object Copied %p, new %p\n", 
+       ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Object Copied %p, new %p\n",
            Object, NewDesc));
     }
     else
@@ -703,7 +703,7 @@ AcpiDsStoreObjectToLocal (
     CurrentObjDesc = AcpiNsGetAttachedObject (Node);
     if (CurrentObjDesc == ObjDesc)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Obj=%p already installed!\n", 
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Obj=%p already installed!\n",
             ObjDesc));
         return_ACPI_STATUS (Status);
     }
@@ -734,19 +734,19 @@ AcpiDsStoreObjectToLocal (
          */
         if (Opcode == AML_ARG_OP)
         {
-            /* 
+            /*
              * Make sure that the object is the correct type.  This may be overkill, but
              * it is here because references were NS nodes in the past.  Now they are
              * operand objects of type Reference.
              */
             if (ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) != ACPI_DESC_TYPE_OPERAND)
             {
-                ACPI_REPORT_ERROR (("Invalid descriptor type while storing to method arg: %X\n", 
+                ACPI_REPORT_ERROR (("Invalid descriptor type while storing to method arg: %X\n",
                     CurrentObjDesc->Common.Type));
                 return_ACPI_STATUS (AE_AML_INTERNAL);
             }
 
-            /* 
+            /*
              * If we have a valid reference object that came from RefOf(), do the
              * indirect store
              */
@@ -761,7 +761,7 @@ AcpiDsStoreObjectToLocal (
                  * Store this object to the Node
                  * (perform the indirect store)
                  */
-                Status = AcpiExStoreObjectToNode (ObjDesc, 
+                Status = AcpiExStoreObjectToNode (ObjDesc,
                             CurrentObjDesc->Reference.Object, WalkState);
                 return_ACPI_STATUS (Status);
             }

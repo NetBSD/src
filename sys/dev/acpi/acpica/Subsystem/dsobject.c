@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -291,23 +291,24 @@ AcpiDsBuildInternalBufferObj (
     {
         ObjDesc->Buffer.Pointer = NULL;
         ACPI_REPORT_WARNING (("Buffer created with zero length in AML\n"));
-        return_ACPI_STATUS (AE_OK);
     }
-
-    ObjDesc->Buffer.Pointer = ACPI_MEM_CALLOCATE (
-                                    ObjDesc->Buffer.Length);
-    if (!ObjDesc->Buffer.Pointer)
+    else
     {
-        AcpiUtDeleteObjectDesc (ObjDesc);
-        return_ACPI_STATUS (AE_NO_MEMORY);
-    }
+        ObjDesc->Buffer.Pointer = ACPI_MEM_CALLOCATE (
+                                        ObjDesc->Buffer.Length);
+        if (!ObjDesc->Buffer.Pointer)
+        {
+            AcpiUtDeleteObjectDesc (ObjDesc);
+            return_ACPI_STATUS (AE_NO_MEMORY);
+        }
 
-    /* Initialize buffer from the ByteList (if present) */
+        /* Initialize buffer from the ByteList (if present) */
 
-    if (ByteList)
-    {
-        ACPI_MEMCPY (ObjDesc->Buffer.Pointer, ByteList->Named.Data,
-                     ByteListLength);
+        if (ByteList)
+        {
+            ACPI_MEMCPY (ObjDesc->Buffer.Pointer, ByteList->Named.Data,
+                         ByteListLength);
+        }
     }
 
     ObjDesc->Buffer.Flags |= AOPOBJ_DATA_VALID;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpe - General Purpose Event handling and dispatch
- *              $Revision: 1.1.1.1 $
+ *              $Revision: 1.1.1.2 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -137,8 +137,8 @@
 ACPI_STATUS
 AcpiEvGpeInitialize (void)
 {
-    NATIVE_UINT_MAX32       i;
-    NATIVE_UINT_MAX32       j;
+    ACPI_NATIVE_UINT        i;
+    ACPI_NATIVE_UINT        j;
     UINT32                  GpeBlock;
     UINT32                  GpeRegister;
     UINT32                  GpeNumberIndex;
@@ -175,7 +175,7 @@ AcpiEvGpeInitialize (void)
     AcpiGbl_GpeBlockInfo[1].BlockBaseNumber = AcpiGbl_FADT->Gpe1Base;
 
 
-    /* 
+    /*
      * Determine the maximum GPE number for this machine.
      *
      * Note: both GPE0 and GPE1 are optional, and either can exist without
@@ -204,7 +204,7 @@ AcpiEvGpeInitialize (void)
         {
             ACPI_REPORT_ERROR ((
                 "GPE0 block (GPE 0 to %d) overlaps the GPE1 block (GPE %d to %d) - Ignoring GPE1\n",
-                AcpiGbl_GpeNumberMax, AcpiGbl_FADT->Gpe1Base, 
+                AcpiGbl_GpeNumberMax, AcpiGbl_FADT->Gpe1Base,
                 AcpiGbl_FADT->Gpe1Base + ((AcpiGbl_GpeBlockInfo[1].RegisterCount * ACPI_GPE_REGISTER_WIDTH) - 1)));
 
             /* Ignore GPE1 block by setting the register count to zero */
@@ -213,11 +213,11 @@ AcpiEvGpeInitialize (void)
         }
         else
         {
-            /* 
+            /*
              * GPE0 and GPE1 do not have to be contiguous in the GPE number space,
              * But, GPE0 always starts at zero.
              */
-            AcpiGbl_GpeNumberMax = AcpiGbl_FADT->Gpe1Base + 
+            AcpiGbl_GpeNumberMax = AcpiGbl_FADT->Gpe1Base +
                                     ((AcpiGbl_GpeBlockInfo[1].RegisterCount * ACPI_GPE_REGISTER_WIDTH) - 1);
         }
     }
@@ -238,7 +238,7 @@ AcpiEvGpeInitialize (void)
 
     if (AcpiGbl_GpeNumberMax > ACPI_GPE_MAX)
     {
-        ACPI_REPORT_ERROR (("Maximum GPE number from FADT is too large: 0x%X\n", 
+        ACPI_REPORT_ERROR (("Maximum GPE number from FADT is too large: 0x%X\n",
             AcpiGbl_GpeNumberMax));
         return_ACPI_STATUS (AE_BAD_VALUE);
     }
@@ -277,7 +277,7 @@ AcpiEvGpeInitialize (void)
      * per register.  Initialization to zeros is sufficient.
      */
     AcpiGbl_GpeNumberInfo = ACPI_MEM_CALLOCATE (
-                                (ACPI_SIZE) (AcpiGbl_GpeRegisterCount * ACPI_GPE_REGISTER_WIDTH) *
+                                ((ACPI_SIZE) AcpiGbl_GpeRegisterCount * ACPI_GPE_REGISTER_WIDTH) *
                                 sizeof (ACPI_GPE_NUMBER_INFO));
     if (!AcpiGbl_GpeNumberInfo)
     {
@@ -326,7 +326,7 @@ AcpiEvGpeInitialize (void)
 
             for (j = 0; j < ACPI_GPE_REGISTER_WIDTH; j++)
             {
-                GpeNumber = GpeRegisterInfo->BaseGpeNumber + j;
+                GpeNumber = GpeRegisterInfo->BaseGpeNumber + (UINT32) j;
                 AcpiGbl_GpeNumberToIndex[GpeNumber].NumberIndex = (UINT8) GpeNumberIndex;
 
                 AcpiGbl_GpeNumberInfo[GpeNumberIndex].BitMask = AcpiGbl_DecodeTo8bit[j];
@@ -415,7 +415,7 @@ AcpiEvSaveMethodInfo (
 {
     UINT32                  GpeNumber;
     UINT32                  GpeNumberIndex;
-    NATIVE_CHAR             Name[ACPI_NAME_SIZE + 1];
+    char                    Name[ACPI_NAME_SIZE + 1];
     UINT8                   Type;
     ACPI_STATUS             Status;
 
@@ -690,7 +690,7 @@ AcpiEvAsynchExecuteGpeMethod (
         if (ACPI_FAILURE (Status))
         {
             ACPI_REPORT_ERROR (("%s while evaluating method [%4.4s] for GPE[%2.2X]\n",
-                AcpiFormatException (Status), 
+                AcpiFormatException (Status),
                 GpeInfo.MethodNode->Name.Ascii, GpeNumber));
         }
     }

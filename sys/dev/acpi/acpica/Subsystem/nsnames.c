@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -144,7 +144,7 @@ void
 AcpiNsBuildExternalPath (
     ACPI_NAMESPACE_NODE     *Node,
     ACPI_SIZE               Size,
-    NATIVE_CHAR             *NameBuffer)
+    char                    *NameBuffer)
 {
     ACPI_SIZE               Index;
     ACPI_NAMESPACE_NODE     *ParentNode;
@@ -213,11 +213,11 @@ AcpiNsBuildExternalPath (
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 AcpiNsGetExternalPathname (
     ACPI_NAMESPACE_NODE     *Node)
 {
-    NATIVE_CHAR             *NameBuffer;
+    char                    *NameBuffer;
     ACPI_SIZE               Size;
 
 

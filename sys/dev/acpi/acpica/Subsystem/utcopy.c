@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utcopy - Internal to external object translation utilities
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -181,7 +181,7 @@ AcpiUtCopyIsimpleToEsimple (
     {
     case ACPI_TYPE_STRING:
 
-        ExternalObject->String.Pointer = (NATIVE_CHAR *) DataSpace;
+        ExternalObject->String.Pointer = (char *) DataSpace;
         ExternalObject->String.Length  = InternalObject->String.Length;
         *BufferSpaceUsed = ACPI_ROUND_UP_TO_NATIVE_WORD ((ACPI_SIZE) InternalObject->String.Length + 1);
 
@@ -521,7 +521,7 @@ AcpiUtCopyEsimpleToIsimple (
 
     case ACPI_TYPE_STRING:
 
-        InternalObject->String.Pointer = 
+        InternalObject->String.Pointer =
             ACPI_MEM_CALLOCATE ((ACPI_SIZE) ExternalObject->String.Length + 1);
         if (!InternalObject->String.Pointer)
         {
@@ -538,7 +538,7 @@ AcpiUtCopyEsimpleToIsimple (
 
     case ACPI_TYPE_BUFFER:
 
-        InternalObject->Buffer.Pointer = 
+        InternalObject->Buffer.Pointer =
             ACPI_MEM_CALLOCATE (ExternalObject->Buffer.Length);
         if (!InternalObject->Buffer.Pointer)
         {
@@ -715,7 +715,7 @@ AcpiUtCopySimpleObject (
 
     /* Copy the entire source object over the destination object*/
 
-    ACPI_MEMCPY ((char *) DestDesc, (char *) SourceDesc, 
+    ACPI_MEMCPY ((char *) DestDesc, (char *) SourceDesc,
                     sizeof (ACPI_OPERAND_OBJECT));
 
     /* Restore the saved fields */
@@ -763,14 +763,14 @@ AcpiUtCopySimpleObject (
         if ((SourceDesc->String.Length) &&
             (!(SourceDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
         {
-            DestDesc->String.Pointer = ACPI_MEM_ALLOCATE (SourceDesc->String.Length + 1);
+            DestDesc->String.Pointer = ACPI_MEM_ALLOCATE ((ACPI_SIZE) SourceDesc->String.Length + 1);
             if (!DestDesc->String.Pointer)
             {
                 return (AE_NO_MEMORY);
             }
 
             ACPI_MEMCPY (DestDesc->String.Pointer, SourceDesc->String.Pointer,
-                         SourceDesc->String.Length + 1);
+                         (ACPI_SIZE) SourceDesc->String.Length + 1);
         }
         break;
 
@@ -868,7 +868,7 @@ AcpiUtCopyIelementToIelement (
         /*
          * Create the object array
          */
-        TargetObject->Package.Elements = 
+        TargetObject->Package.Elements =
             ACPI_MEM_CALLOCATE (((ACPI_SIZE) SourceObject->Package.Count + 1) *
                                     sizeof (void *));
         if (!TargetObject->Package.Elements)

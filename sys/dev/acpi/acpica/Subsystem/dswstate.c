@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswstate - Dispatcher parse tree walk management routines
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -273,7 +273,7 @@ AcpiDsResultPop (
     ACPI_OPERAND_OBJECT     **Object,
     ACPI_WALK_STATE         *WalkState)
 {
-    NATIVE_UINT             Index;
+    ACPI_NATIVE_UINT        Index;
     ACPI_GENERIC_STATE      *State;
 
 
@@ -337,7 +337,7 @@ AcpiDsResultPopFromBottom (
     ACPI_OPERAND_OBJECT     **Object,
     ACPI_WALK_STATE         *WalkState)
 {
-    NATIVE_UINT             Index;
+    ACPI_NATIVE_UINT        Index;
     ACPI_GENERIC_STATE      *State;
 
 
@@ -813,7 +813,7 @@ AcpiDsObjStackGetValue (
         return_PTR (NULL);
     }
 
-    return_PTR (WalkState->Operands[(NATIVE_UINT)(WalkState->NumOperands - 1) -
+    return_PTR (WalkState->Operands[(ACPI_NATIVE_UINT)(WalkState->NumOperands - 1) -
                     Index]);
 }
 
@@ -844,7 +844,7 @@ AcpiDsGetCurrentWalkState (
         return (NULL);
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "DsGetCurrentWalkState, =%p\n",
+    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "Current WalkState %p\n",
         Thread->WalkStateList));
 
     return (Thread->WalkStateList);
@@ -1062,7 +1062,7 @@ AcpiDsInitAmlWalk (
     }
     else
     {
-        /* 
+        /*
          * Setup the current scope.
          * Find a Named Op that has a namespace node associated with it.
          * search upwards from this Op.  Current scope is the first
@@ -1081,7 +1081,7 @@ AcpiDsInitAmlWalk (
         {
             ParserState->StartNode = ExtraOp->Common.Node;
         }
-        
+
         if (ParserState->StartNode)
         {
             /* Push start scope on scope stack and make it current  */

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: asltransform - Parse tree transforms
- *              $Revision: 16 $
+ *              $Revision: 18 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -430,9 +430,9 @@ TrDoSwitch (
     ACPI_PARSE_OBJECT       *StartNode)
 {
     ACPI_PARSE_OBJECT       *Next;
-    ACPI_PARSE_OBJECT       *Case = NULL;
+    ACPI_PARSE_OBJECT       *CaseOp = NULL;
     ACPI_PARSE_OBJECT       *CaseBlock = NULL;
-    ACPI_PARSE_OBJECT       *Default = NULL;
+    ACPI_PARSE_OBJECT       *DefaultOp = NULL;
     ACPI_PARSE_OBJECT       *CurrentParentNode;
     ACPI_PARSE_OBJECT       *Conditional = NULL;
     ACPI_PARSE_OBJECT       *Predicate;
@@ -460,7 +460,7 @@ TrDoSwitch (
 
         if (Next->Asl.ParseOpcode == PARSEOP_CASE)
         {
-            if (Case)
+            if (CaseOp)
             {
                 /* Add an ELSE to complete the previous CASE */
 
@@ -474,20 +474,20 @@ TrDoSwitch (
                 CurrentParentNode   = NewOp;
             }
 
-            Case = Next;
-            Conditional = Case;
-            CaseBlock = Case->Asl.Child->Asl.Next;
+            CaseOp = Next;
+            Conditional = CaseOp;
+            CaseBlock = CaseOp->Asl.Child->Asl.Next;
             Conditional->Asl.Child->Asl.Next = NULL;
 
             /*
-             * change Case() to:  If (PredicateValue == CaseValue) {...}
-             * Case->Child is the case value
-             * Case->Child->Peer is the beginning of the case block
+             * change CaseOp() to:  If (PredicateValue == CaseValue) {...}
+             * CaseOp->Child is the case value
+             * CaseOp->Child->Peer is the beginning of the case block
              */
             NewOp = TrCreateValuedLeafNode (PARSEOP_NAMESTRING,
                             (ACPI_INTEGER) ACPI_TO_INTEGER (PredicateValuePath));
 
-            Predicate = Case->Asl.Child;
+            Predicate = CaseOp->Asl.Child;
             Predicate->Asl.Next = NewOp;
             TrAmlInitLineNumbers (NewOp, Predicate);
 
@@ -533,14 +533,14 @@ TrDoSwitch (
         }
         else if (Next->Asl.ParseOpcode == PARSEOP_DEFAULT)
         {
-            if (Default)
+            if (DefaultOp)
             {
                 /* More than one Default */
             }
 
             /* Save the DEFAULT node for later, after CASEs */
 
-            Default = Next;
+            DefaultOp = Next;
         }
         else
         {
@@ -554,20 +554,20 @@ TrDoSwitch (
     /*
      * Add the default at the end of the if/else construct
      */
-    if (Default)
+    if (DefaultOp)
     {
-        if (Case)
+        if (CaseOp)
         {
             /* Add an ELSE first */
 
-            TrAmlInitNode (Default, PARSEOP_ELSE);
-            Default->Asl.Parent = Conditional->Asl.Parent;
+            TrAmlInitNode (DefaultOp, PARSEOP_ELSE);
+            DefaultOp->Asl.Parent = Conditional->Asl.Parent;
         }
         else
         {
             /* There were no CASE statements, no ELSE needed */
 
-            TrAmlInsertPeer (CurrentParentNode, Default->Asl.Child);
+            TrAmlInsertPeer (CurrentParentNode, DefaultOp->Asl.Child);
         }
     }
 

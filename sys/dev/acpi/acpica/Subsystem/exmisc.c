@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -324,7 +324,7 @@ AcpiExDoConcatenate (
     UINT32                  i;
     ACPI_INTEGER            ThisInteger;
     ACPI_OPERAND_OBJECT     *ReturnDesc;
-    NATIVE_CHAR             *NewBuf;
+    char                    *NewBuf;
 
 
     ACPI_FUNCTION_ENTRY ();
@@ -350,14 +350,14 @@ AcpiExDoConcatenate (
             return (AE_NO_MEMORY);
         }
 
-        NewBuf = (NATIVE_CHAR *) ReturnDesc->Buffer.Pointer;
+        NewBuf = (char *) ReturnDesc->Buffer.Pointer;
 
         /* Convert the first integer */
 
         ThisInteger = ObjDesc1->Integer.Value;
         for (i = 0; i < AcpiGbl_IntegerByteWidth; i++)
         {
-            NewBuf[i] = (NATIVE_CHAR) ThisInteger;
+            NewBuf[i] = (char) ThisInteger;
             ThisInteger >>= 8;
         }
 
@@ -366,7 +366,7 @@ AcpiExDoConcatenate (
         ThisInteger = ObjDesc2->Integer.Value;
         for (; i < (ACPI_MUL_2 (AcpiGbl_IntegerByteWidth)); i++)
         {
-            NewBuf[i] = (NATIVE_CHAR) ThisInteger;
+            NewBuf[i] = (char) ThisInteger;
             ThisInteger >>= 8;
         }
 
@@ -421,7 +421,7 @@ AcpiExDoConcatenate (
             return (AE_NO_MEMORY);
         }
 
-        NewBuf = (NATIVE_CHAR *) ReturnDesc->Buffer.Pointer;
+        NewBuf = (char *) ReturnDesc->Buffer.Pointer;
 
         /* Concatenate the buffers */
 

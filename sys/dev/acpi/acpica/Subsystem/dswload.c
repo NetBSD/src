@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswload - Dispatcher namespace load callbacks
- *              $Revision: 1.1.1.3 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -201,7 +201,7 @@ AcpiDsLoad1BeginOp (
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
     ACPI_OBJECT_TYPE        ObjectType;
-    NATIVE_CHAR             *Path;
+    char                    *Path;
     UINT32                  Flags;
 
 
@@ -284,7 +284,7 @@ AcpiDsLoad1BeginOp (
         case ACPI_TYPE_STRING:
         case ACPI_TYPE_BUFFER:
 
-            /* 
+            /*
              * These types we will allow, but we will change the type.  This
              * enables some existing code of the form:
              *
@@ -294,7 +294,7 @@ AcpiDsLoad1BeginOp (
              * Note: silently change the type here.  On the second pass, we will report a warning
              */
 
-            ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Type override - [%4.4s] had invalid type (%s) for Scope operator, changed to (Scope)\n", 
+            ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Type override - [%4.4s] had invalid type (%s) for Scope operator, changed to (Scope)\n",
                 Path, AcpiUtGetTypeName (Node->Type)));
 
             Node->Type = ACPI_TYPE_ANY;
@@ -305,7 +305,7 @@ AcpiDsLoad1BeginOp (
 
             /* All other types are an error */
 
-            ACPI_REPORT_ERROR (("Invalid type (%s) for target of Scope operator [%4.4s] (Cannot override)\n", 
+            ACPI_REPORT_ERROR (("Invalid type (%s) for target of Scope operator [%4.4s] (Cannot override)\n",
                 AcpiUtGetTypeName (Node->Type), Path));
 
             return (AE_AML_OPERAND_TYPE);
@@ -319,15 +319,15 @@ AcpiDsLoad1BeginOp (
          * For all other named opcodes, we will enter the name into the namespace.
          *
          * Setup the search flags.
-         * Since we are entering a name into the namespace, we do not want to 
+         * Since we are entering a name into the namespace, we do not want to
          * enable the search-to-root upsearch.
          *
          * There are only two conditions where it is acceptable that the name
          * already exists:
-         *    1) the Scope() operator can reopen a scoping object that was 
+         *    1) the Scope() operator can reopen a scoping object that was
          *       previously defined (Scope, Method, Device, etc.)
-         *    2) Whenever we are parsing a deferred opcode (OpRegion, Buffer, 
-         *       BufferField, or Package), the name of the object is already 
+         *    2) Whenever we are parsing a deferred opcode (OpRegion, Buffer,
+         *       BufferField, or Package), the name of the object is already
          *       in the namespace.
          */
         Flags = ACPI_NS_NO_UPSEARCH;
@@ -540,7 +540,7 @@ AcpiDsLoad2BeginOp (
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
     ACPI_OBJECT_TYPE        ObjectType;
-    NATIVE_CHAR             *BufferPtr;
+    char                    *BufferPtr;
 
 
     ACPI_FUNCTION_TRACE ("DsLoad2BeginOp");
@@ -578,7 +578,7 @@ AcpiDsLoad2BeginOp (
         {
             /* Get name from the op */
 
-            BufferPtr = (NATIVE_CHAR *) &Op->Named.Name;
+            BufferPtr = (char *) &Op->Named.Name;
         }
     }
     else
@@ -648,7 +648,7 @@ AcpiDsLoad2BeginOp (
         case ACPI_TYPE_STRING:
         case ACPI_TYPE_BUFFER:
 
-            /* 
+            /*
              * These types we will allow, but we will change the type.  This
              * enables some existing code of the form:
              *
@@ -656,7 +656,7 @@ AcpiDsLoad2BeginOp (
              *  Scope (DEB) { ... }
              */
 
-            ACPI_REPORT_WARNING (("Type override - [%4.4s] had invalid type (%s) for Scope operator, changed to (Scope)\n", 
+            ACPI_REPORT_WARNING (("Type override - [%4.4s] had invalid type (%s) for Scope operator, changed to (Scope)\n",
                 BufferPtr, AcpiUtGetTypeName (Node->Type)));
 
             Node->Type = ACPI_TYPE_ANY;
@@ -667,7 +667,7 @@ AcpiDsLoad2BeginOp (
 
             /* All other types are an error */
 
-            ACPI_REPORT_ERROR (("Invalid type (%s) for target of Scope operator [%4.4s]\n", 
+            ACPI_REPORT_ERROR (("Invalid type (%s) for target of Scope operator [%4.4s]\n",
                 AcpiUtGetTypeName (Node->Type), BufferPtr));
 
             return (AE_AML_OPERAND_TYPE);
