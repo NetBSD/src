@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.94 2000/01/05 23:57:33 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.95 2000/01/08 20:28:09 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2342,3 +2342,123 @@ sys/dev/ic/com.c				1.165
 
   Set carrier early enough for a serial console or kgdb to work
   with hardware handshake.  Fixes PR#6547.
+
+sys/dev/isapnp/gus_isapnp.c			1.14
+
+  Fix a problem preventing GUS P&P sound-card from working.
+
+distrib/utils/sysinst/arch/sparc/md.c		1.15-1.17
+
+  Add sanity to partition handling.  Symlink netbsd.GENERIC to netbsd
+  (while kern.tgz still contains netbsd.GENERIC).  Makes sysinst work
+  on the sparc.  Fixes PR#7741 and a few more problems.
+
+sys/netinet/ip_fil.h				1.33
+sys/netinet/ip_nat.c				1.27
+sys/netinet/ip_raudio_pxy.c			1.2
+sys/netinet/ip_state.c				1.19
+sys/netinet/ipl.h				1.2
+dist/ipf/HISTORY				1.2
+dist/ipf/parse.c				1.2
+dist/ipf/man/ipmon.8				1.2
+
+  Update IPF to version 3.3.6.
+
+lib/libc/net/gethnamaddr.c			1.28
+
+  Reduce superfluous warnings on replies from DNSSEC-enabled name
+  servers.  Fixes PR#8779.
+
+sys/sys/systm.h					1.100
+
+  Add a typedef `sy_call_t' for the function type in `struct sysent',
+  making it easier to reference this type.
+
+bin/date/date.1					1.24
+
+  Make the example ready for cut & paste.
+
+sys/arch/sparc/sparc/process_machdep.c		1.7
+
+  Prevent garbage from entering the data structure holding the FP
+  state of a process.
+
+lib/libc/sys/shutdown.2				1.11
+
+  Correct typo.  Fixes PR#9069.
+
+usr.sbin/rwhod/rwhod.c				1.17
+usr.bin/telnet/telnet.c				1.14
+
+  Avoid memory leak on realloc() failure.
+
+libexec/telnetd/sys_term.c			1.18
+
+  Abort if memory for execv(2) argument array cannot be allocated
+  instead of passing an array with incomplete contents to login(1).
+  Fixes PR#9082.
+
+sys/arch/amiga/dev/a2kbbc.c			1.8-1.9
+sys/arch/amiga/dev/a34kbbc.c			1.4-1.5
+
+  Y2K fix for A2000, A3000 and A4000 battery backed clock modules.
+
+sys/arch/amiga/dev/a34kbbc.c			1.6
+sys/arch/amiga/dev/rtc.h			1.7
+
+  Write the Ricoh RP5C01 leapyear bits when writing the year. 
+
+share/mk/bsd.obj.mk				1.18-1.20
+
+  Allow "make obj" to work nicely with amd by setting PAWD=/usr/bin/pawd
+  in /etc/mk.conf and using the amd mount point path for BSDSRCDIR.
+
+usr.bin/su/Makefile				1.14
+usr.bin/su/su.c					1.34
+
+  Allow the make variable SUROOTAUTH to be set to a group where the
+  members can use their own password to authenticate to su to root.
+  By default this is not set, retaining the traditional behaviour.
+
+usr.bin/su/su.1					1.15-1.16
+
+  Apply two minor corrections, one fixes PR#8499.
+
+sys/uvm/uvm_swap.c				1.31
+
+  Revert a previous change regarding spec_close handling.  The
+  vnode being closed was already locked, so do not try to re-lock.
+  The result before this fix was that failed attempts at "swapon"
+  would panic the machine.
+
+gnu/usr.bin/tar/getdate.y			1.5
+
+  Fix Y2K bug in date parser, fixing PR#9123.
+
+usr.bin/at/parsetime.c				1.9
+
+  Add timebase (1900 years) to system time before passing it to
+  date time parser.  Fixes PR#9122.
+
+distrib/sets/checkflist				1.12 via patch
+
+  Add two new uptions: -u and -c to set diff style.
+
+share/termcap/termcap.src			1.44
+
+  Add 'rcons' and 'rcons-color' entries, primarily for the benefit
+  of NetBSD/pmax.
+
+etc/etc.pmax/ttys				1.5
+
+  Set the terminal type of /dev/console to 'rcons'.
+
+distrib/mac68k/Makefile				1.4
+distrib/mac68k/instkernel/Makefile		1.2
+distrib/mac68k/instkernel/instkernel/Makefile	1.2
+distrib/mac68k/instkernel/ramdisk/Makefile	1.2-1.3 via patch
+distrib/mac68k/instkernel/ramdisk/list		1.4-1.5 via patch
+etc/etc.mac68k/Makefile.inc			1.1-1.2 plus patch
+
+  Build the mac68k instkernel (bootable sysinstall), and include
+  it in the standard release.
