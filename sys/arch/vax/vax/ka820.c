@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.12 1999/01/01 21:43:19 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.13 1999/01/19 21:04:49 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -61,14 +61,18 @@
 #include <arch/vax/bi/bireg.h>
 #include <arch/vax/bi/bivar.h>
 
+#include <vax/vax/crx.h>
+
 #include "locators.h"
 
 struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
 void *bi_nodebase;	/* virtual base address for all possible bi nodes */
 
-static int ka820_match __P((struct device *, struct cfdata *, void *));
-static void ka820_attach __P((struct device *, struct device *, void*));
+static	int ka820_match __P((struct device *, struct cfdata *, void *));
+static	void ka820_attach __P((struct device *, struct device *, void*));
+static	void rxcdintr __P((int));
+void crxintr __P((int));
 
 struct	cpu_dep ka820_calls = {
 	ka820_steal_pages,
@@ -79,6 +83,7 @@ struct	cpu_dep ka820_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	3,      /* ~VUPS */
+	5,	/* SCB pages */
 };
 
 struct cfattach cpu_bi_ca = {
@@ -92,27 +97,14 @@ char bootram[KA820_BRPAGES * VAX_NBPG];
 char eeprom[KA820_EEPAGES * VAX_NBPG];
 #endif
 
-struct ivec_dsp nollhanterare;
-
-static void hant __P((int));
-
-static void
-hant(arg)
-	int arg;
-{
-	if (cold == 0)
-		printf("stray interrupt from vaxbi bus\n");
-}
-
 void
 ka820_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail;
-	extern	struct ivec_dsp idsptch;
 	extern	short *clk_page;
 	extern	int clk_adrshift, clk_tweak;
 	struct	scb *sb;
-	int	junk, i, j;
+	int	junk;
 
 	/*
 	 * On the ka820, we map in the port CSR, the clock registers
@@ -145,12 +137,9 @@ ka820_steal_pages()
 	pmap_map((vm_offset_t)bi_nodebase, (vm_offset_t)BI_BASE(0,0),
 	    BI_BASE(0,0) + sizeof(struct bi_node) * NNODEBI,
 	    VM_PROT_READ|VM_PROT_WRITE);
-	bcopy(&idsptch, &nollhanterare, sizeof(struct ivec_dsp));
-	nollhanterare.hoppaddr = hant;
-	for (i = 0; i < 4; i++)
-		for (j = 0; j < 16; j++)
-			sb->scb_nexvec[i][j] = &nollhanterare;
 
+	/* Steal the interrupt vectors that are unique for us */
+	scb_vecalloc(KA820_INT_RXCD, rxcdintr, 0, SCB_ISTACK);
 }
 
 int
@@ -198,6 +187,9 @@ ka820_attach(parent, self, aux)
 	ka820port_ptr->csr = csr;
 	ba->ba_node->biic.bi_intrdes = ba->ba_intcpu;
 	ba->ba_node->biic.bi_csr |= BICSR_SEIE | BICSR_HEIE;
+
+	/* XXX - should be done somewhere else */
+	scb_vecalloc(SCB_RX50, crxintr, 0, SCB_ISTACK);
 }
 
 /*
@@ -406,12 +398,12 @@ ka820_mchk(cmcf)
 	return (MCHK_PANIC);
 }
 
-void rxcdintr __P((void));
 /*
  * Receive a character from logical console.
  */
 void
-rxcdintr()
+rxcdintr(arg)
+	int arg;
 {
 	register int c = mfpr(PR_RXCD);
 

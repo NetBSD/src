@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.h,v 1.1 1998/11/07 20:58:09 ragge Exp $	*/
+/*	$NetBSD: crx.h,v 1.2 1999/01/19 21:04:48 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -62,6 +62,9 @@ struct rx50device {
 
 #define	RX50SEC		10	/* sectors per track */
 #define	RX50MAXSEC	800	/* 10 sectors times 80 tracks */
+
+/* Interrupt vector */
+#define	SCB_RX50	0xf0
 
 /*
  * Do the sector skew given the sector and track

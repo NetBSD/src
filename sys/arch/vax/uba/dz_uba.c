@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.1 1998/05/17 18:51:13 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.2 1999/01/19 21:04:48 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -46,6 +46,7 @@
 
 #include <machine/pte.h>
 #include <machine/trap.h>
+#include <machine/scb.h>
 
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
@@ -136,7 +137,7 @@ dz_uba_attach(parent, self, aux)
 		sc->sc_type = DZ_DZ;
 
 	/* Now register the RX interrupt handler */
-	ubasetvec(self, ua->ua_cvec-1, dzrint);
+	scb_vecalloc(ua->ua_cvec - 4, dzrint, self->dv_unit, SCB_ISTACK);
 
 	dzattach(sc);
 }

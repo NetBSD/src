@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.12 1998/04/13 12:14:42 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.13 1999/01/19 21:04:48 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -51,9 +51,9 @@
 #include <sys/device.h>
 
 #include <machine/trap.h>
+#include <machine/scb.h>
 
 #include <vax/uba/ubavar.h>
-
 #include <vax/uba/dhureg.h>
 
 /* A DHU-11 has 16 ports while a DHV-11 has only 8. We use 16 by default */
@@ -224,9 +224,7 @@ dhu_attach(parent, self, aux)
 	sc->sc_type = (c & DHU_STAT_DHU)? IS_DHU: IS_DHV;
 
 	/* Now stuff TX interrupt handler in place */
-
-	ubasetvec(self, ua->ua_cvec + 1, dhuxint);
-	return;
+	scb_vecalloc(ua->ua_cvec + 4, dhuxint, self->dv_unit, SCB_ISTACK);
 }
 
 /* Receiver Interrupt */

@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.30 1999/01/01 21:43:18 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.31 1999/01/19 21:04:48 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -129,7 +129,7 @@ extern	struct pmap kernel_pmap_store;
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));
-vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 void	pmap_pinit __P((pmap_t));
 
 #endif PMAP_H
