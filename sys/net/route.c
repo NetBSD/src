@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.37 2000/12/09 01:29:45 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.38 2000/12/11 07:52:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -757,11 +757,11 @@ rt_timer_remove_all(rt)
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-		pool_put(&rttimer_pool, r);
 		if (r->rtt_queue->rtq_count > 0)
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
+		pool_put(&rttimer_pool, r);
 	}
 }
 
@@ -788,11 +788,11 @@ rt_timer_add(rt, func, queue)
 		if (r->rtt_func == func) {
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-			pool_put(&rttimer_pool, r);
 			if (r->rtt_queue->rtq_count > 0)
 				r->rtt_queue->rtq_count--;
 			else
 				printf("rt_timer_add: rtq_count reached 0\n");
+			pool_put(&rttimer_pool, r);
 			break;  /* only one per list, so we can quit... */
 		}
 	}
