@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.26 2000/01/08 07:34:49 augustss Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.27 2000/01/24 23:14:23 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,10 @@ struct wdc_pcmcia_product {
 	  PCMCIA_CIS_TEAC_IDECARDII,
 	  PCMCIA_STR_TEAC_IDECARDII },
 
-	/* EXP IDE/ATAPI DVD Card use with some DVD players.  Does not have a vendor ID or product ID */
+	/*
+	 * EXP IDE/ATAPI DVD Card use with some DVD players.
+	 * Does not have a vendor ID or product ID.
+	 */
 	{ -1,
 	  -1,
 	  0,
@@ -335,8 +338,8 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_auxiowindow = -1;
 	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
-			printf(": can't map second I/O space\n");
-			return;
+		printf(": can't map second I/O space\n");
+		return;
 	}
 
 	if ((wpp != NULL) && (wpp->wpp_name != NULL))
@@ -417,6 +420,7 @@ wdc_pcmcia_enable(arg, onoff)
 			return (EIO);
 		}
 
+		/* See the comment in aic_pcmcia_enable */
 		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
 			if (pcmcia_function_enable(sc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
