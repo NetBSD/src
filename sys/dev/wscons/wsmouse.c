@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $ */
+/* $NetBSD: wsmouse.c,v 1.13.4.1 2001/09/08 04:55:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.4.1 2001/09/08 04:55:31 thorpej Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -636,6 +636,20 @@ wsmousepoll(dev, events, p)
 	return (wsevent_poll(&sc->sc_events, events, p));
 #else
 	return (0);
+#endif /* NWSMOUSE > 0 */
+}
+
+int
+wsmousekqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+#if NWSMOUSE > 0
+	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)]; 
+
+	return (wsevent_kqfilter(&sc->sc_events, kn));
+#else
+	return (1);
 #endif /* NWSMOUSE > 0 */
 }
 
