@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.7 2002/02/20 17:45:42 wiz Exp $
+.\"	$NetBSD: forms.3,v 1.8 2002/05/20 15:00:11 blymn Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -212,4 +212,15 @@ In this implementation only the data entered by the user in the form
 field will be returned, unlike the AT\*[Am]T library which would return the
 contents of the field padded to the size of the field with the pad
 character.
+.It The TAB character
+The handling of the TAB character in fields varies between
+implementations.  In ncurses attempting to set a field contents with a
+string containing a TAB will result in an error and will not allow a
+TAB to be entered into a field.  The AT\*[Am]T library statically
+converts tabs to the equivalent number of spaces when the field buffer
+is set but the form driver will not allow a TAB to be inserted into
+the field buffer.  This implementation allows TAB when setting the
+field buffer and also will allow TAB to be inserted into a field
+buffer via the form driver and correctly calculates the cursor
+position allowing for expansion of the TAB character.
 .El
