@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.1 1999/09/13 10:31:21 itojun Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.2 2000/05/10 20:28:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -33,7 +33,11 @@
 /*
  * sh3-dependent ptrace definitions
  */
+
+#if 0
 #define	PT_STEP		(PT_FIRSTMACH + 0)
+#endif
+
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 

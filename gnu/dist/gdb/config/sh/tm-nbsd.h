@@ -23,4 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sh/tm-sh.h"
 #include "tm-nbsd.h"
 
+#define NO_SINGLE_STEP
+
+#undef DECR_PC_AFTER_BREAK
+#define DECR_PC_AFTER_BREAK 2
+
 #endif /* TM_NBSD_H */
