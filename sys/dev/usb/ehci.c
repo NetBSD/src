@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.46 2003/03/09 19:51:13 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.47 2003/05/10 12:04:22 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.46 2003/03/09 19:51:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.47 2003/05/10 12:04:22 augustss Exp $");
+
+#include "ohci.h"
+#include "uhci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,6 +318,10 @@ ehci_init(ehci_softc_t *sc)
 		aprint_error("%s: wrong number of companions (%d != %d)\n",
 		       USBDEVNAME(sc->sc_bus.bdev),
 		       EHCI_HCS_N_CC(sparams), sc->sc_ncomp);
+#if NOHCI == 0 || NUHCI == 0
+		aprint_error("%s: ohci or uhci probably not configured\n",
+			     USBDEVNAME(sc->sc_bus.bdev));
+#endif
 		return (USBD_IOERROR);
 	}
 	if (sc->sc_ncomp > 0) {
