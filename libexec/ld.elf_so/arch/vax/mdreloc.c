@@ -12,8 +12,9 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, dodebug)
+_rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
+	bool self;
 	bool dodebug;
 {
 	const Elf_Rela *rela;
