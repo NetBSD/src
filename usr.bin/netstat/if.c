@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.42 2000/07/03 02:51:26 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.43 2000/07/03 05:06:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.42 2000/07/03 02:51:26 matt Exp $");
+__RCSID("$NetBSD: if.c,v 1.43 2000/07/03 05:06:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ intpr(interval, ifnetaddr, pfunc)
 	u_long ifaddraddr;
 	struct sockaddr *sa;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
-	char name[IFNAMSIZ];
+	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
 #ifdef INET6
 	char hbuf[NI_MAXHOST];		/* for getnameinfo() */
 #ifdef KAME_SCOPEID
