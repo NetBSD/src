@@ -224,7 +224,12 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	if (type == REC_TYPE_INSP)
 	    /* Use current content inspection settings instead. */
 	    continue;
-	if (type == REC_TYPE_FILT)
+
+	/*
+	 * XXX Workaround: REC_TYPE_FILT (used in envelopes) == REC_TYPE_CONT
+	 * (used in message content).
+	 */
+	if (type == REC_TYPE_FILT && *expected != REC_TYPE_CONTENT[0])
 	    /* Use current content filter settings instead. */
 	    continue;
 	else {

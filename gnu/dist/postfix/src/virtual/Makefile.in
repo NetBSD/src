@@ -11,7 +11,7 @@ CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 PROG	= virtual
 TESTPROG= 
 INC_DIR	= ../../include
-LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libutil.a $(AUXLIBS)
+LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libutil.a
 
 .c.o:;	$(CC) $(CFLAGS) -c $*.c
 

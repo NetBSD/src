@@ -53,6 +53,7 @@ typedef struct {
 #define HDR_CONTENT_DISPOSITION		28
 #define HDR_CONTENT_ID			29
 #define HDR_MIME_VERSION		30
+#define HDR_DISP_NOTIFICATION		31
 
  /*
   * Header flags.

@@ -47,7 +47,10 @@
 /*	stale lock files that were left behind after abnormal termination.
 /* .RE
 /* .IP \fB-m\fR
-/*	List the names of all supported lookup table types.
+/*	List the names of all supported lookup table types. Postfix
+/*	lookup tables are specified as \fItype\fB:\fIname\fR, where
+/*	\fItype\fR is one of the types listed below. The table \fIname\fR
+/*	syntax depends on the lookup table type.
 /* .RS
 /* .IP \fBbtree\fR
 /*	A sorted, balanced tree structure.
@@ -73,6 +76,10 @@
 /* .IP "\fBpcre\fR (read-only)"
 /*	A lookup table based on Perl Compatible Regular Expressions. The
 /*	file format is described in \fBpcre_table\fR(5).
+/* .IP "\fBproxy\fR (read-only)"
+/*	A lookup table that is implemented via the Postfix
+/*	\fBproxymap\fR(8) service. The table name syntax is
+/*	\fItype\fB:\fIname\fR.
 /* .IP "\fBregexp\fR (read-only)"
 /*	A lookup table based on regular expressions. The file format is
 /*	described in \fBregexp_table\fR(5).
@@ -156,6 +163,7 @@
 
 #include <mynetworks.h>
 #include <mail_conf.h>
+#include <mail_dict.h>
 #include <mail_proto.h>
 #include <mail_version.h>
 #include <mail_params.h>
@@ -921,6 +929,7 @@ int     main(int argc, char **argv)
      * If showing map types, show them and exit
      */
     if (mode & SHOW_MAPS) {
+	mail_dict_init();
 	show_maps();
     }
 

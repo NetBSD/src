@@ -89,7 +89,9 @@
 #        /^postmaster@/       OK
 # 
 #        # Protect your outgoing majordomo exploders
-#        /^(.*)-outgoing@(.*)$/!/^owner-/         550 Use ${1}@${2} instead
+#        if !/^owner-/
+#        /^(.*)-outgoing@(.*)$/   550 Use ${1}@${2} instead
+#        endif
 # 
 # EXAMPLE HEADER FILTER MAP
 #        # These were once common in junk mail.
