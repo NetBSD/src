@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.12.2.11 2004/04/07 21:57:22 jmc Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.12.2.12 2004/04/07 22:07:34 jmc Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.56 2000/09/22 04:01:37 itojun Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ ip6_forward(m, srcrt)
 
 	/* adjust pointer */
 	ip6 = mtod(m, struct ip6_hdr *);
-	rt = state.ro->ro_rt;
+	rt = state.ro ? state.ro->ro_rt : NULL;
 	dst = (struct sockaddr_in6 *)state.dst;
 	if (dst != NULL && rt != NULL)
 		ipsecrt = 1;
