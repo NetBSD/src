@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.1 2001/03/10 19:01:27 toshii Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.2 2001/03/21 16:16:35 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ sacpcic_attach(parent, self, aux)
 
 		sacc_intr_establish((sacc_chipset_tag_t)psc,
 				    i ? IRQ_S1_CDVALID : IRQ_S0_CDVALID,
-				    1, IPL_BIO, sapcic_intr,
+				    IST_EDGE_RAISE, IPL_BIO, sapcic_intr,
 				    &sc->sc_socket[i]);
 
 		/* schedule kthread creation */
@@ -156,7 +156,6 @@ sacpcic_print(aux, name)
 	void *aux;
 	const char *name;
 {
-	printf("\n");
 	return (UNCONF);
 }
 
@@ -314,4 +313,5 @@ sacpcic_intr_disestablish(so, ih)
 	struct sapcic_socket *so;
 	void *ih;
 {
+	sacc_intr_disestablish((sacc_chipset_tag_t)so->sacc_sc, ih);
 }

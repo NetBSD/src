@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.1 2001/03/10 19:00:39 toshii Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.2 2001/03/21 16:16:35 toshii Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -162,7 +162,7 @@ sapcic_event_thread(arg)
 			 * No events to process; release the PCIC lock.
 			 */
 			(void) lockmgr(&so->sc->sc_lock, LK_RELEASE, NULL);
-			(void) tsleep(&so->event, PWAIT, "pcicev", 0);
+			(void) tsleep(&so->event, PWAIT, "pcicev", hz);
 			continue;
 		}
 
@@ -206,6 +206,7 @@ sapcic_intr(arg)
 
 	so->event++;
 	(so->pcictag->clear_intr)(so->socket);
+	wakeup(&so->event);
 	return 1;
 }
 
@@ -432,5 +433,7 @@ static void
 sapcic_socket_disable(pch)
 	pcmcia_chipset_handle_t pch;
 {
+	/* XXX mask card interrupts */
+	/* XXX power down the card */
+	/* XXX float controller lines */
 }
-
