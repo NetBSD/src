@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.7 2003/12/30 17:18:11 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.8 2003/12/31 12:46:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <dev/pci/pciide_sii3112_reg.h>
 
 #include <dev/ata/satareg.h>
+#include <dev/ata/atareg.h>
 
 /*
  * Register map for BA5 register space, indexed by channel.
