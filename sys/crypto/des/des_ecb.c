@@ -1,5 +1,5 @@
-/*	$NetBSD: des_ecb.c,v 1.1.1.1 2000/06/14 19:45:35 thorpej Exp $	*/
-/*	$KAME: des_ecb.c,v 1.3 2000/03/27 04:36:33 sumikawa Exp $	*/
+/*	$NetBSD: des_ecb.c,v 1.1.1.1.2.1 2000/08/31 14:50:23 itojun Exp $	*/
+/*	$KAME: des_ecb.c,v 1.4 2000/08/31 07:27:27 itojun Exp $	*/
 
 /* crypto/des/ecb_enc.c */
 /* Copyright (C) 1995-1996 Eric Young (eay@mincom.oz.au)
@@ -48,6 +48,9 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 #include <crypto/des/des_locl.h>
 #include <crypto/des/spr.h>
 
