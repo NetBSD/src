@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.10 2001/01/09 14:29:22 lukem Exp $	*/
+/*	$NetBSD: usage.c,v 1.11 2001/01/09 15:59:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
