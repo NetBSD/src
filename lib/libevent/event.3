@@ -1,4 +1,4 @@
-.\"	$NetBSD: event.3,v 1.5 2004/08/07 21:09:47 provos Exp $
+.\"	$NetBSD: event.3,v 1.6 2004/08/08 14:48:47 wiz Exp $
 .\"	$OpenBSD: event.3,v 1.4 2002/07/12 18:50:48 provos Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
@@ -75,79 +75,79 @@
 .In sys/time.h
 .In event.h
 .Ft void
-.Fn "event_init"
+.Fn event_init
 .Ft int
-.Fn "event_dispatch"
+.Fn event_dispatch
 .Ft int
-.Fn "event_loop" "int flags"
+.Fn event_loop "int flags"
 .Ft int
-.Fn "event_loopexit" "struct timeval *tv"
+.Fn event_loopexit "struct timeval *tv"
 .Ft void
-.Fn "event_set" "struct event *ev" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg"
+.Fn event_set "struct event *ev" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg"
 .Ft int
-.Fn "event_add" "struct event *ev" "struct timeval *tv"
+.Fn event_add "struct event *ev" "struct timeval *tv"
 .Ft int
-.Fn "event_del" "struct event *ev"
+.Fn event_del "struct event *ev"
 .Ft int
-.Fn "event_once" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "struct timeval *tv"
+.Fn event_once "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "struct timeval *tv"
 .Ft int
-.Fn "event_pending" "struct event *ev" "short event" "struct timeval *tv"
+.Fn event_pending "struct event *ev" "short event" "struct timeval *tv"
 .Ft int
-.Fn "event_initialized" "struct event *ev"
+.Fn event_initialized "struct event *ev"
 .Ft void
-.Fn "evtimer_set" "struct event *ev" "void (*fn)(int, short, void *)" "void *arg"
+.Fn evtimer_set "struct event *ev" "void (*fn)(int, short, void *)" "void *arg"
 .Ft void
-.Fn "evtimer_add" "struct event *ev" "struct timeval *tv"
+.Fn evtimer_add "struct event *ev" "struct timeval *tv"
 .Ft void
-.Fn "evtimer_del" "struct event *ev"
+.Fn evtimer_del "struct event *ev"
 .Ft int
-.Fn "evtimer_pending" "struct event *ev" "struct timeval *tv"
+.Fn evtimer_pending "struct event *ev" "struct timeval *tv"
 .Ft int
-.Fn "evtimer_initialized" "struct event *ev"
+.Fn evtimer_initialized "struct event *ev"
 .Ft void
-.Fn "signal_set" "struct event *ev" "int signal" "void (*fn)(int, short, void *)" "void *arg"
+.Fn signal_set "struct event *ev" "int signal" "void (*fn)(int, short, void *)" "void *arg"
 .Ft void
-.Fn "signal_add" "struct event *ev" "struct timeval *tv"
+.Fn signal_add "struct event *ev" "struct timeval *tv"
 .Ft void
-.Fn "signal_del" "struct event *ev"
+.Fn signal_del "struct event *ev"
 .Ft int
-.Fn "signal_pending" "struct event *ev" "struct timeval *tv"
+.Fn signal_pending "struct event *ev" "struct timeval *tv"
 .Ft int
-.Fn "signal_initialized" "struct event *ev"
+.Fn signal_initialized "struct event *ev"
 .Ft "struct bufferevent *"
-.Fn "bufferevent_new" "int fd" "evbuffercb readcb" "evbuffercb writecb" "everrorcb" "void *cbarg"
+.Fn bufferevent_new "int fd" "evbuffercb readcb" "evbuffercb writecb" "everrorcb" "void *cbarg"
 .Ft void
-.Fn "bufferevent_free" "struct bufferevent *bufev"
+.Fn bufferevent_free "struct bufferevent *bufev"
 .Ft int
-.Fn "bufferevent_write" "struct bufferevent *bufev" "void *data" "size_t size"
+.Fn bufferevent_write "struct bufferevent *bufev" "void *data" "size_t size"
 .Ft int
-.Fn "bufferevent_write_buffer" "struct bufferevent *bufev" "struct evbuffer *buf"
+.Fn bufferevent_write_buffer "struct bufferevent *bufev" "struct evbuffer *buf"
 .Ft size_t
-.Fn "bufferevent_read" "struct bufferevent *bufev" "void *data" "size_t size"
+.Fn bufferevent_read "struct bufferevent *bufev" "void *data" "size_t size"
 .Ft int
-.Fn "bufferevent_enable" "struct bufferevent *bufev" "short event"
+.Fn bufferevent_enable "struct bufferevent *bufev" "short event"
 .Ft int
-.Fn "bufferevent_disable" "struct bufferevent *bufev" "short event"
+.Fn bufferevent_disable "struct bufferevent *bufev" "short event"
 .Ft void
-.Fn "bufferevent_settimeout" "struct bufferevent *bufev" "int timeout_read" "int timeout_write"
+.Fn bufferevent_settimeout "struct bufferevent *bufev" "int timeout_read" "int timeout_write"
 .Ft "struct evbuffer *"
-.Fn "evbuffer_new" "void"
+.Fn evbuffer_new "void"
 .Ft void
-.Fn "evbuffer_free" "struct evbuffer *buf"
+.Fn evbuffer_free "struct evbuffer *buf"
 .Ft int
-.Fn "evbuffer_add" "struct evbuffer *buf" "u_char *data" "size_t size"
+.Fn evbuffer_add "struct evbuffer *buf" "u_char *data" "size_t size"
 .Ft int
-.Fn "evbuffer_add_buffer" "struct evbuffer *dst" "struct evbuffer *src"
+.Fn evbuffer_add_buffer "struct evbuffer *dst" "struct evbuffer *src"
 .Ft int
-.Fn "evbuffer_add_printf" "struct evbuffer *buf" "char *fmt" "..."
+.Fn evbuffer_add_printf "struct evbuffer *buf" "char *fmt" "..."
 .Ft void
-.Fn "evbuffer_drain" "struct evbuffer *buf" "size_t size"
+.Fn evbuffer_drain "struct evbuffer *buf" "size_t size"
 .Ft int
-.Fn "evbuffer_write" "struct evbuffer *buf" "int fd"
+.Fn evbuffer_write "struct evbuffer *buf" "int fd"
 .Ft int
-.Fn "evbuffer_read" "struct evbuffer *buf" "int fd" "int size"
+.Fn evbuffer_read "struct evbuffer *buf" "int fd" "int size"
 .Ft "u_char *"
-.Fn "evbuffer_find" "struct evbuffer *buf" "u_char *data" "size_t size"
+.Fn evbuffer_find "struct evbuffer *buf" "u_char *data" "size_t size"
 .Ft int
 .Fn "(*event_sigcb)" "void"
 .Ft int
@@ -181,12 +181,13 @@ sets
 to indicate that a signal has been received.
 The application sets
 .Va event_sigcb
-to a callback function.  After the signal handler sets
+to a callback function.
+After the signal handler sets
 .Va event_gotsig ,
 .Nm event_dispatch
-will execute the callback function to process received signals.  The
-callback returns 1 when no events are registered any more.  It can
-return \-1 to indicate an error to the
+will execute the callback function to process received signals.
+The callback returns 1 when no events are registered any more.
+It can return \-1 to indicate an error to the
 .Nm event
 library, causing
 .Fn event_dispatch
@@ -198,7 +199,8 @@ set to
 The
 .Nm event_loop
 function provides an interface for single pass execution of pending
-events.  The flags
+events.
+The flags
 .Va EVLOOP_ONCE
 and
 .Va EVLOOP_NONBLOCK
@@ -277,7 +279,9 @@ occurs or in at least the time specified in the
 .Fa tv .
 If
 .Fa tv
-is NULL, no timeout occurs and the function will only be called
+is
+.Dv NULL ,
+no timeout occurs and the function will only be called
 if a matching event occurs on the file descriptor.
 The event in the
 .Fa ev
@@ -309,7 +313,7 @@ require the caller to prepare an
 structure.
 This function supports
 .Fa EV_TIMEOUT ,
-.Fa EV_READ
+.Fa EV_READ ,
 and
 .Fa EV_WRITE .
 .Pp
@@ -323,7 +327,7 @@ If
 was specified and
 .Fa tv
 is not
-.Va NULL ,
+.Dv NULL ,
 the expiration time of the event will be returned in
 .Fa tv .
 .Pp
@@ -373,7 +377,7 @@ displays the kernel notification method that it uses.
 .Nm libevent
 provides an abstraction on top of the regular event callbacks.
 This abstraction is called a
-.Va "buffered event" .
+.Dq Sy buffered event .
 A buffered event provides input and output buffer that get filled
 and drained automatically.
 The user of a buffered event no longer deals directly with the IO,
@@ -382,23 +386,21 @@ but instead is reading from input and writing to output buffers.
 A new bufferevent is created by
 .Fn bufferevent_new .
 The parameter
-.Fa "fd"
+.Fa fd
 specifies the file descriptor from which data is read and written to.
-This file descriptor is not allowed to be a 
+This file descriptor is not allowed to be a
 .Xr pipe 2 .
 The next three parameters are callbacks.
 The read and write callback have the following form
 .Ft void
 .Fn "(*cb)" "struct bufferevent *bufev" "void *arg"
 The argument is specified by the fourth parameter
-.Fa "cbarg" .
+.Fa cbarg .
 .Pp
 By default the buffered event is read enabled and will try to read
 from the file descriptor.
 The write callback is executed whenever the output buffer is drained
-below the write low watermark which is
-.Va 0
-by default.
+below the write low watermark which is 0 by default.
 .Pp
 The
 .Fn bufferevent_write
