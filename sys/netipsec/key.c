@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.8 2004/03/01 18:33:03 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.8 2004/03/01 18:33:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.9 2004/03/02 02:22:56 thorpej Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -430,10 +430,6 @@ static int key_ismyaddr6 __P((struct sockaddr_in6 *));
 static int key_cmpsaidx
 	__P((const struct secasindex *, const struct secasindex *, int));
 
-static int key_cmpspidx_exactly
-	__P((struct secpolicyindex *, struct secpolicyindex *));
-static int key_cmpspidx_withmask
-	__P((struct secpolicyindex *, struct secpolicyindex *));
 static int key_sockaddrcmp __P((const struct sockaddr *, const struct sockaddr *, int));
 static int key_bbcmp __P((const void *, const void *, u_int));
 static void key_srandom __P((void));
@@ -1801,13 +1797,6 @@ key_spdadd(so, m, mhp)
 		}
 	}
 
-#if defined(__NetBSD__) && defined(GATEWAY)
-	/*
-	 * Nail the ipflow cache, since we're adding/changing an SPD
-	 */
-	ipflow_invalidate_all();
-#endif
-
 	/* allocation new SP entry */
 	if ((newsp = key_msg2sp(xpl0, PFKEY_EXTLEN(xpl0), &error)) == NULL) {
 		return key_senderror(so, m, error);
@@ -1875,6 +1864,16 @@ key_spdadd(so, m, mhp)
 			spacq->count = 0;
 		}
     	}
+
+#if defined(__NetBSD__)
+	/* Invalidate all cached SPD pointers in the PCBs. */
+	ipsec_invalpcbcacheall();
+
+#if defined(GATEWAY)
+	/* Invalidate the ipflow cache, as well. */
+	ipflow_invalidate_all();
+#endif
+#endif /* __NetBSD__ */
 
     {
 	struct mbuf *n, *mpolicy;
@@ -2029,6 +2028,13 @@ key_spddelete(so, m, mhp)
 	sp->state = IPSEC_SPSTATE_DEAD;
 	KEY_FREESP(&sp);
 
+#if defined(__NetBSD__)
+	/* Invalidate all cached SPD pointers in the PCBs. */
+	ipsec_invalpcbcacheall();
+
+	/* We're deleting policy; no need to invalidate the ipflow cache. */
+#endif /* __NetBSD__ */
+
     {
 	struct mbuf *n;
 	struct sadb_msg *newmsg;
@@ -2090,6 +2096,13 @@ key_spddelete2(so, m, mhp)
 
 	sp->state = IPSEC_SPSTATE_DEAD;
 	KEY_FREESP(&sp);
+
+#if defined(__NetBSD__)
+	/* Invalidate all cached SPD pointers in the PCBs. */
+	ipsec_invalpcbcacheall();
+
+	/* We're deleting policy; no need to invalidate the ipflow cache. */
+#endif /* __NetBSD__ */
 
     {
 	struct mbuf *n, *nn;
@@ -2299,6 +2312,13 @@ key_spdflush(so, m, mhp)
 			sp->state = IPSEC_SPSTATE_DEAD;
 		}
 	}
+
+#if defined(__NetBSD__)
+	/* Invalidate all cached SPD pointers in the PCBs. */
+	ipsec_invalpcbcacheall();
+
+	/* We're deleting policy; no need to invalidate the ipflow cache. */
+#endif /* __NetBSD__ */
 
 	if (sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
 		ipseclog((LOG_DEBUG, "key_spdflush: No more memory.\n"));
@@ -3820,7 +3840,7 @@ key_cmpsaidx(
  *	1 : equal
  *	0 : not equal
  */
-static int
+int
 key_cmpspidx_exactly(
 	struct secpolicyindex *spidx0,
 	struct secpolicyindex *spidx1)
@@ -3850,7 +3870,7 @@ key_cmpspidx_exactly(
  *	1 : equal
  *	0 : not equal
  */
-static int
+int
 key_cmpspidx_withmask(
 	struct secpolicyindex *spidx0,
 	struct secpolicyindex *spidx1)
