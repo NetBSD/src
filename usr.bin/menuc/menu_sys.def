@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.52 2003/12/21 21:42:48 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.53 2004/02/29 23:13:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,8 +168,13 @@ init_menu(menudesc *m)
 	exithadd = ((m->mopt & MC_NOEXITOPT) ? 0 : 1);
 
 #ifdef MSG_DEFS_H
-	if (y == -1)
-		y = msg_row();
+	if (y < 0) {
+		/* put menu box below message text */
+		y = -y;
+		i = msg_row();
+		if (i > y)
+		    y = i;
+	}
 #endif
 
 	/* Calculate h? h == number of visible options. */
