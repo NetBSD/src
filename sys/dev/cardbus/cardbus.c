@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.47 2003/01/01 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.47.4.1 2004/07/23 22:15:16 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47 2003/01/01 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47.4.1 2004/07/23 22:15:16 he Exp $");
 
 #include "opt_cardbus.h"
 
@@ -535,13 +535,15 @@ cardbus_attach_card(struct cardbus_softc *sc)
 
 		ca.ca_intrline = sc->sc_intrline;
 
-		if (cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
-			printf("cardbus_attach_card: failed to read CIS\n");
-		} else {
+		if (cis_ptr != 0) {
+			if (cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+				printf("cardbus_attach_card: failed to read CIS\n");
+			} else {
 #ifdef CARDBUS_DEBUG
-			decode_tuples(tuple, 2048, print_tuple, NULL);
+				decode_tuples(tuple, 2048, print_tuple, NULL);
 #endif
-			decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+				decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+			}
 		}
 
 		if ((csc = config_found_sm((void *)sc, &ca, cardbusprint,
