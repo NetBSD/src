@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.26 2003/10/08 17:29:59 bouyer Exp $
+#	$NetBSD: files.cats,v 1.27 2003/10/21 08:15:40 skrll Exp $
 #
 # CATS-specific configuration info
 #
@@ -76,9 +76,10 @@ device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
 file	arch/arm/footbridge/isa/sysbeep_isa.c		sysbeep_isa
 
-device dsrtc: todservice
-attach dsrtc at isa
-file	arch/arm/footbridge/isa/dsrtc.c			dsrtc
+device ds1687rtc: todservice
+attach ds1687rtc at isa
+file	arch/arm/footbridge/isa/dsrtc.c			ds1687rtc
+
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
 
