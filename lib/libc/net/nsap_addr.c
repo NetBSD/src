@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.10 2000/01/22 22:19:16 mycroft Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.11 2002/11/11 19:28:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,7 +53,7 @@
 #if 0
 static char rcsid[] = "Id: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: nsap_addr.c,v 1.10 2000/01/22 22:19:16 mycroft Exp $");
+__RCSID("$NetBSD: nsap_addr.c,v 1.11 2002/11/11 19:28:23 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,7 +95,7 @@ inet_nsap_addr(ascii, binary, maxlen)
 	int maxlen;
 {
 	register u_char c, nib;
-	u_int len = 0;
+	int len = 0;
 
 	_DIAGASSERT(ascii != NULL);
 	_DIAGASSERT(binary != NULL);
