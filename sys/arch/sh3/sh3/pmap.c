@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2001/04/25 16:18:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 2001/05/13 19:41:17 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2233,6 +2233,7 @@ pmap_page_remove(pg)
 
 	for (prevptr = &pvh->pvh_list, pve = pvh->pvh_list;
 	     pve != NULL; pve = npve) {
+		npve = pve->pv_next;
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
