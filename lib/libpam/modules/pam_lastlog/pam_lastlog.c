@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.5 2005/03/03 02:11:40 christos Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.6 2005/03/05 20:32:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.5 2005/03/03 02:11:40 christos Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.6 2005/03/05 20:32:41 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -66,27 +66,32 @@ __RCSID("$NetBSD: pam_lastlog.c,v 1.5 2005/03/03 02:11:40 christos Exp $");
 #include <login_cap.h>
 #endif
 
+#define PAM_SM_SESSION
+
+#include <security/pam_appl.h>
+#include <security/pam_modules.h>
+#include <security/pam_mod_misc.h>
+
 #ifdef SUPPORT_UTMP
 #include <utmp.h>
 static void doutmp(const char *, const char *, const char *,
     const struct timeval *);
-static void dolastlog(int, const struct passwd *, const char *, const char *,
-    const struct timeval *);
+static void dolastlog(pam_handle_t *, int, const struct passwd *, const char *,
+    const char *, const struct timeval *);
 #endif
 
 #ifdef SUPPORT_UTMPX
 #include <utmpx.h>
 static void doutmpx(const char *, const char *, const char *,
     const struct sockaddr_storage *ss, const struct timeval *);
-static void dolastlogx(int, const struct passwd *, const char *, const char *,
-    const struct sockaddr_storage *ss, const struct timeval *);
+static void dolastlogx(pam_handle_t *, int, const struct passwd *, const char *,
+    const char *, const struct sockaddr_storage *ss, const struct timeval *);
 #endif
 
-#define PAM_SM_SESSION
-
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-#include <security/pam_mod_misc.h>
+#if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
+static void domsg(pam_handle_t *, time_t, const char *, size_t, const char *,
+    size_t);
+#endif
 
 PAM_EXTERN int
 pam_sm_open_session(pam_handle_t *pamh, int flags,
@@ -152,12 +157,12 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 #endif
 #ifdef SUPPORT_UTMPX
 		doutmpx(user, rhost, tty, ss, &now);
-		dolastlogx(quiet, pwd, rhost, tty, ss, &now);
+		dolastlogx(pamh, quiet, pwd, rhost, tty, ss, &now);
 		quiet = 1;
 #endif
 #ifdef SUPPORT_UTMP
 		doutmp(user, rhost, tty, &now);
-		dolastlog(quiet, pwd, rhost, tty, &now);
+		dolastlog(pamh, quiet, pwd, rhost, tty, &now);
 #endif
 	}
 err:
@@ -210,6 +215,28 @@ pam_sm_close_session(pam_handle_t *pamh __unused, int flags __unused,
         return PAM_SUCCESS;
 }
 
+#if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
+static void
+domsg(pam_handle_t *pamh, time_t t, const char *host, size_t hsize,
+    const char *line, size_t lsize)
+{
+	char buf[MAXHOSTNAMELEN + 32], *promptresp = NULL;
+	int pam_err;
+
+	if (*host) {
+		(void)snprintf(buf, sizeof(buf), "from %.*s ",
+		    (int)hsize, host);
+		host = buf;
+	}
+
+	pam_err = pam_prompt(pamh, PAM_TEXT_INFO, &promptresp,
+	    "Last login: %.24s %son %.*s\n", ctime(&t), host, (int)lsize, line);
+
+	if (pam_err == PAM_SUCCESS && promptresp)
+		free(promptresp);
+}
+#endif
+
 #ifdef SUPPORT_UTMPX
 static void
 doutmpx(const char *username, const char *hostname, const char *tty,
@@ -244,29 +271,30 @@ doutmpx(const char *username, const char *hostname, const char *tty,
 }
 
 static void
-dolastlogx(int quiet, const struct passwd *pwd, const char *hostname,
-    const char *tty, const struct sockaddr_storage *ss,
+dolastlogx(pam_handle_t *pamh, int quiet, const struct passwd *pwd,
+    const char *hostname, const char *tty, const struct sockaddr_storage *ss,
     const struct timeval *now)
 {
 	struct lastlogx ll;
-	if (getlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != NULL) {
-		time_t t = (time_t)ll.ll_tv.tv_sec;
-		if (!quiet) {
-			(void)printf("Last login: %.24s ", ctime(&t));
-			if (*ll.ll_host != '\0')
-				(void)printf("from %.*s ",
-				    (int)sizeof(ll.ll_host), ll.ll_host);
-			(void)printf("on %.*s\n", (int)sizeof(ll.ll_line),
-			    ll.ll_line);
-		}
+	if (!quiet) {
+	    if (getlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != NULL) 
+		    domsg(pamh, (time_t)ll.ll_tv.tv_sec, ll.ll_host,
+			sizeof(ll.ll_host), ll.ll_line,
+			sizeof(ll.ll_line));
 	}
 	ll.ll_tv = *now;
 	(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
-	if (hostname) {
+
+	if (hostname)
 		(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
-		if (ss)
-			ll.ll_ss = *ss;
-	}
+	else
+		(void)memset(ll.ll_host, 0, sizeof(ll.ll_host));
+
+	if (ss)
+		ll.ll_ss = *ss;
+	else
+		(void)memset(&ll.ll_ss, 0, sizeof(ll.ll_ss));
+
 	if (updlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != 0)
 		syslog(LOG_NOTICE, "Cannot update lastlogx %m");
 	PAM_LOG("Login recorded in %s", _PATH_LASTLOGX);
@@ -290,37 +318,38 @@ doutmp(const char *username, const char *hostname, const char *tty,
 }
 
 static void
-dolastlog(int quiet, const struct passwd *pwd, const char *hostname,
-    const char *tty, const struct timeval *now)
+dolastlog(pam_handle_t *pamh, int quiet, const struct passwd *pwd,
+    const char *hostname, const char *tty, const struct timeval *now)
 {
 	struct lastlog ll;
 	int fd;
 
-	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
-		(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)), SEEK_SET);
-		if (!quiet) {
-			if (read(fd, (char *)&ll, sizeof(ll)) == sizeof(ll) &&
-			    ll.ll_time != 0) {
-				(void)printf("Last login: %.24s ",
-				    ctime(&ll.ll_time));
-				if (*ll.ll_host != '\0')
-					(void)printf("from %.*s ",
-					    (int)sizeof(ll.ll_host),
-					    ll.ll_host);
-				(void)printf("on %.*s\n",
-				    (int)sizeof(ll.ll_line), ll.ll_line);
-			}
-			(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)),
-			    SEEK_SET);
-		}
-		(void)memset((void *)&ll, 0, sizeof(ll));
-		ll.ll_time = now->tv_sec;
-		(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
-		if (hostname)
-			(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
-		(void)write(fd, (char *)&ll, sizeof(ll));
-		(void)close(fd);
+	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) == -1) {
+		syslog(LOG_NOTICE, "Cannot open `%s' %m", _PATH_LASTLOG);
+		return;
 	}
+	(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)), SEEK_SET);
+
+	if (!quiet) {
+		if (read(fd, (char *)&ll, sizeof(ll)) == sizeof(ll) &&
+		    ll.ll_time != 0)
+			domsg(pamh, ll.ll_time, ll.ll_host,
+			    sizeof(ll.ll_host), ll.ll_line,
+			    sizeof(ll.ll_line));
+		(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)), SEEK_SET);
+	}
+
+	ll.ll_time = now->tv_sec;
+	(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
+
+	if (hostname)
+		(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
+	else
+		(void)memset(ll.ll_host, 0, sizeof(ll.ll_host));
+
+	(void)write(fd, &ll, sizeof(ll));
+	(void)close(fd);
+
 	PAM_LOG("Login recorded in %s", _PATH_LASTLOG);
 }
 #endif
