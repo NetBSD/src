@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslresource - Resource templates and descriptors
- *              $Revision: 28 $
+ *              $Revision: 30 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -243,14 +243,14 @@ RsSetFlagBits (
     UINT8                   *Flags,
     ACPI_PARSE_OBJECT       *Op,
     UINT8                   Position,
-    UINT8                   Default)
+    UINT8                   DefaultBit)
 {
 
     if (Op->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)
     {
         /* Use the default bit */
 
-        *Flags |= (Default << Position);
+        *Flags |= (DefaultBit << Position);
     }
     else
     {
