@@ -1451,3 +1451,67 @@ search.  The only need to set it is when debugging a stripped executable.",
   c->function.sfunc = reinit_frame_cache_sfunc;
   add_show_from_set (c, &showlist);
 }
+
+#if SOFTWARE_SINGLE_STEP_P
+/* alpha_software_single_step() is called just before we want to resume
+   the inferior, if we want to single-step it but there is no hardware
+   or kernel single-step support (NetBSD on Alpha, for example).  We find
+   the target of the coming instruction and breakpoint it.
+
+   single_step is also called just after the inferior stops.  If we had
+   set up a simulated single-step, we undo our damage.  */
+
+CORE_ADDR
+alpha_next_pc (pc)
+     CORE_ADDR pc;
+{
+  unsigned int insn;
+  unsigned int op;
+  int offset;
+
+  insn = read_memory_unsigned_integer (pc, sizeof (insn));
+
+  /* Opcode is top 6 bits. */
+  op = (insn >> 26) & 0x3f;
+
+  if ((op & 0x30) == 0x30)
+    {
+      /* Branch format: target PC is:
+	 (new PC) + (4 * sext(displacement))  */
+      offset = ((short)(insn & 0xffff)) * 4;
+      return (pc + 4 + offset);
+    }
+
+  if (op == 0x1a)
+    {
+      /* Jump format: target PC is:
+	 RB & ~3  */
+      return (read_register ((insn >> 21) & 0x1f));
+    }
+
+  /* Not a branch; target PC is:
+     pc + 4  */
+  return (pc + 4);
+}
+
+void
+alpha_software_single_step (sig, insert_breakpoints_p)
+     int sig; /* not used */
+     int insert_breakpoints_p;
+{
+  static CORE_ADDR next_pc;
+  typedef char binsn_quantum[BREAKPOINT_MAX];
+  static binsn_quantum break_mem;
+  CORE_ADDR pc;
+
+  if (insert_breakpoints_p)
+    {
+      pc = read_register (PC_REGNUM);
+      next_pc = alpha_next_pc (pc);
+
+      target_insert_breakpoint (next_pc, break_mem);
+    }
+  else
+    target_remove_breakpoint (next_pc, break_mem);
+}
+#endif /* SOFTWARE_SINGLE_STEP_P */

@@ -479,4 +479,15 @@ extern struct frame_info *setup_arbitrary_frame PARAMS ((int, CORE_ADDR *));
   (alpha_osf_skip_sigtramp_frame (frame, pc))
 extern CORE_ADDR alpha_osf_skip_sigtramp_frame PARAMS ((struct frame_info *, CORE_ADDR));
 
+/* Provide a default for sofware single-stepping (off by default).  */
+#ifndef SOFTWARE_SINGLE_STEP_P 
+#define SOFTWARE_SINGLE_STEP_P 0
+#endif
+#if SOFTWARE_SINGLE_STEP_P
+#define SOFTWARE_SINGLE_STEP(sig,bpt) alpha_software_single_step((sig), (bpt))
+void alpha_software_single_step PARAMS((int, int));
+#endif
+
+CORE_ADDR alpha_next_pc (CORE_ADDR pc);
+
 #endif /* TM_ALPHA_H */

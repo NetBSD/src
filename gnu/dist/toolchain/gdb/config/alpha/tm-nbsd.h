@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
+/* NetBSD doesn't have single stepping support in ptrace().  */
+#define SOFTWARE_SINGLE_STEP_P 1
+
 #include "alpha/tm-alpha.h"
 #ifndef S0_REGNUM
 #define S0_REGNUM (T7_REGNUM+1)
@@ -29,8 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #undef START_INFERIOR_TRAPS_EXPECTED
 #define START_INFERIOR_TRAPS_EXPECTED 2
 
-#undef NO_SINGLE_STEP
-#define NO_SINGLE_STEP
 #undef CANNOT_STEP_BREAKPOINT 
 
 #define	SOLIB_BKPT_NAME		"__start"
