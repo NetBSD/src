@@ -1,12 +1,10 @@
-# $NetBSD: Makefile,v 1.5 2003/10/21 10:01:20 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2004/05/23 02:24:51 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/libs/libgroff/Makefile,v 1.5 2003/05/01 13:22:19 ru Exp $
 
 DIST_SUBDIR=	src/libs/libgroff
 
-NOMAN=		# defined
-NOPROFILE=	# defined
-NOPIC=		# defined
+MKPRIVATELIB=	yes
 
 LIB=		groff
 SRCS=		assert.cpp change_lf.cpp cmap.cpp color.cpp cset.cpp device.cpp errarg.cpp\
@@ -17,9 +15,6 @@ SRCS=		assert.cpp change_lf.cpp cmap.cpp color.cpp cset.cpp device.cpp errarg.cp
 		tmpfile.cpp tmpname.cpp version.cpp
 SRCS+=		getopt.c getopt1.c iftoa.c itoa.c matherr.c
 CLEANFILES=	version.cpp
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>
 

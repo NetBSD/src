@@ -1,8 +1,6 @@
-# $NetBSD: Makefile,v 1.21 2002/09/18 13:31:53 lukem Exp $
+# $NetBSD: Makefile,v 1.22 2004/05/23 02:24:52 lukem Exp $
 
-NOLINT=	# defined
-NOPIC=	# defined
-NOPROFILE=# defined
+MKPRIVATELIB=	yes
 
 LIB    = dhcp
 SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
@@ -12,8 +10,5 @@ SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 MAN    = dhcp-options.5 dhcp-eval.5
 
 DHCPSRCDIR=	common
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>
