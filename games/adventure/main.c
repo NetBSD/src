@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1998/09/13 15:21:37 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1998/09/14 09:29:08 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 1998/09/13 15:21:37 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 1998/09/14 09:29:08 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,10 +90,10 @@ main(argc, argv)
 			unlink(argv[1]);	/* Don't re-use the save */
 			goto l8;		/* Get where we're going */
 		case 1:				/* Couldn't open it */
-			exit(0);		/* So give up */
+			errx(1,"can't open file");	/* So give up */
 		case 2:				/* Oops -- file was altered */
 			rspeak(202);		/* You dissolve */
-			exit(0);	/* File could be non-adventure */
+			exit(1);	/* File could be non-adventure */
 		}			/* So don't unlink it. */
 	}
 	startup();			/* prepare for a user */
@@ -277,8 +277,7 @@ l2630:		i = vocab(wd1, -1, 0);
 		case 4:
 			goto l2010;
 		default:
-			printf("Error 22\n");
-			exit(0);
+			bug(22);
 		}
 
 l8:
