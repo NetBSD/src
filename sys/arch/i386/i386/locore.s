@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.114 1995/02/08 14:54:12 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.115 1995/02/11 21:51:12 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1157,7 +1157,7 @@ ENTRY(copystr)
 ENTRY(fuword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
-	ja	_fusufault
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movl	(%edx),%eax
@@ -1171,7 +1171,7 @@ ENTRY(fuword)
 ENTRY(fusword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
-	ja	_fusufault
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
@@ -1186,7 +1186,7 @@ ENTRY(fusword)
 ENTRY(fuswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
-	ja	_fusubail
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusubail,PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
@@ -1200,7 +1200,7 @@ ENTRY(fuswintr)
 ENTRY(fubyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
-	ja	_fusufault
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movzbl	(%edx),%eax
@@ -1211,9 +1211,8 @@ ENTRY(fubyte)
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
 ENTRY(fusufault)
-	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx)
-	decl	%eax
+	movl	$0,PCB_ONFAULT(%ecx)
+	movl	$-1,%eax
 	ret
 
 /*
@@ -1222,9 +1221,15 @@ ENTRY(fusufault)
  * than trying to page fault.
  */
 ENTRY(fusubail)
-	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx)
-	decl	%eax
+	movl	$0,PCB_ONFAULT(%ecx)
+	movl	$-1,%eax
+	ret
+
+/*
+ * Handle earlier faults from [fs]u*(), due to our of range addresses.
+ */
+ENTRY(fusuaddrfault)
+	movl	$-1,%eax
 	ret
 
 /*
@@ -1234,7 +1239,7 @@ ENTRY(fusubail)
 ENTRY(suword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
-	ja	_fusufault
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
@@ -1275,7 +1280,7 @@ ENTRY(suword)
 ENTRY(susword)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
-	ja	_fusufault
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
@@ -1317,7 +1322,7 @@ ENTRY(susword)
 ENTRY(suswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
-	ja	_fusubail
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusubail,PCB_ONFAULT(%ecx)
 
@@ -1351,7 +1356,7 @@ ENTRY(suswintr)
 ENTRY(subyte)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
-	ja	_fusufault
+	ja	_fusuaddrfault
 	movl	_curpcb,%ecx
 	movl	$_fusufault,PCB_ONFAULT(%ecx)
 
