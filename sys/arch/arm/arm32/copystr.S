@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.3 2002/03/03 11:22:59 chris Exp $	*/
+/*	$NetBSD: copystr.S,v 1.4 2002/08/09 06:03:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -47,13 +47,6 @@
 Lcurpcb:
 	.word	_C_LABEL(curpcb)
 
-Lvm_min_address:
-	.word	VM_MIN_ADDRESS
-Lvm_maxuser_address:
-	.word	VM_MAXUSER_ADDRESS
-Lvm_maxkern_address:
-	.word	_C_LABEL(pmap_curmaxkvaddr)
-
 /*
  * r0 - from
  * r1 - to
@@ -62,28 +55,25 @@ Lvm_maxkern_address:
  *
  * Copy string from r0 to r1
  */
-
 ENTRY(copystr)
 	stmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	teq	r2, #0x00000000
 	mov	r5, #0x00000000
 	moveq	r0, #ENAMETOOLONG
-	beq	Lcopystrexit
+	beq	2f
 
-Lcopystr_loop:
-	ldrb	r4, [r0], #0x0001
+1:	ldrb	r4, [r0], #0x0001
 	strb	r4, [r1], #0x0001
 	add	r5, r5, #0x00000001
 	teq	r4, #0x00000000
 	teqne	r5, r2
-	bne	Lcopystr_loop
+	bne	1b
 
 	teq	r4, #0x00000000
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
 
-Lcopystrexit:
-	teq	r3, #0x00000000
+2:	teq	r3, #0x00000000
 	strne	r5, [r3]
 
 	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
@@ -98,59 +88,13 @@ Lcopystrexit:
  *
  * Copy string from user space to kernel space
  */
-
 ENTRY(copyinstr)
 	stmfd	sp!, {r4-r6}
 
-	/* Validate user and kernel addresses */
-	ldr	r4, Lvm_min_address
-	cmp	r0, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxuser_address
-	cmp	r0, r4
-	bcs	Lbadaddress
-	cmp	r1, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxkern_address
-	ldr	r5, [r4]
-	cmp	r1, r5
-	bcs	Lbadaddress
-
-	/* Do the actual copy */
-	b	do_copyinoutstr
-
-/*
- * r0 - kernel space address
- * r1 - user space address
- * r2 - maxlens
- * r3 - lencopied
- *
- * Copy string from kernel space to user space
- */
-
-ENTRY(copyoutstr)
-	stmfd	sp!, {r4-r6}		/* stack isn't 8 byte aligned */
-
-	/* Validate user and kernel addresses */
-	ldr	r4, Lvm_min_address
-	cmp	r1, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxuser_address
-	cmp	r1, r4
-	bcs	Lbadaddress
-	cmp	r0, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxkern_address
-	ldr	r5, [r4]
-	cmp	r0, r5
-	bcs	Lbadaddress
-
-	/* Do the actual copy */
-do_copyinoutstr:
 	teq	r2, #0x00000000
 	mov	r6, #0x00000000
 	moveq	r0, #ENAMETOOLONG
-	beq	Lcopyinoutstrexit
+	beq	2f
 
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
@@ -163,13 +107,12 @@ do_copyinoutstr:
 	add	r5, pc, #Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 
-Lcopyinoutstr_loop:
-	ldrb	r5, [r0], #0x0001
+1:	ldrbt	r5, [r0], #0x0001
 	strb	r5, [r1], #0x0001
 	add	r6, r6, #0x00000001
 	teq	r5, #0x00000000
 	teqne	r6, r2
-	bne	Lcopyinoutstr_loop
+	bne	1b
 
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
@@ -178,8 +121,54 @@ Lcopyinoutstr_loop:
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
 
-Lcopyinoutstrexit:
-	teq	r3, #0x00000000
+2:	teq	r3, #0x00000000
+	strne	r6, [r3]
+
+	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
+	mov	pc, lr
+
+/*
+ * r0 - kernel space address
+ * r1 - user space address
+ * r2 - maxlens
+ * r3 - lencopied
+ *
+ * Copy string from kernel space to user space
+ */
+ENTRY(copyoutstr)
+	stmfd	sp!, {r4-r6}		/* stack isn't 8 byte aligned */
+
+	teq	r2, #0x00000000
+	mov	r6, #0x00000000
+	moveq	r0, #ENAMETOOLONG
+	beq	2f
+
+	ldr	r4, Lcurpcb
+	ldr	r4, [r4]
+
+#ifdef DIAGNOSTIC
+	teq	r4, #0x00000000
+	beq	Lcopystrpcbfault
+#endif
+
+	add	r5, pc, #Lcopystrfault - . - 8
+	str	r5, [r4, #PCB_ONFAULT]
+
+1:	ldrb	r5, [r0], #0x0001
+	strbt	r5, [r1], #0x0001
+	add	r6, r6, #0x00000001
+	teq	r5, #0x00000000
+	teqne	r6, r2
+	bne	1b
+
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
+
+	teq	r5, #0x00000000
+	moveq	r0, #0x00000000
+	movne	r0, #ENAMETOOLONG
+
+2:	teq	r3, #0x00000000
 	strne	r6, [r3]
 
 	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
@@ -189,11 +178,6 @@ Lcopyinoutstrexit:
 Lcopystrfault:
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
-
-	/* FALLTHROUGH */
-
-/* Source or Destination address was bad so fail */
-Lbadaddress:
 	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
 	mov	r0, #EFAULT
 	mov	pc, lr
