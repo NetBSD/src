@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.22 2004/03/26 12:53:58 he Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.23 2004/03/26 22:54:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.22 2004/03/26 12:53:58 he Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.23 2004/03/26 22:54:42 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,11 +115,12 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 #define _INT(s, n, v, d) {					\
 	.sysctl_flags = CTLFLAG_IMMEDIATE|CTLFLAG_PERMANENT|	\
 			CTLTYPE_INT|SYSCTL_VERSION,		\
-	._sysctl_size = { .__sysc_ustr = { .__sysc_sdatum = sizeof(int), }, },\
+	sysc_init_field(_sysctl_size, sizeof(int)),		\
 	.sysctl_name = (s),					\
 	.sysctl_num = (n),					\
 	.sysctl_un = { .scu_idata = (v), },			\
-	._sysctl_desc = { .__sysc_ustr = { .__sysc_sdatum = (d), }, }, }
+	sysc_init_field(_sysctl_desc, (d)),			\
+	}
 
 	/*
 	 * the nodes under the "user" node
@@ -134,7 +135,7 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		{
 			.sysctl_flags = SYSCTL_VERSION|CTLFLAG_PERMANENT|
 				CTLTYPE_STRING,
-			._sysctl_size = { .__sysc_ustr = { .__sysc_sdatum = sizeof(_PATH_STDPATH), }, },
+			sysc_init_field(_sysctl_size, sizeof(_PATH_STDPATH)),
 			.sysctl_name = "cs_path",
 			.sysctl_num = USER_CS_PATH,
 			/*
@@ -145,11 +146,10 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			 *	.sysctl_data = _PATH_STDPATH,
 			 *	.sysctl_desc = NULL,
 			 */
-			.sysctl_un = { .scu_data = { ._sud_data =
-				{ .__sysc_ustr = { .__sysc_sdatum =
-				_PATH_STDPATH, }, }, }, },
-			._sysctl_desc = { .__sysc_ustr = { .__sysc_sdatum =
-				NULL, }, },
+			.sysctl_un = { .scu_data = { 
+				sysc_init_field(_sud_data, _PATH_STDPATH),
+				}, },
+			sysc_init_field(_sysctl_desc, NULL),
 		},
 		_INT("bc_base_max", USER_BC_BASE_MAX, BC_BASE_MAX, NULL),
 		_INT("bc_dim_max", USER_BC_DIM_MAX, BC_DIM_MAX, NULL),
