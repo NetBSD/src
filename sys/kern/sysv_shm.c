@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.78 2004/09/28 17:26:25 jdolecek Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.79 2004/09/28 19:05:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.78 2004/09/28 17:26:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.79 2004/09/28 19:05:19 jdolecek Exp $");
 
 #define SYSVSHM
 
@@ -108,6 +108,7 @@ static MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 #define	SHMSEG_REMOVED  	0x0400
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
+#define	SHMSEG_RMLINGER		0x2000
 
 static int	shm_last_free, shm_nused, shm_committed;
 struct	shmid_ds *shmsegs;
@@ -168,7 +169,7 @@ shm_find_segment_by_shmid(shmid)
 	shmseg = &shmsegs[segnum];
 	if ((shmseg->shm_perm.mode & SHMSEG_ALLOCATED) == 0)
 		return NULL;
-	if ((shmseg->shm_perm.mode & SHMSEG_REMOVED) != 0)
+	if ((shmseg->shm_perm.mode & (SHMSEG_REMOVED|SHMSEG_RMLINGER)) == SHMSEG_REMOVED)
 		return NULL;
 	if (shmseg->shm_perm._seq != IPCID_TO_SEQ(shmid))
 		return NULL;
@@ -565,7 +566,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
 	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = cred->cr_gid;
 	shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED) |
-	    (mode & ACCESSPERMS) | SHMSEG_ALLOCATED;
+	    (mode & (ACCESSPERMS|SHMSEG_RMLINGER)) | SHMSEG_ALLOCATED;
 	shmseg->shm_segsz = SCARG(uap, size);
 	shmseg->shm_cpid = p->p_pid;
 	shmseg->shm_lpid = shmseg->shm_nattch = 0;
@@ -601,6 +602,9 @@ sys_shmget(l, v, retval)
 	int segnum, mode, error;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;
+	if (SCARG(uap, shmflg) & _SHM_RMLINGER)
+		mode |= SHMSEG_RMLINGER;
+
 	if (SCARG(uap, key) != IPC_PRIVATE) {
 	again:
 		segnum = shm_find_segment_by_key(SCARG(uap, key));
