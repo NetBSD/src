@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.25 1998/02/10 01:27:05 perry Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.26 1998/03/24 03:10:02 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -173,6 +173,7 @@ int	 ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
 void	 ip_init __P((void));
 int	 ip_mforward __P((struct mbuf *, struct ifnet *));
 int	 ip_optcopy __P((struct ip *, struct ip *));
+u_int	 ip_optlen __P((struct inpcb *));
 int	 ip_output __P((struct mbuf *, ...));
 int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
 struct mbuf *
