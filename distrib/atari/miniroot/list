@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 1999/03/23 10:22:31 leo Exp $
+#	$NetBSD: list,v 1.8 2000/08/09 13:38:48 leo Exp $
 
 # Usage of libhack.o reduces the instbin-size with approx. 64MB!
 LIBS	libhack.o
@@ -22,7 +22,7 @@ CRUNCHSPECIAL	loadkmap srcdir /usr/src/sys/arch/atari/stand/loadkmap/
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
 SPECIAL	cd dev; sh MAKEDEV floppy
-SPECIAL	/bin/rm dev/MAKEDEV
+SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.local
 
 # various files that we need in /etc for the install
 COPY	${ARCHDIR}/disktab.shadow		etc/disktab.shadow
