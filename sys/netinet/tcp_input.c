@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.191 2004/03/29 04:59:02 atatat Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.192 2004/04/14 18:07:52 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.191 2004/03/29 04:59:02 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.192 2004/04/14 18:07:52 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2119,6 +2119,7 @@ after_listen:
 				tp->t_lastm = NULL;
 			sbdrop(&so->so_snd, acked);
 			tp->t_lastoff -= acked;
+			tp->snd_wnd -= acked;
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
