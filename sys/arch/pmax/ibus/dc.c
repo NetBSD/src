@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.1.2.4 1998/10/26 10:52:52 nisimura Exp $ */
+/*	$NetBSD: dc.c,v 1.1.2.5 1999/01/07 06:32:04 nisimura Exp $ */
 
 /*
  * DC7085 (DZ-11 look alike) quad asynchronous serial interface
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.1.2.4 1998/10/26 10:52:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.1.2.5 1999/01/07 06:32:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,9 @@ dcintr(v)
 		}
 		if (csr & DC_TRDY) {
 			line = (csr >> 8) & 3;
+			tp = sc->sc_tty[line];
+			if (tp == NULL)
+				continue;
 			if (sc->sc_xmit[line].p < sc->sc_xmit[line].e) {
 				sc->sc_reg->dctbuf = *sc->sc_xmit[line].p++;	
 				wbflush();
