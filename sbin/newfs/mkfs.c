@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfs.c	6.18 (Berkeley) 7/3/91";*/
-static char rcsid[] = "$Id: mkfs.c,v 1.7 1994/04/01 08:42:43 cgd Exp $";
+static char rcsid[] = "$Id: mkfs.c,v 1.8 1994/04/25 18:28:36 cgd Exp $";
 #endif /* not lint */
 
 #ifndef STANDALONE
@@ -792,9 +792,12 @@ fsinit(utime)
 	/*
 	 * initialize the node
 	 */
-	node.di_atime = utime;
-	node.di_mtime = utime;
-	node.di_ctime = utime;
+	node.di_atime.ts_sec = utime;
+	node.di_atime.ts_nsec = 0;
+	node.di_mtime.ts_sec = utime;
+	node.di_mtime.ts_nsec = 0;
+	node.di_ctime.ts_sec = utime;
+	node.di_ctime.ts_nsec = 0;
 #ifdef LOSTDIR
 	/*
 	 * create the lost+found directory
