@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.13 1996/03/31 23:43:21 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.14 1996/04/13 17:40:03 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,12 +66,13 @@ struct cfdriver auxreg_cd = {
 };
 
 #ifdef BLINK
-static int
+static void blink __P((void *zero));
+
+static void
 blink(zero)
 	void *zero;
 {
 	register int s;
-	register fixpt_t lav;
 
 	s = splhigh();
 	LED_FLIP;
