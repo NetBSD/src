@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.38 1999/07/24 01:40:19 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.39 1999/08/14 14:49:32 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,15 +44,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#if defined(__NetBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#elif defined(__FreeBSD__)
-#include <sys/ioccom.h>
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <machine/clock.h>
-#endif
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -70,7 +63,6 @@
 #include <dev/usb/hid.h>
 #include <dev/usb/ukbdvar.h>
 
-#if defined(__NetBSD__)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
@@ -78,14 +70,9 @@
 
 #include "opt_wsdisplay_compat.h"
 
-#elif defined(__FreeBSD__)
-#include <machine/clock.h>
-#define delay(d)         DELAY(d)
-#endif
-
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (ukbddebug) printf x
-#define DPRINTFN(n,x)	if (ukbddebug>(n)) printf x
+#define DPRINTF(x)	if (ukbddebug) logprintf x
+#define DPRINTFN(n,x)	if (ukbddebug>(n)) logprintf x
 int	ukbddebug = 0;
 #else
 #define DPRINTF(x)
@@ -337,7 +324,6 @@ USB_ATTACH(ukbd)
 		ukbd_is_console = 0;
 	}
 
-#if defined(__NetBSD__)
 	if (sc->sc_console_keyboard) {
 		DPRINTF(("ukbd_attach: console keyboard sc=%p\n", sc));
 		wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
@@ -357,22 +343,6 @@ USB_ATTACH(ukbd)
 	ukbd_set_leds(sc, 0);
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-
-#elif defined(__FreeBSD__)
-	/* XXX why waste CPU in delay() ? */
-	/* It's alive!  IT'S ALIVE!  Do a little song and dance. */
-	ukbd_set_leds(sc, NUM_LOCK);
-	delay(15000);
-	ukbd_set_leds(sc, CAPS_LOCK);
-	delay(20000);
-	ukbd_set_leds(sc, SCROLL_LOCK);
-	delay(30000);
-	ukbd_set_leds(sc, CAPS_LOCK);
-	delay(50000);
-	ukbd_set_leds(sc, NUM_LOCK);
-
-	ukbd_enable(sc, 1);
-#endif
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -520,7 +490,6 @@ ukbd_intr(reqh, addr, status)
 	if (nkeys == 0)
 		return;
 
-#if defined(__NetBSD__)
 	if (sc->sc_polling) {
 		DPRINTFN(1,("ukbd_intr: pollchar = 0x%03x\n", ibuf[0]));
 		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(u_int16_t));
@@ -574,23 +543,6 @@ ukbd_intr(reqh, addr, status)
 		    key&CODEMASK);
 	}
 	splx(s);
-
-#elif defined(__FreeBSD__)
-	/* XXX shouldn't the keys be used? */
-	for (i = 0; i < nkeys; i++) {
-		c = ibuf[i];
-		printf("%c (%d) %s\n", 
-		       ((c&CODEMASK) < 32 || (c&CODEMASK) > 126 ? '.' :
-			(c&CODEMASK)), c,
-		       (c&RELEASE? "released":"pressed"));
-		if (ud->modifiers)
-			printf("0x%04x\n", ud->modifiers);
-                for (i = 0; i < NKEYCODE; i++)
-			if (ud->keycode[i])
-				printf("%d ", ud->keycode[i]);
-		printf("\n");
-	}
-#endif
 }
 
 void
@@ -604,7 +556,6 @@ ukbd_set_leds(v, leds)
 	DPRINTF(("ukbd_set_leds: sc=%p leds=%d\n", sc, leds));
 
 	sc->sc_leds = leds;
-#if defined(__NetBSD__)
 	res = 0;
 	if (leds & WSKBD_LED_SCROLL)
 		res |= SCROLL_LOCK;
@@ -612,14 +563,9 @@ ukbd_set_leds(v, leds)
 		res |= NUM_LOCK;
 	if (leds & WSKBD_LED_CAPS)
 		res |= CAPS_LOCK;
-#elif defined(__FreeBSD__)
-	res = leds;
-#endif
 	res |= leds & 0xf8;
 	usbd_set_report_async(sc->sc_iface, UHID_OUTPUT_REPORT, 0, &res, 1);
 }
-
-#if defined(__NetBSD__)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 void
@@ -718,9 +664,3 @@ ukbd_cnattach()
 	ukbd_is_console = 1;
 	return (0);
 }
-
-#endif /* NetBSD */
-
-#if defined(__FreeBSD__)
-DRIVER_MODULE(ukbd, usb, ukbd_driver, ukbd_devclass, usbd_driver_load, 0);
-#endif

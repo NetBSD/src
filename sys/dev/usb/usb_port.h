@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.7 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.8 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ typedef struct device bdevice;			/* base device */
 
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
+
+#define logprintf printf
 
 #define USB_DECLARE_DRIVER_NAME_INIT(_1, dname, _2)  \
 int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
