@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.2 1997/01/07 05:37:36 tls Exp $
+.\"	$NetBSD: rc.conf.5,v 1.3 1997/03/10 07:06:17 scottr Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -182,6 +182,24 @@ if
 .Sy nfs_client
 is configured.  They default to ``-n 4''
 .El
+.It Sy statd_flags
+Typically set to "" if your system is to run the status monitoring
+daemon,
+.Xr rpc.statd 8 ,
+or "NO"; ignored if neither
+.Sy nfs_server
+nor
+.Sy nfs_client
+are set to "YES".
+.It Sy lockd_flags
+Typically set to "" if your system is to run the NFS locking
+daemon,
+.Xr rpc.lockd 8 ,
+or "NO"; ignored if neither
+.Sy nfs_server
+nor
+.Sy nfs_client
+are set to "YES".
 .It Sy kerberos
 Set to "YES" if the kerberos server,
 .Xr kerberos 8 , 
