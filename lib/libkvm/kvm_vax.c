@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.12 2000/10/27 21:38:10 matt Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.13 2001/09/07 01:48:37 chuck Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,10 +55,13 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/vmparam.h>
+
 #include <limits.h>
 #include <db.h>
 
 #include "kvm_private.h"
+
 
 struct vmstate {
 	u_long end;
