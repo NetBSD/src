@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.1.2.2 2003/01/15 16:04:35 wiz Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.1.2.3 2003/01/15 16:09:28 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@ its status is reported to another LWP via
 .Xr _lwp_wait 2 .
 .It LWP_SUSPENDED
 The LWP is created suspended, and will not begin execution until
-it is resumbed by another LWP via
+it is resumed by another LWP via
 .Xr _lwp_continue 2 .
 .\" __LWP_ASLWP is not yet implemented by the NetBSD kernel.
 .El
