@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.2 2002/06/10 00:30:37 itojun Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.3 2002/06/11 14:00:05 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -88,7 +88,8 @@ void dhcp_db_objects_setup ()
 					     0, 0,
 #endif
 					     0,
-					     sizeof (struct lease), 0);
+					     sizeof (struct lease),
+					     0, RC_LEASE);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register lease object type: %s",
 			   isc_result_totext (status));
@@ -103,7 +104,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_class_lookup, 
 					     dhcp_class_create,
 					     dhcp_class_remove, 0, 0, 0,
-					     sizeof (struct class), 0);
+					     sizeof (struct class), 0,
+					     RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register class object type: %s",
 			   isc_result_totext (status));
@@ -118,7 +120,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_subclass_lookup, 
 					     dhcp_subclass_create,
 					     dhcp_subclass_remove, 0, 0, 0,
-					     sizeof (struct class), 0);
+					     sizeof (struct class), 0, RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register subclass object type: %s",
 			   isc_result_totext (status));
@@ -133,7 +135,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_pool_lookup, 
 					     dhcp_pool_create,
 					     dhcp_pool_remove, 0, 0, 0,
-					     sizeof (struct pool), 0);
+					     sizeof (struct pool), 0, RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register pool object type: %s",
@@ -149,7 +151,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_host_lookup, 
 					     dhcp_host_create,
 					     dhcp_host_remove, 0, 0, 0,
-					     sizeof (struct host_decl), 0);
+					     sizeof (struct host_decl),
+					     0, RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register host object type: %s",
@@ -168,7 +171,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_state_remove,
 					     0, 0, 0,
 					     sizeof (dhcp_failover_state_t),
-					     0);
+					     0, RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register failover state object type: %s",
@@ -182,7 +185,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_link_signal,
 					     dhcp_failover_link_stuff_values,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (dhcp_failover_link_t), 0);
+					     sizeof (dhcp_failover_link_t), 0,
+					     RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register failover link object type: %s",
@@ -197,7 +201,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_listener_stuff,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof
-					     (dhcp_failover_listener_t), 0);
+					     (dhcp_failover_listener_t), 0,
+					     RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register failover listener object type: %s",
@@ -221,16 +226,29 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 	   set - for now, we just make it possible to whack the state. */
 	if (!omapi_ds_strcmp (name, "state")) {
 	    unsigned long bar;
+	    const char *ols, *nls;
 	    status = omapi_get_int_value (&bar, value);
 	    if (status != ISC_R_SUCCESS)
 		return status;
 	    
-	    if (bar < 1 || bar > FTS_BOOTP)
+	    if (bar < 1 || bar > FTS_LAST)
 		return ISC_R_INVALIDARG;
+	    nls = binding_state_names [bar - 1];
+	    if (lease -> binding_state >= 1 &&
+		lease -> binding_state <= FTS_LAST)
+		ols = binding_state_names [lease -> binding_state - 1];
+	    else
+		ols = "unknown state";
+	    
 	    if (lease -> binding_state != bar) {
 		lease -> next_binding_state = bar;
-		if (supersede_lease (lease, 0, 1, 1, 1))
+		if (supersede_lease (lease, 0, 1, 1, 1)) {
+			log_info ("lease %d state changed from %s to %s",
+				  ols, nls);
 			return ISC_R_SUCCESS;
+		}
+		log_info ("lease state change from %s to %s failed.",
+			  ols, nls);
 		return ISC_R_IOERROR;
 	    }
 	    return ISC_R_UNCHANGED;
@@ -817,8 +835,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	if (!omapi_ds_strcmp (name, "name")) {
 		if (host -> name)
 			return ISC_R_EXISTS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 			host -> name = dmalloc (value -> u.buffer.len + 1,
 						MDL);
 			if (!host -> name)
@@ -833,8 +851,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	}
 
 	if (!omapi_ds_strcmp (name, "group")) {
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 			struct group_object *group;
 			group = (struct group_object *)0;
 			group_hash_lookup (&group, group_name_hash,
@@ -859,8 +877,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	if (!omapi_ds_strcmp (name, "hardware-address")) {
 		if (host -> interface.hlen)
 			return ISC_R_EXISTS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 			if (value -> u.buffer.len >
 			    (sizeof host -> interface.hbuf) - 1)
 				return ISC_R_INVALIDARG;
@@ -875,8 +893,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 
 	if (!omapi_ds_strcmp (name, "hardware-type")) {
 		int type;
-		if (value -> type == omapi_datatype_data &&
-		    value -> u.buffer.len == sizeof type) {
+		if (value && (value -> type == omapi_datatype_data &&
+		    	      value -> u.buffer.len == sizeof type)) {
 			if (value -> u.buffer.len > sizeof type)
 				return ISC_R_INVALIDARG;
 			memcpy (&type,
@@ -894,8 +912,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	if (!omapi_ds_strcmp (name, "dhcp-client-identifier")) {
 		if (host -> client_identifier.data)
 			return ISC_R_EXISTS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 		    if (!buffer_allocate (&host -> client_identifier.buffer,
 					  value -> u.buffer.len, MDL))
 			    return ISC_R_NOMEMORY;
@@ -915,8 +933,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 			option_cache_dereference (&host -> fixed_addr, MDL);
 		if (!value)
 			return ISC_R_SUCCESS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+			      value -> type == omapi_datatype_string)) {
 			struct data_string ds;
 			memset (&ds, 0, sizeof ds);
 			ds.len = value -> u.buffer.len;
@@ -952,8 +970,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 		}
 		if (!host -> group)
 			return ISC_R_NOMEMORY;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+			      value -> type == omapi_datatype_string)) {
 			struct parse *parse;
 			int lose = 0;
 			parse = (struct parse *)0;
@@ -1734,8 +1752,8 @@ isc_result_t dhcp_class_destroy (omapi_object_t *h, const char *file, int line)
 		class -> billed_leases = (struct lease **)0;
 	}
 	if (class -> hash) {
-		free_hash_table (class -> hash, file, line);
-		class -> hash = (struct hash_table *)0;
+		class_free_hash_table (&class -> hash, file, line);
+		class -> hash = (class_hash_t *)0;
 	}
 	data_string_forget (&class -> hash_string, file, line);
 

@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.4 2002/06/11 14:00:02 drochner Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -318,10 +318,13 @@ isc_result_t fallback_discard (object)
 
 	status = recvfrom (interface -> wfdesc, buf, sizeof buf, 0,
 			   (struct sockaddr *)&from, &flen);
+#if defined (DEBUG)
+	/* Only report fallback discard errors if we're debugging. */
 	if (status < 0) {
 		log_error ("fallback_discard: %m");
 		return ISC_R_UNEXPECTED;
 	}
+#endif
 	return ISC_R_SUCCESS;
 }
 #endif /* USE_SOCKET_FALLBACK */

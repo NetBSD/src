@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.4 2002/06/11 14:00:01 drochner Exp $ Copyright (c) 2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -130,8 +130,7 @@ static char copyright[] =
  * supported.
  */
 
-struct hash_table *tsig_key_hash;
-struct hash_table *dns_zone_hash;
+dns_zone_hash_t *dns_zone_hash;
 
 #if defined (NSUPDATE)
 isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
@@ -201,11 +200,7 @@ isc_result_t enter_dns_zone (struct dns_zone *zone)
 			dns_zone_dereference (&tz, MDL);
 		}
 	} else {
-		dns_zone_hash =
-			new_hash ((hash_reference)dns_zone_reference,
-				  (hash_dereference)dns_zone_dereference, 1,
-				  MDL);
-		if (!dns_zone_hash)
+		if (!dns_zone_new_hash (&dns_zone_hash, 1, MDL))
 			return ISC_R_NOMEMORY;
 	}
 	dns_zone_hash_add (dns_zone_hash, zone -> name, 0, zone, MDL);
@@ -263,7 +258,7 @@ int dns_zone_dereference (ptr, file, line)
 	dns_zone = *ptr;
 	*ptr = (struct dns_zone *)0;
 	--dns_zone -> refcnt;
-	rc_register (file, line, ptr, dns_zone, dns_zone -> refcnt, 1);
+	rc_register (file, line, ptr, dns_zone, dns_zone -> refcnt, 1, RC_MISC);
 	if (dns_zone -> refcnt > 0)
 		return 1;
 
@@ -624,14 +619,9 @@ isc_result_t ddns_update_a (struct data_string *ddns_fwd_name,
 	 */
 	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
 
+#ifdef DEBUG_DNS_UPDATES
 	print_dns_status ((int)result, &updqueue);
-
-	while (!ISC_LIST_EMPTY (updqueue)) {
-		updrec = ISC_LIST_HEAD (updqueue);
-		ISC_LIST_UNLINK (updqueue, updrec, r_link);
-		minires_freeupdrec (updrec);
-	}
-
+#endif
 
 	/*
 	 * If this update operation succeeds, the updater can conclude that it
@@ -641,8 +631,12 @@ isc_result_t ddns_update_a (struct data_string *ddns_fwd_name,
 	 *   -- "Interaction between DHCP and DNS"
 	 */
 
-	if (result == ISC_R_SUCCESS)
-		return result;
+	if (result == ISC_R_SUCCESS) {
+		log_info ("Added new forward map from %.*s to %s",
+			  (int)ddns_fwd_name -> len,
+			  (const char *)ddns_fwd_name -> data, ddns_address);
+		goto error;
+	}
 
 
 	/*
@@ -658,9 +652,19 @@ isc_result_t ddns_update_a (struct data_string *ddns_fwd_name,
 	 *   -- "Interaction between DHCP and DNS"
 	 */
 
-	if (result != (rrsetp ? ISC_R_YXRRSET : ISC_R_YXDOMAIN))
-		return result;
+	if (result != (rrsetp ? ISC_R_YXRRSET : ISC_R_YXDOMAIN)) {
+		log_error ("Unable to add forward map from %.*s to %s: %s",
+			   (int)ddns_fwd_name -> len,
+			   (const char *)ddns_fwd_name -> data, ddns_address,
+			   isc_result_totext (result));
+		goto error;
+	}
 
+	while (!ISC_LIST_EMPTY (updqueue)) {
+		updrec = ISC_LIST_HEAD (updqueue);
+		ISC_LIST_UNLINK (updqueue, updrec, r_link);
+		minires_freeupdrec (updrec);
+	}
 
 	/*
 	 * DHCID RR exists, and matches client identity.
@@ -721,7 +725,27 @@ isc_result_t ddns_update_a (struct data_string *ddns_fwd_name,
 	 */
 	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
 
+	if (result != ISC_R_SUCCESS) {
+		if (result == YXRRSET || result == YXDOMAIN ||
+		    result == NXRRSET || result == NXDOMAIN)
+			log_error ("Forward map from %.*s to %s already in use",
+				   (int)ddns_fwd_name -> len,
+				   (const char *)ddns_fwd_name -> data,
+				   ddns_address);
+		else
+			log_error ("Can't update forward map %.*s to %s: %s",
+				   (int)ddns_fwd_name -> len,
+				   (const char *)ddns_fwd_name -> data,
+				   ddns_address, isc_result_totext (result));
+
+	} else {
+		log_info ("Added new forward map from %.*s to %s",
+			  (int)ddns_fwd_name -> len,
+			  (const char *)ddns_fwd_name -> data, ddns_address);
+	}
+#if defined (DEBUG_DNS_UPDATES)
 	print_dns_status ((int)result, &updqueue);
+#endif
 
 	/*
 	 * If this query succeeds, the updater can conclude that the current
@@ -868,8 +892,13 @@ isc_result_t ddns_remove_a (struct data_string *ddns_fwd_name,
 	 *   -- "Interaction between DHCP and DNS"
 	 */
 
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
+		/* If the rrset isn't there, we didn't need to do the
+		   delete, which is success. */
+		if (result == ISC_R_NXRRSET || result == ISC_R_NXDOMAIN)
+			result = ISC_R_SUCCESS;	
 		goto error;
+	}
 
 	while (!ISC_LIST_EMPTY (updqueue)) {
 		updrec = ISC_LIST_HEAD (updqueue);
@@ -939,4 +968,5 @@ isc_result_t ddns_remove_a (struct data_string *ddns_fwd_name,
 
 #endif /* NSUPDATE */
 
-HASH_FUNCTIONS (dns_zone, const char *, struct dns_zone)
+HASH_FUNCTIONS (dns_zone, const char *, struct dns_zone, dns_zone_hash_t,
+		dns_zone_reference, dns_zone_dereference)
