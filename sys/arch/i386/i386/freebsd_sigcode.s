@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sigcode.s,v 1.1 2000/11/26 11:18:20 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_sigcode.s,v 1.2 2001/05/21 06:13:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 /*
  * Signal trampoline; copied to top of user stack.
  */
+/* LINTSTUB: Var: char freebsd_sigcode[1], freebsd_esigcode[1]; */
 NENTRY(freebsd_sigcode)
 	call	FREEBSD_SIGF_HANDLER(%esp)
 	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered

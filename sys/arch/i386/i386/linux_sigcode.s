@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.s,v 1.1 2000/11/26 11:18:20 jdolecek Exp $	*/
+/*	$NetBSD: linux_sigcode.s,v 1.2 2001/05/21 06:13:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 /*
  * Signal trampoline; copied to top of user stack.
  */
+/* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
 NENTRY(linux_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
@@ -110,6 +111,7 @@ NENTRY(linux_sigcode)
 	.globl	_C_LABEL(linux_esigcode)
 _C_LABEL(linux_esigcode):
 
+/* LINTSTUB: Var: char linux_rt_sigcode[1], linux_rt_esigcode[1]; */
 NENTRY(linux_rt_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
