@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.3 2000/06/22 08:09:26 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.4 2000/06/22 10:57:38 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -1267,11 +1267,12 @@ handle_reply(int fd, SVCXPRT *xprt)
 	}
 	if (uaddr)
 		free((void *) uaddr);
-	if (buffer)
-		free(buffer);
 #endif
 	svc_sendreply(xprt, (xdrproc_t) xdr_rmtcall_result, (char *) &a);
 done:
+	if (buffer)
+		free(buffer);
+
 	if (reply_msg.rm_xid == 0) {
 #ifdef	SVC_RUN_DEBUG
 	if (debugging) {
