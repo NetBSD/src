@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.24 2002/10/23 09:12:34 jdolecek Exp $ */
+/*	$NetBSD: ts.c,v 1.25 2003/01/20 05:30:03 simonb Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -413,7 +413,7 @@ tscommand (dev, cmd, count)
 		debug (("tscommand: direct return, no biowait.\n"));
 		return;
 	}
-	debug (("tscommand: calling biowait ...\n"));;
+	debug (("tscommand: calling biowait ...\n"));
 	biowait (bp);
 	if (bp->b_flags & B_WANTED)
 		wakeup ((caddr_t)bp);

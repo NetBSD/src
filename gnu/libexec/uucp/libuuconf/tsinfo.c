@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_tsinfo_rcsid[] = "$Id: tsinfo.c,v 1.4 2002/12/06 09:57:59 scw Exp $";
+const char _uuconf_tsinfo_rcsid[] = "$Id: tsinfo.c,v 1.5 2003/01/20 05:29:55 simonb Exp $";
 #endif
 
 #include <errno.h>
@@ -419,7 +419,7 @@ iialternate (pglobal, argc, argv, pvar, pinfo)
 			      sizeof (struct uuconf_system)));
       if (qnew == NULL)
 	{
-	  qglobal->ierrno = errno;;
+	  qglobal->ierrno = errno;
 	  return (UUCONF_MALLOC_FAILED
 		  | UUCONF_ERROR_ERRNO
 		  | UUCONF_CMDTABRET_EXIT);

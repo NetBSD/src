@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: atof-ieee.c,v 1.5 1997/05/17 19:24:44 pk Exp $";
+static char rcsid[] = "$Id: atof-ieee.c,v 1.6 2003/01/20 05:29:55 simonb Exp $";
 #endif
 
 #include "as.h"
@@ -312,7 +312,7 @@ long exponent_bits;
 	littlenum_pointer = generic_floating_point_number.leader;
 	littlenums_left = 1 + generic_floating_point_number.leader - generic_floating_point_number.low;
 	/* Seek (and forget) 1st significant bit */
-	for (exponent_skippage = 0; !next_bits(1); ++exponent_skippage) ;;
+	for (exponent_skippage = 0; !next_bits(1); ++exponent_skippage) ;
 	exponent_1 = generic_floating_point_number.exponent + generic_floating_point_number.leader
 	  + 1 - generic_floating_point_number.low;
 	/* Radix LITTLENUM_RADIX, point just higher than generic_floating_point_number.leader. */

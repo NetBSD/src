@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.59 2002/09/23 05:51:14 simonb Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.60 2003/01/20 05:30:11 simonb Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.59 2002/09/23 05:51:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.60 2003/01/20 05:30:11 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1130,7 +1130,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	/* IPV6_DSTOPTS and IPV6_RTHDR socket options */
 	if (in6p->in6p_flags & (IN6P_DSTOPTS | IN6P_RTHDR)) {
 		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-		int nxt = ip6->ip6_nxt, off = sizeof(struct ip6_hdr);;
+		int nxt = ip6->ip6_nxt, off = sizeof(struct ip6_hdr);
 
 		/*
 		 * Search for destination options headers or routing

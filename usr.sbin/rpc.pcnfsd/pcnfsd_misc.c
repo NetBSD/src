@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.8 2002/08/02 14:06:07 christos Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.9 2003/01/20 05:30:14 simonb Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -539,7 +539,7 @@ config_from_file()
 			    !strcasecmp(val, "off") ||
 			    !strcasecmp(val, "disable") ||
 			    !strcmp(val, "0"))
-				wtmp_enabled = 0;;
+				wtmp_enabled = 0;
 			continue;
 		}
 #endif

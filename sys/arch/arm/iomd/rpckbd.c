@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.5 2003/01/20 05:30:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ rpckbd_set_leds(void *context, int leds)
 		return;
 
 	/* set state */
-	sc->sc_ledstate = new_ledstate;;
+	sc->sc_ledstate = new_ledstate;
         kbdcmd(sc, KBC_SETLEDS, 0);
         res = kbdcmd(sc, sc->sc_ledstate, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.5 2002/03/05 12:28:31 mrg Exp $	*/
+/*	$NetBSD: ch.c,v 1.6 2003/01/20 05:30:12 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -694,7 +694,7 @@ ch_delbufs()
 	while (ch_bufhead != END_OF_CHAIN)
 	{
 		bp = ch_bufhead;
-		bp->next->prev = bp->prev;;
+		bp->next->prev = bp->prev;
 		bp->prev->next = bp->next;
 		free(bp);
 	}
