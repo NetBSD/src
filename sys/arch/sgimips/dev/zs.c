@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 2001/07/07 23:13:25 wdk Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 2001/07/08 20:30:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
-#include <machine/arcs.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 #include <machine/z8530var.h>
@@ -68,6 +67,9 @@
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
+
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 
 /*
  * Some warts needed by z8530tty.c -
@@ -211,7 +213,7 @@ zs_hpc_attach(parent, self, aux)
 	int    zs_unit, channel, err, s;
 	char  *promconsdev;
 
-	promconsdev = ARCS->GetEnvironmentVariable("ConsoleOut");
+	promconsdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
 
 	zsc->zsc_bustag = haa->ha_iot;
 	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
@@ -688,7 +690,7 @@ zscninit(cn)
 {
 	char* consdev;
 
-	if ((consdev = ARCS->GetEnvironmentVariable("ConsoleOut")) == NULL)
+	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
 	    panic("zscninit without valid ARCS ConsoleOut setting!\n");
 
 	if (strlen(consdev) != 9 ||

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.9 2001/05/11 05:04:34 thorpej Exp $
+#	$NetBSD: files.sgimips,v 1.10 2001/07/08 20:30:14 thorpej Exp $
 
 maxpartitions 16
 
@@ -58,9 +58,11 @@ file	arch/sgimips/dev/zs_kgdb.c		kgdb
 file 	arch/sgimips/dev/zs.c			zsc needs-count
 file 	dev/ic/z8530sc.c			zsc
 
+file dev/arcbios/arcbios.c
+file dev/arcbios/arcbios_tty.c
+
 file arch/sgimips/sgimips/ip22.c
 file arch/sgimips/sgimips/ip32.c
-file arch/sgimips/sgimips/arcs.c
 file arch/sgimips/sgimips/autoconf.c
 file arch/sgimips/sgimips/bus.c
 file arch/sgimips/sgimips/clock.c
