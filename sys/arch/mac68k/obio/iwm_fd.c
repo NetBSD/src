@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.1.2.3 2000/02/06 20:51:50 scottr Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.1.2.4 2000/02/13 04:17:48 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -1118,6 +1118,7 @@ fdstrategy(bp)
 		 */
 		remap_geometry(bp->b_blkno, fd->currentType->heads,
 		    &physDiskLoc);
+		bp->b_rawblkno = bp->b_blkno;
 		bp->b_cylinder = physDiskLoc.track;
 
 		if (TRACE_STRAT) {
