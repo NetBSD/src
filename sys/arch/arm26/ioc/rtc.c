@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.3 2000/07/27 23:51:43 bjh21 Exp $	*/
+/*	$NetBSD: rtc.c,v 1.4 2000/07/28 09:54:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -34,19 +34,18 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * rtc.c
- *
- * Routines to read and write the RTC and CMOS RAM
- *
- * Created      : 13/10/94
+ */
+/*
+ * rtc.c - Routines to read and write the RTC and CMOS RAM
+ */
+/*
+ * This driver supports the following chip:
+ * Philips PCF8583	Clock/calendar with 240 x 8-bit RAM
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rtc.c,v 1.3 2000/07/27 23:51:43 bjh21 Exp $");
+__RCSID("$NetBSD: rtc.c,v 1.4 2000/07/28 09:54:56 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
