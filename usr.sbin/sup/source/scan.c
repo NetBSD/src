@@ -28,7 +28,10 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
+ * Revision 1.2  1994/01/03 14:47:25  brezak
+ * Change <sys/dir.h> to <dirent.h>
+ *
+ * Revision 1.1.1.1  1993/05/21  14:52:17  cgd
  * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.8  92/08/11  12:04:28  mrt
@@ -90,7 +93,11 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#ifdef HAS_POSIX_DIR
+#include <dirent.h>
+#else
 #include <sys/dir.h>
+#endif
 #include <sys/file.h>
 #include "sup.h"
 
@@ -161,6 +168,11 @@ extern long lasttime;			/* time of last upgrade */
 extern long scantime;			/* time of this scan */
 extern int trace;			/* trace directories */
 extern int newonly;			/* new files only */
+
+#ifdef RCSSTAT
+extern char *rcs_branch;
+extern int candorcs;
+#endif
 
 extern long time();
 
@@ -405,6 +417,8 @@ static
 getscan (listfile,scanfile)
 char *listfile,*scanfile;
 {
+        struct tm *utc_time;
+        
 	listT = NULL;
 	if (!getscanfile(scanfile)) {	/* check for pre-scanned file list */
 		scantime = time ((long *)NULL);
@@ -616,6 +630,26 @@ int always;
 		return;
 	}
 	if (access(name,R_OK) < 0) return;
+#ifdef RCSSTAT
+        if (candorcs) {
+                char rcs_release[STRINGLENGTH];
+                int status;
+                if (rcs_branch != NULL)
+#ifdef CVS
+                        sprintf(rcs_release, "-r %s", rcs_branch);
+#else
+                        sprintf(rcs_release, "-r%s", rcs_branch);
+#endif
+                else
+                        rcs_release[0] = '\0';
+#ifdef CVS
+                sprintf(sys_com, "cvs -d %s -r -l -Q co -p %s %s > %s\n", cvs_root, rcs_release, name, rcs_file);
+#else
+                status = runp("rcsstat", "rcsstat", "-q", rcs_release, name, 0);
+#endif
+                if (status != 0) return;
+        }
+#endif
 	listname (fullname,&statbuf);
 }
 
@@ -654,7 +688,11 @@ listdir (name,always)		/* expand directory */
 char *name;
 int always;
 {
+#ifdef HAS_POSIX_DIR
+	struct dirent *dentry;
+#else
 	struct direct *dentry;
+#endif
 	register DIR *dirp;
 	char ename[STRINGLENGTH],newname[STRINGLENGTH],filename[STRINGLENGTH];
 	register char *p,*newp;
@@ -780,7 +818,7 @@ char *scanfile;
 	register TREE *tmp, *t = NULL;
 	register notwanted;
 	register TREELIST *tl;
-
+        
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
 	(void) sprintf (buf,FILESCAN,collname,scanfile);

@@ -61,7 +61,11 @@
  */
 #include <sys/param.h>
 #include <sys/stat.h>
+#ifdef HAS_POSIX_DIR
+#include <dirent.h>
+#else
 #include <sys/dir.h>
+#endif
 #include <pwd.h>
 #include <ctype.h>
 #include <libc.h>
@@ -148,14 +152,22 @@ endit:
 static matchdir(pattern)
 	char *pattern;
 {
+#ifdef HAS_POSIX_DIR
+	register struct dirent *dp;
+#else
 	register struct direct *dp;
+#endif
 	DIR *dirp;
 
 	dirp = opendir(path);
 	if (dirp == NULL)
 		return;
 	while ((dp = readdir(dirp)) != NULL) {
+#ifdef HAS_POSIX_DIR
+		if (dp->d_fileno == 0) continue;
+#else
 		if (dp->d_ino == 0) continue;
+#endif
 		if (match(dp->d_name, pattern))
 			addone(path, dp->d_name);
 	}
