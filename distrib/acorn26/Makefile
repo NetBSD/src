@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/19 00:03:46 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/22 19:24:28 bjh21 Exp $
 
-SUBDIR=	floppies
+SUBDIR=	instkernel
 
 TARGETS+=release
 
