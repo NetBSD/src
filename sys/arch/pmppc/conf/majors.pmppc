@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmppc,v 1.4 2002/10/04 18:28:33 elric Exp $
+#	$NetBSD: majors.pmppc,v 1.5 2003/04/25 21:11:01 ragge Exp $
 #
 # Device majors for pmppc
 #
@@ -52,3 +52,4 @@ device-major	clockctl	char 58			clockctl
 device-major	systrace	char 59			systrace
 device-major	pci		char 60			pci
 device-major	cgd		char 61  block 19	cgd
+device-major	ksyms		char 62			ksyms

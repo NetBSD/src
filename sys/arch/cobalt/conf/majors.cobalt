@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.4 2003/01/20 01:26:14 soren Exp $
+#	$NetBSD: majors.cobalt,v 1.5 2003/04/25 21:10:50 ragge Exp $
 #
 # Device majors for cobalt
 #
@@ -40,3 +40,4 @@ device-major	clockctl	char 33			clockctl
 device-major	systrace	char 34			systrace
 device-major	cgd		char 35  block 11	cgd
 device-major	panel		char 36			panel
+device-major	ksyms		char 37			ksyms
