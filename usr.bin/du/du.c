@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.18 2002/09/27 03:33:33 provos Exp $	*/
+/*	$NetBSD: du.c,v 1.19 2002/09/28 21:14:03 provos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.18 2002/09/27 03:33:33 provos Exp $");
+__RCSID("$NetBSD: du.c,v 1.19 2002/09/28 21:14:03 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ main(argc, argv)
 {
 	FTS *fts;
 	FTSENT *p;
-	long blocksize, totalblocks;
+	int64_t totalblocks;
 	int ftsoptions, listdirs, listfiles;
 	int Hflag, Lflag, Pflag, aflag, ch, cflag, kmflag, notused, rval, sflag;
 	char **save;
