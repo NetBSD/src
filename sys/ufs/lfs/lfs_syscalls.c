@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.95 2003/07/30 12:34:00 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.96 2003/07/30 12:38:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.95 2003/07/30 12:34:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.96 2003/07/30 12:38:53 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -105,18 +105,6 @@ int clean_inlocked = 0;
 int verbose_debug = 0;
     
 pid_t lfs_cleaner_pid = 0;
-
-/*
- * Definitions for the buffer free lists.
- */
-#define BQUEUES		4		/* number of free buffer queues */
- 
-#define BQ_LOCKED	0		/* super-blocks &c */
-#define BQ_LRU		1		/* lru, useful buffers */
-#define BQ_AGE		2		/* rubbish */ 
-#define BQ_EMPTY	3		/* buffer headers with no memory */
- 
-extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 
 #define LFS_FORCE_WRITE UNASSIGNED
 
@@ -235,7 +223,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 {
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
-	struct buf *bp, *nbp;
+	struct buf *bp;
 	struct inode *ip = NULL;
 	struct lfs *fs;
 	struct mount *mntp;
@@ -247,7 +235,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	daddr_t b_daddr, v_daddr;
 	int cnt, error;
 	int do_again = 0;
-	int s;
 #ifdef CHECK_COPYIN
 	int i;
 #endif /* CHECK_COPYIN */
@@ -262,6 +249,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		return (ENOENT);
 
 	fs = VFSTOUFS(mntp)->um_lfs;
+
+	if (fs->lfs_ronly)
+		return EROFS;
+
 	maxino = (fragstoblks(fs, fsbtofrags(fs, VTOI(fs->lfs_ivnode)->i_ffs1_blocks)) -
 		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 
@@ -310,7 +301,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		/* Bounds-check incoming data, avoid panic for failed VGET */
 		if (blkp->bi_inode <= 0 || blkp->bi_inode >= maxino) {
 			error = EINVAL;
-			goto again;
+			goto err3;
 		}
 		/*
 		 * Get the IFILE entry (only once) and see if the file still
@@ -502,7 +493,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					goto err2;
 			}
 		}
-		if ((error = lfs_bwrite_ext(bp,BW_CLEAN)) != 0)
+		if ((error = lfs_bwrite_ext(bp, BW_CLEAN)) != 0)
 			goto err2;
 
 		nblkwritten++;
@@ -561,32 +552,25 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 
 	return 0;
 	
- err2:
+err2:
 	printf("lfs_markv err2\n");
-	lfs_vunref(vp);
-	--numrefed;
 
-	/* Free up fakebuffers -- have to take these from the LOCKED list */
- again:
-	s = splbio();
-	for (bp = TAILQ_FIRST(&bufqueues[BQ_LOCKED]); bp; bp = nbp) {
-		nbp = TAILQ_NEXT(bp, b_freelist);
-		if (LFS_IS_MALLOC_BUF(bp)) {
-			if (bp->b_flags & B_BUSY) { /* not bloody likely */
-				bp->b_flags |= B_WANTED;
-				tsleep(bp, PRIBIO+1, "markv", 0);
-				splx(s);
-				goto again;
-			}
-			if (bp->b_flags & B_DELWRI) 
-				fs->lfs_avail += btofsb(fs, bp->b_bcount);
-			bremfree(bp);
-			splx(s);
-			brelse(bp);
-			s = splbio();
-		}
+	/*
+	 * XXX we're here because copyin() failed.
+	 * XXX it means that we can't trust the cleanerd.  too bad.
+	 * XXX how can we recover from this?
+	 */
+
+err3:
+	/*
+	 * XXX should do segwrite here anyway?
+	 */
+
+	if (v_daddr != LFS_UNUSED_DADDR) {
+		lfs_vunref(vp);
+		--numrefed;
 	}
-	splx(s);
+
 	lfs_segunlock(fs);
 	vfs_unbusy(mntp);
 #ifdef DEBUG_LFS
