@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.1 2000/11/05 06:43:46 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.2 2000/11/05 16:13:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -213,15 +213,6 @@ struct audio_device neo_device = {
 	"",
 	"neo"
 };
-
-#if 0
-static u_int32_t badcards[] = {
-	0x0007103c,
-	0x008f1028,
-};
-
-#define NUM_BADCARDS (sizeof(badcards) / sizeof(u_int32_t))
-#endif
 
 /* The actual rates supported by the card. */
 static const int samplerates[9] = {
@@ -486,6 +477,48 @@ nm_init(struct neo_softc *sc)
 	return 0;
 }
 
+int
+neo_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	pcireg_t subdev;
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NEOMAGIC)
+		return (0);
+
+	subdev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU:
+		/*
+		 * We have to weed-out the non-AC'97 versions of
+		 * the chip (i.e. the ones that are known to work
+		 * in WSS emulation mode), as they won't work with
+		 * this driver.
+		 */
+		switch (PCI_VENDOR(subdev)) {
+		case PCI_VENDOR_DELL:
+			switch (PCI_PRODUCT(subdev)) {
+			case 0x008f:
+				return (0);
+			}
+			break;
+
+		case PCI_VENDOR_HP:
+			switch (PCI_PRODUCT(subdev)) {
+			case 0x0007:
+				return (0);
+			}
+		}
+		return (1);
+
+	case PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU:
+		return (1);
+	}
+
+	return (0);
+}
+
 void
 neo_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -555,40 +588,6 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
-}
-
-int
-neo_match(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-#if 0
-	u_int32_t subdev, badcard;
-#endif
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NEOMAGIC)
-		return (0);
-
-#if 0
-	subdev = (pci_get_subdevice(dev) << 16) | pci_get_subvendor(dev);
-#endif
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU:
-#if 0
-		i = 0;
-		while ((i < NUM_BADCARDS) && (badcards[i] != subdev))
-			i++;
-		if (i == NUM_BADCARDS)
-			s = "NeoMagic 256AV";
-		DEB(else)
-			DEB(device_printf(dev,
-			    "this is a non-ac97 NM256AV, not attaching\n"));
-		return (1);
-#endif
-	case PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU:
-		return (1);
-	}
-
-	return (0);
 }
 
 int
