@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.5 1999/03/16 01:19:18 garbled Exp $
+.\" $NetBSD: tun.4,v 1.6 2000/08/10 02:34:50 tv Exp $
 .\" Based on PR#2411
 .\"
 .Dd March 10, 1996
@@ -31,7 +31,8 @@ it is simulating
 a network interface in the case of
 .Nm tun ,
 or a terminal for
-.Nm pty Pc ,
+.Nm pty
+.Pc ,
 and a character-special device
 .Dq control
 interface.
@@ -78,10 +79,8 @@ call will return an error
 .Pq Er EHOSTDOWN
 if the interface is not
 .Dq ready
-.Po
-which means that the control device is open and the interface's
-address has been set
-.Pc .
+(which means that the control device is open and the interface
+address has been set).
 Once the interface is ready,
 .Fn read
 will return a packet if one is available; if not, it will either block
