@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.29 1999/01/19 10:57:11 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.29.2.1 1999/04/08 15:52:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,11 +226,8 @@ struct scsipi_link {
 						   controller */
 			u_int8_t atapibus;
 			u_int8_t cap;		/* drive capability */
-#define ACAP_DRQ_MPROC      0x0000  /* microprocessor DRQ */
-#define ACAP_DRQ_INTR       0x0200  /* interrupt DRQ */
-#define ACAP_DRQ_ACCEL      0x0400  /* accelerated DRQ */
-#define ACAP_DRQ_MASK	    0x0600  /* same as in ataparams */
-#define ACAP_LEN            0x0100  /* 16 bit commands */
+/* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
+#define ACAP_LEN            0x01  /* 16 bit commands */
 		} scsipi_atapi;
 	} _scsipi_link;
 	TAILQ_HEAD(, scsipi_xfer) pending_xfers;
