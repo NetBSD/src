@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.18 1996/03/26 00:07:58 mrg Exp $
+#	$NetBSD: services,v 1.19 1996/12/29 03:25:34 mrg Exp $
 #
 # Network services, Internet style
 #
@@ -181,3 +181,9 @@ eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 #
 supfilesrv	871/tcp			# SUP server
 supfiledbg	1127/tcp		# SUP debugging
+#
+# other common ports
+#
+nfs		2049/udp	nfsd	# Sun NFS
+nfs		2049/tcp	nfsd	# Sun NFS
+ircd		6667/tcp		# Often used IRC port.
