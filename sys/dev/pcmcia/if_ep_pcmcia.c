@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.20 1998/11/18 18:34:53 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.21 1998/12/24 03:57:45 marc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,6 +155,10 @@ struct ep_pcmcia_product {
 	  0,				0,
 	  PCMCIA_STR_3COM_3C589 },
 
+	{ PCMCIA_PRODUCT_3COM_3CXEM556,	ELINK_CHIPSET_3C509,
+	  0,				0,
+	  PCMCIA_STR_3COM_3CXEM556 },
+
 	{ PCMCIA_PRODUCT_3COM_3C574,	ELINK_CHIPSET_ROADRUNNER,
 	  ELINK_FLAGS_MII,			0,
 	  PCMCIA_STR_3COM_3C574 },
@@ -226,7 +230,8 @@ ep_pcmcia_enable1(sc)
 	if ((ret = pcmcia_function_enable(pf)))
 		return (ret);
 
-	if (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) {
+	if ((psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) ||
+	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556)) {
 		int reg;
 
 		/* turn off the serial-disable bit */
