@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.101 2002/04/15 06:08:19 gmcgarry Exp $
+#	$NetBSD: DEVNAMES,v 1.102 2002/04/15 07:37:17 simonb Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -119,6 +119,7 @@ bivideo			hpcmips
 bktr			MI
 bm			macppc
 boca			MI		
+bonito			algor
 bpp			MI		
 bt_dac			sparc		Attribute
 bt_dac			sparc64		Attribute
@@ -193,20 +194,23 @@ com			MI
 commulti		MI		Attribute
 cosc			arm32
 cprofb			MI
+cpu			acorn26
+cpu			algor
 cpu			alpha
 cpu			amiga
 cpu			amigappc
 cpu			arc
-cpu			acorn26
 cpu			arm32
 cpu			atari
 cpu			cobalt
+cpu			evbmips
 cpu			hpcmips
 cpu			macppc
 cpu			mipsco
 cpu			newsmips
 cpu			pmax
 cpu			prep
+cpu			sbmips
 cpu			sgimips
 cpu			sparc
 cpu			sparc64
@@ -425,6 +429,7 @@ grful			amiga
 grful			amigappc
 gsfb			playstation2
 gt			cobalt
+gt			evbmips
 gtsc			amiga
 gtsc			amigappc
 gus			MI		
@@ -591,6 +596,7 @@ macfb			mac68k
 macofcons		macppc
 macvid			mac68k
 magma			MI		
+mainbus			algor
 mainbus			alpha
 mainbus			amiga
 mainbus			amigappc
@@ -600,6 +606,7 @@ mainbus			atari
 mainbus			bebox
 mainbus			bebox		Attribute
 mainbus			cobalt
+mainbus			evbmips
 mainbus			hp300
 mainbus			hpcmips
 mainbus			i386
@@ -639,7 +646,9 @@ mc			mac68k
 mc			macppc
 mca			i386
 mcbus			alpha
+mcclock			algor
 mcclock			alpha
+mcclock			evbmips
 mcclock			pmax
 mcclock			prep
 mcd			MI		
@@ -800,17 +809,21 @@ pceb			alpha
 pceb			i386
 pchb			bebox
 pchb			cobalt
+pchb			evbmips
 pchb			i386
 pchb			macppc
 pchb			prep
 pci			MI		
+pcib			algor
 pcib			arm32
 pcib			bebox
 pcib			cobalt
+pcib			evbmips
 pcib			i386
 pcib			prep
 pcibus			MI		Attribute
 pcibus			atari
+pcic			algor
 pcic			alpha
 pcic			hpcmips
 pcic			i386
@@ -828,6 +841,7 @@ pcmcia			arc		Attribute
 pcmciabus		MI		Attribute
 pcmciaslot		MI		Attribute
 pcmcom			MI		
+pcn			MI
 pcons			sparc64
 pcppi			MI		
 pcscp			MI		
@@ -847,6 +861,7 @@ plumvideo		hpcmips
 pm			pmax
 pms			MI		
 pmsi			MI		
+pnaphy			MI
 pnozz			sparc
 podloader		MI		Attribute
 podulebus		MI
@@ -920,11 +935,16 @@ sb			MI
 sbc			mac68k
 sbdsp			MI		Attribute
 sbi			vax
+sbic			acorn26		Attribute
 sbic			amiga		Attribute
 sbic			amigappc	Attribute
-sbic			acorn26		Attribute
 sbic			arm32		Attribute
 sbic			mvme68k		Attribute
+sbmac			sbmips
+sbobio			sbmips
+sbscd			sbmips
+sbscn			sbmips
+sbtimer			sbmips
 sbus			MI		
 sbus			playstation2
 sc			MI
@@ -1154,6 +1174,7 @@ vsbus			vax
 vsms			alpha
 vt			arm32
 vt			i386
+vtpbc			algor
 vz			vax
 wavelan			MI		Attribute
 wd			MI		
@@ -1206,6 +1227,7 @@ xyc			MI
 xyc			sun3
 yds			MI
 ym			MI		
+zbbus			sbmips
 zbus			amiga
 zbus			amigappc
 ze			vax
