@@ -1481,7 +1481,7 @@ void *glyph_node::operator new(size_t n)
 
 void *ligature_node::operator new(size_t n)
 {
-  return new char[n];
+  return ::operator new(n);
 }
 
 void glyph_node::operator delete(void *p)
@@ -1494,7 +1494,7 @@ void glyph_node::operator delete(void *p)
 
 void ligature_node::operator delete(void *p)
 {
-  delete p;
+  ::operator delete(p);
 }
 
 glyph_node::glyph_node(charinfo *c, tfont *t, node *x)
