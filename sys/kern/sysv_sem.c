@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.49 2003/11/29 11:43:25 jdolecek Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.50 2004/03/18 01:16:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.49 2003/11/29 11:43:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.50 2004/03/18 01:16:44 christos Exp $");
 
 #define SYSVSEM
 
@@ -711,10 +711,6 @@ sys_semop(l, v, retval)
 
 		suptr = NULL;	/* sem_undo may have been reallocated */
 
-		if (eval != 0)
-			return(EINTR);
-		SEM_PRINTF(("semop:  good morning!\n"));
-
 		/*
 		 * Make sure that the semaphore still exists
 		 */
@@ -737,6 +733,14 @@ sys_semop(l, v, retval)
 			semptr->semzcnt--;
 		else
 			semptr->semncnt--;
+		/*
+		 * Is it really morning, or was our sleep interrupted?
+		 * (Delayed check of tsleep() return code because we
+		 * need to decrement sem[nz]cnt either way.)
+		 */
+		if (eval != 0)
+			return(EINTR);
+		SEM_PRINTF(("semop:  good morning!\n"));
 	}
 
 done:
