@@ -1,8 +1,8 @@
-	$NetBSD: upgrade,v 1.6 1998/05/09 03:49:31 ross Exp $
+	$NetBSD: upgrade,v 1.7 1998/05/12 00:00:19 ross Exp $
 
 The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
-to interdepencies in the various components.
+to interdependencies in the various components.
 
 To do the upgrade, you must have at least base.tgz on disk and
 a copy of the proper netbsd.default.  It will require quite a bit
