@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.7 1999/03/16 16:30:19 minoura Exp $	*/
+/*	$NetBSD: kbd.c,v 1.8 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -47,6 +47,7 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/signalvar.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -57,6 +58,7 @@
 
 /* for sun-like event mode, if you go thru /dev/kbd. */
 #include <arch/x68k/dev/event_var.h>
+
 #include <machine/kbio.h>
 #include <machine/kbd.h>
 #include <machine/vuid_event.h>
@@ -216,6 +218,13 @@ kbdwrite(dev, uio, flags)
 	return EOPNOTSUPP;
 }
 
+#if NBELL > 0
+struct bell_info;
+int opm_bell_setup __P((struct bell_info *));
+void opm_bell_on __P((void));
+void opm_bell_off __P((void));
+#endif
+
 int
 kbdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
@@ -259,8 +268,7 @@ kbdioctl(dev, cmd, data, flag, p)
 
 	case KIOCSBELL:
 #if NBELL > 0
-		/* XXX - so tricky! */
-		return opm_bell_setup((struct kbiocbell *)data);
+		return opm_bell_setup((struct bell_info *)data);
 #else
 		return (0);	/* allways success */
 #endif
@@ -322,7 +330,7 @@ kbdintr(arg)
 	if (! k->sc_event_mode) {
 		kbdbuf[kbdputoff++ & KBDBUFMASK] = c;
 		setsoftkbd();
-		return;
+		return 0;
 	}
 
 	/* Keyboard is generating events.  Turn this keystroke into an
@@ -334,13 +342,15 @@ kbdintr(arg)
 	put = (put + 1) % EV_QSIZE;
 	if (put == k->sc_events.ev_get) {
 		log(LOG_WARNING, "keyboard event queue overflow\n"); /* ??? */
-		return;
+		return 0;
 	}
 	fe->id = KEY_CODE(c);
 	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
 	fe->time = time;
 	k->sc_events.ev_put = put;
 	EV_WAKEUP(&k->sc_events);
+
+	return 0;
 }
 
 void
@@ -349,7 +359,7 @@ kbdsoftint()			/* what if ite is not configured? */
 	int s = spltty();
 
 	while(kbdgetoff < kbdputoff)
-		ite_filter(kbdbuf[kbdgetoff++ & KBDBUFMASK], ITEFILT_TTY);
+		ite_filter(kbdbuf[kbdgetoff++ & KBDBUFMASK]);
 	kbdgetoff = kbdputoff = 0;
 
 	splx(s);

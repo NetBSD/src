@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.5 1997/10/12 14:44:14 oki Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.6 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -59,6 +59,13 @@
 #include <machine/opmbellio.h>
 #include <x68k/dev/opmreg.h>
 #include <x68k/dev/opmbellvar.h>
+
+/* In opm.c. */
+void opm_set_volume __P((int, int));
+void opm_set_key __P((int, int));
+void opm_set_voice __P((int, struct opm_voice *));
+void opm_key_on __P((u_char));
+void opm_key_off __P((u_char));
 
 static u_int bell_pitchtokey __P((u_int));
 static void bell_timeout __P((void *));
@@ -418,7 +425,6 @@ opm_bell()
 {
     register struct bell_softc *sc = &bell_softc[0];
     register int ticks;
-    int sps;
 
     if (sc->msec != 0) {
 	if (sc->sc_flags & BELLF_OUT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.2 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: xel.c,v 1.3 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ xel_probe(addr)
 	label_t	faultbuf;
 	volatile u_int32_t *sram = (void*) INTIO_ADDR(XEL_RAM_ADDR_HIGHER);
 
-	if (badaddr(start))
+	if (badaddr((caddr_t)start))
 		return 0;
 
 	nofault = (int *) &faultbuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.27 1999/03/24 05:51:17 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.28 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -370,7 +370,7 @@ fdcprobe(parent, cf, aux)
 	if (ia->ia_dmaintr == INTIOCF_DMAINTR_DEFAULT)
 		ia->ia_dmaintr = FDC_DMAINTR;
 
-	if (ia->ia_intr & 0x03 != 0)
+	if ((ia->ia_intr & 0x03) != 0)
 		return 0;
 
 	ia->ia_size = 0x2000;
@@ -1277,7 +1277,7 @@ loop:
 #endif
 		 }}
 #endif
-		if (read = bp->b_flags & B_READ) {
+		if ((read = bp->b_flags & B_READ)) {
 			bcopy(fd->sc_copybuf
 			      + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
 			      bp->b_data + fd->sc_skip,
@@ -1691,6 +1691,8 @@ fdgetdisklabel(sc, dev)
 
 	return(0);
 }
+
+#include <dev/cons.h>
 
 /*
  * Mountroot hook: prompt the user to enter the root file system
