@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.17 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.17.2.1 2004/05/29 09:05:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.17 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.17.2.1 2004/05/29 09:05:10 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,8 @@ SYSCTL_SETUP(sysctl_vfs_ntfs_setup, "sysctl vfs.ntfs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ntfs", NULL,
+		       CTLTYPE_NODE, "ntfs",
+		       SYSCTL_DESCR("NTFS file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 20, CTL_EOL);
 	/*
