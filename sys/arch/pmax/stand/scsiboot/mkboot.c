@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.11 1999/03/26 05:23:59 simonb Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.12 1999/10/25 02:29:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ static char copyright[] =
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	8.1 (Berkeley) 6/10/93";
 #endif
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.11 1999/03/26 05:23:59 simonb Exp $";
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.12 1999/10/25 02:29:46 simonb Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ static char rcsid[] = "$NetBSD: mkboot.c,v 1.11 1999/03/26 05:23:59 simonb Exp $
 
 #include <machine/dec_boot.h>
 
-struct	Dec_DiskBoot decBootInfo;
+struct	boot_block dec_boot_block;
 char	block[DEV_BSIZE];
 char	*bootfname, *xxboot, *bootxx;
 
@@ -148,16 +148,16 @@ main(argc, argv)
 	/*
 	 * Write the boot information block.
 	 */
-	read(ifd, &decBootInfo, sizeof(decBootInfo));
-	if (decBootInfo.magic != DEC_BOOT_MAGIC) {
+	read(ifd, &dec_boot_block, sizeof(dec_boot_block));
+	if (dec_boot_block.magic != DEC_BOOT_MAGIC) {
 		fprintf(stderr, "bootfile does not contain boot sector\n");
 		die();
 	}
-	decBootInfo.map[0].numBlocks = nsectors =
+	dec_boot_block.map[0].num_blocks = nsectors =
 	    (length + DEV_BSIZE - 1) >> DEV_BSHIFT;
-	length -= sizeof(decBootInfo);
-	if (write(ofd1, (char *)&decBootInfo, sizeof(decBootInfo)) !=
-	    sizeof(decBootInfo) || close(ofd1) != 0) {
+	length -= sizeof(dec_boot_block);
+	if (write(ofd1, (char *)&dec_boot_block, sizeof(dec_boot_block)) !=
+	    sizeof(dec_boot_block) || close(ofd1) != 0) {
 		perror(xxboot);
 		die();
 	}
