@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.6.2.5 2004/09/21 13:35:02 skrll Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.6.2.6 2004/10/27 06:48:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.6.2.5 2004/09/21 13:35:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.6.2.6 2004/10/27 06:48:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -730,7 +730,7 @@ union_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
 	struct vnode *vp;
@@ -773,7 +773,7 @@ union_access(v)
 		struct vnode *a_vp;
 		int a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct union_node *un = VTOUNION(vp);
@@ -841,7 +841,7 @@ union_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	int error;
 	struct union_node *un = VTOUNION(ap->a_vp);
@@ -930,7 +930,7 @@ union_setattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
 	struct vnode *vp = ap->a_vp;
@@ -1079,7 +1079,7 @@ union_lease(v)
 {
 	struct vop_lease_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 		struct ucred *a_cred;
 		int a_flag;
 	} */ *ap = v;
@@ -1099,7 +1099,7 @@ union_ioctl(v)
 		void *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
 
@@ -1114,7 +1114,7 @@ union_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
 
@@ -1149,7 +1149,7 @@ union_mmap(v)
 		struct vnode *a_vp;
 		int  a_fflags;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = OTHERVP(ap->a_vp);
 
@@ -1167,7 +1167,7 @@ union_fsync(v)
 		int  a_flags;
 		off_t offhi;
 		off_t offlo;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	int error = 0;
 	struct lwp *l;
@@ -1666,8 +1666,9 @@ union_inactive(v)
 	void *v;
 {
 	struct vop_inactive_args /* {
+		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct union_node *un = VTOUNION(vp);

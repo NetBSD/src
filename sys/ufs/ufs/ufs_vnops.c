@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.102.2.8 2004/10/27 06:24:01 skrll Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.102.2.9 2004/10/27 06:48:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.8 2004/10/27 06:24:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.9 2004/10/27 06:48:24 skrll Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -181,7 +181,7 @@ ufs_open(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		struct ucred	*a_cred;
-		struct proc	*a_l;
+		struct lwp	*a_l;
 	} */ *ap = v;
 
 	/*
@@ -206,7 +206,7 @@ ufs_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct proc	*a_l;
+		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -230,7 +230,7 @@ ufs_access(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		struct ucred	*a_cred;
-		struct proc	*a_p;
+		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip; 
@@ -286,7 +286,7 @@ ufs_getattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		struct ucred	*a_cred;
-		struct proc	*a_p;
+		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -1826,7 +1826,7 @@ ufsspec_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct proc	*a_p;
+		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -1895,7 +1895,7 @@ ufsfifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct proc	*a_p;
+		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;

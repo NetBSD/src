@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.50.2.6 2004/09/21 13:39:08 skrll Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.50.2.7 2004/10/27 06:48:24 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.6 2004/09/21 13:39:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.7 2004/10/27 06:48:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -4857,7 +4857,7 @@ softdep_sync_metadata(v)
 		int a_waitfor;
 		off_t a_offlo;
 		off_t a_offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inodedep *inodedep;
