@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.43 2001/07/04 22:43:35 hubertf Exp $	*/
+/*	$NetBSD: setup.c,v 1.44 2001/08/15 03:54:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.43 2001/07/04 22:43:35 hubertf Exp $");
+__RCSID("$NetBSD: setup.c,v 1.44 2001/08/15 03:54:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,13 @@ setup(dev)
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	if (!S_ISCHR(statb.st_mode)) {
+	if (forceimage) {
+		if (!S_ISREG(statb.st_mode)) {
+			pfatal("%s is not a regular file", dev);
+			if (reply("CONTINUE") == 0)
+				return (0);
+		}
+	} else if (!S_ISCHR(statb.st_mode)) {
 		pfatal("%s is not a character device", dev);
 		if (reply("CONTINUE") == 0)
 			return (0);
