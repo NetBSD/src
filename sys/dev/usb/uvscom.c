@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.10 2003/07/14 15:47:30 lukem Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.11 2004/01/05 13:28:18 augustss Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.10 2003/07/14 15:47:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.11 2004/01/05 13:28:18 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.10 2003/07/14 15:47:30 lukem Exp $");
 #include <sys/device.h>
 #endif
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>
