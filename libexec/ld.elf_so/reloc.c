@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.48 2001/12/20 02:32:49 thorpej Exp $	 */
+/*	$NetBSD: reloc.c,v 1.49 2001/12/20 06:54:25 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -504,7 +504,8 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 			return -1;
 		tmp = (Elf_Addr)obj->relocbase + def->st_value
 		    - (Elf_Addr)where + (addend << 2);
-		if ((tmp & 0xfe000000) != 0xfe000000 && (tmp & 0xfe000000) != 0) {
+		if ((tmp & 0xfe000000) != 0xfe000000 &&
+		    (tmp & 0xfe000000) != 0) {
 			_rtld_error(
 			"%s: R_ARM_PC24 relocation @ %p to %s failed "
 			"(displacement %ld (%#lx) out of range)",
