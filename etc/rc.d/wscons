@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: wscons,v 1.3.4.3 2000/10/02 01:09:51 lukem Exp $
+# $NetBSD: wscons,v 1.3.4.4 2001/05/02 22:39:19 he Exp $
 #
 
 # PROVIDE: wscons
@@ -17,6 +17,7 @@ wscons_start()
 {
 	wscfg=/usr/sbin/wsconscfg
 	wsfld=/usr/sbin/wsfontload
+	wsctl=/sbin/wsconsctl
 	config=/etc/wscons.conf
 	usage="Usage: wsconfig [-n] [-f configfile] [-font fontpgm] [-screen screenpgm]"
 	DOIT=
@@ -122,6 +123,28 @@ wscons_start()
 						;;
 				esac
 				eval $DOIT $cmd
+				;;
+			encoding)
+				map=$arg1
+				cmd=$wsctl
+				cmd="$cmd -w \"encoding=$map\""
+				eval $DOIT $cmd
+				;;
+			mapfile)
+				mapfile=$arg1
+				( while read entry; do
+				    case "$entry" in
+					\#*|"")
+					    continue
+					    ;;
+					*)
+					    cmd=$wsctl
+					    cmd="$cmd -w \"map+=$entry\""
+					    cmd="$cmd >/dev/null"
+					    eval $DOIT $cmd
+					    ;;
+				    esac
+				done ) < $mapfile
 				;;
 			mux)
 				cmd="$wscfg -m $arg1"
