@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.38 2001/03/14 05:44:46 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.39 2001/04/10 21:52:15 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -249,6 +249,7 @@ struct isposinfo {
 #include <dev/ic/ispreg.h>
 #include <dev/ic/ispvar.h>
 #include <dev/ic/ispmbox.h>
+#include <dev/ic/isp_ioctl.h>
 
 /*
  * isp_osinfo definitions, extensions and shorthand.
