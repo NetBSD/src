@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.211 2004/05/13 15:20:18 pooka Exp $	*/
+/*	$NetBSD: locore.s,v 1.212 2004/05/13 16:34:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2986,7 +2986,7 @@ zshard:
 
 /*
  * Level 15 interrupt.  An async memory error has occurred;
- * take care of it (typically by panicing, but hey...).
+ * take care of it (typically by panicking, but hey...).
  *	%l0 = %psr
  *	%l1 = return pc
  *	%l2 = return npc
