@@ -2,6 +2,8 @@
 @setfilename bzip2.info
 
 @ignore
+$NetBSD: manual.texi,v 1.2 1998/09/14 03:13:53 ross Exp $
+
 This file documents bzip2 version 0.9.0, and associated library
 libbzip2, written by Julian Seward (jseward@acm.org).
 
