@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.17 1995/05/07 16:22:40 cgd Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.18 1995/05/07 19:27:30 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -76,8 +76,6 @@
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-
-#include <machine/cpu.h>
 
 #ifdef SWAPPAGER
 extern struct pagerops swappagerops;

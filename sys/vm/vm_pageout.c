@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.20 1995/05/05 03:35:42 cgd Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.21 1995/05/07 19:27:27 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -73,6 +73,8 @@
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
+
+#include <machine/cpu.h>
 
 #ifndef VM_PAGE_FREE_MIN
 #define VM_PAGE_FREE_MIN	(cnt.v_free_count / 20)
