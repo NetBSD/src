@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.103 2003/02/05 21:38:43 pk Exp $	*/
+/*	$NetBSD: vnode.h,v 1.104 2003/02/25 23:01:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -241,7 +241,7 @@ struct vattr {
  * Convert between vnode types and inode formats (since POSIX.1
  * defines mode word of stat structure in terms of inode formats).
  */
-extern enum vtype	iftovt_tab[];
+extern const enum vtype	iftovt_tab[];
 extern const int	vttoif_tab[];
 #define	IFTOVT(mode)	(iftovt_tab[((mode) & S_IFMT) >> 12])
 #define	VTTOIF(indx)	(vttoif_tab[(int)(indx)])

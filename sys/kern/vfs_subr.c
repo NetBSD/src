@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.188 2003/02/18 20:37:38 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.189 2003/02/25 23:01:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.188 2003/02/18 20:37:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.189 2003/02/25 23:01:40 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -119,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.188 2003/02/18 20:37:38 jdolecek Exp 
 
 #include <sys/sysctl.h>
 
-enum vtype iftovt_tab[16] = {
+const enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
 	VREG, VNON, VLNK, VNON, VSOCK, VNON, VNON, VBAD,
 };
