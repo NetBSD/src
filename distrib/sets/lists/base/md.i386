@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.80 2001/10/21 23:03:15 jmc Exp $
+# $NetBSD: md.i386,v 1.81 2001/10/27 12:15:12 jdolecek Exp $
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
@@ -13,7 +13,10 @@
 ./usr/lkm/adosfs.o			base-adosfs-lkm
 ./usr/lkm/cd9660.o			base-sys-lkm
 ./usr/lkm/coda.o			base-coda-lkm
+./usr/lkm/compat_freebsd.o		base-sys-lkm
 ./usr/lkm/compat_linux.o		base-sys-lkm
+./usr/lkm/exec_freebsd_elf.o		base-sys-lkm
+./usr/lkm/exec_freebsd_aout.o		base-sys-lkm
 ./usr/lkm/exec_linux_elf.o		base-sys-lkm
 ./usr/lkm/ext2fs.o			base-ext2fs-lkm
 ./usr/lkm/fdesc.o			base-miscfs-lkm
