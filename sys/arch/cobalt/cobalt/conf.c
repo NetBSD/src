@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2000/07/13 17:40:34 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2000/07/13 18:10:38 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,7 @@ struct cdevsw cdevsw[] =
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
-int	mem_no = 2;	 	/* Major device number of memory special file */
+int	mem_no = 10;	 	/* Major device number of memory special file */
 
 int
 iskmemdev(dev)
