@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.23 2004/12/29 06:57:52 rumble Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.24 2004/12/30 02:26:20 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.23 2004/12/29 06:57:52 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.24 2004/12/30 02:26:20 rumble Exp $");
 
 #include "bpfilter.h"
 
@@ -126,6 +126,16 @@ CFATTACH_DECL(sq, sizeof(struct sq_softc),
     sq_match, sq_attach, NULL, NULL);
 
 #define        ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
+
+#define sq_seeq_read(sc, off) \
+	bus_space_read_1(sc->sc_regt, sc->sc_regh, off)
+#define sq_seeq_write(sc, off, val) \
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, off, val)
+
+#define sq_hpc_read(sc, off) \
+	bus_space_read_4(sc->sc_hpct, sc->sc_hpch, off)	
+#define sq_hpc_write(sc, off, val) \
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, off, val)	
 
 static int
 sq_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -255,12 +265,12 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	 * If it's zero, we have an 80c03, because we will have read
 	 * the TxCollLSB register.
 	 */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCOLLS0, 0xa5);
-	if (bus_space_read_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCOLLS0) == 0)
+	sq_seeq_write(sc, SEEQ_TXCOLLS0, 0xa5);
+	if (sq_seeq_read(sc, SEEQ_TXCOLLS0) == 0)
 		sc->sc_type = SQ_TYPE_80C03;
 	else
 		sc->sc_type = SQ_TYPE_8003;
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCOLLS0, 0x00);
+	sq_seeq_write(sc, SEEQ_TXCOLLS0, 0x00);
 
 	printf(": SGI Seeq %s\n",
 	    sc->sc_type == SQ_TYPE_80C03 ? "80c03" : "8003");
@@ -340,12 +350,11 @@ sq_init(struct ifnet *ifp)
 	SQ_TRACE(SQ_RESET, sc, 0, 0);
 
 	/* Set into 8003 mode, bank 0 to program ethernet address */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD, TXCMD_BANK0);
+	sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_BANK0);
 
 	/* Now write the address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		bus_space_write_1(sc->sc_regt, sc->sc_regh, i,
-		    sc->sc_enaddr[i]);
+		sq_seeq_write(sc, i, sc->sc_enaddr[i]);
 
 	sc->sc_rxcmd = RXCMD_IE_CRC |
 		       RXCMD_IE_DRIB |
@@ -362,41 +371,35 @@ sq_init(struct ifnet *ifp)
 	sq_set_filter(sc);
 
 	/* Set up Seeq transmit command register */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD,
-						    TXCMD_IE_UFLOW |
-						    TXCMD_IE_COLL |
-						    TXCMD_IE_16COLL |
-						    TXCMD_IE_GOOD);
+	sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_IE_UFLOW |
+				      TXCMD_IE_COLL |
+				      TXCMD_IE_16COLL |
+				      TXCMD_IE_GOOD);
 
 	/* Now write the receive command register. */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_RXCMD, sc->sc_rxcmd);
+	sq_seeq_write(sc, SEEQ_RXCMD, sc->sc_rxcmd);
 
 	/* Set up HPC ethernet DMA config */
 	if (sc->hpc_regs->revision == 3) {
-		reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-			 	HPC_ENETR_DMACFG);	
-		bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				HPC_ENETR_DMACFG,	
-			    	reg | ENETR_DMACFG_FIX_RXDC |
-				ENETR_DMACFG_FIX_INTR |
-				ENETR_DMACFG_FIX_EOP);
+		reg = sq_hpc_read(sc, HPC_ENETR_DMACFG);	
+		sq_hpc_write(sc, HPC_ENETR_DMACFG, reg | ENETR_DMACFG_FIX_RXDC |
+							 ENETR_DMACFG_FIX_INTR |
+							 ENETR_DMACFG_FIX_EOP);
 	}
 
 	/* Pass the start of the receive ring to the HPC */
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, sc->hpc_regs->enetr_ndbp,
-						    SQ_CDRXADDR(sc, 0));
+	sq_hpc_write(sc, sc->hpc_regs->enetr_ndbp, SQ_CDRXADDR(sc, 0));
 
 	/* And turn on the HPC ethernet receive channel */
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, sc->hpc_regs->enetr_ctl,
-				       sc->hpc_regs->enetr_ctl_active);
+	sq_hpc_write(sc, sc->hpc_regs->enetr_ctl,
+	    sc->hpc_regs->enetr_ctl_active);
 
 	/*
 	 * Turn off delayed receive interrupts on HPC1.
 	 * (see Hollywood HPC Specification 2.1.4.3)
 	 */ 
 	if (sc->hpc_regs->revision != 3)
-		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENET_INTDELAY,
-		    HPC1_ENET_INTDELAYVAL);
+		sq_hpc_write(sc, HPC1_ENET_INTDELAY, HPC1_ENET_INTDELAYVAL);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -706,8 +709,7 @@ sq_start(struct ifnet *ifp)
 		 * are more packets to send and restarting the HPC DMA
 		 * engine, rather than mucking with the DMA state here.
 		 */
-		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-				sc->hpc_regs->enetx_ctl);
+		status = sq_hpc_read(sc, sc->hpc_regs->enetx_ctl);
 
 		if ((status & sc->hpc_regs->enetx_ctl_active) != 0) {
 			SQ_TRACE(SQ_ADD_TO_DMA, sc, firsttx, status);
@@ -725,12 +727,11 @@ sq_start(struct ifnet *ifp)
 		} else if (sc->hpc_regs->revision == 3) { 
 			SQ_TRACE(SQ_START_DMA, sc, firsttx, status);
 
-			bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-			    HPC_ENETX_NDBP, SQ_CDTXADDR(sc, firsttx));
+			sq_hpc_write(sc, HPC_ENETX_NDBP, SQ_CDTXADDR(sc,
+			    firsttx));
 
 			/* Kick DMA channel into life */
-			bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-			    HPC_ENETX_CTL, ENETX_CTL_ACTIVE); 
+			sq_hpc_write(sc, HPC_ENETX_CTL, ENETX_CTL_ACTIVE); 
 		} else {
 			/*
 			 * In the HPC1 case where transmit DMA is
@@ -743,17 +744,16 @@ sq_start(struct ifnet *ifp)
 			if (ofree == SQ_NTXDESC) {
 				SQ_TRACE(SQ_START_DMA, sc, firsttx, status);
 
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				    HPC1_ENETX_NDBP, 
+				sq_hpc_write(sc, HPC1_ENETX_NDBP,
 				    SQ_CDTXADDR(sc, firsttx));
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				    HPC1_ENETX_CFXBP, SQ_CDTXADDR(sc, firsttx));
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				    HPC1_ENETX_CBP, SQ_CDTXADDR(sc, firsttx));
+				sq_hpc_write(sc, HPC1_ENETX_CFXBP,
+				    SQ_CDTXADDR(sc, firsttx));
+				sq_hpc_write(sc, HPC1_ENETX_CBP,
+				    SQ_CDTXADDR(sc, firsttx));
 
 				/* Kick DMA channel into life */
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				    HPC1_ENETX_CTL, HPC1_ENETX_CTL_ACTIVE); 
+				sq_hpc_write(sc, HPC1_ENETX_CTL,
+				    HPC1_ENETX_CTL_ACTIVE); 
 			} else
 				sq_txring_hpc1(sc);
 		}
@@ -778,8 +778,8 @@ sq_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Clear Seeq transmit/receive command registers */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD, 0);
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_RXCMD, 0);
+	sq_seeq_write(sc, SEEQ_TXCMD, 0);
+	sq_seeq_write(sc, SEEQ_RXCMD, 0);
 
 	sq_reset(sc);
 
@@ -794,8 +794,7 @@ sq_watchdog(struct ifnet *ifp)
 	u_int32_t status;
 	struct sq_softc *sc = ifp->if_softc;
 
-	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-				  sc->hpc_regs->enetx_ctl);
+	status = sq_hpc_read(sc, sc->hpc_regs->enetx_ctl);
 	log(LOG_ERR, "%s: device timeout (prev %d, next %d, free %d, "
 		     "status %08x)\n", sc->sc_dev.dv_xname, sc->sc_prevtx,
 				       sc->sc_nexttx, sc->sc_nfreetx, status);
@@ -846,16 +845,14 @@ sq_intr(void * arg)
 	int handled = 0;
 	u_int32_t stat;
 
-	stat = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-				sc->hpc_regs->enetr_reset);
+	stat = sq_hpc_read(sc, sc->hpc_regs->enetr_reset);
 
 	if ((stat & 2) == 0) {
 		printf("%s: Unexpected interrupt!\n", sc->sc_dev.dv_xname);
 		return 0;
 	}
 
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-			  sc->hpc_regs->enetr_reset, (stat | 2));
+	sq_hpc_write(sc, sc->hpc_regs->enetr_reset, (stat | 2));
 
 	/*
 	 * If the interface isn't running, the interrupt couldn't
@@ -895,10 +892,13 @@ sq_rxintr(struct sq_softc *sc)
 	int new_end, orig_end;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	for(i = sc->sc_nextrx;; i = SQ_NEXTRX(i)) {
-		SQ_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	for (i = sc->sc_nextrx;; i = SQ_NEXTRX(i)) {
+		SQ_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD |
+		    BUS_DMASYNC_POSTWRITE);
 
-		/* If this is a CPU-owned buffer, we're at the end of the list */
+		/*
+		 * If this is a CPU-owned buffer, we're at the end of the list.
+		 */
 		if (sc->hpc_regs->revision == 3)
 			ctl_reg = sc->sc_rxdesc[i].hpc3_hdd_ctl & HDD_CTL_OWN;
 		else
@@ -909,8 +909,7 @@ sq_rxintr(struct sq_softc *sc)
 #if defined(SQ_DEBUG)
 			u_int32_t reg;
 
-			reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-			    sc->hpc_regs->enetr_ctl);
+			reg = sq_hpc_read(sc, sc->hpc_regs->enetr_ctl);
 			SQ_DPRINTF(("%s: rxintr: done at %d (ctl %08x)\n",
 			    sc->sc_dev.dv_xname, i, reg));
 #endif
@@ -996,18 +995,17 @@ sq_rxintr(struct sq_softc *sc)
 		sc->sc_nextrx = i;
 	}
 
-	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-				  sc->hpc_regs->enetr_ctl);
+	status = sq_hpc_read(sc, sc->hpc_regs->enetr_ctl);
 
 	/* If receive channel is stopped, restart it... */
 	if ((status & sc->hpc_regs->enetr_ctl_active) == 0) {
 		/* Pass the start of the receive ring to the HPC */
-		bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-		    sc->hpc_regs->enetr_ndbp, SQ_CDRXADDR(sc, sc->sc_nextrx));
+		sq_hpc_write(sc, sc->hpc_regs->enetr_ndbp, SQ_CDRXADDR(sc,
+		    sc->sc_nextrx));
 
 		/* And turn on the HPC ethernet receive channel */
-		bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-		    sc->hpc_regs->enetr_ctl, sc->hpc_regs->enetr_ctl_active);
+		sq_hpc_write(sc, sc->hpc_regs->enetr_ctl,
+		    sc->hpc_regs->enetr_ctl_active);
 	}
 
 	return count;
@@ -1017,18 +1015,18 @@ static int
 sq_txintr(struct sq_softc *sc)
 {
 	int shift = 0;
-	u_int32_t status;
+	u_int32_t status, tmp;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (sc->hpc_regs->revision != 3)
 		shift = 16;
-
-	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-				  sc->hpc_regs->enetx_ctl) >> shift;
+			 
+	status = sq_hpc_read(sc, sc->hpc_regs->enetx_ctl) >> shift;
 
 	SQ_TRACE(SQ_TXINTR_ENTER, sc, sc->sc_prevtx, status);
-
-	if ((status & ( (sc->hpc_regs->enetx_ctl_active >> shift) | TXSTAT_GOOD)) == 0) {
+				  
+	tmp = (sc->hpc_regs->enetx_ctl_active >> shift) | TXSTAT_GOOD;
+	if ((status & tmp) == 0) {
 		if (status & TXSTAT_COLL)
 			ifp->if_collisions++;
 
@@ -1087,14 +1085,12 @@ sq_txring_hpc1(struct sq_softc *sc)
 	int reclaimall, i = sc->sc_prevtx;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CTL);
+	status = sq_hpc_read(sc, HPC1_ENETX_CTL);
 	if (status & HPC1_ENETX_CTL_ACTIVE) {
 		SQ_TRACE(SQ_TXINTR_BUSY, sc, i, status);
 		return;
-	} else {
-		reclaimto = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-		    HPC1_ENETX_NDBP);
-	}
+	} else
+		reclaimto = sq_hpc_read(sc, HPC1_ENETX_NDBP);
 
 	if (sc->sc_nfreetx == 0 && SQ_CDTXADDR(sc, i) == reclaimto)
 		reclaimall = 1;
@@ -1129,14 +1125,11 @@ sq_txring_hpc1(struct sq_softc *sc)
 
 		KASSERT(reclaimto == SQ_CDTXADDR(sc, i));
 
-		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CFXBP,
-		    reclaimto);
-		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CBP,
-		    reclaimto);
+		sq_hpc_write(sc, HPC1_ENETX_CFXBP, reclaimto);
+		sq_hpc_write(sc, HPC1_ENETX_CBP, reclaimto);
 
 		/* Kick DMA channel into life */
-		bus_space_write_4(sc->sc_hpct, sc->sc_hpch, HPC1_ENETX_CTL,
-		    HPC1_ENETX_CTL_ACTIVE); 
+		sq_hpc_write(sc, HPC1_ENETX_CTL, HPC1_ENETX_CTL_ACTIVE); 
 
 		/*
 		 * Set a watchdog timer in case the chip
@@ -1172,8 +1165,7 @@ sq_txring_hpc3(struct sq_softc *sc)
 		 * the buffer not being finished while the DMA channel
 		 * has gone idle.
 		 */
-		status = bus_space_read_4(sc->sc_hpct, sc->sc_hpch,
-		    HPC_ENETX_CTL);
+		status = sq_hpc_read(sc, HPC_ENETX_CTL);
 
 		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
 				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1183,12 +1175,12 @@ sq_txring_hpc3(struct sq_softc *sc)
 			if ((status & ENETX_CTL_ACTIVE) == 0) {
 				SQ_TRACE(SQ_RESTART_DMA, sc, i, status);
 
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-				  HPC_ENETX_NDBP, SQ_CDTXADDR(sc, i));
+				sq_hpc_write(sc, HPC_ENETX_NDBP,
+				    SQ_CDTXADDR(sc, i));
 
 				/* Kick DMA channel into life */
-				bus_space_write_4(sc->sc_hpct, sc->sc_hpch,
-					  HPC_ENETX_CTL, ENETX_CTL_ACTIVE); 
+				sq_hpc_write(sc, HPC_ENETX_CTL,
+				    ENETX_CTL_ACTIVE); 
 
 				/*
 				 * Set a watchdog timer in case the chip
@@ -1222,12 +1214,12 @@ void
 sq_reset(struct sq_softc *sc)
 {
 	/* Stop HPC dma channels */
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, sc->hpc_regs->enetr_ctl, 0);
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, sc->hpc_regs->enetx_ctl, 0);
+	sq_hpc_write(sc, sc->hpc_regs->enetr_ctl, 0);
+	sq_hpc_write(sc, sc->hpc_regs->enetx_ctl, 0);
 
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, sc->hpc_regs->enetr_reset, 3);
+	sq_hpc_write(sc, sc->hpc_regs->enetr_reset, 3);
 	delay(20);
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, sc->hpc_regs->enetr_reset, 0);
+	sq_hpc_write(sc, sc->hpc_regs->enetr_reset, 0);
 }
 
 /* sq_add_rxbuf: Add a receive buffer to the indicated descriptor. */
@@ -1279,7 +1271,7 @@ sq_dump_buffer(u_int32_t addr, u_int32_t len)
 
 	printf("%p: ", physaddr);
 
-	for(i = 0; i < len; i++) {
+	for (i = 0; i < len; i++) {
 		printf("%02x ", *(physaddr + i) & 0xff);
 		if ((i % 16) ==  15 && i != len - 1)
 		    printf("\n%p: ", physaddr + i);
@@ -1294,7 +1286,7 @@ enaddr_aton(const char* str, u_int8_t* eaddr)
 	int i;
 	char c;
 
-	for(i = 0; i < ETHER_ADDR_LEN; i++) {
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		if (*str == ':')
 			str++;
 
