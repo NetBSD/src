@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.123 1998/03/22 17:40:08 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.124 1998/04/02 02:46:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -212,8 +212,6 @@ void pc_xmode_off __P((void));
 
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
-
-char	partab[];
 
 #if (NPCCONSKBD == 0)
 int kbd_cmd __P((u_char, u_char));
