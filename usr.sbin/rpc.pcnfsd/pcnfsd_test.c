@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_test.c,v 1.2 1995/07/25 22:21:01 gwr Exp $	*/
+/*	$NetBSD: pcnfsd_test.c,v 1.3 2003/07/16 08:22:01 itojun Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_test.c 1.2 92/01/27 18:00:39 SMI */
 #include <stdio.h>
@@ -222,7 +222,7 @@ v2_pr_init_results *rp;
 	}
 	printf("results: stat = %d, dir = '%s', cm = '%s'\n",
 		rp->stat, rp->dir, rp->cm);
-	strcpy(spooldirbuff, rp->dir);
+	strlcpy(spooldirbuff, rp->dir, sizeof(spooldirbuff));
 /* free up allocated strings */
 	if(rp->cm)
 		free(rp->cm);
@@ -249,7 +249,8 @@ FILE *fp;
 		return(1);
 	}
 
-	sprintf(filenamebuff, "%s/%s", spooldirbuff, tag1);
+	snprintf(filenamebuff, sizeof(filenamebuff), "%s/%s",
+	    spooldirbuff, tag1);
 
 	fp = fopen(filenamebuff, "w");
 	if(fp == NULL) {
@@ -278,7 +279,7 @@ FILE *fp;
 	printf("results: stat = %d, jobid = '%s', cm = '%s'\n",
 		rp->stat, rp->id, rp->cm);
 	if(rp->stat == PS_RES_OK)
-		strcpy(last_id, rp->id);
+		strlcpy(last_id, rp->id, sizeof(last_id));
 /* free up allocated strings */
 	if(rp->cm)
 		free(rp->cm);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.8 1998/07/27 15:14:05 mycroft Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.9 2003/07/16 08:22:01 itojun Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -115,7 +115,7 @@ pcnfsd2_auth_2_svc(arg, req)
 #ifdef USE_YP
 		yphome = find_entry(uname, "auto.home");
 		if (yphome) {
-			strcpy(home, yphome);
+			strlcpy(home, yphome, sizeof(home));
 			free(yphome);
 			cp = strchr(home, ':');
 			cp++;
@@ -149,7 +149,7 @@ pcnfsd2_auth_2_svc(arg, req)
 #ifdef USE_YP
 	yphome = find_entry(uname, "auto.home");
 	if (yphome) {
-		strcpy(home, yphome);
+		strlcpy(home, yphome, sizeof(home));
 		free(yphome);
 		cp = strchr(home, ':');
 		cp++;
@@ -335,7 +335,7 @@ my_strdup(s)
 {
 	char   *r;
 	r = (char *) grab(strlen(s) + 1);
-	strcpy(r, s);
+	strlcpy(r, s, strlen(s) + 1);
 	return (r);
 }
 

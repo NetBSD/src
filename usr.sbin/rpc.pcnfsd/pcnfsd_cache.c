@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_cache.c,v 1.3 1997/10/25 13:45:57 lukem Exp $	*/
+/*	$NetBSD: pcnfsd_cache.c,v 1.4 2003/07/16 08:22:01 itojun Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_cache.c 1.1 91/09/03 12:45:14 SMI */
 /*
@@ -89,8 +89,10 @@ add_cache_entry(p)
 		User_cache[i] = User_cache[i - 1];
 	User_cache[0].cuid = p->pw_uid;
 	User_cache[0].cgid = p->pw_gid;
-	(void) strcpy(User_cache[0].cpw, p->pw_passwd);
-	(void) strcpy(User_cache[0].cuname, p->pw_name);
+	(void) strlcpy(User_cache[0].cpw, p->pw_passwd,
+	    sizeof(User_cache[0].cpw));
+	(void) strlcpy(User_cache[0].cuname, p->pw_name,
+	    sizeof(User_cache[0].cuname));
 }
 
 #endif				/* USER_CACHE */
