@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.2 1996/06/26 18:11:24 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.3 1996/09/11 18:05:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -108,7 +108,7 @@ main()
 
 	printf("\n>> NetBSD MINIROOT INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: inst.c,v 1.2 1996/06/26 18:11:24 thorpej Exp $\n");
+	printf(">> $NetBSD: inst.c,v 1.3 1996/09/11 18:05:02 thorpej Exp $\n");
 	gethelp();
 
 	for (;;) {
@@ -429,10 +429,12 @@ opendisk(question, diskname, len, partition, fdp)
 	/*
 	 * We always open for writing.
 	 */
-	if ((*fdp = open(fulldiskname, 1)) < 0)
+	if ((*fdp = open(fulldiskname, 1)) < 0) {
 		printf("cannot open %s\n", diskname);
+		return (1);
+	}
 
-	return (errno);
+	return (0);
 }
 
 /*
