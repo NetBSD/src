@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.46 2002/01/28 09:57:03 aymeric Exp $ */
+/*	$NetBSD: siop.c,v 1.47 2002/02/24 15:20:05 is Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.46 2002/01/28 09:57:03 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.47 2002/02/24 15:20:05 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1160,6 +1160,8 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 				printf ("%s: ID %02x disconnected without Save Data Pointers\n",
 				    sc->sc_dev.dv_xname, 1 << target);
 #endif
+/* XXX is: 		if (rp->siop_dsps != 0xff02) { */
+				/* not disconnected without save data ptr */
 			for (i = 0; i < DMAMAXIO; ++i) {
 				if (acb->ds.chain[i].datalen == 0)
 					break;
@@ -1176,6 +1178,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 				Debugger();
 #endif
 			}
+/* XXX is: 		}			*/
 #ifdef DEBUG
 			if (siop_debug & 0x100)
 				printf("  chain[0]: %p/%lx -> %lx/%lx\n",
