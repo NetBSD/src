@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_puc.c,v 1.1 2004/01/25 11:50:51 jdolecek Exp $ */
+/* $NetBSD: atppc_puc.c,v 1.2 2004/02/10 18:19:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_atppc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.1 2004/01/25 11:50:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.2 2004/02/10 18:19:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.1 2004/01/25 11:50:51 jdolecek Exp $
 #include <sys/termios.h>
 
 #include <machine/bus.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
@@ -60,9 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.1 2004/01/25 11:50:51 jdolecek Exp $
 static int	atppc_puc_match(struct device *, struct cfdata *, void *);
 static void	atppc_puc_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(atppc_puc, sizeof(struct atppc_softc), atppc_puc_match,
+struct atppc_puc_softc {
+	/* Machine independent device data */
+	struct atppc_softc sc_atppc;
+
+	bus_dmamap_t sc_dmamap;
+};
+	
+CFATTACH_DECL(atppc_puc, sizeof(struct atppc_puc_softc), atppc_puc_match,
     atppc_puc_attach, NULL, NULL);
 
+static int atppc_puc_dma_setup(struct atppc_puc_softc *);
 static int atppc_puc_dma_start(struct atppc_softc *, void *, u_int, 
 	u_int8_t);
 static int atppc_puc_dma_finish(struct atppc_softc *);
@@ -93,6 +102,7 @@ static void
 atppc_puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atppc_softc *sc = (struct atppc_softc *) self;
+	struct atppc_puc_softc *psc = (struct atppc_puc_softc *) self;
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
 
@@ -121,13 +131,14 @@ atppc_puc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_has |= ATPPC_HAS_INTR;
 
 	/* setup DMA hooks */
-	/* XXX setup dma maps */
-	sc->sc_dma_start = atppc_puc_dma_start;
-	sc->sc_dma_finish = atppc_puc_dma_finish;
-	sc->sc_dma_abort = atppc_puc_dma_abort;
-	sc->sc_dma_malloc = atppc_puc_dma_malloc;
-	sc->sc_dma_free = atppc_puc_dma_free;
-	//sc->sc_has |= ATPPC_HAS_DMA;
+	if (atppc_puc_dma_setup(psc) == 0) {
+		sc->sc_has |= ATPPC_HAS_DMA;
+		sc->sc_dma_start = atppc_puc_dma_start;
+		sc->sc_dma_finish = atppc_puc_dma_finish;
+		sc->sc_dma_abort = atppc_puc_dma_abort;
+		sc->sc_dma_malloc = atppc_puc_dma_malloc;
+		sc->sc_dma_free = atppc_puc_dma_free;
+	}
 
 	/* Finished attach */
 	sc->sc_dev_ok = ATPPC_ATTACHED;
@@ -136,22 +147,55 @@ atppc_puc_attach(struct device *parent, struct device *self, void *aux)
 	atppc_sc_attach(sc);
 }
 
+/* Setup DMA structures */
+static int
+atppc_puc_dma_setup(struct atppc_puc_softc *psc)
+{
+	return EOPNOTSUPP;	/* XXX DMA not tested yet */
+#if 0
+	struct atppc_softc *sc = (struct atppc_softc *)psc;
+	int error;
+
+#define BUFSIZE	PAGE_SIZE	/* XXX see lptvar.h */
+	if ((error = bus_dmamap_create(sc->sc_dmat, BUFSIZE, 1, BUFSIZE, 0,
+	    BUS_DMA_NOWAIT, &psc->sc_dmamap)))
+		return error;
+	
+	return (0);
+#endif
+}
+
 /* Start DMA operation over PCI bus */
 static int 
-atppc_puc_dma_start(struct atppc_softc *lsc, void *buf, u_int nbytes,
+atppc_puc_dma_start(struct atppc_softc *dev, void *buf, u_int nbytes,
 	u_int8_t mode)
 {
+	struct atppc_puc_softc *psc = (struct atppc_puc_softc *) dev;
+	struct atppc_softc *sc = &psc->sc_atppc;
 
-	/* Nothing to do */
+	bus_dmamap_sync(sc->sc_dmat, psc->sc_dmamap, 0, nbytes,
+	    (mode == ATPPC_DMA_MODE_WRITE) ? BUS_DMASYNC_PREWRITE
+			: BUS_DMASYNC_PREREAD);
+
 	return (0);
 }
 
 /* Stop DMA operation over PCI bus */
 static int 
-atppc_puc_dma_finish(struct atppc_softc * lsc)
+atppc_puc_dma_finish(struct atppc_softc *dev)
 {
 
-	/* Nothing to do */
+	struct atppc_puc_softc *psc = (struct atppc_puc_softc *) dev;
+	struct atppc_softc *sc = &psc->sc_atppc;
+
+	/*
+	 * We don't know direction of DMA, so sync both. We can safely
+	 *  assume the dma map is loaded.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, psc->sc_dmamap, 0,
+	    psc->sc_dmamap->dm_segs[0].ds_len,
+	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+
 	return (0);
 }
 
@@ -160,31 +204,35 @@ int
 atppc_puc_dma_abort(struct atppc_softc * lsc)
 {
 
-	/* Nothing to do */
+	/* Nothing to do - we do not need to sync, op is aborted */
 	return (0);
 }
 
 /* Allocate memory for DMA over PCI bus */ 
 int
-atppc_puc_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
+atppc_puc_dma_malloc(struct device *dev, caddr_t *buf, bus_addr_t *bus_addr,
 	bus_size_t size)
 {
-	return 0;
-/*
-	struct atppc_puc_softc * sc = (struct atppc_acpi_softc *) dev;
+	struct atppc_puc_softc *psc = (struct atppc_puc_softc *) dev;
+	struct atppc_softc *sc = &psc->sc_atppc;
+	int error;
 
-	return atppc_isadma_malloc(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
-*/
+	error = bus_dmamap_load(sc->sc_dmat, psc->sc_dmamap, *buf, size,
+	    NULL /* kernel address */, BUS_DMA_WAITOK|BUS_DMA_STREAMING);
+	if (error)
+		return (error);
+
+	*bus_addr = psc->sc_dmamap->dm_segs[0].ds_addr;
+	return (0);
 }
 
 /* Free memory allocated by atppc_isa_dma_malloc() */ 
 void 
-atppc_puc_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr, 
+atppc_puc_dma_free(struct device *dev, caddr_t *buf, bus_addr_t *bus_addr, 
 	bus_size_t size)
 {
-/*
-	struct atppc_acpi_softc * sc = (struct atppc_acpi_softc *) dev;
+	struct atppc_puc_softc *psc = (struct atppc_puc_softc *) dev;
+	struct atppc_softc *sc = &psc->sc_atppc;
 
-	return atppc_isadma_free(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
-*/
+	return (bus_dmamap_unload(sc->sc_dmat, psc->sc_dmamap));
 }
