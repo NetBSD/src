@@ -1,4 +1,4 @@
-/* $NetBSD: if_es.c,v 1.6.4.1 1997/03/06 14:56:49 is Exp $ */
+/* $NetBSD: if_es.c,v 1.6.4.2 1997/03/06 16:10:36 is Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -88,7 +88,7 @@
 struct	es_softc {
 	struct	device sc_dev;
 	irqhandler_t sc_ih;
-	struct	ethercom sc_ec;	/* common Ethernet structures */
+	struct	ethercom sc_ethercom;	/* common Ethernet structures */
 	u_int	sc_base;	/* base address of board */
 	int	nrxovrn;
 	u_int	sc_intctl;
