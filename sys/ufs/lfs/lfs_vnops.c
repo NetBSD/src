@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.28 1999/09/03 22:48:51 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.29 1999/11/01 18:29:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -564,15 +564,19 @@ lfs_rename(v)
 		struct componentname *a_tcnp;
 	} */ *ap = v;
 	int ret;
+	struct lfs *fs;
+
+	fs = VTOI(ap->a_fdvp)->i_lfs;
 	
-	if((ret=SET_DIROP(VTOI(ap->a_fdvp)->i_lfs))!=0)
+	if((ret=SET_DIROP(fs))!=0)
 		return ret;
 	MARK_VNODE(ap->a_fdvp);
-	MARK_VNODE(ap->a_tdvp);
+	if(ap->a_tdvp->v_op == lfs_vnodeop_p)
+		MARK_VNODE(ap->a_tdvp);
 	ret = ufs_rename(ap);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_fvp);
-	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_tvp);
-	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs,ap->a_fdvp,"rename");
+	MAYBE_INACTIVE(fs,ap->a_fvp);
+	MAYBE_INACTIVE(fs,ap->a_tvp);
+	SET_ENDOP(fs,ap->a_fdvp,"rename");
 	return (ret);
 }
 
