@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.1.6.1 2002/07/05 13:52:43 lukem Exp $ */
+/* $NetBSD: bus_dma.c,v 1.1.6.2 2002/07/15 16:10:01 thorpej Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.6.1 2002/07/05 13:52:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.6.2 2002/07/15 16:10:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,8 +545,8 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 #endif
 			}
 			break;
-		}
 #endif /* M68040 || M68060 */
+		}
 	}
 }
 
