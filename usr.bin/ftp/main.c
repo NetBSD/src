@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 1999/11/12 02:50:38 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.68 1999/11/26 21:41:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.67 1999/11/12 02:50:38 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.68 1999/11/26 21:41:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,19 +446,36 @@ main(argc, argv)
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
 		} else {
-			char *xargv[5];
+			char *xargv[4], *user, *host;
 
 			if (sigsetjmp(toplevel, 1))
 				exit(0);
 			(void)xsignal(SIGINT, intr);
 			(void)xsignal(SIGPIPE, lostpeer);
+			user = NULL;
+			host = argv[0];
+			cp = strchr(host, '@');
+			if (cp) {
+				*cp = '\0';
+				user = host;
+				host = cp + 1;
+			}
 			xargv[0] = __progname;
-			xargv[1] = argv[0];
+			xargv[1] = host;
 			xargv[2] = argv[1];
-			xargv[3] = argv[2];
-			xargv[4] = NULL;
+			xargv[3] = NULL;
 			do {
+				int oautologin;
+
+				oautologin = autologin;
+				if (user != NULL) {
+					anonftp = 0;
+					autologin = 0;
+				}
 				setpeer(argc+1, xargv);
+				autologin = oautologin;
+				if (connected == 1 && user != NULL)
+					(void)ftp_login(host, user, NULL);
 				if (!retry_connect)
 					break;
 				if (!connected) {
@@ -943,8 +960,9 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: %s [-AadefginpRtvV] [-r retry] [-o outfile] [-P port] [-T dir,max[,inc]\n"
-"       [host [port]] [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
-"       [http://[user[:pass]@]host[:port]/path] [host:path[/]]\n", __progname);
+"usage: %s [-AadefginpRtvV] [-o outfile] [-P port] [-r retry] [-T dir,max[,inc]\n"
+"       [[user@]host [port]] [host:path[/]] [file:///file]\n"
+"       [ftp://[user[:pass]@]host[:port]/path[/]]\n"
+"       [http://[user[:pass]@]host[:port]/path] [...]\n", __progname);
 	exit(1);
 }

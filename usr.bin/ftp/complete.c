@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.34 1999/10/24 12:31:37 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.35 1999/11/26 21:41:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.34 1999/10/24 12:31:37 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.35 1999/11/26 21:41:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -303,8 +303,7 @@ complete_remote(word, list)
 	dummyargv[1] = dir;
 
 	if ((file = strrchr(word, '/')) == NULL) {
-		dir[0] = '.';
-		dir[1] = '\0';
+		dir[0] = '\0';
 		file = word;
 	} else {
 		cp = file;
@@ -314,7 +313,8 @@ complete_remote(word, list)
 		file++;
 	}
 
-	if (dirchange || strcmp(dir, lastdir) != 0) {	/* dir not cached */
+	if (dirchange || dirlist == NULL ||
+	    strcmp(dir, lastdir) != 0) {		/* dir not cached */
 		char *emesg;
 
 		if (dirlist != NULL)
