@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.19 2002/10/22 13:48:50 christos Exp $	*/
+/*	$NetBSD: func.c,v 1.20 2002/10/23 00:36:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.19 2002/10/22 13:48:50 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.20 2002/10/23 00:36:36 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -530,7 +530,7 @@ if1(tnode_t *tn)
 		tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
-	expr(tn, 0, 1);
+	expr(tn, 0, 1, 1);
 	pushctrl(T_IF);
 }
 
@@ -603,7 +603,7 @@ switch1(tnode_t *tn)
 		tp->t_tspec = INT;
 	}
 
-	expr(tn, 1, 0);
+	expr(tn, 1, 0, 1);
 
 	pushctrl(T_SWITCH);
 	cstk->c_switch = 1;
@@ -701,7 +701,7 @@ while1(tnode_t *tn)
 		}
 	}
 
-	expr(tn, 0, 1);
+	expr(tn, 0, 1, 1);
 }
 
 /*
@@ -772,7 +772,7 @@ do2(tnode_t *tn)
 		}
 	}
 
-	expr(tn, 0, 1);
+	expr(tn, 0, 1, 1);
 
 	/*
 	 * The end of the loop is only reached if it is no endless loop
@@ -815,7 +815,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 	STRUCT_ASSIGN(cstk->c_cfpos, csrc_pos);
 
 	if (tn1 != NULL)
-		expr(tn1, 0, 0);
+		expr(tn1, 0, 0, 1);
 
 	if (tn2 != NULL)
 		tn2 = cconv(tn2);
@@ -827,7 +827,7 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 		tn2 = NULL;
 	}
 	if (tn2 != NULL)
-		expr(tn2, 0, 1);
+		expr(tn2, 0, 1, 1);
 
 	if (tn2 == NULL) {
 		cstk->c_infinite = 1;
@@ -874,7 +874,7 @@ for2(void)
 	}
 
 	if (tn3 != NULL) {
-		expr(tn3, 0, 0);
+		expr(tn3, 0, 0, 1);
 	} else {
 		tfreeblk();
 	}
@@ -1011,7 +1011,7 @@ doreturn(tnode_t *tn)
 			}
 		}
 
-		expr(tn, 1, 0);
+		expr(tn, 1, 0, 1);
 
 	} else {
 
