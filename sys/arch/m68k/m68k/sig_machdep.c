@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.4 1997/10/16 18:23:38 carrel Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5 1998/01/06 20:50:24 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,7 +175,7 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_state.ss_flags = SS_USERREGS;
 	bcopy((caddr_t)frame->f_regs,
 	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT7) {
+	if (ft >= FMT4) {
 #ifdef DEBUG
 		if (ft > 15 || exframesize[ft] < 0)
 			panic("sendsig: bogus frame type");
