@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.49 2001/07/09 21:46:20 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.50 2001/07/10 20:44:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -445,7 +445,6 @@ initarm_new_bootloader(bootconf)
 	u_int l2pagetable;
 	extern char page0[], page0_end[];
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	int id;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 
@@ -521,17 +520,6 @@ initarm_new_bootloader(bootconf)
 	 */
 
 /** START OF REAL NEW STUFF */
-
-	/* Check if we are having the right kernel */
-	id = ReadByte(IOMD_HW_BASE + (IOMD_ID0 << 2))
-	  | (ReadByte(IOMD_HW_BASE + (IOMD_ID1 << 2)) << 8);
-	switch (id) {
-	case ARM7500_IOC_ID:
-#ifndef CPU_ARM7500
-		panic2(("Encountered ARM7500 IOMD but no ARM7500 kernel support"));
-#endif	/* CPU_ARM7500 */
-		break;
-	}
 
 	/* Check to make sure the page size is correct */
 	if (NBPG != bootconfig.pagesize)
@@ -1126,7 +1114,6 @@ initarm_old_bootloader(bootconf)
 	u_int l2pagetable;
 	extern char page0[], page0_end[];
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	int id;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 
@@ -1403,16 +1390,6 @@ initarm_old_bootloader(bootconf)
 
 	if (bootconfig.vram[0].pages != 0)
 		printf("done.\n");
-
-	id = ReadByte(IOMD_BASE + (IOMD_ID0 << 2))
-	  | (ReadByte(IOMD_BASE + (IOMD_ID1 << 2)) << 8);
-	switch (id) {
-	case ARM7500_IOC_ID:
-#ifndef CPU_ARM7500
-		panic("Encountered ARM7500 IOMD but no ARM7500 kernel support");
-#endif	/* CPU_ARM7500 */
-		break;
-	}
 
 	/*
 	 * Ok we have finished the primary boot strap. All this has done is to

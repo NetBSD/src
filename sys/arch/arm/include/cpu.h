@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2001/07/09 21:46:19 reinoud Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2001/07/10 20:43:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -84,12 +84,6 @@
 #if !defined(PROG26) && !defined(PROG32)
 #error "Support for at least one CPU type must be configured into the kernel"
 #endif
-
-#ifdef CPU_ARM7500
-#ifndef CPU_ARM7
-#error "option CPU_ARM7 is required with CPU_ARM7500"
-#endif
-#endif /* CPU_ARM7500 */
 
 #endif /* !_LKM */
 
