@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.11 1999/12/15 12:28:54 kleink Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.12 1999/12/16 21:04:10 abs Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -436,6 +436,9 @@ int cardbus_get_capability __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
 
 #define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cf, (tag), (offs))
 #define cardbus_conf_read(cc, cf, tag, offs) ((cf)->cardbus_conf_read)((cc), (tag), (offs))
+#define Cardbus_conf_write(ct, tag, offs, val) (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
+#define cardbus_conf_write(cc, cf, tag, offs, val) ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
+
 #endif /* !_DEV_CARDBUS_CARDBUSVAR_H_ */
 
 #endif /* SYS_DEV_CARDBUS_CARDBUSVAR_H */
