@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.64 2001/10/03 07:04:32 cjs Exp $
+#	$NetBSD: security,v 1.65 2001/10/03 15:41:25 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -50,7 +50,7 @@ PKGS=secure9.$$
 # Handle backup_dir not being set in .conf file
 backup_dir=${backup_dir:-/var/backups}
 CHANGELIST=""
-pkg_dbdir=${pkg_dbdir:-/var/db/pkg}
+pkgdb_dir=${pkgdb_dir:-/var/db/pkg}
 
 MP=/etc/master.passwd
 
@@ -680,9 +680,9 @@ fi
 
 # Check for changes in the list of installed pkgs
 #
-if checkyesno check_pkgs && [ -d $pkg_dbdir ]; then
+if checkyesno check_pkgs && [ -d $pkgdb_dir ]; then
 	pkgs=$backup_dir/pkgs
-	(	cd $pkg_dbdir
+	(	cd $pkgdb_dir
 		pkg_info | sort
 		echo ""
 		find . \( -name +REQUIRED_BY -o -name +CONTENTS \) -print0 |
