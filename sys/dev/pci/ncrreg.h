@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrreg.h,v 1.3 1994/10/27 04:21:35 cgd Exp $	*/
+/*	$NetBSD: ncrreg.h,v 1.4 1994/12/28 19:44:31 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -43,6 +43,8 @@
 **
 **-------------------------------------------------------------------------
 */
+
+#include <scsi/scsi_message.h>
 
 #ifndef __NCR_REG_H__
 #define __NCR_REG_H__
@@ -495,38 +497,6 @@ struct scr_tblsel {
 **
 **-----------------------------------------------------------
 */
-
-/*
-**	Messages
-*/
-
-#define	M_COMPLETE	(0x00)
-#define	M_EXTENDED	(0x01)
-#define	M_SAVE_DP	(0x02)
-#define	M_RESTORE_DP	(0x03)
-#define	M_DISCONNECT	(0x04)
-#define	M_ID_ERROR	(0x05)
-#define	M_ABORT		(0x06)
-#define	M_REJECT	(0x07)
-#define	M_NOOP		(0x08)
-#define	M_PARITY	(0x09)
-#define	M_LCOMPLETE	(0x0a)
-#define	M_FCOMPLETE	(0x0b)
-#define	M_RESET		(0x0c)
-#define	M_ABORT_TAG	(0x0d)
-#define	M_CLEAR_QUEUE	(0x0e)
-#define	M_INIT_REC	(0x0f)
-#define	M_REL_REC	(0x10)
-#define	M_TERMINATE	(0x11)
-#define	M_SIMPLE_TAG	(0x20)
-#define	M_HEAD_TAG	(0x21)
-#define	M_ORDERED_TAG	(0x22)
-#define	M_IGN_RESIDUE	(0x23)
-#define	M_IDENTIFY   	(0x80)
-
-#define	M_X_MODIFY_DP	(0x00)
-#define	M_X_SYNC_REQ	(0x01)
-#define	M_X_WIDE_REQ	(0x03)
 
 /*
 **	Status

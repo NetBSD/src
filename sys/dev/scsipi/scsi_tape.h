@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.5 1994/06/29 06:43:08 cgd Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.6 1994/12/28 19:43:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -60,7 +60,7 @@
 #define	READ			0x08
 #define WRITE			0x0a
 struct scsi_rw_tape {
-	u_char	op_code;
+	u_char	opcode;
 	u_char	byte2;
 #define	SRW_FIXED		0x01
 	u_char	len[3];
@@ -69,7 +69,7 @@ struct scsi_rw_tape {
 
 #define	SPACE			0x11
 struct scsi_space {
-	u_char	op_code;
+	u_char	opcode;
 	u_char	byte2;
 #define	SS_CODE			0x03
 #define SP_BLKS			0x00
@@ -82,7 +82,7 @@ struct scsi_space {
 
 #define	WRITE_FILEMARKS		0x10
 struct scsi_write_filemarks {
-	u_char	op_code;
+	u_char	opcode;
 	u_char	byte2;
 	u_char	number[3];
 	u_char	control;
@@ -90,7 +90,7 @@ struct scsi_write_filemarks {
 
 #define REWIND			0x01
 struct scsi_rewind {
-	u_char	op_code;
+	u_char	opcode;
 	u_char	byte2;
 #define	SR_IMMED		0x01
 	u_char	unused[3];
@@ -99,7 +99,7 @@ struct scsi_rewind {
 
 #define LOAD			0x1b
 struct scsi_load {
-	u_char	op_code;
+	u_char	opcode;
 	u_char	byte2;
 #define	SL_IMMED		0x01
 	u_char	unused[2];
@@ -112,7 +112,7 @@ struct scsi_load {
 
 #define	READ_BLOCK_LIMITS	0x05
 struct scsi_block_limits {
-	u_char	op_code;
+	u_char	opcode;
 	u_char	byte2;
 	u_char	unused[3];
 	u_char	control;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.35 1994/11/18 22:07:34 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.36 1994/12/28 19:43:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -68,17 +68,18 @@
 #include <scsi/scsiconf.h>
 
 #ifdef DDB
-int     Debugger();
-#else   /* DDB */
-#define Debugger()
-#endif  /* DDB */
+int Debugger();
+#else /* DDB */
+#define Debugger() panic("should call debugger here (bt742a.c)")
+#endif /* DDB */
 
 typedef u_long physaddr;
+typedef u_long physlen;
 
 /*
  * I/O Port Interface
  */
-#define	BT_BASE			bt->bt_base
+#define	BT_BASE			bt->sc_iobase
 #define	BT_CTRL_STAT_PORT	(BT_BASE + 0x0)		/* control & status */
 #define	BT_CMD_DATA_PORT	(BT_BASE + 0x1)		/* cmds and datas */
 #define	BT_INTR_PORT		(BT_BASE + 0x2)		/* Intr. stat */
@@ -132,10 +133,6 @@ typedef u_long physaddr;
 #define   BT_DISABLE		0x00	/* Parameter value for Disable */
 #define   BT_ENABLE		0x01	/* Parameter value for Enable */
 
-struct bt_cmd_buf {
-	u_char  byte[16];
-};
-
 /*
  * BT_INTR_PORT bits (read)
  */
@@ -151,39 +148,36 @@ struct bt_cmd_buf {
  */
 #define BT_MBX_SIZE	32	/* mail box size  (MAX 255 MBxs) */
 				/* don't need that many really */
-#define BT_CCB_MAX	32	/* store up to 32CCBs at any one time */
-				/* in bt742a H/W ( Not MAX ? ) */
-#define	CCB_HASH_SIZE	32	/* when we have a physical addr. for */
-				/* a ccb and need to find the ccb in */
-				/* space, look it up in the hash table */
-#define	CCB_HASH_SHIFT	9	/* only hash on multiples of 512 */
-#define CCB_HASH(x)	((((long int)(x))>>CCB_HASH_SHIFT) % CCB_HASH_SIZE)
+#define BT_CCB_MAX	32	/* store up to 32 CCBs at one time */
+#define	CCB_HASH_SIZE	32	/* hash table size for phystokv */
+#define	CCB_HASH_SHIFT	9
+#define CCB_HASH(x)	((((long)(x))>>CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
 
-#define bt_nextmbx( wmb, mbx, mbio ) \
-	if ( (wmb) == &((mbx)->mbio[BT_MBX_SIZE - 1 ]) ) \
-		(wmb) = &((mbx)->mbio[0]); \
-	else \
+#define bt_nextmbx(wmb, mbx, mbio) \
+	if ((wmb) == &(mbx)->mbio[BT_MBX_SIZE - 1])	\
+		(wmb) = &(mbx)->mbio[0];		\
+	else						\
 		(wmb)++;
 
-typedef struct bt_mbx_out {
+struct bt_mbx_out {
 	physaddr ccb_addr;
 	u_char dummy[3];
 	u_char cmd;
-} BT_MBO;
+};
 
-typedef struct bt_mbx_in {
+struct bt_mbx_in {
 	physaddr ccb_addr;
 	u_char btstat;
 	u_char sdstat;
 	u_char dummy;
 	u_char stat;
-} BT_MBI;
+};
 
 struct bt_mbx {
-	BT_MBO  mbo[BT_MBX_SIZE];
-	BT_MBI  mbi[BT_MBX_SIZE];
-	BT_MBO *tmbo;		/* Target Mail Box out */
-	BT_MBI *tmbi;		/* Target Mail Box in */
+	struct bt_mbx_out mbo[BT_MBX_SIZE];
+	struct bt_mbx_in mbi[BT_MBX_SIZE];
+	struct bt_mbx_out *tmbo;	/* Target Mail Box out */
+	struct bt_mbx_in *tmbi;		/* Target Mail Box in */
 };
 
 /*
@@ -211,7 +205,7 @@ WARNING...THIS WON'T WORK(won't fit on 1 page)
 #endif /* BIG_DMA */
 
 struct bt_scat_gath {
-	u_long seg_len;
+	physlen seg_len;
 	physaddr seg_addr;
 };
 
@@ -221,43 +215,37 @@ struct bt_ccb {
 	u_char scsi_cmd_length;
 	u_char req_sense_length;
 	/*------------------------------------longword boundary */
-	u_long data_length;
+	physlen data_length;
 	/*------------------------------------longword boundary */
 	physaddr data_addr;
 	/*------------------------------------longword boundary */
-	u_char dummy[2];
+	u_char dummy1[2];
 	u_char host_stat;
 	u_char target_stat;
 	/*------------------------------------longword boundary */
 	u_char target;
 	u_char lun;
-	u_char scsi_cmd[12];	/* 12 bytes (bytes only) */
+	struct scsi_generic scsi_cmd;
 	u_char dummy2[1];
 	u_char link_id;
-	/*------------------------------------4 longword boundary */
+	/*------------------------------------longword boundary */
 	physaddr link_addr;
 	/*------------------------------------longword boundary */
 	physaddr sense_ptr;
-/*-----end of HW fields-------------------------------longword boundary */
+/*-----end of HW fields-----------------------longword boundary */
 	struct scsi_sense_data scsi_sense;
 	/*------------------------------------longword boundary */
 	struct bt_scat_gath scat_gath[BT_NSEG];
 	/*------------------------------------longword boundary */
-	struct bt_ccb *next;
-	/*------------------------------------longword boundary */
-	struct scsi_xfer *xfer;	/* the scsi_xfer for this cmd */
-	/*------------------------------------longword boundary */
-	struct bt_mbx_out *mbx;	/* pointer to mail box */
-	/*------------------------------------longword boundary */
-	int     flags;
+	TAILQ_ENTRY(bt_ccb) chain;
+	struct bt_ccb *nexthash;
+	long hashkey;
+	struct scsi_xfer *xs;		/* the scsi_xfer for this cmd */
+	int flags;
 #define	CCB_FREE	0
 #define CCB_ACTIVE	1
 #define	CCB_ABORTED	2
-	/*------------------------------------longword boundary */
-	struct bt_ccb *nexthash;	/* if two hash the same */
-	/*------------------------------------longword boundary */
-	physaddr hashkey;	/*physaddr of this ccb */
-	/*------------------------------------longword boundary */
+	struct bt_mbx_out *mbx;		/* pointer to mail box */
 };
 
 /*
@@ -347,14 +335,14 @@ struct bt_softc {
         struct isadev sc_id;
         struct intrhand sc_ih;
 
-	int bt_base;			/* base port for each board */
+	int sc_iobase;
+	int sc_irq, bt_drq;
+
 	struct bt_mbx bt_mbx;		/* all our mailboxes */
-	struct bt_ccb *bt_ccb_free;	/* list of free CCBs */
-	struct bt_ccb *ccbhash[CCB_HASH_SIZE];	/* phys to kv hash */
-	int bt_int;			/* int. read off board */
-	int bt_dma;			/* DMA channel read of board */
+	struct bt_ccb *ccbhash[CCB_HASH_SIZE];
+	TAILQ_HEAD(, bt_ccb) free_ccb;
+	int numccbs;
 	int bt_scsi_dev;		/* adapters scsi id */
-	int numccbs;			/* how many we have malloc'd */
 	struct scsi_link sc_link;	/* prototype for devs */
 };
 
@@ -366,19 +354,18 @@ struct bt_softc {
 int     bt_debug = 0;
 
 int bt_cmd();	/* XXX must be varargs to prototype */
-u_int bt_adapter_info __P((struct bt_softc *));
 int btintr __P((struct bt_softc *));
 void bt_free_ccb __P((struct bt_softc *, struct bt_ccb *, int));
 struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
-struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, physaddr));
-BT_MBO *bt_send_mbo __P((struct bt_softc *, int, int, struct bt_ccb *));
+struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, u_long));
+struct bt_mbx_out *bt_send_mbo __P((struct bt_softc *, int, struct bt_ccb *));
 void bt_done __P((struct bt_softc *, struct bt_ccb *));
 int bt_find __P((struct bt_softc *));
 void bt_init __P((struct bt_softc *));
 void bt_inquire_setup_information __P((struct bt_softc *));
 void btminphys __P((struct buf *));
 int bt_scsi_cmd __P((struct scsi_xfer *));
-int bt_poll __P((struct bt_softc *, struct scsi_xfer *, struct bt_ccb *));
+int bt_poll __P((struct bt_softc *, struct scsi_xfer *, int));
 void bt_timeout __P((void *arg));
 #ifdef UTEST
 void bt_print_ccb __P((struct bt_ccb *));
@@ -390,8 +377,6 @@ struct scsi_adapter bt_switch = {
 	btminphys,
 	0,
 	0,
-	bt_adapter_info,
-	"bt"
 };
 
 /* the below structure is so we have a default dev struct for out link struct */
@@ -400,8 +385,6 @@ struct scsi_device bt_dev = {
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
-	"bt",
-	0
 };
 
 int btprobe __P((struct device *, void *, void *));
@@ -557,35 +540,32 @@ btprobe(parent, match, aux)
                 return 0;
 #endif
 
-	bt->bt_base = ia->ia_iobase;
+	bt->sc_iobase = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
-	 * sets up dma and bus speed, loads bt->bt_int
+	 * sets up dma and bus speed, loads bt->sc_irq
 	 */
 	if (bt_find(bt) != 0)
 		return 0;
 
-	/*
-	 * If it's there, put in it's interrupt vectors and dma channel
-	 */
 	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != bt->bt_int) {
-			printf("bt%d: irq mismatch; kernel configured %d != board configured %d\n",
-			    bt->sc_dev.dv_unit, ia->ia_irq, bt->bt_int);
+		if (ia->ia_irq != bt->sc_irq) {
+			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			    bt->sc_dev.dv_xname, ia->ia_irq, bt->sc_irq);
                 	return 0;
 		}
 	} else
-		ia->ia_irq = bt->bt_int;
+		ia->ia_irq = bt->sc_irq;
 
 	if (ia->ia_drq != DRQUNK) {
-		if (ia->ia_drq != bt->bt_dma) {
-			printf("bt%d: drq mismatch; kernel configured %d != board configured %d\n",
-			    bt->sc_dev.dv_unit, ia->ia_drq, bt->bt_dma);
+		if (ia->ia_drq != bt->bt_drq) {
+			printf("%s: drq mismatch; kernel configured %d != board configured %d\n",
+			    bt->sc_dev.dv_xname, ia->ia_drq, bt->bt_drq);
                 	return 0;
 		}
 	} else
-		ia->ia_drq = bt->bt_dma;
+		ia->ia_drq = bt->bt_drq;
 	
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
@@ -612,14 +592,16 @@ btattach(parent, self, aux)
 		isa_dmacascade(ia->ia_drq);
 
 	bt_init(bt);
+	TAILQ_INIT(&bt->free_ccb);
 
 	/*
 	 * fill in the prototype scsi_link.
 	 */
 	bt->sc_link.adapter_softc = bt;
-	bt->sc_link.adapter_targ = bt->bt_scsi_dev;
+	bt->sc_link.adapter_target = bt->bt_scsi_dev;
 	bt->sc_link.adapter = &bt_switch;
 	bt->sc_link.device = &bt_dev;
+	bt->sc_link.openings = 2;
 
 	printf("\n");
 
@@ -638,125 +620,100 @@ btattach(parent, self, aux)
 }
 
 /*
- * Return some information to the caller about the adapter and its
- * capabilities.
- */
-u_int
-bt_adapter_info(bt)
-	struct bt_softc *bt;
-{
-
-	return 2;	/* 2 outstanding requests at a time per device */
-}
-
-/*
  * Catch an interrupt from the adaptor
  */
 int
 btintr(bt)
 	struct bt_softc *bt;
 {
-	BT_MBI *wmbi;
+	struct bt_mbx_in *wmbi;
 	struct bt_mbx *wmbx;
 	struct bt_ccb *ccb;
 	u_char stat;
-	int i, wait;
+	int i;
 	int found = 0;
 
-#ifdef UTEST
-	printf("btintr ");
-#endif
+#ifdef BTDEBUG
+	printf("%s: btintr ", bt->sc_dev.dv_xname);
+#endif /* BTDEBUG */
+
 	/*
 	 * First acknowlege the interrupt, Then if it's
 	 * not telling about a completed operation
 	 * just return. 
 	 */
 	stat = inb(BT_INTR_PORT);
+	if ((stat & (BT_MBOA | BT_MBIF)) == 0) {
+		outb(BT_CTRL_STAT_PORT, BT_IRST);
+		return -1;	/* XXX */
+	}
 
-	/* Mail Box out empty ? */
+	/* Mail box out empty? */
 	if (stat & BT_MBOA) {
-		printf("%s: Available Free mbo post\n", bt->sc_dev.dv_xname);
-		/* Disable MBO available interrupt */
+		/* Disable MBO available interrupt. */
 		outb(BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
-		wait = 100000;	/* 1 sec enough? */
-		for (i = wait; i; i--) {
+		for (i = 100000; i; i--) {
 			if (!(inb(BT_CTRL_STAT_PORT) & BT_CDF))
 				break;
 			delay(10);
 		}
 		if (!i) {
 			printf("%s: btintr, cmd/data port full\n",
-				bt->sc_dev.dv_xname);
+			    bt->sc_dev.dv_xname);
 			outb(BT_CTRL_STAT_PORT, BT_SRST);
 			return 1;
 		}
 		outb(BT_CMD_DATA_PORT, 0x00);	/* Disable */
-		wakeup((caddr_t)&bt->bt_mbx);
-		outb(BT_CTRL_STAT_PORT, BT_IRST);
+		wakeup(&bt->bt_mbx);
+	}
+
+	/* Mail box in full? */
+	if ((stat & BT_MBIF) == 0)
 		return 1;
-	}
-	if (!(stat & BT_MBIF)) {
-		outb(BT_CTRL_STAT_PORT, BT_IRST);
-		return -1;	/* XXX */
-	}
-	/*
-	 * If it IS then process the competed operation
-	 */
 	wmbx = &bt->bt_mbx;
 	wmbi = wmbx->tmbi;
-    AGAIN:
+AGAIN:
 	while (wmbi->stat != BT_MBI_FREE) {
-		ccb = bt_ccb_phys_kv(bt, (wmbi->ccb_addr));
+		ccb = bt_ccb_phys_kv(bt, wmbi->ccb_addr);
 		if (!ccb) {
 			wmbi->stat = BT_MBI_FREE;
-			printf("bt: BAD CCB ADDR!\n");
+			printf("%s: BAD CCB ADDR!\n", bt->sc_dev.dv_xname);
 			continue;
 		}
 		found++;
-		if ((stat = wmbi->stat) != BT_MBI_OK) {
-			switch (stat) {
-			case BT_MBI_ABORT:
-#ifdef UTEST
-				if (bt_debug & BT_SHOWMISC)
-					printf("abort ");
-#endif
-				ccb->host_stat = BT_ABORTED;
-				break;
+		switch (wmbi->stat) {
+		case BT_MBI_OK:
+		case BT_MBI_ERROR:
+			break;
 
-			case BT_MBI_UNKNOWN:
-				ccb = (struct bt_ccb *) 0;
-#ifdef UTEST
-				if (bt_debug & BT_SHOWMISC)
-					printf("unknown ccb for abort");
-#endif
-				break;
+		case BT_MBI_ABORT:
+			ccb->host_stat = BT_ABORTED;
+			break;
 
-			case BT_MBI_ERROR:
-				break;
+		case BT_MBI_UNKNOWN:
+			ccb = 0;
+			break;
 
-			default:
-				panic("Impossible mbxi status");
-
-			}
-#ifdef UTEST
-			if ((bt_debug & BT_SHOWCMDS) && ccb) {
-				u_char *cp;
-				cp = ccb->scsi_cmd;
-				printf("op=%x %x %x %x %x %x\n",
-				    cp[0], cp[1], cp[2],
-				    cp[3], cp[4], cp[5]);
-				printf("stat %x for mbi addr = 0x%08x\n"
-				    ,wmbi->stat, wmbi);
-				printf("addr = 0x%x\n", ccb);
-			}
-#endif	
+		default:
+			panic("Impossible mbxi status");
 		}
+#ifdef BTDEBUG
+		if (bt_debug && ccb) {
+			u_char *cp = &ccb->scsi_cmd;
+			printf("op=%x %x %x %x %x %x\n",
+			    cp[0], cp[1], cp[2],
+			    cp[3], cp[4], cp[5]);
+			printf("stat %x for mbi addr = 0x%08x, ",
+			    wmbi->stat, wmbi);
+			printf("ccb addr = 0x%x\n", ccb);
+		}
+#endif /* BTDEBUG */
 		wmbi->stat = BT_MBI_FREE;
 		if (ccb) {
 			untimeout(bt_timeout, ccb);
 			bt_done(bt, ccb);
 		}
-		/* Set the IN mail Box pointer for next */ bt_nextmbx(wmbi, wmbx, mbi);
+		bt_nextmbx(wmbi, wmbx, mbi);
 	}
 	if (!found) {
 		for (i = 0; i < BT_MBX_SIZE; i++) {
@@ -768,7 +725,7 @@ btintr(bt)
 		}
 		if (!found) {
 			printf("%s: mbi at 0x%08x should be found, stat=%02x..resync\n",
-			    bt->sc_dev.dv_xname, wmbi, stat);
+			    bt->sc_dev.dv_xname, wmbi, wmbi->stat);
 		} else {
 			found = 0;
 			goto AGAIN;
@@ -790,21 +747,19 @@ bt_free_ccb(bt, ccb, flags)
 {
 	int opri;
 
-	if (!(flags & SCSI_NOMASK))
-		opri = splbio();
+	opri = splbio();
 
-	ccb->next = bt->bt_ccb_free;
-	bt->bt_ccb_free = ccb;
 	ccb->flags = CCB_FREE;
+	TAILQ_INSERT_HEAD(&bt->free_ccb, ccb, chain);
+
 	/*
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (!ccb->next)
-		wakeup((caddr_t)&bt->bt_ccb_free);
+	if (!ccb->chain.tqe_next)
+		wakeup(&bt->free_ccb);
 
-	if (!(flags & SCSI_NOMASK))
-		splx(opri);
+	splx(opri);
 }
 
 /*
@@ -819,55 +774,47 @@ bt_get_ccb(bt, flags)
 	int flags;
 {
 	int opri;
-	struct bt_ccb *ccbp;
-	struct bt_mbx *wmbx;	/* Mail Box pointer specified unit */
-	BT_MBO *wmbo;		/* Out Mail Box pointer */
+	struct bt_ccb *ccb;
 	int hashnum;
 
-	if (!(flags & SCSI_NOMASK))
-		opri = splbio();
+	opri = splbio();
+
 	/*
 	 * If we can and have to, sleep waiting for one to come free
 	 * but only if we can't allocate a new one.
 	 */
-	while (!(ccbp = bt->bt_ccb_free)) {
+	for (;;) {
+		ccb = bt->free_ccb.tqh_first;
+		if (ccb) {
+			TAILQ_REMOVE(&bt->free_ccb, ccb, chain);
+			break;
+		}
 		if (bt->numccbs < BT_CCB_MAX) {
-			if (ccbp = (struct bt_ccb *) malloc(sizeof(struct bt_ccb),
-				M_TEMP,
-				M_NOWAIT)) {
-				bzero(ccbp, sizeof(struct bt_ccb));
+			if (ccb = (struct bt_ccb *) malloc(sizeof(struct bt_ccb),
+			    M_TEMP, M_NOWAIT)) {
+				bzero(ccb, sizeof(struct bt_ccb));
 				bt->numccbs++;
-				ccbp->flags = CCB_ACTIVE;
 				/*
 				 * put in the phystokv hash table
 				 * Never gets taken out.
 				 */
-				ccbp->hashkey = KVTOPHYS(ccbp);
-				hashnum = CCB_HASH(ccbp->hashkey);
-				ccbp->nexthash = bt->ccbhash[hashnum];
-				bt->ccbhash[hashnum] = ccbp;
+				ccb->hashkey = KVTOPHYS(ccb);
+				hashnum = CCB_HASH(ccb->hashkey);
+				ccb->nexthash = bt->ccbhash[hashnum];
+				bt->ccbhash[hashnum] = ccb;
 			} else {
-				printf("%s: Can't malloc CCB\n",
-					bt->sc_dev.dv_xname);
+				printf("%s: can't malloc ccb\n",
+				    bt->sc_dev.dv_xname);
 			}
-			goto gottit;
+			break;
 		} else {
-			if (!(flags & SCSI_NOSLEEP)) {
-				tsleep((caddr_t)&bt->bt_ccb_free, PRIBIO,
-					"btccb", 0);
-			}
+			if ((flags & SCSI_NOSLEEP) == 0)
+				tsleep(&bt->free_ccb, PRIBIO, "btccb", 0);
 		}
 	}
-	if (ccbp) {
-		/* Get CCB from from free list */
-		bt->bt_ccb_free = ccbp->next;
-		ccbp->flags = CCB_ACTIVE;
-	}
-    gottit:
-      	if (!(flags & SCSI_NOMASK))
-		splx(opri);
 
-	return ccbp;
+	splx(opri);
+	return ccb;
 }
 
 /*
@@ -877,76 +824,66 @@ bt_get_ccb(bt, flags)
 struct bt_ccb *
 bt_ccb_phys_kv(bt, ccb_phys)
 	struct bt_softc *bt;
-	physaddr ccb_phys;
+	u_long ccb_phys;
 {
 	int hashnum = CCB_HASH(ccb_phys);
-	struct bt_ccb *ccbp = bt->ccbhash[hashnum];
+	struct bt_ccb *ccb = bt->ccbhash[hashnum];
 
-	while (ccbp) {
-		if (ccbp->hashkey == ccb_phys)
+	while (ccb) {
+		if (ccb->hashkey == ccb_phys)
 			break;
-		ccbp = ccbp->nexthash;
+		ccb = ccb->nexthash;
 	}
-	return ccbp;
+	return ccb;
 }
 
 /*
- * Get a MBO and then Send it  
+ * Get a mbo and send the ccb.
  */
-BT_MBO *
-bt_send_mbo(bt, flags, cmd, ccb)
+struct bt_mbx_out *
+bt_send_mbo(bt, cmd, ccb)
 	struct bt_softc *bt;
-	int flags, cmd;
+	int cmd;
 	struct bt_ccb *ccb;
 {
-	int opri;
-	BT_MBO *wmbo;		/* Mail Box Out pointer */
-	struct bt_mbx *wmbx;	/* Mail Box pointer specified unit */
-	int i, wait;
+	struct bt_mbx_out *wmbo;	/* Mail Box Out pointer */
+	struct bt_mbx *wmbx;		/* Mail Box pointer specified unit */
+	int i;
 
+	/* Get the target out mail box pointer and increment. */
 	wmbx = &bt->bt_mbx;
-
-	if (!(flags & SCSI_NOMASK))
-		opri = splbio();
-
-	/* Get the Target OUT mail Box pointer and move to Next */
 	wmbo = wmbx->tmbo;
-	wmbx->tmbo = (wmbo == &(wmbx->mbo[BT_MBX_SIZE - 1]) ?
-	    &(wmbx->mbo[0]) : wmbo + 1);
+	bt_nextmbx(wmbx->tmbo, wmbx, mbo);
 
 	/* 
 	 * Check the outmail box is free or not.
 	 * Note: Under the normal operation, it shuld NOT happen to wait.
 	 */
 	while (wmbo->cmd != BT_MBO_FREE) {
-		wait = 100000;	/* 1 sec enough? */
-		/* Enable MBO available interrupt */
+		/* Enable mbo available interrupt. */
 		outb(BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
-		for (i = wait; i; i--) {
+		for (i = 100000; i; i--) {
 			if (!(inb(BT_CTRL_STAT_PORT) & BT_CDF))
 				break;
 			delay(10);
 		}
 		if (!i) {
 			printf("%s: bt_send_mbo, cmd/data port full\n",
-				bt->sc_dev.dv_xname);
+			    bt->sc_dev.dv_xname);
 			outb(BT_CTRL_STAT_PORT, BT_SRST);
 			return NULL;
 		}
 		outb(BT_CMD_DATA_PORT, 0x01);	/* Enable */
-		tsleep((caddr_t)wmbx, PRIBIO, "btsnd", 0);/*XXX can't do this */
-		/* May be servicing an int */
+		tsleep(wmbx, PRIBIO, "btsnd", 0);/*XXX can't do this */
 	}
-	/* Link CCB to the Mail Box */
+
+	/* Link ccb to mbo. */
 	wmbo->ccb_addr = KVTOPHYS(ccb);
 	ccb->mbx = wmbo;
 	wmbo->cmd = cmd;
 
 	/* Send it! */
 	outb(BT_CMD_DATA_PORT, BT_START_SCSI);
-
-	if (!(flags & SCSI_NOMASK))
-		splx(opri);
 
 	return wmbo;
 }
@@ -962,51 +899,49 @@ bt_done(bt, ccb)
 	struct bt_ccb *ccb;
 {
 	struct scsi_sense_data *s1, *s2;
-	struct scsi_xfer *xs = ccb->xfer;
+	struct scsi_xfer *xs = ccb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("bt_done\n"));
 	/*
 	 * Otherwise, put the results of the operation
 	 * into the xfer and call whoever started it
 	 */
-	if ((ccb->host_stat != BT_OK || ccb->target_stat != SCSI_OK)
-	    && (!(xs->flags & SCSI_ERR_OK))) {
-
-		s1 = &(ccb->scsi_sense);
-		s2 = &(xs->sense);
-
-		if (ccb->host_stat) {
+	if ((xs->flags & INUSE) == 0) {
+		printf("%s: exiting but not in use!\n", bt->sc_dev.dv_xname);
+		Debugger();
+	}
+	if (xs->error == XS_NOERROR) {
+		if (ccb->host_stat != BT_OK) {
 			switch (ccb->host_stat) {
-			case BT_ABORTED:	/* No response */
+			case BT_ABORTED:
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
 			case BT_SEL_TIMEOUT:	/* No response */
-				SC_DEBUG(xs->sc_link, SDEV_DB3,
-				    ("timeout reported back\n"));
-				xs->error = XS_TIMEOUT;
+				xs->error = XS_SELTIMEOUT;
 				break;
 			default:	/* Other scsi protocol messes */
+				printf("%s: host_stat %x\n",
+				    bt->sc_dev.dv_xname, ccb->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
-				SC_DEBUG(xs->sc_link, SDEV_DB3,
-				    ("unexpected host_stat: %x\n",
-					ccb->host_stat));
 			}
-		} else {
+		} else if (ccb->target_stat != SCSI_OK) {
 			switch (ccb->target_stat) {
-			case 0x02:
+			case SCSI_CHECK:
+				s1 = &ccb->scsi_sense;
+				s2 = &xs->sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
-			case 0x08:
+			case SCSI_BUSY:
 				xs->error = XS_BUSY;
 				break;
 			default:
-				SC_DEBUG(xs->sc_link, SDEV_DB3,
-				    ("unexpected target_stat: %x\n",
-					ccb->target_stat));
+				printf("%s: target_stat %x\n",
+				    bt->sc_dev.dv_xname, ccb->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
-		}
-	} else {		/* All went correctly  OR errors expected */
-		xs->resid = 0;
+		} else
+			xs->resid = 0;
 	}
 	xs->flags |= ITSDONE;
 	bt_free_ccb(bt, ccb, xs->flags);
@@ -1072,19 +1007,19 @@ bt_find(bt)
 	bt_cmd(bt, 0, sizeof(conf), 0, &conf, BT_CONF_GET);
 	switch (conf.chan) {
 	case EISADMA:
-		bt->bt_dma = DRQUNK;
+		bt->bt_drq = DRQUNK;
 		break;
 	case CHAN0:
-		bt->bt_dma = 0;
+		bt->bt_drq = 0;
 		break;
 	case CHAN5:
-		bt->bt_dma = 5;
+		bt->bt_drq = 5;
 		break;
 	case CHAN6:
-		bt->bt_dma = 6;
+		bt->bt_drq = 6;
 		break;
 	case CHAN7:
-		bt->bt_dma = 7;
+		bt->bt_drq = 7;
 		break;
 	default:
 		printf("%s: illegal dma setting %x\n", bt->sc_dev.dv_xname,
@@ -1094,22 +1029,22 @@ bt_find(bt)
 
 	switch (conf.intr) {
 	case INT9:
-		bt->bt_int = 9;
+		bt->sc_irq = 9;
 		break;
 	case INT10:
-		bt->bt_int = 10;
+		bt->sc_irq = 10;
 		break;
 	case INT11:
-		bt->bt_int = 11;
+		bt->sc_irq = 11;
 		break;
 	case INT12:
-		bt->bt_int = 12;
+		bt->sc_irq = 12;
 		break;
 	case INT14:
-		bt->bt_int = 14;
+		bt->sc_irq = 14;
 		break;
 	case INT15:
-		bt->bt_int = 15;
+		bt->sc_irq = 15;
 		break;
 	default:
 		printf("%s: illegal int setting %x\n", bt->sc_dev.dv_xname,
@@ -1131,7 +1066,7 @@ bt_init(bt)
 	struct bt_softc *bt;
 {
 	u_char ad[4];
-	volatile int i;
+	int i;
 
 	/*
 	 * Initialize mail box 
@@ -1141,16 +1076,6 @@ bt_init(bt)
 	bt_cmd(bt, 5, 0, 0, 0, BT_MBX_INIT_EXTENDED, BT_MBX_SIZE,
 	    ad[0], ad[1], ad[2], ad[3]);
 
-	/*
-	 * Set Pointer chain null for just in case
-	 * Link the ccb's into a free-list W/O mbox
-	 * Initialize mail box status to free
-	 */
-	if (bt->bt_ccb_free) {
-		printf("%s: bt_ccb_free is NOT initialized but init here\n",
-		    bt->sc_dev.dv_xname);
-		bt->bt_ccb_free = NULL;
-	}
 	for (i = 0; i < BT_MBX_SIZE; i++) {
 		bt->bt_mbx.mbo[i].cmd = BT_MBO_FREE;
 		bt->bt_mbx.mbi[i].stat = BT_MBI_FREE;
@@ -1230,35 +1155,36 @@ bt_scsi_cmd(xs)
 	physaddr thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
 	struct iovec *iovp;
-	BT_MBO *mbo;
+	struct bt_mbx_out *mbo;
+	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bt_scsi_cmd\n"));
 	/*
-	 * get a ccb (mbox-out) to use. If the transfer
+	 * get a ccb to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
 	if (xs->bp)
-		flags |= (SCSI_NOSLEEP);	/* just to be sure */
+		flags |= SCSI_NOSLEEP;	/* just to be sure */
 	if (flags & ITSDONE) {
-		printf("%s: Already done?\n", bt->sc_dev.dv_xname);
+		printf("%s: already done?\n", bt->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
 	}
-	if (!(flags & INUSE)) {
-		printf("%s: Not in use?\n", bt->sc_dev.dv_xname);
+	if ((flags & INUSE) == 0) {
+		printf("%s: not in use?\n", bt->sc_dev.dv_xname);
 		xs->flags |= INUSE;
 	}
-	if (!(ccb = bt_get_ccb(bt, flags))) {
+	if ((ccb = bt_get_ccb(bt, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
-	SC_DEBUG(sc_link, SDEV_DB3,
-	    ("start ccb(%x)\n", ccb));
+	ccb->flags = CCB_ACTIVE;
+	ccb->xs = xs;
+
 	/*
 	 * Put all the arguments for the xfer in the ccb
 	 */
-	ccb->xfer = xs;
 	if (flags & SCSI_RESET) {
 		ccb->opcode = BT_RESET_CCB;
 	} else {
@@ -1266,28 +1192,31 @@ bt_scsi_cmd(xs)
 		ccb->opcode = (xs->datalen ? BT_INIT_SCAT_GATH_CCB
 					   : BT_INITIATOR_CCB);
 	}
-	ccb->target = sc_link->target;
 	ccb->data_out = 0;
 	ccb->data_in = 0;
+	ccb->target = sc_link->target;
 	ccb->lun = sc_link->lun;
 	ccb->scsi_cmd_length = xs->cmdlen;
-	ccb->sense_ptr = KVTOPHYS(&(ccb->scsi_sense));
+	ccb->sense_ptr = KVTOPHYS(&ccb->scsi_sense);
 	ccb->req_sense_length = sizeof(ccb->scsi_sense);
+	ccb->host_stat = 0x00;
+	ccb->target_stat = 0x00;
 
-	if ((xs->datalen) && (!(flags & SCSI_RESET))) {
+	if (xs->datalen && (flags & SCSI_RESET) == 0) {
 		ccb->data_addr = KVTOPHYS(ccb->scat_gath);
 		sg = ccb->scat_gath;
 		seg = 0;
 #ifdef	TFS
 		if (flags & SCSI_DATA_UIO) {
-			iovp = ((struct uio *) xs->data)->uio_iov;
-			datalen = ((struct uio *) xs->data)->uio_iovcnt;
+			iovp = ((struct uio *)xs->data)->uio_iov;
+			datalen = ((struct uio *)xs->data)->uio_iovcnt;
 			xs->datalen = 0;
-			while ((datalen) && (seg < BT_NSEG)) {
-				sg->seg_addr = (physaddr) iovp->iov_base;
-				xs->datalen += sg->seg_len = iovp->iov_len;
+			while (datalen && seg < BT_NSEG) {
+				sg->seg_addr = (physaddr)iovp->iov_base;
+				sg->seg_len = iovp->iov_len;
+				xs->datalen += iovp->iov_len;
 				SC_DEBUGN(sc_link, SDEV_DB4, ("(0x%x@0x%x)",
-					iovp->iov_len, iovp->iov_base));
+				    iovp->iov_len, iovp->iov_base));
 				sg++;
 				iovp++;
 				seg++;
@@ -1299,25 +1228,23 @@ bt_scsi_cmd(xs)
 			/*
 			 * Set up the scatter gather block
 			 */
-
 			SC_DEBUG(sc_link, SDEV_DB4,
-				("%d @0x%x:- ", xs->datalen, xs->data));
+			    ("%d @0x%x:- ", xs->datalen, xs->data));
 			datalen = xs->datalen;
 			thiskv = (int) xs->data;
 			thisphys = KVTOPHYS(thiskv);
 
-			while ((datalen) && (seg < BT_NSEG)) {
+			while (datalen && seg < BT_NSEG) {
 				bytes_this_seg = 0;
 
 				/* put in the base address */
 				sg->seg_addr = thisphys;
 
-				SC_DEBUGN(sc_link, SDEV_DB4,
-					("0x%x", thisphys));
+				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
 
 				/* do it at least once */
 				nextphys = thisphys;
-				while ((datalen) && (thisphys == nextphys)) {
+				while (datalen && thisphys == nextphys) {
 					/*
 					 * This page is contiguous (physically)
 					 * with the the last, just extend the
@@ -1341,7 +1268,7 @@ bt_scsi_cmd(xs)
 				 * next page isn't contiguous, finish the seg
 				 */
 				SC_DEBUGN(sc_link, SDEV_DB4,
-					("(0x%x)", bytes_this_seg));
+				    ("(0x%x)", bytes_this_seg));
 				sg->seg_len = bytes_this_seg;
 				sg++;
 				seg++;
@@ -1354,25 +1281,28 @@ bt_scsi_cmd(xs)
 			/*
 			 * there's still data, must have run out of segs!
 			 */
-			printf("%s: bt_scsi_cmd, more than %d DMA segs\n",
-				bt->sc_dev.dv_xname, BT_NSEG);
+			printf("%s: bt_scsi_cmd, more than %d dma segs\n",
+			    bt->sc_dev.dv_xname, BT_NSEG);
 			xs->error = XS_DRIVER_STUFFUP;
 			bt_free_ccb(bt, ccb, flags);
-			return HAD_ERROR;
+			return COMPLETE;
 		}
 	} else {		/* No data xfer, use non S/G values */
-		ccb->data_addr = (physaddr) 0;
+		ccb->data_addr = (physaddr)0;
 		ccb->data_length = 0;
 	}
 	ccb->link_id = 0;
-	ccb->link_addr = (physaddr) 0;
+	ccb->link_addr = (physaddr)0;
 
 	/*
 	 * Put the scsi command in the ccb and start it
 	 */
-	if (!(flags & SCSI_RESET))
-		bcopy(xs->cmd, ccb->scsi_cmd, ccb->scsi_cmd_length);
-	if (bt_send_mbo(bt, flags, BT_MBO_START, ccb) == (BT_MBO *) 0) {
+	if ((flags & SCSI_RESET) == 0)
+		bcopy(xs->cmd, &ccb->scsi_cmd, ccb->scsi_cmd_length);
+
+	s = splbio();
+
+	if (bt_send_mbo(bt, BT_MBO_START, ccb) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		bt_free_ccb(bt, ccb, flags);
 		return TRY_AGAIN_LATER;
@@ -1382,29 +1312,34 @@ bt_scsi_cmd(xs)
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
-	if (!(flags & SCSI_NOMASK)) {
+	if ((flags & SCSI_POLL) == 0) {
 		timeout(bt_timeout, ccb, (xs->timeout * hz) / 1000);
+		splx(s);
 		return SUCCESSFULLY_QUEUED;
 	}
+
+	splx(s);
 
 	/*
 	 * If we can't use interrupts, poll on completion
 	 */
-	return bt_poll(bt, xs, ccb);
+	if (bt_poll(bt, xs, xs->timeout)) {
+		bt_timeout(ccb);
+		if (bt_poll(bt, xs, 2000))
+			bt_timeout(ccb);
+	}
+	return COMPLETE;
 }
 
 /*
  * Poll a particular unit, looking for a particular xs
  */
 int 
-bt_poll(bt, xs, ccb)
+bt_poll(bt, xs, count)
 	struct bt_softc *bt;
 	struct scsi_xfer *xs;
-	struct bt_ccb *ccb;
+	int count;
 {
-	int done = 0;
-	int count = xs->timeout;
-	u_char stat;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1412,68 +1347,30 @@ bt_poll(bt, xs, ccb)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		stat = inb(BT_INTR_PORT);
-		if (stat & BT_ANY_INTR)
+		if (inb(BT_INTR_PORT) & BT_ANY_INTR)
 			btintr(bt);
 		if (xs->flags & ITSDONE)
-			break;
+			return 0;
 		delay(1000);	/* only happens in boot so ok */
 		count--;
 	}
-	if (!count) {
-		/*
-		 * We timed out, so call the timeout handler manually,
-		 * accounting for the fact that the clock is not running yet
-		 * by taking out the clock queue entry it makes.
-		 */
-		bt_timeout(ccb);
-
-		/*
-		 * because we are polling, take out the timeout entry
-		 * bt_timeout made
-		 */
-		untimeout(bt_timeout, ccb);
-		count = 2000;
-		while (count) {
-			/*
-			 * Once again, wait for the int bit
-			 */
-			stat = inb(BT_INTR_PORT);
-			if (stat & BT_ANY_INTR)
-				btintr(bt);
-			if (xs->flags & ITSDONE)
-				break;
-			delay(1000);	/* only happens in boot so ok */
-			count--;
-		}
-		if (!count) {
-			/*
-			 * We timed out again...  This is bad.  Notice that
-			 * this time there is no clock queue entry to remove.
-			 */
-			bt_timeout(ccb);
-		}
-	}
-	if (xs->error)
-		return HAD_ERROR;
-	return COMPLETE;
+	return 1;
 }
 
 void
 bt_timeout(arg)
 	void *arg;
 {
-	int s = splbio();
-	struct bt_ccb *ccb = (struct bt_ccb *)arg;
-	struct bt_softc *bt;
+	struct bt_ccb *ccb = arg;
+	struct scsi_xfer *xs = ccb->xs;
+	struct scsi_link *sc_link = xs->sc_link;
+	struct bt_softc *bt = sc_link->adapter_softc;
+	int s;
 
-	bt = ccb->xfer->sc_link->adapter_softc;
-	sc_print_addr(ccb->xfer->sc_link);
-	printf("timed out ");
+	sc_print_addr(sc_link);
+	printf("timed out");
 
-#ifdef	UTEST
-	bt_print_active_ccbs(bt);
-#endif
+	s = splbio();
 
 	/*
 	 * If the ccb's mbx is not free, then the board has gone Far East?
@@ -1491,17 +1388,20 @@ bt_timeout(arg)
 	 */
 	if (ccb->flags == CCB_ABORTED) {
 		/* abort timed out */
-		printf("AGAIN\n");
-		ccb->xfer->retries = 0;		/* I MEAN IT ! */
-		ccb->host_stat = BT_ABORTED;
+		printf(" AGAIN\n");
+		ccb->xs->retries = 0;
 		bt_done(bt, ccb);
-	} else {		/* abort the operation that has timed out */
+	} else {
+		/* abort the operation that has timed out */
 		printf("\n");
-		bt_send_mbo(bt, ~SCSI_NOMASK, BT_MBO_ABORT, ccb);
-		/* 2 secs for the abort */
+		ccb->xs->error = XS_TIMEOUT;
 		ccb->flags = CCB_ABORTED;
-		timeout(bt_timeout, ccb, 2 * hz);
+		bt_send_mbo(bt, BT_MBO_ABORT, ccb);
+		/* 2 secs for the abort */
+		if ((xs->flags & SCSI_POLL) == 0)
+			timeout(bt_timeout, ccb, 2 * hz);
 	}
+
 	splx(s);
 }
 
