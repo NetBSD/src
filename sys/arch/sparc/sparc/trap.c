@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.15 1994/05/05 10:01:00 deraadt Exp $
+ * $Id: trap.c,v 1.16 1994/05/07 05:08:38 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
-		psig(sig);
+		postsig(sig);
 	p->p_priority = p->p_usrpri;
 	if (want_ast) {
 		want_ast = 0;
@@ -175,11 +175,11 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 	}
 	if (want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrq ourselves but
-		 * before we swtch()'ed, we might not be on the queue
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we put ourselves on the run queue
+		 * but before we switched, we might not be on the queue
 		 * indicated by our priority.
 		 */
 		(void) splclock();
@@ -188,7 +188,7 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 		swtch();
 		(void) spl0();
 		while ((sig = CURSIG(p)) != 0)
-			psig(sig);
+			postsig(sig);
 	}
 
 	/*
