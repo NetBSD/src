@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.32 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.33 2004/08/23 06:16:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.32 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.33 2004/08/23 06:16:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,21 +89,21 @@ __KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.32 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <dev/mii/qsphyreg.h>
 
-int	qsphymatch(struct device *, struct cfdata *, void *);
-void	qsphyattach(struct device *, struct device *, void *);
+static int	qsphymatch(struct device *, struct cfdata *, void *);
+static void	qsphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(qsphy, sizeof(struct mii_softc),
     qsphymatch, qsphyattach, mii_phy_detach, mii_phy_activate);
 
-int	qsphy_service(struct mii_softc *, struct mii_data *, int);
-void	qsphy_status(struct mii_softc *);
-void	qsphy_reset(struct mii_softc *);
+static int	qsphy_service(struct mii_softc *, struct mii_data *, int);
+static void	qsphy_status(struct mii_softc *);
+static void	qsphy_reset(struct mii_softc *);
 
-const struct mii_phy_funcs qsphy_funcs = {
+static const struct mii_phy_funcs qsphy_funcs = {
 	qsphy_service, qsphy_status, qsphy_reset,
 };
 
-const struct mii_phydesc qsphys[] = {
+static const struct mii_phydesc qsphys[] = {
 	{ MII_OUI_xxQUALSEMI,		MII_MODEL_xxQUALSEMI_QS6612,
 	  MII_STR_xxQUALSEMI_QS6612 },
 
@@ -111,7 +111,7 @@ const struct mii_phydesc qsphys[] = {
 	  NULL },
 };
 
-int
+static int
 qsphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -122,7 +122,7 @@ qsphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 qsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -153,7 +153,7 @@ qsphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -215,7 +215,7 @@ qsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 qsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
@@ -273,7 +273,7 @@ qsphy_status(struct mii_softc *sc)
 		mii->mii_media_active = ife->ifm_media;
 }
 
-void
+static void
 qsphy_reset(struct mii_softc *sc)
 {
 
