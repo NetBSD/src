@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.37 2000/12/01 09:54:42 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.38 2000/12/09 23:26:27 chs Exp $	*/
 
 /*
  *
@@ -180,12 +180,10 @@ enter:
 	/* got it */
 	for (cva = kva ; size != 0 ; size -= PAGE_SIZE, cva += PAGE_SIZE) {
 		pp = *pps++;
-#ifdef DEBUG
-		if ((pp->flags & PG_BUSY) == 0)
-			panic("uvm_pagermapin: pg %p not busy", pp);
-#endif
+		KASSERT(pp->flags & PG_BUSY);
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    prot, PMAP_WIRED | prot);
+		    prot, PMAP_WIRED | ((pp->flags & PG_FAKE) ? prot :
+					VM_PROT_READ));
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
