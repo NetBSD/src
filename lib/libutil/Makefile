@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2000/05/12 18:31:55 mjl Exp $
+#	$NetBSD: Makefile,v 1.25.4.1 2000/07/07 16:22:18 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	util
@@ -11,7 +11,7 @@ SRCS=	fparseln.c getmaxpartitions.c getrawpartition.c \
 MAN=	fparseln.3 getmaxpartitions.3 getrawpartition.3 \
 	login.3 login_cap.3 opendisk.3 \
 	openpty.3 pidfile.3 pidlock.3 pw_init.3 pw_lock.3 \
-	securepath.3 ttyaction.3 ttymsg.3
+	secure_path.3 ttyaction.3 ttymsg.3
 
 .PATH:	${.CURDIR}/../libc/gen
 
