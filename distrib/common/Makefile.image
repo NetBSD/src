@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.23 2003/04/02 10:39:19 fvdl Exp $
+#	$NetBSD: Makefile.image,v 1.24 2003/05/09 12:20:04 dsl Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -41,13 +41,16 @@ PARSELISTENV+=	TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
 
 .if !target(${WORKBUILT})					# {
 ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
-	@echo "Building tree into ${WORKDIR}"
-	-rm -rf ${WORKDIR} ${WORKBUILT}
-	mkdir -m 755 ${WORKDIR}
-	${MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW
+	@# There is a .PHONY ${CRUNCHBIN}, so check if out of date by hand
+	[ "${.OODATE}" = ${CRUNCHBIN} -a -f ${WORKBUILT} -a ${WORKBUILT} -nt ${CRUNCHBIN} ]  || { \
+	echo "Building tree into ${WORKDIR}"; \
+	rm -rf ${WORKDIR} ${WORKBUILT}; \
+	mkdir -m 755 ${WORKDIR} &&  \
+	${MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW && \
 	${PARSELIST} -v mode=populate ${LISTS} | \
 	sh -e ${POPULATE_DEBUG} \
-	&& touch ${WORKBUILT}
+	&& touch ${WORKBUILT} ; \
+	}
 
 CLEANFILES+=	${WORKBUILT}
 
@@ -74,14 +77,16 @@ CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
 .endif	# ! target (${WORKSPEC})				# }
 
 .if defined(IMAGE)						# {
-${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
-	@echo "Creating image into ${.TARGET}..."
-	-rm -f ${.TARGET} ${.TARGET}.tmp
+${IMAGE}: ${WORKBUILT}
+	[ "${.OODATE}" = ${WORKBUILT} -a -f ${IMAGE} -a ! ${IMAGE} -ot ${WORKBUILT} ]  || { \
+	echo "Creating image into ${.TARGET}..."; \
+	rm -f ${.TARGET} ${.TARGET}.tmp; \
 	${MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
 	    -N ${NETBSDSRCDIR}/etc -o bsize=4096,fsize=512 \
 	    -o optimization=space,minfree=0 \
 	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
-	&& mv -f ${.TARGET}.tmp ${.TARGET}
+	&& mv -f ${.TARGET}.tmp ${.TARGET}; \
+	}
 .if defined(IMAGEPOSTBUILD)
 	${IMAGEPOSTBUILD} || { rm -f ${.TARGET} ; false; }
 .endif
