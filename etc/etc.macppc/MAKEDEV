@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.51 2002/02/02 07:04:50 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.52 2002/02/02 20:58:48 tls Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,7 +119,7 @@ case $i in
 all)
 	sh $0 std wscons fd sd0 sd1 sd2 st0 st1 cd0 cd1 wd0 wd1 md0
 	sh $0 ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
-	sh $0 random tty00 tty01 tty10 pty0 pty1 adb grf0
+	sh $0 random tty00 tty01 tty10 pty0 adb grf0
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1 ipl usbs ttyCZ0 ttyCY0 audio openfirm
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7

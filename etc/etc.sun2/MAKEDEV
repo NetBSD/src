@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 2002/02/02 07:04:56 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2002/02/02 20:58:53 tls Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,7 +92,7 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh $0 std pty0 pty1
+	sh $0 std pty0
 	sh $0 bwtwo0 cgtwo0 
 	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
