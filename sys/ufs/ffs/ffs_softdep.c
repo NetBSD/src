@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.4 2000/06/28 14:11:33 mrg Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.5 2000/08/15 14:25:08 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -2756,6 +2756,7 @@ softdep_disk_io_initiation(bp)
 {
 	struct worklist *wk, *nextwk;
 	struct indirdep *indirdep;
+	caddr_t saveddata;
 
 	/*
 	 * We only care about write operations. There should never
@@ -2800,11 +2801,12 @@ softdep_disk_io_initiation(bp)
 			/*
 			 * Replace up-to-date version with safe version.
 			 */
+			MALLOC(saveddata, caddr_t, bp->b_bcount, M_INDIRDEP,
+			    M_WAITOK);
 			ACQUIRE_LOCK(&lk);
 			indirdep->ir_state &= ~ATTACHED;
 			indirdep->ir_state |= UNDONE;
-			MALLOC(indirdep->ir_saveddata, caddr_t, bp->b_bcount,
-			       M_INDIRDEP, M_WAITOK);
+			indirdep->ir_saveddata = saveddata;
 			bcopy(bp->b_data, indirdep->ir_saveddata, bp->b_bcount);
 			bcopy(indirdep->ir_savebp->b_data, bp->b_data,
 			      bp->b_bcount);
@@ -4232,6 +4234,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 	int gotit, error = 0;
 	struct buf *bp;
 	ino_t inum;
+	u_int ipflag;
 
 	ump = VFSTOUFS(mp);
 	while ((dap = LIST_FIRST(diraddhdp)) != NULL) {
@@ -4273,6 +4276,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		inum = dap->da_newinum;
 		if (dap->da_state & MKDIR_BODY) {
 			FREE_LOCK(&lk);
+			ipflag = vn_setrecurse(pvp);	/* XXX */
 			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
 				break;
 			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, p)) ||
@@ -4282,6 +4286,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 			}
 			drain_output(vp, 0);
 			vput(vp);
+			vn_restorerecurse(pvp, ipflag);
 			ACQUIRE_LOCK(&lk);
 			/*
 			 * If that cleared dependencies, go on to next.
