@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.57 1997/10/20 18:43:18 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.57.2.1 1997/11/12 02:32:50 mellon Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -235,7 +235,7 @@ mcdattach(parent, self, aux)
 
 	if (!mcd_find(iot, ioh, sc)) {
 		printf(": mcd_find failed\n");
-		return
+		return;
 	}
 
 	/*
