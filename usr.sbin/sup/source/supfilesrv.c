@@ -37,7 +37,10 @@
  *	/usr/bin/sup for exported version of sup.
  *
  * $Log: supfilesrv.c,v $
- * Revision 1.3  1993/06/05 21:32:17  cgd
+ * Revision 1.4  1993/06/22 17:20:23  brezak
+ * Close misbehaving connections instead of exiting.
+ *
+ * Revision 1.3  1993/06/05  21:32:17  cgd
  * use daemon() to put supfilesrv into daemon mode...
  *
  * Revision 1.2  1993/05/24  17:57:31  brezak
@@ -366,8 +369,11 @@ char **argv;
 	nchildren = 0;
 	for (;;) {
 		x = service ();
-		if (x != SCMOK)
-			logquit (1,"Error in establishing network connection");
+		if (x != SCMOK) {
+			logerr ("Error in establishing network connection");
+			(void) servicekill ();
+			continue;
+		}
 		signalmask = sigblock(sigmask(SIGCHLD));
 		if ((pid = fork()) == 0) { /* server process */
 			(void) serviceprep ();
