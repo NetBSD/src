@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.12 2000/10/10 14:33:23 ad Exp $ */
+/* $NetBSD: ac.c,v 1.13 2000/10/15 13:34:20 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.12 2000/10/10 14:33:23 ad Exp $");
+__RCSID("$NetBSD: ac.c,v 1.13 2000/10/15 13:34:20 bjh21 Exp $");
 #endif
 
 #include <sys/types.h>
@@ -603,6 +603,6 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-dp] [-t tty] [-w wtmp] [users ...]\n", __progname);
+	    "Usage: %s [-d | -p] [-t tty] [-w wtmp] [users ...]\n", __progname);
 	exit(1);
 }
