@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 1999/07/12 21:55:20 kleink Exp $
+	$NetBSD: syscalls.master,v 1.25 1999/08/25 04:48:21 thorpej Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -427,8 +427,8 @@
 ; Syscalls 220-239 are reserved for syscalls imported from NetBSD
 ;
 #ifdef SYSVSEM
-220	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
-			    union semun *arg); }
+220	NOARGS		{ int compat_14_sys___semctl(int semid, int semnum, \
+			    int cmd, union __semun *arg); }
 221	NOARGS		{ int sys_semget(key_t key, int nsems, int semflg); }
 222	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
 			    u_int nsops); }
@@ -440,8 +440,8 @@
 223	UNIMPL		semconfig
 #endif
 #ifdef SYSVMSG
-224	NOARGS		{ int sys_msgctl(int msqid, int cmd, \
-			    struct msqid_ds *buf); }
+224	NOARGS		{ int compat_14_sys_msgctl(int msqid, int cmd, \
+			    struct msqid14_ds *buf); }
 225	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
 226	NOARGS		{ int sys_msgsnd(int msqid, void *msgp, size_t msgsz, \
 			    int msgflg); }
@@ -455,8 +455,8 @@
 #endif
 #ifdef SYSVSHM
 228	NOARGS		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
-229	NOARGS		{ int sys_shmctl(int shmid, int cmd, \
-			    struct shmid_ds *buf); }
+229	NOARGS		{ int compat_14_sys_shmctl(int shmid, int cmd, \
+			    struct shmid_ds14 *buf); }
 230	NOARGS		{ int sys_shmdt(void *shmaddr); }
 231	NOARGS		{ int sys_shmget(key_t key, int size, int shmflg); }
 #else
