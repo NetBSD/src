@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.15 2003/06/18 20:51:01 christos Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.16 2003/06/19 11:16:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.15 2003/06/18 20:51:01 christos Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.16 2003/06/19 11:16:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,8 +301,9 @@ StringToTerminal(char *s)
  */
 
 int
-_putchar(char c)
+_putchar(int cc)
 {
+    char c = (char)cc;
 #if	defined(sun)		/* SunOS 4.0 bug */
     c &= 0x7f;
 #endif	/* defined(sun) */
