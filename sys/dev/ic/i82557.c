@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.30 2000/05/24 08:04:23 soren Exp $	*/
+/*	$NetBSD: i82557.c,v 1.31 2000/05/24 13:20:32 soren Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -518,7 +518,12 @@ fxp_get_info(sc, enaddr)
 	 * Read MAC address.
 	 */
 	fxp_read_eeprom(sc, myea, 0, 3);
-	bcopy(myea, enaddr, ETHER_ADDR_LEN);
+	enaddr[0] = myea[0] & 0xff;
+	enaddr[1] = myea[0] >> 8;
+	enaddr[2] = myea[1] & 0xff;
+	enaddr[3] = myea[1] >> 8;
+	enaddr[4] = myea[2] & 0xff;
+	enaddr[5] = myea[2] >> 8;
 }
 
 /*
@@ -666,9 +671,6 @@ fxp_read_eeprom(sc, data, offset, words)
 		}
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(1);
-
-		/* The EEPROM data is little-endian. */
-		data[i] = le16toh(data[i]);
 	}
 }
 
@@ -1378,7 +1380,7 @@ fxp_init(sc)
 		FXP_CDCONFIGSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		DELAY(1);
-	} while ((htole16(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
+	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
@@ -1410,7 +1412,7 @@ fxp_init(sc)
 		FXP_CDIASSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		DELAY(1);
-	} while ((htole16(cb_ias->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
+	} while ((le16toh(cb_ias->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
@@ -1873,7 +1875,7 @@ fxp_mc_setup(sc)
 		FXP_CDMCSSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		DELAY(1);
-	} while ((htole16(mcsp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
+	} while ((le16toh(mcsp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
 	if (count == 0) {
 		printf("%s at line %d: dmasync timeout\n",
 		    sc->sc_dev.dv_xname, __LINE__);
