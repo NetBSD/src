@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.126 2002/03/17 20:54:09 manu Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.127 2002/04/03 03:47:53 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.126 2002/03/17 20:54:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.127 2002/04/03 03:47:53 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -728,7 +728,6 @@ mips_vector_init(void)
 
 	mycpu = NULL;
 	for (ct = cputab; ct->cpu_name != NULL; ct++) {
-//printf("test 0x%x 0x%x 0x%x with 0x%x 0x%x 0x%x (%s - isa %d)\n", MIPS_PRID_CID(cpu_id), MIPS_PRID_IMPL(cpu_id), MIPS_PRID_REV(cpu_id), ct->cpu_cid, ct->cpu_pid, ct->cpu_rev, ct->cpu_name, ct->cpu_isa);
 		if (MIPS_PRID_CID(cpu_id) != ct->cpu_cid ||
 		    MIPS_PRID_IMPL(cpu_id) != ct->cpu_pid)
 			continue;
