@@ -280,6 +280,7 @@ The product, component or concept is working in general, but lacks
 features, has irritating behavior, does something wrong, or doesn't
 match its documentation.
 @end table
+@noindent
 The default value is @samp{serious}.
 @sp 1
 
