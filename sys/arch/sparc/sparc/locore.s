@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.130 2000/05/26 21:20:17 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.131 2000/05/31 05:28:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -157,6 +157,13 @@ _C_LABEL(intstack):
 _C_LABEL(eintstack):
 
 _EINTSTACKP = CPUINFO_VA + CPUINFO_EINTSTACK
+
+/*
+ * CPUINFO_VA is a CPU-local virtual address; cpi->ci_self is a global
+ * virtual address for the same structure.  It must be stored in p->p_cpu
+ * upon context switch.
+ */
+_CISELFP = CPUINFO_VA + CPUINFO_SELF
 
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
@@ -3887,10 +3894,18 @@ Lgandul:	nop
 	call	_C_LABEL(bzero)
 	 add	%o1, %lo(CPUINFO_STRUCTSIZE), %o1
 
-	/* Initialize `cpuinfo' fields which are needed early */
+	/*
+	 * Initialize `cpuinfo' fields which are needed early.  Note
+	 * we make the cpuinfo self-reference at the local VA for now.
+	 * It may be changed to reference a global VA later.
+	 */
 	set	_C_LABEL(u0), %o0		! cpuinfo.curpcb = u0;
 	sethi	%hi(cpcb), %l0
 	st	%o0, [%l0 + %lo(cpcb)]
+
+	sethi	%hi(CPUINFO_VA), %o0		| cpuinfo.ci_self = &cpuinfo;
+	sethi	%hi(_CISELFP), %l0
+	st	%o0, [%l0 + %lo(_CISELFP)]
 
 	set	_C_LABEL(eintstack), %o0	! cpuinfo.eintstack= _eintstack;
 	sethi	%hi(_EINTSTACKP), %l0
@@ -4678,6 +4693,12 @@ Lsw_scan:
 	 */
 	mov	SONPROC, %o0			! p->p_stat = SONPROC;
 	stb	%o0, [%g3 + P_STAT]
+
+	/* p->p_cpu initialized in fork1() for single-processor */
+#if defined(MULTIPROCESSOR)
+	ld	[%g7 + %lo(_CISELFP)], %o0	! p->p_cpu = cpuinfo.ci_self;
+	st	%o0, [%g3 + P_CPU]
+#endif
 
 	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]
