@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.5 2002/03/24 16:11:23 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.6 2002/05/23 06:19:39 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.5 2002/03/24 16:11:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.6 2002/05/23 06:19:39 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -349,7 +349,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = bridge_start;
 	ifp->if_stop = bridge_stop;
 	ifp->if_init = bridge_init;
-	ifp->if_type = IFT_PROPVIRTUAL;	/* XXX IFT_BRIDGE */
+	ifp->if_type = IFT_BRIDGE;
 	ifp->if_addrlen = 0;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
