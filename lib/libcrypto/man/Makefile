@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/04/12 07:48:05 itojun Exp $
+#	$NetBSD: Makefile,v 1.7 2001/04/12 10:45:37 itojun Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 
@@ -20,7 +20,8 @@ manpages:
 		fi; \
 		(cd `dirname $$i`; \
 		 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
-			`basename $$i`) | sed -e '/$$RCSfile/d' -e '/$$Log/d' > $$dst; \
+			`basename $$i`) | \
+		perl libcrypto.pl >$$dst; \
 	done
 	for i in ${CRYPTODIST}/openssl/doc/crypto/*.pod \
 	    ${CRYPTODIST}/openssl/doc/ssl/*.pod; do \
@@ -35,13 +36,13 @@ manpages:
 			(cd `dirname $$i`; \
 			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
 				`basename $$i`) | \
-			 sed -f libcrypto.sed | \
-			 sed -e '/$$RCSfile/d' -e '/$$Log/d' > `basename $$i .pod`.$$sec; \
+			perl libcrypto.pl >`basename $$i .pod`.$$sec; \
 		fi \
 	done
-	mv md5.3 MD5_Init.3
-	mv err.3 openssl_err.3
-	mv rand.3 RAND_seed.3
+	for i in bio blowfish bn bn_internal buffer des dh dsa err evp hmac \
+	lhash md5 mdc2 rand rc4 ripemd rsa sha threads; do \
+		mv $$i.3 openssl_$$i.3; \
+	done
 
 clean:
 	-/bin/rm -f *.[0-9]

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.339 2001/04/10 21:19:05 bjh21 Exp $
+# $NetBSD: mi,v 1.340 2001/04/12 10:45:52 itojun Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -248,6 +248,7 @@
 ./usr/share/man/cat1/openssl_rand.0		man-crypto-catman
 ./usr/share/man/cat1/openssl_req.0		man-crypto-catman
 ./usr/share/man/cat1/openssl_rsa.0		man-crypto-catman
+./usr/share/man/cat1/openssl_rsautl.0		man-crypto-catman
 ./usr/share/man/cat1/openssl_s_client.0		man-crypto-catman
 ./usr/share/man/cat1/openssl_s_server.0		man-crypto-catman
 ./usr/share/man/cat1/openssl_sess_id.0		man-crypto-catman
@@ -1739,6 +1740,7 @@
 ./usr/share/man/man1/openssl_rand.1		man-crypto-man
 ./usr/share/man/man1/openssl_req.1		man-crypto-man
 ./usr/share/man/man1/openssl_rsa.1		man-crypto-man
+./usr/share/man/man1/openssl_rsautl.1		man-crypto-man
 ./usr/share/man/man1/openssl_s_client.1		man-crypto-man
 ./usr/share/man/man1/openssl_s_server.1		man-crypto-man
 ./usr/share/man/man1/openssl_sess_id.1		man-crypto-man
