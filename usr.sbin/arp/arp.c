@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.23 1998/02/10 03:45:06 mrg Exp $ */
+/*	$NetBSD: arp.c,v 1.24 2000/07/12 22:36:12 mason Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.23 1998/02/10 03:45:06 mrg Exp $");
+__RCSID("$NetBSD: arp.c,v 1.24 2000/07/12 22:36:12 mason Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,17 +94,6 @@ void	usage __P((void));
 static int pid;
 static int nflag, vflag;
 static int s = -1;
-
-int	delete __P((const char *, const char *));
-void	dump __P((u_long));
-void	ether_print __P((const u_char *));
-int	file __P((char *));
-void	get __P((const char *));
-int	getinetaddr __P((const char *, struct in_addr *));
-void	getsocket __P((void));
-int	rtmsg __P((int));
-int	set __P((int, char **));
-void	usage __P((void));
 
 int
 main(argc, argv)
