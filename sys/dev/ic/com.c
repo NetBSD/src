@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.125 1997/11/02 09:24:51 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.126 1997/11/02 09:31:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -972,12 +972,6 @@ comparam(tp, t)
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
 		return (EINVAL);
 
-	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
-
-	s = splserial();
-
-	sc->sc_lcr = lcr;
-
 	/*
 	 * For the console, always force CLOCAL and !HUPCL, so that the port
 	 * is always active.
@@ -987,6 +981,12 @@ comparam(tp, t)
 		SET(t->c_cflag, CLOCAL);
 		CLR(t->c_cflag, HUPCL);
 	}
+
+	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
+
+	s = splserial();
+
+	sc->sc_lcr = lcr;
 
 	/*
 	 * If we're not in a mode that assumes a connection is present, then
