@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.7 1997/07/17 02:36:56 perry Exp $	*/
+/*	$NetBSD: last.c,v 1.8 1997/08/24 13:57:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: last.c,v 1.7 1997/07/17 02:36:56 perry Exp $";
+__RCSID("$NetBSD: last.c,v 1.8 1997/08/24 13:57:55 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,6 +89,7 @@ static long	maxrec;				/* records to display */
 static char	*file = _PATH_WTMP;		/* wtmp file */
 static int	fulltime = 0;                   /* Display seconds? */
 
+int	 main __P((int, char *[]));
 void	 addarg __P((int, char *));
 TTY	*addtty __P((char *));
 void	 hostconv __P((char *));
@@ -107,7 +109,7 @@ main(argc, argv)
 	char *p;
 
 	maxrec = -1;
-	while ((ch = getopt(argc, argv, "0123456789f:h:t:T")) != EOF)
+	while ((ch = getopt(argc, argv, "0123456789f:h:t:T")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -175,6 +177,8 @@ wtmp()
 	int	bytes, wfd;
 	char	*ct, *crmsg;
 
+	crmsg = NULL;
+
 	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
 		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
@@ -189,7 +193,7 @@ wtmp()
 	(void)signal(SIGQUIT, onintr);
 
 	while (--bl >= 0) {
-		if (lseek(wfd, (off_t)(bl * sizeof(buf)), L_SET) == -1 ||
+		if (lseek(wfd, (off_t)(bl * sizeof(buf)), SEEK_SET) == -1 ||
 		    (bytes = read(wfd, buf, sizeof(buf))) == -1)
 			err(1, "%s", file);
 		for (bp = &buf[bytes / sizeof(buf[0]) - 1]; bp >= buf; --bp) {
