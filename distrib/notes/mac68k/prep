@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 1999/05/07 03:30:44 ender Exp $	
+.\"	$NetBSD: prep,v 1.9 1999/05/31 06:54:31 ender Exp $	
 Find your favorite disk partitioning utility. Any formatter capable of
 partitioning a SCSI disk should work. Some of the ones that have been
 tried and seem to work are:
@@ -24,7 +24,9 @@ non-Apple drives is available at:
 .Pp
 .Lk http://www.euronet.nl/users/ernstoud/patch.html
 .Pp
-First, you need to choose a drive on which to install NetBSD. Try to pick a
+First, you need to choose a drive on which to install
+.Nx .
+Try to pick a
 drive with a low SCSI ID number, especially if you are likely to add or
 remove drives to your SCSI chain in the future.
 
@@ -53,7 +55,8 @@ want a separate
 .Pa /var No partition. 
 .Pp
 Once you have decided how to lay out your partitions, you need to calculate
-how much space to allocate to each partition. A minimal install of NetBSD
+how much space to allocate to each partition. A minimal install of
+.Nx
 (i.e.
 .Pa netbsd.tgz , base.tgz , No and
 .Pa etc.tgz )
@@ -66,6 +69,16 @@ a good idea. Systems that will be heavily used or that are low on real
 memory should have more swap space allocated. Systems that will be only
 lightly used or have a very large amount of real memory can get away
 with less.
+.Pp
+Keep in mind that
+.Nx
+currently requires MacOS in order to boot, so it is likely that you will
+want to keep at least a minimal install of MacOS around on an HFS
+partition for this purpose.  The size of this partition may vary depending
+on the size requirements for the version of MacOS you are using.  Of
+course, if you have MacOS on another hard drive or can boot from a floppy,
+feel free to dedicate the entire drive to
+.Nx .
 .Pp
 Next, use your favorite partitioning utility to make partitions of the
 necessary sizes. You can use any type of partition, but partitions of type
