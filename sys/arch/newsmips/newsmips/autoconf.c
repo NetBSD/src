@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1999/10/17 15:06:46 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1999/12/06 06:47:14 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,8 +98,8 @@ cpu_configure()
 	/*
 	 * Kick off autoconfiguration
 	 */
-	spl0();		/* enable all interrupts */
-	splhigh();	/* ...then disable INT[012] */
+	_splnone();	/* enable all interrupts */
+	splhigh();	/* ...then disable device interrupts */
 
 	*(char *)INTEN0 = INTEN0_BERR;		/* only buserr occurs */
 	*(char *)INTEN1 = 0;
@@ -108,6 +108,9 @@ cpu_configure()
 		panic("no mainbus found");
 
 	initcpu();
+
+	/* Configuration is finished, turn on interrupts. */
+	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 }
 
 void
