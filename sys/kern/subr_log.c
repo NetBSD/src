@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.21 2001/11/12 15:25:19 lukem Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.22 2002/04/28 04:13:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.21 2001/11/12 15:25:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.22 2002/04/28 04:13:51 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ logioctl(dev, com, data, flag, p)
 		break;
 
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }
