@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.1 1996/05/05 12:17:24 oki Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
 
 #include <x68k/x68k/iodevice.h>
 #define zschan IODEVbase->io_inscc.zs_chan

@@ -1,4 +1,0 @@
-#	$NetBSD: Makefile.inc,v 1.3 1997/01/09 20:18:21 tls Exp $
-#	from: @(#)Makefile.inc	5.1 (Berkeley) 5/11/90
-
-BINDIR?=	/usr/bin
