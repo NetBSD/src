@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.19 2002/04/25 15:06:27 atatat Exp $
+#	$NetBSD: JORNADA720,v 1.20 2002/05/03 16:50:51 rjs Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 # estimated number of users
 maxusers	32
@@ -19,8 +19,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_SA110	# Support the SA110 core
-options 	CPU_SA1110	# Support the SA110 core
+options 	CPU_SA1110	# Support the SA1110 core
 
 # Architecture options
 
