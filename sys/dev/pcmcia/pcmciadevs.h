@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.107 2001/01/10 23:48:54 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.108 2001/01/11 11:33:19 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.108 2001/01/10 23:47:56 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.109 2001/01/11 11:32:56 ichiro Exp 
  */
 
 /*-
@@ -577,3 +577,6 @@
 #define	PCMCIA_CIS_SMC_2632W	{ "SMC", "SMC2632W", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_SMC_2632W	-1
 #define	PCMCIA_STR_SMC_2632W	"SMC 2632 EZ Connect Wireless PC Card"
+#define	PCMCIA_CIS_NANOSPEED_PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version 01.02", NULL }
+#define	PCMCIA_PRODUCT_NANOSPEED_PRISM2	-1
+#define	PCMCIA_STR_NANOSPEED_PRISM2	"NANOSPEED ROOT-RZ2000 WLAN Card"
