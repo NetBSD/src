@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.3 1994/12/14 06:59:18 deraadt Exp $ */
+/*	$NetBSD: cache.h,v 1.4 1994/12/15 02:53:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,7 +116,7 @@ extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
 
 #if defined(SUN4) && defined(SUN4C)
 #define	CACHE_ALIAS_DIST	((cputyp == CPU_SUN4) ? CACHE_ALIAS_DIST_SUN4 : \
-				    CACHE_ALIAS_DITS_SUN4C)
+				    CACHE_ALIAS_DIST_SUN4C)
 #define	CACHE_ALIAS_BITS	((cputyp == CPU_SUN4) ? CACHE_ALIAS_BITS_SUN4 : \
 				    CACHE_ALIAS_BITS_SUN4C)
 #else
