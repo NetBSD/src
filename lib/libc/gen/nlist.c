@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.5 1995/02/27 04:35:29 cgd Exp $	*/
+/*	$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,9 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist.c,v 1.5 1995/02/27 04:35:29 cgd Exp $";
+static char rcsid[] = "$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef __alpha__
+#define		DO_ECOFF
+#else
+#define		DO_AOUT
+#endif
+
+#if defined(DO_AOUT) + defined(DO_ECOFF) != 1
+	ERROR: NOT PROPERLY CONFIGURED
+#endif
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -48,6 +58,9 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.5 1995/02/27 04:35:29 cgd Exp $";
 
 #include <errno.h>
 #include <a.out.h>
+#ifdef DO_ECOFF
+#include <sys/exec_ecoff.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -69,6 +82,7 @@ nlist(name, list)
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
+#ifdef DO_AOUT
 int
 __fdnlist(fd, list)
 	register int fd;
@@ -153,3 +167,107 @@ __fdnlist(fd, list)
 	munmap(strtab, strsize);
 	return (nent);
 }
+#endif /* DO_AOUT */
+
+#ifdef DO_ECOFF
+#define check(off, size)	((off < 0) || (off + size > mappedsize))
+#define	BAD			do { rv = -1; goto out; } while (0)
+#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
+
+int
+__fdnlist(fd, list)
+	register int fd;
+	register struct nlist *list;
+{
+	struct nlist *p;
+	struct ecoff_filehdr *filehdrp;
+	struct ecoff_symhdr *symhdrp;
+	struct ecoff_extsym *esyms;
+	struct stat st;
+	char *mappedfile;
+	size_t mappedsize;
+	u_long symhdroff, extstroff;
+	u_int symhdrsize;
+	int rv, nent;
+	long i, nesyms;
+
+	rv = -3;
+
+	if (fstat(fd, &st) < 0)
+		BAD;
+	if (st.st_size > SIZE_T_MAX) {
+		errno = EFBIG;
+		BAD;
+	}
+	mappedsize = st.st_size;
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
+	if (mappedfile == (char *)-1)
+		BAD;
+
+	if (check(0, sizeof *filehdrp))
+		BADUNMAP;
+	filehdrp = (struct ecoff_filehdr *)&mappedfile[0];
+
+	if (ECOFF_BADMAG(filehdrp))
+		BADUNMAP;
+
+	symhdroff = filehdrp->ef_symptr;
+	symhdrsize = filehdrp->ef_syms;
+
+	if (check(symhdroff, sizeof *symhdrp) ||
+	    sizeof *symhdrp != symhdrsize)
+		BADUNMAP;
+	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
+
+	nesyms = symhdrp->sh_esymmax;
+	if (check(symhdrp->sh_esymoff, nesyms * sizeof *esyms))
+		BADUNMAP;
+	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->sh_esymoff];
+	extstroff = symhdrp->sh_estroff;
+
+	/*
+	 * clean out any left-over information for all valid entries.
+	 * Type and value defined to be 0 if not found; historical
+	 * versions cleared other and desc as well.
+	 *
+	 * XXX clearing anything other than n_type and n_value violates
+	 * the semantics given in the man page.
+	 */
+	nent = 0;
+	for (p = list; !ISLAST(p); ++p) {
+		p->n_type = 0;
+		p->n_other = 0;
+		p->n_desc = 0;
+		p->n_value = 0;
+		++nent;
+	}
+
+	for (i = 0; i < nesyms; i++) {
+		for (p = list; !ISLAST(p); p++) {
+			char *nlistname;
+			char *symtabname;
+
+			nlistname = p->n_un.n_name;
+			if (*nlistname == '_')
+				nlistname++;
+			symtabname =
+			    &mappedfile[extstroff + esyms[i].es_strindex];
+
+			if (!strcmp(symtabname, nlistname)) {
+				p->n_value = esyms[i].es_value;
+				p->n_type = N_EXT;		/* XXX */
+				p->n_desc = 0;			/* XXX */
+				p->n_other = 0;			/* XXX */
+				if (--nent <= 0)
+					break;
+			}
+		}
+	}
+	rv = nent;
+
+unmap:
+	munmap(mappedfile, mappedsize);
+out:
+	return (rv);
+}
+#endif /* DO_ECOFF */
