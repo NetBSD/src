@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 1997/11/05 04:36:14 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.3 1998/02/02 05:54:20 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -60,7 +60,5 @@ typedef	unsigned long		vm_offset_t;
 typedef struct label_t {
         int val[40]; /* double check this XXX */
 } label_t;
-
-#define	__BROKEN_INDIRECT_CONFIG	/* i386 compat */
 
 #endif	/* _MACHTYPES_H_ */

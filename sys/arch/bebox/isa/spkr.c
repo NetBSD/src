@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.3 1998/01/12 18:18:09 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.4 1998/02/02 05:54:26 sakamoto Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -20,7 +20,7 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/buf.h>
+#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
 
@@ -31,10 +31,10 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <bebox/isa/timerreg.h>
-#include <bebox/isa/spkrreg.h>
+#include <dev/ic/i8253reg.h>
+#include <i386/isa/spkrreg.h>
 
-int spkrprobe __P((struct device *, void *, void *));
+int spkrprobe __P((struct device *, struct cfdata *, void *));
 void spkrattach __P((struct device *, struct device *, void *));
 
 struct spkr_softc {
@@ -93,9 +93,10 @@ void tone(hz, ticks)
 
     /* set timer to generate clicks at given frequency in Hertz */
     sps = spltty();
-    isa_outb(TIMER_MODE, PIT_MODE);		/* prepare timer */
-    isa_outb(TIMER_CNTR2, (unsigned char) divisor);  /* send lo byte */
-    isa_outb(TIMER_CNTR2, (divisor >> 8));	/* send hi byte */
+    isa_outb(IO_TIMER1 + TIMER_MODE, PIT_MODE);		/* prepare timer */
+    isa_outb(IO_TIMER1 + TIMER_CNTR2, (unsigned char) divisor);
+							/* send lo byte */
+    isa_outb(IO_TIMER1 + TIMER_CNTR2, (divisor >> 8));	/* send hi byte */
     splx(sps);
 
     /* turn the speaker on */
@@ -422,15 +423,14 @@ playstring(cp, slen)
  */
 
 static int spkr_active;	/* exclusion flag */
-static struct buf *spkr_inbuf; /* incoming buf */
+static void *spkr_inbuf;
 
 int
 spkrprobe (parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	/*
 	 * We only attach to the keyboard controller via
 	 * the console drivers. (We really wish we could be the
@@ -440,7 +440,7 @@ spkrprobe (parent, match, aux)
 	   ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0) &&
 	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt") != 0)))
 		return (0);
-	if (cf->cf_loc[1] != PITAUX_PORT)
+	if (match->cf_loc[PCKBDCF_PORT] != PITAUX_PORT)
 		return (0);
 
 	return (1);
@@ -454,7 +454,7 @@ spkrattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[1]);
+	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[PCKBDCF_PORT]);
 	spkr_attached = 1;
 }
 
@@ -476,7 +476,7 @@ spkropen(dev, flags, mode, p)
     else
     {
 	playinit();
-	spkr_inbuf = geteblk(DEV_BSIZE);
+	spkr_inbuf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
 	spkr_active = 1;
     }
     return(0);
@@ -489,7 +489,6 @@ spkrwrite(dev, uio, flags)
     int flags;
 {
     register int n;
-    char *cp;
     int error;
 #ifdef DEBUG
     printf("spkrwrite: entering with dev = %x, count = %d\n",
@@ -501,10 +500,9 @@ spkrwrite(dev, uio, flags)
     else
     {
 	n = min(DEV_BSIZE, uio->uio_resid);
-	cp = spkr_inbuf->b_data;
-	error = uiomove(cp, n, uio);
+	error = uiomove(spkr_inbuf, n, uio);
 	if (!error)
-		playstring(cp, n);
+		playstring((char *)spkr_inbuf, n);
 	return(error);
     }
 }
@@ -524,7 +522,7 @@ int spkrclose(dev, flags, mode, p)
     else
     {
 	endtone(NULL);
-	brelse(spkr_inbuf);
+	free(spkr_inbuf, M_DEVBUF);
 	spkr_active = 0;
     }
     return(0);
