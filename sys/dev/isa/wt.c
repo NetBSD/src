@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.47 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.48 2000/02/08 18:40:51 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -271,8 +271,8 @@ ok:
 	sc->chan = ia->ia_drq;
 
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->chan)) < MAXPHYS) {
-		printf("%s: max DMA size %d is less than required %d\n",
-		    sc->sc_dev.dv_xname, maxsize, MAXPHYS);
+		printf("%s: max DMA size %lu is less than required %d\n",
+		    sc->sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
 		return;
 	}
 
