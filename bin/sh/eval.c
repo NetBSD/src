@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.45 1999/02/04 16:17:39 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.46 1999/06/26 16:31:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.45 1999/02/04 16:17:39 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.46 1999/06/26 16:31:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -546,10 +546,19 @@ evalbackcmd(n, result)
 		exitstatus = 0;
 		goto out;
 	}
+#ifdef notyet
+	/*
+	 * For now we disable executing builtins in the same
+	 * context as the shell, because we are not keeping
+	 * enough state to recover from changes that are
+	 * supposed only to affect subshells. eg. echo "`cd /`"
+	 */
 	if (n->type == NCMD) {
 		exitstatus = oexitstatus;
 		evalcommand(n, EV_BACKCMD, result);
-	} else {
+	} else
+#endif
+	{
 		exitstatus = 0;
 		if (pipe(pip) < 0)
 			error("Pipe call failed");
