@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.42 1997/05/11 19:11:27 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.43 1997/06/10 19:01:00 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -331,9 +331,9 @@ grfaddr(gp, off)
 	register struct grfmode *gm = gp->sc_grfmode;
 	u_long	addr;
 
-	if (off < mac68k_round_page(gm->fbsize + gm->fboff)) {
+	if (off < m68k_round_page(gm->fbsize + gm->fboff)) {
 		addr = (u_long)(*gp->sc_phys)(gp, (vm_offset_t)gm->fbbase)+off;
-		return mac68k_btop(addr);
+		return m68k_btop(addr);
 	}
 	/* bogus */
 	return (-1);
@@ -357,13 +357,13 @@ grfmap(dev, addrp, p)
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
-	len = mac68k_round_page(gp->sc_grfmode->fbsize + gp->sc_grfmode->fboff);
+	len = m68k_round_page(gp->sc_grfmode->fbsize + gp->sc_grfmode->fboff);
 	flags = MAP_SHARED | MAP_FIXED;
 
 	if (gp->sc_slot == NULL)
-		*addrp = (caddr_t) mac68k_trunc_page(mac68k_vidphys);
+		*addrp = (caddr_t) m68k_trunc_page(mac68k_vidphys);
 	else
-		*addrp = (caddr_t) mac68k_trunc_page(
+		*addrp = (caddr_t) m68k_trunc_page(
 		    NUBUS_SLOT2PA(gp->sc_slot->slot));
 
 	vn.v_type = VCHR;	/* XXX */
