@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.4 1998/05/22 17:43:10 cgd Exp $	*/
+/*	$NetBSD: ofw.c,v 1.5 1998/06/10 21:55:30 tv Exp $	*/
 
 /*
  * Copyright 1997
@@ -101,6 +101,8 @@
 #include "arm32/isa/isa_machdep.h"
 #endif
 
+#include "pc.h"
+
 #define IO_VIRT_BASE (OFW_VIRT_BASE + OFW_VIRT_SIZE)
 #define IO_VIRT_SIZE 0x01000000
 
@@ -157,7 +159,7 @@ extern void pmap_bootstrap  __P((vm_offset_t kernel_l1pt, pt_entry_t kernel_ptpt
 extern void dump_spl_masks  __P((void));
 extern void dumpsys	    __P((void));
 extern void dotickgrovelling __P((vm_offset_t));
-#ifdef SHARK
+#if defined(SHARK) && (NPC > 0)
 extern void shark_screen_cleanup __P((int));
 #endif
 
@@ -468,7 +470,7 @@ ofw_boot(howto, bootstr)
 	    *ap++ = 0;
 	    if (ap[-2] == '-')
 		*ap1 = 0;
-#ifdef SHARK
+#if defined(SHARK) && (NPC > 0)
 	    shark_screen_cleanup(0);
 #endif
 	    OF_boot(str);
@@ -478,7 +480,7 @@ ofw_boot(howto, bootstr)
 
 ofw_exit:
 	printf("Calling OF_exit...\n");
-#ifdef SHARK
+#if defined(SHARK) && (NPC > 0)
 	shark_screen_cleanup(1);
 #endif
 	OF_exit();
