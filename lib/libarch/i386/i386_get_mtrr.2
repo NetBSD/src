@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_get_mtrr.2,v 1.11 2003/05/07 07:14:15 wiz Exp $
+.\"     $NetBSD: i386_get_mtrr.2,v 1.12 2004/10/07 01:47:11 snj Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,7 +139,7 @@ entry is valid
 .Pp
 The
 .Em owner
-member the PID of the user process which claims the mapping.
+member is the PID of the user process which claims the mapping.
 It is only valid if MTRR_PRIVATE is set in
 .Em flags .
 To clear/reset MTRRs, use a
@@ -152,7 +152,7 @@ on failure, and the global variable
 is set to indicate the error.
 The integer value pointed to by
 .Fa n
-will be container the number of successfully processed mtrr structures
+will contain the number of successfully processed mtrr structures
 in both cases.
 .Sh ERRORS
 .Bl -tag -width [EINVAL]
