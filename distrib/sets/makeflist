@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.28 2001/01/04 11:15:32 itojun Exp $
+# $NetBSD: makeflist,v 1.29 2001/01/17 06:28:12 jwise Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -70,19 +70,19 @@ else
 fi
 
 for setname in $lists; do
-	awk -- '{print $1}' $setd/lists/$setname/mi
+	cat $setd/lists/$setname/mi
 	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then
-		awk -- '{print $1}' $setd/lists/$setname/ad.${arch}
+		cat $setd/lists/$setname/ad.${arch}
 	fi
 	if [ -f $setd/lists/$setname/md.${machine} ]; then
-		awk -- '{print $1}' $setd/lists/$setname/md.${machine}
+		cat $setd/lists/$setname/md.${machine}
 	fi
 	if [ "$shlib" != "" ]; then
 		if [ -f $setd/lists/$setname/shl.mi ]; then
-			awk -- '{print $1}' $setd/lists/$setname/shl.mi
+			cat $setd/lists/$setname/shl.mi
 		fi
 		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
-			awk -- '{print $1}' $setd/lists/$setname/shl.${shlib}
+			cat $setd/lists/$setname/shl.${shlib}
 		fi
 	fi
-done | egrep -v '^#' | sort -u
+done | egrep -v '^#' | awk -- '{print $1}' | sort -u
