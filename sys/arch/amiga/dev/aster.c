@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.6 1999/12/31 08:38:13 is Exp $ */
+/*	$NetBSD: aster.c,v 1.7 2000/01/23 21:06:12 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ asterattach(parent, self, auxp)
 		printf(": ISDN %s\n", cardname);
 
 	astrsc->sc_bst.base = (u_long)zap->va + 0;
-	astrsc->sc_bst.absm = &amiga_bus_stride_2word;
+	astrsc->sc_bst.absm = &amiga_bus_stride_2;
 
 	supa.supio_iot = &astrsc->sc_bst;
 
