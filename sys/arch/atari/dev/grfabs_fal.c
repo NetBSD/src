@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.6 1996/09/16 06:43:33 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.7 1996/10/04 07:27:55 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -60,6 +60,7 @@ static void	  falcon_display_view __P((view_t *));
 static view_t	  *falcon_alloc_view __P((dmode_t *, dimen_t *, u_char));
 static void	  falcon_free_view __P((view_t *));
 static void	  falcon_remove_view __P((view_t *));
+static void	  falcon_save_view __P((view_t *));
 static int	  falcon_use_colormap __P((view_t *, colormap_t *));
 static void	  falcon_detect __P((dmode_t *));
 static struct videl *falcon_getreg __P((u_short));
@@ -72,6 +73,7 @@ struct grfabs_sw fal_vid_sw = {
 	falcon_alloc_view,
 	falcon_free_view,
 	falcon_remove_view,
+	falcon_save_view,
 	falcon_use_colormap
 };
 
@@ -376,6 +378,12 @@ view_t *v;
 	v->flags &= ~VF_DISPLAY;
 }
 
+void
+falcon_save_view(v)
+view_t *v;
+{
+}
+
 static void
 falcon_free_view(v)
 view_t *v;
@@ -539,7 +547,8 @@ u_char	depth;
 	bm->bytes_per_row = (width * depth) / NBBY;
 	bm->rows          = height;
 	bm->depth         = depth;
-	bm->regs = bm->hw_regs = bm->reg_size = 0;
+	bm->regs = bm->hw_regs = NULL;
+	bm->reg_size = 0;
 
 	bzero(bm->plane, bm_size);
 	return (bm);
