@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.142 2002/09/12 06:40:43 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.143 2002/09/12 08:55:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.142 2002/09/12 06:40:43 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.143 2002/09/12 08:55:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -928,9 +928,9 @@ login_utmp(const char *name, const char *line, const char *host)
 		utmpx.ut_id[2] = 'p';
 		utmpx.ut_id[3] = '*';
 		utmpx.ut_type = USER_PROCESS;
-		(void)strncpy(utmpx.ut_name, name, sizeof(utmpx.ut_name));
-		(void)strncpy(utmpx.ut_line, line, sizeof(utmpx.ut_line));
-		(void)strncpy(utmpx.ut_host, host, sizeof(utmpx.ut_host));
+		(void)strlcpy(utmpx.ut_name, name, sizeof(utmpx.ut_name));
+		(void)strlcpy(utmpx.ut_line, line, sizeof(utmpx.ut_line));
+		(void)strlcpy(utmpx.ut_host, host, sizeof(utmpx.ut_host));
 		loginx(&utmpx);
 	}
 	if (dowtmp)
@@ -940,9 +940,9 @@ login_utmp(const char *name, const char *line, const char *host)
 	if (doutmp) {
 		(void)memset(&utmp, 0, sizeof(utmp));
 		(void)time(&utmp.ut_time);
-		(void)strncpy(utmp.ut_name, name, sizeof(utmp.ut_name));
-		(void)strncpy(utmp.ut_line, line, sizeof(utmp.ut_line));
-		(void)strncpy(utmp.ut_host, host, sizeof(utmp.ut_host));
+		(void)strlcpy(utmp.ut_name, name, sizeof(utmp.ut_name));
+		(void)strlcpy(utmp.ut_line, line, sizeof(utmp.ut_line));
+		(void)strlcpy(utmp.ut_host, host, sizeof(utmp.ut_host));
 		login(&utmp);
 	}
 	if (dowtmp)
