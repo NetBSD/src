@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10.2.1 2002/05/19 07:56:34 gehenna Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.2.2 2002/06/08 09:14:35 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ struct cfattach zsc_hpc_ca = {
 	sizeof(struct zsc_softc), zs_hpc_match, zs_hpc_attach
 };
 
-cdev_decl(zs);
 extern struct	cfdriver zsc_cd;
 
 static int	zshard __P((void *));
