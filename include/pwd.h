@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.33 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: pwd.h,v 1.34 2004/10/05 04:45:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -110,8 +110,8 @@ struct passwd {
 	uid_t	    pw_uid;		/* user uid */
 	gid_t	    pw_gid;		/* user gid */
 	time_t	    pw_change;		/* password change time */
-	__aconst char *pw_class;	/* user access class */
-	__aconst char *pw_gecos;	/* Honeywell login info */
+	__aconst char *pw_class;	/* user login class */
+	__aconst char *pw_gecos;	/* general information */
 	__aconst char *pw_dir;		/* home directory */
 	__aconst char *pw_shell;	/* default shell */
 	time_t	    pw_expire;		/* account expiration */
@@ -124,6 +124,10 @@ struct passwd	*getpwnam __P((const char *));
 struct passwd	*getpwent __P((void));
 void		 setpwent __P((void));
 void		 endpwent __P((void));
+int		 getpwnam_r __P((const char *, struct passwd *, char *, size_t,
+				struct passwd **));
+int		 getpwuid_r __P((uid_t, struct passwd *, char *, size_t,
+				struct passwd **));
 #endif
 #if defined(_NETBSD_SOURCE)
 char		*bcrypt_gensalt(u_int8_t);
