@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.11 2001/09/11 03:33:52 itojun Exp $	*/
+/*	$NetBSD: scm.c,v 1.12 2001/09/18 04:36:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -238,7 +238,7 @@ int af;
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = af;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_socktype = AI_PASSIVE;
+	hints.ai_flags = AI_PASSIVE;
 	error = getaddrinfo(NULL, server, &hints, &res0);
 	if (error) {
 		/* retry with precompiled knowledge */
