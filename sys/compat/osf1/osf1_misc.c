@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.25 1999/04/27 06:37:12 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.26 1999/04/27 17:50:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -86,6 +86,7 @@
 #include <vm/vm.h>
 
 void cvtstat2osf1 __P((struct stat *, struct osf1_stat *));
+void cvtrusage2osf1 __P((struct rusage *, struct osf1_rusage *));
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
@@ -642,20 +643,20 @@ osf1_sys_fcntl(p, v, retval)
 		    (unsigned long)SCARG(uap, arg), &leftovers);
 		break;
 
-	case OSF1_F_GETOWN:
-	case OSF1_F_SETOWN:
-	case OSF1_F_GETLK:
-	case OSF1_F_SETLK:
-	case OSF1_F_SETLKW:
+	case OSF1_F_GETOWN:		/* XXX not yet supported */
+	case OSF1_F_SETOWN:		/* XXX not yet supported */
+	case OSF1_F_GETLK:		/* XXX not yet supported */
+	case OSF1_F_SETLK:		/* XXX not yet supported */
+	case OSF1_F_SETLKW:		/* XXX not yet supported */
 		/* XXX translate. */
 		return (EINVAL);
 		
-	case OSF1_F_RGETLK:		/* [lock mgr op] */
-	case OSF1_F_RSETLK:		/* [lock mgr op] */
-	case OSF1_F_CNVT:		/* [lock mgr op] */
-	case OSF1_F_RSETLKW:		/* [lock mgr op] */
-	case OSF1_F_PURGEFS:		/* [lock mgr op] */
-	case OSF1_F_PURGENFS:		/* [DECsafe op] */
+	case OSF1_F_RGETLK:		/* [lock mgr op] XXX not supported */
+	case OSF1_F_RSETLK:		/* [lock mgr op] XXX not supported */
+	case OSF1_F_CNVT:		/* [lock mgr op] XXX not supported */
+	case OSF1_F_RSETLKW:		/* [lock mgr op] XXX not supported */
+	case OSF1_F_PURGEFS:		/* [lock mgr op] XXX not supported */
+	case OSF1_F_PURGENFS:		/* [DECsafe op] XXX not supported */
 	default:
 		/* XXX syslog? */
 		return (EINVAL);
@@ -1008,9 +1009,73 @@ osf1_sys_getrusage(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct osf1_sys_getrusage_args *uap = v;
+	struct sys_getrusage_args a;
+	struct osf1_rusage osf1_rusage;
+	struct rusage netbsd_rusage;
+	caddr_t sg;
+	int error;
 
-	/* XXX */
-	return EINVAL;
+	switch (SCARG(uap, who)) {
+	case OSF1_RUSAGE_SELF:
+		SCARG(&a, who) = RUSAGE_SELF;
+		break;
+
+	case OSF1_RUSAGE_CHILDREN:
+		SCARG(&a, who) = RUSAGE_CHILDREN;
+		break;
+
+	case OSF1_RUSAGE_THREAD:		/* XXX not supported */
+	default:
+		return (EINVAL);
+	}
+
+	sg = stackgap_init(p->p_emul);
+	SCARG(&a, rusage) = stackgap_alloc(&sg, sizeof netbsd_rusage);
+
+	error = sys_getrusage(p, &a, retval);
+	if (error == 0)
+                error = copyin((caddr_t)SCARG(&a, rusage),
+		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
+	if (error == 0) {
+		cvtrusage2osf1(&netbsd_rusage, &osf1_rusage);
+                error = copyout((caddr_t)&osf1_rusage,
+		    (caddr_t)SCARG(uap, rusage), sizeof osf1_rusage);
+	}
+
+	return (error);
+}
+
+/*
+ * Convert from as rusage structure to an osf1 rusage structure.
+ */
+void
+cvtrusage2osf1(ru, oru)
+	struct rusage *ru;
+	struct osf1_rusage *oru;
+{
+	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
+	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
+	printf("ru_ut: %ld.%ld\n", ru->ru_utime.tv_sec, ru->ru_utime.tv_usec);
+
+	oru->ru_stime.tv_sec = ru->ru_stime.tv_sec;
+	oru->ru_stime.tv_usec = ru->ru_stime.tv_usec;
+	printf("ru_st: %ld.%ld\n", ru->ru_stime.tv_sec, ru->ru_stime.tv_usec);
+
+	oru->ru_maxrss = ru->ru_maxrss;
+	oru->ru_ixrss = ru->ru_ixrss;
+	oru->ru_idrss = ru->ru_idrss;
+	oru->ru_isrss = ru->ru_isrss;
+	oru->ru_minflt = ru->ru_minflt;
+	oru->ru_majflt = ru->ru_majflt;
+	oru->ru_nswap = ru->ru_nswap;
+	oru->ru_inblock = ru->ru_inblock;
+	oru->ru_oublock = ru->ru_oublock;
+	oru->ru_msgsnd = ru->ru_msgsnd;
+	oru->ru_msgrcv = ru->ru_msgrcv;
+	oru->ru_nsignals = ru->ru_nsignals;
+	oru->ru_nvcsw = ru->ru_nvcsw;
+	oru->ru_nivcsw = ru->ru_nivcsw;
 }
 
 int
