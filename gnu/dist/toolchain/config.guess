@@ -512,7 +512,8 @@ EOF
       fi
 	exit 0 ;;
     *:NetBSD:*:*)
-	UNAME_MACHINE_ARCH=`(uname -p || /sbin/sysctl -n hw.machine_arch) 2>/dev/null` || UNAME_MACHINE_ARCH=unknown
+	PATH=$PATH:/sbin:/usr/sbin
+	UNAME_MACHINE_ARCH=`(uname -p || sysctl -n hw.machine_arch) 2>/dev/null` || UNAME_MACHINE_ARCH=unknown
 	echo ${UNAME_MACHINE_ARCH}-unknown-netbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
 	exit 0 ;;
     *:OpenBSD:*:*)
