@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.51 2000/05/16 15:59:16 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.52 2000/06/16 23:49:17 sjg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.51 2000/05/16 15:59:16 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.52 2000/06/16 23:49:17 sjg Exp $");
 #endif
 #endif
 
@@ -548,7 +548,10 @@ pkg_do(char *pkg)
 
 	/* Now finally extract the entire show if we're not going direct */
 	if (!inPlace && !Fake)
-		extract_plist(".", &Plist);
+	    if (!extract_plist(".", &Plist)) {
+		code = 1;
+		goto fail;
+	    }
 
 	if (!Fake && fexists(MTREE_FNAME)) {
 		if (Verbose)
