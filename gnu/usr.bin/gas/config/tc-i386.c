@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.6 1994/04/07 19:19:07 mycroft Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.7 1994/04/07 19:21:36 mycroft Exp $";
 #endif
 
 #include "as.h"
@@ -1654,7 +1654,7 @@ char *operand_string;
 					exp->X_add_symbol = (symbolS *) 0;
 					exp->X_subtract_symbol = (symbolS *) 0;
 				} else {
-#ifdef DEBUG
+#ifdef DEBUGxxx
 					printf("displacement removed in operand `%s'\n", operand_string);
 #endif
 					i.disp_operands--;
@@ -1665,7 +1665,7 @@ char *operand_string;
 				if (i.disp_reloc[this_operand] != NO_RELOC || !found_base_index_form || !i.base_reg || exp->X_add_symbol || exp->X_subtract_symbol || exp->X_add_number != 0)
 					i.types[this_operand] |= SMALLEST_DISP_TYPE (exp->X_add_number);
 				else {
-#ifdef DEBUG
+#ifdef DEBUGxxx
 					printf("displacement removed in operand `%s'\n", operand_string);
 #endif
 					i.disp_operands--;
@@ -1677,7 +1677,7 @@ char *operand_string;
 				if (i.disp_reloc[this_operand] != NO_RELOC || !found_base_index_form || !i.base_reg || exp->X_add_symbol || exp->X_subtract_symbol || exp->X_add_number != 0)
 					i.types[this_operand] |= Disp32;
 				else {
-#ifdef DEBUG
+#ifdef DEBUGxxx
 					printf("displacement removed in operand `%s'\n", operand_string);
 #endif
 					i.disp_operands--;
