@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.5 1997/03/23 07:57:22 cjs Exp $
+.\"	$NetBSD: rc.conf.5,v 1.6 1997/04/01 20:17:43 perry Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -69,6 +69,38 @@ The arguments passed if "DEFAULT" is chosen are listed in
 .Nm
 itself.
 .Pp
+Interface boot-up configuration:
+.Bl -tag -width bootparamd_flags
+.It Sy net_interfaces
+Parameters, DEFAULT, or NO.
+Lists a set of interfaces to be configured with
+.Xr ifconfig 8
+at boot time.
+If DEFAULT, the interfaces are found by running
+.Xr ifconfig 8
+with the
+.Ar -l
+flag. Usually, the parameters for the subsequent
+.Xr ifconfig 8
+commands are found in files named
+.Pa /etc/ifconfig.* ,
+where
+.Dq *
+is the name of each interface (e.g.
+.Pa /etc/ifconfig_le0 ) .
+However, parameters may alternatively be found in an
+.Em ifconfig_*
+variable (see below).
+.It Sy ifconfig_*
+Parameters only.
+Supplies a set of parameters for configuring the given interface
+.Dq *
+(e.g.
+.Em ifconfig_le0 ) .
+See
+.Em net_interfaces ,
+above.
+.El
 Programs run on boot-up:
 .Bl -tag -width bootparamd_flags
 .It Sy savecore_flags
