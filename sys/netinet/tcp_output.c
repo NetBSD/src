@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.79.4.2 2002/11/21 17:48:00 he Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.79.4.3 2002/11/30 14:31:59 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79.4.2 2002/11/21 17:48:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79.4.3 2002/11/30 14:31:59 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -355,12 +355,11 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	/*
 	 * Never send more than half a buffer full.  This insures that we can
 	 * always keep 2 packets on the wire, no matter what SO_SNDBUF is, and
-	 * therefore ACKs will never be delayed unless we run out of data to
+	 * therefore acks will never be delayed unless we run out of data to
 	 * transmit.
 	 */
 	if (so)
-		*txsegsizep = min((so->so_snd.sb_hiwat >> 1) - optlen,
-		    *txsegsizep);
+		*txsegsizep = min(so->so_snd.sb_hiwat >> 1, *txsegsizep);
 	*rxsegsizep = min(tp->t_ourmss - optlen, size);
 
 	if (*txsegsizep != tp->t_segsz) {
