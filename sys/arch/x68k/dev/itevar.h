@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.3 1997/02/03 17:01:57 oki Exp $	*/
+/*	$NetBSD: itevar.h,v 1.4 1998/09/03 14:22:06 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,9 +261,8 @@ void	tv_init __P((struct ite_softc *));
 void	tv_deinit __P((struct ite_softc *));
 
 #ifdef _KERNEL
-#if ITEKANJI
 extern unsigned char kern_font[];
-#endif
+
 /* keyboard LED status variable */
 extern unsigned char kbdled;
 void kbd_setLED __P((void));
