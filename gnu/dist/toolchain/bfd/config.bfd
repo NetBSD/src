@@ -284,7 +284,7 @@ case "${targ}" in
     targ_defvec=bfd_elf32_i386_vec
     targ_selvecs=i386coff_vec
     ;;
-  i[3456]86-*-netbsd*elf*)
+  i[3456]86-*-netbsdelf*)
     targ_defvec=bfd_elf32_i386_vec
     targ_selvecs="i386bsd_vec i386netbsd_vec"
     ;;
@@ -461,7 +461,7 @@ case "${targ}" in
     targ_selvecs="m68knetbsd_vec hp300bsd_vec sunos_big_vec bfd_elf32_m68k_vec"
     targ_underscore=yes
     ;;
-  m68*-*-netbsd*elf*)
+  m68*-*-netbsdelf*)
     targ_defvec=bfd_elf32_m68k_vec
     targ_selvecs="m68knetbsd_vec m68k4knetbsd_vec hp300bsd_vec sunos_big_vec"
     ;;
@@ -702,7 +702,7 @@ case "${targ}" in
     targ_defvec=sparclynx_coff_vec
     targ_selvecs=sparclynx_aout_vec
     ;;
-  sparc-*-netbsd*elf*)
+  sparc-*-netbsdelf*)
     targ_defvec=bfd_elf32_sparc_vec
     targ_selvecs="sparcnetbsd_vec sunos_big_vec"
     ;;
