@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2003/04/07 17:18:20 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.55.2.1 2004/08/12 18:27:31 jmc Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -6,7 +6,7 @@
 
 SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
-	bsearch.c calloc.c drand48.c erand48.c exit.c \
+	bsearch.c calloc.c drand48.c erand48.c exit.c _Exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c jrand48.c \
 	l64a.c lldiv.c lcong48.c lrand48.c malloc.c merge.c mrand48.c \
