@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.15 2003/10/08 11:06:05 bouyer Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.16 2003/12/16 14:07:20 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.15 2003/10/08 11:06:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.16 2003/12/16 14:07:20 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,9 +107,10 @@ wdc_mb_probe(parent, cfp, aux)
 	ch.cmd_iot->stride = 2;
 	ch.cmd_iot->wo_1   = 1;
 
-	if (bus_space_map(ch.cmd_iot, 0xfff00000, 0x40, 0, &ch.cmd_ioh))
+	if (bus_space_map(ch.cmd_iot, 0xfff00000, 0x40, 0, &ch.cmd_baseioh))
 		return 0;
-	if (bus_space_subregion(ch.cmd_iot, ch.cmd_ioh, 0x38, 1, &ch.ctl_ioh))
+	if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, 0x38, 1,
+	    &ch.ctl_ioh))
 		return 0;
 
 	/*
@@ -128,7 +129,7 @@ wdc_mb_probe(parent, cfp, aux)
 
 	MFP->mf_ierb = sv_ierb;
 
-	bus_space_unmap(ch.cmd_iot,  ch.cmd_ioh, 0x40);
+	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, 0x40);
 	mb_free_bus_space_tag(ch.cmd_iot);
 
 	if (result)
@@ -152,13 +153,13 @@ wdc_mb_attach(parent, self, aux)
 	sc->wdc_channel.cmd_iot->abs_rms_2 = read_multi_2_swap;
 	sc->wdc_channel.cmd_iot->abs_wms_2 = write_multi_2_swap;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, 0xfff00000, 0x40, 0,
-			  &sc->wdc_channel.cmd_ioh)) {
+			  &sc->wdc_channel.cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
 	if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-	    sc->wdc_channel.cmd_ioh, 0x38, 1, &sc->wdc_channel.ctl_ioh))
+	    sc->wdc_channel.cmd_baseioh, 0x38, 1, &sc->wdc_channel.ctl_ioh))
 		return;
 
 	/*
