@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.12 2003/01/17 08:11:52 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.13 2003/01/31 04:55:52 thorpej Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.12 2003/01/17 08:11:52 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.13 2003/01/31 04:55:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.12 2003/01/17 08:11:52 itojun Exp $
  * XXX M_TRAILINGSPACE/M_LEADINGSPACE on shared cluster (sharedcluster)
  */
 struct mbuf *
-m_pulldown(m, off, len, offp)
-	struct mbuf *m;
-	int off, len;
-	int *offp;
+m_pulldown(struct mbuf *m, int off, int len, int *offp)
 {
 	struct mbuf *n, *o;
 	int hlen, tlen, olen;
@@ -225,10 +222,7 @@ ok:
 
 /* Get a packet tag structure along with specified data following. */
 struct m_tag *
-m_tag_get(type, len, wait)
-	int type;
-	int len;
-	int wait;
+m_tag_get(int type, int len, int wait)
 {
 	struct m_tag *t;
 
@@ -244,8 +238,7 @@ m_tag_get(type, len, wait)
 
 /* Free a packet tag. */
 void
-m_tag_free(t)
-	struct m_tag *t;
+m_tag_free(struct m_tag *t)
 {
 
 	free(t, M_PACKET_TAGS);
@@ -253,9 +246,7 @@ m_tag_free(t)
 
 /* Prepend a packet tag. */
 void
-m_tag_prepend(m, t)
-	struct mbuf *m;
-	struct m_tag *t;
+m_tag_prepend(struct mbuf *m, struct m_tag *t)
 {
 
 	SLIST_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
@@ -263,9 +254,7 @@ m_tag_prepend(m, t)
 
 /* Unlink a packet tag. */
 void
-m_tag_unlink(m, t)
-	struct mbuf *m;
-	struct m_tag *t;
+m_tag_unlink(struct mbuf *m, struct m_tag *t)
 {
 
 	SLIST_REMOVE(&m->m_pkthdr.tags, t, m_tag, m_tag_link);
@@ -273,9 +262,7 @@ m_tag_unlink(m, t)
 
 /* Unlink and free a packet tag. */
 void
-m_tag_delete(m, t)
-	struct mbuf *m;
-	struct m_tag *t;
+m_tag_delete(struct mbuf *m, struct m_tag *t)
 {
 
 	m_tag_unlink(m, t);
@@ -284,9 +271,7 @@ m_tag_delete(m, t)
 
 /* Unlink and free a packet tag chain, starting from given tag. */
 void
-m_tag_delete_chain(m, t)
-	struct mbuf *m;
-	struct m_tag *t;
+m_tag_delete_chain(struct mbuf *m, struct m_tag *t)
 {
 	struct m_tag *p, *q;
 
@@ -303,10 +288,7 @@ m_tag_delete_chain(m, t)
 
 /* Find a tag, starting from a given position. */
 struct m_tag *
-m_tag_find(m, type, t)
-	struct mbuf *m;
-	int type;
-	struct m_tag *t;
+m_tag_find(struct mbuf *m, int type, struct m_tag *t)
 {
 	struct m_tag *p;
 
@@ -324,8 +306,7 @@ m_tag_find(m, type, t)
 
 /* Copy a single tag. */
 struct m_tag *
-m_tag_copy(t)
-	struct m_tag *t;
+m_tag_copy(struct m_tag *t)
 {
 	struct m_tag *p;
 
@@ -343,9 +324,7 @@ m_tag_copy(t)
  * destination mbuf.
  */
 int
-m_tag_copy_chain(to, from)
-	struct mbuf *to;
-	struct mbuf *from;
+m_tag_copy_chain(struct mbuf *to, struct mbuf *from)
 {
 	struct m_tag *p, *t, *tprev = NULL;
 
@@ -367,8 +346,7 @@ m_tag_copy_chain(to, from)
 
 /* Initialize tags on an mbuf. */
 void
-m_tag_init(m)
-	struct mbuf *m;
+m_tag_init(struct mbuf *m)
 {
 
 	SLIST_INIT(&m->m_pkthdr.tags);
@@ -376,8 +354,7 @@ m_tag_init(m)
 
 /* Get first tag in chain. */
 struct m_tag *
-m_tag_first(m)
-	struct mbuf *m;
+m_tag_first(struct mbuf *m)
 {
 
 	return (SLIST_FIRST(&m->m_pkthdr.tags));
@@ -385,9 +362,7 @@ m_tag_first(m)
 
 /* Get next tag in chain. */
 struct m_tag *
-m_tag_next(m, t)
-	struct mbuf *m;
-	struct m_tag *t;
+m_tag_next(struct mbuf *m, struct m_tag *t)
 {
 
 	return (SLIST_NEXT(t, m_tag_link));
