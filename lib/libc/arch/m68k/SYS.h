@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.5 1995/12/13 22:21:38 thorpej Exp $	*/
+/*	$NetBSD: SYS.h,v 1.6 1996/10/17 18:14:59 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,20 +43,30 @@
 #include <machine/asm.h>
 
 #ifdef __STDC__
+#define SYSTRAP(x)	movl \#SYS_ ## x,d0; trap \#0
+#else
+#define SYSTRAP(x)	movl #SYS_/**/x,d0; trap #0
+#endif
 
 #define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
-			movl \#SYS_ ## x,d0; trap \#0; jcs err
-#define	RSYSCALL(x)	SYSCALL(x); rts
-#define	PSEUDO(x,y)	ENTRY(x); movl \#SYS_ ## y,d0; trap \#0; rts
+			SYSTRAP(x); jcs err
 
-#else /* !__STDC__ */
+#define SYSCALL_NOERROR(x) \
+	ENTRY(x); \
+	SYSTRAP(x)
 
-#define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
-			movl #SYS_/**/x,d0; trap #0; jcs err
-#define	RSYSCALL(x)	SYSCALL(x); rts
-#define	PSEUDO(x,y)	ENTRY(x); movl #SYS_/**/y,d0; trap #0; rts
+#define	RSYSCALL(x) \
+	SYSCALL(x); \
+	rts
 
-#endif /* !__STDC__ */
+#define RSYSCALL_NOERROR(x) \
+	SYSCALL_NOERROR(x); \
+	rts
+
+#define	PSEUDO(x,y) \
+	ENTRY(x); \
+	SYSTRAP(y); 
+	rts
 
 #define	ASMSTR		.asciz
 
