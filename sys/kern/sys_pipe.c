@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.11 2001/07/26 14:14:28 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.12 2001/09/20 19:09:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1060,6 +1060,7 @@ retry:
 	for(j=0; j < npages; j++, kva += PAGE_SIZE)
 		pmap_enter(pmap_kernel(), kva, res[j]->phys_addr,
 			VM_PROT_READ, 0);
+	pmap_update(pmap_kernel());
 
 	wpipe->pipe_state |= PIPE_DIRECTW;
 	error = 0;
@@ -1081,10 +1082,10 @@ retry:
 
     cleanup:
 	pipelock(wpipe, 0);
+	if (res)
+		uvm_unloanpage(res, npages);
 	if (error || amountpipekva > maxpipekva)
 		pipe_loan_free(wpipe);
-	else if (res)
-		uvm_unloanpage(res, npages);
 	pipeunlock(wpipe);
 
 	if (error == EPIPE) {
