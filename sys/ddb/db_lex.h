@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.5 1994/10/09 08:19:36 mycroft Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.6 1994/10/09 08:30:06 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,10 +40,10 @@ int db_read_token __P((void));
 void db_unread_token __P((int));
 void db_flush_lex __P((void));
 
-extern int	db_tok_number;
+int	db_tok_number;
 #define	TOK_STRING_SIZE		120 
-extern char	db_tok_string[TOK_STRING_SIZE];
-extern int	db_radix;
+char	db_tok_string[TOK_STRING_SIZE];
+int	db_radix;
 
 #define	tEOF		(-1)
 #define	tEOL		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.h,v 1.1 1994/10/09 08:19:39 mycroft Exp $	*/
+/*	$NetBSD: db_run.h,v 1.2 1994/10/09 08:30:12 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -35,22 +35,17 @@
 /*
  * Commands to run process.
  */
-#include <sys/param.h>
-#include <sys/proc.h>
-
-#include <machine/db_machdep.h>
-
 int		db_inst_count;
 int		db_load_count;
 int		db_store_count;
 
 #ifndef db_set_single_step
-void		db_set_single_step __P((db_regs_t *));
+void db_set_single_step __P((db_regs_t *));
 #endif
 #ifndef db_clear_single_step
-void		db_clear_single_step __P((db_regs_t *));
+void db_clear_single_step __P((db_regs_t *));
 #endif
-void		db_restart_at_pc __P((db_regs_t *, boolean_t));
-boolean_t	db_stop_at_pc __P((db_regs_t *, boolean_t *));
+void db_restart_at_pc __P((db_regs_t *, boolean_t));
+boolean_t db_stop_at_pc __P((db_regs_t *, boolean_t *));
 
 #endif	_DDB_DB_RUN_

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.5 1994/10/09 08:19:35 mycroft Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.6 1994/10/09 08:30:03 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -106,9 +106,6 @@ db_read_token()
 	    t = db_lex();
 	return (t);
 }
-
-int	db_tok_number;
-char	db_tok_string[TOK_STRING_SIZE];
 
 int	db_radix = 16;
 

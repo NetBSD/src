@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.12 1994/06/29 06:31:01 cgd Exp $	*/
+/*	$NetBSD: db_command.c,v 1.13 1994/10/09 08:29:59 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -45,10 +45,6 @@
  */
 boolean_t	db_cmd_loop_done;
 jmp_buf		*db_recover;
-db_addr_t	db_dot;
-db_addr_t	db_last_addr;
-db_addr_t	db_prev;
-db_addr_t	db_next;
 
 /*
  * if 'ed' style: 'dot' is set at start of last item printed,

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.6 1994/10/09 08:19:37 mycroft Exp $	*/
+/*	$NetBSD: db_run.c,v 1.7 1994/10/09 08:30:08 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,11 @@
 /*
  * Commands to run process.
  */
+#include <sys/param.h>
+#include <sys/proc.h>
+
+#include <machine/db_machdep.h>
+
 #include <ddb/db_run.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_break.h>
