@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.8 2004/05/09 08:29:30 taca Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.9 2004/05/18 21:47:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1043,7 +1043,6 @@ frdest_t *fdp;
 	if ((fr != NULL) && (fin->fin_rev != 0)) {
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
-		dst->sin_addr = ip->ip_dst;
 	} else if (fdp != NULL) {
 		if (fdp->fd_ip.s_addr != 0)
 			dst->sin_addr = fdp->fd_ip;
@@ -1063,7 +1062,7 @@ frdest_t *fdp;
 		goto bad;
 	}
 	if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-		dst = (struct sockaddr_in *)&ro->ro_rt->rt_gateway;
+		dst = (struct sockaddr_in *)ro->ro_rt->rt_gateway;
 	if (ro->ro_rt)
 		ro->ro_rt->rt_use++;
 
