@@ -40,7 +40,7 @@
  * And then from:
  *	Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp 
  *
- *	$Id: proc_machdep.c,v 1.2 1994/01/28 03:48:22 phil Exp $
+ *	$Id: proc_machdep.c,v 1.3 1994/05/17 17:31:41 phil Exp $
  */
 
 /* Modified by Phil Nelson for the pc532 port.  1/12/94 */
@@ -92,10 +92,11 @@ process_read_regs(p, regs)
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-/*	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+/*	ptr = (char *) p->p_addr +
+		((char *) p->p_md.md_regs - (char *) kstack);
 
 	tp = ptr;
 	regs->r_es = tp->tf_es;
@@ -126,10 +127,11 @@ process_write_regs(p, regs)
 	struct trapframe *tp;
 	int eflags;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 /*
-	ptr = (char *)p->p_addr + ((char *) p->p_regs - (char *) kstack);
+	ptr = (char *)p->p_addr +
+		((char *) p->p_md.md_regs - (char *) kstack);
 	tp = ptr;
 
 	eflags = regs->r_eflags;
@@ -165,10 +167,11 @@ process_sstep(p, sstep)
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 /*
-	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+	ptr = (char *) p->p_addr +
+		((char *) p->p_md.md_regs - (char *) kstack);
 
 	tp = ptr;
 	if (sstep)
@@ -195,10 +198,11 @@ process_set_pc(p, addr)
 	void *ptr;
 	struct trapframe *tp;
 
-	if ((p->p_flag & SLOAD) == 0)
+	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-/*	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+/*	ptr = (char *) p->p_addr +
+		((char *) p->p_md.md_regs - (char *) kstack);
 
 	tp = ptr;
 	tp->tf_eip = addr;

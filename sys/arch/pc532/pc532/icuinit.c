@@ -30,14 +30,14 @@
  *
  *	icuinit.c
  *
- *	$Id: icuinit.c,v 1.1.1.1 1993/09/09 23:53:49 phil Exp $
+ *	$Id: icuinit.c,v 1.2 1994/05/17 17:31:36 phil Exp $
  */
 
 /* icuinit.c - C support for 532 icu stuff. */
 
-#include "param.h"
-#include "machine/cpu.h"
-#include "icu.h"
+#include <sys/param.h>
+#include <machine/cpu.h>
+#include <machine/icu.h>
 
 /* Table for initializing ICU.  Written in order to ICU.
  * Monitor has already set

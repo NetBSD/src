@@ -35,19 +35,18 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  *
- *	$Id: clock.c,v 1.4 1994/05/03 07:30:30 phil Exp $
+ *	$Id: clock.c,v 1.5 1994/05/17 17:31:32 phil Exp $
  */
 
 /*
  * Primitive clock interrupt routines.
  */
 
-#include "param.h"
-#include "time.h"
-#include "kernel.h"
-#include "icu.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
 
-#include "machine/param.h"
+#include <machine/icu.h>
 
 void spinwait __P((int));
 
@@ -64,6 +63,7 @@ startrtclock()
   WR_ADR (unsigned short, ICU_ADR + HCSV, timer);
   WR_ADR (unsigned short, ICU_ADR + HCCV, timer);
 
+  printf ("startrtclock\n");
 }
 
 /* convert 2 digit BCD number */
@@ -126,6 +126,8 @@ inittodr(base)
   unsigned int sec;
   int leap;
 
+printf ("inittodr\n");
+
   if (!have_rtc)
     {
       time.tv_sec = 0;
@@ -156,8 +158,7 @@ inittodr(base)
   sec -= 24*60*60; /* XXX why ??? Compensate for Jan 1, 1970??? */  
 
   time.tv_sec = sec;
-
-
+  time.tv_usec = 0;
 }
 
 
@@ -174,6 +175,7 @@ resettodr()
  */
 enablertclock()
 {
+printf ("enablertclock()\n");
   /* Set the clock interrupt enable (CICTL) */
   WR_ADR (unsigned char, ICU_ADR +CICTL, 0x30);
   PL_zero |= SPL_CLK | SPL_SOFTCLK | SPL_NET | SPL_IMP;
@@ -190,3 +192,19 @@ spinwait(int millisecs)
 
 DELAY(n)
 { volatile int N = (n); while (--N > 0); }
+
+
+/* new functions ... */
+int
+cpu_initclocks()
+{
+  printf ("cpu_initclocks\n");
+  startrtclock();
+  enablertclock();
+  inittodr(0);
+}
+
+int
+setstatclockrate()
+{printf ("setstatclockrate\n");}
+

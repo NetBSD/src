@@ -65,5 +65,14 @@
 
 /* The PSR versions ... */
 #define PSR_USR PSL_USER
- 
+
+#ifdef KERNEL
+/* processor level and software interrupts. */
+#ifndef LOCORE 
+int	astpending;	/* need to trap before returning to user mode */
+
+#define setsoftast() (astpending=1)
+#endif
+#endif
+
 #endif

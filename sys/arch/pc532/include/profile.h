@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,42 +30,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)limits.h	7.2 (Berkeley) 6/28/90
- *
- *	limits.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
+ *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
+ *	$Id: profile.h,v 1.1 1994/05/17 17:31:10 phil Exp $
  */
 
-#define	CHAR_BIT	8		/* number of bits in a char */
-#define	MB_LEN_MAX	1		/* no multibyte characters */
+/*	pc532 version, 5/15/94.
+ */
 
-#define	SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
-#define	SCHAR_MAX	0x7f		/* max value for a signed char */
+#define	_MCOUNT_DECL static inline void _mcount
 
-#define	UCHAR_MAX	0xff		/* max value for an unsigned char */
-#define	CHAR_MAX	0x7f		/* max value for a char */
-#define	CHAR_MIN	(-0x7f-1)	/* min value for a char */
+#define	MCOUNT \
+extern void mcount() asm("mcount");					\
+void									\
+mcount()								\
+{									\
+	int selfpc, frompcindex;					\
+	/*								\
+	 * find the return address for mcount,				\
+	 * and the return address for mcount's caller.			\
+	 *								\
+	 * selfpc = pc pushed by mcount call				\
+	 */								\
+	asm("addr 0(pc),%0" : "=r" (selfpc));			\
+	/*								\
+	 * frompcindex = pc pushed by call into self.			\
+	 */								\
+	asm("movd 0(fp),%0" : "=r" (frompcindex));	\
+	_mcount(frompcindex, selfpc);					\
+}
 
-#define	USHRT_MAX	0xffff		/* max value for an unsigned short */
-#define	SHRT_MAX	0x7fff		/* max value for a short */
-#define SHRT_MIN        (-0x7fff-1)     /* min value for a short */
-
-#define	UINT_MAX	0xffffffff	/* max value for an unsigned int */
-#define	INT_MAX		0x7fffffff	/* max value for an int */
-#define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
-
-#define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
-#define	LONG_MAX	0x7fffffff	/* max value for a long */
-#define	LONG_MIN	(-0x7fffffff-1)	/* min value for a long */
-
-#if !defined(_ANSI_SOURCE)
-#define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
-
-#if !defined(_POSIX_SOURCE)
-#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
-
-#define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
-#define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
-#define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
-
-#endif /* !_POSIX_SOURCE */
-#endif /* !_ANSI_SOURCE */
+#ifdef KERNEL
+/*
+ * Note that we assume splhigh() and splx() cannot call mcount()
+ * recursively.
+ */
+#define	MCOUNT_ENTER	s = splhigh()
+#define	MCOUNT_EXIT	splx(s)
+#endif /* KERNEL */

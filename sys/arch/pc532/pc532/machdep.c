@@ -44,43 +44,52 @@
 
 static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp";
 
-#include "param.h"
-#include "systm.h"
-#include "signalvar.h"
-#include "kernel.h"
-#include "map.h"
-#include "proc.h"
-#include "user.h"
-#include "exec.h"            /* for PS_STRINGS */
-#include "buf.h"
-#include "reboot.h"
-#include "conf.h"
-#include "file.h"
-#include "callout.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "msgbuf.h"
-#include "net/netisr.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/exec.h>
+#include <sys/buf.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/callout.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/vnode.h>
+#include <sys/device.h>
+#include <sys/sysctl.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
+#include <dev/cons.h>
 
-#include "sys/vnode.h"
+#include <net/netisr.h>
 
-vm_map_t buffer_map;
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
-#include "machine/psl.h"
-#include "machine/reg.h"
-#include "machine/cpu.h"
-#include "machine/pmap.h"
-#include "icu.h"
+#include <machine/psl.h>
+#include <machine/reg.h>
+#include <machine/cpu.h>
+#include <machine/pmap.h>
+#include <machine/icu.h>
 
 extern vm_offset_t avail_end;
 extern struct user *proc0paddr;
 
+vm_map_t buffer_map;
+
 /* A local function... */
 void reboot_cpu();
+
+
+/* the following is used externally (sysctl_hw) */
+char machine[] = "ns32k";		/* cpu "architecture" */
+char cpu_model[120] = "32532";
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -533,20 +542,17 @@ sendsig(catcher, sig, mask, code)
 	int oonstack;
 	extern char sigcode[], esigcode[];
 
-	regs = p->p_regs;
-        oonstack = ps->ps_onstack;
+	regs = p->p_md.md_regs;
+	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
 
 	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
+	 * Allocate space for the signal handler context.
 	 */
-        if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp
-				- sizeof(struct sigframe));
-                ps->ps_onstack = 1;
+	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_base +
+		    ps->ps_sigstk.ss_size - sizeof(struct sigframe));
+		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else {
 		fp = (struct sigframe *)(regs[SP]
 				- sizeof(struct sigframe));
@@ -616,8 +622,7 @@ sigreturn(p, uap, retval)
 {
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
-	register int *regs = p->p_regs;
-
+	register int *regs = p->p_md.md_regs;
 	fp = (struct sigframe *) regs[SP] ;
 
 	if (useracc((caddr_t)fp, sizeof (*fp), 0) == 0)
@@ -634,7 +639,10 @@ sigreturn(p, uap, retval)
 		return(EINVAL);
 	}
 #endif
-        p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~
 	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
 	regs[FP] = scp->sc_fp;
@@ -809,7 +817,7 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int *retval;
 {
-	struct on_stack *r = (struct on_stack *)p->p_regs;
+	struct on_stack *r = (struct on_stack *)p->p_md.md_regs;
 	int i;
 
 /* printf ("Setregs: entry = %x, stack = %x, (usp = %x)\n", entry, stack,
@@ -1025,7 +1033,7 @@ dumpsys()
 int
 ptrace_set_pc (struct proc *p, unsigned int addr) 
 {
-	register int *regs = p->p_regs;
+	register int *regs = p->p_md.md_regs;
 
 	regs[PC] = addr;
 	return 0;
@@ -1034,7 +1042,7 @@ ptrace_set_pc (struct proc *p, unsigned int addr)
 int
 ptrace_single_step (struct proc *p)
 {
-	register int *regs = p->p_regs;
+	register int *regs = p->p_md.md_regs;
 
 	regs[PSR] |= PSL_T;
 	return 0;
@@ -1044,7 +1052,7 @@ int
 ptrace_getregs (struct proc *p, unsigned int *addr)
 {
 	register int *regs;
-	regs = p->p_regs;
+	regs = p->p_md.md_regs;
 
 	return copyout (regs, addr, NIPCREG*sizeof(int));
 }
@@ -1052,7 +1060,7 @@ ptrace_getregs (struct proc *p, unsigned int *addr)
 int
 ptrace_setregs (struct proc *p, unsigned int *addr)
 {
-	register int *regs = p->p_regs;
+	register int *regs = p->p_md.md_regs;
 
 	return copyin (addr, regs, NIPCREG*sizeof(int));
 }
@@ -1131,9 +1139,42 @@ void dump_qs()
        {
          ptr = qs[ix].ph_link;
 	 do {
-	   printf ("qs[%d]: 0x%x 0x%x\n", ix, ptr->p_link, ptr->p_rlink);
-	   ptr = ptr->p_link;
+	   printf ("qs[%d]: 0x%x 0x%x\n", ix, ptr->p_forw, ptr->p_back);
+	   ptr = ptr->p_forw;
 	 } while (ptr != (struct proc *)0 && ptr != qs[ix].ph_link);
        }
-   panic("nil P_RLINK");
+   panic("nil P_BACK");
 }
+
+/*  
+ * machine dependent system variables.
+ */ 
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+

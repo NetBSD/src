@@ -39,30 +39,30 @@
  */
 
 /*
- * 532 Trap and System call handleing
+ * 532 Trap and System call handling
  */
 
-#include "sys/types.h"
+#include "sys/param.h"
+#include "sys/systm.h"
+#include "sys/proc.h"
+#include "sys/user.h"
+#include "sys/acct.h"
+#include <sys/kernel.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
+#include <sys/vmmeter.h>
 #include "sys/syscall.h"
+
+#include "vm/vm_param.h"
+#include "vm/pmap.h"
+#include "vm/vm_map.h"
 
 #include "machine/cpu.h"
 #include "machine/trap.h"
 #include "machine/psl.h"
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "user.h"
-#include "acct.h"
-#include "kernel.h"
-#ifdef KTRACE
-#include "ktrace.h"
-#endif
 
-#include "vm/vm_param.h"
-#include "vm/pmap.h"
-#include "vm/vm_map.h"
-#include "sys/vmmeter.h"
 
 
 
@@ -85,8 +85,10 @@ trap(frame)
 {
 	register int i;
 	register struct proc *p = curproc;
-	struct timeval syst;
+	struct timeval sticks;
 	int ucode, type, tear, msr;
+
+	cnt.v_trap++;
 
 	type = frame.tf_trapno;
 	tear = frame.tf_tear;
@@ -109,10 +111,12 @@ copyfault:
 	
 	if (curpcb == 0 || curproc == 0) goto we_re_toast;
 
-	syst = p->p_stime;
 	if ((frame.tf_psr & PSL_USER) == PSL_USER) {
 		type |= T_USER;
-		p->p_regs = (int *)&(frame.tf_reg);
+#ifdef notdef
+		sticks = p->p_stime;
+#endif
+		p->p_md.md_regs = (int *)&(frame.tf_reg);
 	}
 
 	ucode = 0;
@@ -317,28 +321,30 @@ nogo:
 		return;
 out:
 	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
+		postsig(i);
+	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * If that happened after we setrunqueue ourselves but
+		 * before we swtch()'ed, we might not be on the queue
+		 * indicated by our priority.
 		 */
 		(void) splclock();
-		setrq(p);
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		(void) splnone();
 		while (i = CURSIG(p))
-			psig(i);
+			postsig(i);
 	}
 	if (p->p_stats->p_prof.pr_scale) {
 		int ticks;
-		struct timeval *tv = &p->p_stime;
+
+#ifdef YO_WHAT
+		struct timeval *tv = &p->p_stime; 
 
 		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
 			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
@@ -351,8 +357,9 @@ out:
 /*			addupc(frame.tf_pc, &p->p_stats->p_prof, ticks); */
 #endif
 		}
+#endif
 	}
-	curpri = p->p_pri;
+	curpriority = p->p_priority;
 }
 
 
@@ -369,23 +376,24 @@ syscall(frame)
 	register caddr_t params;
 	register int i;
 	register struct sysent *callp;
-	register struct proc *p = curproc;
-	struct timeval syst;
+	register struct proc *p;
+	struct timeval sticks;
 	int error, opc;
 	int args[8], rval[2];
 	int code;
 
-#ifdef lint
-	r0 = 0; r0 = r0; r1 = 0; r1 = r1;
-#endif
-	syst = p->p_stime;
+/*	cnt.v_syscall++; */
 
 	/* is this a user? */
 	if ((frame.sf_psr & PSL_USER) != PSL_USER)
 		panic("syscall - process not in user mode.");
 
+	p = curproc;
+#ifdef notdef
+	sticks = p->p_stime;
+#endif
 	code = frame.sf_reg[R0];
-	p->p_regs = (int *) & (frame.sf_reg);
+	p->p_md.md_regs = (int *) & (frame.sf_reg);
 	params = (caddr_t)frame.sf_usp + sizeof (int) ;
 
 /*printf ("Syscall ... pid=%d, pc=0x%x code=%d, psr=0x%x usp=0x%x params=0x%x\n",
@@ -472,27 +480,28 @@ done:
 	 */
 	p = curproc;
 	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
+		postsig(i);
+	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
+		 * If that happened after we setrunqeue ourselves but before
+		 * we swtch()'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
 		(void) splclock();
-		setrq(p);
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		(void) splnone();
 		while (i = CURSIG(p))
-			psig(i);
+			postsig(i);
 	}
 	if (p->p_stats->p_prof.pr_scale) {
 		int ticks;
+#ifdef YO_WHAT
 		struct timeval *tv = &p->p_stime;
 
 		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
@@ -506,8 +515,9 @@ done:
 /*			addupc(frame.sf_pc, &p->p_stats->p_prof, ticks); */
 #endif
 		}
+#endif
 	}
-	curpri = p->p_pri;
+	curpriority = p->p_priority;
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval[0]);
 #endif
