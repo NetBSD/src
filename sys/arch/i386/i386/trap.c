@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 1995/01/15 00:55:25 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.66 1995/01/15 01:15:04 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -214,7 +214,21 @@ trap(frame)
 			return;
 		}
 
-		/* Check for failure during return to user mode. */
+		/*
+		 * Check for failure during return to user mode.
+		 *
+		 * We do this by looking at the instruction we faulted on.  The
+		 * specific instructions we recognize only happen when
+		 * returning from a trap, syscall, or interrupt.
+		 *
+		 * XXX
+		 * The heuristic used here will currently fail for the case of
+		 * one of the 2 pop instructions faulting when returning from a
+		 * a fast interrupt.  This should not be possible.  It can be
+		 * fixed by rearranging the trap frame so that the stack format
+		 * at this point is the same as on exit from a `slow'
+		 * interrupt.
+		 */
 		switch (*(u_char *)frame.tf_eip) {
 		case 0xcf:	/* iret */
 			vframe = (void *)(frame.tf_esp - 44);
