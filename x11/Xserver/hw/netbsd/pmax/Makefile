@@ -1,15 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/10 05:26:14 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	pmax
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/pmax
 SRCS=	pmax_init.c pmax_io.c lk201.c pmaxInEx.c GetTime.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/mfb \

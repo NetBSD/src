@@ -1,10 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2003/12/23 14:28:21 rtr Exp $
+# $NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	xaa
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
@@ -22,8 +20,6 @@ SRCS=	lsb_fixed_xaaBitmap.c lsb_fixed_xaaBitmap3.c lsb_fixed_xaaStipple.c \
 	xaaOverlayDF.c xaaPCache.c xaaPaintWin.c xaaPict.c xaaROP.c xaaRect.c \
 	xaaSeg.c xaaSpans.c xaaStateChange.c xaaTEText.c xaaTables.c \
 	xaaWideLine.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \

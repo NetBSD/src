@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	tdfx_drv
 MAN=	tdfx.4
@@ -12,8 +10,6 @@ MAN=	tdfx.4
 
 SRCS=	tdfx_driver.c tdfx_io.c tdfx_hwcurs.c tdfx_accel.c tdfx_dga.c \
 	tdfx_priv.c tdfx_sli.c tdfx_video.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/tdfx \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

@@ -1,17 +1,13 @@
-# $NetBSD: Makefile,v 1.1 2004/01/05 10:14:18 rtr Exp $
+# $NetBSD: Makefile,v 1.2 2004/02/07 06:52:07 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
 
-.include <bsd.own.mk>
-
 LIB=	xf8_16bpp
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 
 SRCS=	cfb8_16module.c cfbscrinit.c cfbwindow.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf1bpp \
