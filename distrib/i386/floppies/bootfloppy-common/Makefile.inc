@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26.4.1 2000/07/20 00:25:37 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.26.4.2 2000/07/20 16:54:49 rh Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -27,8 +27,9 @@ realall:	netbsd boot
 	tar cvf ${FSTMP} boot ${METAFILE} netbsd
 	@echo
 	@echo Making disk number one
-	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
+	rm -f ${IMAGE}.tmp
+	dd if=/dev/zero of=${IMAGE}.tmp count=${DISKSIZE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}.tmp
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
@@ -44,7 +45,7 @@ realall:	netbsd boot
 			exit 1; \
 		else \
 			dd seek=$$(($${size} / 512 + 15)) count=1 \
-				if=/dev/zero of=${IMAGE}; \
+				if=/dev/zero of=${IMAGE}.tmp; \
 		fi; \
 		echo; \
                 bytes=$$(($$dksize * $$disks - $$size));    \
@@ -60,6 +61,7 @@ realall:	netbsd boot
 				free on disk $$disks."; \
 		fi; \
 	)
+	mv -f ${IMAGE}.tmp ${IMAGE}
 
 # Let the kernel on the diskette be called "netbsd" although
 # it is compressed.  This is because the boot code will search
@@ -91,7 +93,7 @@ release:
 	done
 	
 clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} ${IMAGE}
+	/bin/rm -f *.core ${CLEANFILES} ${IMAGE} ${IMAGE}.tmp
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
