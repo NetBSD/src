@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.47 2005/02/07 01:13:18 wiz Exp $
+.\" $NetBSD: doc2html,v 1.48 2005/02/07 01:23:02 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -260,7 +260,7 @@ TODO:
 \\n[quotation_line]
 .	br-real	\" should be unnecessary...we have fill turned off
 .	fl     	\" more paranoia
-</font></body>
+</body>
 </html>
 .	br-real
 .	fl
@@ -1419,7 +1419,7 @@ AT&T UNIX\\$*
 .	if \\n(.$ \&\\$*
 ..
 .de mo-end-smallcaps
-<font size=+0>
+</font>
 ..
 .de BI
 .	mo-try-link \\$1 \\$2
@@ -1474,7 +1474,7 @@ AT&T UNIX\\$*
 .	\}
 ..
 .de CT
-\&&lt;<font size=-1>CTRL/<font size=+0>\\$*&gt;
+\&&lt;<font size=-1>CTRL/</font>\\$*&gt;
 ..
 .de DS
 <code><pre>
