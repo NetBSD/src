@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.25 1997/06/26 21:04:32 kleink Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.26 1997/07/08 09:11:29 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -518,8 +518,9 @@ adosfs_vget(mp, an, vpp)
 		 * To retain the ADOS behaviour, fake execute permissions
 		 * in that case.
 		 */
-		if (ap->type == ADIR || ap->type == ALDIR)
-			ap->adprot |= (ap->adprot & 0x888) >> 2;
+		if ((ap->type == ADIR || ap->type == ALDIR) &&
+		    (ap->adprot & 0x00000008) == 0)
+			ap->adprot &= ~0x00000002;
 
 		/*
 		 * Get uid/gid from extensions in file header
