@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.24 2000/01/10 03:24:40 simonb Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.25 2000/01/14 13:45:26 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.24 2000/01/10 03:24:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.25 2000/01/14 13:45:26 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.24 2000/01/10 03:24:40 simonb Exp $
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
-#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
 #include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
@@ -100,11 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.24 2000/01/10 03:24:40 simonb Exp $
  */
 void		dec_maxine_init __P((void));		/* XXX */
 static void	dec_maxine_bus_reset __P((void));
-static void	dec_maxine_enable_intr __P((unsigned slotno,
-		    int (*handler)(void *), void *sc, int onoff));
-static int	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_maxine_device_register __P((struct device *, void *));
 static void	dec_maxine_cons_init __P((void));
+static void	dec_maxine_device_register __P((struct device *, void *));
+static int	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_maxine_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
+static void	dec_maxine_intr_disestablish __P((struct device *, void *));
 
 static void	kn02ca_wbflush __P((void));
 static unsigned	kn02ca_clkread __P((void));
@@ -124,6 +124,8 @@ dec_maxine_init()
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
 	platform.iointr = dec_maxine_intr;
+	platform.intr_establish = dec_maxine_intr_establish;
+	platform.intr_disestablish = dec_maxine_intr_disestablish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn02ca_clkread;
 	/* MAXINE has 1 microsec. free-running high resolution timer */
@@ -134,7 +136,6 @@ dec_maxine_init()
  
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
 	mips_hardware_intr = dec_maxine_intr;
-	tc_enable_interrupt = dec_maxine_enable_intr;
 
 	/*
 	 * MAXINE IOASIC interrupts come through INT 3, while
@@ -190,6 +191,7 @@ dec_maxine_bus_reset()
 static void
 dec_maxine_cons_init()
 {
+	/* notyet */
 }
 
 static void
@@ -202,7 +204,7 @@ dec_maxine_device_register(dev, aux)
 
 
 /*
- *  Enable/Disable interrupts from a TURBOchannel slot.
+ *  Enable interrupts from a TURBOchannel slot.
  *
  *	We pretend we actually have 11 slots even if we really have
  *	only 2: TCslots 0-1 maps to slots 0-1, TCslot 2 is used for
@@ -211,59 +213,68 @@ dec_maxine_device_register(dev, aux)
  *	Note that all these interrupts come in via the IMR.
  */
 static void
-dec_maxine_enable_intr(slotno, handler, sc, on)
-	unsigned int slotno;
+dec_maxine_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
 	int (*handler) __P((void *));
-	void *sc;
-	int on;
+	void *arg;
 {
+	int slotno = (int)cookie;
 	unsigned mask;
 
 	switch (slotno) {
-	case 0:			/* a real slot, but  */
+	  case 0:	/* a real slot, but  */
 		mask = XINE_INTR_TC_0;
 		break;
-	case 1:			/* a real slot, but */
+	  case 1:	/* a real slot, but */
 		mask = XINE_INTR_TC_1;
 		break;
-	case XINE_FLOPPY_SLOT:
+	  case XINE_FLOPPY_SLOT:
 		mask = XINE_INTR_FLOPPY;
 		break;
-	case XINE_SCSI_SLOT:
+	  case XINE_SCSI_SLOT:
 		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
 			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
-	case XINE_LANCE_SLOT:
+	  case XINE_LANCE_SLOT:
 		mask = IOASIC_INTR_LANCE;
 		break;
-	case XINE_SCC0_SLOT:
+	  case XINE_SCC0_SLOT:
 		mask = XINE_INTR_SCC_0;
 		break;
-	case XINE_DTOP_SLOT:
+	  case XINE_DTOP_SLOT:
 		mask = XINE_INTR_DTOP_RX;
 		break;
-	case XINE_ISDN_SLOT:
+	  case XINE_ISDN_SLOT:
 		mask = (XINE_INTR_ISDN | IOASIC_INTR_ISDN_OVRUN |
 			IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD);
 		break;
-	case XINE_ASIC_SLOT:
+	  case XINE_ASIC_SLOT:
 		mask = XINE_INTR_ASIC;
 		break;
-	default:
-		return;/* ignore */
+	  default:
+#ifdef DIAGNOSTIC
+		printf("warning: enabling unknown intr %x\n", slotno);
+#endif
+		return;
 	}
 
-	if (on) {
-		xine_tc3_imask |= mask;
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
-	} else {
-		xine_tc3_imask &= ~mask;
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
-	}
+	xine_tc3_imask |= mask;
+	intrtab[slotno].ih_func = handler;
+	intrtab[slotno].ih_arg = arg;
+
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
 	kn02ca_wbflush();
+}
+
+
+static void
+dec_maxine_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
+{
+	printf("dec_maxine_intr_distestablish: not implemented\n");
 }
 
 
@@ -308,9 +319,9 @@ dec_maxine_intr(cpumask, pc, status, cause)
 		intr &= imsk;
 
 		if (intr & XINE_INTR_SCC_0) {
-			if (tc_slot_info[XINE_SCC0_SLOT].intr)
-				(*(tc_slot_info[XINE_SCC0_SLOT].intr))
-				(tc_slot_info[XINE_SCC0_SLOT].sc);
+			if (intrtab[XINE_SCC0_SLOT].ih_func)
+				(*(intrtab[XINE_SCC0_SLOT].ih_func))
+				(intrtab[XINE_SCC0_SLOT].ih_arg);
 			else
 				printf ("can't handle scc interrupt\n");
 			intrcnt[SERIAL0_INTR]++;
@@ -332,54 +343,54 @@ dec_maxine_intr(cpumask, pc, status, cause)
 			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
 
 		if (intr & XINE_INTR_DTOP_RX) {
-			if (tc_slot_info[XINE_DTOP_SLOT].intr)
-				(*(tc_slot_info[XINE_DTOP_SLOT].intr))
-				(tc_slot_info[XINE_DTOP_SLOT].sc);
+			if (intrtab[XINE_DTOP_SLOT].ih_func)
+				(*(intrtab[XINE_DTOP_SLOT].ih_func))
+				    (intrtab[XINE_DTOP_SLOT].ih_arg);
 			else
 				printf ("can't handle dtop interrupt\n");
 			intrcnt[DTOP_INTR]++;
 		}
 
 		if (intr & XINE_INTR_FLOPPY) {
-			if (tc_slot_info[XINE_FLOPPY_SLOT].intr)
-				(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
-				(tc_slot_info[XINE_FLOPPY_SLOT].sc);
+			if (intrtab[XINE_FLOPPY_SLOT].ih_func)
+				(*(intrtab[XINE_FLOPPY_SLOT].ih_func))
+				    (intrtab[XINE_FLOPPY_SLOT].ih_arg);
 		else
 			printf ("can't handle floppy interrupt\n");
 			intrcnt[FLOPPY_INTR]++;
 		}
 
 		if (intr & XINE_INTR_TC_0) {
-			if (tc_slot_info[0].intr)
-				(*(tc_slot_info[0].intr))
-				(tc_slot_info[0].sc);
+			if (intrtab[0].ih_func)
+				(*(intrtab[0].ih_func))
+				    (intrtab[0].ih_arg);
 			else
 				printf ("can't handle tc0 interrupt\n");
 			intrcnt[SLOT0_INTR]++;
 		}
 
 		if (intr & XINE_INTR_TC_1) {
-			if (tc_slot_info[1].intr)
-				(*(tc_slot_info[1].intr))
-				(tc_slot_info[1].sc);
+			if (intrtab[1].ih_func)
+				(*(intrtab[1].ih_func))
+				    (intrtab[1].ih_arg);
 			else
 				printf ("can't handle tc1 interrupt\n");
 			intrcnt[SLOT1_INTR]++;
 		}
 
 		if (intr & XINE_INTR_ISDN) {
-			if (tc_slot_info[XINE_ISDN_SLOT].intr)
-				(*(tc_slot_info[XINE_ISDN_SLOT].intr))
-				(tc_slot_info[XINE_ISDN_SLOT].sc);
+			if (intrtab[XINE_ISDN_SLOT].ih_func)
+				(*(intrtab[XINE_ISDN_SLOT].ih_func))
+				    (intrtab[XINE_ISDN_SLOT].ih_arg);
 			else
 				printf ("can't handle isdn interrupt\n");
 				intrcnt[ISDN_INTR]++;
 		}
 
 		if (intr & IOASIC_INTR_LANCE) {
-			if (tc_slot_info[XINE_LANCE_SLOT].intr)
-				(*(tc_slot_info[XINE_LANCE_SLOT].intr))
-				(tc_slot_info[XINE_LANCE_SLOT].sc);
+			if (intrtab[XINE_LANCE_SLOT].ih_func)
+				(*(intrtab[XINE_LANCE_SLOT].ih_func))
+				    (intrtab[XINE_LANCE_SLOT].ih_arg);
 			else
 				printf ("can't handle lance interrupt\n");
 
@@ -387,9 +398,9 @@ dec_maxine_intr(cpumask, pc, status, cause)
 		}
 
 		if (intr & IOASIC_INTR_SCSI) {
-			if (tc_slot_info[XINE_SCSI_SLOT].intr)
-				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
-				(tc_slot_info[XINE_SCSI_SLOT].sc);
+			if (intrtab[XINE_SCSI_SLOT].ih_func)
+				(*(intrtab[XINE_SCSI_SLOT].ih_func))
+				    (intrtab[XINE_SCSI_SLOT].ih_arg);
 			else
 				printf ("can't handle scsi interrupt\n");
 			intrcnt[SCSI_INTR]++;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.17 2000/01/10 03:24:37 simonb Exp $ */
+/* $NetBSD: dec_5100.c,v 1.18 2000/01/14 13:45:25 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -42,7 +42,6 @@
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
-#include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
@@ -57,9 +56,10 @@ void		dec_5100_init __P((void));		/* XXX */
 static void	dec_5100_bus_reset __P((void));
 static void	dec_5100_cons_init __P((void));
 static void	dec_5100_device_register __P((struct device *, void *));
-static void	dec_5100_enable_intr __P((unsigned slotno,
-		    int (*handler)(void *), void *sc, int onoff));
 static int	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_5100_intr_establish __P((struct device *, void *,
+		    int, int (*)(void *), void *));
+static void	dec_5100_intr_disestablish __P((struct device *, void *));
 static void	dec_5100_memintr __P((void));
 
 
@@ -71,6 +71,8 @@ dec_5100_init()
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
 	platform.iointr = dec_5100_intr;
+	platform.intr_establish = dec_5100_intr_establish;
+	platform.intr_disestablish = dec_5100_intr_disestablish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -78,7 +80,6 @@ dec_5100_init()
 	mips_set_wbflush(kn230_wbflush);
 
 	mips_hardware_intr = dec_5100_intr;
-	tc_enable_interrupt = dec_5100_enable_intr;
 
 	splvec.splbio = MIPS_SPL1;
 	splvec.splnet = MIPS_SPL1;
@@ -111,6 +112,7 @@ dec_5100_bus_reset()
 static void
 dec_5100_cons_init()
 {
+	/* notyet */
 }
 
 
@@ -123,32 +125,7 @@ dec_5100_device_register(dev, aux)
 }
 
 
-/*
- * Enable an interrupt from a slot on the KN01 internal bus.
- *
- * The 4.4bsd kn01 interrupt handler hard-codes r3000 CAUSE register
- * bits to particular device interrupt handlers.  We may choose to store
- * function and softc pointers at some future point.
- */
 static void
-dec_5100_enable_intr(slotno, handler, sc, on)
-	unsigned int slotno;
-	int (*handler) __P((void* softc));
-	void *sc;
-	int on;
-{
-	/*
-	 */
-	if (on) {
-		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].sc = sc;
-	} else {
-		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].sc = 0;
-	}
-}
-
-void
 dec_5100_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie;
@@ -158,19 +135,17 @@ dec_5100_intr_establish(dev, cookie, level, handler, arg)
 {
 	int slotno = (int)cookie;
 
-	tc_slot_info[slotno].intr = handler;
-	tc_slot_info[slotno].sc = arg;
+	intrtab[slotno].ih_func = handler;
+	intrtab[slotno].ih_arg = arg;
 }
 
-void
+static void
 dec_5100_intr_disestablish(dev, arg)
 	struct device *dev;
 	void *arg;
 {
 	printf("dec_5100_intr_distestablish: not implemented\n");
 }
-
-
 
 
 /*
@@ -214,8 +189,8 @@ dec_5100_intr(mask, pc, status, cause)
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
 #define CALLINTR(slot, icnt) \
-	if (tc_slot_info[slot].intr) {					\
-		(*tc_slot_info[slot].intr) (tc_slot_info[slot].sc);	\
+	if (intrtab[slot].ih_func) {					\
+		(*intrtab[slot].ih_func) (intrtab[slot].ih_arg);	\
 		intrcnt[(icnt)]++;					\
 	}
 

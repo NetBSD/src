@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.6 2000/01/09 15:34:44 ad Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.7 2000/01/14 13:45:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,12 +62,17 @@ struct platform {
 	 *	cons_init	-	console initialization
 	 *	device_register -	boot configuration aid
 	 *	iointr		-	I/O interrupt handler
+	 *	intr_establish	-	establish interrupt handler
+	 *	intr_disestablish -	disestablish interrupt handler
 	 *	clkread		-	interporate HZ with hi-resolution timer
 	 */
 	void	(*bus_reset) __P((void));
 	void	(*cons_init) __P((void));
 	void	(*device_register) __P((struct device *, void *));
 	int	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
+	void	(*intr_establish) __P((struct device *, void *, int,
+		    int (*)(void *), void *));
+	void	(*intr_disestablish) __P((struct device *, void *));
 	int	(*memsize) __P((caddr_t));
 	unsigned (*clkread) __P((void));
 };
