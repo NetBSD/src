@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.189 2004/04/05 10:36:32 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.190 2004/04/05 10:40:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.189 2004/04/05 10:36:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.190 2004/04/05 10:40:56 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -906,6 +906,7 @@ nfs_lookup(v)
 			if ((!lockparent || !(flags & ISLASTCN)) &&	
 			     newvp != dvp)
 				VOP_UNLOCK(dvp, 0);
+			KASSERT(newvp->v_type != VNON);
 			return (0);
 		}
 		cache_purge1(newvp, NULL, PURGE_PARENTS);
@@ -959,7 +960,7 @@ dorpc:
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
-		return (0);
+		goto validate;
 	}
 
 	/*
@@ -1063,6 +1064,24 @@ dorpc:
 		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 			cnp->cn_flags |= SAVENAME;
 		*vpp = NULL;
+		return error;
+	}
+
+validate:
+	/*
+	 * make sure we have valid type and size.
+	 */
+
+	newvp = *vpp;
+	if (newvp->v_type == VNON) {
+		struct vattr vattr; /* dummy */
+
+		KASSERT(VTONFS(newvp)->n_attrstamp == 0);
+		error = VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_proc);
+		if (error) {
+			vput(newvp);
+			*vpp = NULL;
+		}
 	}
 
 	return error;

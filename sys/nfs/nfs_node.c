@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.73 2004/03/12 16:52:37 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.74 2004/04/05 10:40:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.73 2004/03/12 16:52:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.74 2004/04/05 10:40:56 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -211,12 +211,8 @@ loop:
 	crhold(np->n_wcred);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
-	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
-	if (error) {
-		vput(vp);
-		return error;
-	}
-	uvm_vnp_setsize(vp, np->n_vattr->va_size);
+	NFS_INVALIDATE_ATTRCACHE(np);
+	uvm_vnp_setsize(vp, 0);
 	*npp = np;
 	return (0);
 }
