@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.5.6.1 2005/01/28 10:34:00 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.5.6.1 2005/01/28 10:34:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	/* XXX use extent manager to check duplicate mapping */
 
-	va = uvm_km_valloc(kernel_map, endpa - startpa);
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
 	if (! va)
 		return(ENOMEM);
 
@@ -214,11 +214,18 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 void
 pxa2x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
+	vaddr_t va;
+	vsize_t sz;
 
 	if (bsh > (u_long)KERNEL_BASE) 
 		return;
 
-	uvm_km_free(kernel_map, bsh, size);
+	va = trunc_page((vaddr_t)bsh);
+	sz = round_page((vaddr_t)bsh + size) - va;
+
+	pmap_kremove(va, sz);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, sz, UVM_KMF_VAONLY);
 }
 
 

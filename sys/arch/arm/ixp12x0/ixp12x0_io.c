@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.9 2003/07/13 07:15:22 igy Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.9.10.1 2005/01/28 10:33:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.9 2003/07/13 07:15:22 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.9.10.1 2005/01/28 10:33:59 yamt Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -159,7 +159,8 @@ ixp12x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	offset = bpa & PAGE_MASK;
 	startpa = trunc_page(bpa);
 		
-	if ((va = uvm_km_valloc(kernel_map, endpa - startpa)) == 0)
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0, UVM_KMF_VAONLY);
+	if (va  == 0)
 		return ENOMEM;
 
 	*bshp = va + offset;
@@ -190,7 +191,7 @@ ixp12x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	va = trunc_page(bsh);
 
 	pmap_kremove(va, endva - va);
-	uvm_km_free(kernel_map, va, endva - va);
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
 int
