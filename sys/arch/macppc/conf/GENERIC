@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159 2003/07/24 21:03:05 nathanw Exp $
+# $NetBSD: GENERIC,v 1.160 2003/08/22 07:52:50 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.160 $"
 
 maxusers	32
 
@@ -375,6 +375,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
 uscanner* at uhub? port ?				# USB scanners
 uyap* at uhub? port ?					# Y@P firmware loader

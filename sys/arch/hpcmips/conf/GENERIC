@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138 2003/04/26 14:10:11 ragge Exp $
+# $NetBSD: GENERIC,v 1.139 2003/08/22 07:52:49 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 maxusers	16
 
@@ -542,6 +542,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
 # MII/PHY support
 ukphy*	at mii? phy ?		# generic unknown PHYs

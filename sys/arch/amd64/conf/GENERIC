@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2003/08/06 12:32:05 bouyer Exp $
+# $NetBSD: GENERIC,v 1.8 2003/08/22 07:52:48 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -586,6 +586,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
