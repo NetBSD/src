@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/17 05:18:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/11 08:30:42 rtr Exp $
 
 .include "../../Makefile.serverlib"
 
@@ -27,6 +27,12 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} \
 		-DHAS_SHM -DHAS_MMAP -UXFree86LOADER
+
+.include "../../Makefile.common"
+
+.if ${XSERVER_XFREE86} == "no"
+CPPFLAGS+=	-UDDXTIME
+.endif
 
 CPPFLAGS.InitInput.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION} \
