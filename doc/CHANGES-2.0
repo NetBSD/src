@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.49 2004/04/07 05:00:18 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.50 2004/04/07 05:01:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -538,3 +538,10 @@ share/termcap/termcap.src			1.89
 	Move the attribute end escape sequence to the start of the xterm
 	initialisation sequence capability. PR#11052
 	[jdc, ticket #78]
+
+usr.bin/tput/tput.1				1.13
+
+	Note in the BUGS section that some termcap entries don't have
+	reset capabilities, so use init instead. PR#11052
+
+	[jdc, ticket #79]
