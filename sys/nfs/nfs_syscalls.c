@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.64 2003/05/22 14:16:23 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.65 2003/05/26 13:30:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.64 2003/05/22 14:16:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.65 2003/05/26 13:30:07 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -128,6 +128,7 @@ int nfs_niothreads = -1; /* == "0, and has never been set" */
 
 #ifdef NFSSERVER
 static void nfsd_rt __P((int, struct nfsrv_descript *, int));
+static struct nfssvc_sock *nfsrv_sockalloc __P((void));
 #endif
 
 /*
@@ -346,6 +347,20 @@ MALLOC_DEFINE(M_NFSD, "NFS daemon", "Nfs server daemon structure");
 MALLOC_DEFINE(M_NFSSVC, "NFS srvsock", "Nfs server structure");
 struct pool nfs_srvdesc_pool;
 
+static struct nfssvc_sock *
+nfsrv_sockalloc()
+{
+	struct nfssvc_sock *slp;
+	
+	slp = (struct nfssvc_sock *)
+	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
+	memset(slp, 0, sizeof (struct nfssvc_sock));
+	TAILQ_INIT(&slp->ns_uidlruhead);
+	TAILQ_INSERT_TAIL(&nfssvc_sockhead, slp, ns_chain);
+
+	return slp;
+}
+
 /*
  * Adds a socket to the list for servicing by nfsds.
  */
@@ -427,11 +442,7 @@ nfssvc_addsock(fp, mynam)
 	if (tslp)
 		slp = tslp;
 	else {
-		slp = (struct nfssvc_sock *)
-			malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-		memset((caddr_t)slp, 0, sizeof (struct nfssvc_sock));
-		TAILQ_INIT(&slp->ns_uidlruhead);
-		TAILQ_INSERT_TAIL(&nfssvc_sockhead, slp, ns_chain);
+		slp = nfsrv_sockalloc();
 	}
 	slp->ns_so = so;
 	slp->ns_nam = mynam;
@@ -879,26 +890,14 @@ nfsrv_init(terminating)
 	TAILQ_INIT(&nfsd_head);
 	nfsd_head_flag &= ~NFSD_CHECKSLP;
 
-	nfs_udpsock = (struct nfssvc_sock *)
-	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-	memset((caddr_t)nfs_udpsock, 0, sizeof (struct nfssvc_sock));
-	TAILQ_INIT(&nfs_udpsock->ns_uidlruhead);
-	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
+	nfs_udpsock = nfsrv_sockalloc();
 
 #ifdef INET6
-	nfs_udp6sock = (struct nfssvc_sock *)
-	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-	memset((caddr_t)nfs_udp6sock, 0, sizeof (struct nfssvc_sock));
-	TAILQ_INIT(&nfs_udp6sock->ns_uidlruhead);
-	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_udp6sock, ns_chain);
+	nfs_udp6sock = nfsrv_sockalloc();
 #endif
 
 #ifdef ISO
-	nfs_cltpsock = (struct nfssvc_sock *)
-	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-	memset((caddr_t)nfs_cltpsock, 0, sizeof (struct nfssvc_sock));
-	TAILQ_INIT(&nfs_cltpsock->ns_uidlruhead);
-	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_cltpsock, ns_chain);
+	nfs_cltpsock = nfsrv_sockalloc();
 #endif
 }
 
