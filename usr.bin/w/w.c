@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.67 2005/01/08 05:08:53 kim Exp $	*/
+/*	$NetBSD: w.c,v 1.68 2005/03/13 04:08:16 kim Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.67 2005/01/08 05:08:53 kim Exp $");
+__RCSID("$NetBSD: w.c,v 1.68 2005/03/13 04:08:16 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,8 +321,8 @@ main(int argc, char **argv)
 	else
 		ttywidth = ws.ws_col - 1;
 
-	if (!wflag && maxhost > (ttywidth / 2))
-		maxhost = ttywidth / 2;
+	if (!wflag && maxhost > (ttywidth / 3))
+		maxhost = ttywidth / 3;
 
 	argwidth = printf("%-*s TTY     %-*s %*s  IDLE WHAT\n",
 	    maxname, "USER", maxhost, "FROM",
