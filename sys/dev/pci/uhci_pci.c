@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.4 1998/11/25 22:32:04 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.5 1999/05/06 19:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,13 @@ void	uhci_pci_attach __P((struct device *, struct device *, void *));
 struct cfattach uhci_pci_ca = {
 	sizeof(uhci_softc_t), uhci_pci_match, uhci_pci_attach
 };
+
+struct {
+	pcitag_t	tag;
+	int		valid;
+} uhci_pci_console_info;
+
+void uhci_pci_has_console __P((pcitag_t));
 
 int
 uhci_pci_match(parent, match, aux)
@@ -158,6 +165,22 @@ uhci_pci_attach(parent, self, aux)
 		return;
 	}
 
+	if (uhci_pci_console_info.valid &&
+	    memcmp(&uhci_pci_console_info.tag, &pa->pa_tag,
+		   sizeof(pcitag_t)) == 0)
+		sc->sc_bus.has_console = 1;
+	else
+		sc->sc_bus.has_console = 0;
+
 	/* Attach usb device. */
 	config_found((void *)sc, &sc->sc_bus, usbctlprint);
+}
+
+void
+uhci_pci_has_console(tag)
+	pcitag_t tag;
+{
+
+	uhci_pci_console_info.tag = tag;
+	uhci_pci_console_info.valid = 1;
 }

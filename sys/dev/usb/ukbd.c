@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.28 1999/01/13 18:38:26 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.29 1999/05/06 19:12:23 thorpej Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/hid.h>
@@ -188,6 +189,8 @@ struct ukbd_softc {
 
 	char sc_enabled;
 	char sc_disconnected;		/* device is gone */
+
+	int sc_console_keyboard;	/* we are the console keyboard */
 
 	int sc_leds;
 #if defined(__NetBSD__)
@@ -328,8 +331,23 @@ USB_ATTACH(ukbd)
 	sc->sc_ep_addr = ed->bEndpointAddress;
 	sc->sc_disconnected = 0;
 
+	/*
+	 * Remember if we're the console keyboard.
+	 *
+	 * XXX This always picks the first keyboard on the bus, but
+	 * what else can we really do?
+	 */
+	sc->sc_console_keyboard = uaa->device->bus->has_console;
+	if (sc->sc_console_keyboard) {
+		/* Don't let any other keyboard have it. */
+		uaa->device->bus->has_console = 0;
+	}
+
 #if defined(__NetBSD__)
-	a.console = 0;
+	if (sc->sc_console_keyboard)
+		ukbd_cnattach(sc);
+
+	a.console = sc->sc_console_keyboard;
 
 	a.keymap = &ukbd_keymapdata;
 
@@ -390,6 +408,14 @@ ukbd_disco(p)
 	DPRINTF(("ukbd_disco: sc=%p\n", sc));
 	usbd_abort_pipe(sc->sc_intrpipe);
 	sc->sc_disconnected = 1;
+
+	if (sc->sc_console_keyboard) {
+		/*
+		 * XXX Should probably disconnect our consops,
+		 * XXX and set has_console in the bus handle back
+		 * XXX to 1.
+		 */
+	}
 }
 
 int
