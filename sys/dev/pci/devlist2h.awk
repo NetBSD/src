@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.4 1998/01/08 00:31:23 thorpej Exp $
+#	$NetBSD: devlist2h.awk,v 1.5 1998/01/09 06:54:25 thorpej Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -38,6 +38,7 @@ NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
 
+	printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > dfile
@@ -46,6 +47,7 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
 
+	printf("/*\t\$NetBSD\$\t*/\n\n") > hfile
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
