@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.12 1998/01/12 20:52:48 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.13 1999/04/12 20:57:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -57,8 +57,8 @@
  *									*
  *	  If the Regents of the University of California or its		*
  *   licensees modify the software in a manner creating			*
- *   diriviative copyright rights, appropriate copyright		*
- *   legends may be placed on  the drivative work in addition		*
+ *   derivative copyright rights, appropriate copyright			*
+ *   legends may be placed on  the derivative work in addition		*
  *   to that set forth above.						*
  *									*
  ************************************************************************/
