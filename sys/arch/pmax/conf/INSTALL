@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.12 1998/06/26 01:54:08 lukem Exp $
+# 	$NetBSD: INSTALL,v 1.13 1998/07/26 09:45:25 simonb Exp $
 #
 # Distribution  install kernel (any  model)
 #    netbsd:    cut-down kernel for miniroots.
@@ -24,7 +24,6 @@ options 	DEC_MAXINE		# kn02ca: 5000/xx (Personal DECstation)
 options 	DEC_3MIN		# kn02ba: 5000/1xx (3min) support
 options 	DEC_3MAX		# kn02: 5000/200 support
 options 	DEC_3MAXPLUS		#  5000/240 (kn03) , 5000/260 (kn05)
-options		DEC_5100
 
 #options 	DEC_5400
 #options 	DEC_5800
@@ -64,6 +63,8 @@ options 	"HZ=256"	# RTC rate required
 config		netbsd		root on ? type ?
 config		nfsnetbsd	root on ? type nfs
 
+mainbus0	at root
+cpu*		at mainbus0
 
 
 ########################################################################
