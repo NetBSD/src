@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2001/08/26 02:47:40 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2002/09/18 01:43:08 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,11 +37,16 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
+#include <dev/ofw/openfirm.h>
+
 #include <machine/autoconf.h>
+#include <machine/platform.h>
 #include <machine/powerpc.h>
 
-static void findroot __P((void));
+static void canonicalize_bootpath(void);
 
+extern char bootpath[];
+char cbootpath[256];
 struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */
 
@@ -51,6 +56,9 @@ int booted_partition;		/* ...and partition on that device */
 void
 cpu_configure()
 {
+
+	canonicalize_bootpath();
+
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
@@ -65,36 +73,83 @@ void
 cpu_rootconf()
 {
 
-	findroot();
-
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
 
-/*
- * Try to find the device we were booted from to set rootdev.
- */
 void
-findroot()
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
 {
-	char *cp;
+
+	(*platform.device_register)(dev, aux);
+}
+
+static void
+canonicalize_bootpath()
+{
+	int node;
+	char *p;
+	char last[32];
+
+printf("bootpath %s\n", bootpath);
+	/*
+	 * Strip kernel name.  bootpath contains "OF-path"/"kernel".
+	 *
+	 * for example:
+	 *   /pci/scsi/disk@0:0/netbsd		(FirePower)
+	 */
+	strcpy(cbootpath, bootpath);
+	while ((node = OF_finddevice(cbootpath)) == -1) {
+		if ((p = strrchr(cbootpath, '/')) == NULL)
+			break;
+		*p = 0;
+	}
+
+	if (node == -1) {
+		/* Cannot canonicalize... use bootpath anyway. */
+		strcpy(cbootpath, bootpath);
+
+		return;
+	}
 
 	/*
-	 * Try to find the device where we were booted from.
+	 * cbootpath is a valid OF path.  Use package-to-path to
+	 * canonicalize pathname.
 	 */
-	if (bootpath != NULL) {
-		for (cp = bootpath + strlen(bootpath); --cp >= bootpath;) {
-			if (*cp == '/') {
-				*cp = '\0';
-				if (!dk_match(bootpath)) {
-					*cp = '/';
-					break;
-				}
-				*cp = '/';
-			}
-		}
+
+	/* Back up the last component for later use. */
+	if ((p = strrchr(cbootpath, '/')) != NULL)
+		strcpy(last, p + 1);
+	else
+		last[0] = 0;
+
+	memset(cbootpath, 0, sizeof(cbootpath));
+	OF_package_to_path(node, cbootpath, sizeof(cbootpath) - 1);
+
+	/*
+	 * At this point, cbootpath contains like:
+	 * "/pci/scsi@1/disk"
+	 *
+	 * The last component may have no address... so append it.
+	 */
+	p = strrchr(cbootpath, '/');
+	if (p != NULL && strchr(p, '@') == NULL) {
+		/* Append it. */
+		if ((p = strrchr(last, '@')) != NULL)
+			strcat(cbootpath, p);
 	}
-	dk_cleanup();
+
+	/*
+	 * Strip off the partition again (saving it in booted_parition).
+	 */
+	if ((p = strrchr(cbootpath, ':')) != NULL) {
+		*p++ = 0;
+		booted_partition = *p - 'a';
+	}
+printf("cbootpath %s\n", cbootpath);
 }
+
