@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2003/05/15 10:13:36 dsl Exp $
+#	$NetBSD: Makefile,v 1.67 2003/09/14 12:11:10 jmmv Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -40,6 +40,7 @@ CPPFLAGS+=-DSMALL
 
 CLEANFILES+= mkinit mknodes mksyntax
 CLEANFILES+= ${GENSRCS} y.tab.h
+CLEANFILES+= trace
 
 token.h: mktokens
 	${HOST_SH} ${.ALLSRC}
