@@ -30,7 +30,7 @@
 #include <signal.h>
 #include "global.h"
 #include "proto.h"
-#include "getopt.h"
+#include <getopt.h>
 
 
 /* Variables for processing multiple files. */
