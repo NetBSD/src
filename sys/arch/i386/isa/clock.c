@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.20 1993/11/08 20:19:35 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.21 1993/12/16 07:01:01 davidb Exp $
  */
 /* 
  * Mach Operating System
@@ -118,6 +118,8 @@ static void clockattach __P((struct device *, struct device *, void *));
 
 struct cfdriver clockcd =
 { NULL, "clock", clockprobe, clockattach, DV_DULL, sizeof(struct device) };
+
+static int bad_clock; /* Shared between readtodr, inittodr, & resettodr */
 
 static int
 clockprobe(parent, cf, aux)
@@ -515,6 +517,12 @@ resettodr()
 	int diff, i, j;
 	int s;
 
+	/*
+	 * Don't write garbage if the time is not yet known.
+	 */
+	if (time.tv_sec == 0)
+		return;
+
 	/* attempt to read the clock to preserve the alarm time, but
 	   don't care if it fails */
 	s = splclock();
@@ -555,30 +563,29 @@ resettodr()
 	s = splclock();
 	rtcput(&rtclk);
 	splx(s);
+	bad_clock = 0;
 }
 
 /*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
+ * Read the RTC time from the CMOS RAM.
  */
-void
-inittodr(base)
-	time_t base;
+int
+readtodr(rtc)
+	struct timeval *rtc;
 {
-        /*
-         * We ignore the suggested time for now and go for the RTC
-         * clock time stored in the CMOS RAM.
-         */
 	struct rtc_st rtclk;
 	time_t n;
 	int sec, min, hr, dom, mon, yr;
 	int i, days;
 	int s;
 
+	if (bad_clock) {	/* inittodr marked it as untrustworthy. */
+		return(-1);
+	}
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
-		return;
+		return(-1);
 	}
 	splx(s);
 
@@ -588,6 +595,10 @@ inittodr(base)
 	dom = bcdtodec(rtclk.rtc_dom);
 	mon = bcdtodec(rtclk.rtc_mon);
 	yr = bcdtodec(rtclk.rtc_yr);
+
+	/* Sanity checks */
+	if (sec > 59 || min > 59 || hr > 23 || dom > 31 || dom == 0 || mon > 12)
+		return(-1);
 
 	/* stupid clock has no century; fake it for another 70 years */
 	yr = (yr < 70) ? yr+100 : yr;
@@ -609,6 +620,54 @@ inittodr(base)
 	if (tz.tz_dsttime)
 		n -= 3600;
 
-	time.tv_sec = n;
-        time.tv_usec = 0;
+	rtc->tv_sec = n;
+
+	/* Add 1/2 a second to (on average) remove the round-down error.  */
+	rtc->tv_usec = 500000;
+	return(0);
+}
+
+/*
+ * Initialize the time of day register, based on the time base which is, e.g.
+ * from a filesystem.
+ */
+void
+inittodr(base)
+	time_t base;
+{
+	time_t deltat;
+
+	bad_clock = 0;
+	if (readtodr(&time) < 0) {
+		/*
+		 * The hardware failed, or the data wasn't sane.
+		 */
+		time.tv_sec = base;
+		time.tv_usec = 0L;
+		resettodr();
+		printf("WARNING: lost clock -- CHECK AND RESET THE DATE\n");
+		bad_clock = 1;
+		return;
+	}
+	if (base == 0) {
+		/*
+		 * No reasonable value was passed to us, so don't try to
+		 * compare it against what we found.
+		 */
+		return;
+	}
+	/*
+	 * Don't check for base > time.tv_sec as a special case, as it is
+	 * reasonable for the time to have been moved backwards outside BSD.
+	 *
+	 * Complain if the clock moved in either direction by less than 2 days.
+	 */
+	if ((deltat = time.tv_sec - base) < 0)
+		deltat = -deltat;
+	if (deltat >= 2 * 24 * 3600) {
+		printf("WARNING: clock %s %d days -- CHECK AND RESET THE DATE\n",
+			time.tv_sec < base ? "lost" : "gained",
+			deltat / (24 * 3600));
+		bad_clock = 1;
+	}
 }
