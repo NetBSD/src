@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.50 2000/03/07 03:34:52 enami Exp $	*/
+/*	$NetBSD: tulip.c,v 1.51 2000/03/07 03:37:39 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2471,6 +2471,7 @@ tlp_filter_setup(sc)
 			 */
 			goto hashperfect;
 		}
+		cnt++;
 		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 0);
 		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 1);
 		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 2);
