@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/12/07 14:16:03 simonb Exp $
+#	$NetBSD: Makefile,v 1.20 2004/05/08 21:51:50 kleink Exp $
 
 INCSDIR= /usr/include/pc532
 
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

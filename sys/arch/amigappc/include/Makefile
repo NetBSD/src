@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/01/21 14:39:35 kleink Exp $
+#	$NetBSD: Makefile,v 1.18 2004/05/08 21:51:47 kleink Exp $
 
 INCSDIR= /usr/include/amigappc
 
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>
