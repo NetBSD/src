@@ -80,6 +80,12 @@ This information is used to determine if
 List of domains that this machine considers local.
 .IP \fBmyorigin\fR
 The domain that locally-posted mail appears to come from.
+.IP \fBresolve_unquoted_address\fR
+When resolving an address, do not quote the address localpart as
+per RFC 822, so that additional \fB@\fR, \fB%\fR or \fB!\fR
+characters remain visible. This is technically incorrect, but
+allows us to stop relay attacks when forwarding mail to a Sendmail
+primary MX host.
 .SH Rewriting
 .ad
 .fi
@@ -109,9 +115,9 @@ The default transport is \fBsmtp\fR.
 Syntax is \fItransport\fR:\fInexthop\fR; see \fBtransport\fR(5)
 for details. The :\fInexthop\fR part is optional.
 .IP \fBparent_domain_matches_subdomains\fR
-List of Postfix features that use \fIdomain.name\fR patterns
-to match \fIsub.domain.name\fR (as opposed to
-requiring \fI.domain.name\fR patterns).
+List of Postfix features that use \fIdomain.tld\fR patterns
+to match \fIsub.domain.tld\fR (as opposed to
+requiring \fI.domain.tld\fR patterns).
 .IP \fBrelayhost\fR
 The default host to send non-local mail to when no entry is matched
 in the \fBtransport\fR(5) table.

@@ -77,7 +77,7 @@ can take a while), you're ready to test the "fast ETRN" service.
 Telnet to the Postfix SMTP server from a client that is allowed to
 execute ETRN commands (by default, that's every client), and type:
 
-    helo my.client.name
+    helo my.client.tld
     etrn some.customer.domain
 
 where "some.customer.domain" is the name of a domain that has a
@@ -99,7 +99,7 @@ Repeat the exercise with another domain that your server is willing
 to relay to (domain listed in "relay_domains"), but that has no mail
 queued.
 
-    helo my.client.name
+    helo my.client.tld
     etrn some.other.customer.domain
 
 This time, the "etrn" command should trigger NO mail deliveries at
@@ -110,7 +110,7 @@ Finally, repeat the exercise with a destination that your mail
 server is not willing to relay to.  It does not matter if your
 server has mail queued for that destination.
 
-    helo my.client.name
+    helo my.client.tld
     etrn not.a.customer.domain
 
 If your "fast ETRN" caching policy is left at its default setting,
