@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 1998/03/18 21:59:38 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 1998/04/11 17:44:11 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -731,6 +731,7 @@ cpu_reboot(howto, bootstr)
 			dump_sf.sf_fp = fp[0];
 			dump_sf.sf_pc = fp[1];
 			dump_sf.sf_pl = s;
+			dump_sf.sf_p  = curproc;
 		}
 		dumpsys();
 	}
@@ -1336,6 +1337,16 @@ cpu_reset()
 	__asm __volatile("jump @0");
 }
 
+/*
+ * Clock software interrupt routine
+ */
+void
+do_softclock(arg)
+	void *arg;
+{
+	softclock();
+}
+	
 /*
  * Network software interrupt routine
  */
