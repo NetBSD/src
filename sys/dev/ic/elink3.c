@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.81 2000/05/29 17:37:12 jhawk Exp $	*/
+/*	$NetBSD: elink3.c,v 1.82 2000/08/21 14:25:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1190,10 +1190,15 @@ startagain:
 #endif
 
 	/*
-	 * Do the output at splhigh() so that an interrupt from another device
-	 * won't cause a FIFO underrun.
+	 * Do the output at a high interrupt priority level so that an
+	 * interrupt from another device won't cause a FIFO underrun.
+	 * We choose splsched() since that blocks essentially everything
+	 * except for interrupts from serial devices (which typically
+	 * lose data of their interrupt isn't serviced fast enough).
+	 *
+	 * XXX THIS CAN CAUSE CLOCK DRIFT!
 	 */
-	sh = splhigh();
+	sh = splsched();
 
 	txreg = ep_w1_reg(sc, ELINK_W1_TX_PIO_WR_1);
 
@@ -1643,11 +1648,16 @@ epget(sc, totlen)
 	mp = &top;
 
 	/*
-	 * We read the packet at splhigh() so that an interrupt from another
-	 * device doesn't cause the card's buffer to overflow while we're
-	 * reading it.  We may still lose packets at other times.
+	 * We read the packet at a high interrupt priority level so that
+	 * an interrupt from another device won't cause the card's packet
+	 * buffer to overflow.  We choose splsched() since that blocks
+	 * essentially everything except for interrupts from serial
+	 * devices (which typically lose data of their interrupt isn't
+	 * serviced fast enough).
+	 *
+	 * XXX THIS CAN CAUSE CLOCK DRIFT!
 	 */
-	sh = splhigh();
+	sh = splsched();
 
 	rxreg = ep_w1_reg(sc, ELINK_W1_RX_PIO_RD_1);
 
