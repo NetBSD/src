@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.24 1998/07/20 21:16:52 thorpej Exp $ */
+/* $NetBSD: isp_pci.c,v 1.25 1998/07/20 21:17:30 thorpej Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -142,7 +142,9 @@ isp_pci_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
+#ifdef DEBUG
 	static char oneshot = 1;
+#endif
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
 	struct ispsoftc *isp = &pcs->pci_isp;
