@@ -1,5 +1,5 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
-/*	$NetBSD: config.h.in,v 1.6 2004/04/08 12:29:45 pooka Exp $	*/
+/*	$NetBSD: config.h.in,v 1.7 2004/04/08 12:33:20 pooka Exp $	*/
 
 /* Autoheader needs me */
 #undef PACKAGE
@@ -80,6 +80,9 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
 
+/* Define to 1 if you have the `mbrtowc' function. */
+#undef HAVE_MBRTOWC
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -149,6 +152,9 @@
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the `wcwidth' function. */
+#undef HAVE_WCWIDTH
 
 /* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
    */
