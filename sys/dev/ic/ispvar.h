@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.12 1998/09/10 17:10:27 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.13 1998/09/17 22:52:54 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -47,7 +47,7 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	2
+#define	ISP_CORE_VERSION_MINOR	3
 
 /*
  * Vector for MD code to provide specific services.
@@ -85,8 +85,9 @@ struct ispmdvec {
 #define	ISP_QUEUE_ENTRY(q, idx)		((q) + ((idx) * QENTRY_LEN))
 #define	ISP_QUEUE_SIZE(n)		((n) * QENTRY_LEN)
 #define	ISP_NXT_QENTRY(idx, qlen)	(((idx) + 1) & ((qlen)-1))
-#define	ISP_QDEPTH(in, out, qlen)	((in - out) & ((qlen) - 1))
-
+#define ISP_QAVAIL(in, out, qlen)	\
+	((in == out)? (qlen - 1) : ((in > out)? \
+		((qlen - 1) - (in - out)) : (out - in - 1)))
 /*
  * SCSI (as opposed to FC-PH) Specific Host Adapter Parameters
  */
