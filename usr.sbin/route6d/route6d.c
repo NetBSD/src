@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.32.2.1 2002/08/22 00:05:26 lukem Exp $	*/
+/*	$NetBSD: route6d.c,v 1.32.2.2 2003/10/04 09:47:06 tron Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.32.2.1 2002/08/22 00:05:26 lukem Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.32.2.2 2003/10/04 09:47:06 tron Exp $");
 #endif
 
 #include <stdio.h>
@@ -2568,6 +2568,8 @@ rt_entry(rtm, again)
 	rrt->rrt_t = time(NULL);
 	if (aflag == 0 && (rtm->rtm_flags & RTF_STATIC))
 		rrt->rrt_t = 0;	/* Don't age static routes */
+	if ((rtm->rtm_flags & (RTF_HOST|RTF_GATEWAY)) == RTF_HOST)
+		rrt->rrt_t = 0;	/* Don't age non-gateway host routes */
 	np->rip6_tag = 0;
 	np->rip6_metric = rtm->rtm_rmx.rmx_hopcount;
 	if (np->rip6_metric < 1)
