@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.3 2000/02/02 13:19:45 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.4 2000/02/17 18:42:21 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -195,4 +195,5 @@ struct cue_softc {
 	struct cue_cdata	cue_cdata;
 
 	char			cue_dying;
+	char			cue_attached;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.6 2000/02/17 05:41:41 mycroft Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.7 2000/02/17 18:42:21 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -649,6 +649,8 @@ USB_ATTACH(cue)
 #endif
 
 #endif /* __NetBSD__ */
+
+	sc->cue_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cue_udev,
@@ -665,10 +667,16 @@ USB_DETACH(cue)
 
 	s = splusb();
 
+	usb_untimeout(cue_tick, sc, sc->cue_stat_ch);
+
+	if (!sc->cue_attached) {
+		/* Detached before attached finished, so just bail out. */
+		splx(s);
+		return (0);
+	}
+
 	if (ifp->if_flags & IFF_RUNNING)
 		cue_stop(sc);
-
-	usb_untimeout(cue_tick, sc, sc->cue_stat_ch);
 
 #if defined(__NetBSD__)
 #if NRND > 0
@@ -690,6 +698,7 @@ USB_DETACH(cue)
 		       USBDEVNAME(sc->cue_dev));
 #endif
 
+	sc->cue_attached = 0;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->cue_udev,
