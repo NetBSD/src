@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.3 2000/07/01 17:33:55 bjh21 Exp $ */
+/* $NetBSD: softintr.c,v 1.4 2000/07/01 21:52:05 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: softintr.c,v 1.3 2000/07/01 17:33:55 bjh21 Exp $");
+__RCSID("$NetBSD: softintr.c,v 1.4 2000/07/01 21:52:05 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -160,6 +160,29 @@ dosoftclock(void *arg)
 	softclock();
 }
 
+/*
+ * XXX The following includes are to avoid implicit function declarations in
+ * netisr_dispatch.h.
+ */
+
+#include <sys/mbuf.h>		/* needed by in.h */
+#include <sys/socket.h>		/* needed by if.h */
+#include <net/if.h>		/* needed by if_inarp.h */
+#include <netinet/in.h>		/* needed by if_inarp.h */
+#include <netinet/if_inarp.h>	/* for arpintr */
+#include <netinet/ip_var.h>	/* for ipintr */
+#include <netinet/ip6.h>	/* needed by ip6_var.h> */
+#include <netinet6/ip6_var.h>	/* for ip6intr */
+#include <netatalk/at_extern.h>	/* for atintr */
+#include <netns/ns_var.h>	/* for nsintr */
+#include <netiso/iso.h>		/* needed by clnp.h */
+#include <netiso/clnp.h>	/* for clnlintr */
+#include <netccitt/x25.h>	/* needed by pk_extern.h */
+#include <netccitt/pk.h>	/* needed by pk_extern.h */
+#include <netccitt/pk_extern.h>	/* for ccittintr */
+#include <netnatm/natm.h>	/* for natmintr */
+#include <net/ppp_defs.h>	/* needed by if_ppp.h */
+#include <net/if_ppp.h>		/* for pppintr */
 
 static void
 dosoftnet(void *arg)
