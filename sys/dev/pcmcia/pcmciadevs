@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.40 1999/07/22 20:56:38 hwr Exp $
+$NetBSD: pcmciadevs,v 1.41 1999/08/06 06:39:29 cgd Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
 product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry 
 product IBM PORTABLE_CDROM_DRIVE 0x002d PCMCIA Portable CD-ROM Drive
+product IBM ETHERJET_PCCARD	0x003f IBM EtherJet Ethernet PC Card
 
 /* I-O DATA */
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
