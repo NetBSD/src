@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.57 1999/11/24 23:14:39 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.58 1999/12/06 21:07:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ usbd_find_idesc(cd, ifaceidx, altidx)
 				return (d);
 		}
 	}
-	return (0);
+	return (NULL);
 }
 
 usb_endpoint_descriptor_t *
@@ -413,9 +413,9 @@ usbd_find_edesc(cd, ifaceidx, altidx, endptidx)
 
 	d = usbd_find_idesc(cd, ifaceidx, altidx);
 	if (d == NULL)
-		return (0);
+		return (NULL);
 	if (endptidx >= d->bNumEndpoints) /* quick exit */
-		return (0);
+		return (NULL);
 
 	curidx = -1;
 	for (p = (char *)d + d->bLength; p < end; ) {
@@ -424,14 +424,14 @@ usbd_find_edesc(cd, ifaceidx, altidx, endptidx)
 			break;
 		p += e->bLength;
 		if (p <= end && e->bDescriptorType == UDESC_INTERFACE)
-			return (0);
+			return (NULL);
 		if (p <= end && e->bDescriptorType == UDESC_ENDPOINT) {
 			curidx++;
 			if (curidx == endptidx)
 				return (e);
 		}
 	}
-	return (0);
+	return (NULL);
 }
 
 usbd_status
@@ -457,11 +457,11 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	if (nendpt != 0) {
 		ifc->endpoints = malloc(nendpt * sizeof(struct usbd_endpoint),
 					M_USB, M_NOWAIT);
-		if (ifc->endpoints == 0)
+		if (ifc->endpoints == NULL)
 			return (USBD_NOMEM);
 	} else
-		ifc->endpoints = 0;
-	ifc->priv = 0;
+		ifc->endpoints = NULL;
+	ifc->priv = NULL;
 	p = (char *)ifc->idesc + ifc->idesc->bLength;
 	end = (char *)dev->cdesc + UGETW(dev->cdesc->wTotalLength);
 #define ed ((usb_endpoint_descriptor_t *)p)
@@ -640,7 +640,7 @@ usbd_set_config_index(dev, index, msg)
 	nifc = cdp->bNumInterface;
 	dev->ifaces = malloc(nifc * sizeof(struct usbd_interface), 
 			     M_USB, M_NOWAIT);
-	if (dev->ifaces == 0) {
+	if (dev->ifaces == NULL) {
 		err = USBD_NOMEM;
 		goto bad;
 	}

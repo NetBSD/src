@@ -48,3 +48,4 @@ Document device driver API.
 
 Document HC driver API.
 
+Handle CLEAR_ENPOINT_STALL centrally.
