@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.4 1997/01/09 14:39:12 tls Exp $	*/
+/*	$NetBSD: renice.c,v 1.5 1997/10/19 14:01:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -33,30 +33,37 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-static char rcsid[] = "$NetBSD: renice.c,v 1.4 1997/01/09 14:39:12 tls Exp $";
+__RCSID("$NetBSD: renice.c,v 1.5 1997/10/19 14:01:38 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include <stdio.h>
+#include <err.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int	donice __P((int, int, int));
+int	main __P((int, char **));
 
 /*
  * Change the priority (nice) of processes
  * or groups of processes which are already
  * running.
  */
+int
 main(argc, argv)
+	int argc;
 	char **argv;
 {
 	int which = PRIO_PROCESS;
@@ -91,16 +98,14 @@ main(argc, argv)
 			register struct passwd *pwd = getpwnam(*argv);
 			
 			if (pwd == NULL) {
-				fprintf(stderr, "renice: %s: unknown user\n",
-					*argv);
+				warnx("%s: unknown user", *argv);
 				continue;
 			}
 			who = pwd->pw_uid;
 		} else {
 			who = atoi(*argv);
 			if (who < 0) {
-				fprintf(stderr, "renice: %s: bad value\n",
-					*argv);
+				warnx("%s: bad value", *argv);
 				continue;
 			}
 		}
@@ -109,6 +114,7 @@ main(argc, argv)
 	exit(errs != 0);
 }
 
+int
 donice(which, who, prio)
 	int which, who, prio;
 {
@@ -117,13 +123,11 @@ donice(which, who, prio)
 
 	errno = 0, oldprio = getpriority(which, who);
 	if (oldprio == -1 && errno) {
-		fprintf(stderr, "renice: %d: ", who);
-		perror("getpriority");
+		warn("%d: getpriority", who);
 		return (1);
 	}
 	if (setpriority(which, who, prio) < 0) {
-		fprintf(stderr, "renice: %d: ", who);
-		perror("setpriority");
+		warn("%d: setpriority", who);
 		return (1);
 	}
 	printf("%d: old priority %d, new priority %d\n", who, oldprio, prio);
