@@ -1238,6 +1238,23 @@ soft_df_operand (op, mode)
      }
  }
  
+ /* This works around a bug in reload.
+
+    Reload will attempt to combine PLUS operators.  If this causes a bad insn
+    such as (PLUS (PLUS (SMIN ...) ...) ...) to be created, it will later
+    spill the SMIN into a separate insn.  However, when it does this it will
+    fail to add the required clobber, and the new insn will be unrecognizable.
+
+    To avoid this, we prevent the creation of a (PLUS (SMIN ...) ...) insn.  */
+
+ int
+ shiftable_operator_not_plus (x, mode)
+      rtx x;
+      enum machine_mode mode;
+ {
+   return shiftable_operator (x, mode) && GET_CODE (x) != PLUS;
+ }
+
  /* Return TRUE for shift operators. */
  
  int

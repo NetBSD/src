@@ -1374,6 +1374,7 @@ extern int arm_compare_fp;
   {"fpu_rhs_operand", {SUBREG, REG, CONST_DOUBLE}},			\
   {"arm_not_operand", {SUBREG, REG, CONST_INT}},			\
   {"shiftable_operator", {PLUS, MINUS, AND, IOR, XOR}},			\
+  {"shiftable_operator_not_plus", {MINUS, AND, IOR, XOR}},		\
   {"minmax_operator", {SMIN, SMAX, UMIN, UMAX}},			\
   {"shift_operator", {ASHIFT, ASHIFTRT, LSHIFTRT, ROTATERT, MULT}},	\
   {"di_operand", {SUBREG, REG, CONST_INT, CONST_DOUBLE, MEM}},		\
