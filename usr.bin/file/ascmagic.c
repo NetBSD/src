@@ -36,7 +36,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: ascmagic.c,v 1.6 1995/04/28 19:23:43 christos Exp $";
+	"@(#)$Id: ascmagic.c,v 1.7 1995/04/30 19:39:37 christos Exp $";
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
@@ -47,7 +47,7 @@ ascmagic(buf, nbytes)
 unsigned char *buf;
 int nbytes;	/* size actually read */
 {
-	int i, isblock, has_escapes = 0;
+	int i, has_escapes = 0;
 	unsigned char *s;
 	char nbuf[HOWMANY+1];	/* one extra for terminating '\0' */
 	char *token;

@@ -34,7 +34,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: softmagic.c,v 1.7 1995/04/28 19:24:04 christos Exp $";
+	"@(#)$Id: softmagic.c,v 1.8 1995/04/30 19:39:41 christos Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
@@ -273,7 +273,7 @@ long offset;
 char *str;
 int len;
 {
-	(void) fprintf(stderr, "mget @%d: ", offset);
+	(void) fprintf(stderr, "mget @%ld: ", offset);
 	showstr(stderr, (char *) str, len);
 	(void) fputc('\n', stderr);
 	(void) fputc('\n', stderr);

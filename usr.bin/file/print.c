@@ -40,7 +40,7 @@
 
 #ifndef lint
 static char *moduleid =
-	"@(#)$Id: print.c,v 1.7 1995/04/28 19:24:01 christos Exp $";
+	"@(#)$Id: print.c,v 1.8 1995/04/30 19:39:40 christos Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -58,7 +58,7 @@ struct magic *m;
 		       m->offset);
 
 	if (m->flag & INDIR)
-		(void) fprintf(stderr, "(%s,%d),",
+		(void) fprintf(stderr, "(%s,%ld),",
 			       (m->in.type >= 0 && m->in.type < SZOF(typ)) ? 
 					typ[(unsigned char) m->in.type] :
 					"*bad*",
@@ -69,7 +69,7 @@ struct magic *m;
 				typ[(unsigned char) m->type] : 
 				"*bad*");
 	if (m->mask != ~0L)
-		(void) fprintf(stderr, " & %.8x", m->mask);
+		(void) fprintf(stderr, " & %.8lx", m->mask);
 
 	(void) fprintf(stderr, ",%c", m->reln);
 
@@ -82,7 +82,7 @@ struct magic *m;
 	    case LELONG:
 	    case BESHORT:
 	    case BELONG:
-		    (void) fprintf(stderr, "%d", m->value.l);
+		    (void) fprintf(stderr, "%ld", m->value.l);
 		    break;
 	    case STRING:
 		    showstr(stderr, m->value.s, -1);
