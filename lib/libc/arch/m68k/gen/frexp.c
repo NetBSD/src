@@ -1,8 +1,11 @@
-/*	$NetBSD: frexp.c,v 1.4 1999/03/10 08:14:45 mycroft Exp $	*/
-
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*	$NetBSD: frexp.c,v 1.5 1999/08/29 18:30:16 mycroft Exp $	*/
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,14 +34,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * from: Header: frexp.c,v 1.1 91/07/07 04:45:01 torek Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "from: @(#)frexp.c	5.1 (Berkeley) 3/6/91";
+static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: frexp.c,v 1.4 1999/03/10 08:14:45 mycroft Exp $");
+__RCSID("$NetBSD: frexp.c,v 1.5 1999/08/29 18:30:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +51,11 @@ __RCSID("$NetBSD: frexp.c,v 1.4 1999/03/10 08:14:45 mycroft Exp $");
 #include <machine/ieee.h>
 #include <math.h>
 
+/*
+ * Split the given value into a fraction in the range [0.5, 1.0) and
+ * an exponent, such that frac * (2^exp) == value.  If value is 0,
+ * return 0.
+ */
 double
 frexp(value, eptr)
 	double value;
@@ -53,13 +63,20 @@ frexp(value, eptr)
 {
 	union {
                 double v;
-                struct ieee_double s;
-        } u;
+		struct ieee_double s;
+	} u;
 
 	if (value) {
+		/*
+		 * Fractions in [0.5..1.0) have an exponent of 2^-1.
+		 * Leave Inf and NaN alone, however.
+		 * WHAT ABOUT DENORMS?
+		 */
 		u.v = value;
-		*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
-		u.s.dbl_exp = DBL_EXP_BIAS - 1;
+		if (u.s.dbl_exp != DBL_EXP_INFNAN) {
+			*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
+			u.s.dbl_exp = DBL_EXP_BIAS - 1;
+		}
 		return (u.v);
 	} else {
 		*eptr = 0;
