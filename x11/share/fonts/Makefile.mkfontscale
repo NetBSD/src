@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mkfontscale,v 1.3 2004/03/09 11:41:19 drochner Exp $
+#	$NetBSD: Makefile.mkfontscale,v 1.4 2004/03/09 16:30:55 drochner Exp $
 
 # Note: needs "install" run in ./encodings  first
 #
@@ -6,12 +6,7 @@
 MKFONTSCALEDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkfontscale && ${PRINTOBJDIR}
 MKFONTSCALE=	${MKFONTSCALEDIR}/mkfontscale
 
-#afterinstall:
-#	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/fonts.dir
-#	rm -f ${DESTDIR}${FILESDIR}/fonts.dir
-#	${MKFONTSCALE} -b -s -l ${DESTDIR}${FILESDIR}
-
-afterinstall: fonts.dir fonts.scale
+afterinstall: create.fonts.dir create.fonts.scale
 .if ${MKUNPRIVED} != "no"
 	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=root gname=wheel" \
 	    | ${METALOG.add}
@@ -23,14 +18,16 @@ afterinstall: fonts.dir fonts.scale
 	    ${DESTDIR}${X11FONTDIR}/encodings/encodings.dir \
 	    ${DESTDIR}${FILESDIR}/encodings.dir
 
-fonts.dir: fonts.scale
+create.fonts.dir: create.fonts.scale
 	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/fonts.dir
 	rm -f ${DESTDIR}${FILESDIR}/fonts.dir
 	${MKFONTSCALE} -b -s -l ${DESTDIR}${FILESDIR}
 
-fonts.scale:
+.if !target(create.fonts.scale)
+create.fonts.scale:
 	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/fonts.scale
 	rm -f ${DESTDIR}${FILESDIR}/fonts.scale
 	${MKFONTSCALE} ${DESTDIR}${FILESDIR}
+.endif
 
-.PHONY: fonts.dir fonts.scale
+.PHONY: create.fonts.dir create.fonts.scale
