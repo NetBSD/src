@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.7 1996/12/17 03:55:32 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp $";
+static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.7 1996/12/17 03:55:32 mrg Exp $";
 #endif
 
 /*
@@ -42,6 +42,9 @@ static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp 
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
+
+#include <sys/types.h>
+#include <sys/poll.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
@@ -234,8 +237,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	int outlen, inlen, fromlen, nets;
 	register int sock;
 	int on = 1;
-	fd_set mask;
-	fd_set readfds;
+	struct pollfd fd;
 	register int i;
 	bool_t done = FALSE;
 	register u_long xid;
@@ -246,6 +248,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	struct rmtcallres r;
 	struct rpc_msg msg;
 	struct timeval t; 
+	int milliseconds;
 	char outbuf[MAX_BROADCAST_SIZE], inbuf[UDPMSGSIZE];
 
 	/*
@@ -264,8 +267,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		goto done_broad;
 	}
 #endif /* def SO_BROADCAST */
-	FD_ZERO(&mask);
-	FD_SET(sock, &mask);
+	fd.fd = sock;
+	fd.events = fd.revents = POLLIN;
 	nets = getbroadcastnets(addrs, sock, inbuf);
 	memset(&baddr, 0, sizeof (baddr));
 	baddr.sin_len = sizeof(struct sockaddr_in);
@@ -318,12 +321,11 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 			goto done_broad;
 		}
 	recv_again:
+		milliseconds = t.tv_sec * 1000 + t.tv_usec / 1000;
 		msg.acpted_rply.ar_verf = _null_auth;
 		msg.acpted_rply.ar_results.where = (caddr_t)&r;
                 msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
-		readfds = mask;
-		switch (select(sock+1, &readfds, (int *)NULL, 
-			       (int *)NULL, &t)) {
+		switch (poll(&fd, 1, milliseconds)) {
 
 		case 0:  /* timed out */
 			stat = RPC_TIMEDOUT;
@@ -332,11 +334,11 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		case -1:  /* some kind of error */
 			if (errno == EINTR)
 				goto recv_again;
-			perror("Broadcast select problem");
+			perror("Broadcast poll problem");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 
-		}  /* end of select results switch */
+		}  /* end of poll results switch */
 	try_again:
 		fromlen = sizeof(struct sockaddr);
 		inlen = recvfrom(sock, inbuf, UDPMSGSIZE, 0,
