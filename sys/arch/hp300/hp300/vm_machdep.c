@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1995/04/12 08:19:02 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1995/04/22 20:26:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,12 +147,14 @@ cpu_coredump(p, vp, cred)
 {
 
 #ifdef COMPAT_HPUX
+	extern struct emul emul_hpux;
+
 	/*
 	 * If we loaded from an HP-UX format binary file we dump enough
 	 * of an HP-UX style user struct so that the HP-UX debuggers can
 	 * grok it.
 	 */
-	if (p->p_emul == EMUL_HPUX)
+	if (p->p_emul == &emul_hpux)
 		return (hpux_dumpu(vp, cred));
 #endif
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, USPACE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1995/03/24 15:01:31 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1995/04/22 20:24:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,8 +55,6 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
-
 #define	cpu_exec(p)			/* nothing XXX? */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_setstack(p, ap)		(p)->p_addr->u_pcb.pcb_usp

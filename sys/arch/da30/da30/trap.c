@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 1995/03/26 08:03:38 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 1995/04/22 20:25:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,9 +63,6 @@
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
-
-struct	sysent	sysent[];
-int	nsysent;
 
 char	*trap_type[] = {
 	"Bus error",
@@ -530,16 +527,8 @@ syscall(code, frame)
 	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
 
-	switch (p->p_emul) {
-	case EMUL_NETBSD:
-		nsys = nsysent;
-		callp = sysent;
-		break;
-#ifdef DIAGNOSTIC
-	default:
-		panic("invalid p_emul %d", p->p_emul);
-#endif
-	}
+	nsys = p->p_emul->e_nsysent;
+	callp = p->p_emul->e_sysent;
 
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 
@@ -563,7 +552,7 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent)
+		if (callp != p->p_emul->e_sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
@@ -572,9 +561,9 @@ syscall(code, frame)
 		break;
 	}
 	if (code < 0 || code >= nsys)
-		callp = &callp[0];		/* illegal */
+		callp += p->p_emul->e_nosys;		/* illegal */
 	else
-		callp = &callp[code];
+		callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize)
 		error = copyin(params, (caddr_t)args, argsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1995/03/26 08:04:05 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 1995/04/22 20:34:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,8 +63,6 @@
 
 
 
-struct	sysent sysent[];
-int	nsysent;
 unsigned rcr2();
 extern short cpl;
 
@@ -375,7 +373,7 @@ syscall(frame)
 	register struct sysent *callp;
 	register struct proc *p;
 	struct timeval sticks;
-	int error, opc;
+	int error, opc, nsys;
 	int args[8], rval[2];
 	int code;
 
@@ -392,6 +390,9 @@ syscall(frame)
 	code = frame.sf_reg[REG_R0];
 	p->p_md.md_regs = (int *) & (frame.sf_reg);
 	params = (caddr_t)frame.sf_usp + sizeof (int) ;
+
+	callp = p->p_emul->e_sysent;
+	nsys = p->p_emul->e_nsysent;
 
 /*printf ("Syscall ... pid=%d, pc=0x%x code=%d, psr=0x%x usp=0x%x params=0x%x\n",
 curproc->p_pid, frame.sf_pc, code, frame.sf_psr, frame.sf_usp, params); */
@@ -428,10 +429,10 @@ if (code == -1 && p->p_pid == 1) {
 #endif
 
 	/* Guard against bad sys call numbers! */
-        if (code < 0 || code >= nsysent)
-                callp = &sysent[0];             /* indir (illegal) */
+        if (code < 0 || code >= nsys)
+                callp += p->p_emul->e_nosys;	/* indir (illegal) */
         else
-                callp = &sysent[code];
+                callp += code;
 
 	if ((i = callp->sy_argsize) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {

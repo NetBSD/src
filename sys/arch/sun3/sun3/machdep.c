@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1995/04/13 22:05:41 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1995/04/22 20:28:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -78,6 +78,7 @@
 #endif
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
+extern struct emul emul_hpux;
 #endif
 
 #include <machine/cpu.h>
@@ -118,8 +119,7 @@ int fpu_type;
 int	safepri = PSL_LOWIPL;
 
 #ifdef COMPAT_SUNOS
-void sun_sendsig();
-static void hack_sun_reboot();	/* XXX - Temporary hack... */
+extern void hack_sun_reboot();	/* XXX - Temporary hack... */
 #endif
 
 /*
@@ -467,15 +467,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack, retval)
 	register struct proc *p;
-	u_long entry;
+	struct exec_package *pack;
 	u_long stack;
-	int retval[2];
+	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
-	frame->f_pc = entry & ~1;
+	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
@@ -516,7 +516,7 @@ setregs(p, entry, stack, retval)
 	{
 		extern short sigcodetrap[];
 
-		if ((p->p_pptr->p_emul == EMUL_HPUX) &&
+		if ((p->p_pptr->p_emul == &emul_hpux) &&
 		    (p->p_flag & P_TRACED)) {
 			p->p_md.md_flags |= MDP_HPUXTRACE;
 			*sigcodetrap = 0x4E42;
@@ -550,26 +550,6 @@ struct sigframe {
 	struct	sigstate sf_state;	/* state of the hardware */
 	struct	sigcontext sf_sc;	/* actual context */
 };
-
-#ifdef COMPAT_SUNOS
-/* sigh.. I guess it's too late to change now, but "our" sigcontext
-   is plain vax, not very 68000 (ap, for example..) */
-struct sun_sigcontext {
-	int 	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore */
-	int	sc_sp;			/* sp to restore */
-	int	sc_pc;			/* pc to restore */
-	int	sc_ps;			/* psl to restore */
-};
-struct sun_sigframe {
-	int	ssf_signum;		/* signo for handler */
-	int	ssf_code;		/* additional info for handler */
-	struct sun_sigcontext *ssf_scp;	/* context pointer for handler */
-	u_int	ssf_addr;		/* even more info for handler */
-	struct sun_sigcontext ssf_sc;	/* I don't know if that's what 
-					   comes here */
-};
-#endif	
 
 #ifdef COMPAT_HPUX
 struct	hpuxsigcontext {
@@ -630,28 +610,6 @@ sendsig(catcher, sig, mask, code)
 	ft = frame->f_format;
 	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
 
-#ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS)
-	  {
-	    /* if this is a hardware fault (ft >= FMT9), sun_sendsig
-	       can't currently handle it. Reset signal actions and
-	       have the process die unconditionally. */
-	    if (ft >= FMT9)
-	      {
-		SIGACTION(p, sig) = SIG_DFL;
-		mask = sigmask(sig);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, sig);
-		return;
-	      }
-
-	    /* else build the short SunOS frame instead */
-	    sun_sendsig (catcher, sig, mask, code);
-	    return;
-	  }
-#endif
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -660,7 +618,7 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 #ifdef COMPAT_HPUX
-	if (p->p_emul == EMUL_HPUX)
+	if (p->p_emul == &emul_hpux)
 		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
 	else
 #endif
@@ -769,7 +727,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
-	if (p->p_emul == EMUL_HPUX) {
+	if (p->p_emul == &emul_hpux) {
 		register struct hpuxsigframe *hkfp;
 
 		hkfp = (struct hpuxsigframe *)&kfp[1];
@@ -815,107 +773,6 @@ sendsig(catcher, sig, mask, code)
 	free((caddr_t)kfp, M_TEMP);
 }
 
-#ifdef COMPAT_SUNOS
-/* much simpler sendsig() for SunOS processes, as SunOS does the whole
-   context-saving in usermode. For now, no hardware information (ie.
-   frames for buserror etc) is saved. This could be fatal, so I take 
-   SIG_DFL for "dangerous" signals. */
-
-void
-sun_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-{
-	register struct proc *p = curproc;
-	register struct sun_sigframe *fp;
-	struct sun_sigframe kfp;
-	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
-	register short ft;
-	int oonstack, fsize;
-
-	frame = (struct frame *)p->p_md.md_regs;
-	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
-	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
-	 */
-	fsize = sizeof(struct sun_sigframe);
-	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_base +
-					 ps->ps_sigstk.ss_size - fsize);
-		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
-	} else
-		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-		(void)grow(p, (unsigned)fp);
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sun_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->ssf_sc, ft);
-#endif
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sun_sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	kfp.ssf_signum = sig;
-	kfp.ssf_code = code;
-	kfp.ssf_scp = &fp->ssf_sc;
-	kfp.ssf_addr = ~0;		/* means: not computable */
-
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	kfp.ssf_sc.sc_onstack = oonstack;
-	kfp.ssf_sc.sc_mask = mask;
-	kfp.ssf_sc.sc_sp = frame->f_regs[SP];
-	kfp.ssf_sc.sc_pc = frame->f_pc;
-	kfp.ssf_sc.sc_ps = frame->f_sr;
-	if (copyout((caddr_t)&kfp, (caddr_t)fp, fsize))
-	    panic("sendsig: copying out signal context\n");
-	frame->f_regs[SP] = (int)fp;
-
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sun_sendsig(%d): sig %d scp %x sc_sp %x\n",
-		       p->p_pid, sig, kfp.ssf_sc.sc_sp);
-#endif
-
-	/* have the user-level trampoline code sort out what registers it
-	   has to preserve. */
-	frame->f_pc = (u_int) catcher;
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sun_sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
-#endif
-}
-
-#endif	/* COMPAT_SUNOS */
-
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -951,7 +808,7 @@ sigreturn(p, uap, retval)
 	 * Grab context as an HP-UX style context and determine if it
 	 * was one that we contructed in sendsig.
 	 */
-	if (p->p_emul == EMUL_HPUX) {
+	if (p->p_emul == &emul_hpux) {
 		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *)scp;
 		struct hpuxsigcontext htsigc;
 
@@ -990,33 +847,6 @@ sigreturn(p, uap, retval)
 		tsigc.sc_pc = hscp->hsc_pc;
 	} else
 #endif
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-#ifdef	COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS) {
-	    struct sunos_sigcontext {
-		int ssc_onstack;
-		int ssc_mask;
-		int ssc_sp;
-		int ssc_pc;
-		int ssc_ps;
-	    } *sscp, stsigc;
-
-	    sscp = (struct sunos_sigcontext *) scp;
-	    if (useracc((caddr_t)sscp, sizeof (*sscp), B_WRITE) == 0 ||
-		copyin((caddr_t)sscp, (caddr_t)&stsigc, sizeof stsigc))
-		    return (EINVAL);
-	    sscp = &stsigc;
-	    tsigc.sc_onstack = sscp->ssc_onstack;
-	    tsigc.sc_mask = sscp->ssc_mask;
-	    tsigc.sc_sp = sscp->ssc_sp;
-	    tsigc.sc_ps = sscp->ssc_ps;
-	    tsigc.sc_pc = sscp->ssc_pc;
-	}
-	else
-#endif
 
 	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
@@ -1034,17 +864,9 @@ sigreturn(p, uap, retval)
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
-#ifdef COMPAT_SUNOS
-	if (p->p_emul != EMUL_SUNOS)
-#endif
-	    frame->f_regs[A6] = scp->sc_fp;
+	frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
-
-#ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS)
-		return EJUSTRETURN;
-#endif
 
 	/*
 	 * Grab pointer to hardware state information.
@@ -1243,76 +1065,6 @@ void boot(howto)
 {
 	(void) reboot2(howto, NULL);
 }
-
-#ifdef	COMPAT_SUNOS
-/*
- * SunOS reboot system call (for compatibility).
- * Sun lets you pass in a boot string which the PROM
- * saves and provides to the next boot program.
- * XXX - Stuff this into sunos_sysent at boot time?
- */
-static struct sun_howto_conv {
-	int sun_howto;
-	int bsd_howto;
-} sun_howto_conv[] = {
-	0x001,	RB_ASKNAME,
-	0x002,	RB_SINGLE,
-	0x004,	RB_NOSYNC,
-	0x008,	RB_HALT,
-	0x080,	RB_DUMP,
-};
-struct sun_reboot_args {
-	int howto;
-	char *bootstr;
-};
-int sun_reboot(p, uap, retval)
-	struct proc *p;
-	struct sun_reboot_args *uap;
-	int *retval;
-{
-	struct sun_howto_conv *convp;
-	int error, bsd_howto, sun_howto;
-	char bs[128];
-	char *bsd_bootstr = NULL;
-
-	if (error = suser(p->p_ucred, &p->p_acflag))
-		return (error);
-
-	/*
-	 * Convert howto bits to BSD format.
-	 */
-	sun_howto = uap->howto;
-	bsd_howto = 0;
-	convp = sun_howto_conv;
-	while (convp->sun_howto) {
-		if (sun_howto &  convp->sun_howto)
-			bsd_howto |= convp->bsd_howto;
-		convp++;
-	}
-
-	/*
-	 * Sun RB_STRING (Get user supplied bootstring.)
-	 */
-	bsd_bootstr = NULL;
-	if (sun_howto & 0x200) {
-		error = copyinstr(uap->bootstr, bs, sizeof(bs), 0);
-		if (error) return error;
-		bsd_bootstr = bs;
-	}
-
-	return (reboot2(bsd_howto, bsd_bootstr));
-}
-/*
- * XXX - Temporary hack:  Install sun_reboot() syscall.
- * Fix compat/sunos/sun_sysent instead.
- */
-static void hack_sun_reboot()
-{
-	extern struct sysent sunos_sysent[];
-	sunos_sysent[55].sy_narg = 2;
-	sunos_sysent[55].sy_call = sun_reboot;
-}
-#endif	/* COMPAT_SUNOS */
 
 /*
  * These variables are needed by /sbin/savecore

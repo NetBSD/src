@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1995/04/22 10:00:50 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.42 1995/04/22 20:28:40 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,9 +322,9 @@ allocsys(v)
  */
 /* ARGSUSED */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack, retval)
 	struct proc *p;
-	u_long entry;
+	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
 {
@@ -353,7 +353,7 @@ setregs(p, entry, stack, retval)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_pc = entry & ~3;
+	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc = (entry+4) & ~3;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack;
@@ -517,6 +517,18 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig: about to return to catcher\n");
 #endif
 }
+
+#ifdef COMPAT_SUNOS
+sunos_sigreturn(p, uap, retval)
+	register struct proc *p;
+	struct sunos_sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
+{
+	return sigreturn(p, (struct sigreturn_args *) uap, retval);
+}
+#endif
 
 /*
  * System call to cleanup state after a signal

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1995/04/21 23:04:32 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 1995/04/22 20:28:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -789,9 +789,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Set registers on exec.
  * Clear all registers except sp, pc.
  */
-setregs(p, entry, stack, retval)
+void
+setregs(p, pack, stack, retval)
 	register struct proc *p;
-	u_long entry;
+	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
 {
@@ -799,7 +800,7 @@ setregs(p, entry, stack, retval)
 
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
 	p->p_md.md_regs[SP] = stack;
-	p->p_md.md_regs[PC] = entry & ~3;
+	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 1995/04/21 21:56:59 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.151 1995/04/22 20:26:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -463,6 +463,17 @@ vmtime(otime, olbolt, oicr)
 }
 #endif
 
+#ifdef COMPAT_IBCS2
+void
+ibcs2_sendsig(catcher, sig, mask, code)
+	sig_t catcher;
+	int sig, mask;
+	u_long code;
+{
+	sendsig(catcher, bsd2ibcs_sig(sig), mask, code);
+}
+#endif
+
 /*
  * Send an interrupt to process.
  *
@@ -489,26 +500,7 @@ sendsig(catcher, sig, mask, code)
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
-	switch (p->p_emul) {
-#ifdef COMPAT_IBCS2
-	case EMUL_IBCS2:
-		frame.sf_signum = bsd2ibcs_sig(sig);
-		break;
-#endif
-#ifdef COMPAT_SVR4
-	case EMUL_SVR4:
-		svr4_sendsig(catcher, sig, mask, code);
-		return;
-#endif
-#ifdef COMPAT_LINUX
-	case EMUL_LINUX:
-		linux_sendsig(catcher, sig, mask, code);
-		return;
-#endif
-	default:
-		frame.sf_signum = sig;
-		break;
-	}
+	frame.sf_signum = sig;
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
@@ -797,9 +789,9 @@ microtime(tvp)
  * Clear registers on exec
  */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack, retval)
 	struct proc *p;
-	u_long entry;
+	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
 {
@@ -807,7 +799,7 @@ setregs(p, entry, stack, retval)
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 	tf->tf_ebp = 0;	/* bottom of the fp chain */
-	tf->tf_eip = entry;
+	tf->tf_eip = pack->ep_entry;
 	tf->tf_esp = stack;
 	tf->tf_ss = _udatasel;
 	tf->tf_ds = _udatasel;

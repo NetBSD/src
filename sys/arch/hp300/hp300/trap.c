@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 1995/04/10 13:10:57 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 1995/04/22 20:25:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,9 +68,6 @@
 #ifdef COMPAT_HPUX
 #include <hp300/hpux/hpux.h>
 #endif
-
-struct	sysent	sysent[];
-int	nsysent;
 
 char	*trap_type[] = {
 	"Bus error",
@@ -226,6 +223,9 @@ trap(type, code, v, frame)
 	register int i;
 	u_int ucode;
 	u_quad_t sticks;
+#ifdef COMPAT_HPUX
+	extern struct emul emul_hpux;
+#endif
 
 	cnt.v_trap++;
 	p = curproc;
@@ -329,7 +329,7 @@ copyfault:
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
 #ifdef COMPAT_HPUX
-		if (p->p_emul == EMUL_HPUX) {
+		if (p->p_emul == &emul_hpux) {
 			ucode = HPUX_ILL_ILLINST_TRAP;
 			i = SIGILL;
 			break;
@@ -338,7 +338,7 @@ copyfault:
 #endif
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
 #ifdef COMPAT_HPUX
-		if (p->p_emul == EMUL_HPUX)
+		if (p->p_emul == &emul_hpux)
 			ucode = HPUX_ILL_PRIV_TRAP;
 		else
 #endif
@@ -348,7 +348,7 @@ copyfault:
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
 #ifdef COMPAT_HPUX
-		if (p->p_emul == EMUL_HPUX)
+		if (p->p_emul == &emul_hpux)
 			ucode = HPUX_FPE_INTDIV_TRAP;
 		else
 #endif
@@ -358,7 +358,7 @@ copyfault:
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
 #ifdef COMPAT_HPUX
-		if (p->p_emul == EMUL_HPUX) {
+		if (p->p_emul == &emul_hpux) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
 			ucode = HPUX_ILL_CHK_TRAP;
@@ -371,7 +371,7 @@ copyfault:
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
 #ifdef COMPAT_HPUX
-		if (p->p_emul == EMUL_HPUX) {
+		if (p->p_emul == &emul_hpux) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
 			ucode = HPUX_ILL_TRAPV_TRAP;
@@ -898,9 +898,8 @@ syscall(code, frame)
 	size_t argsize;
 	register_t args[8], rval[2];
 	u_quad_t sticks;
-#ifdef COMPAT_HPUX
-	extern struct sysent hpux_sysent[];
-	extern int hpux_nsysent;
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
 #endif
 
 	cnt.v_syscall++;
@@ -911,16 +910,11 @@ syscall(code, frame)
 	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
 
-	switch (p->p_emul) {
-	case EMUL_NETBSD:
-		nsys = nsysent;
-		callp = sysent;
-		break;
-#ifdef COMPAT_SUNOS
-	case EMUL_SUNOS:
-		nsys = nsunos_sysent;
-		callp = sunos_sysent;
+	nsys = p->p_emul->e_nsysent;
+	callp = p->p_emul->e_sysent;
 
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == &emul_sunos) {
 		/*
 		 * SunOS passes the syscall-number on the stack, whereas
 		 * BSD passes it in D0. So, we have to get the real "code"
@@ -946,19 +940,8 @@ syscall(code, frame)
 			p->p_md.md_flags |= MDP_STACKADJ;
 		} else
 			p->p_md.md_flags &= ~MDP_STACKADJ;
-		break;
-#endif
-#ifdef COMPAT_HPUX
-	case EMUL_HPUX:
-		nsys = hpux_nsysent;
-		callp = hpux_sysent;
-		break;
-#endif
-#ifdef DIAGNOSTIC
-	default:
-		panic("invalid p_emul %d", p->p_emul);
-#endif
 	}
+#endif
 
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 
@@ -982,7 +965,7 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent)
+		if (callp != p->p_emul->e_sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
@@ -991,9 +974,9 @@ syscall(code, frame)
 		break;
 	}
 	if (code < 0 || code >= nsys)
-		callp = &callp[0];		/* illegal */
+		callp += p->p_emul->e_nosys;		/* illegal */
 	else
-		callp = &callp[code];
+		callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize)
 		error = copyin(params, (caddr_t)args, argsize);
@@ -1034,10 +1017,8 @@ syscall(code, frame)
 		break;
 	default:
 	bad:
-#ifdef COMPAT_HPUX
-		if (p->p_emul == EMUL_HPUX)
-			error = bsdtohpuxerrno(error);
-#endif
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		frame.f_regs[D0] = error;
 		frame.f_sr |= PSL_C;	/* carry bit */
 		break;

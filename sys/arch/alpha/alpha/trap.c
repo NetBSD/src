@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 1995/04/22 16:59:47 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 1995/04/22 20:24:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,12 +39,6 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
-
-#ifdef COMPAT_OSF1
-#include <compat/osf1/osf1_syscall.h>
-extern struct sysent osf1_sysent[];
-extern int nosf1_sysent;
-#endif
 
 struct proc *fpcurproc;		/* current user of the FPU */
 
@@ -339,6 +333,9 @@ syscall(code, framep)
 	u_int64_t rval[2];
 	u_int64_t args[10];					/* XXX */
 	u_int hidden, nargs;
+#ifdef COMPAT_OSF1
+	extern struct emul emul_osf1;
+#endif
 
 #if notdef				/* can't happen, ever. */
 	if (!USERMODE(framep->tf_ps))
@@ -350,31 +347,12 @@ syscall(code, framep)
 	opc = framep->tf_pc - 4;
 	sticks = p->p_sticks;
 
-	switch (p->p_emul) {
-	case EMUL_NETBSD:
-		callp = sysent;
-		numsys = nsysent;
+	callp = p->p_emul->e_sysent;
+	numsys = p->p_emul->e_nsysent;
 
-		switch(code) {
-		case SYS_syscall:
-		case SYS___syscall:
-			/*
-			 * syscall() and __syscall() are handled the same on
-			 * the alpha, as everything is 64-bit aligned, anyway.
-			 */
-			code = framep->tf_a0;
-			hidden = 1;
-			break;
-		default:
-			hidden = 0;
-		}
-		break;
 
 #ifdef COMPAT_OSF1
-	case EMUL_OSF1:
-		callp = osf1_sysent;
-		numsys = nosf1_sysent;
-
+	if (p->p_emul == &emul_osf1) 
 		switch (code) {
 		case OSF1_SYS_syscall:
 			/* OSF/1 syscall() */
@@ -384,29 +362,27 @@ syscall(code, framep)
 		default:
 			hidden = 0;
 		}
+	else
+#endif
+	switch(code) {
+	case SYS_syscall:
+	case SYS___syscall:
+		/*
+		 * syscall() and __syscall() are handled the same on
+		 * the alpha, as everything is 64-bit aligned, anyway.
+		 */
+		code = framep->tf_a0;
+		hidden = 1;
 		break;
-#endif
-
-#ifdef DIAGNOSTIC
 	default:
-		panic("syscall: bad syscall emulation type");
-#endif
+		hidden = 0;
 	}
 
 	error = 0;
 	if (code < numsys)
 		callp += code;
 	else
-		switch (p->p_emul) {
-		case EMUL_NETBSD:
-			callp += SYS_syscall;		/* -> nosys */
-			break;
-#ifdef COMPAT_OSF1
-		case EMUL_OSF1:
-			callp += OSF1_SYS_syscall;	/* -> nosys */
-			break;
-#endif
-		}
+		callp += p->p_emul->e_nosys;
 
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {

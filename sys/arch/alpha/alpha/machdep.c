@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1995/04/22 12:42:01 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1995/04/22 20:24:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -1114,9 +1114,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Set registers on exec.
  */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack, retval)
 	register struct proc *p;
-	u_long entry;
+	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
 {
@@ -1142,7 +1142,7 @@ setregs(p, entry, stack, retval)
 
 	tfp->tf_regs[FRAME_SP] = stack;	/* restored to usp in trap return */
 	tfp->tf_ps = PSL_USERSET;
-	tfp->tf_pc = entry & ~3;
+	tfp->tf_pc = pack->ep_entry & ~3;
 
 	p->p_md.md_flags & ~MDP_FPUSED;
 	if (fpcurproc == p)
@@ -1303,19 +1303,18 @@ microtime(tvp)
 
 #ifdef COMPAT_OSF1
 void
-cpu_exec_ecoff_setup(cmd, p, epp, sp)
-	int cmd;
+cpu_exec_ecoff_setregs(p, pack, stack, retval)
 	struct proc *p;
-	struct exec_package *epp;
-	void *sp;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
 {
 	struct ecoff_aouthdr *eap;
 
-	if (cmd != EXEC_SETUP_FINISH)
-		return;
+	setregs(p, pack, stack, retval);
 
 	eap = (struct ecoff_aouthdr *)
-	    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
+	    ((caddr_t)pack->ep_hdr + sizeof(struct ecoff_filehdr));
 	p->p_md.md_tf->tf_gp = eap->ea_gp_value;
 }
 
@@ -1333,14 +1332,20 @@ cpu_exec_ecoff_hook(p, epp, eap)
 	struct ecoff_aouthdr *eap;
 {
 	struct ecoff_filehdr *efp = epp->ep_hdr;
+	extern struct emul emul_netbsd;
+#ifdef COMPAT_OSF1
+	extern struct emul emul_osf1;
+#endif
 
 	switch (efp->ef_magic) {
+#ifdef COMPAT_OSF1
 	case ECOFF_MAGIC_ALPHA:
-		epp->ep_emul = EMUL_OSF1;
+		epp->ep_emul = &emul_osf1;
 		break;
+#endif
 
 	case ECOFF_MAGIC_NETBSD_ALPHA:
-		epp->ep_emul = EMUL_NETBSD;
+		epp->ep_emul = &emul_netbsd;
 		break;
 
 #ifdef DIAGNOSTIC
@@ -1348,7 +1353,6 @@ cpu_exec_ecoff_hook(p, epp, eap)
 		panic("cpu_exec_ecoff_hook: can't get here from there.");
 #endif
 	}
-	epp->ep_setup = cpu_exec_ecoff_setup;
 	return 0;
 }
 #endif

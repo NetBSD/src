@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.28 1995/04/13 21:49:02 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.29 1995/04/22 20:28:48 christos Exp $
 
 #
 # sun3-specific configuration info
@@ -151,6 +151,7 @@ file	compat/sunos/sunos_init_sysent.c	compat_sunos
 file	compat/sunos/sunos_ioctl.c	compat_sunos
 file	compat/sunos/sunos_misc.c	compat_sunos
 #file	compat/sunos/sunos_syscalls.c	compat_sunos
+file	arch/sun3/sun3/sunos_machdep.c	compat_sunos
 
 # Major numbers for root/swap device configuration
 major	{sd=7}	# SCSI disk

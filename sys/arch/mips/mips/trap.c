@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1995/03/26 08:04:12 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 1995/04/22 20:28:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -179,54 +179,6 @@ extern u_long kn03_tc3_imask;
 int (*pmax_hardware_intr)() = (int (*)())0;
 extern volatile struct chiptime *Mach_clock_addr;
 
-#ifdef COMPAT_ULTRIX
-extern struct sysent ultrix_sysent[];
-extern int nultrix_sysent;
-extern char *ultrix_syscallnames[];
-#endif
-
-#if defined(COMPAT_ULTRIX) && defined(SYSCALL_DEBUG)
-int ultrix_scdebug = 1;
-
-void
-ultrix_scdebug_call(p, code, narg, args)
-	struct proc *p;
-	int code, narg, *args;
-{
-	int i;
-
-	if (!ultrix_scdebug)
-		return;
-
-	printf("proc %d: ultrix syscall ", p->p_pid);
-	if (code < 0 || code >= nultrix_sysent) {
-		printf("OUT OF RANGE (%d)", code);
-		code = 0;
-	} else
-		printf("%d", code);
-	printf(" called: %s(", ultrix_syscallnames[code]);
-	for (i = 0; i < narg; i++)
-		printf("0x%x, ", args[i]);
-	printf(")\n");
-}
-
-void
-ultrix_scdebug_ret(p, code, error, retval)
-	struct proc *p;
-	int code, error, retval;
-{
-	if (!ultrix_scdebug)
-		return;
-
-	printf("proc %d: ultrix syscall ", p->p_pid);
-	if (code < 0 || code >= nultrix_sysent) {
-		printf("OUT OF RANGE (%d)", code);
-		code = 0;
-	} else
-		printf("%d", code);
-	printf(" return: error = %d, retval = %d\n", error, retval);
-}
-#endif
 /*
  * Handle an exception.
  * Called from MachKernGenException() or MachUserGenException()
@@ -449,8 +401,6 @@ trap(statusReg, causeReg, vadr, pc, args)
 			int i[8];
 		} args;
 		int rval[2];
-		struct sysent *systab;
-		extern int nsysent;
 
 		cnt.v_syscall++;
 		/* compute next PC after syscall instruction */
@@ -458,18 +408,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[PC] = MachEmulateBranch(locr0, pc, 0, 0);
 		else
 			locr0[PC] += 4;
-		switch (p->p_emul) {
-		case EMUL_NETBSD:
-			systab = sysent;
-			numsys = nsysent;
-			break;
-#ifdef COMPAT_ULTRIX
-		case EMUL_ULTRIX:
-			systab = ultrix_sysent;
-			numsys = nultrix_sysent;
-			break;
-#endif
-		}
+		callp = p->p_emul->e_sysent;
+		numsys = p->p_emul->e_nsysent;
 		code = locr0[V0];
 		switch (code) {
 		case SYS_syscall:
@@ -478,9 +418,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 			 */
 			code = locr0[A0];
 			if (code >= numsys)
-				callp = &systab[SYS_syscall]; /* (illegal) */
+				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
-				callp = &systab[code];
+				callp += code;
 			i = callp->sy_argsize / sizeof(int);
 			args.i[0] = locr0[A1];
 			args.i[1] = locr0[A2];
@@ -493,17 +433,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 				if (i) {
 					locr0[V0] = i;
 					locr0[A3] = 1;
-#if defined(SYSCALL_DEBUG) && defined(COMPAT_ULTRIX)
-					if (p->p_emul == EMUL_ULTRIX)
-						ultrix_scdebug_call(p,
-						        code, callp->sy_narg,
-							args.i);
-#endif
 #ifdef SYSCALL_DEBUG
-					if (p->p_emul == EMUL_NETBSD)
-						scdebug_call(p,
-						        code, callp->sy_narg,
-							args.i);
+					scdebug_call(p, code, callp->sy_narg,
+						     args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -523,9 +455,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 			 */
 			code = locr0[A0 + _QUAD_LOWWORD];
 			if (code >= numsys)
-				callp = &systab[SYS_syscall]; /* (illegal) */
+				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
-				callp = &systab[code];
+				callp += code;
 			i = callp->sy_argsize / sizeof(int);
 			args.i[0] = locr0[A2];
 			args.i[1] = locr0[A3];
@@ -537,17 +469,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 				if (i) {
 					locr0[V0] = i;
 					locr0[A3] = 1;
-#if defined(SYSCALL_DEBUG) && defined(COMPAT_ULTRIX)
-					if (p->p_emul == EMUL_ULTRIX)
-						ultrix_scdebug_call(p,
-						        code, callp->sy_narg,
-							args.i);
-#endif
 #ifdef SYSCALL_DEBUG
-					if (p->p_emul == EMUL_NETBSD)
-						scdebug_call(p,
-						        code, callp->sy_narg,
-							args.i);
+					scdebug_call(p, code, callp->sy_narg,
+						     args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -562,9 +486,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 		default:
 			if (code >= numsys)
-				callp = &systab[SYS_syscall]; /* (illegal) */
+				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
-				callp = &systab[code];
+				callp += code;
 			i = callp->sy_narg;
 			args.i[0] = locr0[A0];
 			args.i[1] = locr0[A1];
@@ -578,17 +502,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 				if (i) {
 					locr0[V0] = i;
 					locr0[A3] = 1;
-#if defined(SYSCALL_DEBUG) && defined(COMPAT_ULTRIX)
-					if (p->p_emul == EMUL_ULTRIX)
-						ultrix_scdebug_call(p,
-						        code, callp->sy_narg,
-							args.i);
-#endif
 #ifdef SYSCALL_DEBUG
-					if (p->p_emul == EMUL_NETBSD)
-						scdebug_call(p,
-						        code, callp->sy_narg,
-							args.i);
+					scdebug_call(p, code, callp->sy_narg,
+						     args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -600,13 +516,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 				}
 			}
 		}
-#if defined(SYSCALL_DEBUG) && defined(COMPAT_ULTRIX)
-		if (p->p_emul == EMUL_ULTRIX)
-		        ultrix_scdebug_call(p, code, callp->sy_narg, args.i);
-#endif
 #ifdef SYSCALL_DEBUG
-		if (p->p_emul == EMUL_NETBSD)
-		        scdebug_call(p, code, callp->sy_narg, args.i);
+		scdebug_call(p, code, callp->sy_narg, args.i);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
@@ -660,13 +571,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[A3] = 1;
 		}
 	done:
-#if defined(COMPAT_ULTRIX) && defined(SYSCALL_DEBUG)
-		if (p->p_emul == EMUL_ULTRIX)
-	                ultrix_scdebug_ret(p, code, i, rval[0]);
-#endif
 #ifdef SYSCALL_DEBUG
-		if (p->p_emul == EMUL_NETBSD)
-	                scdebug_ret(p, code, i, rval[0]);
+		scdebug_ret(p, code, i, rval[0]);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1 1995/04/07 22:29:34 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.2 1995/04/22 20:26:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -68,8 +68,6 @@
  * I/O map permissions and V86 mode sometime.
  */
 
-extern int _udatasel, _ucodesel;
-
 /*
  * Send an interrupt to process.
  *
@@ -117,8 +115,8 @@ linux_sendsig(catcher, sig, mask, code)
 	 */
 	frame.ls_sc.lsc_mask   = mask;
 	frame.ls_sc.lsc_es     = tf->tf_es;
-	frame.ls_sc.lsc_fs     = _udatasel;
-	frame.ls_sc.lsc_gs     = _udatasel;
+	frame.ls_sc.lsc_fs     = LSEL(LUDATA_SEL, SEL_UPL);
+	frame.ls_sc.lsc_gs     = LSEL(LUDATA_SEL, SEL_UPL);
 	frame.ls_sc.lsc_ds     = tf->tf_ds;
 	frame.ls_sc.lsc_edi    = tf->tf_edi;
 	frame.ls_sc.lsc_esi    = tf->tf_esi;
@@ -151,10 +149,11 @@ linux_sendsig(catcher, sig, mask, code)
 	tf->tf_eip = (int)(((char *)PS_STRINGS) -
 	     (linux_esigcode - linux_sigcode));
 	tf->tf_eflags &= ~PSL_VM;
-	tf->tf_cs = _ucodesel;
-	tf->tf_ds = _udatasel;
-	tf->tf_es = _udatasel;
-	tf->tf_ss = _udatasel;
+	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
+
+	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 1995/03/29 07:39:04 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 1995/04/22 20:27:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,12 +65,8 @@
 #include <machine/reg.h>
 #include <machine/pte.h>
 
-struct	sysent	sysent[];
-int	nsysent;
 #ifdef COMPAT_SUNOS
-#include <compat/sunos/sunos_syscall.h>
-struct	sysent	sunos_sysent[];
-int	nsunos_sysent;
+extern struct emul emul_sunos;
 #endif
 
 char	*trap_type[] = {
@@ -560,7 +556,7 @@ trap(type, code, v, frame)
 		 * fpu operations.  So far, just ignore it, but
 		 * DONT trap on it.. 
 		 */
-		if (p->p_emul == EMUL_SUNOS) {
+		if (p->p_emul == &emul_sunos) {
 			userret(p, frame.f_pc, sticks); 
 			return;
 		}
@@ -672,16 +668,10 @@ syscall(code, frame)
 	p->p_md.md_regs = frame.f_regs;
 	opc = frame.f_pc;
 
-	switch (p->p_emul) {
-	case EMUL_NETBSD:
-		nsys = nsysent;
-		callp = sysent;
-		break;
+	nsys = p->p_emul->e_nsysent;
+	callp = p->p_emul->e_sysent;
 #ifdef COMPAT_SUNOS
-	case EMUL_SUNOS:
-		nsys = nsunos_sysent;
-		callp = sunos_sysent;
-
+	if (p->p_emul == &emul_sunos) {
 		/*
 		 * SunOS passes the syscall-number on the stack, whereas
 		 * BSD passes it in D0. So, we have to get the real "code"
@@ -707,14 +697,8 @@ syscall(code, frame)
 			p->p_md.md_flags |= MDP_STACKADJ;
 		} else
 			p->p_md.md_flags &= ~MDP_STACKADJ;
-		break;
-#endif
-#ifdef DIAGNOSTIC
-	default:
-		panic("invalid p_emul %d", p->p_emul);
-#endif
 	}
-
+#endif
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 
 	switch (code) {
@@ -737,7 +721,7 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent)
+		if (callp != p->p_emul->e_sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
@@ -746,9 +730,9 @@ syscall(code, frame)
 		break;
 	}
 	if (code < 0 || code >= nsys)
-		callp = &callp[0];		/* illegal */
+		callp += p->p_emul->e_nosys;		/* illegal */
 	else
-		callp = &callp[code];
+		callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize)
 		error = copyin(params, (caddr_t)args, argsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1995/04/10 13:09:26 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1995/04/22 20:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -387,14 +387,15 @@ again:
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack, retval)
 	register struct proc *p;
-	u_long entry, stack;
+	struct exec_package *pack;
+	u_long stack;
 	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
-	frame->f_pc = entry & ~1;
+	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
@@ -541,6 +542,8 @@ sendsig(catcher, sig, mask, code)
 	register short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
+#ifdef COMPAT_HPUX
+	extern struct emul emul_hpux;
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
@@ -553,7 +556,7 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 #ifdef COMPAT_HPUX
-	if (p->p_emul == EMUL_HPUX)
+	if (p->p_emul == &emul_hpux)
 		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
 	else
 #endif
