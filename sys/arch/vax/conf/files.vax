@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.94 2002/02/25 14:58:06 ad Exp $
+#	$NetBSD: files.vax,v 1.95 2002/02/25 17:11:18 ad Exp $
 #
 # new style config file for vax architecture
 #
@@ -150,6 +150,14 @@ attach	mem at xmi with mem_xmi
 
 attach	dz at vsbus with dz_vsbus
 file	arch/vax/vsa/dz_vsbus.c		dz_vsbus | smg
+
+device	lkkbd: wskbddev
+attach	lkkbd at dz with dzkbd
+file	dev/dec/dzkbd.c			dzkbd needs-flag
+
+device	lkms: wsmousedev
+attach	lkms at dz with dzms
+file	dev/dec/dzms.c			dzms needs-flag
 
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }
