@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.237 2001/04/21 16:27:10 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.238 2001/04/22 18:21:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2001/04/21 16:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2001/04/22 18:21:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ nobootinfo:
 	 * Init mapping for u page(s) for proc 0
 	 */
 	proc0.p_addr = proc0paddr =
-	    (struct user *)pmap_steal_memory(UPAGES * PAGE_SIZE, NULL, NULL);
+	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
 
 	/*
 	 * Allocate space for system data structures.  These data structures
@@ -638,7 +638,7 @@ nobootinfo:
 	 * virtual address space.
 	 */
 	size = (vsize_t)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("alpha_init: table size inconsistency");
 

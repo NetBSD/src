@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.22 2001/04/22 17:22:57 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.23 2001/04/22 18:21:49 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2001/04/22 17:22:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2001/04/22 18:21:49 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -236,7 +236,7 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	/* Set up the bootstrap pv_table */
 	pv_table_size = round_page(physmem * sizeof(struct pv_entry));
 	pv_table =
-	    (struct pv_entry *)pmap_steal_memory(pv_table_size, NULL, NULL);
+	    (struct pv_entry *)uvm_pageboot_alloc(pv_table_size);
 	bzero(pv_table, pv_table_size);
 
 	/* Set up the kernel's pmap */
