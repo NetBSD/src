@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.21 1999/06/06 03:29:14 thorpej Exp $	*/
+/*	$NetBSD: portmap.c,v 1.22 2000/01/23 15:54:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.21 1999/06/06 03:29:14 thorpej Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.22 2000/01/23 15:54:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,13 +338,18 @@ reg_service(rqstp, xprt)
 		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
 			svcerr_decode(xprt);
 		else {
-			if (verboselog)
-				logit(log_severity, svc_getcaller(xprt),
-				      rqstp->rq_proc, reg.pm_prog, "");
 			if (!insecure && !is_loopback(svc_getcaller(xprt))) {
+				if (verboselog)
+					logit(log_severity, svc_getcaller(xprt),
+					      rqstp->rq_proc, reg.pm_prog,
+					      " declined (non-loopback sender)");
 				ans = 0;
 				goto done;
 			}
+
+			if (verboselog)
+				logit(log_severity, svc_getcaller(xprt),
+				      rqstp->rq_proc, reg.pm_prog, "");
 
 			/*
 			 * check to see if already used
@@ -396,12 +401,17 @@ reg_service(rqstp, xprt)
 			svcerr_decode(xprt);
 		else {
 			ans = 0;
+			if (!insecure && !is_loopback(svc_getcaller(xprt))) {
+				if (verboselog)
+					logit(log_severity, svc_getcaller(xprt),
+					      rqstp->rq_proc, reg.pm_prog,
+					      " declined (non-loopback sender)");
+				goto done;
+			}
+
 			if (verboselog)
 				logit(log_severity, svc_getcaller(xprt),
 				      rqstp->rq_proc, reg.pm_prog, "");
-			if (!insecure && !is_loopback(svc_getcaller(xprt))) {
-				goto done;
-			}
 
 			for (prevpml = NULL, pml = pmaplist; pml != NULL; ) {
 				if ((pml->pml_map.pm_prog != reg.pm_prog) ||
