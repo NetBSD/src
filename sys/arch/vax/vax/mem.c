@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1996/04/08 18:32:48 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1997/11/02 14:25:21 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,7 @@
 
 #include <vm/vm.h>
 
-extern unsigned int vmmap, avail_end;
+extern unsigned int avail_end;
 caddr_t zeropage;
 
 int	mmopen __P((dev_t, int, int));
@@ -93,23 +93,11 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
+	register vm_offset_t v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	static int physlock;
 
-	if (minor(dev) == 0) {
-		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
-	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -125,18 +113,11 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			if (v < 0 || v >= avail_end) {
-				error = EFAULT;
-				goto unlock;
+				return (EFAULT);
 			}
 
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = uio->uio_offset & PAGE_MASK;
-			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + PAGE_SIZE);
+			c = min(iov->iov_len, MAXPHYS);
+			error = uiomove((caddr_t)v + KERNBASE, c, uio);
 			continue;
 /* minor device 1 is kernel memory */
 		case 1:
@@ -178,12 +159,6 @@ mmrw(dev, uio, flags)
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
-	}
-	if (minor(dev) == 0) {
-unlock:
-		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
-		physlock = 0;
 	}
 	return (error);
 }

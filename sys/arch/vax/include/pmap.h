@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.19 1997/07/06 22:38:29 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.20 1997/11/02 14:25:20 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -48,23 +48,16 @@
 
 #include <machine/mtpr.h>
 
-
-#define VAX_PAGE_SIZE	NBPG
-#define VAX_SEG_SIZE	NBSEG
-
 /*
- *  Pmap structure
- *
- * p0br == PR_P0BR in user struct, p0br is also == SBR in pmap_kernel()
- * p1br is the same for stack space, stack is base of alloced pte mem
+ * Pmap structure
+ *  pm_stack holds lowest allocated memory for the process stack.
+ *  pm_pcb is a pointer to the corresponding pcb.
  */
 
 typedef struct pmap {
 	vm_offset_t		 pm_stack; /* Base of alloced p1 pte space */
 	struct pcb		*pm_pcb; /* Pointer to PCB for this pmap */
 	int                      ref_count;   /* reference count        */
-	struct pmap_statistics   stats;       /* statistics             */
-	simple_lock_data_t       lock;        /* lock on pmap           */
 } *pmap_t;
 
 /*
@@ -74,14 +67,8 @@ typedef struct pmap {
 
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;/* if not NULL, pmap where mapping lies */
-	vm_offset_t	 pv_va;		/* virtual address for mapping */
-	int		 pv_flags;	/* flags */
+	struct pte	*pv_pte;	/* pte for this physical page */
 } *pv_entry_t;
-
-#define	PV_REF	0x00000001	/* Simulated phys ref bit */
-
-#define PHYS_TO_PV(phys_page) (&pv_table[((phys_page)>>PAGE_SHIFT)])
 
 /* ROUND_PAGE used before vm system is initialized */
 #define ROUND_PAGE(x)   (((uint)(x) + PAGE_SIZE-1)& ~(PAGE_SIZE - 1))
@@ -93,15 +80,10 @@ typedef struct pv_entry {
 	virtual_avail += (count) * NBPG;
 
 #define	MAPPHYS(ptr, count, perm)				\
-	pmap_map(virtual_avail, avail_start, avail_start +	\
-	    (count) * NBPG, perm);				\
-	(vm_offset_t)ptr = virtual_avail;			\
-	virtual_avail += (count) * NBPG;				\
+	(vm_offset_t)ptr = avail_start + KERNBASE;		\
 	avail_start += (count) * NBPG;
 
 #ifdef	_KERNEL
-#define pa_index(pa)	                atop(pa)
-#define pa_to_pvh(pa)	                (&pv_table[atop(pa)])
 
 extern	struct pmap kernel_pmap_store;
 
@@ -117,10 +99,21 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
 #define	pmap_pinit(pmap)	(pmap)->ref_count=1;
 #define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SHIFT)
+#define	pmap_is_referenced(phys)	(FALSE)
+#define	pmap_clear_reference(pa)	pmap_page_protect(pa, VM_PROT_NONE)
+#define pmap_change_wiring(pmap, v, w)  /* no need */
+#define	pmap_remove(pmap, start, slut)  pmap_protect(pmap, start, slut, 0)
+
+/* These can be done as efficient inline macros */
+#define pmap_copy_page(src, dst)				\
+	asm("addl3 $0x80000000,%0,r0;addl3 $0x80000000,%1,r1;	\
+	    movc3 $1024,(r0),(r1)"				\
+	    :: "r"(src),"r"(dst):"r0","r1","r2","r3","r4","r5");
+
+#define pmap_zero_page(phys)					\
+	asm("addl3 $0x80000000,%0,r0;movc5 $0,(r0),$0,$1024,(r0)" \
+	    :: "r"(phys): "r0","r1","r2","r3","r4","r5");
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));
-void	pmap_expandp0 __P((struct pmap *, int));
-void	pmap_expandp1 __P((struct pmap *));
-
 #endif PMAP_H
