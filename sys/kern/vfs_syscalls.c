@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.64 1996/02/07 16:55:56 jtc Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.65 1996/02/08 02:54:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1248,23 +1248,16 @@ sys_lstat(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
+	struct stat sb;
 	int error;
-	struct vnode *vp, *dvp;
-	struct stat sb, sb1;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | LOCKPARENT, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	vp = nd.ni_vp;
-	dvp = nd.ni_dvp;
-	if (dvp == vp)
-		vrele(dvp);
-	else
-		vput(dvp);
-	error = vn_stat(vp, &sb, p);
-	vput(vp);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
 	if (error)
 		return (error);
 	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
