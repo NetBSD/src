@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.24 2003/05/17 18:16:31 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.25 2003/09/06 12:56:43 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
@@ -177,11 +177,6 @@ main(int argc, char **argv)
 		if (log_upto >= 0)
 			setlogmask(LOG_UPTO(log_upto));
 	}
-
-#ifndef HAVE_ARC4RANDOM
-	/* random value initilization */
-	srandom((u_long)time(NULL));
-#endif
 
 	/* warn if accept_rtadv is down */
 	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
@@ -602,11 +597,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
-#ifndef HAVE_ARC4RANDOM
-		interval = random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
-#else
 		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
-#endif
 		ifinfo->timer.tv_sec = interval / MILLION;
 		ifinfo->timer.tv_usec = interval % MILLION;
 		break;
