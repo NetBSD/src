@@ -628,7 +628,7 @@ case "${target}" in
 	   target_configdirs="${target_configdirs} target-bsp target-cygmon"
     fi
     ;;
-  arm-*-netbsdelf*)
+  arm*-*-netbsdelf*)
     ;;
   arm-*-netbsd*) # (a.out)
     noconfigdirs="$noconfigdirs ld"
