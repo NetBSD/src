@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.87 2003/02/11 10:41:55 drochner Exp $
+# $NetBSD: obsolete.mi,v 1.88 2003/04/06 18:14:21 perry Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -722,7 +722,6 @@
 ./usr/share/man/cat3/circleq_next.0
 ./usr/share/man/cat3/circleq_prev.0
 ./usr/share/man/cat3/circleq_remove.0
-./usr/share/man/cat3/des.0
 ./usr/share/man/cat3/dh.0
 ./usr/share/man/cat3/dsa.0
 ./usr/share/man/cat3/gethostent.0
@@ -817,7 +816,6 @@
 ./usr/share/man/man3/circleq_next.3
 ./usr/share/man/man3/circleq_prev.3
 ./usr/share/man/man3/circleq_remove.3
-./usr/share/man/man3/des.3
 ./usr/share/man/man3/dh.3
 ./usr/share/man/man3/dsa.3
 ./usr/share/man/man3/gethostent.3
