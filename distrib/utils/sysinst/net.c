@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.52 1999/06/24 00:16:49 cgd Exp $	*/
+/*	$NetBSD: net.c,v 1.53 1999/07/03 09:02:23 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,6 +75,20 @@ static void write_etc_hosts(FILE *f);
  * The result is always a nul-terminated string even if it had to be
  * truncated to avoid overflowing the available space.
  *
+ * This url_encode() function does not operate on complete URLs, it
+ * operates on strings that make up parts of URLs.  For example, in a
+ * URL like "ftp://username:password@host/path", the username, password,
+ * host and path should each be encoded separately before they are
+ * joined together with the punctuation characters.
+ *
+ * In most ordinary use, the path portion of a URL does not start with
+ * a slash; the slash is a separator between the host portion and the
+ * path portion, and is dealt with by software outside the url_encode()
+ * function.  However, it is valid for url_encode() to be passed a
+ * string that does begin with a slash.  For example, the string might
+ * represent a password, or a path part of a URL that the user really
+ * does want to begin with a slash.
+ *
  * len is the length of the destination buffer.  The result will be
  * truncated if necessary to fit in the destination buffer.
  *
@@ -90,6 +104,14 @@ static void write_etc_hosts(FILE *f);
  *	"$-_.+!*'(),/"	As above, except '/' is not encoded
  *	"-_.+!,/"	As above, except shell special characters are encoded
  *
+ * encode_leading_slash is a flag that determines whether or not to
+ * encode a leading slash in a string.  If this flag is set, and if the
+ * first character in the src string is '/', then the leading slash will
+ * be encoded (as "%2F"), even if '/' is one of the characters in the
+ * safe_chars string.  Note that only the first character of the src
+ * string is affected by this flag, and that leading slashes are never
+ * deleted, but either retained unchanged or encoded.
+ *
  * Unsafe and reserved characters are defined in RFC 1738 section 2.2.
  * The most important parts are:
  *
@@ -102,10 +124,6 @@ static void write_etc_hosts(FILE *f);
  *      and reserved characters used for their reserved purposes may be
  *      used unencoded within a URL.
  *
- * The encoded URL _does_not_ start with a '/'.  A '/' is inserted
- * between the hostname and the pathname components when the complete
- * URL is constructed.
- *
  */
 
 #define RFC1738_SAFE				"$-_.+!*'(),"
@@ -117,21 +135,18 @@ url_encode(char *dst, const char *src, size_t len,
 	const char *safe_chars, int encode_leading_slash)
 {
 	char *p = dst;
-	const char *initialsrc = src;
-
-	/* Remove any initial '/'s if present */
-	while (*src == '/')
-		src++;
 
 	/*
 	 * If encoding of a leading slash was desired, and there was in
-	 * fact one or more leading shashes, encode one in the output string.
+	 * fact one or more leading slashes, encode one in the output string.
 	 */
-	if (encode_leading_slash && (src != initialsrc)) {
+	if (encode_leading_slash && *src == '/') {
 		if (len < 3)
 			goto done;
 		sprintf(p, "%%%02X", '/');
+		src++;
 		p += 3;
+		len -= 3;
 	}
 
 	while (--len > 0 && *src != '\0') {
