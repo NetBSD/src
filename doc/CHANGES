@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.393 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.394 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -164,3 +164,6 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	bpf(4): Convert to a cloning device [christos 20041129]
 	iteide(4): Add driver for the ITE 8212 IDE controller.
 		[grant 20041201]
+	lo(4): converted to a cloning device [peter 20041203]
+	ppp(4), sl(4), strip(4): converted to cloning devices
+		[christos 20041205]
