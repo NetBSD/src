@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2.8.13 2002/01/05 18:31:05 he Exp $
+.\"	$NetBSD: prep,v 1.2.8.14 2002/03/06 21:30:25 he Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -31,9 +31,8 @@ without booting or knowing how to use
 but depending on your model it may be almost as painful as learning a 
 little
 .Tn MacOS .
-If you 
-.Em really
-want to bypass it, you should mail port-macppc@netbsd.org for guidance.
+See the FAQ for more help:
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#macos-newbie
 .Pp
 It's done printing?  Fine, now get a dark writing implement.
 .Pp
@@ -134,6 +133,7 @@ web site at
 and search for
 .Sq firmware
 and install the most recent version for your model.
+You will need to run the FirmWare updater from MacOS 9.
 .Pp
 .(Note
 If you accidentally set the 
@@ -143,7 +143,7 @@ rewrite the BootROM with garbage, rendering your machine unbootable.  We
 recommend not doing this.
 .Note)
 .(Note
-The most recent BootROMs available (4.1.7 and 4.1.8) as of August 2001 are
+The most recent BootROMs available (4.1.7 and later) are
 known to have some problems.  
 Some PowerMacintosh users find that their third-party 
 RAM has been disabled.  See the discussion at
@@ -153,6 +153,11 @@ The PowerBook (FireWire) and PowerBook G4
 (Titanium) models with BootROM 4.1.8 are not supported in this release.  
 If your system has this BootROM, you must use a kernel from the -current
 branch.
+.Pp
+There are reports that FirmWare Update 4.1.9 on iMac (Summer 2000) will
+prevent the CD-ROM and the hard drive from operating together.  You may get
+.Pa "wdc0:0:1: lost interrupt"
+problems.
 .Note)
 .Pp
 .
@@ -160,17 +165,17 @@ branch.
 .
 (Open Firmware 3)
 .Pp
-Hold down a special key combination when your system boots.
+Hold down a special four-key combination when your system boots.
 .Pp
-After the chime starts, but before it stops, hold down the
+After the chime starts, but before it stops, hold down the four
 .Key COMMAND-OPTION-O-F
 keys (the
 .Key COMMAND
 key looks like a four-leaf clover or an open apple, and the
 .Key OPTION
-key may look like a two-way switch with four straight line segments).
-.Pp
-You should now see the Open Firmware command prompt on your screen:
+key may look like a two-way switch with four straight line segments or say 
+.Key ALT ) 
+until you see the Open Firmware command prompt on your screen:
 .Pp
 .(disp
 Apple PowerBook3,1 2.1f1 BootROM built on 01/29/00 at 22:38:07
@@ -186,7 +191,9 @@ To shut down, type "shut-down" and press return.
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
-.Dl 0 \*> Ic "setenv auto-boot? false
+.(disp
+.No 0 \*> Ic "setenv auto-boot? false
+.disp)
 .Pp
 Skip down to the section on
 .Sx Setting up Open Firmware 3 to boot NetBSD
@@ -206,107 +213,59 @@ You must first hook up a serial console
 .Sq Li ttya
 device in Open Firmware).
 .Pp
-Hold down a special key combination on the keyboard attached to
-the ADB port on your system (not the serial console or PS/2 port) when
+Hold down a special four-key combination on the keyboard attached to
+the ADB port on your system (not the serial console) when
 your system boots.
 .Pp
-After the chime starts, but before it stops, hold down the
+After the chime starts, but before it stops, hold down the four
 .Key COMMAND-OPTION-O-F
 keys (the
 .Key COMMAND
 key looks like a four-leaf clover or an open apple, and the
 .Key OPTION
-key may look like a two-way switch with four straight line segments).
+key may look like a two-way switch with four straight line segments or say
+.Key ALT ) 
+until you see some introductory text and the Open Firmware
+command prompt on your serial terminal:
 .Pp
-You should now see some introductory text and the Open Firmware command
-prompt on your terminal:
+.(disp
+.No 0 \*>
+.disp)
 .Pp
-.Dl 0 \*>
-.Pp
-Your screen will remain black.
+Your Apple Network Server's screen will remain black.
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
-.Dl 0 \*> Ic "setenv auto-boot? false
+.(disp
+.No 0 \*> Ic "setenv auto-boot? false
+.disp)
 .Pp
 Skip down to the section on
 .Sx Setting up pre-Open Firmware 3 to boot NetBSD
 since the next several pages are instructions for MacOS models.
 .Pp
 .
-.Ss2 Older Open Firmware System Preparation
-.
-(Open Firmware 1.0.5, Open Firmware 2.0.x, Open Firmware 2.4)
-.Pp
-These models are significantly trickier than the newer machines.
-.Pp
-All pre-Open Firmware 3 \*M systems have Open Firmware bugs. Luckily, Open 
-Firmware has a small
-Non-Volatile RAM variable (NVRAM) which is reserved for FORTH commands which
-will be run before booting an operating system. Apple has released a freeware
-.Tn MacOS
-tool called System Disk, which patches
-most of these bugs. We
-.Em strongly
-recommend that you use this tool to patch your Open Firmware,
-as several systems cannot boot without these patches.  If you read
-the Model Support page, you'd also know that some models are broken by
-or are unsupported by System Disk.
-.Pp
-If you have one of the following models, then skip down to the section on
-.Sx Getting to the Open Firmware Prompt (Harder method using MacOS)
-.br
-Apple Performa 4400, 5500, 6500, 54xx, 6400, and 6360, 
-.br
-Motorola Starmax 3000, 4000, 5000, and 5500, 
-.br
-APS Tech M*Power 604e/200,
-.br
-PowerComputing PowerBase,
-.br
-Umax Apus 2000, Apus 3000, C500, and C600
-.br
-Umax S900
-.Pp
-For every other model, download System Disk from Apple's site:
-.Lk ftp://ftp.apple.com/developer/macosxserver/utilities/SystemDisk2.3.1.smi.bin
-.Pp
-For a brief tutorial on how to use System Disk, see:
-.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/
-.Pp
-Make sure you click the
-.Dq Save
-button, or the patches will not be saved to NVRAM.
-.(Note
-NVRAM patches and Open Firmware settings will be erased if you
-.Sq "zap your PRAM"
-by holding down
-.Key COMMAND-OPTION-P-R
-keys during the boot chimes, or if you accidentally boot into 
-.Tn MacOS No Ns .
-.Note)
-.Pp
-.
 .Ss2 Getting to the Open Firmware Prompt on Older Models
 .
 (Open Firmware 1.0.5, Open Firmware 2.0.x, Open Firmware 2.4)
 .Pp
+These models are significantly trickier than the newer machines.
 Open Firmware has two variables,
 .Sq input-device
 and
 .Sq output-device No Ns ,
 which specify which devices to use for input and output.  
-.Pp
 All Open Firmware 1.0.5 and most Open Firmware 2.0.x systems will default 
 to using the 
 .Sq Modem
 serial port for the console instead of the ADB keyboard and the monitor
 attached to the on-board video.
+.Pp
 Unless you use a MacOS-based utility to set 
 these variables correctly, you 
 .Em will
-need to hook up a serial console temporarily to set them before you 
-can use your keyboard and screen.  Some models (such as the Performa 54xx,
+need to hook up a serial console temporarily to configure Open Firmware 
+to use your keyboard and screen.  Some models (such as the Performa 54xx,
 6360, 6400, and 6500) have the 
 .Sq Modem
 serial port covered with a piece of plastic since the internal modem
@@ -331,6 +290,14 @@ use a serial console, or they will be unable to boot
 at all.  All models can be set to use a serial console, if you desire
 to bypass the keyboard and screen.
 .Pp
+If, after re-reading the next several sections, you still need help
+figuring out your 
+.Sq input-device
+and
+.Sq output-device
+settings, see the FAQ:
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-input-output-devices
+.Pp
 If you need to use a serial console, you can use a normal 
 .Sq printer
 cable (mini-DIN 8 to mini-DIN 8) and a 
@@ -342,10 +309,52 @@ system to your
 .Nx*M
 system.
 .Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/comm/term/zterm-101.hqx
+.Pp
+See the NetBSD Serial Port Primer for additional help and references:
+.Lk http://www.netbsd.org/Documentation/Hardware/Misc/serial.html
+.
+.Ss2 Older Open Firmware System Preparation
+.
+(Open Firmware 1.0.5, Open Firmware 2.0.x, Open Firmware 2.4)
+.Pp
+All pre-Open Firmware 3 \*M systems have Open Firmware bugs. Luckily, Open 
+Firmware has a small
+Non-Volatile RAM variable (NVRAM) which is reserved for FORTH commands which
+will be run before booting an operating system. Apple has released a freeware
+.Tn MacOS
+tool called System Disk, which patches
+most of these bugs. We
+.Em strongly
+recommend that you use this tool to patch your Open Firmware,
+as several systems cannot boot without these patches.  Instructions for
+using System Disk are covered in the next section.
+.Pp
+Unfortunately, some models are broken by or are unsupported by System Disk.
+If you have one of the following models, then skip down to the section on
+.Sx Getting to the Open Firmware Prompt (Harder method using MacOS)
+.br
+Apple Performa 4400, 5500, 6500, 54xx, 6400, and 6360, 
+.br
+Motorola Starmax 3000, 4000, 5000, and 5500, 
+.br
+APS Tech M*Power 604e/200,
+.br
+PowerComputing PowerBase,
+.br
+Umax Apus 2000, Apus 3000, C500, and C600
+.br
+Umax S900
+.Pp
 .
 .Ss2 Getting to the Open Firmware Prompt (Recommended method using MacOS)
 .
 (Open Firmware 1.0.5, Open Firmware 2.0.x, Open Firmware 2.4)
+.Pp
+Download System Disk:
+.Lk ftp://ftp.apple.com/developer/macosxserver/utilities/SystemDisk2.3.1.smi.bin
+.Pp
+For a brief tutorial on how to use System Disk, see:
+.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/
 .Pp
 Launch the
 .Tn MacOS
@@ -360,6 +369,15 @@ and select
 Click the
 .Dq Save
 button and reboot your system.
+.Pp
+.(Note
+NVRAM patches and Open Firmware settings will be erased if you
+.Sq "zap your PRAM"
+by holding down
+.Key COMMAND-OPTION-P-R
+keys during the boot chimes, or if you accidentally boot into 
+.Tn MacOS No Ns .
+.Note)
 .Pp
 If your
 .Sq output-device
@@ -392,14 +410,18 @@ The
 .Dq "Stop Boot at Open Firmware prompt"
 setting is persistent.  It is equivalent to the Open Firmware command
 .Pp
-.Dl 0 \*> Ic "setenv auto-boot? false
+.(disp
+.No 0 \*> Ic "setenv auto-boot? false
+.disp)
 .Note)
 .(Note
 Unfortunately, there are a few models that are better off without the System
 Disk patches.  If you find that your machine doesn't boot, then try:
 .Pp
-.Dl 0 \*> Ic "setenv use-nvramrc? false"
-.Dl 0 \*> Ic "reset-all"
+.(disp
+.No 0 \*> Ic "setenv use-nvramrc? false"
+.No 0 \*> Ic "reset-all"
+.disp)
 .Note)
 .
 .Ss2 Getting to the Open Firmware Prompt (Harder method using MacOS)
@@ -420,7 +442,7 @@ BootVars tool.
 BootVars does
 .Em not
 apply the (possibly critical) NVRAM patches that System Disk does.
-Expect some devices to not work (such as hard drives and ethernet).
+Expect some devices to not work (such as booting from hard drives and CD-Rs).
 .Note)
 .Pp
 Look up the proper
@@ -442,9 +464,9 @@ variables.
 .Pp
 Launch the
 .Tn MacOS
-BootVars tool.  Click on the
+BootVars tool.  Uncheck the
 .Dq auto-boot?
-checkbox, then click on the
+checkbox, then check on the
 .Dq "All Variables"
 checkbox and type
 .Ic kbd
@@ -487,7 +509,9 @@ The
 setting is persistent.  Your system will always stop at the Open Firmware
 prompt.  It is equivalent to the Open Firmware command
 .Pp
-.Dl 0 \*> Ic "setenv auto-boot? false
+.(disp
+.No 0 \*> Ic "setenv auto-boot? false
+.disp)
 .Note)
 .
 .Ss2 Getting to the Open Firmware Prompt (Without using MacOS)
@@ -497,26 +521,27 @@ prompt.  It is equivalent to the Open Firmware command
 If you don't 
 have
 .Tn MacOS ,
-then you need to hold down a special key combination when your system boots.
-Do this on the keyboard attached to
-the ADB port on your system (not the serial console) when your system
-boots.
+then you need to hold down a special four-key combination when your system
+boots.  Do this on the keyboard attached to
+the ADB port on your system (not the serial console or PS/2 port) when
+your system boots.
 .(Note
 Your system will
 .Em not
 have the (possibly critical) NVRAM patches that System Disk applies.
-Expect some devices to not work (such as hard drives and ethernet).
+Expect some devices to not work (such as booting from hard drives and CD-Rs).
 .Note)
 .Pp
-After the chime starts, but before it stops, hold down the
+After the chime starts, but before it stops, hold down the four
 .Key COMMAND-OPTION-O-F
 keys (the
 .Key COMMAND
 key looks like a four-leaf clover or an open apple, and the
 .Key OPTION
-key may look like a two-way switch with four straight line segments).
-.Pp
-You should now see the Open Firmware command prompt on your screen:
+key may look like a two-way switch with four straight line segments or say
+.Key ALT ) 
+until you see the Open Firmware command prompt on
+your screen or serial console:
 .Pp
 .(disp
 Open Firmware, 1.0.5
@@ -536,7 +561,9 @@ Disk tool to set up Open Firmware. You must hook up a serial console
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
-.Dl 0 \*> Ic "setenv auto-boot? false
+.(disp
+.No 0 \*> Ic "setenv auto-boot? false
+.disp)
 .Pp
 To use your on-board video and keyboard, look up the proper
 .Sq output-device
@@ -552,9 +579,11 @@ with the correct
 .Sq output-device
 for your model):
 .Pp
-.Dl 0 \*> Ic "setenv output-device screen"
-.Dl 0 \*> Ic "setenv input-device kbd"
-.Dl 0 \*> Ic "reset-all"
+.(disp
+.No 0 \*> Ic "setenv output-device screen"
+.No 0 \*> Ic "setenv input-device kbd"
+.No 0 \*> Ic "reset-all"
+.disp)
 .Pp
 Now you should see the Open Firmware prompt on your screen.
 .Pp
@@ -571,10 +600,20 @@ your monitor will not sync. See
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, 
 Open Firmware 2.4)
 .Pp
+This section describes some steps you must take to prepare Open Firmware
+to boot
+.Nx .
+Additional resources are available in the FAQ regarding how to use
+the Open Firmware command environment, and the Open Firmware variables
+you may be using:
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-access
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-variables
+.Pp
 Double-check your Open Firmware version:
 .Pp
 .(disp
-.No 0 \*> Ic "dev /openprom .properties"
+.No 0 \*> Ic "dev /openprom"
+.No 0 \*> Ic ".properties"
 name                    openprom
 model                   Open Firmware, 1.0.5
 relative-addressing
@@ -589,18 +628,20 @@ can boot.  Do
 run these commands on Open Firmware 3 machines, as you may overwrite your
 firmware requiring a trip to Apple for repairs.
 .Pp
-.Dl 0 \*> Ic "setenv load-base 600000"
-.Dl 0 \*> Ic "setenv real-base F00000"
-.Dl 0 \*> Ic "reset-all"
+.(disp
+.No 0 \*> Ic "setenv load-base 600000"
+.No 0 \*> Ic "setenv real-base F00000"
+.No 0 \*> Ic "reset-all"
+.disp)
 .Pp
 The last command reboots your machine so that the
-.Li real-base
-setting takes effect.
+settings are stored.
 .Pp
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
 .(disp
-.No 0 \*> Ic "dev enet .properties"
+.No 0 \*> Ic "dev enet"
+.No 0 \*> Ic ".properties"
 [...]
 local-mac-address   CCCCCCCC CCCC
 [...]
@@ -654,10 +695,20 @@ environment variable to its default value (which prevents
 .
 (Open Firmware 3)
 .Pp
+This section describes some steps you must take to prepare Open Firmware
+to boot
+.Nx .
+Additional resources are available in the FAQ regarding how to use
+the Open Firmware command environment, and the Open Firmware variables
+you may be using:
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-access
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-variables
+.Pp
 Double-check your Open Firmware version:
 .Pp
 .(disp
-.No 0 \*> Ic "dev /openprom .properties"
+.No 0 \*> Ic "dev /openprom"
+.No 0 \*> Ic ".properties"
 name                    openprom
 device_type             BootROM
 model                   OpenFirmware 3
@@ -669,7 +720,8 @@ supports-bootinfo
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
 .(disp
-.No 0 \*> Ic "dev enet .properties"
+.No 0 \*> Ic "dev enet"
+.No 0 \*> Ic ".properties"
 [...]
 local-mac-address   CCCCCCCC CCCC
 [...]
@@ -707,7 +759,16 @@ output-device       screen              screen
 (All Open Firmware versions)
 .Pp
 Each version of Open Firmware is capable of booting from a variety of
-media (such as hard drives, CD-ROMs, and ethernet).  To boot the
+media (such as hard drives, floppy disks, CD-ROMs, and ethernet).  Open
+Firmware is able to boot files from a variety of filesystems (such as ISO9660,
+MS-DOS, and on some models HFS and HFS+).  Unfortunately, Open Firmware is
+.Em not
+able to use the
+.Nx
+filesystem (FFS), so we must put the bootloader in a location that Open
+Firmware is capable of using.  
+.Pp
+Therefore, to boot the 
 .Nx
 kernel, Open Firmware must first open a
 .Sq bootloader
@@ -735,9 +796,6 @@ instead of
 now.
 .Note)
 .Pp
-See the FAQ for a more thorough explanation:
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#boot-support
-.Pp
 The following bootable media are available for loading the bootloader
 .Pq Pa ofwboot No or Pa ofwboot.xcf 
 (see below for descriptions):
@@ -750,10 +808,9 @@ Partition zero
 .It
 Ethernet (netboot)
 .It
-ISO 9660 CD-ROM filesystem
+ISO9660 CD-ROM filesystem
 .It
-MS-DOS filesystem (not supported by
-.Nx No Ns )
+MS-DOS filesystem
 .bullet)
 .It
 .Em "Open Firmware 2.4"
@@ -763,12 +820,13 @@ Partition zero
 .It
 Ethernet (netboot)
 .It
-ISO 9660 CD-ROM filesystem
+ISO9660 CD-ROM filesystem
 .It
-HFS, HFS+, or Hybrid (ISO9660 and HFS) filesystem
+HFS or HFS+ filesystems
 .It
-MS-DOS filesystem (not supported by
-.Nx No Ns )
+Hybrid (both ISO9660 and HFS) filesystem
+.It
+MS-DOS filesystem
 .bullet)
 .It
 .Em "Open Firmware 3"
@@ -781,8 +839,7 @@ Ethernet (netboot)
 Partition zero (not supported by
 .Nx No Ns )
 .It
-MS-DOS filesystem (not supported by
-.Nx No Ns )
+MS-DOS filesystem
 .bullet)
 .bullet)
 .Pp
@@ -808,14 +865,21 @@ partition.
 Only on Open Firmware 2.4 or Open Firmware 3 systems.
 .
 .It
-.Em "ISO 9660 CD-ROM file system"
+.Em "ISO9660 CD-ROM file system"
 .bullet)
 .Pp
 The boot floppy image provided with the distribution sets has a
 .Sq "partition zero"
 bootloader and a
 .Nx
-file system with an installation kernel.
+file system with an installation kernel.  The boot CD-R images provided
+with the distribution sets has both a 
+.Sq "partition zero"
+bootloader and 
+.Pa ofwboot.xcf
+on a hybrid partition so it can be booted on all Open Firmware
+versions.  The boot CD-R image also has an ISO9660 filesystem with
+an installation kernel and the distribution sets.
 .Pp
 .
 .Ss2 Description of bootable media
@@ -834,18 +898,19 @@ Firmware 2.4)
 .Pp
 This method loads a primary bootloader called
 .Pa bootxx
-which then loads the secondary bootloader
+located in the Apple Partition Map, which then loads the secondary
+bootloader
 .Pa ofwboot
 (functionally identical to
 .Pa ofwboot.xcf
 (q.v.))
-which then loads the kernel.
-This is the method used by the boot floppies, and when you're
-installing
-.Nx
-on the entire disk.
-Unfortunately, it appears that the Open Firmare 2.4 floppy disk driver
-is broken.
+which then loads the kernel.  This is what
+.Ic sysinst
+will place on your hard drive during the installation procedure.
+Additionally, the 
+.Nx*M
+CD-R images and boot floppies use this method to load a kernel from
+the floppy's FFS partition or the CD-R's ISO9660 partition.
 .
 .It
 .Em "Partition zero"
@@ -879,11 +944,13 @@ pickiness, it must be on the same partition as
 .br
 (All Open Firmware versions)
 .Pp
-This cannot be used, as neither the
+Load the
 .Pa ofwboot.xcf
-bootloader nor the kernel can read files directly from a
-.Tn MS-DOS
-file system.
+bootloader from an MS-DOS filesystem (such as a floppy or Zip disk).  It
+can then load a
+.Nx
+kernel from the same MS-DOS filesystem or elsewhere.
+.Pp
 .
 .It
 .Em "Ethernet (network boot)"
@@ -900,10 +967,6 @@ You must use your on-board ethernet device for netbooting.  While there
 may be some PCI or Cardbus ethernet interfaces with Open Firmware ROMs, no
 one has reported success netbooting using these devices
 .Note)
-.(Note
-Some Open Firmware 1.0.5 machines do not retrieve the BOOTP information
-correctly. These machines cannot netboot.
-.Note)
 .
 .It
 .Em "ISO9660 CD-ROM file system"
@@ -913,23 +976,23 @@ Firmware 2.4)
 .Pp
 Load the
 .Pa ofwboot.xcf
-bootloader from an ISO 9660 CD-ROM.  It can then load a
+bootloader from an ISO9660 CD-ROM.  It can then load a
 .Nx
-kernel from the ISO 9660 CD-ROM.
+kernel from the ISO9660 CD-ROM.
 .Pp
 Open Firmware 1.0.5 and 2.0.x machines will
 .Em not
-boot from the ISO 9660 file system if you create a hybrid HFS/ISO
-format CD-R. Make sure that it the CD
+boot from the ISO9660 file system if you create a hybrid HFS/ISO
+format CD-R. Make sure that the CD
 .Em only
-has ISO 9660 data and does not have an Apple Partition Map.
+has ISO9660 data and does not have an Apple Partition Map.
 .(Note
 Open Firmware can only open files on the first session of a multi-session
 CD-R
 .Note)
 .
 .It
-.Em "Hybrid HFS/ISO 9660 CD-ROM file system"
+.Em "Hybrid HFS/ISO9660 CD-ROM file system"
 .br
 (Open Firmware 2.4, Open Firmware 3)
 .Pp
@@ -937,7 +1000,7 @@ Load the
 .Pa ofwboot.xcf
 bootloader from the CD-ROM's HFS filesystem.  It can then load a
 .Nx
-kernel from the ISO 9660 filesystem.
+kernel from the HFS or ISO9660 filesystem.
 .Pp
 Make sure that the CD has an Apple Partition Map.
 .(Note
@@ -1036,8 +1099,7 @@ systems).
 .Em "installer to install a disklabel or bootloader will"
 .Em "render your disk unusable by"
 .Tn MacOS No Ns .
-.Em "Either will also prevent Open Firmware 3 machines from booting"
-.Pa ofwboot.xcf Ns .
+.Em "Either will also prevent Open Firmware 3 machines from booting."
 .Em "You will need to use the installer's" 
 .Em Dq "Re-install sets" 
 .Em "option.  More information is provided below on this process."
@@ -1058,7 +1120,7 @@ known to work) to partition the hard drive you will be using for
 .Nx .
 Drive Setup will erase the contents of your drive -- it does not preserve 
 data from any of your partitions.  Make the following partitions:
-.(tag "A/UX_Rootxxx" -offset indent
+.(tag "A/UXxUserxxA/UXxFree1xxA/UXxFree2xxA/UXxFree3" -offset indent
 .It Em HFS No or Em HFS+
 Must be large enough to hold the bootloader, over 100 KB.  May be as large
 as you desire for 
@@ -1079,7 +1141,7 @@ on the disk.
 This partition is not readable from
 .Tn MacOS No Ns .
 .It Em "A/UX Swap"
-Any size. The recommenation is 1.5 times your RAM, although this is not
+Any size. The recommendation is 1.5 times your RAM, although this is not
 strictly necessary for machines with a lot of RAM.
 .Nx
 interprets an
@@ -1089,7 +1151,7 @@ partition as the second partition
 on the disk.
 This partition is not readable from
 .Tn MacOS No Ns .
-.It Em "A/UX User, A/UX Free1, A/UX Free2, A/UX Free3"
+.It Em "A/UX User" No and Em "A/UX Free1"
 Use these for any additional partitions you may want to use under
 .Nx Ns ,
 such as 
@@ -1110,6 +1172,14 @@ and
 If you think you'll be doing this often, then see the FAQ entry on sharing 
 files:
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#disk-sharing
+.It Em UFS
+Any size.  This filesystem type is not currently supported by
+.Nx*M
+although it might be in the future.  
+.Em UFS
+partitions are not readable from 
+.Tn MacOS
+versions prior to X 10.0.0.
 .tag)
 .Pp
 If you need further help, there is a partitioning HOW-TO on the
@@ -1159,39 +1229,59 @@ install kernel:
 .Em "Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x"
 .br
 .(bullet -compact
-Boot off a floppy
+Booting off an MS-DOS floppy
 .It
-Boot off an ISO9660 CD-ROM
+Booting off the 
+.Nx
+install floppy
 .It
-Boot over the ethernet
+Booting off the 
+.Nx*M
+install CD-R image
 .It
-Boot the floppy image off a bootable SCSI or IDE drive (not recommended)
+Booting off an ISO9660 CD-ROM
+.It
+Booting over the ethernet
+.It
+Booting the floppy image off a SCSI or IDE drive (not recommended)
 .bullet)
 .It
 .Em "Open Firmware 2.4"
 .br
 .(bullet -compact
-Boot off a floppy (may not be supported by Open Firmware 2.4)
+Booting off an MS-DOS floppy (may not be supported by Open Firmware 2.4)
 .It
-Boot off an HFS or HFS+ partition
+Booting off the 
+.Nx
+install floppy
 .It
-Boot off an ISO9660 CD-ROM
+Booting off the 
+.Nx*M
+install CD-R image
 .It
-Boot off a Hybrid HFS/ISO9660 CD-ROM
+Booting off an HFS or HFS+ partition
 .It
-Boot over the ethernet
+Booting off an ISO9660 CD-ROM
 .It
-Boot the floppy image off a bootable SCSI or IDE drive (not recommended)
+Booting off a Hybrid HFS/ISO9660 CD-ROM
+.It
+Booting over the ethernet
+.It
+Booting the floppy image off a SCSI or IDE drive (not recommended)
 .bullet)
 .It
 .Em "Open Firmware 3"
 .br
 .(bullet -compact
-Boot off an HFS or HFS+ partition
+Booting off an HFS or HFS+ partition
 .It
-Boot off a Hybrid HFS/ISO9660 CD-ROM
+Booting off the 
+.Nx*M
+install CD-R image
 .It
-Boot over the ethernet
+Booting off a Hybrid HFS/ISO9660 CD-ROM
+.It
+Booting over the ethernet
 .bullet)
 .bullet)
 .Pp
@@ -1201,28 +1291,67 @@ installer
 .Pp
 .(bullet
 .
-.Em "Boot off a floppy"
+.To 2 "Booting off an MS-DOS floppy"
+.Em "Booting off an MS-DOS floppy"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4)
 .Pp
+.(enum
+First, make sure you have done a low-level format on the disk.  A bad
+floppy can produce Open Firmware errors similar to other problems.
+.It
+Mount the floppy on your computer.
+.(bullet -compact
+Insert it into a Windows or DOS machine.
+.It
+Use 
+.Sq "File Exchange" No or Sq "PC Exchange"
+with
+.Tn MacOS 
+versions prior to X 10.0.0
+.It
+Use 
+.Xr mount_msdos 8
+on any unix-like machine.
+.bullet)
+.It
+Copy 
+.Pa netbsd.ram.gz No and Pa ofwboot.xcf
+to the floppy.
+.It
+Rename
+.Pa netbsd.ram.gz No to Pa netbsd.gz ,
+since OpenFirmware can't deal with MS-DOS filenames longer than eight
+characters.
+.enum)
+.Pp
+Skip forward to
+.Sx Installing the NetBSD System
+.
+.It
+.To 2 "Booting off the NetBSD install floppy"
+.Em "Booting off the" Nx Em "install floppy"
+.br
+(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
+Firmware 2.4)
+.Pp
+.(enum
+First, make sure you have done a low-level format on the disk.  A bad
+floppy can produce Open Firmware errors similar to other problems.
+.It
 If the boot floppy image is compressed, then you will need to uncompress
 it first.
-.Pp
-Use some tool to write the boot floppy image 
+.It
+Use a tool to write the boot floppy image 
 .Pa installation/boot.fs
-to a floppy disk, and boot
-from that.
-The primary bootloader (in
-.Sq "partition zero" )
-will load
-.Pa ofwboot
-which will load the installation kernel.
+to a floppy disk
 .Pp
 .(bullet -compact
 .Em "From a UNIX machine"
-.Pp
-.Dl # Ic "dd if=boot.fs of=/dev/rfd0a bs=36k"
+.(disp
+.No # Ic "dd if=boot.fs of=/dev/rfd0a bs=36k"
+.disp)
 .Pp
 .It
 .Em "From a Windows machine"
@@ -1303,38 +1432,31 @@ menu and pick
 .Sq Eject
 .enum)
 .bullet)
+.enum)
 .Pp
 Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.Em "Boot off an HFS or HFS+ partition"
+.To 2 "Booting off an HFS or HFS+ partition"
+.Em "Booting off an HFS or HFS+ partition"
 .br
 (Open Firmware 2.4, Open Firmware 3)
 .Pp
 Place
 .Pa ofwboot.xcf
-and the boot floppy image
-.Pa boot.fs
-at the top level of your Macintosh filesystem. Use a
-.Tn MacOS
-utility such as 
-.Ic Stuffit Expander
-to uncompress the boot floppy image (if it's compressed).
-Get to the Open Firmware prompt. Boot the bootloader, and tell it to look
-for the kernel in the boot floppy image.
-.Pp
-Alternatively, copy a kernel to the same partition as
-.Pa ofwboot.xcf No Ns .
-It may be compressed or uncompressed, it should make no difference.
-Get to the Open Firmware prompt.  Boot the bootloader, and tell it to look
-for the kernel you copied to your HFS or HFS+ partition.
+and the installation kernel
+.Pa netbsd.ram.gz
+at the top level of your Macintosh filesystem. That is, drag the two
+icons onto your hard drive icon (not the desktop).  Make sure they're
+both on the same partition.
 .Pp
 Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.Em "Boot off the official NetBSD/\*M-\*V CD-R image"
+.To 2 "Booting off the NetBSD/macppc CD-R image"
+.Em "Booting off the NetBSD/\*M CD-R image"
 .br
 (All Open Firmware versions)
 .Pp
@@ -1357,7 +1479,9 @@ should get it from the official website:
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
-.Dl # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.(disp
+.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.disp)
 .Pp
 You will need to substitute the correct name of the disk image file,
 speed for your CD writer, and the
@@ -1389,7 +1513,8 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.Em "Boot off an ISO 9660 CD-ROM"
+.To 2 "Booting off an ISO9660 CD-ROM"
+.Em "Booting off an ISO9660 CD-ROM"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4)
@@ -1408,9 +1533,6 @@ at the top level of the CD.
 You may also place the
 .Nx \*V
 distribution sets on the disk.
-Have Open Firmware load
-.Pa ofwboot.xcf
-from the disk, and it will then load the installation kernel.
 .Pp
 .(bullet
 .Em "From a UNIX machine"
@@ -1424,8 +1546,10 @@ should get it from the official website:
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
-.Dl # Ic "mkhybrid -o output.iso -a -l -J -r -L /cdsources"
-.Dl # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.(disp
+.No # Ic "mkhybrid -o output.iso -a -l -J -r -L /cdsources"
+.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.disp)
 .Pp
 You will need to substitute the correct speed for your CD writer, and the
 correct device for your system (for i386 it would be 
@@ -1478,7 +1602,8 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.Em "Boot off a hybrid HFS/ISO 9660 CD-ROM"
+.To 2 "Booting off a hybrid HFS/ISO9660 CD-ROM"
+.Em "Booting off a hybrid HFS/ISO9660 CD-ROM"
 .br
 (Open Firmware 2.4, Open Firmware 3)
 .Pp
@@ -1493,15 +1618,12 @@ Place
 and the installation kernel 
 .Pa netbsd.ram.gz
 at the top level of the CD. Make sure that the
-bootloader is present on the HFS partition, and the kernel is on the ISO
-partition. You may also place the
+bootloader is present on the HFS partition, and the kernel is on both the
+ISO9660 and HFS partitions. You may also place the
 .Nx \*V
-distribution sets on the ISO partition
+distribution sets on the ISO9660 partition
 .No ( Ns Em not
-only on the HFS partition). Have Open Firmware load
-.Pa ofwboot.xcf
-from the HFS partition, and it will load the installation kernel from the
-ISO partition.
+only on the HFS partition). 
 .Pp
 .(bullet
 .Em "From a UNIX machine"
@@ -1514,9 +1636,10 @@ should get it from the official website:
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
 .br
-.Dl # Ic "mkhybrid -o output.iso -hfs -part -a -l -J -r -L /cdsources"
-.br
-.Dl # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.(disp
+.No # Ic "mkhybrid -o output.iso -hfs -part -a -l -J -r -L /cdsources"
+.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.disp)
 .Pp
 You will need to substitute the correct speed for your CD writer, and the
 correct device for your system (for i386 it would be 
@@ -1591,11 +1714,12 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.Em "Boot over the ethernet"
+.To 2 "Booting over the ethernet"
+.Em "Booting over the ethernet"
 .br
 (All Open Firmware versions)
 .Pp
-Set up the DHCP daemon in BOOTP compatable mode, the TFTP daemon, and
+Set up the DHCP daemon in BOOTP compatible mode, the TFTP daemon, and
 the NFS daemons on your netboot server.
 Tell Open Firmware to boot over ethernet, and it will send a BOOTP
 request, which will tell Open Firmware what your system's IP address
@@ -1631,45 +1755,49 @@ Now, set up your
 server.  Make sure the following lines are in
 .Pa /etc/dhcpd.conf :
 .(disp
-allow bootp;	# Allow bootp requests, thus the dhcp server
-		# will act as a bootp server.
-
+ddns-update-style none;
+                # Do not use any dynamic DNS features
+                #
+allow bootp;    # Allow bootp requests, thus the dhcp server
+                # will act as a bootp server.
+                #
+authoritative;  # This is the authoritative DHCP server for this subnet
+                #
 subnet 192.168.1.0 netmask 255.255.255.0 {
-		# Which network interface the server will
-		# listen on.  The zeros indicate which
-		# range of addresses are allowed to connect.
+                # Which network interface the server will
+                # listen on.  The zeros indicate which
+                # range of addresses are allowed to connect.
 }
-
-group {                                
-		# Set of parameters common to all clients
-		# in this "group".
-		#
-	option broadcast-address	192.168.1.255;
-	option domain-name		"test.net";
-	option domain-name-servers	dns.test.net;
-	option routers			router.test.net;
-	option subnet-mask		255.255.255.0;
-
-		# An individual client.
-		#
-	host client.test.net {
-		hardware ethernet	CC:CC:CC:CC:CC:CC;
-		fixed-address		192.168.1.10;
-
-		# Name of the host (if the fixed address
-		# doesn't resolve to a simple name).
-		#
-		option host-name	"client";
-
-		# Name of the bootloader or kernel
-		# to download via tftp.
-		#
-		filename		"ofwboot.xcf";
-
-		# The path on the NFS server.
-		#
-		option	root-path	"/export/client/root";
-	}
+group {
+                # Set of parameters common to all clients
+                # in this "group".
+                #
+        option broadcast-address        192.168.1.255;
+        option domain-name              "test.net";
+        option domain-name-servers      dns.test.net;
+        option routers                  router.test.net;
+        option subnet-mask              255.255.255.0;
+                #
+                # An individual client.
+                #
+        host client.test.net {
+                hardware ethernet       CC:CC:CC:CC:CC:CC;
+                fixed-address           192.168.1.10;
+                #
+                # Name of the host (if the fixed address
+                # doesn't resolve to a simple name).
+                #
+                option host-name        "client";
+                #
+                # Name of the bootloader or kernel
+                # to download via tftp.
+                #
+                filename                "ofwboot.xcf";
+                #
+                # The path on the NFS server.
+                #
+                option root-path        "/export/client/root";
+        }
 }
 .disp)
 .Pp
@@ -1677,7 +1805,9 @@ You will need to make sure that the
 .Pa dhcpd.leases
 file exists.
 .Pp
-.Dl # Ic "touch /var/db/dhcpd.leases"
+.(disp
+.No # Ic "touch /var/db/dhcpd.leases"
+.disp)
 .Pp
 You will need to 
 .Ic kill
@@ -1688,14 +1818,18 @@ If the server is running
 .Nx 1.5 ,
 you can achieve this with:
 .Pp
-.Dl # Ic "/etc/rc.d/dhcpd restart"
+.(disp
+.No # Ic "/etc/rc.d/dhcpd restart"
+.disp)
 .Pp
 Now, place a copy of the
 .Pa installation/ofwboot.xcf
 bootloader in 
 .Pa /tftpboot
 .Pp
-.Dl # Ic "cp ofwboot.xcf /tftpboot"
+.(disp
+.No # Ic "cp ofwboot.xcf /tftpboot"
+.disp)
 .Pp
 Now, you should edit
 .Pa /etc/inetd.conf
@@ -1709,13 +1843,17 @@ process to enable tftp if this line was previously commented out.  The next
 step is to set up NFS exports.  Create the directory you are exporting for
 the netboot client:
 .Pp
-.Dl # Ic "mkdir -p /export/client/root"
+.(disp
+.No # Ic "mkdir -p /export/client/root"
+.disp)
 .Pp
 Put the following line in
 .Pa /etc/exports
 to enable NFS sharing:
 .Pp
-.Dl "/export/client/root -maproot=root client.test.net"
+.(disp
+/export/client/root -maproot=root client.test.net
+.disp)
 .Pp
 If your server is currently running NFS services, you only need to 
 .Ic "kill -HUP"
@@ -1723,30 +1861,37 @@ the
 .Ic mountd
 process.  Otherwise, you need to run:
 .Pp
-.Dl # Ic "/usr/sbin/mountd"
-.Dl # Ic "/usr/sbin/nfsd -tun 4"
+.(disp
+.No # Ic "/usr/sbin/mountd"
+.No # Ic "/usr/sbin/nfsd -tun 4"
+.disp)
 .Pp
 Now, you need to place the files your netboot client will need.
 As noted above in the section
-.Sx Preparing your System for NetBSD Installation
+.Sx Preparing your System for NetBSD installation
 you have several options when choosing a location to store the
 distribution
 filesets. However, the easiest way is to put the distribution
 files into the exported directory for your client on the server.
 .Pp
-.Dl # Ic "mv *.tgz /export/client/root"
+.(disp
+.No # Ic "mv *.tgz /export/client/root"
+.disp)
 .Pp
 Your client will need a kernel to boot (use 
 .Pa installation/netbsd.ram.gz ) .
 .Pp
-.Dl # Ic "gunzip netbsd.ram.gz"
-.Dl # Ic "mv netbsd.ram /export/client/root/netbsd"
+.(disp
+.No # Ic "gunzip netbsd.ram.gz"
+.No # Ic "mv netbsd.ram /export/client/root/netbsd"
+.disp)
 .Pp
 Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.Em "Boot the floppy image off a bootable SCSI or IDE drive"
+.To 2 "Booting the floppy image off a SCSI or IDE drive"
+.Em "Booting the floppy image off a SCSI or IDE drive"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4)
@@ -1767,7 +1912,9 @@ filesystem from the disk image.
 .(bullet -compact
 .Em "From a UNIX machine"
 .Pp
-.Dl # Ic "dd if=boot.fs of=/dev/rsd0c"
+.(disp
+.No # Ic "dd if=boot.fs of=/dev/rsd0c"
+.disp)
 .Pp
 where 
 .Pa /dev/rsd0c
