@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.79 1999/02/11 14:39:35 tv Exp $
+#	$NetBSD: NetBSD.dist,v 1.80 1999/02/11 17:10:13 tv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -987,6 +987,28 @@ LC_MESSAGES
 # ./usr/share/locale/de
 ..
 
+# ./usr/share/locale/el
+el
+
+# ./usr/share/locale/el/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/el/LC_MESSAGES
+..
+
+# ./usr/share/locale/el
+..
+
+# ./usr/share/locale/es
+es
+
+# ./usr/share/locale/es/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/es/LC_MESSAGES
+..
+
+# ./usr/share/locale/es
+..
+
 # ./usr/share/locale/fr
 fr
 
@@ -996,6 +1018,83 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/fr
+..
+
+# ./usr/share/locale/ko
+ko
+
+# ./usr/share/locale/ko/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/ko/LC_MESSAGES
+..
+
+# ./usr/share/locale/ko
+..
+
+# ./usr/share/locale/nl
+nl
+
+# ./usr/share/locale/nl/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/nl/LC_MESSAGES
+..
+
+# ./usr/share/locale/nl
+..
+
+# ./usr/share/locale/no
+no
+
+# ./usr/share/locale/no/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/no/LC_MESSAGES
+..
+
+# ./usr/share/locale/no
+..
+
+# ./usr/share/locale/pl
+pl
+
+# ./usr/share/locale/pl/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/pl/LC_MESSAGES
+..
+
+# ./usr/share/locale/pl
+..
+
+# ./usr/share/locale/ru
+ru
+
+# ./usr/share/locale/ru/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/ru/LC_MESSAGES
+..
+
+# ./usr/share/locale/ru
+..
+
+# ./usr/share/locale/sl
+sl
+
+# ./usr/share/locale/sl/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/sl/LC_MESSAGES
+..
+
+# ./usr/share/locale/sl
+..
+
+# ./usr/share/locale/sv
+sv
+
+# ./usr/share/locale/sv/LC_MESSAGES
+LC_MESSAGES
+# ./usr/share/locale/sv/LC_MESSAGES
+..
+
+# ./usr/share/locale/sv
 ..
 
 # ./usr/share/locale
