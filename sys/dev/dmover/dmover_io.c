@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.3 2002/08/02 06:35:59 thorpej Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.4 2002/08/04 01:52:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.3 2002/08/02 06:35:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.4 2002/08/04 01:52:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -158,7 +158,7 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 		len += uio_out->uio_iov[j].iov_len;
 		if (len > SSIZE_MAX) {
 			free(uio_out->uio_iov, M_TEMP);
-			return (error);
+			return (EINVAL);
 		}
 	}
 
