@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.12 1999/02/13 02:41:41 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.13 1999/04/15 22:11:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.12 1999/02/13 02:41:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.13 1999/04/15 22:11:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,21 +102,21 @@ dec_kn300_init()
 	}
 
 	platform.iobus = "mcbus";
-	platform.cons_init = NULL;
+	platform.cons_init = dec_kn300_cons_init;
 	platform.device_register = dec_kn300_device_register;
 	platform.mcheck_handler = dec_kn300_mcheck_handler;
 }
 
-
-/*
- * Yes, I know this should be done as part of cons_init, but this
- * is broken in that I can't do this until I do a more or less
- * complete configure.
- */
 void
 dec_kn300_cons_init()
 {
 	struct ctb *ctb;
+	struct mcpcia_config *ccp;
+	extern struct mcpcia_config mcpcia_console_configuration;
+
+	ccp = &mcpcia_console_configuration;
+	mcpcia_init();
+
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
@@ -128,7 +128,7 @@ dec_kn300_cons_init()
 		 * character time = (1000000 / (defaultrate / 10))
 		 */
 		DELAY(160000000 / comcnrate);
-		if (comcnattach(&mcpcia_eisaccp->cc_iot, 0x3f8, comcnrate,
+		if (comcnattach(&ccp->cc_iot, 0x3f8, comcnrate,
 		    COM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8)) {
 			panic("can't init serial console");
 
@@ -136,44 +136,28 @@ dec_kn300_cons_init()
 		break;
 
 	case 3:
-	{
-		extern struct mcpcia_softc *mcpcias;
-		struct mcpcia_softc *mcp = mcpcias;
+#if NPCKBD > 0
 		/* display console ... */
-		/*
-		 * Pathetic, but works for now.
-		 * The Alpha4100 SRM won't let you put a vga in any pci
-		 * bus but what it considers PCI0 - for us that's the
-		 * *second* mcpcia.
-		 */
-		if (mcp && mcp->mcpcia_next) {
-#if	NPCKBD > 0
-			struct mcpcia_config *ccp =
-				&mcp->mcpcia_next->mcpcia_cc;
+		/* XXX */
+		(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
 
-			(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
-
-			if ((ctb->ctb_turboslot & 0xffff) == 0)
-				isa_display_console(&ccp->cc_iot,
-				    &ccp->cc_memt);
-			else
-				pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
-				    &ccp->cc_pc,
-				    (ctb->ctb_turboslot >> 8) & 0xff,
-				    ctb->ctb_turboslot & 0xff, 0);
+		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
+		    CTB_TURBOSLOT_TYPE_ISA)
+			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
+		else
+			pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
+			    &ccp->cc_pc, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
+			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
 #else
-			panic("not configured to use display && keyboard "
-				"console");
+		panic("not configured to use display && keyboard console");
 #endif
-		} else {
-			printf("CANNOT DETERMINE CONSOLE'S PCI BUS\n");
-		}
 		break;
-	}
+
 	default:
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-		panic("dec_kn300_cons_init: unknown console type %ld\n",
+
+		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
 }
