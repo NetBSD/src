@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lcmd2.c	3.23 (Berkeley) 6/17/90";*/
-static char rcsid[] = "$Id: lcmd2.c,v 1.2 1993/08/01 18:02:19 mycroft Exp $";
+static char rcsid[] = "$Id: lcmd2.c,v 1.3 1993/12/02 19:58:29 pk Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: lcmd2.c,v 1.2 1993/08/01 18:02:19 mycroft Exp $";
 #include "value.h"
 #include "var.h"
 #include "lcmd.h"
+#include <sys/types.h>
 #include <sys/resource.h>
 #include "alias.h"
 
