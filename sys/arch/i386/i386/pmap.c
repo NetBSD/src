@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.163 2003/11/01 15:21:02 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164 2003/11/03 04:02:13 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2003/11/01 15:21:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2003/11/03 04:02:13 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2273,30 +2273,8 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 		pmap->pm_stats.wired_count--;
 	pmap->pm_stats.resident_count--;
 
-	if (ptp) {
+	if (ptp)
 		ptp->wire_count--;		/* dropping a PTE */
-#ifdef DEBUG
-		if (ptp->wire_count == 1) {
-			/*
-			 * make sure the PTP is zero filled.
-			 *
-			 * XXXyamt
-			 * it's better to do this check
-			 * in uvm rather than here.
-			 */
-			const char *cp =
-			    (const char *)(((vaddr_t)pte) & ~PAGE_MASK);
-			const char *ep = cp + PAGE_SIZE;
-
-			while (cp < ep) {
-				if (*cp != 0)
-					panic("pmap_remove_pte: "
-					    "free ptp not zero-filled");
-				cp++;
-			}
-		}
-#endif /* DEBUG */
-	}
 
 	pmap_tlb_shootdown(pmap, va, opte, cpumaskp);
 
@@ -2612,27 +2590,6 @@ pmap_page_remove(pg)
 		if (pve->pv_ptp) {
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
-#ifdef DEBUG
-				/*
-				 * make sure the PTP is zero filled.
-				 *
-				 * XXXyamt
-				 * it's better to do this check
-				 * in uvm rather than here.
-				 */
-				const char *cp =
-				    (const char *)
-				    (((vaddr_t)&ptes[x86_btop(pve->pv_va)]) &
-				    ~PAGE_MASK);
-				const char *ep = cp + PAGE_SIZE;
-
-				while (cp < ep) {
-					if (*cp != 0)
-						panic("pmap_page_remove: "
-						    "free ptp not zero-filled");
-					cp++;
-				}
-#endif /* DEBUG */
 				/* zap! */
 				opte = x86_atomic_testset_ul(
 				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
