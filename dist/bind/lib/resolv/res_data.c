@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.2 1999/11/20 19:16:55 veego Exp $	*/
+/*	$NetBSD: res_data.c,v 1.3 2000/03/01 10:50:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium.
@@ -42,9 +42,7 @@ static const char rcsid[] = "Id: res_data.c,v 8.17 1999/10/13 17:11:31 vixie Exp
 #include <unistd.h>
 
 #include "port_after.h"
-#ifndef	__NetBSD__
 #undef _res
-#endif
 
 const char *_res_opcodes[] = {
 	"QUERY",

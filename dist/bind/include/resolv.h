@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.2 1999/11/20 19:15:54 veego Exp $	*/
+/*	$NetBSD: resolv.h,v 1.3 2000/03/01 10:50:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -96,11 +96,7 @@
  *		#endif
  */
 
-#ifdef __NetBSD__
-# define RES_SET_H_ERRNO(r,x) (h_errno = (r)->res_h_errno = (x))
-#else
-# define RES_SET_H_ERRNO(r,x) __h_errno_set(r,x)
-#endif
+#define RES_SET_H_ERRNO(r,x) __h_errno_set(r,x)
 struct __res_state; /* forward */
 void __h_errno_set(struct __res_state *res, int err);
 
@@ -244,7 +240,6 @@ extern struct __res_state _res;
 #endif
 
 #ifndef __BIND_NOSTATIC
-#ifndef	__NetBSD__	/* XXX namespace.h */
 #define fp_nquery		__fp_nquery
 #define fp_query		__fp_query
 #define hostalias		__hostalias
@@ -258,7 +253,6 @@ extern struct __res_state _res;
 #define res_search		__res_search
 #define res_send		__res_send
 #define res_sendsigned		__res_sendsigned
-#endif	/* !__NetBSD__ */
 
 __BEGIN_DECLS
 void		fp_nquery __P((const u_char *, int, FILE *));
@@ -295,7 +289,6 @@ extern const struct res_sym __p_type_syms[];
 extern const struct res_sym __p_rcode_syms[];
 #endif /* SHARED_LIBBIND */
 
-#ifndef	__NetBSD__	/* XXX namespace.h */
 #define b64_ntop		__b64_ntop
 #define b64_pton		__b64_pton
 #define dn_comp			__dn_comp
@@ -340,7 +333,6 @@ extern const struct res_sym __p_rcode_syms[];
 #define sym_ntop		__sym_ntop
 #define sym_ntos		__sym_ntos
 #define sym_ston		__sym_ston
-#endif	/* !__NetBSD__ */
 __BEGIN_DECLS
 int		res_hnok __P((const char *));
 int		res_ownok __P((const char *));
