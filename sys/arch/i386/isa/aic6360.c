@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.24 1995/01/07 01:51:07 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.25 1995/01/07 06:49:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -567,7 +567,7 @@ struct aic_softc {
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; /**/ 
 #define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
 #define	AIC_BREAK()	do {if ((aic_debug & AIC_DOBREAK) != 0) Debugger();} while (0)
-#define	AIC_ASSERT(x)	do {if (x) {} else {printf("aic at line %d: assertion failed\n", __LINE__); Debugger();}} while (0)
+#define	AIC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
 #else
 #define	AIC_PRINT(b, s)
 #define	AIC_BREAK()
@@ -1469,14 +1469,16 @@ nextbyte:
 				break;
 
 			default:
-				printf("aic at line %d: unrecognized MESSAGE IN; sending REJECT\n", __LINE__);
+				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
+				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reject;
 			}
 			break;
 
 		default:
-			printf("aic at line %d: unrecognized MESSAGE IN; sending REJECT\n", __LINE__);
+			printf("%s: unrecognized MESSAGE; sending REJECT\n",
+			    sc->sc_dev.dv_xname);
 			AIC_BREAK();
 		reject:
 			aic_sched_msgout(SEND_REJECT);
@@ -1486,7 +1488,8 @@ nextbyte:
 
 	case AIC_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			printf("aic at line %d: reselect without IDENTIFY; sending DEVICE RESET\n", __LINE__);
+			printf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
+			    sc->sc_dev.dv_xname);
 			AIC_BREAK();
 			goto reset;
 		}
@@ -1498,7 +1501,8 @@ nextbyte:
 		 */
 		selid = inb(SELID) & ~(1<<AIC_SCSI_HOSTID);
 		if (selid & (selid - 1)) {
-			printf("aic at line %d: reselect with invalid selid %02x; sending DEVICE RESET\n", __LINE__, selid);
+			printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
+			    sc->sc_dev.dv_xname, selid);
 			AIC_BREAK();
 			goto reset;
 		}
@@ -1517,7 +1521,8 @@ nextbyte:
 				break;
 		}
 		if (acb == NULL) {
-			printf("aic at line %d: reselect from target %d lun %d with no nexus; sending ABORT\n", __LINE__, target, lun);
+			printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
+			    sc->sc_dev.dv_xname, target, lun);
 			AIC_BREAK();
 			goto abort;
 		}
@@ -1538,7 +1543,8 @@ nextbyte:
 		break;
 
 	default:
-		printf("aic at line %d: unexpected MESSAGE IN; sending DEVICE RESET\n", __LINE__);
+		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
+		    sc->sc_dev.dv_xname);
 		AIC_BREAK();
 	reset:
 		sc->sc_flags |= AIC_ABORTING;
@@ -1637,7 +1643,8 @@ nextmsg:
 	switch (sc->sc_msgout) {
 	case SEND_IDENTIFY:
 		if (sc->sc_state != AIC_CONNECTED) {
-			printf("aic at line %d: SEND_IDENTIFY while not connected; sending NOOP\n", __LINE__);
+			printf("%s: SEND_IDENTIFY while not connected; sending NOOP\n",
+			    sc->sc_dev.dv_xname);
 			AIC_BREAK();
 			goto noop;
 		}
@@ -1650,7 +1657,8 @@ nextmsg:
 
 	case SEND_SDTR:
 		if (sc->sc_state != AIC_CONNECTED) {
-			printf("aic at line %d: SEND_SDTR while not connected; sending NOOP\n", __LINE__);
+			printf("%s: SEND_SDTR while not connected; sending NOOP\n",
+			    sc->sc_dev.dv_xname);
 			AIC_BREAK();
 			goto noop;
 		}
@@ -1666,7 +1674,8 @@ nextmsg:
 
 	case SEND_WDTR:
 		if (sc->sc_state != AIC_CONNECTED) {
-			printf("aic at line %d: SEND_WDTR while not connected; sending NOOP\n", __LINE__);
+			printf("%s: SEND_WDTR while not connected; sending NOOP\n",
+			    sc->sc_dev.dv_xname);
 			AIC_BREAK();
 			goto noop;
 		}
@@ -1705,7 +1714,8 @@ nextmsg:
 		break;
 
 	case 0:
-		printf("aic at line %d: unexpected MESSAGE OUT; sending NOOP\n", __LINE__);
+		printf("%s: unexpected MESSAGE OUT; sending NOOP\n",
+		    sc->sc_dev.dv_xname);
 		AIC_BREAK();
 	noop:
 		sc->sc_omess[0] = MSG_NOOP;
@@ -1713,7 +1723,8 @@ nextmsg:
 		break;
 
 	default:
-		printf("aic at line %d: weird MESSAGE OUT; sending NOOP\n", __LINE__);
+		printf("%s: weird MESSAGE OUT; sending NOOP\n",
+		    sc->sc_dev.dv_xname);
 		AIC_BREAK();
 		goto noop;
 	}
@@ -2068,8 +2079,8 @@ aicintr(sc)
 			/*
 			 * We don't currently support target mode.
 			 */
-			printf("aic at line %d: target mode selected; going to bus free\n",
-			    __LINE__);
+			printf("%s: target mode selected; going to bus free\n",
+			    sc->sc_dev.dv_xname);
 			outb(SCSISIG, 0);
 
 			sc->sc_state = AIC_IDLE;
@@ -2100,7 +2111,8 @@ aicintr(sc)
 			 * c) Mark device as busy.
 			 */
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("aic at line %d: selection out while not selecting; resetting\n", __LINE__);
+				printf("%s: selection out while not selecting; resetting\n",
+				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reset;
 			}
@@ -2136,7 +2148,8 @@ aicintr(sc)
 			AIC_MISC(("selection timeout  "));
 
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("aic at line %d: selection timeout while not selecting; resetting\n", __LINE__);
+				printf("%s: selection timeout while not selecting; resetting\n",
+				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reset;
 			}
@@ -2154,7 +2167,8 @@ aicintr(sc)
 			goto out;
 		} else {
 			if (sc->sc_state != AIC_IDLE) {
-				printf("aic at line %d: BUS FREE while not idle; state=%d\n", __LINE__, sc->sc_state);
+				printf("%s: BUS FREE while not idle; state=%d\n",
+				    sc->sc_dev.dv_xname, sc->sc_state);
 				AIC_BREAK();
 				goto out;
 			}
@@ -2193,7 +2207,8 @@ aicintr(sc)
 
 		case AIC_CONNECTED:
 			if ((sc->sc_flags & AIC_ABORTING) == 0) {
-				printf("aic at line %d: unexpected BUS FREE; aborting\n", __LINE__);
+				printf("%s: unexpected BUS FREE; aborting\n",
+				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 			}
 			AIC_ASSERT(sc->sc_nexus != NULL);
@@ -2296,7 +2311,8 @@ dophase:
 		goto nextphase;
 	}
 
-	printf("aic at line %d: unexpected bus phase; resetting\n", __LINE__);
+	printf("%s: unexpected bus phase; resetting\n",
+	    sc->sc_dev.dv_xname);
 	AIC_BREAK();
 reset:
 	aic_init(sc);
