@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldd.1,v 1.7 2003/03/31 01:57:39 perry Exp $
+.\"	$NetBSD: ldd.1,v 1.8 2003/04/19 23:45:44 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,6 +68,12 @@ for a list of recognized conversion characters.
 .Xr ld.so 1 ,
 .Xr ld.elf_so 1 ,
 .Xr nm 1
+.Sh BUGS
+The
+a.out
+.Nm
+actually runs the program it has been requested to analyze which in specially
+constructed environments can have security implications.
 .Sh HISTORY
 A
 .Nm
