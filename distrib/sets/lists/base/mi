@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.421 2003/07/20 19:26:55 tshiozak Exp $
+# $NetBSD: mi,v 1.422 2003/07/21 17:45:50 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1349,6 +1349,8 @@
 ./usr/share/keymaps/x68k			base-sys-share
 ./usr/share/ldscripts				base-util-share
 ./usr/share/locale				base-locale-share
+./usr/share/locale/bg_BG.CP1251			base-locale-bg
+./usr/share/locale/bg_BG.CP1251/LC_CTYPE	base-locale-bg
 ./usr/share/locale/ca				base-locale-ca
 ./usr/share/locale/ca_ES.ISO8859-1		base-locale-ca
 ./usr/share/locale/ca_ES.ISO8859-1/LC_CTYPE	base-locale-ca
@@ -1389,6 +1391,8 @@
 ./usr/share/locale/el				base-locale-el
 ./usr/share/locale/el/LC_MESSAGES		base-locale-el
 ./usr/share/locale/el/LC_MESSAGES/grep.mo	base-util_locale-el
+./usr/share/locale/el_GR.ISO8859-7		base-locale-el
+./usr/share/locale/el_GR.ISO8859-7/LC_CTYPE	base-locale-el
 ./usr/share/locale/en_AU.ISO8859-1		base-locale-en
 ./usr/share/locale/en_AU.ISO8859-1/LC_CTYPE	base-locale-en
 ./usr/share/locale/en_AU.ISO8859-15		base-locale-en
@@ -1459,6 +1463,8 @@
 ./usr/share/locale/hr_HR.ISO8859-2/LC_CTYPE	base-locale-hr
 ./usr/share/locale/hu_HU.ISO8859-2		base-locale-hu
 ./usr/share/locale/hu_HU.ISO8859-2/LC_CTYPE	base-locale-hu
+./usr/share/locale/hy_AM.ARMSCII-8		base-locale-hy
+./usr/share/locale/hy_AM.ARMSCII-8/LC_CTYPE	base-locale-hy
 ./usr/share/locale/id				base-locale-id
 ./usr/share/locale/id/LC_MESSAGES		base-locale-id
 ./usr/share/locale/id/LC_MESSAGES/grep.mo	base-util_locale-id
@@ -1498,6 +1504,8 @@
 ./usr/share/locale/ko_KR.eucKR/LC_CTYPE		base-locale-ko
 ./usr/share/locale/lt_LT.ISO8859-4		base-locale-lt
 ./usr/share/locale/lt_LT.ISO8859-4/LC_CTYPE	base-locale-lt
+./usr/share/locale/lt_LT.ISO8859-13		base-locale-lt
+./usr/share/locale/lt_LT.ISO8859-13/LC_CTYPE	base-locale-lt
 ./usr/share/locale/nl				base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES		base-locale-nl
 ./usr/share/locale/nl/LC_MESSAGES/grep.mo	base-locale-nl
