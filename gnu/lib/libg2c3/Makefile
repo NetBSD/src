@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/08/04 01:53:51 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -10,7 +10,7 @@ LIB=		g2c
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-SHLIB_MAJOR=	1
+SHLIB_MAJOR=	2
 SHLIB_MINOR=	0
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc

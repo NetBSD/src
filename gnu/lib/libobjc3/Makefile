@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/08/01 17:03:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2003/08/04 01:53:52 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,7 +9,7 @@ LIB=		objc
 
 .if ${MKGCC} != "no"
 
-SHLIB_MAJOR=	1
+SHLIB_MAJOR=	2
 SHLIB_MINOR=	0
 
 # Machine-independent definitions (include file names).
