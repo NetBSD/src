@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.165 2002/04/30 13:12:33 uch Exp $
+$NetBSD: pcmciadevs,v 1.166 2002/05/06 22:26:48 chris Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -268,6 +268,7 @@ product NEWMEDIA2 BUSTOASTER	0x0001 NewMedia BusToaster
 
 /* Netgear */
 product NETGEAR FA410TXC	0x4530 Netgear FA410TXC
+product NETGEAR FA411		0x0411 Netgear FA411
 
 /* National Instruments */
 product NI PCMCIA_GPIB	 	0x4882 National Instruments PCMCIA-GPIB
