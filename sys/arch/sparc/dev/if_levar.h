@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.1 1995/12/10 10:15:08 mycroft Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.2 1995/12/11 12:43:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -81,4 +81,11 @@ struct	le_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	struct	lereg1 *sc_r1;		/* LANCE registers */
+	struct	dma_softc *sc_dma;	/* pointer to my dma */
 };
+
+/* DMA macros for ledma */ 
+#define DMA_ENINTR(r)           ((r->enintr)(r))
+#define DMA_ISINTR(r)           ((r->isintr)(r))
+#define DMA_RESET(r)            ((r->reset)(r))
+

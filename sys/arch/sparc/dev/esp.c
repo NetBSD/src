@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.31 1995/12/01 01:00:55 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.32 1995/12/11 12:43:22 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -166,7 +166,7 @@ espattach(parent, self, aux)
 		sc->sc_reg = (volatile caddr_t) ca->ca_ra.ra_vaddr;
 	else {
 		sc->sc_reg = (volatile caddr_t)
-		    mapiodev(ca->ca_ra.ra_paddr, ca->ca_ra.ra_len, ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len, ca->ca_bustype);
 	}
 
 	/* Other settings */
