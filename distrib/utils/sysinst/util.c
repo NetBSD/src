@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 1997/10/20 06:13:42 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.7 1997/10/29 01:07:01 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,60 +161,38 @@ void run_makedev (void)
 /* Load files from floppy. */
 int get_via_floppy (void)
 {
-	char realdir[STRSIZE];
 	char distname[STRSIZE];
 	char fddev[STRSIZE] = "/dev/fd0a";
-	char dirname[STRSIZE];
 	char fname[STRSIZE];
 	char fullname[STRSIZE];
-	char **list;
-	char **last;
+	distinfo *list;
 	char post[4];
 	int  mounted = 0;
 	struct stat sb;
 
-	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE,
-		    "unloading from floppy");
-	if (*dist_dir == '/')
-		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
-	else
-		snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
-	strcpy (dist_dir, realdir);
-	run_prog ("/bin/mkdir %s", realdir);
-	clean_dist_dir = 1;
-#ifndef DEBUG
-	if (chdir(realdir)) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), realdir);
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", realdir);
-#endif
+
+	cd_dist_dir ("unloading from floppy");
 
 	msg_prompt_add (MSG_fddev, fddev, fddev, STRSIZE);
 
 	list = dist_list;
-	last = fd_last;
-	while (*last) {
+	while (list->name) {
 		strcpy (post, ".aa");
-		snprintf (dirname, STRSIZE, *list, rels, "/" );
-		snprintf (distname, STRSIZE, *list, rels, dist_postfix);
-		msg_display (MSG_fdload, dirname);
-		process_menu (MENU_yesno);
-		while (yesno && strcmp(post,*last) <= 0) {
-			snprintf (fname, STRSIZE, *list, rels, post);
-			snprintf (fullname, STRSIZE, "/mnt2/%s%s", dirname,
-				  fname);
+		snprintf (distname, STRSIZE, list->name, rels, dist_postfix);
+		while (list->getit && strcmp(post,list->fdlast) <= 0) {
+			snprintf (fname, STRSIZE, list->name, rels, post);
+			snprintf (fullname, STRSIZE, "/mnt2/%s", fname);
 			while (!mounted || stat(fullname, &sb)) {
-				if (mounted)
-					run_prog ("/sbin/umount /mnt2");
-				msg_display (MSG_fdmount, dirname, fname);
+ 				if (mounted) {
+					run_prog ("/sbin/umount /mnt2 "
+						  "2>/dev/null");
+					msg_display (MSG_fdnotfound, fname);
+				} else 					
+					msg_display (MSG_fdmount, fname);
 				process_menu (MENU_ok);
-				while (!run_prog("/sbin/mount -t %s %s /mnt2",
+				while (run_prog("/sbin/mount -t %s %s /mnt2",
 						 fdtype, fddev)) {
-					msg_display (MSG_fdremount, dirname,
-						     fname);
+					msg_display (MSG_fdremount, fname);
 					process_menu (MENU_fdremount);
 					if (!yesno)
 						return 0;
@@ -228,10 +206,9 @@ int get_via_floppy (void)
 			else
 				post[1]='a', post[2]++;
 		}
-		run_prog ("/sbin/umount /mnt2");
+		run_prog ("/sbin/umount /mnt2 2>/dev/null");
 		mounted = 0;
 		list++;
-		last++;
 	}
 #ifndef DEBUG
 	chdir("/");
@@ -259,4 +236,48 @@ get_via_cdrom(void)
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
+}
+
+
+void cd_dist_dir (char *forwhat)
+{
+	char realdir[STRSIZE];
+
+	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, forwhat);
+	if (*dist_dir == '/')
+		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
+	else
+		snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
+	strcpy (dist_dir, realdir);
+	run_prog ("/bin/mkdir %s", realdir);
+	clean_dist_dir = 1;
+#ifndef DEBUG
+	if (chdir(realdir)) {
+		endwin();
+		(void)fprintf(stderr, msg_string(MSG_realdir), realdir);
+		exit(1);
+	}
+#else
+	printf ("chdir (%s)\n", realdir);
+#endif
+}
+
+/* Support for custom distribution fetches / unpacks. */
+
+void toggle_getit (int num)
+{
+	dist_list[num].getit ^= 1;
+}
+
+void show_cur_distsets (void)
+{
+	distinfo *list;
+
+	msg_display (MSG_cur_distsets);
+	list = dist_list;
+	while (list->name) {
+		msg_printf_add ("%s%s\n", list->desc, list->getit ?
+				msg_string(MSG_yes) : msg_string(MSG_no));
+		list++;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.5 1997/10/22 15:28:45 phil Exp $ */
+/*	$NetBSD: disks.c,v 1.6 1997/10/29 01:06:48 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,7 @@
 #include <sys/disklabel.h>
 
 #include "defs.h"
+#include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 #include "txtwalk.h"
@@ -60,8 +61,7 @@ static void foundffs (struct data *list, int num);
 
 static void get_disks(void)
 {
-	char *names[] = {"wd", "sd", "rd", NULL};
-	char **xd = names;
+	char **xd = disk_names;
 	char d_name[SSTRSIZE];
 	struct disklabel l;
 	int i;
@@ -125,7 +125,7 @@ int find_disks (void)
 		strsep(&tp, " ");
 		diskdev[strlen(diskdev)+1] = 0;
 		diskdev[strlen(diskdev)] = ' ';
-		while (!(*diskdev == 'w' || *diskdev == 's') ||
+		while (!ISDISKSTART(*diskdev) ||
 		       strstr(disknames, diskdev) == NULL) {
 			msg_prompt (MSG_badname, defname,  diskdev, 10,
 				    disknames);

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.8 1997/10/22 15:28:53 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.9 1997/10/29 01:06:51 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -220,12 +220,20 @@ menu selfskind, title "  Select the type ", y=15;
 
 menu distmedium, title "  Select medium";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
-	option "ftp",    action { got_dist = get_via_ftp(); }, exit;
-	option "nfs",    action { got_dist = get_via_nfs(); }, exit;
-	option "cdrom",  action { got_dist = get_via_cdrom(); }, exit; 
-	option "floppy", action { got_dist = get_via_floppy(); }, exit;
-	option "none",   action { nodist = 1; }, exit;
+	option "ftp",  action { process_menu (MENU_distset);
+				got_dist = get_via_ftp(); }, exit;
+	option "nfs",  action { process_menu (MENU_distset);
+				got_dist = get_via_nfs(); }, exit;
+	option "cdrom", action { process_menu (MENU_distset);
+				 got_dist = get_via_cdrom(); }, exit; 
+	option "floppy", action { process_menu (MENU_distset);
+				  got_dist = get_via_floppy(); }, exit;
+	option "none",  action { nodist = 1; };
 
+menu distset, title " Select your distribution";
+	display action { msg_display (MSG_distset); };
+	option "Full installation", exit;
+	option "Custom installation", next menu md_distcustom;
 
 menu ftpsource, title "  Change";
 	display action
