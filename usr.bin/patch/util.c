@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 2003/07/30 08:51:55 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.20 2004/10/30 21:52:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.19 2003/07/30 08:51:55 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.20 2004/10/30 21:52:09 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,11 +102,11 @@ move_file(char *from, char *to)
 		       to_inode == filestat.st_ino) {
 			/* Skip initial non-lowercase chars. */
 			for (s = simplename;
-			     *s && !islower((unsigned char)*s);
+			     *s && *s == toupper((unsigned char)*s);
 			     s++)
 				;
 			if (*s)
-				*s = toupper(*s);
+				*s = toupper((unsigned char)*s);
 			else
 				strcpy(simplename, simplename + 1);
 		}
