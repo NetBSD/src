@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.13 2003/11/16 11:22:30 pk Exp $ */
+/*	$NetBSD: lock.h,v 1.14 2003/12/26 06:00:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -47,17 +47,18 @@
 #ifdef __lint__
 #define __ldstub(__addr)	(__addr)
 #else /* !__lint__ */
-#define	__ldstub(__addr)						\
-({									\
-	int __v;							\
-									\
-	__asm __volatile("ldstub [%1],%0"				\
-	    : "=r" (__v)						\
-	    : "r" (__addr)						\
-	    : "memory");						\
-									\
-	__v;								\
-})
+static __inline__ int __ldstub(__cpu_simple_lock_t *addr);
+static __inline__ int __ldstub(__cpu_simple_lock_t *addr)
+{
+	int v;
+
+	__asm __volatile("ldstub [%1],%0"
+	    : "=r" (v)
+	    : "r" (addr)
+	    : "memory");
+
+	return v;
+}
 #endif /* __lint__ */
 
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
