@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.247 2001/08/04 00:54:30 enami Exp $	*/
+/*	$NetBSD: locore.s,v 1.248 2001/09/18 06:29:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1075,11 +1075,11 @@ ENTRY(i386_copyin)
 #endif /* I386_CPU || I486_CPU || I586_CPU || I686_CPU */
 
 /* LINTSTUB: Ignore */
-ENTRY(copy_efault)
+NENTRY(copy_efault)
 	movl	$EFAULT,%eax
 
 /* LINTSTUB: Ignore */
-ENTRY(copy_fault)
+NENTRY(copy_fault)
 	movl	_C_LABEL(curpcb),%edx
 	popl	PCB_ONFAULT(%edx)
 	popl	%edi
@@ -1255,11 +1255,11 @@ ENTRY(copyinstr)
 	jmp	copystr_return
 
 /* LINTSTUB: Ignore */
-ENTRY(copystr_efault)
+NENTRY(copystr_efault)
 	movl	$EFAULT,%eax
 
 /* LINTSTUB: Ignore */
-ENTRY(copystr_fault)
+NENTRY(copystr_fault)
 copystr_return:
 	/* Set *lencopied and return %eax. */
 	movl	_C_LABEL(curpcb),%ecx
@@ -1389,7 +1389,7 @@ ENTRY(fubyte)
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
 /* LINTSTUB: Ignore */
-ENTRY(fusufault)
+NENTRY(fusufault)
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
 	ret
@@ -1400,7 +1400,7 @@ ENTRY(fusufault)
  * than trying to page fault.
  */
 /* LINTSTUB: Ignore */
-ENTRY(fusubail)
+NENTRY(fusubail)
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
 	ret
@@ -1409,7 +1409,7 @@ ENTRY(fusubail)
  * Handle earlier faults from [fs]u*(), due to our of range addresses.
  */
 /* LINTSTUB: Ignore */
-ENTRY(fusuaddrfault)
+NENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
 
