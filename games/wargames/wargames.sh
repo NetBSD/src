@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$NetBSD: wargames.sh,v 1.2 1995/04/22 07:53:44 cgd Exp $
 #
 # Copyright (c) 1985, 1993
 #	The Regents of the University of California.  All rights reserved.
