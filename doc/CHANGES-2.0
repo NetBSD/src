@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.414 2004/08/25 03:16:08 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.415 2004/08/25 03:17:10 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6826,3 +6826,8 @@ distrib/utils/sysinst/msg.mi.pl			1.42
 
 	CD-ROM -> CD-ROM / DVD
 	[hubertf, ticket #785]
+
+share/man/man5/wscons.conf.5			1.13
+
+	Adjust copyright
+	[hubertf, ticket #786]
