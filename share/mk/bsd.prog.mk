@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.51 1995/06/10 20:21:05 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.52 1995/06/24 08:28:08 cgd Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -58,7 +58,8 @@ CLEANFILES+=strings
 .if defined(PROG)
 SRCS?=	${PROG}.c
 .if !empty(SRCS:N*.h:N*.sh)
-OBJS+=  ${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
@@ -85,7 +86,8 @@ all: ${PROG} _SUBDIRUSE
 
 .if !target(clean)
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${CLEANFILES}
+	rm -f a.out [Ee]rrs mklog core *.core
+	rm -f ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 .endif
 
 cleandir: _SUBDIRUSE clean
@@ -129,9 +131,9 @@ realinstall: beforeinstall
 .endif
 
 .if !target(lint)
-lint: ${SRCS} _SUBDIRUSE
-.if defined(PROG)
-	@${LINT} ${LINTFLAGS} ${CFLAGS} ${.ALLSRC} | more 2>&1
+lint: ${LOBJS}
+.if defined(LOBJS) && !empty(LOBJS)
+	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 .endif
 
