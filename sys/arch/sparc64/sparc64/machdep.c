@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2000/12/06 01:47:50 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.95 2000/12/21 22:19:21 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/extent.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
@@ -1597,6 +1598,7 @@ static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 
 
 vaddr_t iobase = IODEV_BASE;
+struct extent *io_space = NULL;
 
 int
 sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
@@ -1615,6 +1617,14 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	t->type = iospace;
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
+	if (io_space == NULL)
+		/*
+		 * And set up IOSPACE extents.
+		 */
+		io_space = extent_create("IOSPACE",
+					 (u_long)IODEV_BASE, (u_long)IODEV_END,
+					 M_DEVBUF, 0, 0, EX_NOWAIT);
+
 
 	size = round_page(size);
 	if (size == 0) {
@@ -1650,10 +1660,11 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	if (vaddr)
 		v = trunc_page(vaddr);
 	else {
-		v = iobase;
-		iobase += size;
-		if (iobase > IODEV_END)	/* unlikely */
-			panic("sparc_bus_map: iobase=0x%lx", iobase);
+		int err;
+		if ((err = extent_alloc(io_space, size, NBPG,
+					0, EX_NOWAIT|EX_BOUNDZERO, 
+					(u_long *)&v)))
+			panic("sparc_bus_map: cannot allocate io_space: %d\n", err);
 	}
 
 	/* note: preserve page offset */
@@ -1689,6 +1700,9 @@ sparc_bus_unmap(t, bh, size)
 	vaddr_t va = trunc_page((vaddr_t)bh);
 	vaddr_t endva = va + round_page(size);
 
+	int error = extent_free(io_space, va, size, EX_NOWAIT);
+	if (error) printf("sparc_bus_unmap: extent free sez %d\n", error);
+
 	pmap_remove(pmap_kernel(), va, endva);
 	return (0);
 }
@@ -1723,7 +1737,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	paddr_t tmp;
 	int result;
 
-	if (bus_space_map2(tag, btype, paddr, size, flags, TMPMAP_VA, &bh) != 0)
+	if (bus_space_map2(tag, btype, paddr, size, flags, NULL, &bh) != 0)
 		return (0);
 
 	tmp = (paddr_t)bh;
