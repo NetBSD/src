@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 1995/02/24 05:07:00 gwr Exp $ */
+/*	$NetBSD: bootxx.c,v 1.3 1995/06/01 21:03:07 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -30,11 +30,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * This is a generic "first-stage" boot program.
+ *
+ * Note that this program has absolutely no filesystem knowledge!
+ *
+ * Instead, this uses a table of disk block numbers that are
+ * filled in by the installboot program such that this program
+ * can load the "second-stage" boot program.
+ */
+
 #include <sys/param.h>
 #include <sys/time.h>
-#include <a.out.h>
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
+#include <sys/exec.h>
 
 #include <machine/mon.h>
 #include "stand.h"
@@ -47,35 +55,34 @@ int netif_debug;
  */
 #define LOADADDR	0x4000
 struct open_file	io;
-char			sblock[SBSIZE];
-struct fs		*fs;
 
-#if 0
-#define MAXBLOCKNUM	MINBSIZE / sizeof(daddr_t)
-#else
-#define MAXBLOCKNUM	512
-#endif
-int			maxblocknum = MAXBLOCKNUM;
-daddr_t			blocknum[MAXBLOCKNUM] = { 0 };
+/* This determines the largest boot program we can load. */
+#define MAXBLOCKNUM	64
+
+/*
+ * These three names are known by installboot.
+ * The block_table contains starting block numbers,
+ * in terms of 512-byte blocks.  Each non-zero value
+ * will result in a read of block_size bytes.
+ */
+int     	block_size = 512;	/* default */
+int     	block_count = MAXBLOCKNUM;	/* length of table */
+daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
+
 
 main()
 {
 	char *dummy;
 	int n;
 
+#ifdef DEBUG
+	printf("bootxx: open...\n");
+#endif
 	io.f_flags = F_RAW;
 	if (devopen(&io, 0, &dummy)) {
-		printf("Can't open device\n");
+		printf("bootxx: open failed\n");
 		exit();
 	}
-
-	if ((io.f_dev->dv_strategy)(io.f_devdata, F_READ,
-				   btodb(SBOFF), SBSIZE,
-				   sblock, &n) || n != SBSIZE) {
-		printf("Can't read superblock\n");
-		exit();
-	}
-	fs = (struct fs *)sblock;
 
 	(void)copyboot(&io, LOADADDR);
 	exit();
@@ -86,33 +93,41 @@ copyboot(f, addr)
 	register struct open_file	*f;
 	register char			*addr;
 {
-	int	n, i;
+	int	n, i, bsize;
 	daddr_t	blk;
 	void	(*entry)() = (void (*)())addr;
 
+#ifdef	sparc
+	/*
+	 * On the sparc, the 2nd stage boot has an a.out header.
+	 * On the sun3, (by tradition) the 2nd stage boot programs
+	 * have the a.out header stripped off.  (1st stage boot
+	 * programs have the header stripped by installboot.)
+	 */
+	/* XXX - This assumes OMAGIC format! */
 	addr -= sizeof(struct exec); /* XXX */
+#endif
 
-	for (i = 0; i < MAXBLOCKNUM; i++) {
-		if ((blk = blocknum[i]) == 0)
+	for (i = 0; i < block_count; i++) {
+
+		/* XXX - This is FS knowledge, actually. */
+		if ((blk = block_table[i]) == 0)
 			break;
+
 #ifdef DEBUG
 		printf("bootxx: block # %d = %d\n", i, blk);
 #endif
 		if ((f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-					   fsbtodb(fs, blk), fs->fs_bsize,
-					   addr, &n)) {
-			printf("Read failure\n");
+					   blk, block_size, addr, &n))
+		{
+			printf("bootxx: read failed\n");
 			return -1;
 		}
-		if (n != fs->fs_bsize) {
-			printf("Short read\n");
+		if (n != block_size) {
+			printf("bootxx: short read\n");
 			return -1;
 		}
-		addr += fs->fs_bsize;
-	}
-	if (blk != 0) {
-		printf("File too long\n");
-		return -1;
+		addr += block_size;
 	}
 
 #ifdef DEBUG
