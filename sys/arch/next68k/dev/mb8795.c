@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.17 1999/08/29 05:51:45 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.18 2000/08/09 02:26:26 tv Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -278,11 +278,6 @@ mb8795_rint(sc)
 
 	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT, XE_RXSTAT_CLEAR);
 
-#if 0
-	printf("%s: rx interrupt, rxstat = %b\n",
-			sc->sc_dev.dv_xname, rxstat, XE_RXSTAT_BITS);
-#endif
-
 	if (rxstat & XE_RXSTAT_RESET) {
 		DPRINTF(("%s: rx reset packet\n",
 				sc->sc_dev.dv_xname));
@@ -377,16 +372,28 @@ mb8795_rint(sc)
 		splx(s);
 
 	}
-	
-	DPRINTF(("%s: rx interrupt, rxstat = %b\n",
-			sc->sc_dev.dv_xname, rxstat, XE_RXSTAT_BITS));
 
-	DPRINTF(("rxstat = 0x%b\n",
-			bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT), XE_RXSTAT_BITS));
-	DPRINTF(("rxmask = 0x%b\n",
-			bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK), XE_RXMASK_BITS));
-	DPRINTF(("rxmode = 0x%b\n",
-			bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMODE), XE_RXMODE_BITS));
+#ifdef XE_DEBUG
+	if (xe_debug) {
+		char sbuf[256];
+
+		bitmask_snprintf(rxstat, XE_RXSTAT_BITS, sbuf, sizeof(sbuf));
+		printf("%s: rx interrupt, rxstat = %s\n",
+		       sc->sc_dev.dv_xname, sbuf);
+
+		bitmask_snprintf(bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT),
+				 XE_RXSTAT_BITS, sbuf, sizeof(sbuf));
+		printf("rxstat = 0x%s\n", sbuf);
+
+		bitmask_snprintf(bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK),
+				 XE_RXMASK_BITS, sbuf, sizeof(sbuf));
+		printf("rxmask = 0x%s\n", sbuf);
+
+		bitmask_snprintf(bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMODE),
+				 XE_RXMODE_BITS, sbuf, sizeof(sbuf));
+		printf("rxmode = 0x%s\n", sbuf);
+	}
+#endif
 
 	return;
 }
@@ -405,11 +412,6 @@ mb8795_tint(sc)
 
 	txstat = bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT);
 	txmask = bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_TXMASK);
-
-#if 0
-	DPRINTF(("%s: tx interrupt, txstat = %b\n",
-			sc->sc_dev.dv_xname, txstat, XE_TXSTAT_BITS));
-#endif
 
 	if (txstat & XE_TXSTAT_SHORTED) {
 		printf("%s: tx cable shorted\n", sc->sc_dev.dv_xname);
@@ -431,9 +433,11 @@ mb8795_tint(sc)
 
 #if 0
 	if (txstat & XE_TXSTAT_READY) {
+		char sbuf[256];
 
-		panic("%s: unexpected tx interrupt %b",
-				sc->sc_dev.dv_xname,txstat,XE_TXSTAT_BITS);
+		bitmask_snprintf(txstat, XE_TXSTAT_BITS, sbuf, sizeof(sbuf));
+		panic("%s: unexpected tx interrupt %s",
+				sc->sc_dev.dv_xname, sbuf);
 
 		/* turn interrupt off */
 		bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_TXMASK, 

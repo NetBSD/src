@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.27 2000/06/05 07:59:51 nisimura Exp $	*/
+/*	$NetBSD: esp.c,v 1.28 2000/08/09 02:26:26 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -445,10 +445,15 @@ esp_dma_isintr(sc)
 
 #ifdef ESP_DEBUG
 			esp_dma_nest++;
-#endif
 
-			DPRINTF(("esp_dma_isintr = 0x%b\n",
-					(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS));
+			if (esp_debug) {
+				char sbuf[256];
+
+				bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
+						 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+				printf("esp_dma_isintr = 0x%s\n", sbuf);
+			}
+#endif
 
 			while (esp_dma_isactive(sc)) {
 				flushcount++;
@@ -568,10 +573,15 @@ esp_dma_reset(sc)
 
 #ifdef ESP_DEBUG
 	if (esp_debug) {
-		printf("  *intrstat = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
-		printf("  *intrmask = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+		char sbuf[256];
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrstat = 0x%s\n", sbuf);
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrmask = 0x%s\n", sbuf);
 	}
 #endif
 
@@ -1199,10 +1209,15 @@ esp_dmacb_shutdown(arg)
 
 #ifdef ESP_DEBUG
 	if (esp_debug) {
-		printf("  *intrstat = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
-		printf("  *intrmask = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+		char sbuf[256];
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrstat = 0x%s\n", sbuf);
+
+		bitmask_snprintf((*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),
+				 NEXT_INTR_BITS, sbuf, sizeof(sbuf));
+		printf("  *intrmask = 0x%s\n", sbuf);
 	}
 #endif
 }
