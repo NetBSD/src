@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 1999/02/02 20:52:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 1999/02/02 21:06:55 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2031,6 +2031,32 @@ pmap_phys_address(ppn)
 {
 	return(m68k_ptob(ppn));
 }
+
+#ifdef M68K_MMU_HP
+/*
+ * pmap_prefer:			[ INTERFACE ]
+ *
+ *	Find the first virtual address >= *vap that does not
+ *	cause a virtually-tagged cache alias problem.
+ */
+void
+pmap_prefer(foff, vap)
+	vaddr_t foff, *vap;
+{
+	vaddr_t va;
+	vsize_t d;
+
+#ifdef M68K_MMU_MOTOROLA
+	if (pmap_aliasmask)
+#endif
+	{
+		va = *vap;
+		d = foff - va;
+		d &= pmap_aliasmask;
+		*vap = va + d;
+	}
+}
+#endif /* M68K_MMU_HP */
 
 #ifdef COMPAT_HPUX
 /*
