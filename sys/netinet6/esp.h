@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.18 2001/10/15 03:55:38 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.19 2002/08/09 06:29:01 itojun Exp $	*/
 /*	$KAME: esp.h,v 1.19 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -48,7 +48,6 @@ struct esp {
 	/* variable size */		/* padding */
 	/* 8bit */			/* pad size */
 	/* 8bit */			/* next header */
-	/* 8bit */			/* next header */
 	/* variable size, 32bit bound */ /* Authentication data (new IPsec) */
 };
 
@@ -58,7 +57,6 @@ struct newesp {
 	/* variable size */		/* (IV and) Payload data */
 	/* variable size */		/* padding */
 	/* 8bit */			/* pad size */
-	/* 8bit */			/* next header */
 	/* 8bit */			/* next header */
 	/* variable size, 32bit bound *//* Authentication data */
 };
