@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmc.4,v 1.7 2001/04/11 19:21:17 wiz Exp $
+.\"	$NetBSD: dmc.4,v 1.8 2001/05/06 17:48:14 ragge Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Tn DMC-11 Ns / Tn DMR-11
 point-to-point serial communications device
 .Sh SYNOPSIS
-.Cd "dmc0 at uba0 csr 167600 vector dmcrint dmcxint"
+.Cd "dmc0 at uba0 csr 167600"
 .Sh DESCRIPTION
 The
 .Nm dmc
@@ -83,17 +83,6 @@ The configuration flags specify how to set up the device,
 2	DDCMP Half Duplex, primary station
 3	DDCMP Half Duplex, secondary station
 .El
-.Pp
-Several device error counters are available via
-.Xr adb 1 ,
-for
-more information see the
-.Xr adb 1
-script
-.Pa /usr/lib/adb/dmcstats ,
-or the
-.Tn DMC-11
-technical manual.
 .Pp
 The host's address must be specified with an
 .Dv SIOCSIFADDR
