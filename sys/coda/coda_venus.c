@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.16 2003/08/27 17:49:49 drochner Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.17 2003/08/28 05:55:19 mrg Exp $	*/
 
 /*
  * 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.16 2003/08/27 17:49:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.17 2003/08/28 05:55:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.16 2003/08/27 17:49:49 drochner Exp
 #include <coda/coda_venus.h>
 #include <coda/coda_pioctl.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_coda_compat.h"
+#endif
 
 #define DECL_NO_IN(name) 				\
     struct coda_in_hdr *inp;				\
