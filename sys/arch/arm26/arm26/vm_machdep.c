@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.4 2000/06/29 08:32:35 mrg Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.5 2000/08/20 21:50:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.4 2000/06/29 08:32:35 mrg Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.5 2000/08/20 21:50:07 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -162,9 +162,11 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 void
 cpu_exit(struct proc *p)
 {
+	int s;
 
 	/* Nothing to do here? */
 	exit2(p); /* I think this is safe on a uniprocessor machine */
+	SCHED_LOCK(s);		/* expected by cpu_switch */
 	cpu_switch(p);
 }
 
