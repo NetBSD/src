@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1995/09/26 21:25:02 phil Exp $
+#	$Id: Makefile.inc,v 1.3 1995/09/29 03:55:35 phil Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -16,6 +16,12 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 ADIR=		${TOP}/../../../sys/arch/pc532
+PWDSRC=		${TOP}/../../../usr.sbin/pwd_mkdb
+.if exists(${PWDSRC}/obj)
+PWDOBJ=		${PWDSRC}/obj
+.else
+PWDOBJ=		${PWDSRC}
+.endif
 
 all: netbsd
 	dd if=/dev/zero of=${IMAGE} bs=18k count=80
@@ -31,7 +37,9 @@ all: netbsd
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
 
-inject.fs: ${CBIN} ${LISTS} netbsd.gz
+inject.fs: ${CBIN} ${LISTS} netbsd.gz 
+	(cd ${PWDSRC}; ${MAKE})
+	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
 	vnconfig -v -c ${VND_DEV} ${.TARGET}
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} rd
@@ -67,6 +75,7 @@ netbsd.gz:
 #		gzip -9 </var/tmp/$$$$ >netbsd.gz; \
 #		rm /var/tmp/$$$$
 
+
 netbsd.o: inject cloak inject.fs
 	cp ${ADIR}/compile/INSTALL/netbsd /var/tmp/$$$$; \
 		strip /var/tmp/$$$$; \
@@ -81,6 +90,7 @@ netbsd: netbsd.o go.o
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f netbsd* inject* cloak
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
