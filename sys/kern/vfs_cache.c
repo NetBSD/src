@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.19 1999/03/22 17:01:55 sommerfe Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.20 1999/09/05 14:22:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@
  * Names found by directory scans are retained in a cache
  * for future reference.  It is managed LRU, so frequently
  * used names will hang around.  Cache is indexed by hash value
- * obtained from (vp, name) where vp refers to the directory
+ * obtained from (dvp, name) where dvp refers to the directory
  * containing name.
  *
  * For simplicity (and economy of storage), names longer than
@@ -61,6 +61,9 @@
  * Upon reaching the last segment of a path, if the reference
  * is for DELETE, or NOCACHE is set (rewrite), and the
  * name is located in the cache, it will be dropped.
+ * The entry is dropped also when it was not possible to lock
+ * the cached vnode, either because vget() failed or the generation
+ * number has changed while waiting for the lock.
  */
 
 /*
@@ -89,10 +92,12 @@ int doingcache = 1;			/* 1 => enable the cache */
  * Lookup is called with ni_dvp pointing to the directory to search,
  * ni_ptr pointing to the name of the entry being sought, ni_namelen
  * tells the length of the name, and ni_hash contains a hash of
- * the name. If the lookup succeeds, the vnode is returned in ni_vp
- * and a status of -1 is returned. If the lookup determines that
- * the name does not exist (negative cacheing), a status of ENOENT
- * is returned. If the lookup fails, a status of zero is returned.
+ * the name. If the lookup succeeds, the vnode is locked, stored in ni_vp
+ * and a status of zero is returned. If the locking fails for whatever
+ * reason, the vnode is unlocked and the error is returned to caller.
+ * If the lookup determines that the name does not exist (negative cacheing),
+ * a status of ENOENT is returned. If the lookup fails, a status of -1
+ * is returned.
  */
 int
 cache_lookup(dvp, vpp, cnp)
@@ -102,15 +107,19 @@ cache_lookup(dvp, vpp, cnp)
 {
 	register struct namecache *ncp;
 	register struct nchashhead *ncpp;
+	struct vnode *vp;
+	int vpid, error;
 
 	if (!doingcache) {
 		cnp->cn_flags &= ~MAKEENTRY;
-		return (0);
+		*vpp = 0;
+		return (-1);
 	}
 	if (cnp->cn_namelen > NCHNAMLEN) {
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
-		return (0);
+		*vpp = 0;
+		return (-1);
 	}
 	ncpp = &nchashtbl[(cnp->cn_hash ^ dvp->v_id) & nchash];
 	for (ncp = ncpp->lh_first; ncp != 0; ncp = ncp->nc_hash.le_next) {
@@ -122,10 +131,12 @@ cache_lookup(dvp, vpp, cnp)
 	}
 	if (ncp == 0) {
 		nchstats.ncs_miss++;
-		return (0);
+		*vpp = 0;
+		return (-1);
 	}
 	if ((cnp->cn_flags & MAKEENTRY) == 0) {
 		nchstats.ncs_badhits++;
+		goto remove;
 	} else if (ncp->nc_vp == NULL) {
 		/*
 		 * Restore the ISWHITEOUT flag saved earlier.
@@ -142,23 +153,79 @@ cache_lookup(dvp, vpp, cnp)
 				TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 			}
 			return (ENOENT);
-		} else
+		} else {
 			nchstats.ncs_badhits++;
+			goto remove;
+		}
 	} else if (ncp->nc_vpid != ncp->nc_vp->v_id) {
 		nchstats.ncs_falsehits++;
-	} else {
-		nchstats.ncs_goodhits++;
-		/*
-		 * move this slot to end of LRU chain, if not already there
-		 */
-		if (ncp->nc_lru.tqe_next != 0) {
-			TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-			TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-		}
-		*vpp = ncp->nc_vp;
-		return (-1);
+		goto remove;
 	}
 
+	vp = ncp->nc_vp;
+	vpid = vp->v_id;
+	if (vp == dvp) {	/* lookup on "." */
+		VREF(dvp);
+		error = 0;
+	} else if (cnp->cn_flags & ISDOTDOT) {
+		VOP_UNLOCK(dvp, 0);
+		cnp->cn_flags |= PDIRUNLOCK;
+		error = vget(vp, LK_EXCLUSIVE);
+		/* if the above vget() succeeded and both LOCKPARENT and
+		 * ISLASTCN is set, lock the directory vnode as well */
+		if (!error && (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) == 0) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0) {
+				vput(vp);
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
+		}
+	} else {
+		error = vget(vp, LK_EXCLUSIVE);
+		/* if the above vget() failed or either of LOCKPARENT or
+		 * ISLASTCN is set, unlock the directory vnode */
+		if (error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
+	}
+
+	/*
+	 * Check that the lock succeeded, and that the capability number did
+	 * not change while we were waiting for the lock.
+	 */
+	if (error || vpid != vp->v_id) {
+		if (!error) {
+			vput(vp);
+			nchstats.ncs_falsehits++;
+		} else
+			nchstats.ncs_badhits++;
+		/*
+		 * The parent needs to be locked when we return to VOP_LOOKUP().
+		 * The `.' case here should be extremely rare (if it can happen
+		 * at all), so we don't bother optimizing out the unlock/relock.
+		 */
+		if (vp == dvp ||
+		    error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0)
+				return (error);
+			cnp->cn_flags &= ~PDIRUNLOCK;
+		}
+		goto remove;
+	}
+
+	nchstats.ncs_goodhits++;
+	/*
+	 * move this slot to end of LRU chain, if not already there
+	 */
+	if (ncp->nc_lru.tqe_next != 0) {
+		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+	}
+	*vpp = vp;
+	return (0);
+
+remove:
 	/*
 	 * Last component and we are renaming or deleting,
 	 * the cache entry is invalid, or otherwise don't
@@ -172,7 +239,8 @@ cache_lookup(dvp, vpp, cnp)
 		ncp->nc_vhash.le_prev = 0;
 	}
 	TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
-	return (0);
+	*vpp = 0;
+	return (-1);
 }
 
 /*
