@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.9 2002/05/27 21:11:41 wiz Exp $	*/
+/*	$NetBSD: gspa.c,v 1.10 2003/07/14 08:43:19 itojun Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.9 2002/05/27 21:11:41 wiz Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.10 2003/07/14 08:43:19 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -128,10 +128,9 @@ main(int argc, char **argv)
 	argv += optind;
 	if (argc == 0) {
 		infile = stdin;
-		strcpy(in_name, "<stdin>");
+		strlcpy(in_name, "<stdin>", sizeof(in_name));
 	} else if (argc == 1) {
-		strncpy(in_name, *argv, PATH_MAX);
-		in_name[PATH_MAX] = 0;
+		strlcpy(in_name, *argv, sizeof(in_name));
 		if ((infile = fopen(in_name, "r")) == NULL)
 			err(1, "fopen");
 	} else 
@@ -225,11 +224,11 @@ push_input(char *fn)
 	new(p);
 	p->fp = current_infile;
 	p->lineno = lineno;
-	strcpy(p->name, in_name);
+	strlcpy(p->name, in_name, sizeof(p->name));
 	p->next = pending_input;
 	current_infile = f;
 	lineno = 1;
-	strcpy(in_name, fn);
+	strlcpy(in_name, fn, sizeof(in_name));
 	pending_input = p;
 }
 
@@ -244,7 +243,7 @@ get_line(char *lp, int maxlen)
 		/* pop the input stack */
 		fclose(current_infile);
 		current_infile = p->fp;
-		strcpy(in_name, p->name);
+		strlcpy(in_name, p->name, sizeof(in_name));
 		lineno = p->lineno;
 		pending_input = p->next;
 		free(p);
