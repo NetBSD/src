@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22.2.3 2001/02/11 19:12:33 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.22.2.4 2001/03/14 09:01:43 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1287,10 +1287,8 @@ device_register(dev, aux)
 		/*
 		 * Bounds check: we know the target and lun widths.
 		 */
-		if (target >=
-		    periph->periph_channel->chan_adapter->adapt_ntargets ||
-		    lun >=
-		    periph->periph_channel->chan_adapter->adapt_nluns) {
+		if (target >= periph->periph_channel->chan_ntargets ||
+		    lun >= periph->periph_channel->chan_nluns) {
 			printf("SCSI disk bootpath component not accepted: "
 			       "target %u; lun %u\n", target, lun);
 			return;
