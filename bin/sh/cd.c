@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.21 1997/03/07 21:36:19 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.22 1997/04/11 23:07:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.21 1997/03/07 21:36:19 christos Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.22 1997/04/11 23:07:47 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -323,7 +323,7 @@ getpwd()
 	 * c implementation of getcwd, that does not open a pipe to
 	 * /bin/pwd.
 	 */
-#if defined(__NetBSD__) || defined(__svr4__)
+#if defined(__NetBSD__) || defined(__SVR4)
 		
 	if (getcwd(buf, sizeof(buf)) == NULL) {
 		char *pwd = getenv("PWD");
