@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.72 2004/05/15 22:19:27 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.73 2004/05/25 04:38:36 atatat Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.72 2004/05/15 22:19:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.73 2004/05/25 04:38:36 atatat Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3890,7 +3890,8 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "bge", NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "bge",
+	    SYSCTL_DESCR("BGE interface controls"),
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
 		goto err;
 	}
@@ -3900,7 +3901,9 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 	/* BGE Rx interrupt mitigation level */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node, 
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_INT, "rx_lvl", NULL, sysctl_bge_verify, 0,
+	    CTLTYPE_INT, "rx_lvl",
+	    SYSCTL_DESCR("BGE receive interrupt mitigation level"),
+	    sysctl_bge_verify, 0,
 	    &bge_rx_thresh_lvl,
 	    0, CTL_HW, bge_root_num, CTL_CREATE,
 	    CTL_EOL)) != 0) {
