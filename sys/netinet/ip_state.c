@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.27 2000/08/09 21:00:44 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.28 2001/02/05 10:42:44 chs Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_state.c,v 1.27 2000/08/09 21:00:44 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_state.c,v 1.28 2001/02/05 10:42:44 chs Exp $";
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.17 2000/08/08 16:01:03 darrenr Exp";
@@ -101,10 +101,6 @@ static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.17 2000/08/08 16:01:03 
 #  include <sys/libkern.h>
 #  include <sys/systm.h>
 # endif
-#endif
-
-#ifndef	MIN
-# define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
 #define	TCP_CLOSE	(TH_FIN|TH_RST)
