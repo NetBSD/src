@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.36 2003/01/18 10:14:20 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.37 2003/01/27 23:31:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.36 2003/01/18 10:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.37 2003/01/27 23:31:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1151,6 +1151,13 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case DPT_EATAUSRCMD:
+		if (IOCPARM_LEN(cmd) < sizeof(struct eata_ucp)) {
+			DPRINTF(("%s: ucp %d vs %d bytes\n",
+			    sc->sc_dv.dv_xname, IOCPARM_LEN(cmd),
+			    sizeof(struct eata_ucp)));
+			return (EINVAL);
+		}
+
 		if (sc->sc_uactive++)
 			tsleep(&sc->sc_uactive, PRIBIO, "dptslp", 0);
 
@@ -1370,6 +1377,8 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
 			    sc->sc_dv.dv_xname));
 	}
 
+	ucp->ucp_hstatus = (u_int8_t)ccb->ccb_hba_status;
+	ucp->ucp_tstatus = (u_int8_t)ccb->ccb_scsi_status;
 	dpt_ccb_free(sc, ccb);
 	return (rv);
 }
