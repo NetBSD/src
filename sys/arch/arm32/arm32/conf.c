@@ -1,8 +1,7 @@
-/*	$NetBSD: conf.c,v 1.27 1998/08/29 03:28:17 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 1998/09/06 02:33:56 mark Exp $	*/
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
- * Copyright (c) 1994 Brini.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -166,13 +166,18 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "vidcvideo.h"
 #include "ipfilter.h"
 #include "rnd.h"
+#include "fcom.h"
+#include "pc.h"
 #include "profiler.h"
 #include "ofcons.h"
 #include "ofrom.h"
 #include "ofrtc.h"			/* XXX not used for anything?! */
 #include "scr.h"
-#include "pc.h"
 #include "joy.h"
+#include "usb.h"
+#include "uhid.h"
+#include "ugen.h"
+#include "ulpt.h"
 
 /* Character devices */
 
@@ -242,24 +247,25 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_notdef(),			/* 51: reserved */
 	cdev_rnd_init(NRND,rnd),	/* 52: random source pseudo-device */
-#ifdef	SHARK
 	cdev_prof_init(NPROFILER, prof), /* 53: fiq Profiler*/
+#if defined(FOOTBRIDGE)
+	cdev_tty_init(NFCOM, fcom),	/* 54: FOOTBRIDGE console */
 #else
-	cdev_lkm_dummy(),		/* 53: reserved */
-#endif
-	cdev_lkm_dummy(),		/* 54: reserved for DC21285 serial */
-	cdev_lkm_dummy(),		/* 55: reserved for PCI bypass dev */
+	/* FOOTBRIDGE */
+	cdev_lkm_dummy(),		/* 54: */	
+#endif	/* FOOTBRIDGE */
+	cdev_lkm_dummy(),		/* 55: Reserved for bypass device */	
 	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
 	cdev_midi_init(NMIDI,midi),	/* 57: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 58: sequencer I/O */
-	cdev_lkm_dummy(),		/* 59: reserved for coda ? */
-	cdev_lkm_dummy(), 		/* 60: reserved for wsdisplay. */
-	cdev_lkm_dummy(), 		/* 61: reserved for wskbd */
+	cdev_lkm_dummy(),		/* 59: reserved for CODA */
+	cdev_lkm_dummy(),		/* 60: reserved for wsdisplay */
+	cdev_lkm_dummy(),		/* 61: reserved for wskbd */
 	cdev_lkm_dummy(),		/* 62: reserved for wsmouse */
 	cdev_lkm_dummy(),		/* 63: reserved */
-	cdev_lkm_dummy(),		/* 64: reserved for USB */
-	cdev_lkm_dummy(),		/* 65: reserved for USB HID*/
-	cdev_lkm_dummy(),		/* 66: reserved for USB LPT */
+	cdev_usb_init(NUSB,usb),        /* 64: USB controller */
+	cdev_usbdev_init(NUHID,uhid),   /* 65: USB generic HID */
+	cdev_lpt_init(NULPT,ulpt),      /* 66: USB printer */
 	cdev_lkm_dummy(),		/* 67: reserved */
 	cdev_lkm_dummy(),		/* 68: reserved */
 	cdev_lkm_dummy(),		/* 69: reserved */
@@ -405,6 +411,7 @@ chrtoblk(dev)
 #include <dev/cons.h>
 
 cons_decl(rpcconsole);
+cons_decl(fcom);
 cons_decl(com);   
 cons_decl(ofcons_);
 cons_decl(pc);
@@ -413,7 +420,9 @@ struct consdev constab[] = {
 #if (NCOM > 0)
 	cons_init(com),
 #endif
-#if (NVT + NRPC > 0)
+#if (NFCOM > 0)
+	cons_init(fcom),
+#elif (NVT + NRPC > 0)
 	cons_init(rpcconsole),
 #elif (NPC > 0)
 	cons_init(pc),
