@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.10 2001/05/13 23:25:38 mbw Exp $
+.\"$NetBSD: hardware,v 1.11 2001/05/14 07:46:57 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -404,7 +404,19 @@ On-board video capture
 .Ss2 Supported boot devices and media
 .
 Each version of Open Firmware supports different devices and media that you
-may boot from.
+may boot from.  We define the terms
+.Dq bootable media
+as the media (hard drive, CD-R, ethernet) that will be used to bootstrap
+your \*M system into
+.Nx No Ns ,
+and
+.Dq distribution sets
+or
+.Dq distribution media
+as the media (hard drive, CD-R, ethernet) that contains the files that
+will be installed to generate a working 
+.Nx
+system onto your destination media.
 .Pp
 Go to the
 .Nx*M

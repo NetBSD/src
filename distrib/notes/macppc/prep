@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.13 2001/05/13 23:25:38 mbw Exp $
+.\"	$NetBSD: prep,v 1.14 2001/05/14 07:46:57 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1086,7 +1086,9 @@ Firmware 2.4)
 .Pp
 Place
 .Pa ofwboot.xcf
-and the installation kernel at the top level of the CD.
+and the installation kernel 
+.Pa netbsd.ram.gz
+at the top level of the CD.
 You may also place the
 .Nx \*V
 distribution sets on the disk.
@@ -1166,7 +1168,9 @@ Skip forward to
 .Pp
 Place
 .Pa ofwboot.xcf
-and the installation kernel at the top level of the CD. Make sure that the
+and the installation kernel 
+.Pa netbsd.ram.gz
+at the top level of the CD. Make sure that the
 bootloader is present on the HFS partition, and the kernel is on the ISO
 partition. You may also place the
 .Nx \*V
@@ -1555,7 +1559,7 @@ partition map that can be shared with
 .Tn MacOS .
 You will need to use the 
 .Tn MacOS
-Drive Setup tool (versions 1.9.1 and later are
+Drive Setup tool (versions 1.8.1 and later are
 known to work) to partition the hard drive you will be using for
 .Nx .
 Drive Setup will erase the contents of your drive -- it does not preserve 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.10 2001/05/13 23:25:38 mbw Exp $
+.\"	$NetBSD: install,v 1.11 2001/05/14 07:46:57 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -203,7 +203,11 @@ drivers.
 You may find that your first HFS or HFS+ partition might be as high as
 partition 9.
 You may need to keep trying higher partition numbers until you find the one
-that has your bootloader.
+that has your bootloader.  If you're running 
+.Tn MacOS X
+you can run the following command to print out the partition table on your
+drive:
+.Dl % Ic "sudo pdisk /dev/disk0 -dump"
 .Pp
 If bootloader is on a different partition from the
 .Nx
@@ -216,7 +220,7 @@ Here are some examples of what you might use to boot from such a drive:
 .Pp
 .Dl 0 > Ic "boot scsi/sd@0:9,ofwboot.xcf scsi/sd@0:9,boot.fs"
 .Dl 0 > Ic "boot ide0/disk@0:10,ofwboot.xcf ide0/disk@0:9,boot.fs"
-.Dl 0 > Ic "boot hd:8,ofwboot.xcf hd:8,boot.fs"
+.Dl 0 > Ic "boot hd:9,ofwboot.xcf hd:9,boot.fs"
 .bullet)
 .
 .Ss2 Example of a normal boot
@@ -262,7 +266,9 @@ get an idea of what to expect (user-typed commands are in
  using 2483 buffers containing 9932 KB of memory
  [...]
  erase ^H, werase ^W, kill ^U, intr ^C, status ^T
- (I)nstall, (S)hell or (H)alt ? 
+ Terminal type? [vt100]
+ Erase is backspace.
+ (I)nstall, (S)hell or (H)alt ?
 .disp)
 .
 .Ss2 Common Problems and Error Messages
@@ -430,8 +436,10 @@ style boot scheme, you would type something like the following:
 .Dl 0 > Ic "setenv auto-boot? true"
 .Dl 0 > Ic "setenv boot-device scsi/sd@0:0"
 .Dl 0 > Ic "setenv boot-file netbsd"
+.Dl 0 > Ic "reset-all"
 .Pp
-replacing 
+The last command resets the system so that these settings are stored.
+Replace
 .Ic scsi/sd@0:0
 with the actual device you will be booting from.  If you find that your
 system tries booting before your hard drive has spun up, you may need to
@@ -448,4 +456,5 @@ need:
 .Dl 0 > Ic "setenv boot-device ide0/disk@0:8,ofwboot.xcf"
 .Dl 0 > Ic "setenv boot-file ide0/disk@0:13,/netbsd"
 .Dl 0 > Ic "setenv boot-command boot"
+.Dl 0 > Ic "reset-all"
 .Pp
