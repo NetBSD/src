@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.17 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.18 1999/04/14 16:26:42 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,6 +79,7 @@ SOFTWARE.
 #include <net/route.h>
 
 #include <net/if_ether.h>
+#include <net/if_fddi.h>
 
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
@@ -205,15 +206,22 @@ next:
 		m->m_len -= EONIPLEN;
 		m->m_pkthdr.len -= EONIPLEN;
 		break;
-
+	case IFT_ETHER:
+		bcopy((caddr_t) (mtod(m, struct ether_header *)->ether_dhost),
+		  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
+		m->m_data += sizeof(struct ether_header);
+		m->m_len -= sizeof(struct ether_header);
+		m->m_pkthdr.len -= sizeof(struct ether_header);
+		break;
+	case IFT_FDDI:
+		bcopy((caddr_t) (mtod(m, struct fddi_header *)->fddi_dhost),
+		  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
+		m->m_data += sizeof(struct fddi_header);
+		m->m_len -= sizeof(struct fddi_header);
+		m->m_pkthdr.len -= sizeof(struct fddi_header);
+		break;
 	default:
-		if (sh.snh_ifp->if_output == ether_output) {
-			bcopy((caddr_t) (mtod(m, struct ether_header *)->ether_dhost),
-			  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
-			m->m_data += sizeof(struct ether_header);
-			m->m_len -= sizeof(struct ether_header);
-			m->m_pkthdr.len -= sizeof(struct ether_header);
-		}
+		break;
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {

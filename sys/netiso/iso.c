@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.22 1999/04/01 06:51:48 chopps Exp $	*/
+/*	$NetBSD: iso.c,v 1.23 1999/04/14 16:26:42 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,7 @@ SOFTWARE.
 #include <sys/proc.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/route.h>
 
 #include <netiso/iso.h>
@@ -633,7 +634,7 @@ iso_ifinit(ifp, ia, siso, scrub)
 	 * XXX -- The following is here temporarily out of laziness in not
 	 * changing every ethernet driver's if_ioctl routine
 	 */
-	if (ifp->if_output == ether_output) {
+	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
 		ia->ia_ifa.ifa_rtrequest = llc_rtrequest;
 		ia->ia_ifa.ifa_flags |= RTF_CLONING;
 	}
