@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -37,32 +37,32 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)df.c	5.30 (Berkeley) 4/23/92";*/
-static char rcsid[] = "$Id: df.c,v 1.13 1994/06/13 06:39:17 chopps Exp $";
+/*static char sccsid[] = "from: @(#)df.c	8.7 (Berkeley) 4/2/94";*/
+static char rcsid[] = "$Id: df.c,v 1.13.2.1 1994/09/16 21:42:02 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <errno.h>
+
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <unistd.h>
 
-int	 bread __P((long, char *, int));
+int	 bread __P((off_t, void *, int));
 char	*getmntpt __P((char *));
-void	 prtstat __P((struct statfs *, long));
-void	 ufs_df __P((char *, long));
+void	 prtstat __P((struct statfs *, int));
+void	 ufs_df __P((char *, int));
 void	 usage __P((void));
 
 int	iflag, kflag = 0, nflag, lflag;
@@ -82,7 +82,7 @@ main(argc, argv)
 	char *mntpt;
 
 	while ((ch = getopt(argc, argv, "ikln")) != EOF)
-		switch(ch) {
+		switch (ch) {
 		case 'i':
 			iflag = 1;
 			break;
@@ -108,19 +108,21 @@ main(argc, argv)
 
 	mntsize = getmntinfo(&mntbuf, (nflag ? MNT_NOWAIT : MNT_WAIT));
 	if (mntsize == 0)
-	        err(1, "retrieving informaation on mounted file systems");
+	        err(1, "retrieving information on mounted file systems");
 	maxwidth = 0;
 	for (i = 0; i < mntsize; i++) {
 		width = strlen(mntbuf[i].f_mntfromname);
 		if (width > maxwidth)
 			maxwidth = width;
 	}
+
 	if (!*argv) {
 		for (i = 0; i < mntsize; i++)
 			if (!lflag || mntbuf[i].f_flags & MNT_LOCAL)
 				prtstat(&mntbuf[i], maxwidth);
 		exit(0);
 	}
+
 	for (; *argv; argv++) {
 		if (stat(*argv, &stbuf) < 0) {
 			if ((mntpt = getmntpt(*argv)) == 0) {
@@ -183,12 +185,20 @@ getmntpt(name)
 }
 
 /*
+ * Convert statfs returned filesystem size into BLOCKSIZE units.
+ * Attempts to avoid overflow for large filesystems.
+ */
+#define fsbtoblk(num, fsbs, bs) \
+	(((fsbs) != 0 && (fsbs) < (bs)) ? \
+		(num) / ((bs) / (fsbs)) : (num) * ((fsbs) / (bs)))
+
+/*
  * Print out status about a filesystem.
  */
 void
 prtstat(sfsp, maxwidth)
-	register struct statfs *sfsp;
-	long maxwidth;
+	struct statfs *sfsp;
+	int maxwidth;
 {
 	static int headerlen, timesthrough;
 	static char *header;
@@ -202,7 +212,7 @@ prtstat(sfsp, maxwidth)
 			headerlen = strlen(header);
 		} else
 			header = getbsize(&headerlen, &blocksize);
-		(void)printf("%-*.*s %s    Used   Avail Capacity",
+		(void)printf("%-*.*s %s     Used    Avail Capacity",
 		    maxwidth, maxwidth, "Filesystem", header);
 		if (iflag)
 			(void)printf(" iused   ifree  %%iused");
@@ -211,10 +221,10 @@ prtstat(sfsp, maxwidth)
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
 	used = sfsp->f_blocks - sfsp->f_bfree;
 	availblks = sfsp->f_bavail + used;
-	(void)printf(" %*ld %7ld %7ld", headerlen,
-	    sfsp->f_blocks * sfsp->f_bsize / blocksize,
-	    used * sfsp->f_bsize / blocksize,
-	    sfsp->f_bavail * sfsp->f_bsize / blocksize);
+	(void)printf(" %*ld %8ld %8ld", headerlen,
+	    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
+	    fsbtoblk(used, sfsp->f_bsize, blocksize),
+	    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
 	(void)printf(" %5.0f%%",
 	    availblks == 0 ? 100.0 : (double)used / (double)availblks * 100.0);
 	if (iflag) {
@@ -228,7 +238,7 @@ prtstat(sfsp, maxwidth)
 }
 
 /*
- * This code constitutes the old df code for extracting
+ * This code constitutes the pre-system call Berkeley df code for extracting
  * information from filesystem superblocks.
  */
 #include <ufs/ffs/fs.h>
@@ -241,36 +251,34 @@ union {
 } sb;
 #define sblock sb.iu_fs
 
-int	fi;
+int	rfd;
 
 void
 ufs_df(file, maxwidth)
 	char *file;
-	long maxwidth;
+	int maxwidth;
 {
 	struct statfs statfsbuf;
-	register struct statfs *sfsp;
+	struct statfs *sfsp;
 	char *mntpt;
 	static int synced;
 
 	if (synced++ == 0)
 		sync();
 
-	if ((fi = open(file, O_RDONLY)) < 0) {
+	if ((rfd = open(file, O_RDONLY)) < 0) {
 		warn("%s", file);
 		return;
 	}
-	if (bread((long)SBOFF, (char *)&sblock, SBSIZE) == 0) {
-		(void)close(fi);
+	if (bread((off_t)SBOFF, &sblock, SBSIZE) == 0) {
+		(void)close(rfd);
 		return;
 	}
 	sfsp = &statfsbuf;
 	sfsp->f_type = 0;
 	sfsp->f_flags = 0;
-	sfsp->f_iosize = sblock.fs_fsize;
-#ifdef notyet
+	sfsp->f_bsize = sblock.fs_fsize;
 	sfsp->f_iosize = sblock.fs_bsize;
-#endif
 	sfsp->f_blocks = sblock.fs_dsize;
 	sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree * sblock.fs_frag +
 		sblock.fs_cstotal.cs_nffree;
@@ -284,29 +292,28 @@ ufs_df(file, maxwidth)
 	sfsp->f_fsid.val[1] = 0;
 	if ((mntpt = getmntpt(file)) == 0)
 		mntpt = "";
-	bcopy((caddr_t)mntpt, (caddr_t)&sfsp->f_mntonname[0], MNAMELEN);
-	bcopy((caddr_t)file, (caddr_t)&sfsp->f_mntfromname[0], MNAMELEN);
+	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
+	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
 	strncpy(sfsp->f_fstypename, MOUNT_UFS, MFSNAMELEN);
 	sfsp->f_fstypename[MFSNAMELEN] = '\0';
 	prtstat(sfsp, maxwidth);
-	(void) close(fi);
+	(void)close(rfd);
 }
 
 int
 bread(off, buf, cnt)
-	long off;
-	char *buf;
+	off_t off;
+	void *buf;
 	int cnt;
 {
-	int n;
+	int nr;
 
-	(void) lseek(fi, off, SEEK_SET);
-	if ((n=read(fi, buf, cnt)) != cnt) {
-		/* probably a dismounted disk if errno == EIO */
-		if (errno != EIO) {
-			(void)printf("\nread error off = %ld\n", off);
-			(void)printf("count = %d: %s\n", n, strerror(errno));
-		}
+	(void)lseek(rfd, off, SEEK_SET);
+	if ((nr = read(rfd, buf, cnt)) != cnt) {
+		/* Probably a dismounted disk if errno == EIO. */
+		if (errno != EIO)
+			(void)fprintf(stderr, "\ndf: %qd: %s\n",
+			    off, strerror(nr > 0 ? EIO : errno));
 		return (0);
 	}
 	return (1);
@@ -315,7 +322,6 @@ bread(off, buf, cnt)
 void
 usage()
 {
-
-	fprintf(stderr, "usage: df [-ikln] [file | file_system ...]\n");
+	(void)fprintf(stderr, "usage: df [-ikln] [file | file_system ...]\n");
 	exit(1);
 }
