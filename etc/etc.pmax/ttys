@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.5 1999/10/06 22:47:58 ad Exp $
+#	$NetBSD: ttys,v 1.5.6.1 2000/08/12 18:01:50 mason Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -65,3 +65,35 @@ ttyqc	none				network
 ttyqd	none				network
 ttyqe	none				network
 ttyqf	none				network
+ttyr0	none				network
+ttyr1	none				network
+ttyr2	none				network
+ttyr3	none				network
+ttyr4	none				network
+ttyr5	none				network
+ttyr6	none				network
+ttyr7	none				network
+ttyr8	none				network
+ttyr9	none				network
+ttyra	none				network
+ttyrb	none				network
+ttyrc	none				network
+ttyrd	none				network
+ttyre	none				network
+ttyrf	none				network
+ttys0	none				network
+ttys1	none				network
+ttys2	none				network
+ttys3	none				network
+ttys4	none				network
+ttys5	none				network
+ttys6	none				network
+ttys7	none				network
+ttys8	none				network
+ttys9	none				network
+ttysa	none				network
+ttysb	none				network
+ttysc	none				network
+ttysd	none				network
+ttyse	none				network
+ttysf	none				network
