@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.2.2.3 1997/11/02 20:52:57 mellon Exp $	*/
+/*	$NetBSD: md.h,v 1.3.2.2 1997/11/02 20:51:51 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,32 +36,45 @@
  *
  */
 
-/* pmax machine dependent menus, english */
+/* md.h -- Machine specific definitions for the pmax */
 
-menu editfsparts, y=15, exit;
-	display action  {
-			ask_sizemult();
-			msg_display(MSG_fspart, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option "Change a", action { editpart = A;}, sub menu edfspart;
-	option "Change b", action { editpart = B;}, sub menu edfspart;
-	option "Change d", action { editpart = D;}, sub menu edfspart;
-	option "Change e", action { editpart = E;}, sub menu edfspart;
-	option "Change f", action { editpart = F;}, sub menu edfspart;
-	option "Change g", action { editpart = G;}, sub menu edfspart;
-	option "Change h", action { editpart = H;}, sub menu edfspart;
-	option "Set new allocation size", action { reask_sizemult(); };
- 
-menu md_distcustom, x=30, y=10, exit, title " Selection toggles inclusion";
-	display action { show_cur_distsets (); };
-	option  "Compiler Tools", 	 action { toggle_getit (3); };
-	option  "Games", 		 action { toggle_getit (4); };
-	option  "Online Manual Pages", 	 action { toggle_getit (5); };
-	option  "Miscellaneous", 	 action { toggle_getit (6); };
-	option  "Text Processing Tools", action { toggle_getit (7); };
-	option  "X11 base and clients",	 action { toggle_getit (8); };
-	option  "X11 fonts",		 action { toggle_getit (9); };
-	option  "X11 servers",		 action { toggle_getit (10); };
-	option  "X contrib clients",	 action { toggle_getit (11); };
-	option  "X11 programming",	 action { toggle_getit (12); };
+/* Constants and defines */
+
+/* Megs required for a full X installation. */
+#define XNEEDMB 100
+
+/* Disk names. */
+EXTERN	char *disk_names[]
+#ifdef MAIN
+= {"rz", "sd", NULL}
+#endif
+;
+
+/* Legal start character for a disk for checking input. */
+#define ISDISKSTART(dn)	(dn == 'r' || dn == 's')
+
+/* Definition of files to retreive from ftp. */
+EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
+EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
+EXTERN distinfo dist_list[]
+#ifdef MAIN
+= { {"kern%s%s",    1, NULL, "Kernel       : "},
+    {"etc%s%s",	    1, NULL, "System (/etc): "},
+    {"base%s%s",    1, NULL, "Base         : "}, 
+    {"comp%s%s",    1, NULL, "Compiler     : "},
+    {"games%s%s",   1, NULL, "Games        : "},
+    {"man%s%s",     1, NULL, "Manuals      : "},
+    {"misc%s%s",    1, NULL, "Miscellaneous: "},
+    {"text%s%s",    1, NULL, "Text tools   : "},
+    {"xbase%s%s",   1, NULL, "X11 clients  : "},
+    {"xfont%s%s",   1, NULL, "X11 fonts    : "},
+    {"xfont%s%s",   1, NULL, "X11 servers  : "},
+    {"xcontrib%s%s",1, NULL, "X11 contrib  : "},
+    {"xcomp%s%s",   1, NULL, "X programming: "},
+
+    {NULL, 0, NULL }
+}
+#endif
+;
+
+EXTERN char *fdtype INIT("");
