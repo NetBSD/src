@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.h,v 1.9 2000/06/12 16:21:02 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.17 2000/06/11 17:23:40 jinmei Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.9.2.1 2000/07/20 00:07:04 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.18 2000/07/03 02:51:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -555,7 +555,11 @@ struct icmp6stat {
 #define ICMPV6CTL_ND6_USELOOPBACK	11
 /*#define ICMPV6CTL_ND6_PROXYALL	12	obsoleted, do not reuse here */
 #define ICMPV6CTL_NODEINFO	13
-#define ICMPV6CTL_MAXID		14
+#if 0	/*notyet*/
+#define ICMPV6CTL_ERRPPSLIMIT	14	/* ICMPv6 error pps limitation */
+#endif
+#define ICMPV6CTL_ND6_MAXNUDHINT	15
+#define ICMPV6CTL_MAXID		16
 
 #define ICMPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -572,6 +576,8 @@ struct icmp6stat {
 	{ "nd6_useloopback", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "nodeinfo", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ "nd6_maxnudhint", CTLTYPE_INT }, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.108.4.2 2000/07/16 01:27:13 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.108.4.3 2000/07/20 00:07:04 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -154,6 +154,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in.h>
 #endif
 #include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
@@ -206,7 +207,7 @@ struct timeval tcp_rst_ratelim_last;
 do { \
 	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 \
 	 && tp->t_in6pcb->in6p_route.ro_rt) { \
-		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL); \
+		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL, 0); \
 	} \
 } while (0)
 #else
