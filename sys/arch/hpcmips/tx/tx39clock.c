@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.7 2000/10/01 18:12:04 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.8 2000/10/22 10:42:32 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct cfattach tx39clock_ca = {
 int
 tx39clock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 2; /* 1st attach group of txsim */
+	return ATTACH_FIRST;
 }
 
 void
