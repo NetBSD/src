@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)fgetline.3	5.4 (Berkeley) 4/19/91
-.\"	$Id: fgetline.3,v 1.3 1993/11/29 22:06:46 jtc Exp $
+.\"     from: @(#)fgetline.3	8.1 (Berkeley) 6/9/93
+.\"	$Id: fgetline.3,v 1.4 1993/12/22 07:11:09 cgd Exp $
 .\"
-.Dd April 19, 1991
+.Dd June 9, 1993
 .Dt FGETLINE 3
 .Os
 .Sh NAME
@@ -48,14 +48,18 @@ The
 function
 returns a pointer to the next line from the stream referenced by
 .Fa stream .
-The newline character at the end of the line is replaced by a
-.Dv NUL .
-.Pp
-If
+This line is
+.Em not
+a C string as it does not end with a terminating
+.Dv NUL
+character.
+The length of the line, including the final newline,
+is stored in the memory location to which
 .Fa len
-is non-NULL, the length of the line, not counting the terminating
-.Dv NUL ,
-is stored in the memory location it references.
+points.
+(Note, however, that if the line is the last
+in a file that does not end in a newline,
+the returned text will not contain a newline.)
 .Sh RETURN VALUES
 Upon successful completion a pointer is returned;
 this pointer becomes invalid after the next
@@ -87,11 +91,10 @@ cleared with
 .Xr clearerr 3 .
 .Pp
 The text to which the returned pointer points may be modified,
-provided that no changes are made beyond the terminating
-.Dv NUL .
+provided that no changes are made beyond the returned size.
 These changes are lost as soon as the pointer becomes invalid.
 .Sh ERRORS
-.Bl -tag -width Er
+.Bl -tag -width [EBADF]
 .It Bq Er EBADF
 The argument
 .Fa stream
@@ -118,8 +121,4 @@ or
 .Sh HISTORY
 The
 .Fn fgetline
-function is
-.Ud .
-.Sh BUGS
-It is not possible to tell whether the final line of an input file
-was terminated with a newline.
+function first appeared in 4.4BSD.
