@@ -39,6 +39,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_STRING_H
+#include <string.h>		/* for strchr++ prototypes */
+#endif
+
 #include "gdb_locale.h"
 
 /* For ``enum target_signal''.  */
