@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.8 1998/01/22 01:32:15 thorpej Exp $	*/
+/*	$NetBSD: elf.c,v 1.9 1998/06/25 23:19:48 thorpej Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -32,6 +32,7 @@
  */
 
 #include "opt_execfmt.h"
+#include "opt_compat_linux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
