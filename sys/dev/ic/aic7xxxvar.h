@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.15 1998/03/16 15:36:17 leo Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.16 1998/04/16 07:13:57 leo Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -69,6 +69,11 @@
 #define	AHC_OUTSL(ahc, port, valp, size)	\
 	outsl((ahc)->baseport+(port), valp, size)
 #elif defined(__NetBSD__)
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define	bus_space_write_multi_stream_4	bus_space_write_multi_4
+#endif
+
 #define	AHC_INB(ahc, port)	\
 	bus_space_read_1((ahc)->sc_st, (ahc)->sc_sh, port)
 #define	AHC_INSB(ahc, port, valp, size)	\
@@ -78,7 +83,7 @@
 #define	AHC_OUTSB(ahc, port, valp, size)	\
 	bus_space_write_multi_1((ahc)->sc_st, (ahc)->sc_sh, port, (u_int8_t *) valp, size)
 #define	AHC_OUTSL(ahc, port, valp, size)	\
-	bus_space_write_multi_4((ahc)->sc_st, (ahc)->sc_sh, port, (u_int32_t *) valp, size)
+	bus_space_write_multi_stream_4((ahc)->sc_st, (ahc)->sc_sh, port, (u_int32_t *) valp, size)
 #endif
 
 #define	AHC_NSEG	256	/* number of dma segments supported */
