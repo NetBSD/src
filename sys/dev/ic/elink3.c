@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32.4.4 1997/09/27 01:57:29 marc Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.5 1997/09/29 07:47:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1433,7 +1433,7 @@ epioctl(ifp, cmd, data)
 
 	case SIOCSIFADDR:
 		if (sc->enable && !sc->enabled) {
-			if ((*sc->enable)(sc->able_arg)) {
+			if ((*sc->enable)(sc)) {
 				printf("%s: device enable failed\n",
 				       sc->sc_dev.dv_xname);
 				error = EIO;
@@ -1489,7 +1489,7 @@ epioctl(ifp, cmd, data)
 			ifp->if_flags &= ~IFF_RUNNING;
 			if (sc->disable && sc->enabled) {
 			    sc->enabled = 0;
-			    (*sc->disable)(sc->able_arg);
+			    (*sc->disable)(sc);
 			}
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1498,7 +1498,7 @@ epioctl(ifp, cmd, data)
 			 * start it.
 			 */
 			if (sc->enable && !sc->enabled) {
-				if ((*sc->enable)(sc->able_arg)) {
+				if ((*sc->enable)(sc)) {
 					printf("%s: device enable failed\n",
 					       sc->sc_dev.dv_xname);
 					error = EIO;
