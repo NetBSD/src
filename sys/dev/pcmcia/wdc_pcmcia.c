@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.98 2005/02/27 00:27:43 perry Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.99 2005/03/11 16:17:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.98 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.99 2005/03/11 16:17:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,6 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.98 2005/02/27 00:27:43 perry Exp $"
 #include <dev/ic/wdcreg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define	bus_space_write_multi_stream_2	bus_space_write_multi_2
+#define	bus_space_write_multi_stream_4	bus_space_write_multi_4
+#define	bus_space_read_multi_stream_2	bus_space_read_multi_2
+#define	bus_space_read_multi_stream_4	bus_space_read_multi_4
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 #define WDC_PCMCIA_REG_NPORTS      8
 #define WDC_PCMCIA_AUXREG_OFFSET   (WDC_PCMCIA_REG_NPORTS + 6)
