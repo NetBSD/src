@@ -1,7 +1,6 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
- * $NetBSD: pcidevs_data.h,v 1.48 1998/01/05 19:30:34 perry Exp $
  * generated from:
  *	NetBSD: pcidevs,v 1.45 1997/11/16 22:33:21 christos Exp 
  */
