@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.6 1997/10/14 01:14:28 lukem Exp $	*/
+/*	$NetBSD: screen.c,v 1.7 1998/08/10 02:25:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -357,7 +357,7 @@ scr_clear()
 
 	putpad(CLstr);
 	curscore = -1;
-	bzero((char *)curscreen, sizeof(curscreen));
+	memset((char *)curscreen, 0, sizeof(curscreen));
 }
 
 #if vax && !__GNUC__
