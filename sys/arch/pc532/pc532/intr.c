@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 1997/03/21 08:34:57 matthias Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 1997/04/01 16:32:25 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -53,25 +53,23 @@ void
 intr_init()
 {
 	int i, sir;
+	static u_char icu_table[] = {
+		ISRV,	0,	/* Reset interrupt in-service register. */
+		ISRV+1,	0,
+		CSRC,	0,	/* ICU is not cascaded. */
+		CSRC+1,	0,
+		FPRT,	0,	/* Reset first priority register. */
+		TPL,	0,	/* Initialize all interrupts to FALLING_EDGE. */
+		TPL+1,	0,
+		ELTG,	0,
+		ELTG+1,	0,
+		MCTL,	2,	/* Set ICU to fixed priority mode. */
+		IPND,	0x40,
+		IPND+1,	0x40,	/* Reset interrupt pending register. */
+		0xff
+	};
 
-	/* We don't use the ICU in vectored mode but set this anyway. */
-	ICUB(SVCT) = VEC_ICU;
-
-	/* ICU is not cascaded. */	
-	ICUW(CSRC) = 0;
-
-	/* We are using the ICU in fixed priority mode. */
-	ICUB(MCTL) = 2;
-
-	/* Initialize all interrupts to FALLING_EDGE. */
-	ICUW(TPL) = 0;
-	ICUW(ELTG) = 0;
-
-	/* Reset first priority register. */
-	ICUB(FPRT) = 0;
-
-	/* Reset interrupt in-service register. */
-	ICUW(ISRV) = 0;
+	icu_init(icu_table);
 
 	for (i = 0; i < 16; i++) {
 		ivt[i].iv_vec = badhard;
