@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.9 1998/02/03 18:38:13 perry Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.10 1998/07/26 11:11:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.9 1998/02/03 18:38:13 perry Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.10 1998/07/26 11:11:08 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -114,7 +114,7 @@ static void freeset __P((struct parse *p, cset *cs));
 static int freezeset __P((struct parse *p, cset *cs));
 static int firstch __P((struct parse *p, cset *cs));
 static int nch __P((struct parse *p, cset *cs));
-static void mcadd __P((struct parse *p, cset *cs, char *cp));
+static void mcadd __P((struct parse *p, cset *cs, const char *cp));
 #if 0
 static void mcsub __P((cset *cs, char *cp));
 static int mcin __P((cset *cs, char *cp));
@@ -829,9 +829,9 @@ struct parse *p;
 cset *cs;
 {
 	char *sp = p->next;
-	struct cclass *cp;
+	const struct cclass *cp;
 	size_t len;
-	char *u;
+	const char *u;
 	char c;
 
 	while (MORE() && isalpha(PEEK()))
@@ -900,7 +900,7 @@ struct parse *p;
 int endc;			/* name ended by endc,']' */
 {
 	char *sp = p->next;
-	struct cname *cp;
+	const struct cname *cp;
 	int len;
 
 	while (MORE() && !SEETWO(endc, ']'))
@@ -1258,7 +1258,7 @@ static void
 mcadd(p, cs, cp)
 struct parse *p;
 cset *cs;
-char *cp;
+const char *cp;
 {
 	size_t oldend = cs->smultis;
 
