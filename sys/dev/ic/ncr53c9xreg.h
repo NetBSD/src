@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.8 2001/03/29 02:58:39 petrov Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.9 2001/05/23 18:32:26 petrov Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -277,12 +277,12 @@
 
 /* status register #2 definitions (read	only) */
 #define NCR_STAT2	NCR_CCF
-#define	FAS_STAT2_SEQCNT   0x01	   /* Sequence counter bit 7-3 enabled */
-#define	FAS_STAT2_FLATCHED 0x02	   /* FIFO flags register latched */
-#define	FAS_STAT2_CLATCHED 0x04	   /* Xfer cntr	& recommand ctr	latched */
-#define	FAS_STAT2_CACTIVE  0x08	   /* Command register is active */
-#define	FAS_STAT2_SCSI16   0x10	   /* SCSI interface is	wide */
-#define	FAS_STAT2_ISHUTTLE 0x20	   /* FIFO Top register	contains 1 byte */
-#define	FAS_STAT2_OSHUTTLE 0x40	   /* next byte	from FIFO is MSB */
-#define	FAS_STAT2_EMPTY	   0x80	   /* FIFO is empty */
+#define	NCRFAS_STAT2_SEQCNT   0x01	   /* Sequence counter bit 7-3 enabled */
+#define	NCRFAS_STAT2_FLATCHED 0x02	   /* FIFO flags register latched */
+#define	NCRFAS_STAT2_CLATCHED 0x04	   /* Xfer cntr	& recommand ctr	latched */
+#define	NCRFAS_STAT2_CACTIVE  0x08	   /* Command register is active */
+#define	NCRFAS_STAT2_SCSI16   0x10	   /* SCSI interface is	wide */
+#define	NCRFAS_STAT2_ISHUTTLE 0x20	   /* FIFO Top register	contains 1 byte */
+#define	NCRFAS_STAT2_OSHUTTLE 0x40	   /* next byte	from FIFO is MSB */
+#define	NCRFAS_STAT2_EMPTY    0x80	   /* FIFO is empty */
 
