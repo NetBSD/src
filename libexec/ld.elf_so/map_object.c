@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.19 2002/09/24 09:35:13 junyoung Exp $	 */
+/*	$NetBSD: map_object.c,v 1.20 2002/09/24 12:44:58 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -59,7 +59,6 @@ _rtld_map_object(path, fd, sb)
 {
 	Obj_Entry	*obj;
 	Elf_Ehdr	*ehdr;
-	void		*u;
 	Elf_Phdr	*phdr;
 	Elf_Phdr	*phlimit;
 	Elf_Phdr	*segs[2];
@@ -86,13 +85,12 @@ _rtld_map_object(path, fd, sb)
 	size_t		 nclear;
 #endif
 
-	u = mmap(NULL, _rtld_pagesz, PROT_READ, MAP_FILE | MAP_SHARED, fd,
+	ehdr = mmap(NULL, _rtld_pagesz, PROT_READ, MAP_FILE | MAP_SHARED, fd,
 	    (off_t)0);
-	if (u == MAP_FAILED) {
+	if (ehdr == MAP_FAILED) {
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
 		return NULL;
 	}
-	ehdr = (Elf_Ehdr *)u;
 	/* Make sure the file is valid */
 	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0 ||
 	    ehdr->e_ident[EI_CLASS] != ELFCLASS) {
@@ -213,8 +211,7 @@ _rtld_map_object(path, fd, sb)
 		 MAP_FILE | MAP_PRIVATE | MAP_FIXED, fd, data_offset)
 	    == MAP_FAILED) {
 		_rtld_error("mmap of data failed: %s", xstrerror(errno));
-		munmap(mapbase, mapsize);
-		goto bad;
+		goto bad2;
 	}
 
 	/* Overlay the bss segment onto the proper region. */
@@ -223,8 +220,7 @@ _rtld_map_object(path, fd, sb)
 		 MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0)
 	    == MAP_FAILED) {
 		_rtld_error("mmap of bss failed: %s", xstrerror(errno));
-		munmap(mapbase, mapsize);
-		goto bad;
+		goto bad2;
 	}
 
 	/* Unmap the gap between the text and data. */
@@ -233,8 +229,7 @@ _rtld_map_object(path, fd, sb)
 	if (gap_size != 0 && munmap(gap_addr, gap_size) == -1) {
 		_rtld_error("munmap of text -> data gap failed: %s",
 		    xstrerror(errno));
-		munmap(mapbase, mapsize);
-		goto bad;
+		goto bad2;
 	}
 
 #ifdef RTLD_LOADER
@@ -271,10 +266,13 @@ _rtld_map_object(path, fd, sb)
 		obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
 	obj->isdynamic = ehdr->e_type == ET_DYN;
 
+	munmap(ehdr, _rtld_pagesz);
 	return obj;
 
+bad2:
+	munmap(mapbase, mapsize);
 bad:
-	munmap(u, _rtld_pagesz);
+	munmap(ehdr, _rtld_pagesz);
 	return NULL;
 }
 
