@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.4 2003/01/10 15:01:09 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.5 2003/01/13 21:14:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -531,7 +531,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 static int
 mpacpi_pcircount(struct mpacpi_pcibus *mpr)
 {
-	int count;
+	int count = 0;
 	ACPI_STATUS ret;
 	ACPI_BUFFER buf;
 	ACPI_PCI_ROUTING_TABLE *PrtElement;
@@ -539,7 +539,6 @@ mpacpi_pcircount(struct mpacpi_pcibus *mpr)
 
 	ret = acpi_get(mpr->mpr_handle, &buf, AcpiGetIrqRoutingTable);
 	if (!ACPI_FAILURE(ret)) {
-		count = 0;
 		for (Buffer = buf.Pointer; ; Buffer += PrtElement->Length) {
 			PrtElement = (ACPI_PCI_ROUTING_TABLE *)Buffer;
 			if (PrtElement->Length == 0)
@@ -548,7 +547,7 @@ mpacpi_pcircount(struct mpacpi_pcibus *mpr)
 		}
 		AcpiOsFree(buf.Pointer);
 	}
-	return AE_OK;
+	return count;
 }
 
 #endif
