@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25.2.4 2002/12/11 05:58:25 thorpej Exp $
+# $NetBSD: GENERIC,v 1.25.2.5 2002/12/29 19:21:37 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -55,7 +55,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB			# remote debugger
 #options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=180000
+options 	SYMTAB_SPACE=190000
 #options 	SYSCALL_DEBUG
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
@@ -165,6 +165,8 @@ gapspci*	at g2bus?			# GAPS PCI bridge
 pci*		at gapspci?
 rtk*		at pci? dev ? function ?	# SEGA Broadband Adapter
 ukphy*		at mii? phy ?
+
+mbe*		at g2bus?			# SEGA LAN Adapter
 
 #pseudo-device	cgd		2	# cryptographic disk devices
 pseudo-device	md		1	# memory disk device (ramdisk)

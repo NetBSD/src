@@ -1,12 +1,8 @@
-/*	$NetBSD: bootconfig.h,v 1.1.4.2 2002/02/28 04:05:54 nathanw Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.1.4.3 2002/12/29 19:15:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Reinoud Zandijk.
- * Copyright (c) 1994 Mark Brinicombe.
- * Copyright (c) 1994 Brini.
  * All rights reserved.
- *
- * This code is derived from software written for Brini by Mark Brinicombe
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe
- *	for the NetBSD Project.
- * 4. The name of the company nor the name of the author may be used to
+ * 3. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
@@ -40,12 +32,13 @@
  *
  */
 
-#if defined(_KERNEL)
-
 
 /* get some spare blocks ;) */
 #define DRAM_BLOCKS	32
 #define VRAM_BLOCKS	16
+
+#define PHYSMEM_TYPE_GENERIC		0
+#define PHYSMEM_TYPE_PROCESSOR_ONLY	1
 
 
 typedef struct {
@@ -55,20 +48,20 @@ typedef struct {
 } phys_mem;
 
 
-typedef struct _BootConfig {
+struct bootconfig {
 	u_int magic;
 	u_int version;			/* version 2+ */
 
-	u_char machine_id[4];
+	u_char machine_id[4];		/* unique machine Id */
 	char kernelname[80];
 	char args[512];			/* 512 bytes is better than 4096 */
 
 	u_int kernvirtualbase;		/* not used now */
 	u_int kernphysicalbase;		/* not used now */
 	u_int kernsize;
-	u_int scratchvirtualbase;
-	u_int scratchphysicalbase;
-	u_int scratchsize;
+	u_int scratchvirtualbase;	/* not used now */
+	u_int scratchphysicalbase;	/* not used now */
+	u_int scratchsize;		/* not used now */
 
 	u_int ksym_start;
 	u_int ksym_end;
@@ -96,58 +89,13 @@ typedef struct _BootConfig {
 	phys_mem dram[DRAM_BLOCKS];
 	phys_mem vram[VRAM_BLOCKS];
 
-} BootConfig;
+};
 
-
-/************ compat stuff ************/
-
-typedef struct {
-	u_int address;
-	u_int pages;
-} phys_mem_v1;
-
-
-typedef struct {
-	u_int kernvirtualbase;
-	u_int kernphysicalbase;
-	u_int kernsize;
-	u_int argvirtualbase;
-	u_int argphysicalbase;
-	u_int argsize;
-	u_int scratchvirtualbase;
-	u_int scratchphysicalbase;
-	u_int scratchsize;
-
-	u_int display_start;
-	u_int display_size;
-	u_int width;
-	u_int height;
-	u_int log2_bpp;
-
-	phys_mem_v1 dram[4];
-	phys_mem_v1 vram[1];
-
-	u_int dramblocks;
-	u_int vramblocks;
-	u_int pagesize;
-	u_int drampages;
-	u_int vrampages;
-
-	char kernelname[80];
-
-	u_int framerate;
-	u_char machine_id[4];
-	u_int magic;
-	u_int display_phys;
-} BootConfig_v1;
-
-/************ end compat stuff ***********/
 
 #define BOOTCONFIG_MAGIC     0x43112233
 #define BOOTCONFIG_VERSION   	    0x2
 
-extern BootConfig bootconfig;
-#endif	/* _KERNEL */
+extern struct bootconfig bootconfig;
 
 
 #ifdef _KERNEL

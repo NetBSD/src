@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.1.8.2 2002/10/18 02:35:15 nathanw Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.1.8.3 2002/12/29 19:18:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ sonic_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 
-	if (strcmp(ja->ja_name, "sonic") != 0)
+	if (strcmp(ja->ja_name, "SONIC") != 0)
 		return (0);
 
 	return (1);

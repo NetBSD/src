@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.6.2.4 2002/10/18 02:35:14 nathanw Exp $	*/
+/*	$NetBSD: asc.c,v 1.6.2.5 2002/12/29 19:18:56 thorpej Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -520,7 +520,7 @@ ascmatch(parent, match, aux)
 {
 	struct jazzio_attach_args *ja = aux;
 
-	if(strcmp(ja->ja_name, "asc") != 0)
+	if (strcmp(ja->ja_name, "ESP216") != 0)
 		return (0);
 	return (1);
 }

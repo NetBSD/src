@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.40.2.6 2002/02/28 04:05:48 nathanw Exp $
+#	$NetBSD: Makefile,v 1.40.2.7 2002/12/29 19:13:06 thorpej Exp $
 
-SUBDIR=	adosfs altq arch compat dev filecorefs fs isofs lkm miscfs msdosfs \
+SUBDIR=	altq arch compat dev fs lkm miscfs \
 	net netatalk netccitt netinet netinet6 netisdn netiso netkey \
-	netnatm netns netsmb nfs ntfs sys ufs uvm
+	netnatm netns netsmb nfs sys ufs uvm
 
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-lkm:
