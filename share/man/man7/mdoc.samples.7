@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.8 1997/06/07 16:48:55 lukem Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.9 1997/09/16 01:30:53 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1200,6 +1200,11 @@ arguments,
 .Ql \&.Nm
 regurgitates this initial name for the sole purpose
 of making less work for the author.
+If trailing punctuation is required with this feature,
+use
+.Qq
+as a first argument to
+.Ql \&.Nm .
 Note:
 a section two
 or three document function name is addressed with the
@@ -1230,11 +1235,13 @@ it can not recall the first argument it was invoked with.
 .It Li \&.Nm mdoc.samples
 .Nm  mdoc.samples
 .It Li \&.Nm \e-mdoc
-.Nm \-mdoc .
+.Nm \-mdoc
 .It Li \&.Nm foo\ )\ )\ ,
 .Nm foo ) ) ,
 .It Li \&.Nm
 .Nm
+.It Li \&.Nm \&"\&"\ :
+.Nm "" :
 .El
 .Pp
 The
