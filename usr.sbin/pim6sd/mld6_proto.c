@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6_proto.c,v 1.2 2000/05/19 10:43:49 itojun Exp $	*/
+/*	$NetBSD: mld6_proto.c,v 1.3 2000/10/12 06:33:24 augustss Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -270,7 +270,7 @@ accept_listener_query(src, dst, group, tmo)
 		IF_DEBUG(DEBUG_MLD)
 		    log(LOG_DEBUG, 0,
 			"timer for grp %s on mif %d "
-			"set to %d",
+			"set to %ld",
 			inet6_fmt(group),
 			mifi, g->al_timer);
 		break;
@@ -422,7 +422,7 @@ accept_listener_done(src, dst, group)
 
     IF_DEBUG(DEBUG_MLD)
 	log(LOG_INFO, 0,
-	    "accepting listener done message: src %s, dst% s, grp %s",
+	    "accepting listener done message: src %s, dst %s, grp %s",
 	    inet6_fmt(&src->sin6_addr),
 	    inet6_fmt(dst), inet6_fmt(group));
 
@@ -444,7 +444,7 @@ accept_listener_done(src, dst, group)
 	{
 	    IF_DEBUG(DEBUG_MLD)
 		log(LOG_DEBUG, 0,
-		    "[accept_done_message] %d %d \n",
+		    "[accept_done_message] %d %ld\n",
 		    g->al_old, g->al_query);
 
 	    /*
