@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl.h,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $	*/
+/*	$NetBSD: libintl.h,v 1.2 2001/08/13 09:04:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -31,6 +31,7 @@
 
 #include <sys/cdefs.h>
 
+__BEGIN_DECLS
 extern char *gettext __P((const char *));
 extern char *dgettext __P((const char *, const char *));
 extern char *dcgettext __P((const char *, const char *, int));
@@ -43,5 +44,6 @@ extern char *dcngettext __P((const char *, const char *, const char *,
 extern char *textdomain __P((const char *));
 extern char *bindtextdomain __P((const char *, const char *));
 extern char *bind_textdomain_codeset __P((const char *, const char *));
+__END_DECLS
 
 #endif /*__LIBINTL_H_DEFINED__*/
