@@ -23,37 +23,37 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-#options		FPE		# Single precision FPE
+#options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File system options
 
 options		FFS		# UFS
-#options		QUOTA		# UFS quotas
-#options		LFS		# log-structured file system
-#options		MFS		# memory file system
+#options	QUOTA		# UFS quotas
+#options	LFS		# log-structured file system
+#options	MFS		# memory file system
 
 options		CD9660		# ISO 9660 + Rock Ridge file system
 options		MSDOSFS		# MS-DOS file system
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
-#options		NULLFS		# loopback file system
-#options		PORTAL		# portal filesystem (still experimental)
+#options	NULLFS		# loopback file system
+#options	PORTAL		# portal filesystem (still experimental)
 options		PROCFS		# /proc
-#options		UMAPFS		# NULLFS + uid and gid remapping
+#options	UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
 
 # Networking options
 
 options		NFSCLIENT
 options		NFSSERVER
-#options		GATEWAY		# packet forwarding
+#options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
-#options		NS		# XNS
-#options		ISO,TPIP	# OSI
-#options		EON		# OSI tunneling over IP
-#options		CCITT,LLC,HDLC	# X.25
+#options	NS		# XNS
+#options	ISO,TPIP	# OSI
+#options	EON		# OSI tunneling over IP
+#options	CCITT,LLC,HDLC	# X.25
 
 # Compatibility options
 
@@ -79,11 +79,13 @@ options		PLIP		# Build plip device into lpt driver
 
 # Development options
 
+options		MOUSE_IOC_ACK	# acknowledge state change ioctls
 options		DIAGNOSTIC	# internally consistency checks
+options		PROFILE_ASM	# when profiling, profile asm functions
 options		KTRACE		# system call tracing, a la ktrace(1)
 options		IRQSTATS	# IRQ statistics
 options		POSTMORTEM	# perform postmortem on panic
-#options		ROTTEN_INNARDS	# show the gory bit of the postmortem
+#options	ROTTEN_INNARDS	# show the gory bit of the postmortem
 options		KSHELL		# kernel developemnt shell (debug)
 options		LKM		# loadable kernel modules
 #options	DEBUGTERM	# create a debug console
@@ -319,16 +321,17 @@ ch*	at scsibus? target ? lun ?	# SCSI auto-changers
 
 #kie*	at podulebus? slot ? offset ?
 
-#ea0	at podulebus?			# Ether3 podules
+#ea*	at podulebus?			# Ether3 podules
 #eb0	at podulebus?			# EtherB network slot cards
 #eh0	at podulebus?			# EtherH network slot cards
-#ie0	at podulebus?			# Ether1 podules
+#ie*	at podulebus?			# Ether1 podules
 
 pseudo-device	loop	1               # network loopback
 pseudo-device   bpfilter 8              # packet filter
 pseudo-device	sl	2               # CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipl	1		# ip filter
 
 pseudo-device   pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline

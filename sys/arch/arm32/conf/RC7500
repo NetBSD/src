@@ -26,7 +26,7 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-#options		FPE		# Single precision FPE
+#options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File system options
@@ -82,7 +82,9 @@ options		SHMMAXPGS=1024	# 1024 pages is the default
 
 # Development options
 
+options		MOUSE_IOC_ACK	# acknowledge state change ioctls
 #options	DIAGNOSTIC	# internally consistency checks
+options		PROFILE_ASM	# when profiling, profile asm functions
 options		KTRACE		# system call tracing, a la ktrace(1)
 #options	IRQSTATS	# IRQ statistics
 options		POSTMORTEM	# perform postmortem on panic
@@ -162,16 +164,16 @@ rtc0	at iic? addr 0xa0
 # Podule bus device
 #podulebus0	at root
 
-#asc0	at podulebus?			# Acorn SCSI card
+#asc*	at podulebus?			# Acorn SCSI card
 #scsibus* at asc?
 
-#csc0	at podulebus?			# Cumana SCSI II card
+#csc*	at podulebus?			# Cumana SCSI II card
 #scsibus* at csc?
 
-#ptsc0	at podulebus?			# Power-Tec SCSI II card
+#ptsc*	at podulebus?			# Power-Tec SCSI II card
 #scsibus* at ptsc?
 
-#oak0	at podulebus?			# Oak SCSI I card
+#oak*	at podulebus?			# Oak SCSI I card
 #scsibus* at oak?
 
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -183,10 +185,10 @@ rtc0	at iic? addr 0xa0
 
 #kie*	at podulebus? slot ? offset ?
 
-#eb0	at podulebus?			# EtherB network slot cards
+#eb*	at podulebus?			# EtherB network slot cards
 #ea0	at podulebus?			# Ether3 podules
 #eh0	at podulebus?			# EtherH network slot cards
-#ie0	at podulebus?			# Ether1 podules
+#ie*	at podulebus?			# Ether1 podules
 
 es0	at mainbus? base 0x0022B800 irq 11	# On board SMC 91C92 ethernet controller
 
@@ -195,6 +197,7 @@ pseudo-device   bpfilter 8              # packet filter
 #pseudo-device	sl	2               # CSLIP
 #pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipl	1		# ip filter
 
 pseudo-device   pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline

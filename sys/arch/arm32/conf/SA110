@@ -22,7 +22,7 @@ options		CPU_SA110	# Support the SA110 core
 
 # FPA options
 
-#options		FPE		# Single precision FPE
+#options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File system options
@@ -87,6 +87,7 @@ options		MOUSE_IOC_ACK	# acknowledge state change ioctls
 #options	ARM700BUGTRACK	# track the ARM700 swi bug
 options		HYDRA		# Experimental hydra support
 options		MPSUPPORT	# Experimental MP support
+options		PROFILE_ASM	# when profiling, profile asm functions
 options		PORTMASTER	# Enable PortMaster only options
 options		DIAGNOSTIC	# internally consistency checks
 options		POSTMORTEM	# perform postmortem on panic
@@ -170,19 +171,19 @@ rtc0	at iic? addr 0xa0
 # Podule bus device
 podulebus0	at root
 
-asc0	at podulebus?			# Acorn SCSI card
+asc*	at podulebus?			# Acorn SCSI card
 scsibus* at asc?
 
-cosc0	at podulebus?			# MCS Connect32 SCSI II card
+cosc*	at podulebus?			# MCS Connect32 SCSI II card
 scsibus* at cosc?
 
-#csc0	at podulebus?			# Cumana SCSI II card
+#csc*	at podulebus?			# Cumana SCSI II card
 #scsibus* at csc?
 
-ptsc0	at podulebus?			# Power-Tec SCSI II card
+ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-oak0	at podulebus?			# Oak SCSI I card
+oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -194,16 +195,17 @@ ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 #kie*	at podulebus? slot ? offset ?
 
-ea0	at podulebus?			# Ether3 podules
+ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
 eh0	at podulebus?			# EtherH network slot cards
-ie0	at podulebus?			# Ether1 podules
+ie*	at podulebus?			# Ether1 podules
 
 pseudo-device	loop	1               # network loopback
 pseudo-device	bpfilter 8              # packet filter
 pseudo-device	sl	2               # CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipl	1		# ip filter
 
 pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
