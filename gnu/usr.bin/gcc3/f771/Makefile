@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/07/25 17:19:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2003/07/29 23:35:25 uwe Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c} main.c
@@ -6,6 +6,8 @@ SRCS=		${G_F77_OBJS:.o=.c} main.c
 CPPFLAGS+=	-I${DIST}/gcc/f -I.
 HOST_CPPFLAGS+=	-I${GCCARCH} -DUSE_HCONFIG= \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+
+.include "../Makefile.backend"
 
 fini: fini.c
 	${HOST_LINK.c} -o $@ $> ${HOSTLIBIBERTY}
@@ -17,12 +19,10 @@ CLEANFILES+=	str-${f}.h str-${f}.j
 str-${f}.h str-${f}.j: str-${f}.fin fini
 	./fini ${>:M*.fin} str-${f}.j str-${f}.h
 
-${OBJS} .depend: str-${f}.h
+${OBJS} ${DEPENDSRCS}: str-${f}.h
 .endfor
 
 CLEANFILES+=	main.c
-
-.include "../Makefile.backend"
 
 main.c: ${DIST}/gcc/main.c
 	rm -f main.c
