@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.11 1995/04/13 06:37:01 cgd Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.12 1995/06/11 20:39:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -161,7 +161,7 @@ struct tcpcb {
  * is the same as the multiplier for rttvar.
  */
 #define	TCP_REXMTVAL(tp) \
-	(((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar)
+	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
 
 /* XXX
  * We want to avoid doing m_pullup on incoming packets but that
