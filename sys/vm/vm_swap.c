@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.36.2.2 1997/02/14 23:11:36 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.36.2.3 1997/03/02 16:31:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -85,7 +85,7 @@
  *		failure, setting errno to indicate which (done).
  *	SWAP_OFF - swap(2) takes a (char *) n arg to be the pathname
  *		of a device or file to stop swapping on.  returning 0
- *		or -1 (done).
+ *		or -1 (done).  XXX unwritten
  *	SWAP_CTL - swap(2) changes the properties of a swap device,
  *		using the misc value (done).
  */
@@ -127,12 +127,14 @@ struct extent *swapmap;
 LIST_HEAD(swap_priority, swappri) swap_priority;
 
 static int swap_on __P((struct proc *, struct swapdev *));
+#ifdef SWAP_OFF_WORKS
 static int swap_off __P((struct proc *, struct swapdev *));
+static void swap_removemap __P((struct swapdev *));
+#endif
 static struct swapdev *swap_getdevfromaddr __P((daddr_t));
 static daddr_t swap_vtop_addr __P((daddr_t));
 static daddr_t swap_ptov_addr __P((struct swapdev *, daddr_t));
 static void swap_addmap __P((struct swapdev *, int));
-static void swap_removemap __P((struct swapdev *));
 
 int
 sys_swapon(p, v, retval)
@@ -160,8 +162,8 @@ sys_swapon(p, v, retval)
 	/* how many swap devices */
 	if (SCARG(uap, cmd) == SWAP_NSWAP) {
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("did SWAP_NSWAP:  leaving sys_swapon\n");
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("did SWAP_NSWAP:  leaving sys_swapon\n");
 #endif /* SWAPDEBUG */
 		return nswapdev;
 	}
@@ -185,8 +187,8 @@ sys_swapon(p, v, retval)
 			}
 		}
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("did SWAP_STATS:  leaving sys_swapon\n");
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("did SWAP_STATS:  leaving sys_swapon\n");
 #endif /* SWAPDEBUG */
 		return (count);
 	}
@@ -201,7 +203,7 @@ sys_swapon(p, v, retval)
 	vp = nd.ni_vp;
 
 	dev = (dev_t)vp->v_rdev;
-#if 0 /* XXX */
+#if DIAGNOSTIC
 	if (major(dev) > nblkdev) {
 		error = ENXIO;
 		goto bad;
@@ -216,8 +218,8 @@ sys_swapon(p, v, retval)
 		struct swappri *nspp, *pspp = swap_priority.lh_first;
 
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("doing SWAP_ON...\n");
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("doing SWAP_ON...\n");
 #endif /* SWAPDEBUG */
 		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
 			if (spp->spi_priority <= priority)
@@ -240,27 +242,23 @@ sys_swapon(p, v, retval)
 			} else if (pspp) {
 				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
 			} else {
-				LIST_INSERT_HEAD(&swap_priority, nspp, spi_swappri);
+				LIST_INSERT_HEAD(&swap_priority, nspp,
+				    spi_swappri);
 			}
 			spp = nspp;
-		} else
-			nspp = NULL;
+		}
 
 		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
 		    M_WAITOK);
 		if (nsdp == NULL) {
 			error = ENOMEM;
-			if (nspp) {
-				LIST_REMOVE(nspp, spi_swappri);
-				free((caddr_t)nspp, M_VMSWAP);
-			}
 			goto bad;
 		}
 		nsdp->swd_dev = dev;
 		nsdp->swd_flags = 0;
 		nsdp->swd_priority = (int)SCARG(uap, misc);
-		copyin(SCARG(uap, arg), &nsdp->swd_name,
-		    sizeof(nsdp->swd_name));
+		copyinstr(SCARG(uap, arg), &nsdp->swd_name,
+		    sizeof(nsdp->swd_name) - 1, 0);
 		nsdp->swd_vp = vp;
 		if ((error = swap_on(p, nsdp)))
 			goto bad;
@@ -269,9 +267,10 @@ sys_swapon(p, v, retval)
 	}
 	case SWAP_OFF:
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("doing SWAP_OFF...\n");
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("doing SWAP_OFF...\n");
 #endif /* SWAPDEBUG */
+#ifdef SWAP_OFF_WORKS
 		for (spp = swap_priority.lh_first; spp != NULL;
 		    spp = spp->spi_swappri.le_next) {
 			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
@@ -294,17 +293,22 @@ sys_swapon(p, v, retval)
 		}
 		if (sdp == NULL)
 			error = ENXIO;
+#else
+#ifdef DIAGNOSTIC
+		printf("swap SWAP_OFF attempted\n");
+#endif
+#endif
 
 		break;
 	case SWAP_CTL:
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("doing SWAP_CTL...\n");
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("doing SWAP_CTL...\n");
 #endif /* SWAPDEBUG */
 	default:
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("doing default...\n");
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("doing default...\n");
 #endif /* SWAPDEBUG */
 		error = EINVAL;
 	}
@@ -338,16 +342,18 @@ swap_on(p, sdp)
 	int ssize;
 	char tmp[12], *storage;
 
-	if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)))
-		return (error);
+	if (vp != rootvp) {
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)))
+			return (error);
+	}
 	sdp->swd_flags |= SWF_INUSE;
 	if (vp->v_type == VBLK && (bdevsw[major(dev)].d_psize == 0 ||
 	    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1)) {
-		(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
-		return (ENXIO);
+		error = ENXIO;
+		goto bad;
 	} else {
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
-			return (error);
+			goto bad;
 		nblks = (int)(va.va_size / S_BLKSIZE);
 	}
 	if (nblks == 0) {
@@ -355,8 +361,8 @@ swap_on(p, sdp)
 	if (vmswapdebug & VMSDB_SWFLOW)
 		printf("swap_on: nblks == 0\n");
 #endif /* SWAPDEBUG */
-		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
-		return (EINVAL);
+		error = EINVAL;
+		goto bad;
 	}
 	sdp->swd_nblks = nblks;
 
@@ -388,9 +394,18 @@ swap_on(p, sdp)
 	nswapdev++;
 	nswap += nblks;
 	sdp->swd_flags |= SWF_ENABLE;
+	if (dumpdev == NULL && vp->v_type == VBLK)
+		dumpdev = dev;
+	/* XXX handle miniroot == (rootvp == vp) */
 	return (0);
+
+bad:
+	if (vp != rootvp)
+		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+	return (error);
 }
 
+#ifdef SWAP_OFF_WORKS
 static int
 swap_off(p, sdp)
 	struct proc *p;
@@ -422,11 +437,13 @@ swap_off(p, sdp)
 	nswapdev--;
 	extent_destroy(sdp->swd_ex);
 	free((caddr_t)sdp->swd_ex, M_VMSWAP);
-	(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
+	if (sdp->swp_vp != rootvp)
+		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
 	if (sdp->swd_vp)
 		vrele(sdp->swd_vp);
 	return (0);
 }
+#endif
 
 /*
  * to decide where to allocate what part of swap, we must, "round robin"
@@ -495,11 +512,10 @@ swap_free(size, addr)
 }
 
 /*
- * we have a physical -> virtual mapping to address here.  there
- * are several different physical addresses that are to be mapped
- * onto a single virtual address.
+ * We have a physical -> virtual mapping to address here.  There
+ * are several different physical address spaces that are to be
+ * mapped onto a single virtual address space.
  */
-
 #define ADDR_IN_MAP(addr, sdp) \
 	(((addr) >= (sdp)->swd_mapoffset) && \
  	 ((addr) < ((sdp)->swd_mapoffset + (sdp)->swd_mapsize)))
@@ -512,13 +528,11 @@ swap_getdevfromaddr(addr)
 	struct swappri *spp;
 	
 	for (spp = swap_priority.lh_first; spp != NULL;
-	    spp = spp->spi_swappri.le_next) {
+				    spp = spp->spi_swappri.le_next)
 		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-		    sdp = sdp->swd_next.cqe_next) {
+				    sdp = sdp->swd_next.cqe_next)
 			if (ADDR_IN_MAP(addr, sdp))
 				return sdp;
-		}
-	}
 	return NULL;
 }
 
@@ -539,6 +553,7 @@ swap_addmap(sdp, size)
 	sdp->swd_mapsize = size;
 }
 
+#ifdef SWAP_OFF_WORKS
 void
 swap_removemap(sdp)
 	struct swapdev *sdp;
@@ -546,6 +561,7 @@ swap_removemap(sdp)
 
 	extent_free(swapmap, sdp->swd_mapsize, sdp->swd_mapoffset, EX_WAITOK);
 }
+#endif
 
 static daddr_t
 swap_ptov_addr(sdp, addr)
