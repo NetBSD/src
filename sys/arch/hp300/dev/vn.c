@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vn.c 1.1 91/04/30
  *	from: @(#)vn.c	7.6 (Berkeley) 6/21/91
- *	$Id: vn.c,v 1.4 1993/11/12 05:54:20 cgd Exp $
+ *	$Id: vn.c,v 1.5 1994/01/11 17:19:44 mycroft Exp $
  */
 
 /*
@@ -129,6 +129,7 @@ vnopen(dev, flags, mode, p)
  * Note that this driver can only be used for swapping over NFS on the hp
  * since nfs_strategy on the vax cannot handle u-areas and page tables.
  */
+void
 vnstrategy(bp)
 	register struct buf *bp;
 {

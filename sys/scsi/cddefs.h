@@ -1,5 +1,5 @@
 /*
- * 	$Id: cddefs.h,v 1.3 1993/05/20 03:46:20 cgd Exp $
+ * 	$Id: cddefs.h,v 1.4 1994/01/11 17:22:00 mycroft Exp $
  */
 
 struct cd_data {
@@ -28,7 +28,7 @@ int cdopen(dev_t);
 struct scsi_xfer * cd_get_xs(int, int);
 void cd_free_xs(int, struct scsi_xfer *, int);
 void cdminphys(struct buf *);
-int cdstrategy(struct buf *);
+void cdstrategy(struct buf *);
 void cdstart(int);
 int cd_done(int, struct scsi_xfer *);
 int cdioctl(dev_t, int, caddr_t, int);

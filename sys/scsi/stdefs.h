@@ -1,5 +1,5 @@
 /*
- *	$Id: stdefs.h,v 1.3 1993/05/20 03:46:55 cgd Exp $
+ *	$Id: stdefs.h,v 1.4 1994/01/11 17:22:08 mycroft Exp $
  */
 
 #define STQSIZE		4
@@ -35,7 +35,7 @@ int stattach(int, struct scsi_switch *, int, int *);
 int stopen(dev_t);
 int stclose(dev_t);
 void stminphys(struct buf *);
-int ststrategy(struct buf *);
+void ststrategy(struct buf *);
 int ststart(int);
 int st_done(int, struct scsi_xfer *);
 int stioctl(dev_t, int, caddr_t, int);
