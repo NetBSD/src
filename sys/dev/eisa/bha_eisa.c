@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.13 1998/08/15 01:59:25 thorpej Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.14 1998/08/15 02:30:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997, 1998 Charles M. Hannum.  All rights reserved.
@@ -47,7 +47,11 @@
 #include <dev/ic/bhareg.h>
 #include <dev/ic/bhavar.h>
 
-#define	BHA_EISA_IOCONF	0xc8c
+#define BHA_EISA_OFFSET	0xc80
+#define	BHA_EISA_IOSIZE	0x010
+
+#define	BHA_EISA_IOCONF	0x0c
+
 #define	BHA_ISA_IOSIZE	4
 
 int	bha_eisa_address __P((bus_space_tag_t, bus_space_handle_t, int *));
@@ -115,20 +119,20 @@ bha_eisa_match(parent, match, aux)
 	    strcmp(ea->ea_idstring, "BUS4202"))
 		return (0);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), BHA_ISA_IOSIZE, 0,
-	    &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_OFFSET,
+	    BHA_EISA_IOSIZE, 0, &ioh))
 		return (0);
 
 	if (bha_eisa_address(iot, ioh, &port) ||
 	    bus_space_map(iot, port, BHA_ISA_IOSIZE, 0, &ioh2)) {
-		bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
+		bus_space_unmap(iot, ioh, BHA_EISA_IOSIZE);
 		return (0);
 	}
 
 	rv = bha_find(iot, ioh2, NULL);
 
 	bus_space_unmap(iot, ioh2, BHA_ISA_IOSIZE);
-	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
+	bus_space_unmap(iot, ioh, BHA_EISA_IOSIZE);
 
 	return (rv);
 }
@@ -159,8 +163,8 @@ bha_eisa_attach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), BHA_ISA_IOSIZE, 0,
-	    &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_OFFSET,
+	    BHA_EISA_IOSIZE, 0, &ioh))
 		panic("bha_eisa_attach: could not map EISA slot");
 
 	if (bha_eisa_address(iot, ioh, &port) ||
