@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.95 2003/07/02 19:33:20 ragge Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.96 2003/07/02 21:43:49 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.95 2003/07/02 19:33:20 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.96 2003/07/02 21:43:49 ragge Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -448,7 +448,11 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	 * data to send is the directly following the previous
 	 * transfer.  This is important for large TCP windows.
 	 */
+#ifdef FAST_MBSEARCH
 	if (off == 0 || (tp->t_lastoff + tp->t_lastlen) != off) {
+#else
+	if (1) {
+#endif
 		/*
 		 * Either a new packet or a retransmit.
 		 * Start from the beginning.
