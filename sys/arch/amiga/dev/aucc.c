@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.15.2.1 1997/08/23 07:07:26 thorpej Exp $	*/
+/*	$NetBSD: aucc.c,v 1.15.2.2 1997/08/27 21:45:14 thorpej Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -189,8 +189,8 @@ int	aucc_set_port __P((void *, mixer_ctrl_t *));
 int	aucc_get_port __P((void *, mixer_ctrl_t *));
 int	aucc_query_devinfo __P((void *, mixer_devinfo_t *));
 void	aucc_encode __P((int, int, int, u_char *, u_short **));
-int	aucc_set_params __P((void *, int, struct audio_params *,
-	    struct audio_params *));
+int	aucc_set_params __P((void *, int, int,
+	    struct audio_params *, struct audio_params *));
 int	aucc_get_props __P((void *));
 
 struct audio_hw_if sa_hw_if = {
@@ -406,21 +406,19 @@ aucc_query_encoding(addr, fp)
 }
 
 int
-aucc_set_params(addr, mode, p, q)
+aucc_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	int mode;
-	struct  audio_params *p, *q;
+	int setmode, usemode;
+	struct  audio_params *p, *r;
 {
-	struct aucc_softc *sc;
+	struct aucc_softc *sc = addr;
 
-	sc = addr;
-
-	/* if (mode == AUMODE_RECORD)
+	/* if (setmode & AUMODE_RECORD)
 		return 0 ENXIO*/;
 
 #ifdef AUCCDEBUG
-	printf("aucc_set_params(mode %x, enc %d, bits %d, chn %d, sr %ld)\n",
-	    mode, p->encoding, p->precision, p->channels, p->sample_rate);
+	printf("aucc_set_params(setmode 0x%x, usemode 0x%x, enc %d, bits %d, chn %d, sr %ld)\n",
+	    setmode, usemode, p->encoding, p->precision, p->channels, p->sample_rate);
 #endif
 
 	switch (p->encoding) {
@@ -446,11 +444,6 @@ aucc_set_params(addr, mode, p, q)
 	sc->sc_channels = p->channels;
 	sc->sc_encoding = p->encoding;
 
-	q->encoding = p->encoding;
-	q->precision = p->precision;
-	q->channels = p->channels;
-	q->sample_rate = p->sample_rate;
-	
 	return aucc_set_out_sr(addr, p->sample_rate);
 }
 

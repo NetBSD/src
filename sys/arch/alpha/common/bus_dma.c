@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.2 1997/06/06 23:58:02 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.2.6.1 1997/08/27 21:41:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 1997/06/06 23:58:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2.6.1 1997/08/27 21:41:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 1997/06/06 23:58:02 thorpej Exp $");
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -399,10 +400,14 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	vm_offset_t va;
 	bus_addr_t addr;
-	int curseg;
+	int curseg, s;
 
 	size = round_page(size);
+
+	s = splimp();
 	va = kmem_alloc_pageable(kmem_map, size);
+	splx(s);
+
 	if (va == 0)
 		return (ENOMEM);
 
@@ -436,6 +441,7 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
+	int s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -443,7 +449,9 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
+	s = splimp();
 	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	splx(s);
 }
 
 /*
