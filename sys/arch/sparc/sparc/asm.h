@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 1999/01/19 23:05:52 pk Exp $ */
+/*	$NetBSD: asm.h,v 1.8 1999/03/05 10:55:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,6 +134,7 @@
 #define	_rdasr(asr) ({ \
 	register int _rdasr_v; \
 	__asm __volatile("rd %%asr" #asr ",%0" : "=r" (_rdasr_v)); \
+	_rdasr_v; \
 })
 
 /* write ancillary state register */
