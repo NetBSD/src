@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.1 2001/11/09 03:27:51 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.2 2001/11/09 17:44:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -146,6 +146,21 @@ i80312_attach(struct i80312_softc *sc)
 	    I80312_ATU_SIAL, ATU_LIMIT(sc->sc_sin_size));
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
 	    I80312_ATU_SIATV, sc->sc_sin_xlate);
+
+	/*
+	 * Mask (disable) the ATU interrupt sources.
+	 * XXX May want to revisit this if we encounter
+	 * XXX an application that wants it.
+	 */
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
+	    I80312_ATU_PAIM,
+	    ATU_AIM_MPEIM | ATU_AIM_TATIM | ATU_AIM_TAMIM |
+	    ATU_AIM_MAIM | ATU_AIM_SAIM | ATU_AIM_DPEIM |
+	    ATU_AIM_PSTIM);
+	bus_space_write_4(sc->sc_st, sc->sc_atu_sh,
+	    I80312_ATU_SAIM,
+	    ATU_AIM_MPEIM | ATU_AIM_TATIM | ATU_AIM_TAMIM |
+	    ATU_AIM_MAIM | ATU_AIM_SAIM | ATU_AIM_DPEIM);
 
 	/*
 	 * Clear:
