@@ -1,4 +1,4 @@
-/*	$NetBSD: ru_SU.ISO_8859-5.src,v 1.1 2000/12/22 00:36:06 itojun Exp $	*/
+/*	$NetBSD: ru_SU.ISO_8859-5.src,v 1.2 2000/12/22 01:37:23 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian part of ISO8859-5 set
@@ -34,6 +34,7 @@ UPPER		'A' - 'Z' \
 		0xbf 0xc0 0xc1 0xc2 0xc3 0xc4 0xc5 0xc6 \
 		0xc7 0xc8 0xc9 0xca 0xcb 0xcc 0xcd 0xce 0xcf
 XDIGIT          '0' - '9' 'a' - 'f' 'A' - 'F'
+SWIDTH1		0x20 - 0x7e 0xa0 - 0xff
 
 # IDEOGRAM
 # SPECIAL
