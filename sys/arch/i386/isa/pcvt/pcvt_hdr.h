@@ -81,11 +81,10 @@
  *
  *---------------------------------------------------------------------------*/
 
+#ifdef PCVT_NETBSD
+#undef PCVT_NETBSD
+#endif
 #define	PCVT_NETBSD		10
-#define	PCVT_NSCREENS		12
-#define	PCVT_PRETTYSCRNS	0
-#define	PCVT_24LINESDEF		0
-#define	PCVT_NULLCHARS		1
 
 #include "param.h"
 #include "conf.h"
@@ -208,7 +207,7 @@
 #endif
 
 #if !defined PCVT_PRETTYSCRNS	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_PRETTYSCRNS 1	/* for the cost of some microseconds of	*/
+# define PCVT_PRETTYSCRNS 0	/* for the cost of some microseconds of	*/
 #elif PCVT_PRETTYSCRNS != 0	/* cpu time this adds a more "pretty"	*/
 #undef PCVT_PRETTYSCRNS		/* version to the screensaver, an "*"	*/
 #define PCVT_PRETTYSCRNS 1	/* in random locations of the display.	*/
@@ -236,7 +235,7 @@
 				/* user startup ....                    */
 
 #if !defined PCVT_24LINESDEF	/* ---------- DEFAULT: ON ------------- */
-# define PCVT_24LINESDEF 1	/* use 24 lines in VT 25 lines mode and	*/
+# define PCVT_24LINESDEF 0	/* use 24 lines in VT 25 lines mode and	*/
 #elif PCVT_24LINESDEF != 0	/* HP 28 lines mode by default to have	*/
 #undef PCVT_24LINESDEF		/* the the better compatibility to the	*/
 #define PCVT_24LINESDEF 1	/* real VT220 - you can switch between	*/
@@ -307,7 +306,7 @@
 				/* move as a ioctl call to scon ....	*/
 				
 #if !defined PCVT_NULLCHARS	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_NULLCHARS 0	/* allow the keyboard to send null 	*/
+# define PCVT_NULLCHARS 1	/* allow the keyboard to send null 	*/
 #elif PCVT_NULLCHARS != 0	/* program. this has the side effect,	*/
 # undef PCVT_NULLCHARS		/* (0x00) characters to the calling	*/
 # define PCVT_NULLCHARS 1	/* that every undefined key also sends	*/
