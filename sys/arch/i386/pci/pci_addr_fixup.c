@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.6 2000/08/02 02:54:41 soda Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -294,18 +294,22 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ex, type, addr, size)
 	/* write new address to PCI device configuration header */
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
-#ifndef PCIBIOSVERBOSE
-	if (pcibiosverbose) {
+#ifdef PCIBIOSVERBOSE
+	if (!pcibiosverbose)
+#endif 
+	{
 		printf("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
 	}
-#endif 
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		printf("fixup failed. (new address=%#x)\n", (unsigned)*addr);
 		return (1);
 	}
-	PCIBIOS_PRINTV(("new address 0x%08x\n", (unsigned)*addr));
+#ifdef PCIBIOSVERBOSE
+	if (!pcibiosverbose)
+#endif
+		printf("new address 0x%08x\n", (unsigned)*addr);
 
 	return (0);
 }
