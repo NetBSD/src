@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 1996/11/24 13:35:15 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 1996/12/23 08:36:05 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -993,7 +993,7 @@ _ENTRY(interrupt)
 	KENTER
 	lprd    sb,0			/* Kernel code expects sb to be 0 */
 	movd	_Cur_pl(pc),tos
-	movb	@ICU_ADR+HVCT,r0	/* Fetch vector */
+	movb	@ICU_ADR+SVCT,r0	/* Fetch vector */
 	andd	0x0f,r0
 	movd	r0,tos
 	/*
@@ -1001,11 +1001,12 @@ _ENTRY(interrupt)
 	 * interrupt by setting the corresponding bits
 	 * in the ICU's IMSK registern and in Cur_pl.
 	 */
-	movqd	1,r1
-	lshd	r0,r1
-	orw	1 << IR_SOFT,r1
-	orw	r1,_Cur_pl(pc)
-	orw	r1,@ICU_ADR+IMSK
+	movd	r0,r1
+	muld	IV_SIZE,r0
+	movd	_ivt+IV_MASK(r0),r2
+	orw	r2,_Cur_pl(pc)
+	orw	r2,@ICU_ADR+IMSK
+	movb	@ICU_ADR+HVCT,r2	/* Acknowledge Interrupt */
 	/* 
 	 * Flush pending writes and then enable CPU interrupts. 
 	 */
@@ -1013,8 +1014,7 @@ _ENTRY(interrupt)
 	/* 
 	 * Increment interrupt counters.
 	 */
-	addqd	1,_intrcnt(pc)[r0:d]
-	lshd	4,r0
+	addqd	1,_intrcnt(pc)[r1:d]
 	addqd	1,_cnt+V_INTR(pc)
 	addqd	1,_ivt+IV_CNT(r0)
 
