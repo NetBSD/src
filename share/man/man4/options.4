@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.47 1998/04/30 08:50:08 fair Exp $
+.\"	$NetBSD: options.4,v 1.48 1998/05/13 14:20:47 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -998,6 +998,13 @@ enables logging of IP packets using ip-filter.
 .It Cd options IPFILTER_DEFAULT_BLOCK
 This option sets the default policy of ip-filter.
 If it is set, ip-filter will block packets by default.
+.It Cd options PPP_BSDCOMP
+Enable support for BSD-compress
+.Pq Sq bsdcomp
+compression in ppp.
+.It Cd options PPP_DEFLATE
+Enable support for deflate
+compression in ppp.
 .It Cd options PPP_FILTER
 This option turns on
 .Xr pcap 3
