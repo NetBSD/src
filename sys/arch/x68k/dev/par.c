@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.8 1999/05/05 14:31:16 minoura Exp $	*/
+/*	$NetBSD: par.c,v 1.9 1999/08/05 18:08:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -268,7 +268,7 @@ parrw(dev, uio)
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
-		(void) splsoftclock();
+		(void) spllowersoftclock();
 		if ((sc->sc_flags & PARF_UIO) == 0) {
 #ifdef DEBUG
 			if (pardebug & PDB_IO)

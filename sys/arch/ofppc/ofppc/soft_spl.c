@@ -1,4 +1,4 @@
-/*	$NetBSD: soft_spl.c,v 1.1 1997/04/16 21:20:35 thorpej Exp $	*/
+/*	$NetBSD: soft_spl.c,v 1.2 1999/08/05 18:08:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -40,6 +40,7 @@ static int soft_splnet __P((void));
 static int soft_spltty __P((void));
 static int soft_splimp __P((void));
 static int soft_splclock __P((void));
+static int soft_spllowersoftclock __P((void));
 static int soft_splsoftclock __P((void));
 static int soft_splsoftnet __P((void));
 static int soft_splx __P((int));
@@ -56,6 +57,7 @@ struct machvec soft_machvec = {
 	soft_spltty,
 	soft_splimp,
 	soft_splclock,
+	soft_spllowersoftclock,
 	soft_splsoftclock,
 	soft_splsoftnet,
 	soft_splx,
@@ -188,6 +190,12 @@ static int
 soft_splclock()
 {
 	return splraise(SPLCLOCK | SPLSOFTCLOCK | SPLSOFTNET);
+}
+
+static int
+soft_spllowersoftclock()
+{
+	return soft_splx(SPLSOFTCLOCK);
 }
 
 static int

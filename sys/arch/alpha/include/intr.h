@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.19 1999/02/24 19:17:12 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.20 1999/08/05 18:08:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -52,10 +52,7 @@
 /* IPL-lowering/restoring macros */
 #define splx(s)								\
     ((s) == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
-#define splsoft()               alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
-#define splsoftserial()		splsoft()
-#define splsoftclock()		splsoft()
-#define splsoftnet()		splsoft()
+#define	spllowersoftclock()	alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
 
 /* IPL-raising functions/macros */
 static __inline int _splraise __P((int)) __attribute__ ((unused));
@@ -66,6 +63,10 @@ _splraise(s)
 	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
 	return (s > cur ? alpha_pal_swpipl(s) : cur);
 }
+#define splsoft()		_splraise(ALPHA_PSL_IPL_SOFT)
+#define splsoftserial()		splsoft()
+#define splsoftclock()		splsoft()
+#define splsoftnet()		splsoft()
 #define splnet()                _splraise(ALPHA_PSL_IPL_IO)
 #define splbio()                _splraise(ALPHA_PSL_IPL_IO)
 #define splimp()                _splraise(ALPHA_PSL_IPL_IO)

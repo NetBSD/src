@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 1994/10/26 07:50:50 cgd Exp $	*/
+/*	$NetBSD: psl.h,v 1.6 1999/08/05 18:08:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -70,4 +70,60 @@
 #define	PSL_USERCLR	(PSL_S | PSL_IPL7 | PSL_MBZ)
 
 #define	USERMODE(ps)	(((ps) & PSL_S) == 0)
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+
+/*
+ * spl functions; platform-specific code must define spl0.
+ */
+
+#define	_spl(s)								\
+({									\
+	register int _spl_r;						\
+									\
+	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
+	    "&=d" (_spl_r) : "di" (s));					\
+	_spl_r;								\
+})
+
+#define	_splraise(s)							\
+({									\
+	int _spl_r;							\
+									\
+	__asm __volatile ("						\
+		clrl	d0					;	\
+		movw	sr,d0					;	\
+		movl	d0,%0					;	\
+		andw	#0x700,d0				;	\
+		movw	%1,d1					;	\
+		andw	#0x700,d1				;	\
+		cmpw	d0,d1					;	\
+		jle	1f					;	\
+		movw	%1,sr					;	\
+	    1:"							:	\
+		    "&=d" (_spl_r)				:	\
+		    "di" (s)					:	\
+		    "d0", "d1");					\
+	_spl_r;								\
+})
+
+/* spl0 may require checking for software interrupts */
+#define	_spl0()		_spl(PSL_S|PSL_IPL0)
+#define	spl1()		_spl(PSL_S|PSL_IPL1)
+#define	spl2()		_spl(PSL_S|PSL_IPL2)
+#define	spl3()		_spl(PSL_S|PSL_IPL3)
+#define	spl4()		_spl(PSL_S|PSL_IPL4)
+#define	spl5()		_spl(PSL_S|PSL_IPL5)
+#define	spl6()		_spl(PSL_S|PSL_IPL6)
+#define	spl7()		_spl(PSL_S|PSL_IPL7)
+
+#define	splraise1()	_splraise(PSL_S|PSL_IPL1)
+#define	splraise2()	_splraise(PSL_S|PSL_IPL2)
+#define	splraise3()	_splraise(PSL_S|PSL_IPL3)
+#define	splraise4()	_splraise(PSL_S|PSL_IPL4)
+#define	splraise5()	_splraise(PSL_S|PSL_IPL5)
+#define	splraise6()	_splraise(PSL_S|PSL_IPL6)
+#define	splraise7()	_splraise(PSL_S|PSL_IPL7)
+
+#endif /* _KERNEL && ! _LOCORE */
 #endif

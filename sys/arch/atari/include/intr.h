@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 1998/07/18 21:27:26 is Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 1999/08/05 18:08:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,63 +54,28 @@
  */
 #include <machine/psl.h>
 
-#define _spl(s)								\
-({									\
-        register int _spl_r;						\
-									\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
-                "&=d" (_spl_r) : "di" (s));				\
-        _spl_r;								\
-})
-
-#define _splraise(s)							\
-({									\
-	int _spl_r;							\
-									\
-	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
-		jle	1f					;	\
-		movw	%1,sr					;	\
-	    1:"							:	\
-		    "&=d" (_spl_r)				:	\
-		    "di" (s)					:	\
-		    "d0", "d1");					\
-	_spl_r;								\
-})
-
 /* spl0 requires checking for software interrupts */
-#define spl1()	_spl(PSL_S|PSL_IPL1)
-#define spl2()	_spl(PSL_S|PSL_IPL2)
-#define spl3()	_spl(PSL_S|PSL_IPL3)
-#define spl4()	_spl(PSL_S|PSL_IPL4)
-#define spl5()	_spl(PSL_S|PSL_IPL5)
-#define spl6()	_spl(PSL_S|PSL_IPL6)
-#define spl7()	_spl(PSL_S|PSL_IPL7)
 
-#define splnone()	spl0()
-#define splsoftclock()	spl1()
-#define splsoftnet()	spl1()
+#define splnone()		spl0()
+#define	spllowersoftclock()	spl1()
 
-#define splbio()	_splraise(PSL_S|PSL_IPL3)
-#define splnet()	_splraise(PSL_S|PSL_IPL3)
-#define spltty()	_splraise(PSL_S|PSL_IPL4)
-#define splimp()	_splraise(PSL_S|PSL_IPL4)
+#define splsoftclock()		splraise1()
+#define splsoftnet()		splraise1()
 
-#define spllpt()	spltty()
+#define splbio()		_splraise(PSL_S|PSL_IPL3)
+#define splnet()		_splraise(PSL_S|PSL_IPL3)
+#define spltty()		_splraise(PSL_S|PSL_IPL4)
+#define splimp()		_splraise(PSL_S|PSL_IPL4)
 
-#define splclock()	spl6()
-#define splstatclock()	spl6()
-#define splvm()		spl6()
-#define splhigh()	spl7()
-#define splsched()	spl7()
+#define spllpt()		spltty()
 
-#define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+#define splclock()		splraise6()
+#define splstatclock()		splraise6()
+#define splvm()			splraise6()
+#define splhigh()		spl7()
+#define splsched()		spl7()
+
+#define splx(s)			((s) & PSL_IPL ? _spl(s) : spl0())
 
 #ifdef _KERNEL
 int spl0 __P((void));

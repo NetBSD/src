@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.16 1999/07/20 21:54:05 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.17 1999/08/05 18:08:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -2356,7 +2356,7 @@ settime(tv)
 		return (EPERM);
 #endif
 	time = *tv;
-	(void) splsoftclock();
+	(void) spllowersoftclock();
 	timeradd(&boottime, &delta, &boottime);
 	timeradd(&runtime, &delta, &runtime);
 #	if defined(NFS) || defined(NFSSERVER)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 1999/01/26 17:07:06 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 1999/08/05 18:08:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,7 +139,8 @@ spllower(ncpl)
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	splsoftclock()	spllower(imask[IPL_SOFTCLOCK])
+#define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
+#define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
 #define	splsoftnet()	splraise(imask[IPL_SOFTNET])
 #define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
 

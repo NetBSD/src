@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.36 1999/05/02 17:28:43 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.37 1999/08/05 18:08:14 thorpej Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -176,7 +176,8 @@
 #endif
 
 #define	spl0()		splx(0)		/* IPL0  */
-#define splsoftclock()  splx(8)		/* IPL08 */
+#define spllowersoftclock() splx(8)	/* IPL08 */
+#define splsoftclock()  splx(8)		/* IPL08 */	/* XXX XXX XXX */
 #define splsoftnet()    splx(0xc)	/* IPL0C */
 #define	splddb()	splx(0xf)	/* IPL0F */
 #define splbio()        splx(0x15)	/* IPL15 */

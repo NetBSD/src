@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1999/08/01 21:50:17 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 1999/08/05 18:08:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -83,48 +83,7 @@ struct isr {
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
 #ifdef _KERNEL
-/*
- * spl functions; all but spl0 are done in-line
- */
-
-#define	_spl(s)								\
-({									\
-	register int _spl_r;						\
-									\
-	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
-	    "&=d" (_spl_r) : "di" (s));					\
-	_spl_r;								\
-})
-
-#define	_splraise(s)							\
-({									\
-	int _spl_r;							\
-									\
-	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
-		jle	1f					;	\
-		movw	%1,sr					;	\
-	    1:"							:	\
-		    "&=d" (_spl_r)				:	\
-		    "di" (s)					:	\
-		    "d0", "d1");					\
-	_spl_r;								\
-})
-
 /* spl0 requires checking for software interrupts */
-#define	spl1()	_spl(PSL_S|PSL_IPL1)
-#define	spl2()	_spl(PSL_S|PSL_IPL2)
-#define	spl3()	_spl(PSL_S|PSL_IPL3)
-#define	spl4()	_spl(PSL_S|PSL_IPL4)
-#define	spl5()	_spl(PSL_S|PSL_IPL5)
-#define	spl6()	_spl(PSL_S|PSL_IPL6)
-#define	spl7()	_spl(PSL_S|PSL_IPL7)
 
 /*
  * This array contains the appropriate PSL_S|PSL_IPL? values
@@ -142,12 +101,14 @@ extern unsigned short hp300_ipls[];
 #define	HP300_NIPLS		7
 
 /* These spl calls are _not_ to be used by machine-independent code. */
-#define	splhil()	_splraise(PSL_S|PSL_IPL1)
+#define	splhil()	splraise1()
 #define	splkbd()	splhil()
 
 /* These spl calls are used by machine-independent code. */
-#define	splsoftclock()	spl1()		/* will lower interrupt level */
-#define	splsoftnet()	_splraise(PSL_S|PSL_IPL1)
+#define	spllowersoftclock() spl1()
+#define	splsoft()	splraise1()
+#define	splsoftclock()	splsoft()
+#define	splsoftnet()	splsoft()
 #define	splbio()	_splraise(hp300_ipls[HP300_IPL_BIO])
 #define	splnet()	_splraise(hp300_ipls[HP300_IPL_NET])
 #define	spltty()	_splraise(hp300_ipls[HP300_IPL_TTY])

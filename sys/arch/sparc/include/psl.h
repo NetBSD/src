@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.16 1998/11/26 22:53:13 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.17 1999/08/05 18:08:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,7 +171,8 @@ static __inline int name() \
 }
 
 SPL(splsoftint, 1)
-#define	splsoftclock	splsoftint
+#define	spllowersoftclock splsoftint
+#define	splsoftclock	splsoftint	/* XXX XXX XXX */
 #define	splsoftnet	splsoftint
 
 /* audio software interrupts are at software level 4 */

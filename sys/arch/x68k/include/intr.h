@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 1999/03/16 16:30:21 minoura Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 1999/08/05 18:08:15 thorpej Exp $	*/
 
 /*
  *
@@ -38,61 +38,22 @@
 #ifndef _X68K_INTR_H_
 #define	_X68K_INTR_H_
 
-/*
- * spl functions; all but spl0 are done in-line
- */
 #include <machine/psl.h>
-
-#define _spl(s)								\
-({									\
-	register int _spl_r;						\
-									\
-	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
-	    "&=d" (_spl_r) : "di" (s));					\
-	_spl_r;								\
-})
-
-#define	_splraise(s)							\
-({									\
-	int _spl_r;							\
-									\
-	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
-		jle	1f					;	\
-		movw	%1,sr					;	\
-	    1:"							:	\
-		    "&=d" (_spl_r)				:	\
-		    "di" (s)					:	\
-		    "d0", "d1");					\
-	_spl_r;								\
-})
 
 /* spl0 requires checking for software interrupts */
 void	spl0 __P((void));
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
 
 #define splnone()       spl0()
-#define splsoftclock()  spl1()  /* disallow softclock */
-#define splsoftnet()	spl1()	/* disallow softnet */
+#define spllowersoftclock()  spl1()  /* disallow softclock */
+#define splsoftclock()  splraise1()  /* disallow softclock */
+#define splsoftnet()	splraise1()	/* disallow softnet */
 #define splnet()        _splraise(PSL_S|PSL_IPL4) /* disallow network */
 #define splbio()        _splraise(PSL_S|PSL_IPL3) /* disallow block I/O */
 #define splimp()        _splraise(PSL_S|PSL_IPL4) /* disallow imput */
 #define spltty()        _splraise(PSL_S|PSL_IPL4) /* disallow tty interrupts */
-#define splzs()         spl5()	/* disallow serial interrupts */
-#define splclock()      spl6()	/* disallow clock interrupt */
-#define splstatclock()  spl6()	/* disallow clock interrupt */
+#define splzs()         splraise5()	/* disallow serial interrupts */
+#define splclock()      splraise6()	/* disallow clock interrupt */
+#define splstatclock()  splraise6()	/* disallow clock interrupt */
 #define splvm()         _splraise(PSL_S|PSL_IPL4) /* disallow virtual memory operations */
 #define splhigh()       spl7()	/* disallow everything */
 #define splsched()      spl7()	/* disallow scheduling */

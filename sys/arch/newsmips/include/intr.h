@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 1998/08/26 12:07:21 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 1999/08/05 18:08:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -62,7 +62,8 @@ extern int spltty __P((void));
 extern int splnet __P((void));
 extern int splbio __P((void));
 extern int splsoftnet __P((void));
-extern int splsoftclock __P((void));
+extern int spllowersoftclock __P((void));
+#define	splsoftclock()	spllowersoftclock()	/* XXX XXX XXX */
 extern int spl0 __P((void));
 extern void splx __P((int));
 
