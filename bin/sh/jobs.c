@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.41 2002/03/12 00:44:16 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.42 2002/03/12 03:45:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.41 2002/03/12 00:44:16 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.42 2002/03/12 03:45:02 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,8 +580,7 @@ forkshell(jp, n, mode)
 	const char *devnull = _PATH_DEVNULL;
 	const char *nullerr = "Can't open %s";
 
-	TRACE(("forkshell(%%%d, 0x%lx, %d) called\n", jp - jobtab, (long)n,
-	    mode));
+	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
 	INTOFF;
 	pid = fork();
 	if (pid == -1) {
@@ -597,9 +596,12 @@ forkshell(jp, n, mode)
 		TRACE(("Child shell %d\n", getpid()));
 		wasroot = rootshell;
 		rootshell = 0;
-		for (i = njobs, p = jobtab ; --i >= 0 ; p++)
+		for (i = njobs, p = jobtab ; --i >= 0 ; p++) {
+			if (p == jp)
+				continue;	/* don't free current job */
 			if (p->used)
 				freejob(p);
+		}
 		closescript();
 		INTON;
 		clear_traps();
