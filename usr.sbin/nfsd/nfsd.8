@@ -1,4 +1,4 @@
-.\"   $NetBSD: nfsd.8,v 1.12 2000/05/18 09:54:59 bouyer Exp $
+.\"   $NetBSD: nfsd.8,v 1.13 2000/06/09 00:05:02 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 server
 .Sh SYNOPSIS
 .Nm
-.Op Fl rut
+.Op Fl 6rut
 .Op Fl n Ar num_servers
 .Sh DESCRIPTION
 .Nm
@@ -73,6 +73,9 @@ or
 options to re-register NFS if the portmap server is restarted.
 .It Fl n
 Specifies how many servers to create.
+.It Fl 6
+Listen to IPv6 requests as well as IPv4 requests. If IPv6 support is not
+available, nfsd will silently continue and just use IPv4.
 .It Fl t
 Serve
 .Tn TCP NFS
