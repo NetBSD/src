@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.73 2000/01/23 22:19:12 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.74 2000/01/24 16:52:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -435,7 +435,6 @@ establish_chip_type(fdc, tag, type, addr, size, handle)
 	}
 
 	fdc->sc_flags |= FDC_82077;
-	fdc->sc_flags |= FDC_NEEDMOTORWAIT;
 }
 
 /*
@@ -614,6 +613,7 @@ fdcattach(fdc, pri)
 		fdc->sc_reg_fifo = FDREG77_FIFO;
 		fdc->sc_reg_dor = FDREG77_DOR;
 		code = '7';
+		fdc->sc_flags |= FDC_NEEDMOTORWAIT;
 	} else {
 		fdc->sc_reg_msr = FDREG72_MSR;
 		fdc->sc_reg_fifo = FDREG72_FIFO;
@@ -760,6 +760,7 @@ fdattach(parent, self, aux)
 
 	fdc_wrfifo(fdc, NE7CMD_SPECIFY);
 	fdc_wrfifo(fdc, type->steprate);
+	/* XXX head load time == 6ms */
 	fdc_wrfifo(fdc, 6 | NE7_SPECIFY_NODMA);
 
 	/*
@@ -1520,7 +1521,7 @@ loop:
 				  fdc->sc_reg_drs, type->rate);
 #ifdef FD_DEBUG
 		if (fdc_debug > 1)
-			printf("fdcintr: %s drive %d "
+			printf("fdcstate: doio: %s drive %d "
 				"track %d head %d sec %d nblks %d\n",
 				finfo ? "format" :
 					(read ? "read" : "write"),
@@ -1776,6 +1777,7 @@ fdcretry(fdc)
 {
 	struct fd_softc *fd;
 	struct buf *bp;
+	int error = EIO;
 
 	fd = fdc->sc_drives.tqh_first;
 	bp = BUFQ_FIRST(&fd->sc_q);
@@ -1786,6 +1788,13 @@ fdcretry(fdc)
 
 	switch (fdc->sc_errors) {
 	case 0:
+		if (fdc->sc_nstat == 7 &&
+		    (fdc->sc_status[0] & 0xd8) == 0x40 &&
+		    (fdc->sc_status[1] & 0x2) == 0x2) {
+			printf("%s: read-only medium\n", fd->sc_dv.dv_xname);
+			error = EROFS;
+			goto failsilent;
+		}
 		/* try again */
 		fdc->sc_state =
 			(fdc->sc_flags & FDC_EIS) ? DOIO : DOSEEK;
@@ -1808,6 +1817,7 @@ fdcretry(fdc)
 			 * result of no disk loaded into the drive.
 			 */
 			printf("%s: no medium?\n", fd->sc_dv.dv_xname);
+			error = ENODEV;
 			goto failsilent;
 		}
 
@@ -1821,12 +1831,12 @@ fdcretry(fdc)
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
 				fd->sc_skip / FD_BSIZE(fd),
 				(struct disklabel *)NULL);
-			fdcstatus(fdc, " controller status");
+			fdcstatus(fdc, "\n controller status");
 		}
 
 	failsilent:
 		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
+		bp->b_error = error;
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
@@ -2047,7 +2057,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd->sc_opts = *(int *)addr;
 		return (0);
 
-#ifdef DEBUG
+#ifdef FD_DEBUG
 	case _IO('f', 100):
 		fdc_wrfifo(fdc, NE7CMD_DUMPREG);
 		fdcresult(fdc);
