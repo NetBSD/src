@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.108 2004/10/30 17:36:31 dsl Exp $	*/
+/*	$NetBSD: cmds.c,v 1.109 2005/01/03 09:50:09 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.108 2004/10/30 17:36:31 dsl Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.109 2005/01/03 09:50:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -691,7 +691,14 @@ mget(int argc, char *argv[])
 			mflag = 0;
 			continue;
 		}
-		if (! mflag || !confirm(argv[0], cp))
+		if (! mflag)
+			continue;
+		if (! fileindir(cp, localcwd)) {
+			fprintf(ttyout, "Skipping non-relative filename `%s'\n",
+			    cp);
+			continue;
+		}
+		if (!confirm(argv[0], cp))
 			continue;
 		tp = cp;
 		if (mcase)
@@ -1133,7 +1140,7 @@ cd(int argc, char *argv[])
 	}
 	if (r == COMPLETE) {
 		dirchange = 1;
-		updateremotepwd();
+		updateremotecwd();
 	}
 }
 
@@ -1143,7 +1150,6 @@ cd(int argc, char *argv[])
 void
 lcd(int argc, char *argv[])
 {
-	char buf[MAXPATHLEN];
 	char *locdir;
 
 	code = -1;
@@ -1157,14 +1163,16 @@ lcd(int argc, char *argv[])
 	}
 	if ((locdir = globulize(argv[1])) == NULL)
 		return;
-	if (chdir(locdir) < 0)
-		warn("local: %s", locdir);
+	if (chdir(locdir) == -1)
+		warn("lcd %s", locdir);
 	else {
-		if (getcwd(buf, sizeof(buf)) != NULL) {
-			fprintf(ttyout, "Local directory now %s\n", buf);
+		updatelocalcwd();
+		if (localcwd[0]) {
+			fprintf(ttyout, "Local directory now: %s\n", localcwd);
 			code = 0;
-		} else
-			warn("getcwd: %s", locdir);
+		} else {
+			fprintf(ttyout, "Unable to determine local directory\n");
+		}
 	}
 	(void)free(locdir);
 }
@@ -1175,7 +1183,6 @@ lcd(int argc, char *argv[])
 void
 delete(int argc, char *argv[])
 {
-
 
 	if (argc == 0 || argc > 2 ||
 	    (argc == 1 && !another(&argc, &argv, "remote-file"))) {
@@ -1512,19 +1519,20 @@ user(int argc, char *argv[])
 void
 pwd(int argc, char *argv[])
 {
-	int oldverbose = verbose;
 
-	if (argc == 0) {
+	code = -1;
+	if (argc != 1) {
 		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
 		return;
 	}
-	verbose = 1;	/* If we aren't verbose, this doesn't do anything! */
-	if (command("PWD") == ERROR && code == 500) {
-		fputs("PWD command not recognized, trying XPWD.\n", ttyout);
-		(void)command("XPWD");
+	if (! remotecwd[0])
+		updateremotecwd();
+	if (! remotecwd[0])
+		fprintf(ttyout, "Unable to determine remote directory\n");
+	else {
+		fprintf(ttyout, "Remote directory: %s\n", remotecwd);
+		code = 0;
 	}
-	verbose = oldverbose;
 }
 
 /*
@@ -1533,19 +1541,19 @@ pwd(int argc, char *argv[])
 void
 lpwd(int argc, char *argv[])
 {
-	char buf[MAXPATHLEN];
 
-	if (argc == 0) {
+	code = -1;
+	if (argc != 1) {
 		fprintf(ttyout, "usage: %s\n", argv[0]);
-		code = -1;
 		return;
 	}
-	if (getcwd(buf, sizeof(buf)) != NULL) {
-		fprintf(ttyout, "Local directory %s\n", buf);
+	if (! localcwd[0])
+		updatelocalcwd();
+	if (! localcwd[0])
+		fprintf(ttyout, "Unable to determine local directory\n");
+	else {
+		fprintf(ttyout, "Local directory: %s\n", localcwd);
 		code = 0;
-	} else {
-		warn("getcwd");
-		code = -1;
 	}
 }
 
@@ -2311,7 +2319,7 @@ cdup(int argc, char *argv[])
 	}
 	if (r == COMPLETE) {
 		dirchange = 1;
-		updateremotepwd();
+		updateremotecwd();
 	}
 }
 
