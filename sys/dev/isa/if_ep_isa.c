@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.18 1997/10/15 05:59:34 explorer Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.19 1997/10/20 18:43:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -329,8 +329,10 @@ ep_isa_attach(parent, self, aux)
 	int chipset;
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
-		panic("ep_isa_attach: can't map i/o space");
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;

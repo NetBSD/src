@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.3 1997/10/19 18:56:55 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.4 1997/10/20 18:43:10 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -189,12 +189,16 @@ pcic_isa_attach(parent, self, aux)
 	int i, iobuswidth, tmp1, tmp2;
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
-		panic("pcic_isa_attach: can't map i/o space");
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	/* Map mem space. */
-	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
-		panic("pcic_isa_attach: can't map i/o space");
+	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
+		printf(": can't map mem space\n");
+		return;
+	}
 
 	sc->membase = ia->ia_maddr;
 	sc->subregionmask = (1 << (ia->ia_msize / PCIC_MEM_PAGESIZE)) - 1;
@@ -232,8 +236,10 @@ pcic_isa_attach(parent, self, aux)
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase + 0x400, ia->ia_iosize, 0,
-	    &ioh_high))
-		panic("pcic_isa_attach: can't map high i/o space");
+	    &ioh_high)) {
+		printf("%s: can't map high i/o space\n", sc->dev.dv_xname);
+		return;
+	}
 
 	for (i = 0; i < PCIC_NSLOTS; i++) {
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.6 1997/10/19 18:56:39 thorpej Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.7 1997/10/20 18:43:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -122,14 +122,18 @@ aha_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh))
-		panic("aha_isa_attach: bus_space_map failed");
+	if (bus_space_map(iot, ia->ia_iobase, AHA_ISA_IOSIZE, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
-	if (!aha_find(iot, ioh, &apd))
-		panic("aha_isa_attach: aha_find failed");
+	if (!aha_find(iot, ioh, &apd)) {
+		printf("%s: aha_find failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (apd.sc_drq != -1)
 		isa_dmacascade(parent, apd.sc_drq);

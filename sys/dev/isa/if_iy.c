@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.15 1997/10/18 14:09:52 drochner Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.16 1997/10/20 18:43:14 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -274,8 +274,10 @@ iyattach(parent, self, aux)
 
 	iot = ia->ia_iot;
 	
-	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
-		panic("Can't bus_space_map in iyattach");
+	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.22 1997/10/19 18:57:19 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.23 1997/10/20 18:43:20 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -329,14 +329,18 @@ wdsattach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map(iot, ia->ia_iobase, WDS_ISA_IOSIZE, 0, &ioh))
-		panic("wdsattach: bus_space_map failed");
+	if (bus_space_map(iot, ia->ia_iobase, WDS_ISA_IOSIZE, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
-	if (!wds_find(iot, ioh, &wpd))
-		panic("wdsattach: wds_find failed");
+	if (!wds_find(iot, ioh, &wpd)) {
+		printf("%s: wds_find failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	bus_space_write_1(iot, ioh, WDS_HCR, WDSH_DRQEN);
 #ifdef notyet

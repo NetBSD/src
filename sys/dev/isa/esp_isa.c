@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.5 1997/10/05 18:37:01 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.6 1997/10/20 18:43:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -375,20 +375,11 @@ esp_isa_match(parent, match, aux)
 
 	ESP_TRACE(("[esp_isa_match] "));
 
-	if (ia->ia_iobase != 0x230 && ia->ia_iobase != 0x330) {
-#ifdef DIAGNOSTIC
-		printf("%s: invalid iobase 0x%0x, device not configured\n",
-		    sc->sc_dev.dv_xname, ia->ia_iobase);
-#endif
+	if (ia->ia_iobase != 0x230 && ia->ia_iobase != 0x330)
 		return 0;
-	}
 
-	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh)) {
-#ifdef DIAGNOSTIC
-		printf("%s: bus_space_map() failed!\n", sc->sc_dev.dv_xname);
-#endif
+	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh))
 		return 0;
-	}
 
 	epd.sc_dev = sc->sc_dev;
 	rv = esp_find(iot, ioh, &epd);
@@ -429,12 +420,16 @@ esp_isa_attach(parent, self, aux)
 	printf("\n");
 	ESP_TRACE(("[esp_isa_attach] "));
 
-	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh))
-		panic("espattach: bus_space_map failed");
+	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	epd.sc_dev = sc->sc_dev;
-	if (!esp_find(iot, ioh, &epd))
-		panic("espattach: esp_find failed");
+	if (!esp_find(iot, ioh, &epd)) {
+		printf("%s: esp_find failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (ia->ia_drq != DRQUNK)
 		isa_dmacascade(parent, ia->ia_drq);

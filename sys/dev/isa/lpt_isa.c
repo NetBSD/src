@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.46 1997/10/19 18:57:09 thorpej Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.47 1997/10/20 18:43:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -237,8 +237,10 @@ lpt_isa_attach(parent, self, aux)
 	sc->sc_irq = ia->ia_irq;
 
 	iot = lsc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, ia->ia_iobase, LPT_NPORTS, 0, &ioh))
-		panic("lpt_isa_attach: couldn't map I/O ports");
+	if (bus_space_map(iot, ia->ia_iobase, LPT_NPORTS, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", self->dv_xname);
+		return;
+	}
 	lsc->sc_ioh = ioh;
 
 	lpt_attach_subr(lsc);

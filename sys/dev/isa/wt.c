@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.40 1997/10/19 18:57:22 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.41 1997/10/20 18:43:22 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -208,7 +208,6 @@ wtprobe(parent, match, aux)
 	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh))
 		return 0;
 
-
 	/* XXX broken_indirect_config */
 	sc->chan = ia->ia_drq;
 	if (sc->chan < 1 || sc->chan > 3) {
@@ -277,8 +276,10 @@ wtattach(parent, self, aux)
 	bus_space_handle_t ioh;
 
 	/* Map i/o space */
-	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh))
-		panic("mcdattach: bus_space_map failed!");
+	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
