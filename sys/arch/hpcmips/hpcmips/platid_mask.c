@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.13 2000/01/06 18:08:54 uch Exp $ */
+/* $Id: platid_mask.c,v 1.14 2000/01/22 10:51:29 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -157,6 +157,10 @@ platid_t platid_mask_MACH_NEC_MCR_500A = {{
 platid_t platid_mask_MACH_NEC_MCR_530 = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_NEC_MCR_530
+}};
+platid_t platid_mask_MACH_NEC_MCR_430 = {{
+	PLATID_CPU_MIPS_VR_4121,
+	PLATID_MACH_NEC_MCR_430
 }};
 platid_t platid_mask_MACH_NEC_MCR_7XX = {{
 	PLATID_CPU_MIPS_VR_41XX,
