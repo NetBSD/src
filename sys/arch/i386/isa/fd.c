@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.70 1995/01/13 11:14:27 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.71 1995/01/13 14:05:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -873,7 +873,7 @@ loop:
 			goto doio;
 
 		out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
-		out_fdc(iobase, type->steprate);
+		out_fdc(iobase, fd->sc_type->steprate);
 		out_fdc(iobase, 6);		/* XXX head load time == 6ms */
 
 		out_fdc(iobase, NE7CMD_SEEK);	/* seek function */
