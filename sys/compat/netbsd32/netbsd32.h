@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.14 2000/12/01 12:28:33 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.15 2000/12/03 13:15:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -38,6 +38,7 @@
  * NetBSD 32-bit compatibility module.
  */
 
+#include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
