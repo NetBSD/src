@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.10 2000/01/21 23:40:00 thorpej Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.11 2000/01/22 16:35:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,11 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #define	SDRETRIES	4
 
