@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.21 2003/09/28 00:07:50 cl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.22 2003/09/28 00:15:13 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2003/09/28 00:07:50 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2003/09/28 00:15:13 cl Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -193,7 +193,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 		if (((struct fpframe060 *)&kf.sf_c.c_sc.sc_ss.ss_fpstate.FPF_u1)
 					->fpf6_frmfmt != FPF6_FMT_NULL) {
 			asm("fmovem %%fp0-%%fp1,%0" :
-				"=m" (*kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs));
+				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs[0][0]));
 			/*
 			 * On 060,  "fmovem fpcr/fpsr/fpi,<ea>"  is
 			 * emulated by software and slow.
@@ -210,7 +210,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 			: : "memory");
 		if (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_version) {
 			asm("fmovem %%fp0-%%fp1,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
-				"=m" (*kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs),
+				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_regs[0][0]),
 				"=m" (kf.sf_c.c_sc.sc_ss.ss_fpstate.fpf_fpcr)
 				: : "memory");
 		}
@@ -357,7 +357,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 		if (((struct fpframe060 *) &kf.sf_uc.uc_ss.ss_fpstate.FPF_u1)
 					->fpf6_frmfmt != FPF6_FMT_NULL) {
 			asm("fmovem %%fp0-%%fp7,%0" :
-				"=m" (*kf.sf_uc.uc_mc.mc_fpregs.fpr_regs));
+				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_regs[0][0]));
 			/*
 			 * On 060,  "fmovem fpcr/fpsr/fpi,<ea>"  is
 			 * emulated by software and slow.
@@ -382,7 +382,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 		asm("fsave %0" : "=m" (kf.sf_uc.uc_ss.ss_fpstate));
 		if (kf.sf_uc.uc_ss.ss_fpstate.fpf_version) {
 			asm("fmovem %%fp0-%%fp7,%0; fmovem %%fpcr/%%fpsr/%%fpi,%1" :
-				"=m" (*kf.sf_uc.uc_mc.mc_fpregs.fpr_regs),
+				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_regs[0][0]),
 				"=m" (kf.sf_uc.uc_mc.mc_fpregs.fpr_fpcr)
 				: : "memory");
 		}
@@ -622,7 +622,7 @@ bad:		sigexit(l, SIGSEGV);
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpsr),
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpiar));
 			asm("fmovem %0,%%fp0-%%fp1" : :
-				"m" (*scp->sc_ss.ss_fpstate.fpf_regs));
+				"m" (scp->sc_ss.ss_fpstate.fpf_regs[0][0]));
 		}
 		asm("frestore %0" : : "m" (scp->sc_ss.ss_fpstate.FPF_u1));
 		break;
@@ -631,7 +631,7 @@ bad:		sigexit(l, SIGSEGV);
 		if (scp->sc_ss.ss_fpstate.fpf_version) {
 			asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
 				"m" (scp->sc_ss.ss_fpstate.fpf_fpcr),
-				"m" (*scp->sc_ss.ss_fpstate.fpf_regs));
+				"m" (scp->sc_ss.ss_fpstate.fpf_regs[0][0]));
 		}
 		asm("frestore %0" : : "m" (scp->sc_ss.ss_fpstate.FPF_u1));
 		break;
@@ -763,7 +763,7 @@ bad:		sigexit(l, SIGSEGV);
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpsr),
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpiar));
 			asm("fmovem %0,%%fp0-%%fp1" : :
-				"m" (*tuc.uc_mc.mc_fpregs.fpr_regs));
+				"m" (tuc.uc_mc.mc_fpregs.fpr_regs[0][0]));
 		}
 		asm("frestore %0" : : "m" (tuc.uc_ss.ss_fpstate.FPF_u1));
 		break;
@@ -772,7 +772,7 @@ bad:		sigexit(l, SIGSEGV);
 		if (tuc.uc_ss.ss_fpstate.fpf_version) {
 			asm("fmovem %0,%%fpcr/%%fpsr/%%fpi; fmovem %1,%%fp0-%%fp1"::
 				"m" (tuc.uc_mc.mc_fpregs.fpr_fpcr),
-				"m" (*tuc.uc_mc.mc_fpregs.fpr_regs));
+				"m" (tuc.uc_mc.mc_fpregs.fpr_regs[0][0]));
 		}
 		asm("frestore %0" : : "m" (tuc.uc_ss.ss_fpstate.FPF_u1));
 		break;
