@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.68 1998/08/08 00:14:08 ross Exp $	*/
+/*	$NetBSD: ncr.c,v 1.69 1998/08/10 13:10:33 ross Exp $	*/
 
 /**************************************************************************
 **
@@ -1434,7 +1434,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.68 1998/08/08 00:14:08 ross Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.69 1998/08/10 13:10:33 ross Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4281,7 +4281,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	lcb_p lp;
 	tcb_p tp = &np->target[xp->sc_link->scsipi_scsi.target];
 
-	int	i, oldspl, segments, flags = xp->flags;
+	int	i, oldspl, segments, flags = xp->flags, pollmode;
 	u_char	qidx, nego, idmsg, *msgptr;
 	u_long  msglen, msglen2;
 
@@ -4743,6 +4743,11 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	/*
 	**	and reenable interrupts
 	*/
+#ifdef __NetBSD__
+	pollmode = flags & SCSI_POLL;
+#else
+	pollmode = flags & SCSI_NOMASK;
+#endif
 	splx (oldspl);
 
 	/*
@@ -4750,12 +4755,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	**	Command is successfully queued.
 	*/
 
-#ifdef __NetBSD__
-        if (!(flags & SCSI_POLL))
-#else /* !__NetBSD__ */ 
-	if (!(flags & SCSI_NOMASK))
-#endif /* __NetBSD__ */
-	/* if */ {
+	if (!pollmode) {
 		if(DEBUG_FLAGS & DEBUG_TINY) printf ("Q");
 		return(SUCCESSFULLY_QUEUED);
 	};
@@ -4802,12 +4802,6 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 		printf ("%s: result: %x %x.\n",
 			ncr_name (np), cp->host_status, cp->scsi_status);
 	};
-#ifdef __NetBSD__
-        if (!(flags & SCSI_POLL)) 
-#else /* !__NetBSD__ */ 
-	if (!(flags & SCSI_NOMASK))
-#endif /* __NetBSD__ */
-		return (SUCCESSFULLY_QUEUED);
 	switch (xp->error) {
 	case  0     : return (COMPLETE);
 	case XS_BUSY: return (TRY_AGAIN_LATER);
