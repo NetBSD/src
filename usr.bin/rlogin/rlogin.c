@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.17 1997/02/17 06:14:25 mrg Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.18 1997/06/05 16:10:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.17 1997/02/17 06:14:25 mrg Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.18 1997/06/05 16:10:49 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ main(argc, argv)
 	sigset_t smask;
 	int argoff, ch, dflag, one, uid;
 	int i, len, len2;
-	char *host, *p, *user, term[1024] = "network";
+	char *host, *p, *user, *name, term[1024] = "network";
 	speed_t ospeed;
 	struct sigaction sa;
 	struct rlimit rlim;
@@ -265,8 +265,10 @@ main(argc, argv)
 		if (*host == '\0')
 			usage();
 	}
+	if ((name = strdup(pw->pw_name)) == NULL)
+		err(1, "malloc");
 	if (!user)
-		user = pw->pw_name;
+		user = name;
 
 	sp = NULL;
 #ifdef KERBEROS
@@ -353,7 +355,7 @@ try_connect:
 
 		strncpy(dest_realm, cp, REALM_SZ);
 
-		rem = kcmd(&sock, &host, sp->s_port, pw->pw_name, user, 
+		rem = kcmd(&sock, &host, sp->s_port, name, user, 
 			   term, 0, &ticket, "rcmd", dest_realm,
 			   &cred, schedule, &msg_data, &local, &foreign,
 			   authopts);
@@ -400,13 +402,13 @@ try_connect:
 #else
 		out:
 #endif /* CRYPT */
-		rem = rcmd(&host, sp->s_port, pw->pw_name, user, term, 0);
-		if ( rem < 0 )
+		rem = rcmd(&host, sp->s_port, name, user, term, 0);
+		if (rem < 0)
 			exit(1);
 		krem = kstream_create_from_fd(rem, 0, 0);
 	}
 #else
-	rem = rcmd(&host, sp->s_port, pw->pw_name, user, term, 0);
+	rem = rcmd(&host, sp->s_port, name, user, term, 0);
 
 #endif /* KERBEROS */
 
