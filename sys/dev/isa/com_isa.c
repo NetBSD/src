@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.21 2003/08/07 16:31:05 agc Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.22 2004/09/14 20:20:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.21 2003/08/07 16:31:05 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.22 2004/09/14 20:20:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,11 +126,11 @@ com_isa_probe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/* Don't allow wildcarded IRQ. */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	iot = ia->ia_iot;
