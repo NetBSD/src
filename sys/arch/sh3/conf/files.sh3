@@ -1,9 +1,10 @@
-#	$NetBSD: files.sh3,v 1.21 2002/03/02 22:26:27 uch Exp $
+#	$NetBSD: files.sh3,v 1.22 2002/03/17 14:05:47 uch Exp $
 #
 # new style config file for sh3 architecture
 #
 
-defparam PCLOCK
+defparam	PCLOCK
+defflag	opt_kstack_debug.h	KSTACK_DEBUG
 
 file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb | kgdb
