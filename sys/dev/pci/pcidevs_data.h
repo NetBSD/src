@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.131 1999/05/29 07:12:11 mrg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.132 1999/06/02 08:57:02 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.126 1999/05/29 07:10:33 mrg Exp 
+ *	NetBSD: pcidevs,v 1.127 1999/06/02 08:56:03 drochner Exp 
  */
 
 /*
@@ -2354,6 +2354,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 host bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
+	    0,
+	    "Silicon Integrated System",
+	    "6326 AGP VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB,
