@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.359 2002/10/16 15:31:26 itojun Exp $
+# $NetBSD: mi,v 1.360 2002/10/16 15:32:26 christos Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -7,6 +7,7 @@
 ./bin/chio		base-util-root
 ./bin/chmod		base-util-root
 ./bin/cp		base-util-root
+./bin/cpio		base-util-root
 ./bin/csh		base-util-root
 ./bin/date		base-util-root
 ./bin/dd		base-util-root
@@ -202,7 +203,6 @@
 ./usr/bin/comm		base-util-bin
 ./usr/bin/compile_et	base-krb5-bin
 ./usr/bin/compress	base-util-bin
-./usr/bin/cpio		base-util-bin
 ./usr/bin/cpp		base-util-bin
 ./usr/bin/crontab	base-cron-bin
 ./usr/bin/ctags		base-c-bin

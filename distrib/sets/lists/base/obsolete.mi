@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.56 2002/10/16 15:31:26 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.57 2002/10/16 15:32:26 christos Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -17,6 +17,7 @@
 /sbin/nfsd
 /sbin/nfsiod
 /sbin/quotacheck
+/usr/bin/cpio
 /usr/bin/kf
 /usr/bin/tar
 /usr/include/compat
