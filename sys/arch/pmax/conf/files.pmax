@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.18 1995/08/04 01:47:37 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.19 1995/08/10 05:22:26 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -12,7 +12,7 @@ maxusers 2 8 64
 device mainbus at root { }		# no locators
 
 device cpu at mainbus			# not optional
-#file arch/pmax/pmax/cpu.c		cpu
+file arch/pmax/pmax/cpu.c		cpu
 
 
 #
