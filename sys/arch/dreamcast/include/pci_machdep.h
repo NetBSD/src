@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2001/01/31 18:38:26 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 17:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -58,6 +58,8 @@ struct dreamcast_pci_chipset {
                             struct device *, struct pcibus_attach_args *);
         int             (*pc_bus_maxdevs)(void *, int);
         pcitag_t        (*pc_make_tag)(void *, int, int, int);
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
         pcireg_t        (*pc_conf_read)(void *, pcitag_t, int);
         void            (*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -77,6 +79,8 @@ struct dreamcast_pci_chipset {
     (*(c)->pc_bus_maxdevs)((c)->pc_conf_v, (b))
 #define pci_make_tag(c, b, d, f)                                        \
     (*(c)->pc_make_tag)((c)->pc_conf_v, (b), (d), (f))
+#define	pci_decompose_tag(c, t, bp, dp, fp)				\
+    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define pci_conf_read(c, t, r)                                          \
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define pci_conf_write(c, t, r, v)                                      \
