@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.13 1999/09/27 05:00:21 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.14 1999/10/23 04:20:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -383,13 +383,14 @@ set_audio_mode:
 			info.play.encoding = encoding;
 		if (precision)
 			info.play.precision = precision;
+		hdr_len = 0;
 	}
 	info.mode = AUMODE_PLAY_ALL;
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
 	
-	return (0);
+	return (hdr_len);
 }
 
 void
