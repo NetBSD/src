@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.23 2002/09/12 20:21:01 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.24 2002/09/12 22:56:30 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -77,8 +77,7 @@ int
 _rtld_relocate_plt_object(
 	const Obj_Entry *obj,
 	const Elf_Rela *rela,
-	caddr_t *addrp,
-	bool dodebug)
+	caddr_t *addrp)
 {
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	int distance;
@@ -186,10 +185,9 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self, dodebug)
+_rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
 	bool self;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 
@@ -220,14 +218,14 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			    rela->r_addend);
 			if (*where != tmp)
 				*where = tmp;
-			rdbg(dodebug, ("32/GLOB_DAT %s in %s --> %p in %s",
+			rdbg(("32/GLOB_DAT %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):	/* word32 B + A */
 			*where = (Elf_Addr)(obj->relocbase + rela->r_addend);
-			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where));
 			break;
 
@@ -244,11 +242,11 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 				    obj->path);
 				return -1;
 			}
-			rdbg(dodebug, ("COPY (avoid in main)"));
+			rdbg(("COPY (avoid in main)"));
 			break;
 
 		default:
-			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
@@ -264,9 +262,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 }
 
 int
-_rtld_relocate_plt_lazy(obj, dodebug)
+_rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.25 2002/09/12 20:21:01 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.26 2002/09/12 22:56:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -164,11 +164,10 @@ void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp)
 	const Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
-	bool dodebug;
 {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
@@ -185,9 +184,8 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 
 	value = (Elf_Addr) (defobj->relocbase + def->st_value);
 
-	rdbg(dodebug, ("bind now/fixup in %s --> old=%p new=%p", 
-	    defobj->strtab + def->st_name,
-	    (void *)*where, (void *)value));
+	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
+	    defobj->strtab + def->st_name, (void *)*where, (void *)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
@@ -263,10 +261,9 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self, dodebug)
+_rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
 	bool self;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 
@@ -309,7 +306,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 		 */
 		if (type == R_TYPE(RELATIVE)) {
 			*where += (Elf_Addr)(obj->relocbase + value);
-			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where));
 			continue;
 		}
@@ -363,13 +360,11 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 		*where |= value;
 #ifdef RTLD_DEBUG_RELOC
 		if (RELOC_RESOLVE_SYMBOL(type)) {
-			rdbg(dodebug, ("%s %s in %s --> %p in %s",
-			    reloc_names[type],
+			rdbg(("%s %s in %s --> %p in %s", reloc_names[type],
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 		} else {
-			rdbg(dodebug, ("%s in %s --> %p",
-			    reloc_names[type],
+			rdbg(("%s in %s --> %p", reloc_names[type],
 			    obj->path, (void *)*where));
 		}
 #endif
@@ -378,9 +373,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 }
 
 int
-_rtld_relocate_plt_lazy(obj, dodebug)
+_rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
-	bool dodebug;
 {
 	return (0);
 }

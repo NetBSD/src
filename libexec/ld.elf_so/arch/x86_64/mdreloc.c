@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.16 2002/09/12 20:21:02 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.17 2002/09/12 22:56:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -91,10 +91,9 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self, dodebug)
+_rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
 	bool self;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 
@@ -126,7 +125,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 			if (*where32 != tmp32)
 				*where32 = tmp32;
-			rdbg(dodebug, ("32/32S %s in %s --> %p in %s",
+			rdbg(("32/32S %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)(unsigned long)*where32,
 			    defobj->path));
@@ -141,7 +140,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 			if (*where64 != tmp64)
 				*where64 = tmp64;
-			rdbg(dodebug, ("64 %s in %s --> %p in %s",
+			rdbg(("64 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where64, defobj->path));
 			break;
@@ -154,7 +153,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			    (Elf64_Addr)where64);
 			if (*where32 != tmp32)
 				*where32 = tmp32;
-			rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
+			rdbg(("PC32 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)(unsigned long)*where32,
 			    defobj->path));
@@ -168,7 +167,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 			if (*where64 != tmp64)
 				*where64 = tmp64;
-			rdbg(dodebug, ("64 %s in %s --> %p in %s",
+			rdbg(("64 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where64, defobj->path));
 			break;
@@ -176,16 +175,16 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			tmp64 = (Elf64_Addr)(obj->relocbase + rela->r_addend);
 			if (*where64 != tmp64)
 				*where64 = tmp64;
-			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
+			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where64));
        			break;
 
 		case R_TYPE(COPY):
-			rdbg(dodebug, ("COPY"));
+			rdbg(("COPY"));
 			break;
 
 		default:
-			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
@@ -201,9 +200,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 }
 
 int
-_rtld_relocate_plt_lazy(obj, dodebug)
+_rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 
@@ -217,19 +215,17 @@ _rtld_relocate_plt_lazy(obj, dodebug)
 
 		/* Just relocate the GOT slots pointing into the PLT */
 		*where += (Elf_Addr)obj->relocbase;
-		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-		    (void *)*where));
+		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 	}
 
 	return 0;
 }
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp)
 	const Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
-	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
@@ -244,7 +240,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
 	    rela->r_addend);
-	rdbg(dodebug, ("bind now/fixup in %s --> old=%p new=%p",
+	rdbg(("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
 	if (*where != new_value)
 		*where = new_value;

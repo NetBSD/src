@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.59 2002/09/12 19:43:03 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.60 2002/09/12 22:56:29 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -148,11 +148,6 @@ _rtld_init(mapbase, relocbase, pagesz)
 {
 	Obj_Entry objself;/* The dynamic linker shared object */
 	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
-#ifdef RTLD_RELOCATE_SELF
-	int dodebug = false;
-#else
-	int dodebug = true;
-#endif
 	int i;
 
 	memset(&objself, 0, sizeof objself);
@@ -184,10 +179,8 @@ _rtld_init(mapbase, relocbase, pagesz)
 	objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 
 #ifdef RTLD_RELOCATE_SELF
-	/* We have not been relocated yet, so fix the dynamic address */
-	objself.dynamic = (Elf_Dyn *)
-		((u_long) mapbase + (char *) objself.dynamic);
-#endif				/* RTLD_RELOCATE_SELF */
+#error platform still uses RTLD_RELOCATE_SELF
+#endif
 
 	_rtld_digest_dynamic(&objself);
 
@@ -202,7 +195,7 @@ _rtld_init(mapbase, relocbase, pagesz)
 	assert(!objself.textrel);
 #endif
 
-	_rtld_relocate_objects(&objself, true, true, dodebug);
+	_rtld_relocate_objects(&objself, true, true);
 
 	/*
 	 * Now that we relocated ourselves, we can use globals.
@@ -210,7 +203,7 @@ _rtld_init(mapbase, relocbase, pagesz)
 	_rtld_objself = objself;
 
 	_rtld_objself.path = _rtld_path;
-	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
+	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	/*
 	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
@@ -274,7 +267,7 @@ _rtld(sp, relocbase)
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
-#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
+#if defined(RTLD_DEBUG)
 	int             i = 0;
 #endif
 
@@ -286,7 +279,7 @@ _rtld(sp, relocbase)
          */
 	/* Find the auxiliary vector on the stack. */
 	/* first Elf_Word reserved to address of exit routine */
-#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
+#if defined(RTLD_DEBUG)
 	dbg(("sp = %p, argc = %ld, argv = %p <%s>\n", sp, (long)sp[2],
 	     &sp[3], (char *) sp[3]));
 	dbg(("got is at %p, dynamic is at %p\n",
@@ -306,7 +299,7 @@ _rtld(sp, relocbase)
 				 * terminator */
 	env = (char **) sp;
 	while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
-#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
+#if defined(RTLD_DEBUG)
 		dbg(("env[%d] = %p %s\n", i++, (void *)sp[-1], (char *)sp[-1]));
 #endif
 	}
@@ -415,9 +408,9 @@ _rtld(sp, relocbase)
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
 #endif
-		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
+		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
 	}
-	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS, true);
+	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
 	dbg(("%s is initialized, mapbase=%p, relocbase=%p", __progname,
 	     _rtld_objself.mapbase, _rtld_objself.relocbase));
 
@@ -486,22 +479,22 @@ _rtld(sp, relocbase)
 	 * any shared object dependencies.
 	 */
 	dbg(("preloading objects"));
-	if (_rtld_trust && _rtld_preload(getenv("LD_PRELOAD"), true) == -1)
+	if (_rtld_trust && _rtld_preload(getenv("LD_PRELOAD")) == -1)
 		_rtld_die();
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_GLOBAL, true) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_GLOBAL) == -1)
 		_rtld_die();
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next)
 		_rtld_objlist_add(&_rtld_list_main, obj);
 
 	dbg(("relocating objects"));
-	if (_rtld_relocate_objects(_rtld_objmain, bind_now, false, true) == -1)
+	if (_rtld_relocate_objects(_rtld_objmain, bind_now, false) == -1)
 		_rtld_die();
 
 	dbg(("doing copy relocations"));
-	if (_rtld_do_copy_relocations(_rtld_objmain, true) == -1)
+	if (_rtld_do_copy_relocations(_rtld_objmain) == -1)
 		_rtld_die();
 
 	/*
@@ -698,7 +691,7 @@ _rtld_dlopen(name, mode)
 	} else {
 		char *path = _rtld_find_library(name, _rtld_objmain);
 		if (path != NULL)
-			obj = _rtld_load_object(path, mode, true);
+			obj = _rtld_load_object(path, mode);
 	}
 
 	if (obj != NULL) {
@@ -706,10 +699,10 @@ _rtld_dlopen(name, mode)
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj, mode, true) == -1 ||
+			if (_rtld_load_needed_objects(obj, mode) == -1 ||
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
-			    ((mode & 3) == RTLD_NOW), false, true)) == -1) {
+			    ((mode & 3) == RTLD_NOW), false)) == -1) {
 				_rtld_unload_object(obj, false);
 				obj->dl_refcount--;
 				obj = NULL;

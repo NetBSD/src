@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.17 2002/09/06 03:12:05 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.18 2002/09/12 22:56:29 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -219,7 +219,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	 * symbol as having the value zero.
 	 */
 	if (def == NULL && ELF_ST_BIND(ref->st_info) == STB_WEAK) {
-		rdbg(1, ("  returning _rtld_sym_zero@_rtld_objmain"));
+		rdbg(("  returning _rtld_sym_zero@_rtld_objmain"));
 		def = &_rtld_sym_zero;
 		defobj = _rtld_objmain;
 	}
