@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.10 1997/02/08 04:38:04 mycroft Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.11 1997/07/13 20:13:25 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_tcp.c,v 1.10 1997/02/08 04:38:04 mycroft Exp $";
+#if 0
+static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: svc_tcp.c,v 1.11 1997/07/13 20:13:25 christos Exp $");
+#endif
 #endif
 
 /*
@@ -59,12 +63,18 @@ static char *rcsid = "$NetBSD: svc_tcp.c,v 1.10 1997/02/08 04:38:04 mycroft Exp 
 /*
  * Ops vector for TCP/IP based rpc service handle
  */
-static bool_t		svctcp_recv();
-static enum xprt_stat	svctcp_stat();
-static bool_t		svctcp_getargs();
-static bool_t		svctcp_reply();
-static bool_t		svctcp_freeargs();
-static void		svctcp_destroy();
+
+static SVCXPRT *makefd_xprt __P((int, u_int, u_int));
+static bool_t rendezvous_request __P((SVCXPRT *, struct rpc_msg *));
+static enum xprt_stat rendezvous_stat __P((SVCXPRT *));
+static void svctcp_destroy __P((SVCXPRT *));
+static int readtcp __P((caddr_t, caddr_t, int));
+static int writetcp __P((caddr_t, caddr_t, int));
+static enum xprt_stat svctcp_stat __P((SVCXPRT *));
+static bool_t svctcp_recv __P((SVCXPRT *, struct rpc_msg *));
+static bool_t svctcp_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
+static bool_t svctcp_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
+static bool_t svctcp_reply __P((SVCXPRT *, struct rpc_msg *));
 
 static struct xp_ops svctcp_op = {
 	svctcp_recv,
@@ -78,20 +88,15 @@ static struct xp_ops svctcp_op = {
 /*
  * Ops vector for TCP/IP rendezvous handler
  */
-static bool_t		rendezvous_request();
-static enum xprt_stat	rendezvous_stat();
 
 static struct xp_ops svctcp_rendezvous_op = {
 	rendezvous_request,
 	rendezvous_stat,
-	(bool_t (*)())abort,
-	(bool_t (*)())abort,
-	(bool_t (*)())abort,
+	(bool_t	(*) __P((SVCXPRT *, xdrproc_t, caddr_t))) abort,
+	(bool_t	(*) __P((SVCXPRT *, struct rpc_msg *))) abort,
+	(bool_t	(*) __P((SVCXPRT *, xdrproc_t, caddr_t))) abort,
 	svctcp_destroy
 };
-
-static int readtcp(), writetcp();
-static SVCXPRT *makefd_xprt();
 
 struct tcp_rendezvous { /* kept in xprt->xp_p1 */
 	u_int sendsize;
@@ -230,9 +235,11 @@ makefd_xprt(fd, sendsize, recvsize)
 	return (xprt);
 }
 
+/*ARGSUSED*/
 static bool_t
-rendezvous_request(xprt)
+rendezvous_request(xprt, msg)
 	register SVCXPRT *xprt;
+	struct rpc_msg *msg;
 {
 	int sock;
 	struct tcp_rendezvous *r;
@@ -257,8 +264,10 @@ rendezvous_request(xprt)
 	return (FALSE); /* there is never an rpc msg to be processed */
 }
 
+/*ARGSUSED*/
 static enum xprt_stat
-rendezvous_stat()
+rendezvous_stat(xprt)
+	register SVCXPRT *xprt;
 {
 
 	return (XPRT_IDLE);
@@ -292,11 +301,12 @@ svctcp_destroy(xprt)
  * fatal for the connection.
  */
 static int
-readtcp(xprt, buf, len)
-	register SVCXPRT *xprt;
+readtcp(xprtp, buf, len)
+	caddr_t xprtp;
 	caddr_t buf;
 	register int len;
 {
+	register SVCXPRT *xprt = (SVCXPRT *) xprtp;
 	register int sock = xprt->xp_sock;
 	int milliseconds = 35 * 1000;
 	struct pollfd pollfd;
@@ -332,11 +342,12 @@ fatal_err:
  * Any error is fatal and the connection is closed.
  */
 static int
-writetcp(xprt, buf, len)
-	register SVCXPRT *xprt;
+writetcp(xprtp, buf, len)
+	caddr_t xprtp;
 	caddr_t buf;
 	int len;
 {
+	register SVCXPRT *xprt = (SVCXPRT *) xprtp;
 	register int i, cnt;
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {

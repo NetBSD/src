@@ -1,4 +1,4 @@
-/*	$NetBSD: get_myaddress.c,v 1.3 1996/01/04 20:05:04 pk Exp $	*/
+/*	$NetBSD: get_myaddress.c,v 1.4 1997/07/13 20:13:09 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: get_myaddress.c,v 1.3 1996/01/04 20:05:04 pk Exp $";
+#if 0
+static char *sccsid = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: get_myaddress.c,v 1.4 1997/07/13 20:13:09 christos Exp $");
+#endif
 #endif
 
 /*
@@ -42,11 +46,11 @@ static char *rcsid = "$NetBSD: get_myaddress.c,v 1.3 1996/01/04 20:05:04 pk Exp 
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-#include <rpc/types.h>
-#include <rpc/xdr.h>
+#include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>

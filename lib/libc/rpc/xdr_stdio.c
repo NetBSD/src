@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.3 1995/02/25 03:02:09 cgd Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.4 1997/07/13 20:13:33 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_stdio.c,v 1.3 1995/02/25 03:02:09 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: xdr_stdio.c,v 1.4 1997/07/13 20:13:33 christos Exp $");
+#endif
 #endif
 
 /*
@@ -49,14 +53,14 @@ static char *rcsid = "$NetBSD: xdr_stdio.c,v 1.3 1995/02/25 03:02:09 cgd Exp $";
 #include <stdio.h>
 #include <rpc/xdr.h>
 
-static bool_t	xdrstdio_getlong();
-static bool_t	xdrstdio_putlong();
-static bool_t	xdrstdio_getbytes();
-static bool_t	xdrstdio_putbytes();
-static u_int	xdrstdio_getpos();
-static bool_t	xdrstdio_setpos();
-static int32_t *xdrstdio_inline();
-static void	xdrstdio_destroy();
+static void xdrstdio_destroy __P((XDR *));
+static bool_t xdrstdio_getlong __P((XDR *, long *));
+static bool_t xdrstdio_putlong __P((XDR *, long *));
+static bool_t xdrstdio_getbytes __P((XDR *, caddr_t, u_int));
+static bool_t xdrstdio_putbytes __P((XDR *, caddr_t, u_int));
+static u_int xdrstdio_getpos __P((XDR *));
+static bool_t xdrstdio_setpos __P((XDR *, u_int));
+static int32_t *xdrstdio_inline __P((XDR *, u_int));
 
 /*
  * Ops vector for stdio type XDR

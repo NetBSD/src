@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.2 1995/02/25 03:01:57 cgd Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.3 1997/07/13 20:13:21 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)svc_auth.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)svc_auth.c	2.1 88/08/07 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_auth.c,v 1.2 1995/02/25 03:01:57 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)svc_auth.c 1.19 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)svc_auth.c	2.1 88/08/07 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: svc_auth.c,v 1.3 1997/07/13 20:13:21 christos Exp $");
+#endif
 #endif
 
 /*
@@ -59,16 +63,13 @@ static char *rcsid = "$NetBSD: svc_auth.c,v 1.2 1995/02/25 03:01:57 cgd Exp $";
  *
  */
 
-enum auth_stat _svcauth_null();		/* no authentication */
-enum auth_stat _svcauth_unix();		/* unix style (uid, gids) */
-enum auth_stat _svcauth_short();	/* short hand unix style */
-
 static struct {
-	enum auth_stat (*authenticator)();
+	enum auth_stat (*authenticator) __P((struct svc_req *,
+    struct rpc_msg *));
 } svcauthsw[] = {
-	_svcauth_null,			/* AUTH_NULL */
-	_svcauth_unix,			/* AUTH_UNIX */
-	_svcauth_short,			/* AUTH_SHORT */
+	{ _svcauth_null },		/* AUTH_NULL */
+	{ _svcauth_unix },		/* AUTH_UNIX */
+	{ _svcauth_short }		/* AUTH_SHORT */
 };
 #define	AUTH_MAX	2		/* HIGHEST AUTH NUMBER */
 
@@ -110,9 +111,9 @@ _authenticate(rqst, msg)
 }
 
 enum auth_stat
-_svcauth_null(/*rqst, msg*/)
-	/*struct svc_req *rqst;
-	struct rpc_msg *msg;*/
+_svcauth_null(rqst, msg)
+	struct svc_req *rqst;
+	struct rpc_msg *msg;
 {
 
 	return (AUTH_OK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.6 1997/02/08 04:38:03 mycroft Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.7 1997/07/13 20:13:08 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_udp.c,v 1.6 1997/02/08 04:38:03 mycroft Exp $";
+#if 0
+static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: clnt_udp.c,v 1.7 1997/07/13 20:13:08 christos Exp $");
+#endif
 #endif
 
 /*
@@ -46,6 +50,7 @@ static char *rcsid = "$NetBSD: clnt_udp.c,v 1.6 1997/02/08 04:38:03 mycroft Exp 
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -56,12 +61,13 @@ static char *rcsid = "$NetBSD: clnt_udp.c,v 1.6 1997/02/08 04:38:03 mycroft Exp 
 /*
  * UDP bases client side rpc operations
  */
-static enum clnt_stat	clntudp_call();
-static void		clntudp_abort();
-static void		clntudp_geterr();
-static bool_t		clntudp_freeres();
-static bool_t           clntudp_control();
-static void		clntudp_destroy();
+static enum clnt_stat clntudp_call __P((CLIENT *, u_long, xdrproc_t,
+    caddr_t, xdrproc_t, caddr_t, struct timeval));
+static void clntudp_geterr __P((CLIENT *, struct rpc_err *));
+static bool_t clntudp_freeres __P((CLIENT *, xdrproc_t, caddr_t));
+static void clntudp_abort __P((CLIENT *));
+static bool_t clntudp_control __P((CLIENT *, u_int, char *));
+static void clntudp_destroy __P((CLIENT *));
 
 static struct clnt_ops udp_ops = {
 	clntudp_call,
@@ -118,7 +124,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	u_int recvsz;
 {
 	CLIENT *cl;
-	register struct cu_data *cu;
+	register struct cu_data *cu = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
 
@@ -386,16 +392,17 @@ clntudp_freeres(cl, xdr_res, res_ptr)
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
+/*ARGSUSED*/
 static void 
-clntudp_abort(/*h*/)
-	/*CLIENT *h;*/
+clntudp_abort(cl)
+	CLIENT *cl;
 {
 }
 
 static bool_t
 clntudp_control(cl, request, info)
 	CLIENT *cl;
-	int request;
+	u_int request;
 	char *info;
 {
 	register struct cu_data *cu = (struct cu_data *)cl->cl_private;

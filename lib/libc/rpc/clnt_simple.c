@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.7 1997/01/23 14:02:16 mrg Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.8 1997/07/13 20:13:06 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_simple.c,v 1.7 1997/01/23 14:02:16 mrg Exp $";
+#if 0
+static char *sccsid = "@(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: clnt_simple.c,v 1.8 1997/07/13 20:13:06 christos Exp $");
+#endif
 #endif
 
 /* 
@@ -45,6 +49,7 @@ static char *rcsid = "$NetBSD: clnt_simple.c,v 1.7 1997/01/23 14:02:16 mrg Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -59,6 +64,7 @@ static struct callrpc_private {
 int
 callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	char *host;
+	int versnum, procnum;
 	xdrproc_t inproc, outproc;
 	char *in, *out;
 {

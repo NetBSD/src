@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.3 1995/02/25 03:01:40 cgd Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.4 1997/07/13 20:13:06 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_raw.c,v 1.3 1995/02/25 03:01:40 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: clnt_raw.c,v 1.4 1997/07/13 20:13:06 christos Exp $");
+#endif
 #endif
 
 /*
@@ -46,6 +50,7 @@ static char *rcsid = "$NetBSD: clnt_raw.c,v 1.3 1995/02/25 03:01:40 cgd Exp $";
  * any interference from the kernal.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <rpc/rpc.h>
 
@@ -62,12 +67,15 @@ static struct clntraw_private {
 	u_int	mcnt;
 } *clntraw_private;
 
-static enum clnt_stat	clntraw_call();
-static void		clntraw_abort();
-static void		clntraw_geterr();
-static bool_t		clntraw_freeres();
-static bool_t		clntraw_control();
-static void		clntraw_destroy();
+
+
+static enum clnt_stat clntraw_call __P((CLIENT *, u_long, xdrproc_t,
+    caddr_t, xdrproc_t, caddr_t, struct timeval));
+static void clntraw_geterr __P((CLIENT *, struct rpc_err *));
+static bool_t clntraw_freeres __P((CLIENT *, xdrproc_t, caddr_t));
+static void clntraw_abort __P((CLIENT *));
+static bool_t clntraw_control __P((CLIENT *, u_int, char *));
+static void clntraw_destroy __P((CLIENT *));
 
 static struct clnt_ops client_ops = {
 	clntraw_call,
@@ -77,8 +85,6 @@ static struct clnt_ops client_ops = {
 	clntraw_destroy,
 	clntraw_control
 };
-
-void	svc_getreq();
 
 /*
  * Create a client handle for memory based rpc.
@@ -201,8 +207,11 @@ call_again:
 	return (status);
 }
 
+/*ARGSUSED*/
 static void
-clntraw_geterr()
+clntraw_geterr(cl, err)
+	CLIENT *cl;
+	struct rpc_err *err;
 {
 }
 
@@ -226,18 +235,26 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
+/*ARGSUSED*/
 static void
-clntraw_abort()
+clntraw_abort(cl)
+	CLIENT *cl;
 {
 }
 
+/*ARGSUSED*/
 static bool_t
-clntraw_control()
+clntraw_control(cl, ui, str)
+	CLIENT *cl;
+	u_int ui;
+	char *str;
 {
 	return (FALSE);
 }
 
+/*ARGSUSED*/
 static void
-clntraw_destroy()
+clntraw_destroy(cl)
+	CLIENT *cl;
 {
 }

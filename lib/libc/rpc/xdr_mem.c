@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_mem.c,v 1.5 1996/12/20 20:47:53 cgd Exp $	*/
+/*	$NetBSD: xdr_mem.c,v 1.6 1997/07/13 20:13:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)xdr_mem.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_mem.c,v 1.5 1996/12/20 20:47:53 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)xdr_mem.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: xdr_mem.c,v 1.6 1997/07/13 20:13:31 christos Exp $");
+#endif
 #endif
 
 /*
@@ -52,17 +56,19 @@ static char *rcsid = "$NetBSD: xdr_mem.c,v 1.5 1996/12/20 20:47:53 cgd Exp $";
 #include <rpc/xdr.h>
 #include <netinet/in.h>
 
-static bool_t	xdrmem_getlong_aligned();
-static bool_t	xdrmem_putlong_aligned();
-static bool_t	xdrmem_getlong_unaligned();
-static bool_t	xdrmem_putlong_unaligned();
-static bool_t	xdrmem_getbytes();
-static bool_t	xdrmem_putbytes();
-static u_int	xdrmem_getpos(); /* XXX w/64-bit pointers, u_int not enough! */
-static bool_t	xdrmem_setpos();
-static int32_t *xdrmem_inline_aligned();
-static int32_t *xdrmem_inline_unaligned();
-static void	xdrmem_destroy();
+
+static void xdrmem_destroy __P((XDR *));
+static bool_t xdrmem_getlong_aligned __P((XDR *, long *));
+static bool_t xdrmem_putlong_aligned __P((XDR *, long *));
+static bool_t xdrmem_getlong_unaligned __P((XDR *, long *));
+static bool_t xdrmem_putlong_unaligned __P((XDR *, long *));
+static bool_t xdrmem_getbytes __P((XDR *, caddr_t, u_int));
+static bool_t xdrmem_putbytes __P((XDR *, caddr_t, u_int));
+/* XXX: w/64-bit pointers, u_int not enough! */
+static u_int xdrmem_getpos __P((XDR *));
+static bool_t xdrmem_setpos __P((XDR *, u_int));
+static int32_t *xdrmem_inline_aligned __P((XDR *, u_int));
+static int32_t *xdrmem_inline_unaligned __P((XDR *, u_int));
 
 static struct	xdr_ops xdrmem_ops_aligned = {
 	xdrmem_getlong_aligned,
@@ -105,9 +111,10 @@ xdrmem_create(xdrs, addr, size, op)
 	xdrs->x_handy = size;
 }
 
+/*ARGSUSED*/
 static void
-xdrmem_destroy(/*xdrs*/)
-	/*XDR *xdrs;*/
+xdrmem_destroy(xdrs)
+	XDR *xdrs;
 {
 
 }
@@ -223,7 +230,7 @@ xdrmem_setpos(xdrs, pos)
 static int32_t *
 xdrmem_inline_aligned(xdrs, len)
 	register XDR *xdrs;
-	int len;
+	u_int len;
 {
 	int32_t *buf = 0;
 
@@ -238,7 +245,7 @@ xdrmem_inline_aligned(xdrs, len)
 static int32_t *
 xdrmem_inline_unaligned(xdrs, len)
 	register XDR *xdrs;
-	int len;
+	u_int len;
 {
 
 	return (0);

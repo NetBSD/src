@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.3 1995/02/25 03:01:59 cgd Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.4 1997/07/13 20:13:23 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)svc_raw.c 1.15 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)svc_raw.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_raw.c,v 1.3 1995/02/25 03:01:59 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)svc_raw.c 1.15 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)svc_raw.c	2.1 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: svc_raw.c,v 1.4 1997/07/13 20:13:23 christos Exp $");
+#endif
 #endif
 
 /*
@@ -58,12 +62,12 @@ static struct svcraw_private {
 	char	verf_body[MAX_AUTH_BYTES];
 } *svcraw_private;
 
-static bool_t		svcraw_recv();
-static enum xprt_stat 	svcraw_stat();
-static bool_t		svcraw_getargs();
-static bool_t		svcraw_reply();
-static bool_t		svcraw_freeargs();
-static void		svcraw_destroy();
+static enum xprt_stat svcraw_stat __P((SVCXPRT *));
+static bool_t svcraw_recv __P((SVCXPRT *, struct rpc_msg *));
+static bool_t svcraw_reply __P((SVCXPRT *, struct rpc_msg *));
+static bool_t svcraw_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
+static bool_t svcraw_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
+static void svcraw_destroy __P((SVCXPRT *));
 
 static struct xp_ops server_ops = {
 	svcraw_recv,
@@ -92,8 +96,10 @@ svcraw_create()
 	return (&srp->server);
 }
 
+/*ARGSUSED*/
 static enum xprt_stat
-svcraw_stat()
+svcraw_stat(xprt)
+	SVCXPRT *xprt;
 {
 
 	return (XPRT_IDLE);
@@ -165,7 +171,9 @@ svcraw_freeargs(xprt, xdr_args, args_ptr)
 	return ((*xdr_args)(xdrs, args_ptr));
 } 
 
+/*ARGSUSED*/
 static void
-svcraw_destroy()
+svcraw_destroy(xprt)
+	SVCXPRT *xprt;
 {
 }

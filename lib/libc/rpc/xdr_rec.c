@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.6 1996/12/20 20:25:12 cgd Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.7 1997/07/13 20:13:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -28,10 +28,15 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint) 
-/*static char *sccsid = "from: @(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_rec.c,v 1.6 1996/12/20 20:25:12 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: xdr_rec.c,v 1.7 1997/07/13 20:13:31 christos Exp $");
+#endif
 #endif
 
 /*
@@ -122,6 +127,7 @@ typedef struct rec_strm {
 
 static u_int	fix_buf_size __P((u_int));
 static bool_t	flush_out __P((RECSTREAM *, bool_t));
+static bool_t	fill_input_buf __P((RECSTREAM *));
 static bool_t	get_input_bytes __P((RECSTREAM *, caddr_t, int));
 static bool_t	set_input_fragment __P((RECSTREAM *));
 static bool_t	skip_input_bytes __P((RECSTREAM *, long));
@@ -142,8 +148,10 @@ xdrrec_create(xdrs, sendsize, recvsize, tcp_handle, readit, writeit)
 	register u_int sendsize;
 	register u_int recvsize;
 	caddr_t tcp_handle;
-	int (*readit)();  /* like read, but pass it a tcp_handle, not sock */
-	int (*writeit)();  /* like write, but pass it a tcp_handle, not sock */
+	/* like read, but pass it a tcp_handle, not sock */
+	int (*readit) __P((caddr_t, caddr_t, int));
+	/* like write, but pass it a tcp_handle, not sock */
+	int (*writeit) __P((caddr_t, caddr_t, int));
 {
 	register RECSTREAM *rstrm =
 		(RECSTREAM *)mem_alloc(sizeof(RECSTREAM));
@@ -355,6 +363,9 @@ xdrrec_setpos(xdrs, pos)
 				return (TRUE);
 			}
 			break;
+
+		case XDR_FREE:
+			break;
 		}
 	return (FALSE);
 }
@@ -383,6 +394,9 @@ xdrrec_inline(xdrs, len)
 			rstrm->fbtbc -= len;
 			rstrm->in_finger += len;
 		}
+		break;
+
+	case XDR_FREE:
 		break;
 	}
 	return (buf);

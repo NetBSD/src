@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.8 1997/02/08 04:38:03 mycroft Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.9 1997/07/13 20:13:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.8 1997/02/08 04:38:03 mycroft Exp $";
+#if 0
+static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: pmap_rmt.c,v 1.9 1997/07/13 20:13:16 christos Exp $");
+#endif
 #endif
 
 /*
@@ -54,13 +58,15 @@ static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.8 1997/02/08 04:38:03 mycroft Exp 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 #define MAX_BROADCAST_SIZE 1400
 
-static struct timeval timeout = { 3, 0 };
+static int getbroadcastnets __P((struct in_addr *, int, char *));
 
+static struct timeval timeout = { 3, 0 };
 
 /*
  * pmapper remote-call-service interface.
@@ -175,7 +181,7 @@ getbroadcastnets(addrs, sock, buf)
         struct ifreq ifreq, *ifr;
 	struct sockaddr_in *sin;
         char *cp, *cplim;
-        int n, i = 0;
+        int i = 0;
 
         ifc.ifc_len = UDPMSGSIZE;
         ifc.ifc_buf = buf;
@@ -217,7 +223,7 @@ getbroadcastnets(addrs, sock, buf)
 	return (i);
 }
 
-typedef bool_t (*resultproc_t)();
+typedef bool_t (*resultproc_t) __P((caddr_t, struct sockaddr_in *));
 
 enum clnt_stat 
 clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
@@ -390,4 +396,3 @@ done_broad:
 	AUTH_DESTROY(unix_auth);
 	return (stat);
 }
-
