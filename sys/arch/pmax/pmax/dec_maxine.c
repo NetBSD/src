@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.4 1998/03/26 12:46:35 jonathan Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.5 1998/03/30 06:45:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.4 1998/03/26 12:46:35 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.5 1998/03/30 06:45:37 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -140,9 +140,9 @@ dec_maxine_init()
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
 
-	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
-
 	dec_maxine_os_init();
+
+	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
 }
 
 
