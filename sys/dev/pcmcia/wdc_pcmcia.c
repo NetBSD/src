@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.28 2000/02/01 06:48:15 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.29 2000/02/04 09:31:07 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -292,14 +292,14 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	if (cfe == NULL) {
 		printf(": can't handle card info\n");
-		return;
+		goto no_config_entry;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
 
 	wpp = wdc_pcmcia_lookup(pa);
@@ -311,7 +311,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
 		printf(": can't map first I/O space\n");
-		return;
+		goto iomap_failed;
 	} 
 
 	if (cfe->num_iospace <= 1)
@@ -319,7 +319,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
 		printf(": can't map second I/O space\n");
-		return;
+		goto iomapaux_failed;
 	}
 
 	if ((wpp != NULL) && (wpp->wpp_name != NULL))
@@ -345,7 +345,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	if (sc->wdc_channel.ch_queue == NULL) {
 		printf("%s: can't allocate memory for command queue\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
-		return;
+		goto ch_queue_alloc_failed;
 	}
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
@@ -356,6 +356,29 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
 	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
+	return;
+
+ ch_queue_alloc_failed:
+	/* Unmap our aux i/o window. */
+	if (sc->sc_auxiowindow != -1)
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
+
+ iomapaux_failed:
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
+
+ iomap_failed:
+	/* Disable the function */
+	pcmcia_function_disable(sc->sc_pf);
+
+ enable_failed:
+	/* Unmap our i/o space. */
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+	if (cfe->num_iospace == 2)
+		pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+
+ no_config_entry:
+	sc->sc_iowindow = -1;
 }
 
 int
@@ -365,6 +388,10 @@ wdc_pcmcia_detach(self, flags)
 {
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int error;
+
+	if (sc->sc_iowindow == -1)
+		/* Nothing to detach */
+		return (0);
 
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);
