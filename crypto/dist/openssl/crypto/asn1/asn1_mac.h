@@ -59,11 +59,11 @@
 #ifndef HEADER_ASN1_MAC_H
 #define HEADER_ASN1_MAC_H
 
+#include <openssl/asn1.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#include <openssl/asn1.h>
 
 #ifndef ASN1_MAC_ERR_LIB
 #define ASN1_MAC_ERR_LIB	ERR_LIB_ASN1
@@ -195,6 +195,9 @@ err:\
 #define M_ASN1_I2D_put_SEQUENCE_opt_type(type,a,f) \
 	if ((a != NULL) && (sk_##type##_num(a) != 0)) \
 		M_ASN1_I2D_put_SEQUENCE_type(type,a,f);
+
+#define M_ASN1_I2D_put_SEQUENCE_opt_ex_type(type,a,f) \
+	if (a) M_ASN1_I2D_put_SEQUENCE_type(type,a,f);
 
 #define M_ASN1_D2I_get_IMP_set_opt(b,func,free_func,tag) \
 	if ((c.slen != 0) && \
@@ -340,7 +343,7 @@ err:\
 
 /* New macros */
 #define M_ASN1_New_Malloc(ret,type) \
-	if ((ret=(type *)Malloc(sizeof(type))) == NULL) \
+	if ((ret=(type *)OPENSSL_malloc(sizeof(type))) == NULL) \
 		{ c.line=__LINE__; goto err2; }
 
 #define M_ASN1_New(arg,func) \
@@ -388,6 +391,9 @@ err:\
 #define M_ASN1_I2D_len_SEQUENCE_opt_type(type,a,f) \
 		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
 			M_ASN1_I2D_len_SEQUENCE_type(type,a,f);
+
+#define M_ASN1_I2D_len_SEQUENCE_opt_ex_type(type,a,f) \
+		if (a) M_ASN1_I2D_len_SEQUENCE_type(type,a,f);
 
 #define M_ASN1_I2D_len_IMP_SET(a,f,x) \
 		ret+=i2d_ASN1_SET(a,NULL,f,x,V_ASN1_CONTEXT_SPECIFIC,IS_SET);
@@ -445,6 +451,15 @@ err:\
 
 #define M_ASN1_I2D_len_EXP_SEQUENCE_opt_type(type,a,f,mtag,tag,v) \
 		if ((a != NULL) && (sk_##type##_num(a) != 0))\
+			{ \
+			v=i2d_ASN1_SET_OF_##type(a,NULL,f,tag, \
+						 V_ASN1_UNIVERSAL, \
+						 IS_SEQUENCE); \
+			ret+=ASN1_object_size(1,v,mtag); \
+			}
+
+#define M_ASN1_I2D_len_EXP_SEQUENCE_opt_ex_type(type,a,f,mtag,tag,v) \
+		if (a)\
 			{ \
 			v=i2d_ASN1_SET_OF_##type(a,NULL,f,tag, \
 						 V_ASN1_UNIVERSAL, \
@@ -530,6 +545,14 @@ err:\
 
 #define M_ASN1_I2D_put_EXP_SEQUENCE_opt_type(type,a,f,mtag,tag,v) \
 		if ((a != NULL) && (sk_##type##_num(a) != 0)) \
+			{ \
+			ASN1_put_object(&p,1,v,mtag,V_ASN1_CONTEXT_SPECIFIC); \
+			i2d_ASN1_SET_OF_##type(a,&p,f,tag,V_ASN1_UNIVERSAL, \
+					       IS_SEQUENCE); \
+			}
+
+#define M_ASN1_I2D_put_EXP_SEQUENCE_opt_ex_type(type,a,f,mtag,tag,v) \
+		if (a) \
 			{ \
 			ASN1_put_object(&p,1,v,mtag,V_ASN1_CONTEXT_SPECIFIC); \
 			i2d_ASN1_SET_OF_##type(a,&p,f,tag,V_ASN1_UNIVERSAL, \
