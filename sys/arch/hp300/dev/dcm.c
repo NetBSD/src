@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: dcm.c 1.26 91/01/21
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.10 1994/01/30 18:31:04 mycroft Exp $
+ *	$Id: dcm.c,v 1.11 1994/02/06 00:44:34 mycroft Exp $
  */
 
 /*
@@ -1135,7 +1135,7 @@ dcmsetischeme(brd, flags)
 /*
  * Following are all routines needed for DCM to act as console
  */
-#include "../hp300/cons.h"
+#include <dev/cons.h>
 
 dcmcnprobe(cp)
 	struct consdev *cp;
