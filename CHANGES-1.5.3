@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.41 2002/02/23 18:39:42 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.42 2002/02/23 21:06:19 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2102,3 +2102,19 @@ distrib/sets/maketars				1.15
 
   If, during construction of an install set, pax did not find one
   or more files, error out.
+
+distrib/notes/sparc/install			1.45
+
+  Correct symlink example in netboot section; fixes PR#14809.
+
+distrib/notes/common/main			1.157
+
+  Replace tab with 8 spaces to get more sane formatting.
+
+distrib/notes/Makefile.inc			1.15-1.21
+distrib/notes/common/macros			1.11-1.15
+distrib/notes/common/main			1.145,1.154 via patch
+distrib/notes/common/sysinst			1.26 
+distrib/notes/i386/hardware			1.97 via patch
+
+  Add Table of Contents to the install notes. 
