@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.41 1998/01/12 19:55:43 thorpej Exp $ */
+/*	$NetBSD: scn.c,v 1.42 1998/03/30 20:10:26 matthias Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1061,8 +1061,7 @@ scnopen(dev, flag, mode, p)
 	tp->t_hwiflow = scnhwiflow;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -1150,7 +1149,6 @@ scnopen(dev, flag, mode, p)
 				 * carrier up
 				 */
 			}
-			tp->t_state |= TS_WOPEN;
 			error = ttysleep(tp, (caddr_t) & tp->t_rawq,
 			    TTIPRI | PCATCH, ttopen, 0);
 			if (error) {
