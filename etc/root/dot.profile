@@ -1,18 +1,12 @@
-#	$NetBSD: dot.profile,v 1.13 2000/02/16 03:07:09 jwise Exp $
+#	$NetBSD: dot.profile,v 1.14 2000/02/19 18:39:01 mycroft Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 export PATH=${PATH}:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
 
 export BLOCKSIZE=1k
-export HOME=/root
 
 if [ -x /usr/bin/tset ]; then
-	if [ x$TERM = xunknown ]; then
-		tset -Q \?$TERM
-	else
-		echo "Terminal type is '$TERM'."
-		tset -Q $TERM
-	fi
+	tset -Qrm 'unknown:?unknown'
 fi
 
 
