@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.15 1998/11/11 19:38:27 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.16 1998/11/12 15:05:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -550,6 +550,12 @@ pciide_attach(parent, self, aux)
 			
 	}
 	sc->sc_pp->setup_chip(sc, pc, tag);
+	/* Enable PCI bus-master DMA */
+	if (sc->sc_dma_ok) {
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		csr |= PCI_COMMAND_MASTER_ENABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+	}
 	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
