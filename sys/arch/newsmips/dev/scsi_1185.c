@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.6 2001/09/16 16:34:33 wiz Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.7 2001/09/16 16:40:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -909,7 +909,7 @@ sc_discon(sc)
 	register VOLATILE int dummy;
 
 	/*
-	 * Signal reflection on BSY is occurred.
+	 * Signal reflection on BSY has occurred.
 	 *	Not Bus Free Phase, ignore.
 	 *
 	 *	But, CXD1185Q reset INIT bit of sc_statr.
