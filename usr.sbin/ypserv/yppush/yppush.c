@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.4 1997/07/18 21:57:12 thorpej Exp $	*/
+/*	$NetBSD: yppush.c,v 1.5 1997/10/07 14:59:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -159,7 +159,7 @@ main(argc, argv)
 	yp_databas = ypdb_open(map_path, 0, O_RDONLY);
 	OrderNum=0xffffffff;
 	if (yp_databas == NULL)
-		errx(1, "%s%s: cannot open database", map_path, YPDB_SUFFIX);
+		err(1, "%s%s: cannot open database", map_path, YPDB_SUFFIX);
 	else {
 		o.dptr = (char *) &order_key;
 		o.dsize = YP_LAST_LEN;
