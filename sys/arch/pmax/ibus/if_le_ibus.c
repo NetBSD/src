@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.4 2002/09/26 20:33:25 thorpej Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.5 2002/09/26 20:36:51 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -51,7 +51,6 @@ static void le_pmax_attach(struct device *, struct device *, void *);
 struct cfattach le_pmax_ca = {
 	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
 };
-extern struct cfdriver ibus_cd;
 
 int
 le_pmax_match(struct device *parent, struct cfdata *match, void *aux)

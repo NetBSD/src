@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ibus.c,v 1.9 2002/09/26 20:33:25 thorpej Exp $	*/
+/*	$NetBSD: mcclock_ibus.c,v 1.10 2002/09/26 20:36:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.9 2002/09/26 20:33:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.10 2002/09/26 20:36:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,7 +49,6 @@ struct cfattach mcclock_ibus_ca = {
 	sizeof (struct mcclock_pad32_softc),
 	     (void *)mcclock_ibus_match, mcclock_ibus_attach,
 };
-extern struct cfdriver ibus_cd;
 
 static int
 mcclock_ibus_match(parent, match, aux)
