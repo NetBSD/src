@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.11 2001/04/28 22:47:23 ross Exp $	*/
+/*	$NetBSD: conv.c,v 1.12 2001/11/25 06:53:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: conv.c,v 1.11 2001/04/28 22:47:23 ross Exp $");
+__RCSID("$NetBSD: conv.c,v 1.12 2001/11/25 06:53:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: conv.c,v 1.11 2001/04/28 22:47:23 ross Exp $");
  * Worst case buffer calculation is (ibs + obs - 1).
  */
 void
-def()
+def(void)
 {
 	int cnt;
 	u_char *inp;
@@ -91,8 +91,9 @@ def()
 }
 
 void
-def_close()
+def_close(void)
 {
+
 	/* Just update the count, everything is already in the buffer. */
 	if (in.dbcnt)
 		out.dbcnt = in.dbcnt;
@@ -101,11 +102,11 @@ def_close()
 #ifdef	NO_CONV
 /* Build a smaller version (i.e. for a miniroot) */
 /* These can not be called, but just in case...  */
-static char no_block[] = "unblock and -DNO_CONV?";
-void block()       { errx(1, "%s", no_block + 2); }
-void block_close() { errx(1, "%s", no_block + 2); }
-void unblock()       { errx(1, "%s", no_block); }
-void unblock_close() { errx(1, "%s", no_block); }
+static const char no_block[] = "unblock and -DNO_CONV?";
+void block(void)		{ errx(1, "%s", no_block + 2); }
+void block_close(void)		{ errx(1, "%s", no_block + 2); }
+void unblock(void)		{ errx(1, "%s", no_block); }
+void unblock_close(void)	{ errx(1, "%s", no_block); }
 #else	/* NO_CONV */
 
 /*
@@ -116,7 +117,7 @@ void unblock_close() { errx(1, "%s", no_block); }
  * max out buffer: obs + cbsz
  */
 void
-block()
+block(void)
 {
 	static int intrunc;
 	int ch = 0;	/* pacify gcc */
@@ -201,8 +202,9 @@ block()
 }
 
 void
-block_close()
+block_close(void)
 {
+
 	/*
 	 * Copy any remaining data into the output buffer and pad to a record.
 	 * Don't worry about truncation or translation, the input buffer is
@@ -228,7 +230,7 @@ block_close()
  * max out buffer: obs + cbsz
  */
 void
-unblock()
+unblock(void)
 {
 	int cnt;
 	u_char *inp;
@@ -262,7 +264,7 @@ unblock()
 }
 
 void
-unblock_close()
+unblock_close(void)
 {
 	int cnt;
 	u_char *t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.11 2001/04/28 22:47:23 ross Exp $	*/
+/*	$NetBSD: misc.c,v 1.12 2001/11/25 06:53:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.11 2001/04/28 22:47:23 ross Exp $");
+__RCSID("$NetBSD: misc.c,v 1.12 2001/11/25 06:53:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: misc.c,v 1.11 2001/04/28 22:47:23 ross Exp $");
 #define	tv2mS(tv) ((tv).tv_sec * 1000LL + ((tv).tv_usec + 500) / 1000)
 
 void
-summary()
+summary(void)
 {
 	char buf[100];
 	int64_t mS;
@@ -101,8 +101,7 @@ summary()
 
 /* ARGSUSED */
 void
-summaryx(notused)
-	int notused;
+summaryx(int notused)
 {
 
 	summary();
@@ -110,8 +109,7 @@ summaryx(notused)
 
 /* ARGSUSED */
 void
-terminate(notused)
-	int notused;
+terminate(int notused)
 {
 
 	exit(0);

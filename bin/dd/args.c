@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.16 2001/07/22 13:33:58 wiz Exp $	*/
+/*	$NetBSD: args.c,v 1.17 2001/11/25 06:53:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.16 2001/07/22 13:33:58 wiz Exp $");
+__RCSID("$NetBSD: args.c,v 1.17 2001/11/25 06:53:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,25 +59,25 @@ __RCSID("$NetBSD: args.c,v 1.16 2001/07/22 13:33:58 wiz Exp $");
 #include "dd.h"
 #include "extern.h"
 
-static int	c_arg __P((const void *, const void *));
-static int	c_conv __P((const void *, const void *));
-static void	f_bs __P((char *));
-static void	f_cbs __P((char *));
-static void	f_conv __P((char *));
-static void	f_count __P((char *));
-static void	f_files __P((char *));
-static void	f_ibs __P((char *));
-static void	f_if __P((char *));
-static void	f_obs __P((char *));
-static void	f_of __P((char *));
-static void	f_seek __P((char *));
-static void	f_skip __P((char *));
-static void	f_progress __P((char *));
-static u_long	get_bsz __P((char *));
+static int	c_arg(const void *, const void *);
+static int	c_conv(const void *, const void *);
+static void	f_bs(char *);
+static void	f_cbs(char *);
+static void	f_conv(char *);
+static void	f_count(char *);
+static void	f_files(char *);
+static void	f_ibs(char *);
+static void	f_if(char *);
+static void	f_obs(char *);
+static void	f_of(char *);
+static void	f_seek(char *);
+static void	f_skip(char *);
+static void	f_progress(char *);
+static u_long	get_bsz(const char *);
 
 static const struct arg {
-	char *name;
-	void (*f) __P((char *));
+	const char *name;
+	void (*f)(char *);
 	u_int set, noset;
 } args[] = {
      /* the array needs to be sorted by the first column so
@@ -102,8 +102,7 @@ static char *oper;
  * args -- parse JCL syntax of dd.
  */
 void
-jcl(argv)
-	char **argv;
+jcl(char **argv)
 {
 	struct arg *ap, tmp;
 	char *arg;
@@ -122,7 +121,8 @@ jcl(argv)
 		    c_arg)))
 			errx(1, "unknown operand %s", tmp.name);
 		if (ddflags & ap->noset)
-			errx(1, "%s: illegal argument combination or already set",
+			errx(1,
+			    "%s: illegal argument combination or already set",
 			    tmp.name);
 		ddflags |= ap->set;
 		ap->f(arg);
@@ -164,7 +164,8 @@ jcl(argv)
 				cfunc = block;
 			}
 		} else
-			errx(1, "cbs meaningless if not doing record operations");
+			errx(1,
+			    "cbs meaningless if not doing record operations");
 		if (cbsz == 0)
 			errx(1, "cbs cannot be zero");
 	} else
@@ -190,91 +191,91 @@ jcl(argv)
 }
 
 static int
-c_arg(a, b)
-	const void *a, *b;
+c_arg(const void *a, const void *b)
 {
+
 	return (strcmp(((const struct arg *)a)->name,
 	    ((const struct arg *)b)->name));
 }
 
 static void
-f_bs(arg)
-	char *arg;
+f_bs(char *arg)
 {
+
 	in.dbsz = out.dbsz = (int)get_bsz(arg);
 }
 
 static void
-f_cbs(arg)
-	char *arg;
+f_cbs(char *arg)
 {
+
 	cbsz = (int)get_bsz(arg);
 }
 
 static void
-f_count(arg)
-	char *arg;
+f_count(char *arg)
 {
+
 	cpy_cnt = (u_int)get_bsz(arg);
 	if (!cpy_cnt)
 		terminate(0);
 }
 
 static void
-f_files(arg)
-	char *arg;
+f_files(char *arg)
 {
+
 	files_cnt = (int)get_bsz(arg);
 }
 
 static void
-f_ibs(arg)
-	char *arg;
+f_ibs(char *arg)
 {
+
 	if (!(ddflags & C_BS))
 		in.dbsz = (int)get_bsz(arg);
 }
 
 static void
-f_if(arg)
-	char *arg;
+f_if(char *arg)
 {
+
 	in.name = arg;
 }
 
 static void
-f_obs(arg)
-	char *arg;
+f_obs(char *arg)
 {
+
 	if (!(ddflags & C_BS))
 		out.dbsz = (int)get_bsz(arg);
 }
 
 static void
-f_of(arg)
-	char *arg;
+f_of(char *arg)
 {
+
 	out.name = arg;
 }
 
 static void
-f_seek(arg)
-	char *arg;
+f_seek(char *arg)
 {
+
 	out.offset = (u_int)get_bsz(arg);
 }
 
 static void
-f_skip(arg)
-	char *arg;
+f_skip(char *arg)
 {
+
 	in.offset = (u_int)get_bsz(arg);
 }
 
 static void
-f_progress(arg)
-	char *arg;
+f_progress(char *arg)
 {
+
 	if (*arg != '0')
 		progress = 1;
 }
@@ -282,15 +283,15 @@ f_progress(arg)
 #ifdef	NO_CONV
 /* Build a small version (i.e. for a ramdisk root) */
 static void
-f_conv(arg)
-	char *arg;
+f_conv(char *arg)
 {
+
 	errx(1, "conv option disabled");
 }
 #else	/* NO_CONV */
 
 static const struct conv {
-	char *name;
+	const char *name;
 	u_int set, noset;
 	const u_char *ctab;
 } clist[] = {
@@ -312,8 +313,7 @@ static const struct conv {
 };
 
 static void
-f_conv(arg)
-	char *arg;
+f_conv(char *arg)
 {
 	struct conv *cp, tmp;
 
@@ -332,8 +332,7 @@ f_conv(arg)
 }
 
 static int
-c_conv(a, b)
-	const void *a, *b;
+c_conv(const void *a, const void *b)
 {
 
 	return (strcmp(((const struct conv *)a)->name,
@@ -347,15 +346,14 @@ c_conv(a, b)
  * 	1) A positive decimal number.
  *	2) A positive decimal number followed by a b (mult by 512).
  *	3) A positive decimal number followed by a k (mult by 1024).
- *	4) A positive decimal number followed by a m (mult by 512).
+ *	4) A positive decimal number followed by a m (mult by 1048576).
  *	5) A positive decimal number followed by a w (mult by sizeof int)
  *	6) Two or more positive decimal numbers (with/without k,b or w).
  *	   separated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  */
 static u_long
-get_bsz(val)
-	char *val;
+get_bsz(const char *val)
 {
 	u_long num, t;
 	char *expr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.20 2001/04/28 22:47:23 ross Exp $	*/
+/*	$NetBSD: dd.c,v 1.21 2001/11/25 06:53:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.20 2001/04/28 22:47:23 ross Exp $");
+__RCSID("$NetBSD: dd.c,v 1.21 2001/11/25 06:53:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,16 +70,16 @@ __RCSID("$NetBSD: dd.c,v 1.20 2001/04/28 22:47:23 ross Exp $");
 #include "dd.h"
 #include "extern.h"
 
-static void dd_close __P((void));
-static void dd_in __P((void));
-static void getfdtype __P((IO *));
-static void setup __P((void));
+static void dd_close(void);
+static void dd_in(void);
+static void getfdtype(IO *);
+static void setup(void);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 IO	in, out;		/* input/output state */
 STAT	st;			/* statistics */
-void	(*cfunc) __P((void));	/* conversion function */
+void	(*cfunc)(void);		/* conversion function */
 u_long	cpy_cnt;		/* # of blocks to copy */
 u_int	ddflags;		/* conversion options */
 u_int	cbsz;			/* conversion block size */
@@ -89,9 +89,7 @@ const u_char	*ctab;		/* conversion table */
 sigset_t infoset;			/* a set blocking SIGINFO */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 
@@ -124,7 +122,7 @@ main(argc, argv)
 }
 
 static void
-setup()
+setup(void)
 {
 	u_int cnt;
 
@@ -229,8 +227,7 @@ setup()
 }
 
 static void
-getfdtype(io)
-	IO *io;
+getfdtype(IO *io)
 {
 	struct mtget mt;
 	struct stat sb;
@@ -244,7 +241,7 @@ getfdtype(io)
 }
 
 static void
-dd_in()
+dd_in(void)
 {
 	int flags, n;
 
@@ -346,8 +343,9 @@ dd_in()
  * is truncated.
  */
 static void
-dd_close()
+dd_close(void)
 {
+
 	if (cfunc == def)
 		def_close();
 	else if (cfunc == block)
@@ -363,8 +361,7 @@ dd_close()
 }
 
 void
-dd_out(force)
-	int force;
+dd_out(int force)
 {
 	static int warned;
 	int cnt, n, nw;
@@ -434,10 +431,7 @@ dd_out(force)
  * A protected against SIGINFO write
  */
 ssize_t
-bwrite(fd, buf, len)
-	int fd;
-	const void *buf;
-	size_t len;
+bwrite(int fd, const void *buf, size_t len)
 {
 	sigset_t oset;
 	ssize_t rv;
