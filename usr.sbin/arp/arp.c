@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.16 1997/03/07 07:04:43 mikel Exp $ */
+/*	$NetBSD: arp.c,v 1.17 1997/03/15 18:37:27 is Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /* static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95"; */
-static char *rcsid = "$NetBSD: arp.c,v 1.16 1997/03/07 07:04:43 mikel Exp $";
+static char *rcsid = "$NetBSD: arp.c,v 1.17 1997/03/15 18:37:27 is Exp $";
 #endif /* not lint */
 
 /*
@@ -58,10 +58,11 @@ static char *rcsid = "$NetBSD: arp.c,v 1.16 1997/03/07 07:04:43 mikel Exp $";
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <arpa/inet.h>
 
 #include <err.h>
@@ -73,6 +74,18 @@ static char *rcsid = "$NetBSD: arp.c,v 1.16 1997/03/07 07:04:43 mikel Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+int delete __P((const char *, const char *));
+void dump __P((u_long));
+void sdl_print __P((const struct sockaddr_dl *));
+int atosdl __P((const char *s, struct sockaddr_dl *sdl));
+int file __P((char *));
+void get __P((const char *));
+int getinetaddr __P((const char *, struct in_addr *));
+void getsocket __P((void));
+int rtmsg __P((int));
+int set __P((int, char **));
+void usage __P((void));
 
 static int pid;
 static int nflag;
@@ -222,13 +235,8 @@ set(argc, argv)
 	sin_m = blank_sin;		/* struct copy */
 	if (getinetaddr(host, &sin->sin_addr) == -1)
 		return (1);
-	ea = ether_aton(eaddr);
-	if (ea != NULL) {
-		(void)memcpy(LLADDR(&sdl_m), ea, sizeof(struct ether_addr));
-		sdl_m.sdl_alen = sizeof(struct ether_addr);
-	}
-	else
-		warnx("invalid Ethernet address '%s'", eaddr);
+	if (atosdl(eaddr, &sdl_m))
+		warnx("invalid link-level address '%s'", eaddr);
 	doing_proxy = flags = export_only = expire_time = 0;
 	while (argc-- > 0) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
@@ -413,7 +421,7 @@ dump(addr)
 		}
 		(void)printf("%s (%s) at ", host, inet_ntoa(sin->sin_addr));
 		if (sdl->sdl_alen)
-			ether_print((u_char *)LLADDR(sdl));
+			sdl_print(sdl);
 		else
 			(void)printf("(incomplete)");
 		if (rtm->rtm_rmx.rmx_expire == 0)
@@ -433,11 +441,52 @@ dump(addr)
 }
 
 void
-ether_print(cp)
-	const u_char *cp;
+sdl_print(sdl)
+	const struct sockaddr_dl *sdl;
 {
-	(void)printf("%x:%x:%x:%x:%x:%x", cp[0], cp[1], cp[2], cp[3], cp[4],
-	    cp[5]);
+	int i;
+	u_int8_t *p;
+
+	i = sdl->sdl_alen;
+	p = LLADDR(sdl);
+
+	(void)printf("%x", *p);
+	while (--i > 0)
+		(void)printf(":%x", *++p);
+}
+
+int
+atosdl(s, sdl)
+	const char *s;
+	struct sockaddr_dl *sdl;
+{
+	int i;
+	long b;
+	caddr_t endp;
+	caddr_t p; 
+	char *t, *r;
+
+	p = LLADDR(sdl);
+	endp = ((caddr_t)sdl) + sdl->sdl_len;
+	i = 0;
+	
+	b = strtol(s, &t, 16);
+	if (t == s)
+		return 1;
+
+	*p++ = b;
+	++i;
+	while ((p < endp) && (*t++ == ':')) {
+		b = strtol(t, &r, 16);
+		if (r == t)
+			break;
+		*p++ = b;
+		++i;
+		t = r;
+	}
+	sdl->sdl_alen = i;
+
+	return 0;
 }
 
 void
