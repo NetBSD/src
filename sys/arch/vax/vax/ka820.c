@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.19 2000/03/26 11:40:31 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.20 2000/03/28 23:57:30 simonb Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -129,10 +129,9 @@ ka820_attach(parent, self, aux)
 	struct bi_attach_args *ba = aux;
 	register int csr;
 	u_short rev;
-	extern	char cpu_model[];
 
 	rev = bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) >> 16;
-	strcpy(cpu_model,"VAX 8200");
+	strcpy(cpu_model, "VAX 8200");
 	cpu_model[6] = rev & 0x8000 ? '5' : '0';
 	printf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",
 	    cpu_model[6], mastercpu == ba->ba_nodenr ? "master" : "slave",

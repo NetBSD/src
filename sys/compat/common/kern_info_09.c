@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.5 1996/02/21 00:10:59 cgd Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.6 2000/03/28 23:57:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -109,7 +109,6 @@ compat_09_sys_uname(p, v, retval)
 	} */ *uap = v;
 	struct outsname outsname;
 	char *cp, *dp, *ep;
-	extern char ostype[], osrelease[];
 
 	strncpy(outsname.sysname, ostype, sizeof(outsname.sysname));
 	strncpy(outsname.nodename, hostname, sizeof(outsname.nodename));

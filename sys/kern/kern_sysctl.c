@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.58 2000/02/27 06:13:40 itojun Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.59 2000/03/28 23:57:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -251,7 +251,6 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int error, level, inthostid;
 	int old_autonicetime;
 	int old_vnodes;
-	extern char ostype[], osrelease[], version[];
 
 	/* All sysctl names at this level, except for a few, are terminal. */
 	switch (name[0]) {
@@ -444,7 +443,6 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern char machine[], machine_arch[], cpu_model[];
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)

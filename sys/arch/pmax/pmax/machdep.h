@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.7 2000/01/09 03:56:02 simonb Exp $ */
+/* $NetBSD: machdep.h,v 1.8 2000/03/28 23:57:30 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -30,8 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* the following is used externally (sysctl_hw) */
-extern	char machine[], machine_arch[], cpu_model[];
 /* max memory for a model */
 extern	int physmem_boardmax;	/* {model,simm}-specific bound on physmem */
 

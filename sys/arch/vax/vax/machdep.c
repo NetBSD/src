@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.96 2000/03/19 14:56:53 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.97 2000/03/28 23:57:31 simonb Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -152,7 +152,6 @@ void
 cpu_startup()
 {
 	caddr_t		v;
-	extern char	version[];
 	int		base, residual, i, sz;
 	vaddr_t		minaddr, maxaddr;
 	vsize_t		size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.45 2000/03/26 20:42:41 kleink Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.46 2000/03/28 23:57:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -1587,7 +1587,6 @@ ibcs2_sys_scoinfo(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 	struct scoutsname *utsp = stackgap_alloc(&sg,
 						 sizeof(struct scoutsname));
-	extern char ostype[], machine[], osrelease[];
 
 	memset(utsp, 0, sizeof(struct scoutsname));
 	strncpy(utsp->sysname, ostype, 8);

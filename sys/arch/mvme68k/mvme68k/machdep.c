@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2000/03/26 20:42:31 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2000/03/28 23:57:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -575,7 +575,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char	cpu_model[124];
-extern	char version[];
 
 void
 identifycpu()

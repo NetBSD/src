@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2000/03/26 20:42:28 kleink Exp $ */
+/* $NetBSD: machdep.c,v 1.6 2000/03/28 23:57:28 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2000/03/26 20:42:28 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2000/03/28 23:57:28 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2000/03/26 20:42:28 kleink Exp $");
  */
 char	machine[] = MACHINE;
 char	cpu_model[60];
-extern char version[];
 
 extern char kernel_text[];
 extern char etext[];

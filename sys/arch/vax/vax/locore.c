@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.44 2000/03/28 23:57:30 simonb Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -97,7 +97,6 @@ extern struct cpu_dep ka670_calls;
 void
 start()
 {
-	extern char cpu_model[];
 	extern void *scratch;
 	struct pte *pt;
 

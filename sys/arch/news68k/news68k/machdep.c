@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2000/03/10 19:06:43 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2000/03/28 23:57:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -384,7 +384,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char cpu_model[124];
-extern char version[];
 
 int news_machine_id;
 

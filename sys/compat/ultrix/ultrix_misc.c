@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.54 2000/03/26 20:42:43 kleink Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.55 2000/03/28 23:57:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -100,8 +100,6 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-/*#include <sys/stat.h>*/
-/*#include <sys/ioctl.h>*/
 #include <sys/kernel.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
@@ -446,7 +444,6 @@ ultrix_sys_uname(p, v, retval)
 {
 	struct ultrix_sys_uname_args *uap = v;
 	struct ultrix_utsname sut;
-	extern char ostype[], machine[], osrelease[];
 
 	memset(&sut, 0, sizeof(sut));
 
