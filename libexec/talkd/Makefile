@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1997/06/29 19:22:04 christos Exp $
+#	$NetBSD: Makefile,v 1.7 1997/07/06 22:52:28 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
-CFLAGS+=-Wall -Wstrict-prototypes -Wmissing-prototypes
+WARNS=	1
 PROG=	ntalkd
 SRCS=	talkd.c announce.c process.c table.c print.c
 MAN=	talkd.8
