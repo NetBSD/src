@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.20 2002/11/03 19:54:23 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.21 2002/11/06 20:44:59 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -841,3 +841,26 @@ usr.sbin/catman/Makefile			1.7
 	Make these compile again, after the changes in ticket
 	#787.
 	[he, ticket #787]
+
+libexec/ftpd/ftpcmd.y				1.69
+
+	We really, actually, positively want to apply the ftpd.conf "passive"
+	option to all possible *PSV commands.  Some ftp servers are simply not
+	capable of passive connections, hence the option....
+	[tv, ticket #418]
+
+sys/dev/usb/usbdevs				1.258
+
+	Add product code for SMC 2206USB/ETH EZ Connect Ethernet adapter
+	[rh, ticket #442]
+
+sys/dev/usb/if_aue.c				1.77
+
+	Add support for the SMC 2206USB/ETH EZ Connect adapter (Pegasus II)
+	[rh, ticket #442]
+
+libexec/fingerd/fingerd.c			1.16
+
+	typo in message.  PR 17528
+	[itojun, ticket #445]
+
