@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.4 1995/09/23 03:42:44 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.5 1995/09/26 21:30:19 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -159,16 +159,21 @@ struct mapinfo {
 
 static struct mapinfo
 prom_mapinfo[] = {
-  { MAP_MAINMEM, PGT_OBMEM, 0 },
-  { MAP_OBIO,    PGT_OBIO,  0 },
-  { MAP_MBMEM,   PGT_OBMEM, 0 },	/* XXX - Sun2 Multibus? */
-  { MAP_MBIO,    PGT_OBIO,  0 },	/* XXX - Sun2 Multibus? */
-  { MAP_VME16A16D, PGT_VME_D16, 0xFFFF0000 },
-  { MAP_VME16A32D, PGT_VME_D32, 0xFFFF0000 },
-  { MAP_VME24A16D, PGT_VME_D16, 0xFF000000 },
-  { MAP_VME24A32D, PGT_VME_D32, 0xFF000000 },
-  { MAP_VME32A16D, PGT_VME_D16, 0 },
-  { MAP_VME32A32D, PGT_VME_D32, 0 },
+	/* On-board memory, I/O */
+	{ MAP_MAINMEM,   PGT_OBMEM, 0 },
+	{ MAP_OBIO,      PGT_OBIO,  0 },
+	/* Multibus adapter */
+	{ MAP_MBMEM,     PGT_VME_D16, 0xFF000000 },
+	{ MAP_MBIO,      PGT_VME_D16, 0xFFFF0000 },
+	/* VME A16 */
+	{ MAP_VME16A16D, PGT_VME_D16, 0xFFFF0000 },
+	{ MAP_VME16A32D, PGT_VME_D32, 0xFFFF0000 },
+	/* VME A24 */
+	{ MAP_VME24A16D, PGT_VME_D16, 0xFF000000 },
+	{ MAP_VME24A32D, PGT_VME_D32, 0xFF000000 },
+	/* VME A32 */
+	{ MAP_VME32A16D, PGT_VME_D16, 0 },
+	{ MAP_VME32A32D, PGT_VME_D32, 0 },
 };
 static prom_mapinfo_cnt = sizeof(prom_mapinfo) / sizeof(prom_mapinfo[0]);
 
@@ -204,5 +209,5 @@ found:
 		pte += 1;
 		length -= NBPG;
 	} while (length > 0);
-	return ((char*)prom_devmap);
+	return ((char*)(prom_devmap | (pa & PGOFSET)));
 }
