@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.305 2001/01/31 17:53:24 itojun Exp $
+#	$NetBSD: mi,v 1.306 2001/02/03 02:35:07 jwise Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3114,7 +3114,7 @@
 ./usr/share/man/cat9/fuword.0		comp-sys-catman
 ./usr/share/man/cat9/gsignal.0		comp-sys-catman
 ./usr/share/man/cat9/humanize_number.0		comp-sys-catman
-./usr/share/man/cat9/i386/bioscall.0		man-sys-catman
+./usr/share/man/cat9/i386/bioscall.0		comp-sys-catman
 ./usr/share/man/cat9/inittodr.0		comp-sys-catman
 ./usr/share/man/cat9/intro.0		comp-sys-catman
 ./usr/share/man/cat9/ioctl.0		comp-sys-catman
@@ -3223,10 +3223,10 @@
 ./usr/share/man/cat9/subyte.0		comp-sys-catman
 ./usr/share/man/cat9/suibyte.0		comp-sys-catman
 ./usr/share/man/cat9/suiword.0		comp-sys-catman
-./usr/share/man/cat9/sun3/isr_add.0		man-sys-catman
-./usr/share/man/cat9/sun3/isr_add_autovect.0	man-sys-catman
-./usr/share/man/cat9/sun3/isr_add_custom.0	man-sys-catman
-./usr/share/man/cat9/sun3/isr_add_vectored.0	man-sys-catman
+./usr/share/man/cat9/sun3/isr_add.0		comp-sys-catman
+./usr/share/man/cat9/sun3/isr_add_autovect.0	comp-sys-catman
+./usr/share/man/cat9/sun3/isr_add_custom.0	comp-sys-catman
+./usr/share/man/cat9/sun3/isr_add_vectored.0	comp-sys-catman
 ./usr/share/man/cat9/suswintr.0		comp-sys-catman
 ./usr/share/man/cat9/susword.0		comp-sys-catman
 ./usr/share/man/cat9/suword.0		comp-sys-catman
