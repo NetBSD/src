@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.12 1997/06/27 17:01:53 lukem Exp $
+.\"	$NetBSD: su.1,v 1.13 1997/07/02 05:42:12 lukem Exp $
 .\"
 .Dd April 18, 1994
 .Dt SU 1
@@ -39,11 +39,11 @@
 .Nm su
 .Nd substitute user identity
 .Sh SYNOPSIS
-.Nm su
+.Nm
 .Op Fl Kflm
 .Op Ar login Op Ar "shell arguments"
 .Sh DESCRIPTION
-.Nm Su
+.Nm
 requests the Kerberos password for
 .Ar login
 (or for
@@ -54,12 +54,12 @@ A shell is then executed, and any additional
 .Ar "shell arguments"
 after the login name
 are passed to the shell.
-.Nm Su
+.Nm
 will resort to the local password file to find the password for
 .Ar login
 if there is a Kerberos error.
 If
-.Nm su
+.Nm
 is executed by root, no password is requested and a shell
 with the appropriate user ID is executed; no additional Kerberos tickets
 are obtained.
@@ -116,7 +116,7 @@ is set to
 .Ev TERM
 is imported from your current environment.
 The invoked shell is the target login's, and
-.Nm su
+.Nm
 will change directory to the target login's home directory.
 .It Fl m
 Leave the environment unmodified.
@@ -126,7 +126,7 @@ shell (as defined by
 .Xr getusershell 3 )
 and the caller's real uid is
 non-zero,
-.Nm su
+.Nm
 will fail.
 .El
 .Pp
@@ -137,15 +137,18 @@ and
 options are mutually exclusive; the last one specified
 overrides any previous ones.
 .Pp
-Only users in group 0 (normally
-.Dq wheel )
+Only users in group
+.Dq wheel
+(normally gid 0),
+as listed in
+.Pa /etc/group ,
 can
-.Nm su
+.Nm
 to
 .Dq root ,
-unless group 0 does not exist or has no members.  (If you want nobody
-to be able to
-.Nm su
+unless group wheel does not exist or has no members.
+(If you do not want anybody to be able to
+.Nm
 to
 .Dq root ,
 make
@@ -171,7 +174,7 @@ to remind one of its awesome power.
 .Sh ENVIRONMENT
 Environment variables used by
 .Nm su :
-.Bl -tag -width HOME
+.Bl -tag -width "HOME"
 .It Ev HOME
 Default home directory of real user ID unless modified as
 specified above.
@@ -182,7 +185,7 @@ Provides terminal type which may be retained for the substituted
 user ID.
 .It Ev USER
 The user ID is always the effective ID (the target user ID) after an
-.Nm su
+.Nm
 unless the user ID is 0 (root).
 .El
 .Sh HISTORY
@@ -190,6 +193,3 @@ A
 .Nm
 command appeared in
 .At v7 .
-.Sh BUGS
-There should be a way of setting policy so that users can su to root
-without being a member of group 0, if the sysadmin wishes.
