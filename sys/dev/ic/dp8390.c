@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.35 2000/03/22 20:58:28 ws Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.36 2000/05/12 16:44:19 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1037,9 +1037,8 @@ dp8390_getmcaf(ec, af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	u_int8_t *cp, c;
 	u_int32_t crc;
-	int i, len;
+	int i;
 	struct ether_multistep step;
 
 	/*
@@ -1075,19 +1074,9 @@ dp8390_getmcaf(ec, af)
 				af[i] = 0xff;
 			return;
 		}
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			c = *cp++;
-			for (i = 8; --i >= 0;) {
-				if (((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01)) {
-					crc <<= 1;
-					crc ^= 0x04c11db6 | 1;
-				} else
-					crc <<= 1;
-				c >>= 1;
-			}
-		}
+
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.6 2000/05/01 15:08:55 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.7 2000/05/12 16:44:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -169,7 +169,6 @@ STATIC void rl_phy_writereg	__P((struct device *, int, int, int));
 STATIC void rl_phy_statchg	__P((struct device *));
 STATIC void rl_tick __P((void *));
 
-STATIC u_int8_t rl_calchash	__P((caddr_t));
 STATIC void rl_setmulti		__P((struct rl_softc *));
 STATIC int rl_list_tx_init	__P((struct rl_softc *));
 
@@ -551,33 +550,8 @@ rl_phy_statchg(v)
 	/* Nothing to do. */
 }
 
-/*
- * Calculate CRC of a multicast group address, return the upper 6 bits.
- */
-STATIC u_int8_t rl_calchash(addr)
-	caddr_t			addr;
-{
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return(crc >> 26);
-}
+#define	rl_calchash(addr) \
+	(ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
 
 /*
  * Program the 64-bit multicast hash filter.
