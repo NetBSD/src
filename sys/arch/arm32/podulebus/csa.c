@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.9 2001/03/17 20:34:44 bjh21 Exp $	*/
+/*	$NetBSD: csa.c,v 1.10 2001/03/18 16:58:55 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ int  csa_match  __P((struct device *, struct cfdata *, void *));
 struct csa_softc {
 	struct ncr5380_softc	sc_ncr5380;
 	void			*sc_ih;
+	struct evcnt		sc_intrcnt;
 	int			sc_podule_number;
 	podule_t		*sc_podule;
 	volatile u_char		*sc_irqstatus;
@@ -192,8 +193,10 @@ csa_attach(parent, self, aux)
 	sc->sc_irqstatus = (u_char *)pa->pa_podule->slow_base + CSA_INTR_OFFSET;
 	sc->sc_irqmask = CSA_INTR_MASK;
 
-	sc->sc_ih = intr_claim(pa->pa_podule->interrupt, IPL_BIO, "csa",
-	    csa_intr, sc);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
+	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO, csa_intr, sc,
+	    &sc->sc_intrcnt);
 	if (sc->sc_ih == NULL)
 		sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;
 
