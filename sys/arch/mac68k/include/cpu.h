@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 1995/05/17 00:30:16 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 1995/06/21 03:06:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,9 +79,7 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
-#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
-#define	BROKEN_SWAP
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here")
+#define	cpu_swapout(p)
 
 /*
  * Arguments to hardclock, softclock and gatherstats
@@ -112,7 +110,6 @@ struct clockframe {
  * interrupt.  Request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	( (p)->p_flag |= P_OWEUPC, aston() )
 #define	need_proftick(p)	( (p)->p_flag |= P_OWEUPC, aston() )
 
 /*
@@ -123,8 +120,8 @@ struct clockframe {
 
 #define aston() (astpending++)
 
-int	astpending;		/* need to trap before returning to user mode */
-int	want_resched;		/* resched() was called */
+int	astpending;	/* need to trap before returning to user mode */
+int	want_resched;	/* resched() was called */
 
 /*
  * simulated software interrupt register
@@ -207,7 +204,6 @@ extern unsigned char ssir;
 #define MACH_CLASSLC	0x0010	/* Low-Cost/Performa/Wal-Mart Macs. */
 #define MACH_CLASSQ	0x0100	/* Centris/Quadras. */
 
-/* MF processor passed in */
 #define MACH_68020	0
 #define MACH_68030	1
 #define MACH_68040	2
@@ -218,13 +214,6 @@ extern unsigned char ssir;
 #define MMU_68030	-1
 /* #define MMU_HP	0    Just a reminder as to where this came from. */
 #define MMU_68851	1
-
-/* values for cpuspeed (not really related to clock speed due to caches) */
-#define	MHZ_8		1
-#define	MHZ_16		2
-#define	MHZ_25		3
-#define	MHZ_33		4
-#define	MHZ_40		5
 
 #ifdef _KERNEL
 struct mac68k_machine_S {
@@ -274,8 +263,8 @@ extern	unsigned long		load_addr      ;
 
 /* physical memory sections */
 #define	ROMBASE		(0x40800000)
-#define	ROMTOP		(0x41800000)		/* 16MB should be plenty! */
-#define	ROMMAPSIZE	btoc(ROMTOP - ROMBASE)	/* 16k of page tables.  */
+#define	ROMLEN		(0x01000000)		/* 16MB should be plenty! */
+#define	ROMMAPSIZE	btoc(ROMLEN)		/* 16k of page tables.  */
 
 /* This should not be used.  Use IOBase, instead. */
 #define INTIOBASE	(0x50000000)
@@ -306,6 +295,20 @@ extern	unsigned long		load_addr      ;
 #define	PMMU_BE		0x8000
 #define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
 
+/*
+ * 68040 MMU
+ */
+#define MMU4_RES	0x001
+#define MMU4_TTR	0x002
+#define MMU4_WP		0x004
+#define MMU4_MOD	0x010
+#define MMU4_CMMASK	0x060
+#define MMU4_SUP	0x080
+#define MMU4_U0		0x100
+#define MMU4_U1		0x200
+#define MMU4_GLB	0x400
+#define MMU4_BE		0x800
+
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
 #define	FC_USERP	2	/* user program space */
@@ -328,18 +331,17 @@ extern	unsigned long		load_addr      ;
 #define	DC_BE		0x1000	/* data burst enable */
 #define	DC_WA		0x2000	/* write allocate */
 
-/* fields in the 68040 cache control register */
-#define IC40_ENABLE	0x00008000	/* enable instruction cache */
-#define DC40_ENABLE	0x80000000	/* enable data cache */
-
 #define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	CACHE_OFF	(DC_CLR|IC_CLR)
 #define	CACHE_CLR	(CACHE_ON)
 #define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
 
-/* 68040 cache control */
-#define CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
-#define CACHE40_OFF	0x00000000
+/* 68040 cache control register */
+#define IC4_ENABLE	0x00008000	/* enable instruction cache */
+#define DC4_ENABLE	0x80000000	/* enable data cache */
+
+#define CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
+#define CACHE4_OFF	0x00000000
 
 #endif	/* !_MACHINE_CPU_H_ */
