@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.8 2003/01/14 23:00:59 pk Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.9 2003/01/15 06:57:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,7 +160,7 @@ statintr_msiiep(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
+	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
 		if (CLKF_LOPRI(frame, IPL_SCHED)) {
 			/* No need to schedule a soft interrupt */
 			spllowerschedclock();
@@ -172,6 +172,7 @@ statintr_msiiep(void *cap)
 			 */
 			softintr_schedule(sched_cookie);
 		}
+	}
 
 	return (1);
 }
