@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.34 1999/12/02 01:09:13 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.35 1999/12/02 19:41:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -328,13 +328,6 @@ alpha_rpcc()
 
 #define	alpha_mb()	__asm __volatile("mb" : : : "memory")
 #define	alpha_wmb()	__asm __volatile("mb" : : : "memory")	/* XXX */
-
-u_int8_t	alpha_ldbu __P((volatile u_int8_t *));
-u_int16_t	alpha_ldwu __P((volatile u_int16_t *));
-void		alpha_stb __P((volatile u_int8_t *, u_int8_t));
-void		alpha_stw __P((volatile u_int16_t *, u_int16_t));
-u_int8_t	alpha_sextb __P((u_int8_t));
-u_int16_t	alpha_sextw __P((u_int16_t));
 
 /*
  * Stubs for OSF/1 PALcode operations.
