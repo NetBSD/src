@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/12 12:24:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/04/10 15:36:54 he Exp $
 
 NOMAN=		# defined
 
@@ -57,7 +57,7 @@ ${PROG}: $(OBJS)
 	    rm $(PROG) ; exit 1; 					   \
 	fi
 	@if [ `(echo ibase=16; 						   \
-	    sed -n 's/^.*0x\([0-9a-f]*\).* _edata=\.$$/\1-$(TEXT)-2000/p' \
+	    sed -n 's/^.*0x\([0-9a-f]*\).* _edata *= *\.$$/\1-$(TEXT)-2000/p' \
 		$(PROG).map | 						   \
 	    tr a-f A-F) | bc` -gt 0 ]; 					   \
 	then echo '$(BOOT): text+data is too large';			   \
