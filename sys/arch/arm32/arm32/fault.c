@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.34 1999/01/20 13:56:35 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.35 1999/02/19 22:15:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -170,7 +170,24 @@ data_abort_handler(frame)
 	fault_status = cpu_faultstatus();
 	fault_pc = frame->tf_pc;
 
-	fault_instruction = ReadWord(fault_pc);
+	/* Extract the fault code from the fault status */
+	fault_code = fault_status & FAULT_TYPE_MASK;
+
+	/* fusubailout is used by [fs]uswintr to avoid page faulting */
+	if (pcb->pcb_onfault
+	    && ((fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P)
+	        || pcb->pcb_onfault == fusubailout)) {
+copyfault:
+#ifdef DEBUG
+		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
+		    pcb->pcb_onfault, fault_address, fault_status, p);
+#endif
+		frame->tf_pc = (u_int)pcb->pcb_onfault;
+		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
+			panic("Yikes pcb_onfault=%p during USR mode fault\n",
+			    pcb->pcb_onfault);
+		return;
+	}
 
 #ifdef DIAGNOSTIC
 	if (current_intr_depth > 0) {
@@ -187,6 +204,8 @@ data_abort_handler(frame)
 
 	/* More debug stuff */
 
+	fault_instruction = ReadWord(fault_pc);
+
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		report_abort(NULL, fault_status, fault_address, fault_pc);
@@ -201,9 +220,6 @@ data_abort_handler(frame)
 		return;
 	if (error == ABORT_FIXUP_FAILED)
 		panic("data abort fixup failed\n");
-
-	/* Extract the fault code from the fault status */
-	fault_code = fault_status & FAULT_TYPE_MASK;
 
 	/* Get the current proc structure or proc0 if there is none */
 	if ((p = curproc) == NULL)
@@ -240,22 +256,6 @@ data_abort_handler(frame)
 		    p, curproc);
 	}
 #endif	/* DEBUG */
-
-	/* fusubail is used by [fs]uswintr to avoid page faulting */
-	if ((pcb->pcb_onfault
-	    && (fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P))
-	    || pcb->pcb_onfault == fusubailout) {
-copyfault:
-#ifdef DEBUG
-		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
-		    pcb->pcb_onfault, fault_address, fault_status, p);
-#endif
-		frame->tf_pc = (u_int)pcb->pcb_onfault;
-		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-			panic("Yikes pcb_onfault=%p during USR mode fault\n",
-			    pcb->pcb_onfault);
-		return;
-	}
 
 	/* Were we in user mode when the abort occurred ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
