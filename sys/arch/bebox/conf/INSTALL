@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.2 1998/06/26 01:53:53 lukem Exp $
+#	$NetBSD: INSTALL,v 1.3 1998/09/28 09:33:13 sakamoto Exp $
 #
 # First try for BEBOX config file
 #
@@ -82,7 +82,6 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
