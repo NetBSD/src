@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.8 2002/03/03 21:10:40 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.9 2002/04/13 22:41:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -106,16 +106,16 @@ timer_read(void)
 	 * latched.  The loop appears to work around the problem.
 	 */
 	do {
-		la[0] = CPLD_READ(IQ80310_TIMER_LA0) & 0x5f;
+		la[0] = CPLD_READ(IQ80310_TIMER_LA0);
 	} while (la[0] == 0);
-	la[1] = CPLD_READ(IQ80310_TIMER_LA1) & 0x5f;
-	la[2] = CPLD_READ(IQ80310_TIMER_LA2) & 0x5f;
-	la[3] = CPLD_READ(IQ80310_TIMER_LA3) & 0x0f;
+	la[1] = CPLD_READ(IQ80310_TIMER_LA1);
+	la[2] = CPLD_READ(IQ80310_TIMER_LA2);
+	la[3] = CPLD_READ(IQ80310_TIMER_LA3);
 
 	rv  =  ((la[0] & 0x40) >> 1) | (la[0] & 0x1f);
 	rv |= (((la[1] & 0x40) >> 1) | (la[1] & 0x1f)) << 6;
 	rv |= (((la[2] & 0x40) >> 1) | (la[2] & 0x1f)) << 12;
-	rv |= la[3] << 18;
+	rv |= (la[3] 0x0f) << 18;
 
 	return (rv);
 }
@@ -346,15 +346,24 @@ int
 clockhandler(void *arg)
 {
 	struct clockframe *frame = arg;
-	static int snakefreq;
 
 	timer_disable(TIMER_ENABLE_INTEN);
 	timer_enable(TIMER_ENABLE_INTEN);
 
 	hardclock(frame);
 
-	if ((snakefreq++ & 15) == 0)
-		iq80310_7seg_snake();
+	/*
+	 * Don't run the snake on IOP310-based systems that
+	 * don't have the 7-segment display.
+	 */
+#if !defined(IOP310_TEAMASA_NPWR)
+	{
+		static int snakefreq;
+
+		if ((snakefreq++ & 15) == 0)
+			iq80310_7seg_snake();
+	}
+#endif
 
 	return (1);
 }
