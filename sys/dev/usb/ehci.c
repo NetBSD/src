@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.58 2004/06/22 08:55:25 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.59 2004/06/22 09:16:56 enami Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.58 2004/06/22 08:55:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.59 2004/06/22 09:16:56 enami Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -692,9 +692,7 @@ void
 ehci_idone(struct ehci_xfer *ex)
 {
 	usbd_xfer_handle xfer = &ex->xfer;
-#ifdef EHCI_DEBUG
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
-#endif
 	ehci_soft_qtd_t *sqtd;
 	u_int32_t status = 0, nstatus;
 	int actlen;
