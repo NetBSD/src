@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 1997/03/04 22:20:04 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 1998/06/20 03:45:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -51,7 +51,7 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
-#include <machine/sun_disklabel.h>
+#include <dev/sun/disklabel.h>
 
 /* XXX encoding of disk minor numbers, should be elsewhere... */
 #define dkpart(dev)		(minor(dev) & 7)
