@@ -54,6 +54,8 @@
 #include "hd_var.h"
 #include "x25.h"
 
+int frame_reject(), rej_routine(), free_iframes();
+
 /*
  *      HDLC INPUT INTERFACE
  *
@@ -448,6 +450,7 @@ struct Hdlc_iframe *frame;
 {
 	register struct Frmr_frame *frmr = &hd_frmr;
 
+
 	frmr -> frmr_control = ((struct Hdlc_frame *) frame) -> control;
 
 	frmr -> frmr_ns = frame -> ns;
@@ -494,6 +497,7 @@ register struct Hdlc_sframe *frame;
 int frametype;
 {
 	register int nr = frame -> nr, pf = frame -> pf, pollbit = 0;
+	int rej_routine();
 
 	if (valid_nr (hdp, nr, pf) == TRUE) {
 		switch (frametype) {
@@ -548,6 +552,8 @@ valid_nr (hdp, nr, finalbit)
 register struct hdcb *hdp;
 register int finalbit;
 {
+	int free_iframes();
+	
 	/* Make sure it really does acknowledge something. */
 	if (hdp->hd_lastrxnr == nr)
 		return (TRUE);

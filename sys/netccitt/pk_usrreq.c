@@ -55,6 +55,8 @@
 #include "pk.h"
 #include "pk_var.h"
 
+int old_to_new(), new_to_old();
+
 /*
  * 
  *  X.25 Packet level protocol interface to socket abstraction.
