@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)udp_usrreq.c	7.20 (Berkeley) 4/20/91
- *	$Id: udp_usrreq.c,v 1.6 1994/01/08 21:22:06 mycroft Exp $
+ *	$Id: udp_usrreq.c,v 1.7 1994/01/08 23:17:18 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -56,10 +56,16 @@
 
 struct	inpcb *udp_last_inpcb = &udb;
 
+static void	udp_detach __P((struct inpcb *));
+static void	udp_notify __P((struct inpcb *, int));
+static struct mbuf *
+        	udp_saveopt __P((caddr_t, int, int));
+
 /*
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
  */
+void
 udp_init()
 {
 
@@ -75,6 +81,7 @@ int	udp_ttl = UDP_TTL;
 
 struct	sockaddr_in udp_in = { sizeof(udp_in), AF_INET };
 
+void
 udp_input(m, iphlen)
 	register struct mbuf *m;
 	int iphlen;
@@ -269,7 +276,6 @@ udp_input(m, iphlen)
 	udp_in.sin_addr = ip->ip_src;
 	if (inp->inp_flags & INP_CONTROLOPTS) {
 		struct mbuf **mp = &opts;
-		struct mbuf *udp_saveopt();
 
 		if (inp->inp_flags & INP_RECVDSTADDR) {
 			*mp = udp_saveopt((caddr_t) &ip->ip_dst,
@@ -315,7 +321,7 @@ bad:
  * Create a "control" mbuf containing the specified data
  * with the specified type for presentation with a datagram.
  */
-struct mbuf *
+static struct mbuf *
 udp_saveopt(p, size, type)
 	caddr_t p;
 	register int size;
@@ -340,8 +346,10 @@ udp_saveopt(p, size, type)
  * Notify a udp user of an asynchronous error;
  * just wake up so that he can collect error status.
  */
+static void
 udp_notify(inp, errno)
 	register struct inpcb *inp;
+	int errno;
 {
 
 	inp->inp_socket->so_error = errno;
@@ -349,6 +357,7 @@ udp_notify(inp, errno)
 	sowwakeup(inp->inp_socket);
 }
 
+void
 udp_ctlinput(cmd, sa, ip)
 	int cmd;
 	struct sockaddr *sa;
@@ -368,6 +377,7 @@ udp_ctlinput(cmd, sa, ip)
 		in_pcbnotify(&udb, sa, 0, zeroin_addr, 0, cmd, udp_notify);
 }
 
+int
 udp_output(inp, m, addr, control)
 	register struct inpcb *inp;
 	register struct mbuf *m;
@@ -459,6 +469,7 @@ u_long	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
 
 /*ARGSUSED*/
+int
 udp_usrreq(so, req, m, addr, control)
 	struct socket *so;
 	int req;
@@ -595,6 +606,7 @@ release:
 	return (error);
 }
 
+static void
 udp_detach(inp)
 	struct inpcb *inp;
 {
