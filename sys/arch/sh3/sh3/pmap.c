@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40.6.2 2002/06/21 21:26:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40.6.3 2002/12/16 07:20:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -118,13 +118,6 @@ pmap_bootstrap()
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	__pmap_kve = VM_MIN_KERNEL_ADDRESS;
 
-	/* Initialize pmap module */
-	pool_init(&__pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr);
-	pool_init(&__pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pmap_pv_page_allocator);
-	pool_setlowat(&__pmap_pv_pool, 16);
-
 	pmap_kernel()->pm_refcnt = 1;
 	pmap_kernel()->pm_ptp = (pt_entry_t **)uvm_pageboot_alloc(PAGE_SIZE);
 	memset(pmap_kernel()->pm_ptp, 0, PAGE_SIZE);
@@ -226,7 +219,12 @@ void
 pmap_init()
 {
 
-	/* Nothing to do */
+	/* Initialize pmap module */
+	pool_init(&__pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    &pool_allocator_nointr);
+	pool_init(&__pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
+	    &pmap_pv_page_allocator);
+	pool_setlowat(&__pmap_pv_pool, 16);
 }
 
 pmap_t
