@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 1995/06/26 22:36:32 pk Exp $ */
+/*	$NetBSD: param.h,v 1.16 1995/06/28 02:43:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,8 +185,6 @@ extern struct map	*dvmamap;
 #ifndef LOCORE
 #define	DELAY(n)	delay(n)
 #endif
-#else
-#define	DELAY(n)	{ register volatile int N = (n); while (--N > 0); }
 #endif
 
 #ifdef _KERNEL
