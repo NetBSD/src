@@ -1,4 +1,4 @@
-/* $NetBSD: copystr.S,v 1.3 1996/02/02 18:05:49 mycroft Exp $ */
+/* $NetBSD: copystr.S,v 1.4 1996/03/27 22:19:32 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * optimised and fault protected copystr function
  *
  * Created      : 16/05/95
- * Last updated : 16/05/95
- *
- *    $Id: copystr.S,v 1.3 1996/02/02 18:05:49 mycroft Exp $
  */
 
 #include "assym.h"
@@ -53,7 +50,7 @@ sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
-.text
+	.text
 Lcurpcb:
 	.word	_curpcb
 
@@ -89,24 +86,22 @@ copystrtext:
 
 	.align	0
 
-
 /*
-r0 - from
-r1 - to
-r2 - maxlens
-r3 - lencopied
-
-*/
+ * r0 - from
+ * r1 - to
+ * r2 - maxlens
+ * r3 - lencopied
+ */
 
 	.global _copystrinout
 
 _copystrinout:
+	stmfd	sp!, {r4-r6}
 	teq	r2, #0x00000000
 	moveq	r5, #0x00000000
 	moveq	r6, #0x00000000
 	beq	copystrexit
 
-	stmfd	sp!, {r4-r6}
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
 	teq	r4, #0x00000000
