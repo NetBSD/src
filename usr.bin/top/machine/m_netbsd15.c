@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.2 2000/05/26 04:22:01 simonb Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.3 2000/05/29 11:38:33 simonb Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.2 2000/05/26 04:22:01 simonb Exp $
+ * $Id: m_netbsd15.c,v 1.3 2000/05/29 11:38:33 simonb Exp $
  */
 
 #include <sys/param.h>
@@ -60,6 +60,8 @@
 #include "utils.h"
 #include "display.h"
 #include "loadavg.h"
+
+void percentages64(int, int *, u_int64_t *, u_int64_t *, u_int64_t *);
 
 
 /* get_process_info passes back a handle.  This is what it looks like: */
@@ -110,9 +112,9 @@ static int ccpu;
 
 /* these are for calculating cpu state percentages */
 
-static long cp_time[CPUSTATES];
-static long cp_old[CPUSTATES];
-static long cp_diff[CPUSTATES];
+static u_int64_t cp_time[CPUSTATES];
+static u_int64_t cp_old[CPUSTATES];
+static u_int64_t cp_diff[CPUSTATES];
 
 /* these are for detailing the process states */
 
@@ -256,7 +258,6 @@ void
 get_system_info(si)
 	struct system_info *si;
 {
-	long total;
 	size_t ssize;
 	int mib[2];
 	struct uvmexp uvmexp;
@@ -282,7 +283,7 @@ get_system_info(si)
 	}
 
 	/* convert cp_time counts to percentages */
-	total = percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
+	percentages64(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP;
@@ -732,4 +733,52 @@ proc_owner(pid)
 			return(pp->p_ruid);
 	}
 	return(-1);
+}
+
+/*
+ *  percentages(cnt, out, new, old, diffs) - calculate percentage change
+ *	between array "old" and "new", putting the percentages i "out".
+ *	"cnt" is size of each array and "diffs" is used for scratch space.
+ *	The array "old" is updated on each call.
+ *	The routine assumes modulo arithmetic.  This function is especially
+ *	useful on BSD mchines for calculating cpu state percentages.
+ */
+
+void
+percentages64(cnt, out, new, old, diffs)
+	int cnt;
+	int *out;
+	u_int64_t *new;
+	u_int64_t *old;
+	u_int64_t *diffs;
+{
+	int i;
+	u_int64_t change;
+	u_int64_t total_change;
+	u_int64_t *dp;
+	u_int64_t half_total;
+
+	/* initialization */
+	total_change = 0;
+	dp = diffs;
+
+	/* calculate changes for each state and the overall change */
+	for (i = 0; i < cnt; i++) {
+		/*
+		 * Don't worry about wrapping - even at hz=1GHz, a
+		 * u_int64_t will last at least 544 years.
+		 */
+		change = *new - *old;
+		total_change += (*dp++ = change);
+		*old++ = *new++;
+	}
+
+	/* avoid divide by zero potential */
+	if (total_change == 0)
+		total_change = 1;
+
+	/* calculate percentages based on overall change, rounding up */
+	half_total = total_change / 2;
+	for (i = 0; i < cnt; i++)
+		*out++ = (int)((*diffs++ * 1000 + half_total) / total_change);
 }
