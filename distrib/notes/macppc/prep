@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.20 2001/07/05 05:03:02 mbw Exp $
+.\"	$NetBSD: prep,v 1.21 2001/07/24 17:57:45 nra Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1050,7 +1050,7 @@ on the disk.
 This partition is not readable from
 .Tn MacOS No Ns .
 .It Em "A/UX Swap"
-Any size. The recommenation is 1.5 times your RAM, although this is not
+Any size. The recommendation is 1.5 times your RAM, although this is not
 strictly necessary for machines with a lot of RAM.
 .Nx
 interprets an
