@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.8 1998/08/21 16:34:46 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.9 1998/09/11 16:23:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -707,6 +707,7 @@ wdgetdefaultlabel(wd, lp)
 	lp->d_ncylinders = wd->sc_params.atap_cylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
+#if 0
 	if (strcmp(wd->sc_params.atap_model, "ST506") == 0) {
 		lp->d_type = DTYPE_ST506;
 		strncpy(lp->d_typename, "ST506 disk", 16);
@@ -715,7 +716,9 @@ wdgetdefaultlabel(wd, lp)
 		strncpy(lp->d_typename, "ESDI/IDE",
 		sizeof lp->d_typename);
 	}
-	strncpy(lp->d_packname, wd->sc_params.atap_model, 16);
+#endif
+	strncpy(lp->d_typename, wd->sc_params.atap_model, 16);
+	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = wd->sc_capacity;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;

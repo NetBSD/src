@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.11 1998/08/21 16:34:46 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.12 1998/09/11 16:23:12 bouyer Exp $ */
 
 
 /*
@@ -390,17 +390,20 @@ wdcattach(chp)
 	 * devices keep it in a mostly working, but strange state (with busy
 	 * led on)
 	 */
-	wdcreset(chp, VERBOSE);
-	/*
-	 * Read status registers to avoid spurious interrupts.
-	 */
-	for (i = 1; i >= 0; i--) {
-		if (chp->ch_drive[i].drive_flags & DRIVE) {
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-			    WDSD_IBM | (i << 4));
-			if (wait_for_unbusy(chp, 10000) < 0)
-				printf("%s:%d:%d: device busy\n",
-				    chp->wdc->sc_dev.dv_xname, chp->channel, i);
+	if ((chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
+		wdcreset(chp, VERBOSE);
+		/*
+		 * Read status registers to avoid spurious interrupts.
+		 */
+		for (i = 1; i >= 0; i--) {
+			if (chp->ch_drive[i].drive_flags & DRIVE) {
+				bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+				    wd_sdh, WDSD_IBM | (i << 4));
+				if (wait_for_unbusy(chp, 10000) < 0)
+					printf("%s:%d:%d: device busy\n",
+					    chp->wdc->sc_dev.dv_xname,
+					    chp->channel, i);
+			}
 		}
 	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.188.2.8 1998/08/21 16:34:49 bouyer Exp $
+#	$NetBSD: files,v 1.188.2.9 1998/09/11 16:23:15 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -36,6 +36,7 @@ defopt	COMPAT_OSF1
 defopt	COMPAT_SUNOS
 defopt	COMPAT_SVR4
 defopt	COMPAT_ULTRIX
+defopt	COMPAT_SPARC32
 defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_NOMID
 
@@ -157,6 +158,10 @@ defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE
 device	ahc: scsi
 file	dev/ic/aic7xxx.c		ahc
 
+# AdvanSys 1200A, 1200B and ULTRA SCSI controllers
+device	adv: scsi
+file	dev/ic/adv.c			adv
+
 # AMD 7930 audio/ISDN codec
 device audioamd: audio
 file	dev/ic/am7930.c				audioamd
@@ -272,6 +277,24 @@ define  i2c_eeprom
 device  esh: hippi, ifnet
 file    dev/ic/rrunner.c        esh
 
+# SMC 90c26, SMC 90C56 (and 90C66 if in compat mode) chip driver
+device  bah: ifnet, arc, arp
+file    dev/ic/smc90cx6.c	bah
+
+# OPL2/OPL3 FM synth driver
+device	opl: midibus, midisyn
+file	dev/ic/opl.c			opl
+file	dev/ic/oplinstrs.c		opl
+
+# AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
+define	ad1848
+file	dev/ic/ad1848.c			ad1848
+
+# LSI64854 DMA controller back-end
+define	lsi64854
+file	dev/ic/lsi64854.c		lsi64854
+
+
 # XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
 #
@@ -305,6 +328,7 @@ define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
 define	usbus { }			# USB attachment
+define	vmebus { }			# VME bus attachment
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
@@ -342,7 +366,6 @@ file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
 file cfs/cfs_namecache.c		cfs
-file cfs/cfs_nbsd.c			cfs
 file cfs/cfs_psdev.c			vcfs			needs-count
 file cfs/cfs_subr.c			cfs
 file cfs/cfs_venus.c			cfs
@@ -367,7 +390,7 @@ file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
 file ddb/db_xxx.c			ddb
 file dev/auconv.c			auconv
-file dev/audio.c			audio			needs-flag
+file dev/audio.c			audio | midi		needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-count
 file dev/midi.c				midi			needs-flag

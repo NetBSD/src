@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152.2.10 1998/08/21 16:34:48 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.152.2.11 1998/09/11 16:23:14 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -22,7 +22,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # Misc. i386-specific options
 options 	XSERVER		# X server support in console drivers
-options		XSERVER_DDB	# PF12 gets you into DDB when X is running
+#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
@@ -48,9 +48,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-
-#options 	UVM		# Use UVM instead of Mach VM.
-#options 	PMAP_NEW	# new pmap interface; requires UVM
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -102,6 +99,7 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
+#file-system	CFS		# Coda File System; also needs vcfs (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -252,6 +250,7 @@ lpt2	at isa? port 0x3bc
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], ULTRA SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
@@ -283,6 +282,7 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
+scsibus* at adv?
 scsibus* at aha?
 scsibus* at ahb?
 scsibus* at ahc?
@@ -460,12 +460,18 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+# OPL[23] FM syntheziers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at ess?
+opl*	at sb?
+
 # USB Audio devices
 #uaudio*	at uhub? port ?
 
 # Audio support
 audio*	at aria?
 audio*	at eap?
+audio*	at ess?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
@@ -474,11 +480,11 @@ audio*	at sp?
 #audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
-audio*	at ess?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB MPU401 port
+midi*	at opl?			# OPL FM synth
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -538,3 +544,6 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# a pseudo device needed for Coda	# also needs CFS (above)
+#pseudo-device	vcfs		4	# coda minicache <-> venus comm.
