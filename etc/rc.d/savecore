@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: savecore,v 1.5 2002/03/22 04:34:00 thorpej Exp $
+# $NetBSD: savecore,v 1.5.4.1 2004/07/15 19:22:52 he Exp $
 #
 
 # PROVIDE: savecore
@@ -19,11 +19,11 @@ savecore_start()
 	#	/var/crash should be a directory or a symbolic link
 	#	to the crash directory if core dumps are to be saved.
 	#
-	if [ -d /var/crash/. ]; then
+	if [ -d "${savecore_dir}/." ]; then
 		echo "Checking for core dump..."
-		savecore $rc_flags /var/crash
+		savecore $rc_flags "${savecore_dir}"
 	else
-		warn "No /var/crash directory; savecore not run."
+		warn "No crash dump directory; savecore not run."
 	fi
 }
 
