@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.10 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.11 2003/11/11 11:43:45 dsl Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -10,6 +10,7 @@ clean:		cleanlib
 ##### Default values
 CFLAGS+=	${COPTS}
 HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
+MKDEP_SUFFIXES?=	.o .lo
 
 # Override these:
 MKDEP:=		${HOST_MKDEP}
@@ -51,14 +52,6 @@ cleanlib:
 beforedepend:
 CFLAGS:=	${HOST_CFLAGS}
 CPPFLAGS:=	${HOST_CPPFLAGS}
-
-.if defined(SRCS)
-afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; trap 'rm -f $$TMP ; exit 1' 1 2 3 13 15; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.lo:/' \
-	      < .depend > $$TMP; \
-	    mv $$TMP .depend)
-.endif
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
