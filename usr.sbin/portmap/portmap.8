@@ -1,4 +1,4 @@
-.\"	$NetBSD: portmap.8,v 1.4.2.1 1999/01/25 05:22:18 cgd Exp $
+.\"	$NetBSD: portmap.8,v 1.4.2.2 1999/02/06 21:21:26 cgd Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991, 1993
@@ -40,13 +40,13 @@
 .Sh NAME
 .Nm portmap
 .Nd
-.Tn RPC
-program number to
 .Tn DARPA
-port mapper
+port to
+.Tn RPC
+program number mapper
 .Sh SYNOPSIS
 .Nm
-.Op Fl dls
+.Op Fl d
 .Sh DESCRIPTION
 .Nm
 is a server that converts
@@ -88,47 +88,19 @@ like any other daemon.
 then logs errors using
 .Xr syslog 3 .
 .Pp
-.Nm
-uses
-.Xr libwrap
-style access control (the 
-.Pa /etc/hosts.allow
-and
-.Pa /etc/hosts.deny
-files)
-to control access to the portmapper itself and control forwarding
-of requests.  This prevents clients from using
-.Nm
-to circumvent host-based services in individual services.
-.Pp
 Option available:
 .Bl -tag -width Ds
 .It Fl d
-prevents
+(debug) prevents
 .Nm
 from running as a daemon,
 and causes errors and debugging information
 to be printed to the standard error output.
-.It Fl l
-Turns on libwrap connection logging.
-.It Fl s
-causes
-.Nm
-to change to the user daemon as soon as possible.
-This causes
-.Nm
-to use non-privileged ports for outgoing connections, preventing non-privileged
-clients from using
-.Nm
-to connect to services from a privileged port.
 .El
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
 .Xr rpcinfo 8 ,
-.Xr inetd 8 ,
-.Xr syslog 3 ,
-.Xr hosts_access 3 ,
-.Xr hosts_options 3
+.Xr inetd 8
 .Sh BUGS
 If
 .Nm
@@ -137,8 +109,4 @@ crashes, all servers must be restarted.
 The
 .Nm
 command appeared in
-.Bx 4.3 .
-The security features documented herein derive from work by Wietse Venema
-at Eindhoven University of Technology, The Netherlands, and first appeared
-in
-.Nx 1.4 .
+.Bx 4.3
