@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.17 2004/01/02 10:09:42 simonb Exp $	*/
+/*	$NetBSD: gzip.c,v 1.18 2004/01/03 02:39:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.17 2004/01/02 10:09:42 simonb Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.18 2004/01/03 02:39:18 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -341,6 +341,8 @@ prepend_gzip(char *gzip, int *argc, char ***argv)
 		for (; *s; s++)
 			if (*s == ' ' || *s == '\t')
 				break;
+		if (*s == 0)
+			break;
 	}
 	/* punt early */
 	if (nenvarg == 0)
