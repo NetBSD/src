@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.43 1998/03/05 02:10:57 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.44 1998/03/18 20:36:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.43 1998/03/05 02:10:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.44 1998/03/18 20:36:13 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -718,6 +718,15 @@ Lcs5:
 
 	mov	s3, a0				/* swap the context */
 	SWITCH_CONTEXT
+
+	/*
+	 * Don't pmap_deactivate() if we came here from switch_exit
+	 * (old pmap no longer exists; vmspace has been freed).  oldproc
+	 * will be NULL in this case.  We have actually taken care of
+	 * calling pmap_deactivate() in cpu_exit(), before the vmspace
+	 * went away.
+	 */
+	beq	s0, Lcs6
 
 	mov	s0, a0				/* pmap_deactivate(oldproc) */
 	CALL(pmap_deactivate)
