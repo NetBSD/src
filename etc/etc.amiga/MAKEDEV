@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.94 2003/10/03 14:35:37 dsl Exp $
+#	$NetBSD: MAKEDEV,v 1.95 2003/10/10 22:47:10 jdolecek Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -615,13 +615,13 @@ ipl)
 
 pf)
 	rm -f pf
-	mknod pf c 59 0
+	mknod pf c 161 0
 	chmod 600 pf
 	;;
 
 crypto)
 	rm -f crypto
-	mknod crypto c 60 0
+	mknod crypto c 160 0
 	chmod 666 crypto
 	;;
 
