@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.53 2000/07/20 18:40:27 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.54 2000/10/11 16:52:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -240,8 +240,10 @@ struct ifnet {				/* and the entries */
 		__P((struct ifnet *));
 	int	(*if_ioctl)		/* ioctl routine */
 		__P((struct ifnet *, u_long, caddr_t));
-	int	(*if_reset)		/* XXX bus reset routine */
+	int	(*if_init)		/* init routine */
 		__P((struct ifnet *));
+	void	(*if_stop)		/* stop routine */
+		__P((struct ifnet *, int));
 	void	(*if_watchdog)		/* timer routine */
 		__P((struct ifnet *));
 	void	(*if_drain)		/* routine to release resources */
@@ -628,7 +630,8 @@ int	if_nulloutput __P((struct ifnet *, struct mbuf *,
 void	if_nullinput __P((struct ifnet *, struct mbuf *));
 void	if_nullstart __P((struct ifnet *));
 int	if_nullioctl __P((struct ifnet *, u_long, caddr_t));
-int	if_nullreset __P((struct ifnet *));
+int	if_nullinit __P((struct ifnet *));
+void	if_nullstop __P((struct ifnet *, int));
 void	if_nullwatchdog __P((struct ifnet *));
 void	if_nulldrain __P((struct ifnet *));
 #else
