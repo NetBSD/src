@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.12 1999/06/11 00:53:35 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.13 1999/08/13 09:01:51 nisimura Exp $ */
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
  *
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.12 1999/06/11 00:53:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.13 1999/08/13 09:01:51 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ extern int zs_major;
 
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
-extern int _splx_ioasic __P((int));
+extern int _splrestore_ioasic __P((int));
 struct splsw spl_maxine = {
 	{ _spllower_ioasic,	0 },
 	{ _splraise_ioasic,	IPL_BIO },
@@ -130,7 +130,7 @@ struct splsw spl_maxine = {
 	{ _splraise_ioasic,	IPL_TTY },
 	{ _splraise_ioasic,	IPL_IMP },
 	{ _splraise,		MIPS_SPL_0_1_3 },
-	{ _splx_ioasic,		0 },
+	{ _splrestore_ioasic,	0 },
 };
 
 extern volatile struct chiptime *mcclock_addr; /* XXX */
@@ -186,6 +186,7 @@ dec_maxine_init()
 	 * Initialize interrupts.
 	 */
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = 0;
 	kn02ca_wbflush();
 
 	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
