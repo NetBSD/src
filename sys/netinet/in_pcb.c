@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.36 1996/12/10 11:38:42 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.36.8.1 1997/05/14 17:00:16 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -403,7 +403,7 @@ in_setpeeraddr(inp, nam)
  *
  * Must be called at splsoftnet.
  */
-void
+int
 in_pcbnotify(table, faddr, fport_arg, laddr, lport_arg, errno, notify)
 	struct inpcbtable *table;
 	struct in_addr faddr, laddr;
@@ -414,19 +414,24 @@ in_pcbnotify(table, faddr, fport_arg, laddr, lport_arg, errno, notify)
 	struct inpcbhead *head;
 	register struct inpcb *inp, *ninp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+	int nmatch;
 
 	if (in_nullhost(faddr) || notify == 0)
-		return;
+		return (0);
 
+	nmatch = 0;
 	head = INPCBHASH_CONNECT(table, faddr, fport, laddr, lport);
 	for (inp = head->lh_first; inp != NULL; inp = ninp) {
 		ninp = inp->inp_hash.le_next;
 		if (in_hosteq(inp->inp_faddr, faddr) &&
 		    inp->inp_fport == fport &&
 		    inp->inp_lport == lport &&
-		    in_hosteq(inp->inp_laddr, laddr))
+		    in_hosteq(inp->inp_laddr, laddr)) {
 			(*notify)(inp, errno);
+			nmatch++;
+		}
 	}
+	return (nmatch);
 }
 
 void
