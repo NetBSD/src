@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2.2.2 2002/07/14 17:47:33 gehenna Exp $	*/
+/*	$NetBSD: types.h,v 1.2.2.3 2002/07/16 08:13:50 gehenna Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -65,5 +65,6 @@ typedef unsigned long vm_size_t;
 typedef int			register_t;
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
+#define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
 
 #endif	/* _HPPA_TYPES_H_ */
