@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.8 2003/08/06 01:04:44 manu Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.9 2003/10/31 14:04:04 drochner Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.8 2003/08/06 01:04:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.9 2003/10/31 14:04:04 drochner Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.8 2003/08/06 01:04:44 manu Exp
 
 #include <compat/irix/irix_exec.h>
 
-static int irix_load_addr(struct proc *, char *, vaddr_t *);
-
 /*
  * IRIX o32 ABI probe function
  */
@@ -85,7 +83,7 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 	    IRIX_EF_IRIX_ABIO32)
 		return error;
 
-	if (itp[0]) {
+	if (itp) {
 		/* o32 binaries use /lib/libc.so.1 */
 		if (strncmp(itp, "/lib/libc.so", 12) && 
 		    strncmp(itp, "/usr/lib/libc.so", 16))
@@ -93,10 +91,7 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
 		    itp)))
 			return error;
-		if ((error = irix_load_addr(p, itp, pos)) != 0)
-			return error;
-	} else {
-		*pos = ELF_NO_ADDR;
+		*pos = ELF_LINK_ADDR;
 	}
 #ifdef DEBUG_IRIX
 	printf("irix_probe_o32: returning 0\n");
@@ -126,7 +121,7 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 	    IRIX_EF_IRIX_ABIN32)
 		return error;
 
-	if (itp[0]) {
+	if (itp) {
 		/* n32 binaries use /lib32/libc.so.1 */
 		if (strncmp(itp, "/lib32/libc.so", 14) &&
 		    strncmp(itp, "/usr/lib32/libc.so", 18))
@@ -135,7 +130,6 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 		    itp)))
 			return error;
 	}
-	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_IRIX
 	printf("irix_probe_n32: returning 0\n");
 	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
@@ -263,73 +257,4 @@ ELFNAME2(irix,copyargs)(p, pack, arginfo, stackp, argp)
 	printf("*stackp = %p\n", *stackp);
 #endif
 	return 0;
-}
-
-/* 
- * Find the load address of the intepreter. Most of the code is 
- * borrowed from sys/kern/exec_elf32.c:load_file(). 
- * There is nothing specific to IRIX here, it may move to 
- * sys/compat/compat_util.c if another emulation needs it.
- */
-#define MAXPHNUM	50
-static int
-irix_load_addr(p, itp, pos)
-	struct proc *p;
-	char *itp;
-	vaddr_t *pos;
-{
-	int error = 0;
-	int i;
-	struct nameidata nd;
-	struct vnode *vp;
-	Elf_Ehdr eh;
-	Elf_Phdr *ph = NULL;
-	u_long phsize;
-
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, itp, p);
-	if ((error = namei(&nd)) != 0)
-		return ELFDEFNNAME(NO_ADDR);
-	vp = nd.ni_vp;
-
-	/* Check this is a regular file */
-	if (vp->v_type != VREG)  {
-		VOP_UNLOCK(vp, 0);
-		error = EACCES;
-		goto bad;
-	}
-
-	VOP_UNLOCK(vp, 0);
-
-	if ((error = exec_read_from(p, vp, 0, &eh, sizeof(eh))) != 0)
-		goto bad;
-
-	if ((error = ELFNAME(check_header)(&eh, ET_DYN)) != 0)
-		goto bad;
-
-	if (eh.e_phnum > MAXPHNUM)
-		goto bad;
-
-	phsize = eh.e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	if ((error = exec_read_from(p, vp, eh.e_phoff, ph, phsize)) != 0)
-		goto bad;
-
-	/* Look for the first loadable section */
-	for (i = 0; i < eh.e_phnum; i++)
-		if (ph[i].p_type == PT_LOAD)
-			break;
-	if (i == eh.e_phnum) {
-		error = ENOEXEC;
-		goto bad;
-	}
-
-	*pos = ph[i].p_vaddr;
-#ifdef DEBUG_IRIX
-	printf("irix_load_addr: file %s, addr %p\n", itp, (void *)*pos);
-#endif
-bad:
-	if (ph != NULL)
-		free(ph, M_TEMP);
-	vrele(vp);
-	return error;
 }
