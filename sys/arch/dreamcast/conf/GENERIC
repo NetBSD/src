@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.35 2003/04/26 14:10:13 ragge Exp $
+# $NetBSD: GENERIC,v 1.36 2003/06/14 16:28:32 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -54,7 +54,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB			# remote debugger
 #options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=192000
+options 	SYMTAB_SPACE=194000
 #options 	SYSCALL_DEBUG
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
