@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/06/06 05:29:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/06/22 02:20:09 mrg Exp $
 
-SUBDIR=	ramdisk bootfloppy
+SUBDIR=	ramdisk bootfs
 
 .include <bsd.subdir.mk>
