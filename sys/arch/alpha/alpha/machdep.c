@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.261 2003/01/17 22:11:18 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.262 2003/04/01 02:18:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2003/01/17 22:11:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2003/04/01 02:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -910,7 +910,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -957,7 +957,7 @@ cpu_startup()
 		printf("stolen memory for VM structures = %s\n", pbuf);
 	}
 #endif
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -1239,7 +1239,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1285,7 +1285,7 @@ bad:
 /*
  * Dump the kernel's image to the swap partition.
  */
-#define	BYTES_PER_DUMP	NBPG
+#define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
 dumpsys()
