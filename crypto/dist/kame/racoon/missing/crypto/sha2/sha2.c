@@ -43,6 +43,7 @@
 #include <openssl/evp.h>
 
 #include <err.h>
+#include <string.h>
 #define bcopy(a, b, c) memcpy((b), (a), (c))
 #define bzero(a, b) memset((a), 0, (b))
 #define panic(a) err(1, (a))
