@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1999/09/25 21:18:02 tron Exp $
+#	$NetBSD: Makefile,v 1.21 2001/11/24 21:39:20 perry Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/16/94
 
 .include <bsd.own.mk>
@@ -9,6 +9,10 @@ MAKEWHATIS?=	/usr/libexec/makewhatis
 
 makedb:
 	${MAKEWHATIS} ${DESTDIR}/usr/share/man
+.if defined(UNPRIVED)
+	echo "${DESTDIR}/usr/share/man/whatis.db type=file mode=0444 uname=root gname=wheel" | \
+		sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+.endif
 .else
 makedb:
 .endif
