@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.2 2001/04/25 17:53:10 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.3 2001/06/13 15:10:36 soda Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -145,9 +145,9 @@
 #include <arc/jazz/dma.h>
 #include <arc/jazz/scsi.h>
 #include <arc/jazz/ascreg.h>
+#include <arc/jazz/ascvar.h>
 
 #include <arc/jazz/pica.h>
-#include <arc/arc/arctype.h>
 
 
 #define	readback(a)	{ register int foo; foo = (a); }
@@ -457,6 +457,34 @@ struct asc_softc {
 
 typedef struct asc_softc *asc_softc_t;
 
+struct asc_timing {
+	int		min_period;	/* Min transfer period clk/byte */
+	int		max_period;	/* Max transfer period clk/byte */
+	int		ccf;		/* CCF, whatever that really is? */
+	int		timeout_250;	/* 250ms timeout */
+	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
+}	asc_timing_40mhz = {
+		ASC_MIN_PERIOD40,
+		ASC_MAX_PERIOD40,
+		ASC_CCF(40),
+		ASC_TIMEOUT_250(40, 8 /* exception for ASC_CCF(40) (== 0) */),
+		6, /* 6.25 */
+},	asc_timing_25mhz = {
+		ASC_MIN_PERIOD25,
+		ASC_MAX_PERIOD25,
+		ASC_CCF(25),
+		ASC_TIMEOUT_250(25, ASC_CCF(25)),
+		10,
+},	asc_timing_12mhz = {
+		ASC_MIN_PERIOD12,
+		ASC_MAX_PERIOD12,
+		ASC_CCF(13),
+		ASC_TIMEOUT_250(13, ASC_CCF(13)),
+		20,
+};
+
+struct asc_config *asc_conf = NULL;
+
 /*
  * Autoconfiguration data for config.
  */
@@ -509,6 +537,9 @@ ascattach(parent, self, aux)
 	int id, s, i;
 	int bufsiz;
 
+	if (asc_conf == NULL)
+		panic("asc_conf isn't initialized");
+
 	/*
 	 * Initialize hw descriptor, cache some pointers
 	 */
@@ -519,43 +550,22 @@ ascattach(parent, self, aux)
 	 * 1) how to do dma
 	 * 2) timing based on chip clock frequency
 	 */
-	switch (cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-		bufsiz = 63 * 1024; /*XXX check if code handles 0 as 64k */
-		asc->dma = &asc->__dma;
-		asc_dma_init(asc->dma);
-		break;
-	default:
-		bufsiz = 64 * 1024;
-	};
+#if 1	/*XXX check if code handles 0 as 64k */
+	bufsiz = 63 * 1024;
+#else
+	bufsiz = 64 * 1024;
+#endif
+	asc->dma = &asc->__dma;
+	asc_dma_init(asc->dma);
+
 	/*
-	 * Now for timing. The pica has a 25Mhz, NEC M403 has a 40MHz.
+	 * Now for timing.
 	 */
-	switch (cputype) {
-	case MAGNUM: /* XXX - NEC M403 */
-		asc->min_period = ASC_MIN_PERIOD40;
-		asc->max_period = ASC_MAX_PERIOD40;
-		asc->ccf = ASC_CCF(40);
-		asc->timeout_250 = ASC_TIMEOUT_250(40,
-		    asc->ccf != 0 ? asc->ccf : 8);
-		asc->tb_ticks = 6; /* 6.25 */
-		break;
-	case ACER_PICA_61:
-		asc->min_period = ASC_MIN_PERIOD25;
-		asc->max_period = ASC_MAX_PERIOD25;
-		asc->ccf = ASC_CCF(25);
-		asc->timeout_250 = ASC_TIMEOUT_250(25, asc->ccf);
-		asc->tb_ticks = 10;
-		break;
-	default:
-		asc->min_period = ASC_MIN_PERIOD12;
-		asc->max_period = ASC_MAX_PERIOD12;
-		asc->ccf = ASC_CCF(13);
-		asc->timeout_250 = ASC_TIMEOUT_250(13, asc->ccf);
-		asc->tb_ticks = 20;
-		break;
-	};
+	asc->min_period = asc_conf->ac_timing->min_period;
+	asc->max_period = asc_conf->ac_timing->max_period;
+	asc->ccf = asc_conf->ac_timing->ccf;
+	asc->timeout_250 = asc_conf->ac_timing->timeout_250;
+	asc->tb_ticks = asc_conf->ac_timing->tb_ticks;
 
 	asc->state = ASC_STATE_IDLE;
 	asc->target = -1;
@@ -749,15 +759,7 @@ asc_reset(asc, regs)
 	regs->asc_cnfg1 = asc->sc_id | ASC_CNFG1_P_CHECK;
 	/* include ASC_CNFG2_SCSI2 if you want to allow SCSI II commands */
 	regs->asc_cnfg2 = /* ASC_CNFG2_RFB | ASC_CNFG2_SCSI2 | */ ASC_CNFG2_EPL;
-	switch (cputype) {
-	case MAGNUM: /* XXX - NEC M403 */
-		/* only if EPL is FE (Feature Enable bit for 53CF94) */
-		regs->asc_cnfg3 = ASC_CNFG3_FCLK; /* clock 40MHz */
-		break;
-	default:
-		regs->asc_cnfg3 = 0;
-		break;
-	}
+	regs->asc_cnfg3 = asc_conf->ac_cnfg3;
 	/* zero anything else */
 	ASC_TC_PUT(regs, 0, asc->is24bit);
 	regs->asc_syn_p = asc->min_period;
