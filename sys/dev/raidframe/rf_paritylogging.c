@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.4 2000/01/05 02:57:29 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.5 2000/01/08 05:13:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -81,6 +81,9 @@ rf_ConfigureParityLogging(
 	RF_ParityLog_t *l = NULL, *next;
 	caddr_t lHeapPtr;
 
+	if (rf_numParityRegions <= 0)
+		return(EINVAL);
+
 	/*
          * We create multiple entries on the shutdown list here, since
          * this configuration routine is fairly complicated in and of
@@ -127,18 +130,23 @@ rf_ConfigureParityLogging(
 
 	/* configure parity log parameters
 	 * 
-	 * parameter               comment/constraints ----------------
-	 * ------------------- numParityRegions        all regions (except
-	 * possibly last) of equal size totalInCoreLogCapacity  amount of
-	 * memory in bytes available for in-core logs (default 1 MB) #
-	 * numSectorsPerLog        capacity of an in-core log in sectors (1
-	 * disk track) numParityLogs           total number of in-core logs,
-	 * should be at least numParityRegions regionLogCapacity       size of
-	 * a region log (except possibly last one) in sectors totalLogCapacity
-	 * total amount of log space in sectors
+	 * parameter               comment/constraints 
+	 * ------------------------------------------- 
+	 * numParityRegions*       all regions (except possibly last) 
+	 *                         of equal size 
+	 * totalInCoreLogCapacity* amount of memory in bytes available 
+	 *                         for in-core logs (default 1 MB) 
+	 * numSectorsPerLog#       capacity of an in-core log in sectors 
+	 *                         (1 * disk track)
+	 * numParityLogs           total number of in-core logs,
+	 *                         should be at least numParityRegions 
+	 * regionLogCapacity       size of a region log (except possibly 
+	 *                         last one) in sectors 
+	 * totalLogCapacity        total amount of log space in sectors
 	 * 
-	 * denotes a user settable parameter. # logs are fixed to be the size of
-	 * a disk track, value #defined in rf_paritylog.h
+	 * where '*' denotes a user settable parameter. 
+	 * Note that logs are fixed to be the size of a disk track, 
+	 * value #defined in rf_paritylog.h
 	 * 
 	 */
 
