@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.6 1998/11/10 13:01:32 hubertf Exp $	*/
+/*	$NetBSD: inventory.c,v 1.7 2002/07/07 09:35:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: inventory.c,v 1.6 1998/11/10 13:01:32 hubertf Exp $");
+__RCSID("$NetBSD: inventory.c,v 1.7 2002/07/07 09:35:08 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,15 +362,15 @@ pr_com_id(ch)
 }
 
 int
-get_com_id(index, ch)
-	int *index;
+get_com_id(indexp, ch)
+	int *indexp;
 	short ch;
 {
 	short i;
 
 	for (i = 0; i < COMS; i++) {
 		if (com_id_tab[i].com_char == ch) {
-			*index = i;
+			*indexp = i;
 			return(1);
 		}
 	}
