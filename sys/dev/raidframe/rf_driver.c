@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.95 2004/03/13 02:20:40 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.96 2004/03/13 02:31:12 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.95 2004/03/13 02:20:40 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.96 2004/03/13 02:31:12 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -441,7 +441,6 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	RF_RaidAccessDesc_t *desc;
 
 	desc = pool_get(&rf_pools.rad, PR_WAITOK);
-	simple_lock_init(&desc->mutex);
 
 	RF_LOCK_MUTEX(rf_rad_lock);
 	if (raidPtr->waitShutdown) {
