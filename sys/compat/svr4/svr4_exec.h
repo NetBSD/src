@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.14 1999/08/01 23:55:40 christos Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.15 1999/08/22 13:11:38 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define SVR4_INTERP_ADDR	0x01000000
 #endif
 
-#ifdef __m68k__			/* XXX need -D${MACHINE_ARCH} */
+#ifdef __m68k__
 /*
  * Here programs load at 0x80000000, so I load the interpreter far before.
  */
