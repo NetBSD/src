@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.45 2001/03/30 14:34:27 minoura Exp $
+.\"	$NetBSD: pci.4,v 1.46 2001/06/04 16:34:41 tsutsui Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -93,6 +93,10 @@ Buslogic BT-9xx
 interfaces.
 .It dpt
 DPT SmartCache/SmartRAID III and IV
+.Tn SCSI
+interfaces.
+.It iha
+Initio INIC-940/950
 .Tn SCSI
 interfaces.
 .It isp
@@ -310,6 +314,7 @@ VGA graphics boards.
 .Xr fpa 4 ,
 .Xr fxp 4 ,
 .Xr hme 4 ,
+.Xr iha 4 ,
 .Xr iop 4 ,
 .Xr isp 4 ,
 .Xr le 4 ,
