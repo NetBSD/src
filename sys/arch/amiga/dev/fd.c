@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: fd.c,v 1.8 1994/06/16 15:06:49 chopps Exp $
+ *	$Id: fd.c,v 1.9 1994/06/20 06:36:47 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1166,7 +1166,8 @@ fdstart(sc)
 	 * if we will be overwriting the entire cache, don't bother to 
 	 * fetch it.
 	 */
-	if (bp->b_bcount == (sc->nsectors * FDSECSIZE) && write) {
+	if (bp->b_bcount == (sc->nsectors * FDSECSIZE) && write &&
+	    bp->b_blkno % sc->nsectors == 0) {
 		if (sc->flags & FDF_DIRTY)
 			sc->flags |= FDF_JUSTFLUSH;
 		else {
@@ -1188,7 +1189,8 @@ bad:
 }
 
 /*
- * continue a started operation on next track.
+ * continue a started operation on next track. always begin at 
+ * sector 0 on the next track.
  */
 void
 fdcont(sc)
@@ -1208,7 +1210,7 @@ fdcont(sc)
 	 */
 	trk = dp->b_blkno / sc->nsectors;
 #ifdef DEBUG
-	if (trk == sc->cachetrk || trk != sc->cachetrk + 1)
+	if (trk != sc->cachetrk + 1 || dp->b_blkno % sc->nsectors != 0)
 		panic("fdcont: confused");
 #endif
 	if (dp->b_flags & B_READ)
@@ -1367,6 +1369,7 @@ fddmadone(sc, timeo)
 			printf("%s: write of track cache timed out.\n",
 			    sc->dkdev.dk_dev.dv_xname);
 		if (sc->flags & FDF_JUSTFLUSH) {
+			sc->flags &= ~FDF_JUSTFLUSH;
 			/*
 			 * we are done dma'ing
 			 */
@@ -1424,17 +1427,10 @@ fddone(sc)
 #endif
 	/*
 	 * check to see if unit is just flushing the cache,
-	 * if bufq is not for us.
+	 * that is we have no io queued.
 	 */
-	if (sc->flags & FDF_JUSTFLUSH) {
-		sc->flags &= ~FDF_JUSTFLUSH;
-		goto nobuf;
-	}
-
-#ifdef DEBUG
 	if (sc->flags & FDF_MOTOROFF)
-		panic("fddone: motoroff on dma unit");
-#endif
+		goto nobuf;
 
 	dp = &sc->bufq;
 	if ((bp = dp->b_actf) == NULL)
