@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.2 2001/09/16 16:34:42 wiz Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.3 2001/11/13 01:04:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -31,6 +31,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.3 2001/11/13 01:04:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.20 2001/10/18 20:17:32 thorpej Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.21 2001/11/13 01:10:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,9 @@ SOFTWARE.
 /*
  * In here is tp_ctloutput(), the guy called by [sg]etsockopt(),
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.21 2001/11/13 01:10:50 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

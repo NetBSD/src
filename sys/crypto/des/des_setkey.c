@@ -1,4 +1,4 @@
-/*	$NetBSD: des_setkey.c,v 1.6 2001/09/09 11:01:02 tls Exp $	*/
+/*	$NetBSD: des_setkey.c,v 1.7 2001/11/13 01:40:10 lukem Exp $	*/
 /*	$KAME: des_setkey.c,v 1.6 2001/07/03 14:27:53 itojun Exp $	*/
 
 /* crypto/des/set_key.c */
@@ -55,6 +55,10 @@
  * 1.1 added norm_expand_bits
  * 1.0 First working version
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: des_setkey.c,v 1.7 2001/11/13 01:40:10 lukem Exp $");
+
 #include <sys/param.h>
 #ifdef _KERNEL
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.15 2001/10/18 07:44:33 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.16 2001/11/13 00:56:57 lukem Exp $	*/
 /*	$KAME: frag6.c,v 1.31 2001/05/17 13:45:34 jinmei Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.16 2001/11/13 00:56:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
