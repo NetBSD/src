@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.2 1995/08/18 16:46:57 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.3 1995/09/29 13:11:21 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -37,6 +37,7 @@
    using the TMS34010 processor. */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -555,7 +556,7 @@ ul_getvmode (gp, vm)
 		vm->mode_num = current_mon - ul_monitor_defs + 1;
 
 	md = ul_monitor_defs + vm->mode_num - 1;
-	strncpy (vm->mode_descr, md, 
+	strncpy (vm->mode_descr, md->mode_descr, 
 		sizeof (vm->mode_descr));
 
 	/* XXX should tell TMS to measure it */
