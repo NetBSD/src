@@ -1,14 +1,19 @@
-#	from: @(#)Makefile	5.2.1.2 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.5 1994/02/10 01:54:22 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
-# Missing: 03.kdebug 09.uucpimpl 12.uchanges 13.kchanges 17.security
-#	   18.password 19.porttour 21.uucpnet
+# The following modules do not build/install:
+# 10.named, 13.amd
+
 BINDIR=	/usr/share/doc/smm
 FILES=	00.contents Makefile Title
-SUBDIR=	02.config 04.quotas 05.fsck 06.lpd 07.sendmailop \
-	08.timedop 10.newsop 11.named \
-	14.fastfs 15.net 16.sendmail \
-	20.termdesc 22.timed
+SUBDIR=	01.setup 02.config 03.fsck 04.quotas 05.fastfs 06.nfs 07.lpd \
+	08.sendmailop 09.sendmail 11.timedop 12.timed 14.uucpimpl \
+	15.uucpnet 16.security 17.password 18.net
+
+Title.ps: ${FILES}
+	groff Title > ${.TARGET}
+
+contents.ps: ${FILES}
+	groff -ms 00.contents > ${.TARGET}
 
 .if	${MACHINE} == "tahoe"
 SUBDIR+=01.setup
@@ -16,7 +21,7 @@ SUBDIR+=01.setup
 SUBDIR+=01.setup
 .endif
 
-realinstall:
+beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}
 

@@ -1,5 +1,5 @@
-.\"$Header: /cvsroot/src/share/doc/iso/wisc/Attic/debug.nr,v 1.1.1.1 1994/06/19 00:07:17 cgd Exp $
-.\"$Source: /cvsroot/src/share/doc/iso/wisc/Attic/debug.nr,v $
+.\"WISC: Header: debug.nr,v 1.4 88/12/06 16:05:36 nhall Exp $
+.\"WISC: Source: /usr/argo/doc/kernel/RCS/debug.nr,v $
 .\"
 .\"	Program names should be in italics
 .\"

@@ -1,5 +1,5 @@
-.\"$Header: /cvsroot/src/share/doc/iso/wisc/Attic/errors.nr,v 1.1.1.1 1994/06/19 00:07:17 cgd Exp $
-.\"$Source: /cvsroot/src/share/doc/iso/wisc/Attic/errors.nr,v $
+.\"WISC: Header: errors.nr,v 1.2 88/12/06 16:06:07 nhall Exp $
+.\"WISC: Source: /usr/argo/doc/kernel/RCS/errors.nr,v $
 .NC "Error Handling"
 This section describes the various ways that the ARGO kernel 
 handles errors.
