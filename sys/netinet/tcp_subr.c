@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.65 1999/01/26 08:28:50 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.66 1999/02/28 13:41:24 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -887,17 +887,7 @@ tcp_new_iss(tp, len, addin)
 	tcp_seq          tcp_iss;
 
 	/*
-	 * add randomness about this connection, but do not estimate
-	 * entropy from the timing, since the physical device driver would
-	 * have done that for us.
-	 */
-#if NRND > 0
-	if (tp != NULL)
-		rnd_add_data(NULL, tp, len, 0);
-#endif
-
-	/*
-	 * randomize.
+	 * Randomize.
 	 */
 #if NRND > 0
 	rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
