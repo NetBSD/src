@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.25.2.1 2004/07/23 22:08:26 he Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.25.2.2 2004/08/30 09:32:11 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.27.2.1 2004/07/23 22:07:46 he Exp 
+ *	NetBSD: cardbusdevs,v 1.27.2.2 2004/08/30 09:31:08 tron Exp 
  */
 
 /*
@@ -55,6 +55,7 @@
 #define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_IODATA	0x10fc		/* IO Data */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
+#define	CARDBUS_VENDOR_WORKBIT	0x1145		/* Workbit */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	CARDBUS_VENDOR_DLINK	0x1186		/* D-Link Systems */
 #define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
@@ -102,6 +103,7 @@
 
 /* IO Data products */
 #define	CARDBUS_PRODUCT_IODATA_CBIDE2	0x0003		/* CBIDE2 IDE controller */
+#define	CARDBUS_PRODUCT_IODATA_CBSCII	0x0005		/* CBSCII NinjaSCSI-32Bi SCSI */
 
 /* Accton products */
 #define	CARDBUS_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
@@ -150,3 +152,8 @@
 
 /* Atheros Communications, Inc. products */
 #define	CARDBUS_PRODUCT_ATHEROS_AR5001	0x0013		/* AR5001 Wireless LAN 802.11a/b/g CardBus Card */
+
+/* Workbit products */
+#define	CARDBUS_PRODUCT_WORKBIT_NJSC32BI	0x8007		/* NinjaSCSI-32Bi SCSI */
+#define	CARDBUS_PRODUCT_WORKBIT_NJSC32UDE	0x8009		/* NinjaSCSI-32UDE SCSI */
+#define	CARDBUS_PRODUCT_WORKBIT_NJSC32BI_KME	0xf007		/* NinjaSCSI-32Bi SCSI (KME) */
