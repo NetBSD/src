@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.16.2.6 1997/07/22 05:54:24 cgd Exp $ */
+/* $NetBSD: conf.c,v 1.16.2.7 1997/08/12 05:54:39 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -108,7 +108,7 @@ XXX Cannot do this until the DEC_XXX vs. NDEC_XXX nonsense is worked out.
 #endif
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.16.2.6 1997/07/22 05:54:24 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.16.2.7 1997/08/12 05:54:39 cgd Exp $");
 __KERNEL_COPYRIGHT(0, \
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -129,6 +129,7 @@ __KERNEL_COPYRIGHT(0, \
 #include "dec_eb64plus.h"
 #include "dec_kn20aa.h"
 #include "dec_kn8ae.h"
+#include "dec_550.h"
 
 /* Device support flag headers. */
 #include "audio.h"
@@ -192,7 +193,7 @@ const struct cpusw cpusw[] = {
 	cpu_notdef("EB66"),			/* 19: ST_EB66 */
 	cpu_init("EB64+",DEC_EB64PLUS,dec_eb64plus),
 						/* 20: ST_EB64P */
-	cpu_unknown(),				/* 21: ??? */
+	cpu_notdef("AlphaBook"),		/* 21: ST_ALPHABOOK1 */
 	cpu_notdef("DEC 4100 (\"Rawhide\")"),	/* 22: ST_DEC_4100 */
 	cpu_notdef("??? (\"Lego\")"),		/* 23: ST_DEC_EV45_PBP */
 	cpu_notdef("DEC 2100A/A500 (\"Lynx\")"),
@@ -202,6 +203,12 @@ const struct cpusw cpusw[] = {
 	cpu_notdef("DEC 1000A (\"Noritake\")"),	/* 27: ST_DEC_1000A */
 	cpu_notdef("AlphaVME 224 (\"Cortex\")"),
 						/* 28: ST_DEC_ALPHAVME_224 */
+	cpu_unknown(),				/* 29: ??? */
+	cpu_init("DEC 550 (\"Miata\")",DEC_550, dec_550),
+						/* 30: ST_DEC_550 */
+	cpu_unknown(),				/* 31: ??? */
+	cpu_notdef("??? (\"Takara\")"),		/* 32: ST_DEC_EV56_PBP */
+	cpu_notdef("??? (\"Yukon\")"),		/* 33: ST_DEC_ALPHAVME_320 */
 };
 const int ncpusw = sizeof (cpusw) / sizeof (cpusw[0]);
 

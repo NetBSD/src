@@ -1,4 +1,71 @@
-/* $NetBSD: tga.c,v 1.12.2.4 1997/06/01 04:13:51 cgd Exp $ */
+/* $NetBSD: tga.c,v 1.12.2.5 1997/08/12 05:56:24 cgd Exp $ */
+
+/*
+ * Copyright Notice:
+ *
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
+ *
+ * License:
+ *
+ * This License applies to this software ("Software"), created
+ * by Christopher G. Demetriou ("Author").
+ *
+ * You may use, copy, modify and redistribute this Software without
+ * charge, in either source code form, binary form, or both, on the
+ * following conditions:
+ *
+ * 1.  (a) Binary code: (i) a complete copy of the above copyright notice
+ * must be included within each copy of the Software in binary code form,
+ * and (ii) a complete copy of the above copyright notice and all terms
+ * of this License as presented here must be included within each copy of
+ * all documentation accompanying or associated with binary code, in any
+ * medium, along with a list of the software modules to which the license
+ * applies.
+ *
+ * (b) Source Code: A complete copy of the above copyright notice and all
+ * terms of this License as presented here must be included within: (i)
+ * each copy of the Software in source code form, and (ii) each copy of
+ * all accompanying or associated documentation, in any medium.
+ *
+ * 2. The following Acknowledgment must be used in communications
+ * involving the Software as described below:
+ *
+ *      This product includes software developed by
+ *      Christopher G. Demetriou for the NetBSD Project.
+ *
+ * The Acknowledgment must be conspicuously and completely displayed
+ * whenever the Software, or any software, products or systems containing
+ * the Software, are mentioned in advertising, marketing, informational
+ * or publicity materials of any kind, whether in print, electronic or
+ * other media (except for information provided to support use of
+ * products containing the Software by existing users or customers).
+ *
+ * 3. The name of the Author may not be used to endorse or promote
+ * products derived from this Software without specific prior written
+ * permission (conditions (1) and (2) above are not considered
+ * endorsement or promotion).
+ *
+ * 4.  This license applies to: (a) all copies of the Software, whether
+ * partial or whole, original or modified, and (b) your actions, and the
+ * actions of all those who may act on your behalf.  All uses not
+ * expressly permitted are reserved to the Author.
+ *
+ * 5.  Disclaimer.  THIS SOFTWARE IS MADE AVAILABLE BY THE AUTHOR TO THE
+ * PUBLIC FOR FREE AND "AS IS.''  ALL USERS OF THIS FREE SOFTWARE ARE
+ * SOLELY AND ENTIRELY RESPONSIBLE FOR THEIR OWN CHOICE AND USE OF THIS
+ * SOFTWARE FOR THEIR OWN PURPOSES.  BY USING THIS SOFTWARE, EACH USER
+ * AGREES THAT THE AUTHOR SHALL NOT BE LIABLE FOR DAMAGES OF ANY KIND IN
+ * RELATION TO ITS USE OR PERFORMANCE.
+ *
+ * 6.  If you have a special need for a change in one or more of these
+ * license conditions, please contact the Author via electronic mail to
+ *
+ *     cgd@NetBSD.ORG
+ *
+ * or via the contact information on
+ *
+ *     http://www.NetBSD.ORG/People/Pages/cgd.html
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +97,9 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.12.2.4 1997/06/01 04:13:51 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.12.2.5 1997/08/12 05:56:24 cgd Exp $");
+__KERNEL_COPYRIGHT(0,
+    "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +145,7 @@ const struct tga_conf *tga_getconf __P((int));
 void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 	    pcitag_t tag, struct tga_devconfig *dc));
 
+int	tga_is_console;		/* uniqueness of pc+tag prevents dup match */
 struct tga_devconfig tga_console_dc;
 
 struct wsdisplay_emulops tga_emulops = {
@@ -110,6 +180,8 @@ tgamatch(parent, match, aux)
 	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_DEC_21030)
 		return (0);
 
+	/* XXX check mappings and/or console-ness */
+
 	return (10);
 }
 
@@ -137,10 +209,11 @@ tga_getdevconfig(memt, pc, tag, dc)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    &dc->dc_pcipaddr, &pcisize, &flags))
 		return;
-	if (flags == 0)					/* XXX */
-		panic("tga memory not cachable");
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0)		/* XXX */
+		panic("tga memory not cacheable");
 
-	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize, flags, &dc->dc_vaddr))
+	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize,
+	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_vaddr))
 		return;
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 
@@ -237,7 +310,8 @@ tgaattach(parent, self, aux)
 	u_int8_t rev;
 	int console;
 
-	console = (pa->pa_tag == tga_console_dc.dc_pcitag);
+	console = tga_is_console && (pa->pa_pc == tga_console_dc.dc_pc) &&
+	    (pa->pa_tag == tga_console_dc.dc_pcitag);
 	if (console)
 		sc->sc_dc = &tga_console_dc;
 	else {
@@ -414,8 +488,9 @@ tga_console(iot, memt, pc, bus, device, function)
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
 
-	tga_getdevconfig(memt, pc,
-	    pci_make_tag(pc, bus, device, function), dcp);
+	tga_is_console = 1;
+	tga_getdevconfig(memt, pc, pci_make_tag(pc, bus, device, function),
+	    dcp);
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)
