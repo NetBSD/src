@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.6 2002/03/17 14:02:03 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.7 2002/03/24 18:04:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,11 +52,11 @@
  *	Find a runnable process and switch to it.  Wait if necessary.
  */
 ENTRY(cpu_switch)
-	__INTR_MASK(r0, r1)
 	/* Save current process's context to switchframe */
 	mov.l	_L.P_ADDR, r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
+	stc.l	sr,	@-r1	
 	stc.l	r6_bank,@-r1
 	sts.l	pr,	@-r1
 	mov.l	r8,	@-r1
@@ -67,9 +67,6 @@ ENTRY(cpu_switch)
 	mov.l	r13,	@-r1
 	mov.l	r14,	@-r1
 	mov.l	r15,	@-r1
-	mov.l	_L.cpl, r2
-	mov.l	@r2,	r2
-	mov.l	r2,	@-r1
 
 	/* Search next process. cpu_switch_search may or may not sleep. */
 	mov.l	_L.cpu_switch_search, r0
@@ -101,9 +98,6 @@ ENTRY(cpu_switch)
 	/* Restore new process's context from switchframe */
 1:	mov.l	_L.curpcb, r1
 	mov.l	@r1,	r1
-	mov.l	@r1+,	r0
-	mov.l	_L.cpl,	r2
-	mov.l	r0,	@r2
 	mov.l	@r1+,	r15
 	mov.l	@r1+,	r14
 	mov.l	@r1+,	r13
@@ -114,15 +108,15 @@ ENTRY(cpu_switch)
 	mov.l	@r1+,	r8
 	lds.l	@r1+,	pr
 	ldc.l	@r1+,	r6_bank	/* current fp */
+	mov.l	@r1+,	r0
 	ldc.l	@r1+,	r7_bank	/* kernel stack top */
-	__INTR_UNMASK(r0, r1)
+	ldc	r0,	sr
 	rts
 	 nop
 	.align	2
 _L.P_ADDR:		.long	P_ADDR	
 _L.cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 _L.curpcb:		.long	_C_LABEL(curpcb)
-_L.cpl:			.long	_C_LABEL(cpl)
 REG_SYMBOL(TTB)
 FUNC_SYMBOL(switch_resume)
 
@@ -233,13 +227,33 @@ _L.4_MMUCR_MASK:	.long	SH4_MMUCR_MASK
 #endif /* SH4 */
 _L.UPTE:		.long	(P_MD + MD_UPTE)
 	
+/*	
+ * int _cpu_intr_raise(int s):
+ *	raise SR.IMASK to 's'. if current SR.IMASK is greater equal 's',
+ *	nothing to do. returns previous SR.IMASK.
+ */
+NENTRY(_cpu_intr_raise)
+	stc	sr,	r2
+	mov	#0x78,	r1
+	mov	r2,	r0
+	shll	r1		/* r1 = 0xf0 */
+	and	r1,	r0	/* r0 = SR & 0xf0 */
+	cmp/ge	r4,	r0	/* r0 >= r4 ? T = 1 */
+	bt/s	1f
+	 not	r1,	r1	/* r1 = 0xffffff0f */
+	and	r1,	r2	/* r2 = SR & ~0xf0 */
+	or	r2,	r4	/* r4 = (SR & ~0xf0) | s */
+	ldc	r4,	sr	/* SR = r4 (don't move to delay slot) */
+1:	rts
+	 nop	/* return (SR & 0xf0) */
+
 /*
- * u_int32_t _cpu_intr_suspend(void):
- *	Mask all external interrupt. returns previous mask. (SR.IMASK)
- */					
+ * int _cpu_intr_suspend(void):
+ *	Mask all external interrupt. Returns previous SR.IMASK.
+ */
 NENTRY(_cpu_intr_suspend)
-	stc	sr,	r0	/* r0 = SR */	
-	mov	#0x78, r1
+	stc	sr,	r0	/* r0 = SR */
+	mov	#0x78,	r1
 	shll	r1		/* r1 = 0x000000f0 */
 	mov	r0,	r2	/* r2 = SR */
 	or	r1,	r2	/* r2 |= 0x000000f0 */
@@ -248,19 +262,19 @@ NENTRY(_cpu_intr_suspend)
 	 and	r1,	r0	/* r0 = SR & 0x000000f0 */
 
 /*
- * void _cpu_intr_resume(u_int32_t s):
- *	restore 's' interrupt mask. (SR.IMASK)
- */
+ * int _cpu_intr_resume(int s):
+ *	Set 's' to SR.IMASK. Returns previous SR.IMASK.
+ */	 	
 NENTRY(_cpu_intr_resume)
-	stc	sr,	r0	/* r0 = SR */	
-	mov	#0x78,	r1
-	shll	r1		/* r1 = 0x000000f0 */
-	not	r1,	r1	/* r1 = 0xffffff0f */
-	and	r1,	r0	/* r0 &= ~0x000000f0 */
-	or	r4,	r0	/* r0 |= old SR.IMASK */
-	ldc	r0,	sr	/* SR = r0 (don't move to delay slot) */
+	stc	sr,	r0	/* r0 = SR */
+	mov	#0x78,	r2
+	shll	r2		/* r2 = 0x000000f0 */
+	not	r2,	r1	/* r1 = 0xffffff0f */
+	and	r0,	r1	/* r1 = (SR & ~0xf0) */
+	or	r1,	r4	/* r4 = (SR & ~0xf0) | level */
+	ldc	r4,	sr	/* SR = r0 (don't move to delay slot) */
 	rts
-	 nop	
+	 and	r2,	r0	/* return (SR & 0xf0) */
 
 /*	
  * u_int32_t _cpu_exception_suspend(void):
@@ -334,7 +348,7 @@ NENTRY(_cpu_spin)
 NENTRY(proc_trampoline)
 	jsr	@r12
 	 mov	r11,	r4
-	EXCEPTION_RETURN
+	__EXCEPTION_RETURN
 	/* NOTREACHED */
 
 /*
@@ -366,23 +380,19 @@ _C_LABEL(esigcode):
  */
 ENTRY(savectx)
 	add	#SF_SIZE, r4
+	stc.l	sr,	@-r4	
 	stc.l	r6_bank,@-r4
 	sts.l	pr,	@-r4
-	mov.l	r8,	@-r4	
+	mov.l	r8,	@-r4
 	mov.l	r9,	@-r4
 	mov.l	r10,	@-r4
-	mov.l	r11,	@-r4	
-	mov.l	r12,	@-r4	
+	mov.l	r11,	@-r4
+	mov.l	r12,	@-r4
 	mov.l	r13,	@-r4
 	mov.l	r14,	@-r4
-	mov.l	r15,	@-r4	
-	mov.l	1f,	r0
-	mov.l	@r0,	r0
-	mov.l	r0,	@-r4
+	mov.l	r15,	@-r4
 	rts
 	 nop
-	.align	2
-1:		.long	_C_LABEL(cpl)
 
 #if defined(DDB) || defined(KGDB)
 /*	

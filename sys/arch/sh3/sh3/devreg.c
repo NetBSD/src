@@ -1,4 +1,4 @@
-/*	$NetBSD: devreg.c,v 1.1 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: devreg.c,v 1.2 2002/03/24 18:04:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,11 +34,13 @@
  */
 
 #include <sys/param.h>
+
+#include <sh3/exception.h>
 #include <sh3/cache_sh3.h>
 #include <sh3/cache_sh4.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
-#include <sh3/trapreg.h>
+
 #include <sh3/ubcreg.h>
 #include <sh3/rtcreg.h>
 #include <sh3/tmureg.h>

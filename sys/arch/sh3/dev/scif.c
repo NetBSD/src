@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.23 2002/03/17 19:40:50 atatat Exp $ */
+/*	$NetBSD: scif.c,v 1.24 2002/03/24 18:04:42 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -121,10 +121,13 @@
 #include <dev/cons.h>
 
 #include <sh3/clock.h>
+#include <sh3/exception.h>
 #include <sh3/scifreg.h>
+#include <machine/intr.h>
+
 #include <sh3/dev/scifvar.h>
 
-#include <machine/shbvar.h>
+#include "locators.h"
 
 static void	scifstart(struct tty *);
 static int	scifparam(struct tty *, struct termios *);
@@ -141,7 +144,7 @@ int scifintr(void *);
 struct scif_softc {
 	struct device sc_dev;		/* boilerplate */
 	struct tty *sc_tty;
-	void *sc_ih;
+	void *sc_si;
 
 	struct callout sc_diag_ch;
 
@@ -419,13 +422,11 @@ scif_getc(void)
 static int
 scif_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
-	struct shb_attach_args *sa = aux;
 
 	if (strcmp(cfp->cf_driver->cd_name, "scif")
 	    || cfp->cf_unit >= SCIF_MAX_UNITS)
 		return 0;
 
-	sa->ia_iosize = 0x10;
 	return 1;
 }
 
@@ -434,14 +435,10 @@ scif_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct scif_softc *sc = (struct scif_softc *)self;
 	struct tty *tp;
-	int irq;
-	struct shb_attach_args *ia = aux;
 
 	sc->sc_hwflags = 0;	/* XXX */
 	sc->sc_swflags = 0;	/* XXX */
 	sc->sc_fifolen = 16;
-
-	irq = ia->ia_irq;
 
 	if (scifisconsole || kgdb_attached) {
 		/* InitializeScif(scifcn_speed); */
@@ -459,12 +456,29 @@ scif_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	callout_init(&sc->sc_diag_ch);
+#ifdef SH4
+	intc_intr_establish(SH4_INTEVT_SCIF_ERI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+	intc_intr_establish(SH4_INTEVT_SCIF_RXI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+	intc_intr_establish(SH4_INTEVT_SCIF_BRI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+	intc_intr_establish(SH4_INTEVT_SCIF_TXI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+#else
+	intc_intr_establish(SH7709_INTEVT2_SCIF_ERI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+	intc_intr_establish(SH7709_INTEVT2_SCIF_RXI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+	intc_intr_establish(SH7709_INTEVT2_SCIF_BRI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+	intc_intr_establish(SH7709_INTEVT2_SCIF_TXI, IST_LEVEL, IPL_SERIAL,
+	    scifintr, sc);
+#endif
 
-	if (irq != IRQUNK) {
-		sc->sc_ih = shb_intr_establish(SCIF_IRQ,
-		    IST_EDGE, IPL_SERIAL, scifintr, sc);
-	}
-
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scifsoft, sc);
+#endif
 	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
 
 	tp = ttymalloc();

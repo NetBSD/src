@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2002/03/03 14:31:27 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.24 2002/03/24 18:04:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,12 +47,13 @@
 #include <dev/clock_subr.h>
 
 #include <sh3/clock.h>
-#include <sh3/tmureg.h>
+#include <sh3/exception.h>
 #include <sh3/rtcreg.h>
+#include <sh3/tmureg.h>
 #include <sh3/wdogvar.h>
 #include <sh3/wdtreg.h>
 
-#include <machine/shbvar.h>
+#include <machine/intr.h>
 
 #ifndef HZ
 #define HZ		64
@@ -64,6 +65,7 @@
  * NetBSD/sh3 clock module
  *  + default 64Hz
  *  + use TMU channel 0 as clock interrupt source.
+ *  + use TMU channel 1 and 2 as emulated software interrupt soruce.
  *  + If RTC module is active, TMU channel 0 input source is RTC output.
  *    (1.6384kHz)
  */
@@ -123,6 +125,7 @@ sh_clock_init(int flags, struct rtc_ops *rtc)
 	_reg_write_2(SH_(TCR0), 0);
 	_reg_write_2(SH_(TCR1), 0);
 	_reg_write_2(SH_(TCR2), 0);
+
 	/* Reset RTC alarm and interrupt */
 	_reg_write_1(SH_(RCR1), 0);
 
@@ -273,7 +276,7 @@ cpu_initclocks()
 	_reg_write_4(SH_(TCOR0), sh_clock.hz_cnt);
 	_reg_write_4(SH_(TCNT0), sh_clock.hz_cnt);
 
-	shb_intr_establish(TMU0_IRQ, IST_EDGE, IPL_CLOCK,
+	intc_intr_establish(SH_INTEVT_TMU0_TUNI0, IST_LEVEL, IPL_CLOCK,
 	    CPU_IS_SH3 ? sh3_clock_intr : sh4_clock_intr, 0);
 	/* start hardclock */
 	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) | TSTR_STR0);
@@ -308,7 +311,6 @@ inittodr(time_t base)
 	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
 	    dt.dt_wday);
 #endif
-
 	
 	if (!(sh_clock.flags & SH_CLOCK_NOINITTODR) &&
 	    (rtc < base ||

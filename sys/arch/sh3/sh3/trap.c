@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2002/03/17 14:06:39 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 2002/03/24 18:04:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -67,9 +67,9 @@
 #include <uvm/uvm_extern.h>
 
 #include <sh3/cpu.h>
+#include <sh3/exception.h>
 #include <sh3/userret.h>
 #include <sh3/trap.h>
-#include <sh3/trapreg.h>
 #include <sh3/mmu.h>
 
 #ifdef DDB

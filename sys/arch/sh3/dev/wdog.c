@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.5 2002/02/12 15:26:46 uch Exp $ */
+/* $NetBSD: wdog.c,v 1.6 2002/03/24 18:04:42 uch Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -40,14 +40,15 @@
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
+#include <machine/intr.h>
+
 #include <sh3/frame.h>
-#include <sh3/shbvar.h>
 #include <sh3/wdtreg.h>
 #include <sh3/wdogvar.h>
+#include <sh3/exception.h>
 
 struct wdog_softc {
 	struct device sc_dev;		/* generic device structures */
-	unsigned int iobase;
 	int flags;
 };
 
@@ -78,12 +79,9 @@ wdog_wr_csr(unsigned char x)
 static int
 wdogmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
-	struct shb_attach_args *sa = aux;
 
 	if (strcmp(cfp->cf_driver->cd_name, "wdog"))
-		return 0;
-
-	sa->ia_iosize = 4;	/* XXX */
+		return (0);
 
 	return (1);
 }
@@ -96,14 +94,13 @@ static void
 wdogattach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdog_softc *sc = (struct wdog_softc *)self;
-	struct shb_attach_args *sa = aux;
 
-	sc->iobase = sa->ia_iobase;
 	sc->flags = 0;
 
 	wdog_wr_csr(WTCSR_WT | WTCSR_CKS_4096);	/* default to wt mode */
 
-	shb_intr_establish(WDOG_IRQ, IST_EDGE, IPL_SOFTCLOCK, wdogintr, 0);
+	intc_intr_establish(SH_INTEVT_WDT_ITI, IST_LEVEL, IPL_SOFTCLOCK,
+	    wdogintr, 0);
 
 	printf("\nwdog0: internal watchdog timer\n");
 }

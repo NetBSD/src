@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.21 2002/03/17 19:40:49 atatat Exp $ */
+/* $NetBSD: sci.c,v 1.22 2002/03/24 18:04:42 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -119,12 +119,12 @@
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
 #include <sh3/clock.h>
 #include <sh3/scireg.h>
+#include <sh3/pfcreg.h>
 #include <sh3/tmureg.h>
-
-#include <machine/shbvar.h>
+#include <sh3/exception.h>
+#include <machine/intr.h>
 
 static void	scistart(struct tty *);
 static int	sciparam(struct tty *, struct termios *);
@@ -139,8 +139,7 @@ int sciintr(void *);
 struct sci_softc {
 	struct device sc_dev;		/* boilerplate */
 	struct tty *sc_tty;
-	void *sc_ih;
-
+	void *sc_si;
 	struct callout sc_diag_ch;
 
 #if 0
@@ -384,13 +383,11 @@ sci_getc(void)
 static int
 sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
-	struct shb_attach_args *sa = aux;
 
 	if (strcmp(cfp->cf_driver->cd_name, "sci")
-	    || cfp->cf_unit >= SCI_MAX_UNITS)
+	    || cfp->cf_unit >= SCI_MAX_UNITS) //XXX __BROKEN_CONFIG_UNIT_USAGE
 		return 0;
 
-	sa->ia_iosize = 0x10;
 	return 1;
 }
 
@@ -399,14 +396,10 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sci_softc *sc = (struct sci_softc *)self;
 	struct tty *tp;
-	int irq;
-	struct shb_attach_args *ia = aux;
 
 	sc->sc_hwflags = 0;	/* XXX */
 	sc->sc_swflags = 0;	/* XXX */
 	sc->sc_fifolen = 0;	/* XXX */
-
-	irq = ia->ia_irq;
 
 	if (sciisconsole) {
 		SET(sc->sc_hwflags, SCI_HW_CONSOLE);
@@ -419,17 +412,14 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&sc->sc_diag_ch);
 
-#if 0
-	if (irq != IRQUNK) {
-		sc->sc_ih = shb_intr_establish(irq,
-		    IST_EDGE, IPL_SERIAL, sciintr, sc);
-	}
-#else
-	if (irq != IRQUNK) {
-		sc->sc_ih = shb_intr_establish(SCI_IRQ,
-		    IST_EDGE, IPL_SERIAL, sciintr, sc);
-	}
-#endif
+	intc_intr_establish(SH_INTEVT_SCI_ERI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_RXI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_TXI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_TEI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
 
 	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
@@ -1175,10 +1165,10 @@ sciintr(void *arg)
 	if (ISSET(ssr, SCSSR_FER)) {
 		SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
 #if defined(DDB) || defined(KGDB)
-#ifdef SH4
-		if ((SHREG_SCSPTR & SCPTR_SPB0DT) != 0) {
+#ifdef SH3
+		if ((SHREG_SCSPTR & SCSPTR_SPB0DT) != 0) {
 #else
-		if ((SHREG_SCSPDR & SCPDR_SCP0DT) != 0) {
+		if ((SHREG_SCSPDR & SCSPDR_SCP0DT) != 0) {
 #endif
 #ifdef DDB
 			if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.23 2002/03/17 17:55:24 uch Exp $
+#	$NetBSD: files.sh3,v 1.24 2002/03/24 18:04:41 uch Exp $
 #
 
 defparam	PCLOCK
@@ -31,6 +31,7 @@ file	arch/sh3/sh3/mmu_sh3.c		sh3
 file	arch/sh3/sh3/mmu_sh4.c		sh4
 file	arch/sh3/sh3/clock.c
 file	arch/sh3/sh3/devreg.c		sh3 & sh4
+file	arch/sh3/sh3/interrupt.c
 file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c

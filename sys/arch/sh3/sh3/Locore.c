@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.8 2002/03/17 14:02:03 uch Exp $	*/
+/*	$NetBSD: Locore.c,v 1.9 2002/03/24 18:04:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -115,13 +115,17 @@ cpu_switch_search()
 {
 	struct prochd *q;
 	struct proc *p;
+	int s;
 
 	curproc = 0;
 
+	s = _cpu_intr_suspend();
 	SCHED_LOCK_IDLE();
 	while (sched_whichqs == 0) {
 		SCHED_UNLOCK_IDLE();
+		_cpu_intr_resume(s);
 		idle();
+		s = _cpu_intr_suspend();
 		SCHED_LOCK_IDLE();
 	}
 
@@ -129,6 +133,7 @@ cpu_switch_search()
 	p = q->ph_link;
 	remrunqueue(p);
 	want_resched = 0;
+	_cpu_intr_resume(s);
 	SCHED_UNLOCK_IDLE();
 
 	p->p_stat = SONPROC;
@@ -146,8 +151,7 @@ void
 idle()
 {
 
-	cpl = 0;
-	Xspllower();
+	spl0();
 	__asm__ __volatile__("sleep");
 	splhigh();
 }

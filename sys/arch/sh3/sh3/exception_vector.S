@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.4 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.5 2002/03/24 18:04:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sh3/param.h>
 #include <sh3/asm.h>
 #include <sh3/locore.h>
-#include <sh3/trapreg.h>	
+#include <sh3/exception.h>	
 #include <sh3/ubcreg.h>
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
@@ -67,7 +67,7 @@
 	.text	
 	.align	2
 _C_LABEL(sh_vector_generic):
-	EXCEPTION_ENTRY
+	__EXCEPTION_ENTRY
 	/* Identify exception cause */
 	MOV	(EXPEVT, r0)
 	mov.l	@r0,	r0
@@ -121,7 +121,7 @@ _C_LABEL(sh_vector_generic):
 	mov.w	r0,	@r1
 #endif /* DDB */
 4:	
-	EXCEPTION_RETURN
+	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	2
 REG_SYMBOL(EXPEVT)
@@ -142,7 +142,7 @@ _C_LABEL(sh_vector_generic_end):	.long	0
 	.text	
 	.align	2
 _C_LABEL(sh3_vector_tlbmiss):
-	EXCEPTION_ENTRY	
+	__EXCEPTION_ENTRY	
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 #if !defined(P1_STACK)
@@ -210,7 +210,7 @@ _C_LABEL(sh3_vector_tlbmiss):
 	jsr	@r0
 	 mov	r14,	r6
 3:	
-	EXCEPTION_RETURN
+	__EXCEPTION_RETURN
 	.align	2
 1:		.long	_C_LABEL(tlb_handler)		
 _L.TEA:		.long	SH3_TEA
@@ -234,7 +234,7 @@ _C_LABEL(sh3_vector_tlbmiss_end):	.long	0
 	.text	
 	.align	2
 _C_LABEL(sh4_vector_tlbmiss):
-	EXCEPTION_ENTRY	
+	__EXCEPTION_ENTRY	
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov	#0x20,	r7
@@ -315,7 +315,7 @@ _C_LABEL(sh4_vector_tlbmiss):
 	jsr	@r0
 	 mov	r14,	r6
 3:	
-	EXCEPTION_RETURN
+	__EXCEPTION_RETURN
 	.align	2
 1:		.long	_C_LABEL(tlb_handler)		
 __L.TEA:	.long	SH4_TEA
@@ -337,10 +337,21 @@ _C_LABEL(sh4_vector_tlbmiss_end):	.long	0
 	.align	2
 	.text
 _C_LABEL(sh_vector_interrupt):
-	EXCEPTION_ENTRY
+	__EXCEPTION_ENTRY
+	stc	r0_bank,r6	/* ssp */	
+	/* Enable exception for P3 access */
+	__INTR_MASK(r0, r1)
+	__EXCEPTION_UNBLOCK(r0, r1)
+	/* Dispatch interrupt handler */
 	mov.l	1f,	r0
-	jmp	@r0
+	jsr	@r0		/* intc_intr(ssr, spc, ssp) */
 	 nop
+	/* Check for ASTs on exit to user mode. */
+	mov.l	2f,	r0
+	jsr	@r0
+	 mov	r14,	r4
+	__EXCEPTION_RETURN
 	.align	2
-1:	.long	_C_LABEL(interrupt_exp)
+1:	.long	_C_LABEL(intc_intr)	
+2:	.long	_C_LABEL(ast)	
 _C_LABEL(sh_vector_interrupt_end):	.long	0

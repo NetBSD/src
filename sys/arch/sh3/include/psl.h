@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.3 2002/03/03 14:31:24 uch Exp $	*/
+/*	$NetBSD: psl.h,v 1.4 2002/03/24 18:04:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,12 +65,13 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-/* suspend/resume external interrupt (SR.IMASK) */
-u_int32_t _cpu_intr_suspend(void);
-void _cpu_intr_resume(u_int32_t);
-/* suspend/resume exception (SR.BL) */
-u_int32_t _cpu_exception_suspend(void);
-void _cpu_exception_resume(u_int32_t);
+/* SR.IMASK */
+int _cpu_intr_raise(int);
+int _cpu_intr_suspend(void);
+int _cpu_intr_resume(int);
+/* SR.BL */
+int _cpu_exception_suspend(void);
+void _cpu_exception_resume(int);
 #endif /* !_LOCORE */
 
 #include <machine/intr.h>

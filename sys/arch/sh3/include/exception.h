@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.3 2002/03/24 18:04:40 uch Exp $	*/
+/*	$NetBSD: exception.h,v 1.1 2002/03/24 18:04:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,38 +33,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_CPUTYPES_H_
-#define _SH3_CPUTYPES_H_
-#ifdef _KERNEL
+#ifndef _SH3_EXCEPTION_H_
+#define	_SH3_EXCEPTION_H_
+#include <sh3/devreg.h>
 
-#define CPU_ARCH_SH3		3
-#define CPU_ARCH_SH4		4
+#define SH3_TRA			0xffffffd0	/* 32bit */
+#define SH3_EXPEVT		0xffffffd4	/* 32bit */
+#define SH3_INTEVT		0xffffffd8	/* 32bit */
+#define SH7709_INTEVT2		0xa4000000	/* 32bit */
 
-/* SH3 series */
-#define CPU_PRODUCT_7708	1
-#define CPU_PRODUCT_7708S	2
-#define CPU_PRODUCT_7708R	3
-#define CPU_PRODUCT_7709	4
-#define CPU_PRODUCT_7709A	5
-/* SH4 series */
-#define CPU_PRODUCT_7750	6
-#define CPU_PRODUCT_7750S	7
+#define SH4_TRA			0xff000020	/* 32bit */
+#define SH4_EXPEVT		0xff000024	/* 32bit */
+#define SH4_INTEVT		0xff000028	/* 32bit */
+
+#define	SH_INTEVT_NMI		0x1c0
+
+#define	SH_INTEVT_TMU0_TUNI0	0x400
+#define	SH_INTEVT_TMU1_TUNI1	0x420
+#define	SH_INTEVT_TMU2_TUNI2	0x440
+#define	SH_INTEVT_TMU2_TICPI2	0x460
+
+#define	SH_INTEVT_SCI_ERI	0x4e0
+#define	SH_INTEVT_SCI_RXI	0x500
+#define	SH_INTEVT_SCI_TXI	0x520
+#define	SH_INTEVT_SCI_TEI	0x540
+
+#define	SH_INTEVT_WDT_ITI	0x560
+
+#define	SH_INTEVT_IRL9		0x320
+#define	SH_INTEVT_IRL11		0x360
+#define	SH_INTEVT_IRL13		0x3a0
+
+#define	SH4_INTEVT_SCIF_ERI	0x700
+#define	SH4_INTEVT_SCIF_RXI	0x720
+#define	SH4_INTEVT_SCIF_BRI	0x740
+#define	SH4_INTEVT_SCIF_TXI	0x760
+
+#define	SH7709_INTEVT2_SCIF_ERI	0x900
+#define	SH7709_INTEVT2_SCIF_RXI	0x920
+#define	SH7709_INTEVT2_SCIF_BRI	0x940
+#define	SH7709_INTEVT2_SCIF_TXI	0x960
+
+#define	SH7709_INTEVT2_IRQ4	0x680
 
 #ifndef _LOCORE
-extern int cpu_arch;
-extern int cpu_product;
 #if defined(SH3) && defined(SH4)
-#define CPU_IS_SH3		(cpu_arch == CPU_ARCH_SH3)
-#define CPU_IS_SH4		(cpu_arch == CPU_ARCH_SH4)
-#elif defined(SH3)
-#define CPU_IS_SH3		1
-#define CPU_IS_SH4		0
-#elif defined(SH4)
-#define CPU_IS_SH3		0
-#define CPU_IS_SH4		1
-#else
-#error "define SH3 and/or SH4"
-#endif
+extern u_int32_t __sh_TRA;
+extern u_int32_t __sh_EXPEVT;
+extern u_int32_t __sh_INTEVT;
+#endif /* SH3 && SH4 */
 #endif /* !_LOCORE */
-#endif /* _KERNEL */
-#endif /* !_SH3_CPUTYPES_H_ */
+#endif /* !_SH3_EXCEPTION_H_ */
