@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: gnu.c,v 1.4 1994/03/27 09:27:25 cgd Exp $";
+static char rcsid[] = "$Id: gnu.c,v 1.5 1999/08/24 18:40:10 bad Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -582,7 +582,7 @@ gnu_restore (skipcrud)
   add_buffer (the_buffer, "", 1);
 
   current_dir = get_buffer (the_buffer);
-  archive_dir = (char *) ck_malloc (hstat.st_size);
+  archive_dir = (char *) ck_malloc ((size_t)hstat.st_size);
   if (archive_dir == 0)
     {
       msg ("Can't allocate %qd bytes for restore", hstat.st_size);
