@@ -157,6 +157,12 @@ $ ENOSYS
 78 Unctionfay otnay implementedway
 $ EFTYPE
 79 Inappropriateway ilefay ypetay orway ormatfay
+$ EAUTH
+80 Authenticationway errorway
+$ ENEEDAUTH
+81 Eednay authenticatorway
+$ EIDRM
+82 Identifierway emovedray
 $set 2
 $ SIGHUP
 1 Anguphay

@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.6 1997/10/09 11:31:05 mycroft Exp $	*/
+/*	$NetBSD: errlist.c,v 1.7 1998/02/06 08:44:21 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: errlist.c,v 1.6 1997/10/09 11:31:05 mycroft Exp $");
+__RCSID("$NetBSD: errlist.c,v 1.7 1998/02/06 08:44:21 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -140,6 +140,12 @@ const char *const _sys_errlist[] = {
 
 	"No locks available",			/* 77 - ENOLCK */
 	"Function not implemented",		/* 78 - ENOSYS */
+
 	"Inappropriate file type or format",	/* 79 - EFTYPE */
+	"Authentication error",			/* 80 - EAUTH */
+	"Need authenticator",			/* 81 - ENEEDAUTH */
+
+/* SystemV IPC */
+	"Identifier removed",			/* 82 - EIDRM */
 };
 const int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
