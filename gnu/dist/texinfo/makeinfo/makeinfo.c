@@ -1,5 +1,5 @@
 /* Makeinfo -- convert Texinfo source files into Info files.
-   $Id: makeinfo.c,v 1.1.1.1 1999/02/11 03:57:23 tv Exp $
+   $Id: makeinfo.c,v 1.2 1999/02/19 04:15:20 itohy Exp $
 
    Copyright (C) 1987, 92, 93, 94, 95, 96, 97, 98
    Free Software Foundation, Inc.
@@ -1545,14 +1545,19 @@ full_pathname (filename)
       localdir = (char *)xmalloc (1025);
 #if defined (HAVE_GETCWD)
       if (!getcwd (localdir, 1024))
+          {
+            fprintf (stderr, _("%s: getcwd: %s, %s\n"),
+                     progname, filename, strerror (errno));
+            exit (1);
+          }
 #else  /*  !HAVE_GETCWD */
         if (!getwd (localdir))
-#endif /* !HAVE_GETCWD */
           {
             fprintf (stderr, _("%s: getwd: %s, %s\n"),
                      progname, filename, localdir);
             exit (1);
           }
+#endif /* !HAVE_GETCWD */
 
       strcat (localdir, "/");
       strcat (localdir, filename);
