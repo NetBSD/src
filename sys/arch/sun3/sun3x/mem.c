@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 1999/12/04 21:21:46 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -238,54 +238,53 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
-	register u_int v = off;
-
 	/*
 	 * Check address validity.
 	 */
-	if (v & PGOFSET)
+	if (off & PGOFSET)
 		return (-1);
 
 	switch (minor(dev)) {
 
 	case 0:		/* dev/mem */
 		/* Allow access only in valid memory. */
-		if (!pmap_pa_exists(v))
+		if (!pmap_pa_exists(off))
 			break;
-		return (v);
+		return (off);
 
 #if 0	/* XXX - NOTYET */
 		/* XXX - Move this to bus_subr.c? */
 	case 5: 	/* dev/vme16d16 */
-		if (v & 0xffff0000)
+		if (off & 0xffff0000)
 			break;
-		v |= 0xff0000;
+		off |= 0xff0000;
 		/* fall through */
 	case 6: 	/* dev/vme24d16 */
-		if (v & 0xff000000)
+		if (off & 0xff000000)
 			break;
-		v |= 0xff000000;
+		off |= 0xff000000;
 		/* fall through */
 	case 7: 	/* dev/vme32d16 */
-		return (v | PMAP_VME16);
+		return (off | PMAP_VME16);
 
 	case 8: 	/* dev/vme16d32 */
-		if (v & 0xffff0000)
+		if (off & 0xffff0000)
 			break;
-		v |= 0xff0000;
+		off |= 0xff0000;
 		/* fall through */
 	case 9: 	/* dev/vme24d32 */
-		if (v & 0xff000000)
+		if (off & 0xff000000)
 			break;
-		v |= 0xff000000;
+		off |= 0xff000000;
 		/* fall through */
 	case 10:	/* dev/vme32d32 */
-		return (v | PMAP_VME32);
+		return (off | PMAP_VME32);
 #endif	/* XXX */
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.12 2000/02/07 22:07:30 thorpej Exp $	*/
+/*	$NetBSD: interwave.c,v 1.13 2000/06/26 04:56:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -1653,11 +1653,11 @@ iw_round_buffersize(addr, direction, size)
 	return (size);
 }
 
-int
+paddr_t
 iw_mappage(addr, mem, off, prot)
 	void	*addr;
 	void	*mem;
-	int	off;
+	off_t	off;
 	int	prot;
 {
 	return isa_mappage(mem, off, prot);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.31 2000/03/19 15:38:45 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.32 2000/06/26 04:56:04 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -403,10 +403,11 @@ cgtwoputcmap(sc, cmap)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 cgtwommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	vme_am_t mod;
@@ -417,7 +418,7 @@ cgtwommap(dev, off, prot)
 	if (off & PGOFSET)
 		panic("cgtwommap");
 
-	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
+	if (off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
 	/* Apparently, the pixels are in 32-bit data space */
@@ -426,5 +427,5 @@ cgtwommap(dev, off, prot)
 	if (sparc_vme_mmap_cookie(sc->sc_paddr + off, mod, &bh) != 0)
 		panic("cgtwommap");
 
-	return ((int)bh);
+	return ((paddr_t)bh);
 }

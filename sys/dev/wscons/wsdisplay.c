@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.37 2000/03/30 12:45:44 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.38 2000/06/26 04:56:32 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.37 2000/03/30 12:45:44 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.38 2000/06/26 04:56:32 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1120,10 +1120,10 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 	return (EINVAL);
 }
 
-int
+paddr_t
 wsdisplaymmap(dev, offset, prot)
 	dev_t dev;
-	int offset;		/* XXX */
+	off_t offset;
 	int prot;
 {
 	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.6 2000/06/12 22:40:20 gmcgarry Exp $ */
+/* $NetBSD: bba.c,v 1.7 2000/06/26 04:56:27 simonb Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ void	*bba_allocm __P((void *, int, size_t, int, int));
 void	bba_freem __P((void *, void *, int));
 size_t	bba_round_buffersize __P((void *, int, size_t));
 int	bba_get_props __P((void *));
-int	bba_mappage __P((void *, void *, int, int));
+paddr_t	bba_mappage __P((void *, void *, off_t, int));
 int	bba_trigger_output __P((void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *));
 int	bba_trigger_input __P((void *, void *, void *, int,
@@ -629,11 +629,11 @@ bba_get_props(addr)
 	return (AUDIO_PROP_MMAP | am7930_get_props(addr));
 }
 
-int
+paddr_t
 bba_mappage(addr, mem, offset, prot)
 	void *addr;
 	void *mem;
-	int offset;
+	off_t offset;
 	int prot;
 {
 	struct bba_softc *sc = addr;

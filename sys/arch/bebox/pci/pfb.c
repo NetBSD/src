@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.5 1999/12/06 19:25:57 drochner Exp $	*/
+/*	$NetBSD: pfb.c,v 1.6 2000/06/26 04:55:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -90,7 +90,7 @@ struct wsscreen_list pfb_screenlist = {
 };
 
 static int pfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int pfb_mmap __P((void *, off_t, int));
+static paddr_t pfb_mmap __P((void *, off_t, int));
 static int pfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
 static void pfb_free_screen __P((void *, void *));
@@ -221,7 +221,7 @@ pfb_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-int
+paddr_t
 pfb_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

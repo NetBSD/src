@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27 1999/12/04 21:20:23 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.28 2000/06/26 04:55:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,11 +61,6 @@
 extern u_int lowram;
 extern char *extiobase;
 static caddr_t devzeropage;
-
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
 
 /*ARGSUSED*/
 int
@@ -211,10 +206,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this
