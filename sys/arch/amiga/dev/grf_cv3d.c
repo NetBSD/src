@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.1 1997/10/19 18:55:21 veego Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.1.2.1 1997/10/30 02:03:42 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -38,17 +38,14 @@
  *
  * Modified for CV64/3D from Michael Teske's CV driver by Tobias Abt 10/97.
  * Bugfixes by Bernd Ernest 10/97.
+ * Many thanks to Richard Hartmann who gave us his board so we could make
+ * driver.
  *
  * TODO:
- *	- Console support
  *	- ZorroII support
  *	- Blitter support
  *	- Memcheck for 2MB boards (if they exists)
  */
-
-#ifdef CV3DCONSOLE	/* XXX */
-#error A console driver for the CyberVision 3D is not yet supported
-#endif
 
 /* Thanks to Frank Mariak for these infos
 BOARDBASE
@@ -251,7 +248,6 @@ static unsigned char clocks[]={
 static volatile caddr_t cv3d_boardaddr;
 static int cv3d_fbsize;
 
-static volatile caddr_t cv3d_memory_base;
 static volatile caddr_t cv3d_memory_io_base;
 static volatile caddr_t cv3d_register_base;
 static volatile caddr_t cv3d_vcode_switch_base;
@@ -387,7 +383,7 @@ grfcv3dattach(pdp, dp, auxp)
 			(char *) &gp[1] - (char *) &gp->g_display);
 	} else {
 		if (cv3d_zorroIII == 1) {
-			cv3d_memory_base =
+			gp->g_fbkva =
 			    (volatile caddr_t)cv3d_boardaddr + 0x04800000;
 			cv3d_memory_io_base =
 			    (volatile caddr_t)cv3d_boardaddr + 0x05000000;
@@ -398,7 +394,7 @@ grfcv3dattach(pdp, dp, auxp)
 			cv3d_special_register_base =
 			    (volatile caddr_t)cv3d_boardaddr + 0x0C000000;
 		} else {
-			cv3d_memory_base =
+			gp->g_fbkva =
 			    (volatile caddr_t)cv3d_boardaddr + 0x00000000;
 			cv3d_memory_io_base =
 			    (volatile caddr_t)cv3d_boardaddr + 0x003E0000;
@@ -411,7 +407,6 @@ grfcv3dattach(pdp, dp, auxp)
 		}
 
 		gp->g_regkva = (volatile caddr_t)cv3d_register_base;
-		gp->g_fbkva = (volatile caddr_t)cv3d_memory_base;
 
 		gp->g_unit = GRF_CV3D_UNIT;
 		gp->g_mode = cv3d_mode;
@@ -530,7 +525,7 @@ cv3d_boardinit(gp)
 	/* Wakeup Chip */
 	vgawio(cv3d_boardaddr, SREG_VIDEO_SUBS_ENABLE, 1);
 
-/*	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x01); */
+	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x01);
 
 	vgaw(ba, GREG_MISC_OUTPUT_W, 0x03);
 
@@ -548,10 +543,8 @@ cv3d_boardinit(gp)
 	 */
 	vgaw32(cv3d_memory_io_base, MR_ADVANCED_FUNCTION_CONTROL, 0x00000011);
 
-	/* Cpu base addr */
-#if 0	/* XXX */
-	WCrt(ba, CRT_ID_EXT_SYS_CNTL_4, 0x00);
-#endif
+	/* -hsync and -vsync */
+	vgaw(ba, GREG_MISC_OUTPUT_W, 0xC3);
 
 	/* Reset. This does nothing, but everyone does it:) */
 	WSeq(ba, SEQ_ID_RESET, 0x03);
@@ -561,7 +554,6 @@ cv3d_boardinit(gp)
 	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);	/* Character Font */
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, 0x02);	/* Complete mem access */
-
 	WSeq(ba, SEQ_ID_MMIO_SELECT, 0x00);
 	
 	test = RSeq(ba, SEQ_ID_BUS_REQ_CNTL);	/* Bus Request */
@@ -577,8 +569,6 @@ cv3d_boardinit(gp)
 	WSeq(ba, SEQ_ID_UNKNOWN6, 0x00);
 	WSeq(ba, SEQ_ID_SIGNAL_SELECT, 0x02);
 #endif
-
-	vgawio(cv3d_boardaddr, VDAC_MASK, 0xFF);	/* DAC Mask */
 
 	test = RSeq(ba, SEQ_ID_CLKSYN_CNTL_2);	/* Clksyn2 read */
 
@@ -669,11 +659,11 @@ cv3d_boardinit(gp)
 	WCrt(ba, CRT_ID_MISC_1, 0x35);
 
 	/* start fifo position */
-	WCrt(ba, CRT_ID_DISPLAY_FIFO, 0x5a);
+	WCrt(ba, CRT_ID_DISPLAY_FIFO, 0x5A);
 
 	WCrt(ba, CRT_ID_EXT_MEM_CNTL_2, 0x02);
 
-	WCrt(ba, CRT_ID_LAW_CNTL, 0x93);
+	WCrt(ba, CRT_ID_LAW_POS_LO, 0x40);
 
 	WCrt(ba, CRT_ID_EXT_MISC_CNTL_1, 0x81);
 	WCrt(ba, CRT_ID_MISC_1, 0xB5);
@@ -697,13 +687,9 @@ cv3d_boardinit(gp)
 	WAttr(ba, ACT_ID_OVERSCAN_COLOR, 0x01);
 	WAttr(ba, ACT_ID_COLOR_PLANE_ENA, 0x0F);
 	WAttr(ba, ACT_ID_HOR_PEL_PANNING, 0x00);
-	WAttr(ba, ACT_ID_COLOR_SELECT, 0x00);			/* now PIXEL_PADDING */
+	WAttr(ba, ACT_ID_COLOR_SELECT, 0x00);
 
-
-#if 0	/* XXX */
-	*((unsigned long *)(ba + ECR_FRGD_COLOR)) = 0xFF;
-	*((unsigned long *)(ba + ECR_BKGD_COLOR)) = 0;
-#endif
+	vgawio(cv3d_boardaddr, VDAC_MASK, 0xFF);	/* DAC Mask */
 
 	/* colors initially set to greyscale */
 
@@ -721,7 +707,7 @@ cv3d_boardinit(gp)
 	WCrt(ba, CRT_ID_LAW_CNTL, 0x13);
 
 	/* find *correct* fbsize of z3 board */
-	if (cv3d_has_4mb((volatile caddr_t)cv3d_boardaddr + 0x04800000)) {
+	if (cv3d_has_4mb(gp->g_fbkva)) {
 		cv3d_fbsize = 1024 * 1024 * 4;
 		WCrt(ba, CRT_ID_LAW_CNTL, 0x13); /* 4 MB */
 	} else {
@@ -734,8 +720,6 @@ cv3d_boardinit(gp)
 	vgaw32(cv3d_memory_io_base, BLT_COMMAND_SET, CMD_NOP);
 	vgaw32(cv3d_memory_io_base, BLT_CLIP_LEFT_RIGHT, 0x000007ff);
 	vgaw32(cv3d_memory_io_base, BLT_CLIP_TOP_BOTTOM, 0x000007ff);
-	vgaw32(cv3d_memory_io_base, BLT_PATTERN_FG_COLOR, 0xFFFFFFFF);
-	vgaw32(cv3d_memory_io_base, BLT_PATTERN_BG_COLOR, 0x00000000);
 	vgaw32(cv3d_memory_io_base, L2D_COMMAND_SET, CMD_NOP);
 	vgaw32(cv3d_memory_io_base, L2D_CLIP_LEFT_RIGHT, 0x000007ff);
 	vgaw32(cv3d_memory_io_base, L2D_CLIP_TOP_BOTTOM, 0x000007ff);
@@ -743,46 +727,8 @@ cv3d_boardinit(gp)
 	vgaw32(cv3d_memory_io_base, P2D_CLIP_LEFT_RIGHT, 0x000007ff);
 	vgaw32(cv3d_memory_io_base, P2D_CLIP_TOP_BOTTOM, 0x000007ff);
 
-#if 0	/* XXX */
-	/* Initialize graphics engine */
-	GfxBusyWait(ba);
-	vgaw16(ba, ECR_FRGD_MIX, 0x27);
-	vgaw16(ba, ECR_BKGD_MIX, 0x07);
-
-	vgaw16(ba, ECR_READ_REG_DATA, 0x1000);
-	delay(200000);
-	vgaw16(ba, ECR_READ_REG_DATA, 0x2000);
-	GfxBusyWait(ba);
-	vgaw16(ba, ECR_READ_REG_DATA, 0x3fff);
-	GfxBusyWait(ba);
-	delay(200000);
-	vgaw16(ba, ECR_READ_REG_DATA, 0x4fff);
-	GfxBusyWait(ba);
-
-	vgaw16(ba, ECR_BITPLANE_WRITE_MASK, ~0);
-
-	GfxBusyWait (ba);
-	vgaw16(ba, ECR_READ_REG_DATA, 0xe000);
-	vgaw16(ba, ECR_CURRENT_Y_POS2, 0x00);
-	vgaw16(ba, ECR_CURRENT_X_POS2, 0x00);
-	vgaw16(ba, ECR_READ_REG_DATA, 0xa000);
-	vgaw16(ba, ECR_DEST_Y__AX_STEP, 0x00);
-	vgaw16(ba, ECR_DEST_Y2__AX_STEP2, 0x00);
-	vgaw16(ba, ECR_DEST_X__DIA_STEP, 0x00);
-	vgaw16(ba, ECR_DEST_X2__DIA_STEP2, 0x00);
-	vgaw16(ba, ECR_SHORT_STROKE, 0x00);
-	vgaw16(ba, ECR_DRAW_CMD, 0x01);
-	GfxBusyWait (ba);
-
-	/* It ain't easy to write here, so let's do it again */
-	vgaw16(ba, ECR_READ_REG_DATA, 0x4fff);
-
-	vgaw16(ba, ECR_BKGD_COLOR, 0x01);
-	vgaw16(ba, ECR_FRGD_COLOR, 0x00);
-#endif
-
-	/* Enable Video Display */
-	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x01);
+	/* Enable Video Display (Set Bit 5) */
+	WAttr(ba, 0x33, 0);
 
 	gi = &gp->g_display;
 	gi->gd_regaddr	= (caddr_t) kvtop (ba);
@@ -1199,8 +1145,9 @@ cv3d_load_mon(gp, md)
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
-	int cr50, sr15, sr18, clock_mode, test;
+	int cr50, cr66, sr15, sr18, clock_mode, test;
 	int hmul;	/* Multiplier for hor. Values */
+	int fb_flag = 2;	/* default value for 8bit memory access */
 	unsigned char hvsync_pulse;
 	char TEXT, CONSOLE;
 
@@ -1255,17 +1202,31 @@ cv3d_load_mon(gp, md)
 	HSS = gv->hsync_start * hmul;
 	HSE = gv->hsync_stop * hmul;
 	HBE = gv->htotal * hmul - 6;
-	HT  = gv->htotal*hmul - 5;
+	HT  = gv->htotal * hmul - 5;
 	VBS = gv->vblank_start - 1;
 	VSS = gv->vsync_start;
 	VSE = gv->vsync_stop;
 	VBE = gv->vtotal - 3;
 	VT  = gv->vtotal - 2;
 
-	/* Disable enhanced Mode for text display */
-
-	vgaw32(cv3d_memory_io_base, MR_ADVANCED_FUNCTION_CONTROL,
-	    (TEXT ? 0x00000000 : 0x00000011));
+	/*
+	 * Disable enhanced Mode for text display
+	 *
+	 * XXX You need to set this bit in CRT_ID_EXT_MISC_CNTL_1
+	 * _and_ MR_ADVANCED_FUNCTION_CONTROL, because the same
+	 * function exists in both registers.
+	 */
+	cr66 = RCrt(ba, CRT_ID_EXT_MISC_CNTL_1);
+	if (TEXT) {
+		cr66 &= ~0x01;
+		vgaw32(cv3d_memory_io_base, MR_ADVANCED_FUNCTION_CONTROL,
+			0x00000010);
+	} else {
+		cr66 |= 0x01;
+		vgaw32(cv3d_memory_io_base, MR_ADVANCED_FUNCTION_CONTROL,
+			0x00000011);
+	}
+	WCrt(ba, CRT_ID_EXT_MISC_CNTL_1, cr66);
 
 	if (TEXT)
 		HDE = ((gv->disp_width + md->fx - 1) / md->fx) - 1;
@@ -1367,9 +1328,6 @@ cv3d_load_mon(gp, md)
 
 	WCrt(ba, CRT_ID_MODE_CONTROL, 0xE3);
 
-	test = RCrt(ba, CRT_ID_LAW_CNTL);
-	WCrt(ba, CRT_ID_LAW_CNTL, (test | 0x10));
-
 	/* text cursor */
 
 	if (TEXT) {
@@ -1404,13 +1362,6 @@ cv3d_load_mon(gp, md)
 	    ((TEXT || (gv->depth == 1)) ? 0x00 : 0x40));
 	WGfx(ba, GCT_ID_MISC, (TEXT ? 0x04 : 0x01));
 
-	/*
-	 * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	 *
-	 * There is no bit4 in the documentation of the Virge chip.
-	 * Where is this bit? This could be the reason for the black
-	 * console screen!!!!!!
-	 */
 	WSeq (ba, SEQ_ID_MEMORY_MODE,
 	    ((TEXT || (gv->depth == 1)) ? 0x06 : 0x02));
 
@@ -1433,11 +1384,17 @@ cv3d_load_mon(gp, md)
 	switch (gv->depth) {
 	   case 1:
 	   case 4: /* text */
+		fb_flag = 2;
 		HDE = gv->disp_width / 16;
 		break;
 	   case 8:
+		fb_flag = 2;
 		if (gv->pixel_clock > 80000000) {
-			clock_mode = 0x10;	/* | 0x02 */
+			/*
+			 * CR67 bit 1 is undocumented but needed to prevent
+			 * a white line on the left side of the screen.
+			 */
+			clock_mode = 0x10 | 0x02;
 			sr15 |= 0x10;
 			sr18 |= 0x80;
 		}
@@ -1445,21 +1402,32 @@ cv3d_load_mon(gp, md)
 		cr50 |= 0x00;
 		break;
 	   case 15:
+		fb_flag = 1;
 		clock_mode = 0x30;
 		HDE = gv->disp_width / 4;
 		cr50 |= 0x10;
 		break;
 	   case 16:
+		fb_flag = 1;
 		clock_mode = 0x50;
 		HDE = gv->disp_width / 4;
 		cr50 |= 0x10;
 		break;
 	   case 24: /* this is really 32 Bit on CV64/3D */
 	   case 32:
+		fb_flag = 0;
 		clock_mode = 0xd0;
 		HDE = (gv->disp_width / 2);
 		cr50 |= 0x30;
 		break;
+	}
+
+	if (cv3d_zorroIII == 1) {
+		gp->g_fbkva = (volatile caddr_t)cv3d_boardaddr + 0x04000000 +
+				(0x00400000 * fb_flag);
+	} else {
+		/* XXX This is totaly untested */
+		Select_Zorro2_FrameBuffer(fb_flag);
 	}
 
 	WCrt(ba, CRT_ID_EXT_MISC_CNTL_2, clock_mode | test);
@@ -1527,7 +1495,7 @@ cv3d_load_mon(gp, md)
 	}
 
 	/* Set display enable flag */
-	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x01);
+	WAttr(ba, 0x33, 0);
 
 	/* turn gfx on again */
 	cv3d_gfx_on_off(0, ba);
@@ -1579,28 +1547,27 @@ cv3d_inittextmode(gp)
 		}
 
 	/* print out a little init msg */
-/*	c = (unsigned char *)(fb) + (tm->cols - 9) * 4; */
-	c = (unsigned char *)(fb) + (tm->cols - 6) * 4;
+	c = (unsigned char *)(fb) + (tm->cols - 9) * 4;
 	*c++ = 'C';
-	*c++ = 0x0a;
-	c +=2;
-	*c++ = 'V';
-	*c++ = 0x0b;
-	c +=2;
-	*c++ = '6';
 	*c++ = 0x0c;
 	c +=2;
+	*c++ = 'V';
+	*c++ = 0x0c;
+	c +=2;
+	*c++ = '6';
+	*c++ = 0x0b;
+	c +=2;
 	*c++ = '4';
-	*c++ = 0x0d;
-/*	c +=2;
+	*c++ = 0x0f;
+	c +=2;
 	*c++ = '/';
 	*c++ = 0x0e;
 	c +=2;
 	*c++ = '3';
-	*c++ = 0x0f;
+	*c++ = 0x0a;
 	c +=2;
 	*c++ = 'D';
-	*c++ = 0x10; */
+	*c++ = 0x0a;
 }
 
 /*
