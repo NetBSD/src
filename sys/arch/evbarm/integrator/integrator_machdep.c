@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.1 2001/10/27 16:17:52 rearnsha Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.2 2001/11/09 00:34:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -179,8 +179,6 @@ void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
 extern void db_machine_init	__P((void));
 extern void parse_mi_bootargs	__P((char *args));
