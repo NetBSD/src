@@ -1,4 +1,4 @@
-.\"	$NetBSD: skey.1,v 1.13 2000/07/07 15:18:14 mjl Exp $
+.\"	$NetBSD: skey.1,v 1.14 2000/09/14 19:18:24 mjl Exp $
 .\"
 .\"	from: @(#)skey.1	1.1 	10/28/93
 .\"
@@ -10,6 +10,7 @@
 .Nd respond to an OTP challenge
 .Sh SYNOPSIS
 .Nm
+.Op Fl f
 .Op Fl n Ar count
 .Op Fl p Ar password
 .Op Fl t Ar hash
@@ -104,10 +105,17 @@ The
 allows the user to specify the
 .Em S/Key
 password on the command line.
-To output the S/Key list in hexadecimal in addition to words,
+.Pp
+To output the S/Key list in hexadecimal instead of words,
 use the
 .Fl x
 option.
+.Pp
+The
+.Fl f
+option can be used to override the
+strict length checking for passwords. Do not use this option until you have
+very good reason to do so, as shorter passwords violate RFC2289.
 .Sh EXAMPLE
 Initialize generation of one time passwords:
 .Bd -literal -offset indent
