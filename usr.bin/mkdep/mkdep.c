@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.7 2001/03/22 02:33:47 cgd Exp $ */
+/* $NetBSD: mkdep.c,v 1.8 2001/03/22 02:41:02 cgd Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.7 2001/03/22 02:33:47 cgd Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.8 2001/03/22 02:41:02 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ findcc(progname)
 	if ((next = strchr(progname, ' ')) != NULL) {
 		*next = '\0';
 	}
-	
+
 	if (strchr(progname, '/') != NULL)
 		return access(progname, X_OK) ? NULL : strdup(progname);
 
@@ -206,8 +206,7 @@ main(argc, argv)
 
 	(void)lseek(tmpfd, (off_t)0, SEEK_SET);
 	if ((tmpfile = fdopen(tmpfd, "r")) == NULL) {
-		(void)fprintf(stderr,
-		    "%s: unable to read temporary file %s\n",
+		(void)fprintf(stderr, "%s: unable to read temporary file %s\n",
 		    getprogname(), tmpfilename);
 		(void)close(tmpfd);
 		(void)unlink(tmpfilename);
