@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.15 1998/11/17 20:25:00 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.16 1998/11/18 18:34:52 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1263,4 +1263,32 @@ dp8390_disable(sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
 	}
+}
+
+int
+dp8390_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct dp8390_softc *sc = (struct dp8390_softc *)self;
+	int rv = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef notyet
+		/* First, kill off the interface. */
+		if_detach(sc->sc_ec.ec_if);
+#endif
+
+		/* Now disable the interface. */
+		dp8390_disable(sc);
+		break;
+	}
+	splx(s);
+	return (rv);
 }

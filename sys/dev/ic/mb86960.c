@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.27 1998/11/17 20:25:01 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.28 1998/11/18 18:34:52 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1801,6 +1801,34 @@ mb86960_disable(sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
 	}
+}
+
+int
+mb86960_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct mb86960_softc *sc = (struct mb86960_softc *)self;
+	int rv = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef notyet
+		/* First, kill off the interface. */
+		if_detach(sc->sc_ec.ec_if);
+#endif
+
+		/* Now disable the interface. */
+		mb86960_disable(sc);
+		break;
+	}
+	splx(s);
+	return (rv);
 }
 
 #if FE_DEBUG >= 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.26 1998/11/18 18:15:57 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.27 1998/11/18 18:34:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -59,7 +59,6 @@
 int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
 int	ne_pcmcia_detach __P((struct device *, int));
-int	ne_pcmcia_activate __P((struct device *, enum devact));
 
 int	ne_pcmcia_enable __P((struct dp8390_softc *));
 void	ne_pcmcia_disable __P((struct dp8390_softc *));
@@ -77,7 +76,7 @@ struct ne_pcmcia_softc {
 
 struct cfattach ne_pcmcia_ca = {
 	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
-	    ne_pcmcia_detach, ne_pcmcia_activate
+	    ne_pcmcia_detach, dp8390_activate
 };
 
 struct ne2000dev {
@@ -527,33 +526,6 @@ ne_pcmcia_detach(self, flags)
 #else
 	return (EBUSY);
 #endif
-}
-
-int
-ne_pcmcia_activate(self, act)
-	struct device *self;
-	enum devact act;
-{
-	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
-	struct dp8390_softc *sc = &psc->sc_ne2000.sc_dp8390;
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->sc_ec.ec_if);
-#endif
-
-		/* Now disable the interface.  This releases our interrupt. */
-		dp8390_disable(sc);
-		break;
-	}
-	return (rv);
 }
 
 int
