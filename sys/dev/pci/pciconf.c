@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.7 2001/08/28 15:13:48 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.8 2001/08/30 02:52:41 briggs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -50,12 +50,15 @@
  *	if necessary (possibly with an x86 emulator) to configure
  *	devices (e.g. VGA cards).
  *    - Deal with "anything can be hot-plugged" -- i.e., carry configuration
- *	information around & be able to reconfigure on the fly.
+ *	information around & be able to reconfigure on the fly
  *    - Deal with segments (See IA64 System Abstraction Layer)
  *    - Deal with subtractive bridges (& non-spec positive/subtractive decode)
  *    - Deal with ISA/VGA/VGA palette snooping
  *    - Deal with device capabilities on bridges
- *    - Worry about changing a bridge to/from transparency.
+ *    - Worry about changing a bridge to/from transparency
+ * From thorpej (05/25/01)
+ *    - Try to handle devices that are already configured (perhaps using that
+ *      as a hint to where we put other devices)
  */
 
 #include "opt_pci.h"
@@ -80,7 +83,7 @@ int pci_conf_debug = 0;
 /* per-bus constants. */
 #define MAX_CONF_DEV	8			/* Arbitrary */
 #define MAX_CONF_MEM	(3 * MAX_CONF_DEV)	/* Avg. 3 per device -- Arb. */
-#define MAX_CONF_IO	(1 * MAX_CONF_DEV)	/* Avg. 1 per device -- Arb. */
+#define MAX_CONF_IO	(3 * MAX_CONF_DEV)	/* Avg. 1 per device -- Arb. */
 
 #define PCI_BUSNO_SPACING	(1 << 5)
 
@@ -202,6 +205,10 @@ static int
 probe_bus(pciconf_bus_t *pb)
 {
 	int device, maxdevs;
+#ifdef __PCI_BUS_DEVORDER
+	char devs[32];
+	int  i;
+#endif
 
 	maxdevs = pci_bus_maxdevs(pb->pc, pb->busno);
 	pb->ndevs = 0;
@@ -214,7 +221,12 @@ probe_bus(pciconf_bus_t *pb)
 	pb->min_maxlat = 0x100;	/* we are looking for the minimum */
 	pb->bandwidth_used = 0;
 
+#ifdef __PCI_BUS_DEVORDER
+	pci_bus_devorder(pb->pc, pb->busno, devs);
+	for (i=0; (device=devs[i]) < 32 && device >= 0; i++) {
+#else
 	for (device=0; device < maxdevs; device++) {
+#endif
 		pcitag_t tag;
 		pcireg_t id, bhlcr;
 		int function, nfunction;
@@ -223,7 +235,6 @@ probe_bus(pciconf_bus_t *pb)
 		tag = pci_make_tag(pb->pc, pb->busno, device, 0);
 		if (pci_conf_debug) {
 			print_tag(pb->pc, tag);
-			printf("probing with tag 0x%lx.\n", (u_long) tag);
 		}
 		id = pci_conf_read(pb->pc, tag, PCI_ID_REG);
 
@@ -442,7 +453,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	pd->min_gnt = PCI_MIN_GNT(icr);
 	pd->max_lat = PCI_MAX_LAT(icr);
 	if (pd->iline || pd->ipin) {
-		pci_conf_interrupt(pb->pc, pb->busno, dev, func, pb->swiz,
+		pci_conf_interrupt(pb->pc, pb->busno, dev, pd->ipin, pb->swiz,
 		    &pd->iline);
 		icr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
 		icr |= (pd->iline << PCI_INTERRUPT_LINE_SHIFT);
@@ -463,6 +474,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	width = 4;
 	for (br = PCI_MAPREG_START; br < PCI_MAPREG_END; br += width) {
 #if 0
+/* XXX Should only ignore if IDE not in legacy mode? */
 		if (PCI_CLASS(class) == PCI_CLASS_MASS_STORAGE &&
 		    PCI_SUBCLASS(class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
 			break;
@@ -474,9 +486,12 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 		pci_conf_write(pb->pc, tag, br, bar);
 		width = 4;
 
-		if (PCI_MAPREG_TYPE(mask) == PCI_MAPREG_TYPE_IO) {
-			/* Upper 16 bits must be one. */
-			/* XXXJRT -- is this really true? */
+		if (   (mode & PCI_CONF_MAP_IO)
+		    && (PCI_MAPREG_TYPE(mask) == PCI_MAPREG_TYPE_IO)) {
+			/*
+			 * Upper 16 bits must be one.  Devices may hardwire
+			 * them to zero, though, per PCI 2.2, 6.2.5.1, p 203.
+			 */
 			mask |= 0xffff0000;
 
 			size = PCI_MAPREG_IO_SIZE(mask);
@@ -591,6 +606,13 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			pb->nmemwin++;
 			pb->pmem_total += size;
 		}
+	} else {
+		/* Ensure ROM is disabled */
+		bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
+		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, 0xfffffffe);
+		mask = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
+		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM,
+		    bar & ~PCI_MAPREG_ROM_ENABLE);
 	}
 
 	return 0;
@@ -652,6 +674,7 @@ setup_iowins(pciconf_bus_t *pb)
 			}
 			continue;
 		}
+		pd->enable |= PCI_CONF_ENABLE_IO;
 		if (pci_conf_debug) {
 			print_tag(pd->pc, pd->tag);
 			printf("Putting %llu I/O bytes @ %#llx (reg %x)\n",
@@ -706,6 +729,8 @@ setup_memwins(pciconf_bus_t *pb)
 		    pm->address > 0xFFFFFFFFULL) {
 			pm->address = 0;
 			pd->enable = 0;
+		} else {
+			pd->enable |= PCI_CONF_ENABLE_MEM;
 		}
 		if (pm->reg != PCI_MAPREG_ROM) {
 			if (pci_conf_debug) {
@@ -736,7 +761,7 @@ setup_memwins(pciconf_bus_t *pb)
 				    "Putting %llu ROM bytes @ %#llx (reg %x)\n",
 				    pm->size, pm->address, pm->reg);
 			}
-			base = ((pcireg_t) pm->address) | PCI_MAPREG_TYPE_ROM;
+			base = (pcireg_t) (pm->address | PCI_MAPREG_ROM_ENABLE);
 			pci_conf_write(pd->pc, pd->tag, pm->reg, base);
 		}
 	}
@@ -875,10 +900,10 @@ static int
 configure_bus(pciconf_bus_t *pb)
 {
 	pciconf_dev_t	*pd;
-	int		def_ltim, max_ltim, band;
+	int		def_ltim, max_ltim, band, bus_mhz;
 
-				/* MIN_GNT assumes a clock rate of 33MHz */
-	max_ltim = pb->max_mingnt * 33 / 4;	/* cvt to cycle count */
+	bus_mhz = pb->freq_66 ? 66 : 33;
+	max_ltim = pb->max_mingnt * bus_mhz / 4;	/* cvt to cycle count */
 	band = 40000000;			/* 0.25us cycles/sec */
 	if (band < pb->bandwidth_used) {
 		printf("PCI bus %d: Warning: Total bandwidth exceeded!?\n",
@@ -888,7 +913,7 @@ configure_bus(pciconf_bus_t *pb)
 		def_ltim = (band - pb->bandwidth_used) / pb->ndevs;
 		if (def_ltim > pb->min_maxlat)
 			def_ltim = pb->min_maxlat;
-		def_ltim = def_ltim * 33 / 4;
+		def_ltim = def_ltim * bus_mhz / 4;
 	}
 	def_ltim = (def_ltim + 7) & ~7;
 	max_ltim = (max_ltim + 7) & ~7;
@@ -922,20 +947,24 @@ configure_bus(pciconf_bus_t *pb)
 		class = pci_conf_read(pd->pc, pd->tag, PCI_CLASS_REG);
 		misc = pci_conf_read(pd->pc, pd->tag, PCI_BHLC_REG);
 		cmd = pci_conf_read(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG);
-		cmd |= PCI_COMMAND_MASTER_ENABLE
-		    | PCI_COMMAND_SERR_ENABLE
-		    | PCI_COMMAND_PARITY_ENABLE;
+		cmd |= PCI_COMMAND_SERR_ENABLE | PCI_COMMAND_PARITY_ENABLE;
 		if (pb->fast_b2b)
 			cmd |= PCI_COMMAND_BACKTOBACK_ENABLE;
 		if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
 		    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_PCI) {
-			cmd |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
-			ltim = pd->min_gnt * 33 / 4;
+			if (pd->enable & PCI_CONF_ENABLE_IO)
+				cmd |= PCI_COMMAND_IO_ENABLE;
+			if (pd->enable & PCI_CONF_ENABLE_MEM)
+				cmd |= PCI_COMMAND_MEM_ENABLE;
+			if (pd->enable & PCI_CONF_ENABLE_BM)
+				cmd |= PCI_COMMAND_MASTER_ENABLE;
+			ltim = pd->min_gnt * bus_mhz / 4;
 			ltim = MIN (MAX (pb->def_ltim, ltim), pb->max_ltim);
 		} else {
+			cmd |= PCI_COMMAND_MASTER_ENABLE;
 			ltim = MIN (pb->def_ltim, pb->max_ltim);
 		}
-		if (!pd->enable) {
+		if (!(pd->enable)) {
 			print_tag(pd->pc, pd->tag);
 			printf("Disabled due to lack of resources.\n");
 			cmd &= ~(PCI_COMMAND_MASTER_ENABLE |
