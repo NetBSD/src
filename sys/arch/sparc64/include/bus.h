@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.35 2002/03/01 11:34:36 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.36 2002/03/14 20:46:11 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -128,30 +128,27 @@ struct sparc_bus_space_tag {
 	bus_space_tag_t	parent;
 	int		type;
 
-	int     (*sparc_bus_alloc) __P((bus_space_tag_t, 
-		bus_addr_t, bus_addr_t,
-		bus_size_t, bus_size_t, bus_size_t, 
-		int, bus_addr_t *, bus_space_handle_t *));
+	int     (*sparc_bus_alloc) __P((bus_space_tag_t, bus_addr_t, 
+		bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, 
+		bus_addr_t *, bus_space_handle_t *));
 
-	void	(*sparc_bus_free) __P((bus_space_tag_t, 
-		bus_space_handle_t, bus_size_t));
+	void	(*sparc_bus_free) __P((bus_space_tag_t, bus_space_handle_t, 
+		bus_size_t));
 
-	int	(*sparc_bus_map) __P((bus_space_tag_t,
-		bus_type_t, bus_addr_t,	bus_size_t,
+	int	(*sparc_bus_map) __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 		int, vaddr_t, bus_space_handle_t *));
 
-	int	(*sparc_bus_unmap) __P((bus_space_tag_t,
-		bus_space_handle_t, bus_size_t));
+	int	(*sparc_bus_unmap) __P((bus_space_tag_t, bus_space_handle_t, 
+		bus_size_t));
 
 	int	(*sparc_bus_subregion) __P((bus_space_tag_t,
-		bus_space_handle_t, bus_size_t,
-		bus_size_t, bus_space_handle_t *));
+		bus_space_handle_t, bus_size_t,	bus_size_t, 
+		bus_space_handle_t *));
 
-	paddr_t	(*sparc_bus_mmap) __P((bus_space_tag_t,
-		bus_addr_t, off_t, int, int));
+	paddr_t	(*sparc_bus_mmap) __P((bus_space_tag_t,	bus_addr_t, off_t, 
+		int, int));
 
-	void	*(*sparc_intr_establish) __P((bus_space_tag_t,
-		int, int, int,
+	void	*(*sparc_intr_establish) __P((bus_space_tag_t, int, int, int,
 		int (*) __P((void *)), void *));
 
 };
@@ -195,14 +192,6 @@ static int	bus_space_map __P((
 				bus_addr_t,
 				bus_size_t,
 				int,			/*flags*/
-				bus_space_handle_t *));
-static int	bus_space_map2 __P((
-				bus_space_tag_t,
-				bus_type_t,
-				bus_addr_t,
-				bus_size_t,
-				int,			/*flags*/
-				vaddr_t,		/*preferred vaddr*/
 				bus_space_handle_t *));
 static int	bus_space_unmap __P((
 				bus_space_tag_t,
@@ -274,20 +263,7 @@ bus_space_map(t, a, s, f, hp)
 	int		f;
 	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_map)(t, 0, a, s, f, 0, hp);
-}
-
-__inline__ int
-bus_space_map2(t, bt, a, s, f, v, hp)
-	bus_space_tag_t	t;
-	bus_type_t	bt;
-	bus_addr_t	a;
-	bus_size_t	s;
-	int		f;
-	vaddr_t	v;
-	bus_space_handle_t *hp;
-{
-	_BS_CALL(t, sparc_bus_map)(t, bt, a, s, f, v, hp);
+	_BS_CALL(t, sparc_bus_map)(t, a, s, f, 0, hp);
 }
 
 __inline__ int
@@ -341,14 +317,16 @@ void * bus_space_vaddr __P((bus_space_tag_t space, bus_space_handle_t handle));
 #endif
 
 /* flags for bus space map functions */
-#define BUS_SPACE_MAP_CACHEABLE		0x0001
-#define BUS_SPACE_MAP_LINEAR		0x0002
-#define BUS_SPACE_MAP_READONLY		0x0004
-#define BUS_SPACE_MAP_PREFETCHABLE	0x0008
-#define BUS_SPACE_MAP_BUS1	0x0100	/* placeholders for bus functions... */
-#define BUS_SPACE_MAP_BUS2	0x0200
-#define BUS_SPACE_MAP_BUS3	0x0400
-#define BUS_SPACE_MAP_BUS4	0x0800
+#define	BUS_SPACE_MAP_CACHEABLE		0x0001
+#define	BUS_SPACE_MAP_LINEAR		0x0002
+#define	BUS_SPACE_MAP_READONLY		0x0004
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x0008
+#define	BUS_SPACE_MAP_BIG		0x0010	/* Force BE */
+#define	BUS_SPACE_MAP_LITTLE		0x0020	/* Force LE */
+#define	BUS_SPACE_MAP_BUS1		0x0100	
+#define	BUS_SPACE_MAP_BUS2		0x0200
+#define	BUS_SPACE_MAP_BUS3		0x0400
+#define	BUS_SPACE_MAP_BUS4		0x0800
 
 
 /* flags for intr_establish() */
@@ -383,23 +361,6 @@ bus_space_barrier(t, h, o, s, f)
 		/* A store followed by a load? */
 		__asm __volatile("membar #StoreLoad|#MemIssue|#Lookaside");
 }
-
-/*
- * Device space probe assistant.
- * The optional callback function's arguments are:
- *	the temporary virtual address
- *	the passed `arg' argument
- */
-int bus_space_probe __P((
-		bus_space_tag_t,
-		bus_type_t,
-		bus_addr_t,
-		bus_size_t,			/* probe size */
-		size_t,				/* offset */
-		int,				/* flags */
-		int (*) __P((void *, void *)),	/* callback function */
-		void *));			/* callback arg */
-
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
