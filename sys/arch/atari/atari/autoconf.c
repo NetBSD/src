@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1998/01/12 18:03:58 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 1998/04/10 10:37:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -158,10 +158,10 @@ config_console()
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
-#include "idec.h"
+#include "wd.h"
 
-#if NIDEC
-extern	struct cfdriver ide_cd;
+#if NWD > 0
+extern	struct cfdriver wd_cd;
 #endif
 #if NSD > 0
 extern	struct cfdriver sd_cd;  
@@ -174,8 +174,8 @@ extern	struct cfdriver fd_cd;
 #endif
 
 struct cfdriver *genericconf[] = {
-#if NIDEC > 0
-	&ide_cd,
+#if NWD > 0
+	&wd_cd,
 #endif
 #if NSD > 0
 	&sd_cd,
