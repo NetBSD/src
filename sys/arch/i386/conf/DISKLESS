@@ -3,7 +3,7 @@
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
 # and will use NFS for root and swap.  (No local disk space needed.)
 #
-#	$Id: DISKLESS,v 1.1 1994/08/14 22:38:54 gwr Exp $
+#	$Id: DISKLESS,v 1.2 1994/10/25 21:31:35 cgd Exp $
 #
 
 machine		"i386"
@@ -25,6 +25,7 @@ options		KERNFS
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
 options		"COMPAT_09"
+options		"COMPAT_10"
 options		"MACHINE_NONCONTIG"
 options		DDB
 # This is for Ethernet cards that can't receive long UDP messages.
