@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.9 1997/04/28 15:43:47 mjacob Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.10 1997/05/01 22:16:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -131,6 +131,8 @@ const char *ncr53c9x_variant_names[] = {
 	"ESP200",
 	"NCR53C94",
 	"NCR53C96",
+	"ESP406",
+	"FAS408",
 };
 
 /*
@@ -197,6 +199,17 @@ ncr53c9x_attach(sc, adapter, dev)
 	 * Now try to attach all the sub-devices
 	 */
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
+	/*
+	 * Enable interupts from the SCSI core
+	 */
+	if ((sc->sc_rev == NCR_VARIANT_ESP406) ||
+	    (sc->sc_rev == NCR_VARIANT_FAS408)) {
+		NCR_PIOREGS(sc);
+		NCR_WRITE_REG(sc, NCR_CFG5, NCRCFG5_SINT |
+		    NCR_READ_REG(sc, NCR_CFG5));
+		NCR_SCSIREGS(sc);
+	}
 }
 
 /*
@@ -222,6 +235,9 @@ ncr53c9x_reset(sc)
 
 	/* do these backwards, and fall through */
 	switch (sc->sc_rev) {
+	case NCR_VARIANT_ESP406:
+	case NCR_VARIANT_FAS408:
+		NCR_SCSIREGS(sc);
 	case NCR_VARIANT_NCR53C94:
 	case NCR_VARIANT_NCR53C96:
 	case NCR_VARIANT_ESP200:
@@ -1269,7 +1285,7 @@ ncr53c9x_intr(sc)
 	size_t size;
 	int nfifo;
 
-	NCR_TRACE(("[ncr53c9x_intr]"));
+	NCR_TRACE(("[ncr53c9x_intr] "));
 
 	/*
 	 * I have made some (maybe seriously flawed) assumptions here,
