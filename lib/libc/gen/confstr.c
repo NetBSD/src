@@ -1,4 +1,4 @@
-/*	$NetBSD: confstr.c,v 1.5 1995/02/25 08:51:06 cgd Exp $	*/
+/*	$NetBSD: confstr.c,v 1.6 1995/05/13 06:58:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)confstr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: confstr.c,v 1.5 1995/02/25 08:51:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: confstr.c,v 1.6 1995/05/13 06:58:18 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ static char rcsid[] = "$NetBSD: confstr.c,v 1.5 1995/02/25 08:51:06 cgd Exp $";
 #include <errno.h>
 #include <paths.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 size_t

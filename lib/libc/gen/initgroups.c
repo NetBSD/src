@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.8 1995/02/25 08:51:25 cgd Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.9 1995/05/13 06:58:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: initgroups.c,v 1.8 1995/02/25 08:51:25 cgd Exp $";
+static char rcsid[] = "$NetBSD: initgroups.c,v 1.9 1995/05/13 06:58:22 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 
 #include <stdio.h>
+#include <unistd.h>
 
 int
 initgroups(uname, agroup)
