@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.18 2003/10/03 13:48:09 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.19 2003/10/07 15:05:14 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -13,25 +13,34 @@ BEDO	burst extended data output
 BIOS	basic input/output system
 BLOB	binary large object
 BSD	berkeley software distribution
+CAD	computer-aided design
 CD	compact disc
 CDRAM	cache dynamic random access memory
+CGA	color graphics array
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CLI	command line interface
 CPU	central process unit
 CRLF	carriage return line feed
+CRT	cathode ray tube
 CSS	cascading style sheets
 CVS	concurrent versions system
+DAC	digital to analog conversor
+DDC	display data channel
 DDR	double data rate
+DDWG	digital display working group
 DMA	direct memory access
 DNS	domain name system
 DRAM	dynamic random access memory
 DSL	digital subscriber line
 DTD	document type definition
 DVD	digital versatile disc
+DVI	digital visual interface
 ECP	enhanced capability port
+EDID	extended display identification data
 EDO	extended data out
 EEPROM	electrically erasable programmable read only memory
+EGA	enhanced graphics array
 EISA	extended industry standard architecture
 EPP	enhanced parallel port
 EPROM	erasable programmable read only memory
@@ -46,6 +55,7 @@ GIF	graphics interchange format
 GNU	gnu's not unix
 GPL	gnu/general public license
 GUI	graphics user interface
+HDCP	high-bandwidth digital content protection
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
 I2O	intelligent input/output
@@ -74,6 +84,7 @@ JPEG	joint photographic experts group
 KVA	kernel virtual address
 LAN	local area network
 LBA	logical block addressing
+LCD	liquid crystal display
 LDAP	lightweight directory access protocol
 LUN	logical unit number
 MBR	master boot record
@@ -97,6 +108,7 @@ PIO	programmed input/output
 PNG	portable network graphics
 POP	post office protocol
 POSIX	portable operating system interface [for] unix
+POST	power on self test
 PPP	point-to-point protocol
 PPPOE	point-to-point protocol over ethernet
 PROM	programmable read only memory
@@ -124,9 +136,12 @@ SPD	serial presence detect
 SRAM	static random access memory
 SSH	secure shell
 SSL	secure sockets layer
+SVGA	super video graphics array
 TCL	tool command language
 TCP	transmission control protocol
+TFT	thin film transistor
 TLD	top level domain
+TMDS	transition minimized differential signaling
 TTY	teletype
 TZ	time zone
 UC	uncacheable
@@ -138,10 +153,13 @@ USB	universal serial bus
 USWC	uncacheable speculative write combining
 UUCP	unix-to-unix copy protocol
 VCM	virtual channel memory
+VESA	video electronics standards association
+VGA	video graphics array
 VPN	virtual private network
 VRAM	video random access memory
 WRAM	window random access memory
 WWW	world wide web
+XGA	extended graphics array
 XML	extensible markup language
 XSL	extensible stylesheet language
 XT	extended technology
