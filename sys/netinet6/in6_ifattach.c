@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.8 1999/09/19 21:31:34 is Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.9 1999/09/19 21:42:23 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -355,8 +355,10 @@ in6_ifattach(ifp, type, laddr, noloop)
 		rtflag = RTF_CLONING;
 		if (laddr == NULL)
 			break;
-		onebyte_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8], laddr);
-		break;
+		if (laddr_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8],
+				laddr, 1) != 0) {
+			break;
+		}
 	}
 
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
