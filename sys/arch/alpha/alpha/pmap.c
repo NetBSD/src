@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.125 2000/03/01 00:43:34 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.126 2000/03/01 01:32:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2000/03/01 00:43:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2000/03/01 01:32:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,12 +536,15 @@ int	pmap_physpage_delref __P((void *));
  *
  *	Check to see if a pmap is active on the current processor.
  */
-#define	PMAP_ISACTIVE_TEST(pm)						\
-	(((pm)->pm_cpus & (1UL << cpu_number())) != 0)
+#define	PMAP_ISACTIVE_TEST(pm, cpu_id)					\
+	(((pm)->pm_cpus & (1UL << (cpu_id))) != 0)
 
-#ifdef DEBUG
-#define	PMAP_ISACTIVE(pm)						\
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
+#define	PMAP_ISACTIVE(pm, cpu_id)					\
 ({									\
+	/*								\
+	 * XXX This test is not MP-safe.				\
+	 */								\
 	int isactive_ = PMAP_ISACTIVE_TEST(pm);				\
 									\
 	if (curproc != NULL && curproc->p_vmspace != NULL &&		\
@@ -550,8 +553,8 @@ int	pmap_physpage_delref __P((void *));
 	(isactive_);							\
 })
 #else
-#define	PMAP_ISACTIVE(pm) PMAP_ISACTIVE_TEST(pm)
-#endif /* DEBUG */
+#define	PMAP_ISACTIVE(pm, cpu_id)	PMAP_ISACTIVE_TEST(pm, cpu_id)
+#endif /* DEBUG && !MULTIPROCESSOR */
 
 /*
  * PMAP_ACTIVATE_ASN_SANITY:
@@ -1552,7 +1555,7 @@ pmap_protect(pmap, sva, eva, prot)
 	PMAP_LOCK(pmap);
 
 	bits = pte_prot(pmap, prot);
-	isactive = PMAP_ISACTIVE(pmap);
+	isactive = PMAP_ISACTIVE(pmap, cpu_id);
 
 	l1pte = pmap_l1pte(pmap, sva);
 	for (; sva < eva; sva = l1eva, l1pte++) {
@@ -1643,7 +1646,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		return (KERN_SUCCESS);
 
 	managed = PAGE_IS_MANAGED(pa);
-	isactive = PMAP_ISACTIVE(pmap);
+	isactive = PMAP_ISACTIVE(pmap, cpu_id);
 	needisync = isactive && (prot & VM_PROT_EXECUTE) != 0;
 	wired = (flags & PMAP_WIRED) != 0;
 
@@ -2663,7 +2666,7 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id, prmt)
 	pa = pmap_pte_pa(pte);
 	onpv = (pmap_pte_pv(pte) != 0);
 	hadasm = (pmap_pte_asm(pte) != 0);
-	isactive = PMAP_ISACTIVE(pmap);
+	isactive = PMAP_ISACTIVE(pmap, cpu_id);
 	needisync = isactive && (pmap_pte_exec(pte) != 0);
 
 	/*
@@ -2773,7 +2776,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 		npte = (*pte | set) & mask;
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
-			isactive = PMAP_ISACTIVE(pv->pv_pmap);
+			isactive = PMAP_ISACTIVE(pv->pv_pmap, cpu_id);
 			needisync |= (isactive && (pmap_pte_exec(pte) != 0));
 			*pte = npte;
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
@@ -3432,7 +3435,7 @@ pmap_lev1map_create(pmap, cpu_id)
 	 * The page table base has changed; if the pmap was active,
 	 * reactivate it.
 	 */
-	if (PMAP_ISACTIVE(pmap)) {
+	if (PMAP_ISACTIVE(pmap, cpu_id)) {
 		pmap_asn_alloc(pmap, cpu_id);
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 	}
@@ -3484,7 +3487,7 @@ pmap_lev1map_destroy(pmap, cpu_id)
 	 * clashing TLB entries.
 	 */
 	PMAP_INVALIDATE_ASN(pmap, cpu_id);
-	if (PMAP_ISACTIVE(pmap))
+	if (PMAP_ISACTIVE(pmap, cpu_id))
 		PMAP_ACTIVATE(pmap, curproc, cpu_id);
 
 	/*
@@ -3763,7 +3766,7 @@ pmap_l3pt_delref(pmap, va, l3pte, cpu_id, ptp)
 		 */
 		PMAP_INVALIDATE_TLB(pmap,
 		    (vaddr_t)(&VPT[VPT_INDEX(va)]), FALSE,
-		    PMAP_ISACTIVE(pmap), cpu_id);
+		    PMAP_ISACTIVE(pmap, cpu_id), cpu_id);
 #if defined(MULTIPROCESSOR) && 0
 		pmap_tlb_shootdown(pmap,
 		    (vaddr_t)(&VPT[VPT_INDEX(va)]), 0);
