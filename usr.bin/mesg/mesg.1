@@ -1,4 +1,4 @@
-.\"	$NetBSD: mesg.1,v 1.5 1997/08/01 04:31:04 mikel Exp $
+.\"	$NetBSD: mesg.1,v 1.6 1997/10/19 05:09:03 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,11 @@
 .Nm mesg
 .Nd display (do not display) messages from other users
 .Sh SYNOPSIS
-.Nm mesg
+.Nm
 .Op Cm n | Cm y
 .Sh DESCRIPTION
 The
-.Nm mesg
+.Nm
 utility is invoked by a user to control write access others
 have to the terminal device associated with the standard error
 output.
@@ -63,11 +63,11 @@ Permits messages to be displayed.
 .El
 .Pp
 If no arguments are given,
-.Nm mesg
+.Nm
 displays the present message status to the standard error output.
 .Pp
 The
-.Nm mesg
+.Nm
 utility exits with one of the following values:
 .Bl -tag -width flag -compact -offset indent
 .Pp
@@ -88,6 +88,6 @@ An error has occurred.
 .Xr write 1
 .Sh HISTORY
 A
-.Nm mesg
+.Nm
 command appeared in
 .At v6 .
