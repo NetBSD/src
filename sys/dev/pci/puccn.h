@@ -1,7 +1,12 @@
-/*	$NetBSD: pucvar.h,v 1.3 2000/07/25 23:18:43 jeffs Exp $	*/
+/* $Id: */
 
 /*
- * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
+ * Derived from  pci.c
+ * Copyright (c) 2000 Geocast Networks Systems.  All rights reserved.
+ *
+ * Copyright (c) 1995, 1996, 1997, 1998
+ *     Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1994 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,10 +18,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,51 +34,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 /*
- * Exported (or conveniently located) PCI "universal" communications card
- * software structures.
+ * Machine independent support for PCI serial console support.
  *
- * Author: Christopher G. Demetriou, May 14, 1998.
+ * Platform code should provide cpu_comcnprobe() that fills
+ * in the pci_attach_args.  This allows the console can be
+ * used before the normal PCI bus initialization.
  */
 
-#define	PUC_MAX_PORTS		8
-
-struct puc_device_description {
-	const char		*name;
-	pcireg_t		rval[4];
-	pcireg_t		rmask[4];
-	struct {
-		int	type;
-		int	bar;
-		int	offset;
-	}			ports[PUC_MAX_PORTS];
-};
-
-#define	PUC_REG_VEND		0
-#define	PUC_REG_PROD		1
-#define	PUC_REG_SVEND		2
-#define	PUC_REG_SPROD		3
-
-#define	PUC_PORT_TYPE_NONE	0
-#define	PUC_PORT_TYPE_COM	1
-#define	PUC_PORT_TYPE_LPT	2
-
-#define	PUC_PORT_VALID(desc, port) \
-  ((port) < PUC_MAX_PORTS && (desc)->ports[(port)].type != PUC_PORT_TYPE_NONE)
-#define PUC_PORT_BAR_INDEX(bar)	(((bar) - PCI_MAPREG_START) / 4)
-
-struct puc_attach_args {
-	int			port;
-	int			type;
-
-	pci_chipset_tag_t	pc;
-	pci_intr_handle_t	intrhandle;
-
-	bus_addr_t		a;
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-};
-
-extern const struct puc_device_description puc_devices[];
-extern const struct puc_device_description *
-	puc_find_description __P((pcireg_t, pcireg_t, pcireg_t, pcireg_t));
+int cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa);
