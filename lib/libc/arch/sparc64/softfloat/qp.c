@@ -1,4 +1,4 @@
-/* $NetBSD: qp.c,v 1.2 2002/03/27 03:41:54 jmc Exp $ */
+/* $NetBSD: qp.c,v 1.3 2002/03/27 03:43:39 jmc Exp $ */
 
 #include <sys/cdefs.h>
 #include <memory.h>
@@ -55,7 +55,7 @@ void _Qp_dtoq(float128 *c, double a)
 {
 	float64 _b;
 	memcpy (&_b, &a, sizeof(float64));
-	*c = float64_to_float128(b);
+	*c = float64_to_float128(_b);
 }
 
 
