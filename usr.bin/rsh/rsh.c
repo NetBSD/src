@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.26 2005/03/11 02:45:24 ginsbach Exp $	*/
+/*	$NetBSD: rsh.c,v 1.27 2005/03/11 03:20:23 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.26 2005/03/11 02:45:24 ginsbach Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.27 2005/03/11 03:20:23 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -594,7 +594,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-nd%s]%s[-l login] [-p port]%s [login@]host %s\n", getprogname(),
+	    "usage: %s [-46nd%s]%s[-l login] [-p port]%s [login@]host %s\n", getprogname(),
 #ifdef KERBEROS
 #ifdef CRYPT
 	    "x", " [-k realm] ",
