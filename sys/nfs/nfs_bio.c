@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.30 1996/12/02 22:55:41 thorpej Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.31 1997/04/20 16:24:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -728,6 +728,7 @@ again:
 			nmp->nm_bufqiods++;
 			wakeup((caddr_t)&nfs_iodwant[i]);
 			gotiod = TRUE;
+			break;
 		}
 	/*
 	 * If none are free, we may already have an iod working on this mount
