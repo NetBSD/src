@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.21.2.2 1998/01/29 10:27:45 mellon Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.21.2.3 1998/05/05 09:25:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -186,6 +186,7 @@ tcp_timers(tp, timer)
 	register struct tcpcb *tp;
 	int timer;
 {
+	short	rto;
 
 	switch (timer) {
 
@@ -217,8 +218,10 @@ tcp_timers(tp, timer)
 			break;
 		}
 		tcpstat.tcps_rexmttimeo++;
-		TCPT_RANGESET(tp->t_rxtcur,
-		    TCP_REXMTVAL(tp) * tcp_backoff[tp->t_rxtshift],
+		rto = TCP_REXMTVAL(tp);
+		if (rto < tp->t_rttmin)
+			rto = tp->t_rttmin;
+		TCPT_RANGESET(tp->t_rxtcur, rto * tcp_backoff[tp->t_rxtshift],
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
 		/*
@@ -286,9 +289,12 @@ tcp_timers(tp, timer)
 		 * (no responses to probes) reaches the maximum
 		 * backoff that we would use if retransmitting.
 		 */
+		rto = TCP_REXMTVAL(tp);
+		if (rto < tp->t_rttmin)
+			rto = tp->t_rttmin;
 		if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
 		    (tp->t_idle >= tcp_maxpersistidle ||
-		    tp->t_idle >= TCP_REXMTVAL(tp) * tcp_totbackoff)) {
+		    tp->t_idle >= rto * tcp_totbackoff)) {
 			tcpstat.tcps_persistdrops++;
 			tp = tcp_drop(tp, ETIMEDOUT);
 			break;
