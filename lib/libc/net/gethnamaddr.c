@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.42.2.3 2002/06/26 11:15:53 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.42.2.4 2002/07/29 15:22:28 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.42.2.3 2002/06/26 11:15:53 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.42.2.4 2002/07/29 15:22:28 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1056,7 +1056,6 @@ addrsort(ap, num)
 		    hp = ap[j];
 		    ap[j] = ap[j+1];
 		    ap[j+1] = hp;
-
 		} else
 		    break;
 	    }
@@ -1175,7 +1174,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 	querybuf buf;
 	struct hostent *hp;
 	const unsigned char *uaddr;
-	int len, af;
+	int len, af, advance;
 
 	_DIAGASSERT(rv != NULL);
 
@@ -1185,21 +1184,23 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 
 	switch (af) {
 	case AF_INET:
-		(void)sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
-			(uaddr[3] & 0xff),
-			(uaddr[2] & 0xff),
-			(uaddr[1] & 0xff),
-			(uaddr[0] & 0xff));
+		(void)snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u.in-addr.arpa",
+		    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
+		    (uaddr[1] & 0xff), (uaddr[0] & 0xff));
 		break;
 
 	case AF_INET6:
 		qp = qbuf;
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-			qp += sprintf(qp, "%x.%x.",
-				       uaddr[n] & 0xf,
-				       ((unsigned int)uaddr[n] >> 4) & 0xf);
+			advance = sprintf(qp, "%x.%x.", uaddr[n] & 0xf,
+			    ((unsigned int)uaddr[n] >> 4) & 0xf);
+			if (advance > 0 &&
+			    qp + advance < qbuf + sizeof(qbuf) - 1)
+				qp += advance;
+			else
+				return NS_NOTFOUND;
 		}
-		strcpy(qp, "ip6.int");
+		strlcat(qbuf, "ip6.int", sizeof(qbuf));
 		break;
 	default:
 		abort();
