@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.267 2000/10/03 02:59:05 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.268 2000/10/12 02:54:14 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.263 2000/10/03 02:58:30 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.264 2000/10/12 02:52:58 itojun Exp 
  */
 
 /*
@@ -2080,6 +2080,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "J2585A",
 	},
 	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,
+	    0,
+	    "Hi/Fn",
+	    "7751",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_6500,
+	    0,
+	    "Hi/Fn",
+	    "6500",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
 	    0,
 	    "IBM",
@@ -2746,6 +2758,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Powerstorm 4D50T",
 	},
 	{
+	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
+	    0,
+	    "Invertex",
+	    "AEON",
+	},
+	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
 	    0,
 	    "I. T. T.",
@@ -3266,6 +3284,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "GA620 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
+	    0,
+	    "NetSec",
+	    "7751",
 	},
 	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
@@ -8074,6 +8098,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_HIFN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Hi/Fn",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_3WARE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "3ware",
@@ -8104,6 +8134,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_INVERTEX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Invertex",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_CONEXANT, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Conexant Systems",
@@ -8131,6 +8167,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GEOCAST, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Geocast Network Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETSEC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "NetSec",
 	    NULL,
 	},
 	{
