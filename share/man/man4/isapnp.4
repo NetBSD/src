@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.15 2000/05/28 22:37:46 augustss Exp $
+.\"	$NetBSD: isapnp.4,v 1.16 2000/07/26 12:02:28 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -51,54 +51,72 @@ devices on an ISA bus.
 includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
 .Pp
-.Ss SCSI controllers
-.Bl -tag -width speaker -offset indent -compact
+.Ss SCSI interfaces
+.Bl -tag -width pcdisplay -offset indent
 .It aha
-Adapted AHA-154[02] SCSI controller card.
+Adaptec AHA-154[02]
+.Tn SCSI
+interfaces.
 .It aic
-Adaptec AHA-1520B SCSI controller card.
+Adaptec AHA-1520B
+.Tn SCSI
+interfaces.
 .El
 .\"
 .Pp
 .Ss Disk controllers
-.Bl -tag -width speaker -offset indent -compact
+.Bl -tag -width pcdisplay -offset indent
 .It wdc
 Standard IDE and ATAPI drive controller. 
 .El
 .\"
 .Pp
 .Ss Serial and parallel interfaces
-.Bl -tag -width speaker -offset indent -compact
+.Bl -tag -width pcdisplay -offset indent
 .It com
 8250/16450/16550-compatible ISA PnP serial cards and internal modems.
 .El
 .\"
 .Pp
 .Ss Network interfaces
-.Bl -tag -width speaker -offset indent -compact
+.Bl -tag -width pcdisplay -offset indent
 .It ep
-3com 3c509B Etherlink-III Ethernet interface.
+3com 3c509B Etherlink-III
+.Tn Ethernet
+interface.
 .It le
-PCnet-PnP Ethernet interfaces based on the successor to the AMD LANCE chip.
+PCnet-PnP
+.Tn Ethernet
+interfaces based on the successor to the AMD LANCE chip.
 .It ne
-NE2000-compatible Ethernet interfaces.
+NE2000-compatible
+.Tn Ethernet
+interfaces.
 .It tr
 TROPIC based token ring interfaces.
 .El
 .\"
 .Ss Sound cards
-.Bl -tag -width speaker -offset indent -compact
-.It sb
-Soundblaster, Soundblaster 16, and Soundblaster Pro sound cards.
+.Bl -tag -width pcdisplay -offset indent
+.It ess
+ESS Technology derived PnP sound cards and devices.
 .It guspnp
 Gravis Ultrasound PnP sound cards.
+.It sb
+Soundblaster, Soundblaster 16, and Soundblaster Pro sound cards.
 .It wss
 Windows Sound System compatible cards, e.g., most of the cards
 with Crystal Semiconductor chips.
 .It ym
 Yamaha OPL3-SAx sound cards.
-.It ess
-ESS Technology derived PnP sound cards and devices.
+.El
+.Pp
+.Ss Miscellaneous devices
+.Bl -tag -width pcdisplay -offset indent
+.It pcic
+.Tn PCI
+.Tn PCMCIA
+controllers, including the Cirrus Logic GD6729.
 .El
 .Pp
 ISA Plug-and-Play devices also have alternate ISA drivers with
@@ -119,6 +137,8 @@ The manual pages for each individual
 driver also list
 the supported front-ends for other buses.
 .Sh SEE ALSO
+.Xr intro 4 ,
+.Xr aha 4 ,
 .Xr aic 4 ,
 .Xr com 4 ,
 .Xr ep 4 ,
@@ -127,7 +147,9 @@ the supported front-ends for other buses.
 .Xr isa 4 ,
 .Xr le 4 ,
 .Xr ne 4 ,
+.Xr pcic 4 ,
 .Xr sb 4 ,
+.Xr tr 4 ,
 .Xr wdc 4 ,
 .Xr wss 4 ,
 .Xr ym 4
