@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.45 2000/10/10 16:26:44 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.147 2000/10/10 15:35:47 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.46 2000/10/18 21:14:15 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.154 2000/10/18 20:01:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -115,13 +115,23 @@ extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
 static struct timeval icmp6errppslim_last;
 extern int icmp6_nodeinfo;
+
+/*
+ * List of callbacks to notify when Path MTU changes are made.
+ */
+struct icmp6_mtudisc_callback {
+	LIST_ENTRY(icmp6_mtudisc_callback) mc_list;
+	void (*mc_func) __P((struct in6_addr *));
+};
+
+LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
+    LIST_HEAD_INITIALIZER(&icmp6_mtudisc_callbacks);
+
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
 
 static void icmp6_errcount __P((struct icmp6errstat *, int, int));
 static int icmp6_rip6_input __P((struct mbuf **, int));
-static void icmp6_mtudisc_update __P((struct in6_addr *, struct icmp6_hdr *,
-				      struct mbuf *));
 static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
 static const char *icmp6_redirect_diag __P((struct in6_addr *,
 	struct in6_addr *, struct in6_addr *));
@@ -202,6 +212,29 @@ icmp6_errcount(stat, type, code)
 		return;
 	}
 	stat->icp6errs_unknown++;
+}
+
+/*
+ * Register a Path MTU Discovery callback.
+ */
+void
+icmp6_mtudisc_callback_register(func)
+	void (*func) __P((struct in6_addr *));
+{
+	struct icmp6_mtudisc_callback *mc;
+
+	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
+	     mc = LIST_NEXT(mc, mc_list)) {
+		if (mc->mc_func == func)
+			return;
+	}
+
+	mc = malloc(sizeof(*mc), M_PCB, M_NOWAIT);
+	if (mc == NULL)
+		panic("icmp6_mtudisc_callback_register");
+
+	mc->mc_func = func;
+	LIST_INSERT_HEAD(&icmp6_mtudisc_callbacks, mc, mc_list);
 }
 
 /*
@@ -831,7 +864,6 @@ icmp6_input(mp, offp, proto)
 			sizeof(struct ip6_hdr);
 		struct ip6ctlparam ip6cp;
 		struct in6_addr *finaldst = NULL;
-		int icmp6type = icmp6->icmp6_type;
 		struct ip6_frag *fh;
 		struct ip6_rthdr *rth;
 		struct ip6_rthdr0 *rth0;
@@ -971,19 +1003,19 @@ icmp6_input(mp, offp, proto)
 			return IPPROTO_DONE;
 		}
 #endif
-		if (icmp6type == ICMP6_PACKET_TOO_BIG) {
-			if (finaldst == NULL)
-				finaldst = &((struct ip6_hdr *)(icmp6 + 1))->ip6_dst;
-			icmp6_mtudisc_update(finaldst, icmp6, m);
-		}
+		if (finaldst == NULL)
+			finaldst = &((struct ip6_hdr *)(icmp6 + 1))->ip6_dst;
+		ip6cp.ip6c_m = m;
+		ip6cp.ip6c_icmp6 = icmp6;
+		ip6cp.ip6c_ip6 = (struct ip6_hdr *)(icmp6 + 1);
+		ip6cp.ip6c_off = eoff;
+		ip6cp.ip6c_finaldst = finaldst;
 
 		ctlfunc = (void (*) __P((int, struct sockaddr *, void *)))
 			(inet6sw[ip6_protox[nxt]].pr_ctlinput);
 		if (ctlfunc) {
-			ip6cp.ip6c_m = m;
-			ip6cp.ip6c_ip6 = (struct ip6_hdr *)(icmp6 + 1);
-			ip6cp.ip6c_off = eoff;
-			(*ctlfunc)(code, (struct sockaddr *)&icmp6src, &ip6cp);
+			(void) (*ctlfunc)(code, (struct sockaddr *)&icmp6src,
+			    &ip6cp);
 		}
 	    }
 		break;
@@ -1005,12 +1037,14 @@ icmp6_input(mp, offp, proto)
 	return IPPROTO_DONE;
 }
 
-static void
-icmp6_mtudisc_update(dst, icmp6, m)
-	struct in6_addr *dst;
-	struct icmp6_hdr *icmp6;/* we can assume the validity of the pointer */
-	struct mbuf *m;	/* currently unused but added for scoped addrs */
+void
+icmp6_mtudisc_update(ip6cp)
+	struct ip6ctlparam *ip6cp;
 {
+	struct icmp6_mtudisc_callback *mc;
+	struct in6_addr *dst = ip6cp->ip6c_finaldst;
+	struct icmp6_hdr *icmp6 = ip6cp->ip6c_icmp6;
+	struct mbuf *m = ip6cp->ip6c_m;	/* will be necessary for scope issue */
 	u_int mtu = ntohl(icmp6->icmp6_mtu);
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 sin6;
@@ -1019,6 +1053,11 @@ icmp6_mtudisc_update(dst, icmp6, m)
 	sin6.sin6_family = PF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *dst;
+	/* XXX normally, this won't happen */
+	if (IN6_IS_ADDR_LINKLOCAL(dst)) {
+		sin6.sin6_addr.s6_addr16[1] =
+		    htons(m->m_pkthdr.rcvif->if_index);
+	}
 	/* sin6.sin6_scope_id = XXX: should be set if DST is a scoped addr */
 	rt = rtalloc1((struct sockaddr *)&sin6, 1);	/*clone*/
 	if (!rt || (rt->rt_flags & RTF_HOST) == 0) {
@@ -1034,11 +1073,20 @@ icmp6_mtudisc_update(dst, icmp6, m)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
 		} else if (mtu < rt->rt_ifp->if_mtu &&
 			   rt->rt_rmx.rmx_mtu > mtu) {
+			icmp6stat.icp6s_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
 	}
 	if (rt)
 		RTFREE(rt);
+
+	/*
+	 * Notify protocols that the MTU for this destination
+	 * has changed.
+	 */
+	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
+	     mc = LIST_NEXT(mc, mc_list))
+		(*mc->mc_func)(&sin6.sin6_addr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.21 2000/10/10 16:26:44 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.22 2000/10/18 21:14:15 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -205,14 +205,14 @@ struct ip6protosw inet6sw[] = {
 },
 #ifdef IPSEC
 { SOCK_RAW,	&inet6domain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
-  ah6_input,	0,	 	0,		0,
+  ah6_input,	0,	 	ah6_ctlinput,	0,
   0,	  
   0,		0,		0,		0,
   ipsec6_sysctl,
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inet6domain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
-  esp6_input,	0,	 	0,		0,
+  esp6_input,	0,	 	esp6_ctlinput,	0,
   0,	  
   0,		0,		0,		0,
   ipsec6_sysctl,

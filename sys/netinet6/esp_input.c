@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.10 2000/10/18 17:09:16 thorpej Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.11 2000/10/18 21:14:15 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.34 2000/10/01 12:37:19 itojun Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
+#include <netinet6/ip6protosw.h>
 #endif
 
 #include <netinet6/ipsec.h>
@@ -917,5 +918,103 @@ bad:
 	if (m)
 		m_freem(m);
 	return IPPROTO_DONE;
+}
+
+void
+esp6_ctlinput(cmd, sa, d)
+	int cmd;
+	struct sockaddr *sa;
+	void *d;
+{
+	const struct newesp *espp;
+	struct newesp esp;
+	struct secasvar *sav;
+	struct ip6_hdr *ip6;
+	struct mbuf *m;
+	int off;
+	struct in6_addr finaldst;
+	struct in6_addr s;
+
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+
+	/* if the parameter is from icmp6, decode it. */
+	if (d != NULL) {
+		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
+		off = ip6cp->ip6c_off;
+
+		/* translate addresses into internal form */
+		memcpy(&finaldst, ip6cp->ip6c_finaldst, sizeof(finaldst));
+		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
+			finaldst.s6_addr16[1] =
+			    htons(m->m_pkthdr.rcvif->if_index);
+		}
+		memcpy(&s, &ip6->ip6_src, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+	} else {
+		m = NULL;
+		ip6 = NULL;
+	}
+
+	if (ip6) {
+		/*
+		 * XXX: We assume that when ip6 is non NULL,
+		 * M and OFF are valid.
+		 */
+
+		/* check if we can safely examine src and dst ports */
+		if (m->m_pkthdr.len < off + sizeof(esp))
+			return;
+
+		if (m->m_len < off + sizeof(esp)) {
+			/*
+			 * this should be rare case,
+			 * so we compromise on this copy...
+			 */
+			m_copydata(m, off, sizeof(esp), (caddr_t)&esp);
+			espp = &esp;
+		} else
+			espp = (struct newesp*)(mtod(m, caddr_t) + off);
+
+		if (cmd == PRC_MSGSIZE) {
+			/*
+			 * Check to see if we have a valid SA corresponding to
+			 * the address in the ICMP message payload.
+			 */
+			sav = key_allocsa(AF_INET6, (caddr_t)&s,
+			    (caddr_t)&finaldst, IPPROTO_ESP, espp->esp_spi);
+			if (sav == NULL)
+				return;
+			if (sav->state != SADB_SASTATE_MATURE &&
+			    sav->state != SADB_SASTATE_DYING) {
+				key_freesav(sav);
+				return;
+			}
+
+			/* XXX Further validation? */
+
+			key_freesav(sav);
+
+			/*
+			 * Now that we've validated that we are actually
+			 * communicating with the host indicated in the ICMPv6
+			 * message, recalculate the new MTU, and create the
+			 * corresponding routing entry.
+			 */
+			icmp6_mtudisc_update((struct ip6ctlparam *)d);
+
+			return;
+		}
+
+		/* we normally notify single pcb here */
+	} else {
+		/* we normally notify any pcb here */
+	}
 }
 #endif /* INET6 */

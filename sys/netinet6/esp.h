@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.14 2000/10/18 17:09:16 thorpej Exp $	*/
+/*	$NetBSD: esp.h,v 1.15 2000/10/18 21:14:14 itojun Exp $	*/
 /*	$KAME: esp.h,v 1.15 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
@@ -107,6 +107,8 @@ extern void *esp4_ctlinput __P((int, struct sockaddr *, void *));
 extern int esp6_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *));
 extern int esp6_input __P((struct mbuf **, int *, int));
+
+extern void esp6_ctlinput __P((int, struct sockaddr *, void *));
 #endif /* INET6 */
 
 extern int esp_schedule __P((const struct esp_algorithm *, struct secasvar *));
