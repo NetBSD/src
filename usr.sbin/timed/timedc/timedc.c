@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.11 2003/10/13 06:14:04 itojun Exp $	*/
+/*	$NetBSD: timedc.c,v 1.12 2004/10/30 15:54:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.11 2003/10/13 06:14:04 itojun Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.12 2004/10/30 15:54:29 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,13 +185,13 @@ makeargv(void)
 
 	margc = 0;
 	for (cp = cmdline; cp < margv[MAX_MARGV - 1] && *cp;) {
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 		if (*cp == '\0')
 			break;
 		*argp++ = cp;
 		margc += 1;
-		while (*cp != '\0' && !isspace(*cp))
+		while (*cp != '\0' && !isspace((unsigned char)*cp))
 			cp++;
 		if (*cp == '\0')
 			break;

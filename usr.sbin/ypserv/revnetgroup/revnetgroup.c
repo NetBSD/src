@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.12 2003/10/21 03:00:41 fvdl Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.13 2004/10/30 16:01:48 dsl Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.12 2003/10/21 03:00:41 fvdl Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.13 2004/10/30 16:01:48 dsl Exp $");
 #endif
 
 #include <ctype.h>
@@ -139,9 +139,9 @@ main(int argc, char *argv[])
 			continue;
 		p = line;
 
-		for (key = p; *p && isspace(*p) == 0; p++)
+		for (key = p; *p && isspace((unsigned char)*p) == 0; p++)
 			;
-		while (*p && isspace(*p))
+		while (*p && isspace((unsigned char)*p))
 			*p++ = '\0';
 		store(gtable, key, p);
 	}

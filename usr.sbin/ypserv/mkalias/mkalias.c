@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.11 2003/07/14 05:55:38 itojun Exp $ */
+/*	$NetBSD: mkalias.c,v 1.12 2004/10/30 16:01:48 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.11 2003/07/14 05:55:38 itojun Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.12 2004/10/30 16:01:48 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -141,7 +141,7 @@ capitalize(char *name, int len)
 	if (last == '.') {
 		for(c = name; i < len; i++) {
 			if (last == '.')
-				*c = toupper(*c);
+				*c = toupper((unsigned char)*c);
 			last = *c++;
 		}
 	}

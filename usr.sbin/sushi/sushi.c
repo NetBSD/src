@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.18 2004/03/24 19:10:58 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.19 2004/10/30 15:51:20 dsl Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -153,14 +153,14 @@ next_word(char **line)
 static chtype
 parse_keybinding(char *key)
 {
-	if (tolower(key[0]) == 'f' && isdigit(key[1]))
+	if (tolower((unsigned char)key[0]) == 'f' && isdigit((unsigned char)key[1]))
 		/* we have an F key */
 		return(KEY_F(atoi(key + 1)));
 	else if (key[0] == '^')
-		return((chtype)(toupper(key[1]) & ~0x40));
-	else if (isalpha(key[0]))
+		return((chtype)(toupper((unsigned char)key[1]) & ~0x40));
+	else if (isalpha((unsigned char)key[0]))
 		/* we have an insane user */
-		return((chtype)tolower(key[0]));
+		return((chtype)tolower((unsigned char)key[0]));
 
 	bailout("%s: %s", catgets(catalog, 1, 20, "Bad keybinding"), key);
 	/* NOTREACHED */
