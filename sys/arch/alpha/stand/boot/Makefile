@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1996/04/12 01:35:15 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1996/06/14 20:02:52 cgd Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -14,9 +14,11 @@ BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
 
 HEADERSIZE_PROG = headersize
 
-AFLAGS += -DASSEMBLER
+DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ECOFF
+
+AFLAGS += -DASSEMBLER ${DEFNS}
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../..
-CFLAGS = -Werror -mno-fp-regs -g -DCOMPAT_UFS
+CFLAGS = -Werror -mno-fp-regs -g ${DEFNS}
 
 CLEANFILES+= vers.c vers.o
 
