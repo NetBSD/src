@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.659 2004/10/26 11:31:17 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.660 2004/10/28 07:29:07 martti Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.659 2004/10/26 11:30:52 augustss Exp 
+ *	NetBSD: pcidevs,v 1.661 2004/10/28 07:26:09 martti Exp 
  */
 
 /*
@@ -6924,6 +6924,10 @@ const struct pci_product pci_products[] = {
 	    "FC929X",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PERC_4SC,
+	    "PERC 4/SC",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
 	    "Packet Engines G-NIC Ethernet",
 	},
@@ -9772,4 +9776,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1866;
+const int pci_nproducts = 1867;
