@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/04/09 00:32:33 tv Exp $
+#	$NetBSD: Makefile,v 1.8 1998/04/09 00:52:06 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -7,6 +7,7 @@ LIB=	cc1
 NOLINT=
 NOMAN=
 NOPROFILE=
+NOSTATICLIB=
 CPICFLAGS=-fPIC -DPIC
 YHEADER=1
 
