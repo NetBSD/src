@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 1995/09/26 03:53:46 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.55 1995/10/10 21:33:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -581,7 +581,7 @@ syscall(code, frame)
 		 * on the stack to skip, the argument follows the syscall
 		 * number without a gap.
 		 */
-		if (code != SUNOS_SYS_sunos_sigreturn) {
+		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP, 
