@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.41.2.1 1997/10/31 07:47:44 mellon Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.41.2.2 1998/10/01 17:56:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -32,7 +32,44 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_ether.c	8.1 (Berkeley) 6/10/93
+ *	@(#)if_ether.c	8.2 (Berkeley) 9/26/94
+ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Public Access Networks Corporation ("Panix").  It was developed under
+ * contract to Panix by Eric Haszlakiewicz and Thor Lancelot Simon.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -467,7 +504,7 @@ in_arpinput(m)
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	register struct llinfo_arp *la = 0;
 	register struct rtentry *rt;
-	struct in_ifaddr *ia, *maybe_ia = 0;
+	struct in_ifaddr *ia;
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -488,24 +525,35 @@ in_arpinput(m)
 
 	/*
 	 * If the source IP address is zero, this is most likely a
-	 * confused host trying to use IP address zero.  (Windoze?)
-	 * XXX:  Should we bother trying to reply to these?
+	 * confused host trying to use IP address zero. (Windoze?)
+	 * XXX: Should we bother trying to reply to these?
 	 */
 	if (in_nullhost(isaddr))
 		goto out;
 
-	/* Search for a matching interface address. */
-	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
-		if (ia->ia_ifp == ifp) {
-			maybe_ia = ia;
-			if (in_hosteq(itaddr, ia->ia_addr.sin_addr) ||
-			    in_hosteq(isaddr, ia->ia_addr.sin_addr))
-				break;
-		}
-	if (maybe_ia == 0)
-		goto out;
+	/*
+	 * Search for a matching interface address
+	 * or any address on the interface to use
+	 * as a dummy address in the rest of this function
+	 */
+	INADDR_TO_IA(itaddr, ia);
+	while ((ia != NULL) && ia->ia_ifp != m->m_pkthdr.rcvif)
+		NEXT_IA_WITH_SAME_ADDR(ia);
 
-	myaddr = ia ? ia->ia_addr.sin_addr : maybe_ia->ia_addr.sin_addr;
+	if (ia == NULL) {
+		INADDR_TO_IA(isaddr, ia);
+		while ((ia != NULL) && ia->ia_ifp != m->m_pkthdr.rcvif)
+			NEXT_IA_WITH_SAME_ADDR(ia);
+
+		if (ia == NULL) {
+			IFP_TO_IA(ifp, ia);
+			if (ia == NULL)
+				goto out;
+		}
+	}
+
+	myaddr = ia->ia_addr.sin_addr;
+
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
 	    ifp->if_data.ifi_addrlen))
 		goto out;	/* it's from me, ignore it. */
