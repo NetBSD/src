@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.9 1999/06/25 03:08:02 sommerfeld Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.10 1999/06/25 03:22:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.9 1999/06/25 03:08:02 sommerfeld Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.10 1999/06/25 03:22:35 nathanw Exp $");
 #endif
 #endif
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: print-udp.c,v 1.9 1999/06/25 03:08:02 sommerfeld Exp $");
 #include <rpc/rpc.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
