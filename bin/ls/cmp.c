@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.12 1998/10/08 02:13:30 wsanchez Exp $	*/
+/*	$NetBSD: cmp.c,v 1.13 1998/10/08 23:30:35 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.12 1998/10/08 02:13:30 wsanchez Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.13 1998/10/08 23:30:35 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ modcmp(a, b)
 		return (1);
 	else if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
 		return (-1);
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
 	else if (b->fts_statp->st_mtimensec > a->fts_statp->st_mtimensec)
 		return (1);
 	else if (b->fts_statp->st_mtimensec < a->fts_statp->st_mtimensec)
@@ -99,7 +99,7 @@ revmodcmp(a, b)
 		return (-1);
 	else if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
 		return (1);
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
 	else if (b->fts_statp->st_mtimensec > a->fts_statp->st_mtimensec)
 		return (-1);
 	else if (b->fts_statp->st_mtimensec < a->fts_statp->st_mtimensec)
@@ -122,7 +122,7 @@ acccmp(a, b)
 		return (1);
 	else if (b->fts_statp->st_atime < a->fts_statp->st_atime)
 		return (-1);
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
 	else if (b->fts_statp->st_atimensec > a->fts_statp->st_atimensec)
 		return (1);
 	else if (b->fts_statp->st_atimensec < a->fts_statp->st_atimensec)
@@ -145,7 +145,7 @@ revacccmp(a, b)
 		return (-1);
 	else if (b->fts_statp->st_atime < a->fts_statp->st_atime)
 		return (1);
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
 	else if (b->fts_statp->st_atimensec > a->fts_statp->st_atimensec)
 		return (-1);
 	else if (b->fts_statp->st_atimensec < a->fts_statp->st_atimensec)
@@ -168,7 +168,7 @@ statcmp(a, b)
 		return (1);
 	else if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
 		return (-1);
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
 	else if (b->fts_statp->st_ctimensec > a->fts_statp->st_ctimensec)
 		return (1);
 	else if (b->fts_statp->st_ctimensec < a->fts_statp->st_ctimensec)
@@ -191,7 +191,7 @@ revstatcmp(a, b)
 		return (-1);
 	else if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
 		return (1);
-#ifdef _POSIX_SOURCE
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
 	else if (b->fts_statp->st_ctimensec > a->fts_statp->st_ctimensec)
 		return (-1);
 	else if (b->fts_statp->st_ctimensec < a->fts_statp->st_ctimensec)
