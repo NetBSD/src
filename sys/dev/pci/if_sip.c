@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.46 2002/02/28 19:10:16 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.47 2002/02/28 20:08:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.46 2002/02/28 19:10:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.47 2002/02/28 20:08:11 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -907,19 +907,14 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	sc->sc_tx_drain_thresh = 512 / 32;
 
 	/*
-	 * Initialize the Rx FIFO drain threshold.  We want to start
-	 * dumping the packet into memory very quickly, especially
-	 * at Gigabot speeds (the value we use is very aggressive).
+	 * Initialize the Rx FIFO drain threshold.
+	 *
 	 * This is in units of 8 bytes.
 	 *
 	 * We should never set this value lower than 2; 14 bytes are
 	 * required to filter the packet.
 	 */
-#if 0
-	sc->sc_rx_drain_thresh = 4;
-#else
-	sc->sc_rx_drain_thresh = RXCFG_DRTH >> RXCFG_DRTH_SHIFT;
-#endif
+	sc->sc_rx_drain_thresh = 128 / 8;
 
 #ifdef SIP_EVENT_COUNTERS
 	/*
