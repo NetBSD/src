@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.9 2003/01/18 08:02:49 thorpej Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.10 2003/04/01 14:45:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.9 2003/01/18 08:02:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.10 2003/04/01 14:45:09 thorpej Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.9 2003/01/18 08:02:49 thorp
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <compat/linux/common/linux_exec.h>
 
@@ -191,7 +193,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 		a++;
 
 		a->a_type = AT_PAGESZ;
-		a->a_v = NBPG;
+		a->a_v = PAGE_SIZE;
 		a++;
 
 		a->a_type = LINUX_AT_HWCAP;
