@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.23 2001/02/08 10:47:04 itojun Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.26 2001/02/12 12:45:06 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -51,12 +51,26 @@ u_int supported_authentications = 0;
 extern Options options;
 extern char *__progname;
 
+void
+ssh1_put_password(char *password)
+{
+	int size;
+	char *padded;
+
+	size = roundup(strlen(password) + 1, 32);
+	padded = xmalloc(size);
+	strlcpy(padded, password, size);
+	packet_put_string(padded, size);
+	memset(padded, 0, size);
+	xfree(padded);
+}
+
 /*
  * Checks if the user has an authentication agent, and if so, tries to
  * authenticate using the agent.
  */
 int
-try_agent_authentication()
+try_agent_authentication(void)
 {
 	int type;
 	char *comment;
@@ -380,7 +394,7 @@ try_rhosts_rsa_authentication(const char *local_user, RSA * host_key)
 
 #ifdef KRB4
 int
-try_kerberos_authentication()
+try_kerberos_authentication(void)
 {
 	KTEXT_ST auth;		/* Kerberos data */
 	char *reply;
@@ -497,7 +511,7 @@ try_kerberos_authentication()
 
 #ifdef AFS
 int
-send_kerberos_tgt()
+send_kerberos_tgt(void)
 {
 	CREDENTIALS *creds;
 	char pname[ANAME_SZ], pinst[INST_SZ], prealm[REALM_SZ];
@@ -616,7 +630,7 @@ send_afs_tokens(void)
  * Note that the client code is not tied to s/key or TIS.
  */
 int
-try_challenge_reponse_authentication()
+try_challenge_reponse_authentication(void)
 {
 	int type, i;
 	int payload_len;
@@ -658,7 +672,7 @@ try_challenge_reponse_authentication()
 			break;
 		}
 		packet_start(SSH_CMSG_AUTH_TIS_RESPONSE);
-		packet_put_string(response, strlen(response));
+		ssh1_put_password(response);
 		memset(response, 0, strlen(response));
 		xfree(response);
 		packet_send();
@@ -691,7 +705,7 @@ try_password_authentication(char *prompt)
 			error("Permission denied, please try again.");
 		password = read_passphrase(prompt, 0);
 		packet_start(SSH_CMSG_AUTH_PASSWORD);
-		packet_put_string(password, strlen(password));
+		ssh1_put_password(password);
 		memset(password, 0, strlen(password));
 		xfree(password);
 		packet_send();

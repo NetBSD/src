@@ -59,7 +59,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.48 2001/02/06 22:43:02 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.51 2001/02/13 21:51:09 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -133,7 +133,7 @@ int	session_ident = -1;
 /* Returns the user\'s terminal to normal mode if it had been put in raw mode. */
 
 void
-leave_raw_mode()
+leave_raw_mode(void)
 {
 	if (!in_raw_mode)
 		return;
@@ -147,7 +147,7 @@ leave_raw_mode()
 /* Puts the user\'s terminal in raw mode. */
 
 void
-enter_raw_mode()
+enter_raw_mode(void)
 {
 	struct termios tio;
 
@@ -173,7 +173,7 @@ enter_raw_mode()
 /* Restores stdin to blocking mode. */
 
 void
-leave_non_blocking()
+leave_non_blocking(void)
 {
 	if (in_non_blocking_mode) {
 		(void) fcntl(fileno(stdin), F_SETFL, 0);
@@ -185,7 +185,7 @@ leave_non_blocking()
 /* Puts stdin terminal in non-blocking mode. */
 
 void
-enter_non_blocking()
+enter_non_blocking(void)
 {
 	in_non_blocking_mode = 1;
 	(void) fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
@@ -227,7 +227,7 @@ signal_handler(int sig)
  */
 
 double
-get_current_time()
+get_current_time(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -241,7 +241,7 @@ get_current_time()
  */
 
 void
-client_check_initial_eof_on_stdin()
+client_check_initial_eof_on_stdin(void)
 {
 	int len;
 	char buf[1];
@@ -295,7 +295,7 @@ client_check_initial_eof_on_stdin()
  */
 
 void
-client_make_packets_from_stdin_data()
+client_make_packets_from_stdin_data(void)
 {
 	u_int len;
 
@@ -326,7 +326,7 @@ client_make_packets_from_stdin_data()
  */
 
 void
-client_check_window_change()
+client_check_window_change(void)
 {
 	struct winsize ws;
 
@@ -406,6 +406,15 @@ client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
 
 	if (select((*maxfdp)+1, *readsetp, *writesetp, NULL, NULL) < 0) {
 		char buf[100];
+
+		/*
+		 * We have to clear the select masks, because we return.
+		 * We have to return, because the mainloop checks for the flags
+		 * set by the signal handlers.
+		 */
+		memset(*readsetp, 0, *maxfdp);
+		memset(*writesetp, 0, *maxfdp);
+
 		if (errno == EINTR)
 			return;
 		/* Note: we might still have data in the buffers. */
@@ -760,7 +769,7 @@ client_process_output(fd_set * writeset)
  */
 
 void
-client_process_buffered_input_packets()
+client_process_buffered_input_packets(void)
 {
 	dispatch_run(DISPATCH_NONBLOCK, &quit_pending, NULL);
 }
@@ -1195,7 +1204,7 @@ client_input_channel_req(int type, int plen, void *ctxt)
 }
 
 void
-client_init_dispatch_20()
+client_init_dispatch_20(void)
 {
 	dispatch_init(&dispatch_protocol_error);
 	dispatch_set(SSH2_MSG_CHANNEL_CLOSE, &channel_input_oclose);
@@ -1209,7 +1218,7 @@ client_init_dispatch_20()
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
 }
 void
-client_init_dispatch_13()
+client_init_dispatch_13(void)
 {
 	dispatch_init(NULL);
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE, &channel_input_close);
@@ -1228,14 +1237,14 @@ client_init_dispatch_13()
 	    &x11_input_open : &deny_input_open);
 }
 void
-client_init_dispatch_15()
+client_init_dispatch_15(void)
 {
 	client_init_dispatch_13();
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE, &channel_input_ieof);
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE_CONFIRMATION, & channel_input_oclose);
 }
 void
-client_init_dispatch()
+client_init_dispatch(void)
 {
 	if (compat20)
 		client_init_dispatch_20();

@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.164 2001/02/07 22:35:46 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.167 2001/02/12 23:26:20 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -202,7 +202,7 @@ sighup_handler(int sig)
  * Restarts the server.
  */
 void
-sighup_restart()
+sighup_restart(void)
 {
 	log("Received SIGHUP; restarting.");
 	close_listen_socks();
@@ -315,7 +315,8 @@ sshd_exchange_identification(int sock_in, int sock_out)
 			fatal_cleanup();
 		}
 
-		/* Read other side\'s version identification. */
+		/* Read other side's version identification. */
+		memset(buf, 0, sizeof(buf)); 
 		for (i = 0; i < sizeof(buf) - 1; i++) {
 			if (atomicio(read, sock_in, &buf[i], 1) != 1) {
 				log("Did not receive ident string from %s.", get_remote_ipaddr());
@@ -757,7 +758,7 @@ main(int ac, char **av)
 
 		/* Disconnect from the controlling tty. */
 #ifdef TIOCNOTTY
-		fd = open("/dev/tty", O_RDWR | O_NOCTTY);
+		fd = open(_PATH_TTY, O_RDWR | O_NOCTTY);
 		if (fd >= 0) {
 			(void) ioctl(fd, TIOCNOTTY, NULL);
 			close(fd);
@@ -1330,8 +1331,8 @@ do_ssh1_kex(void)
 		len = BN_num_bytes(session_key_int);
 		if (len < 0 || len > sizeof(session_key)) {
 			error("do_connection: bad session key len from %s: "
-			    "session_key_int %d > sizeof(session_key) %d",
-			    get_remote_ipaddr(), len, (int)sizeof(session_key));
+			    "session_key_int %d > sizeof(session_key) %lu",
+			    get_remote_ipaddr(), len, (u_long)sizeof(session_key));
 			rsafail++;
 		} else {
 			memset(session_key, 0, sizeof(session_key));
@@ -1387,6 +1388,10 @@ do_ssh2_kex(void)
 	if (options.ciphers != NULL) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
+	}
+	if (options.macs != NULL) {
+		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
+		myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
 	}
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = list_hostkey_types();
 

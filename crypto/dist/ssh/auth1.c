@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.15 2001/02/07 22:35:45 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.17 2001/02/13 22:49:40 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -289,7 +289,8 @@ do_authloop(Authctxt *authctxt)
 			    authctxt->user);
 
 		/* Special handling for root */
-		if (authenticated && authctxt->pw->pw_uid == 0 && !auth_root_allowed())
+		if (authenticated && authctxt->pw->pw_uid == 0 &&
+		    !auth_root_allowed(get_authname(type)))
 			authenticated = 0;
 
 		/* Log before sending the reply */
@@ -334,8 +335,6 @@ do_authentication()
 	authctxt->user = user;
 	authctxt->style = style;
 
-	setproctitle("%s", user);
-
 	/* Verify that the user is a valid user. */
 	pw = getpwnam(user);
 	if (pw && allowed_user(pw)) {
@@ -346,6 +345,8 @@ do_authentication()
 		pw = NULL;
 	}
 	authctxt->pw = pw;
+
+	setproctitle("%s", pw ? user : "unknown");
 
 	/*
 	 * If we are not running as root, the user must have the same uid as

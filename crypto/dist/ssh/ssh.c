@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.92 2001/02/06 23:06:21 jakob Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.95 2001/02/11 12:59:25 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -65,6 +65,8 @@ RCSID("$OpenBSD: ssh.c,v 1.92 2001/02/06 23:06:21 jakob Exp $");
 #include "tildexpand.h"
 #include "dispatch.h"
 #include "misc.h"
+#include "kex.h"
+#include "mac.h"
 
 extern char *__progname;
 
@@ -138,12 +140,12 @@ int subsystem_flag = 0;
 /* Prints a help message to the user.  This function never returns. */
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage: %s [options] host [command]\n", __progname);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -l user     Log in using this user name.\n");
-	fprintf(stderr, "  -n          Redirect input from /dev/null.\n");
+	fprintf(stderr, "  -n          Redirect input from " _PATH_DEVNULL ".\n");
 	fprintf(stderr, "  -A          Enable authentication agent forwarding.\n");
 	fprintf(stderr, "  -a          Disable authentication agent forwarding.\n");
 #ifdef AFS
@@ -275,12 +277,6 @@ main(int ac, char **av)
 	/* Parse command-line arguments. */
 	host = NULL;
 
-	/* If program name is not one of the standard names, use it as host name. */
-	cp = __progname;
-	if (strcmp(cp, "rsh") && strcmp(cp, "ssh") && strcmp(cp, "rlogin") &&
-	    strcmp(cp, "slogin") && strcmp(cp, "remsh"))
-		host = cp;
-
 	for (optind = 1; optind < ac; optind++) {
 		if (av[optind][0] != '-') {
 			if (host)
@@ -298,7 +294,7 @@ main(int ac, char **av)
 		opt = av[optind][1];
 		if (!opt)
 			usage();
-		if (strchr("eilcpLRo", opt)) {	/* options with arguments */
+		if (strchr("eilcmpLRo", opt)) {	/* options with arguments */
 			optarg = av[optind] + 2;
 			if (strcmp(optarg, "") == 0) {
 				if (optind >= ac - 1)
@@ -425,6 +421,14 @@ main(int ac, char **av)
 				} else {
 					options.ciphers = (char *)-1;
 				}
+			}
+			break;
+		case 'm':
+			if (mac_valid(optarg))
+				options.macs = xstrdup(optarg);
+			else {
+				fprintf(stderr, "Unknown mac type '%s'\n", optarg);
+				exit(1);
 			}
 			break;
 		case 'p':
@@ -700,7 +704,7 @@ x11_get_proto(char *proto, int proto_len, char *data, int data_len)
 
 	if (options.xauth_location) {
 		/* Try to get Xauthority information for the display. */
-		snprintf(line, sizeof line, "%.100s list %.200s 2>/dev/null",
+		snprintf(line, sizeof line, "%.100s list %.200s 2>" _PATH_DEVNULL,
 		    options.xauth_location, getenv("DISPLAY"));
 		f = popen(line, "r");
 		if (f && fgets(line, sizeof(line), f) &&
@@ -1013,7 +1017,7 @@ ssh_session2(void)
 	int in, out, err;
 
 	if (stdin_null_flag) {
-		in = open("/dev/null", O_RDONLY);
+		in = open(_PATH_DEVNULL, O_RDONLY);
 	} else {
 		in = dup(STDIN_FILENO);
 	}
