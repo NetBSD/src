@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_lgamma.c,v 1.5 1994/09/22 16:39:48 jtc Exp $";
+static char rcsid[] = "$NetBSD: e_lgamma.c,v 1.6 1995/05/10 20:45:39 jtc Exp $";
 #endif
 
 /* __ieee754_lgamma(x)

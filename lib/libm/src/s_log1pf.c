@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: s_log1pf.c,v 1.3 1994/09/22 16:44:53 jtc Exp $";
+static char rcsid[] = "$NetBSD: s_log1pf.c,v 1.4 1995/05/10 20:47:48 jtc Exp $";
 #endif
 
 #include "math.h"

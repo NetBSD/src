@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: s_significand.c,v 1.5 1994/09/22 16:45:09 jtc Exp $";
+static char rcsid[] = "$NetBSD: s_significand.c,v 1.6 1995/05/10 20:48:11 jtc Exp $";
 #endif
 
 /*

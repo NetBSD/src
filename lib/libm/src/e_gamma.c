@@ -12,7 +12,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_gamma.c,v 1.5 1994/09/22 16:39:31 jtc Exp $";
+static char rcsid[] = "$NetBSD: e_gamma.c,v 1.6 1995/05/10 20:45:11 jtc Exp $";
 #endif
 
 /* __ieee754_gamma(x)

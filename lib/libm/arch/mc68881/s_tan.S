@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)tan.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_tan.S,v 1.2 1994/03/18 23:23:21 jtc Exp $")
+RCSID("$NetBSD: s_tan.S,v 1.3 1995/05/10 20:44:25 jtc Exp $")
 
 ENTRY(tan)
 	ftand	sp@(4),fp0
