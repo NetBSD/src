@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.33 2003/08/07 16:31:18 agc Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.34 2003/08/28 14:59:07 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -79,6 +79,7 @@ struct	uba_softc {
 	bus_space_tag_t	uh_iot;		/* Tag for this Unibus */
 	bus_space_handle_t uh_ioh;	/* Handle for I/O space */
 	bus_dma_tag_t	uh_dmat;
+	char	*uh_used;		/* I/O addresses used */
 };
 
 /*
