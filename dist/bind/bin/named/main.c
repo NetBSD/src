@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2004/05/17 23:43:22 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2004/05/18 03:08:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -323,7 +323,8 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 				goto found;
 			}
 		}
-		ns_main_earlyfatal("unrecognized flag '%.*s'", end - arg, arg);
+		ns_main_earlyfatal("unrecognized flag '%.*s'",
+		    (int)(end - arg), arg);
 	 found:
 		if (*end == '\0')
 			break;
