@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.32 2000/01/10 16:58:38 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.33 2000/06/26 15:52:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,9 +41,7 @@
 #ifndef	_STDIO_H_
 #define	_STDIO_H_
 
-#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
-#include <sys/types.h>
-#endif
+#include <sys/ansi.h>
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -62,10 +60,10 @@ typedef	_BSD_SIZE_T_	size_t;
  * which we assume is exactly as big as eight chars.
  */
 #if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
-typedef off_t fpos_t;
+typedef __off_t fpos_t;
 #else
 typedef struct __sfpos {
-	long long _pos;			/* XXX must be the same as off_t */
+	__off_t _pos;
 } fpos_t;
 #endif
 
