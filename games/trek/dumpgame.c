@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.5 1997/10/12 21:24:42 christos Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.6 1998/09/11 14:26:19 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpgame.c,v 1.5 1997/10/12 21:24:42 christos Exp $");
+__RCSID("$NetBSD: dumpgame.c,v 1.6 1998/09/11 14:26:19 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ restartgame()
 	int	fd;
 	int		version;
 
-	if ((fd = open("trek.dump", 0)) < 0 ||
+	if ((fd = open("trek.dump", O_RDONLY)) < 0 ||
 	    read(fd, &version, sizeof version) != sizeof version ||
 	    version != VERSION ||
 	    readdump(fd))
