@@ -13,6 +13,7 @@
 ./etc/dumpdates
 ./etc/ftpchroot
 ./etc/ftpusers
+./etc/floppytab
 ./etc/gettytab
 ./etc/group
 ./etc/hosts
