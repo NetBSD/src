@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.10 1996/10/13 02:04:35 christos Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.11 1999/03/04 02:40:20 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -669,9 +669,9 @@ tp_emit(dutype, tpcb, seq, eot, data)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ACKSEND]) {
-					printf("Calling ADDOPTION 0x%x, %p, 0x%x,0x%x\n",
+					printf("Calling ADDOPTION 0x%x, %p, 0x%lx,0x%x\n",
 					       TPP_flow_cntl_conf,
-					       hdr, sizeof(bogus), bogus[0]);
+					       hdr, (unsigned long)sizeof(bogus), bogus[0]);
 				}
 #endif
 				ADDOPTION(TPP_flow_cntl_conf, hdr, sizeof(bogus), bogus[0]);
