@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1996/12/14 13:52:01 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.2.1 1997/01/30 05:34:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1091,8 +1091,9 @@ softint()
 int	*nofault;
 
 int
-badbaddr(addr)
+badbaddr(addr, size)
 	register caddr_t addr;
+	int		 size;
 {
 	register int i;
 	label_t	faultbuf;
@@ -1105,7 +1106,19 @@ badbaddr(addr)
 		nofault = (int *) 0;
 		return(1);
 	}
-	i = *(volatile char *)addr;
+	switch (size) {
+		case 1:
+			i = *(volatile char *)addr;
+			break;
+		case 2:
+			i = *(volatile short *)addr;
+			break;
+		case 4:
+			i = *(volatile long *)addr;
+			break;
+		default:
+			panic("badbaddr: unknown size");
+	}
 	nofault = (int *) 0;
 	return(0);
 }
@@ -1437,8 +1450,8 @@ bus_space_handle_t	*mhp;
 	vm_offset_t	va;
 	u_long		pa, endpa;
 
-	pa    = atari_trunc_page(bpa);
-	endpa = atari_round_page((bpa + size) - 1);
+	pa    = atari_trunc_page(bpa + t);
+	endpa = atari_round_page((bpa + t + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 1996/12/20 12:50:12 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5.2.1 1997/01/30 05:37:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -92,6 +92,8 @@ void		*auxp;
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
+
+	printf("\n");
 
 	config_found(dp, &pba, pcibusprint);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.15 1996/12/10 21:27:31 thorpej Exp $ */
+/*	$NetBSD: asc.c,v 1.15.2.1 1997/01/30 05:32:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -75,7 +75,7 @@ int asc_dmanext __P((struct sbic_softc *));
 int asc_dmaintr __P((struct sbic_softc *));
 int asc_dmago	__P((struct sbic_softc *, char *, int, int));
 int asc_scsicmd __P((struct scsi_xfer *xs));
-int asc_intr	__P((struct asc_softc *));
+int asc_intr	__P((void *arg));
 void asc_minphys __P((struct buf *bp));
 
 struct scsi_adapter asc_scsiswitch = {
@@ -440,9 +440,10 @@ asc_scsicmd(xs)
 
 
 int
-asc_intr(sc)
-	struct asc_softc *sc;
+asc_intr(arg)
+	void *arg;
 {
+	struct asc_softc *sc = arg;
 	int intr;
 	
 /*	printf("ascintr:");*/
