@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.65 1998/12/09 00:59:36 augustss Exp $	*/
+/*	$NetBSD: conf.h,v 1.66 1998/12/18 16:55:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -474,10 +474,6 @@ cdev_decl(uk);
 cdev_decl(bpf);
 
 cdev_decl(ipl);
-
-#if !defined(_LKM)
-#include "opt_compat_svr4.h"
-#endif
 
 #ifdef COMPAT_SVR4
 # define NSVR4_NET	1
