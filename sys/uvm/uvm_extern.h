@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.21.2.2 1999/02/25 04:11:15 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.21.2.3 1999/04/09 04:37:27 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -387,6 +387,7 @@ void			uvm_aio_aiodone __P((struct uvm_aiodesc *));
 
 /* uvm_pdaemon.c */
 void			uvm_pageout __P((void));
+void			uvm_aiodone_daemon __P((void));
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,
