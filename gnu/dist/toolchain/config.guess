@@ -133,11 +133,15 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	    hp300:0*|hp300:1.[012]*)	UNAME_MACHINE_ARCH=m68k4k;;
 	    *)
 		UNAME_MACHINE_ARCH=`(uname -p || sysctl -n hw.machine_arch || echo unknown) 2>/dev/null`
+		# Remap some names to GNU equivalents.
 		case "${UNAME_MACHINE_ARCH}" in
 		    arm26)		UNAME_MACHINE_ARCH=armv2;;
 		    arm32)		UNAME_MACHINE_ARCH=arm;;
 		    mips)		UNAME_MACHINE_ARCH=mipsel;;
-		    i386|m68k|ns32k|sparc|vax)
+		esac
+		# Mark platforms for which ELF is not the original format.
+		case "${UNAME_MACHINE_ARCH}" in
+		    arm|i386|m68k|ns32k|sparc|vax)
 			if ! echo __ELF__ | cc -E - | grep -q __ELF__; then
 			    UNAME_OBJFORMAT=elf
 			fi
