@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.31 2000/06/27 17:41:37 mrg Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.32 2000/07/22 16:11:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/msg.h>
-#include <uvm/uvm_extern.h>	/* XXX for <sys/sysctl.h> */
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
