@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.4 2003/09/30 06:41:30 lukem Exp $
+#	$NetBSD: Makefile.libx11,v 1.5 2005/01/21 05:15:36 rtr Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.xc}/lib/${LIB}
@@ -80,7 +80,7 @@ SRCS+=	SetLocale.c imConv.c imKStoUCS.c lcCT.c lcCharSet.c lcConv.c \
 	lcDB.c lcDefConv.c lcFile.c lcGeneric.c lcInit.c lcPrTxt.c \
 	lcPubWrap.c lcPublic.c lcRM.c lcStd.c lcTxtPr.c lcUTF8.c lcUtil.c
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-I. -DHAS_SNPRINTF -DLIBX11 -DPOSTLOCALELIBDIR=\"lib\"
 
 CMS_DEFINES=		-DXCMSDB=\"${X11LIBDIR}/Xcms.txt\"

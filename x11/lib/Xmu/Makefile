@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ INCS=	Atoms.h CharSet.h CloseHook.h Converters.h CurUtil.h \
 	StdSel.h SysUtil.h WidgetNode.h WinUtil.h Xct.h Xmu.h
 INCSDIR=${X11INCDIR}/X11/Xmu
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-DHAS_SNPRINTF
 CPPFLAGS+=	-DXTSTRINGDEFINES	#XTODO is this correct?
 

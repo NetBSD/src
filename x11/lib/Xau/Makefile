@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/06 03:05:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SRCS=	AuDispose.c AuFileName.c AuGetAddr.c AuGetBest.c AuLock.c \
 INCS=	Xauth.h
 INCSDIR=${X11INCDIR}/X11
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

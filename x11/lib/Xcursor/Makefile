@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ INCSDIR=${X11INCDIR}/X11/Xcursor
 
 MAN=	Xcursor.3
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-DICONDIR=\"${X11LIBDIR}/icons\"
 
 LIBDPLIBS=\
