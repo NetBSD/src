@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-skey.c,v 1.1.1.1 2000/09/28 22:09:41 thorpej Exp $	*/
+/*	$NetBSD: auth-skey.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-skey.c,v 1.1.1.1 2000/09/28 22:09:41 thorpej Exp $");
+__RCSID("$NetBSD: auth-skey.c,v 1.2 2000/10/05 14:09:07 sommerfeld Exp $");
 #endif
 
 #include "includes.h"
@@ -54,7 +54,7 @@ auth_skey_password(struct passwd * pw, const char *password)
 			skeyinfo = skey_fake_keyinfo(pw->pw_name);
 		}
 		if (skeyinfo != NULL)
-			packet_send_debug(skeyinfo);
+			packet_send_debug("%s", skeyinfo);
 		/* Try again. */
 		return 0;
 	} else if (skey_haskey(pw->pw_name) == 0 &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.2 2000/10/04 03:43:58 itojun Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.3 2000/10/05 14:09:08 sommerfeld Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssh-agent.c,v 1.2 2000/10/04 03:43:58 itojun Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.3 2000/10/05 14:09:08 sommerfeld Exp $");
 #endif
 
 #include "includes.h"
@@ -100,6 +100,24 @@ char socket_name[1024];
 char socket_dir[1024];
 
 extern char *__progname;
+
+static void
+printunset(int c_flag, char *varname)
+{
+	if (c_flag)
+	  	printf("unsetenv %s;\n", varname);
+	else
+	  	printf("unset %s;\n", varname);
+}
+
+static void
+printset(int c_flag, char *varname, char *val)
+{
+	if (c_flag)
+	  	printf("setenv %s %s;\n", varname, val);
+	else
+	  	printf("%s=%s; export %s;\n", varname, val, varname);
+}
 
 static void
 idtab_init(void)
@@ -668,7 +686,7 @@ main(int ac, char **av)
 	int sock, c_flag = 0, k_flag = 0, s_flag = 0, ch;
 	struct sockaddr_un sunaddr;
 	pid_t pid;
-	char *shell, *format, *pidstr, pidstrbuf[1 + 3 * sizeof pid];
+	char *shell, *pidstr, pidstrbuf[1 + 3 * sizeof pid];
 
 	/* check if RSA support exists */
 	if (rsa_alive() == 0) {
@@ -725,9 +743,8 @@ main(int ac, char **av)
 			perror("kill");
 			exit(1);
 		}
-		format = c_flag ? "unsetenv %s;\n" : "unset %s;\n";
-		printf(format, SSH_AUTHSOCKET_ENV_NAME);
-		printf(format, SSH_AGENTPID_ENV_NAME);
+		printunset(c_flag, SSH_AUTHSOCKET_ENV_NAME);
+		printunset(c_flag, SSH_AGENTPID_ENV_NAME);
 		printf("echo Agent pid %d killed;\n", pid);
 		exit(0);
 	}
@@ -775,11 +792,8 @@ main(int ac, char **av)
 		close(sock);
 		snprintf(pidstrbuf, sizeof pidstrbuf, "%d", pid);
 		if (ac == 0) {
-			format = c_flag ? "setenv %s %s;\n" : "%s=%s; export %s;\n";
-			printf(format, SSH_AUTHSOCKET_ENV_NAME, socket_name,
-			       SSH_AUTHSOCKET_ENV_NAME);
-			printf(format, SSH_AGENTPID_ENV_NAME, pidstrbuf,
-			       SSH_AGENTPID_ENV_NAME);
+			printset(c_flag, SSH_AUTHSOCKET_ENV_NAME, socket_name);
+			printset(c_flag, SSH_AGENTPID_ENV_NAME, pidstrbuf);
 			printf("echo Agent pid %d;\n", pid);
 			exit(0);
 		}
