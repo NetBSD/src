@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.19 2000/11/13 01:22:40 hubertf Exp $
+.\"	$NetBSD: postinstall,v 1.20 2000/11/13 22:05:52 fvdl Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -219,7 +219,10 @@ for information.
 .Pp
 You will need to set up a configuration file, see
 .Pa /usr/X11R6/lib/X11/XF86Config.eg
-for an example.  See
+for an example. The
+.Xr xf86config 1
+utility can interactively create a first version of such a configuration
+file for you. See
 .Lk http://www.xfree86.org/
 and the XFree86 manual page for more information.
 .\}
