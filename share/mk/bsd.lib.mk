@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.230 2003/08/01 17:04:01 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.231 2003/08/24 09:35:49 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -383,13 +383,13 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	@rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
 	${CC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
-	    -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
 	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}${_LIBSODIR} -L${DESTDIR}${LIBDIR} \
 	    -R${_LIBSODIR} -R${LIBDIR}
 .else
-	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif
 .if ${OBJECT_FMT} == "ELF"
