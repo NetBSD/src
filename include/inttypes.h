@@ -1,11 +1,11 @@
-/*	$NetBSD: inttypes.h,v 1.4 2001/04/28 15:41:30 kleink Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.1 2001/04/28 15:41:28 kleink Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus J. Klein.
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,17 +36,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_INTTYPES_H_
-#define _SYS_INTTYPES_H_
+#ifndef _INTTYPES_H_
+#define _INTTYPES_H_
 
-/*
- * 7.8  Format conversion of integer types
- */
+#include <sys/cdefs.h>
+#include <sys/inttypes.h>
 
-#include <sys/stdint.h>
+__BEGIN_DECLS
+intmax_t	strtoimax __P((const char * __restrict,
+		    char ** __restrict, int));
+uintmax_t	strtoumax __P((const char * __restrict,
+		    char ** __restrict, int));
+__END_DECLS
 
-#if !defined(__cplusplus) || defined(__STDC_FORMAT_MACROS)
-#include <machine/int_fmtio.h>
-#endif
-
-#endif /* !_SYS_INTTYPES_H_ */
+#endif /* !_INTTYPES_H_ */
