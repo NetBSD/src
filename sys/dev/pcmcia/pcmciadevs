@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.143 2001/10/21 23:16:48 mjl Exp $
+$NetBSD: pcmciadevs,v 1.144 2001/10/27 08:05:21 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -155,6 +155,7 @@ product DLINK_2 DMF560TX	0xc0ab D-Link DMF-650TX
 /* ELSA Products */
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
+product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
 
 /* EMTAC */
 product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
