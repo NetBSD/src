@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26 2000/10/29 14:08:05 lukem Exp $
+.\"	$NetBSD: install,v 1.27 2000/11/14 23:57:03 is Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -308,6 +308,21 @@ root file system under
 .Pa /dev .
 .Pp
 Be patient, this will take a while...
+.Pp
+Next, the installer will copy your keymap settings to the new system.
+After this, it will copy the kernel from the installation miniroot to
+the newly installed / upgraded system.
+If the installed system already has a kernel, it will ask you for
+confirmation.
+.Pp If you are doing an upgrade and you did not install the 
+kern.tgz distribution set, this is an old kernel, and you should answer
+"y" to install a working (although restricted) INSTALL kernel.
+.Pp
+If you did install the kern.tgz kernel, you normally should answer "n".
+.Pp
+(In both cases, if you used the INSTWDCPCM kernel for the installation, you
+should replace the installed kernel by netbsd.INSTWDCPCM manually lateron,
+and you need to use netbsd.INSTWDCPCM to run the system.)
 .Pp
 Finally, the installer ask you if you want to install the bootblock
 code on your root disk. This is a matter of personal choice and can
