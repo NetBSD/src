@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.3 2001/07/13 02:42:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.4 2001/07/24 21:21:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,10 +38,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <ucontext.h>
-#include <sys/queue.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -59,7 +55,7 @@ pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 
 	/* Allocate. */
 
-	mutex->ptm_magic = PT_MUTEX_MAGIC;
+	mutex->ptm_magic = _PT_MUTEX_MAGIC;
 	mutex->ptm_owner = NULL;
 	pthread_lockinit(&mutex->ptm_lock);
 	pthread_lockinit(&mutex->ptm_interlock);
@@ -74,9 +70,10 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
 
 	assert(mutex != NULL);
+	assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
 	assert(mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
 
-	mutex->ptm_magic = PT_MUTEX_DEAD;
+	mutex->ptm_magic = _PT_MUTEX_DEAD;
 
 	return 0;
 }
@@ -99,7 +96,7 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 {
 	pthread_t self;
 #ifdef ERRORCHECK
-	if ((mutex == NULL) || (mutex->ptm_magic != PT_MUTEX_MAGIC))
+	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
 		return EINVAL;
 #endif
 
@@ -140,7 +137,7 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
 
 #ifdef ERRORCHECK
-	if ((mutex == NULL) || (mutex->ptm_magic != PT_MUTEX_MAGIC))
+	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
 		return EINVAL;
 #endif
 
@@ -158,10 +155,9 @@ int
 pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
 	pthread_t self, blocked; 
-	struct pt_queue_t blockedq, nullq = PTQ_HEAD_INITIALIZER;
 
 #ifdef ERRORCHECK
-	if ((mutex == NULL) || (mutex->ptm_magic != PT_MUTEX_MAGIC))
+	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
 		return EINVAL;
 
 	if (mutex->ptm_lock != __SIMPLELOCK_LOCKED)
@@ -174,16 +170,17 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 
 	self = pthread__self();
 	pthread_spinlock(self, &mutex->ptm_interlock);
-       	blockedq = mutex->ptm_blocked;
-	mutex->ptm_blocked = nullq;
+	blocked = PTQ_FIRST(&mutex->ptm_blocked);
+	if (blocked)
+		PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
 #ifdef ERRORCHECK
 	mutex->ptm_owner = NULL;
 #endif
 	__cpu_simple_unlock(&mutex->ptm_lock);
 	pthread_spinunlock(self, &mutex->ptm_interlock);
 
-	/* Give everyone on the sleep queue another chance at the lock. */
-	PTQ_FOREACH(blocked, &blockedq, pt_sleep) 
+	/* Give the head of the blocked queue another try. */
+	if (blocked)
 		pthread__sched(self, blocked);
 
 	return 0;
