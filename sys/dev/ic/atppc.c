@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.9 2004/01/28 14:26:24 drochner Exp $ */
+/* $NetBSD: atppc.c,v 1.10 2004/01/28 20:08:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.9 2004/01/28 14:26:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.10 2004/01/28 20:08:35 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
@@ -2171,11 +2171,8 @@ atppc_fifo_write_dma(struct atppc_softc * const atppc, unsigned char ecr,
 		atppc_w_ecr(atppc, ecr);
 		atppc_barrier_w(atppc);
 		
-		/* Limit transfer to minimum of space in FIFO and buffer */
-		worklen = min(len, atppc->sc_fifo);
-
 		/* Limit transfer to maximum DMA size and start it */
-		worklen = min(worklen, atppc->sc_dma_maxsize);
+		worklen = min(len, atppc->sc_dma_maxsize);
 		atppc->sc_dmastat = ATPPC_DMA_INIT;
 		atppc->sc_dma_start(atppc, atppc->sc_outbstart,
 			worklen, ATPPC_DMA_MODE_WRITE);
