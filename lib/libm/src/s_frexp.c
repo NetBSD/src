@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_frexp.c,v 1.11 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_frexp.c,v 1.12 2002/05/26 22:01:56 wiz Exp $");
 #endif
 
 /*
@@ -28,19 +28,11 @@ __RCSID("$NetBSD: s_frexp.c,v 1.11 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */
 
-#ifdef __STDC__
-	double frexp(double x, int *eptr)
-#else
-	double frexp(x, eptr)
-	double x; int *eptr;
-#endif
+double
+frexp(double x, int *eptr)
 {
 	int32_t hx, ix, lx;
 	EXTRACT_WORDS(hx,lx,x);

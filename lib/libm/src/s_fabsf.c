@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_fabsf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_fabsf.c,v 1.7 2002/05/26 22:01:55 wiz Exp $");
 #endif
 
 /*
@@ -25,12 +25,8 @@ __RCSID("$NetBSD: s_fabsf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float fabsf(float x)
-#else
-	float fabsf(x)
-	float x;
-#endif
+float
+fabsf(float x)
 {
 	u_int32_t ix;
 	GET_FLOAT_WORD(ix,x);

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ilogb.c,v 1.11 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_ilogb.c,v 1.12 2002/05/26 22:01:56 wiz Exp $");
 #endif
 
 /* ilogb(double x)
@@ -24,12 +24,8 @@ __RCSID("$NetBSD: s_ilogb.c,v 1.11 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	int ilogb(double x)
-#else
-	int ilogb(x)
-	double x;
-#endif
+int
+ilogb(double x)
 {
 	int32_t hx,lx,ix;
 

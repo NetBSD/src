@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_fmod.c,v 1.10 1999/07/02 15:37:39 simonb Exp $");
+__RCSID("$NetBSD: e_fmod.c,v 1.11 2002/05/26 22:01:49 wiz Exp $");
 #endif
 
 /*
@@ -24,18 +24,10 @@ __RCSID("$NetBSD: e_fmod.c,v 1.10 1999/07/02 15:37:39 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double one = 1.0, Zero[] = {0.0, -0.0,};
-#else
-static double one = 1.0, Zero[] = {0.0, -0.0,};
-#endif
 
-#ifdef __STDC__
-	double __ieee754_fmod(double x, double y)
-#else
-	double __ieee754_fmod(x,y)
-	double x,y ;
-#endif
+double
+__ieee754_fmod(double x, double y)
 {
 	int32_t n,hx,hy,hz,ix,iy,sx,i;
 	u_int32_t lx,ly,lz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: enc_des.c,v 1.6 2001/11/30 04:44:24 lukem Exp $	*/
+/*	$NetBSD: enc_des.c,v 1.7 2002/05/26 22:07:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)enc_des.c	8.3 (Berkeley) 5/30/95"; */
 #else
-__RCSID("$NetBSD: enc_des.c,v 1.6 2001/11/30 04:44:24 lukem Exp $");
+__RCSID("$NetBSD: enc_des.c,v 1.7 2002/05/26 22:07:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: enc_des.c,v 1.6 2001/11/30 04:44:24 lukem Exp $");
 #include <arpa/telnet.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef	__STDC__
 #include <stdlib.h>
-#endif
 
 #include <des.h>
 #include "encrypt.h"

@@ -15,24 +15,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_sqrtf.c,v 1.6 1999/07/02 15:37:41 simonb Exp $");
+__RCSID("$NetBSD: e_sqrtf.c,v 1.7 2002/05/26 22:01:53 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static	const float	one	= 1.0, tiny=1.0e-30;
-#else
-static	float	one	= 1.0, tiny=1.0e-30;
-#endif
 
-#ifdef __STDC__
-	float __ieee754_sqrtf(float x)
-#else
-	float __ieee754_sqrtf(x)
-	float x;
-#endif
+float
+__ieee754_sqrtf(float x)
 {
 	float z;
 	int32_t sign = (int)0x80000000;

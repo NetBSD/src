@@ -12,19 +12,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ldexp.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_ldexp.c,v 1.9 2002/05/26 22:01:56 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 #include <errno.h>
 
-#ifdef __STDC__
-	double ldexp(double value, int exp)
-#else
-	double ldexp(value, exp)
-	double value; int exp;
-#endif
+double
+ldexp(double value, int exp)
 {
 	if(!finite(value)||value==0.0) return value;
 	value = scalbn(value,exp);

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_sqrt.c,v 1.11 2001/12/04 17:56:33 wiz Exp $");
+__RCSID("$NetBSD: e_sqrt.c,v 1.12 2002/05/26 22:01:52 wiz Exp $");
 #endif
 
 /* __ieee754_sqrt(x)
@@ -88,18 +88,10 @@ __RCSID("$NetBSD: e_sqrt.c,v 1.11 2001/12/04 17:56:33 wiz Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static	const double	one	= 1.0, tiny=1.0e-300;
-#else
-static	double	one	= 1.0, tiny=1.0e-300;
-#endif
 
-#ifdef __STDC__
-	double __ieee754_sqrt(double x)
-#else
-	double __ieee754_sqrt(x)
-	double x;
-#endif
+double
+__ieee754_sqrt(double x)
 {
 	double z;
 	int32_t sign = (int)0x80000000;

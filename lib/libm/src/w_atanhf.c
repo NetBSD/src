@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_atanhf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_atanhf.c,v 1.6 2002/05/26 22:02:00 wiz Exp $");
 #endif
 
 /*
@@ -26,12 +26,8 @@ __RCSID("$NetBSD: w_atanhf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	float atanhf(float x)		/* wrapper atanhf */
-#else
-	float atanhf(x)			/* wrapper atanhf */
-	float x;
-#endif
+float
+atanhf(float x)		/* wrapper atanhf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_atanhf(x);

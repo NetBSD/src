@@ -15,16 +15,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_tanf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: k_tanf.c,v 1.7 2002/05/26 22:01:54 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
-#ifdef __STDC__
 static const float
-#else
-static float
-#endif
 one   =  1.0000000000e+00, /* 0x3f800000 */
 pio4  =  7.8539812565e-01, /* 0x3f490fda */
 pio4lo=  3.7748947079e-08, /* 0x33222168 */
@@ -44,12 +40,8 @@ T[] =  {
   2.5907305826e-05, /* 0x37d95384 */
 };
 
-#ifdef __STDC__
-	float __kernel_tanf(float x, float y, int iy)
-#else
-	float __kernel_tanf(x, y, iy)
-	float x,y; int iy;
-#endif
+float
+__kernel_tanf(float x, float y, int iy)
 {
 	float z,r,v,w,s;
 	int32_t ix,hx;

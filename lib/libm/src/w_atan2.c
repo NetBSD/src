@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_atan2.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_atan2.c,v 1.9 2002/05/26 22:01:59 wiz Exp $");
 #endif
 
 /*
@@ -23,12 +23,8 @@ __RCSID("$NetBSD: w_atan2.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	double atan2(double y, double x)	/* wrapper atan2 */
-#else
-	double atan2(y,x)			/* wrapper atan2 */
-	double y,x;
-#endif
+double
+atan2(double y, double x)	/* wrapper atan2 */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_atan2(y,x);

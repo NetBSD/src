@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_remainder.c,v 1.10 1999/07/02 15:37:41 simonb Exp $");
+__RCSID("$NetBSD: e_remainder.c,v 1.11 2002/05/26 22:01:52 wiz Exp $");
 #endif
 
 /* __ieee754_remainder(x,p)
@@ -27,19 +27,11 @@ __RCSID("$NetBSD: e_remainder.c,v 1.10 1999/07/02 15:37:41 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double zero = 0.0;
-#else
-static double zero = 0.0;
-#endif
 
 
-#ifdef __STDC__
-	double __ieee754_remainder(double x, double p)
-#else
-	double __ieee754_remainder(x,p)
-	double x,p;
-#endif
+double
+__ieee754_remainder(double x, double p)
 {
 	int32_t hx,hp;
 	u_int32_t sx,lx,lp;

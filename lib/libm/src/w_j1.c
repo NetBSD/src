@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_j1.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_j1.c,v 1.9 2002/05/26 22:02:01 wiz Exp $");
 #endif
 
 /*
@@ -22,12 +22,8 @@ __RCSID("$NetBSD: w_j1.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double j1(double x)		/* wrapper j1 */
-#else
-	double j1(x)			/* wrapper j1 */
-	double x;
-#endif
+double
+j1(double x)		/* wrapper j1 */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_j1(x);
@@ -42,12 +38,8 @@ __RCSID("$NetBSD: w_j1.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #endif
 }
 
-#ifdef __STDC__
-	double y1(double x)		/* wrapper y1 */
-#else
-	double y1(x)			/* wrapper y1 */
-	double x;
-#endif
+double
+y1(double x)		/* wrapper y1 */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_y1(x);

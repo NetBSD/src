@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_powf.c,v 1.9 1999/07/02 15:37:40 simonb Exp $");
+__RCSID("$NetBSD: e_powf.c,v 1.10 2002/05/26 22:01:51 wiz Exp $");
 #endif
 
 #include "math.h"
@@ -23,11 +23,7 @@ __RCSID("$NetBSD: e_powf.c,v 1.9 1999/07/02 15:37:40 simonb Exp $");
 
 static const float huge = 1.0e+30, tiny = 1.0e-30;
 
-#ifdef __STDC__
 static const float
-#else
-static float
-#endif
 bp[] = {1.0, 1.5,},
 dp_h[] = { 0.0, 5.84960938e-01,}, /* 0x3f15c000 */
 dp_l[] = { 0.0, 1.56322085e-06,}, /* 0x35d1cfdc */
@@ -58,12 +54,8 @@ ivln2    =  1.4426950216e+00, /* 0x3fb8aa3b =1/ln2 */
 ivln2_h  =  1.4426879883e+00, /* 0x3fb8aa00 =16b 1/ln2*/
 ivln2_l  =  7.0526075433e-06; /* 0x36eca570 =1/ln2 tail*/
 
-#ifdef __STDC__
-	float __ieee754_powf(float x, float y)
-#else
-	float __ieee754_powf(x,y)
-	float x, y;
-#endif
+float
+__ieee754_powf(float x, float y)
 {
 	float z,ax,z_h,z_l,p_h,p_l;
 	float y1,t1,t2,r,s,t,u,v,w;

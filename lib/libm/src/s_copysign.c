@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_copysign.c,v 1.10 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_copysign.c,v 1.11 2002/05/26 22:01:54 wiz Exp $");
 #endif
 
 /*
@@ -24,12 +24,8 @@ __RCSID("$NetBSD: s_copysign.c,v 1.10 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double copysign(double x, double y)
-#else
-	double copysign(x,y)
-	double x,y;
-#endif
+double
+copysign(double x, double y)
 {
 	u_int32_t hx,hy;
 	GET_HIGH_WORD(hx,x);

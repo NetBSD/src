@@ -15,18 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_hypotf.c,v 1.7 1999/07/02 15:37:39 simonb Exp $");
+__RCSID("$NetBSD: e_hypotf.c,v 1.8 2002/05/26 22:01:50 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float __ieee754_hypotf(float x, float y)
-#else
-	float __ieee754_hypot(x,y)
-	float x, y;
-#endif
+float
+__ieee754_hypotf(float x, float y)
 {
 	float a=x,b=y,t1,t2,y1,y2,w;
 	int32_t j,k,ha,hb;

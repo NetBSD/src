@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_acosh.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: w_acosh.c,v 1.9 2002/05/26 22:01:59 wiz Exp $");
 #endif
 
 /*
@@ -22,12 +22,8 @@ __RCSID("$NetBSD: w_acosh.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double acosh(double x)		/* wrapper acosh */
-#else
-	double acosh(x)			/* wrapper acosh */
-	double x;
-#endif
+double
+acosh(double x)		/* wrapper acosh */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_acosh(x);

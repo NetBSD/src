@@ -15,24 +15,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_tanhf.c,v 1.6 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_tanhf.c,v 1.7 2002/05/26 22:01:59 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float one=1.0, two=2.0, tiny = 1.0e-30;
-#else
-static float one=1.0, two=2.0, tiny = 1.0e-30;
-#endif
 
-#ifdef __STDC__
-	float tanhf(float x)
-#else
-	float tanhf(x)
-	float x;
-#endif
+float
+tanhf(float x)
 {
 	float t,z;
 	int32_t jx,ix;

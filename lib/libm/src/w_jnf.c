@@ -15,18 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_jnf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_jnf.c,v 1.6 2002/05/26 22:02:02 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float jnf(int n, float x)	/* wrapper jnf */
-#else
-	float jnf(n,x)			/* wrapper jnf */
-	float x; int n;
-#endif
+float
+jnf(int n, float x)	/* wrapper jnf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_jnf(n,x);
@@ -42,12 +38,8 @@ __RCSID("$NetBSD: w_jnf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
 #endif
 }
 
-#ifdef __STDC__
-	float ynf(int n, float x)	/* wrapper ynf */
-#else
-	float ynf(n,x)			/* wrapper ynf */
-	float x; int n;
-#endif
+float
+ynf(int n, float x)	/* wrapper ynf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_ynf(n,x);

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_asin.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: w_asin.c,v 1.9 2002/05/26 22:01:59 wiz Exp $");
 #endif
 
 /*
@@ -24,12 +24,8 @@ __RCSID("$NetBSD: w_asin.c,v 1.8 1999/07/02 15:37:43 simonb Exp $");
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	double asin(double x)		/* wrapper asin */
-#else
-	double asin(x)			/* wrapper asin */
-	double x;
-#endif
+double
+asin(double x)		/* wrapper asin */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_asin(x);

@@ -15,19 +15,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ldexpf.c,v 1.5 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_ldexpf.c,v 1.6 2002/05/26 22:01:57 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 #include <errno.h>
 
-#ifdef __STDC__
-	float ldexpf(float value, int exp)
-#else
-	float ldexpf(value, exp)
-	float value; int exp;
-#endif
+float
+ldexpf(float value, int exp)
 {
 	if(!finitef(value)||value==(float)0.0) return value;
 	value = scalbnf(value,exp);

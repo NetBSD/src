@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_j1f.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_j1f.c,v 1.6 2002/05/26 22:02:01 wiz Exp $");
 #endif
 
 /*
@@ -25,12 +25,8 @@ __RCSID("$NetBSD: w_j1f.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float j1f(float x)		/* wrapper j1f */
-#else
-	float j1f(x)			/* wrapper j1f */
-	float x;
-#endif
+float
+j1f(float x)		/* wrapper j1f */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_j1f(x);
@@ -46,12 +42,8 @@ __RCSID("$NetBSD: w_j1f.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
 #endif
 }
 
-#ifdef __STDC__
-	float y1f(float x)		/* wrapper y1f */
-#else
-	float y1f(x)			/* wrapper y1f */
-	float x;
-#endif
+float
+y1f(float x)		/* wrapper y1f */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_y1f(x);

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_sqrt.c,v 1.8 1999/07/02 15:37:45 simonb Exp $");
+__RCSID("$NetBSD: w_sqrt.c,v 1.9 2002/05/26 22:02:03 wiz Exp $");
 #endif
 
 /*
@@ -22,12 +22,8 @@ __RCSID("$NetBSD: w_sqrt.c,v 1.8 1999/07/02 15:37:45 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double sqrt(double x)		/* wrapper sqrt */
-#else
-	double sqrt(x)			/* wrapper sqrt */
-	double x;
-#endif
+double
+sqrt(double x)		/* wrapper sqrt */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_sqrt(x);

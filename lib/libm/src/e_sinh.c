@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_sinh.c,v 1.10 1999/07/02 15:37:41 simonb Exp $");
+__RCSID("$NetBSD: e_sinh.c,v 1.11 2002/05/26 22:01:52 wiz Exp $");
 #endif
 
 /* __ieee754_sinh(x)
@@ -36,18 +36,10 @@ __RCSID("$NetBSD: e_sinh.c,v 1.10 1999/07/02 15:37:41 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double one = 1.0, shuge = 1.0e307;
-#else
-static double one = 1.0, shuge = 1.0e307;
-#endif
 
-#ifdef __STDC__
-	double __ieee754_sinh(double x)
-#else
-	double __ieee754_sinh(x)
-	double x;
-#endif
+double
+__ieee754_sinh(double x)
 {
 	double t,w,h;
 	int32_t ix,jx;

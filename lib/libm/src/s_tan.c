@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_tan.c,v 1.9 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_tan.c,v 1.10 2002/05/26 22:01:58 wiz Exp $");
 #endif
 
 /* tan(x)
@@ -48,12 +48,8 @@ __RCSID("$NetBSD: s_tan.c,v 1.9 1999/07/02 15:37:43 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	double tan(double x)
-#else
-	double tan(x)
-	double x;
-#endif
+double
+tan(double x)
 {
 	double y[2],z=0.0;
 	int32_t n, ix;

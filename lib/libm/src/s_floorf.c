@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_floorf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_floorf.c,v 1.7 2002/05/26 22:01:56 wiz Exp $");
 #endif
 
 /*
@@ -30,18 +30,10 @@ __RCSID("$NetBSD: s_floorf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float huge = 1.0e30;
-#else
-static float huge = 1.0e30;
-#endif
 
-#ifdef __STDC__
-	float floorf(float x)
-#else
-	float floorf(x)
-	float x;
-#endif
+float
+floorf(float x)
 {
 	int32_t i0,j0;
 	u_int32_t i;

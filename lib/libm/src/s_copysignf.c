@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_copysignf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_copysignf.c,v 1.7 2002/05/26 22:01:54 wiz Exp $");
 #endif
 
 /*
@@ -27,12 +27,8 @@ __RCSID("$NetBSD: s_copysignf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float copysignf(float x, float y)
-#else
-	float copysignf(x,y)
-	float x,y;
-#endif
+float
+copysignf(float x, float y)
 {
 	u_int32_t ix,iy;
 	GET_FLOAT_WORD(ix,x);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.6 2001/11/30 04:48:14 lukem Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.7 2002/05/26 22:07:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.6 2001/11/30 04:48:14 lukem Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.7 2002/05/26 22:07:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,9 +68,7 @@ __RCSID("$NetBSD: kerberos.c,v 1.6 2001/11/30 04:48:14 lukem Exp $");
 #include <stdio.h>
 #include <des.h>	/* BSD wont include this in krb.h, so we do it here */
 #include <krb.h>
-#ifdef	__STDC__
 #include <stdlib.h>
-#endif
 #ifdef	NO_STRING_H
 #include <strings.h>
 #else

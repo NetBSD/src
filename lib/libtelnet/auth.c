@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.11 2000/06/22 06:47:42 thorpej Exp $	*/
+/*	$NetBSD: auth.c,v 1.12 2002/05/26 22:07:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.11 2000/06/22 06:47:42 thorpej Exp $");
+__RCSID("$NetBSD: auth.c,v 1.12 2002/05/26 22:07:27 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,10 +69,8 @@ __RCSID("$NetBSD: auth.c,v 1.11 2000/06/22 06:47:42 thorpej Exp $");
 #include <signal.h>
 #define	AUTH_NAMES
 #include <arpa/telnet.h>
-#ifdef	__STDC__
 #include <stdlib.h>
 #include <unistd.h>
-#endif
 #ifdef	NO_STRING_H
 #include <strings.h>
 #else

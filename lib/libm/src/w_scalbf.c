@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_scalbf.c,v 1.5 1999/07/02 15:37:45 simonb Exp $");
+__RCSID("$NetBSD: w_scalbf.c,v 1.6 2002/05/26 22:02:02 wiz Exp $");
 #endif
 
 /*
@@ -29,19 +29,12 @@ __RCSID("$NetBSD: w_scalbf.c,v 1.5 1999/07/02 15:37:45 simonb Exp $");
 
 #include <errno.h>
 
-#ifdef __STDC__
 #ifdef _SCALB_INT
-	float scalbf(float x, int fn)		/* wrapper scalbf */
+float
+scalbf(float x, int fn)		/* wrapper scalbf */
 #else
-	float scalbf(float x, float fn)		/* wrapper scalbf */
-#endif
-#else
-	float scalbf(x,fn)			/* wrapper scalbf */
-#ifdef _SCALB_INT
-	float x; int fn;
-#else
-	float x,fn;
-#endif
+float
+scalbf(float x, float fn)		/* wrapper scalbf */
 #endif
 {
 #ifdef _IEEE_LIBM

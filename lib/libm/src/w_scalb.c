@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_scalb.c,v 1.8 1999/07/02 15:37:45 simonb Exp $");
+__RCSID("$NetBSD: w_scalb.c,v 1.9 2002/05/26 22:02:02 wiz Exp $");
 #endif
 
 /*
@@ -26,19 +26,12 @@ __RCSID("$NetBSD: w_scalb.c,v 1.8 1999/07/02 15:37:45 simonb Exp $");
 
 #include <errno.h>
 
-#ifdef __STDC__
 #ifdef _SCALB_INT
-	double scalb(double x, int fn)		/* wrapper scalb */
+double
+scalb(double x, int fn)		/* wrapper scalb */
 #else
-	double scalb(double x, double fn)	/* wrapper scalb */
-#endif
-#else
-	double scalb(x,fn)			/* wrapper scalb */
-#ifdef _SCALB_INT
-	double x; int fn;
-#else
-	double x,fn;
-#endif
+double
+scalb(double x, double fn)	/* wrapper scalb */
 #endif
 {
 #ifdef _IEEE_LIBM

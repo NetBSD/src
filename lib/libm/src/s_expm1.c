@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_expm1.c,v 1.11 1999/07/02 15:37:42 simonb Exp $");
+__RCSID("$NetBSD: s_expm1.c,v 1.12 2002/05/26 22:01:55 wiz Exp $");
 #endif
 
 /* expm1(x)
@@ -113,11 +113,7 @@ __RCSID("$NetBSD: s_expm1.c,v 1.11 1999/07/02 15:37:42 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 one		= 1.0,
 huge		= 1.0e+300,
 tiny		= 1.0e-300,
@@ -132,12 +128,8 @@ Q3  =  -7.93650757867487942473e-05, /* BF14CE19 9EAADBB7 */
 Q4  =   4.00821782732936239552e-06, /* 3ED0CFCA 86E65239 */
 Q5  =  -2.01099218183624371326e-07; /* BE8AFDB7 6E09C32D */
 
-#ifdef __STDC__
-	double expm1(double x)
-#else
-	double expm1(x)
-	double x;
-#endif
+double
+expm1(double x)
 {
 	double y,hi,lo,c,t,e,hxs,hfx,r1;
 	int32_t k,xsb;

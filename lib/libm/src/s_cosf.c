@@ -15,26 +15,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cosf.c,v 1.7 2002/04/09 01:55:48 thorpej Exp $");
+__RCSID("$NetBSD: s_cosf.c,v 1.8 2002/05/26 22:01:55 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
 #if 0
-#ifdef __STDC__
 static const float one=1.0;
-#else
-static float one=1.0;
-#endif
 #endif
 
-#ifdef __STDC__
-	float cosf(float x)
-#else
-	float cosf(x)
-	float x;
-#endif
+float
+cosf(float x)
 {
 	float y[2],z=0.0;
 	int32_t n,ix;

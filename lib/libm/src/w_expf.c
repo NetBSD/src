@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_expf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_expf.c,v 1.6 2002/05/26 22:02:00 wiz Exp $");
 #endif
 
 /*
@@ -25,20 +25,12 @@ __RCSID("$NetBSD: w_expf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const float
-#else
-static float
-#endif
 o_threshold=  8.8721679688e+01,  /* 0x42b17180 */
 u_threshold= -1.0397208405e+02;  /* 0xc2cff1b5 */
 
-#ifdef __STDC__
-	float expf(float x)		/* wrapper expf */
-#else
-	float expf(x)			/* wrapper expf */
-	float x;
-#endif
+float
+expf(float x)		/* wrapper expf */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_expf(x);

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_tanh.c,v 1.9 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_tanh.c,v 1.10 2002/05/26 22:01:59 wiz Exp $");
 #endif
 
 /* Tanh(x)
@@ -42,18 +42,10 @@ __RCSID("$NetBSD: s_tanh.c,v 1.9 1999/07/02 15:37:43 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double one=1.0, two=2.0, tiny = 1.0e-300;
-#else
-static double one=1.0, two=2.0, tiny = 1.0e-300;
-#endif
 
-#ifdef __STDC__
-	double tanh(double x)
-#else
-	double tanh(x)
-	double x;
-#endif
+double
+tanh(double x)
 {
 	double t,z;
 	int32_t jx,ix;
