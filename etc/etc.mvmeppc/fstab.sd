@@ -1,0 +1,5 @@
+#	$NetBSD: fstab.sd,v 1.1 2002/02/27 21:17:53 scw Exp $
+#
+/dev/sd0a	/	ffs	rw	1 1
+/dev/sd0b	none	swap	sw	0 0
+/dev/sd0d	/usr	ffs	rw	1 2
