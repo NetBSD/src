@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.32 2003/01/21 20:56:13 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.33 2003/01/21 21:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 
-	{ { USB_VENDOR_MELCO, USB_MELCO_DUBPXXG },
+	{ { USB_VENDOR_MELCO, USB_PRODUCT_MELCO_DUBPXXG },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_FORCE_SHORT_INQUIRY | UMASS_QUIRK_NO_START_STOP,
 	  PQUIRK_NOMODESENSE,
