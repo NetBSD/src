@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright (C) 1987, 91, 92, 93, 94, 95, 98, 99, 2000
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -181,6 +181,8 @@ int flag_no_hash_mixed_case;	/* -h NUM */
 #define C(a,b) ENCODE_RELAX(a,b)
 /* This macro has no side-effects.  */
 #define ENCODE_RELAX(what,length) (((what) << 2) + (length))
+#define RELAX_STATE(s) ((s) >> 2)
+#define RELAX_LENGTH(s) ((s) & 3)
 
 const relax_typeS md_relax_table[] =
 {
@@ -188,25 +190,31 @@ const relax_typeS md_relax_table[] =
   {1, 1, 0, 0},			/* unused	    0,1	*/
   {1, 1, 0, 0},			/* unused	    0,2	*/
   {1, 1, 0, 0},			/* unused	    0,3	*/
+
   {BF + 1, BB + 1, 2, C (1, 1)},/* B^"foo"	    1,0 */
   {WF + 1, WB + 1, 3, C (1, 2)},/* W^"foo"	    1,1 */
   {0, 0, 5, 0},			/* L^"foo"	    1,2 */
   {1, 1, 0, 0},			/* unused	    1,3 */
+
   {BF, BB, 1, C (2, 1)},	/* b<cond> B^"foo"  2,0 */
   {WF + 2, WB + 2, 4, C (2, 2)},/* br.+? brw X	    2,1 */
   {0, 0, 7, 0},			/* br.+? jmp X	    2,2 */
   {1, 1, 0, 0},			/* unused	    2,3 */
+
   {BF, BB, 1, C (3, 1)},	/* brb B^foo	    3,0 */
   {WF, WB, 2, C (3, 2)},	/* brw W^foo	    3,1 */
   {0, 0, 5, 0},			/* Jmp L^foo	    3,2 */
   {1, 1, 0, 0},			/* unused	    3,3 */
+
   {1, 1, 0, 0},			/* unused	    4,0 */
   {WF, WB, 2, C (4, 2)},	/* acb_ ^Wfoo	    4,1 */
   {0, 0, 10, 0},		/* acb_,br,jmp L^foo4,2 */
   {1, 1, 0, 0},			/* unused	    4,3 */
+
   {BF, BB, 1, C (5, 1)},	/* Xob___,,foo      5,0 */
   {WF + 4, WB + 4, 6, C (5, 2)},/* Xob.+2,brb.+3,brw5,1 */
   {0, 0, 9, 0},			/* Xob.+2,brb.+6,jmp5,2 */
+  {1, 1, 0, 0},			/* unused	    5,3 */
 };
 
 #undef C
@@ -1140,127 +1148,112 @@ md_assemble (instruction_string)
     }				/* for(operandP) */
 }				/* vax_assemble() */
 
-/*
- *			md_estimate_size_before_relax()
- *
- * Called just before relax().
- * Any symbol that is now undefined will not become defined.
- * Return the correct fr_subtype in the frag.
- * Return the initial "guess for fr_var" to caller.
- * The guess for fr_var is ACTUALLY the growth beyond fr_fix.
- * Whatever we do to grow fr_fix or fr_var contributes to our returned value.
- * Although it may not be explicit in the frag, pretend fr_var starts with a
- * 0 value.
- */
+/* md_estimate_size_before_relax(), called just before relax().
+   Any symbol that is now undefined will not become defined.
+   Return the correct fr_subtype in the frag and the growth beyond
+   fr_fix.  */
 int
 md_estimate_size_before_relax (fragP, segment)
      fragS *fragP;
      segT segment;
 {
-  char *p;
-  int old_fr_fix;
-
-  old_fr_fix = fragP->fr_fix;
-  switch (fragP->fr_subtype)
+  if (RELAX_LENGTH (fragP->fr_subtype) == STATE_UNDF)
     {
-    case ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF):
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
-	{			/* A relaxable case.  */
+      if (S_GET_SEGMENT (fragP->fr_symbol) != segment)
+	{
+	  /* Non-relaxable cases.  */
+	  char *p;
+	  int old_fr_fix;
+
+	  old_fr_fix = fragP->fr_fix;
+	  p = fragP->fr_literal + old_fr_fix;
+	  switch (RELAX_STATE (fragP->fr_subtype))
+	    {
+	    case STATE_PC_RELATIVE:
+	      p[0] |= VAX_PC_RELATIVE_MODE;	/* Preserve @ bit.  */
+	      fragP->fr_fix += 1 + 4;
+	      fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
+		       fragP->fr_offset, 1, NO_RELOC);
+	      break;
+
+	    case STATE_CONDITIONAL_BRANCH:
+	      *fragP->fr_opcode ^= 1;		/* Reverse sense of branch.  */
+	      p[0] = 6;
+	      p[1] = VAX_JMP;
+	      p[2] = VAX_PC_RELATIVE_MODE;	/* ...(PC) */
+	      fragP->fr_fix += 1 + 1 + 1 + 4;
+	      fix_new (fragP, old_fr_fix + 3, 4, fragP->fr_symbol,
+		       fragP->fr_offset, 1, NO_RELOC);
+	      break;
+
+	    case STATE_COMPLEX_BRANCH:
+	      p[0] = 2;
+	      p[1] = 0;
+	      p[2] = VAX_BRB;
+	      p[3] = 6;
+	      p[4] = VAX_JMP;
+	      p[5] = VAX_PC_RELATIVE_MODE;	/* ...(pc) */
+	      fragP->fr_fix += 2 + 2 + 1 + 1 + 4;
+	      fix_new (fragP, old_fr_fix + 6, 4, fragP->fr_symbol,
+		       fragP->fr_offset, 1, NO_RELOC);
+	      break;
+
+	    case STATE_COMPLEX_HOP:
+	      p[0] = 2;
+	      p[1] = VAX_BRB;
+	      p[2] = 6;
+	      p[3] = VAX_JMP;
+	      p[4] = VAX_PC_RELATIVE_MODE;	/* ...(pc) */
+	      fragP->fr_fix += 1 + 2 + 1 + 1 + 4;
+	      fix_new (fragP, old_fr_fix + 5, 4, fragP->fr_symbol,
+		       fragP->fr_offset, 1, NO_RELOC);
+	      break;
+
+	    case STATE_ALWAYS_BRANCH:
+	      *fragP->fr_opcode += VAX_WIDEN_LONG;
+	      p[0] = VAX_PC_RELATIVE_MODE;	/* ...(PC) */
+	      fragP->fr_fix += 1 + 4;
+	      fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
+		       fragP->fr_offset, 1, NO_RELOC);
+	      break;
+
+	    default:
+	      abort ();
+	    }
+	  frag_wane (fragP);
+
+	  /* Return the growth in the fixed part of the frag.  */
+	  return fragP->fr_fix - old_fr_fix;
+	}
+
+      /* Relaxable cases.  Set up the initial guess for the variable
+	 part of the frag.  */
+      switch (RELAX_STATE (fragP->fr_subtype))
+	{
+	case STATE_PC_RELATIVE:
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_PC_RELATIVE, STATE_BYTE);
-	}
-      else
-	{
-	  p = fragP->fr_literal + old_fr_fix;
-	  p[0] |= VAX_PC_RELATIVE_MODE;	/* Preserve @ bit.  */
-	  fragP->fr_fix += 1 + 4;
-	  fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
-		   fragP->fr_offset, 1, NO_RELOC);
-	  frag_wane (fragP);
-	}
-      break;
-
-    case ENCODE_RELAX (STATE_CONDITIONAL_BRANCH, STATE_UNDF):
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
-	{
+	  break;
+	case STATE_CONDITIONAL_BRANCH:
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_CONDITIONAL_BRANCH, STATE_BYTE);
-	}
-      else
-	{
-	  p = fragP->fr_literal + old_fr_fix;
-	  *fragP->fr_opcode ^= 1;	/* Reverse sense of branch.  */
-	  p[0] = 6;
-	  p[1] = VAX_JMP;
-	  p[2] = VAX_PC_RELATIVE_MODE;	/* ...(PC) */
-	  fragP->fr_fix += 1 + 1 + 1 + 4;
-	  fix_new (fragP, old_fr_fix + 3, 4, fragP->fr_symbol,
-		   fragP->fr_offset, 1, NO_RELOC);
-	  frag_wane (fragP);
-	}
-      break;
-
-    case ENCODE_RELAX (STATE_COMPLEX_BRANCH, STATE_UNDF):
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
-	{
+	  break;
+	case STATE_COMPLEX_BRANCH:
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_COMPLEX_BRANCH, STATE_WORD);
-	}
-      else
-	{
-	  p = fragP->fr_literal + old_fr_fix;
-	  p[0] = 2;
-	  p[1] = 0;
-	  p[2] = VAX_BRB;
-	  p[3] = 6;
-	  p[4] = VAX_JMP;
-	  p[5] = VAX_PC_RELATIVE_MODE;	/* ...(pc) */
-	  fragP->fr_fix += 2 + 2 + 1 + 1 + 4;
-	  fix_new (fragP, old_fr_fix + 6, 4, fragP->fr_symbol,
-		   fragP->fr_offset, 1, NO_RELOC);
-	  frag_wane (fragP);
-	}
-      break;
-
-    case ENCODE_RELAX (STATE_COMPLEX_HOP, STATE_UNDF):
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
-	{
+	  break;
+	case STATE_COMPLEX_HOP:
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_COMPLEX_HOP, STATE_BYTE);
-	}
-      else
-	{
-	  p = fragP->fr_literal + old_fr_fix;
-	  p[0] = 2;
-	  p[1] = VAX_BRB;
-	  p[2] = 6;
-	  p[3] = VAX_JMP;
-	  p[4] = VAX_PC_RELATIVE_MODE;	/* ...(pc) */
-	  fragP->fr_fix += 1 + 2 + 1 + 1 + 4;
-	  fix_new (fragP, old_fr_fix + 5, 4, fragP->fr_symbol,
-		   fragP->fr_offset, 1, NO_RELOC);
-	  frag_wane (fragP);
-	}
-      break;
-
-    case ENCODE_RELAX (STATE_ALWAYS_BRANCH, STATE_UNDF):
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
-	{
+	  break;
+	case STATE_ALWAYS_BRANCH:
 	  fragP->fr_subtype = ENCODE_RELAX (STATE_ALWAYS_BRANCH, STATE_BYTE);
+	  break;
 	}
-      else
-	{
-	  p = fragP->fr_literal + old_fr_fix;
-	  *fragP->fr_opcode += VAX_WIDEN_LONG;
-	  p[0] = VAX_PC_RELATIVE_MODE;	/* ...(PC) */
-	  fragP->fr_fix += 1 + 4;
-	  fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
-		   fragP->fr_offset, 1, NO_RELOC);
-	  frag_wane (fragP);
-	}
-      break;
-
-    default:
-      break;
     }
-  return (fragP->fr_var + fragP->fr_fix - old_fr_fix);
-}				/* md_estimate_size_before_relax() */
+
+  if (fragP->fr_subtype >= sizeof (md_relax_table) / sizeof (md_relax_table[0]))
+    abort ();
+
+  /* Return the size of the variable part of the frag.  */
+  return md_relax_table[fragP->fr_subtype].rlx_length;
+}
 
 /*
  *			md_convert_frag();
@@ -1281,7 +1274,6 @@ md_convert_frag (headers, seg, fragP)
 {
   char *addressP;		/* -> _var to change.  */
   char *opcodeP;		/* -> opcode char(s) to change.  */
-  short int length_code;	/* 2=long 1=word 0=byte */
   short int extension = 0;	/* Size of relaxed address.  */
   /* Added to fr_fix: incl. ALL var chars.  */
   symbolS *symbolP;
@@ -1292,8 +1284,6 @@ md_convert_frag (headers, seg, fragP)
   /* Where, in file space, does addr point? */
 
   know (fragP->fr_type == rs_machine_dependent);
-  length_code = fragP->fr_subtype & 3;	/* depends on ENCODE_RELAX() */
-  know (length_code >= 0 && length_code < 3);
   where = fragP->fr_fix;
   addressP = fragP->fr_literal + where;
   opcodeP = fragP->fr_opcode;

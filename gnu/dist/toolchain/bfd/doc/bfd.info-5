@@ -16,6 +16,45 @@ END-INFO-DIR-ENTRY
 section entitled "GNU Free Documentation License".
 
 
+File: bfd.info,  Node: Linker Functions,  Next: Hash Tables,  Prev: File Caching,  Up: BFD front end
+
+Linker Functions
+================
+
+   The linker uses three special entry points in the BFD target vector.
+It is not necessary to write special routines for these entry points
+when creating a new BFD back end, since generic versions are provided.
+However, writing them can speed up linking and make it use
+significantly less runtime memory.
+
+   The first routine creates a hash table used by the other routines.
+The second routine adds the symbols from an object file to the hash
+table.  The third routine takes all the object files and links them
+together to create the output file.  These routines are designed so
+that the linker proper does not need to know anything about the symbols
+in the object files that it is linking.  The linker merely arranges the
+sections as directed by the linker script and lets BFD handle the
+details of symbols and relocs.
+
+   The second routine and third routines are passed a pointer to a
+`struct bfd_link_info' structure (defined in `bfdlink.h') which holds
+information relevant to the link, including the linker hash table
+(which was created by the first routine) and a set of callback
+functions to the linker proper.
+
+   The generic linker routines are in `linker.c', and use the header
+file `genlink.h'.  As of this writing, the only back ends which have
+implemented versions of these routines are a.out (in `aoutx.h') and
+ECOFF (in `ecoff.c').  The a.out routines are used as examples
+throughout this section.
+
+* Menu:
+
+* Creating a Linker Hash Table::
+* Adding Symbols to the Hash Table::
+* Performing the Final Link::
+
+
 File: bfd.info,  Node: Creating a Linker Hash Table,  Next: Adding Symbols to the Hash Table,  Prev: Linker Functions,  Up: Linker Functions
 
 Creating a linker hash table

@@ -7,7 +7,6 @@ if {[istarget *arm*-*-*] || [istarget "xscale-*-*"]} then {
     gas_test "arm3.s" "" $stdoptlist "Arm 3 instructions"
 
     gas_test "arm6.s" "" $stdoptlist "Arm 6 instructions"
-    gas_test_error "msr-bad.s" "-marmv3" "immediate value cannot be used to set this field"
 
     gas_test "arm7dm.s" "" $stdoptlist "Arm 7DM instructions"
 

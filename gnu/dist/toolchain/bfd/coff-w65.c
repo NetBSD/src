@@ -1,5 +1,5 @@
 /* BFD back-end for WDC 65816 COFF binaries.
-   Copyright 1995, 96, 1997 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1999, 2000 Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
 This file is part of BFD, the Binary File Descriptor library.

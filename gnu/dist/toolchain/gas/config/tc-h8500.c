@@ -1,5 +1,6 @@
 /* tc-h8500.c -- Assemble code for the Hitachi H8/500
-   Copyright (C) 1993, 94, 95, 98, 2000 Free Software Foundation.
+   Copyright 1993, 1994, 1995, 1998, 2000, 2001
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -85,7 +86,31 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #define WORD_F 32767
 #define WORD_B 32768
 
-relax_typeS md_relax_table[C (END, 0)];
+relax_typeS md_relax_table[C (END, 0)] = {
+  { 0, 0, 0, 0 },
+  { 0, 0, 0, 0 },
+  { 0, 0, 0, 0 },
+  { 0, 0, 0, 0 },
+
+  /* BRANCH */
+  { 0,      0,       0, 0 },
+  { BYTE_F, BYTE_B,  2, C (BRANCH, WORD_DISP) },
+  { WORD_F, WORD_B,  3, 0 },
+  { 0,      0,       3, 0 },
+
+  /* SCB_F */
+  { 0,      0,       0, 0 },
+  { BYTE_F, BYTE_B,  3, C (SCB_F, WORD_DISP) },
+  { WORD_F, WORD_B,  8, 0 },
+  { 0,      0,       8, 0 },
+
+  /* SCB_TST */
+  { 0,      0,       0, 0 },
+  { BYTE_F, BYTE_B,  3, C (SCB_TST, WORD_DISP) },
+  { WORD_F, WORD_B, 10, 0 },
+  { 0,      0,      10, 0 }
+
+};
 
 static struct hash_control *opcode_hash_control;	/* Opcode mnemonics */
 
@@ -100,7 +125,6 @@ md_begin ()
   h8500_opcode_info *opcode;
   char prev_buffer[100];
   int idx = 0;
-  register relax_typeS *table;
 
   opcode_hash_control = hash_new ();
   prev_buffer[0] = 0;
@@ -114,40 +138,6 @@ md_begin ()
 	  idx++;
 	}
     }
-
-  /* Initialize the relax table.  We use a local variable to avoid
-     warnings about modifying a supposedly const data structure.  */
-  table = (relax_typeS *) md_relax_table;
-  table[C (BRANCH, BYTE_DISP)].rlx_forward = BYTE_F;
-  table[C (BRANCH, BYTE_DISP)].rlx_backward = BYTE_B;
-  table[C (BRANCH, BYTE_DISP)].rlx_length = 2;
-  table[C (BRANCH, BYTE_DISP)].rlx_more = C (BRANCH, WORD_DISP);
-
-  table[C (BRANCH, WORD_DISP)].rlx_forward = WORD_F;
-  table[C (BRANCH, WORD_DISP)].rlx_backward = WORD_B;
-  table[C (BRANCH, WORD_DISP)].rlx_length = 3;
-  table[C (BRANCH, WORD_DISP)].rlx_more = 0;
-
-  table[C (SCB_F, BYTE_DISP)].rlx_forward = BYTE_F;
-  table[C (SCB_F, BYTE_DISP)].rlx_backward = BYTE_B;
-  table[C (SCB_F, BYTE_DISP)].rlx_length = 3;
-  table[C (SCB_F, BYTE_DISP)].rlx_more = C (SCB_F, WORD_DISP);
-
-  table[C (SCB_F, WORD_DISP)].rlx_forward = WORD_F;
-  table[C (SCB_F, WORD_DISP)].rlx_backward = WORD_B;
-  table[C (SCB_F, WORD_DISP)].rlx_length = 8;
-  table[C (SCB_F, WORD_DISP)].rlx_more = 0;
-
-  table[C (SCB_TST, BYTE_DISP)].rlx_forward = BYTE_F;
-  table[C (SCB_TST, BYTE_DISP)].rlx_backward = BYTE_B;
-  table[C (SCB_TST, BYTE_DISP)].rlx_length = 3;
-  table[C (SCB_TST, BYTE_DISP)].rlx_more = C (SCB_TST, WORD_DISP);
-
-  table[C (SCB_TST, WORD_DISP)].rlx_forward = WORD_F;
-  table[C (SCB_TST, WORD_DISP)].rlx_backward = WORD_B;
-  table[C (SCB_TST, WORD_DISP)].rlx_length = 10;
-  table[C (SCB_TST, WORD_DISP)].rlx_more = 0;
-
 }
 
 static int rn;			/* register number used by RN */
@@ -1353,7 +1343,6 @@ md_convert_frag (headers, seg, fragP)
 	       R_H8500_PCREL16);
 
       fragP->fr_fix += disp_size + inst_size;
-      fragP->fr_var = 0;
       return;
       break;
     default:
@@ -1369,7 +1358,6 @@ md_convert_frag (headers, seg, fragP)
 
       md_number_to_chars (buffer + inst_size, disp, disp_size);
       fragP->fr_fix += disp_size + inst_size;
-      fragP->fr_var = 0;
     }
 }
 
@@ -1441,33 +1429,47 @@ md_estimate_size_before_relax (fragP, segment_type)
      register fragS *fragP;
      register segT segment_type;
 {
-  int what = GET_WHAT (fragP->fr_subtype);
+  int what;
 
   switch (fragP->fr_subtype)
     {
     default:
       abort ();
+
     case C (BRANCH, UNDEF_BYTE_DISP):
     case C (SCB_F, UNDEF_BYTE_DISP):
     case C (SCB_TST, UNDEF_BYTE_DISP):
+      what = GET_WHAT (fragP->fr_subtype);
       /* used to be a branch to somewhere which was unknown */
       if (S_GET_SEGMENT (fragP->fr_symbol) == segment_type)
 	{
 	  /* Got a symbol and it's defined in this segment, become byte
 	     sized - maybe it will fix up.  */
 	  fragP->fr_subtype = C (what, BYTE_DISP);
-	  fragP->fr_var = md_relax_table[C (what, BYTE_DISP)].rlx_length;
 	}
       else
 	{
 	  /* Its got a segment, but its not ours, so it will always be
              long.  */
 	  fragP->fr_subtype = C (what, UNDEF_WORD_DISP);
-	  fragP->fr_var = md_relax_table[C (what, WORD_DISP)].rlx_length;
-	  return md_relax_table[C (what, WORD_DISP)].rlx_length;
 	}
+      break;
+
+    case C (BRANCH, BYTE_DISP):
+    case C (BRANCH, WORD_DISP):
+    case C (BRANCH, UNDEF_WORD_DISP):
+    case C (SCB_F, BYTE_DISP):
+    case C (SCB_F, WORD_DISP):
+    case C (SCB_F, UNDEF_WORD_DISP):
+    case C (SCB_TST, BYTE_DISP):
+    case C (SCB_TST, WORD_DISP):
+    case C (SCB_TST, UNDEF_WORD_DISP):
+      /* When relaxing a section for the second time, we don't need to
+	 do anything besides return the current size.  */
+      break;
     }
-  return fragP->fr_var;
+
+  return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
 /* Put number into target byte order.  */

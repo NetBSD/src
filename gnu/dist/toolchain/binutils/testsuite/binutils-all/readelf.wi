@@ -1,6 +1,6 @@
 The section .debug_info contains:
 
-  Compilation Unit:
+  Compilation Unit @ .*:
    Length:        .*
    Version:       2
    Abbrev Offset: 0

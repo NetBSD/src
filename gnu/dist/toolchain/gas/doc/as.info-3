@@ -17,6 +17,41 @@ Software Foundation, Inc.
 section entitled "GNU Free Documentation License".
 
 
+File: as.info,  Node: Global,  Next: Hidden,  Prev: Func,  Up: Pseudo Ops
+
+`.global SYMBOL', `.globl SYMBOL'
+=================================
+
+   `.global' makes the symbol visible to `ld'.  If you define SYMBOL in
+your partial program, its value is made available to other partial
+programs that are linked with it.  Otherwise, SYMBOL takes its
+attributes from a symbol of the same name from another file linked into
+the same program.
+
+   Both spellings (`.globl' and `.global') are accepted, for
+compatibility with other assemblers.
+
+   On the HPPA, `.global' is not always enough to make it accessible to
+other partial programs.  You may need the HPPA-only `.EXPORT' directive
+as well.  *Note HPPA Assembler Directives: HPPA Directives.
+
+
+File: as.info,  Node: Hidden,  Next: hword,  Prev: Global,  Up: Pseudo Ops
+
+`.hidden NAMES'
+===============
+
+   This one of the ELF visibility directives.  The other two are
+`.internal' (*note `.internal': Internal.) and `.protected' (*note
+`.protected': Protected.).
+
+   This directive overrides the named symbols default visibility (which
+is set by their binding: local, global or weak).  The directive sets
+the visibility to `hidden' which means that the symbols are not visible
+to other components.  Such symbols are always considered to be
+`protected' as well.
+
+
 File: as.info,  Node: hword,  Next: Ident,  Prev: Hidden,  Up: Pseudo Ops
 
 `.hword EXPRESSIONS'
@@ -1285,7 +1320,7 @@ Options
 
 `-marc[5|6|7|8]'
      This option selects the core processor variant. Using `-marc' is
-     the same as `-marc5', which is also the default.
+     the same as `-marc6', which is also the default.
 
     `arc5'
           Base instruction set.
@@ -1399,12 +1434,12 @@ directives:
 
 `.option ARC|ARC5|ARC6|ARC7|ARC8'
      The `.option' directive must be followed by the desired core
-     version. Again `arc' is an alias for `arc5'.
+     version. Again `arc' is an alias for `arc6'.
 
      Note: the `.option' directive overrides the command line option
      `-marc'; a warning is emitted when the version is not consistent
      between the two - even for the implicit default core version
-     (arc5).
+     (arc6).
 
 `.short EXPRESSIONS'
      *TODO*
@@ -1475,49 +1510,4 @@ Special Characters
 
    The character `?' is permitted in identifiers (but may not begin an
 identifier).
-
-
-File: as.info,  Node: AMD29K-Regs,  Prev: AMD29K-Chars,  Up: AMD29K Syntax
-
-Register Names
-..............
-
-   General-purpose registers are represented by predefined symbols of
-the form `GRNNN' (for global registers) or `LRNNN' (for local
-registers), where NNN represents a number between `0' and `127',
-written with no leading zeros.  The leading letters may be in either
-upper or lower case; for example, `gr13' and `LR7' are both valid
-register names.
-
-   You may also refer to general-purpose registers by specifying the
-register number as the result of an expression (prefixed with `%%' to
-flag the expression as a register number):
-     %%EXPRESSION
-
---where EXPRESSION must be an absolute expression evaluating to a
-number between `0' and `255'.  The range [0, 127] refers to global
-registers, and the range [128, 255] to local registers.
-
-   In addition, `as' understands the following protected
-special-purpose register names for the AMD 29K family:
-
-       vab    chd    pc0
-       ops    chc    pc1
-       cps    rbp    pc2
-       cfg    tmc    mmu
-       cha    tmr    lru
-
-   These unprotected special-purpose register names are also recognized:
-       ipc    alu    fpe
-       ipa    bp     inte
-       ipb    fc     fps
-       q      cr     exop
-
-
-File: as.info,  Node: AMD29K Floating Point,  Next: AMD29K Directives,  Prev: AMD29K Syntax,  Up: AMD29K-Dependent
-
-Floating Point
---------------
-
-   The AMD 29K family uses IEEE floating-point numbers.
 

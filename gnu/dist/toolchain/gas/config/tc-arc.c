@@ -1,5 +1,6 @@
 /* tc-arc.c -- Assembler for the ARC
-   Copyright (C) 1994, 1995, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1997, 1999, 2000, 2001
+   Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -27,6 +28,7 @@
 #include "opcode/arc.h"
 #include "../opcodes/arc-ext.h"
 #include "elf/arc.h"
+#include "dwarf2dbg.h"
 
 extern int arc_get_mach PARAMS ((char *));
 extern int arc_operand_type PARAMS ((int));
@@ -75,7 +77,7 @@ const struct syntax_classes {
 #define MAXSYNTAXCLASS (sizeof (syntaxclass) / sizeof (struct syntax_classes))
 
 const pseudo_typeS md_pseudo_table[] = {
-  { "align", s_align_bytes, 0 }, /* Defaulting is invalid (0) */
+  { "align", s_align_bytes, 0 }, /* Defaulting is invalid (0).  */
   { "comm", arc_common, 0 },
   { "common", arc_common, 0 },
   { "lcomm", arc_common, 1 },
@@ -87,7 +89,10 @@ const pseudo_typeS md_pseudo_table[] = {
   { "4byte", cons, 4 },
   { "word", cons, 4 },
   { "option", arc_option, 0 },
+  { "cpu", arc_option, 0 },
   { "block", s_space, 0 },
+  { "file", dwarf2_directive_file, 0 },
+  { "loc", dwarf2_directive_loc, 0 },
   { "extcondcode", arc_extoper, 0 },
   { "extcoreregister", arc_extoper, 1 },
   { "extauxregister", arc_extoper, 2 },
@@ -96,7 +101,7 @@ const pseudo_typeS md_pseudo_table[] = {
 };
 
 /* This array holds the chars that always start a comment.  If the
-   pre-processor is disabled, these aren't very useful */
+   pre-processor is disabled, these aren't very useful.  */
 const char comment_chars[] = "#;";
 
 /* This array holds the chars that only start a comment at the beginning of
@@ -111,12 +116,11 @@ const char line_comment_chars[] = "#";
 
 const char line_separator_chars[] = "";
 
-/* Chars that can be used to separate mant from exp in floating point nums */
+/* Chars that can be used to separate mant from exp in floating point nums.  */
 const char EXP_CHARS[] = "eE";
 
-/* Chars that mean this number is a floating point constant */
-/* As in 0f12.456 */
-/* or    0d1.2345e12 */
+/* Chars that mean this number is a floating point constant
+   As in 0f12.456 or 0d1.2345e12.  */
 const char FLT_CHARS[] = "rRsSfFdD";
 
 /* Byte order.  */
@@ -127,13 +131,13 @@ static int byte_order = DEFAULT_BYTE_ORDER;
 static segT arcext_section;
 
 /* One of bfd_mach_arc_n.  */
-static int arc_mach_type = bfd_mach_arc_5;
+static int arc_mach_type = bfd_mach_arc_6;
 
 /* Non-zero if the cpu type has been explicitly specified.  */
 static int mach_type_specified_p = 0;
 
 /* Non-zero if opcode tables have been initialized.
-   A .cpu command must appear before any instructions.  */
+   A .option command must appear before any instructions.  */
 static int cpu_tables_init_p = 0;
 
 static struct hash_control *arc_suffix_hash = NULL;
@@ -141,19 +145,20 @@ static struct hash_control *arc_suffix_hash = NULL;
 const char *md_shortopts = "";
 struct option md_longopts[] = {
 #define OPTION_EB (OPTION_MD_BASE + 0)
-  {"EB", no_argument, NULL, OPTION_EB},
+  { "EB", no_argument, NULL, OPTION_EB },
 #define OPTION_EL (OPTION_MD_BASE + 1)
-  {"EL", no_argument, NULL, OPTION_EL},
+  { "EL", no_argument, NULL, OPTION_EL },
 #define OPTION_ARC5 (OPTION_MD_BASE + 2)
-  {"marc5", no_argument, NULL, OPTION_ARC5},
+  { "marc5", no_argument, NULL, OPTION_ARC5 },
+  { "pre-v6", no_argument, NULL, OPTION_ARC5 },
 #define OPTION_ARC6 (OPTION_MD_BASE + 3)
-  {"marc6", no_argument, NULL, OPTION_ARC6},
+  { "marc6", no_argument, NULL, OPTION_ARC6 },
 #define OPTION_ARC7 (OPTION_MD_BASE + 4)
-  {"marc7", no_argument, NULL, OPTION_ARC7},
+  { "marc7", no_argument, NULL, OPTION_ARC7 },
 #define OPTION_ARC8 (OPTION_MD_BASE + 5)
-  {"marc8", no_argument, NULL, OPTION_ARC8},
+  { "marc8", no_argument, NULL, OPTION_ARC8 },
 #define OPTION_ARC (OPTION_MD_BASE + 6)
-  {"marc", no_argument, NULL, OPTION_ARC},
+  { "marc", no_argument, NULL, OPTION_ARC },
   { NULL, no_argument, NULL, 0 }
 };
 size_t md_longopts_size = sizeof (md_longopts);
@@ -173,10 +178,10 @@ md_parse_option (c, arg)
 {
   switch (c)
     {
-    case OPTION_ARC:
     case OPTION_ARC5:
       arc_mach_type = bfd_mach_arc_5;
       break;
+    case OPTION_ARC:
     case OPTION_ARC6:
       arc_mach_type = bfd_mach_arc_6;
       break;
@@ -213,7 +218,7 @@ ARC Options:\n\
 
 /* This function is called once, at assembler startup time.  It should
    set up all the tables, etc. that the MD part of the assembler will need.
-   Opcode selection is defered until later because we might see a .cpu
+   Opcode selection is deferred until later because we might see a .option
    command.  */
 
 void
@@ -225,16 +230,14 @@ md_begin ()
   if (!bfd_set_arch_mach (stdoutput, bfd_arch_arc, arc_mach_type))
     as_warn ("could not set architecture and machine");
 
-  /* This call is necessary because we need to
-     initialize `arc_operand_map' which may be needed before we see the
-     first insn.  */
+  /* This call is necessary because we need to initialize `arc_operand_map'
+     which may be needed before we see the first insn.  */
   arc_opcode_init_tables (arc_get_opcode_mach (arc_mach_type,
 					       target_big_endian));
 }
 
 /* Initialize the various opcode and operand tables.
    MACH is one of bfd_mach_arc_xxx.  */
-
 static void
 init_opcode_tables (mach)
      int mach;
@@ -276,8 +279,10 @@ init_opcode_tables (mach)
 	continue;
       /* Use symbol_create here instead of symbol_new so we don't try to
 	 output registers into the object file's symbol table.  */
-      symbol_table_insert (symbol_create (arc_reg_names[i].name, reg_section,
-                           (int) &arc_reg_names[i], &zero_address_frag));
+      symbol_table_insert (symbol_create (arc_reg_names[i].name,
+					  reg_section,
+					  (int) &arc_reg_names[i],
+					  &zero_address_frag));
     }
 
   /* Tell `.option' it's too late.  */
@@ -356,7 +361,7 @@ arc_insert_operand (insn, operand, mods, reg, val, file, line)
    that would screw up references to ``.''.  */
 
 struct arc_fixup {
-  /* index into `arc_operands' */
+  /* index into `arc_operands'  */
   int opindex;
   expressionS exp;
 };
@@ -380,7 +385,7 @@ md_assemble (str)
   static int init_tables_p = 0;
 
   /* Opcode table initialization is deferred until here because we have to
-     wait for a possible .cpu command.  */
+     wait for a possible .option command.  */
   if (!init_tables_p)
     {
       init_opcode_tables (arc_mach_type);
@@ -626,7 +631,7 @@ md_assemble (str)
 	      /* Is there anything left to parse?
 		 We don't check for this at the top because we want to parse
 		 any trailing fake arguments in the syntax string.  */
-	      if (*str == '\0')
+	      if (is_end_of_line[(unsigned char) *str])
 		break;
 
 	      /* Parse the operand.  */
@@ -734,7 +739,7 @@ md_assemble (str)
 	  while (isspace (*str))
 	    ++str;
 
-	  if (*str != '\0')
+	  if (!is_end_of_line[(unsigned char) *str])
 	    as_bad ("junk at end of line: `%s'", str);
 
 	  /* Is there a limm value?  */
@@ -801,6 +806,7 @@ md_assemble (str)
 	      f = frag_more (8);
 	      md_number_to_chars (f, insn, 4);
 	      md_number_to_chars (f + 4, limm, 4);
+	      dwarf2_emit_insn (8);
 	    }
 	  else if (limm_reloc_p)
 	    {
@@ -811,6 +817,7 @@ md_assemble (str)
 	    {
 	      f = frag_more (4);
 	      md_number_to_chars (f, insn, 4);
+	      dwarf2_emit_insn (4);
 	    }
 
 	  /* Create any fixups.  */
@@ -911,7 +918,7 @@ arc_extoper (opertype)
       p++;
     }
 
-  /* just after name is now '\0' */
+  /* just after name is now '\0'  */
   p = input_line_pointer;
   *p = c;
   SKIP_WHITESPACE ();
@@ -924,7 +931,7 @@ arc_extoper (opertype)
       return;
     }
 
-  input_line_pointer++;		/* skip ',' */
+  input_line_pointer++;		/* skip ','  */
   number = get_absolute_expression ();
 
   if (number < 0)
@@ -947,7 +954,7 @@ arc_extoper (opertype)
 	  return;
 	}
 
-      input_line_pointer++;		/* skip ',' */
+      input_line_pointer++;		/* skip ','  */
       mode = input_line_pointer;
 
       if (!strncmp (mode, "r|w", 3))
@@ -989,7 +996,7 @@ arc_extoper (opertype)
 	      return;
 	    }
 
-	  input_line_pointer++;             /* skip ',' */
+	  input_line_pointer++;		/* skip ','  */
 
 	  if (!strncmp (input_line_pointer, "cannot_shortcut", 15))
 	    {
@@ -1154,7 +1161,7 @@ arc_extinst (ignore)
   strcpy (syntax, name);
   name_len = strlen (name);
 
-  /* just after name is now '\0' */
+  /* just after name is now '\0'  */
   p = input_line_pointer;
   *p = c;
 
@@ -1167,7 +1174,7 @@ arc_extinst (ignore)
       return;
     }
 
-  input_line_pointer++;		/* skip ',' */
+  input_line_pointer++;		/* skip ','  */
   opcode = get_absolute_expression ();
 
   SKIP_WHITESPACE ();
@@ -1179,7 +1186,7 @@ arc_extinst (ignore)
       return;
     }
 
-  input_line_pointer++;		/* skip ',' */
+  input_line_pointer++;		/* skip ','  */
   subopcode = get_absolute_expression ();
 
   if (subopcode < 0)
@@ -1217,7 +1224,7 @@ arc_extinst (ignore)
       return;
     }
 
-  input_line_pointer++;         /* skip ',' */
+  input_line_pointer++;		/* skip ','  */
 
   for (i = 0; i < (int) MAXSUFFIXCLASS; i++)
     {
@@ -1245,7 +1252,7 @@ arc_extinst (ignore)
       return;
     }
 
-  input_line_pointer++;         /* skip ',' */
+  input_line_pointer++;		/* skip ','  */
 
   for (i = 0; i < (int) MAXSYNTAXCLASS; i++)
     {
@@ -1372,7 +1379,7 @@ arc_common (localScope)
 
   name = input_line_pointer;
   c = get_symbol_end ();
-  /* just after name is now '\0' */
+  /* just after name is now '\0'  */
   p = input_line_pointer;
   *p = c;
   SKIP_WHITESPACE ();
@@ -1384,7 +1391,7 @@ arc_common (localScope)
       return;
     }
 
-  input_line_pointer++;		/* skip ',' */
+  input_line_pointer++;		/* skip ','  */
   size = get_absolute_expression ();
 
   if (size < 0)
@@ -1436,7 +1443,7 @@ arc_common (localScope)
       old_sec    = now_seg;
       old_subsec = now_subseg;
       record_alignment (bss_section, align);
-      subseg_set (bss_section, 0);  /* ??? subseg_set (bss_section, 1); ??? */
+      subseg_set (bss_section, 0);  /* ??? subseg_set (bss_section, 1); ???  */
 
       if (align)
 	/* Do alignment.  */
@@ -1630,12 +1637,13 @@ arc_code_symbol (expressionP)
     {
       expressionS two;
       expressionP->X_op = O_right_shift;
+      expressionP->X_add_symbol->sy_value.X_op = O_constant;
       two.X_op = O_constant;
       two.X_add_symbol = two.X_op_symbol = NULL;
       two.X_add_number = 2;
       expressionP->X_op_symbol = make_expr_symbol (&two);
     }
-  /* Allow %st(sym1-sym2) */
+  /* Allow %st(sym1-sym2)  */
   else if (expressionP->X_op == O_subtract
 	   && expressionP->X_add_symbol != NULL
 	   && expressionP->X_op_symbol != NULL
@@ -1686,7 +1694,8 @@ md_operand (expressionP)
 	arc_code_symbol (expressionP);
       }
     else
-      {       /* It could be a register.  */
+      {
+	/* It could be a register.  */
 	int i, l;
 	struct arc_ext_operand_value *ext_oper = arc_ext_operands;
 	p++;

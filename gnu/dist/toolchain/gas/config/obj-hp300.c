@@ -1,5 +1,5 @@
 /* This file is obj-hp300.h
-   Copyright (C) 1993, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

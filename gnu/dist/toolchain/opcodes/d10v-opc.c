@@ -1,5 +1,5 @@
 /* d10v-opc.c -- D10V opcode list
-   Copyright 1996, 1997, 1998 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.

@@ -1,5 +1,5 @@
 /* ARC target-dependent stuff. Extension data structures.
-   Copyright (C) 1995, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1995, 1997, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of GDB.
 

@@ -1,5 +1,5 @@
 /* BFD back-end for Texas Instruments TMS320C80 Multimedia Video Processor (MVP).
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1999, 2000 Free Software Foundation, Inc.
 
    Written by Fred Fish (fnf@cygnus.com)
 

@@ -1,5 +1,5 @@
 /* BFD back end for Lynx core files
-   Copyright 1993 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 2001 Free Software Foundation, Inc.
    Written by Stu Grossman of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.

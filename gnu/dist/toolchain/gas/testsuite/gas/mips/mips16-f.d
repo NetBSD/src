@@ -12,7 +12,7 @@ SYMBOL TABLE:
 0+0000000 l    d  \.bss	0+0000000 
 0+0000000 l    d  foo	0+0000000 
 0+0000000 l    d  \.reginfo	0+0000000 
-0+0000000 l    d  \.mdebug	0+0000000 
+0+0000000 l    d  \.(mdebug|pdr)	0+0000000 
 0+0000002 l       \.text	0+0000000 0xf0 l1
 
 
@@ -27,7 +27,7 @@ Contents of section \.data:
 Contents of section \.reginfo:
  0000 00000001 00000000 00000000 00000000  .*
  0010 00000000 00000000                    .*
-Contents of section \.mdebug:
+Contents of section \.(mdebug|pdr):
 #...
 Contents of section foo:
  0000 00000003 00000000 00000000 00000000  .*

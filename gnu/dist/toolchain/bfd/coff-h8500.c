@@ -1,5 +1,6 @@
 /* BFD back-end for Hitachi H8/500 COFF binaries.
-   Copyright 1993, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1997, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 

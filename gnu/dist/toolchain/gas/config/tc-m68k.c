@@ -1,5 +1,6 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+   2000, 2001
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -229,7 +230,7 @@ struct m68k_it
 #define arch_coldfire_p(x)	(((x) & mcf) != 0)
 
 /* Macros for determining if cpu supports a specific addressing mode */
-#define HAVE_LONG_BRANCH(x)	((x) & (m68020|m68030|m68040|m68060|cpu32))
+#define HAVE_LONG_BRANCH(x)     ((x) & (m68020|m68030|m68040|m68060|cpu32|mcf5407))
 
 static struct m68k_it the_ins;	/* the instruction being assembled */
 
@@ -351,56 +352,59 @@ static void md_convert_frag_1 PARAMS ((fragS *));
 
 static int current_architecture;
 
-struct m68k_cpu {
-  unsigned long arch;
-  const char *name;
-  int alias;
-};
+struct m68k_cpu
+  {
+    unsigned long arch;
+    const char *name;
+    int alias;
+  };
 
-static const struct m68k_cpu archs[] = {
-  { m68000, "68000", 0 },
-  { m68010, "68010", 0 },
-  { m68020, "68020", 0 },
-  { m68030, "68030", 0 },
-  { m68040, "68040", 0 },
-  { m68060, "68060", 0 },
-  { cpu32,  "cpu32", 0 },
-  { m68881, "68881", 0 },
-  { m68851, "68851", 0 },
-  { mcf5200, "5200", 0 },
-  { mcf5206e, "5206e", 0 },
-  { mcf5307, "5307", 0},
-  /* Aliases (effectively, so far as gas is concerned) for the above
-     cpus.  */
-  { m68020, "68k", 1 },
-  { m68000, "68008", 1 },
-  { m68000, "68302", 1 },
-  { m68000, "68306", 1 },
-  { m68000, "68307", 1 },
-  { m68000, "68322", 1 },
-  { m68000, "68356", 1 },
-  { m68000, "68ec000", 1 },
-  { m68000, "68hc000", 1 },
-  { m68000, "68hc001", 1 },
-  { m68020, "68ec020", 1 },
-  { m68030, "68ec030", 1 },
-  { m68040, "68ec040", 1 },
-  { m68060, "68ec060", 1 },
-  { cpu32,  "68330", 1 },
-  { cpu32,  "68331", 1 },
-  { cpu32,  "68332", 1 },
-  { cpu32,  "68333", 1 },
-  { cpu32,  "68334", 1 },
-  { cpu32,  "68336", 1 },
-  { cpu32,  "68340", 1 },
-  { cpu32,  "68341", 1 },
-  { cpu32,  "68349", 1 },
-  { cpu32,  "68360", 1 },
-  { m68881, "68882", 1 },
-  { mcf5200, "5202", 1 },
-  { mcf5200, "5204", 1 },
-  { mcf5200, "5206", 1 },
-};
+static const struct m68k_cpu archs[] =
+  {
+    { m68000, "68000", 0 },
+    { m68010, "68010", 0 },
+    { m68020, "68020", 0 },
+    { m68030, "68030", 0 },
+    { m68040, "68040", 0 },
+    { m68060, "68060", 0 },
+    { cpu32,  "cpu32", 0 },
+    { m68881, "68881", 0 },
+    { m68851, "68851", 0 },
+    { mcf5200, "5200", 0 },
+    { mcf5206e, "5206e", 0 },
+    { mcf5307, "5307", 0},
+    { mcf5407, "5407", 0},
+    /* Aliases (effectively, so far as gas is concerned) for the above
+       cpus.  */
+    { m68020, "68k", 1 },
+    { m68000, "68008", 1 },
+    { m68000, "68302", 1 },
+    { m68000, "68306", 1 },
+    { m68000, "68307", 1 },
+    { m68000, "68322", 1 },
+    { m68000, "68356", 1 },
+    { m68000, "68ec000", 1 },
+    { m68000, "68hc000", 1 },
+    { m68000, "68hc001", 1 },
+    { m68020, "68ec020", 1 },
+    { m68030, "68ec030", 1 },
+    { m68040, "68ec040", 1 },
+    { m68060, "68ec060", 1 },
+    { cpu32,  "68330", 1 },
+    { cpu32,  "68331", 1 },
+    { cpu32,  "68332", 1 },
+    { cpu32,  "68333", 1 },
+    { cpu32,  "68334", 1 },
+    { cpu32,  "68336", 1 },
+    { cpu32,  "68340", 1 },
+    { cpu32,  "68341", 1 },
+    { cpu32,  "68349", 1 },
+    { cpu32,  "68360", 1 },
+    { m68881, "68882", 1 },
+    { mcf5200, "5202", 1 },
+    { mcf5200, "5204", 1 },
+    { mcf5200, "5206", 1 },
+  };
 
 static const int n_archs = sizeof (archs) / sizeof (archs[0]);
 
@@ -710,6 +714,19 @@ tc_coff_fix2rtype (fixP)
 
 #ifdef OBJ_ELF
 
+/* Return zero if the reference to SYMBOL from within the same segment may
+   be relaxed.  */
+
+/* On an ELF system, we can't relax an externally visible symbol,
+   because it may be overridden by a shared library.  However, if
+   TARGET_OS is "elf", then we presume that we are assembling for an
+   embedded system, in which case we don't have to worry about shared
+   libraries, and we can relax any external sym.  */
+
+#define relaxable_symbol(symbol) \
+  (!((S_IS_EXTERNAL (symbol) && strcmp (TARGET_OS, "elf") != 0)		\
+     || S_IS_WEAK (symbol)))
+
 /* Compute the relocation code for a fixup of SIZE bytes, using pc
    relative relocation if PCREL is non-zero.  PIC says whether a special
    pic relocation was requested.  */
@@ -828,8 +845,7 @@ tc_m68k_fix_adjustable (fixP)
      fixS *fixP;
 {
   /* Prevent all adjustments to global symbols.  */
-  if (S_IS_EXTERNAL (fixP->fx_addsy)
-      || S_IS_WEAK (fixP->fx_addsy))
+  if (! relaxable_symbol (fixP->fx_addsy))
     return 0;
 
   /* adjust_reloc_syms doesn't know about the GOT */
@@ -861,6 +877,8 @@ tc_m68k_fix_adjustable (fixP)
 #else /* !OBJ_ELF */
 
 #define get_reloc_code(SIZE,PCREL,OTHER) NO_RELOC
+
+#define relaxable_symbol(symbol) 1
 
 #endif /* OBJ_ELF */
 
@@ -964,8 +982,9 @@ tc_gen_reloc (section, fixp)
     reloc->addend = fixp->fx_addnumber;
   else
     reloc->addend = (section->vma
-		     + (fixp->fx_pcrel_adjust == 64
-			? -1 : fixp->fx_pcrel_adjust)
+		     /* Explicit sign extension in case char is
+			unsigned.  */
+		     + ((fixp->fx_pcrel_adjust & 0xff) ^ 0x80) - 0x80
 		     + fixp->fx_addnumber
 		     + md_pcrel_from (fixp));
 #endif
@@ -977,27 +996,6 @@ tc_gen_reloc (section, fixp)
 }
 
 #endif /* BFD_ASSEMBLER */
-
-/* Return zero if the reference to SYMBOL from within the same segment may
-   be relaxed.  */
-#ifdef OBJ_ELF
-
-/* On an ELF system, we can't relax an externally visible symbol,
-   because it may be overridden by a shared library.  However, if
-   TARGET_OS is "elf", then we presume that we are assembling for an
-   embedded system, in which case we don't have to worry about shared
-   libraries, and we can relax anything.  */
-
-#define relaxable_symbol(symbol)		\
-  (strcmp (TARGET_OS, "elf") == 0		\
-   || (! S_IS_EXTERNAL (symbol)			\
-       && ! S_IS_WEAK (symbol)))
-
-#else
-
-#define relaxable_symbol(symbol) 1
-
-#endif
 
 /* Handle of the OPCODE hash table.  NULL means any use before
    m68k_ip_begin() will crash.  */
@@ -2542,11 +2540,7 @@ m68k_ip (instring)
 	  switch (s[1])
 	    {
 	    case 'B':
-	      /* The pc_fix argument winds up in fx_pcrel_adjust,
-                 which is a char, and may therefore be unsigned.  We
-                 want to pass -1, but we pass 64 instead, and convert
-                 back in md_pcrel_from.  */
-	      add_fix ('B', &opP->disp, 1, 64);
+	      add_fix ('B', &opP->disp, 1, -1);
 	      break;
 	    case 'W':
 	      add_fix ('w', &opP->disp, 1, 0);
@@ -3670,6 +3664,21 @@ md_assemble (str)
     }
 
   /* There's some frag hacking */
+  {
+    /* Calculate the max frag size.  */
+    int wid;
+
+    wid = 2 * the_ins.fragb[0].fragoff;
+    for (n = 1; n < the_ins.nfrag; n++)
+      wid += 2 * (the_ins.numo - the_ins.fragb[n - 1].fragoff);
+    /* frag_var part.  */
+    wid += 10;
+    /* Make sure the whole insn fits in one chunk, in particular that
+       the var part is attached, as we access one byte before the
+       variable frag for byte branches.  */
+    frag_grow (wid);
+  }
+
   for (n = 0, fromP = &the_ins.opcode[0]; n < the_ins.nfrag; n++)
     {
       int wid;
@@ -3965,6 +3974,7 @@ select_control_regs ()
     case mcf5200:
     case mcf5206e:
     case mcf5307:
+    case mcf5407:
       control_regs = mcf_control_regs;
       break;
     default:
@@ -4224,10 +4234,7 @@ md_apply_fix_2 (fixP, val)
   buf += fixP->fx_where;
   /* end ibm compiler workaround */
 
-  if (val & 0x80000000)
-    val |= ~(addressT)0x7fffffff;
-  else
-    val &= 0x7fffffff;
+  val = ((val & 0xffffffff) ^ 0x80000000) - 0x80000000;
 
 #ifdef OBJ_ELF
   if (fixP->fx_addsy)
@@ -4582,27 +4589,6 @@ md_estimate_size_before_relax (fragP, segment)
     {
     case TAB (BRANCHBWL, SZ_UNDEF):
     case TAB (BRABSJUNC, SZ_UNDEF):
-      {
-	if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	    && relaxable_symbol (fragP->fr_symbol))
-	  {
-	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), BYTE);
-	  }
-	else if (flag_short_refs)
-	  {
-	    /* Symbol is undefined and we want short ref.  */
-	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
-	    fragP->fr_var += 2;
-	  }
-	else
-	  {
-	    /* Symbol is still undefined.  Make it LONG.  */
-	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), LONG);
-	    fragP->fr_var += 4;
-	  }
-	break;
-      }
-
     case TAB (BRABSJCOND, SZ_UNDEF):
       {
 	if (S_GET_SEGMENT (fragP->fr_symbol) == segment
@@ -4614,13 +4600,11 @@ md_estimate_size_before_relax (fragP, segment)
 	  {
 	    /* Symbol is undefined and we want short ref.  */
 	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
-	    fragP->fr_var += 2;
 	  }
 	else
 	  {
 	    /* Symbol is still undefined.  Make it LONG.  */
 	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), LONG);
-	    fragP->fr_var += 6;
 	  }
 	break;
       }
@@ -4636,59 +4620,24 @@ md_estimate_size_before_relax (fragP, segment)
 	  {
 	    /* Symbol is undefined and we don't have long branches.  */
 	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
-	    fragP->fr_var += 2;
 	  }
 	break;
       }
 
     case TAB (FBRANCH, SZ_UNDEF):
-      {
-	if ((S_GET_SEGMENT (fragP->fr_symbol) == segment
-	     && relaxable_symbol (fragP->fr_symbol))
-	    || flag_short_refs)
-	  {
-	    fragP->fr_subtype = TAB (FBRANCH, SHORT);
-	    fragP->fr_var += 2;
-	  }
-	else
-	  {
-	    fragP->fr_subtype = TAB (FBRANCH, LONG);
-	    fragP->fr_var += 4;
-	  }
-	break;
-      }
-
     case TAB (DBCCLBR, SZ_UNDEF):
     case TAB (DBCCABSJ, SZ_UNDEF):
+    case TAB (PCREL1632, SZ_UNDEF):
       {
 	if ((S_GET_SEGMENT (fragP->fr_symbol) == segment
 	     && relaxable_symbol (fragP->fr_symbol))
 	    || flag_short_refs)
 	  {
 	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
-	    fragP->fr_var += 2;
 	  }
 	else
 	  {
 	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), LONG);
-	    fragP->fr_var += 10;
-	  }
-	break;
-      }
-
-    case TAB (PCREL1632, SZ_UNDEF):
-      {
-	if (((S_GET_SEGMENT (fragP->fr_symbol)) == segment
-	     && relaxable_symbol (fragP->fr_symbol))
-	    || flag_short_refs)
-	  {
-	    fragP->fr_subtype = TAB (PCREL1632, SHORT);
-	    fragP->fr_var += 2;
-	  }
-	else
-	  {
-	    fragP->fr_subtype = TAB (PCREL1632, LONG);
-	    fragP->fr_var += 6;
 	  }
 	break;
       }
@@ -4702,7 +4651,6 @@ md_estimate_size_before_relax (fragP, segment)
       else
 	{
 	  fragP->fr_subtype = TAB (PCINDEX, LONG);
-	  fragP->fr_var += 4;
 	}
       break;
 
@@ -4712,12 +4660,10 @@ md_estimate_size_before_relax (fragP, segment)
 	     && relaxable_symbol (fragP->fr_symbol)))
 	  {
 	    fragP->fr_subtype = TAB (ABSTOPCREL, SHORT);
-	    fragP->fr_var += 2;
 	  }
 	else
 	  {
 	    fragP->fr_subtype = TAB (ABSTOPCREL, LONG);
-	    fragP->fr_var += 4;
 	  }
 	break;
       }
@@ -4752,13 +4698,13 @@ md_estimate_size_before_relax (fragP, segment)
 	  if (l == stop)
 	    {
 	      fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
-	      fragP->fr_var += 2;
 	    }
 	}
       break;
     default:
       break;
     }
+  fragP->fr_var = md_relax_table[fragP->fr_subtype].rlx_length;
   return fragP->fr_var + fragP->fr_fix - old_fix;
 }
 
@@ -6941,9 +6887,9 @@ md_show_usage (stream)
   fprintf (stream, _("\
 680X0 options:\n\
 -l			use 1 word for refs to undefined symbols [default 2]\n\
--m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040 | -m68060\n\
- | -m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -m68360\n\
- | -mcpu32 | -m5200\n\
+-m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040 | -m68060 |\n\
+-m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -m68360 | -mcpu32 |\n\
+-m5200  | -m5202  | -m5204  | -m5206  | -m5206e | -m5307  | -m5407\n\
 			specify variant of 680X0 architecture [default 68020]\n\
 -m68881 | -m68882 | -mno-68881 | -mno-68882\n\
 			target has/lacks floating-point coprocessor\n\
@@ -7097,9 +7043,9 @@ md_pcrel_from (fixP)
 {
   int adjust;
 
-  /* Because fx_pcrel_adjust is a char, and may be unsigned, we store
-     -1 as 64.  */
-  adjust = fixP->fx_pcrel_adjust;
+  /* Because fx_pcrel_adjust is a char, and may be unsigned, we explicitly
+     sign extend the value here.  */
+  adjust = ((fixP->fx_pcrel_adjust & 0xff) ^ 0x80) - 0x80;
   if (adjust == 64)
     adjust = -1;
   return fixP->fx_where + fixP->fx_frag->fr_address - adjust;
