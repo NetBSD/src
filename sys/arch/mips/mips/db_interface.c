@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 1999/10/12 17:08:58 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.21 1999/10/28 06:54:16 lukem Exp $	*/
 
 /*
  * Mach Operating System
@@ -356,8 +356,8 @@ db_kvtophys_cmd(addr, have_addr, count, modif)
 struct db_command mips_db_command_table[] = {
 	{ "halt",	db_halt_cmd,		0,	0 },
 	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
-	{ "trapdump",	db_trapdump_cmd,	0,	0 },
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
+	{ "trapdump",	db_trapdump_cmd,	0,	0 },
 	{ (char *)0, }
 };
 
