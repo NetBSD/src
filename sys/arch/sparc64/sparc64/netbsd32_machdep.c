@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.13 2001/05/09 20:13:38 kleink Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.14 2001/05/09 20:21:51 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -182,7 +182,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	sf.sf_sc.sc_sp = (u_long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
-	sf.sf_sc.sc_tstate = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
+	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
@@ -405,7 +405,7 @@ netbsd32___sigreturn14(p, v, retval)
 		return (EINVAL);
 #endif
 	/* take only psr ICC field */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(sc.sc_tstate);
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(sc.sc_psr);
 	tf->tf_pc = (int64_t)scp->sc_pc;
 	tf->tf_npc = (int64_t)scp->sc_npc;
 	tf->tf_global[1] = (int64_t)scp->sc_g1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.5 1999/12/30 16:24:33 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.6 2001/05/09 20:21:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -41,7 +41,7 @@ struct netbsd32_sigcontext {
 	int		sc_sp;		/* %sp to restore */
 	int		sc_pc;		/* pc to restore */
 	int		sc_npc;		/* npc to restore */
-	int		sc_tstate;	/* pstate to restore */
+	int		sc_psr;		/* pstate to restore */
 	int		sc_g1;		/* %g1 to restore */
 	int		sc_o0;		/* %o0 to restore */
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
