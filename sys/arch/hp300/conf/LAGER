@@ -1,92 +1,99 @@
-#	$NetBSD: LAGER,v 1.17 1997/03/12 18:33:11 thorpej Exp $
+#	$NetBSD: LAGER,v 1.18 1997/03/16 18:46:56 hpeyerl Exp $
 #
-# LAGER (hpeyerl's hp380)
+# LAGER (hpeyerl's hp425s)
 #
-machine		"hp300"
-cpu		"HP320"
-cpu		"HP330"
-cpu		"HP340"
-cpu		"HP350"
-cpu		"HP360"
-cpu		"HP370"
-cpu		"HP380"
-ident		LAGER
 
-maxusers	16
+# Include attributes common to all hp300s
+include "arch/hp300/conf/std.hp300"
 
-# Standard options
-options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options		INET
-options		FFS,FIFO
-options		MFS,KERNFS,FDESC
-options		NFSSERVER,NFSCLIENT
-options		NULLFS,PROCFS
-options		"COMPAT_NOMID"
-options		"COMPAT_43"
-options		"COMPAT_12"
-options		"TCP_COMPAT_42"
-options		GATEWAY
-options 	EXEC_AOUT		# support for exec'ing a.out
-options 	EXEC_SCRIPT		# support for #! scripts
+# Support for various CPU types
+options 	HP380		# includes 425t, 425s, 433s
+options		FPSP		# floating point interface for 68040
 
-# Options for all HP machines
-options		SYSVSHM
-options		FPSP
+# Need to set locally
+maxusers	32
 
-options "COMPAT_09"
+# Standard system options
+options 	COMPAT_43		# compatibility with 4.3BSD interfaces
+options 	COMPAT_44		# compatibility with 4.4BSD binaries
+options 	COMPAT_09		# compatibility with NetBSD 0.9
+options 	COMPAT_10		# compatibility with NetBSD 1.0
+options 	COMPAT_11		# compatibility with NetBSD 1.1
+options 	COMPAT_12		# compatibility with NetBSD 1.2
+options 	KTRACE			# system call tracing support
+options 	NKMEMCLUSTERS=2048	# # 4K pages in kernel malloc pool
+options		LKM			# loadable kernel modules
 
-# Options specific to this host.
-options		DDB
-options		DEBUG,DIAGNOSTIC
-options		PANICBUTTON,PANICWAIT
-options		KTRACE
-options		"NKMEMCLUSTERS=256"
-options		"HILVID=1"
-options		PROFTIMER,"PRF_INTERVAL=500"
-#options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
-options		COMPAT_HPUX
-options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
-options		USELEDS
+# Filesystems
+file-system	FFS		# fast filesystem
+file-system	NFS		# Network filesystem client
+file-system	KERNFS		# kernel data-structure filesystem
+file-system	FDESC		# user file descriptor filesystem
+file-system	PROCFS		# /proc filesystem
+file-system	MFS		# Memory-based filesystem
+file-system 	CD9660		# ISO 9660 + Rock Ridge filesystem
 
-config		netbsd root on sd0 swap on sd0b and sd1b
-#config		vgnetbsd root on sd0 swap on sd0b and sd1b and sd2b
-#config		rdnetbsd root on rd0 swap on rd0b and rd1b
-#config		gennetbsd swap generic
+# Filesystem options
+options		FIFO		# POSIX fifo support (in all filesystems)
+options		NFSSERVER	# Network filesystem server
 
-master		hpib0	at scode7
-master		hpib1	at scode?
-disk		rd0	at hpib? slave ?
-disk		rd1	at hpib? slave ?
-disk		rd2	at hpib? slave ?
-disk		rd3	at hpib? slave ?
-tape		ct0	at hpib0 slave ?
-tape		ct1	at hpib0 slave ?
+# Networking options
+options		INET		# Internet protocols
+options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options		GATEWAY		# Packet forwarding + larger mb_map
+options		NMBCLUSTERS="1024"	# Crank this up
+options		PFIL_HOOKS	# packet filter hooks
 
-master		scsi0	at scode?
-master		scsi1	at scode?
-disk		sd0	at scsi? slave 3
-disk		sd1	at scsi? slave 5
-disk		sd3	at scsi? slave 2
-disk		sd2	at scsi? slave ?
-tape		st0	at scsi? slave ?
-tape		st1	at scsi? slave ?
+# Options for HP hardware
+options		USELEDS		# make the lights twinkle
+options		COMPAT_HPUX	# HP-UX binary compatibility
+options		COMPAT_M68K4K	# m68k4k executables
 
-device		le0	at scode?
-device		le1	at scode?
-device		dca0	at scode9
-device		dcm0	at scode? flags 0xe
-device		dcm1	at scode? flags 0xe
-device		dcm2	at scode? flags 0xe
-device		dcm3	at scode? flags 0xe
+# Debugging options
+options 	DIAGNOSTIC	# Kernel sanity checks
+options 	DDB		# Kernel Dynamic Debugger
+options 	DDB_ONPANIC=0	# Don't go into DDB on panic
 
-device		grf0	at scode?
-device		grf1	at scode?
+config		netbsd root on ? type ?
 
-pseudo-device	sl	1
-pseudo-device	bpfilter 16
-pseudo-device	ite
-pseudo-device	pty	32
-pseudo-device	loop
-pseudo-device	ether
-pseudo-device	ppp	4
-pseudo-device	ccd 4
+mainbus0	at root		# root "bus"
+
+intio0		at mainbus0	# internal i/o space
+dio0		at mainbus0	# DIO/DIO-II bus
+
+# Topcat/catseye framebuffers
+topcat*		at intio?
+topcat*		at dio? scode ?
+
+# Framebuffer abstraction
+grf*		at topcat?
+
+# Internal Terminal Emulator
+ite*		at grf?
+
+dca0		at dio? scode 9		# built-in DCA serial interface
+
+#dcm*		at dio? scode ? flags 0xe # DCM 4-port serial card
+
+le*		at dio? scode ?		# LANCE ethernet interfaces
+
+nhpib0		at dio? scode 7		# internal HP-IB
+
+hpibbus0	at nhpib0
+
+rd*		at hpibbus? slave ? punit ?	# HP-IB disks
+ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
+
+oscsi*		at dio? scode ?		# Old HP SCSI
+
+sd*		at oscsi? target ? lun ?	# SCSI disks
+st*		at oscsi? target ? lun ?	# SCSI tapes
+ac*		at oscsi? target ? lun ?	# SCSI changers
+
+pseudo-device	pty		128	# pseudo ptys
+pseudo-device	ppp		1	# PPP network interfaces
+pseudo-device	bpfilter	4	# packet filter devices
+pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	loop			# loopback network interface
+pseudo-device	ipfilter 		# IP Filter
+pseudo-device	ccd		4
