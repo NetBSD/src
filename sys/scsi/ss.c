@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.8 1996/03/17 00:59:52 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.9 1996/03/30 21:47:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -41,7 +41,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include <sys/conf.h>		/* for cdevsw */
+#include <sys/conf.h>
 #include <sys/scanio.h>
 
 #include <scsi/scsi_all.h>
@@ -76,6 +76,7 @@ struct cfdriver ss_cd = {
 
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
+void	ssminphys __P((struct buf *));
 
 struct scsi_device ss_switch = {
 	NULL,
@@ -153,8 +154,6 @@ ssattach(parent, self, aux)
 	ss->buf_queue.b_active = 0;
 	ss->buf_queue.b_actf = 0;
 	ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
-
-	printf("\n");
 }
 
 /*
@@ -227,8 +226,11 @@ bad:
  * occurence of an open device
  */
 int
-ssclose(dev)
+ssclose(dev, flag, mode, p)
 	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error;
@@ -350,7 +352,6 @@ ssstrategy(bp)
 
 	splx(s);
 	return;
-bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/*
@@ -430,7 +431,6 @@ ssioctl(dev, cmd, addr, flag, p)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;
-	int unit;
 	struct scan_io *sio;
 
 	switch (cmd) {
