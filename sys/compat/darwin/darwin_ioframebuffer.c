@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.6 2003/05/14 14:41:05 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.7 2003/05/14 15:50:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.6 2003/05/14 14:41:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.7 2003/05/14 15:50:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,6 +149,16 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 		rep->rep_outcount = 1;
 		rep->rep_out[0] = 0;
 	}
+
+	/* IOFBGetFramebufferInformationForAperture() gives this */
+	if ((req->req_selector == 0x8) && (req->req_in[0] == 0x0) &&
+	    (req->req_in[req->req_incount] >= 1)) {
+#ifdef DEBUG_MACH
+		printf("flavor 5\n");
+#endif
+		rep->rep_outcount = 1;
+		rep->rep_out[0] = 0x00801000;
+	}
 	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 
 	*msglen = sizeof(*rep) - ((16 - rep->rep_outcount) * sizeof(int));
@@ -246,6 +256,61 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 		rep->rep_out[101] = 0x42;
 		rep->rep_out[102] = 0x42;
 		rep->rep_out[103] = 0x42;
+		rep->rep_out[158] = 0x4;
+		rep->rep_out[162] = 0x3;
+	}
+
+	/* IOFBGetPixelInformation gives this too */
+	if ((req->req_selector == 1) && (req->req_incount == 3) &&
+	    (req->req_in[0] == 0x2e) && 
+	    (req->req_in[1] == 0x2) &&
+	    (req->req_in[2] == 0x0) && 
+	    (req->req_in[req->req_incount] >= 0xac)) {  /* req_outcount */
+#ifdef DEBUG_MACH
+		printf("flavor 3\n");
+#endif
+		rep->rep_outcount = req->req_in[req->req_incount];
+		memset(&rep->rep_out[0], 0, rep->rep_outcount * sizeof(int));
+		rep->rep_out[2] = 0x10;
+		rep->rep_out[11] = 0x20;
+		rep->rep_out[15] = 0x2;
+		rep->rep_out[19] = 0x3;
+		rep->rep_out[23] = 0x8;
+		rep->rep_out[25] = 0xff;
+		rep->rep_out[30] = 0xff;
+		rep->rep_out[35] = 0x1f;
+		rep->rep_out[88] = 0x2d;
+		rep->rep_out[89] = 0x2d;
+		rep->rep_out[90] = 0x2d;
+		rep->rep_out[91] = 0x2d;
+		rep->rep_out[92] = 0x2d;
+		rep->rep_out[93] = 0x2d;
+		rep->rep_out[94] = 0x2d;
+		rep->rep_out[95] = 0x2d;
+		rep->rep_out[96] = 0x52;
+		rep->rep_out[97] = 0x52;
+		rep->rep_out[98] = 0x52;
+		rep->rep_out[99] = 0x52;
+		rep->rep_out[100] = 0x52;
+		rep->rep_out[101] = 0x52;
+		rep->rep_out[102] = 0x52;
+		rep->rep_out[103] = 0x52;
+		rep->rep_out[104] = 0x47;
+		rep->rep_out[105] = 0x47;
+		rep->rep_out[106] = 0x47;
+		rep->rep_out[107] = 0x47;
+		rep->rep_out[108] = 0x47;
+		rep->rep_out[109] = 0x47;
+		rep->rep_out[110] = 0x47;
+		rep->rep_out[111] = 0x47;
+		rep->rep_out[112] = 0x42;
+		rep->rep_out[113] = 0x42;
+		rep->rep_out[114] = 0x42;
+		rep->rep_out[115] = 0x42;
+		rep->rep_out[116] = 0x42;
+		rep->rep_out[117] = 0x42;
+		rep->rep_out[118] = 0x42;
+		rep->rep_out[119] = 0x42;
 		rep->rep_out[158] = 0x4;
 		rep->rep_out[162] = 0x3;
 	}
