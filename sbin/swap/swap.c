@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.9 1997/05/11 08:50:20 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.10 1997/05/11 13:29:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -41,6 +41,7 @@
  *	-s		short listing of swap devices
  *	-k		use kilobytes
  *	-p <pri>	use this priority
+ *	-c		change priority
  */
 
 #include <sys/param.h>
@@ -57,16 +58,19 @@
 
 int	Aflag;
 int	aflag;
+int	cflag;
 #ifdef SWAP_OFF_WORKS
 int	dflag;
 #endif
 int	lflag;
 int	kflag;
 int	sflag;
+int	pflag;
 int	pri;		/* uses 0 as default pri */
 char	*path;
 
 static	void list_swap __P((int));	/* 1 for long, 0 for short */
+static	void change_priority __P((char *));
 static	void add_swap __P((char *));
 #ifdef SWAP_OFF_WORKS
 static	void del_swap __P((char *));
@@ -83,9 +87,9 @@ main(argc, argv)
 	int	am_swapon = 0;
 #ifdef SWAP_OFF_WORKS
 	int	swapoff = 0;
-	static	char getoptstr[] = "Aadlkp:s";
+	static	char getoptstr[] = "Aacdlkp:s";
 #else
-	static	char getoptstr[] = "Aalkp:s";
+	static	char getoptstr[] = "Aaclkp:s";
 #endif /* SWAP_OFF_WORKS */
 	extern	char *__progname;		/* XXX */
 
@@ -101,9 +105,13 @@ main(argc, argv)
 			Aflag = 1;
 			break;
 		case 'a':
+			if (cflag) {
+				warn("-a and -c are mutually exclusive");
+				usage();
+			}
 #ifdef SWAP_OFF_WORKS
 			if (dflag) {
-				warn("-a and -d are mutually exclusive\n");
+				warn("-a and -d are mutually exclusive");
 				usage();
 			}
 #endif /* SWAP_OFF_WORKS */
@@ -112,10 +120,17 @@ main(argc, argv)
 			else
 				aflag = 1;
 			break;
+		case 'c':
+			if (aflag) {
+				warn("-c and -a are mutually exclusive");
+				usage();
+			}
+			cflag = 1;
+			break;
 #ifdef SWAP_OFF_WORKS
 		case 'd':
-			if (aflag) {
-				warn("-d and -a are mutually exclusive\n");
+			if (aflag || cflag) {
+				warn("-d and -a or -c are mutually exclusive");
 				usage();
 			}
 			dflag = 1;
@@ -128,6 +143,7 @@ main(argc, argv)
 			kflag = 1;
 			break;
 		case 'p':
+			pflag = 1;
 			pri = atoi(optarg);
 			break;
 		case 's':
@@ -136,20 +152,24 @@ main(argc, argv)
 		}
 	}
 	/* SWAP_OFF_WORKS */
-	if (!aflag && !lflag && !Aflag && !sflag /* && !dflag */)
+	if (!aflag && !Aflag && !cflag && !lflag && !sflag /* && !dflag */)
 		usage();
 
 	argv += optind;
-	if (!*argv && !lflag && !sflag && !Aflag)
+	if (!*argv && !Aflag && !lflag && !sflag)
 		usage();
 	/* SWAP_OFF_WORKS */
-	if (pri && !aflag && !Aflag /* && !dflag */)
+	if (pflag && !cflag && !aflag && !Aflag /* && !dflag */)
+		usage();
+	if (cflag && !pflag)
 		usage();
 
 	if (lflag)
 		list_swap(1);
 	else if (sflag)
 		list_swap(0);
+	else if (cflag)
+		change_priority(argv[0]);
 	else if (aflag)
 		add_swap(argv[0]);
 #ifdef SWAP_OFF_WORKS
@@ -230,6 +250,18 @@ list_swap(dolong)
 }
 
 /*
+ * change_priority:  change the priority of a swap device.
+ */
+void
+change_priority(path)
+	char	*path;
+{
+
+	if (swapon(SWAP_CTL, path, pri) < 0)
+		warn("%s", path);
+}
+
+/*
  * add_swap:  add the pathname to the list of swap devices.
  */
 void
@@ -268,16 +300,16 @@ do_fstab()
 	while (fp = getfsent()) {
 		if (strcmp(fp->fs_type, "sw") == 0) {
 			if (s = strstr(fp->fs_mntops, PRIORITYEQ)) {
-				s += sizeof(PRIORITYEQ);
-				pri = atol(s);
+				s += sizeof(PRIORITYEQ) - 1;
+				priority = atol(s);
 			} else
 				priority = pri;
 
 			if (swapon(SWAP_ON, fp->fs_spec, (int)priority) < 0)
 				warn("%s", fp->fs_spec);
 			else
-				printf("swap: adding %s as swap device\n",
-				    fp->fs_spec);
+		printf("swap: adding %s as swap device at priority %d\n",
+				    fp->fs_spec, priority);
 		}
 	}
 }
@@ -288,11 +320,12 @@ usage()
 	extern char *__progname;
 #ifdef SWAP_OFF_WORKS
 	static	char usagemsg[] =
-	    "usage: %s [-k] [-A|-a|-d|-l|-s] [-p <pri>] [device]\n";
+	    "usage: %s [-k] [-A|-a|-c|-d|-l|-s] [-p <pri>] [device]\n";
 #else
 	static	char usagemsg[] =
-	    "usage: %s [-k] [-A|-a|-l|-s] [-p <pri>] [device]\n";
+	    "usage: %s [-k] [-A|-a|-c|-l|-s] [-p <pri>] [device]\n";
 #endif /* SWAP_OFF_WORKS */
 
 	fprintf(stderr, usagemsg, __progname);
+	exit(1);
 }
