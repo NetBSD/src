@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.52.2.8 2002/06/26 16:51:41 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.52.2.9 2003/03/15 20:12:13 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.52.2.8 2002/06/26 16:51:41 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.52.2.9 2003/03/15 20:12:13 he Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ static package_t Plist;
 static char *Home;
 
 static int
-sanity_check(char *pkg)
+sanity_check(const char *pkg)
 {
 	int     errc = 0;
 
@@ -65,135 +65,40 @@ sanity_check(char *pkg)
 
 /* install a pre-requisite package. Returns 1 if it installed it */
 static int
-installprereq(char *pkg, char *name, int *errc)
+installprereq(const char *name, int *errc)
 {
 	int	ret;
-
 	ret = 0;
-	if (!IS_URL(pkg) && !getenv("PKG_ADD_BASE")) {
-		/* install depending pkg from local disk */
 
-		char    path[FILENAME_MAX], *cp = NULL;
-
-		/* is there a .tbz file? */
-		(void) snprintf(path, sizeof(path), "%s/%s.tbz", Home, name);
-		if (fexists(path))
-			cp = path;
-		else {
-			/* no, maybe .tgz? */
-			(void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, name);
-			if (fexists(path)) {
-				cp = path;
-			} else {
-				/* neither - let's do some digging! */
-				cp = fileFindByPath(pkg, name); /* files & wildcards */
-			}
-		}
-		if (cp == NULL) {
-			warnx("<%s> (1) add of dependency `%s' failed%s",
-			    pkg, name, Force ? " (proceeding anyway)" : "!");
-			if (!Force)
-				++errc;
-		} else {
-			if (Verbose)
-				printf("Loading it from %s.\n", cp);
-			if (vsystem("%s/pkg_add -s %s %s%s%s %s%s",
-				    BINDIR,
-				    get_verification(),
-				    Force ? "-f " : "",
-				    Prefix ? "-p " : "",
-				    Prefix ? Prefix : "",
-				    Verbose ? "-v " : "",
-				    cp)) {
-				warnx("autoload of dependency `%s' failed%s",
-				    cp, Force ? " (proceeding anyway)" : "!");
-				if (!Force)
-					++errc;
-			} else {
-				ret = 1;
-			}
-		}
+	if (Verbose)
+		printf("Loading it from %s.\n", name);
+	path_setenv("PKG_PATH");
+	if (vsystem("%s/pkg_add -s %s %s%s%s %s%s",
+			BINDIR,
+			get_verification(),
+			Force ? "-f " : "",
+			Prefix ? "-p " : "",
+			Prefix ? Prefix : "",
+			Verbose ? "-v " : "",
+			name)) {
+		warnx("autoload of dependency `%s' failed%s",
+			name, Force ? " (proceeding anyway)" : "!");
+		if (!Force)
+			++(*errc);
 	} else {
-		/* pkg is url -> install depending pkg via FTP */
-
-		char   *saved_Current;	/* allocated/set by save_dirs(), */
-		char   *saved_Previous;	/* freed by restore_dirs() */
-		char   *cp, *new_pkg, *new_name;
-		char   *vertype;
-
-		if (strcmp(vertype = get_verification(), "none") != 0) {
-			(void) fprintf(stderr, "Warning: %s verification requested for a URL package\n", vertype);
-		}
-
-		new_pkg = pkg;
-		new_name = name;
-
-		if (ispkgpattern(name)) {
-			/* Handle wildcard depends here */
-
-			char *s;
-			s=fileFindByPath(pkg, name);
-
-			/* adjust new_pkg and new_name */
-			new_pkg = NULL;
-			new_name = s;
-		}
-
-		/* makeplaypen() and leave_playpen() clobber Current and
-		 * Previous, save them! */
-			save_dirs(&saved_Current, &saved_Previous);
-
-		if ((cp = fileGetURL(new_pkg, new_name)) != NULL) {
-			if (Verbose)
-				printf("Finished loading %s over FTP.\n", new_name);
-			if (!fexists(CONTENTS_FNAME)) {
-				warnx("autoloaded package %s has no %s file?",
-					    name, CONTENTS_FNAME);
-					if (!Force)
-						++errc;
-			} else {
-				if (vsystem("(pwd; cat %s) | pkg_add %s%s%s %s-S",
-						CONTENTS_FNAME,
-						Force ? "-f " : "",
-						Prefix ? "-p " : "",
-						Prefix ? Prefix : "",
-					Verbose ? "-v " : "")) {
-					warnx("<%s> (2) add of dependency `%s' failed%s",
-					      pkg, name, Force ? " (proceeding anyway)" : "!");
-					if (!Force)
-						++errc;
-				} else {
-					ret = 1;
-					if (Verbose) {
-						printf("\t`%s' loaded successfully as `%s'.\n", name, new_name);
-					}
-				}
-			}
-			/* Nuke the temporary playpen */
-			leave_playpen(cp);
-
-		} else {
-			if (Verbose)
-				warnx("fileGetURL('%s', '%s') failed", new_pkg, new_name);
-			if (!Force)
-				errc++;
-		}
-		
-		restore_dirs(saved_Current, saved_Previous);
+		ret = 1;
 	}
 
 	return ret;
 }
 
 /*
- * This is seriously ugly code following.  Written very fast!
- * [And subsequently made even worse..  Sigh!  This code was just born
- * to be hacked, I guess.. :) -jkh]
+ * Install a single package
+ * Returns 0 if everything is ok, >0 else
  */
 static int
-pkg_do(char *pkg)
+pkg_do(const char *pkg)
 {
-	char    pkg_fullname[FILENAME_MAX];
 	char    playpen[FILENAME_MAX];
 	char    extract_contents[FILENAME_MAX];
 	char    upgrade_from[FILENAME_MAX];
@@ -202,7 +107,7 @@ pkg_do(char *pkg)
 	int	upgrading = 0;
 	char   *where_to, *tmp, *extract;
 	char   *dbdir;
-	char   *exact;
+	const char *exact;
 	FILE   *cfile;
 	int     errc;
 	plist_t *p;
@@ -220,7 +125,7 @@ pkg_do(char *pkg)
 	/* make sure dbdir actually exists! */
 	if (!(isdir(dbdir) || islinktodir(dbdir))) {
 		if (vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
-			errx(1, "Database-dir %s cannot be generated, aborting.",
+			errx(EXIT_FAILURE, "Database-dir %s cannot be generated, aborting.",
 			    dbdir);
 		}
 	}
@@ -239,100 +144,40 @@ pkg_do(char *pkg)
 	}
 	/* Nope - do it now */
 	else {
-		/*
-		 * Is it an ftp://foo.bar.baz/file.tgz or http://foo.bar.baz/file.tgz
-		 * specification?
-		 */
+		const char *tmppkg;
+
+		tmppkg = fileFindByPath(pkg);
+		if (tmppkg == NULL) {
+			warnx("no pkg found for '%s', sorry.", pkg);
+			return 1;
+		}
+
+		pkg = tmppkg;
+
 		if (IS_URL(pkg)) {
-			char buf[FILENAME_MAX];
-			char *tmppkg = pkg;
-
-			if (ispkgpattern(pkg)) {
-				/* Handle wildcard depends */
-
-				char *s;
-				s=fileFindByPath(NULL, pkg);
-				if (s == NULL) {
-					warnx("no pkg found for '%s', sorry.", pkg);
-					return 1;
-				}
-				strcpy(buf, s);
-				tmppkg = buf;
-			}
-
-			Home = fileGetURL(NULL, tmppkg);
+			Home = fileGetURL(pkg);
 			if (Home == NULL) {
-				warnx("unable to fetch `%s' by URL", tmppkg);
-				if (ispkgpattern(pkg))
-					/*
-					 * Seems we were not able to expand the pattern
-					 * to something useful - bail out
-					 */
-					return 1;
-
-				if ((strstr(pkg, ".tgz") != NULL) || (strstr(pkg, ".tbz") != NULL)) {
-					/* There already is a ".t[bg]z" - give up 
-					 * (We don't want to pretend to be exceedingly
-					 *  clever - the user should give something sane!)
-					 */
-					return 1;
-				}
-			
-				
-				/* Second chance - maybe just a package name was given,
-				 * without even a wildcard as a version. Tack on
-				 * the same pattern as we do for local packages: "-[0-9]*",
-				 * plus a ".t[bg]z" as we're talking binary pkgs here.
-				 * Then retry.
-				 */
-				{
-					char *s;
-					char buf2[FILENAME_MAX];
-					
-					snprintf(buf2, sizeof(buf2), "%s-[0-9]*.t[bg]z", tmppkg);
-					s=fileFindByPath(NULL, buf2);
-					if (s == NULL) {
-						warnx("no pkg found for '%s' on 2nd try, sorry.", buf2);
-						return 1;
-					}
-					strcpy(buf, s);
-					tmppkg = buf;
-					Home = fileGetURL(NULL, tmppkg);
-					if (Home == NULL) {
-						warnx("unable to fetch `%s' by URL", tmppkg);
-						return 1;
-					}
-				}
+				warnx("unable to fetch `%s' by URL", pkg);
 			}
 			where_to = Home;
-			strcpy(pkg_fullname, tmppkg);
 
 			/* make sure the pkg is verified */
-			if (!verify(tmppkg)) {
-				warnx("Package %s will not be extracted", tmppkg);
+			if (!verify(pkg)) {
+				warnx("Package %s will not be extracted", pkg);
 				goto bomb;
 			}
-		
-			cfile = fopen(CONTENTS_FNAME, "r");
-			if (!cfile) {
-				warnx("unable to open table of contents file `%s' - not a package?",
-				      CONTENTS_FNAME);
-				goto bomb;
-			}
-			read_plist(&Plist, cfile);
-			fclose(cfile);
-		} else { /* no URL */
-			strcpy(pkg_fullname, pkg);	/* copy for sanity's sake, could remove pkg_fullname */
-			if (strcmp(pkg, "-")) {
+		}
+		else { /* local */
+			if (!IS_STDIN(pkg)) {
 			        /* not stdin */
-				if (!ispkgpattern(pkg_fullname)) {
-					if (stat(pkg_fullname, &sb) == FAIL) {
-						warnx("can't stat package file '%s'", pkg_fullname);
+				if (!ispkgpattern(pkg)) {
+					if (stat(pkg, &sb) == FAIL) {
+						warnx("can't stat package file '%s'", pkg);
 						goto bomb;
 					}
 					/* make sure the pkg is verified */
-					if (!verify(pkg_fullname)) {
-						warnx("Package %s will not be extracted", pkg_fullname);
+					if (!verify(pkg)) {
+						warnx("Package %s will not be extracted", pkg);
 						goto bomb;
 					}
 				}
@@ -348,24 +193,27 @@ pkg_do(char *pkg)
 				warnx("unable to make playpen for %ld bytes",
 				      (long) (sb.st_size * 4));
 			where_to = Home;
-			if (unpack(pkg_fullname, extract)) {
+			if (unpack(pkg, extract)) {
 				warnx("unable to extract table of contents file from `%s' - not a package?",
-				      pkg_fullname);
+				      pkg);
 				goto bomb;
 			}
-			cfile = fopen(CONTENTS_FNAME, "r");
-			if (!cfile) {
-				warnx("unable to open table of contents file `%s' - not a package?",
-				      CONTENTS_FNAME);
-				goto bomb;
-			}
-			read_plist(&Plist, cfile);
-			fclose(cfile);
+		}
 
+		cfile = fopen(CONTENTS_FNAME, "r");
+		if (!cfile) {
+			warnx("unable to open table of contents file `%s' - not a package?",
+			      CONTENTS_FNAME);
+			goto bomb;
+		}
+		read_plist(&Plist, cfile);
+		fclose(cfile);
+
+		if (!IS_URL(pkg)) {
 			/* Extract directly rather than moving?  Oh goodie! */
 			if (find_plist_option(&Plist, "extract-in-place")) {
 				if (Verbose)
-					printf("Doing in-place extraction for %s\n", pkg_fullname);
+					printf("Doing in-place extraction for %s\n", pkg);
 				p = find_plist(&Plist, PLIST_CWD);
 				if (p) {
 					if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
@@ -382,23 +230,23 @@ pkg_do(char *pkg)
 				} else {
 					warnx(
 					    "no prefix specified in `%s' - this is a bad package!",
-					    pkg_fullname);
+					    pkg);
 					goto bomb;
 				}
 			}
 
 			/*
-		         * Apply a crude heuristic to see how much space the package will
-		         * take up once it's unpacked.  I've noticed that most packages
-		         * compress an average of 75%, so multiply by 4 for good measure.
-		         */
+			 * Apply a crude heuristic to see how much space the package will
+			 * take up once it's unpacked.  I've noticed that most packages
+			 * compress an average of 75%, so multiply by 4 for good measure.
+			 */
 
 			if (!inPlace && min_free(playpen) < sb.st_size * 4) {
 				warnx("projected size of %ld exceeds available free space.\n"
 				    "Please set your PKG_TMPDIR variable to point to a location with more\n"
 				    "free space and try again", (long) (sb.st_size * 4));
 				warnx("not extracting %s\ninto %s, sorry!",
-				    pkg_fullname, where_to);
+				    pkg, where_to);
 				goto bomb;
 			}
 
@@ -407,8 +255,8 @@ pkg_do(char *pkg)
 				goto success;
 
 			/* Finally unpack the whole mess */
-			if (unpack(pkg_fullname, NULL)) {
-				warnx("unable to extract `%s'!", pkg_fullname);
+			if (unpack(pkg, NULL)) {
+				warnx("unable to extract `%s'!", pkg);
 				goto bomb;
 			}
 		}
@@ -453,10 +301,26 @@ pkg_do(char *pkg)
 			char    buf[FILENAME_MAX];
 			char    installed[FILENAME_MAX];
 
+			/*
+			 * See if the pkg is already installed. If so, we might
+			 * want to upgrade it. 
+			 */
 			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
 				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 				if (upgrade) {
+					/*
+					 * Upgrade step 1/4: Check if the new version is ok with all pkgs
+					 * that require this pkg
+					 */
+					/* TODO */
+
+					/*
+					 * Upgrade step 2/4: Do the actual update by moving aside
+					 * the +REQUIRED_BY file, deinstalling the old pkg, adding
+					 * the new one and moving the +REQUIRED_BY file back
+					 * into place (finished in step 3/4)
+					 */
 					snprintf(upgrade_from, sizeof(upgrade_from), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, installed);
 					snprintf(upgrade_via, sizeof(upgrade_via), "%s/.%s." REQUIRED_BY_FNAME,
@@ -503,7 +367,7 @@ pkg_do(char *pkg)
 		/* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
 			warnx("Conflicting package `%s'installed, please use\n"
-			      "\t\"pkg_delete %s\" first to remove it!\n", installed, installed);
+			      "\t\"pkg_delete %s\" first to remove it!", installed, installed);
 			++errc;
 		}
 	}
@@ -558,7 +422,7 @@ pkg_do(char *pkg)
 					}
 
 					if (Force) {
-						warnx("Proceeding anyways.");
+						warnx("Proceeding anyway.");
 					} else {	
 						warnx("Please resolve this conflict!");
 						errc = 1;
@@ -573,7 +437,6 @@ pkg_do(char *pkg)
 	/* Now check the packing list for dependencies */
 	for (exact = NULL, p = Plist.head; p; p = p->next) {
 		char    installed[FILENAME_MAX];
-		int	done;
 
 		if (p->type == PLIST_BLDDEP) {
 			exact = p->name;
@@ -595,16 +458,18 @@ pkg_do(char *pkg)
 					printf("Package dependency %s for %s not installed%s\n", p->name, pkg,
 					    Force ? " (proceeding anyway)" : "!");
 			} else {
-				done = 0;
+				int done = 0;
+				int errc0 = 0;
+
 				if (exact != NULL) {
 					/* first try the exact name, from the @blddep */
-					done = installprereq(pkg, exact, &errc);
+					done = installprereq(exact, &errc0);
 				}
 				if (!done) {
-					done = installprereq(pkg, p->name, &errc);
+					done = installprereq(p->name, &errc0);
 				}
-				if (!done) {
-					errc = 1;
+				if (!done && !Force) {
+					errc += errc0;
 				}
 			}
 		} else if (Verbose) {
@@ -617,11 +482,11 @@ pkg_do(char *pkg)
 
 	/* Look for the requirements file */
 	if (fexists(REQUIRE_FNAME)) {
-		vsystem("%s +x %s", CHMOD, REQUIRE_FNAME);	/* be sure */
+		vsystem("%s +x %s", CHMOD_CMD, REQUIRE_FNAME);	/* be sure */
 		if (Verbose)
 			printf("Running requirements file first for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
-			warnx("package %s fails requirements %s", pkg_fullname,
+			warnx("package %s fails requirements %s", pkg,
 			    Force ? "installing anyway" : "- not installed");
 			if (!Force) {
 				errc = 1;
@@ -632,7 +497,7 @@ pkg_do(char *pkg)
 	
 	/* If we're really installing, and have an installation file, run it */
 	if (!NoInstall && fexists(INSTALL_FNAME)) {
-		vsystem("%s +x %s", CHMOD, INSTALL_FNAME);	/* make sure */
+		vsystem("%s +x %s", CHMOD_CMD, INSTALL_FNAME);	/* make sure */
 		if (Verbose)
 			printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
@@ -697,7 +562,7 @@ pkg_do(char *pkg)
 			goto success;	/* close enough for government work */
 		}
 		/* Make sure pkg_info can read the entry */
-		vsystem("%s a+rx %s", CHMOD, LogDir);
+		vsystem("%s a+rx %s", CHMOD_CMD, LogDir);
 		if (fexists(DEINSTALL_FNAME))
 			move_file(".", DEINSTALL_FNAME, LogDir);
 		if (fexists(REQUIRE_FNAME))
@@ -723,6 +588,8 @@ pkg_do(char *pkg)
 			move_file(".", BUILD_INFO_FNAME, LogDir);
 		if (fexists(DISPLAY_FNAME))
 			move_file(".", DISPLAY_FNAME, LogDir);
+		if (fexists(PRESERVE_FNAME))
+			move_file(".", PRESERVE_FNAME, LogDir);
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we
@@ -745,7 +612,7 @@ pkg_do(char *pkg)
 					strcpy(t + 1, s);
 					free(s);
 				} else {
-					errx(1, "Where did our dependency go?!");
+					errx(EXIT_FAILURE, "Where did our dependency go?!");
 					/* this shouldn't happen... X-) */
 				}
 			}
@@ -799,8 +666,19 @@ success:
 	leave_playpen(Home);
 
 	if (upgrading) {
+		/*
+		 * Upgrade step 3/4: move back +REQUIRED_BY file
+		 * (see also step 2/4)
+		 */
 		rc = rename(upgrade_via, upgrade_to);
 		assert(rc == 0);
+		
+		/*
+		 * Upgrade step 4/4: Fix pkgs that depend on us to
+		 * depend on the new version instead of the old
+		 * one by fixing @pkgdep lines in +CONTENTS files.
+		 */
+		/* TODO */
 	}
 
 	return errc;
@@ -841,8 +719,10 @@ pkg_perform(lpkg_head_t *pkgs)
 	if (AddMode == SLAVE)
 		err_cnt = pkg_do(NULL);
 	else {
-		while ((lpp = TAILQ_FIRST(pkgs))) {
+		while ((lpp = TAILQ_FIRST(pkgs)) != NULL) {
+			path_prepend_from_pkgname(lpp->lp_name);
 			err_cnt += pkg_do(lpp->lp_name);
+			path_prepend_clear();
 			TAILQ_REMOVE(pkgs, lpp, lp_link);
 			free_lpkg(lpp);
 		}
