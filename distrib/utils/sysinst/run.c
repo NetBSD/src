@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.37 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.38 2003/02/09 16:31:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -373,7 +373,8 @@ launch_subwin(actionwin, args, win, flags, errstr)
 			if (FD_ISSET (i, &read_fd_set)) {
 				n = read(i, ibuf, MAXBUF);
 				if (n <= 0) {
-					warn("read");
+					if (n < 0)
+						warn("read");
 					continue;
 				}
 				if (i == STDIN_FILENO) {
