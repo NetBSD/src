@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.17 1994/02/16 07:26:50 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.18 1994/02/16 17:59:17 mycroft Exp $
  */
 /*
  * TODO:
@@ -30,9 +30,8 @@
  *	epintr returns an int for magnum. 0=not for me. 1=for me. -1=whoknows?
  *	deallocate mbufs when ifconfig'd down.
  */
-#include "ep.h"
-#if NEP > 0
 
+#include "ep.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -73,6 +72,7 @@
 #include <i386/isa/isa_device.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/if_epreg.h>
+#include <i386/isa/elink.h>
 
 #define ETHER_MIN_LEN 64
 #define ETHER_MAX_LEN   1518
@@ -113,7 +113,6 @@ static void epread __P((struct ep_softc *));
 static void epmbufqueue __P((struct ep_softc *));
 static void epstop __P((int));
 
-static void epsendidseq __P((u_short port));
 static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct isa_device * is));
 
@@ -135,7 +134,8 @@ epprobe(is)
 	DELAY(1000);
 	elink_reset();	/* global reset to ELINK_ID_PORT */
 	DELAY(1000);
-	epsendidseq(ELINK_ID_PORT);
+	outb(ELINK_ID_PORT, 0x00);
+	elink_idseq(ELINK_509_POLY);
 	DELAY(1000);
 
 	/*
@@ -821,34 +821,6 @@ epstop(unit)
 	outw(BASE + EP_COMMAND, SET_RX_FILTER);
 }
 
-
-/*
- * This is adapted straight from the book. There's probably a better way.
- */
-static void
-epsendidseq(port)
-	register u_short port;
-{
-	int i;
-	register u_char c;
-
-	outb(port, 0x00);
-	DELAY(100);
-	outb(port, 0x00);
-	DELAY(100);
-
-	c = 0xff;
-	for (i = 255; i; i--) {
-		outb(port, c);
-		if (c & 0x80) {
-			c <<= 1;
-			c ^= 0xcf;
-		} else
-			c <<= 1;
-	}
-}
-
-
 /*
  * We get eeprom data from the id_port given an offset into the
  * eeprom.  Basically; after the ID_sequence is sent to all of
@@ -923,5 +895,3 @@ epmbufqueue(sc)
 	sc->last_mb = i;
 	splx(s);
 }
-
-#endif /* NEP > 0 */
