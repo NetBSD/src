@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.40 2002/03/11 14:59:57 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.41 2002/03/13 03:48:19 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -57,7 +57,7 @@ struct audio_params {
 	 * channels, the audio framework converts data.  Encoding and
 	 * precision are converted in sw_code().
 	 * set_params() should set correct values to them if no conversion is
-	 * neede.
+	 * needed.
 	 */
 	u_long	hw_sample_rate;
 	u_int	hw_encoding;
