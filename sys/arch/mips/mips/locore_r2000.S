@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.41 1997/11/01 06:34:07 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.42 1998/03/06 13:54:02 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1445,6 +1445,7 @@ LEAF(mips1_FlushICache)
 	or	v1, MIPS_KSEG1_START		# Run uncached.
 	j	v1
 	nop
+1:
 #ifdef pmax
 	/*
 	 * The insn below attempts to wait for the  writebuffer to drain. 
@@ -1454,7 +1455,6 @@ LEAF(mips1_FlushICache)
 	 * the SONY news3400.
 	 * Why we are even doing this for an I-cache flush is beyond me.
 	 */
-1:
 	bc0f	1b				# make sure stores are complete
 #endif	/* pmax */
 	li	v1, MIPS_SR_ISOL_CACHES | MIPS_SR_SWAP_CACHES	# DELAYSLOT
