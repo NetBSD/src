@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.362 2002/10/20 21:28:11 thorpej Exp $
+# $NetBSD: mi,v 1.363 2002/10/30 11:47:47 blymn Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -156,6 +156,7 @@
 ./sbin/ttyflags		base-sysutil-root
 ./sbin/tunefs		base-sysutil-root
 ./sbin/umount		base-sysutil-root
+./sbin/verifiedexec_load		base-sysutil-root
 ./sbin/wdogctl		base-sysutil-root
 ./sbin/wsconsctl	base-sysutil-root
 ./stand			base-sys-root
