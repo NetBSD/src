@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.104 2004/06/03 21:07:01 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.105 2004/06/05 04:56:02 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -997,3 +997,9 @@ gnu/usr.bin/cvs/include/config.h		patch
 
 	Bring up to 1.11.16. SA#2004-008
 	[christos, ticket #1696]
+
+etc/rc.d/network				1.44
+
+	Allow an IPv6 default route to be set from /etc/mygate6 or 
+	$defaultroute6.
+	[itojun, ticket #1704]
