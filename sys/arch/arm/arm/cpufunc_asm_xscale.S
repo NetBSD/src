@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.1 2001/11/10 23:14:09 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.2 2001/11/11 01:05:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas
@@ -146,31 +146,46 @@ Lxscale_cache_clean_addr:
 Lxscale_cache_clean_size:
 	.word	_C_LABEL(xscale_cache_clean_size)
 
+#ifdef CACHE_CLEAN_BLOCK_INTR
+#define	XSCALE_CACHE_CLEAN_BLOCK					\
+	mrs	r3, cpsr_all					;	\
+	orr	r0, r3, #(I32_bit | F32_bit)			;	\
+	msr	cpsr_all, r0
+
+#define	XSCALE_CACHE_CLEAN_UNBLOCK					\
+	msr	cpsr_all, r3
+#else
+#define	XSCALE_CACHE_CLEAN_BLOCK					\
+	ldr	r3, Lblock_userspace_access			;	\
+	ldr	ip, [r3]					;	\
+	orr	r0, ip, #1					;	\
+	str	r0, [r3]
+
+#define	XSCALE_CACHE_CLEAN_UNBLOCK					\
+	str	ip, [r3]
+#endif /* CACHE_CLEAN_BLOCK_INTR */
+
+#define	XSCALE_CACHE_CLEAN_PROLOGUE					\
+	XSCALE_CACHE_CLEAN_BLOCK				;	\
+	ldr	r2, Lxscale_cache_clean_addr			;	\
+	ldmia	r2, {r0, r1}					;	\
+	add	r0, r0, r1
+
+#define	XSCALE_CACHE_CLEAN_EPILOGUE					\
+	XSCALE_CACHE_CLEAN_UNBLOCK
+
 ENTRY_NP(xscale_cache_syncI)
 ENTRY_NP(xscale_cache_purgeID)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache (D cleaned below) */
 ENTRY_NP(xscale_cache_cleanID)
 ENTRY_NP(xscale_cache_purgeD)
 ENTRY(xscale_cache_cleanD)
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
-	orr	r0, r3, #(I32_bit | F32_bit)
-	msr	cpsr_all, r0
-#else
-	ldr	r3, Lblock_userspace_access
-	ldr	ip, [r3]
-	orr	r0, ip, #1
-	str	r0, [r3]
-#endif
-	ldr	r2, Lxscale_cache_clean_addr
-	ldmia	r2, {r0, r1}
-	add	r0, r0, r1
+	XSCALE_CACHE_CLEAN_PROLOGUE
 
-Lxscale_cache_cleanD_loop:
-	subs	r0, r0, #32
+1:	subs	r0, r0, #32
 	mcr	p15, 0, r0, c7, c2, 5	/* allocate cache line */
 	subs	r1, r1, #32
-	bne	Lxscale_cache_cleanD_loop
+	bne	1b
 
 #ifdef CACHE_CLEAN_MINIDATA
 	/*
@@ -181,19 +196,14 @@ Lxscale_cache_cleanD_loop:
 	 * context switch.
 	 */
 	mov	r1, #64
-Lxscale_cache_cleanD_loop2:
-	ldr	r3, [r0], #32
+1:	ldr	r3, [r0], #32
 	subs	r1, r1, #1
-	bne	Lxscale_cache_cleanD_loop2
+	bne	1b
 #endif
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
-#ifdef CACHE_CLEAN_BLOCK_INTR
-	msr	cpsr_all, r3
-#else
-	str	ip, [r3]
-#endif
+	XSCALE_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
 
 ENTRY(xscale_cache_purgeID_E)
@@ -224,11 +234,10 @@ ENTRY(xscale_cache_cleanD_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-xscale_cache_cleanD_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	xscale_cache_cleanD_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -241,14 +250,13 @@ ENTRY(xscale_cache_purgeID_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-xscale_cache_purgeID_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
 	mcr	p15, 0, r0, c7, c5, 6	/* inv. BTB */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	xscale_cache_purgeID_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -261,12 +269,11 @@ ENTRY(xscale_cache_purgeD_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-xscale_cache_purgeD_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	xscale_cache_purgeD_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -279,13 +286,12 @@ ENTRY(xscale_cache_syncI_rng)
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
 
-xscale_cache_syncI_rng_loop:
-	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
+1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mcr	p15, 0, r0, c7, c5, 1	/* flush I cache single entry */
 	mcr	p15, 0, r0, c7, c5, 6	/* inv. BTB */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	xscale_cache_syncI_rng_loop
+	bpl	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
