@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.80 1998/06/26 05:42:34 thorpej Exp $
+# $NetBSD: ALPHA,v 1.81 1998/06/26 05:43:21 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -20,6 +20,7 @@ options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
 options		DEC_KN300	# KN300:	AlphaServer 4100
 options 	DEC_550		# Miata:	Digital Personal Workstation
+options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 
 # Standard system options
