@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.30 2000/07/29 03:46:15 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.31 2001/02/04 19:34:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.30 2000/07/29 03:46:15 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.31 2001/02/04 19:34:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: print.c,v 1.30 2000/07/29 03:46:15 lukem Exp $");
 
 #include "ls.h"
 #include "extern.h"
+
+extern int termwidth;
 
 static int	printaname(FTSENT *, int, int);
 static void	printlink(FTSENT *);
@@ -146,7 +148,6 @@ printlong(DISPLAY *dp)
 void
 printcol(DISPLAY *dp)
 {
-	extern int termwidth;
 	static FTSENT **array;
 	static int lastentries = -1;
 	FTSENT *p;
@@ -209,7 +210,6 @@ printcol(DISPLAY *dp)
 void
 printacol(DISPLAY *dp)
 {
-	extern int termwidth;
 	FTSENT *p;
 	int chcnt, col, colwidth;
 	int numcols;
@@ -254,7 +254,6 @@ printacol(DISPLAY *dp)
 void
 printstream(DISPLAY *dp)
 {
-	extern int termwidth;
 	FTSENT *p;
 	int col;
 	int extwidth;
