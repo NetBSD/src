@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/09/10 23:21:49 erh Exp $
+#	$NetBSD: Makefile,v 1.4 2001/01/07 06:56:15 enami Exp $
 #
 
 INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
@@ -7,7 +7,7 @@ INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
 	svc.h svc_auth.h svc_soc.h types.h xdr.h
 
 .ifnmake getrpcgen
-XRPCGEN != (cd ${.CURDIR} && ${MAKE} getrpcgen)
+XRPCGEN != (cd ${.CURDIR} && ${MAKE} -B ${MAKEFLAGS} getrpcgen)
 .endif
 
 getrpcgen:
