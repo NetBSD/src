@@ -601,7 +601,10 @@ getcap()
 	KR = tgetstr("kr", &ap);
 	KU = tgetstr("ku", &ap);
 	KD = tgetstr("kd", &ap);
-	Klength = strlen(KL);
+	if (KL && KR && KU && KD)
+		Klength = strlen(KL);
+	else
+		Klength = 0;
 		/*	NOTE:   If KL, KR, KU, and KD are not
 		 *		all the same length, some problems
 		 *		may arise, since tests are made on
