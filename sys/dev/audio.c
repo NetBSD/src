@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.11 1995/07/19 19:58:16 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.12 1995/11/24 23:45:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -31,7 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 /*
