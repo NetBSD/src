@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.162 2003/12/04 06:33:14 junyoung Exp $
+#	$NetBSD: 3RDPARTY,v 1.163 2003/12/04 19:24:13 drochner Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -467,7 +467,7 @@ Notes:
 X11 support and other things we don't want.
 
 Package:	ntp
-Version:	4.0.99i
+Version:	4.2.0
 Current Vers:	4.2.0
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
