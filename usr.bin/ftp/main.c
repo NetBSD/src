@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.86 2003/08/07 11:13:56 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.87 2004/05/14 18:39:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.86 2003/08/07 11:13:56 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.87 2004/05/14 18:39:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,9 +214,14 @@ main(int argc, char *argv[])
 	(void)close(s);
 					/* sanity check returned buffer sizes */
 	if (rcvbuf_size <= 0)
-		rcvbuf_size = 8192;
+		rcvbuf_size = 8 * 1024;
 	if (sndbuf_size <= 0)
-		sndbuf_size = 8192;
+		sndbuf_size = 8 * 1024;
+
+	if (sndbuf_size > 8 * 1024 * 1024)
+		sndbuf_size = 8 * 1024 * 1024;
+	if (rcvbuf_size > 8 * 1024 * 1024)
+		rcvbuf_size = 8 * 1024 * 1024;
 
 	marg_sl = xsl_init();
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
