@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.49 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.50 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -192,5 +192,6 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		with optional suffices and/or products.  [lukem 20021129]
 	am-utils: upgrade to 6.1b1 [christos 20021129]
 	routed: upgrade to 2.27 [christos 20021129]
+	fparseln(3): migrated from libutil to libc.  [lukem 20021130]
 	x68k: add bmd(4), memory disk driver for Nereid bank memory.
 		[isaki 20021201]
