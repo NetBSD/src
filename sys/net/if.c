@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.118 2003/05/16 16:57:09 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.119 2003/05/19 22:17:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,12 +101,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.118 2003/05/16 16:57:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.119 2003/05/19 22:17:24 christos Exp $");
 
 #include "opt_inet.h"
 
 #include "opt_compat_linux.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_ultrix.h"
 #include "opt_compat_43.h"
 #include "opt_atalk.h"
 #include "opt_pfil_hooks.h"
@@ -1518,7 +1519,7 @@ ifioctl(so, cmd, data, p)
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
-#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(LKM)
+#if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(COMPAT_ULTRIX) && !defined(LKM)
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, p));
@@ -1622,7 +1623,7 @@ ifconf(cmd, data)
 		} else 
 		    for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
 			struct sockaddr *sa = ifa->ifa_addr;
-#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
+#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX)
 			if (cmd == OSIOCGIFCONF) {
 				struct osockaddr *osa =
 					 (struct osockaddr *)&ifr.ifr_addr;
