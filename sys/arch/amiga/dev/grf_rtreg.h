@@ -1,23 +1,58 @@
-/*	$NetBSD: grf_rtreg.h,v 1.5 1994/10/26 02:03:19 cgd Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.6 1995/02/16 21:57:41 chopps Exp $	*/
 
+/*
+ * Copyright (c) 1993 Markus Wild
+ * Copyright (c) 1993 Lutz Vieweg
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Lutz Vieweg.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 #ifndef _GRF_RTREG_H
 #define _GRF_RTREG_H
 
-/* NOTE: this driver for the MacroSystem Retina board was only possible,
-         because MacroSystem provided information about the pecularities
-         of the board. THANKS! Competition in Europe among gfx board 
-         manufacturers is rather tough, so Lutz Vieweg, who wrote the
-         initial driver, has made an agreement with MS not to document
-         the driver source (see also his Copyright disclaimer at the
-         beginning of grf_rt.cc and ite_rt.cc).
-         -> ALL comments and register defines after 
-	 -> "/* -------------- START OF CODE -------------- * /"
-	 -> have been added by myself (mw) from studying the publically
-	 -> available "NCR 77C22E+" Data Manual
-	 
-	 Lutz' original driver source (without any of my comments) is
-	 available on request. */
-
+/*
+ * This driver for the MacroSystem Retina board was only possible,
+ * because MacroSystem provided information about the pecularities
+ * of the board. THANKS! Competition in Europe among gfx board 
+ * manufacturers is rather tough, so Lutz Vieweg, who wrote the
+ * initial driver, has made an agreement with MS not to document
+ * the driver source (see also his comment below).
+ * -> ALL comments and register defines after
+ * -> "/* -------------- START OF CODE -------------- * /"
+ * -> have been added by myself (mw) from studying the publically
+ * -> available "NCR 77C22E+" Data Manual
+ */	 
+/*
+ * This code offers low-level routines to access the Retina graphics-board
+ * manufactured by MS MacroSystem GmbH from within NetBSD for the Amiga.
+ * 
+ * Thanks to MacroSystem for providing me with the neccessary information
+ * to create theese routines. The sparse documentation of this code
+ * results from the agreements between MS and me.
+ */
 
 #if 0
 /* these are in dev/devices.h */
