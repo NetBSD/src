@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.6 1994/10/26 05:44:32 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1995/09/14 20:55:00 pk Exp $
 
 LIB=	sa
 
+DIR=${SAREL}${SADIR}
+
+.PATH: ${DIR}
+
 #DEBUGFLAGS= -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
 #DEBUGFLAGS= -ansi -pedantic -Wall
-CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${.CURDIR} -I${.CURDIR}/../..
+CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
@@ -18,7 +22,7 @@ SRCS+=	close.c dev.c disklabel.c ioctl.c lseek.c open.c read.c \
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
 
 # network info services:
-SRCS+=	bootp.c rarp.c
+SRCS+=	bootp.c rarp.c bootparam.c
 
 # boot filesystems
 SRCS+=	ufs.c nfs.c
