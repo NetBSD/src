@@ -96,6 +96,9 @@ typedef unsigned long chtype;
 #ifndef KEY_RETURN
 #define KEY_RETURN	'\012'	/* Return key				*/
 #endif
+#ifndef KEY_CR
+#define KEY_CR		'\r'	/* Enter key				*/
+#endif
 #ifndef KEY_TAB
 #define KEY_TAB		'\t'	/* Tab key				*/
 #endif
