@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.9.4.3 1997/02/26 20:01:25 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.9.4.4 1997/02/26 21:39:59 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -82,8 +82,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/ic/i82595reg.h>
 
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
+#define	ETHER_MIN_LEN	(ETHERMIN + sizeof(struct ether_header) + 4)
+#define	ETHER_MAX_LEN	(ETHERMTU + sizeof(struct ether_header) + 4)
 
 /*
  * Ethernet status, per interface.
@@ -115,7 +115,6 @@ struct iy_softc {
 #ifdef IYDEBUG
 	int sc_debug;
 #endif
-	u_char sc_enaddr[6];
 };
 
 void iywatchdog __P((struct ifnet *));
@@ -127,9 +126,6 @@ void iystart __P((struct ifnet *));
 
 void iy_intr_rx __P((struct iy_softc *));
 void iy_intr_tx __P((struct iy_softc *));
-void eepro_reset_595 __P((struct iy_softc *));
-int eepro_probe __P((struct iy_softc *, struct isa_attach_args *));
-u_short eepro_read_eeprom __P((struct iy_softc *, int));
 
 void iyreset __P((struct iy_softc *));
 void iy_readframe __P((struct iy_softc *, int));
@@ -143,10 +139,8 @@ void iymbuffill __P((void *));
 void iymbufempty __P((void *));
 void iyprobemem __P((struct iy_softc *));
 static __inline void eepromwritebit __P((bus_space_tag_t, bus_space_handle_t,
-    bus_size_t, int));
-static __inline int eepromreadbit __P((bus_space_tag_t, bus_space_handle_t,
-	bus_size_t));
-
+    int));
+static __inline int eepromreadbit __P((bus_space_tag_t, bus_space_handle_t));
 /*
  * void iymeminit __P((void *, struct iy_softc *));
  * static int iy_mc_setup __P((struct iy_softc *, void *));
@@ -162,8 +156,10 @@ int in_iftint = 0;
 int iyprobe __P((struct device *, void *, void *));
 void iyattach __P((struct device *, struct device *, void *));
 
-static u_int16_t eepromread __P((bus_space_tag_t, bus_space_handle_t, 
-				 bus_size_t, int));
+static u_int16_t eepromread __P((bus_space_tag_t, bus_space_handle_t, int));
+
+static int eepromreadall __P((bus_space_tag_t, bus_space_handle_t, u_int16_t *,
+    int));
 
 struct cfattach iy_ca = {
 	sizeof(struct iy_softc), iyprobe, iyattach
@@ -181,27 +177,18 @@ iyprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct iy_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-
 	u_int16_t eaddr[8];
 
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	int i;
-
-	u_int16_t checksum = 0;
-	u_int16_t eepromtmp;
 	u_int8_t c, d;
 
 	iot = ia->ia_iot;
 	
 	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
-		goto out;
-
-	/* check here for addresses already given to other devices */
-
+		return 0;
 
 	/* try to find the round robin sig: */
 
@@ -238,31 +225,11 @@ iyprobe(parent, match, aux)
 		goto out;
 		
 #ifdef IYDEBUG
-		printf("eepro_probe verified working ID reg.\n");
+		printf("iyprobe verified working ID reg.\n");
 #endif
 	
-	for (i=0; i<64; ++i) {
-		eepromtmp = eepromread(iot, ioh, EEPROM_REG, i);
-		checksum += eepromtmp;
-		if (i<(sizeof(eaddr)/sizeof(*eaddr)))
-			eaddr[i] = eepromtmp;
-	}
-	if (checksum != EEPP_CHKSUM)
-		printf("wrong EEPROM checksum 0x%x should be 0x%x\n",
-		    checksum, EEPP_CHKSUM);
-		
-	
-	if ((eaddr[EEPPEther0] != eepromread(iot, ioh, EEPROM_REG, EEPPEther0a)) &&
-	    (eaddr[EEPPEther1] != eepromread(iot, ioh, EEPROM_REG, EEPPEther1a)) &&
-	    (eaddr[EEPPEther2] != eepromread(iot, ioh, EEPROM_REG, EEPPEther2a)))
-		printf("EEPROM Ethernet address differs from copy\n");
-	
-        sc->sc_enaddr[1] = eaddr[EEPPEther0] & 0xFF;
-        sc->sc_enaddr[0] = eaddr[EEPPEther0] >> 8;
-        sc->sc_enaddr[3] = eaddr[EEPPEther1] & 0xFF;
-        sc->sc_enaddr[2] = eaddr[EEPPEther1] >> 8;
-        sc->sc_enaddr[5] = eaddr[EEPPEther2] & 0xFF;
-        sc->sc_enaddr[4] = eaddr[EEPPEther2] >> 8;
+	if (eepromreadall(iot, ioh, eaddr, 8))
+		goto out;
 	
 	if (ia->ia_irq == IRQUNK)
 		ia->ia_irq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
@@ -270,24 +237,17 @@ iyprobe(parent, match, aux)
 	if (ia->ia_irq >= sizeof(eepro_revirqmap))
 		goto out;
 
-	if ((sc->mappedirq = eepro_revirqmap[ia->ia_irq]) == -1)
+	if (eepro_revirqmap[ia->ia_irq] == 0xff)
 		goto out;
-
-	sc->hard_vers = eaddr[EEPW6] & EEPP_BoardRev;
 
 	/* now lets reset the chip */
 	
 	bus_space_write_1(iot, ioh, COMMAND_REG, RESET_CMD);
 	delay(200);
 	
-	/*
-	 * XXX Sould always unmap, but we can't yet.
-	 * XXX Need to squish "indirect" first.
-	 */
        	ia->ia_iosize = 16;
 
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
+	bus_space_unmap(iot, ioh, 16);
 	return 1;		/* found */
 out:
 	bus_space_unmap(iot, ioh, 16);
@@ -304,13 +264,25 @@ iyattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	u_int16_t eaddr[8];
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
-	/*
-	 * XXX Should re-map io and mem, but can't
-	 * XXX until we squish "indirect" brokenness.
-	 */
-	iot = sc->sc_iot;			/* XXX */
-	ioh = sc->sc_ioh;		/* XXX */
+	iot = ia->ia_iot;
+	
+	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
+		panic("Can't bus_space_map in iyattach");
+
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
+
+	sc->mappedirq = eepro_revirqmap[ia->ia_irq];
+
+	/* now let's reset the chip */
+	
+	bus_space_write_1(iot, ioh, COMMAND_REG, RESET_CMD);
+	delay(200);
+	
+	iyprobemem(sc);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -318,16 +290,35 @@ iyattach(parent, self, aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 					/* XXX todo: | IFF_MULTICAST */
 
-	iyprobemem(sc);
-
 	ifp->if_ioctl = iyioctl;
 	ifp->if_watchdog = iywatchdog;
 
+	(void)eepromreadall(iot, ioh, eaddr, 8);
+	sc->hard_vers = eaddr[EEPW6] & EEPP_BoardRev;
+
+#ifdef DIAGNOSTICS
+	if ((eaddr[EEPPEther0] != 
+	     eepromread(iot, ioh, EEPPEther0a)) &&
+	    (eaddr[EEPPEther1] != 
+	     eepromread(iot, ioh, EEPPEther1a)) &&
+	    (eaddr[EEPPEther2] != 
+	     eepromread(iot, ioh, EEPPEther2a)))
+
+		printf("EEPROM Ethernet address differs from copy\n");
+#endif
+
+        myaddr[1] = eaddr[EEPPEther0] & 0xFF;
+        myaddr[0] = eaddr[EEPPEther0] >> 8;
+        myaddr[3] = eaddr[EEPPEther1] & 0xFF;
+        myaddr[2] = eaddr[EEPPEther1] >> 8;
+        myaddr[5] = eaddr[EEPPEther2] & 0xFF;
+        myaddr[4] = eaddr[EEPPEther2] >> 8;
+	
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp, sc->sc_enaddr);
+	ether_ifattach(ifp, myaddr);
 	printf(": address %s, chip rev. %d, %d kB SRAM\n",
-	    ether_sprintf(sc->sc_enaddr),
+	    ether_sprintf(myaddr),
 	    sc->hard_vers, sc->sram/1024);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -419,12 +410,12 @@ struct iy_softc *sc;
 		bus_space_write_1(iot, ioh, EEPROM_REG, temp & ~0x10);
 	
 	for (i=0; i<6; ++i) {
-		bus_space_write_1(iot, ioh, I_ADD(i), sc->sc_enaddr[i]);
+		bus_space_write_1(iot, ioh, I_ADD(i), LLADDR(ifp->if_sadl)[i]);
 	}
 
 	temp = bus_space_read_1(iot, ioh, REG1);
-	bus_space_write_1(iot, ioh, REG1, temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP |
-	    RCV_DISCARD_BAD);
+	bus_space_write_1(iot, ioh, REG1,
+	    temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | RCV_DISCARD_BAD);
 	
 	temp = bus_space_read_1(iot, ioh, RECV_MODES_REG);
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp | MATCH_BRDCST);
@@ -437,7 +428,7 @@ struct iy_softc *sc;
 #endif
 
 
-	DELAY(500000); /* for the hardware to test for the connector */
+	delay(500000); /* for the hardware to test for the connector */
 
 	temp = bus_space_read_1(iot, ioh, MEDIA_SELECT);
 #ifdef IYDEBUG
@@ -511,7 +502,7 @@ struct iy_softc *sc;
 	sc->rx_start = 0;
 
 	bus_space_write_1(iot, ioh, 0, SEL_RESET_CMD);
-	DELAY(200);
+	delay(200);
 
 	bus_space_write_2(iot, ioh, XMT_ADDR_REG, sc->rx_size);
 
@@ -710,42 +701,39 @@ struct ifnet *ifp;
 
 
 static __inline void
-eepromwritebit(iot, ioh, ioff, what) 
+eepromwritebit(iot, ioh, what) 
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	bus_size_t ioff;
 	int what;
 {
-	bus_space_write_1(iot, ioh, ioff, what);
+	bus_space_write_1(iot, ioh, EEPROM_REG, what);
 	delay(1);
-	bus_space_write_1(iot, ioh, ioff, what|EESK);
+	bus_space_write_1(iot, ioh, EEPROM_REG, what|EESK);
 	delay(1);
-	bus_space_write_1(iot, ioh, ioff, what);
+	bus_space_write_1(iot, ioh, EEPROM_REG, what);
 	delay(1);
 }
 
 static __inline int
-eepromreadbit(iot, ioh, ioff) 
+eepromreadbit(iot, ioh) 
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	bus_size_t ioff;
 {
 	int b; 
 
-	bus_space_write_1(iot, ioh, ioff, EECS|EESK); 
+	bus_space_write_1(iot, ioh, EEPROM_REG, EECS|EESK); 
 	delay(1);
-	b = bus_space_read_1(iot, ioh, ioff);
-	bus_space_write_1(iot, ioh, ioff, EECS);
+	b = bus_space_read_1(iot, ioh, EEPROM_REG);
+	bus_space_write_1(iot, ioh, EEPROM_REG, EECS);
 	delay(1);
 
 	return ((b & EEDO) != 0);
 }
 
 static u_int16_t
-eepromread(iot, ioh, ioff, offset)
+eepromread(iot, ioh, offset)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	bus_size_t ioff;
 	int offset;
 {
 	volatile int i;
@@ -754,30 +742,30 @@ eepromread(iot, ioh, ioff, offset)
 
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
 	delay(1);
-	bus_space_write_1(iot, ioh, ioff, EECS); /* XXXX??? */
+	bus_space_write_1(iot, ioh, EEPROM_REG, EECS); /* XXXX??? */
 	delay(1);
 	
-	eepromwritebit(iot, ioh, ioff, EECS|EEDI);
-	eepromwritebit(iot, ioh, ioff, EECS|EEDI);
-	eepromwritebit(iot, ioh, ioff, EECS);
+	eepromwritebit(iot, ioh, EECS|EEDI);
+	eepromwritebit(iot, ioh, EECS|EEDI);
+	eepromwritebit(iot, ioh, EECS);
 	
 	for (j=5; j>=0; --j) {
 		if ((offset>>j) & 1) 
-			eepromwritebit(iot, ioh, ioff, EECS|EEDI);
+			eepromwritebit(iot, ioh, EECS|EEDI);
 		else
-			eepromwritebit(iot, ioh, ioff, EECS);
+			eepromwritebit(iot, ioh, EECS);
 	}
 
 	for (readval=0, i=0; i<16; ++i) {
 		readval<<=1;
-		readval |= eepromreadbit(iot, ioh, ioff);
+		readval |= eepromreadbit(iot, ioh);
 	}
 
-	bus_space_write_1(iot, ioh, ioff, 0|EESK);
+	bus_space_write_1(iot, ioh, EEPROM_REG, 0|EESK);
 	delay(1);
-	bus_space_write_1(iot, ioh, ioff, 0);
+	bus_space_write_1(iot, ioh, EEPROM_REG, 0);
 
-	bus_space_write_1(iot, ioh, ioff, BANK_SEL(0));
+	bus_space_write_1(iot, ioh, COMMAND_REG, BANK_SEL(0));
 
 	return readval;
 }
@@ -1367,6 +1355,8 @@ iyprobemem(sc)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
+	bus_space_write_1(iot, ioh, COMMAND_REG, BANK_SEL(0));
+	delay(1);
 	bus_space_write_2(iot, ioh, HOST_ADDR_REG, 4096-2);
 	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
 
@@ -1431,4 +1421,33 @@ iyprobemem(sc)
 			break;
 	}
 	sc->tx_size = testing - sc->rx_size;
+}
+
+static int
+eepromreadall(iot, ioh, wordp, maxi)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	u_int16_t *wordp;
+	int maxi;
+{
+	int i;
+	u_int16_t checksum, tmp;
+
+	checksum = 0;
+
+	for (i=0; i<EEPP_LENGTH; ++i) {
+		tmp = eepromread(iot, ioh, i);
+		checksum += tmp;
+		if (i<maxi)
+			wordp[i] = tmp;
+	}
+
+	if (checksum != EEPP_CHKSUM) {
+#ifdef IYDEBUG
+		printf("wrong EEPROM checksum 0x%x should be 0x%x\n",
+		    checksum, EEPP_CHKSUM);
+#endif
+		return 1;
+	}
+	return 0;
 }
