@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.17 1999/04/17 21:27:00 kleink Exp $
+#	$NetBSD: files.sparc64,v 1.18 1999/05/14 06:49:55 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -69,13 +69,15 @@ define zsevent
 file dev/sun/event.c			zsevent
 
 device kbd: zsevent
-attach kbd at zs
+attach kbd at zs with kbd_zs
+file dev/sun/kbd_zs.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sparc64/dev/kd.c 		kbd
 
 device ms: zsevent
-attach ms at zs
+attach ms at zs with ms_zs
+file dev/sun/ms_zs.c			ms_zs
 file dev/sun/ms.c			ms needs-flag
 
 

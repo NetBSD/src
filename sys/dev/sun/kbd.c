@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.21 1999/02/03 20:22:28 mycroft Exp $	*/
+/*	$NetBSD: kbd.c,v 1.22 1999/05/14 06:42:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,8 +51,6 @@
  */
 
 /*
- * Zilog Z8530 Dual UART driver (keyboard interface)
- *
  * This is the "slave" driver that will be attached to
  * the "zsc" driver for a Sun keyboard.
  */
@@ -76,9 +74,10 @@
 #include <machine/vuid_event.h>
 #include <machine/kbd.h>
 #include <machine/kbio.h>
+#include <dev/sun/event_var.h>
+#include <dev/sun/kbd_xlate.h>
+#include <dev/sun/kbdvar.h>
 
-#include "event_var.h"
-#include "kbd_xlate.h"
 #include "locators.h"
 
 /*
@@ -86,193 +85,17 @@
  * /dev/kbd is not a tty (plain device)
  */
 
-/*
- * How many input characters we can buffer.
- * The port-specific var.h may override this.
- * Note: must be a power of two!
- */
-#define	KBD_RX_RING_SIZE	256
-#define KBD_RX_RING_MASK (KBD_RX_RING_SIZE-1)
-/*
- * Output buffer.  Only need a few chars.
- */
-#define	KBD_TX_RING_SIZE	16
-#define KBD_TX_RING_MASK (KBD_TX_RING_SIZE-1)
-/*
- * Keyboard serial line speed is fixed at 1200 bps.
- */
-#define KBD_BPS 1200
-#define KBD_RESET_TIMO 1000 /* mS. */
-
-/*
- * XXX - Historical comment - no longer quite right...
- * Keyboard driver state.  The ascii and kbd links go up and down and
- * we just sit in the middle doing translation.  Note that it is possible
- * to get just one of the two links, in which case /dev/kbd is unavailable.
- * The downlink supplies us with `internal' open and close routines which
- * will enable dataflow across the downlink.  We promise to call open when
- * we are willing to take keystrokes, and to call close when we are not.
- * If /dev/kbd is not the console tty input source, we do this whenever
- * /dev/kbd is in use; otherwise we just leave it open forever.
- */
-struct kbd_softc {
-	struct	device k_dev;		/* required first: base device */
-	struct	zs_chanstate *k_cs;
-
-	/* Flags to communicate with kbd_softint() */
-	volatile int k_intr_flags;
-#define	INTR_RX_OVERRUN 1
-#define INTR_TX_EMPTY   2
-#define INTR_ST_CHECK   4
-
-	/* Transmit state */
-	volatile int k_txflags;
-#define	K_TXBUSY 1
-#define K_TXWANT 2
-
-	/*
-	 * State of upper interface.
-	 */
-	int	k_isopen;		/* set if open has been done */
-	int	k_evmode;		/* set if we should produce events */
-	struct	evvar k_events;		/* event queue state */
-
-	/*
-	 * ACSI translation state
-	 */
-	int k_repeat_start; 	/* initial delay */
-	int k_repeat_step;  	/* inter-char delay */
-	int	k_repeatsym;		/* repeating symbol */
-	int	k_repeating;		/* we've called timeout() */
-	struct	kbd_state k_state;	/* ASCII translation state */
-
-	/*
-	 * Magic sequence stuff (L1-A)
-	 */
-	char k_isconsole;
-	char k_magic1_down;
-	u_char k_magic1;	/* L1 */
-	u_char k_magic2;	/* A */
-
-	/*
-	 * The transmit ring buffer.
-	 */
-	volatile u_int	k_tbget;	/* transmit buffer `get' index */
-	volatile u_int	k_tbput;	/* transmit buffer `put' index */
-	u_char	k_tbuf[KBD_TX_RING_SIZE]; /* data */
-
-	/*
-	 * The receive ring buffer.
-	 */
-	u_int	k_rbget;	/* ring buffer `get' index */
-	volatile u_int	k_rbput;	/* ring buffer `put' index */
-	u_short	k_rbuf[KBD_RX_RING_SIZE]; /* rr1, data pairs */
-
-};
-
 /* Prototypes */
 static void	kbd_new_layout(struct kbd_softc *k);
-static void	kbd_output(struct kbd_softc *k, int c);
 static void	kbd_repeat(void *arg);
 static void	kbd_set_leds(struct kbd_softc *k, int leds);
-static void	kbd_start_tx(struct kbd_softc *k);
 static void	kbd_update_leds(struct kbd_softc *k);
 static void	kbd_was_reset(struct kbd_softc *k);
 static int 	kbd_drain_tx(struct kbd_softc *k);
 
 cdev_decl(kbd);	/* open, close, read, write, ioctl, stop, ... */
 
-struct zsops zsops_kbd;
-
-/****************************************************************
- * Definition of the driver for autoconfig.
- ****************************************************************/
-
-static int	kbd_match(struct device *, struct cfdata *, void *);
-static void	kbd_attach(struct device *, struct device *, void *);
-
-struct cfattach kbd_ca = {
-	sizeof(struct kbd_softc), kbd_match, kbd_attach
-};
-
 extern struct cfdriver kbd_cd;
-
-/*
- * kbd_match: how is this zs channel configured?
- */
-int 
-kbd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
-{
-	struct zsc_attach_args *args = aux;
-
-	/* Exact match required for keyboard. */
-	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
-		return 2;
-
-	return 0;
-}
-
-void 
-kbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
-{
-	struct zsc_softc *zsc = (void *) parent;
-	struct kbd_softc *k = (void *) self;
-	struct zsc_attach_args *args = aux;
-	struct zs_chanstate *cs;
-	struct cfdata *cf;
-	int channel, kbd_unit;
-	int reset, s;
-
-	cf = k->k_dev.dv_cfdata;
-	kbd_unit = k->k_dev.dv_unit;
-	channel = args->channel;
-	cs = zsc->zsc_cs[channel];
-	cs->cs_private = k;
-	cs->cs_ops = &zsops_kbd;
-	k->k_cs = cs;
-
-	if (args->hwflags & ZS_HWFLAG_CONSOLE) {
-		k->k_isconsole = 1;
-		printf(" (console)");
-	}
-	printf("\n");
-
-	/* Initialize the speed, etc. */
-	s = splzs();
-	if (k->k_isconsole == 0) {
-		/* Not the console; may need reset. */
-		reset = (channel == 0) ?
-			ZSWR9_A_RESET : ZSWR9_B_RESET;
-		zs_write_reg(cs, 9, reset);
-	}
-	/* These are OK as set by zscc: WR3, WR4, WR5 */
-	/* We don't care about status interrupts. */
-	cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_TIE;
-	(void) zs_set_speed(cs, KBD_BPS);
-	zs_loadchannelregs(cs);
-	splx(s);
-
-	/* Do this before any calls to kbd_rint(). */
-	kbd_xlate_init(&k->k_state);
-
-	/* XXX - Do this in open? */
-	k->k_repeat_start = hz/2;
-	k->k_repeat_step = hz/20;
-
-	/* Magic sequence. */
-	k->k_magic1 = KBD_L1;
-	k->k_magic2 = KBD_A;
-
-	/* Now attach the (kd) pseudo-driver. */
-	kd_init(kbd_unit);
-}
-
 
 /****************************************************************
  *  Entry points for /dev/kbd
@@ -647,7 +470,6 @@ kbd_iocsled(k, data)
 static void kbd_input_string __P((struct kbd_softc *, char *));
 static void kbd_input_funckey __P((struct kbd_softc *, int));
 static int  kbd_input_keysym __P((struct kbd_softc *, int));
-static void kbd_input_raw __P((struct kbd_softc *k, int));
 
 /*
  * Initialization done by either kdcninit or kbd_iopen
@@ -733,6 +555,7 @@ kbd_input_string(k, str)
 	struct kbd_softc *k;
 	char *str;
 {
+
 	while (*str) {
 		kd_input(*str);
 		str++;
@@ -825,7 +648,8 @@ kbd_input_keysym(k, keysym)
  * Called at splsoftclock().
  */
 static void
-kbd_repeat(void *arg)
+kbd_repeat(arg)
+	void *arg;
 {
 	struct kbd_softc *k = (struct kbd_softc *)arg;
 	int s = spltty();
@@ -957,217 +781,6 @@ kbd_input_raw(k, c)
 	k->k_events.ev_put = put;
 	EV_WAKEUP(&k->k_events);
 }
-
-/****************************************************************
- * Interface to the lower layer (zscc)
- ****************************************************************/
-
-static void kbd_rxint __P((struct zs_chanstate *));
-static void kbd_stint __P((struct zs_chanstate *, int));
-static void kbd_txint __P((struct zs_chanstate *));
-static void kbd_softint __P((struct zs_chanstate *));
-
-static void
-kbd_rxint(cs)
-	register struct zs_chanstate *cs;
-{
-	register struct kbd_softc *k;
-	register int put, put_next;
-	register u_char c, rr1;
-
-	k = cs->cs_private;
-	put = k->k_rbput;
-
-	/*
-	 * First read the status, because reading the received char
-	 * destroys the status of this char.
-	 */
-	rr1 = zs_read_reg(cs, 1);
-	c = zs_read_data(cs);
-
-	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
-		/* Clear the receive error. */
-		zs_write_csr(cs, ZSWR0_RESET_ERRORS);
-	}
-
-	/*
-	 * Check NOW for a console abort sequence, so that we can
-	 * abort even when interrupts are locking up the machine.
-	 */
-	if (k->k_magic1_down) {
-		/* The last keycode was "MAGIC1" down. */
-		k->k_magic1_down = 0;
-		if (c == k->k_magic2) {
-			/* Magic "L1-A" sequence; enter debugger. */
-			if (k->k_isconsole) {
-				zs_abort(cs);
-				/* Debugger done.  Fake L1-up to finish it. */
-				c = k->k_magic1 | KBD_UP;
-			} else {
-				printf("kbd: magic sequence, but not console\n");
-			}
-		}
-	}
-	if (c == k->k_magic1) {
-		k->k_magic1_down = 1;
-	}
-
-	k->k_rbuf[put] = (c << 8) | rr1;
-	put_next = (put + 1) & KBD_RX_RING_MASK;
-
-	/* Would overrun if increment makes (put==get). */
-	if (put_next == k->k_rbget) {
-		k->k_intr_flags |= INTR_RX_OVERRUN;
-	} else {
-		/* OK, really increment. */
-		put = put_next;
-	}
-
-	/* Done reading. */
-	k->k_rbput = put;
-
-	/* Ask for softint() call. */
-	cs->cs_softreq = 1;
-}
-
-
-static void
-kbd_txint(cs)
-	register struct zs_chanstate *cs;
-{
-	register struct kbd_softc *k;
-
-	k = cs->cs_private;
-	zs_write_csr(cs, ZSWR0_RESET_TXINT);
-	k->k_intr_flags |= INTR_TX_EMPTY;
-	/* Ask for softint() call. */
-	cs->cs_softreq = 1;
-}
-
-
-static void
-kbd_stint(cs, force)
-	register struct zs_chanstate *cs;
-	int force;
-{
-	register struct kbd_softc *k;
-	register int rr0;
-
-	k = cs->cs_private;
-
-	rr0 = zs_read_csr(cs);
-	zs_write_csr(cs, ZSWR0_RESET_STATUS);
-
-#if 0
-	if (rr0 & ZSRR0_BREAK) {
-		/* Keyboard unplugged? */
-		zs_abort(cs);
-		return (0);
-	}
-#endif
-
-	/*
-	 * We have to accumulate status line changes here.
-	 * Otherwise, if we get multiple status interrupts
-	 * before the softint runs, we could fail to notice
-	 * some status line changes in the softint routine.
-	 * Fix from Bill Studenmund, October 1996.
-	 */
-	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
-	cs->cs_rr0 = rr0;
-	k->k_intr_flags |= INTR_ST_CHECK;
-
-	/* Ask for softint() call. */
-	cs->cs_softreq = 1;
-}
-
-/*
- * Get input from the recieve ring and pass it on.
- * Note: this is called at splsoftclock()
- */
-static void
-kbd_softint(cs)
-	struct zs_chanstate *cs;
-{
-	register struct kbd_softc *k;
-	register int get, c, s;
-	int intr_flags;
-	register u_short ring_data;
-
-	k = cs->cs_private;
-
-	/* Atomically get and clear flags. */
-	s = splzs();
-	intr_flags = k->k_intr_flags;
-	k->k_intr_flags = 0;
-
-	/* Now lower to spltty for the rest. */
-	(void) spltty();
-
-	/*
-	 * Copy data from the receive ring to the event layer.
-	 */
-	get = k->k_rbget;
-	while (get != k->k_rbput) {
-		ring_data = k->k_rbuf[get];
-		get = (get + 1) & KBD_RX_RING_MASK;
-
-		/* low byte of ring_data is rr1 */
-		c = (ring_data >> 8) & 0xff;
-
-		if (ring_data & ZSRR1_DO)
-			intr_flags |= INTR_RX_OVERRUN;
-		if (ring_data & (ZSRR1_FE | ZSRR1_PE)) {
-			/*
-			 * After garbage, flush pending input, and
-			 * send a reset to resync key translation.
-			 */
-			log(LOG_ERR, "%s: input error (0x%x)\n",
-				k->k_dev.dv_xname, ring_data);
-			get = k->k_rbput; /* flush */
-			goto send_reset;
-		}
-
-		/* Pass this up to the "middle" layer. */
-		kbd_input_raw(k, c);
-	}
-	if (intr_flags & INTR_RX_OVERRUN) {
-		log(LOG_ERR, "%s: input overrun\n",
-		    k->k_dev.dv_xname);
-	send_reset:
-		/* Send a reset to resync translation. */
-		kbd_output(k, KBD_CMD_RESET);
-		kbd_start_tx(k);
-	}
-	k->k_rbget = get;
-
-	if (intr_flags & INTR_TX_EMPTY) {
-		/*
-		 * Transmit done.  Try to send more, or
-		 * clear busy and wakeup drain waiters.
-		 */
-		k->k_txflags &= ~K_TXBUSY;
-		kbd_start_tx(k);
-	}
-
-	if (intr_flags & INTR_ST_CHECK) {
-		/*
-		 * Status line change.  (Not expected.)
-		 */
-		log(LOG_ERR, "%s: status interrupt?\n",
-		    k->k_dev.dv_xname);
-		cs->cs_rr0_delta = 0;
-	}
-
-	splx(s);
-}
-
-struct zsops zsops_kbd = {
-	kbd_rxint,	/* receive char available */
-	kbd_stint,	/* external/status */
-	kbd_txint,	/* xmit buffer empty */
-	kbd_softint,	/* process software interrupt */
-};
 
 /****************************************************************
  * misc...
@@ -1337,7 +950,7 @@ kbd_drain_tx(k)
  * Enqueue some output for the keyboard
  * Called at spltty().
  */
-static void
+void
 kbd_output(k, c)
 	struct kbd_softc *k;
 	int c;	/* the data */
@@ -1362,12 +975,11 @@ kbd_output(k, c)
  * Start the sending data from the output queue
  * Called at spltty().
  */
-static void
+void
 kbd_start_tx(k)
-    struct kbd_softc *k;
+	struct kbd_softc *k;
 {
-	struct zs_chanstate *cs = k->k_cs;
-	int get, s;
+	int get;
 	u_char c;
 
 	if (k->k_txflags & K_TXBUSY)
@@ -1390,10 +1002,7 @@ kbd_start_tx(k)
 	k->k_tbget = get;
 	k->k_txflags |= K_TXBUSY;
 
-	/* Need splzs to avoid interruption of the delay. */
-	s = splzs();
-	zs_write_data(cs, c);
-	splx(s);
+	k->k_write_data(k, c);
 }
 
 /*
