@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.7 2000/09/23 17:30:06 sommerfeld Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.8 2000/12/31 17:45:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,37 @@ i386_self_ipi (int vector)
 void
 i386_broadcast_ipi (int ipimask)
 {
-	panic("broadcast_ipi not implemented");
+	struct cpu_info *ci, *self = curcpu();
+	CPU_INFO_ITERATOR cii;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci == self)
+			continue;
+		if ((ci->ci_flags & CPUF_RUNNING) == 0)
+			continue;
+		i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
+	}
+
+	i82489_writereg(LAPIC_ICRLO,
+	    LAPIC_IPI_VECTOR | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT |
+	    LAPIC_DEST_ALLEXCL);
+}
+
+void
+i386_multicast_ipi (int cpumask, int ipimask)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	cpumask &= ~(1U << cpu_number());
+	if (cpumask == 0)
+		return;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if ((cpumask & (1U << ci->ci_cpuid)) == 0)
+			continue;
+		i386_send_ipi(ci, ipimask);
+	}
 }
 
 void
