@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1 2002/06/15 21:31:38 itojun Exp $
+.\"	$NetBSD: hardware,v 1.2 2002/06/16 16:00:31 itojun Exp $
 .
 A H/PC machine contains a keyboard and a touch screen and
 generally has 8 MB or more of RAM.  The port supports the HPC
@@ -32,9 +32,9 @@ CPUs
 .(bullet -compact
 SH-3 SH7709
 .It
-SH-4 SH7709R
+SH-3 SH7709R
 .It
-SH-4 SH7709A
+SH-3 SH7709A
 .It
 SH-4 SH7750V
 .bullet)
