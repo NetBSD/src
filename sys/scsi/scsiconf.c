@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.33 1995/07/09 09:30:42 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.34 1995/07/09 09:43:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -266,6 +266,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "IMS     ", "CDD521/10       ", "2.06", SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
+	 "MEDIAVIS", "CDR-H93MV       ", "1.31", SDEV_NOLUNS},
+	{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:55 ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:83 ", "",     SDEV_NOLUNS},
@@ -285,8 +287,6 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM          ", "1.06", SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10", SDEV_NOLUNS},
-	{T_CDROM, T_REMOV,
-	 "MEDIAVIS", "CDR-H93MV       ", "1.31", SDEV_NOLUNS},
 
 	{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-3280         ", "",     SDEV_NOLUNS},
@@ -303,27 +303,26 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "LXT-213S SUN0207", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "RODIME  ", "RO3000S         ", "2.33", SDEV_NOLUNS},
-	{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST157N          ", "\004|j", SDEV_NOLUNS},
-	{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST296           ", "921",  SDEV_NOLUNS},
-	{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "LPS525S         ", "3110", SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "P105S 910-10-94x", "A.3",  SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "PD1225S         ", "3110", SDEV_NOLUNS},
+	{T_DIRECT, T_FIXED,
+	 "RODIME  ", "RO3000S         ", "2.33", SDEV_NOLUNS},
+	{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST157N          ", "\004|j", SDEV_NOLUNS},
+	{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST296           ", "921",  SDEV_NOLUNS},
 
 	{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-2000        ", "2.09", SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
-	 "TANDBERG", " TDC 3600       ", "",     SDEV_NOLUNS},
-
-	{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-5000        ", "3.17", SDEV_NOSYNCWIDE},
+	{T_SEQUENTIAL, T_REMOV,
+	 "TANDBERG", " TDC 3600       ", "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 1300      ", "02.4", SDEV_NOSYNCWIDE},
 	{T_SEQUENTIAL, T_REMOV,
