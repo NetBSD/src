@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.20 1999/07/21 11:25:23 is Exp $	
+.\"	$NetBSD: prep,v 1.21 2000/10/03 23:05:30 lukem Exp $	
 .Pp
 You will need an AmigaDOS hard drive prep tool to prepare your hard
 drives for use with NetBSD/Amiga.  HDToolBox is provided with the
@@ -84,7 +84,7 @@ Here `other' refers to other partitions you will
 format for reading and writing under NetBSD (e.g.
 /usr)
 .Pp
-Make sure you hit the return key to enter this value
+Make sure you press the return key to enter this value
 as some versions of HDToolBox will forget your entry
 if you don't.
 .It

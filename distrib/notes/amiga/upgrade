@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.19 1999/04/27 19:05:16 is Exp $	
+.\"	$NetBSD: upgrade,v 1.20 2000/10/03 23:05:30 lukem Exp $	
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -139,8 +139,8 @@ to proceed with the upgrade process. If you answer
 negatively, the upgrade process will stop, and your disk will
 not be modified. If you answer affirmatively, the upgrade
 process will begin, and your disk will be modified. You may
-hit Control-C to stop the upgrade process at any time.
-However, if you hit it at an inopportune moment, your system
+press Control-C to stop the upgrade process at any time.
+However, if you press it at an inopportune moment, your system
 may be left in an inconsistent (and possibly unusable) state.
 .Pp
 You will now be greeted and reminded of the fact that this is a

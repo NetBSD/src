@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.23 2000/03/13 22:45:46 soren Exp $	
+.\"	$NetBSD: install,v 1.24 2000/10/03 23:05:30 lukem Exp $	
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ detailed in the section on preparing your system for install.
 .Pp
 The following is a walk-through of the steps necessary to get NetBSD
 installed on your hard disk.  If you wish to stop the installation,
-you may hit Control-C at any prompt, but if you do, you'll have to
+you may press Control-C at any prompt, but if you do, you'll have to
 begin again from scratch.
 .Pp
 Transfer the miniroot file system onto the hard disk partition
@@ -144,7 +144,7 @@ This disables synchronous transfer on all SCSI devices.
 The system should continue to boot.  For now ignore WARNING:
 messages about bad dates in clocks, and a warning about /etc/rc
 not existing.  Eventually you will be be asked to enter the
-pathname of the shell, just hit return.  After a short while,
+pathname of the shell, just press return.  After a short while,
 you will be asked to select the type of your keyboard.  After
 you have entered a valid response here, the system asks you if
 you want to install or upgrade your system.  Since you are
