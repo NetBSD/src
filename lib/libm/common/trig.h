@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trig.h	5.6 (Berkeley) 10/9/90
- *	$Id: trig.h,v 1.2 1993/08/01 18:35:03 mycroft Exp $
+ *	$Id: trig.h,v 1.3 1993/08/14 13:42:19 mycroft Exp $
  */
 
 #include "mathimpl.h"

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sincos.c	5.5 (Berkeley) 10/9/90";*/
-static char rcsid[] = "$Id: sincos.c,v 1.2 1993/08/01 18:35:01 mycroft Exp $";
+static char rcsid[] = "$Id: sincos.c,v 1.3 1993/08/14 13:42:18 mycroft Exp $";
 #endif /* not lint */
 
 #include "trig.h"
@@ -64,7 +64,8 @@ double x;
 		big+a;
 		return x;
 	}
-	return x+x*sin__S(x*x);
+	a = x*x;
+	return x+x*sin__S(a);
 }
 
 double
@@ -84,7 +85,8 @@ double x;
 		}
 		else {			/* ... in [PI/4,3PI/4] */
 			a = PIo2-a;
-			return a+a*sin__S(a*a);	/* rtn. S(PI/2-|x|) */ 
+			c = a*a;
+			return a+a*sin__S(c);	/* rtn. S(PI/2-|x|) */ 
 		}
 	}
 	if (a < small) {

@@ -29,9 +29,10 @@
 ; OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ; SUCH DAMAGE.
 ;
-;	from: @(#)support.s	5.4 (Berkeley) 10/9/90
-;	$Id: support.s,v 1.2 1993/08/01 18:34:22 mycroft Exp $
-;
+;_sccsid:
+;.asciz	"from: @(#)support.s	5.4 (Berkeley) 10/9/90"
+_rcsid:
+.asciz	"$Id: support.s,v 1.3 1993/08/14 13:43:53 mycroft Exp $"
 
 ; IEEE recommended functions
 ; 
