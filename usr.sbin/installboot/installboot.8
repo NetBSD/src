@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.6 2002/04/04 11:06:47 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.7 2002/04/04 13:45:25 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,7 +77,7 @@ The
 .Nm
 utility installs and removes
 .Nx
-disk bootstrap software.
+disk bootstrap software into a file system.
 .Nm
 can install
 .Ar bootstrap
@@ -91,11 +91,11 @@ Generally,
 disk bootstrap software consists of two parts: a
 .Dq primary
 bootstrap program usually written into the disklabel area of the
-disk by
+file system by
 .Nm "" ,
 and a
 .Dq secondary
-bootstrap program that usually resides in a file system on the disk.
+bootstrap program that usually resides as an ordinary file in the file system.
 .Pp
 When booting, the primary bootstrap program is loaded and invoked by
 the machine's PROM or BIOS.
@@ -104,28 +104,41 @@ bootstrap program, which in turn loads and runs the kernel.
 The secondary bootstrap may allow control over various boot parameters
 passed to the kernel.
 .Pp
-To make a disk bootable, copy the secondary bootstrap
-(usually
+Perform the following steps to make a file system bootable:
+.Bl -enum
+.It
+Copy the secondary bootstrap (usually
 .Pa /usr/mdec/boot. Ns Sy MACHINE )
-to the root directory of the first file system on the disk.
+to the root directory of the target file system.
+.Pp
 .Nx Ns Tn /pmax
-requires this file system to start at block 0 of the disk.
-Then use
+requires that this file system starts at block 0 of the disk.
+.Pp
+The secondary
+.Nx Ns Tn /sparc64
+bootstrap is located in
+.Pa /usr/mdec/ofwboot .
+.
+.It
+Use
 .Nm
 to install the primary bootstrap program
 (usually
 .Pa /usr/mdec/bootxx. Ns Sy <fs> )
-into the disk's raw partition
-.Po
-usually
-.Dq c
-.ig
-but
-.Dq d
-on platforms such as
-.Sy i386 .
-..
-.Pc .
+into
+.Ar filesystem .
+.Pp
+.Nx Ns Tn /pmax
+and
+.Nx Ns Tn /sparc64
+do not require this step if the primary bootstrap already exists
+and the secondary bootstrap file is just being updated.
+.Pp
+The primary
+.Nx Ns Tn /sparc64
+bootstrap is located in
+.Pa /usr/mdec/bootblk .
+.El
 .Pp
 The options recognized by
 .Nm
@@ -151,12 +164,12 @@ The default machine is determined from
 .Xr uname 3
 and then
 .Ev MACHINE .
-.Pp
 The following machines are currently supported by
 .Nm "" :
 .Bd -ragged -offset indent
 .Sy alpha ,
 .Sy pmax ,
+.Sy sparc64 ,
 .Sy vax
 .Ed
 .
@@ -258,16 +271,33 @@ Searched for by the primary bootstrap if
 is not found.
 .
 .El
+.Pp
+.Ss NetBSD/sparc64 files
 .
+.Bl -tag -width /usr/mdec/boot.$MACHINE
+.
+.It Pa /usr/mdec/bootblk
+.Nx Ns Tn /sparc64
+primary bootstrap.
+.
+.It Pa /usr/mdec/ofwboot
+.Nx Ns Tn /sparc64
+secondary bootstrap.
+.
+.It Pa /ofwboot
+Installed copy of
+.Nx Ns Tn /sparc64
+secondary bootstrap.
+.
+.El
 .
 .Sh EXAMPLES
-.\".if t .ne 4
+.Ss NetBSD/pmax examples
 Install the Berkeley Fast File System primary bootstrap on to disk sd0:
 .D1 Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
 .Pp
-Remove the primary bootstrap from disk wd1:
-.Dl Ic installboot -c /dev/rwd1c
-.Ss NetBSD/pmax examples
+Remove the primary bootstrap from disk sd1:
+.Dl Ic installboot -c /dev/swd1c
 Install the ISO 9660 primary bootstrap in the file
 .Pa /tmp/cd-image :
 .Dl Ic installboot -m pmax /tmp/cd-image /usr/mdec/bootxx_cd9660
@@ -306,7 +336,9 @@ The following people contributed to the various machine dependent
 back-ends:
 Simon Burge (pmax),
 Chris Demetriou (alpha),
+Matthew Green (sparc64),
 Ross Harvey (alpha),
+and
 Matt Thomas (vax).
 .
 .Sh BUGS
