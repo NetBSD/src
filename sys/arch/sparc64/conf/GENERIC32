@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.94 2005/02/06 18:27:41 martin Exp $
+# 	$NetBSD: GENERIC32,v 1.95 2005/02/11 08:25:56 dsl Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.94 $"
+#ident 		"GENERIC-$Revision: 1.95 $"
 
 maxusers	64
 
@@ -175,6 +175,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

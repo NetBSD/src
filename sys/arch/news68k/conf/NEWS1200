@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.27 2005/01/05 09:01:24 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.28 2005/02/11 08:25:55 dsl Exp $
 
 #	news1200 config file
 #
@@ -73,6 +73,7 @@ file-system	NULLFS		# loopback file system
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 #options 	SOFTDEP		# ffs soft updates support
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocols

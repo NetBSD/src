@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.36 2005/01/31 16:54:33 hannken Exp $
+#	$NetBSD: IQ80321,v 1.37 2005/02/11 08:25:54 dsl Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -49,6 +49,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

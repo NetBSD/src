@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.19 2005/01/31 16:54:33 hannken Exp $
+#	$NetBSD: IQ31244,v 1.20 2005/02/11 08:25:54 dsl Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -49,6 +49,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

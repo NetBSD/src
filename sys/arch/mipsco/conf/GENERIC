@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.41 2005/01/31 16:55:00 hannken Exp $
+# $NetBSD: GENERIC,v 1.42 2005/02/11 08:25:55 dsl Exp $
 #
 # GENERIC machine description file
 # 
@@ -92,6 +92,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocols

@@ -47,6 +47,7 @@ file-system	MSDOSFS		# MS-DOS file system
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	SOFTDEP
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.18 2005/01/31 16:54:34 hannken Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.19 2005/02/11 08:25:54 dsl Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.18 $"
+#ident 		"GENERIC-$Revision: 1.19 $"
 
 maxusers	32		# estimated number of users
 
@@ -156,6 +156,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
+options 	FFS_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

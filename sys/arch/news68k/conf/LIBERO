@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.27 2005/01/31 16:55:01 hannken Exp $
+# 	$NetBSD: LIBERO,v 1.28 2005/02/11 08:25:55 dsl Exp $
 
 #	NEWS1750 config file;
 #
@@ -70,6 +70,7 @@ options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 options 	SOFTDEP		# ffs soft updates support
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocols
