@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.12 2000/09/13 03:37:04 thorpej Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.13 2000/09/13 04:44:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -259,6 +259,17 @@
  * See Appendix A of "Intel Architecture Software Developer's
  * Manual, Volume 3: System Programming" for more information.
  */
+
+/*
+ * 586-class CESR MSR format.  Lower 16 bits is CTR0, upper 16 bits
+ * is CTR1.
+ */
+
+#define	PMC5_CESR_EVENT			0x003f
+#define	PMC5_CESR_OS			0x0040
+#define	PMC5_CESR_USR			0x0080
+#define	PMC5_CESR_E			0x0100
+#define	PMC5_CESR_P			0x0200
 
 /*
  * 686-class Event Selector MSR format.
