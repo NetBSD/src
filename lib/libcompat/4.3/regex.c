@@ -43,51 +43,51 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
-static char rcsid[] = "$Id: regex.c,v 1.2 1993/08/01 18:36:06 mycroft Exp $";
+static char rcsid[] = "$Id: regex.c,v 1.3 1993/11/11 01:24:50 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stddef.h>
-#include <regexp.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <regex.h>
 
-static regexp *re_regexp;
-static int re_goterr;
-static char *re_errstr;
+static int compiled_regexp = 0;
+static char errbuf[256];
+static regex_t rp;
 
 char *
 re_comp(s)
 	char *s;
 {
+	int eval;
+
 	if (s == NULL)
 		return (NULL);
-	if (re_regexp)
-		free(re_regexp);
-	if (re_errstr)
-		free(re_errstr);
-	re_goterr = 0;
-	re_regexp = regcomp(s);
-	return (re_goterr ? re_errstr : NULL);
+
+	if (compiled_regexp) {
+		regfree(&rp);
+		compiled_regexp = 0;
+	}
+
+	if ((eval = regcomp(&rp, s, REG_NOSUB)) != 0) {
+		regerror (eval, &rp, errbuf, sizeof(errbuf));
+		return errbuf;
+	}
+
+	compiled_regexp = 1;
+	return NULL;
 }
 
 int
 re_exec(s)
 	char *s;
 {
-	int rc;
+	regmatch_t rm[1];
+	int eval;
 
-	re_goterr = 0;
-	rc = regexec(re_regexp, s);
-	return (re_goterr ? -1 : rc);
-}
+	if ((eval = regexec(&rp, s, 0, rm, 0)) == 0)
+		return 1;
 
-void
-regerror(s)
-	const char *s;
-{
-	re_goterr = 1;
-	if (re_errstr)
-		free(re_errstr);
-	re_errstr = strdup(s);
+	return eval == REG_NOMATCH ? 0 : -1;
 }
