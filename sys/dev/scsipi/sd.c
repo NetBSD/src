@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.229 2004/10/28 07:07:45 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.230 2004/12/04 19:02:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.229 2004/10/28 07:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.230 2004/12/04 19:02:26 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -773,6 +773,7 @@ sdstart(struct scsipi_periph *periph)
 	struct sd_softc *sd = (void *)periph->periph_dev;
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
+	struct scsipi_rw_16 cmd16;
 	struct scsipi_rw_big cmd_big;
 	struct scsi_rw cmd_small;
 	struct scsipi_generic *cmdp;
@@ -829,15 +830,13 @@ sdstart(struct scsipi_periph *periph)
 			nblks = howmany(bp->b_bcount, lp->d_secsize);
 
 		/*
-		 *  Fill out the scsi command.  If the transfer will
-		 *  fit in a "small" cdb, use it.
+		 * Fill out the scsi command.  Use the smallest CDB possible
+		 * (6-byte, 10-byte, or 16-byte).
 		 */
 		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
 		    ((nblks & 0xff) == nblks) &&
 		    !(periph->periph_quirks & PQUIRK_ONLYBIG)) {
-			/*
-			 * We can fit in a small cdb.
-			 */
+			/* 6-byte CDB */
 			memset(&cmd_small, 0, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
@@ -845,10 +844,8 @@ sdstart(struct scsipi_periph *periph)
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
-		} else {
-			/*
-			 * Need a large cdb.
-			 */
+		} else if ((bp->b_rawblkno & 0xffffffff) == bp->b_rawblkno) {
+			/* 10-byte CDB */
 			memset(&cmd_big, 0, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
@@ -856,6 +853,15 @@ sdstart(struct scsipi_periph *periph)
 			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsipi_generic *)&cmd_big;
+		} else {
+			/* 16-byte CDB */
+			memset(&cmd16, 0, sizeof(cmd16));
+			cmd16.opcode = (bp->b_flags & B_READ) ?
+			    READ_16 : WRITE_16;
+			_lto8b(bp->b_rawblkno, cmd16.addr);
+			_lto4b(nblks, cmd16.length);
+			cmdlen = sizeof(cmd16);
+			cmdp = (struct scsipi_generic *)&cmd16;
 		}
 
 		/* Instrumentation. */
