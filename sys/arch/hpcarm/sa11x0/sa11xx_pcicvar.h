@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.4 2001/07/07 08:45:43 toshii Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.5 2001/07/09 05:19:05 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,8 @@ struct sapcic_socket {
 
 	int power_capability;
 
-	/* private data for pcictag functions */
 	struct sa11x0_softc *saip_sc;
-	struct sacc_softc *sacc_sc;
-	void *pddata;
+	void *pcictag_cookie;	/* opaque data for pcictag functions */
 };
 
 struct sapcic_tag {
