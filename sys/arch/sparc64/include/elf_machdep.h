@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.6 2000/07/14 20:59:07 eeh Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.7 2001/02/11 00:18:49 eeh Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -18,6 +18,29 @@
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 #endif
 
+/* The following are what is used for AT_SUN_HWCAP: */
+#define AV_SPARC_HWMUL_32x32	1	/* 32x32-bit smul/umul is efficient */
+#define	AV_SPARC_HWDIV_32x32	2	/* 32x32-bit sdiv/udiv is efficient */
+#define	AV_SPARC_HWFSMULD	4	/* fsmuld is efficient */
+
+/*
+ * Here are some SPARC specific flags I can't 
+ * find a better home for.  They are used for AT_FLAGS
+ * and in the exec header.
+ */
+#define	EF_SPARCV9_MM		0x3
+#define	EF_SPARCV9_TSO		0x0
+#define	EF_SPARCV9_PSO		0x1
+#define	EF_SPARCV9_RMO		0x2
+
+#define EF_SPARC_32PLUS_MASK    0xffff00        /* bits indicating V8+ type */
+#define EF_SPARC_32PLUS         0x000100        /* generic V8+ features */
+#define EF_SPARC_EXT_MASK       0xffff00        /* bits for vendor extensions */
+#define	EF_SPARC_SUN_US1	0x000200	/* UltraSPARC 1 extensions */	
+#define	EF_SPARC_HAL_R1		0x000400	/* HAL R1 extensions */
+#define	EF_SPARC_SUN_US3	0x000800	/* UltraSPARC 3 extensions */
+
+/* Relocation types */
 #define R_SPARC_NONE		0
 #define R_SPARC_8		1
 #define R_SPARC_16		2
