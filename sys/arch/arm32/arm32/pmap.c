@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1999/02/28 01:49:25 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 1999/03/10 20:54:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2465,13 +2465,25 @@ pmap_extract(pmap, va)
 	if (!pmap_pte_v(pte))
 		return(0);
 
-	/* Extract the physical address from the pte */
-	pa = pmap_pte_pa(pte);
+	/* Return the physical address depending on the PTE type */
+	/* XXX What about L1 section mappings ? */
+	if ((*(pte) & L2_MASK) == L2_LPAGE) {
+		/* Extract the physical address from the pte */
+		pa = (*(pte)) & ~(L2_LPAGE_SIZE - 1);
 
-	PDEBUG(5, printf("pmap_extract: pa = P%08lx\n",
-	    (pa | (va & ~PG_FRAME))));
+		PDEBUG(5, printf("pmap_extract: LPAGE pa = P%08lx\n",
+		    (pa | (va & (L2_LPAGE_SIZE - 1)))));
 
-	return(pa | (va & ~PG_FRAME));
+		return(pa | (va & (L2_LPAGE_SIZE - 1)));
+	} else {
+		/* Extract the physical address from the pte */
+		pa = pmap_pte_pa(pte);
+
+		PDEBUG(5, printf("pmap_extract: SPAGE pa = P%08lx\n",
+		    (pa | (va & ~PG_FRAME))));
+
+		return(pa | (va & ~PG_FRAME));
+	}
 }
 
 
