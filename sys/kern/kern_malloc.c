@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.48 2000/02/01 19:37:58 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.49 2000/02/11 19:22:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,6 +52,34 @@
 
 static struct vm_map_intrsafe kmem_map_store;
 vm_map_t kmem_map = NULL;
+
+#include "opt_kmempages.h"
+
+#ifdef NKMEMCLUSTERS
+#error NKMEMCLUSTERS is obsolete; use NKMEMPAGES instead or let the kernel auto-size
+#endif
+
+/*
+ * Default number of pages in kmem_map.  We attempt to calculate this
+ * at run-time, but allow it to be either patched or set in the kernel
+ * config file.
+ */
+#ifndef NKMEMPAGES
+#define	NKMEMPAGES	0
+#endif
+int	nkmempages = NKMEMPAGES;
+
+/*
+ * Defaults for lower- and upper-bounds for the kmem_map page count.
+ * Can be overridden by kernel config options.
+ */
+#ifndef	NKMEMPAGES_MIN
+#define	NKMEMPAGES_MIN	NKMEMPAGES_MIN_DEFAULT
+#endif
+
+#ifndef NKMEMPAGES_MAX
+#define	NKMEMPAGES_MAX	NKMEMPAGES_MAX_DEFAULT
+#endif
 
 #include "opt_kmemstats.h"
 #include "opt_malloclog.h"
@@ -223,7 +251,7 @@ malloc(size, type, flags)
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
-			allocsize = roundup(size, NBPG);
+			allocsize = roundup(size, PAGE_SIZE);
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
@@ -268,7 +296,7 @@ malloc(size, type, flags)
 		 * bucket, don't assume the list is still empty.
 		 */
 		savedlist = kbp->kb_next;
-		kbp->kb_next = cp = va + (npg * NBPG) - allocsize;
+		kbp->kb_next = cp = va + (npg << PAGE_SHIFT) - allocsize;
 		for (;;) {
 			freep = (struct freelist *)cp;
 #ifdef DIAGNOSTIC
@@ -428,8 +456,8 @@ free(addr, type)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (size > NBPG)
-		alloc = addrmask[BUCKETINDX(NBPG)];
+	if (size > PAGE_SIZE)
+		alloc = addrmask[BUCKETINDX(PAGE_SIZE)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
@@ -554,8 +582,8 @@ realloc(curaddr, newsize, type, flags)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (cursize > NBPG)
-		alloc = addrmask[BUCKETINDX(NBPG)];
+	if (cursize > PAGE_SIZE)
+		alloc = addrmask[BUCKETINDX(PAGE_SIZE)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)curaddr & alloc) != 0)
@@ -596,6 +624,43 @@ realloc(curaddr, newsize, type, flags)
 }
 
 /*
+ * Compute the number of pages that kmem_map will map, that is,
+ * the size of the kernel malloc arena.
+ */
+void
+kmeminit_nkmempages()
+{
+	int npages;
+
+	if (nkmempages != 0) {
+		/*
+		 * It's already been set (by us being here before, or
+		 * by patching or kernel config options), bail out now.
+		 */
+		return;
+	}
+
+	/*
+	 * We use the following (simple) formula:
+	 *
+	 *	- Starting point is physical memory / 4.
+	 *
+	 *	- Clamp it down to NKMEMPAGES_MAX.
+	 *
+	 *	- Round it up to NKMEMPAGES_MIN.
+	 */
+	npages = physmem / 4;
+
+	if (npages > NKMEMPAGES_MAX)
+		npages = NKMEMPAGES_MAX;
+
+	if (npages < NKMEMPAGES_MIN)
+		npages = NKMEMPAGES_MIN;
+
+	nkmempages = npages;
+}
+
+/*
  * Initialize the kernel memory allocator
  */
 void
@@ -604,7 +669,6 @@ kmeminit()
 #ifdef KMEMSTATS
 	register long indx;
 #endif
-	int npg;
 
 #if	((MAXALLOCSAVE & (MAXALLOCSAVE - 1)) != 0)
 		ERROR!_kmeminit:_MAXALLOCSAVE_not_power_of_2
@@ -619,22 +683,27 @@ kmeminit()
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
 		panic("minbucket too small/struct freelist too big");
 
-	npg = VM_KMEM_SIZE/ NBPG;
+	/*
+	 * Compute the number of kmem_map pages, if we have not
+	 * done so already.
+	 */
+	kmeminit_nkmempages();
+
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
-		(vsize_t)(npg * sizeof(struct kmemusage)));
+		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
-		(vaddr_t *)&kmemlimit, (vsize_t)(npg * NBPG), 
+		(vaddr_t *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
 			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
-		if (1 << indx >= NBPG)
+		if (1 << indx >= PAGE_SIZE)
 			bucket[indx].kb_elmpercl = 1;
 		else
-			bucket[indx].kb_elmpercl = NBPG / (1 << indx);
+			bucket[indx].kb_elmpercl = PAGE_SIZE / (1 << indx);
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = npg * NBPG * 6 / 10;
+		kmemstats[indx].ks_limit = (nkmempages << PAGE_SHIFT) * 6 / 10;
 #endif
 }
 
