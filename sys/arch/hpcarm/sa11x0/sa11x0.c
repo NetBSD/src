@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.10 2001/06/20 02:19:55 toshii Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.11 2001/06/22 01:29:26 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -93,24 +93,6 @@ extern vaddr_t saipic_base;
 
 extern int SetCPSR(int, int);
 
-#ifdef DEBUG  /* XXX */
-extern int sacomcncharpoll();
-
-int hoge(void *p)
-{
-	static int i = 0;
-	int c = sacomcncharpoll();
-	*(u_int32_t *)0xd0001010 = 8 | 2;       /* clear intr status bit */
-
-	i++;
-	if (! (i & 7))
-		printf("h %ld.%03ld\n", time.tv_sec, time.tv_usec / 1000);
-	if (c == 1)
-		cpu_Debugger();
-	return 1;
-}
-#endif
-
 /*
  * int sa11x0_print(void *aux, const char *name)
  * print configuration info for children
@@ -201,10 +183,6 @@ sa11x0_attach(parent, self, aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR4_CLR, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR5_CLR, 1);
 
-#ifdef DEBUG  /* XXX */
-	sa11x0_intr_establish(0, 30, 1, IPL_HIGH, hoge, 0);
-	*((u_int32_t *)0xd0001010) = 0x8;
-#endif
 	/*
 	 * XXX this is probably a bad place, but intr bit shouldn't be
 	 * XXX enabled before intr mask is set.
