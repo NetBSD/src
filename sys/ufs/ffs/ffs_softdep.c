@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13 2001/01/10 04:47:10 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.14 2001/08/30 03:55:42 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4989,7 +4989,7 @@ softdep_pageiodone(bp)
 	KASSERT(!(bp->b_flags & B_READ));
 	bshift = vp->v_mount->mnt_fs_bshift;
 	bsize = 1 << bshift;
-	asize = min(PAGE_SIZE, bsize);
+	asize = MIN(PAGE_SIZE, bsize);
 	ACQUIRE_LOCK(&lk);
 	for (i = 0; i < npages; i++) {
 		pg = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
@@ -5000,7 +5000,7 @@ softdep_pageiodone(bp)
 		for (off = pg->offset;
 		     off < pg->offset + PAGE_SIZE;
 		     off += bsize) {
-			size = min(asize, iosize);
+			size = MIN(asize, iosize);
 			iosize -= size;
 			lbn = off >> bshift;
 			if (pcbp == NULL || pcbp->b_lblkno != lbn) {
