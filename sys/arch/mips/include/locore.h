@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.45 2000/10/03 23:15:58 cgd Exp $ */
+/* $NetBSD: locore.h,v 1.46 2000/10/04 22:44:01 cgd Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -45,8 +45,10 @@ struct tlb;
  * only to print them by name in stack tracebacks
  */
 
-u_int32_t mips_read_causereg(void);
-u_int32_t mips_read_statusreg(void);
+u_int32_t mips_cp0_cause_read(void);
+void	mips_cp0_cause_write(u_int32_t);
+u_int32_t mips_cp0_status_read(void);
+void	mips_cp0_status_write(u_int32_t);
 
 int	mips1_icsize(void);
 int	mips1_dcsize(void);
