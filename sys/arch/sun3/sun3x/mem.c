@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2001/09/05 12:37:25 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.21 2001/09/05 14:18:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -206,7 +206,7 @@ mmrw(dev, uio, flags)
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
 				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				memset(devzeropage, 0, NBPG);
 			}
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
