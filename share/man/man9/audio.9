@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.9 1999/03/16 00:40:47 garbled Exp $
+.\"	$NetBSD: audio.9,v 1.10 1999/03/24 06:46:30 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,9 +95,8 @@ struct audio_params {
 	void	(*sw_code)__P((void *, u_char *, int));
 	int	factor;			/* coding space change */
 };
-
 .Ed
-
+.Pp
 The high level audio driver attaches to the low level driver
 when the latter calls
 .Va audio_attach_mi .
@@ -110,7 +109,7 @@ This call should be
 	void *hdl;
 	struct device *dev;
 .Ed
-
+.Pp
 The 
 .Va audio_hw_if
 struct is as shown above and the
@@ -124,7 +123,6 @@ in
 when the high level driver calls them.
 .Va dev
 is the device struct for the hardware device.
-
 .Pp
 The upper layer of the audio driver allocates one buffer for playing
 and one for recording.  It handles the buffering of data from the
@@ -134,14 +132,12 @@ no data available from the user process when the hardware request
 another block a block of silence will be used instead.  Furthermore,
 if the user process does not read data quickly enough during recording
 data will be thrown away.
-
 .Pp
 The fields of
 .Va audio_hw_if
 are described in some more detail below.
 Some fields are optional and can be set to 0 if not needed.
-.Bl -tag -width indent -compact
-
+.Bl -tag -width indent
 .It Dv int open(void *hdl, int flags)
 is called when the audio device is opened.  It should initialize
 the hardware for I/O.  Every successful call to
@@ -149,10 +145,8 @@ the hardware for I/O.  Every successful call to
 is matched by a call to
 .Va close .
 Return 0 on success, otherwise an error code.
-
 .It Dv void close(void *hdl)
 is called when the audio device is closed.
-
 .It Dv int drain(void *hdl)
 optional, is called before the device is closed or when
 .Dv AUDIO_DRAIN
@@ -161,7 +155,6 @@ in to be played that could be lost when
 .Va close
 is called.
 Return 0 on success, otherwise an error code.
-
 .It Dv int query_encoding(void *hdl, struct audio_encoding *ae)
 is used when
 .Dv AUDIO_GETENC
@@ -169,7 +162,6 @@ is called.  It should fill the
 .Va audio_encoding
 structure and return 0 or, if there is no encoding with the
 given number, return EINVAL.
-
 .It Dv int set_params(void *hdl, int setmode, int usemode, 
 .Dv "struct audio_params *play, struct audio_params *rec)"
 .br
@@ -214,14 +206,12 @@ is copied into
 after the call to
 .Va set_params .
 Return 0 on success, otherwise an error code.
-
 .It Dv int round_blocksize(void *hdl, int bs)
 optional, is called with the block size,
 .Va bs ,
 that has been computed by the upper layer.  It should return
 a block size, possibly changed according to the needs of the
 hardware driver.
-
 .It Dv int commit_settings(void *hdl)
 optional, is called after all calls to
 .Va set_params ,
@@ -231,7 +221,6 @@ are done.  A hardware driver that needs to get the hardware in
 and out of command mode for each change can save all the changes
 during previous calls and do them all here.
 Return 0 on success, otherwise an error code.
-
 .It Dv int init_output(void *hdl, void *buffer, int size)
 optional, is called before any output starts, but when the total
 .Va size
@@ -240,7 +229,6 @@ of the output
 has been determined.  It can be used to initialize looping DMA
 for hardware that needs that.
 Return 0 on success, otherwise an error code.
-
 .It Dv int init_input(void *hdl, void *buffer, int size)
 optional, is called before any input starts, but when the total
 .Va size
@@ -249,7 +237,6 @@ of the input
 has been determined.  It can be used to initialize looping DMA
 for hardware that needs that.
 Return 0 on success, otherwise an error code.
-
 .It Dv int start_output(void *hdl, void *block, int bsize,
 .Dv "void (*intr)(void*), void *intrarg)"
 .br
@@ -268,7 +255,6 @@ Calling
 will normally initiate another call to
 .Va start_output .
 Return 0 on success, otherwise an error code.
-
 .It Dv int start_input(void *hdl, void *block, int bsize,
 .Dv "void (*intr)(void*), void *intrarg)"
 .br
@@ -287,37 +273,31 @@ Calling
 will normally initiate another call to
 .Va start_input.
 Return 0 on success, otherwise an error code.
-
 .It Dv int halt_output(void *hdl)
 is called to abort the output transfer (started by
 .Va start_output )
 in progress.
 Return 0 on success, otherwise an error code.
-
 .It Dv int halt_input(void *hdl)
 is called to abort the input transfer (started by
 .Va start_input )
 in progress.
 Return 0 on success, otherwise an error code.
-
 .It Dv int speaker_ctl(void *hdl, int on)
 optional, is called when a half duplex device changes between
 playing and recording.  It can, e.g., be used to turn on
 and off the speaker.
 Return 0 on success, otherwise an error code.
-
 .It Dv int getdev(void *hdl, struct audio_device *ret)
 Should fill the 
 .Va audio_device
 struct with relevant information about the driver.
 Return 0 on success, otherwise an error code.
-
 .It Dv int setfd(void *hdl, int fd)
 optional, is called when
 .Dv AUDIO_SETFD
 is used, but only if the device has AUDIO_PROP_FULLDUPLEX set.
 Return 0 on success, otherwise an error code.
-
 .It Dv int set_port(void *hdl, mixer_ctl_t *mc)
 is called in when
 .Dv AUDIO_MIXER_WRITE
@@ -325,7 +305,6 @@ is used.  It should take data from the
 .Va mixer_ctl_t
 struct at set the corresponding mixer values.
 Return 0 on success, otherwise an error code.
-
 .It Dv int get_port(void *hdl, mixer_ctl_t *mc)
 is called in when
 .Dv AUDIO_MIXER_READ
@@ -333,7 +312,6 @@ is used.  It should fill the
 .Va mixer_ctl_t
 struct.
 Return 0 on success, otherwise an error code.
-
 .It Dv int query_devinfo(void *hdl, mixer_devinfo_t *di)
 is called in when
 .Dv AUDIO_MIXER_DEVINFO
@@ -341,7 +319,6 @@ is used.  It should fill the
 .Va mixer_devinfo_t
 struct.
 Return 0 on success, otherwise an error code.
-
 .It Dv "void *alloc(void *hdl, u_long size, int type, int flags)"
 .br
 optional, is called to allocate the device buffers.  If not present
@@ -351,14 +328,12 @@ The reason for using a device dependent routine instead of
 .Xr malloc 9
 is that some buses need special allocation to do DMA.
 Returns the address of the buffer, or 0 on failure.
-
 .It Dv void free(void *hdl, void *addr, int type)
 optional, is called to free memory allocated by
 .Va alloc .
 If not supplied
 .Xr free 9
 is used.
-
 .It Dv u_long round_buffer(void *hdl, u_long bufsize)
 optional, is called at startup to determine the audio
 buffer size.  The upper layer supplies the suggested
@@ -366,7 +341,6 @@ size in
 .Va bufsize ,
 which the hardware driver can then change if needed.
 E.g., DMA on the ISA bus cannot exceed 65536 bytes.
-
 .It Dv "int mappage(void *hdl, void *addr, int offs, int prot)"
 .br
 optional, is called for
@@ -379,12 +353,11 @@ mapped with protection
 .Va prot .
 Returns -1 on failure, or a machine dependent opaque value
 on success.
-
 .It Dv int get_props(void *hdl)
 Should return the device properties; i.e. a combination of
 AUDIO_PROP_xxx.
 .El
-
+.Pp
 The
 .Va query_devinfo
 method should define certain mixer controls for
