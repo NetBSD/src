@@ -1,17 +1,10 @@
 #	from: @(#)Makefile	4.8 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.3 1993/07/31 15:25:25 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/10/01 00:35:19 jtc Exp $
 
 PROG=	calendar
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}/usr/share/calendar ]; then \
-                /bin/rm -f ${DESTDIR}/usr/share/calendar ; \
-                mkdir -p ${DESTDIR}/usr/share/calendar ; \
-                chown root.wheel ${DESTDIR}/usr/share/calendar ; \
-                chmod 755 ${DESTDIR}/usr/share/calendar ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/share/calendar
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/calendars/calendar.* ${DESTDIR}/usr/share/calendar
 
