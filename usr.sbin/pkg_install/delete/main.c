@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.16.2.2 2002/03/20 22:06:18 he Exp $	*/
+/*	$NetBSD: main.c,v 1.16.2.3 2002/06/26 16:53:39 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.16.2.2 2002/03/20 22:06:18 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.2.3 2002/06/26 16:53:39 he Exp $");
 #endif
 #endif
 
@@ -52,21 +52,6 @@ usage(void)
 {
 	fprintf(stderr, "usage: pkg_delete [-vVDdnFfOrR] [-p prefix] pkg-name ...\n");
 	exit(1);
-}
-
-int
-find_fn(const char *pkg, char *data)
-{
-	lpkg_t *lpp;
-	char fn[FILENAME_MAX];
-
-	snprintf(fn, sizeof(fn), "%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
-	if (!isfile(fn)) {	/* might as well use sanity_check() */
-		lpp = alloc_lpkg(pkg);
-		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
-	}
-
-	return 0;
 }
 
 int
@@ -159,7 +144,7 @@ main(int argc, char **argv)
 		} else {
 			if (ispkgpattern(*argv)) {
 				int rc;
-				rc = findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, find_fn, NULL);
+				rc = findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, add_to_list_fn, &pkgs);
 				if (rc == 0)
 					errx(1, "No matching pkg for %s.", *argv);
 				else if (rc == -1) 
