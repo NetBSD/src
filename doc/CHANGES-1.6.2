@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.21 2003/06/16 13:24:52 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.22 2003/06/16 13:38:11 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -351,3 +351,11 @@ sys/dev/pci/if_bgereg.h				1.8
 
 	Thanks to Paul Saab @mu.org.
 	[tron, ticket #1250]
+
+usr.bin/window/wwiomux.c			1.8
+
+	Fix a bug where window(1) would (appear to) miss a character when two
+	characters are typed fast one after the other (<10 ms).
+	The visual effect under vi(1) was even more impressive. ;-)
+	This bug was actually introduced inadvertantly in 1995 in rev 1.4.
+	[aymeric, ticket #1252]
