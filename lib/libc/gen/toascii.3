@@ -1,4 +1,4 @@
-.\"	$NetBSD: toascii.3,v 1.8 2003/08/07 16:42:58 agc Exp $
+.\"	$NetBSD: toascii.3,v 1.9 2004/12/24 02:47:16 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)toascii.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd December 24, 2004
 .Dt TOASCII 3
 .Os
 .Sh NAME
@@ -69,6 +69,14 @@ function always returns a valid ASCII character.
 .Xr ascii 7
 .Sh STANDARDS
 The
-.Fn isascii
+.Fn toascii
 function conforms to
 .St -xpg4 .
+.Sh CAVEATS
+The argument to
+.Fn toascii
+must be
+.Dv EOF
+or representable as an
+.Li unsigned char ;
+otherwise, the result is undefined.
