@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
- *	$Id: vm_glue.c,v 1.10 1993/07/19 13:47:09 cgd Exp $
+ *	vm_glue.c,v 1.8 1993/07/15 15:42:17 cgd Exp
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -541,6 +541,7 @@ thread_wakeup(event)
 	splx(s);
 }
 
+#if	defined(DDB) || #defined(DEBUG)
 /*
  * DEBUG stuff
  */
@@ -555,10 +556,11 @@ iprintf(a, b, c, d, e, f, g, h)
 
 	i = indent;
 	while (i >= 8) {
-		printf("\t");
+		db_printf("\t");
 		i -= 8;
 	}
 	for (; i > 0; --i)
-		printf(" ");
-	printf(a, b, c, d, e, f, g, h);
+		db_printf(" ");
+	db_printf(a, b, c, d, e, f, g, h);
 }
+#endif	/* DDB || DEBUG */
