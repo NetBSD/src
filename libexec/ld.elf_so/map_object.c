@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.14 2002/09/06 13:20:29 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.15 2002/09/13 03:12:40 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -169,10 +169,6 @@ _rtld_map_object(path, fd, sb)
 		    nsegs);
 		return NULL;
 	}
-#ifdef __i386__
-	assert(segs[0]->p_align <= PAGESIZE);
-	assert(segs[1]->p_align <= PAGESIZE);
-#endif
 
 	/*
 	 * Map the entire address space of the object as a file
