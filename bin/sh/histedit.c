@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.32 2003/10/19 01:55:05 lukem Exp $	*/
+/*	$NetBSD: histedit.c,v 1.33 2003/10/19 19:13:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.32 2003/10/19 01:55:05 lukem Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.33 2003/10/19 19:13:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ histedit(void)
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
 				el_set(el, EL_PROMPT, getprompt);
+				el_set(el, EL_SIGNAL, 1);
 			} else {
 bad:
 				out2str("sh: can't initialize editing\n");
