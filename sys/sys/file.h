@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.37 2003/02/23 16:38:01 martin Exp $	*/
+/*	$NetBSD: file.h,v 1.38 2003/02/24 10:18:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,6 +45,7 @@
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 #include <sys/queue.h>
+#include <sys/lock.h>
 
 MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
