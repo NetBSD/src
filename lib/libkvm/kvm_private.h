@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.8 1997/08/12 16:27:01 gwr Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.9 2000/05/26 02:42:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,12 +49,13 @@ struct __kvm {
 	char	*errp;		/* XXX this can probably go away */
 	char	errbuf[_POSIX2_LINE_MAX];
 	DB	*db;
-#define ISALIVE(kd) ((kd)->vmfd >= 0)
 	int	pmfd;		/* physical memory file (or crashdump) */
 	int	vmfd;		/* virtual memory file (-1 if crashdump) */
 	int	swfd;		/* swap file (e.g., /dev/drum) */
 	int	nlfd;		/* namelist file (e.g., /vmunix) */
+	char	alive;		/* live kernel? */
 	struct kinfo_proc *procbase;
+	struct kinfo_proc2 *procbase2;
 	u_long	usrstack;		/* address of end of user stack */
 	u_long	min_uva, max_uva;	/* min/max user virtual address */
 	int	nbpg;		/* page size */
@@ -87,6 +88,15 @@ struct __kvm {
 	struct pglist *vm_page_buckets;
 	int vm_page_hash_mask;
 };
+
+/* Levels of aliveness */
+#define	KVM_ALIVE_DEAD		0	/* dead, working from core file */
+#define	KVM_ALIVE_FILES		1	/* alive, working from open kmem/drum */
+#define	KVM_ALIVE_SYSCTL	2	/* alive, sysctl-type calls only */
+
+#define	ISALIVE(kd)	((kd)->alive != KVM_ALIVE_DEAD)
+#define	ISKMEM(kd)	((kd)->alive == KVM_ALIVE_FILES)
+#define	ISSYSCTL(kd)	((kd)->alive == KVM_ALIVE_SYSCTL || ISKMEM(kd))
 
 /*
  * Functions used internally by kvm, but across kvm modules.
