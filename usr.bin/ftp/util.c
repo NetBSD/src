@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 1997/10/14 16:31:26 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.17 1997/11/01 14:37:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.16 1997/10/14 16:31:26 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.17 1997/11/01 14:37:05 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: util.c,v 1.16 1997/10/14 16:31:26 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tzfile.h>
 #include <unistd.h>
 
 #include "ftp_var.h"
@@ -581,8 +582,8 @@ progressmeter(flag)
 	static off_t lastsize;
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize;
-	double elapsed, remaining;
-	int ratio, barlength, i, len;
+	double elapsed;
+	int ratio, barlength, i, len, remaining;
 	char buf[256];
 
 	len = 0;
@@ -643,20 +644,20 @@ progressmeter(flag)
 		len += snprintf(buf + len, sizeof(buf) - len,
 		    " - stalled -");
 	} else {
-		remaining =
-		    (filesize - restart_point) / (bytes / elapsed) - elapsed;
-		if (remaining >= 100 * 3600)
+		remaining = (int)
+		    ((filesize - restart_point) / (bytes / elapsed) - elapsed);
+		if (remaining >= 100 * SECSPERHOUR)
 			len += snprintf(buf + len, sizeof(buf) - len,
 			    "   --:-- ETA");
 		else {
-			i = (int)remaining / 3600;
+			i = remaining / SECSPERHOUR;
 			if (i)
 				len += snprintf(buf + len, sizeof(buf) - len,
 				    "%2d:", i);
 			else
 				len += snprintf(buf + len, sizeof(buf) - len,
 				    "   ");
-			i = (int)remaining % 3600;
+			i = remaining % SECSPERHOUR;
 			len += snprintf(buf + len, sizeof(buf) - len,
 			    "%02d:%02d ETA", i / 60, i % 60);
 		}
@@ -688,7 +689,7 @@ ptransfer(siginfo)
 	struct timeval now, td;
 	double elapsed;
 	off_t bs;
-	int meg, remaining, hh;
+	int meg, remaining, hh, len;
 	char buf[100];
 
 	if (!verbose && !siginfo)
@@ -701,7 +702,8 @@ ptransfer(siginfo)
 	meg = 0;
 	if (bs > (1024 * 1024))
 		meg = 1;
-	(void)snprintf(buf, sizeof(buf),
+	len = 0;
+	len += snprintf(buf + len, sizeof(buf) - len,
 	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
 	    (long long)bytes, bytes == 1 ? "" : "s", direction, elapsed,
 	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
@@ -709,14 +711,14 @@ ptransfer(siginfo)
 	    && bytes + restart_point <= filesize) {
 		remaining = (int)((filesize - restart_point) /
 				  (bytes / elapsed) - elapsed);
-		hh = remaining / 3600;
-		remaining %= 3600;
-			/* "buf+len(buf) -1" to overwrite \n */
-		snprintf(buf + strlen(buf) - 1, sizeof(buf) - strlen(buf),
+		hh = remaining / SECSPERHOUR;
+		remaining %= SECSPERHOUR;
+		len--;	 		/* decrement len to overwrite \n */
+		len += snprintf(buf + len, sizeof(buf) - len,
 		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
 		    remaining % 60);
 	}
-	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, strlen(buf));
+	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, len);
 }
 
 /*
