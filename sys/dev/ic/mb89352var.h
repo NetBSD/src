@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.4 2003/07/05 19:00:16 tsutsui Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.5 2003/08/01 00:38:39 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -144,7 +144,7 @@ struct spc_softc {
 	u_char	 sc_flags;
 #define SPC_DROP_MSGIN	0x01	/* Discard all msgs (parity err detected) */
 #define	SPC_ABORTING	0x02	/* Bailing out */
-#define SPC_DOINGDMA	0x04	/* The FIFO data path is active! */
+#define SPC_DOINGDMA	0x04	/* doing DMA */
 #define SPC_INACTIVE	0x80	/* The FIFO data path is active! */
 	u_char	sc_selid;	/* Reselection ID */
 
@@ -172,6 +172,10 @@ struct spc_softc {
 	int	sc_freq;		/* Clock frequency in MHz */
 	int	sc_minsync;		/* Minimum sync period / 4 */
 	int	sc_maxsync;		/* Maximum sync period / 4 */
+
+	/* DMA function set from MD code */
+	void (*sc_dma_start)(struct spc_softc *, void *, size_t, int);
+	void (*sc_dma_done)(struct spc_softc *);
 };
 
 #if SPC_DEBUG
