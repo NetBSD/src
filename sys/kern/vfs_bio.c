@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.100 2003/12/30 12:33:23 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.101 2003/12/30 20:40:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.100 2003/12/30 12:33:23 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.101 2003/12/30 20:40:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,27 +178,30 @@ struct pool bufpool;
 #endif
 
 /* Buffer memory pools */
-struct pool bmempools[NMEMPOOLS];
+static struct pool bmempools[NMEMPOOLS];
 
-struct vm_map *buf_map;
+static struct vm_map *buf_map;
 
 /*
  * Buffer memory pool allocator.
  */
-static void *bufpool_page_alloc(struct pool *pp, int flags)
+static void *
+bufpool_page_alloc(struct pool *pp, int flags)
 {
 	return (void *)uvm_km_kmemalloc1(buf_map,
 					uvm.kernel_object, MAXBSIZE, MAXBSIZE,
 					UVM_UNKNOWN_OFFSET,
-					(flags & PR_WAITOK)?0:UVM_KMF_NOWAIT);
+					(flags & PR_WAITOK) ? 0
+							    : UVM_KMF_NOWAIT);
 }
 
-static void bufpool_page_free(struct pool *pp, void *v)
+static void
+bufpool_page_free(struct pool *pp, void *v)
 {
 	uvm_km_free(kernel_map, (vaddr_t)v, MAXBSIZE);
 }
 
-struct pool_allocator bufmempool_allocator = {
+static struct pool_allocator bufmempool_allocator = {
 	bufpool_page_alloc, bufpool_page_free, MAXBSIZE,
 };
 
@@ -212,7 +215,8 @@ u_long bufmem;
  * MD code can call this to set a hard limit on the amount
  * of virtual memory used by the buffer cache.
  */
-int buf_setvalimit(vsize_t sz)
+int
+buf_setvalimit(vsize_t sz)
 {
 
 	/* We need to accommodate at least NMEMPOOLS of MAXBSIZE each */
@@ -253,8 +257,7 @@ static int checkfreelist(struct buf *bp, struct bqueues *dp)
 #endif
 
 void
-bremfree(bp)
-	struct buf *bp;
+bremfree(struct buf *bp)
 {
 	struct bqueues *dp = NULL;
 
@@ -286,7 +289,8 @@ bremfree(bp)
 	TAILQ_REMOVE(dp, bp, b_freelist);
 }
 
-u_long buf_memcalc()
+u_long
+buf_memcalc(void)
 {
 	u_long n;
 
@@ -324,7 +328,7 @@ u_long buf_memcalc()
  * Initialize buffers and hash links for buffers.
  */
 void
-bufinit()
+bufinit(void)
 {
 	struct bqueues *dp;
 	int smallmem;
@@ -415,7 +419,8 @@ buf_canrelease(void)
 /*
  * Buffer memory allocation helper functions
  */
-static __inline__ u_long buf_mempoolidx(u_long size)
+static __inline u_long
+buf_mempoolidx(u_long size)
 {
 	u_int n = 0;
 
@@ -430,13 +435,15 @@ static __inline__ u_long buf_mempoolidx(u_long size)
 	return n;
 }
 
-static __inline__ u_long buf_roundsize(u_long size)
+static __inline u_long
+buf_roundsize(u_long size)
 {
 	/* Round up to nearest power of 2 */
 	return (1 << (buf_mempoolidx(size) + MEMPOOL_INDEX_OFFSET));
 }
 
-static __inline__ caddr_t buf_malloc(size_t size)
+static __inline caddr_t
+buf_malloc(size_t size)
 {
 	u_int n = buf_mempoolidx(size);
 	caddr_t addr;
@@ -463,7 +470,8 @@ static __inline__ caddr_t buf_malloc(size_t size)
 	return addr;
 }
 
-static void buf_mrelease(caddr_t addr, size_t size)
+static void
+buf_mrelease(caddr_t addr, size_t size)
 {
 
 	pool_put(&bmempools[buf_mempoolidx(size)], addr);
@@ -471,12 +479,8 @@ static void buf_mrelease(caddr_t addr, size_t size)
 
 
 static __inline struct buf *
-bio_doread(vp, blkno, size, cred, async)
-	struct vnode *vp;
-	daddr_t blkno;
-	int size;
-	struct ucred *cred;
-	int async;
+bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
+    int async)
 {
 	struct buf *bp;
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
@@ -514,12 +518,8 @@ bio_doread(vp, blkno, size, cred, async)
  * This algorithm described in Bach (p.54).
  */
 int
-bread(vp, blkno, size, cred, bpp)
-	struct vnode *vp;
-	daddr_t blkno;
-	int size;
-	struct ucred *cred;
-	struct buf **bpp;
+bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
+    struct buf **bpp)
 {
 	struct buf *bp;
 
@@ -535,13 +535,8 @@ bread(vp, blkno, size, cred, bpp)
  * Trivial modification to the breada algorithm presented in Bach (p.55).
  */
 int
-breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
-	struct vnode *vp;
-	daddr_t blkno; int size;
-	daddr_t rablks[]; int rasizes[];
-	int nrablks;
-	struct ucred *cred;
-	struct buf **bpp;
+breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
+    int *rasizes, int nrablks, struct ucred *cred, struct buf **bpp)
 {
 	struct buf *bp;
 	int i;
@@ -570,12 +565,8 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
  * XXX for compatibility with old file systems.
  */
 int
-breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
-	struct vnode *vp;
-	daddr_t blkno; int size;
-	daddr_t rablkno; int rabsize;
-	struct ucred *cred;
-	struct buf **bpp;
+breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
+    int rabsize, struct ucred *cred, struct buf **bpp)
 {
 
 	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));	
@@ -585,8 +576,7 @@ breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
  * Block write.  Described in Bach (p.56)
  */
 int
-bwrite(bp)
-	struct buf *bp;
+bwrite(struct buf *bp)
 {
 	int rv, sync, wasdelayed, s;
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
@@ -668,8 +658,7 @@ bwrite(bp)
 }
 
 int
-vn_bwrite(v)
-	void *v;
+vn_bwrite(void *v)
 {
 	struct vop_bwrite_args *ap = v;
 
@@ -690,8 +679,7 @@ vn_bwrite(v)
  * Described in Leffler, et al. (pp. 208-213).
  */
 void
-bdwrite(bp)
-	struct buf *bp;
+bdwrite(struct buf *bp)
 {
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
@@ -734,8 +722,7 @@ bdwrite(bp)
  * Asynchronous block write; just an asynchronous bwrite().
  */
 void
-bawrite(bp)
-	struct buf *bp;
+bawrite(struct buf *bp)
 {
 	int s;
 
@@ -756,8 +743,7 @@ bawrite(bp)
  * Note: called only from biodone() through ffs softdep's bioops.io_complete()
  */
 void
-bdirty(bp)
-	struct buf *bp;
+bdirty(struct buf *bp)
 {
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
@@ -779,8 +765,7 @@ bdirty(bp)
  * Described in Bach (p. 46).
  */
 void
-brelse(bp)
-	struct buf *bp;
+brelse(struct buf *bp)
 {
 	struct bqueues *bufq;
 	int s;
@@ -911,9 +896,7 @@ already_queued:
  * wants us to.
  */
 struct buf *
-incore(vp, blkno)
-	struct vnode *vp;
-	daddr_t blkno;
+incore(struct vnode *vp, daddr_t blkno)
 {
 	struct buf *bp;
 
@@ -936,10 +919,7 @@ incore(vp, blkno)
  * cached blocks be of the correct size.
  */
 struct buf *
-getblk(vp, blkno, size, slpflag, slptimeo)
-	struct vnode *vp;
-	daddr_t blkno;
-	int size, slpflag, slptimeo;
+getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 {
 	struct buf *bp;
 	int s, err;
@@ -1005,8 +985,7 @@ start:
  * Get an empty, disassociated buffer of given size.
  */
 struct buf *
-geteblk(size)
-	int size;
+geteblk(int size)
 {
 	struct buf *bp; 
 	int s;
@@ -1034,10 +1013,7 @@ geteblk(size)
  * responsibility to fill out the buffer's additional contents.
  */
 void
-allocbuf(bp, size, preserve)
-	struct buf *bp;
-	int size;
-	int preserve;
+allocbuf(struct buf *bp, int size, int preserve)
 {
 	vsize_t oldsize, desired_size;
 	caddr_t addr;
@@ -1095,8 +1071,7 @@ allocbuf(bp, size, preserve)
  * Return buffer locked.
  */
 struct buf *
-getnewbuf(slpflag, slptimeo, from_bufq)
-	int slpflag, slptimeo, from_bufq;
+getnewbuf(int slpflag, int slptimeo, int from_bufq)
 {
 	struct buf *bp;
 
@@ -1191,14 +1166,15 @@ start:
  * Called at splbio and with queue lock held.
  * Returns the amount of buffer memory freed.
  */
-int buf_trim(void)
+int
+buf_trim(void)
 {
 	struct buf *bp;
 	long size = 0;
 	int wanted;
 
 	/* Instruct getnewbuf() to get buffers off the queues */
-	if ((bp = getnewbuf(PCATCH,1,1)) == NULL)
+	if ((bp = getnewbuf(PCATCH, 1, 1)) == NULL)
 		return 0;
 
 	wanted = ISSET(bp->b_flags, B_WANTED);
@@ -1225,7 +1201,8 @@ out:
 	return size;
 }
 
-int buf_drain(int n)
+int
+buf_drain(int n)
 {
 	int s, size = 0;
 
@@ -1247,8 +1224,7 @@ int buf_drain(int n)
  * When they do, extract and return the I/O's error value.
  */
 int
-biowait(bp)
-	struct buf *bp;
+biowait(struct buf *bp)
 {
 	int s, error;
 	
@@ -1288,8 +1264,7 @@ biowait(bp)
  * for the vn device, that puts malloc'd buffers on the free lists!)
  */
 void
-biodone(bp)
-	struct buf *bp;
+biodone(struct buf *bp)
 {
 	int s = splbio();
 
@@ -1330,7 +1305,7 @@ biodone(bp)
  * Return a count of buffers on the "locked" queue.
  */
 int
-count_lock_queue()
+count_lock_queue(void)
 {
 	struct buf *bp;
 	int n = 0;
@@ -1538,7 +1513,7 @@ SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
  * in vfs_syscalls.c using sysctl.
  */
 void
-vfs_bufstats()
+vfs_bufstats(void)
 {
 	int s, i, j, count;
 	struct buf *bp;
