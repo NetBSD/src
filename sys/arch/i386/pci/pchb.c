@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2 1997/04/13 22:48:27 jtk Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3 1997/05/13 22:47:30 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,8 +48,18 @@
 
 #include <dev/pci/pcidevs.h>
 
+#define PCISET_BRIDGETYPE_MASK	0x3
+#define PCISET_TYPE_COMPAT	0x1
+#define PCISET_TYPE_AUX		0x2
+
+#define PCISET_BUSCONFIG_REG	0x48
+#define PCISET_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
+#define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
+
 int	pchbmatch __P((struct device *, void *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
+
+int	pchb_print __P((void *, const char *));
 
 struct cfattach pchb_ca = {
 	sizeof(struct device), pchbmatch, pchbattach
@@ -75,9 +85,9 @@ pchbmatch(parent, match, aux)
 		case PCI_PRODUCT_INTEL_PCMC:
 		case PCI_PRODUCT_INTEL_82437:
 		case PCI_PRODUCT_INTEL_82440FX:
-		case PCI_PRODUCT_INTEL_82454GX:
 		case PCI_PRODUCT_INTEL_CDC:
-		case PCI_PRODUCT_INTEL_82450KX:
+		case PCI_PRODUCT_INTEL_PCI450_PB:
+		case PCI_PRODUCT_INTEL_PCI450_MC:
 			return (1);
 		}
 		break;
@@ -104,16 +114,67 @@ pchbattach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
+	struct pcibus_attach_args pba;
+	pcireg_t bcreg;
+	u_char bdnum, pbnum;
 
 	printf("\n");
 
 	/*
-	 * All we do is print out a description.  Eventually, we
-	 * might want to add code that does something that's
-	 * possibly chipset-specific.
+	 * Print out a description, and configure certain chipsets which
+	 * have auxiliary PCI buses.
 	 */
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_PCI450_PB:
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+					      PCISET_BUSCONFIG_REG);
+			bdnum = PCISET_BRIDGE_NUMBER(bcreg);
+			pbnum = PCISET_PCI_BUS_NUMBER(bcreg);
+			switch (bdnum & PCISET_BRIDGETYPE_MASK) {
+			default:
+				printf("%s: bdnum=%x (reserved)\n",
+				       self->dv_xname, bdnum);
+				break;
+			case PCISET_TYPE_COMPAT:
+				printf("%s: Compatibility PB (bus %d)\n",
+				       self->dv_xname, pbnum);
+				break;
+			case PCISET_TYPE_AUX:
+				printf("%s: Auxiliary PB (bus %d)\n",
+				       self->dv_xname, pbnum);
+				/*
+				 * This host bridge has a second PCI bus.
+				 * Configure it.
+				 */
+				pba.pba_busname = "pci";
+				pba.pba_iot = pa->pa_iot;
+				pba.pba_memt = pa->pa_memt;
+				pba.pba_bus = pbnum;
+				pba.pba_flags = pa->pa_flags;;
+				pba.pba_pc = pa->pa_pc;
+				config_found(self, &pba, pchb_print);
+				break;
+			}
+			break;
+		}
+	}
+}
+
+int
+pchb_print(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct pcibus_attach_args *pba = aux;
+
+	if (pnp)
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
+	return (UNCONF);
 }
