@@ -136,7 +136,7 @@ grfconfig()
 			 * If exact match done searching, else keep looking.
 			 */
 			if (((hw->hw_manufacturer << 16) | hw->hw_product) 
-			    == ad->amiga_addr) {
+			    == (u_int) ad->amiga_addr) {
 				nad = ad;
 				break;
 			}
@@ -180,7 +180,7 @@ grfinit(ad, ahw)
 	register struct grfdev *gd;
 
 	for (gd = grfdev; gd < &grfdev[ngrfdev]; gd++)
-	  if (((gd->gd_manuf << 16) | gd->gd_prod) == ad->amiga_addr)
+	  if (((gd->gd_manuf << 16) | gd->gd_prod) == (u_int)ad->amiga_addr)
 	    break;
 
 	if (gd < &grfdev[ngrfdev] && (*gd->gd_init)(gp, ad, ahw)) {
@@ -477,7 +477,7 @@ grfmmap(dev, addrp, p)
 		 * There should really be a pmap call to determine a reasonable
 		 * location.
 		 */
-		*addrp = round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+		*addrp = (caddr_t) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
 	}
 	bzero (&vn, sizeof (vn));
 	bzero (&si, sizeof (si));

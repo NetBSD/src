@@ -43,44 +43,25 @@
 /*
  * AMIGA 53C710 scsi adaptor driver
  */
+
 #include "zeusscsi.h"
 #include "magnumscsi.h"
 #define NSIOP (NZEUSSCSI + NMAGNUMSCSI)
 #if NSIOP > 0
 
-/* these are used to determine if we compile for sddriver or rzdriver */
-#include "a3000scsi.h"
-#include "a2091scsi.h"
-#include "gvp11scsi.h"
-
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.1 1994/01/26 21:06:20 mw Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.2 1994/02/01 11:52:35 chopps Exp $";
 #endif
 
+/* need to know if any tapes have been configured */
+#include "st.h"
+ 
 #include "sys/param.h"
 #include "sys/systm.h"
 #include "sys/buf.h"
 #include "device.h"
 
-#if (NA3000SCSI + NA2091SCSI + NAGVP11SCSI) == 0
-/* Kludge for sd.c */
-#define siopstart	scsistart
-#define siopgo		scsigo
-#define	siopdone	scsidone
-#define	siopreset	scsireset
-#define	siop_delay	scsi_delay
-#define	siop_test_unit_rdy	scsi_test_unit_rdy
-#define siop_start_stop_unit	scsi_start_stop_unit
-#define	siop_request_sense	scsi_request_sense
-#define	siop_immed_command	scsi_immed_command
-#define siop_tt_read	scsi_tt_read
-#define	siop_tt_write	scsi_tt_write
-#define	siop_tt_oddio	scsi_tt_oddio
-#define	siopreq		scsireq
-#define	siopustart	scsiustart
-#define	siopfree	scsifree
-#endif
-
+#include "scsidefs.h"
 #include "siopvar.h"
 #include "siopreg.h"
 
@@ -98,12 +79,39 @@ extern u_int	kvtop();
 #define	SCSI_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
 
+void siopstart (int unit);
+int siopgo (int ctlr, int slave, int unit, struct buf *bp, struct scsi_fmt_cdb *cdb, int pad);
+int siopintr2 (void);
+void siopdone (int unit);
+int siopustart (int unit);
+int siopreq (register struct devqueue *dq);
+void siopfree (register struct devqueue *dq);
+void siopreset (int unit);
+void siop_delay (int delay);
+int siop_test_unit_rdy (int ctlr, int slave, int unit);
+int siop_start_stop_unit (int ctlr, int slave, int unit, int start);
+int siop_request_sense (int ctlr, int slave, int unit, u_char *buf, unsigned int len);
+int siop_immed_command (int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd);
+int siop_tt_read (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
+int siop_tt_write (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
+#if NST > 0
+int siop_tt_oddio (int ctlr, int slave, int unit, u_char *buf, u_int len, int b_flags, int freedma);
+#endif
+
 #if NZEUSSCSI > 0
 int zeusscsiinit();
 
 struct driver zeusscsidriver = {
 	zeusscsiinit, "Zeusscsi", (int (*)())siopstart, (int (*)())siopgo,
 	(int (*)())siopintr2, (int (*)())siopdone,
+	siopustart, siopreq, siopfree, siopreset,
+	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
+	siop_request_sense, siop_immed_command, siop_tt_read, siop_tt_write,
+#if NST > 0
+	siop_tt_oddio
+#else
+	0
+#endif
 };
 #endif
 
@@ -113,6 +121,14 @@ int magnumscsiinit();
 struct driver magnumscsidriver = {
 	magnumscsiinit, "Magnumscsi", (int (*)())siopstart, (int (*)())siopgo,
 	(int (*)())siopintr2, (int (*)())siopdone,
+	siopustart, siopreq, siopfree, siopreset,
+	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
+	siop_request_sense, siop_immed_command, siop_tt_read, siop_tt_write,
+#if NST > 0
+	siop_tt_oddio
+#else
+	0
+#endif
 };
 #endif
 
@@ -1017,8 +1033,9 @@ siop_tt_write(ctlr, slave, unit, buf, len, blk, bshift)
 	int old_wait = siop_data_wait;
 
 #ifdef DEBUG
-	if (siop_debug | 1)	/* XXX */
-		printf ("siop%d: tt_write\n", slave);
+	if (siop_debug)
+		printf ("siop%d: tt_write blk %d from %08x\n", slave,
+		   blk, kvtop(buf));
 	if (blk < 604)
 		panic("siop_tt_write: writing block < 604");
 #endif
@@ -1288,9 +1305,8 @@ siopfree(dq)
  * to read odd-size records.
  */
 
-/* XXX - probably not needed for the 53C710 */
+/* XXX - probably not needed for the 53C710 (and not implemented yet!) */
 
-#include "st.h"
 #if NST > 0
 int
 siop_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)

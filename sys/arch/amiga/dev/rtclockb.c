@@ -43,7 +43,7 @@ extern int (*settod)();
 static struct rtclock2000 *rt = 0;
 
 struct driver rtclockbdriver = {
-  rtclockbinit, "rtclock"
+  (int (*)(void *)) rtclockbinit, "rtclock",
 };
 
 
