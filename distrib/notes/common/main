@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.127 2001/06/10 11:41:05 magick Exp $
+.\"	$NetBSD: main,v 1.128 2001/06/18 20:36:15 nra Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1265,6 +1265,7 @@ them, and would like to mentioned, tell us!)
 .It-span Em "Developers and other contributors:"
 .It Ta Ta
 .It Ta Steve Allen Ta Mt wormey@netbsd.org
+.It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Julian Assange Ta Mt proff@netbsd.org
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
 .It Ta Christoph Badura Ta Mt bad@netbsd.org
