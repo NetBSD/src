@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.20.2.2 1998/11/24 06:20:57 cgd Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.20.2.3 1999/02/04 06:55:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20.2.2 1998/11/24 06:20:57 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20.2.3 1999/02/04 06:55:58 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.20.2.2 1998/11/24 06:20:57 cgd Exp $"
 #include <sys/file.h>
 #include <sys/conf.h>
 
-#include <pmax/stand/dec_prom.h>
+#include <pmax/stand/libsa/dec_prom.h>
 
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
