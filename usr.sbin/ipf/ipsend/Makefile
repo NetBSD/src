@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.2.3 2004/03/29 10:48:39 tron Exp $
+#	$NetBSD: Makefile,v 1.19.2.4 2004/03/31 07:59:48 tron Exp $
 
 NOGCCERROR=	# defined
 
@@ -13,6 +13,7 @@ LDADD+=		-ll
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/ipsend
 CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/iplang
+CPPFLAGS+=	-I.
 
 CLEANFILES+=	iplang_y.c iplang_y.h
 
