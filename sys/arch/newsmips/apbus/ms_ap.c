@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.3 2002/09/27 20:34:19 thorpej Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.4 2002/10/02 04:27:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -60,9 +60,8 @@ int ms_ap_enable(void *);
 int ms_ap_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void ms_ap_disable(void *);
 
-const struct cfattach ms_ap_ca = {
-	sizeof(struct ms_ap_softc), ms_ap_match, ms_ap_attach
-};
+CFATTACH_DECL(ms_ap, sizeof(struct ms_ap_softc),
+    ms_ap_match, ms_ap_attach, NULL, NULL);
 
 struct wsmouse_accessops ms_ap_accessops = {
 	ms_ap_enable,
