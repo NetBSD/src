@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.56 1998/03/18 19:04:42 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.57 1998/03/18 19:12:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.56 1998/03/18 19:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.57 1998/03/18 19:12:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2955,12 +2955,15 @@ pmap_ptpage_addref(pte)
 
 	pvh->pvh_ptref++;
 
+#ifdef DIAGNOSTIC
 	/*
 	 * Reference count may be as many as NPTEPG + 1, because
 	 * pmap_enter() avoids an incorrect 0 reference count
 	 * when calling pmap_remove_mapping().
 	 */
-	assert(pvh->pvh_ptref <= (NPTEPG + 1));
+	if (pvh->pvh_ptref > (NPTEPG + 1))
+		panic("pmap_ptpage_addref: too many references");
+#endif
 
 	return (pvh->pvh_ptref);
 }
@@ -2988,10 +2991,13 @@ pmap_ptpage_delref(pte)
 
 	pvh->pvh_ptref--;
 
+#ifdef DIAGNOSTIC
 	/*
 	 * Make sure we never have a negative reference count.
 	 */
-	assert(pvh->pvh_ptref >= 0);
+	if (pvh->pvh_ptref < 0)
+		panic("pmap_ptpage_delref: negative reference count");
+#endif
 
 	return (pvh->pvh_ptref);
 }
