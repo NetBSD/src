@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.139 2002/04/25 06:55:53 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.140 2002/06/01 12:27:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@ _C_LABEL(kernel_text):
 #if defined(MIPS3_PLUS) && !defined(MIPS1)
 	/* keep firmware exception handler until we hook. */
 	mfc0	v0, MIPS_COP_0_STATUS
-	and	v0, MIPS3_SR_DIAG_BEV
+	and	v0, MIPS_SR_BEV
 	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 #else

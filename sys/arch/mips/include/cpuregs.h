@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.50 2002/03/13 13:18:58 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.51 2002/06/01 12:27:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,7 +126,6 @@
  *
  *	R3000 status register fields:
  *	MIPS_SR_CO_USABILITY	Control the usability of the four coprocessors.
- *	MIPS_SR_BOOT_EXC_VEC	Use alternate exception vectors.
  *	MIPS_SR_TLB_SHUTDOWN	TLB disabled.
  *
  *	MIPS_SR_INT_IE		Master (current) interrupt enable bit.
@@ -143,7 +142,7 @@
 
 	/* r4k and r3k differences, see below */
 
-#define	MIPS_SR_BOOT_EXC_VEC	0x00400000
+#define	MIPS_SR_BEV		0x00400000	/* Use boot exception vector */
 #define	MIPS_SR_TLB_SHUTDOWN	0x00200000
 
 	/* r4k and r3k differences, see below */
@@ -206,7 +205,6 @@
 
 #define	MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
 #define	MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
-#define	MIPS3_SR_DIAG_BEV	0x00400000
 #define	MIPS3_SR_SOFT_RESET	0x00100000
 #define	MIPS3_SR_EIE		0x00100000		/* TX79/R5900 */
 #define	MIPS3_SR_DIAG_CH	0x00040000
