@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.7 2003/03/25 22:54:59 provos Exp $	*/
+/*	$NetBSD: register.c,v 1.8 2003/03/25 22:58:24 provos Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -126,7 +126,8 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("netbsd", "mkdir", trans_cb, NULL));
-	tl = intercept_register_transfn("netbsd", "mkdir", 0);
+	tl = intercept_register_translation("netbsd", "mkdir", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("netbsd", "mkdir", "netbsd", "fswrite");
 	systrace_alias_add_trans(alias, tl);
 	X(intercept_register_sccb("netbsd", "rmdir", trans_cb, NULL));
@@ -233,7 +234,8 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("native", "mkdir", trans_cb, NULL));
-	tl = intercept_register_transfn("native", "mkdir", 0);
+	tl = intercept_register_translation("native", "mkdir", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("native", "mkdir", "native", "fswrite");
 	systrace_alias_add_trans(alias, tl);
 	X(intercept_register_sccb("native", "rmdir", trans_cb, NULL));
