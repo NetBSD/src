@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.10 1997/06/15 11:19:02 mycroft Exp $	*/
+/*	$NetBSD: comvar.h,v 1.11 1997/07/05 20:52:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,7 @@ extern tcflag_t comconscflag;
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_HAYESP	0x04
 #define	COM_HW_CONSOLE	0x40
+#define	COM_HW_KGDB	0x80
 
 /* Buffer size for character buffer */
 #define RXBUFSIZE 2048			/* More than enough.. */
