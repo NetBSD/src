@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1996/09/27 22:45:14 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.21 1996/09/27 22:45:14 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -311,6 +311,8 @@ checkfilesys(filesys, mntpt, auxdata, child)
 		return (0);
 	if (!preen)
 		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
+	if (rerun)
+		printf("\n***** PLEASE RERUN FSCK *****\n");
 	if (hotroot()) {
 		struct statfs stfs_buf;
 		/*
