@@ -1,5 +1,4 @@
-# $NetBSD: Makefile,v 1.2 1996/09/12 22:33:40 cgd Exp $
-#
+#	$NetBSD: Makefile,v 1.3 1996/09/13 00:29:51 cgd Exp $
 
 LIB=	z
 SRCS=	adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \

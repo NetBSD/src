@@ -1,3 +1,5 @@
+/*	$NetBSD: minigzip.c,v 1.3 1996/09/13 00:30:41 cgd Exp $	*/
+
 /* minigzip.c -- simulate gzip using the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -12,8 +14,6 @@
  * real thing. On MSDOS, use only on file names without extension
  * or in pipe mode.
  */
-
-/* $Id: minigzip.c,v 1.2 1996/09/12 19:26:44 gwr Exp $ */
 
 #include <stdio.h>
 #include <string.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: infutil.h,v 1.2 1996/09/13 00:30:40 cgd Exp $	*/
+
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-1996 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 

@@ -1,3 +1,5 @@
+$NetBSD: algorithm.doc,v 1.2 1996/09/13 00:29:55 cgd Exp $
+
 1. Compression algorithm (deflate)
 
 The deflation algorithm used by zlib (also zip and gzip) is a variation of
