@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 1999/10/25 14:04:38 kleink Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2000/03/06 01:29:04 eeh Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -60,6 +60,8 @@
 
 #include <sparc64/stand/ofwboot/ofdev.h>
 #include <sparc64/stand/ofwboot/openfirm.h>
+
+#define	MEG	(1024*1024)
 
 /*
  * Boot device is derived from ROM provided information, or if there is none,
@@ -403,6 +405,7 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 	void *addr;
 	size_t size;
 	int i, first = 1;
+	long align;
 	int n;
 
 	/*
@@ -429,7 +432,15 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 		printf("%s%lu@0x%lx", first ? "" : "+", phdr.p_filesz,
 		    (u_long)phdr.p_vaddr);
 		(void)lseek(fd, phdr.p_offset, SEEK_SET);
-/* NB need to do 4MB allocs here */
+
+		/* 
+		 * If the segment's VA is aligned on a 4MB boundary, align its
+		 * request 4MB aligned physical memory.  Otherwise use default
+		 * alignment.
+		 */
+		align = phdr.p_align;
+		if ((phdr.p_vaddr & (4*MEG-1)) == 0)
+			align = 4*MEG;
 		if (OF_claim((void *)phdr.p_vaddr, phdr.p_memsz, phdr.p_align) ==
 		    (void *)-1)
 			panic("cannot claim memory");

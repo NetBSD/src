@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/01/23 17:04:11 mycroft Exp $
+#	$NetBSD: Makefile,v 1.14 2000/03/06 01:29:04 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -14,9 +14,9 @@ SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c
 .PATH:		${S}/arch/sparc64/sparc64
 
 .if CROSS
-CEXTRAFLAGS=	-nostdinc
+CEXTRAFLAGS?=	-nostdinc
 .else
-CEXTRAFLAGS=	-D_LP64
+CEXTRAFLAGS?=	-D_LP64
 .endif
 CFLAGS+=	${COPTS} -DNETIF_DEBUG -D__ELF__ ${CEXTRAFLAGS} -D_STANDALONE
 
@@ -91,7 +91,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 .if CROSS
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE -D__ELF__
 .else
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ -D_LP64 -Wa,-Av9 #-Wa,-Av8plusa
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ -Wa,-Av9a ${CEXTRAFLAGS} #-Wa,-Av8plusa
 .endif
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 srt0.o: srt0.s

@@ -1,6 +1,7 @@
-/*	$NetBSD: elfXX_exec.c,v 1.4 1999/10/25 14:04:38 kleink Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.5 2000/03/06 01:29:04 eeh Exp $	*/
 
 /*
+ * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -44,6 +45,7 @@
 
 #define CONCAT(x,y)	__CONCAT(x,y)
 #define CAT3(s,m,e)	CONCAT(s,CONCAT(m,e))
+#define	MEG	(1024*1024)
 
 #if 0
 int	CAT3(elf,ELFSIZE,_exec) __P((int, CAT3(Elf,ELFSIZE,_Ehdr) *, u_int64_t *, void **, void **));
@@ -61,6 +63,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	CAT3(Elf,ELFSIZE,_Off) off;
 	void *addr;
 	size_t size;
+	u_int align;
 	int i, first = 1;
 	int n;
 
@@ -72,18 +75,14 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	printf("elf%d_exec: ", ELFSIZE);
 #endif
 	printf("Booting %s\n", opened_name);
-printf("reading %ld program headers\n", (long)elf->e_phnum);
 
 	for (i = 0; i < elf->e_phnum; i++) {
 		CAT3(Elf,ELFSIZE,_Phdr) phdr;
-printf("reading phdr %d at %lx\n", i, (long)(elf->e_phoff + sizeof(phdr) * i));
 		size = lseek(fd, (size_t)(elf->e_phoff + sizeof(phdr) * i), SEEK_SET);
-printf("lseek sez: %lx %s\n", (long)size, (size<0)?strerror(errno):"");
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
-printf("reading phdr worked, type %lx flags %lx\n", (long)phdr.p_type, (long)phdr.p_flags);
 		if (phdr.p_type != PT_LOAD ||
 		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
@@ -92,8 +91,15 @@ printf("reading phdr worked, type %lx flags %lx\n", (long)phdr.p_type, (long)phd
 		printf("%s%lu@0x%lx", first ? "" : "+", (u_long)phdr.p_filesz,
 		    (u_long)phdr.p_vaddr);
 		(void)lseek(fd, (size_t)phdr.p_offset, SEEK_SET);
-/* NB need to do 4MB allocs here */
-		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, phdr.p_align) ==
+		/* 
+		 * If the segment's VA is aligned on a 4MB boundary, align its
+		 * request 4MB aligned physical memory.  Otherwise use default
+		 * alignment.
+		 */
+		align = phdr.p_align;
+		if ((phdr.p_vaddr & (4*MEG-1)) == 0)
+			align = 4*MEG;
+		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, align) ==
 		    (void *)-1)
 			panic("cannot claim memory");
 		if (read(fd, (void *)(long)phdr.p_vaddr, phdr.p_filesz) !=
