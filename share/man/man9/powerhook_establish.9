@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerhook_establish.9,v 1.1 1999/12/06 14:50:02 augustss Exp $
+.\"	$NetBSD: powerhook_establish.9,v 1.1.6.1 2001/05/06 15:04:12 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,10 +80,16 @@ The different reasons for calling the power hooks are: suspend, standby, and
 resume.  The reason is reflected in the
 .Fa why
 argument and the values
+.Dv PWR_SOFTSUSPEND ,
 .Dv PWR_SUSPEND ,
+.Dv PWR_SOFTSTANDBY ,
 .Dv PWR_STANDBY ,
+.Dv PWR_SOFTRESUME ,
 and
 .Dv PWR_RESUME .
+It calls with PWR_SOFTxxx in the normal priority level while the other
+callings are protected with
+.Xr splhigh 9 .
 At suspend the system is going to lose (almost) all power, standby retains
 some power (e.g., minimal power to USB devices), and at resume power is
 back to normal.
