@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_eon.c	7.16 (Berkeley) 6/27/91
- *	$Id: if_eon.c,v 1.3 1993/12/18 00:43:07 mycroft Exp $
+ *	$Id: if_eon.c,v 1.4 1994/01/10 22:01:43 mycroft Exp $
  */
 
 /***********************************************************
@@ -117,7 +117,6 @@ int						eonioctl();
 int						eonattach();
 int						eoninit();
 int						eonrtrequest();
-extern 	int				ip_output();
 struct ifnet			eonif[1];
 
 eonprotoinit() {
@@ -432,7 +431,7 @@ send:
 		dump_buf(ei, sizeof(struct eon_iphdr));
 	ENDDEBUG
 
-	error = ip_output(m, (struct mbuf *)0, ro, 0);
+	error = ip_output(m, NULL, ro, 0, NULL);	/* XXX */
 	m = 0;
 	if (error) {
 		ifp->if_oerrors++;
