@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.47 2001/08/24 10:24:48 wiz Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.48 2001/09/15 14:55:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.47 2001/08/24 10:24:48 wiz Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.48 2001/09/15 14:55:38 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,19 +91,17 @@ char *suffix=BACKUP_SUFFIX;
 #define	DIRECTORY	0x01		/* Tell install it's a directory. */
 #define	SETFLAGS	0x02		/* Tell install to set flags. */
 
-void	copy __P((int, char *, int, char *, off_t));
-void	makelink __P((char *, char *));
-void	install __P((char *, char *, u_long, u_int));
-void	install_dir __P((char *));
-void	strip __P((char *));
-void	backup __P((const char *));
-void	usage __P((void));
-int	main __P((int, char *[]));
+void	copy(int, char *, int, char *, off_t);
+void	makelink(char *, char *);
+void	install(char *, char *, u_long, u_int);
+void	install_dir(char *);
+void	strip(char *);
+void	backup(const char *);
+void	usage(void);
+int	main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat from_sb, to_sb;
 	void *set;
@@ -287,9 +285,7 @@ main(argc, argv)
  *	make a link from source to destination
  */
 void
-makelink(from_name, to_name)
-	char *from_name;
-	char *to_name;
+makelink(char *from_name, char *to_name)
 {
 	char src[MAXPATHLEN], dst[MAXPATHLEN], lnk[MAXPATHLEN];
 
@@ -354,10 +350,7 @@ makelink(from_name, to_name)
  *	build a path name and install the file
  */
 void
-install(from_name, to_name, fset, flags)
-	char *from_name, *to_name;
-	u_long fset;
-	u_int flags;
+install(char *from_name, char *to_name, u_long fset, u_int flags)
 {
 	struct stat from_sb, to_sb;
 	int devnull, from_fd, to_fd, serrno;
@@ -510,10 +503,7 @@ install(from_name, to_name, fset, flags)
  *	copy from one file to another
  */
 void
-copy(from_fd, from_name, to_fd, to_name, size)
-	int from_fd, to_fd;
-	char *from_name, *to_name;
-	off_t size;
+copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 {
 	ssize_t nr, nw;
 	int serrno;
@@ -574,8 +564,7 @@ mmap_failed:
  *	use strip(1) to strip the target file
  */
 void
-strip(to_name)
-	char *to_name;
+strip(char *to_name)
 {
 	int serrno, status;
 	char *stripprog;
@@ -617,8 +606,7 @@ strip(to_name)
  * used for a numbered backup.
  */
 void
-backup(to_name)
-	const char *to_name;
+backup(const char *to_name)
 {
 	char backup[FILENAME_MAX];
 	
@@ -647,8 +635,7 @@ backup(to_name)
  *	build directory hierarchy
  */
 void
-install_dir(path)
-        char *path;
+install_dir(char *path)
 {
         char *p;
         struct stat sb;
@@ -679,7 +666,7 @@ install_dir(path)
  *	print a usage message and die
  */
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "\
 usage: install [-Ubcprs] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
