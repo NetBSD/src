@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.46 2000/05/22 14:49:11 jhawk Exp $
+.\"	$NetBSD: ddb.4,v 1.47 2000/05/23 23:48:43 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -622,6 +622,12 @@ section symbols display
 .Sy & ,
 and file symbols display
 .Sy / .
+.Pp
+To sift for a string beginning with a number, escape the first
+character with a backslash as:
+.Bd -literal -offset indent
+sifting \\386
+.Ed
 .It Xo
 .Ic step Ns Op Cm /p
 .Op Cm , Ns Ar count
