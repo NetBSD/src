@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.27 1999/11/03 22:25:08 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.28 1999/11/03 23:07:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -3310,8 +3310,8 @@ tlp_print_media(sc)
 #define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
 	printf("%s: ", sc->sc_dev.dv_xname);
-	for (ife = LIST_FIRST(&sc->sc_mii.mii_media.ifm_list);
-	     ife != NULL; ife = LIST_NEXT(ife, ifm_list)) {
+	for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
+	     ife != NULL; ife = TAILQ_NEXT(ife, ifm_list)) {
 		tm = ife->ifm_aux;
 		if (tm == NULL) {
 #ifdef DIAGNOSTIC
@@ -3492,8 +3492,8 @@ tlp_sia_fixup(sc)
 		return;
 	}
 
-	for (ife = LIST_FIRST(&sc->sc_mii.mii_media.ifm_list);
-	     ife != NULL; ife = LIST_NEXT(ife, ifm_list)) {
+	for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
+	     ife != NULL; ife = TAILQ_NEXT(ife, ifm_list)) {
 		tm = ife->ifm_aux;
 		if (tm == NULL)
 			continue;
@@ -4132,9 +4132,9 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * We do this by looking for media with our
 			 * PHY's `instance'.
 			 */
-			for (ife = LIST_FIRST(&sc->sc_mii.mii_media.ifm_list);
+			for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
 			     ife != NULL;
-			     ife = LIST_NEXT(ife, ifm_list)) {
+			     ife = TAILQ_NEXT(ife, ifm_list)) {
 				if (IFM_INST(ife->ifm_media) != phy->mii_inst)
 					continue;
 				ife->ifm_aux = tm;
@@ -4249,7 +4249,7 @@ tlp_2114x_isv_tmsw_init(sc)
 	/*
 	 * Deal with the case where no media is configured.
 	 */
-	if (LIST_FIRST(&sc->sc_mii.mii_media.ifm_list) == NULL) {
+	if (TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list) == NULL) {
 		printf("%s: no media found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
