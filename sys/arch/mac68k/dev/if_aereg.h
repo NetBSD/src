@@ -1,7 +1,29 @@
-/*	$NetBSD: if_aereg.h,v 1.3 1994/10/26 08:46:12 cgd Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.4 1994/12/03 23:30:47 briggs Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions 
+ *
+ * $Id: if_aereg.h,v 1.4 1994/12/03 23:30:47 briggs Exp $
+ *
+ * Modification history
+ *
+ * $Log: if_aereg.h,v $
+ * Revision 1.4  1994/12/03 23:30:47  briggs
+ * At least somewhat functional ethernet driver from Brad Parker
+ * (brad@fcr.com).  Requires changes to via.c which are coming with
+ * other changes in a moment...
+ *
+ * Revision 1.2  1994/03/01  15:24:26  briggs
+ * More Dayna separation.
+ *
+ * Revision 1.1  1993/11/29  00:32:46  briggs
+ * Update to current work in progress.  This includes an update to
+ * use config.new.
+ * Numerous updates to console so it works better on the SE/30 screen.
+ * Some nice changes from Brad Parker for handling NuBUS and an ethernet
+ * driver that I haven't worked on, yet.
+ *
+ * 
  */
 
 /*
@@ -546,6 +568,7 @@ struct ae_ring	{
 #define AE_VENDOR_APPLE		0x00		/* Apple Ethernet card */
 #define AE_VENDOR_INTERLAN	0x01		/* Interlan A310 card (GatorCard) */
 #define AE_VENDOR_DAYNA		0x02		/* DaynaPORT E/30s (and others?) */
+#define AE_VENDOR_ASANTE	0x03		/* Asante MacCon II/E */
 
 /*
  * Compile-time config flags
