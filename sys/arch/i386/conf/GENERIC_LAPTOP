@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.34 2001/11/20 12:56:30 lukem Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.35 2001/12/01 00:09:08 bouyer Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.34 $"
+#ident 		"GENERIC-$Revision: 1.35 $"
 
 maxusers	32		# estimated number of users
 
@@ -448,6 +448,7 @@ atapibus* at pciide? channel ?
 # flags have the same meaning as for IDE drives.
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 
