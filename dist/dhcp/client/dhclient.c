@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.11 2004/04/02 22:53:15 mellon Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.12 2004/04/04 02:35:21 mrg Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2131,11 +2131,14 @@ void rewrite_client_leases ()
 	struct interface_info *ip;
 	struct client_state *client;
 	struct client_lease *lp;
+	int fd;
 
 	if (leaseFile)
 		fclose (leaseFile);
-	leaseFile = fopen (path_dhclient_db, "w");
-	if (!leaseFile) {
+	fd = open (path_dhclient_db, O_WRONLY|O_CREAT, 0600);
+	if (fd != -1)
+		leaseFile = fdopen (fd, "w");
+	if (fd == -1 || !leaseFile) {
 		log_error ("can't create %s: %m", path_dhclient_db);
 		return;
 	}
@@ -2225,8 +2228,12 @@ int write_client_lease (client, lease, rewrite, makesure)
 		return 1;
 
 	if (!leaseFile) {	/* XXX */
-		leaseFile = fopen (path_dhclient_db, "w");
-		if (!leaseFile) {
+		int fd;
+
+		fd = open (path_dhclient_db, O_WRONLY|O_CREAT, 0600);
+		if (fd != -1)
+			leaseFile = fdopen (fd, "w");
+		if (fd == -1 || !leaseFile) {
 			log_error ("can't create %s: %m", path_dhclient_db);
 			return 0;
 		}
