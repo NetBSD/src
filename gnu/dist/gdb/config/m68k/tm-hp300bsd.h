@@ -52,8 +52,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* For 4.4, it is actually right 20 bytes *before* STACK_END_ADDR, so
    include that in the area we test for.  */
 
-#define SIGTRAMP_START (STACK_END_ADDR - 20)
-#define SIGTRAMP_END (STACK_END_ADDR + TARGET_UPAGES * TARGET_NBPG)
+#define SIGTRAMP_START(pc) (STACK_END_ADDR - 20)
+#define SIGTRAMP_END(pc) (STACK_END_ADDR + TARGET_UPAGES * TARGET_NBPG)
 
 /* Address of end of stack space.  */
 

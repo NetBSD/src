@@ -27,10 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "inferior.h"
 #include "target.h"
 #include <sys/ptrace.h>
+#include "gdbcore.h"
 
 extern CORE_ADDR text_end;
 
-static void fetch_register ();
+static void fetch_register PARAMS ((int));
 
 void
 fetch_inferior_registers (regno)
@@ -110,7 +111,6 @@ fetch_register (regno)
 {
   register unsigned int regaddr;
   char buf[MAX_REGISTER_RAW_SIZE];
-  char mess[128];				/* For messages */
   register int i;
 
   /* Offset of registers within the u area.  */

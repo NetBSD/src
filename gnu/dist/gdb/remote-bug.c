@@ -270,7 +270,7 @@ bug_resume (pid, step, sig)
 static char *wait_strings[] = {
   "At Breakpoint",
   "Exception: Data Access Fault (Local Bus Timeout)",
-  "\r8???-Bug>",
+  "\r8??\?-Bug>",	/* The '\?' avoids creating a trigraph */
   "\r197-Bug>",
   NULL,
 };

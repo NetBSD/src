@@ -51,6 +51,8 @@ extern int errno;
 
 #include "target.h"
 
+static void fetch_core_registers PARAMS ((char *, unsigned, int, CORE_ADDR));
+
 
 /* this table must line up with REGISTER_NAMES in tm-i386v.h */
 /* symbols like 'EAX' come from <sys/reg.h> */
@@ -317,7 +319,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
      unsigned core_reg_size;
      int which;
-     unsigned int reg_addr;	/* ignored */
+     CORE_ADDR reg_addr;	/* ignored */
 {
 
   if (which == 0)

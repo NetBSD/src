@@ -23,19 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define GDBINIT_FILENAME "gdb.ini"
 
-
 #define SLASH_P(X) ((X)=='\\' || (X) == '/')
 #define ROOTED_P(X) ((SLASH_P((X)[0]))|| ((X)[1] ==':'))
 #define SLASH_CHAR '/'
 #define SLASH_STRING "/"
 
-
 /* If we longjmp out of the signal handler we never get another one.
    So disable immediate_quit inside request_quit */
 #define REQUEST_QUIT 
 
-
-
-
-
-
+/* Define this lseek(n) != nth byte of file */
+#define LSEEK_NOT_LINEAR

@@ -138,7 +138,7 @@ static struct monitor_ops cpu32bug_cmds =
   cpu32bug_supply_register,	/* supply_register */
   NULL,				/* load_routine (defaults to SRECs) */
   "lo\r",			/* download command */
-  "lo\r\n",			/* load response */
+  "\n",				/* load response */
   "CPU32Bug>",			/* monitor command prompt */
   "\r",				/* end-of-line terminator */
   NULL,				/* optional command terminator */

@@ -70,6 +70,9 @@ static const struct demangler
   {NULL, unknown_demangling, NULL}
 };
 
+static void
+set_demangling_command PARAMS ((char *, int, struct cmd_list_element *));
+
 /* set current demangling style.  called by the "set demangling" command
    after it has updated the current_demangling_style_string to match
    what the user has entered.
@@ -159,7 +162,7 @@ set_demangling_style (style)
       free (current_demangling_style_string);
     }
   current_demangling_style_string = savestring (style, strlen (style));
-  set_demangling_command ((char *) NULL, 0);
+  set_demangling_command ((char *) NULL, 0, (struct cmd_list_element *) NULL);
 }
 
 /* In order to allow a single demangler executable to demangle strings

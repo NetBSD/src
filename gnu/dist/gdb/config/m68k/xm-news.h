@@ -19,9 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define HOST_BYTE_ORDER BIG_ENDIAN
 
-/* A News 1800 running NEWS-OS Release 4.0.1C is said to need this.  */
-/* Avoid "INT_MIN redefined" preprocessor warnings by defining them here.  */
-#include <sys/param.h>
+#include <sys/param.h>	/* For INT_MIN */
 
 #define HAVE_WAIT_STRUCT
 

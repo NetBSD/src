@@ -589,7 +589,10 @@ extern void m88k_push_dummy_frame();
   pc = text_end;							\
 }
 
-#define STACK_ALIGN(addr) (((addr)+7) & -8)
+/* Stack must be aligned on 64-bit boundaries when synthesizing
+   function calls. */
+
+#define STACK_ALIGN(addr) (((addr) + 7) & -8)
 
 #define STORE_STRUCT_RETURN(addr, sp) \
     write_register (SRA_REGNUM, (addr))

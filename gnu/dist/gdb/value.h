@@ -1,5 +1,6 @@
 /* Definitions for values of C expressions, for GDB.
-   Copyright 1986, 1987, 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1986, 1987, 1989, 1992, 1993, 1994, 1995, 1996
+   Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -100,6 +101,8 @@ struct value
     /* If nonzero, this is the value of a variable which does not
        actually exist in the program.  */
     char optimized_out;
+    /* The BFD section associated with this value.  */
+    asection *bfd_section;
     /* Actual contents of the value.  For use of this value; setting
        it uses the stuff above.  Not valid if lazy is nonzero.
        Target byte-order.  We force it to be aligned properly for any
@@ -110,7 +113,6 @@ struct value
       LONGEST force_longlong_align;
       char *literal_data;
     } aligner;
-
   };
 
 typedef struct value *value_ptr;
@@ -140,14 +142,18 @@ extern int value_fetch_lazy PARAMS ((value_ptr val));
 #define VALUE_NEXT(val) (val)->next
 #define VALUE_REGNO(val) (val)->regno
 #define VALUE_OPTIMIZED_OUT(val) ((val)->optimized_out)
+#define VALUE_BFD_SECTION(val) ((val)->bfd_section)
 
 /* Convert a REF to the object referenced. */
 
 #define COERCE_REF(arg)    \
-{ if (TYPE_CODE (VALUE_TYPE (arg)) == TYPE_CODE_REF)			\
-    arg = value_at_lazy (TYPE_TARGET_TYPE (VALUE_TYPE (arg)),		\
-			 unpack_long (VALUE_TYPE (arg),			\
-				      VALUE_CONTENTS (arg)));}
+do { struct type *value_type_arg_tmp = check_typedef (VALUE_TYPE (arg));\
+     if (TYPE_CODE (value_type_arg_tmp) == TYPE_CODE_REF)		\
+	 arg = value_at_lazy (TYPE_TARGET_TYPE (value_type_arg_tmp),	\
+			      unpack_long (VALUE_TYPE (arg),		\
+					   VALUE_CONTENTS (arg)),       \
+			      VALUE_BFD_SECTION (arg));			\
+    } while (0)
 
 /* If ARG is an array, convert it to a pointer.
    If ARG is an enum, convert it to an integer.
@@ -174,7 +180,7 @@ do { COERCE_REF(arg);							\
 /* If ARG is an enum, convert it to an integer.  */
 
 #define COERCE_ENUM(arg)   { \
-  if (TYPE_CODE (VALUE_TYPE (arg)) == TYPE_CODE_ENUM)			\
+  if (TYPE_CODE (check_typedef (VALUE_TYPE (arg))) == TYPE_CODE_ENUM)	\
     arg = value_cast (builtin_type_unsigned_int, arg);			\
 }
 
@@ -227,9 +233,9 @@ extern value_ptr value_from_longest PARAMS ((struct type *type, LONGEST num));
 
 extern value_ptr value_from_double PARAMS ((struct type *type, DOUBLEST num));
 
-extern value_ptr value_at PARAMS ((struct type *type, CORE_ADDR addr));
+extern value_ptr value_at PARAMS ((struct type *type, CORE_ADDR addr, asection *sect));
 
-extern value_ptr value_at_lazy PARAMS ((struct type *type, CORE_ADDR addr));
+extern value_ptr value_at_lazy PARAMS ((struct type *type, CORE_ADDR addr, asection *sect));
 
 extern value_ptr value_from_register PARAMS ((struct type *type, int regnum,
 					  struct frame_info * frame));
@@ -293,6 +299,8 @@ extern value_ptr value_struct_elt_for_reference PARAMS ((struct type *domain,
 							 struct type *curtype,
 							 char *name,
 							 struct type *intype));
+
+extern value_ptr value_static_field PARAMS ((struct type *type, int fieldno));
 
 extern value_ptr value_field PARAMS ((value_ptr arg1, int fieldno));
 
@@ -366,9 +374,11 @@ extern value_ptr value_of_this PARAMS ((int complain));
 
 extern value_ptr value_x_binop PARAMS ((value_ptr arg1, value_ptr arg2,
 					enum exp_opcode op,
-					enum exp_opcode otherop));
+					enum exp_opcode otherop,
+					enum noside noside));
 
-extern value_ptr value_x_unop PARAMS ((value_ptr arg1, enum exp_opcode op));
+extern value_ptr value_x_unop PARAMS ((value_ptr arg1, enum exp_opcode op,
+				       enum noside noside));
 
 extern value_ptr value_fn_field PARAMS ((value_ptr *arg1p, struct fn_field *f,
 					 int j,
@@ -407,8 +417,14 @@ read_register_gen PARAMS ((int regno, char *myaddr));
 extern CORE_ADDR
 read_register PARAMS ((int regno));
 
+extern CORE_ADDR
+read_register_pid PARAMS ((int regno, int pid));
+
 extern void
 write_register PARAMS ((int regno, LONGEST val));
+
+extern void
+write_register_pid PARAMS ((int regno, LONGEST val, int pid));
 
 extern void
 supply_register PARAMS ((int regno, char *val));
@@ -487,5 +503,9 @@ extern value_ptr value_slice PARAMS ((value_ptr, int, int));
 extern value_ptr call_function_by_hand PARAMS ((value_ptr, int, value_ptr *));
 
 extern value_ptr value_literal_complex PARAMS ((value_ptr, value_ptr, struct type*));
+
+extern value_ptr find_function_in_inferior PARAMS ((char *));
+
+extern value_ptr value_allocate_space_in_inferior PARAMS ((int));
 
 #endif	/* !defined (VALUE_H) */

@@ -60,6 +60,7 @@ struct subfile
   struct linetable *line_vector;
   int line_vector_length;
   enum language language;
+  char *debugformat;
 };
 
 EXTERN struct subfile *subfiles;
@@ -95,10 +96,6 @@ struct pending
   int nsyms;
   struct symbol *symbol[PENDINGSIZE];
 };
-
-/* List of free `struct pending' structures for reuse.  */
-
-EXTERN struct pending *free_pendings;
 
 /* Here are the three lists that symbols are put on.  */
 
@@ -168,8 +165,6 @@ struct pending_block
   struct pending_block *next;
   struct block *block;
 };
-
-EXTERN struct pending_block *pending_blocks;
 
 
 struct subfile_stack
@@ -253,6 +248,25 @@ start_symtab PARAMS ((char *, char *, CORE_ADDR));
 
 extern int
 hashname PARAMS ((char *));
+
+extern void
+free_pending_blocks PARAMS ((void));
+
+/* FIXME: Note that this is used only in buildsym.c and dstread.c,
+   which should be fixed to not need direct access to make_blockvector. */
+
+extern struct blockvector *
+make_blockvector PARAMS ((struct objfile *));
+
+/* FIXME: Note that this is used only in buildsym.c and dstread.c,
+   which should be fixed to not need direct access to record_pending_block. */
+
+extern void
+record_pending_block PARAMS ((struct objfile *, struct block *,
+			      struct pending_block *));
+
+extern void
+record_debugformat PARAMS ((char *));
 
 #undef EXTERN
 

@@ -1,5 +1,5 @@
 /* Target machine parameters for MIPS r4000
-   Copyright 1994 Free Software Foundation, Inc.
+   Copyright 1994, 1996 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor (ian@cygnus.com)
 
 This file is part of GDB.
@@ -20,9 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define GDB_TARGET_IS_MIPS64 1
 
-/* force LONGEST to be long long in gdb */
-#define FORCE_LONG_LONG
-
 /* Use eight byte registers.  */
 #define MIPS_REGSIZE 8
 
@@ -34,6 +31,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Load double words in CALL_DUMMY.  */
 #define OP_LDFPR 065	/* ldc1 */
 #define OP_LDGPR 067	/* ld */
+
+#if defined(MIPS_EABI) && (MIPS_EABI != 0)
+/* define sizes for 64-bit data types */
+#define TARGET_LONG_BIT      64
+#define TARGET_LONG_LONG_BIT 64
+#define TARGET_PTR_BIT       64
+#endif /* MIPS_EABI */
 
 /* Get the basic MIPS definitions.  */
 #include "tm-mips.h"

@@ -61,6 +61,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 static char zerobuf[MAX_REGISTER_RAW_SIZE] = {0};
 
+static void fetch_core_registers PARAMS ((char *, unsigned, int, CORE_ADDR));
+
 /* Get all registers from the inferior */
 
 void
@@ -167,7 +169,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
      unsigned core_reg_size;
      int which;
-     unsigned reg_addr;
+     CORE_ADDR reg_addr;
 {
   register int regno;
   register unsigned int addr;
@@ -209,12 +211,12 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
 /* Return the address in the core dump or inferior of register REGNO.
    BLOCKEND is the address of the end of the user structure.  */
 
-unsigned int
+CORE_ADDR
 register_addr (regno, blockend)
      int regno;
-     int blockend;
+     CORE_ADDR blockend;
 {
-  int addr;
+  CORE_ADDR addr;
 
   if (regno < 0 || regno >= NUM_REGS)
     error ("Invalid register number %d.", regno);

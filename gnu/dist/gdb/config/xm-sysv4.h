@@ -31,6 +31,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define NEED_POSIX_SETPGID
 
+/* SVR4 has sigsetjmp and siglongjmp */
+#define HAVE_SIGSETJMP
+
 /* We have to include these files now, so that GDB will not make
    competing definitions in defs.h.  */
 #include <limits.h>

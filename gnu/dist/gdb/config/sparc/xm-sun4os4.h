@@ -22,16 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define FPU
 
-/* If you expect to use the mmalloc package to obtain mapped symbol files,
-   for now you have to specify some parameters that determine how gdb places
-   the mappings in it's address space.  See the comments in map_to_address()
-   for details.  This is expected to only be a short term solution.  Yes it
-   is a kludge.
-   FIXME:  Make this more automatic. */
-
-#define MMAP_BASE_ADDRESS	0xE0000000	/* First mapping here */
-#define MMAP_INCREMENT		0x01000000	/* Increment to next mapping */
-
 /* /usr/include/malloc.h is included by vx-share/xdr_ld, and might
    declare these using char * not void *.  The following should work with
    acc, gcc, or /bin/cc.  */

@@ -27,10 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Needed for DECstation core files.  */
 #include <machine/param.h>
 #define KERNEL_U_ADDR UADDR
-#endif
 
-#ifdef ultrix
-extern char *strdup();
+/* Native Ultrix cc has broken long long support.  */
+#ifndef __GNUC__
+#undef CC_HAS_LONG_LONG
+#endif
 #endif
 
 #if ! defined (__STDC__) && ! defined (offsetof)

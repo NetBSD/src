@@ -97,8 +97,9 @@ serial_t serial_fdopen PARAMS ((const int fd));
 
 /* Send a break between 0.25 and 0.5 seconds long.  */
 
-#define SERIAL_SEND_BREAK(SERIAL_T) \
-  ((*(SERIAL_T)->ops->send_break) (SERIAL_T))
+extern int serial_send_break PARAMS ((serial_t scb));
+
+#define SERIAL_SEND_BREAK(SERIAL_T) serial_send_break (SERIAL_T)
 
 /* Turn the port into raw mode. */
 
@@ -176,7 +177,6 @@ extern void serial_printf PARAMS ((serial_t desc, const char *, ...))
 
 /* File in which to record the remote debugging session */
 
-extern char *serial_logfile;
-extern FILE *serial_logfp;
+extern void serial_log_command PARAMS ((const char *));
 
 #endif /* SERIAL_H */

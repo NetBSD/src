@@ -36,4 +36,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "m68k/tm-m68k.h"
 
+/* Need to do this for ELF targets, where we can't figure out the boundaries of
+   the entry file.  This method stops the backtrace when we reach main.  */
+
+#undef FRAME_CHAIN_VALID
+#define FRAME_CHAIN_VALID_ALTERNATE
+
 /* FIXME, should do GET_LONGJMP_TARGET for newlib.  */

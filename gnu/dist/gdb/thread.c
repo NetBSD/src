@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "environ.h"
 #include "value.h"
 #include "target.h"
-#include "thread.h"
+#include "gdbthread.h"
 #include "command.h"
 #include "gdbcmd.h"
 
@@ -58,13 +58,29 @@ struct thread_info
 static struct thread_info *thread_list = NULL;
 static int highest_thread_num;
 
-static void thread_command PARAMS ((char * tidstr, int from_tty));
+static void
+thread_command PARAMS ((char * tidstr, int from_tty));
 
-static void prune_threads PARAMS ((void));
+static void
+prune_threads PARAMS ((void));
 
-static void thread_switch PARAMS ((int pid));
+static void
+switch_to_thread PARAMS ((int pid));
 
-static struct thread_info * find_thread_id PARAMS ((int num));
+static struct thread_info *
+find_thread_id PARAMS ((int num));
+
+static void
+info_threads_command PARAMS ((char *, int));
+
+static void
+restore_current_thread PARAMS ((int));
+
+static void
+thread_apply_all_command PARAMS ((char *, int));
+
+static void
+thread_apply_command PARAMS ((char *, int));
 
 void
 init_thread_list ()
@@ -109,6 +125,31 @@ add_thread (pid)
   thread_list = tp;
 }
 
+void
+delete_thread (pid)
+     int pid;
+{
+  struct thread_info *tp, *tpprev;
+
+  tpprev = NULL;
+
+  for (tp = thread_list; tp; tpprev = tp, tp = tp->next)
+    if (tp->pid == pid)
+      break;
+
+  if (!tp)
+    return;
+
+  if (tpprev)
+    tpprev->next = tp->next;
+  else
+    thread_list = tp->next;
+
+  free (tp);
+
+  return;
+}
+
 static struct thread_info *
 find_thread_id (num)
     int num;
@@ -146,6 +187,17 @@ pid_to_thread_id (pid)
       return tp->num;
 
   return 0;
+}
+
+int
+thread_id_to_pid (num)
+    int num;
+{
+  struct thread_info *thread = find_thread_id (num);
+  if (thread)
+    return thread->pid;
+  else
+    return -1;
 }
 
 int
@@ -243,25 +295,41 @@ void save_infrun_state (pid, prev_pc, prev_func_start, prev_func_name,
   tp->another_trap = another_trap;
 }
 
+/* Return true if TP is an active thread. */
+static int
+thread_alive (tp)
+     struct thread_info *tp;
+{
+  if (tp->pid == -1)
+    return 0;
+  if (! target_thread_alive (tp->pid))
+    {
+      tp->pid = -1;	/* Mark it as dead */
+      return 0;
+    }
+  return 1;
+}
+
 static void
 prune_threads ()
 {
-  struct thread_info *tp, *tpprev;
+  struct thread_info *tp, *tpprev, *next;
 
   tpprev = 0;
-
-  for (tp = thread_list; tp; tp = tp->next)
-    if (tp->pid == -1)
-      {
- 	if (tpprev)
-	  tpprev->next = tp->next;
- 	else
-	  thread_list = NULL;
-
-	free (tp);
-      }
-    else
-      tpprev = tp;
+  for (tp = thread_list; tp; tp = next)
+    {
+      next = tp->next;
+      if (!thread_alive (tp))
+	{
+	  if (tpprev)
+	    tpprev->next = next;
+	  else
+	    thread_list  = next;
+	  free (tp);
+	}
+      else
+	tpprev = tp;
+    }
 }
 
 /* Print information about currently known threads */
@@ -278,14 +346,13 @@ info_threads_command (arg, from_tty)
      selected_frame.  */
   if (!target_has_stack) error ("No stack.");
 
+  prune_threads ();
+#if defined(FIND_NEW_THREADS)
+  FIND_NEW_THREADS ();
+#endif
+
   for (tp = thread_list; tp; tp = tp->next)
     {
-      if (! target_thread_alive (tp->pid))
- 	{
-	  tp->pid = -1;	/* Mark it as dead */
-	  continue;
- 	}
-
       if (tp->pid == current_pid)
 	printf_filtered ("* ");
       else
@@ -293,18 +360,20 @@ info_threads_command (arg, from_tty)
 
       printf_filtered ("%d %s  ", tp->num, target_pid_to_str (tp->pid));
 
-      thread_switch (tp->pid);
-      print_stack_frame (selected_frame, -1, 0);
+      switch_to_thread (tp->pid);
+      if (selected_frame)
+	print_stack_frame (selected_frame, -1, 0);
+      else
+	printf_filtered ("[No stack.]\n");
     }
 
-  thread_switch (current_pid);
-  prune_threads ();
+  switch_to_thread (current_pid);
 }
 
 /* Switch from one thread to another. */
 
 static void
-thread_switch (pid)
+switch_to_thread (pid)
      int pid;
 {
   if (pid == inferior_pid)
@@ -322,7 +391,7 @@ restore_current_thread (pid)
      int pid;
 {
   if (pid != inferior_pid)
-    thread_switch (pid);
+    switch_to_thread (pid);
 }
 
 /* Apply a GDB command to a list of threads.  List syntax is a whitespace
@@ -348,12 +417,13 @@ thread_apply_all_command (cmd, from_tty)
   old_chain = make_cleanup (restore_current_thread, inferior_pid);
 
   for (tp = thread_list; tp; tp = tp->next)
-    {
-      thread_switch (tp->pid);
-      printf_filtered ("\nThread %d (%s):\n", tp->num,
-		       target_pid_to_str (inferior_pid));
-      execute_command (cmd, from_tty);
-    }
+    if (thread_alive (tp))
+      {
+	switch_to_thread (tp->pid);
+	printf_filtered ("\nThread %d (%s):\n", tp->num,
+			 target_pid_to_str (inferior_pid));
+	execute_command (cmd, from_tty);
+      }
 }
 
 static void
@@ -407,15 +477,16 @@ thread_apply_command (tidlist, from_tty)
 	  tp = find_thread_id (start);
 
 	  if (!tp)
+	    warning ("Unknown thread %d.", start);
+	  else if (!thread_alive (tp))
+	    warning ("Thread %d has terminated.", start);
+	  else
 	    {
-	      warning ("Unknown thread %d.", start);
-	      continue;
+	      switch_to_thread (tp->pid);
+	      printf_filtered ("\nThread %d (%s):\n", tp->num,
+			       target_pid_to_str (inferior_pid));
+	      execute_command (cmd, from_tty);
 	    }
-
-	  thread_switch (tp->pid);
-	  printf_filtered ("\nThread %d (%s):\n", tp->num,
-			   target_pid_to_str (inferior_pid));
-	  execute_command (cmd, from_tty);
 	}
     }
 }
@@ -443,16 +514,21 @@ see the IDs of currently known threads.");
     error ("Thread ID %d not known.  Use the \"info threads\" command to\n\
 see the IDs of currently known threads.", num);
 
-  thread_switch (tp->pid);
+  if (!thread_alive (tp))
+    error ("Thread ID %d has terminated.\n", num);
+
+  switch_to_thread (tp->pid);
 
   printf_filtered ("[Switching to %s]\n", target_pid_to_str (inferior_pid));
   print_stack_frame (selected_frame, selected_frame_level, 1);
 }
 
+/* Commands with a prefix of `thread'.  */
+struct cmd_list_element *thread_cmd_list = NULL;
+
 void
 _initialize_thread ()
 {
-  static struct cmd_list_element *thread_cmd_list = NULL;
   static struct cmd_list_element *thread_apply_list = NULL;
   extern struct cmd_list_element *cmdlist;
 

@@ -25,12 +25,12 @@ exec_prefix = @exec_prefix@
 host_alias = @host_alias@
 target_alias = @target_alias@
 program_transform_name = @program_transform_name@
-bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
+bindir = @bindir@
+libdir = @libdir@
 tooldir = $(libdir)/$(target_alias)
 
-datadir = $(prefix)/lib
-mandir = $(prefix)/man
+datadir = @datadir@
+mandir = @mandir@
 man1dir = $(mandir)/man1
 man2dir = $(mandir)/man2
 man3dir = $(mandir)/man3
@@ -40,9 +40,8 @@ man6dir = $(mandir)/man6
 man7dir = $(mandir)/man7
 man8dir = $(mandir)/man8
 man9dir = $(mandir)/man9
-infodir = $(prefix)/info
-includedir = $(prefix)/include
-docdir = $(datadir)/doc
+infodir = @infodir@
+includedir = @includedir@
 
 SHELL = /bin/sh
 
