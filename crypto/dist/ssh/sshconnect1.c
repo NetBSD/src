@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.1.1.1 2000/09/28 22:10:37 thorpej Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.1.1.2 2001/01/14 04:50:55 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,11 +14,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: sshconnect1.c,v 1.6 2000/09/07 20:27:54 deraadt Exp */
+/* from OpenBSD: sshconnect1.c,v 1.13 2000/12/19 23:17:58 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sshconnect1.c,v 1.1.1.1 2000/09/28 22:10:37 thorpej Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.1.1.2 2001/01/14 04:50:55 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -34,7 +34,6 @@ __RCSID("$NetBSD: sshconnect1.c,v 1.1.1.1 2000/09/28 22:10:37 thorpej Exp $");
 #include "ssh.h"
 #include "buffer.h"
 #include "packet.h"
-#include "cipher.h"
 #include "mpaux.h"
 #include "uidswap.h"
 #include "readconf.h"
@@ -44,8 +43,8 @@ __RCSID("$NetBSD: sshconnect1.c,v 1.1.1.1 2000/09/28 22:10:37 thorpej Exp $");
 #include "authfile.h"
 
 /* Session id for the current session. */
-unsigned char session_id[16];
-unsigned int supported_authentications = 0;
+u_char session_id[16];
+u_int supported_authentications = 0;
 
 extern Options options;
 extern char *__progname;
@@ -60,8 +59,8 @@ try_agent_authentication(void)
 	int type;
 	char *comment;
 	AuthenticationConnection *auth;
-	unsigned char response[16];
-	unsigned int i;
+	u_char response[16];
+	u_int i;
 	int plen, clen;
 	Key *key;
 	BIGNUM *challenge;
@@ -72,7 +71,7 @@ try_agent_authentication(void)
 		return 0;
 
 	challenge = BN_new();
-	key = key_new(KEY_RSA);
+	key = key_new(KEY_RSA1);
 
 	/* Loop through identities served by the agent. */
 	for (key = ssh_get_first_identity(auth, &comment, 1);
@@ -156,7 +155,7 @@ try_agent_authentication(void)
 static void
 respond_to_rsa_challenge(BIGNUM * challenge, RSA * prv)
 {
-	unsigned char buf[32], response[16];
+	u_char buf[32], response[16];
 	MD5_CTX md;
 	int i, len;
 
@@ -206,7 +205,7 @@ try_rsa_authentication(const char *authfile)
 	int plen, clen;
 
 	/* Try to load identification for the authentication key. */
-	public = key_new(KEY_RSA);
+	public = key_new(KEY_RSA1);
 	if (!load_public_key(authfile, public, &comment)) {
 		key_free(public);
 		/* Could not load it.  Fail. */
@@ -247,7 +246,7 @@ try_rsa_authentication(const char *authfile)
 
 	debug("Received RSA challenge from server.");
 
-	private = key_new(KEY_RSA);
+	private = key_new(KEY_RSA1);
 	/*
 	 * Load the private key.  Try first with empty passphrase; if it
 	 * fails, ask for a passphrase.
@@ -451,7 +450,7 @@ try_kerberos_authentication(void)
 		debug("Kerberos V4 authentication accepted.");
 
 		/* Get server's response. */
-		reply = packet_get_string((unsigned int *) &auth.length);
+		reply = packet_get_string((u_int *) &auth.length);
 		memcpy(auth.dat, reply, auth.length);
 		xfree(reply);
 
@@ -516,7 +515,7 @@ send_kerberos_tgt(void)
 		debug("Kerberos V4 ticket expired: %s", TKT_FILE);
 		return 0;
 	}
-	creds_to_radix(creds, (unsigned char *)buffer, sizeof buffer);
+	creds_to_radix(creds, (u_char *)buffer, sizeof buffer);
 	xfree(creds);
 
 	packet_start(SSH_CMSG_HAVE_KERBEROS_TGT);
@@ -555,10 +554,10 @@ send_afs_tokens(void)
 		p = buf;
 
 		/* Get secret token. */
-		memcpy(&creds.ticket_st.length, p, sizeof(unsigned int));
+		memcpy(&creds.ticket_st.length, p, sizeof(u_int));
 		if (creds.ticket_st.length > MAX_KTXT_LEN)
 			break;
-		p += sizeof(unsigned int);
+		p += sizeof(u_int);
 		memcpy(creds.ticket_st.dat, p, creds.ticket_st.length);
 		p += creds.ticket_st.length;
 
@@ -584,7 +583,7 @@ send_afs_tokens(void)
 		creds.pinst[0] = '\0';
 
 		/* Encode token, ship it off. */
-		if (creds_to_radix(&creds, (unsigned char*) buffer, sizeof buffer) <= 0)
+		if (creds_to_radix(&creds, (u_char*) buffer, sizeof buffer) <= 0)
 			break;
 		packet_start(SSH_CMSG_HAVE_AFS_TOKEN);
 		packet_put_string(buffer, strlen(buffer));
@@ -613,38 +612,42 @@ try_skey_authentication(void)
 {
 	int type, i;
 	int payload_len;
-	unsigned int clen;
+	u_int clen;
+	char prompt[1024];
 	char *challenge, *response;
 
 	debug("Doing skey authentication.");
 
-	/* request a challenge */
-	packet_start(SSH_CMSG_AUTH_TIS);
-	packet_send();
-	packet_write_wait();
-
-	type = packet_read(&payload_len);
-	if (type != SSH_SMSG_FAILURE &&
-	    type != SSH_SMSG_AUTH_TIS_CHALLENGE) {
-		packet_disconnect("Protocol error: got %d in response "
-				  "to skey-auth", type);
-	}
-	if (type != SSH_SMSG_AUTH_TIS_CHALLENGE) {
-		debug("No challenge for skey authentication.");
-		return 0;
-	}
-	challenge = packet_get_string(&clen);
-	packet_integrity_check(payload_len, (4 + clen), type);
-	if (options.cipher == SSH_CIPHER_NONE)
-		log("WARNING: Encryption is disabled! "
-		    "Reponse will be transmitted in clear text.");
-	fprintf(stderr, "%s\n", challenge);
-	xfree(challenge);
-	fflush(stderr);
 	for (i = 0; i < options.number_of_password_prompts; i++) {
+		/* request a challenge */
+		packet_start(SSH_CMSG_AUTH_TIS);
+		packet_send();
+		packet_write_wait();
+
+		type = packet_read(&payload_len);
+		if (type != SSH_SMSG_FAILURE &&
+		    type != SSH_SMSG_AUTH_TIS_CHALLENGE) {
+			packet_disconnect("Protocol error: got %d in response "
+			    "to skey-auth", type);
+		}
+		if (type != SSH_SMSG_AUTH_TIS_CHALLENGE) {
+			debug("No challenge for skey authentication.");
+			return 0;
+		}
+		challenge = packet_get_string(&clen);
+		packet_integrity_check(payload_len, (4 + clen), type);
+		snprintf(prompt, sizeof prompt, "%s\nResponse: ", challenge);
+		xfree(challenge);
 		if (i != 0)
 			error("Permission denied, please try again.");
-		response = read_passphrase("Response: ", 0);
+		if (options.cipher == SSH_CIPHER_NONE)
+			log("WARNING: Encryption is disabled! "
+			    "Reponse will be transmitted in clear text.");
+		response = read_passphrase(prompt, 0);
+		if (strcmp(response, "") == 0) {
+			xfree(response);
+			break;
+		}
 		packet_start(SSH_CMSG_AUTH_TIS_RESPONSE);
 		packet_put_string(response, strlen(response));
 		memset(response, 0, strlen(response));
@@ -656,7 +659,7 @@ try_skey_authentication(void)
 			return 1;
 		if (type != SSH_SMSG_FAILURE)
 			packet_disconnect("Protocol error: got %d in response "
-					  "to skey-auth-reponse", type);
+			    "to skey-auth-reponse", type);
 	}
 	/* failure */
 	return 0;
@@ -708,10 +711,10 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	Key k;
 	int bits, rbits;
 	int ssh_cipher_default = SSH_CIPHER_3DES;
-	unsigned char session_key[SSH_SESSION_KEY_LENGTH];
-	unsigned char cookie[8];
-	unsigned int supported_ciphers;
-	unsigned int server_flags, client_flags;
+	u_char session_key[SSH_SESSION_KEY_LENGTH];
+	u_char cookie[8];
+	u_int supported_ciphers;
+	u_int server_flags, client_flags;
 	int payload_len, clen, sum_len = 0;
 	u_int32_t rand = 0;
 
@@ -770,7 +773,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	packet_integrity_check(payload_len,
 			       8 + 4 + sum_len + 0 + 4 + 0 + 0 + 4 + 4 + 4,
 			       SSH_SMSG_PUBLIC_KEY);
-	k.type = KEY_RSA;
+	k.type = KEY_RSA1;
 	k.rsa = host_key;
 	check_host_key(host, hostaddr, &k,
 	    options.user_hostfile, options.system_hostfile);
@@ -843,19 +846,14 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	RSA_free(public_key);
 	RSA_free(host_key);
 
-	if (options.cipher == SSH_CIPHER_ILLEGAL) {
-		log("No valid SSH1 cipher, using %.100s instead.",
-		    cipher_name(SSH_FALLBACK_CIPHER));
-		options.cipher = SSH_FALLBACK_CIPHER;
-	} else if (options.cipher == SSH_CIPHER_NOT_SET) {
-		if (cipher_mask1() & supported_ciphers & (1 << ssh_cipher_default))
+	if (options.cipher == SSH_CIPHER_NOT_SET) {
+		if (cipher_mask_ssh1(1) & supported_ciphers & (1 << ssh_cipher_default))
 			options.cipher = ssh_cipher_default;
-		else {
-			debug("Cipher %s not supported, using %.100s instead.",
-			    cipher_name(ssh_cipher_default),
-			    cipher_name(SSH_FALLBACK_CIPHER));
-			options.cipher = SSH_FALLBACK_CIPHER;
-		}
+	} else if (options.cipher == SSH_CIPHER_ILLEGAL ||
+	    !(cipher_mask_ssh1(1) & (1 << options.cipher))) {
+		log("No valid SSH1 cipher, using %.100s instead.",
+		    cipher_name(ssh_cipher_default));
+		options.cipher = ssh_cipher_default;
 	}
 	/* Check that the selected cipher is supported. */
 	if (!(supported_ciphers & (1 << options.cipher)))
@@ -1013,7 +1011,8 @@ ssh_userauth(
 
 		/* Try RSA authentication for each identity. */
 		for (i = 0; i < options.num_identity_files; i++)
-			if (try_rsa_authentication(options.identity_files[i]))
+			if (options.identity_files_type[i] == KEY_RSA1 &&
+			    try_rsa_authentication(options.identity_files[i]))
 				return;
 	}
 	/* Try skey authentication if the server supports it. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $	*/
+/*	$NetBSD: login.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,11 +40,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: login.c,v 1.15 2000/09/07 20:27:52 deraadt Exp */
+/* from OpenBSD: login.c,v 1.16 2000/12/19 23:17:57 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: login.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $");
+__RCSID("$NetBSD: login.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -64,9 +64,9 @@ __RCSID("$NetBSD: login.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $");
  * is found).  The name of the host used last time is returned in buf.
  */
 
-unsigned long
+u_long
 get_last_login_time(uid_t uid, const char *logname,
-		    char *buf, unsigned int bufsize)
+		    char *buf, u_int bufsize)
 {
 	struct lastlog ll;
 	char *lastlog;

@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.1.1.1 2000/09/28 22:10:20 thorpej Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.1.1.2 2001/01/14 04:50:38 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,12 +36,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* from OpenBSD: serverloop.c,v 1.39 2000/12/27 14:19:21 markus Exp */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: serverloop.c,v 1.1.1.1 2000/09/28 22:10:20 thorpej Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.1.1.2 2001/01/14 04:50:38 itojun Exp $");
 #endif
 
 #include "includes.h"
+
 #include "xmalloc.h"
 #include "ssh.h"
 #include "packet.h"
@@ -55,6 +58,9 @@ __RCSID("$NetBSD: serverloop.c,v 1.1.1.1 2000/09/28 22:10:20 thorpej Exp $");
 #include "session.h"
 #include "dispatch.h"
 #include "auth-options.h"
+#include "auth.h"
+
+extern ServerOptions options;
 
 static Buffer stdin_buffer;	/* Buffer for stdin data. */
 static Buffer stdout_buffer;	/* Buffer for stdout data. */
@@ -72,7 +78,7 @@ static int fdout_eof = 0;	/* EOF encountered reading from fdout. */
 static int fderr_eof = 0;	/* EOF encountered readung from fderr. */
 static int connection_in;	/* Connection to client (input). */
 static int connection_out;	/* Connection to client (output). */
-static unsigned int buffer_high;/* "Soft" max buffer size. */
+static u_int buffer_high;/* "Soft" max buffer size. */
 static int max_fd;		/* Max file descriptor number for select(). */
 
 /*
@@ -181,7 +187,7 @@ make_packets_from_stdout_data(void)
  */
 static void
 wait_until_can_do_something(fd_set * readset, fd_set * writeset,
-			    unsigned int max_time_milliseconds)
+			    u_int max_time_milliseconds)
 {
 	struct timeval tv, *tvp;
 	int ret;
@@ -252,7 +258,7 @@ retry_select:
 		tvp = &tv;
 	}
 	if (tvp!=NULL)
-		debug("tvp!=NULL kid %d mili %d", child_terminated, max_time_milliseconds);
+		debug2("tvp!=NULL kid %d mili %d", child_terminated, max_time_milliseconds);
 
 	/* Wait for something to happen, or the timeout to expire. */
 	ret = select(max_fd + 1, readset, writeset, NULL, tvp);
@@ -404,9 +410,9 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	int wait_status;	/* Status returned by wait(). */
 	pid_t wait_pid;		/* pid returned by wait(). */
 	int waiting_termination = 0;	/* Have displayed waiting close message. */
-	unsigned int max_time_milliseconds;
-	unsigned int previous_stdout_buffer_bytes;
-	unsigned int stdout_buffer_bytes;
+	u_int max_time_milliseconds;
+	u_int previous_stdout_buffer_bytes;
+	u_int stdout_buffer_bytes;
 	int type;
 
 	debug("Entering interactive session.");
@@ -579,7 +585,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 
 	/* Wait for the child to exit.  Get its exit status. */
 	wait_pid = wait(&wait_status);
-	if (wait_pid < 0) {
+	if (wait_pid == -1) {
 		/*
 		 * It is possible that the wait was handled by SIGCHLD
 		 * handler.  This may result in either: this call
@@ -683,7 +689,7 @@ static void
 server_input_stdin_data(int type, int plen, void *ctxt)
 {
 	char *data;
-	unsigned int data_len;
+	u_int data_len;
 
 	/* Stdin data from the client.  Append it to the buffer. */
 	/* Ignore any data if the client has closed stdin. */
@@ -723,10 +729,10 @@ server_input_window_size(int type, int plen, void *ctxt)
 		pty_change_window_size(fdin, row, col, xpixel, ypixel);
 }
 
-static int
-input_direct_tcpip(void)
+static Channel *
+server_request_direct_tcpip(char *ctype)
 {
-	int sock;
+	int sock, newch;
 	char *target, *originator;
 	int target_port, originator_port;
 
@@ -736,23 +742,52 @@ input_direct_tcpip(void)
 	originator_port = packet_get_int();
 	packet_done();
 
-	debug("open direct-tcpip: from %s port %d to %s port %d",
+	debug("server_request_direct_tcpip: originator %s port %d, target %s port %d",
 	   originator, originator_port, target, target_port);
 
 	/* XXX check permission */
-	if (no_port_forwarding_flag) {
+	if (no_port_forwarding_flag || !options.allow_tcp_forwarding) {
 		xfree(target);
 		xfree(originator);
-		return -1;
+		return NULL;
 	}
 	sock = channel_connect_to(target, target_port);
 	xfree(target);
 	xfree(originator);
 	if (sock < 0)
-		return -1;
-	return channel_new("direct-tcpip", SSH_CHANNEL_OPEN,
+		return NULL;
+	newch = channel_new(ctype, SSH_CHANNEL_CONNECTING,
 	    sock, sock, -1, CHAN_TCP_WINDOW_DEFAULT,
-	    CHAN_TCP_PACKET_DEFAULT, 0, xstrdup("direct-tcpip"));
+	    CHAN_TCP_PACKET_DEFAULT, 0, xstrdup("direct-tcpip"), 1);
+	return (newch >= 0) ? channel_lookup(newch) : NULL;
+}
+
+static Channel *
+server_request_session(char *ctype)
+{
+	int newch;
+
+	debug("input_session_request");
+	packet_done();
+	/*
+	 * A server session has no fd to read or write until a
+	 * CHANNEL_REQUEST for a shell is made, so we set the type to
+	 * SSH_CHANNEL_LARVAL.  Additionally, a callback for handling all
+	 * CHANNEL_REQUEST messages is registered.
+	 */
+	newch = channel_new(ctype, SSH_CHANNEL_LARVAL,
+	    -1, -1, -1, 0, CHAN_SES_PACKET_DEFAULT,
+	    0, xstrdup("server-session"), 1);
+	if (session_open(newch) == 1) {
+		channel_register_callback(newch, SSH2_MSG_CHANNEL_REQUEST,
+		    session_input_channel_req, (void *)0);
+		channel_register_cleanup(newch, session_close_by_channel);
+		return channel_lookup(newch);
+	} else {
+		debug("session open failed, free channel %d", newch);
+		channel_free(newch);
+	}
+	return NULL;
 }
 
 static void
@@ -760,8 +795,7 @@ server_input_channel_open(int type, int plen, void *ctxt)
 {
 	Channel *c = NULL;
 	char *ctype;
-	int id;
-	unsigned int len;
+	u_int len;
 	int rchan;
 	int rmaxpack;
 	int rwindow;
@@ -775,34 +809,12 @@ server_input_channel_open(int type, int plen, void *ctxt)
 	    ctype, rchan, rwindow, rmaxpack);
 
 	if (strcmp(ctype, "session") == 0) {
-		debug("open session");
-		packet_done();
-		/*
-		 * A server session has no fd to read or write
-		 * until a CHANNEL_REQUEST for a shell is made,
-		 * so we set the type to SSH_CHANNEL_LARVAL.
-		 * Additionally, a callback for handling all
-		 * CHANNEL_REQUEST messages is registered.
-		 */
-		id = channel_new(ctype, SSH_CHANNEL_LARVAL,
-		    -1, -1, -1, 0, CHAN_SES_PACKET_DEFAULT,
-		    0, xstrdup("server-session"));
-		if (session_open(id) == 1) {
-			channel_register_callback(id, SSH2_MSG_CHANNEL_REQUEST,
-			    session_input_channel_req, (void *)0);
-			channel_register_cleanup(id, session_close_by_channel);
-			c = channel_lookup(id);
-		} else {
-			debug("session open failed, free channel %d", id);
-			channel_free(id);
-		}
+		c = server_request_session(ctype);
 	} else if (strcmp(ctype, "direct-tcpip") == 0) {
-		id = input_direct_tcpip();
-		if (id >= 0)
-			c = channel_lookup(id);
+		c = server_request_direct_tcpip(ctype);
 	}
 	if (c != NULL) {
-		debug("confirm %s", ctype);
+		debug("server_input_channel_open: confirm %s", ctype);
 		c->remote_id = rchan;
 		c->remote_window = rwindow;
 		c->remote_maxpacket = rmaxpack;
@@ -814,7 +826,7 @@ server_input_channel_open(int type, int plen, void *ctxt)
 		packet_put_int(c->local_maxpacket);
 		packet_send();
 	} else {
-		debug("failure %s", ctype);
+		debug("server_input_channel_open: failure %s", ctype);
 		packet_start(SSH2_MSG_CHANNEL_OPEN_FAILURE);
 		packet_put_int(rchan);
 		packet_put_int(SSH2_OPEN_ADMINISTRATIVELY_PROHIBITED);
@@ -823,6 +835,56 @@ server_input_channel_open(int type, int plen, void *ctxt)
 		packet_send();
 	}
 	xfree(ctype);
+}
+
+static void 
+server_input_global_request(int type, int plen, void *ctxt)
+{
+	char *rtype;
+	int want_reply;
+	int success = 0;
+
+	rtype = packet_get_string(NULL);
+	want_reply = packet_get_char();
+	debug("server_input_global_request: rtype %s want_reply %d", rtype, want_reply);
+	
+	if (strcmp(rtype, "tcpip-forward") == 0) {
+		struct passwd *pw;
+		char *listen_address;
+		u_short listen_port;
+
+		pw = auth_get_user();
+		if (pw == NULL)
+			fatal("server_input_global_request: no user");
+		listen_address = packet_get_string(NULL); /* XXX currently ignored */
+		listen_port = (u_short)packet_get_int();
+		debug("server_input_global_request: tcpip-forward listen %s port %d",
+		    listen_address, listen_port);
+
+		/* check permissions */
+		if (!options.allow_tcp_forwarding ||
+		    no_port_forwarding_flag ||
+		    (listen_port < IPPORT_RESERVED && pw->pw_uid != 0)) {
+			success = 0;
+			packet_send_debug("Server has disabled port forwarding.");
+		} else {
+			/* Start listening on the port */
+			channel_request_forwarding(
+			    listen_address, listen_port,
+			    /*unspec host_to_connect*/ "<unspec host>",
+			    /*unspec port_to_connect*/ 0,
+			    options.gateway_ports, /*remote*/ 1);
+			success = 1;
+		}
+		xfree(listen_address);
+	}
+	if (want_reply) {
+		packet_start(success ?
+		    SSH2_MSG_REQUEST_SUCCESS : SSH2_MSG_REQUEST_FAILURE);
+		packet_send();
+		packet_write_wait();
+	}
+	xfree(rtype);
 }
 
 static void
@@ -839,6 +901,7 @@ server_init_dispatch_20(void)
 	dispatch_set(SSH2_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
 	dispatch_set(SSH2_MSG_CHANNEL_REQUEST, &channel_input_channel_request);
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
+	dispatch_set(SSH2_MSG_GLOBAL_REQUEST, &server_input_global_request);
 }
 static void
 server_init_dispatch_13(void)
