@@ -1,5 +1,5 @@
-/*	$NetBSD: keydb.h,v 1.6 2000/06/15 12:37:10 itojun Exp $	*/
-/*	$KAME: keydb.h,v 1.11 2000/06/15 12:20:50 sakane Exp $	*/
+/*	$NetBSD: keydb.h,v 1.7 2000/07/23 05:23:05 itojun Exp $	*/
+/*	$KAME: keydb.h,v 1.12 2000/07/20 17:41:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -87,6 +87,8 @@ struct secasvar {
 	caddr_t misc2;
 	caddr_t misc3;
 #endif
+	void *sched;			/* intermediate encryption key */
+	size_t schedlen;
 
 	struct secreplay *replay;	/* replay prevention */
 	u_int32_t tick;			/* for lifetime */
