@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.10 2004/03/26 13:57:44 minoura Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.11 2004/04/05 02:09:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10 2004/03/26 13:57:44 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11 2004/04/05 02:09:41 mrg Exp $");
 
 #include "opt_cputype.h"
 
@@ -109,6 +109,7 @@ static const char * const i386_intel_brand[] = {
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
 	"Xeon",		    /* Intel (R) Xeon (TM) processor */
 	"Xeon MP",	    /* Intel (R) Xeon (TM) processor MP */
+	"",		    /* Reserved */
 	"Mobile Pentium 4", /* Mobile Intel (R) Pentium (R) 4 processor-M */
 	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };
@@ -658,11 +659,15 @@ intel_family6_name(struct cpu_info *ci)
 				if (ci->ci_signature == 0x6B1)
 					ret = "Celeron";
 				break;
-			case 0x08:
+			case 0x8:
 				if (ci->ci_signature >= 0xF13)
 					ret = "genuine processor";
 				break;
-			case 0x0E:
+			case 0xB:
+				if (ci->ci_signature >= 0xF13)
+					ret = "Xeon MP";
+				break;
+			case 0xE:
 				if (ci->ci_signature < 0xF13)
 					ret = "Xeon";
 				break;
@@ -1118,6 +1123,9 @@ identifycpu(struct cpu_info *ci)
 						name = tmp;
 				}
 				if (family == CPU_MAXFAMILY &&
+				    ci->ci_brand_id <
+				    (sizeof(i386_intel_brand) /
+				     sizeof(i386_intel_brand[0])) &&
 				    i386_intel_brand[ci->ci_brand_id])
 					name =
 					     i386_intel_brand[ci->ci_brand_id];
