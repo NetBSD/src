@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.18 2002/03/31 22:22:47 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.19 2002/04/02 23:25:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
 #include <compat/linux/arch/mips/linux_signal.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_signal.h>
-#else
-#error Undefined linux_signal.h machine type.
 #endif
 
 #ifdef _KERNEL
