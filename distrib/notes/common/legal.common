@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.16 2000/11/03 13:23:07 christos Exp $
+.\"	$NetBSD: legal.common,v 1.17 2001/02/06 16:08:59 reinoud Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -288,3 +288,5 @@ This product includes software developed by the University of Southern
 California and/or Information Sciences Institute.
 .Pp
 This product includes software developed by Internet Initiative Japan Inc.
+.Pp
+This product includes software developped bt Reinoud Zandijk.
