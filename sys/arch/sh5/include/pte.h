@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2002/07/05 13:32:01 scw Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2002/10/07 14:42:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -104,6 +104,7 @@ typedef struct pte {
 #define	SH5_PTEL_CB_DEVICE	0x1
 #define	SH5_PTEL_CB_WRITEBACK	0x2
 #define	SH5_PTEL_CB_WRITETHRU	0x3
+#define	SH5_PTEL_CACHEABLE(p)	(((p)&SH5_PTEL_CB_MASK)>=SH5_PTEL_CB_WRITEBACK)
 
 #define	SH5_PTEL_SZ_MASK	0x18
 #define	SH5_PTEL_SZ_4KB		0x00
