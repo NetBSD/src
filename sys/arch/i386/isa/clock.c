@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.11 1993/10/11 01:51:15 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.12 1993/10/12 23:31:43 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -269,10 +269,6 @@ timerattach(parent, self, aux)
 	}
 
 	isa_establish(&sc->sc_id, &sc->sc_dev);
-
-	sc->sc_ih.ih_fun = timerintr;
-	sc->sc_ih.ih_arg = NULL;
-	intr_establish(ia->ia_irq, &sc->sc_ih, DV_DULL);
 }
 
 static int
@@ -293,7 +289,7 @@ cpu_initclocks(void)
 		panic("cpu_initclocks: no timer");
 
 	sc->sc_ih.ih_fun = timerintr;
-	sc->sc_ih.ih_arg = (caddr_t)sc;
+	sc->sc_ih.ih_arg = sc;
 	intr_establish(sc->sc_irq, &sc->sc_ih, DV_DULL);
 }
 
