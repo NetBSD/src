@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.109 2000/09/05 22:39:16 augustss Exp $
+$NetBSD: usbdevs,v 1.110 2000/09/07 03:59:55 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,9 @@ vendor LUCENT		0x047e	Lucent
 vendor STMICRO		0x0483	STMicroelectronics
 vendor COMPAQ		0x049f	Compaq Computers
 vendor ACERP		0x04a5	Acer Peripherals, Inc.
+vendor VISIONEER	0x04a7	Visioneer
 vendor CANON		0x04a9	Canon, Inc.
+vendor IBM		0x04b3	IBM Corporation
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor RAINBOW		0x04b9	Rainbow Technologies
@@ -103,6 +105,7 @@ vendor ATI		0x0528	ATI Technologies, Inc.
 vendor AKS		0x0529	Aladdin Knowledge Systems
 vendor UNIACCESS	0x0540	Universal Access
 vendor ANCHOR		0x0547	Anchor Chips, Inc.
+vendor SONY		0x054c	Sony Corp.
 vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ASAHIKASEI	0x0556	Asahi Kasei Microsystems Co., Ltd
 vendor ATEN		0x0557	ATEN International Co. Ltd.
@@ -132,6 +135,7 @@ vendor QTRONIX		0x05c7	Qtronix Corp
 vendor ELSA		0x05cc	ELSA Gmbh
 vendor BRAINBOXES	0x05d1	Brainboxes Limited
 vendor AXIOHM		0x05d9	Axiohm Transaction Solutions
+vendor MICROTEK		0x05da	Microtek
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor KLSI		0x05e9	Kawasaki LSI
 vendor ANKO		0x05ef	Anko Electronic Co., Ltd.
@@ -232,7 +236,7 @@ vendor BROADCOM		0x0a5c	Broadcom Corp.
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
-vendor BELKIN2		0x1293  Belkin Components (2nd)
+vendor BELKIN2		0x1293	Belkin Components (2nd)
 vendor UMAX		0x1606	UMAX
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
@@ -259,6 +263,8 @@ product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Acer Peripherals, Inc. products */
 product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
+product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
+product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
 
 /* ActiveWire, Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
@@ -272,6 +278,11 @@ product ADS UBS10BT		0x0008	UBS-10BT Ethernet adapter
 
 /* Agiler products */
 product ELECOM MOUSE29UO	0x0002	mouse 29UO
+
+/* AGFA products */
+product AGFA SNAPSCAN1212U	0x0001	SnapScan 1212U
+product AGFA SNAPSCANTOUCH	0x0100	SnapScan Touch
+product AGFA SNAPSCAN1212U2	0x2061	SnapScan 1212U
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
@@ -303,9 +314,12 @@ product ATEN UC1284		0x2001	Parallel printer adapter
 product ATEN UC10T		0x2002	10Mbps ethernet adapter
 product ATEN UC232A		0x2008	Serial adapter
 
+/* Avision products */
+product AVISION 1200U		0x0268	1200U scanner
+
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
-product BELKIN2 F5U002		0x0002  F5U002 Parallel printer adapter
+product BELKIN2 F5U002		0x0002	F5U002 Parallel printer adapter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
@@ -394,6 +408,9 @@ product ENTREGA EZUSB		0x8000	EZ-USB
 product EPSON PRINTER1		0x0001	USB Printer
 product EPSON PRINTER2		0x0002	ISD USB Smart Cable for Mac
 product EPSON PRINTER3		0x0003	ISD USB Smart Cable
+product EPSON 636		0x0101	Perfection 636U / 636Photo scanner
+product EPSON 610		0x0103	Perfection 610 scanner
+product EPSON 1200		0x0104	Perfection 1200U / 1200Photo scanner
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial port
@@ -425,13 +442,16 @@ product HP 6300C		0x0601	Scanjet 6300C
 product HP 970CSE		0x1004	Deskjet 970Cse
 product HP P1100		0x3102	Photosmart P1100
 
+/* IBM Corporation */
+product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
+
 /* Inside Out Networks products */
 product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
-product INSYSTEM ISD110		0x0200  IDE adapter ISD110
-product INSYSTEM ISD105		0x0202  IDE adapter ISD105
+product INSYSTEM ISD110		0x0200	IDE adapter ISD110
+product INSYSTEM ISD105		0x0202	IDE adapter ISD105
 product INSYSTEM USBCABLE	0x081a	USB cable
 
 /* Intel products */
@@ -475,6 +495,7 @@ product KONICA CAMERA		0x0720	Digital Color Camera
 product KYE NICHE		0x0001	Niche mouse
 product KYE NETSCROLL		0x0003	Genius NetScroll mouse
 product KYE FLIGHT2000		0x1004	Flight 2000 joystick
+product KYE VIVIDPRO		0x2001	ColorPage Vivid-Pro scanner
 
 /* LaCie products */
 product LACIE CDRW		0xa602	CD R/W
@@ -527,6 +548,15 @@ product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 
+/* Microtek products */
+product MICROTEK X6U		0x0099	ScanMaker X6 - X6U
+product MICROTEK 336CX		0x0094	Phantom 336CX - C3 scanner
+product MICROTEK 336CX2		0x00a0	Phantom 336CX - C3 scanner
+product MICROTEK C6		0x009a	Phantom C6 scanner
+product MICROTEK V6USL		0x00a3	ScanMaker V6USL
+product MICROTEK V6USL2		0x80a3	ScanMaker V6USL
+product MICROTEK V6UL		0x80ac	ScanMaker V6UL
+
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
 
@@ -537,6 +567,7 @@ product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
 
 /* Mustek products */
+product MUSTEK 1200CU		0x0001	1200 CU scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
 
 /* NEC products */
@@ -576,6 +607,16 @@ product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
 product PLX TESTBOARD		0x9060	test board
 
 /* Primax products */
+product PRIMAX G2E300		0x0301	G2E-300 scanner
+product PRIMAX G2300		0x0302	G2-300 scanner
+product PRIMAX G2E3002		0x0303	G2E-300 scanner
+product PRIMAX 9600		0x0340	Colorado USB 9600 scanner
+product PRIMAX 600U		0x0341	Colorado 600u scanner
+product PRIMAX 19200		0x0360	Colorado USB 19200 scanner
+product PRIMAX 1200U		0x0361	Colorado 1200u scanner
+product PRIMAX 636I		0x0381	ReadyScan 636i
+product PRIMAX G2600		0x0382	G2-600 scanner
+product PRIMAX G2E600		0x0383	G2E-600 scanner
 product PRIMAX COMFORT		0x4d01	Comfort
 product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
 product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
@@ -583,6 +624,7 @@ product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
 /* Prolific products */
 product PROLIFIC PL2301		0x0000	PL2301 Host-Host interface
 product PROLIFIC PL2302		0x0001	PL2302 Host-Host interface
+product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
@@ -618,6 +660,9 @@ product SMC 2202USB		0x0200	10/100 ethernet adapter
 /* SOLID YEAR products */
 product SOLIDYEAR KEYBOARD	0x2101	Solid Year USB keyboard
 
+/* SONY products */
+product SONY DSC		0x0010	Sony DSC cameras
+
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
 
@@ -641,7 +686,11 @@ product TI UTUSB41		0x1446	UT-USB41 hub
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 
 /* UMAX products */
-product UMAX ASTRA1220U		0x0010	Astra 1220U
+product UMAX ASTRA1236U		0x0002	Astra 1236U Scanner
+product UMAX ASTRA1220U		0x0010	Astra 1220U Scanner
+product UMAX ASTRA2000U		0x0030	Astra 2000U Scanner
+product UMAX ASTRA2100U		0x0130	Astra 2100U Scanner
+product UMAX ASTRA2200U		0x0230	Astra 2200U Scanner
 
 /* Universal Access products */
 product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
@@ -649,6 +698,10 @@ product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 /* Vision products */
 product VISION VC6452V002	0x0002	CPiA Camera
 
+/* Visioneer products */
+product VISIONEER 5300		0x0221	OneTouch 5300 / 7600
+product VISIONEER 6100		0x0231	OneTouch 6100
+								       
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
