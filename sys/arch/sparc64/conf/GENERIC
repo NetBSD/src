@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.3 1998/08/26 09:09:31 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.4 1998/08/26 10:31:36 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -29,10 +29,11 @@ options		TRAPWIN
 
 config		netbsd	root on ? type ?
 
-## Virtual memory configuration.  There are two choices, the old Mach
-## based VM system, or the new UVM system.
-options 	OLDVM		# MACH VM
-#options 	UVM		# UVM VM
+## UVM options.
+options		UVM_PAGE_TRKOWN
+options		UVMHIST
+#options 	UVMHIST_PRINT	# Loud!
+#options 	PMAP_NEW	# new pmap interface; not yet supported
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
