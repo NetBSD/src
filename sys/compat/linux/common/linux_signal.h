@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.9 1998/10/07 22:13:39 erh Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.10 1998/10/07 22:45:51 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 extern int native_to_linux_sig[];
 extern int linux_to_native_sig[];
 __BEGIN_DECLS
-int linux_sigprocmask1 __P((struct proc *, int, linux_old_sigset_t *,
+int linux_sigprocmask1 __P((struct proc *, int, const linux_old_sigset_t *,
 						linux_old_sigset_t *));
 void linux_old_to_native_sigset __P((const linux_old_sigset_t *, sigset_t *));
 void native_to_linux_old_sigset __P((const sigset_t *, linux_old_sigset_t *));
