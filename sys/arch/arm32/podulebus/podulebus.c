@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.48 2001/07/10 20:10:49 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.49 2001/07/28 18:12:45 chris Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -437,7 +437,7 @@ podulebusattach(parent, self, aux)
 
 	/* Map the FAST and SYNC simple podules */
 
-	map_section((vm_offset_t)kernel_pmap->pm_pdir,
+	map_section((vm_offset_t)pmap_kernel()->pm_pdir,
 	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000, 0);
 	cpu_tlb_flushD();
 
@@ -448,7 +448,7 @@ podulebusattach(parent, self, aux)
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
 		    loop1 += L1_SEC_SIZE)
-		map_section((vm_offset_t)kernel_pmap->pm_pdir, EASI_BASE + loop1,
+		map_section((vm_offset_t)pmap_kernel()->pm_pdir, EASI_BASE + loop1,
 		    EASI_HW_BASE + loop1, 0);
 	}
 	cpu_tlb_flushD();

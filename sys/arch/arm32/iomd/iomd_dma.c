@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.10 2001/07/09 21:46:20 reinoud Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.11 2001/07/28 18:12:44 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -198,7 +198,7 @@ dma_intr(dp)
 		
 /*	return(0);*/
 /* XXX */
-#define	PHYS(x, y)	pmap_extract(kernel_pmap, (vaddr_t)x, (paddr_t *)(y))
+#define	PHYS(x, y)	pmap_extract(pmap_kernel(), (vaddr_t)x, (paddr_t *)(y))
 fill:
 #ifdef DMA_DEBUG
 	printf("fill:\n");

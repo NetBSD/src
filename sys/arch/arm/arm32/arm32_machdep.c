@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.2 2001/07/28 18:12:43 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -448,7 +448,7 @@ cpu_startup()
 	curpcb->pcb_flags = 0;
 	curpcb->pcb_und_sp = (u_int)proc0.p_addr + USPACE_UNDEF_STACK_TOP;
 	curpcb->pcb_sp = (u_int)proc0.p_addr + USPACE_SVC_STACK_TOP;
-	(void) pmap_extract(kernel_pmap, (vaddr_t)(kernel_pmap)->pm_pdir,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)(pmap_kernel())->pm_pdir,
 	    (paddr_t *)&curpcb->pcb_pagedir);
 
         curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_sp - 1;

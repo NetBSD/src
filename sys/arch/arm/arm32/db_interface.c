@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 2001/06/24 07:32:20 chs Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 2001/07/28 18:12:43 chris Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -190,7 +190,7 @@ db_validate_address(addr)
 	 * otherwise use the kernel pmap's page directory.
 	 */
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap)
-		pdep = kernel_pmap->pm_pdir;
+		pdep = pmap_kernel()->pm_pdir;
 	else
 		pdep = p->p_vmspace->vm_map.pmap->pm_pdir;
 
