@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.26 2000/03/12 12:08:16 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.27 2000/03/13 18:56:40 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -69,9 +69,6 @@ include "dev/wsfont/files.wsfont"
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
-device	fb: wsemuldisplaydev, rasops1, rasops2, rasops8, rasops15, rasops16
-attach	fb at mainbus
-file	arch/hpcmips/dev/fb.c           fb needs-flag
 
 define	hpcfbif {}
 device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops8, rasops15, rasops16
