@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.2 2004/03/28 14:33:35 he Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.3 2004/03/29 03:15:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1029,11 +1029,7 @@ int	blen;
 	(void) sprintf(t, "%*.*s%u", len, len, ipf->fl_ifname, ipf->fl_unit);
 	t += strlen(t);
 #endif
-#ifdef __sgi
-	if ((ipf->fl_group[0] == 255) && (ipf->fl_group[1] == '\0'))
-#else
-	if ((ipf->fl_group[0] == -1) && (ipf->fl_group[1] == '\0'))
-#endif
+	if ((ipf->fl_group[0] == (char)~0) && (ipf->fl_group[1] == '\0'))
 		strcat(t, " @-1:");
 	else if (ipf->fl_group[0] == '\0')
 		(void) strcpy(t, " @0:");
