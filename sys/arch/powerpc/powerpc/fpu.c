@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.15 2004/04/05 04:53:01 simonb Exp $	*/
+/*	$NetBSD: fpu.c,v 1.16 2004/04/16 23:58:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.15 2004/04/05 04:53:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.16 2004/04/16 23:58:08 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -110,7 +110,7 @@ enable_fpu(void)
 		"lfd	29,232(%0)\n"
 		"lfd	30,240(%0)\n"
 		"lfd	31,248(%0)\n"
-	    :: "b"(&pcb->pcb_fpu.fpr[0]));
+	    :: "b"(&pcb->pcb_fpu.fpreg[0]));
 	__asm __volatile ("isync");
 	tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 	ci->ci_fpulwp = l;
@@ -171,7 +171,7 @@ save_fpu_cpu(void)
 		"stfd	29,232(%0)\n"
 		"stfd	30,240(%0)\n"
 		"stfd	31,248(%0)\n"
-	    :: "b"(&pcb->pcb_fpu.fpr[0]));
+	    :: "b"(&pcb->pcb_fpu.fpreg[0]));
 	__asm __volatile (
 		"mffs	0\n"
 		"stfd	0,0(%0)\n"
@@ -192,16 +192,30 @@ save_fpu_cpu(void)
  * this function).
  */
 void
-save_fpu_lwp(struct lwp *l)
+save_fpu_lwp(struct lwp *l, int discard)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct cpu_info *ci = curcpu();
+	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct cpu_info * const ci = curcpu();
 
 	/*
 	 * If it's already in the PCB, there's nothing to do.
 	 */
 
-	if (pcb->pcb_fpcpu == NULL) {
+	if (pcb->pcb_fpcpu == NULL)
+		return;
+
+	/*
+	 * If we simply need to discard the information, then don't
+	 * to save anything.
+	 */
+	if (discard) {
+#ifndef MULTIPROCESSOR
+		KASSERT(ci == pcb->pcb_fpcpu);
+#endif
+		KASSERT(l == pcb->pcb_fpcpu->ci_fpulwp);
+		pcb->pcb_fpcpu->ci_fpulwp = NULL;
+		pcb->pcb_fpcpu = NULL;
+		pcb->pcb_flags &= ~PCB_FPU;
 		return;
 	}
 
@@ -209,18 +223,15 @@ save_fpu_lwp(struct lwp *l)
 	 * If the state is in the current CPU, just flush the current CPU's
 	 * state.
 	 */
-
 	if (l == ci->ci_fpulwp) {
 		save_fpu_cpu();
 		return;
 	}
 
 #ifdef MULTIPROCESSOR
-
 	/*
 	 * It must be on another CPU, flush it from there.
 	 */
-
 	mp_save_fpu_lwp(l);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2004/04/15 21:07:07 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.102 2004/04/16 23:58:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2004/04/15 21:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2004/04/16 23:58:08 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -350,7 +350,7 @@ trap(struct trapframe *frame)
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
 		if (pcb->pcb_fpcpu) {
-			save_fpu_lwp(l);
+			save_fpu_lwp(l, FPU_SAVE);
 		}
 		enable_fpu();
 		break;
@@ -397,7 +397,7 @@ trap(struct trapframe *frame)
 		ci->ci_ev_vec.ev_count++;
 #ifdef ALTIVEC
 		if (pcb->pcb_veccpu)
-			save_vec_lwp(l);
+			save_vec_lwp(l, ALTIVEC_SAVE);
 		enable_vec();
 		break;
 #else
@@ -726,8 +726,9 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 	case EXC_ALI_LFD:
 	case EXC_ALI_STFD:
 		{
-			int reg = EXC_ALI_RST(frame->dsisr);
-			double *fpr = &curpcb->pcb_fpu.fpr[reg];
+			struct pcb * const pcb = &l->l_addr->u_pcb;
+			const int reg = EXC_ALI_RST(frame->dsisr);
+			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
 
 			/*
 			 * Juggle the FPU to ensure that we've initialized
@@ -735,19 +736,22 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 			 * the PCB.
 			 */
 
-			save_fpu_lwp(l);
-			enable_fpu();
-			save_fpu_cpu();
+			if (pcb->pcb_fpcpu)
+				save_fpu_lwp(l, FPU_SAVE);
+			if ((pcb->pcb_flags & PCB_FPU) == 0) {
+				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
+				pcb->pcb_flags |= PCB_FPU;
+			}
 			if (indicator == EXC_ALI_LFD) {
-				if (copyin((void *)frame->dar, fpr,
+				if (copyin((void *)frame->dar, fpreg,
 				    sizeof(double)) != 0)
 					return -1;
-				enable_fpu();
 			} else {
-				if (copyout(fpr, (void *)frame->dar,
+				if (copyout(fpreg, (void *)frame->dar,
 				    sizeof(double)) != 0)
 					return -1;
 			}
+			enable_fpu();
 			return 0;
 		}
 		break;

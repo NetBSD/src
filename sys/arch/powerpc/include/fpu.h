@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.12 2004/04/04 17:26:58 matt Exp $	*/
+/*	$NetBSD: fpu.h,v 1.13 2004/04/16 23:58:08 matt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -77,9 +77,12 @@
 #if defined(PPC_OEA)
 #define PPC_HAVE_FPU
 
+#define	FPU_SAVE	0
+#define	FPU_DISCARD	1
+
 void	enable_fpu(void);
 void	save_fpu_cpu(void);
-void	save_fpu_lwp(struct lwp *);
+void	save_fpu_lwp(struct lwp *, int /*discard*/);
 int	get_fpu_fault_code(void);
 #ifdef MULTIPROCESSOR
 void	mp_save_fpu_lwp(struct lwp *);

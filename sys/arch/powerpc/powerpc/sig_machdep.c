@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.22 2004/04/15 21:07:07 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.23 2004/04/16 23:58:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.22 2004/04/15 21:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23 2004/04/16 23:58:08 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -182,8 +182,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 	if ((pcb->pcb_flags & PCB_FPU) != 0) {
 		/* If we're the FPU owner, dump its context to the PCB first. */
 		if (pcb->pcb_fpcpu)
-			save_fpu_lwp(l);
-		(void)memcpy(mcp->__fpregs.__fpu_regs, pcb->pcb_fpu.fpr,
+			save_fpu_lwp(l, FPU_SAVE);
+		(void)memcpy(mcp->__fpregs.__fpu_regs, pcb->pcb_fpu.fpreg,
 		    sizeof (mcp->__fpregs.__fpu_regs));
 		mcp->__fpregs.__fpu_fpscr =
 		    ((int *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD];
@@ -201,7 +201,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 		 * to the PCB first.
 		 */
 		if (pcb->pcb_veccpu)
-			save_vec_lwp(l);
+			save_vec_lwp(l, ALTIVEC_SAVE);
 		(void)memcpy(mcp->__vrf.__vrs, pcb->pcb_vr.vreg,
 		    sizeof (mcp->__vrf.__vrs));
 		mcp->__vrf.__vscr = pcb->pcb_vr.vscr;
@@ -248,10 +248,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 #ifdef PPC_HAVE_FPU /* Restore FPR context, if any. */
 	if ((flags & _UC_FPU) && mcp->__fpregs.__fpu_valid != 0) {
-		/* XXX we don't need to save the state, just to drop it */
-		save_fpu_lwp(l);
-		(void)memcpy(&pcb->pcb_fpu.fpr, &mcp->__fpregs.__fpu_regs,
-		    sizeof (pcb->pcb_fpu.fpr));
+		/* we don't need to save the state, just drop it */
+		save_fpu_lwp(l, FPU_DISCARD);
+		(void)memcpy(&pcb->pcb_fpu.fpreg, &mcp->__fpregs.__fpu_regs,
+		    sizeof (pcb->pcb_fpu.fpreg));
 		((int *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD] = 
 		    mcp->__fpregs.__fpu_fpscr;
 	}
@@ -260,8 +260,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #ifdef ALTIVEC
 	/* Restore AltiVec context, if any. */
 	if (flags & _UC_POWERPC_VEC) {
-		/* XXX we don't need to save the state, just to drop it */
-		save_vec_lwp(l);
+		/* we don't need to save the state, just drop it */
+		save_vec_lwp(l, ALTIVEC_DISCARD);
 		(void)memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs,
 		    sizeof (pcb->pcb_vr.vreg));
 		pcb->pcb_vr.vscr = mcp->__vrf.__vscr;

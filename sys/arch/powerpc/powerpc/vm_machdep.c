@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.59 2004/04/04 16:57:00 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.60 2004/04/16 23:58:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2004/04/04 16:57:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2004/04/16 23:58:08 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -98,11 +98,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 #ifdef PPC_HAVE_FPU
 	if (l1->l_addr->u_pcb.pcb_fpcpu)
-		save_fpu_lwp(l1);
+		save_fpu_lwp(l1, FPU_SAVE);
 #endif
 #ifdef ALTIVEC
 	if (l1->l_addr->u_pcb.pcb_veccpu)
-		save_vec_lwp(l1);
+		save_vec_lwp(l1, ALTIVEC_SAVE);
 #endif
 	*pcb = l1->l_addr->u_pcb;
 
@@ -226,11 +226,11 @@ cpu_lwp_free(struct lwp *l, int proc)
 
 #ifdef PPC_HAVE_FPU
 	if (pcb->pcb_fpcpu)			/* release the FPU */
-		save_fpu_lwp(l);
+		save_fpu_lwp(l, FPU_DISCARD);
 #endif
 #ifdef ALTIVEC
 	if (pcb->pcb_veccpu)			/* release the AltiVEC */
-		save_vec_lwp(l);
+		save_vec_lwp(l, ALTIVEC_DISCARD);
 #endif
 
 }
@@ -274,19 +274,19 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 	md_core.frame = *trapframe(l);
 	if (pcb->pcb_flags & PCB_FPU) {
 #ifdef PPC_HAVE_FPU
-		if (l->l_addr->u_pcb.pcb_fpcpu)
-			save_fpu_lwp(l);
+		if (pcb->pcb_fpcpu)
+			save_fpu_lwp(l, FPU_SAVE);
 #endif
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
 		memset(&md_core.fpstate, 0, sizeof(md_core.fpstate));
 
 #ifdef ALTIVEC
-	if (pcb->pcb_veccpu)
-		save_vec_lwp(l);
-	if (pcb->pcb_flags & PCB_ALTIVEC)
+	if (pcb->pcb_flags & PCB_ALTIVEC) {
+		if (pcb->pcb_veccpu)
+			save_vec_lwp(l, ALTIVEC_SAVE);
 		md_core.vstate = pcb->pcb_vr;
-	else
+	} else
 #endif
 		memset(&md_core.vstate, 0, sizeof(md_core.vstate));
 

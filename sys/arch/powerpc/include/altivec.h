@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.8 2003/06/23 11:01:35 martin Exp $	*/
+/*	$NetBSD: altivec.h,v 1.9 2004/04/16 23:58:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,15 +45,17 @@
 #ifdef _KERNEL
 #include "opt_multiprocessor.h"
 
+#define	ALTIVEC_SAVE	0
+#define	ALTIVEC_DISCARD	1
+
 void enable_vec(void);
 void save_vec_cpu(void);
-void save_vec_lwp(struct lwp *);
+void save_vec_lwp(struct lwp *, int /*discard*/);
 #ifdef MULTIPROCESSOR
 void mp_save_vec_lwp(struct lwp *);
 #endif
 void vzeropage(paddr_t);
 void vcopypage(paddr_t, paddr_t);	/* dst, src */
-extern struct pool vecpool;
 #endif
 
 #endif	/* _POWERPC_ALTIVEC_H_ */
