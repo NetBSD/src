@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.2 1993/05/22 07:56:53 cgd Exp $
+ *	$Id: sd.c,v 1.3 1993/08/07 20:48:38 mycroft Exp $
  */
 
 /*
@@ -83,24 +83,7 @@ struct	driver sddriver = {
 	sdinit, "sd", (int (*)())sdstart, (int (*)())sdgo, (int (*)())sdintr,
 };
 
-struct	size {
-	u_long	strtblk;
-	u_long	endblk;
-	int	nblocks;
-};
-
-struct sdinfo {
-	struct	size part[8];
-};
-
-/*
- * since the SCSI standard tends to hide the disk structure, we define
- * partitions in terms of DEV_BSIZE blocks.  The default partition table
- * (for an unlabeled disk) reserves 512K for a boot area, has an 8 meg
- * root and 32 meg of swap.  The rest of the space on the drive goes in
- * the G partition.  As usual, the C partition covers the entire disk
- * (including the boot area).
- */
+#if 0
 struct sdinfo sddefaultpart = {
 	     1024,   17408,   16384   ,	/* A */
 	    17408,   82944,   65536   ,	/* B */
@@ -111,6 +94,7 @@ struct sdinfo sddefaultpart = {
 	    82944,       0,       0   ,	/* G */
 	   115712,       0,       0   ,	/* H */
 };
+#endif
 
 struct	sd_softc {
 	struct	hp_device *sc_hd;
@@ -123,11 +107,12 @@ struct	sd_softc {
 	u_int	sc_blks;	/* number of blocks on device */
 	int	sc_blksize;	/* device block size in bytes */
 	u_int	sc_wpms;	/* average xfer rate in 16 bit wds/sec. */
-	struct	sdinfo sc_info;	/* drive partition table & label info */
+	struct	disklabel sc_label; /* drive partition table & label info */
 } sd_softc[NSD];
 
 /* sc_flags values */
 #define	SDF_ALIVE	0x1
+#define	SDF_LABEL	0x2
 
 #ifdef DEBUG
 int sddebug = 1;
@@ -337,44 +322,6 @@ sdinit(hd)
 	sc->sc_dq.dq_slave = hd->hp_slave;
 	sc->sc_dq.dq_driver = &sddriver;
 
-	/*
-	 * If we don't have a disk label, build a default partition
-	 * table with 'standard' size root & swap and everything else
-	 * in the G partition.
-	 */
-	sc->sc_info = sddefaultpart;
-	/* C gets everything */
-	sc->sc_info.part[2].nblocks = sc->sc_blks;
-	sc->sc_info.part[2].endblk = sc->sc_blks;
-	/* G gets from end of B to end of disk */
-	sc->sc_info.part[6].nblocks = sc->sc_blks - sc->sc_info.part[1].endblk;
-	sc->sc_info.part[6].endblk = sc->sc_blks;
-	/*
-	 * We also define the D, E and F paritions as an alternative to
-	 * B and G.  D is 48Mb, starts after A and is intended for swapping.
-	 * E is 50Mb, starts after D and is intended for /usr. F starts
-	 * after E and is what ever is left.
-	 */
-	if (sc->sc_blks >= sc->sc_info.part[4].endblk) {
-		sc->sc_info.part[5].nblocks =
-			sc->sc_blks - sc->sc_info.part[4].endblk;
-		sc->sc_info.part[5].endblk = sc->sc_blks;
-	} else {
-		sc->sc_info.part[5].strtblk = 0;
-		sc->sc_info.part[3] = sc->sc_info.part[5];
-		sc->sc_info.part[4] = sc->sc_info.part[5];
-	}
-	/*
-	 * H is a single partition alternative to E and F.
-	 */
-	if (sc->sc_blks >= sc->sc_info.part[3].endblk) {
-		sc->sc_info.part[7].nblocks =
-			sc->sc_blks - sc->sc_info.part[3].endblk;
-		sc->sc_info.part[7].endblk = sc->sc_blks;
-	} else {
-		sc->sc_info.part[7].strtblk = 0;
-	}
-
 	sc->sc_flags = SDF_ALIVE;
 	return(1);
 }
@@ -395,6 +342,8 @@ sdopen(dev, flags, mode, p)
 {
 	register int unit = sdunit(dev);
 	register struct sd_softc *sc = &sd_softc[unit];
+	char *error;
+	struct cpu_disklabel notused;
 
 	if (unit >= NSD)
 		return(ENXIO);
@@ -403,6 +352,60 @@ sdopen(dev, flags, mode, p)
 
 	if (sc->sc_hd->hp_dk >= 0)
 		dk_wpms[sc->sc_hd->hp_dk] = sc->sc_wpms;
+
+	if (sc->sc_flags & SDF_LABEL)
+		return(0);
+
+	sc->sc_label.d_npartitions = 1;
+	sc->sc_label.d_partitions[0].p_offset = 0;
+	sc->sc_label.d_partitions[0].p_size = sc->sc_blks;
+	sc->sc_label.d_secsize = sc->sc_blksize;
+	sc->sc_label.d_secpercyl = 1 << sc->sc_bshift;
+
+	if (error = readdisklabel(dev & ~7, sdstrategy, &sc->sc_label,
+	    &notused)) {
+		printf("sd%d: %s\n", unit, error);
+		/* XXX need to fix this */
+#ifdef notyet
+		/* Build a default disk label. */
+		sc->sc_info = sddefaultpart;
+		/* C gets everything */
+		sc->sc_info.part[2].nblocks = sc->sc_blks;
+		sc->sc_info.part[2].endblk = sc->sc_blks;
+		/* G gets from end of B to end of disk */
+		sc->sc_info.part[6].nblocks = sc->sc_blks -
+		    sc->sc_info.part[1].endblk;
+		sc->sc_info.part[6].endblk = sc->sc_blks;
+		/*
+		 * We also define the D, E and F paritions as an alternative to
+		 * B and G.  D is 48Mb, starts after A and is intended for
+		 * swapping.  E is 50Mb, starts after D and is intended for
+		 * /usr. F starts after E and is what ever is left.
+		 */
+		if (sc->sc_blks >= sc->sc_info.part[4].endblk) {
+			sc->sc_info.part[5].nblocks =
+				sc->sc_blks - sc->sc_info.part[4].endblk;
+			sc->sc_info.part[5].endblk = sc->sc_blks;
+		} else {
+			sc->sc_info.part[5].strtblk = 0;
+			sc->sc_info.part[3] = sc->sc_info.part[5];
+			sc->sc_info.part[4] = sc->sc_info.part[5];
+		}
+		/*
+		 * H is a single partition alternative to E and F.
+		 */
+		if (sc->sc_blks >= sc->sc_info.part[3].endblk) {
+			sc->sc_info.part[7].nblocks =
+				sc->sc_blks - sc->sc_info.part[3].endblk;
+			sc->sc_info.part[7].endblk = sc->sc_blks;
+		} else {
+			sc->sc_info.part[7].strtblk = 0;
+		}
+#else
+		return(ENXIO);
+#endif
+	} else
+		sc->sc_flags |= SDF_LABEL;
 	return(0);
 }
 
@@ -508,9 +511,10 @@ void
 sdstrategy(bp)
 	register struct buf *bp;
 {
-	register int unit = sdunit(bp->b_dev);
+	register int unit = sdunit(bp->b_dev),
+		     part = sdpart(bp->b_dev);
 	register struct sd_softc *sc = &sd_softc[unit];
-	register struct size *pinfo = &sc->sc_info.part[sdpart(bp->b_dev)];
+	register struct disklabel *dl = &sc->sc_label;
 	register struct buf *dp = &sdtab[unit];
 	register daddr_t bn;
 	register int sz, s;
@@ -525,8 +529,8 @@ sdstrategy(bp)
 	} else {
 		bn = bp->b_blkno;
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
-		if (bn < 0 || bn + sz > pinfo->nblocks) {
-			sz = pinfo->nblocks - bn;
+		if (bn < 0 || bn + sz > dl->d_partitions[part].p_size) {
+			sz = dl->d_partitions[part].p_size - bn;
 			if (sz == 0) {
 				bp->b_resid = bp->b_bcount;
 				goto done;
@@ -546,8 +550,10 @@ sdstrategy(bp)
 			sdlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylin = (bn + pinfo->strtblk) >> sc->sc_bshift;
+		bp->b_cylin = (bn + dl->d_partitions[part].p_offset) >>
+		    sc->sc_bshift;
 	}
+
 	s = splbio();
 	disksort(dp, bp);
 	if (dp->b_active == 0) {
@@ -794,6 +800,8 @@ sdioctl(dev, cmd, data, flag, p)
 	default:
 		return (EINVAL);
 
+	/* XXX need DIOCGPART and label stuff */
+
 	case SDIOCSFORMAT:
 		/* take this device into or out of "format" mode */
 		if (suser(p->p_ucred, &p->p_acflag))
@@ -846,7 +854,7 @@ sdsize(dev)
 	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
 		return(-1);
 
-	return(sc->sc_info.part[sdpart(dev)].nblocks);
+	return(sc->sc_label.d_partitions[sdpart(dev)].p_size);
 }
 
 /*
@@ -878,12 +886,12 @@ sddump(dev)
 	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
 		return (ENXIO);
 	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= sc->sc_info.part[part].nblocks)
+	if (dumplo < 0 || dumplo >= sc->sc_label.d_partitions[part].p_size)
 		return (EINVAL);
-	if (dumplo + ctod(pages) > sc->sc_info.part[part].nblocks)
-		pages = dtoc(sc->sc_info.part[part].nblocks - dumplo);
+	if (dumplo + ctod(pages) > sc->sc_label.d_partitions[part].p_size)
+		pages = dtoc(sc->sc_label.d_partitions[part].p_size - dumplo);
 	maddr = lowram;
-	baddr = dumplo + sc->sc_info.part[part].strtblk;
+	baddr = dumplo + sc->sc_label.d_partitions[part].p_offset;
 	/* scsi bus idle? */
 	if (!scsireq(&sc->sc_dq)) {
 		scsireset(hp->hp_ctlr);
