@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.4 2000/09/19 19:52:25 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.144 2000/09/15 08:10:45 jinmei Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.5 2000/10/02 23:41:32 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.146 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -358,7 +358,7 @@ icmp6_input(mp, offp, proto)
 #ifdef IPSEC
 	/* drop it if it does not match the default policy */
 	if (ipsec6_in_reject(m, NULL)) {
-		ipsecstat.in_polvio++;
+		ipsec6stat.in_polvio++;
 		goto freeit;
 	}
 #endif
