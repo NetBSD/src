@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.2 1999/05/25 07:37:08 nisimura Exp $	*/
+/*	$NetBSD: promcall.c,v 1.3 1999/06/08 23:40:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,24 +43,23 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.2 1999/05/25 07:37:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.3 1999/06/08 23:40:19 simonb Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <dev/cons.h>
 
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/machdep.h>
 #include <machine/dec_prom.h>
-
-int	prom_systype __P((void));
-void	prom_haltbutton __P((void));
-void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
-void	prom_findcons __P((int *, int *, int *));
 
 static int  romgetc __P((dev_t));
 static void romputc __P((dev_t, int));
 static int  atoi __P((const char *));
+
+#define DEFAULT_SCSIID	7    /* XXX - this should really live somewhere else */
 
 /*
  * Default consdev, for errors or warnings before
@@ -123,7 +122,7 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 	 * Get and parse the "osconsole" environment variable.
 	 */
 	*crtslot = *kbdslot = -1;
-	oscon = (*callv->_getenv)("osconsole");
+	oscon = prom_getenv("osconsole");
 	if (oscon && *oscon >= '0' && *oscon <= '9') {
 		*kbdslot = *oscon - '0';
 		*prom_using_screen = 0;
@@ -161,6 +160,16 @@ prom_findcons(kbdslot, crtslot, prom_using_screen)
 }
 
 /*
+ * Get a prom environment variable.
+ */
+char *
+prom_getenv(name)
+	char *name;
+{
+	return (*callv->_getenv)(name);
+}
+
+/*
  * Get 32bit system type of Digital hardware.
  *	cputype,		u_int8_t [3]
  *	systype,		u_int8_t [2]
@@ -174,7 +183,7 @@ prom_systype()
 
 	if (callv != &callvec)
 		return (*callv->_getsysid)();
-	cp = (*callv->_getenv)("systype");
+	cp = prom_getenv("systype");
 	return (cp != NULL) ? atoi(cp) : 0;
 }
 
@@ -208,6 +217,21 @@ prom_halt(howto, bootstr)
 
 	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
+}
+
+/*
+ * Get the host SCSI ID from the PROM.
+ */
+int
+prom_scsiid(cnum)
+	int cnum;
+{
+	char scsiid_var[8];	/* strlen("scsiidX") + NULL */
+	char *cp;
+
+	snprintf(scsiid_var, 8, "scsiid%d", cnum);
+	cp = prom_getenv(scsiid_var);
+	return (cp != NULL) ? atoi(cp) : DEFAULT_SCSIID;
 }
 
 /*
