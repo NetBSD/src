@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/04/10 17:39:20 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/04/17 22:17:27 thorpej Exp $
 
 PROG=	ld.elf_so
 
@@ -21,7 +21,7 @@ DPADD+=	${LIBC_PIC}
 HDRS=	link.h
 
 NOMAN=
-STRIP=
+STRIPFLAG=
 
 .PATH: ${.CURDIR}/${MACHINE_ARCH}
 
