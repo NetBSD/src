@@ -1,4 +1,4 @@
-/*	$NetBSD: e_scalb.S,v 1.7 1999/11/10 16:45:39 thorpej Exp $	*/
+/*	$NetBSD: e_scalb.S,v 1.8 2000/01/31 18:28:49 kleink Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,12 +7,11 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_scalb.S,v 1.7 1999/11/10 16:45:39 thorpej Exp $")
+RCSID("$NetBSD: e_scalb.S,v 1.8 2000/01/31 18:28:49 kleink Exp $")
 
 ENTRY(__ieee754_scalb)
 	fmoved	%sp@(4),%fp0
 	fscaled	%sp@(12),%fp0
-Ldone:
 #ifndef __SVR4_ABI__
 	fmoved	%fp0,%sp@-
 	movel	%sp@+,%d0
