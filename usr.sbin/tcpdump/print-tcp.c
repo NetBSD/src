@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.11 1999/06/25 03:08:02 sommerfeld Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.12 1999/07/02 11:31:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.11 1999/06/25 03:08:02 sommerfeld Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.12 1999/07/02 11:31:36 itojun Exp $");
 #endif
 #endif
 
@@ -50,6 +50,10 @@ __RCSID("$NetBSD: print-tcp.c,v 1.11 1999/06/25 03:08:02 sommerfeld Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -86,8 +90,13 @@ __RCSID("$NetBSD: print-tcp.c,v 1.11 1999/06/25 03:08:02 sommerfeld Exp $");
 #endif
 
 struct tha {
+#ifndef INET6
 	struct in_addr src;
 	struct in_addr dst;
+#else
+	struct in6_addr src;
+	struct in6_addr dst;
+#endif /*INET6*/
 	u_int port;
 };
 
@@ -162,9 +171,18 @@ tcp_print(register const u_char *bp, register u_int length,
 	register char ch;
 	u_int16_t sport, dport, win, urp;
 	tcp_seq seq, ack;
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif
 
 	tp = (struct tcphdr *)bp;
 	ip = (struct ip *)bp2;
+#ifdef INET6
+	if (ip->ip_v == 6)
+		ip6 = (struct ip6_hdr *)bp2;
+	else
+		ip6 = NULL;
+#endif /*INET6*/
 	ch = '\0';
 	TCHECK(*tp);
 	if (length < sizeof(*tp)) {
@@ -201,16 +219,43 @@ tcp_print(register const u_char *bp, register u_int length,
 		}
 	}
 
-
-	(void)printf("%s.%s > %s.%s: ",
-		ipaddr_string(&ip->ip_src), tcpport_string(sport),
-		ipaddr_string(&ip->ip_dst), tcpport_string(dport));
+#ifdef INET6
+	if (ip6) {
+		if (bp == (u_char *)(ip6 + 1)) {
+			(void)printf("%s.%s > %s.%s: ",
+				ip6addr_string(&ip6->ip6_src),
+				tcpport_string(sport),
+				ip6addr_string(&ip6->ip6_dst),
+				tcpport_string(dport));
+		} else {
+			(void)printf("%s > %s: ",
+				tcpport_string(sport), tcpport_string(dport));
+		}
+	} else
+#endif /*INET6*/
+	{
+		if (bp == (u_char *)(ip + 1)) {
+			(void)printf("%s.%s > %s.%s: ",
+				ipaddr_string(&ip->ip_src),
+				tcpport_string(sport),
+				ipaddr_string(&ip->ip_dst),
+				tcpport_string(dport));
+		} else {
+			(void)printf("%s > %s: ",
+				tcpport_string(sport), tcpport_string(dport));
+		}
+	}
 
 	if (qflag) {
-		(void)printf("tcp %d", length - hlen);
+		(void)printf("tcp %d", length - tp->th_off * 4);
 		return;
 	}
-	if ((flags = tp->th_flags) & (TH_SYN|TH_FIN|TH_RST|TH_PUSH)) {
+#ifdef TH_ECN
+	if ((flags = tp->th_flags) & (TH_SYN|TH_FIN|TH_RST|TH_PUSH|TH_ECN))
+#else
+	if ((flags = tp->th_flags) & (TH_SYN|TH_FIN|TH_RST|TH_PUSH))
+#endif
+	{
 		if (flags & TH_SYN)
 			putchar('S');
 		if (flags & TH_FIN)
@@ -219,6 +264,10 @@ tcp_print(register const u_char *bp, register u_int length,
 			putchar('R');
 		if (flags & TH_PUSH)
 			putchar('P');
+#ifdef TH_ECN
+		if (flags & TH_ECN)
+			putchar('C');
+#endif
 	} else
 		putchar('.');
 
@@ -232,6 +281,49 @@ tcp_print(register const u_char *bp, register u_int length,
 		 * collating order so there's only one entry for
 		 * both directions).
 		 */
+#ifdef INET6
+		bzero(&tha, sizeof(tha));
+		rev = 0;
+		if (ip6) {
+			if (sport > dport) {
+				rev = 1;
+			} else if (sport == dport) {
+			    int i;
+
+			    for (i = 0; i < 4; i++) {
+				if (((u_int32_t *)(&ip6->ip6_src))[i] >
+				    ((u_int32_t *)(&ip6->ip6_dst))[i]) {
+					rev = 1;
+					break;
+				}
+			    }
+			}
+			if (rev) {
+				tha.src = ip6->ip6_dst;
+				tha.dst = ip6->ip6_src;
+				tha.port = dport << 16 | sport;
+			} else {
+				tha.dst = ip6->ip6_dst;
+				tha.src = ip6->ip6_src;
+				tha.port = sport << 16 | dport;
+			}
+		} else {
+			if (sport > dport ||
+			    (sport == dport &&
+			     ip->ip_src.s_addr > ip->ip_dst.s_addr)) {
+				rev = 1;
+			}
+			if (rev) {
+				*(struct in_addr *)&tha.src = ip->ip_dst;
+				*(struct in_addr *)&tha.dst = ip->ip_src;
+				tha.port = dport << 16 | sport;
+			} else {
+				*(struct in_addr *)&tha.dst = ip->ip_dst;
+				*(struct in_addr *)&tha.src = ip->ip_src;
+				tha.port = sport << 16 | dport;
+			}
+		}
+#else
 		if (sport < dport ||
 		    (sport == dport &&
 		     ip->ip_src.s_addr < ip->ip_dst.s_addr)) {
@@ -243,6 +335,7 @@ tcp_print(register const u_char *bp, register u_int length,
 			tha.port = dport << 16 | sport;
 			rev = 1;
 		}
+#endif
 
 		for (th = &tcp_seq_hash[tha.port % TSEQ_HASHSIZE];
 		     th->nxt; th = th->nxt)
@@ -270,6 +363,7 @@ tcp_print(register const u_char *bp, register u_int length,
 				seq -= th->seq, ack -= th->ack;
 		}
 	}
+	hlen = tp->th_off * 4;
 	if (hlen > length) {
 		(void)printf(" [bad hdr length]");
 		return;

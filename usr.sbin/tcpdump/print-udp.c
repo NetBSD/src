@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.10 1999/06/25 03:22:35 nathanw Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.11 1999/07/02 11:31:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.10 1999/06/25 03:22:35 nathanw Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.11 1999/07/02 11:31:37 itojun Exp $");
 #endif
 #endif
 
@@ -58,6 +58,10 @@ __RCSID("$NetBSD: print-udp.c,v 1.10 1999/06/25 03:22:35 nathanw Exp $");
 
 #include <stdio.h>
 #include <string.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -346,8 +350,13 @@ static int udp_cksum(register const struct ip *ip,
 #define SNMP_PORT 161		/*XXX*/
 #define NTP_PORT 123		/*XXX*/
 #define SNMPTRAP_PORT 162	/*XXX*/
+#define ISAKMP_PORT 500		/*XXX*/
 #define RIP_PORT 520		/*XXX*/
 #define KERBEROS_SEC_PORT 750	/*XXX*/
+
+#ifdef INET6
+#define RIPNG_PORT 521		/*XXX*/
+#endif
 
 void
 udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
@@ -357,11 +366,20 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	register const u_char *cp;
 	register const u_char *ep = bp + length;
 	u_int16_t sport, dport, ulen;
+#ifdef INET6
+	register const struct ip6_hdr *ip6;
+#endif
 
 	if (ep > snapend)
 		ep = snapend;
 	up = (struct udphdr *)bp;
 	ip = (struct ip *)bp2;
+#ifdef INET6
+	if (ip->ip_v == 6)
+		ip6 = (struct ip6_hdr *)bp2;
+	else
+		ip6 = NULL;
+#endif /*INET6*/
 	cp = (u_char *)(up + 1);
 	if (cp > snapend) {
 		printf("[|udp]");
@@ -466,11 +484,40 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			return;
 		}
 	}
+#if 0
 	(void)printf("%s.%s > %s.%s:",
 		ipaddr_string(&ip->ip_src), udpport_string(sport),
 		ipaddr_string(&ip->ip_dst), udpport_string(dport));
+#else
+#ifdef INET6
+	if (ip6) {
+		if (bp == (u_char *)(ip6 + 1)) {
+			(void)printf("%s.%s > %s.%s: ",
+				ip6addr_string(&ip6->ip6_src),
+				udpport_string(sport),
+				ip6addr_string(&ip6->ip6_dst),
+				udpport_string(dport));
+		} else {
+			(void)printf("%s > %s: ",
+				udpport_string(sport), udpport_string(dport));
+		}
+	} else
+#endif /*INET6*/
+	{
+		if (bp == (u_char *)(ip + 1)) {
+			(void)printf("%s.%s > %s.%s: ",
+				ipaddr_string(&ip->ip_src),
+				udpport_string(sport),
+				ipaddr_string(&ip->ip_dst),
+				udpport_string(dport));
+		} else {
+			(void)printf("%s > %s: ",
+				udpport_string(sport), udpport_string(dport));
+		}
+	}
+#endif
 
-	if (vflag) {
+	if (ip && vflag) {
 		int sum = up->uh_sum;
 		if (sum == 0) {
 			(void)printf(" [no cksum]");
@@ -494,6 +541,8 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			    sport, dport);
 		else if (ISPORT(RIP_PORT))
 			rip_print((const u_char *)(up + 1), length);
+		else if (ISPORT(ISAKMP_PORT))
+			isakmp_print((const u_char *)(up + 1), length, bp2);
 		else if (ISPORT(SNMP_PORT) || ISPORT(SNMPTRAP_PORT))
 			snmp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(NTP_PORT))
@@ -502,6 +551,10 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			krb_print((const void *)(up + 1), length);
 		else if (dport == 3456)
 			vat_print((const void *)(up + 1), length, up);
+#ifdef INET6
+		else if (ISPORT(RIPNG_PORT))
+			ripng_print((const u_char *)(up + 1), length);
+#endif /*INET6*/
 		/*
 		 * Kludge in test for whiteboard packets.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp.c,v 1.5 1997/10/03 19:55:15 christos Exp $	*/
+/*	$NetBSD: print-icmp.c,v 1.6 1999/07/02 11:31:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-icmp.c,v 1.38 96/09/26 23:36:44 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-icmp.c,v 1.5 1997/10/03 19:55:15 christos Exp $");
+__RCSID("$NetBSD: print-icmp.c,v 1.6 1999/07/02 11:31:32 itojun Exp $");
 #endif
 #endif
 
@@ -189,9 +189,11 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 	ip = (struct ip *)bp2;
 	str = buf;
 
+#if 0
         (void)printf("%s > %s: ",
 		ipaddr_string(&ip->ip_src),
 		ipaddr_string(&ip->ip_dst));
+#endif
 
 	TCHECK(dp->icmp_code);
 	switch (dp->icmp_type) {

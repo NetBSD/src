@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.6 1999/05/11 02:56:55 thorpej Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.7 1999/07/02 11:31:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ppp.c,v 1.26 97/06/12 14:21:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ppp.c,v 1.6 1999/05/11 02:56:55 thorpej Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.7 1999/07/02 11:31:35 itojun Exp $");
 #endif
 #endif
 
@@ -74,6 +74,7 @@ ppp_if_print(u_char *user, const struct pcap_pkthdr *h,
 	register u_int length = h->len;
 	register u_int caplen = h->caplen;
 	const struct ip *ip;
+	u_int proto;
 
 	ts_print(&h->ts);
 
@@ -87,6 +88,7 @@ ppp_if_print(u_char *user, const struct pcap_pkthdr *h,
 	 * and/or check that they're not walking off the end of the packet.
 	 * Rather than pass them all the way down, we set these globals.
 	 */
+	proto = ntohs(*(u_short *)&p[2]);
 	packetp = p;
 	snapend = p + caplen;
 
@@ -96,8 +98,17 @@ ppp_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 	length -= PPP_HDRLEN;
 	ip = (struct ip *)(p + PPP_HDRLEN);
-	ip_print((const u_char *)ip, length);
-
+	switch (proto) {
+	case ETHERTYPE_IP:
+	case PPP_IP:
+		ip_print((const u_char *)ip, length);
+		break;
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		ip6_print((const u_char *)ip, length);
+		break;
+#endif
+	}
 	if (xflag)
 		default_print((const u_char *)ip, caplen - PPP_HDRLEN);
 out:

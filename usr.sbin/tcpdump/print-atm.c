@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atm.c,v 1.1.1.1 1997/10/03 17:24:14 christos Exp $	*/
+/*	$NetBSD: print-atm.c,v 1.2 1999/07/02 11:31:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: print-atm.c,v 1.9 97/05/28 12:52:40 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-atm.c,v 1.1.1.1 1997/10/03 17:24:14 christos Exp $");
+__RCSID("$NetBSD: print-atm.c,v 1.2 1999/07/02 11:31:30 itojun Exp $");
 #endif
 #endif
 
@@ -112,6 +112,12 @@ atm_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	case ETHERTYPE_IP:
 		ip_print(p, length);
 		break;
+
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		ip6_print(p, length);
+		break;
+#endif /*INET6*/
 
 		/*XXX this probably isn't right */
 	case ETHERTYPE_ARP:

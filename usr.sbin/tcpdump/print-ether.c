@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ether.c,v 1.5 1997/10/03 19:55:11 christos Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.6 1999/07/02 11:31:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ether.c,v 1.44 97/05/26 17:18:13 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ether.c,v 1.5 1997/10/03 19:55:11 christos Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.6 1999/07/02 11:31:31 itojun Exp $");
 #endif
 #endif
 
@@ -176,6 +176,12 @@ ether_encap_print(u_short ethertype, const u_char *p,
 	case ETHERTYPE_IP:
 		ip_print(p, length);
 		return (1);
+
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		ip6_print(p, length);
+		return (1);
+#endif /*INET6*/
 
 	case ETHERTYPE_ARP:
 	case ETHERTYPE_REVARP:

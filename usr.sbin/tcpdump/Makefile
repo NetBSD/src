@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/03/23 00:02:24 bad Exp $	
+#	$NetBSD: Makefile,v 1.15 1999/07/02 11:31:28 itojun Exp $	
 
 PROG=	tcpdump
 MAN=	tcpdump.8 
@@ -9,6 +9,7 @@ CPPFLAGS+=-DHAVE_STRCASECMP=1 -DHAVE_ETHER_NTOA=1 -DHAVE_SETLINEBUF=1
 CPPFLAGS+=-DRETSIGTYPE=void -DRETSIGVAL= -DHAVE_SIGACTION=1
 CPPFLAGS+=-DHAVE_SOCKADDR_SA_LEN=1 -DHAVE_FDDI -DHAVE_TOKEN -DLBL_ALIGN
 CPPFLAGS+=-DHAVE_HDLC
+CPPFLAGS+=-DINET6 -DHAVE_LIBZ -DHAVE_ZLIB_H
 
 LDADD+=	-lpcap -ll
 DPADD+=	${LIBPCAP} ${LIBL}
@@ -22,6 +23,9 @@ print-egp.c print-dvmrp.c print-domain.c print-decnet.c print-bootp.c print-atm.
 print-hdlc.c print-token.c \
 print-atalk.c print-arp.c parsenfsfh.c machdep.c gmt2local.c bpf_dump.c \
 addrtoname.c print-mobile.c
+SRCS+=	print-ah.c print-esp.c print-frag6.c print-icmp6.c print-ip6.c \
+	print-ip6opts.c print-ipcomp.c print-isakmp.c print-ospf6.c \
+	print-ripng.c print-rt6.c
 SRCS+= version.c
 
 AWKS= atime.awk packetdat.awk stime.awk send-ack.awk   

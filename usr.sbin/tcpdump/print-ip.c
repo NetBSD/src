@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.6 1998/09/25 19:10:25 hwr Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.7 1999/07/02 11:31:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ip.c,v 1.66 97/05/28 12:51:43 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.6 1998/09/25 19:10:25 hwr Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.7 1999/07/02 11:31:32 itojun Exp $");
 #endif
 #endif
 
@@ -191,7 +191,7 @@ igmp_print(register const u_char *bp, register u_int len,
 		break;
 	case 0x14:
 		(void)printf("igmp pim");
-		pim_print(bp, len);
+		igmp_pim_print(bp, len);
   		break;
 	case 0x1e:
 		print_mresp(bp, len);
@@ -345,6 +345,8 @@ ip_print(register const u_char *bp, register u_int length)
 	register const struct ip *ip;
 	register u_int hlen, len, off;
 	register const u_char *cp;
+	u_char nh;
+	int advance;
 
 	ip = (const struct ip *)bp;
 #ifdef LBL_ALIGN
@@ -396,7 +398,48 @@ ip_print(register const u_char *bp, register u_int length)
 	off = ntohs(ip->ip_off);
 	if ((off & 0x1fff) == 0) {
 		cp = (const u_char *)ip + hlen;
-		switch (ip->ip_p) {
+		nh = ip->ip_p;
+
+		if (nh != IPPROTO_TCP && nh != IPPROTO_UDP) {
+			(void)printf("%s > %s: ", ipaddr_string(&ip->ip_src),
+				ipaddr_string(&ip->ip_dst));
+		}
+again:
+		switch (nh) {
+
+		case IPPROTO_AH:
+			nh = *cp;
+			advance = ah_print(cp, (const u_char *)ip);
+			cp += advance;
+			len -= advance;
+			goto again;
+
+		case IPPROTO_ESP:
+		    {
+			int enh;
+			advance = esp_print(cp, (const u_char *)ip, &enh);
+			cp += advance;
+			len -= advance;
+			if (enh < 0)
+				break;
+			nh = enh & 0xff;
+			goto again;
+		    }
+
+#ifndef IPPROTO_IPCOMP
+#define IPPROTO_IPCOMP	108
+#endif
+		case IPPROTO_IPCOMP:
+		    {
+			int enh;
+			advance = ipcomp_print(cp, (const u_char *)ip, &enh);
+			cp += advance;
+			len -= advance;
+			if (enh < 0)
+				break;
+			nh = enh & 0xff;
+			goto again;
+		    }
 
 		case IPPROTO_TCP:
 			tcp_print(cp, len, (const u_char *)ip);
@@ -418,8 +461,10 @@ ip_print(register const u_char *bp, register u_int length)
 			break;
 
 		case IPPROTO_ND:
+#if 0
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
 				ipaddr_string(&ip->ip_dst));
+#endif
 			(void)printf(" nd %d", len);
 			break;
 
@@ -443,16 +488,39 @@ ip_print(register const u_char *bp, register u_int length)
 
 		case 4:
 			/* DVMRP multicast tunnel (ip-in-ip encapsulation) */
+#if 0
 			if (vflag)
 				(void)printf("%s > %s: ",
 					     ipaddr_string(&ip->ip_src),
 					     ipaddr_string(&ip->ip_dst));
+#endif
 			ip_print(cp, len);
 			if (! vflag) {
 				printf(" (ipip)");
 				return;
 			}
 			break;
+
+#ifdef INET6
+#ifndef IP6PROTO_ENCAP
+#define IP6PROTO_ENCAP 41
+#endif
+		case IP6PROTO_ENCAP:
+			/* ip6-in-ip encapsulation */
+#if 0
+			if (vflag)
+				(void)printf("%s > %s: ",
+					     ipaddr_string(&ip->ip_src),
+					     ipaddr_string(&ip->ip_dst));
+#endif
+			ip6_print(cp, len);
+			if (! vflag) {
+				printf(" (encap)");
+				return;
+			}
+			break;
+#endif /*INET6*/
+
 
 #ifndef IPPROTO_GRE
 #define IPPROTO_GRE 47
@@ -486,8 +554,10 @@ ip_print(register const u_char *bp, register u_int length)
 			break;
 
 		default:
+#if 0
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
 				ipaddr_string(&ip->ip_dst));
+#endif
 			(void)printf(" ip-proto-%d %d", ip->ip_p, len);
 			break;
 		}
