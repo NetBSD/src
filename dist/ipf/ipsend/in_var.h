@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.1.1.1 1999/12/11 22:24:08 veego Exp $	*/
+/*	$NetBSD: in_var.h,v 1.2 2002/05/16 19:36:52 wiz Exp $	*/
 
 /*	@(#)in_var.h 1.3 88/08/19 SMI; from UCB 7.1 6/5/86	*/
 
@@ -78,7 +78,7 @@ struct	ifqueue	ipintrq;		/* ip packet input queue */
 	     (ia) != NULL && (ia)->ia_ifp != (ifp);			  \
 	     (ia) = (ia)->ia_next);					  \
 }
-#endif KERNEL
+#endif /* KERNEL */
 
 /*
  * Per-interface router version information is kept in this list.
@@ -175,5 +175,5 @@ struct in_multistep {
 }
 
 struct in_multi *in_addmulti();
-#endif KERNEL
+#endif /* KERNEL */
 #endif /*!_netinet_in_var_h*/

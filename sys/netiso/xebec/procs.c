@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.6 2001/11/13 01:10:52 lukem Exp $	*/
+/*	$NetBSD: procs.c,v 1.7 2002/05/16 19:30:41 wiz Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.6 2001/11/13 01:10:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.7 2002/05/16 19:30:41 wiz Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -254,7 +254,7 @@ predtable(os, oe, str, action, newstate)
 				event, state, Index, str);
 				fflush(stdout);
 			ENDDEBUG
-#endif LINT
+#endif /* LINT */
 			for( ((q = &Predlist[(event<<Eventshift)+state]), 
 					 (p = Predlist[(event<<Eventshift)+state]));
 							p ; p = p->p_next ) {
@@ -313,7 +313,7 @@ dump_predtable(f)
 	fprintf(stdout,
 		" Xebec used %8d bytes of storage, wasted %8d bytes\n", 
 		bytesmalloced, byteswasted);
-#endif notdef
+#endif /* notdef */
 	fprintf(stdout, 
 		" %8d states\n %8d events\n %8d transitions\n",
 		Nstates, Nevents, Ntrans);
@@ -382,9 +382,9 @@ dump_predtable(f)
 	fprintf(f, "default: return 0;\n} /* end switch */\n");
 #ifdef notdef
 	fprintf(f, "/*NOTREACHED*/return 0;\n} /* _Xebec_index() */\n");
-#else notdef
+#else /* !notdef */
 	fprintf(f, "} /* _Xebec_index() */\n");
-#endif notdef
+#endif /* notdef */
 	fprintf(f, "static int inx[%d][%d] = { {", Nevents+1,Nstates);
 	for(s = 0; s< Nstates; s++) fprintf(f, "0,"); /* event 0 */
 	fprintf(f, "},\n");
@@ -405,7 +405,7 @@ dump_predtable(f)
 	}
 	fprintf(f, "};");
 }
-#endif LINT
+#endif /* LINT */
 
 char *
 stash(buf)
@@ -419,7 +419,7 @@ char *buf;
 	c = Malloc(len+1);
 #ifdef LINT
 	c =
-#endif LINT
+#endif /* LINT */
 	strcpy(c, buf);
 
 	IFDEBUG(z)
@@ -444,8 +444,8 @@ int event,state;
 			"dump_pentry for event 0x%x, state 0x%x is 0x%x\n", 
 			 event, state, p);
 		ENDDEBUG
-#endif LINT
+#endif /* LINT */
 		q = &p->p_next;
 	}
 }
-#endif notdef
+#endif /* notdef */
