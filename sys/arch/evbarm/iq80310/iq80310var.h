@@ -1,7 +1,7 @@
-/*	$NetBSD: iq80310var.h,v 1.4 2002/01/30 03:59:43 thorpej Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.5 2002/02/07 21:34:24 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -37,6 +37,16 @@
 
 #ifndef _IQ80310_IQ80310VAR_H_
 #define	_IQ80310_IQ80310VAR_H_
+
+#include "opt_iop310.h"
+
+/*
+ * If no IOP310 board type options are specified, default to IQ80310.
+ * Otherwise, make sure only one board type option is specified.
+ */
+#if (defined(IOP310_TEAMASA_NPWR)) > 1
+#error May not define more than one IOP310 board type
+#endif
 
 #include <sys/queue.h>
 #include <dev/pci/pcivar.h>
