@@ -2151,6 +2151,8 @@ read_dbx_symtab (struct objfile *objfile)
 	  case N_NSYMS:		/* Ultrix 4.0: symbol count */
 	  case N_DEFD:			/* GNU Modula-2 */
 	  case N_ALIAS:		/* SunPro F77: alias name, ignore for now.  */
+	  case N_WARNING:	/* Linker warning message; ignore.  */
+
 
 	  case N_OBJ:			/* useless types from Solaris */
 	  case N_OPT:

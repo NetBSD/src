@@ -331,6 +331,8 @@ sparc_init_extra_frame_info (int fromleaf, struct frame_info *fi)
 
 	  if (GDB_TARGET_IS_SPARC64 && (fi->frame & 1))
 	    fi->frame += 2047;
+	  else
+	    fi->frame &= 0x0ffffffffL;
 	}
     }
 
@@ -372,6 +374,8 @@ sparc_init_extra_frame_info (int fromleaf, struct frame_info *fi)
 
 	      if (GDB_TARGET_IS_SPARC64 && (fi->frame & 1))
 		fi->frame += 2047;
+	      else
+		fi->frame &= 0x0ffffffffL;
 
 	      /* Record where the fp got saved.  */
 	      fi->extra_info->fp_addr = 
@@ -1305,6 +1309,8 @@ sparc_pop_frame (void)
  
       if (GDB_TARGET_IS_SPARC64 && (sp & 1))
 	sp += 2047;
+      else
+	sp &= 0x0ffffffffL;
 
       read_memory (sp, reg_temp, SPARC_INTREG_SIZE * 16);
 
@@ -2189,13 +2195,22 @@ sparc_fix_call_dummy (char *dummy, CORE_ADDR pc, CORE_ADDR fun,
 		      struct type *value_type, int using_gcc)
 {
   int i;
-
+#ifdef GDB_TARGET_IS_SPARC64
+/*
+ * XXXXXXXXX
+ *
+ * We'll use jmpl %g1, %o7, so we just overwrite %g1 with the
+ * pointer to the function we want to call.
+ */
+  write_register (G0_REGNUM + 1, fun);
+#else
   /* Store the relative adddress of the target function into the
      'call' instruction. */
   store_unsigned_integer (dummy + CALL_DUMMY_CALL_OFFSET, 4,
 			  (0x40000000
 			   | (((fun - (pc + CALL_DUMMY_CALL_OFFSET)) >> 2)
 			      & 0x3fffffff)));
+#endif
 
   /* If the called function returns an aggregate value, fill in the UNIMP
      instruction containing the size of the returned aggregate return value,
@@ -2297,6 +2312,8 @@ sparc64_read_sp (void)
 
   if (sp & 1)
     sp += 2047;
+  else
+    sp &= 0x0ffffffffL;
   return sp;
 }
 
@@ -2307,6 +2324,8 @@ sparc64_read_fp (void)
 
   if (fp & 1)
     fp += 2047;
+  else
+    fp &= 0x0ffffffffL;
   return fp;
 }
 
@@ -2319,6 +2338,12 @@ sparc64_write_sp (CORE_ADDR val)
   else
     write_register (SP_REGNUM, val);
 }
+
+CORE_ADDR
+sparc64_frame_address (struct frame_info *fi)
+{  
+  return (fi->frame - 2047);
+}  
 
 /* The SPARC 64 ABI passes floating-point arguments in FP0 to FP31,
    and all other arguments in O0 to O5.  They are also copied onto
