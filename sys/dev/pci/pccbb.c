@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.44 2000/07/09 22:06:02 jhawk Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.45 2000/08/28 09:26:38 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -755,8 +755,8 @@ pccbb_chipinit(sc)
 		reg |= PCI113X_CBCTRL_PCI_IRQ_ENA;
 		/* CSC intr enable */
 		reg |= PCI113X_CBCTRL_PCI_CSC;
-		/* functional intr prohibit */
-		reg &= ~PCI113X_CBCTRL_PCI_INTR;
+		/* functional intr prohibit | prohibit ISA routing */
+		reg &= ~(PCI113X_CBCTRL_PCI_INTR | PCI113X_CBCTRL_INT_MASK);
 		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
 		break;
 
@@ -830,8 +830,12 @@ pccbb_pcmcia_attach_setup(sc, paa)
 	 * 4) Clear any pending CSC interrupt.
 	 */
 	Pcic_write(ph, PCIC_INTR, PCIC_INTR_ENABLE | PCIC_INTR_RESET);
-	Pcic_write(ph, PCIC_CSC_INTR, PCIC_CSC_INTR_CD_ENABLE);
-	Pcic_read(ph, PCIC_CSC);
+	if (sc->sc_chipset == CB_TI113X) {
+		Pcic_write(ph, PCIC_CSC_INTR, 0);
+	} else {
+		Pcic_write(ph, PCIC_CSC_INTR, PCIC_CSC_INTR_CD_ENABLE);
+		Pcic_read(ph, PCIC_CSC);
+	}
 
 	/* initialize pcmcia bus attachment */
 	paa->paa_busname = "pcmcia";
