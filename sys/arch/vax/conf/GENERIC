@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.117 2004/02/13 11:36:19 wiz Exp $
+# $NetBSD: GENERIC,v 1.118 2004/03/19 20:21:08 mhitch Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.117 $"
+#ident 		"GENERIC-$Revision: 1.118 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -178,6 +178,7 @@ asc0		at vsbus0 csr 0x26000080 # VS4000/90 and 4000/10x SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 lcspx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
+#lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
 
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 rd*		at hdc0 drive?		# RD5x disks
@@ -253,6 +254,7 @@ uk*		at scsibus? target? lun?
 # VAXstation graphics support
 wsdisplay0	at smg0
 wsdisplay0	at lcspx0
+#wsdisplay0	at lcg0
 #wsdisplay0	at clr0
 #wsdisplay0	at qd0
 #wsdisplay0	at qv0
@@ -294,3 +296,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	leds			# control the leds on vaxstations.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	wsmux			# mouse & keyboard multiplexor
