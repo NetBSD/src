@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.38 1999/02/12 15:04:01 kleink Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.38.2.1 2000/10/19 17:05:59 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.38 1999/02/12 15:04:01 kleink Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.38.2.1 2000/10/19 17:05:59 he Exp $");
 #endif
 
 #include <sys/param.h>
@@ -133,7 +133,8 @@ int	_yp_invalid_domain __P((const char *));		/* from libc */
 int	main __P((int, char *[]));
 
 static void usage __P((void));
-static void yp_log __P((int, const char *, ...));
+static void yp_log __P((int, const char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 static struct _dom_binding *makebinding __P((const char *));
 static int makelock __P((struct _dom_binding *));
 static void removelock __P((struct _dom_binding *));
