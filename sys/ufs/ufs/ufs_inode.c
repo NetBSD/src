@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.18 2000/12/03 03:57:24 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.19 2001/02/07 12:40:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -57,6 +57,8 @@
 
 #include <uvm/uvm.h>
 
+extern int prtactive;
+
 /*
  * Last reference to an inode.  If necessary, write or delete it.
  */
@@ -72,7 +74,6 @@ ufs_inactive(v)
 	struct inode *ip = VTOI(vp);
 	struct proc *p = ap->a_p;
 	int mode, error = 0;
-	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_inactive: pushing active", vp);
@@ -119,7 +120,6 @@ ufs_reclaim(vp, p)
 	struct proc *p;
 {
 	struct inode *ip;
-	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_reclaim: pushing active", vp);

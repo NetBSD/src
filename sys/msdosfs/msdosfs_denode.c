@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.48 2001/01/01 00:25:41 chs Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.49 2001/02/07 12:40:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -75,6 +75,8 @@ u_long dehash;			/* size of hash table - 1 */
 struct simplelock msdosfs_ihash_slock;
 
 struct pool msdosfs_denode_pool;
+
+extern int prtactive;
 
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
@@ -563,7 +565,6 @@ msdosfs_reclaim(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
-	extern int prtactive;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_reclaim(): dep %p, file %s, refcnt %ld\n",
@@ -604,7 +605,6 @@ msdosfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
-	extern int prtactive;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_inactive(): dep %p, de_Name[0] %x\n", dep, dep->de_Name[0]);

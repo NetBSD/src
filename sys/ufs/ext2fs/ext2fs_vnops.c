@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.31 2001/01/22 12:17:42 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.32 2001/02/07 12:40:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -72,6 +72,7 @@
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 
+extern int prtactive;
 
 static int ext2fs_chmod
 	__P((struct vnode *, int, struct ucred *, struct proc *));
@@ -1392,7 +1393,6 @@ ext2fs_reclaim(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip;
-	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0) 
 		vprint("ext2fs_reclaim: pushing active", vp);

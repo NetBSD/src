@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.40 2001/02/06 16:25:48 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41 2001/02/07 12:40:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,6 +65,8 @@ struct lock nfs_hashlock;
 
 struct pool nfs_node_pool;		/* memory pool for nfs nodes */
 struct pool nfs_vattr_pool;		/* memory pool for nfs vattrs */
+
+extern int prtactive;
 
 #define TRUE	1
 #define	FALSE	0
@@ -205,7 +207,6 @@ nfs_inactive(v)
 	struct sillyrename *sp;
 	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
-	extern int prtactive;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -247,7 +248,6 @@ nfs_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
