@@ -50,14 +50,12 @@ Boston, MA 02111-1307, USA.  */
 /* NetBSD extension to GNU C: __KPRINTF_ATTRIBUTE__ */
 
 #define CPP_PREDEFINES "\
--Dm68k -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ -D__SVR4_ABI__ \
+-D__m68k__ -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ -D__SVR4_ABI__ \
 -D__motorola__ -Asystem(unix) -Asystem(NetBSD) -Acpu(m68k) -Amachine(m68k)"
 
-/* XXX This may need further investigation.  */
+/* This is BSD, so it wants DBX format. */
 
-#undef DBX_DEBUGGING_INFO
 #define DBX_DEBUGGING_INFO
-#undef PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 /* Make GCC agree with <machine/ansi.h>.  */
 
