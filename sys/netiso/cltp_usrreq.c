@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.22 2003/08/07 16:33:34 agc Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.23 2003/09/30 00:01:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.22 2003/08/07 16:33:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.23 2003/09/30 00:01:18 christos Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -196,7 +196,7 @@ cltp_ctlinput(cmd, sa, dummy)
 	extern u_char   inetctlerrmap[];
 	struct sockaddr_iso *siso;
 
-	if ((unsigned) cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 	if (sa->sa_family != AF_ISO && sa->sa_family != AF_CCITT)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.58 2003/09/06 03:36:32 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.59 2003/09/30 00:01:18 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.58 2003/09/06 03:36:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.59 2003/09/30 00:01:18 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -584,7 +584,7 @@ in6_pcbnotify(table, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 	int nmatch = 0;
 	u_int32_t flowinfo;
 
-	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
+	if ((unsigned)cmd >= PRC_NCMDS || dst->sa_family != AF_INET6)
 		return 0;
 
 	sa6_dst = (struct sockaddr_in6 *)dst;
