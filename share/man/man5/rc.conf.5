@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.74 2002/12/04 22:59:51 martin Exp $
+.\"	$NetBSD: rc.conf.5,v 1.75 2002/12/18 19:29:26 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -187,12 +187,12 @@ If empty or not set, then the contents of
 (if it exists) are used.
 .It Sy force_down_interfaces
 A space separated list of interface names.
-This interfaces will be configured down when going from multiuser to singleuser
+These interfaces will be configured down when going from multiuser to singleuser
 mode or on system shutdown.
 .Pp
 This is important for some stateful interfaces, for example PPP over ISDN
 connections that cost money by connection time or PPPoE interfaces which
-have no direct means of noticing 
+have no direct means of noticing
 .Dq disconnect
 events.
 .Pp
