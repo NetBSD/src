@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 1999/09/12 01:17:00 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 1999/09/24 06:24:34 is Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -494,7 +494,6 @@ pmap_init()
 	extern vaddr_t	amigahwaddr;
 	extern u_int	namigahwpg;
 	vaddr_t		addr, addr2;
-	paddr_t		paddr;
 	vsize_t		s;
 	u_int		npg;
 	struct pv_entry *pv;
@@ -502,6 +501,7 @@ pmap_init()
 	int             rv, bank;
 #if defined(M68060)
 	struct kpt_page *kptp;
+	paddr_t		paddr;
 #endif
 
 #ifdef DEBUG
