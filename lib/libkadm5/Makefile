@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/12/30 17:21:45 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.5 2001/01/10 21:30:05 phil Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,8 @@ kadm5_err.c kadm5_err.h: kadm5_err.et
 
 clean cleandir:
 	rm -f kadm5_err.c kadm5_err.h
+
+cleanhtml:
 
 INCSDIR= /usr/include/krb5
 
