@@ -1,6 +1,6 @@
-.\"	$NetBSD: contents,v 1.62 2002/06/28 15:26:38 skrll Exp $
+.\"	$NetBSD: contents,v 1.63 2002/06/29 08:32:30 lukem Exp $
 .\"
-.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -76,20 +76,21 @@ four megabytes of RAM.
 .if r_amiga \{\
 .			It Pa netbsd.INSTALL.gz
 A somewhat smaller kernel, which you can use to boot the system
-using loadbsd for installation on memory-tight systems. This is the
-same kernel as present on the miniroot.
+using loadbsd for installation on memory-tight systems.
+This is the same kernel as present on the miniroot.
 .\}
 .
 .if r_atari \{\
 .			It Pa netbsd-ATARITT.gz
 A kernel specifically tuned for the Atari TT030.
 .			It Pa netbsd-BOOT.gz
-A kernel for both the Falcon and TT030. It is kept pretty small, so you
+A kernel for both the Falcon and TT030.
+It is kept pretty small, so you
 can use it to boot the system for installation on memory-tight systems.
 This is the kernel supplied on the boot.fs floppy.
 .			It Pa netbsd-BOOTX.gz
-Same as the BOOT kernel, but it has slightly more features. You can run X11
-with it.
+Same as the BOOT kernel, but it has slightly more features.
+You can run X11 with it.
 .			It Pa netbsd-FALCON.gz
 A kernel specifically tuned for the Atari Falcon.
 .			It Pa netbsd-HADES.gz
@@ -107,7 +108,7 @@ A kernel for TX3912 machines.
 .
 .if r_i386 \{\
 .			It Pa netbsd.GENERIC_LAPTOP.gz
-A version of 
+A version of
 .Li GENERIC
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
@@ -130,28 +131,29 @@ A version of
 .Li INSTALL
 intended to fit on a 5.25"/1.2 MB diskette.
 .			It Pa netbsd.INSTALL_LAPTOP.gz
-A version of 
+A version of
 .Li INSTALL
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
 .			It Pa netbsd.INSTALL_PS2.gz
-A version of 
+A version of
 .Li INSTALL
 that has MCA stuff enabled to allow installing on IBM PS/2 machines.
 .\}
 .if r_macppc \{\
 .			It Pa netbsd.GENERIC_MD.gz
-A gzipped 
+A gzipped
 .Nx
-kernel containing code for everything supported in this release.  It also
-has a RAM-disk installer.  This is the kernel you should use when you want
-to install via from an HFS partition on Open Firmware 3 systems, netboot,
-or from a CD-R.
+kernel containing code for everything supported in this release.
+It also has a RAM-disk installer.
+This is the kernel you should use when you want to install via from an
+HFS partition on Open Firmware 3 systems, netboot, or from a CD-R.
 .			It Pa netbsd.INSTALL.gz
 A gzipped
 .Nx kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
-and 2.4 systems (i.e. those that have floppy drives).  It has a RAM-disk
-installer.  This is the kernel you should use when you want to install on
+and 2.4 systems (i.e. those that have floppy drives).
+It has a RAM-disk installer.
+This is the kernel you should use when you want to install on
 one of these systems from a floppy disk.
 .\}
 .
@@ -184,10 +186,11 @@ in this release.
 .			It Pa netbsd.img-WALNUT.gz
 Same as the above, but in the format expected by the firmware.
 .			It Pa netbsd.INSTALL.gz
-A gzipped 
+A gzipped
 .Nx
 kernel (ELF format) containing code for everything supported in this
-release.  It also includes a RAM-disk installer with sysinst.
+release.
+It also includes a RAM-disk installer with sysinst.
 .			It Pa netbsd.INSTALL.img.gz
 Same as the above, but in the format expected by the firmware.
 .\}
@@ -244,8 +247,8 @@ contains
 .Pa GENERIC.fs ,
 a
 .Li GENERIC
-kernel in a bootable file system image. This is used in some unusual
-installations as described in the next section.
+kernel in a bootable file system image.
+This is used in some unusual installations as described in the next section.
 .\}
 .ie r_sparc \{\
 Statically-linked versions of
@@ -262,8 +265,9 @@ installation section, below.
 .
 .if r_macppc \{\
 .		It Pa floppy/boot.fs
-\*M boot and installation floppy image.  Only usable on models that
-ship with a floppy drive (pre-Open Firmware 3); see below.
+\*M boot and installation floppy image.
+Only usable on models that ship with a floppy drive (pre-Open Firmware 3);
+see below.
 .		It Pa ofwboot.xcf
 \*M bootloader; see below.
 .\}
@@ -312,21 +316,22 @@ There are three bootable images in the
 \*M distribution.
 One is for a dual-floppy boot and is split into two separate files.
 The other is a single-file image containing the same install kernel,
-but intended to be written to a CD, tape, or hard drive. The third
-image is a
+but intended to be written to a CD, tape, or hard drive.
+The third image is a
 .Li GENERIC
 kernel intended for production use in unusual cases.
 This can be useful at some sites when:
 .(bullet
 You want to run diskless but SRM bugs prevent the firmware from
-netbooting. You can work around this problem by always booting the generic
+netbooting.
+You can work around this problem by always booting the generic
 kernel from the floppy.
 .It
 SRM doesn't recognize your (hard) disk controller but
 .Nx
-does. This
-happens more frequently than you might think. SRM will usually only boot
-from
+does.
+This happens more frequently than you might think.
+SRM will usually only boot from
 .Xr ncr 4
 or
 .Xr isp 4
@@ -343,8 +348,9 @@ a kernel or always boot from floppy.
 .if r_amiga \{\
 .Ss2 Miniroot file system
 The Amiga now uses a single miniroot file system for both an initial
-installation and for an upgrade. A gzipped version is available, for easier
-downloading. (The gzipped version has the
+installation and for an upgrade.
+A gzipped version is available, for easier downloading.
+(The gzipped version has the
 .Sy \&.gz
 extension added to
 their names.)
@@ -362,10 +368,11 @@ This includes formatting and mounting your
 (root) and
 .Pa /usr
 partitions and getting ready to extract (and possibly first
-fetching) the distribution sets. There is enough on this file
-system to allow you to make a SLIP or PPP connection, configure
-an Ethernet, mount an NFS file system or ftp. You can also load
-distribution sets from a SCSI tape or from one of your existing
+fetching) the distribution sets.
+There is enough on this file system to allow you to make a SLIP or
+PPP connection, configure an Ethernet, mount an NFS file system or ftp.
+You can also load distribution sets from a SCSI tape or from one of
+your existing
 .Tn AmigaDOS
 partitions.
 .tag)
@@ -379,7 +386,8 @@ The
 binary distribution sets contain the binaries which
 comprise the
 .Nx \*V
-release for the \*M. There are eight binary distribution sets.
+release for the \*M.
+There are eight binary distribution sets.
 The binary distribution sets can be found in the
 .Pa \*M/binary/sets
 subdirectory
@@ -391,13 +399,15 @@ distribution tree, and are as follows:
 .It Sy base
 The
 .Nx \*V
-.No \*M Sy base No binary distribution. You
+.No \*M Sy base No binary distribution.
+You
 .Em must
-install this distribution set. It contains the base
+install this distribution set.
+It contains the base
 .Nx
 utilities that are necessary for the
-system to run and be minimally functional. It
-includes shared library support, and excludes
+system to run and be minimally functional.
+It includes shared library support, and excludes
 everything described below.
 .br
 .if r_acorn26 .Em 20.2 MB gzipped, ? MB uncompressed
@@ -427,13 +437,14 @@ everything described below.
 .if r_x68k .Em 12.5 MB gzipped, 34.0 MB uncompressed
 .
 .It Sy comp
-Things needed for compiling programs. This set
-includes the system include files
+Things needed for compiling programs.
+This set includes the system include files
 .Pq Pa /usr/include
 and the various system libraries (except the shared
 libraries, which are included as part of the
 .Sy base
-set). This set also includes the manual pages for
+set).
+This set also includes the manual pages for
 all of the utilities it contains, as well as the
 system call and library manual pages.
 .br
@@ -467,7 +478,8 @@ system call and library manual pages.
 This distribution set contains the system
 configuration files that reside in
 .Pa /etc
-and in several other places. This set
+and in several other places.
+This set
 .Em must
 be installed if you are installing the system from scratch, but should
 .Em not
@@ -615,8 +627,8 @@ The sets are:
 .(tag xcontrib
 .It Sy xbase
 The basic files needed for a complete X
-client environment. This does not include
-the X servers.
+client environment.
+This does not include the X servers.
 .br
 .\" Shareable within MACHINE_ARCH, except atari
 .if r_alpha .Em 3.6 MB gzipped, 13.7 MB uncompressed
@@ -709,9 +721,9 @@ The Xarm32VIDC and Xprt servers.
 .
 .if r_atari \{\
 .It Sy xserver
-The Xservers and some programs not shared with the other m68k ports. Please
-consult the X specific section in the atari FAQ as to which server you should
-use.
+The Xservers and some programs not shared with the other m68k ports.
+Please consult the X specific section in the atari FAQ as to which server
+you should use.
 .br
 .Em 5.7 MB gzipped, 14.1 MB uncompressed
 .\}
@@ -725,11 +737,11 @@ The Xhpc server which supports 256 and 65536 colors, with man pages.
 .
 .if r_i386 \{\
 .It Sy xserver
-All XFree86 X servers. Because all of them are
-included, this set is large. However, you will
-only need one of the servers provided in this
-set. (Typically,
-.Ic XF86_SVGA . )
+All XFree86 X servers.
+Because all of them are included, this set is large.
+However, you will only need one of the servers provided in this set.
+(Typically,
+.Ic XF86_SVGA ) .
 .br
 .Em 14.9 MB gzipped, 35.2 MB uncompressed
 .\}
@@ -768,8 +780,8 @@ servers with man pages.
 .if r_sparc64 \{\
 .It Sy xserver
 The Xsun, Xsun24, XsunMono and Xprt
-servers with man pages.  The 64-bit X server current has problems with
-pixmaps.
+servers with man pages.
+The 64-bit X server current has problems with pixmaps.
 .br
 .Em 3.4 MB gzipped, 8.9 MB uncompressed
 .\}
@@ -812,8 +824,8 @@ method, the files are
 .Pa / Ns No -relative
 and therefore are extracted
 .Em below
-the current directory. That
-is, if you want to extract the binaries into your system, i.e.
+the current directory.
+That is, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
 .Ic "tar -xpf"
 command from
@@ -831,7 +843,8 @@ bootloader,
 .Ic boot26 ,
 in the
 .Pa installation/misc
-subdirectory.  This is a RISC OS relocatable module, and should have its file
+subdirectory.
+This is a RISC OS relocatable module, and should have its file
 type set to ffa (Module) once it's been copied to a RISC OS system.
 .\}
 .
@@ -843,19 +856,22 @@ in the
 .Pa atari/binary/kernel
 subdirectory of the
 .Nx \*V
-distribution tree. These kernels are generally named something like
+distribution tree.
+These kernels are generally named something like
 .Pa netbsd-BOOT.gz
-or some other suitable name. Please note that these kernels are simply
-gzipped and are not in tar archives.
+or some other suitable name.
+Please note that these kernels are simply gzipped and are not in tar archives.
 .Pp
 There are six atari floppy images to be found in the
 .Pa atari/installation/floppies
 subdirectory of the
 .Nx \*V
-distribution. three of them are bootable
+distribution.
+Three of them are bootable
 .Tn TOS
 kernel floppies and the other
-three are installation floppies. They are described in more detail below.
+three are installation floppies.
+They are described in more detail below.
 There are gzipped versions of each available, for easier downloading.
 (The gzipped versions have the
 .Pa \&.gz
@@ -864,13 +880,14 @@ extension added to their names.)
 .It Em Bootable\ Kernel\ floppies
 These
 .Tn TOS
-disks contains the 
+disks contains the
 .Tn TOS
 support programs (like
 .Ic loadbsd.ttp
 and
 .Ic chg_pid.ttp
-- see below) and a kernel. They are setup such that you can insert them'into
+\(em see below) and a kernel.
+They are setup such that you can insert them'into
 your floppy drive, and start the programs from GEM.
 .Pp
 For the TT030 and Falcon, the (720 KB) floppy is named
@@ -881,7 +898,7 @@ the kernel supplied is
 For the Hades, you need the
 .Pa hades-boot.fs
 floppy (1.44 MB), the kernel is
-.Li HADES . 
+.Li HADES .
 For the Milan, you need the
 .Pa milan-boot.fs
 floppy (1.44 MB), the kernel is MILAN-PCIIDE.
@@ -898,10 +915,12 @@ and mounting your
 .Pa /usr
 partitions and getting
 ready to extract (and possibly first fetching) the distribution
-sets. There is enough on this file system to allow you to
+sets.
+There is enough on this file system to allow you to
 make a slip connection, configure an ethernet, mount an NFS
-file system or ftp. You can also load distribution sets from
-a SCSI tape or from one of your existing
+file system or ftp.
+You can also load distribution sets from a SCSI tape or from one of
+your existing
 .Tn GEMDOS
 partitions.
 .Pp
@@ -938,7 +957,8 @@ The
 program reads the partition tables present on a
 given disk and tries to interpret then the same way the
 .Nx
-kernel does. If you have a disk on which
+kernel does.
+If you have a disk on which
 .Tn GEMDOS
 and
 .Nx
@@ -947,13 +967,13 @@ are to co-exist, It is a good idea to run this before you begin the
 installation just to check that the kernel's view
 of the partition tables agree with
 .Tn GEMDOS Ns 's
-view. If you have
-more than 3 partitions defined on a disk you will notice that
-the
+view.
+If you have more than 3 partitions defined on a disk you will notice that the
 .Nx*M
 partition starts one sector after the
 .Tn GEMDOS
-partition. This is to allow space for the auxiliary root for
+partition.
+This is to allow space for the auxiliary root for
 the 4th and subsequent partitions.
 .It
 The
@@ -971,7 +991,8 @@ The
 .Ic chg_pid.ttp
 program can be used to change the id of an
 .Tn AHDI
-compatible partition. This allows you to reserve a partition for use by
+compatible partition.
+This allows you to reserve a partition for use by
 .Nx*M
 (id: NBD), or for use as a swap (id: SWP) partition.
 .It
@@ -979,9 +1000,10 @@ The
 .Ic file2swp.ttp
 program can be used to transfer an installation filesystem image, like
 .Pa sysinst.fs
-to a partition with id SWP. In this way, you can run the installation from
-the swap partition instead of a memory disk. This is a necessity for small
-memory systems.
+to a partition with id SWP.
+In this way, you can run the installation from the swap partition
+instead of a memory disk.
+This is a necessity for small memory systems.
 .bullet)
 .\}
 .
@@ -1004,16 +1026,18 @@ A file containing geometry for some HB-IB disk drives.
 .	It Pa SYS_INST.gz
 A gzipped copy of the SYS_INST miniroot installation program.
 .	It Pa SYS_UBOOT.gz
-A gzipped copy of the universal boot block. Supports Network, tape and disk
-booting. This is useful if you are installing a diskless
+A gzipped copy of the universal boot block.
+Supports Network, tape and disk booting.
+This is useful if you are installing a diskless
 .Nx*M
 system.
 .	It Pa rbootd.tgz
 Source code for the rbootd program included with
 .Nx .
 It requires that
-the server has a Berkeley Packet Filter (bpf). You will need to compile this
-version of rbootd if server system does not have this utility already.
+the server has a Berkeley Packet Filter (bpf).
+You will need to compile this version of rbootd if
+server system does not have this utility already.
 .	tag)
 .tag)
 .
@@ -1043,10 +1067,11 @@ in the
 .Pa hpcmips/binary/kernels
 subdirectory of the
 .Nx \*V
-distribution tree. These kernels are generally named something like
+distribution tree.
+These kernels are generally named something like
 .Pa netbsd-GENERIC.gz
-or some other suitable name. Please note that these kernels are simply
-gzipped and are not in tar archives.
+or some other suitable name.
+Please note that these kernels are simply gzipped and are not in tar archives.
 .Pp
 The
 .Tn "Windows CE" Ns No -based utilities
@@ -1057,26 +1082,28 @@ be found in the
 .Pa hpcmips/installation/
 subdirectory of the
 .Nx \*V
-distribution tree. The important files in this directory are as
-follows:
+distribution tree.
+The important files in this directory are as follows:
 .
 .
 .(tag pbsdboot1.exe
 .It Pa netbsd.gz
 .Nx*M
-kernel with system installer (sysinst). This kernel runs on Vr41xx and
-TX3922 CPU only.
+kernel with system installer (sysinst).
+This kernel runs on Vr41xx and TX3922 CPU only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
 .It Pa netbsd.TX3912.gz
 .Nx*M
-kernel with system installer (sysinst). This kernel runs on TX3912 CPU only.
+kernel with system installer (sysinst).
+This kernel runs on TX3912 CPU only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
 .It Pa hpcboot.exe
 The
 .Nx*M
-boot loader utility. This program is used to boot the
+boot loader utility.
+This program is used to boot the
 .Nx
 kernel from within
 .Tn "Windows CE"
@@ -1086,7 +1113,8 @@ kernel from within
 .It Pa pbsdboot.exe
 The
 .Nx*M
-boot loader utility. This program is used to boot the
+boot loader utility.
+This program is used to boot the
 .Nx
 kernel from within
 .Tn "Windows CE"
@@ -1096,7 +1124,8 @@ kernel from within
 .It Pa pbsdboot1.exe
 The
 .Nx*M
-boot loader utility. This program is used to boot the
+boot loader utility.
+This program is used to boot the
 .Nx
 kernel from within
 .Tn "Windows CE"
@@ -1105,11 +1134,12 @@ kernel from within
 .Em 191 KB
 .tag)
 .Pp
-These 
+These
 .Pa *.exe
 files are
 .Tn "Windows CE
-binaries.  If you need them,
+binaries.
+If you need them,
 the sources for these utilities are in the
 .Pa src/arch/hpc/stand/
 and the
@@ -1125,10 +1155,11 @@ in the
 .Pa mac68k/binary/kernels
 subdirectory of the
 .Nx \*V
-distribution tree. These kernels are generally named something like
+distribution tree.
+These kernels are generally named something like
 .Pa netbsd-GENERIC.gz
-or some other suitable name. Please note that these kernels are simply
-gzipped and are not in tar archives.
+or some other suitable name.
+Please note that these kernels are simply gzipped and are not in tar archives.
 .Pp
 The
 .Tn MacOS
@@ -1139,14 +1170,15 @@ be found in the
 .Pa mac68k/installation/misc
 subdirectory of the
 .Nx \*V
-distribution tree. The important files in this directory are as
-follows:
+distribution tree.
+The important files in this directory are as follows:
 .
 .(tag Installer.sea.hqx
 .It Pa Booter.sea.hqx
 The
 .Nx*M
-Booter utility. This program is used to boot the
+Booter utility.
+This program is used to boot the
 .Nx
 kernel from within
 .Tn MacOS .
@@ -1155,24 +1187,25 @@ kernel from within
 .It Pa Installer.sea.hqx
 The
 .Nx*M
-Installer utility. This
-program is used to install the distribution sets onto your
+Installer utility.
+This program is used to install the distribution sets onto your
 .Nx
 partition(s).
 .br
 .Em 147 KB archived
 .It Pa Mkfs.sea.hqx
-The Mkfs utility. This program is used to
-format your chosen partitions so that they
+The Mkfs utility.
+This program is used to format your chosen partitions so that they
 can be used with
 .Nx .
 .br
 .Em 76 KB archived
 .tag)
 .Pp
-These files are all binhexed, self-extracting archives. If you need them,
-the sources for these utilities are in the
-.Pa src No subdirectory.
+These files are all binhexed, self-extracting archives.
+If you need them, the sources for these utilities are in the
+.Pa src
+subdirectory.
 .\}
 .
 .if r_mvme68k \{\
@@ -1188,7 +1221,8 @@ A copy of the miniroot file system.
 This filesystem image is copied into the swap partition of the disk which
 you intend to boot
 .Nx
-from. Normally, this step will be performed manually from the ramdisk boot
+from.
+Normally, this step will be performed manually from the ramdisk boot
 environment.
 .	tag)
 .tag)
@@ -1197,15 +1231,15 @@ environment.
 .It Pa netboot/
 .	(tag sboot
 .	It Pa sboot
-An MVME147 bootstrap program in Motorola S-Record format. This is
-required when you wish to boot an MVME147 over the network since
-the ROM has no built-in network support. Instructions for getting
-this program into memory are discussed later.
+An MVME147 bootstrap program in Motorola S-Record format.
+This is required when you wish to boot an MVME147 over the network since
+the ROM has no built-in network support.
+Instructions for getting this program into memory are discussed later.
 .	tag)
 .	(tag netboot
 .	It Pa netboot
-A standalone 2nd stage bootstrap program loaded over the network
-via TFTP. This is responsible for fetching and starting the
+A standalone 2nd stage bootstrap program loaded over the network via TFTP.
+This is responsible for fetching and starting the
 .Nx
 \*M
 kernel from an NFS server.
@@ -1216,27 +1250,29 @@ kernel from an NFS server.
 .It Pa tapeimage/
 .	(tag stboot
 .	It Pa stboot
-This file contains a boot sector for Motorola MVME boards. It must
-be the first file written to a tape in order to make the tape bootable.
+This file contains a boot sector for Motorola MVME boards.
+It must be the first file written to a tape in order to make the tape bootable.
 .	tag)
 .	(tag bootst
 .	It Pa bootst
 This file contains a bootstrap program which knows how to load the
 .Nx
 \*M
-ramdisk image from tape. This must be the second file written to the tape.
+ramdisk image from tape.
+This must be the second file written to the tape.
 .	tag)
 .	(tag netbsd.RAMDISK.gz
 .	It Pa netbsd.RAMDISK.gz
 This is the
 .Nx
 \*M
-ramdisk image. It contains a
+ramdisk image.
+It contains a
 .Li GENERIC
 kernel and a built in RAMDISK
 with just enough tools to partition a disk, dump the miniroot kernel
-to it and make the disk bootable. This must be the third file written
-to the tape.
+to it and make the disk bootable.
+This must be the third file written to the tape.
 .	tag)
 .tag)
 .\}
@@ -1259,7 +1295,8 @@ into memory via the pc532
 .tag)
 .Pp
 The upgrade process is supported by having a copy of a \*V kernel
-available. This file is:
+available.
+This file is:
 .(tag kern.tgz
 .It Pa kern.tgz
 Contains a kernel produced from the
@@ -1293,16 +1330,18 @@ There is a collection of Sun2 kernels in the
 .Pa \*M/binary/kernel
 subdirectory of the
 .Nx \*V
-distribution.  The one named
+distribution.
+The one named
 .Pa netbsd.RAMDISK.gz
 contain a root file system image and should only be used for the
-initial installation.  The others are included for convenience.
+initial installation.
+The others are included for convenience.
 (Most people will want to use
 .Pa netbsd-GENERIC.gz
 or
 .Pa netbsd-FOURMEG.gz
-as appropriate.)  Please note that these kernels are simply gzipped
-and are not tar archives.
+as appropriate.)
+Please note that these kernels are simply gzipped and are not tar archives.
 .\}
 .
 .if r_sun3 \{\
@@ -1311,14 +1350,16 @@ There is a collection of Sun3 and Sun3X kernels in the
 .Pa \*M/binary/kernels
 subdirectory of the
 .Nx \*V
-distribution.  The ones named
+distribution.
+The ones named
 .Pa netbsd-ramdisk*.gz
 contain a root file system image and should only be used for the
-initial installation.  The others are included for convenience.
+initial installation.
+The others are included for convenience.
 (Most people will want to use
 .Pa netbsd-generic.gz
 or
 .Pa netbsd-generic3x.gz
-as appropriate.)  Please note that these kernels are simply gzipped
-and are not tar archives.
+as appropriate.)
+Please note that these kernels are simply gzipped and are not tar archives.
 .\}
