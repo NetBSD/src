@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 1999/12/04 21:20:28 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2000/01/01 02:22:36 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 1999/12/04 21:20:28 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2000/01/01 02:22:36 shin Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 1999/12/04 21:20:28 ragge Exp $");
 #include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_rtc_offset.h"
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +112,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 1999/12/04 21:20:28 ragge Exp $");
 #define DPRINTF(arg) printf arg
 #else
 #define DPRINTF(arg)
+#endif
+
+#ifdef NFS
+extern int nfs_mountroot __P((void));
+extern int (*mountroot) __P((void));
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -295,7 +301,7 @@ mach_init(argc, argv, bi)
 #endif /* RTC_OFFSET */
 
 	/* Compute bootdev */
-	makebootdev("wd0"); /* XXX Should be passed up from boot lorder */
+	makebootdev("wd0"); /* default boot device */
 
 	boothowto = 0;
 #ifdef KADB
@@ -322,6 +328,19 @@ mach_init(argc, argv, bi)
 
 			case 'h': /* XXX, serial console */
 				bootinfo->bi_cnuse |= BI_CNUSE_SERIAL;
+				break;
+
+			case 'b':
+				/* boot device: -b=sd0 etc. */
+#ifdef NFS
+				if (strcmp(cp+2, "nfs") == 0)
+					mountroot = nfs_mountroot;
+				else
+					makebootdev(cp+2);
+#else
+				makebootdev(cp+2);
+#endif
+				cp += strlen(cp);
 				break;
 			}
 		}
