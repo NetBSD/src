@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.265 2000/10/14 01:53:14 wiz Exp $
+#	$NetBSD: mi,v 1.266 2000/10/16 23:00:33 thorpej Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -222,6 +222,7 @@
 ./usr/include/dev/isa/spkrio.h		comp-c-include
 ./usr/include/dev/isa/vga_isavar.h		comp-c-include
 ./usr/include/dev/isa/wdsreg.h		comp-c-include
+./usr/include/dev/isa/weaselreg.h	comp-c-include
 ./usr/include/dev/isa/wssreg.h		comp-c-include
 ./usr/include/dev/isa/wssvar.h		comp-c-include
 ./usr/include/dev/isa/wtreg.h		comp-c-include
