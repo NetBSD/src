@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)externs.h	8.1 (Berkeley) 6/6/93
- *	$Id: externs.h,v 1.3 1994/02/25 03:00:25 cgd Exp $
+ *	$Id: externs.h,v 1.4 1994/12/24 17:50:05 cgd Exp $
  */
 
 #ifndef	BSD
@@ -52,6 +52,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <setjmp.h>
 #if defined(CRAY) && !defined(NO_BSD_SETJMP)
 #include <bsdsetjmp.h>
