@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.18 2002/03/04 13:24:07 sommerfeld Exp $
+.\"	$NetBSD: gif.4,v 1.19 2002/03/04 14:50:54 wiz Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -146,27 +146,6 @@ Ingress filter can be turned off by
 .Dv IFF_LINK2
 bit.
 .\"
-.Sh SEE ALSO
-.Xr inet 4 ,
-.Xr inet6 4 ,
-.Xr ifconfig 8
-.Rs
-.%A	R. Gilligan
-.%A	E. Nordmark
-.%B	RFC2893
-.%T	Transition Mechanisms for IPv6 Hosts and Routers
-.%D	August 2000
-.%O	ftp://ftp.isi.edu/in-notes/rfc2893.txt
-.Re
-.Rs
-.%A	Sally Floyd
-.%A	David L. Black
-.%A	K. K. Ramakrishnan
-.%T	"IPsec Interactions with ECN"
-.%D	December 1999
-.%O	draft-ietf-ipsec-ecn-02.txt
-.Re
-.\"
 .Sh EXAMPLES
 Configuration example:
 .Bd -literal
@@ -176,7 +155,9 @@ Host X--NetBSD A  ----------------tunnel---------- cisco D------Host E
              +-----Router B--------Router C---------+
 
 .Ed
-On NetBSD system A
+On
+.Nx
+system A
 .Ns ( Nx ) :
 .Bd -literal
    # route add default B
@@ -201,16 +182,37 @@ or on Host D
 .Ns ( Nx ) :
 .Bd -literal
    # route add default C
-   # ifconfig ipipN D A
+   # ifconfig gifN D A
 .Ed
 .Pp
-If all goes well, you should see packets flowing ;-)
+If all goes well, you should see packets flowing.
 .Pp
 If you want to reach Host A over the tunnel (from the Cisco D), then
 you have to have an alias on Host A for e.g. the Ethernet interface like:
 .Ic ifconfig Ar <etherif> alias Y
 and on the cisco
 .Ic ip Ar route Y mask tunnelX .
+.Sh SEE ALSO
+.Xr inet 4 ,
+.Xr inet6 4 ,
+.Xr ifconfig 8
+.Rs
+.%A	R. Gilligan
+.%A	E. Nordmark
+.%B	RFC2893
+.%T	Transition Mechanisms for IPv6 Hosts and Routers
+.%D	August 2000
+.%O	ftp://ftp.isi.edu/in-notes/rfc2893.txt
+.Re
+.Rs
+.%A	Sally Floyd
+.%A	David L. Black
+.%A	K. K. Ramakrishnan
+.%T	"IPsec Interactions with ECN"
+.%D	December 1999
+.%O	draft-ietf-ipsec-ecn-02.txt
+.Re
+.\"
 .Sh HISTORY
 The
 .Nm
@@ -245,15 +247,12 @@ had a multi-destination behavior, configurable via
 flag.
 The behavior was obsoleted and is no longer supported.
 .Pp
-It should be possible to use the 
-.Dv add 
+It should be possible to use the
+.Dv add
 command of
 .Xr route 8
 to add an interface route to a
 .Nm
 interface in one step rather than having to tweak it
-later with 
+later with
 .Dv change .
-
-
-
