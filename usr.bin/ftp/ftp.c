@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.123 2003/12/10 12:34:28 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.124 2004/04/10 12:02:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.123 2003/12/10 12:34:28 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.124 2004/04/10 12:02:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -574,13 +574,13 @@ empty(FILE *cin, FILE *din, int sec)
 	struct pollfd pfd[2];
 
 	if (cin) {
-	    pfd[nfd].fd = fileno(cin);
-	    pfd[nfd++].events = POLLIN;
+		pfd[nfd].fd = fileno(cin);
+		pfd[nfd++].events = POLLIN;
 	}
 
 	if (din) {
-	    pfd[nfd].fd = fileno(din);
-	    pfd[nfd++].events = POLLIN;
+		pfd[nfd].fd = fileno(din);
+		pfd[nfd++].events = POLLIN;
 	}
 
 	if ((nr = poll(pfd, nfd, sec * 1000)) <= 0)
