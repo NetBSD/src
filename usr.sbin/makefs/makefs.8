@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.5 2002/01/24 03:21:07 lukem Exp $
+.\"	$NetBSD: makefs.8,v 1.6 2002/02/08 01:17:32 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 24, 2002
+.Dd February 8, 2002
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -169,7 +169,14 @@ modification time will be used unless specifically overridden by the specfile.
 An error will be raised if the type of entry in the specfile conflicts
 with that of an existing entry.
 .Pp
-Otherwise, it is necessary to specify at least the following parameters
+In the opposite case
+(where a specfile entry does not have an entry in the underlying file system)
+the following occurs:
+If the specfile entry is marked
+.Sy optional ,
+the specfile entry is ignored.
+Otherwise, the entry will be created in the image,
+and it is necessary to specify at least the following parameters
 in the specfile:
 .Sy type ,
 .Sy mode ,
@@ -190,6 +197,7 @@ isn't provided, the current time will be used.
 If
 .Sy flags
 isn't provided, the current file flags will be used.
+Missing regular file entries will be created as zero-length files.
 .It Fl N Ar dbdir
 Use the user database text file
 .Pa master.passwd

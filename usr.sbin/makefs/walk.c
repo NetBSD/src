@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.8 2002/01/31 22:44:03 tv Exp $	*/
+/*	$NetBSD: walk.c,v 1.9 2002/02/08 01:17:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.8 2002/01/31 22:44:03 tv Exp $");
+__RCSID("$NetBSD: walk.c,v 1.9 2002/02/08 01:17:32 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -279,14 +279,24 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 			if (strcmp(curnode->name, curfsnode->name) == 0)
 				break;
 		}
+		if (snprintf(path, sizeof(path), "%s/%s",
+		    dir, curnode->name) >= sizeof(path))
+			errx(1, "Pathname too long.");
 		if (curfsnode == NULL) {	/* need new entry */
 			struct stat	stbuf;
+
+					    /*
+					     * don't add optional spec entries
+					     * that lack an existing fs entry
+					     */
+			if ((curnode->flags & F_OPT) &&
+			    lstat(path, &stbuf) == -1)
+					continue;
 
 					/* check that enough info is provided */
 #define NODETEST(t, m)							\
 			if (!(t))					\
-				errx(1, "`%s/%s': %s not provided",	\
-				    dir, curnode->name, m)
+				errx(1, "`%s': %s not provided", path, m)
 			NODETEST(curnode->flags & F_TYPE, "type");
 			NODETEST(curnode->flags & F_MODE, "mode");
 				/* XXX: require F_TIME ? */
@@ -334,12 +344,8 @@ apply_specdir(const char *dir, NODE *specnode, fsnode *dirnode)
 		apply_specentry(dir, curnode, curfsnode);
 		if (curnode->type == F_DIR) {
 			if (curfsnode->type != S_IFDIR)
-				errx(1, "`%s/%s' is not a directory",
-				    dir, curfsnode->name);
+				errx(1, "`%s' is not a directory", path);
 			assert (curfsnode->child != NULL);
-			if (snprintf(path, sizeof(path), "%s/%s",
-			    dir, curnode->name) >= sizeof(path))
-				errx(1, "Pathname too long.");
 			apply_specdir(path, curnode, curfsnode->child);
 		}
 	}
