@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.21 2002/02/10 15:13:43 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.22 2002/02/24 17:11:53 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.21 2002/02/10 15:13:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.22 2002/02/24 17:11:53 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -613,6 +613,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	    ether_sprintf((const unsigned char *)&sc->sc_dest), m->m_pkthdr.len);
 #endif
 
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 	sc->sc_sppp.pp_if.if_opackets++;
 	return sc->sc_eth_if->if_output(sc->sc_eth_if, m, &dst, NULL);
 }
