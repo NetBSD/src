@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.61 2003/07/15 00:25:02 lukem Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.62 2003/09/09 20:42:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.61 2003/07/15 00:25:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.62 2003/09/09 20:42:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -182,7 +182,7 @@ extern int pmap_debug_level;
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	2
+#define	KERNEL_PT_KERNEL_NUM	4
 
 					/* L2 table for mapping i80312 */
 #define	KERNEL_PT_IOPXS		(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
