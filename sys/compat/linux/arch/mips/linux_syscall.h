@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.5 2001/11/13 02:08:44 lukem Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.6 2001/11/20 21:37:51 manu Exp $ */
 
 /*
  * System call numbers.
@@ -302,7 +302,7 @@
 /* syscall: "fsync" ret: "int" args: "int" */
 #define	LINUX_SYS_fsync	118
 
-/* syscall: "sigreturn" ret: "int" args: "struct linux_pt_regs" */
+/* syscall: "sigreturn" ret: "int" args: "struct linux_sigframe *" */
 #define	LINUX_SYS_sigreturn	119
 
 /* syscall: "clone" ret: "int" args: "int" "void *" */
