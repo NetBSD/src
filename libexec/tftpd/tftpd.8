@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,25 +29,26 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tftpd.8	6.7 (Berkeley) 5/13/91
+.\"	@(#)tftpd.8	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 13, 1991
+.Dd June 4, 1993
 .Dt TFTPD 8
 .Os BSD 4.2
 .Sh NAME
 .Nm tftpd
 .Nd
-.Tn DARPA
-Trivial File Transfer Protocol server
+Internet Trivial File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm tftpd
+.Op Fl l
+.Op Fl n
 .Op Ar directory ...
 .Sh DESCRIPTION
 .Nm Tftpd
 is a server which supports the
-.Tn DARPA
-Trivial File Transfer
-Protocol.
+Internet Trivial File Transfer
+Protocol (\c
+.Tn RFC 783).
 The
 .Tn TFTP
 server operates
@@ -66,6 +67,7 @@ Due to the lack of authentication information,
 .Nm tftpd
 will allow only publicly readable files to be
 accessed.
+Files containing the string ``/\|\fB.\|.\fP\|/'' are not allowed.
 Files may be written only if they already exist and are publicly writable.
 Note that this extends the concept of
 .Dq public
@@ -77,11 +79,23 @@ The server should have the user ID with the lowest possible privilege.
 .Pp
 Access to files may be restricted by invoking
 .Nm tftpd
-with a list of directories by including pathnames
+with a list of directories by including up to 20 pathnames
 as server program arguments in
 .Pa /etc/inetd.conf .
 In this case access is restricted to files whose
 names are prefixed by the one of the given directories.
+The given directories are also treated as a search path for 
+relative filename requests.
+.Pp
+The options are:
+.Bl -tag -width Ds
+.It Fl l
+Logs all requests using
+.Xr syslog 3 .
+.It Fl n
+Suppresses negative acknowledgement of requests for nonexistent
+relative filenames.
+.El
 .Sh SEE ALSO
 .Xr tftp 1 ,
 .Xr inetd 8

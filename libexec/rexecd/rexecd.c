@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,29 +32,31 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)rexecd.c	5.12 (Berkeley) 2/25/91";
+static char sccsid[] = "@(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+
 #include <netinet/in.h>
-#include <signal.h>
-#include <netdb.h>
-#include <pwd.h>
+
 #include <errno.h>
-#include <unistd.h>
+#include <netdb.h>
+#include <paths.h>
+#include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <unistd.h>
 
 /*VARARGS1*/
 int error();
@@ -216,7 +218,7 @@ doit(f, fromp)
 	strncat(homedir, pwd->pw_dir, sizeof(homedir)-6);
 	strncat(shell, pwd->pw_shell, sizeof(shell)-7);
 	strncat(username, pwd->pw_name, sizeof(username)-6);
-	cp = rindex(pwd->pw_shell, '/');
+	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;
 	else
