@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.60 2000/11/27 06:37:32 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.61 2000/12/14 21:29:51 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -595,7 +595,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
@@ -730,7 +730,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
@@ -1012,7 +1012,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	ra, FRAME_RA(k1)
