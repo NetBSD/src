@@ -28,8 +28,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.6 1994/04/27 22:37:12 cgd Exp $";
+__RCSID("$Id: catman.c,v 1.7 1997/10/18 04:11:02 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,10 +59,11 @@ int dowhatis;
 char *mp = _PATH_MAN;
 char *sp = _MAN_SECTIONS;
 
-void usage __P((void));
-void catman __P((const char *, char *));
-void makewhatis __P((const char *));
-void dosystem __P((const char *));
+void	catman __P((const char *, char *));
+int	main __P((int, char **));
+void	makewhatis __P((const char *));
+void	dosystem __P((const char *));
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -70,7 +72,7 @@ main(argc, argv)
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "knpswM:")) != EOF) {
+	while ((c = getopt(argc, argv, "knpswM:")) != -1) {
 		switch (c) {
 		case 'k':
 			f_ignerr = 1;
@@ -255,8 +257,8 @@ dosystem(cmd)
 	if (WIFSTOPPED(status))
 		errx(1, "child was stopped. aborting");
 	if (f_ignerr == 0)
-		errx(1,"*** Exited %d");
-	warnx("*** Exited %d (continuing)");
+		errx(1, "*** Exited %d", status);
+	warnx("*** Exited %d (continuing)", status);
 }
 
 void
