@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.37 2003/01/16 03:24:34 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.38 2003/01/18 01:17:46 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -77,9 +77,9 @@ Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
 Responsible:	vixie, itojun
 Notes:
-bind2netbsd script to import into basesrc/dist/bind.
-The Makefiles in basesrc/usr.sbin/bind are not handled by the script.
-do not try to use libc resolver from basesrc/usr.sbin/bind, it adds
+bind2netbsd script to import into src/dist/bind.
+The Makefiles in src/usr.sbin/bind are not handled by the script.
+do not try to use libc resolver from src/usr.sbin/bind, it adds
 too much constraint between bind and libc, as well as problem with
 _res declaration differences.  DNSSEC portion is disabled.
 
@@ -162,16 +162,6 @@ main trunc has Citrus code in the following places:
 	(singlebyte only - multibyte will come shortly)
 - src/lib/libintl: 20010216 snapshot from cvs tree
 
-Package:	cpio
-Version:	2.3
-Current Vers:	2.5
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/cpio/
-Mailing List:	bug-gnu-utils@gnu.org
-Responsible:
-Notes:
-Pax (bin/pax) has replaced tar and cpio by having tar/cpio front ends.
-
 Package:	cron
 Version:	3.0
 Current Vers:	3.0
@@ -190,7 +180,7 @@ Archive Site:	ftp://ftp.cvshome.org/pub/
 Mailing List:	bug-cvs@gnu.org
 Responsible:	Christos Zoulas <christos@netbsd.org>, wiz
 Notes:
-Use gnusrc/gnu/dist/cvs/cvs2netbsd for preparing the source tree
+Use src/gnu/dist/cvs/cvs2netbsd for preparing the source tree
 for the import.
 
 Package:	db
@@ -329,7 +319,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/groff/
 Mailing List:	bug-groff@gnu.org
 Responsible:	wiz
 Notes:
-Use groff2netbsd from gnusrc/gnu/dist/groff to prepare the distribution
+Use groff2netbsd from src/gnu/dist/groff to prepare the distribution
 for import.
 
 Package:	gzip
@@ -475,7 +465,7 @@ Notes:
 We still use gawk as the system awk. nawk is here for evaluation only for now.
 Build maketab from nawk sources and generate proctab.c.
 Remove buildwin.bat, mac.code, missing95.c, ytab.[ch], ytab?.bak, then import
-to basesrc/dist/nawk.
+to src/dist/nawk.
 
 Package:	ndbootd
 Version:	0.5
@@ -680,16 +670,6 @@ Heavily modified for use as a soft float library for GCC.  The actual
 arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
-Package:	tar
-Version:	1.13.25 + security fixes
-Current Vers:	1.13/1.13.25
-Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/tar/, ftp://alpha.gnu.org/gnu/tar/
-Mailing List:	bug-tar@gnu.org
-Responsible:
-Notes:
-Pax (bin/pax) has replaced tar and cpio by having tar/cpio front ends.
-
 Package:	tcpdump
 Version:	3.7.1 as of 2002/5/31
 Current Vers:	3.7.1
@@ -720,13 +700,15 @@ Responsible:	ross
 Notes:
 
 Package:	texinfo
-Version:	4.0
+Version:	4.3
 Current Vers:	4.3
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Mailing List:	bug-texinfo@gnu.org
 Responsible:	wiz
 Notes:
+Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
+for the import.
 
 Package:	top
 Version:	3.5beta9
