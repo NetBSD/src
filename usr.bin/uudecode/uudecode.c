@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.18 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.19 2004/11/04 07:43:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.18 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.19 2004/11/04 07:43:38 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -127,13 +127,13 @@ decode()
 	} while (strncmp(buf, "begin ", 6));
         /* must be followed by an octal mode and a space */
 	mode = strtol(buf + 6, &fn, 8);
-	if (fn == (buf+6) || !isspace(*fn) || mode==LONG_MIN || mode==LONG_MAX)
+	if (fn == (buf+6) || !isspace((unsigned char)*fn) || mode==LONG_MIN || mode==LONG_MAX)
 	{
 	        warnx("%s: invalid mode on \"begin\" line", filename);
 		return(1);
 	}
 	/* skip whitespace for file name */
-	while (*fn && isspace(*fn)) fn++;
+	while (*fn && isspace((unsigned char)*fn)) fn++;
 	if (*fn == 0) {
                 warnx("%s: no filename on \"begin\" line", filename);
 		return(1);

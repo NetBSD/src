@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.7 2003/08/07 11:17:01 agc Exp $	*/
+/*	$NetBSD: regexp.c,v 1.8 2004/11/04 07:44:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.7 2003/08/07 11:17:01 agc Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.8 2004/11/04 07:44:47 dsl Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -58,7 +58,7 @@ boolean	 x_escaped;	/* true if we are currently x_escaped */
 char	*x_start;	/* start of string */
 boolean	 l_onecase;	/* true if upper and lower equivalent */
 
-#define makelower(c) (isupper((unsigned char)(c)) ? tolower((c)) : (c))
+#define makelower(c) (isupper((unsigned char)(c)) ? tolower((unsigned char)(c)) : (c))
 
 /*  STRNCMP -	like strncmp except that we convert the
  *	 	first string to lower case before comparing

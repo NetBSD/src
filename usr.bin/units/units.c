@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.13 2003/12/05 22:26:43 mycroft Exp $	*/
+/*	$NetBSD: units.c,v 1.14 2004/11/04 07:38:43 dsl Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -316,7 +316,7 @@ addunit(struct unittype * theunit, char *toadd, int flip)
 	savescr = scratch = dupstr(toadd);
 	for (slash = scratch + 1; *slash; slash++)
 		if (*slash == '-' &&
-		    (tolower(*(slash - 1)) != 'e' ||
+		    (tolower((unsigned char)*(slash - 1)) != 'e' ||
 		    !strchr(".0123456789", *(slash + 1))))
 			*slash = ' ';
 	slash = strchr(scratch, '/');
