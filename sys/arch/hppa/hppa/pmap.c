@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2004/01/05 02:25:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2004/01/05 02:25:32 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1826,6 +1826,7 @@ pmap_is_referenced(struct vm_page *pg)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
+	u_int tlbprot;
 	int s;
 #ifdef PMAPDEBUG
 	int opmapdebug = pmapdebug;
@@ -1843,12 +1844,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	PMAP_PRINTF(PDB_KENTER, ("(%p, %p, %x)\n", 
 				 (caddr_t)va, (caddr_t)pa, prot));
 	va = hppa_trunc_page(va);
+	tlbprot = TLB_WIRED | TLB_UNMANAGED;
+	tlbprot |= (prot & PMAP_NC) ? TLB_UNCACHEABLE : 0;
+	tlbprot |= pmap_prot(pmap_kernel(), prot & VM_PROT_ALL);
 	s = splvm();
 	KASSERT(pmap_pv_find_va(HPPA_SID_KERNEL, va) == NULL);
-	pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, va, pa, 
-		      pmap_prot(pmap_kernel(), prot) |
-		      TLB_WIRED | TLB_UNMANAGED);
+	pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, va, pa, tlbprot);
 	splx(s);
+
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
 #endif /* PMAPDEBUG */

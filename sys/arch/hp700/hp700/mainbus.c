@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 2003/11/24 02:51:35 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16 2004/01/05 02:25:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2003/11/24 02:51:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2004/01/05 02:25:32 chs Exp $");
 
 #undef BTLBDEBUG
 
@@ -849,8 +849,7 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 	mapsize = size;
 	off = (bus_size_t)addr & (PAGE_SIZE - 1);
 	addr = (void *) ((caddr_t)addr - off);
-	for(; size > 0; ) {
-
+	while (size > 0) {
 		pa = kvtop(addr);
 		if (pa != pa_next) {
 			if (++seg >= map->_dm_segcnt)
@@ -871,7 +870,6 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 	/* Make the map truly valid. */
 	map->dm_nsegs = seg + 1;
 	map->dm_mapsize = mapsize;
-
 	return (0);
 }
 
@@ -1111,11 +1109,10 @@ int
 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
     caddr_t *kvap, int flags)
 {
-	struct vm_page *m;
+	struct vm_page *pg;
+	struct pglist *pglist;
 	vaddr_t va;
-	struct pglist *mlist;
-	paddr_t pa, pa_next;
-	int seg;
+	paddr_t pa;
 
 	size = round_page(size);
 
@@ -1137,32 +1134,15 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	*kvap = (caddr_t)va;
 
 	/* Map the allocated pages into the chunk. */
-	mlist = segs[0]._ds_mlist;
-	pa_next = 0;
-	seg = -1;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
-
-		if (size == 0)
-			panic("mbus_dmamem_map: size botch");
-
-		pa = VM_PAGE_TO_PHYS(m);
-		if (pa != pa_next) {
-			if (++seg >= nsegs)
-				panic("mbus_dmamem_map: nsegs botch");
-		}
-		pa_next = pa + PAGE_SIZE;
-
-		pmap_kenter_pa(va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE);
-#if notused
-		pmap_changebit(va, TLB_UNCACHEABLE, 0); /* XXX for now */
-#endif
-
+	pglist = segs[0]._ds_mlist;
+	TAILQ_FOREACH(pg, pglist, pageq) {
+		KASSERT(size != 0);
+		pa = VM_PAGE_TO_PHYS(pg);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE | PMAP_NC);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
 	pmap_update();
-
 	return (0);
 }
 
@@ -1407,4 +1387,3 @@ mbsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		ca->ca_irq = saved_irq;
 	return ret;
 }
-
