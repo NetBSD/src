@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 1999/11/21 16:46:33 itojun Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2002/07/01 17:17:18 he Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/named-xfer ${BIND_DIST_DIR}/bin/named \
 	${BIND_DIST_DIR}/man
 
-NAMEDOBJ!=cd ${.CURDIR}/../named; ${MAKE} print-objdir
+NAMEDOBJ!=cd ${.CURDIR}/../named && ${PRINTOBJDIR}
 
 PROG=	named-xfer
 SRCS=	${PROG}.c db_glue.c ns_glue.c tmp_version.c
@@ -13,8 +13,10 @@ LDADD=	${LIBRARY}
 CLEANFILES+=	tmp_version.c
 MAN=	${PROG}.8
 BINDIR=	/usr/libexec
+LDSTATIC?=-static
 
-tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile
+tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile \
+		${BIND_DIST_DIR}/Version
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
