@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstemp.c,v 1.1 1998/07/27 13:42:39 mycroft Exp $	*/
+/*	$NetBSD: mkstemp.c,v 1.2 1998/07/27 16:05:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkstemp.c,v 1.1 1998/07/27 13:42:39 mycroft Exp $");
+__RCSID("$NetBSD: mkstemp.c,v 1.2 1998/07/27 16:05:07 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,5 +53,5 @@ mkstemp(path)
 {
 	int fd;
 
-	return (__gettemp(path, &fd) ? fd : -1);
+	return (__gettemp(path, &fd, 0) ? fd : -1);
 }
