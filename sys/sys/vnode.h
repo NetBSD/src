@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.11 1993/09/07 15:41:57 ws Exp $
+ *	$Id: vnode.h,v 1.11.2.1 1993/09/24 08:58:15 mycroft Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -125,7 +125,7 @@ struct vattr {
 	gid_t		va_gid;		/* owner group id */
 	long		va_fsid;	/* file system id (dev for now) */
 	long		va_fileid;	/* file id */
-	u_quad		va_qsize;	/* file size in bytes */
+	u_quad_t	va_size;	/* file size in bytes */
 	long		va_blocksize;	/* blocksize preferred for i/o */
 	struct timeval	va_atime;	/* time of last access */
 	struct timeval	va_mtime;	/* time of last modification */
@@ -134,19 +134,8 @@ struct vattr {
 	u_long		va_flags;	/* flags defined for file */
 	/* XXX should be a dev_t */
 	u_long		va_rdev;	/* device the special file represents */
-	u_quad		va_qbytes;	/* bytes of disk space held by file */
+	u_quad_t	va_bytes;	/* bytes of disk space held by file */
 };
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define	va_size		va_qsize.val[0]
-#define	va_size_rsv	va_qsize.val[1]
-#define	va_bytes	va_qbytes.val[0]
-#define	va_bytes_rsv	va_qbytes.val[1]
-#else
-#define	va_size		va_qsize.val[1]
-#define	va_size_rsv	va_qsize.val[0]
-#define	va_bytes	va_qbytes.val[1]
-#define	va_bytes_rsv	va_qbytes.val[0]
-#endif
 
 /*
  * Operations on vnodes.

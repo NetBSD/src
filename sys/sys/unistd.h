@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.14 (Berkeley) 4/1/91
- *	$Id: unistd.h,v 1.3 1993/05/20 16:23:41 cgd Exp $
+ *	$Id: unistd.h,v 1.3.4.1 1993/09/24 08:58:12 mycroft Exp $
  */
 
 #ifndef _SYS_UNISTD_H_
@@ -88,5 +88,23 @@
 #define	_SC_JOB_CONTROL		6
 #define	_SC_SAVED_IDS		7
 #define	_SC_VERSION		8
+#define	_SC_BC_BASE_MAX		9
+#define	_SC_BC_DIM_MAX		10
+#define	_SC_BC_SCALE_MAX	11
+#define	_SC_BC_STRING_MAX	12
+#define	_SC_COLL_WEIGHTS_MAX	13
+#define	_SC_EXPR_NEST_MAX	14
+#define	_SC_LINE_MAX		15
+#define	_SC_RE_DUP_MAX		16
+#define	_SC_2_VERSION		17
+#define	_SC_2_C_DEV		18
+#define	_SC_2_CHAR_TERM		19
+#define	_SC_2_FORT_DEV		20
+#define	_SC_2_FORT_RUN		21
+#define	_SC_2_LOCALEDEF		22
+#define	_SC_2_SW_DEV		23
+#define	_SC_2_UPE		24
+
+#define	_CS_PATH		1
 
 #endif /* !_SYS_UNISTD_H_ */

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cdefs.h	7.6 (Berkeley) 5/4/91
- *	$Id: cdefs.h,v 1.4 1993/05/26 14:52:56 cgd Exp $
+ *	$Id: cdefs.h,v 1.4.4.1 1993/09/24 08:57:44 mycroft Exp $
  */
 
 #ifndef	_SYS_CDEFS_H_
@@ -52,6 +52,8 @@
  * in between its arguments.  __CONCAT can also concatenate double-quoted
  * strings produced by the __STRING macro, but this only works with ANSI C.
  */
+#undef __P				/* avoid redefinition warnings */
+
 #if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #define	__CONCAT(x,y)	x ## y

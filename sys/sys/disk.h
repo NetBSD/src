@@ -41,7 +41,7 @@
  *
  *	@(#)disk.h	5.1 (Berkeley) 7/10/92
  *
- * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.1 1993/08/13 13:20:10 glass Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.1.2.1 1993/09/24 08:57:48 mycroft Exp $ (LBL)
  */
 
 /*
@@ -74,7 +74,8 @@ struct dkdriver {
 	int	(*d_close) __P((dev_t dev, int, int ifmt, struct proc *));
 	int	(*d_ioctl) __P((dev_t dev, int cmd, caddr_t data, int fflag,
 				struct proc *));
-	int	(*d_dump) __P((dev_t));
+	int	(*d_dump) __P((dev_t dev, daddr_t blkno, caddr_t maddr, int
+				bytes));
 	void	(*d_start) __P((struct buf *, daddr_t));
 	int	(*d_mklabel) __P((struct dkdevice *));
 #endif
