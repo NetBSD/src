@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.4 2001/11/13 07:23:16 lukem Exp $ */
+/* $NetBSD: if_ea.c,v 1.5 2001/11/13 13:32:34 lukem Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: if_ea.c,v 1.4 2001/11/13 07:23:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.5 2001/11/13 13:32:34 lukem Exp $");
 
 #include <sys/param.h>
 
