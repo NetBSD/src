@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.213 2003/10/22 06:13:56 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.214 2003/10/22 06:19:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2626,3 +2626,16 @@ sys/sys/shm.h					1.35 (via patch)
 
 	Need to make sure __sysconf() has C linkage.
 	[kleink, ticket #1532]
+
+sys/kern/kern_exit.c				1.96
+
+	Move the call up exit hooks before curproc = NULL so that we can
+	use lockmgr in exit hooks.
+	[junyoung, ticket #1533]
+
+libexec/telnetd/utility.c			1.19
+	
+	If the peer closes the connection in ttloop()
+	 syslog(LOG_ERR, "ttloop:  peer died: %m");
+	is a little console spammingly excessive. Switch to LOG_INFO.
+	[abs, ticket #1534]
