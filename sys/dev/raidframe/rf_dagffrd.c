@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.7 2002/08/02 03:42:34 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.8 2002/09/21 00:40:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.7 2002/08/02 03:42:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.8 2002/09/21 00:40:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -427,6 +427,8 @@ rf_CreateMirrorIdleReadDAG(
 	    rf_DiskReadMirrorIdleFunc);
 }
 
+#if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0)
+
 void 
 rf_CreateMirrorPartitionReadDAG(
     RF_Raid_t * raidPtr,
@@ -439,3 +441,4 @@ rf_CreateMirrorPartitionReadDAG(
 	CreateMirrorReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
 	    rf_DiskReadMirrorPartitionFunc);
 }
+#endif
