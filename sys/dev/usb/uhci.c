@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.24 1999/02/20 23:26:16 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.25 1999/04/03 19:00:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ uhci_dumpregs(sc)
 	       UREAD2(sc, UHCI_STS),
 	       UREAD2(sc, UHCI_INTR),
 	       UREAD2(sc, UHCI_FRNUM),
-	       UREAD2(sc, UHCI_FLBASEADDR),
+	       UREAD4(sc, UHCI_FLBASEADDR),
 	       UREAD2(sc, UHCI_SOF),
 	       UREAD2(sc, UHCI_PORTSC1),
 	       UREAD2(sc, UHCI_PORTSC2));
@@ -408,7 +408,8 @@ void
 uhci_dump_td(p)
 	uhci_soft_td_t *p;
 {
-	printf("TD(%p) at %08lx = 0x%08lx 0x%08lx 0x%08lx 0x%08lx\n",
+	printf("TD(%p) at %08lx = link=0x%08lx st=0x%08lx tok=0x%08lx "
+	       "buf=0x%08lx\n",
 	       p, (long)p->physaddr,
 	       (long)p->td->td_link,
 	       (long)p->td->td_status,
