@@ -328,11 +328,12 @@ mouse*)						# (XXX)
 	;;
 
 audio*)
-	rm -f audio sound
+	rm -f audio sound mixer
 	mknod sound c 42 0
 	mknod audio c 42 128
-	chown root.wheel audio sound
-	chmod 666 audio sound
+	mknod mixer c 42 16
+	chown root.wheel audio sound mixer
+	chmod 666 audio sound mixer
 	;;
 	
 local)
