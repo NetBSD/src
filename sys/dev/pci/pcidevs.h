@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.361 2001/09/10 15:09:48 eeh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.362 2001/09/15 13:13:53 chris Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.356 2001/09/10 15:07:50 eeh Exp 
+ *	NetBSD: pcidevs,v 1.357 2001/09/15 13:11:42 chris Exp 
  */
 
 /*
@@ -616,6 +616,7 @@
 #define	PCI_PRODUCT_3DFX_VOODOO2	0x0002		/* Voodoo2 */
 #define	PCI_PRODUCT_3DFX_BANSHEE	0x0003		/* Banshee */
 #define	PCI_PRODUCT_3DFX_VOODOO3	0x0005		/* Voodoo3 */
+#define	PCI_PRODUCT_3DFX_VOODOO5	0x0009		/* Voodoo 4/5 */
 
 /* 3D Labs products */
 #define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* GLINT 300SX */
