@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.39 1997/08/20 15:26:25 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.40 1997/08/24 22:31:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -497,7 +497,7 @@ ad1848_attach(sc)
     int i;
     struct ad1848_volume vol_mid = {220, 220};
     struct ad1848_volume vol_0   = {0, 0};
-    struct audio_params params, xparams;
+    struct audio_params pparams, rparams;
     
     sc->sc_locked = 0;
     sc->sc_playrun = NOTRUNNING;
@@ -532,10 +532,9 @@ ad1848_attach(sc)
     }
     ad1848_reset(sc);
 
-    params = audio_default;
-    (void) ad1848_set_params(sc, AUMODE_RECORD, &params, &xparams);
-    params = audio_default;
-    (void) ad1848_set_params(sc, AUMODE_PLAY,   &params, &xparams);
+    pparams = audio_default;
+    rparams = audio_default;
+    (void) ad1848_set_params(sc, AUMODE_RECORD|AUMODE_PLAY, 0, &pparams, &rparams);
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);
@@ -1015,44 +1014,45 @@ ad1848_query_encoding(addr, fp)
 }
 
 int
-ad1848_set_params(addr, mode, p, q)
+ad1848_set_params(addr, setmode, usemode, p, r)
     void *addr;
-    int mode;
-    struct audio_params *p, *q;
+    int setmode, usemode;
+    struct audio_params *p, *r;
 {
     struct ad1848_softc *sc = addr;
     int error, bits, enc;
-    void (*swcode) __P((void *, u_char *buf, int cnt));
+    void (*pswcode) __P((void *, u_char *buf, int cnt));
+    void (*rswcode) __P((void *, u_char *buf, int cnt));
 
     DPRINTF(("ad1848_set_params: %d %d %d %ld\n", 
 	     p->encoding, p->precision, p->channels, p->sample_rate));
 
     enc = p->encoding;
-    swcode = 0;
+    pswcode = rswcode = 0;
     switch (enc) {
     case AUDIO_ENCODING_SLINEAR_LE:
 	if (p->precision == 8) {
 	    enc = AUDIO_ENCODING_ULINEAR_LE;
-	    swcode = change_sign8;
+	    pswcode = rswcode = change_sign8;
 	}
 	break;
     case AUDIO_ENCODING_SLINEAR_BE:
 	if (p->precision == 16 && sc->mode == 1) {
 	    enc = AUDIO_ENCODING_SLINEAR_LE;
-	    swcode = swap_bytes;
+	    pswcode = rswcode = swap_bytes;
 	}
 	break;
     case AUDIO_ENCODING_ULINEAR_LE:
 	if (p->precision == 16) {
 	    enc = AUDIO_ENCODING_SLINEAR_LE;
-	    swcode = change_sign16;
+	    pswcode = rswcode = change_sign16;
 	}
 	break;
     case AUDIO_ENCODING_ULINEAR_BE:
 	if (p->precision == 16) {
 	    enc = AUDIO_ENCODING_SLINEAR_LE;
-	    swcode = mode == AUMODE_PLAY ?
-	      swap_bytes_change_sign16 : change_sign16_swap_bytes;
+	    pswcode = swap_bytes_change_sign16;
+	    rswcode = change_sign16_swap_bytes;
 	}
 	break;
     }
@@ -1085,28 +1085,23 @@ ad1848_set_params(addr, mode, p, q)
 	    return EINVAL;
 	break;
     default:
-	return (EINVAL);
+	return EINVAL;
     }
 
     if (p->channels < 1 || p->channels > 2)
-	return(EINVAL);
+	return EINVAL;
 
     error = ad1848_set_speed(sc, &p->sample_rate);
     if (error)
 	return error;
 
-    p->sw_code = swcode;
+    p->sw_code = pswcode;
+    r->sw_code = rswcode;
 
     sc->format_bits = bits;
     sc->channels = p->channels;
     sc->precision = p->precision;
     sc->need_commit = 1;
-
-    /* Update setting for the other mode. */
-    q->sample_rate = p->sample_rate;
-    q->encoding = p->encoding;
-    q->channels = p->channels;
-    q->precision = p->precision;
 
     DPRINTF(("ad1848_set_params succeeded, bits=%x\n", bits));
     return (0);
