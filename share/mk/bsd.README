@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.134 2003/08/03 09:23:15 lukem Exp $
+#	$NetBSD: bsd.README,v 1.135 2003/09/03 05:38:09 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -441,6 +441,11 @@ FILESNAME	Optional name to install each file as.
 FILESDIR.<fn>	The location to install the specific file <fn>.
 
 FILESNAME.<fn>	Optional name to install <fn> as.
+
+LNFILES		List of two word items:
+			lnsrc lntgt
+		For each lnsrc item, create a symlink named lntgt.
+		The lntgt symlinks are removed by the cleandir target.
 
 
 =-=-=-=-=   bsd.gcc.mk   =-=-=-=-=
