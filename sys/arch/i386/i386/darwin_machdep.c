@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.1 2002/11/25 22:25:12 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.2 2002/12/12 17:42:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,18 +37,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.1 2002/11/25 22:25:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.2 2002/12/12 17:42:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
+#include <sys/mount.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
+
+#include <machine/darwin_machdep.h>
 
 void
 darwin_sendsig(sig, mask, code)
@@ -74,4 +77,30 @@ darwin_sys_sigreturn(p, v, retval)
 	printf("darwin_sys_sigreturn: uctx = %p\n", SCARG(uap, uctx));
 
 	return 0;
+}
+
+/*
+ * Set the return value for darwin binaries after a fork(). The userland
+ * libSystem stub expects the child pid to be in retval[0] for the parent
+ * and the child as well. It will perform the required operation to transform 
+ * it in the POSIXly correct value: zero for the child.
+ * We also need to skip the next instruction because the system call
+ * was successful (We also do this in the syscall handler, Darwin 
+ * works that way).
+ */
+void
+darwin_fork_child_return(arg)
+	void *arg;
+{
+#ifdef notyet
+	struct proc * const p = arg;
+	struct trapframe * const tf = trapframe(p);
+
+	child_return(arg);
+
+	tf->fixreg[FIRSTARG] = p->p_pid;
+	tf->srr0 +=4;
+#else
+	printf("darwin_fork_child_return: proc = %p\n", arg);
+#endif
 }
