@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.180 2003/03/27 12:19:44 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.181 2003/03/29 16:47:27 perry Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -420,6 +420,7 @@ product COREGA FETHER_PCC_TXF	{ "corega", "FEther&spPCC-TXF", NULL, NULL } Coreg
 product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11", NULL, NULL } Corega Wireless LAN PCC-11
 product COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL } Corega Wireless LAN PCCA-11
 product COREGA WIRELESS_LAN_PCCB_11	{ "corega_K.K.", "Wireless_LAN_PCCB-11", NULL, NULL } Corega Wireless LAN PCCB-11
+product COREGA WIRELESS_LAN_PCCL_11	{ "corega", "WL&spPCCL-11", NULL, NULL } Corega Wireless LAN PCCL-11
 
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
