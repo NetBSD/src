@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.7.2.2 2001/09/04 02:58:05 nathanw Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.7.2.3 2001/12/18 22:31:17 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.7.2.2 2001/09/04 02:58:05 nathanw Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.7.2.3 2001/12/18 22:31:17 nathanw Exp $");
 #endif
 #endif
  
@@ -201,7 +201,7 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 #ifdef _REENTRANT
 	mutex_lock(&clnt_fd_lock);
 	if (vc_fd_locks == (int *) NULL) {
-		int cv_allocsz, fd_allocsz;
+		size_t cv_allocsz, fd_allocsz;
 		int dtbsize = __rpc_dtbsize();
 
 		fd_allocsz = dtbsize * sizeof (int);
