@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.13 1996/05/09 22:29:25 scottr Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.14 1996/05/23 23:35:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -698,10 +698,8 @@ int x25_startproto = 1;
 void
 pk_init()
 {
-	/*
-	 * warning, sizeof (struct sockaddr_x25) > 32,
-	 * but contains no data of interest beyond 32
-	 */
+
+	TAILQ_INIT(&pk_listenhead);
 	if (x25_startproto) {
 		pk_protolisten(0xcc, 1, x25_dgram_incoming);
 		pk_protolisten(0x81, 1, x25_dgram_incoming);
@@ -736,7 +734,7 @@ pk_user_protolisten(info)
 
 gotspi:if (info[1])
 		return pk_protolisten(dp->spi, dp->spilen, dp->f);
-	for (lcp = pk_listenhead; lcp; lcp = lcp->lcd_listen)
+	for (lcp = pk_listenhead.tqh_first; lcp; lcp = lcp->lcd_listen.tqe_next)
 		if (lcp->lcd_laddr.x25_udlen == dp->spilen &&
 		Bcmp(&dp->spi, lcp->lcd_laddr.x25_udata, dp->spilen) == 0) {
 			pk_disconnect(lcp);
