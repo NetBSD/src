@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.258 2003/10/24 22:39:51 ross Exp $
+#	$NetBSD: Makefile,v 1.259 2003/10/25 03:55:26 ross Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -121,6 +121,7 @@ BIN3+=	hosts.equiv
 ETC_PKG=-T etc_pkg
 BASE_PKG=-T base_pkg
 ETC_INSTALL_FILE=cd ${.CURDIR} && ${INSTALL_FILE} ${ETC_PKG}
+ETC_INSTALL_OBJ_FILE=             ${INSTALL_FILE} ${ETC_PKG}
 ETC_INSTALL_LINK=cd ${.CURDIR} && ${INSTALL_LINK} ${ETC_PKG}
 ETC_INSTALL_SYMLINK=cd ${.CURDIR} && ${INSTALL_SYMLINK} ${ETC_PKG}
 
@@ -180,7 +181,7 @@ install-etc-files: check_DESTDIR MAKEDEV
 		done; \
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV.local ${DESTDIR}/dev
