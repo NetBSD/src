@@ -1,9 +1,9 @@
-/*	$NetBSD: in_cksum.c,v 1.8 1998/08/15 03:02:43 mycroft Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.8.2.1 1999/02/25 03:49:26 chs Exp $ */
 
 /*
  * Copyright (c) 1995 Zubin Dittia.
  * Copyright (c) 1995 Matthew R. Green.
- * Copyright (c) 1994 Charles M. Hannum.
+ * Copyright (c) 1994, 1998 Charles M. Hannum.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -79,52 +79,53 @@
  */
 
 #define Asm	__asm __volatile
-#define ADD64		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+8],%3; ld [%2+12],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+16],%3; ld [%2+20],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+24],%3; ld [%2+28],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+32],%3; ld [%2+36],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+40],%3; ld [%2+44],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+48],%3; ld [%2+52],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+56],%3; ld [%2+60],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
+#define ADD64		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+ 8],%1;   ld [%4+12],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+16],%1;   ld [%4+20],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+24],%1;   ld [%4+28],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+32],%1;   ld [%4+36],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+40],%1;   ld [%4+44],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+48],%1;   ld [%4+52],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+56],%1;   ld [%4+60],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD32		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+8],%3; ld [%2+12],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+16],%3; ld [%2+20],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+24],%3; ld [%2+28],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD32		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+ 8],%1;   ld [%4+12],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+16],%1;   ld [%4+20],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+24],%1;   ld [%4+28],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD16		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+8],%3; ld [%2+12],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD16		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+ 8],%1;   ld [%4+12],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD8		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD8		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD4		Asm("	ld [%2],%3; addcc  %0,%3,%0;		\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD4		Asm("	ld [%3+ 0],%1; 				\
+				addcc  %0,%1,%0;			\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1))
+				: "=r" (sum), "=&r" (tmp1)		\
+				: "0" (sum), "r" (w))
 
 #define REDUCE		{sum = (sum & 0xffff) + (sum >> 16);}
 #define ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
@@ -148,8 +149,7 @@ in_cksum(m, len)
 	 * allow the compiler to pick which specific machine registers to
 	 * use, instead of hard-coding this in the asm code above.
 	 */
-	/* XXX - initialized because of gcc's `-Wuninitialized' ! */
-	register u_int tmp1 = 0, tmp2 = 0;
+	register u_int tmp1, tmp2;
 
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
