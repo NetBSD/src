@@ -547,7 +547,7 @@ pcic_detach_card(h)
      struct pcic_handle *h;
 {
     if (!(h->flags & PCIC_FLAG_CARDP))
-	panic("pcic_attach_card: already attached");
+	panic("pcic_attach_card: already detached");
 
     h->flags &= ~PCIC_FLAG_CARDP;
 
