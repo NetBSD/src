@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.15 1999/05/30 19:13:33 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.16 1999/05/31 00:14:00 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -288,21 +288,8 @@ sbus_attach(parent, self, aux)
 	 */
 	error = getprop(node, "ranges", sizeof(struct sbus_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
-	switch (error) {
-	case 0:
-		break;
-#if 0
-	case ENOENT:
-		/* Fall back to our own `range' construction */
-		sc->sc_range = sbus_translations;
-		sc->sc_nrange =
-			sizeof(sbus_translations)/sizeof(sbus_translations[0]);
-		break;
-#endif
-	default:
+	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
-	}
-
 
 	/*
 	 * Setup the iommu.
@@ -317,37 +304,16 @@ sbus_attach(parent, self, aux)
 	 * pages must be contiguous.  Luckily, the smallest IOTSB size
 	 * is one 8K page.
 	 */
-#if 1
 	sc->sc_tsbsize = 0;
 	sc->sc_tsb = malloc(NBPG, M_DMAMAP, M_WAITOK);
 	sc->sc_ptsb = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_tsb);
-#else
 
-	/* 
-	 * All IOMMUs will share the same TSB which is allocated in pmap_bootstrap.
-	 *
-	 * This makes device management easier.
-	 */
-	{
-		extern int64_t		*iotsb;
-		extern paddr_t		iotsbp;
-		extern int		iotsbsize;
-		
-		sc->sc_tsbsize = iotsbsize;
-		sc->sc_tsb = iotsb;
-		sc->sc_ptsb = iotsbp;
-	}
-#endif
-#if 1
 	/* Need to do 64-bit stores */
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_cr, 
 			  0, (IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_tsb,
 			  0, sc->sc_ptsb);
-#else
-	stxa(&sc->sc_sysio->sys_iommu.iommu_cr,ASI_NUCLEUS,(IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
-	stxa(&sc->sc_sysio->sys_iommu.iommu_tsb,ASI_NUCLEUS,sc->sc_ptsb);
-#endif
+
 #ifdef DEBUG
 	if (sbusdebug & SDB_DVMA)
 	{
@@ -370,12 +336,8 @@ sbus_attach(parent, self, aux)
 	 * Initialize streaming buffer.
 	 */
 	sc->sc_flushpa = pmap_extract(pmap_kernel(), (vaddr_t)&sc->sc_flush);
-#if 1
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_ctl, 
 			  0, STRBUF_EN); /* Enable diagnostics mode? */
-#else
-	stxa(&sc->sc_sysio->sys_strbuf.strbuf_ctl,ASI_NUCLEUS,STRBUF_EN);
-#endif
 
 	/*
 	 * Now all the hardware's working we need to allocate a dvma map.
@@ -606,7 +568,6 @@ sbusreset(sbus)
 			printf(" %s", dev->dv_xname);
 		}
 	}
-#if 1
 	/* Reload iommu regs */
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_cr, 
 			  0, (IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
@@ -614,12 +575,6 @@ sbusreset(sbus)
 			  0, sc->sc_ptsb);
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_ctl, 
 			  0, STRBUF_EN); /* Enable diagnostics mode? */
-#else
-	/* Reload iommu regs */
-	stxa(&sc->sc_sysio->sys_iommu.iommu_cr,ASI_NUCLEUS,(IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
-	stxa(&sc->sc_sysio->sys_iommu.iommu_tsb,ASI_NUCLEUS,sc->sc_ptsb);
-	stxa(&sc->sc_sysio->sys_strbuf.strbuf_ctl,ASI_NUCLEUS,STRBUF_EN);
-#endif
 }
 
 /*
@@ -643,24 +598,16 @@ sbus_enter(sc, va, pa, flags)
 			!(flags&BUS_DMA_COHERENT));
 	
 	/* Is the streamcache flush really needed? */
-#if 1
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_pgflush,
 			  0, va);
-#else
-	stxa(&(sc->sc_sysio->sys_strbuf.strbuf_pgflush), ASI_NUCLEUS, va);
-#endif
 	sbus_flush(sc);
 #ifdef DEBUG
 	if (sbusdebug & SDB_DVMA)
 		printf("Clearing TSB slot %d for va %p\n", (int)IOTSBSLOT(va,sc->sc_tsbsize), va);
 #endif
 	sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)] = tte;
-#if 1
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_flush, 
 			  0, va);
-#else
-	stxa(&sc->sc_sysio->sys_iommu.iommu_flush,ASI_NUCLEUS,va);
-#endif
 #ifdef DEBUG
 	if (sbusdebug & SDB_DVMA)
 		printf("sbus_enter: va %lx pa %lx TSB[%lx]@%p=%lx\n",
@@ -714,11 +661,7 @@ sbus_remove(sc, va, len)
 			       (long)(sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)]), 
 			       (u_long)len);
 #endif
-#if 1
 		bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_pgflush, 0, va);
-#else
-		stxa(&(sc->sc_sysio->sys_strbuf.strbuf_pgflush), ASI_NUCLEUS, va);
-#endif
 		if (len <= NBPG) {
 			sbus_flush(sc);
 			len = 0;
@@ -732,11 +675,7 @@ sbus_remove(sc, va, len)
 			       (u_long)len);
 #endif
 		sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)] = 0;
-#if 1
 		bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_flush, 0, va);
-#else
-		stxa(&sc->sc_sysio->sys_iommu.iommu_flush, ASI_NUCLEUS, va);
-#endif
 		va += NBPG;
 	}
 }
@@ -745,31 +684,41 @@ int
 sbus_flush(sc)
 	struct sbus_softc *sc;
 {
-	extern u_int64_t cpu_clockrate;
-	u_int64_t flushtimeout;
+	struct timeval cur, flushtimeout;
+#define BUMPTIME(t, usec) { \
+	register volatile struct timeval *tp = (t); \
+	register long us; \
+ \
+	tp->tv_usec = us = tp->tv_usec + (usec); \
+	if (us >= 1000000) { \
+		tp->tv_usec = us - 1000000; \
+		tp->tv_sec++; \
+	} \
+}
 
 	sc->sc_flush = 0;
 	membar_sync();
-#if 1
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_flushsync, 0, sc->sc_flushpa);
-#else
-	stxa(&sc->sc_sysio->sys_strbuf.strbuf_flushsync, ASI_NUCLEUS, sc->sc_flushpa);
-#endif
 	membar_sync();
-/* XXXXXX this may never time out if %tick is the clock!!!! */
-	flushtimeout = tick() + cpu_clockrate/2; /* .5 sec after *now* */
+
+	microtime(&flushtimeout); 
+	cur = flushtimeout;
+	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
+	
 #ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sbus_flush: flush = %lx at va = %lx pa = %lx now=%lx until = %lx\n", 
+	if (sbusdebug & SDB_DVMA) {
+		printf("sbus_flush: flush = %lx at va = %lx pa = %lx now=%lx until = %lx:%lx\n", 
 		       (long)sc->sc_flush, (long)&sc->sc_flush, 
-		       (long)sc->sc_flushpa, (long)tick(), flushtimeout);
+		       (long)sc->sc_flushpa, cur.tv_sec, cur.tv_usec, 
+		       flushtimeout.tv_sec, flushtimeout.tv_usec);
+	}
 #endif
 	/* Bypass non-coherent D$ */
-#if 0
-	while( !ldxa(sc->sc_flushpa, ASI_PHYS_CACHED) && flushtimeout > tick()) membar_sync();
-#else
-	{ int i; for(i=140000000/2; !ldxa(sc->sc_flushpa, ASI_PHYS_CACHED) && i; i--) membar_sync(); }
-#endif
+	while( !ldxa(sc->sc_flushpa, ASI_PHYS_CACHED) && 
+	       ((cur.tv_sec <= flushtimeout.tv_sec) && 
+		(cur.tv_usec <= flushtimeout.tv_usec)))
+		microtime(&cur);
+
 #ifdef DIAGNOSTIC
 	if( !sc->sc_flush ) {
 		printf("sbus_flush: flush timeout %p at %p\n", (long)sc->sc_flush, 
@@ -785,6 +734,7 @@ sbus_flush(sc)
 #endif
 	return (sc->sc_flush);
 }
+
 /*
  * Get interrupt attributes for an Sbus device.
  */
@@ -1058,14 +1008,13 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 #ifdef DEBUG
 	{ 
-		printf("_bus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+		printf("sbus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
 		Debugger();
 		return (EINVAL);
 	}		
 #else	
 		return (EINVAL);
 #endif
-
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
 	/*
@@ -1083,7 +1032,7 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 #ifdef DEBUG
 	if (dvmaddr == (bus_addr_t)-1)	
 	{ 
-		printf("_bus_dmamap_load(): dvmamap_alloc(%d, %x) failed!\n", sgsize, flags);
+		printf("sbus_dmamap_load(): dvmamap_alloc(%d, %x) failed!\n", sgsize, flags);
 		Debugger();
 	}		
 #endif	
@@ -1151,7 +1100,7 @@ sbus_dmamap_unload(t, map)
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
 	if (map->dm_nsegs != 1)
-		panic("_sbus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+		panic("sbus_dmamap_unload: nsegs = %d", map->dm_nsegs);
 
 	addr = trunc_page(map->dm_segs[0].ds_addr);
 	len = map->dm_segs[0].ds_len;
@@ -1236,11 +1185,7 @@ sbus_dmamap_sync(t, map, offset, len, ops)
 				printf("sbus_dmamap_sync: flushing va %p, %lu bytes left\n", 	       
 				       (long)va, (u_long)len);
 #endif
-#if 1
 			bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_pgflush, 0, va);
-#else
-			stxa(&(sc->sc_sysio->sys_strbuf.strbuf_pgflush), ASI_NUCLEUS, va);
-#endif
 			if (len <= NBPG) {
 				sbus_flush(sc);
 				len = 0;
