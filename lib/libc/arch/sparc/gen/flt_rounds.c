@@ -3,6 +3,9 @@
  * Public domain.
  */
 
+#include <sys/types.h>
+#include <machine/float.h>
+
 static const int map[] = {
 	1,	/* round to nearest */
 	0,	/* round to zero */
