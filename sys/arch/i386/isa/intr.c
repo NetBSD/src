@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 1994/11/04 19:13:50 mycroft Exp $	*/
+/*	$NetBSD: intr.c,v 1.26 1994/11/18 22:22:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -122,26 +122,17 @@ void
 isa_strayintr(irq)
 	int irq;
 {
-	static u_long strays, wilds;
+	static u_long strays;
 
         /*
          * Stray interrupts on irq 7 occur when an interrupt line is raised
          * and then lowered before the CPU acknowledges it.  This generally
          * means either the device is screwed or something is cli'ing too
          * long and it's timing out.
-         *
-         * -1 is passed by the generic handler for out of range exceptions,
-         * since we don't really want 208 little vectors just to get the
-	 * message right.  (It wouldn't be all that much code, but why bother?)
          */
-	if (irq == -1) {
-		++wilds;
-		log(LOG_ERR, "wild interrupt\n");
-	} else {
-		if (++strays <= 5)
-			log(LOG_ERR, "stray interrupt %d%s\n", irq,
-			    strays >= 5 ? "; stopped logging" : "");
-	}
+	if (++strays <= 5)
+		log(LOG_ERR, "stray interrupt %d%s\n", irq,
+		    strays >= 5 ? "; stopped logging" : "");
 }
 
 int fastvec;
