@@ -1,4 +1,4 @@
-#	$Id: files.m68k.oldconf,v 1.4 1994/01/29 02:49:21 cgd Exp $
+#	$Id: files.m68k.oldconf,v 1.5 1994/02/03 18:58:40 mycroft Exp $
 #
 arch/m68k/fpsp/fpsp.U			optional fpsp compile-with "uudecode $S/arch/m68k/fpsp/fpsp.U"
 arch/m68k/fpsp/fpspnull.s		optional not fpsp
@@ -10,3 +10,4 @@ arch/m68k/m68k/in_cksum.c		optional inet
 arch/m68k/m68k/ns_cksum.c		optional ns
 arch/m68k/m68k/oc_cksum.s		optional inet
 arch/m68k/m68k/process_machdep.c	standard
+arch/m68k/m68k/random.s			standard
