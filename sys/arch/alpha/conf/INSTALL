@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.34 2000/03/22 00:58:17 cgd Exp $
+# $NetBSD: INSTALL,v 1.35 2000/04/22 16:28:48 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -150,7 +150,7 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-rl*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
