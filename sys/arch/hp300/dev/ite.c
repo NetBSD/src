@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.24 1994/12/13 14:20:33 mycroft Exp $	*/
+/*	$NetBSD: ite.c,v 1.25 1994/12/16 04:00:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -385,7 +385,7 @@ itestart(tp)
 }
 
 void
-itestart(tp, flag)
+itestop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
