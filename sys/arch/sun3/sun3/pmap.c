@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 1997/02/18 20:16:54 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 1997/02/28 19:55:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1522,8 +1522,8 @@ pmap_virtual_space(v_start, v_end)
  * all addresses provided by pmap_next_page().  This
  * return value is used to allocate per-page data.
  *
- * Note that a machine with a "hole" in physical memory
- * may include the pages in the hole in this count, and
+ * Machines with a small "hole" in physical memory may
+ * include the pages in the hole in this count, and
  * skip the pages in the hole in pmap_next_page().
  */
 u_int
@@ -1531,8 +1531,8 @@ pmap_free_pages()
 {
 	int bytes;
 
-	bytes = avail_end - avail_start;
-	return(sun3_btop(bytes));
+	bytes = avail_end - avail_next;
+	return(atop(bytes));
 }
 
 /*
@@ -1541,10 +1541,10 @@ pmap_free_pages()
  * return FALSE to indicate that there are no more free pages.
  * Note that avail_next is set to avail_start in pmap_bootstrap().
  *
- * Imporant:  The page indices of the pages returned here must be
+ * Important:  The page indices of the pages returned here must be
  * in ascending order.
  */
-int
+boolean_t
 pmap_next_page(paddr)
 	vm_offset_t *paddr;
 {
@@ -1558,7 +1558,7 @@ pmap_next_page(paddr)
 
 	/* Have memory, will travel... */
 	*paddr = avail_next;
-	avail_next += NBPG;
+	avail_next += PAGE_SIZE;
 	return TRUE;
 }
 
@@ -1571,9 +1571,9 @@ pmap_next_page(paddr)
  * as long as the range of indices returned by this function
  * is smaller than the value returned by pmap_free_pages().
  * The returned index does NOT need to start at zero.
- *
- * XXX - Should make this a macro in pmap.h
+ * (This is normally a macro in pmap.h)
  */
+#ifndef	pmap_page_index
 int
 pmap_page_index(pa)
 	vm_offset_t pa;
@@ -1583,16 +1583,12 @@ pmap_page_index(pa)
 #ifdef	DIAGNOSTIC
 	if (pa < avail_start || pa >= avail_end)
 		panic("pmap_page_index: pa=0x%x", pa);
-	if (hole_start && pa >= hole_start) {
-		/* Make sure pa is not in the hole. */
-		if (pa < (hole_start + hole_size))
-			panic("pmap_page_index: pa=0x%x", pa);
-	}
-#endif
+#endif	/* DIAGNOSTIC */
 
-	idx = sun3_btop(pa);
+	idx = atop(pa);
 	return (idx);
 }
+#endif	/* !pmap_page_index */
 
 
 /*
