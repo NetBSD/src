@@ -1,3 +1,5 @@
+/*	$NetBSD: flt_rounds.S,v 1.5 1998/01/09 03:45:03 perry Exp $	*/
+
 /*
  * Written by J.T. Conklin, Apr 4, 1995
  * Public domain.
