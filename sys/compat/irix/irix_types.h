@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.14 2002/10/05 23:17:30 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.15 2003/11/08 22:36:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 /* From IRIX's <limits.h> */
 #define IRIX_PATH_MAX 1024
+#define IRIX_NAME_MAX 255
 
 /* From IRIX's <sys/signal.h> */
 typedef struct {
@@ -165,14 +166,14 @@ typedef struct irix_dirent {
 	irix_ino_t	d_ino;
 	irix_off_t	d_off;
 	unsigned short	d_reclen;
-	char		d_name[1];
+	char		d_name[IRIX_NAME_MAX + 1];
 } irix_dirent_t;
 
 typedef struct irix_dirent64 { 
 	irix_ino64_t	d_ino;
 	irix_off64_t	d_off;
 	unsigned short	d_reclen;
-	char		d_name[1];
+	char		d_name[IRIX_NAME_MAX + 1];
 } irix_dirent64_t;
 
 /* From IRIX's <sys/utsname.h> */
