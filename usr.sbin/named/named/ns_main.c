@@ -1,6 +1,6 @@
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
-static char rcsid[] = "$Id: ns_main.c,v 1.3 1997/04/13 10:51:37 mrg Exp $";
+static char rcsid[] = "$Id: ns_main.c,v 1.4 1997/04/21 05:54:00 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -744,7 +744,7 @@ main(argc, argv, envp)
 			}
 			if (len != 0) {
 				nameserIncr(from_addr.sin_addr, nssRcvdOpts);
-				if (!haveComplained((char*)
+				if (!haveComplained((char*)(long)
 						    from_addr.sin_addr.s_addr,
 						    "rcvd ip options")) {
 					syslog(LOG_INFO,
