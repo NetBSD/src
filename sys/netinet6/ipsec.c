@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.70 2003/05/10 13:23:07 darrenr Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.71 2003/07/22 11:18:26 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70 2003/05/10 13:23:07 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.71 2003/07/22 11:18:26 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -834,11 +834,7 @@ ipsec_setspidx(m, spidx, needport)
 		m_copydata(m, 0, sizeof(ipbuf), (caddr_t)&ipbuf);
 		ip = &ipbuf;
 	}
-#ifdef _IP_VHL
-	v = _IP_VHL_V(ip->ip_vhl);
-#else
 	v = ip->ip_v;
-#endif
 	switch (v) {
 	case 4:
 		error = ipsec4_setspidx_ipaddr(m, spidx);
@@ -898,11 +894,7 @@ ipsec4_get_ulp(m, spidx, needport)
 		return;
 
 	nxt = ip.ip_p;
-#ifdef _IP_VHL
-	off = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	off = ip.ip_hl << 2;
-#endif
 	while (off < m->m_pkthdr.len) {
 		switch (nxt) {
 		case IPPROTO_TCP:
@@ -2012,25 +2004,14 @@ ipsec4_encapsulate(m, sav)
 		panic("ipsec4_encapsulate: assumption failed (first mbuf length)");
 
 	ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-	hlen = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	if (m->m_len != hlen)
 		panic("ipsec4_encapsulate: assumption failed (first mbuf length)");
 
 	/* generate header checksum */
 	ip->ip_sum = 0;
-#ifdef _IP_VHL
-	if (ip->ip_vhl == IP_VHL_BORING)
-		ip->ip_sum = in_cksum_hdr(ip);
-	else
-		ip->ip_sum = in_cksum(m, hlen);
-#else
 	ip->ip_sum = in_cksum(m, hlen);
-#endif
 
 	plen = m->m_pkthdr.len;
 
@@ -2062,11 +2043,7 @@ ipsec4_encapsulate(m, sav)
 	/* construct new IPv4 header. see RFC 2401 5.1.2.1 */
 	/* ECN consideration. */
 	ip_ecn_ingress(ip4_ipsec_ecn, &ip->ip_tos, &oip->ip_tos);
-#ifdef _IP_VHL
-	ip->ip_vhl = IP_MAKE_VHL(IPVERSION, sizeof(struct ip) >> 2);
-#else
 	ip->ip_hl = sizeof(struct ip) >> 2;
-#endif
 	ip->ip_off &= htons(~IP_OFFMASK);
 	ip->ip_off &= htons(~IP_MF);
 	switch (ip4_ipsec_dfbit) {
@@ -3140,11 +3117,7 @@ ipsec4_splithdr(m)
 	if (m->m_len < sizeof(struct ip))
 		panic("ipsec4_splithdr: first mbuf too short");
 	ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-	hlen = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 	if (m->m_len > hlen) {
 		MGETHDR(mh, M_DONTWAIT, MT_HEADER);
 		if (!mh) {
@@ -3222,11 +3195,7 @@ ipsec4_tunnel_validate(ip, nxt0, sav)
 	/* do not decapsulate if the SA is for transport mode only */
 	if (sav->sah->saidx.mode == IPSEC_MODE_TRANSPORT)
 		return 0;
-#ifdef _IP_VHL
-	hlen = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 	if (hlen != sizeof(struct ip))
 		return 0;
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
