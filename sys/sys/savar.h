@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.15 2002/07/17 19:32:40 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.16 2002/08/30 23:58:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,17 +63,19 @@ struct sadata {
 	int	sa_flag;		/* SA_* flags */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
 	struct lwp	*sa_vp;		/* "virtual processor" allocation */
+	struct lwp	*sa_woken;	/* list of woken lwps */
 	struct lwp	*sa_idle;      	/* lwp in sawait */
 	int	sa_concurrency;		/* desired concurrency */
 	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
 	int	sa_ncached;		/* list length */
 	stack_t	*sa_stacks;		/* pointer to array of upcall stacks */
-	int	sa_nstackentries;	/* size of the array */
+	stack_t	*sa_rstacks;		/* reserved stacks */
 	int	sa_nstacks;		/* number of valid stacks */
+	int	sa_nrstacks;		/* number of reserved stacks */
 	SIMPLEQ_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
 };
 
-#define SA_PREEMPT	0x0001	/* Generate upcalls on a vanilla preempt() */
+#define SA_FLAG_ALL	SA_FLAG_PREEMPT
 
 extern struct pool sadata_pool;		/* memory pool for sadata structures */
 extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
@@ -85,10 +87,12 @@ void	sadata_upcall_free(struct sadata_upcall *);
 
 void	sa_switch(struct lwp *, int);
 void	sa_preempt(struct lwp *);
+void	sa_yield(struct lwp *);
 void	sa_switchcall(void *);
+void	sa_yieldcall(void *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
 int	sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
-	    size_t, void *, struct sadata_upcall *);
+	    size_t, void *, struct sadata_upcall *, stack_t *);
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
 struct lwp *sa_getcachelwp(struct proc *);
