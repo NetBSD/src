@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.22 2004/03/15 22:49:07 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.23 2004/03/15 23:25:09 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -559,6 +559,11 @@ static const keysym_t jornada6x0_us_keydesc[] = {
     KC(40),  KS_apostrophe,  KS_quotedbl,   KS_bracketright,
     KC(43),  KS_backslash,   KS_bar,        KS_braceright,
     KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
 
@@ -595,6 +600,11 @@ const u_int8_t jornada6x0_intl_keytrans[] = {
 static const keysym_t jornada6x0_intl_keydesc[] = {
 /*  pos      normal          shifted        altgr	*/
     KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
 /* German (ABD) */
@@ -614,6 +624,11 @@ static const keysym_t jornada6x0_de_keydesc[] = {
     KC(44),  KS_y,           KS_Y,          KS_less,
     KC(45),  KS_x,           KS_X,          KS_greater,
     KC(46),  KS_c,           KS_C,          KS_cent,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
 #if 0 /* XXX: not yet: need to add platform id to hpcboot */
@@ -640,6 +655,11 @@ static const keysym_t jornada6x0_fr_keydesc[] = {
     KC(50),  KS_comma,       KS_question,   KS_mu,
     KC(53),  KS_exclam,      KS_section,    KS_Eacute,
     KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 #endif
 
