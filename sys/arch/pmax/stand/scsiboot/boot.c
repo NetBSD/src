@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 1999/01/29 05:37:48 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 1999/02/01 02:46:59 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,7 +149,7 @@ loadfile(fname)
 		 * Copy exec header to start of bss.
 		 * Load symbols into end + sizeof(int).
 		 */
-		bcopy((char *)&aout, buf += i, sizeof(aout));
+		memcpy(buf += i, (char *)&aout, sizeof(aout));
 		n += read(fd, buf += aout.a_bss + 4, aout.a_syms + 4);
 		i += aout.a_syms + 4;
 		buf += aout.a_syms;
