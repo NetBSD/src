@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.5 2002/10/02 05:02:30 thorpej Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.6 2003/02/17 20:51:52 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -69,6 +69,7 @@ struct ixpclk_softc {
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_space_handle_t	sc_pll_ioh;
 
 	u_int32_t		sc_clock_count;
 	u_int32_t		sc_count_per_usec;
@@ -132,7 +133,7 @@ ixpclk_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return (1);
+	return 2;
 }
 
 static void
@@ -141,8 +142,9 @@ ixpclk_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct ixpclk_softc *sc = (struct ixpclk_softc*) self;
-	struct ixpsip_attach_args *sa = aux;
+	struct ixpclk_softc		*sc = (struct ixpclk_softc*) self;
+	struct ixpsip_attach_args	*sa = aux;
+	u_int32_t			ccf;
 
 	printf("\n");
 
@@ -156,12 +158,33 @@ ixpclk_attach(parent, self, aux)
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
+	if (bus_space_map(sa->sa_iot, sa->sa_addr + IXPCLK_PLL_CFG_OFFSET,
+			  IXPCLK_PLL_CFG_SIZE, 0, &sc->sc_pll_ioh))
+		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* disable all channel and clear interrupt status */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,
 			  IXPCL_DISABLE | IXPCL_PERIODIC | IXPCL_STP_CORE);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CLEAR, 0);
-	printf("%s: IXP12x0 Interval Timer\n",  sc->sc_dev.dv_xname);
+
+
+	ccf = bus_space_read_4(sc->sc_iot, sc->sc_pll_ioh, 0)
+		& IXP12X0_PLL_CFG_CCF;
+	sc->sc_coreclock_freq = ccf_to_coreclock[ccf];
+
+	sc->sc_clock_count = sc->sc_coreclock_freq / hz;
+	sc->sc_count_per_usec = sc->sc_coreclock_freq / 1000000;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CLEAR, IXPT_CLEAR);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_LOAD,
+			  sc->sc_clock_count);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,
+			  IXPCL_ENABLE | IXPCL_PERIODIC | IXPCL_STP_CORE);
+
+	printf("%s: IXP12x0 Interval Timer (core clock %d.%03dMHz)\n",
+	       sc->sc_dev.dv_xname,
+	       sc->sc_coreclock_freq / 1000000,
+	       (sc->sc_coreclock_freq % 1000000) / 1000);
 }
 
 /*
@@ -173,11 +196,6 @@ static int
 ixpclk_intr(void *arg)
 	
 {
-	/* XXX XXX */
-	if (!(IXPREG(IXPPCI_IRQ_RAW_STATUS)
-	      & (1U << (IXPPCI_INTR_T1 - SYS_NIRQ))))
-		return (0);
-
 	bus_space_write_4(ixpclk_sc->sc_iot, ixpclk_sc->sc_ioh,
 			  IXPCLK_CLEAR, 1);
 
@@ -212,26 +230,16 @@ void
 cpu_initclocks()
 {
 	struct ixpclk_softc*	sc = ixpclk_sc;
-	u_int32_t		ccf;
 
 	stathz = profhz = 0;
 
 	printf("clock: hz = %d stathz = %d\n", hz, stathz);
 
-	ccf = IXPREG(IXP12X0_PLL_CFG) & IXP12X0_PLL_CFG_CCF;
-	sc->sc_coreclock_freq = ccf_to_coreclock[ccf];
-
-	printf("pll_cfg:ccf = %x coreclock frequency = %dHz\n",
-	       ccf, sc->sc_coreclock_freq);
-
-	sc->sc_clock_count = sc->sc_coreclock_freq / hz;
-	sc->sc_count_per_usec = sc->sc_coreclock_freq / 10000000;
-
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,
+			  IXPCL_DISABLE);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CLEAR, IXPT_CLEAR);
 
 	ixp12x0_intr_establish(IXPPCI_INTR_T1, IPL_CLOCK, ixpclk_intr, NULL);
-
-	IXPREG(IXPPCI_IRQ_ENABLE_SET) = (1U << (IXPPCI_INTR_T1 - SYS_NIRQ));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_LOAD,
 			  sc->sc_clock_count);
@@ -311,27 +319,23 @@ microtime(tvp)
  *	Delay for at least N microseconds.
  */
 void
-delay(usecs)
-	u_int usecs;
+delay(unsigned int usecs)
 {
-	u_int32_t tick, otick, delta;
-	int j, csec, usec;
+	u_int32_t	count;
+	u_int32_t	tick;
+	u_int32_t	otick;
+	u_int32_t	delta;
+	int		j;
+	int		csec, usec;
 
-	csec = usecs / 10000;
-	usec = usecs % 10000;
-	
 	if (ixpclk_sc == NULL) {
-		static u_int32_t	coreclock_freq = 0;
-
 #ifdef DEBUG
-		printf("delay: called befor initialize ixpclk\n");
+		printf("delay: called befor start ixpclk\n");
 #endif
-		if (coreclock_freq == 0) {
-			coreclock_freq
-				= ccf_to_coreclock[IXPREG(IXP12X0_PLL_CFG)
-						   & IXP12X0_PLL_CFG_CCF];
-		}
 
+		csec = usecs / 10000;
+		usec = usecs % 10000;
+	
 		usecs = (TIMER_FREQUENCY / 100) * csec
 			+ (TIMER_FREQUENCY / 100) * usec / 10000;
 		/* clock isn't initialized yet */
@@ -341,22 +345,23 @@ delay(usecs)
 		return;
 	}
 
-	usecs = (ixpclk_sc->sc_coreclock_freq / 100) * csec
-		+ (ixpclk_sc->sc_coreclock_freq / 100) * usec / 10000;
+	count = ixpclk_sc->sc_count_per_usec * usecs;
 
 	otick = gettick();
 
-	while (1) {
+	for (;;) {
 		for(j = 100; j > 0; j--)
 			;
-		tick = gettick();
 
-		delta = otick > tick
-			? otick - tick
-			: otick - tick + IXPCL_ITV + 1;
-		if (delta > usecs)
+		tick = gettick();
+		delta = otick < tick
+			? ixpclk_sc->sc_clock_count + otick - tick
+			: otick - tick;
+
+		if (delta > count)
 			break;
-		usecs -= delta;
+
+		count -= delta;
 		otick = tick;
 	}
 }

@@ -1,6 +1,6 @@
-/*	$NetBSD: nappi_nppb.c,v 1.4 2002/10/02 05:10:36 thorpej Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.5 2003/02/17 20:51:53 ichiro Exp $ */
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
  * All rights reserved.
  *
@@ -100,11 +100,6 @@ nppbmatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (PCI_CLASS(class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(class) == PCI_SUBCLASS_BRIDGE_MISC) {
-#ifdef PCI_DEBUG
-	printf("pci vendor = 0x%08x\n", PCI_VENDOR(id));
-	printf("pci class = 0x%08x\n", PCI_CLASS(class));
-	printf("pci subclass = 0x%08x\n", PCI_SUBCLASS(class));
-#endif
 		switch (PCI_VENDOR(id)) {
 		case PCI_VENDOR_INTEL:
 			switch (PCI_PRODUCT(id)) {
@@ -132,13 +127,11 @@ nppbattach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
 
-	printf("\n");
 	psc->psc_pc = pc;
 	psc->psc_tag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
-		PCI_REVISION(pa->pa_class));
+	sprintf(devinfo, "21555 Non-Transparent PCI-PCI Bridge");
+	aprint_normal(": %s, rev %d\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Make sure bus-mastering is enabled. */
 	pci_conf_write(psc->psc_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
@@ -193,6 +186,9 @@ nppb_intr(void *arg)
 {
 #if 0
 	struct nppb_softc *sc = arg;
+#endif
+#ifdef PCI_DEBUG
+	printf("nppb_intr assert\n");
 #endif
 	return(0);
 }

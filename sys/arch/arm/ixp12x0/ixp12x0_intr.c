@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.4 2002/12/02 14:10:13 ichiro Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.5 2003/02/17 20:51:52 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ ixp12x0_intr_calculate_masks(void)
 	pci_imask[IPL_CLOCK] |= pci_imask[IPL_AUDIO];
 
 	/*
-	 * No separate statclock on the IQ80310.
+	 * No separate statclock on the IXP12x0.
 	 */
 	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
 	pci_imask[IPL_STATCLOCK] |= pci_imask[IPL_CLOCK];
@@ -455,6 +455,8 @@ ixp12x0_intr_init(void)
 	current_intr_depth = 0;
 	current_spl_level = 0;
 
+	ixp12x0_intr_calculate_masks();
+
 	/* Enable IRQs (don't yet use FIQs). */
 	enable_interrupts(I32_bit);
 }
@@ -466,7 +468,7 @@ ixp12x0_intr_establish(int irq, int ipl, int (*ih_func)(void *), void *arg)
 	struct intrhand*	ih;
 	u_int			oldirqstate;
 #ifdef DEBUG
-	printf("ixp12x0_intr_establish(%d, %d, %08x, %08x)\n",
+	printf("ixp12x0_intr_establish(irq=%d, ipl=%d, ih_func=%08x, arg=%08x)\n",
 	       irq, ipl, (u_int32_t) ih_func, (u_int32_t) arg);
 #endif
 	if (irq < 0 || irq > NIRQ)
@@ -484,6 +486,7 @@ ixp12x0_intr_establish(int irq, int ipl, int (*ih_func)(void *), void *arg)
 	ih->ih_ipl = ipl;
 
 	iq = &intrq[irq];
+	iq->iq_ist = IST_LEVEL;
 
 	oldirqstate = disable_interrupts(I32_bit);
 	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);

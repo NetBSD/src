@@ -1,7 +1,7 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.5 2002/12/22 11:28:37 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.6 2003/02/17 20:51:52 ichiro Exp $ */
 
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
  * All rights reserved.
  *
@@ -183,9 +183,6 @@ ixp12x0_mem_bs_map(t, bpa, size, cacheable, bshp)
 	int cacheable;
 	bus_space_handle_t *bshp;
 {
-#if 0
-	struct ixp12x0_softc *sc = t;
-#endif
 	paddr_t pa, endpa;
 	vaddr_t va;
 
@@ -193,13 +190,12 @@ ixp12x0_mem_bs_map(t, bpa, size, cacheable, bshp)
 		return (EINVAL);
 	/*
 	 * PCI MEM space is mapped same address as real memory
+	 *  see. PCI_ADDR_EXT
 	 */
-
 	pa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
 
-	/* XXX use extent manager to check duplicate mapping */
-
+	/* Get some VM.  */
 	va = uvm_km_valloc(kernel_map, endpa - pa);
 	if (va == 0)
 		return(ENOMEM);
@@ -207,6 +203,7 @@ ixp12x0_mem_bs_map(t, bpa, size, cacheable, bshp)
 	/* Store the bus space handle */
 	*bshp = va + (bpa & PAGE_MASK);
 
+	/* Now map the pages */
 	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE,
@@ -275,16 +272,12 @@ ixp12x0_io_bs_map(t, bpa, size, cacheable, bshp)
 	int cacheable;
 	bus_space_handle_t *bshp;
 {
-#if 0
-	struct ixp12x0_softc *sc = t;
-#endif
-#if 0
 	if ((bpa + size) >= IXP12X0_PCI_IO_SIZE)
 		return (EINVAL);
-#endif
+
 	/*
 	 * PCI I/O space is mapped at virtual address of each evaluation board.
-	 * Translate the bus address to the virtual address.
+	 * Translate the bus address(0x0) to the virtual address(0x54000000).
 	 */
 	*bshp = bpa + IXP12X0_PCI_IO_VBASE;
 

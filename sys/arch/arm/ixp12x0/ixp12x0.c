@@ -1,6 +1,6 @@
-/*	$NetBSD: ixp12x0.c,v 1.5 2003/01/01 00:46:15 thorpej Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.6 2003/02/17 20:51:52 ichiro Exp $ */
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
  * All rights reserved.
  *
@@ -60,13 +60,29 @@ ixp12x0_attach(sc)
 	/*
 	 * Subregion for PCI Configuration Spase Registers
 	 */
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0,
-	    IXP12X0_PCI_SIZE, &sc->sc_pci_ioh))
-		panic("%s: unable to subregion PCI registers",
-		      sc->sc_dev.dv_xname); 
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		IXP12X0_PCI_VBASE - IXP12X0_IO_VBASE,
+		IXP12X0_PCI_SIZE, &sc->sc_pci_ioh))
+			panic("%s: unable to subregion PCI registers",
+			       sc->sc_dev.dv_xname); 
+
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		IXP12X0_PCI_TYPE0_VBASE - IXP12X0_IO_VBASE,
+		IXP12X0_PCI_TYPE0_SIZE, &sc->sc_conf0_ioh))
+			panic("%s: unable to subregion PCI Configutation 0\n",
+			       sc->sc_dev.dv_xname);
+
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		IXP12X0_PCI_TYPE1_VBASE - IXP12X0_IO_VBASE,
+		IXP12X0_PCI_TYPE1_SIZE, &sc->sc_conf1_ioh))
+			panic("%s: unable to subregion PCI Configutation 1\n",
+			       sc->sc_dev.dv_xname);
 	/*
 	 * PCI bus reset
 	 */
+	/* disable PCI command */
+	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
+		PCI_COMMAND_STATUS_REG, 0xffff0000);
 	/* XXX assert PCI reset Mode */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
 		SA_CONTROL) &~ SA_CONTROL_PNR;
@@ -84,8 +100,10 @@ ixp12x0_attach(sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
 		DBELL_SA_MASK, 0x0);
 
+	/*  We setup a 1:1 memory map of bus<->physical addresses */
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
-		PCI_ADDR_EXT, 0);
+		PCI_ADDR_EXT,
+		PCI_ADDR_EXT_PMSA(IXP12X0_PCI_MEM_HWBASE));
 
 	/* XXX Negate PCI reset */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
@@ -96,31 +114,27 @@ ixp12x0_attach(sc)
 	/*
 	 * specify window size of memory access and SDRAM.
 	 */
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
-		IXP_PCI_MEM_BAR) | IXP1200_PCI_MEM_BAR;
-	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
-		IXP_PCI_MEM_BAR, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh, IXP_PCI_MEM_BAR,
+		IXP1200_PCI_MEM_BAR & IXP_PCI_MEM_BAR_MASK);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
-		IXP_PCI_IO_BAR) | IXP1200_PCI_IO_BAR;
-	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
-		IXP_PCI_IO_BAR, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh, IXP_PCI_IO_BAR,
+		IXP1200_PCI_IO_BAR & IXP_PCI_IO_BAR_MASK);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
-		IXP_PCI_DRAM_BAR) | IXP1200_PCI_DRAM_BAR;
-	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
-		IXP_PCI_DRAM_BAR, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh, IXP_PCI_DRAM_BAR,
+		IXP1200_PCI_DRAM_BAR & IXP_PCI_DRAM_BAR_MASK);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
 		CSR_BASE_ADDR_MASK, CSR_BASE_ADDR_MASK_1M);
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
 		DRAM_BASE_ADDR_MASK, DRAM_BASE_ADDR_MASK_256MB);
 
-#if DEBUG
-	printf("IXP_PCI_MEM_BAR = 0x%08x\nIXP_PCI_IO_BAR = 0x%08x\nIXP_PCI_DRAM_BAR = 0x%08x\nCSR_BASE_ADDR_MASK = 0x%08x\n",
+#ifdef PCI_DEBUG
+	printf("IXP_PCI_MEM_BAR = 0x%08x\nIXP_PCI_IO_BAR = 0x%08x\nIXP_PCI_DRAM_BAR = 0x%08x\nPCI_ADDR_EXT = 0x%08x\nCSR_BASE_ADDR_MASK = 0x%08x\nDRAM_BASE_ADDR_MASK = 0x%08x\n",
 	bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, IXP_PCI_MEM_BAR),
 	bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, IXP_PCI_IO_BAR),
 	bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, IXP_PCI_DRAM_BAR),
+	bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, PCI_ADDR_EXT),
+	bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, CSR_BASE_ADDR_MASK),
 	bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, DRAM_BASE_ADDR_MASK));
 #endif 
 	/* Initialize complete */
@@ -139,10 +153,11 @@ ixp12x0_attach(sc)
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh,
 		PCI_COMMAND_STATUS_REG) |
 		PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+		PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE |
 		PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_INVALIDATE_ENABLE;
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
 		PCI_COMMAND_STATUS_REG, reg);
-#if DEBUG
+#ifdef PCI_DEBUG
 	printf("PCI_COMMAND_STATUS_REG = 0x%08x\n",
 		bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, PCI_COMMAND_STATUS_REG));
 #endif
@@ -152,7 +167,11 @@ ixp12x0_attach(sc)
 	ixp12x0_io_bs_init(&sc->ia_pci_iot, sc);
 	ixp12x0_mem_bs_init(&sc->ia_pci_memt, sc);
 	ixp12x0_pci_init(&sc->ia_pci_chipset, sc);
-	ixp12x0_pci_dma_init(&sc->ia_pci_dmat, sc);
+
+	/*
+	 * Initialize the DMA tags.
+	 */
+	ixp12x0_pci_dma_init(sc);
 
 	/*
 	 * Attach the PCI bus.
@@ -213,13 +232,13 @@ static struct pmap_ent	map_tbl_ixp12x0[] = {
 
 	{ "PCI Type0 Configuration Space",
 	  IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_HWBASE,
-	  IXP12X0_PCI_TYPEX_SIZE,
+	  IXP12X0_PCI_TYPE0_SIZE,
 	  VM_PROT_READ|VM_PROT_WRITE,
 	  PTE_NOCACHE, },
 
 	{ "PCI Type1 Configuration Space",
 	  IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_HWBASE,
-	  IXP12X0_PCI_TYPEX_SIZE,
+	  IXP12X0_PCI_TYPE1_SIZE,
 	  VM_PROT_READ|VM_PROT_WRITE,
 	  PTE_NOCACHE, },
 

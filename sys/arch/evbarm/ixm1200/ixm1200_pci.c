@@ -1,6 +1,7 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.2 2002/07/21 22:16:58 ichiro Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.3 2003/02/17 20:51:53 ichiro Exp $ */
+#define PCI_DEBUG
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *      Ichiro FUKUHARA <ichiro@ichiro.org>.
  * All rights reserved.
  *
@@ -61,10 +62,6 @@ void *ixm1200_pci_intr_establish(void *, pci_intr_handle_t, int,
 	int (*func)(void *), void *);
 void ixm1200_pci_intr_disestablish(void *, void *);
 
-#ifdef PCI_DEBUG
-extern void ixp12x0_pci_decompose_tag();
-#endif
-
 void
 ixm1200_pci_init(pc, cookie)
 	pci_chipset_tag_t pc;
@@ -83,20 +80,18 @@ ixm1200_pci_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
-	int pin = pa->pa_intrpin, line = pa->pa_intrline;
-
 #ifdef PCI_DEBUG
 	void *v = pa->pa_pc;
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
+	int dev=pa->pa_device;
 	pcitag_t intrtag = pa->pa_intrtag;
-	int bus, device, function;
 
-	ixp12x0_pci_decompose_tag(v, intrtag, &bus, &device, &function);
 	printf("ixm1200_pci_intr_map: v=%p, tag=%08lx intrpin=%d line=%d dev=%d\n",
-		v, intrtag, pin, line, device);
-#else
-	printf("pin = %d, line = %d\n", pin, line);
+		v, intrtag, pin, line, dev);
 #endif
 
+	/* ixp12x0 has only one interrupt line for PCI */
 	*ihp = IXPPCI_INTR_PIL;
 	return (0);
 }
@@ -128,11 +123,21 @@ ixm1200_pci_intr_establish(v, ih, ipl, func, arg)
 	int (*func)(void *);
 	void *arg;
 {
+#ifdef PCI_DEBUG
+	printf("ixm1200_pci_intr_establish(v=%p, irq=%d, ipl=%d, func=%p, arg=%p)\n",
+		v, (int) ih, ipl, func, arg);
+#endif
+
 	return (ixp12x0_intr_establish(ih, ipl, func, arg));
 }
 
 void
 ixm1200_pci_intr_disestablish(void *v, void *cookie)
 {
+#ifdef PCI_DEBUG
+	printf("ixm1200_pci_intr_disestablish(v=%p, cookie=%p)\n",
+		v, cookie);
+#endif
+
 	ixp12x0_intr_disestablish(cookie);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: ixp12x0_pcireg.h,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_pcireg.h,v 1.2 2003/02/17 20:51:52 ichiro Exp $ */
 
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,15 @@
 /* base address */
 #define	IXP_PCI_MEM_BAR		0x10
 # define IXP1200_PCI_MEM_BAR	0x40000000UL
+# define IXP_PCI_MEM_BAR_MASK	0xffffff80
+
 #define	IXP_PCI_IO_BAR		0x14
 # define IXP1200_PCI_IO_BAR	0x0000f000UL
+# define IXP_PCI_IO_BAR_MASK	0xffffff80
+
 #define	IXP_PCI_DRAM_BAR	0x18
 # define IXP1200_PCI_DRAM_BAR	0x00000000UL
+# define IXP_PCI_DRAM_BAR_MASK	0xfffc0000
 
 #define PCI_CAP_PTR		0x34
 #define PCI_INT_LINE		0x3C
@@ -119,6 +124,8 @@
 # define SA_CONTROL_PNR		(1 << 9)
 # define SA_CONTROL_COMPLETE	(1 << 0)
 #define PCI_ADDR_EXT		0x140
+# define PCI_ADDR_EXT_PIOADD(x)	((x) & 0xffff0000)
+# define PCI_ADDR_EXT_PMSA(x)	(((x) & 0xe0000000) >> 16)
 #define PREFETCH_RANGE		0x144
 #define PCI_ABITOR_STATUS	0x148
 #define DBELL_PCI_MASK		0x150
