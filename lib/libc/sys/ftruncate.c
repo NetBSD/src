@@ -1,4 +1,4 @@
-/*	$NetBSD: ftruncate.c,v 1.7 1997/07/13 20:25:30 christos Exp $	*/
+/*	$NetBSD: ftruncate.c,v 1.8 1998/10/14 11:25:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,13 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)ftruncate.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: ftruncate.c,v 1.7 1997/07/13 20:25:30 christos Exp $");
+__RCSID("$NetBSD: ftruncate.c,v 1.8 1998/10/14 11:25:19 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(ftruncate,_ftruncate);
+#endif
 
 /*
  * This function provides 64-bit offset padding that
