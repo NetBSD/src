@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.1 2001/01/05 21:15:50 jdolecek Exp $	*/
+/*	$NetBSD: readline.h,v 1.2 2002/03/18 16:01:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,7 +54,9 @@ typedef struct _hist_entry {
 } HIST_ENTRY;
 
 /* global variables used by readline enabled applications */
-__BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern const char	*rl_library_version;
 extern char		*rl_readline_name;
 extern FILE		*rl_instream;
@@ -109,6 +111,8 @@ void		 rl_display_match_list(char **, int, int);
 int		 rl_insert(int, int);
 void		 rl_reset_terminal(const char *);
 int		 rl_bind_key(int, int (*)(int, int));
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _READLINE_H_ */
