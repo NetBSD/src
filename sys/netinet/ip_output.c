@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.93 2002/01/31 07:45:22 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.94 2002/02/06 18:00:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.93 2002/01/31 07:45:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.94 2002/02/06 18:00:01 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -1645,7 +1645,7 @@ ip_mloopback(ifp, m, dst)
 		HTONS(ip->ip_off);
 
 		if (copym->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(m);
+			in_delayed_cksum(copym);
 			copym->m_pkthdr.csum_flags &=
 			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 		}
