@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.16 2000/03/22 09:35:06 haya Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -330,6 +330,8 @@ struct cardbus_cis_info {
     union {
 	struct {
 	    char netid[6];
+	    char netid_present;
+	    char __filler;
 	} network;
     } funce;
 };
