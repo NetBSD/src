@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.15 2002/12/17 12:04:30 simonb Exp $	*/
+/*	$NetBSD: cache.c,v 1.16 2003/01/10 03:22:49 rafal Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -797,6 +797,7 @@ tx39_cache_config_write_through(void)
 void
 mips3_get_cache_config(int csizebase)
 {
+	int has_sdcache_enable = 0;
 	uint32_t config = mips3_cp0_config_read();
 
 	mips_picache_size = MIPS3_CONFIG_CACHE_SIZE(config,
@@ -814,10 +815,28 @@ mips3_get_cache_config(int csizebase)
 	mips_cache_prefer_mask =
 	    max(mips_pdcache_size, mips_picache_size) - 1;
 
+	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R5000 || 
+	    MIPS_PRID_IMPL(cpu_id) == MIPS_RM5200)
+		has_sdcache_enable = 1;
+	
+	/* 
+ 	 * If CPU has a software-enabled L2 cache, check both if it's
+	 * present and if it's enabled before making assumptions the
+	 * L2 is usable.  If the L2 is disabled, we treat it the same
+	 * as if there were no L2 cache.
+	 */
 	if ((config & MIPS3_CONFIG_SC) == 0) {
-		mips_sdcache_line_size = MIPS3_CONFIG_CACHE_L2_LSIZE(config);
-		if ((config & MIPS3_CONFIG_SS) == 0)
-			mips_scache_unified = 1;
+		if (has_sdcache_enable == 0 ||
+		    (has_sdcache_enable && (config & MIPS3_CONFIG_SE))) {
+			mips_sdcache_line_size = 
+				MIPS3_CONFIG_CACHE_L2_LSIZE(config);
+			if ((config & MIPS3_CONFIG_SS) == 0)
+				mips_scache_unified = 1;
+		} else {
+#ifdef CACHE_DEBUG
+			printf("External cache detected, but is disabled -- WILL NOT ENABLE!\n");
+#endif	/* CACHE_DEBUG */
+		}
 	}
 }
 #endif /* MIPS3 || MIPS4 */

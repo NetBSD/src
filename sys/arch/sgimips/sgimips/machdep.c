@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2003/01/06 06:25:32 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2003/01/10 03:22:49 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -929,20 +929,20 @@ void mips_machdep_cache_config(void)
 		mips_sdcache_line_size = 0;
 
 		cpu_config = mips3_cp0_config_read();
-		cpu_config &= ~(MIPS3_CONFIG_SC_ENABLE);
+		cpu_config &= ~MIPS3_CONFIG_SE;
 		mips3_cp0_config_write(cpu_config);
 #else
 		arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
 
 		cpu_config = mips3_cp0_config_read();
 		printf("\nbefore mips_machdep_cache_config: SE = %x\n",
-				cpu_config & MIPS3_CONFIG_SC_ENABLE);
+				cpu_config & MIPS3_CONFIG_SE);
 
 		r5k_enable_sdcache();
 
 		cpu_config = mips3_cp0_config_read();
 		printf("after mips_machdep_cache_config: SE = %x\n",
-				cpu_config & MIPS3_CONFIG_SC_ENABLE);
+				cpu_config & MIPS3_CONFIG_SE);
 #endif
 	}
 	else /* IP22 works, maybe */
