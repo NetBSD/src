@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.6 2002/01/22 20:42:59 thorpej Exp $	*/
+/*	$NetBSD: config.h.in,v 1.7 2002/01/24 04:05:27 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -24,6 +24,7 @@
 #undef HAVE_FPARSELN
 #undef HAVE_FUTIMES
 #undef HAVE_PREAD
+#undef HAVE_PWCACHE_USERDB
 #undef HAVE_PWRITE
 #undef HAVE_SETPROGNAME
 #undef HAVE_STRLCAT
