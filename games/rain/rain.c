@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.6 1995/04/22 10:26:09 cgd Exp $	*/
+/*	$NetBSD: rain.c,v 1.7 1995/04/29 00:51:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rain.c,v 1.6 1995/04/22 10:26:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: rain.c,v 1.7 1995/04/29 00:51:04 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,20 +54,12 @@ static char rcsid[] = "$NetBSD: rain.c,v 1.6 1995/04/22 10:26:09 cgd Exp $";
 
 #include <sys/types.h>
 #include <stdio.h>
-#ifdef USG
-#include <termio.h>
-#else
-#include <sgtty.h>
-#endif
+#include <termios.h>
 #include <signal.h>
 
 #define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, fputchar)
 
-#ifdef USG
-static struct termio sg, old_tty;
-#else
-static struct sgttyb sg, old_tty;
-#endif
+static struct termios sg, old_tty;
 
 void	fputchar __P((int));
 char	*LL, *TE, *tgoto();
@@ -76,7 +68,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern short ospeed;
+	extern speed_t ospeed;
 	extern char *UP;
 	register int x, y, j;
 	register char *CM, *BC, *DN, *ND, *term;
@@ -137,32 +129,19 @@ main(argc, argv)
 		}
 		(void)strcpy(LL, tgoto(CM, 0, 23));
 	}
-#ifdef USG
-	ioctl(1, TCGETA, &sg);
-	ospeed = sg.c_cflag&CBAUD;
-#else
-	gtty(1, &sg);
-	ospeed = sg.sg_ospeed;
-#endif
 	(void)signal(SIGHUP, onsig);
 	(void)signal(SIGINT, onsig);
 	(void)signal(SIGQUIT, onsig);
 	(void)signal(SIGSTOP, onsig);
 	(void)signal(SIGTSTP, onsig);
 	(void)signal(SIGTERM, onsig);
-#ifdef USG
-	ioctl(1, TCGETA, &old_tty);	/* save tty bits for exit */
-	ioctl(1, TCGETA, &sg);
+	tcgetattr(1, &sg);
+	old_tty = sg;
+	ospeed = cfgetospeed(&sg);
 	sg.c_iflag &= ~ICRNL;
 	sg.c_oflag &= ~ONLCR;
 	sg.c_lflag &= ~ECHO;
-	ioctl(1, TCSETAW, &sg);
-#else
-	gtty(1, &old_tty);		/* save tty bits for exit */
-	gtty(1, &sg);
-	sg.sg_flags &= ~(CRMOD|ECHO);
-	stty(1, &sg);
-#endif
+	tcsetattr(1, TCSADRAIN, &sg);
 	if (TI)
 		tputs(TI, 1, fputchar);
 	tputs(tgetstr("cl", &tcp), 1, fputchar);
@@ -247,11 +226,7 @@ onsig()
 	if (TE)
 		tputs(TE, 1, fputchar);
 	(void)fflush(stdout);
-#ifdef USG
-	ioctl(1, TCSETAW, &old_tty);
-#else
-	stty(1, &old_tty);
-#endif
+	tcsetattr(1, TCSADRAIN, &old_tty);
 	exit(0);
 }
 
