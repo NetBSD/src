@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.11 2000/03/22 00:58:18 cgd Exp $
+#	$NetBSD: CATSINST,v 1.12 2000/03/26 04:31:40 tsutsui Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -349,7 +349,6 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 # Audio support
 #audio*	at eap?
 #audio*	at sv?
-#audio*	at uaudio?
 
 vga*		at pci?
 wsdisplay*	at vga? console ?
