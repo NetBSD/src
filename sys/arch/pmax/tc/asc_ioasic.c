@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.7 1999/03/30 07:09:41 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.8 1999/04/05 06:42:51 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.7 1999/03/30 07:09:41 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.8 1999/04/05 06:42:51 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -27,10 +27,11 @@ struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
-	void	*sc_cookie;			/* intr. handling cookie */
-
+	bus_space_handle_t sc_scsi_bsh;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
+	void	*sc_cookie;			/* intr. handling cookie */
+
 	int	sc_active;			/* DMA active ? */
 	int	sc_ispullup;			/* DMA into main memory? */
 	size_t	sc_dmasize;
@@ -121,10 +122,11 @@ asc_ioasic_attach(parent, self, aux)
 	 */
 	sc->sc_glue = &asc_ioasic_glue;
 	asc->sc_bst = ((struct ioasic_softc *)parent)->sc_bst;
+	asc->sc_bsh = ((struct ioasic_softc *)parent)->sc_bsh;
 	asc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
 	if (bus_space_subregion(asc->sc_bst,
-			((struct ioasic_softc *)parent)->sc_bsh,
-			IOASIC_SLOT_12_START, 0x100, &asc->sc_bsh)) {
+			asc->sc_bsh,
+			IOASIC_SLOT_12_START, 0x100, &asc->sc_scsi_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -191,10 +193,12 @@ asc_ioasic_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
+	u_int32_t ssr;
 
-	*asc->sc_ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	*asc->sc_scsi_scr = 0;
-
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
 	asc->sc_active = 0;
 }
 
@@ -204,14 +208,16 @@ asc_ioasic_intr(sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	int trans, resid;
-	u_int tcl, tcm;
+	u_int tcl, tcm, ssr;
 	
 	if (asc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
 
 	/* DMA has stopped */
-	*asc->sc_ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	*asc->sc_scsi_scr = 0;
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
 	asc->sc_active = 0;	
 
 	if (asc->sc_dmasize == 0) {
@@ -280,8 +286,10 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 	NCR_DMA(("ioasic_setup: dmasize = %d\n", asc->sc_dmasize));
 
 	/* stop DMA engine first */
-	*asc->sc_ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	*asc->sc_scsi_scr = 0;
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR, 0);
 
 	/* If R4K, writeback and invalidate the buffer */
 	if (CPUISMIPS3)
@@ -308,13 +316,12 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 
 	*asc->sc_scsi_dmaptr = IOASIC_DMA_ADDR(phys);
 	*asc->sc_scsi_nextptr = IOASIC_DMA_ADDR(nphys);
-	ssr = *asc->sc_ssr;
 	if (asc->sc_ispullup)
-		ssr = (ssr | IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
+		ssr |=  IOASIC_CSR_SCSI_DIR;
 	else
-		ssr = (ssr &~ IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
-	*asc->sc_ssr = ssr;
-	tc_wmb();
+		ssr &= ~IOASIC_CSR_SCSI_DIR;
+	ssr |= IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 	asc->sc_active = 1;
 	return 0;
 }
@@ -325,14 +332,15 @@ asc_ioasic_go(sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 #if 0
-	u_int32_t ssr = *asc->sc_ssr;
+	u_int32_t ssr;
 
+	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
 	if (asc->sc_ispullup)
-		ssr = (ssr | IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
+		ssr |=  IOASIC_CSR_SCSI_DIR;
 	else
-		ssr = (ssr &~ IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
-	*asc->sc_ssr = ssr;
-	tc_wmb();
+		ssr &= ~IOASIC_CSR_SCSI_DIR;
+	ssr |= IOASIC_CSR_DMAEN_SCSI;
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 #endif
 	asc->sc_active = 1;
 }
@@ -384,7 +392,7 @@ asc_read_reg(sc, reg)
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_char v;
 
-	v = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+	v = bus_space_read_4(asc->sc_bst, asc->sc_scsi_bsh,
 	    reg * sizeof(u_int32_t)) & 0xff;
 
 	return (v);
@@ -398,7 +406,7 @@ asc_write_reg(sc, reg, val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+	bus_space_write_4(asc->sc_bst, asc->sc_scsi_bsh,
 	    reg * sizeof(u_int32_t), val);
 }
 
