@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.31.4.7 1999/11/12 11:07:19 nisimura Exp $ */
+/* $NetBSD: autoconf.c,v 1.31.4.8 2000/02/03 09:57:46 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.7 1999/11/12 11:07:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31.4.8 2000/02/03 09:57:46 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,6 @@ cpu_configure()
 	
 	if (cn_tab->cn_dev == NODEV)
 		panic("No console driver.  Check kernel configuration.");
-}
-
-void
-consinit()
-{
-	(*platform.cons_init)();
 }
 
 void
