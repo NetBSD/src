@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.1 1998/08/26 10:20:36 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.2 1998/08/26 13:42:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -89,6 +89,26 @@ sparc32_to_itimerval(itv32, itv)
 
 	sparc32_to_timeval(&itv->it_interval, &itv32->it_interval);
 	sparc32_to_timeval(&itv->it_value, &itv32->it_value);
+}
+
+static __inline void
+sparc32_to_timespec(s32p, p)
+	struct sparc32_timespec *s32p;
+	struct timespec *p;
+{
+
+	p->tv_sec = s32p->tv_sec;
+	p->tv_nsec = (long)s32p->tv_nsec;
+}
+
+static __inline void
+sparc32_from_timespec(p, s32p)
+	struct timespec *p;
+	struct sparc32_timespec *s32p;
+{
+
+	s32p->tv_sec = p->tv_sec;
+	s32p->tv_nsec = (sparc32_long)p->tv_nsec;
 }
 
 static __inline void
@@ -410,6 +430,19 @@ sparc32_to_semid_ds(s32dsp, dsp)
 	dsp->sem_nsems = s32dsp->sem_nsems;
 	dsp->sem_otime = s32dsp->sem_otime;
 	dsp->sem_ctime = s32dsp->sem_ctime;
+}
+
+static __inline void
+sparc32_from_semid_ds(dsp, s32dsp)
+	struct  semid_ds *dsp;
+	struct  sparc32_semid_ds *s32dsp;
+{
+
+	sparc32_to_ipc_perm(&s32dsp->sem_perm, &dsp->sem_perm);
+	s32dsp->sem_base = (sparc32_semp_t)(u_long)dsp->sem_base;
+	s32dsp->sem_nsems = dsp->sem_nsems;
+	s32dsp->sem_otime = dsp->sem_otime;
+	s32dsp->sem_ctime = dsp->sem_ctime;
 }
 
 /*
@@ -1831,7 +1864,7 @@ compat_sparc32_adjtime(p, v, retval)
 		SCARG(&ua, olddelta) = &otv;
 	else
 		SCARG(&ua, olddelta) = NULL;
-	error = sys_ajdtime(p, &ua, retval);
+	error = sys_adjtime(p, &ua, retval);
 	if (error)
 		return (error);
 
@@ -2502,7 +2535,7 @@ compat_sparc32_semop(p, v, retval)
 	SPARC32TO64_UAP(semid);
 	SPARC32TOP_UAP(sops, struct sembuf);
 	SPARC32TOX_UAP(nsops, size_t);
-	return (sys_seop(p, &ua, retval));
+	return (sys_semop(p, &ua, retval));
 }
 
 int
@@ -2864,7 +2897,7 @@ compat_sparc32_getdents(p, v, retval)
 	SPARC32TO64_UAP(fd);
 	SPARC32TOP_UAP(buf, char);
 	SPARC32TOX_UAP(count, size_t);
-	return (sys_getdentsit(p, &ua, retval));
+	return (sys_getdents(p, &ua, retval));
 }
 
 int
