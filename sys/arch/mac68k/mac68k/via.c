@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.19 1995/04/21 04:00:55 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.20 1995/04/29 20:23:53 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -140,10 +140,6 @@ void VIA_initialize()
 		via2itab[1] = via2_nubus_intr;
 
 	}else{	/* RBV */
-		/* I'm sure that I'll find something to put in here
-			someday. -- BG */
-		/* enable specific interrupts */
-		/* via_reg(VIA2, rIER) = RBV_INTS | 0x80; */
 		real_via2_intr = rbv_intr;
 		via2itab[1] = rbv_nubus_intr;
 	}
@@ -244,16 +240,14 @@ long via2_noint(int bitnum)
 static int	nubus_intr_mask = 0;
 
 int
-add_nubus_intr(addr, func, client_data)
-int	addr;
+add_nubus_intr(slot, func, client_data)
+int	slot;
 void	(*func)();
 void	*client_data;
 {
 	int	s = splhigh();
-	int	slot;
 
-	slot = nubus_addr_to_slot(addr);
-	if (slot < 0) return 0;
+	if (slot < 9 || slot > 15) return 0;
 
 	slotitab[slot-9] = func;
 	slotptab[slot-9] = client_data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.27 1995/04/22 12:08:12 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.28 1995/04/29 20:23:44 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -61,20 +61,22 @@
 #include <dev/ic/dp8390.h>
 #include "if_aereg.h"
 
+#define INTERFACE_NAME_LEN	32
+
 /*
  * ae_softc: per line info and status
  */
 struct ae_softc {
-	struct device sc_dev;
-/*	struct	nubusdev sc_nu;
-	struct	intrhand sc_ih;	*/
+	struct device	sc_dev;
+	nubus_slot	sc_slot;
+/*	struct	intrhand sc_ih;	*/
 
 	struct arpcom sc_arpcom;/* ethernet common */
 
-	char   *type_str;	/* pointer to type string */
-	u_char  vendor;		/* interface vendor */
-	u_char  type;		/* interface type code */
-	u_char  regs_rev;	/* registers are reversed */
+	char	type_str[INTERFACE_NAME_LEN];	/* type string */
+	u_short	type;		/* interface type code */
+	u_char	vendor;		/* interface vendor */
+	u_char	regs_rev;	/* registers are reversed */
 
 #define	REG_MAP(sc, reg)	((sc)->regs_rev ? (0x0f-(reg))<<2 : (reg)<<2)
 #define NIC_GET(sc, reg)	((sc)->nic_addr[REG_MAP(sc, reg)])
@@ -121,45 +123,19 @@ u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
 void ae_get_packet __P(( /* struct ae_softc *, caddr_t, u_short */ ));
 static inline void ae_rint __P((struct ae_softc *));
 static inline void ae_xmit __P((struct ae_softc *));
-static inline caddr_t ae_ring_copy 
-__P((				/* struct ae_softc *, caddr_t, caddr_t,
-	    u_short */ ));
+static inline caddr_t ae_ring_copy __P((
+		/* struct ae_softc *, caddr_t, caddr_t, u_short */ ));
 
-	struct cfdriver aecd = {
-		NULL, "ae", aeprobe, aeattach, DV_IFNET, sizeof(struct ae_softc)
-	};
+struct cfdriver aecd = {
+	NULL, "ae", aeprobe, aeattach, DV_IFNET, sizeof(struct ae_softc)
+};
+
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-	char    ae_name[] = "8390 Nubus Ethernet card";
-	static char zero = 0;
-	static u_char ones = 0xff;
-
-	struct vendor_S {
-		char   *manu;
-		int     len;
-		int     vendor;
-	}       vend[] =
-{
-	{
-		"Apple", 5, AE_VENDOR_APPLE
-	},
-	{
-		"3Com", 4, AE_VENDOR_APPLE
-	},
-	{
-		"Dayna", 5, AE_VENDOR_DAYNA
-	},
-	{
-		"Inter", 5, AE_VENDOR_INTERLAN
-	},
-	{
-		"Asant", 5, AE_VENDOR_ASANTE
-	},
-};
-
-static int numvend = sizeof(vend) / sizeof(vend[0]);
+static char zero = 0;
+static u_char ones = 0xff;
 
 /*
  * XXX These two should be moved to locore, and maybe changed to use shorts
@@ -200,25 +176,59 @@ byte_copy(a, b, len)
 		*b++ = *a++;
 }
 
-void
-ae_id_card(nu, sc)
-	struct nubus_hw *nu;
+static int
+ae_id_card(slot, sc)
+	nubus_slot	*slot;
 	struct ae_softc *sc;
 {
-	int     i;
+	nubus_dir	dir;
+	nubus_dirent	dirent;
+	nubus_type	slottype;
 
-	/*
-	 * Try to determine what type of card this is...
-	 */
-	sc->vendor = AE_VENDOR_UNKNOWN;
-	for (i = 0; i < numvend; i++) {
-		if (!strncmp(nu->slot.manufacturer, vend[i].manu, vend[i].len)) {
-			sc->vendor = vend[i].vendor;
-			break;
-		}
+	nubus_get_main_dir(slot, &dir);
+
+	if (nubus_find_rsrc(slot, &dir, 0x80, &dirent) <= 0)
+		return 0;
+
+	nubus_get_dir_from_rsrc(slot, &dirent, &dir);
+
+	if (nubus_find_rsrc(slot, &dir, NUBUS_RSRC_TYPE, &dirent) <= 0)
+		return 0;
+
+	if (nubus_get_ind_data(slot, &dirent,
+		(caddr_t) &slottype, sizeof(nubus_type)) <= 0)
+		return 0;
+
+	if (slottype.category != NUBUS_CATEGORY_NETWORK)
+		return 0;
+
+	if (slottype.type != NUBUS_TYPE_ETHERNET)
+		return 0;
+
+	switch (slottype.type) {
+	case NUBUS_DRSW_3COM:
+	case NUBUS_DRSW_APPLE:
+		sc->vendor = AE_VENDOR_APPLE;
+		break;
+	case NUBUS_DRSW_ASANTE:
+		sc->vendor = AE_VENDOR_ASANTE;
+		break;
+	case NUBUS_DRSW_DAYNA:
+		sc->vendor = AE_VENDOR_DAYNA;
+		break;
+	case NUBUS_DRSW_INTERLAN:
+		sc->vendor = AE_VENDOR_INTERLAN;
+		break;
+	default:
+		sc->vendor = AE_VENDOR_UNKNOWN;
+		return 0;
 	}
-	sc->type_str = (char *) (nu->slot.manufacturer);
 
+	strncpy(sc->type_str, nubus_get_card_name(slot), INTERFACE_NAME_LEN);
+
+	sc->type_str[INTERFACE_NAME_LEN-1] = '\0';
+
+	return 1;
 }
 
 int
@@ -266,28 +276,29 @@ aeprobe(parent, match, aux)
 	void   *match, *aux;
 {
 	struct ae_softc *sc = match;
-	register struct nubus_hw *nu = aux;
+	nubus_slot *nu = (nubus_slot *) aux;
+	caddr_t	addr;
 	int     i, memsize;
 	int     flags = 0;
 
-	if (nu->slot.type != NUBUS_NETWORK)
+	if (ae_id_card(nu, sc) < 0)
 		return 0;
-
-	ae_id_card(nu, sc);
 
 	sc->regs_rev = 0;
 	sc->mem_wr_short = 0;
 
+	addr = (caddr_t) NUBUS_SLOT_TO_BASE(nu->slot);
+
 	switch (sc->vendor) {
 	case AE_VENDOR_INTERLAN:
-		sc->nic_addr = nu->addr + GC_NIC_OFFSET;
-		sc->rom_addr = nu->addr + GC_ROM_OFFSET;
-		sc->mem_start = nu->addr + GC_DATA_OFFSET;
+		sc->nic_addr = addr + GC_NIC_OFFSET;
+		sc->rom_addr = addr + GC_ROM_OFFSET;
+		sc->mem_start = addr + GC_DATA_OFFSET;
 		if ((memsize = ae_size_card_memory(sc)) == 0)
 			return 0;
 
 		/* reset the NIC chip */
-		*((caddr_t) nu->addr + GC_RESET_OFFSET) = (char) zero;
+		*((caddr_t) addr + GC_RESET_OFFSET) = (char) zero;
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
@@ -301,9 +312,9 @@ aeprobe(parent, match, aux)
 
 	case AE_VENDOR_APPLE:
 		sc->regs_rev = 1;
-		sc->nic_addr = nu->addr + AE_NIC_OFFSET;
-		sc->rom_addr = nu->addr + AE_ROM_OFFSET;
-		sc->mem_start = nu->addr + AE_DATA_OFFSET;
+		sc->nic_addr = addr + AE_NIC_OFFSET;
+		sc->rom_addr = addr + AE_ROM_OFFSET;
+		sc->mem_start = addr + AE_DATA_OFFSET;
 		if ((memsize = ae_size_card_memory(sc)) == 0)
 			return (0);
 
@@ -314,9 +325,9 @@ aeprobe(parent, match, aux)
 
 	case AE_VENDOR_DAYNA:
 		printf("We think we are a Dayna card, but ");
-		sc->nic_addr = nu->addr + DP_NIC_OFFSET;
-		sc->rom_addr = nu->addr + DP_ROM_OFFSET;
-		sc->mem_start = nu->addr + DP_DATA_OFFSET;
+		sc->nic_addr = addr + DP_NIC_OFFSET;
+		sc->rom_addr = addr + DP_ROM_OFFSET;
+		sc->mem_start = addr + DP_DATA_OFFSET;
 		memsize = 8192;
 
 		/* Get station address from on-board ROM */
@@ -356,6 +367,8 @@ aeprobe(parent, match, aux)
 			    sc->mem_start + i);
 			return (0);
 		}
+
+	bcopy(nu, &sc->sc_slot, sizeof(nubus_slot));
 	return (1);
 }
 /*
@@ -390,19 +403,14 @@ aeattach(parent, self, aux)
 	/* Print additional info when attached. */
 	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	if (sc->type_str && (*sc->type_str != 0))
-		printf("type %s", sc->type_str);
-	else
-		printf("type unknown (0x%x)", sc->type);
-
-	printf(", %dk mem.\n", sc->mem_size / 1024);
+	printf("type %s, %dk mem.\n", sc->type_str, sc->mem_size / 1024);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	/* make sure interrupts are vectored to us */
-	add_nubus_intr((int) sc->rom_addr & 0xFF000000, aeintr, sc);
+	add_nubus_intr(sc->sc_slot.slot, aeintr, sc);
 
 	/*
 	 * XXX -- enable nubus interrupts here.  Should be done elsewhere,
