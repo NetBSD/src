@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2800,v 1.1 2002/11/20 18:06:25 bsh Exp $
+#	$NetBSD: std.smdk2800,v 1.2 2003/01/02 23:38:03 thorpej Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -16,4 +16,4 @@ options 	ARM32
 
 makeoptions	BOARDTYPE="smdk2800"
 
-options 	EVBARM_BOARDTYPE=EVBARM_BOARDTYPE_S3C2800
+options 	ARM_INTR_IMPL="<arch/arm/s3c2xx0/s3c2800_intr.h>"

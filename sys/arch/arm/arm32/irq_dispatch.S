@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_irq.S,v 1.1 2002/11/20 17:52:51 bsh Exp $ */
+/*	$NetBSD: irq_dispatch.S,v 1.1 2003/01/02 23:37:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -31,13 +31,9 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-	
-/*	
- * This code is derived from i80200_irq.S
- */
-	
+
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -76,24 +72,26 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/intr.h>
+
+#include "opt_arm_intr_impl.h"
+#ifdef ARM_INTR_IMPL
+#include ARM_INTR_IMPL
+#else
+#error ARM_INTR_IMPL not defined
+#endif
+
+#ifndef ARM_IRQ_HANDLER
+#error ARM_IRQ_HANDLER not defined
+#endif
 
 /*
  * irq_entry:
- *	Main entry point for the IRQ vector.
+ *	Main entry point for the IRQ vector.  This is a generic version
+ *	which can be used by different platforms.
  */
-
-#if EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_S3C2800
-#define IRQ_HANDLER	_C_LABEL(s3c2800_irq_handler)
-#elif EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_S3C24X0
-#define IRQ_HANDLER	_C_LABEL(s3c24x0_irq_handler)
-#else
-#error EVBARM_BOARDTYPE is not defined correctly
-#endif
-
 	.text
 	.align	0
-Lastpending:
+.Lastpending:
 	.word	_C_LABEL(astpending)
 
 ASENTRY_NP(irq_entry)
@@ -102,8 +100,7 @@ ASENTRY_NP(irq_entry)
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
 
 	mov	r0, sp
-	bl	IRQ_HANDLER
-1:	
+	bl	ARM_IRQ_HANDLER
 
 	/*
 	 * If we're returning to user mode, check for pending ASTs.
@@ -111,28 +108,28 @@ ASENTRY_NP(irq_entry)
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
 	teq	r0, #(PSR_USR32_MODE)
-	bne	Lirqout			/* Nope, get out now */
+	bne	2f			/* Nope, get out now */
 
-Lastloop:	
-	ldr	r0, Lastpending		/* Do we have an AST pending? */
+1:
+	ldr	r0, .Lastpending	/* Do we have an AST pending? */
 	ldr	r1, [r0]
 	teq	r1, #0x00000000
-	beq	Lirqout			/* Nope, get out now */
+	beq	2f			/* Nope, get out now */
 
 	mov	r1, #0x00000000
 	str	r1, [r0]		/* Clear astpending */
 
-	mrs	r4, cpsr_all		/* save CPSR */
+	mrs	r4, cpsr		/* save CPSR */
 	bic	r0, r4, #(I32_bit)	/* Enable IRQs */
-	msr	cpsr_all, r0
+	msr	cpsr_c, r0
 
 	mov	r0, sp
 	bl	_C_LABEL(ast)		/* ast(frame) */
 
-	msr	cpsr_all, r4		/* Disable IRQs */
-	b	Lastloop		/* Check for more ASTs */
+	msr	cpsr_c, r4		/* Disable IRQs */
+	b	1b			/* Check for more ASTs */
 
-Lirqout:
+2:
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 
