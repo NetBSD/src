@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.20 2003/04/10 22:07:00 christos Exp $
+#	$NetBSD: MMTA,v 1.21 2003/10/08 11:13:02 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -156,11 +156,14 @@ com*	at pcmcia? function ?		# Modems and serial cards
 
 wdc* at pcmcia? function ?
 
+# ATA bus support
+atabus* at wdc? channel ?
+
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
+wd*	at atabus? drive ?
 
 # ATAPI bus support
-#atapibus* at wdc?
+#atapibus* at atabus?
 
 # ATAPI devices
 #cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
