@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.h,v 1.1.2.1 1997/06/03 06:56:59 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.h,v 1.1.2.2 1997/06/03 23:07:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,11 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if !defined(SGMAP_TYPE) && !defined(SGMAP_PTE_TYPE) && \
-    !defined(SGMAP_PTE_OFFSET_SHIFT)
-#error Must define sgmap type and pte type and offset shift.
-#endif
 
 #undef __C
 #undef __S
