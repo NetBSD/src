@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.5 1999/05/11 02:54:30 thorpej Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.6 1999/05/11 02:56:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ppp.c,v 1.26 97/06/12 14:21:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ppp.c,v 1.5 1999/05/11 02:54:30 thorpej Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.6 1999/05/11 02:56:55 thorpej Exp $");
 #endif
 #endif
 
@@ -281,7 +281,7 @@ ppp_netbsd_serial_if_print(u_char *user, const struct pcap_pkthdr *h,
 			u_short rel, time0, time1;
 
 			if (caplen < CISCO_KEEP_LEN) {
-				printf("[!cisco keepalive]");
+				printf("[|cisco keepalive]");
 				goto out;
 			}
 
