@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.12 1994/12/13 22:11:25 mycroft Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.13 1995/04/05 21:26:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -774,7 +774,7 @@ unp_gc()
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
 		sorflush((struct socket *)(*fpp)->f_data);
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
-		closef(*fpp);
+		(void) closef(*fpp, (struct proc *)0);
 	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
 }
@@ -836,5 +836,5 @@ unp_discard(fp)
 
 	fp->f_msgcount--;
 	unp_rights--;
-	(void) closef(fp, (struct proc *)NULL);
+	(void) closef(fp, (struct proc *)0);
 }
