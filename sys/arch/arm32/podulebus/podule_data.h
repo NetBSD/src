@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.15 2000/11/26 15:04:22 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.16 2000/12/05 00:44:21 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.13 2000/11/26 15:03:25 bjh21 Exp 
+ *	NetBSD: podules,v 1.14 2000/12/05 00:43:55 bjh21 Exp 
  */
 
 /*
@@ -70,7 +70,10 @@ static struct podule_description podules_armadillo[] = {
 };
 
 static struct podule_description podules_wildvision[] = {
+	{ PODULE_WILDVISION_COLOURCARD,	"ColourCard" },
 	{ PODULE_WILDVISION_HAWKV9,	"hawk v9 mark2" },
+	{ PODULE_WILDVISION_SOUNDSAMPLER,	"Sound Sampler" },
+	{ PODULE_WILDVISION_CENTRONICS,	"Bi-directional Centronics" },
 	{ PODULE_WILDVISION_SCANLIGHTV256,	"scanlight video 256" },
 	{ PODULE_WILDVISION_EAGLEM2,	"eagle M2" },
 	{ PODULE_WILDVISION_LARKA16,	"lark A16" },
@@ -207,6 +210,7 @@ static struct podule_description podules_yes[] = {
 
 static struct podule_description podules_mcs[] = {
 	{ PODULE_MCS_SCSI,	"Connect32 SCSI II interface" },
+	{ PODULE_MCS_MIDICONNECT,	"Midi-Connect" },
 	{ 0x0000, NULL }
 };
 
