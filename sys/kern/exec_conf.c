@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.30 1998/08/31 02:46:22 mrg Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.31 1998/10/01 15:55:34 erh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -120,7 +120,7 @@ struct execsw execsw[] = {
 #ifdef COMPAT_SUNOS
 	{ SUNOS_AOUT_HDR_SIZE, exec_sunos_aout_makecmds, }, /* SunOS a.out */
 #endif
-#ifdef COMPAT_LINUX
+#if defined(COMPAT_LINUX) && defined(EXEC_AOUT)
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, }, /* linux a.out */
 #endif
 #ifdef COMPAT_IBCS2
