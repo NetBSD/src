@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.23 1999/06/07 20:31:34 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.24 2000/02/14 21:42:54 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -206,6 +206,7 @@ file	arch/sparc64/sparc64/cache.c
 file	arch/sparc64/sparc64/conf.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.c
+file	netinet/in4_cksum.c		inet
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c kgdb
 # sparc/sparc/locore.s is handled specially in the makefile,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.12 1999/11/17 14:56:11 kleink Exp $
+#	$NetBSD: files.powerpc,v 1.13 2000/02/14 21:42:53 thorpej Exp $
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copyinstr.c
@@ -8,6 +8,7 @@ file	arch/powerpc/powerpc/fpu.c
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c
+file	netinet/in4_cksum.c				inet
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/pmap.c
