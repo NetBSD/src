@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.13 2001/06/12 15:17:17 wiz Exp $ */
+/* $NetBSD: arckbd.c,v 1.14 2001/07/02 23:49:17 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.13 2001/06/12 15:17:17 wiz Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.14 2001/07/02 23:49:17 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -69,6 +69,11 @@ __RCSID("$NetBSD: arckbd.c,v 1.13 2001/06/12 15:17:17 wiz Exp $");
 #include <arch/arm26/ioc/arckbdvar.h>
 
 #include "locators.h"
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 /* #define ARCKBD_DEBUG */
 
@@ -138,6 +143,9 @@ struct arckbd_softc {
 	struct evcnt		sc_xev;
 	struct irq_handler	*sc_rirq;
 	struct evcnt		sc_rev;
+#if NRND > 0
+	rndsource_element_t	sc_rnd_source;
+#endif
 };
 
 #define AKF_WANTKBD	0x01
@@ -243,6 +251,10 @@ arckbd_attach(struct device *parent, struct device *self, void *aux)
 	arckbd_cnattach(self);
 
 	printf("\n");
+
+#if NRND > 0
+	rnd_attach_source(&sc->sc_rnd_source, self->dv_xname, RND_TYPE_TTY, 0);
+#endif
 
 	/* Attach the dummy drivers */
 	aka.aka_wskbdargs.console = 1; /* XXX FIXME */
@@ -528,6 +540,9 @@ arckbd_mousemoved(struct device *self, int byte1, int byte2)
 	struct arckbd_softc *sc = (void *)self;
 	int dx, dy;
 
+#if NRND > 0
+	rnd_add_uint32(&sc->sc_rnd_source, byte1);
+#endif
 	if (sc->sc_wsmousedev != NULL) {
 		/* deltas are 7-bit signed */
 		dx = byte1 < 0x40 ? byte1 : byte1 - 0x80;
@@ -545,6 +560,9 @@ arckbd_keyupdown(struct device *self, int byte1, int byte2)
 	u_int type;
 	int value;
 
+#if NRND > 0
+	rnd_add_uint32(&sc->sc_rnd_source, byte1);
+#endif
 	if ((byte1 & 0x0f) == 7) {
 		/* Mouse button event */
 		/*
