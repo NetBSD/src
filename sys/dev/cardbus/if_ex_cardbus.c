@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.3 1999/10/15 10:59:57 augustss Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.4 1999/10/25 19:18:10 drochner Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -65,23 +65,6 @@
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/if_ether.h>
-
-#if defined INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
