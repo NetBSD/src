@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.27 2003/12/30 22:11:14 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.28 2003/12/30 22:12:10 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.27 2003/12/30 22:11:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.28 2003/12/30 22:12:10 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -474,7 +474,7 @@ rf_FreeASMList(RF_AccessStripeMap_t *asm_list)
 void 
 rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
 {
-	RF_AccessStripeMap_t *p, *pt = NULL;
+	RF_AccessStripeMap_t *p;
 	RF_PhysDiskAddr_t *pdp, *trailer, *pdaList = NULL, *pdaEnd = NULL;
 	int     count = 0, t, asm_count = 0;
 
@@ -518,7 +518,6 @@ rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
 		if (trailer)
 			pdaEnd = trailer;
 
-		pt = p;
 		asm_count++;
 	}
 
