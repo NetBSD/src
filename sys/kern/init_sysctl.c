@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.29 2004/05/03 13:39:50 martin Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.30 2004/05/26 16:28:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.29 2004/05/03 13:39:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.30 2004/05/26 16:28:05 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2132,7 +2132,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	default:
 		return (EINVAL);
 	}
-	auio.uio_offset = (off_t)(long)tmp;
+	auio.uio_offset = (off_t)(unsigned long)tmp;
 	aiov.iov_base = &argv;
 	aiov.iov_len = sizeof(argv);
 	auio.uio_iov = &aiov;
