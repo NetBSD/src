@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.37 2001/01/22 12:17:39 jdolecek Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.38 2001/06/03 02:22:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,6 @@ int	portal_setattr	__P((void *));
 #define	portal_fcntl	genfs_fcntl
 #define	portal_ioctl	genfs_enoioctl
 #define	portal_poll	genfs_eopnotsupp
-#define	portal_mmap	genfs_eopnotsupp
 #define portal_revoke	genfs_revoke
 #define	portal_fsync	genfs_nullop
 #define	portal_seek	genfs_seek
@@ -131,7 +130,6 @@ const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
 	{ &vop_poll_desc, portal_poll },		/* poll */
 	{ &vop_revoke_desc, portal_revoke },		/* revoke */
-	{ &vop_mmap_desc, portal_mmap },		/* mmap */
 	{ &vop_fsync_desc, portal_fsync },		/* fsync */
 	{ &vop_seek_desc, portal_seek },		/* seek */
 	{ &vop_remove_desc, portal_remove },		/* remove */
@@ -159,7 +157,7 @@ const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_truncate_desc, portal_truncate },	/* truncate */
 	{ &vop_update_desc, portal_update },		/* update */
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc portal_vnodeop_opv_desc =
 	{ &portal_vnodeop_p, portal_vnodeop_entries };
