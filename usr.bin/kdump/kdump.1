@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.8 2000/04/10 08:05:25 jdolecek Exp $
+.\"	$NetBSD: kdump.1,v 1.9 2001/02/04 20:44:53 jdolecek Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 .Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
-.Op Fl t Op cenis
+.Op Fl t Ar trstr
 .Sh DESCRIPTION
 .Nm
 displays the kernel trace files produced with
@@ -92,7 +92,7 @@ easily amenable to further processing.
 Display relative timestamps (time since previous entry).
 .It Fl T
 Display absolute timestamps for each entry (seconds since epoch).
-.It Fl t Ar cnis 
+.It Fl t Ar trstr
 See the
 .Fl t
 option of
