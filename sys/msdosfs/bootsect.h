@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- * $Id: bootsect.h,v 1.2 1993/12/01 10:35:21 cgd Exp $
+ *	$Id: bootsect.h,v 1.3 1993/12/01 22:42:29 cgd Exp $
  */
 
 /*
