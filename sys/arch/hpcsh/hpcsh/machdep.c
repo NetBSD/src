@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2001/03/15 17:30:56 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2001/03/20 16:04:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #include <machine/autoconf.h>		/* makebootdev() */
 
 #include <sh3/intcreg.h>
+#include <sh3/tmureg.h>
 
 #if NBICONSDEV > 0
 #define DPRINTF(arg) printf arg
@@ -173,7 +174,11 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	SHREG_IPRC = 0;
 	SHREG_IPRD = 0;
 	SHREG_IPRE = 0;
-	
+	/* initialize TMU */
+	SHREG_TCR0 = 0;
+	SHREG_TCR1 = 0;
+	SHREG_TCR2 = 0;
+
 	/* start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end);
 
