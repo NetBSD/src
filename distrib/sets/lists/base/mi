@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.507 2004/11/12 15:34:34 he Exp $
+# $NetBSD: mi,v 1.508 2004/11/17 00:33:45 soren Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -31,7 +31,6 @@
 ./bin/rcorder					base-obsolete		obsolete
 ./bin/rcp					base-netutil-root
 ./bin/rm					base-util-root
-./bin/rmail					base-uucp-root
 ./bin/rmdir					base-util-root
 ./bin/sh					base-util-root
 ./bin/sleep					base-util-root
