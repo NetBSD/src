@@ -1,3 +1,8 @@
+#
+#	ALL -- everything that's currently supported
+#
+#	$Id: ALL,v 1.7 1993/05/07 08:32:23 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		ALL
@@ -93,6 +98,4 @@ pseudo-device loop
 pseudo-device sl
 #pseudo-device tun	missing header files
 pseudo-device ether #XXX
-
-
-
+pseudo-device speaker
