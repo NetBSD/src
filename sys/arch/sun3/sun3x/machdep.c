@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1998/06/09 01:57:45 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1998/06/09 17:10:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,7 @@
 #include <machine/pte.h>
 
 #include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
 #include <sun3/sun3/machdep.h>
@@ -159,10 +160,10 @@ consinit()
 #ifdef DDB
 	db_machine_init();
 	{
-		extern int end;
-		extern int *esym;
+		extern int end[];
+		extern char *esym;
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ddb_init(end[0], end + 1, (int*)esym);
 	}
 #endif DDB
 
