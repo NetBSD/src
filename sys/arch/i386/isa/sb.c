@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.1 1994/01/09 19:35:08 cgd Exp $
+ *	$Id: sb.c,v 1.2 1994/01/25 05:00:14 hpeyerl Exp $
  */
 
 #include "sb.h"
@@ -383,6 +383,7 @@ void
 sb_spkron(struct sb_softc *sc)
 {
 	(void)wdsp(sc->sc_base, SB_DSP_SPKR_ON);
+	DELAY(1000);
 }
 
 /*
