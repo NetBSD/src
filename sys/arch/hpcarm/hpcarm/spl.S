@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4 2001/05/14 16:19:30 toshii Exp $	*/
+/*	$NetBSD: spl.S,v 1.5 2001/11/26 20:51:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -39,7 +39,7 @@
  */
 
 #include "assym.h"
-#include <machine/psl.h>
+#include <arm/arm32/psl.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
