@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.16 2002/03/15 05:45:24 gmcgarry Exp $	*/
+/*	$NetBSD: itevar.h,v 1.16.4.1 2002/05/19 08:02:54 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,7 +221,6 @@ void	itekbdcnattach __P((struct ite_kbdops *, struct ite_kbdmap *));
 void	itecninit __P((void));
 int	itecngetc __P((dev_t));
 void	itecnputc __P((dev_t, int));
-int	ite_major __P((void));
 
 /* ite_subr.c prototypes */
 void	ite_fontinfo __P((struct ite_data *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.8 2001/05/30 14:25:07 leo Exp $	*/
+/*	$NetBSD: itevar.h,v 1.8.16.1 2002/05/19 08:02:55 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -192,18 +192,6 @@ void	ite_cnfinish __P((struct ite_softc *));
 
 /* standard ite device entry points. */
 void	iteinit __P((dev_t));
-
-/*
- * Standard character device functions.
- */
-dev_type_open(iteopen);
-dev_type_close(iteclose);
-dev_type_read(iteread);
-dev_type_write(itewrite);
-dev_type_poll(itepoll);
-dev_type_ioctl(iteioctl);
-dev_type_tty(itetty);
-dev_type_stop(itestop);
 
 /* ite functions */
 int	ite_on __P((dev_t, int));

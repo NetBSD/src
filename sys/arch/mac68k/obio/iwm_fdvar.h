@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.5 2000/03/23 06:39:56 thorpej Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.5.20.1 2002/05/19 08:02:53 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -202,22 +202,6 @@ typedef struct iwm_softc iwm_softc_t;
 int	fdModInit __P((void));
 void	fdModFree __P((void));
 #endif
-
-/*
- * This is the exported driver interface
- * (bdevsw[] & cdevsw[] function prototypes)
- *
- * (see <sys/conf.h>
- */
-dev_type_open(fdopen);
-dev_type_close(fdclose);
-dev_type_strategy(fdstrategy);
-dev_type_read(fdread);
-dev_type_write(fdwrite);
-dev_type_ioctl(fdioctl);
-dev_type_size(fdsize);
-dev_type_dump(fddump);
-
 
 int 	iwmInit __P((void));
 int 	iwmCheckDrive __P((int32_t drive));
