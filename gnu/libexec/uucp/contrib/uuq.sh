@@ -4,7 +4,7 @@
 #       note - uses the uuname script or similar functionality.
 # Zacharias Beckman
 
-SPOOLDIR="/usr/spool/uucp"
+SPOOLDIR="/var/spool/uucp"
 SYSTEMS=`uuname`
 TMPFILE="/tmp/uuq.tmp"
 FORSYSTEM=""
