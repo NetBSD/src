@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2001/10/27 12:11:17 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.7 2001/10/31 18:30:18 jdolecek Exp $
 
 # only install actually tested LKMs
 .if make(install)
 .if ${MACHINE} == "i386"
-SUBDIR+=	freebsd_aout freebsd_elf linux_elf
+SUBDIR+=	freebsd_aout freebsd_elf linux_elf svr4_elf
 .endif
 .else # !make(install)
 
