@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.19 1998/08/15 17:04:52 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.20 1998/08/18 08:00:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -115,7 +115,7 @@
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
+#define	vtophys(va)	alpha_XXX_dmamap((vaddr_t)(va))
 #endif
 
 /* number of transmit/receive buffers */
