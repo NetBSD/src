@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.24 2003/10/15 11:51:48 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.25 2004/03/15 23:46:40 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.24 2003/10/15 11:51:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.25 2004/03/15 23:46:40 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -976,18 +976,53 @@ prom_getidprom(void)
 	return (&idprom);
 }
 
-__strong_alias(myetheraddr,prom_getether);
-void prom_getether(cp)
+void prom_getether(node, cp)
+	int node;
 	u_char *cp;
 {
 	struct idprom *idp = prom_getidprom();
+	int optionsnode;
+	char buf[6+1], *bp;
+	int nitem;
 
-	cp[0] = idp->id_ether[0];
-	cp[1] = idp->id_ether[1];
-	cp[2] = idp->id_ether[2];
-	cp[3] = idp->id_ether[3];
-	cp[4] = idp->id_ether[4];
-	cp[5] = idp->id_ether[5];
+	if (node == 0)
+		goto read_idprom;
+
+	/*
+	 * First, try the node's "mac-address" property.
+	 * This property is set by the adapter's firmware if the
+	 * device has already been opened for traffic, e.g. for
+	 * net booting.  Its value might be `0-terminated', probably
+	 * because the Forth ROMs uses `xdrstring' instead of `xdrbytes'
+	 * to construct the property.
+	 */
+	nitem = 6+1;
+	bp = buf;
+	if (PROM_getprop(node, "mac-address", 1, &nitem, &bp) == 0 &&
+	    nitem >= 6) {
+		memcpy(cp, bp, 6);
+		return;
+	}
+
+	/*
+	 * Next, check the global "local-mac-address?" switch to see
+	 * if we should try to extract the node's "local-mac-address"
+	 * property.
+	 */
+	optionsnode = findnode(firstchild(findroot()), "options");
+	if (strcmp(PROM_getpropstring(optionsnode, "local-mac-address?"),
+			  "true") != 0)
+		goto read_idprom;
+
+	/* Retrieve the node's "local-mac-address" property, if any */
+	nitem = 6;
+	if (PROM_getprop(node, "local-mac-address", 1, &nitem, &cp) == 0 &&
+	    nitem == 6)
+		return;
+
+	/* Fall back on the machine's global ethernet address */
+read_idprom:
+	memcpy(cp, idp->id_ether, 6);
 }
 
 static void prom_init_oldmon __P((void));
