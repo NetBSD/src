@@ -1,6 +1,6 @@
-#	$NetBSD: files.linux,v 1.5 1997/04/04 15:35:56 augustss Exp $
+#	$NetBSD: files.linux,v 1.6 1997/07/20 20:35:40 pk Exp $
 #
-# Config.new file description for machine-independent Linux compat code.
+# Config file description for machine-independent Linux compat code.
 # Included by ports that need it.
 
 # ports should define any machine-specific files they need in their

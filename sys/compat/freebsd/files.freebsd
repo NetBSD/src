@@ -1,6 +1,6 @@
-#	$NetBSD: files.freebsd,v 1.1 1995/10/10 01:19:26 mycroft Exp $
+#	$NetBSD: files.freebsd,v 1.2 1997/07/20 20:35:35 pk Exp $
 #
-# Config.new file description for machine-independent FreeBSD compat code.
+# Config file description for machine-independent FreeBSD compat code.
 # Included by ports that need it.
 
 # ports should define any machine-specific files they need in their
