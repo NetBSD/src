@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.18 2001/06/28 23:01:55 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.19 2001/08/10 18:51:06 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.18 2001/06/28 23:01:55 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.19 2001/08/10 18:51:06 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -696,7 +696,7 @@ eh_writemem(struct eh_softc *sc, u_int8_t *src, int dst, size_t len)
 	if (maxwait == 0)
 		printf("eh_writemem: failed to complete "
 		    "(RSAR=0x%04x, RBCR=0x%04x, CRDA=0x%02x%02x)\n",
-		    dst, len,
+		    dst, (u_int)len,
 		    bus_space_read_1(nict, nich, ED_P0_CRDA1),
 		    bus_space_read_1(nict, nich, ED_P0_CRDA0));
 }
