@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.21 2002/10/02 21:48:00 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.22 2002/10/04 20:05:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.21 2002/10/02 21:48:00 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.22 2002/10/04 20:05:15 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.21 2002/10/02 21:48:00 oster Exp $")
 #include "rf_raid.h"
 
 static void DAGExecutionThread(RF_ThreadArg_t arg);
+static void rf_RaidIOThread(RF_ThreadArg_t arg);
 
 #define DO_INIT(_l_,_r_) { \
   int _rc; \
@@ -110,10 +111,29 @@ rf_ShutdownEngine(arg)
 	void   *arg;
 {
 	RF_Raid_t *raidPtr;
+	int ks;
 
 	raidPtr = (RF_Raid_t *) arg;
-	raidPtr->shutdown_engine = 1;
-	DO_SIGNAL(raidPtr);
+
+	/* Tell the rf_RaidIOThread to shutdown */
+	simple_lock(&(raidPtr->iodone_lock));
+
+	raidPtr->shutdown_raidio = 1;
+	wakeup(&(raidPtr->iodone));
+
+	/* ...and wait for it to tell us it has finished */
+	while (raidPtr->shutdown_raidio)
+ 		ltsleep(&(raidPtr->shutdown_raidio), PRIBIO, "raidshutdown", 0,
+			&(raidPtr->iodone_lock));
+
+	simple_unlock(&(raidPtr->iodone_lock));
+
+ 	/* Now shut down the DAG execution engine. */
+ 	DO_LOCK(raidPtr);
+  	raidPtr->shutdown_engine = 1;
+  	DO_SIGNAL(raidPtr);
+ 	DO_UNLOCK(raidPtr);
+
 }
 
 int 
@@ -141,6 +161,13 @@ rf_ConfigureEngine(
 	}
 	if (RF_CREATE_ENGINE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid%d",raidPtr->raidid)) {
 		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
+		return (ENOMEM);
+	}
+	if (RF_CREATE_ENGINE_THREAD(raidPtr->engine_helper_thread,
+				    rf_RaidIOThread, raidPtr, 
+				    "raidio%d", raidPtr->raidid)) {
+		printf("raid%d: Unable to create raidio thread\n", 
+		       raidPtr->raidid);
 		return (ENOMEM);
 	}
 	if (rf_engineDebug) {
@@ -809,5 +836,51 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 	RF_THREADGROUP_DONE(&raidPtr->engine_tg);
 
 	splx(s);
+	kthread_exit(0);
+}
+
+/* 
+   rf_RaidIOThread() -- When I/O to a component completes, KernelWakeupFunc()
+   puts the completed request onto raidPtr->iodone TAILQ.  This function
+   looks after requests on that queue by calling rf_DiskIOComplete() for
+   the request, and by calling any required CompleteFunc for the request.
+*/
+
+static void
+rf_RaidIOThread(RF_ThreadArg_t arg)
+{
+	RF_Raid_t *raidPtr;
+	RF_DiskQueueData_t *req;
+	int s;
+
+	raidPtr = (RF_Raid_t *) arg;
+
+	s = splbio();
+	simple_lock(&(raidPtr->iodone_lock));
+
+	while (!raidPtr->shutdown_raidio) {
+		/* if there is nothing to do, then snooze. */
+		if (TAILQ_EMPTY(&(raidPtr->iodone))) {
+			ltsleep(&(raidPtr->iodone), PRIBIO, "raidiow", 0,
+				&(raidPtr->iodone_lock));
+		}
+
+		/* See what I/Os, if any, have arrived */
+		while ((req = TAILQ_FIRST(&(raidPtr->iodone))) != NULL) {
+			TAILQ_REMOVE(&(raidPtr->iodone), req, iodone_entries);
+			simple_unlock(&(raidPtr->iodone_lock));
+			rf_DiskIOComplete(req->queue, req, req->error);
+			(req->CompleteFunc) (req->argument, req->error);
+			simple_lock(&(raidPtr->iodone_lock));
+		}
+	}
+
+	/* Let rf_ShutdownEngine know that we're done... */
+	raidPtr->shutdown_raidio = 0;
+	wakeup(&(raidPtr->shutdown_raidio));
+
+	simple_unlock(&(raidPtr->iodone_lock));
+	splx(s);
+
 	kthread_exit(0);
 }
