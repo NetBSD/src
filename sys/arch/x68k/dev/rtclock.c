@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.8 2001/01/11 16:09:42 minoura Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.9 2001/01/15 07:04:41 itohy Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -149,16 +149,17 @@ rtgettod()
 	dt.dt_hour = RTC_REG(RTC_HOUR10) * 10 + RTC_REG(RTC_HOUR);
 	dt.dt_day  = RTC_REG(RTC_DAY10)  * 10 + RTC_REG(RTC_DAY);
 	dt.dt_mon  = RTC_REG(RTC_MON10)  * 10 + RTC_REG(RTC_MON);
-	dt.dt_year = RTC_REG(RTC_YEAR10) * 10 + RTC_REG(RTC_YEAR)  + 1980;
+	dt.dt_year = RTC_REG(RTC_YEAR10) * 10 + RTC_REG(RTC_YEAR)
+							+RTC_BASE_YEAR;
 
 	/* let it run again.. */
 	RTC_WRITE(RTC_MODE, RTC_FREE_CLOCK);
 
 #ifdef DIAGNOSTIC
-	range_test(dt.dt_hour, 0, 23);
+	range_test0(dt.dt_hour, 23);
 	range_test(dt.dt_day, 1, 31);
 	range_test(dt.dt_mon, 1, 12);
-	range_test(dt.dt_year, STARTOFTIME, 2079);
+	range_test(dt.dt_year, RTC_BASE_YEAR, RTC_BASE_YEAR+100-1);
 #endif
   
 	return clock_ymdhms_to_secs (&dt);
@@ -190,7 +191,7 @@ rtsettod (tim)
 	day2  = dt.dt_day  % 10;
 	mon1  = dt.dt_mon  / 10;
 	mon2  = dt.dt_mon  % 10;
-	year1 = (dt.dt_year - 1980) / 10;
+	year1 = (dt.dt_year - RTC_BASE_YEAR) / 10;
 	year2 = dt.dt_year % 10;
 
 	RTC_WRITE(RTC_MODE,   RTC_HOLD_CLOCK);
