@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.67 1996/03/17 01:31:01 thorpej Exp $
+#	$NetBSD: files.i386,v 1.68 1996/03/18 01:26:10 jtk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -81,7 +81,7 @@ file	arch/i386/isa/npx.c		npx needs-flag
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
-define pckbd { irq = -1 }
+define pckbd { [irq = -1], [port = -1] }
 
 # PC console support a la "pccons"
 device	pc: tty, pckbd
@@ -119,7 +119,7 @@ major	{fd = 2}
 
 # PC speaker
 device	spkr: tty
-attach	spkr at isa
+attach	spkr at pckbd
 file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # AMD am7990 (Lance) -based boards
