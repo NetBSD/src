@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.37 2000/08/26 19:26:43 sommerfeld Exp $	*/
+/*	$NetBSD: lock.h,v 1.38 2000/11/19 00:54:50 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -283,12 +283,11 @@ void	lockmgr_printinfo(__volatile struct lock *);
 void	spinlock_switchcheck(void);
 #endif
 
-#define	spinlockinit(lkp, name, flags)					\
-	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
-
-#define	spinlockmgr(lkp, flags, intrlk)					\
-	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
-
+void	spinlockinit(struct lock *, const char *, int);
+int	spinlockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
+int	spinlock_acquire_exclusive(__volatile struct lock *, u_int);
+int	spinlock_acquire_shared(__volatile struct lock *, u_int);
+void	spinlock_release(__volatile struct lock *);
 int	spinlock_release_all(__volatile struct lock *);
 void	spinlock_acquire_count(__volatile struct lock *, int);
 
@@ -309,6 +308,7 @@ void	simple_lock_init(struct simplelock *);
 void	simple_lock_dump(void);
 void	simple_lock_freecheck(void *, void *);
 void	simple_lock_switchcheck(void);
+void	simplelock_sleeplock_check(struct simplelock *);
 #elif defined(MULTIPROCESSOR)
 #define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
 #define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
