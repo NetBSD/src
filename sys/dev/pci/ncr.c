@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.62 1997/09/23 02:27:43 perry Exp $	*/
+/*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
 **
@@ -235,7 +235,7 @@
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <dev/pci/ncr_reg.h>
+#include <dev/pci/ncrreg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #ifndef __alpha__
@@ -510,7 +510,7 @@
 **
 **	OS dependencies.
 **
-**	Note that various types are defined in ncr_reg.h.
+**	Note that various types are defined in ncrreg.h.
 **
 **==========================================================
 */
@@ -828,7 +828,7 @@ struct head {
 **	The status bytes are used by the host and the script processor.
 **
 **	The first four byte are copied to the scratchb register
-**	(declared as scr0..scr3 in ncr_reg.h) just after the select/reselect,
+**	(declared as scr0..scr3 in ncrreg.h) just after the select/reselect,
 **	and copied back just after disconnecting.
 **	Inside the script the XX_REG are used.
 **
@@ -1440,7 +1440,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.62 1997/09/23 02:27:43 perry Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
