@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.5 2003/01/25 00:43:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.6 2003/01/28 21:04:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -130,6 +130,9 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	
 	self = pthread__self();
 	if (act != NULL) {
+		if (sig <= 0 || sig >= _NSIG)
+			return (EINVAL);
+
 		/* Save the information for our internal dispatch. */
 		pthread_spinlock(self, &pt_sigacts_lock);
 		pt_sigacts[sig] = *act;
