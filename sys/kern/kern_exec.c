@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.182 2004/02/06 08:02:59 junyoung Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.183 2004/03/05 11:30:50 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.182 2004/02/06 08:02:59 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.183 2004/03/05 11:30:50 junyoung Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -184,7 +184,7 @@ const struct emul emul_netbsd = {
  * This must not be static so that netbsd32 can access it, too.
  */
 struct lock exec_lock;
- 
+
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
 
@@ -218,7 +218,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
 int
 #ifdef VERIFIED_EXEC
 check_exec(struct proc *p, struct exec_package *epp, int direct_exec)
-#else 
+#else
 check_exec(struct proc *p, struct exec_package *epp)
 #endif
 {
@@ -262,7 +262,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
 
-   
+
 #ifdef VERIFIED_EXEC
         /* Evaluate signature for file... */
         if ((error = check_veriexec(p, vp, epp, direct_exec)) != 0)
@@ -280,7 +280,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 	/*
 	 * Set up default address space limits.  Can be overridden
 	 * by individual exec packages.
-	 * 
+	 *
 	 * XXX probably should be all done in the exec pakages.
 	 */
 	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
@@ -428,7 +428,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #ifdef VERIFIED_EXEC
         if ((error = check_exec(p, &pack, 1)) != 0)
         /* if ((error = check_exec(p, &pack, 0)) != 0) */
-#else 
+#else
         if ((error = check_exec(p, &pack)) != 0)
 #endif
 		goto freehdr;
@@ -629,15 +629,15 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * The copyargs call always copies into lower addresses
 	 * first, moving towards higher addresses, starting with
-	 * the stack pointer that we give.  When the stack grows 
-	 * down, this puts argc/argv/envp very shallow on the 
-	 * stack, right at the first user stack pointer, and puts 
+	 * the stack pointer that we give.  When the stack grows
+	 * down, this puts argc/argv/envp very shallow on the
+	 * stack, right at the first user stack pointer, and puts
 	 * STACKGAPLEN very deep in the stack.  When the stack
 	 * grows up, the situation is reversed.
 	 *
 	 * Normally, this is no big deal.  But the ld_elf.so _rtld()
-	 * function expects to be called with a single pointer to 
-	 * a region that has a few words it can stash values into, 
+	 * function expects to be called with a single pointer to
+	 * a region that has a few words it can stash values into,
 	 * followed by argc/argv/envp.  When the stack grows down,
 	 * it's easy to decrement the stack pointer a little bit to
 	 * allocate the space for these few words and pass the new
@@ -645,8 +645,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 * a few words before argc is part of the signal trampoline, XXX
 	 * so we have a problem.
 	 *
-	 * Instead of changing how _rtld works, we take the easy way 
-	 * out and steal 32 bytes before we call copyargs.  This 
+	 * Instead of changing how _rtld works, we take the easy way
+	 * out and steal 32 bytes before we call copyargs.  This
 	 * space is effectively stolen from STACKGAPLEN.
 	 */
 	stack += 32;
@@ -680,7 +680,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
-	
+
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/* set command name & other accounting info */
@@ -1026,11 +1026,11 @@ emul_unregister(const char *name)
 		}
 	}
 	proclist_unlock_read();
-	
+
 	if (error)
 		goto out;
 
-	
+
 	/* entry is not used, remove it */
 	LIST_REMOVE(it, el_list);
 	FREE(it, M_EXEC);
@@ -1205,7 +1205,7 @@ exec_init(int init_boot)
 		link_es(&list, e2->es);
 		es_sz++;
 	}
-	
+
 	/*
 	 * Now that we have sorted all execw entries, create new execsw[]
 	 * and free no longer needed memory in the process.
@@ -1230,7 +1230,7 @@ exec_init(int init_boot)
 
 	/*
 	 * Figure out the maximum size of an exec header.
-	 */ 
+	 */
 	exec_maxhdrsz = 0;
 	for (i = 0; i < nexecs; i++) {
 		if (execsw[i]->es_hdrsz > exec_maxhdrsz)
