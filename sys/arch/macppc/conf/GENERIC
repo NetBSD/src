@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.96 2001/04/04 17:08:07 manu Exp $
+#	$NetBSD: GENERIC,v 1.97 2001/05/16 10:56:42 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 maxusers	32
 
@@ -187,6 +187,7 @@ zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
 awacs*	at obio?			# Apple audio device
+wi*	at obio?			# AirMac
 
 cardslot* at cbb?
 cardbus* at cardslot?
@@ -198,6 +199,7 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
+wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
