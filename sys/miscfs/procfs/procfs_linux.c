@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.1 2001/01/17 00:09:08 fvdl Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.2 2001/01/18 16:39:43 tv Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
