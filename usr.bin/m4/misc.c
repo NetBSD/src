@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2000/05/08 00:52:18 tv Exp $	*/
+/*	$NetBSD: misc.c,v 1.10.4.1 2002/03/20 21:49:08 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 2000/05/08 00:52:18 tv Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10.4.1 2002/03/20 21:49:08 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ indx(s1, s2)
  */
 void
 putback(c)
-	unsigned char c;
+	int c;
 {
 	if (bp < endpbb)
 		*bp++ = c;
