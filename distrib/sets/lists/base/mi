@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.503 2004/09/28 06:51:37 tshiozak Exp $
+# $NetBSD: mi,v 1.504 2004/09/28 23:41:07 erh Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2642,6 +2642,7 @@
 ./usr/share/sushi/system/dailyconf/help		base-sushi-share	share
 ./usr/share/sushi/system/dailyconf/script	base-sushi-share	share
 ./usr/share/sushi/system/dailyconf/script1	base-sushi-share	share
+./usr/share/sushi/system/dailyconf/script2	base-sushi-share	share
 ./usr/share/sushi/system/dailyconf/script3	base-sushi-share	share
 ./usr/share/sushi/system/help			base-sushi-share	share
 ./usr/share/sushi/system/index			base-sushi-share	share
