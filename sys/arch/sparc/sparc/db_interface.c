@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 1997/12/23 23:57:23 tv Exp $ */
+/*	$NetBSD: db_interface.c,v 1.21 1998/01/08 11:03:13 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -183,6 +183,7 @@ kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
 {
+
 #if NFB > 0
 	fb_unblank();
 #endif
