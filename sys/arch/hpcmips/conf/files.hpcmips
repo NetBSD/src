@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.35 2000/07/22 08:53:34 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.36 2000/07/30 04:41:19 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -92,8 +92,8 @@ file	arch/hpcmips/dev/video_subr.c	tx3912video | plumvideo
 #
 # power management
 #
-include "dev/apm/files.apm"
-device hpcapm: apmif
+include "arch/hpcmips/dev/apm/files.apm"
+device hpcapm: apmdevif
 attach hpcapm at mainbus
 file	arch/hpcmips/dev/hpcapm.c	hpcapm
 
