@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.33 2000/06/03 18:58:22 fvdl Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.34 2000/06/04 01:38:52 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.33 2000/06/03 18:58:22 fvdl Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.34 2000/06/04 01:38:52 perry Exp $");
 #endif
 #endif
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.33 2000/06/03 18:58:22 fvdl Exp $");
  */
 
 #include <sys/param.h>
+#include <sys/sched.h>
 #include <sys/socket.h>
 
 #include <errno.h>
