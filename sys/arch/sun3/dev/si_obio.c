@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.17 1997/10/21 22:14:08 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.18 1997/12/09 22:29:04 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #include <machine/obio.h>
 #include <machine/dvma.h>
 
-#define DEBUG XXX
+/* #define DEBUG XXX */
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
