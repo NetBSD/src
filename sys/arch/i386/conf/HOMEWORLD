@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.68 2002/06/17 05:14:13 lukem Exp $
+#	$NetBSD: HOMEWORLD,v 1.69 2002/06/25 03:12:08 lukem Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - TNF mail/gnats
@@ -332,21 +332,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
-#scsibus* at adv?
-#scsibus* at adw?
-#scsibus* at aha?
-#scsibus* at ahb?
-#scsibus* at ahc?
-#scsibus* at aic?
-#scsibus* at bha?
-#scsibus* at dpt?
-#scsibus* at isp?
-#scsibus* at nca?
-#scsibus* at ncr?
-#scsibus* at pcscp?
-#scsibus* at sea?
-#scsibus* at uha?
-#scsibus* at wds?
+#scsibus* at scsi?
 
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -389,8 +375,7 @@ pciide* at pci ? dev ? function ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-#atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -554,23 +539,11 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 #uaudio*	at uhub? port ? configuration ? interface ?
 
 # Audio support
-#audio*	at aria?
-#audio*	at eap?
-#audio*	at ess?
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-#audio*	at sb?
-#audio*	at sp?
-#audio*	at sv?
-#audio*	at uaudio?
-#audio*	at wss?
-#audio*	at ym?
+#audio*	at audiobus?
 
 # MIDI support
+#midi*	at midibus?
 #midi*	at pcppi?		# MIDI interface to the PC speaker
-#midi*	at sb?			# SB MPU401 port
-#midi*	at opl?			# OPL FM synth
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker

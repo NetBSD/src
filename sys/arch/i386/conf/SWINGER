@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.33 2002/06/17 05:14:14 lukem Exp $
+#	$NetBSD: SWINGER,v 1.34 2002/06/25 03:12:11 lukem Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.33 $"
+#ident 		"SWINGER-$Revision: 1.34 $"
 
 maxusers	64		# estimated number of users
 
@@ -384,23 +384,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
-#scsibus* at adv?
-scsibus* at adw?
-#scsibus* at aha?
-#scsibus* at ahb?
-scsibus* at ahc?
-#scsibus* at aic?
-scsibus* at bha?
-#scsibus* at dpt?
-#scsibus* at esp?
-#scsibus* at isp?
-##scsibus* at nca?
-#scsibus* at ncr?
-scsibus* at siop?
-#scsibus* at pcscp?
-#scsibus* at sea?
-#scsibus* at uha?
-#scsibus* at wds?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -449,8 +433,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -613,8 +596,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
@@ -702,22 +683,7 @@ opl*	at sb?
 #opl*	at ym?
 
 # Audio support
-#audio*	at aria?
-#audio*	at auvia?
-#audio*	at clcs?
-audio*	at eap?
-#audio*	at eso?
-#audio*	at ess?
-#audio*	at fms?
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-audio*	at sb?
-#audio*	at sp?
-#audio*	at sv?
-audio*	at uaudio?
-#audio*	at wss?
-#audio*	at ym?
+audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
@@ -727,11 +693,8 @@ mpu*	at sb?
 #mpu*	at ym?
 
 # MIDI support
-midi*	at eap?			# 137[01] MIDI port
-midi*	at mpu?			# MPU 401
-midi*	at opl?			# OPL FM synth
+midi*	at midibus?
 midi*	at pcppi?		# MIDI interface to the PC speaker
-midi*	at sb?			# SB1 MIDI port
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker

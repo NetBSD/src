@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.198 2002/06/24 16:14:13 lukem Exp $
+#	$NetBSD: INSTALL,v 1.199 2002/06/25 03:12:08 lukem Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -363,25 +363,7 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
-scsibus* at adv?
-scsibus* at adw?
-scsibus* at aha?
-scsibus* at ahb?
-scsibus* at ahc?
-scsibus* at aic?
-scsibus* at bha?
-scsibus* at dpt?
-scsibus* at iha?
-scsibus* at iopsp?
-scsibus* at isp?
-#scsibus* at nca?
-scsibus* at mly?
-scsibus* at pcscp?
-scsibus* at sea?
-scsibus* at siop?
-scsibus* at trm?
-scsibus* at uha?
-scsibus* at wds?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -408,7 +390,6 @@ ld*	at twe? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
-scsibus* at icpsp?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -445,8 +426,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -617,8 +597,6 @@ wskbd*	at ukbd? console ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 # Y@P firmware loader
 #uyap* at uhub? port ?
@@ -661,21 +639,11 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #opl*	at sv?
 
 # Audio support
-#audio*	at aria?
-#audio*	at eap?
-#audio*	at eso?
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-#audio*	at sb?
-#audio*	at sp?
-#audio*	at sv?
-#audio*	at wss?
+#audio*	at audiobus?
 
 # MIDI support
+#midi*	at midibus?
 #midi*	at pcppi?		# MIDI interface to the PC speaker
-#midi*	at sb?			# SB MPU401 port
-#midi*	at opl?			# OPL FM synth
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
