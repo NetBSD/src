@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.4 1995/04/29 05:26:31 cgd Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.5 1996/12/20 20:47:59 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_callmsg.c,v 1.4 1995/04/29 05:26:31 cgd Exp $";
+static char *rcsid = "$NetBSD: rpc_callmsg.c,v 1.5 1996/12/20 20:47:59 cgd Exp $";
 #endif
 
 /*
@@ -43,6 +43,7 @@ static char *rcsid = "$NetBSD: rpc_callmsg.c,v 1.4 1995/04/29 05:26:31 cgd Exp $
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <sys/param.h>
 
 #include <rpc/rpc.h>
