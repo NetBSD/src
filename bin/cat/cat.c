@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
+/*	$NetBSD: cat.c,v 1.12 1997/01/09 16:07:09 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $";
+static char rcsid[] = "$NetBSD: cat.c,v 1.12 1997/01/09 16:07:09 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ void
 cook_args(argv)
 	char **argv;
 {
-	register FILE *fp;
+	FILE *fp;
 
 	fp = stdin;
 	filename = "stdin";
@@ -149,9 +149,9 @@ cook_args(argv)
 
 void
 cook_buf(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register int ch, gobble, line, prev;
+	int ch, gobble, line, prev;
 
 	line = gobble = 0;
 	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
@@ -214,7 +214,7 @@ void
 raw_args(argv)
 	char **argv;
 {
-	register int fd;
+	int fd;
 
 	fd = fileno(stdin);
 	filename = "stdin";
@@ -237,9 +237,9 @@ raw_args(argv)
 
 void
 raw_cat(rfd)
-	register int rfd;
+	int rfd;
 {
-	register int nr, nw, off, wfd;
+	int nr, nw, off, wfd;
 	static int bsize;
 	static char *buf;
 	struct stat sbuf;
