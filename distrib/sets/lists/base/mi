@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.361 2002/10/17 12:26:46 lukem Exp $
+# $NetBSD: mi,v 1.362 2002/10/20 21:28:11 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -203,6 +203,7 @@
 ./usr/bin/comm		base-util-bin
 ./usr/bin/compile_et	base-krb5-bin
 ./usr/bin/compress	base-util-bin
+./usr/bin/cpio		base-util-bin
 ./usr/bin/cpp		base-util-bin
 ./usr/bin/crontab	base-cron-bin
 ./usr/bin/ctags		base-c-bin
@@ -390,6 +391,7 @@
 ./usr/bin/systat	base-util-bin
 ./usr/bin/tail		base-util-bin
 ./usr/bin/talk		base-netutil-bin
+./usr/bin/tar		base-util-bin
 ./usr/bin/tcopy		base-util-bin
 ./usr/bin/tee		base-util-bin
 ./usr/bin/telnet	base-netutil-bin
