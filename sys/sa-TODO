@@ -26,109 +26,109 @@ Platform status:
   previously, but then all the SA stuff had to be redone because of
   a code reshuffling.
 
-- acorn32: unknown.
+- acorn32: GENERIC compiles, otherwise untested.
 
-- algor: unknown.
+- algor: P6032 compiles, otherwise untested.
 
 - alpha: Mystery bug that crashes system; see above.
 
-- amiga: unknown.
+- amiga: GENERIC compiles, otherwise untested.
 
 - amigappc: unknown.  Not branched?
 
-- arc: unknown.
+- arc: GENERIC compiles, otherwise untested.
 
-- atari: unknown.
+- atari: HADES compiles, otherwise untested.
 
 - bebox: unknown.
 
 - cats: Works.
 
-- cesfic: unknown.
+- cesfic: GENERIC compiles, otherwise untested.
 
-- cobalt: unknown.
+- cobalt: GENERIC compiles, otherwise untested.
 
 - dreamcast: See sh3.
 
 - evbarm: Works.
 
-- evbmips: unknown.
+- evbmips: MALTA compiles, otherwise untested.
 
 - evbsh3: See sh3.
 
 - evbsh5: Not yet branched.
 
-- hp300: unknown.
+- hp300: Works.
 
 - hp700: Not yet branched.
 
-- hpcarm: unknown.
+- hpcarm: IPAQ compiles, otherwise untested.
 
-- hpcmips: unknown.
+- hpcmips: GENERIC compiles, otherwise untested.
 
 - hpcsh: See sh3.
 
 - i386: Works.
 
-- luna68k: unknown.
+- luna68k: GENERIC compiles, otherwise untested.
 
-- mac68k: unknown.
+- mac68k: GENERIC compiles, otherwise untested.
 
 - macppc: Works.
 
-- mipsco: unknown.
+- mipsco: GENERIC compiles, otherwise untested.
 
 - mmeye: See sh3.
 
-- mvme68k: unknown.
+- mvme68k: GENERIC compiles, otherwise untested.
 
-- mvmeppc: unknown.
+- mvmeppc: GENERIC compiles, otherwise untested.
 
 - netwinder: Works.
 
-- news68k: unknown.
+- news68k: GENERIC compiles, otherwise untested.
 
-- newsmips: unknown.
+- newsmips: GENERIC compiles, otherwise untested.
 
-- next68k: unknown.
+- next68k: GENERIC compiles, otherwise untested.
 
-- ofppc: unknown.
+- ofppc: GENERIC compiles, otherwise untested.
 
 - pc532: Not yet branched.
 
 - platstation2: unknown.
 
-- pmax: unknown.
+- pmax: Works.
 
 - pmppc: Not yet branched.
 
-- prep: unknown.
+- prep: GENERIC compiles, otherwise untested.
 
-- sandpoint: unknown.
+- sandpoint: GENERIC compiles, otherwise untested.
 
-- sbmips: unknown.
+- sbmips: GENERIC compiles, otherwise untested.
 
-- sgimips: unknown.
+- sgimips: GENERIC compiles.  Reported to work once upon a time.
 
 - sh3: Mystery bug that crashes system; see above.
 
 - sh5: Not yet branched.
 
-- shark: unknown.
+- shark: GENERIC compiles, otherwise untested.
 
-- sparc: unknown.
+- sparc: GENERIC compiles.  LWPs have worked.  Upcall trampoline not done.
 
 - sparc64: Works?
 
-- sun2: unknown.
+- sun2: GENERIC compiles, otherwise untested.
 
-- sun3: works.
+- sun3: Works.
 
-- vax: unknown.
+- vax: GENERIC compiles, otherwise untested.
 
-- walnut: unknown.
+- walnut: WALNET compiles, otherwise untested.
 
-- x68k: unknown.
+- x68k: GENERIC compiles, otherwise untested.
 
 - x86_64: Not yet branched.
 
