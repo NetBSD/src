@@ -1,5 +1,5 @@
 .\" $Heimdal: krb5.conf.5,v 1.25 2002/08/28 15:33:59 nectar Exp $
-.\" $NetBSD: krb5.conf.5,v 1.11 2002/12/21 13:22:20 wiz Exp $
+.\" $NetBSD: krb5.conf.5,v 1.12 2003/01/02 00:22:30 jschauma Exp $
 .\"
 .Dd April 11, 1999
 .Dt KRB5.CONF 5
@@ -179,7 +179,7 @@ binding in this section looks like:
 .Pp
 The domain can be either a full name of a host or a trailing
 component, in the latter case the domain-string should start with a
-perid.
+period.
 The realm may be the token `dns_locate', in which case the actual
 realm will be determined using DNS (independently of the setting
 of the `dns_lookup_realm' option).
@@ -195,9 +195,9 @@ service will be used.
 The kdcs will be used in the order that they are specified.
 .It Li admin_server = Va host[:port]
 Specifies the admin server for this realm, where all the modifications
-to the database are perfomed.
+to the database are performed.
 .It Li kpasswd_server = Va host[:port]
-Points to the server where all the password changes are perfomed.
+Points to the server where all the password changes are performed.
 If there is no such entry, the kpasswd port on the admin_server host
 will be tried.
 .It Li krb524_server = Va Host[:port]
@@ -296,7 +296,7 @@ syntax of this if something like:
 .Pp
 if
 .Ar etype
-is omitted it means everything, and if string is omitted is means the default string (for that principal). Additional special values of keyttypes are:
+is omitted it means everything, and if string is omitted is means the default string (for that principal). Additional special values of keytypes are:
 .Bl -tag -width "xxx" -offset indent
 .It v5
 The kerberos 5 salt
