@@ -3,8 +3,7 @@
  * define path names
  */
 
-#define PPPHOSTS	"/etc/ppp/hosts"
-
-#define _PATH_PIDFILE 	"/etc/ppp"
-#define _PATH_UPAPFILE 	"/etc/ppp/upap"
-#define _PATH_CHAPFILE 	"/etc/ppp/chap"
+#define _PATH_PIDFILE 	"/var/run/ppp"
+#define _PATH_UPAPFILE 	"/etc/ppp/pap-secrets"
+#define _PATH_CHAPFILE 	"/etc/ppp/chap-secrets"
+#define _PATH_SYSOPTIONS "/etc/ppp/options"
