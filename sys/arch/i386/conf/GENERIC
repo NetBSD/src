@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.310 2000/03/10 06:03:18 groo Exp $
+#	$NetBSD: GENERIC,v 1.311 2000/03/14 22:37:55 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.310 $"
+#ident 		"GENERIC-$Revision: 1.311 $"
 
 maxusers	32		# estimated number of users
 
@@ -287,7 +287,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
-vga*		at pci?
+vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
@@ -295,7 +295,7 @@ wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
 
-pcppi0	at isa?
+pcppi0		at isa?
 sysbeep0	at pcppi?
 
 # Serial Devices
@@ -423,7 +423,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci ? dev ? function ? flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp? 
