@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.30 1997/08/18 21:23:18 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.31 1997/08/22 12:25:16 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,11 +39,10 @@
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
-#	st*	? tape
+#	st*	SCSI tape
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	st*	SCSI tape
 #	ch*	SCSI changer
 #	xy*	Xylogic 450/451 disks
 #	xd*	Xylogic 753/7053 disks
@@ -209,7 +208,6 @@ md*)
 	;;
 
 ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
-	umask 2
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=9;	chr=23;;
 	fd*)	name=fd;	unit=${i#fd};	blk=16;	chr=54;;
@@ -246,11 +244,9 @@ ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
-	umask 77
 	;;
 
 st*)
-	umask 2
 	case $i in
 	st*) name=st; unit=${i#st}; blk=11; chr=18;;
 	esac
@@ -268,22 +264,22 @@ st*)
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 
-	chmod 640 ${name}${unit} n${name}${unit} \
+	chmod 660 ${name}${unit} n${name}${unit} \
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 
-	umask 77
 	;;
 
 ss*)
 	case $i in
 	ss*) name=ss;	unit=${i#ss};	chr=59;;
 	esac
-	rm -f $name$unit n$name$unit
+	rm -f $name$unit n$name$unit en$name$unit
 	mknod $name$unit	c $chr $(($unit * 16 + 0))
 	mknod n$name$unit	c $chr $(($unit * 16 + 1))
-	chgrp operator $name$unit n$name$unit
-	chmod 640 $name$unit n$name$unit
+	mknod en$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit en$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
 ch*|uk*)
@@ -295,7 +291,6 @@ ch*|uk*)
 	mknod ${name}${unit}	c $chr $(($unit * 16 + 0))
 	chgrp operator ${name}${unit}
 	chmod 640 ${name}${unit}
-	umask 77
 	;;
 
 lkm)
@@ -324,9 +319,7 @@ pty*)
 	3)      name=s;;
 	4)      name=t;;
 	5)      name=u;;
-	6)      name=v
-		echo "$0: $i: pty unit conflicts with another use."
-		continue ;;
+	6)      name=v;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
@@ -357,14 +350,12 @@ pty*)
 	done
         chgrp wheel tty$name? pty$name?
         chmod 666 tty$name? pty$name?
-	if [ $class = 1 ]; then
-		mv ttyqf ttyv0; mv ptyqf ptyv0
-	fi
 	;;
 
 local)
 	umask 0
-	sh MAKEDEV.local all
+	sh $0.local all
+	umask 77
 	;;
 *)
 	echo $i: unknown device
