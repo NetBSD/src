@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/08/17 00:28:07 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.12 2000/08/21 14:05:25 msaitoh Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -26,7 +26,7 @@ LIB2OBJS=	__gcc_bcmp.o _varargs.o __dummy.o _eprintf.o _bb.o _shtab.o \
 LIB2OBJS+=	_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
 .endif
 .if (${MACHINE_ARCH} == "sh3") || (${MACHINE_ARCH} == "arm26")
-LIB2OBJS+=	_fixunsdfsi.o _fixunsdfsi.o
+LIB2OBJS+=	_fixunsdfsi.o _fixunssfsi.o
 .endif
 OBJS+=		${LIB2OBJS}
 
