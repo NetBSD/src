@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.9 1996/04/27 18:59:05 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.10 1996/12/20 20:46:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9 1996/04/27 18:59:05 christos Exp $";
+static char *rcsid = "$NetBSD: getnetgrent.c,v 1.10 1996/12/20 20:46:19 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,6 +45,9 @@ static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9 1996/04/27 18:59:05 christos 
 #include <ctype.h>
 #include <stdlib.h>
 #include <db.h>
+#ifdef YP
+#include <rpcsvc/ypclnt.h>
+#endif
 
 #define _NG_STAR(s)	(((s) == NULL || *(s) == '\0') ? _ngstar : s)
 #define _NG_EMPTY(s)	((s) == NULL ? "" : s)
