@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.31 2002/06/09 17:18:32 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.32 2002/06/09 17:22:41 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.31 2002/06/09 17:18:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.32 2002/06/09 17:22:41 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -143,7 +143,7 @@ gre_clone_create(ifc, unit)
 
 	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
-	sc->sc_if.if_type =  IFT_OTHER;
+	sc->sc_if.if_type = IFT_OTHER;
 	sc->sc_if.if_addrlen = 4;
 	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
 	sc->sc_if.if_dlt = DLT_NULL;
