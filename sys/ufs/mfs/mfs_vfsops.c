@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.23 2000/03/16 18:20:07 jdolecek Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.24 2000/03/29 04:03:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -129,7 +129,6 @@ mfs_done()
 int
 mfs_mountroot()
 {
-	extern struct vnode *rootvp;
 	struct fs *fs;
 	struct mount *mp;
 	struct proc *p = curproc;	/* XXX */
