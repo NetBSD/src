@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.18 1993/11/05 23:18:51 cgd Exp $
+ *	$Id: trap.c,v 1.19 1993/12/14 05:31:27 mycroft Exp $
  */
 
 /*
@@ -283,7 +283,7 @@ copyfault:
 		}
 
 		/* check if page table is mapped, if not, fault it first */
-#define pde_v(v) (PTD[((v)>>PD_SHIFT)&1023].pd_v)
+#define pde_v(v) (PTD[((v)>>PDSHIFT)&1023].pd_v)
 		if (!pde_v(va)) {
 			v = trunc_page(vtopte(va));
 			rv = vm_fault(map, v, ftype, FALSE);
