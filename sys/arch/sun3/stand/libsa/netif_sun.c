@@ -1,8 +1,11 @@
-/*	$NetBSD: netif_sun.c,v 1.9 1997/10/17 04:06:24 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.9.4.1 1998/01/27 02:29:55 gwr Exp $	*/
 
-/*
- * Copyright (c) 1995 Gordon W. Ross
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,22 +15,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
+ * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Gordon W. Ross
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -47,27 +53,24 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <machine/idprom.h>
 #include <machine/mon.h>
-#include <machine/saio.h>
 
-#include "stand.h"
-#include "net.h"
-#include "netif.h"
+#include <stand.h>
+#include <net.h>
 
-#include "clock.h"
+#include "libsa.h"
 #include "dvma.h"
-#include "promdev.h"
+#include "saio.h"
+#include "netif.h"
 
 #define	PKT_BUF_SIZE 2048
 
-int debug;
 int errno;
 
 struct iodesc sockets[SOPEN_MAX];
 
-static struct netif prom_nif;
-static struct devdata {
+struct netif prom_netif;
+struct devdata {
 	struct saioreq dd_si;
 	int rbuf_len;
 	char *rbuf;
@@ -75,7 +78,9 @@ static struct devdata {
 	char *tbuf;
 	u_short dd_opens;
 	u_char dd_myea[6];
-} prom_dd;
+} netif_devdata;
+
+void netif_getether(struct saioreq *, u_char *);
 
 
 /*
@@ -86,7 +91,7 @@ struct devdata *
 netif_init(aux)
 	void *aux;
 {
-	struct devdata *dd = &prom_dd;
+	struct devdata *dd = &netif_devdata;
 	struct saioreq *si;
 	struct bootparam *bp;
 	int error;
@@ -123,11 +128,6 @@ netif_init(aux)
 		return (NULL);
 	}
 
-#ifdef NETIF_DEBUG
-	if (debug)
-		printf("netif_init: allocating buffers\n");
-#endif
-
 	/* Allocate the transmit/receive buffers. */
 	if (dd->rbuf == NULL) {
 		dd->rbuf_len = PKT_BUF_SIZE;
@@ -148,7 +148,8 @@ netif_init(aux)
 #endif
 
 	/* Record our ethernet address. */
-	idprom_etheraddr(dd->dd_myea);
+	netif_getether(si, dd->dd_myea);
+
 	dd->dd_opens = 0;
 
 	return(dd);
@@ -233,7 +234,7 @@ netif_open(aux)
 
 found:
 	bzero(s, sizeof(*s));
-	nif = &prom_nif;
+	nif = &prom_netif;
 	error = netif_attach(nif, s);
 	if (error != 0) {
 		errno = error;
@@ -423,4 +424,46 @@ break2:
 #endif
 
 	return rlen;
+}
+
+/*
+ * Copy our Ethernet address into the passed array.
+ * Later PROM versions offer a function to do this.
+ */
+void
+netif_getether(si, ea)
+	struct saioreq *si;
+	u_char *ea;
+{
+	struct saif *sif;
+
+	sif = si->si_sif;
+#ifdef NETIF_DEBUG
+	if (debug) {
+		printf("netif_getether: sif=0x%x\n", sif);
+		breakpoint();
+	}
+#endif
+
+	/*
+	 * PROM versions 3.0 and later support this.
+	 * Maybe earlier ones too, but who knows?
+	 */
+	if (romVectorPtr->monId[0] >= '3') {
+		(*sif->sif_macaddr)(ea);
+		return;
+	}
+
+	/*
+	 * All Sun3X machines have PROM version 3.0 or later.
+	 * Well... I hope so anyway.  If not, loose here.
+	 */
+	if (_is3x)
+		panic("netboot on Sun3X needs PROM 3.0 or later");
+
+	/*
+	 * Old Sun3 PROMs may not have sif_macaddr,
+	 * so go read the Sun3 IDPROM directly.
+	 */
+	sun3_etheraddr(ea);
 }
