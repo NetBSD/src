@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.36 2000/06/06 05:39:26 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.37 2000/06/06 06:49:39 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -42,8 +42,9 @@ __recurse: .USE
 .for dir in ${__REALSUBDIR}
 .PHONY: ${targ}-${dir}
 ${targ}-${dir}: .MAKE __recurse
-${targ}: ${targ}-${dir}
+subdir-${targ}: ${targ}-${dir}
 .endfor
+${targ}: subdir-${targ}
 .endfor
 
 # Make sure all of the standard targets are defined, even if they do nothing.
