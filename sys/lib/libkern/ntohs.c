@@ -1,5 +1,3 @@
-/*	$NetBSD: ntohs.c,v 1.2 1994/10/26 06:42:39 cgd Exp $	*/
-
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -28,22 +26,25 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: ntohs.c,v 1.3 1995/01/06 00:10:09 cgd Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: ntohs.c,v 1.2 1994/10/26 06:42:39 cgd Exp $";
+static char *rcsid = "$Id: ntohs.c,v 1.3 1995/01/06 00:10:09 cgd Exp $";
 #endif
 
+#include <sys/types.h>
 #include <machine/endian.h>
 
 #undef ntohs
 
 unsigned short
-ntohs (x)
+ntohs(x)
 	unsigned short x;
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	char *s = (char *) &x;
+	u_char *s = (u_char *) &x;
 	return s[0] << 8 | s[1];
 #else
 	return x;
