@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 1998/09/29 03:01:38 thorpej Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.1 1998/09/29 03:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,16 +29,10 @@
 
 #include "SYS.h"
 
-LEAF(sigprocmask, 3)
-	mov	a2, a5			/* safe */
-	cmoveq	a1, 1, a0		/* if set == NULL, how = SIG_BLOCK */
-	beq	a1, Ldoit		/* and set = 0, and do it. */
-	ldl	a1, 0(a1)		/* load the set from *set */
-Ldoit:	CALLSYS_ERROR(compat_13_sigprocmask13)
-	beq	a5, Lret		/* if they don't want old mask, done */	
-	stl	v0, 0(a5)		/* otherwise, give it to them. */
-Lret:	mov	zero, v0
-	RET
+/*
+ * We must preserve the state of the registers as the user has set them up.
+ * However, that doesn't involve any special work on the Alpha.
+ * (XXX PROFILING)
+ */
 
-	END(sigprocmask)
-
+RSYSCALL(__sigreturn14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 1998/09/29 03:01:38 thorpej Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.1 1998/09/29 03:01:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,18 +27,36 @@
  * rights to redistribute these changes.
  */
 
-#include "SYS.h"
+#include <machine/asm.h>
 
-LEAF(sigprocmask, 3)
-	mov	a2, a5			/* safe */
-	cmoveq	a1, 1, a0		/* if set == NULL, how = SIG_BLOCK */
-	beq	a1, Ldoit		/* and set = 0, and do it. */
-	ldl	a1, 0(a1)		/* load the set from *set */
-Ldoit:	CALLSYS_ERROR(compat_13_sigprocmask13)
-	beq	a5, Lret		/* if they don't want old mask, done */	
-	stl	v0, 0(a5)		/* otherwise, give it to them. */
-Lret:	mov	zero, v0
-	RET
+/*
+ * C library -- sigsetjmp, siglongjmp
+ *
+ *	siglongjmp(a,v)
+ * will generate a "return(v)" from
+ * the last call to
+ *	sigsetjmp(a, mask)
+ * by restoring registers from the stack.
+ * If `mask' is non-zero, the previous signal
+ * state will be restored.
+ */
 
-	END(sigprocmask)
+	.set	noreorder
 
+LEAF(__sigsetjmp14, 2)
+	LDGP(pv)
+	stq	a1, (83 * 8)(a0)		/* save the mask */
+	bne	a1, Lsavesig			/* if !zero, save signals */
+	jmp	zero, _setjmp				/* else don't. */
+Lsavesig:
+	jmp	zero, __setjmp14
+END(__sigsetjmp14)
+
+LEAF(__siglongjmp14, 2)
+	LDGP(pv)
+	ldq	t0, (83 * 8)(a0)		/* get the mask */
+	bne	t0, Lrestoresig			/* if !zero, restore signals */
+	jmp	zero, _longjmp
+Lrestoresig:
+	jmp	zero, __longjmp14
+END(__siglongjmp14)
