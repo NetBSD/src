@@ -40,7 +40,7 @@
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
  *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
- *	$Id: process.s,v 1.14 1994/05/20 04:40:20 gwr Exp $
+ *	$Id: process.s,v 1.15 1994/05/27 14:58:38 gwr Exp $
  */
 
 /*
@@ -54,8 +54,7 @@
 
 	.text
 	.globl	_whichqs,_qs,_cnt,_panic
-	.globl	_curproc
-	.comm	_want_resched,4
+	.globl	_curproc,_want_resched
 
 /*
  * Setrunqueue(p)
@@ -131,15 +130,12 @@ Lsw0:
 
 	.globl	_curpcb
 	.globl	_masterpaddr	| XXX compatibility (debuggers)
-	.globl _Idle_count
 	.data
 _masterpaddr:			| XXX compatibility (debuggers)
 _curpcb:
 	.long	0
-_Idle_count:
-	.long   0
-pcbflag:
-	.byte	0		| copy of pcb_flags low byte
+mdpflag:
+	.byte	0		| copy of proc md_flags low byte
 	.align	2
 	.comm	nullpcb,SIZEOF_PCB
 	.text
@@ -159,15 +155,19 @@ ENTRY(switch_exit)
  * When no processes are on the runq, cpu_switch() branches to idle
  * to wait for something to come ready.
  */
-	.globl	Idle
-Lidle:
+	.data
+	.globl _Idle_count
+_Idle_count:
+	.long   0
+	.text
+	.globl	idle
+idle:
 	stop	#PSL_LOWIPL
 Idle:
-idle:
 	movw	#PSL_HIGHIPL,sr
 	addql   #1, _Idle_count
 	tstl	_whichqs
-	jeq	Lidle
+	jeq	idle
 	movw	#PSL_LOWIPL,sr
 	jra	Lsw1
 
@@ -191,6 +191,7 @@ ENTRY(cpu_switch)
 #endif
 	clrl	_curproc
 	addql	#1,_cnt+V_SWTCH
+
 Lsw1:
 	/*
 	 * Find the highest-priority queue that isn't empty,
@@ -205,7 +206,7 @@ Lswchk:
 	addqb	#1,d0
 	cmpb	#32,d0
 	jne	Lswchk
-	jra	idle
+	jra	Idle
 Lswfnd:
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	movl	a0@,d1			| and check again...
@@ -228,9 +229,9 @@ Lswok:
 	movl	d1,a1
 	cmpl	a1@(P_FORW),a1		| anyone on queue?
 	jeq	Lbadsw			| no, panic
-	movl	a1@(P_FORW),a0			| p = q->p_forw
-	movl	a0@(P_FORW),a1@(P_FORW)		| q->p_forw = p->p_forw
-	movl	a0@(P_FORW),a1			| q = p->p_forw
+	movl	a1@(P_FORW),a0		| p = q->p_forw
+	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
+	movl	a0@(P_FORW),a1		| q = p->p_forw
 	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
 	cmpl	a0@(P_FORW),d1		| anyone left on queue?
 	jeq	Lsw2			| no, skip
@@ -269,17 +270,21 @@ Lswnofpsave:
 	jne	Lbadsw
 #endif
 	clrl	a0@(P_BACK)		| clear back link
+	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
-	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
-	
+
 	/* see if pmap_activate needs to be called; should remove this */
 	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
-/*#ifdef DIAGNOSTIC*/
+/*#ifdef DIAGNOSTIC XXX*/
 	tstl	a0			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 /*#endif*/
 	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
+#ifdef notdef
+	tstl	a0@(PM_STCHG)		| pmap->st_changed?
+	jeq	Lswnochg		| no, skip
+#endif
 	pea	a1@			| push pcb (at p_addr)
 	pea	a0@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap, pcb)
@@ -297,7 +302,6 @@ Lcxswdone:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
-
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
@@ -322,7 +326,6 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
@@ -342,6 +345,7 @@ Lsavedone:
 	moveq	#0,d0			| return 0
 	rts
 
+#ifdef notdef
 /*
  * update profiling information for the user
  * addupc(pc, &u.u_prof, ticks)
@@ -379,3 +383,4 @@ Lauerror:
 Lauexit:
 	movl	sp@+,a2			| restore scratch reg
 	rts
+#endif

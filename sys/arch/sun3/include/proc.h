@@ -32,7 +32,7 @@
  *
  *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
  *	proc.h,v 1.2 1993/05/22 07:58:30 cgd Exp
- *	$Id: proc.h,v 1.3 1994/05/06 04:33:55 gwr Exp $
+ *	$Id: proc.h,v 1.4 1994/05/27 14:55:25 gwr Exp $
  */
 
 /*
@@ -48,4 +48,5 @@ struct mdproc {
 #define	MDP_STACKADJ	0x0002	/* frame SP adjusted, might have to
 				   undo when system call returns
 				   ERESTART. */
+#define	MDP_HPUXTRACE	0x0004	/* being traced by HP-UX process */
 

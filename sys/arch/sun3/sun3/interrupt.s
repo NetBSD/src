@@ -28,45 +28,34 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.9 1994/03/09 05:00:20 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.10 1994/05/27 14:58:28 gwr Exp $
  */
 
-.globl _cnt
-
-.data
-.globl _intrcnt
-_intrcnt:
-    /* spurious  1  2  3  4  5  6  7*/
-	.long 0, 0, 0, 0, 0, 0, 0, 0
+	.data
 .globl _clock_turn
 _clock_turn:
 	.long 0	
 .globl	timebomb
 timebomb:
 	.long	0
-.text
+	.text
 
-#define INTERRUPT_BEGIN(interrupt_num) \
-	clrw	sp@-		;	/* ???? stack alignment?*/\
-	moveml	#0xC0C0,sp@-	;	/* save a0 a1, d0, d1 */\
-	addql #1,_intrcnt+interrupt_num*4;/*increment interrupt counter */
+#define INTERRUPT_SAVEREG \
+	moveml	#0xC0C0,sp@-
 
-#define INTERRUPT_INTRHAND \
-	movw	sr,sp@-		;	/* push current SR value */\
-	clrw	sp@-		;	/*    padded to longword */\
-	jbsr	_intrhand	;	/* handle interrupt 	 */\
-	addql	#4,sp		;	/* pop SR		 */\
+#define INTERRUPT_BODY(num) \
+	pea	num		;\
+	jbsr	_intrhand	;\
+	addql	#4,sp
 
-#define INTERRUPT_END \
-	moveml	sp@+,#0x0303	;	/* restore a0, a1, d0, d1*/\
-	addql	#2,sp		;	/* undo stack alignment? hanck*/\
-	addql #1, _cnt+V_INTR	;	/* more statistics gathering */\
+#define INTERRUPT_RESTORE \
+	moveml	sp@+,#0x0303
+
+#define INTERRUPT_HANDLE(num) ;\
+	INTERRUPT_SAVEREG ;\
+	INTERRUPT_BODY(num) ;\
+	INTERRUPT_RESTORE ;\
 	jra rei
-
-#define INTERRUPT_HANDLE(num) \
-	INTERRUPT_BEGIN(num) \
-	INTERRUPT_INTRHAND \
-	INTERRUPT_END
 
 .globl _level0intr, _level1intr, _level2intr, _level3intr, _level4intr
 .globl _level5intr, _level6intr, _level7intr
@@ -106,7 +95,7 @@ _level5intr_clock:
 	andb #~IREG_CLOCK_ENAB_5, INTERREG_VA
 	orb #IREG_CLOCK_ENAB_5, INTERREG_VA
 	tstb CLOCK_VA+INTERSIL_INTR_OFFSET
-	INTERRUPT_BEGIN(5)	| stack aligned, a0, a1, d0, d1 saved
+	INTERRUPT_SAVEREG 	| save a0, a1, d0, d1
 #define CLOCK_DEBUG
 #ifdef CLOCK_DEBUG
 	.globl	_panicstr, _regdump, _panic
@@ -114,7 +103,7 @@ _level5intr_clock:
 	jeq	Lnobomb			| no, skip it
 	subql	#1,timebomb		| decrement
 	jne	Lnobomb			| not ready to go off
-	moveml	sp@+,#0x0303		| temporarily restore regs
+	INTERRUPT_RESTORE		| temporarily restore regs
 	jra	Lbomb			| go die
 Lnobomb:
 	cmpl	#_kstack+NBPG,sp	| are we still in stack pages?
@@ -151,12 +140,12 @@ Lbomrip:
 	.even
 Lstackok:
 #endif
-	lea sp@(16), a1
-	movl a1@, sp@-		| clockframe.sr (ps)
-	movl a1@(4), sp@-	| clockframe.pc
-	jbsr _clock_intr
-	addl #8,sp		| pop clockframe
-	INTERRUPT_END
+	lea	sp@(16),a1		| a1 = &clockframe
+	movl	a1,sp@-
+	jbsr	_clock_intr
+	addql	#4,sp
+	INTERRUPT_RESTORE
+	jra	rei
 
 /* SCCs */
 .align 4
@@ -168,5 +157,8 @@ _level6intr:
 _level7intr:
 	INTERRUPT_HANDLE(7)
 
-_spurintr:
-	
+
+#undef	INTERRUPT_SAVEREG
+#undef	INTERRUPT_BODY
+#undef	INTERRUPT_RESTORE
+#undef	INTERRUPT_HANDLE

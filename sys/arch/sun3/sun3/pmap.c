@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.24 1994/05/20 04:57:17 gwr Exp $
+ *	$Id: pmap.c,v 1.25 1994/05/27 14:58:35 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@
 #include <machine/mon.h>
 #include <machine/vmparam.h>
 #include <machine/pmap.h>
+
+#define VA_SEGNUM(x)    ((x >> SEGSHIFT) & SEGOFSET)
 
 /*
  * globals needed by the vm system
@@ -996,11 +998,9 @@ pmap_bootstrap_alloc(size)
 {
 	register void *mem;
 
-#if 0	/* XXX */
 	extern boolean_t vm_page_startup_initialized;
 	if (vm_page_startup_initialized)
 		panic("pmap_bootstrap_alloc: called after startup initialized");
-#endif
 
 	size = round_page(size);
 	mem = (void *)virtual_avail;
