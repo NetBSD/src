@@ -68,7 +68,10 @@ file for additional configuration parameters and a password.
 If no password is found,
 .Nm
 prompts for it.
-.It Fl O Ar cowner : Ns Ar cgroup Ns / Ns Ar sowner : Ns Ar sgroup
+.It Fl O Xo
+.Ar cowner : Ns Ar cgroup Ns /
+.Ns Ar sowner : Ns Ar sgroup
+.Xc
 Assign owner/group attributes to the newly created connection.
 See
 .Xr nsmb 8
@@ -109,7 +112,10 @@ server.
 User ID and group ID assigned to files.
 The default are owner and group IDs from
 the directory where the volume is mounted.
-.It No // Ns Ar user Ns @ Ns Ar server Ns / Ns Ar share
+.It Xo
+.No // Ns Ar user Ns @
+.Ns Ar server Ns / Ns Ar share
+.Xc
 The
 .Nm
 command will use
