@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38.2.1 1997/01/14 21:25:30 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38.2.2 1997/01/22 02:34:00 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,9 +81,7 @@ static int target_to_unit __P((u_long, u_long, u_long));
 struct devnametobdevmaj mac68k_nam2blk[] = {
 	{ "sd",         4 },
 	{ "cd",         6 },
-#ifdef notyet
-	{ "md",		XXX },
-#endif
+	{ "md",		13 },
 	{ NULL,		0 },
 };
 
@@ -107,7 +105,7 @@ configure()
 	findbootdev();
 
 	printf("boot device: %s\n",
-	    booted_device ? booted_devvice->dv_xname : "<unknown>");
+	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, mac68k_nam2blk);
 	swapconf();
@@ -118,17 +116,24 @@ configure()
 /*
  * Yanked from i386/i386/autoconf.c (and tweaked a bit)
  */
+
+u_long	bootdev;		/* XXX should be dev_t */
+
 static void
 findbootdev()
 {
 	struct device *dv;
-	int major, unit;
+	int major, unit, i;
+	char buf[32];
 
 	booted_device = NULL;
 	booted_partition = 0;	/* Assume root is on partition a */
 
 	major = B_TYPE(bootdev);
-	if (major < 0 || major >= nblkdev)
+	for (i = 0; mac68k_nam2blk[i].d_name != NULL; i++)
+		if (major == mac68k_nam2blk[i].d_maj)
+			break;
+	if (mac68k_nam2blk[i].d_name == NULL)
 		return;
 
 	unit = B_UNIT(bootdev);
@@ -137,12 +142,10 @@ findbootdev()
 	unit = target_to_unit(-1, unit, 0);
 	bootdev |= (unit << B_UNITSHIFT);
 
-	if (disk_count <= 0)
-		return;
-
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_class == DV_DISK && major == findblkmajor(dv) &&
-		    unit == dv->dv_unit) {
+	sprintf(buf, "%s%d", mac68k_nam2blk[i].d_name, unit);
+	for (dv = alldevs.tqh_first; dv != NULL;
+	    dv = dv->dv_list.tqe_next) {
+		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			return;
 		}
