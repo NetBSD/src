@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.5 2001/07/24 13:46:04 christos Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.6 2001/07/25 05:17:50 matt Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -109,7 +109,7 @@ test3()
 
 	/* Can't enforce resource limit on root */
 	if (geteuid() == 0)
-		return 0;
+		return;
 
 	if (getrlimit(RLIMIT_NPROC, &rl) == -1)
 		err(1, "getrlimit");
