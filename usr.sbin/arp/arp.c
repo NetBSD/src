@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.11 1995/03/01 11:56:13 chopps Exp $ */
+/*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$NetBSD: arp.c,v 1.11 1995/03/01 11:56:13 chopps Exp $";
+static char *rcsid = "$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -70,6 +70,7 @@ static char *rcsid = "$NetBSD: arp.c,v 1.11 1995/03/01 11:56:13 chopps Exp $";
 #include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <paths.h>
 
 int delete __P((const char *, const char *));
