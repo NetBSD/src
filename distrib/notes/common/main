@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.237 2003/08/28 16:38:23 xtraeme Exp $
+.\"	$NetBSD: main,v 1.238 2003/08/28 16:59:14 heas Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1765,6 +1765,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
 .It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.org
+.It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org
 .It Ta Michael L. Hitch Ta Mt mhitch@NetBSD.org
 .It Ta Christian E. Hopps Ta Mt chopps@NetBSD.org
