@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.10 2000/04/10 13:34:20 pk Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.11 2000/08/02 22:26:35 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -219,10 +219,6 @@ sunos_sys_sigreturn(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 	if (rwindow_save(p))
 		sigexit(p, SIGILL);
 #ifdef DEBUG
