@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.y,v 1.5 1997/01/09 20:23:33 tls Exp $	*/
+/*	$NetBSD: ftp.y,v 1.6 2001/01/04 23:05:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -17,7 +17,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
- *	$NetBSD: ftp.y,v 1.5 1997/01/09 20:23:33 tls Exp $
+ *	$NetBSD: ftp.y,v 1.6 2001/01/04 23:05:57 lukem Exp $
  */
 
 /*
@@ -29,7 +29,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";*/
-static char rcsid[] = "$NetBSD: ftp.y,v 1.5 1997/01/09 20:23:33 tls Exp $";
+static char rcsid[] = "$NetBSD: ftp.y,v 1.6 2001/01/04 23:05:57 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1151,7 +1151,7 @@ char *filename;
 		    (stbuf.st_mode&S_IFMT) != S_IFREG)
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%qu", stbuf.st_size);
+			reply(213, "%llu", (long long)stbuf.st_size);
 		break;}
 	case TYPE_A: {
 		FILE *fin;

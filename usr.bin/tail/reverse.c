@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.11 1999/07/21 06:38:50 cgd Exp $	*/
+/*	$NetBSD: reverse.c,v 1.12 2001/01/04 23:05:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.11 1999/07/21 06:38:50 cgd Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.12 2001/01/04 23:05:56 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -227,7 +227,7 @@ r_buf(fp)
 
 	if (enomem) {
 		(void)fprintf(stderr,
-		    "tail: warning: %qd bytes discarded\n", (long long)enomem);
+		    "tail: warning: %lld bytes discarded\n", (long long)enomem);
 		rval = 1;
 	}
 

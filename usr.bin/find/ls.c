@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.13 1998/11/06 23:21:38 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.14 2001/01/04 23:05:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.13 1998/11/06 23:21:38 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.14 2001/01/04 23:05:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ printlong(name, accpath, sb)
 {
 	char modep[15];
 
-	(void)printf("%7lu %6qd ", (u_long)sb->st_ino,
+	(void)printf("%7lu %6lld ", (u_long)sb->st_ino,
 	    (long long)sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
 	(void)printf("%s %3lu %-*s %-*s ", modep, (unsigned long)sb->st_nlink,
@@ -84,7 +84,7 @@ printlong(name, accpath, sb)
 		(void)printf("%3d,%5d ", major(sb->st_rdev),
 		    minor(sb->st_rdev));
 	else
-		(void)printf("%9qd ", (long long)sb->st_size);
+		(void)printf("%9lld ", (long long)sb->st_size);
 	printtime(sb->st_mtime);
 	(void)printf("%s", name);
 	if (S_ISLNK(sb->st_mode))
