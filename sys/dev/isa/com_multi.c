@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.2.2.4 1997/10/14 10:23:22 thorpej Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.2.2.5 1997/10/16 00:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -58,9 +58,10 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
 #include <dev/isa/com_multi.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
