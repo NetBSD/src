@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.57 2001/01/14 02:08:35 thorpej Exp $	*/
+/*	$NetBSD: malloc.h,v 1.58 2001/02/17 22:17:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -144,8 +144,8 @@
 #define	M_USBDEV	88	/* USB device driver */
 #define	M_POOL		89	/* memory pool structs */
 #define	M_CODA		90	/* Coda file system structures and tables. */
-#define	M_FILECOREMNT	91	/* Filcore FS mount structures */
-#define	M_FILECORENODE	92	/* Filcore FS vnode private part */
+#define	M_FILECOREMNT	91	/* Filecore FS mount structures */
+#define	M_FILECORENODE	92	/* Filecore FS vnode private part */
 #define	M_RAIDFRAME	93	/* RAIDframe structures */
 #define M_USBHC		94	/* USB host controller */
 #define	M_SECA		95	/* security associations, key management */
