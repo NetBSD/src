@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.29 1998/07/29 05:18:54 tls Exp $	*/
+/*	$NetBSD: in_var.h,v 1.30 1998/08/14 06:57:54 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ void	in_socktrim __P((struct sockaddr_in *));
 	addr = ia->ia_addr.sin_addr; \
 	do { \
 		ia = ia->ia_hash.le_next; \
-	} while ((ia != NULL) && in_hosteq(ia->ia_addr.sin_addr, addr)); \
+	} while ((ia != NULL) && !in_hosteq(ia->ia_addr.sin_addr, addr)); \
 }
 
 /*
