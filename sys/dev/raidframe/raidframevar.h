@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.3 2003/02/01 18:34:14 tron Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.4 2003/08/12 10:01:08 dsl Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@
 #ifndef _RF_RAIDFRAMEVAR_H_
 #define _RF_RAIDFRAMEVAR_H_
 
-
+#ifndef _STANDALONE
 #include <sys/ioctl.h>
 
 #include <sys/errno.h>
@@ -112,6 +112,7 @@
 #include <sys/lock.h>
 
 #include <sys/mallocvar.h>
+#endif
 
 /*
  * First, define system-dependent types and constants.
@@ -490,6 +491,7 @@ typedef struct RF_ProgressInfo_s {
 	RF_uint64 total;
 } RF_ProgressInfo_t;
 
+#ifndef _STANDALONE
 typedef struct RF_LayoutSW_s {
 	RF_ParityConfig_t parityConfig;
 	const char *configName;
@@ -573,5 +575,6 @@ typedef struct RF_LayoutSW_s {
 	RF_AccessStripeMapFlags_t flags;
 #endif				/* !KERNEL */
 }       RF_LayoutSW_t;
+#endif
 
 #endif				/* !_RF_RAIDFRAMEVAR_H_ */
