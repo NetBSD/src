@@ -1,0 +1,46 @@
+#	$NetBSD: Makefile,v 1.1 2000/10/04 00:21:22 itojun Exp $
+
+PROG=	racoon
+SRCS=	main.c session.c isakmp.c handler.c \
+	isakmp_ident.c isakmp_agg.c isakmp_base.c \
+	isakmp_quick.c isakmp_inf.c isakmp_newg.c \
+	pfkey.c admin.c ipsec_doi.c oakley.c grabmyaddr.c \
+	policy.c localconf.c remoteconf.c crypto_openssl.c algorithm.c \
+	cfparse.c cftoken.c strnames.c \
+	vmbuf.c plog.c logger.c schedule.c str2val.c misc.c sockmisc.c \
+	proposal.c sainfo.c vendorid.c safefile.c
+
+MAN=	racoon.8 racoon.conf.5
+
+# debugging code with print-isakmp.c
+SRCS+=	print-isakmp.c
+CPPFLAGS+=-I${TCPDUMPSRCDIR} -I${TCPDUMPSRCDIR}/lbl -DHAVE_PRINT_ISAKMP_C=1
+
+# for debugging malloc/free
+#.if exists(/usr/pkg/lib/libefence.a) || exists(/usr/pkg/lib/libefence.so)
+#LDADD+=-L/usr/pkg/lib -lefence
+#.endif
+
+LIBPFKEYDIR!=	cd ${.CURDIR}/../libpfkey; make print-objdir
+LDADD+=	-L${LIBPFKEYDIR} -lpfkey
+DPADD+=	${LIBPFKEYDIR}/libpfkey.a
+LDADD+=	-lipsec -ly -ll -lcrypto
+DPADD+=	${LIBIPSEC} ${LIBY} ${LIBL} ${LIBCRYPTO}
+
+WARNS=0
+
+#CFLAGS+=-g
+OPTFLAG+=-DHAVE_PFKEYV2 -DYIPS_DEBUG
+CPPFLAGS+=-DINET6 -DHAVE_FUNCTION_MACRO=1 -DHAVE_LIBCRYPTO=1 -DHAVE_LIBL=1 -DHAVE_LIBY=1 -DENABLE_IPV6=1 -DADVAPI=1 -DHAVE_GETADDRINFO=1 -DHAVE_GETNAMEINFO=1 -DSTDC_HEADERS=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_LIMITS_H=1 -DHAVE_SYS_TIME_H=1 -DHAVE_UNISTD_H=1 -DHAVE_STDARG_H=1 -DHAVE_VARARGS_H=1 -DTIME_WITH_SYS_TIME=1 -DRETSIGTYPE=void -DHAVE_VPRINTF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -DHAVE_STRDUP=1  $(OPTFLAG) -DIPSEC -I${RACOONSRCDIR} -I. -Dss_family=__ss_family -Dss_len=__ss_len -DSYSCONFDIR=\"$(ETCDIR)\"
+CPPFLAGS+=-DHAVE_OPENSSL_OPENSSLV_H=1
+CPPFLAGS+=-DYY_NO_UNPUT
+CPPFLAGS+=-I${LIBPFKEYSRCDIR}
+YFLAGS+=-d
+
+# Certificate support
+CPPFLAGS+=-DHAVE_SIGNING_C=1 -DHAVE_OPENSSL_PEM_H=1 -DHAVE_OPENSSL_X509_H=1
+
+.include <bsd.prog.mk>
+
+.PATH:	${RACOONSRCDIR} ${TCPDUMPSRCDIR}
+CLEANFILES+=	y.tab.h cfparse.c cftoken.c
