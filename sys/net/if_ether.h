@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.5 1998/07/28 12:25:53 is Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.6 1999/03/25 04:45:37 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -63,6 +63,7 @@ struct	ether_header {
 
 #define	ETHERMTU	1500
 #define	ETHERMIN	(60-14)
+#define	ETHER_CRC_LEN	4
 
 #ifdef _KERNEL
 /*
