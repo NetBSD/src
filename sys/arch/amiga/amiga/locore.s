@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107.2.1 1999/04/30 16:20:30 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.107.2.2 2000/02/04 23:18:25 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@
  */
 
 #include "opt_bb060stupidrom.h"
+#include "opt_p5ppc68kboard.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 
@@ -1819,6 +1820,13 @@ Lm68060fprdone:
  * Handle the nitty-gritty of rebooting the machine.
  *
  */
+#if defined(P5PPC68KBOARD)
+	.data
+GLOBAL(p5ppc)
+	.long	0
+	.text
+#endif
+
 	.globl	_doboot
 _doboot:
 	movl	#CACHE_OFF,d0
@@ -1832,6 +1840,10 @@ Ldoboot0:
 
 	movw	#0x2700,sr			| cut off any interrupts
 
+#if defined(P5PPC68KBOARD)
+	tstl	_C_LABEL(p5ppc)
+	jne	Lp5ppcboot
+#endif
 #if defined(DRACO)
 	cmpb	#0x7d,_machineid
 	jeq	LdbOnDraCo
@@ -1896,6 +1908,22 @@ Ldoreset:
 	| now rely on prefetch for next jmp
 	jmp	a0@
 	| NOT REACHED
+
+#if defined(P5PPC68KBOARD)
+Lp5ppcboot:
+| The Linux-Apus boot code does it in a similar way
+| For 040 on uncached pages, eieio can be replaced by nothing.
+	movl	_C_LABEL(ZTWOROMADDR),a0
+	lea	a0@(0xf60000-0xd80000),a0
+	movb	#0x60,a0@(0x20)
+	movb	#0x50,a0@(0x20)
+	movb	#0x30,a0@(0x20)
+	movb	#0x40,a0@(0x18)
+	movb	#0x04,a0@
+Lwaithere:
+	jra	Lwaithere
+#endif
+
 #ifdef DRACO
 LdbOnDraCo:
 | we use a TTR. We want to boot even if half of us is already dead.
