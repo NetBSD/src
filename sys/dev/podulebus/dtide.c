@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.4 2001/11/13 13:32:34 lukem Exp $ */
+/* $NetBSD: dtide.c,v 1.5 2002/03/29 17:27:34 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -26,13 +26,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 /*
  * dtide.c - Driver for the D.T. Software IDE interface.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.4 2001/11/13 13:32:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.5 2002/03/29 17:27:34 bjh21 Exp $");
 
 #include <sys/param.h>
 
