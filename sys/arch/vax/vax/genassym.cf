@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 2000/05/26 00:36:51 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.16 2000/05/27 20:02:58 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -76,6 +76,7 @@ endif
 
 # mtpr register numbers
 define	PR_KSP		PR_KSP
+define	PR_ESP		PR_ESP
 define	PR_USP		PR_USP
 define	PR_ICCS		PR_ICCS
 define	PR_PCBB		PR_PCBB
