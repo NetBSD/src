@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.137 2004/03/11 07:14:12 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.138 2004/03/21 18:48:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.137 2004/03/11 07:14:12 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.138 2004/03/21 18:48:24 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -704,12 +704,22 @@ ffs_mountfs(devvp, mp, p)
 	bp = NULL;
 	ump = NULL;
 	fs = NULL;
-	fsblockloc = sblockloc = 0;
+	sblockloc = 0;
 	fstype = 0;
 
 	/*
 	 * Try reading the superblock in each of its possible locations.		 */
-	for (i = 0; sblock_try[i] != -1; i++) {
+	for (i = 0; ; i++) {
+		if (bp != NULL) {
+			bp->b_flags |= B_NOCACHE;
+			brelse(bp);
+			bp = NULL;
+		}
+		if (sblock_try[i] == -1) {
+			error = EINVAL;
+			fs = NULL;
+			goto out;
+		}
 		error = bread(devvp, sblock_try[i] / size, SBLOCKSIZE, cred,
 			      &bp);
 		if (error)
@@ -729,33 +739,45 @@ ffs_mountfs(devvp, mp, p)
 		} else if (fs->fs_magic == FS_UFS2_MAGIC) {
 			sbsize = fs->fs_sbsize;
 			fstype = UFS2;
-			fsblockloc = fs->fs_sblockloc;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS2;
-			fsblockloc = bswap64(fs->fs_sblockloc);
 			needswap = 1;
 #endif
 		} else
-			goto next_sblock;
+			continue;
 
-		if ((fsblockloc == sblockloc ||
-		     (fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)
-		    && sbsize <= MAXBSIZE && sbsize >= sizeof(struct fs))
-			break;
 
-next_sblock:
-		bp->b_flags |= B_NOCACHE;
-		brelse(bp);
-		bp = NULL;
-	}
+		/* fs->fs_sblockloc isn't defined for old filesystems */
+		if (!(fs->fs_old_flags & FS_FLAGS_UPDATED)) {
+			if (fstype == UFS1 && sblockloc == SBLOCK_UFS2)
+				/*
+				 * This is likely to be the first alternate
+				 * in a filesystem with 64k blocks.
+				 * Don't use it.
+				 */
+				continue;
+			fsblockloc = sblockloc;
+		} else {
+			fsblockloc = fs->fs_sblockloc;
+#ifdef FFS_EI
+			if (needswap)
+				fsblockloc = bswap64(fsblockloc);
+#endif
+		}
 
-	if (sblock_try[i] == -1) {
-		error = EINVAL;
-		fs = NULL;
-		goto out;
+		/* Check we haven't found an alternate superblock */
+		if (fsblockloc != sblockloc)
+			continue;
+
+		/* Validate size of superblock */
+		if (sbsize > MAXBSIZE || sbsize < sizeof(struct fs))
+			continue;
+
+		/* Ok seems to be a good superblock */
+		break;
 	}
 
 	fs = malloc((u_long)sbsize, M_UFSMNT, M_WAITOK);

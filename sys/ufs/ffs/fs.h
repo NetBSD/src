@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.42 2004/03/20 17:26:16 dsl Exp $	*/
+/*	$NetBSD: fs.h,v 1.43 2004/03/21 18:48:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,6 +77,10 @@
  * As a added bonus, the 'first alternate' superblock of a FFSv1 filesystem
  * with 64k blocks is at 64k - just where the code looks first when playing
  * 'hunt the superblock'.
+ *
+ * The ffsv2 superblock layout (which might contain an ffsv1 filesystem)
+ * can be detected by checking for sb->fs_old_flags & FS_FLAGS_UPDATED.
+ * This is the default suberblock type for NetBSD since ffsv2 support was added.
  */
 #define	BBSIZE		8192
 #define	BBOFF		((off_t)(0))
@@ -302,7 +306,7 @@ struct fs {
 	int32_t	*fs_maxcluster;		/* max cluster in each cyl group */
 	u_int	*fs_active;		/* used by snapshots to track fs */
 	int32_t	 fs_old_cpc;		/* cyl per cycle in postbl */
-/* this area is otherwise allocated in filesystems created before ffsv2 */
+/* this area is otherwise allocated unless fs_old_flags & FS_FLAGS_UPDATED */
 	int32_t	 fs_maxbsize;		/* maximum blocking factor permitted */
 	int64_t	 fs_sparecon64[17];	/* old rotation block list head */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
