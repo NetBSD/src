@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.50.2.1 2004/07/10 13:54:25 tron Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.50.2.2 2005/03/20 11:58:47 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.50.2.1 2004/07/10 13:54:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.50.2.2 2005/03/20 11:58:47 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -799,7 +799,9 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 {
 
 	if (l) {
+		l->l_flag |= L_SA_SWITCHING;
 		getucontext(l, &ss->ss_captured.ss_ctx);
+		l->l_flag &= ~L_SA_SWITCHING;
 		ss->ss_captured.ss_sa.sa_context = (ucontext_t *)
 		    (intptr_t)((_UC_MACHINE_SP(&ss->ss_captured.ss_ctx) -
 			sizeof(ucontext_t))
