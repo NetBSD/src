@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.5 2002/07/09 17:22:26 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.6 2002/07/09 21:25:00 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,22 +38,22 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.5 2002/07/09 17:22:26 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.6 2002/07/09 21:25:00 atatat Exp $");
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <unistd.h>
+
+#include <ctype.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <err.h>
 #include <string.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <stddef.h>
 #include <stdlib.h>
-#include <pwd.h>
-#include <grp.h>
+#include <time.h>
+#include <unistd.h>
 
 #define DEF_FORMAT \
 	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" %k %b %N"
