@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4.8.3 2002/10/18 02:39:35 nathanw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.8.4 2003/01/17 16:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <sys/kernel.h>
 #include <sys/extent.h>
 #include <sys/mbuf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -113,7 +115,7 @@ prep_memio_mmap(t, bpa, offset, prot, flags)
 	int prot, flags;
 {
 
-	return ((bpa + offset) >> PGSHIFT);
+	return (trunc_page(bpa + offset));
 }
 
 static int

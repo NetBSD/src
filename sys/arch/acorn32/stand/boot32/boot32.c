@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.2.2.6 2003/01/15 18:16:22 thorpej Exp $	*/
+/*	$NetBSD: boot32.c,v 1.2.2.7 2003/01/17 16:03:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -290,7 +290,7 @@ void get_memory_configuration(void) {
 	osmemory_read_arrangement_table(memory_page_types);
 
 	/* init counters */
-	vram_blocks = dram_blocks = rom_blocks = io_blocks = podram_blocks = 0;
+	bank = vram_blocks = dram_blocks = rom_blocks = io_blocks = podram_blocks = 0;
 
 	current_page_type = -1;
 	phys_page = 0;			/* physical address in pages	*/
@@ -356,7 +356,7 @@ void get_memory_configuration(void) {
 	printf(" \n\n");
 
 	if (VRAM_pages[0] == 0) {
-		/* map bottom DRAM as video memory */
+		/* map DRAM as video memory */
 		display_size	 = (vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1));
 #if 0
 		mapped_screen_memory = 1024 * 1024;		/* max allowed on RiscPC	*/

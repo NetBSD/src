@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5.6.3 2003/01/03 16:50:09 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.5.6.4 2003/01/17 16:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,12 @@ pcibattach(parent, self, aux)
 	u_int32_t v;
 	int lvlmask = 0;
 
-	printf("\n");
+	/*
+	 * Just print out a description and defer configuration
+	 * until all PCI devices have been attached.
+	 */
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
 	if ((v & 0x20) == 0) {
@@ -137,14 +142,6 @@ pcibattach(parent, self, aux)
 	/* Initialize interrupt controller */
 	init_icu(lvlmask);
 #endif
-
-	/*
-	 * Just print out a description and defer configuration
-	 * until all PCI devices have been attached.
-	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
-	    PCI_REVISION(pa->pa_class));
 
 	config_defer(self, pcib_callback);
 }
