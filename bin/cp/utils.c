@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.17 1999/03/01 18:57:29 mjl Exp $	*/
+/*	$NetBSD: utils.c,v 1.18 2001/07/18 11:01:54 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.17 1999/03/01 18:57:29 mjl Exp $");
+__RCSID("$NetBSD: utils.c,v 1.18 2001/07/18 11:01:54 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,6 +154,7 @@ copy_file(entp, dne)
 				warn("%s", entp->fts_path);
 				rval = 1;
 			} else {
+				(void) madvise(p, (size_t)fs->st_size, MADV_SEQUENTIAL);
 				if (write(to_fd, p, fs->st_size) != fs->st_size) {
 					warn("%s", to.p_path);
 					rval = 1;
