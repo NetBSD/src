@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.7 2000/07/08 17:12:08 sommerfeld Exp $ */
+/*	$NetBSD: ses.c,v 1.8 2000/08/08 22:55:30 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -2094,26 +2094,28 @@ safte_rdstat(ses_softc_t *ssc, int slpflg)
 		 * Hmm- we'll state that 'normal' operating
 		 * is 10 to 40 deg Celsius.
 		 */
+
+		/*
+		 * Actually.... All of the units that people out in the world
+		 * seem to have do not come even close to setting a value that
+		 * complies with this spec.
+		 *
+		 * The closest explanation I could find was in an
+		 * LSI-Logic manual, which seemed to indicate that
+		 * this value would be set by whatever the I2C code
+		 * would interpolate from the output of an LM75
+		 * temperature sensor.
+		 *
+		 * This means that it is impossible to use the actual
+		 * numeric value to predict anything. But we don't want
+		 * to lose the value. So, we'll propagate the *uncorrected*
+		 * value and set SES_OBJSTAT_NOTAVAIL. We'll depend on the
+		 * temperature flags for warnings.
+		 */
+		ssc->ses_objmap[oid].encstat[0] = SES_OBJSTAT_NOTAVAIL;
 		ssc->ses_objmap[oid].encstat[1] = 0;
-		ssc->ses_objmap[oid].encstat[2] =
-		    ((unsigned int) sdata[r]) - 10;
-		if (sdata[r] < 20) {
-			ssc->ses_objmap[oid].encstat[0] = SES_OBJSTAT_CRIT;
-			/*
-			 * Set 'under temperature' failure.
-			 */
-			ssc->ses_objmap[oid].encstat[3] = 2;
-			ssc->ses_encstat |= SES_ENCSTAT_CRITICAL;
-		} else if (sdata[r] > 30) {
-			ssc->ses_objmap[oid].encstat[0] = SES_OBJSTAT_CRIT;
-			/*
-			 * Set 'over temperature' failure.
-			 */
-			ssc->ses_objmap[oid].encstat[3] = 8;
-			ssc->ses_encstat |= SES_ENCSTAT_CRITICAL;
-		} else {
-			ssc->ses_objmap[oid].encstat[0] = SES_OBJSTAT_OK;
-		}
+		ssc->ses_objmap[oid].encstat[2] = sdata[r];
+		ssc->ses_objmap[oid].encstat[3] = 0;;
 		ssc->ses_objmap[oid++].svalid = 1;
 		r++;
 	}
