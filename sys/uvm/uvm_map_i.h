@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.14 1999/06/04 23:38:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.15 1999/06/14 22:05:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -125,7 +125,7 @@ uvm_map_setup(map, min, max, flags)
 	map->first_free = &map->header;
 	map->hint = &map->header;
 	map->timestamp = 0;
-	lockinit(&map->lock, PVM, "thrd_sleep", 0, 0);
+	lockinit(&map->lock, PVM, "vmmaplk", 0, 0);
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
 
