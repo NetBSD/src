@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_kbc.c,v 1.4 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: kb_kbc.c,v 1.5 2004/09/04 13:43:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.4 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.5 2004/09/04 13:43:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.4 2003/07/15 02:59:26 lukem Exp $");
 
 #include <news68k/news68k/isr.h>
 
-int	kb_kbc_match(struct device *, struct cfdata *, void *);
-void	kb_kbc_attach(struct device *, struct device *, void *);
-void	kb_kbc_init(struct kb_softc *);
+static int kb_kbc_match(struct device *, struct cfdata *, void *);
+static void kb_kbc_attach(struct device *, struct device *, void *);
+static void kb_kbc_init(struct kb_softc *);
 int	kb_kbc_intr(void *);
 int	kb_kbc_cnattach(void);
 
@@ -60,11 +60,8 @@ CFATTACH_DECL(kb_kbc, sizeof(struct kb_softc),
 
 struct console_softc kb_kbc_conssc;
 
-int
-kb_kbc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+kb_kbc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct kbc_attach_args *ka = aux;
 
@@ -74,10 +71,8 @@ kb_kbc_match(parent, cf, aux)
 	return 1;
 }
 
-void
-kb_kbc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+kb_kbc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kb_softc *sc = (void *)self;
 	struct kbc_attach_args *ka = aux;
@@ -104,9 +99,8 @@ kb_kbc_attach(parent, self, aux)
 	sc->sc_wskbddev = config_found(self, &wsa, wskbddevprint);
 }
 
-void
-kb_kbc_init(sc)
-	struct kb_softc *sc;
+static void
+kb_kbc_init(struct kb_softc *sc)
 {
 	bus_space_tag_t bt = sc->sc_bt;
 	bus_space_handle_t bh = sc->sc_bh;
@@ -116,8 +110,7 @@ kb_kbc_init(sc)
 }
 
 int
-kb_kbc_intr(arg)
-	void *arg;
+kb_kbc_intr(void *arg)
 {
 	struct kb_softc *sc = (struct kb_softc *)arg;
 	struct console_softc *kb_conssc = sc->sc_conssc;
@@ -138,7 +131,7 @@ kb_kbc_intr(arg)
 }
 
 int
-kb_kbc_cnattach()
+kb_kbc_cnattach(void)
 {
 
 	kb_kbc_conssc.cs_isconsole = 1;

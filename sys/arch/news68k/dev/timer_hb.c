@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.7 2004/09/04 11:28:32 tsutsui Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.8 2004/09/04 13:43:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.7 2004/09/04 11:28:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.8 2004/09/04 13:43:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.7 2004/09/04 11:28:32 tsutsui Exp $")
 #define TIMER_LEVEL 6
 #define TIMER_SIZE 8	/* XXX */
 
-int timer_hb_match(struct device *, struct cfdata  *, void *);
-void timer_hb_attach(struct device *, struct device *, void *);
-void timer_hb_initclocks(int, int);
+static int timer_hb_match(struct device *, struct cfdata  *, void *);
+static void timer_hb_attach(struct device *, struct device *, void *);
+static void timer_hb_initclocks(int, int);
 void clock_intr(struct clockframe *);
 
 static __inline void leds_intr(void);
@@ -81,21 +81,18 @@ static volatile u_int8_t *ctrl_timer; /* XXX */
 
 extern volatile u_char *ctrl_led; /* XXX */
 
-int
-timer_hb_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+timer_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	static int timer_hb_matched;
 
 	/* Only one timer, please. */
 	if (timer_hb_matched)
-		return (0);
+		return 0;
 
 	if (strcmp(ha->ha_name, timer_cd.cd_name))
-		return (0);
+		return 0;
 
 	if (ha->ha_ipl == -1)
 		ha->ha_ipl = TIMER_LEVEL;
@@ -107,10 +104,8 @@ timer_hb_match(parent, cf, aux)
 	return 1;
 }
 
-void
-timer_hb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+timer_hb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -133,9 +128,8 @@ timer_hb_attach(parent, self, aux)
  * Leave stathz 0 since there is no secondary clock available.
  * Note that clock interrupts MUST STAY DISABLED until here.
  */
-void
-timer_hb_initclocks(tick, statint)
-	int tick, statint;
+static void
+timer_hb_initclocks(int tick, int statint)
 {
 	int s;
 
@@ -156,8 +150,7 @@ timer_hb_initclocks(tick, statint)
  * from sun3/sun3x/clock.c -tsutsui
  */
 void
-clock_intr(cf)
-	struct clockframe *cf;
+clock_intr(struct clockframe *cf)
 {
 #ifdef	LED_IDLE_CHECK
 	extern char _Idle[];	/* locore.s */
@@ -184,7 +177,7 @@ clock_intr(cf)
 #define LED1	0x02
 
 static __inline void
-leds_intr()
+leds_intr(void)
 {
 	static u_char led_countdown, led_stat;
 	u_char i;
