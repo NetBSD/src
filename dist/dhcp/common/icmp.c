@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.2 2002/06/02 15:17:17 itojun Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -70,11 +70,7 @@ void icmp_startup (routep, handler)
 {
 	struct protoent *proto;
 	int protocol = 1;
-	struct sockaddr_in from;
-	int fd;
 	int state;
-	struct icmp_state *new;
-	omapi_object_t *h;
 	isc_result_t result;
 
 	/* Only initialize icmp once. */
@@ -292,7 +288,6 @@ isc_result_t icmp_echoreply (h)
 void trace_icmp_input_input (trace_type_t *ttype, unsigned length, char *buf)
 {
 	struct iaddr *ia;
-	unsigned len;
 	u_int8_t *icbuf;
 	ia = (struct iaddr *)buf;
 	ia->len = ntohl(ia->len);
