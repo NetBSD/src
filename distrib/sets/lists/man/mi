@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.239 2000/05/03 23:30:35 simonb Exp $
+# $NetBSD: mi,v 1.240 2000/05/06 06:22:22 mycroft Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -218,6 +218,16 @@
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
 ./usr/share/man/cat1/popd.0
+./usr/share/man/cat1/postalias.0
+./usr/share/man/cat1/postcat.0
+./usr/share/man/cat1/postconf.0
+./usr/share/man/cat1/postdrop.0
+./usr/share/man/cat1/postfix.0
+./usr/share/man/cat1/postkick.0
+./usr/share/man/cat1/postlock.0
+./usr/share/man/cat1/postlog.0
+./usr/share/man/cat1/postmap.0
+./usr/share/man/cat1/postsuper.0
 ./usr/share/man/cat1/pr.0
 ./usr/share/man/cat1/printenv.0
 ./usr/share/man/cat1/printf.0
@@ -578,11 +588,13 @@
 ./usr/share/man/cat4/zero.0
 ./usr/share/man/cat4/zstty.0
 ./usr/share/man/cat5/a.out.0
+./usr/share/man/cat5/access.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
+./usr/share/man/cat5/canonical.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
 ./usr/share/man/cat5/daily.conf.0
@@ -651,6 +663,7 @@
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat5/rc.conf.0
 ./usr/share/man/cat5/rcsfile.0
+./usr/share/man/cat5/relocated.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/rhosts.0
@@ -662,6 +675,7 @@
 ./usr/share/man/cat5/stab.0
 ./usr/share/man/cat5/syslog.conf.0
 ./usr/share/man/cat5/termcap.0
+./usr/share/man/cat5/transport.0
 ./usr/share/man/cat5/ttyaction.0
 ./usr/share/man/cat5/ttys.0
 ./usr/share/man/cat5/types.0
@@ -669,6 +683,7 @@
 ./usr/share/man/cat5/utmp.0
 ./usr/share/man/cat5/uuencode.0
 ./usr/share/man/cat5/vgrindefs.0
+./usr/share/man/cat5/virtual.0
 ./usr/share/man/cat5/weekly.conf.0
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat7/ascii.0
@@ -701,12 +716,14 @@
 ./usr/share/man/cat8/bootpgw.0
 ./usr/share/man/cat8/bootptest.0
 ./usr/share/man/cat8/bootselect.0
+./usr/share/man/cat8/bounce.0
 ./usr/share/man/cat8/catman.0
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/chat.0
 ./usr/share/man/cat8/chown.0
 ./usr/share/man/cat8/chroot.0
 ./usr/share/man/cat8/chrtbl.0
+./usr/share/man/cat8/cleanup.0
 ./usr/share/man/cat8/clri.0
 ./usr/share/man/cat8/cnwctl.0
 ./usr/share/man/cat8/compat_freebsd.0
@@ -721,6 +738,7 @@
 ./usr/share/man/cat8/compat_xenix.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
+./usr/share/man/cat8/defer.0
 ./usr/share/man/cat8/dev_mkdb.0
 ./usr/share/man/cat8/dhclient-script.0
 ./usr/share/man/cat8/dhclient.0
@@ -736,6 +754,7 @@
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/dumplfs.0
 ./usr/share/man/cat8/edquota.0
+./usr/share/man/cat8/error.0
 ./usr/share/man/cat8/envstat.0
 ./usr/share/man/cat8/eshconfig.0
 ./usr/share/man/cat8/faithd.0
@@ -783,6 +802,7 @@
 ./usr/share/man/cat8/lfs_cleanerd.0
 ./usr/share/man/cat8/link.0
 ./usr/share/man/cat8/lmcctl.0
+./usr/share/man/cat8/local.0
 ./usr/share/man/cat8/lockd.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
@@ -795,6 +815,7 @@
 ./usr/share/man/cat8/makemap.0
 ./usr/share/man/cat8/makewhatis.0
 ./usr/share/man/cat8/map-mbone.0
+./usr/share/man/cat8/master.0
 ./usr/share/man/cat8/mbr.0
 ./usr/share/man/cat8/mbrlabel.0
 ./usr/share/man/cat8/mdconfig.0
@@ -861,10 +882,12 @@
 ./usr/share/man/cat8/ntptrace.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
+./usr/share/man/cat8/pickup.0
 ./usr/share/man/cat8/pim6dd.0
 ./usr/share/man/cat8/pim6sd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0
+./usr/share/man/cat8/pipe.0
 ./usr/share/man/cat8/poweroff.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
@@ -874,6 +897,7 @@
 ./usr/share/man/cat8/pvcsif.0
 ./usr/share/man/cat8/pvctxctl.0
 ./usr/share/man/cat8/pwd_mkdb.0
+./usr/share/man/cat8/qmgr.0
 ./usr/share/man/cat8/quot.0
 ./usr/share/man/cat8/quotacheck.0
 ./usr/share/man/cat8/quotaoff.0
@@ -934,12 +958,15 @@
 ./usr/share/man/cat8/setkey.0
 ./usr/share/man/cat8/setobjstat.0
 ./usr/share/man/cat8/showmount.0
+./usr/share/man/cat8/showq.0
 ./usr/share/man/cat8/shutdown.0
 ./usr/share/man/cat8/slattach.0
 ./usr/share/man/cat8/slip.0
 ./usr/share/man/cat8/sliplogin.0
 ./usr/share/man/cat8/slstats.0
 ./usr/share/man/cat8/smrsh.0
+./usr/share/man/cat8/smtp.0
+./usr/share/man/cat8/smtpd.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/statd.0
@@ -965,6 +992,7 @@
 ./usr/share/man/cat8/timedc.0
 ./usr/share/man/cat8/traceroute.0
 ./usr/share/man/cat8/traceroute6.0
+./usr/share/man/cat8/trivial-rewrite.0
 ./usr/share/man/cat8/trpt.0
 ./usr/share/man/cat8/trsp.0
 ./usr/share/man/cat8/ttyflags.0
@@ -1198,6 +1226,16 @@
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
 ./usr/share/man/man1/popd.1
+./usr/share/man/man1/postalias.1
+./usr/share/man/man1/postcat.1
+./usr/share/man/man1/postconf.1
+./usr/share/man/man1/postdrop.1
+./usr/share/man/man1/postfix.1
+./usr/share/man/man1/postkick.1
+./usr/share/man/man1/postlock.1
+./usr/share/man/man1/postlog.1
+./usr/share/man/man1/postmap.1
+./usr/share/man/man1/postsuper.1
 ./usr/share/man/man1/pr.1
 ./usr/share/man/man1/printenv.1
 ./usr/share/man/man1/printf.1
@@ -1558,11 +1596,13 @@
 ./usr/share/man/man4/zero.4
 ./usr/share/man/man4/zstty.4
 ./usr/share/man/man5/a.out.5
+./usr/share/man/man5/access.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bootparams.5
 ./usr/share/man/man5/bootptab.5
+./usr/share/man/man5/canonical.5
 ./usr/share/man/man5/core.5
 ./usr/share/man/man5/crontab.5
 ./usr/share/man/man5/daily.conf.5
@@ -1631,6 +1671,7 @@
 ./usr/share/man/man5/ranlib.5
 ./usr/share/man/man5/rc.conf.5
 ./usr/share/man/man5/rcsfile.5
+./usr/share/man/man5/relocated.5
 ./usr/share/man/man5/remote.5
 ./usr/share/man/man5/resolv.conf.5
 ./usr/share/man/man5/rhosts.5
@@ -1642,6 +1683,7 @@
 ./usr/share/man/man5/stab.5
 ./usr/share/man/man5/syslog.conf.5
 ./usr/share/man/man5/termcap.5
+./usr/share/man/man5/transport.5
 ./usr/share/man/man5/ttyaction.5
 ./usr/share/man/man5/ttys.5
 ./usr/share/man/man5/types.5
@@ -1649,6 +1691,7 @@
 ./usr/share/man/man5/utmp.5
 ./usr/share/man/man5/uuencode.5
 ./usr/share/man/man5/vgrindefs.5
+./usr/share/man/man5/virtual.5
 ./usr/share/man/man5/weekly.conf.5
 ./usr/share/man/man5/wtmp.5
 ./usr/share/man/man7/ascii.7
@@ -1681,12 +1724,14 @@
 ./usr/share/man/man8/bootpgw.8
 ./usr/share/man/man8/bootptest.8
 ./usr/share/man/man8/bootselect.8
+./usr/share/man/man8/bounce.8
 ./usr/share/man/man8/catman.8
 ./usr/share/man/man8/ccdconfig.8
 ./usr/share/man/man8/chat.8
 ./usr/share/man/man8/chown.8
 ./usr/share/man/man8/chroot.8
 ./usr/share/man/man8/chrtbl.8
+./usr/share/man/man8/cleanup.8
 ./usr/share/man/man8/clri.8
 ./usr/share/man/man8/cnwctl.8
 ./usr/share/man/man8/compat_freebsd.8
@@ -1701,6 +1746,7 @@
 ./usr/share/man/man8/compat_xenix.8
 ./usr/share/man/man8/comsat.8
 ./usr/share/man/man8/cron.8
+./usr/share/man/man8/defer.8
 ./usr/share/man/man8/dev_mkdb.8
 ./usr/share/man/man8/dhclient-script.8
 ./usr/share/man/man8/dhclient.8
@@ -1717,6 +1763,7 @@
 ./usr/share/man/man8/dumplfs.8
 ./usr/share/man/man8/edquota.8
 ./usr/share/man/man8/envstat.8
+./usr/share/man/man8/error.8
 ./usr/share/man/man8/eshconfig.8
 ./usr/share/man/man8/faithd.8
 ./usr/share/man/man8/fastboot.8
@@ -1763,6 +1810,7 @@
 ./usr/share/man/man8/lfs_cleanerd.8
 ./usr/share/man/man8/link.8
 ./usr/share/man/man8/lmcctl.8
+./usr/share/man/man8/local.8
 ./usr/share/man/man8/lockd.8
 ./usr/share/man/man8/lpc.8
 ./usr/share/man/man8/lpd.8
@@ -1775,6 +1823,7 @@
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
 ./usr/share/man/man8/map-mbone.8
+./usr/share/man/man8/master.8
 ./usr/share/man/man8/mbr.8
 ./usr/share/man/man8/mbrlabel.8
 ./usr/share/man/man8/mdconfig.8
@@ -1841,10 +1890,12 @@
 ./usr/share/man/man8/ntptrace.8
 ./usr/share/man/man8/pac.8
 ./usr/share/man/man8/pcnfsd.8
+./usr/share/man/man8/pickup.8
 ./usr/share/man/man8/pim6dd.8
 ./usr/share/man/man8/pim6sd.8
 ./usr/share/man/man8/ping.8
 ./usr/share/man/man8/ping6.8
+./usr/share/man/man8/pipe.8
 ./usr/share/man/man8/poweroff.8
 ./usr/share/man/man8/portmap.8
 ./usr/share/man/man8/pppd.8
@@ -1854,6 +1905,7 @@
 ./usr/share/man/man8/pvcsif.8
 ./usr/share/man/man8/pvctxctl.8
 ./usr/share/man/man8/pwd_mkdb.8
+./usr/share/man/man8/qmgr.8
 ./usr/share/man/man8/quot.8
 ./usr/share/man/man8/quotacheck.8
 ./usr/share/man/man8/quotaoff.8
@@ -1914,12 +1966,15 @@
 ./usr/share/man/man8/setkey.8
 ./usr/share/man/man8/setobjstat.8
 ./usr/share/man/man8/showmount.8
+./usr/share/man/man8/showq.8
 ./usr/share/man/man8/shutdown.8
 ./usr/share/man/man8/slattach.8
 ./usr/share/man/man8/slip.8
 ./usr/share/man/man8/sliplogin.8
 ./usr/share/man/man8/slstats.8
 ./usr/share/man/man8/smrsh.8
+./usr/share/man/man8/smtp.8
+./usr/share/man/man8/smtpd.8
 ./usr/share/man/man8/spray.8
 ./usr/share/man/man8/sprayd.8
 ./usr/share/man/man8/statd.8
@@ -1945,6 +2000,7 @@
 ./usr/share/man/man8/timedc.8
 ./usr/share/man/man8/traceroute.8
 ./usr/share/man/man8/traceroute6.8
+./usr/share/man/man8/trivial-rewrite.8
 ./usr/share/man/man8/trpt.8
 ./usr/share/man/man8/trsp.8
 ./usr/share/man/man8/ttyflags.8

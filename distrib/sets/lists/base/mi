@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.160 2000/05/03 11:44:31 veego Exp $
+# $NetBSD: mi,v 1.161 2000/05/06 06:22:21 mycroft Exp $
 .
 ./altroot
 ./bin
@@ -44,6 +44,7 @@
 ./etc/disklabels
 ./etc/kerberosIV
 ./etc/kerberosV
+./etc/mail
 ./etc/mtree
 ./etc/namedb
 ./etc/openssl
@@ -468,6 +469,19 @@
 ./usr/libexec/named-xfer
 ./usr/libexec/ntalkd
 ./usr/libexec/postfix
+./usr/libexec/postfix/bounce
+./usr/libexec/postfix/cleanup
+./usr/libexec/postfix/error
+./usr/libexec/postfix/local
+./usr/libexec/postfix/master
+./usr/libexec/postfix/pickup
+./usr/libexec/postfix/pipe
+./usr/libexec/postfix/qmgr
+./usr/libexec/postfix/sendmail
+./usr/libexec/postfix/showq
+./usr/libexec/postfix/smtp
+./usr/libexec/postfix/smtpd
+./usr/libexec/postfix/trivial-rewrite
 ./usr/libexec/rexecd
 ./usr/libexec/rlogind
 ./usr/libexec/rmail
@@ -619,6 +633,16 @@
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
 ./usr/sbin/portmap
+./usr/sbin/postalias
+./usr/sbin/postcat
+./usr/sbin/postconf
+./usr/sbin/postdrop
+./usr/sbin/postfix
+./usr/sbin/postkick
+./usr/sbin/postlock
+./usr/sbin/postlog
+./usr/sbin/postmap
+./usr/sbin/postsuper
 ./usr/sbin/pppd
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
@@ -1023,7 +1047,6 @@
 ./usr/share/misc/map3270
 ./usr/share/misc/na.phone
 ./usr/share/misc/nslookup.help
-./usr/share/misc/sendmail.hf
 ./usr/share/misc/termcap
 ./usr/share/misc/termcap.db
 ./usr/share/misc/units.lib
