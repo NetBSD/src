@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.5 2003/03/24 02:02:51 elric Exp $ */
+/* $NetBSD: params.c,v 1.6 2003/04/10 05:45:29 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.5 2003/03/24 02:02:51 elric Exp $");
+__RCSID("$NetBSD: params.c,v 1.6 2003/04/10 05:45:29 elric Exp $");
 #endif
 
 #include <sys/types.h>
@@ -531,10 +531,13 @@ params_fget(FILE *f)
 	 * to the list of keygens, so that the rest of the code does not
 	 * have to deal with this backwards compat issue.  The deprecated
 	 * ``xor_key'' field may be stored in p->dep_keygen->kg_key.  If
-	 * it exists, we construct a storedkey keygen struct as well.
+	 * it exists, we construct a storedkey keygen struct as well.  Also,
+	 * default the iteration count to 128 as the old code did.
 	 */
 
 	if (p->dep_keygen) {
+		if (p->dep_keygen->kg_iterations == -1)
+			p->dep_keygen->kg_iterations = 128;
 		p->dep_keygen->next = p->keygen;
 		if (p->dep_keygen->kg_key) {
 			p->keygen = keygen_generate(KEYGEN_STOREDKEY);
