@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.51 2001/02/21 00:59:45 reinoud Exp $
+#	$NetBSD: MAKEDEV,v 1.52 2001/03/03 18:06:55 bjh21 Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -77,9 +77,6 @@
 #	lpt*	stock lp
 #	lpa*	interruptless lp
 #
-# Cpus:
-#	cpu*	cpus
-#
 # USB devices:
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uhid*	Generic HID devices
@@ -135,7 +132,7 @@ all)
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 lpa0 lpt0 tun0 tun1 tun2 ipl
-	sh $0 beep lkm qms0 pms0 local cpu0 cpu1
+	sh $0 beep lkm qms0 pms0 local
 	sh $0 usbs wscons isdn
 	sh $0 mouse-qms0 random openfirm
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
@@ -490,13 +487,6 @@ mouse-*)
 	esac
 	rm -f mouse
 	ln -s $name$unit mouse
-	;;
-
-cpu*)
-	unit=${i#cpu}
-	rm -f cpu$unit
-	mknod cpu$unit c 38 $unit
-	chown root.wheel cpu$unit
 	;;
 
 audio*)
