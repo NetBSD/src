@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.10 1994/08/30 03:05:38 mycroft Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.11 1994/12/24 15:07:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -50,6 +50,7 @@
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
 /*
  * Structure associated with user cacheing.
@@ -76,6 +77,7 @@ struct proclist zombproc;
 /*
  * Initialize global process hashing structures.
  */
+void
 procinit()
 {
 
@@ -127,6 +129,7 @@ chgproccnt(uid, diff)
 /*
  * Is p an inferior of the current process?
  */
+int
 inferior(p)
 	register struct proc *p;
 {
@@ -170,13 +173,13 @@ pgfind(pgid)
 /*
  * Move p to a new or existing process group (and session)
  */
+int
 enterpgrp(p, pgid, mksess)
 	register struct proc *p;
 	pid_t pgid;
 	int mksess;
 {
 	register struct pgrp *pgrp = pgfind(pgid);
-	int n;
 
 #ifdef DIAGNOSTIC
 	if (pgrp != NULL && mksess)	/* firewalls */
@@ -248,6 +251,7 @@ enterpgrp(p, pgid, mksess)
 /*
  * remove process from process group
  */
+int
 leavepgrp(p)
 	register struct proc *p;
 {
@@ -262,6 +266,7 @@ leavepgrp(p)
 /*
  * delete a process group
  */
+void
 pgdelete(pgrp)
 	register struct pgrp *pgrp;
 {

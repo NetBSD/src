@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.28 1994/10/30 21:47:39 cgd Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.29 1994/12/24 15:07:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -58,6 +58,7 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
+#include <sys/acct.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -102,7 +103,6 @@ exit1(p, rv)
 	int rv;
 {
 	register struct proc *q, *nq;
-	register struct proc **pp;
 	register struct vmspace *vm;
 
 	if (p->p_pid == 1)
@@ -278,6 +278,7 @@ exit1(p, rv)
 #define GETPS(rp)	(rp)[PS]
 #endif
 
+int
 compat_43_wait(p, uap, retval)
 	struct proc *p;
 	void *uap;
@@ -307,6 +308,7 @@ compat_43_wait(p, uap, retval)
 	return (wait1(p, &a, retval, 1));
 }
 
+int
 wait4(p, uap, retval)
 	struct proc *p;
 	struct wait4_args /* {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.24 1994/12/11 18:06:09 mycroft Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.25 1994/12/24 15:07:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -53,10 +53,14 @@
 
 #include <vm/vm.h>
 
+int	donice __P((struct proc *curp, struct proc *chgp, int n));
+int	dosetrlimit __P((struct proc *p, u_int which, struct rlimit *limp));
+
 /*
  * Resource controls and accounting.
  */
 
+int
 getpriority(curp, uap, retval)
 	struct proc *curp;
 	register struct getpriority_args /* {
@@ -113,6 +117,7 @@ getpriority(curp, uap, retval)
 }
 
 /* ARGSUSED */
+int
 setpriority(curp, uap, retval)
 	struct proc *curp;
 	register struct setpriority_args /* {
@@ -171,6 +176,7 @@ setpriority(curp, uap, retval)
 	return (error);
 }
 
+int
 donice(curp, chgp, n)
 	register struct proc *curp, *chgp;
 	register int n;
@@ -194,6 +200,7 @@ donice(curp, chgp, n)
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
 /* ARGSUSED */
+int
 compat_43_setrlimit(p, uap, retval)
 	struct proc *p;
 	struct compat_43_setrlimit_args /* {
@@ -215,6 +222,7 @@ compat_43_setrlimit(p, uap, retval)
 }
 
 /* ARGSUSED */
+int
 compat_43_getrlimit(p, uap, retval)
 	struct proc *p;
 	register struct compat_43_getrlimit_args /* {
@@ -239,6 +247,7 @@ compat_43_getrlimit(p, uap, retval)
 #endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 */
 
 /* ARGSUSED */
+int
 setrlimit(p, uap, retval)
 	struct proc *p;
 	register struct setrlimit_args /* {
@@ -341,6 +350,7 @@ dosetrlimit(p, which, limp)
 }
 
 /* ARGSUSED */
+int
 getrlimit(p, uap, retval)
 	struct proc *p;
 	register struct getrlimit_args /* {
@@ -360,6 +370,7 @@ getrlimit(p, uap, retval)
  * Transform the running time and tick information in proc p into user,
  * system, and interrupt time usage.
  */
+void
 calcru(p, up, sp, ip)
 	register struct proc *p;
 	register struct timeval *up;
@@ -413,6 +424,7 @@ calcru(p, up, sp, ip)
 }
 
 /* ARGSUSED */
+int
 getrusage(p, uap, retval)
 	register struct proc *p;
 	register struct getrusage_args /* {
@@ -441,6 +453,7 @@ getrusage(p, uap, retval)
 	    sizeof (struct rusage)));
 }
 
+void
 ruadd(ru, ru2)
 	register struct rusage *ru, *ru2;
 {
