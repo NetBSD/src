@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.4 2000/06/05 21:47:23 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.4 2000/06/05 21:47:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,6 +355,10 @@ dec_6600_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 #if NSIO
 	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
 	    func, arg);
+	if (cookie == NULL)
+		return (NULL);
+	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
 #endif
 	return (cookie);
 }
