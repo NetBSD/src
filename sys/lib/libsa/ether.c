@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.11 1997/07/07 15:52:50 drochner Exp $	*/
+/*	$NetBSD: ether.c,v 1.12 1998/05/14 18:08:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -142,7 +142,7 @@ char *
 ether_sprintf(ap)
         register u_char *ap;
 {
-	register i;
+	register int i;
 	static char etherbuf[18];
 	register char *cp = etherbuf;
 
