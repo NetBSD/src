@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.111 2000/06/21 05:43:33 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.112 2000/06/26 14:21:14 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -56,7 +56,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

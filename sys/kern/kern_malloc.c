@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.52 2000/05/26 23:18:26 sommerfeld Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.53 2000/06/26 14:21:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -46,7 +46,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

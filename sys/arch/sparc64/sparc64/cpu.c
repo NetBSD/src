@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2000/06/24 20:48:40 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.9 2000/06/26 14:21:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,8 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

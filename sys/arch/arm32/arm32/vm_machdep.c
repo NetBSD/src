@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 2000/05/28 05:49:01 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 2000/06/26 14:20:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -58,7 +58,6 @@
 #include <sys/syslog.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.17 1999/07/08 18:05:25 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.18 2000/06/26 14:20:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -54,7 +54,6 @@
 #include <sys/errno.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.17 2000/06/26 04:56:15 simonb Exp $	*/
+/*	$NetBSD: grf.c,v 1.18 2000/06/26 14:21:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,9 +76,6 @@ extern struct emul emul_hpux;
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/vm_pager.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>

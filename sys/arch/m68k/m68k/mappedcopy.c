@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.10 2000/03/26 20:42:29 kleink Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.11 2000/06/26 14:20:46 mrg Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -51,7 +51,7 @@
 #include <sys/proc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 

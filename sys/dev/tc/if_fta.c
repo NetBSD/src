@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.15 1998/07/05 00:51:25 jonathan Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.16 2000/06/26 14:21:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -57,8 +57,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_param.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/ic/pdqvar.h>

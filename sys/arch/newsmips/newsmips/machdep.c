@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2000/05/26 21:20:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2000/06/26 14:20:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2000/05/26 21:20:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2000/06/26 14:20:51 mrg Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -73,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2000/05/26 21:20:02 thorpej Exp $")
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
-
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

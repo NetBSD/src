@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2000/06/02 17:46:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2000/06/26 14:20:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -69,8 +69,6 @@
 #include <sys/user.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

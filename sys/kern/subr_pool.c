@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.37 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.38 2000/06/26 14:21:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@
 #include <sys/syslog.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

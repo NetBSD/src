@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.21 2000/06/05 00:09:17 matt Exp $ */
+/*	$NetBSD: kdb.c,v 1.22 2000/06/26 14:21:09 mrg Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,7 +49,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #ifdef __vax__
 #include <machine/pte.h>

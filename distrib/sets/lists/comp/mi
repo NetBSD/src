@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.234 2000/06/25 13:49:36 mrg Exp $
+#	$NetBSD: mi,v 1.235 2000/06/26 14:20:25 mrg Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1111,6 +1111,7 @@
 ./usr/include/uvm/uvm_fault.h		comp-c-include
 ./usr/include/uvm/uvm_fault_i.h		comp-c-include
 ./usr/include/uvm/uvm_glue.h		comp-c-include
+./usr/include/uvm/uvm_inherit.h		comp-c-include
 ./usr/include/uvm/uvm_km.h		comp-c-include
 ./usr/include/uvm/uvm_loan.h		comp-c-include
 ./usr/include/uvm/uvm_map.h		comp-c-include
@@ -1121,22 +1122,18 @@
 ./usr/include/uvm/uvm_pager.h		comp-c-include
 ./usr/include/uvm/uvm_pager_i.h		comp-c-include
 ./usr/include/uvm/uvm_pdaemon.h		comp-c-include
+./usr/include/uvm/uvm_pglist.h		comp-c-include
 ./usr/include/uvm/uvm_prot.h		comp-c-include
 ./usr/include/uvm/uvm_stat.h		comp-c-include
 ./usr/include/uvm/uvm_swap.h		comp-c-include
 ./usr/include/uvm/uvm_vnode.h		comp-c-include
 ./usr/include/varargs.h		comp-c-include
 ./usr/include/vis.h		comp-c-include
-./usr/include/vm/pglist.h		comp-c-include
 ./usr/include/vm/pmap.h		comp-c-include
 ./usr/include/vm/vm.h		comp-c-include
 ./usr/include/vm/vm_extern.h		comp-c-include
-./usr/include/vm/vm_inherit.h		comp-c-include
-./usr/include/vm/vm_kern.h		comp-c-include
 ./usr/include/vm/vm_map.h		comp-c-include
-./usr/include/vm/vm_object.h		comp-c-include
 ./usr/include/vm/vm_page.h		comp-c-include
-./usr/include/vm/vm_pager.h		comp-c-include
 ./usr/include/vm/vm_param.h		comp-c-include
 ./usr/include/wchar.h		comp-c-include
 ./usr/include/zconf.h		comp-c-include
