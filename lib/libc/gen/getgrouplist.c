@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.9 1998/02/03 18:23:44 perry Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.9.2.1 1999/04/27 14:11:26 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.9 1998/02/03 18:23:44 perry Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.9.2.1 1999/04/27 14:11:26 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,10 +46,11 @@ __RCSID("$NetBSD: getgrouplist.c,v 1.9 1998/02/03 18:23:44 perry Exp $");
  * get credential
  */
 #include "namespace.h"
-#include <sys/types.h>
+#include <sys/param.h>
+
+#include <grp.h>
 #include <string.h>
 #include <unistd.h>
-#include <grp.h>
 
 #ifdef __weak_alias
 __weak_alias(getgrouplist,_getgrouplist);
@@ -73,27 +74,35 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	/*
 	 * install primary group
 	 */
-	groups[ngroups++] = agroup;
+	if (ngroups < maxgroups)
+		groups[ngroups] = agroup;
+	else
+		ret = -1;
+	ngroups++;
 
 	/*
 	 * Scan the group file to find additional groups.
 	 */
 	setgrent();
+ nextgroup:
 	while ((grp = getgrent()) != NULL) {
 		if (grp->gr_gid == agroup)
 			continue;
 		for (i = 0; grp->gr_mem[i]; i++) {
 			if (!strcmp(grp->gr_mem[i], uname)) {
-				if (ngroups >= maxgroups) {
-					ret = -1;
-					goto out;
+				for (i = 0; i < MIN(ngroups, maxgroups); i++) {
+					if (grp->gr_gid == groups[i])
+						goto nextgroup;
 				}
-				groups[ngroups++] = grp->gr_gid;
+				if (ngroups < maxgroups)
+					groups[ngroups] = grp->gr_gid;
+				else
+					ret = -1;
+				ngroups++;
 				break;
 			}
 		}
 	}
-out:
 	endgrent();
 	*grpcnt = ngroups;
 	return (ret);
