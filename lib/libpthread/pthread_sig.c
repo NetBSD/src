@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.23 2003/01/02 06:41:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.24 2003/01/03 22:04:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -600,4 +600,5 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 	 */
 	_setcontext_u(uc);
        	/* NOTREACHED */
+	assert(0);
 }
