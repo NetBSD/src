@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/05/30 15:24:28 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/06/15 17:48:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,9 +110,9 @@ char machine[] = MACHINE;		/* cpu "architecture" */
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-vm_map_t exec_map = NULL;  
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;  
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern vaddr_t virtual_avail;
 
