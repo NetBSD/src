@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 1998/03/18 21:59:38 matthias Exp $
+#	$NetBSD: genassym.cf,v 1.4 1998/04/25 19:58:11 matthias Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -38,8 +38,7 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
-#type	long
-#asmtype	i
+config long n c
 
 include "opt_uvm.h"
 include "opt_pmap_new.h"
@@ -67,8 +66,7 @@ define	PGSHIFT 		PGSHIFT
 define	PGOFSET 		PGOFSET
 define	NBPG			NBPG
 
-ifdef PMAP_NEW
-else
+ifndef PMAP_NEW
 define	PTDPTDI 		PTDPTDI
 define	KPTDI			KPTDI
 define	APTDPTDI		APTDPTDI
