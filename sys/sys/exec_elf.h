@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.21 1998/10/01 16:04:37 erh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.22 1998/10/03 18:13:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -79,13 +79,17 @@ enum Elf_e_machine {
 	Elf_em_486,
 	Elf_em_860,
 	Elf_em_mips,
+	Elf_em_mips_rs3_le = 10,
+	Elf_em_rs6000,
 	Elf_em_parisc = 15,
-	Elf_em_sparc32plus = 18,
+	Elf_em_ncube,
+	Elf_em_vpp500,
+	Elf_em_sparc32plus,
 	Elf_em_ppc = 20,
 	Elf_em_arm = 40,
-	/* Elf_em_alpha = 41, */
+	Elf_em_alpha = 41,
 	Elf_em_sparc64 = 43,
-	Elf_em_alpha = 0x9026,
+	Elf_em_alpha_exp = 0x9026,
 	Elf_em_num
 };
 
@@ -399,12 +403,35 @@ enum AuxID {
 	AUX_base = 7,		/* ld.so base addr */
 	AUX_flags = 8,		/* processor flags */
 	AUX_entry = 9,		/* a.out entry */
+#ifdef obsolete
 	AUX_debug = 10,		/* debug flag */
 	AUX_count = 11,		/* not really the limit */
+#else
+	AUX_dcachebsize = 10,	/* min data cache block size */
+	AUX_icachebsize = 11,	/* min instruction cache block size */
+#endif
+	AUX_ucachebsize = 12,	/* min unified cache block size */
+
+	/* Vendor specific */
 	AUX_sun_uid = 2000,	/* euid */
 	AUX_sun_ruid = 2001,	/* ruid */
 	AUX_sun_gid = 2002,	/* egid */
-	AUX_sun_rgid = 2003	/* rgid */
+	AUX_sun_rgid = 2003,	/* rgid */
+	/* Solaris kernel specific */
+	AUX_sun_ldelf = 2004,	/* dynamic linker's ELF header */
+	AUX_sun_ldshdr = 2005,	/* dynamic linker's section header */
+	AUX_sun_ldname = 2006,	/* dynamic linker's name */
+	AUX_sun_lpgsize = 2007,	/* lage pagesize */
+	/* Other information */
+	AUX_sun_platform = 2008,/* sysinfo(SI_PLATFORM) */
+	AUX_sun_hwcap = 2009,	/* process hardware capabilities */
+	AUX_sun_iflush = 2010,	/* do we need to flush the instruction cache? */
+	AUX_sun_cpu = 2011,	/* cpu name */
+	/* ibcs2 emulation band aid */
+	AUX_sun_coff_entry = 2012,
+	AUX_sun_coff_execfd = 2013,
+	/* Executable's fully resolved name */
+	AUX_sun_execname = 2014
 };
 
 /*
