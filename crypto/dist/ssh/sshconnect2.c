@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.14 2001/11/27 04:10:26 itojun Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.15 2001/12/06 03:54:06 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.85 2001/11/07 16:03:17 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.87 2001/12/05 10:06:13 deraadt Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -188,7 +188,7 @@ int	userauth_passwd(Authctxt *);
 int	userauth_kbdint(Authctxt *);
 int	userauth_hostbased(Authctxt *);
 
-void	userauth(Authctxt *authctxt, char *authlist);
+void	userauth(Authctxt *, char *);
 
 static int sign_and_send_pubkey(Authctxt *, Key *, sign_cb_fn *);
 static void clear_auth_state(Authctxt *);
@@ -408,7 +408,7 @@ input_userauth_pk_ok(int type, int plen, void *ctxt)
 		}
 		sent = sign_and_send_pubkey(authctxt, key,
 		   authctxt->last_key_sign);
-	} while(0);
+	} while (0);
 
 	if (key != NULL)
 		key_free(key);
@@ -447,7 +447,7 @@ userauth_passwd(Authctxt *authctxt)
 	if (attempt++ >= options.number_of_password_prompts)
 		return 0;
 
-	if(attempt != 1)
+	if (attempt != 1)
 		error("Permission denied, please try again.");
 
 	snprintf(prompt, sizeof(prompt), "%.30s@%.128s's password: ",
@@ -711,7 +711,7 @@ userauth_pubkey(Authctxt *authctxt)
 	if (authctxt->agent != NULL) {
 		do {
 			sent = userauth_pubkey_agent(authctxt);
-		} while(!sent && authctxt->agent->howmany > 0);
+		} while (!sent && authctxt->agent->howmany > 0);
 	}
 	while (!sent && idx < options.num_identity_files) {
 		key = options.identity_keys[idx];
