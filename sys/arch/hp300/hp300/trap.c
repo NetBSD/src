@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 1996/10/13 03:14:34 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 1996/10/14 08:07:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,7 +160,7 @@ int mmupid = -1;
 #define MDB_FOLLOW	1
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
-#define MDB_ISPID(p)	(p) == mmupid
+#define MDB_ISPID(p)	(((p) != NULL) && ((p) == mmupid))
 #endif
 
 /*
@@ -526,8 +526,9 @@ trap(type, code, v, frame)
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == subail)
+		if ((p != NULL && p->p_addr != NULL) &&
+		    (p->p_addr->u_pcb.pcb_onfault == fubail ||
+		     p->p_addr->u_pcb.pcb_onfault == subail))
 			goto copyfault;
 		/* fall into ... */
 
@@ -553,12 +554,12 @@ trap(type, code, v, frame)
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_MMUFLT &&
-		    ((p != NULL && p->p_addr->u_pcb.pcb_onfault == 0) ||
-		    KDFAULT(code)))
+		if ((type & T_USER) == 0 &&
+		    ((p == NULL || p->p_addr == NULL ||
+		      p->p_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
 		else
-			map = &vm->vm_map;
+			map = vm ? &vm->vm_map : kernel_map;
 
 		if (WRFAULT(code))
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
@@ -600,7 +601,8 @@ trap(type, code, v, frame)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
+		    && map != kernel_map) {
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
