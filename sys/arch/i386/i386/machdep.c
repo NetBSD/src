@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.530 2003/08/17 14:15:43 kochi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.531 2003/08/17 14:23:16 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.530 2003/08/17 14:15:43 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.531 2003/08/17 14:23:16 kochi Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -906,7 +906,7 @@ haltsys:
 		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
-		printf("WARNING: powerdown failed!\n");
+		printf("WARNING: APM powerdown failed!\n");
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
 		 */
