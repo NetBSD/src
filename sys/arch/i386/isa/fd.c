@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.24 1993/10/28 20:44:31 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.25 1993/10/29 04:35:51 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -256,10 +256,9 @@ fdprint(args, fdc)
 {
 	register struct fdc_attach_args *fa = args;
 
-	if (fdc)
-		printf("%s:", fdc);
-	printf(" drive %d", fa->fa_drive);
-	return (UNCONF);
+	if (!fdc)
+		printf(" drive %d", fa->fa_drive);
+	return QUIET;
 }
 
 STATIC void
