@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.9 1997/10/14 09:58:14 mark Exp $	*/
+/*	$NetBSD: ast.c,v 1.10 1997/10/17 00:08:33 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -47,6 +47,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
+#include <sys/vmmeter.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/katelib.h>
