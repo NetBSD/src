@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.20 1997/03/15 18:11:12 is Exp $ */
+/*	$NetBSD: if_qe.c,v 1.21 1997/04/19 15:02:27 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,29 +38,29 @@
  *	@(#)if_qe.c	7.20 (Berkeley) 3/28/91
  */
 
-/* from  @(#)if_qe.c	1.15	(ULTRIX)	4/16/86 */
+/* from	 @(#)if_qe.c	1.15	(ULTRIX)	4/16/86 */
 
 /****************************************************************
  *								*
- *        Licensed from Digital Equipment Corporation 		*
- *                       Copyright (c) 				*
- *               Digital Equipment Corporation			*
- *                   Maynard, Massachusetts 			*
- *                         1985, 1986 				*
- *                    All rights reserved. 			*
+ *	  Licensed from Digital Equipment Corporation		*
+ *			 Copyright (c)				*
+ *		 Digital Equipment Corporation			*
+ *		     Maynard, Massachusetts			*
+ *			   1985, 1986				*
+ *		      All rights reserved.			*
  *								*
- *        The Information in this software is subject to change *
+ *	  The Information in this software is subject to change *
  *   without notice and should not be construed as a commitment *
- *   by  Digital  Equipment  Corporation.   Digital   makes  no *
+ *   by	 Digital  Equipment  Corporation.   Digital   makes  no *
  *   representations about the suitability of this software for *
  *   any purpose.  It is supplied "As Is" without expressed  or *
- *   implied  warranty. 					*
+ *   implied  warranty.						*
  *								*
- *        If the Regents of the University of California or its *
- *   licensees modify the software in a manner creating  	*
- *   derivative copyright rights, appropriate copyright  	*
- *   legends may be placed on the derivative work in addition   *
- *   to that set forth above. 					*
+ *	  If the Regents of the University of California or its *
+ *   licensees modify the software in a manner creating		*
+ *   derivative copyright rights, appropriate copyright		*
+ *   legends may be placed on the derivative work in addition	*
+ *   to that set forth above.					*
  *								*
  ****************************************************************/
 /* ---------------------------------------------------------------------
@@ -70,7 +70,7 @@
  *	Rename "unused_multi" to "qunused_multi" for extending Generic
  *	kernel to MicroVAXen.
  *
- * 18-mar-86  -- jaw     br/cvec changed to NOT use registers.
+ * 18-mar-86  -- jaw	 br/cvec changed to NOT use registers.
  *
  * 12 March 86 -- Jeff Chase
  *	Modified to handle the new MCLGET macro
@@ -79,11 +79,11 @@
  *
  * 19 Oct 85 -- rjl
  *	Changed the watch dog timer from 30 seconds to 3.  VMS is using
- * 	less than 1 second in their's. Also turned the printf into an
+ *	less than 1 second in their's. Also turned the printf into an
  *	mprintf.
  *
  *  09/16/85 -- Larry Cohen
- * 		Add 43bsd alpha tape changes for subnet routing
+ *		Add 43bsd alpha tape changes for subnet routing
  *
  *  1 Aug 85 -- rjl
  *	Panic on a non-existent memory interrupt and the case where a packet
@@ -92,8 +92,8 @@
  *	because we hang 2k input buffers on the device.
  *
  *  1 Aug 85 -- rich
- *      Fixed the broadcast loopback code to handle Clusters without
- *      wedging the system.
+ *	Fixed the broadcast loopback code to handle Clusters without
+ *	wedging the system.
  *
  *  27 Feb. 85 -- ejf
  *	Return default hardware address on ioctl request.
@@ -109,7 +109,7 @@
  *	Added watchdog timer to mask hardware bug that causes device lockup.
  *
  *  18 Dec. 84 -- rjl
- *	Reworked driver to use q-bus mapping routines.  MicroVAX-I now does
+ *	Reworked driver to use q-bus mapping routines.	MicroVAX-I now does
  *	copying instead of m-buf shuffleing.
  *	A number of deficencies in the hardware/firmware were compensated
  *	for. See comments in qestart and qerint.
@@ -152,6 +152,7 @@
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_dl.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -181,11 +182,11 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 #include <vax/uba/ubareg.h>
 #include <vax/uba/ubavar.h>
 
-#define NRCV	15	 		/* Receive descriptors		*/
-#define NXMT	5	 		/* Transmit descriptors		*/
+#define NRCV	15			/* Receive descriptors		*/
+#define NXMT	5			/* Transmit descriptors		*/
 #define NTOT	(NXMT + NRCV)
 
-#define	QETIMEOUT	2		/* transmit timeout, must be > 1 */
+#define QETIMEOUT	2		/* transmit timeout, must be > 1 */
 #define QESLOWTIMEOUT	40		/* timeout when no xmits in progress */
 
 #define MINDATA 60
@@ -199,29 +200,29 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
  */
 struct	qe_softc {
 	struct	device qe_dev;		/* Configuration common part	*/
-	struct	ethercom qe_ec;		/* Ethernet common part 	*/
-#define	qe_if	qe_ec.ec_if		/* network-visible interface 	*/
-	struct	ifubinfo qe_uba;	/* Q-bus resources 		*/
+	struct	ethercom qe_ec;		/* Ethernet common part		*/
+#define qe_if	qe_ec.ec_if		/* network-visible interface	*/
+	struct	ifubinfo qe_uba;	/* Q-bus resources		*/
 	struct	ifrw qe_ifr[NRCV]; /*	for receive buffers;	*/
 	struct	ifxmt qe_ifw[NXMT]; /*	for xmit buffers;	*/
 	struct	qedevice *qe_vaddr;
 	int	qe_flags;		/* software state		*/
-#define	QEF_RUNNING	0x01
-#define	QEF_SETADDR	0x02
+#define QEF_RUNNING	0x01
+#define QEF_SETADDR	0x02
 #define QEF_FASTTIMEO	0x04
-	int	setupaddr;		/* mapping info for setup pkts  */
+	int	setupaddr;		/* mapping info for setup pkts	*/
 	int	ipl;			/* interrupt priority		*/
 	struct	qe_ring *rringaddr;	/* mapping info for rings	*/
-	struct	qe_ring *tringaddr;	/*       ""			*/
+	struct	qe_ring *tringaddr;	/*	 ""			*/
 	struct	qe_ring rring[NRCV+1]; /* Receive ring descriptors */
 	struct	qe_ring tring[NXMT+1]; /* Xmit ring descriptors */
 	u_char	setup_pkt[16][8];	/* Setup packet			*/
 	int	rindex;			/* Receive index		*/
 	int	tindex;			/* Transmit index		*/
 	int	otindex;		/* Old transmit index		*/
-	int	qe_intvec;		/* Interrupt vector 		*/
+	int	qe_intvec;		/* Interrupt vector		*/
 	struct	qedevice *addr; /* device addr		*/
-	int 	setupqueued;		/* setup packet queued		*/
+	int	setupqueued;		/* setup packet queued		*/
 	int	nxmit;			/* Transmits in progress	*/
 	int	qe_restarts;		/* timeouts			*/
 };
@@ -250,7 +251,7 @@ struct	cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
 };
 
-#define	QEUNIT(x)	minor(x)
+#define QEUNIT(x)	minor(x)
 /*
  * The deqna shouldn't receive more than ETHERMTU + sizeof(struct ether_header)
  * but will actually take in up to 2048 bytes. To guard against the receiver
@@ -270,8 +271,8 @@ qematch(parent, match, aux)
 	struct	qe_softc *sc = match;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
-	struct	qe_ring	*rp;
-	struct	qe_ring *prp;   /* physical rp          */
+	struct	qe_ring *rp;
+	struct	qe_ring *prp;	/* physical rp		*/
 	volatile struct qedevice *addr = (struct qedevice *)ua->ua_addr;
 	int i;
 
@@ -442,7 +443,7 @@ qeinit(sc)
 		    sizeof(sc->setup_pkt), 0);
 		if (i == 0)
 			goto fail;
-		sc->setupaddr =	UBAI_ADDR(i);
+		sc->setupaddr = UBAI_ADDR(i);
 		/*
 		 * init buffers and maps
 		 */
@@ -843,7 +844,7 @@ qe_setaddr(physaddr, sc)
 void
 qeinitdesc(rp, addr, len)
 	register struct qe_ring *rp;
-	caddr_t addr; 			/* mapped address */
+	caddr_t addr;			/* mapped address */
 	int len;
 {
 	/*
@@ -903,7 +904,7 @@ qeread(sc, ifrw, len)
 	int len;
 {
 	struct ether_header *eh;
-    	struct mbuf *m;
+	struct mbuf *m;
 
 	/*
 	 * Deal with trailer protocol: if type is INET trailer

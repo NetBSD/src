@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.40 1997/04/03 17:35:56 christos Exp $  */
+/* $NetBSD: machdep.c,v 1.41 1997/04/19 15:02:31 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -82,7 +82,6 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #endif
 #ifdef NETATALK
