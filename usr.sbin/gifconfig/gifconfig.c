@@ -1,4 +1,4 @@
-/*	$NetBSD: gifconfig.c,v 1.3 1999/07/30 18:59:42 itojun Exp $	*/
+/*	$NetBSD: gifconfig.c,v 1.4 1999/07/30 19:16:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -601,7 +601,7 @@ in_status(force)
 	sin = (struct sockaddr_in *)info.rti_info[RTAX_NETMASK];
 	if (!sin)
 		sin = &null_sin;
-	printf("netmask 0x%x ", ntohl(sin->sin_addr.s_addr));
+	printf("netmask 0x%x ", (u_int32_t)ntohl(sin->sin_addr.s_addr));
 
 	if (flags & IFF_BROADCAST) {
 		/* note RTAX_BRD overlap with IFF_POINTOPOINT */
