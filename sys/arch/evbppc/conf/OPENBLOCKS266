@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.9 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.10 2004/09/04 23:29:47 manu Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -93,6 +93,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP

@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.10 2004/08/07 10:47:19 rearnsha Exp $
+#	$NetBSD: SMDK2410,v 1.11 2004/09/04 23:29:47 manu Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -70,6 +70,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

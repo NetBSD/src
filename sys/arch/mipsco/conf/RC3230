@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.16 2004/07/15 03:53:50 atatat Exp $
+# 	$NetBSD: RC3230,v 1.17 2004/09/04 23:29:50 manu Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -72,6 +72,7 @@ options 	IPSEC		# Internet protocols
 options 	IPSEC_ESP	# Internet protocols
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking

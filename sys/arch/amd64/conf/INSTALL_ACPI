@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.8 2004/02/16 02:43:53 thorpej Exp $
+# $NetBSD: INSTALL_ACPI,v 1.9 2004/09/04 23:29:45 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.8 $"
+#ident 		"INSTALL-$Revision: 1.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -101,6 +101,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
