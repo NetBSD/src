@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.13 2001/03/26 12:49:39 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.14 2001/03/26 12:58:44 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -87,7 +87,7 @@ int	uplcomdebug = 0;
 struct	uplcom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* first interface */
+	usbd_interface_handle	sc_iface;	/* interface */
 	int			sc_iface_number;	/* interface number */
 
 	int			sc_intr_number;	/* interrupt number */
@@ -264,10 +264,10 @@ USB_ATTACH(uplcom)
 	 *
 	 *  USB-RSAQ1       | USB-RSAQ2
  	 * -----------------+-----------------
-	 * Interface 1      |Interface 1
-	 *  Interruput(0x81)| Interruput(0x81)
+	 * Interface 0      |Interface 0
+	 *  Interrupt(0x81) | Interrupt(0x81)
 	 * -----------------+ BulkIN(0x02)
-	 * Interface 2	    | BulkOUT(0x83)
+	 * Interface 1	    | BulkOUT(0x83)
 	 *   BulkIN(0x02)   | 
 	 *   BulkOUT(0x83)  |
 	 */
