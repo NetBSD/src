@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.25 2002/08/08 04:49:26 enami Exp $	*/
+/*	$NetBSD: chpass.c,v 1.26 2002/08/16 01:06:28 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.25 2002/08/08 04:49:26 enami Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.26 2002/08/16 01:06:28 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,10 @@ main(argc, argv)
 {
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw, old_pw;
-	int ch, dfd, pfd, tfd, yflag;
+	int ch, dfd, pfd, tfd;
+#ifdef YP
+	int yflag;
+#endif
 	char *arg, *username = NULL;
 
 #ifdef __GNUC__
