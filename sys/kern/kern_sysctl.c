@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.124 2003/02/02 20:33:09 kleink Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.125 2003/02/10 00:35:16 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.124 2003/02/02 20:33:09 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.125 2003/02/10 00:35:16 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -281,6 +281,7 @@ int defcorenamelen = sizeof(DEFCORENAME);
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
 extern  int	forkfsleep;
+extern	int	dumponpanic;
 
 #ifndef MULTIPROCESSOR
 #define sysctl_ncpus() 1
@@ -652,6 +653,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
 	case KERN_POSIX_READER_WRITER_LOCKS:	/* XXX _POSIX_VERSION */
 		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
+	case KERN_DUMP_ON_PANIC:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &dumponpanic));
 
 	default:
 		return (EOPNOTSUPP);

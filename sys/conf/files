@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.596 2003/02/05 18:07:46 matt Exp $
+#	$NetBSD: files,v 1.597 2003/02/10 00:35:17 atatat Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -31,6 +31,8 @@ defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
 defflag				MULTIPROCESSOR
 
 defflag	opt_config.h		INCLUDE_CONFIG_FILE INCLUDE_JUST_CONFIG
+
+defparam opt_dump.h		DUMP_ON_PANIC
 
 defflag	opt_callout.h		CALLWHEEL_STATS
 
@@ -118,6 +120,7 @@ defparam			SB_MAX
 # UVM options
 #
 defflag	opt_uvmhist.h		UVMHIST UVMHIST_PRINT
+defflag	opt_uvm.h		USE_TOPDOWN_VM
 
 # file system options
 #
