@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.34 1996/08/04 06:03:47 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.35 1996/08/05 01:26:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,14 +128,12 @@ grfattach(parent, self, aux)
 
 	sc->sc_flags = GF_ALIVE;	/* XXX bogus */
 
-#ifdef notyet
 	/*
 	 * Attach ite semantics to the grf.  Change the name, forward
 	 * everything else.
 	 */
 	ga->ga_name = "ite";
 	(void)config_found(self, ga, grfbusprint);
-#endif
 }
 
 /*ARGSUSED*/
