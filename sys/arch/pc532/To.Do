@@ -1,8 +1,8 @@
-$NetBSD: To.Do,v 1.9 1997/11/10 01:58:10 phil Exp $
+$NetBSD: To.Do,v 1.10 2001/05/16 15:01:40 simonb Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
-  (Last updated, 11/9/97)
+  (Last updated, May 17, 2001)
 
 - write an aic scsi driver
 
@@ -16,3 +16,5 @@ This is the "To Do" list for NetBSD/pc532
 
 - find or write a "usable" comm package to replace kermit for
 	initial downloading.
+
+- switch from a.out to ELF
