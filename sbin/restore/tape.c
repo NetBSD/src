@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.39 2000/01/27 15:25:00 sommerfeld Exp $	*/
+/*	$NetBSD: tape.c,v 1.40 2000/05/19 09:22:55 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.39 2000/01/27 15:25:00 sommerfeld Exp $");
+__RCSID("$NetBSD: tape.c,v 1.40 2000/05/19 09:22:55 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -701,7 +701,8 @@ getfile(fill, skip)
 	gettingfile++;
 loop:
 	for (i = 0; i < spcl.c_count; i++) {
-		if (spcl.c_addr[i]) {
+		if (spcl.c_type == TS_BITS || spcl.c_type == TS_CLRI ||
+		    spcl.c_addr[i]) {
 			readtape(&buf[curblk++][0]);
 			if (curblk == fssize / TP_BSIZE) {
 				(*fill)((char *)buf, (long)(size > TP_BSIZE ?
@@ -719,9 +720,12 @@ loop:
 				TP_BSIZE : size));
 		}
 		if ((size -= TP_BSIZE) <= 0) {
-			for (i++; i < spcl.c_count; i++)
-				if (spcl.c_addr[i])
-					readtape(junk);
+			if (!(spcl.c_type == TS_BITS ||
+			    spcl.c_type == TS_CLRI)) {
+				for (i++; i < spcl.c_count; i++)
+					if (spcl.c_addr[i])
+						readtape(junk);
+			}
 			break;
 		}
 	}
@@ -1126,8 +1130,6 @@ good:
 		 */
 		buf->c_inumber = 0;
 		buf->c_dinode.di_size = buf->c_count * TP_BSIZE;
-		for (i = 0; i < buf->c_count; i++)
-			buf->c_addr[i]++;
 		break;
 
 	case TS_TAPE:
@@ -1206,10 +1208,19 @@ accthdr(header)
 	fprintf(stderr, "\n");
 newcalc:
 	blks = 0;
-	if (header->c_type != TS_END)
+	switch (header->c_type) {
+	case TS_END:
+		break;
+	case TS_CLRI:
+	case TS_BITS:
+		blks = header->c_count;
+		break;
+	default:
 		for (i = 0; i < header->c_count; i++)
 			if (header->c_addr[i] != 0)
 				blks++;
+		break;
+	}
 	predict = blks;
 	blksread = 0;
 	prevtype = header->c_type;
