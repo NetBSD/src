@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysent.c,v 1.15 1999/12/16 15:13:41 tron Exp $	*/
+/*	$NetBSD: linux_sysent.c,v 1.16 2000/03/18 20:44:01 erh Exp $	*/
 
 /*
  * System call switch table.
@@ -714,8 +714,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_times },			/* 323 = times */
 	{ 1, s(struct linux_sys_personality_args),
 	    linux_sys_personality },		/* 324 = personality */
-	{ 0, 0,
-	    sys_nosys },			/* 325 = unimplemented setfsuid */
+	{ 1, s(struct linux_sys_setfsuid_args),
+	    linux_sys_setfsuid },		/* 325 = setfsuid */
 	{ 0, 0,
 	    sys_nosys },			/* 326 = unimplemented setfsgid */
 	{ 0, 0,

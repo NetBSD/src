@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.14 1999/12/16 15:13:41 tron Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.15 2000/03/18 20:44:01 erh Exp $	*/
 
 /*
  * System call names.
@@ -377,7 +377,7 @@ char *linux_syscallnames[] = {
 	"swapon",			/* 322 = swapon */
 	"times",			/* 323 = times */
 	"personality",			/* 324 = personality */
-	"#325 (unimplemented setfsuid)",		/* 325 = unimplemented setfsuid */
+	"setfsuid",			/* 325 = setfsuid */
 	"#326 (unimplemented setfsgid)",		/* 326 = unimplemented setfsgid */
 	"#327 (unimplemented ustat)",		/* 327 = unimplemented ustat */
 	"statfs",			/* 328 = statfs */

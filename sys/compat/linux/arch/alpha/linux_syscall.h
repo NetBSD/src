@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.14 1999/12/16 15:13:41 tron Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.15 2000/03/18 20:44:01 erh Exp $	*/
 
 /*
  * System call numbers.
@@ -16,37 +16,37 @@
 /* syscall: "fork" ret: "int" args: */
 #define	LINUX_SYS_fork	2
 
-/* syscall: "read" ret: "int" args: "int" "char *" "u_int" */
+/* syscall: "read" ret: "int" args: "int" "void *" "size_t" */
 #define	LINUX_SYS_read	3
 
-/* syscall: "write" ret: "int" args: "int" "char *" "u_int" */
+/* syscall: "write" ret: "int" args: "int" "const void *" "size_t" */
 #define	LINUX_SYS_write	4
 
 /* syscall: "close" ret: "int" args: "int" */
 #define	LINUX_SYS_close	6
 
-/* syscall: "creat" ret: "int" args: "char *" "int" */
+/* syscall: "creat" ret: "int" args: "const char *" "mode_t" */
 #define	LINUX_SYS_creat	8
 
-/* syscall: "link" ret: "int" args: "char *" "char *" */
+/* syscall: "link" ret: "int" args: "const char *" "const char *" */
 #define	LINUX_SYS_link	9
 
-/* syscall: "unlink" ret: "int" args: "char *" */
+/* syscall: "unlink" ret: "int" args: "const char *" */
 #define	LINUX_SYS_unlink	10
 
-/* syscall: "chdir" ret: "int" args: "char *" */
+/* syscall: "chdir" ret: "int" args: "const char *" */
 #define	LINUX_SYS_chdir	12
 
 /* syscall: "fchdir" ret: "int" args: "int" */
 #define	LINUX_SYS_fchdir	13
 
-/* syscall: "mknod" ret: "int" args: "char *" "int" "int" */
+/* syscall: "mknod" ret: "int" args: "const char *" "int" "int" */
 #define	LINUX_SYS_mknod	14
 
-/* syscall: "chmod" ret: "int" args: "char *" "int" */
+/* syscall: "chmod" ret: "int" args: "const char *" "int" */
 #define	LINUX_SYS_chmod	15
 
-/* syscall: "chown" ret: "int" args: "char *" "int" "int" */
+/* syscall: "chown" ret: "int" args: "const char *" "int" "int" */
 #define	LINUX_SYS_chown	16
 
 /* syscall: "brk" ret: "int" args: "char *" */
@@ -64,10 +64,10 @@
 /* syscall: "getuid" ret: "uid_t" args: */
 #define	LINUX_SYS_getuid	24
 
-/* syscall: "ptrace" ret: "int" args: "int" "int" "int" "int" */
+/* syscall: "ptrace" ret: "int" args: "long" "long" "long" "long" */
 #define	LINUX_SYS_ptrace	26
 
-/* syscall: "access" ret: "int" args: "char *" "int" */
+/* syscall: "access" ret: "int" args: "const char *" "int" */
 #define	LINUX_SYS_access	33
 
 /* syscall: "sync" ret: "int" args: */
@@ -79,19 +79,19 @@
 /* syscall: "setpgid" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_setpgid	39
 
-/* syscall: "dup" ret: "int" args: "u_int" */
+/* syscall: "dup" ret: "int" args: "int" */
 #define	LINUX_SYS_dup	41
 
 /* syscall: "pipe" ret: "int" args: */
 #define	LINUX_SYS_pipe	42
 
-/* syscall: "open" ret: "int" args: "char *" "int" "int" */
+/* syscall: "open" ret: "int" args: "const char *" "int" "int" */
 #define	LINUX_SYS_open	45
 
 /* syscall: "getgid" ret: "gid_t" args: */
 #define	LINUX_SYS_getgid	47
 
-/* syscall: "acct" ret: "int" args: "char *" */
+/* syscall: "acct" ret: "int" args: "const char *" */
 #define	LINUX_SYS_acct	51
 
 /* syscall: "sigpending" ret: "int" args: "linux_old_sigset_t *" */
@@ -100,19 +100,19 @@
 /* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
 #define	LINUX_SYS_ioctl	54
 
-/* syscall: "symlink" ret: "int" args: "char *" "char *" */
+/* syscall: "symlink" ret: "int" args: "const char *" "const char *" */
 #define	LINUX_SYS_symlink	57
 
-/* syscall: "readlink" ret: "int" args: "char *" "char *" "int" */
+/* syscall: "readlink" ret: "int" args: "const char *" "char *" "int" */
 #define	LINUX_SYS_readlink	58
 
-/* syscall: "execve" ret: "int" args: "char *" "char **" "char **" */
+/* syscall: "execve" ret: "int" args: "const char *" "char **" "char **" */
 #define	LINUX_SYS_execve	59
 
-/* syscall: "umask" ret: "int" args: "int" */
+/* syscall: "umask" ret: "mode_t" args: "mode_t" */
 #define	LINUX_SYS_umask	60
 
-/* syscall: "chroot" ret: "int" args: "char *" */
+/* syscall: "chroot" ret: "int" args: "const char *" */
 #define	LINUX_SYS_chroot	61
 
 /* syscall: "getpgrp" ret: "int" args: */
@@ -124,25 +124,25 @@
 /* syscall: "__vfork14" ret: "int" args: */
 #define	LINUX_SYS___vfork14	66
 
-/* syscall: "stat" ret: "int" args: "char *" "struct linux_stat *" */
+/* syscall: "stat" ret: "int" args: "const char *" "struct linux_stat *" */
 #define	LINUX_SYS_stat	67
 
-/* syscall: "lstat" ret: "int" args: "char *" "struct linux_stat *" */
+/* syscall: "lstat" ret: "int" args: "const char *" "struct linux_stat *" */
 #define	LINUX_SYS_lstat	68
 
 /* syscall: "mmap" ret: "int" args: "unsigned long" "size_t" "int" "int" "int" "off_t" */
 #define	LINUX_SYS_mmap	71
 
-/* syscall: "munmap" ret: "int" args: "caddr_t" "int" */
+/* syscall: "munmap" ret: "int" args: "void *" "size_t" */
 #define	LINUX_SYS_munmap	73
 
-/* syscall: "mprotect" ret: "int" args: "caddr_t" "int" "int" */
+/* syscall: "mprotect" ret: "int" args: "void *" "size_t" "int" */
 #define	LINUX_SYS_mprotect	74
 
-/* syscall: "getgroups" ret: "int" args: "u_int" "gid_t *" */
+/* syscall: "getgroups" ret: "int" args: "int" "gid_t *" */
 #define	LINUX_SYS_getgroups	79
 
-/* syscall: "setgroups" ret: "int" args: "u_int" "gid_t *" */
+/* syscall: "setgroups" ret: "int" args: "int" "const gid_t *" */
 #define	LINUX_SYS_setgroups	80
 
 /* syscall: "gethostname" ret: "int" args: "char *" "u_int" */
@@ -151,7 +151,7 @@
 /* syscall: "sethostname" ret: "int" args: "char *" "u_int" */
 #define	LINUX_SYS_sethostname	88
 
-/* syscall: "dup2" ret: "int" args: "u_int" "u_int" */
+/* syscall: "dup2" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_dup2	90
 
 /* syscall: "fstat" ret: "int" args: "int" "struct linux_stat *" */
@@ -172,7 +172,7 @@
 /* syscall: "socket" ret: "int" args: "int" "int" "int" */
 #define	LINUX_SYS_socket	97
 
-/* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "int" */
+/* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
 #define	LINUX_SYS_connect	98
 
 /* syscall: "accept" ret: "int" args: "int" "caddr_t" "int *" */
@@ -190,7 +190,7 @@
 /* syscall: "sigreturn" ret: "int" args: "struct linux_sigframe *" */
 #define	LINUX_SYS_sigreturn	103
 
-/* syscall: "bind" ret: "int" args: "int" "const struct sockaddr *" "int" */
+/* syscall: "bind" ret: "int" args: "int" "const struct sockaddr *" "unsigned int" */
 #define	LINUX_SYS_bind	104
 
 /* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "void *" "int" */
@@ -202,25 +202,25 @@
 /* syscall: "sigsuspend" ret: "int" args: "caddr_t" "int" "int" */
 #define	LINUX_SYS_sigsuspend	111
 
-/* syscall: "recvmsg" ret: "int" args: "int" "struct msghdr *" "u_int" */
+/* syscall: "recvmsg" ret: "size_t" args: "int" "struct msghdr *" "int" */
 #define	LINUX_SYS_recvmsg	113
 
-/* syscall: "sendmsg" ret: "int" args: "int" "struct msghdr *" "u_int" */
+/* syscall: "sendmsg" ret: "ssize_t" args: "int" "const struct msghdr *" "int" */
 #define	LINUX_SYS_sendmsg	114
 
 /* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
 #define	LINUX_SYS_getsockopt	118
 
-/* syscall: "readv" ret: "int" args: "int" "struct iovec *" "u_int" */
+/* syscall: "readv" ret: "ssize_t" args: "int" "const struct iovec *" "int" */
 #define	LINUX_SYS_readv	120
 
-/* syscall: "writev" ret: "int" args: "int" "struct iovec *" "u_int" */
+/* syscall: "writev" ret: "ssize_t" args: "int" "struct iovec *" "int" */
 #define	LINUX_SYS_writev	121
 
 /* syscall: "fchown" ret: "int" args: "int" "int" "int" */
 #define	LINUX_SYS_fchown	123
 
-/* syscall: "fchmod" ret: "int" args: "int" "int" */
+/* syscall: "fchmod" ret: "int" args: "int" "mode_t" */
 #define	LINUX_SYS_fchmod	124
 
 /* syscall: "recvfrom" ret: "int" args: "int" "void *" "int" "int" "struct sockaddr *" "int *" */
@@ -232,10 +232,10 @@
 /* syscall: "setregid" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_setregid	127
 
-/* syscall: "rename" ret: "int" args: "char *" "char *" */
+/* syscall: "rename" ret: "int" args: "const char *" "const char *" */
 #define	LINUX_SYS_rename	128
 
-/* syscall: "truncate" ret: "int" args: "char *" "long" */
+/* syscall: "truncate" ret: "int" args: "const char *" "long" */
 #define	LINUX_SYS_truncate	129
 
 /* syscall: "ftruncate" ret: "int" args: "int" "long" */
@@ -256,19 +256,19 @@
 /* syscall: "socketpair" ret: "int" args: "int" "int" "int" "int *" */
 #define	LINUX_SYS_socketpair	135
 
-/* syscall: "mkdir" ret: "int" args: "char *" "int" */
+/* syscall: "mkdir" ret: "int" args: "const char *" "int" */
 #define	LINUX_SYS_mkdir	136
 
-/* syscall: "rmdir" ret: "int" args: "char *" */
+/* syscall: "rmdir" ret: "int" args: "const char *" */
 #define	LINUX_SYS_rmdir	137
 
 /* syscall: "getpeername" ret: "int" args: "int" "caddr_t" "int *" */
 #define	LINUX_SYS_getpeername	141
 
-/* syscall: "getrlimit" ret: "int" args: "u_int" "struct orlimit *" */
+/* syscall: "getrlimit" ret: "int" args: "int" "struct orlimit *" */
 #define	LINUX_SYS_getrlimit	144
 
-/* syscall: "setrlimit" ret: "int" args: "u_int" "struct orlimit *" */
+/* syscall: "setrlimit" ret: "int" args: "int" "const struct orlimit *" */
 #define	LINUX_SYS_setrlimit	145
 
 /* syscall: "setsid" ret: "int" args: */
@@ -298,7 +298,7 @@
 /* syscall: "semget" ret: "int" args: "key_t" "int" "int" */
 #define	LINUX_SYS_semget	205
 
-/* syscall: "semop" ret: "int" args: "int" "struct sembuf *" "unsigned u_int" */
+/* syscall: "semop" ret: "int" args: "int" "struct sembuf *" "size_t" */
 #define	LINUX_SYS_semop	206
 
 /* syscall: "olduname" ret: "int" args: "struct linux_old_utsname *" */
@@ -313,10 +313,10 @@
 /* syscall: "shmctl" ret: "int" args: "int" "int" "struct linux_shmid_ds *" */
 #define	LINUX_SYS_shmctl	210
 
-/* syscall: "shmdt" ret: "int" args: "void *" */
+/* syscall: "shmdt" ret: "int" args: "const void *" */
 #define	LINUX_SYS_shmdt	211
 
-/* syscall: "shmget" ret: "int" args: "key_t" "int" "int" */
+/* syscall: "shmget" ret: "int" args: "key_t" "size_t" "int" */
 #define	LINUX_SYS_shmget	212
 
 /* syscall: "msync" ret: "int" args: "caddr_t" "int" "int" */
@@ -349,7 +349,7 @@
 /* syscall: "__sysctl" ret: "int" args: "struct linux___sysctl *" */
 #define	LINUX_SYS___sysctl	319
 
-/* syscall: "swapon" ret: "int" args: "char *" */
+/* syscall: "swapon" ret: "int" args: "const char *" */
 #define	LINUX_SYS_swapon	322
 
 /* syscall: "times" ret: "int" args: "struct times *" */
@@ -358,7 +358,10 @@
 /* syscall: "personality" ret: "int" args: "int" */
 #define	LINUX_SYS_personality	324
 
-/* syscall: "statfs" ret: "int" args: "char *" "struct linux_statfs *" */
+/* syscall: "setfsuid" ret: "int" args: "uid_t" */
+#define	LINUX_SYS_setfsuid	325
+
+/* syscall: "statfs" ret: "int" args: "const char *" "struct linux_statfs *" */
 #define	LINUX_SYS_statfs	328
 
 /* syscall: "fstatfs" ret: "int" args: "int" "struct linux_statfs *" */
@@ -430,16 +433,16 @@
 /* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
 #define	LINUX_SYS_gettimeofday	359
 
-/* syscall: "settimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
+/* syscall: "settimeofday" ret: "int" args: "const struct timeval *" "const struct timezone *" */
 #define	LINUX_SYS_settimeofday	360
 
-/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval *" */
+/* syscall: "getitimer" ret: "int" args: "int" "struct itimerval *" */
 #define	LINUX_SYS_getitimer	361
 
-/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval *" "struct itimerval *" */
+/* syscall: "setitimer" ret: "int" args: "int" "const struct itimerval *" "struct itimerval *" */
 #define	LINUX_SYS_setitimer	362
 
-/* syscall: "utimes" ret: "int" args: "char *" "struct timecal *" */
+/* syscall: "utimes" ret: "int" args: "char *" "struct timeval *" */
 #define	LINUX_SYS_utimes	363
 
 /* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.14 1999/12/16 15:13:41 tron Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.15 2000/03/18 20:44:01 erh Exp $	*/
 
 /*
  * System call argument lists.
@@ -27,31 +27,31 @@
 	}
 
 struct linux_sys_creat_args {
-	syscallarg(char *) path;
-	syscallarg(int) mode;
+	syscallarg(const char *) path;
+	syscallarg(mode_t) mode;
 };
 
 struct linux_sys_unlink_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 };
 
 struct linux_sys_chdir_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 };
 
 struct linux_sys_mknod_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(int) mode;
 	syscallarg(int) dev;
 };
 
 struct linux_sys_chmod_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(int) mode;
 };
 
 struct linux_sys_chown_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
 };
@@ -61,14 +61,14 @@ struct linux_sys_brk_args {
 };
 
 struct linux_sys_ptrace_args {
-	syscallarg(int) request;
-	syscallarg(int) pid;
-	syscallarg(int) addr;
-	syscallarg(int) data;
+	syscallarg(long) request;
+	syscallarg(long) pid;
+	syscallarg(long) addr;
+	syscallarg(long) data;
 };
 
 struct linux_sys_access_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(int) flags;
 };
 
@@ -78,7 +78,7 @@ struct linux_sys_kill_args {
 };
 
 struct linux_sys_open_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(int) flags;
 	syscallarg(int) mode;
 };
@@ -94,29 +94,29 @@ struct linux_sys_ioctl_args {
 };
 
 struct linux_sys_symlink_args {
-	syscallarg(char *) path;
-	syscallarg(char *) to;
+	syscallarg(const char *) path;
+	syscallarg(const char *) to;
 };
 
 struct linux_sys_readlink_args {
-	syscallarg(char *) name;
+	syscallarg(const char *) name;
 	syscallarg(char *) buf;
 	syscallarg(int) count;
 };
 
 struct linux_sys_execve_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(char **) argp;
 	syscallarg(char **) envp;
 };
 
 struct linux_sys_stat_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(struct linux_stat *) sp;
 };
 
 struct linux_sys_lstat_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(struct linux_stat *) sp;
 };
 
@@ -189,12 +189,12 @@ struct linux_sys_setregid_args {
 };
 
 struct linux_sys_rename_args {
-	syscallarg(char *) from;
-	syscallarg(char *) to;
+	syscallarg(const char *) from;
+	syscallarg(const char *) to;
 };
 
 struct linux_sys_truncate_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(long) length;
 };
 
@@ -215,12 +215,12 @@ struct linux_sys_socketpair_args {
 };
 
 struct linux_sys_mkdir_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(int) mode;
 };
 
 struct linux_sys_rmdir_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 };
 
 struct linux_sys_sigaction_args {
@@ -275,8 +275,12 @@ struct linux_sys_personality_args {
 	syscallarg(int) per;
 };
 
+struct linux_sys_setfsuid_args {
+	syscallarg(uid_t) uid;
+};
+
 struct linux_sys_statfs_args {
-	syscallarg(char *) path;
+	syscallarg(const char *) path;
 	syscallarg(struct linux_statfs *) sp;
 };
 
@@ -532,6 +536,7 @@ int	linux_sys___sysctl	__P((struct proc *, void *, register_t *));
 int	compat_12_sys_swapon	__P((struct proc *, void *, register_t *));
 int	linux_sys_times	__P((struct proc *, void *, register_t *));
 int	linux_sys_personality	__P((struct proc *, void *, register_t *));
+int	linux_sys_setfsuid	__P((struct proc *, void *, register_t *));
 int	linux_sys_statfs	__P((struct proc *, void *, register_t *));
 int	linux_sys_fstatfs	__P((struct proc *, void *, register_t *));
 int	linux_sys_sched_setparam	__P((struct proc *, void *, register_t *));
