@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.27 2002/06/09 09:45:39 martin Exp $ */
+/*	$NetBSD: if_gre.c,v 1.28 2002/06/09 17:10:09 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.27 2002/06/09 09:45:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.28 2002/06/09 17:10:09 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -344,6 +344,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = (struct in_ifaddr *)data;
+	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
 	int s;
 	struct sockaddr_in si;
@@ -468,14 +469,62 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GREGADDRS:
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_src.s_addr;
 		sa = sintosa(&si);
 		ifr->ifr_addr = *sa;
 		break;
 	case GREGADDRD:
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
 		sa = sintosa(&si);
 		ifr->ifr_addr = *sa;
+		break;
+	case SIOCSLIFPHYADDR:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+		if (lifr->addr.ss_family != AF_INET ||
+		    lifr->dstaddr.ss_family != AF_INET)
+			return EAFNOSUPPORT;
+		if (lifr->addr.ss_len != sizeof(si) ||
+		    lifr->dstaddr.ss_len != sizeof(si))
+			return EINVAL;
+		sc->g_src = (satosin((struct sockadrr *)&lifr->addr))->sin_addr;
+		sc->g_dst =
+		    (satosin((struct sockadrr *)&lifr->dstaddr))->sin_addr;
+		if ((sc->g_src.s_addr != INADDR_ANY) &&
+		    (sc->g_dst.s_addr != INADDR_ANY)) {
+			if (sc->route.ro_rt != 0) /* free old route */
+				RTFREE(sc->route.ro_rt);
+			if (gre_compute_route(sc) == 0)
+				ifp->if_flags |= IFF_UP;
+		}
+		break;
+
+	case SIOCDIFPHYADDR:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+		sc->g_src.s_addr = INADDR_ANY;
+		sc->g_dst.s_addr = INADDR_ANY;
+		break;
+	case SIOCGLIFPHYADDR:
+		if (sc->g_src.s_addr == INADDR_ANY ||
+		    sc->g_dst.s_addr == INADDR_ANY) {
+			error = EADDRNOTAVAIL;
+			break;
+		}
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
+		si.sin_addr.s_addr = sc->g_src.s_addr;
+		sa = sintosa(&si);
+		memcpy(&lifr->addr, sa, sa->sa_len);
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
+		si.sin_addr.s_addr = sc->g_dst.s_addr;
+		sa = sintosa(&si);
+		memcpy(&lifr->dstaddr, sa, sa->sa_len);
 		break;
 	default:
 		error = EINVAL;
