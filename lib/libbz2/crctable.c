@@ -1,4 +1,4 @@
-/*	$NetBSD: crctable.c,v 1.4 1999/07/03 12:30:17 simonb Exp $	*/
+/*	$NetBSD: crctable.c,v 1.5 1999/08/20 02:21:49 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Table for doing CRCs                                  ---*/
@@ -69,7 +69,7 @@
   comp.compression FAQ.
 --*/
 
-UInt32 crc32Table[256] = {
+UInt32 __BZcrc32Table[256] = {
 
    /*-- Ugly, innit? --*/
 
