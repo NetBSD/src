@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.166 2001/11/15 09:48:17 lukem Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.167 2001/11/18 17:22:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.166 2001/11/15 09:48:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.167 2001/11/18 17:22:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,16 +462,16 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "IBM     ", "CDRM00201     !F", "0724"}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 	{{T_CDROM, T_REMOV,
-	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"},   PQUIRK_NOLUNS},
+	 "ShinaKen", "CD-ROM DM-3x1S",   "1.04"}, PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "JVC     ", "R2626",            ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "YAMAHA", "CRW8424S",           ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "VMware", "Virtual",           "1.0"},
+	 "VMware", "Virtual",            "1.0"},
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
 	{{T_CDROM, T_REMOV,
-	 "LITE-ON", "LTR-12101B",       "LS38"},  PQUIRK_ONLYBIG},
+	 "LITE-ON", "LTR-12101B",        "LS38"}, PQUIRK_ONLYBIG},
 
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     PQUIRK_AUTOSAVE},
@@ -480,22 +480,23 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "TOSHIBA ","CD-ROM XM-3401TA", "0283"},  PQUIRK_CDROM|PQUIRK_NOLUNS},
+	 "TOSHIBA ","CD-ROM XM-3401TA",  "0283"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "TOSHIBA ", "CD-ROM DRIVE:XM", "1971"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
+	 "TOSHIBA ", "CD-ROM DRIVE:XM",  "1971"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE},
+	 "EMULEX  ", "MD21/S2     ESDI", "A00"},
+				PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE},
 	/* Gives non-media hardware failure in response to start-unit command */
 	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",		"CP16"},  PQUIRK_NOSTARTUNIT},
+	 "HITACHI", "DK515C",            "CP16"}, PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
-	 "HITACHI", "DK515C",		"CP15"},  PQUIRK_NOSTARTUNIT},
+	 "HITACHI", "DK515C",            "CP15"}, PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
-	 "MICROP",  "1548-15MZ1077801", "HZ2P"},  PQUIRK_NOTAG},
+	 "MICROP",  "1548-15MZ1077801",  "HZ2P"}, PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "HP      ", "C372",             ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
@@ -505,7 +506,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "IBM",	     "0664",		 ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "IBM     ", "H3171-S2",	 ""},	  PQUIRK_NOLUNS|PQUIRK_AUTOSAVE},
+	 "IBM     ", "H3171-S2",	 ""},
+				PQUIRK_NOLUNS|PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "KZ-C",		 ""},	  PQUIRK_AUTOSAVE},
 	/* Broken IBM disk */
@@ -572,7 +574,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 ""},	  PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOMODESENSE|PQUIRK_NOLUNS},
+	 "IOMEGA", "ZIP 100",		 "J.03"},
+				PQUIRK_NOMODESENSE|PQUIRK_NOLUNS},
 	/* Letting the motor run kills floppy drives and disks quite fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  PQUIRK_NOSTARTUNIT},
@@ -636,15 +639,15 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-12       ", "V2.1"}, PQUIRK_NOLUNS},
 	{{T_SCANNER, T_FIXED,
-	 "ULTIMA  ", "A6000C          ", ""}, PQUIRK_NOLUNS},
+	 "ULTIMA  ", "A6000C          ", ""},     PQUIRK_NOLUNS},
 	{{T_PROCESSOR, T_FIXED,
-	 "SYMBIOS", "", ""},     PQUIRK_NOLUNS},
+	 "SYMBIOS",  "",                 ""},     PQUIRK_NOLUNS},
 	{{T_PROCESSOR, T_FIXED,
 	 "LITRONIC", "PCMCIA          ", ""},     PQUIRK_NOLUNS},
 	{{T_CHANGER, T_REMOV,
 	 "SONY    ", "CDL1100         ", ""},     PQUIRK_NOLUNS},
 	{{T_ENCLOSURE, T_FIXED,
-	 "SUN     ", "SENA            ", ""}, PQUIRK_NOLUNS},
+	 "SUN     ", "SENA            ", ""},     PQUIRK_NOLUNS},
 };
 
 /*
@@ -845,7 +848,8 @@ scsi_probe_device(sc, target, lun)
 	if (periph->periph_quirks & PQUIRK_CDROM) {
 		periph->periph_quirks ^= PQUIRK_CDROM;
 		inqbuf.dev_qual2 |= SID_REMOVABLE;
-		sa.sa_inqbuf.type = inqbuf.device = ((inqbuf.device & ~SID_REMOVABLE) | T_CDROM);
+		sa.sa_inqbuf.type = inqbuf.device =
+		    ((inqbuf.device & ~SID_REMOVABLE) | T_CDROM);
 		sa.sa_inqbuf.removable = T_REMOV;
 	}
 
