@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.87 2002/12/24 12:15:45 manu Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.88 2003/01/18 09:53:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,6 +46,7 @@
  */
 #include <sys/time.h>
 #include <sys/ucred.h>
+#include <sys/ucontext.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
 
@@ -189,6 +190,7 @@ struct ctlname {
 #define	KERN_LWP		64	/* struct: lwp entries */
 #define	KERN_FORKFSLEEP		65	/* int: sleep length on failed fork */
 #define	KERN_MAXID		66	/* number of valid kern ids */
+
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -388,7 +390,7 @@ struct kinfo_proc2 {
 	ki_sigset_t p_sigignore;	/* SIGSET_T: Signals being ignored. */
 	ki_sigset_t p_sigcatch;		/* SIGSET_T: Signals being caught by user. */
 
-	int8_t	p_stat;			/* CHAR: S* process status. */
+	int8_t	p_stat;			/* CHAR: S* process status (from LWP). */
 	u_int8_t p_priority;		/* U_CHAR: Process priority. */
 	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_cpu and p_nice. */
 	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
@@ -436,6 +438,34 @@ struct kinfo_proc2 {
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
 	u_int64_t p_cpuid;		/* LONG: cpu id */
+	u_int64_t p_realflag;	       	/* INT: P_* flags (not including LWPs). */
+	u_int64_t p_nlwps;		/* LONG: Number of LWPs */
+	u_int64_t p_nrlwps;		/* LONG: Number of running LWPs */
+	u_int64_t p_realstat;		/* LONG: non-LWP process status */
+};
+
+/*
+ * KERN_LWP structure. See notes on KERN_PROC2 about adding elements.
+ */
+struct kinfo_lwp {
+	u_int64_t l_forw;		/* PTR: linked run/sleep queue. */
+	u_int64_t l_back;
+	u_int64_t l_laddr;		/* PTR: Address of LWP */
+	u_int64_t l_addr;		/* PTR: Kernel virtual addr of u-area */
+	int32_t	l_lid;			/* LWPID_T: LWP identifier */
+	int32_t	l_flag;			/* INT: L_* flags. */
+	u_int32_t l_swtime;		/* U_INT: Time swapped in or out. */
+	u_int32_t l_slptime;		/* U_INT: Time since last blocked. */
+	int32_t	l_schedflags;		/* INT: PSCHED_* flags */
+	int32_t	l_holdcnt;              /* INT: If non-zero, don't swap. */
+	u_int8_t l_priority;		/* U_CHAR: Process priority. */
+	u_int8_t l_usrpri;		/* U_CHAR: User-priority based on l_cpu and p_nice. */
+	int8_t	l_stat;			/* CHAR: S* process status. */
+	int8_t	l_pad1;			/* fill out to 4-byte boundary */
+	int32_t	l_pad2;			/* .. and then to an 8-byte boundary */
+	char	l_wmesg[KI_WMESGLEN];	/* wchan message */
+	u_int64_t l_wchan;		/* PTR: sleep address. */
+	u_int64_t l_cpuid;		/* LONG: cpu id */
 };
 
 /*

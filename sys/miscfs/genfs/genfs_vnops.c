@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.68 2002/11/15 14:01:57 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.69 2003/01/18 09:18:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.68 2002/11/15 14:01:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.69 2003/01/18 09:18:05 thorpej Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -473,7 +473,7 @@ genfs_getpages(void *v)
 	struct genfs_node *gp = VTOG(vp);
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, *pgs[MAX_READ_AHEAD];
-	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curproc */
+	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curlwp */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t sawhole = FALSE;
@@ -1087,7 +1087,7 @@ genfs_putpages(void *v)
 	if (by_list) {
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
-		PHOLD(curproc);
+		PHOLD(curlwp);
 	} else {
 		pg = uvm_pagelookup(uobj, off);
 	}
@@ -1126,7 +1126,7 @@ genfs_putpages(void *v)
 		 * wait for it to become unbusy.
 		 */
 
-		yield = (curproc->p_cpu->ci_schedstate.spc_flags &
+		yield = (curlwp->l_cpu->ci_schedstate.spc_flags &
 		    SPCF_SHOULDYIELD) && !pagedaemon;
 		if (pg->flags & PG_BUSY || yield) {
 			KASSERT(!pagedaemon);
@@ -1138,7 +1138,7 @@ genfs_putpages(void *v)
 			}
 			if (yield) {
 				simple_unlock(slock);
-				preempt(NULL);
+				preempt(1);
 				simple_lock(slock);
 			} else {
 				pg->flags |= PG_WANTED;
@@ -1315,7 +1315,7 @@ genfs_putpages(void *v)
 	}
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
-		PRELE(curproc);
+		PRELE(curlwp);
 	}
 
 	/*

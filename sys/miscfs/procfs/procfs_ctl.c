@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.23 2002/07/25 20:04:03 jdolecek Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.24 2003/01/18 09:18:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.23 2002/07/25 20:04:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.24 2003/01/18 09:18:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static const vfs_namemap_t signames[] = {
 	{ 0 },
 };
 
-int procfs_control __P((struct proc *, struct proc *, int, int));
+int procfs_control __P((struct proc *, struct lwp *, int, int));
 
 /* Macros to clear/set/test flags. */ 
 #define	SET(t, f)	(t) |= (f)
@@ -100,12 +100,13 @@ int procfs_control __P((struct proc *, struct proc *, int, int));
 #define	ISSET(t, f)	((t) & (f))
 
 int
-procfs_control(curp, p, op, sig)
+procfs_control(curp, l, op, sig)
 	struct proc *curp;
-	struct proc *p;
+	struct lwp *l;
 	int op, sig;
 {
 	int s, error;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * You cannot do anything to the process if it is currently exec'ing
@@ -243,9 +244,9 @@ procfs_control(curp, p, op, sig)
 	case PROCFS_CTL_RUN:
 	case PROCFS_CTL_DETACH:
 #ifdef PT_STEP
-		PHOLD(p);
-		error = process_sstep(p, op == PROCFS_CTL_STEP);
-		PRELE(p);
+		PHOLD(l);
+		error = process_sstep(l, op == PROCFS_CTL_STEP);
+		PRELE(l);
 		if (error)
 			return (error);
 #endif
@@ -264,10 +265,10 @@ procfs_control(curp, p, op, sig)
 
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
-		if (p->p_stat == SSTOP) {
+		if (l->l_stat == LSSTOP) {
 			p->p_xstat = sig;
 			SCHED_LOCK(s);
-			setrunnable(p);
+			setrunnable(l);
 			SCHED_UNLOCK(s);
 		} else {
 			if (sig != 0)
@@ -279,8 +280,8 @@ procfs_control(curp, p, op, sig)
 		/*
 		 * Wait for the target process to stop.
 		 */
-		while (p->p_stat != SSTOP && P_ZOMBIE(p)) {
-			error = tsleep(p, PWAIT|PCATCH, "procfsx", 0);
+		while (l->l_stat != LSSTOP && P_ZOMBIE(p)) {
+			error = tsleep(l, PWAIT|PCATCH, "procfsx", 0);
 			if (error)
 				return (error);
 		}
@@ -291,16 +292,17 @@ procfs_control(curp, p, op, sig)
 }
 
 int
-procfs_doctl(curp, p, pfs, uio)
+procfs_doctl(curp, l, pfs, uio)
 	struct proc *curp;
+	struct lwp *l;
 	struct pfsnode *pfs;
 	struct uio *uio;
-	struct proc *p;
 {
 	int xlen;
 	int error;
 	char msg[PROCFS_CTLLEN+1];
 	const vfs_namemap_t *nm;
+	struct proc *p = l->l_proc;
 
 	if (uio->uio_rw != UIO_WRITE)
 		return (EOPNOTSUPP);
@@ -323,13 +325,13 @@ procfs_doctl(curp, p, pfs, uio)
 
 	nm = vfs_findname(ctlnames, msg, xlen);
 	if (nm) {
-		error = procfs_control(curp, p, nm->nm_val, 0);
+		error = procfs_control(curp, l, nm->nm_val, 0);
 	} else {
 		nm = vfs_findname(signames, msg, xlen);
 		if (nm) {
 			if (ISSET(p->p_flag, P_TRACED) &&
 			    p->p_pptr == curp)
-				error = procfs_control(curp, p, PROCFS_CTL_RUN,
+				error = procfs_control(curp, l, PROCFS_CTL_RUN,
 				    nm->nm_val);
 			else {
 				psignal(p, nm->nm_val);

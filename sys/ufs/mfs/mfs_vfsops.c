@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.42 2002/10/24 16:41:00 chs Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.43 2003/01/18 09:38:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.42 2002/10/24 16:41:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.43 2003/01/18 09:38:22 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -348,7 +348,13 @@ mfs_start(mp, flags, p)
 	struct buf *bp;
 	caddr_t base;
 	int sleepreturn = 0;
+	struct lwp *l; /* XXX NJWLWP */
 
+	/* XXX NJWLWP the vnode interface again gives us a proc in a
+	 * place where we want a execution context. Cheat.
+	 */
+	KASSERT(curproc == p);
+	l = curlwp; 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
 		while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {
@@ -371,7 +377,7 @@ mfs_start(mp, flags, p)
 			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
 				lockmgr(&syncer_lock, LK_RELEASE, NULL);
 			else if (dounmount(mp, 0, p) != 0)
-				CLRSIG(p, CURSIG(p));
+				CLRSIG(p, CURSIG(l));
 			sleepreturn = 0;
 			continue;
 		}

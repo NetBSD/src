@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.155 2003/01/03 02:47:30 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.156 2003/01/18 09:53:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -198,7 +198,8 @@
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
 #define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
 				   the interlock */
-
+#define PNOEXITERR     	0x400   /* OR'd with pri for tsleep to not exit 
+				   with an error code when LWPs are exiting */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */

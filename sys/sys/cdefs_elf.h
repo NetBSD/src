@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.13 2002/11/01 22:58:44 thorpej Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.14 2003/01/18 09:53:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -52,6 +52,9 @@
 #define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
 
 #if __STDC__
+#define	__strong_alias(alias,sym)	       				\
+    __asm__(".global " _C_LABEL_STRING(#alias) " ; "			\
+	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak " _C_LABEL_STRING(#alias) " ; "			\

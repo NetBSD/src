@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.77 2002/12/26 13:04:39 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.78 2003/01/18 09:38:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.77 2002/12/26 13:04:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.78 2003/01/18 09:38:19 thorpej Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.77 2002/12/26 13:04:39 yamt Exp $
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <ufs/ufs/inode.h>
@@ -176,7 +177,7 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 }
 #else
 int
-sys_lfs_markv(struct proc *p, void *v, register_t *retval)
+sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_markv_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -188,7 +189,7 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 	int i, blkcnt, error;
 	fsid_t fsid;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 	
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -214,7 +215,7 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_markv(p, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_markv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode     = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn       = blkiov[i].bi_lbn;
@@ -647,13 +648,14 @@ sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
 }
 #else
 int
-sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
+sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_bmapv_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	BLOCK_INFO *blkiov;
 	BLOCK_INFO_15 *blkiov15;
 	int i, blkcnt, error;
@@ -866,12 +868,13 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
+sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_segclean_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(u_long) segment;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	struct buf *bp;
@@ -971,12 +974,13 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segwait(struct proc *p, void *v, register_t *retval)
+sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_segwait_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct mount *mntp;
 	struct timeval atv;
 	fsid_t fsid;

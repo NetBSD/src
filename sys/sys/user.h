@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.13 1999/04/30 21:23:50 thorpej Exp $	*/
+/*	$NetBSD: user.h,v 1.14 2003/01/18 09:53:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -61,7 +61,6 @@
 struct	user {
 	struct	pcb u_pcb;
 
-	struct	pstats u_stats;		/* p_stats points here (use it!) */
 };
 
 #endif /* !_SYS_USER_H_ */
