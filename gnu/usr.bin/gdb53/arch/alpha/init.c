@@ -84,6 +84,7 @@ extern initialize_file_ftype _initialize_mi_out;
 extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_main;
 extern initialize_file_ftype _initialize_mi_parse;
+extern initialize_file_ftype _initialize_nbsd_thread;
 void
 initialize_all_files (void)
 {
@@ -169,4 +170,5 @@ initialize_all_files (void)
   _initialize_mi_cmds ();
   _initialize_mi_main ();
   _initialize_mi_parse ();
+  _initialize_nbsd_thread ();
 }

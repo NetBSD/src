@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.1 2003/09/24 06:16:49 matt Exp $
+# $NetBSD: defs.mk,v 1.2 2003/11/10 21:59:58 matt Exp $
 G_GDB_OBJS=\
 alpha-tdep.o \
 alphabsd-nat.o \
@@ -100,6 +100,7 @@ mi-parse.o \
 minsyms.o \
 mipsread.o \
 nbsd-tdep.o \
+nbsd-thread.o \
 nlmread.o \
 objfiles.o \
 osabi.o \
