@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.5 2003/12/07 04:49:17 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.6 2004/01/10 06:02:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -41,8 +41,6 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/time.h>
-#if 0
-#endif
 
 /*
  * Some misc. statics, useful for debugging.
