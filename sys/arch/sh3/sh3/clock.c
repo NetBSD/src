@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2000/01/17 21:54:32 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2000/02/24 17:07:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -90,6 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "opt_pclock.h"
+#include "wdog.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +102,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <sh3/rtcreg.h>
 #include <sh3/tmureg.h>
+#include <sh3/wdogvar.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/cpufunc.h>
@@ -176,6 +178,8 @@ microtime(tvp)
 	splx(s);
 }
 
+#include <sh3/wdtreg.h>
+unsigned int maxwdog;
 
 int
 clockintr(arg)
@@ -183,6 +187,14 @@ clockintr(arg)
 {
 #if 1
 	struct clockframe *frame = arg;		/* not strictly necessary */
+#endif
+#if (NWDOG > 0)
+	unsigned int i;
+
+	i = (unsigned int)SHREG_WTCNT_R;
+	if (i > maxwdog)
+		maxwdog = i;
+	wdog_wr_cnt(0);			/* reset to zero */
 #endif
 
 	/* clear timer counter under flow interrupt flag */
