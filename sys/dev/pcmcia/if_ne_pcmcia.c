@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.73 2001/05/21 13:48:25 ichiro Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.74 2001/06/03 04:52:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -644,13 +644,23 @@ again:
 	}
 
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
+		u_int8_t type;
+
 		enaddr = ne_pcmcia_dl10019_get_enaddr(psc, myea);
 		if (enaddr == NULL) {
 			++i;
 			goto again;
 		}
-		nsc->sc_type = NE2000_TYPE_DL10019;
-		typestr = " (DL10019)";
+
+		/* Determine if this is a DL10019 or a DL10022. */
+		type = bus_space_read_1(nsc->sc_asict, nsc->sc_asich, 0x0f);
+		if (type == 0x91 || type == 0x99) {
+			nsc->sc_type = NE2000_TYPE_DL10022;
+			typestr = " (DL10022)";
+		} else {
+			nsc->sc_type = NE2000_TYPE_DL10019;
+			typestr = " (DL10019)";
+		}
 	}
 
 	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
