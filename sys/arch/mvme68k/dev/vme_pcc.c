@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.3 1996/10/13 03:30:24 christos Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.4 1997/03/19 16:24:42 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #include <mvme68k/dev/vme_pccreg.h>
 #include <mvme68k/dev/vmevar.h>
 
-int	vmechip_pcc_match __P((struct device *, void *, void *));
+int 	vmechip_pcc_match  __P((struct device *, struct cfdata *, void *));
 void	vmechip_pcc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vmechip_pcc_ca = {
@@ -79,11 +79,11 @@ struct vme_pcc *sys_vme_pcc;
 extern	int physmem;
 
 int
-vmechip_pcc_match(parent, match, aux)
+vmechip_pcc_match(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct pcc_attach_args *pa = aux;
 
 	/* Only one VME chip, please. */
