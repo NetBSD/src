@@ -1,4 +1,4 @@
-#	$NetBSD: INSTADP,v 1.11 1996/03/25 05:45:28 perry Exp $
+#	$NetBSD: INSTADP,v 1.12 1996/04/21 20:55:30 ghudson Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
 #                     adapters.  This kernel is GENERICADP with lines
@@ -92,7 +92,7 @@ ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 ahe0	at isa? port 0x1c00 irq ?	# Adaptec 284x SCSI controllers
 scsibus* at ahe?
-aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
+aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives

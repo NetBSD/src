@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.23 1996/03/25 05:45:14 perry Exp $
+#	$NetBSD: DISKLESS,v 1.24 1996/04/21 20:55:25 ghudson Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -119,7 +119,7 @@ mms1	at isa? port 0x238 irq 5
 #scsibus* at aha?
 #ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
-#aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
+#aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
