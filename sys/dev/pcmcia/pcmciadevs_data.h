@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.117 2001/02/10 14:08:45 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.118 2001/02/11 03:28:16 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -494,10 +494,10 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK LAC-CF010"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDF, PCMCIA_PRODUCT_TDF_LAK_CD011WL,
-	    PCMCIA_CIS_TDF_LAK_CD011WL,
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD011WL,
+	    PCMCIA_CIS_TDK_LAK_CD011WL,
 	    0,
-	    "",
+	    "TDK Corporation",
 	    "TDK LAK-CD011WL"	},
 	},
 	{
