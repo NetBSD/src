@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.18 1998/09/13 14:44:34 christos Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -109,6 +109,12 @@ awk_parser='
 	argdir[argc] = $1; i=2;
 	if ($2 == "WILLRELE") {
 		willrele[argc] = 1;
+		i++;
+	} else if ($2 == "WILLUNLOCK") {
+		willrele[argc] = 2;
+		i++;
+	} else if ($2 == "WILLPUT") {
+		willrele[argc] = 3;
 		i++;
 	} else
 		willrele[argc] = 0;
@@ -293,10 +299,17 @@ function doit() {
 	vpnum = 0;
 	for (i=0; i<argc; i++) {
 		if (willrele[i]) {
-			if (argdir[i] ~ /OUT/) {
-				printf(" | VDESC_VPP_WILLRELE");
+			if (willrele[i] == 2) {
+				word = "UNLOCK";
+			} else if (willrele[i] == 3) {
+				word = "PUT";
 			} else {
-				printf(" | VDESC_VP%s_WILLRELE", vpnum);
+				word = "RELE";
+			}
+			if (argdir[i] ~ /OUT/) {
+				printf(" | VDESC_VPP_WILL%s", word);
+			} else {
+				printf(" | VDESC_VP%s_WILL%s", vpnum, word);
 			};
 			vpnum++;
 		}
