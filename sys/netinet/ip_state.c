@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.25 2000/05/21 18:45:55 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.26 2000/05/23 06:07:44 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -9,10 +9,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_state.c,v 1.25 2000/05/21 18:45:55 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_state.c,v 1.26 2000/05/23 06:07:44 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.8 2000/05/19 15:54:43 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.9 2000/05/22 10:26:15 darrenr Exp";
 #endif
 #endif
 
@@ -566,6 +566,8 @@ u_int flags;
 	    {
 		tcp = (tcphdr_t *)fin->fin_dp;
 
+		if (tcp->th_flags & TH_RST)
+			return NULL;
 		/*
 		 * The endian of the ports doesn't matter, but the ack and
 		 * sequence numbers do as we do mathematics on them later.
