@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.67 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.68 2003/08/11 17:26:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.67 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.68 2003/08/11 17:26:24 drochner Exp $");
 
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
@@ -198,9 +198,9 @@ i386_set_ldt(l, args, retval)
 
 	if ((error = copyin(ua.desc, descv, sizeof (*descv) * ua.num)) != 0)
 		goto out;
-	
+
 	/* Check descriptors for access violations. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
+	for (i = 0; i < ua.num; i++) {
 		union descriptor *desc = &descv[i];
 
 		switch (desc->sd.sd_type) {
@@ -271,7 +271,6 @@ i386_set_ldt(l, args, retval)
 	/* allocate user ldt */
 	simple_lock(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
-		old_ldt = pmap->pm_ldt;
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
 		else
@@ -302,7 +301,6 @@ i386_set_ldt(l, args, retval)
 
 		if (old_ldt != NULL) {
 			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
 		} else {
 			old_len = NLDT * sizeof(union descriptor);
 			old_ldt = ldt;
