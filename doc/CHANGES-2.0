@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.472 2004/10/01 03:34:04 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.473 2004/10/01 03:41:16 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7653,3 +7653,8 @@ share/man/man5/route.conf.5			patch
 
 	Add documentation for route.conf
 	[cube, ticket #877]
+
+distrib/notes/common/main			patch
+
+	Updates for some wording changes and troff fixes
+	[wiz, ticket #878]
