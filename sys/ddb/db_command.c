@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.37 2000/04/11 02:21:16 chs Exp $	*/
+/*	$NetBSD: db_command.c,v 1.38 2000/04/13 22:48:29 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -197,13 +197,25 @@ db_command(last_cmdp, cmd_table)
 	boolean_t	have_addr = FALSE;
 	int		result;
 
+	static db_expr_t               last_count = 0;
+
 	t = db_read_token();
-	if (t == tEOL) {
-	    /* empty line repeats last command, at 'next' */
+	if ((t == tEOL) || (t == tCOMMA)) {
+	    /*
+	     * An empty line repeats last command, at 'next'.
+	     * Only a count repeats the last command with the new count.
+	     */
 	    cmd = *last_cmdp;
 	    addr = (db_expr_t)db_next;
+	    if (t == tCOMMA) {
+	            if (!db_expression(&count)) {
+		    db_printf("Count missing\n");
+		    db_flush_lex();
+		    return;
+	        }
+	    } else
+	        count = last_count;
 	    have_addr = FALSE;
-	    count = 1;
 	    modif[0] = '\0';
 	}
 	else if (t == tEXCL) {
@@ -296,6 +308,7 @@ db_command(last_cmdp, cmd_table)
 	    }
 	}
 	*last_cmdp = cmd;
+	last_count = count;
 	if (cmd != 0) {
 	    /*
 	     * Execute the command.

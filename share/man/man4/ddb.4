@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.38 2000/01/26 13:37:57 soren Exp $
+.\"	$NetBSD: ddb.4,v 1.39 2000/04/13 22:48:29 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -179,9 +179,9 @@ to be the same as
 .Pp
 A blank line repeats the previous command from the address
 .Ar next
-with a
+with the previous
 .Cm count
-of 1 and no modifiers.
+and no modifiers.
 Specifying
 .Cm address
 sets
@@ -195,6 +195,15 @@ is used.
 A missing
 .Cm count
 is taken to be 1 for printing commands, and infinity for stack traces.
+.Pp
+The syntax:
+.Bd -ragged -offset indent
+.Ic Cm , Ns Ar count
+.Ed
+.Pp
+repeats the previous command, just as a blank line does, but with
+the specified
+.Cm count .
 .Pp
 .Nm
 has a
