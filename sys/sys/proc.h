@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.173 2003/09/26 12:02:57 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.174 2003/10/09 14:00:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -380,7 +380,18 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curproc */
 
-#define curproc ((curlwp) ? (curlwp)->l_proc : NULL)
+static struct proc *__curproc(void);
+
+static __inline struct proc *
+__curproc()
+{
+	struct lwp *l = curlwp;
+
+	if (l == NULL)
+		return NULL;
+	return l->l_proc;
+}
+#define	curproc	__curproc()
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
