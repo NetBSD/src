@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.6 2000/09/04 00:31:59 thorpej Exp $ */
+/* $NetBSD: multiproc.s,v 1.7 2000/11/18 16:21:37 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.6 2000/09/04 00:31:59 thorpej Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.7 2000/11/18 16:21:37 sommerfeld Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -63,7 +63,7 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 1:	LDGP(pv)
 
 	/* Write new KGP. */
-	mov	s0, a0
+	mov	gp, a0
 	call_pal PAL_OSF1_wrkgp
 
 	/* Store our CPU info in SysValue. */
