@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/06/15 21:34:19 itojun Exp $
+#	$NetBSD: Makefile,v 1.28 2002/06/16 00:38:33 wiz Exp $
 #
 
 TARGETS+=	release
@@ -38,6 +38,7 @@ SUBDIR+= sparc64
 SUBDIR+= sun2
 SUBDIR+= sun3
 SUBDIR+= vax
+SUBDIR+= walnut
 SUBDIR+= x68k
 .endif
 

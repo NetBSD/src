@@ -1,0 +1,25 @@
+.\"	$NetBSD: install,v 1.1 2002/06/16 00:38:34 wiz Exp $
+.
+.Ss2 Booting the installer
+.
+The kernel starts automatically once it is loaded.
+.
+.Ss2 Example of a normal boot
+.
+If you already configured the network settings, just press
+.Sq 0
+from the boot menu to boot.
+.
+.Ss2 Common Problems and Error Messages
+.
+Do not use the plain ELF kernel as the file provided to the
+firmware, use the
+.Dq netbsd.img
+file (which is in the format the firmware expects).
+Of course, you should put the matching
+.Dq netbsd
+as
+.Pa /netbsd
+on your root file system, otherwise some kernel grovellers won't work.
+.
+.so ../common/sysinst

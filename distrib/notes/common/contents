@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.59 2002/06/15 16:48:36 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.60 2002/06/16 00:38:33 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ conventions for indicating italic and bold display.
 .	(tag kernel/ -compact
 .		It Pa kernel/
 .		(tag netbsd.gz -compact
-.if !r_atari \{\
+.if !\n[atari]:\n[walnut] \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
@@ -175,6 +175,23 @@ A kernel similar to GENERIC, but will boot on an Indy and similar machines.
 GENERIC targeted for being bootable on Indigo 2 and similar machines.
 .\}
 .
+.if r_walnut \{\
+.			It Pa netbsd-WALNUT.gz
+A gzipped
+.Nx
+kernel (in ELF format) containing code for everything supported
+in this release.
+.			It Pa netbsd.img-WALNUT.gz
+Same as the above, but in the format expected by the firmware.
+.			It Pa netbsd.INSTALL.gz
+A gzipped 
+.Nx
+kernel (ELF format) containing code for everything supported in this
+release.  It also includes a RAM-disk installer with sysinst.
+.			It Pa netbsd.INSTALL.img.gz
+Same as the above, but in the format expected by the firmware.
+.\}
+.
 .		tag)
 .		It Pa sets/
 \*M binary distribution sets;
@@ -219,7 +236,7 @@ this image.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[mvme68k]:\n[macppc]:\n[sgimips] \{\
+.if !\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[walnut] \{\
 .		It Pa misc/
 .
 .if r_alpha \{\
@@ -404,6 +421,7 @@ everything described below.
 .if r_sun2 .Em 51.9 MB gzipped, 116.0 MB uncompressed
 .if r_sun3 .Em 14.5 MB gzipped, 38.1 MB uncompressed
 .if r_vax .Em 15.5 MB gzipped, 36.0 MB uncompressed
+.if r_walnut .Em 19.7 MB gzipped, ??.? MB uncompressed
 .if r_x68k .Em 12.5 MB gzipped, 34.0 MB uncompressed
 .
 .It Sy comp
@@ -438,6 +456,7 @@ system call and library manual pages.
 .if r_sun2 .Em 12.5 MB gzipped, 45.1 MB uncompressed
 .if r_sun3 .Em 9.5 MB gzipped, 32.5 MB uncompressed
 .if r_vax .Em 11.9 MB gzipped, 37.9 MB uncompressed
+.if r_walnut .Em 16.9 MB gzipped, ??.? MB uncompressed
 .if r_x68k .Em 9.4 MB gzipped, 31.8 MB uncompressed
 .
 .It Sy etc
@@ -471,7 +490,7 @@ This set includes the games and their manual pages.
 .if r_sun2 .Em 5.4 MB gzipped, 12.2 MB uncompressed
 .if r_vax .Em 2.9 MB gzipped, 7.1 MB uncompressed
 .
-.if !r_atari \{\
+.if !\n[atari]:\n[walnut] \{\
 .It Sy kern-GENERIC
 This set contains a
 .Nx*M
@@ -511,6 +530,21 @@ kernel, named
 .No You Em must
 install the kernel that matches your hardware.
 .br
+.\}
+.if r_walnut \{\
+.It Sy kern-WALNUT
+This set contains a
+.Nx*M
+\*V
+kernel in ELF format named
+.Pa /netbsd
+and the same kernel in the format needed by the bootloader as
+.Pa /netbsd.img .
+You
+.Em must
+install this distribution set.
+.br
+.Em 3.3 MB gzipped, 7.6 MB uncompressed
 .\}
 .
 .It Sy man

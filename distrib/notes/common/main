@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.185 2002/06/15 16:48:37 tsutsui Exp $
+.\"	$NetBSD: main,v 1.186 2002/06/16 00:38:33 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -583,8 +583,9 @@ hpcmips,
 news68k,
 newsmips,
 sgimips,
+sparc64,
 and
-sparc64.
+walnut.
 .It
 Improved performance and stability of the UVM virtual memory subsystem.
 .It
@@ -1513,7 +1514,7 @@ them, and would like to mentioned, tell us!)
 .br_ne 2i
 .It-span Em "Developers and other contributors:"
 .It Ta Ta
-.It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
+.It Ta Nathan Ahlstrom Ta Mt nra@netbsd.org
 .It Ta Steve Allen Ta Mt wormey@netbsd.org
 .It Ta Julian Assange Ta Mt proff@netbsd.org
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
