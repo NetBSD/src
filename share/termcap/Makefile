@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
-#	$Id: Makefile,v 1.14 1994/12/22 10:43:36 cgd Exp $
+#	$Id: Makefile,v 1.15 1995/03/01 09:05:20 glass Exp $
 
 # reorder gives an editor command for most common terminals
 # (in reverse order from n'th to 1'st most commonly used)
@@ -24,5 +24,5 @@ realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/map3270 \
 	     ${DESTDIR}${BINDIR}/misc
 
-	
+
 .include <bsd.prog.mk>
