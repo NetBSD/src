@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.325 1999/10/25 19:18:10 drochner Exp $
+#	$NetBSD: files,v 1.326 1999/10/27 13:18:02 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -360,6 +360,10 @@ file	dev/ic/am7930.c			audioamd
 # SPARC `SUNW,audiocs'
 device	audiocs: audio, auconv, ad1848
 file	dev/ic/cs4231.c			audiocs
+
+# AC-97 CODECs
+define	ac97
+file	dev/ic/ac97.c			ac97
 
 # LSI64854 DMA controller back-end
 define	lsi64854
