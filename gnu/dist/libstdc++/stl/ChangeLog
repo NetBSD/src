@@ -1,13 +1,20 @@
-Fri Mar  6 00:12:28 1998  H.J. Lu  (hjl@gnu.org)
+Fri Jul 10 15:20:09 1998  Klaus-Georg Adams <Klaus-Georg.Adams@chemie.uni-karlsruhe.de>
+
+	* stl_tempbuf.h (temporary_buffer): Add missing typename.
+	* type_traits.h: update comments.
+
+Sun Jun 28 00:49:42 1998  Jeffrey A Law  (law@cygnus.com)
 
 	* stl_config.h (__STL_PTHREADS): Don't define for glibc 2 if
 	_G_USING_THUNKS is not defined.
 
-1998-02-25  Jason Merrill  <jason@yorick.cygnus.com>
+1998-04-07 18:32  Ulrich Drepper  <drepper@cygnus.com>
 
-	* stl_config.h: Work around glibc pthread.h bug.
+	* stl_hashtable.h (__stl_prime_list): Mark last two numbers as
+	unsigned long since they are otherwise too large for long int on
+	32bit machines.
 
-Wed Jan 14 16:15:05 1998  H.J. Lu  (hjl@gnu.org)
+Fri Feb 20 16:15:05 1998  H.J. Lu  (hjl@gnu.org)
 			  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* ropeimpl.h: Check __STL_PTHREADS instead of _PTHREADS.
@@ -18,6 +25,10 @@ Wed Jan 14 16:15:05 1998  H.J. Lu  (hjl@gnu.org)
 	* stl_config.h: include <_G_config.h> if __GNUG__ is defined.
 	(__STL_PTHREADS): Defined if _PTHREADS is defined or
 	__GLIBC__ >= 2.
+
+Tue Jan 27 12:01:25 1998  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* stl_algo.h (__lg): Fix for n == 0.
 
 Sat Nov  8 00:45:17 1997  Jason Merrill  <jason@yorick.cygnus.com>
 
