@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.426 2002/05/14 12:05:36 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.427 2002/05/15 14:14:58 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.423 2002/05/14 12:05:13 augustss Exp 
+ *	NetBSD: pcidevs,v 1.424 2002/05/15 14:14:34 augustss Exp 
  */
 
 /*
@@ -2464,10 +2464,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "DECchip 21154 PCI-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_CPQ42XX,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21554,
 	    0,
 	    "Digital Equipment",
-	    "Compaq SMART RAID 42xx",
+	    "DECchip 21554 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,

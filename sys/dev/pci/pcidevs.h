@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.428 2002/05/14 12:05:35 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.429 2002/05/15 14:14:57 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.423 2002/05/14 12:05:13 augustss Exp 
+ *	NetBSD: pcidevs,v 1.424 2002/05/15 14:14:34 augustss Exp 
  */
 
 /*
@@ -1120,7 +1120,7 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
+#define	PCI_PRODUCT_DEC_21554	0x0046		/* DECchip 21554 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_SWXCR	0x1065		/* SWXCR RAID */
 
 /* Dell Computer products */
