@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_var.h,v 1.1.2.2 2004/05/10 15:00:38 tron Exp $ */
+/*	$NetBSD: ipsec_var.h,v 1.1.2.3 2004/07/17 16:51:57 he Exp $ */
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ struct newipsecstat {
 /*
  * Names for IPsec & Key sysctl objects
  */
-#define IPSECCTL_STATS			1	/* stats */
+#define IPSECCTL_STATS			1	/* KAME compat stats */
 #define IPSECCTL_DEF_POLICY		2
 #define IPSECCTL_DEF_ESP_TRANSLEV	3	/* int; ESP transport mode */
 #define IPSECCTL_DEF_ESP_NETLEV		4	/* int; ESP tunnel mode */
