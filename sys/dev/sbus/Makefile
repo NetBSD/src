@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1998/07/28 00:33:03 pk Exp $
+#	$NetBSD: Makefile,v 1.2 1998/07/28 08:45:46 augustss Exp $
 
 INCSDIR= /usr/include/dev/sbus
 
 INCS=	mbppio.h
+
+.include <bsd.kinc.mk>
