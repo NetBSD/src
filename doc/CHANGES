@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.371 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.372 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -7,7 +7,7 @@ or see the mailing list archives.  For more information, send a message
 containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
-Changes from NetBSD 2.0 to NetBSD 2.1:
+Changes from NetBSD 2.0 to NetBSD 3.0:
 	which(1): Replaced by a C program that only checks the path.
 		[christos 20040401]
 	heimdal: import version 0.6.1.  [lha 20040402]
