@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.88 2003/07/08 05:17:12 itojun Exp $
+# $NetBSD: mi,v 1.89 2003/09/29 19:33:06 mycroft Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -541,6 +541,16 @@
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples
 ./usr/share/examples/syslogd/all.debug			misc-sysutil-examples
 ./usr/share/examples/syslogd/all.newsyslog.conf		misc-sysutil-examples
+./usr/share/misc/airport				misc-reference-share
+./usr/share/misc/birthtoken				misc-reference-share
+./usr/share/misc/country				misc-reference-share
+./usr/share/misc/domains				misc-reference-share
+./usr/share/misc/flowers				misc-reference-share
+./usr/share/misc/inter.phone				misc-reference-share
+./usr/share/misc/language				misc-reference-share
+./usr/share/misc/na.phone				misc-reference-share
+./usr/share/misc/na.postal				misc-reference-share
+./usr/share/misc/zipcodes				misc-reference-share
 ./usr/share/sendmail					misc-sendmail-share
 ./usr/share/sendmail/LICENSE				misc-sendmail-share
 ./usr/share/sendmail/README				misc-sendmail-share
