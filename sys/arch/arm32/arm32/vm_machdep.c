@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 1998/09/09 11:17:25 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 1998/11/11 06:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -86,7 +86,6 @@ int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
 void	switch_exit	__P((struct proc *p, struct proc *proc0));
 extern void proc_trampoline	__P((void));
-extern void child_return	__P((void));
 
 pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
@@ -122,9 +121,20 @@ cpu_fork(p1, p2)
 		printf("cpu_fork: %p %p %p %p\n", p1, p2, curproc, &proc0);
 #endif	/* PMAP_DEBUG */
 
-#if 0	/* XXX */
-	/* Sync the pcb */
-	savectx(curpcb);
+#if 0 /* XXX */
+	if (p1 == curproc) {
+		/* Sync the PCB before we copy it. */
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
+#else
+#ifdef DIAGNOSTIC
+	if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 #endif
 
 	/* Copy the pcb */
@@ -178,14 +188,15 @@ cpu_fork(p1, p2)
 
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
 
 	sf->sf_r4 = (u_int)pc;
-	sf->sf_r5 = (u_int)p;
+	sf->sf_r5 = (u_int)arg;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 1998/08/20 08:33:47 kleink Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 1998/11/11 06:41:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -184,6 +184,9 @@ int	cachectl __P((int, caddr_t, int));
 void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 int	kvtop __P((caddr_t));
+
+/* trap.c functions */
+void	child_return __P((void *));
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()
