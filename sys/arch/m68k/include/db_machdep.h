@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.14 1997/01/15 23:11:46 gwr Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15 1997/01/27 23:02:55 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,50 +36,29 @@
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 #include <vm/lock.h>
+
+#include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
-struct mc68020_saved_state {
-	int		d0;		/* data registers */
-	int		d1;
-	int		d2;
-	int		d3;
-	int		d4;
-	int		d5;
-	int		d6;
-	int		d7;
-	int		a0;		/* address registers */
-	int		a1;
-	int		a2;
-	int		a3;
-	int		a4;
-	int		a5;
-	int		a6;
-	int		sp;		/* stack pointer */
-	short		empty;
-	short		stackadj;
-	unsigned short	sr;		/* status register */
-	unsigned int	pc;		/* program counter - UNALIGNED!!! */
-	unsigned short	stkfmt	: 4;	/* rte stack frame format */
-	unsigned short	vector	: 12;	/* vector number */
-};
-typedef struct mc68020_saved_state db_regs_t;
+typedef struct trapframe db_regs_t;
+
 db_regs_t	ddb_regs;		/* register state */
 #define DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->pc)
+#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
 
 #define	BKPT_INST	0x4e4f		/* breakpoint instruction */
 #define	BKPT_SIZE	(2)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK	ddb_regs.pc -= 2;
+#define	FIXUP_PC_AFTER_BREAK	ddb_regs.tf_pc -= 2;
 
 #define SR_T1 0x8000
-#define	db_clear_single_step(regs)	((regs)->sr &= ~SR_T1)
-#define	db_set_single_step(regs)	((regs)->sr |=  SR_T1)
+#define	db_clear_single_step(regs)	((regs)->tf_sr &= ~SR_T1)
+#define	db_set_single_step(regs)	((regs)->tf_sr |=  SR_T1)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
 #ifdef T_WATCHPOINT
