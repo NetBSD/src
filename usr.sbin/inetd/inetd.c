@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.21 1997/03/13 14:29:15 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.22 1997/03/13 14:57:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$NetBSD: inetd.c,v 1.21 1997/03/13 14:29:15 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.22 1997/03/13 14:57:34 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -524,9 +524,7 @@ main(argc, argv, envp)
 				syslog(deny_severity, "refused "
 				    "connection from %.500s, service %s (%s)",
 				    eval_client(&req), service, sep->se_proto);
-				if (sep->se_socktype != SOCK_STREAM)
-					recv(0, buf, sizeof (buf), 0);
-				_exit(1);
+				goto reject;
 			}
 			if (lflag) {
 				syslog(allow_severity,
@@ -539,20 +537,16 @@ main(argc, argv, envp)
 			else {
 				if ((pwd = getpwnam(sep->se_user)) == NULL) {
 					syslog(LOG_ERR,
-						"getpwnam: %s: No such user",
-						sep->se_user);
-					if (sep->se_socktype != SOCK_STREAM)
-						recv(0, buf, sizeof (buf), 0);
-					_exit(1);
+					    "getpwnam: %s: No such user",
+					    sep->se_user);
+					goto reject;
 				}
 				if (sep->se_group &&
 				    (grp = getgrnam(sep->se_group)) == NULL) {
 					syslog(LOG_ERR,
-						"getgrnam: %s: No such group",
-						sep->se_group);
-					if (sep->se_socktype != SOCK_STREAM)
-						recv(0, buf, sizeof (buf), 0);
-					_exit(1);
+					    "getgrnam: %s: No such group",
+					    sep->se_group);
+					goto reject;
 				}
 				if (pwd->pw_uid) {
 					if (sep->se_group)
@@ -570,8 +564,11 @@ main(argc, argv, envp)
 				if (sep->se_log)
 					dolog(sep, ctrl);
 #endif
-				dup2(ctrl, 0);
-				close(ctrl);
+				if (ctrl != 0) {
+					dup2(ctrl, 0);
+					close(ctrl);
+					ctrl = 0;
+				}
 				dup2(0, 1);
 				dup2(0, 2);
 #ifdef RLIMIT_NOFILE
@@ -584,9 +581,10 @@ main(argc, argv, envp)
 				for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
 					(void)close(tmpint);
 				execv(sep->se_server, sep->se_argv);
-				if (sep->se_socktype != SOCK_STREAM)
-					recv(0, buf, sizeof (buf), 0);
 				syslog(LOG_ERR, "execv %s: %m", sep->se_server);
+			reject:
+				if (sep->se_socktype != SOCK_STREAM)
+					recv(ctrl, buf, sizeof (buf), 0);
 				_exit(1);
 			}
 		}
