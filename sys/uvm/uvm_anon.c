@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.26 2003/08/28 13:12:17 pk Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.27 2004/01/06 15:56:49 chs Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.26 2003/08/28 13:12:17 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.27 2004/01/06 15:56:49 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -125,10 +125,9 @@ uvm_anon_add(count)
 	uvmexp.nanon += needed;
 	uvmexp.nfreeanon += needed;
 	for (lcv = 0; lcv < needed; lcv++) {
-		simple_lock_init(&anon->an_lock);
+		simple_lock_init(&anon[lcv].an_lock);
 		anon[lcv].u.an_nxt = uvm.afree;
 		uvm.afree = &anon[lcv];
-		simple_lock_init(&uvm.afree->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
 	return 0;
