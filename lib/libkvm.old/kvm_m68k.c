@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.2 1996/05/13 02:30:24 thorpej Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.3 1996/05/14 21:59:57 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,10 +38,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-$if 0
+#if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: kvm_m68k.c,v 1.2 1996/05/13 02:30:24 thorpej Exp $";
+static char rcsid[] = "$NetBSD: kvm_m68k.c,v 1.3 1996/05/14 21:59:57 scottr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
