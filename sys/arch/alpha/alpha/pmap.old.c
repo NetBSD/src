@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.38 1998/02/27 22:25:25 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.39 1998/02/28 01:07:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.38 1998/02/27 22:25:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.39 1998/02/28 01:07:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,16 +324,19 @@ pa_to_pvh(pa)
 void	alpha_protection_init __P((void));
 void	pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *, int));
 void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
-void	pmap_enter_ptpage __P((pmap_t, vm_offset_t));
 
 /*
  * PT page management functions.
  */
+void	pmap_enter_ptpage __P((pmap_t, vm_offset_t));
 void	pmap_create_lev1map __P((pmap_t));
 
 /*
  * PV table management functions.
  */
+void	pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t));
+void	pmap_remove_pv __P((pmap_t, vm_offset_t, vm_offset_t,
+	    pt_entry_t **, pmap_t *));
 struct	pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
@@ -1244,46 +1247,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 	/*
 	 * Enter on the PV list if part of our managed memory
-	 * Note that we raise IPL while manipulating pv_table
-	 * since pmap_enter can be called at interrupt time.
+	 * (raise IPL since we may be called at interrupt time).
 	 */
 	if (PAGE_IS_MANAGED(pa)) {
-		struct pv_head *pvh;
-		pv_entry_t pv;
 		int s;
-
 #ifdef PMAPSTATS
 		enter_stats.managed++;
 #endif
-		pvh = pa_to_pvh(pa);
 		s = splimp();
-
-#ifdef DEBUG
-		for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
-		     pv = LIST_NEXT(pv, pv_list))
-			if (pmap == pv->pv_pmap && va == pv->pv_va)
-				panic("pmap_enter: already in pv table");
-#endif
-
-		/*
-		 * Allocate and fill in the new pv_entry.
-		 */
-		pv = pmap_alloc_pv();
-		pv->pv_va = va;
-		pv->pv_pmap = pmap;
-		pv->pv_ptpte = NULL;
-		pv->pv_ptpmap = NULL;
-
-		/*
-		 * ...and put it in the list.
-		 */
-#ifdef PMAPSTATS
-		if (LIST_FIRST(&pvh->pvh_list) == NULL)
-			enter_stats.firstpv++;
-		else if (LIST_NEXT(LIST_FIRST(&pvh->pvh_list)) == NULL)
-			enter_stats.secondpv++;
-#endif
-		LIST_INSERT_HEAD(&pvh->pvh_list, pv, pv_list);
+		pmap_enter_pv(pmap, pa, va);
 		splx(s);
 	} else if (pmap_initialized) {
 		checkpv = FALSE;
@@ -1817,7 +1789,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	int flags;
 {
 	struct pv_head *pvh;
-	pv_entry_t pv;
 	vm_offset_t pa;
 	pmap_t ptpmap;
 	pt_entry_t *ste;
@@ -1895,30 +1866,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * (raise IPL since we may be called at interrupt time).
 	 */
 	pvh = pa_to_pvh(pa);
-	ste = NULL;
 	s = splimp();
 
-	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
-	     pv = LIST_NEXT(pv, pv_list))
-		if (pmap == pv->pv_pmap && va == pv->pv_va)
-			break;
-#ifdef DEBUG
-	if (pv == NULL)
-		panic("pmap_remove_mapping: not in pv table");
-#endif
-
-	LIST_REMOVE(pv, pv_list);
-
-	/*
-	 * Remeber if we mapped a PT page.
-	 */
-	ste = pv->pv_ptpte;
-	ptpmap = pv->pv_ptpmap;
-
-	/*
-	 * ...and free the pv_entry.
-	 */
-	pmap_free_pv(pv);
+	pmap_remove_pv(pmap, pa, va, &ste, &ptpmap);
 
 	/*
 	 * If this was a PT page we must also remove the
@@ -2404,6 +2354,103 @@ vtophys(vaddr)
 
 /******************** pv_entry management ********************/
 
+/*
+ * pmap_enter_pv:
+ *
+ *	Add a physical->virtual entry to the pv_table.
+ *	Must be called at splimp()!
+ */
+void
+pmap_enter_pv(pmap, pa, va)
+	pmap_t pmap;
+	vm_offset_t pa, va;
+{
+	struct pv_head *pvh;
+	pv_entry_t pv;
+
+	pvh = pa_to_pvh(pa);
+
+#ifdef DEBUG
+	/*
+	 * Make sure the entry doens't already exist.
+	 */
+	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
+	     pv = LIST_NEXT(pv, pv_list))
+		if (pmap == pv->pv_pmap && va == pv->pv_va)
+			panic("pmap_enter_pv: already in pv table");
+#endif
+
+	/*
+	 * Allocate and fill in the new pv_entry.
+	 */
+	pv = pmap_alloc_pv();
+	pv->pv_va = va;
+	pv->pv_pmap = pmap;
+	pv->pv_ptpte = NULL;
+	pv->pv_ptpmap = NULL;
+
+	/*
+	 * ...and put it in the list.
+	 */
+#ifdef PMAPSTATS
+	if (LIST_FIRST(&pvh->pvh_list) == NULL)
+		enter_stats.firstpv++;
+	else if (LIST_NEXT(LIST_FIRST(&pvh->pvh_list)) == NULL)
+		enter_stats.secondpv++;
+#endif
+	LIST_INSERT_HEAD(&pvh->pvh_list, pv, pv_list);
+}
+
+/*
+ * pmap_remove_pv:
+ *
+ *	Remove a physical->virtual entry from the pv_table.
+ *	Must be called at splimp()!
+ */
+void
+pmap_remove_pv(pmap, pa, va, ptptep, ptpmapp)
+	pmap_t pmap;
+	vm_offset_t pa, va;
+	pt_entry_t **ptptep;
+	pmap_t *ptpmapp;
+{
+	struct pv_head *pvh;
+	pv_entry_t pv;
+
+	pvh = pa_to_pvh(pa);
+
+	/*
+	 * Find the entry to remove.
+	 */
+	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
+	     pv = LIST_NEXT(pv, pv_list))
+		if (pmap == pv->pv_pmap && va == pv->pv_va)
+			break;
+
+#ifdef DEBUG
+	if (pv == NULL)
+		panic("pmap_remove_pv: not in pv table");
+#endif
+
+	LIST_REMOVE(pv, pv_list);
+
+	/*
+	 * Remember if we mapped a PT page.
+	 */
+	*ptptep = pv->pv_ptpte;
+	*ptpmapp = pv->pv_ptpmap;
+
+	/*
+	 * ...and free the pv_entry.
+	 */
+	pmap_free_pv(pv);
+}
+
+/*
+ * pmap_alloc_pv:
+ *
+ *	Allocate a pv_entry.
+ */
 struct pv_entry *
 pmap_alloc_pv()
 {
@@ -2413,6 +2460,9 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
+		/*
+		 * No free pv_entry's; allocate a new pv_page.
+		 */
 		pvppa = pmap_alloc_physpage();
 		pvp = (struct pv_page *)ALPHA_PHYS_TO_K0SEG(pvppa);
 		LIST_INIT(&pvp->pvp_pgi.pgi_freelist);
@@ -2436,6 +2486,11 @@ pmap_alloc_pv()
 	return (pv);
 }
 
+/*
+ * pmap_free_pv:
+ *
+ *	Free a pv_entry.
+ */
 void
 pmap_free_pv(pv)
 	struct pv_entry *pv;
@@ -2452,6 +2507,10 @@ pmap_free_pv(pv)
 		++pv_nfree;
 		break;
 	case NPVPPG:
+		/*
+		 * We've freed all of the pv_entry's in this pv_page.
+		 * Free the pv_page back to the system.
+		 */
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 		pvppa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pvp);
@@ -2460,6 +2519,12 @@ pmap_free_pv(pv)
 	}
 }
 
+/*
+ * pmap_collect_pv:
+ *
+ *	Compact the pv_table and release any completely free
+ *	pv_page's back to the system.
+ */
 void
 pmap_collect_pv()
 {
