@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18 1997/09/01 00:16:31 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.19 1997/12/10 23:12:17 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -50,6 +50,7 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
+#include <machine/instr.h>
 #endif
 
 #include <machine/bsd_openprom.h>
@@ -233,4 +234,239 @@ db_machine_init()
 {
 	db_machine_commands_install(sparc_db_command_table);
 }
+
+
+/*
+ * support for SOFTWARE_SSTEP:
+ * return the next pc if the given branch is taken.
+ *
+ * note: in the case of conditional branches with annul,
+ * this actually returns the next pc in the "not taken" path,
+ * but in that case next_instr_address() will return the
+ * next pc in the "taken" path.  so even tho the breakpoints
+ * are backwards, everything will still work, and the logic is
+ * much simpler this way.
+ */
+db_addr_t
+db_branch_taken(inst, pc, regs)
+	int inst;
+	db_addr_t pc;
+	db_regs_t *regs;
+{
+    union instr insn;
+    db_addr_t npc = ddb_regs.db_tf.tf_npc;
+
+    insn.i_int = inst;
+
+    /*
+     * if this is not an annulled conditional branch, the next pc is "npc".
+     */
+
+    if (insn.i_any.i_op != IOP_OP2 || insn.i_branch.i_annul != 1)
+	return npc;
+
+    switch (insn.i_op2.i_op2) {
+      case IOP2_Bicc:
+      case IOP2_FBfcc:
+      case IOP2_BPcc:
+      case IOP2_FBPfcc:
+      case IOP2_CBccc:
+	/* branch on some condition-code */
+	switch (insn.i_branch.i_cond)
+	{
+	  case Icc_A: /* always */
+	    return pc + ((inst << 10) >> 8);
+
+	  default: /* all other conditions */
+	    return npc + 4;
+	}
+
+      case IOP2_BPr:
+	/* branch on register, always conditional */
+	return npc + 4;
+
+      default:
+	/* not a branch */
+	panic("branch_taken() on non-branch");
+    }
+}
+
+boolean_t
+db_inst_branch(inst)
+	int inst;
+{
+    union instr insn;
+
+    insn.i_int = inst;
+
+    if (insn.i_any.i_op != IOP_OP2)
+	return FALSE;
+
+    switch (insn.i_op2.i_op2) {
+      case IOP2_BPcc:
+      case IOP2_Bicc:
+      case IOP2_BPr:
+      case IOP2_FBPfcc:
+      case IOP2_FBfcc:
+      case IOP2_CBccc:
+	return TRUE;
+
+      default:
+	return FALSE;
+    }
+}
+
+
+boolean_t
+db_inst_call(inst)
+	int inst;
+{
+    union instr insn;
+
+    insn.i_int = inst;
+
+    switch (insn.i_any.i_op) {
+      case IOP_CALL:
+	return TRUE;
+
+      case IOP_reg:
+	return (insn.i_op3.i_op3 == IOP3_JMPL) && !db_inst_return(inst);
+
+      default:
+	return FALSE;
+    }
+}
+
+
+boolean_t
+db_inst_unconditional_flow_transfer(inst)
+	int inst;
+{
+    union instr insn;
+
+    insn.i_int = inst;
+
+    if (db_inst_call(inst))
+	return TRUE;
+
+    if (insn.i_any.i_op != IOP_OP2)
+	return FALSE;
+
+    switch (insn.i_op2.i_op2)
+    {
+      case IOP2_BPcc:
+      case IOP2_Bicc:
+      case IOP2_FBPfcc:
+      case IOP2_FBfcc:
+      case IOP2_CBccc:
+	return insn.i_branch.i_cond == Icc_A;
+
+      default:
+	return FALSE;
+    }
+}
+
+
+boolean_t
+db_inst_return(inst)
+	int inst;
+{
+    return (inst == I_JMPLri(I_G0, I_O7, 8) ||		/* ret */
+	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
+}
+
+boolean_t
+db_inst_trap_return(inst)
+	int inst;
+{
+    union instr insn;
+
+    insn.i_int = inst;
+
+    return (insn.i_any.i_op == IOP_reg &&
+	    insn.i_op3.i_op3 == IOP3_RETT);
+}
+
+
+int
+db_inst_load(inst)
+	int inst;
+{
+    union instr insn;
+
+    insn.i_int = inst;
+
+    if (insn.i_any.i_op != IOP_mem)
+	return 0;
+
+    switch (insn.i_op3.i_op3) {
+      case IOP3_LD:
+      case IOP3_LDUB:
+      case IOP3_LDUH:
+      case IOP3_LDD:
+      case IOP3_LDSB:
+      case IOP3_LDSH:
+      case IOP3_LDSTUB:
+      case IOP3_SWAP:
+      case IOP3_LDA:
+      case IOP3_LDUBA:
+      case IOP3_LDUHA:
+      case IOP3_LDDA:
+      case IOP3_LDSBA:
+      case IOP3_LDSHA:
+      case IOP3_LDSTUBA:
+      case IOP3_SWAPA:
+      case IOP3_LDF:
+      case IOP3_LDFSR:
+      case IOP3_LDDF:
+      case IOP3_LFC:
+      case IOP3_LDCSR:
+      case IOP3_LDDC:
+	return 1;
+
+      default:
+	return 0;
+    }
+}
+
+int
+db_inst_store(inst)
+	int inst;
+{
+    union instr insn;
+
+    insn.i_int = inst;
+
+    if (insn.i_any.i_op != IOP_mem)
+	return 0;
+
+    switch (insn.i_op3.i_op3) {
+      case IOP3_ST:
+      case IOP3_STB:
+      case IOP3_STH:
+      case IOP3_STD:
+      case IOP3_LDSTUB:
+      case IOP3_SWAP:
+      case IOP3_STA:
+      case IOP3_STBA:
+      case IOP3_STHA:
+      case IOP3_STDA:
+      case IOP3_LDSTUBA:
+      case IOP3_SWAPA:
+      case IOP3_STF:
+      case IOP3_STFSR:
+      case IOP3_STDFQ:
+      case IOP3_STDF:
+      case IOP3_STC:
+      case IOP3_STCSR:
+      case IOP3_STDCQ:
+      case IOP3_STDC:
+	return 1;
+
+      default:
+	return 0;
+    }
+}
+
+
 #endif /* DDB */
