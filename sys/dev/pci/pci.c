@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.50 2001/02/12 09:14:53 mrg Exp $	*/
+/*	$NetBSD: pci.c,v 1.51 2001/03/02 06:24:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -126,6 +126,10 @@ pcimatch(parent, cf, aux)
 	return 1;
 }
 
+/* XXX
+ * The __PCI_BUS_DEVORDER/__PCI_DEV_FUNCORDER macros should go away
+ * and be implemented with device properties when they arrive.
+ */
 void
 pci_probe_bus(self)
 	struct device *self;
@@ -134,15 +138,27 @@ pci_probe_bus(self)
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	const struct pci_quirkdata *qd;
-	int bus, device, maxndevs, function, nfunctions;
+	int bus, device, function, nfunctions;
+#ifdef __PCI_BUS_DEVORDER
+	char devs[32];
+	int i;
+#endif
+#ifdef __PCI_DEV_FUNCORDER
+	char funcs[8];
+	int j;
+#endif
 
 	iot = sc->sc_iot;
 	memt = sc->sc_memt;
 	pc = sc->sc_pc;
 	bus = sc->sc_bus;
-	maxndevs = sc->sc_maxndevs;
-
-	for (device = 0; device < maxndevs; device++) {
+#ifdef __PCI_BUS_DEVORDER
+	pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs);
+	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++)
+#else
+	for (device = 0; device < sc->sc_maxndevs; device++)
+#endif
+	{
 		pcitag_t tag;
 		pcireg_t id, class, intr, bhlcr, csr;
 		struct pci_attach_args pa;
@@ -168,7 +184,14 @@ pci_probe_bus(self)
 		else
 			nfunctions = 1;
 
-		for (function = 0; function < nfunctions; function++) {
+#ifdef __PCI_DEV_FUNCORDER
+		pci_dev_funcorder(sc->sc_pc, sc->sc_bus, device, funcs);
+		for (j = 0; (function = funcs[j]) < nfunctions &&
+		    function >= 0; j++)
+#else
+		for (function = 0; function < nfunctions; function++)
+#endif
+		{
 			tag = pci_make_tag(pc, bus, device, function);
 			id = pci_conf_read(pc, tag, PCI_ID_REG);
 			csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
