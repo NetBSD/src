@@ -1,4 +1,4 @@
-/*	$NetBSD: pfour_subr.c,v 1.3 2003/10/28 15:25:27 chs Exp $ */
+/*	$NetBSD: pfour_subr.c,v 1.4 2003/10/28 16:25:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfour_subr.c,v 1.3 2003/10/28 15:25:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfour_subr.c,v 1.4 2003/10/28 16:25:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,12 +120,10 @@ fb_setsize_pfour(fb)
 	default:
 
 		/*
-		 * Assume the smallest size.
+		 * Use the defaults already filled in by the generic fb code.
 		 */
 
-		width = 640;
-		height = 480;
-		break;
+		return;
 	}
 
 	fb->fb_type.fb_width = width;
