@@ -36,13 +36,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: heapsort.c,v 1.4 1994/06/16 05:26:34 mycroft Exp $";
+static char *rcsid = "$Id: heapsort.c,v 1.5 1995/03/23 19:42:42 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <stddef.h>
 
 /*
  * Swap two areas of size number of bytes.  Although qsort(3) permits random
