@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 2001/06/02 18:09:21 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 2001/06/24 05:22:18 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -97,6 +97,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	printf("cpu_fork:p1(%p),p2(%p)\n", p1, p2);
 #endif
 
+#ifdef SH4
+	cacheflush();
+#endif
+
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
@@ -113,6 +117,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	/* set up the kernel stack pointer */
 	pcb->kr15 = (int)p2->p_addr + USPACE - sizeof(struct trapframe);
+
+	/* convert r15, kr15 to physical address , because tlb miss must not
+	   be occured when accessing kernel stack */
+        pcb->kr15 = SH3_PHYS_TO_P1SEG(SH3_P2SEG_TO_PHYS(vtophys(pcb->kr15)));
 
 	/*
 	 * Copy the trapframe.
@@ -132,11 +140,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sf->sf_r11 = (int)arg;
 	sf->sf_pr = (int)proc_trampoline;
 	pcb->r15 = (int)sf;
-
-	/* convert r15, kr15 to physical address , because tlb miss must not
-	   be occured when accessing kernel stack */
-	pcb->r15 = vtophys(pcb->r15);
-	pcb->kr15 = vtophys(pcb->kr15);
 }
 
 void
