@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1998/02/03 05:39:25 perry Exp $ */
+/*	$NetBSD: extern.h,v 1.8 1998/03/29 04:49:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -236,8 +236,8 @@ struct room {
 	char   *desc;
 	unsigned int objects[NUMOFWORDS];
 };
-struct room dayfile[];
-struct room nightfile[];
+extern struct room dayfile[];
+extern struct room nightfile[];
 struct room *location;
 
  /* object characteristics */
@@ -294,14 +294,14 @@ struct wlist {
 #define HASHMUL		81
 #define HASHMASK	(HASHSIZE - 1)
 struct wlist *hashtab[HASHSIZE];
-struct wlist wlist[];
+extern struct wlist wlist[];
 
 struct objs {
 	short   room;
 	short   obj;
 };
-struct objs dayobjs[];
-struct objs nightobjs[];
+extern struct objs dayobjs[];
+extern struct objs nightobjs[];
 
 void blast __P((void));
 void bury __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/10/10 08:59:37 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1998/03/29 04:46:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1997/10/10 08:59:37 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1998/03/29 04:46:40 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: main.c,v 1.5 1997/10/10 08:59:37 lukem Exp $");
 #define MVPAUSE	5		/* time to sleep when stuck */
 #define MAXUSERS 35		/* maximum number of users */
 
-char   *instr[];		/* text of instructions */
-char   *message[];		/* update message */
+extern char   *instr[];		/* text of instructions */
+extern char   *message[];		/* update message */
 speed_t ospeed;			/* tty output speed */
 
 char   *helpm[] = {		/* help message */
