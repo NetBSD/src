@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.53 2003/10/31 08:15:53 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.54 2003/11/06 07:13:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.53 2003/10/31 08:15:53 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.54 2003/11/06 07:13:33 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1440,6 +1440,7 @@ auich_calibrate(struct auich_softc *sc)
 	uint32_t actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
+	u_long rate;
 
 	/*
 	 * Grab audio from input for fixed interval and compare how
@@ -1448,9 +1449,16 @@ auich_calibrate(struct auich_softc *sc)
 	 * generated.
 	 */
 
+	/* Force the codec to a known state first. */
+	sc->codec_if->vtbl->set_clock(sc->codec_if, 48000);
+	rate = 48000;
+	sc->codec_if->vtbl->set_rate(sc->codec_if, AC97_REG_PCM_LR_ADC_RATE,
+	    &rate);
+
 	/* Setup a buffer */
 	bytes = 64000;
 	temp_buffer = auich_allocm(sc, AUMODE_RECORD, bytes, M_DEVBUF, M_WAITOK);
+
 	for (p = sc->sc_dmas; p && KERNADDR(p) != temp_buffer; p = p->next)
 		;
 	if (p == NULL) {
