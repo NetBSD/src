@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysent.c,v 1.25 1998/06/25 22:18:53 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sysent.c,v 1.26 1998/09/11 23:15:08 mycroft Exp $	*/
 
 /*
  * System call switch table.
@@ -119,12 +119,12 @@ struct sysent freebsd_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 45 = unimplemented ktrace */
 #endif
-	{ 3, s(struct sys_sigaction_args),
-	    sys_sigaction },			/* 46 = sigaction */
+	{ 3, s(struct compat_13_sys_sigaction_args),
+	    compat_13_sys_sigaction },		/* 46 = sigaction */
 	{ 0, 0,
 	    sys_getgid },			/* 47 = getgid */
-	{ 2, s(struct sys_sigprocmask_args),
-	    sys_sigprocmask },			/* 48 = sigprocmask */
+	{ 2, s(struct compat_13_sys_sigprocmask_args),
+	    compat_13_sys_sigprocmask },	/* 48 = sigprocmask */
 	{ 2, s(struct sys___getlogin_args),
 	    sys___getlogin },			/* 49 = __getlogin */
 	{ 1, s(struct sys_setlogin_args),
@@ -132,7 +132,7 @@ struct sysent freebsd_sysent[] = {
 	{ 1, s(struct sys_acct_args),
 	    sys_acct },				/* 51 = acct */
 	{ 0, 0,
-	    sys_sigpending },			/* 52 = sigpending */
+	    compat_13_sys_sigpending },		/* 52 = sigpending */
 	{ 2, s(struct compat_13_sys_sigaltstack_args),
 	    compat_13_sys_sigaltstack },	/* 53 = sigaltstack */
 	{ 3, s(struct freebsd_sys_ioctl_args),
@@ -249,8 +249,8 @@ struct sysent freebsd_sysent[] = {
 	    compat_43_sys_sigblock },		/* 109 = osigblock */
 	{ 1, s(struct compat_43_sys_sigsetmask_args),
 	    compat_43_sys_sigsetmask },		/* 110 = osigsetmask */
-	{ 1, s(struct sys_sigsuspend_args),
-	    sys_sigsuspend },			/* 111 = sigsuspend */
+	{ 1, s(struct compat_13_sys_sigsuspend_args),
+	    compat_13_sys_sigsuspend },		/* 111 = sigsuspend */
 	{ 2, s(struct compat_43_sys_sigstack_args),
 	    compat_43_sys_sigstack },		/* 112 = osigstack */
 	{ 3, s(struct compat_43_sys_recvmsg_args),
