@@ -391,7 +391,7 @@ quaffpotion(pot)
 	{
 	register int i,j,k;
 	if (pot<0 || pot>=MAXPOTION) return; /* check for within bounds */
-	potionname[pot][0] = ' ';
+	potionname[pot] = potionhide[pot];
 	switch(pot)
 		{
 		case 9: lprcat("\nYou feel greedy . . .");   nap(2000);
@@ -550,7 +550,7 @@ read_scroll(typ)
 	{
 	register int i,j;
 	if (typ<0 || typ>=MAXSCROLL) return;  /* be sure we are within bounds */
-	scrollname[typ][0] = ' ';
+	scrollname[typ] = scrollhide[typ];
 	switch(typ)
 	  {
 	  case 0:	lprcat("\nYour armor glows for a moment");  enchantarmor(); return;
@@ -615,8 +615,8 @@ read_scroll(typ)
 
 	  case 19:	for (i=0; i<26; i++)	/* identify */
 					{
-					if (iven[i]==OPOTION)  potionname[ivenarg[i]][0] = ' ';
-					if (iven[i]==OSCROLL)  scrollname[ivenarg[i]][0] = ' ';
+					if (iven[i]==OPOTION)  potionname[ivenarg[i]] = potionhide[ivenarg[i]];
+					if (iven[i]==OSCROLL)  scrollname[ivenarg[i]] = scrollhide[ivenarg[i]];
 					}
 				break;
 

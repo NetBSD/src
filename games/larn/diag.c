@@ -213,8 +213,8 @@ restoregame(fname)
 	level = c[CAVELEVEL] = lgetc();
 	playerx = lgetc();		playery = lgetc();
 	lrfill((char*)iven,26);		lrfill((char*)ivenarg,26*sizeof(short));
-	for (k=0; k<MAXSCROLL; k++)  scrollname[k][0] = lgetc();
-	for (k=0; k<MAXPOTION; k++)  potionname[k][0] = lgetc();
+	for (k=0; k<MAXSCROLL; k++)  scrollname[k] = lgetc() ? scrollhide[k] : "";
+	for (k=0; k<MAXPOTION; k++)  potionname[k] = lgetc() ? potionhide[k] : "";
 	lrfill((char*)spelknow,SPNUM);		wizard = lgetc();
 	rmst = lgetc();			/*	random monster creation flag */
 
