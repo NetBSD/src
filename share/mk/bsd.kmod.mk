@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.35 1999/11/02 22:42:51 jdolecek Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.36 2000/01/22 19:31:01 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -40,7 +40,7 @@ ${PROG}: ${DPSRCS} ${OBJS} ${DPADD}
 MAN=	${KMOD}.4
 .endif
 
-all: machine-links ${PROG}
+realall: machine-links ${PROG}
 
 .PHONY:	machine-links
 beforedepend: machine-links

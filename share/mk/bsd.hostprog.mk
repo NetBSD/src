@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.4 1999/11/23 13:22:38 blymn Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.5 2000/01/22 19:31:01 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -100,7 +100,7 @@ MAN=	${HOSTPROG}.1
 .endif	# !defined(MAN)
 .endif	# defined(HOSTPROG)
 
-all: ${HOSTPROG}
+realall: ${HOSTPROG}
 
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
