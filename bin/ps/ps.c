@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.34 1999/12/04 01:23:09 hubertf Exp $	*/
+/*	$NetBSD: ps.c,v 1.35 2000/04/10 06:37:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.34 1999/12/04 01:23:09 hubertf Exp $");
+__RCSID("$NetBSD: ps.c,v 1.35 2000/04/10 06:37:37 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,6 +178,7 @@ main(argc, argv)
 			break;
 		case 'M':
 			memf = optarg;
+			dontuseprocfs = 1;
 			break;
 		case 'm':
 			sortby = SORTMEM;
