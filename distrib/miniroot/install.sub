@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.25 1999/01/25 23:34:21 garbled Exp $
+#	$NetBSD: install.sub,v 1.25.2.1 1999/04/26 16:35:21 perry Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -671,7 +671,7 @@ __install_ftp_2
 		# Build the basics of an ftp-script...
 		echo "#!/bin/sh" > /tmp/ftp-script.sh
 		echo "cd /mnt" >> /tmp/ftp-script.sh
-		echo "ftp -i -n $_ftp_server_ip << \__end_commands" >> \
+		echo "ftp -e -i -n $_ftp_server_ip << \__end_commands" >> \
 		    /tmp/ftp-script.sh
 		echo "user $_ftp_server_login $_ftp_server_password" >> \
 		    /tmp/ftp-script.sh
