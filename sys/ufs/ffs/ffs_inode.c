@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.5 1994/06/29 06:46:32 cgd Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.6 1994/10/28 19:31:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -194,9 +194,11 @@ ffs_truncate(ap)
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
-	 * value of oszie is 0, length will be at least 1.
+	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
+		if (length > fs->fs_maxfilesize)
+			return (EFBIG);
 		offset = blkoff(fs, length - 1);
 		lbn = lblkno(fs, length - 1);
 		aflags = B_CLRBUF;
