@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.46 1997/05/13 19:02:17 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.47 1997/05/16 07:07:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -179,7 +179,7 @@ sbdsp_probe(sc)
 		sc->sc_model = sbversion(sc);
 	}
 
-#if 0
+#if 1
 	sc->sc_model = 0x100;	/* XXX pretend to be just a tired old SB XXX */
 #endif
 
