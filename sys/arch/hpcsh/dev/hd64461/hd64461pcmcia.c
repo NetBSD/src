@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.23 2003/10/23 02:34:07 uwe Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.24 2004/03/27 02:24:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.23 2003/10/23 02:34:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.24 2004/03/27 02:24:01 uwe Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -268,8 +268,13 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT (&sc->sc_event_head);
 	kthread_create(hd64461pcmcia_create_event_thread, sc);
 
+#if !defined(HD64461PCMCIA_REORDER_ATTACH)
 	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
 	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
+#else
+	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
+	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
+#endif
 }
 
 void
