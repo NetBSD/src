@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.95 2003/06/04 19:09:50 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.96 2003/06/11 11:00:39 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,23 +75,21 @@ int	distribution_sets_exist_p (const char *path);
 static int check_for (unsigned int mode, const char *pathname);
 
 int
-dir_exists_p(path)
-	const char *path;
+dir_exists_p(const char *path)
 {
+
 	return file_mode_match(path, S_IFDIR);
 }
 
 int
-file_exists_p(path)
-	const char *path;
+file_exists_p(const char *path)
 {
+
 	return file_mode_match(path, S_IFREG);
 }
 
 int
-file_mode_match(path, mode)
-	const char *path;
-	unsigned int mode;
+file_mode_match(const char *path, unsigned int mode)
 {
 	struct stat st;
 
@@ -99,8 +97,7 @@ file_mode_match(path, mode)
 }
 
 int
-distribution_sets_exist_p(path)
-	const char *path;
+distribution_sets_exist_p(const char *path)
 {
 	char buf[STRSIZE];
 	int result;
@@ -117,7 +114,7 @@ distribution_sets_exist_p(path)
 
 
 void
-get_ramsize()
+get_ramsize(void)
 {
 	size_t len = sizeof(ramsize);
 	int mib[2] = {CTL_HW, HW_PHYSMEM};
@@ -131,9 +128,9 @@ get_ramsize()
 static int asked = 0;
 
 void
-ask_sizemult(cylsize)
-	int cylsize;
+ask_sizemult(int cylsize)
 {
+
 	current_cylsize = cylsize;	/* XXX */
 
 	if (!asked) {
@@ -144,8 +141,7 @@ ask_sizemult(cylsize)
 }
 
 void
-reask_sizemult(cylsize)
-	int cylsize;
+reask_sizemult(int cylsize)
 {
 
 	asked = 0;
@@ -153,7 +149,7 @@ reask_sizemult(cylsize)
 }
 
 void
-run_makedev()
+run_makedev(void)
 {
 	char *owd;
 
@@ -178,7 +174,7 @@ run_makedev()
  * Load files from floppy.  Requires a /mnt2 directory for mounting them.
  */
 int
-get_via_floppy()
+get_via_floppy(void)
 {
 	char distname[STRSIZE];
 	char fddev[STRSIZE] = "/dev/fd0a";
@@ -256,7 +252,7 @@ get_via_floppy()
  * Get from a CDROM distribution.
  */
 int
-get_via_cdrom()
+get_via_cdrom(void)
 {
 	char tmpdir[STRSIZE];
 	int retries = 0;
@@ -307,7 +303,7 @@ again:
  * (e.g., where sets were preloaded onto a local DOS partition) 
  */
 int
-get_via_localfs()
+get_via_localfs(void)
 {
 	char tmpdir[STRSIZE];
 
@@ -389,8 +385,7 @@ again:
 
 
 void
-cd_dist_dir(forwhat)
-	char *forwhat;
+cd_dist_dir(char *forwhat)
 {
 	char *cwd;
 
@@ -414,15 +409,14 @@ cd_dist_dir(forwhat)
  * Support for custom distribution fetches / unpacks.
  */
 void
-toggle_getit(num)
-	int num;
+toggle_getit(int num)
 {
 
 	dist_list[num].getit ^= 1;
 }
 
 void
-show_cur_distsets()
+show_cur_distsets(void)
 {
 	distinfo *list;
 
@@ -440,7 +434,7 @@ show_cur_distsets()
 static	int verbose = -1;
 
 void
-ask_verbose_dist()
+ask_verbose_dist(void)
 {
 
 	if (verbose < 0) {
@@ -453,8 +447,7 @@ ask_verbose_dist()
 }
 
 int
-extract_file(path)
-	char *path;
+extract_file(char *path)
 {
 	char *owd;
 	int   tarexit, rv;
@@ -511,7 +504,7 @@ extract_file(path)
  */
 
 int
-extract_dist()
+extract_dist(void)
 {
 	char distname[STRSIZE];
 	char fname[STRSIZE];
@@ -583,8 +576,7 @@ struct filelist {
 };
 
 int 
-cleanup_dist(name)
-	const char *name;
+cleanup_dist(const char *name)
 {
 	char file_path[MAXPATHLEN];
 	char file_name[MAXPATHLEN];
@@ -754,9 +746,7 @@ cleanup_dist(name)
  * success_msg and failure_msg must both be 0-adic messages.
  */
 int
-get_and_unpack_sets(success_msg, failure_msg)
-	msg success_msg;
-	msg failure_msg;
+get_and_unpack_sets(msg success_msg, msg failure_msg)
 {
 
 	/* Ensure mountpoint for distribution files exists in current root. */
@@ -850,9 +840,7 @@ struct check_table { unsigned int mode; const char *path;} checks[] = {
  * Check target for a single file.
  */
 static int
-check_for(mode, pathname)
-	unsigned int mode;
-	const char *pathname;
+check_for(unsigned int mode, const char *pathname)
 {
 	int found; 
 
@@ -867,7 +855,7 @@ check_for(mode, pathname)
  * target root. Warn if not found.
  */
 int
-sanity_check()
+sanity_check(void)
 {
 	int target_ok = 1;
 	struct check_table *p;
@@ -961,6 +949,7 @@ static void
 /*ARGSUSED*/
 timezone_sig(int sig)
 {
+
 	set_timezone_select(NULL, NULL, NULL);
 	alarm(60);
 }
@@ -969,7 +958,7 @@ timezone_sig(int sig)
  * Choose from the files in usr/share/zoneinfo and set etc/localtime
  */
 int
-set_timezone()
+set_timezone(void)
 {
 	char localtime_link[STRSIZE];
 	char localtime_target[STRSIZE];
@@ -1129,8 +1118,9 @@ set_crypt_type(void)
 }
 
 int
-set_root_password()
+set_root_password(void)
 {
+
 	msg_display(MSG_rootpw);
 	process_menu(MENU_yesno, NULL);
 	if (yesno)
@@ -1139,8 +1129,9 @@ set_root_password()
 }
 
 int
-set_root_shell()
+set_root_shell(void)
 {
+
 	msg_display(MSG_rootsh);
 	process_menu(MENU_rootsh, NULL);
 	run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "chpass -s %s root", shellpath);
@@ -1150,6 +1141,7 @@ set_root_shell()
 void
 scripting_vfprintf(FILE *f, const char *fmt, va_list ap)
 {
+
 	if (f)
 		(void)vfprintf(f, fmt, ap);
 	if (scripting)
@@ -1185,7 +1177,7 @@ add_rc_conf(const char *fmt, ...)
 }
 
 int
-check_lfs_progs()
+check_lfs_progs(void)
 {
 
 	return (access("/sbin/dump_lfs", X_OK) == 0 &&
