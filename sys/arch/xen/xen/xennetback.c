@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.1.2.3 2005/03/08 19:33:01 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.1.2.4 2005/03/08 22:24:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -533,7 +533,7 @@ xennetback_evthandler(void *arg)
 		}
 
 		ma = txreq->addr  & ~PAGE_MASK;
-		if ((pkt = xen_shm_map(&ma, 1, xneti->domid)) == 0) {
+		if (xen_shm_map(&ma, 1, xneti->domid, &pkt, 0) != 0) {
 			printf("%s: can't map packet page\n", ifp->if_xname);
 			txresp->id = txreq->id;
 			txresp->status = NETIF_RSP_ERROR;
