@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.68 2002/02/13 08:18:20 ross Exp $
+.\"	$NetBSD: packages.7,v 1.69 2002/07/02 11:49:19 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -441,13 +441,13 @@ depending on the setting of USE_IMAKE or USE_X11BASE.  If you do not wish
 to override these settings, use LDFLAGS+=.
 .It MAKE_ENV
 Additional environment variables passed to sub-make in build stage.
-.It IS_INTERACTIVE
+.It INTERACTIVE_STAGE
 Set this if your package needs to interact with the user
-during a build.  User can then decide to skip this package by
+during its fetch, configure, build or install stages.
+Multiple stages may be specified.
+The user can then decide to skip this package by
 setting
-.Dv ${BATCH} ,
-or compiling only the interactive package by setting
-.Dv ${INTERACTIVE} .
+.Dv ${BATCH} .
 .It FETCH_DEPENDS
 A list of
 .Dq path:dir
