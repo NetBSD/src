@@ -1,4 +1,4 @@
-.\" $NetBSD: greconfig.8,v 1.8 2001/04/11 19:36:59 wiz Exp $
+.\" $NetBSD: greconfig.8,v 1.9 2002/01/15 14:19:27 wiz Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm greconfig
 .Nd set characteristics of the
 .Xr gre 4
-pseudo device.
+pseudo device
 .Sh SYNOPSIS
 .Nm
 .Fl i Ar unit
@@ -104,14 +104,13 @@ GRE encapsulation
 as arguments to
 .Xr ifconfig 8 .
 .Sh SEE ALSO
-.Xr ifconfig 8 ,
 .Xr gre 4 ,
+.Xr netintro 4 ,
 .Xr protocols 5 ,
-.Xr netintro 4
+.Xr ifconfig 8
 .Pp
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
 .Pp
 A description of MOBILE encapsulation can be found in RFC 2004.
-
-.Sh AUTHOR
-Heiko W.Rupp <hwr@pilhuhn.de>
+.Sh AUTHORS
+.An Heiko W.Rupp Aq hwr@pilhuhn.de
