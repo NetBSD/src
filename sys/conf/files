@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.545 2002/08/11 13:17:55 isaki Exp $
+#	$NetBSD: files,v 1.546 2002/08/11 17:00:04 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -419,7 +419,8 @@ file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
 #
-device wi: arp, wlan, ifnet
+#device wi: arp, wlan, ifnet
+device wi: arp, ifnet
 file	dev/ic/wi.c			wi
 file	dev/ic/wi_hostap.c		wi
 
