@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.6 1998/02/12 07:36:45 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.6.4.1 1998/11/09 06:06:37 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -66,7 +66,9 @@
  * prototypes
  */
 
+void uao_init __P((void));
 int uao_set_swslot __P((struct uvm_object *, int, int));
+int uao_swap_off __P((int, int));
 
 /*
  * globals

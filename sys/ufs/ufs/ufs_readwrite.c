@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.18 1998/08/02 18:57:24 kleink Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.18.2.1 1998/11/09 06:06:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -108,6 +108,30 @@ READ(v)
 	if (uio->uio_resid == 0)
 		return (0);
 
+#ifdef UBC
+	if (vp->v_type == VREG) {
+	error = 0;
+	while (uio->uio_resid > 0) {
+		void *win;
+		int byteoff = uio->uio_offset & (MAXBSIZE - 1);
+		int bytelen = min(ip->i_ffs_size - uio->uio_offset,
+				  min(uio->uio_resid, MAXBSIZE - byteoff));
+
+		if (bytelen == 0)
+			break;
+		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, bytelen,
+				UBC_READ);
+		if (win == NULL)
+			panic(READ_S ": ubc_alloc -> NULL");
+
+		error = uiomove(win, bytelen, uio);
+		ubc_release(win, 0);
+		if (error)
+			break;
+	}
+	}
+	else {
+#endif
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		if ((bytesinfile = ip->i_ffs_size - uio->uio_offset) <= 0)
 			break;
@@ -162,6 +186,10 @@ READ(v)
 	}
 	if (bp != NULL)
 		brelse(bp);
+#ifdef UBC
+	}
+#endif
+
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
@@ -171,6 +199,55 @@ READ(v)
 	}
 	return (error);
 }
+
+
+int
+ffs_mballoc(struct inode *, off_t, off_t, struct ucred *, int);
+
+int
+ffs_mballoc(ip, off, len, cred, flags)
+struct inode *ip;
+off_t off;
+off_t len;
+struct ucred *cred;
+int flags;
+{
+	struct fs *fs = ip->i_fs;
+	int lbn, bsize, delta, error;
+
+#define UBCSPEW 0
+#if UBCSPEW
+printf("ffs_mballoc vp %p off 0x%x len 0x%x\n",
+       ITOV(ip), (int)off, (int)len);
+#endif
+
+	while (len > 0) {
+		lbn = lblkno(fs, off);
+		bsize = min(fs->fs_bsize, blkoff(fs, off) + len);
+
+#if UBCSPEW
+printf("before ffs_balloc lbn %d bsize 0x%x blocks %d\n",
+       lbn, bsize, ip->i_ffs_blocks);
+#endif
+
+		if ((error = ffs_balloc(ip, lbn, bsize, cred, NULL, flags))) {
+			return error;
+		}
+
+#if UBCSPEW
+printf("after ffs_balloc %d\n", ip->i_ffs_blocks);
+#endif
+
+		delta = fs->fs_bsize - blkoff(fs, off);
+		len -= delta;
+		off += delta;
+	}
+
+	return 0;
+}
+
+
+
 
 /*
  * Vnode op for writing.
@@ -243,6 +320,53 @@ WRITE(v)
 	osize = ip->i_ffs_size;
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
+#ifdef UBC
+	if (vp->v_type == VREG) {
+		error = 0;
+
+	/*
+	 * make sure the range of file offsets to be written
+	 * is fully allocated.
+	 */
+
+	if ((error = ffs_mballoc(ip, uio->uio_offset, uio->uio_resid,
+				 ap->a_cred, 0))) {
+		return error;
+	}
+
+/*
+ * XXX increase the vm notion of the size before copying anything
+ * to satisfy the uvm_vnode size check.
+ * this is should probably change with access_type arg.
+ */
+
+	if (ip->i_ffs_size < uio->uio_offset + uio->uio_resid) {
+		ip->i_ffs_size = uio->uio_offset + uio->uio_resid;
+		uvm_vnp_setsize(vp, ip->i_ffs_size);
+	}
+
+	while (uio->uio_resid > 0) {
+		void *win;
+		int byteoff = uio->uio_offset & (MAXBSIZE - 1);
+		int bytelen = min(uio->uio_resid, MAXBSIZE - byteoff);
+/* XXX if file is mapped and this is the last block, limit len to a page */
+
+		if (bytelen == 0)
+			break;
+		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, bytelen,
+				UBC_WRITE);
+		if (win == NULL)
+			panic(WRITE_S ": ubc_alloc -> NULL");
+
+		error = uiomove(win, bytelen, uio);
+		ubc_release(win, 0);
+		if (error)
+			break;
+	}
+
+	}
+	else {
+#endif
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
@@ -283,6 +407,16 @@ WRITE(v)
 
 		error =
 		    uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
+
+		/*
+		 * if we didn't clear the block and the uiomove failed,
+		 * the buf will now contain part of some other file,
+		 * so we need to invalidate it.
+		 */
+		if (error && (flags & B_CLRBUF) == 0) {
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+		} else
 #ifdef LFS_READWRITE
 		(void)VOP_BWRITE(bp);
 #else
@@ -300,6 +434,11 @@ WRITE(v)
 			break;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+
+#ifdef UBC
+	}
+#endif
+
 	/*
 	 * If we successfully wrote any data, and we are not the superuser
 	 * we clear the setuid and setgid bits as a precaution against

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.14 1998/09/13 14:45:22 christos Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.14.2.1 1998/11/09 06:06:35 chs Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -1041,6 +1041,71 @@ static __inline int VOP_WHITEOUT(dvp, cnp, flags)
 	a.a_cnp = cnp;
 	a.a_flags = flags;
 	return (VCALL(dvp, VOFFSET(vop_whiteout), &a));
+}
+
+struct vop_getpages_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	vaddr_t a_offset;
+	vm_page_t *a_m;
+	int *a_count;
+	int a_centeridx;
+	vm_prot_t a_access_type;
+	int a_advice;
+	int a_flags;
+};
+extern struct vnodeop_desc vop_getpages_desc;
+static __inline int VOP_GETPAGES __P((struct vnode *, vaddr_t, vm_page_t *, 
+    int *, int, vm_prot_t, int, int)) __attribute__((__unused__));
+static __inline int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
+	struct vnode *vp;
+	vaddr_t offset;
+	vm_page_t *m;
+	int *count;
+	int centeridx;
+	vm_prot_t access_type;
+	int advice;
+	int flags;
+{
+	struct vop_getpages_args a;
+	a.a_desc = VDESC(vop_getpages);
+	a.a_vp = vp;
+	a.a_offset = offset;
+	a.a_m = m;
+	a.a_count = count;
+	a.a_centeridx = centeridx;
+	a.a_access_type = access_type;
+	a.a_advice = advice;
+	a.a_flags = flags;
+	return (VCALL(vp, VOFFSET(vop_getpages), &a));
+}
+
+struct vop_putpages_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	vm_page_t *a_m;
+	int a_count;
+	int a_sync;
+	int *a_rtvals;
+};
+extern struct vnodeop_desc vop_putpages_desc;
+static __inline int VOP_PUTPAGES __P((struct vnode *, vm_page_t *, int, int, 
+    int *)) __attribute__((__unused__));
+static __inline int VOP_PUTPAGES(vp, m, count, sync, rtvals)
+	struct vnode *vp;
+	vm_page_t *m;
+	int count;
+	int sync;
+	int *rtvals;
+{
+	struct vop_putpages_args a;
+	a.a_desc = VDESC(vop_putpages);
+	a.a_vp = vp;
+	a.a_m = m;
+	a.a_count = count;
+	a.a_sync = sync;
+	a.a_rtvals = rtvals;
+	return (VCALL(vp, VOFFSET(vop_putpages), &a));
 }
 
 /* Special cases: */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.11 1998/09/01 03:11:08 thorpej Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.11.2.1 1998/11/09 06:06:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -77,7 +77,7 @@ __BEGIN_DECLS
 int ffs_alloc __P((struct inode *, ufs_daddr_t, ufs_daddr_t , int, struct ucred *,
 		   ufs_daddr_t *));
 int ffs_realloccg __P((struct inode *, ufs_daddr_t, ufs_daddr_t, int, int ,
-		       struct ucred *, struct buf **));
+		       struct ucred *, struct buf **, ufs_daddr_t *));
 int ffs_reallocblks __P((void *));
 int ffs_valloc __P((void *));
 ufs_daddr_t ffs_blkpref __P((struct inode *, ufs_daddr_t, int, ufs_daddr_t *));
@@ -134,6 +134,8 @@ int ffs_read __P((void *));
 int ffs_write __P((void *));
 #define ffs_fsync genfs_fsync
 int ffs_reclaim __P((void *));
+int ffs_getpages __P((void *));
+int ffs_putpages __P((void *));
 __END_DECLS
 
 extern int (**ffs_vnodeop_p) __P((void *));

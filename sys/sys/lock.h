@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.14 1998/11/04 06:19:56 chs Exp $	*/
+/*	$NetBSD: lock.h,v 1.14.2.1 1998/11/09 06:06:35 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -200,6 +200,10 @@ int _simple_lock_try __P((__volatile struct simplelock *alp, const char *, int))
 #define simple_lock_try(alp) _simple_lock_try(alp, __FILE__, __LINE__)
 void _simple_lock __P((__volatile struct simplelock *alp, const char *, int));
 #define simple_lock(alp) _simple_lock(alp, __FILE__, __LINE__)
+void _simple_lock_assert __P((__volatile struct simplelock *alp, int,
+			      const char *, int));
+#define simple_lock_assert(alp, value) \
+	_simple_lock_assert(alp, value,  __FILE__, __LINE__)
 void simple_lock_init __P((struct simplelock *alp));
 void simple_lock_dump __P((void));
 void simple_lock_freecheck __P((void *, void *));
@@ -216,6 +220,7 @@ void simple_lock_freecheck __P((void *, void *));
 #define	simple_lock(alp)
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)
+#define	simple_lock_assert(alp, value)
 #endif /* MULTIPROCESSOR */
 #endif /* LOCKDEBUG && ! MULTIPROCESSOR */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.32 1998/10/24 13:32:34 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.32.2.1 1998/11/09 06:06:38 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -179,6 +179,8 @@ static vm_map_entry_t	uvm_mapent_alloc __P((vm_map_t));
 static void		uvm_mapent_copy __P((vm_map_entry_t,vm_map_entry_t));
 static void		uvm_mapent_free __P((vm_map_entry_t));
 static void		uvm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
+static void		uvm_map_reference_amap __P((vm_map_entry_t, int));
+static void		uvm_map_unreference_amap __P((vm_map_entry_t, int));
 
 /*
  * local inlines
@@ -277,6 +279,33 @@ uvm_map_entry_unwire(map, entry)
 	uvm_fault_unwire(map->pmap, entry->start, entry->end);
 	entry->wired_count = 0;
 }
+
+
+/*
+ * wrapper for calling amap_ref() 
+ */
+static __inline void 
+uvm_map_reference_amap(entry, flags)
+vm_map_entry_t entry;
+int flags;
+{
+    amap_ref(entry->aref.ar_amap, entry->aref.ar_slotoff,
+	     (entry->end - entry->start) >> PAGE_SHIFT, flags);
+}
+
+
+/*
+ * wrapper for calling amap_unref() 
+ */
+static __inline void
+uvm_map_unreference_amap(entry, flags)
+vm_map_entry_t entry;
+int flags;
+{
+    amap_unref(entry->aref.ar_amap, entry->aref.ar_slotoff,
+	     (entry->end - entry->start) >> PAGE_SHIFT, flags);
+}
+
 
 /*
  * uvm_map_init: init mapping system at boot time.   note that we allocate
@@ -1086,9 +1115,9 @@ uvm_unmap_remove(map, start, end, entry_list)
  */
 
 void
-uvm_unmap_detach(first_entry, amap_unref_flags)
+uvm_unmap_detach(first_entry, flags)
 	vm_map_entry_t first_entry;
-	int amap_unref_flags;
+	int flags;
 {
 	vm_map_entry_t next_entry;
 	UVMHIST_FUNC("uvm_unmap_detach"); UVMHIST_CALLED(maphist);
@@ -1115,7 +1144,7 @@ uvm_unmap_detach(first_entry, amap_unref_flags)
 		 */
 
 		if (first_entry->aref.ar_amap)
-			amap_unref(first_entry, amap_unref_flags);
+			uvm_map_unreference_amap(first_entry, flags);
 
 		/*
 		 * drop reference to our backing object, if we've got one
@@ -1480,7 +1509,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		if (newentry->aref.ar_amap) {
 			newentry->aref.ar_slotoff =
 			    entry->aref.ar_slotoff + (fudge >> PAGE_SHIFT);
-			amap_ref(newentry, AMAP_SHARED |
+			uvm_map_reference_amap(newentry, AMAP_SHARED |
 			    ((flags & UVM_EXTRACT_QREF) ? AMAP_REFALL : 0));
 		} else {
 			newentry->aref.ar_slotoff = 0;
@@ -2543,7 +2572,7 @@ uvmspace_fork(vm1)
 			 */
 			if (new_entry->aref.ar_amap)
 				/* share reference */
-				amap_ref(new_entry, AMAP_SHARED);
+				uvm_map_reference_amap(new_entry, AMAP_SHARED);
 
 			if (new_entry->object.uvm_obj &&
 			    new_entry->object.uvm_obj->pgops->pgo_reference)
@@ -2582,7 +2611,7 @@ uvmspace_fork(vm1)
 			uvm_mapent_copy(old_entry, new_entry);
 
 			if (new_entry->aref.ar_amap)
-				amap_ref(new_entry, 0);
+				uvm_map_reference_amap(new_entry, 0);
 
 			if (new_entry->object.uvm_obj &&
 			    new_entry->object.uvm_obj->pgops->pgo_reference)
@@ -2855,8 +2884,8 @@ uvm_object_printit(uobj, full, pr)
 	struct vm_page *pg;
 	int cnt = 0;
 
-	(*pr)("OBJECT %p: pgops=%p, npages=%d, ", uobj, uobj->pgops,
-	    uobj->uo_npages);
+	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
+	      uobj, uobj->vmobjlock.lock_data, uobj->pgops, uobj->uo_npages);
 	if (uobj->uo_refs == UVM_OBJ_KERN)
 		(*pr)("refs=<SYSTEM>\n");
 	else
@@ -2903,6 +2932,8 @@ uvm_page_printit(pg, full, pr)
 	pg->flags, pg->pqflags, pg->version, pg->wire_count, (long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%lx loan_count=%d\n", 
 	pg->uobject, pg->uanon, pg->offset, pg->loan_count);
+	(*pr)("  blkno=0x%x\n", pg->blkno);
+
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",

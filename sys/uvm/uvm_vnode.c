@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17 1998/11/04 06:21:40 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17.2.1 1998/11/09 06:06:40 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -58,6 +58,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
@@ -106,8 +107,6 @@ static int                 uvn_get __P((struct uvm_object *, vaddr_t,
 					vm_page_t *, int *, int, 
 					vm_prot_t, int, int));
 static void		   uvn_init __P((void));
-static int		   uvn_io __P((struct uvm_vnode *, vm_page_t *,
-				      int, int, int));
 static int		   uvn_put __P((struct uvm_object *, vm_page_t *,
 					int, boolean_t));
 static void                uvn_reference __P((struct uvm_object *));
@@ -180,7 +179,7 @@ uvn_attach(arg, accessprot)
 	struct vattr vattr;
 	int oldflags, result;
 	struct partinfo pi;
-	u_quad_t used_vnode_size;
+	off_t used_vnode_size;
 	UVMHIST_FUNC("uvn_attach"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(vn=0x%x)", arg,0,0,0);
@@ -201,14 +200,106 @@ uvn_attach(arg, accessprot)
 	}
 
 	/*
-	 * if we're maping a BLK device, make sure it is a disk.
+	 * if we're mapping a BLK device, make sure it is a disk.
 	 */
 	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK) {
-		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
+		simple_unlock(&uvn->u_obj.vmobjlock);
 		UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)", 0,0,0,0);
 		return(NULL);
 	}
 
+#ifdef UBC
+	oldflags = 0;
+
+
+#ifdef DIAGNOSTIC
+	if (vp->v_type != VREG) {
+		panic("uvn_attach: vp %p not VREG", vp);
+	}
+#endif
+
+	/*
+	 * set up our idea of the size
+	 * if this hasn't been done already.
+	 */
+	if (uvn->u_size == VSIZENOTSET) {
+
+	uvn->u_flags = UVM_VNODE_ALOCK;
+	simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock in case we sleep */
+		/* XXX: curproc? */
+	if (vp->v_type == VBLK) {
+		/*
+		 * We could implement this as a specfs getattr call, but:
+		 *
+		 *	(1) VOP_GETATTR() would get the file system
+		 *	    vnode operation, not the specfs operation.
+		 *
+		 *	(2) All we want is the size, anyhow.
+		 */
+		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+		if (result == 0) {
+			/* XXX should remember blocksize */
+			used_vnode_size = (u_quad_t)pi.disklab->d_secsize *
+			    (u_quad_t)pi.part->p_size;
+		}
+	} else {
+		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
+		if (result == 0)
+			used_vnode_size = vattr.va_size;
+	}
+
+
+	/*
+	 * make sure that the newsize fits within a vaddr_t
+	 * XXX: need to revise addressing data types
+	 */
+	if (used_vnode_size > (vaddr_t) -PAGE_SIZE) {
+#ifdef DEBUG
+		printf("uvn_attach: vn %p size truncated %qx->%x\n", vp,
+		    used_vnode_size, -PAGE_SIZE);
+#endif    
+		used_vnode_size = (vaddr_t) -PAGE_SIZE;
+	}
+
+	/* relock object */
+	simple_lock(&uvn->u_obj.vmobjlock);
+
+	if (uvn->u_flags & UVM_VNODE_WANTED)
+		wakeup(uvn);
+	uvn->u_flags = 0;
+
+	if (result != 0) {
+		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
+		UVMHIST_LOG(maphist,"<- done (VOP_GETATTR FAILED!)", 0,0,0,0);
+		return(NULL);
+	}
+	uvn->u_size = used_vnode_size;
+
+	}
+
+		/* check for new writeable uvn */
+		if ((accessprot & VM_PROT_WRITE) != 0 && 
+		    (uvn->u_flags & UVM_VNODE_WRITEABLE) == 0) {
+			simple_lock(&uvn_wl_lock);
+
+			if (uvn->u_wlist.le_next != NULL) {
+				printf("already on wlist vp %p\n", uvn);
+				Debugger();
+			}
+
+			LIST_INSERT_HEAD(&uvn_wlist, uvn, u_wlist);
+			simple_unlock(&uvn_wl_lock);
+			/* we are now on wlist! */
+			uvn->u_flags |= UVM_VNODE_WRITEABLE;
+		}
+
+		/* unlock and return */
+		simple_unlock(&uvn->u_obj.vmobjlock);
+		UVMHIST_LOG(maphist,"<- done, refcnt=%d", uvn->u_obj.uo_refs,
+		    0, 0, 0);
+		return (&uvn->u_obj);
+#else
 	/*
 	 * now we have lock and uvn must not be in a blocked state.
 	 * first check to see if it is already active, in which case
@@ -333,6 +424,7 @@ if (vp->v_type == VBLK) printf("used_vnode_size = %qu\n", used_vnode_size);
 
 	UVMHIST_LOG(maphist,"<- done/VREF, ret 0x%x", &uvn->u_obj,0,0,0);
 	return(&uvn->u_obj);
+#endif
 }
 
 
@@ -352,11 +444,17 @@ static void
 uvn_reference(uobj)
 	struct uvm_object *uobj;
 {
+#ifdef UBC
+#else
 #ifdef DIAGNOSTIC
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 #endif
+#endif
 	UVMHIST_FUNC("uvn_reference"); UVMHIST_CALLED(maphist);
 
+#ifdef UBC
+	VREF((struct vnode *)uobj);
+#else
 	simple_lock(&uobj->vmobjlock);
 #ifdef DIAGNOSTIC
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
@@ -369,6 +467,7 @@ uvn_reference(uobj)
 	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)", 
 	uobj, uobj->uo_refs,0,0);
 	simple_unlock(&uobj->vmobjlock);
+#endif
 }
 
 /*
@@ -384,11 +483,17 @@ static void
 uvn_detach(uobj)
 	struct uvm_object *uobj;
 {
+#ifdef UBC
+#else
 	struct uvm_vnode *uvn;
 	struct vnode *vp;
 	int oldflags;
+#endif
 	UVMHIST_FUNC("uvn_detach"); UVMHIST_CALLED(maphist);
 
+#ifdef UBC
+	vrele((struct vnode *)uobj);
+#else
 	simple_lock(&uobj->vmobjlock);
 
 	UVMHIST_LOG(maphist,"  (uobj=0x%x)  ref=%d", uobj,uobj->uo_refs,0,0);
@@ -483,6 +588,7 @@ uvn_detach(uobj)
 	if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
 		simple_lock(&uvn_wl_lock);		/* protect uvn_wlist */
 		LIST_REMOVE(uvn, u_wlist);
+XXXwlist
 		simple_unlock(&uvn_wl_lock);
 	}
 #ifdef DIAGNOSTIC
@@ -505,6 +611,7 @@ uvn_detach(uobj)
 	UVMHIST_LOG(maphist,"<- done (vrele) final", 0,0,0,0);
 
 	return;
+#endif
 }
 
 /*
@@ -540,6 +647,15 @@ uvm_vnp_terminate(vp)
 	struct vnode *vp;
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
+#ifdef UBC
+	if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
+		simple_lock(&uvn_wl_lock);
+		LIST_REMOVE(uvn, u_wlist);
+		uvn->u_wlist.le_next = NULL;
+		uvn->u_flags &= ~(UVM_VNODE_WRITEABLE);
+		simple_unlock(&uvn_wl_lock);
+	}
+#else
 	int oldflags;
 	UVMHIST_FUNC("uvm_vnp_terminate"); UVMHIST_CALLED(maphist);
 
@@ -668,7 +784,7 @@ uvm_vnp_terminate(vp)
 
 	simple_unlock(&uvn->u_obj.vmobjlock);
 	UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
-
+#endif
 }
 
 /*
@@ -710,6 +826,10 @@ uvn_releasepg(pg, nextpgp)
 	if (!nextpgp)
 		uvm_unlock_pageq();
 
+#ifdef UBC
+	/* XXX I'm sure we need to do something here. */
+	uvn = uvn;
+#else
 	/*
 	 * now see if we need to kill the object
 	 */
@@ -736,6 +856,7 @@ uvn_releasepg(pg, nextpgp)
 			return (FALSE);
 		}
 	}
+#endif
 	return (TRUE);
 }
 
@@ -848,6 +969,27 @@ uvn_flush(uobj, start, stop, flags)
 	u_short pp_version;
 	UVMHIST_FUNC("uvn_flush"); UVMHIST_CALLED(maphist);
 
+#ifdef UBC
+	if (uvn->u_size == VSIZENOTSET) {
+		void vp_name(void *);
+	      
+		printf("uvn_flush: size not set vp %p\n", uvn);
+		if ((flags & PGO_ALLPAGES) == 0)
+			printf("... and PGO_ALLPAGES not set: "
+			       "start 0x%lx end 0x%lx flags 0x%x\n",
+			       start, stop, flags);
+		vp_name(uvn);
+		flags |= PGO_ALLPAGES;
+	}
+#if 0
+	/* XXX unfortunately this is legitimate */
+	if (flags & PGO_FREE && uobj->uo_refs) {
+		printf("uvn_flush: PGO_FREE on ref'd vp %p\n", uobj);
+		Debugger();
+	}
+#endif
+#endif
+
 	curoff = 0;	/* XXX: shut up gcc */
 	/*
 	 * get init vals and determine how we are going to traverse object
@@ -857,14 +999,19 @@ uvn_flush(uobj, start, stop, flags)
 	retval = TRUE;		/* return value */
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
+#ifdef UBC
+		stop = -1;
+#else
 		stop = round_page(uvn->u_size);
+#endif
 		by_list = TRUE;		/* always go by the list */
 	} else {
 		start = trunc_page(start);
 		stop = round_page(stop);
-		if (stop > round_page(uvn->u_size))
-			printf("uvn_flush: strange, got an out of range "
-			    "flush (fixed)\n");
+		if (stop > round_page(uvn->u_size)) {
+			printf("uvn_flush: out of range flush (fixed)\n");
+			printf("  vp %p stop 0x%x\n", uvn, (int)stop);
+		}
 
 		by_list = (uobj->uo_npages <= 
 		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
@@ -888,9 +1035,11 @@ uvn_flush(uobj, start, stop, flags)
 	if ((flags & PGO_CLEANIT) != 0 &&
 	    uobj->pgops->pgo_mk_pcluster != NULL) {
 		if (by_list) {
-			for (pp = uobj->memq.tqh_first ; pp != NULL ;
-			    pp = pp->listq.tqe_next) {
-				if (pp->offset < start || pp->offset >= stop)
+			for (pp = TAILQ_FIRST(&uobj->memq);
+			     pp != NULL ;
+			     pp = TAILQ_NEXT(pp, listq)) {
+				if (pp->offset < start ||
+				    (pp->offset >= stop && stop != -1))
 					continue;
 				pp->flags &= ~PG_CLEANCHK;
 			}
@@ -912,7 +1061,7 @@ uvn_flush(uobj, start, stop, flags)
 	 */
 
 	if (by_list) {
-		pp = uobj->memq.tqh_first;
+		pp = TAILQ_FIRST(&uobj->memq);
 	} else {
 		curoff = start;
 		pp = uvm_pagelookup(uobj, curoff);
@@ -933,7 +1082,7 @@ uvn_flush(uobj, start, stop, flags)
 			 */
 
 			if (pp->offset < start || pp->offset >= stop) {
-				ppnext = pp->listq.tqe_next;
+				ppnext = TAILQ_NEXT(pp, listq);
 				continue;
 			}
 
@@ -1207,9 +1356,9 @@ ReTry:
 				} else {
 					if (result != VM_PAGER_OK) {
 						printf("uvn_flush: obj=%p, "
-						   "offset=0x%lx.  error "
-						   "during pageout.\n",
-						    pp->uobject, pp->offset);
+						   "offset=0x%lx.  error %d\n",
+						    pp->uobject, pp->offset,
+						    result);
 						printf("uvn_flush: WARNING: "
 						    "changes to page may be "
 						    "lost!\n");
@@ -1233,6 +1382,12 @@ ReTry:
 	/*
 	 * now wait for all I/O if required.
 	 */
+#ifdef UBC
+	/*
+	 * XXX currently not needed since all i/o is sync.
+	 * merge this with VBWAIT.
+	 */
+#else
 	if (need_iosync) {
 
 		UVMHIST_LOG(maphist,"  <<DOING IOSYNC>>",0,0,0,0);
@@ -1246,6 +1401,7 @@ ReTry:
 			wakeup(&uvn->u_flags);
 		uvn->u_flags &= ~(UVM_VNODE_IOSYNC|UVM_VNODE_IOSYNCWANTED);
 	}
+#endif
 
 	/* return, with object locked! */
 	UVMHIST_LOG(maphist,"<- done (retval=0x%x)",retval,0,0,0);
@@ -1272,7 +1428,18 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 	*loffset = offset;
 
 	if (*loffset >= uvn->u_size)
-		panic("uvn_cluster: offset out of range");
+#ifdef UBC
+	{
+		/* XXX nfs writes cause trouble with this */
+		*loffset = *hoffset = offset;
+		printf("uvn_cluster: offset out of range: vp %p loffset 0x%x\n",
+		      uobj, (int) *loffset);
+		return;
+	}
+#else
+		panic("uvn_cluster: offset out of range: vp %p loffset 0x%x",
+		      uobj, (int) *loffset);
+#endif
 
 	/*
 	 * XXX: old pager claims we could use VOP_BMAP to get maxcontig value.
@@ -1304,8 +1471,10 @@ uvn_put(uobj, pps, npages, flags)
 	int retval;
 
 	/* note: object locked */
-	retval = uvn_io((struct uvm_vnode*)uobj, pps, npages, flags, UIO_WRITE);
+	simple_lock_assert(&uobj->vmobjlock, 1);
+	retval = VOP_PUTPAGES((struct vnode *)uobj, pps, npages, 1, &retval);
 	/* note: object unlocked */
+	simple_lock_assert(&uobj->vmobjlock, 0);
 
 	return(retval);
 }
@@ -1331,234 +1500,70 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	int centeridx, advice, flags;
 	vm_prot_t access_type;
 {
-	vaddr_t current_offset;
+	struct vnode *vp = (struct vnode *)uobj;
+	int error;
+
+	simple_lock_assert(&uobj->vmobjlock, 1);
+	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
+			     access_type, advice, flags);
+	simple_lock_assert(&uobj->vmobjlock, flags & PGO_LOCKED ? 1 : 0);
+
+	return error ? VM_PAGER_ERROR : VM_PAGER_OK;
+}
+
+/*
+ * uvn_findpage:
+ * return the page for the uobj and offset requested, allocating if needed.
+ * => uobj must be locked.
+ * => returned page will be BUSY.
+ */
+
+void
+uvn_findpage(uobj, offset, pps)
+	struct uvm_object *uobj;
+	vaddr_t offset;
+	struct vm_page **pps;
+{
 	struct vm_page *ptmp;
-	int lcv, result, gotpages;
-	boolean_t done;
-	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "flags=%d", flags,0,0,0);
+	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(maphist);
 
-	/*
-	 * step 1: handled the case where fault data structures are locked.
-	 */
+	for (;;) {
+		/* look for a current page */
+		ptmp = uvm_pagelookup(uobj, offset);
 
-	if (flags & PGO_LOCKED) {
-
-		/*
-		 * gotpages is the current number of pages we've gotten (which
-		 * we pass back up to caller via *npagesp.
-		 */
-
-		gotpages = 0;
-
-		/*
-		 * step 1a: get pages that are already resident.   only do this
-		 * if the data structures are locked (i.e. the first time
-		 * through).
-		 */
-
-		done = TRUE;	/* be optimistic */
-
-		for (lcv = 0, current_offset = offset ; lcv < *npagesp ;
-		    lcv++, current_offset += PAGE_SIZE) {
-
-			/* do we care about this page?  if not, skip it */
-			if (pps[lcv] == PGO_DONTCARE)
-				continue;
-
-			/* lookup page */
-			ptmp = uvm_pagelookup(uobj, current_offset);
-
-			/* to be useful must get a non-busy, non-released pg */
-			if (ptmp == NULL ||
-			    (ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
-				if (lcv == centeridx || (flags & PGO_ALLPAGES)
-				    != 0)
-				done = FALSE;	/* need to do a wait or I/O! */
+		/* nope?   allocate one now */
+		if (ptmp == NULL) {
+			ptmp = uvm_pagealloc(uobj, offset, NULL);
+			if (ptmp == NULL) {
+				simple_unlock(&uobj->vmobjlock);
+				uvm_wait("uvn_fp1");
+				simple_lock(&uobj->vmobjlock);
 				continue;
 			}
 
 			/*
-			 * useful page: busy/lock it and plug it in our
-			 * result array
+			 * XXX for now, always zero new pages.
 			 */
-			ptmp->flags |= PG_BUSY;		/* loan up to caller */
-			UVM_PAGE_OWN(ptmp, "uvn_get1");
-			pps[lcv] = ptmp;
-			gotpages++;
+			pmap_zero_page(VM_PAGE_TO_PHYS(ptmp));
 
-		}	/* "for" lcv loop */
+			break;
+		}
 
-		/*
-		 * XXX: given the "advice", should we consider async read-ahead?
-		 * XXX: fault current does deactive of pages behind us.  is 
-		 * this good (other callers might now).
-		 */
-		/* 
-		 * XXX: read-ahead currently handled by buffer cache (bread)
-		 * level.
-		 * XXX: no async i/o available.
-		 * XXX: so we don't do anything now.
-		 */
-
-		/*
-		 * step 1c: now we've either done everything needed or we to
-		 * unlock and do some waiting or I/O.
-		 */
-
-		*npagesp = gotpages;		/* let caller know */
-		if (done)
-			return(VM_PAGER_OK);		/* bingo! */
-		else
-			/* EEK!   Need to unlock and I/O */
-			return(VM_PAGER_UNLOCK);
-	}
-
-	/*
-	 * step 2: get non-resident or busy pages.
-	 * object is locked.   data structures are unlocked.
-	 *
-	 * XXX: because we can't do async I/O at this level we get things
-	 * page at a time (otherwise we'd chunk).   the VOP_READ() will do 
-	 * async-read-ahead for us at a lower level.
-	 */
-
-	for (lcv = 0, current_offset = offset ; 
-			 lcv < *npagesp ; lcv++, current_offset += PAGE_SIZE) {
-		
-		/* skip over pages we've already gotten or don't want */
-		/* skip over pages we don't _have_ to get */
-		if (pps[lcv] != NULL || (lcv != centeridx &&
-		    (flags & PGO_ALLPAGES) == 0))
+		/* page is there, see if we need to wait on it */
+		if ((ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
+			ptmp->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock, 0,
+					    "uvn_fp2",0);
+			simple_lock(&uobj->vmobjlock);
 			continue;
-
-		/*
-		 * we have yet to locate the current page (pps[lcv]).   we first
-		 * look for a page that is already at the current offset.   if
-		 * we fine a page, we check to see if it is busy or released.
-		 * if that is the case, then we sleep on the page until it is
-		 * no longer busy or released and repeat the lookup.    if the
-		 * page we found is neither busy nor released, then we busy it
-		 * (so we own it) and plug it into pps[lcv].   this breaks the
-		 * following while loop and indicates we are ready to move on
-		 * to the next page in the "lcv" loop above.
-		 *
-		 * if we exit the while loop with pps[lcv] still set to NULL,
-		 * then it means that we allocated a new busy/fake/clean page
-		 * ptmp in the object and we need to do I/O to fill in the data.
-		 */
-
-		while (pps[lcv] == NULL) {	/* top of "pps" while loop */
-			
-			/* look for a current page */
-			ptmp = uvm_pagelookup(uobj, current_offset);
-
-			/* nope?   allocate one now (if we can) */
-			if (ptmp == NULL) {
-
-				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);	/* alloc */
-
-				/* out of RAM? */
-				if (ptmp == NULL) {
-					simple_unlock(&uobj->vmobjlock);
-					uvm_wait("uvn_getpage");
-					simple_lock(&uobj->vmobjlock);
-
-					/* goto top of pps while loop */
-					continue;	
-				}
-
-				/* 
-				 * got new page ready for I/O.  break pps
-				 * while loop.  pps[lcv] is still NULL.
-				 */
-				break;		
-			}
-
-			/* page is there, see if we need to wait on it */
-			if ((ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
-				ptmp->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(ptmp,
-				    &uobj->vmobjlock, 0, "uvn_get",0);
-				simple_lock(&uobj->vmobjlock);
-				continue;	/* goto top of pps while loop */
-			}
-			
-			/* 
-			 * if we get here then the page has become resident
-			 * and unbusy between steps 1 and 2.  we busy it
-			 * now (so we own it) and set pps[lcv] (so that we
-			 * exit the while loop).
-			 */
-			ptmp->flags |= PG_BUSY;
-			UVM_PAGE_OWN(ptmp, "uvn_get2");
-			pps[lcv] = ptmp;
 		}
-
-		/*
-		 * if we own the a valid page at the correct offset, pps[lcv]
-		 * will point to it.   nothing more to do except go to the
-		 * next page.
-		 */
-
-		if (pps[lcv])
-			continue;			/* next lcv */
-
-		/*
-		 * we have a "fake/busy/clean" page that we just allocated.  do
-		 * I/O to fill it with valid data.  note that object must be
-		 * locked going into uvn_io, but will be unlocked afterwards.
-		 */
-
-		result = uvn_io((struct uvm_vnode *) uobj, &ptmp, 1,
-		    PGO_SYNCIO, UIO_READ);
-
-		/*
-		 * I/O done.   object is unlocked (by uvn_io).   because we used
-		 * syncio the result can not be PEND or AGAIN.   we must relock
-		 * and check for errors.
-		 */
-
-		/* lock object.   check for errors.   */
-		simple_lock(&uobj->vmobjlock);
-		if (result != VM_PAGER_OK) {
-			if (ptmp->flags & PG_WANTED)
-				/* object lock still held */
-				thread_wakeup(ptmp);
-
-			ptmp->flags &= ~(PG_WANTED|PG_BUSY);
-			UVM_PAGE_OWN(ptmp, NULL);
-			uvm_lock_pageq();
-			uvm_pagefree(ptmp);
-			uvm_unlock_pageq();
-			simple_unlock(&uobj->vmobjlock);
-			return(result);
-		}
-
-		/* 
-		 * we got the page!   clear the fake flag (indicates valid
-		 * data now in page) and plug into our result array.   note
-		 * that page is still busy.   
-		 *
-		 * it is the callers job to:
-		 * => check if the page is released
-		 * => unbusy the page
-		 * => activate the page
-		 */
-
-		ptmp->flags &= ~PG_FAKE;		/* data is valid ... */
-		pmap_clear_modify(PMAP_PGARG(ptmp));	/* ... and clean */
-		pps[lcv] = ptmp;
-
-	}	/* lcv loop */
-
-	/*
-	 * finally, unlock object and return.
-	 */
-
-	simple_unlock(&uobj->vmobjlock);
-	return (VM_PAGER_OK);
+			
+		/* BUSY the page and we're done. */
+		ptmp->flags |= PG_BUSY;
+		UVM_PAGE_OWN(ptmp, "uvn_findpage");
+		break;
+	}
+	*pps = ptmp;
 }
 
 /*
@@ -1581,183 +1586,6 @@ uvn_asyncget(uobj, offset, npages)
 	 */
 	printf("uvn_asyncget called\n");
 	return (KERN_SUCCESS);
-}
-
-/*
- * uvn_io: do I/O to a vnode
- *
- * => prefer map unlocked (not required)
- * => object must be locked!   we will _unlock_ it before starting I/O.
- * => flags: PGO_SYNCIO -- use sync. I/O
- * => XXX: currently we use VOP_READ/VOP_WRITE which are only sync.
- *	[thus we never do async i/o!  see iodone comment]
- */
-
-static int
-uvn_io(uvn, pps, npages, flags, rw)
-	struct uvm_vnode *uvn;
-	vm_page_t *pps;
-	int npages, flags, rw;
-{
-	struct vnode *vn;
-	struct uio uio;
-	struct iovec iov;
-	vaddr_t kva, file_offset;
-	int waitf, result, got, wanted;
-	UVMHIST_FUNC("uvn_io"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "rw=%d", rw,0,0,0);
-	
-	/*
-	 * init values
-	 */
-
-	waitf = (flags & PGO_SYNCIO) ? M_WAITOK : M_NOWAIT;
-	vn = (struct vnode *) uvn;
-	file_offset = pps[0]->offset;
-	
-	/*
-	 * check for sync'ing I/O.
-	 */
-	
-	while (uvn->u_flags & UVM_VNODE_IOSYNC) {
-		if (waitf == M_NOWAIT) { 
-			simple_unlock(&uvn->u_obj.vmobjlock);
-			UVMHIST_LOG(maphist,"<- try again (iosync)",0,0,0,0);
-			return(VM_PAGER_AGAIN);
-		}
-		uvn->u_flags |= UVM_VNODE_IOSYNCWANTED;
-		UVM_UNLOCK_AND_WAIT(&uvn->u_flags, &uvn->u_obj.vmobjlock, 
-			FALSE, "uvn_iosync",0);
-		simple_lock(&uvn->u_obj.vmobjlock);
-	}
-
-	/*
-	 * check size
-	 */
-
-	if (file_offset >= uvn->u_size) {
-			simple_unlock(&uvn->u_obj.vmobjlock);
-			UVMHIST_LOG(maphist,"<- BAD (size check)",0,0,0,0);
-#ifdef DIAGNOSTIC
-			printf("uvn_io: note: size check fired\n");
-#endif
-			return(VM_PAGER_BAD);
-	}
-
-	/*
-	 * first try and map the pages in (without waiting)
-	 */
-
-	kva = uvm_pagermapin(pps, npages, NULL, M_NOWAIT);
-	if (kva == NULL && waitf == M_NOWAIT) {
-		simple_unlock(&uvn->u_obj.vmobjlock);
-		UVMHIST_LOG(maphist,"<- mapin failed (try again)",0,0,0,0);
-		return(VM_PAGER_AGAIN);
-	}
-
-	/*
-	 * ok, now bump u_nio up.   at this point we are done with uvn
-	 * and can unlock it.   if we still don't have a kva, try again
-	 * (this time with sleep ok).
-	 */
-	
-	uvn->u_nio++;			/* we have an I/O in progress! */
-	simple_unlock(&uvn->u_obj.vmobjlock);
-	/* NOTE: object now unlocked */
-	if (kva == NULL) {
-		kva = uvm_pagermapin(pps, npages, NULL, M_WAITOK);
-	}
-
-	/*
-	 * ok, mapped in.  our pages are PG_BUSY so they are not going to
-	 * get touched (so we can look at "offset" without having to lock
-	 * the object).  set up for I/O.
-	 */
-
-	/*
-	 * fill out uio/iov
-	 */
-	
-	iov.iov_base = (caddr_t) kva;
-	wanted = npages << PAGE_SHIFT;
-	if (file_offset + wanted > uvn->u_size)
-		wanted = uvn->u_size - file_offset;	/* XXX: needed? */
-	iov.iov_len = wanted;
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = file_offset;
-	uio.uio_segflg = UIO_SYSSPACE;
-	uio.uio_rw = rw;
-	uio.uio_resid = wanted;
-	uio.uio_procp = NULL;
-
-	/*
-	 * do the I/O!  (XXX: curproc?)
-	 */
-
-	UVMHIST_LOG(maphist, "calling VOP",0,0,0,0);
-
-	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		vn_lock(vn, LK_EXCLUSIVE | LK_RETRY);
-	/* NOTE: vnode now locked! */
-
-	if (rw == UIO_READ)
-		result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
-	else
-		result = VOP_WRITE(vn, &uio, 0, curproc->p_ucred);
-
-	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		VOP_UNLOCK(vn, 0);
-	/* NOTE: vnode now unlocked (unless vnislocked) */
-
-	UVMHIST_LOG(maphist, "done calling VOP",0,0,0,0);
-
-	/*
-	 * result == unix style errno (0 == OK!)
-	 *
-	 * zero out rest of buffer (if needed)
-	 */
-
-	if (result == 0) {
-		got = wanted - uio.uio_resid;
-
-		if (wanted && got == 0) {
-			result = EIO;		/* XXX: error? */
-		} else if (got < PAGE_SIZE * npages && rw == UIO_READ) {
-			memset((void *) (kva + got), 0,
-			       (npages << PAGE_SHIFT) - got);
-		}
-	}
-
-	/*
-	 * now remove pager mapping
-	 */
-	uvm_pagermapout(kva, npages);
-		
-	/*
-	 * now clean up the object (i.e. drop I/O count)
-	 */
-
-	simple_lock(&uvn->u_obj.vmobjlock);
-	/* NOTE: object now locked! */
-
-	uvn->u_nio--;			/* I/O DONE! */
-	if ((uvn->u_flags & UVM_VNODE_IOSYNC) != 0 && uvn->u_nio == 0) {
-		wakeup(&uvn->u_nio);
-	}
-	simple_unlock(&uvn->u_obj.vmobjlock);
-	/* NOTE: object now unlocked! */
-
-	/*
-	 * done!
-	 */
-
-	UVMHIST_LOG(maphist, "<- done (result %d)", result,0,0,0);
-	if (result == 0)
-		return(VM_PAGER_OK);
-	else
-		return(VM_PAGER_ERROR);
 }
 
 /*
@@ -1800,6 +1628,8 @@ boolean_t
 uvm_vnp_uncache(vp)
 	struct vnode *vp;
 {
+#ifdef UBC
+#else
 	struct uvm_vnode *uvn = &vp->v_uvm;
 
 	/*
@@ -1877,7 +1707,7 @@ uvm_vnp_uncache(vp)
 	/*
 	 * and return...
 	 */
-	
+#endif
 	return(TRUE);
 }
 
@@ -1910,8 +1740,10 @@ uvm_vnp_setsize(vp, newsize)
 	 * lock uvn and check for valid object, and if valid: do it!
 	 */
 	simple_lock(&uvn->u_obj.vmobjlock);
+#ifdef UBC
+#else
 	if (uvn->u_flags & UVM_VNODE_VALID) {
-
+#endif
 		/*
 		 * make sure that the newsize fits within a vaddr_t
 		 * XXX: need to revise addressing data types
@@ -1930,18 +1762,25 @@ uvm_vnp_setsize(vp, newsize)
 		 * toss some pages...
 		 */
 
+#ifdef UBC
+		if (uvn->u_size > newsize && uvn->u_size != VSIZENOTSET) {
+#else
+/*
 		if (uvn->u_size > newsize) {
-			(void)uvn_flush(&uvn->u_obj, (vaddr_t) newsize,
-			    uvn->u_size, PGO_FREE);
+*/
+#endif
+			(void)uvn_flush(&uvn->u_obj, (vaddr_t)newsize,
+					uvn->u_size, PGO_FREE);
 		}
+#ifdef DEBUGxx
+printf("uvm_vnp_setsize: vp %p newsize 0x%x\n", vp, (int)newsize);
 		uvn->u_size = (vaddr_t)newsize;
+#endif
+#ifdef UBC
+#else
 	}
+#endif
 	simple_unlock(&uvn->u_obj.vmobjlock);
-
-	/*
-	 * done
-	 */
-	return;
 }
 
 /*
@@ -1987,7 +1826,7 @@ uvm_vnp_sync(mp)
 		/* attempt to gain reference */
 		while ((got_lock = simple_lock_try(&uvn->u_obj.vmobjlock)) ==
 		    						FALSE && 
-				(uvn->u_flags & UVM_VNODE_BLOCKED) == 0)
+				(uvn->u_flags & UVM_VNODE_BLOCKED) == 0) 
 			/* spin */ ;
 
 		/*
@@ -2014,8 +1853,12 @@ uvm_vnp_sync(mp)
 		 * gain reference.   watch out for persisting uvns (need to
 		 * regain vnode REF).
 		 */
+#ifdef UBC
+/* XXX should be using a vref-like function here */
+#else
 		if (uvn->u_obj.uo_refs == 0)
 			VREF(vp);
+#endif
 		uvn->u_obj.uo_refs++;
 		simple_unlock(&uvn->u_obj.vmobjlock);
 
@@ -2034,10 +1877,13 @@ uvm_vnp_sync(mp)
 
 	for (uvn = uvn_sync_q.sqh_first ; uvn ; uvn = uvn->u_syncq.sqe_next) {
 		simple_lock(&uvn->u_obj.vmobjlock);
+#ifdef UBC
+#else
 #ifdef DIAGNOSTIC
 		if (uvn->u_flags & UVM_VNODE_DYING) {
 			printf("uvm_vnp_sync: dying vnode on sync list\n");
 		}
+#endif
 #endif
 		uvn_flush(&uvn->u_obj, 0, 0,
 		    PGO_CLEANIT|PGO_ALLPAGES|PGO_DOACTCLUST);
@@ -2064,4 +1910,87 @@ uvm_vnp_sync(mp)
 	 * done!  release sync lock
 	 */
 	lockmgr(&uvn_sync_lock, LK_RELEASE, (void *)0);
+}
+
+
+/*
+ * uvm_vnp_relocate: update pages' blknos
+ */
+
+int
+uvm_vnp_relocate(vp, off, len, blkno)
+	struct vnode *vp;
+	vaddr_t off;
+	vsize_t len;
+	daddr_t blkno;
+{
+	int npages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	struct vm_page *pgs[npages], *pg;
+	int i, rv;
+
+printf("relocate: vp %p off 0x%lx npages 0x%x blkno 0x%x\n",
+       vp, off, npages, blkno);
+
+#ifdef DIAGNOSTIC
+	if (off & (PAGE_SIZE - 1)) {
+		panic("uvm_vnp_relocate: vp %p bad off 0x%lx", vp, off);
+	}
+#endif
+
+	/*
+	 * get all the pages in the range, change their blknos.
+	 * XXX access_type?  advice?
+	 */
+
+	bzero(pgs, sizeof pgs);
+
+again:
+	simple_lock(&vp->v_uvm.u_obj.vmobjlock);
+	rv = (vp->v_uvm.u_obj.pgops->pgo_get)(&vp->v_uvm.u_obj, off,
+					      pgs, &npages,
+					      0, 0, 0, PGO_ALLPAGES);
+	switch (rv) {
+	case VM_PAGER_OK:
+		break;
+
+#ifdef DIAGNOSTIC
+	case VM_PAGER_PEND:
+		panic("ubc_fault: pgo_get got PENDing on non-async I/O");
+#endif
+
+	case VM_PAGER_AGAIN:
+		tsleep(&lbolt, PVM, "uvn_relocate", 0);
+		goto again;
+
+	default:
+		return rv;
+	}
+
+	for (i = 0; i < npages; i++) {
+		pg = pgs[i];
+
+#ifdef DIAGNOSTIC
+		if (pg == NULL) {
+			panic("uvm_vnp_relocate: NULL pg");
+		}
+#endif
+
+		pg->blkno = blkno;
+		blkno += PAGE_SIZE >> DEV_BSHIFT;
+
+		if (pg->flags & PG_WANTED) {
+			wakeup(pg);
+		}
+
+#ifdef DIAGNOSTIC
+		if (pg->flags & PG_RELEASED) {
+			panic("uvm_vnp_relocate: "
+			      "pgo_get gave us a RELEASED page");
+		}
+#endif
+		pg->flags &= ~PG_BUSY;
+		UVM_PAGE_OWN(pg, NULL);
+	}
+
+	return 0;
 }

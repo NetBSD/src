@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.17 1998/11/04 07:07:22 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.17.2.1 1998/11/09 06:06:36 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -48,6 +48,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 #include <sys/pool.h>
 
 #include <vm/vm.h>
@@ -57,6 +58,23 @@
 #define UVM_AMAP		/* pull in uvm_amap.h functions */
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
+
+
+/*
+ * anonblock_list: global list of anon blocks,
+ * locked by swap_syscall_lock (since we never remove
+ * anything from this list and we only add to it via swapctl()).
+ */
+
+struct anonblock {
+	LIST_ENTRY(anonblock) list;
+	int count;
+	struct vm_anon *anons;
+};
+
+
+static LIST_HEAD(anonlist, anonblock) anonblock_list;
+
 
 /*
  * pool for vm_amap_structures.
@@ -69,6 +87,7 @@ struct pool uvm_amap_pool;
  */
 
 static struct vm_amap *amap_alloc1 __P((int, int, int));
+static boolean_t anon_pagein __P((struct vm_anon *));
 
 #ifdef VM_AMAP_PPREF
 /*
@@ -292,7 +311,7 @@ amap_extend(entry, addsize)
 	if (amap->am_nslot >= slotneed) {
 #ifdef VM_AMAP_PPREF
 		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-			amap_pp_adjref(amap, slotoff + slotmapped, addsize, 1);
+			amap_pp_adjref(amap, slotoff + slotmapped, slotadd, 1);
 		}
 #endif
 		simple_unlock(&amap->am_l);
@@ -310,8 +329,8 @@ amap_extend(entry, addsize)
 		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 			if ((slotoff + slotmapped) < amap->am_nslot)
 				amap_pp_adjref(amap, slotoff + slotmapped, 
-				    (amap->am_nslot - (slotoff + slotmapped)) <<
-				    PAGE_SHIFT, 1);
+				    (amap->am_nslot - (slotoff + slotmapped)),
+				    1);
 			pp_setreflen(amap->am_ppref, amap->am_nslot, 1, 
 			   slotneed - amap->am_nslot);
 		}
@@ -395,8 +414,7 @@ amap_extend(entry, addsize)
 		amap->am_ppref = newppref;
 		if ((slotoff + slotmapped) < amap->am_nslot)
 			amap_pp_adjref(amap, slotoff + slotmapped, 
-			    (amap->am_nslot - (slotoff + slotmapped)) <<
-			    PAGE_SHIFT, 1);
+			    (amap->am_nslot - (slotoff + slotmapped)), 1);
 		pp_setreflen(newppref, amap->am_nslot, 1, slotadded);
 	}
 #endif
@@ -548,7 +566,8 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	int slots, lcv;
 	vaddr_t chunksize;
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)", map, entry, waitf, 0);
+	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)",
+		    map, entry, waitf, 0);
 
 	/*
 	 * is there a map to copy?   if not, create one from scratch.
@@ -663,7 +682,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 #ifdef VM_AMAP_PPREF
 	if (srcamap->am_ppref && srcamap->am_ppref != PPREF_NONE) {
 		amap_pp_adjref(srcamap, entry->aref.ar_slotoff, 
-		    entry->end - entry->start, -1);
+		    (entry->end - entry->start) >> PAGE_SHIFT, -1);
 	}
 #endif
 
@@ -781,8 +800,10 @@ ReStart:
 				 * XXXCDC: we should cause fork to fail, but
 				 * we can't ...
 				 */
-				if (nanon)
+				if (nanon) {
+					simple_lock(&nanon->an_lock);
 					uvm_anfree(nanon);
+				}
 				simple_unlock(&anon->an_lock);
 				simple_unlock(&amap->am_l);
 				uvm_wait("cownowpage");
@@ -903,21 +924,20 @@ amap_pp_establish(amap)
  * => caller must check that ppref != PPREF_NONE before calling
  */
 void
-amap_pp_adjref(amap, curslot, bytelen, adjval)
+amap_pp_adjref(amap, curslot, slotlen, adjval)
 	struct vm_amap *amap;
 	int curslot;
-	vsize_t bytelen;
+	int slotlen;
 	int adjval;
 {
-	int slots, stopslot, *ppref, lcv;
+	int stopslot, *ppref, lcv;
 	int ref, len;
 
 	/*
 	 * get init values
 	 */
 
-	AMAP_B2SLOT(slots, bytelen);
-	stopslot = curslot + slots;
+	stopslot = curslot + slotlen;
 	ppref = amap->am_ppref;
 
 	/*
@@ -1047,9 +1067,8 @@ amap_wiperange(amap, slotoff, slots)
 void
 uvm_anon_init()
 {
-	struct vm_anon *anon;
-	int nanon = uvmexp.free - (uvmexp.free / 16); /* XXXCDC ??? */
-	int lcv;
+	simple_lock_init(&uvm.afreelock);
+	LIST_INIT(&anonblock_list);
 
 	/*
 	 * Initialize the vm_amap pool.
@@ -1058,24 +1077,8 @@ uvm_anon_init()
 	    "amappl", 0,
 	    pool_page_alloc_nointr, pool_page_free_nointr, M_UVMAMAP);
 
-	/*
-	 * Allocate the initial anons.
-	 */
-	anon = (struct vm_anon *)uvm_km_alloc(kernel_map,
-	    sizeof(*anon) * nanon);
-	if (anon == NULL) {
-		printf("uvm_anon_init: can not allocate %d anons\n", nanon);
-		panic("uvm_anon_init");
-	}
-
-	memset(anon, 0, sizeof(*anon) * nanon);
-	uvm.afree = NULL;
-	uvmexp.nanon = uvmexp.nfreeanon = nanon;
-	for (lcv = 0 ; lcv < nanon ; lcv++) {
-		anon[lcv].u.an_nxt = uvm.afree;
-		uvm.afree = &anon[lcv];
-	}
-	simple_lock_init(&uvm.afreelock);
+	/* XXXCDC: how many anons do we need to start with? */
+	uvm_anon_add(uvmexp.free, FALSE);
 }
 
 /*
@@ -1083,27 +1086,43 @@ uvm_anon_init()
  * more swap space.
  */
 void
-uvm_anon_add(pages)
-	int	pages;
+uvm_anon_add(pages, canwait)
+	int pages;
+	boolean_t canwait;
 {
+	struct anonblock *anonblock;
 	struct vm_anon *anon;
-	int lcv;
+	int lcv, flags;
 
-	anon = (struct vm_anon *)uvm_km_alloc(kernel_map,
-	    sizeof(*anon) * pages);
+	uvmexp.nanonneeded += pages;
+	pages = uvmexp.nanonneeded - uvmexp.nanon;
+
+	if (pages <= 0)
+	    return;
+
+	flags = canwait ? M_WAITOK : M_NOWAIT;
+
+	MALLOC(anonblock, struct anonblock *, sizeof(*anonblock), M_UVMAMAP,
+	       flags);
+	anon = (void *)uvm_km_alloc(kernel_map, sizeof(*anon) * pages);
 
 	/* XXX Should wait for VM to free up. */
-	if (anon == NULL) {
+	if (anonblock == NULL || anon == NULL) {
 		printf("uvm_anon_add: can not allocate %d anons\n", pages);
 		panic("uvm_anon_add");
 	}
 
-	simple_lock(&uvm.afreelock);
+	anonblock->count = pages;
+	anonblock->anons = anon;
+	LIST_INSERT_HEAD(&anonblock_list, anonblock, list);
+
 	memset(anon, 0, sizeof(*anon) * pages);
+
+	simple_lock(&uvm.afreelock);
 	uvmexp.nanon += pages;
 	uvmexp.nfreeanon += pages;
 	for (lcv = 0; lcv < pages; lcv++) {
-		simple_lock_init(&anon->an_lock);
+		simple_lock_init(&anon[lcv].an_lock);
 		anon[lcv].u.an_nxt = uvm.afree;
 		uvm.afree = &anon[lcv];
 	}
@@ -1124,7 +1143,11 @@ uvm_analloc()
 		uvm.afree = a->u.an_nxt;
 		uvmexp.nfreeanon--;
 		a->an_ref = 1;
-		a->an_swslot = 0;
+#ifdef DEBUG
+		if (a->an_swslot != 0)
+		    panic("anon modified on free list: anon %p swslot %d\n",
+			  a, a->an_swslot);
+#endif
 		a->u.an_page = NULL;		/* so we can free quickly */
 	}
 	simple_unlock(&uvm.afreelock);
@@ -1146,6 +1169,11 @@ uvm_anfree(anon)
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_anfree"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(anon=0x%x)", anon, 0,0,0);
+
+#ifdef	DIAGNOSTIC
+	if (anon->an_ref)
+		panic("uvm_anfree: anon still has refs");
+#endif
 
 	/*
 	 * get page
@@ -1232,12 +1260,21 @@ uvm_anfree(anon)
 		    anon, anon->an_swslot, 0, 0);
 		uvm_swap_free(anon->an_swslot, 1);
 		anon->an_swslot = 0;
+
+		if (pg == NULL) {
+			/* this page is no longer only in swap. */
+			uvmexp.swpguniq--;
+		}
 	} 
 
 	/*
 	 * now that we've stripped the data areas from the anon, free the anon
 	 * itself!
 	 */
+
+	(void) simple_lock_try(&anon->an_lock);
+	simple_unlock(&anon->an_lock);
+
 	simple_lock(&uvm.afreelock);
 	anon->u.an_nxt = uvm.afree;
 	uvm.afree = anon;
@@ -1341,4 +1378,213 @@ uvm_anon_lockloanpg(anon)
 	 */
 
 	return(pg);
+}
+
+
+
+/*
+ * page in every page in every amap that is paged-out to a range of swslots.
+ * 
+ * nothing should be locked.
+ */
+boolean_t
+anon_swap_off(startslot, endslot)
+int startslot, endslot;
+{
+	struct anonblock *anonblock;
+
+	for (anonblock = anonblock_list.lh_first;
+	     anonblock != NULL;
+	     anonblock = anonblock->list.le_next)
+	{
+		int i;
+
+		/*
+		 * loop thru all the anons in the anonblock,
+		 * paging in where needed.
+		 */
+		for (i = 0; i < anonblock->count; i++) {
+			struct vm_anon *anon = &anonblock->anons[i];
+			int slot;
+
+			/*
+			 * lock anon to work on it.
+			 */
+			simple_lock(&anon->an_lock);
+
+			/*
+			 * is this anon's swap slot in range?
+			 */
+			slot = anon->an_swslot;
+			if (slot >= startslot && slot < endslot) {
+				int rv;
+
+				/*
+				 * yup, page it in.
+				 */
+				rv = anon_pagein(anon);
+				if (rv) {
+					return rv;
+				}
+			}
+			else
+			{
+				/*
+				 * nope, unlock and proceed.
+				 */
+				simple_unlock(&anon->an_lock);
+			}
+		}
+	}
+
+	/*
+	 * done with traversal, unlock the list
+	 */
+	return FALSE;
+}
+
+
+/*
+ * fetch an anon's page.
+ *
+ * anon must be locked, and is unlocked upon return.
+ */
+static boolean_t
+anon_pagein(anon)
+struct vm_anon *anon;
+{
+	struct vm_page *pg;
+	int rv;
+	UVMHIST_FUNC("anon_pagein"); UVMHIST_CALLED(pdhist);
+
+	/*
+	 * check if page is resident.
+	 */
+
+restart:
+	while ((pg = anon->u.an_page) != NULL) {
+
+		/*
+		 * page is already resident.
+		 * if the page is busy or released,
+		 * wait for it and try again.
+		 */
+
+		if ((pg->flags & (PG_BUSY|PG_RELEASED)) != 0) {
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
+					    "anon_pagein", 0);
+			simple_lock(&anon->an_lock);
+			continue;
+		}
+
+		/*
+		 * page is ours.
+		 * mark it as dirty,
+		 * mark the anon as no longer being in swap,
+		 * and free the swap slot.
+		 */
+
+		pg->flags &= ~(PG_CLEAN);
+		uvm_swap_free(anon->an_swslot, 1);
+		anon->an_swslot = 0;
+
+		simple_unlock(&anon->an_lock);
+		return FALSE;
+	}
+
+	/*
+	 * page is not resident.
+	 * try to allocate a page, start over if we fail.
+	 */
+
+	while ((pg = uvm_pagealloc(NULL, 0, anon)) == NULL) {
+		boolean_t nomem;
+
+		/*
+		 * if we are out of swap here, then we have to fail.
+		 */
+		/* XXX what locks these? */
+		nomem = uvmexp.swpages <= uvmexp.swpginuse;
+
+		if (nomem) {
+			simple_unlock(&anon->an_lock);
+			return TRUE;
+		}
+
+		/*
+		 * otherwise wait for free pages.
+		 */
+		simple_unlock(&anon->an_lock);
+		uvm_wait("anon_pagein");
+		simple_lock(&anon->an_lock);
+		goto restart;
+	}
+
+	/*
+	 * fetch the page from swap.
+	 * everything is unlocked.
+	 */
+	simple_unlock(&anon->an_lock);
+	rv = uvm_swap_get(pg, anon->an_swslot, PGO_SYNCIO);
+
+	switch (rv) {
+	case VM_PAGER_OK:
+		break;
+
+	case VM_PAGER_AGAIN:
+		/*
+		 * sleep a bit, then try again.
+		 */
+		tsleep(&lbolt, PVM, "anon_pagein2", 0);
+		simple_lock(&anon->an_lock);
+		goto restart;
+
+	default:
+		panic("anon_pagein: uvm_swap_get -> %d", rv);
+	}
+
+	/*
+	 * relock to finish up.
+	 */
+	simple_lock(&anon->an_lock);
+
+	/*
+	 * handle wanted pages
+	 */
+	if (pg->flags & PG_WANTED) {
+		thread_wakeup(pg);
+	}
+
+	/*
+	 * handle released pages
+	 */
+	if (pg->flags & PG_RELEASED) {
+		uvm_anfree(anon);
+		return FALSE;
+	}
+
+	/*
+	 * ok, we've got the page now.
+	 * mark it as dirty, clear its swslot and un-busy it.
+	 */
+	uvm_swap_free(anon->an_swslot, 1);
+	anon->an_swslot = 0;
+	pg->flags &= ~(PG_BUSY|PG_CLEAN);
+	UVM_PAGE_OWN(pg, NULL);
+
+	/*
+	 * deactivate the page (to put it on a page queue)
+	 */
+	pmap_clear_reference(PMAP_PGARG(pg));
+	pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+	uvm_lock_pageq();
+	uvm_pagedeactivate(pg);
+	uvm_unlock_pageq();
+
+	/*
+	 * unlock and we're done.
+	 */
+	simple_unlock(&anon->an_lock);
+	return FALSE;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.18 1998/09/01 04:33:56 thorpej Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.18.2.1 1998/11/09 06:06:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -185,6 +185,20 @@ cache_enter(dvp, vp, cnp)
 #endif
 	if (!doingcache)
 		return;
+
+#ifdef UBC
+#ifdef DEBUG
+	if (vp == NULL) {
+		printf("cache_enter: dvp %p name %.*s NEG\n",
+		       dvp, (int)cnp->cn_namelen, cnp->cn_nameptr);
+	}
+	else {
+		printf("cache_enter: name %.*s vp %p\n",
+		       (int)cnp->cn_namelen, cnp->cn_nameptr, vp);
+	}
+#endif
+#endif
+
 	/*
 	 * Free the cache slot at head of lru chain.
 	 */
@@ -288,5 +302,37 @@ cache_purgevfs(mp)
 		/* cause rescan of list, it may have altered */
 		nxtcp = nclruhead.tqh_first;
 		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
+	}
+}
+
+
+void vp_name(struct vnode *vp);
+void
+vp_name(struct vnode *vp)
+{
+	struct vnode *dvp = NULL;
+	struct namecache *ncp;
+
+	for (ncp = TAILQ_FIRST(&nclruhead);
+	     ncp != NULL;
+	     ncp = TAILQ_NEXT(ncp, nc_lru)) {
+		if (ncp->nc_vp == vp && ncp->nc_vpid == vp->v_id) {
+			printf("name %.*s\n", ncp->nc_nlen, ncp->nc_name);
+			dvp = ncp->nc_dvp;
+		}
+	}
+
+	if (dvp == NULL) {
+		printf("name not found\n");
+		return;
+	}
+	vp = dvp;
+
+	for (ncp = TAILQ_FIRST(&nclruhead);
+	     ncp != NULL;
+	     ncp = TAILQ_NEXT(ncp, nc_lru)) {
+		if (ncp->nc_vp == vp && ncp->nc_vpid == vp->v_id) {
+			printf("parent %.*s\n", ncp->nc_nlen, ncp->nc_name);
+		}
 	}
 }

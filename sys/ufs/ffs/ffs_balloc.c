@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.13 1998/10/27 21:32:58 mycroft Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13.2.1 1998/11/09 06:06:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,7 +51,7 @@
 #include <vm/vm.h>
 
 #if defined(UVM)
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #endif
 
 #include <ufs/ufs/quota.h>
@@ -86,14 +86,17 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 	int deallocated, osize, nsize, num, i, error;
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 
-	*bpp = NULL;
+	if (bpp != NULL) {
+		*bpp = NULL;
+	}
+
 	if (lbn < 0)
 		return (EFBIG);
 	fs = ip->i_fs;
 
 	/*
-	 * If the next write will extend the file into a new block,
-	 * and the file is currently composed of a fragment
+	 * If the file currently ends with a fragment and
+	 * the block we're allocating now is after the current EOF,
 	 * this fragment has to be extended to be a full block.
 	 */
 	nb = lblkno(fs, ip->i_ffs_size);
@@ -102,36 +105,66 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		if (osize < fs->fs_bsize && osize > 0) {
 			error = ffs_realloccg(ip, nb,
 				ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs_db[0]),
-				osize, (int)fs->fs_bsize, cred, &bp);
+				osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
-			ip->i_ffs_size = (nb + 1) * fs->fs_bsize;
+			ip->i_ffs_size = lblktosize(fs, nb + 1);
 #if defined(UVM)
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
 #else
 			vnode_pager_setsize(vp, ip->i_ffs_size);
 #endif
-			ip->i_ffs_db[nb] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
+			ip->i_ffs_db[nb] = ufs_rw32(newb,
 			    UFS_MPNEEDSWAP(vp->v_mount));
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (flags & B_SYNC)
-				bwrite(bp);
-			else
-				bawrite(bp);
+
+			if (bpp) {
+				if (flags & B_SYNC)
+					bwrite(*bpp);
+				else
+					bawrite(*bpp);
+			}
+			else {
+				/*
+				 * XXX the data in the frag might be
+				 * moving to a new disk location.
+				 * we need to flush pages to the
+				 * new disk locations.
+				 * XXX we could do this in realloccg
+				 * except for the sync flag.
+				 */
+				(vp->v_uvm.u_obj.pgops->pgo_flush)
+					(&vp->v_uvm.u_obj, lblktosize(fs, nb),
+					 lblktosize(fs, nb + 1),
+					 flags & B_SYNC ? PGO_SYNCIO : 0);
+			}
 		}
 	}
 	/*
 	 * The first NDADDR blocks are direct blocks
 	 */
 	if (lbn < NDADDR) {
+
 		nb = ufs_rw32(ip->i_ffs_db[lbn], UFS_MPNEEDSWAP(vp->v_mount));
-		if (nb != 0 && ip->i_ffs_size >= (lbn + 1) * fs->fs_bsize) {
-			error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp);
-			if (error) {
-				brelse(bp);
-				return (error);
+		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
+
+			/*
+			 * the block is an already-allocated direct block
+			 * and the file already extends past this block,
+			 * thus this must be a whole block.
+			 * just read the block (if requested).
+			 */
+
+justread:
+			if (bpp != NULL) {
+				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
+					      &bp);
+				if (error) {
+					brelse(bp);
+					return (error);
+				}
+				*bpp = bp;
 			}
-			*bpp = bp;
 			return (0);
 		}
 		if (nb != 0) {
@@ -141,21 +174,39 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
-				error = bread(vp, lbn, osize, NOCRED, &bp);
-				if (error) {
-					brelse(bp);
-					return (error);
-				}
+
+				/*
+				 * the existing block is already
+				 * at least as big as we want.
+				 * just read the block (if requested).
+				 */
+
+				goto justread;
 			} else {
+
+				/*
+				 * the existing block is smaller than we want,
+				 * grow it.
+				 */
+
 				error = ffs_realloccg(ip, lbn,
 				    ffs_blkpref(ip, lbn, (int)lbn,
 					&ip->i_ffs_db[0]), osize, nsize, cred,
-					&bp);
+					bpp, &newb);
 				if (error)
 					return (error);
+				ip->i_ffs_db[lbn] = ufs_rw32(newb,
+					UFS_MPNEEDSWAP(vp->v_mount));
+				ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			}
 		} else {
-			if (ip->i_ffs_size < (lbn + 1) * fs->fs_bsize)
+
+			/*
+			 * the block was not previously allocated,
+			 * allocate a new block or fragment.
+			 */
+
+			if (ip->i_ffs_size < lblktosize(fs, lbn + 1))
 				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
@@ -164,15 +215,19 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 				nsize, cred, &newb);
 			if (error)
 				return (error);
-			bp = getblk(vp, lbn, nsize, 0, 0);
-			bp->b_blkno = fsbtodb(fs, newb);
-			if (flags & B_CLRBUF)
-				clrbuf(bp);
+
+			ip->i_ffs_db[lbn] = ufs_rw32(newb,
+				UFS_MPNEEDSWAP(vp->v_mount));
+			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
+			if (bpp != NULL) {
+				bp = getblk(vp, lbn, nsize, 0, 0);
+				bp->b_blkno = fsbtodb(fs, newb);
+				if (flags & B_CLRBUF)
+					clrbuf(bp);
+				*bpp = bp;
+			}
 		}
-		ip->i_ffs_db[lbn] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
-		    UFS_MPNEEDSWAP(vp->v_mount));
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		*bpp = bp;
 		return (0);
 	}
 	/*
@@ -280,10 +335,6 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		}
 		nb = newb;
 		*allocblk++ = nb;
-		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
-		if (flags & B_CLRBUF)
-			clrbuf(nbp);
 		bap[indirs[i].in_off] = ufs_rw32(nb,
 		    UFS_MPNEEDSWAP(vp->v_mount));
 		/*
@@ -295,21 +346,33 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		} else {
 			bdwrite(bp);
 		}
-		*bpp = nbp;
+		if (bpp != NULL) {
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
+			if (flags & B_CLRBUF)
+				clrbuf(nbp);
+			*bpp = nbp;
+		}
 		return (0);
 	}
+
 	brelse(bp);
-	if (flags & B_CLRBUF) {
-		error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
-		if (error) {
-			brelse(nbp);
-			goto fail;
+
+	if (bpp != NULL) {
+		if (flags & B_CLRBUF) {
+			error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
+			if (error) {
+				brelse(nbp);
+				goto fail;
+			}
+		} else {
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
+			clrbuf(nbp);
 		}
-	} else {
-		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		*bpp = nbp;
 	}
-	*bpp = nbp;
+
 	return (0);
 fail:
 	/*
