@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.28 2001/07/19 15:32:19 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.29 2001/09/10 14:56:33 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -387,8 +387,8 @@ int bus_space_probe __P((
 	unsigned char __bv =				      		\
 	    lduba((h) + (o), bus_type_asi[(t)->type]);			\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr1(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsr1(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) __bv);		\
 	__bv; })
 
@@ -396,8 +396,8 @@ int bus_space_probe __P((
 	unsigned short __bv =				      		\
 	    lduha((h) + (o), bus_type_asi[(t)->type]);			\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr2(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsr2(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_type_asi[(t)->type], (unsigned int)__bv);		\
 	__bv; })
 
@@ -405,8 +405,8 @@ int bus_space_probe __P((
 	unsigned int __bv =				      		\
 	    lda((h) + (o), bus_type_asi[(t)->type]);			\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr4(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsr4(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_type_asi[(t)->type], __bv);				\
 	__bv; })
 
@@ -414,9 +414,9 @@ int bus_space_probe __P((
 	u_int64_t __bv =				      		\
 	    ldxa((h) + (o), bus_type_asi[(t)->type]);			\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr8(%llx + %llx, %x) -> %llx\n", (u_int64_t)(h),	\
-		(u_int64_t)(o),						\
-		bus_type_asi[(t)->type], __bv);				\
+	printf("bsr8(%llx + %llx, %x) -> %llx\n", (long long)(h),	\
+		(long long)(o),						\
+		bus_type_asi[(t)->type], (long long)__bv);		\
 	__bv; })
 #endif
 /*
@@ -479,30 +479,30 @@ int bus_space_probe __P((
 #else
 #define	bus_space_write_1(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw1(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsw1(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) v);		\
 	((void)(stba((h) + (o), bus_type_asi[(t)->type], (v))));  })
 
 #define	bus_space_write_2(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw2(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsw2(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) v);		\
 	((void)(stha((h) + (o), bus_type_asi[(t)->type], (v)))); })
 
 #define	bus_space_write_4(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw4(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsw4(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) v);		\
 	((void)(sta((h) + (o), bus_type_asi[(t)->type], (v)))); })
 
 #define	bus_space_write_8(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw8(%llx + %llx, %x) <- %llx\n", (u_int64_t)(h),	\
-		(u_int64_t)(o),						\
-		bus_type_asi[(t)->type], (u_int64_t) v);		\
+	printf("bsw8(%llx + %llx, %x) <- %llx\n", (long long)(h),	\
+		(long long)(o),						\
+		bus_type_asi[(t)->type], (long long) v);		\
 	((void)(stxa((h) + (o), bus_type_asi[(t)->type], (v)))); })
 #endif
 /*
@@ -887,38 +887,38 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
 #else
 #define	bus_space_read_stream_1(t, h, o) ({				\
 	unsigned char __bv =				      		\
-	    lduba((h) + (o), bus_stream_asi[(t)->type]);			\
+	    lduba((h) + (o), bus_stream_asi[(t)->type]);		\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr1(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
-		bus_stream_asi[(t)->type], (unsigned int) __bv);		\
+	printf("bsr1(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+		(long long)(o),						\
+		bus_stream_asi[(t)->type], (unsigned int) __bv);	\
 	__bv; })
 
 #define	bus_space_read_stream_2(t, h, o) ({				\
 	unsigned short __bv =				      		\
-	    lduha((h) + (o), bus_stream_asi[(t)->type]);			\
+	    lduha((h) + (o), bus_stream_asi[(t)->type]);		\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr2(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsr2(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_stream_asi[(t)->type], (unsigned int)__bv);		\
 	__bv; })
 
-#define	bus_space_read_stream_4(t, h, o) ({					\
+#define	bus_space_read_stream_4(t, h, o) ({				\
 	unsigned int __bv =				      		\
 	    lda((h) + (o), bus_stream_asi[(t)->type]);			\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr4(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
-		bus_stream_asi[(t)->type], __bv);				\
+	printf("bsr4(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+		(long long)(o),						\
+		bus_stream_asi[(t)->type], __bv);			\
 	__bv; })
 
-#define	bus_space_read_stream_8(t, h, o) ({					\
+#define	bus_space_read_stream_8(t, h, o) ({				\
 	u_int64_t __bv =				      		\
 	    ldxa((h) + (o), bus_stream_asi[(t)->type]);			\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr8(%llx + %llx, %x) -> %llx\n", (u_int64_t)(h),	\
-		(u_int64_t)(o),						\
-		bus_stream_asi[(t)->type], __bv);				\
+	printf("bsr8(%llx + %llx, %x) -> %llx\n", (long long)(h),	\
+		(long long)(o),						\
+		bus_stream_asi[(t)->type], (long long)__bv);		\
 	__bv; })
 #endif
 /*
@@ -930,32 +930,32 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
  * described by tag/handle/offset and copy into buffer provided.
  */
 
-#define	bus_space_read_multi_stream_1(t, h, o, a, c) do {			\
+#define	bus_space_read_multi_stream_1(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
-		*p++ = bus_space_read_stream_1(t, h, o);			\
+		*p++ = bus_space_read_stream_1(t, h, o);		\
 } while (0)
 
-#define	bus_space_read_multi_stream_2(t, h, o, a, c) do {			\
+#define	bus_space_read_multi_stream_2(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int16_t *p = (u_int16_t *)a;					\
 	while (i-- > 0)							\
-		*p++ = bus_space_read_stream_2(t, h, o);			\
+		*p++ = bus_space_read_stream_2(t, h, o);		\
 } while (0)
 
-#define	bus_space_read_multi_stream_4(t, h, o, a, c) do {			\
+#define	bus_space_read_multi_stream_4(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int32_t *p = (u_int32_t *)a;					\
 	while (i-- > 0)							\
-		*p++ = bus_space_read_stream_4(t, h, o);			\
+		*p++ = bus_space_read_stream_4(t, h, o);		\
 } while (0)
 
-#define	bus_space_read_multi_stream_8(t, h, o, a, c) do {			\
+#define	bus_space_read_multi_stream_8(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int64_t *p = (u_int64_t *)a;					\
 	while (i-- > 0)							\
-		*p++ = bus_space_read_stream_8(t, h, o);			\
+		*p++ = bus_space_read_stream_8(t, h, o);		\
 } while (0)
 
 /*
@@ -967,44 +967,44 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
  * described by tag/handle/offset.
  */
 #ifndef BUS_SPACE_DEBUG
-#define	bus_space_write_stream_1(t, h, o, v)					\
+#define	bus_space_write_stream_1(t, h, o, v)				\
 	((void)(stba((h) + (o), bus_stream_asi[(t)->type], (v))))
 
-#define	bus_space_write_stream_2(t, h, o, v)					\
+#define	bus_space_write_stream_2(t, h, o, v)				\
 	((void)(stha((h) + (o), bus_stream_asi[(t)->type], (v))))
 
-#define	bus_space_write_stream_4(t, h, o, v)					\
+#define	bus_space_write_stream_4(t, h, o, v)				\
 	((void)(sta((h) + (o), bus_stream_asi[(t)->type], (v))))
 
-#define	bus_space_write_stream_8(t, h, o, v)					\
+#define	bus_space_write_stream_8(t, h, o, v)				\
 	((void)(stxa((h) + (o), bus_stream_asi[(t)->type], (v))))
 #else
 #define	bus_space_write_stream_1(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw1(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsw1(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_stream_asi[(t)->type], (unsigned int) v);		\
 	((void)(stba((h) + (o), bus_stream_asi[(t)->type], (v))));  })
 
 #define	bus_space_write_stream_2(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw2(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsw2(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_stream_asi[(t)->type], (unsigned int) v);		\
 	((void)(stha((h) + (o), bus_stream_asi[(t)->type], (v)))); })
 
 #define	bus_space_write_stream_4(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw4(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(o),						\
+	printf("bsw4(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+		(long long)(o),						\
 		bus_stream_asi[(t)->type], (unsigned int) v);		\
 	((void)(sta((h) + (o), bus_stream_asi[(t)->type], (v)))); })
 
 #define	bus_space_write_stream_8(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw8(%llx + %llx, %x) <- %llx\n", (u_int64_t)(h),	\
-		(u_int64_t)(o),						\
-		bus_stream_asi[(t)->type], (u_int64_t) v);		\
+	printf("bsw8(%llx + %llx, %x) <- %llx\n", (long long)(h),	\
+		(long long)(o),						\
+		bus_stream_asi[(t)->type], (long long) v);		\
 	((void)(stxa((h) + (o), bus_stream_asi[(t)->type], (v)))); })
 #endif
 /*
@@ -1016,32 +1016,32 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
  * provided to bus space described by tag/handle/offset.
  */
 
-#define	bus_space_write_multi_stream_1(t, h, o, a, c) do {			\
+#define	bus_space_write_multi_stream_1(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int8_t *p = (u_int8_t *)a;					\
 	while (i-- > 0)							\
-		bus_space_write_stream_1(t, h, o, *p++);			\
+		bus_space_write_stream_1(t, h, o, *p++);		\
 } while (0)
 
-#define bus_space_write_multi_stream_2(t, h, o, a, c) do {			\
+#define bus_space_write_multi_stream_2(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int16_t *p = (u_int16_t *)a;					\
 	while (i-- > 0)							\
-		bus_space_write_stream_2(t, h, o, *p++);			\
+		bus_space_write_stream_2(t, h, o, *p++);		\
 } while (0)
 
-#define bus_space_write_multi_stream_4(t, h, o, a, c) do {			\
+#define bus_space_write_multi_stream_4(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int32_t *p = (u_int32_t *)a;					\
 	while (i-- > 0)							\
-		bus_space_write_stream_4(t, h, o, *p++);			\
+		bus_space_write_stream_4(t, h, o, *p++);		\
 } while (0)
 
-#define bus_space_write_multi_stream_8(t, h, o, a, c) do {			\
+#define bus_space_write_multi_stream_8(t, h, o, a, c) do {		\
 	int i = c;							\
 	u_int64_t *p = (u_int64_t *)a;					\
 	while (i-- > 0)							\
-		bus_space_write_stream_8(t, h, o, *p++);			\
+		bus_space_write_stream_8(t, h, o, *p++);		\
 } while (0)
 
 /*
@@ -1053,28 +1053,28 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
  * by tag/handle/offset `count' times.
  */
 
-#define bus_space_set_multi_stream_1(t, h, o, v, c) do {			\
+#define bus_space_set_multi_stream_1(t, h, o, v, c) do {		\
 	int i = c;							\
 	while (i-- > 0)							\
-		bus_space_write_stream_1(t, h, o, v);				\
+		bus_space_write_stream_1(t, h, o, v);			\
 } while (0)
 
-#define bus_space_set_multi_stream_2(t, h, o, v, c) do {			\
+#define bus_space_set_multi_stream_2(t, h, o, v, c) do {		\
 	int i = c;							\
 	while (i-- > 0)							\
-		bus_space_write_stream_2(t, h, o, v);				\
+		bus_space_write_stream_2(t, h, o, v);			\
 } while (0)
 
-#define bus_space_set_multi_stream_4(t, h, o, v, c) do {			\
+#define bus_space_set_multi_stream_4(t, h, o, v, c) do {		\
 	int i = c;							\
 	while (i-- > 0)							\
-		bus_space_write_stream_4(t, h, o, v);				\
+		bus_space_write_stream_4(t, h, o, v);			\
 } while (0)
 
-#define bus_space_set_multi_stream_8(t, h, o, v, c) do {			\
+#define bus_space_set_multi_stream_8(t, h, o, v, c) do {		\
 	int i = c;							\
 	while (i-- > 0)							\
-		bus_space_write_stream_8(t, h, o, v);				\
+		bus_space_write_stream_8(t, h, o, v);			\
 } while (0)
 
 /*
