@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.6 1998/02/08 06:15:58 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.7 1998/02/09 13:08:22 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -178,20 +178,21 @@ struct uvmexp {
 	int nfreeanon;	/* number of free anon's */
 
 		/* stat counters */
-	int faults;	/* page fault count */
-	int traps;	/* trap count */
-	int intrs;	/* interrupt count */
-	int swtch;	/* context switch count */
-	int softs;	/* software interrupt count */
-	int syscalls;	/* system calls */
-	int pageins;	/* pages paged in */
-	int pageouts;	/* pages paged out */
-	int swapins;	/* swapins */
-	int swapouts;	/* swapouts */
-	int forks;  	/* forks */
+	int faults;		/* page fault count */
+	int traps;		/* trap count */
+	int intrs;		/* interrupt count */
+	int swtch;		/* context switch count */
+	int softs;		/* software interrupt count */
+	int syscalls;		/* system calls */
+	int pageins;		/* pagein operation count */
+				/* pageouts are in pdpageouts below */
+	int swapins;		/* swapins */
+	int swapouts;		/* swapouts */
+	int pgswapin;		/* pages swapped in */
+	int pgswapout;		/* pages swapped out */
+	int forks;  		/* forks */
 	int forks_ppwait;	/* forks where parent waits */
 	int forks_sharevm;	/* forks where vmspace is shared */
-
 
 		/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
