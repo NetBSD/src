@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.227 2000/04/25 05:38:56 mellon Exp $
+# $NetBSD: mi,v 1.228 2000/04/25 14:03:25 hubertf Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -849,6 +849,7 @@
 ./usr/share/man/cat8/pim6sd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0
+./usr/share/man/cat8/poweroff.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
@@ -1812,6 +1813,7 @@
 ./usr/share/man/man8/pim6sd.8
 ./usr/share/man/man8/ping.8
 ./usr/share/man/man8/ping6.8
+./usr/share/man/man8/poweroff.8
 ./usr/share/man/man8/portmap.8
 ./usr/share/man/man8/pppd.8
 ./usr/share/man/man8/pppstats.8
