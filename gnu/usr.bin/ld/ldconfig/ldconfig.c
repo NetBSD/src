@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldconfig.c,v 1.7 1994/06/10 15:16:54 pk Exp $
+ *	$Id: ldconfig.c,v 1.8 1994/06/16 13:38:32 pk Exp $
  */
 
 #include <sys/param.h>
@@ -54,7 +54,8 @@
 #undef major
 #undef minor
 
-char				*progname;
+extern char			*__progname;
+
 static int			verbose;
 static int			nostd;
 static int			justread;
@@ -84,12 +85,6 @@ char	*argv[];
 {
 	int		i, c;
 	int		rval = 0;
-	extern int	optind;
-
-	if ((progname = strrchr(argv[0], '/')) == NULL)
-		progname = argv[0];
-	else
-		progname++;
 
 	while ((c = getopt(argc, argv, "rsv")) != EOF) {
 		switch (c) {
@@ -103,7 +98,8 @@ char	*argv[];
 			justread = 1;
 			break;
 		default:
-			fprintf(stderr, "Usage: %s [-v] [dir ...]\n", progname);
+			fprintf(stderr, "Usage: %s [-r][-s][-v][dir ...]\n",
+				__progname);
 			exit(1);
 			break;
 		}

@@ -20,7 +20,7 @@ directories.  It scans a set of built-in system directories and any
 specified on the command line (in the given order) looking for shared
 libraries and stores the results in the file
 .Xr /var/run/ld.so.hints
-to forstall the overhead that would otherwise result from the
+to forestall the overhead that would otherwise result from the
 directory search operations
 .Xr ld.so
 would have to perform to load the required shared libraries.
@@ -56,12 +56,8 @@ Lists the current contents of
 .Xr ld.so.hints
 on the standard output. The hints file will not be modified.
 .It Fl s
-Do not scan
-.Nm ldconfig
-'s builtin system directories
-.Sq /usr/lib
-and
-.Sq /usr/local/lib
+Do not scan the built-in system directory
+.Pq Dq /usr/lib
 for shared libraries.
 .It Fl v
 Switch on verbose mode.
