@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2003/08/04 05:53:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2003/09/21 19:26:02 tron Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -12,6 +12,9 @@ SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 		CKSUM=${TOOL_CKSUM:Q} MAKE=${MAKE:Q} MTREE=${TOOL_MTREE:Q} \
 		PAX=${TOOL_PAX:Q} 
+
+print_have_gcc3:
+	@echo ${HAVE_GCC3}
 
 print_machine: .PHONY
 	@echo ${MACHINE}

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.62 2003/08/04 05:53:20 mrg Exp $
+# $NetBSD: makeflist,v 1.63 2003/09/21 19:26:03 tron Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -17,6 +17,10 @@ use_tools_toolchain=`${make} print_use_tools_toolchain`
 x11_version=`${make} print_x11_version`
 setd=`pwd`
 nlists="base comp etc games man misc text"
+if [ "`${make} print_have_gcc3`" != yes ]
+then
+	nlists="$nlists gcc"
+fi
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
 lists=$nlists
 
