@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.144 2002/09/09 02:32:38 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.145 2002/11/03 13:47:34 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,85 +201,6 @@ END(linux_sigcode)
 XLEAF(linux_esigcode)
 #undef SYSCALL_SHIFT
 #endif
-
-/*
- * The following primitives manipulate the run queues.  whichqs tells which
- * of the 32 queues qs have processes in them.  Setrunqueue puts processes
- * into queues, remrunqueue removes them from queues.  The running process is
- * on no queue, other processes are on a queue related to p->p_priority,
- * divided by 4 actually to shrink the 0-127 range of priorities into the 32
- * available queues.
- */
-/*
- * setrunqueue(struct proc *)
- *
- * Call should be made at splclock(), and p->p_stat should be SRUN.
- */
-NESTED(setrunqueue, CALLFRAME_SIZ, ra)
-	.mask	0x80000000, -4
-	subu	sp, sp, CALLFRAME_SIZ
-	lw	t0, P_BACK(a0)		# firewall: p->p_back must be 0
-	sw	ra, CALLFRAME_RA(sp)
-	beq	t0, zero, 1f
-	lbu	t0, P_PRIORITY(a0)	# put on p->p_priority / 4 queue
-	PANIC("setrunqueue")		#
-1:
-	li	t1, 1			# compute corresponding bit
-	srl	t0, t0, 2		# compute index into 'whichqs'
-	sll	t1, t1, t0
-	lw	t2, _C_LABEL(sched_whichqs)	# set corresponding bit
-	nop
-	or	t2, t2, t1
-	sw	t2, _C_LABEL(sched_whichqs)
-	sll	t0, t0, 3		# compute index into 'qs'
-	la	t1, _C_LABEL(sched_qs)
-	addu	t0, t0, t1		# t0 = qp = &qs[pri >> 2]
-	lw	t1, P_BACK(t0)		# t1 = qp->ph_rlink
-	sw	t0, P_FORW(a0)		# p->p_forw = qp
-	sw	t1, P_BACK(a0)		# p->p_back = qp->ph_rlink
-	sw	a0, P_FORW(t1)		# p->p_back->p_forw = p;
-	sw	a0, P_BACK(t0)		# qp->ph_rlink = p
-	j	ra
-	addu	sp, sp, CALLFRAME_SIZ
-END(setrunqueue)
-
-/*
- * remrunqueue(struct proc *)
- *
- * Call should be made at splclock().
- */
-NESTED(remrunqueue, CALLFRAME_SIZ, ra)
-	.mask	0x80000000, -4
-	subu	sp, sp, CALLFRAME_SIZ
-	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
-	li	t1, 1			# compute corresponding bit
-	srl	t0, t0, 2		# compute index into 'whichqs'
-	lw	t2, _C_LABEL(sched_whichqs)	# check corresponding bit
-	sll	t1, t1, t0
-	and	v0, t2, t1
-	sw	ra, CALLFRAME_RA(sp)
-	bne	v0, zero, 1f
-	lw	v0, P_BACK(a0)		# v0 = p->p_back
-	PANIC("remrunqueue")		# it wasn't recorded to be on its q
-1:
-	lw	v1, P_FORW(a0)		# v1 = p->p_forw
-	nop
-	sw	v1, P_FORW(v0)		# p->p_back->p_forw = p->p_forw;
-	sw	v0, P_BACK(v1)		# p->p_forw->p_back = p->r_rlink
-	sll	t0, t0, 3		# compute index into 'qs'
-	la	v0, _C_LABEL(sched_qs)
-	addu	t0, t0, v0		# t0 = qp = &qs[pri >> 2]
-	lw	v0, P_FORW(t0)		# check if queue empty
-	nop
-	bne	v0, t0, 2f		# No. qp->ph_link != qp
-	nop
-	xor	t2, t2, t1		# clear corresponding bit in 'whichqs'
-	sw	t2, _C_LABEL(sched_whichqs)
-2:
-	sw	zero, P_BACK(a0)	# for firewall checking
-	j	ra
-	addu	sp, sp, CALLFRAME_SIZ
-END(remrunqueue)
 
 /*
  * When no processes are on the runq, cpu_switch branches to idle
