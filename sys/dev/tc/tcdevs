@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp $
+$NetBSD: tcdevs,v 1.7 1997/02/05 22:14:18 cgd Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@ device	FORE_ATM	fa	Fore TCA-100 ATM
 device	KZTSA-AA	tza	TZA FWD SCSI
 device	OTTO		otto	DEC SRC \"OTTO\" ATM
 device	PMAD-AA		le	LANCE Ethernet
-device	PMAF-AA		fza	DEFZA FDDI
+device	PMAF-AA		fza	DEC FDDIcontroller 700 (DEFZA; fiber optic)
 device	PMAF-F		fta	DEFTA FDDI
 device	PMAG-AA		mfb	Monochrome Frame Buffer
 device	PMAG-BA		cfb	Color Frame Buffer
@@ -52,3 +52,21 @@ device	PMAGD-BA	sfbp	Smart Frame Buffer Plus, 32bpp
 device	PMAZ-AA		asc	53c94 SCSI
 device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
+
+# the following entries are unconfirmed
+#device	PMAD-AB		le	LANCE Ethernet
+#device	PMAF-CA		fza	DEC FDDIcontroller 700C (DEFZA; copper)
+#device	PMAG-DB		???	8-plane 3D Grahpics (PXG)
+#device	PMAG-AB		???	Monochrome Graphics Adapter (MX)
+#device	PMAG-JB		???	24-plane True Color Frame Buffer (TX)
+#device	PMAGB-BB	???	8-plane Color/Grayscale 2D SFB (HX)
+#device	PMAGB-BC	???	8-plane Color/Grayscale 2D SFB (HX)
+#define	PMAGB-BD	???	8-plane Color/Grayscale 2D SFB (HX)
+#define	PMAGB-BE	???	8-plane Color/Grayscale 2D SFB (HX)
+#device	PMAGB-DB	???	8-plane 3D Graphics (PXG+)
+#device	PMAGB-DD	???	8-plane 3D Graphics (PXG+)
+#device	PMAGB-EB	???	24-plane 3D Graphics with Z-Buffer (PXG+)
+#device	PMAGB-ED	???	24-plane 3D Graphics (with Z-Buffer?) (PXG+)
+#device	PMAGB-FB	???	96-plane 3D Graphics (PXG+ Turbo)
+#device	PMAGB-JB	???	24-plane True Color Frame Buffer (TX)
+#device	PMAZ-AB		asc	53c94 SCSI
