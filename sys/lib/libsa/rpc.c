@@ -1,3 +1,5 @@
+/*	$NetBSD: rpc.c,v 1.2 1994/10/26 05:45:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
- *   $Id: rpc.c,v 1.1 1994/05/08 16:11:35 brezak Exp $
+ * @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
  */
 
 #include <sys/param.h>

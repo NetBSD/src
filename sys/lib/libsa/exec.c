@@ -1,3 +1,5 @@
+/*	$NetBSD: exec.c,v 1.3 1994/10/26 05:44:44 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: exec.c,v 1.2 1994/08/22 21:56:03 brezak Exp $
  */
 
 #include <string.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: saioctl.h,v 1.2 1994/10/26 05:45:04 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)saioctl.h	8.1 (Berkeley) 6/11/93
- *	     $Id: saioctl.h,v 1.1 1994/01/26 02:03:57 brezak Exp $
+ *	@(#)saioctl.h	8.1 (Berkeley) 6/11/93
  */
 
 /* ioctl's -- for disks just now */

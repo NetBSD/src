@@ -1,3 +1,5 @@
+/*	$NetBSD: bcopy.c,v 1.4 1994/10/26 05:44:37 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)bcopy.c	8.1 (Berkeley) 6/11/93
- *	      $Id: bcopy.c,v 1.3 1994/07/27 07:38:17 cgd Exp $
+ *	@(#)bcopy.c	8.1 (Berkeley) 6/11/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: in_cksum.c,v 1.2 1994/10/26 05:44:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from @(#) Header: in_cksum.c,v 1.1 92/09/11 01:15:55 leres Exp  (LBL)
- *    $Id: in_cksum.c,v 1.1 1994/05/08 16:11:24 brezak Exp $
+ * @(#) Header: in_cksum.c,v 1.1 92/09/11 01:15:55 leres Exp  (LBL)
  */
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ufs.h,v 1.2 1994/10/26 05:45:10 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs.h	8.1 (Berkeley) 6/11/93
- *	     $Id: ufs.h,v 1.1 1994/01/26 02:04:02 brezak Exp $
+ *	@(#)ufs.h	8.1 (Berkeley) 6/11/93
  */
 
 int	ufs_open __P((char *path, struct open_file *f));

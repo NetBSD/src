@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs.h,v 1.2 1994/10/26 05:44:56 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * 	     $Id: nfs.h,v 1.1 1994/05/08 16:11:32 brezak Exp $
  */
 
 int	nfs_open __P((char *path, struct open_file *f));

@@ -1,3 +1,5 @@
+/*	$NetBSD: lseek.c,v 1.2 1994/10/26 05:44:51 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lseek.c	8.1 (Berkeley) 6/11/93
+ *	@(#)lseek.c	8.1 (Berkeley) 6/11/93
  *  
  *
  * Copyright (c) 1989, 1990, 1991 Carnegie Mellon University
@@ -60,8 +62,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- *	$Id: lseek.c,v 1.1 1994/01/26 02:03:51 brezak Exp $
  */
 
 #include "stand.h"

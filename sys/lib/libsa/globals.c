@@ -1,10 +1,10 @@
+/*	$NetBSD: globals.c,v 1.2 1994/10/26 05:44:47 cgd Exp $	*/
+
 /*
  *	globals.c:
  *
  *	global variables should be separate, so nothing else
  *	must be included extraneously.
- *
- *	$Id: globals.c,v 1.1 1994/05/08 16:11:23 brezak Exp $
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.1 1994/01/26 02:03:34 brezak Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1994/10/26 05:44:33 cgd Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
