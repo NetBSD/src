@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1996/09/18 20:03:09 cgd Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 1997/01/16 01:21:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)devopen.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
 /*
  * Decode the string 'fname', open the device and return the remaining

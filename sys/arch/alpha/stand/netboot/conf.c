@@ -1,10 +1,10 @@
-/*	$NetBSD: conf.c,v 1.2 1996/10/02 21:18:45 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1997/01/16 01:21:36 cgd Exp $	*/
 
 #include <sys/types.h>
 #include <netinet/in.h>
 
-#include "stand.h"
-#include "nfs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/nfs.h>
 #include "dev_net.h"
 
 struct fs_ops file_system[] = {
