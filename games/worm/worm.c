@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.22 2001/08/31 07:15:44 jsm Exp $	*/
+/*	$NetBSD: worm.c,v 1.23 2001/12/06 12:24:00 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.22 2001/08/31 07:15:44 jsm Exp $");
+__RCSID("$NetBSD: worm.c,v 1.23 2001/12/06 12:24:00 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ main(argc, argv)
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
 	initscr();
-	crmode();
+	cbreak();
 	noecho();
 #ifdef KEY_LEFT
 	keypad(stdscr, TRUE);
