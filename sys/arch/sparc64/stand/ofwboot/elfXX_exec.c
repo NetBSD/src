@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.5 2000/03/06 01:29:04 eeh Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.6 2000/05/22 19:15:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.
@@ -49,6 +49,13 @@
 
 #if 0
 int	CAT3(elf,ELFSIZE,_exec) __P((int, CAT3(Elf,ELFSIZE,_Ehdr) *, u_int64_t *, void **, void **));
+#endif
+#if defined(ELFSIZE) && (ELFSIZE == 32)
+#define ELF_ALIGN(x)	(((x)+3)&(~3))
+#elif defined(ELFSIZE) && (ELFSIZE == 64)
+#define ELF_ALIGN(x)	(((x)+7)&(~7))
+#else
+#error ELFSIZE must be either 32 or 64!
 #endif
 
 int
@@ -168,8 +175,11 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	 * Now load the symbol sections themselves.
 	 */
 	shp = addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr));
-	addr += sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + (elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
-	off = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) + (elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	size = sizeof(CAT3(Elf,ELFSIZE,_Ehdr)) +
+		(elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	size = ELF_ALIGN(size);
+	addr += size;
+	off = size;
 	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
 		if (shp->sh_type == SHT_SYMTAB
 		    || shp->sh_type == SHT_STRTAB) {
@@ -181,9 +191,9 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 				printf("read symbols: %s\n", strerror(errno));
 				return (1);
 			}
-			addr += (shp->sh_size+3)&(~3);
+			addr += ELF_ALIGN(shp->sh_size);
 			shp->sh_offset = off;
-			off += (shp->sh_size+3)&(~3);
+			off += ELF_ALIGN(shp->sh_size);
 			first = 0;
 		}
 	}
@@ -192,3 +202,5 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	*entryp = elf->e_entry;
 	return (0);
 }
+
+#undef ELF_ALIGN
