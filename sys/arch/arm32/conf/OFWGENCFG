@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.7 1998/09/06 02:37:47 mark Exp $
+#	$NetBSD: OFWGENCFG,v 1.8 1998/10/04 19:03:37 mark Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -28,7 +28,6 @@ options 	OFWGENCFG	# Enable Open Firmware bits specific to GENERIC configuration
 
 # FPA options
 
-#options	FPE		# Single precision FPE
 #options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
