@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.22 1997/06/23 01:49:15 lukem Exp $
+#	$NetBSD: security,v 1.23 1997/06/23 11:59:30 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -178,7 +178,7 @@ end-of-csh
 	cp /dev/null $OUTPUT
 	rhome=/root
 	umaskset=no
-	list="${rhome}/.profile"
+	list="/etc/profile ${rhome}/.profile"
 	for i in $list; do
 		if [ -f $i ] ; then
 			if egrep umask $i > /dev/null ; then
