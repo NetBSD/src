@@ -1,4 +1,4 @@
-#	$NetBSD: gettytab,v 1.16 2001/11/10 18:49:13 thorpej Exp $
+#	$NetBSD: gettytab,v 1.17 2003/04/04 16:43:38 perry Exp $
 #	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
 #
 # Most of the table entries here are just copies of the old getty table,
@@ -121,7 +121,7 @@ X|Xwindow|X window system:\
 	:rw:sp#9600:
 
 Pc|Pc console:\
-	:np:sp#9600:ig:
+	:np:sp#9600:ig:ht:
 
 # 8 bit clean Sun console
 suncons|Sun Console:\
