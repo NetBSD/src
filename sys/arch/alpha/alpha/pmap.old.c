@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.66 1998/03/22 07:27:54 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.67 1998/03/24 22:02:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.66 1998/03/22 07:27:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.67 1998/03/24 22:02:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3132,10 +3132,9 @@ pmap_destroy_lev1map(pmap)
 	 * reserved ASN, to ensure that no two pmaps never have
 	 * clashing TLB entries.
 	 */
-	if (active_pmap(pmap)) {
-		PMAP_INVALIDATE_ASN(pmap);
+	PMAP_INVALIDATE_ASN(pmap);
+	if (active_pmap(pmap))
 		PMAP_ACTIVATE(pmap, curproc);
-	}
 
 	/*
 	 * Clear PT page bookkeeping.
