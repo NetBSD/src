@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.3 1998/01/09 08:06:11 perry Exp $	*/
+/*	$NetBSD: shlock.c,v 1.4 1998/12/19 22:14:30 christos Exp $	*/
 
 /*
 ** Program to produce reliable locks for shell scripts.
@@ -96,7 +96,7 @@ int	uucpstyle;
 	char	*cp, buf[BUFSIZ];
 	static char	tempname[BUFSIZ];
 
-	sprintf(buf, "shlock%d", getpid());
+	sprintf(buf, "shlock%ld", (u_long)getpid());
 	if ((cp = strrchr(strcpy(tempname, file), '/')) != (char *)NULL) {
 		*++cp = '\0';
 		(void) strcat(tempname, buf);
@@ -104,7 +104,7 @@ int	uucpstyle;
 		(void) strcpy(tempname, buf);
 	dprintf("%s: temporary filename: %s\n", Pname, tempname);
 
-	sprintf(buf, "%d\n", pid);
+	sprintf(buf, "%ld\n", (u_long)pid);
 	len = strlen(buf);
 openloop:
 	if ((fd = open(tempname, O_RDWR|O_CREAT|O_EXCL, 0644)) < 0) {
@@ -137,8 +137,8 @@ openloop:
 		(write(fd, &pid, sizeof(pid)) != sizeof(pid)) :
 		(write(fd, buf, len) < 0))
 	{
-		fprintf(stderr, "%s: write(%s,%d): %s\n",
-			Pname, tempname, pid, strerror(errno));
+		fprintf(stderr, "%s: write(%s,%ld): %s\n",
+			Pname, tempname, (u_long)pid, strerror(errno));
 		(void) close(fd);
 		if (unlink(tempname) < 0) {
 			fprintf(stderr, E_unlk,
@@ -158,7 +158,7 @@ int
 p_exists(pid)
 pid_t	pid;
 {
-	dprintf("%s: process %d is ", Pname, pid);
+	dprintf("%s: process %ld is ", Pname, (u_long)pid);
 	if (pid <= 0) {
 		dprintf("invalid\n");
 		return(FALSE);
@@ -234,7 +234,8 @@ int	uucpstyle;
 	char	*tmp;
 	int	retcode = FALSE;
 
-	dprintf("%s: trying lock <%s> for process %d\n", Pname, file, pid);
+	dprintf("%s: trying lock <%s> for process %ld\n", Pname, file,
+	    (u_long)pid);
 	if ((tmp = xtmpfile(file, pid, uucpstyle)) == (char *)NULL)
 		return(FALSE);
 
