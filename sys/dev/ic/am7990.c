@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.4 1995/11/25 01:23:55 cgd Exp $	*/
+/*	$NetBSD: am7990.c,v 1.5 1995/12/10 08:55:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -86,6 +86,9 @@ leconfig(sc)
 	ifp->if_watchdog = lewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+#ifdef LANCE_REVC_BUG
+	ifp->if_flags &= ~IFF_MULTICAST;
+#endif
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -116,9 +119,9 @@ leconfig(sc)
 		panic("leconfig: weird memory size");
 	}
 
-	printf(": address %s, %d receive buffers, %d transmit buffers\n",
+	printf(": address %s\n%s: %d receive buffers, %d transmit buffers\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
-	    sc->sc_nrbuf, sc->sc_ntbuf);
+	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
 
 	mem = 0;
 	sc->sc_initaddr = mem;
@@ -406,6 +409,7 @@ leread(sc, boff, len)
 	if (ifp->if_bpf) {
 		bpf_mtap(ifp->if_bpf, m);
 
+#ifndef LANCE_REVC_BUG
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
@@ -418,6 +422,17 @@ leread(sc, boff, len)
 			m_freem(m);
 			return;
 		}
+#endif
+	}
+#endif
+
+#ifdef LANCE_REVC_BUG
+	if (bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    sizeof(eh->ether_dhost)) != 0 &&
+	    bcmp(eh->ether_dhost, etherbroadcastaddr,
+		    sizeof(eh->ether_dhost)) != 0) {
+		m_freem(m);
+		return;
 	}
 #endif
 
