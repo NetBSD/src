@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.10 1996/02/27 05:51:05 mycroft Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.11 1996/02/27 07:25:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -643,7 +643,7 @@ linux_sys_ioctl(p, v, retval)
 		SCARG(&ia, com) = TIOCNOTTY;
 		break;
 	case LINUX_SIOCGIFCONF:
-		SCARG(&ia, com) = SIOCGIFCONF;
+		SCARG(&ia, com) = OSIOCGIFCONF;
 		break;
 	case LINUX_SIOCADDMULTI:
 		SCARG(&ia, com) = SIOCADDMULTI;
