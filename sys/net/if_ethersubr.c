@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.94 2002/04/27 02:38:47 enami Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.95 2002/05/18 22:52:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.94 2002/04/27 02:38:47 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95 2002/05/18 22:52:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -595,12 +595,15 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 		break;
 	}
 
+	while (m->m_len <= hlen) {
+		hlen -= m->m_len;
+		m = m->m_next;
+	}
 	if (m->m_len < (hlen + hdrsize)) {
 		/*
-		 * Ethernet and protocol header not in a single
-		 * mbuf.  We can't cope with this situation right
+		 * protocol header not in a single mbuf.
+		 * We can't cope with this situation right
 		 * now (but it shouldn't ever happen, really, anyhow).
-		 * XXX Should use m_pulldown().
 		 */
 #ifdef DEBUG
 		printf("altq_etherclassify: headers span multiple mbufs: "
