@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.19 1998/12/12 15:21:33 simonb Exp $
+.\"	$NetBSD: hier.7,v 1.20 2000/01/05 00:11:44 itojun Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -352,9 +352,15 @@ CCITT networking include files
 .It Sy netinet/
 include files for Internet standard protocols; see
 .Xr inet 4
+.It Sy netinet6/
+include files for Internet protocol version 6; see
+.Xr inet6 4
 .It Sy netiso/
 include files for ISO standard protocols; see
 .Xr iso 4
+.It Sy netkey/
+include files for secret key management, used for security protocols; see
+.Xr ipsec 4
 .It Sy natm/
 C include files for native mode ATM
 .It Sy netns/
