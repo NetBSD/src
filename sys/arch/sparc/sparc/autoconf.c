@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.90 1998/04/01 14:03:26 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.91 1998/06/06 05:03:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -749,6 +749,7 @@ st_crazymap(n)
 
 struct devnametobdevmaj sparc_nam2blk[] = {
 	{ "xy",		3 },
+	{ "md",		5 },
 	{ "sd",		7 },
 	{ "xd",		10 },
 	{ "st",		11 },
