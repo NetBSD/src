@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.2.2.2 2000/02/08 00:10:45 he Exp $
+.\" $NetBSD: sysinst,v 1.2.2.3 2000/04/02 19:34:04 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,9 +115,11 @@ notes that will appear in this document.
 If the kernel by default allocates an interrupt for PCMCIA which is
 allocated to other (typically undetected) hardware, you may use a
 workaround by booting the install kernel with "boot -d" to drop into
-DDB (the in-kernel debugger) and set pcic_isa_intr_alloc_mask to mask
-out the offending interrupt before continuing.  By default the kernel
-masks out IRQ 10, and the corresponding mask is 0xfbff.  If you can
+DDB (the in-kernel debugger) and use "write pcic_isa_intr_alloc_mask 0x0808"
+(or any appropriate value for your machine) to mask out the offending
+interrupt before continuing.  By default the kernel masks out IRQ 10, and
+the corresponding mask is 0xfbff.
+If you can
 get your PCMCIA card to work using this hack, you may also ignore the
 .Bq Tn PCMCIA
 notes later in this document.
