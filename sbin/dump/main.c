@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1997/04/15 01:09:51 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1997/04/21 11:31:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.11 1997/04/15 01:09:51 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.12 1997/04/21 11:31:16 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ main(argc, argv)
 		(void)strncpy(spcl.c_filesys, "an unlisted file system",
 		    NAMELEN);
 	}
-	(void)strcpy(spcl.c_label, "none");
+	(void)strncpy(spcl.c_label, "none", sizeof(spcl.c_label) - 1);
 	(void)gethostname(spcl.c_host, NAMELEN);
 	spcl.c_level = level - '0';
 	spcl.c_type = TS_TAPE;
@@ -527,10 +527,8 @@ rawname(cp)
 	if (dp == NULL)
 		return (NULL);
 	*dp = '\0';
-	(void)strcpy(rawbuf, cp);
+	(void)snprintf(rawbuf, sizeof rawbuf, "%s/r%s", cp, dp + 1);
 	*dp = '/';
-	(void)strcat(rawbuf, "/r");
-	(void)strcat(rawbuf, dp + 1);
 	return (rawbuf);
 }
 
@@ -581,7 +579,7 @@ obsolete(argcp, argvp)
 				err(1, NULL);
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
-			(void)strcpy(&nargv[0][2], *argv);
+			(void)strcpy(&nargv[0][2], *argv); /* XXX strcpy is safe */
 			++argv;
 			++nargv;
 			break;
