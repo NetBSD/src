@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.20 2002/03/25 17:58:32 he Exp $
+.\"	$NetBSD: hardware,v 1.71.2.21 2002/03/29 23:09:15 he Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -615,170 +615,170 @@ To be detected by the distributed kernels, the devices must
 be configured as follows:
 .\"(disp
 .Bd -literal
-Device		Name	Port	IRQ	DRQ	Misc
-------		----	----	---	---	----
-Serial ports	com0	0x3f8	4		[8250/16450/16550/clones]
-		com1	0x2f8	3		[8250/16450/16550/clones]
-		com2	0x3e8	5		[8250/16450/16550/clones]
+Device          Name    Port    IRQ     DRQ     Misc
+------          ----    ----    ---     ---     ----
+Serial ports    com0    0x3f8   4               [8250/16450/16550/clones]
+                com1    0x2f8   3               [8250/16450/16550/clones]
+                com2    0x3e8   5               [8250/16450/16550/clones]
 
-Parallel ports	lpt0	0x378	7		[interrupt-driven or polling]
-		lpt1	0x278			[polling only]
-		lpt2	0x3bc			[polling only]
+Parallel ports  lpt0    0x378   7               [interrupt-driven or polling]
+                lpt1    0x278                   [polling only]
+                lpt2    0x3bc                   [polling only]
 
 Floppy controller
-		fdc0	0x3f0	6	2	[supports two disks]
+                fdc0    0x3f0   6       2       [supports two disks]
 
 AHA-154x, AHA-174x (in compatibility mode), or BT-54x SCSI host adapters
-		aha0	0x330	any	any
-		aha1	0x334	any	any
+                aha0    0x330   any     any
+                aha1    0x334   any     any
 
 AHA-174x SCSI host adapters (in enhanced mode)
-		ahb0	any  	any	any
+                ahb0    any     any     any
 
 AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
-		aic0	0x340	11	6
+                aic0    0x340   11      6
 
-AHA-2X4X or AIC-7xxx-based SCSI host adapters	[precise list: see NetBSD
-		ahc0	any  	any	any	 System Requirements and
-						 Supported Devices]
+AHA-2X4X or AIC-7xxx-based SCSI host adapters   [precise list: see NetBSD
+                ahc0    any     any     any      System Requirements and
+                                                 Supported Devices]
 
 AdvanSys ABP-9x0[U][A] SCSI host adapters
-		adv0	any	any	any
+                adv0    any     any     any
 
 AdvanSys ABP-940UW[68], ABP-970UW[68], ASB3940UW-00 SCSI host adapters
-		adw0	any	any	any
+                adw0    any     any     any
 
 AMD PCscsi-PCI based SCSI host adapters
-		pcscp0	any	any	any
+                pcscp0  any     any     any
 
 BusLogic BT445, BT74x, or BT9xx SCSI host adapters
-		bha0 	0x330	any	any
-		bha1 	0x334	any	any
+                bha0    0x330   any     any
+                bha1    0x334   any     any
 
 Seagate/Future Domain SCSI
-		sea0	any	5	any	iomem 0xd8000
+                sea0    any     5       any     iomem 0xd8000
 
 Symbios Logic/NCR 53C8xx, 53c1010-33 and 53c1510D based PCI SCSI host adapters
-		siop0	any  	any	any
+                siop0   any     any     any
 
 Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
-		uha0	0x330	any	any
-		uha1	0x340	any	any
+                uha0    0x330   any     any
+                uha1    0x340   any     any
 
 Western Digital WD7000 based ISA SCSI host adapters
-		wds0	0x350	15	6
-		wds1	0x358	11	5
+                wds0    0x350   15      6
+                wds1    0x358   11      5
 
 PCI IDE hard disk controllers
-		pciide0	any	any	any	[supports four devices]
+                pciide0 any     any     any     [supports four devices]
 
 MFM/ESDI/IDE/RLL hard disk controllers
-		wdc0	0x1f0	14		[supports two devices]
-		wdc1	0x170	15		[supports two devices]
+                wdc0    0x1f0   14              [supports two devices]
+                wdc1    0x170   15              [supports two devices]
 
-ATA disks	wd0, wd1, ...
+ATA disks       wd0, wd1, ...
 SCSI and ATAPI disks sd0, sd1, ...
-SCSI tapes	st0, st1, ...
+SCSI tapes      st0, st1, ...
 SCSI and ATAPI CD-ROMs cd0, cd1, ...
-	For each SCSI and IDE controller found, the SCSI or ATA(PI) devices
-	present on the bus are probed in increasing ID order for SCSI and
-	master/slave order for ATA(PI). So the first SCSI drive found will
-	be called sd0, the second sd1, and so on ...
+        For each SCSI and IDE controller found, the SCSI or ATA(PI) devices
+        present on the bus are probed in increasing ID order for SCSI and
+        master/slave order for ATA(PI). So the first SCSI drive found will
+        be called sd0, the second sd1, and so on ...
 
 StarLAN cards
-		ai0	0x360	7	any	iomem 0xd0000
+                ai0     0x360   7       any     iomem 0xd0000
 
 FMV-180 series cards
-		fmv0	0x2a0	any
+                fmv0    0x2a0   any
 
 AT1700 cards
-		ate0	0x2a0	any
+                ate0    0x2a0   any
 
 Intel EtherExpress/16 cards
-		ix0	0x300	10
+                ix0     0x300   10
 
 Intel EtherExpress PRO 10 ISA cards
-		iy0	0x360	any
+                iy0     0x360   any
 
 CS8900 Ethernet cards
-		cs0	0x300	any	any
+                cs0     0x300   any     any
 
 3Com 3c501 Ethernet cards
-		el0	0x300	9
+                el0     0x300   9
 
 3Com 3c503 Ethernet cards
-		ec0	0x250	9		iomem 0xd8000
+                ec0     0x250   9               iomem 0xd8000
 
 3Com 3c505 Ethernet cards
-		eg0	0x280	9
+                eg0     0x280   9
 
 3Com 3c507 Ethernet cards
-		ef0	0x360	7		iomem 0xd0000
+                ef0     0x360   7               iomem 0xd0000
 
 Novell NE1000, or NE2000 Ethernet boards
-		ne0 	0x280	9
-		ne1 	0x300	10
+                ne0     0x280   9
+                ne1     0x300   10
 
 Novell NE2100 Ethernet boards
-		ne2	0x320	9	7
+                ne2     0x320   9       7
 
 BICC IsoLan cards
-		ne3	0x320	10	7
+                ne3     0x320   10      7
 
 SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
-		we0	0x280 	9		iomem 0xd0000
-		we1	0x300	10		iomem 0xcc000
+                we0     0x280   9               iomem 0xd0000
+                we1     0x300   10              iomem 0xcc000
 
 3COM 3c509 or 3COM 3c579 Ethernet boards
-		ep0 	any  	any
+                ep0     any     any
 
 3COM 3x59X PCI Ethernet boards
-		ep0 	any  	any	[you must assign an interrupt in your
-		    	    	   	 PCI BIOS, or let it do so for you]
+                ep0     any     any     [you must assign an interrupt in your
+                                         PCI BIOS, or let it do so for you]
 
 3COM 3x90X PCI Ethernet boards
-		ex0 	any  	any	[you must assign an interrupt in your
-		    	    	   	 PCI BIOS, or let it do so for you]
+                ex0     any     any     [you must assign an interrupt in your
+                                         PCI BIOS, or let it do so for you]
 
 Intel EtherExpress PRO 10 ISA
-		iy0		0x360	any
+                iy0             0x360   any
 
 Intel EtherExpress 100 Fast Ethernet adapters
-		fxp0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+                fxp0    any     any     [you must assign an interrupt in your
+                                         PCI BIOS, or let it do so for you]
 
 SMC91C9x based Ethernet cards
-		sm0	0x300	10
+                sm0     0x300   10
 
 PCnet-PCI based Ethernet boards; see above for partial list
-		le0 	any  	any	[you must assign an interrupt in your
-		    	    	   	 PCI BIOS, or let it do so for you]
+                le0     any     any     [you must assign an interrupt in your
+                                         PCI BIOS, or let it do so for you]
 
 DC21x4x based Ethernet boards; see above for partial list
-		de0 	any  	any	[you must assign an interrupt in your
-		    	     	   	 PCI BIOS, or let it do so for you]
+                de0     any     any     [you must assign an interrupt in your
+                                         PCI BIOS, or let it do so for you]
 
 Digital EtherWORKS III (DE203/DE204/DE205) LEMAC
-		lc0 	0x320	any
+                lc0     0x320   any
 
 Qlogic ISP [12]0x0 SCSI/FibreChannel boards
-		isp0	any	any
+                isp0    any     any
 
 Efficient Networks EN-155 and Adaptec AIC-590x ATM interfaces
-		en0	any	any
+                en0     any     any
 
 SMC EPIC/100 Fast Ethernet boards
-		epic0	any	any
+                epic0   any     any
 
 Texas Instruments ThunderLAN based ethernet boards
-		tl0	any	any
+                tl0     any     any
 
 VIA VT3043(Rhine) and VT86C100A(Rhine-II) based ethernet boards
-		vr0	any	any
+                vr0     any     any
 
 IBM TROPIC based Token-Ring cards
-		tr0	0xa20	any		iomem 0xd8000
-		tr1	0xa24	any		iomem 0xd0000
-		tr2	any	any
+                tr0     0xa20   any             iomem 0xd8000
+                tr1     0xa24   any             iomem 0xd0000
+                tr2     any     any
 
 .disp)
