@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 1997/10/20 00:45:03 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.2.1 1997/12/09 20:02:33 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -71,6 +71,9 @@
 #define	NKPDE_MAX	63		/* max. # of kernel PDEs */ 
 #define	NKPDE_SCALE	1		/* # of kernel PDEs to add per meg. */
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
+
+#define UPT_MIN_ADDRESS	(PTDPTDI<<PDSHIFT)
+#define UPT_MAX_ADDRESS	(UPT_MIN_ADDRESS + (PTDPTDI<<PGSHIFT))
 
 /*
  * Address of current and alternate address space page table maps
