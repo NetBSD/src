@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.24 1999/04/30 18:32:01 ross Exp $	*/
+/*	$NetBSD: modload.c,v 1.25 1999/06/13 12:54:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.24 1999/04/30 18:32:01 ross Exp $");
+__RCSID("$NetBSD: modload.c,v 1.25 1999/06/13 12:54:40 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: modload.c,v 1.24 1999/04/30 18:32:01 ross Exp $");
 #include <sys/lkm.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <a.out.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -57,6 +56,8 @@ __RCSID("$NetBSD: modload.c,v 1.24 1999/04/30 18:32:01 ross Exp $");
 #define TRUE 1
 #define FALSE 0
 
+#include "modload.h"
+
 #ifndef DFLT_ENTRY
 #define	DFLT_ENTRY	"xxxinit"
 #endif	/* !DFLT_ENTRY */
@@ -64,46 +65,30 @@ __RCSID("$NetBSD: modload.c,v 1.24 1999/04/30 18:32:01 ross Exp $");
 #define	DFLT_ENTRYEXT	"_lkmentry"
 #endif	/* !DFLT_ENTRYEXT */
 
-/*
- * Expected linker options:
- *
- * -A		executable to link against
- * -e		entry point
- * -o		output file
- * -T		address to link to in hex (assumes it's a page boundry)
- * <target>	object file
- */
-#ifdef	__alpha__
-#define	LINKCMD		"ld -R %s -e %s -o %s -Ttext %x %s"
-#else
-#define	LINKCMD		"ld -A %s -e _%s -o %s -T %x %s"
-#endif
-
-void	cleanup __P((void));
-int	linkcmd __P((char *, char *, char *, u_int, char *));
-int	main __P((int, char *[]));
-void	usage __P((void));
-int	verify_entry __P((char *, char *));
-
 int debug = 0;
 int verbose = 0;
+char *out = NULL;
 int symtab = 0;
+int Sflag;
 
-int
-linkcmd(kernel, entry, outfile, address, object)
-	char *kernel, *entry, *outfile;
-	u_int address;	/* XXX */
-	char *object;
+static	void	cleanup __P((void));
+
+/* prelink the module */
+static int
+prelink(const char *kernel, 
+	const char *entry, 
+	const char *outfile, 
+	const void *address, 
+	const char *object)
 {
 	char cmdbuf[1024];
 	int error = 0;
 
-	if (snprintf(cmdbuf, sizeof(cmdbuf), LINKCMD, kernel, entry, outfile,
-	    address, object) >= sizeof(cmdbuf))
-		errx(1, "link command too long");
+	linkcmd(cmdbuf, sizeof(cmdbuf), 
+		kernel, entry, outfile, address, object);
 
 	if (debug)
-		printf("%s\n", cmdbuf);
+		fprintf(stderr, "%s\n", cmdbuf);
 
 	switch (system(cmdbuf)) {
 	case 0:				/* SUCCESS! */
@@ -128,14 +113,14 @@ linkcmd(kernel, entry, outfile, address, object)
 	return error;
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "modload [-d] [-v] [-A <kernel>] [-e <entry]\n");
+	fprintf(stderr, "modload [-d] [-v] [-n] [-A <kernel>] [-e <entry>]\n");
 	fprintf(stderr,
-	    "[-p <postinstall>] [-o <output file>] <input file>\n");
+	    "        [-p <postinstall>] [-o <output file>] <input file>\n");
 	exit(1);
 }
 
@@ -143,12 +128,15 @@ int fileopen = 0;
 #define	DEV_OPEN	0x01
 #define	MOD_OPEN	0x02
 #define	PART_RESRV	0x04
+#define	OUTFILE_CREAT	0x08
+
 int devfd, modfd;
 struct lmc_resrv resrv;
 
-void
-cleanup()
+static void
+cleanup(void)
 {
+
 	if (fileopen & PART_RESRV) {
 		/*
 		 * Free up kernel memory
@@ -162,11 +150,13 @@ cleanup()
 
 	if (fileopen & MOD_OPEN)
 		close(modfd);
+
+	if (fileopen & OUTFILE_CREAT)
+		unlink(out);
 }
 
-int
-verify_entry(entry, filename)
-	char *entry, *filename;
+static int
+verify_entry(char *entry, char *filename)
 {
 	struct	nlist	names[2];
 	int n;
@@ -188,31 +178,58 @@ verify_entry(entry, filename)
 	return n;
 }
 
+/* 
+ * Transfer data to kernel memory in chunks 
+ * of MODIOBUF size at a time.
+ */
+void
+loadbuf(void *buf, size_t len)
+{
+	struct lmc_loadbuf ldbuf;
+	size_t n;
+	char *p = buf;
+	
+	while(len) {
+		n = MIN(len, MODIOBUF);
+		ldbuf.cnt = n;
+		ldbuf.data = p;
+		if(ioctl(devfd, LMLOADBUF, &ldbuf) == -1)
+			err(11, "error loading buffer");
+		len -= n;
+		p += n;
+	}
+}
+
+/* Transfer some empty space. */
+void
+loadspace(size_t len)
+{
+	char buf[MODIOBUF];
+	size_t n;
+	memset(buf, 0, sizeof(buf));
+	while(len) {
+		n = MIN(len, sizeof(buf));
+		loadbuf(buf, n);
+		len -= n;
+	}
+}
+
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int c;
 	char *kname = _PATH_UNIX;
 	char *entry = DFLT_ENTRY;
 	char *post = NULL;
-	char *out = NULL;
 	char *modobj;
 	char modout[80], *p;
-	struct exec info_buf;
 	struct stat stb;
-	u_int modsize;	/* XXX */
-	u_int modentry;	/* XXX */
-	struct nlist *nlp;
-	int strtablen, numsyms;
+	int strtablen;
+	size_t modsize;	/* XXX */
+	void* modentry;	/* XXX */
+	int noready = 0, old = 0;
 
-	struct lmc_loadbuf ldbuf;
-	int sz, bytesleft, old = FALSE;
-	char buf[MODIOBUF];
- 	char *symbuf;
-
-	while ((c = getopt(argc, argv, "dvsA:e:p:o:")) != -1) {
+	while ((c = getopt(argc, argv, "dnvsAS:e:p:o:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -232,11 +249,18 @@ main(argc, argv)
 		case 'o':
 			out = optarg;
 			break;	/* output file */
+		case 'n':
+			noready = 1;
+			break;
 		case 's':
 			symtab = 1;
 			break;
+		case 'S':
+			Sflag = 1;
+			break;
 		case '?':
 			usage();
+			/* NOTREACHED */
 		default:
 			printf("default!\n");
 			break;
@@ -261,7 +285,8 @@ main(argc, argv)
 		err(3, _PATH_LKM);
 	fileopen |= DEV_OPEN;
 
-	strcpy(modout, modobj);
+	strncpy(modout, modobj, sizeof(modout) - 1);
+	modout[sizeof(modout) - 1] = '\0';
 
 	p = strrchr(modout, '.');
 	if (!p || strcmp(p, ".o"))
@@ -282,7 +307,7 @@ main(argc, argv)
 				p++;
 			else
 				p = modout;
-			entry = (char *)malloc(strlen(p) +
+			entry = malloc(strlen(p) + 
 			    strlen(DFLT_ENTRYEXT) + 1);
 			strcpy(entry, p);
 			strcat(entry, DFLT_ENTRYEXT);
@@ -297,22 +322,18 @@ main(argc, argv)
 	/*
 	 * Prelink to get file size
 	 */
-	if (linkcmd(kname, entry, out, 0, modobj))
+	if (prelink(kname, entry, out, 0, modobj))
 		errx(1, "can't prelink `%s' creating `%s'", modobj, out);
-
-	/*
-	 * Pre-open the 0-linked module to get the size information
-	 */
+	if (Sflag == 0)
+		fileopen |= OUTFILE_CREAT;
+  
+ 	/*
+ 	 * Pre-open the 0-linked module to get the size information
+ 	 */
 	if ((modfd = open(out, O_RDONLY, 0)) == -1)
-		err(4, out);
+		err(4, "%s", out);
 	fileopen |= MOD_OPEN;
 
-	/*
-	 * Get the load module post load size... do this by reading the
-	 * header and doing page counts.
-	 */
-	if (read(modfd, &info_buf, sizeof(struct exec)) == -1)
-		err(3, "read `%s'", out);
 	/*
 	 * stat for filesize to figure out string table size
 	 */
@@ -320,21 +341,16 @@ main(argc, argv)
 	    err(3, "fstat `%s'", out);
 
 	/*
+	 * work out various sizes and fill in resrv bits
+	 */
+	if (mod_sizes(modfd, &modsize, &strtablen, &resrv, &stb) != 0)
+		err(1, "can't get module sizes");
+
+	/*
 	 * Close the dummy module -- we have our sizing information.
 	 */
 	close(modfd);
 	fileopen &= ~MOD_OPEN;
-
-	/*
-	 * Magic number...
-	 */
-	if (N_BADMAG(info_buf))
-		errx(4, "not an a.out format file");
-
-	/*
-	 * Calculate the size of the module
-	 */
- 	modsize = info_buf.a_text + info_buf.a_data + info_buf.a_bss;
 
 	/*
 	 * Reserve the required amount of kernel memory -- this may fail
@@ -344,16 +360,9 @@ main(argc, argv)
 	resrv.name = modout;	/* objname w/o ".o" */
 	resrv.slot = -1;	/* returned */
 	resrv.addr = 0;		/* returned */
-	strtablen = stb.st_size - N_STROFF(info_buf);
-	if (symtab) {
-	    /* XXX TODO:  grovel through symbol table looking
-	       for just the symbol table stuff from the new module,
-	       and skip the stuff from the kernel. */
-	    resrv.sym_size = info_buf.a_syms + strtablen;
-	    resrv.sym_symsize = info_buf.a_syms;
-	} else
-	    resrv.sym_size = resrv.sym_symsize = 0;
 
+	if (verbose)
+		warnx("reserving %lu bytes of memory", (unsigned long)modsize);
 	if (ioctl(devfd, LMRESERV, &resrv) == -1) {
 	    if (symtab)
 		warn("not loading symbols: kernel does not support symbol table loading");
@@ -368,117 +377,31 @@ main(argc, argv)
 	/*
 	 * Relink at kernel load address
 	 */
-	if (linkcmd(kname, entry, out, resrv.addr, modobj))
-		errx(1, "can't link `%s' creating `%s' bound to 0x%08lx",
-		    modobj, out, (long) resrv.addr);
+	if (prelink(kname, entry, out, (void*)resrv.addr, modobj))
+		errx(1, "can't link `%s' creating `%s' bound to %p",
+		     modobj, out, (void*)resrv.addr);
 
 	/*
 	 * Open the relinked module to load it...
 	 */
 	if ((modfd = open(out, O_RDONLY, 0)) == -1)
-		err(4, out);
+		err(4, "%s", out);
 	fileopen |= MOD_OPEN;
 
-	/*
-	 * Reread the header to get the actual entry point *after* the
-	 * relink.
-	 */
-	if (read(modfd, &info_buf, sizeof(struct exec)) == -1)
-		err(3, "read `%s'", out);
+	modentry = mod_load(modfd);
+	if (debug)
+		fprintf(stderr, "modentry = %p\n", modentry);
 
-	/*
-	 * Get the entry point (for initialization)
-	 */
-	modentry = info_buf.a_entry;			/* place to call */
+	if (symtab)
+		mod_symload(strtablen);
 
-	/*
-	 * Seek to the text offset to start loading...
-	 */
-	if (lseek(modfd, N_TXTOFF(info_buf), 0) == -1)
-		err(12, "lseek");
-
-	/*
-	 * Transfer the relinked module to kernel memory in chunks of
-	 * MODIOBUF size at a time.
-	 */
-	for (bytesleft = info_buf.a_text + info_buf.a_data;
-	    bytesleft > 0;
-	    bytesleft -= sz) {
-		sz = MIN(bytesleft, MODIOBUF);
-		read(modfd, buf, sz);
-		ldbuf.cnt = sz;
-		ldbuf.data = buf;
-		if (ioctl(devfd, LMLOADBUF, &ldbuf) == -1)
-			err(11, "error transferring buffer");
-	}
-
-
-	if (symtab) {
-	    /*
-	     * Seek to the symbol table to start loading it...
-	     */
-	    if (lseek(modfd, N_SYMOFF(info_buf), SEEK_SET) == -1)
-		err(12, "lseek");
-
-	    /*
-	     * Transfer the symbol table entries.  First, read them all in,
-	     * then adjust their string table pointers, then
-	     * copy in bulk.  Then copy the string table itself.
-	     */
-
-	    symbuf = malloc(info_buf.a_syms);
-	    if (symbuf == 0)
-		err(13, "malloc");
-
-	    if (read(modfd, symbuf, info_buf.a_syms) != info_buf.a_syms)
-		err(14, "read");
-	    numsyms = info_buf.a_syms / sizeof(struct nlist);
-	    for (nlp = (struct nlist *)symbuf; 
-		 (char *)nlp < symbuf + info_buf.a_syms;
-		 nlp++) {
-		register int strx;
-		strx = nlp->n_un.n_strx;
-		if (strx != 0) {
-		    /* If a valid name, set the name ptr to point at the
-		     * loaded address for the string in the string table.
-		     */
-		    if (strx > strtablen)
-			nlp->n_un.n_name = 0;
-		    else
-			nlp->n_un.n_name =
-			    (char *)(strx + resrv.sym_addr + info_buf.a_syms);
-		}
-	    }
-	    /*
-	     * we've fixed the symbol table entries, now load them
-	     */
-	    for (bytesleft = info_buf.a_syms;
-		 bytesleft > 0;
-		 bytesleft -= sz) {
-		sz = MIN(bytesleft, MODIOBUF);
-		ldbuf.cnt = sz;
-		ldbuf.data = symbuf;
-		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
-		    err(11, "error transferring sym buffer");
-		symbuf += sz;
-	    }
-	    free(symbuf - info_buf.a_syms);
-	    /* and now read the string table and load it. */
-	    for (bytesleft = strtablen;
-		 bytesleft > 0;
-		 bytesleft -= sz) {
-		sz = MIN(bytesleft, MODIOBUF);
-		read(modfd, buf, sz);
-		ldbuf.cnt = sz;
-		ldbuf.data = buf;
-		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
-		    err(11, "error transferring stringtable buffer");
-	    }
-	}
 	/*
 	 * Save ourselves before disaster (potentitally) strikes...
 	 */
 	sync();
+
+	if (noready)
+		return 0;
 
 	/*
 	 * Trigger the module as loaded by calling the entry procedure;
@@ -528,5 +451,5 @@ main(argc, argv)
 		err(16, "can't exec `%s'", post);
 	}
 
-	return 0;
+	exit (0);
 }
