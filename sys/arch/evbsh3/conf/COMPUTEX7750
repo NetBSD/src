@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.17 2002/04/25 15:06:26 atatat Exp $
+#	$NetBSD: COMPUTEX7750,v 1.18 2002/05/09 12:34:20 uch Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -24,7 +24,7 @@ options 	SH4
 options 	PCLOCK=33333300			# 33.3333MHz
 options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_ROM_SIZE=0x00100000		# 1MB
-options 	IOM_RAM_BEGIN=0x8c000000
+options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_RAM_SIZE=0x02000000		# 32MB
 
 options 	BSC_BCR1_VAL	=0x0000000c
