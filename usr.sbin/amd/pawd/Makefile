@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1998/10/30 16:55:13 matt Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/26 20:04:50 kim Exp $
 
-PROG= pawd
+BINDIR=	/usr/bin
+PROG=	pawd
 SRCS=	pawd.c 
-SRCS+= amq_clnt.c amq_xdr.c
-MAN+= pawd.1
+SRCS+=	amq_clnt.c amq_xdr.c
+MAN+=	pawd.1
 CPPFLAGS+=-I${.CURDIR}/../amq
 .PATH.c: ${.CURDIR}/../amq
 
