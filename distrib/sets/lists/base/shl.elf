@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.72 2003/06/25 10:38:01 tshiozak Exp $
+# $NetBSD: shl.elf,v 1.73 2003/06/25 18:58:24 tshiozak Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12		base-sys-shlib
 ./lib/libcrypt.so.0		base-sys-shlib
@@ -22,14 +22,14 @@
 ./usr/lib/i18n/libMSKanji.so.4	base-i18n-shlib
 ./usr/lib/i18n/libUTF1632.so.4	base-i18n-shlib
 ./usr/lib/i18n/libUTF8.so.4	base-i18n-shlib
-./usr/lib/i18n/iconv_none.so.4	base-i18n-shlib
-./usr/lib/i18n/iconv_std.so.4	base-i18n-shlib
-./usr/lib/i18n/mapper_646.so.4	base-i18n-shlib
-./usr/lib/i18n/mapper_none.so.4	base-i18n-shlib
-./usr/lib/i18n/mapper_parallel.so.4	base-i18n-shlib
-./usr/lib/i18n/mapper_serial.so.4	base-i18n-shlib
-./usr/lib/i18n/mapper_std.so.4	base-i18n-shlib
-./usr/lib/i18n/mapper_zone.so.4	base-i18n-shlib
+./usr/lib/i18n/libiconv_none.so.4	base-i18n-shlib
+./usr/lib/i18n/libiconv_std.so.4	base-i18n-shlib
+./usr/lib/i18n/libmapper_646.so.4	base-i18n-shlib
+./usr/lib/i18n/libmapper_none.so.4	base-i18n-shlib
+./usr/lib/i18n/libmapper_parallel.so.4	base-i18n-shlib
+./usr/lib/i18n/libmapper_serial.so.4	base-i18n-shlib
+./usr/lib/i18n/libmapper_std.so.4	base-i18n-shlib
+./usr/lib/i18n/libmapper_zone.so.4	base-i18n-shlib
 ./usr/lib/libamu.so.2		base-amd-shlib
 ./usr/lib/libasn1.so.6		base-krb5-shlib
 ./usr/lib/libbsdmalloc.so.0	base-sys-shlib

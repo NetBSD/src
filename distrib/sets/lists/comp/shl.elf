@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.40 2003/06/25 10:38:03 tshiozak Exp $
+# $NetBSD: shl.elf,v 1.41 2003/06/25 18:58:23 tshiozak Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -22,14 +22,14 @@
 ./usr/lib/i18n/libMSKanji.so	comp-i18n-lib
 ./usr/lib/i18n/libUTF1632.so	comp-i18n-lib
 ./usr/lib/i18n/libUTF8.so	comp-i18n-lib
-./usr/lib/i18n/iconv_none.so	comp-i18n-lib
-./usr/lib/i18n/iconv_std.so	comp-i18n-lib
-./usr/lib/i18n/mapper_646.so	comp-i18n-lib
-./usr/lib/i18n/mapper_none.so	comp-i18n-lib
-./usr/lib/i18n/mapper_parallel.so	comp-i18n-lib
-./usr/lib/i18n/mapper_serial.so	comp-i18n-lib
-./usr/lib/i18n/mapper_std.so	comp-i18n-lib
-./usr/lib/i18n/mapper_zone.so	comp-i18n-lib
+./usr/lib/i18n/libiconv_none.so	comp-i18n-lib
+./usr/lib/i18n/libiconv_std.so	comp-i18n-lib
+./usr/lib/i18n/libmapper_646.so	comp-i18n-lib
+./usr/lib/i18n/libmapper_none.so	comp-i18n-lib
+./usr/lib/i18n/libmapper_parallel.so	comp-i18n-lib
+./usr/lib/i18n/libmapper_serial.so	comp-i18n-lib
+./usr/lib/i18n/libmapper_std.so		comp-i18n-lib
+./usr/lib/i18n/libmapper_zone.so	comp-i18n-lib
 ./usr/lib/libasn1.so		comp-c-lib
 ./usr/lib/libbsdmalloc.so	comp-c-lib
 ./usr/lib/libbz2.so		comp-c-lib
