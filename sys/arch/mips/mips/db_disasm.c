@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 1997/08/17 16:58:53 mhitch Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.3 1999/03/23 22:15:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@
 #include <machine/cpu.h>
 #include <mips/mips_opcode.h>
 /*#include <machine/param.h>*/
-#include <mips/db_machdep.h>
+#include <machine/db_machdep.h>
 
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>

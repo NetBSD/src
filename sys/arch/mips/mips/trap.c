@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 1999/03/18 04:56:02 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.106 1999/03/23 22:15:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 1999/03/18 04:56:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 1999/03/23 22:15:36 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 1999/03/18 04:56:02 chs Exp $");
 #include <miscfs/procfs/procfs.h>
 
 #ifdef DDB
-#include <mips/db_machdep.h>
+#include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #endif
 
