@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.2.3 1999/04/09 04:37:11 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.2.4 1999/04/30 04:32:07 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -438,10 +438,10 @@ ubc_find_mapping(uobj, offset)
  * ubc_alloc:  allocate a buffer mapping
  */
 void *
-ubc_alloc(uobj, offset, len, flags)
+ubc_alloc(uobj, offset, lenp, flags)
 	struct uvm_object *uobj;
 	vaddr_t offset;
-	vsize_t len;
+	vsize_t *lenp;
 	int flags;
 {
 	int s;
@@ -453,14 +453,7 @@ ubc_alloc(uobj, offset, len, flags)
 
 	umap_offset = offset & ~(MAXBSIZE - 1);
 	slot_offset = offset & (MAXBSIZE - 1);
-
-#ifdef DIAGNOSTIC
-	if (umap_offset != ((offset + len - 1) & ~(MAXBSIZE - 1))) {
-		printf("uobj %p offset 0x%lx len 0x%lx flags 0x%x\n",
-		       uobj, offset, len, flags);
-		panic("ubc_alloc: region crosses window boundary");
-	}
-#endif
+	*lenp = min(*lenp, MAXBSIZE - slot_offset);
 
 	/*
 	 * the vnode is always locked here, so we don't need to add a ref.
@@ -514,7 +507,7 @@ again:
 #endif
 	if (flags & UBC_WRITE) {
 		umap->writeoff = slot_offset;
-		umap->writelen = len;
+		umap->writelen = *lenp;
 	}
 
 	umap->refcount++;
