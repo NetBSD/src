@@ -1,10 +1,10 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.35 1995/03/20 14:47:39 mycroft Exp $
+#	$Id: Makefile.inc,v 1.36 1996/09/24 09:14:18 matthias Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
 
-SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
+SRCS+=	bm.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strftime.c strmode.c strsignal.c strtok.c strxfrm.c \
 	__strerror.c __strsignal.c
 
@@ -18,6 +18,11 @@ SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 #	memcpy() memmove() strchr() strrchr()
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/string/Makefile.inc"
+
+# if no machine specific memccpy(3), use the machine independent version.
+.if empty(SRCS:Mmemccpy.S)
+SRCS+=	memccpy.c
+.endif
 
 # if no machine specific memmove(3), build one out of bcopy(3).
 .if empty(SRCS:Mmemmove.S)
