@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.15 2003/08/07 09:36:54 agc Exp $	*/
+/*	$NetBSD: input.c,v 1.16 2004/01/27 20:30:28 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.15 2003/08/07 09:36:54 agc Exp $");
+__RCSID("$NetBSD: input.c,v 1.16 2004/01/27 20:30:28 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ typedef struct {
 	int	token;
 	int	to_state;
 	const char	*str;
-	const char	*(*func) __P((char));
+	const char	*(*func)(char);
 } RULE;
 
 typedef struct {
@@ -229,7 +229,7 @@ int
 getcommand()
 {
 	int	c, i, done;
-	const char	*s, *(*func) __P((char));
+	const char	*s, *(*func)(char);
 	PLANE	*pp;
 
 	rezero();

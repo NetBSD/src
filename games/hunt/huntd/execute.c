@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.3 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: execute.c,v 1.4 2004/01/27 20:30:29 jsm Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,19 +32,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: execute.c,v 1.3 2003/06/11 12:00:22 wiz Exp $");
+__RCSID("$NetBSD: execute.c,v 1.4 2004/01/27 20:30:29 jsm Exp $");
 #endif /* not lint */
 
 # include	<stdlib.h>
 # include	"hunt.h"
 
-static	void	cloak __P((PLAYER *));
-static	void	face __P((PLAYER *, int));
-static	void	fire __P((PLAYER *, int));
-static	void	fire_slime __P((PLAYER *, int));
-static	void	move_player __P((PLAYER *, int));
-static	void	pickup __P((PLAYER *, int, int, int, int));
-static	void	scan __P((PLAYER *));
+static	void	cloak(PLAYER *);
+static	void	face(PLAYER *, int);
+static	void	fire(PLAYER *, int);
+static	void	fire_slime(PLAYER *, int);
+static	void	move_player(PLAYER *, int);
+static	void	pickup(PLAYER *, int, int, int, int);
+static	void	scan(PLAYER *);
 
 
 # ifdef MONITOR

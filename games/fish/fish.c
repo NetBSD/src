@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.14 2003/08/07 09:37:13 agc Exp $	*/
+/*	$NetBSD: fish.c,v 1.15 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.14 2003/08/07 09:37:13 agc Exp $");
+__RCSID("$NetBSD: fish.c,v 1.15 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,22 +78,22 @@ int asked[RANKS], comphand[RANKS], deck[TOTCARDS];
 int userasked[RANKS], userhand[RANKS];
 int curcard = TOTCARDS;
 
-void	chkwinner __P((int, const int *));
-int	compmove __P((void));
-int	countbooks __P((const int *));
-int	countcards __P((const int *));
-int	drawcard __P((int, int *));
-int	gofish __P((int, int, int *));
-void	goodmove __P((int, int, int *, int *));
-void	init __P((void));
-void	instructions __P((void));
-int	main __P((int, char *[]));
-int	nrandom __P((int));
-void	printhand __P((const int *));
-void	printplayer __P((int));
-int	promove __P((void));
-void	usage __P((void)) __attribute__((__noreturn__));
-int	usermove __P((void));
+void	chkwinner(int, const int *);
+int	compmove(void);
+int	countbooks(const int *);
+int	countcards(const int *);
+int	drawcard(int, int *);
+int	gofish(int, int, int *);
+void	goodmove(int, int, int *, int *);
+void	init(void);
+void	instructions(void);
+int	main(int, char *[]);
+int	nrandom(int);
+void	printhand(const int *);
+void	printplayer(int);
+int	promove(void);
+void	usage(void) __attribute__((__noreturn__));
+int	usermove(void);
 
 int
 main(argc, argv)

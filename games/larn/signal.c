@@ -1,10 +1,10 @@
-/*	$NetBSD: signal.c,v 1.7 2001/02/05 00:57:34 christos Exp $	*/
+/*	$NetBSD: signal.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
 
 /* "Larn is copyrighted 1986 by Noah Morgan.\n" */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signal.c,v 1.7 2001/02/05 00:57:34 christos Exp $");
+__RCSID("$NetBSD: signal.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
 #endif	/* not lint */
 
 #include <signal.h>
@@ -14,11 +14,11 @@ __RCSID("$NetBSD: signal.c,v 1.7 2001/02/05 00:57:34 christos Exp $");
 #include "header.h"
 #include "extern.h"
 
-static void s2choose __P((void));
-static void cntlc __P((int));
-static void sgam __P((int));
-static void tstop __P((int));
-static void sigpanic __P((int));
+static void s2choose(void);
+static void cntlc(int);
+static void sgam(int);
+static void tstop(int);
+static void sigpanic(int);
 
 #define BIT(a) (1<<((a)-1))
 

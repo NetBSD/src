@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.h,v 1.6 2003/08/07 09:37:34 agc Exp $	*/
+/*	$NetBSD: quiz.h,v 1.7 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -54,6 +54,6 @@ typedef struct qentry {
 
 extern char rxperr[];
 
-int	 rxp_compile __P((const char *));
-char	*rxp_expand __P((void));
-int	 rxp_match __P((const char *));
+int	 rxp_compile(const char *);
+char	*rxp_expand(void);
+int	 rxp_match(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.8 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.9 2004/01/27 20:30:29 jsm Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.8 2003/06/11 12:00:22 wiz Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.9 2004/01/27 20:30:29 jsm Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -66,8 +66,8 @@ extern	char		*my_machine_name;
 extern	char		*First_arg, *Last_arg;
 extern	char		**environ;
 
-static	void	do_announce __P((char *));
-SIGNAL_TYPE	exorcise __P((int));
+static	void	do_announce(char *);
+SIGNAL_TYPE	exorcise(int);
 /*
  *	exorcise - disspell zombies
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hangman.h,v 1.12 2003/08/07 09:37:21 agc Exp $	*/
+/*	$NetBSD: hangman.h,v 1.13 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -81,14 +81,14 @@ extern FILE *Dict;
 
 extern off_t Dict_size;
 
-void    die __P((int)) __attribute__((__noreturn__));
-void    endgame __P((void));
-int	main __P((int, char *[]));
-void	getguess __P((void));
-void	getword __P((void));
-void	playgame __P((void));
-void	prdata __P((void));
-void	prman __P((void));
-void	prword __P((void));
-int	readch __P((void));
-void	setup __P((void));
+void    die(int) __attribute__((__noreturn__));
+void    endgame(void);
+int	main(int, char *[]);
+void	getguess(void);
+void	getword(void);
+void	playgame(void);
+void	prdata(void);
+void	prman(void);
+void	prword(void);
+int	readch(void);
+void	setup(void);

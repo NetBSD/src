@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2003/08/07 09:37:17 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2003/08/07 09:37:17 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
 const char	*plyr[2];			/* who's who */
 
-int	main __P((int, char *[]));
+int	main(int, char *[]);
 
 int
 main(argc, argv)
