@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.21 2000/02/26 19:02:22 uch Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.22 2000/05/08 13:51:36 augustss Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -815,10 +815,8 @@ pcmcia_intr_disestablish(pf, ih)
 		 */
 
 		ihcnt = 0;
-		s = 0;		/* this is only here to keep the compipler
-				   happy */
-		hiipl = 0;	/* this is only here to keep the compipler
-				   happy */
+		s = 0;		/* avoid compiler warning */
+		hiipl = 0;	/* avoid compiler warning */
 
 		for (pf2 = pf->sc->card.pf_head.sqh_first; pf2 != NULL;
 		     pf2 = pf2->pf_list.sqe_next) {
@@ -837,12 +835,14 @@ pcmcia_intr_disestablish(pf, ih)
 		}
 
 		/*
-		 * if the ih being removed is lower priority than the lowest
+		 * If the ih being removed is lower priority than the lowest
 		 * priority remaining interrupt, up the priority.
 		 */
 
-		/* ihcnt is the number of interrupt handlers *not* including
-		   the one about to be removed. */
+		/* 
+		 * ihcnt is the number of interrupt handlers *not* including
+		 * the one about to be removed. 
+		 */
 
 		if (ihcnt == 0) {
 			int reg;
