@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.26 1996/11/12 18:05:27 cgd Exp $
+#	$NetBSD: GENERIC,v 1.27 1996/11/15 19:37:25 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -20,7 +20,6 @@ options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
