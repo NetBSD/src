@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.131 2004/01/09 19:10:22 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.132 2004/01/10 16:23:36 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.131 2004/01/09 19:10:22 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.132 2004/01/10 16:23:36 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1221,7 +1221,7 @@ ffs_sync(mp, waitfor, cred, p)
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
-	int error, allerror = 0;
+	int error, count, allerror = 0;
 
 	fs = ump->um_fs;
 	if (fs->fs_fmod != 0 && fs->fs_ronly != 0) {		/* XXX */
@@ -1270,14 +1270,26 @@ loop:
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if (waitfor != MNT_LAZY) {
-		if (ump->um_mountp->mnt_flag & MNT_SOFTDEP)
-			waitfor = MNT_NOWAIT;
+	if (waitfor == MNT_WAIT && (ump->um_mountp->mnt_flag & MNT_SOFTDEP)) {
+		if ((error = softdep_flushworklist(ump->um_mountp, &count, p)))
+			allerror = error;
+		/* Flushed work items may create new vnodes to clean */
+		if (allerror == 0 && count) {
+			simple_lock(&mntvnode_slock);
+			goto loop;
+		}
+	}
+	if (waitfor != MNT_LAZY && (ump->um_devvp->v_numoutput > 0 ||
+	    !LIST_EMPTY(&ump->um_devvp->v_dirtyblkhd))) {
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp, 0);
+		if (allerror == 0 && waitfor == MNT_WAIT) {
+			simple_lock(&mntvnode_slock);
+			goto loop;
+		}
 	}
 #ifdef QUOTA
 	qsync(mp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.53 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.54 2004/01/10 16:23:36 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.53 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.54 2004/01/10 16:23:36 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -551,7 +551,8 @@ workitem_free(item, type)
  */
 static struct workhead softdep_workitem_pending;
 static struct worklist *worklist_tail;
-static int softdep_worklist_busy;
+static int softdep_worklist_busy; /* 1 => trying to do unmount */
+static int softdep_worklist_req; /* serialized waiters */
 static int max_softdeps;	/* maximum number of structs before slowdown */
 static int tickdelay = 2;	/* number of ticks to pause during slowdown */
 static int proc_waiting;	/* tracks whether we have a timeout posted */
@@ -648,8 +649,12 @@ softdep_process_worklist(matchmnt)
 	 * (below) can get an accurate count of the number of items
 	 * related to its mount point that are in the list.
 	 */
-	if (softdep_worklist_busy && matchmnt == NULL)
-		return (-1);
+	if (matchmnt == NULL) {
+		if (softdep_worklist_busy < 0)
+			return (-1);
+		softdep_worklist_busy += 1;
+	}
+
 	/*
 	 * If requested, try removing inode or removal dependencies.
 	 */
@@ -727,8 +732,16 @@ softdep_process_worklist(matchmnt)
 			    TYPENAME(wk->wk_type));
 			/* NOTREACHED */
 		}
-		if (softdep_worklist_busy && matchmnt == NULL)
-			return (-1);
+
+		/*
+		 * If a umount operation wants to run the worklist
+		 * accurately, abort.
+		 */
+		if (softdep_worklist_req && matchmnt == NULL) {
+			ACQUIRE_LOCK(&lk);
+			matchcnt = -1;
+			break;
+		}
 		/*
 		 * If requested, try removing inode or removal dependencies.
 		 */
@@ -749,6 +762,11 @@ softdep_process_worklist(matchmnt)
 
 		ACQUIRE_LOCK(&lk);
 		softdep_freequeue_process();
+	}
+	if (matchmnt == NULL) {
+		softdep_worklist_busy -= 1;
+		if (softdep_worklist_req && softdep_worklist_busy == 0)
+			wakeup(&softdep_worklist_req);
 	}
 	FREE_LOCK(&lk);
 	return (matchcnt);
@@ -783,46 +801,33 @@ softdep_move_dependencies(oldbp, newbp)
  * Purge the work list of all items associated with a particular mount point.
  */
 int
-softdep_flushfiles(oldmnt, flags, p)
+softdep_flushworklist(oldmnt, countp, p)
 	struct mount *oldmnt;
-	int flags;
+	int *countp;
 	struct proc *p;
 {
 	struct vnode *devvp;
-	int error, loopcnt;
+	int count, error = 0;
 
 	/*
 	 * Await our turn to clear out the queue.
 	 */
-	while (softdep_worklist_busy)
-		tsleep(&lbolt, PRIBIO, "softflush", 0);
-	softdep_worklist_busy = 1;
-	if ((error = ffs_flushfiles(oldmnt, flags, p)) != 0) {
-		softdep_worklist_busy = 0;
-		return (error);
+	while (softdep_worklist_busy) {
+		softdep_worklist_req += 1;
+		tsleep(&softdep_worklist_req, PRIBIO, "softflush", 0);
+		softdep_worklist_req -= 1;
 	}
+	softdep_worklist_busy = -1;
 	/*
 	 * Alternately flush the block device associated with the mount
 	 * point and process any dependencies that the flushing
-	 * creates. In theory, this loop can happen at most twice,
-	 * but we give it a few extra just to be sure.
+	 * creates. We continue until no more worklist dependencies
+	 * are found.
 	 */
+	*countp = 0;
 	devvp = VFSTOUFS(oldmnt)->um_devvp;
-	for (loopcnt = 10; loopcnt > 0; ) {
-		if (softdep_process_worklist(oldmnt) == 0) {
-			loopcnt--;
-			/*
-			 * Do another flush in case any vnodes were brought in
-			 * as part of the cleanup operations.
-			 */
-			if ((error = ffs_flushfiles(oldmnt, flags, p)) != 0)
-				break;
-			/*
-			 * If we still found nothing to do, we are really done.
-			 */
-			if (softdep_process_worklist(oldmnt) == 0)
-				break;
-		}
+	while ((count = softdep_process_worklist(oldmnt)) > 0) {
+		*countp += count;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_FSYNC(devvp, p->p_ucred, FSYNC_WAIT, 0, 0, p);
 		VOP_UNLOCK(devvp, 0);
@@ -830,6 +835,39 @@ softdep_flushfiles(oldmnt, flags, p)
 			break;
 	}
 	softdep_worklist_busy = 0;
+	if (softdep_worklist_req)
+		wakeup(&softdep_worklist_req);
+	return (error);
+}
+
+/*
+ * Flush all vnodes and worklist items associated with a specified mount point.
+ */
+int
+softdep_flushfiles(oldmnt, flags, p)
+	struct mount *oldmnt;
+	int flags;
+	struct proc *p;
+{
+	int error, count, loopcnt;
+
+	/*
+	 * Alternately flush the vnodes associated with the mount
+	 * point and process any dependencies that the flushing
+	 * creates. In theory, this loop can happen at most twice,
+	 * but we give it a few extra just to be sure.
+	 */
+	for (loopcnt = 10; loopcnt > 0; loopcnt--) {
+		/*
+		 * Do another flush in case any vnodes were brought in
+		 * as part of the cleanup operations.
+		 */
+		if ((error = ffs_flushfiles(oldmnt, flags, p)) != 0)
+			break;
+		if ((error = softdep_flushworklist(oldmnt, &count, p)) != 0 ||
+		    count == 0)
+			break;
+	}
 	/*
 	 * If we are unmounting then it is an error to fail. If we
 	 * are simply trying to downgrade to read-only, then filesystem
