@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 1994/12/10 00:28:38 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 1995/01/15 00:55:25 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -162,7 +162,10 @@ trap(frame)
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb;
-	extern char fusubail[];
+	extern char fusubail[],
+		    resume_iret[], resume_pop_ds[], resume_pop_es[];
+	struct trapframe *vframe;
+	int resume;
 
 	cnt.v_trap++;
 
@@ -185,15 +188,10 @@ trap(frame)
 
 	default:
 	we_re_toast:
-#ifdef KDB /* XXX KGDB? */
-		if (kdb_trap(&psl))
-			return;
-#endif
 #ifdef DDB
 		if (kdb_trap(type, 0, &frame))
 			return;
 #endif
-
 		if (frame.tf_trapno < trap_types)
 			printf("fatal %s", trap_type[frame.tf_trapno]);
 		else
@@ -206,25 +204,50 @@ trap(frame)
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
+	case T_SEGNPFLT:
 	case T_ALIGNFLT:
+		/* Check for copyin/copyout fault. */
 		pcb = &p->p_addr->u_pcb;
-		if (pcb->pcb_onfault == 0)
+		if (pcb->pcb_onfault != 0) {
+		copyfault:
+			frame.tf_eip = (int)pcb->pcb_onfault;
+			return;
+		}
+
+		/* Check for failure during return to user mode. */
+		switch (*(u_char *)frame.tf_eip) {
+		case 0xcf:	/* iret */
+			vframe = (void *)(frame.tf_esp - 44);
+			resume = (int)resume_iret;
+			break;
+		case 0x1f:	/* popl %ds */
+			vframe = (void *)(frame.tf_esp - 4);
+			resume = (int)resume_pop_ds;
+			break;
+		case 0x07:	/* popl %es */
+			vframe = (void *)(frame.tf_esp - 0);
+			resume = (int)resume_pop_es;
+			break;
+		default:
 			goto we_re_toast;
-	copyfault:
-		frame.tf_eip = (int)pcb->pcb_onfault;
-		break;
+		}
+		if (ISPL(vframe->tf_cs) == SEL_KPL)
+			goto we_re_toast;
+
+		frame.tf_eip = resume;
+		return;
 
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_PROTFLT|T_USER:		/* protection fault */
 	case T_ALIGNFLT|T_USER:
 		trapsignal(p, SIGBUS, type &~ T_USER);
-		break;
+		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		trapsignal(p, SIGILL, type &~ T_USER);
-		break;
+		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		cnt.v_soft++;
@@ -243,12 +266,12 @@ trap(frame)
 			return;
 		}
 		trapsignal(p, rv, type &~ T_USER);
-		break;
+		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
 		trapsignal(p, SIGKILL, type &~ T_USER);
-		break;
+		goto out;
 #endif
 	}
 
@@ -256,11 +279,11 @@ trap(frame)
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
 		trapsignal(p, SIGFPE, type &~ T_USER);
-		break;
+		goto out;
 
 	case T_ARITHTRAP|T_USER:
 		trapsignal(p, SIGFPE, frame.tf_err);
-		break;
+		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		pcb = &p->p_addr->u_pcb;
