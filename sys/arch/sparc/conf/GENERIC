@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.97 2000/01/28 16:08:52 cjs Exp $
+# 	$NetBSD: GENERIC,v 1.98 2000/02/07 21:24:48 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.98 $"
 
 maxusers	32
 
@@ -444,8 +444,8 @@ qec*	at sbus? slot ? offset ?		# Quad Ethernet Controller
 be*	at qec?					# BigMac Ethernet (10/100MBd)
 qe*	at qec?					# Mace Ethernet (10MBd)
 
-## Happy Meal Ethernet (hme) (driver not quite ready yet)
-#hme*	at sbus? slot ? offset ?
+## Happy Meal Ethernet
+hme*	at sbus? slot ? offset ?
 
 # midway ATM
 en0	at sbus? slot ? offset ?
