@@ -1,4 +1,4 @@
-.\"	$NetBSD: talk.1,v 1.5 1999/03/22 18:16:43 garbled Exp $
+.\"	$NetBSD: talk.1,v 1.6 2001/12/08 19:17:46 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,7 +103,6 @@ and
 .Xr pr 1 ,
 disallow messages in order to
 prevent messy output.
-.Pp
 .Sh FILES
 .Bl -tag -width /var/run/utmp -compact
 .It Pa /etc/hosts
@@ -116,6 +115,11 @@ to find the recipient's tty
 .Xr mesg 1 ,
 .Xr who 1 ,
 .Xr write 1
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 The version of
 .Xr talk 1
@@ -123,9 +127,4 @@ released with
 .Bx 4.3
 uses a protocol that
 is incompatible with the protocol used in the version released with
-.Bx 4.2 .
-.Sh HISTORY
-The
-.Nm
-command appeared in
 .Bx 4.2 .
