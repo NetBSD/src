@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.5 2003/01/09 12:18:38 jdolecek Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.6 2003/01/09 12:23:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.5 2003/01/09 12:18:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.6 2003/01/09 12:23:28 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -215,8 +215,9 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq, 0,
-				       IPL_BIO, fdcintr, sc);
+	sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
+	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
+	    IPL_BIO, fdcintr, sc);
 
 	/* Setup direct configuration of floppy drives */
 	sc->sc_present = fdc_acpi_enumerate(asc);
