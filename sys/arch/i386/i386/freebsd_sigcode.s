@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sigcode.s,v 1.2 2001/05/21 06:13:12 perry Exp $	*/
+/*	$NetBSD: freebsd_sigcode.s,v 1.3 2001/09/26 09:58:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 /* LINTSTUB: Var: char freebsd_sigcode[1], freebsd_esigcode[1]; */
 NENTRY(freebsd_sigcode)
-	call	FREEBSD_SIGF_HANDLER(%esp)
+	call	*FREEBSD_SIGF_HANDLER(%esp)
 	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
 					# the copy at SIGF_SCP(%esp))
 	pushl	%eax
