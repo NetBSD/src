@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)glob.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: glob.c,v 1.8 1994/09/21 00:10:56 mycroft Exp $";
+static char *rcsid = "$Id: glob.c,v 1.9 1994/09/21 00:40:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -511,7 +511,7 @@ globall(v)
     else
 	vl = vo = saveblk(v);
 
-    if (!noglob && (gflg & G_GLOB) && *vl) {
+    if (!noglob && (gflg & G_GLOB)) {
 	vl = libglob(vo);
 	if ((gflg & G_CSH) && vl != vo)
 	    blkfree(vo);
@@ -605,7 +605,6 @@ dobackp(cp, literal)
 {
     register Char *lp, *rp;
     Char   *ep, word[MAXPATHLEN];
-    int ogflag = gflag;
 
     if (pargv) {
 #ifdef notdef
@@ -624,7 +623,6 @@ dobackp(cp, literal)
 	    if (*lp == 0) {
 		if (pargcp != pargs)
 		    pword();
-		gflag = ogflag;
 		return (pargv);
 	    }
 	    psave(*lp);
