@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.7 2003/05/01 12:13:26 scw Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.8 2003/06/12 19:16:18 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -1511,11 +1511,13 @@ gtmpsc_common_getc(unsigned int unit)
 	unsigned int ix;
 	unsigned int cx;
 	unsigned int nc;
+	unsigned int wdog_interval;
 	int c;
 
 	ix = sc->gtmpsc_poll_rxix;
 	nc = sc->gtmpsc_nc;
 	cx = sc->gtmpsc_cx;
+	wdog_interval = 0;
 	while (nc == 0) {
 		unsigned int *csrp;
 		unsigned int csr;
@@ -1531,13 +1533,16 @@ gtmpsc_common_getc(unsigned int unit)
 			r = sc->gtmpsc_chr2 | GTMPSC_CHR2_CRD;
 			GT_WRITE(sc, GTMPSC_U_CHRN(unit, 2), r);
 			do {
-
+				if (wdog_interval++ % 32)
+					gt_watchdog_service();
 				gtmpsc_poll_getc_miss++;
 				GTMPSC_CACHE_INVALIDATE(csrp);
 				DELAY(50);
 				csr = desc_read(csrp);
 			} while (csr & SDMA_CSR_RX_OWN);
-		}
+		} else
+		if (wdog_interval++ % 32)
+			gt_watchdog_service();
 		if (csr & SDMA_CSR_RX_ES)
 			PRINTF(("mpsc 0 RX error, rxdesc csr 0x%x\n", csr));
 
@@ -1569,6 +1574,7 @@ gtmpsc_common_getc(unsigned int unit)
 	}
 	sc->gtmpsc_cx = cx;
 	sc->gtmpsc_nc = nc;
+	gt_watchdog_service();
 	return c;
 }
 
@@ -1645,6 +1651,7 @@ gtmpsc_common_putc(unsigned int unit, unsigned char c)
 	unsigned int csr;
 	unsigned int ix;
 	unsigned int nix;
+	unsigned int wdog_interval = 0;
 
 	DPRINTF(("gtmpsc_common_putc(%d, '%c'): cur=%#x, first=%#x", unit, c,
 	    GT_READ(sc, SDMA_U_SCTDP(unit)),   /* current */
@@ -1666,6 +1673,8 @@ gtmpsc_common_putc(unsigned int unit, unsigned char c)
 		gtmpsc_poll_putc_miss++;
 		DELAY(40);
 		DPRINTF(("."));
+		if (wdog_interval++ % 32)
+			gt_watchdog_service();
 	}
 	if (csr & SDMA_CSR_TX_ES)
 		PRINTF(("mpsc %d TX error, txdesc csr 0x%x\n", unit, csr));
@@ -1681,6 +1690,7 @@ gtmpsc_common_putc(unsigned int unit, unsigned char c)
 	 * now kick some SDMA
 	 */
 	GT_WRITE(sc, SDMA_U_SDCM(unit), SDMA_SDCM_TXD);
+	gt_watchdog_service();
 }
 
 
