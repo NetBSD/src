@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern__physio.c,v 1.3 1993/05/20 02:54:15 cgd Exp $
+ *	$Id: kern__physio.c,v 1.4 1993/06/12 19:54:35 cgd Exp $
  */
 
 #include "param.h"
@@ -95,6 +95,8 @@ static physio(strat, dev, off, rw, base, len, p)
 
 	/* create and build a buffer header for a transfer */
 	bp = (struct buf *)malloc(sizeof(*bp), M_TEMP, M_NOWAIT);
+	if (bp == NULL)
+		panic("physio: NULL bp");
 	bzero((char *)bp, sizeof(*bp));			/* 09 Sep 92*/
 	bp->b_flags = B_BUSY | B_PHYS | rw;
 	bp->b_proc = p;
