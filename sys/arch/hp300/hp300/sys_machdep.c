@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.2 1993/05/22 07:57:46 cgd Exp $
+ *	$Id: sys_machdep.c,v 1.3 1993/10/13 08:19:03 cgd Exp $
  */
 
 #include "sys/param.h"
@@ -146,4 +146,13 @@ cachectl(req, addr, len)
 		break;
 	}
 	return(error);
+}
+
+int
+sysarch(p, uap, retval)
+	struct proc *p;
+	void  *uap;
+	int *retval;
+{
+	return ENOSYS;
 }
