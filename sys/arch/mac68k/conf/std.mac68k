@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.6 1995/03/29 07:28:58 briggs Exp $
+#	$NetBSD: std.mac68k,v 1.7 1995/10/12 17:39:45 briggs Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -16,6 +16,5 @@ fpu0	at mainbus0
 asc0	at mainbus0
 
 ser0	at mainbus0
-ser1	at mainbus0
 grf0	at nubus0	slot -1 id ? claimed 0
 grf1	at nubus0	slot -1 id ? claimed 0
