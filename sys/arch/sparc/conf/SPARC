@@ -1,5 +1,5 @@
 # from:	@(#)SPARC	8.1 (Berkeley) 6/29/93
-# $Id: SPARC,v 1.9 1994/08/12 01:16:27 deraadt Exp $
+# $Id: SPARC,v 1.10 1994/08/20 09:08:32 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -8,7 +8,7 @@ include	"std.sparc"
 options		"SUN4C"
 
 # obsolete timezone spec
-options               TIMEZONE=480, DST=1
+options               TIMEZONE=0, DST=0
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
