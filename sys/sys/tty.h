@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.64 2004/02/13 11:36:23 wiz Exp $	*/
+/*	$NetBSD: tty.h,v 1.65 2004/04/25 06:13:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -226,7 +226,7 @@ int	 ttread __P((struct tty *, struct uio *, int));
 void	 ttrstrt __P((void *));
 int	 ttpoll __P((struct tty *, int, struct proc *));
 void	 ttsetwater __P((struct tty *));
-int	 ttspeedtab __P((int, struct speedtab *));
+int	 ttspeedtab __P((int, const struct speedtab *));
 int	 ttstart __P((struct tty *));
 void	 ttwakeup __P((struct tty *));
 int	 ttwrite __P((struct tty *, struct uio *, int));

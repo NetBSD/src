@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.165 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: tty.c,v 1.166 2004/04/25 06:13:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.165 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.166 2004/04/25 06:13:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2262,7 +2262,7 @@ ttwakeup(struct tty *tp)
  * used by drivers to map software speed values to hardware parameters.
  */
 int
-ttspeedtab(int speed, struct speedtab *table)
+ttspeedtab(int speed, const struct speedtab *table)
 {
 
 	for (; table->sp_speed != -1; table++)
