@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.8 1994/11/04 07:39:19 mycroft Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1994/11/04 09:57:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,8 +47,6 @@
 #include <sys/disklabel.h>
 
 #include <machine/pte.h>
-
-#include <i386/isa/isa_device.h>
 
 #include "wdc.h"
 #include "fdc.h"
@@ -116,7 +114,6 @@ setconf()
 {
 	register struct genericconf *gc;
 	int unit, swaponroot = 0;
-	struct isa_device *id;
 
 	if (rootdev != NODEV)
 		goto doswap;
@@ -152,16 +149,10 @@ bad:
 	}
 	unit = 0;
 	for (gc = genericconf; gc->gc_driver; gc++) {
-		for (id = isa_devtab; id->id_driver != 0; id++) {
-			if (id->id_state != FSTATE_FOUND)
-				continue;
-			if (id->id_unit == 0 &&
-			    id->id_driver == gc->gc_driver &&
-			    id->id_driver->cd_ndevs >= 1 &&
-			    id->id_driver->cd_devs[0]) {
-				printf("root on %s0\n", gc->gc_name);
-				goto found;
-			}
+		if (gc->gc_driver->cd_ndevs > unit &&
+		    gc->gc_driver->cd_devs[unit]) {
+			printf("root on %s0\n", gc->gc_name);
+			goto found;
 		}
 	}
 verybad:
