@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2002/07/05 13:31:40 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2002/07/12 15:42:30 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,19 +38,14 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-	.section	.text
-	.align 3
-
-
 /*
  * The main entry point.
  *
  * The bootloader (to be written) will have stashed the boot parameters
  * in r56 - r62
  */
-GLOBAL(text)
-	.globl start
-start:
+ASENTRY_NOPROFILE(text)
+ASENTRY_NOPROFILE(start)
 	LDC32(SH5_CONREG_SR_IMASK_ALL|SH5_CONREG_SR_BL|SH5_CONREG_SR_MD, r0)
 	putcon	r0, ssr
 	pta/u	1f, tr0			/* PC-Relative */
