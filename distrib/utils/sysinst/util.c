@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.62 2000/12/31 13:08:06 jdc Exp $	*/
+/*	$NetBSD: util.c,v 1.63 2001/01/07 13:07:57 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -533,7 +533,7 @@ extract_dist()
 		}
 	}
 
-	clearok(stdscr, TRUE);
+	wrefresh(curscr);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
 	wrefresh(stdscr);
