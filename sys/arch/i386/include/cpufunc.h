@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.12 1998/02/05 19:53:52 drochner Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.13 1998/02/25 22:36:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -39,6 +39,8 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+
+/* LINTLIBRARY */
 
 static __inline void 
 invlpg(u_int addr)
