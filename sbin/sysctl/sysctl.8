@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.85 2003/02/01 00:42:03 kleink Exp $
+.\"	$NetBSD: sysctl.8,v 1.86 2003/02/02 20:33:05 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd February 1, 2003
+.Dd February 2, 2003
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -230,6 +230,12 @@ privilege can change the value.
 .It kern.pipe.nbigpipes	integer	no
 .It kern.pipe.kvasize	integer	no
 .It kern.posix1version	integer	no
+.It kern.posix_barriers	integer	no
+.It kern.posix_reader_writer_locks	integer	no
+.It kern.posix_semaphores	integer	no
+.It kern.posix_spin_locks	integer	no
+.It kern.posix_timers	integer	no
+.It kern.posix_threads	integer	no
 .It kern.proc2	struct	no
 .It kern.proc_args	string	yes
 .It kern.rawpartition	integer	no

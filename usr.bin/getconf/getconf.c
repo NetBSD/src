@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.19 2002/12/19 23:31:57 kleink Exp $	*/
+/*	$NetBSD: getconf.c,v 1.20 2003/02/02 20:33:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.19 2002/12/19 23:31:57 kleink Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.20 2003/02/02 20:33:10 kleink Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -140,12 +140,20 @@ const struct conf_variable conf_table[] =
   { "_POSIX_MEMLOCK_RANGE",	SYSCONF,	_SC_MEMLOCK_RANGE	},
   { "_POSIX_MEMORY_PROTECTION",	SYSCONF,	_SC_MEMORY_PROTECTION	},
   { "_POSIX_MONOTONIC_CLOCK",	SYSCONF,	_SC_MONOTONIC_CLOCK	},
+  { "_POSIX_SEMAPHORES",	SYSCONF,	_SC_SEMAPHORES		},
   { "_POSIX_SYNCHRONIZED_IO",	SYSCONF,	_SC_SYNCHRONIZED_IO	},
+  { "_POSIX_TIMERS",		SYSCONF,	_SC_TIMERS		},
 
   { "_POSIX_SYNC_IO",		PATHCONF,	_PC_SYNC_IO		},
 
   /* POSIX.1c Configurable System Variables */
   { "LOGIN_NAME_MAX",		SYSCONF,	_SC_LOGIN_NAME_MAX	},
+  { "_POSIX_THREADS",		SYSCONF,	_SC_THREADS		},
+
+  /* POSIX.1j Configurable System Variables */
+  { "_POSIX_BARRIERS",		SYSCONF,	_SC_BARRIERS		},
+  { "_POSIX_READER_WRITER_LOCKS", SYSCONF,	_SC_READER_WRITER_LOCKS	},
+  { "_POSIX_SPIN_LOCKS",	SYSCONF,	_SC_SPIN_LOCKS		},
 
   /* XPG4.2 Configurable System Variables */
   { "IOV_MAX",			SYSCONF,	_SC_IOV_MAX		},

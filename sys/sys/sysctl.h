@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.88 2003/01/18 09:53:21 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.89 2003/02/02 20:33:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -189,7 +189,13 @@ struct ctlname {
 #define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
 #define	KERN_LWP		64	/* struct: lwp entries */
 #define	KERN_FORKFSLEEP		65	/* int: sleep length on failed fork */
-#define	KERN_MAXID		66	/* number of valid kern ids */
+#define	KERN_POSIX_THREADS	66	/* int: POSIX Threads option */
+#define	KERN_POSIX_SEMAPHORES	67	/* int: POSIX Semaphores option */
+#define	KERN_POSIX_BARRIERS	68	/* int: POSIX Barriers option */
+#define	KERN_POSIX_TIMERS	69	/* int: POSIX Timers option */
+#define	KERN_POSIX_SPIN_LOCKS	70	/* int: POSIX Spin Locks option */
+#define	KERN_POSIX_READER_WRITER_LOCKS 71 /* int: POSIX R/W Locks option */
+#define	KERN_MAXID		72	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -259,6 +265,12 @@ struct ctlname {
 	{ "labeloffset", CTLTYPE_INT }, \
 	{ "lwp", CTLTYPE_STRUCT }, \
 	{ "forkfsleep", CTLTYPE_INT }, \
+	{ "posix_threads", CTLTYPE_INT }, \
+	{ "posix_semaphores", CTLTYPE_INT }, \
+	{ "posix_barriers", CTLTYPE_INT }, \
+	{ "posix_timers", CTLTYPE_INT }, \
+	{ "posix_spin_locks", CTLTYPE_INT }, \
+	{ "posix_reader_writer_locks", CTLTYPE_INT }, \
 }
 
 /*
