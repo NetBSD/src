@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.16 1994/04/05 08:02:09 mycroft Exp $
+ *	$Id: npx.c,v 1.17 1994/04/05 17:57:02 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -106,7 +106,7 @@ typedef u_char bool_t;
 extern	struct gate_descriptor idt[];
 
 int	npxdna		__P((void));
-void	npxexit		__P((struct proc *p));
+void	npxexit		__P((void));
 void	npxinit		__P((u_int control));
 void	npxintr		__P((struct intrframe frame));
 void	npxsave		__P((struct save87 *addr));
@@ -371,8 +371,7 @@ npxinit(control)
  * Free coprocessor (if we have it).
  */
 void
-npxexit(p)
-	struct proc *p;
+npxexit()
 {
 
 	start_emulating();
