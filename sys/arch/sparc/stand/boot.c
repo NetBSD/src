@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1994/11/20 20:54:52 deraadt Exp $ */
+/*	$NetBSD: boot.c,v 1.7 1994/11/25 23:09:09 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -116,7 +116,7 @@ copyunix(io, addr)
 		goto shread;
 	addr += x.a_text;
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
-		while ((int)addr & CLOFSET)
+		while ((int)addr & __LDPGSZ)
 			*addr++ = 0;
 	reset_twiddle();
 	printf("+%d", x.a_data);
