@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/mon.h,v 1.12 1994/02/23 08:29:15 glass Exp $
+ *	$Id: mon.h,v 1.13 1994/09/20 16:26:40 gwr Exp $
  */
 /*
  * This file derived from kernel/mach/sun3.md/machMon.h from the
@@ -329,37 +329,15 @@ typedef struct {
 
 #define	romVectorPtr	((MachMonRomVector *) PROM_BASE)
 
-#if 0
 /*
  * Functions and defines to access the monitor.
  */
-
-#define Mach_MonPrintf (romVectorPtr->printf)
-
-extern void Mach_MonPutChar _ARGS_((int ch));
-extern int Mach_MonMayPut _ARGS_((int ch));
-extern void Mach_MonAbort _ARGS_((void));
-extern void Mach_MonReboot _ARGS_((char *rebootString));
-extern void Mach_MonStartNmi _ARGS_((void));
-extern void Mach_MonStopNmi _ARGS_((void));
-
-extern  void    Mach_MonTrap _ARGS_((Address address_to_trap_to));
-
-/*
- * These routines no longer work correctly with new virtual memory.
- */
-
-#define Mach_MonGetChar (romVectorPtr->getChar)
-#define Mach_MonGetLine (romVectorPtr->getLine)
-#define Mach_MonGetNextChar (romVectorPtr->getNextChar)
-#define Mach_MonPeekNextChar (romVectorPtr->peekNextChar)
-#endif
 
 #define mon_printf (romVectorPtr->printf)
 #define mon_putchar (romVectorPtr->putChar)
 #define mon_may_getchar (romVectorPtr->mayGet)
 #define mon_exit_to_mon (romVectorPtr->exitToMon)
-#define mon_reboot (romVectorPtr->exitToMon)
+#define mon_reboot (romVectorPtr->reBoot)
 #define mon_panic(x) { mon_printf(x); mon_exit_to_mon();}
 
 #define mon_setcxsegmap(context, va, sme) \
