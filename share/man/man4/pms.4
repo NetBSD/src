@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.6 2001/09/22 15:58:14 wiz Exp $
+.\" $NetBSD: pms.4,v 1.7 2002/03/18 17:14:14 christos Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -41,28 +41,48 @@
 .Sh SYNOPSIS
 .Cd pckbc* at isa?
 .Cd pms* at pckbc?
-.Cd pmsi* at pckbc?
 .Cd wsmouse* at pms?
-.Cd wsmouse* at pmsi?
 .Sh DESCRIPTION
 The
 .Nm
-drivers provide an interface to PS/2 auxiliary port mice within the
+driver provides an interface to PS/2 auxiliary port mice within the
 .Xr wscons 4
 framework. Parent device in terms of the autoconfiguration framework is
 .Xr pckbc 4 ,
 the PC keyboard controller.
 .Dq pms
-is a generic driver which supports 2 coordinate axes and 3 buttons. The
-.Dq pmsi
-variant provides specific support for wheel mice of the
+is a generic driver which supports mice using common variants of the PS/2
+protocol, including wheel mice of the
 .Dq IntelliMouse
-breed; wheel movements are mapped to a third (z-) axis.
+breed.  Wheel movements are mapped to a third (z-) axis.  The driver is
+believed to work with both 3-button and 5-button mice with scroll wheels.
+Mice which use other protocol extensions are not currently supported, but
+might be if protocol documentation could be found.
 Mouse related data are accessed by
 .Xr wsmouse 4
 devices.
+.Pp
+The
+.Nm
+driver has been updated to attempt to renegotiate mouse protocol after seeing
+suspicious or defective mouse protocol packets, or unusual delays in the
+middle of a packet; this should improve the chances that a mouse will recover
+after being switched away or reset (for instance, by a console switch).
 .Sh SEE ALSO
 .Xr opms 4 ,
 .Xr pckbc 4 ,
 .Xr ums 4 ,
 .Xr wsmouse 4
+.Sh BUGS
+It is possible for the driver to mistakenly negotiate the non-scroll-wheel
+protocol, after which it is unlikely to recover until the device is closed
+and reopened.
+.Sh AUTHORS
+The
+.Nm
+driver was originally written by Christopher G. Demetriou.  The changes to
+merge the
+.Dq IntelliMouse
+protocol in, and reset the mouse in the event of protocol problems, were
+contributed by Peter Seebach.  Special thanks to Ray Trent, at Synaptics,
+who contributed valuable insight into how to identify bogus mouse data.
