@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2002/06/03 18:23:17 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2002/06/04 15:44:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -983,6 +983,8 @@ setregs(p, pack, stack)
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
 	pcb->pcb_savefpu.fx_fcw = __NetBSD_NPXCW__;
+
+	p->p_flag &= ~P_32;
 
 	tf = p->p_md.md_regs;
 #if 0
