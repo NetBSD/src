@@ -1,6 +1,6 @@
-.\" $NetBSD: mscdlabel.8,v 1.2 2002/05/30 16:09:59 wiz Exp $
+.\" $NetBSD: mscdlabel.8,v 1.3 2004/07/04 14:11:44 drochner Exp $
 .\"
-.Dd May 29, 2002
+.Dd June 30, 2004
 .Dt MSCDLABEL 8
 .Os
 .Sh NAME
@@ -17,8 +17,10 @@ disk label from track information read from the CD.  This way, data
 of previous sessions of a multi-session CD can be accessed.
 .Pp
 .Nm
-scans the CD's TOC and adds a partition entry for each data track,
-beginning with the last one.
+scans the CD's TOC, beginning with the last track.
+For each data track where an ISO9660 filesystem is identified,
+basic information (volume label, creation date) is printed and
+a partition entry added to the in-core disklabel.
 .Pp
 The raw partition (typically partition
 .Em c ,
