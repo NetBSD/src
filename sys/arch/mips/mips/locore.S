@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.93 2000/04/10 04:59:46 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.94 2000/04/28 19:25:56 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -268,6 +268,8 @@ LEAF(mips_idle)
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
+	nop
+	jal	_C_LABEL(uvm_pageidlezero)
 	nop
 	la	ra, cpu_switch_queuescan
 	j	ra
