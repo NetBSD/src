@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.19 2000/03/05 07:57:52 elric Exp $ */
+/* $NetBSD: tga.c,v 1.20 2000/03/09 18:40:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -1089,9 +1089,18 @@ tga2_init(dc, m)
 	    (decmonitors[m].vsync << 16) |
 	    (decmonitors[m].vfp << 11) |
 	    (decmonitors[m].rows);
-        dc->dc_regs[TGA_REG_VVBR] = 1;		alpha_mb();
-	dc->dc_regs[TGA_REG_VVVR] |= 1;		alpha_mb();
-	dc->dc_regs[TGA_REG_GPMR] = 0xffffffff;	alpha_mb();
+        dc->dc_regs[TGA_REG_VVBR] = 1;
+#ifdef __alpha__
+	alpha_mb();
+#endif
+	dc->dc_regs[TGA_REG_VVVR] |= 1;
+#ifdef __alpha__
+	alpha_mb();
+#endif
+	dc->dc_regs[TGA_REG_GPMR] = 0xffffffff;
+#ifdef __alpha__
+	alpha_mb();
+#endif
 }
 
 void
