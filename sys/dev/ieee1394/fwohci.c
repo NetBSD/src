@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.40 2001/07/17 11:01:03 haya Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.41 2001/07/18 02:59:54 onoe Exp $	*/
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -157,7 +157,7 @@ static int  fwohci_if_input(struct fwohci_softc *, void *, struct fwohci_pkt *);
 static int  fwohci_if_input_iso(struct fwohci_softc *, void *, struct fwohci_pkt *);
 static int  fwohci_if_output(struct device *, struct mbuf *,
     void (*)(struct device *, struct mbuf *));
-static int fwohci_if_setiso(struct device *, int, int, int,
+static int fwohci_if_setiso(struct device *, u_int32_t, u_int32_t, u_int32_t,
     void (*)(struct device *, struct mbuf *));
 static int  fwohci_read(struct ieee1394_abuf *);
 static int  fwohci_write(struct ieee1394_abuf *);
@@ -279,8 +279,8 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 }
 
 static int
-fwohci_if_setiso(struct device *self, int channel, int tag, int direction,
-    void (*handler)(struct device *, struct mbuf *))
+fwohci_if_setiso(struct device *self, u_int32_t channel, u_int32_t tag,
+    u_int32_t direction, void (*handler)(struct device *, struct mbuf *))
 {
 	struct fwohci_softc *sc = (struct fwohci_softc *)self;
 	int retval;
@@ -2842,29 +2842,28 @@ fwohci_if_input_iso(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	struct mbuf *m;
 	struct iovec *iov;
 	void (*handler)(struct device *, struct mbuf *) = arg;
+#ifdef FW_DEBUG
+	int i;
+#endif
 
 	chan = (pkt->fp_hdr[0] & 0x00003f00) >> 8;
 	tag  = (pkt->fp_hdr[0] & 0x0000c000) >> 14;
 #ifdef FW_DEBUG
-	if (fw_verbose) {
-		int i;
-		printf("fwohci_if_input_iso: tcode=0x%x, chan=%d, tag=%x, dlen=%d",
-		    pkt->fp_tcode, chan, tag, pkt->fp_dlen);
-		if (fw_dump) {
-			for (i = 0; i < pkt->fp_hlen/4; i++)
-				printf("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]);
-			printf("$");
-			for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++){
-				iov = &pkt->fp_iov[n];
-				for (i = 0; i < iov->iov_len; i++)
-					printf("%s%02x",
-					    (i%32)?((i%4)?"":" "):"\n\t",
-					    ((u_int8_t *)iov->iov_base)[i]);
-				printf("$");
-			}
-		}
-		printf("\n");
+	DPRINTFN(1, ("fwohci_if_input_iso: "
+	    "tcode=0x%x, chan=%d, tag=%x, dlen=%d",
+	    pkt->fp_tcode, chan, tag, pkt->fp_dlen));
+	for (i = 0; i < pkt->fp_hlen/4; i++)
+		DPRINTFN(2, ("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]));
+	DPRINTFN(2, ("$"));
+	for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++){
+		iov = &pkt->fp_iov[n];
+		for (i = 0; i < iov->iov_len; i++)
+			DPRINTFN(2, ("%s%02x",
+			    (i%32)?((i%4)?"":" "):"\n\t",
+			    ((u_int8_t *)iov->iov_base)[i]));
+		DPRINTFN(2, ("$"));
 	}
+	DPRINTFN(2, ("\n"));
 #endif /* FW_DEBUG */
 	len = pkt->fp_dlen;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
