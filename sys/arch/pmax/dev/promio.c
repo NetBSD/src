@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.3 1995/09/11 21:37:24 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.4 1995/09/20 05:13:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,10 +221,11 @@ consinit()
 	    case DS_PMAX:
 #if NDC > 0 && NPM > 0
 		if (pminit(0, 0, 1)) {
+			cd.cn_pri = CN_INTERNAL;
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
 			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
-			cd.cn_pri = CN_INTERNAL;
+			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 		}
 #endif /* NDC and NPM */
@@ -239,8 +240,9 @@ consinit()
 #endif /* NDTOP */
 			goto remcons;
 #if NXCFB > 0
-		if (crt == 3 && xcfbinit(NULL, 0, 0)) {
+		if (crt == 3 && xcfbinit(NULL, NULL, 0, 0)) {
 			cd.cn_pri = CN_INTERNAL;
+			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 		}
 #endif /* XCFB */
