@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.69 2000/01/11 12:59:45 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.70 2000/01/17 16:57:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -111,7 +111,7 @@ enum fdc_state {
 struct fdc_softc {
 	struct device	sc_dev;		/* boilerplate */
 	bus_space_tag_t	sc_bustag;
-	caddr_t		sc_reg;
+
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
 	enum fdc_state	sc_state;
@@ -123,6 +123,7 @@ struct fdc_softc {
 	int		sc_overruns;		/* number of DMA overruns */
 	int		sc_cfg;			/* current configuration */
 	struct fdcio	sc_io;
+#define sc_handle	sc_io.fdcio_handle
 #define sc_reg_msr	sc_io.fdcio_reg_msr
 #define sc_reg_fifo	sc_io.fdcio_reg_fifo
 #define sc_reg_dor	sc_io.fdcio_reg_dor
@@ -256,7 +257,15 @@ void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
 int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
 void	fd_do_eject __P((struct fd_softc *));
 void	fd_mountroot_hook __P((struct device *));
-static void fdconf __P((struct fdc_softc *));
+static int fdconf __P((struct fdc_softc *));
+static void establish_chip_type __P((
+		struct fdc_softc *,
+		bus_space_tag_t,
+		bus_type_t,
+		bus_addr_t,
+		bus_size_t,
+		bus_space_handle_t));
+
 
 #if PIL_FDSOFT == 4
 #define IE_FDSOFT	IE_L4
@@ -334,6 +343,59 @@ fdcmatch_obio(parent, match, aux)
 				NULL, NULL));
 }
 
+static void
+establish_chip_type(fdc, tag, type, addr, size, handle)
+	struct fdc_softc	*fdc;
+	bus_space_tag_t		tag;
+	bus_type_t		type;
+	bus_addr_t		addr;
+	bus_size_t		size;
+	bus_space_handle_t	handle;
+{
+	u_int8_t v;
+
+	/*
+	 * This hack from Chris Torek: apparently DOR really
+	 * addresses MSR/DRS on a 82072.
+	 * We used to rely on the VERSION command to tell the
+	 * difference (which did not work).
+	 */
+
+	/* First, check the size of the register bank */
+	if (size < 8)
+		/* It isn't a 82077 */
+		return;
+
+	/* Then probe the DOR register offset */
+	if (bus_space_probe(tag, type, addr,
+			    1,			/* probe size */
+			    FDREG77_DOR,	/* offset */
+			    0,			/* flags */
+			    NULL, NULL) == 0) {
+
+		/* It isn't a 82077 */
+		return;
+	}
+
+	v = bus_space_read_1(tag, handle, FDREG77_DOR);
+	if (v == NE7_RQM) {
+		/*
+		 * Value in DOR looks like it's really MSR
+		 */
+		bus_space_write_1(tag, handle, FDREG77_DOR, FDC_250KBPS);
+		v = bus_space_read_1(tag, handle, FDREG77_DOR);
+		if (v == NE7_RQM) {
+			/*
+			 * The value in the DOR didn't stick;
+			 * it isn't a 82077
+			 */
+			return;
+		}
+	}
+
+	fdc->sc_flags |= FDC_82077;
+}
+
 /*
  * Arguments passed between fdcattach and fdprobe.
  */
@@ -361,14 +423,14 @@ fdprint(aux, fdc)
 	return (QUIET);
 }
 
-static void
+static int
 fdconf(fdc)
 	struct fdc_softc *fdc;
 {
 	int	vroom;
 
 	if (out_fdc(fdc, NE7CMD_DUMPREG) || fdcresult(fdc) != 10)
-		return;
+		return (-1);
 
 	/*
 	 * dumpreg[7] seems to be a motor-off timeout; set it to whatever
@@ -382,7 +444,27 @@ fdconf(fdc)
 	out_fdc(fdc, vroom);
 	out_fdc(fdc, fdc->sc_cfg);
 	out_fdc(fdc, 0); /* PRETRK */
-	/* No result phase */
+	/* No result phase for the NE7CMD_CFG command */
+
+	if ((fdc->sc_flags & FDC_82077) != 0) {
+		/* Lock configuration across soft resets. */
+		out_fdc(fdc, NE7CMD_LOCK | CFG_LOCK);
+		if (fdcresult(fdc) != 1) {
+#ifdef DEBUG
+			printf("fdconf: CFGLOCK failed");
+#endif
+			return (-1);
+		}
+	}
+
+	return (0);
+#if 0
+	if (out_fdc(fdc, NE7CMD_VERSION) == 0 &&
+	    fdcresult(fdc) == 1 && fdc->sc_status[0] == 0x90) {
+		if (fdc_debug)
+			printf("[version cmd]");
+	}
+#endif
 }
 
 	/*
@@ -401,9 +483,8 @@ fdcattach_mainbus(parent, self, aux)
 	fdc->sc_bustag = ma->ma_bustag;
 
 	if (ma->ma_promvaddr != 0)
-		fdc->sc_reg = (caddr_t)ma->ma_promvaddr;
+		fdc->sc_handle = (bus_space_handle_t)ma->ma_promvaddr;
 	else {
-		bus_space_handle_t bh;
 		if (bus_space_map2(
 				ma->ma_bustag,
 				ma->ma_iospace,
@@ -411,12 +492,18 @@ fdcattach_mainbus(parent, self, aux)
 				ma->ma_size,
 				BUS_SPACE_MAP_LINEAR,
 				0,
-				&bh) != 0) {
+				&fdc->sc_handle) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
-		fdc->sc_reg = (caddr_t)bh;
 	}
+
+	establish_chip_type(fdc,
+			    ma->ma_bustag,
+			    ma->ma_iospace,
+			    ma->ma_paddr,
+			    ma->ma_size,
+			    fdc->sc_handle);
 
 	fdcattach(fdc, ma->ma_pri);
 }
@@ -433,22 +520,26 @@ fdcattach_obio(parent, self, aux)
 	fdc->sc_bustag = sa->sa_bustag;
 
 	if (sa->sa_npromvaddrs != 0)
-		fdc->sc_reg = (caddr_t)sa->sa_promvaddrs[0];
+		fdc->sc_handle = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	else {
-		bus_space_handle_t bh;
-
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 				 sa->sa_offset,
 				 sa->sa_size,
 				 BUS_SPACE_MAP_LINEAR,
 				 0,
-				 &bh) != 0) {
+				 &fdc->sc_handle) != 0) {
 			printf("%s: cannot map control registers\n",
 				self->dv_xname);
 			return;
 		}
-		fdc->sc_reg = (caddr_t)bh;
 	}
+
+	establish_chip_type(fdc,
+			    sa->sa_bustag,
+			    sa->sa_slot,
+			    sa->sa_offset,
+			    sa->sa_size,
+			    fdc->sc_handle);
 
 	if (sa->sa_nintr != 0)
 		fdcattach(fdc, sa->sa_pri);
@@ -467,6 +558,30 @@ fdcattach(fdc, pri)
 	fdc->sc_flags |= FDC_EIS;
 	TAILQ_INIT(&fdc->sc_drives);
 
+	if ((fdc->sc_flags & FDC_82077) != 0) {
+		fdc->sc_reg_msr = FDREG77_MSR;
+		fdc->sc_reg_fifo = FDREG77_FIFO;
+		fdc->sc_reg_dor = FDREG77_DOR;
+		code = '7';
+	} else {
+		fdc->sc_reg_msr = FDREG72_MSR;
+		fdc->sc_reg_fifo = FDREG72_FIFO;
+		fdc->sc_reg_dor = 0;
+		code = '2';
+	}
+
+	printf(" softpri %d: chip 8207%c\n", PIL_FDSOFT, code);
+
+	/*
+	 * Configure controller; enable FIFO, Implied seek, no POLL mode?.
+	 * Note: CFG_EFIFO is active-low, initial threshold value: 8
+	 */
+	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(8 & CFG_THRHLD_MASK);
+	if (fdconf(fdc) != 0) {
+		printf("%s: no drives attached\n", fdc->sc_dev.dv_xname);
+		return;
+	}
+
 #ifdef FDC_C_HANDLER
 	(void)bus_intr_establish(fdc->sc_bustag, pri, 0,
 				 fdchwintr, fdc);
@@ -480,56 +595,7 @@ fdcattach(fdc, pri)
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 fdcswintr, fdc);
 
-	/* Assume a 82077 */
-	fdc->sc_reg_msr = &((struct fdreg_77 *)fdc->sc_reg)->fd_msr;
-	fdc->sc_reg_fifo = &((struct fdreg_77 *)fdc->sc_reg)->fd_fifo;
-	fdc->sc_reg_dor = &((struct fdreg_77 *)fdc->sc_reg)->fd_dor;
-
-	code = '7';
-	if (*fdc->sc_reg_dor == NE7_RQM) {
-		/*
-		 * This hack from Chris Torek: apparently DOR really
-		 * addresses MSR/DRS on a 82072.
-		 * We used to rely on the VERSION command to tell the
-		 * difference (which did not work).
-		 */
-		*fdc->sc_reg_dor = FDC_250KBPS;
-		if (*fdc->sc_reg_dor == NE7_RQM)
-			code = '2';
-	}
-	if (code == '7') {
-		fdc->sc_flags |= FDC_82077;
-	} else {
-		fdc->sc_reg_msr = &((struct fdreg_72 *)fdc->sc_reg)->fd_msr;
-		fdc->sc_reg_fifo = &((struct fdreg_72 *)fdc->sc_reg)->fd_fifo;
-		fdc->sc_reg_dor = 0;
-	}
-
-#ifdef FD_DEBUG
-	if (out_fdc(fdc, NE7CMD_VERSION) == 0 &&
-	    fdcresult(fdc) == 1 && fdc->sc_status[0] == 0x90) {
-		if (fdc_debug)
-			printf("[version cmd]");
-	}
-#endif
-
-	/*
-	 * Configure controller; enable FIFO, Implied seek, no POLL mode?.
-	 * Note: CFG_EFIFO is active-low, initial threshold value: 8
-	 */
-	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(8 & CFG_THRHLD_MASK);
-	fdconf(fdc);
-
-	if (fdc->sc_flags & FDC_82077) {
-		/* Lock configuration across soft resets. */
-		out_fdc(fdc, NE7CMD_LOCK | CFG_LOCK);
-		if (fdcresult(fdc) != 1)
-			printf(" CFGLOCK: unexpected response");
-	}
-
 	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
-
-	printf(" softpri %d: chip 8207%c\n", PIL_FDSOFT, code);
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
@@ -546,6 +612,8 @@ fdmatch(parent, match, aux)
 	void *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
+	bus_space_tag_t t = fdc->sc_bustag;
+	bus_space_handle_t h = fdc->sc_handle;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	int n, ok;
@@ -556,7 +624,8 @@ fdmatch(parent, match, aux)
 
 	if (fdc->sc_flags & FDC_82077) {
 		/* select drive and turn on motor */
-		*fdc->sc_reg_dor = drive | FDO_FRST | FDO_MOEN(drive);
+		bus_space_write_1(t, h, fdc->sc_reg_dor,
+				  drive | FDO_FRST | FDO_MOEN(drive));
 		/* wait for motor to spin up */
 		delay(250000);
 	} else {
@@ -565,10 +634,14 @@ fdmatch(parent, match, aux)
 	fdc->sc_nstat = 0;
 	out_fdc(fdc, NE7CMD_RECAL);
 	out_fdc(fdc, drive);
-	/* wait for recalibrate */
+
+	/* Wait for recalibration to complete */
 	for (n = 0; n < 10000; n++) {
+		u_int8_t v;
+
 		delay(1000);
-		if ((*fdc->sc_reg_msr & (NE7_RQM|NE7_DIO|NE7_CB)) == NE7_RQM) {
+		v = bus_space_read_1(t, h, fdc->sc_reg_msr);
+		if ((v & (NE7_RQM|NE7_DIO|NE7_CB)) == NE7_RQM) {
 			/* wait a bit longer till device *really* is ready */
 			delay(100000);
 			if (out_fdc(fdc, NE7CMD_SENSEI))
@@ -598,7 +671,7 @@ fdmatch(parent, match, aux)
 	/* turn off motor */
 	if (fdc->sc_flags & FDC_82077) {
 		/* deselect drive and turn motor off */
-		*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
+		bus_space_write_1(t, h, fdc->sc_reg_dor, FDO_FRST | FDO_DS);
 	} else {
 		auxregbisc(0, AUXIO4C_FDS);
 	}
@@ -797,16 +870,21 @@ void
 fdc_reset(fdc)
 	struct fdc_softc *fdc;
 {
+	bus_space_tag_t t = fdc->sc_bustag;
+	bus_space_handle_t h = fdc->sc_handle;
+
 	if (fdc->sc_flags & FDC_82077) {
-		*fdc->sc_reg_dor = FDO_FDMAEN | FDO_MOEN(0);
+		bus_space_write_1(t, h, fdc->sc_reg_dor,
+				  FDO_FDMAEN | FDO_MOEN(0));
 	}
 
-	*fdc->sc_reg_drs = DRS_RESET;
+	bus_space_write_1(t, h, fdc->sc_reg_drs, DRS_RESET);
 	delay(10);
-	*fdc->sc_reg_drs = 0;
+	bus_space_write_1(t, h, fdc->sc_reg_drs, 0);
 
 	if (fdc->sc_flags & FDC_82077) {
-		*fdc->sc_reg_dor = FDO_FRST | FDO_FDMAEN | FDO_DS;
+		bus_space_write_1(t, h, fdc->sc_reg_dor,
+				  FDO_FRST | FDO_FDMAEN | FDO_DS);
 	}
 #ifdef FD_DEBUG
 	if (fdc_debug)
@@ -830,7 +908,8 @@ fd_set_motor(fdc)
 		for (n = 0; n < 4; n++)
 			if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
 				status |= FDO_MOEN(n);
-		*fdc->sc_reg_dor = status;
+		bus_space_write_1(fdc->sc_bustag, fdc->sc_handle,
+				  fdc->sc_reg_dor, status);
 	} else {
 		int on = 0;
 
@@ -877,20 +956,23 @@ int
 fdcresult(fdc)
 	struct fdc_softc *fdc;
 {
-	u_char i;
+	bus_space_tag_t t = fdc->sc_bustag;
+	bus_space_handle_t h = fdc->sc_handle;
 	int j = 100000,
 	    n = 0;
 
 	for (; j; j--) {
-		i = *fdc->sc_reg_msr & (NE7_DIO | NE7_RQM | NE7_CB);
-		if (i == NE7_RQM)
+		u_int8_t v = bus_space_read_1(t, h, fdc->sc_reg_msr);
+		v &= (NE7_DIO | NE7_RQM | NE7_CB);
+		if (v == NE7_RQM)
 			return (fdc->sc_nstat = n);
-		if (i == (NE7_DIO | NE7_RQM | NE7_CB)) {
+		if (v == (NE7_DIO | NE7_RQM | NE7_CB)) {
 			if (n >= sizeof(fdc->sc_status)) {
 				log(LOG_ERR, "fdcresult: overrun\n");
 				return (-1);
 			}
-			fdc->sc_status[n++] = *fdc->sc_reg_fifo;
+			fdc->sc_status[n++] =
+				bus_space_read_1(t, h, fdc->sc_reg_fifo);
 		} else
 			delay(10);
 	}
@@ -901,16 +983,22 @@ fdcresult(fdc)
 int
 out_fdc(fdc, x)
 	struct fdc_softc *fdc;
-	u_char x;
+	u_int8_t x;
 {
-	int i = 100000;
+	bus_space_tag_t t = fdc->sc_bustag;
+	bus_space_handle_t h = fdc->sc_handle;
+	int i;
 
-	while (((*fdc->sc_reg_msr & (NE7_DIO|NE7_RQM)) != NE7_RQM) && i-- > 0)
+	for (i = 100000; i-- > 0;) {
+		u_int8_t v = bus_space_read_1(t, h, fdc->sc_reg_msr);
+		if ((v & (NE7_DIO|NE7_RQM)) == NE7_RQM)
+			break;
 		delay(1);
+	}
 	if (i <= 0)
 		return (-1);
 
-	*fdc->sc_reg_fifo = x;
+	bus_space_write_1(t, h, fdc->sc_reg_fifo, x);
 	return (0);
 }
 
@@ -1124,6 +1212,8 @@ fdchwintr(arg)
 	void *arg;
 {
 	struct fdc_softc *fdc = arg;
+	bus_space_tag_t t = fdc->sc_bustag;
+	bus_space_handle_t h = fdc->sc_handle;
 
 	switch (fdc->sc_istate) {
 	case ISTATE_IDLE:
@@ -1148,9 +1238,9 @@ fdchwintr(arg)
 	}
 
 	for (;;) {
-		register int msr;
+		u_int8_t msr;
 
-		msr = *fdc->sc_reg_msr;
+		msr = bus_space_read_1(t, h, fdc->sc_reg_msr);
 
 		if ((msr & NE7_RQM) == 0)
 			break;
@@ -1164,9 +1254,12 @@ fdchwintr(arg)
 		}
 
 		if (msr & NE7_DIO) {
-			*fdc->sc_data++ = *fdc->sc_reg_fifo;
+			*fdc->sc_data++ =
+				bus_space_read_1(t, h, fdc->sc_reg_fifo);
 		} else {
-			*fdc->sc_reg_fifo = *fdc->sc_data++;
+			bus_space_write_1(t, h, fdc->sc_reg_fifo,
+					  *fdc->sc_data);
+			fdc->sc_data++;
 		}
 		if (--fdc->sc_tc == 0) {
 			fdc->sc_istate = ISTATE_DONE;
@@ -1344,7 +1437,8 @@ loop:
 		fdc->sc_data = bp->b_data + fd->sc_skip;
 		fdc->sc_tc = fd->sc_nbytes;
 
-		*fdc->sc_reg_drs = type->rate;
+		bus_space_write_1(fdc->sc_bustag, fdc->sc_handle,
+				  fdc->sc_reg_drs, type->rate);
 #ifdef FD_DEBUG
 		if (fdc_debug > 1)
 			printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
@@ -1646,13 +1740,22 @@ fdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd;
+	struct fdc_softc *fdc;
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb fd_formb;
 	int il[FD_MAX_NSEC + 1];
+	int unit;
 	int i, j;
 	int error;
+
+	unit = FDUNIT(dev);
+	if (unit >= fd_cd.cd_ndevs)
+		return (ENXIO);
+
+	fd = fd_cd.cd_devs[FDUNIT(dev)];
+	fdc = (struct fdc_softc *)fd->sc_dv.dv_parent;
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -1825,38 +1928,26 @@ fdioctl(dev, cmd, addr, flag, p)
 
 #ifdef DEBUG
 	case _IO('f', 100):
-		{
-		int i;
-		struct fdc_softc *fdc = (struct fdc_softc *)
-					fd->sc_dv.dv_parent;
-
 		out_fdc(fdc, NE7CMD_DUMPREG);
 		fdcresult(fdc);
-		printf("dumpreg(%d regs): <", fdc->sc_nstat);
+		printf("fdc: dumpreg(%d regs): <", fdc->sc_nstat);
 		for (i = 0; i < fdc->sc_nstat; i++)
 			printf(" 0x%x", fdc->sc_status[i]);
 		printf(">\n");
-		}
+		return (0);
 
-		return (0);
 	case _IOW('f', 101, int):
-		((struct fdc_softc *)fd->sc_dv.dv_parent)->sc_cfg &=
-			~CFG_THRHLD_MASK;
-		((struct fdc_softc *)fd->sc_dv.dv_parent)->sc_cfg |=
-			(*(int *)addr & CFG_THRHLD_MASK);
-		fdconf((struct fdc_softc *) fd->sc_dv.dv_parent);
+		fdc->sc_cfg &= ~CFG_THRHLD_MASK;
+		fdc->sc_cfg |= (*(int *)addr & CFG_THRHLD_MASK);
+		fdconf(fdc);
 		return (0);
+
 	case _IO('f', 102):
-		{
-		int i;
-		struct fdc_softc *fdc = (struct fdc_softc *)
-					fd->sc_dv.dv_parent;
 		out_fdc(fdc, NE7CMD_SENSEI);
 		fdcresult(fdc);
-		printf("sensei(%d regs): <", fdc->sc_nstat);
+		printf("fdc: sensei(%d regs): <", fdc->sc_nstat);
 		for (i=0; i< fdc->sc_nstat; i++)
 			printf(" 0x%x", fdc->sc_status[i]);
-		}
 		printf(">\n");
 		return (0);
 #endif
@@ -2008,10 +2099,13 @@ fd_do_eject(fd)
 		return;
 	}
 	if (CPU_ISSUN4M && (fdc->sc_flags & FDC_82077)) {
-		int dor = FDO_FRST | FDO_FDMAEN | FDO_MOEN(0);
-		*fdc->sc_reg_dor = dor | FDO_EJ;
+		bus_space_tag_t t = fdc->sc_bustag;
+		bus_space_handle_t h = fdc->sc_handle;
+		u_int8_t dor = FDO_FRST | FDO_FDMAEN | FDO_MOEN(0);
+
+		bus_space_write_1(t, h, fdc->sc_reg_dor, dor | FDO_EJ);
 		delay(10);
-		*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
+		bus_space_write_1(t, h, fdc->sc_reg_dor, FDO_FRST | FDO_DS);
 		return;
 	}
 }
