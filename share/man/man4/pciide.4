@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.31 2001/07/28 12:18:19 tsutsui Exp $
+.\"	$NetBSD: pciide.4,v 1.32 2001/08/23 10:05:51 tsutsui Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -108,11 +108,6 @@ on the buggy revisions.  Multiword DMA can eventually be disabled on a
 per-drive basis with config flags, see
 .Xr wd 4 .
 The bug, if triggered, will cause a total system hang.
-.Pp
-Since there is few information about the Acard controllers,
-this driver does not check the cable type connected to the Acard
-contrllers. If Ultra/66 drives are connected to the ATP860
-with normal 40P cables, it would cause many transfer errors.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 MHz (except the OPTi controller,
