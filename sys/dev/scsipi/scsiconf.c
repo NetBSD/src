@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.178 2002/03/16 23:26:34 chs Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.179 2002/04/01 20:37:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.178 2002/03/16 23:26:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.179 2002/04/01 20:37:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,7 @@ scsibusattach(parent, self, aux)
 	struct scsipi_channel *chan = aux;
 
 	sc->sc_channel = chan;
+	chan->chan_name = sc->sc_dev.dv_xname;
 
 	/* Initialize the channel structure first */
 	if (scsipi_channel_init(chan)) {
