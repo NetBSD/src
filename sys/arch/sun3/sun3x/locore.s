@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.21 1997/05/29 22:20:01 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.22 1997/10/16 16:14:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1112,8 +1112,8 @@ L_delay:
 	.set	_C_LABEL(kernbase),KERNBASE
 	.globl	_C_LABEL(dvma_base)
 	.set	_C_LABEL(dvma_base),DVMA_SPACE_START
-	.globl	_C_LABEL(prom_start)
-	.set	_C_LABEL(prom_start),MONSTART
+	.globl	_C_LABEL(monstart)
+	.set	_C_LABEL(monstart),MONSTART
 	.globl	_C_LABEL(prom_base)
 	.set	_C_LABEL(prom_base),PROM_BASE
 
