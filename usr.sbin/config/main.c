@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67.8.2 2002/05/16 13:05:55 gehenna Exp $	*/
+/*	$NetBSD: main.c,v 1.67.8.3 2002/05/16 13:07:15 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -303,7 +303,7 @@ usage:
 	 * Ready to go.  Build all the various files.
 	 */
 	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
-	    mkioconf() || mkident())
+	    mkioconf() || mkdevsw() || mkident())
 		stop();
 	(void)printf("Don't forget to run \"make depend\"\n");
 	exit(0);
