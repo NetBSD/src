@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.195 2001/10/24 23:58:21 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.196 2001/10/25 07:46:48 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -39,6 +39,7 @@ USETOOLS?=	yes
 
 AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
 AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
+ASN1_COMPILE	${TOOLDIR}/bin/asn1_compile
 #BIB=		${TOOLDIR}/bin/bib
 CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 COMPILE_ET=	${TOOLDIR}/bin/compile_et
