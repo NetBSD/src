@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciavar.h,v 1.2 1999/02/17 03:17:17 mjacob Exp $ */
+/* $NetBSD: mcpciavar.h,v 1.3 1999/04/15 22:27:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -41,7 +41,10 @@
  * MPCIA configuration.
  */
 struct mcpcia_config {
+	int				cc_gid;	/* GID of this MCbus */
+	int				cc_mid;	/* MCbus Module ID */
 	int				cc_initted;
+	int				cc_mallocsafe;
 	struct alpha_bus_space		cc_iot;
 	struct alpha_bus_space		cc_memt;
 	struct extent *			cc_io_ex;
@@ -60,16 +63,12 @@ struct mcpcia_config {
 
 struct mcpcia_softc {
 	struct device		mcpcia_dev;
-	struct mcpcia_softc *	mcpcia_next;	/* next in a list */
-	struct mcpcia_config	mcpcia_cc;	/* config info */
-	u_int8_t		mcpcia_gid;	/* GID of this MCbus */
-	u_int8_t		mcpcia_mid;	/* MCbus Module ID */
+	struct mcpcia_config	*mcpcia_cc;	/* config info */
 };
-void mcpcia_config_cleanup __P((void));
 
-extern struct mcpcia_config *mcpcia_eisaccp;
+void	mcpcia_init __P((void));
+void	mcpcia_config_cleanup __P((void));
 
-void	mcpcia_init __P((struct mcpcia_softc *));
 void	mcpcia_pci_init __P((pci_chipset_tag_t, void *));
 void	mcpcia_dma_init __P((struct mcpcia_config *));
 
