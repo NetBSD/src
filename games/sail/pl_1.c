@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.17 2003/08/07 09:37:43 agc Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.18 2004/01/27 20:23:36 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.17 2003/08/07 09:37:43 agc Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.18 2004/01/27 20:23:36 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,12 +129,12 @@ choke(int n __attribute__((__unused__)))
 void
 child(int n __attribute__((__unused__)))
 {
-	union wait status;
+	int status;
 	int pid;
 
 	signal(SIGCHLD, SIG_IGN);
 	do {
-		pid = wait3((int *)&status, WNOHANG, (struct rusage *)0);
+		pid = wait3(&status, WNOHANG, (struct rusage *)0);
 		if (pid < 0 || (pid > 0 && !WIFSTOPPED(status)))
 			hasdriver = 0;
 	} while (pid > 0);
