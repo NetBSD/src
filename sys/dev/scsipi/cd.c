@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.86 1996/03/26 22:22:19 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.87 1996/03/27 00:48:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -609,7 +609,7 @@ void
 cdminphys(bp)
 	struct buf *bp;
 {
-	struct cd_softc *cd = cd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
 	long max;
 
 	/*
