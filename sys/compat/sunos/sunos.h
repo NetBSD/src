@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.9 1996/09/07 13:02:43 mycroft Exp $	*/
+/*	$NetBSD: sunos.h,v 1.10 1998/08/22 17:41:43 mrg Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
@@ -51,15 +51,15 @@ struct sunos_ustat {
 };
 
 struct sunos_statfs {
-	long	f_type;		/* type of info, zero for now */
-	long	f_bsize;	/* fundamental file system block size */
-	long	f_blocks;	/* total blocks in file system */
-	long	f_bfree;	/* free blocks */
-	long	f_bavail;	/* free blocks available to non-super-user */
-	long	f_files;	/* total file nodes in file system */
-	long	f_ffree;	/* free file nodes in fs */
+	int	f_type;		/* type of info, zero for now */
+	int	f_bsize;	/* fundamental file system block size */
+	int	f_blocks;	/* total blocks in file system */
+	int	f_bfree;	/* free blocks */
+	int	f_bavail;	/* free blocks available to non-super-user */
+	int	f_files;	/* total file nodes in file system */
+	int	f_ffree;	/* free file nodes in fs */
 	fsid_t	f_fsid;		/* file system id */
-	long	f_spare[7];	/* spare for later */
+	int	f_spare[7];	/* spare for later */
 };
 
 
@@ -93,10 +93,10 @@ struct sunos_termio {
 #define SUNOS_TCSBRK	_IO('T', 5)
 
 struct sunos_termios {
-	u_long	c_iflag;
-	u_long	c_oflag;
-	u_long	c_cflag;
-	u_long	c_lflag;
+	u_int	c_iflag;
+	u_int	c_oflag;
+	u_int	c_cflag;
+	u_int	c_lflag;
 	char	c_line;
 	u_char	c_cc[17];
 };
@@ -144,7 +144,7 @@ struct sunos_audio_info {
 
 __BEGIN_DECLS
 /* Defined in arch/m68k/m68k/sunos_machdep.c -- sparc uses regular sendsig() */
-#ifndef sparc
+#ifndef __sparc__
 void	sunos_sendsig __P((sig_t, int, int, u_long));
 #endif
 __END_DECLS
