@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.17 2004/07/15 03:53:52 atatat Exp $
+# $NetBSD: DISKLESS,v 1.18 2004/11/10 17:54:07 christos Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.17 $"
+#ident 		"DISKLESS-$Revision: 1.18 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -51,6 +51,7 @@ options 	COMPAT_43	# and 4.3BSD and ...
 options 	COMPAT_16
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	EXEC_AOUT	# support for a.out executables
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystem options
 #file-system	FFS		# Berkeley Fast Filesystem

@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.12 2004/10/23 14:00:51 augustss Exp $
+#	$NetBSD: SMDK2410,v 1.13 2004/11/10 17:54:04 christos Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -106,6 +106,7 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 

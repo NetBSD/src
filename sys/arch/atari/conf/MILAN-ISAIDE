@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.29 2004/06/28 21:10:09 bouyer Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.30 2004/11/10 17:54:03 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -77,6 +77,7 @@ options COMPAT_16 # Compatibility to NetBSD1.6
 
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
+options	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options SYSVSHM # System V shared memory
 options SYSVMSG # System V messages

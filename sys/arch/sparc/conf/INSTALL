@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43 2004/09/04 23:29:57 manu Exp $
+#	$NetBSD: INSTALL,v 1.44 2004/11/10 17:54:07 christos Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -150,6 +150,7 @@ options 	INSECURE
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem

@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.24 2004/07/18 05:41:51 tsutsui Exp $
+# 	$NetBSD: LIBERO,v 1.25 2004/11/10 17:54:06 christos Exp $
 
 #	NEWS1750 config file;
 #
@@ -50,6 +50,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
 options 	COMPAT_SUNOS		# binary compatibility with SunOS
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

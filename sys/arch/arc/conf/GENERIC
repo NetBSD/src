@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2004/09/04 23:29:46 manu Exp $
+# $NetBSD: GENERIC,v 1.106 2004/11/10 17:54:03 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.105 $"
+#ident		"GENERIC-$Revision: 1.106 $"
 
 maxusers	32		# estimated number of users
 
@@ -89,6 +89,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # mipsel specific
 options 	COMPAT_ULTRIX	# Ultrix binary compatibility

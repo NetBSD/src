@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.17 2004/07/15 03:53:50 atatat Exp $
+#	$NetBSD: VME177,v 1.18 2004/11/10 17:54:05 christos Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -46,6 +46,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs

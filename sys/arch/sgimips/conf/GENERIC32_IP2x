@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.22 2004/10/01 07:40:59 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.23 2004/11/10 17:54:07 christos Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.22 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -92,6 +92,7 @@ options		COMPAT_20	# NetBSD 2.0
 options 	COMPAT_IRIX	# binary compatibility with IRIX
 #options	COMPAT_LINUX	# binary compatibility with Linux
 #options	COMPAT_ULTRIX	# binary compatibility with Ultrix 
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

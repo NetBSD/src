@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.80 2004/07/15 03:53:45 atatat Exp $
+# $NetBSD: INSTALL,v 1.81 2004/11/10 17:54:02 christos Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -63,6 +63,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Misc. options
 #options 	EISAVERBOSE		# recognize "unknown" EISA devices

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.21 2004/10/23 14:00:51 augustss Exp $
+# $NetBSD: VR41XX,v 1.22 2004/11/10 17:54:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -105,6 +105,7 @@ options 	INET6		# IPV6
 
 # NetBSD backwards compatibility
 options 	COMPAT_43
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	NFS_BOOT_DHCP
 

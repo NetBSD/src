@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2004/09/04 23:29:56 manu Exp $
+# $NetBSD: GENERIC,v 1.70 2004/11/10 17:54:06 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 maxusers	16
 
@@ -72,6 +72,7 @@ options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	EXEC_AOUT	# exec a.out binaries
 #options 	EXEC_ECOFF	# exec ecoff binaries
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

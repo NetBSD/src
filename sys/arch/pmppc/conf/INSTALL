@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.12 2004/09/04 23:29:57 manu Exp $
+#	$NetBSD: INSTALL,v 1.13 2004/11/10 17:54:06 christos Exp $
 #
 #	INSTALL
 #
@@ -58,6 +58,7 @@ no makeoptions	NEED_SYMTAB
 #options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

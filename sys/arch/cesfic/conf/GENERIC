@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2004/09/04 23:29:46 manu Exp $
+# $NetBSD: GENERIC,v 1.28 2004/11/10 17:54:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -62,6 +62,7 @@ options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	LKM		# Loadable kernel modules
 options 	COMPAT_SUNOS
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystems
 #file-system 	FFS		# fast filesystem

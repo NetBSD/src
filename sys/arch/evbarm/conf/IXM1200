@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.10 2004/09/04 23:29:46 manu Exp $
+#	$NetBSD: IXM1200,v 1.11 2004/11/10 17:54:04 christos Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -87,6 +87,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 

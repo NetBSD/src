@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.14 2004/09/04 23:29:47 manu Exp $
+#	$NetBSD: ZAO425,v 1.15 2004/11/10 17:54:04 christos Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -92,6 +92,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 

@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.89 2004/10/23 14:00:53 augustss Exp $
+# 	$NetBSD: GENERIC32,v 1.90 2004/11/10 17:54:07 christos Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.90 $"
 
 maxusers	64
 
@@ -152,6 +152,7 @@ options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 #options 	SYSCALL_DEBUG
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
