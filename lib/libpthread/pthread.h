@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.12 2003/07/17 20:59:35 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.13 2003/07/18 15:58:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <time.h>	/* For timespec */
 #include <sched.h>
 
-#include "pthread_types.h"
+#include <pthread_types.h>
 
 __BEGIN_DECLS
 int	pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
