@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 1995/05/21 10:50:41 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 1995/05/28 19:33:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -511,7 +511,6 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;
 		i = SIGFPE;
 		break;
-#ifdef FPCOPROC
 	/* 
 	 * User coprocessor violation
 	 */
@@ -536,12 +535,36 @@ trap(type, code, v, frame)
 		ucode = code;
 		i = SIGFPE;
 		break;
+	/*
+	 * FPU faults in supervisor mode.
+	 */
+	case T_FPEMULI:
+	case T_FPEMULD: {
+		extern int	*nofault;
+
+		if (nofault)	/* If we're probing. */
+			longjmp((label_t *) nofault);
+		panictrap(type, code, v, &frame);
+	}
+	/*
+	 * Unimplemented FPU instructions/datatypes.
+	 */
+	case T_FPEMULI|T_USER:
+	case T_FPEMULD|T_USER:
+#ifdef FPU_EMULATE
+		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
+		/* XXX -- deal with tracing? (frame.f_sr & PSL_T) */
+#else
+		uprintf("pid %d killed: no floating point support.\n",
+			p->p_pid);
+		i = SIGILL;
+#endif
+		break;
 	/* 
 	 * Kernel coprocessor violation
 	 */
 	case T_COPERR:
 		/*FALLTHROUGH*/
-#endif
 	/*
 	 * Kernel format error
 	 */
@@ -574,8 +597,8 @@ trap(type, code, v, frame)
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 */
-		case T_TRACE:
-		case T_TRAP15:
+	case T_TRACE:
+	case T_TRAP15:
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
