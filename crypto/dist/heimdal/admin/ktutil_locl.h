@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: ktutil_locl.h,v 1.1.1.1 2000/06/16 18:31:39 thorpej Exp $
+ * $Id: ktutil_locl.h,v 1.1.1.1.2.1 2001/04/05 23:23:39 he Exp $
  */
 
 #ifndef __KTUTIL_LOCL_H__
@@ -51,6 +51,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <parse_time.h>
 #include <roken.h>
 
 #include <des.h>

@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: privs_c.c,v 1.1.1.1 2000/06/16 18:32:53 thorpej Exp $");
+RCSID("$Id: privs_c.c,v 1.1.1.1.2.1 2001/04/05 23:23:48 he Exp $");
 
 kadm5_ret_t
 kadm5_c_get_privs(void *server_handle, u_int32_t *privs)
@@ -44,6 +44,10 @@ kadm5_c_get_privs(void *server_handle, u_int32_t *privs)
     unsigned char buf[1024];
     int32_t tmp;
     krb5_data reply;
+
+    ret = _kadm5_connect(server_handle);
+    if(ret)
+	return ret;
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $Id: ss.h,v 1.1.1.1 2000/06/16 18:32:33 thorpej Exp $ */
+/* $Id: ss.h,v 1.1.1.1.2.1 2001/04/05 23:23:52 he Exp $ */
 
 /* SS compatibility for SL */
 
@@ -51,5 +51,7 @@ int ss_list_requests (int argc, char**);
 int ss_listen (int);
 void ss_perror (int, long, const char*);
 int ss_quit (int argc, char**);
+
+#define SS_ET_COMMAND_NOT_FOUND (-1)
 
 #endif /* __ss_h__ */

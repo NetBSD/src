@@ -1,4 +1,4 @@
-dnl $Id: have-type.m4,v 1.1.1.1 2000/06/16 18:32:17 thorpej Exp $
+dnl $Id: have-type.m4,v 1.1.1.1.2.1 2001/04/05 23:23:42 he Exp $
 dnl
 dnl check for existance of a type
 
@@ -18,15 +18,13 @@ $2],
 [$1 foo;],
 eval "ac_cv_type_$cv=yes",
 eval "ac_cv_type_$cv=no"))dnl
-AC_MSG_RESULT(`eval echo \\$ac_cv_type_$cv`)
-if test `eval echo \\$ac_cv_type_$cv` = yes; then
+ac_foo=`eval echo \\$ac_cv_type_$cv`
+AC_MSG_RESULT($ac_foo)
+if test "$ac_foo" = yes; then
   ac_tr_hdr=HAVE_`echo $1 | sed 'y%abcdefghijklmnopqrstuvwxyz./- %ABCDEFGHIJKLMNOPQRSTUVWXYZ____%'`
-dnl autoheader tricks *sigh*
-define(foo,translit($1, [ ], [_]))
-: << END
-@@@funcs="$funcs foo"@@@
-END
-undefine([foo])
-  AC_DEFINE_UNQUOTED($ac_tr_hdr, 1)
+if false; then
+	AC_CHECK_TYPES($1)
+fi
+  AC_DEFINE_UNQUOTED($ac_tr_hdr, 1, [Define if you have type `$1'])
 fi
 ])

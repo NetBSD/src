@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: kadm5_locl.h,v 1.1.1.1 2000/06/16 18:32:53 thorpej Exp $ */
+/* $Id: kadm5_locl.h,v 1.1.1.1.2.1 2001/04/05 23:23:48 he Exp $ */
 
 #ifndef __KADM5_LOCL_H__
 #define __KADM5_LOCL_H__
@@ -77,9 +77,9 @@
 #include "admin.h"
 #include "kadm5_err.h"
 #include <hdb.h>
+#include <der.h>
 #include <roken.h>
 #include <parse_units.h>
-#include <der.h>
 #include "private.h"
 
 #endif /* __KADM5_LOCL_H__ */
