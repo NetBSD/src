@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.41 2002/09/05 06:20:10 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.42 2002/09/05 23:06:17 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1420,3 +1420,6 @@ sys/netinet6/ip6_mroute.c			1.36 via patch
 
 usr.bin/join/join.c				1.21
   finish fixing PR#15412
+
+sys/netinet/tcp_input.c				1.154
+  always consult SS_CANTRCVMORE.  PR 18185
