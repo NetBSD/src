@@ -541,6 +541,9 @@ esac
 noconfigdirs=""
 
 case "${host}" in
+  alpha*-*-netbsd*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
   i[3456]86-*-vsta)
     noconfigdirs="tcl expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl apache inet itcl tix db snavigator gnuserv gettext"
     ;;
