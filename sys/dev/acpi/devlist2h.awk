@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.1 2003/01/05 22:33:55 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 2003/02/04 01:42:32 perry Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,7 +55,10 @@ NR == 1 {
 
 	next
 }
-/^PNP.*/ {
+/^#/ {
+	next
+}
+/^[A-Z][A-Z][A-Z].*/ {
 	nproducts++
 
 	products[nproducts, 1] = toupper($1);
