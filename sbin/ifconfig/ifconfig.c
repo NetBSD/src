@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.142 2004/07/06 23:26:31 mycroft Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.143 2004/07/27 14:25:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.142 2004/07/06 23:26:31 mycroft Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.143 2004/07/27 14:25:19 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -630,7 +630,7 @@ main(argc, argv)
 	 */
 
 	if (conflicting > 1) 
-		err(EXIT_FAILURE,
+		errx(EXIT_FAILURE,
 		    "Only one use of alias, -alias or delete is valid.");
 
 	/* Process any media commands that may have been issued. */
