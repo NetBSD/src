@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vnops.c,v 1.5 1993/08/26 19:01:02 pk Exp $
+ *	$Id: procfs_vnops.c,v 1.6 1993/09/07 15:41:27 ws Exp $
  */
 
 /*
@@ -621,11 +621,13 @@ pfs_lookup(vp, ndp, p)
 }
 
 int
-pfs_readdir(vp, uio, cred, eofflagp)
+pfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
         struct vnode *vp;
         register struct uio *uio;
         struct ucred *cred;
         int *eofflagp;
+	u_int *cookies;
+	int ncookies;
 {
 	int	error = 0;
 	int	count, lost, pcnt, skipcnt, doingzomb = 0;
@@ -660,7 +662,11 @@ pfs_readdir(vp, uio, cred, eofflagp)
 		error = uiomove((char *)&dent, sizeof(struct pfsdent) , uio);
 		if (error)
 			return error;
-
+		if (cookies) {
+			*cookies++ = sizeof(struct pfsdent);
+			ncookies--;
+		}
+		
 		dent.d_fileno = 2;
 		dent.d_namlen = 2;
 		dent.d_nam[1] = '.';
@@ -668,12 +674,16 @@ pfs_readdir(vp, uio, cred, eofflagp)
 		error = uiomove((char *)&dent, sizeof(struct pfsdent) , uio);
 		if (error)
 			return error;
+		if (cookies) {
+			*cookies++ = 2 * sizeof(struct pfsdent);
+			ncookies--;
+		}
 #endif
 		count += 2*dent.d_reclen;
 	}
 
 	p = allproc;
-	for (pcnt = 0; p && uio->uio_resid; pcnt++) {
+	for (pcnt = 0; p && uio->uio_resid && (!cookies || ncookies > 0); pcnt++) {
 		if (pcnt < skipcnt) {
 			p = p->p_nxt;
 			if (p == NULL && doingzomb == 0) {
@@ -703,6 +713,10 @@ pfs_readdir(vp, uio, cred, eofflagp)
 		error = uiomove((char *)&dent, dent.d_reclen, uio);
 		if (error)
 			break;
+		if (cookies) {
+			*cookies++ = count;
+			ncookies--;
+		}
 	}
 	if (count == 0)
 		*eofflagp = 1;

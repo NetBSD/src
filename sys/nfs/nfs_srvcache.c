@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_srvcache.c	7.11 (Berkeley) 4/16/91
- *	$Id: nfs_srvcache.c,v 1.4 1993/05/22 11:43:02 cgd Exp $
+ *	$Id: nfs_srvcache.c,v 1.5 1993/09/07 15:41:44 ws Exp $
  */
 
 /*
@@ -215,6 +215,7 @@ loop:
 	rp->rc_state = RC_INPROG;
 	rp->rc_xid = xid;
 	bcopy((caddr_t)nam, (caddr_t)&rp->rc_nam, sizeof (struct mbuf));
+	rp->rc_nam.m_data = rp->rc_nam.m_dat; /* for now; hopefully correct? certainly better */
 	rp->rc_proc = proc;
 	insque(rp, rh);
 	if (mb)

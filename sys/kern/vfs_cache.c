@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_cache.c	7.8 (Berkeley) 2/28/91
- *	$Id: vfs_cache.c,v 1.2 1993/05/20 02:55:33 cgd Exp $
+ *	$Id: vfs_cache.c,v 1.3 1993/09/07 15:41:10 ws Exp $
  */
 
 #include "param.h"
@@ -87,10 +87,11 @@ int doingcache = 1;			/* 1 => enable the cache */
  * Lookup is called with ni_dvp pointing to the directory to search,
  * ni_ptr pointing to the name of the entry being sought, ni_namelen
  * tells the length of the name, and ni_hash contains a hash of
- * the name. If the lookup succeeds, the vnode is returned in ni_vp
- * and a status of -1 is returned. If the lookup determines that
- * the name does not exist (negative cacheing), a status of ENOENT
- * is returned. If the lookup fails, a status of zero is returned.
+ * the name and directory vnode. If the lookup succeeds, the vnode is
+ * returned in ni_vp and a status of -1 is returned. If the lookup
+ * determines that the name does not exist (negative cacheing),
+ * a status of ENOENT is returned.
+ * If the lookup fails, a status of zero is returned.
  */
 cache_lookup(ndp)
 	register struct nameidata *ndp;

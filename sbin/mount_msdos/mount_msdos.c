@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_msdos.c,v 1.3 1993/08/14 11:05:26 mycroft Exp $";
+static char rcsid[] = "$Id: mount_msdos.c,v 1.4 1993/09/07 15:40:33 ws Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,8 +53,6 @@ char **argv;
 	dir = argv[optind + 1];
 
 	args.fspec = dev;
-	args.exflags = 0;
-	args.exroot = 0;
 
 	if (mount (MOUNT_MSDOS, dir, opts, &args) < 0) {
 		perror ("mount");
