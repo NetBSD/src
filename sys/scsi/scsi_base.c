@@ -1,6 +1,6 @@
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.6 1994/02/01 20:05:19 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.7 1994/02/14 21:44:13 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -399,10 +399,10 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	}
 retry:
 	xs->error = XS_NOERROR;
-#ifdef	PARANOID
+#ifdef	DIAGNOSTIC
 	if (datalen && ((caddr_t) xs->data < (caddr_t) KERNBASE))
 		printf("It's still wrong!\n");
-#endif	/*PARANOID*/
+#endif	/* DIAGNOSTIC */
 #ifdef	SCSIDEBUG
 	if (sc_link->flags & SDEV_DB3)
 		show_scsi_xs(xs);
