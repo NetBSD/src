@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.10 2002/12/17 15:16:42 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.11 2003/03/04 14:36:17 jmmv Exp $
 
-SUBDIR= amd apm disktab emul fstab ftpd isdn supfiles syslogd veriexecctl
+SUBDIR= amd apm disktab emul fstab ftpd isdn supfiles syslogd veriexecctl wsmoused
 
 .include <bsd.subdir.mk>
