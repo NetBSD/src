@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.60 2000/03/30 12:45:43 augustss Exp $	*/
+/*	$NetBSD: asc.c,v 1.60.4.1 2000/11/02 23:59:57 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1040,6 +1040,14 @@ again:
 				state->script =
 					&asc_scripts[SCRIPT_RESUME_DMA_IN];
 				state->flags |= DMA_RESUME;
+				/*
+				 * If the transfer doesn't end on a 8-byte
+				 * boundary, and it's an IOASIC DMA read,
+				 * the SDRx registers need to be written to
+				 * the buffer.
+				 */
+				if (((int)state->buf + state->dmalen - len) & 7)
+					(*asc->dma_end)(asc, state, ASCDMA_READ);
 			} else if (state->flags & DMA_OUT) {
 				state->script =
 					&asc_scripts[SCRIPT_RESUME_DMA_OUT];
