@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.45 2000/01/09 02:56:13 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.46 2000/01/09 03:39:13 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -155,20 +155,9 @@
 int     rf_kdebug_level = 0;
 
 #ifdef DEBUG
-#define db0_printf(a) printf a
-#define db_printf(a) if (rf_kdebug_level > 0) printf a
 #define db1_printf(a) if (rf_kdebug_level > 0) printf a
-#define db2_printf(a) if (rf_kdebug_level > 1) printf a
-#define db3_printf(a) if (rf_kdebug_level > 2) printf a
-#define db4_printf(a) if (rf_kdebug_level > 3) printf a
-#define db5_printf(a) if (rf_kdebug_level > 4) printf a
 #else				/* DEBUG */
-#define db0_printf(a) printf a
 #define db1_printf(a) { }
-#define db2_printf(a) { }
-#define db3_printf(a) { }
-#define db4_printf(a) { }
-#define db5_printf(a) { }
 #endif				/* DEBUG */
 
 static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
@@ -187,12 +176,10 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 		   RF_SectorCount_t numSect, caddr_t buf,
 		   void (*cbFunc) (struct buf *), void *cbArg, 
 		   int logBytesPerSector, struct proc * b_proc);
+static int raidinit __P((dev_t, RF_Raid_t *, int));
 
 void raidattach __P((int));
 int raidsize __P((dev_t));
-
-static int raidinit __P((dev_t, RF_Raid_t *, int));
-
 int raidopen __P((dev_t, int, int, struct proc *));
 int raidclose __P((dev_t, int, int, struct proc *));
 int raidioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -734,7 +721,7 @@ raidioctl(dev, cmd, data, flag, p)
 		    sizeof(RF_Config_t));
 		if (retcode) {
 			RF_Free(k_cfg, sizeof(RF_Config_t));
-			db3_printf(("rf_ioctl: retcode=%d copyin.1\n",
+			db1_printf(("rf_ioctl: retcode=%d copyin.1\n",
 				retcode));
 			return (retcode);
 		}
@@ -759,7 +746,7 @@ raidioctl(dev, cmd, data, flag, p)
 				RF_Free(k_cfg, sizeof(RF_Config_t));
 				RF_Free(specific_buf, 
 					k_cfg->layoutSpecificSize);
-				db3_printf(("rf_ioctl: retcode=%d copyin.2\n",
+				db1_printf(("rf_ioctl: retcode=%d copyin.2\n",
 					retcode));
 				return (retcode);
 			}
