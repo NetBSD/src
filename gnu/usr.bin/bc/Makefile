@@ -1,20 +1,15 @@
-#	$NetBSD: Makefile,v 1.20 1999/01/18 04:12:15 simonb Exp $
+#	$NetBSD: Makefile,v 1.21 1999/02/11 16:13:01 tv Exp $
 
-TOP=	${.CURDIR}/../..
-dist=	${TOP}/dist
-srcdir=	${dist}/bc
-
-PROG=	bc
-CPPFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR} -I${srcdir}/bc -I${srcdir}/h
-LFLAGS+=-I8
-SRCS=	bc.y execute.c getopt.c getopt1.c global.c load.c main.c number.c \
-	scan.l storage.c util.c
+PROG=		bc
+SRCS=		bc.y execute.c getopt.c getopt1.c global.c load.c main.c \
+		number.c scan.l storage.c util.c
+CPPFLAGS+=	-D_POSIX_SOURCE -I. -I${.CURDIR} -I${DIST}/bc/bc -I${DIST}/bc/h
+LFLAGS+=	-I8
+LDADD+=		-ll -ledit -ltermcap
+DPADD+=		${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 YHEADER=1
-LDADD+=	-ll -ledit -ltermcap
-DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 
-.PATH:	${srcdir}/bc
-.PATH:	${srcdir}/lib
-.PATH:	${srcdir}/doc
+DIST=		${.CURDIR}/../../dist
+.PATH: ${DIST}/bc/bc ${DIST}/bc/lib ${DIST}/bc/doc
 
 .include <bsd.prog.mk>
