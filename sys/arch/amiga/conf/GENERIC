@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.132 2000/01/20 19:12:28 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.133 2000/01/22 21:16:56 is Exp $
 
 #
 #if 0
@@ -8,6 +8,8 @@
 #
 # make AMIGA extracts the AMIGA configuration file.
 # make DRACO extracts the DRACO configuration file.
+#
+# commit them, too.
 #endif
 #
 
