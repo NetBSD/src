@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.4 1997/10/12 06:42:18 oki Exp $ */
+/*	$NetBSD: ms.c,v 1.4.2.1 1999/02/05 06:56:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * Mouse driver.
  */
+
+#include "mouse.h"
+#if NMOUSE > 0
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -344,3 +347,4 @@ mspoll(dev, events, p)
 
 void
 mouseattach(){} /* XXX pseudo-device */
+#endif

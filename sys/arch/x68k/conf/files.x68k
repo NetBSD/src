@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.16 1997/10/19 15:17:24 oki Exp $
+#	$NetBSD: files.x68k,v 1.16.2.1 1999/02/05 06:56:07 cgd Exp $
 #
 # new style config file for x68k architecture
 #
@@ -89,7 +89,7 @@ file	arch/x68k/dev/par.c		par needs-flag
 
 file	arch/x68k/dev/rtclock.c
 pseudo-device mouse
-file	arch/x68k/dev/ms.c		mouse
+file	arch/x68k/dev/ms.c		mouse needs-flag
 
 # graphic devices
 define	grfb {}

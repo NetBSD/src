@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24.2.1 1998/10/13 21:52:51 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.24.2.2 1999/02/05 06:56:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 #include "fd.h"
 #include "par.h"
 #include "adpcm.h"
+#include "mouse.h"
 #include "assym.h"
 
 #include <machine/asm.h>
@@ -740,8 +741,10 @@ _timertrap:
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 	jbsr	_hardclock		| hardclock(&frame)
+#if NMOUSE > 0
 	movl	#1,sp@
 	jbsr	_ms_modem		| ms_modem(1)
+#endif
 	addql	#4,sp
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
 	moveml	sp@+,#0x0303		| restore scratch registers

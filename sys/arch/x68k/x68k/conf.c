@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1997/10/15 23:39:42 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.13.2.1 1999/02/05 06:56:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -156,6 +156,7 @@ cdev_decl(md);
 cdev_decl(st);
 cdev_decl(fd);
 cdev_decl(kbd);
+#include "mouse.h"
 cdev_decl(ms);
 dev_decl(filedesc,open);
 #include "audio.h"
@@ -199,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NZS,zs),		/* 12: zs serial */
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_gen_init(1,kbd),		/* 14: /dev/kbd */
-	cdev_gen_init(1,ms),		/* 15: /dev/mouse */
+	cdev_gen_init(NMOUSE,ms),		/* 15: /dev/mouse */
 	cdev_tty_init(NXCOM,com),	/* 16: serial port */
 	cdev_gen_init(NAUDIO,audio),	/* 17: /dev/adpcm /dev/pcm /dev/audio */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
