@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.41 1997/07/20 19:48:03 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.42 1997/07/20 20:48:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1756,24 +1756,8 @@ FPReturn:
 	addu	sp, sp, STAND_FRAME_SIZE
 END(MachFPInterrupt)
 
-#ifdef MDB
-/*
- * Trap into the debugger.
- *
-L* void
-L* mdbpanic()
-L* {
-L* }
- */
-LEAF(mdbpanic)
-	break	MIPS_BREAK_SOVER_VAL
-	j	ra
-	nop
-END(mdbpanic)
-
-#endif	/* MDB */
 
-#if defined(DEBUG) || defined(MDB) || defined(DDB)
+#if defined(DEBUG) || defined(DDB)
 /*
  * Stacktrace support hooks which use type punnign to access
  * the caller's registers.
@@ -1841,7 +1825,7 @@ NON_LEAF(logstacktrace, STAND_FRAME_SIZE+20, ra)
 	nop
 END(logstacktrace)
 
-#endif	/* DEBUG */
+#endif	/* DEBUG || DDB */
 
 
 /*
