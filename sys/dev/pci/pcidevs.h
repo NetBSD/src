@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.168 1999/10/29 21:31:30 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.169 1999/11/01 20:43:51 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.161 1999/10/29 21:30:19 matt Exp 
+ *	NetBSD: pcidevs,v 1.162 1999/11/01 20:43:12 augustss Exp 
  */
 
 /*
@@ -518,6 +518,7 @@
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
+#define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
@@ -891,6 +892,9 @@
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
+
+/* Forte Media products */
+#define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* Forte Media 801 Sound */
 
 /* Fujtsu products */
 #define	PCI_PRODUCT_LUCENT_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
