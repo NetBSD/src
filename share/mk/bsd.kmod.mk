@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.68 2003/09/04 07:15:43 lukem Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.69 2003/09/04 08:27:08 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -18,24 +18,18 @@ CPPFLAGS+=	-D_KERNEL -D_LKM
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
-CLEANFILES+=	tmp.o
+CLEANFILES+=	machine ${MACHINE_CPU} tmp.o
 
-LNFILES+=	${S}/arch/${MACHINE}/include machine
-LNFILES+=	${S}/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
-DPSRCS+=	machine ${MACHINE_CPU}
-
+# see below why this is necessary
 .if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
-LNFILES+=	${S}/arch/sun68k/include sun68k
-DPSRCS+=	sun68k
+CLEANFILES+=	sun68k
 .elif ${MACHINE} == "sparc64"
-LNFILES+=	${S}/arch/sparc64/include sparc64
-DPSRCS+=	sparc64
-.elif ${MACHINE} == "i386" || ${MACHINE} == "amd64"
-LNFILES+=	${S}/arch/x86/include x86
-DPSRCS+=	x86
-.if ${MACHINE} == "amd64"
+CLEANFILES+=	sparc
+.elif ${MACHINE} == "i386"
+CLEANFILES+=	x86
+.elif ${MACHINE} == "amd64"
+CLEANFILES+=	x86
 CFLAGS+=	-mcmodel=kernel
-.endif
 .elif ${MACHINE_ARCH} == "powerpc"
 CLEANFILES+=	${KMOD}_tramp.o ${KMOD}_tramp.S tmp.S ${KMOD}_tmp.o
 .endif
@@ -75,6 +69,33 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -r ${LDFLAGS} -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
+.endif
+
+# XXX.  This should be done a better way.  It's @'d to reduce visual spew.
+# XXX   .BEGIN is used to make sure the links are done before anything else.
+.if make(depend) || make(all) || make(dependall)
+.BEGIN:
+	@rm -f machine && \
+	    ln -s $S/arch/${MACHINE}/include machine
+	@rm -f ${MACHINE_CPU} && \
+	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
+# XXX. it gets worse..
+.if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
+	@rm -f sun68k && \
+	    ln -s $S/arch/sun68k/include sun68k
+.endif
+.if ${MACHINE} == "sparc64"
+	@rm -f sparc && \
+	    ln -s $S/arch/sparc/include sparc
+.endif
+.if ${MACHINE} == "amd64"
+	@rm -f x86 && \
+	    ln -s $S/arch/x86/include x86
+.endif
+.if ${MACHINE_CPU} == "i386"
+	@rm -f x86 && \
+	    ln -s $S/arch/x86/include x86
+.endif
 .endif
 
 ##### Install rules
@@ -124,7 +145,6 @@ unload:
 
 ##### Pull in related .mk logic
 .include <bsd.man.mk>
-.include <bsd.files.mk>
 .include <bsd.links.mk>
 .include <bsd.sys.mk>
 .include <bsd.dep.mk>
