@@ -1000,7 +1000,7 @@ bad:
 				for (k=0; k<j; k++)
 					{
 					snprintf((char *)n,
-					    sizeof(buf[2]) - (n - buf[2]),
+					    sizeof(buf[2]) - ((char *)n - &buf[2][0]),
 					    "%02X",(unsigned char)*(p++));
 					n+=2;
 					}
