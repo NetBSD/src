@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.1 1996/01/31 23:19:49 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.2 1996/02/05 16:49:08 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -41,7 +41,7 @@
  * Created      : 17/09/94
  * Last updated : 15/11/95
  *
- *    $Id: vidcconsole.c,v 1.1 1996/01/31 23:19:49 mark Exp $
+ *    $Id: vidcconsole.c,v 1.2 1996/02/05 16:49:08 mark Exp $
  */
 
 /* woo */
@@ -1431,7 +1431,6 @@ int vidcconsole_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 	{
 		case CONSOLE_MODE:
     			tp = find_tp(dev);
-			printf ( "mode ioctl called\n" );
 			vidcconsole_mode ( vc, (struct vidc_mode *)data );
     			vc->MODECHANGE ( vc );
 			ws.ws_row=vc->ychars;
