@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: pass1.c,v 1.6 1999/02/17 13:11:19 bouyer Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 
 #include <ufs/ufs/dinode.h> /* for IFMT & friends */
+#include <ufs/ufs/dir.h> /* for IFTODT & friends */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -247,6 +248,7 @@ checkinode(inumber, idesc)
 	} else {
 		statemap[inumber] = FSTATE;
 	}
+	typemap[inumber] = IFTODT(mode);
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
