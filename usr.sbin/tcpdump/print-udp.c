@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.11 1999/07/02 11:31:37 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.12 1999/07/02 14:51:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.11 1999/07/02 11:31:37 itojun Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.12 1999/07/02 14:51:22 itojun Exp $");
 #endif
 #endif
 
@@ -517,7 +517,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	}
 #endif
 
-	if (ip && vflag) {
+	if (ip->ip_v == 4 && vflag) {
 		int sum = up->uh_sum;
 		if (sum == 0) {
 			(void)printf(" [no cksum]");
