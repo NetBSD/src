@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.123 2004/06/13 08:08:43 jmc Exp $
+$NetBSD: UPDATING,v 1.124 2004/06/22 01:29:51 jmc Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,16 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20040621:
+
+	Due to the recent rototill of tools/compat it's crucial one starts
+	from a clean objdir under tools/*.
+
+	This is mostly due to generated files (yacc and lex sources) needing
+	to be generated w. new rules from bsd.hostprog.mk.
+
+	The safest course is to rm -rf all objects under tools before building.
 
 20040516:
 	The end-user modifiable X11 configuration has been moved
