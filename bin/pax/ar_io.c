@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.23 2002/10/12 15:39:29 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.24 2002/10/12 18:49:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.23 2002/10/12 15:39:29 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.24 2002/10/12 18:49:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,8 @@ extern sigset_t s_mask;
 static void ar_start_gzip(int, const char *, int);
 static const char *timefmt(char *, size_t, off_t, time_t);
 static const char *sizefmt(char *, size_t, off_t);
+
+#ifdef SUPPORT_RMT
 #ifdef SYS_NO_RESTART
 static int rmtread_with_restart(int, void *, int);
 static int rmtwrite_with_restart(int, void *, int);
@@ -106,6 +108,7 @@ static int rmtwrite_with_restart(int, void *, int);
 #define rmtread_with_restart(a, b, c) rmtread((a), (b), (c))
 #define rmtwrite_with_restart(a, b, c) rmtwrite((a), (b), (c))
 #endif
+#endif /* SUPPORT_RMT */
 
 /*
  * ar_open()
@@ -128,6 +131,7 @@ ar_open(const char *name)
 	artyp = ISREG;
 	flcnt = 0;
 
+#ifdef SUPPORT_RMT
 	if (strchr(name, ':') != NULL && !forcelocal) {
 		artyp = ISRMT;
 		if ((arfd = rmtopen(name, O_RDWR, DMOD)) == -1) {
@@ -138,6 +142,7 @@ ar_open(const char *name)
 		lstrval = 1;
 		return 0;
 	}
+#endif /* SUPPORT_RMT */
 
 	/*
 	 * open based on overall operation mode
@@ -371,9 +376,11 @@ ar_close(void)
 		waitpid(zpid, &status, 0);
 	}
 
+#ifdef SUPPORT_RMT
 	if (artyp == ISRMT)
 		(void)rmtclose(arfd);
 	else
+#endif /* SUPPORT_RMT */
 		(void)close(arfd);
 
 	if (vflag && (artyp == ISTAPE)) {
@@ -461,13 +468,19 @@ ar_drain(void)
 	/*
 	 * keep reading until pipe is drained
 	 */
+#ifdef SUPPORT_RMT
 	if (artyp == ISRMT) {
-		while ((res = rmtread_with_restart(arfd, drbuf, sizeof(drbuf))) > 0)
+		while ((res = rmtread_with_restart(arfd,
+						   drbuf, sizeof(drbuf))) > 0)
 			continue;
 	} else {
-		while ((res = read_with_restart(arfd, drbuf, sizeof(drbuf))) > 0)
+#endif /* SUPPORT_RMT */
+		while ((res = read_with_restart(arfd,
+						drbuf, sizeof(drbuf))) > 0)
 			continue;
+#ifdef SUPPORT_RMT
 	}
+#endif /* SUPPORT_RMT */
 	lstrval = res;
 }
 
@@ -591,8 +604,13 @@ xread(int fd, void *buf, int bsz)
 	int r;
 
 	do {
+#ifdef SUPPORT_RMT
 		if ((r = rmtread_with_restart(fd, b, bsz)) <= 0)
 			break;
+#else
+		if ((r = read_with_restart(fd, b, bsz)) <= 0)
+			break;
+#endif /* SUPPORT_RMT */
 		b += r;
 		bsz -= r;
 		nread += r;
@@ -657,8 +675,13 @@ xwrite(int fd, void *buf, int bsz)
 	int r;
 
 	do {
+#ifdef SUPPORT_RMT
 		if ((r = rmtwrite_with_restart(fd, b, bsz)) <= 0)
 			break;
+#else
+		if ((r = write_with_restart(fd, b, bsz)) <= 0)
+			break;
+#endif /* SUPPORT_RMT */
 		b += r;
 		bsz -= r;
 		written += r;
@@ -691,12 +714,14 @@ ar_read(char *buf, int cnt)
 	 * how we read must be based on device type
 	 */
 	switch (artyp) {
+#ifdef SUPPORT_RMT
 	case ISRMT:
 		if ((res = rmtread_with_restart(arfd, buf, cnt)) > 0) {
 			io_ok = 1;
 			return res;
 		}
 		break;
+#endif /* SUPPORT_RMT */
 	case ISTAPE:
 		if ((res = read_with_restart(arfd, buf, cnt)) > 0) {
 			/*
@@ -819,7 +844,9 @@ ar_write(char *buf, int bsz)
 	case ISTAPE:
 	case ISCHR:
 	case ISBLK:
+#ifdef SUPPORT_RMT
 	case ISRMT:
+#endif /* SUPPORT_RMT */
 		if (res >= 0)
 			break;
 		if (errno == EACCES) {
@@ -911,7 +938,9 @@ ar_rdsync(void)
 		did_io = 1;
 
 	switch(artyp) {
+#ifdef SUPPORT_RMT
 	case ISRMT:
+#endif /* SUPPORT_RMT */
 	case ISTAPE:
 		/*
 		 * if the last i/o was a successful data transfer, we assume
@@ -928,13 +957,17 @@ ar_rdsync(void)
 		}
 		mb.mt_op = MTFSR;
 		mb.mt_count = 1;
+#ifdef SUPPORT_RMT
 		if (artyp == ISRMT) {
 			if (rmtioctl(arfd, MTIOCTOP, &mb) < 0)
 				break;
 		} else {
+#endif /* SUPPORT_RMT */
 			if (ioctl(arfd, MTIOCTOP, &mb) < 0)
 				break;
+#ifdef SUPPORT_RMT
 		}
+#endif /* SUPPORT_RMT */
 		lstrval = 1;
 		break;
 	case ISREG:
@@ -1001,7 +1034,11 @@ ar_fow(off_t sksz, off_t *skipped)
 	 * number of physical blocks to skip (we do not know physical block
 	 * size at this point), so we must only read forward on tapes!
 	 */
-	if (artyp == ISTAPE || artyp == ISPIPE || artyp == ISRMT)
+	if (artyp == ISTAPE || artyp == ISPIPE
+#ifdef SUPPORT_RMT
+	    || artyp == ISRMT
+#endif /* SUPPORT_RMT */
+	    )
 		return(0);
 
 	/*
@@ -1111,7 +1148,9 @@ ar_rev(off_t sksz)
 		}
 		break;
 	case ISTAPE:
+#ifdef SUPPORT_RMT
 	case ISRMT:
+#endif /* SUPPORT_RMT */
 		/*
 		 * Calculate and move the proper number of PHYSICAL tape
 		 * blocks. If the sksz is not an even multiple of the physical
@@ -1152,7 +1191,13 @@ ar_rev(off_t sksz)
 		 */
 		mb.mt_op = MTBSR;
 		mb.mt_count = sksz/phyblk;
-		if (rmtioctl(arfd, MTIOCTOP, &mb) < 0) {
+		if (
+#ifdef SUPPORT_RMT
+		    rmtioctl(arfd, MTIOCTOP, &mb)
+#else
+		    ioctl(arfd, MTIOCTOP, &mb)
+#endif /* SUPPORT_RMT */
+		    < 0) {
 			syswarn(1,errno, "Unable to backspace tape %ld blocks.",
 			    (long) mb.mt_count);
 			lstrval = -1;
@@ -1193,7 +1238,13 @@ get_phys(void)
 		 * we know we are at file mark when we get back a 0 from
 		 * read()
 		 */
-		while ((res = rmtread_with_restart(arfd, scbuf, sizeof(scbuf))) > 0)
+#ifdef SUPPORT_RMT
+		while ((res = rmtread_with_restart(arfd,
+						   scbuf, sizeof(scbuf))) > 0)
+#else
+		while ((res = read_with_restart(arfd,
+						scbuf, sizeof(scbuf))) > 0)
+#endif /* SUPPORT_RMT */
 			padsz += res;
 		if (res < 0) {
 			syswarn(1, errno, "Unable to locate tape filemark.");
@@ -1207,7 +1258,13 @@ get_phys(void)
 	 */
 	mb.mt_op = MTBSF;
 	mb.mt_count = 1;
-	if (rmtioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (
+#ifdef SUPPORT_RMT
+	    rmtioctl(arfd, MTIOCTOP, &mb)
+#else
+	    ioctl(arfd, MTIOCTOP, &mb)
+#endif /* SUPPORT_RMT */
+	    < 0) {
 		syswarn(1, errno, "Unable to backspace over tape filemark.");
 		return(-1);
 	}
@@ -1218,11 +1275,23 @@ get_phys(void)
 	 */
 	mb.mt_op = MTBSR;
 	mb.mt_count = 1;
-	if (rmtioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (
+#ifdef SUPPORT_RMT
+	    rmtioctl(arfd, MTIOCTOP, &mb)
+#else
+	    ioctl(arfd, MTIOCTOP, &mb)
+#endif /* SUPPORT_RMT */
+	    < 0) {
 		syswarn(1, errno, "Unable to backspace over last tape block.");
 		return(-1);
 	}
-	if ((phyblk = rmtread_with_restart(arfd, scbuf, sizeof(scbuf))) <= 0) {
+	if ((phyblk =
+#ifdef SUPPORT_RMT
+	     rmtread_with_restart(arfd, scbuf, sizeof(scbuf))
+#else
+	     read_with_restart(arfd, scbuf, sizeof(scbuf))
+#endif /* SUPPORT_RMT */
+	    ) <= 0) {
 		syswarn(1, errno, "Cannot determine archive tape blocksize.");
 		return(-1);
 	}
@@ -1231,7 +1300,13 @@ get_phys(void)
 	 * read forward to the file mark, then back up in front of the filemark
 	 * (this is a bit paranoid, but should be safe to do).
 	 */
-	while ((res = rmtread_with_restart(arfd, scbuf, sizeof(scbuf))) > 0)
+	while ((res =
+#ifdef SUPPORT_RMT
+		rmtread_with_restart(arfd, scbuf, sizeof(scbuf))
+#else
+		read_with_restart(arfd, scbuf, sizeof(scbuf))
+#endif /* SUPPORT_RMT */
+	       ) > 0)
 		;
 	if (res < 0) {
 		syswarn(1, errno, "Unable to locate tape filemark.");
@@ -1239,7 +1314,13 @@ get_phys(void)
 	}
 	mb.mt_op = MTBSF;
 	mb.mt_count = 1;
-	if (rmtioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (
+#ifdef SUPPORT_RMT
+	    rmtioctl(arfd, MTIOCTOP, &mb)
+#else
+	    ioctl(arfd, MTIOCTOP, &mb)
+#endif /* SUPPORT_RMT */
+	    < 0) {
 		syswarn(1, errno, "Unable to backspace over tape filemark.");
 		return(-1);
 	}
@@ -1270,7 +1351,13 @@ get_phys(void)
 	 */
 	mb.mt_op = MTBSR;
 	mb.mt_count = padsz/phyblk;
-	if (rmtioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (
+#ifdef SUPPORT_RMT
+	    rmtioctl(arfd, MTIOCTOP, &mb)
+#else
+	    ioctl(arfd, MTIOCTOP, &mb)
+#endif /* SUPPORT_RMT */
+	    < 0) {
 		syswarn(1,errno,"Unable to backspace tape over %ld pad blocks",
 		    (long)mb.mt_count);
 		return(-1);
@@ -1317,7 +1404,11 @@ ar_next(void)
 	 */
 	if (strcmp(arcname, STDO) && strcmp(arcname, STDN) && (artyp != ISREG)
 	    && (artyp != ISPIPE)) {
-		if (artyp == ISTAPE || artyp == ISRMT) {
+		if (artyp == ISTAPE
+#ifdef SUPPORT_RMT
+		    || artyp == ISRMT
+#endif /* SUPPORT_RMT */
+		    ) {
 			tty_prnt("%s ready for archive tape volume: %d\n",
 				arcname, arvol);
 			tty_prnt("Load the NEXT TAPE on the tape drive");
