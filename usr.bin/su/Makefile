@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/12/11 09:46:27 dyoung Exp $
+#	$NetBSD: Makefile,v 1.35 2005/01/07 22:34:20 manu Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -49,4 +49,9 @@ LDADD+= -lskey
 
 .ifdef SU_ROOTAUTH
 CPPFLAGS+=-DSU_ROOTAUTH=\"${SU_ROOTAUTH}\"
+.endif
+
+.if (${USE_PAM} != "no")
+CPPFLAGS+=-DUSE_PAM
+LDADD+= -lpam
 .endif

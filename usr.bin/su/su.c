@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: su.c,v 1.59 2005/01/07 22:34:20 manu Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,12 +40,15 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: su.c,v 1.59 2005/01/07 22:34:20 manu Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#ifdef USE_PAM
+#include <sys/wait.h>
+#endif
 #include <sys/resource.h>
 #include <err.h>
 #include <errno.h>
@@ -62,6 +65,21 @@ __RCSID("$NetBSD: su.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+#include <security/openpam.h>   /* for openpam_ttyconv() */
+
+static pam_handle_t *pamh;
+static struct pam_conv pamc;
+
+#define fatal(x) { pam_end(pamh, pam_err); err x; }
+#define fatalx(x) { pam_end(pamh, pam_err); errx x; }
+#else
+#define fatal(x) err x
+#define fatalx(x) errx x
+
+#endif
 
 #ifdef LOGIN_CAP
 #include <login_cap.h>
@@ -132,6 +150,14 @@ main(argc, argv)
 #ifdef LOGIN_CAP
 	login_cap_t *lc;
 #endif
+#ifdef USE_PAM
+	char **pam_envlist, **pam_env;
+	char hostname[MAXHOSTNAMELEN];
+	const char **usernamep;
+	char *tty; 
+	int pam_err, status;
+	pid_t pid;
+#endif
 
 	asme = asthem = fastlogin = 0;
 	gohome = 1;
@@ -186,16 +212,80 @@ main(argc, argv)
 	/* get current login name and shell */
 	ruid = getuid();
 	username = getlogin();
+
+#ifdef USE_PAM
+	pamc.conv = &openpam_ttyconv;
+	pam_start("su", username, &pamc, &pamh);
+
+	/* Fill in hostname, username and tty */	
+	if ((pam_err = pam_set_item(pamh, PAM_RUSER, username)) != PAM_SUCCESS)
+		goto pam_failed;
+
+	gethostname(hostname, sizeof(hostname));
+	if ((pam_err = pam_set_item(pamh, PAM_RHOST, hostname)) != PAM_SUCCESS)
+		goto pam_failed;
+	
+	tty = ttyname(STDERR_FILENO);
+	if ((pam_err = pam_set_item(pamh, PAM_TTY, tty)) != PAM_SUCCESS)
+		goto pam_failed;
+
+	/* authentication */
+	if ((pam_err = pam_authenticate(pamh, 0)) != PAM_SUCCESS)
+		goto pam_failed;
+
+	if ((pam_err = pam_acct_mgmt(pamh, 0)) == PAM_NEW_AUTHTOK_REQD)
+		pam_err = pam_chauthtok(pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
+	if (pam_err != PAM_SUCCESS)
+		goto pam_failed;
+
+	/* Get user credentials */
+	if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED)) != PAM_SUCCESS)
+		goto pam_failed;
+
+	/* Open the session */
+	if ((pam_err = pam_open_session(pamh, 0)) != PAM_SUCCESS)
+		goto pam_failed;
+
+	/* New user name? */
+	usernamep = (const char **)&username;
+	pam_err = pam_get_item(pamh, PAM_USER, (const void **)usernamep);
+	if (pam_err != PAM_SUCCESS)
+		goto pam_failed;
+
+pam_failed:
+	if (pam_err != PAM_SUCCESS) {
+		warn("PAM failed, fallback to plain old authentication");
+		pam_end(pamh, pam_err);
+		username = getlogin();
+	}	
+
+	/* 
+	 * Now any failure should use fatal/fatalx instead of err/errx
+	 * so that pam_end() is called on errors.
+	 */
+#endif
 	if (username == NULL || (pwd = getpwnam(username)) == NULL ||
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
 	if (pwd == NULL)
-		errx(1, "who are you?");
+		fatalx((1, "who are you?"));
+
 	username = strdup(pwd->pw_name);
 	userpass = strdup(pwd->pw_passwd);
 	if (username == NULL || userpass == NULL)
-		err(1, "strdup");
+		fatal((1, "strdup"));
 
+#ifdef USE_PAM
+	/* Get PAM environment */
+	if ((pam_err == PAM_SUCCESS) && 
+	    ((pam_envlist = pam_getenvlist(pamh)) != NULL)) {
+		for (pam_env = pam_envlist; *pam_env != NULL; ++pam_env) {
+			putenv(*pam_env);
+			free(*pam_env);
+		}
+		free(pam_envlist);
+	}
+#endif
 
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
@@ -211,13 +301,13 @@ main(argc, argv)
 	np = *argv ? argv : argv-1;
 
 	if ((pwd = getpwnam(user)) == NULL)
-		errx(1, "unknown login %s", user);
+		fatalx((1, "unknown login %s", user));
 
 #ifdef LOGIN_CAP
 	/* force the usage of specified class */
 	if (class) {
 		if (ruid)
-			errx(1, "Only root may use -c");
+			fatalx((1, "Only root may use -c"));
 
 		pwd->pw_class = class;
 	}
@@ -234,6 +324,9 @@ main(argc, argv)
 #endif
 #ifdef KERBEROS
 	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
+#endif
+#ifdef USE_PAM	
+	    && (pam_err != PAM_SUCCESS)
 #endif
 	    ) {
 		char *pass = pwd->pw_passwd;
@@ -260,17 +353,18 @@ main(argc, argv)
 			ok = check_ingroup(-1, SU_GROUP, username, 1);
 		}
 		if (!ok)
-			errx(1,
+			fatalx((1,
 	    "you are not listed in the correct secondary group (%s) to su %s.",
-					    SU_GROUP, user);
+					    SU_GROUP, user));
 		/* if target requires a password, verify it */
 		if (*pass) {
 			p = getpass("Password:");
 #ifdef SKEY
 			if (strcasecmp(p, "s/key") == 0) {
-				if (skey_haskey(user))
-					errx(1, "Sorry, you have no s/key.");
-				else {
+				if (skey_haskey(user)) {
+					fatalx((1, 
+					    "Sorry, you have no s/key."));
+				} else {
 					if (skey_authenticate(user)) {
 						goto badlogin;
 					}
@@ -294,7 +388,7 @@ badlogin:
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
 		if (!chshell(pwd->pw_shell) && ruid)
-			errx(1,"permission denied (shell).");
+			fatalx((1,"permission denied (shell)."));
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
 		shell = pwd->pw_shell;
 		iscsh = UNSET;
@@ -312,6 +406,34 @@ badlogin:
 	if (iscsh == UNSET)
 		iscsh = strstr(avshell, "csh") ? YES : NO;
 
+#ifdef USE_PAM
+	/* 
+	 * If PAM is in use, we must release PAM ressources and close
+	 * the session after su child exits. That require a fork now,
+	 * before we drop the root privs (needed for PAM)
+	 */
+	if (pam_err == PAM_SUCCESS) {
+		switch(pid = fork()) {
+		case -1:
+			fatal((1, "fork"));
+			break;
+		case 0:		/* child */
+			break;
+		default:	/* parent */
+			waitpid(pid, &status, 0);	
+			pam_err = pam_close_session(pamh, 0);
+			pam_end(pamh, pam_err);
+
+			exit(WEXITSTATUS(status));
+			break;
+		}
+	}
+
+	/* 
+	 * Everything here happens in the child, it should not 
+	 * do any PAM operation anymore (don't use fatal/fatalx)
+	 */
+#endif
 	/* set permissions */
 #ifdef LOGIN_CAP
 	if (setusercontext(lc, pwd, pwd->pw_uid,
