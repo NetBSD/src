@@ -1,4 +1,4 @@
-.\"	$NetBSD: tutorial.ms,v 1.6 2002/05/16 19:47:47 wiz Exp $
+.\"	$NetBSD: tutorial.ms,v 1.7 2003/07/14 08:55:18 wiz Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
 .\" Copyright (c) 1988, 1989, 1993
@@ -149,7 +149,7 @@ be familiar. PMake's most important feature is its ability to run
 several different jobs at once, making the creation of systems
 considerably faster. It also has a great deal more functionality than
 Make. Throughout the text, whenever something is mentioned that is an
-important difference between PMake and Make (i.e.  something that will
+important difference between PMake and Make (i.e. something that will
 cause a makefile to fail if you don't do something about it), or is
 simply important, it will be flagged with a little sign in the left
 margin, like this:
@@ -3066,8 +3066,8 @@ identify the system on which PMake is being run.
 The syntax is
 .CW exists( \fIfile\fP\c
 .CW )
-and is true if the file can be found on the global search path (i.e.
-that defined by
+and is true if the file can be found on the global search path
+(i.e. that defined by
 .CW .PATH
 targets, not by
 .CW .PATH \fIsuffix\fP
