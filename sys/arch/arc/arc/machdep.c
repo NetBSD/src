@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2002/11/30 17:57:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2002/12/07 21:34:48 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
@@ -344,6 +345,10 @@ mach_init(argc, argv, envv)
 	/* init symbols if present */
 	if (esym)
 		ddb_init(1000, &end, (int*)esym);
+#else
+#ifdef SYMTAB_SPACE
+	ddb_init(0, NULL, NULL);
+#endif
 #endif
 #endif
 
