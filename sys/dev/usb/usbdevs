@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.46 1999/10/04 19:05:13 augustss Exp $
+$NetBSD: usbdevs,v 1.47 1999/10/05 20:03:49 nathanw Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -236,6 +236,7 @@ product OMNIVISION OV511	0x0511	OV511 Camera
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
+product INSYSTEM ISD110		0x0200  IDE adapter
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
