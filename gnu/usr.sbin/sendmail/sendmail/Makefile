@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/07/07 04:26:59 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 2000/07/22 03:30:40 cgd Exp $
 
 .include <bsd.own.mk>
 
@@ -26,8 +26,10 @@ SRCS=		alias.c arpadate.c bf_torek.c clock.c collect.c \
 
 MAN=		aliases.5 mailq.1 newaliases.1 sendmail.8
 
-afterinstall:
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		${DIST}/sendmail/sendmail/helpfile ${DESTDIR}/etc/mail
+FILES=		${DIST}/sendmail/sendmail/helpfile
+FILESDIR=	/etc/mail
+FILESOWN=	${BINOWN}
+FILESGRP=	${BINGRP}
+FILESMODE=	${NONBINMODE}
 
 .include <bsd.prog.mk>
