@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.17 2003/08/11 15:14:16 itojun Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.18 2003/09/16 17:37:27 jdc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -77,12 +77,10 @@
  *	  802.11, VLANs on Ethernet, etc.)  Figure out a nice way
  *	  to bridge other types of interfaces (FDDI-FDDI, and maybe
  *	  consider heterogenous bridges).
- *
- *	- Add packet filter hooks.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.17 2003/08/11 15:14:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.18 2003/09/16 17:37:27 jdc Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1116,19 +1114,20 @@ bridge_stop(struct ifnet *ifp, int disable)
  *	NOTE: must be called at splnet().
  */
 __inline void
-bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m)
+bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
+    int runfilt)
 {
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int len, error;
 	short mflags;
 
 #ifdef PFIL_HOOKS
-	if (pfil_run_hooks(&sc->sc_if.if_pfil, &m, dst_ifp, PFIL_OUT) != 0) {
-		m_freem(m);
-		return;
+	if (runfilt) {
+		if (pfil_run_hooks(&sc->sc_if.if_pfil, &m, dst_ifp, PFIL_OUT) != 0) {
+			m_freem(m);
+			return;
+		}
 	}
-	if (m == NULL)
-		return;
 #endif /* PFIL_HOOKS */
 
 #ifdef ALTQ
@@ -1252,7 +1251,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				}
 			}
 
-			bridge_enqueue(sc, dst_if, mc);
+			bridge_enqueue(sc, dst_if, mc, 0);
 		}
 		if (used == 0)
 			m_freem(m);
@@ -1271,7 +1270,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		return (0);
 	}
 
-	bridge_enqueue(sc, dst_if, m);
+	bridge_enqueue(sc, dst_if, m, 0);
 
 	splx(s);
 	return (0);
@@ -1412,7 +1411,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		}
 	}
 
-	bridge_enqueue(sc, dst_if, m);
+	bridge_enqueue(sc, dst_if, m, 1);
 }
 
 /*
@@ -1556,7 +1555,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 			}
 		}
 
-		bridge_enqueue(sc, dst_if, mc);
+		bridge_enqueue(sc, dst_if, mc, 1);
 	}
 	if (used == 0)
 		m_freem(m);
@@ -1920,7 +1919,7 @@ extern struct pfil_head inet6_pfil_hook;                /* XXX */
  */
 static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
-	int snap, error;
+	int snap, error, split1, split2, pktlen;
 	struct ether_header *eh;
 	struct mbuf *m1, *m2;
 	u_int16_t ether_type;
@@ -1968,12 +1967,24 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	}
 
 	/* Strip off the Ethernet header---but keep a copy. */
-	if ((m1 = m_split(*mp, sizeof(struct ether_header), M_NOWAIT)) == NULL)
-		goto bad;
+	if ((*mp)->m_len == sizeof(struct ether_header)) {
+		m1 = (*mp)->m_next;
+		split1 = 0;
+	} else {
+		if ((m1 = m_split(*mp, sizeof(struct ether_header), M_NOWAIT)) == NULL)
+			goto bad;
+		split1 = 1;
+	}
 	/* Strip off snap header, if present */
 	if (snap) {
-		if ((m2 = m_split(m1, sizeof(struct llc), M_NOWAIT)) == NULL)
-			goto bad2;
+		if (m1->m_len == sizeof(struct llc)) {
+			m2 = m1->m_next;
+			split2 = 0;
+		} else {
+			if ((m2 = m_split(m1, sizeof(struct llc), M_NOWAIT)) == NULL)
+				goto bad2;
+			split2 = 1;
+		}
 	} else
 		m2 = m1;
 
@@ -1998,11 +2009,20 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	/*
 	 * Finally, put everything back the way it was and return
 	 */
-	if (snap)
-		m_cat(m1, m2);
-	else
+	if (snap) {
+		if (split2) {
+			pktlen = m2->m_pkthdr.len;
+			m_cat(m1, m2);
+			m1 ->m_pkthdr.len += pktlen;
+		}
+	} else
 		m1 = m2;
-	m_cat(*mp, m1);
+	if (split1) {
+		pktlen = m1->m_pkthdr.len;
+		m_cat(*mp, m1);
+		(*mp)->m_pkthdr.len += pktlen;
+	}
+
 	return 0;
 
     bad2:
