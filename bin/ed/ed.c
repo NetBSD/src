@@ -81,8 +81,13 @@ static char sccsid[] = "@(#)ed.c	5.5 (Berkeley) 3/28/93";
 
 #include "ed.h"
 
-jmp_buf	env;
-line_t	line0;			/* initial node of line queue */
+#ifdef HAVE_SIGSETJMP
+sigjmp_buf env;
+#else
+jmp_buf env;
+#endif
+
+line_t line0;			/* initial node of line queue */
 char ibuf[MAXLINE];		/* input buffer */
 char *ibufp;			/* pointer to input buffer */
 long curln;			/* current address */
@@ -152,7 +157,11 @@ main(argc, argv)
 		signal(SIGWINCH, dowinch);
 	signal(SIGHUP, onhup);
 	signal(SIGQUIT, SIG_IGN);
+#ifdef HAVE_SIGSETJMP
+	if (status = sigsetjmp(env, 1)) {
+#else
 	if (status = setjmp(env)) {
+#endif
 		fputs("\n?\n", stderr);
 		sprintf(errmsg, "interrupt");
 	} else	signal(SIGINT, onintr);
@@ -790,7 +799,7 @@ docmd(glob)
 		if (sflags & SGG)
 			sgflag ^= GSG;
 		if (sflags & SGP)
-			sgflag ^= GPR, sgflag &= ~GLS;
+			sgflag ^= GPR, sgflag &= ~(GLS | GNP);
 		do {
 			switch(*ibufp) {
 			case 'p':
@@ -1188,9 +1197,6 @@ subst(pat, sub, gflag)
 			} while (new != NULL);
 			spl0();
 			nsubs++;
-			if ((gflag & (GPR | GLS))
-			 && doprnt(curln, curln, gflag) < 0)
-				return ERR;
 		}
 	ocl = curln;
 	del(line1, line2);
@@ -1198,7 +1204,9 @@ subst(pat, sub, gflag)
 	if  (nsubs == 0 && !(gflag & GLB)) {
 		sprintf(errmsg, "no match");
 		return ERR;
-	}
+	} else if ((gflag & (GPR | GLS | GNP))
+	 && doprnt(curln, curln, gflag) < 0)
+		return ERR;
 	return 1;
 }
 #else	/* sun */
@@ -1240,15 +1248,14 @@ subst(pat, sub, gflag)
 			} while (new != NULL);
 			spl0();
 			nsubs++;
-			if ((gflag & (GPR | GLS))
-			 && doprnt(curln, curln, gflag) < 0)
-				return ERR;
 		}
 	}
 	if  (nsubs == 0 && !(gflag & GLB)) {
 		sprintf(errmsg, "no match");
 		return ERR;
-	}
+	} else if ((gflag & (GPR | GLS | GNP))
+	 && doprnt(curln, curln, gflag) < 0)
+		return ERR;
 	return 1;
 }
 #endif	/* sun */
@@ -2088,7 +2095,11 @@ dointr(signo)
 	int signo;
 {
 	sigflags &= ~(1 << signo);
+#ifdef HAVE_SIGSETJMP
+	siglongjmp(env, -1);
+#else
 	longjmp(env, -1);
+#endif
 }
 
 
