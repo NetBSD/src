@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 2003/05/09 23:51:25 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.3 2004/09/14 09:00:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct algor_isa_chipset {
  */
 #define	isa_attach_hook(p, s, a)					\
     (*(a)->iba_ic->ic_attach_hook)((p), (s), (a))
-#define	isa_intr_evcnt(c, i)					\
+#define	isa_intr_evcnt(c, i)						\
     (*(c)->ic_intr_evcnt)((c)->ic_v, (i))
 #define	isa_intr_establish(c, i, t, l, f, a)				\
     (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
