@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.4 2002/06/29 10:49:52 lukem Exp $
+.\"	$NetBSD: prep,v 1.5 2002/07/01 18:25:09 skrll Exp $
 .
 A \*M machine usually needs little or no preparation before installing
 .Nx ,
@@ -30,7 +30,7 @@ Booting from floppy disk is not currently supported.
 .Ss2 Preparing the Bootable Media
 .
 This section desribes how to get a
-.Nx /\*M
+.Nx*M
 install kernel onto a CD-R.
 .Pp
 Go to one of the
