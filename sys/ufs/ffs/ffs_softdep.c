@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.23 2001/12/23 11:54:46 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.24 2001/12/27 01:29:05 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.23 2001/12/23 11:54:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.24 2001/12/27 01:29:05 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2262,7 +2262,8 @@ check_inode_unwritten(inodedep)
 	inodedep->id_state |= ALLCOMPLETE;
 	LIST_REMOVE(inodedep, id_deps);
 	inodedep->id_buf = NULL;
-	WORKLIST_REMOVE(&inodedep->id_list);
+	if (inodedep->id_state & ONWORKLIST)
+		WORKLIST_REMOVE(&inodedep->id_list);
 	if (inodedep->id_savedino != NULL) {
 		FREE(inodedep->id_savedino, M_INODEDEP);
 		inodedep->id_savedino = NULL;
@@ -3017,18 +3018,21 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 		dirrem->dm_dirinum = pagedep->pd_ino;
 		add_to_worklist(&dirrem->dm_list);
 	}
-	LIST_INSERT_HEAD(&pagedep->pd_diraddhd[DIRADDHASH(offset)], dap,
-	    da_pdlist);
 	/*
 	 * Link into its inodedep. Put it on the id_bufwait list if the inode
 	 * is not yet written. If it is written, do the post-inode write
 	 * processing to put it on the id_pendinghd list.
 	 */
-	(void) inodedep_lookup(dp->i_fs, newinum, DEPALLOC, &inodedep);
-	if ((inodedep->id_state & ALLCOMPLETE) == ALLCOMPLETE)
-		diradd_inode_written(dap, inodedep);
-	else
+	if (inodedep_lookup(dp->i_fs, newinum, DEPALLOC, &inodedep) == 0 ||
+	    (inodedep->id_state & ALLCOMPLETE) == ALLCOMPLETE) {
+		dap->da_state |= COMPLETE;
+		LIST_INSERT_HEAD(&pagedep->pd_pendinghd, dap, da_pdlist);
+		WORKLIST_INSERT(&inodedep->id_pendinghd, &dap->da_list);
+	} else {
+		LIST_INSERT_HEAD(&pagedep->pd_diraddhd[DIRADDHASH(offset)],
+		    dap, da_pdlist);
 		WORKLIST_INSERT(&inodedep->id_bufwait, &dap->da_list);
+	}
 	FREE_LOCK(&lk);
 }
 
