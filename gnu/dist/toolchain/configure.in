@@ -795,6 +795,7 @@ case "${target}" in
   m68k-*-netbsd* | m68k4k-*-netbsd*) # (a.out)
     noconfigdirs="$noconfigdirs gas ld"
     ;;
+  m680[01]0-*-netbsdelf*) ;;
   mn10200-*-*)
     noconfigdirs="$noconfigdirs target-libffi"
     if [ x${is_cross_compiler} != xno ] ; then
