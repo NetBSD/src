@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: messages.c,v 1.3 1993/10/02 20:57:45 pk Exp $";
+static char rcsid[] = "$Id: messages.c,v 1.4 1994/03/16 18:40:35 pk Exp $";
 #endif
 
 #include <stdio.h> /* define stderr */
@@ -281,24 +281,22 @@ char *format;
  */
 
 #ifndef NO_STDARG
-void as_bad(Format)
-const char *Format;
+void as_bad(const char *Format, ...)
 {
 	va_list args;
 	char buffer[200];
 	
+	va_start(args, Format);
+	vsprintf(buffer, Format, args);
+	va_end(args);
+
 	++error_count;
 	as_where();
-	va_start(args, Format);
-	fprintf(stderr,"Error: ");
+	fprintf(stderr,"Error: %s\n", buffer);
 	
-	vsprintf(buffer, Format, args);
-	fprintf(stderr,buffer);
 #ifndef NO_LISTING
 	listing_error(buffer);
 #endif
-	va_end(args);
-	(void) putc('\n', stderr);
 } /* as_bad() */
 #else
 #ifndef NO_VARARGS
@@ -358,8 +356,7 @@ char *format;
  */
 
 #ifndef NO_STDARG
-void as_fatal(Format)
-const char *Format;
+void as_fatal(const char *Format, ...)
 {
 	va_list args;
 	
