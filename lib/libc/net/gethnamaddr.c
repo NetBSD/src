@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.19 1999/07/01 16:43:18 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.20 1999/07/04 22:44:28 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.19 1999/07/01 16:43:18 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.20 1999/07/04 22:44:28 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -762,21 +762,21 @@ _gethtbyname(rv, cb_data, ap)
 {
 	struct hostent *hp;
 	const char *name;
-#ifdef notyet
 	int len, af;
-#endif
 
 	name = va_arg(ap, char *);
-#ifdef notyet
 	len = va_arg(ap, int);
 	af = va_arg(ap, int);
-#endif
 
 	hp = NULL;
+#if 0
 	if (_res.options & RES_USE_INET6)
 		hp = _gethtbyname2(name, AF_INET6);
 	if (hp==NULL)
 		hp = _gethtbyname2(name, AF_INET);
+#else
+	hp = _gethtbyname2(name, af);
+#endif
 	*((struct hostent **)rv) = hp;
 	if (hp==NULL) {
 		h_errno = HOST_NOT_FOUND;
