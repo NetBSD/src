@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.28 1996/05/22 13:55:25 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.29 1996/07/10 18:13:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -586,7 +586,7 @@ in_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	}
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in_pcbhashlookup: faddr=%08x fport=%d laddr=%08x lport=%d\n",
+		printf("in_pcbhashlookup: faddr=%08lx fport=%d laddr=%08lx lport=%d\n",
 		    ntohl(faddr.s_addr), ntohs(fport),
 		    ntohl(laddr.s_addr), ntohs(lport));
 	}
