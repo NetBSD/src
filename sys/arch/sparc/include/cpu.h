@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2000/08/25 01:04:11 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.42 2001/01/21 07:48:29 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,7 +83,7 @@
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-#define	cpu_number()	(cpuinfo.cpu_no)
+#define	cpu_number()	(cpuinfo.ci_cpuid)
 
 #if defined(MULTIPROCESSOR)
 void	cpu_boot_secondary_processors __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.29 2000/06/27 16:51:44 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.30 2001/01/21 07:48:30 christos Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ struct cpu_info {
 	int		mmu_vers;	/* MMU version code */
 	int		master;		/* 1 if this is bootup CPU */
 
-	int		cpu_no;		/* CPU index (see cpus[] array) */
+	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 	int		mid;		/* Module ID for MP systems */
 	int		mbus;		/* 1 if CPU is on MBus */
 	int		mxcc;		/* 1 if a MBus-level MXCC is present */
