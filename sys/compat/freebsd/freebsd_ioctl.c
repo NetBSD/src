@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.1 1995/10/10 01:19:31 mycroft Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.2 1997/04/04 15:35:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -42,6 +42,9 @@
 #include <compat/freebsd/freebsd_util.h>
 #include <compat/freebsd/freebsd_ioctl.h>
 
+#include <compat/ossaudio/ossaudio.h>
+#define FREEBSD_TO_OSS(v) (v)	/* do nothing, same ioctl() encoding */
+
 int
 freebsd_sys_ioctl(p, v, retval)
 	struct proc *p;
@@ -62,5 +65,15 @@ freebsd_sys_ioctl(p, v, retval)
 	/* XXX - <sys/mtio.h> */
 	/* XXX - <sys/scsiio.h> */
 	/* XXX - should convert machine dependent ioctl()s */
-	return sys_ioctl(p, uap, retval);
+
+	switch (FREEBSD_IOCGROUP(SCARG(uap, com))) {
+	case 'M':
+		return oss_ioctl_mixer(p, FREEBSD_TO_OSS(v), retval);
+	case 'Q':
+		return oss_ioctl_sequencer(p, FREEBSD_TO_OSS(v), retval);
+	case 'P':
+		return oss_ioctl_audio(p, FREEBSD_TO_OSS(v), retval);
+	default:
+		return sys_ioctl(p, uap, retval);
+	}
 }
