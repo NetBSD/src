@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.9 1997/04/15 01:09:53 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.10 1997/04/15 07:00:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.9 1997/04/15 01:09:53 lukem Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.10 1997/04/15 07:00:49 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -616,7 +616,7 @@ restore_check_point:
 			tapeno+1, parentpid, getpid());
 #endif /* TDEBUG */
 		/*
-		 * If we have a name like "/dev/rmt0,/dev/rmt1",
+		 * If we have a name like "/dev/rst0,/dev/rst1",
 		 * use the name before the comma first, and save
 		 * the remaining names for subsequent volumes.
 		 */
