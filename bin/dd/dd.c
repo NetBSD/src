@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.16 2000/08/02 19:44:18 christos Exp $	*/
+/*	$NetBSD: dd.c,v 1.17 2000/08/25 03:40:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.16 2000/08/02 19:44:18 christos Exp $");
+__RCSID("$NetBSD: dd.c,v 1.17 2000/08/25 03:40:32 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,7 +317,7 @@ dd_in()
 		}
 
 		if (ddflags & C_SWAB) {
-			if ((n = in.dbcnt) & 1) {
+			if ((n = in.dbrcnt) & 1) {
 				++st.swab;
 				--n;
 			}
