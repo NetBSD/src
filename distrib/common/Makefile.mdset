@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.7 2002/04/14 04:22:38 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.8 2002/04/14 06:18:14 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -35,6 +35,7 @@
 #
 # Variables modified by this:
 #	KERNELS			List of kernel .gz files to build
+#	KERNELDEPS		Dependency version of ${KERNELS} (with .WAIT)
 #	KERNELSYMS		List of kernel .symbol files to build
 #	_KERNEL.${KERNEL}	Target filename for ${KERNEL}
 #
@@ -49,7 +50,8 @@ _KERNEL.${_K}:=	netbsd.${_K}
 _KERNEL.${_K}:=	${_F}
 .endif
 
-KERNELS+=	${_KERNEL.${_K}}.gz .WAIT
+KERNELS+=	${_KERNEL.${_K}}.gz
+KERNELDEPS+=	${_KERNEL.${_K}}.gz .WAIT
 .for suf in ${MDSET.${_FILENAME}.suffixes}
 KERNELS+=	${_KERNEL.${_K}}.${suf}.gz .WAIT
 CLEANFILES+=	netbsd.${suf} netbsd.${suf}.gz
@@ -84,10 +86,10 @@ ${_KERNEL.${_K}}.${suf}.gz: .NOTMAIN ${_KERNEL.${_K}}.gz
 
 CLEANFILES+=	netbsd.tmp netbsd.tmp.gz ${KERNELS} ${KERNELSYMS}
 
-realall: ${KERNELS}
+realall: ${KERNELDEPS}
 
 .if defined(MDSETDIR)
-release: check_RELEASEDIR .WAIT ${KERNELS}
+release: check_RELEASEDIR .WAIT ${KERNELDEPS}
 	-mkdir -p ${RELEASEDIR}/${MDSETDIR}
 	${RELINSTALL} ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/${MDSETDIR}
 .endif
