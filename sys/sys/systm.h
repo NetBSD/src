@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.85 1998/11/17 01:41:06 mrg Exp $	*/
+/*	$NetBSD: systm.h,v 1.86 1999/01/26 17:05:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -307,9 +307,17 @@ void	kmstartup __P((void));
 #endif
 
 #ifdef _KERNEL
-void	Debugger __P((void));	/* XXX in DDB only */
-void	console_debugger __P((void));
+#ifdef DDB
+void	Debugger __P((void));
+/*
+ * Enter debugger(s) from console attention if enabled
+ */
+extern int db_fromconsole; /* XXX ddb/ddbvar.h */
+#define console_debugger() if (db_fromconsole) Debugger()
+#else
+#define console_debugger() do {} while (0) /* NOP */
 #endif
+#endif /* _KERNEL */
 
 #ifdef SYSCALL_DEBUG
 void scdebug_call __P((struct proc *, register_t, register_t[]));
