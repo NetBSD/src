@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.2 2000/12/03 04:52:38 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.3 2000/12/03 05:30:31 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -58,15 +58,20 @@ CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
-		-mno-abicalls -mno-half-pic ${ENDIAN}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${ENDIAN}
+		-mno-abicalls -mno-half-pic
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP}
-.if (${ENDIAN} == "-EB")
+.if (${MACHINE_ARCH} == "mipseb")
 LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.be
+CFLAGS+=	-EB
+AFLAGS+=	-EB
+LD+=		-EB
 .else
 LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.le
+CFLAGS+=	-EL
+AFLAGS+=	-EL
+LD+=		-EL
 .endif
-LD+=		${ENDIAN}
 STRIPFLAGS=	-g -X -x
 
 .if exists(${THISMIPS}/conf/Makefile.${MACHINE}.inc)
