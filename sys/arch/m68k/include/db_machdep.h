@@ -23,45 +23,13 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- * $Log: db_machdep.h,v $
- * Revision 1.2  1993/08/10 08:42:37  glass
- * fixed problem that caused two consecutive segments to be using the same
- * pmeg unknowingly.  still too many printfs, not sure how many are actualy
- * in the machine dependent code.  reaches cpu_startup() where it stops
- * deliberately. next project: autoconfig(), maybe kgdb
- *
- * Revision 1.1  93/08/08  12:18:27  glass
- * various changes
- * 
- * Revision 2.5  91/07/31  18:12:56  dbg
- * 	Changed register save area name.
- * 	[91/07/12            dbg]
- * 
- * Revision 2.4  91/01/08  15:52:19  rpd
- * 	Added dummy inst_load/inst_store macros.
- * 	[91/01/06            rpd]
- * 
- * Revision 2.3  90/10/25  14:47:23  rwd
- * 	Added watchpoint support.
- * 	[90/10/16            rwd]
- * 
- * Revision 2.2  90/08/27  22:11:31  dbg
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
 
 /*
  * Machine-dependent defines for new kernel debugger.
  */
-#ifndef	_SUN3_DB_MACHDEP_H_
-#define	_SUN3_DB_MACHDEP_H_
+#ifndef	_M68K_DB_MACHDEP_H_
+#define	_M68K_DB_MACHDEP_H_
 
-/*#include <mach/sun3/vm_types.h>*/
-/*#include <mach/sun3/vm_param.h>*/
-/*#include <sun3/thread.h>*/		/* for thread_status */
 #include <vm/queue.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
@@ -69,7 +37,6 @@
 #include <vm/lock.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
@@ -130,4 +97,4 @@ db_regs_t	ddb_regs;		/* register state */
 #define inst_load(ins)		0
 #define inst_store(ins)		0
 
-#endif	/* _SUN3_DDB_MACHDEP_H_ */
+#endif	/* _M68K_DDB_MACHDEP_H_ */
