@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.39 2002/03/06 14:35:22 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.40 2002/03/07 12:34:26 tron Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -46,6 +46,7 @@
 /usr/share/man/cat4/i386/speaker.0
 /usr/share/man/cat4/i4bisp.4
 /usr/share/man/cat4/imp.0
+/usr/share/man/cat4/ipip.0
 /usr/share/man/cat4/lsu.0
 /usr/share/man/cat4/mvme68k/le.0
 /usr/share/man/cat4/ncr.0
@@ -145,6 +146,7 @@
 /usr/share/man/man4/i386/speaker.4
 /usr/share/man/man4/i4bisp.4
 /usr/share/man/man4/imp.4
+/usr/share/man/man4/ipip.4
 /usr/share/man/man4/lsu.4
 /usr/share/man/man4/mvme68k/le.4
 /usr/share/man/man4/ncr.4
