@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2002/09/18 02:44:03 lukem Exp $
+# $NetBSD: GENERIC,v 1.26 2002/09/24 18:27:55 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -203,17 +203,30 @@ options 	TLP_MATCH_21142
 icsphy*		at mii? phy ?			# ISC-189x PHYs
 ukphy*		at mii? phy ?			# generic unknown PHYs
 
+
 # WSCONS Support
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WS_KERNEL_COLATTR=WSATTR_HILIT
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+options 	FONT_GALLANT12x22		# Sun PROM font look-alike
+
 pckbc0		at isa?
 pckbd*		at pckbc?
 wskbd*		at pckbd? console ?
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
 
-vga*		at pci? dev ? function ?
-wsdisplay*	at vga? console ?
+#igsfb*		at pci? dev ? function ?
+#wsdisplay*	at igsfb? console ?
+
 
 # ISA Devices
 com0		at isa? port 0x3f8 irq 4
@@ -247,3 +260,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
