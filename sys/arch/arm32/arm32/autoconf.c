@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.7 1996/06/12 19:42:23 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.8 1996/08/29 22:08:58 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -50,9 +50,8 @@
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-
-#include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
+#include <machine/irqhandler.h>
 
 #include "wdc.h"
 #include "fdc.h"
@@ -61,14 +60,13 @@
 #include "cd.h"
 #include "podulebus.h"
 
+dev_t   argdev = NODEV;
+
 extern dev_t rootdev;
-extern dev_t swapdev;
 extern dev_t dumpdev;
-extern dev_t argdev;
 
 extern struct swdevt swdevt[];
 
-extern char *boot_args;
 extern int pmap_debug_level;
 
 char *	strstr	__P((char */*s1*/, char */*s2*/));
@@ -96,6 +94,9 @@ struct {
 #if NCD > 0
 	{ "cd", 0x1a },
 #endif
+#ifdef NFSCLIENT
+	{ "nfs", 0x01 },	/* This is the fake swap device so never valid */
+#endif
 	{ NULL, 0x00 },
 };
 
@@ -117,18 +118,21 @@ get_device(name)
 		    strlen(rootdevices[loop].name)) == 0) {
 			name += strlen(rootdevices[loop].name);
 
-			if (name[0] >= '0' && name[0] <= '9')
+			part = 0;
+
+			if (name[0] >= '0' && name[0] <= '9') {
 				unit = name[0] - '0';
+				if (name[1] >= 'a' && name[1] <= 'z')
+					part = name[1] - 'a';
+				else if (name[1] == 0 || name[1] == ' ')
+					part = 0;
+				else
+					part = -1;
+			}
 			else if (name[0] == 0 || name[0] == ' ')
 				unit = 0;
 			else
 				unit = -1;
-			if (name[1] >= 'a' && name[1] <= 'z')
-				part = name[1] - 'a';
-			else if (name[1] == 0 || name[1] == ' ')
-				part = 0;
-			else
-				part = -1;
 
 			if (unit < 0 || unit > 9)
 				return(NODEV);
@@ -162,8 +166,10 @@ set_root_device()
 		}
 	}
 
+#ifdef GENERIC
 	if (rootdev == NODEV)
 		panic("No root device specified in boot config\n");
+#endif
 }
 
 
@@ -174,6 +180,7 @@ set_swap_device()
 {
 	char *ptr;
 	int nswap = 0;
+	dev_t dev;
             
 	if (boot_args) {
 		ptr = boot_args;
@@ -181,15 +188,11 @@ set_swap_device()
 			ptr = strstr(ptr, "swap=");
 			if (ptr) {
 				ptr += 5;
-				swdevt[nswap].sw_dev = get_device(ptr);
-
-				/*
-				 * Remember the first swap device
-				 */
-
-				if (nswap == 0)
-					swapdev = get_device(ptr);
-				++nswap;
+				dev = get_device(ptr);
+				if ((dev != NODEV) && (major(dev) != 1)) {
+					swdevt[nswap].sw_dev = dev;
+					++nswap;
+				}
 			}
 		} while (ptr);
 	}
@@ -246,15 +249,19 @@ void
 set_boot_devs()
 {
 	set_root_device();
+#ifdef GENERIC
 	set_swap_device();
+#ifdef NFSCLIENT
+	if (major(rootdev) != 1)
+#endif
+	{
+		if (swdevt[0].sw_dev == NODEV && minor(rootdev) < (MAXPARTITIONS - 2))
+			swdevt[0].sw_dev = makedev(major(rootdev), minor(rootdev) + 1);
 
-	if (swapdev == NODEV && minor(rootdev) < (MAXPARTITIONS - 2))
-		swapdev = makedev(major(rootdev), minor(rootdev) + 1);
-
-	dumpdev = swapdev;
-	argdev = swapdev;
-	swdevt[0].sw_dev = swapdev;
-
+		dumpdev = swdevt[0].sw_dev;
+		argdev = swdevt[0].sw_dev;
+	}		
+#endif
 	swapconf();
 	dumpconf();
 }
