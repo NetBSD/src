@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 1996/03/27 04:48:43 scottr Exp $
+# $NetBSD: Makefile,v 1.5 1997/10/22 02:11:56 lukem Exp $
 # Build a smaller dd (i.e. for boot media)
 
 PROG=	dd
@@ -9,7 +9,7 @@ SRCDIR= ${.CURDIR}/../../../bin/dd
 SRCS=	args.c conv.c dd.c misc.c position.c
 # SRCS+= conv_tab.c (not used)
 
-CFLAGS+= -DNO_CONV -I${SRCDIR}
+CPPFLAGS+= -DNO_CONV -I${SRCDIR}
 
 all: ${PROG}
 
