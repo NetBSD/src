@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
+/*	$NetBSD: column.c,v 1.5 1997/07/01 06:39:38 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $";
+static char rcsid[] = "$NetBSD: column.c,v 1.5 1997/07/01 06:39:38 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -305,6 +305,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: column [-tx] [-c columns] [file ...]\n");
+	    "usage: column [-tx] [-c columns] [-s sep] [file ...]\n");
 	exit(1);
 }
