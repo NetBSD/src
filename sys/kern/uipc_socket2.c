@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.37 2001/02/27 05:19:15 lukem Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.38 2001/04/30 03:32:56 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -375,7 +375,8 @@ int
 sbreserve(struct sockbuf *sb, u_long cc)
 {
 
-	if (cc == 0 || cc > sb_max * MCLBYTES / (MSIZE + MCLBYTES))
+	if (cc == 0 || 
+	    (u_quad_t) cc > (u_quad_t) sb_max * MCLBYTES / (MSIZE + MCLBYTES))
 		return (0);
 	sb->sb_hiwat = cc;
 	sb->sb_mbmax = min(cc * 2, sb_max);
