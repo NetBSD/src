@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.2 1999/11/17 18:55:15 thorpej Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.3 1999/12/13 15:42:05 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -299,6 +299,8 @@ pciintr_link_fixup()
 	 * First stage: Attempt to connect PIRQs which aren't
 	 * yet connected.
 	 */
+	pciirq = 0;
+
 	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
 	     l = SIMPLEQ_NEXT(l, list)) {
 		/*
