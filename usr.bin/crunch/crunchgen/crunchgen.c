@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.44 2003/03/18 01:30:54 fvdl Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.45 2003/05/09 12:10:15 dsl Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.44 2003/03/18 01:30:54 fvdl Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.45 2003/05/09 12:10:15 dsl Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -830,7 +830,6 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "NOMAN=\n\n");
 
     fprintf(outmk, "DBG=%s\n", dbg);
-    fprintf(outmk, "STRIP?=strip\n");
     fprintf(outmk, "MAKE?=make\n");
 #ifdef NEW_TOOLCHAIN
     fprintf(outmk, "OBJCOPY?=objcopy\n");
@@ -858,10 +857,17 @@ void top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "PROG=%s\n\n", execfname);
     
-    fprintf(outmk, "all: ${PROG}\n\t${STRIP} ${PROG}\n");
+    fprintf(outmk, "all: ${SUBMAKE_TARGETS} ${PROG}.strip\n");
+    fprintf(outmk, "${PROG}.strip:\n");
+    fprintf(outmk, "\t${MAKE} -f ${PROG}.mk ${PROG}\n");
+    fprintf(outmk, "\t[ -f ${PROG}.stripped -a ! ${PROG} -nt ${PROG}.stripped ] || { \\\n");
+    fprintf(outmk, "\t\techo stripping ${PROG}; \\\n");
+    fprintf(outmk, "\t\t${OBJCOPY} -S -R .note -R .ident ${PROG} && \\\n");
+    fprintf(outmk, "\t\ttouch ${PROG}.stripped; \\\n");
+    fprintf(outmk, "\t}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
-    fprintf(outmk, "clean:\n\trm -rf %s *.cro *.cro.syms *.o *_stub.c ${CRUNCHEDOBJSDIRS}\n",
+    fprintf(outmk, "clean:\n\trm -rf %s *.cro *.cro.syms *.o *_stub.c ${CRUNCHEDOBJSDIRS} ${PROG}.stripped\n",
 	    execfname);
 }
 
@@ -884,8 +890,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "%s_SRCDIR=%s\n", p->ident, p->srcdir);
 	fprintf(outmk, "%s_OBJS=", p->ident);
 	output_strlst(outmk, p->objs);
-	fprintf(outmk, "%s_make: ${%s_OBJPATHS}\n", p->ident, p->ident);
-	fprintf(outmk, "${%s_OBJPATHS}: \n", p->ident);
+	fprintf(outmk, "%s_make:\n", p->ident);
 	fprintf(outmk, "\tif [ \\! -d %s ]; then mkdir %s; fi; cd %s; \\\n",
 	    p->ident, p->ident, p->ident);
 	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
