@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_bus_io.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $ */
+/* $NetBSD: mcpcia_bus_io.c,v 1.2 1999/04/15 22:31:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.2 1999/04/15 22:31:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(1, "$NetBSD: mcpcia_bus_io.c,v 1.1 1998/04/15 00:50:14 mjacob Exp
 
 #define	CHIP		mcpcia
 
-#define	CHIP_EX_MALLOC_SAFE(v)	(1)
+#define	CHIP_EX_MALLOC_SAFE(v)	(((struct mcpcia_config *)(v))->cc_mallocsafe)
 #define	CHIP_IO_EXTENT(v)	(((struct mcpcia_config *)(v))->cc_io_ex)
 #define	CHIP_IO_EX_STORE(v)	(((struct mcpcia_config *)(v))->cc_io_exstorage)
 #define	CHIP_IO_EX_STORE_SIZE(v)					\
