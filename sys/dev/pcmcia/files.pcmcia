@@ -14,9 +14,9 @@ attach	ep at pcmcia with ep_pcmcia
 file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
 
 # National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-attach	ed at pcmcia with ed_pcmcia
-file	dev/pcmcia/if_ed_pcmcia.c		ed_pcmcia
+# (NE[12]000, and clones)
+attach	ne at pcmcia with ne_pcmcia
+file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 
 # Adaptec APA-1460 SCSI Host Adapter
 device	aicx
