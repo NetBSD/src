@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $
+/*	$NetBSD: pmap.c,v 1.2 2002/09/01 20:37:28 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.2 2002/09/01 20:37:28 atatat Exp $");
 #endif
 
 #include <sys/types.h>
