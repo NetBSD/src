@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.90 2000/10/02 22:30:40 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.91 2000/11/07 14:47:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.90 2000/10/02 22:30:40 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.91 2000/11/07 14:47:59 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2234,6 +2234,8 @@ in6_alias(creq)
 			printf(" duplicated");
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DETACHED)
 			printf(" detached");
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
+			printf(" deprecated");
 	}
 
 	if (scopeid)
