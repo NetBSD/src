@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.26 2001/03/17 20:34:44 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.27 2001/03/18 00:00:43 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -122,6 +122,7 @@ struct ea_softc {
 	struct device sc_dev;
 	irqhandler_t sc_ih;
 	int sc_irq;			/* IRQ number */
+	struct evcnt sc_intrcnt;	/* IRQ count */
 	podule_t *sc_podule;		/* Our podule */
 	int sc_podule_number;		/* Our podule number */
 	u_int sc_iobase;		/* base I/O addr */
@@ -330,19 +331,15 @@ eaattach(parent, self, aux)
 
 	sc->sc_irqclaimed = 0;
 
-/* Set up the interrupt structure */
-
-	sc->sc_ih.ih_func = eaintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NET;
-	sc->sc_ih.ih_name = "net: ea";
-	sc->sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
-	sc->sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
-
 /* Claim either a network slot interrupt or a podule interrupt */
 
 	sc->sc_irq = sc->sc_podule->interrupt;
 
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
+	podulebus_irq_establish(parent, sc->sc_podule_number, IPL_NET, eaintr,
+	    sc, &sc->sc_intrcnt);
+	
 	/* Stop the board. */
 
 	ea_chipreset(sc);
@@ -479,44 +476,6 @@ ea_ramtest(sc)
 }
 
 
-/* Claim an irq for the board */
-
-void
-ea_claimirq(sc)
-	struct ea_softc *sc;
-{
-/* Have we claimed one already ? */
-
-	if (sc->sc_irqclaimed) return;
-
-/* Claim it */
-
-	dprintf(("ea_claimirq(%d)\n", sc->sc_irq));
-	if (irq_claim(sc->sc_irq, &sc->sc_ih))
-		panic("Cannot install IRQ handler for IRQ %d\n", sc->sc_irq);
-
-	sc->sc_irqclaimed = 1;
-}
-
-
-/* Release an irq */
-
-void
-ea_releaseirq(sc)
-	struct ea_softc *sc;
-{
-/* Have we claimed one ? */
-
-	if (!sc->sc_irqclaimed) return;
-
-	dprintf(("ea_releaseirq(%d)\n", sc->sc_irq));
-	if (irq_release(sc->sc_irq, &sc->sc_ih))
-		panic("Cannot release IRQ handler for IRQ %d\n", sc->sc_irq);
-
-	sc->sc_irqclaimed = 0;
-}
-
-
 /*
  * Stop and reinitialise the interface.
  */
@@ -642,10 +601,6 @@ ea_stop(sc)
 	    | EA_CMD_RX_INTACK | EA_CMD_TX_INTACK | EA_CMD_DMA_INTACK
 	    | EA_CMD_BW_INTACK);
 	dprintf(("st=%08x", ReadShort(iobase + EA_8005_STATUS)));
-
-/* Release the irq */
-
-	ea_releaseirq(sc);
 
 	/* Cancel any watchdog timer */
 	
@@ -844,10 +799,6 @@ ea_init(sc)
 	dprintf(("ea_init()\n"));
 
 	s = splnet();
-
-/* Grab an irq */
-
-	ea_claimirq(sc);
 
 	/* First, reset the board. */
 
