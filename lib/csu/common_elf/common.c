@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.3 1999/05/19 14:50:50 kleink Exp $	*/
+/*	$NetBSD: common.c,v 1.4 1999/08/19 20:52:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -56,6 +56,13 @@ asm ("_eprol:");
 #endif
 
 #ifdef DYNAMIC
+#ifdef __weak_alias
+__weak_alias(dlopen,_dlopen);
+__weak_alias(dlclose,_dlclose);
+__weak_alias(dlsym,_dlsym);
+__weak_alias(dlerror,_dlerror);
+#endif
+
 void
 _rtld_setup(cleanup, obj)
 	void (*cleanup) __P((void));
