@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.21 1998/09/11 23:09:31 mycroft Exp $	*/
+/*	$NetBSD: kdump.c,v 1.22 1998/10/18 17:43:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.21 1998/09/11 23:09:31 mycroft Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.22 1998/10/18 17:43:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,25 +95,44 @@ struct ktr_header ktr_header;
 #include "../../sys/compat/sunos/sunos_syscalls.c"
 #include "../../sys/compat/svr4/svr4_syscalls.c"
 #include "../../sys/compat/ultrix/ultrix_syscalls.c"
+
+#include "../../sys/compat/hpux/hpux_error.c"
+#include "../../sys/compat/svr4/svr4_error.c"
+#include "../../sys/compat/ibcs2/ibcs2_error.c"
+#include "../../sys/compat/linux/common/linux_error.c"
 #undef KTRACE
 
 struct emulation {
 	char *name;		/* Emulation name */
 	char **sysnames;	/* Array of system call names */
 	int  nsysnames;		/* Number of */
+	int  *errno;		/* Array of error number mapping */
+	int  nerrno;		/* number of elements in array */
 };
 
+#define NELEM(a) (sizeof(a) / sizeof(a[0]))
+
 static struct emulation emulations[] = {
-	{ "netbsd",	     syscallnames,         SYS_MAXSYSCALL },
-	{ "freebsd", freebsd_syscallnames, FREEBSD_SYS_MAXSYSCALL },
-	{ "hpux",	hpux_syscallnames,    HPUX_SYS_MAXSYSCALL },
-	{ "ibcs2",     ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL },
-	{ "linux",     linux_syscallnames,   LINUX_SYS_MAXSYSCALL },
-	{ "osf1",       osf1_syscallnames,    OSF1_SYS_MAXSYSCALL },
-	{ "sunos",     sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL },
-	{ "svr4",       svr4_syscallnames,    SVR4_SYS_MAXSYSCALL },
-	{ "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL },
-	{ NULL,			     NULL,		     0    }
+	{   "netbsd",	       syscallnames,         SYS_MAXSYSCALL,
+	        NULL,		        0 },
+	{  "freebsd",  freebsd_syscallnames, FREEBSD_SYS_MAXSYSCALL,
+	        NULL,		        0 },
+	{     "hpux",	  hpux_syscallnames,    HPUX_SYS_MAXSYSCALL,
+	  hpux_error,   NELEM(hpux_error) },
+	{    "ibcs2",    ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL,
+	 ibcs2_error,  NELEM(ibcs2_error) },
+	{    "linux",    linux_syscallnames,   LINUX_SYS_MAXSYSCALL,
+	 linux_error,  NELEM(linux_error) },
+	{     "osf1",     osf1_syscallnames,    OSF1_SYS_MAXSYSCALL,
+	        NULL,		        0 },
+	{    "sunos",    sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL,
+	        NULL,		        0 },
+	{     "svr4",     svr4_syscallnames,    SVR4_SYS_MAXSYSCALL,
+	  svr4_error,   NELEM(svr4_error) },
+	{   "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL,
+	        NULL,			0 },
+	{       NULL,		       NULL,		          0,
+	        NULL,			0 }
 };
 
 struct emulation *current;
@@ -137,6 +156,7 @@ void	ktrpsig __P((struct ktr_psig *));
 void	ktrcsw __P((struct ktr_csw *));
 void	usage __P((void));
 void	setemul __P((char *));
+void	eprint __P((int));
 char	*ioctlname __P((long));
 
 int
@@ -388,7 +408,8 @@ ktrsysret(ktr)
 	else
 		(void)printf("%s ", current->sysnames[code]);
 
-	if (error == 0) {
+	switch (error) {
+	case 0:
 		if (fancy) {
 			(void)printf("%d", ret);
 			if (ret < 0 || ret > 9)
@@ -399,16 +420,58 @@ ktrsysret(ktr)
 			else
 				(void)printf("%#x", ret);
 		}
-	} else if (error == ERESTART)
-		(void)printf("RESTART");
-	else if (error == EJUSTRETURN)
-		(void)printf("JUSTRETURN");
-	else {
-		(void)printf("-1 errno %d", ktr->ktr_error);
-		if (fancy)
-			(void)printf(" %s", strerror(ktr->ktr_error));
+		break;
+
+	default:
+		eprint(error);
+		break;
 	}
 	(void)putchar('\n');
+
+}
+
+/*
+ * We print the original emulation's error numerically, but we
+ * translate it to netbsd to print it symbolically.
+ */
+void
+eprint(e)
+	int e;
+{
+	int i = e;
+
+	if (current->errno) {
+
+		/* No remapping for ERESTART and EJUSTRETURN */
+		/* Kludge for linux that has negative error numbers */
+		if (current->errno[2] > 0 && e < 0)
+			goto normal;
+
+		for (i = 0; i < current->nerrno; i++)
+			if (e == current->errno[i])
+				break;
+
+		if (i == current->nerrno) {
+			printf("-1 unknown errno %d", e);
+			return;
+		}
+	}
+
+normal:
+	switch (i) {
+	case ERESTART:
+		(void)printf("RESTART");
+		break;
+
+	case EJUSTRETURN:
+		(void)printf("JUSTRETURN");
+		break;
+
+	default:
+		(void)printf("-1 errno %d", e);
+		if (fancy)
+			(void)printf(" %s", strerror(i));
+	}
 }
 
 void
