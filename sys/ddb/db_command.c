@@ -24,11 +24,11 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_command.c,v 1.3 1993/05/20 03:39:10 cgd Exp $
+ * db_command.c,v 1.3 1993/05/20 03:39:10 cgd Exp
  *
  * HISTORY
- * $Log: db_command.c,v $
- * Revision 1.3  1993/05/20 03:39:10  cgd
+ * db_command.c,v
+ * Revision 1.3  1993/05/20  03:39:10  cgd
  * add explicit rcs id
  *
  * Revision 1.2  1993/03/21  18:08:04  cgd
@@ -348,20 +348,51 @@ db_command(last_cmdp, cmd_table)
 	}
 }
 
+/*ARGSUSED*/
+void
+db_map_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+        extern void	vm_map_print();
+        boolean_t full = FALSE;
+        
+        if (modif[0] == 'f')
+                full = TRUE;
+
+        vm_map_print(addr, full);
+}
+
+/*ARGSUSED*/
+void
+db_object_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+        extern void	vm_object_print();
+        boolean_t full = FALSE;
+        
+        if (modif[0] == 'f')
+                full = TRUE;
+
+        vm_object_print(addr, full);
+}
+
 /*
  * 'show' commands
  */
+extern void	db_show_all_procs();
 extern void	db_listbreak_cmd();
 extern void	db_listwatch_cmd();
-extern void	db_show_regs(), db_show_one_thread(), db_show_all_threads();
-extern void	vm_map_print(), vm_object_print(), vm_page_print();
-extern void	ipc_port_print();
+extern void	db_show_regs();
 void		db_show_help();
 
 struct command db_show_all_cmds[] = {
-#if 0
-	{ "threads",	db_show_all_threads,0,	0 },
-#endif
+	{ "procs",	db_show_all_procs,0,	0 },
 	{ (char *)0 }
 };
 
@@ -370,17 +401,8 @@ struct command db_show_cmds[] = {
 	{ "registers",	db_show_regs,		0,	0 },
 	{ "breaks",	db_listbreak_cmd, 	0,	0 },
 	{ "watches",	db_listwatch_cmd, 	0,	0 },
-#if 0
-	{ "thread",	db_show_one_thread,	0,	0 },
-#endif
-	{ "map",	vm_map_print,		0,	0 },
-	{ "object",	vm_object_print,	0,	0 },
-#if 0
-	{ "page",	vm_page_print,		0,	0 },
-#endif
-#if 0
-	{ "port",	ipc_port_print,		0,	0 },
-#endif
+	{ "map",	db_map_print_cmd,	0,	0 },
+	{ "object",	db_object_print_cmd,	0,	0 },
 	{ (char *)0, }
 };
 
@@ -417,6 +439,7 @@ struct command db_command_table[] = {
 	{ "match",	db_trace_until_matching_cmd,0,	0 },
 	{ "trace",	db_stack_trace_cmd,	0,	0 },
 	{ "call",	db_fncall,		CS_OWN,	0 },
+	{ "ps",		db_show_all_procs,	0,	0 },
 	{ "show",	0,			0,	db_show_cmds },
 	{ (char *)0, }
 };
@@ -438,6 +461,8 @@ db_help_cmd()
 void
 db_command_loop()
 {
+	extern int db_output_line;
+
 	/*
 	 * Initialize 'prev' and 'next' to dot.
 	 */
@@ -450,6 +475,7 @@ db_command_loop()
 	    (void) setjmp(db_jmpbuf);
 	    if (db_print_position() != 0)
 		db_printf("\n");
+	    db_output_line = 0;
 
 	    db_printf("db> ");
 	    (void) db_read_line();
