@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.11 2003/07/15 15:25:13 itojun Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.12 2003/07/15 17:37:00 kleink Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.11 2003/07/15 15:25:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.12 2003/07/15 17:37:00 kleink Exp $");
 
 #include "opt_inet.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.11 2003/07/15 15:25:13 itojun Exp
 
 #include <net/net_osdep.h>
 
-/* as rijndael uses assymetric scheduled keys, we need to do it twice. */
+/* as rijndael uses asymmetric scheduled keys, we need to do it twice. */
 
 typedef struct {
 	u_int32_t	r_ek[(RIJNDAEL_MAXNR+1)*4];
