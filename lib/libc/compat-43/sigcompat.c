@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sigcompat.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: sigcompat.c,v 1.5 1994/01/31 17:37:05 ws Exp $";
+static char *rcsid = "$Id: sigcompat.c,v 1.6 1994/02/24 06:10:57 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -51,7 +51,8 @@ sigvec(signo, sv, osv)
 		nsv = *sv;
 		nsv.sv_flags ^= SV_INTERRUPT;	/* !SA_INTERRUPT */
 	}
-	ret = sigaction(signo,(struct sigaction *)&nsv,(struct sigaction *)osv);
+	ret = sigaction(signo, sv ? (struct sigaction *)&nsv : NULL,
+	    (struct sigaction *)osv);
 	if (ret == 0 && osv)
 		osv->sv_flags ^= SV_INTERRUPT;	/* !SA_INTERRUPT */
 	return (ret);
