@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2002/02/17 20:57:12 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2002/02/19 17:21:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -648,7 +648,7 @@ initSH3(pc)
 	/* MMEYE_LED = 0x00; */
 
 	splraise(-1);
-	enable_intr();
+	_cpu_exception_resume(0);
 
 	avail_end = sh3_trunc_page(IOM_RAM_END + 1);
 
@@ -777,7 +777,8 @@ consinit()
 void
 cpu_reset()
 {
-	disable_intr();
+
+	_cpu_exception_suspend();
 
 	Sh3Reset();
 	for (;;);
