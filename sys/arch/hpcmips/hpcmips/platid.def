@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.10 1999/12/26 05:50:59 shin Exp $	*/
+/*	$NetBSD: platid.def,v 1.11 1999/12/26 17:21:03 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -148,6 +148,9 @@ Compaq {
     }
   }
   AERO {
+    15XX {
+      CPU=MIPS_VR_4111 1530
+    }
     21XX {
       CPU=MIPS_VR_4111 2110 2130 2140
     }
