@@ -1,5 +1,6 @@
 /* Convert function calls to rtl insns, for GNU C compiler.
-   Copyright (C) 1989, 92-97, 1998, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -408,13 +409,12 @@ emit_call_1 (funexp, fndecl, funtype, stack_size, rounded_stack_size,
 /* If the target has "call" or "call_value" insns, then prefer them
    if no arguments are actually popped.  If the target does not have
    "call" or "call_value" insns, then we must use the popping versions
-   eve n if the call has no arguments to pop.  */
+   even if the call has no arguments to pop.  */
+  if (HAVE_call_pop && HAVE_call_value_pop
 #if defined (HAVE_call) && defined (HAVE_call_value)
-  if (HAVE_call && HAVE_call_value && HAVE_call_pop && HAVE_call_value_pop
-      && n_popped > 0)
-#else
-  if (HAVE_call_pop && HAVE_call_value_pop)
+      && (n_popped > 0 || ! HAVE_call || ! HAVE_call_value)
 #endif
+      )
     {
       rtx n_pop = GEN_INT (n_popped);
       rtx pat;
