@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/08/01 05:39:22 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
+#	$Id: Makefile,v 1.3 1997/04/29 20:39:10 tls Exp $
 
 PROG=	getNAME
 NOMAN=	noman
