@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.8 1994/01/29 02:03:24 jtc Exp $
+ *	$Id: md.c,v 1.9 1994/04/07 19:43:37 pk Exp $
  */
 
 #include <sys/param.h>
@@ -227,6 +227,11 @@ long	*savep;
 }
 
 #ifndef RTLD
+
+#ifdef FreeBSD
+int	netzmagic;
+#endif
+
 /*
  * Initialize (output) exec header such that useful values are
  * obtained from subsequent N_*() macro evaluations.
@@ -243,9 +248,9 @@ int		magic, flags;
 		N_SETMAGIC((*hp), magic, MID_I386, flags);
 #endif
 #ifdef FreeBSD
-	if (oldmagic && number_of_shobjs != 0)
+	if (oldmagic)
 		hp->a_midmag = magic;
-	else if (magic == ZMAGIC)
+	else if (netzmagic)
 		N_SETMAGIC_NET((*hp), magic, MID_I386, flags);
 	else
 		N_SETMAGIC((*hp), magic, MID_I386, flags);
