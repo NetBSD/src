@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.29 2000/04/13 11:23:14 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.30 2000/04/15 03:08:12 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -215,7 +215,8 @@ ebus*	at pci?					# ebus devices
 #### Standard system devices -- all required for a given architecture
 
 ## Auxiliary system registers -- We use the OBP for power management
-auxio0	at ebus?				# auxio registers
+auxio*	at ebus?				# auxio registers
+auxio*	at sbus? slot ? offset ?		# auxio registers
 
 # We also need:
 bpp*	at sbus? slot ? offset ?		# parallel port
@@ -305,7 +306,9 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 ## Floppy controller and drive found on SPARCstations.
 
 # need share with the sparc, and everyone else.  needs to use auxio.
-#fdc0	at sbus? slot ? offset ?
+# actually, the ebus version has (will have) direct access to it's AUXIO
+# register space (it is mapped in to fdthree not auxio).
+#fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
 #fdc0	at ebus?				# fdthree
 #fd*	at fdc0 	 			# the drive itself
 

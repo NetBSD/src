@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.26 2000/04/05 07:58:44 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.27 2000/04/15 03:08:12 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -42,10 +42,6 @@ file	arch/sparc64/dev/ebus_bus.c		ebus
 # network devices MII bus
 include "dev/mii/files.mii"
 
-#device auxreg
-#attach auxreg at mainbus, sbus
-#file	arch/sparc64/sparc64/auxreg.c
-
 device clock
 attach clock at mainbus, sbus with clock_sbus
 attach clock at ebus with clock_ebus
@@ -82,12 +78,15 @@ file	dev/ic/z8530sc.c			zs
 #file	arch/sparc64/dev/ucom_ebus.c		ucom
 
 # XXX bogus; this is in dev/isa/files.isa.  fix me please!
+# XXX we should attach a `bpp'-style device here rather than
+# `lpt' because the `bpp' driver supports DMA.
 device	lpt
 file	dev/ic/lpt.c				lpt needs-flag
 
 device	auxio
-attach auxio at ebus with auxio_ebus
-file	arch/sparc64/dev/auxio_ebus.c		auxio_ebus
+attach	auxio at ebus with auxio_ebus
+attach	auxio at sbus with auxio_sbus
+file	arch/sparc64/dev/auxio.c		auxio
 
 attach lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus

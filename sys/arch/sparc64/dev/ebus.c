@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.6 2000/04/13 14:39:34 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.7 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -190,17 +190,17 @@ ebus_setup_attach_args(sc, node, ea)
 	if (rv)
 		return (rv);
 
-	rv = getprop(node, "address", sizeof(u_int32_t), &ea->ea_naddrs,
+	rv = getprop(node, "address", sizeof(u_int32_t), &ea->ea_nvaddrs,
 	    (void **)&ea->ea_vaddrs);
 	if (rv != ENOENT) {
 		if (rv)
 			return (rv);
 
-		if (ea->ea_nregs != ea->ea_naddrs)
+		if (ea->ea_nregs != ea->ea_nvaddrs)
 			printf("ebus loses: device %s: %d regs and %d addrs\n",
-			    ea->ea_name, ea->ea_nregs, ea->ea_naddrs);
+			    ea->ea_name, ea->ea_nregs, ea->ea_nvaddrs);
 	} else
-		ea->ea_naddrs = 0;
+		ea->ea_nvaddrs = 0;
 
 	if (getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
 	    (void **)&ea->ea_intrs))

@@ -1,4 +1,4 @@
-/*	$NetBSD: auxioreg.h,v 1.2 2000/04/08 03:07:07 mrg Exp $	*/
+/*	$NetBSD: auxioreg.h,v 1.3 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -30,7 +30,9 @@
 
 /*
  * The AUXIO registers; their offset in the Ebus2 address space, plus the
- * bits for each register.
+ * bits for each register.  Note that the fdthree (FD), SUNW,CS4231 (AUDIO)
+ * and power (POWER) devices on the Ebus2 have their AUXIO regsiters mapped
+ * into their own "reg" properties, not the "auxio" device's "reg" properties.
  */
 #define	AUXIO_FD			0x00720000
 #define	AUXIO_FD_DENSENSE_INPUT		0x0
@@ -45,6 +47,16 @@
 
 #define	AUXIO_LED			0x00726000
 #define	AUXIO_LED_LED			0x0
+#define	AUXIO_LED_MB1			0xf0	/* must be set on write */
+/* XXX: these may be useless on Ebus2 auxio! find out! */
+#define	AUXIO_LED_FHD	0x20		/* floppy: high density (unreliable?)*/
+#define	AUXIO_LED_FDC	0x10		/* floppy: diskette was changed */
+#define	AUXIO_LED_FDS	0x08		/* floppy: drive select */
+#define	AUXIO_LED_FTC	0x04		/* floppy: drives Terminal Count pin */
+#define	AUXIO_LED_FEJ	0x02		/* floppy: eject disk */
+#if 0
+#define	AUXIO_LED_LED	0x01		/* front panel LED */
+#endif
 
 #define	AUXIO_PCI			0x00728000
 #define	AUXIO_PCI_SLOT0			0x0	/* two bits each */

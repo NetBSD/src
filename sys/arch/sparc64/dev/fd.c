@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.14 2000/04/07 16:58:56 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -69,7 +69,6 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 
-#include <sparc64/sparc64/auxreg.h>
 #include <sparc64/dev/fdreg.h>
 #include <sparc64/dev/fdvar.h>
 
@@ -270,6 +269,7 @@ static void fdconf __P((struct fdc_softc *));
 
 #define	FD_SET_SWINTR	send_softint(-1, PIL_FDSOFT, fdc->sc_sih)
 
+/* XXX sun4u */
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
 int
@@ -470,14 +470,10 @@ fdmatch(parent, match, aux)
 		/* XXX - for now, punt on more than one drive */
 		return (0);
 
-	if (fdc->sc_flags & FDC_82077) {
-		/* select drive and turn on motor */
-		*fdc->sc_reg_dor = drive | FDO_FRST | FDO_MOEN(drive);
-		/* wait for motor to spin up */
-		delay(250000);
-	} else {
-		auxregbisc(AUXIO4C_FDS, 0);
-	}
+	/* select drive and turn on motor */
+	*fdc->sc_reg_dor = drive | FDO_FRST | FDO_MOEN(drive);
+	/* wait for motor to spin up */
+	delay(250000);
 	fdc->sc_nstat = 0;
 	out_fdc(fdc, NE7CMD_RECAL);
 	out_fdc(fdc, drive);
@@ -511,13 +507,8 @@ fdmatch(parent, match, aux)
 #endif
 	ok = (n == 2 && (fdc->sc_status[0] & 0xf8) == 0x20) ? 1 : 0;
 
-	/* turn off motor */
-	if (fdc->sc_flags & FDC_82077) {
-		/* deselect drive and turn motor off */
-		*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
-	} else {
-		auxregbisc(0, AUXIO4C_FDS);
-	}
+	/* deselect drive and turn motor off */
+	*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
 
 	return (ok);
 }
@@ -740,27 +731,14 @@ fd_set_motor(fdc)
 	u_char status;
 	int n;
 
-	if (fdc->sc_flags & FDC_82077) {
-		status = FDO_FRST | FDO_FDMAEN;
-		if ((fd = fdc->sc_drives.tqh_first) != NULL)
-			status |= fd->sc_drive;
+	status = FDO_FRST | FDO_FDMAEN;
+	if ((fd = fdc->sc_drives.tqh_first) != NULL)
+		status |= fd->sc_drive;
 
-		for (n = 0; n < 4; n++)
-			if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
-				status |= FDO_MOEN(n);
-		*fdc->sc_reg_dor = status;
-	} else {
-		int on = 0;
-
-		for (n = 0; n < 4; n++)
-			if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
-				on = 1;
-		if (on) {
-			auxregbisc(AUXIO4C_FDS, 0);
-		} else {
-			auxregbisc(0, AUXIO4C_FDS);
-		}
-	}
+	for (n = 0; n < 4; n++)
+		if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
+			status |= FDO_MOEN(n);
+	*fdc->sc_reg_dor = status;
 }
 
 void
@@ -954,17 +932,6 @@ fdcstatus(dv, n, s)
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 	char bits[64];
-#if 0
-	/*
-	 * A 82072 seems to return <invalid command> on
-	 * gratuitous Sense Interrupt commands.
-	 */
-	if (n == 0 && (fdc->sc_flags & FDC_82077)) {
-		out_fdc(fdc, NE7CMD_SENSEI);
-		(void) fdcresult(fdc);
-		n = 2;
-	}
-#endif
 
 	/* Just print last status */
 	n = fdc->sc_nstat;
@@ -1918,19 +1885,11 @@ fd_do_eject(fd)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 
-	if (CPU_ISSUN4C) {
-		auxregbisc(AUXIO4C_FDS, AUXIO4C_FEJ);
-		delay(10);
-		auxregbisc(AUXIO4C_FEJ, AUXIO4C_FDS);
-		return;
-	}
-	if (CPU_ISSUN4M && (fdc->sc_flags & FDC_82077)) {
-		int dor = FDO_FRST | FDO_FDMAEN | FDO_MOEN(0);
-		*fdc->sc_reg_dor = dor | FDO_EJ;
-		delay(10);
-		*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
-		return;
-	}
+	int dor = FDO_FRST | FDO_FDMAEN | FDO_MOEN(0);
+	*fdc->sc_reg_dor = dor | FDO_EJ;
+	delay(10);
+	*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
+	return;
 }
 
 #ifdef MEMORY_DISK_HOOKS
