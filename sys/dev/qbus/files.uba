@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.8 2000/12/30 22:11:46 ragge Exp $
+#	$NetBSD: files.uba,v 1.9 2001/05/06 17:37:52 ragge Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -6,8 +6,10 @@
 device	uba { csr }
 
 define	qfont
+define	ifuba
 
 file	dev/qbus/uba.c				uba
+file	dev/qbus/if_uba.c			ifuba
 
 # DZ-11 (-compatible) tty device driver.
 device	dz { line = -1 }: tty
@@ -38,9 +40,14 @@ attach	qe at uba
 file	dev/qbus/if_qe.c			qe
 
 # DEUNA/DELUA Ethernet controller
-device	de: ifnet, ether, arp
+device	de: ifnet, ether, arp, ifuba
 attach	de at uba
 file	dev/qbus/if_de.c			de
+
+# Interlan Ethernet controller
+device	il: ifnet, ether, arp, ifuba
+attach	il at uba
+file	dev/qbus/if_il.c			il
 
 # QDSS at UBA
 device	qd: qfont
@@ -56,3 +63,13 @@ attach	rlc at uba
 device	rl: disk
 attach	rl at rlc
 file	dev/qbus/rl.c				rl | rlc needs-flag
+
+# DEC DMC-11/DMR-11 P2P interface
+device	dmc: ifnet, ifuba
+attach	dmc at uba
+file	dev/qbus/if_dmc.c			dmc
+
+# DEC TS11 tape formatter
+device	ts: tape
+attach	ts at uba
+file	dev/qbus/ts.c				ts needs-flag
