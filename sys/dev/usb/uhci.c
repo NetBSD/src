@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.70 1999/12/06 21:07:00 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.71 1999/12/24 13:56:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  * USB Universal Host Controller driver.
  * Handles e.g. PIIX3 and PIIX4.
  *
- * Data sheets: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
- *              ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  * UHCI spec: http://www.intel.com/design/usb/uhci11d.pdf
  * USB spec: http://www.usb.org/developers/data/usb11.pdf
+ * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
+ *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
 
 #include <sys/param.h>
@@ -428,6 +428,8 @@ uhci_init(sc)
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
+
+	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
 	return (uhci_run(sc, 1));		/* and here we go... */
 }
@@ -1206,11 +1208,17 @@ uhci_run(sc, run)
 	int run;
 {
 	int s, n, running;
+	u_int16_t cmd;
 
 	run = run != 0;
 	s = splusb();
 	DPRINTF(("uhci_run: setting run=%d\n", run));
-	UHCICMD(sc, run ? UHCI_CMD_RS : 0);
+	cmd = UREAD2(sc, UHCI_CMD);
+	if (run)
+		cmd |= UHCI_CMD_RS;
+	else
+		cmd &= ~UHCI_CMD_RS;
+	UHCICMD(sc, cmd);
 	for(n = 0; n < 10; n++) {
 		running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
 		/* return when we've entered the state we want */
