@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_rem_pio2f.c,v 1.1 1994/08/10 20:31:39 jtc Exp $";
+static char rcsid[] = "$Id: k_rem_pio2f.c,v 1.2 1994/08/18 23:06:12 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -58,13 +58,13 @@ two8   =  2.5600000000e+02, /* 0x43800000 */
 twon8  =  3.9062500000e-03; /* 0x3b800000 */
 
 #ifdef __STDC__
-	int __kernel_rem_pio2f(float *x, float *y, int e0, int nx, int prec, const int *ipio2) 
+	int __kernel_rem_pio2f(float *x, float *y, int e0, int nx, int prec, const int32_t *ipio2) 
 #else
 	int __kernel_rem_pio2f(x,y,e0,nx,prec,ipio2) 	
-	float x[], y[]; int e0,nx,prec; int ipio2[];
+	float x[], y[]; int e0,nx,prec; int32_t ipio2[];
 #endif
 {
-	int jz,jx,jv,jp,jk,carry,n,iq[20],i,j,k,m,q0,ih;
+	int32_t jz,jx,jv,jp,jk,carry,n,iq[20],i,j,k,m,q0,ih;
 	float z,fw,f[20],fq[20],q[20];
 
     /* initialize jk*/
@@ -89,15 +89,15 @@ twon8  =  3.9062500000e-03; /* 0x3b800000 */
 recompute:
     /* distill q[] into iq[] reversingly */
 	for(i=0,j=jz,z=q[jz];j>0;i++,j--) {
-	    fw    =  (float)((int)(twon8* z));
-	    iq[i] =  (int)(z-two8*fw);
+	    fw    =  (float)((int32_t)(twon8* z));
+	    iq[i] =  (int32_t)(z-two8*fw);
 	    z     =  q[j-1]+fw;
 	}
 
     /* compute n */
 	z  = scalbnf(z,q0);		/* actual value of z */
 	z -= (float)8.0*floorf(z*(float)0.125);	/* trim off integer >= 8 */
-	n  = (int) z;
+	n  = (int32_t) z;
 	z -= (float)n;
 	ih = 0;
 	if(q0>0) {	/* need iq[jz-1] to determine n */
@@ -156,11 +156,11 @@ recompute:
 	} else { /* break z into 8-bit if necessary */
 	    z = scalbnf(z,-q0);
 	    if(z>=two8) { 
-		fw = (float)((int)(twon8*z));
-		iq[jz] = (int)(z-two8*fw);
+		fw = (float)((int32_t)(twon8*z));
+		iq[jz] = (int32_t)(z-two8*fw);
 		jz += 1; q0 += 8;
-		iq[jz] = (int) fw;
-	    } else iq[jz] = (int) z ;
+		iq[jz] = (int32_t) fw;
+	    } else iq[jz] = (int32_t) z ;
 	}
 
     /* convert integer "bit" chunk to floating-point value */

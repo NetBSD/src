@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_acosh.c,v 1.5 1994/08/10 20:30:31 jtc Exp $";
+static char rcsid[] = "$Id: e_acosh.c,v 1.6 1994/08/18 23:04:54 jtc Exp $";
 #endif
 
 /* __ieee754_acosh(x)
@@ -47,8 +47,8 @@ ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 #endif
 {	
 	double t;
-	int hx;
-	unsigned int lx;
+	int32_t hx;
+	u_int32_t lx;
 	EXTRACT_WORDS(hx,lx,x);
 	if(hx<0x3ff00000) {		/* x < 1 */
 	    return (x-x)/(x-x);

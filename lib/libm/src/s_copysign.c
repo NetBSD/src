@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_copysign.c,v 1.5 1994/08/10 20:32:06 jtc Exp $";
+static char rcsid[] = "$Id: s_copysign.c,v 1.6 1994/08/18 23:06:31 jtc Exp $";
 #endif
 
 /*
@@ -30,7 +30,7 @@ static char rcsid[] = "$Id: s_copysign.c,v 1.5 1994/08/10 20:32:06 jtc Exp $";
 	double x,y;
 #endif
 {
-	unsigned int hx,hy;
+	u_int32_t hx,hy;
 	GET_HIGH_WORD(hx,x);
 	GET_HIGH_WORD(hy,y);
 	SET_HIGH_WORD(x,(hx&0x7fffffff)|(hy&0x80000000));

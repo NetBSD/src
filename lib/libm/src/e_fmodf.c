@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_fmodf.c,v 1.1 1994/08/10 20:30:48 jtc Exp $";
+static char rcsid[] = "$Id: e_fmodf.c,v 1.2 1994/08/18 23:05:23 jtc Exp $";
 #endif
 
 /* 
@@ -39,7 +39,7 @@ static float one = 1.0, Zero[] = {0.0, -0.0,};
 	float x,y ;
 #endif
 {
-	int n,hx,hy,hz,ix,iy,sx,i;
+	int32_t n,hx,hy,hz,ix,iy,sx,i;
 
 	GET_FLOAT_WORD(hx,x);
 	GET_FLOAT_WORD(hy,y);
@@ -53,7 +53,7 @@ static float one = 1.0, Zero[] = {0.0, -0.0,};
 	    return (x*y)/(x*y);
 	if(hx<hy) return x;			/* |x|<|y| return x */
 	if(hx==hy)
-	    return Zero[(unsigned)sx>>31];	/* |x|=|y| return x*0*/
+	    return Zero[(u_int32_t)sx>>31];	/* |x|=|y| return x*0*/
 
     /* determine ix = ilogb(x) */
 	if(hx<0x00800000) {	/* subnormal x */
@@ -86,7 +86,7 @@ static float one = 1.0, Zero[] = {0.0, -0.0,};
 	    if(hz<0){hx = hx+hx;}
 	    else {
 	    	if(hz==0) 		/* return sign(x)*0 */
-		    return Zero[(unsigned)sx>>31];
+		    return Zero[(u_int32_t)sx>>31];
 	    	hx = hz+hz;
 	    }
 	}
@@ -95,7 +95,7 @@ static float one = 1.0, Zero[] = {0.0, -0.0,};
 
     /* convert back to floating value and restore the sign */
 	if(hx==0) 			/* return sign(x)*0 */
-	    return Zero[(unsigned)sx>>31];	
+	    return Zero[(u_int32_t)sx>>31];	
 	while(hx<0x00800000) {		/* normalize x */
 	    hx = hx+hx;
 	    iy -= 1;

@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_tanhf.c,v 1.1 1994/08/10 20:33:16 jtc Exp $";
+static char rcsid[] = "$Id: s_tanhf.c,v 1.2 1994/08/18 23:10:23 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -34,7 +34,7 @@ static float one=1.0, two=2.0, tiny = 1.0e-30;
 #endif
 {
 	float t,z;
-	int jx,ix;
+	int32_t jx,ix;
 
 	GET_FLOAT_WORD(jx,x);
 	ix = jx&0x7fffffff;

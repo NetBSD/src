@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_j0.c,v 1.5 1994/08/10 20:30:58 jtc Exp $";
+static char rcsid[] = "$Id: e_j0.c,v 1.6 1994/08/18 23:05:29 jtc Exp $";
 #endif
 
 /* __ieee754_j0(x), __ieee754_y0(x)
@@ -101,7 +101,7 @@ static double zero = 0.0;
 #endif
 {
 	double z, s,c,ss,cc,r,u,v;
-	int hx,ix;
+	int32_t hx,ix;
 
 	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
@@ -170,7 +170,7 @@ v04  =  4.41110311332675467403e-10; /* 0x3DFE5018, 0x3BD6D9EF */
 #endif
 {
 	double z, s,c,ss,cc,u,v;
-	int hx,ix,lx;
+	int32_t hx,ix,lx;
 
 	EXTRACT_WORDS(hx,lx,x);
         ix = 0x7fffffff&hx;
@@ -337,7 +337,7 @@ static double pS2[5] = {
 	double *p,*q;
 #endif
 	double z,r,s;
-	int ix;
+	int32_t ix;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = pR8; q= pS8;}
@@ -473,7 +473,7 @@ static double qS2[6] = {
 	double *p,*q;
 #endif
 	double s,r,z;
-	int ix;
+	int32_t ix;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = qR8; q= qS8;}

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_rem_pio2.c,v 1.4 1994/08/10 20:31:21 jtc Exp $";
+static char rcsid[] = "$Id: e_rem_pio2.c,v 1.5 1994/08/18 23:05:56 jtc Exp $";
 #endif
 
 /* __ieee754_rem_pio2(x,y)
@@ -27,9 +27,9 @@ static char rcsid[] = "$Id: e_rem_pio2.c,v 1.4 1994/08/10 20:31:21 jtc Exp $";
  * Table of constants for 2/pi, 396 Hex digits (476 decimal) of 2/pi 
  */
 #ifdef __STDC__
-static const int two_over_pi[] = {
+static const int32_t two_over_pi[] = {
 #else
-static int two_over_pi[] = {
+static int32_t two_over_pi[] = {
 #endif
 0xA2F983, 0x6E4E44, 0x1529FC, 0x2757D1, 0xF534DD, 0xC0DB62, 
 0x95993C, 0x439041, 0xFE5163, 0xABDEBB, 0xC561B7, 0x246E3A, 
@@ -45,9 +45,9 @@ static int two_over_pi[] = {
 };
 
 #ifdef __STDC__
-static const int npio2_hw[] = {
+static const int32_t npio2_hw[] = {
 #else
-static int npio2_hw[] = {
+static int32_t npio2_hw[] = {
 #endif
 0x3FF921FB, 0x400921FB, 0x4012D97C, 0x401921FB, 0x401F6A7A, 0x4022D97C,
 0x4025FDBB, 0x402921FB, 0x402C463A, 0x402F6A7A, 0x4031475C, 0x4032D97C,
@@ -84,16 +84,16 @@ pio2_3  =  2.02226624871116645580e-21, /* 0x3BA3198A, 0x2E000000 */
 pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 
 #ifdef __STDC__
-	int __ieee754_rem_pio2(double x, double *y)
+	int32_t __ieee754_rem_pio2(double x, double *y)
 #else
-	int __ieee754_rem_pio2(x,y)
+	int32_t __ieee754_rem_pio2(x,y)
 	double x,y[];
 #endif
 {
 	double z,w,t,r,fn;
 	double tx[3];
-	int e0,i,j,nx,n,ix,hx;
-	unsigned int low;
+	int32_t e0,i,j,nx,n,ix,hx;
+	u_int32_t low;
 
 	GET_HIGH_WORD(hx,x);		/* high word of x */
 	ix = hx&0x7fffffff;
@@ -101,14 +101,14 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	    {y[0] = x; y[1] = 0; return 0;}
 	if(ix<=0x413921fb) { /* |x| ~<= 2^19*(pi/2), medium size */
 	    t  = fabs(x);
-	    n  = (int) (t*invpio2+half);
+	    n  = (int32_t) (t*invpio2+half);
 	    fn = (double)n;
 	    r  = t-fn*pio2_1;
 	    w  = fn*pio2_1t;	/* 1st round good to 85 bit */
 	    if(n<32&&ix!=npio2_hw[n-1]) {	
 		y[0] = r-w;	/* quick check no cancellation */
 	    } else {
-	        unsigned int high;
+	        u_int32_t high;
 	        j  = ix>>20;
 	        y[0] = r-w; 
 		GET_HIGH_WORD(high,y[0]);
@@ -144,9 +144,9 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	GET_LOW_WORD(low,x);
 	SET_LOW_WORD(z,low);
 	e0 	= (ix>>20)-1046;	/* e0 = ilogb(z)-23; */
-	SET_HIGH_WORD(z, ix - (e0<<20));
+	SET_HIGH_WORD(z, ix - ((int32_t)(e0<<20)));
 	for(i=0;i<2;i++) {
-		tx[i] = (double)((int)(z));
+		tx[i] = (double)((int32_t)(z));
 		z     = (z-tx[i])*two24;
 	}
 	tx[2] = z;

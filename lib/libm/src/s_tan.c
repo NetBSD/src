@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_tan.c,v 1.4 1994/08/10 20:33:12 jtc Exp $";
+static char rcsid[] = "$Id: s_tan.c,v 1.5 1994/08/18 23:10:19 jtc Exp $";
 #endif
 
 /* tan(x)
@@ -55,7 +55,7 @@ static char rcsid[] = "$Id: s_tan.c,v 1.4 1994/08/10 20:33:12 jtc Exp $";
 #endif
 {
 	double y[2],z=0.0;
-	int n, ix;
+	int32_t n, ix;
 
     /* High word of x. */
 	GET_HIGH_WORD(ix,x);

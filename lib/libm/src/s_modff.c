@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_modff.c,v 1.1 1994/08/10 20:32:55 jtc Exp $";
+static char rcsid[] = "$Id: s_modff.c,v 1.2 1994/08/18 23:07:12 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -33,8 +33,8 @@ static float one = 1.0;
 	float x,*iptr;
 #endif
 {
-	int i0,j0;
-	unsigned i;
+	int32_t i0,j0;
+	u_int32_t i;
 	GET_FLOAT_WORD(i0,x);
 	j0 = ((i0>>23)&0xff)-0x7f;	/* exponent of x */
 	if(j0<23) {			/* integer part in x */
@@ -44,7 +44,7 @@ static float one = 1.0;
 	    } else {
 		i = (0x007fffff)>>j0;
 		if((i0&i)==0) {			/* x is integral */
-		    unsigned int ix;
+		    u_int32_t ix;
 		    *iptr = x;
 		    GET_FLOAT_WORD(ix,x);
 		    SET_FLOAT_WORD(x,ix&0x80000000);	/* return +-0 */
@@ -55,7 +55,7 @@ static float one = 1.0;
 		}
 	    }
 	} else {			/* no fraction part */
-	    unsigned int ix;
+	    u_int32_t ix;
 	    *iptr = x*one;
 	    GET_FLOAT_WORD(ix,x);
 	    SET_FLOAT_WORD(x,ix&0x80000000);	/* return +-0 */
