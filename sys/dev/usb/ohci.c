@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.80 2000/03/24 22:03:30 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.81 2000/03/25 18:02:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1173,7 +1173,7 @@ ohci_softintr(bus)
 			continue;
 		}
 		cc = OHCI_TD_GET_CC(le32toh(std->td.td_flags));
-		usb_uncallout(xfer->timo_handle, ohci_timeout, xfer);
+		usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 		if (xfer->status == USBD_CANCELLED ||
 		    xfer->status == USBD_TIMEOUT) {
 			DPRINTF(("ohci_process_done: cancel/timeout %p\n",
@@ -1498,7 +1498,7 @@ ohci_device_request(xfer)
 	opipe->tail.td = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timo_handle, MS_TO_TICKS(xfer->timeout),
+                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
 			    ohci_timeout, xfer);
 	}
 	splx(s);
@@ -1693,6 +1693,7 @@ ohci_open(pipe)
 
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
+
 	if (addr == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
@@ -1840,7 +1841,7 @@ ohci_abort_xfer(xfer, status)
 
 	xfer->status = status;
 
-	usb_uncallout(xfer->timo_handle, ohci_timeout, xfer);
+	usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 
 	sed = opipe->sed;
 	DPRINTFN(1,("ohci_abort_xfer: stop ed=%p\n", sed));
@@ -1849,8 +1850,8 @@ ohci_abort_xfer(xfer, status)
 #if 1
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		usb_callout(xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
-		    ohci_abort_xfer_end, xfer);
+		usb_callout(xfer->pipe->abort_handle,
+		    hz / USB_FRAMES_PER_SECOND, ohci_abort_xfer_end, xfer);
 	} else {
 #if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
 		KASSERT(intr_nesting_level == 0,
@@ -2543,7 +2544,7 @@ ohci_device_bulk_start(xfer)
 	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timo_handle, MS_TO_TICKS(xfer->timeout),
+                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
 			    ohci_timeout, xfer);
 	}
 

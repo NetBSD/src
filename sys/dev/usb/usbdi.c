@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.67 2000/03/24 22:03:32 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.68 2000/03/25 18:02:33 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -238,6 +238,12 @@ usbd_close_pipe(pipe)
 	LIST_REMOVE(pipe, next);
 	pipe->endpoint->refcnt--;
 	pipe->methods->close(pipe);
+#if defined(__NetBSD__) && defined(DIAGNOSTIC)
+	if (callout_pending(&pipe->abort_handle)) {
+		callout_stop(&pipe->abort_handle);
+		printf("usbd_close_pipe: abort_handle pending");
+	}
+#endif
 	if (pipe->intrxfer != NULL)
 		usbd_free_xfer(pipe->intrxfer);
 	free(pipe, M_USB);
@@ -384,8 +390,7 @@ usbd_alloc_xfer(dev)
 	if (xfer == NULL)
 		return (NULL);
 	xfer->device = dev;
-	usb_callout_init(xfer->timo_handle);
-	usb_callout_init(xfer->abort_handle);
+	usb_callout_init(xfer->timeout_handle);
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
 	return (xfer);
 }
@@ -398,10 +403,10 @@ usbd_free_xfer(xfer)
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		usbd_free_buffer(xfer);
 #if defined(__NetBSD__) && defined(DIAGNOSTIC)
-	if (callout_pending(&xfer->timo_handle))
-		panic("usbd_free_xfer: timo_handle pending");
-	if (callout_pending(&xfer->abort_handle))
-		panic("usbd_free_xfer: abort_handle pending");
+	if (callout_pending(&xfer->timeout_handle)) {
+		callout_stop(&xfer->timeout_handle);
+		printf("usbd_free_xfer: timout_handle pending");
+	}
 #endif
 	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
 	return (USBD_NORMAL_COMPLETION);
