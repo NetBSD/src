@@ -1,4 +1,4 @@
-/*      $NetBSD: main.h,v 1.4 2003/04/04 03:49:20 atatat Exp $ */
+/*      $NetBSD: main.h,v 1.5 2003/07/31 15:47:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ extern struct nchashhead *nchashtbl;
 struct cache_entry {
 	LIST_ENTRY(cache_entry) ce_next;
 	struct vnode *ce_vp, *ce_pvp;
-	u_long ce_cid, ce_pcid;
 	int ce_nlen;
 	char ce_name[256];
 };

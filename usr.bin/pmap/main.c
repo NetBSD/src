@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2003/07/24 00:43:50 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.11 2003/07/31 15:47:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 2003/07/24 00:43:50 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2003/07/31 15:47:57 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -585,17 +585,14 @@ cache_enter(int i, struct namecache *ncp)
 
 	if (debug & DUMP_NAMEI_CACHE)
 		printf("[%d] ncp->nc_vp %10p, ncp->nc_dvp %10p, "
-		       "ncp->nc_nlen %3d [%.*s] (nc_dvpid=%lu, nc_vpid=%lu)\n",
+		       "ncp->nc_nlen %3d [%.*s]\n",
 		       i, ncp->nc_vp, ncp->nc_dvp,
-		       ncp->nc_nlen, ncp->nc_nlen, ncp->nc_name,
-		       ncp->nc_dvpid, ncp->nc_vpid);
+		       ncp->nc_nlen, ncp->nc_nlen, ncp->nc_name);
 
 	ce = malloc(sizeof(struct cache_entry));
 	
 	ce->ce_vp = ncp->nc_vp;
 	ce->ce_pvp = ncp->nc_dvp;
-	ce->ce_cid = ncp->nc_vpid;
-	ce->ce_pcid = ncp->nc_dvpid;
 	ce->ce_nlen = ncp->nc_nlen;
 	strncpy(ce->ce_name, ncp->nc_name, sizeof(ce->ce_name));
 	ce->ce_name[MIN(ce->ce_nlen, sizeof(ce->ce_name) - 1)] = '\0';
