@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh5,v 1.1.2.2 2002/07/16 00:41:02 gehenna Exp $
+#	$NetBSD: files.evbsh5,v 1.1.2.3 2002/07/16 01:43:35 gehenna Exp $
 
 # Config file for SuperH CAYMAN SH5 Evaluation Board
 
@@ -19,3 +19,5 @@ file	arch/evbsh5/dev/sysfpga.c		sysfpga
 device	superio: isabus
 attach	superio at sysfpga
 file	arch/evbsh5/dev/superio.c		superio
+
+include	"arch/sh5/conf/majors.sh5"
