@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.4 2001/06/01 14:08:35 toshii Exp $
+#	$NetBSD: IPAQ,v 1.5 2001/07/02 13:52:29 ichiro Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -133,7 +133,7 @@ sacom*  at saip? addr 0xd000d000 size 0x24	intr 17
 #OS Timer
 saost*  at saip? addr 0x90000000 size 0x20
 
-#salcd* at saip? addr 0xd0100000 size 0x800000  intr 12
+#salcd* at saip?
 #hpcfb* at salcd?
     
 # Workstation Console attachments
@@ -150,12 +150,6 @@ saost*  at saip? addr 0x90000000 size 0x20
 #lpt*    at pioc? offset 0x0378 irq -1
 #lpt*    at pioc? offset 0x03bc irq -1
 
-# XXX workaround broken bootinfo
-options         BOOTINFO_FB_LINE_BYTES=0x280
-options         BOOTINFO_FB_WIDTH=240
-options         BOOTINFO_FB_HEIGHT=320
-options         BOOTINFO_FB_TYPE=5
-    
 pseudo-device	loop	1               # network loopback
 pseudo-device	bpfilter 8              # packet filter
 pseudo-device	sl	2               # CSLIP

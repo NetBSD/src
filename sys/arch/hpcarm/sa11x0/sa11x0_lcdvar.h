@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcdvar.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $ */
+/*	$NetBSD: sa11x0_lcdvar.h,v 1.3 2001/07/02 13:52:30 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@
 
 struct salcd_softc {
 	struct device		sc_dev;
-	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	struct sa11x0_softc     *sc_parent;
 
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;

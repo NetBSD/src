@@ -1,11 +1,12 @@
-/*	$NetBSD: sa11x0_lcd.c,v 1.4 2001/06/29 17:22:51 toshii Exp $	*/
+/*	$NetBSD: sa11x0_lcd.c,v 1.5 2001/07/02 13:52:30 ichiro Exp $	*/
 #define SALCD_DEBUG
+
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ichiro FUKUHARA.
+ * by Ichiro FUKUHARA (ichiro@ichiro.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,6 +74,15 @@ static int	salcd_fbinit(struct hpcfb_fbconf *);
 static int	salcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static paddr_t	salcd_mmap(void *, off_t offset, int);
 
+extern  struct bus_space sa11x0_bs_tag;
+
+#if defined __mips__ || defined __sh__ || defined __arm__
+#define __BTOP(x)		((paddr_t)(x) >> PGSHIFT)
+#define __PTOB(x)		((paddr_t)(x) << PGSHIFT)
+#else
+#error "define btop, ptob."
+#endif
+
 struct cfattach salcd_ca = {
 	sizeof(struct salcd_softc), salcd_match, salcd_attach
 };
@@ -80,6 +90,7 @@ struct cfattach salcd_ca = {
 struct hpcfb_accessops salcd_ha = {
 	salcd_ioctl, salcd_mmap
 };
+static int console_flag = 0;
 
 static int
 salcd_match(parent, match, aux)
@@ -97,26 +108,22 @@ salcd_attach(parent, self, aux)
 	void *aux;
 {
 	struct salcd_softc *sc = (struct salcd_softc*)self;
-	struct sa11x0_attach_args *sa = aux;
 	struct hpcfb_attach_args ha;
 
+	sc->sc_iot = &sa11x0_bs_tag;
+	sc->sc_parent = (struct sa11x0_softc *)parent;
+#ifdef XXX
+	(u_long)bootinfo->fb_addr = 0x48200000; /* XXX For iPAQ*/
+#endif
+	salcd_init(sc);
+	salcd_fbinit(&sc->sc_fbconf);
+
 	printf("\n");
-
-	sc->sc_iot = sa->sa_iot;
-	sc->sc_baseaddr = sa->sa_addr;
-
-	if(bus_space_map(sa->sa_iot, SALCD_BASE, SALCD_NPORTS, 0, 
-			&sc->sc_ioh))
-		panic("%s: Cannot map registers\n", self->dv_xname);
 	printf("%s: SA-11x0 internal LCD controller\n",  sc->sc_dev.dv_xname);
 
-	salcd_fbinit(&sc->sc_fbconf);
-	salcd_init(sc);
+	DPRINTF(("framebuffer_baseaddr=%lx\n", (u_long)bootinfo->fb_addr));
 
-	DPRINTF(("framebuffer_baseaddr=%lx\n", sc->sc_fbconf.hf_baseaddr));
-	DPRINTF(("framebuffer_offset=%lx\n", sc->sc_fbconf.hf_offset));
-
-        ha.ha_console = 0; /* XXX */
+        ha.ha_console = console_flag;
         ha.ha_accessops = &salcd_ha;
         ha.ha_accessctx = sc;
         ha.ha_curfbconf = 0;
@@ -136,13 +143,16 @@ salcd_init(sc)
 {
 	int buf_r0, buf_r1, buf_r2, buf_r3;
 
+	if (bus_space_map(sc->sc_iot, SALCD_BASE, SALCD_NPORTS,
+			  0, &sc->sc_ioh))
+                panic("salcd_init:Cannot map registers\n");
 	/*
 	 * must initialize DMA Channel Base Address Register 
 	 * before enabling LCD(LEN = 1) 
 	 */
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			SALCD_BA1, sc->sc_fbconf.hf_baseaddr);
+			SALCD_BA1, (u_long)bootinfo->fb_addr);
 
 #if 1 /* XXX for iPAQ */
 	buf_r0 = buf_r1 = buf_r2 = buf_r3 = 0x0;
@@ -186,6 +196,9 @@ salcd_init(sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			SALCD_CR3, buf_r3);
 
+	(u_long)bootinfo->fb_addr = 
+		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_CA1);
+
 	DPRINTF(("DMA_BASE= %08x : DMA_CUR = %08x \n"
 		 "LCCR0   = %08x : LCCR1   = %08x \n"
 		 "LCCR2   = %08x : LCCR3   = %08x \n",
@@ -212,9 +225,17 @@ salcd_fbinit(fb)
                                         /* configuration name */
 	fb->hf_height		= bootinfo->fb_height;
 	fb->hf_width		= bootinfo->fb_width;
-	fb->hf_baseaddr		= (u_long)bootinfo->fb_addr;
-	fb->hf_offset		= 0x20;
 
+	if (bus_space_map(&sa11x0_bs_tag, (bus_addr_t)bootinfo->fb_addr,
+			   bootinfo->fb_height * bootinfo->fb_line_bytes,
+			   0, &fb->hf_baseaddr)) {
+		printf("unable to map framebuffer\n");
+		return (-1);
+	}
+
+	fb->hf_offset		= (u_long)bootinfo->fb_addr -
+					__PTOB(__BTOP(bootinfo->fb_addr));
+					/* frame buffer start offset    */
 	fb->hf_bytes_per_line   = bootinfo->fb_line_bytes;
 	fb->hf_nplanes          = 1;
 	fb->hf_bytes_per_plane  = bootinfo->fb_height *
@@ -261,8 +282,8 @@ salcd_fbinit(fb)
 			fb->hf_pixel_width = 16;
 
 			fb->hf_class_data_length = sizeof(struct hf_rgb_tag);
-			fb->hf_u.hf_rgb.hf_flags = 0;   /* reserved for future use */
-
+			fb->hf_u.hf_rgb.hf_flags = 0;
+				/* reserved for future use */
 			fb->hf_u.hf_rgb.hf_red_width = 5;
 			fb->hf_u.hf_rgb.hf_red_shift = 11;
 			fb->hf_u.hf_rgb.hf_green_width = 6;
@@ -397,6 +418,10 @@ salcd_mmap(ctx, offset, prot)
 {
 	struct salcd_softc *sc = (struct salcd_softc *)ctx;
 
-        return ((paddr_t)(sc->sc_baseaddr + offset) >> PGSHIFT);
-}
+	if (offset < 0 ||
+	   (sc->sc_fbconf.hf_bytes_per_plane +
+	    sc->sc_fbconf.hf_offset) <  offset)
+		return -1;
 
+	return __BTOP((u_long)bootinfo->fb_addr + offset);
+}
