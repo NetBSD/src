@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1995/11/30 00:59:05 jtc Exp $
+#	$NetBSD: Makefile,v 1.9 1996/11/07 07:33:55 matthias Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -36,8 +36,8 @@ LIBSA=	${SALIB}
 
 #LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
 #	${LIBKERN} ${LIBSA} ${LIBKERN}
-LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
-	${LIBKERN} ${LIBSA}
+LIBS=	${LIBKERN} ${LIBSA} ${.OBJDIR}/libdrive.a \
+	${LIBSA}
 
 BOOTS=	boot zboot.o
 ALL=	${BOOTS}
