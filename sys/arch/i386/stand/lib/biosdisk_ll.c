@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.11 2001/07/07 22:57:57 perry Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.12 2002/10/10 18:52:42 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,7 @@ extern long ourseg;
 extern int get_diskinfo __P((int));
 extern void int13_getextinfo __P((int, struct biosdisk_ext13info *));
 extern int int13_extension __P((int));
+extern int biosdiskreset __P((int));
 extern int biosread __P((int, int, int, int, int, char *));
 extern int biosextread __P((int, void *));
 static int do_read __P((struct biosdisk_ll *, int, int, char *));
@@ -130,8 +131,10 @@ do_read(d, dblk, num, buf)
 		ext.seg = ourseg;
 		ext.sec = dblk;
 
-		if (biosextread(d->dev, &ext))
+		if (biosextread(d->dev, &ext)) {
+			(void)biosdiskreset(d->dev);
 			return -1;
+		}
 
 		return ext.cnt;
 	} else {
@@ -144,8 +147,10 @@ do_read(d, dblk, num, buf)
 		if (nsec > num)
 			nsec = num;
 
-		if (biosread(d->dev, cyl, head, sec, nsec, buf))
+		if (biosread(d->dev, cyl, head, sec, nsec, buf)) {
+			(void)biosdiskreset(d->dev);
 			return -1;
+		}
 
 		return nsec;
 	}
