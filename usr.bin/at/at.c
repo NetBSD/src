@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.8 1998/03/30 02:19:02 mrg Exp $	*/
+/*	$NetBSD: at.c,v 1.9 1998/06/26 07:04:00 mrg Exp $	*/
 
 /*
  * at.c : Put file into atrun queue
@@ -64,7 +64,7 @@
 
 /* File scope variables */
 #ifndef lint
-__RCSID("$NetBSD: at.c,v 1.8 1998/03/30 02:19:02 mrg Exp $");
+__RCSID("$NetBSD: at.c,v 1.9 1998/06/26 07:04:00 mrg Exp $");
 #endif
 
 char *no_export[] =
@@ -249,13 +249,6 @@ writefile(runtimer, queue)
 	PRIV_END
 
 	/*
-	 * We no longer need suid root; now we just need to be able to
-	 * write to the directory, if necessary.
-	 */
-
-	    REDUCE_PRIV(effective_uid);
-
-	/*
 	 * We've successfully created the file; let's set the flag so it
 	 * gets removed in case of an interrupt or error.
 	 */
@@ -292,6 +285,14 @@ writefile(runtimer, queue)
 		if (fpin == NULL)
 			perr("Cannot open input file");
 	}
+
+	/*
+	 * We no longer need suid root; now we just need to be able to
+	 * write to the directory, if necessary.
+	 */
+
+	REDUCE_PRIV(effective_uid);
+
 	fprintf(fp, "#! /bin/sh\n# mail %8s %d\n", mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */
