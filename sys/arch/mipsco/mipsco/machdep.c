@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2003/01/17 23:38:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2003/04/02 04:00:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2003/01/17 23:38:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2003/04/02 04:00:45 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -431,7 +431,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -469,7 +469,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -713,7 +713,7 @@ memsize_scan(first)
 		if (*vp != PATTERN2)
 			break;
 		*vp = tmp;
-		vp += NBPG/sizeof(int);
+		vp += PAGE_SIZE/sizeof(int);
 		mem++;
 	}
 	*vp0 = tmp0;

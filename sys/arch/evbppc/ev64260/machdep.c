@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/03/27 07:19:11 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/04/02 03:52:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -211,7 +211,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	DELAY(100000);
 
 	gt_bus_space_init();
-	gt_find_memory(&gt_mem_bs_tag, gt_memh, roundup(endkernel, NBPG));
+	gt_find_memory(&gt_mem_bs_tag, gt_memh, roundup(endkernel, PAGE_SIZE));
 	gt_halt(&gt_mem_bs_tag, gt_memh);
 
 	/*
