@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.13 1998/06/09 05:20:11 chs Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.14 1998/07/08 04:37:43 thorpej Exp $	*/
 
 /*
  *
@@ -734,6 +734,7 @@ vm_offset_t kva_start;
   struct pmap *kpm;
   vm_offset_t kva;
   pt_entry_t *pte;
+  int first16q;
 
   /*
    * set the page size (default value is 4K which is ok)
@@ -887,15 +888,31 @@ vm_offset_t kva_start;
    * we must call uvm_page_physload() after we are done playing with
    * virtual_avail but before we call pmap_steal_memory.  [i.e. here]
    * this call tells the VM system how much physical memory it
-   * controls.
+   * controls.  If we have 16M of RAM or less, just put it all on
+   * the default free list.  Otherwise, put the first 16M of RAM
+   * on a lower priority free list (so that all of the ISA DMA'able
+   * memory won't be eaten up first-off).
    */
+
+  if (avail_end <= (16 * 1024 * 1024))
+    first16q = VM_FREELIST_DEFAULT;
+  else
+    first16q = VM_FREELIST_FIRST16;
 
   if (avail_start < hole_start)   /* any free memory before the hole? */
     uvm_page_physload(atop(avail_start), atop(hole_start),
-		      atop(avail_start), atop(hole_start));
+		      atop(avail_start), atop(hole_start), first16q);
 
-  uvm_page_physload(atop(hole_end), atop(avail_end), 
-		    atop(hole_end), atop(avail_end));
+  if (first16q == VM_FREELIST_FIRST16) {
+    uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
+		      atop(hole_end), atop(16 * 1024 * 1024), first16q);
+    uvm_page_physload(atop(16 * 1024 * 1024), atop(avail_end),
+		      atop(16 * 1024 * 1024), atop(avail_end),
+		      VM_FREELIST_DEFAULT);
+  } else {
+    uvm_page_physload(atop(hole_end), atop(avail_end), 
+		      atop(hole_end), atop(avail_end), first16q);
+  }
   
   /*
    * ensure the TLB is sync'd with reality by flushing it...
