@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.2 2000/03/19 12:50:43 pk Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.3 2000/03/22 16:08:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,6 +147,8 @@ struct kbd_softc {
 void	kbd_input_raw __P((struct kbd_softc *k, int));
 void	kbd_output(struct kbd_softc *k, int c);
 void	kbd_start_tx(struct kbd_softc *k);
+int	kbd_cc_open __P((struct cons_channel *));
+int	kbd_cc_close __P((struct cons_channel *));
 
 /*
  * kbd console input channel interface.
@@ -166,6 +168,3 @@ struct cons_channel {
 
 /* Special hook to attach the keyboard driver to the console */
 void	cons_attach_input __P((struct cons_channel *));
-
-int	kbd_iopen __P((struct cons_channel *));
-int	kbd_iclose __P((struct cons_channel *));

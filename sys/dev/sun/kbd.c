@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.23 2000/03/19 12:50:43 pk Exp $	*/
+/*	$NetBSD: kbd.c,v 1.24 2000/03/22 16:08:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,12 +86,14 @@
  */
 
 /* Prototypes */
-static void	kbd_new_layout(struct kbd_softc *k);
-static void	kbd_repeat(void *arg);
-static void	kbd_set_leds(struct kbd_softc *k, int leds);
-static void	kbd_update_leds(struct kbd_softc *k);
-static void	kbd_was_reset(struct kbd_softc *k);
-static int 	kbd_drain_tx(struct kbd_softc *k);
+static void	kbd_new_layout __P((struct kbd_softc *));
+static void	kbd_repeat __P((void *));
+static void	kbd_set_leds __P((struct kbd_softc *, int));
+static void	kbd_update_leds __P((struct kbd_softc *));
+static void	kbd_was_reset __P((struct kbd_softc *));
+static int 	kbd_drain_tx __P((struct kbd_softc *));
+static int	kbd_iopen __P((struct kbd_softc *));
+static int	kbd_iclose __P((struct kbd_softc *));
 
 cdev_decl(kbd);	/* open, close, read, write, ioctl, stop, ... */
 
@@ -128,7 +130,7 @@ kbdopen(dev, flags, mode, p)
 		return (EBUSY);
 	k->k_events.ev_io = p;
 
-	if ((error = kbd_iopen(k->k_cc)) != 0) {
+	if ((error = kbd_iopen(k)) != 0) {
 		k->k_events.ev_io = NULL;
 		return (error);
 	}
@@ -782,20 +784,37 @@ kbd_input_raw(k, c)
 	EV_WAKEUP(&k->k_events);
 }
 
-/****************************************************************
- * misc...
- ****************************************************************/
+/****************************************************************/
 
 /*
- * Initialization to be done at first open.
- * This is called from kbdopen or kdopen (in kd.c)
- * Called with user context.
+ * Open/close routines called upon opening /dev/console
+ * if we serve console input.
  */
 int
-kbd_iopen(cc)
+kbd_cc_open(cc)
 	struct cons_channel *cc;
 {
 	struct kbd_softc *k = (struct kbd_softc *)cc->cc_dev;
+	return (kbd_iopen(k));
+}
+
+int
+kbd_cc_close(cc)
+	struct cons_channel *cc;
+{
+	struct kbd_softc *k = (struct kbd_softc *)cc->cc_dev;
+	return (kbd_iclose(k));
+}
+
+/*
+ * Initialization to be done at first open.
+ * This is called from kbdopen() or kd_cc_open()
+ * Called with user context.
+ */
+int
+kbd_iopen(k)
+	struct kbd_softc *k;
+{
 	struct kbd_state *ks;
 	int error, s;
 
@@ -859,8 +878,8 @@ out:
 }
 
 int
-kbd_iclose(cc)
-	struct cons_channel *cc;
+kbd_iclose(k)
+	struct kbd_softc *k;
 {
 	/* For now: */ return (0);
 }
