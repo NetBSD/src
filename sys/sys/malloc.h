@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.77.10.1 2002/07/21 03:35:56 lukem Exp $	*/
+/*	$NetBSD: malloc.h,v 1.77.10.2 2002/12/16 04:56:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -429,11 +429,14 @@ do {									\
 	long s = splvm();						\
 	if (kbp->kb_next == NULL) {					\
 		(space) = (cast)malloc((u_long)(size), (type), (flags)); \
+		splx(s);						\
 	} else {							\
 		(space) = (cast)kbp->kb_next;				\
 		kbp->kb_next = *(caddr_t *)(space);			\
+		splx(s);						\
+		if ((flags) & M_ZERO)					\
+			memset((space), 0, (size));			\
 	}								\
-	splx(s);							\
 } while (/* CONSTCOND */ 0)
 
 #define	FREE(addr, type)						\
