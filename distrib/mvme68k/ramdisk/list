@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2002/03/24 18:08:20 scw Exp $
+#	$NetBSD: list,v 1.7 2002/03/24 22:44:21 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -49,10 +49,10 @@ LIBS	libhack.o -lutil -lz -ll -lrmt
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/rd.fstab			etc/fstab
-COPY	${CURDIR}/../../../etc/netconfig	etc/netconfig
+COPY	${_SRC_TOP_}/etc/netconfig		etc/netconfig
 COPY	${CURDIR}/rd.passwd			etc/passwd
-COPY	${CURDIR}/../../../etc/protocols	etc/protocols
-COPY	${CURDIR}/../../../etc/services		etc/services
+COPY	${_SRC_TOP_}/etc/protocols		etc/protocols
+COPY	${_SRC_TOP_}/etc/services		etc/services
 COPY	${DESTDIR}/usr/mdec/bootsd		bootsd
 COPY	${DESTDIR}/usr/mdec/bootst		bootst
 COPY	${DESTDIR}/usr/mdec/bootxx		bootxx
