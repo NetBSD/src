@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: ntp2netbsd,v 1.1 1999/10/13 22:18:53 jonathan Exp $
+#	$NetBSD: ntp2netbsd,v 1.2 1999/10/21 02:46:21 jonathan Exp $
 #
 #  Perl script to convert a standard distribution directory for ntpv4.0 into
 #	a NetBSD source tree.
@@ -16,10 +16,10 @@
 #	TARGETDIR - name of the high level directory to make
 #
 #  Written by Christos Zoulas April 17, 1997 for xntp 3-5.90
-#  Updated by Jonathan Stone Oct 10, 1999    for ntp 4-0.93a
+#  Updated by Jonathan Stone Oct 18, 1999    for ntp 4-0.98b
 #
 
-$version = "4-0.93a";
+$version = "4-0.98b";
 
 # definitions ...
 
@@ -415,7 +415,7 @@ minor=0
 /*
  * version file for 5.93c
  */
-char * Version = "5.93c 3-NetBSD Wed Aug 12 10:05:25 EDT 1998 (1)";
+char * Version = "4.0.98b-NetBSD Wed Oct 20 15:34:08 PDT 1999 PDT 1998 (1)";
 %% file usr.sbin/ntp/include/config.h
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -1285,7 +1285,7 @@ char * Version = "5.93c 3-NetBSD Wed Aug 12 10:05:25 EDT 1998 (1)";
 #define PACKAGE "ntp"
 
 /* Version number of package */
-#define VERSION "4.0.98a"
+#define VERSION "4.0.98b"
 
 /* Define if compiler has function prototypes */
 #define PROTOTYPES 1
