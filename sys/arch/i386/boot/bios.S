@@ -254,7 +254,6 @@ ENTRY(get_diskinfo)
 	 * documentation, although we only need head and sector counts.
 	 */
 	subb	%ah, %ah		# %ax = 0
-	movb	%al, %al
 	movb	%ah, %bh		# %bh = 0
 	movb	$2, %bl			# %bl bits 0-3 = drive type, 2 = 1.2M
 	movb	$79, %ch		# max track
@@ -301,9 +300,9 @@ ENTRY(memsize)
 
 	call	EXT(prot_to_real)		# enter real mode
 
-	cmpb	$0x1, %bl
+	testb	%bl, %bl
 	data32
-	je	xext
+	jnz	xext
 	
 	sti
 	int	$0x12
