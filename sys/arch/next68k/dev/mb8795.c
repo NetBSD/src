@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.26 2002/05/20 20:19:36 jdolecek Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.26.2.1 2003/01/28 05:51:03 jmc Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -825,17 +825,18 @@ mb8795_start_dma(ifp)
 		struct mbuf *m = sc->sc_tx_mb_head;
 		buflen = m->m_pkthdr.len;
 
-		/* Fix runt packets,  @@@ memory overrun */
-		if (buflen < ETHERMIN+sizeof(struct ether_header)) {
-			buflen = ETHERMIN+sizeof(struct ether_header);
-		}
-
 		{
 			u_char *p = buf;
 			for (m=sc->sc_tx_mb_head; m; m = m->m_next) {
 				if (m->m_len == 0) continue;
 				bcopy(mtod(m, u_char *), p, m->m_len);
 				p += m->m_len;
+			}
+			/* Fix runt packets */
+			if (buflen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+				memset(p, 0,
+				    ETHER_MIN_LEN - ETHER_CRC_LEN - buflen);
+				buflen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 			}
 		}
 
