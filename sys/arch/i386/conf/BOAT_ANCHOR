@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.77 1998/02/06 11:20:27 mrg Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.78 1998/06/07 03:01:05 enami Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -44,7 +44,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	PPP_BSDCOMP
 options 	PPP_DEFLATE
 
-config		netbsd	root on wd0 
+config		netbsd	root on wd0
 
 mainbus0 at root
 
