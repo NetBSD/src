@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.87 2001/07/12 12:35:16 itojun Exp $
+#       $NetBSD: Makefile,v 1.88 2001/07/28 15:35:10 chs Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -248,7 +248,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_deallocate.9 uvm.9 uvmspace_alloc.9 uvm.9 uvmspace_exec.9 \
 	uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 uvm.9 uvmspace_share.9 \
 	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 uvm.9 uvn_attach.9 \
-	uvm.9 uvm_vnp_setsize.9 uvm.9 uvm_vnp_sync.9 uvm.9 uvm_vnp_terminate.9 \
+	uvm.9 uvm_vnp_setsize.9 \
 	uvm.9 uvm_io.9 uvm.9 uvm_km_alloc.9 uvm.9 uvm_km_zalloc.9 \
 	uvm.9 uvm_km_alloc1.9 uvm.9 uvm_km_kmemalloc.9 uvm.9 uvm_km_valloc.9 \
 	uvm.9 uvm_km_valloc_wait.9 uvm.9 uvm_km_suballoc.9 uvm.9 uvm_km_free.9 \
@@ -259,7 +259,10 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uao_detach.9 uvm.9 uao_reference.9 uvm.9 uvm_chgkprot.9 \
 	uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 uvm.9 uvm_vslock.9 \
 	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 uvm.9 uvm_sysctl.9 \
-	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9
+	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9 \
+	uvm.9 ubc_alloc.9 \
+	uvm.9 ubc_release.9 \
+	uvm.9 uvn_findpages.9
 MLINKS+=vme.9 vme_probe.9 \
 	vme.9 vme_space_map.9 \
 	vme.9 vme_space_unmap.9 \
