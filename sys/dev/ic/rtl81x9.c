@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.26 2000/12/19 00:06:01 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.27 2001/01/11 14:38:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1003,7 +1003,8 @@ STATIC void rtk_rxeof(sc)
 		if (total_len == RTK_RXSTAT_UNFINISHED)
 			break;
 
-		if ((rxstat & RTK_RXSTAT_RXOK) == 0) {
+		if ((rxstat & RTK_RXSTAT_RXOK) == 0 ||
+		    total_len > ETHER_MAX_LEN) {
 			ifp->if_ierrors++;
 
 			/*
