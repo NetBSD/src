@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.46 1999/02/23 17:41:48 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.47 1999/02/28 18:14:57 ross Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -919,7 +919,7 @@ statclock(frame)
 	register struct gmonparam *g;
 	register int i;
 #endif
-	static int schedclk2;
+	static int schedclk;
 	register struct proc *p;
 
 	if (CLKF_USERMODE(frame)) {
@@ -981,12 +981,12 @@ statclock(frame)
 	if (p != NULL) {
 		++p->p_cpticks;
 		/*
-		 * If no schedclk is provided, call it here at ~~12-25 Hz,
+		 * If no schedclock is provided, call it here at ~~12-25 Hz,
 		 * ~~16 Hz is best
 		 */
 		if(schedhz == 0)
-			if ((++schedclk2 & 3) == 0)
-				schedclk(p);
+			if ((++schedclk & 3) == 0)
+				schedclock(p);
 	}
 }
 
