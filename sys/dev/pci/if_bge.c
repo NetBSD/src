@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.29 2003/01/17 08:27:35 itojun Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.30 2003/01/31 01:03:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1888,7 +1888,8 @@ bge_attach(parent, self, aux)
 
 	sc->bge_pa = *pa;
 
-	printf(": %s\n", bp->bp_name);
+	aprint_naive(": Ethernet controller\n");
+	aprint_normal(": %s\n", bp->bp_name);
 
 	/*
 	 * Map control/status registers.
@@ -1900,7 +1901,7 @@ bge_attach(parent, self, aux)
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: failed to enable memory mapping!\n",
+		aprint_error("%s: failed to enable memory mapping!\n",
 		    sc->bge_dev.dv_xname);
 		return;
 	}
@@ -1915,14 +1916,14 @@ bge_attach(parent, self, aux)
 		    &memaddr, &memsize) == 0)
 			break;
 	default:
-		printf("%s: can't find mem space\n",
+		aprint_error("%s: can't find mem space\n",
 		    sc->bge_dev.dv_xname);
 		return;
 	}
 
 	DPRINTFN(5, ("pci_intr_map\n"));
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n",
+		aprint_error("%s: couldn't map interrupt\n",
 		    sc->bge_dev.dv_xname);
 		return;
 	}
@@ -1934,14 +1935,15 @@ bge_attach(parent, self, aux)
 	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc);
 
 	if (sc->bge_intrhand == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->bge_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->bge_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n",
+	    sc->bge_dev.dv_xname, intrstr);
 
 	/*
 	 * Kludge for 5700 Bx bug: a hardware bug (PCIX byte enable?)
@@ -1961,7 +1963,7 @@ bge_attach(parent, self, aux)
 	bge_reset(sc);
 
 	if (bge_chipinit(sc)) {
-		printf("%s: chip initialization failed\n",
+		aprint_error("%s: chip initialization failed\n",
 		    sc->bge_dev.dv_xname);
 		bge_release_resources(sc);
 		return;
@@ -1981,7 +1983,7 @@ bge_attach(parent, self, aux)
 		eaddr[5] = (u_char)(mac_addr >> 0);
 	} else if (bge_read_eeprom(sc, (caddr_t)eaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
-		printf("%s: failed to read station address\n",
+		aprint_error("%s: failed to read station address\n",
 		    sc->bge_dev.dv_xname);
 		bge_release_resources(sc);
 		return;
@@ -1996,29 +1998,30 @@ bge_attach(parent, self, aux)
 	    BGE_PCIMISCCTL_ASICREV;
 	br = bge_lookup_rev(sc->bge_asicrev);
 
-	printf("%s: ", sc->bge_dev.dv_xname);
+	aprint_normal("%s: ", sc->bge_dev.dv_xname);
 	if (br == NULL) {
-		printf("unknown ASIC 0x%08x", sc->bge_asicrev);
+		aprint_normal("unknown ASIC 0x%08x", sc->bge_asicrev);
 		sc->bge_quirks = 0;
 	} else {
-		printf("ASIC %s", br->br_name);
+		aprint_normal("ASIC %s", br->br_name);
 		sc->bge_quirks = br->br_quirks;
 	}
-	printf(", Ethernet address %s\n", ether_sprintf(eaddr));
+	aprint_normal(", Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Allocate the general information block and ring buffers. */
 	sc->bge_dmatag = pa->pa_dmat;
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->bge_dev.dv_xname);
+		aprint_error("%s: can't alloc rx buffers\n",
+		    sc->bge_dev.dv_xname);
 		return;
 	}
 	DPRINTFN(5, ("bus_dmamem_map\n"));
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
 			   sizeof(struct bge_ring_data), &kva,
 			   BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
+		aprint_error("%s: can't map dma buffers (%d bytes)\n",
 		    sc->bge_dev.dv_xname, (int)sizeof(struct bge_ring_data));
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 		return;
@@ -2027,7 +2030,8 @@ bge_attach(parent, self, aux)
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
-		printf("%s: can't create dma map\n", sc->bge_dev.dv_xname);
+		aprint_error("%s: can't create dma map\n",
+		    sc->bge_dev.dv_xname);
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
@@ -2051,7 +2055,7 @@ bge_attach(parent, self, aux)
 
 	/* Try to allocate memory for jumbo buffers. */
 	if (bge_alloc_jumbo_mem(sc)) {
-		printf("%s: jumbo buffer allocation failed\n",
+		aprint_error("%s: jumbo buffer allocation failed\n",
 		    sc->bge_dev.dv_xname);
 	} else
 		sc->ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
