@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.45 2002/01/07 21:47:13 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.46 2002/01/12 16:21:07 tsutsui Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.45 2002/01/07 21:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.46 2002/01/12 16:21:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,11 +821,9 @@ sea_grow_scb(sea)
 		return;
 	}
 
-	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT);
+	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (scb == NULL)
 		return;
-
-	memset(scb, 0, sizeof(struct sea_scb));
 
 	TAILQ_INSERT_TAIL(&sea->free_list, scb, chain);
 	sea->numscbs++;
