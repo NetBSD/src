@@ -105,7 +105,7 @@ Supported devices include:
 			Allied-Telesis AT1700 series
 			Allied-Telesis RE2000 series
 		Intel EtherExpress 16
-		Intel EtherExpress PRO/10 [*]
+		Intel EtherExpress PRO/10
 		Intel EtherExpress 100 Fast Ethernet adapters
 		Novell NE1000, NE2000 (ISA, PCI, PCMCIA, ISA PnP)
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
@@ -264,7 +264,7 @@ EtherExpress 16 Ethernet boards
 		ie1 	0x300	10		iomem 0xd0000
 
 Intel EtherExpress PRO 10 ISA
-		iy0	any	any
+		iy0		0x360	any
 
 Intel EtherExpress 100 Fast Ethernet adapters
 		fxp0	any	any	[you must assign an interrupt in your
