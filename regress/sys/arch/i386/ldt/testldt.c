@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.8 2002/02/21 07:38:19 itojun Exp $	*/
+/*	$NetBSD: testldt.c,v 1.9 2002/07/20 08:36:25 grant Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -198,13 +198,13 @@ print_ldt(union descriptor *dp)
 static void
 busfault(int signo, int code, struct sigcontext *sc)
 {
-	errx(1, "\nbus fault - investigate.\n");
+	errx(1, "\nbus fault - investigate.");
 }
 
 static void
 usage(int status)
 {
-	errx(status, "Usage: testldt [-v]\n");
+	errx(status, "Usage: testldt [-v]");
 }
 
 #define MAX_USER_LDT 1024
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
 		    check_desc(num));
 	if (check_desc(num) != 0x97)
 		errx(1, "ERROR: descriptor check failed; "
-		    "expected 0x97, got 0x%x\n", check_desc(num));
+		    "expected 0x97, got 0x%x", check_desc(num));
 	
 	/*
 	 * Test a Call Gate

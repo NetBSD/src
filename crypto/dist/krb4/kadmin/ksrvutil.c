@@ -30,7 +30,7 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: ksrvutil.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
+RCSID("$Id: ksrvutil.c,v 1.2 2002/07/20 08:36:22 grant Exp $");
 
 #include "ksrvutil.h"
 
@@ -517,7 +517,7 @@ main(int argc, char **argv)
 			key_vno++;
 		    else {
 		        memcpy(new_key, old_key, sizeof(new_key));
-			warnx ("Key NOT changed: %s\n",
+			warnx ("Key NOT changed: %s",
 			       krb_get_err_text(status));
 			change_this_key = FALSE;
 		    }

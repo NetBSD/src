@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.58 2002/06/10 21:18:53 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.59 2002/07/20 08:36:27 grant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.58 2002/06/10 21:18:53 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.59 2002/07/20 08:36:27 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -1752,7 +1752,7 @@ print_getmsg(rtm, msglen)
 		return;
 	}
 	if (rtm->rtm_msglen > msglen) {
-		warnx("message length mismatch, in packet %d, returned %d\n",
+		warnx("message length mismatch, in packet %d, returned %d",
 		    rtm->rtm_msglen, msglen);
 	}
 	if (rtm->rtm_errno)  {

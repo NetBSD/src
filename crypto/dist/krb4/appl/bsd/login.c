@@ -45,7 +45,7 @@
 #include <sys/capability.h>
 #endif
 
-RCSID("$Id: login.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+RCSID("$Id: login.c,v 1.2 2002/07/20 08:36:21 grant Exp $");
 
 #ifdef OTP
 #include <otp.h>
@@ -267,7 +267,7 @@ main(int argc, char **argv)
 			break;
 	        case 'r':
 			if (rflag || hflag) {
-				warnx("Only one of -r and -h allowed\n");
+				warnx("Only one of -r and -h allowed");
 				exit(1);
                         }
 			if (getuid()) {
@@ -846,7 +846,7 @@ main(int argc, char **argv)
 
 	execlp(pwd->pw_shell, tbuf, 0);
 	if (getuid() == 0) {
-		warnx("Can't exec %s, trying %s\n", 
+		warnx("Can't exec %s, trying %s", 
 		      pwd->pw_shell, _PATH_BSHELL);
 		execlp(_PATH_BSHELL, tbuf, 0);
 		err(1, "%s", _PATH_BSHELL);
