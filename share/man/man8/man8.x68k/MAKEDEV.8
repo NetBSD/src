@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.13 2001/06/26 02:28:53 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.14 2001/09/08 01:32:56 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,13 +99,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd#
 Floppy disks
@@ -128,17 +128,17 @@ RAIDframe disk driver, see
 Memory pseudo-disk devices, see
 .Xr \&md 4
 . El
-.It Console ports:
+.It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttye#
 Ite bitmapped consoles
 . El
-.It Pointing devices:
+.It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar mouse#
 Serial mouse
 . El
-.It Terminal ports:
+.It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar tty#
 Standard serial port, see
@@ -147,18 +147,18 @@ Standard serial port, see
 PSX16550 serial board, see
 .Xr \&com 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar par#
 Motherboard parallel port
 . El
-.It ISDN devices:
+.It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
 Comunication between userland isdnd and kernel
@@ -171,7 +171,7 @@ Telephonie device
 . It Ar i4btrc#
 Trace device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar grf#
 Builtin video

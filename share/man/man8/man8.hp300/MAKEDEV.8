@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.15 2001/06/26 02:28:49 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.16 2001/09/08 01:32:42 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar ct#
 HP300 HP-IB cartridge tape, see
@@ -102,7 +102,7 @@ HP300 HP-IB cartridge tape, see
 Exabyte tape, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 ``concatenated'' pseudo-disks, see
@@ -123,7 +123,7 @@ HP300 SCSI disks, see
 ``file'' pseudo-disks, see
 .Xr \&vnd 4
 . El
-.It Terminal multiplexors:
+.It Terminal multiplexors :
 . Bl -tag -width 0123456789 -compact
 . It Ar dca#
 HP200/300 single port serial interface, see
@@ -134,13 +134,13 @@ HP200/300 4 port serial mux interface, see
 . It Ar apci#
 HP400 4 port serial mux interface
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
 File descriptors
