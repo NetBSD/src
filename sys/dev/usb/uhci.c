@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.18 1998/12/29 04:15:04 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.19 1998/12/30 13:25:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1645,8 +1645,10 @@ uhci_device_isoc_transfer(reqh)
 	usbd_request_handle reqh;
 {
 	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
+#ifdef USB_DEBUG
 	usbd_device_handle dev = upipe->pipe.device;
 	uhci_softc_t *sc = (uhci_softc_t *)dev->bus;
+#endif
 
 	DPRINTFN(1,("uhci_device_isoc_transfer: sc=%p\n", sc));
 	if (upipe->u.iso.bufsize == 0)
