@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.26 1996/02/25 17:47:26 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -1235,12 +1235,12 @@ nfs_timer(arg)
 	register struct socket *so;
 	register struct nfsmount *nmp;
 	register int timeo;
-	register struct nfssvc_sock *slp;
-#ifdef NFSSERVER
-	static long lasttime = 0;
-#endif
 	int s, error;
+#ifdef NFSSERVER
+	register struct nfssvc_sock *slp;
+	static long lasttime = 0;
 	u_quad_t cur_usec;
+#endif
 
 	s = splsoftnet();
 	for (rep = nfs_reqq.tqh_first; rep != 0; rep = rep->r_chain.tqe_next) {
