@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.29 2003/01/17 22:45:40 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.30 2003/04/01 21:27:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -200,9 +200,8 @@ void	consinit(void);
  * Define the default console speed for the board.  This is generally
  * what the firmware provided with the board defaults to.
  */
-#define CONSPEED B115200
 #ifndef CONSPEED
-#define CONSPEED B9600	/* TTYDEF_SPEED */
+#define CONSPEED B115200
 #endif
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
