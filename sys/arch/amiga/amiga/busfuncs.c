@@ -1,4 +1,4 @@
-/*	$NetBSD: busfuncs.c,v 1.1 1998/10/08 21:46:39 is Exp $	*/
+/*	$NetBSD: busfuncs.c,v 1.2 1998/10/12 21:15:54 is Exp $	*/
 
 /*
  * Copyright (c) 1998 Ignatios Souvatzis.  All rights reserved.
@@ -43,6 +43,8 @@ bsrm(amiga_contiguous_read_multi_2, u_int16_t);
 bswm(amiga_contiguous_write_multi_2, u_int16_t);
 bsrm(amiga_contiguous_read_region_2, u_int16_t);
 bswm(amiga_contiguous_write_region_2, u_int16_t);
+bssr(amiga_contiguous_set_region_2, u_int16_t);
+bscr(amiga_contiguous_copy_region_2, u_int16_t);
 
 bsr(amiga_interleaved_read_2, u_int16_t);
 bsw(amiga_interleaved_write_2, u_int16_t);
@@ -50,6 +52,8 @@ bsrm(amiga_interleaved_read_multi_2, u_int16_t);
 bswm(amiga_interleaved_write_multi_2, u_int16_t);
 bsrm(amiga_interleaved_read_region_2, u_int16_t);
 bswm(amiga_interleaved_write_region_2, u_int16_t);
+bssr(amiga_interleaved_set_region_2, u_int16_t);
+bscr(amiga_interleaved_copy_region_2, u_int16_t);
 
 const struct amiga_bus_space_methods amiga_contiguous_methods = {
 	amiga_contiguous_read_2,
@@ -58,9 +62,11 @@ const struct amiga_bus_space_methods amiga_contiguous_methods = {
 	amiga_contiguous_write_multi_2,
 	amiga_contiguous_read_region_2,
 	amiga_contiguous_write_region_2,
-	/* identical to the above here */
+	/* next two identical to the above here */
 	amiga_contiguous_read_region_2,
-	amiga_contiguous_write_region_2
+	amiga_contiguous_write_region_2,
+	amiga_contiguous_set_region_2,
+	amiga_contiguous_copy_region_2
 };
 
 const struct amiga_bus_space_methods amiga_interleaved_methods = {
@@ -70,9 +76,11 @@ const struct amiga_bus_space_methods amiga_interleaved_methods = {
 	amiga_interleaved_write_multi_2,
 	amiga_interleaved_read_region_2,
 	amiga_interleaved_write_region_2,
-	/* identical to the above here */
+	/* next two identical to the above here */
 	amiga_interleaved_read_region_2,
-	amiga_interleaved_write_region_2
+	amiga_interleaved_write_region_2,
+	amiga_interleaved_set_region_2,
+	amiga_interleaved_copy_region_2
 };
 
 /*
@@ -160,6 +168,38 @@ amiga_contiguous_write_region_2(t, h, o, p, s)
 {
 	/* ARGSUSED */
 	volatile u_int16_t *q = (volatile u_int16_t *)(h + o);
+
+	while (s-- > 0) {
+		*q++ = *p++;
+	}
+}
+
+void
+amiga_contiguous_set_region_2(t, h, o, v, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t v;
+	bus_size_t s;
+{
+	/* ARGSUSED */
+	volatile u_int16_t *q = (volatile u_int16_t *)(h + o);
+
+	while (s-- > 0) {
+		*q++ = v;
+	}
+}
+
+void
+amiga_contiguous_copy_region_2(t, srch, srco, dsth, dsto, s)
+	bus_space_tag_t t;
+	bus_space_handle_t srch, dsth;
+	bus_size_t srco, dsto;
+	bus_size_t s;
+{
+	/* ARGSUSED */
+	volatile u_int16_t *p = (volatile u_int16_t *)(srch + srco);
+	volatile u_int16_t *q = (volatile u_int16_t *)(dsth + dsto);
 
 	while (s-- > 0) {
 		*q++ = *p++;
@@ -289,6 +329,45 @@ amiga_interleaved_write_region_2(t, h, o, p, s)
 		*q = v >> 8;
 		q += step;
 		*q = v;
+		q += step;
+	}
+}
+
+void
+amiga_interleaved_set_region_2(t, h, o, v, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t v;
+	bus_size_t s;
+{
+	int step;
+	volatile u_int16_t *q = (volatile u_int16_t *)(h + o);
+
+	step = 1 << t->stride;
+
+	while (s-- > 0) {
+		*q = v;
+		q += step;
+	}
+}
+
+void
+amiga_interleaved_copy_region_2(t, srch, srco, dsth, dsto, s)
+	bus_space_tag_t t;
+	bus_space_handle_t srch, dsth;
+	bus_size_t srco, dsto;
+	bus_size_t s;
+{
+	int step;
+	volatile u_int16_t *p = (volatile u_int16_t *)(srch + srco);
+	volatile u_int16_t *q = (volatile u_int16_t *)(dsth + dsto);
+
+	step = 1 << t->stride;
+
+	while (s-- > 0) {
+		*q = *p;
+		p += step;
 		q += step;
 	}
 }
