@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.606 2004/01/19 12:33:26 ragge Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.607 2004/01/26 13:23:26 blymn Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -835,6 +835,7 @@
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
 #define	PCI_PRODUCT_AMD_PCIX8131_PPB	0x7450		/* PCI-X Tunnel */
 #define	PCI_PRODUCT_AMD_PCIX8131_APIC	0x7451		/* IO Apic */
+#define	PCI_PRODUCT_AMD_SC8151	0x7454		/* AMD8151 AGP Bridge */
 #define	PCI_PRODUCT_AMD_PBC8111	0x7460		/* AMD8111 I/O Hub */
 #define	PCI_PRODUCT_AMD_PBC8111_USB	0x7464		/* AMD8111 USB Host Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC Controller */
