@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)file.c	5.17 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: file.c,v 1.5 1994/03/07 23:28:09 cgd Exp $";
+static char rcsid[] = "$Id: file.c,v 1.6 1994/03/09 04:23:37 cgd Exp $";
 #endif /* not lint */
 
 #ifdef FILEC
@@ -108,7 +108,7 @@ static void
 setup_tty(on)
     int     on;
 {
-    static struct termios tchars;
+    struct termios tchars;
 
     if (on) {
 	(void) tcgetattr(SHIN, &tchars);
