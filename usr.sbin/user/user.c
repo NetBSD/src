@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.31 2000/11/01 22:29:10 simonb Exp $ */
+/* $NetBSD: user.c,v 1.32 2000/11/01 22:35:30 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.31 2000/11/01 22:29:10 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.32 2000/11/01 22:35:30 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -243,16 +243,12 @@ removehomedir(const char *user, int uid, const char *dir)
 
 	(void) seteuid(uid);
 	/* we add the "|| true" to keep asystem() quiet if there is a non-zero exit status. */
-#if 1
-printf("XXX: %s -rf %s > /dev/null 2>&1 || true", RM, dir);
-#else
 	(void) asystem("%s -rf %s > /dev/null 2>&1 || true", RM, dir);
 	(void) seteuid(0);
 	if (rmdir(dir) < 0) {
 		warnx("Unable to remove all files in `%s'\n", dir);
 		return 0;
 	}
-#endif
 	return 1;
 }
 
