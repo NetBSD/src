@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.17 1999/05/21 01:09:49 nisimura Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.18 1999/05/25 04:17:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.17 1999/05/21 01:09:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.18 1999/05/25 04:17:57 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ dec_3maxplus_init()
 	    (volatile u_int *) MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
 	u_int intr;
 
-	platform.iobus = "tcioasic";
+	platform.iobus = "tc3maxplus";
 
 	platform.os_init = dec_3maxplus_os_init;
 	platform.bus_reset = dec_3maxplus_bus_reset;
@@ -166,39 +166,32 @@ dec_3maxplus_init()
 void
 dec_3maxplus_os_init()
 {
-	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
-	mips_hardware_intr = dec_3maxplus_intr;
-	tc_enable_interrupt = dec_3maxplus_enable_intr;
-
 	/* clear any pending memory errors. */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
-	/*
-	 * Reset interrupts.
-	 */
-	Mach_splbio = Mach_spl0;
-	Mach_splnet = Mach_spl0;
-	Mach_spltty = Mach_spl0;
-	Mach_splimp = Mach_spl0;	/* XXX */
-	/*
-	 * Clock interrupts at hw priority 1 must block bio,net,tty
-	 * at hw priority 0.
-	 */
-	Mach_splclock = cpu_spl1;
-	Mach_splstatclock = cpu_spl1;
+	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
+	mips_hardware_intr = dec_3maxplus_intr;
+	tc_enable_interrupt = dec_3maxplus_enable_intr;
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
+
+	/* 3MAX+ has IOASIC free-running high resolution timer */
+	clkread = kn03_clkread;
 
 	/*
-	 * Initialize interrupts.
+	 * 3MAX+ IOASIC interrupts come through INT 0, while
+	 * clock interrupt does via INT 1.  splclock and splstatclock
+	 * should block IOASIC activities.
 	 */
-	kn03_tc3_imask = KN03_IM0 &
-		~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
-	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
-	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
-	kn03_wbflush();
+	splvec.splbio = MIPS_SPL0;
+	splvec.splnet = MIPS_SPL0;
+	splvec.spltty = MIPS_SPL0;
+	splvec.splimp = MIPS_SPL0;
+	splvec.splclock = MIPS_SPL_0_1;
+	splvec.splstatclock = MIPS_SPL_0_1;
+
+	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
 	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
@@ -214,8 +207,14 @@ dec_3maxplus_os_init()
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
-	/* 3MAX+ has IOASIC free-running high resolution timer */
-	clkread = kn03_clkread;
+	/*
+	 * Initialize interrupts.
+	 */
+	kn03_tc3_imask = KN03_IM0 &
+		~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
+	*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
+	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
+	kn03_wbflush();
 }
 
 
@@ -230,10 +229,10 @@ dec_3maxplus_bus_reset()
 	 */
 
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
-	wbflush();
+	kn03_wbflush();
 
 	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
-	wbflush();
+	kn03_wbflush();
 
 }
 
@@ -319,7 +318,7 @@ dec_3maxplus_enable_intr(slotno, handler, sc, on)
 	}
 done:
 	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
-	wbflush();
+	kn03_wbflush();
 }
 
 
@@ -366,7 +365,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 	}
 
 	/* If clock interrups were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_1));
+	_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_1));
 
 	/*
 	 * Check for late clock interrupts (allow 10% slop). Be careful
@@ -490,7 +489,7 @@ dec_3maxplus_intr(mask, pc, statusReg, causeReg)
 	if (mask & MIPS_INT_MASK_3)
 		dec_3maxplus_errintr();
 	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
-		MIPS_SR_INT_ENA_CUR);
+		MIPS_SR_INT_IE);
 }
 
 
@@ -508,7 +507,7 @@ dec_3maxplus_errintr()
 	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
 	*(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
-	wbflush();
+	kn03_wbflush();
 
 	/* Send to kn02/kn03 memory subsystem handler */
 	dec_mtasic_err(erradr, errsyn);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.11 1999/05/21 01:09:50 nisimura Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.12 1999/05/25 04:17:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.11 1999/05/21 01:09:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.12 1999/05/25 04:17:57 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ void
 dec_maxine_init()
 {
 
-	platform.iobus = "tcbus";
+	platform.iobus = "tcmaxine";
 
 	platform.os_init = dec_maxine_os_init;
 	platform.bus_reset = dec_maxine_bus_reset;
@@ -157,32 +157,25 @@ void
 dec_maxine_os_init()
 {
 	/* clear any memory errors from probes */
-	*(volatile u_int*)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
-	wbflush();
+	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
+	kn02ca_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
 	mips_hardware_intr = dec_maxine_intr;
 	tc_enable_interrupt = dec_maxine_enable_intr;
-
-	/* On the MAXINE ioasic interrupts at level 3. */
-	Mach_splbio = Mach_spl3;
-	Mach_splnet = Mach_spl3;
-	Mach_spltty = Mach_spl3;
-	Mach_splimp = Mach_spl3;
-
-	/*
-	 * Note priority inversion of ioasic and clock:
-	 * clock interrupts are at hw priority 1, and when blocking
-	 * clock interrups we we must block hw priority 3
-	 * (bio,net,tty) also.
-	 *
-	 * XXX hw priority 2 is used for memory errors, we
-	 * should not disable memory errors during clock interrupts!
-	 */
-	Mach_splclock = cpu_spl3;
-	Mach_splstatclock = cpu_spl3;
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
+
+	/* MAXINE has 1 microsec. free-running high resolution timer */
+	clkread = kn02ca_clkread;
+
+	splvec.splbio = MIPS_SPL3;
+	splvec.splnet = MIPS_SPL3;
+	splvec.spltty = MIPS_SPL3;
+	splvec.splimp = MIPS_SPL3;
+	splvec.splclock = MIPS_SPL_0_1_3;
+	splvec.splstatclock = MIPS_SPL_0_1_3;
+
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
 	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
@@ -196,11 +189,8 @@ dec_maxine_os_init()
 	/*
 	 * Initialize interrupts.
 	 */
-	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = XINE_IM0;
-	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
-
-	/* MAXINE has 1 microsec. free-running high resolution timer */
-	clkread = kn02ca_clkread;
+	*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) = XINE_IM0;
+	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 }
 
 
@@ -344,7 +334,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 	}
 
 	/* If clock interrups were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_1));
+	_splset(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_1));
 
 	if (mask & MIPS_INT_MASK_3) {
 		intr = *intrp;
