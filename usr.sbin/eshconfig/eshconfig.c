@@ -1,4 +1,4 @@
-/*	$NetBSD: eshconfig.c,v 1.5 2003/05/03 18:11:44 wiz Exp $	*/
+/*	$NetBSD: eshconfig.c,v 1.6 2003/09/19 06:22:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eshconfig.c,v 1.5 2003/05/03 18:11:44 wiz Exp $");
+__RCSID("$NetBSD: eshconfig.c,v 1.6 2003/09/19 06:22:03 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -463,7 +463,7 @@ static void
 eeprom_download(const char *filename)
 {
 	FILE *fp;
-	struct rr_seg_descr *segd = NULL;
+	struct rr_seg_descr *segd = NULL, *nsegd;
 	char id[BUFSIZ];
 	char pad[BUFSIZ];
 	char buffer[BUFSIZ];
@@ -553,9 +553,10 @@ eeprom_download(const char *filename)
 		if (!in_segment) {
 			in_segment = 1;
 
-			segd = realloc(segd, sizeof(struct rr_seg_descr) * (segment + 1));
-			if (segd == NULL)
+			nsegd = realloc(segd, sizeof(struct rr_seg_descr) * (segment + 1));
+			if (nsegd == NULL)
 				err(6, "couldn't realloc segment descriptor space");
+			segd = nsegd;
 
 			segd[segment].start_addr = address * sizeof(u_int32_t);
 			segd[segment].ee_addr = segment_start;

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.15 2001/07/22 13:34:18 wiz Exp $ */
+/* $NetBSD: main.c,v 1.16 2003/09/19 06:26:09 itojun Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.15 2001/07/22 13:34:18 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2003/09/19 06:26:09 itojun Exp $");
 #endif
 
 /*
@@ -570,8 +570,15 @@ fmt(key)
 {
 	static char *buf = NULL;
 	static size_t len = 0;
-	if (len < key->size * 4 + 1)
-		buf = realloc(buf, len = key->size * 4 + 1);
+	char *nbuf;
+
+	if (len < key->size * 4 + 1) {
+		nbuf = realloc(buf, key->size * 4 + 1);
+		if (!nbuf)
+			err(1, "realloc");
+		buf = nbuf;
+		len = key->size * 4 + 1;
+	}
 	(void)strvisx(buf, key->data, key->size, 0);
 	return buf;
 }
