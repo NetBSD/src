@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.46 1999/08/05 02:07:39 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.47 1999/09/13 12:15:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,6 +106,7 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/in6_ifattach.h>
 #endif
 
 #ifdef NS
@@ -773,6 +774,9 @@ ether_ifattach(ifp, lla)
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
+#ifdef INET6
+	in6_ifattach_getifid(ifp);
+#endif
 }
 
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
@@ -830,7 +834,7 @@ ether_addmulti(ifr, ec)
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)
 			&(((struct in6_ifreq *)ifr)->ifr_addr);
-		if (IN6_IS_ADDR_ANY(&sin6->sin6_addr)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/*
 			 * An IP6 address of 0 means listen to all
 			 * of the Ethernet multicast address used for IP6.
@@ -942,7 +946,7 @@ ether_delmulti(ifr, ec)
 #ifdef INET6
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)&(ifr->ifr_addr);
-		if (IN6_IS_ADDR_ANY(&sin6->sin6_addr)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/*
 			 * An IP6 address of all 0 means stop listening
 			 * to the range of Ethernet multicast addresses used
