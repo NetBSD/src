@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.11 1997/05/15 10:04:27 veego Exp $
+#	$NetBSD: Makefile,v 1.12 1997/10/03 15:53:01 christos Exp $
 
+WARNS?=	1
 LIB=	pcap
-MAN=	pcap.3
+MAN=	pcap.3 
 
 LEX=	flex
 
@@ -12,12 +13,13 @@ CFLAGS+=-DLBL_ALIGN=1
 LFLAGS+=-olex.yy.c -Ppcap_
 YFLAGS+=-ppcap_
 
-SRCS=	bpf_filter.c bpf_image.c etherent.c gencode.c grammar.y inet.c \
-	nametoaddr.c optimize.c pcap-bpf.c pcap.c savefile.c scanner.l
+SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
+inet.c grammar.y gencode.c etherent.c bpf_image.c 
+SRCS+=	bpf_filter.c
 
 .PATH:	${.CURDIR}/../../sys/net
 
-INCS=pcap.h pcap-namedb.h
+INCS=	pcap-namedb.h pcap.h 
 INCSDIR=/usr/include
 
 CLEANFILES+= y.tab.h

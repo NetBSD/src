@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-namedb.h,v 1.4 1996/12/13 08:26:10 mikel Exp $	*/
+/*	$NetBSD: pcap-namedb.h,v 1.5 1997/10/03 15:53:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap-namedb.h,v 1.5 96/07/14 03:00:14 leres Exp (LBL)
+ * @(#) Header: pcap-namedb.h,v 1.5 96/07/14 03:00:14 leres Exp  (LBL)
  */
 
 #ifndef lib_pcap_ethers_h

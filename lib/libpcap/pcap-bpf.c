@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.5 1997/01/23 14:03:00 mrg Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.6 1997/10/03 15:53:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -20,9 +20,14 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+#include <sys/cdefs.h>
 #ifndef lint
-static  char rcsid[] =
-    "@(#)Header: pcap-bpf.c,v 1.26 96/07/15 00:48:50 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: pcap-bpf.c,v 1.29 96/12/31 20:53:40 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: pcap-bpf.c,v 1.6 1997/10/03 15:53:12 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>			/* optionally get BSD define */
@@ -204,6 +209,19 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		    pcap_strerror(errno));
 		goto bad;
 	}
+#if _BSDI_VERSION - 0 >= 199510
+	/* The SLIP and PPP link layer header changed in BSD/OS 2.1 */
+	switch (v) {
+
+	case DLT_SLIP:
+		v = DLT_SLIP_BSDOS;
+		break;
+
+	case DLT_PPP:
+		v = DLT_PPP_BSDOS;
+		break;
+	}
+#endif
 	p->linktype = v;
 
 	/* set timeout */
