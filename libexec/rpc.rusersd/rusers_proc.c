@@ -154,14 +154,20 @@ getidle(char *tty, char *display)
         idle = 0;
         if (*tty == 'X') {
                 u_long kbd_idle, mouse_idle;
+#if	!defined(__386BSD__)
                 kbd_idle = getidle("kbd", NULL);
+#else
+                kbd_idle = getidle("vga", NULL);
+#endif
                 mouse_idle = getidle("mouse", NULL);
                 idle = (kbd_idle < mouse_idle)?kbd_idle:mouse_idle;
         }
         else {
                 sprintf(devname, "%s/%s", _PATH_DEV, tty);
                 if (stat(devname, &st) < 0) {
-                        syslog(LOG_ERR, "%s: %m", devname);
+#ifdef DEBUG
+                        printf("%s: %s\n", devname, strerror(errno));
+#endif
                         return(-1);
                 }
                 time(&now);
