@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/10/21 23:23:23 jmc Exp $
+#	$NetBSD: Makefile,v 1.9 2001/12/04 18:14:20 jmc Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -138,3 +138,4 @@ release: $(IMAGE) netbsd.INSTALL
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
+.include <bsd.prog.mk>
