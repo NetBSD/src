@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.29 2003/08/07 11:25:50 agc Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.30 2004/01/25 21:49:04 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -226,11 +226,44 @@ main(argc, argv)
 			if (vnu.vnu_ino == 0)
 				printf("vnd%d: not in use\n",
 				    vnu.vnu_unit);
-			else
-				printf("vnd%d: dev %d,%d inode %d\n",
-				    vnu.vnu_unit,
-				    major(vnu.vnu_dev), minor(vnu.vnu_dev),
-				    vnu.vnu_ino);
+			else {
+				char *dev;
+				struct statfs *mnt = NULL;
+				int i, n;
+
+				printf("vnd%d: ", vnu.vnu_unit);
+
+				dev = devname(vnu.vnu_dev, S_IFBLK);
+				if (dev != NULL)
+					n = getmntinfo(&mnt, MNT_NOWAIT);
+				else
+					mnt = NULL;
+				if (mnt != NULL) {
+					for (i = 0; i < n; i++) {
+						if (strncmp(
+						    mnt[i].f_mntfromname,
+						    "/dev/", 5) == 0 &&
+						    strcmp(
+						    mnt[i].f_mntfromname + 5,
+						    dev) == 0)
+							break;
+					}
+					if (i < n)
+						printf("%s (%s) ",
+						    mnt[i].f_mntonname,
+						    mnt[i].f_mntfromname);
+					else
+						printf("%s ", dev);
+				}
+				else if (dev != NULL)
+					printf("%s ", dev);
+				else
+					printf("dev %d,%d ",
+					    major(vnu.vnu_dev),
+					    minor(vnu.vnu_dev));
+
+				printf("inode %d\n", vnu.vnu_ino);
+			}
 
 			if (argc)
 				break;
