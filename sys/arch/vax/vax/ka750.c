@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.29 1999/08/07 10:36:49 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.30 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -76,13 +76,13 @@ static	caddr_t mcraddr[4];	/* XXX */
 void
 ka750_conf()
 {
-	printf("cpu: KA750, hardware rev %d, ucode rev %d\n",
+	printf("cpu0: KA750, hardware rev %d, ucode rev %d, ",
 	    V750HARDW(vax_cpudata), V750UCODE(vax_cpudata));
 	if (mfpr(PR_ACCS) & 255) {
-		printf("cpu: FPA present, enabling.\n");
+		printf("FPA present, enabling.\n");
 		mtpr(0x8000, PR_ACCS);
 	} else
-		printf("cpu: no FPA\n");
+		printf("no FPA\n");
 
 	if (mfpr(PR_TODR) == 0) { /* Check for failing battery */
 		mtpr(1, PR_TODR);
