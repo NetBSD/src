@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.20 1999/07/05 21:49:05 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.21 1999/07/05 21:55:46 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -62,6 +62,9 @@
 #endif /* __FreeBSD__ */
 
 #if defined(__NetBSD__)
+#   include <sys/param.h>
+size_t pagesize;
+#   define malloc_pageshift             pagesize
 #   define malloc_minsize               16U
 #endif /* __NetBSD__ */
 
@@ -247,7 +250,7 @@ static struct pgfree *px;
 char *malloc_options;
 
 /* Name of the current public function */
-static char *malloc_func;
+static const char *malloc_func;
 
 /* Macro for mmap */
 #define MMAP(size) \
@@ -257,7 +260,7 @@ static char *malloc_func;
 /*
  * Necessary function declarations
  */
-static int extend_pgdir(u_long index);
+static int extend_pgdir(u_long idx);
 static void *imalloc(size_t size);
 static void ifree(void *ptr);
 static void *irealloc(void *ptr, size_t size);
@@ -265,9 +268,9 @@ static void *irealloc(void *ptr, size_t size);
 extern char *__progname;
 
 static void
-wrterror(char *p)
+wrterror(const char *p)
 {
-    char *q = " error: ";
+    const char *q = " error: ";
     write(STDERR_FILENO, __progname, strlen(__progname));
     write(STDERR_FILENO, malloc_func, strlen(malloc_func));
     write(STDERR_FILENO, q, strlen(q));
@@ -277,9 +280,9 @@ wrterror(char *p)
 }
 
 static void
-wrtwarning(char *p)
+wrtwarning(const char *p)
 {
-    char *q = " warning: ";
+    const char *q = " warning: ";
     if (malloc_abort)
 	wrterror(p);
     write(STDERR_FILENO, __progname, strlen(__progname));
@@ -320,13 +323,13 @@ map_pages(int pages)
  * Extend page directory
  */
 static int
-extend_pgdir(u_long index)
+extend_pgdir(u_long idx)
 {
     struct  pginfo **new, **old;
     int i, oldlen;
 
     /* Make it this many pages */
-    i = index * sizeof *page_dir;
+    i = idx * sizeof *page_dir;
     i /= malloc_pagesize;
     i += 2;
 
@@ -394,6 +397,9 @@ malloc_init (void)
 #ifdef MALLOC_EXTRA_SANITY
     malloc_junk = 1;
 #endif /* MALLOC_EXTRA_SANITY */
+#ifdef __NetBSD__
+    pagesize = sysconf(_SC_PAGESIZE);
+#endif
 
     for (i = 0; i < 3; i++) {
 	if (i == 0) {
@@ -498,7 +504,7 @@ malloc_pages(size_t size)
     void *p, *delay_free = 0;
     int i;
     struct pgfree *pf;
-    u_long index;
+    u_long idx;
 
     size = pageround(size);
 
@@ -555,10 +561,10 @@ malloc_pages(size_t size)
 
     if (p) {
 
-	index = ptr2index(p);
-	page_dir[index] = MALLOC_FIRST;
+	idx = ptr2index(p);
+	page_dir[idx] = MALLOC_FIRST;
 	for (i=1;i<size;i++)
-	    page_dir[index+i] = MALLOC_FOLLOW;
+	    page_dir[idx+i] = MALLOC_FOLLOW;
 
 	if (malloc_junk)
 	    memset(p, SOME_JUNK, size << malloc_pageshift);
@@ -735,26 +741,26 @@ static void *
 irealloc(void *ptr, size_t size)
 {
     void *p;
-    u_long osize, index;
+    u_long osize, idx;
     struct pginfo **mp;
     int i;
 
     if (suicide)
 	abort();
 
-    index = ptr2index(ptr);
+    idx = ptr2index(ptr);
 
-    if (index < malloc_pageshift) {
+    if (idx < malloc_pageshift) {
 	wrtwarning("junk pointer, too low to make sense.\n");
 	return 0;
     }
 
-    if (index > last_index) {
+    if (idx > last_index) {
 	wrtwarning("junk pointer, too high to make sense.\n");
 	return 0;
     }
 
-    mp = &page_dir[index];
+    mp = &page_dir[idx];
 
     if (*mp == MALLOC_FIRST) {			/* Page allocation */
 
@@ -825,7 +831,7 @@ irealloc(void *ptr, size_t size)
  */
 
 static __inline__ void
-free_pages(void *ptr, int index, struct pginfo *info)
+free_pages(void *ptr, int idx, struct pginfo *info)
 {
     int i;
     struct pgfree *pf, *pt=0;
@@ -848,9 +854,9 @@ free_pages(void *ptr, int index, struct pginfo *info)
     }
 
     /* Count how many pages and mark them free at the same time */
-    page_dir[index] = MALLOC_FREE;
-    for (i = 1; page_dir[index+i] == MALLOC_FOLLOW; i++)
-	page_dir[index + i] = MALLOC_FREE;
+    page_dir[idx] = MALLOC_FREE;
+    for (i = 1; page_dir[idx+i] == MALLOC_FOLLOW; i++)
+	page_dir[idx + i] = MALLOC_FREE;
 
     l = i << malloc_pageshift;
 
@@ -938,10 +944,10 @@ free_pages(void *ptr, int index, struct pginfo *info)
 	brk(pf->end);
 	malloc_brk = pf->end;
 
-	index = ptr2index(pf->end);
-	last_index = index - 1;
+	idx = ptr2index(pf->end);
+	last_index = idx - 1;
 
-	for(i=index;i <= last_index;)
+	for(i=idx;i <= last_index;)
 	    page_dir[i++] = MALLOC_NOT_MINE;
 
 	/* XXX: We could realloc/shrink the pagedir here I guess. */
@@ -955,7 +961,7 @@ free_pages(void *ptr, int index, struct pginfo *info)
  */
 
 static __inline__ void
-free_bytes(void *ptr, int index, struct pginfo *info)
+free_bytes(void *ptr, int idx, struct pginfo *info)
 {
     int i;
     struct pginfo **mp;
@@ -1020,7 +1026,7 @@ static void
 ifree(void *ptr)
 {
     struct pginfo *info;
-    int index;
+    int idx;
 
     /* This is legal */
     if (!ptr)
@@ -1035,24 +1041,24 @@ ifree(void *ptr)
     if (suicide)
 	return;
 
-    index = ptr2index(ptr);
+    idx = ptr2index(ptr);
 
-    if (index < malloc_pageshift) {
+    if (idx < malloc_pageshift) {
 	wrtwarning("junk pointer, too low to make sense.\n");
 	return;
     }
 
-    if (index > last_index) {
+    if (idx > last_index) {
 	wrtwarning("junk pointer, too high to make sense.\n");
 	return;
     }
 
-    info = page_dir[index];
+    info = page_dir[idx];
 
     if (info < MALLOC_MAGIC)
-        free_pages(ptr, index, info);
+        free_pages(ptr, idx, info);
     else
-	free_bytes(ptr, index, info);
+	free_bytes(ptr, idx, info);
     return;
 }
 
