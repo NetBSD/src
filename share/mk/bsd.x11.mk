@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.28 2004/01/29 00:21:31 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.29 2004/02/06 11:52:48 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -7,6 +7,7 @@ BINDIR=			${X11BINDIR}
 LIBDIR=			${X11USRLIBDIR}
 MANDIR=			${X11MANDIR}
 
+FOOBAR=	foo
 
 X11FLAGS.VERSION=	-DOSMAJORVERSION=1 -DOSMINORVERSION=6		# XXX
 
@@ -67,6 +68,13 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module
 .endif
 
+# Extract X11VERSION
+PRINTX11VERSION=awk '/^\#define XF86_VERSION_MAJOR/ {major = $$3} \
+		     /^\#define XF86_VERSION_MINOR/ {minor = $$3} \
+		     /^\#define XF86_VERSION_PATCH/ {patch = $$3} \
+		     /^\#define XF86_VERSION_SNAP/ {snap = $$3} \
+		     END { print "((("major") * 10000000) + (("minor") * 100000) + (("patch") * 1000) + "snap")"}' \
+		     ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86Version.h
 
 # Commandline to convert 'XCOMM' comments to #
 #
