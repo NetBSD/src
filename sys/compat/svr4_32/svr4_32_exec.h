@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.2 2001/02/11 01:10:24 eeh Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.3 2001/07/29 21:28:47 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
 # define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(netbsd32_charp))
 #endif
 
-void *svr4_32_copyargs __P((struct exec_package *, struct ps_strings *,
-			       void *, void *));
+int svr4_32_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 
 /*
  * The following is horrible; there must be a better way. I need to
