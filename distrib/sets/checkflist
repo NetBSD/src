@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.6 1998/06/15 14:45:05 lukem Exp $
+#	$NetBSD: checkflist,v 1.7 1998/06/30 05:13:31 ross Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -16,6 +16,8 @@ elif [ "$1" = "-both" ]; then
 else
 	sh makeflist > /tmp/_CHECK.$$
 fi
-( cd $DESTDIR ; find . \( -type d -o -type f -o -type l \) ) | sort | \
-    diff /tmp/_CHECK.$$ -
+( cd $DESTDIR ; find . \( -type d -o -type f -o -type l \) ) 	\
+    | sed -e s:./usr/include/`uname -m`/:./usr/include/machine/:	\
+    | sort							\
+    | diff /tmp/_CHECK.$$ -
 /bin/rm -f /tmp/_CHECK.$$
