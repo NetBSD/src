@@ -1,4 +1,4 @@
-/*	$NetBSD: curs_set.c,v 1.6 2001/12/02 09:14:20 blymn Exp $	*/
+/*	$NetBSD: curs_set.c,v 1.7 2001/12/11 11:18:17 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -31,13 +31,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: curs_set.c,v 1.6 2001/12/02 09:14:20 blymn Exp $");
+__RCSID("$NetBSD: curs_set.c,v 1.7 2001/12/11 11:18:17 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
-
-/*static int old_mode = 2;*/ /* cursor is set to high vis on start */
 
 /*
  * curs_set --

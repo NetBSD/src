@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.34 2001/12/02 09:14:20 blymn Exp $
+#	$NetBSD: Makefile,v 1.35 2001/12/11 11:18:17 blymn Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 CPPFLAGS+=#-DTFILE=\"/dev/ttyp0\"
-CPPFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR} -I${.CURDIR}/../libterm
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../libterm
 .if defined(DEBUG_CURSES)
 CFLAGS+=-g
 .if defined(FULL_DEBUG)

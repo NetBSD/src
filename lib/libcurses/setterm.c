@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.29 2001/12/02 09:14:23 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.30 2001/12/11 11:18:18 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.29 2001/12/02 09:14:23 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.30 2001/12/11 11:18:18 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,25 +357,7 @@ zap(SCREEN *screen)
 		screen->int_count++;
 	} while (*namp);
 
-	  /* calculate the size of tspace.... */
   	nampstr = "ABacaeAFALalasbcblbtcdceclcmcrcsdcDLdldmDOdoeAedeihoIcicimIpipk0k1k2k3k4k5k6k7k8k9kdkekhklkrkskuLEllmambmdmemhmkmmmompmrndnlocoppcrcRISbscseSFSfsfsospSRsrtatetiucueUPupusvbvevivs";
-/*  	namp = nampstr; */
-/*  	tspace_size = 0; */
-/*  	do { */
-/*  		*tmp = *namp; */
-/*  		*(tmp + 1) = *(namp + 1); */
-/*  		t_getstr(tinfo, tmp, NULL, &i); */
-/*  		tspace_size += i + 1; */
-/*  		namp += 2; */
-/*  	} while (*namp); */
-
-/*  	if ((screen->tspace = (char *) malloc(tspace_size)) == NULL) */
-/*  		return ERR; */
-/*  #ifdef DEBUG */
-/*  	__CTRACE("Allocated %d (0x%x) size buffer for tspace\n", tspace_size, */
-/*  		 tspace_size); */
-/*  #endif */
-/*  	screen->aoftspace = screen->tspace; */
 	
 	namp = nampstr;
 	sp = &screen->tc_AB;
