@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.35 1998/02/24 07:38:02 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.36 1998/02/27 03:59:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.35 1998/02/24 07:38:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.36 1998/02/27 03:59:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,9 +231,6 @@ struct chgstats {
 
 int debugmap = 0;
 int pmapdebug = PDB_PARANOIA;
-#if !defined(UVM)
-extern vm_offset_t pager_sva, pager_eva;
-#endif
 #endif
 
 /*
@@ -321,6 +318,12 @@ pmap_attr_t	*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
+/*
+ * List of all pmaps, used to update them when e.g. additional kernel
+ * page tables are allocated.
+ */
+LIST_HEAD(, pmap) pmap_all_pmaps;
+
 #define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
 
 static __inline struct pv_entry *pa_to_pvh __P((vm_offset_t));
@@ -349,20 +352,31 @@ pa_to_attribute(pa)
 /*
  * Internal routines
  */
-void alpha_protection_init __P((void));
-void pmap_collect1	__P((pmap_t, vm_offset_t, vm_offset_t));
-void pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *, int));
-void pmap_changebit	__P((vm_offset_t, u_long, boolean_t));
-void pmap_enter_ptpage	__P((pmap_t, vm_offset_t));
-#ifdef DEBUG
-void pmap_pvdump	__P((vm_offset_t));
-void pmap_check_wiring	__P((char *, vm_offset_t));
-#endif
+void	alpha_protection_init __P((void));
+void	pmap_collect1 __P((pmap_t, vm_offset_t, vm_offset_t));
+void	pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *, int));
+void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
+void	pmap_enter_ptpage __P((pmap_t, vm_offset_t));
 
-struct pv_entry *pmap_alloc_pv __P((void));
+/*
+ * PT page management functions.
+ */
+vm_offset_t pmap_alloc_ptpage __P((void));
+void	pmap_free_ptpage __P((vm_offset_t));
+void	pmap_create_lev1map __P((pmap_t));
+
+/*
+ * PV table management functions.
+ */
+struct	pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 #ifdef notyet
 void	pmap_collect_pv __P((void));
+#endif
+
+#ifdef DEBUG
+void	pmap_pvdump __P((vm_offset_t));
+void	pmap_check_wiring __P((char *, vm_offset_t));
 #endif
 
 /* pmap_remove_mapping flags */
@@ -370,21 +384,29 @@ void	pmap_collect_pv __P((void));
 #define	PRM_CFLUSH	2
 
 /*
- *	Inline version of pmap_activate(), for speed in certain cases.
+ * PMAP_ACTIVATE:
  *
- *	This is invoked when it is known that the pmap in question
- *	is the one for the current process.
+ *	This is essentially the guts of pmap_activate(), without
+ *	ASN allocation.  This is used by pmap_activate() and by
+ *	pmap_create_lev1map().
  */
-__inline void _pmap_activate __P((struct pmap *));
-__inline void
-_pmap_activate(pmap)
-	struct pmap *pmap;
-{
-
-	Lev1map[kvtol1pte(VM_MIN_ADDRESS)] = pmap->pm_stpte;
-	ALPHA_TBIAP();
-	alpha_pal_imb();
-}
+#define	PMAP_ACTIVATE(pmap, p)						\
+do {									\
+	(p)->p_addr->u_pcb.pcb_hw.apcb_ptbr =				\
+	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)(pmap)->pm_lev1map) >> PGSHIFT; \
+									\
+	if ((p) == curproc) {						\
+		/*							\
+		 * Page table base register has changed; switch to	\
+		 * our own context again so that it will take effect.	\
+		 */							\
+		(void) alpha_pal_swpctx((u_long)p->p_md.md_pcbpaddr);	\
+									\
+		/* XXX These go away if we use ASNs. */			\
+		ALPHA_TBIAP();						\
+		alpha_pal_imb();					\
+	}								\
+} while (0)
 
 /*
  * pmap_bootstrap:
@@ -404,16 +426,14 @@ pmap_bootstrap(ptaddr)
 		printf("pmap_bootstrap(0x%lx)\n", ptaddr);
 #endif
 
-	/* XXX change vallocs to direct calls to pmap_steal_memory (later) */
-#define valloc(name, type, num)					\
-	(name) = (type *)pmap_steal_memory(sizeof (type) * (num), NULL, NULL)
-
 	/*
 	 * Allocate an empty prototype segment map for processes.
 	 * This will be used until processes get their own.
 	 */
-	valloc(Segtabzero, pt_entry_t, NPTEPG);
-        Segtabzeropte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Segtabzero) >> PGSHIFT) << PG_SHIFT;
+	Segtabzero = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
+        Segtabzeropte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Segtabzero) >>
+            PGSHIFT) << PG_SHIFT;
 	Segtabzeropte |= PG_V | PG_KRE | PG_KWE | PG_WIRED;
 
 	/*
@@ -436,7 +456,8 @@ pmap_bootstrap(ptaddr)
 	 * This is always one page long.
 	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
 	 */
-	valloc(Lev1map, pt_entry_t, NPTEPG);
+	Lev1map = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
 
 	/*
 	 * Allocate a level 2 PTE table for the kernel.
@@ -444,15 +465,15 @@ pmap_bootstrap(ptaddr)
 	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
 	 */
 	Sysptmapsize = roundup(howmany(Sysmapsize, NPTEPG), NPTEPG);
-	valloc(Sysptmap, pt_entry_t, Sysptmapsize);
-	pmap_kernel()->pm_stab = Sysptmap;
+	Sysptmap = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * Sysptmapsize, NULL, NULL);
 
 	/*
 	 * Allocate a level 3 PTE table for the kernel.
 	 * Contains Sysmapsize PTEs.
 	 */
-	valloc(Sysmap, pt_entry_t, Sysmapsize);
-	pmap_kernel()->pm_ptab = Sysmap;
+	Sysmap = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * Sysmapsize, NULL, NULL);
 
 	/*
 	 * Allocate memory for page attributes and pv_table entries.
@@ -479,12 +500,11 @@ pmap_bootstrap(ptaddr)
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
     {
-	extern pt_entry_t *rom_ptep, rom_pte;		/* XXX */
+	extern pt_entry_t rom_pte;			/* XXX */
 	extern int prom_mapped;				/* XXX */
 
 	if (pmap_uses_prom_console()) {
 		/* XXX save old pte so that we can remap prom if necessary */
-		rom_ptep = &Lev1map[0];				/* XXX */
 		rom_pte = *(pt_entry_t *)ptaddr & ~PG_ASM;	/* XXX */
 	}
 	prom_mapped = 0;
@@ -500,15 +520,16 @@ pmap_bootstrap(ptaddr)
 
 	/* Map all of the level 2 pte pages */
 	for (i = 0; i < howmany(Sysptmapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysptmap) + (i*PAGE_SIZE)) >> PGSHIFT)
-		    << PG_SHIFT;
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysptmap) +
+		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		Lev1map[kvtol1pte(VM_MIN_KERNEL_ADDRESS +
 		    (i*PAGE_SIZE*NPTEPG*NPTEPG))] = pte;
 	}
 
 	/* Map the virtual page table */
-	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT) << PG_SHIFT;
+	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT)
+	    << PG_SHIFT;
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
 	Lev1map[kvtol1pte(VPTBASE)] = pte;
 	
@@ -517,8 +538,8 @@ pmap_bootstrap(ptaddr)
 	 */
 	/* Map all of the level 3 pte pages */
 	for (i = 0; i < howmany(Sysmapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysmap)+(i*PAGE_SIZE)) >> PGSHIFT)
-		    << PG_SHIFT;
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysmap) +
+		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		Sysptmap[vatoste(VM_MIN_KERNEL_ADDRESS+
 		    (i*PAGE_SIZE*NPTEPG))] = pte;
@@ -547,10 +568,19 @@ pmap_bootstrap(ptaddr)
 #endif
 
 	/*
+	 * Intialize the pmap list.
+	 */
+	LIST_INIT(&pmap_all_pmaps);
+
+	/*
 	 * Initialize kernel pmap.
 	 */
+	pmap_kernel()->pm_lev1map = Lev1map;
+	pmap_kernel()->pm_stab = Sysptmap;
+	pmap_kernel()->pm_ptab = Sysmap;
 	pmap_kernel()->pm_count = 1;
 	simple_lock_init(&pmap_kernel()->pm_lock);
+	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap_kernel(), pm_list);
 
 	/*
 	 * Set up proc0's PCB such that the ptbr points to the right place.
@@ -785,6 +815,14 @@ pmap_pinit(pmap)
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
 		printf("pmap_pinit(%p)\n", pmap);
 #endif
+
+	/*
+	 * Defer allocation of a new level 1 page table until
+	 * the first new mapping is entered; just take a reference
+	 * to the kernel Lev1map.
+	 */
+	pmap->pm_lev1map = Lev1map;
+
 	/*
 	 * No need to allocate page table space yet but we do need a
 	 * valid segment table.  Initially, we point everyone at the
@@ -792,9 +830,10 @@ pmap_pinit(pmap)
 	 * segment table will be allocated.
 	 */
 	pmap->pm_stab = Segtabzero;
-	pmap->pm_stpte = Segtabzeropte;
+
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
+	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap, pm_list);
 }
 
 /*
@@ -860,6 +899,12 @@ pmap_release(pmap)
 		kmem_free_wakeup(st_map, (vm_offset_t)pmap->pm_stab,
 				 ALPHA_STSIZE);
 #endif
+
+	if (pmap->pm_lev1map != Lev1map)
+		pmap_free_ptpage(ALPHA_K0SEG_TO_PHYS((vm_offset_t)
+		    pmap->pm_lev1map));
+
+	LIST_REMOVE(pmap, pm_list);
 }
 
 /*
@@ -1634,8 +1679,9 @@ pmap_activate(p)
 		printf("pmap_activate(%p)\n", p);
 #endif
 
-	if (p == curproc)
-		_pmap_activate(pmap);
+	/* XXX Allocate an ASN. */
+
+	PMAP_ACTIVATE(pmap, p);
 }
 
 /*
@@ -1653,6 +1699,8 @@ pmap_deactivate(p)
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
 		printf("pmap_deactivate(%p)\n", p);
 #endif
+
+	/* XXX Free the ASN. */
 }
 
 /*
@@ -2097,15 +2145,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 						 ALPHA_STSIZE);
 #endif
 				ptpmap->pm_stab = Segtabzero;
-				ptpmap->pm_stpte = Segtabzeropte;
-				/*
-				 * XXX may have changed segment table
-				 * pointer for current process so
-				 * update now to reload hardware.
-				 * (curproc may be NULL if exiting.)
-				 */
-				if (active_user_pmap(ptpmap))
-					_pmap_activate(ptpmap);
+				ptpmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)] =
+				    Segtabzeropte;
 			}
 #ifdef DEBUG
 			else if (ptpmap->pm_sref < 0)
@@ -2236,6 +2277,14 @@ pmap_enter_ptpage(pmap, va)
 #ifdef PMAPSTATS
 	enter_stats.ptpneeded++;
 #endif
+
+	/*
+	 * If this is a user pmap and we're still referencing the
+	 * kernel Lev1map, create a new level 1 page table.
+	 */
+	if (pmap != pmap_kernel() && pmap->pm_lev1map == Lev1map)
+		pmap_create_lev1map(pmap);
+
 	/*
 	 * Allocate a segment table if necessary.  Note that it is allocated
 	 * from a private map and not pt_map.  This keeps user page tables
@@ -2251,17 +2300,13 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_stab = (pt_entry_t *)
 			kmem_alloc(st_map, ALPHA_STSIZE);
 #endif
-		pmap->pm_stpte = *kvtopte(pmap->pm_stab);
-		/*
-		 * XXX may have changed segment table pointer for current
-		 * process so update now to reload hardware.
-		 */
-		if (active_user_pmap(pmap))
-			_pmap_activate(pmap);
+		pmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)] =
+		    *kvtopte(pmap->pm_stab);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: pmap %p stab %p(%lx)\n",
-			       pmap, pmap->pm_stab, pmap->pm_stpte);
+			       pmap, pmap->pm_stab,
+			       pmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)]);
 #endif
 	}
 
@@ -2713,3 +2758,124 @@ pmap_collect_pv()
 	}
 }
 #endif /* notyet */
+
+/******************** page table page management ********************/
+
+/*
+ * pmap_alloc_ptpage:
+ *
+ *	Allocate a single page from the VM system and return the
+ *	physical address for that page.
+ */
+vm_offset_t
+pmap_alloc_ptpage()
+{
+#if defined(UVM)
+	struct vm_page *pg;
+
+	if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL) {
+		/*
+		 * XXX This is lame.  We can probably wait for the
+		 * XXX memory to become available, or steal a PT
+		 * XXX page from another pmap.
+		 */
+		panic("pmap_alloc_ptpage: no pages available");
+	}
+
+	return (VM_PAGE_TO_PHYS(pg));
+#else
+	struct pglist mlist;
+
+	TAILQ_INIT(&mlist);
+	if (vm_page_alloc_memory(PAGE_SIZE, avail_start, avail_end - PAGE_SIZE,
+	    PAGE_SIZE, 0, &mlist, 1, FALSE)) {
+		/*
+		 * XXX This is lame.  We can probably wait for the
+		 * XXX memory to become available, or steal a PT
+		 * XXX page from another pmap.
+		 */
+		panic("pmap_alloc_ptpage: no pages available");
+	}
+
+	return (VM_PAGE_TO_PHYS(mlist.tqh_first));
+#endif /* UVM */
+}
+
+/*
+ * pmap_free_ptpage:
+ *
+ *	Free the single page table page at the specified physical address.
+ */
+void
+pmap_free_ptpage(ptpage)
+	vm_offset_t ptpage;
+{
+#if defined(UVM)
+	struct vm_page *pg;
+
+	if ((pg = PHYS_TO_VM_PAGE(ptpage)) == NULL)
+		panic("pmap_free_ptpage: bogus ptpage address");
+
+	uvm_pagefree(pg);
+#else
+	struct pglist mlist;
+	vm_page_t pg;
+
+	if ((pg = PHYS_TO_VM_PAGE(ptpage)) == NULL)
+		panic("pmap_free_ptpage: bogus ptpage address");
+
+	TAILQ_INIT(&mlist);
+	TAILQ_INSERT_TAIL(&mlist, pg, pageq);
+	vm_page_free_memory(&mlist);
+#endif /* UVM */
+}
+
+/*
+ * pmap_create_lev1map:
+ *
+ *	Create a new level 1 page table for the specified pmap.
+ */
+void
+pmap_create_lev1map(pmap)
+	pmap_t pmap;
+{
+	vm_offset_t ptpa;
+	pt_entry_t pte;
+	int i;
+
+	/*
+	 * Allocate a page for the level 1 table.
+	 */
+	ptpa = pmap_alloc_ptpage();
+	pmap->pm_lev1map = (pt_entry_t *) ALPHA_PHYS_TO_K0SEG(ptpa);
+
+	/*
+	 * Initialize the new level 1 table by copying the
+	 * kernel mappings into it.
+	 */
+	for (i = kvtol1pte(VM_MIN_KERNEL_ADDRESS);
+	     i <= kvtol1pte(VM_MAX_KERNEL_ADDRESS); i++)
+		pmap->pm_lev1map[i] = Lev1map[i];
+
+	/*
+	 * Now, map the new virtual page table.  NOTE: NO ASM!
+	 */
+	pte = ((ptpa >> PGSHIFT) << PG_SHIFT) | PG_V | PG_KRE | PG_KWE;
+	pmap->pm_lev1map[kvtol1pte(VPTBASE)] = pte;
+
+	/*
+	 * Point to the initial segment table.
+	 */
+#ifdef DIAGNOSTIC
+	if (pmap->pm_stab != Segtabzero)
+		panic("pmap_create_lev1map: not Segtabzero");
+#endif
+	pmap->pm_lev1map[kvtol1pte(VM_MIN_ADDRESS)] = Segtabzeropte;
+
+	/*
+	 * The page table base has changed; if the pmap was active,
+	 * reactivate it.
+	 */
+	if (active_user_pmap(pmap))
+		PMAP_ACTIVATE(pmap, curproc);
+}
