@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.23 1997/11/04 23:22:40 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.24 1997/11/05 00:50:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -40,6 +40,13 @@
 
 #ifndef	_SYS_CDEFS_H_
 #define	_SYS_CDEFS_H_
+
+/*
+ * These need to be defined early for the correct CPP evil to happen
+ * in <machine/cdefs.h>.
+ */
+#define	___STRING(x)	__STRING(x)
+#define	___CONCAT(x)	__CONCAT(x)
 
 #include <machine/cdefs.h>
 
@@ -85,9 +92,6 @@
 #define	__signed
 #define	__volatile
 #endif	/* !__GNUC__ */
-
-#define	___STRING(x)	__STRING(x)
-#define	___CONCAT(x)	__CONCAT(x)
 
 /*
  * In non-ANSI C environments, new programs will want ANSI-only C keywords
