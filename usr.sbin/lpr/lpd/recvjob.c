@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.13 2001/10/09 02:15:38 mjl Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.13 2001/10/09 02:15:38 mjl Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,14 +180,12 @@ readjob(void)
 			 * something different than what gethostbyaddr()
 			 * returns
 			 */
-			(void)strncpy(cp + 6, from, sizeof(line) - strlen(line) - 1);
-			line[sizeof(line) - 1 ] = '\0';
-			(void)strncpy(tfname, cp, sizeof(tfname) - 1);
-			tfname[sizeof(tfname) - 1 ] = '\0';
+ 			(void)strlcpy(cp + 6, from,
+			    sizeof(line) + line - cp - 6);
+			if (strchr(cp, '/'))
+				frecverr("readjob: %s: illegal path name", cp);
+			(void)strlcpy(tfname, cp, sizeof(tfname));
 			tfname[0] = 't';
-			if (strchr(tfname, '/'))
-				frecverr("readjob: %s: illegal path name",
-				    tfname);
 			if (!chksize(size)) {
 				(void)write(STDOUT_FILENO, "\2", 1);
 				continue;
@@ -213,11 +211,9 @@ readjob(void)
 				(void)write(STDOUT_FILENO, "\2", 1);
 				continue;
 			}
-			(void)strncpy(dfname, cp, sizeof(dfname) - 1);
-			dfname[sizeof(dfname) - 1] = '\0';
-			if (strchr(dfname, '/'))
-				frecverr("readjob: %s: illegal path name",
-					dfname);
+			if (strchr(cp, '/'))
+				frecverr("readjob: %s: illegal path name", cp);
+			(void)strlcpy(dfname, cp, sizeof(dfname));
 			(void)readfile(dfname, size);
 			continue;
 		}
