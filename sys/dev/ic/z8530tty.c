@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.8 1996/05/17 22:49:23 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.9 1996/06/13 23:05:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -258,6 +258,7 @@ zstty_attach(parent, self, aux)
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
+	tty_attach(tp);
 
 	zst->zst_tty = tp;
 	zst->zst_rbhiwat =  zstty_rbuf_size;	/* impossible value */
@@ -775,7 +776,7 @@ zsparam(tp, t)
 		if (zst->zst_tx_busy) {
 			zst->zst_heldtbc = zst->zst_tbc;
 			zst->zst_tbc = 0;
-			cs->cs_heldchange = 0xFFFF;
+			cs->cs_heldchange = 0xFF; /* XXX */
 		} else {
 			zs_loadchannelregs(cs);
 		}
