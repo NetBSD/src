@@ -1,7 +1,7 @@
-/* $NetBSD: mcpcia_dma.c,v 1.11 1999/04/15 22:32:21 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.12 1999/04/15 23:47:52 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.11 1999/04/15 22:32:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.12 1999/04/15 23:47:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,13 +79,16 @@ int	mcpcia_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 void	mcpcia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 /*
- * Direct-mapped window: 1G at 2G
- *
- * XXX Should consider making this 2G at 2G, and creating a 1G at 1G
- * XXX SGMAP window for fallback if we have more than 2G of RAM.
+ * Direct-mapped window: 2G at 2G
  */
 #define	MCPCIA_DIRECT_MAPPED_BASE	(2UL*1024UL*1024UL*1024UL)
-#define	MCPCIA_DIRECT_MAPPED_SIZE	(1UL*1024UL*1024UL*1024UL)
+#define	MCPCIA_DIRECT_MAPPED_SIZE	(2UL*1024UL*1024UL*1024UL)
+
+/*
+ * SGMAP window for PCI: 1G at 1G
+ */
+#define	MCPCIA_PCI_SG_MAPPED_BASE	(1UL*1024UL*1024UL*1024UL)
+#define	MCPCIA_PCI_SG_MAPPED_SIZE	(1UL*1024UL*1024UL*1024UL)
 
 /*
  * SGMAP window for ISA: 8M at 8M
@@ -113,7 +116,7 @@ mcpcia_dma_init(ccp)
 	t->_cookie = ccp;
 	t->_wbase = MCPCIA_DIRECT_MAPPED_BASE;
 	t->_wsize = MCPCIA_DIRECT_MAPPED_SIZE;
-	t->_next_window = NULL;			/* XXX See above. */
+	t->_next_window = &ccp->cc_dmat_pci_sgmap;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = mcpcia_dma_get_tag;
@@ -133,15 +136,15 @@ mcpcia_dma_init(ccp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the DMA tag used for sgmap-mapped ISA DMA.
+	 * Initialize the DMA tag used for sgmap-mapped PCI DMA.
 	 */
-	t = &ccp->cc_dmat_sgmap;
+	t = &ccp->cc_dmat_pci_sgmap;
 	t->_cookie = ccp;
-	t->_wbase = MCPCIA_ISA_SG_MAPPED_BASE;
-	t->_wsize = MCPCIA_ISA_SG_MAPPED_SIZE;
+	t->_wbase = MCPCIA_PCI_SG_MAPPED_BASE;
+	t->_wsize = MCPCIA_PCI_SG_MAPPED_SIZE;
 	t->_next_window = NULL;
 	t->_boundary = 0;
-	t->_sgmap = &ccp->cc_sgmap;
+	t->_sgmap = &ccp->cc_pci_sgmap;
 	t->_get_tag = mcpcia_dma_get_tag;
 	t->_dmamap_create = mcpcia_bus_dmamap_create_sgmap;
 	t->_dmamap_destroy = mcpcia_bus_dmamap_destroy_sgmap;
@@ -159,31 +162,43 @@ mcpcia_dma_init(ccp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * The SRM console is supposed to set up an 8MB direct mapped window
-	 * at 8MB (window 0) and a 1MB direct mapped window at 1MB. Useless.
-	 *
-	 * The DU && OpenVMS convention is to have an 8MB S/G window
-	 * at 8MB for window 0, a 1GB direct mapped window at 2GB
-	 * for window 1, a 1 GB S/G window at window 2 and a 512 MB
-	 * S/G window at window 3. This seems overkill.
-	 *
-	 * We'll just go with the 8MB S/G window and one 1GB direct window.
-	 * XXX See comment above.
+	 * Initialize the DMA tag used for sgmap-mapped ISA DMA.
 	 */
+	t = &ccp->cc_dmat_isa_sgmap;
+	t->_cookie = ccp;
+	t->_wbase = MCPCIA_ISA_SG_MAPPED_BASE;
+	t->_wsize = MCPCIA_ISA_SG_MAPPED_SIZE;
+	t->_next_window = NULL;
+	t->_boundary = 0;
+	t->_sgmap = &ccp->cc_isa_sgmap;
+	t->_get_tag = mcpcia_dma_get_tag;
+	t->_dmamap_create = mcpcia_bus_dmamap_create_sgmap;
+	t->_dmamap_destroy = mcpcia_bus_dmamap_destroy_sgmap;
+	t->_dmamap_load = mcpcia_bus_dmamap_load_sgmap;
+	t->_dmamap_load_mbuf = mcpcia_bus_dmamap_load_mbuf_sgmap;
+	t->_dmamap_load_uio = mcpcia_bus_dmamap_load_uio_sgmap;
+	t->_dmamap_load_raw = mcpcia_bus_dmamap_load_raw_sgmap;
+	t->_dmamap_unload = mcpcia_bus_dmamap_unload_sgmap;
+	t->_dmamap_sync = _bus_dmamap_sync;
+
+	t->_dmamem_alloc = _bus_dmamem_alloc;
+	t->_dmamem_free = _bus_dmamem_free;
+	t->_dmamem_map = _bus_dmamem_map;
+	t->_dmamem_unmap = _bus_dmamem_unmap;
+	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the SGMAP.
-	 *
-	 * Must align page table to its size.
+	 * Initialize the SGMAPs.
 	 */
-	alpha_sgmap_init(t, &ccp->cc_sgmap, "mcpcia_sgmap",
-	    MCPCIA_ISA_SG_MAPPED_BASE, 0, MCPCIA_ISA_SG_MAPPED_SIZE,
+	alpha_sgmap_init(&ccp->cc_dmat_pci_sgmap, &ccp->cc_pci_sgmap,
+	    "mcpcia pci sgmap",
+	    MCPCIA_PCI_SG_MAPPED_BASE, 0, MCPCIA_PCI_SG_MAPPED_SIZE,
 	    sizeof(u_int64_t), NULL, 0);
 
-	if (ccp->cc_sgmap.aps_ptpa & (1024-1)) {
-		panic("mcpcia_dma_init: bad page table address 0x%lx",
-			ccp->cc_sgmap.aps_ptpa);
-	}
+	alpha_sgmap_init(&ccp->cc_dmat_isa_sgmap, &ccp->cc_isa_sgmap,
+	    "mcpcia isa sgmap",
+	    MCPCIA_ISA_SG_MAPPED_BASE, 0, MCPCIA_ISA_SG_MAPPED_SIZE,
+	    sizeof(u_int64_t), NULL, 0);
 
 	/*
 	 * Disable windows first.
@@ -204,7 +219,8 @@ mcpcia_dma_init(ccp)
 	 */
 	REGVAL(MCPCIA_W0_MASK(ccp)) = MCPCIA_WMASK_8M;
 	REGVAL(MCPCIA_T0_BASE(ccp)) =
-		ccp->cc_sgmap.aps_ptpa >> MCPCIA_TBASEX_SHIFT;
+		ccp->cc_isa_sgmap.aps_ptpa >> MCPCIA_TBASEX_SHIFT;
+	alpha_mb();
 	REGVAL(MCPCIA_W0_BASE(ccp)) =
 		MCPCIA_WBASE_EN | MCPCIA_WBASE_SG | MCPCIA_ISA_SG_MAPPED_BASE;
 	alpha_mb();
@@ -212,13 +228,26 @@ mcpcia_dma_init(ccp)
 	MCPCIA_SGTLB_INVALIDATE(ccp);
 
 	/*
-	 * Set up window 1 as a 1 GB Direct-mapped window starting at 2GB.
+	 * Set up window 1 as a 2 GB Direct-mapped window starting at 2GB.
 	 */
 
-	REGVAL(MCPCIA_W0_MASK(ccp)) = MCPCIA_WMASK_1G;
-	REGVAL(MCPCIA_T0_BASE(ccp)) = 0;
-	REGVAL(MCPCIA_W0_BASE(ccp)) =
+	REGVAL(MCPCIA_W1_MASK(ccp)) = MCPCIA_WMASK_2G;
+	REGVAL(MCPCIA_T1_BASE(ccp)) = 0;
+	alpha_mb();
+	REGVAL(MCPCIA_W1_BASE(ccp)) =
 		MCPCIA_DIRECT_MAPPED_BASE | MCPCIA_WBASE_EN;
+	alpha_mb();
+
+	/*
+	 * Set up window 2 as a 1G SGMAP-mapped window starting at 1G.
+	 */
+
+	REGVAL(MCPCIA_W2_MASK(ccp)) = MCPCIA_WMASK_1G;
+	REGVAL(MCPCIA_T2_BASE(ccp)) =
+		ccp->cc_pci_sgmap.aps_ptpa >> MCPCIA_TBASEX_SHIFT;
+	alpha_mb();
+	REGVAL(MCPCIA_W2_BASE(ccp)) =
+		MCPCIA_WBASE_EN | MCPCIA_WBASE_SG | MCPCIA_PCI_SG_MAPPED_BASE;
 	alpha_mb();
 
 	/* XXX XXX BEGIN XXX XXX */
@@ -244,8 +273,9 @@ mcpcia_dma_get_tag(t, bustype)
 	case ALPHA_BUS_PCI:
 	case ALPHA_BUS_EISA:
 		/*
-		 * Just always use direct-mapped for now; see comment
-		 * above about chaining with SGMAPs.
+		 * Start off using the direct-mapped window.  We will
+		 * automatically fall backed onto the chained PCI SGMAP
+		 * window if necessary.
 		 */
 		return (&ccp->cc_dmat_direct);
 
@@ -255,7 +285,7 @@ mcpcia_dma_get_tag(t, bustype)
 		 * the direct-mapped DMA window, so we must use
 		 * SGMAPs.
 		 */
-		return (&ccp->cc_dmat_sgmap);
+		return (&ccp->cc_dmat_isa_sgmap);
 
 	default:
 		panic("mcpcia_dma_get_tag: shouldn't be here, really...");
