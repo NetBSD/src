@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.35 2001/09/19 03:41:46 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.36 2001/11/06 06:31:06 simonb Exp $	*/
 
 /*
  *
@@ -292,7 +292,7 @@ amap_extend(entry, addsize)
 #ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
 #endif
-	u_int *newsl, *newbck, *oldsl, *oldbck;
+	int *newsl, *newbck, *oldsl, *oldbck;
 	struct vm_anon **newover, **oldover;
 	int slotadded;
 	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.68 2001/09/28 11:59:55 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.69 2001/11/06 06:31:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -918,7 +918,7 @@ uvm_page_recolor(int newncolors)
 
 static __inline struct vm_page *
 uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
-    unsigned int *trycolorp)
+    int *trycolorp)
 {
 	struct pglist *freeq;
 	struct vm_page *pg;
