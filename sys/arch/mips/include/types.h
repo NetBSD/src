@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.34 2002/11/02 02:45:22 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.35 2002/11/03 13:47:34 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -98,6 +98,5 @@ typedef struct label_t {
 #define	__HAVE_CPU_COUNTER
 #endif
 #define	__HAVE_RAS
-#define	__HAVE_MD_RUNQUEUE
 
 #endif	/* _MACHTYPES_H_ */
