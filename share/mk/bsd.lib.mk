@@ -69,7 +69,7 @@ _LIBS=lib${LIB}.a
 
 all: ${_LIBS} ${MANALL}# llib-l${LIB}.ln
 
-OBJS+=	${SRCS:R:S/$/.o/g}
+OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 
 lib${LIB}.a:: ${OBJS}
 	@echo building standard ${LIB} library

@@ -60,7 +60,7 @@ CLEANFILES+=strings
 .if defined(PROG)
 .if defined(SRCS)
 
-OBJS+=  ${SRCS:R:S/$/.o/g}
+OBJS+=  ${SRCS:N*.h:R:S/$/.o/g}
 
 .if defined(LDONLY)
 
