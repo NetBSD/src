@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.487 2004/10/04 06:07:24 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.488 2004/10/08 03:01:15 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7744,3 +7744,9 @@ sys/sys/param.h					patched by hand
 share/tmac/doc-common				patched by hand
 
 	Welcome to 2.0_RC3
+
+dist/ipf/tools/ipf_y.y				1.14
+
+	The "keep options" only allow one order, not both as they should for 
+	proper backwards compatibility. PR#27086
+	[grant, ticket #890]
