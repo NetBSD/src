@@ -1,6 +1,6 @@
-/* $NetBSD: stand.ldscript,v 1.1 1997/10/05 22:17:56 jonathan Exp $ */
+/* $NetBSD: stand.ldscript.le,v 1.1 2000/05/21 02:50:13 soren Exp $ */
 
-/*  ldscript for NetBSD/mips kernels */
+/*  ldscript for NetBSD/mipsel stand-alone programs */
 OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips",
 	      "elf32-littlemips")
 OUTPUT_ARCH(mips)
@@ -8,7 +8,7 @@ ENTRY(_start)
 SECTIONS
 {
   /*  Read-only sections, merged into text segment.  Assumes the
-      kernel Makefile sets the start address via -Ttext.  */
+      stand Makefile sets the start address via -Ttext.  */
   .text      :
   {
     _ftext = . ;

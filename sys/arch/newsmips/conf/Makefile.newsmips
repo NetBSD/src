@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.27 2000/05/09 00:56:26 hubertf Exp $
+#	$NetBSD: Makefile.newsmips,v 1.28 2000/05/21 02:50:11 soren Exp $
 
 # Makefile for NetBSD
 #
@@ -58,7 +58,8 @@ GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} -T ${NEWSMIPS}/conf/kern.ldscript
+LINKFLAGS=	-N -Ttext 80001000 -e start ${GP} \
+		-T ${MIPS}/conf/kern.ldscript.be
 STRIPFLAGS=	-g -X -x
 
 %INCLUDES
