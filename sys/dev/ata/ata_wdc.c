@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.12 1998/10/02 19:37:19 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.13 1998/10/04 15:50:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -140,6 +140,9 @@ wdc_ata_bio(drvp, ata_bio)
 		return WDC_TRY_AGAIN;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	    (ata_bio->flags & ATA_SINGLE) == 0)
+		xfer->c_flags |= C_DMA;
 	xfer->drive = drvp->drive;
 	xfer->cmd = ata_bio;
 	xfer->databuf = ata_bio->databuf;
@@ -198,8 +201,7 @@ wdc_ata_bio_start(chp, xfer)
 		return;
 	}
 
-	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (ata_bio->flags & ATA_SINGLE) == 0) {
+	if (xfer->c_flags & C_DMA) {
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
 		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
@@ -209,8 +211,7 @@ again:
 	 * When starting a multi-sector transfer, or doing single-sector
 	 * transfers...
 	 */
-	if (xfer->c_skip == 0 || (ata_bio->flags & ATA_SINGLE) != 0 ||
-	    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) != 0) {
+	if (xfer->c_skip == 0 || (ata_bio->flags & ATA_SINGLE) != 0) {
 		if (ata_bio->flags & ATA_SINGLE)
 			nblks = 1;
 		else 
@@ -254,8 +255,7 @@ again:
 			cyl = blkno;
 			head |= WDSD_CHS;
 		}
-		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-		    (ata_bio->flags & ATA_SINGLE) == 0) {
+		if (xfer->c_flags & C_DMA) {
 			ata_bio->nblks = nblks;
 			ata_bio->nbytes = xfer->c_bcount;
 			cmd = (ata_bio->flags & ATA_READ) ?
@@ -400,8 +400,7 @@ wdc_ata_bio_intr(chp, xfer)
 		panic("wdc_ata_bio_intr: bad state\n");
 	}
 
-	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (ata_bio->flags & ATA_SINGLE) == 0) {
+	if (xfer->c_flags & C_DMA) {
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
 		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
@@ -412,8 +411,7 @@ wdc_ata_bio_intr(chp, xfer)
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 		/* if we were using DMA, turn off DMA channel */
-		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-		    (ata_bio->flags & ATA_SINGLE) == 0)
+		if (xfer->c_flags & C_DMA)
 			(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive, dma_flags);
 		ata_bio->error = TIMEOUT;
@@ -424,8 +422,7 @@ wdc_ata_bio_intr(chp, xfer)
 	drv_err = wdc_ata_err(chp, ata_bio);
 
 	/* If we were using DMA, Turn off the DMA channel and check for error */
-	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (ata_bio->flags & ATA_SINGLE) == 0) {
+	if (xfer->c_flags & C_DMA) {
 		if (ata_bio->flags & ATA_POLL) {
 			/*
 			 * IDE drives deassert WDCS_BSY before trasfert is

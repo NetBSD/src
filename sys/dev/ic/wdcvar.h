@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.11 1998/10/02 19:37:20 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2.2.12 1998/10/04 15:50:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@ struct wdc_xfer {
 #define C_TIMEOU  	0x0004 /* xfer processing timed out */
 #define C_NEEDDONE  	0x0010 /* need to call upper-level done */
 #define C_POLL		0x0020 /* cmd is polled */
+#define C_DMA		0x0040 /* cmd uses DMA */
 
 	/* Information about our location */
 	u_int8_t drive;
