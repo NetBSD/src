@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.15 2002/04/29 01:41:43 simonb Exp $
+.\"	$NetBSD: directory.3,v 1.16 2002/08/10 02:55:20 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,18 +153,22 @@ returns the integer file descriptor associated with the named
 .Em directory stream ,
 see
 .Xr open 2 .
-.Pp
-Sample code which searchs a directory for entry ``name'' is:
+.Sh EXAMPLES
+Sample code which searches a directory for entry
+.Dq name
+is:
 .Bd -literal -offset indent
 len = strlen(name);
 dirp = opendir(".");
-while ((dp = readdir(dirp)) != NULL)
-	if (dp-\*[Gt]d_namlen == len \*[Am]\*[Am] !strcmp(dp-\*[Gt]d_name, name)) {
-		(void)closedir(dirp);
-		return FOUND;
-	}
-(void)closedir(dirp);
-return NOT_FOUND;
+if (dirp) {
+	while ((dp = readdir(dirp)) != NULL)
+		if (dp-\*[Gt]d_namlen == len \*[Am]\*[Am] !strcmp(dp-\*[Gt]d_name, name)) {
+			(void)closedir(dirp);
+			return (FOUND);
+		}
+	(void)closedir(dirp);
+}
+return (NOT_FOUND);
 .Ed
 .Sh SEE ALSO
 .Xr close 2 ,
