@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.36 2004/09/25 03:32:52 thorpej Exp $	*/
+/*	$NetBSD: fsck.c,v 1.37 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.36 2004/09/25 03:32:52 thorpej Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.37 2005/01/13 15:22:35 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,6 +122,10 @@ main(int argc, char *argv[])
 			flags |= CHECK_PREEN;
 			break;
 
+		case 'P':
+			flags |= CHECK_PROGRESS;
+			break;
+
 		case 'q':
 			break;
 
@@ -159,6 +163,17 @@ main(int argc, char *argv[])
 		globopt[1] = i;
 		catopt(&options, globopt);
 	}
+
+	/* Don't do progress meters if we're debugging. */
+	if (flags & CHECK_DEBUG)
+		flags &= ~CHECK_PROGRESS;
+
+	/*
+	 * If progress meters are being used, force max parallel to 1
+	 * so the progress meter outputs don't interfere with one another.
+	 */
+	if (flags & CHECK_PROGRESS)
+		maxrun = 1;
 
 	argc -= optind;
 	argv += optind;

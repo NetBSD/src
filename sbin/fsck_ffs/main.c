@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2004/10/11 15:24:09 dbj Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.52 2004/10/11 15:24:09 dbj Exp $");
+__RCSID("$NetBSD: main.c,v 1.53 2005/01/13 15:22:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: main.c,v 1.52 2004/10/11 15:24:09 dbj Exp $");
 #include "fsutil.h"
 
 int	returntosingle;
+int	progress = 0;
 
 int	main __P((int, char *[]));
 
@@ -94,7 +95,7 @@ main(argc, argv)
 	forceimage = 0;
 	endian = 0;
 	isappleufs = 0;
-	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npqy")) != -1) {
+	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npPqy")) != -1) {
 		switch (ch) {
 		case 'a':
 			isappleufs = 1;
@@ -151,6 +152,10 @@ main(argc, argv)
 			preen++;
 			break;
 
+		case 'P':
+			progress = 1;
+			break;
+
 		case 'q':
 			quiet++;
 			break;
@@ -171,10 +176,19 @@ main(argc, argv)
 	if (!argc)
 		usage();
 
+	if (debug)
+		progress = 0;
+
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		(void)signal(SIGINT, catch);
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
+#ifndef SMALL
+	if (progress) {
+		progress_ttywidth(0);
+		(void)signal(SIGWINCH, progress_ttywidth);
+	}
+#endif /* ! SMALL */
 	signal(SIGINFO, infohandler);
 
 	while (argc-- > 0) {
@@ -226,6 +240,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 #ifdef LITE2BORKEN
 	int flags;
 #endif
+#ifndef SMALL
+	off_t progress_total = 0;
+#endif
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
@@ -245,6 +262,22 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * the superblock should be marked clean.
 	 */
 	resolved = 1;
+
+#ifndef SMALL
+	/*
+	 * Pass 1, Pass 4, and Pass 5 all iterate over cylinder
+	 * groups.  Account for those now.  We'll never need to
+	 * add in Pass 1b, since that pass is never executed when
+	 * preening.
+	 *
+	 * Pass 2 and Pass 3 iterate over directory inodes, but we
+	 * don't know how many of those exist until after Pass 1.
+	 * We'll add those in after Pass 1 has completed.
+	 */
+	if (preen)
+		progress_total += sblock->fs_ncg * 3;
+#endif /* ! SMALL */
+
 	/*
 	 * 1: scan inodes tallying blocks used
 	 */
@@ -255,6 +288,15 @@ checkfilesys(filesys, mntpt, auxdata, child)
 		pwarn("** Phase 1 - Check Blocks and Sizes\n");
 	}
 	pass1();
+
+#ifndef SMALL
+	/* Account for number of directory inodes (used twice). */
+	if (preen)
+		progress_total += inplast * 2;
+	progress_switch(progress);
+	progress_init(progress_total);
+#endif /* ! SMALL */
+
 
 	/*
 	 * 1b: locate first references to duplicates, if any

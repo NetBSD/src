@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.18 2004/04/21 01:05:33 christos Exp $	 */
+/* $NetBSD: main.c,v 1.19 2005/01/13 15:22:35 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -64,7 +64,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int ret = 0;
-	char *optstring = "b:dfi:m:npqy";
+	char *optstring = "b:dfi:m:npPqy";
 
 	sync();
 	skipclean = 1;
@@ -104,6 +104,9 @@ main(int argc, char **argv)
 
 		case 'p':
 			preen++;
+			break;
+
+		case 'P':		/* Progress meter not implemented. */
 			break;
 
 		case 'q':		/* Quiet not implemented */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2004/05/13 00:18:46 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2004/05/13 00:18:46 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2005/01/13 15:22:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,10 @@ main(argc, argv)
 
 		case 'p':
 			preen++;
+			break;
+
+		case 'P':
+			/* Progress meter not implemented. */
 			break;
 
 		case 'q':		/* Quiet not implemented */

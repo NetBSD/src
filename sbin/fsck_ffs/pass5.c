@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.41 2004/10/09 20:08:44 ragge Exp $	*/
+/*	$NetBSD: pass5.c,v 1.42 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.41 2004/10/09 20:08:44 ragge Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.42 2005/01/13 15:22:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,6 +206,10 @@ pass5(void)
 			    c * 100 / fs->fs_ncg);
 			got_siginfo = 0;
 		}
+#ifndef SMALL
+		progress_bar(cdevname(), preen ? NULL : "phase 5",
+			    c, fs->fs_ncg);
+#endif /* ! SMALL */
 		getblk(&cgblk, cgtod(fs, c), fs->fs_cgsize);
 		memcpy(cg, cgblk.b_un.b_cg, fs->fs_cgsize);
 		if((doswap && !needswap) || (!doswap && needswap))
@@ -486,6 +490,12 @@ pass5(void)
 		} else
 			markclean = 0;
 	}
+#ifndef SMALL
+	if (preen)
+		progress_add(fs->fs_ncg);
+	else
+		progress_done();
+#endif /* ! SMALL */
 }
 
 void 

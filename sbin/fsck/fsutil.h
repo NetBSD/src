@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.8 2003/03/28 08:12:38 perseant Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.9 2005/01/13 15:22:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -55,6 +55,7 @@ char *estrdup(const char *);
 #define	CHECK_VERBOSE	2
 #define	CHECK_DEBUG	4
 #define	CHECK_FORCE	8
+#define	CHECK_PROGRESS	16
 
 struct fstab;
 int checkfstab(int, int, void *(*)(struct fstab *), 
