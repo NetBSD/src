@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.2 2003/05/23 09:34:42 ichiro Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.3 2003/05/31 23:57:46 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -801,6 +801,7 @@ consinit(void)
 	consinit_called = 1;
 
 	if (ixp4xx_comcnattach(&ixpsip_bs_tag, comcn_config[comcnunit].hw_addr,
-		comcn_config[comcnunit].v_addr, comcnspeed, FREQ, comcnmode))
+		comcn_config[comcnunit].v_addr, comcnspeed, FREQ, comcnmode,
+		(char *)comcn_config[comcnunit].name))
 		panic("can't init serial console (%s)", comcn_config[comcnunit].name);
 }
