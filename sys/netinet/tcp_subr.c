@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.81 1999/09/23 04:02:27 enami Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.82 1999/12/08 16:22:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -139,6 +139,7 @@
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/ip6protosw.h>
 #endif
 
 #include <netinet/tcp.h>
