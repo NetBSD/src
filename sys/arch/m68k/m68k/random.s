@@ -50,7 +50,7 @@ ENTRY(random)
 	lsll	#1, d1
 	movl	d0, a0
 	roll	#1, d0
-	andl	#1, d0
+	andil	#1, d0
 	orl	d0, d1
 	movl	a0, d0
 	andil	#0x7fffffff, d0
