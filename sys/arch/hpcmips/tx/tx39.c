@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.24 2001/09/15 19:51:39 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.25 2001/09/16 15:45:45 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,9 +79,6 @@
 #include <hpcmips/dev/tc5165bufvar.h>
 #endif
 
-extern unsigned nullclkread(void);
-extern unsigned (*clkread)(void);
-
 struct tx_chipset_tag tx_chipset;
 
 #ifdef TX39_DEBUG
@@ -93,10 +90,7 @@ int	tx39icu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void	tx39clock_cpuspeed(int*, int*);
 
 /* TX39-specific initialization vector */
-void	tx_os_init(void);
-void	tx_bus_reset(void);
 void	tx_cons_init(void);
-void	tx_device_register(struct device *, void *);
 void    tx_fb_init(caddr_t*);
 void    tx_mem_init(paddr_t);
 void	tx_find_dram(paddr_t, paddr_t);
@@ -117,14 +111,12 @@ tx_init()
 	/*
 	 * Platform Specific Function Hooks
 	 */
-	platform.os_init = tx_os_init;
-	platform.bus_reset = tx_bus_reset;
-	platform.cons_init = tx_cons_init;
-	platform.device_register = tx_device_register;
-	platform.fb_init = tx_fb_init;
-	platform.mem_init = tx_mem_init;
-	platform.reboot = tx_reboot;
-	platform.iointr = tx39icu_intr;
+	platform.cpu_idle	= NULL; /* not implemented yet */
+	platform.cons_init	= tx_cons_init;
+	platform.fb_init	= tx_fb_init;
+	platform.mem_init	= tx_mem_init;
+	platform.reboot		= tx_reboot;
+	platform.iointr		= tx39icu_intr;
 
 	model = MIPS_PRID_REV(cpu_id);
 
@@ -150,14 +142,6 @@ tx_init()
 		tc->tc_chipset = __TX392X;
 		break;
 	}
-}
-
-void
-tx_os_init()
-{
-
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
 }
 
 void
@@ -267,12 +251,6 @@ tx_reboot(howto, bootstr)
 }
 
 void
-tx_bus_reset()
-{
-	/* hpcmips port don't use */
-}
-
-void
 tx_cons_init()
 {
 	int slot;
@@ -318,14 +296,6 @@ tx_cons_init()
  panic:
 	panic("tx_cons_init: can't init console");
 	/* NOTREACHED */
-}
-
-void
-tx_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	/* hpcmips port don't use */
 }
 
 void
