@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.12.2.1 1999/10/31 22:15:29 he Exp $
+.\"	$NetBSD: passwd.5,v 1.12.2.2 1999/12/17 23:14:50 he Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,10 +59,10 @@ as controlled by
 .Xr nsswitch.conf 5 .
 .Pp
 The
-.Nm
-files consisting of newline separated records, one per user,
-containing ten colon (``:'') separated fields.  These fields are as
-follows:
+.Nm master.passwd
+file is readable only by root, and consists of newline separated
+records, one per user, containing ten colon (``:'') separated
+fields.  These fields are as follows:
 .Pp
 .Bl -tag -width password -offset indent
 .It name
@@ -88,6 +88,15 @@ User's home directory.
 .It shell
 User's login shell.
 .El
+.Pp
+The
+.Nm 
+file is generated from the 
+.Nm master.password
+file by
+.Xr pwd_mkdb 8 ,
+has the class, change, and expire fields removed, and the password
+field replaced by a ``*''.
 .Pp
 The
 .Ar name
