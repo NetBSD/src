@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.25.2.2 2000/01/08 16:42:23 he Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.25.2.3 2001/04/14 21:14:56 he Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.25.2.2 2000/01/08 16:42:23 he Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.25.2.3 2001/04/14 21:14:56 he Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.2.2.10 1999/12/07 12:53:42 darrenr Exp";
@@ -1378,7 +1378,8 @@ maskloop:
 
 	if (nat) {
 		np = nat->nat_ptr;
-		if (natadd && fin->fin_fi.fi_fl & FI_FRAG)
+		if (natadd && (fin->fin_fi.fi_fl & FI_FRAG) &&
+		    np && (np->in_flags & IPN_FRAG))
 			ipfr_nat_newfrag(ip, fin, 0, nat);
 		ip->ip_src = nat->nat_outip;
 		MUTEX_ENTER(&ipf_rw);
@@ -1552,7 +1553,8 @@ maskloop:
 	if (nat) {
 		np = nat->nat_ptr;
 		fin->fin_fr = nat->nat_fr;
-		if (natadd && fin->fin_fi.fi_fl & FI_FRAG)
+		if (natadd && (fin->fin_fi.fi_fl & FI_FRAG) &&
+		    np && (np->in_flags & IPN_FRAG))
 			ipfr_nat_newfrag(ip, fin, 0, nat);
 		if ((np->in_apr != NULL) && (np->in_dport == 0 ||
 		    (tcp != NULL && sport == np->in_dport)))
