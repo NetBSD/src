@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.23 2001/02/19 22:56:19 cgd Exp $	*/
+/*	$NetBSD: fsck.c,v 1.24 2001/06/18 02:22:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.23 2001/02/19 22:56:19 cgd Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.24 2001/06/18 02:22:33 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ main(argc, argv)
 			break;
 
 		case 't':
-			if (selhead.tqh_first != NULL)
+			if (TAILQ_FIRST(&selhead) != NULL)
 				errx(1, "only one -t option may be specified.");
 
 			maketypelist(optarg);
@@ -336,7 +336,7 @@ selected(type)
 	struct entry *e;
 
 	/* If no type specified, it's always selected. */
-	for (e = selhead.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &selhead, entries)
 		if (!strncmp(e->type, type, MFSNAMELEN))
 			return which == IN_LIST ? 1 : 0;
 
@@ -350,7 +350,7 @@ getoptions(type)
 {
 	struct entry *e;
 
-	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &opthead, entries)
 		if (!strncmp(e->type, type, MFSNAMELEN))
 			return e->options;
 	return "";
@@ -369,7 +369,7 @@ addoption(optstr)
 
 	*newoptions++ = '\0';
 
-	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &opthead, entries)
 		if (!strncmp(e->type, optstr, MFSNAMELEN)) {
 			catopt(&e->options, newoptions);
 			return;
