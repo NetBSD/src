@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.8 2002/06/11 05:17:30 deberg Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.9 2002/09/11 01:46:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -123,8 +123,13 @@ typedef u_long	bus_space_handle_t;
  * Mmap an area of bus space.
  */
 
-#define bus_space_mmap(t, addr, off, prot, flags) 			\
-	m68k_btop((addr) + (off))
+#define bus_space_mmap(t, a, s, prot, flags)				\
+	((((a)>=INTIOBASE)&&((a)+(s)<INTIOTOP)) ?			\
+		m68k_btop((t)+((a)-INTIOBASE)) :			\
+	 ((((a)>=MONOBASE)&&((a)+(s)<MONOTOP)) ?			\
+		m68k_btop((t)+((a)-MONOBASE)) :				\
+	  ((((a)>=COLORBASE)&&((a)+(s)<COLORTOP)) ?			\
+		m68k_btop((t)+((a)-COLORBASE)) : (-1))))
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

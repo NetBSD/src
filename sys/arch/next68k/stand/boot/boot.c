@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2002/07/11 16:03:17 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2002/09/11 01:46:36 mycroft Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -89,6 +89,15 @@ main(char *boot_arg)
 	try_bootp = 1;
 
 #if 0
+	{
+		int i;
+		int *p = (int *)mg;
+		for (i = 0; i <= 896; ) {
+			printf ("%d: %x %x %x %x %x %x %x %x\n", i, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+			p = &p[8];
+			i += 8*4;
+		}
+	}
 	printf("Press return to continue.\n");
 	getchar();
 #endif
