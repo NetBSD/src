@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.11 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: inet.c,v 1.12 2003/05/17 09:39:04 dsl Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -152,23 +152,26 @@ inet_parse(char *s, int *mask_p)
     u_int32_t a = 0;
     u_int a0, a1, a2, a3;
     char c;
-    int mask = 0;
     int n;
 
-    n = sscanf(s, "%u.%u.%u.%u/%d%c", &a0, &a1, &a2, &a3, &mask, &c);
-    if (n < 4 || (n == 4 && mask_p) || (n == 5 && !mask_p) || n >= 6)
-	return (0xffffffff);
-
+    if (sscanf(s, "%u.%u.%u.%u%n", &a0, &a1, &a2, &a3, &n) != 4)
+	return 0xffffffff;
     if (a0 > 255 || a1 > 255 || a2 > 255 || a3 > 255)
-	return (0xffffffff);
+	return 0xffffffff;
+
+    if (mask_p == 0) {
+	if (s[n] != 0)
+	    return 0xffffffff;
+    } else {
+	if (sscanf(s + n, "/%u%c", &n, &c) != 1 || n > 32)
+	    return 0xffffffff;
+	*mask_p = n;
+    }
 
     ((u_char *)&a)[0] = a0;
     ((u_char *)&a)[1] = a1;
     ((u_char *)&a)[2] = a2;
     ((u_char *)&a)[3] = a3;
-
-    if (mask_p)
-	*mask_p = mask;
 
     return (a);
 }
