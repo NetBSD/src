@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 1997/05/14 01:37:24 jeremy Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 1997/06/10 19:48:33 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  * Rounding macros.
  * The MMU_ROUND macros are named misleadingly.  MMU_ROUND_A actually
  * rounds an address to the nearest B table boundary, and so on.
- * MMU_ROUND_C() is synonmous with _round_page().
+ * MMU_ROUND_C() is synonmous with m68k_round_page().
  */
 #define	MMU_ROUND_A(pa)\
 	((unsigned long) (pa) & MMU_TIA_MASK)
@@ -140,19 +140,6 @@
 #define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
 
 #define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
-
-/*
- * Mach derived conversion macros
- */
-#define _round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
-#define _trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define _btos(x)	((unsigned)(x) >> SEGSHIFT)
-#define _stob(x)	((unsigned)(x) << SEGSHIFT)
-
-#define _round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define _trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define _btop(x)	((unsigned)(x) >> PGSHIFT)
-#define _ptob(x)	((unsigned)(x) << PGSHIFT)
 
 #ifdef	_KERNEL
 
