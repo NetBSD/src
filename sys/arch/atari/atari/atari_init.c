@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.16 1996/07/20 20:52:30 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.17 1996/08/23 11:07:56 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -66,6 +66,8 @@ void start_c __P((int, u_int, u_int, u_int, char *));
 static void cpu_init_kcorehdr __P((u_long));
 static void mmu030_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
 			      pt_entry_t *, u_int, u_int));
+static void map_io_areas __P((pt_entry_t *, u_int, u_int));
+static void set_machtype __P((void));
 
 #if defined(M68040) || defined(M68060)
 static void mmu040_setup __P((st_entry_t *, u_int, pt_entry_t *, u_int,
@@ -90,6 +92,9 @@ u_int		*Sysmap;
 int		machineid, mmutype, cpu040, astpending;
 char		*vmmap;
 pv_entry_t	pv_table;
+#if defined(M68040) || defined(M68060)
+extern int	protostfree;
+#endif
 
 extern char	*esym;
 
@@ -145,7 +150,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	u_int		vstart;		/* Next available virtual address */
 	u_int		avail;
 	pt_entry_t	*pt;
-	u_int		ptsize;
+	u_int		ptsize, ptextra;
 	u_int		tc, i;
 	u_int		*pg;
 	u_int		pg_proto;
@@ -195,6 +200,12 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	PAGE_SHIFT = PG_SHIFT;
 
 	/*
+	 * Determine the type of machine we are running on. This needs
+	 * to be done early!
+	 */
+	set_machtype();
+
+	/*
 	 * We run the kernel from ST memory at the moment.
 	 * The kernel segment table is put just behind the loaded image.
 	 * pstart: start of usable ST memory
@@ -221,21 +232,30 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/*
 	 * allocate the kernel segment table
 	 */
-	Sysseg  = (st_entry_t *)pstart;
-	pstart += kstsize * NBPG;
-	avail  -= kstsize * NBPG;
+	Sysseg     = (st_entry_t *)pstart;
+	Sysseg_pa  = (u_int)Sysseg + kbase;
+	pstart    += kstsize * NBPG;
+	avail     -= kstsize * NBPG;
   
 	/*
+	 * Determine the number of pte's we need for extra's like
+	 * ST I/O map's.
+	 */
+	ptextra = btoc(STIO_SIZE);
+
+	/*
+	 * If present, add pci areas
+	 */
+	if (machineid & ATARI_HADES)
+		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_MEM_SIZE);
+
+	/*
 	 * The 'pt' (the initial kernel pagetable) has to map the kernel and
-	 * the I/O area. To make life easy when building device drivers, the
-	 * I/O-area is mapped in the same VA address range as TOS maps
-	 * it: 0xff8000 - 0xffffff. This means that 'pt' should map at least
-	 * 16Mb of space. ( howmany((0xffffff/NBPG), NPTEPG)) pages).
-	 * Luckily, Sysptsize is twice as large and the results of mapping
-	 * it are checked in pmap_init() ....
+	 * the I/O areas. The various I/O areas are mapped (virtually) at
+	 * the top of the address space mapped by 'pt' (ie. just below Sysmap).
 	 */
 	pt      = (pt_entry_t *)pstart;
-	ptsize  = Sysptsize << PGSHIFT;
+	ptsize  = (Sysptsize + howmany(ptextra, NPTEPG)) << PGSHIFT;
 	pstart += ptsize;
 	avail  -= ptsize;
   
@@ -294,13 +314,6 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
 
-	/*
-	 * Map until the segment table, the 68040/060 needs a different
-	 * treatment there.
-	 */
-	for (; i < (u_int)Sysseg; i += NBPG, pg_proto += NBPG)
-		*pg++ = pg_proto;
-
 #if defined(M68040) || defined(M68060)
 	/*
 	 * Map the kernel segment table cache invalidated for 
@@ -308,11 +321,13 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
 	if (mmutype == MMU_68040) {
-	    pg_proto |= PG_CI;
-	    for (; i < &Sysseg[kstsize * NPTEPG]; i += NBPG, pg_proto += NBPG)
+	    for (; i < (u_int)Sysseg; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
-	    pg_proto &= ~PG_CI;
-	    pg_proto |= PG_CCB;
+	    pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
+	    for (; i < (u_int)&Sysseg[kstsize * NPTEPG]; i += NBPG,
+							 pg_proto += NBPG)
+		*pg++ = pg_proto;
+	    pg_proto = (pg_proto & ~PG_CI) | PG_CCB;
 	}
 #endif /* defined(M68040) || defined(M68060) */
 
@@ -326,18 +341,13 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/*
 	 * invalidate remainder of kernel PT
 	 */
-	while(pg < &pt[ptsize/NBPG])
+	while(pg < &pt[ptsize/sizeof(pt_entry_t)])
 		*pg++ = PG_NV;
 
 	/*
-	 * Go back and validate internal IO PTEs. They MUST be Cache inhibited!
+	 * Map various I/O areas
 	 */
-	pg       = &pt[AD_IO / NBPG];
-	pg_proto = AD_IO | PG_RW | PG_CI | PG_V;
-	while(pg_proto < AD_EIO) {
-		*pg++     = pg_proto;
-		pg_proto += NBPG;
-	}
+	map_io_areas(pt, ptsize, ptextra);
 
 	/*
 	 * Clear proc0 user-area
@@ -425,7 +435,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/*
 	 * get the pmap module in sync with reality.
 	 */
-	pmap_bootstrap(vstart, AD_IO, howmany(AD_EIO-AD_IO, NBPG));
+	pmap_bootstrap(vstart, stio_addr, ptextra);
 
 	/*
 	 * Prepare to enable the MMU.
@@ -451,16 +461,31 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		while(lp < le)
 			*fp++ = *lp++;
 	}
-
-	asm volatile ("pmove %0@,srp" : : "a" (&protorp[0]));
-	/*
-	 * setup and load TC register.
-	 * enable_cpr, enable_srp, pagesize=8k,
-	 * A = 8 bits, B = 11 bits
-	 */
-	tc = 0x82d08b00;
-	asm volatile ("pmove %0@,tc" : : "a" (&tc));
-
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		/*
+		 * movel Sysseg_pa,a0;
+		 * movec a0,SRP;
+		 * pflusha;
+		 * movel #$0xc000,d0;
+		 * movec d0,TC
+		 */
+		asm volatile ("movel %0,a0;.word 0x4e7b,0x8807" : : "a" (Sysseg_pa) : "a0");
+		asm volatile (".word 0xf518" : : );
+		asm volatile ("movel #0xc000,d0; .word 0x4e7b,0x0003" : : :"d0" );
+	} else
+#endif
+	{
+		asm volatile ("pmove %0@,srp" : : "a" (&protorp[0]));
+		/*
+		 * setup and load TC register.
+		 * enable_cpr, enable_srp, pagesize=8k,
+		 * A = 8 bits, B = 11 bits
+		 */
+		tc = 0x82d08b00;
+		asm volatile ("pmove %0@,tc" : : "a" (&tc));
+	}
+ 
 	/* Is this to fool the optimizer?? */
 	i = *(int *)proc0paddr;
 	*(volatile int *)proc0paddr = i;
@@ -479,8 +504,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	MFP->mf_imra  = MFP->mf_imrb = 0;
 	MFP->mf_aer   = MFP->mf_ddr  = 0;
 	MFP->mf_vr    = 0x40;
-	if(!badbaddr((caddr_t)&MFP2->mf_gpip)) {
-		machineid |= ATARI_TT;
+	if(machineid & ATARI_TT) {
 		MFP2->mf_iera = MFP2->mf_ierb = 0;
 		MFP2->mf_imra = MFP2->mf_imrb = 0;
 		MFP2->mf_aer  = 0x80;
@@ -500,12 +524,92 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 #endif
 		
 	}
-	else machineid |= ATARI_FALCON;
 
 	/*
 	 * Initialize stmem allocator
 	 */
 	init_stmem();
+}
+
+/*
+ * Try to figure out on what type of machine we are running
+ * Note: This module runs *before* 
+ */
+static void
+set_machtype()
+{
+	if(!badbaddr((caddr_t)(PCI_CONFB_PHYS + PCI_CONFM_PHYS)))
+		machineid |= ATARI_HADES;
+	else {
+		if(!badbaddr((caddr_t)&MFP2->mf_gpip))
+			machineid |= ATARI_TT;
+		else machineid |= ATARI_FALCON;
+	}
+}
+
+/*
+ * Do the dull work of mapping the various I/O areas. They MUST be Cache
+ * inhibited!
+ * All I/O areas are virtually mapped at the end of the pt-table.
+ */
+static void
+map_io_areas(pt, ptsize, ptextra)
+pt_entry_t	*pt;
+u_int		ptsize;		/* Size of 'pt' in bytes	*/
+u_int		ptextra;	/* #of additional I/O pte's	*/
+{
+	vm_offset_t	ioaddr;
+	pt_entry_t	*pg, *epg;
+	pt_entry_t	pg_proto;
+	u_long		mask;
+
+	ioaddr = ((ptsize / sizeof(pt_entry_t)) - ptextra) * NBPG;
+
+	/*
+	 * Map ST-IO area
+	 */
+	stio_addr = ioaddr;
+	ioaddr   += STIO_SIZE;
+	pg        = &pt[stio_addr / NBPG];
+	epg       = &pg[btoc(STIO_SIZE)];
+	pg_proto  = STIO_PHYS | PG_RW | PG_CI | PG_V;
+	while(pg < epg) {
+		*pg++     = pg_proto;
+		pg_proto += NBPG;
+	}
+
+	/*
+	 * Map PCI areas
+	 */
+	if (machineid & ATARI_HADES) {
+
+		pci_conf_addr = ioaddr;
+		ioaddr       += PCI_CONF_SIZE;
+		pg            = &pt[pci_conf_addr / NBPG];
+		epg           = &pg[btoc(PCI_CONF_SIZE)];
+		mask          = PCI_CONFM_PHYS;
+		pg_proto      = PCI_CONFB_PHYS | PG_RW | PG_CI | PG_V;
+		for(; pg < epg; mask >>= 1)
+			*pg++ = pg_proto | mask;
+
+		pci_io_addr   = ioaddr;
+		ioaddr       += PCI_IO_SIZE;
+		epg           = &pg[btoc(PCI_IO_SIZE)];
+		pg_proto      = PCI_IO_PHYS | PG_RW | PG_CI | PG_V;
+		while(pg < epg) {
+			*pg++     = pg_proto;
+			pg_proto += NBPG;
+		}
+
+		pci_mem_addr  = ioaddr;
+		ioaddr       += PCI_MEM_SIZE;
+		epg           = &pg[btoc(PCI_MEM_SIZE)];
+		pg_proto      = PCI_MEM_PHYS | PG_RW | PG_CI | PG_V;
+		while(pg < epg) {
+			*pg++     = pg_proto;
+			pg_proto += NBPG;
+		}
+	}
 }
 
 /*
@@ -629,6 +733,7 @@ mmu040_setup(sysseg, kstsize, pt, ptsize, sysptmap, sysptsize, kbase)
 {
 	int		i;
 	st_entry_t	sg_proto, *sg, *esg;
+	pt_entry_t	pg_proto;
 
 	/*
 	 * First invalidate the entire "segment table" pages
