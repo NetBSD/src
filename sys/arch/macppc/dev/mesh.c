@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.2.2.5 2001/03/29 10:17:50 bouyer Exp $	*/
+/*	$NetBSD: mesh.c,v 1.2.2.6 2001/03/29 20:24:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -983,13 +983,14 @@ mesh_scsi_request(chan, req, arg)
 	struct scsipi_periph *periph;
 	struct mesh_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct mesh_scb *scb;
-	u_int flags = xs->xs_control;
+	u_int flags;
 	int s;
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
 
 		if ((scb = mesh_get_scb(sc)) == NULL) {
