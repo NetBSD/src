@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.27 1994/11/06 23:43:50 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.28 1994/11/07 03:39:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -130,6 +130,7 @@ static	bool_t			npx_exists;
 static	struct gate_descriptor	npx_idt_probeintr;
 static	int			npx_intrno;
 static	unsigned		npx_intrmask;
+static	int			npx_nointr;
 static	volatile u_int		npx_intrs_while_probing;
 static	bool_t			npx_irq13;
 static	volatile u_int		npx_traps_while_probing;
@@ -140,24 +141,23 @@ static	volatile u_int		npx_traps_while_probing;
  * latch stuff in probintr() can be moved to npxprobe().
  */
 void probeintr(void);
-asm ( \
-	".text;" \
-	"_probeintr:;" \
-	"ss;" \
-	"incl	_npx_intrs_while_probing;" \
-	"pushl	%eax;" \
-	"movb	$0x20,%al;"	/* EOI (asm in strings loses cpp features) */ \
-	"outb	%al,$0xa0;"	/* IO_ICU2 */ \
-	"outb	%al,$0x20;"	/* IO_ICU1 */ \
-	"movb	$0,%al;" \
-	"outb	%al,$0xf0;"	/* clear BUSY# latch */ \
-	"popl	%eax;" \
-	"iret" \
-);
+asm ("
+	.text
+_probeintr:
+	ss
+	incl	_npx_intrs_while_probing
+	pushl	%eax
+	movb	$0x20,%al	# EOI (asm in strings loses cpp features)
+	outb	%al,$0xa0	# IO_ICU2
+	outb	%al,$0x20	# IO_ICU1
+	movb	$0,%al
+	outb	%al,$0xf0	# clear BUSY# latch
+	popl	%eax
+	iret
+");
 
 void probetrap(void);
-asm
-("
+asm ("
 	.text
 _probetrap:
 	ss
@@ -385,15 +385,24 @@ npxintr(frame)
 		panic("npxintr from nowhere");
 	}
 	/*
-	 * We used to check that p == curproc here, but with delayed saves,
-	 * that may not be true.
+	 * Clear the interrupt latch.
+	 */
+	outb(0xf0, 0);
+	/*
+	 * If we're saving, ignore the interrupt.  The FPU will happily
+	 * generate another one when we restore the state later.
+	 */
+	if (npx_nointr != 0)
+		return (1);
+	/*
+	 * Find the address of npxproc's savefpu.  This is not necessarily
+	 * the one in curpcb.
 	 */
 	addr = &p->p_addr->u_pcb.pcb_savefpu;
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.
 	 */
-	outb(0xf0, 0);
 	fnsave(addr);
 	fwait();
 	/*
@@ -457,14 +466,15 @@ npxintr(frame)
 		psignal(p, SIGFPE);
 	}
 
-	return 1;
+	return (1);
 }
 
 /*
  * Implement device not available (DNA) exception
  *
- * It would be better to switch FP context here (only).  This would require
- * saving the state in the proc table instead of in the pcb.
+ * If the we were the last process to use the FPU, we can simply return.
+ * Otherwise, we save the previous state, if necessary, and restore our last
+ * saved state.
  */
 int
 npxdna()
@@ -472,14 +482,19 @@ npxdna()
 
 	if (!npx_exists)
 		return (0);
-	if (npxproc != 0) {
-		if (npxproc == curproc) {
-			stop_emulating();
-			return (1);
-		}
-		npxsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
-	}
+#ifdef DIAGNOSTIC
+	if (cpl != 0 || npx_nointr != 0)
+		panic("npxdna");
+#endif
 	stop_emulating();
+	if (npxproc != 0) {
+		if (npxproc == curproc)
+			return (1);
+		npx_nointr = 1;
+		fnsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
+		fwait();
+		npx_nointr = 0;
+	}
 	/*
 	 * The following frstor may cause an IRQ13 when the state being
 	 * restored has a pending error.  The error will appear to have been
@@ -498,69 +513,65 @@ npxdna()
 
 /*
  * Wrapper for fnsave instruction to handle h/w bugs.  If there is an error
- * pending, then fnsave generates a bogus IRQ13 on some systems.  Force
- * any IRQ13 to be handled immediately, and then ignore it.  This routine is
- * often called at splhigh so it must not use many system services.  In
- * particular, it's much easier to install a special handler than to
- * guarantee that it's safe to use npxintr() and its supporting code.
+ * pending, then fnsave generates a bogus IRQ13 on some systems.  Force any
+ * IRQ13 to be handled immediately, and then ignore it.
+ *
+ * This routine is always called at spl0.  If it might called with the NPX
+ * interrupt masked, it would be necessary to forcibly unmask the NPX interrupt
+ * so that it could succeed.
+ *
+ * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
+ * immediately, we clear npxproc and turn on CR0_TS to force a DNA and a reload
+ * of the FPU state the next time we try to use it.  Since this routine is only
+ * called when forking, so this algorithm at worst forces us to trap once per
+ * fork(), and at best saves us a reload once per fork().
  */
 void
 npxsave(addr)
 	struct save87 *addr;
 {
-	unsigned save_imen;
-	struct gate_descriptor	save_idt_npxintr;
 
-	disable_intr();
-	save_imen = imen;
-	save_idt_npxintr = idt[npx_intrno];
-	idt[npx_intrno] = npx_idt_probeintr;
-	imen &= ~npx_intrmask;
-	SET_ICUS();
-	enable_intr();
+#ifdef DIAGNOSTIC
+	if (cpl != 0 || npx_nointr != 0)
+		panic("npxsave");
+#endif
 	stop_emulating();
+	npx_nointr = 1;
 	fnsave(addr);
 	fwait();
+	npx_nointr = 0;
 	npxproc = 0;
 	start_emulating();
-	disable_intr();
-	imen = save_imen;
-	SET_ICUS();
-	idt[npx_intrno] = save_idt_npxintr;
-	enable_intr();		/* back to usual state */
 }
 
 /*
  * Initialize floating point unit.
+ *
+ * This is normally called at spl0, so NPX interrupts will be caught and
+ * ignored.  It is called once during boot at splhigh, but there is never any
+ * state to save then.
  */
 void
 npxinit()
 {
 	static u_short control = __INITIAL_NPXCW__;
-	unsigned save_imen;
-	struct gate_descriptor save_idt_npxintr;
 
-	disable_intr();
-	save_imen = imen;
-	save_idt_npxintr = idt[npx_intrno];
-	idt[npx_intrno] = npx_idt_probeintr;
-	imen &= ~npx_intrmask;
-	SET_ICUS();
-	enable_intr();
+#ifdef DIAGNOSTIC
+	extern int cold;
+	if (cpl != 0 && !cold || npx_nointr != 0)
+		panic("npxinit");
+#endif
 	stop_emulating();
+	npx_nointr = 1;
 	if (npxproc != 0 && npxproc != curproc)
 		fnsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
 	else
 		fninit();
 	fwait();
+	npx_nointr = 0;
 	npxproc = curproc;
 	fldcw(&control);
 	fwait();
-	disable_intr();
-	imen = save_imen;
-	SET_ICUS();
-	idt[npx_intrno] = save_idt_npxintr;
-	enable_intr();		/* back to usual state */
 }
 
 #endif /* NNPX > 0 */
