@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 1996/04/26 19:26:51 chuck Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 1996/05/09 21:09:14 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
  */
 
 #include "assym.h"
-#include <mvme68k/mvme68k/vectors.s>
 
 /*
  * Temporary stack for a variety of purposes.
@@ -55,20 +54,242 @@
 	.space	NBPG
 tmpstk:
 
-	.text
-/*
- * This is where we wind up if the kernel jumps to location 0.
- * (i.e. a bogus PC)  This is known to immediately follow the vector
- * table and is hence at 0x400 (see reset vector in vectors.s).
- */
-	.globl	_panic
-	pea	Ljmp0panic
-	jbsr	_panic
-	/* NOTREACHED */
-Ljmp0panic:
-	.asciz	"kernel jump to zero"
-	.even
+#define	RELOC(var, ar) \
+	lea	var,ar
 
+/*
+ * Initialization
+ *
+ * The bootstrap loader loads us in starting at 0, and VBR is non-zero.
+ * On entry, args on stack are boot device, boot filename, console unit,
+ * boot flags (howto), boot device name, filesystem type name.
+ */
+	.comm	_lowram,4
+	.comm	_esym,4
+
+	.text
+	.globl	_edata
+	.globl	_etext,_end
+	.globl	start
+start:					| start of kernel and .text!
+	movw	#PSL_HIGHIPL,sr		| no interrupts
+	movl	#0,d6			| get bootdev
+	movl	sp@(4),d7		| get boothowto
+	RELOC(tmpstk, a0)
+	movl	a0,sp			| give ourselves a temporary stack
+
+	lea	_edata,a0		| clear out BSS
+	movl	#_end-4,d0		| (must be <= 256 kB)
+	subl	#_edata,d0
+	lsrl	#2,d0
+1:	clrl	a0@+
+	dbra	d0,1b
+
+	RELOC(_esym, a0)
+#if 1
+	movl	a4,a0@			| store end of symbol table
+#else
+	clrl	a0@			| no symbol table, yet
+#endif
+	movl	#0,a5			| RAM starts at 0
+	RELOC(_lowram, a0)
+	movl	a5,a0@			| store start of physical memory
+	movl	#CACHE_OFF,d0
+	movc	d0,cacr			| clear and disable on-chip cache(s)
+
+/* determine our CPU/MMU combo - check for all regardless of kernel config */
+	movl	#0x200,d0		| data freeze bit
+	movc	d0,cacr			|   only exists on 68030
+	movc	cacr,d0			| read it back
+	tstl	d0			| zero?
+	jeq	Lnot68030		| yes, we have 68020/68040
+	RELOC(_mmutype, a0)		| no, we have 68030
+	movl	#-1,a0@			| set to reflect 68030 PMMU
+	jra	Lstart1
+Lnot68030:
+	bset	#31,d0			| data cache enable bit
+	movc	d0,cacr			|   only exists on 68040
+	movc	cacr,d0			| read it back
+	tstl	d0			| zero?
+	beq	Lis68020		| yes, we have 68020
+	moveq	#0,d0			| now turn it back off
+	movec	d0,cacr			|   before we access any data
+	RELOC(_mmutype, a0)
+	movl	#-2,a0@			| with a 68040 MMU
+	jra	Lstart1
+Lis68020:
+	RELOC(_mmutype, a0)
+	movl	#1,a0@			| no, we have PMMU
+
+Lstart1:
+	/* XXXCDC SHUTUP 147 CALL */
+	movb	#0, 0xfffe1026		| serial interrupt off
+	movb	#0, 0xfffe1018		| timer 1 off
+	movb	#0, 0xfffe1028		| ethernet off
+	/* XXXCDC SHUTUP 147 CALL */
+/* initialize source/destination control registers for movs */
+	moveq	#FC_USERD,d0		| user space
+	movc	d0,sfc			|   as source
+	movc	d0,dfc			|   and destination of transfers
+/* initialize memory sizes (for pmap_bootstrap) */
+	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
+	movl	0xfffe0778,_myea	| XXXCDC -- ethernet addr
+	moveq	#PGSHIFT,d2
+	lsrl	d2,d1			| convert to page (click) number
+	RELOC(_maxmem, a0)
+	movl	d1,a0@			| save as maxmem
+	movl	a5,d0			| lowram value from ROM via boot
+	lsrl	d2,d0			| convert to page number
+	subl	d0,d1			| compute amount of RAM present
+	RELOC(_physmem, a0)
+	movl	d1,a0@			| and physmem
+/* configure kernel and proc0 VA space so we can get going */
+	.globl	_Sysseg, _pmap_bootstrap, _avail_start
+#ifdef DDB
+	RELOC(_esym,a0)			| end of static kernel test/data/syms
+	movl	a0@,d5
+	jne	Lstart2
+#endif
+	movl	#_end,d5		| end of static kernel text/data
+Lstart2:
+	addl	#NBPG-1,d5
+	andl	#PG_FRAME,d5		| round to a page
+	movl	d5,a4
+	addl	a5,a4			| convert to PA
+	movl	#0, sp@-		| firstpa
+	pea	a4@			| nextpa
+	RELOC(_pmap_bootstrap,a0)
+	jbsr	a0@			| pmap_bootstrap(firstpa, nextpa)
+	addql	#8,sp
+
+/*
+ * Enable the MMU.
+ * Since the kernel is mapped logical == physical, we just turn it on.
+ */
+	RELOC(_Sysseg, a0)		| system segment table addr
+	movl	a0@,d1			| read value (a KVA)
+	addl	a5,d1			| convert to PA
+	RELOC(_mmutype, a0)
+	cmpl	#-2,a0@			| 68040?
+	jne	Lmotommu1		| no, skip
+	.long	0x4e7b1807		| movc d1,srp
+	jra	Lstploaddone
+Lmotommu1:
+	RELOC(_protorp, a0)
+	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
+	movl	d1,a0@(4)		| + segtable address
+	pmove	a0@,srp			| load the supervisor root pointer
+	movl	#0x80000002,a0@		| reinit upper half for CRP loads
+Lstploaddone:
+	RELOC(_mmutype, a0)
+	cmpl	#-2,a0@			| 68040?
+	jne	Lmotommu2		| no, skip
+	moveq	#0,d0			| ensure TT regs are disabled
+	.long	0x4e7b0004		| movc d0,itt0
+	.long	0x4e7b0005		| movc d0,itt1
+	.long	0x4e7b0006		| movc d0,dtt0
+	.long	0x4e7b0007		| movc d0,dtt1
+	.word	0xf4d8			| cinva bc
+	.word	0xf518			| pflusha
+	movl	#0x8000,d0
+	.long	0x4e7b0003		| movc d0,tc
+	movl	#0x80008000,d0
+	movc	d0,cacr			| turn on both caches
+	jmp	Lenab1
+Lmotommu2:
+	movl	#0x82c0aa00,a2@		| value to load TC with
+	pmove	a2@,tc			| load it
+Lenab1:
+
+/*
+ * Should be running mapped from this point on
+ */
+/* select the software page size now */
+	lea	tmpstk,sp		| temporary stack
+	jbsr	_vm_set_page_size	| select software page size
+/* set kernel stack, user SP, and initial pcb */
+	movl	_proc0paddr,a1		| get proc0 pcb addr
+	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
+	movl	#USRSTACK-4,a2
+	movl	a2,usp			| init user SP
+	movl	a1,_curpcb		| proc0 is running
+#ifdef FPCOPROC
+	clrl	a1@(PCB_FPCTX)		| ensure null FP context
+	movl	a1,sp@-
+	jbsr	_m68881_restore		| restore it (does not kill a1)
+	addql	#4,sp
+#endif
+/* flush TLB and turn on caches */
+	jbsr	_TBIA			| invalidate TLB
+	cmpl	#-2,_mmutype		| 68040?
+	jeq	Lnocache0		| yes, cache already on
+	movl	#CACHE_ON,d0
+	movc	d0,cacr			| clear cache(s)
+Lnocache0:
+/* final setup for C code */
+	movl	#_vectab,d0		| set VBR
+	movc	d0,vbr
+	jbsr	_isrinit		| be ready for stray ints
+	jbsr	_mvme68k_init		| early model-dependent init
+	movw	#PSL_LOWIPL,sr		| lower SPL
+	movl	d7,_boothowto		| save reboot flags
+	movl	d6,_bootdev		|   and boot device
+
+/*
+ * Create a fake exception frame so that cpu_fork() can copy it.
+ * main() nevers returns; we exit to user mode from a forked process
+ * later on.
+ */
+	clrw	sp@-			| vector offset/frame type
+	clrl	sp@-			| PC - filled in by "execve"
+	movw	#PSL_USER,sp@-		| in user mode
+	clrl	sp@-			| stack adjust count and padding
+	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
+	lea	_proc0,a0		| save pointer to frame
+	movl	sp,a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
+
+	jra	_main			| main()
+
+	.globl _proc_trampoline
+_proc_trampoline:
+	movl	a3@(P_MD_REGS),sp	| process' frame pointer in sp
+	movl    a3,sp@-
+	jbsr    a2@
+	addql   #4,sp
+	movl    sp@(FR_SP),a0           | grab and load
+	movl    a0,usp                  |   user SP
+	moveml  sp@+,#0x7FFF            | restore most user regs
+	addql   #8,sp                   | toss SP and stack adjust
+	jra     rei                     | and return
+
+/*
+ * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
+ * 
+ * Stack looks like:
+ *
+ *	sp+0 ->	signal number
+ *	sp+4	signal specific code
+ *	sp+8	pointer to signal context frame (scp)
+ *	sp+12	address of handler
+ *	sp+16	saved hardware state
+ *			.
+ *			.
+ *	scp+0->	beginning of signal context frame
+ */
+	.globl	_sigcode, _esigcode, _sigcodetrap
+	.data
+_sigcode:
+	movl	sp@(12),a0		| signal handler addr	(4 bytes)
+	jsr	a0@			| call signal handler	(2 bytes)
+	addql	#4,sp			| pop signo		(2 bytes)
+_sigcodetrap:
+	trap	#1			| special syscall entry	(2 bytes)
+	movl	d0,sp@(4)		| save errno		(4 bytes)
+	moveq	#1,d0			| syscall == exit	(2 bytes)
+	trap	#0			| exit(errno)		(2 bytes)
+	.align	2
+_esigcode:
+	.text
 /*
  * Do a dump.
  * Called by auto-restart.
@@ -653,242 +874,6 @@ Lnosir:
 	movl	sp@+,d0			| restore scratch register
 Ldorte:
 	rte				| real return
-
-#define	RELOC(var, ar) \
-	lea	var,ar
-
-/*
- * Initialization
- *
- * The bootstrap loader loads us in starting at 0, and VBR is non-zero.
- * On entry, args on stack are boot device, boot filename, console unit,
- * boot flags (howto), boot device name, filesystem type name.
- */
-	.comm	_lowram,4
-	.comm	_esym,4
-
-	.text
-	.globl	_edata
-	.globl	_etext,_end
-	.globl	start
-start:
-	movw	#PSL_HIGHIPL,sr		| no interrupts
-	movl	#0,d6			| get bootdev
-	movl	sp@(4),d7		| get boothowto
-	RELOC(tmpstk, a0)
-	movl	a0,sp			| give ourselves a temporary stack
-
-	lea	_edata,a0		| clear out BSS
-	movl	#_end-4,d0		| (must be <= 256 kB)
-	subl	#_edata,d0
-	lsrl	#2,d0
-1:	clrl	a0@+
-	dbra	d0,1b
-
-	RELOC(_esym, a0)
-#if 1
-	movl	a4,a0@			| store end of symbol table
-#else
-	clrl	a0@			| no symbol table, yet
-#endif
-	movl	#0,a5			| RAM starts at 0
-	RELOC(_lowram, a0)
-	movl	a5,a0@			| store start of physical memory
-	movl	#CACHE_OFF,d0
-	movc	d0,cacr			| clear and disable on-chip cache(s)
-
-/* determine our CPU/MMU combo - check for all regardless of kernel config */
-	movl	#0x200,d0		| data freeze bit
-	movc	d0,cacr			|   only exists on 68030
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
-	jeq	Lnot68030		| yes, we have 68020/68040
-	RELOC(_mmutype, a0)		| no, we have 68030
-	movl	#-1,a0@			| set to reflect 68030 PMMU
-	jra	Lstart1
-Lnot68030:
-	bset	#31,d0			| data cache enable bit
-	movc	d0,cacr			|   only exists on 68040
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
-	beq	Lis68020		| yes, we have 68020
-	moveq	#0,d0			| now turn it back off
-	movec	d0,cacr			|   before we access any data
-	RELOC(_mmutype, a0)
-	movl	#-2,a0@			| with a 68040 MMU
-	jra	Lstart1
-Lis68020:
-	RELOC(_mmutype, a0)
-	movl	#1,a0@			| no, we have PMMU
-
-Lstart1:
-	/* XXXCDC SHUTUP 147 CALL */
-	movb	#0, 0xfffe1026		| serial interrupt off
-	movb	#0, 0xfffe1018		| timer 1 off
-	movb	#0, 0xfffe1028		| ethernet off
-	/* XXXCDC SHUTUP 147 CALL */
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,d0		| user space
-	movc	d0,sfc			|   as source
-	movc	d0,dfc			|   and destination of transfers
-/* initialize memory sizes (for pmap_bootstrap) */
-	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
-	movl	0xfffe0778,_myea	| XXXCDC -- ethernet addr
-	moveq	#PGSHIFT,d2
-	lsrl	d2,d1			| convert to page (click) number
-	RELOC(_maxmem, a0)
-	movl	d1,a0@			| save as maxmem
-	movl	a5,d0			| lowram value from ROM via boot
-	lsrl	d2,d0			| convert to page number
-	subl	d0,d1			| compute amount of RAM present
-	RELOC(_physmem, a0)
-	movl	d1,a0@			| and physmem
-/* configure kernel and proc0 VA space so we can get going */
-	.globl	_Sysseg, _pmap_bootstrap, _avail_start
-#ifdef DDB
-	RELOC(_esym,a0)			| end of static kernel test/data/syms
-	movl	a0@,d5
-	jne	Lstart2
-#endif
-	movl	#_end,d5		| end of static kernel text/data
-Lstart2:
-	addl	#NBPG-1,d5
-	andl	#PG_FRAME,d5		| round to a page
-	movl	d5,a4
-	addl	a5,a4			| convert to PA
-	movl	#0, sp@-		| firstpa
-	pea	a4@			| nextpa
-	RELOC(_pmap_bootstrap,a0)
-	jbsr	a0@			| pmap_bootstrap(firstpa, nextpa)
-	addql	#8,sp
-
-/*
- * Enable the MMU.
- * Since the kernel is mapped logical == physical, we just turn it on.
- */
-	RELOC(_Sysseg, a0)		| system segment table addr
-	movl	a0@,d1			| read value (a KVA)
-	addl	a5,d1			| convert to PA
-	RELOC(_mmutype, a0)
-	cmpl	#-2,a0@			| 68040?
-	jne	Lmotommu1		| no, skip
-	.long	0x4e7b1807		| movc d1,srp
-	jra	Lstploaddone
-Lmotommu1:
-	RELOC(_protorp, a0)
-	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
-	movl	d1,a0@(4)		| + segtable address
-	pmove	a0@,srp			| load the supervisor root pointer
-	movl	#0x80000002,a0@		| reinit upper half for CRP loads
-Lstploaddone:
-	RELOC(_mmutype, a0)
-	cmpl	#-2,a0@			| 68040?
-	jne	Lmotommu2		| no, skip
-	moveq	#0,d0			| ensure TT regs are disabled
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0006		| movc d0,dtt0
-	.long	0x4e7b0007		| movc d0,dtt1
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-	movl	#0x8000,d0
-	.long	0x4e7b0003		| movc d0,tc
-	movl	#0x80008000,d0
-	movc	d0,cacr			| turn on both caches
-	jmp	Lenab1
-Lmotommu2:
-	movl	#0x82c0aa00,a2@		| value to load TC with
-	pmove	a2@,tc			| load it
-Lenab1:
-
-/*
- * Should be running mapped from this point on
- */
-/* select the software page size now */
-	lea	tmpstk,sp		| temporary stack
-	jbsr	_vm_set_page_size	| select software page size
-/* set kernel stack, user SP, and initial pcb */
-	movl	_proc0paddr,a1		| get proc0 pcb addr
-	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
-	movl	#USRSTACK-4,a2
-	movl	a2,usp			| init user SP
-	movl	a1,_curpcb		| proc0 is running
-#ifdef FPCOPROC
-	clrl	a1@(PCB_FPCTX)		| ensure null FP context
-	movl	a1,sp@-
-	jbsr	_m68881_restore		| restore it (does not kill a1)
-	addql	#4,sp
-#endif
-/* flush TLB and turn on caches */
-	jbsr	_TBIA			| invalidate TLB
-	cmpl	#-2,_mmutype		| 68040?
-	jeq	Lnocache0		| yes, cache already on
-	movl	#CACHE_ON,d0
-	movc	d0,cacr			| clear cache(s)
-Lnocache0:
-/* final setup for C code */
-	movl	#_vectab,d0		| set VBR
-	movc	d0,vbr
-	jbsr	_isrinit		| be ready for stray ints
-	jbsr	_mvme68k_init		| early model-dependent init
-	movw	#PSL_LOWIPL,sr		| lower SPL
-	movl	d7,_boothowto		| save reboot flags
-	movl	d6,_bootdev		|   and boot device
-
-/*
- * Create a fake exception frame so that cpu_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-	clrw	sp@-			| vector offset/frame type
-	clrl	sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,sp@-		| in user mode
-	clrl	sp@-			| stack adjust count and padding
-	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
-	lea	_proc0,a0		| save pointer to frame
-	movl	sp,a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
-
-	jra	_main			| main()
-
-	.globl _proc_trampoline
-_proc_trampoline:
-	movl	a3@(P_MD_REGS),sp	| process' frame pointer in sp
-	movl    a3,sp@-
-	jbsr    a2@
-	addql   #4,sp
-	movl    sp@(FR_SP),a0           | grab and load
-	movl    a0,usp                  |   user SP
-	moveml  sp@+,#0x7FFF            | restore most user regs
-	addql   #8,sp                   | toss SP and stack adjust
-	jra     rei                     | and return
-
-/*
- * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
- * 
- * Stack looks like:
- *
- *	sp+0 ->	signal number
- *	sp+4	signal specific code
- *	sp+8	pointer to signal context frame (scp)
- *	sp+12	address of handler
- *	sp+16	saved hardware state
- *			.
- *			.
- *	scp+0->	beginning of signal context frame
- */
-	.globl	_sigcode, _esigcode, _sigcodetrap
-	.data
-_sigcode:
-	movl	sp@(12),a0		| signal handler addr	(4 bytes)
-	jsr	a0@			| call signal handler	(2 bytes)
-	addql	#4,sp			| pop signo		(2 bytes)
-_sigcodetrap:
-	trap	#1			| special syscall entry	(2 bytes)
-	movl	d0,sp@(4)		| save errno		(4 bytes)
-	moveq	#1,d0			| syscall == exit	(2 bytes)
-	trap	#0			| exit(errno)		(2 bytes)
-	.align	2
-_esigcode:
 
 /*
  * Primitives
@@ -1701,3 +1686,5 @@ _eintrnames:
 _intrcnt:
 	.long	0,0,0,0,0,0,0,0,0,0
 _eintrcnt:
+
+#include <mvme68k/mvme68k/vectors.s>

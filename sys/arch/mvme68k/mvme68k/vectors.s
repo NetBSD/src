@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.2 1996/04/26 19:27:06 chuck Exp $
+|	$NetBSD: vectors.s,v 1.3 1996/05/09 21:09:20 chuck Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -46,8 +46,8 @@
 	.globl	_vectab
 
 _vectab:
-	.long	0x4ef88400	/* 0: jmp 0x8400:w (unused reset SSP) */
-	.long	0		/* 1: NOT USED (reset PC) */
+	.long	_badtrap	/* 0: (unused reset SSP) */
+	.long	_badtrap	/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */
 	.long	_addrerr	/* 3: address error */
 	.long	_illinst	/* 4: illegal instruction */
