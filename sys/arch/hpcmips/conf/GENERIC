@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.12 1999/11/15 19:10:47 fvdl Exp $
+# 	$NetBSD: GENERIC,v 1.13 1999/11/20 07:18:59 jun Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -60,10 +60,25 @@ file-system 	UNION
 #options 	SOFTDEP         # FFS soft updates support.
 options 	QUOTA		# UFS quotas
 
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 # Networking options
-options 	INET		# Internet protocols
-#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	GATEWAY		# IP packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MROUTING	# Multicast routing support
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
@@ -181,3 +196,7 @@ pseudo-device	vnd		4	# virtual disk ick
 pseudo-device	ccd		4	# concatenated disks
 
 pseudo-device	biconsdev	1	# build-in console device
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
