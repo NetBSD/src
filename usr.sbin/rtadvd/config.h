@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
