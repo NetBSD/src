@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nstest.c	4.15 (Berkeley) 3/21/91";*/
-static char rcsid[] = "$Id: nstest.c,v 1.2 1993/08/01 17:57:55 mycroft Exp $";
+static char rcsid[] = "$Id: nstest.c,v 1.3 1994/12/23 16:55:50 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$Id: nstest.c,v 1.2 1993/08/01 17:57:55 mycroft Exp $";
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 extern char *inet_ntoa();
 char *progname;

@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)named-xfer.c	4.18 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: named-xfer.c,v 1.2 1993/08/01 17:57:51 mycroft Exp $";
+static char rcsid[] = "$Id: named-xfer.c,v 1.3 1994/12/23 16:55:53 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ static char rcsid[] = "$Id: named-xfer.c,v 1.2 1993/08/01 17:57:51 mycroft Exp $
 #include <resolv.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 
 #define XFER			/* modifies the ns.h include file */
