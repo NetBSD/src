@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -37,69 +37,87 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)common.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: common.c,v 1.4 1994/05/17 04:15:20 cgd Exp $";
+static char sccsid[] = "@(#)common.c	8.2 (Berkeley) 1/21/94";
 #endif /* not lint */
+
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+#include <dirent.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "lp.h"
+#include "pathnames.h"
 
 /*
  * Routines and data common to all the line printer functions.
  */
 
-#include "lp.h"
-
-int	DU;		/* daeomon user-id */
-int	MX;		/* maximum number of blocks to copy */
-int	MC;		/* maximum number of copies allowed */
+char	*AF;		/* accounting file */
+long	 BR;		/* baud rate if lp is a tty */
+char	*CF;		/* name of cifplot filter (per job) */
+char	*DF;		/* name of tex filter (per job) */
+long	 DU;		/* daeomon user-id */
+long	 FC;		/* flags to clear if lp is a tty */
+char	*FF;		/* form feed string */
+long	 FS;		/* flags to set if lp is a tty */
+char	*GF;		/* name of graph(1G) filter (per job) */
+long	 HL;		/* print header last */
+char	*IF;		/* name of input filter (created per job) */
+char	*LF;		/* log file for error messages */
+char	*LO;		/* lock file name */
 char	*LP;		/* line printer device name */
+long	 MC;		/* maximum number of copies allowed */
+long	 MX;		/* maximum number of blocks to copy */
+char	*NF;		/* name of ditroff filter (per job) */
+char	*OF;		/* name of output filter (created once) */
+char	*PF;		/* name of vrast filter (per job) */
+long	 PL;		/* page length */
+long	 PW;		/* page width */
+long	 PX;		/* page width in pixels */
+long	 PY;		/* page length in pixels */
+char	*RF;		/* name of fortran text filter (per job) */
+char    *RG;		/* resricted group */
 char	*RM;		/* remote machine name */
 char	*RP;		/* remote printer name */
-char	*LO;		/* lock file name */
-char	*ST;		/* status file name */
+long	 RS;		/* restricted to those with local accounts */
+long	 RW;		/* open LP for reading and writing */
+long	 SB;		/* short banner instead of normal header */
+long	 SC;		/* suppress multiple copies */
 char	*SD;		/* spool directory */
-char	*AF;		/* accounting file */
-char	*LF;		/* log file for error messages */
-char	*OF;		/* name of output filter (created once) */
-char	*IF;		/* name of input filter (created per job) */
-char	*RF;		/* name of fortran text filter (per job) */
+long	 SF;		/* suppress FF on each print job */
+long	 SH;		/* suppress header page */
+char	*ST;		/* status file name */
 char	*TF;		/* name of troff filter (per job) */
-char	*NF;		/* name of ditroff filter (per job) */
-char	*DF;		/* name of tex filter (per job) */
-char	*GF;		/* name of graph(1G) filter (per job) */
-char	*VF;		/* name of vplot filter (per job) */
-char	*CF;		/* name of cifplot filter (per job) */
-char	*PF;		/* name of vrast filter (per job) */
-char	*FF;		/* form feed string */
 char	*TR;		/* trailer string to be output when Q empties */
-short	SC;		/* suppress multiple copies */
-short	SF;		/* suppress FF on each print job */
-short	SH;		/* suppress header page */
-short	SB;		/* short banner instead of normal header */
-short	HL;		/* print header last */
-short	RW;		/* open LP for reading and writing */
-short	PW;		/* page width */
-short	PL;		/* page length */
-short	PX;		/* page width in pixels */
-short	PY;		/* page length in pixels */
-short	BR;		/* baud rate if lp is a tty */
-int	FC;		/* flags to clear if lp is a tty */
-int	FS;		/* flags to set if lp is a tty */
-int	XC;		/* flags to clear for local mode */
-int	XS;		/* flags to set for local mode */
-short	RS;		/* restricted to those with local accounts */
+char	*VF;		/* name of vplot filter (per job) */
+long	 XC;		/* flags to clear for local mode */
+long	 XS;		/* flags to set for local mode */
 
 char	line[BUFSIZ];
-char	pbuf[BUFSIZ/2];	/* buffer for printcap strings */
-char	*bp = pbuf;	/* pointer into pbuf for pgetent() */
+char	*bp;		/* pointer into printcap buffer. */
 char	*name;		/* program name */
 char	*printer;	/* printer name */
-char	host[32];	/* host machine name */
+			/* host machine name */
+char	host[MAXHOSTNAMELEN];
 char	*from = host;	/* client's machine name */
 int	sendtorem;	/* are we sending to a remote? */
+char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
+
+static int compar __P((const void *, const void *));
 
 /*
  * Create a connection to the remote printer server.
  * Most of this code comes from rcmd.c.
  */
+int
 getport(rhost)
 	char *rhost;
 {
@@ -155,6 +173,7 @@ retry:
  *  new-line to null and leaves it in line.
  * Returns 0 at EOF or the number of characters read.
  */
+int
 getline(cfp)
 	FILE *cfp;
 {
@@ -184,6 +203,7 @@ getline(cfp)
  * creation time.
  * Return the number of entries and a pointer to the list.
  */
+int
 getq(namelist)
 	struct queue *(*namelist[]);
 {
@@ -193,7 +213,6 @@ getq(namelist)
 	struct stat stbuf;
 	DIR *dirp;
 	int arraysz;
-	static int compar();
 
 	if ((dirp = opendir(SD)) == NULL)
 		return(-1);
@@ -246,13 +265,13 @@ errdone:
 /*
  * Compare modification times.
  */
-static
+static int
 compar(p1, p2)
-	register struct queue **p1, **p2;
+	const void *p1, *p2;
 {
-	if ((*p1)->q_time < (*p2)->q_time)
+	if ((*(struct queue **)p1)->q_time < (*(struct queue **)p2)->q_time)
 		return(-1);
-	if ((*p1)->q_time > (*p2)->q_time)
+	if ((*(struct queue **)p1)->q_time > (*(struct queue **)p2)->q_time)
 		return(1);
 	return(0);
 }
@@ -275,7 +294,7 @@ checkremote()
 		name[sizeof(name)-1] = '\0';
 		hp = gethostbyname(name);
 		if (hp == (struct hostent *) NULL) {
-		    (void) sprintf(errbuf,
+		    (void) snprintf(errbuf, sizeof(errbuf),
 			"unable to get official name for local machine %s",
 			name);
 		    return errbuf;
@@ -284,7 +303,7 @@ checkremote()
 		/* get the official name of RM */
 		hp = gethostbyname(RM);
 		if (hp == (struct hostent *) NULL) {
-		    (void) sprintf(errbuf,
+		    (void) snprintf(errbuf, sizeof(errbuf),
 			"unable to get official name for remote machine %s",
 			RM);
 		    return errbuf;
@@ -300,16 +319,34 @@ checkremote()
 	return (char *)0;
 }
 
-/*VARARGS1*/
-fatal(msg, a1, a2, a3)
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+void
+#if __STDC__
+fatal(const char *msg, ...)
+#else
+fatal(msg, va_alist)
 	char *msg;
+        va_dcl
+#endif
 {
+	va_list ap;
+#if __STDC__
+	va_start(ap, msg);
+#else
+	va_start(ap);
+#endif
 	if (from != host)
-		printf("%s: ", host);
-	printf("%s: ", name);
+		(void)printf("%s: ", host);
+	(void)printf("%s: ", name);
 	if (printer)
-		printf("%s: ", printer);
-	printf(msg, a1, a2, a3);
-	putchar('\n');
+		(void)printf("%s: ", printer);
+	(void)vprintf(msg, ap);
+	va_end(ap);
+	(void)putchar('\n');
 	exit(1);
 }

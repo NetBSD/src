@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,26 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rmjob.c	5.7 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmjob.c,v 1.3 1993/12/08 00:47:04 jtc Exp $";
+static char sccsid[] = "@(#)rmjob.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
+
+#include <sys/param.h>
+
+#include <signal.h>
+#include <errno.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include "lp.h"
+#include "lp.local.h"
+#include "pathnames.h"
 
 /*
  * rmjob - remove the specified jobs from the queue.
  */
-
-#include "lp.h"
-#include "pathnames.h"
 
 /*
  * Stuff for handling lprm specifications
@@ -52,13 +62,12 @@ extern int	requ[];			/* job number of spool entries */
 extern int	requests;		/* # of spool requests */
 extern char	*person;		/* name of person doing lprm */
 
-char	root[] = "root";
-int	all = 0;		/* eliminate all files (root only) */
-int	cur_daemon;		/* daemon's pid */
-char	current[40];		/* active control file name */
+static char	root[] = "root";
+static int	all = 0;		/* eliminate all files (root only) */
+static int	cur_daemon;		/* daemon's pid */
+static char	current[40];		/* active control file name */
 
-int	iscf();
-
+void
 rmjob()
 {
 	register int i, nitems;
@@ -66,19 +75,21 @@ rmjob()
 	struct dirent **files;
 	char *cp;
 
-	if ((i = pgetent(line, printer)) < 0)
-		fatal("cannot open printer description file");
-	else if (i == 0)
+	if ((i = cgetent(&bp, printcapdb, printer)) == -2)
+		fatal("can't open printer description file");
+	else if (i == -1)
 		fatal("unknown printer");
-	if ((SD = pgetstr("sd", &bp)) == NULL)
-		SD = _PATH_DEFSPOOL;
-	if ((LO = pgetstr("lo", &bp)) == NULL)
-		LO = DEFLOCK;
-	if ((LP = pgetstr("lp", &bp)) == NULL)
+	else if (i == -3)
+		fatal("potential reference loop detected in printcap file");
+	if (cgetstr(bp, "lp", &LP) < 0)
 		LP = _PATH_DEFDEVLP;
-	if ((RP = pgetstr("rp", &bp)) == NULL)
+	if (cgetstr(bp, "rp", &RP) < 0)
 		RP = DEFLP;
-	RM = pgetstr("rm", &bp);
+	if (cgetstr(bp, "sd", &SD) < 0)
+		SD = _PATH_DEFSPOOL;
+	if (cgetstr(bp,"lo", &LO) < 0)
+		LO = DEFLOCK;
+	cgetstr(bp, "rm", &RM);
 	if (cp = checkremote())
 		printf("Warning: %s\n", cp);
 
@@ -137,6 +148,7 @@ rmjob()
  *  daemon and the file name of the active spool entry.
  * Return boolean indicating existence of a lock file.
  */
+int
 lockchk(s)
 	char *s;
 {
@@ -172,6 +184,7 @@ lockchk(s)
 /*
  * Process a control file.
  */
+void
 process(file)
 	char *file;
 {
@@ -199,6 +212,7 @@ process(file)
 /*
  * Do the dirty work in checking
  */
+int
 chk(file)
 	char *file;
 {
@@ -253,6 +267,7 @@ chk(file)
  * files sent from the remote machine to be removed.
  * Normal users can only remove the file from where it was sent.
  */
+int
 isowner(owner, file)
 	char *owner, *file;
 {
@@ -270,6 +285,7 @@ isowner(owner, file)
  * Check to see if we are sending files to a remote machine. If we are,
  * then try removing files on the remote machine.
  */
+void
 rmremote()
 {
 	register char *cp;
@@ -285,7 +301,7 @@ rmremote()
 	 */
 	fflush(stdout);
 
-	sprintf(buf, "\5%s %s", RP, all ? "-all" : person);
+	(void)snprintf(buf, sizeof(buf), "\5%s %s", RP, all ? "-all" : person);
 	cp = buf;
 	for (i = 0; i < users; i++) {
 		cp += strlen(cp);
@@ -315,6 +331,7 @@ rmremote()
 /*
  * Return 1 if the filename begins with 'cf'
  */
+int
 iscf(d)
 	struct dirent *d;
 {

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,28 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lp.local.h	5.5 (Berkeley) 6/1/90
- *	$Id: lp.local.h,v 1.4 1993/08/01 17:59:08 mycroft Exp $
+ *	@(#)lp.local.h	8.1 (Berkeley) 6/6/93
  */
 
 /*
  * Possibly, local parameters to the spooling system
  */
-
-/*
- * Magic number mapping for binary files, used by lpr to avoid
- *   printing objects files.
- */
-
-#include <a.out.h>
-#include <ar.h>
-
-#ifndef A_MAGIC1	/* must be a VM/UNIX system */
-#ifndef SARMAG
-#	undef ARMAG
-#	define ARMAG	0177545
-#endif
-#endif
 
 /*
  * Defaults for line printer capabilities data base

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +32,27 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)displayq.c	5.13 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: displayq.c,v 1.3 1994/03/27 09:15:15 cgd Exp $";
+static char sccsid[] = "@(#)displayq.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
+
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#include <signal.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include "lp.h"
+#include "lp.local.h"
+#include "pathnames.h"
 
 /*
  * Routines to display the state of the queue.
  */
-
-#include "lp.h"
-#include "pathnames.h"
-
 #define JOBCOL	40		/* column for job # in -l format */
 #define OWNCOL	7		/* start of Owner column in normal */
 #define SIZCOL	62		/* start of Size column in normal */
@@ -50,26 +60,27 @@ static char rcsid[] = "$Id: displayq.c,v 1.3 1994/03/27 09:15:15 cgd Exp $";
 /*
  * Stuff for handling job specifications
  */
-extern char	*user[];	/* users to process */
-extern int	users;		/* # of users in user array */
 extern int	requ[];		/* job number of spool entries */
 extern int	requests;	/* # of spool requests */
+extern char    *user[];	        /* users to process */
+extern int	users;		/* # of users in user array */
 
-int	lflag;		/* long output option */
-char	current[40];	/* current file being printed */
-int	garbage;	/* # of garbage cf files */
-int	rank;		/* order to be printed (-1=none, 0=active) */
-long	totsize;	/* total print job size in bytes */
-int	first;		/* first file in ``files'' column? */
-int	col;		/* column on screen */
-char	file[132];	/* print file name */
+static int	col;		/* column on screen */
+static char	current[40];	/* current file being printed */
+static char	file[132];	/* print file name */
+static int	first;		/* first file in ``files'' column? */
+static int	garbage;	/* # of garbage cf files */
+static int	lflag;		/* long output option */
+static int	rank;		/* order to be printed (-1=none, 0=active) */
+static long	totsize;	/* total print job size in bytes */
 
-char	*head0 = "Rank   Owner      Job  Files";
-char	*head1 = "Total Size\n";
+static char	*head0 = "Rank   Owner      Job  Files";
+static char	*head1 = "Total Size\n";
 
 /*
  * Display the current state of the queue. Format = 1 if long format.
  */
+void
 displayq(format)
 	int format;
 {
@@ -79,27 +90,27 @@ displayq(format)
 	struct queue **queue;
 	struct stat statb;
 	FILE *fp;
-	char c;
 
 	lflag = format;
 	totsize = 0;
 	rank = -1;
-
-	if ((i = pgetent(line, printer)) < 0)
-		fatal("cannot open printer description file");
-	else if (i == 0)
+	if ((i = cgetent(&bp, printcapdb, printer)) == -2)
+		fatal("can't open printer description file");
+	else if (i == -1)
 		fatal("unknown printer");
-	if ((LP = pgetstr("lp", &bp)) == NULL)
+	else if (i == -3)
+		fatal("potential reference loop detected in printcap file");
+	if (cgetstr(bp, "lp", &LP) < 0)
 		LP = _PATH_DEFDEVLP;
-	if ((RP = pgetstr("rp", &bp)) == NULL)
+	if (cgetstr(bp, "rp", &RP) < 0)
 		RP = DEFLP;
-	if ((SD = pgetstr("sd", &bp)) == NULL)
+	if (cgetstr(bp, "sd", &SD) < 0)
 		SD = _PATH_DEFSPOOL;
-	if ((LO = pgetstr("lo", &bp)) == NULL)
+	if (cgetstr(bp,"lo", &LO) < 0)
 		LO = DEFLOCK;
-	if ((ST = pgetstr("st", &bp)) == NULL)
+	if (cgetstr(bp, "st", &ST) < 0)
 		ST = DEFSTAT;
-	RM = pgetstr("rm", &bp);
+	cgetstr(bp, "rm", &RM);
 	if (cp = checkremote())
 		printf("Warning: %s\n", cp);
 
@@ -223,6 +234,7 @@ displayq(format)
 /*
  * Print a warning message if there is no daemon present.
  */
+void
 warn()
 {
 	if (sendtorem)
@@ -234,6 +246,7 @@ warn()
 /*
  * Print the header for the short listing format
  */
+void
 header()
 {
 	printf(head0);
@@ -242,11 +255,11 @@ header()
 	printf(head1);
 }
 
+void
 inform(cf)
 	char *cf;
 {
-	register int j, k;
-	register char *cp;
+	register int j;
 	FILE *cfp;
 
 	/*
@@ -304,6 +317,7 @@ inform(cf)
 	}
 }
 
+int
 inlist(name, file)
 	char *name, *file;
 {
@@ -329,8 +343,10 @@ inlist(name, file)
 	return(0);
 }
 
+void
 show(nfile, file, copies)
 	register char *nfile, *file;
+	int copies;
 {
 	if (strcmp(nfile, " ") == 0)
 		nfile = "(standard input)";
@@ -343,6 +359,7 @@ show(nfile, file, copies)
 /*
  * Fill the line with blanks to the specified column
  */
+void
 blankfill(n)
 	register int n;
 {
@@ -353,8 +370,10 @@ blankfill(n)
 /*
  * Give the abbreviated dump of the file names
  */
+void
 dump(nfile, file, copies)
 	char *nfile, *file;
+	int copies;
 {
 	register short n, fill;
 	struct stat lbuf;
@@ -384,8 +403,10 @@ dump(nfile, file, copies)
 /*
  * Print the long info about the file
  */
+void
 ldump(nfile, file, copies)
 	char *nfile, *file;
+	int copies;
 {
 	struct stat lbuf;
 
@@ -405,9 +426,11 @@ ldump(nfile, file, copies)
  * Print the job's rank in the queue,
  *   update col for screen management
  */
+void
 prank(n)
+	int n;
 {
-	char line[100];
+	char rline[100];
 	static char *r[] = {
 		"th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th"
 	};
@@ -418,9 +441,9 @@ prank(n)
 		return;
 	}
 	if ((n/10)%10 == 1)
-		(void) sprintf(line, "%dth", n);
+		(void)snprintf(rline, sizeof(rline), "%dth", n);
 	else
-		(void) sprintf(line, "%d%s", n, r[n%10]);
-	col += strlen(line);
-	printf("%s", line);
+		(void)snprintf(rline, sizeof(rline), "%d%s", n, r[n%10]);
+	col += strlen(rline);
+	printf("%s", rline);
 }
