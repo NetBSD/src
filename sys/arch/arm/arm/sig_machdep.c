@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.19 2003/09/13 14:31:34 chris Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.20 2003/09/26 12:02:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2003/09/13 14:31:34 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20 2003/09/26 12:02:56 simonb Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -83,7 +83,7 @@ process_frame(struct lwp *l)
  * frame pointer, it returns to the user specified pc.
  */
 void
-sendsig(int sig, sigset_t *mask, u_long code)
+sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

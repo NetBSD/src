@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15 2003/07/15 03:36:00 lukem Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16 2003/09/26 12:02:56 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15 2003/07/15 03:36:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2003/09/26 12:02:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15 2003/07/15 03:36:00 lukem Exp $
  * Send a signal to process
  */
 void
-sendsig(int sig, sigset_t *returnmask, u_long code)
+sendsig(int sig, const sigset_t *returnmask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

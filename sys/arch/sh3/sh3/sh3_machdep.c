@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.51 2003/08/07 16:29:30 agc Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.52 2003/09/26 12:02:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.51 2003/08/07 16:29:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.52 2003/09/26 12:02:56 simonb Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -416,7 +416,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
  * specified pc, psl.
  */
 void
-sendsig(int sig, sigset_t *mask, u_long code)
+sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

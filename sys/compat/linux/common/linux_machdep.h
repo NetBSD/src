@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.9 2003/09/25 22:00:02 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.10 2003/09/26 12:02:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ __BEGIN_DECLS
 #ifdef __HAVE_SIGINFO
 void linux_sendsig __P((const ksiginfo_t *, const sigset_t *));
 #else
-void linux_sendsig __P((int, sigset_t *, u_long));
+void linux_sendsig __P((int, const sigset_t *, u_long));
 #endif
 dev_t linux_fakedev __P((dev_t, int));
 __END_DECLS

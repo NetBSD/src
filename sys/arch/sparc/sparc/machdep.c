@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.232 2003/08/27 15:59:53 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.233 2003/09/26 12:02:56 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2003/08/27 15:59:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2003/09/26 12:02:56 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -530,7 +530,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;

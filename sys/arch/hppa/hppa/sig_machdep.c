@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.6 2003/09/26 12:02:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.6 2003/09/26 12:02:56 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -146,7 +146,7 @@ int sigpid = 0;
 void
 sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;

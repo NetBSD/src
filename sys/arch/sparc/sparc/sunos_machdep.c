@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.12 2003/07/15 00:05:09 lukem Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.13 2003/09/26 12:02:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.12 2003/07/15 00:05:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.13 2003/09/26 12:02:56 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ struct sunos_sigframe {
 void
 sunos_sendsig(sig, mask, code)
 	int sig;
-	sigset_t *mask;
+	const sigset_t *mask;
 	u_long code;
 {
 	struct lwp *l = curlwp;
