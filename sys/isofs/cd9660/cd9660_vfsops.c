@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.9 1994/07/19 15:27:42 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.10 1994/12/13 22:33:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_vfsops.c	8.3 (Berkeley) 1/31/94
+ *	@(#)cd9660_vfsops.c	8.9 (Berkeley) 12/5/94
  */
 
 #include <sys/param.h>
