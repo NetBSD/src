@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.5 1999/02/24 00:03:12 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.6 1999/03/02 03:13:59 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,12 +70,15 @@ static  void do_ioctl __P((int, unsigned long, void *, char *));
 static  void rf_configure __P((int, char*, int));
 static  char *device_status __P((RF_DiskStatus_t));
 static  void rf_get_device_status __P((int));
+static  void get_component_number __P((int, char *, int *, int *));
 static  void rf_fail_disk __P((int, char *, int));
 static  void usage __P((void));
 static  void get_component_label __P((int, char *));
 static  void set_component_label __P((int, char *));
 static  void init_component_labels __P((int, int));
 static  void add_hot_spare __P((int, char *));
+static  void remove_hot_spare __P((int, char *));
+static  void rebuild_in_place __P((int, char *));
 
 int
 main(argc,argv)
@@ -105,35 +108,39 @@ main(argc,argv)
 	do_recon = 0;
 	force = 0;
 
-#ifdef NOT_YET_BOYS_AND_GIRLS
-	while ((ch = getopt(argc, argv, "a:c:Cf:F:g:I:l:rRsuX:")) != -1)
-#endif
-	while ((ch = getopt(argc, argv, "c:Cf:F:rRsu")) != -1)
+	while ((ch = getopt(argc, argv, "a:Bc:C:f:F:g:iI:l:r:R:sSu")) != -1)
 		switch(ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
 			strncpy(component, optarg, PATH_MAX);
 			num_options++;
 			break;
+		case 'B':
+			action = RAIDFRAME_COPYBACK;
+			num_options++;
+			break;
 		case 'c':
-			strncpy(config_filename,optarg,PATH_MAX);
 			action = RAIDFRAME_CONFIGURE;
+			strncpy(config_filename,optarg,PATH_MAX);
+			force = 0;
 			num_options++;
 			break;
 		case 'C':
-			action = RAIDFRAME_COPYBACK;
+			strncpy(config_filename,optarg,PATH_MAX);
+			action = RAIDFRAME_CONFIGURE;
+			force = 1;
 			num_options++;
 			break;
 		case 'f':
 			action = RAIDFRAME_FAIL_DISK;
-			do_recon = 0;
 			strncpy(component, optarg, PATH_MAX);
+			do_recon = 0;
 			num_options++;
 			break;
 		case 'F':
 			action = RAIDFRAME_FAIL_DISK;
-			do_recon = 1;
 			strncpy(component, optarg, PATH_MAX);
+			do_recon = 1;
 			num_options++;
 			break;
 		case 'g':
@@ -141,36 +148,40 @@ main(argc,argv)
 			strncpy(component, optarg, PATH_MAX);
 			num_options++;
 			break;
+		case 'i':
+			action = RAIDFRAME_REWRITEPARITY;
+			num_options++;
+			break;
 		case 'I':
 			action = RAIDFRAME_INIT_LABELS;
 			serial_number = atoi(optarg);
 			num_options++;
 			break;
-		case 'l':
+		case 'l': 
 			action = RAIDFRAME_SET_COMPONENT_LABEL;
 			strncpy(component, optarg, PATH_MAX);
 			num_options++;
 			break;
 		case 'r':
-			action = RAIDFRAME_REWRITEPARITY;
+			action = RAIDFRAME_REMOVE_HOT_SPARE;
+			strncpy(component, optarg, PATH_MAX);
 			num_options++;
 			break;
 		case 'R':
-			action = RAIDFRAME_CHECKRECON;
+			strncpy(component,optarg,PATH_MAX);
+			action = RAIDFRAME_REBUILD_IN_PLACE;
 			num_options++;
 			break;
 		case 's':
 			action = RAIDFRAME_GET_INFO;
 			num_options++;
 			break;
-		case 'u':
-			action = RAIDFRAME_SHUTDOWN;
+		case 'S':
+			action = RAIDFRAME_CHECKRECON;
 			num_options++;
 			break;
-		case 'X':
-			strncpy(config_filename,optarg,PATH_MAX);
-			action = RAIDFRAME_CONFIGURE;
-			force = 1;
+		case 'u':
+			action = RAIDFRAME_SHUTDOWN;
 			num_options++;
 			break;
 		default:
@@ -221,6 +232,9 @@ main(argc,argv)
 	case RAIDFRAME_ADD_HOT_SPARE:
 		add_hot_spare(fd,component);
 		break;
+	case RAIDFRAME_REMOVE_HOT_SPARE:
+		remove_hot_spare(fd,component);
+		break;
 	case RAIDFRAME_CONFIGURE:
 		rf_configure(fd, config_filename,force);
 		break;
@@ -253,6 +267,9 @@ main(argc,argv)
 		break;
 	case RAIDFRAME_GET_INFO:
 		rf_get_device_status(fd);
+		break;
+	case RAIDFRAME_REBUILD_IN_PLACE:
+		rebuild_in_place(fd,component);
 		break;
 	case RAIDFRAME_SHUTDOWN:
 		do_ioctl(fd, RAIDFRAME_SHUTDOWN, NULL, "RAIDFRAME_SHUTDOWN");
@@ -294,6 +311,8 @@ rf_configure(fd,config_file,force)
 		exit(1);
 	}
 	
+	cfg.force = force;
+
 	/* 
 
 	   Note the extra level of redirection needed here, since
@@ -303,8 +322,7 @@ rf_configure(fd,config_file,force)
 	 */
 
 	generic = (void *) &cfg;
-	do_ioctl(fd,RAIDFRAME_CONFIGURE,&generic,"RAIDFRAME_CONFIGURE");
-
+	do_ioctl(fd, RAIDFRAME_CONFIGURE, &generic, "RAIDFRAME_CONFIGURE");
 }
 
 static char *
@@ -369,7 +387,42 @@ rf_get_device_status(fd)
 	} else {
 		printf("No spares.\n");
 	}
+}
 
+static void
+get_component_number(fd, component_name, component_number, num_columns)
+	int fd;
+	char *component_name;
+	int *component_number;
+	int *num_columns;
+{
+	RF_DeviceConfig_t device_config;
+	void *cfg_ptr;
+	int i;
+	int found;
+
+	*component_number = -1;
+		
+	/* Assuming a full path spec... */
+	cfg_ptr = &device_config;
+	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, 
+		 "RAIDFRAME_GET_INFO");
+
+	*num_columns = device_config.cols;
+	
+	found = 0;
+	for(i=0; i < device_config.ndevs; i++) {
+		if (strncmp(component_name, device_config.devs[i].devname,
+			    PATH_MAX)==0) {
+			found = 1;
+			*component_number = i;
+		}
+	}
+	if (!found) {
+		fprintf(stderr,"%s: %s is not a component %s", __progname, 
+			component_name, "of this device\n");
+		exit(1);
+	}
 }
 
 static void
@@ -379,36 +432,13 @@ rf_fail_disk(fd, component_to_fail, do_recon)
 	int do_recon;
 {
 	struct rf_recon_req recon_request;
-	RF_DeviceConfig_t device_config;
-	void *cfg_ptr;
-	int i;
-	int found;
 	int component_num;
+	int num_cols;
 
-	component_num = -1;
-		
-	/* Assuming a full path spec... */
-	cfg_ptr = &device_config;
-	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, 
-		 "RAIDFRAME_GET_INFO");
-	found = 0;
-	for(i=0; i < device_config.ndevs; i++) {
-		if (strncmp(component_to_fail,
-			    device_config.devs[i].devname,
-			    PATH_MAX)==0) {
-			found = 1;
-			component_num = i;
-		}
-	}
-	if (!found) {
-		fprintf(stderr,"%s: %s is not a component %s",
-			__progname, component_to_fail, 
-			"of this device\n");
-		exit(1);
-	}
+	get_component_number(fd, component_to_fail, &component_num, &num_cols);
 
-	recon_request.row = component_num / device_config.cols;
-	recon_request.col = component_num % device_config.cols;
+	recon_request.row = component_num / num_cols;
+	recon_request.col = component_num % num_cols;
 	if (do_recon) {
 		recon_request.flags = RF_FDFLAGS_RECON;
 	} else {
@@ -416,7 +446,6 @@ rf_fail_disk(fd, component_to_fail, do_recon)
 	}
 	do_ioctl(fd, RAIDFRAME_FAIL_DISK, &recon_request, 
 		 "RAIDFRAME_FAIL_DISK");
-
 }
 
 static void
@@ -425,36 +454,15 @@ get_component_label(fd, component)
 	char *component;
 {
 	RF_ComponentLabel_t component_label;
-	RF_DeviceConfig_t device_config;
-	void *cfg_ptr;
 	void *label_ptr;
-	int i;
-	int found;
 	int component_num;
+	int num_cols;
 
-	component_num = -1;
-		
-	/* Assuming a full path spec... */
-	cfg_ptr = &device_config;
-	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, 
-		 "RAIDFRAME_GET_INFO");
-	found = 0;
-	for(i=0; i < device_config.ndevs; i++) {
-		if (strncmp(component, device_config.devs[i].devname,
-			    PATH_MAX)==0) {
-			found = 1;
-			component_num = i;
-		}
-	}
-	if (!found) {
-		fprintf(stderr,"%s: %s is not a component %s",
-			__progname, component, "of this device\n");
-		exit(1);
-	}
+	get_component_number(fd, component, &component_num, &num_cols);
 
 	memset( &component_label, 0, sizeof(RF_ComponentLabel_t));
-	component_label.row = component_num / device_config.cols;
-	component_label.column = component_num % device_config.cols;
+	component_label.row = component_num / num_cols;
+	component_label.column = component_num % num_cols;
 
 	label_ptr = &component_label;
 	do_ioctl( fd, RAIDFRAME_GET_COMPONENT_LABEL, &label_ptr,
@@ -470,7 +478,6 @@ get_component_label(fd, component)
 	printf("Num Columns: %d\n", component_label.num_columns);
 	printf("Clean: %d\n", component_label.clean);
 	printf("Status: %s\n", device_status(component_label.status));
-
 }
 
 static void
@@ -479,37 +486,18 @@ set_component_label(fd, component)
 	char *component;
 {
 	RF_ComponentLabel_t component_label;
-	RF_DeviceConfig_t device_config;
-	void *cfg_ptr;
-	int i;
-	int found;
 	int component_num;
+	int num_cols;
 
-	component_num = -1;
-		
-	/* Assuming a full path spec... */
-	cfg_ptr = &device_config;
-	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, 
-		 "RAIDFRAME_GET_INFO");
-	found = 0;
-	for(i=0; i < device_config.ndevs; i++) {
-		if (strncmp(component, device_config.devs[i].devname,
-			    PATH_MAX)==0) {
-			found = 1;
-			component_num = i;
-		}
-	}
-	if (!found) {
-		fprintf(stderr,"%s: %s is not a component %s",
-			__progname, component, "of this device\n");
-		exit(1);
-	}
+	get_component_number(fd, component, &component_num, &num_cols);
+
+	/* XXX This is currently here for testing, and future expandability */
 
 	component_label.version = 1;
 	component_label.serial_number = 123456;
 	component_label.mod_counter = 0;
-	component_label.row = component_num / device_config.cols;
-	component_label.column = component_num % device_config.cols;
+	component_label.row = component_num / num_cols;
+	component_label.column = component_num % num_cols;
 	component_label.num_rows = 0;
 	component_label.num_columns = 5;
 	component_label.clean = 0;
@@ -517,7 +505,6 @@ set_component_label(fd, component)
 	
 	do_ioctl( fd, RAIDFRAME_SET_COMPONENT_LABEL, &component_label,
 		  "RAIDFRAME_SET_COMPONENT_LABEL");
-
 }
 
 
@@ -526,7 +513,6 @@ init_component_labels(fd, serial_number)
 	int fd;
 	int serial_number;
 {
-
 	RF_ComponentLabel_t component_label;
 
 	component_label.version = 0;
@@ -541,8 +527,6 @@ init_component_labels(fd, serial_number)
 	
 	do_ioctl( fd, RAIDFRAME_INIT_LABELS, &component_label,
 		  "RAIDFRAME_SET_COMPONENT_LABEL");
-
-
 }
 
 static void
@@ -550,32 +534,81 @@ add_hot_spare(fd, component)
 	int fd;
 	char *component;
 {
-	RF_HotSpare_t hot_spare;
+	RF_SingleComponent_t hot_spare;
 
-	hot_spare.spare_number = 0;
-	strncpy(hot_spare.spare_name, component, sizeof(hot_spare.spare_name));
+	hot_spare.row = 0;
+	hot_spare.column = 0;
+	strncpy(hot_spare.component_name, component, 
+		sizeof(hot_spare.component_name));
 	
 	do_ioctl( fd, RAIDFRAME_ADD_HOT_SPARE, &hot_spare,
 		  "RAIDFRAME_ADD_HOT_SPARE");
+}
 
+static void
+remove_hot_spare(fd, component)
+	int fd;
+	char *component;
+{
+	RF_SingleComponent_t hot_spare;
+	int component_num;
+	int num_cols;
+
+	get_component_number(fd, component, &component_num, &num_cols);
+
+	hot_spare.row = component_num / num_cols;
+	hot_spare.column = component_num % num_cols;
+
+	strncpy(hot_spare.component_name, component, 
+		sizeof(hot_spare.component_name));
+	
+	do_ioctl( fd, RAIDFRAME_REMOVE_HOT_SPARE, &hot_spare,
+		  "RAIDFRAME_REMOVE_HOT_SPARE");
+}
+
+static void
+rebuild_in_place( fd, component )
+	int fd;
+	char *component;
+{
+	RF_SingleComponent_t comp;
+	int component_num;
+	int num_cols;
+
+	get_component_number(fd, component, &component_num, &num_cols);
+
+	comp.row = 0;
+	comp.column = component_num;
+	strncpy(comp.component_name, component, sizeof(comp.component_name));
+	
+	do_ioctl( fd, RAIDFRAME_REBUILD_IN_PLACE, &comp,
+		  "RAIDFRAME_REBUILD_IN_PLACE");
 }
 
 
 static void
 usage()
 {
-	fprintf(stderr, "usage: %s -c config_file dev\n", __progname);
-	fprintf(stderr, "       %s -C dev\n", __progname);
+	fprintf(stderr, "usage: %s -a component dev\n", __progname);
+	fprintf(stderr, "       %s -B dev\n", __progname);
+	fprintf(stderr, "       %s -c config_file dev\n", __progname);
+	fprintf(stderr, "       %s -C config_file dev\n", __progname);
 	fprintf(stderr, "       %s -f component dev\n", __progname);
 	fprintf(stderr, "       %s -F component dev\n", __progname);
-#ifdef NOT_YET_BOYS_AND_GIRLS
+	fprintf(stderr, "       %s -g component dev\n", __progname);
+	fprintf(stderr, "       %s -i dev\n", __progname);
 	fprintf(stderr, "       %s -I serial_number dev\n", __progname);
-#endif
-	fprintf(stderr, "       %s -r dev\n", __progname);
-	fprintf(stderr, "       %s -R dev\n", __progname);
+	fprintf(stderr, "       %s -r component dev\n", __progname); 
+	fprintf(stderr, "       %s -R component dev\n", __progname);
 	fprintf(stderr, "       %s -s dev\n", __progname);
-#ifdef NOT_YET_BOYS_AND_GIRLS
+	fprintf(stderr, "       %s -S dev\n", __progname);
 	fprintf(stderr, "       %s -u dev\n", __progname);
+#if 0
+	fprintf(stderr, "usage: %s %s\n", __progname, 
+		"-a | -f | -F | -g | -r | -R component dev");
+	fprintf(stderr, "       %s -B | -i | -s | -S -u dev\n", __progname);
+	fprintf(stderr, "       %s -c | -C config_file dev\n", __progname);
+	fprintf(stderr, "       %s -I serial_number dev\n", __progname);
 #endif
 	exit(1);
 	/* NOTREACHED */

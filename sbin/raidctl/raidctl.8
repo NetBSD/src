@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.4 1999/02/18 07:54:33 msaitoh Exp $
+.\"     $NetBSD: raidctl.8,v 1.5 1999/03/02 03:13:59 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,28 +67,40 @@
 .Nm raidctl
 .Nd configuration utility for the RAIDframe disk driver
 .Sh SYNOPSIS
-.Nm
+.Nm ""
+.Fl a Ar component Ar dev
+.Nm ""
+.Fl B Ar dev 
+.Nm ""
 .Fl c Ar config_file Ar dev
 .Nm ""
-.Fl C Ar dev
+.Fl C Ar config_file Ar dev
 .Nm ""
 .Fl f Ar component Ar dev
 .Nm ""
 .Fl F Ar component Ar dev
 .Nm ""
-.Fl r Ar dev
+.Fl g Ar component Ar dev
 .Nm ""
-.Fl R Ar dev
+.Fl i Ar dev
+.Nm ""
+.Fl I Ar serial_number Ar dev
+.Nm ""
+.Fl r Ar component Ar dev
+.Nm ""
+.Fl R Ar component Ar dev
 .Nm ""
 .Fl s Ar dev 
 .Nm ""
+.Fl S Ar dev
+.Nm ""
 .Fl u Ar dev
 .Sh DESCRIPTION
-.Nm
+.Nm ""
 is the user-land control program for
 .Xr raid 4 , Ns
 the RAIDframe disk device.  
-.Nm 
+.Nm ""
 is primarily used to dynamically configure and unconfigure RAIDframe disk
 devices.  For more information about the RAIDframe disk device, see
 .Xr raid 4 .
@@ -100,6 +112,15 @@ The command-line options for
 .Nm
 are as follows:
 .Bl -tag -width indent
+.It Fl a Ar component Ar dev
+Add 
+.Ar component
+as a hot spare for the device 
+.Ar dev .
+.It Fl B Ar dev
+Initiate a copyback of reconstructed data from a spare disk to 
+it's original disk.  This is performed after a component has failed, 
+and the failed drive has been reconstructed onto a spare drive.
 .It Fl c Ar config_file Ar dev
 Configure the RAIDframe device 
 .Ar dev
@@ -108,10 +129,11 @@ according to the configuration given in
 A description of the contents of 
 .Ar config_file
 is given later.
-.It Fl C Ar dev
-Initiate a copyback of reconstructed data from a spare disk to 
-it's original disk.  This is performed after a component has failed, 
-and the failed drive has been reconstructed onto a spare drive.
+.It Fl C Ar config_file Ar dev
+As for
+.Ar -c ,
+but forces the configuration to take place.  This is required the
+first time a RAID set is configured.
 .It Fl f Ar component Ar dev
 This marks the specified 
 .Ar component
@@ -121,22 +143,42 @@ component.
 Fails the specified 
 .Ar component
 of the device, and immediately begin a reconstruction of the failed
-disk onto an available hot spare.  This is the mechanism used to start
+disk onto an available hot spare.  This is one of the mechanisms used to start
 the reconstruction process if a component does have a hardware failure.
-.It Fl r Ar dev
-Re-write the parity on the device.  This 
+.It Fl g Ar component Ar dev
+Get the component label for the specified component.
+.It Fl i Ar dev
+Initialize (re-write) the parity on the device.  This 
 .Ar MUST
 be done before the RAID device is labeled and before
 filesystems are created on the RAID device, and is normally used after
 a system crash (and before a 
 .Xr fsck 8 ) Ns
 to ensure the integrity of the parity.
-.It Fl R Ar dev
-Check the status of component reconstruction.  The output indicates 
-the amount of progress achieved in reconstructing a failed component.
+.It Fl I Ar serial_number Ar dev
+Initialize the component labels on each component of the device.  
+.Ar serial_number 
+is used as one of the keys in determining whether a
+particular set of components belong to the same RAID set.  While not
+strictly enforced, different serial numbers should be used for
+different RAID sets.
+.It Fl r Ar component Ar dev
+Remove the spare disk specified by 
+.Ar component 
+from the set of available spare components.
+.It Fl R Ar component Ar dev
+Fails the specified 
+.Ar component , 
+if necessary, and immediately begins a reconstruction back to 
+.Ar component .
+This is another mechanism for starting the reconstruction process if a
+component has a hardware failure.
 .It Fl s Ar dev
 Display the status of the RAIDframe device for each of the components
 and spares.  
+.It Fl S Ar dev
+Check the status of component reconstruction.  The output indicates 
+the amount of progress achieved in reconstructing a failed component.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
 .El
@@ -164,7 +206,7 @@ the section name, and the confuration parameters associated with that
 section.  The first section is the 
 .Sq array
 section, and it specifies
-the number of rows, columns, and spare disks in the RAID array.  For
+the number of rows, columns, and spare disks in the RAID set.  For
 example: 
 .Bd -unfilled -offset indent
 START array
@@ -298,14 +340,14 @@ recommended that before using the RAID driver for real filesystems
 that the system administrator(s) have used 
 .Ar all
 of the options for 
-.Nm ,
+.Nm "" ,
 and that they understand how the component reconstruction process
 works.  While this example is not created as a tutorial, the steps
 shown here can be easily dupilicated using four equal-sized partitions
 from any number of disks (including all four from a single disk).  
 .Pp
 The primary uses of 
-.Nm
+.Nm ""
 is to configure and unconfigure
 .Xr raid 4 
 devices.  To configure the device, a configuration
@@ -332,14 +374,14 @@ fifo 100
 .Ed
 .Pp
 is first created.  In short, this configuration file specifies a RAID
-5 configuration consisting of the disks /dev/sd1e, /dev/sd2e, and
-/dev/sd3e, with /dev/sd4e available as a 
+5 configuration consisting of the components /dev/sd1e,
+/dev/sd2e, and /dev/sd3e, with /dev/sd4e available as a 
 .Sq hot spare
 in case one of
 the three main drives should fail.  If the above configuration is in a
 file called 
 .Sq rfconfig , 
-raid device 0 can be configured with: 
+raid device 0 in the normal case can be configured with: 
 .Bd -unfilled -offset indent
 raidctl -c rfconfig raid0
 .Ed
@@ -352,7 +394,66 @@ raidctl -c rfconfig /dev/rraid0d
 on the i386 architecture.  On all other architectures, /dev/rraid0c
 is used in place of /dev/rraid0d.
 .Pp
-To see how the device is doing, the following will show the status:
+A RAID set will not configure with 
+.Fl c
+if the component labels are not correct.  A
+.Sq component label
+contains important information about the component, including a
+user-specified serial number, the row and column of that component in the RAID
+set, and whether the data (and parity) on the component is 
+.Sq clean .
+See 
+.Xr raid 4
+for more information about component labels.
+.Pp
+Since new RAID sets will not have correct component labels, the first
+configuration of a RAID set must use
+.Fl C
+instead of
+.Fl c :
+.Bd -unfilled -offset indent
+raidctl -C rfconfig raid0
+.Ed
+.Pp
+The 
+.Fl C
+forces the configuration to succeed, even if any of the component
+labels are incorrect.  This option should not be used lightly in
+situations other than initial configurations, as if
+the system is refusing to configure a RAID set, there is probably a
+very good reason for it.
+.Pp
+When the RAID set is configured for the first time, it is 
+necessary to initialize the component labels, and to initialize the
+parity on the RAID set.  Initializing the component labels is done with:
+.Bd -unfilled -offset indent
+raidctl -I 112341 raid0
+.Ed
+.Pp
+where 
+.Sq 112341
+is a user-specified serial number for the RAID set.  Using different
+serial numbers between RAID sets is strongly encouraged, as using the
+same serial number for all RAID sets will only serve to decrease the
+usefulness of the component label checking.
+.Pp
+Initializing the parity on the RAID set is done via:
+.Bd -unfilled -offset indent
+raidctl -i raid0
+.Ed
+.Pp
+Initializing the parity in this way may also be required after an
+unclean shutdown.  Once the parity is known to be correct, 
+it is then safe to perform
+.Xr disklabel 8 , Ns
+.Xr newfs 8 , Ns
+or
+.Xr fsck 8
+on the device or its filesystems, and then to mount the filesystems
+for use.
+.Pp
+To see how the RAID set is doing, the following command can be used to
+show the RAID set's status:
 .Bd -unfilled -offset indent
 raidctl -s raid0
 .Ed
@@ -364,23 +465,36 @@ Components:
            /dev/sd2e: optimal
            /dev/sd3e: optimal
 Spares:
-           /dev/sd4e [0][0]: spare
+           /dev/sd4e: spare
 .Ed
 .Pp
-This indicates that all is well with the RAID array.  If this is the first
-time this RAID array has been configured, or the system is just being
-brought up after an unclean shutdown, it is necessary to
-ensure that the parity values are correct.  This can be done via:
+This indicates that all is well with the RAID set. 
+.Pp
+To check the component label of /dev/sd1e, the following is used:
 .Bd -unfilled -offset indent
-raidctl -r raid0
+raidctl -g /dev/sd1e raid0
 .Ed
 .Pp
-Once this is done, it is then safe to perform
-.Xr disklabel 8 , Ns
-.Xr newfs 8 , Ns
-or
-.Xr fsck 8
-on the device or its filesystems.
+The output of this command will look something like:
+.Bd -unfilled -offset indent
+Component label for /dev/sd2e:
+Version: 1
+Serial Number: 112341
+Mod counter: 6
+Row: 0
+Column: 1
+Num Rows: 1
+Num Columns: 3
+Clean: 0
+Status: optimal
+.Ed
+.Pp
+For a component label to be considered valid, that particular
+component label must be in agreement with the other component labels
+in the set.  For example, the serial number, 'modification counter',
+number of rows and number of columns must all be in agreement.  If any
+of these are different, then the component is not considered to be
+part of the set.
 .Pp
 If for some reason
 (perhaps to test reconstruction) it is necessary to pretend a drive
@@ -398,7 +512,7 @@ Components:
            /dev/sd2e: failed
            /dev/sd3e: optimal
 Spares:
-           /dev/sd4e [0][0]: spare
+           /dev/sd4e: spare
 .Ed
 .Pp
 Note that with the use of 
@@ -406,11 +520,16 @@ Note that with the use of
 a reconstruction has not been started.  To both fail the disk and
 start a reconstruction, the 
 .Fl F
-option must be used.  (The 
+option must be used:
+.Bd -unfilled -offset indent
+raidctl -F /dev/sd2e raid0
+.Ed
+.Pp
+The 
 .Fl f
 option may be used first, and then the
 .Fl F
-option used later, on the same disk, if desired.)  
+option used later, on the same disk, if desired.  
 Immediately after the reconstruction is started, the status will report:
 .Bd -unfilled -offset indent
 Components:
@@ -418,12 +537,12 @@ Components:
            /dev/sd2e: reconstructing
            /dev/sd3e: optimal
 Spares:
-           /dev/sd4e [0][0]: used_spare
+           /dev/sd4e: used_spare
 .Ed
 .Pp
 This indicates that a reconstruction is in progress.  To find out how
 the reconstruction is progressing the 
-.Fl R
+.Fl S
 option may be used.  This will indicate the progress in terms of the
 percentage of the reconstruction that is completed.  When the
 reconstruction is finished the
@@ -435,7 +554,7 @@ Components:
            /dev/sd2e: spared
            /dev/sd3e: optimal
 Spares:
-           /dev/sd4e [0][0]: used_spare
+           /dev/sd4e: used_spare
 .Ed
 .Pp
 At this point there are at least two options.  First, if /dev/sd2e is
@@ -445,7 +564,7 @@ or
 .Fl F ,
 or the failed disk was replaced), then a copyback of the data can 
 be initiated with the 
-.Fl C
+.Fl B
 option.  In this example, this would copy the entire contents of
 /dev/sd4e to /dev/sd2e.  Once the copyback procedure is complete, the
 status of the device would be:
@@ -455,7 +574,7 @@ Components:
            /dev/sd2e: optimal
            /dev/sd3e: optimal
 Spares:
-           /dev/sd4e [0][0]: spare
+           /dev/sd4e: spare
 .Ed
 .Pp
 and the system is back to normal operation.
@@ -481,6 +600,63 @@ changed without loss of data!  In general, the ordering of components
 in a configuration file should 
 .Ar never 
 be changed.
+.Pp
+If a component fails and there are no hot spares
+available on-line, the status of the RAID set might look like:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: failed
+           /dev/sd3e: optimal
+No spares.
+.Ed
+.Pp
+In this case there are a number of options.  The first option is to add a hot
+spare using:
+.Bd -unfilled -offset indent
+raidctl -a /dev/sd4e raid0
+.Ed
+.Pp
+After the hot add, the status would then be:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: failed
+           /dev/sd3e: optimal
+Spares:
+           /dev/sd4e: spare
+.Ed
+.Pp
+Reconstruction could then take place using 
+.Fl F
+as describe above.
+.Pp
+A second option is to rebuild directly onto /dev/sd2e.  Once the disk 
+containing /dev/sd2e has been replaced, one can simply use:
+.Bd -unfilled -offset indent
+raidctl -R /dev/sd2e raid0
+.Ed
+.Pp
+to rebuild the /dev/sd2e component.  As the rebuilding is in progress,
+the status will be:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: reconstructing
+           /dev/sd3e: optimal
+No spares.
+.Ed
+.Pp
+and when completed, will be:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: optimal
+           /dev/sd3e: optimal
+No spares.
+.Ed
+.Pp
+
 .Pp
 The final operation performed by 
 .Nm
@@ -514,7 +690,7 @@ is to use parity, but not keep the parity correct.  At least with RAID
 .Sh FILES
 .Bl -tag -width /dev/XXrXraidX -compact
 .It Pa /dev/{,r}raid*
-.Nm
+.Cm raid 
 device special files.
 .El
 .Pp
@@ -522,6 +698,8 @@ device special files.
 .Xr raid 4 ,
 .Xr ccd 4 ,
 .Xr rc 8
+.Sh BUGS
+Hot-spare removal is currently not available.
 .Sh HISTORY
 RAIDframe is a framework for rapid prototyping of RAID structures
 developed by the folks at the Parallel Data Laboratory at Carnegie
