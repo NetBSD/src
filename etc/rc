@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.144 2000/01/19 12:00:49 tron Exp $
+#	$NetBSD: rc,v 1.145 2000/01/31 12:47:29 jdc Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -315,7 +315,7 @@ fi
 mount -a
 
 # now start the rpc servers, for NFS server/client.
-if checkyesno nfs_client || checkyesno nfs_client || checkyesno amd; then
+if checkyesno nfs_server || checkyesno nfs_client || checkyesno amd; then
 	echo -n 'starting nfs daemons:'
 
 	if (checkyesno nfs_server || checkyesno amd) && \
