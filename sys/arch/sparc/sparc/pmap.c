@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1994/11/20 20:54:35 deraadt Exp $ */
+/*	$NetBSD: pmap.c,v 1.23 1994/12/06 08:34:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1417,19 +1417,15 @@ pmap_bootstrap(nmmu, nctx)
 	 * set red zone at kernel base; enable cache on message buffer.
 	 */
 	{
-		extern char etext[], msgbuf[];
+		extern char etext[];
 #ifdef KGDB
 		register int mask = ~PG_NC;	/* XXX chgkprot is busted */
 #else
 		register int mask = ~(PG_W | PG_NC);
 #endif
 
-		for (p = (caddr_t)roundup((int)msgbuf+1, NBPG); p < etext; p += NBPG)
+		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
 			setpte(p, getpte(p) & mask);
-		p = (caddr_t)KERNBASE;
-		setpte(p, 0);
-		p += NBPG;
-		setpte(p, getpte(p) & ~PG_NC);
 	}
 
 	/*
@@ -2842,4 +2838,9 @@ pmap_count_ptes(pm)
 		total += pm->pm_npte[--idx];
 	pm->pm_stats.resident_count = total;
 	return (total);
+}
+
+pmap_redzone()
+{
+	setpte(KERNBASE, 0);
 }
