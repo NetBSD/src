@@ -1,6 +1,7 @@
-/*	$NetBSD: am7990var.h,v 1.11 1997/03/15 18:11:27 is Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.12 1997/03/17 03:14:04 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,6 +54,7 @@
 struct am7990_softc {
 	struct	device sc_dev;		/* base device glue */
 	struct	ethercom sc_ethercom;	/* Ethernet common part */
+	struct	ifmedia sc_media;	/* our supported media */
 
 	/*
 	 * Memory functions:
@@ -78,6 +80,7 @@ struct am7990_softc {
 	 *	read/write CSR
 	 *	hardware init hook - may be NULL
 	 *	no carrier hook - may be NULL
+	 *	media change hook - may be NULL
 	 */
 	u_int16_t (*sc_rdcsr)
 		    __P((struct am7990_softc *, u_int16_t));
@@ -85,6 +88,19 @@ struct am7990_softc {
 		    __P((struct am7990_softc *, u_int16_t, u_int16_t));
 	void	(*sc_hwinit) __P((struct am7990_softc *));
 	void	(*sc_nocarrier) __P((struct am7990_softc *));
+	int	(*sc_mediachange) __P((struct am7990_softc *));
+	void	(*sc_mediastatus) __P((struct am7990_softc *,
+		    struct ifmediareq *));
+
+	/*
+	 * Media-supported by this interface.  If this is NULL,
+	 * the only supported media is assumed to be "manual".
+	 */
+	int	*sc_supmedia;
+	int	sc_nsupmedia;
+	int	sc_defaultmedia;
+
+	int	sc_havecarrier;	/* carrier status */
 
 	void	*sc_sh;		/* shutdownhook cookie */
 
