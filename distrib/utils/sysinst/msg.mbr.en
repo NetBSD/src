@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.8 2003/07/07 21:26:32 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.9 2003/07/14 09:59:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,16 +83,15 @@ start up properly. Should the NetBSD partition of the disk be marked active?}
 
 message setbiosgeom
 {
-You will be prompted for the geometry.  Please enter the values you
-want.  The number of cylinders should be <= 1024 and the number of sectors
-should be <= 63. If you have the BIOS set up to use > 1024 cylinders just
-truncate that number to 1024 here; NetBSD will know about the rest of the
-cylinders.
+You will be prompted for the geometry.
+Please enter the number of sectors per track (maximum 63)
+and number of heads (maximum 256) that the BIOS uses to access the disk. 
+The number of cylinders will be calculated from the disk size.
 
 }
 
 message nobiosgeom
-{Sysinst could not automatically determine the BIOS geometry of the disk.
+{Sysinst could not automatically determine the BIOS geometry of the disk. 
 The physical geometry is %d cylinders %d sectors %d heads\n}
 
 message biosguess
