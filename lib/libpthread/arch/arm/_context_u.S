@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/01/18 10:34:18 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3 2003/04/05 23:15:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -123,11 +123,7 @@
 ENTRY(_getcontext_u)
 	GETC(r0)
 	mov	r0, #0x00000000
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif
 
 ENTRY(_setcontext_u)
 	SETC(r0)
