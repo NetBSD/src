@@ -1,4 +1,4 @@
-/*	$NetBSD: dkcksum.c,v 1.6 1995/03/18 14:54:42 cgd Exp $	*/
+/*	$NetBSD: dkcksum.c,v 1.7 1997/06/30 22:51:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,16 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dkcksum.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dkcksum.c,v 1.6 1995/03/18 14:54:42 cgd Exp $";
+__RCSID("$NetBSD: dkcksum.c,v 1.7 1997/06/30 22:51:31 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
+#include "dkcksum.h"
 
 u_short
 dkcksum(lp)
