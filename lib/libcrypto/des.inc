@@ -1,4 +1,4 @@
-#	$NetBSD: des.inc,v 1.6 2001/09/09 20:54:25 tls Exp $
+#	$NetBSD: des.inc,v 1.7 2001/09/09 21:22:09 tls Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,16 +9,16 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/des
 
-.if (${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "i386")
+.if (${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "i386")
 CPPFLAGS+=	-DDES_UNROLL -DDES_RISC2 -DDES_PTR
 .endif
-.if (${MACHINE_ARCH} == "sparc64")
+.if (${MACHINE_CPU} == "sparc64")
 CPPFLAGS+=	-DDES_UNROLL -DDES_RISC1 -DDES_PTR
 .endif
-.if (${MACHINE_ARCH} == "alpha")
+.if (${MACHINE_CPU} == "alpha")
 CPPFLAGS+=	-DDES_RISC2 -DDES_PTR
 .endif
-.if (${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc")
+.if (${MACHINE_CPU} == "powerpc" || ${MACHINE_ARCH} == "sparc")
 CPPFLAGS+=	-DDES_UNROLL
 .endif
 
