@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.54 2003/03/29 21:43:22 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.55 2003/06/26 17:17:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.54 2003/03/29 21:43:22 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.55 2003/06/26 17:17:10 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,6 +52,9 @@ static void	domvcur __P((int, int, int, int));
 static int	makech __P((int));
 static void	quickch __P((void));
 static void	scrolln __P((int, int, int, int, int));
+
+static int wnout_refresh(SCREEN *, WINDOW *, int, int, int, int, int, int);
+static void wnout_refresh_sub(SCREEN *, WINDOW *, int, int, int, int, int, int);
 
 #ifndef _CURSES_USE_MACROS
 
@@ -79,7 +82,7 @@ wnoutrefresh(WINDOW *win)
 	__CTRACE("wnoutrefresh: win %p\n", win);
 #endif
 
-	return _cursesi_wnoutrefresh(_cursesi_screen, win, 0, 0, win->begy,
+	return wnout_refresh(_cursesi_screen, win, 0, 0, win->begy,
 	    win->begx, win->maxy, win->maxx);
 }
 
@@ -109,7 +112,7 @@ pnoutrefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	if (sbegx < 0)
 		sbegx = 0;
 
-	/* Calculate rectangle on pad - used by _cursesi_wnoutrefresh */
+	/* Calculate rectangle on pad - used by wnout_refresh */
 	pmaxy = pbegy + smaxy - sbegy + 1;
 	pmaxx = pbegx + smaxx - sbegx + 1;
 
@@ -122,25 +125,24 @@ pnoutrefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	if (smaxy - sbegy < 0 || smaxx - sbegx < 0 )
 		return ERR;
 
-	return _cursesi_wnoutrefresh(_cursesi_screen, pad,
+	return wnout_refresh(_cursesi_screen, pad,
 	    pad->begy + pbegy, pad->begx + pbegx, pad->begy + sbegy,
 	    pad->begx + sbegx, pmaxy, pmaxx);
 }
 
 /*
- * _cursesi_wnoutrefresh --
+ * wnout_refresh_sub --
  *      Does the grunt work for wnoutrefresh to the given screen.
  *	Copies the part of the window given by the rectangle
  *	(begy, begx) to (maxy, maxx) at screen position (wbegy, wbegx).
  */
-int
-_cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
+void
+wnout_refresh_sub(SCREEN *screen, WINDOW *win, int begy, int begx,
     int wbegy, int wbegx, int maxy, int maxx)
 {
 
 	short	wy, wx, y_off, x_off;
 	__LINE	*wlp, *vlp;
-	WINDOW	*sub_win;
 
 #ifdef DEBUG
 	__CTRACE("wnoutrefresh: win %p, flags 0x%08x\n", win, win->flags);
@@ -149,7 +151,7 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 #endif
 
 	if (screen->curwin)
-		return(OK);
+		return;
 
 	/* Check that cursor position on "win" is valid for "__virtscr" */
 	if (win->cury + wbegy - begy < screen->__virtscr->maxy &&
@@ -254,17 +256,29 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 			}
 		}
 	}
+}
+
+int
+wnout_refresh(SCREEN *screen, WINDOW *win, int begy, int begx,
+    int wbegy, int wbegx, int maxy, int maxx)
+{
+	WINDOW	*sub_win;
+
+	wnout_refresh_sub(screen, win, begy, begx, wbegy, wbegx, maxy, maxx);
 
 	/* Recurse through any sub-windows */
-	if ((sub_win = win->nextp) != win && sub_win != win->orig) {
+	if (win->orig != 0)
+		return OK;
+
+	for (sub_win = win->nextp; sub_win != win; sub_win = win->nextp) {
 #ifdef DEBUG
 		__CTRACE("wnoutrefresh: win %o, sub_win %o\n", win, sub_win);
 #endif
-		return _cursesi_wnoutrefresh(screen, sub_win, 0, 0,
+		wnout_refresh_sub(screen, sub_win, 0, 0,
 		    sub_win->begy, sub_win->begx,
 		    sub_win->maxy, sub_win->maxx);
-	} else
-		return OK;
+	}
+	return OK;
 }
 
 /*
@@ -283,13 +297,13 @@ wrefresh(WINDOW *win)
 
 	_cursesi_screen->curwin = (win == _cursesi_screen->curscr);
 	if (!_cursesi_screen->curwin)
-		retval = _cursesi_wnoutrefresh(_cursesi_screen, win, 0, 0,
+		retval = wnout_refresh(_cursesi_screen, win, 0, 0,
 		    win->begy, win->begx, win->maxy, win->maxx);
 	else
 		retval = OK;
 	if (retval == OK) {
 		retval = doupdate();
-		if (!win->flags & __LEAVEOK) {
+		if (!(win->flags & __LEAVEOK)) {
 			win->cury = max(0, curscr->cury - win->begy);
 			win->curx = max(0, curscr->curx - win->begx);
 		}
@@ -317,7 +331,7 @@ prefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	retval = pnoutrefresh(pad, pbegy, pbegx, sbegy, sbegx, smaxy, smaxx);
 	if (retval == OK) {
 		retval = doupdate();
-		if (!pad->flags & __LEAVEOK) {
+		if (!(pad->flags & __LEAVEOK)) {
 			pad->cury = max(0, curscr->cury - pad->begy);
 			pad->curx = max(0, curscr->curx - pad->begx);
 		}
