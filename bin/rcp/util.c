@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 2003/08/07 09:05:27 agc Exp $	*/
+/*	$NetBSD: util.c,v 1.7 2003/09/19 08:46:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.6 2003/08/07 09:05:27 agc Exp $");
+__RCSID("$NetBSD: util.c,v 1.7 2003/09/19 08:46:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,7 @@ allocbuf(bp, fd, blksize)
 {
 	struct stat stb;
 	size_t size;
+	char *nbuf;
 
 	if (fstat(fd, &stb) < 0) {
 		run_err("fstat: %s", strerror(errno));
@@ -151,11 +152,14 @@ allocbuf(bp, fd, blksize)
 		size = blksize;
 	if (bp->cnt >= size)
 		return (bp);
-	if ((bp->buf = realloc(bp->buf, size)) == NULL) {
+	if ((nbuf = realloc(bp->buf, size)) == NULL) {
+		free(bp->buf);
+		bp->buf = NULL;
 		bp->cnt = 0;
 		run_err("%s", strerror(errno));
 		return (0);
 	}
+	bp->buf = nbuf;
 	bp->cnt = size;
 	return (bp);
 }
