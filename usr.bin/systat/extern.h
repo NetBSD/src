@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2002/11/01 12:47:57 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.29 2003/01/20 18:24:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -133,7 +133,7 @@ void	 ip_run(char *);
 void	 ip_time(char *);
 void	 ip_zero(char *);
 int	 keyboard(void) __attribute__((__noreturn__));
-ssize_t	 kvm_ckread(void *, void *, size_t);
+ssize_t	 kvm_ckread(const void *, void *, size_t);
 void	 labelbufcache(void);
 void	 labelicmp(void);
 void	 labeliostat(void);
