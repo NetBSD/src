@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.133 2001/12/04 13:54:12 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.134 2001/12/06 02:00:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.133 2001/12/04 13:54:12 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.134 2001/12/06 02:00:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -707,7 +707,7 @@ user(const char *name)
 			const char *myskey;
 
 			myskey = skey_keyinfo(curname);
-			reply(331, "Password [%s] required for %s.",
+			reply(331, "Password [ %s ] required for %s.",
 			    myskey ? myskey : "error getting challenge",
 			    curname);
 		} else
