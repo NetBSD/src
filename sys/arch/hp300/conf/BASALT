@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.29 1999/07/29 10:37:16 augustss Exp $
+#	$NetBSD: BASALT,v 1.30 1999/07/31 20:19:31 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -7,7 +7,8 @@
 include "arch/hp300/conf/std.hp300"
 
 # Support for various CPU types
-options 	HP380		# includes 425t, 425s, 433s
+options 	HP380
+options 	HP385
 options 	FPSP		# floating point interface for 68040
 
 # Need to set locally
