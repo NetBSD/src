@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.22 1993/12/07 01:00:06 mycroft Exp $
+#	$Id: Makefile.inc,v 1.23 1993/12/08 13:31:19 pk Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -37,6 +37,11 @@ SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.c memchr.S memcmp.S memset.S \
 	strncat.S strncmp.S strncpy.S strpbrk.S strsep.S \
 	strspn.S strstr.S swab.c
 SRCS+=	memmove.S strchr.S strrchr.S
+.elif (${MACHINE_ARCH} == "sparc")
+SRCS+=	bcmp.c bcopy.c bzero.S ffs.S index.c memchr.c memcmp.c memset.c \
+	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.S \
+	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
+	strspn.c strstr.c swab.c
 .endif
 
 # if no machine specific memmove(3), build one out of bcopy(3).
