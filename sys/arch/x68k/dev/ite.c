@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25 2001/05/02 10:32:21 scw Exp $	*/
+/*	$NetBSD: ite.c,v 1.26 2001/10/21 03:46:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -521,6 +521,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	case ITELOADFONT:
 		if (addr) {
 			bcopy(addr, kern_font, 4096 /*sizeof (kernel_font)*/);
+			ite_set_glyph();
 			return 0;
 		} else
 			return EFAULT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.5 1999/03/24 14:11:47 minoura Exp $	*/
+/*	$NetBSD: itevar.h,v 1.6 2001/10/21 03:46:31 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -263,5 +263,6 @@ extern unsigned char kern_font[];
 
 /* keyboard LED status variable */
 extern unsigned char kbdled;
+void ite_set_glyph __P((void));
 void kbd_setLED __P((void));
 #endif
