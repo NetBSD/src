@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.48 1999/05/28 20:49:51 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.49 1999/05/28 22:54:12 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2066,10 +2066,11 @@ uvm_map_pageable(map, start, end, new_pageable)
 		 * now decrement the wiring count for each region.  if a region
 		 * becomes completely unwired, unwire its physical pages and
 		 * mappings.
+		 *
+		 * Note, uvm_fault_unwire() (called via uvm_map_entry_unwire())
+		 * does not lock the map, so we don't have to do anything
+		 * special regarding locking here.
 		 */
-#if 0		/* not necessary: uvm_fault_unwire does not lock */
-		lock_set_recursive(&map->lock);
-#endif  /* XXXCDC */
 
 		entry = start_entry;
 		while ((entry != &map->header) && (entry->start < end)) {
@@ -2081,9 +2082,6 @@ uvm_map_pageable(map, start, end, new_pageable)
 			
 			entry = entry->next;
 		}
-#if 0 /* XXXCDC: not necessary, see above */
-		lock_clear_recursive(&map->lock);
-#endif
 		vm_map_unlock(map);
 		UVMHIST_LOG(maphist,"<- done (OK UNWIRE)",0,0,0,0);
 		return(KERN_SUCCESS);
