@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.7 2000/12/05 21:24:36 wrstuden Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.8 2001/01/08 06:22:42 martin Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -154,7 +154,8 @@ Concatenated disk driver, see
 SCSI CD-ROM, see
 .Xr cd 4 
 . It Ar ld#
-Logical disk devices (e.g. hardware RAID)
+Logical disk devices (e.g. hardware RAID), see
+.Xr ld 4 
 . It Ar md#
 Memory pseudo-disk devices, see
 .Xr md 4 
@@ -221,6 +222,19 @@ Scanners, see
 .Xr uscanner 4 
 . It Ar ttyU#
 Modem
+. El
+.It ISDN devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar i4b
+Comunication between userland isdnd and kernel
+. It Ar i4bctl
+Control device
+. It Ar i4brbch#
+Raw b-channel access
+. It Ar i4btel#
+Telephonie device
+. It Ar i4btrc#
+Trace device
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
