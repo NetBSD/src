@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.7 1998/08/20 11:44:58 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.8 1999/03/29 12:04:43 cjs Exp $	*/
 
 /*
  *
@@ -110,13 +110,18 @@ en_sbus_match(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	if (CPU_ISSUN4M) {
+	if (strcmp("ENI-155s", sa->sa_name) == 0)  {
+		if (CPU_ISSUN4M) {
 #ifdef DEBUG
-		printf("%s: sun4m DMA not supported yet\n", sa->sa_name);
+			printf("%s: sun4m DMA not supported yet\n",
+			    sa->sa_name);
 #endif
+			return (0);
+		}
+		return (1);
+	} else {
 		return (0);
 	}
-	return (strcmp("ENI-155s", sa->sa_name) == 0);
 }
 
 
