@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2004/12/15 04:56:13 jmc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2004/12/15 14:03:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -265,7 +265,6 @@ int kvtop(caddr_t);
 #define ROMBASE		(0xe0000000)
 
 #define INTIOBASE1700	(0xe0c00000)
-#define INTIOBASE1700_OFF 	(0xe0dc0000-INTIOBASE1700)
 #define INTIOTOP1700	(0xe1d00000) /* XXX */
 #define EXTIOBASE1700	(0xf0f00000)
 #define EXTIOTOP1700	(0xf1000000) /* XXX */
