@@ -1,4 +1,4 @@
-.\"	$NetBSD: times.3,v 1.6 1998/02/05 18:48:06 perry Exp $
+.\"	$NetBSD: times.3,v 1.7 1998/04/28 04:07:06 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,10 @@
 .Fn times "struct tms *tp"
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is obsoleted by getrusage(2)
-and gettimeofday(3).
+This interface is obsoleted by
+.Xr getrusage 2
+and
+.Xr gettimeofday 3 .
 .Ef
 .Pp
 The
