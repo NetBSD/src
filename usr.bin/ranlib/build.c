@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: build.c,v 1.2 1993/08/01 18:09:57 mycroft Exp $";
+static char rcsid[] = "$Id: build.c,v 1.3 1994/03/03 10:20:06 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,8 +63,12 @@ typedef struct _rlib {
 } RLIB;
 RLIB *rhead, **pnext;
 
-FILE *fp;
-static void rexec(), symobj();
+static FILE	*fp;
+static long	symcnt;			/* symbol count */
+static long	tsymlen;		/* total string length */
+
+static void	rexec(), symobj();
+extern void	*emalloc();
 
 build()
 {
@@ -79,6 +83,7 @@ build()
 	SETCF(afd, archive, tfd, tname, RPAD|WPAD);
 
 	/* Read through the archive, creating list of symbols. */
+	symcnt = tsymlen = 0;
 	pnext = &rhead;
 	while(get_arobj(afd)) {
 		if (!strcmp(chdr.name, RANLIBMAG)) {
@@ -107,9 +112,6 @@ build()
 	return(0);
 }
 
-long symcnt;				/* symbol count */
-long tsymlen;				/* total string length */
-
 /*
  * rexec
  *	Read the exec structure; ignore any files that don't look
@@ -128,7 +130,6 @@ rexec(rfd, wfd)
 	struct nlist nl;
 	off_t r_off, w_off;
 	long strsize;
-	void *emalloc();
 
 	/* Get current offsets for original and tmp files. */
 	r_off = lseek(rfd, (off_t)0, SEEK_CUR);
@@ -216,12 +217,10 @@ bad1:	(void)lseek(rfd, (off_t)r_off, SEEK_SET);
 static void
 symobj()
 {
-	register RLIB *rp;
+	register RLIB *rp, *rnext;
 	struct ranlib rn;
 	char hb[sizeof(struct ar_hdr) + 1], pad;
 	long ransize, size, stroff;
-	gid_t getgid();
-	uid_t getuid();
 
 	/* Rewind the archive, leaving the magic number. */
 	if (fseek(fp, (off_t)SARMAG, SEEK_SET) == (off_t)-1)
@@ -269,9 +268,13 @@ symobj()
 		error(tname);
 
 	/* Write out the string table. */
-	for (rp = rhead; rp; rp = rp->next)
+	for (rp = rhead; rp; rp = rnext) {
 		if (!fwrite(rp->sym, rp->symlen, 1, fp))
 			error(tname);
+		rnext = rp->next;
+		free(rp);
+	}
+	rhead = NULL;
 
 	if (pad && !fwrite(&pad, sizeof(pad), 1, fp))
 		error(tname);
