@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.5 1995/08/20 18:17:31 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.6 1995/09/04 19:41:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -74,14 +74,14 @@ long		gra_con_colors[MAX_CENTRIES];
 u_long gra_def_color16[16] = {
 	0x00000000,	/* black		*/
 	0x00ffffff,	/* white		*/
-	0x00c0c0c0,	/* light gray		*/
-	0x00808080,	/* gray			*/
-	0x000000c0,	/* blue			*/
-	0x0000c000,	/* green		*/
-	0x0000c0c0,	/* cyan			*/
+	0x000c0c0c,	/* light gray		*/
+	0x00808008,	/* gray			*/
+	0x0000000c,	/* blue			*/
+	0x00000c00,	/* green		*/
+	0x00000c0c,	/* cyan			*/
 	0x00c00000,	/* red			*/
-	0x00c000c0,	/* magenta		*/
-	0x00c0c000,	/* brown		*/
+	0x00c0000c,	/* magenta		*/
+	0x00c00c00,	/* brown		*/
 	0x000000ff,	/* light blue		*/
 	0x0000ff00,	/* light green		*/
 	0x0000ffff,	/* light cyan		*/
