@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.52 2000/02/14 05:41:11 jun Exp $
+#	$NetBSD: termcap.src,v 1.53 2000/04/16 01:27:44 mycroft Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1742,7 +1742,9 @@ xterm-xf86-v32|xterm terminal emulator (X Window System):\
 	:co#80:it#8:li#24:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:K1=\EOw:K2=\EOy:K3=\EOu:K4=\EOq:K5=\EOs:LE=\E[%dD:\
-	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:bl=^G:cd=\E[J:\
+	:RI=\E[%dC:UP=\E[%dA:\
+	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+	:ae=^O:al=\E[L:as=^N:bl=^G:cd=\E[J:\
 	:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:cr=^M:\
 	:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:ec=\E[%dX:\
 	:ei=\E[4l:ho=\E[H:ic=\E[@:im=\E[4h:\
@@ -1777,7 +1779,7 @@ xterm-nc|vs100-nc|xterms-nc|xterm terminal emulator (X Window System):\
 
 # This is the standard xterm entry.
 xterm|vs100|xterms|xterm terminal emulator (X Window System):\
-	:tc=xterm-r6:
+	:tc=xterm-xf86-v33:
 
 # These entries allow access to the X titlebar and icon name as a status line. 
 # Note that twm (and possibly window managers descended from it such as tvtwm, 
