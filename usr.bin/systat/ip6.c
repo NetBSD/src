@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.8 2000/12/01 02:19:43 simonb Exp $	*/
+/*	$NetBSD: ip6.c,v 1.9 2000/12/20 01:16:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.8 2000/12/01 02:19:43 simonb Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.9 2000/12/20 01:16:42 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: ip6.c,v 1.8 2000/12/01 02:19:43 simonb Exp $");
 #define LHD(row, str)		mvwprintw(wnd, row, 10, str)
 #define RHD(row, str)		mvwprintw(wnd, row, 45, str);
 #define SHOW(stat, row, col) \
-    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.##stat)
+    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.stat)
 
 enum update {
 	UPDATE_TIME,
