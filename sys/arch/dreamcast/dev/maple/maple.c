@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.10 2001/12/04 15:27:35 atatat Exp $	*/
+/*	$NetBSD: maple.c,v 1.11 2002/03/24 18:21:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -45,9 +45,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <sh3/shbvar.h>
 #include <sh3/pmap.h>
-
 
 #include <dreamcast/dev/maple/maple.h>
 #include <dreamcast/dev/maple/mapleconf.h>
@@ -55,6 +53,7 @@
 #include <dreamcast/dev/maple/maplereg.h>
 #include <dreamcast/dev/maple/mapleio.h>
 
+#include "locators.h"
 
 /* Internal macros, functions, and variables. */
 
@@ -111,12 +110,10 @@ maplematch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct shb_attach_args *sa = aux;
 
 	if (strcmp("maple", cf->cf_driver->cd_name))
 	  return (0);
 
-	sa->ia_iosize = 0 /* 0x100 */;
 	return (1);
 }
 

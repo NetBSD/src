@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.35 2002/03/10 19:56:43 lukem Exp $
+# $NetBSD: GENERIC,v 1.36 2002/03/24 18:21:21 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 maxusers	16		# estimated number of users
 
@@ -140,18 +140,15 @@ mainbus0 at root
 
 shb*	at mainbus?
 
-# WatchDog Timer
-#wdog0 at shb? port 0xffffff84
-
-com0	at shb? port 0xa4000000 irq 11
-com1	at shb? port 0xa4000008 irq 12
+com0	at mainbus?
+com1	at mainbus?
 
 # SH PCMCIA controllers
-shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000
-shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x1000000
+mmeyepcmcia0	at mainbus?
+mmeyepcmcia1	at mainbus?
 
 # PCMCIA bus support
-pcmcia*	at shpcic? controller ? socket ?
+pcmcia*	at mmeyepcmcia? controller ? socket ?
 
 com*	at pcmcia? function ?		# Modems and serial cards
 wdc*	at pcmcia? function ?

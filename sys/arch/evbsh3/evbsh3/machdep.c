@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2002/03/17 17:55:23 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2002/03/24 18:21:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,10 +93,20 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
-#include <machine/bus.h>
+
 #include <sh3/bscreg.h>
 #include <sh3/cpgreg.h>
 #include <sh3/cache_sh3.h>
+#include <sh3/cache_sh4.h>
+#include <sh3/exception.h>
+
+#include <machine/bus.h>
+#include <machine/intr.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* evbsh3 */
@@ -104,15 +114,13 @@ char machine_arch[] = MACHINE_ARCH;	/* sh3eb or sh3el */
 
 paddr_t msgbuf_paddr;
 extern paddr_t avail_start, avail_end;
+extern char start[], etext[], edata[], end[];
 
 #define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
 void initSH3 __P((void *));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
-void consinit __P((void));
-
-extern char start[], etext[], edata[], end[];
 
 /*
  * Machine-dependent startup code
@@ -223,8 +231,6 @@ initSH3(void *pc)	/* XXX return address */
 	vaddr_t kernend;
 	vsize_t sz;
 
-	kernend = sh3_round_page(end);
-
 	/* Clear bss */
 	memset(edata, 0, end - edata);
 
@@ -232,13 +238,33 @@ initSH3(void *pc)	/* XXX return address */
 #if defined(SH3) && defined(SH4)
 #error "don't define both SH3 and SH4"
 #elif defined(SH3)
-	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_UNKNOWN);	
+#if defined(SH7708)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708);
+#elif defined(SH7708S)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708S);
+#elif defined(SH7708R)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708R);
+#elif defined(SH7709)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709);
+#elif defined(SH7709A)
+	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
+#else
+#error "unsupported SH3 variants"
+#endif
 #elif defined(SH4)
-	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_UNKNOWN);	
+#if defined(SH7750)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);	
+#elif defined(SH7750S)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750S);
+#else
+#error "unsupported SH4 variants"
+#endif
 #else
 #error "define SH3 or SH4"
 #endif
+
 	/* Initialize proc0 and enable MMU. */
+	kernend = sh3_round_page(end);
 	sz = sh_proc0_init(kernend, IOM_RAM_BEGIN, IOM_RAM_END);
 
 	/* Number of pages of physmem addr space */
@@ -249,6 +275,9 @@ initSH3(void *pc)	/* XXX return address */
 	avail_end = IOM_RAM_END + 1;
 
 	consinit();
+#ifdef DDB
+	ddb_init(0, NULL, NULL);
+#endif
 
 	/* Call pmap initialization to make new kernel address space */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
@@ -262,6 +291,7 @@ initSH3(void *pc)	/* XXX return address */
 	 * XXX We can't return here, because we change stack pointer.
 	 *     So jump to return address directly.
 	 */
+
 	__asm __volatile (
 		"jmp	@%0;"
 		"mov	%1, r15" :: "r"(pc), "r"(proc0.p_addr->u_pcb.pcb_sp));
@@ -283,10 +313,6 @@ consinit()
 	initted = 1;
 
 	cninit();
-
-#ifdef DDB
-	ddb_init();
-#endif
 }
 
 int
@@ -717,4 +743,56 @@ LoadAndReset(osimage)
 	/* mask all externel interrupt (XXX) */
 
 	XLoadAndReset(buf_addr);
+}
+
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	struct clockframe cf;
+	int s, evtcode;
+
+	switch (cpu_product) {
+	case CPU_PRODUCT_7708:
+	case CPU_PRODUCT_7708S:
+	case CPU_PRODUCT_7708R:
+		evtcode = _reg_read_4(SH3_INTEVT);
+		break;
+	case CPU_PRODUCT_7709:
+	case CPU_PRODUCT_7709A:
+		evtcode = _reg_read_4(SH7709_INTEVT2);
+		break;
+	case CPU_PRODUCT_7750:
+	case CPU_PRODUCT_7750S:
+		evtcode = _reg_read_4(SH4_INTEVT);
+		break;
+	}
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/* 
+	 * On entry, all interrrupts are disabled,
+	 * and exception is enabled for P3 access. (kernel stack is P3,
+	 * SH3 may or may not cause TLB miss when access stack.)
+	 * Enable higher level interrupt here.
+	 */
+	s = _cpu_intr_resume(ih->ih_level);
+
+	switch (evtcode) {
+	default:
+		(*ih->ih_func)(ih->ih_arg);
+		break;
+	case SH_INTEVT_TMU0_TUNI0:
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+		break;
+	case SH_INTEVT_NMI:
+		printf("NMI ignored.\n");
+		break;
+	}
+
+	/* Return to old interrupt level. */
+	_cpu_intr_resume(ssr & 0xf0);
 }

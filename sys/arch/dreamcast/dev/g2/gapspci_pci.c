@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.2 2001/04/24 19:43:25 marcus Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.3 2002/03/24 18:21:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -46,7 +46,6 @@
  
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/shbvar.h>
 #include <machine/sysasicvar.h>
 
 #include <dev/pci/pcivar.h>
@@ -165,8 +164,7 @@ int
 gaps_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 
-	/* We interrupt at the CPU's irq 11. */
-	*ihp = 11;
+	*ihp = SYSASIC_EVENT_EXT;
 	return (0);
 }
 
@@ -174,15 +172,15 @@ const char *
 gaps_intr_string(void *v, pci_intr_handle_t ih)
 {
 
-	return ("SH4 irq 11");
+	return ("SH4 IRL 11");
 }
 
 void *
 gaps_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
-	return sysasic_intr_establish(ih, SYSASIC_EVENT_EXT,
-				      level, func, arg);
+
+	return (sysasic_intr_establish(ih, func, arg));
 }
 
 void

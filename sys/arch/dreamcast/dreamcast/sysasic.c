@@ -1,7 +1,7 @@
-/*	$NetBSD: sysasic.c,v 1.1 2001/04/24 19:43:23 marcus Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.2 2002/03/24 18:21:10 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,127 +35,96 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 
+#include <sh3/exception.h>
+
 #include <machine/intr.h>
-#include <machine/shbvar.h>
 #include <machine/sysasicvar.h>
 
+#define SYSASIC_IRQ_LEVEL_13	0
+#define SYSASIC_IRQ_LEVEL_11	1
+#define SYSASIC_IRQ_LEVEL_9	2
+#define SYSASIC_IRQ_LEVEL_MAX	2
 
-static u_int32_t sysasicmasks[SYSASIC_IRQ_LEVEL_MAX+1][(SYSASIC_EVENT_MAX+1)/32];
+struct sysasic_intrhand {
+	void	*syh_intc;
+	int	syh_event;
+	int	syh_idx;
+} sysasic_intrhand[SYSASIC_IRQ_LEVEL_MAX + 1];
 
-void
-sysasic_mask_irq(level)
-	int level;
-{
-	volatile unsigned int *masks =
-	  (volatile unsigned int *)(void *)(0xa05f6910+(level<<4));
-
-	masks[0] = 0;
-	masks[1] = 0;
-}
-
-void
-sysasic_unmask_irq(level)
-	int level;
-{
-	volatile unsigned int *masks =
-	  (volatile unsigned int *)(void *)(0xa05f6910+(level<<4));
-
-	masks[0] = sysasicmasks[level][0];
-	masks[1] = sysasicmasks[level][1];
-}
+void sysasic_intr_enable(struct sysasic_intrhand *, int);
 
 /*
  * Set up an interrupt handler to start being called.
  */
 void *
-sysasic_intr_establish(irq, event, level, ih_fun, ih_arg)
-	int irq;
-	int event;
-	int level;
-	int (*ih_fun) __P((void *));
-	void *ih_arg;
+sysasic_intr_establish(int event, int (*ih_fun)(void *), void *ih_arg)
 {
-	struct intrhand *ih;
-	int mask_no, bit_set, bit_no;
-
-	switch (irq) {
-	case 9:
-		mask_no = SYSASIC_IRQ_LEVEL_9;
-		break;
-	case 11:
-		mask_no = SYSASIC_IRQ_LEVEL_11;
-		break;
-        case 13:
-		mask_no = SYSASIC_IRQ_LEVEL_13;
-		break;
-	default:
-		panic("invalid sysasic IRQ %d", irq);
-	}
+	struct sysasic_intrhand *syh;
+	int evtcode, ipl, idx;
 
 	if (event < 0 || event > SYSASIC_EVENT_MAX)
 		panic("invalid sysasic event %d", event);
 
-	bit_set = event >> 5;
-	bit_no = event & 31;
+	/*
+	 * Dreamcast use SH4 INTC as IRL mode. if INTEVT code is specified,
+	 * its priority level is fixed.
+	 */
+	switch (event) {
+	case SYSASIC_EVENT_EXT:
+		idx = SYSASIC_IRQ_LEVEL_11;
+		ipl = IPL_NET;
+		evtcode = SH_INTEVT_IRL11;
+		break;
+	case SYSASIC_EVENT_GDROM:
+		idx = SYSASIC_IRQ_LEVEL_9;
+		ipl = IPL_BIO;
+		evtcode = SH_INTEVT_IRL9;
+		break;
+	default:
+		panic("vaild but unknown event %d\n", event);
+	}
 
-	if (sysasicmasks[mask_no][bit_set] & (1<<bit_no))
-		panic("multiple handlers for event %d", event);
+	syh = &sysasic_intrhand[idx];
 
-	sysasicmasks[mask_no][bit_set] |= 1<<bit_no;
+	syh->syh_event	= event;
+	syh->syh_idx	= idx;
+	syh->syh_intc	= intc_intr_establish(evtcode, IST_LEVEL, ipl,
+	    ih_fun, ih_arg);
 
-	ih = shb_intr_establish(irq, IST_LEVEL, level, ih_fun, ih_arg);
+	sysasic_intr_enable(syh, 1);
 
-	/* XXX need to remember the event no so that we can disestablish
-	   correctly.  This should probably be a field of its own in
-	   struct intrhand, but by jamming it into the ih_irq field we
-	   can avoid changing the generic sh3 struct... */
-
-	ih->ih_irq |= (event << 8);
-
-	return ih;
+	return (void *)syh;
 }
-
 
 /*
  * Deregister an interrupt handler.
  */
 void
-sysasic_intr_disestablish(ic, arg)
-	void *ic;
-	void *arg;
+sysasic_intr_disestablish(void *arg)
 {
-	struct intrhand *ih = arg;
-	int event, mask_no, bit_set, bit_no;
+	struct sysasic_intrhand *syh = arg;
+	int event;
 
-	/* XXX kluge, see sysasic_intr_establish() */
-	event = ih->ih_irq >> 8;
-	ih->ih_irq &= 0xff;
-
-	switch (ih->ih_irq) {
-	case 9:
-		mask_no = SYSASIC_IRQ_LEVEL_9;
-		break;
-	case 11:
-		mask_no = SYSASIC_IRQ_LEVEL_11;
-		break;
-        case 13:
-		mask_no = SYSASIC_IRQ_LEVEL_13;
-		break;
-	default:
-		panic("invalid sysasic IRQ %d", ih->ih_irq);
-	}
+	event = syh->syh_event;
 
 	if (event < 0 || event > SYSASIC_EVENT_MAX)
 		panic("invalid sysasic event %d", event);
 
-	bit_set = event >> 5;
-	bit_no = event & 31;
+	sysasic_intr_enable(syh, 0);
+	intc_intr_disestablish(syh->syh_intc);
+}
 
-	sysasicmasks[mask_no][bit_set] &= ~(1<<bit_no);
+void
+sysasic_intr_enable(struct sysasic_intrhand *syh, int on)
+{
+	int event = syh->syh_event;
+	__volatile u_int32_t *masks =
+	    (__volatile u_int32_t *)(0xa05f6910 + (syh->syh_idx << 4));
 
-	shb_intr_disestablish(ic, arg);
+	masks[0] = 0;
+	masks[1] = 0;
+	if (on)
+		masks[event >> 5] = 1 << (event & 31);
 }

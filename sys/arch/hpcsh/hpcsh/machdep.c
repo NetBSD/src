@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2002/03/17 17:55:23 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2002/03/24 18:21:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <sh3/cpu.h>
+#include <sh3/exception.h>
 #include <sh3/clock.h>
 #include <sh3/intcreg.h>
 
@@ -84,6 +85,8 @@
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/kloader.h>
+#include <machine/intr.h>
+
 #include <hpcsh/dev/hd64465/hd64465var.h>
 
 #ifdef DEBUG
@@ -186,23 +189,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
 		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
 
-	/* ICU initiailze. (now we can use cpu_arch and cpu_product) */
-	switch (cpu_product) {
-	case CPU_PRODUCT_7709A:
-		_reg_write_2(SH7709_IPRC, 0);
-		_reg_write_2(SH7709_IPRD, 0);
-		_reg_write_2(SH7709_IPRE, 0);
-		/* FALLTHROUGH */
-	case CPU_PRODUCT_7709:
-		_reg_write_2(SH3_IPRA, 0);
-		_reg_write_2(SH3_IPRB, 0);
-		break;
-	case CPU_PRODUCT_7750:
-		_reg_write_2(SH4_IPRA, 0);
-		_reg_write_2(SH4_IPRB, 0);
-		_reg_write_2(SH4_IPRC, 0);
-		break;
-	}
 #if NHD64465IF > 0
 	hd64465_intr_disable();
 #endif
@@ -578,3 +564,35 @@ __check_dram(paddr_t start, paddr_t end)
 	return (1);
 }
 #endif /* NARLY_MEMORY_PROBE */
+
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	int s, evtcode;
+
+	evtcode = _reg_read_4(CPU_IS_SH3 ? SH7709_INTEVT2 : SH4_INTEVT);
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/* 
+	 * On entry, all interrrupts are disabled,
+	 * and exception is enabled for P3 access. (kernel stack is P3,
+	 * SH3 may or may not cause TLB miss when access stack.)
+	 * Enable higher level interrupt here.
+	 */
+	s = _cpu_intr_resume(ih->ih_level);//XXX cascaded ICU mask
+
+	if (evtcode == SH_INTEVT_TMU0_TUNI0) {	/* hardclock */
+		struct clockframe cf;
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+	} else {
+		(*ih->ih_func)(ih->ih_arg);
+	}
+
+	/* Return to old interrupt level. */
+	_cpu_intr_resume(ssr & 0xf0);//XXX cascaded ICU mask.
+}

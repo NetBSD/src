@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2002/03/17 17:55:24 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2002/03/24 18:21:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -95,9 +95,13 @@
 #include <sh3/bscreg.h>
 #include <sh3/cpgreg.h>
 #include <sh3/cache_sh3.h>
-#include <dev/cons.h>
+#include <sh3/exception.h>
+
 #include <machine/bus.h>
 #include <machine/mmeye.h>
+#include <machine/intr.h>
+
+#include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* mmeye */
@@ -114,6 +118,11 @@ void XLoadAndReset __P((char *));
 void consinit __P((void));
 void sh3_cache_on __P((void));
 void InitializeBsc(void);
+
+struct mmeye_intrhand {
+	void *intc_ih;
+	int irq;
+} mmeye_intrhand[_INTR_N];
 
 extern char start[], etext[], edata[], end[];
 
@@ -287,64 +296,6 @@ consinit()
 	initted = 1;
 
 	cninit();
-}
-
-int
-bus_space_map(t, addr, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
-{
-	*bshp = (bus_space_handle_t)addr;
-
-	return 0;
-}
-
-int
-sh_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
-{
-
-	*nbshp = bsh + offset;
-	return (0);
-}
-
-int
-sh_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
-	       bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
-{
-	*bshp = *bpap = rstart;
-
-	return (0);
-}
-
-void
-sh_memio_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-
-}
-
-void
-sh_memio_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-
 }
 
 /*
@@ -619,3 +570,86 @@ Send16550(int c)
 	}
 }
 #endif /* sh3_tmp */
+
+
+void
+intc_intr(int ssr, int spc, int ssp)
+{
+	struct intc_intrhand *ih;
+	int s, evtcode;
+
+	evtcode = _reg_read_4(SH3_INTEVT);
+
+	ih = EVTCODE_IH(evtcode);
+	KDASSERT(ih->ih_func);
+	/* 
+	 * On entry, all interrrupts are disabled,
+	 * and exception is enabled for P3 access. (kernel stack is P3,
+	 * SH3 may or may not cause TLB miss when access stack.)
+	 * Enable higher level interrupt here.
+	 */
+	s = _cpu_intr_resume(ih->ih_level);
+
+	if (evtcode == SH_INTEVT_TMU0_TUNI0) {	/* hardclock */
+		struct clockframe cf;
+		cf.spc = spc;
+		cf.ssr = ssr;
+		cf.ssp = ssp;
+		(*ih->ih_func)(&cf);
+	} else {
+		(*ih->ih_func)(ih->ih_arg);
+	}
+
+	/* Return to old interrupt level. */
+	_cpu_intr_resume(ssr & 0xf0);
+}
+
+void *
+mmeye_intr_establish(int irq, int trigger, int level, int (*func)(void *),
+    void *arg)
+{
+	struct mmeye_intrhand *mh = &mmeye_intrhand[irq];
+
+	mh->intc_ih = intc_intr_establish(0x200 + (irq << 5), IST_LEVEL, level,
+	    func, arg);
+	mh->irq = irq;
+
+	MMTA_IMASK |= (1 << (15 - irq));
+
+	return ((void *)irq);
+}
+
+void
+mmeye_intr_disestablish(void *ih)
+{
+	struct mmeye_intrhand *mh = ih;
+
+	MMTA_IMASK &= ~(1 << (15 - mh->irq));
+
+	intc_intr_disestablish(mh->intc_ih);
+}
+
+int
+bus_space_map(t, addr, size, flags, bshp)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	bus_size_t size;
+	int flags;
+	bus_space_handle_t *bshp;
+{
+	*bshp = (bus_space_handle_t)addr;
+
+	return 0;
+}
+
+int
+sh_memio_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
+{
+
+	*nbshp = bsh + offset;
+	return (0);
+}

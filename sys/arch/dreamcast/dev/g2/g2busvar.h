@@ -1,4 +1,4 @@
-/*	$NetBSD: g2busvar.h,v 1.1 2001/01/31 18:33:24 thorpej Exp $	*/
+/*	$NetBSD: g2busvar.h,v 1.2 2002/03/24 18:21:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -35,7 +35,7 @@
 #ifndef _DREAMCAST_G2BUSVAR_H_
 #define _DREAMCAST_G2BUSVAR_H_
 
-#include <sh3/shbvar.h>
+#include <machine/bus.h>
 
 /*
  * G2 driver attach arguments
