@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 1996/11/19 21:04:47 gwr Exp $
+#	$NetBSD: GENERIC,v 1.33 1996/12/28 23:27:28 pk Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -165,8 +165,8 @@ cd* at scsibus? target ? lun ?
 
 #ch* at scsibus? target ? lun ?
 
-# RAM-disk drivers
-pseudo-device	rd	2
+# Memory-disk drivers
+pseudo-device	md	2
 
 # Misc.
 pseudo-device	loop	1		# network loopback
