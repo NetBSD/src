@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.52 2001/04/18 17:35:36 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.53 2001/11/03 13:40:30 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
 
-WARNS=2
 YHEADER=1
 PROG=	sh
 SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
