@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.140 2003/10/19 15:04:08 ragge Exp $
+#	$NetBSD: DEVNAMES,v 1.141 2003/10/19 15:41:23 bouyer Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -18,8 +18,10 @@ abtn			macppc
 abus			vax
 ac			hp300
 ac97			MI		Attribute
+acardide		MI
 acc			vax
 acemidi			MI
+aceride			MI
 aclock			arc
 ad			vax
 ad1848			MI		Attribute
@@ -195,6 +197,7 @@ clock			sun2
 clock			sun3
 clock			x68k
 clockctl		MI
+cmdide			MI
 cmi			vax
 cmpci			MI
 cnw			MI		
@@ -244,6 +247,7 @@ ct			vax
 cue			MI		
 cy			MI		
 cy82c693		MI		
+cypide			MI
 cz			MI		
 daic			MI
 dc			pmax
@@ -472,6 +476,7 @@ hpcfb			hpcmips
 hpcfbif			hpcmips		Attribute
 hpibbus			hp300
 hpibdev			hp300		Attribute
+hptide			MI
 ht			vax
 hydra			acorn32
 hyper			amiga
@@ -827,6 +832,7 @@ opm			x68k
 opms			acorn32
 opms			arc
 opms			shark
+optiide			MI
 oscsi			hp300
 osiop			MI
 otgsc			amiga
@@ -891,9 +897,11 @@ pcn			MI
 pcons			sparc64
 pcppi			MI		
 pcscp			MI		
+pdcide			MI
 pdq			MI		Attribute
 pfb			bebox
 pica			arc
+piixide			MI
 pioc			acorn32
 plum			hpcmips
 plumicu			hpcmips
@@ -1046,10 +1054,12 @@ siop_common		MI		Attribute
 siopng			amiga		Attribute
 siotty			luna68k
 sip			MI		
+siside			MI
 sk			MI
 skbd			hpcmips
 skbdif			hpcmips
 slhci			MI
+slide			MI
 sm			MI		
 smap			playstation2
 smc93cx6		MI		Attribute
@@ -1200,6 +1210,7 @@ va			vax
 veriexec		MI
 vga			MI		
 viaenv			MI
+viaide			MI
 viapm			MI
 vidc			acorn32
 vidcaudio		acorn32
