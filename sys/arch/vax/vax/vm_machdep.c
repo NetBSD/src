@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.12 1995/05/05 10:47:44 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.13 1995/05/07 16:41:28 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -39,6 +39,7 @@
 #include "sys/user.h"
 #include "sys/exec.h"
 #include "sys/vnode.h"
+#include "sys/core.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
@@ -47,8 +48,8 @@
 #include "machine/pmap.h"
 #include "machine/pte.h"
 #include "machine/macros.h"
-#include "machine/pcb.h"
 #include "machine/trap.h"
+#include "machine/pcb.h"
 
 volatile int whichqs;
 
@@ -107,8 +108,8 @@ cpu_fork(p1, p2)
 	nyproc->P0LR = opmap->pm_pcb->P0LR;
 	nyproc->P1LR = opmap->pm_pcb->P1LR;
 #else
-	nyproc->P0BR = 0;
-	nyproc->P1BR = 0x80000000;
+	nyproc->P0BR = (void *)0;
+	nyproc->P1BR = (void *)0x80000000;
 	nyproc->P0LR = AST_PCB;
 	nyproc->P1LR = 0x200000;
 #endif
@@ -408,30 +409,43 @@ suword(ptr,val)
  * XXX - registers r6-r11 are lost in coredump!
  */
 int
-cpu_coredump(p, vp, cred)
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *chdr;
 {
-	struct pcb *pb=&p->p_addr->u_pcb;
-	struct trapframe *exptr=pb->framep;
+	struct trapframe *tf;
+	struct md_coredump state;
+	struct coreseg cseg;
+	int error;
 
-	pb->R[0]=exptr->r0;
-	pb->R[1]=exptr->r1;
-	pb->R[2]=exptr->r2;
-	pb->R[3]=exptr->r3;
-	pb->R[4]=exptr->r4;
-	pb->R[5]=exptr->r5;
-	pb->FP=exptr->fp;
-	pb->AP=exptr->ap;
-	pb->PC=exptr->pc;
-	pb->PSL=exptr->psl;
-	pb->ESP=exptr->trap;
-	pb->SSP=exptr->code;
+	tf = p->p_addr->u_pcb.framep;
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_VAX, 0);
+	chdr->c_hdrsize = sizeof(struct core);
+	chdr->c_seghdrsize = sizeof(struct coreseg);
+	chdr->c_cpusize = sizeof(struct md_coredump);
 
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
-	    p));
+	bcopy(tf, &state, sizeof(struct md_coredump));
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_VAX, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (error)
+		return error;
+
+        error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
+            (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+            IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+
+        if (!error)
+                chdr->c_nseg++;
+
+        return error;
 }
 
 copyout(from, to, len)
