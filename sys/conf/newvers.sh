@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.28 1999/02/02 19:40:47 cjs Exp $
+#	$NetBSD: newvers.sh,v 1.29 1999/02/17 08:13:12 itohy Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
 echo \
   "char sccs[] = \
-    \"@(#)${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
+    \"@""(#)${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
   >> vers.c
 echo \
   "char version[] = \
