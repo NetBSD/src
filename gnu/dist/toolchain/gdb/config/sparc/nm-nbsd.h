@@ -24,7 +24,7 @@
 
 /* Get generic NetBSD native definitions. */
 
-#include "config/nm-nbsd.h"
+#include <nm-nbsd.h>
 
 /* Before storing, we need to read all the registers.  */
 
