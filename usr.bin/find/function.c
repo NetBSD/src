@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: function.c,v 1.14 1994/10/18 13:54:25 mycroft Exp $";
+static char rcsid[] = "$Id: function.c,v 1.15 1994/10/18 17:02:44 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -379,20 +379,14 @@ f_fstype(plan, entry)
 		}
 
 		first = 0;
-		switch (plan->flags) {
-		case F_MTFLAG:
-		case F_MTTYPE:
-			/*
-			 * Further tests may need both of these values, so
-			 * always copy both of them.
-			 */
-			val = sb.f_flags;
-			strncpy(fstype, sb.f_fstypename, MFSNAMELEN);
-			fstype[MFSNAMELEN] = '\0';
-			break;
-		default:
-			abort();
-		}
+
+		/*
+		 * Further tests may need both of these values, so
+		 * always copy both of them.
+		 */
+		val = sb.f_flags;
+		strncpy(fstype, sb.f_fstypename, MFSNAMELEN);
+		fstype[MFSNAMELEN] = '\0';
 	}
 	switch (plan->flags) {
 	case F_MTFLAG:
