@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.13 1999/08/25 00:14:13 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.14 1999/10/07 18:26:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.13 1999/08/25 00:14:13 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.14 1999/10/07 18:26:58 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,6 +208,7 @@ get_ifile (fsp, use_mmap)
 
 {
 	struct stat file_stat;
+	struct statfs statfsbuf;
 	caddr_t ifp;
 	char *ifile_name;
 	int count;
@@ -228,8 +229,16 @@ get_ifile (fsp, use_mmap)
 		lseek(ifile_fd, 0, SEEK_SET);
 
 	if (fstat (ifile_fd, &file_stat)) {
-		syslog(LOG_ERR, "Exiting: get_ifile: fstat failed: %m");
-                exit(1);
+		/* If the fs was unmounted, don't complain */
+		statfs(fsp->fi_statfsp->f_mntonname, &statfsbuf);
+		if(memcmp(&statfsbuf.f_fsid,&fsp->fi_statfsp->f_fsid,
+			  sizeof(statfsbuf.f_fsid))!=0)
+		{
+			/* Filesystem still mounted, this error is real */
+			syslog(LOG_ERR, "Exiting: get_ifile: fstat failed: %m");
+                	exit(1);
+		}
+		exit(0);
         }
 	fsp->fi_fs_tstamp = file_stat.st_mtimespec.tv_sec;
 
