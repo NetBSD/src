@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.22 1996/05/25 00:56:38 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.23 1996/06/01 00:13:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -832,9 +832,10 @@ iteopen(dev, mode, devtype, p)
 	if (!ite_initted)
 		return (ENXIO);
 
-	if (ite_tty == NULL)
+	if (ite_tty == NULL) {
 		tp = ite_tty = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = ite_tty;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
