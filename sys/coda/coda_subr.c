@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.6 1998/10/28 19:54:50 rvb Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.6.6.1 1999/10/10 20:49:49 cgd Exp $	*/
 
 /*
  * 
@@ -46,6 +46,12 @@
 /*
  * HISTORY
  * $Log: coda_subr.c,v $
+ * Revision 1.6.6.1  1999/10/10 20:49:49  cgd
+ * pull up rev 1.7 from trunk (requested by mycroft):
+ *   Fix potential overflow of v_usecount and v_writecount (and panics
+ *   resulting from this) by widening them to `long'.  Mostly affects
+ *   systems where maxvnodes>=32768.
+ *
  * Revision 1.6  1998/10/28 19:54:50  rvb
  * Venus must be passed O_CREAT flag on VOP_OPEN iff this is
  * a creat so that we can will allow a mode 444 file to be
@@ -397,7 +403,7 @@ coda_kill(whoIam, dcstat)
 #endif
 				count++;
 				CODADEBUG(CODA_FLUSH, 
-					 myprintf(("Live cnode fid %lx.%lx.%lx flags %d count %d\n",
+					 myprintf(("Live cnode fid %lx.%lx.%lx flags %d count %ld\n",
 						   (cp->c_fid).Volume,
 						   (cp->c_fid).Vnode,
 						   (cp->c_fid).Unique, 
@@ -447,7 +453,7 @@ coda_testflush(void)
 	for (cp = coda_cache[hash];
 	     cp != NULL;
 	     cp = CNODE_NEXT(cp)) {  
-	    myprintf(("Live cnode fid %lx.%lx.%lx count %d\n",
+	    myprintf(("Live cnode fid %lx.%lx.%lx count %ld\n",
 		      (cp->c_fid).Volume,(cp->c_fid).Vnode,
 		      (cp->c_fid).Unique, CTOV(cp)->v_usecount));
 	}
@@ -594,7 +600,7 @@ int handleDownCall(opcode, out)
 	      if (CTOV(cp)->v_flag & VTEXT)
 		  error = coda_vmflush(cp);
 	      CODADEBUG(CODA_ZAPFILE, myprintf(("zapfile: fid = (%lx.%lx.%lx), 
-                                              refcnt = %d, error = %d\n",
+                                              refcnt = %ld, error = %d\n",
 					      cp->c_fid.Volume, 
 					      cp->c_fid.Vnode, 
 					      cp->c_fid.Unique, 
@@ -622,7 +628,7 @@ int handleDownCall(opcode, out)
 	      coda_nc_zapParentfid(&out->coda_zapdir.CodaFid, IS_DOWNCALL);     
 	      
 	      CODADEBUG(CODA_ZAPDIR, myprintf(("zapdir: fid = (%lx.%lx.%lx), 
-                                          refcnt = %d\n",cp->c_fid.Volume, 
+                                          refcnt = %ld\n",cp->c_fid.Volume, 
 					     cp->c_fid.Vnode, 
 					     cp->c_fid.Unique, 
 					     CTOV(cp)->v_usecount - 1)););
@@ -656,7 +662,7 @@ int handleDownCall(opcode, out)
 		  
 		  error = coda_vmflush(cp);
 	      }
-	      CODADEBUG(CODA_PURGEFID, myprintf(("purgefid: fid = (%lx.%lx.%lx), refcnt = %d, error = %d\n",
+	      CODADEBUG(CODA_PURGEFID, myprintf(("purgefid: fid = (%lx.%lx.%lx), refcnt = %ld, error = %d\n",
                                             cp->c_fid.Volume, cp->c_fid.Vnode,
                                             cp->c_fid.Unique, 
 					    CTOV(cp)->v_usecount - 1, error)););
