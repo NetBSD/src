@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vi_mode.c	6.4 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: vi_mode.c,v 1.2 1993/08/01 18:48:04 mycroft Exp $";
+static char vi_mode_rcsid[] = "$Id: vi_mode.c,v 1.3 1993/08/10 00:13:57 mycroft Exp $";
 #endif /* not lint */
 
 /* vi_mode.c -- A vi emulation mode for Bash.

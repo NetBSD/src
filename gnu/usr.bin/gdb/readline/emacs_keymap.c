@@ -20,7 +20,7 @@
    Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: emacs_keymap.c,v 1.2 1993/08/02 17:40:33 mycroft Exp $";
+static char emacs_keymap_rcsid[] = "$Id: emacs_keymap.c,v 1.3 1993/08/10 00:13:55 mycroft Exp $";
 #endif /* not lint */
 
 #ifndef FILE
