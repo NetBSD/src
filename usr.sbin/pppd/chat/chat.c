@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.27 2003/05/16 18:15:34 itojun Exp $	*/
+/*	$NetBSD: chat.c,v 1.28 2003/11/02 08:54:06 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.27 2003/05/16 18:15:34 itojun Exp $");
+__RCSID("$NetBSD: chat.c,v 1.28 2003/11/02 08:54:06 christos Exp $");
 #endif
 #endif
 
@@ -156,6 +156,7 @@ extern char *sys_errlist[];
 
 char *program_name;
 
+#define	BUFFER_SIZE		256
 #define	MAX_ABORTS		50
 #define	MAX_REPORTS		50
 #define	DEFAULT_CHAT_TIMEOUT	45
@@ -193,12 +194,12 @@ struct termios saved_tty_parameters;
 #endif
 
 char *abort_string[MAX_ABORTS], *fail_reason = (char *)0,
-	fail_buffer[50];
+	fail_buffer[BUFFER_SIZE];
 int n_aborts = 0, abort_next = 0, timeout_next = 0, echo_next = 0;
 int clear_abort_next = 0;
 
 char *report_string[MAX_REPORTS] ;
-char  report_buffer[50] ;
+char  report_buffer[BUFFER_SIZE] ;
 int n_reports = 0, report_next = 0, report_gathering = 0 ; 
 int clear_report_next = 0;
 
