@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2000/12/08 16:43:48 deberg Exp $
+#	$NetBSD: Makefile,v 1.25 2000/12/11 21:05:14 itojun Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -26,7 +26,6 @@ INCS=	acct.h ansi.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h \
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/inttypes.h /usr/include/inttypes.h \
-	sys/md5.h /usr/include/md5.h \
 	sys/poll.h /usr/include/poll.h \
 	sys/sha1.h /usr/include/sha1.h \
 	sys/syslog.h /usr/include/syslog.h \
