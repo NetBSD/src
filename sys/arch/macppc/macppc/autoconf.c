@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1998/12/22 19:35:49 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 1999/02/02 16:37:51 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -117,39 +117,65 @@ findroot()
 	int chosen, node, pnode;
 	u_int targ, lun = 0;	/* XXX lun */
 	struct device *dv;
-	char *controller, *addr, p[64];
+	char *p, *controller = "nodev";
+	char path[64], type[16], name[16];
 
 	booted_device = NULL;
 
-	if ((chosen = OF_finddevice("/chosen")) == -1)
-		goto out;
-	bzero(p, sizeof(p));
-	if (OF_getprop(chosen, "bootpath", p, sizeof(p)) == -1)
-		goto out;
-	if ((addr = strrchr(p, '@')) == NULL)	/* XXX fd:0 case... */
-		goto out;
-	targ = addr[1] - '0';
-	booted_partition = 0;	/* booted_partition = addr[3] - '0'; */
+	/* Cut off filename from "boot/devi/ce/file". */
+	path[0] = 0;
+	p = bootpath;
+	while ((p = strchr(p + 1, '/')) != NULL) {
+		char new[64];
 
-	if ((node = OF_finddevice(p)) == -1)
-		goto out;
-	if ((pnode = OF_parent(node)) == -1)
-		goto out;
-	bzero(p, sizeof(p));
-	if (OF_getprop(pnode, "name", p, sizeof(p)) == -1)
+		strcpy(new, bootpath);
+		new[p - bootpath] = 0;
+		if (OF_finddevice(new) == -1)
+			break;
+		strcpy(path, new);
+	}
+	if ((node = OF_finddevice(path)) == -1)
 		goto out;
 
-	controller = "";
-	if (strcmp(p, "53c94") == 0) controller = "esp";
-	if (strcmp(p, "mesh") == 0) controller = "mesh";
-	if (strcmp(p, "ide") == 0) controller = "wdc";
-	if (strcmp(p, "ata") == 0) controller = "wdc";
-	if (strcmp(p, "ATA") == 0) controller = "wdc";
+	bzero(type, sizeof(type));
+	bzero(name, sizeof(name));
+	if (OF_getprop(node, "device_type", type, 16) == -1)
+		goto out;
+	if (OF_getprop(node, "name", name, 16) == -1)
+		goto out;
+
+	if (strcmp(type, "block") == 0) {
+		char *addr;
+
+		if ((addr = strrchr(path, '@')) == NULL)	/* XXX fd:0 */
+			goto out;
+
+		targ = addr[1] - '0';		/* XXX > '9' */
+		booted_partition = 0;		/* = addr[3] - '0'; */
+
+		if ((pnode = OF_parent(node)) == -1)
+			goto out;
+
+		bzero(name, sizeof(name));
+		if (OF_getprop(pnode, "name", name, sizeof(name)) == -1)
+			goto out;
+	}
+
+	if (strcmp(name, "mace") == 0) controller = "mc";
+	if (strcmp(name, "bmac") == 0) controller = "bm";
+	if (strcmp(name, "ethernet") == 0) controller = "bm";
+	if (strcmp(name, "53c94") == 0) controller = "esp";
+	if (strcmp(name, "mesh") == 0) controller = "mesh";
+	if (strcmp(name, "ide") == 0) controller = "wdc";
+	if (strcmp(name, "ata") == 0) controller = "wdc";
+	if (strcmp(name, "ata0") == 0) controller = "wdc";
+	if (strcmp(name, "ATA") == 0) controller = "wdc";
 
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
-		if (dv->dv_class != DV_DISK)
+		if (dv->dv_class != DV_DISK && dv->dv_class != DV_IFNET)
 			continue;
 
+		/* XXX ATAPI */
 		if (strncmp(dv->dv_xname, "sd", 2) == 0) {
 			struct scsibus_softc *sdv = (void *)dv->dv_parent;
 
@@ -159,7 +185,7 @@ findroot()
 				continue;
 			if (targ > 7 || lun > 7)
 				goto out;
-			if (sdv->sc_link[targ][lun] == NULL)
+			if (sdv->sc_link[targ][lun]->device_softc != dv)
 				continue;
 			booted_device = dv;
 			break;
@@ -171,13 +197,25 @@ findroot()
 			if (strncmp(dv->dv_parent->dv_xname,
 				    controller, strlen(controller)) != 0)
 				continue;
-			if (targ >= wdv->nchannels
+			if (targ >= 2
 			 || wdv->channels == NULL
-			 || wdv->channels[targ] == NULL)
+			 || wdv->channels[0]->ch_drive[targ].drv_softc != dv)
 				continue;
 			booted_device = dv;
 			break;
 		}
+
+		if (strncmp(dv->dv_xname, "mc", 2) == 0)
+			if (strcmp(controller, "mc") == 0) {
+				booted_device = dv;
+				break;
+			}
+
+		if (strncmp(dv->dv_xname, "bm", 2) == 0)
+			if (strcmp(controller, "bm") == 0) {
+				booted_device = dv;
+				break;
+			}
 	}
 
 out:
