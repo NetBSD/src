@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.47 2004/10/30 15:04:45 dsl Exp $	*/
+/*	$NetBSD: str.c,v 1.48 2004/11/10 16:51:16 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.47 2004/10/30 15:04:45 dsl Exp $");
+__RCSID("$NetBSD: str.c,v 1.48 2004/11/10 16:51:16 wiz Exp $");
 #endif
 #endif
 
@@ -151,6 +151,7 @@ static const test_t   tests[] = {
 static const test_t	modifiers[] = {
 	{	"alpha",	5,	Alpha	},
 	{	"beta",		4,	Beta	},
+	{	"pre",		3,	RC	},
 	{	"rc",		2,	RC	},
 	{	"pl",		2,	Dot	},
 	{	"_",		1,	Dot	},
