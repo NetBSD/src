@@ -6,3 +6,4 @@
 ./etc/fstab.sd5
 ./etc/fstab.sd6
 ./etc/fstab.sd7
+./etc/ld.so.conf
