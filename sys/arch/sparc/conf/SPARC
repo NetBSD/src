@@ -1,5 +1,5 @@
 # from:	@(#)SPARC	8.1 (Berkeley) 6/29/93
-# $Id: SPARC,v 1.5 1994/04/12 07:47:20 deraadt Exp $
+# $Id: SPARC,v 1.6 1994/05/22 23:13:51 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -36,7 +36,6 @@ options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options	TPIP
 #options	EON
 options		COMPAT_43
-options		MAXFDESCS=1024
 
 # Options for SPARCstation hardware
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
