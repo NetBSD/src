@@ -1,7 +1,8 @@
-/*	$NetBSD: bzscreg.h,v 1.2 1996/04/21 21:10:54 veego Exp $	*/
+/*	$NetBSD: bzivscvar.h,v 1.1.2.2 1997/10/14 08:26:11 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Daniel Widenfalk
+ * Copyright (c) 1997 Michael L. Hitch.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,10 +14,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Daniel Widenfalk
- *      for the NetBSD Project.
+ *	This product includes software developed for the NetBSD Project
+ *	by Michael L. Hitch.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,23 +31,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* BlizzardII 1230 with FAS216 SCSI interface hardware description. */
+struct bzivsc_softc {
+	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
 
-#ifndef _BZSCREG_H_
-#define _BZSCREG_H_
+	struct	isr		 sc_isr;	/* Interrupt chain struct */
 
-#ifndef _SFARREG_H_
-#include <amiga/dev/sfasreg.h>
-#endif
+	volatile u_char *sc_reg;		/* the registers */
+	volatile u_char *sc_dmabase;
 
-typedef struct bzsc_regmap {
-	sfas_regmap_t	FAS216;
-	vu_char		*cclkaddr;
-	vu_char		*epowaddr;
-} bzsc_regmap_t;
-typedef bzsc_regmap_t *bzsc_regmap_p;
+	int		sc_active;		/* Pseudo-DMA state vars */
+	int		sc_datain;
+	int		sc_tc;
+	size_t		sc_dmasize;
+	size_t		sc_dmatrans;
+	char		**sc_dmaaddr;
+	size_t		*sc_pdmalen;
+	vm_offset_t	sc_pa;
 
-#define BZSC_DMA_WRITE	0x80000000
-#define BZSC_DMA_READ	0x00000000	/* Symmetric reasons */
+	u_char		sc_pad1[18];		/* XXX */
+	u_char		sc_alignbuf[256];
+	u_char		sc_pad2[16];
+	u_char		sc_hardbits;
+	u_char		sc_portbits;
+	u_char		sc_xfr_align;
 
-#endif
+};

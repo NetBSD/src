@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94.2.3 1997/09/22 06:30:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94.2.4 1997/10/14 08:25:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,6 +197,12 @@ char	*cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
  
+/*
+ * current open serial device speed;  used by some SCSI drivers to reduce
+ * DMA transfer lengths.
+ */
+int	ser_open_speed;
+
  /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
@@ -1007,11 +1013,14 @@ cpu_reboot(howto, bootstr)
 		dumpsys();
 
 	if (howto & RB_HALT) {
-		printf("System halted.\n\n");
-		asm("	stop	#0x2700");
-		/*NOTREACHED*/
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cngetc();
 	}
 
+	printf("rebooting...\n");
+	DELAY(1000000);
 	doboot();
 	/*NOTREACHED*/
 }

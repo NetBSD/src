@@ -1,6 +1,7 @@
-/*	$NetBSD: bzsc.c,v 1.15.8.1 1997/08/27 21:45:15 thorpej Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.15.8.2 1997/10/14 08:26:13 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Michael L. Hitch
  * Copyright (c) 1995 Daniel Widenfalk
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -16,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Daniel Widenfalk
+ *	and Michael L. Hitch.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,372 +34,475 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)dma.c
  */
 
+/*
+ * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
+ * 53c9x MI driver by Michael L. Hitch (mhitch@montana.edu).
+ */
+
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/queue.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <machine/pmap.h>
-#include <amiga/amiga/custom.h>
-#include <amiga/amiga/cc.h>
-#include <amiga/amiga/device.h>
+#include <dev/scsipi/scsi_message.h>
+
+#include <machine/cpu.h>
+#include <machine/param.h>
+
+#include <dev/ic/ncr53c9xreg.h>
+#include <dev/ic/ncr53c9xvar.h>
+
 #include <amiga/amiga/isr.h>
-#include <amiga/dev/sfasreg.h>
-#include <amiga/dev/sfasvar.h>
-#include <amiga/dev/zbusvar.h>
-#include <amiga/dev/bzscreg.h>
 #include <amiga/dev/bzscvar.h>
+#include <amiga/dev/zbusvar.h>
 
-void bzscattach __P((struct device *, struct device *, void *));
-int  bzscmatch  __P((struct device *, struct cfdata *, void *));
+void	bzscattach	__P((struct device *, struct device *, void *));
+int	bzscmatch	__P((struct device *, struct cfdata *, void *));
 
-struct scsipi_adapter bzsc_scsiswitch = {
-	sfas_scsicmd,
-	sfas_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
-};
-
-struct scsipi_device bzsc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
+/* Linkup to the rest of the kernel */
 struct cfattach bzsc_ca = {
 	sizeof(struct bzsc_softc), bzscmatch, bzscattach
 };
 
 struct cfdriver bzsc_cd = {
-	NULL, "bzsc", DV_DULL, NULL, 0
+	NULL, "bzsc", DV_DULL
 };
 
-int bzsc_intr		__P((void *));
-void bzsc_set_dma_adr	__P((struct sfas_softc *sc, vm_offset_t ptr, int mode));       
-void bzsc_set_dma_tc	__P((struct sfas_softc *sc, unsigned int len));
-int bzsc_setup_dma	__P((struct sfas_softc *sc, vm_offset_t ptr, int len,
-			     int mode));
-int bzsc_build_dma_chain __P((struct sfas_softc *sc,
-				struct sfas_dma_chain *chain, void *p, int l));
-int bzsc_need_bump	__P((struct sfas_softc *sc, vm_offset_t ptr, int len));
-void bzsc_led_dummy	__P((struct sfas_softc *sc, int mode));
+struct scsipi_adapter bzsc_switch = {
+	ncr53c9x_scsi_cmd,
+	minphys,		/* no max at this level; handled by DMA code */
+	NULL,
+	NULL,
+};
+
+struct scsipi_device bzsc_dev = {
+	NULL,			/* Use default error handler */
+	NULL,			/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
+};
 
 /*
- * if we are an Advanced Systems & Software FastlaneZ3
+ * Functions and the switch for the MI code.
+ */
+u_char	bzsc_read_reg __P((struct ncr53c9x_softc *, int));
+void	bzsc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+int	bzsc_dma_isintr __P((struct ncr53c9x_softc *));
+void	bzsc_dma_reset __P((struct ncr53c9x_softc *));
+int	bzsc_dma_intr __P((struct ncr53c9x_softc *));
+int	bzsc_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *));
+void	bzsc_dma_go __P((struct ncr53c9x_softc *));
+void	bzsc_dma_stop __P((struct ncr53c9x_softc *));
+int	bzsc_dma_isactive __P((struct ncr53c9x_softc *));
+
+struct ncr53c9x_glue bzsc_glue = {
+	bzsc_read_reg,
+	bzsc_write_reg,
+	bzsc_dma_isintr,
+	bzsc_dma_reset,
+	bzsc_dma_intr,
+	bzsc_dma_setup,
+	bzsc_dma_go,
+	bzsc_dma_stop,
+	bzsc_dma_isactive,
+	0,
+};
+
+/* Maximum DMA transfer length to reduce impact on high-speed serial input */
+u_long bzsc_max_dma = 1024;
+extern int ser_open_speed;
+
+u_long bzsc_cnt_pio = 0;	/* number of PIO transfers */
+u_long bzsc_cnt_dma = 0;	/* number of DMA transfers */
+u_long bzsc_cnt_dma2 = 0;	/* number of DMA transfers broken up */
+u_long bzsc_cnt_dma3 = 0;	/* number of pages combined */
+
+#ifdef DEBUG
+struct {
+	u_char hardbits;
+	u_char status;
+	u_char xx;
+	u_char yy;
+} bzsc_trace[128];
+int bzsc_trace_ptr = 0;
+int bzsc_trace_enable = 1;
+void bzsc_dump __P((void));
+#endif
+
+/*
+ * if we are a Phase5 Blizzard 1230 II
  */
 int
-bzscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+bzscmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct zbus_args *zap;
-	vu_char *ta;
+	volatile u_char *regs;
 
-	if (!is_a1200())
-		return(0);
-
-	zap = auxp;
+	zap = aux;
 	if (zap->manid != 0x2140 || zap->prodid != 11)
+		return(0);			/* It's not Blizzard 1230 */
+	if (!is_a1200())
+		return(0);			/* And not A1200 */
+	regs = &((volatile u_char *)zap->va)[0x10000];
+	if (badaddr((caddr_t)regs))
 		return(0);
-
-	ta = (vu_char *)(((char *)zap->va)+0x10010);
-	if (badbaddr((caddr_t)ta))
+	regs[NCR_CFG1 * 2] = 0;
+	regs[NCR_CFG1 * 2] = NCRCFG1_PARENB | 7;
+	delay(5);
+	if (regs[NCR_CFG1 * 2] != (NCRCFG1_PARENB | 7))
 		return(0);
-
-	*ta = 0;
-	*ta = 1;
-	DELAY(5);
-	if (*ta != 1)
-		return(0);
-
 	return(1);
 }
 
+/*
+ * Attach this instance, and then all the sub-devices
+ */
 void
-bzscattach(pdp, dp, auxp)
-	struct device *pdp;
-	struct device *dp;
-	void *auxp;
+bzscattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct bzsc_softc *sc;
+	struct bzsc_softc *bsc = (void *)self;
+	struct ncr53c9x_softc *sc = &bsc->sc_ncr53c9x;
 	struct zbus_args  *zap;
-	bzsc_regmap_p	   rp;
-	vu_char		  *fas;
+	extern u_long scsi_nosync;
+	extern int shift_nosync;
+	extern int ncr53c9x_debug;
 
-	zap = auxp;
-	fas = (vu_char *)(((char *)zap->va)+0x10000);
+	/*
+	 * Set up the glue for MI code early; we use some of it here.
+	 */
+	sc->sc_glue = &bzsc_glue;
 
-	sc = (struct bzsc_softc *)dp;
-	rp = &sc->sc_regmap;
+	/*
+	 * Save the regs
+	 */
+	zap = aux;
+	bsc->sc_reg = &((volatile u_char *)zap->va)[0x10000];
+	bsc->sc_dmabase = &bsc->sc_reg[0x21];
 
-	rp->FAS216.sfas_tc_low   = &fas[0x00];
-	rp->FAS216.sfas_tc_mid   = &fas[0x02];
-	rp->FAS216.sfas_fifo     = &fas[0x04];
-	rp->FAS216.sfas_command  = &fas[0x06];
-	rp->FAS216.sfas_dest_id  = &fas[0x08];
-	rp->FAS216.sfas_timeout  = &fas[0x0A];
-	rp->FAS216.sfas_syncper  = &fas[0x0C];
-	rp->FAS216.sfas_syncoff  = &fas[0x0E];
-	rp->FAS216.sfas_config1  = &fas[0x10];
-	rp->FAS216.sfas_clkconv  = &fas[0x12];
-	rp->FAS216.sfas_test     = &fas[0x14];
-	rp->FAS216.sfas_config2  = &fas[0x16];
-	rp->FAS216.sfas_config3  = &fas[0x18];
-	rp->FAS216.sfas_tc_high  = &fas[0x1C];
-	rp->FAS216.sfas_fifo_bot = &fas[0x1E];
-	rp->cclkaddr		 = &fas[0x21];
-	rp->epowaddr		 = &fas[0x31];
+	sc->sc_freq = 40;		/* Clocked at 40Mhz */
 
-	sc->sc_softc.sc_fas  = (sfas_regmap_p)rp;
-	sc->sc_softc.sc_spec = 0;
+	printf(": address %p", bsc->sc_reg);
 
-	sc->sc_softc.sc_led  = bzsc_led_dummy;
+	sc->sc_id = 7;
 
-	sc->sc_softc.sc_setup_dma	= bzsc_setup_dma;
-	sc->sc_softc.sc_build_dma_chain = bzsc_build_dma_chain;
-	sc->sc_softc.sc_need_bump	= bzsc_need_bump;
+	/*
+	 * It is necessary to try to load the 2nd config register here,
+	 * to find out what rev the FAS chip is, else the ncr53c9x_reset
+	 * will not set up the defaults correctly.
+	 */
+	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
+	sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_FE;
+	sc->sc_cfg3 = 0x08 /*FCLK*/ | NCRESPCFG3_FSCSI | NCRESPCFG3_CDB;
+	sc->sc_rev = NCR_VARIANT_FAS216;
 
-	sc->sc_softc.sc_clock_freq   = 40; /* BlizzardII 1230 runs at 40MHz? */
-	sc->sc_softc.sc_timeout      = 250; /* Set default timeout to 250ms */
-	sc->sc_softc.sc_config_flags = 0;
-	sc->sc_softc.sc_host_id      = 7;
+	/*
+	 * This is the value used to start sync negotiations
+	 * Note that the NCR register "SYNCTP" is programmed
+	 * in "clocks per byte", and has a minimum value of 4.
+	 * The SCSI period used in negotiation is one-fourth
+	 * of the time (in nanoseconds) needed to transfer one byte.
+	 * Since the chip's clock is given in MHz, we have the following
+	 * formula: 4 * period = (1000 / freq) * 4
+	 */
+	sc->sc_minsync = 1000 / sc->sc_freq;
 
-	sc->sc_softc.sc_bump_sz = NBPG;
-	sc->sc_softc.sc_bump_pa = 0x0;
+	/*
+	 * get flags from -I argument and set cf_flags.
+	 * NOTE: low 8 bits are to disable disconnect, and the next
+	 *       8 bits are to disable sync.
+	 */
+	sc->sc_dev.dv_cfdata->cf_flags |= (scsi_nosync >> shift_nosync)
+	    & 0xffff;
+	shift_nosync += 16;
 
-	sfasinitialize((struct sfas_softc *)sc);
+	/* Use next 16 bits of -I argument to set ncr53c9x_debug flags */
+	ncr53c9x_debug |= (scsi_nosync >> shift_nosync) & 0xffff;
+	shift_nosync += 16;
 
-	sc->sc_softc.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_softc.sc_link.adapter_softc = sc;
-	sc->sc_softc.sc_link.scsipi_scsi.adapter_target = sc->sc_softc.sc_host_id;
-	sc->sc_softc.sc_link.adapter = &bzsc_scsiswitch;
-	sc->sc_softc.sc_link.device = &bzsc_scsidev;
-	sc->sc_softc.sc_link.openings = 1;
-	sc->sc_softc.sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_softc.sc_link.type = BUS_SCSI;
-
-	printf("\n");
-
-	sc->sc_softc.sc_isr.isr_intr = bzsc_intr;
-	sc->sc_softc.sc_isr.isr_arg = &sc->sc_softc;
-	sc->sc_softc.sc_isr.isr_ipl = 2;
-	add_isr(&sc->sc_softc.sc_isr);
-
-	/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
-}
-
-int
-bzsc_intr(arg)
-	void *arg;
-{
-	struct sfas_softc *dev = arg;
-	bzsc_regmap_p	rp;
-	int		quickints;
-
-	rp = (bzsc_regmap_p)dev->sc_fas;
-
-	if (!(*rp->FAS216.sfas_status & SFAS_STAT_INTERRUPT_PENDING))
-		return(0);
-
-	quickints = 16;
-	do {
-		dev->sc_status = *rp->FAS216.sfas_status;
-		dev->sc_interrupt = *rp->FAS216.sfas_interrupt;
-		
-		if (dev->sc_interrupt & SFAS_INT_RESELECTED) {
-			dev->sc_resel[0] = *rp->FAS216.sfas_fifo;
-			dev->sc_resel[1] = *rp->FAS216.sfas_fifo;
-		}
-		sfasintr(dev);
-	} while((*rp->FAS216.sfas_status & SFAS_STAT_INTERRUPT_PENDING) &&
-		--quickints);
-
-	return(1);
-}
-
-/* --------- */
-void
-bzsc_set_dma_adr(sc, ptr, mode)
-	struct sfas_softc *sc;
-	vm_offset_t ptr;
-	int mode;
-{
-	bzsc_regmap_p	rp;
-	unsigned long	p;
-
-	rp = (bzsc_regmap_p)sc->sc_fas;
-
-	p = ((unsigned long)ptr)>>1;
-	
-	if (mode == SFAS_DMA_WRITE)
-		p |= BZSC_DMA_WRITE;
-	else
-		p |= BZSC_DMA_READ;
-
-	*rp->epowaddr = (u_char)(p>>24) & 0xFF;
-	*rp->cclkaddr = (u_char)(p>>16) & 0xFF;
-	*rp->cclkaddr = (u_char)(p>> 8) & 0xFF;
-	*rp->cclkaddr = (u_char)(p    ) & 0xFF;
-}
-
-/* Set DMA transfer counter */
-void
-bzsc_set_dma_tc(sc, len)
-	struct sfas_softc *sc;
-	unsigned int len;
-{
-	*sc->sc_fas->sfas_tc_low  = len; len >>= 8;
-	*sc->sc_fas->sfas_tc_mid  = len; len >>= 8;
-	*sc->sc_fas->sfas_tc_high = len;
-}
-
-/* Initialize DMA for transfer */
-int
-bzsc_setup_dma(sc, ptr, len, mode)
-	struct sfas_softc *sc;
-	vm_offset_t ptr;
-	int len;
-	int mode;
-{
-	int	retval;
-
-	retval = 0;
-
-	switch(mode) {
-	case SFAS_DMA_READ:
-	case SFAS_DMA_WRITE:
-		bzsc_set_dma_adr(sc, ptr, mode);
-		bzsc_set_dma_tc(sc, len);
-		break;
-	case SFAS_DMA_CLEAR:
-	default:
-		retval = (*sc->sc_fas->sfas_tc_high << 16) |
-			 (*sc->sc_fas->sfas_tc_mid  <<  8) |
-			  *sc->sc_fas->sfas_tc_low;
-      
-		bzsc_set_dma_tc(sc, 0);
-		break;
-	}
-
-	return(retval);
-}
-
-/* Check if address and len is ok for DMA transfer */
-int
-bzsc_need_bump(sc, ptr, len)
-	struct sfas_softc *sc;
-	vm_offset_t ptr;
-	int len;
-{
-	int	p;
-
-	p = (int)ptr & 0x03;
-
-	if (p) {
-		p = 4-p;
-
-		if (len < 256)
-			p = len;
-	}
-
-	return(p);
-}
-
-/* Interrupt driven routines */
-int
-bzsc_build_dma_chain(sc, chain, p, l)
-	struct sfas_softc *sc;
-	struct sfas_dma_chain *chain;
-	void *p;
-	int l;
-{
-	int	n;
-
-	if (!l)
-		return(0);
-
-#define set_link(n, p, l, f)\
-do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
-
-	n = 0;
-
-	if (l < 512)
-		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
-	else if (
-#if defined(M68040) || defined(M68060)
-		 ((mmutype == MMU_68040) && ((vm_offset_t)p >= 0xFFFC0000)) &&
+#if 1
+	if (((scsi_nosync >> shift_nosync) & 0xff00) == 0xff00)
+		sc->sc_minsync = 0;
 #endif
-		 ((vm_offset_t)p >= 0xFF000000)) {
-		int	len;
 
-		while(l) {
-			len = ((l > sc->sc_bump_sz) ? sc->sc_bump_sz : l);
+	/* Really no limit, but since we want to fit into the TCR... */
+	sc->sc_maxxfer = 64 * 1024;
 
-			set_link(n, (vm_offset_t)p, len, SFAS_CHAIN_BUMP);
+	/*
+	 * Configure interrupts.
+	 */
+	bsc->sc_isr.isr_intr = (int (*)(void *))ncr53c9x_intr;
+	bsc->sc_isr.isr_arg  = sc;
+	bsc->sc_isr.isr_ipl  = 2;
+	add_isr(&bsc->sc_isr);
 
-			p += len;
-			l -= len;
-		}
-	} else  {
-		char		*ptr;
-		vm_offset_t	 pa, lastpa;
-		int		 len,  prelen,  max_t;
+	/*
+	 * Now try to attach all the sub-devices
+	 */
+	ncr53c9x_attach(sc, &bzsc_switch, &bzsc_dev);
+}
 
-		ptr = p;
-		len = l;
+/*
+ * Glue functions.
+ */
 
-		pa = kvtop(ptr);
-		prelen = ((int)ptr & 0x03);
+u_char
+bzsc_read_reg(sc, reg)
+	struct ncr53c9x_softc *sc;
+	int reg;
+{
+	struct bzsc_softc *bsc = (struct bzsc_softc *)sc;
 
-		if (prelen) {
-			prelen = 4-prelen;
-			set_link(n, (vm_offset_t)ptr, prelen, SFAS_CHAIN_BUMP);
-			ptr += prelen;
-			len -= prelen;
-		}
+	return bsc->sc_reg[reg * 2];
+}
 
-		lastpa = 0;
-		while(len > 3) {
-			pa = kvtop(ptr);
-			max_t = NBPG - (pa & PGOFSET);
-			if (max_t > len)
-				max_t = len;
-	  
-			max_t &= ~3;
-	  
-			if (lastpa == pa)
-				sc->sc_chain[n-1].len += max_t;
-			else
-				set_link(n, pa, max_t, SFAS_CHAIN_DMA);
-	  
-			lastpa = pa+max_t;
-	  
-			ptr += max_t;
-			len -= max_t;
-		}
-      
-		if (len)
-			set_link(n, (vm_offset_t)ptr, len, SFAS_CHAIN_BUMP);
+void
+bzsc_write_reg(sc, reg, val)
+	struct ncr53c9x_softc *sc;
+	int reg;
+	u_char val;
+{
+	struct bzsc_softc *bsc = (struct bzsc_softc *)sc;
+	u_char v = val;
+
+	bsc->sc_reg[reg * 2] = v;
+#ifdef DEBUG
+if (bzsc_trace_enable/* && sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL*/ &&
+  reg == NCR_CMD/* && bsc->sc_active*/) {
+  bzsc_trace[(bzsc_trace_ptr - 1) & 127].yy = v;
+/*  printf(" cmd %x", v);*/
+}
+#endif
+}
+
+int
+bzsc_dma_isintr(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct bzsc_softc *bsc = (struct bzsc_softc *)sc;
+
+	if ((bsc->sc_reg[NCR_STAT * 2] & NCRSTAT_INT) == 0)
+		return 0;
+
+#ifdef DEBUG
+if (/*sc->sc_nexus && sc->sc_nexus->xs->flags & SCSI_POLL &&*/ bzsc_trace_enable) {
+  bzsc_trace[bzsc_trace_ptr].status = bsc->sc_reg[NCR_STAT * 2];
+  bzsc_trace[bzsc_trace_ptr].xx = bsc->sc_reg[NCR_CMD * 2];
+  bzsc_trace[bzsc_trace_ptr].yy = bsc->sc_active;
+  bzsc_trace_ptr = (bzsc_trace_ptr + 1) & 127;
+}
+#endif
+	return 1;
+}
+
+void
+bzsc_dma_reset(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct bzsc_softc *bsc = (struct bzsc_softc *)sc;
+
+	bsc->sc_active = 0;
+}
+
+int
+bzsc_dma_intr(sc)
+	struct ncr53c9x_softc *sc;
+{
+	register struct bzsc_softc *bsc = (struct bzsc_softc *)sc;
+	register int	cnt;
+
+	NCR_DMA(("bzsc_dma_intr: cnt %d int %x stat %x fifo %d ",
+	    bsc->sc_dmasize, sc->sc_espintr, sc->sc_espstat,
+	    bsc->sc_reg[NCR_FFLAG * 2] & NCRFIFO_FF));
+	if (bsc->sc_active == 0) {
+		printf("bzsc_intr--inactive DMA\n");
+		return -1;
 	}
 
-	return(n);
+	/* update sc_dmaaddr and sc_pdmalen */
+	cnt = bsc->sc_reg[NCR_TCL * 2];
+	cnt += bsc->sc_reg[NCR_TCM * 2] << 8;
+	cnt += bsc->sc_reg[NCR_TCH * 2] << 16;
+	if (!bsc->sc_datain) {
+		cnt += bsc->sc_reg[NCR_FFLAG * 2] & NCRFIFO_FF;
+		bsc->sc_reg[NCR_CMD * 2] = NCRCMD_FLUSH;
+	}
+	cnt = bsc->sc_dmasize - cnt;	/* number of bytes transferred */
+	NCR_DMA(("DMA xferred %d\n", cnt));
+	if (bsc->sc_xfr_align) {
+		bcopy(bsc->sc_alignbuf, *bsc->sc_dmaaddr, cnt);
+		bsc->sc_xfr_align = 0;
+	}
+	*bsc->sc_dmaaddr += cnt;
+	*bsc->sc_pdmalen -= cnt;
+	bsc->sc_active = 0;
+	return 0;
 }
 
-/* Turn on led */
-void bzsc_led_dummy(sc, mode)
-	struct sfas_softc *sc;
-	int mode;
+int
+bzsc_dma_setup(sc, addr, len, datain, dmasize)
+	struct ncr53c9x_softc *sc;
+	caddr_t *addr;
+	size_t *len;
+	int datain;
+	size_t *dmasize;
+{
+	struct bzsc_softc *bsc = (struct bzsc_softc *)sc;
+	vm_offset_t pa;
+	u_char *ptr;
+	size_t xfer;
+
+	bsc->sc_dmaaddr = addr;
+	bsc->sc_pdmalen = len;
+	bsc->sc_datain = datain;
+	bsc->sc_dmasize = *dmasize;
+	/*
+	 * DMA can be nasty for high-speed serial input, so limit the
+	 * size of this DMA operation if the serial port is running at
+	 * a high speed (higher than 19200 for now - should be adjusted
+	 * based on cpu type and speed?).
+	 * XXX - add serial speed check XXX
+	 */
+	if (ser_open_speed > 19200 && bzsc_max_dma != 0 &&
+	    bsc->sc_dmasize > bzsc_max_dma)
+		bsc->sc_dmasize = bzsc_max_dma;
+	ptr = *addr;			/* Kernel virtual address */
+	pa = kvtop(ptr);		/* Physical address of DMA */
+	xfer = min(bsc->sc_dmasize, NBPG - (pa & (NBPG - 1)));
+	bsc->sc_xfr_align = 0;
+	/*
+	 * If output and unaligned, stuff odd byte into FIFO
+	 */
+	if (datain == 0 && (int)ptr & 1) {
+		NCR_DMA(("bzsc_dma_setup: align byte written to fifo\n"));
+		pa++;
+		xfer--;			/* XXXX CHECK THIS !!!! XXXX */
+		bsc->sc_reg[NCR_FIFO * 2] = *ptr++;
+	}
+	/*
+	 * If unaligned address, read unaligned bytes into alignment buffer
+	 */
+	else if ((int)ptr & 1) {
+		pa = kvtop((caddr_t)&bsc->sc_alignbuf);
+		xfer = bsc->sc_dmasize = min(xfer, sizeof (bsc->sc_alignbuf));
+		NCR_DMA(("bzsc_dma_setup: align read by %d bytes\n", xfer));
+		bsc->sc_xfr_align = 1;
+	}
+++bzsc_cnt_dma;		/* number of DMA operations */
+
+	while (xfer < bsc->sc_dmasize) {
+		if ((pa + xfer) != kvtop(*addr + xfer))
+			break;
+		if ((bsc->sc_dmasize - xfer) < NBPG)
+			xfer = bsc->sc_dmasize;
+		else
+			xfer += NBPG;
+++bzsc_cnt_dma3;
+	}
+if (xfer != *len)
+  ++bzsc_cnt_dma2;
+
+	bsc->sc_dmasize = xfer;
+	*dmasize = bsc->sc_dmasize;
+	bsc->sc_pa = pa;
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		if (bsc->sc_xfr_align) {
+			dma_cachectl(bsc->sc_alignbuf,
+			    sizeof(bsc->sc_alignbuf));
+		}
+		else
+			dma_cachectl(*bsc->sc_dmaaddr, bsc->sc_dmasize);
+	}
+#endif
+
+	pa >>= 1;
+	if (!bsc->sc_datain)
+		pa |= 0x80000000;
+	bsc->sc_dmabase[0x10] = (u_int8_t)(pa >> 24);
+	bsc->sc_dmabase[0] = (u_int8_t)(pa >> 16);
+	bsc->sc_dmabase[0] = (u_int8_t)(pa >> 8);
+	bsc->sc_dmabase[0] = (u_int8_t)(pa);
+	bsc->sc_active = 1;
+	return 0;
+}
+
+void
+bzsc_dma_go(sc)
+	struct ncr53c9x_softc *sc;
 {
 }
+
+void
+bzsc_dma_stop(sc)
+	struct ncr53c9x_softc *sc;
+{
+}
+
+int
+bzsc_dma_isactive(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct bzsc_softc *bsc = (struct bzsc_softc *)sc;
+
+	return bsc->sc_active;
+}
+
+#ifdef DEBUG
+void
+bzsc_dump()
+{
+	int i;
+
+	i = bzsc_trace_ptr;
+	printf("bzsc_trace dump: ptr %x\n", bzsc_trace_ptr);
+	do {
+		if (bzsc_trace[i].hardbits == 0) {
+			i = (i + 1) & 127;
+			continue;
+		}
+		printf("%02x%02x%02x%02x(", bzsc_trace[i].hardbits,
+		    bzsc_trace[i].status, bzsc_trace[i].xx, bzsc_trace[i].yy);
+		if (bzsc_trace[i].status & NCRSTAT_INT)
+			printf("NCRINT/");
+		if (bzsc_trace[i].status & NCRSTAT_TC)
+			printf("NCRTC/");
+		switch(bzsc_trace[i].status & NCRSTAT_PHASE) {
+		case 0:
+			printf("dataout"); break;
+		case 1:
+			printf("datain"); break;
+		case 2:
+			printf("cmdout"); break;
+		case 3:
+			printf("status"); break;
+		case 6:
+			printf("msgout"); break;
+		case 7:
+			printf("msgin"); break;
+		default:
+			printf("phase%d?", bzsc_trace[i].status & NCRSTAT_PHASE);
+		}
+		printf(") ");
+		i = (i + 1) & 127;
+	} while (i != bzsc_trace_ptr);
+	printf("\n");
+}
+#endif

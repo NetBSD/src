@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37 1997/07/17 01:30:44 jtk Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.2.1 1997/10/14 08:26:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -192,6 +192,7 @@ void	fdintr __P((int));
 void	fdidxintr __P((void));
 void	fdstrategy __P((struct buf *));
 int	fdloaddisk __P((struct fd_softc *));
+void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *, int));
 int	fdgetdisklabel __P((struct fd_softc *, dev_t));
 int	fdsetdisklabel __P((struct fd_softc *, struct disklabel *));
 int	fdputdisklabel __P((struct fd_softc *, dev_t));
@@ -597,6 +598,9 @@ fdioctl(dev, cmd, addr, flag, p)
 			return(EBADF);
 		sc->wlabel = *(int *)addr;
 		return(0);
+	case DIOCGDEFLABEL:
+		fdgetdefaultlabel(sc, (struct disklabel *)addr, FDPART(dev));
+		return(0);
 	default:
 		return(ENOTTY);
 	}
@@ -741,6 +745,36 @@ fdloaddisk(sc)
 	return(0);
 }
 
+void
+fdgetdefaultlabel(sc, lp, part)
+	struct fd_softc *sc;
+	struct disklabel *lp;
+	int part;		/* XXX ick */
+{
+
+	bzero(lp, sizeof(struct disklabel));
+	lp->d_secsize = FDSECSIZE;
+	lp->d_ntracks = FDNHEADS;
+	lp->d_ncylinders = sc->type->ncylinders;
+	lp->d_nsectors = sc->nsectors;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	lp->d_type = DTYPE_FLOPPY;
+	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	lp->d_rpm = 300; 		/* good guess I suppose. */
+	lp->d_interleave = 1;		/* should change when adding msdos */
+	sc->stepdelay = lp->d_trkseek = FDSTEPDELAY;
+	lp->d_bbsize = 0;
+	lp->d_sbsize = 0;
+	lp->d_partitions[part].p_size = lp->d_secperunit;
+	lp->d_partitions[part].p_fstype = FS_UNUSED;
+	lp->d_partitions[part].p_fsize = 1024;
+	lp->d_partitions[part].p_frag = 8;
+	lp->d_partitions[part].p_cpg = 2;	/* adosfs: reserved blocks */
+	lp->d_npartitions = part + 1;
+	lp->d_magic = lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+}
+
 /*
  * read disk label, if present otherwise create one
  * return a new label if raw part and none found, otherwise err.
@@ -803,27 +837,7 @@ fdgetdisklabel(sc, dev)
 	brelse(bp);
 	return(0);
 nolabel:
-	bzero(lp, sizeof(struct disklabel));
-	lp->d_secsize = FDSECSIZE;
-	lp->d_ntracks = FDNHEADS;
-	lp->d_ncylinders = sc->type->ncylinders;
-	lp->d_nsectors = sc->nsectors;
-	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_type = DTYPE_FLOPPY;
-	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
-	lp->d_rpm = 300; 		/* good guess I suppose. */
-	lp->d_interleave = 1;		/* should change when adding msdos */
-	sc->stepdelay = lp->d_trkseek = FDSTEPDELAY;
-	lp->d_bbsize = 0;
-	lp->d_sbsize = 0;
-	lp->d_partitions[part].p_size = lp->d_secperunit;
-	lp->d_partitions[part].p_fstype = FS_UNUSED;
-	lp->d_partitions[part].p_fsize = 1024;
-	lp->d_partitions[part].p_frag = 8;
-	lp->d_partitions[part].p_cpg = 2;	/* adosfs: reserved blocks */
-	lp->d_npartitions = part + 1;
-	lp->d_magic = lp->d_magic2 = DISKMAGIC;
-	lp->d_checksum = dkcksum(lp);
+	fdgetdefaultlabel(sc, lp, part);
 	brelse(bp);
 	return(0);
 }
