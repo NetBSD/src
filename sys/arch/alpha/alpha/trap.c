@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.36 1998/09/24 23:28:18 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.37 1998/10/07 19:09:53 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 1998/09/24 23:28:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 1998/10/07 19:09:53 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,7 +551,7 @@ syscall(code, framep)
 #endif
 
 #if notdef				/* can't happen, ever. */
-	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0) {
+	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
 		panic("syscall");
 #endif
 #if defined(UVM)
