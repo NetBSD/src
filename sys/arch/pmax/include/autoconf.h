@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9.2.3 1999/03/15 02:00:45 nisimura Exp $ */
+/*	$NetBSD: autoconf.h,v 1.9.2.4 1999/03/15 03:58:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,4 +39,5 @@ struct confargs {
 typedef void	*intr_arg_t;		/* pointer to some softc */
 typedef int	(*intr_handler_t) __P((intr_arg_t));
 
+int	badaddr	__P((void *, u_int));
 void	makebootdev __P((char *));
