@@ -1,4 +1,4 @@
-/*	$NetBSD: strtok_r.c,v 1.3 1998/02/03 18:49:25 perry Exp $	*/
+/*	$NetBSD: strtok_r.c,v 1.4 1998/09/27 17:57:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,11 +38,16 @@
 #if 0
 static char *sccsid = "@(#)strtok.c	5.8 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strtok_r.c,v 1.3 1998/02/03 18:49:25 perry Exp $");
+__RCSID("$NetBSD: strtok_r.c,v 1.4 1998/09/27 17:57:49 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(strtok_r,_strtok_r);
+#endif
 
 char *
 strtok_r(s, delim, lasts)

@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.8 1998/09/10 16:02:59 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.9 1998/09/27 17:57:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -287,6 +287,7 @@
 #define strncasecmp		_strncasecmp
 #define strptime		_strptime
 #define strsignal		_strsignal
+#define strtok_r		_strtok_r
 #define strunvis		_strunvis
 #define strvis			_strvis
 #define strvisx			_strvisx
