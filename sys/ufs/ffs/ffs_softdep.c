@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.32 2002/06/18 20:24:31 jdolecek Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.33 2002/07/05 13:49:26 scw Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.32 2002/06/18 20:24:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.33 2002/07/05 13:49:26 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -848,7 +848,8 @@ softdep_flushfiles(oldmnt, flags, p)
 LIST_HEAD(pagedep_hashhead, pagedep) *pagedep_hashtbl;
 u_long	pagedep_hash;		/* size of hash table - 1 */
 #define	PAGEDEP_HASH(mp, inum, lbn) \
-	(((((register_t)(mp)) >> 13) + (inum) + (lbn)) & pagedep_hash)
+	(((((register_t)(uintptr_t)(mp)) >> 13) + \
+	    (inum) + (lbn)) & pagedep_hash)
 static struct sema pagedep_in_progress;
 
 /*
@@ -922,7 +923,7 @@ LIST_HEAD(inodedep_hashhead, inodedep) *inodedep_hashtbl;
 static u_long	inodedep_hash;	/* size of hash table - 1 */
 static long	num_inodedep;	/* number of inodedep allocated */
 #define	INODEDEP_HASH(fs, inum) \
-	(((((register_t)(fs)) >> 13) + (inum)) & inodedep_hash)
+	(((((register_t)(uintptr_t)(fs)) >> 13) + (inum)) & inodedep_hash)
 static struct sema inodedep_in_progress;
 
 /*
@@ -1001,7 +1002,8 @@ top:
 LIST_HEAD(newblk_hashhead, newblk) *newblk_hashtbl;
 u_long	newblk_hash;		/* size of hash table - 1 */
 #define	NEWBLK_HASH(fs, inum) \
-	(&newblk_hashtbl[((((register_t)(fs)) >> 13) + (inum)) & newblk_hash])
+	(&newblk_hashtbl[((((register_t)(uintptr_t)(fs)) >> 13) + \
+	    (inum)) & newblk_hash])
 static struct sema newblk_in_progress;
 
 /*
