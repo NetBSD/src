@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.49 2003/08/07 16:32:02 agc Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.50 2003/08/25 09:12:44 cb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.49 2003/08/07 16:32:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.50 2003/08/25 09:12:44 cb Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.49 2003/08/07 16:32:02 agc Exp $");
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
@@ -135,6 +139,10 @@ namei(ndp)
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
 		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
+#endif
+#ifdef SYSTRACE
+	if (ISSET(cnp->cn_proc->p_flag, P_SYSTRACE))
+		systrace_namei(ndp);
 #endif
 
 	/*

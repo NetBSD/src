@@ -1,4 +1,4 @@
-/*	$NetBSD: openbsd-syscalls.c,v 1.8 2003/06/03 04:33:44 provos Exp $	*/
+/*	$NetBSD: openbsd-syscalls.c,v 1.9 2003/08/25 09:12:45 cb Exp $	*/
 /*	$OpenBSD: openbsd-syscalls.c,v 1.12 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -133,7 +133,7 @@ static int obsd_answer(int, pid_t, u_int32_t, short, int, short,
 static int obsd_newpolicy(int);
 static int obsd_assignpolicy(int, pid_t, int);
 static int obsd_modifypolicy(int, int, int, short);
-static int obsd_replace(int, pid_t, struct intercept_replace *);
+static int obsd_replace(int, pid_t, u_int16_t, struct intercept_replace *);
 static int obsd_io(int, pid_t, int, void *, u_char *, size_t);
 static int obsd_setcwd(int, pid_t);
 static int obsd_restcwd(int);
@@ -429,7 +429,8 @@ obsd_modifypolicy(int fd, int num, int code, short policy)
 }
 
 static int
-obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
+obsd_replace(int fd, pid_t pid, u_int16_t seqnr,
+    struct intercept_replace *repl)
 {
 	struct systrace_replace replace;
 	size_t len, off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept-translate.c,v 1.5 2002/08/28 03:52:45 itojun Exp $	*/
+/*	$NetBSD: intercept-translate.c,v 1.6 2003/08/25 09:12:45 cb Exp $	*/
 /*	$OpenBSD: intercept-translate.c,v 1.9 2002/08/01 20:16:45 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept-translate.c,v 1.5 2002/08/28 03:52:45 itojun Exp $");
+__RCSID("$NetBSD: intercept-translate.c,v 1.6 2003/08/25 09:12:45 cb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,6 +147,7 @@ ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
 
 	trans->trans_size = len;
 	memcpy(trans->trans_data, name, len);
+	trans->trans_flags = ICTRANS_NOLINKS;
 
 	return (0);
 }
@@ -217,6 +218,7 @@ ic_get_unlinkname(struct intercept_translate *trans, int fd, pid_t pid,
 
 	trans->trans_size = len;
 	memcpy(trans->trans_data, name, len);
+	trans->trans_flags = ICTRANS_NOLINKS;
 
 	return (0);
 }
