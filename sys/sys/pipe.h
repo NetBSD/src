@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.12 2002/08/16 10:32:12 jdolecek Exp $ */
+/* $NetBSD: pipe.h,v 1.13 2003/02/12 21:54:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -27,15 +27,7 @@
 #define _SYS_PIPE_H_
 
 #ifndef _KERNEL
-#ifdef __FreeBSD__
-#include <sys/time.h>			/* for struct timeval */
-#include <sys/selinfo.h>		/* for struct selinfo */
-#include <vm/vm.h>			/* for vm_page_t */
-#include <machine/param.h>		/* for PAGE_SIZE */
-#endif
-#ifdef __NetBSD__
 #include <sys/select.h>			/* for struct selinfo */
-#endif
 #endif
 
 /*
@@ -78,24 +70,11 @@ struct pipebuf {
 	u_int	out;		/* out pointer */
 	size_t	size;		/* size of buffer */
 	caddr_t	buffer;		/* kva of buffer */
-#ifdef __FreeBSD__
-	struct	vm_object *object;	/* VM object containing buffer */
-#endif
 };
 
 /*
  * Information to support direct transfers between processes for pipes.
  */
-#if defined(__FreeBSD__)
-#define PIPENPAGES	(BIG_PIPE_SIZE / PAGE_SIZE + 1)
-struct pipemapping {
-	vm_offset_t	kva;		/* kernel virtual address */
-	vm_size_t	cnt;		/* number of chars in buffer */
-	vm_size_t	pos;		/* current position of transfer */
-	int		npages;		/* number of pages */
-	vm_page_t	ms[PIPENPAGES];	/* pages in source process */
-};
-#elif defined(__NetBSD__)
 struct pipemapping {
 	vaddr_t		kva;		/* kernel virtual address */
 	vsize_t		cnt;		/* number of chars in buffer */
@@ -103,56 +82,38 @@ struct pipemapping {
 	int		npages;		/* how many pages allocated */
 	struct vm_page	**pgs;		/* pointers to the pages */
 };
-#endif
 
 /*
  * Bits in pipe_state.
  */
-#define PIPE_ASYNC	0x004	/* Async? I/O. */
-#define PIPE_WANTR	0x008	/* Reader wants some characters. */
-#define PIPE_WANTW	0x010	/* Writer wants space to put characters. */
-#define PIPE_WANTCLOSE	0x020	/* Pipe is wanted to be run-down. */
-#define PIPE_SEL	0x040	/* Pipe has a select active. */
-#define PIPE_EOF	0x080	/* Pipe is in EOF condition. */
-#define PIPE_LOCKFL	0x100	/* Process has exclusive access to pointers/data. */
-#define PIPE_LWANT	0x200	/* Process wants exclusive access to pointers/data. */
-#define PIPE_DIRECTW	0x400	/* Pipe direct write active. */
-#define PIPE_SIGNALR	0x800	/* Do selwakeup() on read(2) */
+#define PIPE_ASYNC	0x001	/* Async I/O */
+#define PIPE_WANTR	0x002	/* Reader wants some characters */
+#define PIPE_WANTW	0x004	/* Writer wants space to put characters */
+#define PIPE_WANTCLOSE	0x008	/* Pipe is wanted to be run-down */
+#define PIPE_EOF	0x010	/* Pipe is in EOF condition */
+#define PIPE_SIGNALR	0x020	/* Do selwakeup() on read(2) */
+#define PIPE_DIRECTW	0x040	/* Pipe in direct write mode setup */
+#define PIPE_DIRECTR	0x080	/* Pipe direct read request (setup complete) */
 
 /*
  * Per-pipe data structure.
  * Two of these are linked together to produce bi-directional pipes.
  */
 struct pipe {
+	struct	simplelock pipe_slock;	/* pipe mutex */
+	struct	lock pipe_lock;		/* long-term pipe lock */
 	struct	pipebuf pipe_buffer;	/* data storage */
 	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
 	struct	selinfo pipe_sel;	/* for compat with select */
-#ifdef __FreeBSD__
-	struct	timespec pipe_atime;	/* time of last access */
-	struct	timespec pipe_mtime;	/* time of last modify */
-	struct	timespec pipe_ctime;	/* time of status change */
-	struct	sigio *pipe_sigio;	/* information for async I/O */
-	struct	mtx *pipe_mtxp;		/* shared mutex between both pipes */
-#elif defined(__NetBSD__)
 	struct	timeval pipe_atime;	/* time of last access */
 	struct	timeval pipe_mtime;	/* time of last modify */
 	struct	timeval pipe_ctime;	/* time of status change */
 	pid_t	pipe_pgid;		/* process group for sigio */
-	struct	lock pipe_lock;		/* pipe lock */
-#endif
 	struct	pipe *pipe_peer;	/* link with other direction */
 	u_int	pipe_state;		/* pipe status info */
 	int	pipe_busy;		/* busy flag, mostly to handle rundown sanely */
 };
 
-#ifdef __FreeBSD__
-#define PIPE_MTX(pipe)		(pipe)->pipe_mtxp
-#define PIPE_LOCK(pipe)		mtx_lock(PIPE_MTX(pipe))
-#define PIPE_UNLOCK(pipe)	mtx_unlock(PIPE_MTX(pipe))
-#define PIPE_LOCK_ASSERT(pipe, type)  mtx_assert(PIPE_MTX(pipe), (type))
-#endif /* FreeBSD */
-
-#ifdef __NetBSD__
 /*
  * KERN_PIPE subtypes
  */
@@ -176,14 +137,8 @@ struct pipe {
 void pipe_init __P((void));
 int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
 
-/* XXXSMP use spinlock ? clear for now */
-#define PIPE_MTX(pipe)		NULL
-#define PIPE_LOCK(pipe)	
-#define PIPE_UNLOCK(pipe)
-#define PIPE_LOCK_ASSERT(pipe, type)
+#define PIPE_LOCK(pipe)		simple_lock(&(pipe)->pipe_slock);
+#define PIPE_UNLOCK(pipe)	simple_unlock(&(pipe)->pipe_slock);
 
 #endif /* _KERNEL */
-
-#endif /* NetBSD */
-
 #endif /* !_SYS_PIPE_H_ */
