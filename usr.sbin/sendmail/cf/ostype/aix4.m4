@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1983 Eric P. Allman
+# Copyright (c) 1996 Eric P. Allman
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -34,33 +34,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)bestmx_is_local.m4	8.4 (Berkeley) 10/23/96')
-divert(-1)
-
-LOCAL_CONFIG
-# turn on bestMX lookup table
-Kbestmx bestmx
-
-# limit bestmx to these domains
-CB`'_ARG_
-
-LOCAL_NET_CONFIG
-
-# If we are the best MX for a site, then we want to accept
-# its mail as local.  We assume we've already weeded out mail to
-# UUCP sites which are connected to us, which should also have
-# listed us as their best MX.
-#
-# Warning: this may generate a lot of extra DNS traffic -- a
-# lower cost method is to list all the expected best MX hosts
-# in $=w.  This should be fine (and easier to administer) for
-# low to medium traffic hosts.  If you use the limited bestmx
-# by passing in a set of possible domains it will improve things.
-
-ifelse(_ARG_, `', `', `#')dnl		unlimited bestmx
-R$* < @ $* > $*			$: $1 < @ $2 @@ $(bestmx $2 $) > $3
-ifelse(_ARG_, `', `#', `')dnl		limit bestmx to $=B
-R$* < @ $* $=B > $*		$: $1 < @ $2 $3 @@ $(bestmx $2 $3 $) > $4
-R$* $=O $* < @ $* @@ $=w . > $*	$@ $>97 $1 $2 $3
-R$* < @ $* @@ $=w . > $*	$#local $: $1
-R$* < @ $* @@ $* > $*		$: $1 < @ $2 > $4
+VERSIONID(`@(#)aix4.m4	8.1 (Berkeley) 11/13/96')
+ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', /bin/bellmail)')dnl
+ifdef(`LOCAL_MAILER_ARGS',, `define(`LOCAL_MAILER_ARGS', mail -F $g $u)')dnl
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', `mn9')')dnl
+define(`confTIME_ZONE', `USE_TZ')dnl
