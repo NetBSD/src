@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.1 2002/04/23 05:51:14 manu Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.1.2.1 2002/05/16 04:35:49 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,12 +46,6 @@
 
 #ifdef _KERNEL
 void	irix_usemaattach __P((struct device *, struct device *, void *));
-int	irix_usemaopen	__P((dev_t, int, int, struct proc *));
-int	irix_usemaread	__P((dev_t, struct uio *, int));
-int	irix_usemawrite	__P((dev_t, struct uio *, int)); 
-int	irix_usemapoll	__P((dev_t, int, struct proc *));
-int	irix_usemaioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
-int	irix_usemaclose	__P((dev_t, int, int, struct proc *)); 
 #endif
 
 #define IRIX_USEMADEV_MINOR	1
