@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.100 1998/12/30 13:49:49 hwr Exp $
+$NetBSD: pcidevs,v 1.101 1999/01/16 11:27:40 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -909,6 +909,7 @@ product SYMBIOS 815	0x0004	53c815
 product SYMBIOS 810AP	0x0005	53c810AP
 product SYMBIOS 860	0x0006	53c860
 product SYMBIOS 875	0x000f	53c875
+product SYMBIOS 875J	0x008f	53c875J
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
