@@ -1,4 +1,4 @@
-/* $NetBSD: securepath.c,v 1.1 2000/01/12 05:02:10 mjl Exp $ */
+/* $NetBSD: securepath.c,v 1.2 2000/01/13 06:48:14 mjl Exp $ */
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -51,7 +51,7 @@ secure_path(char *path)
 	 * other than root, quit.
 	 */
 	if (lstat(path, &sb) < 0) {
-		syslog(LOG_ERR, "cannot stat %s: %m", path);
+		/* syslog(LOG_ERR, "cannot stat %s: %m", path); */
 		return (-1);
 	} else if (!S_ISREG(sb.st_mode)) {
 		syslog(LOG_ERR, "%s: not a regular file", path);
