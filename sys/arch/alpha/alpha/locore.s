@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.49 1998/09/09 00:07:48 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.50 1998/09/13 01:51:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.49 1998/09/09 00:07:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.50 1998/09/13 01:51:29 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -215,7 +215,7 @@ NESTED(sigcode,0,0,ra,0,0)
 	jsr	ra, (t12)		/* call the signal handler (t12==pv) */
 	ldq	a0, 0(sp)		/* get the sigcontext pointer */
 	lda	sp, 16(sp)
-	CALLSYS_NOERROR(sigreturn)	/* and call sigreturn() with it. */
+	CALLSYS_NOERROR(__sigreturn14)	/* and call sigreturn() with it. */
 	mov	v0, a0			/* if that failed, get error code */
 	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
 XNESTED(esigcode,0)

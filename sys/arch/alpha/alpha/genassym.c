@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.17 1997/12/31 19:32:55 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.18 1998/09/13 01:51:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.17 1997/12/31 19:32:55 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.18 1998/09/13 01:51:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -208,7 +208,7 @@ struct nv assyms[] = {
 	def1(EFAULT),
 
 	/* Syscalls called from sigreturn. */
-	def1(SYS_sigreturn),
+	def1(SYS___sigreturn14),
 	def1(SYS_exit),
 };
 int nassyms = sizeof(assyms)/sizeof(assyms[0]);
