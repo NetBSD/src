@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.252 2000/08/07 08:27:11 billc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.253 2000/08/21 09:13:02 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *  NetBSD: pcidevs,v 1.247 2000/08/07 04:08:35 billc Exp
+ *	NetBSD: pcidevs,v 1.249 2000/08/21 08:58:51 haya Exp 
  */
 
 /*
@@ -3796,6 +3796,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TSB12LV22 OHCI IEEE 1394 Host Controller",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450LYNX,
+	    0,
+	    "Texas Instruments",
+	    "PCI4450 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410LYNX,
+	    0,
+	    "Texas Instruments",
+	    "PCI4410 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
 	    0,
 	    "Texas Instruments",
@@ -3806,6 +3818,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "TSB12LV26 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
+	    0,
+	    "Texas Instruments",
+	    "PCI4451 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
@@ -3844,6 +3862,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1221 PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1210,
+	    0,
+	    "Texas Instruments",
+	    "PCI1210 PCI-CardBus Bridge",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450,
 	    0,
 	    "Texas Instruments",
@@ -3880,6 +3904,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI2030 PCI-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI4450 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI4410 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI4451 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410,
+	    0,
+	    "Texas Instruments",
+	    "PCI1410 PCI-CardBus Bridge",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420,
 	    0,
 	    "Texas Instruments",
@@ -3906,44 +3954,50 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_HOST,
 	    0,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    "Host Bridge/Controller",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ISA,
 	    0,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    "ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
 	    0,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    "ToPIC95 CardBus-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B,
 	    0,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    "ToPIC95B CardBus-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97,
 	    0,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    "ToPIC97 CardBus-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100,
 	    0,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    "ToPIC100 CardBus-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_FIRO,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_OBOE,
 	    0,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    "Fast Infrared Type O",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_DONAUOBOE,
+	    0,
+	    "Toshiba",
+	    "Fast Infrared Type DO",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
@@ -7002,7 +7056,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Toshiba America Info Systems",
+	    "Toshiba",
 	    NULL,
 	},
 	{
