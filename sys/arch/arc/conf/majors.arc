@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.11 2003/10/22 16:53:22 jdolecek Exp $
+#	$NetBSD: majors.arc,v 1.12 2003/10/24 08:09:53 jdolecek Exp $
 #
 # Device majors for arc
 #
@@ -37,7 +37,7 @@ device-major	ipl		char 31			ipfilter
 device-major	uk		char 32			uk
 device-major	rnd		char 33			rnd
 device-major	ss		char 34			ss
-
+device-major	ses		char 35			ses
 device-major	ch		char 36			ch
 device-major	isdn		char 37			isdn
 device-major	isdnctl		char 38			isdnctl
