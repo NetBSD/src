@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.413 2004/03/08 06:30:33 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.414 2004/04/13 12:25:03 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -677,6 +677,29 @@ X11MANDIR?=		${X11ROOTDIR}/man
 X11USRLIBDIR?=		${X11ROOTDIR}/lib
 X11DRI?=		no
 
+
+#
+# MAKEDIRTARGET dir target [extra make(1) params]
+#	run "cd $${dir} && ${MAKE} [params] $${target}", with a pretty message
+#
+MAKEDIRTARGET=\
+	@_makedirtarget() { \
+		dir="$$1"; shift; \
+		target="$$1"; shift; \
+		case "$${dir}" in \
+		/*)	this="$${dir}/"; \
+			real="$${dir}" ;; \
+		.)	this="${_THISDIR_}"; \
+			real="${.CURDIR}" ;; \
+		*)	this="${_THISDIR_}$${dir}/"; \
+			real="${.CURDIR}/$${dir}" ;; \
+		esac; \
+		show=$${this:-.}; \
+		echo "$${target} ===> $${show%/}$${1:+	(with: $$@)}"; \
+		cd "$${real}" \
+		&& ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
+	}; \
+	_makedirtarget
 
 #
 # MAKEVERBOSE support.  Levels are:
