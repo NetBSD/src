@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.9 1999/08/16 02:01:11 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.10 1999/08/17 02:09:47 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -620,9 +620,7 @@ adw_build_req(xs, ccb)
 	 * Set the ADW_SCSI_REQ_Q 'ccb_ptr' to point to the
 	 * physical CCB structure.
 	 */
-	scsiqp->ccb_ptr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
-		    ADW_CCB_OFF(ccb);
-
+	scsiqp->ccb_ptr = ccb->hashkey;
 
 	/*
 	 * Build the ADW_SCSI_REQ_Q request.
@@ -637,8 +635,8 @@ adw_build_req(xs, ccb)
 	scsiqp->target_lun = sc_link->scsipi_scsi.lun;
 
 	scsiqp->vsense_addr = &ccb->scsi_sense;
-	scsiqp->sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
-		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense);
+	scsiqp->sense_addr = ccb->hashkey +
+	    offsetof(struct adw_ccb, scsi_sense);
 	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
 
 	/*
@@ -713,8 +711,6 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 	ADW_SCSI_REQ_Q *scsiqp;
 	ADW_SG_BLOCK   *sg_block;
 {
-	struct scsipi_xfer *xs = ccb->xs;
-	ADW_SOFTC      *sc = xs->sc_link->adapter_softc;
 	u_long          sg_block_next_addr;	/* block and its next */
 	u_int32_t       sg_block_physical_addr;
 	int             sg_block_index, i;	/* how many SG entries */
@@ -723,8 +719,8 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 
 
 	sg_block_next_addr = (u_long) sg_block;	/* allow math operation */
-	sg_block_physical_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
-		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, sg_block[0]);
+	sg_block_physical_addr = ccb->hashkey +
+	    offsetof(struct adw_ccb, sg_block[0]);
 	scsiqp->sg_real_addr = sg_block_physical_addr;
 
 	/*
@@ -755,8 +751,7 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 		sg_block->sg_ptr = sg_block_physical_addr;
 		sg_block->last_entry_no = sg_block_index - 1;
 		sg_block = (ADW_SG_BLOCK *) sg_block_next_addr;	/* virt. addr */
-	}
-	while (1);
+	} while (1);
 }
 
 
