@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.12 2003/12/04 07:02:18 briggs Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.13 2003/12/17 22:03:24 abs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.12 2003/12/04 07:02:18 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.13 2003/12/17 22:03:24 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Check the configuration of the ATU to see if another BIOS
-	 * has configured us.  If a PC BIOS didn't configured us, then:
+	 * has configured us.  If a PC BIOS didn't configure us, then:
 	 * 	IQ80321: BAR0 00000000.0000000c BAR1 is 00000000.8000000c.
 	 * 	IQ31244: BAR0 00000000.00000004 BAR1 is 00000000.0000000c.
 	 * If a BIOS has configured us, at least one of those should be
