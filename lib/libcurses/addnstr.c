@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.9 2000/04/17 12:25:45 blymn Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.9.4.1 2000/09/05 17:11:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.9 2000/04/17 12:25:45 blymn Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.9.4.1 2000/09/05 17:11:06 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -139,7 +139,15 @@ waddnstr(WINDOW *win, const char *s, int n)
 	size_t  len;
 	const char *p;
 
-	if (n > 0)
+	/*
+	 * behavior changed from traditional BSD curses, for better XCURSES
+	 * conformance.
+	 * 
+	 * BSD curses: if (n > 0) then "at most n", else "len = strlen(s)"
+	 * ncurses: if (n >= 0) then "at most n", else "len = strlen(s)"
+	 * XCURSES: if (n != -1) then "at most n", else "len = strlen(s)"
+	 */
+	if (n >= 0)
 		for (p = s, len = 0; n-- && *p++; ++len);
 	else
 		len = strlen(s);
