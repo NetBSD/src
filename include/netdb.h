@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.46 2004/11/07 01:48:01 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.47 2004/11/16 06:00:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -286,9 +286,6 @@ struct addrinfo {
 #define	NI_NAMEREQD	0x00000004
 #define	NI_NUMERICSERV	0x00000008
 #define	NI_DGRAM	0x00000010
-#if defined(_NETBSD_SOURCE)
-#define	NI_WITHSCOPEID	0x00000020
-#endif
 #define	NI_NUMERICSCOPE	0x00000040
 
 /*
