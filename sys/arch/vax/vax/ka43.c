@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.16 1999/04/14 23:14:46 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.17 1999/05/01 16:13:44 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -72,7 +72,6 @@ static  void ka43_clrf __P((void));
 
 struct	cpu_dep ka43_calls = {
 	ka43_steal_pages,
-	no_nicr_clock,
 	ka43_mchk,
 	ka43_memerr,
 	ka43_conf,
