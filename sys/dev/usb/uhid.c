@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.28 1999/11/18 23:32:29 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.29 1999/12/18 22:47:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -473,7 +473,7 @@ uhid_do_read(sc, uio, flag)
 
 		/* Remove a small chunk from the input queue. */
 		(void) q_to_b(&sc->sc_q, buffer, length);
-		DPRINTFN(5, ("uhidread: got %d chars\n", length));
+		DPRINTFN(5, ("uhidread: got %lu chars\n", (u_long)length));
 
 		/* Copy the data to the user process. */
 		if ((error = uiomove(buffer, length, uio)) != 0)
