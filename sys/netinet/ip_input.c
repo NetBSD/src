@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.182 2003/11/12 15:00:05 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.183 2003/11/17 22:34:16 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.182 2003/11/12 15:00:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.183 2003/11/17 22:34:16 jonathan Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -226,6 +226,7 @@ int	in_multientries;			/* total number of addrs */
 struct	in_multihashhead *in_multihashtbl;
 struct	ifqueue ipintrq;
 struct	ipstat	ipstat;
+uint16_t ip_id;
 
 #ifdef PFIL_HOOKS
 struct pfil_head inet_pfil_hook;
@@ -359,6 +360,7 @@ ip_init()
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
+	ip_id = time.tv_sec & 0xfffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddrhead);
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
