@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.147 2001/03/09 01:02:11 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.148 2001/04/09 14:14:10 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2701,7 +2701,7 @@ vfs_buf_print(bp, full, pr)
 
 const char vnode_flagbits[] =
 	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\11XLOCK\12XWANT\13BWAIT\14ALIASED"
-	"\15DIROP\17DIRTY";
+	"\15DIROP\16LAYER\17ONWORKLIST\20DIRTY";
 
 const char *vnode_types[] = {
 	"VNON",
