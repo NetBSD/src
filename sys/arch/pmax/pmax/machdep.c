@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.2.18 1999/11/12 11:07:21 nisimura Exp $ */
+/* $NetBSD: machdep.c,v 1.120.2.19 1999/12/09 19:29:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.18 1999/11/12 11:07:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.19 1999/12/09 19:29:34 drochner Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -152,6 +152,7 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
+	0, /* memsize */
 	nullwork,
 };
 
@@ -498,7 +499,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -543,7 +544,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
