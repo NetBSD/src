@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2001/04/23 11:22:19 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2001/07/02 17:19:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #undef LOAD_ALL_MEMORY
+
+#include "opt_md.h"
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
 #include "fs_mfs.h"
@@ -64,6 +66,7 @@
 #endif
 
 #include <dev/cons.h> /* consdev */
+#include <dev/md.h>
 
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
@@ -103,9 +106,6 @@
 #ifdef NFS
 extern int nfs_mountroot(void);
 extern int (*mountroot)(void);
-#endif
-#ifdef MEMORY_DISK_DYNAMIC
-void md_root_setconf(caddr_t, size_t);
 #endif
 
 extern char edata[], end[];
@@ -237,7 +237,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	if (boothowto & RB_MINIROOT) {
 		size_t fssz;
 		fssz = round_page(mfs_initminiroot((void *)kernend));
-#ifdef MEMORY_DISK_DYNAMIC
+#if MEMORY_DISK_DYNAMIC
 		md_root_setconf((caddr_t)kernend, fssz);
 #endif
 		kernend += fssz;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.13 2001/06/28 17:03:47 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.14 2001/07/02 17:19:09 uch Exp $
 #
 maxpartitions 8
 
@@ -39,7 +39,7 @@ include "dev/ata/files.ata"
 major	{wd = 1}
 
 # Memory Disk for install floppy
-file arch/hpcsh/hpcsh/md_root.c			memory_disk_hooks
+file dev/md_root.c				memory_disk_hooks
 major	{md = 6}
 
 #
