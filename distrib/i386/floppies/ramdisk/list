@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 1999/03/17 23:32:33 he Exp $
+#	$NetBSD: list,v 1.15 1999/03/30 08:03:42 dbj Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -70,6 +70,16 @@ SYMLINK	/bin/cat		usr/sbin/mbrlabel
 SYMLINK	/bin/cat		usr/sbin/update
 SPECIAL	/bin/rm ramdiskbin
 
+# various files that we need in /etc for the install
+COPY	${CURDIR}/../../../../etc/group		etc/group
+COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
+COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
+COPY	${CURDIR}/../../../../etc/services	etc/services
+
+SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
+SPECIAL /bin/rm etc/spwd.db
+SPECIAL /bin/rm etc/pwd.db
+
 # copy the MAKEDEV script and make some devices
 COPY	${CURDIR}/../../../../etc/etc.i386/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
@@ -78,15 +88,6 @@ SPECIAL	/bin/rm dev/MAKEDEV
 # we need the boot block in /usr/mdec + the MBR copy
 COPY	${DESTDIR}/usr/mdec/biosboot.sym	usr/mdec/biosboot.sym
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
-
-# various files that we need in /etc for the install
-COPY	${CURDIR}/../../../../etc/group		etc/group
-COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
-COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
-COPY	${CURDIR}/../../../../etc/services	etc/services
-SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
-SPECIAL /bin/rm etc/spwd.db
-SPECIAL /bin/rm etc/pwd.db
 
 # and the common installation tools
 # COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
