@@ -1,4 +1,4 @@
-/*	$NetBSD: scanc.S,v 1.7 1998/08/15 03:56:57 mycroft Exp $	*/
+/*	$NetBSD: scanc.S,v 1.8 1999/09/10 15:39:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(scanc)
 	movl	4(%esp),%ecx

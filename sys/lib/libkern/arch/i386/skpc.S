@@ -1,4 +1,4 @@
-/*	$NetBSD: skpc.S,v 1.4 1998/08/15 03:56:57 mycroft Exp $	*/
+/*	$NetBSD: skpc.S,v 1.5 1999/09/10 15:39:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(skpc)
 	pushl	%edi
