@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.13.2.3 2004/09/21 13:18:19 skrll Exp $	*/
+/*	$NetBSD: aed.c,v 1.13.2.4 2004/11/18 21:20:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.13.2.3 2004/09/21 13:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.13.2.4 2004/11/18 21:20:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -421,10 +421,10 @@ aed_enqevent(event)
 }
 
 int 
-aedopen(dev, flag, mode, p)
+aedopen(dev, flag, mode, l)
     dev_t dev;
     int flag, mode;
-    struct proc *p;
+    struct lwp *l;
 {
 	int unit;
 	int error = 0;
@@ -443,7 +443,7 @@ aedopen(dev, flag, mode, p)
 	aed_sc->sc_evq_tail = 0;
 	aed_sc->sc_evq_len = 0;
 	aed_sc->sc_open = 1;
-	aed_sc->sc_ioproc = p;
+	aed_sc->sc_ioproc = l->l_proc;
 	splx(s);
 
 	return (error);
@@ -451,10 +451,10 @@ aedopen(dev, flag, mode, p)
 
 
 int 
-aedclose(dev, flag, mode, p)
+aedclose(dev, flag, mode, l)
     dev_t dev;
     int flag, mode;
-    struct proc *p;
+    struct lwp *l;
 {
 	int s = spladb();
 
@@ -515,12 +515,12 @@ aedread(dev, uio, flag)
 }
 
 int 
-aedioctl(dev, cmd, data, flag, p)
+aedioctl(dev, cmd, data, flag, l)
     dev_t dev;
     u_long cmd;
     caddr_t data;
     int flag;
-    struct proc *p;
+    struct lwp *l;
 {
 	switch (cmd) {
 	case ADBIOCDEVSINFO: {
@@ -584,10 +584,10 @@ aedioctl(dev, cmd, data, flag, p)
 
 
 int 
-aedpoll(dev, events, p)
+aedpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	int s, revents;
 
@@ -600,7 +600,7 @@ aedpoll(dev, events, p)
 	if (aed_sc->sc_evq_len > 0)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(p, &aed_sc->sc_selinfo);
+		selrecord(l, &aed_sc->sc_selinfo);
 	splx(s);
 
 	return (revents);
