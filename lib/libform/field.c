@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.15 2002/05/20 15:00:11 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.16 2002/07/04 10:51:02 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -343,7 +343,7 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 		  /* redraw the field to reflect the new contents. If the field
 		   * is attached....
 		   */
-		if (field->parent != NULL)
+		if ((field->parent != NULL) && (field->parent->posted == 1))
 			_formi_redraw_field(field->parent, field->index);
 	}
 
