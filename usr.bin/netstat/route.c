@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.34 1999/01/15 19:06:25 kml Exp $	*/
+/*	$NetBSD: route.c,v 1.35 1999/04/01 08:14:11 chopps Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.34 1999/01/15 19:06:25 kml Exp $");
+__RCSID("$NetBSD: route.c,v 1.35 1999/04/01 08:14:11 chopps Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,22 +494,53 @@ p_flags(f, format)
 	printf(format, name);
 }
 
+static struct sockaddr *sockdup __P((struct sockaddr *));
+
+/*
+ * copy a sockaddr into an allocated region, allocate at least sockaddr
+ * bytes and zero unused
+ */
+static struct sockaddr *
+sockdup(sp)
+	struct sockaddr *sp;
+{
+	struct sockaddr *dp;
+	int len, salen;
+
+	if (sp == 0)
+		salen = 0;
+	else
+		salen = sp->sa_len;
+	if (salen < sizeof(struct sockaddr))
+		len = sizeof(struct sockaddr);
+	else
+		len = sp->sa_len;
+	if ((dp = malloc(len)) == 0)
+		errx(1, "sockdup");
+	if (salen)
+		memcpy(dp, sp, salen);
+	if (len > salen)
+		memset(dp + salen, 0, len - salen);
+	return (dp);
+}
+
 static void
 p_rtentry(rt)
 	struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
-	struct sockaddr *sa, addr, mask;
+	struct sockaddr *addr, *mask;
 
-	if (!(sa = kgetsa(rt_key(rt))))
-		memset(&addr, 0, sizeof addr);
+	addr = sockdup(kgetsa(rt_key(rt)));
+	if (rt_mask(rt))
+		mask = sockdup(kgetsa(rt_mask(rt)));
 	else
-		addr = *sa;
-	if (!rt_mask(rt) || !(sa = kgetsa(rt_mask(rt))))
-		memset(&mask, 0, sizeof mask);
-	else
-		mask = *sa;
-	p_sockaddr(&addr, &mask, rt->rt_flags, WID_DST);
+		mask = sockdup(0);
+	p_sockaddr(addr, mask, rt->rt_flags, WID_DST);
+
+	free(addr);
+	free(mask);
+
 	p_sockaddr(kgetsa(rt->rt_gateway), NULL, RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8lu ", rt->rt_refcnt, rt->rt_use);
