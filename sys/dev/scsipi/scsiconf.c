@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.3 1999/10/26 23:08:05 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.4 1999/11/01 22:54:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -657,14 +657,16 @@ scsi_probe_device(sc, target, lun)
 
 	TAILQ_INIT(&periph->periph_xferq);
 
+#ifdef SCSIPI_DEBUG
+	if (SCSIPI_DEBUG_TYPE == SCSIPI_BUSTYPE_SCSI &&
+	    SCSIPI_DEBUG_TARGET == target &&
+	    SCSIPI_DEBUG_LUN == lun)
+		periph->periph_dbflags |= SCSIPI_DEBUG_FLAGS;
+#endif
+
 	/*
 	 * Ask the device what it is
 	 */
-#if defined(SCSIDEBUG) && DEBUGTYPE == BUS_SCSI
-	if (target == DEBUGTARGET && lun == DEBUGLUN)
-		sc_link->flags |= DEBUGLEVEL;
-#endif /* SCSIDEBUG */
-
 	(void) scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
 	    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE);

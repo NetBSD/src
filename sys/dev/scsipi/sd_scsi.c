@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.11.2.1 1999/10/19 17:39:41 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.11.2.2 1999/11/01 22:54:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ sd_scsibus_attach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sd_scsibus_attach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("sd_scsibus_attach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	scsipi_strvis(sd->name, 16, sa->sa_inqbuf.product, 16);
@@ -258,7 +258,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, page = 4,
 	    flags)) == 0) {
-		SC_DEBUG(sd->sc_link, SDEV_DB3,
+		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
 		    scsipi_sense.pages.rigid_geometry.nheads,

@@ -1,10 +1,16 @@
-#	$NetBSD: files.scsipi,v 1.20 1999/02/07 22:58:43 sommerfe Exp $
+#	$NetBSD: files.scsipi,v 1.20.8.1 1999/11/01 22:54:18 thorpej Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
 defopt	opt_scsi.h	SCSIVERBOSE ST_ENABLE_EARLYWARN
+
+defopt	opt_scsipi_debug.h	SCSIPI_DEBUG
+				SCSIPI_DEBUG_TYPE
+				SCSIPI_DEBUG_TARGET
+				SCSIPI_DEBUG_LUN
+				SCSIPI_DEBUG_FLAGS
 
 file	dev/scsipi/scsipiconf.c		scsi | atapibus
 file	dev/scsipi/scsipi_base.c	scsi | atapibus

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.28.2.3 1999/10/26 23:10:14 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.28.2.4 1999/11/01 22:54:14 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -570,7 +570,7 @@ ahb_done(sc, ecb)
 	struct scsipi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = ecb->xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahb_done\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("ahb_done\n"));
 
 	bus_dmamap_sync(dmat, sc->sc_dmamap_ecb,
 	    AHB_ECB_OFF(ecb), sizeof(struct ahb_ecb),
@@ -825,7 +825,7 @@ ahb_scsipi_request(chan, req, arg)
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
 
-		SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsipi_request\n"));
+		SC_DEBUG(periph, SCSIPI_DB2, ("ahb_scsipi_request\n"));
 
 		/* Get an ECB to use. */
 		ecb = ahb_get_ecb(sc);

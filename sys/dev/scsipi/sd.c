@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151.2.2 1999/10/20 20:39:29 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.151.2.3 1999/11/01 22:54:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ sdattach(parent, sd, periph, ops)
 	struct disk_parms *dp = &sd->params;
 	char pbuf[9];
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -365,7 +365,7 @@ sdopen(dev, flag, fmt, p)
 	adapt = periph->periph_channel->chan_adapter;
 	part = SDPART(dev);
 
-	SC_DEBUG(sc_link, SDEV_DB1,
+	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, part));
 
@@ -437,11 +437,11 @@ sdopen(dev, flag, fmt, p)
 				error = ENXIO;
 				goto bad2;
 			}
-			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
+			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 			/* Load the partition info if not already loaded. */
 			sdgetdisklabel(sd);
-			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
+			SC_DEBUG(periph, SCSIPI_DB3, ("Disklabel loaded "));
 		}
 	}
 
@@ -465,7 +465,7 @@ out:	/* Insure only one open at a time. */
 	sd->sc_dk.dk_openmask =
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
 	sdunlock(sd);
 	return (0);
 
@@ -560,8 +560,8 @@ sdstrategy(bp)
 	struct scsipi_periph *periph = sd->sc_periph;
 	int s;
 
-	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
-	SC_DEBUG(sd->sc_link, SDEV_DB1,
+	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
+	SC_DEBUG(sd->sc_periph, SCSIPI_DB1,
 	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
@@ -659,7 +659,7 @@ sdstart(periph)
 	int flags, blkno, nblks, cmdlen, error;
 	struct partition *p;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("sdstart "));
 	/*
 	 * Check if the device has room for another command
 	 */
@@ -861,7 +861,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	int part = SDPART(dev);
 	int error;
 
-	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
+	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdioctl 0x%lx ", cmd));
 
 	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);

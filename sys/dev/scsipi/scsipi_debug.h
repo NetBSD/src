@@ -1,45 +1,94 @@
-/*	$NetBSD: scsipi_debug.h,v 1.12 1998/02/13 08:28:53 enami Exp $	*/
+/*	$NetBSD: scsipi_debug.h,v 1.12.14.1 1999/11/01 22:54:19 thorpej Exp $	*/
 
-/*
- * Written by Julian Elischer (julian@tfs.com)
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * These are the new debug bits.  (Sat Oct  2 12:46:46 WST 1993)
- * the following DEBUG bits are defined to exist in the flags word of
- * the scsi_link structure.
- */
-#define	SDEV_DB1		0x10	/* scsi commands, errors, data */ 
-#define	SDEV_DB2		0x20	/* routine flow tracking */
-#define	SDEV_DB3		0x40	/* internal to routine flows */
-#define	SDEV_DB4		0x80	/* level 4 debugging for this dev */
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_scsipi_debug.h"
+#endif
 
-/* type, target and LUN we want to debug */
-#define DEBUGTYPE	BUS_ATAPI
-#define	DEBUGTARGET	-1		/* -1 = disable. This is the drive
-					   number for ATAPI */
-#define	DEBUGLUN	0
-#define	DEBUGLEVEL	(SDEV_DB1|SDEV_DB2|SDEV_DB3)
- 
 /*
- * This is the usual debug macro for use with the above bits
+ * Originally written by Julian Elischer (julian@tfs.com)
  */
-#ifdef SCSIDEBUG
-#define	SC_DEBUG(sc_link,Level,Printstuff)				\
+
+#define	SCSIPI_DB1	0x0001		/* scsi commands, errors, data */ 
+#define	SCSIPI_DB2	0x0002		/* routine flow tracking */
+#define	SCSIPI_DB3	0x0004		/* internal to routine flows */
+#define	SCSIPI_DB4	0x0008		/* level 4 debugging for this dev */
+
+/*
+ * The following options allow us to build a kernel with debugging on
+ * by default for a certain type of device.  We can always enable
+ * debugging on a specific device using an ioctl.
+ */
+#ifndef SCSIPI_DEBUG_TYPE
+#define	SCSIPI_DEBUG_TYPE	SCSIPI_BUSTYPE_ATAPI
+#endif
+
+#ifndef SCSIPI_DEBUG_TARGET
+#define	SCSIPI_DEBUG_TARGET	-1	/* disabled */
+#endif
+
+#ifndef	SCSIPI_DEBUG_LUN
+#define	SCSIPI_DEBUG_LUN	0
+#endif
+
+/*
+ * Default debugging flags for above.
+ */
+#ifndef SCSIPI_DEBUG_FLAGS
+#define	SCSIPI_DEBUG_FLAGS	(SCSIPI_DB1|SCSIPI_DB2|SCSIPI_DB3)
+#endif
+
+#ifdef SCSIPI_DEBUG
+#define	SC_DEBUG(periph, flags, x)					\
 do {									\
-	if ((sc_link)->flags & (Level)) {				\
-		sc_link->sc_print_addr(sc_link);			\
- 		printf Printstuff;					\
+	if ((periph)->periph_dbflags & (flags)) {			\
+		scsipi_printaddr((periph));				\
+		printf x ;						\
 	}								\
 } while (0)
 
-#define	SC_DEBUGN(sc_link,Level,Printstuff) 				\
+#define	SC_DEBUGN(periph, flags, x)					\
 do {									\
-	if ((sc_link)->flags & (Level)) {				\
- 		printf Printstuff;					\
-	}								\
+	if ((periph)->periph_dbflags & (flags))				\
+		printf x ;						\
 } while (0)
 #else
-#define SC_DEBUG(A,B,C)
-#define SC_DEBUGN(A,B,C)
+#define	SC_DEBUG(periph, flags, x)	/* nothing */
+#define	SC_DEBUGN(periph, flags, x)	/* nothing */
 #endif

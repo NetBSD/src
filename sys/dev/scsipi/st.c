@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114.2.2 1999/10/20 20:39:30 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.114.2.3 1999/11/01 22:54:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -432,7 +432,7 @@ stattach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("stattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("stattach: "));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -575,7 +575,7 @@ stopen(dev, flags, mode, p)
 	periph = st->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    unit, st_cd.cd_ndevs));
 
 
@@ -636,7 +636,7 @@ stopen(dev, flags, mode, p)
 		st->last_dsty = dsty;
 	}
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("open complete\n"));
 	return (0);
 
 bad:
@@ -662,7 +662,7 @@ stclose(dev, flags, mode, p)
 	struct scsipi_periph *periph = st->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
+	SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("closing\n"));
 
 	/*
 	 * Make sure that a tape opened in write-only mode will have
@@ -754,7 +754,7 @@ st_mount_tape(st, dsty, flags)
 	if (st->flags & ST_MOUNTED)
 		return (0);
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n "));
+	SC_DEBUG(periph, SCSIPI_DB1, ("mounting\n "));
 	st->flags |= ST_NEW_MOUNT;
 	st->quirks = st->drive_quirks | st->modes[dsty].quirks;
 	/*
@@ -845,7 +845,7 @@ st_unmount(st, eject)
 
 	if ((st->flags & ST_MOUNTED) == 0)
 		return;
-	SC_DEBUG(sc_link, SDEV_DB1, ("unmounting\n"));
+	SC_DEBUG(periph, SCSIPI_DB1, ("unmounting\n"));
 	st_check_eod(st, FALSE, &nmarks, XS_CTL_IGNORE_NOT_READY);
 	st_rewind(st, 0, XS_CTL_IGNORE_NOT_READY);
 	scsipi_prevent(periph, PR_ALLOW,
@@ -866,11 +866,8 @@ st_decide_mode(st, first_read)
 	struct st_softc *st;
 	boolean	first_read;
 {
-#ifdef SCSIDEBUG
-	struct scsipi_periph *sc_link = st->sc_link;
-#endif
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("starting block mode decision\n"));
+	SC_DEBUG(st->sc_periph, SCSIPI_DB2, ("starting block mode decision\n"));
 
 	/*
 	 * If the drive can only handle fixed-length blocks and only at
@@ -879,7 +876,7 @@ st_decide_mode(st, first_read)
 	if (st->blkmin && (st->blkmin == st->blkmax)) {
 		st->flags |= ST_FIXEDBLOCKS;
 		st->blksize = st->blkmin;
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(st->sc_periph, SCSIPI_DB3,
 		    ("blkmin == blkmax of %d\n", st->blkmin));
 		goto done;
 	}
@@ -894,7 +891,8 @@ st_decide_mode(st, first_read)
 	case DDS:
 		st->flags &= ~ST_FIXEDBLOCKS;
 		st->blksize = 0;
-		SC_DEBUG(sc_link, SDEV_DB3, ("density specified variable\n"));
+		SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+		    ("density specified variable\n"));
 		goto done;
 	case QIC_11:
 	case QIC_24:
@@ -907,7 +905,8 @@ st_decide_mode(st, first_read)
 			st->blksize = st->media_blksize;
 		else
 			st->blksize = DEF_FIXED_BSIZE;
-		SC_DEBUG(sc_link, SDEV_DB3, ("density specified fixed\n"));
+		SC_DEBUG(st->sc_periph, SCSIPI_DB3,
+		    ("density specified fixed\n"));
 		goto done;
 	}
 	/*
@@ -924,7 +923,7 @@ st_decide_mode(st, first_read)
 		else
 			st->flags &= ~ST_FIXEDBLOCKS;
 		st->blksize = st->media_blksize;
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(st->sc_periph, SCSIPI_DB3,
 		    ("Used media_blksize of %d\n", st->media_blksize));
 		goto done;
 	}
@@ -934,7 +933,7 @@ st_decide_mode(st, first_read)
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
 	st->blksize = 0;
-	SC_DEBUG(sc_link, SDEV_DB3,
+	SC_DEBUG(st->sc_periph, SCSIPI_DB3,
 	    ("Give up and default to variable mode\n"));
 
 done:
@@ -976,7 +975,7 @@ ststrategy(bp)
 	struct buf *dp;
 	int s;
 
-	SC_DEBUG(st->sc_link, SDEV_DB1,
+	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
 	    ("ststrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * If it's a null transfer, return immediatly
@@ -1067,7 +1066,7 @@ ststart(periph)
 	struct scsi_rw_tape cmd;
 	int flags, error;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ststart "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
 	/*
 	 * See if there is a buf to do and we are not already
 	 * doing one
@@ -1271,7 +1270,7 @@ stioctl(dev, cmd, arg, flag, p)
 		error = st_mode_sense(st, XS_CTL_SILENT);
 		if (error)
 			break;
-		SC_DEBUG(st->sc_link, SDEV_DB1, ("[ioctl: get status]\n"));
+		SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("[ioctl: get status]\n"));
 		bzero(g, sizeof(struct mtget));
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
 		g->mt_blksiz = st->blksize;
@@ -1299,7 +1298,7 @@ stioctl(dev, cmd, arg, flag, p)
 	}
 	case MTIOCTOP: {
 
-		SC_DEBUG(st->sc_link, SDEV_DB1,
+		SC_DEBUG(st->sc_periph, SCSIPI_DB1,
 		    ("[ioctl: op=0x%x count=0x%x]\n", mt->mt_op,
 			mt->mt_count));
 
@@ -1535,7 +1534,7 @@ st_read_block_limits(st, flags)
 	st->blkmin = _2btol(block_limits.min_length);
 	st->blkmax = _3btol(block_limits.max_length);
 
-	SC_DEBUG(sc_link, SDEV_DB3,
+	SC_DEBUG(periph, SCSIPI_DB3,
 	    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
 	return (0);
 }
@@ -1593,11 +1592,11 @@ st_mode_sense(st, flags)
 		st->flags |= ST_READONLY;
 	else
 		st->flags &= ~ST_READONLY;
-	SC_DEBUG(sc_link, SDEV_DB3,
+	SC_DEBUG(periph, SCSIPI_DB3,
 	    ("density code 0x%x, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
 	    st->flags & ST_READONLY ? "protected" : "enabled"));
-	SC_DEBUG(sc_link, SDEV_DB3,
+	SC_DEBUG(periph, SCSIPI_DB3,
 	    ("%sbuffered\n",
 	    scsipi_sense.header.dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 	if (st->page_0_size)
@@ -1633,7 +1632,7 @@ st_mode_select(st, flags)
 	 * even if the selected mode is the one that is supported.
 	 */
 	if (st->quirks & ST_Q_UNIMODAL) {
-		SC_DEBUG(sc_link, SDEV_DB3,
+		SC_DEBUG(periph, SCSIPI_DB3,
 		    ("not setting density 0x%x blksize 0x%x\n",
 		    st->density, st->blksize));
 		return (0);
@@ -2309,10 +2308,9 @@ st_interpret_sense(xs)
 			bp->b_resid = info;
 	}
 
-#ifndef	SCSIDEBUG
-	if (retval == 0 && key == SKEY_NO_SENSE) {
+#ifdef SCSIPI_DEBUG
+	if (retval == 0 && key == SKEY_NO_SENSE)
 		doprint = 0;
-	}
 #endif
 	if (key == SKEY_BLANK_CHECK) {
 		/*

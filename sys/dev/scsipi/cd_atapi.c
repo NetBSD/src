@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.11.2.1 1999/10/19 17:39:28 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.11.2.2 1999/11/01 22:54:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -134,7 +134,7 @@ cd_atapibus_attach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
 	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 

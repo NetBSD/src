@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.18.2.2 1999/10/20 20:39:30 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.18.2.3 1999/11/01 22:54:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -91,12 +91,9 @@ scanjet_attach(ss, sa)
 	struct ss_softc *ss;
 	struct scsipibus_attach_args *sa;
 {
-#ifdef SCSIDEBUG
-	struct scsipi_link *periph = sa->sa_periph;
-#endif
 	int error;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: start\n"));
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1, ("scanjet_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
 	printf("\n%s: ", ss->sc_dev.dv_xname);
@@ -120,7 +117,8 @@ scanjet_attach(ss, sa)
 		printf("HP ScanJet 5p");
 	}
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: scanner_type = %d\n",
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
+	    ("scanjet_attach: scanner_type = %d\n",
 	    ss->sio.scan_scanner_type));
 
 	/* now install special handlers */

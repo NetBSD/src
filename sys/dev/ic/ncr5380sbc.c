@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.31.2.2 1999/10/26 23:10:16 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31.2.3 1999/11/01 22:54:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2592,7 +2592,7 @@ ncr5380_show_req(sr)
 		return;
 	}
 	db_printf("\n");
-#ifdef	SCSIDEBUG
+#ifdef SCSIPI_DEBUG
 	show_scsipi_xs(xs);
 #else
 	db_printf("xs=%p\n", xs);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.22.2.4 1999/10/26 23:10:17 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.22.2.5 1999/11/01 22:54:17 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -343,7 +343,7 @@ uha_done(sc, mscp)
 	struct scsipi_sense_data *s1, *s2;
 	struct scsipi_xfer *xs = mscp->xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("uha_done\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("uha_done\n"));
 
 	bus_dmamap_sync(dmat, sc->sc_dmamap_mscp,
 	    UHA_MSCP_OFF(mscp), sizeof(struct uha_mscp),
@@ -432,13 +432,14 @@ uha_scsipi_request(chan, req, arg)
 	struct uha_dma_seg *sg;
 	int error, seg, flags, s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("uha_scsipi_request\n"));
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
+
+		SC_DEBUG(periph, SCSIPI_DB2, ("uha_scsipi_request\n"));
 
 		/* Get an MSCP to use. */
 		mscp = uha_get_mscp(sc);

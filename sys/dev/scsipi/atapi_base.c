@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.14.2.1 1999/10/19 17:39:25 thorpej Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.14.2.2 1999/11/01 22:54:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ atapi_interpret_sense(xs)
 	 * it wants us to continue with normal error processing.
 	 */
 	if (periph->periph_switch->psw_error != NULL) {
-		SC_DEBUG(sc_link, SDEV_DB2,
+		SC_DEBUG(periph, SCSIPI_DB2,
 		    ("calling private err_handler()\n"));
 		error = (*periph->periph_switch->psw_error)(xs);
 		if (error != EJUSTRETURN)
@@ -221,7 +221,7 @@ atapi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
 	struct scsipi_xfer *xs;
 	int error, s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("atapi_cmd\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("atapi_cmd\n"));
 
 #ifdef DIAGNOSTIC
 	if (bp != NULL && (flags & XS_CTL_ASYNC) == 0)
@@ -267,7 +267,7 @@ atapi_mode_select(periph, data, len, flags, retries, timeout)
 	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_OUT);
-	SC_DEBUG(l, SDEV_DB2, ("atapi_mode_select: error=%d\n", error));
+	SC_DEBUG(periph, SCSIPI_DB2, ("atapi_mode_select: error=%d\n", error));
 	return (error);
 }
 
@@ -288,6 +288,6 @@ atapi_mode_sense(periph, page, data, len, flags, retries, timeout)
 	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
 	    flags | XS_CTL_DATA_IN);
-	SC_DEBUG(l, SDEV_DB2, ("atapi_mode_sense: error=%d\n", error));
+	SC_DEBUG(periph, SCSIPI_DB2, ("atapi_mode_sense: error=%d\n", error));
 	return (error);
 }

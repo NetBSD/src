@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.27.10.1 1999/10/19 17:39:46 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.27.10.2 1999/11/01 22:54:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ ukattach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ukattach: "));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -135,7 +135,7 @@ ukopen(dev, flag, fmt, p)
 	periph = uk->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(sc_link, SDEV_DB1,
+	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
 		uk_cd.cd_ndevs));
 
@@ -151,7 +151,7 @@ ukopen(dev, flag, fmt, p)
 		return (error);
 	periph->periph_flags |= PERIPH_OPEN;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
 	return (0);
 }
 
@@ -169,7 +169,7 @@ ukclose(dev, flag, fmt, p)
 	struct scsipi_periph *periph = uk->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
-	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
+	SC_DEBUG(uk->sc_periph, SCSIPI_DB1, ("closing\n"));
 
 	scsipi_wait_drain(periph);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.8 1999/10/26 23:10:16 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.9 1999/11/01 22:54:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.8 1999/10/26 23:10:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.9 1999/11/01 22:54:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,7 +733,7 @@ dpt_done_ccb(sc, ccb)
 	dmat = sc->sc_dmat;
 	xs = ccb->ccb_xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("dpt_done_ccb\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("dpt_done_ccb\n"));
 
 	/*
 	 * If we were a data transfer, unload the map that described the 

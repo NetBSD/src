@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.3 1999/10/20 20:41:27 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.4 1999/11/01 22:54:17 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
@@ -98,7 +98,7 @@ struct isposinfo {
 #define	DMA_MSW(x)	(((x) >> 16) & 0xffff)
 #define	DMA_LSW(x)	(((x) & 0xffff))
 
-#if	defined(SCSIDEBUG)
+#if	defined(SCSIPI_DEBUG)
 #define	DFLT_DBLEVEL		3
 #define	CFGPRINTF		printf
 #else

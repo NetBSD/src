@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.16.2.1 1999/10/19 17:39:29 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.16.2.2 1999/11/01 22:54:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ cd_scsibus_attach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cd_scsibus_attach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("cd_scsibus_attach: "));
 
 	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 

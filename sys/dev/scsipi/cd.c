@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.131.2.2 1999/10/20 20:39:29 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.131.2.3 1999/11/01 22:54:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ cdattach(parent, cd, periph, ops)
 	struct scsipi_periph *periph;
 	const struct cd_ops *ops;
 {
-	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -324,7 +324,7 @@ cdopen(dev, flag, fmt, p)
 	adapt = periph->periph_channel->chan_adapter;
 	part = CDPART(dev);
 
-	SC_DEBUG(sc_link, SDEV_DB1,
+	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    cd_cd.cd_ndevs, CDPART(dev)));
 
@@ -354,7 +354,7 @@ cdopen(dev, flag, fmt, p)
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
 		    XS_CTL_IGNORE_NOT_READY);
-		SC_DEBUG(sc_link, SDEV_DB1,
+		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("cdopen: scsipi_test_unit_ready, error=%d\n", error));
 		if (error)
 			goto bad3;
@@ -367,7 +367,7 @@ cdopen(dev, flag, fmt, p)
 		error = scsipi_start(periph, SSS_START,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
 		    XS_CTL_SILENT);
-		SC_DEBUG(sc_link, SDEV_DB1,
+		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("cdopen: scsipi_start, error=%d\n", error));
 		if (error) {
 			if (part != RAW_PART || fmt != S_IFCHR) 
@@ -381,7 +381,7 @@ cdopen(dev, flag, fmt, p)
 		/* Lock the pack in. */
 		error = scsipi_prevent(periph, PR_PREVENT,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
-		SC_DEBUG(sc_link, SDEV_DB1,
+		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("cdopen: scsipi_prevent, error=%d\n", error));
 		if (error)
 			goto bad;
@@ -394,11 +394,11 @@ cdopen(dev, flag, fmt, p)
 				error = ENXIO;
 				goto bad2;
 			}
-			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
+			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 			/* Fabricate a disk label. */
 			cdgetdisklabel(cd);
-			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
+			SC_DEBUG(periph, SCSIPI_DB3, ("Disklabel fabricated "));
 		}
 	}
 
@@ -422,7 +422,7 @@ out:	/* Insure only one open at a time. */
 	cd->sc_dk.dk_openmask =
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
-	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
+	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
 	cdunlock(cd);
 	return (0);
 
@@ -504,8 +504,8 @@ cdstrategy(bp)
 	struct scsipi_periph *periph = cd->sc_periph;
 	int opri;
 
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy "));
-	SC_DEBUG(cd->sc_link, SDEV_DB1,
+	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdstrategy "));
+	SC_DEBUG(cd->sc_periph, SCSIPI_DB1,
 	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
@@ -603,7 +603,7 @@ cdstart(periph)
 	int flags, blkno, nblks, cmdlen, error;
 	struct partition *p;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("cdstart "));
 	/*
 	 * Check if the device has room for another command
 	 */
@@ -821,7 +821,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	int part = CDPART(dev);
 	int error;
 
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx ", cmd));
+	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdioctl 0x%lx ", cmd));
 
 	/*
 	 * If the device is not valid, some IOCTLs can still be
@@ -1108,14 +1108,12 @@ cdioctl(dev, cmd, addr, flag, p)
 	case DIOCLOCK:
 		return (scsipi_prevent(periph,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0));
-#if 0 /* XXX THORPEJ */
 	case CDIOCSETDEBUG:
-		cd->sc_link->flags |= (SDEV_DB1 | SDEV_DB2);
+		cd->sc_periph->periph_dbflags |= (SCSIPI_DB1 | SCSIPI_DB2);
 		return (0);
 	case CDIOCCLRDEBUG:
-		cd->sc_link->flags &= ~(SDEV_DB1 | SDEV_DB2);
+		cd->sc_periph->periph_dbflags &= ~(SCSIPI_DB1 | SCSIPI_DB2);
 		return (0);
-#endif
 	case CDIOCRESET:
 	case SCIOCRESET:
 		return (cd_reset(cd));
@@ -1253,7 +1251,8 @@ cd_size(cd, flags)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
 
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_size: %d %ld\n", blksize, size));
+	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
+	    ("cd_size: %d %ld\n", blksize, size));
 	return (size);
 }
 
