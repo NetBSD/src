@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.2 1998/10/14 13:21:10 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.3 1998/10/15 14:48:47 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -115,10 +116,15 @@ ofbmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
-		return 0;
+	/* /chaos/control */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
+	    PCI_PRODUCT(pa->pa_id) == 3)
+		return 1;
 
-	return 1;
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY)
+		return 1;
+
+	return 0;
 }
 
 void
@@ -143,7 +149,10 @@ ofbattach(parent, self, aux)
 		dc = malloc(sizeof(struct ofb_devconfig), M_DEVBUF, M_WAITOK);
 		bzero(dc, sizeof(struct ofb_devconfig));
 		node = pcidev_to_ofdev(pa);
-
+		if (node == 0) {
+			printf(": ofdev not found\n");
+			return;
+		}
 		ofb_common_init(node, dc);
 	}
 	sc->sc_dc = dc;
@@ -180,11 +189,6 @@ ofb_common_init(node, dc)
 	int addr, width, height, linebytes, depth;
 	u_int regs[5];
 
-	OF_getprop(node, "width", &width, sizeof(width));
-	OF_getprop(node, "height", &height, sizeof(height));
-	OF_getprop(node, "linebytes", &linebytes, sizeof(linebytes));
-	OF_getprop(node, "depth", &depth, sizeof(depth));
-
 	OF_getprop(node, "assigned-addresses", regs, sizeof(regs));
 	addr = regs[2] & 0xf0000000;
 
@@ -199,6 +203,21 @@ ofb_common_init(node, dc)
 		OF_package_to_path(node, name, sizeof(name));
 		dc->dc_ih = OF_open(name);
 	}
+
+	/*
+	 * /chaos/control don't have "width", "height", ...
+	 */
+	width = height = -1;
+	if (OF_getprop(node, "width", &width, sizeof(width)) != 4)
+		OF_interpret("screen-width", 1, &width);
+	if (OF_getprop(node, "height", &height, sizeof(height)) != 4)
+		OF_interpret("screen-height", 1, &height);
+	if (OF_getprop(node, "linebytes", &linebytes, sizeof(linebytes)) != 4)
+		linebytes = width;			/* XXX */
+	if (OF_getprop(node, "depth", &depth, sizeof(depth)) != 4)
+		depth = 8;				/* XXX */
+	if (width == -1 || height == -1)
+		return;
 
 	OF_interpret("frame-buffer-adr", 1, &addr);
 	if (addr == 0)
