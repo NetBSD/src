@@ -1,0 +1,10 @@
+# $NetBSD: GENERIC_DIAGNOSTIC,v 1.2.6.2 2001/04/21 20:58:14 fvdl Exp $
+#
+# GENERIC with DIAGNOSTIC enabled.
+# DIAGNOSTIC was moved out of the default GENERIC file because
+# it is pretty expensive (up to some 15% speed loss).
+#
+
+include "arch/i386/conf/GENERIC"
+
+options 	DIAGNOSTIC
