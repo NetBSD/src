@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.51 2001/10/15 00:37:51 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.52 2001/11/06 06:28:22 simonb Exp $	*/
 
 /*
  *
@@ -296,7 +296,7 @@ uvm_aio_aiodone(bp)
 	struct uvm_object *uobj;
 	struct simplelock *slock;
 	int s, i, error, swslot;
-	boolean_t write, swap, pageout, async;
+	boolean_t write, swap, pageout;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
@@ -318,7 +318,6 @@ uvm_aio_aiodone(bp)
 	swslot = 0;
 	slock = NULL;
 	pageout = (pgs[0]->flags & PG_PAGEOUT) != 0;
-	async = (bp->b_flags & B_ASYNC) != 0;
 	if (!swap) {
 		uobj = pgs[0]->uobject;
 		slock = &uobj->vmobjlock;
