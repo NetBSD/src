@@ -1,3 +1,5 @@
+/*	$NetBSD: catclose.c,v 1.4 1995/02/27 13:06:30 cgd Exp $	*/
+
 /*
  * Written by J.T. Conklin, 10/05/94
  * Public domain.
