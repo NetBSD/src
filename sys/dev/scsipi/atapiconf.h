@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.7.12.3 2000/11/20 09:59:23 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.7.12.4 2001/04/21 19:37:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -44,7 +44,7 @@ extern const struct scsipi_periphsw atapi_probe_periphsw;
 
 /*
  * We need some more callbacks than in scsipi_adapter.
- * So define a new atapi_adapter, we'll cast sc_link->adapter to
+ * So define a new atapi_adapter, we'll cast channel->chan_adapter to
  * atapi_adapter when we need the extra callback (only in ATAPI code)
  */
 struct atapi_adapter {

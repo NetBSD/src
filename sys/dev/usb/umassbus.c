@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.3.2.2 2001/04/21 17:50:03 bouyer Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.3.2.3 2001/04/21 19:37:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -586,6 +586,6 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	DPRINTF(UDMASS_SCSI, ("umass_atapi_probedev: doing atapi_probedev on "
 			      "'%s' '%s' '%s'\n", vendor, product, revision));
 	drvp->drv_softc = atapi_probe_device(atapi, target, periph, &sa);
-	/* atapi_probe_device() frees the scsipi_link when there is no device.*/
+	/* atapi_probe_device() frees the periph when there is no device.*/
 }
 #endif
