@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.5 2001/12/12 01:49:51 tv Exp $
+# $NetBSD: Makefile.booters,v 1.6 2001/12/20 20:30:59 thorpej Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -28,6 +28,8 @@ LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 
 NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
+
+CPPFLAGS+=	-Dsgimips
 
 # PROG set by parent.
 NOMAN=		# defined
