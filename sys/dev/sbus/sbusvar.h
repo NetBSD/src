@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.15 2002/03/15 07:00:34 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.16 2002/03/20 18:39:44 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@ void	sbus_destroy_attach_args __P((struct sbus_attach_args *));
 #define sbus_bus_map(tag, slot, offset, sz, flags, hp) \
 	bus_space_map(tag, BUS_ADDR(slot,offset), sz, flags, hp)
 bus_addr_t	sbus_bus_addr __P((bus_space_tag_t, u_int, u_int));
+void	sbus_promaddr_to_handle __P((bus_space_tag_t, u_int, 
+	bus_space_handle_t *))
 
 #if notyet
 /* variables per Sbus */
