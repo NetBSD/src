@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/02/14 22:56:37 gwr Exp $
+#	$NetBSD: Makefile,v 1.2 1995/02/24 05:07:01 gwr Exp $
 
 LIB=sa
 
-SRCS=	alloc.c ashrdi3.c bcopy.c bzero.c gets.c \
-	open.c panic.c printf.c promcons.c promdev.c \
-	read.c strcmp.c strerror.c strlen.c strlen.c \
-	twiddle.c ufs.c 
+SRCS=	 alloc.c ashrdi3.c bcopy.c bzero.c gets.c open.c \
+	 panic.c printf.c promcons.c promdev.c read.c \
+	 strcmp.c strerror.c strlen.c strlen.c ufs.c 
 
 NOPIC=nopic
 NOPROFILE=noprofile
