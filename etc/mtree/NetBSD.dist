@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.255 2004/01/06 08:26:11 rtr Exp $
+#	$NetBSD: NetBSD.dist,v 1.256 2004/01/13 09:12:22 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -216,12 +216,14 @@
 ./usr/include/cdk
 ./usr/include/crypto
 ./usr/include/dev
+./usr/include/dev/apm
 ./usr/include/dev/ata
 ./usr/include/dev/dec
 ./usr/include/dev/dmover
 ./usr/include/dev/hpc
 ./usr/include/dev/i2o
 ./usr/include/dev/ic
+./usr/include/dev/ieee1394
 ./usr/include/dev/ir
 ./usr/include/dev/isa
 ./usr/include/dev/ofw
@@ -234,6 +236,7 @@
 ./usr/include/dev/sun
 ./usr/include/dev/tc
 ./usr/include/dev/usb
+./usr/include/dev/vinum
 ./usr/include/dev/vme
 ./usr/include/dev/wscons
 ./usr/include/filecorefs
