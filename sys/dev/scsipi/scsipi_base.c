@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.110 2004/08/27 20:37:28 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.111 2004/09/02 12:39:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.110 2004/08/27 20:37:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.111 2004/09/02 12:39:56 chs Exp $");
 
 #include "opt_scsi.h"
 
@@ -54,7 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.110 2004/08/27 20:37:28 bouyer Exp
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/hash.h>
-#include <machine/vmparam.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
@@ -105,7 +106,7 @@ scsipi_init(void)
 	    0, 0, "scxspl", NULL);
 	if (pool_prime(&scsipi_xfer_pool,
 	    PAGE_SIZE / sizeof(struct scsipi_xfer)) == ENOMEM) {
-		printf("WARNING: not enouth memory for scsipi_xfer_pool\n");
+		printf("WARNING: not enough memory for scsipi_xfer_pool\n");
 	}
 }
 
