@@ -33,8 +33,6 @@
  *	@(#)kern_ktrace.c	7.15 (Berkeley) 6/21/91
  */
 
-#ifdef KTRACE
-
 #include "param.h"
 #include "proc.h"
 #include "file.h"
@@ -410,5 +408,3 @@ ktrcanset(callp, targetp)
 
 	return (0);
 }
-
-#endif
