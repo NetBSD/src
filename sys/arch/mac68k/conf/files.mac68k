@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.98 2001/06/18 02:00:50 christos Exp $
+#	$NetBSD: files.mac68k,v 1.99 2001/11/20 07:48:31 chs Exp $
 
 # mac68k-specific configuration info
 
@@ -188,6 +188,9 @@ major	{md = 13}
 major	{raid = 20}
 
 # Compatibility modules
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
