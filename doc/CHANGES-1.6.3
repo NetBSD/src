@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.105 2004/06/05 04:56:02 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.106 2004/06/05 19:50:17 jdc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1003,3 +1003,15 @@ etc/rc.d/network				1.44
 	Allow an IPv6 default route to be set from /etc/mygate6 or 
 	$defaultroute6.
 	[itojun, ticket #1704]
+
+sys/nfs/nfs_srvcache.c				1.31
+
+	Enable reply cache for connection oriented protocols as well
+	(linux retransmits rpcs even when using tcp).
+
+	[yamt, ticket #1705]
+
+sys/nfs/nfs_serv.c				1.89
+
+	Fix an LP64 problem for exclusive create in nfsrv_create().
+	[yamt, ticket #1706]
