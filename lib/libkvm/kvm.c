@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.51 1997/04/09 21:11:41 thorpej Exp $	*/
+/*	$NetBSD: kvm.c,v 1.52 1997/08/12 16:28:32 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$NetBSD: kvm.c,v 1.51 1997/04/09 21:11:41 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm.c,v 1.52 1997/08/12 16:28:32 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -239,6 +239,15 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->cpu_dsize = 0;
 	kd->cpu_data = 0;
 	kd->dump_off = 0;
+
+	/*
+	 * Call the MD open hook.  This sets:
+	 *	usrstack, min_uva, max_uva
+	 */
+	if (_kvm_mdopen(kd)) {
+		_kvm_err(kd, kd->program, "md init failed");
+		goto failed;
+	}
 
 	ufgiven = (uf != NULL);
 	if (!ufgiven)
