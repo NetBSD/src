@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.3 2001/11/20 18:31:21 briggs Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.4 2002/03/23 23:14:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@ pthread__sp(void)
 {
 	long	ret;
 
-	__asm("mr %0,1" : "=g" (ret));
+	__asm("mr %0,1" : "=r" (ret));
 
 	return ret;
 }
