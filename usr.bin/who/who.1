@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)who.1	6.5 (Berkeley) 4/23/91
+.\"     from: @(#)who.1	6.5 (Berkeley) 4/23/91
+.\"	$Id: who.1,v 1.1.1.2 1994/11/14 05:02:21 jtc Exp $
 .\"
 .Dd April 23, 1991
 .Dt WHO 1
@@ -62,9 +63,9 @@ gathers information from the file
 An alternate
 .Ar file
 may be specified which is usually
-.Pa /var/run/wtmp
+.Pa /var/log/wtmp
 (or
-.Pa /var/run/wtmp.[0-6]
+.Pa /var/log/wtmp.[0-6]
 depending on site policy as
 .Pa wtmp
 can grow quite large and daily versions may or may not
