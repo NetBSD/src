@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.125 2003/10/14 06:36:48 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.126 2003/10/17 20:31:12 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.125 2003/10/14 06:36:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.126 2003/10/17 20:31:12 enami Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -961,8 +961,12 @@ sendorfree:
 	 * any of them.
 	 */
 	s = splnet();
-	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments)
+	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
+	    error == 0) {
 		error = ENOBUFS;
+		ipstat.ips_odropped++;
+		IFQ_INC_DROPS(&ifp->if_snd);
+	}
 	splx(s);
 	if (error) {
 		for (m = m0; m; m = m0) {
