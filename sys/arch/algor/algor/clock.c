@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2001/06/10 05:26:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $");
 #include <sys/sched.h>
 
 #include <machine/autoconf.h>
+
+#include <mips/locore.h>
 
 #include <dev/clock_subr.h>
 
@@ -99,10 +101,13 @@ clockattach(struct device *dev, const struct clockfns *fns)
 void
 cpu_initclocks(void)
 {
+	u_int32_t cycles;
+
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
 
-	hz = 128;
+	cycles = mips3_cp0_count_read();
+	mips3_cp0_compare_write(cycles + cycles_per_hz);
 
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
@@ -115,12 +120,7 @@ cpu_initclocks(void)
         }
 
 	/*
-	 * Enable the clock interrupt.
-	 */
-	(*algor_init_clock_intr)();
-
-	/*
-	 * Get the clock started.
+	 * Get the clock (well, the TODR, anyway) started.
 	 */
 	(*clockfns->cf_init)(clockdev);
 }
