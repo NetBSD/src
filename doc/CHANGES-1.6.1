@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.81 2003/01/02 08:35:58 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.82 2003/01/05 09:03:57 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2777,3 +2777,55 @@ sys/dev/usb/umass.c				1.93
 	This is probably the cause of panics reported in kern/19326.
 	[toshii, ticket #1054]
 
+sys/dev/pci/emuxki.c				1.13-1.14
+
+	Use bus_space_write_2() to write the 16 bit register "EMU_TIMER" which
+	should fix PR kern/15663. Patch supplied by Yorick Hardy via GNATS.
+	[tron, ticket #1056]
+
+sys/dev/usb/umass.c				1.91-1.92
+
+	Use "NULL" instead of "0" in pointer checks.
+	[tron, ticket #1055]
+
+usr.sbin/etcupdate/etcupdate			1.7-1.8
+
+	Fix a typo in the yesno() function: add a missing question mark.
+	[jmmv, ticket #1050]
+
+usr.bin/cksum/cksum.1				1.20-1.21
+
+	Fix typo: extra 'a' word in plural sentence.
+	[jmmv, ticket #1051]
+
+lib/libedit/refresh.c				1.18-1.19
+
+	PR/17954: SAITOH Masanobu: since we have opost and onlcr set, we don't 
+	need to output \r to go to the end of line; \n is enough. 
+	From David Laight.
+	[masanobu, ticket #1048]
+
+sys/arch/i386/i386/db_trace.c			1.31-1.32
+
+	stack frames can be overwrapped for eg. softintr.
+	[masanobu, ticket #1047]
+
+usr.bin/file/ascmagic.c				1.20-1.21
+
+	Actually return a different code for big-endian UTF-16 in 
+	looks_unicode().  Fixes PR 19487.
+	[is, ticket #1045]
+
+bin/pax/gen_subs.c				1.26-1.27 (via patch)
+bin/pax/pax.1					1.36-1.37
+
+	Change verbose output for symbolic links from "%s => %s" to
+	"%s -> %s", which matches ls(1) (per POSIX), as well as GNU
+	tar output.
+	[kleink, ticket #1040]
+
+sys/ufs/ffs/ffs_alloc.c				1.56-1.57
+
+	Clear IN_SPACECOUNTED on (re-)used inodes.
+	This cures the "unmount pending error:" on softdep umounts.
+	[hannken, ticket #1049]
