@@ -1,4 +1,4 @@
-/*	$NetBSD: warp.c,v 1.5 1997/10/13 22:21:14 cjs Exp $	*/
+/*	$NetBSD: warp.c,v 1.6 1998/09/11 14:28:28 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)warp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: warp.c,v 1.5 1997/10/13 22:21:14 cjs Exp $");
+__RCSID("$NetBSD: warp.c,v 1.6 1998/09/11 14:28:28 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: warp.c,v 1.5 1997/10/13 22:21:14 cjs Exp $");
 
 void
 dowarp(fl)
+	int fl;
 {
 	int c;
 	double d;
