@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)prim.c	5.8 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: prim.c,v 1.2 1993/11/09 05:12:42 cgd Exp $";
+static char *rcsid = "$Id: prim.c,v 1.3 1994/02/14 08:58:22 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -847,7 +847,7 @@ search(search_forward, pattern, n, wantmatch)
 	return(1);
 }
 
-#if !defined(REGCMP) && !defined(RECOMP) && !defined(RECOMP)
+#if !defined(REGCMP) && !defined(RECOMP) && !defined(REGEX)
 /*
  * We have neither regcmp() nor re_comp().
  * We use this function to do simple pattern matching.
