@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 1997/06/20 07:35:03 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 1997/06/21 04:36:22 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -168,7 +168,7 @@ int	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
 int	pmap_alloc_tlbpid __P((register struct proc *p));
 void	pmap_zero_page __P((vm_offset_t phys));
 void pmap_zero_page __P((vm_offset_t));
-#ifdef MIPS3XXX
+#ifdef MIPS3XXX		/* XXX - see comment in pmap_enter_pv() */
 void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t, u_int *));
 #else
 void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t));
@@ -459,12 +459,6 @@ pmap_release(pmap)
 			pte = pmap->pm_segtab->seg_tab[i];
 			if (!pte)
 				continue;
-#ifdef MIPS1
-			if (!(CPUISMIPS3)) {
-				vm_page_free1(
-				    PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
-			}
-#endif
 #ifdef DIAGNOSTIC
 			for (j = 0; j < NPTEPG; j++) {
 				if ((pte+j)->pt_entry)
@@ -473,14 +467,20 @@ pmap_release(pmap)
 #endif
 
 #ifdef MIPS3
-			if (CPUISMIPS3) {
-				/* XXX why flush page full of freed PTEs?  */
+			/*
+			 * The pica pmap.c flushed the segmap pages here.  I'm
+			 * not sure why, but I suspect it's because the page(s)
+			 * were being accessed by KSEG0 (cached) addresses and
+			 * may cause cache coherency problems when the page
+			 * is reused with KSEG2 (mapped) addresses.  This may
+			 * cause problems on machines without secondary caches.
+			 */
+			if (CPUISMIPS3)
 				mips3_HitFlushDCache(
 				    (vm_offset_t)pte, PAGE_SIZE);
-				vm_page_free1(
-				    PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
-			}
-#endif /* mips3 */
+#endif
+			vm_page_free1(
+			    PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
 
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
@@ -1497,7 +1497,7 @@ pmap_alloc_tlbpid(p)
  * physical to virtual map table.
  */
 void
-#ifdef MIPS3XXX
+#ifdef MIPS3XXX		/* XXX - see comment below */
 pmap_enter_pv(pmap, va, pa, npte)
 #else
 pmap_enter_pv(pmap, va, pa)
@@ -1534,6 +1534,11 @@ pmap_enter_pv(pmap, va, pa)
 		pv->pv_next = NULL;
 	} else {
 #ifdef MIPS3XXX
+/*
+ * This isn't needed with the DECstations - the virtual coherency exception
+ * handler appears to be able to deal with this.  It may need to be enabled
+ * for other R4K systems.
+ */
 			if (!(pv->pv_flags & PV_UNCACHED)) {
 			/*
 			 * There is at least one other VA mapping this page.
@@ -1758,44 +1763,6 @@ vm_page_free1(mem)
 	}
 }
 
-#ifdef MIPS3
-void
-mips_dump_segtab(p)
-	register struct proc *p;
-{
-	register pmap_t pmap;
-	int i;
-#if 0
-	int j;
-#endif
-
-	printf("Segment table process %p pmap ", p);
-	if (p != NULL) {
-		pmap = p->p_vmspace->vm_map.pmap;
-		printf("%p pm_segtab ", pmap);
-		if (pmap->pm_segtab) {
-			printf("%p\n", pmap->pm_segtab);
-			for (i = 0; i < PMAP_SEGTABSIZE; ++i) {
-				if (pmap->pm_segtab->seg_tab[i] != 0) {
-					printf("  seg_tab[%3d] %p", i,
-					    pmap->pm_segtab->seg_tab[i]);
-					printf(" 0x%08x\n", i << SEGSHIFT);
-#if 0
-					for (j = 0; j < 1024; +j)
-						if (pmap->pm_segtab->seg_tab[i].pt_entry[j])
-							printf(" %x", pmap->pm_segtab->seg_tab[i].pt_entry[j]);
-#endif
-				}
-			}
-		}
-		else
-			printf("NULL\n");
-	}
-	else
-		printf("NULL\n");
-}
-#endif
-
 pt_entry_t *
 pmap_pte(pmap, va)
 	pmap_t pmap;
@@ -1823,8 +1790,11 @@ pmap_prefer(foff, vap)
 	register vm_offset_t	va = *vap;
 	register long		d;
 
-	d = foff - va;
-	d &= (0x10000 - 1);	/* Use 64K to prevent virtual coherency exceptions */
-	*vap = va + d;
+	if (CPUISMIPS3) {
+		d = foff - va;
+		/* Use 64K to prevent virtual coherency exceptions */
+		d &= (0x10000 - 1);
+		*vap = va + d;
+	}
 }
 #endif
