@@ -35,8 +35,9 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
+	.text
 	/*.asciz "from: @(#)Ovfork.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: Ovfork.s,v 1.3 1993/08/01 18:40:29 mycroft Exp $"
+	.asciz "$Id: Ovfork.s,v 1.4 1993/08/26 02:14:11 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
