@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.317 2003/05/05 11:56:27 dsainty Exp $
+$NetBSD: usbdevs,v 1.318 2003/05/06 02:05:43 rafal Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -967,6 +967,7 @@ product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
 product MELCO LUA2TX5		0x0009	LUA2-TX Ethernet
 product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
+product MELCO MCRSM2		0x001b	MCR-SM2 SmartMedia Card Reader/Writer
 product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 
