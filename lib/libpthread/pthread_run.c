@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.11 2003/06/26 01:26:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.12 2003/09/16 13:51:35 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.11 2003/06/26 01:26:39 nathanw Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.12 2003/09/16 13:51:35 cl Exp $");
 
 #include <ucontext.h>
 
@@ -193,6 +193,8 @@ pthread__sched_idle2(pthread_t self)
 {
 	pthread_t idlethread, qhead, next;
 
+	/* XXXconcurrency: only reidle threads on same vp */
+
 	qhead = NULL;
 	pthread_spinlock(self, &pthread__deadqueue_lock);
 	idlethread = PTQ_FIRST(&pthread__reidlequeue);
@@ -227,6 +229,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 	for ( ; qhead && (qhead != self) ; qhead = next) {
 		next = qhead->pt_next;
 		pthread__assert(qhead->pt_spinlocks == 0);
+		pthread__assert(qhead->pt_type != PT_THREAD_UPCALL);
 		if (qhead->pt_type == PT_THREAD_NORMAL) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_next = NULL;

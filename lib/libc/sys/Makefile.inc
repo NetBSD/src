@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.143 2003/09/13 22:50:21 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.144 2003/09/16 13:51:34 cl Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -79,7 +79,7 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S \
 	_lwp_getprivate.S _lwp_setprivate.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \
-	sa_preempt.S \
+	sa_preempt.S sa_unblockyield.S \
 	timer_create.S timer_delete.S timer_gettime.S timer_getoverrun.S \
 	timer_settime.S
 
