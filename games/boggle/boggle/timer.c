@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.4 1997/10/10 12:04:36 lukem Exp $	*/
+/*	$NetBSD: timer.c,v 1.5 2001/02/05 00:27:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-__RCSID("$NetBSD: timer.c,v 1.4 1997/10/10 12:04:36 lukem Exp $");
+__RCSID("$NetBSD: timer.c,v 1.5 2001/02/05 00:27:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,10 @@ __RCSID("$NetBSD: timer.c,v 1.4 1997/10/10 12:04:36 lukem Exp $");
 
 static int waitch __P((long));
 
+extern int tlimit;
+extern time_t start_t;
+extern jmp_buf env;
+
 /*
  * Update the display of the remaining time while waiting for a character
  * If time runs out do a longjmp() to the game controlling routine, returning
@@ -68,9 +72,6 @@ static int waitch __P((long));
 int
 timerch()
 {
-	extern int tlimit;
-	extern time_t start_t;
-	extern jmp_buf env;
 	time_t prevt, t;
 	int col, remaining, row;
 
