@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.88 2003/02/03 12:17:23 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.89 2003/03/04 01:50:08 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1872,3 +1872,12 @@ sys/netkey/keysock.c				1.21
 
   allocate route_in6 in struct secashead, to avoid mistakenly overrun
   the end of secashead.  Fixes PR18751.
+
+gnu/dist/sendmail/sendmail/headers.c		1.8
+gnu/dist/sendmail/sendmail/main.c		1.10
+gnu/dist/sendmail/sendmail/parseaddr.c		1.9
+gnu/dist/sendmail/sendmail/sendmail.h		1.11
+
+  Apply patch from sendmail.org, for critical buffer overrun in header parsing.
+  [atatat, ticket #28]
+
