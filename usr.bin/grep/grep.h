@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.h,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $	*/
+/*	$NetBSD: grep.h,v 1.2 2004/05/05 15:06:33 cjep Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <zlib.h>
 
-#define VERSION "20031230"
+#define VERSION "20040505"
 
 #define	GREP_READ	0
 #define GREP_SKIP	1
