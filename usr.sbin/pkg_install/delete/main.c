@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.9 1999/03/03 17:29:58 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1999/03/08 00:20:21 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1999/03/03 17:29:58 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1999/03/08 00:20:21 hubertf Exp $");
 #endif
 #endif
 
@@ -35,20 +35,21 @@ __RCSID("$NetBSD: main.c,v 1.9 1999/03/03 17:29:58 hubertf Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "hvDdnfFrOp:";
+static char Options[] = "hvDdnfFp:OrR";
 
 char	*Prefix		= NULL;
 char    *ProgramPath	= NULL;
 Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
 Boolean File2Pkg	= FALSE;
-Boolean Recurse		= FALSE;
+Boolean Recurse_up	= FALSE;
+Boolean Recurse_down	= FALSE;
 Boolean OnlyDeleteFromPkgDB = FALSE;
 
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: pkg_delete [-vDdnFfrO] [-p prefix] pkg-name ...\n");
+    fprintf(stderr, "usage: pkg_delete [-vDdnFfOrR] [-p prefix] pkg-name ...\n");
     exit(1);
 }
 
@@ -93,7 +94,11 @@ main(int argc, char **argv)
 	    break;
 
 	case 'r':
-	    Recurse = TRUE;
+	    Recurse_up = TRUE;
+	    break;
+
+	case 'R':
+	    Recurse_down = TRUE;
 	    break;
 
 	case 'O':
