@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.37 2002/11/24 22:35:40 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.38 2003/05/15 13:26:45 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.37 2002/11/24 22:35:40 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.38 2003/05/15 13:26:45 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -512,20 +512,19 @@ popallfiles(void)
  *
  * Takes one arg, vfork, which tells it to not modify its global vars
  * as it is still running in the parent.
+ *
+ * This code is (probably) unnecessary as the 'close on exec' flag is
+ * set and should be enough.  In the vfork case it is definitely wrong
+ * to close the fds as another fork() may be done later to feed data
+ * from a 'here' document into a pipe and we don't want to close the
+ * pipe!
  */
 
 void
 closescript(int vforked)
 {
-	if (vforked) {
-		struct parsefile *pf;
-
-		for (pf=parsefile; pf != &basepf; pf=pf->prev)
-			close(pf->fd);
-		if (parsefile->fd > 0)
-			close(parsefile->fd);
+	if (vforked)
 		return;
-	}
 	popallfiles();
 	if (parsefile->fd > 0) {
 		close(parsefile->fd);
