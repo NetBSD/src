@@ -1,4 +1,4 @@
-.\" $NetBSD: vga.4,v 1.12 2003/05/04 00:11:54 gmcgarry Exp $
+.\" $NetBSD: vga.4,v 1.13 2003/05/04 00:27:17 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1999, 2000
 .\" 	Matthias Drochner.  All rights reserved.
@@ -54,7 +54,7 @@ The
 driver supports text-mode hardware acceleration on the
 .Tn VGA
 hardware.  Currently, the driver runs the display with
-a 640\(mu400 pixel resolution.  The
+a 720\(mu400 pixel resolution.  The
 .Tn VGA
 text-mode accelerator divides the display into fixed-size
 character cells.  The size of the character cells specifies
@@ -73,7 +73,7 @@ Each screen mode requires a suitable font to be loaded into
 the kernel by the
 .Xr wsfontload 8
 utility, before the screen can be used.  The size of the font
-and the screen mode must match for use on the 640\(mu400 display.
+and the screen mode must match for use on the 720\(mu400 display.
 For example, a screen mode with 80 columns and 40 rows requires
 a font where each character is 8 pixels wide and 10 pixels high.
 The
