@@ -1,3 +1,5 @@
+#	$NetBSD: kdump,v 1.2 1997/02/12 23:35:07 gwr Exp $
+
 # Dump kmem statistics
 #	@(#)kdump	8.1 (Berkeley) 6/10/93
 

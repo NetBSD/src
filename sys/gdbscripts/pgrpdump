@@ -1,3 +1,5 @@
+#	$NetBSD: pgrpdump,v 1.2 1997/02/12 23:35:08 gwr Exp $
+
 #	@(#)pgrpdump	8.1 (Berkeley) 6/10/93
 
 define allpgrps
