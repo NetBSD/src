@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.4 2002/12/09 22:54:10 simonb Exp $
+#	$NetBSD: PB1000,v 1.5 2003/04/03 22:50:30 he Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000 and PB1500
 # evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -142,7 +142,7 @@ ohci*		at aubus? addr ?		# USB Open Host Controller
 
 # USB bus support
 #usb*		at uhci?
-#usb*		at ohci?
+usb*		at ohci?
 
 # USB Hubs
 #uhub*		at usb?
