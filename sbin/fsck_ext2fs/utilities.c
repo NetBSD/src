@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.3 1997/10/09 13:19:41 bouyer Exp $	*/
+/*	$NetBSD: utilities.c,v 1.4 1998/03/30 02:07:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.3 1997/10/09 13:19:41 bouyer Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.4 1998/03/30 02:07:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -474,7 +474,7 @@ void
 catchquit(n)
 	int n;
 {
-	extern returntosingle;
+	extern int returntosingle;
 
 	printf("returning to single-user after filesystem check\n");
 	returntosingle = 1;
