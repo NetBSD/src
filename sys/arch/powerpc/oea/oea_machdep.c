@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.4 2003/02/08 20:42:07 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.5 2003/03/05 05:27:25 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -141,6 +141,20 @@ oea_init(void (*handler)(void))
 	KASSERT(lwp0.l_cpu != NULL);
 
 	curpcb = &proc0paddr->u_pcb;
+	memset(curpcb, 0, sizeof(*curpcb));
+#ifdef ALTIVEC
+	/*
+	 * Initialize the vectors with NaNs
+	 */
+	for (scratch = 0; scratch < 32; scratch++) {
+		curpcb->pcb_vr.vreg[scratch][0] = 0x7FFFDEAD;
+		curpcb->pcb_vr.vreg[scratch][1] = 0x7FFFDEAD;
+		curpcb->pcb_vr.vreg[scratch][2] = 0x7FFFDEAD;
+		curpcb->pcb_vr.vreg[scratch][3] = 0x7FFFDEAD;
+	}
+	curpcb->pcb_vr.vscr = 0;
+	curpcb->pcb_vr.vrsave = 0;
+#endif
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
 	/*
@@ -733,11 +747,6 @@ oea_startup(const char *model)
 	 * Set up the buffers.
 	 */
 	bufinit();
-
-#ifdef ALTIVEC
-	if (cpu_altivec)
-		init_vec();
-#endif
 }
 
 /*
