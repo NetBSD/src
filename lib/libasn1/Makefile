@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/08/30 23:51:52 jhawk Exp $
+# $NetBSD: Makefile,v 1.5 2000/11/13 15:08:16 jdolecek Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1
 
@@ -12,14 +12,14 @@ COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
 asn1_err.h asn1_err.c: asn1_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/asn1/asn1_err.et
 
-DPSRCS=	asn1_err.h
+DPSRCS=	asn1_err.h asn1.h
 
 INCS=	asn1.h asn1_err.h
 
 INCSDIR= /usr/include/krb5
 
 BUILT_SOURCES =			\
-	$(gen_files:.x=.c)	\
+	${gen_files:.x=.c}	\
 	asn1_err.h		\
 	asn1_err.c
 
@@ -80,7 +80,7 @@ SRCS=	der_get.c \
 	der_length.c \
 	der_copy.c \
 	timegm.c \
-	$(BUILT_SOURCES)
+	${BUILT_SOURCES}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/asn1		\
@@ -90,22 +90,19 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/com_err		\
 	 -DHAVE_CONFIG_H
 
-$(gen_files) asn1.hx: asn1_files
-
 ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${MAKE} print-objdir
+ASN1_COMPILE=	${ASN1COMPILE}/asn1_compile
 
-asn1_files: k5.asn1 all-asn1_compile
-	${ASN1COMPILE}/asn1_compile ${DIST}/heimdal/lib/asn1/k5.asn1
+${gen_files} asn1.hx: k5.asn1 ${ASN1_COMPILE}
+	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1
 
-asn1.h:	asn1.hx
-${SRCS}: asn1.h
+.PHONY: ${ASN1_COMPILE}
+${ASN1_COMPILE}:
+	@cd ${.CURDIR}/asn1_compile && ${MAKE}
 
-CLEANFILES = $(BUILT_SOURCES) $(gen_files) asn1_files asn1.h asn1.hx
-
-SUBDIR=	asn1_compile
+CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files asn1.h asn1.hx
 
 .include <bsd.lib.mk>
-.include <bsd.subdir.mk>
 
 .SUFFIXES: .hx .x
 
