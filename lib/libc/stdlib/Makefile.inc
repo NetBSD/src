@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.45 2000/03/06 18:32:28 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.46 2000/03/08 20:17:20 kleink Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
 .PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
 
-SRCS+=	_rand48.c _strtoll.c _strtoq.c _strtoull.c _strtouq.c \
+SRCS+=	_rand48.c _strtoll.c _strtoull.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c calloc.c drand48.c erand48.c exit.c \
 	getenv.c getopt.c getsubopt.c heapsort.c jrand48.c l64a.c \
