@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.11 1999/07/04 09:37:18 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.12 1999/07/04 10:13:12 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,10 @@ static int do_echo = 1;
 
 static int last_i_was_nl, last_i_was_space;
 static int last_o_was_punct, last_o_was_space;
+
+static int	_msg_vprintf(int auto_fill, char *fmt, va_list ap);
+static void	_msg_vprompt(char *msg, char *def, char *val, int max_chars,
+		    va_list ap);
 
 /* Routines */
 
@@ -94,7 +98,8 @@ void msg_standend(void)
 	wstandend(msg_win);
 }
 
-int msg_vprintf (int auto_fill, char *fmt, va_list ap)
+static int
+_msg_vprintf(int auto_fill, char *fmt, va_list ap)
 {
 	const char *wstart, *afterw;
 	int wordlen, nspaces;
@@ -226,7 +231,7 @@ void msg_display(int msg_no, ...)
 	msg_clear();
 
 	va_start(ap, msg_no);
-	(void)msg_vprintf(1, msg_list[msg_no], ap);
+	(void)_msg_vprintf(1, msg_list[msg_no], ap);
 	va_end(ap);
 }
 
@@ -235,7 +240,7 @@ void msg_display_add(int msg_no, ...)
 	va_list ap;
 
 	va_start (ap, msg_no);
-	(void)msg_vprintf(1, msg_list[msg_no], ap);
+	(void)_msg_vprintf(1, msg_list[msg_no], ap);
 	va_end (ap);
 }
 
@@ -247,7 +252,7 @@ int msg_printf (char *fmt, ...)
 	msg_clear();
 
 	va_start (ap, fmt);
-	res = msg_vprintf (1, fmt, ap);
+	res = _msg_vprintf(1, fmt, ap);
 	va_end (ap);
 	return res;
 }
@@ -258,21 +263,21 @@ int msg_printf_add (char *fmt, ...)
 	int  res;
 
 	va_start (ap, fmt);
-	res = msg_vprintf (1, fmt, ap);
+	res = _msg_vprintf(1, fmt, ap);
 	va_end (ap);
 	return res;
 }
 
 
-static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
-			 va_list ap)
+static void
+_msg_vprompt(char *msg, char *def, char *val, int max_chars, va_list ap)
 {
 	int ch;
 	int count = 0;
 	int y,x;
 	char *ibuf = alloca(max_chars);
 
-	msg_vprintf (0, msg, ap);
+	_msg_vprintf(0, msg, ap);
 	if (def != NULL && *def) {
 		waddstr (msg_win, " [");
 		waddstr (msg_win, def);
@@ -352,33 +357,13 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 	}
 }
 
-void msg_prompt_addstr (char *fmt, char *def, char *val, int max_chars, ...)
-{
-	va_list ap;
-
-	va_start (ap, max_chars);
-	msg_vprompt (fmt, def, val, max_chars, ap);
-	va_end(ap);
-}
-
 void msg_prompt_add (int msg_no, char *def, char *val, int max_chars, ...)
 {
 	va_list ap;
 
 	va_start (ap, max_chars);
-	msg_vprompt (msg_list[msg_no], def, val, max_chars, ap);
+	_msg_vprompt(msg_list[msg_no], def, val, max_chars, ap);
 	va_end(ap);
-}
-
-void msg_prompt_str (char *msg, char *def, char *val, int max_chars, ...)
-{
-	va_list ap;
-
-	msg_clear();
-
-	va_start (ap, max_chars);
-	msg_vprompt (msg, def, val, max_chars, ap);
-	va_end (ap);
 }
 
 void msg_prompt (int msg_no, char *def, char *val, int max_chars, ...)
@@ -388,7 +373,7 @@ void msg_prompt (int msg_no, char *def, char *val, int max_chars, ...)
 	msg_clear();
 
 	va_start (ap, max_chars);
-	msg_vprompt (msg_list[msg_no], def, val, max_chars, ap);
+	_msg_vprompt(msg_list[msg_no], def, val, max_chars, ap);
 	va_end (ap);
 }
 
@@ -402,23 +387,12 @@ void msg_echo()
 	do_echo = 1;
 }
 
-void msg_table(int msg_no, ...)
-{
-	va_list ap;
-
-	msg_clear();
-
-	va_start(ap, msg_no);
-	(void)msg_vprintf(0, msg_list[msg_no], ap);
-	va_end(ap);
-}
-
 void msg_table_add(int msg_no, ...)
 {
 	va_list ap;
 
 	va_start (ap, msg_no);
-	(void)msg_vprintf(0, msg_list[msg_no], ap);
+	(void)_msg_vprintf(0, msg_list[msg_no], ap);
 	va_end (ap);
 }
 
