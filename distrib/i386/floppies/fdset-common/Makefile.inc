@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2001/11/08 02:10:27 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2002/01/08 04:00:01 tv Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -90,9 +90,6 @@ boot: ${BOOTCODE}
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
-	for f in ${RELEASEDIR}/installation/floppy/${BASENAME}?.fs; do \
-		gzip <$$f >$$f.gz; \
-	done
 	
 unconfig:
 	-umount -f ${MOUNT_POINT}
