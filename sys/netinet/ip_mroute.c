@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.74 2003/06/26 21:49:17 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.75 2003/06/30 10:34:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.74 2003/06/26 21:49:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75 2003/06/30 10:34:53 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -546,8 +546,8 @@ ip_mrouter_detach(ifp)
 {
 	int vifi, i;
 	struct vif *vifp;
-	struct mfc *rt, *nrt;
-	struct rtdetq *rte, *nrte, **prte;
+	struct mfc *rt;
+	struct rtdetq *rte;
 
 	/* XXX not sure about sideeffect to userland routing daemon */
 	for (vifi = 0; vifi < numvifs; vifi++) {
@@ -556,25 +556,13 @@ ip_mrouter_detach(ifp)
 			reset_vif(vifp);
 	}
 	for (i = 0; i < MFCTBLSIZ; i++) {
-		for (rt = LIST_FIRST(&mfchashtbl[i]); rt; rt = nrt) {
-			nrt = LIST_NEXT(rt, mfc_hash);
-
-			prte = &rt->mfc_stall;
-			for (rte = *prte; rte; rte = nrte) {
-				nrte = rte->next;
-				if (rte->ifp == ifp) {
-					m_freem(rte->m);
-					free(rte, M_MRTABLE);
-					*prte = nrte;
-				} else
-					prte = &rte->next;
+		if (nexpire[i] == 0)
+			continue;
+		LIST_FOREACH(rt, &mfchashtbl[i], mfc_hash) {
+			for (rte = rt->mfc_stall; rte; rte = rte->next) {
+				if (rte->ifp == ifp)
+					rte->ifp = NULL;
 			}
-
-			if (rt->mfc_expire == 0)
-				continue;
-			nexpire[i]--;
-			++mrtstat.mrts_cache_cleanups;
-			expire_mfc(rt);
 		}
 	}
 }
@@ -914,11 +902,13 @@ add_mfc(m)
 			/* free packets Qed at the end of this entry */
 			for (; rte != 0; rte = nrte) {
 				nrte = rte->next;
+				if (rte->ifp) {
 #ifdef RSVP_ISI
-				ip_mdq(rte->m, rte->ifp, rt, -1);
+					ip_mdq(rte->m, rte->ifp, rt, -1);
 #else
-				ip_mdq(rte->m, rte->ifp, rt);
+					ip_mdq(rte->m, rte->ifp, rt);
 #endif /* RSVP_ISI */
+				}
 				m_freem(rte->m);
 #ifdef UPCALL_TIMING
 				collate(&rte->t);
