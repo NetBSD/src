@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.8 1997/11/14 12:47:19 mrg Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.9 1997/11/25 03:14:13 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.2 1997/11/12 10:54:11 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.5 1997/11/24 06:09:47 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -248,7 +248,8 @@ nat_t *nat;
 							aps, nat);
 		}
 		if (err == 2) {
-			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip, tcp);
+			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip,
+						tcp);
 			err = 0;
 		}
 		return err;
@@ -277,6 +278,8 @@ void ap_free(ap)
 aproxy_t *ap;
 {
 	ap->apr_ref--;
+	if (!ap->apr_ref)
+		KFREE(ap);
 }
 
 
@@ -298,5 +301,23 @@ void ap_unload()
 		while ((aps = ap_sess_tab[i])) {
 			ap_sess_tab[i] = aps->aps_next;
 			aps_free(aps);
+		}
+}
+
+
+void ap_expire()
+{
+	ap_session_t *aps, **apsp;
+	int i;
+
+	for (i = 0; i < AP_SESS_SIZE; i++)
+		for (apsp = &ap_sess_tab[i]; (aps = *apsp); ) {
+			aps->aps_tout--;
+			if (!aps->aps_tout) {
+				ap_sess_tab[i] = aps->aps_next;
+				aps_free(aps);
+				*apsp = aps->aps_next;
+			} else
+				apsp = &aps->aps_next;
 		}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.8 1997/10/30 16:09:09 mrg Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.9 1997/11/25 03:14:14 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -90,5 +90,6 @@ extern	void	ap_free __P((aproxy_t *));
 extern	void	aps_free __P((ap_session_t *));
 extern	int	ap_check __P((ip_t *, tcphdr_t *, fr_info_t *, struct nat *));
 extern	aproxy_t	*ap_match __P((u_char, char *));
+extern	void	ap_expire __P((void));
 
 #endif /* __IP_PROXY_H__ */
