@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.30 2003/08/07 11:16:00 agc Exp $
+.\"	$NetBSD: systat.1,v 1.31 2003/08/30 12:27:26 dsl Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd December 30, 1993
+.Dd August 30, 2003
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -364,22 +364,7 @@ etc.
 The upper left quadrant of the screen shows the number
 of users logged in and the load average over the last one, five,
 and fifteen minute intervals.
-Below this line are statistics on memory utilization.
-The first row of the table reports memory usage only among
-active processes, that is processes that have run in the previous
-twenty seconds.
-The second row reports on memory usage of all processes.
-The first column reports on the number of physical pages
-claimed by processes.
-The second column reports the number of physical pages that
-are devoted to read only text pages.
-The third and fourth columns report the same two figures for
-virtual pages, that is the number of pages that would be
-needed if all processes had all of their pages.
-Finally the last column shows the number of physical pages
-on the free list.
-.Pp
-Below the memory display is a list of the
+Below this is a list of the
 average number of processes (over the last refresh interval)
 that are runnable (`r'), in page wait (`p'),
 in disk wait other than paging (`d'),
@@ -389,13 +374,23 @@ a bar graph showing the amount of
 system (shown as `='), user (shown as `\*[Gt]'),
 nice (shown as `-'), and idle time (shown as ` ').
 .Pp
-Next to the process statistics is a column that
+To the right of the process statistics is a column that
 lists the average number of context switches (`Csw'),
 traps (`Trp'; includes page faults), system calls (`Sys'), interrupts (`Int'),
 network software interrupts (`Sof'),
 page faults (`Flt').
 .Pp
-Below the process display are statistics on name translations.
+Below this are statistics on memory utilization.
+The first row of the table reports memory usage only among
+active processes, that is processes that have run in the previous
+twenty seconds.
+The second row reports on memory usage of all processes.
+The first column reports on the number of physical pages
+claimed by processes.
+The second column reports the number of pages of memory and swap.
+The third column gives the number of pages of free memory and swap.
+.Pp
+Below the memory display are statistics on name translations.
 It lists the number of names translated in the previous interval,
 the number and percentage of the translations that were
 handled by the system wide name translation cache, and
@@ -407,7 +402,9 @@ It reports the number of seeks, transfers, number
 of kilobyte blocks transferred per second averaged over the
 refresh period of the display (by default, five seconds), and
 the time spent in disk accesses.
-Note that the system only keeps statistics on at most four disks.
+If there are more than five disks, and the terminal window has more
+than 24 lines, the disks display will be flipped so that more
+of the disk statistics are visible.
 .Pp
 Under the date in the upper right hand quadrant are statistics
 on paging and swapping activity.
@@ -441,7 +438,7 @@ Thus this figure is most interesting when observed over
 a long time period, such as from boot time
 (see below on getting such a display).
 .Pp
-Running down the right hand side of the display is a breakdown
+To the left of the column of paging statistics is a breakdown
 of the interrupts being handled by the system.
 At the top of the list is the total interrupts per second
 over the time interval.
