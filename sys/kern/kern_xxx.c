@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.16 1994/05/17 08:22:13 cgd Exp $
+ *	from: @(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
+ *	$Id: kern_xxx.c,v 1.17 1994/05/20 07:24:58 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -39,20 +39,80 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
+
+struct reboot_args {
+	int	opt;
+};
+/* ARGSUSED */
+int
+reboot(p, uap, retval)
+	struct proc *p;
+	struct reboot_args *uap;
+	int *retval;
+{
+	int error;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+	boot(uap->opt);
+	return (0);
+}
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+
+struct ogethostname_args {
+	char	*hostname;
+	u_int	len;
+};
+/* ARGSUSED */
+int
+ogethostname(p, uap, retval)
+	struct proc *p;
+	struct ogethostname_args *uap;
+	int *retval;
+{
+	int name;
+
+	name = KERN_HOSTNAME;
+	return (kern_sysctl(&name, 1, uap->hostname, &uap->len, 0, 0));
+}
+
+struct osethostname_args {
+	char	*hostname;
+	u_int	len;
+};
+/* ARGSUSED */
+int
+osethostname(p, uap, retval)
+	struct proc *p;
+	register struct osethostname_args *uap;
+	int *retval;
+{
+	int name;
+	int error;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+	name = KERN_HOSTNAME;
+	return (kern_sysctl(&name, 1, 0, 0, uap->hostname, uap->len));
+}
+
 /* ARGSUSED */
 int
 ogethostid(p, uap, retval)
 	struct proc *p;
 	void *uap;
-	long *retval;
+	int *retval;
 {
 
-	*retval = hostid;
+	*(long *)retval = hostid;
 	return (0);
 }
+#endif /* COMPAT_43 || COMPAT_SUNOS */
 
+#ifdef COMPAT_43
 struct osethostid_args {
 	long	hostid;
 };
@@ -71,46 +131,13 @@ osethostid(p, uap, retval)
 	return (0);
 }
 
-struct ogethostname_args {
-	char	*hostname;
-	u_int	len;
-};
-/* ARGSUSED */
 int
-ogethostname(p, uap, retval)
-	struct proc *p;
-	struct ogethostname_args *uap;
-	int *retval;
+oquota()
 {
 
-	if (uap->len > hostnamelen + 1)
-		uap->len = hostnamelen + 1;
-	return (copyout((caddr_t)hostname, (caddr_t)uap->hostname, uap->len));
+	return (ENOSYS);
 }
-
-struct osethostname_args {
-	char	*hostname;
-	u_int	len;
-};
-/* ARGSUSED */
-int
-osethostname(p, uap, retval)
-	struct proc *p;
-	register struct osethostname_args *uap;
-	int *retval;
-{
-	int error;
-
-	if (error = suser(p->p_ucred, &p->p_acflag))
-		return (error);
-	if (uap->len > sizeof (hostname) - 1)
-		return (EINVAL);
-	hostnamelen = uap->len;
-	error = copyin((caddr_t)uap->hostname, hostname, uap->len);
-	hostname[hostnamelen] = 0;
-	return (error);
-}
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_43 */
 
 #if defined(COMPAT_09) || defined(COMPAT_SUNOS) || defined(COMPAT_HPUX)
 struct ogetdomainname_args {
@@ -124,9 +151,10 @@ ogetdomainname(p, uap, retval)
 	struct ogetdomainname_args *uap;
 	int *retval;
 {
-	if (uap->len > domainnamelen + 1)
-		uap->len = domainnamelen + 1;
-	return (copyout((caddr_t)domainname, (caddr_t)uap->domainname, uap->len));
+	int name;
+
+	name = KERN_DOMAINNAME;
+	return (kern_sysctl(&name, 1, uap->domainname, &uap->len, 0, 0));
 }
 
 struct osetdomainname_args {
@@ -140,16 +168,13 @@ osetdomainname(p, uap, retval)
 	struct osetdomainname_args *uap;
 	int *retval;
 {
+	int name;
 	int error;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
-	if (uap->len > sizeof (domainname) - 1)
-		return EINVAL;
-	domainnamelen = uap->len;
-	error = copyin((caddr_t)uap->domainname, domainname, uap->len);
-	domainname[domainnamelen] = 0;
-	return (error);
+	name = KERN_DOMAINNAME;
+	return (kern_sysctl(&name, 1, 0, 0, uap->domainname, uap->len));
 }
 #endif /* COMPAT_09 || COMPAT_SUNOS || COMPAT_HPUX */
 
@@ -195,33 +220,6 @@ ouname(p, uap, retval)
 	    sizeof(struct outsname)));
 }
 #endif /* COMPAT_09 */
-
-struct reboot_args {
-	int	opt;
-};
-/* ARGSUSED */
-int
-reboot(p, uap, retval)
-	struct proc *p;
-	struct reboot_args *uap;
-	int *retval;
-{
-	int error;
-
-	if (error = suser(p->p_ucred, &p->p_acflag))
-		return (error);
-	boot(uap->opt);
-	return (0);
-}
-
-#ifdef COMPAT_43
-int
-oquota()
-{
-
-	return (ENOSYS);
-}
-#endif
 
 #ifdef SYSCALL_DEBUG
 int	scdebug = 1;	/* XXX */
