@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2004/01/13 12:57:24 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2004/01/18 00:47:21 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2004/01/13 12:57:24 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2004/01/18 00:47:21 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,13 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2004/01/13 12:57:24 sekiya Exp $");
 #include <mips/cache_r10k.h>
 #endif
 
+#include <sgimips/dev/int2reg.h>
+
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
-
-#if defined(IP32)
-#include <sgimips/dev/crimereg.h>
-#include <sgimips/dev/crimevar.h>
-#endif
 
 #include "ksyms.h"
 
@@ -144,21 +141,17 @@ u_int32_t clockmask;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-#if defined(IP1X)
-void	ip1x_init(void);
+#if !defined(IP32)
+extern void	ip22_sdcache_disable(void);
+extern void	ip22_sdcache_enable(void);
+extern void	int_init(u_int32_t);
 #endif
 
-#if defined(IP2X)
-void	ip2x_init(void);
-extern void      ip22_sdcache_disable(void);
-extern void      ip22_sdcache_enable(void);
-#endif
+extern void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern unsigned long mips1_clkread(void);
+extern unsigned long mips3_clkread(void);
 
-#ifdef IP32
-void	ip32_init(void);
-#endif
-
-void * cpu_intr_establish(int, int, int (*)(void *), void *);
 
 void	mach_init(int, char **, int, struct btinfo_common *);
 void	unconfigured_system_type(int);
@@ -176,18 +169,27 @@ void mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_tr
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
-static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
-static void	unimpl_intr_establish(int, int, int (*)(void *), void *);
-static unsigned	long nullwork(void);
+static void	*unimpl_intr_establish(int, int, int (*)(void *), void *);
+static void	unimpl_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static unsigned	long nulllong(void);
+static void	nullvoid(void);
 
 void ddb_trap_hook(int where);
 
 struct platform platform = {
 	unimpl_bus_reset,
 	unimpl_cons_init,
-	unimpl_iointr,
 	unimpl_intr_establish,
-	nullwork,
+	nulllong,
+	nullvoid,
+	nullvoid,
+	nullvoid,
+	unimpl_intr,
+	unimpl_intr,
+	unimpl_intr,
+	unimpl_intr,
+	unimpl_intr,
+	unimpl_intr,
 };
 
 /*
@@ -207,11 +209,7 @@ static struct btinfo_common *bootinfo;
  * Process arguments passed to us by the ARCS firmware.
  */
 void
-mach_init(argc, argv, magic, btinfo)
-	int argc;
-	char **argv;
-	int magic;
-	struct btinfo_common *btinfo;
+mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 {
 	extern char kernel_text[], _end[];
 	paddr_t first, last;
@@ -349,9 +347,7 @@ mach_init(argc, argv, magic, btinfo)
 		if (strncmp(argv[i], "SystemPartition", 15) == 0)
 			makebootdev(argv[i] + 16);
 
-#ifdef DEBUG
-		printf("argv[%d]: %s\n", i, argv[i]);
-#endif
+		aprint_debug("argv[%d]: %s\n", i, argv[i]);
 	}
 
 	for (i = 0; arcbios_system_identifier[i] != '\0'; i++) {
@@ -372,12 +368,12 @@ mach_init(argc, argv, magic, btinfo)
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	ksyms_init(nsym, ssym, esym);
-#endif
+#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+
 #  ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #  endif
-
 
 #  ifdef KGDB
 	kgdb_port_init();
@@ -390,30 +386,74 @@ mach_init(argc, argv, magic, btinfo)
 	switch (mach_type) {
 	case MACH_SGI_IP12:
 #if defined(IP1X)
-		ip1x_init();
-#else
-		unconfigured_system_type(mach_type);
+		int_init(INT_IP12);
+		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
+        	mach_boardrev = (sysid & 0x7000) >> 12; 
+
+		if ((i & 0x8000) == 0) {
+			if (mach_boardrev < 7)	/* 4D/3X */
+				mach_subtype = MACH_SGI_IP12_4D_3X;
+			else			/* VIP12 */
+				mach_subtype = MACH_SGI_IP12_VIP12;
+		} else {
+			if (mach_boardrev < 6)	/* HP1 */
+				mach_subtype = MACH_SGI_IP12_HP1;
+			else			/* HPLC */
+				mach_subtype = MACH_SGI_IP12_HPLC;
+                }
+
+		biomask = 0x0700;
+		netmask = 0x0700;
+		ttymask = 0x0f00;
+		clockmask = 0xbf00;
+		platform.intr3 = mips1_clock_intr;
+		platform.clkread = mips1_clkread;
 #endif
 		break;
 	case MACH_SGI_IP20:
-	case MACH_SGI_IP22:
 #if defined(IP2X)
-		ip2x_init();
-#else
-		unconfigured_system_type(mach_type);
-#endif
-		break;
+		int_init(INT_IP20);
+		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
+		mach_boardrev = (i & 0x7000) >> 12;
 
-	case MACH_SGI_IP32:
-#ifdef IP32
-		ip32_init();
-#else
-		unconfigured_system_type(mach_type);
+		biomask = 0x0700;
+		netmask = 0x0700;
+		ttymask = 0x0f00;
+		clockmask = 0xbf00;
+		platform.intr5 = mips3_clock_intr;
+		platform.clkread = mips3_clkread;
+		break;
+	case MACH_SGI_IP22:
+		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9858);
+		if (i & 1) {
+			mach_subtype = MACH_SGI_IP22_FULLHOUSE;
+			int_init(INT_IP22);
+		} else {
+			mach_subtype = MACH_SGI_IP22_GUINESS;
+			int_init(INT_IP24);
+		}
+                mach_boardrev = (i >> 1) & 0x0f;
+		biomask = 0x0700;
+		netmask = 0x0700;
+		ttymask = 0x0f00;
+		clockmask = 0xbf00;
+		platform.intr5 = mips3_clock_intr;
+		platform.clkread = mips3_clkread;
 #endif
 		break;
+#ifdef IP32
+	case MACH_SGI_IP32:
+		biomask = 0x0700;
+		netmask = 0x0700;
+		ttymask = 0x0700;
+		clockmask = 0x8700;
+		platform.intr5 = mips3_clock_intr;
+		platform.clkread = mips3_clkread;
+		break;
+#endif
 
 	default:
-		panic("IP%d architecture not yet supported", mach_type);
+		panic("IP%d architecture not configured", mach_type);
 		break;
 	}
 
@@ -460,10 +500,7 @@ mach_init(argc, argv, magic, btinfo)
 			    kernendpfn <= firstpfn) {
 				/* Kernel is not in this cluster at all */
 				
-#ifdef DEBUG
-				printf("Loading cluster %d: 0x%x / 0x%x\n", i,
-				    firstpfn, lastpfn);
-#endif
+				aprint_debug("Loading cluster %d: 0x%x / 0x%x\n", i, firstpfn, lastpfn);
 				uvm_page_physload(firstpfn, lastpfn,
 				    firstpfn, lastpfn, VM_FREELIST_DEFAULT);
 			} else {
@@ -471,11 +508,7 @@ mach_init(argc, argv, magic, btinfo)
 					/* There is space before kernel in this
 					 * cluster */
 
-#ifdef DEBUG
-					printf("Loading cluster %d (before "
-					    "kernel): 0x%x / 0x%x\n", i,
-					    firstpfn, kernstartpfn);
-#endif
+					aprint_debug("Loading cluster %d (before kernel): 0x%x / 0x%x\n", i, firstpfn, kernstartpfn);
 					uvm_page_physload(firstpfn,
 					    kernstartpfn, firstpfn,
 					    kernstartpfn, VM_FREELIST_DEFAULT);
@@ -485,11 +518,7 @@ mach_init(argc, argv, magic, btinfo)
 					/* There is space after kernel in this
 					 * cluster */
 
-#ifdef DEBUG
-					printf("Loading cluster %d (after "
-					    "kernel): 0x%x / 0x%x\n", i,
-					    kernendpfn, lastpfn);
-#endif
+					aprint_debug("Loading cluster %d (after kernel): 0x%x / 0x%x\n", i, kernendpfn, lastpfn);
 					uvm_page_physload(kernendpfn,
 					    lastpfn, kernendpfn,
 					    lastpfn, VM_FREELIST_DEFAULT);
@@ -618,13 +647,8 @@ cpu_startup()
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
-#if defined(IP32)
-	u_int64_t scratch;
-#endif
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
 		savectx((struct user *)curpcb);
@@ -651,26 +675,7 @@ cpu_reboot(howto, bootstr)
 	}
 
 	/* Clear and disable watchdog timer. */
-	switch (mach_type) {
-#if defined(IP2X)
-	case MACH_SGI_IP20:
-	case MACH_SGI_IP22:
-		*(volatile u_int32_t *)0xbfa00014 = 0;
-		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
-		break;
-#endif
-
-#if defined(IP32)
-	case MACH_SGI_IP32:
-		bus_space_write_8(crime_sc->iot, crime_sc->ioh,
-		    CRIME_WATCHDOG, 0);
-		scratch = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
-		    CRIME_CONTROL) & ~CRIME_CONTROL_DOG_ENABLE;
-		bus_space_write_8(crime_sc->iot, crime_sc->ioh,
-		    CRIME_CONTROL, scratch);
-		break;
-#endif
-	}
+	(void)(*platform.watchdog_disable)();
 
 	splhigh();
 
@@ -713,8 +718,7 @@ haltsys:
 }
 
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s = splclock();
 	static struct timeval lasttime;
@@ -736,9 +740,8 @@ microtime(tvp)
 	splx(s);
 }
 
-__inline void
-delay(n)
-	unsigned long n;
+inline void
+delay(unsigned long n)
 {
 	u_long i;
 	long divisor = curcpu()->ci_divisor_delay;
@@ -765,65 +768,31 @@ unimpl_cons_init()
 	panic("target init didn't set cons_init");
 }
 
-static void
-unimpl_iointr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+static void *
+unimpl_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 {
-
-	panic("target init didn't set intr");
+	panic("target init didn't set intr_establish");
+	return (void *)NULL;
 }
 
 static void
-unimpl_intr_establish(level, ipl, handler, arg)
-	int level;
-	int ipl;
-	int (*handler) __P((void *));
-	void *arg;
+unimpl_intr(u_int32_t a, u_int32_t b, u_int32_t c, u_int32_t d)
 {
-	panic("target init didn't set intr_establish");
+	panic("target init didn't set unimpl_intr");
 }
 
 static unsigned long
-nullwork()
+nulllong()
 {
-
+	printf("nulllong\n");
 	return (0);
 }
 
-void *
-cpu_intr_establish(level, ipl, func, arg)
-	int level;
-	int ipl;
-	int (*func)(void *);
-	void *arg;
+static void
+nullvoid()
 {
-	(*platform.intr_establish)(level, ipl, func, arg);
-	return (void *) -1;
-}
-
-void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
-{
-	uvmexp.intrs++;
-
-	if (ipending & MIPS_HARD_INT_MASK)
-		(*platform.iointr)(status, cause, pc, ipending);
-
-	/* software interrupt */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-
-	_clrsoftintr(ipending);
-
-	softintr_dispatch(ipending);
+	printf("nullvoid\n");
+	return;
 }
 
 void unconfigured_system_type(int ipnum)
@@ -855,54 +824,13 @@ lookup_bootinfo(int type)
 
 void ddb_trap_hook(int where)
 {
-#if defined(IP32)
-	u_int64_t scratch;
-#endif
 	switch (where) {
 	case 1:		/* Entry to DDB, turn watchdog off */
-		switch (mach_type) {
-#if defined(IP2X)
-		case MACH_SGI_IP20:
-		case MACH_SGI_IP22:
-			*(volatile u_int32_t *)0xbfa00014 = 0;
-			*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
-			break;
-#endif
-
-#if defined(IP32)
-		case MACH_SGI_IP32:
-			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
-			    CRIME_WATCHDOG, 0);
-			scratch = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
-			    CRIME_CONTROL) & ~CRIME_CONTROL_DOG_ENABLE;
-			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
-			    CRIME_CONTROL, scratch);
-			break;
-#endif
-		}
+		(void)(*platform.watchdog_disable)();
 		break;
 
 	case 0:		/* Exit from DDB, turn watchdog back on */
-		switch (mach_type) {
-#if defined(IP2X)
-		case MACH_SGI_IP20:
-		case MACH_SGI_IP22:
-			*(volatile u_int32_t *)0xbfa00004 |= 0x100;
-			*(volatile u_int32_t *)0xbfa00014 = 0;
-			break;
-#endif
-
-#if defined(IP32)
-		case MACH_SGI_IP32:
-			scratch = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
-			    CRIME_CONTROL) | CRIME_CONTROL_DOG_ENABLE;
-			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
-			    CRIME_CONTROL, scratch);
-			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
-			    CRIME_WATCHDOG, 0);
-			break;
-#endif
-		}
+		(void)(*platform.watchdog_enable)();
 		break;
 	}
 }
@@ -949,14 +877,9 @@ void mips_machdep_cache_config(void)
 #ifdef ENABLE_MIPS4_CACHE_R10K
 	case MIPS_R10000:
 		cpu_config = mips3_cp0_config_read();
-#ifdef DEBUG
-		printf("\nr10k cpu config is %x\n", cpu_config);
-#endif
+		aprint_debug("\nr10k cpu config is %x\n", cpu_config);
 		break;
 #endif	/* ENABLE_MIPS4_CACHE_R10K */
-	default:
-		printf("Don't know how to configure SC on this platform.\n");
-		break;
 	}
 #endif
 }
@@ -982,4 +905,3 @@ mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewal
 		break;
 	}
 }
-

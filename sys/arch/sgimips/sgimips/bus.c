@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.25 2004/01/13 05:47:09 sekiya Exp $	*/
+/*	$NetBSD: bus.c,v 1.26 2004/01/18 00:47:21 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.25 2004/01/13 05:47:09 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.26 2004/01/18 00:47:21 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,6 @@ u_int64_t
 bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 {
 	u_int64_t reg;
-#if defined(MIPS3)
 	int s;
 
 	switch (tag) {
@@ -268,16 +267,12 @@ bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 			reg = mips3_ld( (u_int64_t *)(bsh + o));
 			break;
 	}
-#else
-	reg = (*(volatile u_int64_t *)(bsh + o));
-#endif
 	return reg;
 }
 
 void
 bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_int64_t v)
 {
-#if defined(MIPS3)
 	int s;
 
 	switch (tag) {
@@ -292,9 +287,6 @@ bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 			mips3_sd( (u_int64_t *)(bsh + o), v);
 			break;
 	}
-#else
-	*(volatile u_int64_t *)(bsh + o) = v;
-#endif
 }
 
 int
