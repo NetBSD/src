@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.19 1998/11/06 23:31:09 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.20 1999/03/19 16:11:02 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.19 1998/11/06 23:31:09 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.20 1999/03/19 16:11:02 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.19 1998/11/06 23:31:09 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.20 1999/03/19 16:11:02 christos Exp $");
 #endif
 #endif
 
@@ -62,8 +62,7 @@ strdup(str)
     if (str == NULL)
 	return NULL;
     len = strlen(str) + 1;
-    if ((p = malloc(len)) == NULL)
-	return NULL;
+    p = emalloc(len);
 
     return memcpy(p, str, len);
 }
@@ -80,7 +79,7 @@ setenv(name, value, dum)
 {
     register char *p;
     int len = strlen(name) + strlen(value) + 2; /* = \0 */
-    char *ptr = (char*) malloc(len);
+    char *ptr = (char*) emalloc(len);
 
     (void) dum;
 
