@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.8 2003/07/15 02:54:40 lukem Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.9 2005/01/11 07:01:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2003/07/15 02:54:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2005/01/11 07:01:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,11 +71,7 @@ extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
  * pmax uses standard mips1 convention, wiring FPU to hard interrupt 5.
  */
 void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
+cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
 	uvmexp.intrs++;
