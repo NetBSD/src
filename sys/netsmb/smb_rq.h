@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.4 2003/03/23 10:01:32 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.5 2003/03/23 10:32:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -110,7 +110,7 @@ struct smb_rq {
 	u_int16_t		sr_rpmid;
 	struct smb_slock	sr_slock;	/* short term locks */
 /*	struct smb_t2rq*sr_t2;*/
-	TAILQ_ENTRY(smb_rq)	sr_link;
+	SIMPLEQ_ENTRY(smb_rq)	sr_link;
 };
 
 struct smb_t2rq {

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.12 2003/03/23 10:01:31 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.13 2003/03/23 10:32:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.12 2003/03/23 10:01:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.13 2003/03/23 10:32:05 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ smb_iod_invrq(struct smbiod *iod)
 	 * Invalidate all outstanding requests for this connection
 	 */
 	SMB_IOD_RQLOCK(iod);
-	TAILQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
+	SIMPLEQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
 		if (rqp->sr_flags & SMBR_INTERNAL)
 			SMBRQ_SUNLOCK(rqp);
 		rqp->sr_flags |= SMBR_RESTART;
@@ -340,7 +340,7 @@ smb_iod_recvall(struct smbiod *iod)
 		mid = SMB_HDRMID(hp);
 		SMBSDEBUG("mid %04x\n", (u_int)mid);
 		SMB_IOD_RQLOCK(iod);
-		TAILQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
+		SIMPLEQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
 			if (rqp->sr_mid != mid)
 				continue;
 			SMBRQ_SLOCK(rqp);
@@ -370,7 +370,7 @@ smb_iod_recvall(struct smbiod *iod)
 	 * check for interrupts
 	 */
 	SMB_IOD_RQLOCK(iod);
-	TAILQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
+	SIMPLEQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
 		if (smb_proc_intr(rqp->sr_cred->scr_p)) {
 			smb_iod_rqprocessed(rqp, EINTR);
 		}
@@ -418,7 +418,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 	if (rqp->sr_cred->scr_p == iod->iod_p) {
 		rqp->sr_flags |= SMBR_INTERNAL;
 		SMB_IOD_RQLOCK(iod);
-		TAILQ_INSERT_HEAD(&iod->iod_rqlist, rqp, sr_link);
+		SIMPLEQ_INSERT_HEAD(&iod->iod_rqlist, rqp, sr_link);
 		SMB_IOD_RQUNLOCK(iod);
 		for (;;) {
 			if (smb_iod_sendrq(iod, rqp) != 0) {
@@ -462,7 +462,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 			0, SMB_IOD_RQLOCKPTR(iod));
 	}
 	iod->iod_muxcnt++;
-	TAILQ_INSERT_TAIL(&iod->iod_rqlist, rqp, sr_link);
+	SIMPLEQ_INSERT_TAIL(&iod->iod_rqlist, rqp, sr_link);
 	SMB_IOD_RQUNLOCK(iod);
 	smb_iod_wakeup(iod);
 	return 0;
@@ -477,7 +477,7 @@ smb_iod_removerq(struct smb_rq *rqp)
 	SMBIODEBUG("\n");
 	if (rqp->sr_flags & SMBR_INTERNAL) {
 		SMB_IOD_RQLOCK(iod);
-		TAILQ_REMOVE(&iod->iod_rqlist, rqp, sr_link);
+		SIMPLEQ_REMOVE(&iod->iod_rqlist, rqp, smb_rq, sr_link);
 		SMB_IOD_RQUNLOCK(iod);
 		return 0;
 	}
@@ -486,7 +486,7 @@ smb_iod_removerq(struct smb_rq *rqp)
 		rqp->sr_flags |= SMBR_XLOCKWANT;
 		ltsleep(rqp, PWAIT, "smbxrm", 0, SMB_IOD_RQLOCKPTR(iod));
 	}
-	TAILQ_REMOVE(&iod->iod_rqlist, rqp, sr_link);
+	SIMPLEQ_REMOVE(&iod->iod_rqlist, rqp, smb_rq, sr_link);
 	iod->iod_muxcnt--;
 	if (iod->iod_muxwant) {
 		iod->iod_muxwant--;
@@ -528,8 +528,8 @@ smb_iod_waitrq(struct smb_rq *rqp)
 		 * at the end of queue so other waiters have chance to concur
 		 */
 		SMB_IOD_RQLOCK(iod);
-		TAILQ_REMOVE(&iod->iod_rqlist, rqp, sr_link);
-		TAILQ_INSERT_TAIL(&iod->iod_rqlist, rqp, sr_link);
+		SIMPLEQ_REMOVE(&iod->iod_rqlist, rqp, smb_rq, sr_link);
+		SIMPLEQ_INSERT_TAIL(&iod->iod_rqlist, rqp, sr_link);
 		SMB_IOD_RQUNLOCK(iod);
 	} else
 		smb_iod_removerq(rqp);
@@ -549,7 +549,7 @@ smb_iod_sendall(struct smbiod *iod)
 	 * Loop through the list of requests and send them if possible
 	 */
 	SMB_IOD_RQLOCK(iod);
-	TAILQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
+	SIMPLEQ_FOREACH(rqp, &iod->iod_rqlist, sr_link) {
 		switch (rqp->sr_state) {
 		case SMBRQ_NOTSENT:
 			rqp->sr_flags |= SMBR_XLOCK;
@@ -685,7 +685,7 @@ smb_iod_create(struct smb_vc *vcp)
 #endif
 	vcp->vc_iod = iod;
 	smb_sl_init(&iod->iod_rqlock, "smbrql");
-	TAILQ_INIT(&iod->iod_rqlist);
+	SIMPLEQ_INIT(&iod->iod_rqlist);
 	smb_sl_init(&iod->iod_evlock, "smbevl");
 	SIMPLEQ_INIT(&iod->iod_evlist);
 #ifdef __NetBSD__

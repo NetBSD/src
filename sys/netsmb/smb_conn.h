@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.4 2003/03/23 10:01:32 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.5 2003/03/23 10:32:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -179,8 +179,6 @@ struct mbdata;
 struct smbioc_oshare;
 struct smbioc_ossn;
 struct uio;
-
-TAILQ_HEAD(smb_rqhead, smb_rq);
 
 #define SMB_DEFRQTIMO	5
 
@@ -440,7 +438,8 @@ struct smbiod {
 	int			iod_sleeptimo;
 	struct smb_vc *		iod_vc;
 	struct smb_slock	iod_rqlock;	/* iod_rqlist, iod_muxwant */
-	struct smb_rqhead	iod_rqlist;	/* list of outstanding requests */
+	SIMPLEQ_HEAD(, smb_rq)
+				iod_rqlist;	/* list of outstanding requests */
 	int			iod_muxwant;
 	struct proc *		iod_p;
 #ifndef __NetBSD__
