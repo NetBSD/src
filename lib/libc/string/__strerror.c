@@ -33,17 +33,54 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strsignal.c,v 1.2 1994/09/03 05:07:56 jtc Exp $";
+static char *rcsid = "$Id: __strerror.c,v 1.1 1994/09/03 05:07:51 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
+#ifdef NLS
+#include <nl_types.h>
+#endif
 
-extern char *__strsignal __P((int, char *));
+/*
+ * Since perror() is not allowed to change the contents of strerror()'s
+ * static buffer, both functions supply their own buffers to the
+ * internal function __strerror().
+ */
+
+extern char *sys_errlist[];
+extern int sys_nerr;
 
 char *
-strsignal(sig)
-	int sig;
+__strerror(num, buf)
+	int num;
+	char *buf;
 {
-	static char buf[128];
-	return __strsignal(sig, buf);
+#define	UPREFIX	"Unknown error: %u"
+	register unsigned int errnum;
+
+#ifdef NLS
+	nl_catd catd ;
+	catd = catopen("libc", 0);
+#endif
+
+	errnum = num;				/* convert to unsigned */
+	if (errnum < sys_nerr) {
+#ifdef NLS
+		strcpy(buf, catgets(catd, 1, errnum, sys_errlist[errnum])); 
+#else
+		return(sys_errlist[errnum]);
+#endif
+	} else {
+#ifdef NLS
+		sprintf(buf, catgets(catd, 1, 0xffff, UPREFIX), errnum);
+#else
+		sprintf(buf, UPREFIX, errnum);
+#endif
+	}
+
+#ifdef NLS
+	catclose(catd);
+#endif
+
+	return buf;
 }

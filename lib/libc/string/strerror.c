@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strerror.c,v 1.2 1993/10/09 00:11:01 jtc Exp $";
+static char *rcsid = "$Id: strerror.c,v 1.3 1994/09/03 05:07:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -44,43 +44,12 @@ static char *rcsid = "$Id: strerror.c,v 1.2 1993/10/09 00:11:01 jtc Exp $";
  * internal function __strerror().
  */
 
-char *
-__strerror(num, buf)
-	int num;
-	char *buf;
-{
-#define	UPREFIX	"Unknown error: "
-	extern char *sys_errlist[];
-	extern int sys_nerr;
-	register unsigned int errnum;
-	register char *p, *t;
-	char tmp[40];
-
-	errnum = num;				/* convert to unsigned */
-	if (errnum < sys_nerr)
-		return(sys_errlist[errnum]);
-
-	/* Do this by hand, so we don't include stdio(3). */
-	t = tmp;
-	do {
-		*t++ = "0123456789"[errnum % 10];
-	} while (errnum /= 10);
-
-	strcpy (buf, UPREFIX);
-	for (p = buf + sizeof(UPREFIX) -1;;) {
-		*p++ = *--t;
-		if (t <= tmp)
-			break;
-	}
-
-	return buf;
-}
-
+extern char *__strerror __P((int, char *));
 
 char *
 strerror(num)
 	int num;
 {
-	static char buf[40];			/* 64-bit number + slop */
+	static char buf[128];
 	return __strerror(num, buf);
 }
