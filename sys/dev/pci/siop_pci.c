@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.6 2000/05/09 17:05:52 bouyer Exp $	*/
+/*	$NetBSD: siop_pci.c,v 1.7 2000/05/10 17:22:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -230,6 +230,11 @@ siop_pci_attach(parent, self, aux)
 	struct siop_pci_softc *sc = (struct siop_pci_softc *)self;
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	pcireg_t memtype;
+	int memh_valid, ioh_valid;
+	bus_addr_t ioaddr, memaddr;
 
 	sc->sc_pp = siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
 	if (sc->sc_pp == NULL) {
@@ -240,18 +245,35 @@ siop_pci_attach(parent, self, aux)
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
 	sc->siop.sc_dmat = pa->pa_dmat;
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->siop.sc_rt, &sc->siop.sc_rh, &sc->siop.sc_raddr, NULL) != 0) {
-		/* Try to map memory addr */
-		if (pci_mapreg_map(pa, 0x14,
-		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-		    &sc->siop.sc_rt, &sc->siop.sc_rh,
-			&sc->siop.sc_raddr, NULL) != 0) {
-			printf("%s: unable to map device registers\n",
-			    sc->siop.sc_dev.dv_xname);
-			return;
-		}
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, 0x14);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		memh_valid = (pci_mapreg_map(pa, 0x14, memtype, 0,
+		    &memt, &memh, &memaddr, NULL) == 0);
+		break;
+	default:
+		memh_valid = 0;
 	}
+
+	ioh_valid = (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, &ioaddr, NULL) == 0);
+
+	if (memh_valid) {
+		sc->siop.sc_rt = memt;
+		sc->siop.sc_rh = memh;
+		sc->siop.sc_raddr = memaddr;
+	} else if (ioh_valid) {
+		sc->siop.sc_rt = iot;
+		sc->siop.sc_rh = ioh;
+		sc->siop.sc_raddr = ioaddr;
+	} else {
+		printf("%s: unable to map device registers\n",
+		    sc->siop.sc_dev.dv_xname);
+		return;
+	}
+
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &intrhandle) != 0) {
 		printf("%s: couldn't map interrupt\n",
