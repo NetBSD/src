@@ -29,7 +29,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: wiconfig.c,v 1.3 2000/03/26 08:58:11 itojun Exp $
+ *	$Id: wiconfig.c,v 1.4 2000/05/04 21:19:12 explorer Exp $
  */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.3 2000/03/26 08:58:11 itojun Exp $";
+	"@(#) $Id: wiconfig.c,v 1.4 2000/05/04 21:19:12 explorer Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -727,8 +727,10 @@ int main(argc, argv)
 	if (iface == NULL)
 		usage(p);
 
-	if (key != NULL)
+	if (key != NULL) {
 	        wi_setkeys(iface, key, modifier);
+		exit(0);
+	}
 
 	wi_dumpinfo(iface);
 
