@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.4 2002/09/25 22:21:18 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.5 2003/01/18 06:23:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,17 +38,19 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>  
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext13 sc;
 	struct trapframe *tf;
 	int error;
@@ -63,7 +65,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (error);
 
 	/* Restore the register context. */
-	tf = trapframe(p);
+	tf = trapframe(l);
 	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);
 	*tf = sc.sc_frame;

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3 2002/08/08 01:27:35 chs Exp $	*/
+/*	$NetBSD: userret.h,v 1.4 2003/01/18 06:23:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,18 +40,26 @@
  * trap and syscall.
  */
 static __inline void
-userret(struct proc *p, struct trapframe *frame)
+userret(struct lwp *l, struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb;
 	int sig;
 
 	/* Take pending signals. */
-	while ((sig = CURSIG(p)) != 0) {
+	while ((sig = CURSIG(l)) != 0) {
 		postsig(sig);
 	}
 
-	pcb = &p->p_addr->u_pcb;
+	/* Invoke per-process kernel-exit handling, if any */
+	if (l->l_proc->p_userret)
+		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
+
+	/* Invoke any pending upcalls */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	pcb = &l->l_addr->u_pcb;
 
 	/*
 	 * If someone stole the fp or vector unit while we were away,
@@ -59,13 +67,13 @@ userret(struct proc *p, struct trapframe *frame)
 	 */
 #ifdef PPC_HAVE_FPU
 	if ((pcb->pcb_flags & PCB_FPU) &&
-	    (p != ci->ci_fpuproc || pcb->pcb_fpcpu != ci)) {
+	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
 		frame->srr1 &= ~PSL_FP;
 	}
 #endif
 #ifdef ALTIVEC
 	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
-	    (p != ci->ci_vecproc || pcb->pcb_veccpu != ci)) {
+	    (l != ci->ci_veclwp || pcb->pcb_veccpu != ci)) {
 		frame->srr1 &= ~PSL_VEC;
 	}
 
@@ -74,10 +82,10 @@ userret(struct proc *p, struct trapframe *frame)
 	 * cpu, we need to stop any data streams that are active (since
 	 * it will be a different address space).
 	 */
-	if (ci->ci_vecproc != NULL && ci->ci_vecproc != p) {
+	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
 		__asm __volatile("dssall;sync");
 	}
 #endif
 
-	ci->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

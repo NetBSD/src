@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.29 2002/10/10 22:37:52 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.30 2003/01/18 06:23:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -725,8 +725,9 @@ s_sctrap:
 	isync
 	addi	3,1,8
 /* Call the appropriate syscall handler: */
-	lis	4,_C_LABEL(curproc)@ha
-	lwz	4,_C_LABEL(curproc)@l(4)
+	lis	4,_C_LABEL(curlwp)@ha
+	lwz	4,_C_LABEL(curlwp)@l(4)
+	lwz	4,L_PROC@l(4)
 	lwz	4,P_MD_SYSCALL@l(4)
 	mtctr	4
 	bctrl

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.14 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.15 2003/01/18 06:23:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,7 +37,13 @@
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/exec.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
+#include <sys/signal.h>
 #include <sys/sysctl.h>
+#include <sys/ucontext.h>
 #include <sys/user.h>
 
 int cpu_timebase;
@@ -46,16 +52,19 @@ int cpu_printfataltraps;
 extern int powersave;
 #endif
 
+extern struct pool siginfo_pool;
+
 /*
  * Set set up registers on exec.
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct trapframe *tf = trapframe(p);
+	struct proc *p = l->l_proc;
+	struct trapframe *tf = trapframe(l);
 	struct ps_strings arginfo;
 
 	memset(tf, 0, sizeof *tf);
@@ -93,7 +102,7 @@ setregs(p, pack, stack)
 #ifdef ALTIVEC
 	tf->vrsave = 0;
 #endif
-	p->p_addr->u_pcb.pcb_flags = 0;
+	l->l_addr->u_pcb.pcb_flags = 0;
 }
 
 /*
@@ -191,3 +200,25 @@ cpu_dumpconf()
 	if (dumplo < nblks - ctod(dumpsize))
 		dumplo = nblks - ctod(dumpsize);
 }
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+
+	tf = trapframe(l);
+
+	/*
+	 * Build context to run handler in.
+	 */
+	tf->fixreg[1] = (int)((struct saframe *)sp - 1);
+	tf->lr = 0;
+	tf->fixreg[3] = (int)type;
+	tf->fixreg[4] = (int)sas;
+	tf->fixreg[5] = (int)nevents;
+	tf->fixreg[6] = (int)ninterrupted;
+	tf->fixreg[7] = (int)ap;
+	tf->srr0 = (int)upcall;
+
+}
+

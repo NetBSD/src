@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2002/11/25 01:31:12 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2003/01/18 06:23:29 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -66,12 +66,12 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 	struct device *ci_dev;		/* device of corresponding cpu */
-	struct proc *ci_curproc;	/* current owner of the processor */
+	struct lwp *ci_curlwp;		/* current owner of the processor */
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
-	struct proc *ci_fpuproc;
-	struct proc *ci_vecproc;
+	struct lwp *ci_fpulwp;
+	struct lwp *ci_veclwp;
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
 
@@ -132,7 +132,7 @@ void	cpu_boot_secondary_processors(void);
 extern struct cpu_info cpu_info[];
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
-#define curproc			curcpu()->ci_curproc
+#define curlwp			curcpu()->ci_curlwp
 #define curpcb			curcpu()->ci_curpcb
 #define curpm			curcpu()->ci_curpm
 #define want_resched		curcpu()->ci_want_resched
@@ -213,10 +213,11 @@ mfpvr(void)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth > 0)
 
-#define	PROC_PC(p)		(trapframe(p)->srr0)
+#define	LWP_PC(l)		(trapframe(l)->srr0)
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
+#define	cpu_proc_fork(p1, p2)
 
 extern int powersave;
 extern int cpu_timebase;
