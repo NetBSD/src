@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.74 2002/09/24 18:23:14 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.75 2002/09/24 18:25:54 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -262,10 +262,11 @@ _rtld(sp, relocbase)
 	/* Find the auxiliary vector on the stack. */
 	/* first Elf_Word reserved to address of exit routine */
 #if defined(RTLD_DEBUG)
+	debug = 1;
 	dbg(("sp = %p, argc = %ld, argv = %p <%s>", sp, (long)sp[2],
 	     &sp[3], (char *) sp[3]));
-	dbg(("got is at %p, dynamic is at %p",
-	    _GLOBAL_OFFSET_TABLE_, &_DYNAMIC));
+	dbg(("got is at %p, dynamic is at %p", _GLOBAL_OFFSET_TABLE_,
+	    &_DYNAMIC));
 	dbg(("_ctype_ is %p", _ctype_));
 #endif
 
@@ -348,6 +349,9 @@ _rtld(sp, relocbase)
 	if (_rtld_trust) {
 #ifdef DEBUG
 		const char     *ld_debug = getenv("LD_DEBUG");
+#ifdef RTLD_DEBUG
+		debug = 0;
+#endif
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
 #endif
