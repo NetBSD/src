@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.47 2000/05/23 12:35:35 itojun Exp $
+.\"	$NetBSD: sysctl.8,v 1.47.4.1 2000/08/16 01:23:21 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -193,8 +193,8 @@ privilege can change the value.
 .It kern.vdisable	integer	no
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
-.It net.inet.icmp.errratelimit	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
+.It net.inet.icmp.errppslimit	integer	yes
 .It net.inet.ip.allowsrcrt	integer	yes
 .It net.inet.ip.anonportmax	integer	yes
 .It net.inet.ip.anonportmin	integer	yes
@@ -230,7 +230,7 @@ privilege can change the value.
 .It net.inet.tcp.mssdflt	integer	yes
 .It net.inet.tcp.recvspace	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
-.It net.inet.tcp.rstratelimit	integer	yes
+.It net.inet.tcp.rstppslimit	integer	yes
 .It net.inet.tcp.sack	integer	yes
 .It net.inet.tcp.sendspace	integer	yes
 .It net.inet.tcp.slowhz	integer	no
@@ -242,8 +242,9 @@ privilege can change the value.
 .It net.inet.udp.checksum	integer	yes
 .It net.inet.udp.recvspace	integer	yes
 .It net.inet.udp.sendspace	integer	yes
-.It net.inet6.icmp6.errratelimit	integer	yes
+.It net.inet6.icmp6.errppslimit	integer	yes
 .It net.inet6.icmp6.nd6_delay	integer	yes
+.It net.inet6.icmp6.nd6_maxnudhint	integer	yes
 .It net.inet6.icmp6.nd6_mmaxtries	integer	yes
 .It net.inet6.icmp6.nd6_prune	integer	yes
 .It net.inet6.icmp6.nd6_umaxtries	integer	yes
