@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.23 2004/08/21 21:29:39 thorpej Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.24 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.23 2004/08/21 21:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.24 2005/01/31 21:13:16 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -605,7 +605,7 @@ static const struct {
 };
 
 static void
-asc2ascii(u_char asc, u_char ascq, char *result, size_t l)
+asc2ascii(uint8_t asc, uint8_t ascq, char *result, size_t l)
 {
 	int i = 0;
 

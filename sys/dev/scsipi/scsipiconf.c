@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.27 2004/09/18 00:21:03 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.28 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.27 2004/09/18 00:21:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.28 2005/01/31 21:13:16 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.27 2004/09/18 00:21:03 mycroft Exp 
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 
-#define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
+#define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (uint8_t)'\377')
 
 int
 scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
-    int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
+    int cmdlen, uint8_t *data_addr, int datalen, int retries, int timeout,
     struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
@@ -230,7 +230,7 @@ scsipi_dtype(int type)
 }
 
 void
-scsipi_strvis(u_char *dst, int dlen, u_char *src, int slen)
+scsipi_strvis(uint8_t *dst, int dlen, uint8_t *src, int slen)
 {
 
 	/* Trim leading and trailing blanks and NULs. */
