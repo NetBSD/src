@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 2000/06/29 07:07:52 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 2001/05/02 12:50:24 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -448,7 +448,8 @@ fdcattach(parent, self, aux)
 					     ia->ia_dmaintr, fdcdmaintr, fdc,
 					     ia->ia_dmaintr+1, fdcdmaerrintr,
 					     fdc);
-	if (bus_dmamap_create(fdc->sc_dmat, FDC_MAXIOSIZE, 16, 0xf000, 0,
+	if (bus_dmamap_create(fdc->sc_dmat, FDC_MAXIOSIZE, 16,
+			      DMAC_MAXSEGSZ, 0,
 			      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 			      &fdc->sc_dmamap)) {
 		printf("%s: can't set up intio DMA map\n",
