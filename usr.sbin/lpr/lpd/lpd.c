@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.23 2000/10/03 11:45:30 scw Exp $	*/
+/*	$NetBSD: lpd.c,v 1.24 2000/10/03 13:28:27 scw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.23 2000/10/03 11:45:30 scw Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.24 2000/10/03 13:28:27 scw Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,8 +294,11 @@ main(argc, argv)
 	else
 		finet = NULL;	/* pretend we couldn't open TCP socket. */
 
-	if (blist != NULL)
+	if (blist != NULL) {
+		for (i = 0; i < blist_addrs; i++)
+			free(blist[i]);
 		free(blist);
+	}
 
 	if (finet) {
 		for (i = 1; i <= *finet; i++) {
