@@ -1,4 +1,4 @@
-/*	$NetBSD: snmp.c,v 1.5 2002/06/02 13:47:03 itojun Exp $	*/
+/*	$NetBSD: snmp.c,v 1.6 2002/07/14 16:30:42 wiz Exp $	*/
 
 #include "defs.h"
 #include <netinet/in_var.h>
@@ -158,9 +158,9 @@ get_address(name, length, addr, n)
  */
 u_char *
 o_scalar(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
@@ -253,9 +253,9 @@ next_boundary(vifi, addr, mask)
  */
 u_char *
 o_dvmrpBoundaryTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
@@ -383,9 +383,9 @@ find_neighbor(vifi, addr)
 
 u_char *
 o_dvmrpNeighborTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
@@ -557,9 +557,9 @@ next_cache(addr, vifi)
  */
 u_char *
 o_igmpCacheTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
@@ -677,15 +677,15 @@ o_igmpCacheTable(vp, name, length, exact, var_len, write_method)
  */
 u_char *
 o_igmpInterfaceTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
     oid			newname[MAX_NAME_LEN];
-    register int	ifnum;
+    int	ifnum;
     int result;
 static struct sioc_vif_req v_req;
 
@@ -749,15 +749,15 @@ refresh_vif(v_req, ifnum)
  */
 u_char *
 o_ipMRouteInterfaceTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
     oid			newname[MAX_NAME_LEN];
-    register int	ifnum;
+    int	ifnum;
     int result;
 static struct sioc_vif_req v_req;
 
@@ -857,9 +857,9 @@ static struct sioc_vif_req v_req;
  */
 u_char *
 o_dvmrpRouteTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
@@ -950,9 +950,9 @@ o_dvmrpRouteTable(vp, name, length, exact, var_len, write_method)
  */
 u_char *
 o_dvmrpRouteNextHopTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
@@ -1034,9 +1034,9 @@ o_dvmrpRouteNextHopTable(vp, name, length, exact, var_len, write_method)
  */
 u_char *
 o_ipMRouteTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
@@ -1153,9 +1153,9 @@ static struct sioc_sg_req sg_req;
  */
 u_char *
 o_ipMRouteNextHopTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
+    struct variable *vp;   /* IN - pointer to variable entry that points here */
+    oid	*name;	    /* IN/OUT - input name requested, output name found */
+    int	*length;    /* IN/OUT - length of input and output oid's */
     int			exact;	    /* IN - TRUE if an exact match was requested. */
     int			*var_len;   /* OUT - length of variable or 0 if function returned. */
     int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
