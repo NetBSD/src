@@ -230,6 +230,11 @@ struct svr4_sys_hrtsys_args {
 	syscallarg(void *) rv2;
 };
 
+struct svr4_sys_pathconf_args {
+	syscallarg(char *) path;
+	syscallarg(int) name;
+};
+
 struct svr4_sys_mmap_args {
 	syscallarg(svr4_caddr_t) addr;
 	syscallarg(svr4_size_t) len;
@@ -237,6 +242,11 @@ struct svr4_sys_mmap_args {
 	syscallarg(int) flags;
 	syscallarg(int) fd;
 	syscallarg(svr4_off_t) pos;
+};
+
+struct svr4_sys_fpathconf_args {
+	syscallarg(int) fd;
+	syscallarg(int) name;
 };
 
 struct svr4_sys_xstat_args {
@@ -260,8 +270,8 @@ struct svr4_sys_fxstat_args {
 struct svr4_sys_xmknod_args {
 	syscallarg(int) two;
 	syscallarg(char *) path;
-	syscallarg(svr4_dev_t) dev;
 	syscallarg(svr4_mode_t) mode;
+	syscallarg(svr4_dev_t) dev;
 };
 
 struct svr4_sys_setrlimit_args {
@@ -386,10 +396,11 @@ int	svr4_sys_statvfs	__P((struct proc *, void *, register_t *));
 int	svr4_sys_fstatvfs	__P((struct proc *, void *, register_t *));
 int	svr4_sys_waitsys	__P((struct proc *, void *, register_t *));
 int	svr4_sys_hrtsys	__P((struct proc *, void *, register_t *));
+int	svr4_sys_pathconf	__P((struct proc *, void *, register_t *));
 int	svr4_sys_mmap	__P((struct proc *, void *, register_t *));
 int	sys_mprotect	__P((struct proc *, void *, register_t *));
 int	sys_munmap	__P((struct proc *, void *, register_t *));
-int	sys_fpathconf	__P((struct proc *, void *, register_t *));
+int	svr4_sys_fpathconf	__P((struct proc *, void *, register_t *));
 int	sys_vfork	__P((struct proc *, void *, register_t *));
 int	sys_fchdir	__P((struct proc *, void *, register_t *));
 int	sys_readv	__P((struct proc *, void *, register_t *));

@@ -86,6 +86,7 @@
 #define	SVR4_SYS_fstatvfs	104
 #define	SVR4_SYS_waitsys	107
 #define	SVR4_SYS_hrtsys	109
+#define	SVR4_SYS_pathconf	113
 #define	SVR4_SYS_mmap	115
 #define	SVR4_SYS_mprotect	116
 #define	SVR4_SYS_munmap	117
@@ -113,4 +114,4 @@
 #define	SVR4_SYS_gettimeofday	156
 #define	SVR4_SYS_getitimer	157
 #define	SVR4_SYS_setitimer	158
-#define	SVR4_SYS_MAXSYSCALL	187
+#define	SVR4_SYS_MAXSYSCALL	213
