@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.15 1999/03/24 06:34:58 mycroft Exp $
+.\"	$NetBSD: fcntl.2,v 1.16 1999/03/25 18:37:06 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Fd #include <fcntl.h>
 .Ft int
-.Fn fcntl "int fd" "int cmd" "int arg"
+.Fn fcntl "int fd" "int cmd" "void *arg"
 .Sh DESCRIPTION
 .Fn fcntl
 provides for control over descriptors.
@@ -50,7 +50,13 @@ The argument
 .Fa fd
 is a descriptor to be operated on by
 .Fa cmd
-as follows:
+as described below.
+The argument
+.Fa arg
+is technically a pointer to void and is usually interpreted as such,
+but it is also interpreted as an int by some commands and ignored by others.
+.Pp
+Commands are:
 .Bl -tag -width F_GETOWNX
 .It Dv F_DUPFD
 Return a new descriptor as follows:
@@ -58,7 +64,8 @@ Return a new descriptor as follows:
 .Bl -bullet -compact -offset 4n
 .It
 Lowest numbered available descriptor greater than or equal to
-.Fa arg .
+.Fa arg ,
+which is interpreted as an int.
 .It
 Same object references as the original descriptor.
 .It
@@ -97,7 +104,8 @@ Get descriptor status flags, as described below
 is ignored).
 .It Dv F_SETFL
 Set descriptor status flags to
-.Fa arg .
+.Fa arg ,
+which is interpreted as an int.
 .It Dv F_GETOWN
 Get the process ID or process group
 currently receiving
@@ -120,6 +128,9 @@ process groups are specified by supplying
 as negative, otherwise 
 .Fa arg
 is interpreted as a process ID.
+The argument
+.Fa arg
+is interpreted as an int.
 .El
 .Pp
 The flags for the
