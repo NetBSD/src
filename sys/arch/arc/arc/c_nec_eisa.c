@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.3 2002/12/07 13:09:46 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.4 2002/12/09 13:38:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -61,6 +61,7 @@ struct isabr_config isabr_nec_eisa_conf = {
 int
 isabr_nec_eisa_intr_status()
 {
+
 	return (in32(RD94_SYS_INTSTAT2) & (ICU_LEN - 1));
 }
 
@@ -81,6 +82,7 @@ void
 jazzio_nec_eisa_set_iointr_mask(mask)
 	int mask;
 {
+
 	out16(RD94_SYS_LB_IE2, mask);
 }
 
@@ -90,10 +92,10 @@ jazzio_nec_eisa_set_iointr_mask(mask)
 void
 c_nec_eisa_init()
 {
+
 	/*
 	 * Initialize I/O address offset
 	 */
-
 	arc_bus_space_init(&jazzio_bus, "jazzio",
 	    RD94_P_LOCAL_IO_BASE, RD94_V_LOCAL_IO_BASE,
 	    RD94_V_LOCAL_IO_BASE, RD94_S_LOCAL_IO_BASE);
@@ -109,7 +111,7 @@ c_nec_eisa_init()
 	 */
 	arc_enter_wired(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE, 0,
 	    MIPS3_PG_SIZE_256K);
-	arc_enter_wired(RD94_V_PCI_IO, RD94_P_PCI_IO, RD94_P_PCI_MEM,
+	arc_enter_wired(RD94_V_EISA_IO, RD94_P_EISA_IO, RD94_P_EISA_MEM,
 	    MIPS3_PG_SIZE_16M);
 
 	/*
