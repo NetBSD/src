@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2002/10/14 18:39:39 elric Exp $
+# $NetBSD: GENERIC,v 1.142 2002/10/15 13:53:01 jdc Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.141 $"
+#ident 		"GENERIC-$Revision: 1.142 $"
 
 maxusers	32
 
@@ -557,7 +557,7 @@ pseudo-device	bridge
 ## /dev/audio support (`audioamd' plus `audio')
 ##
 audioamd0	at mainbus0				# sun4c
-#audioamd0	at obio0				# sun4m
+audioamd0	at obio0				# sun4m
 audioamd0	at sbus0 slot ? offset ?		# sun4m
 audio*		at audioamd0
 
