@@ -1,4 +1,4 @@
-/*	$NetBSD: targmatch.h,v 1.1.1.1 1997/09/26 02:38:49 gwr Exp $	*/
+/*	$NetBSD: targmatch.h,v 1.2 1998/07/12 19:09:29 thorpej Exp $	*/
 
 /*
  * This file was copied by hand from the result of configure with a
@@ -459,7 +459,7 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_m68k4knetbsd_vec)
 
-{ "m68*-hp*-netbsd*",
+{ "m68*-hp*-netbsd*0.*", NULL },{ "m68*-hp*-netbsd*1.[012]*",
 &m68k4knetbsd_vec },
 #endif
 
