@@ -1,9 +1,20 @@
-#	$NetBSD: Makefile,v 1.1 2000/07/25 16:32:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2000/07/25 18:54:09 thorpej Exp $
 
 .include <bsd.own.mk>
 
+.include "${.CURDIR}/Makefile.inc"
+
 .if defined(SSHDIST)
 SUBDIR=	libssh ssh sshd ssh-add ssh-keygen ssh-agent scp
+
+distribution:
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 \
+	    ${SSHDIST}/ssh_config ${DESTDIR}/etc/ssh_config
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 \ 
+	    ${SSHDIST}/sshd_config ${DESTDIR}/etc/sshd_config
+.else
+distribution:
+	@true
 .endif
 
 .include <bsd.subdir.mk>
