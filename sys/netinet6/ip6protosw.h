@@ -1,9 +1,10 @@
-/*	$NetBSD: ip6protosw.h,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.3.2.1 2000/11/20 18:10:54 bouyer Exp $	*/
+/*	$KAME: ip6protosw.h,v 1.14 2000/10/18 18:15:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -74,6 +75,7 @@
  * Protocol switch table for IPv6.
  * All other definitions should refer to sys/protosw.h
  */
+#include <net/pfil.h>
 
 struct mbuf;
 struct sockaddr;
@@ -81,6 +83,30 @@ struct socket;
 struct domain;
 struct proc;
 struct ip6_hdr;
+struct icmp6_hdr;
+struct in6_addr;
+
+/*
+ * argument type for the last arg of pr_ctlinput().
+ * should be consulted only with AF_INET6 family.
+ *
+ * IPv6 ICMP IPv6 [exthdrs] finalhdr paylaod
+ * ^    ^    ^              ^
+ * |    |    ip6c_ip6       ip6c_off
+ * |    ip6c_icmp6
+ * ip6c_m
+ *
+ * ip6c_finaldst usually points to ip6c_ip6->ip6_dst.  if the original
+ * (internal) packet carries a routing header, it may point the final
+ * dstination address in the routing header.
+ */
+struct ip6ctlparam {
+	struct mbuf *ip6c_m;		/* start of mbuf chain */
+	struct icmp6_hdr *ip6c_icmp6;	/* icmp6 header of target packet */
+	struct ip6_hdr *ip6c_ip6;	/* ip6 header of target packet */
+	int ip6c_off;			/* offset of the target proto header */
+	struct in6_addr *ip6c_finaldst;	/* final destination address */
+};
 
 struct ip6protosw {
 	int 	pr_type;		/* socket type used for */
@@ -94,8 +120,7 @@ struct ip6protosw {
 	int	(*pr_output)		/* output to protocol (from above) */
 			__P((struct mbuf *, ...));
 	void	(*pr_ctlinput)		/* control input (from below) */
-			__P((int, struct sockaddr *, struct ip6_hdr *,
-				struct mbuf *, int));
+			__P((int, struct sockaddr *, void *));
 	int	(*pr_ctloutput)		/* control output (from above) */
 			__P((int, struct socket *, int, int, struct mbuf **));
 
@@ -116,7 +141,9 @@ struct ip6protosw {
 			__P((void));
 	int	(*pr_sysctl)		/* sysctl for protocol */
 			__P((int *, u_int, void *, size_t *, void *, size_t));
+	struct	pfil_head	pr_pfh;
 };
 
+extern	struct	ip6protosw	inet6sw[];
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.8 1999/03/25 18:48:56 mrg Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.8.8.1 2000/11/20 18:12:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -48,6 +48,7 @@
 /*
  * uvm_unix.c: traditional sbrk/grow interface to vm.
  */
+#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +60,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm.h>
-
 
 /*
  * sys_obreak: set break
@@ -76,48 +75,46 @@ sys_obreak(p, v, retval)
 	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
 	} */ *uap = v;
-	register struct vmspace *vm = p->p_vmspace;
+	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
+	ssize_t diff;
 	int rv;
-	register int diff;
 
 	old = (vaddr_t)vm->vm_daddr;
-	new = round_page(SCARG(uap, nsize));
-	if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
-		return(ENOMEM);
+	new = round_page((vaddr_t)SCARG(uap, nsize));
+	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+		return (ENOMEM);
 
-	old = round_page(old + ctob(vm->vm_dsize));
+	old = round_page(old + ptoa(vm->vm_dsize));
 	diff = new - old;
+
+	if (diff == 0)
+		return (0);
 
 	/*
 	 * grow or shrink?
 	 */
-
 	if (diff > 0) {
-
 		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+		    0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
-
-		if (rv != KERN_SUCCESS) {
-			uprintf("sbrk: grow failed, return = %d\n", rv);
-			return(ENOMEM);
+		if (rv == KERN_SUCCESS) {
+			vm->vm_dsize += atop(diff);
+			return (0);
 		}
-		vm->vm_dsize += btoc(diff);
-
-	} else if (diff < 0) {
-
-		diff = -diff;
-		rv = uvm_deallocate(&vm->vm_map, new, diff);
-		if (rv != KERN_SUCCESS) {
-			uprintf("sbrk: shrink failed, return = %d\n", rv);
-			return(ENOMEM);
+	} else {
+		rv = uvm_deallocate(&vm->vm_map, new, -diff);
+		if (rv == KERN_SUCCESS) {
+			vm->vm_dsize -= atop(-diff);
+			return (0);
 		}
-		vm->vm_dsize -= btoc(diff);
-
 	}
-	return(0);
+
+	uprintf("sbrk: %s %ld failed, return = %d\n",
+	    diff > 0 ? "grow" : "shrink",
+	    (long)(diff > 0 ? diff : -diff), rv);
+	return (ENOMEM);
 }
 
 /*
@@ -129,8 +126,8 @@ uvm_grow(p, sp)
 	struct proc *p;
 	vaddr_t sp;
 {
-	register struct vmspace *vm = p->p_vmspace;
-	register int si;
+	struct vmspace *vm = p->p_vmspace;
+	int si;
 
 	/*
 	 * For user defined stacks (from sendsig).
@@ -147,7 +144,7 @@ uvm_grow(p, sp)
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
-	si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
+	si = btoc(USRSTACK-sp) - vm->vm_ssize;
 	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
 	vm->vm_ssize += si;
@@ -185,15 +182,16 @@ uvm_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	register struct vmspace *vm = p->p_vmspace;
-	register vm_map_t map = &vm->vm_map;
-	register vm_map_entry_t entry;
-	vaddr_t start, end;
+	struct vmspace *vm = p->p_vmspace;
+	vm_map_t map = &vm->vm_map;
+	vm_map_entry_t entry;
+	vaddr_t start, end, maxstack;
 	struct coreseg cseg;
 	off_t offset;
 	int flag, error = 0;
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
@@ -216,10 +214,11 @@ uvm_coredump(p, vp, cred, chdr)
 			end = VM_MAXUSER_ADDRESS;
 
 		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			flag = CORE_STACK;
-			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
-			if (start >= end)
+			if (end <= maxstack)
 				continue;
+			if (start < maxstack)
+				start = maxstack;
+			flag = CORE_STACK;
 		} else
 			flag = CORE_DATA;
 
@@ -252,3 +251,85 @@ uvm_coredump(p, vp, cred, chdr)
 	return (error);
 }
 
+#if COMPAT_NETBSD32
+/*
+ * uvm_coredump32: dump 32-bit core!
+ */
+
+int
+uvm_coredump32(p, vp, cred, chdr)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	struct core32 *chdr;
+{
+	struct vmspace *vm = p->p_vmspace;
+	vm_map_t map = &vm->vm_map;
+	vm_map_entry_t entry;
+	vaddr_t start, end, maxstack;
+	struct coreseg32 cseg;
+	off_t offset;
+	int flag, error = 0;
+
+	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
+
+		/* should never happen for a user process */
+		if (UVM_ET_ISSUBMAP(entry)) {
+			panic("uvm_coredump: user process with submap?");
+		}
+
+		if (!(entry->protection & VM_PROT_WRITE))
+			continue;
+
+		start = entry->start;
+		end = entry->end;
+
+		if (start >= VM_MAXUSER_ADDRESS)
+			continue;
+
+		if (end > VM_MAXUSER_ADDRESS)
+			end = VM_MAXUSER_ADDRESS;
+
+		if (start >= (vaddr_t)vm->vm_maxsaddr) {
+			if (end <= maxstack)
+				continue;
+			if (start < maxstack)
+				start = maxstack;
+			flag = CORE_STACK;
+		} else
+			flag = CORE_DATA;
+
+		/*
+		 * Set up a new core file segment.
+		 */
+		CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(*chdr), flag);
+		cseg.c_addr = start;
+		cseg.c_size = end - start;
+
+		error = vn_rdwr(UIO_WRITE, vp,
+		    (caddr_t)&cseg, chdr->c_seghdrsize,
+		    offset, UIO_SYSSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+		if (error)
+			break;
+
+		offset += chdr->c_seghdrsize;
+		error = vn_rdwr(UIO_WRITE, vp,
+		    (caddr_t)(u_long)cseg.c_addr, (int)cseg.c_size,
+		    offset, UIO_USERSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+		if (error)
+			break;
+		
+		offset += cseg.c_size;
+		chdr->c_nseg++;
+	}
+
+	return (error);
+}
+
+#endif

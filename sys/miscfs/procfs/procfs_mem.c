@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.23 1999/03/25 04:45:57 sommerfe Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.23.8.1 2000/11/20 18:09:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -54,10 +54,6 @@
 
 #include <miscfs/procfs/procfs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-
 #include <uvm/uvm_extern.h>
 
 #define	ISSET(t, f)	((t) & (f))
@@ -93,10 +89,8 @@ procfs_domem(curp, p, pfs, uio)
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
 		return(EFAULT);
-	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;  /* XXX */
 	error = uvm_io(&p->p_vmspace->vm_map, uio);
-	PRELE(p);
 	uvmspace_free(p->p_vmspace);
 
 #ifdef PMAP_NEED_PROCWR

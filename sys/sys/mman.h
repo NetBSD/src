@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.24 1999/07/07 06:02:21 thorpej Exp $	*/
+/*	$NetBSD: mman.h,v 1.24.2.1 2000/11/20 18:11:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -46,6 +46,19 @@
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
+
+#include <sys/ansi.h>
+
+#ifndef	mode_t
+typedef	__mode_t	mode_t;
+#define	mode_t		__mode_t
+#endif
+
+#ifndef	off_t
+typedef	__off_t		off_t;		/* file offset */
+#define	off_t		__off_t
+#endif
+
 
 /*
  * Protections are chosen from these bits, or-ed together
@@ -115,6 +128,15 @@ typedef	_BSD_SIZE_T_	size_t;
 #define	MADV_DONTNEED	4	/* dont need these pages */
 #define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
 #define	MADV_FREE	6	/* pages are empty, free them */
+/*
+ * Flags to minherit
+ */
+#define	MAP_INHERIT_SHARE	0	/* share with child */
+#define	MAP_INHERIT_COPY	1	/* copy into child */
+#define	MAP_INHERIT_NONE	2	/* absent from child */
+#define	MAP_INHERIT_DONATE_COPY	3	/* copy and delete -- not
+					   implemented in UVM */
+#define	MAP_INHERIT_DEFAULT	MAP_INHERIT_COPY
 #endif
 
 #ifndef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.10 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.10.8.1 2000/11/20 18:11:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -51,10 +51,6 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -78,10 +74,10 @@ ext2fs_read(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct inode *ip;
-	register struct uio *uio;
-	register struct m_ext2fs *fs;
+	struct vnode *vp;
+	struct inode *ip;
+	struct uio *uio;
+	struct m_ext2fs *fs;
 	struct buf *bp;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
@@ -163,7 +159,7 @@ ext2fs_read(v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, 1);
+			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -181,10 +177,10 @@ ext2fs_write(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct uio *uio;
-	register struct inode *ip;
-	register struct m_ext2fs *fs;
+	struct vnode *vp;
+	struct uio *uio;
+	struct inode *ip;
+	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct proc *p;
 	ufs_daddr_t lbn;
@@ -295,6 +291,6 @@ ext2fs_write(v)
 			uio->uio_resid = resid;
 		}
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, 1);
+		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	return (error);
 }

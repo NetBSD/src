@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.42 1999/07/02 08:46:47 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.42.2.1 2000/11/20 18:10:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -43,15 +43,22 @@
 #ifndef _NETINET_IN_H_
 #define	_NETINET_IN_H_
 
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define	sa_family_t	__sa_family_t
+#endif
+
 /*
  * Protocols
  */
 #define	IPPROTO_IP		0		/* dummy for IP */
-#define IPPROTO_HOPOPTS		0		/* IP6 hop-by-hop options */
+#define	IPPROTO_HOPOPTS		0		/* IP6 hop-by-hop options */
 #define	IPPROTO_ICMP		1		/* control message protocol */
 #define	IPPROTO_IGMP		2		/* group mgmt protocol */
 #define	IPPROTO_GGP		3		/* gateway^2 (deprecated) */
-#define IPPROTO_IPV4		4 		/* IP header */
+#define	IPPROTO_IPV4		4 		/* IP header */
 #define	IPPROTO_IPIP		4		/* IP inside IP */
 #define	IPPROTO_TCP		6		/* tcp */
 #define	IPPROTO_EGP		8		/* exterior gateway protocol */
@@ -59,25 +66,28 @@
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
-#define IPPROTO_IPV6		41		/* IP6 header */
-#define IPPROTO_ROUTING		43		/* IP6 routing header */
-#define IPPROTO_FRAGMENT	44		/* IP6 fragmentation header */
-#define IPPROTO_RSVP		46		/* resource reservation */
-#define IPPROTO_GRE		47		/* GRE encaps RFC 1701 */
+#define	IPPROTO_IPV6		41		/* IP6 header */
+#define	IPPROTO_ROUTING		43		/* IP6 routing header */
+#define	IPPROTO_FRAGMENT	44		/* IP6 fragmentation header */
+#define	IPPROTO_RSVP		46		/* resource reservation */
+#define	IPPROTO_GRE		47		/* GRE encaps RFC 1701 */
 #define	IPPROTO_ESP		50 		/* encap. security payload */
 #define	IPPROTO_AH		51 		/* authentication header */
-#define IPPROTO_MOBILE		55		/* IP Mobility RFC 2004 */
-#define IPPROTO_IPV6_ICMP	58		/* IPv6 ICMP */
-#define IPPROTO_ICMPV6		58		/* ICMP6 */
-#define IPPROTO_NONE		59		/* IP6 no next header */
-#define IPPROTO_DSTOPTS		60		/* IP6 destination option */
+#define	IPPROTO_MOBILE		55		/* IP Mobility RFC 2004 */
+#define	IPPROTO_IPV6_ICMP	58		/* IPv6 ICMP */
+#define	IPPROTO_ICMPV6		58		/* ICMP6 */
+#define	IPPROTO_NONE		59		/* IP6 no next header */
+#define	IPPROTO_DSTOPTS		60		/* IP6 destination option */
 #define	IPPROTO_EON		80		/* ISO cnlp */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
-#define IPPROTO_PIM		103		/* Protocol indep. multicast */
-#define IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
+#define	IPPROTO_PIM		103		/* Protocol indep. multicast */
+#define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
+
+/* last return value of *_input(), meaning "all job for this pkt is done".  */
+#define	IPPROTO_DONE		257
 
 
 /*
@@ -119,7 +129,7 @@
  */
 struct in_addr {
 	u_int32_t s_addr;
-};
+} __attribute__((__packed__));
 
 /*
  * Definitions of bits in internet address integers.
@@ -186,21 +196,18 @@ struct in_addr {
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
-/* last return value of *_input(), meaning "all job for this pkt is done".  */
-#define	IPPROTO_DONE		257
-
 /*
  * Socket address, internet style.
  */
 struct sockaddr_in {
-	u_int8_t  sin_len;
-	u_int8_t  sin_family;
-	u_int16_t sin_port;
-	struct	  in_addr sin_addr;
-	int8_t	  sin_zero[8];
+	u_int8_t	sin_len;
+	sa_family_t	sin_family;
+	u_int16_t	sin_port;
+	struct in_addr	sin_addr;
+	int8_t		sin_zero[8];
 };
 
-#define INET_ADDRSTRLEN                 16
+#define	INET_ADDRSTRLEN                 16
 
 /*
  * Structure used to describe IP options.
@@ -231,11 +238,11 @@ struct ip_opts {
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
-#define IP_PORTRANGE		19   /* int; range to use for ephemeral port */
+#define	IP_PORTRANGE		19   /* int; range to use for ephemeral port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 #define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
 #if 1 /*IPSEC*/
-#define IP_IPSEC_POLICY		22 /* struct; get/set security policy */
+#define	IP_IPSEC_POLICY		22 /* struct; get/set security policy */
 #endif
 
 /*
@@ -344,8 +351,10 @@ struct ip_mreq {
 #define	IPCTL_MTUDISCTIMEOUT   12	/* allow path MTU discovery */
 #define	IPCTL_MAXFLOWS         13	/* maximum ip flows allowed */
 #define	IPCTL_HOSTZEROBROADCAST 14	/* is host zero a broadcast addr? */
-#define IPCTL_GIF_TTL 	       15	/* default TTL for gif encap packet */
-#define	IPCTL_MAXID	       16
+#define	IPCTL_GIF_TTL 	       15	/* default TTL for gif encap packet */
+#define	IPCTL_LOWPORTMIN       16	/* minimum reserved port */
+#define	IPCTL_LOWPORTMAX       17	/* maximum reserved port */
+#define	IPCTL_MAXID	       18
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -364,18 +373,24 @@ struct ip_mreq {
 	{ "maxflows", CTLTYPE_INT }, \
 	{ "hostzerobroadcast", CTLTYPE_INT }, \
 	{ "gifttl", CTLTYPE_INT }, \
+	{ "lowportmin", CTLTYPE_INT }, \
+	{ "lowportmax", CTLTYPE_INT }, \
 }
 #endif /* !_XOPEN_SOURCE */
 
 /* INET6 stuff */
+#define	__KAME_NETINET_IN_H_INCLUDED_
 #include <netinet6/in6.h>
+#undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifdef _KERNEL
 extern	struct in_addr zeroin_addr;
+extern	u_char	ip_protox[];
 
 int	in_broadcast __P((struct in_addr, struct ifnet *));
 int	in_canforward __P((struct in_addr));
 int	in_cksum __P((struct mbuf *, int));
+int	in4_cksum __P((struct mbuf *, u_int8_t, int, int));
 int	in_localaddr __P((struct in_addr));
 void	in_socktrim __P((struct sockaddr_in *));
 

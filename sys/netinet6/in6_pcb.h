@@ -1,9 +1,10 @@
-/*	$NetBSD: in6_pcb.h,v 1.5 1999/07/22 03:59:42 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.5.2.1 2000/11/20 18:10:49 bouyer Exp $	*/
+/*	$KAME: in6_pcb.h,v 1.28 2000/06/09 01:10:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -68,9 +69,6 @@
 #define _NETINET6_IN6_PCB_H_
 
 #include <sys/queue.h>
-#if 1 /*IPSEC*/
-#include <netinet6/ipsec.h>
-#endif
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -80,6 +78,7 @@
  * control block.
  */
 struct icmp6_filter;
+struct inpcbpolicy;
 
 struct	in6pcb {
 	struct	in6pcb *in6p_next, *in6p_prev;
@@ -87,9 +86,9 @@ struct	in6pcb {
 	struct	in6pcb *in6p_head;	/* pointer back to chain of
 					   in6pcb's for this protocol */
 	struct	in6_addr in6p_faddr;	/* foreign host table entry */
-	u_short	in6p_fport;		/* foreign port */
+	u_int16_t in6p_fport;		/* foreign port */
 	struct	in6_addr in6p_laddr;	/* local host table entry */
-	u_short	in6p_lport;		/* local port */
+	u_int16_t in6p_lport;		/* local port */
 	u_int32_t in6p_flowinfo;	/* priority and flowlabel */
 	struct	socket *in6p_socket;	/* back pointer to socket */
 	caddr_t	in6p_ppcb;		/* pointer to per-protocol pcb */
@@ -105,9 +104,7 @@ struct	in6pcb {
 	LIST_ENTRY(in6pcb) in6p_hlist;	/* hash chain */
 	u_long	in6p_hash;		/* hash value */
 #if 1 /*IPSEC*/
-	struct secpolicy *in6p_sp;	/* security policy. It may not be
-					 * used according to policy selection.
-					 */
+	struct inpcbpolicy *in6p_sp;	/* security policy. */
 #endif
 	struct icmp6_filter *in6p_icmp6filt;
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
@@ -115,21 +112,30 @@ struct	in6pcb {
 
 #define in6p_ip6_nxt in6p_ip6.ip6_nxt  /* for KAME src sync over BSD*'s */
 
-/* flags in in6p_flags */
-#define IN6P_RECVOPTS		0x01	/* receive incoming IP6 options */
-#define IN6P_RECVRETOPTS	0x02	/* receive IP6 options for reply */
-#define IN6P_RECVDSTADDR	0x04	/* receive IP6 dst address */
-#define IN6P_HIGHPORT		0x10	/* user wants "high" port binding */
-#define IN6P_LOWPORT		0x20	/* user wants "low" port binding */
-#define IN6P_ANONPORT		0x40	/* port chosen for user */
-#define IN6P_FAITH		0x80	/* accept FAITH'ed connections */
-#define IN6P_PKTINFO		0x010000
-#define IN6P_HOPLIMIT		0x020000
-#define IN6P_NEXTHOP		0x040000
-#define IN6P_HOPOPTS		0x080000
-#define IN6P_DSTOPTS		0x100000
-#define IN6P_RTHDR		0x200000
-#define IN6P_CONTROLOPTS	(0x3f0000 | IN6P_RECVOPTS | IN6P_RECVRETOPTS | IN6P_RECVDSTADDR)
+/*
+ * Flags in in6p_flags
+ * We define KAME's original flags in higher 16 bits as much as possible
+ * for compatibility with *bsd*s.
+ */
+#define IN6P_RECVOPTS		0x001000 /* receive incoming IP6 options */
+#define IN6P_RECVRETOPTS	0x002000 /* receive IP6 options for reply */
+#define IN6P_RECVDSTADDR	0x004000 /* receive IP6 dst address */
+#define IN6P_PKTINFO		0x010000 /* receive IP6 dst and I/F */
+#define IN6P_HOPLIMIT		0x020000 /* receive hoplimit */
+#define IN6P_HOPOPTS		0x040000 /* receive hop-by-hop options */
+#define IN6P_DSTOPTS		0x080000 /* receive dst options after rthdr */
+#define IN6P_RTHDR		0x100000 /* receive routing header */
+#define IN6P_RTHDRDSTOPTS	0x200000 /* receive dstoptions before rthdr */
+
+#define IN6P_HIGHPORT		0x1000000 /* user wants "high" port binding */
+#define IN6P_LOWPORT		0x2000000 /* user wants "low" port binding */
+#define IN6P_ANONPORT		0x4000000 /* port chosen for user */
+#define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
+#define IN6P_BINDV6ONLY		0x10000000 /* do not grab IPv4 traffic */
+
+#define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
+				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS)
+
 
 #define IN6PLOOKUP_WILDCARD	1
 #define IN6PLOOKUP_SETLOCAL	2
@@ -147,7 +153,7 @@ struct	in6pcb {
 #ifdef _KERNEL
 void	in6_losing __P((struct in6pcb *));
 int	in6_pcballoc __P((struct socket *, struct in6pcb *));
-int	in6_pcbbind __P((struct in6pcb *, struct mbuf *));
+int	in6_pcbbind __P((struct in6pcb *, struct mbuf *, struct proc *));
 int	in6_pcbconnect __P((struct in6pcb *, struct mbuf *));
 void	in6_pcbdetach __P((struct in6pcb *));
 void	in6_pcbdisconnect __P((struct in6pcb *));
@@ -158,21 +164,30 @@ struct	in6pcb *
 int	in6_pcbnotify __P((struct in6pcb *, struct sockaddr *,
 			   u_int, struct in6_addr *, u_int, int,
 			   void (*)(struct in6pcb *, int)));
+void	in6_pcbpurgeif __P((struct in6pcb *, struct ifnet *));
 void	in6_rtchange __P((struct in6pcb *, int));
 void	in6_setpeeraddr __P((struct in6pcb *, struct mbuf *));
 void	in6_setsockaddr __P((struct in6pcb *, struct mbuf *));
-struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
-			struct ip6_pktopts *, struct ip6_moptions *,
-			struct route_in6 *, int *));
 
-#ifndef TCP6
+/* in in6_src.c */
+struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
+				     struct ip6_pktopts *,
+				     struct ip6_moptions *,
+				     struct route_in6 *,
+				     struct in6_addr *, int *));
+int	in6_selecthlim __P((struct in6pcb *, struct ifnet *));
+int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *));
+int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
+	struct in6pcb *, struct ifnet **));
+int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
+	struct ifnet *));
+
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));
 extern struct in6pcb *in6_pcblookup_connect __P((struct in6pcb *,
 	struct in6_addr *, u_int, struct in6_addr *, u_int, int));
 extern struct in6pcb *in6_pcblookup_bind __P((struct in6pcb *,
 	struct in6_addr *, u_int, int));
-#endif
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IN6_PCB_H_ */

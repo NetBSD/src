@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.28 1999/08/05 04:04:28 sommerfeld Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.28.2.1 2000/11/20 18:09:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,12 +52,15 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
+
+struct callout pffasttimo_ch, pfslowtimo_ch;
 
 /*
  * Current time values for fast and slow timeouts.  We can use u_int
@@ -76,8 +79,8 @@ u_int	pffasttimo_now;
 void
 domaininit()
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 #undef unix
 	/*
@@ -110,8 +113,10 @@ domaininit()
 #ifdef IPSEC
 	ADDDOMAIN(key);
 #endif
+#ifdef INET
 #if NARP > 0
 	ADDDOMAIN(arp);
+#endif
 #endif
 	ADDDOMAIN(route);
 #endif /* ! lint */
@@ -128,49 +133,65 @@ domaininit()
 		max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
 	max_datalen = MHLEN - max_hdr;
-	timeout(pffasttimo, NULL, 1);
-	timeout(pfslowtimo, NULL, 1);
+
+	callout_init(&pffasttimo_ch);
+	callout_init(&pfslowtimo_ch);
+
+	callout_reset(&pffasttimo_ch, 1, pffasttimo, NULL);
+	callout_reset(&pfslowtimo_ch, 1, pfslowtimo, NULL);
+}
+
+struct domain *
+pffinddomain(family)
+	int family;
+{
+	struct domain *dp;
+
+	for (dp = domains; dp != NULL; dp = dp->dom_next)
+		if (dp->dom_family == family)
+			return (dp);
+	return (NULL);
 }
 
 struct protosw *
 pffindtype(family, type)
 	int family, type;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
-	for (dp = domains; dp; dp = dp->dom_next)
-		if (dp->dom_family == family)
-			goto found;
-	return (0);
-found:
+	dp = pffinddomain(family);
+	if (dp == NULL)
+		return (NULL);
+
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 		if (pr->pr_type && pr->pr_type == type)
 			return (pr);
-	return (0);
+
+	return (NULL);
 }
 
 struct protosw *
 pffindproto(family, protocol, type)
 	int family, protocol, type;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
-	struct protosw *maybe = 0;
+	struct domain *dp;
+	struct protosw *pr;
+	struct protosw *maybe = NULL;
 
 	if (family == 0)
-		return (0);
-	for (dp = domains; dp; dp = dp->dom_next)
-		if (dp->dom_family == family)
-			goto found;
-	return (0);
-found:
+		return (NULL);
+
+	dp = pffinddomain(family);
+	if (dp == NULL)
+		return (NULL);
+
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 		if ((pr->pr_protocol == protocol) && (pr->pr_type == type))
 			return (pr);
 
 		if (type == SOCK_RAW && pr->pr_type == SOCK_RAW &&
-		    pr->pr_protocol == 0 && maybe == (struct protosw *)0)
+		    pr->pr_protocol == 0 && maybe == NULL)
 			maybe = pr;
 	}
 	return (maybe);
@@ -186,8 +207,8 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 	int family, protocol;
 
 	/*
@@ -203,11 +224,11 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	if (family == 0)
 		return (0);
-	for (dp = domains; dp; dp = dp->dom_next)
-		if (dp->dom_family == family)
-			goto found;
-	return (ENOPROTOOPT);
-found:
+
+	dp = pffinddomain(family);
+	if (dp == NULL)
+		return (ENOPROTOOPT);
+
 	switch (family) {
 #ifdef IPSEC
 	case PF_KEY:
@@ -235,8 +256,8 @@ pfctlinput(cmd, sa)
 	int cmd;
 	struct sockaddr *sa;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
@@ -248,8 +269,8 @@ void
 pfslowtimo(arg)
 	void *arg;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 	pfslowtimo_now++;
 
@@ -257,15 +278,15 @@ pfslowtimo(arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
-	timeout(pfslowtimo, NULL, hz/2);
+	callout_reset(&pfslowtimo_ch, hz / 2, pfslowtimo, NULL);
 }
 
 void
 pffasttimo(arg)
 	void *arg;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 	pffasttimo_now++;
 
@@ -273,5 +294,5 @@ pffasttimo(arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
-	timeout(pffasttimo, NULL, hz/5);
+	callout_reset(&pffasttimo_ch, hz / 5, pffasttimo, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.45 1999/08/25 04:50:08 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.45.2.1 2000/11/20 18:08:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,8 +74,6 @@
 #include <sys/ipc.h>
 #include <sys/user.h>
 #include <sys/mman.h>
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -404,8 +402,6 @@ hpux_sys_utssys(p, v, retval)
 	int i;
 	int error;
 	struct hpux_utsname	ut;
-	extern char ostype[], hostname[], osrelease[], version[];
-	extern char machine[];
 
 	switch (SCARG(uap, request)) {
 	/* uname */
@@ -902,7 +898,7 @@ hpux_sys_getpgrp2(cp, v, retval)
 	if (p == 0)
 		return (ESRCH);
 	if (cp->p_ucred->cr_uid && p->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
-	    !inferior(p))
+	    !inferior(p, cp))
 		return (EPERM);
 	*retval = p->p_pgid;
 	return (0);
@@ -1208,7 +1204,7 @@ hpux_sys_alarm_6x(p, v, retval)
 	} */ *uap = v;
 	int s = splhigh();
 
-	untimeout(realitexpire, (caddr_t)p);
+	callout_stop(&p->p_realit_ch);
 	timerclear(&p->p_realtimer.it_interval);
 	*retval = 0;
 	if (timerisset(&p->p_realtimer.it_value) &&
@@ -1221,7 +1217,12 @@ hpux_sys_alarm_6x(p, v, retval)
 	}
 	p->p_realtimer.it_value = time;
 	p->p_realtimer.it_value.tv_sec += SCARG(uap, deltat);
-	timeout(realitexpire, (caddr_t)p, hzto(&p->p_realtimer.it_value));
+	/*
+	 * We don't need to check the hzto() return value, here.
+	 * callout_reset() does it for us.
+	 */
+	callout_reset(&p->p_realit_ch, hzto(&p->p_realtimer.it_value),
+	    realitexpire, p);
 	splx(s);
 	return (0);
 }

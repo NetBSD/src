@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.21 1999/07/17 22:03:55 jtk Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.21.2.1 2000/11/20 18:08:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -500,9 +500,39 @@ linux_getifhwaddr(p, retval, fd, data)
 	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
 
 	/*
-	 * Only support finding addresses for "ethX".  Should we
-	 * do otherwise? XXX
+	 * Try real interface name first, then fake "ethX"
 	 */
+	for (ifp = ifnet.tqh_first, found = 0;
+	     ifp != 0 && !found;
+	     ifp = ifp->if_list.tqe_next) {
+		if (strcmp(lreq.if_name, ifp->if_xname))
+			/* not this interface */
+			continue;
+		found=1;           
+		if ((ifa = ifp->if_addrlist.tqh_first) != 0) {
+			for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+				sadl = (struct sockaddr_dl *)ifa->ifa_addr;
+				/* only return ethernet addresses */
+				/* XXX what about FDDI, etc. ? */
+				if (sadl->sdl_family != AF_LINK ||
+				    sadl->sdl_type != IFT_ETHER)
+					continue;
+				memcpy((caddr_t)&lreq.hwaddr.sa_data,
+				       LLADDR(sadl),
+				       MIN(sadl->sdl_alen,
+					   sizeof(lreq.hwaddr.sa_data)));
+				lreq.hwaddr.sa_family =
+					sadl->sdl_family;
+				error = copyout((caddr_t)&lreq, data,
+						sizeof(lreq));
+				goto out; 
+			}
+		} else {
+			error = ENODEV;
+			goto out;
+		}
+	}
+
 	if (lreq.if_name[0] == 'e' &&
 	    lreq.if_name[1] == 't' &&
 	    lreq.if_name[2] == 'h') {
@@ -545,20 +575,21 @@ linux_getifhwaddr(p, retval, fd, data)
 					break;
 				}
 		}
-	} else
-		/* not an "eth*" name */
-		error = EINVAL;
+	} else {
+		/* unknown interface, not even an "eth*" name */
+		error = ENODEV;
+	}
     
 out:
 	FILE_UNUSE(fp, p);
 	return error;
 }
-#undef IF_NAME_LEN 16
+#undef IF_NAME_LEN
 
 int
 linux_ioctl_socket(p, uap, retval)
-	register struct proc *p;
-	register struct linux_sys_ioctl_args /* {
+	struct proc *p;
+	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
@@ -610,13 +641,13 @@ linux_ioctl_socket(p, uap, retval)
 
 int
 linux_sys_connect(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	int error;
 
-	register struct sys_connect_args /* {
+	struct sys_connect_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(unsigned int) namelen;
@@ -626,7 +657,7 @@ linux_sys_connect(p, v, retval)
 
 	if (error == EISCONN) {
 		struct file *fp;
-		register struct socket *so;
+		struct socket *so;
 		int s, state, prflags;
 		
 		/* getsock() will use the descriptor for us */

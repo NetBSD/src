@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.1 1997/04/02 21:31:04 christos Exp $	 */
+/*	$NetBSD: at_control.c,v 1.1.22.1 2000/11/20 18:10:13 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -171,6 +171,7 @@ at_control(cmd, data, ifp, p)
 				return (ENOBUFS);
 
 			bzero(aa, sizeof *aa);
+			callout_init(&aa->aa_probe_ch);
 
 			if ((aa0 = at_ifaddr.tqh_first) != NULL) {
 				/*
@@ -190,6 +191,7 @@ at_control(cmd, data, ifp, p)
 			} else {
 				TAILQ_INSERT_TAIL(&at_ifaddr, aa, aa_list);
 			}
+			IFAREF(&aa->aa_ifa);
 
 			/*
 		         * Find the end of the interface's addresses
@@ -197,6 +199,7 @@ at_control(cmd, data, ifp, p)
 		         */
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
 			    (struct ifaddr *) aa, ifa_list);
+			IFAREF(&aa->aa_ifa);
 
 			/*
 		         * As the at_ifaddr contains the actual sockaddrs,
@@ -295,17 +298,7 @@ at_control(cmd, data, ifp, p)
 		    (struct sockaddr_at *) &ifr->ifr_addr));
 
 	case SIOCDIFADDR:
-		/*
-		 * scrub all routes.. didn't we just DO this? XXX yes, del it
-		 */
-		at_scrub(ifp, aa);
-
-		/*
-		 * remove the ifaddr from the interface
-		 */
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *) aa, ifa_list);
-		TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
-		IFAFREE((struct ifaddr *) aa);
+		at_purgeaddr((struct ifaddr *) aa, ifp);
 		break;
 
 	default:
@@ -314,6 +307,42 @@ at_control(cmd, data, ifp, p)
 		return ((*ifp->if_ioctl) (ifp, cmd, data));
 	}
 	return (0);
+}
+
+void
+at_purgeaddr(ifa, ifp)
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+{
+	struct at_ifaddr *aa = (void *) ifa;
+
+	/*
+	 * scrub all routes.. didn't we just DO this? XXX yes, del it
+	 * XXX above XXX not necessarily true anymore
+	 */
+	at_scrub(ifp, aa);
+
+	/*
+	 * remove the ifaddr from the interface
+	 */
+	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *) aa, ifa_list);
+	IFAFREE(&aa->aa_ifa);
+	TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
+	IFAFREE(&aa->aa_ifa);
+}
+
+void
+at_purgeif(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
+		nifa = TAILQ_NEXT(ifa, ifa_list);
+		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
+			continue;
+		at_purgeaddr(ifa, ifp);
+	}
 }
 
 /*
@@ -499,7 +528,8 @@ at_ifinit(ifp, aa, sat)
 				 * start off the probes as an asynchronous
 				 * activity. though why wait 200mSec?
 				 */
-				timeout(aarpprobe, ifp, hz / 5);
+				callout_reset(&aa->aa_probe_ch, hz / 5,
+				    aarpprobe, ifp);
 				if (tsleep(aa, PPAUSE | PCATCH, "at_ifinit",
 				    0)) {
 					/*

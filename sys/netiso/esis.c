@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.21 1999/04/14 16:26:42 chopps Exp $	*/
+/*	$NetBSD: esis.c,v 1.21.2.1 2000/11/20 18:11:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,7 @@ SOFTWARE.
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -111,6 +112,8 @@ extern int      iso_systype;
 struct sockaddr_dl esis_dl = {sizeof(esis_dl), AF_LINK};
 extern char     all_es_snpa[], all_is_snpa[];
 
+struct callout	esis_config_ch;
+
 #define EXTEND_PACKET(m, mhdr, cp)\
 	if (((m)->m_next = m_getclr(M_DONTWAIT, MT_HEADER)) == NULL) {\
 		esis_stat.es_nomem++;\
@@ -140,8 +143,11 @@ esis_init()
 
 	LIST_INIT(&esis_pcb);
 
-	timeout(snpac_age, (caddr_t) 0, hz);
-	timeout(esis_config, (caddr_t) 0, hz);
+	callout_init(&snpac_age_ch);
+	callout_init(&esis_config_ch);
+
+	callout_reset(&snpac_age_ch, hz, snpac_age, NULL);
+	callout_reset(&esis_config_ch, hz, esis_config, NULL);
 
 	clnl_protox[ISO9542_ESIS].clnl_input = esis_input;
 	clnl_protox[ISO10589_ISIS].clnl_input = isis_input;
@@ -277,13 +283,22 @@ esis_input(m0, va_alist)
 #endif
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
-	register struct esis_fixed *pdu = mtod(m0, struct esis_fixed *);
-	register int    type;
+	struct esis_fixed *pdu = mtod(m0, struct esis_fixed *);
+	int    type;
+	struct ifaddr *ifa;
 	va_list ap;
 
 	va_start(ap, m0);
 	shp = va_arg(ap, struct snpa_hdr *);
 	va_end(ap);
+
+	for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
+	     ifa = ifa->ifa_list.tqe_next)
+		if (ifa->ifa_addr->sa_family == AF_ISO)
+			break;
+	/* if we have no iso address just send it to the sockets */
+	if (ifa == 0)
+		goto bad;
 
 	/*
 	 *	check checksum if necessary
@@ -506,13 +521,13 @@ esis_rdoutput(inbound_shp, inbound_m, inbound_oidx, rd_dstnsap, rt)
  */
 int
 esis_insert_addr(buf, len, isoa, m, nsellen)
-	register caddr_t *buf;	/* ptr to buffer to put address into */
+	caddr_t *buf;	/* ptr to buffer to put address into */
 	int            *len;	/* ptr to length of buffer so far */
-	register struct iso_addr *isoa;	/* ptr to address */
-	register struct mbuf *m;/* determine if there remains space */
+	struct iso_addr *isoa;	/* ptr to address */
+	struct mbuf *m;/* determine if there remains space */
 	int             nsellen;
 {
-	register int    newlen, result = 0;
+	int    newlen, result = 0;
 
 	isoa->isoa_len -= nsellen;
 	newlen = isoa->isoa_len + 1;
@@ -654,8 +669,8 @@ esis_ishinput(m, shp)
 	struct esis_fixed *pdu = mtod(m, struct esis_fixed *);
 	u_short         ht, newct;	/* holding time */
 	struct iso_addr *nsap;	/* Network Entity Title */
-	register u_char *buf = (u_char *) (pdu + 1);
-	register u_char *buflim = pdu->esis_hdr_len + (u_char *) pdu;
+	u_char *buf = (u_char *) (pdu + 1);
+	u_char *buflim = pdu->esis_hdr_len + (u_char *) pdu;
 	int             new_entry;
 
 	esis_stat.es_ishrcvd++;
@@ -680,7 +695,7 @@ esis_ishinput(m, shp)
 				goto bad;
 			CTOH(buf[2], buf[3], newct);
 			if ((u_short) esis_config_time != newct) {
-				untimeout(esis_config, 0);
+				callout_stop(&esis_config_ch);
 				esis_config_time = newct;
 				esis_config(NULL);
 			}
@@ -727,9 +742,9 @@ esis_rdinput(m0, shp)
 	struct esis_fixed *pdu = mtod(m0, struct esis_fixed *);
 	u_short         ht;	/* holding time */
 	struct iso_addr *da, *net = 0, *netmask = 0, *snpamask = 0;
-	register struct iso_addr *bsnpa;
-	register u_char *buf = (u_char *) (pdu + 1);
-	register u_char *buflim = pdu->esis_hdr_len + (u_char *) pdu;
+	struct iso_addr *bsnpa;
+	u_char *buf = (u_char *) (pdu + 1);
+	u_char *buflim = pdu->esis_hdr_len + (u_char *) pdu;
 
 	esis_stat.es_rdrcvd++;
 
@@ -822,9 +837,10 @@ void
 esis_config(v)
 	void *v;
 {
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 
-	timeout(esis_config, (caddr_t) 0, hz * esis_config_time);
+	callout_reset(&esis_config_ch, hz * esis_config_time,
+	    esis_config, NULL);
 
 	/*
 	 * Report configuration for each interface that - is UP - has
@@ -948,7 +964,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 		int nsellen = (type == ESIS_ISH ? ia->ia_addr.siso_tlen : 0);
 		int n = ia->ia_addr.siso_nlen;
-		register struct iso_ifaddr *ia2;
+		struct iso_ifaddr *ia2;
 
 		if (type == ESIS_ISH && naddr > 0)
 			break;
@@ -1035,7 +1051,7 @@ isis_input(m0, va_alist)
 #endif
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
-	register struct rawcb *rp, *first_rp = 0;
+	struct rawcb *rp, *first_rp = 0;
 	struct ifnet   *ifp;
 	struct mbuf    *mm;
 	va_list ap;
@@ -1103,8 +1119,8 @@ isis_output(m, va_alist)
 	va_dcl
 #endif
 {
-	register struct sockaddr_dl *sdl;
-	register struct ifnet *ifp;
+	struct sockaddr_dl *sdl;
+	struct ifnet *ifp;
 	struct ifaddr  *ifa;
 	struct sockaddr_iso siso;
 	int             error = 0;
@@ -1142,9 +1158,13 @@ isis_output(m, va_alist)
 	bzero((caddr_t) & siso, sizeof(siso));
 	siso.siso_family = AF_ISO;	/* This convention may be useful for
 					 * X.25 */
-	siso.siso_data[0] = AFI_SNA;
-	siso.siso_nlen = sn_len + 1;
-	bcopy(LLADDR(sdl), siso.siso_data + 1, sn_len);
+	if (sn_len == 0)
+		siso.siso_nlen = 0;
+	else {
+		siso.siso_data[0] = AFI_SNA;
+		siso.siso_nlen = sn_len + 1;
+		bcopy(LLADDR(sdl), siso.siso_data + 1, sn_len);
+	}
 	error = (ifp->if_output) (ifp, m, sisotosa(&siso), 0);
 	if (error) {
 #ifdef ARGO_DEBUG
@@ -1182,8 +1202,11 @@ esis_ctlinput(req, siso, dummy)
 	struct sockaddr *siso;	/* address of ifp */
 	void *dummy;
 {
-	register struct iso_ifaddr *ia;	/* scan through interface addresses */
+	struct iso_ifaddr *ia;	/* scan through interface addresses */
 
+	/*XXX correct? */
+	if (siso->sa_family != AF_ISO)
+		return NULL;
 	if (req == PRC_IFDOWN)
 		for (ia = iso_ifaddr.tqh_first; ia != 0;
 		     ia = ia->ia_list.tqe_next) {

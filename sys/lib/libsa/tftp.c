@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.7 1999/07/12 12:34:57 drochner Exp $	 */
+/*	$NetBSD: tftp.c,v 1.7.2.1 2000/11/20 18:09:37 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -111,9 +111,9 @@ static void tftp_terminate __P((struct tftp_handle *));
 
 static ssize_t 
 recvtftp(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void  *pkt;
-	register size_t len;
+	struct iodesc *d;
+	void  *pkt;
+	size_t len;
 	time_t          tleft;
 {
 	ssize_t n;
@@ -139,7 +139,7 @@ recvtftp(d, pkt, len, tleft)
 			/*
 			 * First data packet from new port.
 			 */
-			register struct udphdr *uh;
+			struct udphdr *uh;
 			uh = (struct udphdr *) pkt - 1;
 			d->destport = uh->uh_sport;
 		} /* else check uh_sport has not changed??? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.53 1999/08/29 16:29:16 sommerfeld Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.53.2.1 2000/11/20 18:11:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,10 +43,13 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfs.h"
 #include "opt_nfsserver.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
@@ -142,19 +145,24 @@ static int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
 
+struct callout nfs_timer_ch = CALLOUT_INITIALIZER;
+
 /*
  * Initialize sockets and congestion for a new NFS connection.
  * We do not free the sockaddr if error.
  */
 int
 nfs_connect(nmp, rep)
-	register struct nfsmount *nmp;
+	struct nfsmount *nmp;
 	struct nfsreq *rep;
 {
-	register struct socket *so;
+	struct socket *so;
 	int s, error, rcvreserve, sndreserve;
 	struct sockaddr *saddr;
 	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+#endif
 	struct mbuf *m;
 	u_int16_t tport;
 
@@ -185,6 +193,23 @@ nfs_connect(nmp, rep)
 		if (error)
 			goto bad;
 	}
+#ifdef INET6
+	if (saddr->sa_family == AF_INET6 && (nmp->nm_flag & NFSMNT_RESVPORT)) {
+		MGET(m, M_WAIT, MT_SONAME);
+		sin6 = mtod(m, struct sockaddr_in6 *);
+		sin6->sin6_len = m->m_len = sizeof (struct sockaddr_in6);
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_addr = in6addr_any;
+		tport = IPV6PORT_RESERVED - 1;
+		sin6->sin6_port = htons(tport);
+		while ((error = sobind(so, m)) == EADDRINUSE &&
+		       --tport > IPV6PORT_RESERVED / 2)
+			sin6->sin6_port = htons(tport);
+		m_freem(m);
+		if (error)
+			goto bad;
+	}
+#endif
 
 	/*
 	 * Protocols that do not require connections may be optionally left
@@ -292,10 +317,10 @@ bad:
  */
 int
 nfs_reconnect(rep)
-	register struct nfsreq *rep;
+	struct nfsreq *rep;
 {
-	register struct nfsreq *rp;
-	register struct nfsmount *nmp = rep->r_nmp;
+	struct nfsreq *rp;
+	struct nfsmount *nmp = rep->r_nmp;
 	int error;
 
 	nfs_disconnect(nmp);
@@ -321,9 +346,9 @@ nfs_reconnect(rep)
  */
 void
 nfs_disconnect(nmp)
-	register struct nfsmount *nmp;
+	struct nfsmount *nmp;
 {
-	register struct socket *so;
+	struct socket *so;
 	int drain = 0;
 	
 	if (nmp->nm_so) {
@@ -341,7 +366,8 @@ nfs_disconnect(nmp)
 			 */
 			while (nmp->nm_waiters > 0) {
 				wakeup (&nmp->nm_iflag);
-				sleep(&nmp->nm_waiters, PVFS);
+				(void) tsleep(&nmp->nm_waiters, PVFS,
+				    "nfsdis", 0);
 			}
 		}
 		soclose(so);
@@ -372,17 +398,17 @@ nfs_safedisconnect(nmp)
  * For the client side:
  * - return EINTR if the RPC is terminated, 0 otherwise
  * - set R_MUSTRESEND if the send fails for any reason
- * - do any cleanup required by recoverable socket errors (???)
+ * - do any cleanup required by recoverable socket errors (? ? ?)
  * For the server side:
  * - return EINTR or ERESTART if interrupted by a signal
  * - return EPIPE if a connection is lost for connection based sockets (TCP...)
- * - do any cleanup required by recoverable socket errors (???)
+ * - do any cleanup required by recoverable socket errors (? ? ?)
  */
 int
 nfs_send(so, nam, top, rep)
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *nam;
-	register struct mbuf *top;
+	struct mbuf *top;
 	struct nfsreq *rep;
 {
 	struct mbuf *sendnam;
@@ -415,20 +441,34 @@ nfs_send(so, nam, top, rep)
 		(struct mbuf *)0, flags);
 	if (error) {
 		if (rep) {
-			log(LOG_INFO, "nfs send error %d for server %s\n",error,
-			    rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
-			/*
-			 * Deal with errors for the client side.
-			 */
-			if (rep->r_flags & R_SOFTTERM)
-				error = EINTR;
-			else
+			if (error == ENOBUFS && so->so_type == SOCK_DGRAM) {
+				/*
+				 * We're too fast for the network/driver,
+				 * and UDP isn't flowcontrolled.
+				 * We need to resend. This is not fatal,
+				 * just try again.
+				 *
+				 * Could be smarter here by doing some sort
+				 * of a backoff, but this is rare.
+				 */
 				rep->r_flags |= R_MUSTRESEND;
+			} else {
+				log(LOG_INFO, "nfs send error %d for %s\n",
+				    error,
+				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
+				/*
+				 * Deal with errors for the client side.
+				 */
+				if (rep->r_flags & R_SOFTTERM)
+					error = EINTR;
+				else
+					rep->r_flags |= R_MUSTRESEND;
+			}
 		} else
 			log(LOG_INFO, "nfsd send error %d\n", error);
 
 		/*
-		 * Handle any recoverable (soft) socket errors here. (???)
+		 * Handle any recoverable (soft) socket errors here. (? ? ?)
 		 */
 		if (error != EINTR && error != ERESTART &&
 			error != EWOULDBLOCK && error != EPIPE)
@@ -449,14 +489,14 @@ nfs_send(so, nam, top, rep)
  */
 int
 nfs_receive(rep, aname, mp)
-	register struct nfsreq *rep;
+	struct nfsreq *rep;
 	struct mbuf **aname;
 	struct mbuf **mp;
 {
-	register struct socket *so;
+	struct socket *so;
 	struct uio auio;
 	struct iovec aio;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *control;
 	u_int32_t len;
 	struct mbuf **getnam;
@@ -667,9 +707,9 @@ int
 nfs_reply(myrep)
 	struct nfsreq *myrep;
 {
-	register struct nfsreq *rep;
-	register struct nfsmount *nmp = myrep->r_nmp;
-	register int32_t t1;
+	struct nfsreq *rep;
+	struct nfsmount *nmp = myrep->r_nmp;
+	int32_t t1;
 	struct mbuf *mrep, *nam, *md;
 	u_int32_t rxid, *tl;
 	caddr_t dpos, cp2;
@@ -708,7 +748,7 @@ nfs_reply(myrep)
 			}
 			nmp->nm_waiters--;
 			/*
-			 * Ignore routing errors on connectionless protocols??
+			 * Ignore routing errors on connectionless protocols? ?
 			 */
 			if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 				nmp->nm_so->so_error = 0;
@@ -733,10 +773,13 @@ nfs_reply(myrep)
 		nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 		rxid = *tl++;
 		if (*tl != rpc_reply) {
+#ifndef NFS_V2_ONLY
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
 				if (nqnfs_callback(nmp, mrep, md, dpos))
 					nfsstats.rpcinvalid++;
-			} else {
+			} else
+#endif
+			{
 				nfsstats.rpcinvalid++;
 				m_freem(mrep);
 			}
@@ -852,23 +895,26 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct mbuf **mdp;
 	caddr_t *dposp;
 {
-	register struct mbuf *m, *mrep;
-	register struct nfsreq *rep;
-	register u_int32_t *tl;
-	register int i;
+	struct mbuf *m, *mrep;
+	struct nfsreq *rep;
+	u_int32_t *tl;
+	int i;
 	struct nfsmount *nmp;
 	struct mbuf *md, *mheadend;
-	struct nfsnode *np;
 	char nickv[RPCX_NICKVERF];
 	time_t reqtime, waituntil;
 	caddr_t dpos, cp2;
-	int t1, nqlflag, cachable, s, error = 0, mrest_len, auth_len, auth_type;
+	int t1, s, error = 0, mrest_len, auth_len, auth_type;
 	int trylater_delay = NQ_TRYLATERDEL, trylater_cnt = 0, failed_auth = 0;
 	int verf_len, verf_type;
 	u_int32_t xid;
-	u_quad_t frev;
 	char *auth_str, *verf_str;
 	NFSKERBKEY_T key;		/* save session key */
+#ifndef NFS_V2_ONLY
+	int nqlflag, cachable;
+	u_quad_t frev;
+	struct nfsnode *np;
+#endif
 
 	nmp = VFSTONFS(vp->v_mount);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
@@ -1087,6 +1133,7 @@ tryagain:
 			return (error);
 		}
 
+#ifndef NFS_V2_ONLY
 		/*
 		 * For nqnfs, get any lease in reply
 		 */
@@ -1105,6 +1152,7 @@ tryagain:
 				}
 			}
 		}
+#endif
 		*mrp = mrep;
 		*mdp = md;
 		*dposp = dpos;
@@ -1137,8 +1185,8 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 	struct mbuf **mbp;
 	caddr_t *bposp;
 {
-	register u_int32_t *tl;
-	register struct mbuf *mreq;
+	u_int32_t *tl;
+	struct mbuf *mreq;
 	caddr_t bpos;
 	struct mbuf *mb, *mb2;
 
@@ -1178,7 +1226,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 		 * verifier back, otherwise just RPCAUTH_NULL.
 		 */
 		if (nd->nd_flag & ND_KERBFULL) {
-		    register struct nfsuid *nuidp;
+		    struct nfsuid *nuidp;
 		    struct timeval ktvin, ktvout;
 
 		    for (nuidp = NUIDHASH(slp, nd->nd_cr.cr_uid)->lh_first;
@@ -1284,14 +1332,14 @@ void
 nfs_timer(arg)
 	void *arg;	/* never used */
 {
-	register struct nfsreq *rep;
-	register struct mbuf *m;
-	register struct socket *so;
-	register struct nfsmount *nmp;
-	register int timeo;
+	struct nfsreq *rep;
+	struct mbuf *m;
+	struct socket *so;
+	struct nfsmount *nmp;
+	int timeo;
 	int s, error;
 #ifdef NFSSERVER
-	register struct nfssvc_sock *slp;
+	struct nfssvc_sock *slp;
 	static long lasttime = 0;
 	u_quad_t cur_usec;
 #endif
@@ -1410,7 +1458,7 @@ nfs_timer(arg)
 	}
 #endif /* NFSSERVER */
 	splx(s);
-	timeout(nfs_timer, (void *)0, nfs_ticks);
+	callout_reset(&nfs_timer_ch, nfs_ticks, nfs_timer, NULL);
 }
 
 /*
@@ -1421,7 +1469,7 @@ int
 nfs_sigintr(nmp, rep, p)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
-	register struct proc *p;
+	struct proc *p;
 {
 	sigset_t ss;
 
@@ -1450,7 +1498,7 @@ nfs_sigintr(nmp, rep, p)
  */
 int
 nfs_sndlock(flagp, rep)
-	register int *flagp;
+	int *flagp;
 	struct nfsreq *rep;
 {
 	struct proc *p;
@@ -1482,7 +1530,7 @@ nfs_sndlock(flagp, rep)
  */
 void
 nfs_sndunlock(flagp)
-	register int *flagp;
+	int *flagp;
 {
 
 	if ((*flagp & NFSMNT_SNDLOCK) == 0)
@@ -1496,10 +1544,10 @@ nfs_sndunlock(flagp)
 
 int
 nfs_rcvlock(rep)
-	register struct nfsreq *rep;
+	struct nfsreq *rep;
 {
 	struct nfsmount *nmp = rep->r_nmp;
-	register int *flagp = &nmp->nm_iflag;
+	int *flagp = &nmp->nm_iflag;
 	int slpflag, slptimeo = 0;
 
 	if (*flagp & NFSMNT_DISMNT)
@@ -1542,7 +1590,7 @@ nfs_rcvlock(rep)
  */
 void
 nfs_rcvunlock(flagp)
-	register int *flagp;
+	int *flagp;
 {
 
 	if ((*flagp & NFSMNT_RCVLOCK) == 0)
@@ -1561,13 +1609,13 @@ nfs_rcvunlock(flagp)
  */
 int
 nfs_getreq(nd, nfsd, has_header)
-	register struct nfsrv_descript *nd;
+	struct nfsrv_descript *nd;
 	struct nfsd *nfsd;
 	int has_header;
 {
-	register int len, i;
-	register u_int32_t *tl;
-	register int32_t t1;
+	int len, i;
+	u_int32_t *tl;
+	int32_t t1;
 	struct uio uio;
 	struct iovec iov;
 	caddr_t dpos, cp2, cp;
@@ -1575,7 +1623,7 @@ nfs_getreq(nd, nfsd, has_header)
 	uid_t nickuid;
 	int error = 0, nqnfs = 0, ticklen;
 	struct mbuf *mrep, *md;
-	register struct nfsuid *nuidp;
+	struct nfsuid *nuidp;
 	struct timeval tvin, tvout;
 
 	mrep = nd->nd_mrep;
@@ -1858,8 +1906,8 @@ nfsrv_rcv(so, arg, waitflag)
 	caddr_t arg;
 	int waitflag;
 {
-	register struct nfssvc_sock *slp = (struct nfssvc_sock *)arg;
-	register struct mbuf *m;
+	struct nfssvc_sock *slp = (struct nfssvc_sock *)arg;
+	struct mbuf *m;
 	struct mbuf *mp, *nam;
 	struct uio auio;
 	int flags, error;
@@ -1966,12 +2014,12 @@ dorecs:
  */
 int
 nfsrv_getstream(slp, waitflag)
-	register struct nfssvc_sock *slp;
+	struct nfssvc_sock *slp;
 	int waitflag;
 {
-	register struct mbuf *m, **mpp;
-	register char *cp1, *cp2;
-	register int len;
+	struct mbuf *m, **mpp;
+	char *cp1, *cp2;
+	int len;
 	struct mbuf *om, *m2, *recm = NULL;
 	u_int32_t recmark;
 
@@ -2097,12 +2145,12 @@ nfsrv_getstream(slp, waitflag)
  */
 int
 nfsrv_dorec(slp, nfsd, ndp)
-	register struct nfssvc_sock *slp;
+	struct nfssvc_sock *slp;
 	struct nfsd *nfsd;
 	struct nfsrv_descript **ndp;
 {
-	register struct mbuf *m, *nam;
-	register struct nfsrv_descript *nd;
+	struct mbuf *m, *nam;
+	struct nfsrv_descript *nd;
 	int error;
 
 	*ndp = NULL;
@@ -2146,7 +2194,7 @@ void
 nfsrv_wakenfsd(slp)
 	struct nfssvc_sock *slp;
 {
-	register struct nfsd *nd;
+	struct nfsd *nd;
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;

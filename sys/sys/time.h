@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.28 1999/08/16 18:42:25 tron Exp $	*/
+/*	$NetBSD: time.h,v 1.28.2.1 2000/11/20 18:11:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -163,6 +163,8 @@ int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
 void	microtime __P((struct timeval *tv));
 int	settime __P((struct timeval *));
+int	ratecheck __P((struct timeval *, const struct timeval *));
+int	ppsratecheck __P((struct timeval *, int *, int));
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE

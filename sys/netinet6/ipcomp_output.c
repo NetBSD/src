@@ -1,9 +1,10 @@
-/*	$NetBSD: ipcomp_output.c,v 1.6 1999/09/10 02:05:24 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.6.2.1 2000/11/20 18:10:55 bouyer Exp $	*/
+/*	$KAME: ipcomp_output.c,v 1.20 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,9 +34,7 @@
  * RFC2393 IP payload compression protocol (IPComp).
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +62,7 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
-#include <netinet6/in6_pcb.h>
-#endif
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet6/ipcomp.h>
@@ -74,13 +70,10 @@
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
-#include <netkey/key_debug.h>
 
 #include <machine/stdarg.h>
 
-#ifdef __NetBSD__
-#define ovbcopy	bcopy
-#endif
+#include <net/net_osdep.h>
 
 static int ipcomp_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *, int));
@@ -88,7 +81,7 @@ static int ipcomp_output __P((struct mbuf *, u_char *, struct mbuf *,
 /*
  * Modify the packet so that the payload is compressed.
  * The mbuf (m) must start with IPv4 or IPv6 header.
- * On failure, free the given mbuf and return NULL.
+ * On failure, free the given mbuf and return non-zero.
  *
  * on invocation:
  *	m   nexthdrp md
@@ -97,7 +90,7 @@ static int ipcomp_output __P((struct mbuf *, u_char *, struct mbuf *,
  * during the encryption:
  *	m   nexthdrp mprev md
  *	v   v        v     v
- *	IP ............... ipcomp payload 
+ *	IP ............... ipcomp payload
  *	                   <-----><----->
  *	                   complen  plen
  *	<-> hlen
@@ -113,44 +106,47 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 {
 	struct mbuf *n;
 	struct mbuf *md0;
+	struct mbuf *mcopy;
 	struct mbuf *mprev;
 	struct ipcomp *ipcomp;
-	struct secas *sa = isr->sa;
-	struct ipcomp_algorithm *algo;
+	struct secasvar *sav = isr->sav;
+	const struct ipcomp_algorithm *algo;
 	u_int16_t cpi;		/* host order */
 	size_t plen0, plen;	/*payload length to be compressed*/
 	size_t compoff;
 	int afnumber;
 	int error = 0;
+	struct ipsecstat *stat;
 
 	switch (af) {
 #ifdef INET
 	case AF_INET:
 		afnumber = 4;
+		stat = &ipsecstat;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		afnumber = 6;
+		stat = &ipsec6stat;
 		break;
 #endif
 	default:
-		printf("ipcomp_output: unsupported af %d\n", af);
+		ipseclog((LOG_ERR, "ipcomp_output: unsupported af %d\n", af));
 		return 0;	/* no change at all */
 	}
 
 	/* grab parameters */
-	if ((ntohl(sa->spi) & ~0xffff) != 0 || sa->alg_enc >= IPCOMP_MAX
-	 || ipcomp_algorithms[sa->alg_enc].compress == NULL) {
-		ipsecstat.out_inval++;
+	algo = ipcomp_algorithm_lookup(sav->alg_enc);
+	if ((ntohl(sav->spi) & ~0xffff) != 0 || !algo) {
+		stat->out_inval++;
 		m_freem(m);
 		return EINVAL;
 	}
-	if ((sa->flags & SADB_X_EXT_RAWCPI) == 0)
-		cpi = sa->alg_enc;
+	if ((sav->flags & SADB_X_EXT_RAWCPI) == 0)
+		cpi = sav->alg_enc;
 	else
-		cpi = ntohl(sa->spi) & 0xffff;
-	algo = &ipcomp_algorithms[sa->alg_enc];	/*XXX*/
+		cpi = ntohl(sav->spi) & 0xffff;
 
 	/* compute original payload length */
 	plen = 0;
@@ -162,11 +158,21 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 		return 0;
 
 	/*
-	 * keep the original data packet, so that we can backout
-	 * our changes when compression is not necessary.
+	 * retain the original packet for two purposes:
+	 * (1) we need to backout our changes when compression is not necessary.
+	 * (2) byte lifetime computation should use the original packet.
+	 *     see RFC2401 page 23.
+	 * compromise two m_copym().  we will be going through every byte of
+	 * the payload during compression process anyways.
 	 */
+	mcopy = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+	if (mcopy == NULL) {
+		error = ENOBUFS;
+		return 0;
+	}
 	md0 = m_copym(md, 0, M_COPYALL, M_NOWAIT);
 	if (md0 == NULL) {
+		m_freem(mcopy);
 		error = ENOBUFS;
 		return 0;
 	}
@@ -176,15 +182,19 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	for (mprev = m; mprev && mprev->m_next != md; mprev = mprev->m_next)
 		;
 	if (mprev == NULL || mprev->m_next != md) {
-		printf("ipcomp%d_output: md is not in chain\n", afnumber);
+		ipseclog((LOG_DEBUG, "ipcomp%d_output: md is not in chain\n",
+		    afnumber));
+		stat->out_inval++;
 		m_freem(m);
 		m_freem(md0);
+		m_freem(mcopy);
 		return EINVAL;
 	}
 	mprev->m_next = NULL;
 	if ((md = ipsec_copypkt(md)) == NULL) {
 		m_freem(m);
 		m_freem(md0);
+		m_freem(mcopy);
 		error = ENOBUFS;
 		goto fail;
 	}
@@ -192,24 +202,15 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 
 	/* compress data part */
 	if ((*algo->compress)(m, md, &plen) || mprev->m_next == NULL) {
-		printf("packet compression failure\n");
+		ipseclog((LOG_ERR, "packet compression failure\n"));
 		m = NULL;
 		m_freem(md0);
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_inval++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_inval++;
-			break;
-#endif
-		}
+		m_freem(mcopy);
+		stat->out_inval++;
 		error = EINVAL;
 		goto fail;
 	}
+	stat->out_comphist[sav->alg_enc]++;
 	md = mprev->m_next;
 
 	/*
@@ -218,13 +219,17 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	 */
 	if (plen0 < plen) {
 		m_freem(md);
+		m_freem(mcopy);
 		mprev->m_next = md0;
 		return 0;
 	}
 
-	/* no need to backout change beyond here */
+	/*
+	 * no need to backout change beyond here.
+	 */
 	m_freem(md0);
 	md0 = NULL;
+
 	m->m_pkthdr.len -= plen0;
 	m->m_pkthdr.len += plen;
 
@@ -296,7 +301,8 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 		if (compoff + complen + plen < IP_MAXPACKET)
 			ip->ip_len = htons(compoff + complen + plen);
 		else {
-			printf("IPv4 ESP output: size exceeds limit\n");
+			ipseclog((LOG_ERR,
+			    "IPv4 ESP output: size exceeds limit\n"));
 			ipsecstat.out_inval++;
 			m_freem(m);
 			error = EMSGSIZE;
@@ -313,37 +319,17 @@ ipcomp_output(m, nexthdrp, md, isr, af)
     }
 
 	if (!m) {
-		printf("NULL mbuf after compression in ipcomp%d_output",
-			afnumber);
-	} else {
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			ipsecstat.out_success++;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			ipsec6stat.out_success++;
-			break;
-#endif
-		}
+		ipseclog((LOG_DEBUG,
+		    "NULL mbuf after compression in ipcomp%d_output",
+		    afnumber));
+		stat->out_inval++;
 	}
-#if 0
-	switch (af) {
-#ifdef INET
-	case AF_INET:
-		ipsecstat.out_esphist[sa->alg_enc]++;
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		ipsec6stat.out_esphist[sa->alg_enc]++;
-		break;
-#endif
-	}
-#endif
-	key_sa_recordxfer(sa, m);
+		stat->out_success++;
+
+	/* compute byte lifetime against original packet */
+	key_sa_recordxfer(sav, mcopy);
+	m_freem(mcopy);
+
 	return 0;
 
 fail:
@@ -362,9 +348,10 @@ ipcomp4_output(m, isr)
 {
 	struct ip *ip;
 	if (m->m_len < sizeof(struct ip)) {
-		printf("ipcomp4_output: first mbuf too short\n");
+		ipseclog((LOG_DEBUG, "ipcomp4_output: first mbuf too short\n"));
+		ipsecstat.out_inval++;
 		m_freem(m);
-		return NULL;
+		return 0;
 	}
 	ip = mtod(m, struct ip *);
 	/* XXX assumes that m->m_next points to payload */
@@ -381,9 +368,10 @@ ipcomp6_output(m, nexthdrp, md, isr)
 	struct ipsecrequest *isr;
 {
 	if (m->m_len < sizeof(struct ip6_hdr)) {
-		printf("ipcomp6_output: first mbuf too short\n");
+		ipseclog((LOG_DEBUG, "ipcomp6_output: first mbuf too short\n"));
+		ipsec6stat.out_inval++;
 		m_freem(m);
-		return NULL;
+		return 0;
 	}
 	return ipcomp_output(m, nexthdrp, md, isr, AF_INET6);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.46 1999/08/05 04:00:03 sommerfeld Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.46.2.1 2000/11/20 18:11:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  * non-external mbufs in the driver.  This has no impact on performance
  * seen from the packet statistics, and avoid header pullups in network code.
  */
-#define	MINCLSIZE	(MHLEN + 1)	/* smallest amount to put in cluster */
+#define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
@@ -120,6 +120,7 @@ struct m_hdr {
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	int	len;			/* total packet length */
+	struct mbuf *aux;		/* extra data buffer; ipsec/others */
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
@@ -250,6 +251,7 @@ struct mbuf {
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
+		(m)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
 } while (0)
@@ -407,9 +409,11 @@ do {									\
 /*
  * Copy mbuf pkthdr from `from' to `to'.
  * `from' must have M_PKTHDR set, and `to' must be empty.
+ * aux pointer will be moved to `to'.
  */
 #define	M_COPY_PKTHDR(to, from) do { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
+	(from)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
 } while (0)
@@ -481,6 +485,14 @@ do {									\
 #define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
 
 /*
+ * pkthdr.aux type tags.
+ */
+struct mauxtag {
+	int af;
+	int type;
+};
+
+/*
  * Mbuf statistics.
  * For statistics related to mbuf and cluster allocations, see also the
  * pool headers (mbpool and mclpool).
@@ -516,6 +528,9 @@ struct mbstat {
 }
 
 #ifdef	_KERNEL
+/* always use m_pulldown codepath for KAME IPv6/IPsec */
+#define PULLDOWN_TEST
+
 extern struct mbstat mbstat;
 extern int	nmbclusters;		/* limit on the # of clusters */
 extern int	mblowat;		/* mbuf low water mark */
@@ -534,11 +549,13 @@ struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
 struct	mbuf *m_copypacket __P((struct mbuf *, int));
 struct	mbuf *m_devget __P((char *, int, int, struct ifnet *,
 			    void (*copy)(const void *, void *, size_t)));
+struct	mbuf *m_dup __P((struct mbuf *, int, int, int));
 struct	mbuf *m_free __P((struct mbuf *));
 struct	mbuf *m_get __P((int, int));
 struct	mbuf *m_getclr __P((int, int));
 struct	mbuf *m_gethdr __P((int, int));
 struct	mbuf *m_prepend __P((struct mbuf *,int,int));
+struct	mbuf *m_pulldown __P((struct mbuf *, int, int, int *));
 struct	mbuf *m_pullup __P((struct mbuf *, int));
 struct	mbuf *m_retry __P((int, int));
 struct	mbuf *m_retryhdr __P((int, int));
@@ -551,6 +568,10 @@ void	m_copydata __P((struct mbuf *,int,int,caddr_t));
 void	m_freem __P((struct mbuf *));
 void	m_reclaim __P((int));
 void	mbinit __P((void));
+
+struct mbuf *m_aux_add __P((struct mbuf *, int, int));
+struct mbuf *m_aux_find __P((struct mbuf *, int, int));
+void m_aux_delete __P((struct mbuf *, struct mbuf *));
 
 #ifdef MBTYPES
 const int mbtypes[] = {				/* XXX */

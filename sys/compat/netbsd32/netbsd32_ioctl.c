@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.4 1999/10/11 01:36:23 eeh Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.4.2.1 2000/11/20 18:08:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -34,6 +34,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/filedesc.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/socketvar.h>
 #include <sys/audioio.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -61,10 +66,56 @@
 #include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-void
-netbsd32_to_fbcmap(s32p, p)
+/* prototypes for the converters */
+static __inline void
+netbsd32_to_fbcmap(struct netbsd32_fbcmap *, struct fbcmap *, u_long);
+static __inline void
+netbsd32_to_fbcursor(struct netbsd32_fbcursor *, struct fbcursor *, u_long);
+static __inline void
+netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *, struct opiocdesc *, u_long);
+static __inline void
+netbsd32_to_partinfo(struct netbsd32_partinfo *, struct partinfo *, u_long);
+static __inline void
+netbsd32_to_format_op(struct netbsd32_format_op *, struct format_op *, u_long);
+static __inline void
+netbsd32_to_ifconf(struct netbsd32_ifconf *, struct ifconf *, u_long);
+static __inline void
+netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *, struct ifmediareq *, u_long);
+static __inline void
+netbsd32_to_ifdrv(struct netbsd32_ifdrv *, struct ifdrv *, u_long);
+static __inline void
+netbsd32_to_sioc_vif_req(struct netbsd32_sioc_vif_req *, struct sioc_vif_req *, u_long);
+static __inline void
+netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *, struct sioc_sg_req *, u_long);
+
+static __inline void
+netbsd32_from_fbcmap(struct fbcmap *, struct netbsd32_fbcmap *);
+static __inline void
+netbsd32_from_fbcursor(struct fbcursor *, struct netbsd32_fbcursor *);
+static __inline void
+netbsd32_from_opiocdesc(struct opiocdesc *, struct netbsd32_opiocdesc *);
+static __inline void
+netbsd32_from_partinfo(struct partinfo *, struct netbsd32_partinfo *);
+static __inline void
+netbsd32_from_format_op(struct format_op *, struct netbsd32_format_op *);
+static __inline void
+netbsd32_from_ifconf(struct ifconf *, struct netbsd32_ifconf *);
+static __inline void
+netbsd32_from_ifmediareq(struct ifmediareq *, struct netbsd32_ifmediareq *);
+static __inline void
+netbsd32_from_ifdrv(struct ifdrv *, struct netbsd32_ifdrv *);
+static __inline void
+netbsd32_from_sioc_vif_req(struct sioc_vif_req *, struct netbsd32_sioc_vif_req *);
+static __inline void
+netbsd32_from_sioc_sg_req(struct sioc_sg_req *, struct netbsd32_sioc_sg_req *);
+
+/* convert to/from different structures */
+
+static __inline void
+netbsd32_to_fbcmap(s32p, p, cmd)
 	struct netbsd32_fbcmap *s32p;
 	struct fbcmap *p;
+	u_long cmd;
 {
 
 	p->index = s32p->index;
@@ -74,26 +125,28 @@ netbsd32_to_fbcmap(s32p, p)
 	p->blue = (u_char *)(u_long)s32p->blue;
 }
 
-void
-netbsd32_to_fbcursor(s32p, p)
+static __inline void
+netbsd32_to_fbcursor(s32p, p, cmd)
 	struct netbsd32_fbcursor *s32p;
 	struct fbcursor *p;
+	u_long cmd;
 {
 
 	p->set = s32p->set;
 	p->enable = s32p->enable;
 	p->pos = s32p->pos;
 	p->hot = s32p->hot;
-	netbsd32_to_fbcmap(&s32p->cmap, &p->cmap);
+	netbsd32_to_fbcmap(&s32p->cmap, &p->cmap, cmd);
 	p->size = s32p->size;
 	p->image = (char *)(u_long)s32p->image;
 	p->mask = (char *)(u_long)s32p->mask;
 }
 
-void
-netbsd32_to_opiocdesc(s32p, p)
+static __inline void
+netbsd32_to_opiocdesc(s32p, p, cmd)
 	struct netbsd32_opiocdesc *s32p;
 	struct opiocdesc *p;
+	u_long cmd;
 {
 
 	p->op_nodeid = s32p->op_nodeid;
@@ -103,20 +156,22 @@ netbsd32_to_opiocdesc(s32p, p)
 	p->op_buf = (char *)(u_long)s32p->op_buf;
 }
 
-void
-netbsd32_to_partinfo(s32p, p)
+static __inline void
+netbsd32_to_partinfo(s32p, p, cmd)
 	struct netbsd32_partinfo *s32p;
 	struct partinfo *p;
+	u_long cmd;
 {
 
 	p->disklab = (struct disklabel *)(u_long)s32p->disklab;
 	p->part = (struct partition *)(u_long)s32p->part;
 }
 
-void
-netbsd32_to_format_op(s32p, p)
+static __inline void
+netbsd32_to_format_op(s32p, p, cmd)
 	struct netbsd32_format_op *s32p;
 	struct format_op *p;
+	u_long cmd;
 {
 
 	p->df_buf = (char *)(u_long)s32p->df_buf;
@@ -126,7 +181,7 @@ netbsd32_to_format_op(s32p, p)
 }
 
 #if 0 /* XXX see below */
-void
+static __inline void
 netbsd32_to_ifreq(s32p, p, cmd)
 	struct netbsd32_ifreq *s32p;
 	struct ifreq *p;
@@ -143,10 +198,11 @@ netbsd32_to_ifreq(s32p, p, cmd)
 }
 #endif
 
-void
-netbsd32_to_ifconf(s32p, p)
+static __inline void
+netbsd32_to_ifconf(s32p, p, cmd)
 	struct netbsd32_ifconf *s32p;
 	struct ifconf *p;
+	u_long cmd;
 {
 
 	p->ifc_len = s32p->ifc_len;
@@ -154,30 +210,33 @@ netbsd32_to_ifconf(s32p, p)
 	p->ifc_buf = (caddr_t)(u_long)s32p->ifc_buf;
 }
 
-void
-netbsd32_to_ifmediareq(s32p, p)
+static __inline void
+netbsd32_to_ifmediareq(s32p, p, cmd)
 	struct netbsd32_ifmediareq *s32p;
 	struct ifmediareq *p;
+	u_long cmd;
 {
 
 	memcpy(p, s32p, sizeof *s32p);
 	p->ifm_ulist = (int *)(u_long)s32p->ifm_ulist;
 }
 
-void
-netbsd32_to_ifdrv(s32p, p)
+static __inline void
+netbsd32_to_ifdrv(s32p, p, cmd)
 	struct netbsd32_ifdrv *s32p;
 	struct ifdrv *p;
+	u_long cmd;
 {
 
 	memcpy(p, s32p, sizeof *s32p);
 	p->ifd_data = (void *)(u_long)s32p->ifd_data;
 }
 
-void
-netbsd32_to_sioc_vif_req(s32p, p)
+static __inline void
+netbsd32_to_sioc_vif_req(s32p, p, cmd)
 	struct netbsd32_sioc_vif_req *s32p;
 	struct sioc_vif_req *p;
+	u_long cmd;
 {
 
 	p->vifi = s32p->vifi;
@@ -187,10 +246,11 @@ netbsd32_to_sioc_vif_req(s32p, p)
 	p->obytes = (u_long)s32p->obytes;
 }
 
-void
-netbsd32_to_sioc_sg_req(s32p, p)
+static __inline void
+netbsd32_to_sioc_sg_req(s32p, p, cmd)
 	struct netbsd32_sioc_sg_req *s32p;
 	struct sioc_sg_req *p;
+	u_long cmd;
 {
 
 	p->src = s32p->src;
@@ -204,7 +264,7 @@ netbsd32_to_sioc_sg_req(s32p, p)
  * handle ioctl conversions from sparc64 -> netbsd32
  */
 
-void
+static __inline void
 netbsd32_from_fbcmap(p, s32p)
 	struct fbcmap *p;
 	struct netbsd32_fbcmap *s32p;
@@ -220,7 +280,7 @@ netbsd32_from_fbcmap(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_fbcursor(p, s32p)
 	struct fbcursor *p;
 	struct netbsd32_fbcursor *s32p;
@@ -239,7 +299,7 @@ netbsd32_from_fbcursor(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_opiocdesc(p, s32p)
 	struct opiocdesc *p;
 	struct netbsd32_opiocdesc *s32p;
@@ -252,7 +312,17 @@ netbsd32_from_opiocdesc(p, s32p)
 	s32p->op_buf = (netbsd32_charp)(u_long)p->op_buf;
 }
 
-void
+static __inline void
+netbsd32_from_partinfo(p, s32p)
+	struct partinfo *p;
+	struct netbsd32_partinfo *s32p;
+{
+
+	s32p->disklab = (netbsd32_disklabel_tp_t)(u_long)p->disklab;
+	s32p->part = s32p->part;
+}
+
+static __inline void
 netbsd32_from_format_op(p, s32p)
 	struct format_op *p;
 	struct netbsd32_format_op *s32p;
@@ -268,7 +338,7 @@ netbsd32_from_format_op(p, s32p)
 }
 
 #if 0 /* XXX see below */
-void
+static __inline void
 netbsd32_from_ifreq(p, s32p, cmd)
 	struct ifreq *p;
 	struct netbsd32_ifreq *s32p;
@@ -285,7 +355,7 @@ netbsd32_from_ifreq(p, s32p, cmd)
 }
 #endif
 
-void
+static __inline void
 netbsd32_from_ifconf(p, s32p)
 	struct ifconf *p;
 	struct netbsd32_ifconf *s32p;
@@ -296,7 +366,7 @@ netbsd32_from_ifconf(p, s32p)
 	s32p->ifc_buf = (netbsd32_caddr_t)(u_long)p->ifc_buf;
 }
 
-void
+static __inline void
 netbsd32_from_ifmediareq(p, s32p)
 	struct ifmediareq *p;
 	struct netbsd32_ifmediareq *s32p;
@@ -309,7 +379,7 @@ netbsd32_from_ifmediareq(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_ifdrv(p, s32p)
 	struct ifdrv *p;
 	struct netbsd32_ifdrv *s32p;
@@ -322,7 +392,7 @@ netbsd32_from_ifdrv(p, s32p)
 #endif
 }
 
-void
+static __inline void
 netbsd32_from_sioc_vif_req(p, s32p)
 	struct sioc_vif_req *p;
 	struct netbsd32_sioc_vif_req *s32p;
@@ -335,7 +405,7 @@ netbsd32_from_sioc_vif_req(p, s32p)
 	s32p->obytes = (netbsd32_u_long)p->obytes;
 }
 
-void
+static __inline void
 netbsd32_from_sioc_sg_req(p, s32p)
 	struct sioc_sg_req *p;
 	struct netbsd32_sioc_sg_req *s32p;
@@ -366,228 +436,290 @@ netbsd32_ioctl(p, v, retval)
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_voidp) data;
 	} */ *uap = v;
-	struct sys_ioctl_args ua;
-	void *data = NULL;
-	int rv;
+	struct file *fp;
+	struct filedesc *fdp;
+	u_long com;
+	int error = 0;
+	u_int size, size32;
+	caddr_t data, memp = NULL;
+	caddr_t data32, memp32 = NULL;
+	int tmp;
+#define STK_PARAMS	128
+	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
+	u_long stkbuf32[STK_PARAMS/sizeof(u_long)];
 
 	/*
 	 * we need to translate some commands (_IOW) before calling sys_ioctl,
 	 * some after (_IOR), and some both (_IOWR). 
 	 */
+#if 0
+	{
+char *dirs[8] = { "NONE!", "VOID", "OUT", "VOID|OUT!", "IN", "VOID|IN!",
+		"INOUT", "VOID|IN|OUT!" };
+
+printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
+       SCARG(uap, fd), SCARG(uap, com), SCARG(uap, data),
+       dirs[((SCARG(uap, com) & IOC_DIRMASK)>>29)],
+       IOCGROUP(SCARG(uap, com)), IOCBASECMD(SCARG(uap, com)),
+       IOCPARM_LEN(SCARG(uap, com)));
+	}
+#endif
+
+	fdp = p->p_fd;
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+		return (EBADF);
+
+	FILE_USE(fp);
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
+		error = EBADF;
+		goto out;
+	}
+
+	switch (com = SCARG(uap, com)) {
+	case FIONCLEX:
+		fdp->fd_ofileflags[SCARG(uap, fd)] &= ~UF_EXCLOSE;
+		goto out;
+
+	case FIOCLEX:
+		fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
+		goto out;
+	}
+
+	/*
+	 * Interpret high order word to find amount of data to be
+	 * copied to/from the user's address space.
+	 */
+	size32 = IOCPARM_LEN(com);
+	if (size32 > IOCPARM_MAX) {
+		error = ENOTTY;
+		goto out;
+	}
+	memp = NULL;
+	if (size32 > sizeof(stkbuf)) {
+		memp32 = (caddr_t)malloc((u_long)size32, M_IOCTLOPS, M_WAITOK);
+		data32 = memp32;
+	} else
+		data32 = (caddr_t)stkbuf32;
+	if (com&IOC_IN) {
+		if (size32) {
+			error = copyin((caddr_t)(u_long)SCARG(uap, data), 
+				       data32, size32);
+			if (error) {
+				if (memp32)
+					free(memp32, M_IOCTLOPS);
+				goto out;
+			}
+		} else
+			*(caddr_t *)data32 = (caddr_t)(u_long)SCARG(uap, data);
+	} else if ((com&IOC_OUT) && size32)
+		/*
+		 * Zero the buffer so the user always
+		 * gets back something deterministic.
+		 */
+		memset(data32, 0, size32);
+	else if (com&IOC_VOID)
+		*(caddr_t *)data = (caddr_t)(u_long)SCARG(uap, data);
 
 /* we define some handy macros here... */
-#define IOCTL_STRUCT_CONV_TO(type)	\
-	data = malloc(sizeof(struct type), M_TEMP, M_WAITOK); \
-	__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
-	    (u_long)SCARG(uap, data), data)
-
-#define IOCTL_STRUCT_CONV_CMD_TO(type, cmd)	\
-	data = malloc(sizeof(struct type), M_TEMP, M_WAITOK); \
-	__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
-	    (u_long)SCARG(uap, data), data, cmd)
-
-#define IOCTL_STRUCT_CONV_FROM(type)	\
-	__CONCAT(netbsd32_from_, type)(data, \
-	    (struct __CONCAT(netbsd32_, type) *) (u_long)SCARG(uap, data))
-
-#define IOCTL_STRUCT_CONV_CMD_FROM(type, cmd)	\
-	__CONCAT(netbsd32_from_, type)(data, \
-	    (struct __CONCAT(netbsd32_, type) *) (u_long)SCARG(uap, data), cmd)
+#define IOCTL_STRUCT_CONV_TO(cmd, type)	\
+		com = cmd; \
+		size = IOCPARM_LEN(com); \
+		if (size > sizeof(stkbuf)) \
+			data = memp = malloc(size, M_IOCTLOPS, M_WAITOK); \
+		else \
+			data = (caddr_t)stkbuf; \
+		__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
+			data32, (struct type *)data, com); \
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data, p); \
+		__CONCAT(netbsd32_from_, type)((struct type *)data, \
+			(struct __CONCAT(netbsd32_, type) *)data32); \
+		break
 
 	/*
 	 * convert various structures, pointers, and other objects that
 	 * change size from 32 bit -> 64 bit, for all ioctl commands.
 	 */
 	switch (SCARG(uap, com)) {
-	case FBIOPUTCMAP:
-	case FBIOGETCMAP:
-		IOCTL_STRUCT_CONV_TO(fbcmap);
+	case FIONBIO:
+		if ((tmp = *(int *)data) != 0)
+			fp->f_flag |= FNONBLOCK;
+		else
+			fp->f_flag &= ~FNONBLOCK;
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
 		break;
 
-	case FBIOSCURSOR:
-	case FBIOGCURSOR:
-		IOCTL_STRUCT_CONV_TO(fbcursor);
+	case FIOASYNC:
+		if ((tmp = *(int *)data) != 0)
+			fp->f_flag |= FASYNC;
+		else
+			fp->f_flag &= ~FASYNC;
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
 		break;
 
-	case OPIOCGET:
-	case OPIOCSET:
-	case OPIOCNEXTPROP:
-		IOCTL_STRUCT_CONV_TO(opiocdesc);
+	case FIOSETOWN:
+		tmp = *(int *)data;
+		if (fp->f_type == DTYPE_SOCKET) {
+			((struct socket *)fp->f_data)->so_pgid = tmp;
+			error = 0;
+			break;
+		}
+		if (tmp <= 0) {
+			tmp = -tmp;
+		} else {
+			struct proc *p1 = pfind(tmp);
+			if (p1 == 0) {
+				error = ESRCH;
+				break;
+			}
+			tmp = p1->p_pgrp->pg_id;
+		}
+		error = (*fp->f_ops->fo_ioctl)
+			(fp, TIOCSPGRP, (caddr_t)&tmp, p);
 		break;
 
-	case DIOCGPART:
-		IOCTL_STRUCT_CONV_TO(partinfo);
+	case FIOGETOWN:
+		if (fp->f_type == DTYPE_SOCKET) {
+			error = 0;
+			*(int *)data = ((struct socket *)fp->f_data)->so_pgid;
+			break;
+		}
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
+		*(int *)data = -*(int *)data;
 		break;
 
-	case DIOCRFORMAT:
-	case DIOCWFORMAT:
-		IOCTL_STRUCT_CONV_TO(format_op);
-		break;
+/*
+ * Here are calls that need explicit conversion.
+ */
+	case FBIOPUTCMAP32:
+		IOCTL_STRUCT_CONV_TO(FBIOPUTCMAP, fbcmap);
+	case FBIOGETCMAP32:
+		IOCTL_STRUCT_CONV_TO(FBIOGETCMAP, fbcmap);
+
+	case FBIOSCURSOR32:
+		IOCTL_STRUCT_CONV_TO(FBIOSCURSOR, fbcursor);
+	case FBIOGCURSOR32:
+		IOCTL_STRUCT_CONV_TO(FBIOGCURSOR, fbcursor);
+
+	case OPIOCGET32:
+		IOCTL_STRUCT_CONV_TO(OPIOCGET, opiocdesc);
+	case OPIOCSET32:
+		IOCTL_STRUCT_CONV_TO(OPIOCSET, opiocdesc);
+	case OPIOCNEXTPROP32:
+		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
+
+	case DIOCGPART32:
+		IOCTL_STRUCT_CONV_TO(DIOCGPART, partinfo);
+
+	case DIOCRFORMAT32:
+		IOCTL_STRUCT_CONV_TO(DIOCRFORMAT, format_op);
+	case DIOCWFORMAT32:
+		IOCTL_STRUCT_CONV_TO(DIOCWFORMAT, format_op);
 
 /*
  * only a few ifreq syscalls need conversion and those are
  * all driver specific... XXX
  */
 #if 0
-	case SIOCGADDRROM:
-	case SIOCGCHIPID:
-	case SIOCSIFADDR:
-	case OSIOCGIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFDSTADDR:
-	case OSIOCGIFDSTADDR:
-	case SIOCGIFDSTADDR:
-	case SIOCSIFFLAGS:
-	case SIOCGIFFLAGS:
-	case OSIOCGIFBRDADDR:
-	case SIOCGIFBRDADDR:
-	case SIOCSIFBRDADDR:
-	case OSIOCGIFNETMASK:
-	case SIOCGIFNETMASK:
-	case SIOCSIFNETMASK:
-	case SIOCGIFMETRIC:
-	case SIOCSIFMETRIC:
-	case SIOCDIFADDR:
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCSIFMEDIA:
-	case SIOCSIFMTU:
-	case SIOCGIFMTU:
-	case SIOCSIFASYNCMAP:
-	case SIOCGIFASYNCMAP:
-/*	case BIOCGETIF: READ ONLY */
-	case BIOCSETIF:
-	case SIOCPHASE1:
-	case SIOCPHASE2:
-		IOCTL_STRUCT_CONV_CMD_TO(ifreq, SCARG(uap, cmd));
-		break;
+	case SIOCGADDRROM3232:
+		IOCTL_STRUCT_CONV_TO(SIOCGADDRROM32, ifreq);
+	case SIOCGCHIPID32:
+		IOCTL_STRUCT_CONV_TO(SIOCGCHIPID, ifreq);
+	case SIOCSIFADDR32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFADDR, ifreq);
+	case OSIOCGIFADDR32:
+		IOCTL_STRUCT_CONV_TO(OSIOCGIFADDR, ifreq);
+	case SIOCGIFADDR32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFADDR, ifreq);
+	case SIOCSIFDSTADDR32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFDSTADDR, ifreq);
+	case OSIOCGIFDSTADDR32:
+		IOCTL_STRUCT_CONV_TO(OSIOCGIFDSTADDR, ifreq);
+	case SIOCGIFDSTADDR32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFDSTADDR, ifreq);
+	case SIOCSIFFLAGS32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFFLAGS, ifreq);
+	case SIOCGIFFLAGS32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFFLAGS, ifreq);
+	case OSIOCGIFBRDADDR32:
+		IOCTL_STRUCT_CONV_TO(OSIOCGIFBRDADDR, ifreq);
+	case SIOCGIFBRDADDR32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFBRDADDR, ifreq);
+	case SIOCSIFBRDADDR32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFBRDADDR, ifreq);
+	case OSIOCGIFNETMASK32:
+		IOCTL_STRUCT_CONV_TO(OSIOCGIFNETMASK, ifreq);
+	case SIOCGIFNETMASK32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFNETMASK, ifreq);
+	case SIOCSIFNETMASK32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFNETMASK, ifreq);
+	case SIOCGIFMETRIC32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFMETRIC, ifreq);
+	case SIOCSIFMETRIC32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFMETRIC, ifreq);
+	case SIOCDIFADDR32:
+		IOCTL_STRUCT_CONV_TO(SIOCDIFADDR, ifreq);
+	case SIOCADDMULTI32:
+		IOCTL_STRUCT_CONV_TO(SIOCADDMULTI, ifreq);
+	case SIOCDELMULTI32:
+		IOCTL_STRUCT_CONV_TO(SIOCDELMULTI, ifreq);
+	case SIOCSIFMEDIA32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFMEDIA, ifreq);
+	case SIOCSIFMTU32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFMTU, ifreq);
+	case SIOCGIFMTU32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFMTU, ifreq);
+	case SIOCSIFASYNCMAP32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFASYNCMAP, ifreq);
+	case SIOCGIFASYNCMAP32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFASYNCMAP, ifreq);
+/*		IOCTL_STRUCT_CONV_TO(BIOCGETIF, ifreq); READ ONLY */
+	case BIOCSETIF32:
+		IOCTL_STRUCT_CONV_TO(BIOCSETIF, ifreq);
+	case SIOCPHASE132:
+		IOCTL_STRUCT_CONV_TO(SIOCPHASE1, ifreq);
+	case SIOCPHASE232:
+		IOCTL_STRUCT_CONV_TO(SIOCPHASE2, ifreq);
 #endif
 
-	case OSIOCGIFCONF:
-	case SIOCGIFCONF:
-		IOCTL_STRUCT_CONV_TO(ifconf);
-		break;
+	case OSIOCGIFCONF32:
+		IOCTL_STRUCT_CONV_TO(OSIOCGIFCONF, ifconf);
+	case SIOCGIFCONF32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFCONF, ifconf);
 
-	case SIOCGIFMEDIA:
-		IOCTL_STRUCT_CONV_TO(ifmediareq);
-		break;
+	case SIOCGIFMEDIA32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
 
-	case SIOCSDRVSPEC:
-		IOCTL_STRUCT_CONV_TO(ifdrv);
-		break;
+	case SIOCSDRVSPEC32:
+		IOCTL_STRUCT_CONV_TO(SIOCSDRVSPEC, ifdrv);
 
-	case SIOCGETVIFCNT:
-		IOCTL_STRUCT_CONV_TO(sioc_vif_req);
-		break;
+	case SIOCGETVIFCNT32:
+		IOCTL_STRUCT_CONV_TO(SIOCGETVIFCNT, sioc_vif_req);
 
-	case SIOCGETSGCNT:
-		IOCTL_STRUCT_CONV_TO(sioc_sg_req);
-		break;
+	case SIOCGETSGCNT32:
+		IOCTL_STRUCT_CONV_TO(SIOCGETSGCNT, sioc_sg_req);
 
+	default:
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
+		break;
 	}
 
 	/*
-	 * if we malloced a new data segment, plug it into the
-	 * syscall args, otherwise copy incoming one as a void
-	 * pointer.  also copy the rest of the syscall args...
+	 * Copy any data to user, size was
+	 * already set and checked above.
 	 */
-	if (data)
-		SCARG(&ua, data) = data;
-	else
-		NETBSD32TOP_UAP(data, void);
-	NETBSD32TO64_UAP(fd);
-	NETBSD32TOX_UAP(com, u_long);
-
-	/* call the real ioctl */
-	rv = sys_ioctl(p, &ua, retval);
-
-	/*
-	 * convert _back_ to 32 bit the results of the command.
-	 */
-	switch (SCARG(uap, com)) {
-	case FBIOGETCMAP:
-		IOCTL_STRUCT_CONV_FROM(fbcmap);
-		break;
-
-	case FBIOGCURSOR:
-		IOCTL_STRUCT_CONV_FROM(fbcursor);
-		break;
-
-	case OPIOCGET:
-	case OPIOCNEXTPROP:
-		IOCTL_STRUCT_CONV_FROM(opiocdesc);
-		break;
-
-	case DIOCRFORMAT:
-	case DIOCWFORMAT:
-		IOCTL_STRUCT_CONV_FROM(format_op);
-		break;
-
-/*
- * only a few ifreq syscalls need conversion and those are
- * all driver specific... XXX
- */
-#if 0
-	case SIOCGADDRROM:
-	case SIOCGCHIPID:
-	case SIOCSIFADDR:
-	case OSIOCGIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFDSTADDR:
-	case OSIOCGIFDSTADDR:
-	case SIOCGIFDSTADDR:
-	case SIOCSIFFLAGS:
-	case SIOCGIFFLAGS:
-	case OSIOCGIFBRDADDR:
-	case SIOCGIFBRDADDR:
-	case SIOCSIFBRDADDR:
-	case OSIOCGIFNETMASK:
-	case SIOCGIFNETMASK:
-	case SIOCSIFNETMASK:
-	case SIOCGIFMETRIC:
-	case SIOCSIFMETRIC:
-	case SIOCDIFADDR:
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCSIFMEDIA:
-	case SIOCSIFMTU:
-	case SIOCGIFMTU:
-	case SIOCSIFASYNCMAP:
-	case SIOCGIFASYNCMAP:
-/*	case BIOCGETIF: READ ONLY */
-	case BIOCSETIF:
-	case SIOCPHASE1:
-	case SIOCPHASE2:
-		IOCTL_STRUCT_CONV_CMD_FROM(ifreq, SCARG(uap, cmd));
-		break;
-#endif
-
-	case OSIOCGIFCONF:
-	case SIOCGIFCONF:
-		IOCTL_STRUCT_CONV_FROM(ifconf);
-		break;
-
-	case SIOCGIFMEDIA:
-		IOCTL_STRUCT_CONV_FROM(ifmediareq);
-		break;
-
-	case SIOCSDRVSPEC:
-		IOCTL_STRUCT_CONV_FROM(ifdrv);
-		break;
-
-	case SIOCGETVIFCNT:
-		IOCTL_STRUCT_CONV_FROM(sioc_vif_req);
-		break;
-
-	case SIOCGETSGCNT:
-		IOCTL_STRUCT_CONV_FROM(sioc_sg_req);
-		break;
-	}
+	if (error == 0 && (com&IOC_OUT) && size32)
+		error = copyout(data32, (caddr_t)(u_long)SCARG(uap, data), size32);
 
 	/* if we malloced data, free it here */
-	if (data)
-		free(data, M_TEMP);
+	if (memp32)
+		free(memp32, M_IOCTLOPS);
+	if (memp)
+		free(memp, M_IOCTLOPS);
 
-	/* done! */
-	return (rv);
+ out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }

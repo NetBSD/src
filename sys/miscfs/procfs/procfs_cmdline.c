@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.6 1999/07/22 18:13:38 thorpej Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.6.2.1 2000/11/20 18:09:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -47,8 +47,6 @@
 #include <sys/malloc.h>
 #include <miscfs/procfs/procfs.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 /*
@@ -62,8 +60,8 @@ procfs_docmdline(curp, p, pfs, uio)
 	struct uio *uio;
 {
 	struct ps_strings pss;
-	int xlen, count, error, i;
-	size_t len, upper_bound;
+	int count, error, i;
+	size_t len, xlen, upper_bound;
 	struct uio auio;
 	struct iovec aiov;
 	vaddr_t argv;
@@ -85,7 +83,14 @@ procfs_docmdline(curp, p, pfs, uio)
 	 */
 	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
 		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm);
-		goto doio;
+		xlen = len - uio->uio_offset;
+		if (xlen <= 0) 
+			error = 0;
+		else
+			error = uiomove(arg, xlen, uio);
+
+		free(arg, M_TEMP);
+		return (error);
 	}
 
 	/*
@@ -98,9 +103,10 @@ procfs_docmdline(curp, p, pfs, uio)
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+		free(arg, M_TEMP);
 		return (EFAULT);
-	PHOLD(p);
+	}
 	p->p_vmspace->vm_refcnt++;	/* XXX */
 
 	/*
@@ -110,7 +116,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	aiov.iov_len = sizeof(pss);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)PS_STRINGS;
+	auio.uio_offset = (vaddr_t)p->p_psstr;
 	auio.uio_resid = sizeof(pss);
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
@@ -142,14 +148,15 @@ procfs_docmdline(curp, p, pfs, uio)
 	 */
 	len = 0;
 	count = pss.ps_nargvstr;
-	upper_bound = round_page(uio->uio_offset + 1);
-	for (; count && len < upper_bound; len += PAGE_SIZE) {
+	upper_bound = round_page(uio->uio_offset + uio->uio_resid);
+	for (; count && len < upper_bound; len += xlen) {
 		aiov.iov_base = arg;
 		aiov.iov_len = PAGE_SIZE;
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = argv + len;
-		auio.uio_resid = PAGE_SIZE;
+		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
+		auio.uio_resid = xlen;
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = NULL;
@@ -157,39 +164,29 @@ procfs_docmdline(curp, p, pfs, uio)
 		if (error)
 			goto bad;
 
-		for (i = len; i < (len + PAGE_SIZE) && count != 0; i++) {
+		for (i = 0; i < xlen && count != 0; i++) {
 			if (arg[i] == '\0')
 				count--;	/* one full string */
 		}
 
-		if (count == 0) {
-			/* No more argv strings, set up len and break. */
-			len = i;
-			break;
+		if (count == 0)
+			i--;		/* exclude the final NUL */
+
+		if (len + i > uio->uio_offset) {
+			/* Have data in this page, copy it out */
+			error = uiomove(arg + uio->uio_offset - len,
+			    i + len - uio->uio_offset, uio);
+			if (error || uio->uio_resid <= 0)
+				break;
 		}
 	}
-	if (len > 0)
-		len--;			/* exclude last NUL */
 
+ bad:
 	/*
 	 * Release the process.
 	 */
-	PRELE(p);
 	uvmspace_free(p->p_vmspace);
 
- doio:
-	xlen = len - uio->uio_offset;
-	if (xlen <= 0) 
-		error = 0;
-	else
-		error = uiomove(arg + trunc_page(len), xlen, uio);
-
-	free(arg, M_TEMP);
-	return (error);
-
- bad:
-	PRELE(p);
-	uvmspace_free(p->p_vmspace);
 	free(arg, M_TEMP);
 	return (error);
 }

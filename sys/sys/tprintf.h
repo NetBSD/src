@@ -1,4 +1,4 @@
-/*	$NetBSD: tprintf.h,v 1.11 1997/01/22 07:09:26 mikel Exp $	*/
+/*	$NetBSD: tprintf.h,v 1.11.26.1 2000/11/20 18:11:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,5 +42,5 @@ tpr_t	tprintf_open __P((struct proc *));
 void	tprintf_close __P((tpr_t));
 
 void	tprintf __P((tpr_t, const char *fmt, ...))
-    __kprintf_attribute__((__format__(__kprintf__,2,3)));
+    __attribute__((__format__(__printf__,2,3)));
 #endif /* _KERNEL */

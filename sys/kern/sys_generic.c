@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.45 1999/05/05 20:01:09 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.45.2.1 2000/11/20 18:09:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,14 +75,14 @@ sys_read(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_read_args /* {
+	struct sys_read_args /* {
 		syscallarg(int) fd;
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -150,7 +150,7 @@ dofileread(p, fd, fp, buf, nbyte, offset, flags, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, fd, UIO_READ, &ktriov, cnt, error);
+		ktrgenio(p, fd, UIO_READ, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
  out:
@@ -167,14 +167,14 @@ sys_readv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_readv_args /* {
+	struct sys_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(const struct iovec *) iovp;
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -201,7 +201,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -217,7 +217,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 			error = EINVAL;
 			goto out;
 		}
-		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -254,7 +254,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -268,15 +268,14 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p->p_tracep, fd, UIO_READ, ktriov, cnt,
-			    error);
-		FREE(ktriov, M_TEMP);
+			ktrgenio(p, fd, UIO_READ, ktriov, cnt, error);
+		free(ktriov, M_TEMP);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		FREE(needfree, M_IOV);
+		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -291,14 +290,14 @@ sys_write(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_write_args /* {
+	struct sys_write_args /* {
 		syscallarg(int) fd;
 		syscallarg(const void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -369,7 +368,7 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, flags, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, fd, UIO_WRITE, &ktriov, cnt, error);
+		ktrgenio(p, fd, UIO_WRITE, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
  out:
@@ -386,14 +385,14 @@ sys_writev(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_writev_args /* {
+	struct sys_writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(const struct iovec *) iovp;
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -420,7 +419,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -434,7 +433,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
 		if ((u_int)iovcnt > IOV_MAX)
 			return (EINVAL);
-		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -471,7 +470,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -488,15 +487,14 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p->p_tracep, fd, UIO_WRITE, ktriov, cnt,
-			    error);
-		FREE(ktriov, M_TEMP);
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt, error);
+		free(ktriov, M_TEMP);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		FREE(needfree, M_IOV);
+		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -512,20 +510,20 @@ sys_ioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_ioctl_args /* {
+	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	register struct file *fp;
-	register struct filedesc *fdp;
-	register u_long com;
-	register int error = 0;
-	register u_int size;
+	struct file *fp;
+	struct filedesc *fdp;
+	u_long com;
+	int error = 0;
+	u_int size;
 	caddr_t data, memp;
 	int tmp;
 #define STK_PARAMS	128
-	char stkbuf[STK_PARAMS];
+	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
 
 	fdp = p->p_fd;
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -564,7 +562,7 @@ sys_ioctl(p, v, retval)
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
 	} else
-		data = stkbuf;
+		data = (caddr_t)stkbuf;
 	if (com&IOC_IN) {
 		if (size) {
 			error = copyin(SCARG(uap, data), data, size);
@@ -657,11 +655,11 @@ int	selwait, nselcoll;
  */
 int
 sys_select(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_select_args /* {
+	struct sys_select_args /* {
 		syscallarg(int) nd;
 		syscallarg(fd_set *) in;
 		syscallarg(fd_set *) ou;
@@ -709,12 +707,6 @@ sys_select(p, v, retval)
 		}
 		s = splclock();
 		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		/*
-		 * Avoid inadvertently sleeping forever.
-		 */
-		if (timo == 0)
-			timo = 1;
 		splx(s);
 	} else
 		timo = 0;
@@ -725,11 +717,15 @@ retry:
 			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
 	if (error || *retval)
 		goto done;
-	s = splhigh();
-	if (timo && timercmp(&time, &atv, >=)) {
-		splx(s);
-		goto done;
+	if (SCARG(uap, tv)) {
+		/*
+		 * We have to recalculate the timeout on every retry.
+		 */
+		timo = hzto(&atv);
+		if (timo <= 0)
+			goto done;
 	}
+	s = splsched();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
@@ -771,9 +767,9 @@ selscan(p, ibitp, obitp, nfd, retval)
 	int nfd;
 	register_t *retval;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register int msk, i, j, fd;
-	register fd_mask ibits, obits;
+	struct filedesc *fdp = p->p_fd;
+	int msk, i, j, fd;
+	fd_mask ibits, obits;
 	struct file *fp;
 	int n = 0;
 	static int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
@@ -809,11 +805,11 @@ selscan(p, ibitp, obitp, nfd, retval)
  */
 int
 sys_poll(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_poll_args /* {
+	struct sys_poll_args /* {
 		syscallarg(struct pollfd *) fds;
 		syscallarg(u_int) nfds;
 		syscallarg(int) timeout;
@@ -847,12 +843,6 @@ sys_poll(p, v, retval)
 		}
 		s = splclock();
 		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		/*
-		 * Avoid inadvertently sleeping forever.
-		 */
-		if (timo == 0)
-			timo = 1;
 		splx(s);
 	} else
 		timo = 0;
@@ -862,11 +852,15 @@ retry:
 	error = pollscan(p, (struct pollfd *)bits, SCARG(uap, nfds), retval);
 	if (error || *retval)
 		goto done;
-	s = splhigh();
-	if (timo && timercmp(&time, &atv, >=)) {
-		splx(s);
-		goto done;
+	if (SCARG(uap, timeout) != INFTIM) {
+		/*
+		 * We have to recalculate the timeout on every retry.
+		 */
+		timo = hzto(&atv);
+		if (timo <= 0)
+			goto done;
 	}
+	s = splsched();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
@@ -901,7 +895,7 @@ pollscan(p, fds, nfd, retval)
 	int nfd;
 	register_t *retval;
 {
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 	int i;
 	struct file *fp;
 	int n = 0;
@@ -967,9 +961,9 @@ selrecord(selector, sip)
  */
 void
 selwakeup(sip)
-	register struct selinfo *sip;
+	struct selinfo *sip;
 {
-	register struct proc *p;
+	struct proc *p;
 	int s;
 
 	if (sip->si_pid == 0)
@@ -982,7 +976,7 @@ selwakeup(sip)
 	p = pfind(sip->si_pid);
 	sip->si_pid = 0;
 	if (p != NULL) {
-		s = splhigh();
+		SCHED_LOCK(s);
 		if (p->p_wchan == (caddr_t)&selwait) {
 			if (p->p_stat == SSLEEP)
 				setrunnable(p);
@@ -990,6 +984,6 @@ selwakeup(sip)
 				unsleep(p);
 		} else if (p->p_flag & P_SELECT)
 			p->p_flag &= ~P_SELECT;
-		splx(s);
+		SCHED_UNLOCK(s);
 	}
 }

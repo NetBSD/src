@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.39.2.1 1999/10/20 22:57:21 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.39.2.2 2000/11/20 18:11:51 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,7 +91,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -130,6 +130,7 @@ struct vfsops lfs_vfsops = {
 	lfs_fhtovp,
 	lfs_vptofh,
 	lfs_init,
+	lfs_done,
 	lfs_sysctl,
 	lfs_mountroot,
 	ufs_check_export,
@@ -145,13 +146,20 @@ void
 lfs_init()
 {
 	ufs_init();
-	
+
 	/*
 	 * XXX Same structure as FFS inodes?  Should we share a common pool?
 	 */
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "lfsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 		  M_LFSNODE);
+}
+
+void
+lfs_done()
+{
+	ufs_done();
+	pool_destroy(&lfs_inode_pool);
 }
 
 /*
@@ -203,7 +211,7 @@ lfs_mountroot()
  */
 int
 lfs_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
+	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
@@ -212,7 +220,7 @@ lfs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
-	register struct lfs *fs = NULL;				/* LFS */
+	struct lfs *fs = NULL;				/* LFS */
 	size_t size;
 	int error;
 	mode_t accessmode;
@@ -317,14 +325,14 @@ lfs_mount(mp, path, data, ndp, p)
  */
 int
 lfs_mountfs(devvp, mp, p)
-	register struct vnode *devvp;
+	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
 {
 	extern struct vnode *rootvp;
 	struct dlfs *dfs, *adfs;
-	register struct lfs *fs;
-	register struct ufsmount *ump;
+	struct lfs *fs;
+	struct ufsmount *ump;
 	struct vnode *vp;
 	struct buf *bp, *abp;
 	struct partinfo dpart;
@@ -358,6 +366,7 @@ lfs_mountfs(devvp, mp, p)
 
 	/* Don't free random space on error. */
 	bp = NULL;
+	abp = NULL;
 	ump = NULL;
 
 	/* Read in the superblock. */
@@ -366,24 +375,33 @@ lfs_mountfs(devvp, mp, p)
 		goto out;
 	dfs = (struct dlfs *)bp->b_data;
 
-	/*
-	 * Check the second superblock to see which is newer; then mount
-	 * using the older of the two.  This is necessary to ensure that
-	 * the filesystem is valid if it was not unmounted cleanly.
-	 */
-	error = bread(devvp, dfs->dlfs_sboffs[1], LFS_SBPAD, cred, &abp);
-	if (error)
-		goto out;
-	adfs = (struct dlfs *)abp->b_data;
-
-	if (adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
-		dfs = adfs;
-
 	/* Check the basics. */
 	if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
 	    dfs->dlfs_version > LFS_VERSION ||
 	    dfs->dlfs_bsize < sizeof(struct dlfs)) {
 		error = EINVAL;		/* XXX needs translation */
+		goto out;
+	}
+
+	/*
+	 * Check the second superblock to see which is newer; then mount
+	 * using the older of the two.  This is necessary to ensure that
+	 * the filesystem is valid if it was not unmounted cleanly.
+	 */
+	if (dfs->dlfs_sboffs[1] &&
+	    dfs->dlfs_sboffs[1]-(LFS_LABELPAD/size) > LFS_SBPAD/size)
+	{
+		error = bread(devvp, dfs->dlfs_sboffs[1], LFS_SBPAD, cred, &abp);
+		if (error)
+			goto out;
+		adfs = (struct dlfs *)abp->b_data;
+
+		if (adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX 1s? */
+			dfs = adfs;
+	} else {
+		printf("lfs_mountfs: invalid alt superblock daddr=0x%x\n",
+			dfs->dlfs_sboffs[1]);
+		error = EINVAL;
 		goto out;
 	}
 
@@ -402,11 +420,12 @@ lfs_mountfs(devvp, mp, p)
 
 	/* Set up the I/O information */
 	fs->lfs_iocount = 0;
-	fs->lfs_dirvcount = 0;
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
+	fs->lfs_uinodes = 0;
+	fs->lfs_ravail = 0;
 #ifdef LFS_CANNOT_ROLLFW
-	fs->lfs_sbactive = NULL;
+	fs->lfs_sbactive = 0;
 #endif
 #ifdef LFS_TRACK_IOS
 	for (i=0;i<LFS_THROTTLE;i++)
@@ -417,7 +436,9 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_doifile = 0;
 	fs->lfs_writer = 0;
 	fs->lfs_dirops = 0;
+	fs->lfs_nadirop = 0;
 	fs->lfs_seglock = 0;
+	lockinit(&fs->lfs_freelock, PINOD, "lfs_freelock", 0, 0);
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -429,6 +450,7 @@ lfs_mountfs(devvp, mp, p)
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_LFS);
+	mp->mnt_stat.f_iosize = fs->lfs_bsize;
 	mp->mnt_maxsymlinklen = fs->lfs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_flags = 0;
@@ -440,7 +462,7 @@ lfs_mountfs(devvp, mp, p)
 	ump->um_nindir = fs->lfs_nindir;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -488,8 +510,8 @@ lfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
-	register struct lfs *fs;
+	struct ufsmount *ump;
+	struct lfs *fs;
 	int error, flags, ronly;
 	extern int lfs_allclean_wakeup;
 
@@ -528,7 +550,7 @@ lfs_unmount(mp, mntflags, p)
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
@@ -551,40 +573,24 @@ lfs_unmount(mp, mntflags, p)
 int
 lfs_statfs(mp, sbp, p)
 	struct mount *mp;
-	register struct statfs *sbp;
+	struct statfs *sbp;
 	struct proc *p;
 {
-	register struct lfs *fs;
-	register struct ufsmount *ump;
+	struct lfs *fs;
+	struct ufsmount *ump;
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
 	if (fs->lfs_magic != LFS_MAGIC)
 		panic("lfs_statfs: magic");
+
 	sbp->f_type = 0;
 	sbp->f_bsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = dbtofrags(fs, fs->lfs_dsize);
-	sbp->f_bfree = dbtofrags(fs, fs->lfs_bfree);
-	/*
-	 * To compute the available space.  Subtract the minimum free
-	 * from the total number of blocks in the file system.	Set avail
-	 * to the smaller of this number and fs->lfs_bfree.
-	 *
-	 * XXX KS - is my modification below what is desired?  (This
-	 * will, e.g., change the report when the cleaner runs.)
-	 */
-#if 0
-        sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
-		(100 - fs->lfs_minfree) / (u_int64_t) 100);
-	sbp->f_bavail =
-	    sbp->f_bavail > fs->lfs_bfree ? fs->lfs_bfree : sbp->f_bavail;
-#else
-	sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
-				(100 - fs->lfs_minfree) / (u_int64_t) 100)
-		- (u_int64_t)(fs->lfs_dsize - fs->lfs_bfree);
-#endif
-	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
+	sbp->f_blocks = dbtofrags(fs, LFS_EST_NONMETA(fs));
+	sbp->f_bfree = dbtofrags(fs, LFS_EST_BFREE(fs));
+	sbp->f_bavail = dbtofrags(fs, (long)LFS_EST_BFREE(fs) -
+				  (long)LFS_EST_RSVD(fs));
 	sbp->f_files = dbtofsb(fs,fs->lfs_bfree) * INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
 	if (sbp != &mp->mnt_stat) {
@@ -613,6 +619,8 @@ lfs_sync(mp, waitfor, cred, p)
 	struct lfs *fs;
 
 	fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+	if (fs->lfs_ronly)
+		return 0;
 	while(fs->lfs_dirops)
 		error = tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirops", 0);
 	fs->lfs_writer++;
@@ -627,9 +635,7 @@ lfs_sync(mp, waitfor, cred, p)
 	return (error);
 }
 
-#ifdef USE_UFS_HASHLOCK
 extern struct lock ufs_hashlock;
-#endif
 
 /*
  * Look up an LFS dinode number to find its incore vnode.  If not already
@@ -642,8 +648,8 @@ lfs_vget(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-	register struct lfs *fs;
-	register struct inode *ip;
+	struct lfs *fs;
+	struct inode *ip;
 	struct buf *bp;
 	struct ifile *ifp;
 	struct vnode *vp;
@@ -658,14 +664,20 @@ lfs_vget(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 
-#ifdef USE_UFS_HASHLOCK
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
+		return (0);
+
+	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
+		*vpp = NULL;
+		 return (error);
+	}
+
 	do {
-#endif
-		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+			ungetnewvnode(vp);
 			return (0);
-#ifdef USE_UFS_HASHLOCK
+		}
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
-#endif
 
 	/* Translate the inode number to a disk address. */
 	fs = ump->um_lfs;
@@ -679,21 +691,13 @@ lfs_vget(mp, ino, vpp)
 #endif
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR) {
-#ifdef USE_UFS_HASHLOCK
 			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 			return (ENOENT);
 		}
 	}
 
-	/* Allocate new vnode/inode. */
-	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
-		*vpp = NULL;
-#ifdef USE_UFS_HASHLOCK
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
-		return (error);
-	}
+	/* Allocate/init new vnode/inode. */
+	lfs_vcreate(mp, ino, vp);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -703,9 +707,7 @@ lfs_vget(mp, ino, vpp)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-#ifdef USE_UFS_HASHLOCK
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 
 	/*
 	 * XXX
@@ -729,7 +731,9 @@ lfs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din.ffs_din = *lfs_ifind(fs, ino, (struct dinode *)bp->b_data);
+	ip->i_din.ffs_din = *lfs_ifind(fs, ino, bp);
+	ip->i_ffs_effnlink = ip->i_ffs_nlink;
+	ip->i_lfs_effnblks = ip->i_ffs_blocks;
 #ifdef LFS_ATIME_IFILE
 	ip->i_ffs_atime = ts.tv_sec;
 	ip->i_ffs_atimensec = ts.tv_nsec;
@@ -746,12 +750,12 @@ lfs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
+#ifdef DIAGNOSTIC
 	if(vp->v_type == VNON) {
-		printf("lfs_vget: ino %d is type VNON! (ifmt %o)\n", ip->i_number, (ip->i_ffs_mode&IFMT)>>12);
-#ifdef DDB
-		Debugger();
-#endif
+		panic("lfs_vget: ino %d is type VNON! (ifmt %o)\n",
+		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
 	}
+#endif
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
@@ -777,11 +781,11 @@ lfs_vget(mp, ino, vpp)
  */
 int
 lfs_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	register struct ufid *ufhp;
+	struct ufid *ufhp;
 
 	ufhp = (struct ufid *)fhp;
 	if (ufhp->ufid_ino < ROOTINO)
@@ -798,8 +802,8 @@ lfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	register struct inode *ip;
-	register struct ufid *ufhp;
+	struct inode *ip;
+	struct ufid *ufhp;
 
 	ip = VTOI(vp);
 	ufhp = (struct ufid *)fhp;

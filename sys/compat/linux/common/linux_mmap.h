@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.6 1998/12/15 19:31:39 itohy Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.6.8.1 2000/11/20 18:08:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include <compat/linux/arch/mips/linux_mmap.h>
 #elif defined(__powerpc__)
 #include <compat/linux/arch/powerpc/linux_mmap.h>
-#elif defined(sparc)
+#elif defined(__sparc__)
 #include <compat/linux/arch/sparc/linux_mmap.h>
 #else
 #error Undefined linux_mmap.h machine type.

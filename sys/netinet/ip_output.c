@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.62 1999/07/09 22:57:19 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.62.2.1 2000/11/20 18:10:32 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -113,8 +113,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -127,6 +125,10 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+
+#ifdef MROUTING
+#include <netinet/ip_mroute.h>
+#endif
 
 #ifdef __vax__
 #include <machine/mtpr.h>
@@ -159,16 +161,13 @@ ip_output(m0, va_alist)
 	va_dcl
 #endif
 {
-	register struct ip *ip, *mhip;
-	register struct ifnet *ifp;
-	register struct mbuf *m = m0;
-	register int hlen = sizeof (struct ip);
+	struct ip *ip, *mhip;
+	struct ifnet *ifp;
+	struct mbuf *m = m0;
+	int hlen = sizeof (struct ip);
 	int len, off, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
-#if IFA_STATS
-	struct sockaddr_in src;
-#endif
 	struct in_ifaddr *ia;
 	struct mbuf *opt;
 	struct route *ro;
@@ -183,7 +182,7 @@ ip_output(m0, va_alist)
 	int rv;
 #endif /* PFIL_HOOKS */
 #ifdef IPSEC
-	struct socket *so = (struct socket *)m->m_pkthdr.rcvif;
+	struct socket *so;
 	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
 
@@ -199,7 +198,8 @@ ip_output(m0, va_alist)
 	va_end(ap);
 
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
+	so = ipsec_getsocket(m);
+	ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
 #ifdef	DIAGNOSTIC
@@ -275,10 +275,12 @@ ip_output(m0, va_alist)
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
 	}
-	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
+	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
 		struct in_multi *inm;
 
-		m->m_flags |= M_MCAST;
+		m->m_flags |= (ip->ip_dst.s_addr == INADDR_BROADCAST) ?
+			M_BCAST : M_MCAST;
 		/*
 		 * IP destination address is multicast.  Make sure "dst"
 		 * still points to the address in "ro".  (It may have been
@@ -299,7 +301,10 @@ ip_output(m0, va_alist)
 		/*
 		 * Confirm that the outgoing interface supports multicast.
 		 */
-		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (((m->m_flags & M_MCAST) &&
+		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
+		    ((m->m_flags & M_BCAST) && 
+		     (ifp->if_flags & IFF_BROADCAST) == 0))  {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
@@ -309,7 +314,7 @@ ip_output(m0, va_alist)
 		 * of outgoing interface.
 		 */
 		if (in_nullhost(ip->ip_src)) {
-			register struct in_ifaddr *ia;
+			struct in_ifaddr *ia;
 
 			IFP_TO_IA(ifp, ia);
 			ip->ip_src = ia->ia_addr.sin_addr;
@@ -407,12 +412,21 @@ ip_output(m0, va_alist)
 		m->m_flags &= ~M_BCAST;
 
 sendit:
+	/*
+	 * If we're doing Path MTU Discovery, we need to set DF unless
+	 * the route's MTU is locked.
+	 */
+	if ((flags & IP_MTUDISC) != 0 && ro->ro_rt != NULL &&
+	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+		ip->ip_off |= IP_DF;
+
 #ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
 	m1 = m;
-	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.tqe_next)
+	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
+	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
 			if (rv) {
@@ -429,9 +443,9 @@ sendit:
 #ifdef IPSEC
 	/* get SP for this packet */
 	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, flags, &error);
+		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, flags, &error);
 	else
-		sp = ipsec4_getpolicybysock(m, so, &error);
+		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
 
 	if (sp == NULL) {
 		ipsecstat.out_inval++;
@@ -549,6 +563,15 @@ skip_ipsec:
 	 * If small enough for mtu of path, can just send directly.
 	 */
 	if ((u_int16_t)ip->ip_len <= mtu) {
+#if IFA_STATS
+		/*
+		 * search for the source address structure to
+		 * maintain output statistics.
+		 */
+		INADDR_TO_IA(ip->ip_src, ia);
+		if (ia)
+			ia->ia_ifa.ifa_data.ifad_outbytes += ip->ip_len;
+#endif
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
@@ -608,6 +631,8 @@ skip_ipsec:
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
+		/* we must inherit MCAST and BCAST flags */
+		m->m_flags |= m0->m_flags & (M_MCAST|M_BCAST);
 		if (hlen > sizeof (struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
 			mhip->ip_hl = mhlen >> 2;
@@ -659,10 +684,21 @@ sendorfree:
 	for (m = m0; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
-		if (error == 0)
+		if (error == 0) {
+#if IFA_STATS
+			/*
+			 * search for the source address structure to
+			 * maintain output statistics.
+			 */
+			INADDR_TO_IA(ip->ip_src, ia);
+			if (ia) {
+				ia->ia_ifa.ifa_data.ifad_outbytes +=
+					ntohs(ip->ip_len);
+			}
+#endif
 			error = (*ifp->if_output)(ifp, m, sintosa(dst),
 			    ro->ro_rt);
-		else
+		} else
 			m_freem(m);
 	}
 
@@ -674,19 +710,6 @@ done:
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
-#if IFA_STATS
-	if (error == 0) {
-		/* search for the source address structure to maintain output
-		 * statistics. */
-		bzero((caddr_t*) &src, sizeof(src));
-		src.sin_family = AF_INET;
-		src.sin_addr.s_addr = ip->ip_src.s_addr;
-		src.sin_len = sizeof(src);
-		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
-		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
-	}
-#endif
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -727,13 +750,13 @@ ip_optlen(inp)
  */
 static struct mbuf *
 ip_insertoptions(m, opt, phlen)
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *opt;
 	int *phlen;
 {
-	register struct ipoption *p = mtod(opt, struct ipoption *);
+	struct ipoption *p = mtod(opt, struct ipoption *);
 	struct mbuf *n;
-	register struct ip *ip = mtod(m, struct ip *);
+	struct ip *ip = mtod(m, struct ip *);
 	unsigned optlen;
 
 	optlen = opt->m_len - sizeof(p->ipopt_dst);
@@ -774,7 +797,7 @@ int
 ip_optcopy(ip, jp)
 	struct ip *ip, *jp;
 {
-	register u_char *cp, *dp;
+	u_char *cp, *dp;
 	int opt, optlen, cnt;
 
 	cp = (u_char *)(ip + 1);
@@ -789,8 +812,16 @@ ip_optcopy(ip, jp)
 			*dp++ = IPOPT_NOP;
 			optlen = 1;
 			continue;
-		} else
-			optlen = cp[IPOPT_OLEN];
+		}
+#ifdef DIAGNOSTIC
+		if (cnt < IPOPT_OLEN + sizeof(*cp))
+			panic("malformed IPv4 option passed to ip_optcopy");
+#endif
+		optlen = cp[IPOPT_OLEN];
+#ifdef DIAGNOSTIC
+		if (optlen < IPOPT_OLEN + sizeof(*cp) || optlen > cnt)
+			panic("malformed IPv4 option passed to ip_optcopy");
+#endif
 		/* bogus lengths should have been caught by ip_dooptions */
 		if (optlen > cnt)
 			optlen = cnt;
@@ -814,9 +845,9 @@ ip_ctloutput(op, so, level, optname, mp)
 	int level, optname;
 	struct mbuf **mp;
 {
-	register struct inpcb *inp = sotoinpcb(so);
-	register struct mbuf *m = *mp;
-	register int optval = 0;
+	struct inpcb *inp = sotoinpcb(so);
+	struct mbuf *m = *mp;
+	int optval = 0;
 	int error = 0;
 #ifdef IPSEC
 #ifdef __NetBSD__
@@ -919,10 +950,11 @@ ip_ctloutput(op, so, level, optname, mp)
 
 #ifdef IPSEC
 		case IP_IPSEC_POLICY:
-		    {
+		{
 			caddr_t req = NULL;
-			int len = 0;
+			size_t len = 0;
 			int priv = 0;
+
 #ifdef __NetBSD__
 			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
 				priv = 0;
@@ -931,12 +963,11 @@ ip_ctloutput(op, so, level, optname, mp)
 #else
 			priv = (in6p->in6p_socket->so_state & SS_PRIV);
 #endif
-			if (m != 0) {
+			if (m) {
 				req = mtod(m, caddr_t);
 				len = m->m_len;
 			}
-			error = ipsec_set_policy(&inp->inp_sp,
-			                         optname, req, len, priv);
+			error = ipsec4_set_policy(inp, optname, req, len, priv);
 			break;
 		    }
 #endif /*IPSEC*/
@@ -1008,8 +1039,17 @@ ip_ctloutput(op, so, level, optname, mp)
 
 #ifdef IPSEC
 		case IP_IPSEC_POLICY:
-			error = ipsec_get_policy(inp->inp_sp, mp);
+		{
+			caddr_t req = NULL;
+			size_t len;
+
+			if (m) {
+				req = mtod(m, caddr_t);
+				len = m->m_len;
+			}
+			error = ipsec4_get_policy(inp, req, len, mp);
 			break;
+		}
 #endif /*IPSEC*/
 
 		case IP_MULTICAST_IF:
@@ -1054,10 +1094,10 @@ ip_pcbopts(optname, pcbopt, m)
 ip_pcbopts(pcbopt, m)
 #endif
 	struct mbuf **pcbopt;
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register int cnt, optlen;
-	register u_char *cp;
+	int cnt, optlen;
+	u_char *cp;
 	u_char opt;
 
 	/* turn off any old options */
@@ -1097,8 +1137,10 @@ ip_pcbopts(pcbopt, m)
 		if (opt == IPOPT_NOP)
 			optlen = 1;
 		else {
+			if (cnt < IPOPT_OLEN + sizeof(*cp))
+				goto bad;
 			optlen = cp[IPOPT_OLEN];
-			if (optlen <= IPOPT_OLEN || optlen > cnt)
+			if (optlen < IPOPT_OLEN  + sizeof(*cp) || optlen > cnt)
 				goto bad;
 		}
 		switch (opt) {
@@ -1156,15 +1198,15 @@ ip_setmoptions(optname, imop, m)
 	struct ip_moptions **imop;
 	struct mbuf *m;
 {
-	register int error = 0;
+	int error = 0;
 	u_char loop;
-	register int i;
+	int i;
 	struct in_addr addr;
-	register struct ip_mreq *mreq;
-	register struct ifnet *ifp;
-	register struct ip_moptions *imo = *imop;
+	struct ip_mreq *mreq;
+	struct ifnet *ifp;
+	struct ip_moptions *imo = *imop;
 	struct route ro;
-	register struct sockaddr_in *dst;
+	struct sockaddr_in *dst;
 
 	if (imo == NULL) {
 		/*
@@ -1392,8 +1434,8 @@ ip_setmoptions(optname, imop, m)
 int
 ip_getmoptions(optname, imo, mp)
 	int optname;
-	register struct ip_moptions *imo;
-	register struct mbuf **mp;
+	struct ip_moptions *imo;
+	struct mbuf **mp;
 {
 	u_char *ttl;
 	u_char *loop;
@@ -1439,9 +1481,9 @@ ip_getmoptions(optname, imo, mp)
  */
 void
 ip_freemoptions(imo)
-	register struct ip_moptions *imo;
+	struct ip_moptions *imo;
 {
-	register int i;
+	int i;
 
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i)
@@ -1459,13 +1501,16 @@ ip_freemoptions(imo)
 static void
 ip_mloopback(ifp, m, dst)
 	struct ifnet *ifp;
-	register struct mbuf *m;
-	register struct sockaddr_in *dst;
+	struct mbuf *m;
+	struct sockaddr_in *dst;
 {
-	register struct ip *ip;
+	struct ip *ip;
 	struct mbuf *copym;
 
 	copym = m_copy(m, 0, M_COPYALL);
+	if (copym != NULL
+	 && (copym->m_flags & M_EXT || copym->m_len < sizeof(struct ip)))
+		copym = m_pullup(copym, sizeof(struct ip));
 	if (copym != NULL) {
 		/*
 		 * We don't bother to fragment if the IP length is greater

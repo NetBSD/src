@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.34 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.34.2.1 2000/11/20 18:11:59 bouyer Exp $	*/
 
 /*
  *
@@ -34,6 +34,41 @@
  * from: Id: uvm_extern.h,v 1.1.2.21 1998/02/07 01:16:53 chs Exp
  */
 
+/*-
+ * Copyright (c) 1991, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)vm_extern.h	8.5 (Berkeley) 5/3/95
+ */
+
 #ifndef _UVM_UVM_EXTERN_H_
 #define _UVM_UVM_EXTERN_H_
 
@@ -47,6 +82,28 @@
  *
  * NOTE: vm system calls are prototyped in syscallargs.h
  */
+
+/*
+ * typedefs, necessary for standard UVM headers.
+ */
+
+typedef unsigned int  uvm_flag_t;
+typedef int vm_fault_t;
+
+typedef int vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+
+union vm_map_object;
+typedef union vm_map_object vm_map_object_t;
+
+struct vm_map_entry;
+typedef struct vm_map_entry *vm_map_entry_t;
+
+struct vm_map;
+typedef struct vm_map *vm_map_t;
+
+struct vm_page;
+typedef struct vm_page  *vm_page_t;
 
 /*
  * defines
@@ -112,7 +169,7 @@
 	((MAXPROT << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
 
 /* magic offset value */
-#define UVM_UNKNOWN_OFFSET ((vaddr_t) -1)
+#define UVM_UNKNOWN_OFFSET ((voff_t) -1)
 				/* offset not known(obj) or don't care(!obj) */
 
 /*
@@ -132,7 +189,8 @@
 /*
  * flags for uvm_pagealloc_strat()
  */
-#define UVM_PGA_USERESERVE		0x0001
+#define UVM_PGA_USERESERVE	0x0001	/* ok to use reserve pages */
+#define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -175,6 +233,7 @@ struct uvmexp {
 	int inactive;   /* number of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
+	int zeropages;	/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel; /* number of pages reserved for kernel */
 
@@ -211,6 +270,12 @@ struct uvmexp {
 	int forks;  		/* forks */
 	int forks_ppwait;	/* forks where parent waits */
 	int forks_sharevm;	/* forks where vmspace is shared */
+	int pga_zerohit;	/* pagealloc where zero wanted and zero
+				   was available */
+	int pga_zeromiss;	/* pagealloc where zero wanted and zero
+				   not available */
+	int zeroaborts;		/* number of times page zeroing was
+				   aborted */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -252,8 +317,55 @@ struct uvmexp {
 };
 
 #ifdef _KERNEL
-
 extern struct uvmexp uvmexp;
+#endif
+
+/*
+ * Finally, bring in standard UVM headers.
+ */
+#include <sys/vmmeter.h>
+#include <sys/queue.h>
+#include <uvm/uvm_param.h>
+#include <sys/lock.h>
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_page.h>
+#include <uvm/uvm_pmap.h>
+#include <uvm/uvm_map.h>
+#include <uvm/uvm_fault.h>
+#include <uvm/uvm_pager.h>
+
+/*
+ * Shareable process virtual address space.
+ * May eventually be merged with vm_map.
+ * Several fields are temporary (text, data stuff).
+ */
+struct vmspace {
+	struct	vm_map vm_map;	/* VM address map */
+	int	vm_refcnt;	/* number of references */
+	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
+/* we copy from vm_startcopy to the end of the structure on fork */
+#define vm_startcopy vm_rssize
+	segsz_t vm_rssize; 	/* current resident set size in pages */
+	segsz_t vm_swrss;	/* resident set size before last swap */
+	segsz_t vm_tsize;	/* text size (pages) XXX */
+	segsz_t vm_dsize;	/* data size (pages) XXX */
+	segsz_t vm_ssize;	/* stack size (pages) */
+	caddr_t	vm_taddr;	/* user virtual address of text XXX */
+	caddr_t	vm_daddr;	/* user virtual address of data XXX */
+	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
+	caddr_t vm_minsaddr;	/* user VA at top of stack */
+};
+
+#ifdef _KERNEL
+
+/*
+ * the various kernel maps, owned by MD code
+ */
+extern vm_map_t	exec_map;
+extern vm_map_t	kernel_map;
+extern vm_map_t	kmem_map;
+extern vm_map_t	mb_map;
+extern vm_map_t	phys_map;
 
 /*
  * macros
@@ -265,19 +377,42 @@ extern struct uvmexp uvmexp;
 
 #endif /* _KERNEL */
 
-/*
- * typedefs 
- */
+#ifdef	pmap_resident_count
+#define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
+#else
+#define vm_resident_count(vm) ((vm)->vm_rssize)
+#endif
 
-typedef unsigned int  uvm_flag_t;
-typedef int vm_fault_t;
+/* XXX clean up later */
+struct buf;
+struct loadavg;
+struct proc;
+struct pmap;
+struct vmspace;
+struct vmtotal;
+struct mount;
+struct vnode;
+struct core;
 
 #ifdef _KERNEL
+
+/* vm_machdep.c */
+void		vmapbuf __P((struct buf *, vsize_t));
+void		vunmapbuf __P((struct buf *, vsize_t));
+void		pagemove __P((caddr_t, caddr_t, size_t));
+#ifndef	cpu_swapin
+void		cpu_swapin __P((struct proc *));
+#endif
+#ifndef	cpu_swapout
+void		cpu_swapout __P((struct proc *));
+#endif
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));
 void			uao_detach __P((struct uvm_object *));
+void			uao_detach_locked __P((struct uvm_object *));
 void			uao_reference __P((struct uvm_object *));
+void			uao_reference_locked __P((struct uvm_object *));
 
 /* uvm_fault.c */
 int			uvm_fault __P((vm_map_t, vaddr_t, 
@@ -288,10 +423,8 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
-void			uvm_sleep __P((void *, struct simplelock *, boolean_t,
-			    const char *, int));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
-			    void *, size_t));
+			    void *, size_t, void (*)(void *), void *));
 void			uvm_exit __P((struct proc *));
 void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
@@ -322,6 +455,8 @@ struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
 				boolean_t, vm_map_t));
 vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
 vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));
+vaddr_t			uvm_km_valloc_prefer_wait __P((vm_map_t, vsize_t,
+					voff_t));
 vaddr_t			uvm_km_alloc_poolpage1 __P((vm_map_t,
 				struct uvm_object *, boolean_t));
 void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
@@ -332,7 +467,8 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 
 /* uvm_map.c */
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
-				struct uvm_object *, vaddr_t, uvm_flag_t));
+				struct uvm_object *, voff_t, vsize_t,
+				uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
 				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
@@ -359,23 +495,23 @@ int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, vaddr_t, vsize_t));
+				caddr_t, voff_t, vsize_t));
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
-				vaddr_t, struct vm_anon *, int, int, int));
+				voff_t, struct vm_anon *, int, int, int));
 #define	uvm_pagealloc(obj, off, anon, flags) \
 	    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
 				UVM_PGA_STRAT_NORMAL, 0)
 void			uvm_pagerealloc __P((struct vm_page *, 
-					     struct uvm_object *, vaddr_t));
+					     struct uvm_object *, voff_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload __P((vaddr_t, vaddr_t,
-					       vaddr_t, vaddr_t, int));
+void			uvm_page_physload __P((paddr_t, paddr_t,
+					       paddr_t, paddr_t, int));
 void			uvm_setpagesize __P((void));
 
 /* uvm_pdaemon.c */
-void			uvm_pageout __P((void));
+void			uvm_pageout __P((void *));
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,
@@ -390,17 +526,26 @@ void			uvm_swap_init __P((void));
 int			uvm_coredump __P((struct proc *, struct vnode *, 
 				struct ucred *, struct core *));
 int			uvm_grow __P((struct proc *, vaddr_t));
+/* should only be needed if COMPAT_NETBSD32 is defined */
+struct core32;
+int			uvm_coredump32 __P((struct proc *, struct vnode *, 
+				struct ucred *, struct core32 *));
 
 /* uvm_user.c */
 int			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
 
 /* uvm_vnode.c */
-void			uvm_vnp_setsize __P((struct vnode *, u_quad_t));
+void			uvm_vnp_setsize __P((struct vnode *, voff_t));
 void			uvm_vnp_sync __P((struct mount *));
 void 			uvm_vnp_terminate __P((struct vnode *));
 				/* terminate a uvm/uvn object */
 boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
+
+/* kern_malloc.c */
+void			kmeminit_nkmempages __P((void));
+void			kmeminit __P((void));
+extern int		nkmempages;
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.24 1999/07/08 01:19:05 wrstuden Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.24.2.1 2000/11/20 18:09:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the the name of the National Aeronautics & Space Administration
+ * 3. Neither the name of the National Aeronautics & Space Administration
  *    nor the names of its contributors may be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
@@ -168,7 +168,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 * Make sure that the mount point is sufficiently initialized
 	 * that the node create call will work.
 	 */
-	vfs_getnewfsid(mp, MOUNT_NULL);
+	vfs_getnewfsid(mp);
 
 	nmp->nullm_size = sizeof (struct null_node);
 	nmp->nullm_tag = VT_NULL;
@@ -289,6 +289,7 @@ struct vfsops nullfs_vfsops = {
 	layerfs_fhtovp,
 	layerfs_vptofh,
 	layerfs_init,
+	layerfs_done,
 	layerfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,

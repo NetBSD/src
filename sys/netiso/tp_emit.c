@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.11 1999/03/04 02:40:20 mjacob Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.11.8.1 2000/11/20 18:11:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -167,8 +167,8 @@ tp_emit(dutype, tpcb, seq, eot, data)
 	u_int           eot;
 	struct mbuf    *data;
 {
-	register struct tpdu *hdr;
-	register struct mbuf *m;
+	struct tpdu *hdr;
+	struct mbuf *m;
 	int             csum_offset = 0;
 	int             datalen = 0;
 	int             error = 0;
@@ -198,6 +198,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			m->m_nextpkt = MNULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
+			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
 		}
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
@@ -539,7 +540,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 					 * tmp1 = number of pkts fewer than
 					 * the full window
 					 */
-					register int    tmp1 =
+					int    tmp1 =
 					(int) SEQ_SUB(tpcb, olduwe,
 						      tpcb->tp_rcvnxt);
 
@@ -790,7 +791,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 
 		if (tp_delay)
 			if (tpcb->tp_use_checksum == 0) {
-				register u_int  i = tp_delay;
+				u_int  i = tp_delay;
 				for (; i != 0; i--)
 					(void) iso_check_csum(m, datalen);
 			}
@@ -860,8 +861,8 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 {
 	int             dutype;
 	int             datalen = 0;
-	register struct tpdu *hdr;
-	register struct mbuf *m;
+	struct tpdu *hdr;
+	struct mbuf *m;
 	int             csum_offset;
 
 #ifdef TPPT
@@ -959,7 +960,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 
 	if (dutype == ER_TPDU_type) {
 		/* copy the errant tpdu into another 'variable part' */
-		register caddr_t P;
+		caddr_t P;
 
 #ifdef TPPT
 		if (tp_traceflags[D_ERROR_EMIT]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_sysent.c,v 1.36 1999/05/10 06:00:11 cgd Exp $	*/
+/* $NetBSD: osf1_sysent.c,v 1.36.2.1 2000/11/20 18:08:35 bouyer Exp $ */
 
 /*
  * System call switch table.

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.17 1998/08/18 06:27:01 thorpej Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.17.12.1 2000/11/20 18:09:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,7 +73,7 @@ initmsgbuf(buf, bufsize)
 	caddr_t buf;
 	size_t bufsize;
 {
-	register struct kern_msgbuf *mbp;
+	struct kern_msgbuf *mbp;
 	long new_bufs;
 
 	/* Sanity-check the given size. */
@@ -108,7 +108,7 @@ logopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register struct kern_msgbuf *mbp = msgbufp;
+	struct kern_msgbuf *mbp = msgbufp;
 
 	if (log_open)
 		return (EBUSY);
@@ -148,9 +148,9 @@ logread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct kern_msgbuf *mbp = msgbufp;
-	register long l;
-	register int s;
+	struct kern_msgbuf *mbp = msgbufp;
+	long l;
+	int s;
 	int error = 0;
 
 	s = splhigh();
@@ -220,7 +220,8 @@ logwakeup()
 	if (logsoftc.sc_state & LOG_ASYNC) {
 		if (logsoftc.sc_pgid < 0)
 			gsignal(-logsoftc.sc_pgid, SIGIO); 
-		else if ((p = pfind(logsoftc.sc_pgid)) != NULL)
+		else if (logsoftc.sc_pgid > 0 &&
+		    (p = pfind(logsoftc.sc_pgid)) != NULL)
 			psignal(p, SIGIO);
 	}
 	if (logsoftc.sc_state & LOG_RDWAIT) {

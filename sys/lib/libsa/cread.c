@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.9 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: cread.c,v 1.9.8.1 2000/11/20 18:09:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -241,9 +241,9 @@ open(fname, mode)
 	int fd;
 	struct sd *s = 0;
 
-	if ( ((fd = oopen(fname, mode)) == -1) || (mode != 0) )
+	if (((fd = oopen(fname, mode)) == -1) || (mode != 0))
 		/* compression only for read */
-		return(fd);
+		return (fd);
 
 	ss[fd] = s = alloc(sizeof(struct sd));
 	if (s == 0)
@@ -261,7 +261,7 @@ open(fname, mode)
 
 	s->fd = fd;
 	check_header(s); /* skip the .gz header */
-	return(fd);
+	return (fd);
 
 errout:
 	if (s != 0)
@@ -286,7 +286,7 @@ close(fd)
 	f = &files[fd];
 
 	if ((f->f_flags & F_READ) == 0)
-		return(oclose(fd));
+		return (oclose(fd));
 
 	s = ss[fd];
 
@@ -404,10 +404,10 @@ lseek(fd, offset, where)
 		return (-1);
 	}
 #endif
-	f = &files[fd];;
+	f = &files[fd];
 
 	if ((f->f_flags & F_READ) == 0)
-		return(olseek(fd, offset, where));
+		return (olseek(fd, offset, where));
 
 	s = ss[fd];
 
@@ -474,5 +474,5 @@ lseek(fd, offset, where)
 		errno = EINVAL;
 	}
 
-	return((off_t)-1);
+	return ((off_t)-1);
 }

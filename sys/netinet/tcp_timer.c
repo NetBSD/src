@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.45 1999/07/14 22:37:15 itojun Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.45.2.1 2000/11/20 18:10:37 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@ struct tcp_delack_head tcp_delacks;
 void
 tcp_fasttimo()
 {
-	register struct tcpcb *tp, *ntp;
+	struct tcpcb *tp, *ntp;
 	int s;
 
 	s = splsoftnet();
@@ -175,13 +175,13 @@ tcp_fasttimo()
 void
 tcp_slowtimo()
 {
-	register struct inpcb *inp, *ninp;
-	register struct tcpcb *tp;
-#if defined(INET6) && !defined(TCP6)
-	register struct in6pcb *in6p, *nin6p;
+	struct inpcb *inp, *ninp;
+	struct tcpcb *tp;
+#ifdef INET6
+	struct in6pcb *in6p, *nin6p;
 #endif
 	int s;
-	register long i;
+	long i;
 	static int syn_cache_last = 0;
 	int skip, mask;
 
@@ -224,7 +224,7 @@ tpgone:
 		;
 	}
 dotcb6:
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 	mask |= 2;
 	in6p = tcb6.in6p_next;
 	if (in6p == (struct in6pcb *)0) {			/* XXX */
@@ -278,7 +278,7 @@ void
 tcp_canceltimers(tp)
 	struct tcpcb *tp;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < TCPT_NTIMERS; i++)
 		TCP_TIMER_DISARM(tp, i);
@@ -294,10 +294,15 @@ int	tcp_totbackoff = 511;	/* sum of tcp_backoff[] */
  */
 struct tcpcb *
 tcp_timers(tp, timer)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	int timer;
 {
 	short	rto;
+
+#ifdef DIAGNOSTIC
+	if (tp->t_inpcb && tp->t_in6pcb)
+		panic("tcp_timers: both t_inpcb and t_in6pcb are set");
+#endif
 
 	switch (timer) {
 
@@ -347,10 +352,12 @@ tcp_timers(tp, timer)
 		if (ip_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
 			struct rtentry *rt = NULL;
 
+#ifdef INET
 			if (tp->t_inpcb)
 				rt = in_pcbrtentry(tp->t_inpcb);
+#endif
 #ifdef INET6
-			else if (tp->t_in6pcb)
+			if (tp->t_in6pcb)
 				rt = in6_pcbrtentry(tp->t_in6pcb);
 #endif
 
@@ -366,10 +373,12 @@ tcp_timers(tp, timer)
 		 * retransmit times until then.
 		 */
 		if (tp->t_rxtshift > TCP_MAXRXTSHIFT / 4) {
+#ifdef INET
 			if (tp->t_inpcb)
 				in_losing(tp->t_inpcb);
+#endif
 #ifdef INET6
-			else if (tp->t_in6pcb)
+			if (tp->t_in6pcb)
 				in6_losing(tp->t_in6pcb);
 #endif
 			tp->t_rttvar += (tp->t_srtt >> TCP_RTT_SHIFT);
@@ -463,10 +472,12 @@ tcp_timers(tp, timer)
 		tcpstat.tcps_keeptimeo++;
 		if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 			goto dropit;
+#ifdef INET
 		if (tp->t_inpcb)
 			so = tp->t_inpcb->inp_socket;
+#endif
 #ifdef INET6
-		else if (tp->t_in6pcb)
+		if (tp->t_in6pcb)
 			so = tp->t_in6pcb->in6p_socket;
 #endif
 		if (so->so_options & SO_KEEPALIVE &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.2 1999/04/01 18:37:33 drochner Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.2.8.1 2000/11/20 18:08:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,15 +54,11 @@
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/mman.h>
-#include <sys/conf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#include <vm/vm.h>
-#include <vm/vm_prot.h>
 
 /* ARGSUSED */
 int
@@ -82,7 +78,7 @@ compat_43_sys_mmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_mmap_args /* {
+	struct compat_43_sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.55 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.55.2.1 2000/11/20 18:09:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -124,7 +124,7 @@ sys_getsid(p, v, retval)
 		return (ESRCH);
 found:
 	*retval = p->p_session->s_sid;
-	return 0;
+	return (0);
 }
 
 int
@@ -133,7 +133,7 @@ sys_getpgid(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getpgid_args /* {
+	struct sys_getpgid_args /* {
 		syscallarg(pid_t) pid;
 	} */ *uap = v;
 
@@ -143,7 +143,7 @@ sys_getpgid(p, v, retval)
 		return (ESRCH);
 found:
 	*retval = p->p_pgid;
-	return 0;
+	return (0);
 }
 
 /* ARGSUSED */
@@ -214,12 +214,12 @@ sys_getgroups(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getgroups_args /* {
+	struct sys_getgroups_args /* {
 		syscallarg(int) gidsetsize;
 		syscallarg(gid_t *) gidset;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register int ngrp;
+	struct pcred *pc = p->p_cred;
+	int ngrp;
 	int error;
 
 	ngrp = SCARG(uap, gidsetsize);
@@ -241,7 +241,7 @@ sys_getgroups(p, v, retval)
 /* ARGSUSED */
 int
 sys_setsid(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -276,18 +276,19 @@ sys_setpgid(curp, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_setpgid_args /* {
+	struct sys_setpgid_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
 	} */ *uap = v;
-	register struct proc *targp;		/* target process */
-	register struct pgrp *pgrp;		/* target pgrp */
+	struct proc *targp;			/* target process */
+	struct pgrp *pgrp;			/* target pgrp */
 
 	if (SCARG(uap, pgid) < 0)
 		return (EINVAL);
 
 	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != curp->p_pid) {
-		if ((targp = pfind(SCARG(uap, pid))) == 0 || !inferior(targp))
+		if ((targp = pfind(SCARG(uap, pid))) == 0
+		    || !inferior(targp, curp))
 			return (ESRCH);
 		if (targp->p_session != curp->p_session)
 			return (EPERM);
@@ -316,14 +317,20 @@ sys_setuid(p, v, retval)
 	struct sys_setuid_args /* {
 		syscallarg(uid_t) uid;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register uid_t uid;
+	struct pcred *pc = p->p_cred;
+	uid_t uid;
 	int error;
 
 	uid = SCARG(uap, uid);
 	if (uid != pc->p_ruid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
+	/*
+	 * Check if we are all set, and this is a no-op.
+	 */
+	if (pc->p_ruid == uid && pc->p_svuid == uid &&
+	    pc->pc_ucred->cr_uid == uid)
+		return (0);
 	/*
 	 * Everything's okay, do it.
 	 * Transfer proc count to new user.
@@ -349,14 +356,20 @@ sys_seteuid(p, v, retval)
 	struct sys_seteuid_args /* {
 		syscallarg(uid_t) euid;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register uid_t euid;
+	struct pcred *pc = p->p_cred;
+	uid_t euid;
 	int error;
 
 	euid = SCARG(uap, euid);
 	if (euid != pc->p_ruid && euid != pc->p_svuid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
+	/*
+	 * Check if we are all set, and this is a no-op.
+	 */
+	if (pc->pc_ucred->cr_uid == euid)
+		return (0);
+
 	/*
 	 * Everything's okay, do it.  Copy credentials so other references do
 	 * not see our changes.
@@ -377,9 +390,9 @@ sys_setreuid(p, v, retval)
 		syscallarg(uid_t) ruid;
 		syscallarg(uid_t) euid;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register uid_t ruid, euid;
-	int error;
+	struct pcred *pc = p->p_cred;
+	uid_t ruid, euid;
+	int error, changed = 0;
 
 	ruid = SCARG(uap, ruid);
 	euid = SCARG(uap, euid);
@@ -395,19 +408,22 @@ sys_setreuid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 
-	if (euid != (uid_t)-1) {
+	if (euid != (uid_t)-1 && euid != pc->pc_ucred->cr_uid) {
 		pc->pc_ucred = crcopy(pc->pc_ucred);
 		pc->pc_ucred->cr_uid = euid;
+		changed++;
 	}
 
-	if (ruid != (uid_t)-1) {
+	if (ruid != (uid_t)-1 &&
+	    (pc->p_ruid != ruid || pc->p_svuid != pc->pc_ucred->cr_uid)) {
 		(void)chgproccnt(pc->p_ruid, -1);
 		(void)chgproccnt(ruid, 1);
 		pc->p_ruid = ruid;
 		pc->p_svuid = pc->pc_ucred->cr_uid;
+		changed++;
 	}
 
-	if (euid != (uid_t)-1 && ruid != (uid_t)-1)
+	if (changed)
 		p_sugid(p);
 	return (0);
 }
@@ -422,14 +438,21 @@ sys_setgid(p, v, retval)
 	struct sys_setgid_args /* {
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register gid_t gid;
+	struct pcred *pc = p->p_cred;
+	gid_t gid;
 	int error;
 
 	gid = SCARG(uap, gid);
 	if (gid != pc->p_rgid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
+	/*
+	 * Check if we are all set, and this is a no-op.
+	 */
+	if (pc->pc_ucred->cr_gid == gid && pc->p_rgid == gid &&
+	    pc->p_svgid == gid)
+		return (0);
+
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = gid;
 	pc->p_rgid = gid;
@@ -448,14 +471,20 @@ sys_setegid(p, v, retval)
 	struct sys_setegid_args /* {
 		syscallarg(gid_t) egid;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register gid_t egid;
+	struct pcred *pc = p->p_cred;
+	gid_t egid;
 	int error;
 
 	egid = SCARG(uap, egid);
 	if (egid != pc->p_rgid && egid != pc->p_svgid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
+	/*
+	 * Check if we are all set, and this is a no-op.
+	 */
+	if (pc->pc_ucred->cr_gid == egid)
+		return (0);
+
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
 	p_sugid(p);
@@ -472,9 +501,9 @@ sys_setregid(p, v, retval)
 		syscallarg(gid_t) rgid;
 		syscallarg(gid_t) egid;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register gid_t rgid, egid;
-	int error;
+	struct pcred *pc = p->p_cred;
+	gid_t rgid, egid;
+	int error, changed = 0;
 
 	rgid = SCARG(uap, rgid);
 	egid = SCARG(uap, egid);
@@ -490,18 +519,39 @@ sys_setregid(p, v, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 
-	if (egid != (gid_t)-1) {
+	if (egid != (gid_t)-1 && pc->pc_ucred->cr_gid != egid) {
 		pc->pc_ucred = crcopy(pc->pc_ucred);
 		pc->pc_ucred->cr_gid = egid;
+		changed++;
 	}
 
-	if (rgid != (gid_t)-1) {
+	if (rgid != (gid_t)-1 &&
+	    (pc->p_rgid != rgid || pc->p_svgid != pc->pc_ucred->cr_gid)) {
 		pc->p_rgid = rgid;
 		pc->p_svgid = pc->pc_ucred->cr_gid;
+		changed++;
 	}
 
-	if (egid != (gid_t)-1 && rgid != (gid_t)-1)
+	if (changed)
 		p_sugid(p);
+	return (0);
+}
+
+int
+sys_issetugid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	/*
+	 * Note: OpenBSD sets a P_SUGIDEXEC flag set at execve() time,
+	 * we use P_SUGID because we consider changing the owners as
+	 * "tainting" as well.
+	 * This is significant for procs that start as root and "become"
+	 * a user without an exec - programs cannot know *everything*
+	 * that libc *might* have put in their data segment.
+	 */
+	*retval = (p->p_flag & P_SUGID) != 0;
 	return (0);
 }
 
@@ -516,20 +566,32 @@ sys_setgroups(p, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(const gid_t *) gidset;
 	} */ *uap = v;
-	register struct pcred *pc = p->p_cred;
-	register int ngrp;
+	struct pcred *pc = p->p_cred;
+	int ngrp;
 	int error;
+	gid_t grp[NGROUPS];
+	size_t grsize;
 
 	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0)
 		return (error);
+
 	ngrp = SCARG(uap, gidsetsize);
 	if ((u_int)ngrp > NGROUPS)
 		return (EINVAL);
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	error = copyin(SCARG(uap, gidset), pc->pc_ucred->cr_groups,
-	    ngrp * sizeof(gid_t));
+
+	grsize = ngrp * sizeof(gid_t);
+	error = copyin(SCARG(uap, gidset), grp, grsize);
 	if (error)
 		return (error);
+	/*
+	 * Check if this is a no-op.
+	 */
+	if (pc->pc_ucred->cr_ngroups == ngrp &&
+	    memcmp(grp, pc->pc_ucred->cr_groups, grsize) == 0)
+		return (0);
+
+	pc->pc_ucred = crcopy(pc->pc_ucred);
+	(void)memcpy(pc->pc_ucred->cr_groups, grp, grsize);
 	pc->pc_ucred->cr_ngroups = ngrp;
 	p_sugid(p);
 	return (0);
@@ -541,9 +603,9 @@ sys_setgroups(p, v, retval)
 int
 groupmember(gid, cred)
 	gid_t gid;
-	register struct ucred *cred;
+	struct ucred *cred;
 {
-	register gid_t *gp;
+	gid_t *gp;
 	gid_t *egp;
 
 	egp = &(cred->cr_groups[cred->cr_ngroups]);
@@ -578,7 +640,7 @@ suser(cred, acflag)
 struct ucred *
 crget()
 {
-	register struct ucred *cr;
+	struct ucred *cr;
 
 	MALLOC(cr, struct ucred *, sizeof(*cr), M_CRED, M_WAITOK);
 	memset((caddr_t)cr, 0, sizeof(*cr));

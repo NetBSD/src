@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.52 1999/05/10 02:55:57 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.52.2.1 2000/11/20 18:08:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -57,6 +57,8 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_syscall_debug.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -78,7 +80,6 @@
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
-#include <vm/vm.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
@@ -168,7 +169,6 @@ osf1_sys_sysinfo(p, v, retval)
 	struct osf1_sys_sysinfo_args *uap = v;
 	const char *string;
 	int error;
-        extern char ostype[], osrelease[];
 
 	error = 0;
 	switch (SCARG(uap, cmd)) {
@@ -239,8 +239,8 @@ osf1_sys_uname(p, v, retval)
 {
 	struct osf1_sys_uname_args *uap = v;
         struct osf1_utsname u;
-        char *cp, *dp, *ep;
-        extern char ostype[], osrelease[];
+        const char *cp;
+        char *dp, *ep;
 
 	/* XXX would use stackgap, but our struct utsname is too big! */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.5 1999/04/30 17:47:36 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.5.2.1 2000/11/20 18:10:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,9 +100,6 @@
  * 	Useful for debugging newly-ported  drivers.
  */
 
-struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
-    int flags, int mask));
-
 #ifdef IFMEDIA_DEBUG
 int	ifmedia_debug = 0;
 static	void ifmedia_printword __P((int));
@@ -119,7 +116,7 @@ ifmedia_init(ifm, dontcare_mask, change_callback, status_callback)
 	ifm_stat_cb_t status_callback;
 {
 
-	LIST_INIT(&ifm->ifm_list);
+	TAILQ_INIT(&ifm->ifm_list);
 	ifm->ifm_cur = NULL;
 	ifm->ifm_media = 0;
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
@@ -138,7 +135,7 @@ ifmedia_add(ifm, mword, data, aux)
 	int data;
 	void *aux;
 {
-	register struct ifmedia_entry *entry;
+	struct ifmedia_entry *entry;
 
 #ifdef IFMEDIA_DEBUG
 	if (ifmedia_debug) {
@@ -159,7 +156,7 @@ ifmedia_add(ifm, mword, data, aux)
 	entry->ifm_data = data;
 	entry->ifm_aux = aux;
 
-	LIST_INSERT_HEAD(&ifm->ifm_list, entry, ifm_list);
+	TAILQ_INSERT_TAIL(&ifm->ifm_list, entry, ifm_list);
 }
 
 /*
@@ -256,7 +253,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		/*
 		 * If no change, we're done.
 		 * XXX Automedia may invole software intervention.
-		 *     Keep going in case the the connected media changed.
+		 *     Keep going in case the connected media changed.
 		 *     Similarly, if best match changed (kernel debugger?).
 		 */
 		if ((IFM_SUBTYPE(newmedia) != IFM_AUTO) &&
@@ -305,7 +302,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		(*ifm->ifm_status)(ifp, ifmr);
 
 		count = 0;
-		ep = ifm->ifm_list.lh_first;
+		ep = TAILQ_FIRST(&ifm->ifm_list);
 
 		if (ifmr->ifm_count != 0) {
 			kptr = (int *)malloc(ifmr->ifm_count * sizeof(int),
@@ -315,7 +312,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 			 * Get the media words from the interface's list.
 			 */
 			for (; ep != NULL && count < ifmr->ifm_count;
-			    ep = ep->ifm_list.le_next, count++)
+			    ep = TAILQ_NEXT(ep, ifm_list), count++)
 				kptr[count] = ep->ifm_media;
 
 			if (ep != NULL)
@@ -328,7 +325,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		 * to 0 on the first call to know how much space to
 		 * callocate.
 		 */
-		for (; ep != NULL; ep = ep->ifm_list.le_next)
+		for (; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
 			count++;
 
 		/*
@@ -363,7 +360,6 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 
 /*
  * Find media entry matching a given ifm word.
- *
  */
 struct ifmedia_entry *
 ifmedia_match(ifm, target, mask)
@@ -376,8 +372,8 @@ ifmedia_match(ifm, target, mask)
 	match = NULL;
 	mask = ~mask;
 
-	for (next = ifm->ifm_list.lh_first; next != NULL;
-	    next = next->ifm_list.le_next) {
+	for (next = TAILQ_FIRST(&ifm->ifm_list); next != NULL;
+	     next = TAILQ_NEXT(next, ifm_list)) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 			if (match) {
@@ -390,6 +386,50 @@ ifmedia_match(ifm, target, mask)
 	}
 
 	return match;
+}
+
+/*
+ * Delete all media for a given instance.
+ */
+void
+ifmedia_delete_instance(ifm, inst)
+	struct ifmedia *ifm;
+	int inst;
+{
+	struct ifmedia_entry *ife, *nife;
+
+	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL;
+	     ife = nife) {
+		nife = TAILQ_NEXT(ife, ifm_list);
+		if (inst == IFM_INST_ANY ||
+		    inst == IFM_INST(ife->ifm_media)) {
+			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
+			free(ife, M_DEVBUF);
+		}
+	}
+}
+
+/*
+ * Compute the interface `baudrate' from the media, for the interface
+ * metrics (used by routing daemons).
+ */
+struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
+    IFM_BAUDRATE_DESCRIPTIONS;
+
+int
+ifmedia_baudrate(mword)
+	int mword;
+{
+	int i;
+
+	for (i = 0; ifmedia_baudrate_descriptions[i].ifmb_word != 0; i++) {
+		if ((mword & (IFM_NMASK|IFM_TMASK)) ==
+		    ifmedia_baudrate_descriptions[i].ifmb_word)
+			return (ifmedia_baudrate_descriptions[i].ifmb_baudrate);
+	}
+
+	/* Not known. */
+	return (0);
 }
 
 #ifdef IFMEDIA_DEBUG

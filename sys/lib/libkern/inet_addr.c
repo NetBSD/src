@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.4 1999/04/13 19:00:30 drochner Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.4.2.1 2000/11/20 18:09:19 bouyer Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -56,7 +56,7 @@ inet_addr(src)
 	int base, n;
 	unsigned char c;
 	u_int parts[4];
-	register u_int *pp = parts;
+	u_int *pp = parts;
 
 	c = *src;
 	for (;;) {

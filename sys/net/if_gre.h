@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.4 1998/12/22 01:33:45 thorpej Exp $ */
+/*	$NetBSD: if_gre.h,v 1.4.8.1 2000/11/20 18:10:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,8 +39,11 @@
 #ifndef _NET_IF_GRE_H
 #define _NET_IF_GRE_H
 
+#include <sys/queue.h>
+
 struct gre_softc {
 	struct ifnet sc_if;
+	LIST_ENTRY(gre_softc) sc_list;
 	int gre_unit;
 	int gre_flags;
 	struct    in_addr g_src;  /* source address of gre packets */
@@ -76,12 +79,12 @@ struct gre_h {
     struct gre_sre[] routing Routing fileds (see below)
                              Present if (rt_pres == 1)
 */
-};
+} __attribute__((__packed__));
 
 struct greip {
 	struct ip gi_i;
 	struct gre_h  gi_g;
-};
+} __attribute__((__packed__));
 
 #define gi_pr           gi_i.ip_p
 #define gi_len          gi_i.ip_len
@@ -120,12 +123,12 @@ struct mobile_h {
 	u_int16_t hcrc;			/* header checksum */
 	u_int32_t odst;			/* original destination address */
 	u_int32_t osrc;			/* original source addr, if S-bit set */
-};
+} __attribute__((__packed__));
 
 struct mobip_h {
 	struct ip       mi;
 	struct mobile_h mh;
-};
+} __attribute__((__packed__));
 
 
 #define MOB_H_SIZ_S		(sizeof(struct mobile_h) - sizeof(u_int32_t))
@@ -145,9 +148,9 @@ struct mobip_h {
 #define GREGPROTO       _IOWR('i', 106, struct ifreq)
 
 #ifdef _KERNEL
-extern	struct gre_softc gre_softc[];
+LIST_HEAD(gre_softc_head, gre_softc);
+extern struct gre_softc_head gre_softc_list;
 
-void	greattach __P((void));
 int     gre_ioctl __P((struct ifnet *, u_long, caddr_t));
 int     gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *rt));

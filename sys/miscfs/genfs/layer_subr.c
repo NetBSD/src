@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.3 1999/07/15 21:30:32 wrstuden Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.3.4.1 2000/11/20 18:09:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the the name of the National Aeronautics & Space Administration
+ * 3. Neither the name of the National Aeronautics & Space Administration
  *    nor the names of its contributors may be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
@@ -100,9 +100,19 @@
 void
 layerfs_init()
 {
-
 #ifdef LAYERFS_DIAGNOSTIC
 	printf("layerfs_init\n");		/* printed during system boot */
+#endif
+}
+
+/*
+ * Free global resources of layerfs.
+ */
+void
+layerfs_done()
+{
+#ifdef LAYERFS_DIAGNOSTIC
+	printf("layerfs_done\n");		/* printed on layerfs detach */
 #endif
 }
 
@@ -190,6 +200,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {
 		MALLOC(vp->v_specinfo, struct specinfo *,
 		    sizeof(struct specinfo), M_VNODE, M_WAITOK);
+		vp->v_hashchain = NULL;
 		vp->v_rdev = lowervp->v_rdev;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.17 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.17.2.1 2000/11/20 18:11:56 bouyer Exp $	*/
 
 /*
  *
@@ -77,12 +77,15 @@
 struct uvm {
 	/* vm_page related parameters */
 		/* vm_page queues */
-	struct pglist page_free[VM_NFREELIST];	/* unallocated pages */
+	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
 	simple_lock_data_t pageqlock;	/* lock for active/inactive page q */
 	simple_lock_data_t fpageqlock;	/* lock for free page q */
+	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
+	boolean_t page_idle_zero;	/* TRUE if we should try to zero
+					   pages in the idle loop */
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct proc *pagedaemon_proc;	/* daemon's pid */
@@ -115,17 +118,6 @@ struct uvm {
 	struct uvm_object *kernel_object;
 };
 
-extern struct uvm uvm;
-
-/*
- * historys
- */
-
-#ifdef _KERNEL
-UVMHIST_DECL(maphist);
-UVMHIST_DECL(pdhist);
-#endif /* _KERNEL */
-
 /*
  * vm_map_entry etype bits:
  */
@@ -140,25 +132,30 @@ UVMHIST_DECL(pdhist);
 #define UVM_ET_ISCOPYONWRITE(E)	(((E)->etype & UVM_ET_COPYONWRITE) != 0)
 #define UVM_ET_ISNEEDSCOPY(E)	(((E)->etype & UVM_ET_NEEDSCOPY) != 0)
 
-/*
- * macros
- */
-
 #ifdef _KERNEL
 
 /*
- * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
- * uvm_sleep() function.
+ * holds all the internal UVM data
+ */
+extern struct uvm uvm;
+
+/*
+ * historys
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define UVM_UNLOCK_AND_WAIT(event, lock, intr ,msg, timo) \
-	uvm_sleep(event, lock, intr, msg, timo)
+UVMHIST_DECL(maphist);
+UVMHIST_DECL(pdhist);
 
-#else
-#define UVM_UNLOCK_AND_WAIT(event, lock, intr, msg, timo) \
-	uvm_sleep(event, NULL, intr, msg, timo)
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
+/*
+ * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the
+ * interlocked tsleep() function.
+ */
+
+#define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
+do {									\
+	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
+	    msg, timo, slock);						\
+} while (0)
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.18 1999/01/29 01:05:03 tv Exp $	*/
+/*	$NetBSD: queue.h,v 1.18.8.1 2000/11/20 18:11:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,8 +39,18 @@
 #define	_SYS_QUEUE_H_
 
 /*
- * This file defines four types of data structures: lists, simple queues,
- * tail queues, and circular queues.
+ * This file defines five types of data structures: singly-linked lists,
+ * lists, simple queues, tail queues, and circular queues.
+ *
+ * A singly-linked list is headed by a single forward pointer. The
+ * elements are singly linked for minimum space and pointer manipulation
+ * overhead at the expense of O(n) removal for arbitrary elements. New
+ * elements can be added to the list after an existing element or at the
+ * head of the list.  Elements being removed from the head of the list
+ * should use the explicit macro for this purpose for optimum
+ * efficiency. A singly-linked list may only be traversed in the forward
+ * direction.  Singly-linked lists are ideal for applications with large
+ * datasets and few or no removals or for implementing a LIFO queue.
  *
  * A list is headed by a single forward pointer (or an array of forward
  * pointers for a hash table header). The elements are doubly linked
@@ -61,7 +71,7 @@
  * linked so that an arbitrary element can be removed without a need to
  * traverse the list. New elements can be added to the list before or
  * after an existing element, at the head of the list, or at the end of
- * the list. A tail queue may only be traversed in the forward direction.
+ * the list. A tail queue may be traversed in either direction.
  *
  * A circle queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly
@@ -127,12 +137,76 @@ struct {								\
 	*(elm)->field.le_prev = (elm)->field.le_next;			\
 } while (/*CONSTCOND*/0)
 
+#define LIST_FOREACH(var, head, field)					\
+	for ((var) = ((head)->lh_first);				\
+		(var);							\
+		(var) = ((var)->field.le_next))
+
 /*
  * List access methods.
  */
+#define	LIST_EMPTY(head)		((head)->lh_first == NULL)
 #define	LIST_FIRST(head)		((head)->lh_first)
-
 #define	LIST_NEXT(elm, field)		((elm)->field.le_next)
+
+/*
+ * Singly-linked List definitions.
+ */
+#define SLIST_HEAD(name, type)						\
+struct name {								\
+	struct type *slh_first;	/* first element */			\
+}
+
+#define SLIST_HEAD_INITIALIZER(head)					\
+	{ NULL }
+ 
+#define SLIST_ENTRY(type)						\
+struct {								\
+	struct type *sle_next;	/* next element */			\
+}
+ 
+/*
+ * Singly-linked List functions.
+ */
+#define	SLIST_EMPTY(head)	((head)->slh_first == NULL)
+#define	SLIST_FIRST(head)	((head)->slh_first)
+#define	SLIST_NEXT(elm, field)	((elm)->field.sle_next)
+
+#define SLIST_FOREACH(var, head, field)					\
+	for((var) = (head)->slh_first; (var); (var) = (var)->field.sle_next)
+
+#define SLIST_INIT(head) do {						\
+	(head)->slh_first = NULL;					\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_INSERT_AFTER(slistelm, elm, field) do {			\
+	(elm)->field.sle_next = (slistelm)->field.sle_next;		\
+	(slistelm)->field.sle_next = (elm);				\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_INSERT_HEAD(head, elm, field) do {			\
+	(elm)->field.sle_next = (head)->slh_first;			\
+	(head)->slh_first = (elm);					\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_NEXT(elm, field)	((elm)->field.sle_next)
+
+#define SLIST_REMOVE_HEAD(head, field) do {				\
+	(head)->slh_first = (head)->slh_first->field.sle_next;		\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_REMOVE(head, elm, type, field) do {			\
+	if ((head)->slh_first == (elm)) {				\
+		SLIST_REMOVE_HEAD((head), field);			\
+	}								\
+	else {								\
+		struct type *curelm = (head)->slh_first;		\
+		while( curelm->field.sle_next != (elm) )		\
+			curelm = curelm->field.sle_next;		\
+		curelm->field.sle_next =				\
+		    curelm->field.sle_next->field.sle_next;		\
+	}								\
+} while (/*CONSTCOND*/0)
 
 /*
  * Simple queue definitions.
@@ -182,11 +256,16 @@ struct {								\
 		(head)->sqh_last = &(head)->sqh_first;			\
 } while (/*CONSTCOND*/0)
 
+#define SIMPLEQ_FOREACH(var, head, field)				\
+	for ((var) = ((head)->sqh_first);				\
+		(var);							\
+		(var) = ((var)->field.sqe_next))
+
 /*
  * Simple queue access methods.
  */
+#define	SIMPLEQ_EMPTY(head)		((head)->sqh_first == NULL)
 #define	SIMPLEQ_FIRST(head)		((head)->sqh_first)
-
 #define	SIMPLEQ_NEXT(elm, field)	((elm)->field.sqe_next)
 
 /*
@@ -261,9 +340,24 @@ struct {								\
 /*
  * Tail queue access methods.
  */
+#define	TAILQ_EMPTY(head)		((head)->tqh_first == NULL)
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
-
 #define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
+
+#define TAILQ_LAST(head, headname) \
+	(*(((struct headname *)((head)->tqh_last))->tqh_last))
+#define TAILQ_PREV(elm, headname, field) \
+	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
+
+#define TAILQ_FOREACH(var, head, field)					\
+	for ((var) = ((head)->tqh_first);				\
+		(var);							\
+		(var) = ((var)->field.tqe_next))
+
+#define TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
+	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last));	\
+		(var);							\
+		(var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
 
 /*
  * Circular queue definitions.
@@ -344,14 +438,22 @@ struct {								\
 		    (elm)->field.cqe_next;				\
 } while (/*CONSTCOND*/0)
 
+#define CIRCLEQ_FOREACH(var, head, field)				\
+	for ((var) = ((head)->cqh_first);				\
+		(var) != (void *)(head);				\
+		(var) = ((var)->field.cqe_next))
+
+#define CIRCLEQ_FOREACH_REVERSE(var, head, field)			\
+	for ((var) = ((head)->cqh_last);				\
+		(var) != (void *)(head);				\
+		(var) = ((var)->field.cqe_prev))
+
 /*
  * Circular queue access methods.
  */
+#define	CIRCLEQ_EMPTY(head)		((head)->cqh_first == (void *)(head))
 #define	CIRCLEQ_FIRST(head)		((head)->cqh_first)
-
 #define	CIRCLEQ_LAST(head)		((head)->cqh_last)
-
 #define	CIRCLEQ_NEXT(elm, field)	((elm)->field.cqe_next)
-
 #define	CIRCLEQ_PREV(elm, field)	((elm)->field.cqe_prev)
 #endif	/* !_SYS_QUEUE_H_ */

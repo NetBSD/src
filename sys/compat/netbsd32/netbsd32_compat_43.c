@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.8 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.8.2.1 2000/11/20 18:08:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -38,14 +38,20 @@
 #include <sys/syscallargs.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
-#include <vm/vm.h>	/* XXX for <sys/sysctl.h> */
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/swap.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-static void
+static void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
+int compat_43_netbsd32_sethostid __P((struct proc *, void *, register_t *));
+int compat_43_netbsd32_killpg __P((struct proc *, void *, register_t *retval));
+int compat_43_netbsd32_sigblock __P((struct proc *, void *, register_t *retval));
+int compat_43_netbsd32_sigblock __P((struct proc *, void *, register_t *retval));
+
+static void 
 netbsd32_from_stat43(sp43, sp32)
 	struct stat43 *sp43;
 	struct netbsd32_stat43 *sp32;
@@ -410,22 +416,6 @@ compat_43_netbsd32_ommap(p, v, retval)
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOX_UAP(pos, long);
 	return (compat_43_sys_mmap(p, &ua, retval));
-}
-
-/* virtual memory syscalls */
-int
-netbsd32_ovadvise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_ovadvise_args /* {
-		syscallarg(int) anom;
-	} */ *uap = v;
-	struct sys_ovadvise_args ua;
-
-	NETBSD32TO64_UAP(anom);
-	return (sys_ovadvise(p, &ua, retval));
 }
 
 /* network syscalls */

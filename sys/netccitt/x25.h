@@ -1,4 +1,4 @@
-/*	$NetBSD: x25.h,v 1.8 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: x25.h,v 1.8.12.1 2000/11/20 18:10:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -9,7 +9,7 @@
  *
  * This code is derived from software contributed to Berkeley by the
  * Laboratory for Computation Vision and the Computer Science Department
- * of the the University of British Columbia and the Computer Science
+ * of the University of British Columbia and the Computer Science
  * Department (IV) of the University of Erlangen-Nuremberg, Germany.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,9 @@
  *
  *	@(#)x25.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETCCITT_X25_H_
+#define _NETCCITT_X25_H_
 
 #ifdef _KERNEL
 #define PRC_IFUP	3
@@ -182,3 +185,5 @@ int pk_user_protolisten __P((u_char *));
 int pk_rtattach __P((struct socket *, struct mbuf *));
 int x25_rtattach __P((struct pklcd *, struct rtentry *));
 #endif
+
+#endif /* _NETCCITT_X25_H_ */

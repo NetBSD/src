@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.33 1999/07/09 22:57:18 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.33.2.1 2000/11/20 18:10:23 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,6 +105,7 @@
 #include <netinet/tcp_debug.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+#include <netinet/ip_encap.h>
 /*
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */
@@ -146,6 +147,11 @@
 #include <netinet/ip_gre.h>
 #endif
 
+#include "stf.h"
+#if NSTF > 0
+#include <net/if_stf.h>
+#endif
+
 extern	struct domain inetdomain;
 
 struct protosw inetsw[] = {
@@ -176,13 +182,13 @@ struct protosw inetsw[] = {
 },
 #ifdef IPSEC
 { SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
-  ah4_input,	0,	 	0,		0,
+  ah4_input,	0,	 	ah4_ctlinput,	0,
   0,	  
   0,		0,		0,		0,		ipsec_sysctl
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
-  esp4_input,	0,	 	0,		0,
+  esp4_input,	0,	 	esp4_ctlinput,	0,
   0,	  
   0,		0,		0,		0,		ipsec_sysctl
 },
@@ -193,27 +199,18 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,		ipsec_sysctl
 },
 #endif /* IPSEC */
-#if NGIF > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
-  0,	  
-  0,		0,		0,		0,
+  encap4_input,	rip_output, 	0,		rip_ctloutput,
+  rip_usrreq,	/*XXX*/
+  encap_init,	0,		0,		0,
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
-  0,	  
+  encap4_input,	rip_output, 	0,		rip_ctloutput,
+  rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #endif /* INET6 */
-#else /* NGIF */
-#if NIPIP > 0 || defined(MROUTING)
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
-  ipip_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,	/* XXX */
-  0,		0,		0,		0,
-},
-#endif /* NIPIP > 0 || MROUTING */
 #if NGRE > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR,
   gre_input,	rip_output,	0,		rip_ctloutput,
@@ -226,7 +223,6 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* NGRE > 0 */
-#endif /* NGIF */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -262,16 +258,38 @@ struct protosw inetsw[] = {
 },
 };
 
+#if NIPIP > 0
+struct protosw ipip_protosw =
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
+  ipip_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,	/* XXX */
+  0,		0,		0,		0,
+};
+#endif /* NIPIP */
+
+#if NGIF > 0
+struct protosw in_gif_protosw =
+{ SOCK_RAW,	&inetdomain,	0/*IPPROTO_IPV[46]*/,	PR_ATOMIC|PR_ADDR,
+  in_gif_input, rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,            0,              0,              0,
+};
+#endif /*NGIF*/
+
+#if NSTF > 0
+struct protosw in_stf_protosw =
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
+  in_stf_input, rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,            0,              0,              0
+};
+#endif /*NSTF*/
+
 struct domain inetdomain =
     { PF_INET, "internet", 0, 0, 0, 
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
       rn_inithead, 32, sizeof(struct sockaddr_in) };
 
-#define	TCP_SYN_HASH_SIZE	293
-#define	TCP_SYN_BUCKET_SIZE	35
+u_char	ip_protox[IPPROTO_MAX];
 
-int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
-int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
-int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
-struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
-int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
+int icmperrppslim = 100;			/* 100pps */

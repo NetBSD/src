@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.157 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157.2.1 2000/11/20 18:08:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -44,14 +44,19 @@
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
+#include "opt_maxuprc.h"
+#include "opt_multiprocessor.h"
+#include "opt_syscall_debug.h"
 
 #include "rnd.h"
 
 #include <sys/param.h>
+#include <sys/acct.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/exec.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/map.h>
@@ -70,6 +75,7 @@
 #include <sys/protosw.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
+#include <sys/sysctl.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -91,18 +97,18 @@
 
 #include <ufs/ufs/quota.h>
 
-#include <machine/cpu.h>
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/syncfs/syncfs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_pageout.h>
+#include <machine/cpu.h>
 
 #include <uvm/uvm.h>
 
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-char	copyright[] = "\
-Copyright (c) 1996, 1997, 1998, 1999
+const char copyright[] = "\
+Copyright (c) 1996, 1997, 1998, 1999, 2000
     The NetBSD Foundation, Inc.  All rights reserved.
 Copyright (c) 1982, 1986, 1989, 1991, 1993
     The Regents of the University of California.  All rights reserved.
@@ -131,13 +137,12 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct	timeval boottime;
-struct	timeval runtime;
 
-static void check_console __P((struct proc *p));
-static void start_init __P((void *));
-static void start_pagedaemon __P((void *));
-static void start_reaper __P((void *));
-void main __P((void));
+__volatile int start_init_exec;		/* semaphore for start_init() */
+
+static void check_console(struct proc *p);
+static void start_init(void *);
+void main(void);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -170,17 +175,19 @@ struct emul emul_netbsd = {
  * startup(), which does memory initialization and autoconfiguration.
  */
 void
-main()
+main(void)
 {
 	struct proc *p;
 	struct pdevinit *pdev;
 	int i, s, error;
 	extern struct pdevinit pdevinit[];
-	extern void roundrobin __P((void *));
-	extern void schedcpu __P((void *));
-	extern void disk_init __P((void));
+	extern void schedcpu(void *);
+	extern void disk_init(void);
 #if defined(NFSSERVER) || defined(NFS)
-	extern void nfs_init __P((void));
+	extern void nfs_init(void);
+#endif
+#ifdef NVNODE_IMPLICIT
+	int usevnodes;
 #endif
 
 	/*
@@ -189,6 +196,7 @@ main()
 	 */
 	p = &proc0;
 	curproc = p;
+	p->p_cpu = curcpu();
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -196,10 +204,15 @@ main()
 	consinit();
 	printf("%s", copyright);
 
+	KERNEL_LOCK_INIT();
+
 	uvm_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
+
+	/* Initialize callouts. */
+	callout_startup();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
@@ -219,6 +232,9 @@ main()
 	rnd_init();		/* initialize RNG */
 #endif
 
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
+
 	/*
 	 * Initialize process and pgrp structures.
 	 */
@@ -229,6 +245,7 @@ main()
 	 */
 	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
 	proclist_unlock_write(s);
 
 	p->p_pgrp = &pgrp0;
@@ -247,10 +264,13 @@ main()
 	 * for us.
 	 */
 	p->p_flag = P_INMEM | P_SYSTEM | P_NOCLDWAIT;
-	p->p_stat = SRUN;
+	p->p_stat = SONPROC;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
+
+	callout_init(&p->p_realit_ch);
+	callout_init(&p->p_tsleep_ch);
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;
@@ -325,6 +345,9 @@ main()
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
+	/* Lock the kernel on behalf of proc0. */
+	KERNEL_PROC_LOCK(p);
+
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
 	shminit();
@@ -358,11 +381,51 @@ main()
 	kmstartup();
 #endif
 
+	/* Initialize system accouting. */
+	acct_init();
+
+	/*
+	 * Initialize signal-related data structures, and signal state
+	 * for proc0.
+	 */
+	signal_init();
+	p->p_sigacts = &sigacts0;
+	siginit(p);
+
 	/* Kick off timeout driven events by calling first time. */
-	roundrobin(NULL);
 	schedcpu(NULL);
 
-	/* Determine the root and dump devices. */
+	/*
+	 * Create process 1 (init(8)).  We do this now, as Unix has
+	 * historically had init be process 1, and changing this would
+	 * probably upset a lot of people.
+	 *
+	 * Note that process 1 won't immediately exec init(8), but will
+	 * wait for us to inform it that the root file system has been
+	 * mounted.
+	 */
+	if (fork1(p, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
+		panic("fork init");
+
+	/*
+	 * Create any kernel threads who's creation was deferred because
+	 * initproc had not yet been created.
+	 */
+	kthread_run_deferred_queue();
+
+	/*
+	 * Now that device driver threads have been created, wait for
+	 * them to finish any deferred autoconfiguration.  Note we don't
+	 * need to lock this semaphore, since we haven't booted any
+	 * secondary processors, yet.
+	 */
+	while (config_pending)
+		(void) tsleep((void *)&config_pending, PWAIT, "cfpend", 0);
+
+	/*
+	 * Now that autoconfiguration has completed, we can determine
+	 * the root and dump devices.
+	 */
 	cpu_rootconf();
 	cpu_dumpconf();
 
@@ -391,39 +454,67 @@ main()
 	VREF(cwdi0.cwdi_cdir);
 	VOP_UNLOCK(rootvnode, 0);
 	cwdi0.cwdi_rdir = NULL;
-	uvm_swap_init();
+
+	/*
+	 * Now that root is mounted, we can fixup initproc's CWD
+	 * info.  All other processes are kthreads, which merely
+	 * share proc0's CWD info.
+	 */
+	initproc->p_cwdi->cwdi_cdir = rootvnode;
+	VREF(initproc->p_cwdi->cwdi_cdir);
+	initproc->p_cwdi->cwdi_rdir = NULL;
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
 	 * from the file system.  Reset p->p_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	p->p_stats->p_start = runtime = mono_time = boottime = time;
-	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+	proclist_lock_read();
+	s = splsched();
+	for (p = LIST_FIRST(&allproc); p != NULL;
+	     p = LIST_NEXT(p, p_list)) {
+		p->p_stats->p_start = mono_time = boottime = time;
+		if (p->p_cpu != NULL)
+			p->p_cpu->ci_schedstate.spc_runtime = time;
+		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+	}
+	splx(s);
+	proclist_unlock_read();
 
-	/*
-	 * Initialize signal-related data structures, and signal state
-	 * for proc0.
-	 */
-	signal_init();
-	p->p_sigacts = &sigacts0;
-	siginit(p);
-
-	/* Create process 1 (init(8)). */
-	if (fork1(p, 0, SIGCHLD, NULL, 0, NULL, &initproc))
-		panic("fork init");
-	cpu_set_kpc(initproc, start_init, initproc);
-
-	/* Create process 2, the pageout daemon kernel thread. */
-	if (kthread_create1(start_pagedaemon, NULL, NULL, "pagedaemon"))
+	/* Create the pageout daemon kernel thread. */
+	uvm_swap_init();
+	if (kthread_create1(uvm_pageout, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
-	/* Create process 3, the process reaper kernel thread. */
-	if (kthread_create1(start_reaper, NULL, NULL, "reaper"))
+	/* Create the process reaper kernel thread. */
+	if (kthread_create1(reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
-	/* Create any other deferred kernel threads. */
-	kthread_run_deferred_queue();
+	/* Create the filesystem syncer kernel thread. */
+	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
+		panic("fork syncer");
+
+#if defined(MULTIPROCESSOR)
+	/* Boot the secondary processors. */
+	cpu_boot_secondary_processors();
+#endif
+
+	/*
+	 * Okay, now we can let init(8) exec!  It's off to userland!
+	 */
+	start_init_exec = 1;
+	wakeup((void *)&start_init_exec);
+
+#ifdef NVNODE_IMPLICIT
+	/*
+	 * If maximum number of vnodes in namei vnode cache is not explicitly
+	 * defined in kernel config, adjust the number such as we use roughly
+	 * 0.5% of memory for vnode cache (but not less than NVNODE vnodes).
+	 */
+	usevnodes = (ptoa(physmem) / 200) / sizeof(struct vnode);
+	if (usevnodes > desiredvnodes) 
+		desiredvnodes = usevnodes;
+#endif
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
@@ -431,8 +522,7 @@ main()
 }
 
 static void
-check_console(p)
-	struct proc *p;
+check_console(struct proc *p)
 {
 	struct nameidata nd;
 	int error;
@@ -450,7 +540,7 @@ check_console(p)
 /*
  * List of paths to try when searching for "init".
  */
-static char *initpaths[] = {
+static const char *initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",
@@ -462,8 +552,7 @@ static char *initpaths[] = {
  * The program is invoked with one argument containing the boot flags.
  */
 static void
-start_init(arg)
-	void *arg;
+start_init(void *arg)
 {
 	struct proc *p = arg;
 	vaddr_t addr;
@@ -475,12 +564,19 @@ start_init(arg)
 	int options, i, error;
 	register_t retval[2];
 	char flags[4], *flagsp;
-	char **pathp, *path, *slash, *ucp, **uap, *arg0, *arg1 = NULL;
+	const char **pathp, *path, *slash;
+	char *ucp, **uap, *arg0, *arg1 = NULL;
 
 	/*
 	 * Now in process 1.
 	 */
 	strncpy(p->p_comm, "init", MAXCOMLEN);
+
+	/*
+	 * Wait for main() to tell us that it's safe to exec.
+	 */
+	while (start_init_exec == 0)
+		(void) tsleep((void *)&start_init_exec, PWAIT, "initexec", 0);
 
 	/*
 	 * This is not the right way to do this.  We really should
@@ -495,7 +591,7 @@ start_init(arg)
 	 */
 	addr = USRSTACK - PAGE_SIZE;
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
-                    NULL, UVM_UNKNOWN_OFFSET, 
+                    NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL,
                     UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))
@@ -573,31 +669,13 @@ start_init(arg)
 		 * other than it doesn't exist, complain.
 		 */
 		error = sys_execve(p, &args, retval);
-		if (error == 0 || error == EJUSTRETURN)
+		if (error == 0 || error == EJUSTRETURN) {
+			KERNEL_PROC_UNLOCK(p);
 			return;
+		}
 		if (error != ENOENT)
 			printf("exec %s: error %d\n", path, error);
 	}
 	printf("init: not found\n");
 	panic("no init");
-}
-
-/* ARGSUSED */
-static void
-start_pagedaemon(arg)
-	void *arg;
-{
-
-	uvm_pageout();
-	/* NOTREACHED */
-}
-
-/* ARGSUSED */
-static void
-start_reaper(arg)
-	void *arg;
-{
-
-	reaper();
-	/* NOTREACHED */
 }

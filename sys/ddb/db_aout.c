@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.26 1999/06/15 00:23:19 thorpej Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.26.2.1 2000/11/20 18:08:46 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,6 +51,8 @@ boolean_t	db_aout_line_at_pc __P((db_symtab_t *, db_sym_t,
 		    char **, int *, db_expr_t));
 boolean_t	db_aout_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
 		    char **));
+void		db_aout_forall __P((db_symtab_t *,
+		    db_forall_func_t db_forall_func, void *));
 
 db_symformat_t db_symformat_aout = {
 	"a.out",
@@ -60,6 +62,7 @@ db_symformat_t db_symformat_aout = {
 	db_aout_symbol_values,
 	db_aout_line_at_pc,
 	db_aout_sym_numargs,
+	db_aout_forall
 };
 
 /*
@@ -87,10 +90,10 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 				   boundary */
 	const char *name;
 {
-	register struct nlist	*sym_start, *sym_end;
-	register struct nlist	*sp;
-	register char *strtab;
-	register int slen, bad = 0;
+	struct nlist	*sym_start, *sym_end;
+	struct nlist	*sp;
+	char *strtab;
+	int slen, bad = 0;
 	char *estrtab;
 
 	if (ALIGNED_POINTER(vsymtab, long) == 0) {
@@ -126,7 +129,7 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 #undef	round_to_size
         
 	for (sp = sym_start; sp < sym_end; sp++) {
-	    register int strx;
+	    int strx;
 	    strx = sp->n_un.n_strx;
 	    if (strx != 0) {
 		if (strx > slen) {
@@ -145,7 +148,7 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
 	    NULL) !=  -1) {
-                printf("[ preserving %ld bytes of %s a.out symbol table ]\n",
+                printf("[ using %ld bytes of %s a.out symbol table ]\n",
                           (long)vesymtab - (long)vsymtab, name);
 		return (TRUE);
         }
@@ -158,7 +161,7 @@ db_aout_lookup(stab, symstr)
 	db_symtab_t	*stab;
 	char *		symstr;
 {
-	register struct nlist *sp, *ep;
+	struct nlist *sp, *ep;
 
 	sp = (struct nlist *)stab->start;
 	ep = (struct nlist *)stab->end;
@@ -179,14 +182,13 @@ db_aout_lookup(stab, symstr)
 db_sym_t
 db_aout_search_symbol(symtab, off, strategy, diffp)
 	db_symtab_t *	symtab;
-	register
 	db_addr_t	off;
 	db_strategy_t	strategy;
 	db_expr_t	*diffp;		/* in/out */
 {
-	register unsigned int	diff = *diffp;
-	register struct nlist	*symp = 0;
-	register struct nlist	*sp, *ep;
+	unsigned int	diff = *diffp;
+	struct nlist	*symp = 0;
+	struct nlist	*sp, *ep;
 
 	sp = (struct nlist *)symtab->start;
 	ep = (struct nlist *)symtab->end;
@@ -235,7 +237,7 @@ db_aout_symbol_values(symtab, sym, namep, valuep)
 	char		**namep;
 	db_expr_t	*valuep;
 {
-	register struct nlist *sp;
+	struct nlist *sp;
 
 	sp = (struct nlist *)sym;
 	if (namep)
@@ -253,7 +255,7 @@ db_aout_line_at_pc(symtab, cursym, filename, linenum, off)
 	int 		*linenum;
 	db_expr_t	off;
 {
-	register struct nlist	*sp, *ep;
+	struct nlist	*sp, *ep;
 	unsigned long		sodiff = -1UL, lndiff = -1UL, ln = 0;
 	char			*fname = NULL;
 
@@ -316,7 +318,7 @@ db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
 	int		*nargp;
 	char		**argnamep;
 {
-	register struct nlist	*sp, *ep;
+	struct nlist		*sp, *ep;
 	u_long			addr;
 	int			maxnarg = *nargp, nargs = 0;
 
@@ -347,4 +349,49 @@ db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
 	}
 	return FALSE;
 }
+
+void
+db_aout_forall(stab, db_forall_func, arg)
+	db_symtab_t		*stab;
+	db_forall_func_t	db_forall_func;
+	void			*arg;
+{
+	static char suffix[2];
+	struct nlist *sp, *ep;
+
+	sp = (struct nlist *)stab->start;
+	ep = (struct nlist *)stab->end;
+
+	for (; sp < ep; sp++) {
+	    if (sp->n_un.n_name == 0)
+		continue;
+	    if ((sp->n_type & N_STAB) == 0 && sp->n_un.n_name != 0) {
+		    suffix[1] = '\0';
+		    switch(sp->n_type & N_TYPE) {
+		    case N_ABS:
+			    suffix[0] = '@';
+			    break;
+		    case N_TEXT:
+			    suffix[0] = '*';
+			    break;
+		    case N_DATA:
+			    suffix[0] = '+';
+			    break;
+		    case N_BSS:
+			    suffix[0] = '-';
+			    break;
+		    case N_FN:
+			    suffix[0] = '/';
+			    break;
+		    default:
+			    suffix[0] = '\0';
+		    }
+		    (*db_forall_func)(stab, (db_sym_t)sp, sp->n_un.n_name,
+			suffix, '_', arg);
+	    }
+	}
+	return;
+}
+
+	
 #endif	/* DB_AOUT_SYMBOLS */

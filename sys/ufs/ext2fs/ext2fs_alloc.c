@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.6 1999/02/10 13:14:09 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.6.8.1 2000/11/20 18:11:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -46,8 +46,6 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
-#include <vm/vm.h>
-
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -85,12 +83,12 @@ static ufs_daddr_t	ext2fs_mapsearch __P((struct m_ext2fs *, char *, ufs_daddr_t)
  */
 int
 ext2fs_alloc(ip, lbn, bpref, cred, bnp)
-	register struct inode *ip;
+	struct inode *ip;
 	ufs_daddr_t lbn, bpref;
 	struct ucred *cred;
 	ufs_daddr_t *bnp;
 {
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 	ufs_daddr_t bno;
 	int cg;
 	
@@ -149,10 +147,10 @@ ext2fs_valloc(v)
 		struct ucred *a_cred;
 		struct vnode **a_vpp;
 	} */ *ap = v;
-	register struct vnode *pvp = ap->a_pvp;
-	register struct inode *pip;
-	register struct m_ext2fs *fs;
-	register struct inode *ip;
+	struct vnode *pvp = ap->a_pvp;
+	struct inode *pip;
+	struct m_ext2fs *fs;
+	struct inode *ip;
 	mode_t mode = ap->a_mode;
 	ino_t ino, ipref;
 	int cg, error;
@@ -207,7 +205,7 @@ noinodes:
  */
 static u_long
 ext2fs_dirpref(fs)
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 {
 	int cg, maxspace, mincg, avgifree;
 
@@ -242,8 +240,8 @@ ext2fs_blkpref(ip, lbn, indx, bap)
 	int indx;
 	ufs_daddr_t *bap;
 {
-	register struct m_ext2fs *fs;
-	register int cg, i;
+	struct m_ext2fs *fs;
+	int cg, i;
 
 	fs = ip->i_e2fs;
 	/*
@@ -290,7 +288,7 @@ ext2fs_hashalloc(ip, cg, pref, size, allocator)
 	int size;	/* size for data blocks, mode for inodes */
 	ufs_daddr_t (*allocator) __P((struct inode *, int, ufs_daddr_t, int));
 {
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 	long result;
 	int i, icg = cg;
 
@@ -326,7 +324,7 @@ ext2fs_hashalloc(ip, cg, pref, size, allocator)
 		if (cg == fs->e2fs_ncg)
 			cg = 0;
 	}
-	return (NULL);
+	return (0);
 }
 
 /*
@@ -343,20 +341,20 @@ ext2fs_alloccg(ip, cg, bpref, size)
 	ufs_daddr_t bpref;
 	int size;
 {
-	register struct m_ext2fs *fs;
-	register char *bbp;
+	struct m_ext2fs *fs;
+	char *bbp;
 	struct buf *bp;
 	int error, bno, start, end, loc;
 
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nbfree == 0)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	bbp = (char *)bp->b_data;
 
@@ -398,7 +396,7 @@ ext2fs_alloccg(ip, cg, bpref, size)
 
 	bno = ext2fs_mapsearch(fs, bbp, bpref);
 	if (bno < 0)
-		return (NULL);
+		return (0);
 gotit:
 #ifdef DIAGNOSTIC
 	if (isset(bbp, (long)bno)) {
@@ -431,21 +429,21 @@ ext2fs_nodealloccg(ip, cg, ipref, mode)
 	ufs_daddr_t ipref;
 	int mode;
 {
-	register struct m_ext2fs *fs;
-	register char *ibp;
+	struct m_ext2fs *fs;
+	char *ibp;
 	struct buf *bp;
 	int error, start, len, loc, map, i;
 
 	ipref--; /* to avoid a lot of (ipref -1) */
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	ibp = (char *)bp->b_data;
 	if (ipref) {
@@ -498,11 +496,11 @@ gotit:
  */
 void
 ext2fs_blkfree(ip, bno)
-	register struct inode *ip;
+	struct inode *ip;
 	ufs_daddr_t bno;
 {
-	register struct m_ext2fs *fs;
-	register char *bbp;
+	struct m_ext2fs *fs;
+	char *bbp;
 	struct buf *bp;
 	int error, cg;
 
@@ -549,9 +547,9 @@ ext2fs_vfree(v)
 		ino_t a_ino;
 		int a_mode;
 	} */ *ap = v;
-	register struct m_ext2fs *fs;
-	register char *ibp;
-	register struct inode *pip;
+	struct m_ext2fs *fs;
+	char *ibp;
+	struct inode *pip;
 	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
@@ -597,8 +595,8 @@ ext2fs_vfree(v)
 
 static ufs_daddr_t
 ext2fs_mapsearch(fs, bbp, bpref)
-	register struct m_ext2fs *fs;
-	register char *bbp;
+	struct m_ext2fs *fs;
+	char *bbp;
 	ufs_daddr_t bpref;
 {
 	ufs_daddr_t bno;

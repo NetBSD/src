@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.10 1998/10/04 21:33:52 matt Exp $	*/
+/*	$NetBSD: tcp.h,v 1.10.12.1 2000/11/20 18:10:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,10 +49,12 @@ struct tcphdr {
 	tcp_seq	  th_seq;		/* sequence number */
 	tcp_seq	  th_ack;		/* acknowledgement number */
 #if BYTE_ORDER == LITTLE_ENDIAN
+	/*LINTED non-portable bitfields*/
 	u_int8_t  th_x2:4,		/* (unused) */
 		  th_off:4;		/* data offset */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
+	/*LINTED non-portable bitfields*/
 	u_int8_t  th_off:4,		/* data offset */
 		  th_x2:4;		/* (unused) */
 #endif
@@ -66,7 +68,7 @@ struct tcphdr {
 	u_int16_t th_win;			/* window */
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
-};
+} __attribute__((__packed__));
 
 #define	TCPOPT_EOL		0
 #define	TCPOPT_NOP		1

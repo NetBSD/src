@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.11 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.11.12.1 2000/11/20 18:10:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -9,7 +9,7 @@
  *
  * This code is derived from software contributed to Berkeley by the
  * Laboratory for Computation Vision and the Computer Science Department
- * of the the University of British Columbia and the Computer Science
+ * of the University of British Columbia and the Computer Science
  * Department (IV) of the University of Erlangen-Nuremberg, Germany.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,11 +62,11 @@ struct mbuf_cache pk_output_cache = {0}, pk_input_cache;
 
 void
 pk_output(lcp)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 {
-	register struct x25_packet *xp;
-	register struct mbuf *m;
-	register struct pkcb *pkp = lcp->lcd_pkp;
+	struct x25_packet *xp;
+	struct mbuf *m;
+	struct pkcb *pkp = lcp->lcd_pkp;
 
 	if (lcp == 0 || pkp == 0) {
 		printf("pk_output: zero arg\n");
@@ -195,9 +195,9 @@ struct mbuf *
 nextpk(lcp)
 	struct pklcd   *lcp;
 {
-	register struct mbuf *m, *n;
+	struct mbuf *m, *n;
 	struct socket  *so = lcp->lcd_so;
-	register struct sockbuf *sb = (so ? &so->so_snd : &lcp->lcd_sb);
+	struct sockbuf *sb = (so ? &so->so_snd : &lcp->lcd_sb);
 
 	if (lcp->lcd_template) {
 		m = lcp->lcd_template;

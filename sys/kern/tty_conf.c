@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.24 1998/12/10 15:09:18 christos Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.24.8.1 2000/11/20 18:09:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -101,6 +101,28 @@ int	stripinput __P((int c, struct tty *tp));
 int	stripstart __P((struct tty *tp));
 #endif
 
+/*
+ * XXXXXX
+ *
+ * The implementation for the following is currently in
+ * sys/dev/sun.  I expect it will be moved out of there
+ * eventually, but until then add yourself to the list if
+ * you want to use the Sun Keyboard or Mouse line disciplines.
+ */
+#if defined(__sparc__) || defined(__sparc_v9__) || defined(sun3) || defined(sun3x)
+#include "kbd.h"
+#if NKBD > 0
+int	sunkbdinput __P((int c, struct tty *tp));
+int	sunkbdstart __P((struct tty *tp));
+int	sunkbdstart __P((struct tty *tp));
+#endif
+
+#include "ms.h"
+#if NMS > 0
+int	sunmsinput __P((int c, struct tty *tp));
+#endif
+#endif
+
 struct	linesw linesw[] =
 {
 	{ ttylopen, ttylclose, ttread, ttwrite, nullioctl,
@@ -144,6 +166,30 @@ struct	linesw linesw[] =
 #if NSTRIP > 0
 	{ stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
 	  stripinput, stripstart, nullmodem },		/* 6- STRIPDISC */
+#else
+	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
+	  ttyerrinput, ttyerrstart, nullmodem },
+#endif
+
+/*
+ * The following are special line disciplines for Sun style Keybaords and Mice.
+ * Since they are used to handle special hardware they are enabled if/when the
+ * hardware is detected and you cannot switch in or out of them by normal means.
+ *
+ * All I/O currently goes through the keyboard and mouse device nodes so the
+ * TTY does no I/O itself.
+ */
+#if NKBD > 0
+	{ ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	  sunkbdinput, sunkbdstart, nullmodem },	/* 7- SUNKBDDISC */
+#else
+	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
+	  ttyerrinput, ttyerrstart, nullmodem },
+#endif
+
+#if NMS > 0
+	{ ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	  sunmsinput, ttstart, nullmodem },		/* 8- SUNMOUSEDISC */
 #else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },

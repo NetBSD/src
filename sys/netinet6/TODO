@@ -1,59 +1,15 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.5 1999/08/14 19:17:19 itojun Exp $
+$NetBSD: TODO,v 1.5.2.1 2000/11/20 18:10:40 bouyer Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
 This file talks about issues/TODOs in KAME/NetBSD integration.
 For details about original KAME distribution, please refer to
 sys/netinet6/IMPLEMENTATION, or documents in KAME distribution.
-(NOTE: description in 1.12 does not apply to integrated code)
 
 
 KERNEL 
 ======
-* inpcb and in6pcb
-
-KAME kit has been designed to have less influence (bad impact) to the base
-IPv4 code.  For this, KAME uses separate pcb structure for IPv6 connections,
-namely struct in6pcb (sys/netinet6/in6_pcb.h).  In unified-ipv6 codebase
-(this part is from NRL) they are merged into one, but will need bunch of
-changes into netinet/in_pcb.h - which will affect stability of IPv4 tree.
-Let us see which is better.
-
-* port number issues
-
-No IETF document talks about how tcp4/tcp6 and udp4/udp6 port number space
-should be handled.  The only thing defined is, in RFC2553:
-	AF_INET6 socket listening to wildcard IPv6 address (::) should
-	accept IPv4 connections.
-It is very unclear how port number spaces should be treated.  If they are
-to be unified, what happens if, for example, you bind(2) to IPv4 wildcard
-address, then IPv6 specific address on that port?  There are so many
-possibilities to be considered.  It is much clearer and easier for me if
-they are totally separate.  Also, separated port number space is
-compatible/safe to future addition of "TCP over IPv7" :-)
-
-Proper userland code should not be affected by this (see RFC2553 for
-how to use getaddrinfo()), so KAME userland can cope with both cases.
-
-Current kernel code implement separate port number spaces, since it uses
-separate inpcb/in6pcb.
-
-* udp4/6 wildcard bind
-
-Currently udp4 and udp6 are handled in separate source code, and AF_INET6
-socket listening to wildcard IPv4 address does not accept IPv4 connections.
-This is not compatible with what described in RFC2553.
-This is related to the above two items (in6pcb and port number issues).
-
-* tcp4/6 wildcard bind
-
-As we share tcp4 and tcp6 code (sys/netinet/tcp*) we have implemented
-AF_INET6 wildcard bind socket behavior (AF_INET6 wildcard bind socket 
-will receive IPv4 packets, with get{peer,sock}name translated into
-IPv6 address like ::ffff:10.1.1.1).  At this moment there is no way to
-disable this behavior.  We may want to add setsockopt() for this.
-
 * net/if_types.h
 
 IFT_GIF and IFT_FAITH are not defined in IANA assignment, but we need to
@@ -80,15 +36,20 @@ KAME tree and then will bring it to NetBSD.
 can easily exceed MHLEN.  Remember, IPv6 header itself already occupies 40
 bytes)
 
+KAME team is doing experiments with m_pulldown().  will migrate to m_pulldown()
+after stabilization.  working nicely but need more tests and code reviews.
+
+* ipsec socket pointer
+
+We currently reuse m_pkthdr.rcvif for ipsec socket pointer, and ipf and
+other code does not like this.
+
+It is planned to add m->m_pkthdr.aux (pointer to mbuf chain) to carry around
+extra information for IPsec and other cases.
+
 * gre/ipip compatibility
 
 Hope I did not break any of these...  Could someone check?
-
-* kernel config
-
-Should we have GENERIC.v6 and GENERIC, or IPv6 items should be integrated into
-GENERIC?  How can we maintain IPv6 items efficiently?  Is there good place to
-list MI compilation options?
 
 * mbuf flags
 
@@ -97,16 +58,43 @@ is local to IPv6 code so it should be M_PROTO0 or something like that.
 Others (IPsec items) are used across IPv4 and IPv6 so they cannot be in
 M_PROTO0 kind of thing.
 
+When we switch to full m->m_pkthdr.aux support, we don't need IPsec related
+flags in m->m_flags.
+
+* use of xx_control() from kernel
+
+xx_control() are designed to be called from userland process, not
+from within the kernel.  Calling xx_control() from interrupt context would
+cause various problems, like M_WAIT/NOWAIT issue, spl issue and others.
+we need to clean it up.  The right thing to happen is to split those
+necessary functions into (1) called-from-userland function, (2) called-from-
+interrupt function, and (3) common backend which shares as much code as
+possible.  in6_prefix.c is the offending portion.
+
+* more LP64 friendliness checking
+
+* scoped address printing
+
+KAME implements extended format for link-local address printing, like
+"fe80::1@lo0".  After long debate, IETF ipngwg will pick "lo0%fe80::1" as
+standard one (picked "%" for avoiding conflict with "user@host" notation).
+We'll need to update the support before the release.
+
+* PRC_IF{UP,CHANGE}
+
+We have some hook in sys/net/if.c for IPv6, for detecting (1) when interface
+bringed up, and (2) when interface MTU changes.  These hooks should be
+removed by introducing PRC_IF{UP,CHANGE}.
+
 
 USERLAND
 ========
-* various routing daemons
+* pim6dd/pim6sd licensing
 
-KAME codebase includes several routing daemons, like route6d or bgpd (which
-does RIPng and BGP4+, respectively).  Should we put these into
-/usr/src/usr.sbin, or should we treat those as third-party code (pkgsrc)?
+pim6dd/pim6sd license issue should be clarified, just like we need
+clarification for mroute6d.
 
-* IPv6-support in resolvers
+* IPv6-support in resolvers and libraries
 
 Dual stack resolver code is from KAME.  The change may not be compatible with
 future bind8 code, so we may have to merge future bind8 carefully.
@@ -114,17 +102,6 @@ future bind8 code, so we may have to merge future bind8 carefully.
 
 At this moment IPv6 support in lib/libc/net/* is implemented in very
 conservative way so that it will not break existing codebase.
-To be RFC2553 compilient, we need to supply getipnodeby{name,addr}.
-However, it needs a total rewrite of gethostby{name,addr}.
-It will make future upgrade to bind8x really harder.
-
-rcmd() and iruserok() must be extended to support multiple address families.
-
-* IPsec library
-
-Should IPsec library be enabled on userland programs by default?
-(NOTE: no crypto code will be put into userland - crypto code for IPsec
-is in kernel only)
 
 * -DINET6, -DIPSEC
 
@@ -133,13 +110,11 @@ EXPORTABLE_SYSTEM=1 (in /etc/mk.conf), or local option defined somewhere?
 (some people may need a binary tree with no IPv6 support at all, for
 smaller footprint)
 
-* if index
-
-Should we hide if index (s6_addr16[1] in in6_addr) from the user, on "ifconfig"
-or "netstat -in"?  Those numbers are just for kernel internal
-and should never be used from standard userland applications.
-(see 1.3 in sys/netinet6/IMPLEMENTATION)
+At this moment -DINET6 is placed in each of leaf directory Makefiles,
+and there's no global option for enabling/disabling userland IPv6/IPsec
+support.  Since we ship single binary tree we want to ship them enabled
+by default.
 
 * more IPv6 support
 
-libwrap, ppp, you-name-it.
+X11, NFS, RPC, whatever.

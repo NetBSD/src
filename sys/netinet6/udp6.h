@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6.h,v 1.3 1999/07/03 21:30:20 thorpej Exp $	*/
+/*	$NetBSD: udp6.h,v 1.3.2.1 2000/11/20 18:10:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,4 +35,3 @@
 #include <netinet/udp.h>
 
 #endif /*_NETINET6_UDP6_H_*/
-

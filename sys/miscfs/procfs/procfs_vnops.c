@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.69 1999/09/02 23:33:45 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.69.2.1 2000/11/20 18:09:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -43,6 +43,10 @@
  * procfs vnode interface
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_linux.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -57,7 +61,7 @@
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 
-#include <vm/vm.h>	/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <machine/reg.h>
 
@@ -68,6 +72,10 @@
  * Vnode Operations.
  *
  */
+
+#ifdef COMPAT_LINUX
+static int procfs_validfile_linux __P((struct proc *));
+#endif
 
 /*
  * This is a list of the valid names in the
@@ -95,11 +103,12 @@ struct proc_target {
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
 	{ DT_REG, N("map"),	Pmap,		procfs_validmap },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
+#ifdef COMPAT_LINUX
+	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
+#endif
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
-
-static pid_t atopid __P((const char *, u_int));
 
 int	procfs_lookup	__P((void *));
 #define	procfs_create	genfs_eopnotsupp_rele
@@ -828,9 +837,17 @@ int
 procfs_validfile(p)
 	struct proc *p;
 {
-
 	return (procfs_findtextvp(p) != NULLVP);
 }
+
+#ifdef COMPAT_LINUX
+static int
+procfs_validfile_linux(p)
+	struct proc *p;
+{
+	return (!strcmp("linux", p->p_emul->e_name) && procfs_validfile(p));
+}
+#endif
 
 /*
  * readdir returns directory entries from pfsnode (vp).
@@ -896,7 +913,7 @@ procfs_readdir(v)
 
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (nproc_targets - i));
-			MALLOC(cookies, off_t *, ncookies * sizeof (off_t),
+			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 		}
@@ -942,7 +959,7 @@ procfs_readdir(v)
 			 * XXX Potentially allocating too much space here,
 			 * but I'm lazy. This loop needs some work.
 			 */
-			MALLOC(cookies, off_t *, ncookies * sizeof (off_t),
+			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 		}
@@ -1024,7 +1041,7 @@ procfs_readdir(v)
 	if (ap->a_ncookies) {
 		if (error) {
 			if (cookies)
-				FREE(*ap->a_cookies, M_TEMP);
+				free(*ap->a_cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.35 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.35.2.1 2000/11/20 18:09:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,8 +119,9 @@ struct proclist zombproc;	/* resources have been freed */
  *
  * We have two types of locks on the proclists: read locks and write
  * locks.  Read locks can be used in interrupt context, so while we
- * hold the write lock, we must also block softclock interrupts (since
- * the interrupt context is the timeout-driven schedcpu()).
+ * hold the write lock, we must also block clock interrupts to
+ * lock out any scheduling changes that may happen in interrupt
+ * context.
  *
  * The proclist lock locks the following structures:
  *
@@ -200,15 +201,13 @@ procinit()
 void
 proclist_lock_read()
 {
-	int error, s;
+	int error;
 
-	s = splstatclock();
 	error = spinlockmgr(&proclist_lock, LK_SHARED, NULL);
 #ifdef DIAGNOSTIC
-	if (error)
+	if (__predict_false(error != 0))
 		panic("proclist_lock_read: failed to acquire lock");
 #endif
-	splx(s);
 }
 
 /*
@@ -217,11 +216,8 @@ proclist_lock_read()
 void
 proclist_unlock_read()
 {
-	int s;
 
-	s = splstatclock();
 	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
-	splx(s);
 }
 
 /*
@@ -230,12 +226,12 @@ proclist_unlock_read()
 int
 proclist_lock_write()
 {
-	int error, s;
+	int s, error;
 
-	s = splstatclock();
+	s = splclock();
 	error = spinlockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
 #ifdef DIAGNOSTIC
-	if (error != 0)
+	if (__predict_false(error != 0))
 		panic("proclist_lock: failed to acquire lock");
 #endif
 	return (s);
@@ -262,8 +258,8 @@ chgproccnt(uid, diff)
 	uid_t	uid;
 	int	diff;
 {
-	register struct uidinfo *uip;
-	register struct uihashhead *uipp;
+	struct uidinfo *uip;
+	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
 	for (uip = uipp->lh_first; uip != 0; uip = uip->ui_hash.le_next)
@@ -292,14 +288,15 @@ chgproccnt(uid, diff)
 }
 
 /*
- * Is p an inferior of the current process?
+ * Is p an inferior of q?
  */
 int
-inferior(p)
-	register struct proc *p;
+inferior(p, q)
+	struct proc *p;
+	struct proc *q;
 {
 
-	for (; p != curproc; p = p->p_pptr)
+	for (; p != q; p = p->p_pptr)
 		if (p->p_pid == 0)
 			return (0);
 	return (1);
@@ -310,7 +307,7 @@ inferior(p)
  */
 struct proc *
 pfind(pid)
-	register pid_t pid;
+	pid_t pid;
 {
 	struct proc *p;
 
@@ -328,9 +325,9 @@ pfind(pid)
  */
 struct pgrp *
 pgfind(pgid)
-	register pid_t pgid;
+	pid_t pgid;
 {
-	register struct pgrp *pgrp;
+	struct pgrp *pgrp;
 
 	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != 0; pgrp = pgrp->pg_hash.le_next)
 		if (pgrp->pg_id == pgid)
@@ -343,16 +340,16 @@ pgfind(pgid)
  */
 int
 enterpgrp(p, pgid, mksess)
-	register struct proc *p;
+	struct proc *p;
 	pid_t pgid;
 	int mksess;
 {
-	register struct pgrp *pgrp = pgfind(pgid);
+	struct pgrp *pgrp = pgfind(pgid);
 
 #ifdef DIAGNOSTIC
-	if (pgrp != NULL && mksess)	/* firewalls */
+	if (__predict_false(pgrp != NULL && mksess))	/* firewalls */
 		panic("enterpgrp: setsid into non-empty pgrp");
-	if (SESS_LEADER(p))
+	if (__predict_false(SESS_LEADER(p)))
 		panic("enterpgrp: session leader attempted setpgrp");
 #endif
 	if (pgrp == NULL) {
@@ -362,14 +359,14 @@ enterpgrp(p, pgid, mksess)
 		 * new process group
 		 */
 #ifdef DIAGNOSTIC
-		if (p->p_pid != pgid)
+		if (__predict_false(p->p_pid != pgid))
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
 		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
 		if ((np = pfind(savepid)) == NULL || np != p)
 			return (ESRCH);
 		if (mksess) {
-			register struct session *sess;
+			struct session *sess;
 
 			/*
 			 * new session
@@ -386,7 +383,7 @@ enterpgrp(p, pgid, mksess)
 			p->p_flag &= ~P_CONTROLT;
 			pgrp->pg_session = sess;
 #ifdef DIAGNOSTIC
-			if (p != curproc)
+			if (__predict_false(p != curproc))
 				panic("enterpgrp: mksession and p != curproc");
 #endif
 		} else {
@@ -421,7 +418,7 @@ enterpgrp(p, pgid, mksess)
  */
 int
 leavepgrp(p)
-	register struct proc *p;
+	struct proc *p;
 {
 
 	LIST_REMOVE(p, p_pglist);
@@ -436,7 +433,7 @@ leavepgrp(p)
  */
 void
 pgdelete(pgrp)
-	register struct pgrp *pgrp;
+	struct pgrp *pgrp;
 {
 
 	if (pgrp->pg_session->s_ttyp != NULL && 
@@ -460,12 +457,12 @@ pgdelete(pgrp)
  */
 void
 fixjobc(p, pgrp, entering)
-	register struct proc *p;
-	register struct pgrp *pgrp;
+	struct proc *p;
+	struct pgrp *pgrp;
 	int entering;
 {
-	register struct pgrp *hispgrp;
-	register struct session *mysession = pgrp->pg_session;
+	struct pgrp *hispgrp;
+	struct session *mysession = pgrp->pg_session;
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
@@ -505,7 +502,7 @@ static void
 orphanpg(pg)
 	struct pgrp *pg;
 {
-	register struct proc *p;
+	struct proc *p;
 
 	for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
 		if (p->p_stat == SSTOP) {
@@ -546,9 +543,9 @@ p_sugid(p)
 void
 pgrpdump()
 {
-	register struct pgrp *pgrp;
-	register struct proc *p;
-	register int i;
+	struct pgrp *pgrp;
+	struct proc *p;
+	int i;
 
 	for (i = 0; i <= pgrphash; i++) {
 		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {

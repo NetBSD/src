@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.31 1999/05/10 21:13:05 thorpej Exp $	*/
+/*	$NetBSD: db_command.c,v 1.31.2.1 2000/11/20 18:08:47 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,6 +27,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_inet.h"
 
 /*
  * Command dispatcher.
@@ -35,9 +36,17 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 #include <sys/pool.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
+#ifdef MULTIPROCESSOR
+#include <machine/cpu.h>
+#endif
 
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
@@ -50,10 +59,10 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
+
+#include "arp.h"
 
 /*
  * Exported global variables
@@ -102,9 +111,9 @@ db_cmd_search(name, table, cmdp)
 	int			result = CMD_NONE;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
-	    register char *lp;
-	    register char *rp;
-	    register int  c;
+	    char *lp;
+	    char *rp;
+	    int  c;
 
 	    lp = name;
 	    rp = cmd->name;
@@ -144,11 +153,36 @@ void
 db_cmd_list(table)
 	struct db_command *table;
 {
-	register struct db_command *cmd;
+	int	 i, j, w, columns, lines, width=0, items, numcmds;
+	char	*p;
 
-	for (cmd = table; cmd->name != 0; cmd++) {
-	    db_printf("%-12s", cmd->name);
-	    db_end_line();
+	for (numcmds = 0; table[numcmds].name != NULL; numcmds++) {
+		w = strlen(table[numcmds].name);
+		if (w > width)
+			width = w;
+	}
+	width = DB_NEXT_TAB(width);
+	items = 0;
+
+	columns = db_max_width / width;
+	if (columns == 0)
+		columns = 1;
+	lines = (numcmds + columns - 1) / columns;
+	for (i = 0; i < lines; i++) {
+		for (j = 0; j < columns; j++) {
+			p = table[j * lines + i].name;
+			if (p)
+				db_printf("%s", p);
+			if (j * lines + i + lines >= numcmds) {
+				db_putchar('\n');
+				break;
+			}
+			w = strlen(p);
+			while (w < width) {
+				w = DB_NEXT_TAB(w);
+				db_putchar('\t');
+			}
+		}
 	}
 }
 
@@ -164,14 +198,27 @@ db_command(last_cmdp, cmd_table)
 	boolean_t	have_addr = FALSE;
 	int		result;
 
+	static db_expr_t               last_count = 0;
+
 	t = db_read_token();
-	if (t == tEOL) {
-	    /* empty line repeats last command, at 'next' */
+	if ((t == tEOL) || (t == tCOMMA)) {
+	    /*
+	     * An empty line repeats last command, at 'next'.
+	     * Only a count repeats the last command with the new count.
+	     */
 	    cmd = *last_cmdp;
 	    addr = (db_expr_t)db_next;
+	    if (t == tCOMMA) {
+	            if (!db_expression(&count)) {
+			    db_printf("Count missing\n");
+			    db_flush_lex();
+			    return;
+		    }
+	    } else
+		    count = last_count;
 	    have_addr = FALSE;
-	    count = 1;
 	    modif[0] = '\0';
+	    db_skip_to_eol();
 	}
 	else if (t == tEXCL) {
 	    db_fncall(0, 0, 0, NULL);
@@ -263,6 +310,7 @@ db_command(last_cmdp, cmd_table)
 	    }
 	}
 	*last_cmdp = cmd;
+	last_count = count;
 	if (cmd != 0) {
 	    /*
 	     * Execute the command.
@@ -341,6 +389,38 @@ db_page_print_cmd(addr, have_addr, count, modif)
 
 /*ARGSUSED*/
 void
+db_buf_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	boolean_t full = FALSE;
+        
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	vfs_buf_print((struct buf *)addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void
+db_vnode_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	boolean_t full = FALSE;
+        
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	vfs_vnode_print((struct vnode *)addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void
 db_pool_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
@@ -356,83 +436,87 @@ db_pool_print_cmd(addr, have_addr, count, modif)
  */
 
 struct db_command db_show_all_cmds[] = {
-	{ "procs",	db_show_all_procs,	0, NULL },
 	{ "callout",	db_show_callout,	0, NULL },
+	{ "procs",	db_show_all_procs,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
-	{ "registers",	db_show_regs,		0,	NULL },
+#if defined(INET) && (NARP > 0)
+	{ "arptab",	db_show_arptab,		0,	NULL },
+#endif
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
-	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
+	{ "buf",	db_buf_print_cmd,	0,	NULL },
+	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
-	{ NULL,		NULL,			0,	NULL, }
+	{ "registers",	db_show_regs,		0,	NULL },
+	{ "watches",	db_listwatch_cmd, 	0,	NULL },
+	{ NULL,		NULL,			0,	NULL }
 };
 
 struct db_command db_command_table[] = {
-#ifdef DB_MACHINE_COMMANDS
-  /* this must be the first entry, if it exists */
-	{ "machine",    NULL,                   0,     		NULL},
-#endif
-	{ "print",	db_print_cmd,		0,		NULL },
+	{ "break",	db_breakpoint_cmd,	0,		NULL },
+	{ "c",		db_continue_cmd,	0,		NULL },
+	{ "call",	db_fncall,		CS_OWN,		NULL },
+	{ "callout",	db_show_callout,	0,		NULL },
+	{ "continue",	db_continue_cmd,	0,		NULL },
+	{ "d",		db_delete_cmd,		0,		NULL },
+	{ "delete",	db_delete_cmd,		0,		NULL },
+	{ "dwatch",	db_deletewatch_cmd,	0,		NULL },
 	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	NULL },
-	{ "x",		db_examine_cmd,		CS_SET_DOT, 	NULL },
+	{ "kill",	db_kill_proc,		CS_OWN,		NULL },
+#ifdef DB_MACHINE_COMMANDS
+	{ "machine",    NULL,                   0,     		NULL },
+#endif
+	{ "match",	db_trace_until_matching_cmd,0,		NULL },
+	{ "next",	db_trace_until_matching_cmd,0,		NULL },
+	{ "p",		db_print_cmd,		0,		NULL },
+	{ "print",	db_print_cmd,		0,		NULL },
+	{ "ps",		db_show_all_procs,	0,		NULL },
+	{ "reboot",	db_reboot_cmd,		CS_OWN,		NULL },
+	{ "s",		db_single_step_cmd,	0,		NULL },
 	{ "search",	db_search_cmd,		CS_OWN|CS_SET_DOT, NULL },
 	{ "set",	db_set_cmd,		CS_OWN,		NULL },
-	{ "write",	db_write_cmd,		CS_MORE|CS_SET_DOT, NULL },
-	{ "w",		db_write_cmd,		CS_MORE|CS_SET_DOT, NULL },
-	{ "delete",	db_delete_cmd,		0,		NULL },
-	{ "d",		db_delete_cmd,		0,		NULL },
-	{ "break",	db_breakpoint_cmd,	0,		NULL },
-	{ "dwatch",	db_deletewatch_cmd,	0,		NULL },
-	{ "watch",	db_watchpoint_cmd,	CS_MORE,	NULL },
-	{ "step",	db_single_step_cmd,	0,		NULL },
-	{ "s",		db_single_step_cmd,	0,		NULL },
-	{ "continue",	db_continue_cmd,	0,		NULL },
-	{ "c",		db_continue_cmd,	0,		NULL },
-	{ "until",	db_trace_until_call_cmd,0,		NULL },
-	{ "next",	db_trace_until_matching_cmd,0,		NULL },
-	{ "match",	db_trace_until_matching_cmd,0,		NULL },
-	{ "trace",	db_stack_trace_cmd,	0,		NULL },
-	{ "call",	db_fncall,		CS_OWN,		NULL },
-	{ "ps",		db_show_all_procs,	0,		NULL },
-	{ "kill",	db_kill_proc,		CS_OWN,		NULL },
-	{ "callout",	db_show_callout,	0,		NULL },
-	{ "reboot",	db_reboot_cmd,		CS_OWN,		NULL },
 	{ "show",	NULL,			0,		db_show_cmds },
+	{ "sifting",    db_sifting_cmd,		CS_OWN,		NULL },
+	{ "step",	db_single_step_cmd,	0,		NULL },
+	{ "sync",	db_sync_cmd,		CS_OWN,		NULL },
+	{ "trace",	db_stack_trace_cmd,	0,		NULL },
+	{ "until",	db_trace_until_call_cmd,0,		NULL },
+	{ "w",		db_write_cmd,		CS_MORE|CS_SET_DOT, NULL },
+	{ "watch",	db_watchpoint_cmd,	CS_MORE,	NULL },
+	{ "write",	db_write_cmd,		CS_MORE|CS_SET_DOT, NULL },
+	{ "x",		db_examine_cmd,		CS_SET_DOT, 	NULL },
 	{ NULL, 	NULL,			0,		NULL }
 };
 
 #ifdef DB_MACHINE_COMMANDS
 
-/* this function should be called to install the machine dependent
-   commands. It should be called before the debugger is enabled  */
-void db_machine_commands_install(ptr)
-struct db_command *ptr;
+/*
+ * this function should be called to install the machine dependent
+ * commands. It should be called before the debugger is enabled
+ */
+void
+db_machine_commands_install(ptr)
+	struct db_command *ptr;
 {
-  db_command_table[0].more = ptr;
-  return;
+	struct db_command *cmd;
+
+	for (cmd = db_command_table; cmd != 0; cmd++) {
+		if (strcmp(cmd->name, "machine") == 0) {
+			cmd->more = ptr;
+			break;
+		}
+	}
 }
 
 #endif
 
 struct db_command	*db_last_command = 0;
-
-void
-db_help_cmd()
-{
-	struct db_command *cmd = db_command_table;
-
-	while (cmd->name != 0) {
-	    db_printf("%-12s", cmd->name);
-	    db_end_line();
-	    cmd++;
-	}
-}
 
 void
 db_command_loop()
@@ -458,7 +542,12 @@ db_command_loop()
 			db_printf("\n");
 		db_output_line = 0;
 
-		db_printf("db> ");
+
+#ifdef MULTIPROCESSOR
+		db_printf("db{%ld}> ", (long)cpu_number());
+#else
+		db_printf("db> ");		
+#endif
 		(void) db_read_line();
 
 		db_command(&db_last_command, db_command_table);
@@ -472,7 +561,7 @@ db_error(s)
 	char *s;
 {
 	if (s)
-	    db_printf(s);
+	    db_printf("%s", s);
 	db_flush_lex();
 	longjmp(db_recover);
 }
@@ -538,7 +627,7 @@ db_fncall(addr, have_addr, count, modif)
 
 	retval = (*func)(args[0], args[1], args[2], args[3], args[4],
 			 args[5], args[6], args[7], args[8], args[9]);
-	db_printf("%#ln\n", retval);
+	db_printf("%s\n", db_num_to_str(retval));
 }
 
 void
@@ -557,5 +646,74 @@ db_reboot_cmd(addr, have_addr, count, modif)
 	    db_error("?\n");
 	    /*NOTREACHED*/
 	}
+	/*
+	 * We are leaving DDB, never to return upward.
+	 * Clear db_recover so that we can debug faults in functions
+	 * called from cpu_reboot.
+	 */
+	db_recover = 0;
 	cpu_reboot((int)bootflags, NULL);
+}
+
+void
+db_sifting_cmd(addr, have_addr, count, omodif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		omodif;
+{
+	int	mode, t;
+
+	t = db_read_token();
+	if (t == tSLASH) {
+		t = db_read_token();
+		if (t != tIDENT) {
+			bad_modifier:
+			db_printf("Bad modifier\n");
+			db_flush_lex();
+			return;
+		}
+		if (!strcmp(db_tok_string, "F"))
+			mode = 'F';
+		else
+			goto bad_modifier;
+		t = db_read_token();
+	} else
+		mode = 0;
+
+	if (t==tIDENT)
+		db_sifting(db_tok_string, mode);
+	else {
+		db_printf("Bad argument (non-string)\n");
+		db_flush_lex();
+	}
+}
+
+void
+db_stack_trace_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	boolean_t	have_addr;
+	db_expr_t	count;
+	char		*modif;
+{
+	if (count == -1)
+		count = 65535;
+
+	db_stack_trace_print(addr, have_addr, count, modif, db_printf);
+}
+
+void
+db_sync_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	/*
+	 * We are leaving DDB, never to return upward.
+	 * Clear db_recover so that we can debug faults in functions
+	 * called from cpu_reboot.
+	 */
+	db_recover = 0;
+	cpu_reboot(RB_DUMP, NULL);
 }

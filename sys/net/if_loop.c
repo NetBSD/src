@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.26 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.26.2.1 2000/11/20 18:10:03 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,7 +104,7 @@
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif
 
 #ifdef NS
@@ -143,8 +143,8 @@ void
 loopattach(n)
 	int n;
 {
-	register int i;
-	register struct ifnet *ifp;
+	int i;
+	struct ifnet *ifp;
 
 	for (i = 0; i < NLOOP; i++) {
 		ifp = &loif[i];
@@ -167,12 +167,12 @@ loopattach(n)
 int
 looutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
@@ -204,39 +204,55 @@ looutput(ifp, m, dst, rt)
 			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
 
-#ifdef INET6
+#ifndef PULLDOWN_TEST
 	/*
 	 * KAME requires that the packet to be contiguous on the
 	 * mbuf.  We need to make that sure.
 	 * this kind of code should be avoided.
-	 * XXX: fails to join if interface MTU > MCLBYTES.  jumbogram?
+	 * XXX other conditions to avoid running this part?
 	 */
-	if (m && m->m_next != NULL && m->m_pkthdr.len < MCLBYTES) {
-		struct mbuf *n;
+	if (m->m_len != m->m_pkthdr.len) {
+		struct mbuf *n = NULL;
+		int maxlen;
 
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
-		if (!n)
-			goto contiguousfail;
-		MCLGET(n, M_DONTWAIT);
-		if (! (n->m_flags & M_EXT)) {
-			m_freem(n);
-			goto contiguousfail;
+		maxlen = MHLEN;
+		if (n)
+			M_COPY_PKTHDR(n, m);
+		if (n && m->m_pkthdr.len > maxlen) {
+			MCLGET(n, M_DONTWAIT);
+			maxlen = MCLBYTES;
+			if ((n->m_flags & M_EXT) == 0) {
+				m_free(n);
+				n = NULL;
+			}
+		}
+		if (!n) {
+			printf("looutput: mbuf allocation failed\n");
+			m_freem(m);
+			return ENOBUFS;
 		}
 
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
-		n->m_pkthdr.rcvif = m->m_pkthdr.rcvif;
-		n->m_pkthdr.len = m->m_pkthdr.len;
-		n->m_len = m->m_pkthdr.len;
-		m_freem(m);
+		if (m->m_pkthdr.len <= maxlen) {
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
+			n->m_len = m->m_pkthdr.len;
+			n->m_next = NULL;
+			m_freem(m);
+		} else {
+			m_copydata(m, 0, maxlen, mtod(n, caddr_t));
+			m_adj(m, maxlen);
+			n->m_len = maxlen;
+			n->m_next = m;
+			m->m_flags &= ~M_PKTHDR;
+		}
 		m = n;
 	}
-	if (0) {
-contiguousfail:
-		printf("looutput: mbuf allocation failed\n");
-	}
 #if 0
-	if (m && m->m_next != NULL)
+	if (m && m->m_next != NULL) {
 		printf("loop: not contiguous...\n");
+		m_freem(m);
+		return ENOBUFS;
+	}
 #endif
 #endif
 
@@ -320,13 +336,13 @@ lortrequest(cmd, rt, sa)
 /* ARGSUSED */
 int
 loioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa;
-	register struct ifreq *ifr;
-	register int error = 0;
+	struct ifaddr *ifa;
+	struct ifreq *ifr;
+	int error = 0;
 
 	switch (cmd) {
 

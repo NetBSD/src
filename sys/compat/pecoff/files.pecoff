@@ -1,0 +1,4 @@
+#	$NetBSD: files.pecoff,v 1.2.6.2 2000/11/20 18:08:36 bouyer Exp $
+#
+
+file	compat/pecoff/pecoff_exec.c	compat_pecoff

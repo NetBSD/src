@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.67 1999/08/25 14:42:35 sommerfeld Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.67.2.1 2000/11/20 18:09:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,8 +62,6 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 #define KSTRING	256		/* Largest I/O available via this filesystem */
@@ -80,7 +78,9 @@ struct kern_target kern_targets[] = {
      { DT_DIR, N("."),         0,            KTT_NULL,     VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KTT_NULL,     VDIR, DIR_MODE   },
      { DT_REG, N("boottime"),  &boottime.tv_sec, KTT_INT,  VREG, READ_MODE  },
-     { DT_REG, N("copyright"), copyright,    KTT_STRING,   VREG, READ_MODE  },
+			/* XXX cast away const */
+     { DT_REG, N("copyright"), (void *)copyright,
+     					     KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("hostname"),  0,            KTT_HOSTNAME, VREG, WRITE_MODE },
      { DT_REG, N("hz"),        &hz,          KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("loadavg"),   0,            KTT_AVENRUN,  VREG, READ_MODE  },
@@ -93,7 +93,9 @@ struct kern_target kern_targets[] = {
      { DT_BLK, N("rootdev"),   &rootdev,     KTT_DEVICE,   VBLK, READ_MODE  },
      { DT_CHR, N("rrootdev"),  &rrootdev,    KTT_DEVICE,   VCHR, READ_MODE  },
      { DT_REG, N("time"),      0,            KTT_TIME,     VREG, READ_MODE  },
-     { DT_REG, N("version"),   version,      KTT_STRING,   VREG, READ_MODE  },
+			/* XXX cast away const */
+     { DT_REG, N("version"),   (void *)version,
+     					     KTT_STRING,   VREG, READ_MODE  },
 #undef N
 };
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
@@ -636,8 +638,7 @@ kernfs_readdir(v)
 	if (ap->a_ncookies) {
 		nc = uio->uio_resid / UIO_MX;
 		nc = min(nc, (nkern_targets - i));
-		MALLOC(cookies, off_t *, nc * sizeof(off_t), M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(nc * sizeof(off_t), M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
 
@@ -670,7 +671,7 @@ kernfs_readdir(v)
 
 	if (ap->a_ncookies) {
 		if (error) {
-			FREE(*ap->a_cookies, M_TEMP);
+			free(*ap->a_cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		} else

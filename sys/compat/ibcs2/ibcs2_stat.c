@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.12 1999/05/05 20:01:03 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.12.2.1 2000/11/20 18:08:15 bouyer Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -39,8 +39,6 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_fcntl.h>
@@ -135,8 +133,8 @@ ibcs2_sys_statfs(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) fstype;
 	} */ *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	int error;
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -168,7 +166,7 @@ ibcs2_sys_fstatfs(p, v, retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -195,8 +193,8 @@ ibcs2_sys_statvfs(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statvfs *) buf;
 	} */ *uap = v;
-	register struct mount *mp;
-	register struct statfs *sp;
+	struct mount *mp;
+	struct statfs *sp;
 	int error;
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -227,7 +225,7 @@ ibcs2_sys_fstatvfs(p, v, retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -260,10 +258,10 @@ ibcs2_sys_stat(p, v, retval)
 	struct sys___stat13_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
-
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+
 	if ((error = sys___stat13(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
@@ -289,9 +287,10 @@ ibcs2_sys_lstat(p, v, retval)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+
 	if ((error = sys___lstat13(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
@@ -344,7 +343,6 @@ ibcs2_sys_utssys(p, v, retval)
 	case 0:			/* uname(struct utsname *) */
 	{
 		struct ibcs2_utsname sut;
-		extern char ostype[], machine[], osrelease[];
 
 		memset(&sut, 0, ibcs2_utsname_len);
 		memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);

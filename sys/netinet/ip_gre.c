@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.8 1999/01/19 23:03:21 mycroft Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.8.8.1 2000/11/20 18:10:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
 #if NGRE > 0
 
 #include "opt_inet.h"
+#include "opt_ns.h"
+#include "opt_atalk.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +62,7 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <net/bpf.h>
 #include <net/ethertypes.h>
 #include <net/if.h>
 #include <net/netisr.h>
@@ -98,6 +102,8 @@ void gre_inet_ntoa(struct in_addr in); 	/* XXX */
 
 struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
 
+int	gre_input2 __P((struct mbuf *, int, u_char));
+
 /*
  * De-encapsulate a packet and feed it back through ip input (this
  * routine is called whenever IP gets a packet with proto type
@@ -113,7 +119,7 @@ gre_input(m, va_alist)
         va_dcl
 #endif
 {
-	register int hlen,ret;
+	int hlen,ret;
 	va_list ap;
 
 	va_start(ap, m);
@@ -142,9 +148,9 @@ gre_input(m, va_alist)
 int
 gre_input2(struct mbuf *m ,int hlen,u_char proto)
 {
-	register struct greip *gip = mtod(m, struct greip *);
-	register int s;
-	register struct ifqueue *ifq;
+	struct greip *gip = mtod(m, struct greip *);
+	int s;
+	struct ifqueue *ifq;
 	struct gre_softc *sc;
 	u_short flags;
 
@@ -205,6 +211,21 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
 
+#if NBPFILTER > 0
+	if (sc->gre_bpf) {
+		struct mbuf m0;
+		u_int32_t af = AF_INET;
+
+		m0.m_next = m;
+		m0.m_len = 4;
+		m0.m_data = (char *)&af;
+
+		bpf_mtap(sc->gre_bpf, &m0);
+		}
+#endif /*NBPFILTER > 0*/
+
+	m->m_pkthdr.rcvif = &sc->sc_if;
+
 	s = splimp();		/* possible */
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
@@ -233,11 +254,11 @@ gre_mobile_input(m, va_alist)
         va_dcl
 #endif
 {
-	register struct ip *ip = mtod(m, struct ip *);
-	register struct mobip_h *mip = mtod(m, struct mobip_h *);
-	register struct ifqueue *ifq;
+	struct ip *ip = mtod(m, struct ip *);
+	struct mobip_h *mip = mtod(m, struct mobip_h *);
+	struct ifqueue *ifq;
 	struct gre_softc *sc;
-	register int hlen,s;
+	int hlen,s;
 	va_list ap;
 	u_char osrc=0;
 	int msiz;
@@ -280,6 +301,19 @@ gre_mobile_input(m, va_alist)
 	ip->ip_sum=0;
 	ip->ip_sum=in_cksum(m,(ip->ip_hl << 2));
 
+#if NBPFILTER > 0
+	if (sc->gre_bpf) {
+		struct mbuf m0;
+		u_int af = AF_INET; 
+
+		m0.m_next = m;
+		m0.m_len = 4;
+		m0.m_data = (char *)&af;
+
+		bpf_mtap(sc->gre_bpf, &m0);
+		}
+#endif /*NBPFILTER > 0*/
+
 	ifq = &ipintrq;
 	s = splimp();       /* possible */
 	if (IF_QFULL(ifq)) {
@@ -301,10 +335,9 @@ gre_lookup(m, proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct gre_softc *sc;
-	int i;
 
-	for (i = 0; i < NGRE; i++) {
-		sc = &gre_softc[i];
+	for (sc = LIST_FIRST(&gre_softc_list); sc != NULL;
+	     sc = LIST_NEXT(sc, sc_list)) {
 		if ((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
 		    (sc->g_src.s_addr == ip->ip_dst.s_addr) &&
 		    (sc->g_proto == proto) &&

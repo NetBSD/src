@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.7 1999/07/13 11:12:05 scw Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.7.2.1 2000/11/20 18:08:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -98,6 +98,7 @@ int cd9660_check_export __P((struct mount *, struct mbuf *, int *,
 	    struct ucred **));
 int cd9660_vptofh __P((struct vnode *, struct fid *));
 void cd9660_init __P((void));
+void cd9660_done __P((void));
 int cd9660_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			struct proc *));
 
@@ -109,5 +110,5 @@ extern int (**cd9660_fifoop_p) __P((void *));
 
 int isochar __P((const u_char *, const u_char *, int, u_char *));
 int isofncmp __P((const u_char *, int, const u_char *, int, int));
-void isofntrans __P((u_char *, int, u_char *, u_short *, int, int, int));
+void isofntrans __P((u_char *, int, u_char *, u_short *, int, int, int, int));
 ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));

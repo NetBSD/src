@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.16 1999/08/05 04:00:03 sommerfeld Exp $	*/
+/*	$NetBSD: pool.h,v 1.16.2.1 2000/11/20 18:11:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct pool {
 	 * if the hard limit is reached.
 	 */
 	const char	*pr_hardlimit_warning;
-	int		pr_hardlimit_ratecap;		/* in seconds */
+	struct timeval	pr_hardlimit_ratecap;
 	struct timeval	pr_hardlimit_warning_last;
 
 	/*

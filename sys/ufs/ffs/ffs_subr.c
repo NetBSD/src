@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.13 1998/07/28 17:30:01 drochner Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.13.14.1 2000/11/20 18:11:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,7 +76,7 @@ ffs_blkatoff(v)
 		struct buf **a_bpp;
 	} */ *ap = v;
 	struct inode *ip;
-	register struct fs *fs;
+	struct fs *fs;
 	struct buf *bp;
 	ufs_daddr_t lbn;
 	int bsize, error;
@@ -111,8 +111,8 @@ ffs_fragacct(fs, fragmap, fraglist, cnt, needswap)
 	int needswap;
 {
 	int inblk;
-	register int field, subfield;
-	register int siz, pos;
+	int field, subfield;
+	int siz, pos;
 
 	inblk = (int)(fragtbl[fs->fs_frag][fragmap]) << 1;
 	fragmap <<= 1;
@@ -142,8 +142,8 @@ ffs_checkoverlap(bp, ip)
 	struct buf *bp;
 	struct inode *ip;
 {
-	register struct buf *ebp, *ep;
-	register ufs_daddr_t start, last;
+	struct buf *ebp, *ep;
+	ufs_daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];
@@ -197,6 +197,30 @@ ffs_isblock(fs, cp, h)
 		return ((cp[h >> 3] & mask) == mask);
 	default:
 		panic("ffs_isblock");
+	}
+}
+
+/*
+ * check if a block is free
+ */
+int
+ffs_isfreeblock(fs, cp, h)
+	struct fs *fs;
+	unsigned char *cp;
+	ufs_daddr_t h;
+{
+
+	switch ((int)fs->fs_frag) {
+	case 8:
+		return (cp[h] == 0);
+	case 4:
+		return ((cp[h >> 1] & (0x0f << ((h & 0x1) << 2))) == 0);
+	case 2:
+		return ((cp[h >> 2] & (0x03 << ((h & 0x3) << 1))) == 0);
+	case 1:
+		return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
+	default:
+		panic("ffs_isfreeblock");
 	}
 }
 

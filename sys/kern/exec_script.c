@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.22 1999/05/07 17:38:41 tv Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.22.2.1 2000/11/20 18:08:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -47,7 +47,6 @@
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 
 #include <sys/exec_script.h>
 
@@ -64,9 +63,7 @@
  * into the exec package.
  */
 int
-exec_script_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_script_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error, hdrlinelen, shellnamelen, shellarglen;
 	char *hdrstr = epp->ep_hdr;
@@ -172,7 +169,6 @@ check_shell:
 #endif
 	    ) {
 		struct file *fp;
-		extern struct fileops vnops;
 
 #if defined(DIAGNOSTIC) && defined(FDSCRIPTS)
 		if (epp->ep_flags & EXEC_HASFD)
@@ -256,7 +252,7 @@ check_shell:
 		}
 
 		/* free the old pathname buffer */
-		FREE(oldpnbuf, M_NAMEI);
+		PNBUF_PUT(oldpnbuf);
 
 		epp->ep_flags |= (EXEC_HASARGL | EXEC_SKIPARG);
 		epp->ep_fa = shellargp;
@@ -292,7 +288,7 @@ fail:
 		vput(scriptvp);
 	}
 
-        FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+        PNBUF_PUT(epp->ep_ndp->ni_cnd.cn_pnbuf);
 
 	/* free the fake arg list, because we're not returning it */
 	if ((tmpsap = shellargp) != NULL) {

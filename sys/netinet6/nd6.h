@@ -1,9 +1,10 @@
-/*	$NetBSD: nd6.h,v 1.5 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.5.2.1 2000/11/20 18:10:57 bouyer Exp $	*/
+/*	$KAME: nd6.h,v 1.23 2000/06/04 12:54:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,7 +33,13 @@
 #ifndef _NETINET6_ND6_H_
 #define _NETINET6_ND6_H_
 
+/* see net/route.h, or net/if_inarp.h */
+#ifndef RTF_ANNOUNCE
+#define RTF_ANNOUNCE	RTF_PROTO2
+#endif
+
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 struct	llinfo_nd6 {
 	struct	llinfo_nd6 *ln_next;
@@ -43,6 +50,7 @@ struct	llinfo_nd6 {
 	u_long	ln_expire;	/* lifetime for NDP state transition */
 	short	ln_state;	/* reachability state */
 	short	ln_router;	/* 2^0: ND6 router bit */
+	int	ln_byhint;	/* # of times we made it reachable by UL hint */
 };
 
 #define ND6_LLINFO_NOSTATE	-2
@@ -53,16 +61,21 @@ struct	llinfo_nd6 {
 #define ND6_LLINFO_DELAY	3
 #define ND6_LLINFO_PROBE	4
 
+#define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
+
 struct nd_ifinfo {
 	u_int32_t linkmtu;		/* LinkMTU */
 	u_int32_t maxmtu;		/* Upper bound of LinkMTU */
 	u_int32_t basereachable;	/* BaseReachableTime */
 	u_int32_t reachable;		/* Reachable Time */
 	u_int32_t retrans;		/* Retrans Timer */
-	int	recalctm;		/* BaseReacable re-calculation timer */
+	u_int32_t flags;		/* Flags */
+	int recalctm;			/* BaseReacable re-calculation timer */
 	u_int8_t chlim;			/* CurHopLimit */
 	u_int8_t receivedra;
 };
+
+#define ND6_IFF_PERFORMNUD	0x1
 
 struct in6_nbrinfo {
 	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
@@ -92,6 +105,7 @@ struct	in6_prlist {
 		struct	in6_addr prefix;
 		struct prf_ra raflags;
 		u_char	prefixlen;
+		u_char	origin;
 		u_long	vltime;
 		u_long	pltime;
 		u_long	expire;
@@ -105,6 +119,12 @@ struct	in6_ndireq {
 	char ifname[IFNAMSIZ];
 	struct nd_ifinfo ndi;
 };
+
+struct	in6_ndifreq {
+	char ifname[IFNAMSIZ];
+	u_long ifindex;
+};
+
 
 /* protocol constants */
 #define MAX_RTR_SOLICITATION_DELAY	1	/*1sec*/
@@ -124,9 +144,9 @@ struct	in6_ndireq {
 		(((MIN_RANDOM_FACTOR * (x >> 10)) + (random() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
 
+TAILQ_HEAD(nd_drhead, nd_defrouter);
 struct	nd_defrouter {
-	LIST_ENTRY(nd_defrouter) dr_entry;
-#define dr_next dr_entry.le_next
+	TAILQ_ENTRY(nd_defrouter) dr_entry;
 	struct	in6_addr rtaddr;
 	u_char	flags;
 	u_short	rtlifetime;
@@ -135,7 +155,7 @@ struct	nd_defrouter {
 };
 
 struct nd_prefix {
-	struct ifprefix	ndpr_ifpr;
+	struct ifnet *ndpr_ifp;
 	LIST_ENTRY(nd_prefix) ndpr_entry;
 	struct sockaddr_in6 ndpr_prefix;	/* prefix */
 	struct in6_addr ndpr_mask; /* netmask derived from the prefix */
@@ -144,34 +164,24 @@ struct nd_prefix {
 	u_int32_t ndpr_pltime;	/* advertised preferred lifetime */
 	time_t ndpr_expire;	/* expiration time of the prefix */
 	time_t ndpr_preferred;	/* preferred time of the prefix */
-	struct in6_prflags ndpr_flags;
+	struct prf_ra ndpr_flags;
 	/* list of routers that advertise the prefix: */
 	LIST_HEAD(pr_rtrhead, nd_pfxrouter) ndpr_advrtrs;
-	u_char	ndpr_origin; /* from where this prefix info is obtained */
+	u_char	ndpr_plen;
 	struct	ndpr_stateflags {
 		/* if this prefix can be regarded as on-link */
 		u_char onlink : 1;
-		/* if some prefix should be added to this prefix */
-		u_char addmark : 1;
-		u_char delmark : 1; /* if this prefix will be deleted */
 	} ndpr_stateflags;
 };
 
 #define ndpr_next		ndpr_entry.le_next
-#define ndpr_ifp		ndpr_ifpr.ifpr_ifp
-#define ndpr_plen		ndpr_ifpr.ifpr_plen
 
-#define ndpr_raf		ndpr_flags.prf_ra
-#define ndpr_raf_onlink		ndpr_flags.prf_ra.onlink
-#define ndpr_raf_auto		ndpr_flags.prf_ra.autonomous
+#define ndpr_raf		ndpr_flags
+#define ndpr_raf_onlink		ndpr_flags.onlink
+#define ndpr_raf_auto		ndpr_flags.autonomous
 
 #define ndpr_statef_onlink	ndpr_stateflags.onlink
 #define ndpr_statef_addmark	ndpr_stateflags.addmark
-#define ndpr_statef_delmark	ndpr_stateflags.delmark
-
-#define ndpr_rrf		ndpr_flags.prf_rr
-#define ndpr_rrf_decrvalid	ndpr_flags.prf_rr.decrvalid
-#define ndpr_rrf_decrprefd	ndpr_flags.prf_rr.decrprefd
 
 /*
  * We keep expired prefix for certain amount of time, for validation purposes.
@@ -214,7 +224,6 @@ struct nd_pfxrouter {
 	struct nd_defrouter *router;
 };
 
-LIST_HEAD(nd_drhead, nd_defrouter);
 LIST_HEAD(nd_prhead, nd_prefix);
 
 /* nd6.c */
@@ -223,11 +232,16 @@ extern int nd6_delay;
 extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
 extern int nd6_useloopback;
-extern int nd6_proxyall;
+extern int nd6_maxnudhint;
 extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
+
+extern struct callout nd6_timer_ch;
+
+/* nd6_rtr.c */
+extern int nd6_defifindex;
 
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[9];
@@ -258,15 +272,16 @@ union nd_opts {
 /* nd6.c */
 void nd6_init __P((void));
 void nd6_ifattach __P((struct ifnet *));
-int nd6_is_addr_neighbor __P((struct in6_addr *, struct ifnet *));
+int nd6_is_addr_neighbor __P((struct sockaddr_in6 *, struct ifnet *));
 void nd6_option_init __P((void *, int, union nd_opts *));
 struct nd_opt_hdr *nd6_option __P((union nd_opts *));
 int nd6_options __P((union nd_opts *));
 struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
 void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
+void nd6_purge __P((struct ifnet *));
 void nd6_free __P((struct rtentry *));
-void nd6_nud_hint __P((struct rtentry *, struct in6_addr *));
+void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));
 void nd6_rtrequest __P((int, struct rtentry *, struct sockaddr *));
@@ -275,15 +290,15 @@ int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));
 /* for test */
-int nd6_output __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *,
-		    struct rtentry *));
+int nd6_output __P((struct ifnet *, struct ifnet *, struct mbuf *,
+		    struct sockaddr_in6 *, struct rtentry *));
 int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
 			 struct sockaddr *, u_char *));
 
 /* nd6_nbr.c */
 void nd6_na_input __P((struct mbuf *, int, int));
 void nd6_na_output __P((struct ifnet *, struct in6_addr *,
- 			struct in6_addr *, u_long, int));
+ 			struct in6_addr *, u_long, int, struct sockaddr *));
 void nd6_ns_input __P((struct mbuf *, int, int));
 void nd6_ns_output __P((struct ifnet *, struct in6_addr *,
 			struct in6_addr *, struct llinfo_nd6 *, int));
@@ -297,15 +312,18 @@ void nd6_ra_input __P((struct mbuf *, int, int));
 void prelist_del __P((struct nd_prefix *));
 void defrouter_addreq __P((struct nd_defrouter *));
 void defrouter_delreq __P((struct nd_defrouter *, int));
+void defrouter_select __P((void));
 void defrtrlist_del __P((struct nd_defrouter *));
 void prelist_remove __P((struct nd_prefix *));
 int prelist_update __P((struct nd_prefix *, struct nd_defrouter *,
 	struct mbuf *));
+void pfxlist_onlink_check __P((void));
 struct nd_defrouter *defrouter_lookup __P((struct in6_addr *,
 					   struct ifnet *));
 int in6_ifdel __P((struct ifnet *, struct in6_addr *));
 int in6_init_prefix_ltimes __P((struct nd_prefix *ndpr));
 void rt6_flush __P((struct in6_addr *, struct ifnet *));
+int nd6_setdefaultiface __P((int));
 
 #endif /* _KERNEL */
 

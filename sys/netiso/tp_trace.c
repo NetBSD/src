@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.c,v 1.6 1996/02/13 22:12:20 christos Exp $	*/
+/*	$NetBSD: tp_trace.c,v 1.6.30.1 2000/11/20 18:11:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -108,7 +108,7 @@ tpTrace(tpcb, event, arg, src, len, arg4, arg5)
 	u_int           arg4;
 	u_int           arg5;
 {
-	register struct tp_Trace *tp;
+	struct tp_Trace *tp;
 
 	tp = &tp_Trace[tp_Tracen++];
 	tp_Tracen %= TPTRACEN;

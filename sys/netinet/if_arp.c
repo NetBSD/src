@@ -1,7 +1,7 @@
-/*	$NetBSD: if_arp.c,v 1.66 1999/09/25 17:49:29 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.66.2.1 2000/11/20 18:10:19 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -85,6 +85,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -155,6 +156,10 @@ int	arp_inuse, arp_allocated, arp_intimer;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
+
+struct	arpstat arpstat;
+struct	callout arptimer_ch;
+
 
 /* revarp state */
 static struct	in_addr myip, srv_ip;
@@ -293,7 +298,7 @@ do {									\
 void
 arp_drain()
 {
-	register struct llinfo_arp *la, *nla;
+	struct llinfo_arp *la, *nla;
 	int count = 0;
 	struct mbuf *mold;
 	
@@ -314,6 +319,7 @@ arp_drain()
 		}
 	}
 	ARP_UNLOCK();
+	arpstat.as_dfrdropped += count;
 }
 
 
@@ -326,7 +332,7 @@ arptimer(arg)
 	void *arg;
 {
 	int s;
-	register struct llinfo_arp *la, *nla;
+	struct llinfo_arp *la, *nla;
 
 	s = splsoftnet();
 
@@ -336,9 +342,9 @@ arptimer(arg)
 		return;
 	}
 
-	timeout(arptimer, NULL, arpt_prune * hz);
+	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
 	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
-		register struct rtentry *rt = la->la_rt;
+		struct rtentry *rt = la->la_rt;
 
 		nla = la->la_list.le_next;
 		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
@@ -356,11 +362,11 @@ arptimer(arg)
 void
 arp_rtrequest(req, rt, sa)
 	int req;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct sockaddr *sa;
 {
-	register struct sockaddr *gate = rt->rt_gateway;
-	register struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct sockaddr *gate = rt->rt_gateway;
+	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	size_t allocsize;
 	struct mbuf *mold;
@@ -375,7 +381,8 @@ arp_rtrequest(req, rt, sa)
 		if (time.tv_sec == 0) {
 			time.tv_sec++;
 		}
-		timeout(arptimer, (caddr_t)0, hz);
+		callout_init(&arptimer_ch);
+		callout_reset(&arptimer_ch, hz, arptimer, NULL);
 	}
 	if (rt->rt_flags & RTF_GATEWAY)
 		return;
@@ -529,11 +536,11 @@ arp_rtrequest(req, rt, sa)
  */
 static void
 arprequest(ifp, sip, tip, enaddr)
-	register struct ifnet *ifp;
-	register struct in_addr *sip, *tip;
-	register u_int8_t *enaddr;
+	struct ifnet *ifp;
+	struct in_addr *sip, *tip;
+	u_int8_t *enaddr;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct arphdr *ah;
 	struct sockaddr sa;
 
@@ -555,6 +562,8 @@ arprequest(ifp, sip, tip, enaddr)
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
+	arpstat.as_sndtotal++;
+	arpstat.as_sndrequest++;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 }
 
@@ -570,13 +579,13 @@ arprequest(ifp, sip, tip, enaddr)
  */
 int
 arpresolve(ifp, rt, m, dst, desten)
-	register struct ifnet *ifp;
-	register struct rtentry *rt;
+	struct ifnet *ifp;
+	struct rtentry *rt;
 	struct mbuf *m;
-	register struct sockaddr *dst;
-	register u_char *desten;
+	struct sockaddr *dst;
+	u_char *desten;
 {
-	register struct llinfo_arp *la;
+	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
 	struct mbuf *mold;
 	int s;
@@ -588,6 +597,7 @@ arpresolve(ifp, rt, m, dst, desten)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
+		arpstat.as_allocfail++;
 		log(LOG_DEBUG, "arpresolve: can't allocate llinfo\n");
 		m_freem(m);
 		return (0);
@@ -609,14 +619,16 @@ arpresolve(ifp, rt, m, dst, desten)
 	 * latest one.
 	 */
 
+	arpstat.as_dfrtotal++;
 	s = splimp();
 	mold = la->la_hold;
 	la->la_hold = m;
 	splx(s);
 
-	if (mold)
+	if (mold) {
+		arpstat.as_dfrdropped++;
 		m_freem(mold);
-
+	}
 	
 	/*
 	 * Re-send the ARP request when appropriate.
@@ -655,8 +667,8 @@ arpresolve(ifp, rt, m, dst, desten)
 void
 arpintr()
 {
-	register struct mbuf *m;
-	register struct arphdr *ar;
+	struct mbuf *m;
+	struct arphdr *ar;
 	int s;
 
 	while (arpintrq.ifq_head) {
@@ -665,6 +677,8 @@ arpintr()
 		splx(s);
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
+
+		arpstat.as_rcvtotal++;
 
 		if (m->m_len >= sizeof(struct arphdr) &&
 		    (ar = mtod(m, struct arphdr *)) &&
@@ -677,7 +691,11 @@ arpintr()
 			case ETHERTYPE_IPTRAILERS:
 				in_arpinput(m);
 				continue;
+			default:
+				arpstat.as_rcvbadproto++;
 			}
+		else
+			arpstat.as_rcvbadlen++;
 		m_freem(m);
 	}
 }
@@ -701,9 +719,9 @@ in_arpinput(m)
 	struct mbuf *m;
 {
 	struct arphdr *ah;
-	register struct ifnet *ifp = m->m_pkthdr.rcvif;
-	register struct llinfo_arp *la = 0;
-	register struct rtentry  *rt;
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct llinfo_arp *la = 0;
+	struct rtentry  *rt;
 	struct in_ifaddr *ia;
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
@@ -712,27 +730,33 @@ in_arpinput(m)
 	struct mbuf *mold;
 	int s;
 	
-
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
+
+	if (m->m_flags & (M_BCAST|M_MCAST))
+		arpstat.as_rcvmcast++;
 
 	/*
 	 * If the target IP address is zero, ignore the packet.
 	 * This prevents the code below from tring to answer
 	 * when we are using IP address zero (booting).
 	 */
-	if (in_nullhost(itaddr))
+	if (in_nullhost(itaddr)) {
+		arpstat.as_rcvzerotpa++;
 		goto out;
+	}
 
 	/*
 	 * If the source IP address is zero, this is most likely a
 	 * confused host trying to use IP address zero. (Windoze?)
 	 * XXX: Should we bother trying to reply to these?
 	 */
-	if (in_nullhost(isaddr))
+	if (in_nullhost(isaddr)) {
+		arpstat.as_rcvzerospa++;
 		goto out;
+	}
 
 	/*
 	 * Search for a matching interface address
@@ -750,19 +774,24 @@ in_arpinput(m)
 
 		if (ia == NULL) {
 			IFP_TO_IA(ifp, ia);
-			if (ia == NULL)
+			if (ia == NULL) {
+				arpstat.as_rcvnoint++;
 				goto out;
+			}
 		}
 	}
 
 	myaddr = ia->ia_addr.sin_addr;
 
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
-	    ifp->if_data.ifi_addrlen))
+	    ifp->if_data.ifi_addrlen)) {
+		arpstat.as_rcvlocalsha++;
 		goto out;	/* it's from me, ignore it. */
+	}
 
 	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
 	    ifp->if_data.ifi_addrlen)) {
+		arpstat.as_rcvbcastsha++;
 		log(LOG_ERR,
 		    "%s: arp: link address is broadcast for IP address %s!\n",
 		    ifp->if_xname, in_fmtaddr(isaddr));
@@ -770,6 +799,7 @@ in_arpinput(m)
 	}
 
 	if (in_hosteq(isaddr, myaddr)) {
+		arpstat.as_rcvlocalspa++;
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from link address %s\n",
 		   in_fmtaddr(isaddr), lla_snprintf(ar_sha(ah), ah->ar_hln));
@@ -781,6 +811,7 @@ in_arpinput(m)
 		if (sdl->sdl_alen &&
 		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen)) {
 			if (rt->rt_flags & RTF_STATIC) {
+				arpstat.as_rcvoverperm++;
 				log(LOG_INFO,
 				    "%s tried to overwrite permanent arp info"
 				    " for %s\n",
@@ -788,6 +819,7 @@ in_arpinput(m)
 				    in_fmtaddr(isaddr));
 				goto out;
 			} else if (rt->rt_ifp != ifp) {
+				arpstat.as_rcvoverint++;
 				log(LOG_INFO,
 				    "%s on %s tried to overwrite "
 				    "arp info for %s on %s\n",
@@ -796,6 +828,7 @@ in_arpinput(m)
 				    rt->rt_ifp->if_xname);
 				    goto out;
 			} else {
+				arpstat.as_rcvover++;
 				log(LOG_INFO,
 				    "arp info overwritten for %s by %s\n",
 				    in_fmtaddr(isaddr),
@@ -809,11 +842,13 @@ in_arpinput(m)
 		 */
 		if (sdl->sdl_alen &&
 		    sdl->sdl_alen != ah->ar_hln) {
+			arpstat.as_rcvlenchg++;
 			log(LOG_WARNING, 
 			    "arp from %s: new addr len %d, was %d",
 			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
 		if (ifp->if_data.ifi_addrlen != ah->ar_hln) {
+			arpstat.as_rcvbadlen++;
 			log(LOG_WARNING, 
 			    "arp from %s: addr len: new %d, i/f %d (ignored)",
 			    in_fmtaddr(isaddr), ah->ar_hln,
@@ -859,15 +894,20 @@ in_arpinput(m)
 		la->la_hold = 0;
 		splx(s);
 
-		if (mold)
+		if (mold) {
+			arpstat.as_dfrsent++;
 			(*ifp->if_output)(ifp, mold, rt_key(rt), rt);
+		}
 	}
 reply:
 	if (op != ARPOP_REQUEST) {
+		if (op == ARPOP_REPLY)
+			arpstat.as_rcvreply++;
 	out:
 		m_freem(m);
 		return;
 	}
+	arpstat.as_rcvrequest++;
 	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
 		bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah), ah->ar_hln);
@@ -891,6 +931,8 @@ reply:
 	m->m_pkthdr.len = m->m_len;
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
+	arpstat.as_sndtotal++;
+	arpstat.as_sndreply++;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 	return;
 }
@@ -900,10 +942,10 @@ reply:
  */
 static void
 arptfree(la)
-	register struct llinfo_arp *la;
+	struct llinfo_arp *la;
 {
-	register struct rtentry *rt = la->la_rt;
-	register struct sockaddr_dl *sdl;
+	struct rtentry *rt = la->la_rt;
+	struct sockaddr_dl *sdl;
 
 	ARP_LOCK_CHECK();
 
@@ -928,7 +970,7 @@ arplookup(addr, create, proxy)
 	struct in_addr *addr;
 	int create, proxy;
 {
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	static struct sockaddr_inarp sin;
 	const char *why = 0;
 
@@ -943,9 +985,10 @@ arplookup(addr, create, proxy)
 
 	if (rt->rt_flags & RTF_GATEWAY)
 		why = "host is not on local network";
-	else if ((rt->rt_flags & RTF_LLINFO) == 0)
+	else if ((rt->rt_flags & RTF_LLINFO) == 0) {
+		arpstat.as_allocfail++;
 		why = "could not allocate llinfo";
-	else if (rt->rt_gateway->sa_family != AF_LINK)
+	} else if (rt->rt_gateway->sa_family != AF_LINK)
 		why = "gateway route is not ours";
 	else
 		return ((struct llinfo_arp *)rt->rt_llinfo);
@@ -1237,20 +1280,24 @@ db_show_radix_node(rn, w)
 }
 /*
  * Function to print all the route trees.
- * Use this from ddb:  "call db_show_arptab"
+ * Use this from ddb:  "show arptab"
  */
-int
-db_show_arptab()
+void
+db_show_arptab(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	struct radix_node_head *rnh;
 	rnh = rt_tables[AF_INET];
 	db_printf("Route tree for AF_INET\n");
 	if (rnh == NULL) {
 		db_printf(" (not initialized)\n");
-		return (0);
+		return;
 	}
 	rn_walktree(rnh, db_show_radix_node, NULL);
-	return (0);
+	return;
 }
 #endif
 #endif /* INET */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.26.2.1 1999/10/20 22:57:34 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.26.2.2 2000/11/20 18:12:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -64,10 +64,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm.h>
 #include <uvm/uvm_vnode.h>
 
@@ -90,15 +86,14 @@ lock_data_t uvn_sync_lock;			/* locks sync operation */
  * functions
  */
 
-static int		   uvn_asyncget __P((struct uvm_object *, vaddr_t,
+static int		   uvn_asyncget __P((struct uvm_object *, voff_t,
 					    int));
-struct uvm_object 	  *uvn_attach __P((void *, vm_prot_t));
-static void		   uvn_cluster __P((struct uvm_object *, vaddr_t,
-					   vaddr_t *, vaddr_t *));
+static void		   uvn_cluster __P((struct uvm_object *, voff_t,
+					   voff_t *, voff_t *));
 static void                uvn_detach __P((struct uvm_object *));
-static boolean_t           uvn_flush __P((struct uvm_object *, vaddr_t, 
-					 vaddr_t, int));
-static int                 uvn_get __P((struct uvm_object *, vaddr_t,
+static boolean_t           uvn_flush __P((struct uvm_object *, voff_t, 
+					 voff_t, int));
+static int                 uvn_get __P((struct uvm_object *, voff_t,
 					vm_page_t *, int *, int, 
 					vm_prot_t, int, int));
 static void		   uvn_init __P((void));
@@ -125,7 +120,6 @@ struct uvm_pagerops uvm_vnodeops = {
 	uvn_put,
 	uvn_cluster,
 	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
-	uvm_shareprot,	 /* !NULL: allow us in share maps */
 	NULL,		 /* AIO-DONE function (not until we have asyncio) */
 	uvn_releasepg,
 };
@@ -187,6 +181,8 @@ uvn_attach(arg, accessprot)
 	 */
 	simple_lock(&uvn->u_obj.vmobjlock);
 	while (uvn->u_flags & UVM_VNODE_BLOCKED) {
+		printf("uvn_attach: blocked at 0x%p flags 0x%x\n",
+		    uvn, uvn->u_flags);
 		uvn->u_flags |= UVM_VNODE_WANTED;
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
 		UVM_UNLOCK_AND_WAIT(uvn, &uvn->u_obj.vmobjlock, FALSE,
@@ -291,13 +287,6 @@ uvn_attach(arg, accessprot)
 	if (vp->v_type == VBLK)
 		printf("used_vnode_size = %qu\n", (long long)used_vnode_size);
 #endif
-	if (used_vnode_size > (vaddr_t) -PAGE_SIZE) {
-#ifdef DEBUG
-		printf("uvn_attach: vn %p size truncated %qx->%x\n", vp,
-		    (long long)used_vnode_size, -PAGE_SIZE);
-#endif    
-		used_vnode_size = (vaddr_t) -PAGE_SIZE;
-	}
 
 	/*
 	 * now set up the uvn.
@@ -555,7 +544,7 @@ uvm_vnp_terminate(vp)
 
 	/*
 	 * must be a valid uvn that is not already dying (because XLOCK
-	 * protects us from that).   the uvn can't in the the ALOCK state
+	 * protects us from that).   the uvn can't in the ALOCK state
 	 * because it is valid, and uvn's that are in the ALOCK state haven't
 	 * been marked valid yet.
 	 */
@@ -834,15 +823,15 @@ uvn_releasepg(pg, nextpgp)
 static boolean_t
 uvn_flush(uobj, start, stop, flags)
 	struct uvm_object *uobj;
-	vaddr_t start, stop;
+	voff_t start, stop;
 	int flags;
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 	struct vm_page *pp, *ppnext, *ptmp;
 	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
 	int npages, result, lcv;
-	boolean_t retval, need_iosync, by_list, needs_clean;
-	vaddr_t curoff;
+	boolean_t retval, need_iosync, by_list, needs_clean, all;
+	voff_t curoff;
 	u_short pp_version;
 	UVMHIST_FUNC("uvn_flush"); UVMHIST_CALLED(maphist);
 
@@ -854,8 +843,7 @@ uvn_flush(uobj, start, stop, flags)
 	need_iosync = FALSE;
 	retval = TRUE;		/* return value */
 	if (flags & PGO_ALLPAGES) {
-		start = 0;
-		stop = round_page(uvn->u_size);
+		all = TRUE;
 		by_list = TRUE;		/* always go by the list */
 	} else {
 		start = trunc_page(start);
@@ -865,6 +853,7 @@ uvn_flush(uobj, start, stop, flags)
 			printf("uvn_flush: strange, got an out of range "
 			    "flush (fixed)\n");
 #endif
+		all = FALSE;
 		by_list = (uobj->uo_npages <= 
 		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
 	}
@@ -889,7 +878,8 @@ uvn_flush(uobj, start, stop, flags)
 		if (by_list) {
 			for (pp = uobj->memq.tqh_first ; pp != NULL ;
 			    pp = pp->listq.tqe_next) {
-				if (pp->offset < start || pp->offset >= stop)
+				if (!all &&
+				    (pp->offset < start || pp->offset >= stop))
 					continue;
 				pp->flags &= ~PG_CLEANCHK;
 			}
@@ -931,7 +921,8 @@ uvn_flush(uobj, start, stop, flags)
 			 * range check
 			 */
 
-			if (pp->offset < start || pp->offset >= stop) {
+			if (!all &&
+			    (pp->offset < start || pp->offset >= stop)) {
 				ppnext = pp->listq.tqe_next;
 				continue;
 			}
@@ -1202,9 +1193,10 @@ ReTry:
 				} else {
 					if (result != VM_PAGER_OK) {
 						printf("uvn_flush: obj=%p, "
-						   "offset=0x%lx.  error "
+						   "offset=0x%llx.  error "
 						   "during pageout.\n",
-						    pp->uobject, pp->offset);
+						    pp->uobject,
+						    (long long)pp->offset);
 						printf("uvn_flush: WARNING: "
 						    "changes to page may be "
 						    "lost!\n");
@@ -1259,8 +1251,8 @@ ReTry:
 static void
 uvn_cluster(uobj, offset, loffset, hoffset)
 	struct uvm_object *uobj;
-	vaddr_t offset;
-	vaddr_t *loffset, *hoffset; /* OUT */
+	voff_t offset;
+	voff_t *loffset, *hoffset; /* OUT */
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 	*loffset = offset;
@@ -1319,13 +1311,13 @@ uvn_put(uobj, pps, npages, flags)
 static int
 uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 	struct vm_page **pps;		/* IN/OUT */
 	int *npagesp;			/* IN (OUT if PGO_LOCKED) */
 	int centeridx, advice, flags;
 	vm_prot_t access_type;
 {
-	vaddr_t current_offset;
+	voff_t current_offset;
 	struct vm_page *ptmp;
 	int lcv, result, gotpages;
 	boolean_t done;
@@ -1566,7 +1558,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 static int
 uvn_asyncget(uobj, offset, npages)
 	struct uvm_object *uobj;
-	vaddr_t offset;
+	voff_t offset;
 	int npages;
 {
 
@@ -1596,8 +1588,10 @@ uvn_io(uvn, pps, npages, flags, rw)
 	struct vnode *vn;
 	struct uio uio;
 	struct iovec iov;
-	vaddr_t kva, file_offset;
-	int waitf, result, got, wanted;
+	vaddr_t kva;
+	off_t file_offset;
+	int waitf, result, mapinflags;
+	size_t got, wanted;
 	UVMHIST_FUNC("uvn_io"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "rw=%d", rw,0,0,0);
@@ -1633,9 +1627,6 @@ uvn_io(uvn, pps, npages, flags, rw)
 	if (file_offset >= uvn->u_size) {
 			simple_unlock(&uvn->u_obj.vmobjlock);
 			UVMHIST_LOG(maphist,"<- BAD (size check)",0,0,0,0);
-#ifdef DEBUG
-			printf("uvn_io: note: size check fired\n");
-#endif
 			return(VM_PAGER_BAD);
 	}
 
@@ -1643,8 +1634,11 @@ uvn_io(uvn, pps, npages, flags, rw)
 	 * first try and map the pages in (without waiting)
 	 */
 
-	kva = uvm_pagermapin(pps, npages, NULL, M_NOWAIT);
-	if (kva == NULL && waitf == M_NOWAIT) {
+	mapinflags = (rw == UIO_READ) ?
+	    UVMPAGER_MAPIN_READ : UVMPAGER_MAPIN_WRITE;
+
+	kva = uvm_pagermapin(pps, npages, NULL, mapinflags);
+	if (kva == 0 && waitf == M_NOWAIT) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
 		UVMHIST_LOG(maphist,"<- mapin failed (try again)",0,0,0,0);
 		return(VM_PAGER_AGAIN);
@@ -1659,9 +1653,9 @@ uvn_io(uvn, pps, npages, flags, rw)
 	uvn->u_nio++;			/* we have an I/O in progress! */
 	simple_unlock(&uvn->u_obj.vmobjlock);
 	/* NOTE: object now unlocked */
-	if (kva == NULL) {
-		kva = uvm_pagermapin(pps, npages, NULL, M_WAITOK);
-	}
+	if (kva == 0)
+		kva = uvm_pagermapin(pps, npages, NULL,
+		    mapinflags | UVMPAGER_MAPIN_WAITOK);
 
 	/*
 	 * ok, mapped in.  our pages are PG_BUSY so they are not going to
@@ -1910,7 +1904,7 @@ uvm_vnp_uncache(vp)
 void
 uvm_vnp_setsize(vp, newsize)
 	struct vnode *vp;
-	u_quad_t newsize;
+	voff_t newsize;
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
 
@@ -1921,29 +1915,15 @@ uvm_vnp_setsize(vp, newsize)
 	if (uvn->u_flags & UVM_VNODE_VALID) {
 
 		/*
-		 * make sure that the newsize fits within a vaddr_t
-		 * XXX: need to revise addressing data types
-		 */
-
-		if (newsize > (vaddr_t) -PAGE_SIZE) {
-#ifdef DEBUG
-			printf("uvm_vnp_setsize: vn %p size truncated "
-			       "%qx->%lx\n", vp, (long long)newsize,
-			       (vaddr_t)-PAGE_SIZE);
-#endif
-			newsize = (vaddr_t)-PAGE_SIZE;
-		}
-
-		/*
 		 * now check if the size has changed: if we shrink we had better
 		 * toss some pages...
 		 */
 
 		if (uvn->u_size > newsize) {
-			(void)uvn_flush(&uvn->u_obj, (vaddr_t) newsize,
+			(void)uvn_flush(&uvn->u_obj, newsize,
 			    uvn->u_size, PGO_FREE);
 		}
-		uvn->u_size = (vaddr_t)newsize;
+		uvn->u_size = newsize;
 	}
 	simple_unlock(&uvn->u_obj.vmobjlock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.13 1999/04/12 20:38:20 pk Exp $	*/
+/*	$NetBSD: db_break.h,v 1.13.2.1 2000/11/20 18:08:46 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,7 +32,7 @@
 #ifndef	_DDB_DB_BREAK_H_
 #define	_DDB_DB_BREAK_H_
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Breakpoints.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.38 1999/09/29 11:58:45 bouyer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.38.2.1 2000/11/20 18:11:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,12 +44,10 @@
 /*
  * These are for the eproc structure defined below.
  */
-#ifndef _KERNEL
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
-#endif
+#include <uvm/uvm_extern.h>
 
 /*
  * Definitions for sysctl call.  The sysctl call uses a hierarchical name
@@ -60,7 +58,7 @@
  * respective subsystem header files.
  */
 
-#define CTL_MAXNAME	12	/* largest number of components supported */
+#define	CTL_MAXNAME	12	/* largest number of components supported */
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
@@ -70,7 +68,7 @@
  * pairs to be used by sysctl(1) in manipulating the subsystem.
  */
 struct ctlname {
-	char	*ctl_name;	/* subsystem name */
+	const char *ctl_name;	/* subsystem name */
 	int	ctl_type;	/* type of name */
 };
 #define	CTLTYPE_NODE	1	/* name is a node */
@@ -95,7 +93,7 @@ struct ctlname {
 #define	CTL_PROC	10		/* per-proc attr */
 #define	CTL_MAXID	11		/* number of valid top-level ids */
 
-#define CTL_NAMES { \
+#define	CTL_NAMES { \
 	{ 0, 0 }, \
 	{ "kern", CTLTYPE_NODE }, \
 	{ "vm", CTLTYPE_NODE }, \
@@ -135,11 +133,11 @@ struct ctlname {
 #define	KERN_BOOTTIME		21	/* struct: time kernel was booted */
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
-#define KERN_RAWPARTITION	24	/* int: raw partition number */
+#define	KERN_RAWPARTITION	24	/* int: raw partition number */
 #define	KERN_NTPTIME		25	/* struct: extended-precision time */
 #define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
-#define KERN_AUTONICETIME	27	/* int: proc time before autonice */
-#define KERN_AUTONICEVAL	28	/* int: auto nice value */
+#define	KERN_AUTONICETIME	27	/* int: proc time before autonice */
+#define	KERN_AUTONICEVAL	28	/* int: auto nice value */
 #define	KERN_RTC_OFFSET		29	/* int: offset of rtc from gmt */
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
 #define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
@@ -157,9 +155,19 @@ struct ctlname {
 #define	KERN_MEMORY_PROTECTION	43	/* int: POSIX memory protections */
 #define	KERN_LOGIN_NAME_MAX	44	/* int: max length login name + NUL */
 #define	KERN_DEFCORENAME	45	/* old: sort core name format */
-#define	KERN_MAXID		46	/* number of valid kern ids */
+#define	KERN_LOGSIGEXIT		46	/* int: log signalled processes */
+#define	KERN_PROC2		47	/* struct: process entries */
+#define	KERN_PROC_ARGS		48	/* struct: process argv/env */
+#define	KERN_FSCALE		49	/* int: fixpt FSCALE */
+#define	KERN_CCPU		50	/* int: fixpt ccpu */
+#define	KERN_CP_TIME		51	/* struct: cpu time counters */
+#define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
+#define	KERN_MSGBUF		53	/* kernel message buffer */
+#define	KERN_CONSDEV		54	/* dev_t: console terminal device */
+#define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
+#define	KERN_MAXID		56	/* number of valid kern ids */
 
-#define CTL_KERN_NAMES { \
+#define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
 	{ "ostype", CTLTYPE_STRING }, \
 	{ "osrelease", CTLTYPE_STRING }, \
@@ -206,18 +214,36 @@ struct ctlname {
 	{ "memory_protection", CTLTYPE_INT }, \
 	{ "login_name_max", CTLTYPE_INT }, \
 	{ "defcorename", CTLTYPE_STRING }, \
+	{ "logsigexit", CTLTYPE_INT }, \
+	{ "proc2", CTLTYPE_STRUCT }, \
+	{ "proc_args", CTLTYPE_STRING }, \
+	{ "fscale", CTLTYPE_INT }, \
+	{ "ccpu", CTLTYPE_INT }, \
+	{ "cp_time", CTLTYPE_STRUCT }, \
+	{ "sysvipc_info", CTLTYPE_STRUCT }, \
+	{ "msgbuf", CTLTYPE_STRUCT }, \
+	{ "consdev", CTLTYPE_STRUCT }, \
+	{ "maxptys", CTLTYPE_INT }, \
 }
 
 /*
  * KERN_PROC subtypes
  */
-#define KERN_PROC_ALL		0	/* everything */
-#define	KERN_PROC_PID		1	/* by process id */
-#define	KERN_PROC_PGRP		2	/* by process group id */
-#define	KERN_PROC_SESSION	3	/* by session of pid */
-#define	KERN_PROC_TTY		4	/* by controlling tty */
-#define	KERN_PROC_UID		5	/* by effective uid */
-#define	KERN_PROC_RUID		6	/* by real uid */
+#define	KERN_PROC_ALL		 0	/* everything */
+#define	KERN_PROC_PID		 1	/* by process id */
+#define	KERN_PROC_PGRP		 2	/* by process group id */
+#define	KERN_PROC_SESSION	 3	/* by session of pid */
+#define	KERN_PROC_TTY		 4	/* by controlling tty */
+#define	KERN_PROC_UID		 5	/* by effective uid */
+#define	KERN_PROC_RUID		 6	/* by real uid */
+#define	KERN_PROC_GID		 7	/* by effective gid */
+#define	KERN_PROC_RGID		 8	/* by real gid */
+
+/*
+ * KERN_PROC_TTY sub-subtypes
+ */
+#define	KERN_PROC_TTY_NODEV	NODEV		/* no controlling tty */
+#define	KERN_PROC_TTY_REVOKE	((dev_t)-2)	/* revoked tty */
 
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
@@ -252,6 +278,146 @@ struct kinfo_proc {
 };
 
 /*
+ * KERN_PROC2 subtype ops return arrays of relatively fixed size
+ * structures of process info.   Use 8 byte alignment, and new
+ * elements should only be added to the end of this structure so
+ * binary compatibility can be preserved.
+ */
+#define	KI_NGROUPS	16
+#define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
+#define	KI_WMESGLEN	8
+#define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
+
+typedef struct {
+	u_int32_t	__bits[4];
+} ki_sigset_t;
+
+struct kinfo_proc2 {
+	u_int64_t p_forw;		/* PTR: linked run/sleep queue. */
+	u_int64_t p_back;
+	u_int64_t p_paddr;		/* PTR: address of proc */
+
+	u_int64_t p_addr;		/* PTR: Kernel virtual addr of u-area */
+	u_int64_t p_fd;			/* PTR: Ptr to open files structure. */
+	u_int64_t p_cwdi;		/* PTR: cdir/rdir/cmask info */
+	u_int64_t p_stats;		/* PTR: Accounting/statistics */
+	u_int64_t p_limit;		/* PTR: Process limits. */
+	u_int64_t p_vmspace;		/* PTR: Address space. */
+	u_int64_t p_sigacts;		/* PTR: Signal actions, state */
+	u_int64_t p_sess;		/* PTR: session pointer */
+	u_int64_t p_tsess;		/* PTR: tty session pointer */
+	u_int64_t p_ru;			/* PTR: Exit information. XXX */
+
+	int32_t	p_eflag;		/* LONG: extra kinfo_proc2 flags */
+	int32_t	p_exitsig;		/* INT: signal to sent to parent on exit */
+	int32_t	p_flag;			/* INT: P_* flags. */
+
+	int32_t	p_pid;			/* PID_T: Process identifier. */
+	int32_t	p_ppid;			/* PID_T: Parent process id */
+	int32_t	p_sid;			/* PID_T: session id */
+	int32_t	p__pgid;		/* PID_T: process group id */
+					/* XXX: <sys/proc.h> hijacks p_pgid */
+	int32_t	p_tpgid;		/* PID_T: tty process group id */
+
+	u_int32_t p_uid;		/* UID_T: effective user id */
+	u_int32_t p_ruid;		/* UID_T: real user id */
+	u_int32_t p_gid;		/* GID_T: effective group id */
+	u_int32_t p_rgid;		/* GID_T: real group id */
+
+	u_int32_t p_groups[KI_NGROUPS];	/* GID_T: groups */
+	int16_t	p_ngroups;		/* SHORT: number of groups */
+
+	int16_t	p_jobc;			/* SHORT: job control counter */
+	u_int32_t p_tdev;		/* DEV_T: controlling tty dev */
+
+	u_int32_t p_estcpu;		/* U_INT: Time averaged value of p_cpticks. */
+	u_int32_t p_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
+	u_int32_t p_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
+	int32_t	p_cpticks;		/* INT: Ticks of cpu time. */
+	u_int32_t p_pctcpu;		/* FIXPT_T: %cpu for this process during p_swtime */
+	u_int32_t p_swtime;		/* U_INT: Time swapped in or out. */
+	u_int32_t p_slptime;		/* U_INT: Time since last blocked. */
+	int32_t	p_schedflags;		/* INT: PSCHED_* flags */
+
+	u_int64_t p_uticks;		/* U_QUAD_T: Statclock hits in user mode. */
+	u_int64_t p_sticks;		/* U_QUAD_T: Statclock hits in system mode. */
+	u_int64_t p_iticks;		/* U_QUAD_T: Statclock hits processing intr. */
+
+	u_int64_t p_tracep;		/* PTR: Trace to vnode or file */
+	int32_t	p_traceflag;		/* INT: Kernel trace points. */
+
+	int32_t	p_holdcnt;              /* INT: If non-zero, don't swap. */
+
+	ki_sigset_t p_siglist;		/* SIGSET_T: Signals arrived but not delivered. */
+	ki_sigset_t p_sigmask;		/* SIGSET_T: Current signal mask. */
+	ki_sigset_t p_sigignore;	/* SIGSET_T: Signals being ignored. */
+	ki_sigset_t p_sigcatch;		/* SIGSET_T: Signals being caught by user. */
+
+	int8_t	p_stat;			/* CHAR: S* process status. */
+	u_int8_t p_priority;		/* U_CHAR: Process priority. */
+	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_cpu and p_nice. */
+	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
+
+	u_int16_t p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
+	u_int16_t p_acflag;		/* U_SHORT: Accounting flags. */
+
+	char	p_comm[KI_MAXCOMLEN];
+
+	char	p_wmesg[KI_WMESGLEN];	/* wchan message */
+	u_int64_t p_wchan;		/* PTR: sleep address. */
+
+	char	p_login[KI_MAXLOGNAME];	/* setlogin() name */
+
+	int32_t	p_vm_rssize;		/* SEGSZ_T: current resident set size in pages */
+	int32_t	p_vm_tsize;		/* SEGSZ_T: text size (pages) */
+	int32_t	p_vm_dsize;		/* SEGSZ_T: data size (pages) */
+	int32_t	p_vm_ssize;		/* SEGSZ_T: stack size (pages) */
+
+	int64_t	p_uvalid;		/* CHAR: following p_u* members from struct user are valid */
+					/* XXX 64 bits for alignment */
+	u_int32_t p_ustart_sec;		/* STRUCT TIMEVAL: starting time. */
+	u_int32_t p_ustart_usec;	/* STRUCT TIMEVAL: starting time. */
+
+	u_int32_t p_uutime_sec;		/* STRUCT TIMEVAL: user time. */
+	u_int32_t p_uutime_usec;	/* STRUCT TIMEVAL: user time. */
+	u_int32_t p_ustime_sec;		/* STRUCT TIMEVAL: system time. */
+	u_int32_t p_ustime_usec;	/* STRUCT TIMEVAL: system time. */
+
+	u_int64_t p_uru_maxrss;		/* LONG: max resident set size. */
+	u_int64_t p_uru_ixrss;		/* LONG: integral shared memory size. */
+	u_int64_t p_uru_idrss;		/* LONG: integral unshared data ". */
+	u_int64_t p_uru_isrss;		/* LONG: integral unshared stack ". */
+	u_int64_t p_uru_minflt;		/* LONG: page reclaims. */
+	u_int64_t p_uru_majflt;		/* LONG: page faults. */
+	u_int64_t p_uru_nswap;		/* LONG: swaps. */
+	u_int64_t p_uru_inblock;	/* LONG: block input operations. */
+	u_int64_t p_uru_oublock;	/* LONG: block output operations. */
+	u_int64_t p_uru_msgsnd;		/* LONG: messages sent. */
+	u_int64_t p_uru_msgrcv;		/* LONG: messages received. */
+	u_int64_t p_uru_nsignals;	/* LONG: signals received. */
+	u_int64_t p_uru_nvcsw;		/* LONG: voluntary context switches. */
+	u_int64_t p_uru_nivcsw;		/* LONG: involuntary ". */
+
+	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
+	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
+};
+
+/*
+ * KERN_PROC_ARGS subtypes
+ */
+#define	KERN_PROC_ARGV		1	/* argv */
+#define	KERN_PROC_NARGV		2	/* number of strings in above */
+#define	KERN_PROC_ENV		3	/* environ */
+#define	KERN_PROC_NENV		4	/* number of strings in above */
+
+/*
+ * KERN_SYSVIPC_INFO subtypes
+ */
+#define	KERN_SYSVIPC_MSG_INFO		1	/* msginfo and msqid_ds */
+#define	KERN_SYSVIPC_SEM_INFO		2	/* seminfo and semid_ds */
+#define	KERN_SYSVIPC_SHM_INFO		3	/* shminfo and shmid_ds */
+
+/*
  * CTL_HW identifiers
  */
 #define	HW_MACHINE	 1		/* string: machine class */
@@ -264,9 +430,10 @@ struct kinfo_proc {
 #define	HW_DISKNAMES	 8		/* strings: disk drive names */
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
-#define	HW_MAXID	11		/* number of valid hw ids */
+#define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
+#define	HW_MAXID	12		/* number of valid hw ids */
 
-#define CTL_HW_NAMES { \
+#define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
 	{ "machine", CTLTYPE_STRING }, \
 	{ "model", CTLTYPE_STRING }, \
@@ -278,6 +445,7 @@ struct kinfo_proc {
 	{ "disknames", CTLTYPE_STRUCT }, \
 	{ "diskstats", CTLTYPE_STRUCT }, \
 	{ "machine_arch", CTLTYPE_STRING }, \
+	{ "alignbytes", CTLTYPE_INT }, \
 }
 
 /*
@@ -366,13 +534,13 @@ struct kinfo_proc {
  * CTL_PROC subtype. Either a PID, or a magic value for the current proc.
  */
 
-#define PROC_CURPROC	(~((u_int)1 << 31))
+#define	PROC_CURPROC	(~((u_int)1 << 31))
 
 /*
  * CTL_PROC tree: either corename (string), or a limit
  * (rlimit.<type>.{hard,soft}, int).
  */
-#define PROC_PID_CORENAME	1
+#define	PROC_PID_CORENAME	1
 #define	PROC_PID_LIMIT		2
 #define	PROC_PID_MAXID		3
 
@@ -383,18 +551,18 @@ struct kinfo_proc {
 }
 
 /* Limit types from <sys/resources.h> */
-#define PROC_PID_LIMIT_CPU	(RLIMIT_CPU+1)
-#define PROC_PID_LIMIT_FSIZE	(RLIMIT_FSIZE+1)
-#define PROC_PID_LIMIT_DATA	(RLIMIT_DATA+1)
-#define PROC_PID_LIMIT_STACK	(RLIMIT_STACK+1)
-#define PROC_PID_LIMIT_CORE	(RLIMIT_CORE+1)
-#define PROC_PID_LIMIT_RSS	(RLIMIT_RSS+1)
-#define PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
+#define	PROC_PID_LIMIT_CPU	(RLIMIT_CPU+1)
+#define	PROC_PID_LIMIT_FSIZE	(RLIMIT_FSIZE+1)
+#define	PROC_PID_LIMIT_DATA	(RLIMIT_DATA+1)
+#define	PROC_PID_LIMIT_STACK	(RLIMIT_STACK+1)
+#define	PROC_PID_LIMIT_CORE	(RLIMIT_CORE+1)
+#define	PROC_PID_LIMIT_RSS	(RLIMIT_RSS+1)
+#define	PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
 #define PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
-#define PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
-#define PROC_PID_LIMIT_MAXID 	10
+#define	PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
+#define	PROC_PID_LIMIT_MAXID 	10
 
-#define PROC_PID_LIMIT_NAMES { \
+#define	PROC_PID_LIMIT_NAMES { \
 	{ 0, 0 }, \
 	{ "cputime", CTLTYPE_NODE }, \
 	{ "filesize", CTLTYPE_NODE }, \
@@ -407,11 +575,11 @@ struct kinfo_proc {
 	{ "descriptors", CTLTYPE_NODE }, \
 }
 /* for each type, either hard or soft value */
-#define PROC_PID_LIMIT_TYPE_SOFT	1
-#define PROC_PID_LIMIT_TYPE_HARD	2
-#define PROC_PID_LIMIT_TYPE_MAXID	3
+#define	PROC_PID_LIMIT_TYPE_SOFT	1
+#define	PROC_PID_LIMIT_TYPE_HARD	2
+#define	PROC_PID_LIMIT_TYPE_MAXID	3
 
-#define PROC_PID_LIMIT_TYPE_NAMES { \
+#define	PROC_PID_LIMIT_TYPE_NAMES { \
 	{0, 0}, \
 	{ "soft", CTLTYPE_QUAD }, \
 	{ "hard", CTLTYPE_QUAD }, \
@@ -458,21 +626,14 @@ int sysctl_rdint __P((void *, size_t *, void *, int));
 int sysctl_quad __P((void *, size_t *, void *, size_t, quad_t *));
 int sysctl_rdquad __P((void *, size_t *, void *, quad_t));
 int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
-int sysctl_rdstring __P((void *, size_t *, void *, char *));
-int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
+int sysctl_rdstring __P((void *, size_t *, void *, const char *));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
-int sysctl_file __P((char *, size_t *));
-int sysctl_doeproc __P((int *, u_int, char *, size_t *));
+int sysctl_rdstruct __P((void *, size_t *, void *, const void *, int));
 struct radix_node;
 struct walkarg;
-int sysctl_dumpentry __P((struct radix_node *, void *));
-int sysctl_iflist __P((int, struct walkarg *));
-int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
-int sysctl_clockrate __P((char *, size_t *));
-int sysctl_rdstring __P((void *, size_t *, void *, char *));
-int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
+int sysctl_clockrate __P((void *, size_t *));
 int sysctl_vnode __P((char *, size_t *, struct proc *));
-int sysctl_ntptime __P((char *, size_t *));
+int sysctl_ntptime __P((void *, size_t *));
 #ifdef GPROF
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
@@ -490,16 +651,18 @@ int proc_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 int debug_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *));
 #endif
-int vm_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		   struct proc *));
-int fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		   struct proc *));
 int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 
 /* ddb_sysctl() declared in ddb_var.h */
+
+void	sysctl_init(void);
+
+#ifdef __SYSCTL_PRIVATE
+extern struct lock sysctl_memlock;
+#endif
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>

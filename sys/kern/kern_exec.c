@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.103 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.103.2.1 2000/11/20 18:08:59 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -55,9 +55,6 @@
 
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -89,9 +86,7 @@
  *			exec header unmodified.
  */
 int
-check_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+check_exec(struct proc *p, struct exec_package *epp)
 {
 	int error, i;
 	struct vnode *vp;
@@ -186,7 +181,7 @@ bad2:
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(vp, FREAD, p->p_ucred, p);
 	vput(vp);
-	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
 
 bad1:
@@ -195,7 +190,7 @@ bad1:
 	 * (which we don't yet have open).
 	 */
 	vput(vp);				/* was still locked */
-	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
 }
 
@@ -204,12 +199,9 @@ bad1:
  */
 /* ARGSUSED */
 int
-sys_execve(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+sys_execve(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_execve_args /* {
+	struct sys_execve_args /* {
 		syscallarg(const char *) path;
 		syscallarg(char * const *) argp;
 		syscallarg(char * const *) envp;
@@ -229,6 +221,7 @@ sys_execve(p, v, retval)
 	struct vmspace *vm;
 	char **tmpfap;
 	int szsigcode;
+	struct exec_vmcmd *base_vcp = NULL;
 	extern struct emul emul_netbsd;
 
 	/*
@@ -251,7 +244,7 @@ sys_execve(p, v, retval)
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = SCARG(uap, path);
-	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
@@ -345,9 +338,14 @@ sys_execve(p, v, retval)
 	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
-	len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
-	    sizeof(long) + dp + STACKGAPLEN + szsigcode +
-	    sizeof(struct ps_strings)) - argp;
+	if (pack.ep_flags & EXEC_32)
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
+		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
+		       sizeof(struct ps_strings)) - argp;
+	else
+		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
+		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
+		       sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
@@ -374,6 +372,7 @@ sys_execve(p, v, retval)
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
 	vm->vm_maxsaddr = (char *) pack.ep_maxsaddr;
+	vm->vm_minsaddr = (char *) pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -384,35 +383,84 @@ sys_execve(p, v, retval)
 		struct exec_vmcmd *vcp;
 
 		vcp = &pack.ep_vmcmds.evs_cmds[i];
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+#ifdef DIAGNOSTIC
+			if (base_vcp == NULL)
+				panic("execve: relative vmcmd with no base");
+			if (vcp->ev_flags & VMCMD_BASE)
+				panic("execve: illegal base & relative vmcmd");
+#endif
+			vcp->ev_addr += base_vcp->ev_addr;
+		}
 		error = (*vcp->ev_proc)(p, vcp);
+#ifdef DEBUG
+		if (error) {
+			if (i > 0)
+				printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i-1,
+				       vcp[-1].ev_addr, vcp[-1].ev_len,
+				       vcp[-1].ev_offset);
+			printf("vmcmd[%d] = %#lx/%#lx @ %#lx\n", i,
+			       vcp->ev_addr, vcp->ev_len, vcp->ev_offset);
+		}
+#endif
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
 	}
 
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 
 	/* if an error happened, deallocate and punt */
-	if (error)
+	if (error) {
+#ifdef DEBUG
+		printf("execve: vmcmd %i failed: %d\n", i-1, error);
+#endif
 		goto exec_abort;
+	}
 
 	/* remember information about the process */
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
 
-	stack = (char *) (USRSTACK - len);
+	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
+	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp)) {
+#ifdef DEBUG
+		printf("execve: copyargs failed\n");
+#endif
 		goto exec_abort;
+	}
+
+	/* fill process ps_strings info */
+	p->p_psstr = (struct ps_strings *)(vm->vm_minsaddr
+		- sizeof(struct ps_strings));
+	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
+	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
+	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
+	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
 
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *) PS_STRINGS, sizeof(arginfo)))
+	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo))) {
+#ifdef DEBUG
+		printf("execve: ps_strings copyout failed\n");
+#endif
 		goto exec_abort;
+	}
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
 		if (copyout((char *)pack.ep_emul->e_sigcode,
-		    p->p_sigacts->ps_sigcode = (char *)PS_STRINGS - szsigcode,
-		    szsigcode))
+		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
+		    szsigcode)) {
+#ifdef DEBUG
+			printf("execve: sig trampoline copyout failed\n");
+#endif
 			goto exec_abort;
+		}
+#ifdef PMAP_NEED_PROCWR
+		/* This is code. Let the pmap do what is needed. */
+		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
+#endif
 	}
 
 	stopprofclock(p);	/* stop profiling */
@@ -463,9 +511,11 @@ sys_execve(p, v, retval)
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
 
+	doexechooks(p);
+
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
@@ -477,11 +527,11 @@ sys_execve(p, v, retval)
 		psignal(p, SIGTRAP);
 
 	p->p_emul = pack.ep_emul;
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p->p_tracep, p, p->p_emul->e_name);
+		ktremul(p);
 #endif
 
 	return (EJUSTRETURN);
@@ -498,11 +548,11 @@ bad:
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
@@ -514,13 +564,13 @@ exec_abort:
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 	if (pack.ep_emul_arg)
-		FREE(pack.ep_emul_arg, M_TEMP);
-	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
+		free(pack.ep_emul_arg, M_TEMP);
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
 	exit1(p, -1);
 
@@ -530,21 +580,26 @@ exec_abort:
 
 
 void *
-copyargs(pack, arginfo, stack, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	void *stack;
-	void *argp;
+copyargs(struct exec_package *pack, struct ps_strings *arginfo,
+    void *stack, void *argp)
 {
 	char **cpp = stack;
 	char *dp, *sp;
 	size_t len;
 	void *nullp = NULL;
-	int argc = arginfo->ps_nargvstr;
-	int envc = arginfo->ps_nenvstr;
+	long argc = arginfo->ps_nargvstr;
+	long envc = arginfo->ps_nenvstr;
 
+#ifdef __sparc_v9__
+	/* XXX Temporary hack for argc format conversion. */
+	argc <<= 32;
+#endif
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		return NULL;
+#ifdef __sparc_v9__
+	/* XXX Temporary hack for argc format conversion. */
+	argc >>= 32;
+#endif
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
 	sp = argp;

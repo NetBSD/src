@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.11 1999/09/12 01:17:38 chs Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.11.2.1 2000/11/20 18:12:04 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -123,7 +123,7 @@ uvm_unlock_fpageq(s)
 struct vm_page *
 uvm_pagelookup(obj, off)
 	struct uvm_object *obj;
-	vaddr_t off;
+	voff_t off;
 {
 	struct vm_page *pg;
 	struct pglist *buck;
@@ -215,7 +215,7 @@ uvm_pagedeactivate(pg)
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 #ifdef DIAGNOSTIC 
-		if (pg->wire_count)
+		if (__predict_false(pg->wire_count))
 			panic("uvm_pagedeactivate: caller did not check "
 			    "wire count");
 #endif
@@ -311,7 +311,7 @@ uvm_page_lookup_freelist(pg)
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 #ifdef DIAGNOSTIC
-	if (lcv == -1)
+	if (__predict_false(lcv == -1))
 		panic("uvm_page_lookup_freelist: unable to locate physseg");
 #endif
 	return (vm_physmem[lcv].free_list);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.23 1999/09/12 01:17:41 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.23.2.1 2000/11/20 18:12:04 bouyer Exp $	*/
 
 /*
  *
@@ -45,10 +45,6 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
-
 #define UVM_PAGER
 #include <uvm/uvm.h>
 
@@ -56,7 +52,6 @@
  * list of uvm pagers in the system
  */
 
-extern struct uvm_pagerops aobj_pager;
 extern struct uvm_pagerops uvm_deviceops;
 extern struct uvm_pagerops uvm_vnodeops;
 
@@ -115,31 +110,39 @@ uvm_pager_init()
  *
  * we basically just map in a blank map entry to reserve the space in the
  * map and then use pmap_enter() to put the mappings in by hand.
- *
- * XXX It would be nice to know the direction of the I/O, so that we can
- * XXX map only what is necessary.
  */
 
 vaddr_t
-uvm_pagermapin(pps, npages, aiop, waitf)
+uvm_pagermapin(pps, npages, aiop, flags)
 	struct vm_page **pps;
 	int npages;
 	struct uvm_aiodesc **aiop;	/* OUT */
-	int waitf;
+	int flags;
 {
 	vsize_t size;
 	vaddr_t kva;
 	struct uvm_aiodesc *aio;
 	vaddr_t cva;
 	struct vm_page *pp;
+	vm_prot_t prot;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, waitf=%d)",
-	      pps, npages, aiop, waitf);
+	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, flags=0x%x)",
+	      pps, npages, aiop, flags);
+
+	/*
+	 * compute protection.  outgoing I/O only needs read
+	 * access to the page, whereas incoming needs read/write.
+	 */
+
+	prot = VM_PROT_READ;
+	if (flags & UVMPAGER_MAPIN_READ)
+		prot |= VM_PROT_WRITE;
 
 ReStart:
 	if (aiop) {
-		MALLOC(aio, struct uvm_aiodesc *, sizeof(*aio), M_TEMP, waitf);
+		MALLOC(aio, struct uvm_aiodesc *, sizeof(*aio), M_TEMP,
+		    (flags & UVMPAGER_MAPIN_WAITOK));
 		if (aio == NULL)
 			return(0);
 		*aiop = aio;
@@ -148,15 +151,15 @@ ReStart:
 	}
 
 	size = npages << PAGE_SHIFT;
-	kva = NULL;			/* let system choose VA */
+	kva = 0;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
-	      UVM_UNKNOWN_OFFSET, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
-		if (waitf == M_NOWAIT) {
+	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
+		if ((flags & UVMPAGER_MAPIN_WAITOK) == 0) {
 			if (aio)
 				FREE(aio, M_TEMP);
 			UVMHIST_LOG(maphist,"<- NOWAIT failed", 0,0,0,0);
-			return(NULL);
+			return(0);
 		}
 		simple_lock(&pager_map_wanted_lock);
 		pager_map_wanted = TRUE; 
@@ -173,15 +176,8 @@ ReStart:
 		if ((pp->flags & PG_BUSY) == 0)
 			panic("uvm_pagermapin: page not busy");
 #endif
-
-		/*
-		 * XXX VM_PROT_DEFAULT includes VM_PROT_EXEC; is that
-		 * XXX really necessary?  It could lead to unnecessary
-		 * XXX instruction cache flushes.
-		 */
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    VM_PROT_DEFAULT, TRUE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    prot, PMAP_WIRED | prot);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
@@ -252,10 +248,10 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	struct uvm_object *uobj;	/* IN */
 	struct vm_page **pps, *center;  /* IN/OUT, IN */
 	int *npages, flags;		/* IN/OUT, IN */
-	vaddr_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
+	voff_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
 {
 	struct vm_page **ppsp, *pclust;
-	vaddr_t lo, hi, curoff;
+	voff_t lo, hi, curoff;
 	int center_idx, forward;
 	UVMHIST_FUNC("uvm_mk_pcluster"); UVMHIST_CALLED(maphist);
 
@@ -363,41 +359,6 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	return(ppsp);
 }
 
-
-/*
- * uvm_shareprot: generic share protect routine
- *
- * => caller must lock map entry's map
- * => caller must lock object pointed to by map entry
- */
-
-void
-uvm_shareprot(entry, prot)
-	vm_map_entry_t entry;
-	vm_prot_t prot;
-{
-	struct uvm_object *uobj = entry->object.uvm_obj;
-	struct vm_page *pp;
-	vaddr_t start, stop;
-	UVMHIST_FUNC("uvm_shareprot"); UVMHIST_CALLED(maphist);
-
-	if (UVM_ET_ISSUBMAP(entry)) 
-		panic("uvm_shareprot: non-object attached");
-
-	start = entry->offset;
-	stop = start + (entry->end - entry->start);
-
-	/*
-	 * traverse list of pages in object.   if page in range, pmap_prot it
-	 */
-
-	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = pp->listq.tqe_next) {
-		if (pp->offset >= start && pp->offset < stop)
-			pmap_page_protect(pp, prot);
-	}
-	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
-}
-
 /*
  * uvm_pager_put: high level pageout routine
  *
@@ -444,7 +405,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vaddr_t start, stop;	/* IN, IN */
+	voff_t start, stop;		/* IN, IN */
 {
 	int result;
 	daddr_t swblk;
@@ -470,8 +431,8 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 		} else {
 			ppsp[0] = pg;
 			*npages = 1;
-		 }
-					  
+		}
+
 		swblk = 0;		/* XXX: keep gcc happy */
 
 	} else {
@@ -532,7 +493,7 @@ ReTry:
 				simple_lock(&uobj->vmobjlock);
 			if (*npages > 1 || pg == NULL)
 				uvm_pager_dropcluster(uobj, pg, ppsp, npages,
-				    PGO_PDFREECLUST, 0);
+				    PGO_PDFREECLUST);
 			/* if (uobj): object still locked, as per
 			 * return-state item #3 */
 		}
@@ -540,17 +501,67 @@ ReTry:
 	}
 
 	/*
-	 * a pager error occured.    if we have clustered, we drop the 
-	 * cluster and try again.
+	 * a pager error occured.
+	 * for transient errors, drop to a cluster of 1 page ("pg")
+	 * and try again.  for hard errors, don't bother retrying.
 	 */
 
 	if (*npages > 1 || pg == NULL) {
-		if (uobj)
+		if (uobj) {
 			simple_lock(&uobj->vmobjlock);
-		uvm_pager_dropcluster(uobj, pg, ppsp, npages, PGO_REALLOCSWAP,
-		    swblk);
-		if (pg != NULL)
-			goto ReTry;
+		}
+		uvm_pager_dropcluster(uobj, pg, ppsp, npages, PGO_REALLOCSWAP);
+
+		/*
+		 * for failed swap-backed pageouts with a "pg",
+		 * we need to reset pg's swslot to either:
+		 * "swblk" (for transient errors, so we can retry),
+		 * or 0 (for hard errors).
+		 */
+
+		if (uobj == NULL && pg != NULL) {
+			int nswblk = (result == VM_PAGER_AGAIN) ? swblk : 0;
+			if (pg->pqflags & PQ_ANON) {
+				simple_lock(&pg->uanon->an_lock);
+				pg->uanon->an_swslot = nswblk;
+				simple_unlock(&pg->uanon->an_lock);
+			} else {
+				simple_lock(&pg->uobject->vmobjlock);
+				uao_set_swslot(pg->uobject,
+					       pg->offset >> PAGE_SHIFT,
+					       nswblk);
+				simple_unlock(&pg->uobject->vmobjlock);
+			}
+		}
+		if (result == VM_PAGER_AGAIN) {
+
+			/*
+			 * for transient failures, free all the swslots that
+			 * we're not going to retry with.
+			 */
+
+			if (uobj == NULL) {
+				if (pg) {
+					uvm_swap_free(swblk + 1, *npages - 1);
+				} else {
+					uvm_swap_free(swblk, *npages);
+				}
+			}
+			if (pg) {
+				ppsp[0] = pg;
+				*npages = 1;
+				goto ReTry;
+			}
+		} else if (uobj == NULL) {
+
+			/*
+			 * for hard errors on swap-backed pageouts,
+			 * mark the swslots as bad.  note that we do not
+			 * free swslots that we mark bad.
+			 */
+
+			uvm_swap_markbad(swblk, *npages);
+		}
 	}
 
 	/*
@@ -584,33 +595,15 @@ ReTry:
  */
 
 void
-uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
+uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 	struct uvm_object *uobj;	/* IN */
 	struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;
-	int swblk;			/* valid if
-					   (uobj == NULL && PGO_REALLOCSWAP) */
 {
 	int lcv;
 	boolean_t obj_is_alive; 
 	struct uvm_object *saved_uobj;
-
-	/*
-	 * if we need to reallocate swap space for the cluster we are dropping
-	 * (true if swap-backed and PGO_REALLOCSWAP) then free the old
-	 * allocation now.   save a block for "pg" if it is non-NULL.
-	 *
-	 * note that we will zap the object's pointer to swap in the "for" loop
-	 * below...
-	 */
-
-	if (uobj == NULL && (flags & PGO_REALLOCSWAP)) {
-		if (pg)
-			uvm_swap_free(swblk + 1, *npages - 1);
-		else
-			uvm_swap_free(swblk, *npages);
-	}
 
 	/*
 	 * drop all pages but "pg"
@@ -718,35 +711,6 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 				simple_unlock(&ppsp[lcv]->uanon->an_lock);
 			else
 				simple_unlock(&ppsp[lcv]->uobject->vmobjlock);
-		}
-
-	}
-
-	/*
-	 * drop to a cluster of 1 page ("pg") if requested
-	 */
-
-	if (pg && (flags & PGO_PDFREECLUST) == 0) {
-		/*
-		 * if we are not a successful pageout, we make a 1 page cluster.
-		 */
-		ppsp[0] = pg;
-		*npages = 1;
-
-		/*
-		 * assign new swap block to new cluster, if anon backed
-		 */
-		if (uobj == NULL && (flags & PGO_REALLOCSWAP)) {
-			if (pg->pqflags & PQ_ANON) {
-				simple_lock(&pg->uanon->an_lock);
-				pg->uanon->an_swslot = swblk;	/* reassign */
-				simple_unlock(&pg->uanon->an_lock);
-			} else {
-				simple_lock(&pg->uobject->vmobjlock);
-				uao_set_swslot(pg->uobject,
-				    pg->offset >> PAGE_SHIFT, swblk);
-				simple_unlock(&pg->uobject->vmobjlock);
-			}
 		}
 	}
 }

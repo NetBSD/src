@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.43 1999/08/05 02:24:29 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.43.2.1 2000/11/20 18:09:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,9 +87,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
@@ -105,6 +102,7 @@ int	max_datalen;
 
 void	*mclpool_alloc __P((unsigned long, int, int));
 void	mclpool_release __P((void *, unsigned long, int));
+static struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
 
 const char *mclpool_warnmsg =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
@@ -349,6 +347,10 @@ m_freem(m)
 
 	if (m == NULL)
 		return;
+	if ((m->m_flags & M_PKTHDR) != 0 && m->m_pkthdr.aux) {
+		m_freem(m->m_pkthdr.aux);
+		m->m_pkthdr.aux = NULL;
+	}
 	do {
 		MFREE(m, n);
 		m = n;
@@ -401,6 +403,25 @@ m_copym(m, off0, len, wait)
 	int off0, wait;
 	int len;
 {
+	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
+}
+
+struct mbuf *
+m_dup(m, off0, len, wait)
+	struct mbuf *m;
+	int off0, wait;
+	int len;
+{
+	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
+}
+
+static struct mbuf *
+m_copym0(m, off0, len, wait, deep)
+	struct mbuf *m;
+	int off0, wait;
+	int len;
+	int deep;	/* deep copy */
+{
 	struct mbuf *n, **np;
 	int off = off0;
 	struct mbuf *top;
@@ -440,16 +461,37 @@ m_copym(m, off0, len, wait)
 		}
 		n->m_len = min(len, m->m_len - off);
 		if (m->m_flags & M_EXT) {
-			n->m_data = m->m_data + off;
-			n->m_ext = m->m_ext;
-			MCLADDREFERENCE(m, n);
+			if (!deep) {
+				n->m_data = m->m_data + off;
+				n->m_ext = m->m_ext;
+				MCLADDREFERENCE(m, n);
+			} else {
+				/*
+				 * we are unsure about the way m was allocated.
+				 * copy into multiple MCLBYTES cluster mbufs.
+				 */
+				MCLGET(n, wait);
+				n->m_len = 0;
+				n->m_len = M_TRAILINGSPACE(n);
+				n->m_len = min(n->m_len, len);
+				n->m_len = min(n->m_len, m->m_len - off);
+				memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
+				    (unsigned)n->m_len);
+			}
 		} else
 			memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
 			    (unsigned)n->m_len);
 		if (len != M_COPYALL)
 			len -= n->m_len;
-		off = 0;
-		m = m->m_next;
+		off += n->m_len;
+#ifdef DIAGNOSTIC
+		if (off > m->m_len)
+			panic("m_copym0 overrun");
+#endif
+		if (off == m->m_len) {
+			m = m->m_next;
+			off = 0;
+		}
 		np = &n->m_next;
 	}
 	if (top == 0)

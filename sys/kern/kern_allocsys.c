@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.5 1999/08/25 05:05:48 thorpej Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.5.2.1 2000/11/20 18:08:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,10 +87,7 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-
+#include <uvm/uvm_param.h>
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -128,12 +125,17 @@ int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
  */
 
 caddr_t
-allocsys(v, mdcallback)
-	caddr_t	v;
-	caddr_t (*mdcallback) __P((caddr_t));
+allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 {
 
-	ALLOCSYS(v, callout, struct callout, ncallout);
+	/* Calculate the number of callwheels if necessary. */
+	if (callwheelsize == 0)
+		callout_setsize();
+
+	ALLOCSYS(v, callwheel, struct callout_queue, callwheelsize);
+#ifdef CALLWHEEL_STATS
+	ALLOCSYS(v, callwheel_sizes, int, callwheelsize);
+#endif
 #ifdef SYSVSHM
 	ALLOCSYS(v, shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
@@ -165,14 +167,14 @@ allocsys(v, mdcallback)
 			if (bufcache < 5 || bufcache > 95)
 				panic("bufcache is out of range (%d)\n",
 				    bufcache);
-			bufpages = physmem / CLSIZE * bufcache / 100;
+			bufpages = physmem / 100 * bufcache;
 
 		} else {
 			if (physmem < btoc(2 * 1024 * 1024))
-				bufpages = physmem / (10 * CLSIZE);
+				bufpages = physmem / 10;
 			else
 				bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-				    (20 * CLSIZE);
+				    20;
 		}
 	}
 

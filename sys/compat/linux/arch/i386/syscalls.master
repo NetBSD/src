@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 1999/10/04 16:55:55 tron Exp $
+	$NetBSD: syscalls.master,v 1.36.2.1 2000/11/20 18:08:20 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -83,7 +83,8 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
-26	UNIMPL		ptrace
+26	STD		{ int linux_sys_ptrace(int request, int pid, \
+			  int addr, int data); }
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int linux_sys_pause(void); }
@@ -107,7 +108,7 @@
 45	STD		{ int linux_sys_brk(char *nsize); }
 46	NOARGS		{ int sys_setgid(gid_t gid); }
 47	NOARGS		{ gid_t sys_getgid(void); }
-48	STD		{ int linux_sys_signal(int sig, \
+48	STD		{ int linux_sys_signal(int signum, \
 			    linux_handler_t handler); }
 49	NOARGS		{ uid_t sys_geteuid(void); }
 50	NOARGS		{ gid_t sys_getegid(void); }
@@ -160,7 +161,8 @@
 			    int count); }
 86	STD		{ int linux_sys_uselib(const char *path); }
 87	NOARGS		{ int compat_12_sys_swapon(char *name); }
-88	NOARGS		{ int sys_reboot(int opt); }
+88	STD		{ int linux_sys_reboot(int magic1, int magic2, \
+			    int cmd, void *arg); }
 89	STD		{ int linux_sys_readdir(int fd, caddr_t dent, \
 			    unsigned int count); }
 90	STD		{ int linux_sys_old_mmap(struct linux_oldmmap *lmp); }
@@ -226,8 +228,8 @@
 135	UNIMPL		sysfs
 136	STD		{ int linux_sys_personality(int per); }
 137	UNIMPL		afs_syscall
-138	UNIMPL		setfsuid
-139	UNIMPL		getfsuid
+138	STD		{ int linux_sys_setfsuid(uid_t uid); }
+139	NOARGS		{ int linux_sys_getfsuid(void); }
 140	STD		{ int linux_sys_llseek(int fd, u_int32_t ohigh, \
 			    u_int32_t olow, caddr_t res, int whence); }
 141	STD		{ int linux_sys_getdents(int fd, \
@@ -296,16 +298,18 @@
 			    void *uinfo); }
 179	STD		{ int linux_sys_rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
-180	NOARGS		{ int sys_pread(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
-181	NOARGS		{ int sys_pwrite(int fd, char *buf, size_t nbytes, \
-			    off_t offset); }
+180	STD		{ int linux_sys_pread(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
+181	STD		{ int linux_sys_pwrite(int fd, char *buf, \
+			    size_t nbyte, linux_off_t offset); }
 182	STD		{ int linux_sys_chown(const char *path, int uid, \
 			    int gid); }
 183	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 184	UNIMPL		capget
 185	UNIMPL		capset
-186	UNIMPL		sigaltstack
+186	STD		{ int linux_sys_sigaltstack( \
+			    const struct linux_sigaltstack *ss, \
+			    struct linux_sigaltstack *oss); }
 187	UNIMPL		sendfile
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.22 1999/03/24 05:51:31 mrg Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.22.8.1 2000/11/20 18:11:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -69,10 +69,10 @@ READ(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct inode *ip;
-	register struct uio *uio;
-	register FS *fs;
+	struct vnode *vp;
+	struct inode *ip;
+	struct uio *uio;
+	FS *fs;
 	struct buf *bp;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
@@ -160,7 +160,7 @@ READ(v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, 1);
+			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -178,10 +178,10 @@ WRITE(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp;
-	register struct uio *uio;
-	register struct inode *ip;
-	register FS *fs;
+	struct vnode *vp;
+	struct uio *uio;
+	struct inode *ip;
+	FS *fs;
 	struct buf *bp;
 	struct proc *p;
 	ufs_daddr_t lbn;
@@ -219,6 +219,13 @@ WRITE(v)
 	if (uio->uio_offset < 0 ||
 	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->fs_maxfilesize)
 		return (EFBIG);
+#ifdef LFS_READWRITE
+	/* Disallow writes to the Ifile, even if noschg flag is removed */
+	/* XXX can this go away when the Ifile is no longer in the namespace? */
+	if (vp == fs->lfs_ivnode)
+		return (EPERM);
+#endif
+
 	/*
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.
@@ -241,18 +248,14 @@ WRITE(v)
 		xfersize = fs->fs_bsize - blkoffset;
 		if (uio->uio_resid < xfersize)
 			xfersize = uio->uio_resid;
-#ifdef LFS_READWRITE
-		(void)lfs_check(vp, lbn, 0);
-		error = lfs_balloc(vp, blkoffset, xfersize, lbn, &bp);
-#else
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;
 		else
 			flags &= ~B_CLRBUF;
 
-		error = ffs_balloc(ip,
-		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
-#endif
+		error = VOP_BALLOC(vp, uio->uio_offset, xfersize,
+		    ap->a_cred, flags, &bp);
+
 		if (error)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_ffs_size) {
@@ -268,7 +271,11 @@ WRITE(v)
 		error =
 		    uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
 #ifdef LFS_READWRITE
+		if (!error)
+			error = lfs_reserve(fs, vp, fsbtodb(fs, NIADDR + 1));
 		(void)VOP_BWRITE(bp);
+		if (!error)
+			lfs_reserve(fs, vp, fsbtodb(fs, -(NIADDR + 1)));
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
@@ -299,6 +306,6 @@ WRITE(v)
 			uio->uio_resid = resid;
 		}
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, 1);
+		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.15 1998/08/09 21:19:51 perry Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.15.12.1 2000/11/20 18:11:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -165,11 +165,11 @@ nfsrv_initcache()
  */
 int
 nfsrv_getcache(nd, slp, repp)
-	register struct nfsrv_descript *nd;
+	struct nfsrv_descript *nd;
 	struct nfssvc_sock *slp;
 	struct mbuf **repp;
 {
-	register struct nfsrvcache *rp;
+	struct nfsrvcache *rp;
 	struct mbuf *mb;
 	struct sockaddr_in *saddr;
 	caddr_t bpos;
@@ -278,11 +278,11 @@ loop:
  */
 void
 nfsrv_updatecache(nd, repvalid, repmbuf)
-	register struct nfsrv_descript *nd;
+	struct nfsrv_descript *nd;
 	int repvalid;
 	struct mbuf *repmbuf;
 {
-	register struct nfsrvcache *rp;
+	struct nfsrvcache *rp;
 
 	if (!nd->nd_nam2)
 		return;
@@ -329,7 +329,7 @@ loop:
 void
 nfsrv_cleancache()
 {
-	register struct nfsrvcache *rp, *nextrp;
+	struct nfsrvcache *rp, *nextrp;
 
 	for (rp = nfsrvlruhead.tqh_first; rp != 0; rp = nextrp) {
 		nextrp = rp->rc_lru.tqe_next;

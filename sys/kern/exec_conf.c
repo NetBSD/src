@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.37 1999/09/13 10:31:36 itojun Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.37.2.1 2000/11/20 18:08:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,6 +40,8 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
+#include "opt_compat_vax1k.h"
+#include "opt_compat_pecoff.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -52,14 +54,12 @@
 /*#include <sys/exec_aout.h> -- automatically pulled in */
 #endif
 
-#ifdef EXEC_ECOFF
-#include <sys/exec_ecoff.h>
+#ifdef EXEC_COFF
+#include <sys/exec_coff.h>
 #endif
 
-#ifdef __sh3__ /* XXX */
-#ifdef EXEC_COFF
-#include <machine/exec_coff.h>
-#endif
+#ifdef EXEC_ECOFF
+#include <sys/exec_ecoff.h>
 #endif
 
 #if defined(EXEC_ELF32) || defined(EXEC_ELF64)
@@ -75,6 +75,7 @@
 #endif
 
 #ifdef COMPAT_IBCS2
+#include <sys/exec_coff.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 #endif
 
@@ -106,6 +107,11 @@
 #include <compat/aout/aout_exec.h>
 #endif
 
+#ifdef COMPAT_PECOFF
+#include <sys/exec_coff.h>
+#include <compat/pecoff/pecoff_exec.h>
+#endif
+
 struct execsw execsw[] = {
 #ifdef LKM
 	{ 0, NULL, },					/* entries for LKMs */
@@ -118,25 +124,26 @@ struct execsw execsw[] = {
 	{ MAXINTERP, exec_script_makecmds, },		/* shell scripts */
 #endif
 #ifdef EXEC_AOUT
+#ifdef COMPAT_NETBSD32
+	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, }, /* sparc 32 bit */
+#endif
 # ifdef COMPAT_AOUT
 	{ sizeof(struct exec), exec_aoutcompat_makecmds, },/* compat a.out */
 # else
 	{ sizeof(struct exec), exec_aout_makecmds, },	/* a.out binaries */
 # endif
 #endif
-#ifdef EXEC_ECOFF
-	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
-#endif
-#ifdef __sh3__ /* XXX */
 #ifdef EXEC_COFF
 	{ COFF_HDR_SIZE, exec_coff_makecmds, },		/* coff binaries */
 #endif
+#ifdef EXEC_ECOFF
+	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
 #ifdef EXEC_ELF32
-	{ ELF32_HDR_SIZE, exec_elf32_makecmds, },	/* 32bit ELF bins */
+	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds, },	/* 32bit ELF bins */
 #endif
 #ifdef EXEC_ELF64
-	{ ELF64_HDR_SIZE, exec_elf64_makecmds, },	/* 64bit ELF bins */
+	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds, },	/* 64bit ELF bins */
 #endif
 #ifdef COMPAT_SUNOS
 	{ SUNOS_AOUT_HDR_SIZE, exec_sunos_aout_makecmds, }, /* SunOS a.out */
@@ -157,11 +164,11 @@ struct execsw execsw[] = {
 #ifdef COMPAT_M68K4K
 	{ sizeof(struct exec), exec_m68k4k_makecmds, },	/* m68k4k a.out */
 #endif
-#ifdef COMPAT_NETBSD32
-	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, }, /* sparc 32 bit */
-#endif
 #ifdef COMPAT_VAX1K
 	{ sizeof(struct exec), exec_vax1k_makecmds, },	/* vax1k a.out */
+#endif
+#ifdef COMPAT_PECOFF
+	{ sizeof(struct exec), exec_pecoff_makecmds, },	/* Win32/CE PE/COFF */
 #endif
 };
 int nexecs = (sizeof(execsw) / sizeof(*execsw));

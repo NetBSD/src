@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_init.c,v 1.14 1998/08/04 04:03:18 perry Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.14.12.1 2000/11/20 18:09:16 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,11 +111,13 @@ extern struct vnodeop_desc *vfs_op_descs[];
 extern struct vnodeopv_desc dead_vnodeop_opv_desc;
 extern struct vnodeopv_desc fifo_vnodeop_opv_desc;
 extern struct vnodeopv_desc spec_vnodeop_opv_desc;
+extern struct vnodeopv_desc sync_vnodeop_opv_desc;
 
 struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
 	&dead_vnodeop_opv_desc,
 	&fifo_vnodeop_opv_desc,
 	&spec_vnodeop_opv_desc,
+	&sync_vnodeop_opv_desc,
 	NULL,
 };
 
@@ -312,6 +314,12 @@ vfsinit()
 {
 	extern struct vfsops *vfs_list_initial[];
 	int i;
+
+	/*
+	 * Initialize the namei pathname buffer pool.
+	 */
+	pool_init(&pnbuf_pool, MAXPATHLEN, 0, 0, 0, "pnbufpl",
+	     0, pool_page_alloc_nointr,  pool_page_free_nointr, M_NAMEI);
 
 	/*
 	 * Initialize the vnode table

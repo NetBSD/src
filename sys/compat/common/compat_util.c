@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.14 1999/04/27 15:42:37 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.14.2.1 2000/11/20 18:08:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 #include <sys/syslog.h>
 #include <sys/mount.h>
 
-#include <vm/vm_param.h>
 
 #include <compat/common/compat_util.h>
 
@@ -187,9 +186,13 @@ good:
 	else {
 		sz = &ptr[len] - buf;
 		*pbuf = stackgap_alloc(sgp, sz + 1);
+		if (*pbuf == NULL) {
+			error = ENAMETOOLONG;
+			goto bad;
+		}
 		if ((error = copyout(buf, (void *)*pbuf, sz)) != 0) {
 			*pbuf = path;
-			return error;
+			goto bad;
 		}
 		free(buf, M_TEMP);
 	}
@@ -230,9 +233,11 @@ caddr_t
 stackgap_init(e)
 	struct emul *e;
 {
+	struct proc *p = curproc;		/* XXX */
 
 #define szsigcode ((caddr_t)(e->e_esigcode - e->e_sigcode))
-	return STACKGAPBASE;
+	return (caddr_t)(((unsigned long)p->p_psstr - (unsigned long)szsigcode
+		- STACKGAPLEN) & ~ALIGNBYTES);
 #undef szsigcode
 }
 
@@ -242,10 +247,18 @@ stackgap_alloc(sgp, sz)
 	caddr_t *sgp;
 	size_t sz;
 {
-	void *p = (void *) *sgp;
-
-	*sgp += ALIGN(sz);
-	return p;
+	void *n = (void *) *sgp;
+	caddr_t nsgp;
+	struct proc *p = curproc;		/* XXX */
+	struct emul *e = p->p_emul;
+	int sigsize = e->e_esigcode - e->e_sigcode;
+	
+	sz = ALIGN(sz);
+	nsgp = *sgp + sz;
+	if (nsgp > (((caddr_t)p->p_psstr) - sigsize))
+		return NULL;
+	*sgp = nsgp;
+	return n;
 }
 
 void

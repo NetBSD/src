@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.55 1999/08/03 20:19:18 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.55.2.1 2000/11/20 18:08:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -49,7 +49,6 @@
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
@@ -63,6 +62,7 @@
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
+#include <isofs/cd9660/cd9660_mount.h>
 
 /*
  * Structure for reading directories
@@ -102,7 +102,7 @@ cd9660_mknod(ndp, vap, cred, p)
 	vput(ndp->ni_vp);
 	return (EINVAL);
 #else
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct iso_node *ip;
 	struct iso_dnode *dp;
 	int error;
@@ -193,7 +193,7 @@ cd9660_getattr(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
-	register struct vattr *vap = ap->a_vap;
+	struct vattr *vap = ap->a_vap;
 
 	vap->va_fsid	= ip->i_dev;
 	vap->va_fileid	= ip->i_number;
@@ -263,9 +263,9 @@ cd9660_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
-	register struct iso_node *ip = VTOI(vp);
-	register struct iso_mnt *imp;
+	struct uio *uio = ap->a_uio;
+	struct iso_node *ip = VTOI(vp);
+	struct iso_mnt *imp;
 	struct buf *bp;
 	daddr_t lbn, rablock;
 	off_t diff;
@@ -433,7 +433,7 @@ cd9660_readdir(v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
-	register struct uio *uio = ap->a_uio;
+	struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
 	struct vnode *vdp = ap->a_vp;
 	struct iso_node *dp;
@@ -469,8 +469,7 @@ cd9660_readdir(v)
 		idp->cookies = NULL;
 	else {
 		ncookies = uio->uio_resid / 16;
-		MALLOC(cookies, off_t *, ncookies * sizeof(off_t), M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 		idp->cookies = cookies;
 		idp->ncookies = ncookies;
 	}
@@ -553,6 +552,7 @@ cd9660_readdir(v)
 			isofntrans(ep->name,idp->current.d_namlen,
 				   idp->current.d_name, &namelen,
 				   imp->iso_ftype == ISO_FTYPE_9660,
+				   (imp->im_flags & ISOFSMNT_NOCASETRANS) == 0,
 				   isonum_711(ep->flags)&4,
 				   imp->im_joliet_level);
 			switch (idp->current.d_name[0]) {
@@ -590,7 +590,7 @@ cd9660_readdir(v)
 
 	if (ap->a_ncookies != NULL) {
 		if (error)
-			FREE(cookies, M_TEMP);
+			free(cookies, M_TEMP);
 		else {
 			/*
 			 * Work out the number of cookies actually used.
@@ -752,9 +752,9 @@ cd9660_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
-	register struct vnode *vp = bp->b_vp;
-	register struct iso_node *ip;
+	struct buf *bp = ap->a_bp;
+	struct vnode *vp = bp->b_vp;
+	struct iso_node *ip;
 	int error;
 
 	ip = VTOI(vp);

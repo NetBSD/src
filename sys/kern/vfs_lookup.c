@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.32 1999/08/03 18:17:24 wrstuden Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.32.2.1 2000/11/20 18:09:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,6 +58,8 @@
 #include <sys/ktrace.h>
 #endif
 
+struct pool pnbuf_pool;		/* pathname buffer pool */
+
 /*
  * Convert a pathname into a pointer to a locked inode.
  *
@@ -80,11 +82,11 @@
  */
 int
 namei(ndp)
-	register struct nameidata *ndp;
+	struct nameidata *ndp;
 {
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
-	register char *cp;		/* pointer into pathname argument */
-	register struct vnode *dp;	/* the directory we are searching */
+	char *cp;			/* pointer into pathname argument */
+	struct vnode *dp;		/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
 	struct uio auio;
 	int error, linklen;
@@ -106,7 +108,7 @@ namei(ndp)
 	 * name into the buffer.
 	 */
 	if ((cnp->cn_flags & HASBUF) == 0)
-		MALLOC(cnp->cn_pnbuf, caddr_t, MAXPATHLEN, M_NAMEI, M_WAITOK);
+		cnp->cn_pnbuf = PNBUF_GET();
 	if (ndp->ni_segflg == UIO_SYSSPACE)
 		error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
@@ -121,7 +123,7 @@ namei(ndp)
 		error = ENOENT;
 
 	if (error) {
-		free(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		ndp->ni_vp = NULL;
 		return (error);
 	}
@@ -129,7 +131,7 @@ namei(ndp)
 
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_proc->p_tracep, cnp->cn_pnbuf);
+		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
 #endif
 
 	/*
@@ -151,7 +153,7 @@ namei(ndp)
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
 		if ((error = lookup(ndp)) != 0) {
-			FREE(cnp->cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(cnp->cn_pnbuf);
 			return (error);
 		}
 		/*
@@ -159,7 +161,7 @@ namei(ndp)
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
-				FREE(cnp->cn_pnbuf, M_NAMEI);
+				PNBUF_PUT(cnp->cn_pnbuf);
 			else
 				cnp->cn_flags |= HASBUF;
 			return (0);
@@ -177,7 +179,7 @@ namei(ndp)
 				break;
 		}
 		if (ndp->ni_pathlen > 1)
-			MALLOC(cp, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+			cp = PNBUF_GET();
 		else
 			cp = cnp->cn_pnbuf;
 		aiov.iov_base = cp;
@@ -193,7 +195,7 @@ namei(ndp)
 		if (error) {
 		badlink:
 			if (ndp->ni_pathlen > 1)
-				FREE(cp, M_NAMEI);
+				PNBUF_PUT(cp);
 			break;
 		}
 		linklen = MAXPATHLEN - auio.uio_resid;
@@ -207,7 +209,7 @@ namei(ndp)
 		}
 		if (ndp->ni_pathlen > 1) {
 			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
-			FREE(cnp->cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(cnp->cn_pnbuf);
 			cnp->cn_pnbuf = cp;
 		} else
 			cnp->cn_pnbuf[linklen] = '\0';
@@ -223,7 +225,7 @@ namei(ndp)
 			VREF(dp);
 		}
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vrele(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	ndp->ni_vp = NULL;
@@ -270,10 +272,10 @@ namei(ndp)
  */
 int
 lookup(ndp)
-	register struct nameidata *ndp;
+	struct nameidata *ndp;
 {
-	register const char *cp;	/* pointer into pathname argument */
-	register struct vnode *dp = 0;	/* the directory we are searching */
+	const char *cp;			/* pointer into pathname argument */
+	struct vnode *dp = 0;		/* the directory we are searching */
 	struct vnode *tdp;		/* saved dp */
 	struct mount *mp;		/* mount table entry */
 	int docache;			/* == 0 do not cache last component */

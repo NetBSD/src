@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.13 1999/07/27 05:38:02 cgd Exp $	*/
+/*	$NetBSD: fat.h,v 1.13.2.1 2000/11/20 18:09:52 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -58,6 +58,7 @@
 #define	CLUST_BAD	0xfffffff7	/* a cluster with a defect */
 #define	CLUST_EOFS	0xfffffff8	/* start of eof cluster range */
 #define	CLUST_EOFE	0xffffffff	/* end of eof cluster range */
+#define	CLUST_END	CLUST_EOFE	/* bigger than any valid cluster */
 
 #define	FAT12_MASK	0x00000fff	/* mask for 12 bit cluster numbers */
 #define	FAT16_MASK	0x0000ffff	/* mask for 16 bit cluster numbers */
@@ -80,7 +81,14 @@
 #define	FAT16(pmp)	(pmp->pm_fatmask == FAT16_MASK)
 #define	FAT32(pmp)	(pmp->pm_fatmask == FAT32_MASK)
 
-#define	MSDOSFSEOF(pmp, cn)	((cn) == (CLUST_EOFS & (pmp)->pm_fatmask))
+/*
+ * M$ in it's unlimited wisdom desided that EOF mark is anything
+ * between 0xfffffff8 and 0xffffffff (masked by appropriate fatmask,
+ * of course).
+ * Note that cn is supposed to be already adjusted accordingly to FAT type.
+ */ 
+#define	MSDOSFSEOF(cn, fatmask)	\
+	(((cn) & CLUST_EOFS) == (CLUST_EOFS & (fatmask)))
 
 #ifdef _KERNEL
 /*
@@ -98,7 +106,7 @@
 
 int pcbmap __P((struct denode *, u_long, daddr_t *, u_long *, int *));
 int clusterfree __P((struct msdosfsmount *, u_long, u_long *));
-int clusteralloc __P((struct msdosfsmount *, u_long, u_long, u_long, u_long *, u_long *));
+int clusteralloc __P((struct msdosfsmount *, u_long, u_long,u_long *,u_long *));
 int extendfile __P((struct denode *, u_long, struct buf **, u_long *, int));
 int fatentry __P((int, struct msdosfsmount *, u_long, u_long *, u_long));
 void fc_purge __P((struct denode *, u_int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.7 1996/09/08 14:28:12 mycroft Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.7.28.1 2000/11/20 18:11:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,7 @@ idrp_output(m, va_alist)
 	va_dcl
 #endif
 {
-	register struct sockaddr_iso *siso;
+	struct sockaddr_iso *siso;
 	int             s = splsoftnet(), i;
 	va_list ap;
 

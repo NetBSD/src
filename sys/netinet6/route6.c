@@ -1,9 +1,10 @@
-/*	$NetBSD: route6.c,v 1.3 1999/07/03 21:30:20 thorpej Exp $	*/
+/*	$NetBSD: route6.c,v 1.3.2.1 2000/11/20 18:10:59 bouyer Exp $	*/
+/*	$KAME: route6.c,v 1.21 2000/09/20 23:00:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -32,12 +33,13 @@
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet6/in6.h>
-#include <netinet6/ip6.h>
+#include <netinet6/in6_var.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 
 #include <netinet/icmp6.h>
@@ -54,14 +56,31 @@ route6_input(mp, offp, proto)
 	register struct ip6_rthdr *rh;
 	int off = *offp, rhlen;
 
+#ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, sizeof(*rh), IPPROTO_DONE);
 	ip6 = mtod(m, struct ip6_hdr *);
 	rh = (struct ip6_rthdr *)((caddr_t)ip6 + off);
+#else
+	ip6 = mtod(m, struct ip6_hdr *);
+	IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, sizeof(*rh));
+	if (rh == NULL) {
+		ip6stat.ip6s_tooshort++;
+		return IPPROTO_DONE;
+	}
+#endif
 
 	switch(rh->ip6r_type) {
 	 case IPV6_RTHDR_TYPE_0:
 		 rhlen = (rh->ip6r_len + 1) << 3;
+#ifndef PULLDOWN_TEST
 		 IP6_EXTHDR_CHECK(m, off, rhlen, IPPROTO_DONE);
+#else
+		 IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, rhlen);
+		 if (rh == NULL) {
+			ip6stat.ip6s_tooshort++;
+			return IPPROTO_DONE;
+		 }
+#endif
 		 if (ip6_rthdr0(m, ip6, (struct ip6_rthdr0 *)rh))
 			 return(IPPROTO_DONE);
 		 break;
@@ -123,8 +142,23 @@ ip6_rthdr0(m, ip6, rh0)
 	rh0->ip6r0_segleft--;
 	nextaddr = rh0->ip6r0_addr + index;
 
+	/*
+	 * reject invalid addresses.  be proactive about malicious use of
+	 * IPv4 mapped/compat address.
+	 * XXX need more checks?
+	 */
 	if (IN6_IS_ADDR_MULTICAST(nextaddr) ||
-	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+	    IN6_IS_ADDR_UNSPECIFIED(nextaddr) ||
+	    IN6_IS_ADDR_V4MAPPED(nextaddr) ||
+	    IN6_IS_ADDR_V4COMPAT(nextaddr)) {
+		ip6stat.ip6s_badoptions++;
+		m_freem(m);
+		return(-1);
+	}
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badoptions++;
 		m_freem(m);
 		return(-1);
@@ -149,6 +183,6 @@ ip6_rthdr0(m, ip6, rh0)
 #else
 	ip6_forward(m, 1);
 #endif
-    
+
 	return(-1);			/* m would be freed in ip6_forward() */
 }

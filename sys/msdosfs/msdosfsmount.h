@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.19 1999/02/26 23:44:47 wrstuden Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.19.8.1 2000/11/20 18:09:55 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -207,16 +207,7 @@ struct msdosfsmount {
 /*
  * Prototypes for MSDOSFS virtual filesystem operations
  */
-int msdosfs_mount __P((struct mount *, const char *, void *, struct nameidata *, struct proc *));
-int msdosfs_start __P((struct mount *, int, struct proc *));
-int msdosfs_unmount __P((struct mount *, int, struct proc *));
-int msdosfs_root __P((struct mount *, struct vnode **));
-int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int msdosfs_checkexp __P((struct mount *, struct mbuf *, int *, struct ucred **));
-int msdosfs_vptofh __P((struct vnode *, struct fid *));
 void msdosfs_init __P((void));
+void msdosfs_done __P((void));
 
 #endif /* _KERNEL */

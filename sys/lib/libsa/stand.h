@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.33 1999/09/09 15:52:40 drochner Exp $	*/
+/*	$NetBSD: stand.h,v 1.33.2.1 2000/11/20 18:09:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,15 @@
 #define	NULL	0
 #endif
 
+#ifdef LIBSA_RENAME_PRINTF
+#define getchar		libsa_getchar
+#define gets		libsa_gets
+#define printf		libsa_printf
+#define putchar		libsa_putchar
+#define sprintf		libsa_sprintf
+#define vprintf		libsa_vprintf
+#define vsprintf	libsa_vsprintf
+#endif
 #ifdef LIBSA_USE_MEMSET
 #define	bzero(s, l)	memset(s, 0, l)
 #endif
@@ -237,6 +246,8 @@ ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
 off_t	lseek __P((int, off_t, int));
 int	ioctl __P((int, u_long, char *));
+int	stat __P((const char *, struct stat *));
+int	fstat __P((int, struct stat *));
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;

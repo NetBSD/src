@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.53 1999/08/25 14:42:35 sommerfeld Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.53.2.1 2000/11/20 18:09:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -199,6 +199,15 @@ fdesc_init()
 }
 
 /*
+ * Free hash table.
+ */
+void
+fdesc_done()
+{
+	hashdone(fdhashtbl, M_CACHE);
+}
+
+/*
  * Return a locked vnode of the correct type.
  */
 int
@@ -229,7 +238,7 @@ loop:
 	 */ 
 	if (fdcache_lock & FDL_LOCKED) {
 		fdcache_lock |= FDL_WANT;
-		sleep((caddr_t) &fdcache_lock, PINOD);
+		(void) tsleep(&fdcache_lock, PINOD, "fdcache", 0);
 		goto loop;
 	}
 	fdcache_lock |= FDL_LOCKED;
@@ -716,7 +725,7 @@ fdesc_readdir(v)
 
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (nfdesc_targets - i));
-			MALLOC(cookies, off_t *, ncookies * sizeof(off_t),
+			cookies = malloc(ncookies * sizeof(off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 			*ap->a_ncookies = ncookies;
@@ -753,7 +762,8 @@ fdesc_readdir(v)
 	} else {
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (fdp->fd_nfiles + 2));
-			MALLOC(cookies, off_t *, ncookies * sizeof(off_t),				    M_TEMP, M_WAITOK);
+			cookies = malloc(ncookies * sizeof(off_t),
+			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 			*ap->a_ncookies = ncookies;
 		}
@@ -786,7 +796,7 @@ fdesc_readdir(v)
 	}
 
 	if (ap->a_ncookies && error) {
-		FREE(*ap->a_cookies, M_TEMP);
+		free(*ap->a_cookies, M_TEMP);
 		*ap->a_ncookies = 0;
 		*ap->a_cookies = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45 1999/03/24 05:51:28 mrg Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.8.1 2000/11/20 18:11:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,8 @@
  *	@(#)nfs_bio.c	8.9 (Berkeley) 3/30/95
  */
 
+#include "opt_nfs.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -50,8 +52,6 @@
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -72,13 +72,13 @@ extern struct nfsstats nfsstats;
  */
 int
 nfs_bioread(vp, uio, ioflag, cred, cflag)
-	register struct vnode *vp;
-	register struct uio *uio;
+	struct vnode *vp;
+	struct uio *uio;
 	int ioflag, cflag;
 	struct ucred *cred;
 {
-	register struct nfsnode *np = VTONFS(vp);
-	register int biosize, diff;
+	struct nfsnode *np = VTONFS(vp);
+	int biosize, diff;
 	struct buf *bp = NULL, *rabp;
 	struct vattr vattr;
 	struct proc *p;
@@ -100,9 +100,11 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	if (vp->v_type != VDIR && uio->uio_offset < 0)
 		return (EINVAL);
 	p = uio->uio_procp;
+#ifndef NFS_V2_ONLY
 	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, p);
+#endif
 	if (vp->v_type != VDIR &&
 	    (uio->uio_offset + uio->uio_resid) > nmp->nm_maxfilesize)
 		return (EFBIG);
@@ -158,6 +160,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	}
 	do {
 
+#ifndef NFS_V2_ONLY
 	    /*
 	     * Get a valid lease. If cached data is stale, flush it.
 	     */
@@ -188,6 +191,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			return (error);
 		}
 	    }
+#endif
 	    /*
 	     * Don't cache symlinks.
 	     */
@@ -550,12 +554,12 @@ nfs_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register int biosize;
-	register struct uio *uio = ap->a_uio;
+	int biosize;
+	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	register struct ucred *cred = ap->a_cred;
+	struct ucred *cred = ap->a_cred;
 	int ioflag = ap->a_ioflag;
 	struct buf *bp;
 	struct vattr vattr;
@@ -575,9 +579,11 @@ nfs_write(v)
 		np->n_flag &= ~NWRITEERR;
 		return (np->n_error);
 	}
+#ifndef NFS_V2_ONLY
 	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, p);
+#endif
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
 			np->n_attrstamp = 0;
@@ -621,6 +627,7 @@ nfs_write(v)
 		 */
 		(void)uvm_vnp_uncache(vp);
 
+#ifndef NFS_V2_ONLY
 		/*
 		 * Check for a valid write lease.
 		 */
@@ -639,6 +646,7 @@ nfs_write(v)
 				np->n_brev = np->n_lrev;
 			}
 		}
+#endif
 		if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {
 		    iomode = NFSV3WRITE_FILESYNC;
 		    error = nfs_writerpc(vp, uio, cred, &iomode, &must_commit);
@@ -678,6 +686,7 @@ again:
 			goto again;
 		}
 
+#ifndef NFS_V2_ONLY
 		/*
 		 * Check for valid write lease and get one as required.
 		 * In case getblk() and/or bwrite() delayed us.
@@ -701,6 +710,7 @@ again:
 				goto again;
 			}
 		}
+#endif
 		error = uiomove((char *)bp->b_data + on, n, uio);
 		if (error) {
 			bp->b_flags |= B_ERROR;
@@ -727,7 +737,15 @@ again:
 		 * Since this block is being modified, it must be written
 		 * again and not just committed.
 		 */
-		bp->b_flags &= ~B_NEEDCOMMIT;
+		if (NFS_ISV3(vp)) {
+			lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+			if (bp->b_flags & B_NEEDCOMMIT) {
+				bp->b_flags &= ~B_NEEDCOMMIT;
+				nfs_del_tobecommitted_range(vp, bp);
+			}
+			nfs_del_committed_range(vp, bp);
+			lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		}
 
 		/*
 		 * If the lease is non-cachable or IO_SYNC do bwrite().
@@ -745,8 +763,7 @@ again:
 		} else if ((n + on) == biosize &&
 			(nmp->nm_flag & NFSMNT_NQNFS) == 0) {
 			bp->b_proc = (struct proc *)0;
-			bp->b_flags |= B_ASYNC;
-			(void)nfs_writebp(bp, 0);
+			bawrite(bp);
 		} else {
 			bdwrite(bp);
 		}
@@ -768,7 +785,7 @@ nfs_getcacheblk(vp, bn, size, p)
 	int size;
 	struct proc *p;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	if (nmp->nm_flag & NFSMNT_INT) {
@@ -795,7 +812,7 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	struct proc *p;
 	int intrflg;
 {
-	register struct nfsnode *np = VTONFS(vp);
+	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int error = 0, slpflag, slptimeo;
 
@@ -850,11 +867,11 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
  */
 int
 nfs_asyncio(bp, cred)
-	register struct buf *bp;
+	struct buf *bp;
 	struct ucred *cred;
 {
-	register int i;
-	register struct nfsmount *nmp;
+	int i;
+	struct nfsmount *nmp;
 	int gotiod, slpflag = 0, slptimeo = 0, error;
 
 	if (nfs_numasync == 0)
@@ -931,7 +948,7 @@ again:
 				bp->b_wcred = cred;
 			}
 		}
-	
+
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
 		return (0);
@@ -950,17 +967,20 @@ again:
  */
 int
 nfs_doio(bp, cr, p)
-	register struct buf *bp;
+	struct buf *bp;
 	struct ucred *cr;
 	struct proc *p;
 {
-	register struct uio *uiop;
-	register struct vnode *vp;
+	struct uio *uiop;
+	struct vnode *vp;
 	struct nfsnode *np;
 	struct nfsmount *nmp;
-	int error = 0, diff, len, iomode, must_commit = 0;
+	int error = 0, diff, len, iomode, must_commit = 0, s, retv = 0;
+	int pushedrange;
+	unsigned cnt;
 	struct uio uio;
 	struct iovec io;
+	off_t off;
 
 	vp = bp->b_vp;
 	np = VTONFS(vp);
@@ -1067,6 +1087,61 @@ nfs_doio(bp, cr, p)
 		bp->b_error = error;
 	    }
 	} else {
+	    /*
+	     * If B_NEEDCOMMIT is set, a commit rpc may do the trick. If not
+	     * an actual write will have to be scheduled.
+	     */
+	    if (bp->b_flags & B_NEEDCOMMIT) {
+		/*
+		 * If the buffer is in the range that we already committed,
+		 * there's nothing to do.
+		 *
+		 * If it's in the range that we need to commit, push the
+		 * whole range at once. Else only push the buffer. In
+		 * both these cases, acquire the commit lock to avoid
+		 * other processes modifying the range. Normally the
+		 * vnode lock should have handled this, but there are
+		 * no proper vnode locks for NFS yet (XXX).
+		 */
+		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		if (!(bp->b_flags & B_NEEDCOMMIT)) {
+			lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+			goto dowrite;
+		}
+		if (!nfs_in_committed_range(vp, bp)) {
+			if (nfs_in_tobecommitted_range(vp, bp)) {
+				pushedrange = 1;
+				off = np->n_pushlo;
+				/* XXX will be too big if > 2G buffer cache */
+				cnt = np->n_pushhi - np->n_pushlo;
+			} else {
+				pushedrange = 0;
+				off = ((u_quad_t)bp->b_blkno) * DEV_BSIZE;
+				cnt = bp->b_dirtyend;
+			}
+			bp->b_flags |= B_WRITEINPROG;
+			retv = nfs_commit(bp->b_vp, off, cnt,
+			    bp->b_wcred, bp->b_proc);
+
+			bp->b_flags &= ~B_WRITEINPROG;
+			if (retv == 0) {
+				if (pushedrange) {
+					nfs_merge_commit_ranges(vp);
+				}
+				else
+					nfs_add_committed_range(vp, bp);
+			}
+		}
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		if (!retv) {
+			bp->b_resid = bp->b_dirtyoff = bp->b_dirtyend = 0;
+			bp->b_flags &= ~B_NEEDCOMMIT;
+			biodone(bp);
+			return (0);
+		} else if (retv == NFSERR_STALEWRITEVERF)
+			nfs_clearcommit(bp->b_vp->v_mount);
+	    }
+dowrite:
 	    io.iov_len = uiop->uio_resid = bp->b_dirtyend
 		- bp->b_dirtyoff;
 	    uiop->uio_offset = ((off_t)bp->b_blkno) * DEV_BSIZE
@@ -1078,17 +1153,23 @@ nfs_doio(bp, cr, p)
 		iomode = NFSV3WRITE_UNSTABLE;
 	    else
 		iomode = NFSV3WRITE_FILESYNC;
+
 	    bp->b_flags |= B_WRITEINPROG;
-#ifdef fvdl_debug
-	    printf("nfs_doio(%x): bp %x doff %d dend %d\n", 
-		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
-#endif
 	    error = nfs_writerpc(vp, uiop, cr, &iomode, &must_commit);
-	    if (!error && iomode == NFSV3WRITE_UNSTABLE)
+	    s = splbio();
+	    if (!error && iomode == NFSV3WRITE_UNSTABLE) {
 		bp->b_flags |= B_NEEDCOMMIT;
-	    else
+		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		nfs_add_tobecommitted_range(vp, bp);
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+	    } else if (!error && bp->b_flags & B_NEEDCOMMIT) {
 		bp->b_flags &= ~B_NEEDCOMMIT;
-	    bp->b_flags &= ~B_WRITEINPROG;
+		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		nfs_del_committed_range(vp, bp);
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+	    }
+	    /* XXX the use of NOCACHE is a hack */
+	    bp->b_flags &= ~(B_WRITEINPROG|B_NOCACHE);
 
 	    /*
 	     * For an interrupted write, the buffer is still valid and the
@@ -1104,14 +1185,12 @@ nfs_doio(bp, cr, p)
 	     */
 	    if (error == EINTR || (!error && (bp->b_flags & B_NEEDCOMMIT))) {
 		bp->b_flags |= B_DELWRI;
-
 		/*
-		 * Since for the B_ASYNC case, nfs_bwrite() has reassigned the
-		 * buffer to the clean list, we have to reassign it back to the
-		 * dirty one. Ugh.
+		 * A B_ASYNC block still needs to be committed, so put
+		 * it back on the dirty list.
 		 */
 		if (bp->b_flags & B_ASYNC)
-		    reassignbuf(bp, vp);
+			reassignbuf(bp, vp);
 		else if (error)
 		    bp->b_flags |= B_EINTR;
 	    } else {
@@ -1122,6 +1201,7 @@ nfs_doio(bp, cr, p)
 		}
 		bp->b_dirtyoff = bp->b_dirtyend = 0;
 	    }
+	    splx(s);
 	}
 	bp->b_resid = uiop->uio_resid;
 	if (must_commit)

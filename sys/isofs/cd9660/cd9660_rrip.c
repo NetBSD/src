@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.19 1999/07/13 11:12:06 scw Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.19.2.1 2000/11/20 18:08:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -121,8 +121,8 @@ cd9660_rrip_slink(v, ana)
 	ISO_RRIP_ANALYZE *ana;
 {
 	ISO_RRIP_SLINK  *p = v;
-	register ISO_RRIP_SLINK_COMPONENT *pcomp;
-	register ISO_RRIP_SLINK_COMPONENT *pcompe;
+	ISO_RRIP_SLINK_COMPONENT *pcomp;
+	ISO_RRIP_SLINK_COMPONENT *pcompe;
 	int len, wlen, cont;
 	char *outbuf, *inbuf;
 	
@@ -300,7 +300,7 @@ cd9660_rrip_defname(v, ana)
 
 	isofntrans(isodir->name, isonum_711(isodir->name_len),
 		   ana->outbuf, ana->outlen,
-		   1, isonum_711(isodir->flags) & 4,
+		   1, 0, isonum_711(isodir->flags) & 4,
 		   ana->imp->im_joliet_level);
 	switch (ana->outbuf[0]) {
 	default:
@@ -515,9 +515,9 @@ cd9660_rrip_loop(isodir, ana, table)
 	ISO_RRIP_ANALYZE *ana;
 	RRIP_TABLE *table;
 {
-	register RRIP_TABLE *ptable;
-	register ISO_SUSP_HEADER *phead;
-	register ISO_SUSP_HEADER *pend;
+	RRIP_TABLE *ptable;
+	ISO_SUSP_HEADER *phead;
+	ISO_SUSP_HEADER *pend;
 	struct buf *bp = NULL;
 	char *pwhead;
 	u_char c;

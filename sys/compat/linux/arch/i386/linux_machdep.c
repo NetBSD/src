@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.47 1999/10/04 17:46:37 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.47.2.1 2000/11/20 18:08:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -82,15 +82,8 @@
 #include <machine/vmparam.h>
 
 /*
- * To see whether pcvt is configured (for virtual console ioctl calls).
+ * To see whether wscons is configured (for virtual console ioctl calls).
  */
-#ifndef NVT
-#include "vt.h"
-#endif
-#if NVT > 0
-#include <arch/i386/isa/pcvt/pcvt_ioctl.h>
-#endif
-
 #include "wsdisplay.h"
 #if (NWSDISPLAY > 0)
 #include <sys/ioctl.h>
@@ -116,7 +109,7 @@ linux_setregs(p, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	setregs(p, epp, stack);
 	pcb->pcb_savefpu.sv_env.en_cw = __Linux_NPXCW__;
@@ -140,8 +133,8 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	struct proc *p = curproc;
+	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 
@@ -247,7 +240,7 @@ linux_sys_sigreturn(p, v, retval)
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
 	struct linux_sigcontext *scp, context;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 	sigset_t mask;
 
 	/*
@@ -452,10 +445,6 @@ dev_t
 linux_fakedev(dev)
 	dev_t dev;
 {
-#if (NVT > 0)
-	if (major(dev) == NETBSD_PCCONS_MAJOR)
-		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
-#endif
 #if (NWSDISPLAY > 0)
 	if (major(dev) == NETBSD_WSCONS_MAJOR)
 		return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
@@ -463,7 +452,7 @@ linux_fakedev(dev)
 	return dev;
 }
 
-#if (NWSDISPLAY > 0) && defined(XSERVER)
+#if (NWSDISPLAY > 0)
 /*
  * That's not complete, but enough to get an X server running.
  */
@@ -559,12 +548,10 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
-#if (NVT > 0) || (NWSDISPLAY > 0)
+#if (NWSDISPLAY > 0)
 	int error;
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
-#endif
-#if (NWSDISPLAY > 0) && defined(XSERVER)
 	struct kbentry kbe;
 #endif
 
@@ -573,7 +560,7 @@ linux_machdepioctl(p, v, retval)
 	com = SCARG(uap, com);
 
 	switch (com) {
-#if (NVT > 0) || (NWSDISPLAY > 0)
+#if (NWSDISPLAY > 0)
 	case LINUX_KDGKBMODE:
 		com = KDGKBMODE;
 		break;
@@ -638,12 +625,9 @@ linux_machdepioctl(p, v, retval)
 	case LINUX_VT_WAITACTIVE:
 		com = VT_WAITACTIVE;
 		break;
-#endif
-#if (NWSDISPLAY > 0)
 	case LINUX_VT_GETSTATE:
 		com = VT_GETSTATE;
 		break;
-#ifdef XSERVER
 	case LINUX_KDGKBTYPE:
 		/* This is what Linux does. */
 		return (subyte(SCARG(uap, data), KB_101));
@@ -663,7 +647,6 @@ linux_machdepioctl(p, v, retval)
 		kbe.kb_value = linux_keytabs[kbe.kb_table][kbe.kb_index];
 		return (copyout(&kbe, SCARG(uap, data),
 				sizeof(struct kbentry)));
-#endif
 #endif
 	default:
 		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);

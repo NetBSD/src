@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.15.28.1 2000/11/20 18:08:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -37,7 +37,6 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.
@@ -52,9 +51,7 @@
  */
 
 int
-exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	u_long midmag, magic;
 	u_short mid;
@@ -101,9 +98,7 @@ exec_aout_makecmds(p, epp)
  */
 
 int
-exec_aout_prep_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 
@@ -126,14 +121,14 @@ exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
+	vn_marktext(epp->ep_vp);
 
 	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, round_page(execp->a_text),
 	    epp->ep_taddr, epp->ep_vp, 0, VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, round_page(execp->a_data),
 	    epp->ep_daddr, epp->ep_vp, execp->a_text,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
@@ -150,9 +145,7 @@ exec_aout_prep_zmagic(p, epp)
  */
 
 int
-exec_aout_prep_nmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -188,9 +181,7 @@ exec_aout_prep_nmagic(p, epp)
  */
 
 int
-exec_aout_prep_omagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
@@ -240,9 +231,7 @@ exec_aout_prep_omagic(p, epp)
  */
 
 int
-exec_aout_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_setup_stack(struct proc *p, struct exec_package *epp)
 {
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;

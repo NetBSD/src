@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.24 1999/09/13 10:31:43 itojun Exp $	*/
+/*	$NetBSD: bpf.h,v 1.24.2.1 2000/11/20 18:09:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -271,6 +271,7 @@ int	 bpf_validate __P((struct bpf_insn *, int));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
 void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
+void	 bpfdetach __P((struct ifnet *));
 void	 bpf_change_type __P((caddr_t *, u_int, u_int));
 void	 bpfilterattach __P((int));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.18 1999/07/01 05:56:53 darrenr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.18.2.1 2000/11/20 18:11:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -61,6 +61,11 @@
  * described below.
  */
 
+/*
+ * For pfil_head structure.
+ */
+#include <net/pfil.h>
+
 struct mbuf;
 struct sockaddr;
 struct socket;
@@ -100,6 +105,7 @@ struct protosw {
 			__P((void));
 	int	(*pr_sysctl)		/* sysctl for protocol */
 			__P((int *, u_int, void *, size_t *, void *, size_t));
+	struct	pfil_head	pr_pfh;
 };
 
 #define	PR_SLOWHZ	2		/* 2 slow timeouts per second */
@@ -153,8 +159,9 @@ struct protosw {
 #define	PRU_SLOWTIMO		19	/* 500ms timeout */
 #define	PRU_PROTORCV		20	/* receive from below */
 #define	PRU_PROTOSEND		21	/* send to below */
+#define	PRU_PURGEIF		22	/* purge specified if */
 
-#define	PRU_NREQ		22
+#define	PRU_NREQ		23
 
 #ifdef PRUREQUESTS
 char *prurequests[] = {
@@ -163,7 +170,7 @@ char *prurequests[] = {
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
 	"SENSE",	"RCVOOB",	"SENDOOB",	"SOCKADDR",
 	"PEERADDR",	"CONNECT2",	"FASTTIMO",	"SLOWTIMO",
-	"PROTORCV",	"PROTOSEND",
+	"PROTORCV",	"PROTOSEND",	"PURGEIF",
 };
 #endif
 
@@ -256,6 +263,8 @@ extern	u_int pffasttimo_now;
 struct sockaddr;
 struct protosw *pffindproto __P((int, int, int));
 struct protosw *pffindtype __P((int, int));
+struct domain *pffinddomain __P((int));
+extern struct protosw inetsw[];
 void pfctlinput __P((int, struct sockaddr *));
 #endif /* _KERNEL */
 

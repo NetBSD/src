@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.7 1998/07/31 22:50:50 perry Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.7.12.1 2000/11/20 18:09:02 bouyer Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -63,7 +63,7 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #ifdef NTP
@@ -72,7 +72,6 @@
  * The following variables are used by the hardclock() routine in the
  * kern_clock.c module and are described in that module. 
  */
-extern struct timeval time;	/* kernel time variable */
 extern int time_state;		/* clock state */
 extern int time_status;		/* clock status bits */
 extern long time_offset;	/* time adjustment (us) */
@@ -296,7 +295,7 @@ sys_ntp_adjtime(p, v, retval)
  */
 int
 sysctl_ntptime(where, sizep)
-	register char *where;
+	void *where;
 	size_t *sizep;
 {
 	struct timeval atv;
@@ -373,15 +372,8 @@ sysctl_ntptime(where, sizep)
 
 #else /* !NTP */
 
-/*
- * For kernels configured without the NTP option, emulate the behavior
- * of a kernel with no NTP support (i.e., sys_nosys()). On systems
- * where kernel  NTP support appears present when xntpd is compiled,
- * (e.g., sys/timex.h is present),  xntpd relies on getting a SIGSYS
- * signal in response to an ntp_adjtime() syscal, to inform xntpd that
- * NTP support is not really present, and xntpd should fall back to
- * using a user-level phase-locked loop to discipline the clock.
- */
+/* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
+
 int
 sys_ntp_gettime(p, v, retval)
 	struct proc *p;
@@ -391,20 +383,4 @@ sys_ntp_gettime(p, v, retval)
 	return(ENOSYS);
 }
 
-int
-sys_ntp_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return(sys_nosys(p, v, retval));
-}
-
-int
-sysctl_ntptime(where, sizep)
-	register char *where;
-	size_t *sizep;
-{
-	return (ENOSYS);
-}
-#endif /* NTP */
+#endif /* !NTP */

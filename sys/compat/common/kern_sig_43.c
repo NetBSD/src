@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.11 1999/04/29 16:09:12 christos Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.11.2.1 2000/11/20 18:08:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
 
 void compat_43_sigmask_to_sigset __P((const int *, sigset_t *));
@@ -139,7 +138,7 @@ compat_43_sigaltstack_to_sigstack(sa, ss)
 
 int
 compat_43_sys_sigblock(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -190,7 +189,7 @@ compat_43_sys_sigstack(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_sigstack_args /* {
+	struct compat_43_sys_sigstack_args /* {
 		syscallarg(struct sigstack *) nss;
 		syscallarg(struct sigstack *) oss;
 	} */ *uap = v;
@@ -227,7 +226,7 @@ compat_43_sys_sigvec(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_sigvec_args /* {
+	struct compat_43_sys_sigvec_args /* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
@@ -263,7 +262,7 @@ compat_43_sys_killpg(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_killpg_args /* {
+	struct compat_43_sys_killpg_args /* {
 		syscallarg(int) pgid;
 		syscallarg(int) signum;
 	} */ *uap = v;

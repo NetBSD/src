@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.51 1999/05/04 16:01:37 sommerfe Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.51.2.1 2000/11/20 18:11:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -73,8 +73,6 @@
 #include <sys/kernel.h>
 #include <ufs/ufs/dir.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <nfs/nfsproto.h>
@@ -92,7 +90,6 @@ extern enum vtype nv3tov_type[8];
 extern struct nfsstats nfsstats;
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
-extern struct nfs_public nfs_pub;
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
 
 /*
@@ -112,8 +109,8 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache = 0, getret;
 	char *cp2;
@@ -178,13 +175,13 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register struct nfs_fattr *fp;
+	struct nfs_fattr *fp;
 	struct vattr va;
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache;
 	char *cp2;
@@ -225,13 +222,13 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct vattr va, preat;
-	register struct nfsv2_sattr *sp;
-	register struct nfs_fattr *fp;
+	struct nfsv2_sattr *sp;
+	struct nfs_fattr *fp;
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, preat_ret = 1, postat_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), gcheck = 0;
@@ -355,14 +352,14 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register struct nfs_fattr *fp;
+	struct nfs_fattr *fp;
 	struct nameidata nd, ind, *ndp = &nd;
 	struct vnode *vp, *dirp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	register caddr_t cp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	caddr_t cp;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, dirattr_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), pubflag;
@@ -438,7 +435,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 
 	nqsrv_getl(ndp->ni_startdir, ND_READ);
 	vrele(ndp->ni_startdir);
-	FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	vp = ndp->ni_vp;
 	memset((caddr_t)fhp, 0, sizeof(nfh));
 	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
@@ -477,10 +474,10 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct iovec iv[(NFS_MAXPATHLEN+MLEN-1)/MLEN];
-	register struct iovec *ivp = iv;
-	register struct mbuf *mp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	struct iovec *ivp = iv;
+	struct mbuf *mp;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, i, tlen, len, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
@@ -577,13 +574,13 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register struct iovec *iv;
+	struct iovec *iv;
 	struct iovec *iv2;
-	register struct mbuf *m;
-	register struct nfs_fattr *fp;
-	register u_int32_t *tl;
-	register int32_t t1;
-	register int i;
+	struct mbuf *m;
+	struct nfs_fattr *fp;
+	u_int32_t *tl;
+	int32_t t1;
+	int i;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, cnt, len, left, siz, tlen, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), reqlen;
@@ -673,8 +670,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 				m2 = m;
 			}
 		}
-		MALLOC(iv, struct iovec *, i * sizeof (struct iovec),
-		       M_TEMP, M_WAITOK);
+		iv = malloc(i * sizeof (struct iovec), M_TEMP, M_WAITOK);
 		uiop->uio_iov = iv2 = iv;
 		m = mb;
 		left = cnt;
@@ -700,7 +696,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		uiop->uio_segflg = UIO_SYSSPACE;
 		error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
 		off = uiop->uio_offset;
-		FREE((caddr_t)iv2, M_TEMP);
+		free((caddr_t)iv2, M_TEMP);
 		if (error || (getret = VOP_GETATTR(vp, &va, cred, procp)) != 0){
 			if (!error)
 				error = getret;
@@ -743,14 +739,14 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register struct iovec *ivp;
-	register int i, cnt;
-	register struct mbuf *mp;
-	register struct nfs_fattr *fp;
+	struct iovec *ivp;
+	int i, cnt;
+	struct mbuf *mp;
+	struct nfs_fattr *fp;
 	struct iovec *iv;
 	struct vattr va, forat;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, len, forat_ret = 1;
 	int ioflags, aftat_ret = 1, retlen, zeroing, adjust;
@@ -847,8 +843,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 
 	if (len > 0) {
-	    MALLOC(ivp, struct iovec *, cnt * sizeof (struct iovec), M_TEMP,
-		M_WAITOK);
+	    ivp = malloc(cnt * sizeof (struct iovec), M_TEMP, M_WAITOK);
 	    uiop->uio_iov = iv = ivp;
 	    uiop->uio_iovcnt = cnt;
 	    mp = mrep;
@@ -881,7 +876,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	    uiop->uio_offset = off;
 	    error = VOP_WRITE(vp, uiop, ioflags, cred);
 	    nfsstats.srvvop_writes++;
-	    FREE((caddr_t)iv, M_TEMP);
+	    free((caddr_t)iv, M_TEMP);
 	}
 	aftat_ret = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
@@ -927,17 +922,17 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	struct proc *procp;
 	struct mbuf **mrq;
 {
-	register struct iovec *ivp;
-	register struct mbuf *mp;
-	register struct nfsrv_descript *wp, *nfsd, *owp, *swp;
-	register struct nfs_fattr *fp;
-	register int i = 0;
+	struct iovec *ivp;
+	struct mbuf *mp;
+	struct nfsrv_descript *wp, *nfsd, *owp, *swp;
+	struct nfs_fattr *fp;
+	int i = 0;
 	struct iovec *iov;
 	struct nfsrvw_delayhash *wpp;
 	struct ucred *cred;
 	struct vattr va, forat;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos, dpos;
 	int error = 0, rdonly, cache, len = 0, forat_ret = 1;
 	int ioflags, aftat_ret = 1, s, adjust, v3, zeroing;
@@ -1126,8 +1121,7 @@ loop1:
 			mp = mp->m_next;
 		    }
 		    uiop->uio_iovcnt = i;
-		    MALLOC(iov, struct iovec *, i * sizeof (struct iovec), 
-			M_TEMP, M_WAITOK);
+		    iov = malloc(i * sizeof (struct iovec), M_TEMP, M_WAITOK);
 		    uiop->uio_iov = ivp = iov;
 		    mp = mrep;
 		    while (mp) {
@@ -1142,7 +1136,7 @@ loop1:
 			error = VOP_WRITE(vp, uiop, ioflags, cred);
 			nfsstats.srvvop_writes++;
 		    }
-		    FREE((caddr_t)iov, M_TEMP);
+		    free((caddr_t)iov, M_TEMP);
 		}
 		m_freem(mrep);
 		if (vp) {
@@ -1234,11 +1228,11 @@ loop1:
  */
 void
 nfsrvw_coalesce(owp, nfsd)
-        register struct nfsrv_descript *owp;
-        register struct nfsrv_descript *nfsd;
+        struct nfsrv_descript *owp;
+        struct nfsrv_descript *nfsd;
 {
-        register int overlap;
-        register struct mbuf *mp;
+        int overlap;
+        struct mbuf *mp;
 
         LIST_REMOVE(nfsd, nd_hash);
         LIST_REMOVE(nfsd, nd_tq);
@@ -1268,7 +1262,7 @@ nfsrvw_coalesce(owp, nfsd)
  	 */
  	if (nfsd->nd_coalesce.lh_first)
  	{
- 		register struct nfsrv_descript *m;
+ 		struct nfsrv_descript *m;
  
  		while ((m = nfsd->nd_coalesce.lh_first))
  		{
@@ -1293,13 +1287,13 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register struct nfs_fattr *fp;
+	struct nfs_fattr *fp;
 	struct vattr va, dirfor, diraft;
-	register struct nfsv2_sattr *sp;
-	register u_int32_t *tl;
+	struct nfsv2_sattr *sp;
+	u_int32_t *tl;
 	struct nameidata nd;
-	register caddr_t cp;
-	register int32_t t1;
+	caddr_t cp;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, tsize, dirfor_ret = 1, diraft_ret = 1;
 	int rdev = 0;
@@ -1392,7 +1386,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 			if (!error) {
-				FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+				PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 				if (exclusive_flag) {
 					exclusive_flag = 0;
 					VATTR_NULL(&va);
@@ -1409,7 +1403,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			if (va.va_type != VFIFO &&
 			    (error = suser(cred, (u_short *)0))) {
 				vrele(nd.ni_startdir);
-				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+				PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1428,10 +1422,10 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			nd.ni_cnd.cn_proc = procp;
 			nd.ni_cnd.cn_cred = cred;
 			if ((error = lookup(&nd)) != 0) {
-				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+				PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 				nfsm_reply(0);
 			}
-			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
 				vput(nd.ni_vp);
@@ -1441,7 +1435,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			}
 		} else {
 			vrele(nd.ni_startdir);
-			free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			error = ENXIO;
@@ -1449,7 +1443,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		vp = nd.ni_vp;
 	} else {
 		vrele(nd.ni_startdir);
-		free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		vp = nd.ni_vp;
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -1504,7 +1498,7 @@ nfsmout:
 		vrele(dirp);
 	if (nd.ni_cnd.cn_nameiop) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	}
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	if (nd.ni_dvp == nd.ni_vp)
@@ -1531,9 +1525,9 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
-	register u_int32_t *tl;
+	u_int32_t *tl;
 	struct nameidata nd;
-	register int32_t t1;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
 	u_int32_t major, minor;
@@ -1567,7 +1561,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	vtyp = nfsv3tov_type(*tl);
 	if (vtyp != VCHR && vtyp != VBLK && vtyp != VSOCK && vtyp != VFIFO) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		error = NFSERR_BADTYPE;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
@@ -1592,7 +1586,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	 */
 	if (nd.ni_vp) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		error = EEXIST;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
@@ -1608,12 +1602,12 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nqsrv_getl(nd.ni_dvp, ND_WRITE);
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 		if (!error)
-			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	} else {
 		if (va.va_type != VFIFO &&
 		    (error = suser(cred, (u_short *)0))) {
 			vrele(nd.ni_startdir);
-			free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
@@ -1629,7 +1623,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nd.ni_cnd.cn_proc = procp;
 		nd.ni_cnd.cn_cred = procp->p_ucred;
 		error = lookup(&nd);
-		FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		if (error)
 			goto out;
 		if (nd.ni_cnd.cn_flags & ISSYMLINK) {
@@ -1663,7 +1657,7 @@ nfsmout:
 		vrele(dirp);
 	if (nd.ni_cnd.cn_nameiop) {
 		vrele(nd.ni_startdir);
-		free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	}
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	if (nd.ni_dvp == nd.ni_vp)
@@ -1690,8 +1684,8 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct nameidata nd;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
@@ -1774,8 +1768,8 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, len2, fdirfor_ret = 1, fdiraft_ret = 1;
 	int tdirfor_ret = 1, tdiraft_ret = 1;
@@ -1930,7 +1924,7 @@ out:
 			error = 0;
 	}
 	vrele(tond.ni_startdir);
-	FREE(tond.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(tond.ni_cnd.cn_pnbuf);
 out1:
 	if (fdirp) {
 		fdiraft_ret = VOP_GETATTR(fdirp, &fdiraft, cred, procp);
@@ -1941,7 +1935,7 @@ out1:
 		vrele(tdirp);
 	}
 	vrele(fromnd.ni_startdir);
-	FREE(fromnd.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(fromnd.ni_cnd.cn_pnbuf);
 	nfsm_reply(2 * NFSX_WCCDATA(v3));
 	if (v3) {
 		nfsm_srvwcc_data(fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft);
@@ -1956,11 +1950,11 @@ nfsmout:
 		vrele(tdirp);
 	if (tond.ni_cnd.cn_nameiop) {
 		vrele(tond.ni_startdir);
-		FREE(tond.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(tond.ni_cnd.cn_pnbuf);
 	}
 	if (fromnd.ni_cnd.cn_nameiop) {
 		vrele(fromnd.ni_startdir);
-		FREE(fromnd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(fromnd.ni_cnd.cn_pnbuf);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		vrele(fvp);
@@ -1983,8 +1977,8 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct nameidata nd;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, len, dirfor_ret = 1, diraft_ret = 1;
 	int getret = 1, v3 = (nfsd->nd_flag & ND_NFSV3);
@@ -2082,8 +2076,8 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	struct ucred *cred = &nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
 	struct nameidata nd;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	struct nfsv2_sattr *sp;
 	char *bpos, *pathcp = NULL, *cp2;
 	struct uio io;
@@ -2120,7 +2114,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	if (v3)
 		nfsm_srvsattr(&va);
 	nfsm_strsiz(len2, NFS_MAXPATHLEN);
-	MALLOC(pathcp, caddr_t, len2 + 1, M_TEMP, M_WAITOK);
+	pathcp = malloc(len2 + 1, M_TEMP, M_WAITOK);
 	iv.iov_base = pathcp;
 	iv.iov_len = len2;
 	io.uio_resid = len2;
@@ -2138,7 +2132,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	*(pathcp + len2) = '\0';
 	if (nd.ni_vp) {
 		vrele(nd.ni_startdir);
-		free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
 			vrele(nd.ni_dvp);
@@ -2171,11 +2165,11 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 		}
 	    } else
 		vrele(nd.ni_startdir);
-	    FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+	    PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	}
 out:
 	if (pathcp)
-		FREE(pathcp, M_TEMP);
+		free(pathcp, M_TEMP);
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
 		vrele(dirp);
@@ -2192,7 +2186,7 @@ out:
 nfsmout:
 	if (nd.ni_cnd.cn_nameiop) {
 		vrele(nd.ni_startdir);
-		free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	}
 	if (dirp)
 		vrele(dirp);
@@ -2204,7 +2198,7 @@ nfsmout:
 	if (nd.ni_vp)
 		vrele(nd.ni_vp);
 	if (pathcp)
-		FREE(pathcp, M_TEMP);
+		free(pathcp, M_TEMP);
 	return (error);
 }
 
@@ -2223,11 +2217,11 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
-	register struct nfs_fattr *fp;
+	struct nfs_fattr *fp;
 	struct nameidata nd;
-	register caddr_t cp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	caddr_t cp;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
@@ -2337,8 +2331,8 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
@@ -2468,12 +2462,12 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register char *bp, *be;
-	register struct mbuf *mp;
-	register struct dirent *dp;
-	register caddr_t cp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	char *bp, *be;
+	struct mbuf *mp;
+	struct dirent *dp;
+	caddr_t cp;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	struct mbuf *mb, *mb2, *mreq, *mp2;
 	char *cpos, *cend, *cp2, *rbuf;
@@ -2540,7 +2534,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	VOP_UNLOCK(vp, 0);
-	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
+	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2568,7 +2562,7 @@ again:
 	VOP_UNLOCK(vp, 0);
 	if (error) {
 		vrele(vp);
-		FREE((caddr_t)rbuf, M_TEMP);
+		free((caddr_t)rbuf, M_TEMP);
 		if (cookies)
 			free((caddr_t)cookies, M_TEMP);
 		nfsm_reply(NFSX_POSTOPATTR(v3));
@@ -2595,8 +2589,8 @@ again:
 				nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			FREE((caddr_t)rbuf, M_TEMP);
-			FREE((caddr_t)cookies, M_TEMP);
+			free((caddr_t)rbuf, M_TEMP);
+			free((caddr_t)cookies, M_TEMP);
 			return (0);
 		}
 	}
@@ -2715,8 +2709,8 @@ again:
 			mp->m_len = bp - mtod(mp, caddr_t);
 	} else
 		mp->m_len += bp - bpos;
-	FREE((caddr_t)rbuf, M_TEMP);
-	FREE((caddr_t)cookies, M_TEMP);
+	free((caddr_t)rbuf, M_TEMP);
+	free((caddr_t)cookies, M_TEMP);
 	nfsm_srvdone;
 }
 
@@ -2731,12 +2725,12 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register char *bp, *be;
-	register struct mbuf *mp;
-	register struct dirent *dp;
-	register caddr_t cp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	char *bp, *be;
+	struct mbuf *mp;
+	struct dirent *dp;
+	caddr_t cp;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	struct mbuf *mb, *mb2, *mreq, *mp2;
 	char *cpos, *cend, *cp2, *rbuf;
@@ -2799,7 +2793,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	}
 	VOP_UNLOCK(vp, 0);
 
-	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
+	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2843,8 +2837,8 @@ again:
 	if (error) {
 		vrele(vp);
 		if (cookies)
-			FREE((caddr_t)cookies, M_TEMP);
-		FREE((caddr_t)rbuf, M_TEMP);
+			free((caddr_t)cookies, M_TEMP);
+		free((caddr_t)rbuf, M_TEMP);
 		nfsm_reply(NFSX_V3POSTOPATTR);
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
@@ -2866,8 +2860,8 @@ again:
 			tl += 2;
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			FREE((caddr_t)cookies, M_TEMP);
-			FREE((caddr_t)rbuf, M_TEMP);
+			free((caddr_t)cookies, M_TEMP);
+			free((caddr_t)rbuf, M_TEMP);
 			return (0);
 		}
 	}
@@ -2934,7 +2928,7 @@ again:
 			 * are calculated conservatively, including all
 			 * XDR overheads.
 			 */
-			len += (7 * NFSX_UNSIGNED + nlen + rem + NFSX_V3FH +
+			len += (8 * NFSX_UNSIGNED + nlen + rem + NFSX_V3FH +
 				NFSX_V3POSTOPATTR);
 			dirlen += (6 * NFSX_UNSIGNED + nlen + rem);
 			if (len > cnt || dirlen > fullsiz) {
@@ -3024,8 +3018,8 @@ invalid:
 			mp->m_len = bp - mtod(mp, caddr_t);
 	} else
 		mp->m_len += bp - bpos;
-	FREE((caddr_t)cookies, M_TEMP);
-	FREE((caddr_t)rbuf, M_TEMP);
+	free((caddr_t)cookies, M_TEMP);
+	free((caddr_t)rbuf, M_TEMP);
 	nfsm_srvdone;
 }
 
@@ -3047,8 +3041,8 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt, cache;
 	char *cp2;
@@ -3062,10 +3056,6 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 
-	/*
-	 * XXX At this time VOP_FSYNC() does not accept offset and byte
-	 * count parameters, so these arguments are useless (someday maybe).
-	 */
 	off = fxdr_hyper(tl);
 	tl += 2;
 	cnt = fxdr_unsigned(int, *tl);
@@ -3077,7 +3067,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	for_ret = VOP_GETATTR(vp, &bfor, cred, procp);
-	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, procp);
+	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, off + cnt, procp);
 	aft_ret = VOP_GETATTR(vp, &aft, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_V3WCCDATA + NFSX_V3WRITEVERF);
@@ -3105,10 +3095,10 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register struct statfs *sf;
-	register struct nfs_statfs *sfp;
-	register u_int32_t *tl;
-	register int32_t t1;
+	struct statfs *sf;
+	struct nfs_statfs *sfp;
+	u_int32_t *tl;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, getret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
@@ -3180,9 +3170,9 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register u_int32_t *tl;
-	register struct nfsv3_fsinfo *sip;
-	register int32_t t1;
+	u_int32_t *tl;
+	struct nfsv3_fsinfo *sip;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, getret = 1, pref;
 	char *cp2;
@@ -3256,9 +3246,9 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	register u_int32_t *tl;
-	register struct nfsv3_pathconf *pc;
-	register int32_t t1;
+	u_int32_t *tl;
+	struct nfsv3_pathconf *pc;
+	int32_t t1;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, getret = 1;
 	register_t linkmax, namemax, chownres, notrunc;
@@ -3374,9 +3364,9 @@ nfsrv_noop(nfsd, slp, procp, mrq)
  */
 int
 nfsrv_access(vp, flags, cred, rdonly, p, override)
-	register struct vnode *vp;
+	struct vnode *vp;
 	int flags;
-	register struct ucred *cred;
+	struct ucred *cred;
 	int rdonly;
 	struct proc *p;
 {

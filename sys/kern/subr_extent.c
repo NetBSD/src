@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.29 1999/10/11 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.29.2.1 2000/11/20 18:09:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -50,8 +50,7 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #define	KMEM_IS_RUNNING		(kmem_map != NULL)
 #elif defined(_EXTENT_TESTING)
@@ -66,16 +65,38 @@
 #include <stdio.h>
 #include <string.h>
 
-#define	malloc(s, t, flags)		malloc(s)
-#define	free(p, t)			free(p)
-#define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
-#define	wakeup(chan)			((void)0)
-#define	pool_get(pool, flags)		malloc(pool->pr_size,0,0)
-#define	pool_put(pool, rp)		free(rp,0)
-#define	panic(a)			printf(a)
-#define	splhigh()			(1)
-#define	splx(s)				((void)(s))
+/*
+ * Use multi-line #defines to avoid screwing up the kernel tags file;
+ * without this, ctags produces a tags file where panic() shows up
+ * in subr_extent.c rather than subr_prf.c.
+ */
+#define	\
+malloc(s, t, flags)		malloc(s)
+#define	\
+free(p, t)			free(p)
+#define	\
+tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
+#define	\
+ltsleep(chan,pri,str,timo,lck)	(EWOULDBLOCK)
+#define	\
+wakeup(chan)			((void)0)
+#define	\
+pool_get(pool, flags)		malloc(pool->pr_size,0,0)
+#define	\
+pool_put(pool, rp)		free(rp,0)
+#define	\
+panic(a)			printf(a)
+#define	\
+splhigh()			(1)
+#define	\
+splx(s)				((void)(s))
 
+#define	\
+simple_lock_init(l)		((void)(l))
+#define	\
+simple_lock(l)			((void)(l))
+#define	\
+simple_unlock(l)		((void)(l))
 #define	KMEM_IS_RUNNING			(1)
 #endif
 
@@ -449,10 +470,9 @@ extent_alloc_region(ex, start, size, flags)
 			 */
 			if (flags & EX_WAITSPACE) {
 				ex->ex_flags |= EXF_WANTED;
-				simple_unlock(&ex->ex_slock);
-				error = tsleep(ex,
-				    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
-				    "extnt", 0);
+				error = ltsleep(ex,
+				    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+				    "extnt", 0, &ex->ex_slock);
 				if (error)
 					return (error);
 				goto alloc_start;
@@ -648,12 +668,15 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				    - 1;
 
 #if 0
-				printf("newstart=%x newend=%x ex_start=%x ex_end=%x boundary=%x dontcross=%x\n",
+				printf("newstart=%lx newend=%lx ex_start=%lx ex_end=%lx boundary=%lx dontcross=%lx\n",
 				    newstart, newend, ex->ex_start, ex->ex_end,
 				    boundary, dontcross);
 #endif
 
-				if (newend > dontcross) {
+				/* Check for overflow */
+				if (dontcross < ex->ex_start)
+					dontcross = ex->ex_end;
+				else if (newend > dontcross) {
 					/*
 					 * Candidate region crosses boundary.
 					 * Throw away the leading part and see
@@ -672,7 +695,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				 * overflows, then the request
 				 * can't fit.
 				 */
-				if (dontcross > ex->ex_end ||
+				if (newstart + size - 1 > ex->ex_end ||
 				    dontcross < newstart)
 					goto fail;
 			}
@@ -739,12 +762,15 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			    - 1;
 
 #if 0
-			printf("newstart=%x newend=%x ex_start=%x ex_end=%x boundary=%x dontcross=%x\n",
+			printf("newstart=%lx newend=%lx ex_start=%lx ex_end=%lx boundary=%lx dontcross=%lx\n",
 			    newstart, newend, ex->ex_start, ex->ex_end,
 			    boundary, dontcross);
 #endif
 
-			if (newend > dontcross) {
+			/* Check for overflow */
+			if (dontcross < ex->ex_start)
+				dontcross = ex->ex_end;
+			else if (newend > dontcross) {
 				/*
 				 * Candidate region crosses boundary.
 				 * Throw away the leading part and see
@@ -763,7 +789,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			 * overflows, then the request
 			 * can't fit.
 			 */
-			if (dontcross > ex->ex_end ||
+			if (newstart + size - 1 > ex->ex_end ||
 			    dontcross < newstart)
 				goto fail;
 		}
@@ -818,9 +844,9 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	 */
 	if (flags & EX_WAITSPACE) {
 		ex->ex_flags |= EXF_WANTED;
-		simple_unlock(&ex->ex_slock);
-		error = tsleep(ex,
-		    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0), "extnt", 0);
+		error = ltsleep(ex,
+		    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+		    "extnt", 0, &ex->ex_slock);
 		if (error)
 			return (error);
 		goto alloc_start;
@@ -1047,10 +1073,9 @@ extent_alloc_region_descriptor(ex, flags)
 				return (NULL);
 			}
 			ex->ex_flags |= EXF_FLWANTED;
-			simple_unlock(&ex->ex_slock);
-			if (tsleep(&fex->fex_freelist,
-			    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
-			    "extnt", 0))
+			if (ltsleep(&fex->fex_freelist,
+			    PNORELOCK| PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+			    "extnt", 0, &ex->ex_slock))
 				return (NULL);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.3 1997/04/03 18:38:23 christos Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.3.22.1 2000/11/20 18:10:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -33,6 +33,7 @@ struct ifnet;
 struct mbuf;
 struct sockaddr_at;
 struct proc;
+struct ifaddr;
 struct at_ifaddr;
 struct route;
 struct socket;
@@ -45,6 +46,8 @@ void	aarpinput	__P((struct ifnet *, struct mbuf *));
 int	at_broadcast	__P((struct sockaddr_at  *));
 void	aarp_clean	__P((void));
 int	at_control	__P((u_long, caddr_t, struct ifnet *, struct proc *));
+void	at_purgeaddr	__P((struct ifaddr *, struct ifnet *));
+void	at_purgeif	__P((struct ifnet *));
 u_int16_t
 	at_cksum	__P((struct mbuf *, int));
 int	ddp_usrreq	__P((struct socket *, int, struct mbuf *, struct mbuf *,

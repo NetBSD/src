@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.13 1999/03/05 21:09:50 mycroft Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.13.8.1 2000/11/20 18:11:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -94,7 +94,7 @@ ufs_inactive(v)
 		VOP_VFREE(vp, ip->i_number, mode);
 	}
 
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE))
+	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED))
 		VOP_UPDATE(vp, NULL, NULL, 0);
 out:
 	VOP_UNLOCK(vp, 0);
@@ -115,7 +115,7 @@ ufs_reclaim(vp, p)
 	struct vnode *vp;
 	struct proc *p;
 {
-	register struct inode *ip;
+	struct inode *ip;
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)

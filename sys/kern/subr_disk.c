@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_disk.c,v 1.25 1999/02/22 16:00:01 drochner Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.25.8.1 2000/11/20 18:09:07 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -98,28 +98,40 @@ int	disk_count;		/* number of drives in global disklist */
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
  * as the current cylinder number.
  *
- * The argument ap structure holds a b_actf activity chain pointer on which we
- * keep two queues, sorted in ascending cylinder order.  The first queue holds
- * those requests which are positioned after the current cylinder (in the first
- * request); the second holds requests which came in after their cylinder number
- * was passed.  Thus we implement a one way scan, retracting after reaching the
- * end of the drive to the first request on the second queue, at which time it
- * becomes the first queue.
+ * The argument bufq is an I/O queue for the device, on which there are
+ * actually two queues, sorted in ascending cylinder order.  The first
+ * queue holds those requests which are positioned after the current
+ * cylinder (in the first request); the second holds requests which came
+ * in after their cylinder number was passed.  Thus we implement a one-way
+ * scan, retracting after reaching the end of the drive to the first request
+ * on the second queue, at which time it becomes the first queue.
  *
  * A one-way scan is natural because of the way UNIX read-ahead blocks are
  * allocated.
+ *
+ * This is further adjusted by any `barriers' which may exist in the queue.
+ * The bufq points to the last such ordered request.
  */
-
 void
-disksort(ap, bp)
-	register struct buf *ap, *bp;
+disksort_cylinder(bufq, bp)
+	struct buf_queue *bufq;
+	struct buf *bp;
 {
-	register struct buf *bq;
+	struct buf *bq, *nbq;
 
-	/* If the queue is empty, then it's easy. */
-	if (ap->b_actf == NULL) {
-		bp->b_actf = NULL;
-		ap->b_actf = bp;
+	/*
+	 * If there are ordered requests on the queue, we must start
+	 * the elevator sort after the last of these.
+	 */
+	if ((bq = bufq->bq_barrier) == NULL)
+		bq = BUFQ_FIRST(bufq);
+
+	/*
+	 * If the queue is empty, of if it's an ordered request,
+	 * it's easy; we just go on the end.
+	 */
+	if (bq == NULL || (bp->b_flags & B_ORDERED) != 0) {
+		BUFQ_INSERT_TAIL(bufq, bp);
 		return;
 	}
 
@@ -127,15 +139,16 @@ disksort(ap, bp)
 	 * If we lie after the first (currently active) request, then we
 	 * must locate the second request list and add ourselves to it.
 	 */
-	bq = ap->b_actf;
-	if (bp->b_cylinder < bq->b_cylinder) {
-		while (bq->b_actf) {
+	if (bp->b_cylinder < bq->b_cylinder ||
+	    (bp->b_cylinder == bq->b_cylinder &&
+	     bp->b_rawblkno < bq->b_rawblkno)) {
+		while ((nbq = BUFQ_NEXT(bq)) != NULL) {
 			/*
 			 * Check for an ``inversion'' in the normally ascending
 			 * cylinder numbers, indicating the start of the second
 			 * request list.
 			 */
-			if (bq->b_actf->b_cylinder < bq->b_cylinder) {
+			if (nbq->b_cylinder < bq->b_cylinder) {
 				/*
 				 * Search the second request list for the first
 				 * request at a larger cylinder number.  We go
@@ -143,18 +156,16 @@ disksort(ap, bp)
 				 * go at end.
 				 */
 				do {
-					if (bp->b_cylinder <
-					    bq->b_actf->b_cylinder)
+					if (bp->b_cylinder < nbq->b_cylinder)
 						goto insert;
-					if (bp->b_cylinder ==
-					    bq->b_actf->b_cylinder &&
-					    bp->b_blkno < bq->b_actf->b_blkno)
+					if (bp->b_cylinder == nbq->b_cylinder &&
+					    bp->b_rawblkno < nbq->b_rawblkno)
 						goto insert;
-					bq = bq->b_actf;
-				} while (bq->b_actf);
+					bq = nbq;
+				} while ((nbq = BUFQ_NEXT(bq)) != NULL);
 				goto insert;		/* after last */
 			}
-			bq = bq->b_actf;
+			bq = BUFQ_NEXT(bq);
 		}
 		/*
 		 * No inversions... we will go after the last, and
@@ -166,26 +177,134 @@ disksort(ap, bp)
 	 * Request is at/after the current request...
 	 * sort in the first request list.
 	 */
-	while (bq->b_actf) {
+	while ((nbq = BUFQ_NEXT(bq)) != NULL) {
 		/*
 		 * We want to go after the current request if there is an
 		 * inversion after it (i.e. it is the end of the first
 		 * request list), or if the next request is a larger cylinder
 		 * than our request.
 		 */
-		if (bq->b_actf->b_cylinder < bq->b_cylinder ||
-		    bp->b_cylinder < bq->b_actf->b_cylinder ||
-		    (bp->b_cylinder == bq->b_actf->b_cylinder &&
-		    bp->b_blkno < bq->b_actf->b_blkno))
+		if (nbq->b_cylinder < bq->b_cylinder ||
+		    bp->b_cylinder < nbq->b_cylinder ||
+		    (bp->b_cylinder == nbq->b_cylinder &&
+		     bp->b_rawblkno < nbq->b_rawblkno))
 			goto insert;
-		bq = bq->b_actf;
+		bq = nbq;
 	}
 	/*
 	 * Neither a second list nor a larger request... we go at the end of
 	 * the first list, which is the same as the end of the whole schebang.
 	 */
-insert:	bp->b_actf = bq->b_actf;
-	bq->b_actf = bp;
+insert:	BUFQ_INSERT_AFTER(bufq, bq, bp);
+}
+
+/*
+ * Seek sort for disks.  This version sorts based on b_rawblkno, which
+ * indicates the block number.
+ *
+ * As before, there are actually two queues, sorted in ascendening block
+ * order.  The first queue holds those requests which are positioned after
+ * the current block (in the first request); the second holds requests which
+ * came in after their block number was passed.  Thus we implement a one-way
+ * scan, retracting after reaching the end of the driver to the first request
+ * on the second queue, at which time it becomes the first queue.
+ *
+ * A one-way scan is natural because of the way UNIX read-ahead blocks are
+ * allocated.
+ *
+ * This is further adjusted by any `barriers' which may exist in the queue.
+ * The bufq points to the last such ordered request.
+ */
+void
+disksort_blkno(bufq, bp)
+	struct buf_queue *bufq;
+	struct buf *bp;
+{
+	struct buf *bq, *nbq;
+
+	/*
+	 * If there are ordered requests on the queue, we must start
+	 * the elevator sort after the last of these.
+	 */
+	if ((bq = bufq->bq_barrier) == NULL)
+		bq = BUFQ_FIRST(bufq);
+
+	/*
+	 * If the queue is empty, or if it's an ordered request,
+	 * it's easy; we just go on the end.
+	 */
+	if (bq == NULL || (bp->b_flags & B_ORDERED) != 0) {
+		BUFQ_INSERT_TAIL(bufq, bp);
+		return;
+	}
+
+	/*
+	 * If we lie after the first (currently active) request, then we
+	 * must locate the second request list and add ourselves to it.
+	 */
+	if (bp->b_rawblkno < bq->b_rawblkno) {
+		while ((nbq = BUFQ_NEXT(bq)) != NULL) {
+			/*
+			 * Check for an ``inversion'' in the normally ascending
+			 * block numbers, indicating the start of the second
+			 * request list.
+			 */
+			if (nbq->b_rawblkno < bq->b_rawblkno) {
+				/*
+				 * Search the second request list for the first
+				 * request at a larger block number.  We go
+				 * after that; if there is no such request, we
+				 * go at the end.
+				 */
+				do {
+					if (bp->b_rawblkno < nbq->b_rawblkno)
+						goto insert;
+					bq = nbq;
+				} while ((nbq = BUFQ_NEXT(bq)) != NULL);
+				goto insert;		/* after last */
+			}
+			bq = BUFQ_NEXT(bq);
+		}
+		/*
+		 * No inversions... we will go after the last, and
+		 * be the first request in the second request list.
+		 */
+		goto insert;
+	}
+	/*
+	 * Request is at/after the current request...
+	 * sort in the first request list.
+	 */
+	while ((nbq = BUFQ_NEXT(bq)) != NULL) {
+		/*
+		 * We want to go after the current request if there is an
+		 * inversion after it (i.e. it is the end of the first
+		 * request list), or if the next request is a larger cylinder
+		 * than our request.
+		 */
+		if (nbq->b_rawblkno < bq->b_rawblkno ||
+		    bp->b_rawblkno < nbq->b_rawblkno)
+			goto insert;
+		bq = nbq;
+	}
+	/*
+	 * Neither a second list nor a larger request... we go at the end of
+	 * the first list, which is the same as the end of the whole schebang.
+	 */
+insert:	BUFQ_INSERT_AFTER(bufq, bq, bp);
+}
+
+/*
+ * Seek non-sort for disks.  This version simply inserts requests at
+ * the tail of the queue.
+ */
+void
+disksort_tail(bufq, bp)
+	struct buf_queue *bufq;
+	struct buf *bp;
+{
+
+	BUFQ_INSERT_TAIL(bufq, bp);
 }
 
 /*
@@ -193,10 +312,10 @@ insert:	bp->b_actf = bq->b_actf;
  */
 u_int
 dkcksum(lp)
-	register struct disklabel *lp;
+	struct disklabel *lp;
 {
-	register u_short *start, *end;
-	register u_short sum = 0;
+	u_short *start, *end;
+	u_short sum = 0;
 
 	start = (u_short *)lp;
 	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
@@ -221,13 +340,13 @@ hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
  */
 void
 diskerr(bp, dname, what, pri, blkdone, lp)
-	register struct buf *bp;
+	struct buf *bp;
 	char *dname, *what;
 	int pri, blkdone;
-	register struct disklabel *lp;
+	struct disklabel *lp;
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-	register void (*pr) __P((const char *, ...));
+	void (*pr) __P((const char *, ...));
 	char partname = 'a' + part;
 	int sn;
 

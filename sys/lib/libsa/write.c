@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.8 1999/03/31 01:50:26 cgd Exp $	*/
+/*	$NetBSD: write.c,v 1.8.8.1 2000/11/20 18:09:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -73,7 +73,7 @@ write(fd, dest, bcount)
 	void *dest;
 	size_t bcount;
 {
-	register struct open_file *f = &files[fd];
+	struct open_file *f = &files[fd];
 	size_t resid;
 
 #if !defined(LIBSA_NO_FD_CHECKING)

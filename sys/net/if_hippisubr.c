@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.3 1999/05/18 23:57:20 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.3.2.1 2000/11/20 18:10:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -58,7 +58,7 @@
 #include <net/if_hippi.h>
 
 #include <netinet/in.h>
-#ifdef INET
+#if defined(INET) || defined(INET6)
 #include <netinet/in_var.h>
 #endif
 
@@ -164,7 +164,7 @@ hippi_output(ifp, m0, dst, rt0)
 	}
 
 	if (htype != 0) {
-		register struct llc *l;
+		struct llc *l;
 		M_PREPEND(m, sizeof (struct llc), M_DONTWAIT);
 		if (m == 0)
 			senderr(ENOBUFS);
@@ -238,8 +238,8 @@ hippi_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
-	register struct ifqueue *inq;
-	register struct llc *l;
+	struct ifqueue *inq;
+	struct llc *l;
 	u_int16_t htype;
 	struct hippi_header *hh;
 	int s;
@@ -278,12 +278,15 @@ hippi_input(ifp, m)
 	m_adj(m, 8);
 	switch (htype) {
 #ifdef INET
-#ifdef INET6
-	case ETHERTYPE_IPV6:
-#endif
 	case ETHERTYPE_IP:
 		schednetisr(NETISR_IP);
 		inq = &ipintrq;
+		break;
+#endif
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		schednetisr(NETISR_IPV6);
+		inq = &ip6intrq;
 		break;
 #endif
 	default:
@@ -304,12 +307,13 @@ hippi_input(ifp, m)
  * Handle packet from HIPPI that has no MAC header
  */
 
+#ifdef INET
 void
 hippi_ip_input(ifp, m)
 	struct ifnet *ifp;
 	struct mbuf *m;
 {
-	register struct ifqueue *inq;
+	struct ifqueue *inq;
 	int s;
 	u_int32_t *ip;
     
@@ -326,6 +330,7 @@ hippi_ip_input(ifp, m)
 		IF_ENQUEUE(inq, m);
 	splx(s);
 }
+#endif
 
 
 /*
@@ -333,10 +338,10 @@ hippi_ip_input(ifp, m)
  */
 void
 hippi_ifattach(ifp, lla)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	caddr_t lla;
 {
-	register struct sockaddr_dl *sdl;
+	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_HIPPI;
 	ifp->if_addrlen = 6;  /* regular 802.3 MAC address */
@@ -344,6 +349,7 @@ hippi_ifattach(ifp, lla)
 	ifp->if_mtu = HIPPIMTU;
 	ifp->if_output = hippi_output;
 	ifp->if_input = hippi_input;
+	ifp->if_baudrate = IF_Mbps(800);	/* XXX double-check */
 	if ((sdl = ifp->if_sadl) &&
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_HIPPI;

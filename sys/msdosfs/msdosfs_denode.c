@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.36.8.1 2000/11/20 18:09:53 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -59,8 +59,6 @@
 #include <sys/dirent.h>
 #include <sys/namei.h>
 
-#include <vm/vm.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <msdosfs/bpb.h>
@@ -92,6 +90,13 @@ msdosfs_init()
 	    M_MSDOSFSNODE);
 }
 
+void
+msdosfs_done()
+{
+	hashdone(dehashtbl, M_MSDOSFSMNT);
+	pool_destroy(&msdosfs_denode_pool);
+}
+
 static struct denode *
 msdosfs_hashget(dev, dirclust, diroff)
 	dev_t dev;
@@ -117,7 +122,7 @@ loop:
 			return (dep);
 		}
 	}
-	simple_lock(&msdosfs_ihash_slock);
+	simple_unlock(&msdosfs_ihash_slock);
 	return (NULL);
 }
 
@@ -306,7 +311,7 @@ deget(pmp, dirclust, diroffset, depp)
 
 		nvp->v_type = VDIR;
 		if (ldep->de_StartCluster != MSDOSFSROOT) {
-			error = pcbmap(ldep, 0xffff, 0, &size, 0);
+			error = pcbmap(ldep, CLUST_END, 0, &size, 0);
 			if (error == E2BIG) {
 				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;
@@ -326,7 +331,7 @@ deupdat(dep, waitfor)
 	int waitfor;
 {
 
-	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor));
+	return (VOP_UPDATE(DETOV(dep), NULL, NULL, waitfor ? UPDATE_WAIT : 0));
 }
 
 /*
@@ -342,10 +347,9 @@ detrunc(dep, length, flags, cred, p)
 {
 	int error;
 	int allerror;
-	int vflags;
 	u_long eofentry;
 	u_long chaintofree;
-	daddr_t bn;
+	daddr_t bn, lastblock;
 	int boff;
 	int isadir = dep->de_Attributes & ATTR_DIRECTORY;
 	struct buf *bp;
@@ -373,6 +377,7 @@ detrunc(dep, length, flags, cred, p)
 
 	if (dep->de_FileSize < length)
 		return (deextend(dep, length, cred));
+	lastblock = de_clcount(pmp, length) - 1;
 
 	/*
 	 * If the desired length is 0 then remember the starting cluster of
@@ -388,8 +393,7 @@ detrunc(dep, length, flags, cred, p)
 		dep->de_StartCluster = 0;
 		eofentry = ~0;
 	} else {
-		error = pcbmap(dep, de_clcount(pmp, length) - 1, 0,
-			       &eofentry, 0);
+		error = pcbmap(dep, lastblock, 0, &eofentry, 0);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): pcbmap fails %d\n", error);
@@ -398,7 +402,7 @@ detrunc(dep, length, flags, cred, p)
 		}
 	}
 
-	fc_purge(dep, de_clcount(pmp, length));
+	fc_purge(dep, lastblock + 1);
 
 	/*
 	 * If the new length is not a multiple of the cluster size then we
@@ -440,8 +444,7 @@ detrunc(dep, length, flags, cred, p)
 	dep->de_FileSize = length;
 	if (!isadir)
 		dep->de_flag |= DE_UPDATE|DE_MODIFIED;
-	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
-	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
+	vtruncbuf(DETOV(dep), lastblock + 1, 0, 0);
 	allerror = deupdat(dep, 1);
 #ifdef MSDOSFS_DEBUG
 	printf("detrunc(): allerror %d, eofentry %lu\n",
@@ -469,7 +472,7 @@ detrunc(dep, length, flags, cred, p)
 	 * Now free the clusters removed from the file because of the
 	 * truncation.
 	 */
-	if (chaintofree != 0 && !MSDOSFSEOF(pmp, chaintofree))
+	if (chaintofree != 0 && !MSDOSFSEOF(chaintofree, pmp->pm_fatmask))
 		freeclusterchain(pmp, chaintofree);
 
 	return (allerror);
@@ -620,8 +623,9 @@ msdosfs_inactive(v)
 	 * as empty.  (This may not be necessary for the dos filesystem.)
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x, MNT_RDONLY %x\n",
-	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
+	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x %s",
+	       dep, dep->de_refcnt, vp->v_mount->mnt_flag,
+		(vp->v_mount->mnt_flag & MNT_RDONLY) ? "MNT_RDONLY" : "");
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
@@ -635,8 +639,8 @@ out:
 	 * so that it can be reused immediately.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n", vp->v_usecount,
-	       dep->de_Name[0]);
+	printf("msdosfs_inactive(): v_usecount %ld, de_Name[0] %x\n",
+		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
 		vrecycle(vp, (struct simplelock *)0, p);

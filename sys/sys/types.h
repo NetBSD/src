@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.39 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.39.2.1 2000/11/20 18:11:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -49,6 +49,8 @@
 #include <machine/ansi.h>
 #include <machine/endian.h>
 
+#include <sys/ansi.h>
+
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
@@ -67,6 +69,9 @@ typedef	u_int64_t	u_quad_t;	/* quads */
 typedef	int64_t		quad_t;
 typedef	quad_t *	qaddr_t;
 
+typedef	quad_t		longlong_t;	/* ANSI long long type */
+typedef	u_quad_t	u_longlong_t;	/* ANSI unsigned long long type */
+
 typedef	int64_t		blkcnt_t;	/* fs block count */
 typedef	u_int32_t	blksize_t;	/* fs optimal block size */
 typedef	char *		caddr_t;	/* core address */
@@ -77,14 +82,29 @@ typedef	u_int32_t	gid_t;		/* group id */
 typedef	u_int32_t	id_t;		/* group id, process id or user id */
 typedef	u_int32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
-typedef	u_int32_t	mode_t;		/* permissions */
+
+#ifndef	mode_t
+typedef	__mode_t	mode_t;		/* permissions */
+#define	mode_t		__mode_t
+#endif
+
 typedef	u_int32_t	nlink_t;	/* link count */
-typedef	quad_t		off_t;		/* file offset */
-typedef	int32_t		pid_t;		/* process id */
+
+#ifndef	off_t
+typedef	__off_t		off_t;		/* file offset */
+#define	off_t		__off_t
+#endif
+
+#ifndef	pid_t
+typedef	__pid_t		pid_t;		/* process id */
+#define	pid_t		__pid_t
+#endif
+
 typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
+typedef	int32_t		dtime_t;	/* on-disk time_t */
 
 #if defined(_KERNEL) || defined(_LIBC)
 /*
@@ -97,7 +117,7 @@ union __semun {
 	struct semid_ds	*buf;		/* buffer for IPC_STAT & IPC_SET */
 	unsigned short	*array;		/* array for GETALL & SETALL */
 };
-#endif /* _KERNEL || __LIBC12_SOURCE__ */
+#endif /* _KERNEL || _LIBC */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
@@ -166,8 +186,23 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #undef	_BSD_USECONDS_T_
 #endif
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	NBBY	8		/* number of bits in a byte */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500
+
+/*
+ * Implementation dependent defines, hidden from user space. X/Open does not
+ * specify them.
+ */
+#define	__NBBY	8		/* number of bits in a byte */
+typedef int32_t	__fd_mask;
+#define __NFDBITS	(sizeof(__fd_mask) * __NBBY)	/* bits per mask */
+
+#ifndef howmany
+#define	__howmany(x, y)	(((x) + ((y) - 1)) / (y))
+#else
+#define __howmany(x, y) howmany(x, y)
+#endif
 
 /*
  * Select uses bit masks of file descriptors in longs.  These macros
@@ -179,22 +214,33 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #define	FD_SETSIZE	256
 #endif
 
-typedef int32_t	fd_mask;
-#define NFDBITS	(sizeof(fd_mask) * NBBY)	/* bits per mask */
-
-#ifndef howmany
-#define	howmany(x, y)	(((x) + ((y) - 1)) / (y))
-#endif
-
 typedef	struct fd_set {
-	fd_mask	fds_bits[howmany(FD_SETSIZE, NFDBITS)];
+	__fd_mask	fds_bits[__howmany(FD_SETSIZE, __NFDBITS)];
 } fd_set;
 
-#define	FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
-#define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
-#define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
-#define	FD_COPY(f, t)	(void)memcpy((t), (f), sizeof(*(f)))
+#define	FD_SET(n, p)	\
+    ((p)->fds_bits[(n)/__NFDBITS] |= (1 << ((n) % __NFDBITS)))
+#define	FD_CLR(n, p)	\
+    ((p)->fds_bits[(n)/__NFDBITS] &= ~(1 << ((n) % __NFDBITS)))
+#define	FD_ISSET(n, p)	\
+    ((p)->fds_bits[(n)/__NFDBITS] & (1 << ((n) % __NFDBITS)))
 #define	FD_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
+
+/*
+ * Expose our internals if we are not required to hide them.
+ */
+#ifndef _XOPEN_SOURCE
+
+#define NBBY __NBBY
+#define fd_mask __fd_mask
+#define NFDBITS __NFDBITS
+#ifndef howmany
+#define howmany(a, b) __howmany(a, b)
+#endif
+
+#define	FD_COPY(f, t)	(void)memcpy((t), (f), sizeof(*(f)))
+
+#endif
 
 #if defined(__STDC__) && defined(_KERNEL)
 /*

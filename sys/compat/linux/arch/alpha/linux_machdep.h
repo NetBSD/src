@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1 1998/09/30 21:36:26 erh Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.1.12.1 2000/11/20 18:08:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@ struct linux_rt_sigframe {
 __BEGIN_DECLS
 void setup_linux_rt_sigframe __P((struct trapframe *, int, sigset_t *));
 void setup_linux_sigframe __P((struct trapframe *, int, sigset_t *));
-int linux_restore_sigcontext __P((struct proc *, struct linux_sigcontext));
+int linux_restore_sigcontext __P((struct proc *, struct linux_sigcontext,
+				  sigset_t *));
 void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
 dev_t linux_fakedev __P((dev_t));
 __END_DECLS

@@ -1,9 +1,10 @@
-/*	$NetBSD: ah.h,v 1.5 1999/07/31 18:41:16 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.5.2.1 2000/11/20 18:10:41 bouyer Exp $	*/
+/*	$KAME: ah.h,v 1.13 2000/10/18 21:28:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,13 +37,9 @@
 #ifndef _NETINET6_AH_H_
 #define _NETINET6_AH_H_
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
 #endif
-#endif
-
-#include <netkey/keydb.h>		/* for struct secas */
 
 struct ah {
 	u_int8_t	ah_nxt;		/* Next Header */
@@ -61,49 +58,50 @@ struct newah {
 	/* variable size, 32bit bound*/	/* Authentication data */
 };
 
+#ifdef _KERNEL
+struct secasvar;
+
 struct ah_algorithm_state {
-	struct secas *sa;
+	struct secasvar *sav;
 	void* foo;	/*per algorithm data - maybe*/
 };
 
 struct ah_algorithm {
-	int (*sumsiz) __P((struct secas *));
-	int (*mature) __P((struct secas *));
+	int (*sumsiz) __P((struct secasvar *));
+	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	void (*init) __P((struct ah_algorithm_state *, struct secas *));
+	const char *name;
+	int (*init) __P((struct ah_algorithm_state *, struct secasvar *));
 	void (*update) __P((struct ah_algorithm_state *, caddr_t, size_t));
 	void (*result) __P((struct ah_algorithm_state *, caddr_t));
 };
 
 #define	AH_MAXSUMSIZE	16
 
-#ifdef KERNEL
-extern struct ah_algorithm ah_algorithms[];
-
-struct inpcb;
-#ifdef INET6
-struct in6pcb;
-#endif
+extern const struct ah_algorithm *ah_algorithm_lookup __P((int));
 
 /* cksum routines */
-extern int ah_hdrlen __P((struct secas *));
+extern int ah_hdrlen __P((struct secasvar *));
 
 extern size_t ah_hdrsiz __P((struct ipsecrequest *));
 extern void ah4_input __P((struct mbuf *, ...));
-struct secasb;
 extern int ah4_output __P((struct mbuf *, struct ipsecrequest *));
-extern int ah4_calccksum __P((struct mbuf *, caddr_t,
-				struct ah_algorithm *, struct secas *));
+extern int ah4_calccksum __P((struct mbuf *, caddr_t, size_t,
+	const struct ah_algorithm *, struct secasvar *));
+
+extern void *ah4_ctlinput __P((int, struct sockaddr *, void *));
 
 #ifdef INET6
 extern int ah6_input __P((struct mbuf **, int *, int));
 extern int ah6_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *));
-extern int ah6_calccksum __P((struct mbuf *, caddr_t,
-			      struct ah_algorithm *, struct secas *));
+extern int ah6_calccksum __P((struct mbuf *, caddr_t, size_t,
+	const struct ah_algorithm *, struct secasvar *));
+
+extern void ah6_ctlinput __P((int, struct sockaddr *, void *));
 #endif /* INET6 */
 
-#endif /*KERNEL*/
+#endif /*_KERNEL*/
 
 #endif /*_NETINET6_AH_H_*/

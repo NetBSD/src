@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.21 1999/09/10 23:24:23 mycroft Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.21.2.1 2000/11/20 18:09:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -105,8 +105,8 @@ cache_lookup(dvp, vpp, cnp)
 	struct vnode **vpp;
 	struct componentname *cnp;
 {
-	register struct namecache *ncp;
-	register struct nchashhead *ncpp;
+	struct namecache *ncp;
+	struct nchashhead *ncpp;
 	struct vnode *vp;
 	int vpid, error;
 
@@ -323,9 +323,9 @@ cache_enter(dvp, vp, cnp)
 	struct vnode *vp;
 	struct componentname *cnp;
 {
-	register struct namecache *ncp;
-	register struct nchashhead *ncpp;
-	register struct ncvhashhead *nvcpp;
+	struct namecache *ncp;
+	struct nchashhead *ncpp;
+	struct ncvhashhead *nvcpp;
 
 #ifdef DIAGNOSTIC
 	if (cnp->cn_namelen > NCHNAMLEN)
@@ -336,7 +336,7 @@ cache_enter(dvp, vp, cnp)
 	/*
 	 * Free the cache slot at head of lru chain.
 	 */
-	if (numcache < desiredvnodes) {
+	if (numcache < numvnodes) {
 		ncp = pool_get(&namecache_pool, PR_WAITOK);
 		memset((char *)ncp, 0, sizeof(*ncp));
 		numcache++;
@@ -416,6 +416,7 @@ cache_purge(vp)
 {
 	struct namecache *ncp;
 	struct nchashhead *ncpp;
+	static u_long nextvnodeid;
 
 	vp->v_id = ++nextvnodeid;
 	if (nextvnodeid != 0)
@@ -433,15 +434,15 @@ cache_purge(vp)
  * Cache flush, a whole filesystem; called when filesys is umounted to
  * remove entries that would now be invalid
  *
- * The line "nxtcp = nchhead" near the end is to avoid potential problems
- * if the cache lru chain is modified while we are dumping the
- * inode.  This makes the algorithm O(n^2), but do you think I care?
+ * The line "nxtcp = nclruhead.tqh_first" near the end is to avoid potential
+ * problems if the cache lru chain is modified while we are dumping the inode.
+ * This makes the algorithm O(n^2), but do you think I care?
  */
 void
 cache_purgevfs(mp)
 	struct mount *mp;
 {
-	register struct namecache *ncp, *nxtcp;
+	struct namecache *ncp, *nxtcp;
 
 	for (ncp = nclruhead.tqh_first; ncp != 0; ncp = nxtcp) {
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {

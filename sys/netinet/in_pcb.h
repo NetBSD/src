@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.27 1999/07/01 08:12:50 itojun Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.27.2.1 2000/11/20 18:10:23 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,9 +95,7 @@ struct inpcb {
 	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
 	struct	  inpcbtable *inp_table;
 #if 1 /*IPSEC*/
-	struct secpolicy *inp_sp;	/* security policy. It may not be
-					 * used according to policy selection.
-					 */
+	struct inpcbpolicy *inp_sp;     /* security policy. */
 #endif
 };
 #define	inp_faddr	inp_ip.ip_dst
@@ -153,6 +151,7 @@ int	in_pcbnotify __P((struct inpcbtable *, struct in_addr, u_int,
 	    struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
 void	in_pcbnotifyall __P((struct inpcbtable *, struct in_addr, int,
 	    void (*)(struct inpcb *, int)));
+void	in_pcbpurgeif __P((struct inpcbtable *, struct ifnet *));
 void	in_pcbstate __P((struct inpcb *, int));
 void	in_rtchange __P((struct inpcb *, int));
 void	in_setpeeraddr __P((struct inpcb *, struct mbuf *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.58 1998/11/09 01:18:34 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58.10.1 2000/11/20 18:09:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -59,7 +59,7 @@
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
+#include <miscfs/specfs/specdev.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -73,6 +73,7 @@
 	(&bufhashtbl[((long)(dvp) / sizeof(*(dvp)) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
+struct bio_ops bioops;	/* I/O operation notification */
 
 /*
  * Insq/Remq for the buffer hash lists.
@@ -94,6 +95,11 @@ TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
 
 /*
+ * Buffer pool for I/O buffers.
+ */
+struct pool bufpool;
+
+/*
  * Insq/Remq for the buffer free lists.
  */
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
@@ -107,6 +113,8 @@ void
 bremfree(bp)
 	struct buf *bp;
 {
+	int s = splbio();
+
 	struct bqueues *dp = NULL;
 
 	/*
@@ -124,6 +132,8 @@ bremfree(bp)
 			panic("bremfree: lost tail");
 	}
 	TAILQ_REMOVE(dp, bp, b_freelist);
+
+	splx(s);
 }
 
 /*
@@ -132,10 +142,18 @@ bremfree(bp)
 void
 bufinit()
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct bqueues *dp;
-	register int i;
+	int i;
 	int base, residual;
+
+	/*
+	 * Initialize the buffer pool.  This pool is used for buffers
+	 * which are strictly I/O control blocks, not buffer cache
+	 * buffers.
+	 */
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", 0,
+	    NULL, NULL, M_DEVBUF);
 
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
@@ -149,11 +167,12 @@ bufinit()
 		bp->b_rcred = NOCRED;
 		bp->b_wcred = NOCRED;
 		bp->b_vnbufs.le_next = NOLIST;
+		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
 		if (i < residual)
-			bp->b_bufsize = (base + 1) * CLBYTES;
+			bp->b_bufsize = (base + 1) * NBPG;
 		else
-			bp->b_bufsize = base * CLBYTES;
+			bp->b_bufsize = base * NBPG;
 		bp->b_flags = B_INVAL;
 		dp = bp->b_bufsize ? &bufqueues[BQ_AGE] : &bufqueues[BQ_EMPTY];
 		binsheadfree(bp, dp);
@@ -169,7 +188,7 @@ bio_doread(vp, blkno, size, cred, async)
 	struct ucred *cred;
 	int async;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
 
 	bp = getblk(vp, blkno, size, 0, 0);
@@ -209,7 +228,7 @@ bread(vp, blkno, size, cred, bpp)
 	struct ucred *cred;
 	struct buf **bpp;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
@@ -242,7 +261,7 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 	struct ucred *cred;
 	struct buf **bpp;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	int i;
 
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
@@ -300,6 +319,8 @@ bwrite(bp)
 {
 	int rv, sync, wasdelayed, s;
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct vnode *vp;
+	struct mount *mp;
 
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
@@ -315,10 +336,29 @@ bwrite(bp)
 		return (0);
 	}
 
+	/*
+	 * Collect statistics on synchronous and asynchronous writes.
+	 * Writes to block devices are charged to their associated
+	 * filesystem (if any).
+	 */
+	if ((vp = bp->b_vp) != NULL) {
+		if (vp->v_type == VBLK)
+			mp = vp->v_specmountpoint;
+		else
+			mp = vp->v_mount;
+		if (mp != NULL) {
+			if (sync)
+				mp->mnt_stat.f_syncwrites++;
+			else
+				mp->mnt_stat.f_asyncwrites++;
+		}
+	}
+
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
-	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
 	s = splbio();
+
+	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
 	/*
 	 * Pay for the I/O operation and make sure the buf is on the correct
@@ -375,8 +415,8 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
-	int s;
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	int s;
 
 	/* If this is a tape block, write the block now. */
 	/* XXX NOTE: the memory filesystem usurpes major device */
@@ -394,16 +434,18 @@ bdwrite(bp)
 	 *	(2) Charge for the write,
 	 *	(3) Make sure it's on its vnode's correct block list.
 	 */
+	s = splbio();
+
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
 		p->p_stats->p_ru.ru_oublock++;
-		s = splbio();
 		reassignbuf(bp, bp->b_vp);
-		splx(s);
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
 	CLR(bp->b_flags, B_NEEDCOMMIT|B_DONE);
+	splx(s);
+
 	brelse(bp);
 }
 
@@ -417,6 +459,41 @@ bawrite(bp)
 
 	SET(bp->b_flags, B_ASYNC);
 	VOP_BWRITE(bp);
+}
+
+/*
+ * Ordered block write; asynchronous, but I/O will occur in order queued.
+ */
+void
+bowrite(bp)
+	struct buf *bp;
+{
+
+	SET(bp->b_flags, B_ASYNC | B_ORDERED);
+	VOP_BWRITE(bp);
+}
+
+/*
+ * Same as first half of bdwrite, mark buffer dirty, but do not release it.
+ */
+void
+bdirty(bp)
+	struct buf *bp;
+{
+	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	int s;
+
+	s = splbio();
+
+	CLR(bp->b_flags, B_AGE);
+
+	if (!ISSET(bp->b_flags, B_DELWRI)) {
+		SET(bp->b_flags, B_DELWRI);
+		p->p_stats->p_ru.ru_oublock++;
+		reassignbuf(bp, bp->b_vp);
+	}
+
+	splx(s);
 }
 
 /*
@@ -436,14 +513,14 @@ brelse(bp)
 		wakeup(&needbuffer);
 	}
 
+	/* Block disk interrupts. */
+	s = splbio();
+
 	/* Wake up any proceeses waiting for _this_ buffer to become free. */
 	if (ISSET(bp->b_flags, B_WANTED)) {
 		CLR(bp->b_flags, B_WANTED|B_AGE);
 		wakeup(bp);
 	}
-
-	/* Block disk interrupts. */
-	s = splbio();
 
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
@@ -476,9 +553,13 @@ brelse(bp)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (bp->b_vp)
-			brelvp(bp);
+		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
+			(*bioops.io_deallocate)(bp);
 		CLR(bp->b_flags, B_DONE|B_DELWRI);
+		if (bp->b_vp) {
+			reassignbuf(bp, bp->b_vp);
+			brelvp(bp);
+		}
 		if (bp->b_bufsize <= 0)
 			/* no data */
 			bufq = &bufqueues[BQ_EMPTY];
@@ -490,22 +571,35 @@ brelse(bp)
 		/*
 		 * It has valid data.  Put it on the end of the appropriate
 		 * queue, so that it'll stick around for as long as possible.
+		 * If buf is AGE, but has dependencies, must put it on last
+		 * bufqueue to be scanned, ie LRU. This protects against the
+		 * livelock where BQ_AGE only has buffers with dependencies,
+		 * and we thus never get to the dependent buffers in BQ_LRU.
 		 */
 		if (ISSET(bp->b_flags, B_LOCKED))
 			/* locked in core */
 			bufq = &bufqueues[BQ_LOCKED];
-		else if (ISSET(bp->b_flags, B_AGE))
-			/* stale but valid data */
-			bufq = &bufqueues[BQ_AGE];
-		else
+		else if (!ISSET(bp->b_flags, B_AGE))
 			/* valid data */
 			bufq = &bufqueues[BQ_LRU];
+		else {
+			/* stale but valid data */
+			int has_deps;
+
+			if (LIST_FIRST(&bp->b_dep) != NULL &&
+			    bioops.io_countdeps)
+				has_deps = (*bioops.io_countdeps)(bp, 0);
+			else
+				has_deps = 0;
+			bufq = has_deps ? &bufqueues[BQ_LRU] :
+			    &bufqueues[BQ_AGE];
+		}
 		binstailfree(bp, bufq);
 	}
 
 already_queued:
 	/* Unlock the buffer. */
-	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
+	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_ORDERED);
 
 	/* Allow disk interrupts. */
 	splx(s);
@@ -547,7 +641,7 @@ incore(vp, blkno)
  */
 struct buf *
 getblk(vp, blkno, size, slpflag, slptimeo)
-	register struct vnode *vp;
+	struct vnode *vp;
 	daddr_t blkno;
 	int size, slpflag, slptimeo;
 {
@@ -601,7 +695,7 @@ start:
 		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL)
 			goto start;
 		binshash(bp, bh);
-		bp->b_blkno = bp->b_lblkno = blkno;
+		bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = blkno;
 		s = splbio();
 		bgetvp(vp, bp);
 		splx(s);
@@ -645,7 +739,7 @@ allocbuf(bp, size)
 	vsize_t       desired_size;
 	int	     s;
 
-	desired_size = roundup(size, CLBYTES);
+	desired_size = roundup(size, NBPG);
 	if (desired_size > MAXBSIZE)
 		panic("allocbuf: buffer larger than MAXBSIZE requested");
 
@@ -727,7 +821,7 @@ struct buf *
 getnewbuf(slpflag, slptimeo)
 	int slpflag, slptimeo;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	int s;
 
 start:
@@ -775,10 +869,13 @@ start:
 		brelvp(bp);
 	splx(s);
 
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
+		(*bioops.io_deallocate)(bp);
+
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
 	bp->b_dev = NODEV;
-	bp->b_blkno = bp->b_lblkno = 0;
+	bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = 0;
 	bp->b_iodone = 0;
 	bp->b_error = 0;
 	bp->b_resid = 0;
@@ -809,7 +906,7 @@ biowait(bp)
 	struct buf *bp;
 {
 	int s;
-
+	
 	s = splbio();
 	while (!ISSET(bp->b_flags, B_DONE))
 		tsleep(bp, PRIBIO + 1, "biowait", 0);
@@ -845,9 +942,14 @@ void
 biodone(bp)
 	struct buf *bp;
 {
+	int s = splbio();
+
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
+
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
+		(*bioops.io_complete)(bp);
 
 	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
 		vwakeup(bp);
@@ -855,12 +957,16 @@ biodone(bp)
 	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
 		CLR(bp->b_flags, B_CALL);	/* but note callout done */
 		(*bp->b_iodone)(bp);
-	} else if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release it */
-		brelse(bp);
-	else {					/* or just wakeup the buffer */
-		CLR(bp->b_flags, B_WANTED);
-		wakeup(bp);
+	} else {
+		if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release */
+			brelse(bp);
+		else {				/* or just wakeup the buffer */
+			CLR(bp->b_flags, B_WANTED);
+			wakeup(bp);
+		}
 	}
+
+	splx(s);
 }
 
 /*
@@ -869,8 +975,8 @@ biodone(bp)
 int
 count_lock_queue()
 {
-	register struct buf *bp;
-	register int n = 0;
+	struct buf *bp;
+	int n = 0;
 
 	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp;
 	    bp = bp->b_freelist.tqe_next)
@@ -888,25 +994,25 @@ void
 vfs_bufstats()
 {
 	int s, i, j, count;
-	register struct buf *bp;
-	register struct bqueues *dp;
-	int counts[MAXBSIZE/CLBYTES+1];
+	struct buf *bp;
+	struct bqueues *dp;
+	int counts[MAXBSIZE/NBPG+1];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
+		for (j = 0; j <= MAXBSIZE/NBPG; j++)
 			counts[j] = 0;
 		s = splbio();
 		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
-			counts[bp->b_bufsize/CLBYTES]++;
+			counts[bp->b_bufsize/NBPG]++;
 			count++;
 		}
 		splx(s);
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
+		for (j = 0; j <= MAXBSIZE/NBPG; j++)
 			if (counts[j] != 0)
-				printf(", %d-%d", j * CLBYTES, counts[j]);
+				printf(", %d-%d", j * NBPG, counts[j]);
 		printf("\n");
 	}
 }

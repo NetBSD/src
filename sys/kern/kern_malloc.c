@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.45 1999/07/19 03:17:42 chs Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.45.2.1 2000/11/20 18:09:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,13 +45,38 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
 static struct vm_map_intrsafe kmem_map_store;
 vm_map_t kmem_map = NULL;
+
+#include "opt_kmempages.h"
+
+#ifdef NKMEMCLUSTERS
+#error NKMEMCLUSTERS is obsolete; remove it from your kernel config file and use NKMEMPAGES instead or let the kernel auto-size
+#endif
+
+/*
+ * Default number of pages in kmem_map.  We attempt to calculate this
+ * at run-time, but allow it to be either patched or set in the kernel
+ * config file.
+ */
+#ifndef NKMEMPAGES
+#define	NKMEMPAGES	0
+#endif
+int	nkmempages = NKMEMPAGES;
+
+/*
+ * Defaults for lower- and upper-bounds for the kmem_map page count.
+ * Can be overridden by kernel config options.
+ */
+#ifndef	NKMEMPAGES_MIN
+#define	NKMEMPAGES_MIN	NKMEMPAGES_MIN_DEFAULT
+#endif
+
+#ifndef NKMEMPAGES_MAX
+#define	NKMEMPAGES_MAX	NKMEMPAGES_MAX_DEFAULT
+#endif
 
 #include "opt_kmemstats.h"
 #include "opt_malloclog.h"
@@ -185,9 +210,9 @@ malloc(size, type, flags)
 	int type, flags;
 #endif /* MALLOCLOG */
 {
-	register struct kmembuckets *kbp;
-	register struct kmemusage *kup;
-	register struct freelist *freep;
+	struct kmembuckets *kbp;
+	struct kmemusage *kup;
+	struct freelist *freep;
 	long indx, npg, allocsize;
 	int s;
 	caddr_t va, cp, savedlist;
@@ -197,14 +222,14 @@ malloc(size, type, flags)
 	const char *savedtype;
 #endif
 #ifdef KMEMSTATS
-	register struct kmemstats *ksp = &kmemstats[type];
+	struct kmemstats *ksp = &kmemstats[type];
 
-	if (((unsigned long)type) > M_LAST)
+	if (__predict_false(((unsigned long)type) > M_LAST))
 		panic("malloc - bogus type");
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
-	s = splimp();
+	s = splmem();
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
@@ -223,14 +248,14 @@ malloc(size, type, flags)
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
-			allocsize = roundup(size, CLBYTES);
+			allocsize = roundup(size, PAGE_SIZE);
 		else
 			allocsize = 1 << indx;
-		npg = clrnd(btoc(allocsize));
+		npg = btoc(allocsize);
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 				(vsize_t)ctob(npg), 
 				(flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0);
-		if (va == NULL) {
+		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
 			 * wait, if there is no map space avaiable, because
@@ -268,7 +293,7 @@ malloc(size, type, flags)
 		 * bucket, don't assume the list is still empty.
 		 */
 		savedlist = kbp->kb_next;
-		kbp->kb_next = cp = va + (npg * NBPG) - allocsize;
+		kbp->kb_next = cp = va + (npg << PAGE_SHIFT) - allocsize;
 		for (;;) {
 			freep = (struct freelist *)cp;
 #ifdef DIAGNOSTIC
@@ -306,8 +331,7 @@ malloc(size, type, flags)
 				       VM_PROT_WRITE);
 		vm_map_unlock(kmem_map);
 
-		if (!rv)
-								{
+		if (__predict_false(rv == 0)) {
 			printf(
 		    "%s %ld of object %p size %ld %s %s (invalid addr %p)\n",
 			    "Data modified on freelist: word", 
@@ -335,7 +359,7 @@ malloc(size, type, flags)
 	/* and check that the data hasn't been modified. */
 	end = (int32_t *)&va[copysize];
 	for (lp = (int32_t *)va; lp < end; lp++) {
-		if (*lp == WEIRD_ADDR)
+		if (__predict_true(*lp == WEIRD_ADDR))
 			continue;
 		printf("%s %ld of object %p size %ld %s %s (0x%x != 0x%x)\n",
 		    "Data modified on freelist: word",
@@ -391,9 +415,9 @@ free(addr, type)
 	int type;
 #endif /* MALLOCLOG */
 {
-	register struct kmembuckets *kbp;
-	register struct kmemusage *kup;
-	register struct freelist *freep;
+	struct kmembuckets *kbp;
+	struct kmemusage *kup;
+	struct freelist *freep;
 	long size;
 	int s;
 #ifdef DIAGNOSTIC
@@ -402,13 +426,24 @@ free(addr, type)
 	long alloc, copysize;
 #endif
 #ifdef KMEMSTATS
-	register struct kmemstats *ksp = &kmemstats[type];
+	struct kmemstats *ksp = &kmemstats[type];
+#endif
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Ensure that we're free'ing something that we could
+	 * have allocated in the first place.  That is, check
+	 * to see that the address is within kmem_map.
+	 */
+	if (__predict_false((vaddr_t)addr < kmem_map->header.start ||
+			    (vaddr_t)addr >= kmem_map->header.end))
+		panic("free: addr %p not within kmem_map", addr);
 #endif
 
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
-	s = splimp();
+	s = splmem();
 #ifdef MALLOCLOG
 	domlog(addr, 0, type, 2, file, line);
 #endif
@@ -417,8 +452,8 @@ free(addr, type)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (size > NBPG * CLSIZE)
-		alloc = addrmask[BUCKETINDX(NBPG * CLSIZE)];
+	if (size > PAGE_SIZE)
+		alloc = addrmask[BUCKETINDX(PAGE_SIZE)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
@@ -447,7 +482,7 @@ free(addr, type)
 	 * Check for multiple frees. Use a quick check to see if
 	 * it looks free before laboriously searching the freelist.
 	 */
-	if (freep->spare0 == WEIRD_ADDR) {
+	if (__predict_false(freep->spare0 == WEIRD_ADDR)) {
 		for (cp = kbp->kb_next; cp;
 		    cp = ((struct freelist *)cp)->next) {
 			if (addr != cp)
@@ -510,7 +545,7 @@ realloc(curaddr, newsize, type, flags)
 	unsigned long newsize;
 	int type, flags;
 {
-	register struct kmemusage *kup;
+	struct kmemusage *kup;
 	long cursize;
 	void *newaddr;
 #ifdef DIAGNOSTIC
@@ -543,8 +578,8 @@ realloc(curaddr, newsize, type, flags)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (cursize > NBPG * CLSIZE)
-		alloc = addrmask[BUCKETINDX(NBPG * CLSIZE)];
+	if (cursize > PAGE_SIZE)
+		alloc = addrmask[BUCKETINDX(PAGE_SIZE)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)curaddr & alloc) != 0)
@@ -566,7 +601,7 @@ realloc(curaddr, newsize, type, flags)
 	 * Allocate a new one and copy the data.
 	 */
 	newaddr = malloc(newsize, type, flags);
-	if (newaddr == NULL) {
+	if (__predict_false(newaddr == NULL)) {
 		/*
 		 * Malloc() failed, because flags included M_NOWAIT.
 		 * Return NULL to indicate that failure.  The old
@@ -585,15 +620,51 @@ realloc(curaddr, newsize, type, flags)
 }
 
 /*
+ * Compute the number of pages that kmem_map will map, that is,
+ * the size of the kernel malloc arena.
+ */
+void
+kmeminit_nkmempages()
+{
+	int npages;
+
+	if (nkmempages != 0) {
+		/*
+		 * It's already been set (by us being here before, or
+		 * by patching or kernel config options), bail out now.
+		 */
+		return;
+	}
+
+	/*
+	 * We use the following (simple) formula:
+	 *
+	 *	- Starting point is physical memory / 4.
+	 *
+	 *	- Clamp it down to NKMEMPAGES_MAX.
+	 *
+	 *	- Round it up to NKMEMPAGES_MIN.
+	 */
+	npages = physmem / 4;
+
+	if (npages > NKMEMPAGES_MAX)
+		npages = NKMEMPAGES_MAX;
+
+	if (npages < NKMEMPAGES_MIN)
+		npages = NKMEMPAGES_MIN;
+
+	nkmempages = npages;
+}
+
+/*
  * Initialize the kernel memory allocator
  */
 void
 kmeminit()
 {
 #ifdef KMEMSTATS
-	register long indx;
+	long indx;
 #endif
-	int npg;
 
 #if	((MAXALLOCSAVE & (MAXALLOCSAVE - 1)) != 0)
 		ERROR!_kmeminit:_MAXALLOCSAVE_not_power_of_2
@@ -601,29 +672,34 @@ kmeminit()
 #if	(MAXALLOCSAVE > MINALLOCSIZE * 32768)
 		ERROR!_kmeminit:_MAXALLOCSAVE_too_big
 #endif
-#if	(MAXALLOCSAVE < CLBYTES)
+#if	(MAXALLOCSAVE < NBPG)
 		ERROR!_kmeminit:_MAXALLOCSAVE_too_small
 #endif
 
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
 		panic("minbucket too small/struct freelist too big");
 
-	npg = VM_KMEM_SIZE/ NBPG;
+	/*
+	 * Compute the number of kmem_map pages, if we have not
+	 * done so already.
+	 */
+	kmeminit_nkmempages();
+
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
-		(vsize_t)(npg * sizeof(struct kmemusage)));
+		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
-		(vaddr_t *)&kmemlimit, (vsize_t)(npg * NBPG), 
+		(vaddr_t *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
 			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
-		if (1 << indx >= CLBYTES)
+		if (1 << indx >= PAGE_SIZE)
 			bucket[indx].kb_elmpercl = 1;
 		else
-			bucket[indx].kb_elmpercl = CLBYTES / (1 << indx);
+			bucket[indx].kb_elmpercl = PAGE_SIZE / (1 << indx);
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = npg * NBPG * 6 / 10;
+		kmemstats[indx].ks_limit = (nkmempages << PAGE_SHIFT) * 6 / 10;
 #endif
 }
 
