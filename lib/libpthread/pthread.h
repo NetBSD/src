@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.5 2003/01/19 19:21:49 wiz Exp $	*/
+/*	$NetBSD: pthread.h,v 1.6 2003/01/19 19:41:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -175,8 +175,6 @@ __END_DECLS
  * NULL."
  */
 #define PTHREAD_CANCELED	((void *) 1)
-
-#define	_POSIX_THREADS
 
 #define PTHREAD_DESTRUCTOR_ITERATIONS	4	/* Min. required */
 #define PTHREAD_KEYS_MAX	256
