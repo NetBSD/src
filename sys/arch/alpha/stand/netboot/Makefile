@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/01/17 21:14:32 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/01/18 00:59:47 cgd Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 BOOT_PROG = netboot
 BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
 
-BOOT_SRCS = start.S netboot.c prom.c prom_disp.S OSFpal.c prom_swpal.S
+BOOT_SRCS = start.S boot.c prom.c prom_disp.S OSFpal.c prom_swpal.S
 BOOT_SRCS+= rpcc.S
 
 BOOT_SRCS+= dev_net.c conf.c devopen.c
