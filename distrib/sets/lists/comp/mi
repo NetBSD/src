@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.620 2003/09/22 12:54:46 atatat Exp $
+#	$NetBSD: mi,v 1.621 2003/09/25 18:08:01 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -173,6 +173,8 @@
 ./usr/include/dev/pci/pciio.h		comp-c-include
 ./usr/include/dev/pci/pcireg.h		comp-c-include
 ./usr/include/dev/pci/tgareg.h		comp-c-include
+./usr/include/dev/pci/tweio.h		comp-c-include
+./usr/include/dev/pci/twereg.h		comp-c-include
 ./usr/include/dev/pckbc			comp-c-include
 ./usr/include/dev/pckbc/pckbdreg.h	comp-c-include
 ./usr/include/dev/pcmcia		comp-c-include
