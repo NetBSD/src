@@ -1,4 +1,3 @@
-
 /* @(#)s_ilogb.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: s_ilogb.c,v 1.3 1994/02/18 02:26:35 jtc Exp $";
+#endif
 
 /* ilogb(double x)
  * return the binary exponent of non-zero x

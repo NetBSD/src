@@ -1,4 +1,3 @@
-
 /* @(#)w_gamma.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -9,8 +8,11 @@
  * software is freely granted, provided that this notice 
  * is preserved.
  * ====================================================
- *
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: w_gamma.c,v 1.3 1994/02/18 02:27:27 jtc Exp $";
+#endif
 
 /* double gamma(double x)
  * Return the logarithm of the Gamma function of x.
