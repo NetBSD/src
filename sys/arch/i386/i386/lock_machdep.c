@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.1.2.5 2000/08/18 03:30:19 sommerfeld Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.1.2.6 2001/01/07 18:16:02 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -72,14 +72,20 @@ void
 __cpu_simple_lock(lockp)
 	__cpu_simple_lock_t *lockp;
 {
-#if defined (DEBUG) && defined(DDB)	
+#if defined (DEBUG)
+#if defined(DDB)	
 	int spincount = 0;
 	int cpu = cpu_number();
 	int limit = spin_limit * (cpu + 1);
+#endif
+	__cpu_simple_lock_t v = *lockp;
 
+	KASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
+#if defined(DDB)
 	wantlock[cpu] = lockp;
 #endif
-	
+#endif
+
 	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_LOCKED) {
 #if defined(DEBUG) && defined(DDB)
@@ -108,6 +114,11 @@ int
 __cpu_simple_lock_try(lockp)
 	__cpu_simple_lock_t *lockp;
 {
+#ifdef DEBUG
+	__cpu_simple_lock_t v = *lockp;
+	
+	KASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
+#endif
 
 	if (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_UNLOCKED)
@@ -119,6 +130,12 @@ void
 __cpu_simple_unlock(lockp)
 	__cpu_simple_lock_t *lockp;
 {
+#ifdef DEBUG
+	__cpu_simple_lock_t v = *lockp;
+	
+	KASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
+#endif
+
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
