@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 2001/12/15 23:09:51 fredette Exp $ */
+/*	$NetBSD: installboot.c,v 1.3 2001/12/17 21:55:13 fredette Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ int	devfd;
 	/* Read superblock */
 	devread(devfd, sblock, SBLOCK, SBSIZE, "superblock");
 	fs = (struct fs *)sblock;
-	needswap = (sa_be32toh(fs->fs_magic) == FS_MAGIC);
+	needswap = (fs->fs_magic != FS_MAGIC);
 	if (needswap)
 		ffs_sb_swap(fs, fs);
 
