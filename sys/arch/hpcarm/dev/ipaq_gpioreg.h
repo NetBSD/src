@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_gpioreg.h,v 1.3 2001/07/15 00:30:17 ichiro Exp $	*/
+/*	$NetBSD: ipaq_gpioreg.h,v 1.4 2001/07/15 13:29:38 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -87,6 +87,9 @@ Extended GPIO
 #define GPIO_H3600_PCMCIA_CD1	GPIO (10)
 #define GPIO_H3600_PCMCIA_IRQ0	GPIO (21)
 #define GPIO_H3600_PCMCIA_IRQ1	GPIO (11)
+#define GPIO_H3600_L3_DATA	GPIO (14)
+#define GPIO_H3600_L3_MODE	GPIO (15)
+#define GPIO_H3600_L3_CLK	GPIO (16)
 #define GPIO_H3600_OPT_LOCK	GPIO (22)
 #define GPIO_H3600_OPT_IRQ	GPIO (24)
 #define GPIO_H3600_OPT_DETECT	GPIO (27)
