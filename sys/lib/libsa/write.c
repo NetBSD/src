@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.4 1995/02/21 06:33:26 mycroft Exp $	*/
+/*	$NetBSD: write.c,v 1.5 1995/09/14 23:45:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,14 +66,14 @@
 
 #include "stand.h"
 
-int
+ssize_t
 write(fd, dest, bcount)
 	int fd;
 	void *dest;
-	u_int bcount;
+	size_t bcount;
 {
 	register struct open_file *f = &files[fd];
-	u_int resid;
+	size_t resid;
 
 	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_WRITE)) {
 		errno = EBADF;

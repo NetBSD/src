@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.8 1995/09/13 15:06:12 gwr Exp $	*/
+/*	$NetBSD: arp.c,v 1.9 1995/09/14 23:45:21 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -64,8 +64,8 @@ static struct arp_list {
 static	int arp_num = 1;
 
 /* Local forwards */
-static	size_t arpsend __P((struct iodesc *, void *, size_t));
-static	size_t arprecv __P((struct iodesc *, void *, size_t, time_t));
+static	ssize_t arpsend __P((struct iodesc *, void *, size_t));
+static	ssize_t arprecv __P((struct iodesc *, void *, size_t, time_t));
 
 /* Broadcast an ARP packet, asking who has addr on interface d */
 u_char *
@@ -134,7 +134,7 @@ arpwhohas(d, addr)
 	return (al->ea);
 }
 
-static size_t
+static ssize_t
 arpsend(d, pkt, len)
 	register struct iodesc *d;
 	register void *pkt;
@@ -150,13 +150,14 @@ arpsend(d, pkt, len)
 }
 
 /* Returns 0 if this is the packet we're waiting for else -1 (and errno == 0) */
-static size_t
+static ssize_t
 arprecv(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void *pkt;
 	register size_t len;
 	time_t tleft;
 {
+	register ssize_t n;
 	register struct ether_arp *ah;
 	u_int16_t etype;	/* host order */
 
@@ -165,11 +166,11 @@ arprecv(d, pkt, len, tleft)
 		printf("arprecv: ");
 #endif
 
-	len = readether(d, pkt, len, tleft, &etype);
-	if (len == -1 || len < sizeof(struct ether_arp)) {
+	n = readether(d, pkt, len, tleft, &etype);
+	if (n == -1 || n < sizeof(struct ether_arp)) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("bad len=%d\n", len);
+			printf("bad len=%d\n", n);
 #endif
 		goto bad;
 	}
@@ -225,7 +226,7 @@ arprecv(d, pkt, len, tleft)
 			   intoa(ah->arp_spa),
 			   ether_sprintf(ah->arp_sha));
 #endif
-	return (0);
+	return (n);
 
 bad:
 	errno = 0;
