@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.155 2001/03/15 06:10:40 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.156 2001/03/18 02:53:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ trap(frame)
 	struct trapframe *vframe;
 	int resume;
 	caddr_t onfault;
+	int error;
 
 	uvmexp.traps++;
 
@@ -230,8 +231,11 @@ trap(frame)
 		/* Check for copyin/copyout fault. */
 		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
-		copyfault:
+copyefault:
+			error = EFAULT;
+copyfault:
 			frame.tf_eip = (int)pcb->pcb_onfault;
+			frame.tf_eax = error;
 			return;
 		}
 
@@ -340,7 +344,7 @@ trap(frame)
 		 * from inside the profiling interrupt.
 		 */
 		if (pcb->pcb_onfault == fusubail)
-			goto copyfault;
+			goto copyefault;
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
 		if (frame.tf_err & PGEX_P)
@@ -352,7 +356,6 @@ trap(frame)
 		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
-		int error;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 		unsigned nss;
@@ -415,6 +418,9 @@ trap(frame)
 			if (type == T_PAGEFLT)
 				return;
 			goto out;
+		}
+		if (error == EACCES) {
+			error = EFAULT;
 		}
 
 		if (type == T_PAGEFLT) {
