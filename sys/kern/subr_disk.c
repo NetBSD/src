@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.43 2002/11/01 03:32:21 enami Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.44 2002/11/01 03:34:07 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.43 2002/11/01 03:32:21 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.44 2002/11/01 03:34:07 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -702,16 +702,17 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 
 	bp = prio->bq_next;
 
-	if (prio->bq_next != NULL && remove) {
-		if ((prio->bq_next->b_flags & B_READ) == B_READ)
-			TAILQ_REMOVE(&prio->bq_read, prio->bq_next, b_actq);
+	if (bp != NULL && remove) {
+		if ((bp->b_flags & B_READ) == B_READ)
+			TAILQ_REMOVE(&prio->bq_read, bp, b_actq);
 		else {
-			TAILQ_REMOVE(&prio->bq_write, prio->bq_next, b_actq);
 			/*
-			 * Advance the write pointer.
+			 * Advance the write pointer before removing
+			 * bp since it is actually prio->bq_write_next.
 			 */
 			prio->bq_write_next =
 			    TAILQ_NEXT(prio->bq_write_next, b_actq);
+			TAILQ_REMOVE(&prio->bq_write, bp, b_actq);
 			if (prio->bq_write_next == NULL)
 				prio->bq_write_next =
 				    TAILQ_FIRST(&prio->bq_write);
