@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.12 2001/12/13 17:15:09 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.13 2001/12/14 12:57:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ void irframe_attach(struct device *parent, struct device *self, void *aux);
 int irframe_activate(struct device *self, enum devact act);
 int irframe_detach(struct device *self, int flags);
 
+Static int irf_set_params(struct irframe_softc *sc, struct irda_params *p);
 Static int irf_reset_params(struct irframe_softc *sc);
 
 #if NIRFRAME == 0
@@ -257,18 +258,74 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
+irf_set_params(struct irframe_softc *sc, struct irda_params *p)
+{
+	int error;
+
+	DPRINTF(("irf_set_params: set params speed=%u ebofs=%u maxsize=%u "
+		 "speedmask=0x%x\n", p->speed, p->ebofs, p->maxsize,
+		 sc->sc_speedmask));
+
+	if (p->maxsize > IRDA_MAX_FRAME_SIZE) {
+#ifdef IRFRAME_DEBUG
+		printf("irf_set_params: bad maxsize=%u\n", p->maxsize);
+#endif
+		return (EINVAL);
+	}
+
+	if (p->ebofs > IRDA_MAX_EBOFS) {
+#ifdef IRFRAME_DEBUG
+		printf("irf_set_params: bad maxsize=%u\n", p->maxsize);
+#endif
+		return (EINVAL);
+	}
+
+#define CONC(x,y) x##y
+#define CASE(s) case s: if (!(sc->sc_speedmask & CONC(IRDA_SPEED_,s))) return (EINVAL); break
+	switch (p->speed) {
+	CASE(2400);
+	CASE(9600);
+	CASE(19200);
+	CASE(38400);
+	CASE(57600);
+	CASE(115200);
+	CASE(576000);
+	CASE(1152000);
+	CASE(4000000);
+	CASE(16000000);
+	default: return (EINVAL);
+	}
+#undef CONC
+#undef CASE
+
+	error = sc->sc_methods->im_set_params(sc->sc_handle, p);
+	if (!error) {
+		sc->sc_params = *p;
+		DPRINTF(("irf_set_params: ok\n"));
+#ifdef DIAGNOSTIC
+		if (p->speed != sc->sc_speed) {
+			sc->sc_speed = p->speed;
+			printf("%s: set speed %u\n", sc->sc_dev.dv_xname,
+			       sc->sc_speed);
+		}
+#endif
+	} else {
+#ifdef IRFRAME_DEBUG
+		printf("irf_set_params: error=%d\n", error);
+#endif
+	}
+	return (error);
+}
+
+int
 irf_reset_params(struct irframe_softc *sc)
 {
 	struct irda_params params;
-	int error;
 
 	params.speed = IRDA_DEFAULT_SPEED;
 	params.ebofs = IRDA_DEFAULT_EBOFS;
 	params.maxsize = IRDA_DEFAULT_SIZE;
-	error = sc->sc_methods->im_set_params(sc->sc_handle, &params);
-	if (!error)
-		sc->sc_params = params;
-	return (error);
+	return (irf_set_params(sc, &params));
 }
 
 int
@@ -276,7 +333,6 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;
-	struct irda_params *parms = vaddr;
 	int error;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
@@ -292,24 +348,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_SET_PARAMS:
-		DPRINTF(("irframeioctl: set params speed=%u ebofs=%u maxsize=%u\n", parms->speed, parms->ebofs, parms->maxsize));
-#ifdef DIAGNOSTIC
-		if (parms->speed != sc->sc_speed) {
-			sc->sc_speed = parms->speed;
-			printf("%s: set speed %u\n", sc->sc_dev.dv_xname,
-			       sc->sc_speed);
-		}
-#endif
-		if (parms->maxsize > IRDA_MAX_FRAME_SIZE)
-			return (EINVAL);
-		if (parms->ebofs > IRDA_MAX_EBOFS)
-			return (EINVAL);
-		/* XXX check speed */
-		error = sc->sc_methods->im_set_params(sc->sc_handle, vaddr);
-		if (!error) {
-			sc->sc_params = *parms;
-			DPRINTF(("irframeioctl: ok\n"));
-		}
+		error = irf_set_params(sc, vaddr);
 		break;
 
 	case IRDA_RESET_PARAMS:
