@@ -1,5 +1,7 @@
+/*	$NetBSD: info-utils.c,v 1.1.1.3 2003/01/17 14:54:31 wiz Exp $	*/
+
 /* info-utils.c -- miscellanous.
-   $Id: info-utils.c,v 1.1.1.2 2001/07/25 16:20:47 assar Exp $
+   Id: info-utils.c,v 1.1 2002/08/25 23:38:38 karl Exp
 
    Copyright (C) 1993, 98 Free Software Foundation, Inc.
 
@@ -443,9 +445,11 @@ printed_representation (character, hpos)
 {
   register int i = 0;
   int printable_limit = ISO_Latin_p ? 255 : 127;
-    
+
+  if (raw_escapes_p && character == '\033')
+    the_rep[i++] = character;
   /* Show CTRL-x as ^X.  */
-  if (iscntrl (character) && character < 127)
+  else if (iscntrl (character) && character < 127)
     {
       switch (character)
         {
