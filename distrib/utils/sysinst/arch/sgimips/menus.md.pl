@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.2 2002/04/09 19:48:18 hubertf Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.3 2002/05/21 21:59:03 rafal Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:01 thorpej Exp */
 
@@ -59,8 +59,8 @@ menu editfsparts, y=12, exit;
  
 menu md_distcustom, x=26, y=5, exit, title "Wybierz";
 	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
-	option	"Kernel (GENERIC_INDY)",	 action { toggle_getit (1); };
+	option	"Kernel (GENERIC_INDY)", action { toggle_getit (0); };
+	option	"Kernel (GENERIC)",	 action { toggle_getit (1); };
 	option	"Base",			 action { toggle_getit (2); };
 	option	"System (/etc)",	 action { toggle_getit (3); };
 	option  "Compiler Tools", 	 action { toggle_getit (4); };
