@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.10.2.1 2002/02/28 04:15:23 nathanw Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.10.2.2 2002/08/02 21:07:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,6 +56,9 @@
 #endif /* !__DO_NOT_DO_WEAK__ */
 
 #if __STDC__
+#define	__strong_alias(alias,sym)	       				\
+    __asm__(".global " _C_LABEL_STRING(#alias) " ; "			\
+	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 
 #ifndef __DO_NOT_DO_WEAK__
 #define	__weak_alias(alias,sym)						\
