@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.13 2002/07/14 15:28:01 wiz Exp $	*/
+/*	$NetBSD: lprm.c,v 1.14 2003/05/17 20:46:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.13 2002/07/14 15:28:01 wiz Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.14 2003/05/17 20:46:44 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,8 +103,7 @@ main(int argc, char *argv[])
 		fatal("Who are you?");
 	if (strlen(p->pw_name) >= sizeof(luser))
 		fatal("Your name is too long");
-	strncpy(luser, p->pw_name, sizeof(luser) - 1);
-	luser[sizeof(luser) - 1] = '\0';
+	strlcpy(luser, p->pw_name, sizeof(luser));
 	person = luser;
 	while (--argc) {
 		if ((arg = *++argv)[0] == '-')
