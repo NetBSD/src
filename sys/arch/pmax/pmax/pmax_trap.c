@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.34 1996/04/10 17:38:27 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.35 1996/05/19 17:58:12 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,9 +78,18 @@
 
 #include <pmax/stand/dec_prom.h>
 
+#include <sys/socket.h>
+#include <sys/mbuf.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <netinet/if_ether.h>
+
+struct ifnet; struct arpcom;
+#include <dev/ic/am7990var.h>		/* Lance interrupt for kn01 */
+
 #include "asc.h"
 #include "sii.h"
-#include "le.h"
+#include "le_pmax.h"
 #include "dc.h"
 
 #include <sys/cdefs.h>
@@ -208,7 +217,7 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	}
 #endif /* NSII */
 
-#if NLE > 0
+#if NLE_PMAX > 0
 	if (mask & MACH_INT_MASK_1) {
 
 		/* 
@@ -217,10 +226,10 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		 * manipulating if queues should have called splimp(),
 		 * which would mask out MACH_INT_MASK_1.
 		 */
-		leintr(le_cd.cd_devs[0]);
+		am7990_intr(le_cd.cd_devs[0]); /* XXX FIXME */
 		intrcnt[LANCE_INTR]++;
 	}
-#endif /* NLE */
+#endif /* NLE_PMAX */
 
 #if NDC > 0
 	if (mask & MACH_INT_MASK_2) {
