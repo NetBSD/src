@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: a3000dma.c,v 1.5 1994/02/13 21:10:22 chopps Exp $
+ *	$Id: a3000dma.c,v 1.6 1994/04/18 04:09:13 chopps Exp $
  */
 
 /*
@@ -47,7 +47,6 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#include <vm/vm_statistics.h>
 #include <machine/pmap.h>
 
 #include <amiga/dev/device.h>

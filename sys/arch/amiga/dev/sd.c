@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.12 1994/04/06 21:01:06 chopps Exp $
+ *	$Id: sd.c,v 1.13 1994/04/18 04:09:20 chopps Exp $
  */
 
 /*
@@ -54,7 +54,7 @@
 #endif
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.12 1994/04/06 21:01:06 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.13 1994/04/18 04:09:20 chopps Exp $";
 #endif
 
 #include <sys/types.h>
@@ -72,7 +72,6 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.1
 #include <amiga/dev/scsidefs.h>
 #include <vm/vm_param.h>
 #include <vm/lock.h>
-#include <vm/vm_statistics.h>
 #include <vm/pmap.h>
 #include <vm/vm_prot.h>
 
