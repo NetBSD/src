@@ -137,6 +137,7 @@ m68k-*-linux-gnu*)	targ_emul=m68kelf
 			;;
 m68*-*-lynxos*)		targ_emul=m68klynx ;;
 m68*-hp*-netbsd*)	targ_emul=m68k4knbsd ;;
+m68*-*-netbsdelf*)	targ_emul=m68kelf ;;
 m68*-*-netbsd*)		targ_emul=m68knbsd ;;
 m68*-*-psos*)		targ_emul=m68kpsos ;;
 m68*-*-rtems*)		targ_emul=m68kcoff ;;
