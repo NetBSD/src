@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.19 2004/02/29 00:47:21 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.20 2004/03/01 01:19:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.36 2003/11/29 01:23:59 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.19 2004/02/29 00:47:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.20 2004/03/01 01:19:45 dyoung Exp $");
 #endif
 
 /*
@@ -195,6 +195,12 @@ SYSCTL_INT(_hw_ath, OID_AUTO, regdomain, CTLFLAG_RD, &ath_regdomain,
 	    0, "regulatory domain");
 #endif /* __FreeBSD__ */
 
+#ifdef __NetBSD__
+static struct sysctlnode *ath_node_root;
+static int ath_dwelltime_nodenum, ath_calibrate_nodenum, ath_outdoor_nodenum,
+           ath_countrycode_nodenum, ath_regdomain_nodenum, ath_debug_nodenum;
+#endif /* __NetBSD__ */
+
 static	int ath_dwelltime = 200;		/* 5 channels/second */
 static	int ath_calinterval = 30;		/* calibrate every 30 secs */
 static	int ath_outdoor = AH_TRUE;		/* outdoor operation */
@@ -264,7 +270,125 @@ ath_disable(struct ath_softc *sc)
 		(*sc->sc_disable)(sc);
 	sc->sc_flags &= ~ATH_ENABLED;
 }
-#endif	/* #ifdef __NetBSD__ */
+
+static int
+sysctl_ath_verify(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	DPRINTF2(("%s: t = %d, nodenum = %d, rnodenum = %d\n", __func__, t,
+	    node.sysctl_num, rnode->sysctl_num));
+
+	if (node.sysctl_num == ath_dwelltime_nodenum) {
+		if (t <= 0)
+			return (EINVAL);
+	} else if (node.sysctl_num == ath_calibrate_nodenum) {
+		if (t <= 0)
+			return (EINVAL);
+#ifdef AR_DEBUG
+	} else if (node.sysctl_num == ath_debug_nodenum) {
+		if (t < 0 || t > 2)
+			return (EINVAL);
+#endif /* AR_DEBUG */
+	} else
+		return (EINVAL);
+
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+/*
+ * Setup sysctl(3) MIB, ath.*.
+ *
+ * TBD condition SYSCTL_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
+{
+	int rc;
+	struct sysctlnode *node = NULL;
+
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT, CTLTYPE_NODE, "ath",
+	    &node, NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ath_node_root = node;
+	node = NULL;
+
+	/* channel dwell time (ms) for AP/station scanning */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	    CTLTYPE_INT, "dwell", &node, sysctl_ath_verify, 0, &ath_dwelltime,
+	    0, ath_node_root->sysctl_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ath_dwelltime_nodenum = node->sysctl_num;
+
+	node = NULL;
+
+	/* chip calibration interval (secs) */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	    CTLTYPE_INT, "calibrate", &node, sysctl_ath_verify,
+	    0, &ath_calinterval, 0, ath_node_root->sysctl_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	ath_calibrate_nodenum = node->sysctl_num;
+
+	node = NULL;
+
+	/* enable/disable outdoor operation */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY, CTLTYPE_INT,
+	    "outdoor", &node, NULL, 0, &ath_outdoor, 0,
+	    ath_node_root->sysctl_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ath_outdoor_nodenum = node->sysctl_num;
+
+	node = NULL;
+
+	/* country code */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY, CTLTYPE_INT,
+	    "countrycode", &node, NULL, 0, &ath_countrycode, 0,
+	    ath_node_root->sysctl_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ath_countrycode_nodenum = node->sysctl_num;
+
+	node = NULL;
+
+	/* regulatory domain */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY, CTLTYPE_INT,
+	    "regdomain", &node, NULL, 0, &ath_regdomain, 0,
+	    ath_node_root->sysctl_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ath_regdomain_nodenum = node->sysctl_num;
+
+#ifdef AR_DEBUG
+	node = NULL;
+
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE, CTLTYPE_INT,
+	    "debug", &node, sysctl_ath_verify, 0, &ath_debug, 0,
+	    ath_node_root->sysctl_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	ath_debug_nodenum = node->sysctl_num;
+
+#endif /* AR_DEBUG */
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+#endif /* __NetBSD__ */
 
 int
 ath_attach(u_int16_t devid, struct ath_softc *sc)
@@ -3363,6 +3487,36 @@ sysctl_hw_ath_dump(SYSCTL_HANDLER_ARGS)
 SYSCTL_PROC(_hw_ath, OID_AUTO, dump, CTLTYPE_STRING | CTLFLAG_RW,
 	0, 0, sysctl_hw_ath_dump, "A", "Dump driver state");
 #endif /* __FreeBSD__ */
+
+#if 0 /* #ifdef __NetBSD__ */
+static int
+sysctl_hw_ath_dump(SYSCTL_HANDLER_ARGS)
+{
+	char dmode[64];
+	int error;
+
+	strncpy(dmode, "", sizeof(dmode) - 1);
+	dmode[sizeof(dmode) - 1] = '\0';
+	error = sysctl_handle_string(oidp, &dmode[0], sizeof(dmode), req);
+
+	if (error == 0 && req->newptr != NULL) {
+		struct ifnet *ifp;
+		struct ath_softc *sc;
+
+		ifp = ifunit("ath0");		/* XXX */
+		if (!ifp)
+			return EINVAL;
+		sc = ifp->if_softc;
+		if (strcmp(dmode, "hal") == 0)
+			ath_hal_dumpstate(sc->sc_ah);
+		else
+			return EINVAL;
+	}
+	return error;
+}
+SYSCTL_PROC(_hw_ath, OID_AUTO, dump, CTLTYPE_STRING | CTLFLAG_RW,
+	0, 0, sysctl_hw_ath_dump, "A", "Dump driver state");
+#endif /* __NetBSD__ */
 
 static void
 ath_printrxbuf(struct ath_buf *bf, int done)
