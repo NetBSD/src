@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.617 2004/04/03 00:41:10 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.618 2004/04/03 10:51:16 martti Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.616 2004/04/01 08:00:01 tron Exp 
+ *	NetBSD: pcidevs,v 1.618 2004/04/03 10:49:13 martti Exp 
  */
 
 /*
@@ -1235,8 +1235,10 @@
 
 /* Creative Labs products */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SBLive! EMU 10000 */
+#define	PCI_PRODUCT_CREATIVELABS_SBLIVE2	0x0006		/* SBLive! EMU 10000 */
 #define	PCI_PRODUCT_CREATIVELABS_SBAUDIGYLS	0x0007		/* SB Audigy LS */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
+#define	PCI_PRODUCT_CREATIVELABS_SBJOY2	0x7004		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_EV1938	0x8938		/* Ectiva 1938 */
 
 /* Cyclades products */
