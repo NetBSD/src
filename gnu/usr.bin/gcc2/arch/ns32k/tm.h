@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.4 1994/12/21 11:25:35 cgd Exp $
+	$Id: tm.h,v 1.5 1994/12/23 21:17:00 pk Exp $
 */
 
 #if 0
@@ -130,6 +130,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  * Some imports from svr4.h in support of shared libraries.
  */
 
+#define HANDLE_SYSV_PRAGMA
+
 /* Define the strings used for the special svr4 .type and .size directives.
    These strings generally do not vary from one system running svr4 to
    another, but if a given system (e.g. m88k running svr) needs to use
@@ -139,6 +141,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #define TYPE_ASM_OP	".type"
 #define SIZE_ASM_OP	".size"
 #define WEAK_ASM_OP	".weak"
+#define SET_ASM_OP	".set"
 
 /* The following macro defines the format used to output the second
    operand of the .type assembler directive.  Different svr4 assemblers
