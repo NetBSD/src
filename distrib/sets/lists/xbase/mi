@@ -207,7 +207,9 @@
 ./usr/X11R6/lib/X11/locale/iso8859-1
 ./usr/X11R6/lib/X11/locale/iso8859-1/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-1/XLC_LOCALE
+./usr/X11R6/lib/X11/locale/iso8859-10
 ./usr/X11R6/lib/X11/locale/iso8859-10/XLC_LOCALE
+./usr/X11R6/lib/X11/locale/iso8859-15
 ./usr/X11R6/lib/X11/locale/iso8859-15/Compose
 ./usr/X11R6/lib/X11/locale/iso8859-15/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/iso8859-2
