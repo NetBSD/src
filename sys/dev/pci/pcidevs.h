@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.13 2001/03/20 17:24:03 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.14 2001/03/22 02:44:38 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1337,6 +1337,7 @@
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
 #define	PCI_PRODUCT_S3_TRIO32	0x8810		/* Trio32 */
 #define	PCI_PRODUCT_S3_TRIO64	0x8811		/* Trio32/64 */
+#define	PCI_PRODUCT_TRIDENT_CYBERBLADE	0x9910		/* CyberBlade */
 #define	PCI_PRODUCT_S3_AURORA64P	0x8812		/* Aurora64V+ */
 #define	PCI_PRODUCT_S3_TRIO64UVP	0x8814		/* Trio64UV+ */
 #define	PCI_PRODUCT_S3_VIRGE_VX	0x883d		/* ViRGE/VX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.13 2001/03/20 17:24:03 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.14 2001/03/22 02:44:39 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3332,6 +3332,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "Trio32/64",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE,
+	    0,
+	    "Trident Microsystems",
+	    "CyberBlade",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_AURORA64P,
