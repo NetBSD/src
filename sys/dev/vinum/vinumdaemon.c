@@ -34,7 +34,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumdaemon.c,v 1.1.1.1 2003/10/10 03:08:04 grog Exp $
+ * $Id: vinumdaemon.c,v 1.2 2003/11/25 20:11:59 jdolecek Exp $
  * $FreeBSD$
  */
 
@@ -109,7 +109,7 @@ vinum_daemon(void)
 			rq->bp->b_flags & B_READ ? "Read" : "Write",
 			major(rq->bp->b_dev),
 			minor(rq->bp->b_dev),
-			rq->bp->b_blkno,
+			(long long int) rq->bp->b_blkno,
 			rq->bp->b_bcount);
 		}
 		recover_io(request->info.rq);		    /* the failed request */

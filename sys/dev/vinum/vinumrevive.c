@@ -37,7 +37,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumrevive.c,v 1.1.1.1 2003/10/10 03:09:22 grog Exp $
+ * $Id: vinumrevive.c,v 1.2 2003/11/25 20:11:59 jdolecek Exp $
  * $FreeBSD$
  */
 
@@ -302,7 +302,7 @@ parityops(struct vinum_ioctl_msg *data)
 		reply->error = EIO;
 	    sprintf(reply->msg,
 		"Parity incorrect at offset 0x%llx\n",
-		errorloc);
+		(long long int) errorloc);
 	}
 	if (reply->error == EAGAIN) {			    /* still OK, */
 	    plex->checkblock = pstripe + (pbp->b_bcount >> DEV_BSHIFT);	/* moved this much further down */

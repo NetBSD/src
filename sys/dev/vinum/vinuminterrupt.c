@@ -39,7 +39,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinuminterrupt.c,v 1.1.1.1 2003/10/10 03:08:17 grog Exp $
+ * $Id: vinuminterrupt.c,v 1.2 2003/11/25 20:11:59 jdolecek Exp $
  * $FreeBSD$
  */
 
@@ -103,7 +103,7 @@ complete_rqe(struct buf *bp)
 		"%s:%s read error, block %lld for %ld bytes\n",
 		gravity,
 		sd->name,
-		bp->b_blkno,
+		(long long int) bp->b_blkno,
 		bp->b_bcount);
 	} else {					    /* write operation */
 	    if ((rq->error == ENXIO) || (sd->flags & VF_RETRYERRORS) == 0) {
@@ -114,19 +114,19 @@ complete_rqe(struct buf *bp)
 		"%s:%s write error, block %lld for %ld bytes\n",
 		gravity,
 		sd->name,
-		bp->b_blkno,
+		(long long int)bp->b_blkno,
 		bp->b_bcount);
 	}
 	log(LOG_ERR,
 	    "%s: user buffer block %lld for %ld bytes\n",
 	    sd->name,
-	    ubp->b_blkno,
+	    (long long int)ubp->b_blkno,
 	    ubp->b_bcount);
 	if (rq->error == ENXIO) {			    /* the drive's down too */
 	    log(LOG_ERR,
 		"%s: fatal drive I/O error, block %lld for %ld bytes\n",
 		DRIVE[rqe->driveno].label.name,
-		bp->b_blkno,
+		(long long int)bp->b_blkno,
 		bp->b_bcount);
 	    DRIVE[rqe->driveno].lasterror = rq->error;
 	    set_drive_state(rqe->driveno,		    /* take the drive down */
