@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.19 1998/12/17 14:34:51 pk Exp $	*/
+/*	$NetBSD: lib.c,v 1.20 1999/10/04 17:54:15 tron Exp $	*/
 
 /*
  *	- library routines
@@ -306,7 +306,7 @@ symdef_library(fd, entry, member_length)
 
 			read_entry_symbols(fd, subentry);
 			subentry->strings = (char *)
-				alloca(subentry->string_size);
+				malloc(subentry->string_size);
 			read_entry_strings(fd, subentry);
 
 			/*
@@ -319,6 +319,7 @@ symdef_library(fd, entry, member_length)
 				if (subentry->symbols)
 					free(subentry->symbols);
 				free(subentry->filename);
+				free(subentry->strings);
 				free(subentry);
 			} else {
 				/*
@@ -354,6 +355,7 @@ symdef_library(fd, entry, member_length)
 				 * We'll read the strings again
 				 * if we need them.
 				 */
+				free(subentry->strings);
 				subentry->strings = 0;
 			}
 		}
