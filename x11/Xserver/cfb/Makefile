@@ -1,5 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/21 03:07:01 rtr Exp $
 
 PIXELSIZE=	8
 
+.include "../Makefile.serverlib"
 .include "Makefile.cfb"
+
+.if defined(X11FLAGS.LOADABLE)
+SUBDIR= module
+.include <bsd.subdir.mk>
+.endif

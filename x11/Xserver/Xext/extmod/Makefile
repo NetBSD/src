@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/23 23:21:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/12/21 03:07:01 rtr Exp $
 
 LIB=		extmod
 SRCS=		modinit.c shape.c mitmisc.c bigreq.c sync.c saver.c xcmisc.c \
@@ -10,6 +10,7 @@ CPPFLAGS+=	-DEXTMODULE
 
 XMODULEDIR=	${X11ROOTDIR}/lib/modules/extensions
 
+.include "../../Makefile.serverlib"
 .include "../Makefile.ext"
 
 .PATH:          ${X11SRCDIR.xc}/programs/Xserver/Xext/extmod
