@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.13 1996/10/13 02:59:30 christos Exp $	*/
+/*	$NetBSD: am7930.c,v 1.14 1996/11/01 23:32:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -89,10 +89,19 @@ struct amd7930_softc {
 /* interrupt interfaces */
 #ifdef AUDIO_C_HANDLER
 int	amd7930hwintr __P((void *));
+#if defined(SUN4M)
+#define AUDIO_SET_SWINTR do {		\
+	if (CPU_ISSUN4M)		\
+		raise(0, 4);		\
+	else				\
+		ienab_bis(IE_L4);	\
+} while(0);
+#else
 #define AUDIO_SET_SWINTR ienab_bis(IE_L4)
+#endif /* defined(SUN4M) */
 #else
 struct auio *auiop;
-#endif
+#endif /* AUDIO_C_HANDLER */
 int	amd7930swintr __P((void *));
 
 /* forward declarations */
