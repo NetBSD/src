@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.162 2002/01/31 14:27:29 is Exp $
+$NetBSD: pcmciadevs,v 1.163 2002/03/04 16:41:50 martin Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -331,6 +331,7 @@ product	SYMBOL LA4100		0x0001	Symbol Spectrum24 LA4100 Series WLAN
 product TDK LAK_CD011WL		0x0000 TDK LAK-CD011WL
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK LAK_CF010		0x0900 TDK LAC-CF010
+product	TDK C6500012		0x410a TDK ELSA MicroLink MC all
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 
 /* Telecom Device */
