@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetmask.S,v 1.1 1996/09/09 22:00:39 mark Exp $ */
+/*	$NetBSD: fpgetmask.S,v 1.2 1997/10/06 00:26:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
-
-	.text
-	.align	0
+#include <machine/asm.h>
 
 /*
  * Return the current FP exception enable mask
  */
 
 ENTRY(fpgetmask)
+#ifdef SOFTFLOAT
+	b	_sfp_getmask
+#else
 	rfs	r0
 	mov	r0, r0, lsr #16
 	and	r0, r0, #0x1f
 	mov	r15, r14		/* return */ 
+#endif	/* SOFTFLOAT */

@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetsticky.S,v 1.1 1996/09/09 22:00:41 mark Exp $ */
+/*	$NetBSD: fpsetsticky.S,v 1.2 1997/10/06 00:26:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
-
-	.text
-	.align	0
+#include <machine/asm.h>
 
 /*
  * Set the current FP cumulative flags
  */
 
 ENTRY(fpsetsticky)
+#ifdef SOFTFLOAT
+	b	_sfp_setsticky
+#else
 	rfs	r1
 	bic	r1, r1, #0x1f
 	and	r0, r0, #0x1f
@@ -50,3 +50,4 @@ ENTRY(fpsetsticky)
 	wfs	r0
 	mov	r0, r1			/* Return old mask */
 	mov	r15, r14		/* return */ 
+#endif	/* SOFTFLOAT */
