@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.11 1995/06/16 07:05:33 jtc Exp $	*/
+/*	$NetBSD: popen.c,v 1.12 1996/06/29 00:51:49 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.11 1995/06/16 07:05:33 jtc Exp $";
+static char rcsid[] = "$NetBSD: popen.c,v 1.12 1996/06/29 00:51:49 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,6 +104,13 @@ popen(program, type)
 			}
 			(void)close(pdes[1]);
 		}
+
+		/* POSIX.2 B.3.2.2 "popen() shall ensure that any streams
+		   from previous popen() calls that remain open in the 
+		   parent process are closed in the new child process. */
+		for (cur = pidlist; cur; cur = cur->next)
+			close(fileno(cur->fp));
+		
 		execl(_PATH_BSHELL, "sh", "-c", program, NULL);
 		_exit(127);
 		/* NOTREACHED */
