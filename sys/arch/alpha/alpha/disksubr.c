@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1996/10/10 23:50:28 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 1996/10/13 02:59:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -56,9 +56,9 @@ dk_establish(dk, dev)
 #define CRAZYMAP(v) ((v) == 3 ? 0 : (v) == 0 ? 3 : (v))
 
 	if (bp == NULL) {
-		kprintf("no boot path\n");
+		printf("no boot path\n");
 	}
-	ksprintf(name, "%s%d", bp->name, CRAZYMAP(bp->val[0]));
+	sprintf(name, "%s%d", bp->name, CRAZYMAP(bp->val[0]));
 	if (strcmp(name, dev->dv_xname) == 0) {
 		bootdv = dev;
 	}
