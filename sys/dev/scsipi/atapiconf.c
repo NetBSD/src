@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.59 2003/09/09 02:37:55 mycroft Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.60 2003/09/17 19:14:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.59 2003/09/09 02:37:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.60 2003/09/17 19:14:57 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,10 +104,7 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "CD-ROM  CDR-N16", "", "1.25"},	PQUIRK_NOCAPACITY}, /* Sanyo */
 	{{T_DIRECT, T_REMOV,		/* Panasonic MultiMediaCard */
-	  "04DA", "1B00", "0010"},		PQUIRK_BYTE5_ZERO |
-	 					PQUIRK_NO_FLEX_PAGE },
-	{{T_DIRECT, T_REMOV,		/* NEO Jukebox */
-	  "IC25N020", "ATDA04-0", "DA3O"}, PQUIRK_BYTE5_ZERO },
+	  "04DA", "1B00", "0010"},		PQUIRK_NO_FLEX_PAGE },
 	{{T_DIRECT, T_REMOV,		/* ZiO! MultiMediaCard */
 	  "eUSB", "MultiMediaCard", ""},	PQUIRK_NO_FLEX_PAGE },
 	{{T_DIRECT, T_REMOV,
