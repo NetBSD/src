@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.39 2002/01/14 13:32:48 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.39.8.1 2002/05/16 11:28:00 gehenna Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.39 2002/01/14 13:32:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.39.8.1 2002/05/16 11:28:00 gehenna Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -189,9 +189,6 @@ static	int xyc_probe __P((void *, bus_space_tag_t, bus_space_handle_t));
 static	void xydummystrat __P((struct buf *));
 int	xygetdisklabel __P((struct xy_softc *, void *));
 
-bdev_decl(xy);
-cdev_decl(xy);
-
 /*
  * cfattach's: device driver interface to autoconfig
  */
@@ -205,6 +202,24 @@ struct cfattach xy_ca = {
 };
 
 extern struct cfdriver xy_cd;
+
+dev_type_open(xyopen);
+dev_type_close(xyclose);
+dev_type_read(xyread);
+dev_type_write(xywrite);
+dev_type_ioctl(xyioctl);
+dev_type_strategy(xystrategy);
+dev_type_dump(xydump);
+dev_type_size(xysize);
+
+const struct bdevsw xy_bdevsw = {
+	xyopen, xyclose, xystrategy, xyioctl, xydump, xysize, D_DISK
+};
+
+const struct cdevsw xy_cdevsw = {
+	xyopen, xyclose, xyread, xywrite, xyioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
 	int	driveno;	/* unit number */

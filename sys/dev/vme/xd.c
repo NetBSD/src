@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.40 2002/01/14 13:32:48 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.40.8.1 2002/05/16 11:27:59 gehenna Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.40 2002/01/14 13:32:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.40.8.1 2002/05/16 11:27:59 gehenna Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -248,9 +248,6 @@ static	int xdc_probe __P((void *, bus_space_tag_t, bus_space_handle_t));
 static	void xddummystrat __P((struct buf *));
 int	xdgetdisklabel __P((struct xd_softc *, void *));
 
-bdev_decl(xd);
-cdev_decl(xd);
-
 /* XXX - think about this more.. xd_machdep? */
 void xdc_md_setup __P((void));
 int	XDC_DELAY;
@@ -291,6 +288,24 @@ struct cfattach xd_ca = {
 };
 
 extern struct cfdriver xd_cd;
+
+dev_type_open(xdopen);
+dev_type_close(xdclose);
+dev_type_read(xdread);
+dev_type_write(xdwrite);
+dev_type_ioctl(xdioctl);
+dev_type_strategy(xdstrategy);
+dev_type_dump(xddump);
+dev_type_size(xdsize);
+
+const struct bdevsw xd_bdevsw = {
+	xdopen, xdclose, xdstrategy, xdioctl, xddump, xdsize, D_DISK
+};
+
+const struct cdevsw xd_cdevsw = {
+	xdopen, xdclose, xdread, xdwrite, xdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	int	driveno;	/* unit number */
