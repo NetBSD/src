@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.42 1998/01/25 16:37:08 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.43 1998/02/04 20:50:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -295,22 +295,21 @@ si_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	struct vme_attach_args	*va = aux;
+	vme_chipset_tag_t	ct = va->vma_chipset_tag;
+        bus_space_tag_t		bt = va->vma_bustag;
+        vme_mod_t		mod; 
+        vme_addr_t		vme_addr;
+
 
 	/* Nothing but a Sun 4 is going to have these devices. */
 	if (!CPU_ISSUN4 || cpuinfo.cpu_type == CPUTYP_4_100)
 		return (0);
 
-	/*
-	 * Default interrupt priority always is 3.  At least, that's
-	 * what my board seems to be at.  --thorpej
-	 */
-	if (ra->ra_intr[0].int_pri == -1)
-		ra->ra_intr[0].int_pri = 3;
-
 	/* Make sure there is something there... */
-	if (probeget(ra->ra_vaddr + 1, 1) == -1)
+	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
+	vme_addr = va->vma_reg[0] + 1;
+	if (vme_bus_probe(ct, bt, vme_addr, 1, mod, NULL, 0) == 0)
 		return (0);
 
 	/*
@@ -319,7 +318,8 @@ si_match(parent, cf, aux)
 	 * be determined using the fact that the "sc" board occupies
 	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
 	 */
-	return (probeget(ra->ra_vaddr + 0x801, 1) == -1);
+	vme_addr = va->vma_reg[0] + 0x801;
+	return (vme_bus_probe(ct, bt, vme_addr, 1, mod, NULL, 0));
 }
 
 static void
