@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.17 1998/07/28 21:40:55 thorpej Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.18 1998/12/03 06:28:45 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,7 +146,7 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
 	setregs(p, epp, stack);
-	p->p_md.md_regs[GP] = execp->a.gp_value;
+	((struct frame *)p->p_md.md_regs)->f_regs[GP] = execp->a.gp_value;
 }
 
 /*
