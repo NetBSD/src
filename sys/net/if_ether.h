@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.20 2000/10/11 16:53:41 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.21 2000/11/17 19:21:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -154,7 +154,7 @@ struct	ethercom {
 };
 
 #define	ETHERCAP_VLAN_MTU	0x00000001	/* VLAN-compatible MTU */
-#define	ETHERCAP_VLAN_TAGGING	0x00000002	/* VLAN tag support */
+#define	ETHERCAP_VLAN_HWTAGGING	0x00000002	/* hardware VLAN tag support */
 
 #ifdef	_KERNEL
 extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
