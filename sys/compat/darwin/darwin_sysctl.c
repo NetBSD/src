@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.23.2.2 2004/04/28 05:33:33 jmc Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.23.2.3 2004/05/26 20:04:56 he Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.23.2.2 2004/04/28 05:33:33 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.23.2.3 2004/05/26 20:04:56 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -341,24 +341,28 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
 		       CTL_EMUL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "darwin", NULL,
+		       CTLTYPE_NODE, "darwin",
+		       SYSCTL_DESCR("Darwin emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "init", NULL,
+		       CTLTYPE_NODE, "init",
+		       SYSCTL_DESCR("Darwin init(8) process settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, 
 		       EMUL_DARWIN_INIT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ioframebuffer", NULL,
+		       CTLTYPE_NODE, "ioframebuffer",
+		       SYSCTL_DESCR("Darwin framebuffer settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, 
 		       EMUL_DARWIN_IOFRAMEBUFFER, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "iohidsystem", NULL,
+		       CTLTYPE_NODE, "iohidsystem",
+		       SYSCTL_DESCR("Darwin HID system settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_DARWIN, 
 		       EMUL_DARWIN_IOHIDSYSTEM, CTL_EOL);
@@ -367,25 +371,29 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
 	 */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "pid", NULL,
+		       CTLTYPE_INT, "pid",
+		       SYSCTL_DESCR("Pid of Darwin init(8) process"),
 		       NULL, 0, &darwin_init_pid, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_INIT,
 		       EMUL_DARWIN_INIT_PID, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unit", NULL,
+		       CTLTYPE_INT, "unit",
+		       SYSCTL_DESCR("Darwin framebuffer unit number"),
 		       NULL, 0, &darwin_ioframebuffer_unit, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOFRAMEBUFFER,
 		       EMUL_DARWIN_IOFRAMEBUFFER_UNIT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "screen", NULL,
+		       CTLTYPE_INT, "screen",
+		       SYSCTL_DESCR("Darwin framebuffer screen number"),
 		       NULL, 0, &darwin_ioframebuffer_screen, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOFRAMEBUFFER,
 		       EMUL_DARWIN_IOFRAMEBUFFER_SCREEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mux", NULL,
+		       CTLTYPE_INT, "mux",
+		       SYSCTL_DESCR("Darwin HID system mux"),
 		       NULL, 0, &darwin_iohidsystem_mux, 0,
 		       CTL_EMUL, EMUL_DARWIN, EMUL_DARWIN_IOHIDSYSTEM,
 		       EMUL_DARWIN_IOHIDSYSTEM_MUX, CTL_EOL);
