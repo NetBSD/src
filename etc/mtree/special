@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.64 2002/09/03 15:35:51 abs Exp $
+#	$NetBSD: special,v 1.65 2002/09/16 02:36:53 perry Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -298,6 +298,7 @@
 ./var/log			type=dir  mode=0755
 ./var/log/authlog		type=file mode=0600 optional tags=exclude
 ./var/log/wtmp			type=file mode=0644 tags=exclude
+./var/log/wtmpx			type=file mode=0644 tags=exclude
 ./var/mail			type=dir  mode=1777 ignore
 ./var/preserve			type=dir  mode=0755 ignore
 ./var/run			type=dir  mode=0755
