@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.2 1998/08/22 22:54:11 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.3 1998/08/26 12:10:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ opl_attach(sc)
 	sc->syn.data = sc;
 	sc->syn.nvoice = sc->model == OPL_2 ? OPL2_NVOICE : OPL3_NVOICE;
 	sc->syn.flags =  MS_DOALLOC | MS_FREQXLATE;
-	midisyn_attach(&sc->sc_mididev, &sc->syn);
+	midisyn_attach(&sc->mididev, &sc->syn);
 	
 	/* Set up voice table */
 	for (i = 0; i < OPL3_NVOICE; i++)
@@ -167,7 +167,7 @@ opl_attach(sc)
 
 	printf(": model OPL%d\n", sc->model);
 
-	midi_attach_mi(&midisyn_hw_if, &sc->syn, &sc->sc_mididev.dev);
+	midi_attach_mi(&midisyn_hw_if, &sc->syn, &sc->mididev.dev);
 }
 
 static void
@@ -180,21 +180,15 @@ opl_command(sc, offs, addr, data)
 		     sc, offs, addr, data));
 	offs += sc->offs;
 	bus_space_write_1(sc->iot, sc->ioh, OPL_ADDR+offs, addr);
-	if (sc->model == OPL_2) {
+	if (sc->model == OPL_2)
 		delay(10);
-	} else {
-		/* wait a little */
-		bus_space_read_1(sc->iot, sc->ioh, OPL_STATUS+offs);
-		bus_space_read_1(sc->iot, sc->ioh, OPL_STATUS+offs);
-	}
+	else
+		delay(2);
 	bus_space_write_1(sc->iot, sc->ioh, OPL_DATA+offs, data);
-	if (sc->model == OPL_2) {
+	if (sc->model == OPL_2)
 		delay(30);
-	} else {
-		/* wait a little */
-		bus_space_read_1(sc->iot, sc->ioh, OPL_STATUS+offs);
-		bus_space_read_1(sc->iot, sc->ioh, OPL_STATUS+offs);
-	}
+	else
+		delay(2);
 }
 
 int
@@ -325,6 +319,10 @@ opl_reset(sc)
 
 	opl_command(sc, OPL_LO, OPL_TEST, OPL_ENABLE_WAVE_SELECT);
 	opl_command(sc, OPL_LO, OPL_PERCUSSION, 0);
+	if (sc->model == OPL_3) {
+		opl_command(sc, OPL_HI, OPL_MODE, OPL3_ENABLE);
+		opl_command(sc, OPL_HI,OPL_CONNECTION_SELECT,OPL_NOCONNECTION);
+	}
 
 	sc->volume = 64;
 }
@@ -334,8 +332,13 @@ oplsyn_open(ms, flags)
 	midisyn *ms;
 	int flags;
 {
+	struct opl_softc *sc = ms->data;
+
 	DPRINTFN(2, ("oplsyn_open: %d\n", flags));
+
 	opl_reset(ms->data);
+	if (sc->spkrctl)
+		sc->spkrctl(sc->spkrarg, 1);
 	return (0);
 }
 
@@ -351,6 +354,8 @@ oplsyn_close(ms)
 	
 	for (v = 0; v < sc->syn.nvoice ; v++)
 		oplsyn_noteoff(ms, v, 0, 0);
+	if (sc->spkrctl)
+		sc->spkrctl(sc->spkrarg, 0);
 }
 
 #if 0

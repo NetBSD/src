@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.24 1998/08/22 22:55:09 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.25 1998/08/26 12:10:22 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -844,7 +844,7 @@ essattach(sc)
 	/*
 	 * Set gain on each mixer device to a sensible value.
 	 * Devices not normally used are turned off, and other devices
-	 * are set to 75% volume.
+	 * are set to 50% volume.
 	 */
 	for (i = 0; i < ESS_NDEVS; i++) {
 		switch(i) {
@@ -860,7 +860,7 @@ essattach(sc)
 			v = 0;
 			break;
 		default:
-			v = ESS_4BIT_GAIN(AUDIO_MAX_GAIN * 3 / 4);
+			v = ESS_4BIT_GAIN(AUDIO_MAX_GAIN / 2);
 			break;
 		}
 		sc->gain[i][ESS_LEFT] = sc->gain[i][ESS_RIGHT] = v;
@@ -946,6 +946,7 @@ ess_drain(addr)
 	return (0);
 }
 
+/* XXX should use reference count */
 int
 ess_speaker_ctl(addr, newstate)
 	void *addr;
