@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.122 2003/07/20 14:27:57 lukem Exp $
+#	$NetBSD: bsd.README,v 1.123 2003/07/20 14:36:12 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -1013,6 +1013,8 @@ TOOL_ROFF_RAW		Generate "raw" groff output.  [${TOOL_GROFF} -Z]
 TOOL_RPCGEN		Remote Procedure Call (RPC) protocol compiler.  [rpcgen]
 
 TOOL_SOELIM		Eliminate .so's from groff input.  [soelim]
+
+TOOL_STAT		Display file status.  [stat]
 
 TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
 
