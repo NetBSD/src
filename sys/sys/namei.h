@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.36 2004/04/17 15:24:22 christos Exp $	*/
+/*	$NetBSD: namei.h,v 1.37 2004/06/27 08:50:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -193,6 +193,8 @@ void cache_purge1 __P((struct vnode *, const struct componentname *, int));
 #define	PURGE_CHILDREN	2
 #define	cache_purge(vp)	cache_purge1((vp), NULL, PURGE_PARENTS|PURGE_CHILDREN)
 int cache_lookup __P((struct vnode *, struct vnode **, struct componentname *));
+int cache_lookup_raw __P((struct vnode *, struct vnode **,
+    struct componentname *));
 int cache_revlookup __P((struct vnode *, struct vnode **, char **, char *));
 void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
 void nchinit __P((void));

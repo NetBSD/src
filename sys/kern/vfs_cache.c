@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.60 2004/06/19 18:49:47 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.61 2004/06/27 08:50:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.60 2004/06/19 18:49:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.61 2004/06/27 08:50:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -326,6 +326,77 @@ fail_wlock:
 fail:
 	*vpp = NULL;
 	return (-1);
+}
+
+int
+cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
+    struct componentname *cnp)
+{
+	struct namecache *ncp;
+	struct vnode *vp;
+	int error;
+
+	if (!doingcache) {
+		cnp->cn_flags &= ~MAKEENTRY;
+		*vpp = NULL;
+		return (-1);
+	}
+
+	if (cnp->cn_namelen > NCHNAMLEN) {
+		/* XXXSMP - updating stats without lock; do we care? */
+		nchstats.ncs_long++;
+		cnp->cn_flags &= ~MAKEENTRY;
+		goto fail;
+	}
+	simple_lock(&namecache_slock);
+	ncp = cache_lookup_entry(dvp, cnp);
+	if (ncp == NULL) {
+		nchstats.ncs_miss++;
+		goto fail_wlock;
+	}
+	/*
+	 * Move this slot to end of LRU chain,
+	 * if not already there.
+	 */
+	if (TAILQ_NEXT(ncp, nc_lru) != 0) {
+		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+	}
+
+	vp = ncp->nc_vp;
+	if (vp == NULL) {
+		/*
+		 * Restore the ISWHITEOUT flag saved earlier.
+		 */
+		cnp->cn_flags |= ncp->nc_flags;
+		nchstats.ncs_neghits++;
+		simple_unlock(&namecache_slock);
+		return (ENOENT);
+	}
+
+	error = vget(vp, LK_NOWAIT);
+
+	/* Release the name cache mutex while we get reference to the vnode */
+	simple_unlock(&namecache_slock);
+
+	if (error) {
+		KASSERT(error == EBUSY);
+		/*
+		 * this vnode is being cleaned out.
+		 */
+		nchstats.ncs_falsehits++; /* XXX badhits? */
+		goto fail;
+	}
+
+	*vpp = vp;
+
+	return 0;
+
+fail_wlock:
+	simple_unlock(&namecache_slock);
+fail:
+	*vpp = NULL;
+	return -1;
 }
 
 /*
