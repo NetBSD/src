@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.24 1996/02/18 11:53:39 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.25 1996/02/29 20:26:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -565,6 +565,13 @@ again:
 			bp->b_validoff = min(bp->b_validoff, bp->b_dirtyoff);
 			bp->b_validend = max(bp->b_validend, bp->b_dirtyend);
 		}
+
+		/*
+		 * Since this block is being modified, it must be written
+		 * again and not just committed.
+		 */
+		bp->b_flags &= ~B_NEEDCOMMIT;
+
 		/*
 		 * If the lease is non-cachable or IO_SYNC do bwrite().
 		 */
