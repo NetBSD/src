@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2001/06/13 06:02:01 simonb Exp $
+#	$NetBSD: genassym.cf,v 1.2 2002/03/13 19:34:06 eeh Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -72,3 +72,5 @@ define	P_STAT		offsetof(struct proc, p_stat)
 define	P_CPU		offsetof(struct proc, p_cpu)
 
 define	SONPROC		SONPROC
+
+define	CPU_CI		offsetof(struct cpu_info, ci_ci)
