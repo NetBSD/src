@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37 1998/10/19 22:43:00 tron Exp $
+	$NetBSD: syscalls.master,v 1.38 1998/11/27 15:08:50 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -323,7 +323,8 @@
 206	UNIMPL		schedctl
 207	UNIMPL		pset
 208	UNIMPL
-209	UNIMPL		resolvepath
+209	STD		{ int svr4_sys_resolvepath(const char *path, \
+			    char *buf, size_t bufsiz); }
 210	UNIMPL		signotifywait
 211	UNIMPL		lwp_sigredirect
 212	UNIMPL		lwp_alarm
