@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.4 1999/12/17 14:37:15 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.5 1999/12/18 14:05:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,14 +43,13 @@
 #define HMEDEBUG
 
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h> 
 #include <sys/syslog.h>
 #include <sys/socket.h>
@@ -96,6 +95,7 @@
 void		hme_start __P((struct ifnet *));
 void		hme_stop __P((struct hme_softc *));
 int		hme_ioctl __P((struct ifnet *, u_long, caddr_t));
+void		hme_tick __P((void *));
 void		hme_watchdog __P((struct ifnet *));
 void		hme_shutdown __P((void *));
 void		hme_init __P((struct hme_softc *));
@@ -133,6 +133,7 @@ hme_config(sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+	struct mii_softc *child;
 	bus_dma_segment_t seg;
 	bus_size_t size;
 	int rseg, error;
@@ -248,11 +249,37 @@ hme_config(sc)
 	mii_phy_probe(&sc->sc_dev, mii, 0xffffffff,
 			MII_PHY_ANY, MII_OFFSET_ANY);
 
-	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+	child = LIST_FIRST(&mii->mii_phys);
+	if (child == NULL) {
 		/* No PHY attached */
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	} else {
+		/*
+		 * Walk along the list of attached MII devices and
+		 * establish an `MII instance' to `phy number'
+		 * mapping. We'll use this mapping in media change
+		 * requests to determine which phy to use to program
+		 * the MIF configuration register.
+		 */
+		for (; child != NULL; child = LIST_NEXT(child, mii_list)) {
+			/*
+			 * Note: we support just two PHYs: the built-in
+			 * internal device and an external on the MII
+			 * connector.
+			 */
+			if (child->mii_phy > 1 || child->mii_inst > 1) {
+				printf("%s: cannot accomodate MII device %s"
+				       " at phy %d, instance %d\n",
+				       sc->sc_dev.dv_xname,
+				       child->mii_dev.dv_xname,
+				       child->mii_phy, child->mii_inst);
+				continue;
+			}
+
+			sc->sc_phys[child->mii_inst] = child->mii_phy;
+		}
+
 		/*
 		 * XXX - we can really do the following ONLY if the
 		 * phy indeed has the auto negotiation capability!!
@@ -285,6 +312,23 @@ hme_config(sc)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET, 0);
 #endif
+
+	/* Start the one second clock */
+	timeout(hme_tick, sc, hz);
+}
+
+void
+hme_tick(arg)
+	void *arg;
+{
+	struct hme_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	timeout(hme_tick, sc, hz);
 }
 
 void
@@ -305,6 +349,9 @@ hme_stop(sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	int n;
+
+	untimeout(hme_tick, sc);
+	mii_down(&sc->sc_mii);
 
 	/* Reset transmitter and receiver */
 	bus_space_write_4(t, seb, HME_SEBI_RESET,
@@ -985,6 +1032,15 @@ hme_mii_readreg(self, phy, reg)
 	int n;
 	u_int32_t v;
 
+	/* Select the desired PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	/* Clear PHY select bit */
+	v &= ~HME_MIF_CFG_PHY;
+	if (phy == HME_PHYAD_EXTERNAL)
+		/* Set PHY select bit to get at external device */
+		v |= HME_MIF_CFG_PHY;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
 	/* Construct the frame command */
 	v = (MII_COMMAND_START << HME_MIF_FO_ST_SHIFT) |
 	    HME_MIF_FO_TAMSB |
@@ -1015,6 +1071,15 @@ hme_mii_writereg(self, phy, reg, val)
 	int n;
 	u_int32_t v;
 
+	/* Select the desired PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	/* Clear PHY select bit */
+	v &= ~HME_MIF_CFG_PHY;
+	if (phy == HME_PHYAD_EXTERNAL)
+		/* Set PHY select bit to get at external device */
+		v |= HME_MIF_CFG_PHY;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
 	/* Construct the frame command */
 	v = (MII_COMMAND_START << HME_MIF_FO_ST_SHIFT)	|
 	    HME_MIF_FO_TAMSB				|
@@ -1038,34 +1103,27 @@ static void
 hme_mii_statchg(dev)
 	struct device *dev;
 {
-#ifdef HMEDEBUG
 	struct hme_softc *sc = (void *)dev;
-	if (sc->sc_debug)
-		printf("hme_mii_statchg: status change\n");
-#endif
-}
-
-int
-hme_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct hme_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_media;
-	int newmedia = ifm->ifm_media;
+	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+	int phy = sc->sc_phys[instance];
 	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
 	u_int32_t v;
-	int error;
 
-	if (IFM_TYPE(newmedia) != IFM_ETHER)
-		return (EINVAL);
+#ifdef HMEDEBUG
+	if (sc->sc_debug)
+		printf("hme_mii_statchg: status change: phy = %d\n", phy);
+#endif
 
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return (0);
+	/* Select the current PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	v &= ~HME_MIF_CFG_PHY;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MIF_CFG_PHY;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
 
-	if ((error = mii_mediachg(&sc->sc_mii)) != 0)
-		return (error);
-
+	/* Set the MAC Full Duplex bit appropriately */
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
 	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
 		v |= HME_MAC_TXCFG_FULLDPLX;
@@ -1073,7 +1131,24 @@ hme_mediachange(ifp)
 		v &= ~HME_MAC_TXCFG_FULLDPLX;
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 
-	return (0);
+	/* If an external transceiver is selected, enable its MII drivers */
+	v = bus_space_read_4(t, mac, HME_MACI_XIF);
+	v &= ~HME_MAC_XIF_MIIENABLE;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
+}
+
+int
+hme_mediachange(ifp)
+	struct ifnet *ifp;
+{
+	struct hme_softc *sc = ifp->if_softc;
+
+	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	return (mii_mediachg(&sc->sc_mii));
 }
 
 void
