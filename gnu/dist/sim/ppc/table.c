@@ -49,7 +49,7 @@ struct _table {
 };
 
 extern table *
-table_open(char *file_name,
+table_open(const char *file_name,
 	   int nr_fields,
 	   int nr_model_fields)
 {
@@ -264,10 +264,10 @@ dump_table_entry(table_entry *entry,
 
 
 extern void
-table_entry_lf_c_line_nr(lf *file,
-			 table_entry *entry)
+table_entry_print_cpp_line_nr(lf *file,
+			      table_entry *entry)
 {
-  lf_print_c_line_nr(file, entry->line_nr, entry->file_name);
+  lf_print__external_reference(file, entry->line_nr, entry->file_name);
 }
 
 

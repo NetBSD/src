@@ -75,6 +75,10 @@
 #include "device.c"
 #endif
 
+#if (TREE_INLINE & INCLUDE_MODULE)
+#include "tree.c"
+#endif
+
 #if (SPREG_INLINE & INCLUDE_MODULE)
 #include "spreg.c"
 #endif
