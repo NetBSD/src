@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.2 2002/01/04 14:30:51 lukem Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.3 2002/01/21 20:04:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -34,6 +34,9 @@
 #endif
 
 #ifndef HAVE_FPARSELN
+#include <stdlib.h>
+#include <string.h>
+
 static int isescaped(const char *, const char *, int);
 
 /* isescaped():

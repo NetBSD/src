@@ -1,16 +1,31 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/04 14:39:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/01/21 20:04:36 tv Exp $
 
 HOSTLIB=	nbcompat
 
-SRCS=		err.c fgetln.c fparseln.c setprogname.c
-HOST_CPPFLAGS+=	-I. -DHAVE_CONFIG_H
+SRCS=		basename.c dirname.c err.c fgetln.c flock.c fparseln.c \
+		getmode.c pread.c pwrite.c setprogname.c strlcat.c strlcpy.c vis.c
+HOST_CPPFLAGS+=	-I. -I${.CURDIR} -DHAVE_CONFIG_H
+
+.PATH:		${.CURDIR}/../../lib/libc/gen \
+		${.CURDIR}/../../lib/libc/string
 
 DPSRCS=		config.h
-CLEANFILES=	config.cache config.log config.status confdefs.h defs.mk
+CLEANFILES=	config.cache config.log config.status config.stamp confdefs.h defs.mk
 
-config.h: configure config.h.in defs.mk.in
-	-rm -f config.h defs.mk
-	sh ${.CURDIR}/configure --cache-file=config.cache
+# Get components of Berkeley DB.
+_CURDIR:=	${.CURDIR}
+.CURDIR:=	${_CURDIR}/../../lib/libc
+.include "${.CURDIR}/db/Makefile.inc"
+.CURDIR:=	${_CURDIR}
+
+HOST_CPPFLAGS+=	${CPPFLAGS}
+SRCS:=		${SRCS:Nndbm.c}
+
+config.h defs.mk: config.stamp
+config.stamp: configure config.h.in defs.mk.in
+	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
+		sh ${.CURDIR}/configure --cache-file=config.cache
+	@touch $@
 
 # Run by hand, then "configure" script committed:
 regen:
