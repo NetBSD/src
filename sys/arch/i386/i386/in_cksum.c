@@ -32,7 +32,7 @@
  *
  *	from tahoe: in_cksum.c	1.2	86/01/05
  *	from: @(#)in_cksum.c	1.3 (Berkeley) 1/19/91
- *	$Id: in_cksum.c,v 1.3.4.1 1993/09/14 17:28:32 mycroft Exp $
+ *	$Id: in_cksum.c,v 1.3.4.2 1993/11/06 01:11:20 mycroft Exp $
  */
 
 #include "param.h"
@@ -55,7 +55,7 @@
  * Thanks to gcc we don't have to guess
  * which registers contain sum & w.
  */
-#define CLC     asm("clc")
+#define	ADD0	asm("addl (%2), %0": "=r"(sum): "0"(sum), "r"(w))
 #define ADD(n)  asm("adcl " #n "(%2), %0": "=r"(sum): "0"(sum), "r"(w))
 #define MOP     asm("adcl $0, %0":         "=r"(sum): "0"(sum))
 
@@ -121,15 +121,13 @@ in_cksum(m, len)
 			 * Clear the carry flag, add with carry 16 words
 			 * and fold-in last carry by adding a 0 with carry.
 			 */
-			CLC;
-			ADD(0);  ADD(4);  ADD(8);  ADD(12);
+			ADD0;  ADD(4);  ADD(8);  ADD(12);
 			ADD(16); ADD(20); ADD(24); ADD(28);
 			MOP; w += 16;
 		}
 		mlen += 32;
 		while ((mlen -= 8) >= 0) {
-			CLC;
-			ADD(0); ADD(4);
+			ADD0; ADD(4);
 			MOP;
 			w += 4;
 		}
