@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.30 1997/03/14 23:27:29 mycroft Exp $
+#	$NetBSD: Makefile.atari,v 1.31 1997/03/17 13:24:37 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -104,14 +104,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${ATARI}/atari/genassym.c
-	${HOSTED_C}
+assym.h: ${ATARI}/atari/genassym.cf $S/kern/genassym.sh
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	< ${ATARI}/atari/genassym.cf >assym.h || rm assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -131,7 +126,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -157,8 +152,6 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ATARI}/atari/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${ATARI}/atari/genassym.c
 
 
 # depend on root or device configuration
@@ -168,7 +161,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 locore.o pmap.o sys_machdep.o: Makefile
