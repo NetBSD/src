@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.2 2001/10/01 23:39:57 eeh Exp $ */
+/*	$NetBSD: gemvar.h,v 1.3 2001/10/18 06:28:17 thorpej Exp $ */
 
 /*
  * 
@@ -153,7 +153,6 @@ struct gem_softc {
 	bus_space_handle_t sc_mac;	/* HME MAC registers */
 	bus_space_handle_t sc_mif;	/* HME MIF registers */
 #endif
-	int		sc_burst;	/* DVMA burst size in effect */
 	int		sc_phys[2];	/* MII instance -> PHY map */
 
 	int		sc_mif_config;	/* Selected MII reg setting */
