@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.2 2000/12/11 23:58:55 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.3 2000/12/12 01:32:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -258,11 +258,12 @@ int an_attach(sc)
 		return(EIO);
 	}
 
-	printf("%s: Ethernet address: %s\n", sc->an_dev.dv_xname,
+	printf("%s: 802.11 address: %s\n", sc->an_dev.dv_xname,
 	    ether_sprintf(sc->an_caps.an_oemaddr));
 
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_NOTRAILERS | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = an_ioctl;
 	ifp->if_start = an_start;
 	ifp->if_init = an_init;
