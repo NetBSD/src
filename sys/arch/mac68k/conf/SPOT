@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.22 1997/01/20 00:31:42 scottr Exp $
+#	$NetBSD: SPOT,v 1.23 1997/01/25 22:44:08 scottr Exp $
 #
 # SPOT
 
@@ -48,6 +48,9 @@ options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
 
+# Loadable Kernel Modules
+options 	LKM
+
 # SPOT-specific options
 options 	RTC_OFFSET=360	# hardware clock is this many mins. west of GMT
 
@@ -73,3 +76,4 @@ pseudo-device	bpfilter	16
 pseudo-device	vnd		2
 pseudo-device	ppp		2
 pseudo-device	loop
+pseudo-device	ipfilter
