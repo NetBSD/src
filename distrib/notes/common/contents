@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.94 2003/10/21 02:14:30 mbw Exp $
+.\"	$NetBSD: contents,v 1.95 2003/11/01 03:02:59 grant Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -924,7 +924,7 @@ The Xmacppc server which supports all on-board video and Open
 Firmware-compatible video cards with man pages.  Acceleration and depths 
 greater than 256 colors are not supported.  See the X11 FAQ for help 
 installing and using the XFree86 server.
-.Lk http://www.netbsd.org/Ports/macppc/x11.html
+.Lk http://www.NetBSD.org/Ports/macppc/x11.html
 .showsize 2 5
 .\}
 .

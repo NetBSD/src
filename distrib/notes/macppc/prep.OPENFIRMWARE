@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.4 2003/10/11 00:04:06 mbw Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.5 2003/11/01 03:03:00 grant Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -176,7 +176,7 @@ Make sure that your monitor can handle these resolutions.
 Now would be a good time to look at the
 .Nx*M
 Model Support webpage to determine the issues with your model.
-.Lk http://www.netbsd.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/Ports/macppc/models.html
 .Pp
 In particular, some models
 .Em must
@@ -192,7 +192,7 @@ figuring out your
 and
 .Sq output-device
 settings, see the FAQ:
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-input-output-devices
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-input-output-devices
 .Pp
 If you need to use a serial console, you can use a normal
 .Sq printer
@@ -208,7 +208,7 @@ system.
 .Lk http://homepage.mac.com/dalverson/zterm/
 .Pp
 See the NetBSD Serial Port Primer for additional help and references:
-.Lk http://www.netbsd.org/Documentation/Hardware/Misc/serial.html
+.Lk http://www.NetBSD.org/Documentation/Hardware/Misc/serial.html
 .Pp
 All Open Firmware 1 and 2 \*M systems have Open Firmware bugs.
 Luckily, Open Firmware has a small Non-Volatile RAM variable (NVRAM)
@@ -277,7 +277,7 @@ Download System Disk:
 .Lk ftp://ftp.apple.com/developer/macosxserver/utilities/SystemDisk2.3.1.smi.bin
 .Pp
 For a brief tutorial on how to use System Disk, see:
-.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/
+.Lk http://www.NetBSD.org/Ports/macppc/SystemDisk-tutorial/
 .Pp
 Launch the
 .Tn MacOS
@@ -312,7 +312,7 @@ is
 (i.e. you have a PowerMacintosh 7300 \(em 8600 system), there is a chance that
 your monitor will not sync.
 See
-.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
+.Lk http://www.NetBSD.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
 .Pp
 You should now see the Open Firmware command prompt on your screen:
 .Pp
@@ -364,7 +364,7 @@ the
 .Tn MacOS
 BootVars tool.
 .Pp
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/macos-utils/bootvars/bootvars.sit.hqx
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/arch/macppc/macos-utils/bootvars/bootvars.sit.hqx
 .(Note
 BootVars does
 .Em not
@@ -378,7 +378,7 @@ Look up the proper
 for your model on the
 .Nx*M
 Model Support webpage.
-.Lk http://www.netbsd.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/Ports/macppc/models.html
 If the
 .Nx*M
 Model support webpage does not list an
@@ -416,7 +416,7 @@ is
 (i.e. you have a PowerMacintosh 7300 \(em 8600 system), there is a chance that
 your monitor will not sync.
 See
-.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
+.Lk http://www.NetBSD.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
 .Pp
 If you have a Performa 5500 or 6500, you may need to apply NVRAMRC patches
 to use your built-in video.
@@ -512,7 +512,7 @@ To use your on-board video and keyboard, look up the proper
 for your model on the
 .Nx*M
 webpage
-.Lk http://www.netbsd.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/Ports/macppc/models.html
 Run the following commands to use your screen instead of
 a serial console
 (replace
@@ -536,7 +536,7 @@ is
 (i.e. you have a PowerMacintosh 7300 \(em 8600 system), there is a chance that
 your monitor will not sync.
 See
-.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
+.Lk http://www.NetBSD.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
 .
 .Ss2 Setting up Open Firmware 1 and 2 to boot NetBSD
 .
@@ -547,9 +547,9 @@ Additional resources are available in the FAQ regarding how to use
 the Open Firmware command environment, and the Open Firmware variables
 you may be using:
 .br
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-access
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-access
 .br
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-variables
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-variables
 .Pp
 Double-check your Open Firmware version:
 .Pp
@@ -647,8 +647,8 @@ to boot
 Additional resources are available in the FAQ regarding how to use
 the Open Firmware command environment, and the Open Firmware variables
 you may be using:
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-access
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-variables
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-access
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-variables
 .Pp
 Double-check your Open Firmware version:
 .Pp
@@ -992,7 +992,7 @@ only and have another drive which will have the bootloader.
 .\}
 .Pp
 The process is more fully detailed in the Partitioning HOW-TO:
-.Lk http://www.netbsd.org/Ports/macppc/partitioning.html
+.Lk http://www.NetBSD.org/Ports/macppc/partitioning.html
 .Pp
 You can create a partition map with 
 .Xr pdisk 8 ,
@@ -1022,8 +1022,8 @@ of your drive \(em it does not preserve data from any of your partitions.
 is the most flexible (and most difficult to use) partitioning tool
 available.
 It runs on almost all OSes that \*M machines support.  Download it:
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/netbsd-pdisk/
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/macos-utils/pdisk.sea.hqx
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/arch/macppc/netbsd-pdisk/
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/arch/macppc/macos-utils/pdisk.sea.hqx
 .Pp
 There is built-in help describing how it works.  When it asks you to enter
 the
@@ -1049,7 +1049,7 @@ for
 file systems, and 
 .Ic hfstools
 to create and mount HFS file systems.
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/hfsutils/README.html
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/hfsutils/README.html
 .Pp
 Make the following partitions:
 .(tag "A/UXxUserxandxA/UXxFree1" -offset indent
@@ -1106,7 +1106,7 @@ transfer files between
 and
 .Nx .
 If would like to create such a partition, then see the Partitioning HOW-TO.
-.Lk http://www.netbsd.org/Ports/macppc/partitioning.html#msdos
+.Lk http://www.NetBSD.org/Ports/macppc/partitioning.html#msdos
 .It Em UFS
 Any size.
 .Em UFS
@@ -1181,7 +1181,7 @@ mirror sites and download the CD-R image
 from the
 .Pa pub/NetBSD/iso
 directory.
-.Lk http://www.netbsd.org/mirrors/#iso
+.Lk http://www.NetBSD.org/mirrors/#iso
 .Pp
 .(bullet
 .Em From an UNIX-like machine
@@ -1193,7 +1193,7 @@ Other
 .Ul
 systems should get it from the official website:
 .br
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
@@ -1381,7 +1381,7 @@ Other
 .Ul
 systems should get it from the official website:
 .br
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
@@ -1402,7 +1402,7 @@ correct device for your system (for i386 it would be
 See the
 .Nx
 Bootable CD-ROM HOW-TO for more detail:
-.Lk http://www.netbsd.org/Documentation/bootcd.html
+.Lk http://www.NetBSD.org/Documentation/bootcd.html
 .Pp
 .It
 .Em "From a MacOS machine (using Toast)"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.53 2003/10/10 23:51:00 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.54 2003/11/01 03:02:59 grant Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -368,7 +368,7 @@ A list of available packages suitable for browsing is at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages ,
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/ ,
 usually in the
 .Pa \*V/\*M/All
 subdir.
