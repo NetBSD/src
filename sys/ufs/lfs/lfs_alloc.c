@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.7 2000/01/15 17:55:11 he Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.8 2000/01/20 21:01:11 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,11 +122,9 @@ lfs_valloc(v)
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	
 	/*
-	 * Prevent a race getting lfs_free.  We use
-	 * the ufs_hashlock here because we need that anyway for
-	 * the hash insertion later.
+	 * Prevent a race getting lfs_free.
 	 */
-	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
+	lockmgr(&fs->lfs_freelock, LK_EXCLUSIVE, 0);
 
 	/* Get the head of the freelist. */
 	new_ino = fs->lfs_free;
@@ -185,16 +183,17 @@ lfs_valloc(v)
 		ifp->if_nextfree = LFS_UNUSED_INUM;
 		VOP_UNLOCK(vp,0);
 		if ((error = VOP_BWRITE(bp)) != 0) {
-			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 			return (error);
 		}
 	}
-
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM)
 		panic("inode 0 allocated [3]");
 #endif /* DIAGNOSTIC */
 	
+	lockmgr(&fs->lfs_freelock, LK_RELEASE, 0);
+
+	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
 	/* Create a vnode to associate with the inode. */
 	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0) {
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
@@ -300,7 +299,6 @@ lfs_vfree(v)
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
 	ino_t ino;
-	int already_locked;
 	extern int lfs_dirvcount;
 	
 	/* Get the inode number and file system. */
@@ -309,11 +307,9 @@ lfs_vfree(v)
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 	
-	/* If we already hold ufs_hashlock, don't panic, just do it anyway */
-	already_locked = lockstatus(&ufs_hashlock) && ufs_hashlock.lk_lockholder == curproc->p_pid;
 	while(WRITEINPROG(vp)
 	      || fs->lfs_seglock
-	      || (!already_locked && lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0)))
+	      || lockmgr(&fs->lfs_freelock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
 	{
 		if (WRITEINPROG(vp)) {
 			tsleep(vp, (PRIBIO+1), "lfs_vfree", 0);
@@ -375,8 +371,7 @@ lfs_vfree(v)
 		sup->su_nbytes -= DINODE_SIZE;
 		(void) VOP_BWRITE(bp);
 	}
-	if(!already_locked)
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	lockmgr(&fs->lfs_freelock, LK_RELEASE, 0);
 	
 	/* Set superblock modified bit and decrement file count. */
 	fs->lfs_fmod = 1;
