@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2003/06/10 17:47:15 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,13 +54,13 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-int main (int argc, char **argv);
-static void usage (void);
-static void miscsighandler (int);
-static void ttysighandler (int);
-static void cleanup (void);
-static void set_defaults (void);
-static void process_f_flag (char *);
+int main(int, char **);
+static void usage(void);
+static void miscsighandler(int);
+static void ttysighandler(int);
+static void cleanup(void);
+static void set_defaults(void);
+static void process_f_flag(char *);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 int logging;			/* are we logging everything? */
@@ -69,13 +69,11 @@ FILE *logfp;			/* log file */
 FILE *script;			/* script file */
 
 #ifdef DEBUG
-extern int log_flip (void);
+extern int log_flip(void);
 #endif
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	WINDOW *win;
 	int ch;
@@ -89,7 +87,7 @@ main(argc, argv)
 	/* Check for TERM ... */
 	if (!getenv("TERM")) {
 		(void)fprintf(stderr,
-			 "sysinst: environment varible TERM not set.\n");
+			 "sysinst: environment variable TERM not set.\n");
 		exit(1);
 	}
 
@@ -102,7 +100,7 @@ main(argc, argv)
 			break;
 		case 'f':
 			/* Definition file to read. */
-			process_f_flag (optarg);
+			process_f_flag(optarg);
 			break;
 		case '?':
 		default:
@@ -153,13 +151,13 @@ main(argc, argv)
 	process_menu(MENU_netbsd, NULL);
 	
 	exit_cleanly = 1;
-	return (0);
+	return 0;
 }
 	
 
 /* toplevel menu handler ... */
 void
-toplevel()
+toplevel(void)
 {
 
 	/* Display banner message in (english, francais, deutsch..) */
@@ -180,7 +178,7 @@ toplevel()
 /* The usage ... */
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, msg_string(MSG_usage));
@@ -189,8 +187,7 @@ usage()
 
 /* ARGSUSED */
 static void
-miscsighandler(signo)
-	int signo;
+miscsighandler(int signo)
 {
 
 	/*
@@ -201,8 +198,7 @@ miscsighandler(signo)
 }
 
 static void
-ttysighandler(signo)
-	int signo;
+ttysighandler(int signo)
 {
 
 	/*
@@ -231,7 +227,7 @@ ttysighandler(signo)
 }
 
 static void
-cleanup()
+cleanup(void)
 {
 	time_t tloc;
 
@@ -245,7 +241,8 @@ cleanup()
 		fclose(logfp);
 	}
 	if (scripting) {
-		fprintf(script, "# Script ended at: %s\n", asctime(localtime(&tloc)));
+		fprintf(script, "# Script ended at: %s\n",
+		    asctime(localtime(&tloc)));
 		fflush(script);
 		fclose(script);
 	}
@@ -274,10 +271,10 @@ set_defaults(void)
 	 */
 	
 		/* ftp_dir += ftp_prefix */
-	strncat(ftp_dir, ftp_prefix, STRSIZE - strlen(ftp_dir));
+	strlcat(ftp_dir, ftp_prefix, STRSIZE);
 
 		/* cdrom_dir += ftp_prefix */
-	strncat(cdrom_dir, ftp_prefix, STRSIZE - strlen(cdrom_dir));
+	strlcat(cdrom_dir, ftp_prefix, STRSIZE);
 }
 
 
@@ -339,52 +336,54 @@ struct lookfor fflagopts[] = {
 
 /* process function ... */
 
-void process_f_flag (char *f_name)
+void
+process_f_flag(char *f_name)
 {
-  char *buffer;
-  struct stat statinfo;
-  int fd;
+	char *buffer;
+	struct stat statinfo;
+	int fd;
 
-  /* stat the file (error reported) */
+	/* stat the file (error reported) */
 
-  if (stat(f_name, &statinfo) < 0) {
-	perror (f_name);			/* XXX -- better message? */
-	exit (1);
-  }
+	if (stat(f_name, &statinfo) < 0) {
+		perror(f_name);			/* XXX -- better message? */
+		exit(1);
+	}
 
-  if ((statinfo.st_mode & S_IFMT) != S_IFREG) {
-	fprintf (stderr, msg_string(MSG_not_regular_file), f_name);
-  	exit (1);
-  }
+	if ((statinfo.st_mode & S_IFMT) != S_IFREG) {
+		fprintf(stderr, msg_string(MSG_not_regular_file), f_name);
+		exit(1);
+	}
 
-  /* allocate buffer (error reported) */
-  buffer = (char *) malloc ((size_t)statinfo.st_size+1);
-  if (buffer == NULL) {
-	fprintf (stderr, msg_string(MSG_out_of_memory));
-  	exit (1); 
-  }
+	/* allocate buffer (error reported) */
+	buffer = malloc((size_t)statinfo.st_size + 1);
+	if (buffer == NULL) {
+		fprintf(stderr, msg_string(MSG_out_of_memory));
+		exit(1); 
+	}
 
-  /* open the file */
-  fd = open (f_name, O_RDONLY, 0);
-  if (fd < 0) {
-	fprintf (stderr, msg_string(MSG_config_open_error), f_name);
-  	exit (1);
-  }
+	/* open the file */
+	fd = open(f_name, O_RDONLY, 0);
+	if (fd < 0) {
+		fprintf(stderr, msg_string(MSG_config_open_error), f_name);
+		exit(1);
+	}
 
-  /* read the file */
-  if (read (fd,buffer,(size_t)statinfo.st_size) != (size_t)statinfo.st_size) {
-	fprintf (stderr, msg_string(MSG_config_read_error), f_name);
-  	exit (1);
-  }
-  buffer[(size_t)statinfo.st_size] = 0;
+	/* read the file */
+	if (read(fd,buffer, (size_t)statinfo.st_size)
+						!= (size_t)statinfo.st_size) {
+		fprintf(stderr, msg_string(MSG_config_read_error), f_name);
+		exit(1);
+	}
+	buffer[(size_t)statinfo.st_size] = 0;
 
-  /* close the file */
-  close (fd);
+	/* close the file */
+	close(fd);
 
-  /* Walk the buffer */
-  walk (buffer, (size_t)statinfo.st_size, fflagopts,
-	sizeof(fflagopts)/sizeof(struct lookfor));
+	/* Walk the buffer */
+	walk(buffer, (size_t)statinfo.st_size, fflagopts,
+	    sizeof(fflagopts)/sizeof(struct lookfor));
 
-  /* free the buffer */
-  free (buffer);
+	/* free the buffer */
+	free(buffer);
 }

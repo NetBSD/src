@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.40 2003/06/04 19:09:50 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.41 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -228,8 +228,7 @@ collect(int kind, char **buffer, const char *name, ...)
  * use only for curses sub-applications.
  */
 int
-do_system(execstr)
-	const char *execstr;
+do_system(const char *execstr)
 {
 	register int ret;
 
@@ -247,12 +246,8 @@ do_system(execstr)
  * launch a program inside a subwindow, and report it's return status when done
  */
 static int
-launch_subwin(actionwin, args, win, flags, errstr)
-	WINDOW *actionwin;
-	char **args;
-	struct winsize *win;
-	int flags;
-	const char **errstr;
+launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
+	const char **errstr)
 {
 	int xcor,ycor;
 	int n, i, j;
@@ -589,5 +584,5 @@ done:
 		msg_display(errmsg, scmd);
 		process_menu(MENU_ok, NULL);
 	}
-	return(ret);
+	return (ret);
 }

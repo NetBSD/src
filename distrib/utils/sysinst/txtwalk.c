@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.7 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.8 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,20 +56,16 @@
 
 /* prototypes */
 
-static void process (struct lookfor *, char *);
-static void match (char *, struct lookfor *, size_t);
-static int finddata (struct lookfor *, char *, struct data *, size_t *);
-static char *strndup (char *, size_t);
+static void process(struct lookfor *, char *);
+static void match(char *, struct lookfor *, size_t);
+static int finddata(struct lookfor *, char *, struct data *, size_t *);
+static char *strndup(char *, size_t);
 
 /*
  * Walk the buffer, call match for each line.
  */
 void
-walk(buffer, size, these, numthese)
-	char *buffer;
-	size_t size;
-	struct lookfor *these;
-	size_t numthese;
+walk(char *buffer, size_t size, struct lookfor *these, size_t numthese)
 {
 	size_t i = 0;
 	size_t len;
@@ -102,10 +98,7 @@ walk(buffer, size, these, numthese)
  * For each match in these, process the match.
  */
 static void
-match(line, these, numthese)
-	char *line;
-	struct lookfor *these;
-	size_t numthese;
+match(char *line, struct lookfor *these, size_t numthese)
 {
 	size_t linelen;		/* Line length */
 	size_t patlen;		/* Pattern length */
@@ -125,9 +118,7 @@ match(line, these, numthese)
 
 /* process the matched line. */
 static void
-process(item, line)
-	struct lookfor *item;
-	char *line;
+process(struct lookfor *item, char *line)
 {
 	struct data found[MAXDATA];
 	size_t numfound = 0;
@@ -198,11 +189,7 @@ process(item, line)
  * Side Effect -- sets numfound and found.
  */
 static int
-finddata(item, line, found, numfound)
-	struct lookfor *item;
-	char *line;
-	struct data *found;
-	size_t *numfound;
+finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
 {
 	char *fmt = item->fmt;
 	size_t len;
@@ -278,9 +265,7 @@ finddata(item, line, found, numfound)
  */
 
 static char *
-strndup(str, len)
-	char *str;
-	size_t len;
+strndup(char *str, size_t len)
 {
 	size_t alen;
 	char *val;
@@ -290,6 +275,6 @@ strndup(str, len)
 	val = malloc(alen);
 	if (!val)
 		return NULL;
-	strncpy(val, str, alen-1);
+	strlcpy(val, str, alen);
 	return val;
 }

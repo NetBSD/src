@@ -1,4 +1,4 @@
-/*	$NetBSD: geom.c,v 1.6 2003/05/30 11:56:23 dsl Exp $	*/
+/*	$NetBSD: geom.c,v 1.7 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jason R. Thorpe.
@@ -45,9 +45,7 @@
 #include "defs.h"
 
 int
-get_geom(disk, l)
-	char *disk;
-	struct disklabel *l;
+get_geom(char *disk, struct disklabel *l)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;
@@ -69,9 +67,7 @@ get_geom(disk, l)
 }
 
 int
-get_real_geom(disk, l)
-	char *disk;
-	struct disklabel *l;
+get_real_geom(char *disk, struct disklabel *l)
 {
 	char diskpath[MAXPATHLEN];
 	int fd;

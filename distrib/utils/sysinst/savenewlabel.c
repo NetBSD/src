@@ -1,4 +1,4 @@
-/*	$NetBSD: savenewlabel.c,v 1.2 2003/01/12 21:49:50 christos Exp $	*/
+/*	$NetBSD: savenewlabel.c,v 1.3 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: savenewlabel.c,v 1.2 2003/01/12 21:49:50 christos Exp $");
+__RCSID("$NetBSD: savenewlabel.c,v 1.3 2003/06/16 19:42:14 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,9 +54,7 @@ __RCSID("$NetBSD: savenewlabel.c,v 1.2 2003/01/12 21:49:50 christos Exp $");
 
 int
 /*ARGSUSED*/
-savenewlabel(lp, nparts)
-	partinfo *lp;
-	int nparts;
+savenewlabel(partinfo *lp, int nparts)
 {
 	FILE *f;
 	int i;

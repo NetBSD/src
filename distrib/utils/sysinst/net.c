@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.85 2003/06/11 21:35:36 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.86 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -205,7 +205,7 @@ static const char *ignored_if_names[] = {
 };
 
 static void
-get_ifconfig_info()
+get_ifconfig_info(void)
 {
 	char *textbuf;
 	char *t, *nt, *ndest;
@@ -248,7 +248,7 @@ loop:
 
 /* Fill in defaults network values for the selected interface */
 static void
-get_ifinterface_info()
+get_ifinterface_info(void)
 {
 	char *textbuf;
 	int textsize;
@@ -331,7 +331,7 @@ get_ifinterface_info()
 
 #ifdef INET6
 static int
-is_v6kernel()
+is_v6kernel(void)
 {
 	int s;
 
@@ -350,8 +350,7 @@ is_v6kernel()
  * (include and use sysctl(8) if you are willing to)
  */
 static void
-init_v6kernel(autoconf)
-	int autoconf;
+init_v6kernel(int autoconf)
 {
 	int v;
 	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, 0};
@@ -368,7 +367,7 @@ init_v6kernel(autoconf)
 }
 
 static int
-get_v6wait()
+get_v6wait(void)
 {
 	long len = sizeof(int);
 	int v;
@@ -388,8 +387,9 @@ get_v6wait()
  * make sure both the gateway and the name server are up.
  */
 int
-config_network()
-{	char *tp;
+config_network(void)
+{
+	char *tp;
 	char defname[255];
 	int  octet0;
 	int  pass, dhcp_config;
@@ -667,7 +667,7 @@ again:
 }
 
 int
-get_via_ftp()
+get_via_ftp(void)
 { 
 	distinfo *list;
 	char ftp_user_encoded[STRSIZE];
@@ -762,7 +762,7 @@ get_via_ftp()
 }
 
 int
-get_via_nfs()
+get_via_nfs(void)
 {
 	int ret;
 
@@ -951,8 +951,7 @@ mnt_net_config(void)
 }
 
 int
-config_dhcp(inter)
-char *inter;
+config_dhcp(char *inter)
 {
 	int dhcpautoconf;
 	int result;
@@ -982,11 +981,7 @@ char *inter;
 }
 
 static void
-get_command_out(targ, af, command, search)
-char *targ;
-int af;
-char *command;
-char *search;
+get_command_out(char *targ, int af, char *command, char *search)
 {
 	int textsize;
 	char *textbuf;
@@ -1021,9 +1016,7 @@ char *search;
 }
 
 static void
-get_dhcp_value(targ, line)
-char *targ;
-char *line;
+get_dhcp_value(char *targ, char *line)
 {
 	int textsize;
 	char *textbuf;

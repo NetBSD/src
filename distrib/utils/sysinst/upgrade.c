@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.33 2003/06/03 11:54:49 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.34 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,7 +58,7 @@ int	merge_X (void);
  * Do the system upgrade.
  */
 void
-do_upgrade()
+do_upgrade(void)
 {
 	doingwhat = msg_string(MSG_upgrade);
 
@@ -132,7 +132,7 @@ do_upgrade()
  * we are upgrading the target root.
  */
 int
-save_etc()
+save_etc(void)
 {
 
 	if (target_dir_exists_p("/etc.old")) {
@@ -187,7 +187,7 @@ save_etc()
  * Save X symlink to X.old so it can be recovered later
  */
 int
-save_X()
+save_X(void)
 {
 	/* Only care for X if it's a symlink */
 	if (target_symlink_exists_p("/usr/X11R6/bin/X")) {
@@ -214,7 +214,7 @@ save_X()
  * sets has completed.
  */
 int
-merge_etc()
+merge_etc(void)
 {
 
 	/* just move back fstab, so we can boot cleanly.  */
@@ -228,7 +228,7 @@ merge_etc()
  * sets has completed.
  */
 int
-merge_X()
+merge_X(void)
 {
 	if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
 		/* Only move back X if it's a symlink - we don't want
@@ -244,7 +244,7 @@ merge_X()
  * Unpacks sets,  clobbering existing contents.
  */
 void
-do_reinstall_sets()
+do_reinstall_sets(void)
 {
 	doingwhat = msg_string(MSG_reinstall);
 

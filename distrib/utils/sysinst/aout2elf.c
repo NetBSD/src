@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.5 2003/06/14 12:58:45 dsl Exp $
+/*	$NetBSD: aout2elf.c,v 1.6 2003/06/16 19:42:13 dsl Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -193,7 +193,7 @@ endloop:
 }
 
 int
-move_aout_libs()
+move_aout_libs(void)
 {
 	int n, backedup = 0;
 	char prefix[MAXPATHLEN], src[MAXPATHLEN];
