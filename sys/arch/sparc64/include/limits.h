@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.2 1998/08/06 11:25:05 kleink Exp $ */
+/*	$NetBSD: limits.h,v 1.3 1998/09/11 00:05:57 eeh Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -53,15 +53,21 @@
 #define	INT_MAX		0x7fffffff	/* max value for an int */
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
+#ifndef _LP64
+#define	ULONG_MAX	0xffffffffffffffffUL	/* max value for an unsigned long */
+#define	LONG_MAX	0x7fffffffffffffffL	/* max value for a long */
+#define	LONG_MIN	(-0x7fffffffffffffffL-1)	/* min value for a long */
+#else
 #define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
 #define	LONG_MAX	0x7fffffffL	/* max value for a long */
 #define	LONG_MIN	(-0x7fffffffL-1)	/* min value for a long */
+#endif
 
 #if !defined(_ANSI_SOURCE)
-#define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
+#define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 
 /* GCC requires that quad constants be written as expressions. */
 #define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
@@ -74,7 +80,11 @@
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)
+#ifdef _LP64
+#define LONG_BIT	64
+#else
 #define LONG_BIT	32
+#endif
 #define WORD_BIT	32
 
 #define DBL_DIG		15
