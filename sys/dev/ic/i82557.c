@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.58 2001/07/19 16:25:25 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.59 2001/08/06 09:51:40 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -440,6 +440,7 @@ fxp_attach(struct fxp_softc *sc)
 void
 fxp_mii_initmedia(struct fxp_softc *sc)
 {
+	int flags;
 
 	sc->sc_flags |= FXPF_MII;
 
@@ -449,11 +450,15 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	sc->sc_mii.mii_statchg = fxp_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
 	    fxp_mii_mediastatus);
+
+	flags = MIIF_NOISOLATE;
+	if (sc->sc_rev >= FXP_REV_82558_A4)
+		flags |= MIIF_DOPAUSE;
 	/*
 	 * The i82557 wedges if all of its PHYs are isolated!
 	 */
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, MIIF_NOISOLATE);
+	    MII_OFFSET_ANY, flags);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
