@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.9 2002/12/28 04:28:39 dsainty Exp $	*/
+/*	$NetBSD: ustir.c,v 1.10 2002/12/28 04:55:30 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.9 2002/12/28 04:28:39 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.10 2002/12/28 04:55:30 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,7 @@ struct ustir_softc {
 
 	u_int8_t		*sc_wr_buf;
 	int			sc_wr_addr;
+	int			sc_wr_stalewrite;
 	usbd_xfer_handle	sc_wr_xfer;
 	usbd_pipe_handle	sc_wr_pipe;
 	struct selinfo		sc_wr_sel;
@@ -652,6 +653,18 @@ ustir_periodic(struct ustir_softc *sc)
 		}
 	}
 
+	if (sc->sc_wr_stalewrite && sc->sc_direction == udir_idle) {
+		/*
+		 * In a stale write case, we need to check if the
+		 * write has completed.  Once that has happened, the
+		 * write is no longer stale.
+		 *
+		 * But note that we may immediately start a read poll...
+		 */
+		sc->sc_wr_stalewrite = 0;
+		wakeup(&sc->sc_wr_buf);
+	}
+
 	if (!sc->sc_rd_readinprogress &&
 	    (sc->sc_direction == udir_idle ||
 	     sc->sc_direction == udir_input))
@@ -769,6 +782,8 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (sc->sc_direction == udir_input &&
 	    ((size == 0 && sc->sc_rd_expectdataticks == 0) ||
 	     USTIR_BLOCK_RX_DATA(sc))) {
+		DPRINTFN(8,("%s: idling on packet timeout, "
+			    "complete frame, or no data\n", __func__));
 		sc->sc_direction = udir_idle;
 
 		/* Wake up for possible output */
@@ -893,6 +908,7 @@ ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 	sc->sc_rd_expectdataticks = 0;
 	sc->sc_ur_framelen = 0;
 	sc->sc_rd_err = 0;
+	sc->sc_wr_stalewrite = 0;
 	sc->sc_speedrec = NULL;
 	sc->sc_direction = udir_idle;
 	sc->sc_params.speed = 0;
@@ -1073,15 +1089,33 @@ ustir_write(void *h, struct uio *uio, int flag)
 
 	sc->sc_refcnt++;
 
-	if (!sc->sc_rd_readinprogress && !USTIR_BLOCK_RX_DATA(sc) &&
-	    (sc->sc_direction == udir_idle || sc->sc_direction == udir_input))
-		/* If idle, check for input before outputting */
-		ustir_start_read(sc);
+	if (!USTIR_BLOCK_RX_DATA(sc)) {
+		/*
+		 * If reads are not blocked, determine what action we
+		 * should potentially take...
+		 */
+		if (sc->sc_direction == udir_output) {
+			/*
+			 * If the last operation was an output, wait for the
+			 * polling thread to check for incoming data.
+			 */
+			sc->sc_wr_stalewrite = 1;
+			wakeup(&sc->sc_thread);
+		} else if (!sc->sc_rd_readinprogress &&
+			   (sc->sc_direction == udir_idle ||
+			    sc->sc_direction == udir_input)) {
+			/* If idle, check for input before outputting */
+			ustir_start_read(sc);
+		}
+	}
 
 	s = splusb();
-	while (sc->sc_direction != udir_output &&
-	       sc->sc_direction != udir_idle) {
-		DPRINTFN(5, ("%s: calling tsleep()\n", __func__));
+	while (sc->sc_wr_stalewrite ||
+	       (sc->sc_direction != udir_output &&
+		sc->sc_direction != udir_idle)) {
+		DPRINTFN(5, ("%s: sc=%p stalewrite=%d direction=%d, "
+			     "calling tsleep()\n", __func__,
+			     sc, sc->sc_wr_stalewrite, sc->sc_direction));
 		error = tsleep(&sc->sc_wr_buf, PZERO | PCATCH,
 			       "usirwr", 0);
 		if (sc->sc_dying)
