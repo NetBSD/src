@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.9 1998/05/12 21:25:44 pk Exp $	*/
+/*	$NetBSD: common.c,v 1.10 1998/05/30 18:33:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -209,7 +209,7 @@ dlerror()
 	    (*ld_entry->dlctl)(NULL, DL_GETERRNO, &error) == -1)
 		return "Service unavailable";
 
-	return (char *)strerror(error);
+	return ((char *)(error == 0 ? NULL : strerror(error)));
 }
 
 int
