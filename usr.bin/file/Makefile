@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2003/04/12 02:15:22 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.45 2003/05/26 13:42:33 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ CPPFLAGS+=	-I${.CURDIR}/../../lib/libmagic -I${DIST}
 LDADD+=		-lmagic -lz
 MAN=		file.1 magic.5
 
-CLEANFILES+=	magic magic.mgc magic.mime.mgc
+CLEANFILES+=	magic magic.mgc magic.mime magic.mime.mgc
 .if ${MKSHARE} != "no"
 realall:	file magic magic.mgc magic.mime.mgc
 .endif
@@ -43,7 +43,8 @@ magic.mgc: magic
 	 ${MKMAGIC} -C -m magic
 
 magic.mime.mgc:
-	${MKMAGIC} -C -m ${DIST}/magic/magic.mime
+	cp ${DIST}/magic/magic.mime ${.OBJDIR}
+	${MKMAGIC} -C -m magic.mime
 .else
 magic:
 .endif
