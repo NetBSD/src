@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.h,v 1.1 1996/07/20 18:55:12 ragge Exp $ */
+/*	$NetBSD: hdc9224.h,v 1.1.38.1 2000/06/28 13:31:54 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,13 +33,14 @@
  */
 
 
-
+#ifdef notdef
 struct hdc9224_DKCreg {
 	unsigned char dkc_reg;	/* Disk Register Data Access Port (rw)*/
 	unsigned char fill[3];	/* bytes are longword aligned */
 	unsigned char dkc_cmd;	/* Disk Controller Command Port (wo) */
 #define dkc_stat dkc_cmd	/* Interrupt Status Port (ro) */
 };
+#endif
 
 /*
  * definition of some commands (constant bits only, incomplete!)
@@ -118,6 +119,9 @@ struct hdc9224_UDCreg { /* internal disk controller registers */
 #define udc_dstat udc_term	/*     drive status register */
 	u_char udc_data;	/* 10: data */
 };
+
+/* UDC regs */
+#define	UDC_TERM	9
 
 /*
  * Definition of bits in the Current-Head register
