@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.32 1998/08/31 18:43:30 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.33 1998/09/30 14:10:00 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -82,7 +82,8 @@ ENTRY(stray/**/vecnr)		; \
 	.long	label+stack;
 		.text
 
-	.globl	_kernbase, _rpb
+	.globl	_kernbase, _rpb, _kernel_text
+	.set	_kernel_text,KERNBASE
 _kernbase:
 _rpb:	
 /*
