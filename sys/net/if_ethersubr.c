@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.69 2000/11/15 01:02:15 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.70 2000/11/17 19:21:53 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -505,6 +505,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	u_int16_t etype;
 	int s;
 	struct ether_header *eh;
+	struct mbuf *n;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
 #endif
@@ -540,6 +541,22 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		   memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
 			  ETHER_ADDR_LEN) != 0) {
 		m_freem(m);
+		return;
+	}
+
+	/* Check if the mbuf has a VLAN tag */
+	n = m_aux_find(m, AF_LINK, ETHERTYPE_VLAN);
+	if (n) {
+#if NVLAN > 0
+		/*
+		 * vlan_input() will either recursively call ether_input()
+		 * or drop the packet.
+		 */
+		if (((struct ethercom *)ifp)->ec_nvlans != 0)
+			vlan_input(ifp, m);
+		else
+#endif
+			m_freem(m);
 		return;
 	}
 
