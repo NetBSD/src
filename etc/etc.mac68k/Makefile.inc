@@ -1,12 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/01/27 07:03:04 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2002/02/01 04:57:24 fredb Exp $
 #
 #	mac68k-specific release building goo
-#
-
-# You will find no configs for GENERICSBC or INSTALLSBC in the
-# sources. That's because they're trivial to generate--each is
-# simply its corresponding config with "ncrscsi" commented out,
-# and "sbc" uncommented.
 #
 
 KERNEL_SETS=		GENERIC GENERICSBC
