@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.92 2004/12/22 23:29:51 dbj Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.93 2005/01/25 09:50:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.92 2004/12/22 23:29:51 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.93 2005/01/25 09:50:31 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -508,19 +508,7 @@ genfs_getpages(void *v)
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
 	KASSERT(orignpages > 0);
-
-	/*
-	 * Bounds-check the request.
-	 */
-
-	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= memeof) {
-		if ((flags & PGO_LOCKED) == 0) {
-			simple_unlock(&uobj->vmobjlock);
-		}
-		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
-		    origoffset, *ap->a_count, memeof,0);
-		return (EINVAL);
-	}
+	KASSERT(origoffset + (ap->a_centeridx << PAGE_SHIFT) < memeof);
 
 	/*
 	 * For PGO_LOCKED requests, just return whatever's in memory.
@@ -903,6 +891,10 @@ raout:
 		    genfs_rapages);
 		rasize = rapages << PAGE_SHIFT;
 		for (i = skipped = 0; i < genfs_racount; i++) {
+
+			if (raoffset >= memeof)
+				break;
+
 			err = VOP_GETPAGES(vp, raoffset, NULL, &rapages, 0,
 			    VM_PROT_READ, 0, 0);
 			simple_lock(&uobj->vmobjlock);
