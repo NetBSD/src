@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4 1998/01/13 23:49:31 cjs Exp $
+# $NetBSD: INSTALL,v 1.5 1998/01/15 07:17:21 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -137,8 +137,8 @@ lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
-awdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
-awdc1	at	isa? port 0x170 irq 15
+wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
+wdc1	at	isa? port 0x170 irq 15
 
 # EISA devices
 ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
@@ -159,7 +159,14 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
-awd*	at	awdc? drive ?
+wd*	at	wdc? drive ?
+
+# ATAPI bus support
+atapibus* at	wdc?
+
+# ATAPI devices
+sd*	at	atapibus? drive ?		# ATAPI disk devices
+cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Workstation Console attachments
 wscons*	at	vga?
