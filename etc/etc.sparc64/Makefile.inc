@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2003/07/10 10:34:19 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2004/01/03 13:58:26 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -24,7 +24,7 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	SHLIB_LDENDFILE=${DESTDIR}${LIBDIR}/crtendS.o
 
 .if ${MACHINE_ARCH} == "sparc64" && ${MACHINE} == "sparc64" && \
-	${MK32BITLIBS} == "yes"
+	${MK32BITLIBS} != "no"
 
 	# build 32 bit programs
 .for _s64dir in lib/csu lib gnu/lib libexec/ld_elf.so
@@ -39,7 +39,7 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall \
 	    && ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
 .endfor
-.endif	# MACHINE_ARCH==sparc64 && MACHINE==sparc && MK32BITLIBS==yes
+.endif	# MACHINE_ARCH==sparc64 && MACHINE==sparc && MK32BITLIBS!=no
 
 #
 # Install miniroot images and auxiliary scripts to the release tree
