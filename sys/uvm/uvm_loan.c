@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.47 2004/02/13 11:15:30 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.48 2004/02/13 13:47:16 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.47 2004/02/13 11:15:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.48 2004/02/13 13:47:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,7 +1051,6 @@ uvm_loanbreak(struct vm_page *uobjpage)
 {
 	struct vm_page *pg;
 	struct uvm_object *uobj = uobjpage->uobject;
-	voff_t offset;
 
 	KASSERT(uobj != NULL);
 	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
@@ -1081,8 +1080,12 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	UVM_PAGE_OWN(uobjpage, NULL);
 
 	uvm_lock_pageq();
-	offset = uobjpage->offset;
-	uvm_pagerealloc(uobjpage, NULL, 0);
+
+	/*
+	 * replace uobjpage with new page.
+	 */
+
+	uvm_pagereplace(uobjpage, pg);
 
 	/*
 	 * if the page is no longer referenced by
@@ -1099,7 +1102,6 @@ uvm_loanbreak(struct vm_page *uobjpage)
 
 	/* install new page */
 	uvm_pageactivate(pg);
-	uvm_pagerealloc(pg, uobj, offset);
 	uvm_unlock_pageq();
 
 	/*
