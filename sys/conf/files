@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.526 2002/05/03 17:58:28 thorpej Exp $
+#	$NetBSD: files,v 1.527 2002/05/09 15:44:44 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1060,9 +1060,6 @@ file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs | lkm
-file	miscfs/procfs/procfs_fpregs.c	# XXX
-file	miscfs/procfs/procfs_mem.c	# XXX
-file	miscfs/procfs/procfs_regs.c	# XXX
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
