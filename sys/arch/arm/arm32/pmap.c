@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2002/11/11 20:34:03 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.122 2002/11/12 22:14:21 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2002/11/11 20:34:03 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2002/11/12 22:14:21 chris Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -251,7 +251,7 @@ static struct simplelock pmaps_lock;
 TAILQ_HEAD(pv_pagelist, pv_page);
 static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
 static struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
-static int pv_nfpvents;			/* # of free pv entries */
+static unsigned int pv_nfpvents;	/* # of free pv entries */
 static struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
 static vaddr_t pv_cachedva;		/* cached VA for later use */
 
@@ -271,7 +271,7 @@ static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
 static void		 pmap_enter_pv(struct vm_page *,
 				       struct pv_entry *, struct pmap *,
-				       vaddr_t, struct vm_page *, int);
+				       vaddr_t, struct vm_page *, unsigned int);
 static void		 pmap_free_pv(struct pmap *, struct pv_entry *);
 static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
 static void		 pmap_free_pv_doit(struct pv_entry *);
@@ -534,7 +534,6 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 	struct vm_page *pg;
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
-	int s;
 
 	/*
 	 * if we need_entry and we've got unused pv_pages, allocate from there
@@ -564,6 +563,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 
 
 	if (pv_cachedva == 0) {
+		int s;
 		s = splvm();
 		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL,
 		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
@@ -605,7 +605,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 static struct pv_entry *
 pmap_add_pvpage(struct pv_page *pvp, boolean_t need_entry)
 {
-	int tofree, lcv;
+	unsigned int tofree, lcv;
 
 	/* do we need to return one? */
 	tofree = (need_entry) ? PVE_PER_PVPAGE - 1 : PVE_PER_PVPAGE;
@@ -786,7 +786,7 @@ pmap_free_pvpage(void)
 
 __inline static void
 pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, struct pmap *pmap,
-    vaddr_t va, struct vm_page *ptp, int flags)
+    vaddr_t va, struct vm_page *ptp, unsigned int flags)
 {
 	pve->pv_pmap = pmap;
 	pve->pv_va = va;
@@ -1160,7 +1160,7 @@ pmap_init(void)
 void
 pmap_postinit(void)
 {
-	int loop;
+	unsigned int loop;
 	struct l1pt *pt;
 
 #ifdef PMAP_STATIC_L1S
@@ -1881,7 +1881,8 @@ pmap_zero_page_xscale(paddr_t phys)
 boolean_t
 pmap_pageidlezero(paddr_t phys)
 {
-	int i, *ptr;
+	unsigned int i;
+	int *ptr;
 	boolean_t rv = TRUE;
 #ifdef DEBUG
 	struct vm_page *pg;
@@ -2120,12 +2121,12 @@ static void
 pmap_vac_me_kpmap(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 	boolean_t clear_cache)
 {
-	int user_entries = 0;
-	int user_writable = 0;
-	int user_cacheable = 0;
-	int kernel_entries = 0;
-	int kernel_writable = 0;
-	int kernel_cacheable = 0;
+	unsigned int user_entries = 0;
+	unsigned int user_writable = 0;
+	unsigned int user_cacheable = 0;
+	unsigned int kernel_entries = 0;
+	unsigned int kernel_writable = 0;
+	unsigned int kernel_cacheable = 0;
 	struct pv_entry *pv;
 	struct pmap *last_pmap = pmap;
 
@@ -2227,11 +2228,11 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 {
 	struct pmap *kpmap = pmap_kernel();
 	struct pv_entry *pv, *npv;
-	int entries = 0;
-	int writable = 0;
-	int cacheable_entries = 0;
-	int kern_cacheable = 0;
-	int other_writable = 0;
+	unsigned int entries = 0;
+	unsigned int writable = 0;
+	unsigned int cacheable_entries = 0;
+	unsigned int kern_cacheable = 0;
+	unsigned int other_writable = 0;
 
 	pv = pg->mdpage.pvh_list;
 	KASSERT(ptes != NULL);
@@ -2303,7 +2304,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			cpu_tlb_flushID();
 		}
 		cpu_cpwait();
-	} else if (entries > 0) {
+	} else if (entries > cacheable_entries) {
 		/*
 		 * Turn cacheing back on for some pages.  If it is a kernel
 		 * page, only do so if there are no other writable pages.
@@ -2345,7 +2346,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 void
 pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
-	int cleanlist_idx = 0;
+	unsigned int cleanlist_idx = 0;
 	struct pagelist {
 		vaddr_t va;
 		pt_entry_t *pte;
