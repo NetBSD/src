@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.1 2001/07/08 23:37:52 rjs Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.2 2002/12/18 04:16:09 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _SA1111_VAR_H
+#define _SA1111_VAR_H
+
 
 struct sacc_intrhand {
 	void *ih_soft;
@@ -63,9 +66,23 @@ struct sacc_softc {
 
 typedef void *sacc_chipset_tag_t;
 
+struct sa1111_attach_args {
+	bus_addr_t		sa_addr;	/* i/o address  */
+	bus_size_t		sa_size;
+#if 0
+	bus_addr_t		sa_membase;	/* mem address  */
+	bus_size_t		sa_memsize;
+#endif
+	int			sa_intr;
+};
+
 #define IST_EDGE_RAISE	6
 #define IST_EDGE_FALL	7
 
 void *sacc_intr_establish(sacc_chipset_tag_t *, int, int, int,
 			  int (*)(void *), void *);
 void sacc_intr_disestablish(sacc_chipset_tag_t *, void *);
+int sacc_probe(struct device *, struct cfdata *, void *);
+int sa1111_search(struct device *, struct cfdata *, void *);
+
+#endif /* _SA1111_VAR_H */
