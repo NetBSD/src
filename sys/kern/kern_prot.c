@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.74 2003/02/18 19:26:23 wiz Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.75 2003/02/28 23:24:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.74 2003/02/18 19:26:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.75 2003/02/28 23:24:40 enami Exp $");
 
 #include "opt_compat_43.h"
 
@@ -213,6 +213,7 @@ int
 sys_getegid(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
+
 	*retval = p->p_ucred->cr_gid;
 	return (0);
 }
@@ -239,7 +240,7 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 		return (EINVAL);
 	ngrp = pc->pc_ucred->cr_ngroups;
 	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
-			(caddr_t)SCARG(uap, gidset), ngrp * sizeof(gid_t));
+	    (caddr_t)SCARG(uap, gidset), ngrp * sizeof(gid_t));
 	if (error)
 		return (error);
 	*retval = ngrp;
@@ -291,8 +292,8 @@ sys_setpgid(struct lwp *l, void *v, register_t *retval)
 		return (EINVAL);
 
 	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != curp->p_pid) {
-		if ((targp = pfind(SCARG(uap, pid))) == 0
-		    || !inferior(targp, curp))
+		if ((targp = pfind(SCARG(uap, pid))) == 0 ||
+		    !inferior(targp, curp))
 			return (ESRCH);
 		if (targp->p_session != curp->p_session)
 			return (EPERM);
@@ -306,7 +307,7 @@ sys_setpgid(struct lwp *l, void *v, register_t *retval)
 		SCARG(uap, pgid) = targp->p_pid;
 	else if (SCARG(uap, pgid) != targp->p_pid)
 		if ((pgrp = pgfind(SCARG(uap, pgid))) == 0 ||
-	            pgrp->pg_session != curp->p_session)
+		    pgrp->pg_session != curp->p_session)
 			return (EPERM);
 	return (enterpgrp(targp, SCARG(uap, pgid), 0));
 }
@@ -533,6 +534,7 @@ int
 sys_issetugid(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
+
 	/*
 	 * Note: OpenBSD sets a P_SUGIDEXEC flag set at execve() time,
 	 * we use P_SUGID because we consider changing the owners as
@@ -610,6 +612,7 @@ groupmember(gid_t gid, const struct ucred *cred)
 int
 suser(const struct ucred *cred, u_short *acflag)
 {
+
 	if (cred->cr_uid == 0) {
 		if (acflag)
 			*acflag |= ASU;
@@ -681,6 +684,7 @@ crdup(const struct ucred *cr)
 void
 crcvt(struct ucred *uc, const struct uucred *uuc)
 {
+
 	uc->cr_ref = 0;
 	uc->cr_uid = uuc->cr_uid;
 	uc->cr_gid = uuc->cr_gid;
@@ -726,7 +730,7 @@ sys___setlogin(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	error = copyinstr(SCARG(uap, namebuf), &newname, sizeof newname, NULL);
 	if (error != 0)
-		return error == ENAMETOOLONG ? EINVAL : error;
+		return (error == ENAMETOOLONG ? EINVAL : error);
 
 	if (s->s_flags & S_LOGIN_SET && p->p_pid != s->s_sid &&
 	    strncmp(newname, s->s_login, sizeof s->s_login) != 0)
@@ -735,5 +739,5 @@ sys___setlogin(struct lwp *l, void *v, register_t *retval)
 		    (int)sizeof s->s_login, s->s_login, newname);
 	s->s_flags |= S_LOGIN_SET;
 	strncpy(s->s_login, newname, sizeof s->s_login);
-	return 0;
+	return (0);
 }
