@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.69 2001/10/24 06:36:37 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.70 2001/10/29 07:02:34 simonb Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/domain.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -2915,9 +2916,6 @@ icmp6_redirect_timeout(rt, r)
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	}
 }
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
