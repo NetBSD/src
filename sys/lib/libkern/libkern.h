@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.38 2001/12/23 22:48:29 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.39 2001/12/28 07:37:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -272,6 +272,11 @@ size_t	 strlen __P((const char *));
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
 #define	strlen(a)		__builtin_strlen(a)
+#endif
+
+/* Functions for which we always use built-ins. */
+#ifdef __GNUC__
+#define	alloca(s)		__builtin_alloca(s)
 #endif
 
 /* These exist in GCC 3.x, but we don't bother. */
