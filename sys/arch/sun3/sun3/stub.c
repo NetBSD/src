@@ -1,0 +1,4 @@
+
+ether_output() {}
+     
+     
