@@ -33,9 +33,10 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)utility.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: utility.c,v 1.5 1994/02/25 03:21:02 cgd Exp $";
+static char *rcsid = "$Id: utility.c,v 1.6 1994/02/25 03:26:26 cgd Exp $";
 #endif /* not lint */
 
+#include <sys/utsname.h>
 #define PRINTOPTIONS
 #include "telnetd.h"
 
@@ -415,11 +416,14 @@ putf(cp, where)
 	char *slash;
 	time_t t;
 	char db[100];
+	struct utsname utsinfo;
 #ifdef	STREAMSPTY
 	extern char *index();
 #else
 	extern char *rindex();
 #endif
+
+	uname(&utsinfo);
 
 	putlocation = where;
 
@@ -456,6 +460,22 @@ putf(cp, where)
 		case '%':
 			putchr('%');
 			break;
+
+		case 's':
+			putstr(utsinfo.sysname);
+			break;
+
+		case 'm':
+			putstr(utsinfo.machine);
+			break;
+
+		case 'r':
+			putstr(utsinfo.release);
+			break;
+
+		case 'v':
+			puts(utsinfo.version);
+                        break;
 		}
 		cp++;
 	}
