@@ -35,36 +35,36 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.10 1993/10/16 06:40:17 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.11 1993/10/17 05:34:33 mycroft Exp $
  */
 
 /*
  * code to work keyboard & display for PC-style console
  */
-#include "param.h"
-#include "conf.h"
-#include "ioctl.h"
-#include "proc.h"
-#include "user.h"
-#include "select.h"
-#include "tty.h"
-#include "uio.h"
-#include "callout.h"
-#include "systm.h"
-#include "kernel.h"
-#include "syslog.h"
-#incldue "sys/device.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
+#include <sys/callout.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#incldue <sys/device.h>
 
-#include "machine/cpu.h"
-#include "machine/frame.h"
-#include "machine/pio.h"
-#include "machine/pc/display.h"
-#include "machine/pccons.h"
+#include <machine/cpu.h>
+#include <machine/frame.h>
+#include <machine/pio.h>
+#include <machine/pc/display.h>
+#include <machine/pccons.h>
 
-#include "i386/i386/cons.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/isavar.h"
-#include "i386/isa/kbdreg.h"
+#include <i386/i386/cons.h>
+#include <i386/isa/isa.h>
+#include <i386/isa/isavar.h>
+#include <i386/isa/kbdreg.h>
 
 #include "pc.h"
 

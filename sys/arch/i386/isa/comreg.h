@@ -31,9 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)comreg.h	7.2 (Berkeley) 5/9/91
- *	$Id: comreg.h,v 1.2.4.1 1993/09/30 17:32:56 mycroft Exp $
+ *	$Id: comreg.h,v 1.2.4.2 1993/10/17 05:34:22 mycroft Exp $
  */
 
+#include <i386/isa/ic/ns16550.h>
 
 /* 16 bit baud rate divisor (lower byte in dca_data, upper in dca_ier) */
 #define	COM_FREQ	1843200

@@ -26,11 +26,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.6 1993/10/15 03:19:44 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.7 1993/10/17 05:34:36 mycroft Exp $
  */
 
-#include "i386/isa/icu.h"
-#include "i386/isa/isa.h"
+#include <i386/isa/icu.h>
+#include <i386/isa/isa.h>
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)

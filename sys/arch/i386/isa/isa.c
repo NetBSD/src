@@ -35,27 +35,29 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.14 1993/10/16 05:25:18 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.15 1993/10/17 05:34:29 mycroft Exp $
  */
 
 /*
  * code to manage AT bus
  */
 
-#include "param.h"
-#include "systm.h"
-#include "conf.h"
-#include "file.h"
-#include "syslog.h"
-#include "machine/cpu.h"
-#include "machine/pio.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/isavar.h"
-#include "i386/isa/icu.h"
-#include "i386/isa/timerreg.h"
-#include "i386/isa/spkr_reg.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
+#include <vm/vm.h>
+
+#include <machine/cpu.h>
+#include <machine/pio.h>
+
+#include <i386/isa/isa.h>
+#include <i386/isa/isavar.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/timerreg.h>
+#include <i386/isa/spkr_reg.h>
 
 isa_type isa_bustype;				/* type of bus */
 
