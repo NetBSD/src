@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.8 1999/01/25 22:36:19 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.9 1999/02/11 06:16:38 simonb Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.8 1999/01/25 22:36:19 lukem Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.9 1999/02/11 06:16:38 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -212,7 +212,8 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 		/* Put together the rest of the domain. */
 	strcat(bindname, ".");
 	strcat(bindname, type);
-	if (ctx->lhs) {
+		/* Only append lhs if it isn't empty. */
+	if (ctx->lhs && ctx->lhs[0] != '\0' ) {
 		if (ctx->lhs[0] != '.')
 			strcat(bindname, ".");
 		strcat(bindname, ctx->lhs);
