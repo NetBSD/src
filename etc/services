@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.22 1997/09/17 11:20:26 is Exp $
+#	$NetBSD: services,v 1.23 1997/10/04 09:11:55 mrg Exp $
 #
 # Network services, Internet style
 #
@@ -191,3 +191,4 @@ supfiledbg	1127/tcp		# SUP debugging
 nfs		2049/udp	nfsd	# Sun NFS
 nfs		2049/tcp	nfsd	# Sun NFS
 ircd		6667/tcp		# Often used IRC port.
+hunt		26740/udp		# multi-player/multi-host maze-wars
