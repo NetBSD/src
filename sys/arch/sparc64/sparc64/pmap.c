@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2000/06/24 20:48:44 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2000/06/25 13:49:35 mrg Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -44,7 +44,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_pageout.h>
 
 #include <uvm/uvm.h>
 
