@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.471 2002/05/12 23:16:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.472 2002/05/31 17:46:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471 2002/05/12 23:16:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.472 2002/05/31 17:46:51 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1605,9 +1605,10 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 }
 
-static const char n_support[] =
+static const char n_support[] __attribute__((__unused__)) =
     "NOTICE: this kernel does not support %s CPU class\n";
-static const char n_lower[] = "NOTICE: lowering CPU class to %s\n";
+static const char n_lower[] __attribute__((__unused__)) =
+    "NOTICE: lowering CPU class to %s\n";
 
 void
 identifycpu(struct cpu_info *ci)
