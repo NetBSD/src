@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.55 2002/09/21 18:10:04 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.56 2002/09/21 20:26:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.55 2002/09/21 18:10:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.56 2002/09/21 20:26:49 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -111,7 +111,7 @@ adosfs_mount(mp, path, data, ndp, p)
 		args.gid = amp->gid;
 		args.mask = amp->mask;
 		args.fspec = NULL;
-		args.export = amp->export;
+		vfs_showexport(mp, &args.export, &amp->export);
 		return copyout(&args, data, sizeof(args));
 	}
 	error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args));
