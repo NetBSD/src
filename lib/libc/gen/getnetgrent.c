@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.11 1997/01/17 07:26:19 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.12 1997/07/13 19:12:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,10 +31,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getnetgrent.c,v 1.11 1997/01/17 07:26:19 lukem Exp $";
+__RCSID("$NetBSD: getnetgrent.c,v 1.12 1997/07/13 19:12:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <stdio.h>
 #define _NETGROUP_PRIVATE
@@ -109,7 +111,7 @@ getstring(pp, del, str)
 	if (del > 1) {
 		dp = malloc(del);
 		if (dp == NULL)
-			_err(1, _ngoomem);
+			err(1, _ngoomem);
 		memcpy(dp, sp, del);
 		dp[del - 1] = '\0';
 	} else
@@ -130,7 +132,7 @@ getnetgroup(pp)
 	struct netgroup *ng = malloc(sizeof(struct netgroup));
 
 	if (ng == NULL)
-		_err(1, _ngoomem);
+		err(1, _ngoomem);
 
 	(*pp)++;	/* skip '(' */
 	if (!getstring(pp, ',', &ng->ng_host))
@@ -195,14 +197,14 @@ lookup(ypdom, name, line, bywhat)
 			free(ks);
 			*line = strdup(data.data);
 			if (*line == NULL)
-				_err(1, _ngoomem);
+				err(1, _ngoomem);
 			return 1;
 
 		case 1:
 			break;
 
 		case -1:
-			_warn("netgroup: db get");
+			warn("netgroup: db get");
 			break;
 		}
 		free(ks);
@@ -261,7 +263,7 @@ _ng_parse(p, name, ng)
 
 		if (**p == '(') {
 			if ((*ng = getnetgroup(p)) == NULL) {
-				_warnx("netgroup: Syntax error `%s'", *p);
+				warnx("netgroup: Syntax error `%s'", *p);
 				return _NG_ERROR;
 			}
 			return _NG_GROUP;
@@ -275,7 +277,7 @@ _ng_parse(p, name, ng)
 				i = (*p - np) + 1;
 				*name = malloc(i);
 				if (*name == NULL)
-					_err(1, _ngoomem);
+					err(1, _ngoomem);
 				memcpy(*name, np, i);
 				(*name)[i - 1] = '\0';
 				return _NG_NAME;
@@ -305,7 +307,7 @@ addgroup(ypdom, sl, grp)
 	/* check for cycles */
 	if (sl_find(sl, grp) != NULL) {
 		free(grp);
-		_warnx("netgroup: Cycle in group `%s'", grp);
+		warnx("netgroup: Cycle in group `%s'", grp);
 		return;
 	}
 	sl_add(sl, grp);
@@ -395,7 +397,7 @@ in_find(ypdom, sl, grp, host, user, domain)
 	/* check for cycles */
 	if (sl_find(sl, grp) != NULL) {
 		free(grp);
-		_warnx("netgroup: Cycle in group `%s'", grp);
+		warnx("netgroup: Cycle in group `%s'", grp);
 		return 0;
 	}
 	sl_add(sl, grp);
@@ -460,7 +462,7 @@ _ng_makekey(s1, s2, len)
 {
 	char *buf = malloc(len);
 	if (buf == NULL)
-		_err(1, _ngoomem);
+		err(1, _ngoomem);
 	(void) snprintf(buf, len, "%s.%s", _NG_STAR(s1), _NG_STAR(s2));
 	return buf;
 }
@@ -598,7 +600,7 @@ setnetgrent(ng)
 #endif
 	ng_copy = strdup(ng);
 	if (ng_copy == NULL)
-		_err(1, _ngoomem);
+		err(1, _ngoomem);
 	addgroup(ypdom, sl, ng_copy);
 	_nghead = _nglist;
 	sl_free(sl, 1);
