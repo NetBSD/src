@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.143 2001/07/15 20:49:40 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.144 2001/07/29 21:22:42 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -533,10 +533,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp)) {
-		DPRINTF(("execve: copyargs failed\n"));
+	error = (*pack.ep_es->es_copyargs)(&pack, &arginfo, &stack, argp);
+	if (error) {
+		DPRINTF(("execve: copyargs failed %d\n", error));
 		goto exec_abort;
 	}
+	/* Move the stack back to original point */
+	stack = (char *) (vm->vm_minsaddr - len);
 
 	/* fill process ps_strings info */
 	p->p_psstr = (struct ps_strings *)(vm->vm_minsaddr
@@ -547,7 +550,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
 
 	/* copy out the process's ps_strings structure */
-	if (copyout(&arginfo, (char *)p->p_psstr, sizeof(arginfo))) {
+	if ((error = copyout(&arginfo, (char *)p->p_psstr,
+	    sizeof(arginfo))) != 0) {
 		DPRINTF(("execve: ps_strings copyout %p->%p size %ld failed\n",
 		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo)));
 		goto exec_abort;
@@ -555,9 +559,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
-		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
+		if ((error = copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigctx.ps_sigcode = (char *)p->p_psstr - szsigcode,
-		    szsigcode)) {
+		    szsigcode)) != 0) {
 			DPRINTF(("execve: sig trampoline copyout failed\n"));
 			goto exec_abort;
 		}
@@ -716,29 +720,29 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 	free(pack.ep_hdr, M_EXEC);
-	exit1(p, W_EXITCODE(0, SIGABRT));
-	exit1(p, -1);
+	exit1(p, W_EXITCODE(error, SIGABRT));
 
 	/* NOTREACHED */
 	return 0;
 }
 
 
-void *
+int
 copyargs(struct exec_package *pack, struct ps_strings *arginfo,
-	void *stack, void *argp)
+    char **stackp, void *argp)
 {
 	char	**cpp, *dp, *sp;
 	size_t	len;
 	void	*nullp;
 	long	argc, envc;
+	int	error;
 
-	cpp = stack;
+	cpp = (char **)*stackp;
 	nullp = NULL;
 	argc = arginfo->ps_nargvstr;
 	envc = arginfo->ps_nenvstr;
-	if (copyout(&argc, cpp++, sizeof(argc)))
-		return NULL;
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
+		return error;
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_es->es_arglen);
 	sp = argp;
@@ -747,24 +751,25 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo,
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
 	for (; --argc >= 0; sp += len, dp += len)
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+			return error;
 
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+			return error;
 
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
 
-	return cpp;
+	*stackp = (char *)cpp;
+	return 0;
 }
 
 #ifdef LKM
