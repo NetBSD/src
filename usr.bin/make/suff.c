@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: suff.c,v 1.6 1994/06/06 22:45:44 jtc Exp $";
+static char *rcsid = "$Id: suff.c,v 1.7 1995/02/04 23:44:43 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -1897,7 +1897,7 @@ SuffFindNormalDeps(gn, slst)
      */
     if (Lst_IsEmpty(targs) && suffNull != NULL) {
 	if (DEBUG(SUFF)) {
-	    printf("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
+	    printf("\tNo known suffix on %s. Using .NULL suffix: ", gn->name);
 	}
 	
 	targ = (Src *)emalloc(sizeof (Src));
@@ -1912,7 +1912,20 @@ SuffFindNormalDeps(gn, slst)
 	targ->cp = Lst_Init(FALSE);
 #endif
 
-	SuffAddLevel(srcs, targ);
+	/*
+	 * Only use the default suffix rules if we don't have commands
+	 * or dependencies defined for this gnode
+	 */
+	if (Lst_IsEmpty(gn->commands) && Lst_IsEmpty(gn->children))
+	    SuffAddLevel(srcs, targ);
+	else {
+	    if (DEBUG(SUFF)) 
+		printf("not ");
+	}
+
+	if (DEBUG(SUFF)) 
+	    printf("adding suffix rules\n");
+
 	(void)Lst_AtEnd(targs, (ClientData)targ);
     }
     
