@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.34 1999/02/12 00:52:52 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.34.2.1 1999/12/04 19:34:13 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -444,8 +444,14 @@ ncr53c9x_setsync(sc, ti)
 			 * put the chip in Fast SCSI mode.
 			 */
 			if (ti->period <= 50)
-				cfg3 |= (sc->sc_rev == NCR_VARIANT_AM53C974) ?
-				    NCRAMDCFG3_FSCSI : NCRCFG3_FSCSI;
+				/*
+				 * There are (at least) 4 variations of the
+				 * configuration 3 register.  The drive attach
+				 * routine sets the appropriate bit to put the
+				 * chip into Fast SCSI mode so that it doesn't
+				 * have to be figured out here each time.
+				 */
+				cfg3 |= sc->sc_cfg3_fscsi;
 		}
 
 		/*
