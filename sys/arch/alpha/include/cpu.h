@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1995/04/22 20:24:49 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1995/05/05 03:41:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,8 @@
 #define	cpu_exec(p)			/* nothing XXX? */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_setstack(p, ap)		(p)->p_addr->u_pcb.pcb_usp
+#define	BROKEN_SWAP
+#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
