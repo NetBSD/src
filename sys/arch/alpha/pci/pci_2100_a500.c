@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.2 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.3 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.2 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.3 2001/07/27 00:25:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -221,6 +221,9 @@ pci_2100_a500_pickintr(struct ttwoga_config *tcp)
 		    T2_IRQ_IS_EISA(i) ? "eisa" : "T2", cp);
 	}
 
+	/* 64 16-byte vectors per hose. */
+	tcp->tc_vecbase = 0x800 + ((64 * 16) * tcp->tc_hose);
+
 	/*
 	 * T2 uses a custom layout of cascaded 8259 PICs for interrupt
 	 * control.  T3 and T4 use a built-in interrupt controller.
@@ -241,8 +244,6 @@ pci_2100_a500_pickintr(struct ttwoga_config *tcp)
 		tcp->tc_eoi = dec_2100_a500_icic_eoi;
 		dec_2100_a500_icic_init_intr(tcp);
 	}
-
-	set_iointr(dec_2100_a500_iointr);
 }
 
 void
@@ -456,8 +457,11 @@ dec_2100_a500_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	    dec_2100_a500_intr_deftype[ih], level, func, arg, "T2 irq");
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_isactive(tcp->tc_intrtab, ih))
+	    alpha_shared_intr_firstactive(tcp->tc_intrtab, ih)) {
+		scb_set(tcp->tc_vecbase + SCB_IDXTOVEC(ih),
+		    dec_2100_a500_iointr, tcp);
 		(*tcp->tc_enable_intr)(tcp, ih, 1);
+	}
 
 	return (cookie);
 }
@@ -478,6 +482,7 @@ dec_2100_a500_intr_disestablish(void *v, void *cookie)
 		(*tcp->tc_enable_intr)(tcp, irq, 0);
 		alpha_shared_intr_set_dfltsharetype(tcp->tc_intrtab,
 		    irq, dec_2100_a500_intr_deftype[irq]);
+		scb_free(tcp->tc_vecbase + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
@@ -576,7 +581,9 @@ dec_2100_a500_eisa_intr_establish(void *v, int eirq, int type, int level,
 	    type, level, fn, arg, "T2 irq");
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_isactive(tcp->tc_intrtab, irq)) {
+	    alpha_shared_intr_firstactive(tcp->tc_intrtab, irq)) {
+		scb_set(tcp->tc_vecbase + SCB_IDXTOVEC(irq),
+		    dec_2100_a500_iointr, tcp);
 		(*tcp->tc_setlevel)(tcp, eirq,
 		    alpha_shared_intr_get_sharetype(tcp->tc_intrtab,
 						    irq) == IST_LEVEL);
@@ -603,6 +610,7 @@ dec_2100_a500_eisa_intr_disestablish(void *v, void *cookie)
 		(*tcp->tc_enable_intr)(tcp, irq, 0);
 		alpha_shared_intr_set_dfltsharetype(tcp->tc_intrtab,
 		    irq, dec_2100_a500_intr_deftype[irq]);
+		scb_free(tcp->tc_vecbase + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
@@ -641,26 +649,13 @@ do {									\
 } while (0)
 
 void
-dec_2100_a500_iointr(void *framep, u_long vec)
+dec_2100_a500_iointr(void *arg, u_long vec)
 {
-	struct ttwoga_config *tcp;
-	int irq, hose, vecbase, rv;
+	struct ttwoga_config *tcp = arg;
+	int irq, rv;
 
-	if (vec >= 0xc00) {
-		hose = 1;
-		vecbase = 0xc00;
-	} else if (vec >= 0x800) {
-		hose = 0;
-		vecbase = 0x800;
-	} else
-		panic("dec_2100_a500_iointr: weird vec 0x%lx\n", vec);
+	irq = SCB_VECTOIDX(vec - tcp->tc_vecbase);
 
-	tcp = &ttwoga_configuration[hose];
-
-	if (vec >= vecbase + (SABLE_MAX_IRQ << 4))
-		panic("dec_2100_a500_iointr: vec 0x%lx out of range\n",
-		    vec);
-	irq = (vec - vecbase) >> 4;
 	rv = alpha_shared_intr_dispatch(tcp->tc_intrtab, irq);
 	(*tcp->tc_eoi)(tcp, irq);
 	if (rv == 0) {
