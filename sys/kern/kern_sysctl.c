@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.71 2000/06/13 01:27:00 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.72 2000/06/16 00:18:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -102,6 +102,7 @@ static int sysctl_file __P((void *, size_t *));
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 static int sysctl_sysvipc __P((int *, u_int, void *, size_t *));
 #endif
+static int sysctl_msgbuf __P((void *, size_t *));
 static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
@@ -466,6 +467,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
 #endif
+	case KERN_MSGBUF:
+		return (sysctl_msgbuf(oldp, oldlenp));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1149,6 +1152,49 @@ sysctl_sysvipc(name, namelen, where, sizep)
 	return (error);
 }
 #endif /* SYSVMSG || SYSVSEM || SYSVSHM */
+
+static int
+sysctl_msgbuf(vwhere, sizep)
+	void *vwhere;
+	size_t *sizep;
+{
+	char *where = vwhere;
+	size_t len, maxlen = *sizep;
+	long pos;
+	int error;
+
+	/*
+	 * deal with cases where the message buffer has
+	 * become corrupted.
+	 */
+	if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+		msgbufenabled = 0;
+		return (ENXIO);
+	}
+
+	if (where == NULL) {
+		/* always return full buffer size */
+		*sizep = msgbufp->msg_bufs;
+		return (0);
+	}
+
+	error = 0;
+	maxlen = min(msgbufp->msg_bufs, maxlen);
+	pos = msgbufp->msg_bufx;
+	while (maxlen > 0) {
+		len = pos == 0 ? msgbufp->msg_bufx : msgbufp->msg_bufs - msgbufp->msg_bufx;
+		len = min(len, maxlen);
+		if (len == 0)
+			break;
+		error = copyout(&msgbufp->msg_bufc[pos], where, len);
+		if (error)
+			break;
+		where += len;
+		maxlen -= len;
+		pos = 0;
+	}
+	return (error);
+}
 
 /*
  * try over estimating by 5 procs
