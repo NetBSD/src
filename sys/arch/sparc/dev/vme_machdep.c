@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.15 1999/01/15 00:26:24 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.16 1999/02/08 00:13:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,8 +89,8 @@ int 		vmeintr4  __P((void *));
 #endif
 #if defined(SUN4M)
 int 		vmeintr4m __P((void *));
-#endif
 static int	sparc_vme_error __P((void));
+#endif
 
 
 static int	sparc_vme_probe __P((void *, bus_space_tag_t, vme_addr_t,
@@ -468,7 +468,8 @@ vmeattach_iommu(parent, self, aux)
 #endif
 }
 
-int
+#if defined(SUN4M)
+static int
 sparc_vme_error()
 {
 	struct vmebus_softc *sc = vmebus_sc;
@@ -482,6 +483,7 @@ sparc_vme_error()
 	printf("\taddress: 0x%x%x\n", afsr, afpa);
 	return (0);
 }
+#endif
 
 int
 vmebus_translate(sc, mod, addr, btp, bap)
