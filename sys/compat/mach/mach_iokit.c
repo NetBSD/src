@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.25 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.26 2003/11/24 16:51:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.25 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.26 2003/11/24 16:51:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.25 2003/11/13 13:40:39 manu Exp $")
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/ktrace.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
@@ -761,16 +763,17 @@ mach_io_registry_entry_get_properties(args)
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
-#ifdef DEBUG_MACH
-	printf("pid %d.%d: copyout iokit properties at %p\n",
-		    l->l_proc->p_pid, l->l_lid, (void *)va);
-#endif
 	if ((error = copyout(mid->mid_properties, (void *)va, size)) != 0) {
 #ifdef DEBUG_MACH
 		printf("pid %d.%d: copyout iokit properties failed\n",
 		    l->l_proc->p_pid, l->l_lid);
 #endif
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
+		ktrmool(l->l_proc, mid->mid_properties, size, (void *)va);
+#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -849,10 +852,6 @@ mach_io_registry_entry_get_property(args)
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
-#ifdef DEBUG_MACH
-	printf("pid %d.%d: copyout iokit property at %p\n",
-		    l->l_proc->p_pid, l->l_lid, (void *)va);
-#endif
 	if ((error = copyout(mip->mip_value, (void *)va, size)) != 0) {
 #ifdef DEBUG_MACH
 		printf("pid %d.%d: copyout iokit property failed\n",
@@ -860,6 +859,10 @@ mach_io_registry_entry_get_property(args)
 #endif
 	}
 
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
+		ktrmool(l->l_proc, mip->mip_value, size, (void *)va);
+#endif
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;

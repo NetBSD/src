@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.34 2003/09/25 21:58:12 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.35 2003/11/24 16:51:33 manu Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -180,6 +180,16 @@ struct ktr_mmsg {
 	/* record contains arg/env string */
 
 /*
+ * KTR_MOOL - Mach Out Of Line data
+ */
+#define KTR_MOOL		12
+struct ktr_mool {
+	const void 	*uaddr;	/* User address */
+	size_t		size;	/* Data len */
+	/* Followed by size bytes of data */
+};
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -194,6 +204,8 @@ struct ktr_mmsg {
 #define KTRFAC_MMSG	(1<<KTR_MMSG)
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
+#define KTRFAC_MOOL	(1<<KTR_MOOL)
+
 /*
  * trace flags (also in p_traceflags)
  */
@@ -226,6 +238,7 @@ void ktrmmsg(struct proc *, const void *, size_t);
 void ktrkmem(struct proc *, int, const void *, size_t);
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
+void ktrmool(struct proc *, const void *, size_t, const void *);
 
 #endif	/* !_KERNEL */
 
