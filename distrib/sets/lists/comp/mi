@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.465 2002/08/07 11:18:37 tron Exp $
+#	$NetBSD: mi,v 1.466 2002/08/07 14:39:51 tron Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -5909,22 +5909,22 @@
 ./usr/share/man/man9/physio.9		comp-sys-man
 ./usr/share/man/man9/pmap.9		comp-sys-man
 ./usr/share/man/man9/pmc.9		comp-sys-man
-./usr/share/man/man9/pmc_get_num_counters.9		comp-sys-catman
-./usr/share/man/man9/pmc_get_counter_type.9		comp-sys-catman
-./usr/share/man/man9/pmc_save_context.9		comp-sys-catman
-./usr/share/man/man9/pmc_restore_context.9		comp-sys-catman
-./usr/share/man/man9/pmc_enable_counter.9		comp-sys-catman
-./usr/share/man/man9/pmc_disable_counter.9		comp-sys-catman
-./usr/share/man/man9/pmc_counter_isrunning.9		comp-sys-catman
-./usr/share/man/man9/pmc_counter_isconfigured.9		comp-sys-catman
-./usr/share/man/man9/pmc_configure_counter.9		comp-sys-catman
-./usr/share/man/man9/pmc_get_counter_value.9		comp-sys-catman
-./usr/share/man/man9/pmc_accumulate.9		comp-sys-catman
-./usr/share/man/man9/pmc_alloc_kernel_counter.9		comp-sys-catman
-./usr/share/man/man9/pmc_free_kernel_counter.9		comp-sys-catman
-./usr/share/man/man9/pmc_start_profiling.9		comp-sys-catman
-./usr/share/man/man9/pmc_stop_profiling.9		comp-sys-catman
-./usr/share/man/man9/PMC_ENABLED.9		comp-sys-catman
+./usr/share/man/man9/pmc_get_num_counters.9		comp-sys-man
+./usr/share/man/man9/pmc_get_counter_type.9		comp-sys-man
+./usr/share/man/man9/pmc_save_context.9		comp-sys-man
+./usr/share/man/man9/pmc_restore_context.9		comp-sys-man
+./usr/share/man/man9/pmc_enable_counter.9		comp-sys-man
+./usr/share/man/man9/pmc_disable_counter.9		comp-sys-man
+./usr/share/man/man9/pmc_counter_isrunning.9		comp-sys-man
+./usr/share/man/man9/pmc_counter_isconfigured.9		comp-sys-man
+./usr/share/man/man9/pmc_configure_counter.9		comp-sys-man
+./usr/share/man/man9/pmc_get_counter_value.9		comp-sys-man
+./usr/share/man/man9/pmc_accumulate.9		comp-sys-man
+./usr/share/man/man9/pmc_alloc_kernel_counter.9		comp-sys-man
+./usr/share/man/man9/pmc_free_kernel_counter.9		comp-sys-man
+./usr/share/man/man9/pmc_start_profiling.9		comp-sys-man
+./usr/share/man/man9/pmc_stop_profiling.9		comp-sys-man
+./usr/share/man/man9/PMC_ENABLED.9		comp-sys-man
 ./usr/share/man/man9/pool.9		comp-sys-man
 ./usr/share/man/man9/pool_create.9		comp-sys-man
 ./usr/share/man/man9/pool_destroy.9		comp-sys-man
