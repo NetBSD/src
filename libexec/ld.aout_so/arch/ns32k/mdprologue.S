@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994 Matthias Pfaller
+ * Copyright (c) 1994 Matthias Pfaller.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Mackerras.
+ *	This product includes software developed by Matthias Pfaller.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.2 1994/12/04 08:26:22 mycroft Exp $
+ *	$Id: mdprologue.S,v 1.3 1995/05/29 18:11:35 phil Exp $
  */
 
 /*
