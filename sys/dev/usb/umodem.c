@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.9 1999/08/16 20:26:53 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.10 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -378,10 +378,7 @@ umodemwritecb(reqh, p, status)
 {
 	struct umodem_softc *sc = (struct umodem_softc *)p;
 	struct tty *tp = sc->sc_tty;
-	usbd_private_handle priv;
-	usbd_status r;
 	u_int32_t cc;
-	void *cp;
 	int s;
 
 	DPRINTFN(5,("umodemwritecb: status=%d\n", status));
@@ -396,7 +393,7 @@ umodemwritecb(reqh, p, status)
 		return;
 	}
 
-	(void)usbd_get_request_status(reqh, &priv, &cp, &cc, &r);
+	usbd_get_request_status(reqh, 0, 0, &cc, 0);
 	DPRINTFN(5,("umodemwritecb: cc=%d\n", cc));
 
 	s = spltty();
@@ -643,7 +640,6 @@ umodemreadcb(reqh, p, status)
 	struct umodem_softc *sc = (struct umodem_softc *)p;
 	struct tty *tp = sc->sc_tty;
 	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
-	usbd_private_handle priv;
 	usbd_status r;
 	u_int32_t cc;
 	u_char *cp;
@@ -659,7 +655,7 @@ umodemreadcb(reqh, p, status)
 		return;
 	}
 
-	(void)usbd_get_request_status(reqh, &priv, (void **)&cp, &cc, &r);
+	usbd_get_request_status(reqh, 0, (void **)&cp, &cc, 0);
 	DPRINTFN(5,("umodemreadcb: got %d chars, tp=%p\n", cc, tp));
 	s = spltty();
 	/* Give characters to tty layer. */
