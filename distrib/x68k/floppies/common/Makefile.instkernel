@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.instkernel,v 1.1 2002/05/07 13:55:41 isaki Exp $
+#	$NetBSD: Makefile.instkernel,v 1.2 2002/05/07 14:08:32 isaki Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
-RAMDISKDIR?=	$(.CURDIR)/../ramdisk/
+RAMDISKDIR?=	${.CURDIR}/../ramdisk/
 KERN?=		netbsd-xxx
 KERNNAME?=	netbsd.xxx
 GZNAME?=	${KERNNAME}.gz
@@ -20,24 +20,22 @@ CLEANFILES+=	${KERNNAME} ${GZNAME} netbsd.tmp*
 realall: ${GZNAME}
 
 .if defined(RAMDISK)
-${KERNNAME}: ${KERN} ${RAMDISK}
+${GZNAME}: ${KERN} ${RAMDISK}
 	-/bin/rm -f netbsd.tmp*
 	cp ${KERN} netbsd.tmp
 	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	mv -f netbsd.tmp ${.TARGET}
+	mv -f netbsd.tmp ${KERNNAME}
 .else
 ${KERNNAME}: ${KERN}
 	cp ${KERN} ${.TARGET}
 .endif
-
-${GZNAME}: ${KERNNAME}
-	gzip -cv9 ${KERNNAME} > ${.TARGET}
+	gzip -v9 ${KERNNAME}
 
 depend:
 
-release: check_RELEASEDIR .WAIT ${KERNNAME} ${GZNAME}
+release: check_RELEASEDIR .WAIT ${GZNAME}
 .ifndef NOKERNCOPY
-	${RELEASE_INSTALL} ${KERNNAME} ${GZNAME} ${RELEASEDIR}/binary/kernel
+	${RELEASE_INSTALL} ${GZNAME} ${RELEASEDIR}/binary/kernel
 .endif
 
 

@@ -1,34 +1,33 @@
-#	$NetBSD: Makefile,v 1.15 2002/04/28 11:29:29 isaki Exp $
+#	$NetBSD: Makefile,v 1.16 2002/05/07 14:08:34 isaki Exp $
+
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 TOP=		${.CURDIR}/..
-COMMONDIR=	${TOP}/ramdisk-common
+COMMONDIR=	${TOP}/common
 
 IMAGE=		ramdisk.fs
+IMAGESIZE=	1228800
 
-AUXTARGETS=	passwd
-AUXDEPENDS= 	${AUXTARGETS} dot.profile dot.hdprofile \
-		${COMMONDIR}/termcap.vt ${COMMONDIR}/disktab.preinstall
-AUXCLEAN=	${AUXTARGETS}
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+MTREECONF=	${DISTRIBDIR}/common/mtree.common ${.CURDIR}/mtree.conf
+MAKEDEVTARGETS=	std md0 fd0 sd0 sd1 sd2 sd3 sd4 sd5 cd0 ttye0 tty00 opty
 
-CBIN=		ramdiskbin
-
-RAMDISKSPT=	15
-RAMDISKCYLS=	85
-RAMDISKHEADS=	2
-RAMDISKCPG=	96
-RAMDISKBPI=	4096
-
-passwd:
-	-/bin/mkdir ${.OBJDIR}/etc
-	/bin/cp -pf ${.CURDIR}/../../../../etc/master.passwd ${.OBJDIR}/etc
-	${PWD_MKDB} -p -d ${.OBJDIR} ${.OBJDIR}/etc/master.passwd
-	/bin/cp -pf ${.OBJDIR}/etc/passwd ${.OBJDIR}
+AUXDEPENDS= 	\
+		dot.profile \
+		dot.hdprofile \
+		services \
+		${NETBSDSRCDIR}/etc/master.passwd \
+		${NETBSDSRCDIR}/etc/group \
+		${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/netconfig \
+		${DESTDIR}/usr/mdec/sdboot_ufs \
+		${DESTDIR}/usr/mdec/boot \
+		${DESTDIR}/usr/mdec/mboot \
+		${COMMONDIR}/termcap.vt \
+		${COMMONDIR}/disktab.preinstall
 
 includes:
 
-.include "${COMMONDIR}/Makefile.inc"
-
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.sys.mk>
-.include <bsd.prog.mk>
+.include "${COMMONDIR}/Makefile.ramdisk"
