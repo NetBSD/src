@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.9 2002/10/09 00:08:23 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.10 2002/12/02 14:25:38 ichiro Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -343,10 +343,6 @@ initarm(void *arg)
         Elf_Shdr *sh;
 #endif
 
-#ifdef PMAP_DEBUG
-	pmap_debug(-1);
-#endif
-
 #ifdef DEBUG_BEFOREMMU
 	/*
 	 * At this point, we cannot call real consinit().
@@ -378,6 +374,11 @@ initarm(void *arg)
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
+
+#ifdef PMAP_DEBUG
+	pmap_debug(-1);
+#endif
+
 #ifdef DDB
         if (! memcmp(&end, "\177ELF", 4)) {
                 sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
