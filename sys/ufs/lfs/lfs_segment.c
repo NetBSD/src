@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.141 2003/10/18 15:52:42 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.142 2003/10/25 18:26:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.141 2003/10/18 15:52:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.142 2003/10/25 18:26:46 christos Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1639,7 +1639,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct vop_strategy_args vop_strategy_a;
 	u_short ninos;
 	struct vnode *devvp;
-	char *p;
+	char *p = NULL;
 	struct vnode *vp;
 	int32_t *daddrp;	/* XXX ondisk32 */
 	int changed;

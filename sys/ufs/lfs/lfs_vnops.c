@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.121 2003/10/21 00:39:03 fvdl Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.122 2003/10/25 18:26:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.121 2003/10/21 00:39:03 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.122 2003/10/25 18:26:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1362,9 +1362,10 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	    int flags, int checkfirst)
 {
 	int by_list;
-	struct vm_page *curpg, *pgs[MAXBSIZE / PAGE_SIZE], *pg;
+	struct vm_page *curpg = NULL; /* XXX: gcc */
+	struct vm_page *pgs[MAXBSIZE / PAGE_SIZE], *pg;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
-	off_t soff;
+	off_t soff = 0; /* XXX: gcc */
 	voff_t off;
 	int i;
 	int nonexistent;
