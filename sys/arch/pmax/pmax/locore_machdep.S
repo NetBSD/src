@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.18 2001/08/27 02:00:19 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.19 2003/06/09 12:20:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,11 +148,11 @@ END(CopyFromBuffer)
 LEAF(dec_mips1_wbflush)
 ALEAF(kn230_wbflush)
 ALEAF(kn210_wbflush)
-        mfc0	v0, MIPS_COP_0_STATUS_REG	# save original SR in v0
+        mfc0	v0, MIPS_COP_0_STATUS		# save original SR in v0
 	li	t0, 0x80000000			# set CU3 bit
 	or	v1, v0 ,t0			# v1 = v0 | 0x80000000
 	nop
-	mtc0	v1, MIPS_COP_0_STATUS_REG
+	mtc0	v1, MIPS_COP_0_STATUS
 	nop				/* two  more cycles to complete */
  	nop
 
@@ -160,7 +160,7 @@ ALEAF(kn210_wbflush)
 	bc3f    1b				# until write buffer drained
         nop                     		# (branch delay slot)
 
-        mtc0    v0, MIPS_COP_0_STATUS_REG	# restore SR on exit
+        mtc0    v0, MIPS_COP_0_STATUS		# restore SR on exit
         nop
         j       ra
         nop
