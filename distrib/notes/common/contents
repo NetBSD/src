@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.76 2002/07/26 22:31:26 rafal Exp $
+.\"	$NetBSD: contents,v 1.77 2002/07/29 16:12:26 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -884,7 +884,7 @@ However, you will only need one of the servers provided in this set.
 The Xmac68k
 .Em monochrome
 server with man pages.
-.showsize 1 3
+.showsize 2 4
 .\}
 .
 .if \n[macppc] \{\
