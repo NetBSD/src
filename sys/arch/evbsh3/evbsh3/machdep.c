@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2000/03/20 20:30:34 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2000/03/20 22:27:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -912,18 +912,24 @@ InitializeBsc()
 	 */
 	SHREG_MCR = BSC_MCR_VAL;
 
-#ifdef BSC_SDMR_VAL
-#if 1
-#define SDMR	(*(volatile unsigned char  *)BSC_SDMR_VAL)
+#if defined(BSC_SDMR2_VAL)
+#define SDMR2	(*(volatile unsigned char  *)BSC_SDMR2_VAL)
 
-	SDMR = 0;
+	SDMR2 = 0;
+#endif
+
+#if defined(BSC_SDMR3_VAL)
+#ifndef COMPUTEXEVB
+#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
+
+	SDMR3 = 0;
 #else
 #define ADDSET	(*(volatile unsigned short *)0x1A000000)
 #define ADDRST	(*(volatile unsigned short *)0x18000000)
-#define SDMR	(*(volatile unsigned char  *)BSC_SDMR_VAL)
+#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
 
 	ADDSET = 0;
-	SDMR = 0;
+	SDMR3 = 0;
 	ADDRST = 0;
 #endif
 #endif
