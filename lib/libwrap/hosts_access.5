@@ -8,9 +8,14 @@ name, host name/address) patterns.  Examples are given at the end. The
 impatient reader is encouraged to skip to the EXAMPLES section for a
 quick introduction.
 .PP
-An extended version of the access control language is described in the
-\fIhosts_options\fR(5) document. The extensions are turned on at
-program build time by building with -DPROCESS_OPTIONS.
+Note that in a `stock' installation of the tcp_wrappers package, a
+program called \fItcpd\fR is called from \fI/etc/inetd.conf\fR, and
+this program performs the wrapper checks and then executes the daemon.
+In NetBSD \fIinetd\fR(8) has been modified to perform this check
+internally, and so tcpd is neither used nor supplied.
+.PP
+Also note that libwrap under NetBSD uses the extensions to the access
+control language as described in the \fIhosts_options\fR(5).
 .PP
 In the following text, \fIdaemon\fR is the process name of a
 network daemon process, and \fIclient\fR is the name and/or address of
@@ -48,7 +53,7 @@ All other lines should satisfy the following format, things between []
 being optional:
 .sp
 .ti +3
-daemon_list : client_list [ : shell_command ]
+daemon_list : client_list : option : option ...
 .PP
 \fIdaemon_list\fR is a list of one or more daemon process names
 (argv[0] values) or wildcards (see below).  
@@ -108,10 +113,11 @@ host names may be unavailable due to temporary name server problems.  A
 network address will be unavailable when the software cannot figure out
 what type of network it is talking to.
 .IP PARANOID
-Matches any host whose name does not match its address.  When tcpd is
-built with -DPARANOID (default mode), it drops requests from such
-clients even before looking at the access control tables.  Build
-without -DPARANOID when you want more control over such requests.
+Matches any host whose name does not match its address.
+Note that unlike the default mode of \fItcpd\fR, NetBSD \fIinetd\fR
+does not automatically drop these requests; you must explicitly
+drop them in your \fI/etc/hosts.allow\fR or \fI/etc/hosts.deny\fR 
+file.
 .ne 6
 .SH OPERATORS
 .IP EXCEPT
@@ -123,22 +129,8 @@ language would permit the use of parentheses, `a EXCEPT b EXCEPT c\'
 would parse as `(a EXCEPT (b EXCEPT c))\'.
 .br
 .ne 6
-.SH SHELL COMMANDS
-If the first-matched access control rule contains a shell command, that
-command is subjected to %<letter> substitutions (see next section).
-The result is executed by a \fI/bin/sh\fR child process with standard
-input, output and error connected to \fI/dev/null\fR.  Specify an `&\'
-at the end of the command if you do not want to wait until it has
-completed.
-.PP
-Shell commands should not rely on the PATH setting of the inetd.
-Instead, they should use absolute path names, or they should begin with
-an explicit PATH=whatever statement.
-.PP
-The \fIhosts_options\fR(5) document describes an alternative language
-that uses the shell command field in a different and incompatible way.
 .SH % EXPANSIONS
-The following expansions are available within shell commands:
+The following expansions are available within some options:
 .IP "%a (%A)"
 The client (server) host address.
 .IP %c
@@ -175,7 +167,7 @@ addresses with different internet hostnames.  Service providers can use
 this facility to offer FTP, GOPHER or WWW archives with internet names
 that may even belong to different organizations. See also the `twist'
 option in the hosts_options(5) document. Some systems (Solaris,
-FreeBSD) can have more than one internet address on one physical
+FreeBSD, NetBSD) can have more than one internet address on one physical
 interface; with other systems you may have to resort to SLIP or PPP
 pseudo interfaces that live in a dedicated network address space.
 .sp
@@ -322,14 +314,14 @@ in.tftpd: LOCAL, .my.domain
 /etc/hosts.deny:
 .in +3
 .nf
-in.tftpd: ALL: (/some/where/safe_finger -l @%h | \\
+in.tftpd: ALL: spawn (/some/where/safe_finger -l @%h | \\
 	/usr/ucb/mail -s %d-%h root) &
 .fi
 .PP
-The safe_finger command comes with the tcpd wrapper and should be
+(The safe_finger command can be gotten from the tcp_wrappers package and
 installed in a suitable place. It limits possible damage from data sent
 by the remote finger server.  It gives better protection than the
-standard finger command.
+standard finger command.)
 .PP
 The expansion of the %h (client host) and %d (service name) sequences
 is described in the section on shell commands.
@@ -359,7 +351,6 @@ that shouldn\'t.  All problems are reported via the syslog daemon.
 .fi
 .SH SEE ALSO
 .nf
-tcpd(8) tcp/ip daemon wrapper program.
 tcpdchk(8), tcpdmatch(8), test programs.
 .SH BUGS
 If a name server lookup times out, the host name will not be available
@@ -376,3 +367,4 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
 \" @(#) hosts_access.5 1.20 95/01/30 19:51:46
+\"	$NetBSD: hosts_access.5,v 1.3 1997/01/20 06:45:37 cjs Exp $
