@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.158 2004/03/21 11:49:28 he Exp $
+#       $NetBSD: Makefile,v 1.159 2004/03/23 00:59:47 jonathan Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -17,7 +17,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	fetch.9 file.9 filedesc.9 fork1.9 fsetown.9 \
 	hash.9 hardclock.9 humanize_number.9 hz.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
-	isapnp.9 itimerfix.9 kcopy.9 \
+	isapnp.9 itimerfix.9 kcopy.9 kcont.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
 	malloc.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \

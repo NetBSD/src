@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.681 2004/03/22 10:28:55 he Exp $
+#	$NetBSD: mi,v 1.682 2004/03/23 00:59:48 jonathan Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4945,6 +4945,7 @@
 ./usr/share/man/cat9/issignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcopy.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kcont.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kernacc.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/kfilter_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman		.cat
@@ -8579,6 +8580,7 @@
 ./usr/share/man/man9/issignal.9			comp-sys-man		.man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man		.man
 ./usr/share/man/man9/kcopy.9			comp-sys-man		.man
+./usr/share/man/man9/kcont.9			comp-sys-man		.man
 ./usr/share/man/man9/kernacc.9			comp-obsolete		obsolete
 ./usr/share/man/man9/kfilter_register.9		comp-sys-man		.man
 ./usr/share/man/man9/kfilter_unregister.9	comp-sys-man		.man
