@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.24 2002/09/27 15:35:42 provos Exp $	*/
+/*	$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.24 2002/09/27 15:35:42 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,7 +645,8 @@ prefetch_abort_handler(frame)
 	 * There are bugs in the rev K SA110.  This is a check for one
 	 * of them.
 	 */
-	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
+	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
+	    curcpu()->ci_arm_cpurev < 3) {
 		/* Always current pmap */
 		pt_entry_t *pte = vtopte((vaddr_t) fault_pc);
 		struct pmap *pmap = p->p_vmspace->vm_map.pmap;

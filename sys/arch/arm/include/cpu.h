@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2002/10/12 21:06:47 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2002/10/13 12:24:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -203,9 +203,9 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 	struct device *ci_dev;		/* Device corresponding to this CPU */
-	u_int32_t ci_cpuid;		/* aggregate CPU id */
-	u_int32_t ci_cputype;		/* CPU type */
-	u_int32_t ci_cpurev;		/* CPU revision */
+	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
+	u_int32_t ci_arm_cputype;	/* CPU type */
+	u_int32_t ci_arm_cpurev;	/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
 	struct evcnt ci_arm700bugcount;
 #ifdef MULTIPROCESSOR
