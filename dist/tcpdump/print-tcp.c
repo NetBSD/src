@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.1.1.1 2001/06/25 19:26:39 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.2 2001/06/25 19:36:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -618,8 +618,10 @@ tcp_print(register const u_char *bp, register u_int length,
 			bgp_print(bp, length);
 		else if (sport == PPTP_PORT || dport == PPTP_PORT)
 			pptp_print(bp, length);
+#if 0
 		else if (sport == NETBIOS_SSN_PORT || dport == NETBIOS_SSN_PORT)
 			nbt_tcp_print(bp, length);
+#endif
 		else if (sport == BXXP_PORT || dport == BXXP_PORT)
 			bxxp_print(bp, length);
 		else if (length > 2 &&

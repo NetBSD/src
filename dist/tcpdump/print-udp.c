@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.1.1.1 2001/06/25 19:26:40 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.2 2001/06/25 19:36:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -652,12 +652,14 @@ udp_print(register const u_char *bp, u_int length,
 			krb_print((const void *)(up + 1), length);
 		else if (ISPORT(L2TP_PORT))
 			l2tp_print((const u_char *)(up + 1), length);
+#if 0
  		else if (ISPORT(NETBIOS_NS_PORT)) {
 			nbt_udp137_print((const u_char *)(up + 1), length);
  		}
  		else if (ISPORT(NETBIOS_DGRAM_PORT)) {
  			nbt_udp138_print((const u_char *)(up + 1), length);
  		}
+#endif
 		else if (dport == 3456)
 			vat_print((const void *)(up + 1), length, up);
  		/*
