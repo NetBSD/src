@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.9 2002/10/15 23:02:51 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.10 2002/10/21 02:30:14 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -296,4 +296,55 @@ distrib/common/parselist.awk			1.13
 
 	Escape { and } in the regexp that matches e.g. ${FOO}.
 	[thorpej, ticket #824]
+
+sys/nfs/nfs_vnops.c				1.152
+
+	Fix panic in NFS client code when unlinking certain paths.
+	[thorpej, ticket #930]
+
+usr.sbin/rarpd/rarpd.8				1.10
+usr.sbin/rarpd/rarpd.c				1.46
+
+	Allow more than one interface to be specified on the command line.
+	[thorpej, ticket #920]
+
+bin/ps/keyword.c				1.28
+
+	Correct use of format string.
+	Fixes PR#18679.
+	[itojun, ticket #922]
+
+sbin/route/route.c				1.60
+
+	Make prefixlen check to make sure its argument is present before
+	dereferencing.
+	[itojun, ticket #923]
+
+sys/ufs/ufs/ufs_readwrite.c			1.43
+
+	Make sure to update the vnode's size even if uiomove failed.
+	otherwise, softdep states can't be flushed later.
+	Fixes PR#16670.
+	[yamt, ticket #926]
+
+games/trek/getpar.c				1.10
+
+	Avoid buffer overrun.
+	[itojun, ticket #927]
+
+sys/arch/macppc/stand/ofwboot/version		1.7
+
+	Bump to version 1.7 to indicate a working alloc.c.
+	[wrstuden, ticket #931]
+
+sys/arch/i386/i386/machdep.c			1.492 (via patch)
+	Fix bugs in BIOS memory probe.
+	Fixes PR#13399.
+	[kanaoka, ticket #934]
+
+sys/netinet/tcp_input.c				1.156 (via patch)
+
+	Correct log_refused check.
+	Fixes PR#18669.
+	[itojun, ticket #915]
 
