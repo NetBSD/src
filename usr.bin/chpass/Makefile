@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/04/05 20:32:26 bouyer Exp $
+#	$NetBSD: Makefile,v 1.14 2003/07/22 12:25:57 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -19,13 +19,11 @@ CPPFLAGS+=-DYP
 DPADD+=	${LIBRPCSVC}
 LDADD+=	-lrpcsvc
 .else
-SRCS+= getpwent.c
+SRCS+=	getpwent.c
+CPPFLAGS.getpwent.c=-UYP
 .endif
 
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 
 .include <bsd.prog.mk>
-
-getpwent.o: getpwent.c
-	${COMPILE.c} -UYP ${.IMPSRC}
