@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.1 1996/04/25 22:26:52 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.2 1996/04/25 23:47:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -72,7 +72,7 @@
 
 #include <machine/viareg.h>
 
-#include "ncr_sbcreg.h"
+#include "sbcreg.h"
 
 /*
  * Transfers smaller than this are done using PIO
