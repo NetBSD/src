@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.15 1997/03/18 23:31:59 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.16 1997/04/28 21:51:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,12 +80,6 @@ struct cfdriver eeprom_cd = {
 	NULL, "eeprom", DV_DULL
 };
 
-/* Called very early by internal_configure. */
-void eeprom_init()
-{
-	eeprom_va = obio_find_mapping(OBIO_EEPROM, OBIO_EEPROM_SIZE);
-}
-
 static int
 eeprom_match(parent, cf, args)
     struct device *parent;
@@ -98,11 +92,11 @@ eeprom_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* Validate the given address. */
-	if (ca->ca_paddr != OBIO_EEPROM)
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
 		return (0);
 
-	if (eeprom_va == NULL)
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
 	return (1);
@@ -114,9 +108,14 @@ eeprom_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
+	struct confargs *ca = args;
 	char *src, *dst, *lim;
 
 	printf("\n");
+
+	eeprom_va = obio_mapin(ca->ca_paddr, OBIO_EEPROM_SIZE);
+	if (!eeprom_va)
+		panic("eeprom_attach");
 
 	/* Keep a "soft" copy of the EEPROM to make access simpler. */
 	ee_rambuf = malloc(sizeof(struct eeprom), M_DEVBUF, M_NOWAIT);
