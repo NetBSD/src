@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.41 2000/08/03 16:30:38 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.131 2000/08/03 15:24:34 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.42 2000/08/19 08:15:54 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.134 2000/08/19 02:01:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1282,11 +1282,15 @@ ni6_input(m, off)
 		nni6->ni_flags = 0;
 		break;
 	case NI_QTYPE_SUPTYPES:
+	{
+		u_int32_t v;
 		nni6->ni_code = ICMP6_NI_SUCCESS;
 		nni6->ni_flags = htons(0x0000);	/* raw bitmap */
 		/* supports NOOP, SUPTYPES, FQDN, and NODEADDR */
-		*(u_int32_t *)(nni6 + 1) = htonl(0x0000000f);
+		v = (u_int32_t)htonl(0x0000000f);
+		bcopy(&v, nni6 + 1, sizeof(u_int32_t));
 		break;
+	}
 	case NI_QTYPE_FQDN:
 		nni6->ni_code = ICMP6_NI_SUCCESS;
 		fqdn = (struct ni_reply_fqdn *)(mtod(n, caddr_t) +
@@ -1310,12 +1314,9 @@ ni6_input(m, off)
 		int lenlim, copied;
 
 		nni6->ni_code = ICMP6_NI_SUCCESS;
-		if (n->m_flags & M_EXT)
-			lenlim = MCLBYTES - sizeof(struct ip6_hdr) -
-				sizeof(struct icmp6_nodeinfo);
-		else
-			lenlim = MHLEN - sizeof(struct ip6_hdr) -
-				sizeof(struct icmp6_nodeinfo);
+		n->m_pkthdr.len = n->m_len =
+		    sizeof(struct ip6_hdr) + sizeof(struct icmp6_nodeinfo);
+		lenlim = M_TRAILINGSPACE(n);
 		copied = ni6_store_addrs(ni6, nni6, ifp, lenlim);
 		/* XXX: reset mbuf length */
 		n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
@@ -2223,7 +2224,8 @@ icmp6_redirect_output(m0, rt)
 		MCLGET(m, M_DONTWAIT);
 	if (!m)
 		goto fail;
-	maxlen = (m->m_flags & M_EXT) ? MCLBYTES : MHLEN;
+	m->m_len = 0;
+	maxlen = M_TRAILINGSPACE(m);
 	maxlen = min(IPV6_MMTU, maxlen);
 	/* just for safety */
 	if (maxlen < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) +
