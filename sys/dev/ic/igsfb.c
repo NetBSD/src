@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.14.2.4 2004/11/29 07:24:15 skrll Exp $ */
+/*	$NetBSD: igsfb.c,v 1.14.2.5 2005/01/27 08:30:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.14.2.4 2004/11/29 07:24:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.14.2.5 2005/01/27 08:30:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ static const struct wsscreen_list igsfb_screenlist = {
  * wsdisplay_accessops
  */
 
-static int	igsfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	igsfb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	igsfb_mmap(void *, off_t, int);
 
 static int	igsfb_alloc_screen(void *, const struct wsscreen_descr *,
@@ -598,12 +598,12 @@ igsfb_mmap(v, offset, prot)
  * wsdisplay_accessops: ioctl()
  */
 static int
-igsfb_ioctl(v, cmd, data, flag, p)
+igsfb_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct igsfb_devconfig *dc = v;
 	struct rasops_info *ri;
