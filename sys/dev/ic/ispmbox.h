@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.24 2000/07/05 22:25:53 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.25 2000/08/01 23:55:12 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -157,6 +157,9 @@ typedef struct {
 #define	MBOX_LOOP_ID_USED		0x4008
 #define	MBOX_ALL_IDS_USED		0x4009
 #define	MBOX_NOT_LOGGED_IN		0x400A
+#define	MBLOGALL			0x000f
+#define	MBLOGNONE			0x0000
+#define	MBLOGMASK(x)			((x) & 0xf)
 
 /*
  * Asynchronous event status codes
