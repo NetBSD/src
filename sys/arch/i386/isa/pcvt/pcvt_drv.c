@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.12 1995/04/10 18:08:45 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.13 1995/04/18 00:59:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -124,7 +124,6 @@ void
 pcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	static struct intrhand vthand;
 #else
 int
 pcattach(struct isa_device *dev)
@@ -273,10 +272,8 @@ pcattach(struct isa_device *dev)
 	async_update(0);		/* start asynchronous updates */
 
 #if PCVT_NETBSD > 9
-	vthand.ih_fun = pcrint;
-	vthand.ih_arg = 0;
-	vthand.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, IST_EDGE, &vthand);
+	isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY, pcrint,
+	    (void *)0);
 #else
 	return 1;
 #endif
@@ -612,7 +609,7 @@ pcmmap(Dev_t dev, int offset, int nprot)
  *
  *---------------------------------------------------------------------------*/
 int
-pcrint(void)
+pcrint(void *arg)
 {
 	u_char *cp;
 	
@@ -819,7 +816,7 @@ pccnpollc(Dev_t dev, int on)
 		 * won't get any further interrupts.
 		 */
 		s = spltty();
-		pcrint();
+		pcrint((void *)0);
 		splx(s);
 	}
 }
