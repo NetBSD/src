@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.60 2002/10/04 01:50:54 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.61 2002/10/09 02:59:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -107,12 +107,14 @@ enum devact {
 struct device {
 	enum	devclass dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
-	struct	cfdata *dv_cfdata;	/* config data that found us */
+	struct	cfdata *dv_cfdata;	/* config data that found us
+					   (NULL if pseudo-device) */
 	struct	cfdriver *dv_cfdriver;	/* our cfdriver */
 	struct	cfattach *dv_cfattach;	/* our cfattach */
 	int	dv_unit;		/* device unit number */
 	char	dv_xname[16];		/* external name (name + unit) */
-	struct	device *dv_parent;	/* pointer to parent device */
+	struct	device *dv_parent;	/* pointer to parent device
+					   (NULL if pesudo- or root node) */
 	int	dv_flags;		/* misc. flags; see below */
 };
 
@@ -286,6 +288,9 @@ struct pdevinit {
 	int	pdev_count;
 };
 
+/* This allows us to wildcard a device unit. */
+#define	DVUNIT_ANY	-1
+
 #ifdef _KERNEL
 
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
@@ -314,6 +319,8 @@ struct device *config_rootfound(const char *, void *);
 struct device *config_attach(struct device *, struct cfdata *, void *,
     cfprint_t);
 int config_match(struct device *, struct cfdata *, void *);
+
+struct device *config_attach_pseudo(const char *, int);
 
 void config_makeroom(int n, struct cfdriver *cd);
 int config_detach(struct device *, int);

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.76 2002/10/04 01:50:53 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.77 2002/10/09 02:59:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.76 2002/10/04 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.77 2002/10/09 02:59:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -364,7 +364,7 @@ config_cfattach_detach(const char *driver, struct cfattach *ca)
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if ((dev = cd->cd_devs[i]) == NULL)
 			continue;
-		if (STREQ(dev->dv_cfdata->cf_atname, ca->ca_name))
+		if (dev->dv_cfattach == ca)
 			return (EBUSY);
 	}
 
@@ -450,7 +450,7 @@ cfparent_match(struct device *parent, const struct cfparent *cfp)
 	if (cfp == NULL)
 		return (0);
 
-	pcd = config_cfdriver_lookup(parent->dv_cfdata->cf_name);
+	pcd = parent->dv_cfdriver;
 	KASSERT(pcd != NULL);
 
 	/*
@@ -484,7 +484,7 @@ cfparent_match(struct device *parent, const struct cfparent *cfp)
 	/*
 	 * Make sure the unit number matches.
 	 */
-	if (cfp->cfp_unit == -1 ||	/* wildcard */
+	if (cfp->cfp_unit == DVUNIT_ANY ||	/* wildcard */
 	    cfp->cfp_unit == parent->dv_unit)
 		return (1);
 
@@ -790,6 +790,91 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 }
 
 /*
+ * As above, but for pseudo-devices.  Pseudo-devices attached in this
+ * way are silently inserted into the device tree, and their children
+ * attached.
+ *
+ * Note that because pseudo-devices are attached silently, any information
+ * the attach routine wishes to print should be prefixed with the device
+ * name by the attach routine.
+ */
+struct device *
+config_attach_pseudo(const char *name, int unit)
+{
+	struct device *dev;
+	struct cfdriver *cd;
+	struct cfattach *ca;
+	size_t lname, lunit;
+	const char *xunit;
+	int myunit;
+	char num[10];
+
+	cd = config_cfdriver_lookup(name);
+	if (cd == NULL)
+		return (NULL);
+
+	ca = config_cfattach_lookup_cd(cd, name);
+	if (ca == NULL)
+		return (NULL);
+
+	if (ca->ca_devsize < sizeof(struct device))
+		panic("config_attach_pseudo");
+
+	if (unit == DVUNIT_ANY) {
+		for (myunit = 0; myunit < cd->cd_ndevs; myunit++)
+			if (cd->cd_devs[myunit] == NULL)
+				break;
+		/*
+		 * myunit is now the unit of the first NULL device pointer.
+		 */
+	} else {
+		myunit = unit;
+		if (myunit < cd->cd_ndevs && cd->cd_devs[myunit] != NULL)
+			return (NULL);
+	}
+
+	/* compute length of name and decimal expansion of unit number */
+	lname = strlen(cd->cd_name);
+	xunit = number(&num[sizeof(num)], myunit);
+	lunit = &num[sizeof(num)] - xunit;
+	if (lname + lunit > sizeof(dev->dv_xname))
+		panic("config_attach_pseudo: device name too long");
+
+	/* get memory for all device vars */
+	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF,
+	    cold ? M_NOWAIT : M_WAITOK);
+	if (!dev)
+		panic("config_attach_pseudo: memory allocation for device "
+		    "softc failed");
+	memset(dev, 0, ca->ca_devsize);
+	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+	dev->dv_class = cd->cd_class;
+	dev->dv_cfdata = NULL;
+	dev->dv_cfdriver = cd;
+	dev->dv_cfattach = ca;
+	dev->dv_unit = myunit;
+	memcpy(dev->dv_xname, cd->cd_name, lname);
+	memcpy(dev->dv_xname + lname, xunit, lunit);
+	dev->dv_parent = ROOT;
+	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
+
+	/* put this device in the devices array */
+	config_makeroom(dev->dv_unit, cd);
+	if (cd->cd_devs[dev->dv_unit])
+		panic("config_attach_pseudo: duplicate %s", dev->dv_xname);
+	cd->cd_devs[dev->dv_unit] = dev;
+
+#if 0	/* XXXJRT not yet */
+#ifdef __HAVE_DEVICE_REGISTER
+	device_register(dev, NULL);	/* like a root node */
+#endif
+#endif
+	(*ca->ca_attach)(ROOT, dev, NULL);
+	config_process_deferred(&deferred_config_queue, dev);
+	return (dev);
+}
+
+/*
  * Detach a device.  Optionally forced (e.g. because of hardware
  * removal) and quiet.  Returns zero if successful, non-zero
  * (an error code) otherwise.
@@ -810,15 +895,16 @@ config_detach(struct device *dev, int flags)
 #endif
 	int rv = 0, i;
 
-	cf = dev->dv_cfdata;
 #ifdef DIAGNOSTIC
-	if (cf->cf_fstate != FSTATE_FOUND && cf->cf_fstate != FSTATE_STAR)
+	if (dev->dv_cfdata != NULL &&
+	    dev->dv_cfdata->cf_fstate != FSTATE_FOUND &&
+	    dev->dv_cfdata->cf_fstate != FSTATE_STAR)
 		panic("config_detach: bad device fstate");
 #endif
-	cd = config_cfdriver_lookup(cf->cf_name);
+	cd = dev->dv_cfdriver;
 	KASSERT(cd != NULL);
 
-	ca = config_cfattach_lookup_cd(cd, cf->cf_atname);
+	ca = dev->dv_cfattach;
 	KASSERT(ca != NULL);
 
 	/*
@@ -899,10 +985,11 @@ config_detach(struct device *dev, int flags)
 	TAILQ_REMOVE(&alldevs, dev, dv_list);
 
 	/*
-	 * Remove from cfdriver's array, tell the world, and free softc.
+	 * Remove from cfdriver's array, tell the world (unless it was
+	 * a pseudo-device), and free softc.
 	 */
 	cd->cd_devs[dev->dv_unit] = NULL;
-	if ((flags & DETACH_QUIET) == 0)
+	if (dev->dv_cfdata != NULL && (flags & DETACH_QUIET) == 0)
 		printf("%s detached\n", dev->dv_xname);
 	free(dev, M_DEVBUF);
 
