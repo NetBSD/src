@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.11 1999/03/25 05:13:15 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.12 1999/03/25 05:22:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,10 +70,6 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 
 	offset = bn * DEV_BSIZE;
 
-#ifdef DEBUG
-/*XXX*/printf("rz:%x %d\n", offset, reqcnt);
-#endif
-
 	/*
 	 * Partial-block transfers not handled.
 	 */
@@ -132,7 +128,7 @@ rzopen(struct open_file *f, ...)
 	else
 		i = bootinit (device);
 	if (i < 0) {
-		printf("boot init failed\n");
+		printf("open failed\n");
 		return (ENXIO);
 	}
 
