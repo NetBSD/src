@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.11 2003/08/27 15:59:50 mrg Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.12 2004/03/17 17:04:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.11 2003/08/27 15:59:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.12 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,7 +113,7 @@ bootbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(sc->sc_node, "ranges",
+	error = prom_getprop(sc->sc_node, "ranges",
 	    sizeof(struct openprom_range), &sc->sc_bustag->nranges,
 	    &sc->sc_bustag->ranges);
 	if (error) {
@@ -176,7 +176,7 @@ bootbus_setup_attach_args(struct bootbus_softc *sc, bus_space_tag_t bustag,
 
 	memset(baa, 0, sizeof(*baa));
 
-	error = PROM_getprop(node, "name", 1, &n, &baa->ba_name);
+	error = prom_getprop(node, "name", 1, &n, &baa->ba_name);
 	if (error)
 		return (error);
 	baa->ba_name[n] = '\0';
@@ -184,21 +184,21 @@ bootbus_setup_attach_args(struct bootbus_softc *sc, bus_space_tag_t bustag,
 	baa->ba_bustag = bustag;
 	baa->ba_node = node;
 
-	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
+	error = prom_getprop(node, "reg", sizeof(struct openprom_addr),
 	    &baa->ba_nreg, &baa->ba_reg);
 	if (error) {
 		bootbus_destroy_attach_args(baa);
 		return (error);
 	}
 
-	error = PROM_getprop(node, "intr", sizeof(struct openprom_intr),
+	error = prom_getprop(node, "intr", sizeof(struct openprom_intr),
 	    &baa->ba_nintr, &baa->ba_intr);
 	if (error != 0 && error != ENOENT) {
 		bootbus_destroy_attach_args(baa);
 		return (error);
 	}
 
-	error = PROM_getprop(node, "address", sizeof(uint32_t),
+	error = prom_getprop(node, "address", sizeof(uint32_t),
 	    &baa->ba_npromvaddrs, &baa->ba_promvaddrs);
 	if (error != 0 && error != ENOENT) {
 		bootbus_destroy_attach_args(baa);

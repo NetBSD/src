@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2003/07/15 00:05:07 lukem Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.9 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/07/15 00:05:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2004/03/17 17:04:59 pk Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -145,7 +145,7 @@ pci_attach_hook(parent, self, pba)
 	char buf[32];
 	char *model;
 
-	model = PROM_getpropstringA(prom_findroot(), "model",
+	model = prom_getpropstringA(prom_findroot(), "model",
 				    buf, sizeof(buf));
 	if (model == NULL)
 		panic("pci_attach_hook: no \"model\" property");

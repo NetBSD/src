@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.50 2004/02/13 11:36:18 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.51 2004/03/17 17:04:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.50 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.51 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -252,7 +252,7 @@ zs_attach_sbus(parent, self, aux)
 	}
 	zsc->zsc_bustag = sa->sa_bustag;
 	zsc->zsc_dmatag = sa->sa_dmatag;
-	zsc->zsc_promunit = PROM_getpropint(sa->sa_node, "slave", -2);
+	zsc->zsc_promunit = prom_getpropint(sa->sa_node, "slave", -2);
 	zsc->zsc_node = sa->sa_node;
 	zs_attach(zsc, zsaddr[zs_unit], sa->sa_pri);
 }
@@ -363,7 +363,7 @@ zs_attach(zsc, zsd, pri)
 		 */
 		if (child 
 		    && (!strcmp(child->dv_cfdata->cf_name, "zstty"))
-		    && (PROM_getproplen(zsc->zsc_node, "keyboard") == 0)) {
+		    && (prom_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
 				/* The following are the only fields we need here */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.9 2003/08/27 15:59:53 mrg Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.10 2004/03/17 17:04:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.9 2003/08/27 15:59:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.10 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -97,8 +97,8 @@ cpuunit_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_st = ma->ma_bustag;
 
-	sc->sc_device_id = PROM_getpropint(sc->sc_node, "device-id", -1);
-	sc->sc_board = PROM_getpropint(sc->sc_node, "board#", -1);
+	sc->sc_device_id = prom_getpropint(sc->sc_node, "device-id", -1);
+	sc->sc_board = prom_getpropint(sc->sc_node, "board#", -1);
 
 	printf(": board #%d, ID %d\n", sc->sc_board, sc->sc_device_id);
 
@@ -115,7 +115,7 @@ cpuunit_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = PROM_getprop(sc->sc_node, "ranges",
+	error = prom_getprop(sc->sc_node, "ranges",
 	    sizeof(struct openprom_range), &sc->sc_bustag->nranges,
 	    &sc->sc_bustag->ranges);
 	if (error) {
@@ -157,12 +157,12 @@ cpuunit_setup_attach_args(struct cpuunit_softc *sc, bus_space_tag_t bustag,
 
 	memset(cpua, 0, sizeof(*cpua));
 
-	error = PROM_getprop(node, "name", 1, &n, &cpua->cpua_name);
+	error = prom_getprop(node, "name", 1, &n, &cpua->cpua_name);
 	if (error)
 		return (error);
 	cpua->cpua_name[n] = '\0';
 
-	error = PROM_getprop(node, "device_type", 1, &n,
+	error = prom_getprop(node, "device_type", 1, &n,
 	    &cpua->cpua_type);
 	if (error) {
 		free(cpua->cpua_name, M_DEVBUF);

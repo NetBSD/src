@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.17 2004/03/17 14:00:46 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.18 2004/03/17 17:04:58 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.17 2004/03/17 14:00:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.18 2004/03/17 17:04:58 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ fb_is_console(node)
 		if (prom_stdout() != PROMDEV_SCREEN)
 			return (0);
 
-		fbnode = PROM_getpropint(findroot(), "fb", 0);
+		fbnode = prom_getpropint(findroot(), "fb", 0);
 		return (fbnode == 0 || node == fbnode);
 
 	case PROM_OBP_V2:
@@ -276,9 +276,9 @@ fb_setsize_obp(fb, depth, def_width, def_height, node)
 	struct fbdevice *fb;
 	int depth, def_width, def_height, node;
 {
-	fb->fb_type.fb_width = PROM_getpropint(node, "width", def_width);
-	fb->fb_type.fb_height = PROM_getpropint(node, "height", def_height);
-	fb->fb_linebytes = PROM_getpropint(node, "linebytes",
+	fb->fb_type.fb_width = prom_getpropint(node, "width", def_width);
+	fb->fb_type.fb_height = prom_getpropint(node, "height", def_height);
+	fb->fb_linebytes = prom_getpropint(node, "linebytes",
 				     (fb->fb_type.fb_width * depth) / 8);
 }
 

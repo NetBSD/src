@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
+/*	$NetBSD: fd.c,v 1.113 2004/03/17 17:04:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.113 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -608,7 +608,7 @@ fdcattach_obio(parent, self, aux)
 		sa->sa_size,
 		fdc->sc_handle);
 
-	if (strcmp(PROM_getpropstring(sa->sa_node, "status"), "disabled") == 0) {
+	if (strcmp(prom_getpropstring(sa->sa_node, "status"), "disabled") == 0) {
 		printf(": no drives attached\n");
 		return;
 	}
