@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.19 1999/12/03 16:23:58 mjl Exp $	*/
+/*	$NetBSD: passwd.c,v 1.20 2000/07/06 11:06:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.19 1999/12/03 16:23:58 mjl Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.20 2000/07/06 11:06:12 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -59,12 +59,11 @@ __RCSID("$NetBSD: passwd.c,v 1.19 1999/12/03 16:23:58 mjl Exp $");
 #include <unistd.h>
 #include <util.h>
 
-static void	pw_cont __P((int sig));
-static int	pw_equal __P((char *buf, struct passwd *old_pw));
+static void	pw_cont(int sig);
+static int	pw_equal(char *buf, struct passwd *old_pw);
 
 int
-pw_lock(retries)
-	int retries;
+pw_lock(int retries)
 {
 	int i, fd;
 	mode_t old_mode;
@@ -85,7 +84,7 @@ pw_lock(retries)
 }
 
 int
-pw_mkdb()
+pw_mkdb(void)
 {
 	int pstat;
 	pid_t pid;
@@ -106,8 +105,9 @@ pw_mkdb()
 }
 
 int
-pw_abort()
+pw_abort(void)
 {
+
 	return(unlink(_PATH_MASTERPASSWD_LOCK));
 }
 
@@ -118,8 +118,7 @@ pw_abort()
 static pid_t editpid = -1;
 
 static void
-pw_cont(sig)
-	int sig;
+pw_cont(int sig)
 {
 
 	if (editpid != -1)
@@ -127,7 +126,7 @@ pw_cont(sig)
 }
 
 void
-pw_init()
+pw_init(void)
 {
 	struct rlimit rlim;
 
@@ -154,9 +153,7 @@ pw_init()
 }
 
 void
-pw_edit(notsetuid, filename)
-	int notsetuid;
-	const char *filename;
+pw_edit(int notsetuid, const char *filename)
 {
 	int pstat;
 	char *p, *editor;
@@ -209,7 +206,7 @@ pw_edit(notsetuid, filename)
 }
 
 void
-pw_prompt()
+pw_prompt(void)
 {
 	int c;
 
@@ -224,9 +221,7 @@ pw_prompt()
 
 /* for use in pw_copy(). Compare a pw entry to a pw struct. */
 static int
-pw_equal (buf, pw)
-	char *buf;
-	struct passwd *pw;
+pw_equal(char *buf, struct passwd *pw)
 {
 	struct passwd buf_pw;
 	int len;
@@ -251,9 +246,7 @@ pw_equal (buf, pw)
 }
 
 void
-pw_copy(ffd, tfd, pw, old_pw)
-	int ffd, tfd;
-	struct passwd *pw, *old_pw;
+pw_copy(int ffd, int tfd, struct passwd *pw, struct passwd *old_pw)
 {
 	FILE *from, *to;
 	int done;
@@ -323,9 +316,7 @@ err:		pw_error(NULL, 1, 1);
 }
 
 void
-pw_error(name, err, eval)
-	const char *name;
-	int err, eval;
+pw_error(const char *name, int err, int eval)
 {
 
 	if (err)
@@ -334,4 +325,131 @@ pw_error(name, err, eval)
 	warnx("%s: unchanged", _PATH_MASTERPASSWD);
 	pw_abort();
 	exit(eval);
+}
+
+/* Removes head and/or tail spaces. */
+static void
+trim_whitespace(char *line)
+{
+	char *p;
+
+	/* Remove leading spaces */
+	p = line;
+	while (isspace(*p))
+		p++;
+	memmove(line, p, strlen(p) + 1);
+
+	/* Remove trailing spaces */
+	p = line + strlen(line) - 1;
+	while (isspace(*p))
+		p--;
+	*(p + 1) = '\0';
+}
+
+
+/* Get one line, remove spaces from front and tail */
+static int
+read_line(FILE *fp, char *line, int max)
+{
+	char   *p;
+
+	/* Read one line of config */
+	if (fgets(line, max, fp) == NULL)
+		return (0);
+
+	if ((p = strchr(line, '\n')) == NULL) {
+		warnx("line too long");
+		return (0);
+	}
+	*p = '\0';
+
+	/* Remove comments */
+	if ((p = strchr(line, '#')) != NULL)
+		*p = '\0';
+
+	trim_whitespace(line);
+	return (1);
+}
+
+static const char *
+pw_default(const char *option)
+{
+	static const char *options[][2] = {
+		{ "localcipher",	"old" },
+		{ "ypcipher",		"old" },
+	};
+	int i;
+
+	for (i = 0; i < sizeof(options) / sizeof(options[0]); i++)
+		if (strcmp(options[i][0], option) == 0)
+			return (options[i][1]);
+
+	return (NULL);
+}
+
+/*
+ * Retrieve password information from the /etc/passwd.conf file, at the
+ * moment this is only for choosing the cipher to use.  It could easily be
+ * used for other authentication methods as well.
+ */
+void
+pw_getconf(char *data, size_t max, const char *key, const char *option)
+{
+	FILE *fp;
+	char line[LINE_MAX], *p, *p2;
+	static char result[LINE_MAX];
+	int got, found;
+	const char *cp;
+
+	got = 0;
+	found = 0;
+	result[0] = '\0';
+
+	if ((fp = fopen(_PATH_PASSWDCONF, "r")) == NULL) {
+		if ((cp = pw_default(option)) != NULL)
+			strlcpy(data, p, max);
+		else
+			data[0] = '\0';
+		return;
+	}
+
+	while (!found && (got || read_line(fp, line, LINE_MAX))) {
+		got = 0;
+
+		if (strncmp(key, line, strlen(key)) != 0 ||
+		    line[strlen(key)] != ':')
+			continue;
+
+		/* Now we found our specified key */
+		while (read_line(fp, line, LINE_MAX)) {
+			/* Leaving key field */
+			if (strchr(line, ':') != NULL) {
+				got = 1;
+				break;
+			}
+			p2 = line;
+			if ((p = strsep(&p2, "=")) == NULL || p2 == NULL)
+				continue;
+			trim_whitespace(p);
+
+			if (!strncmp(p, option, strlen(option))) {
+				trim_whitespace(p2);
+				strcpy(result, p2);
+				found = 1;
+				break;
+			}
+		}
+	}
+	fclose(fp);
+
+	/* 
+	 * If we got no result and were looking for a default
+	 * value, try hard coded defaults.
+	 */
+
+	if (strlen(result) == 0 && strcmp(key, "default") == 0 &&
+	    (cp = pw_default(option)) != NULL)
+		strlcpy(data, p, max);
+	else 
+		strlcpy(data, result, max);
 }
