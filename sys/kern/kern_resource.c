@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.64 2002/09/04 01:32:34 matt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.65 2002/10/03 04:52:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.64 2002/09/04 01:32:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.65 2002/10/03 04:52:51 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ sys_getrlimit(p, v, retval)
 	} */ *uap = v;
 	int which = SCARG(uap, which);
 
-	if ((u_int)which >= RLIM_NLIMITS)
+	if (which < 0 || (u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 	return (copyout(&p->p_rlimit[which], SCARG(uap, rlp),
 	    sizeof(struct rlimit)));
