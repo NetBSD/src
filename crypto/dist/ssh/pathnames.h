@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.11 2002/04/29 08:23:35 lukem Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.12 2002/05/16 20:59:37 itojun Exp $	*/
 /*	$OpenBSD: pathnames.h,v 1.12 2002/03/19 03:03:43 stevesk Exp $	*/
 
 /*
@@ -125,7 +125,7 @@
 #define _PATH_LS			"ls"
 
 /* chroot directory for unprivileged user when UsePrivilegeSeparation=yes */
-#define _PATH_PRIVSEP_CHROOT_DIR	"/var/empty"
+#define _PATH_PRIVSEP_CHROOT_DIR	"/var/chroot/sshd"
 
 #define _PATH_RSH			"/usr/bin/rsh"
 #define _PATH_URANDOM			"/dev/urandom"
