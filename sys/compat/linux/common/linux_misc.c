@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.69.4.2 2001/03/30 21:41:32 he Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.69.4.3 2001/05/01 08:53:53 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1145,4 +1145,18 @@ linux_sys_reboot(struct proc *p, void *v, register_t *retval)
 	}
 
 	return(sys_reboot(p, &sra, retval));
+}
+
+/*
+ * This gets called for unsupported syscalls. The difference to sys_nosys()
+ * is that process does not get SIGSYS, the call just returns with ENOSYS.
+ * This is the way Linux does it and glibc depends on this behaviour.
+ */
+int
+linux_sys_nosys(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return (ENOSYS);
 }
