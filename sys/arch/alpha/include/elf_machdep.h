@@ -1,12 +1,12 @@
-/* $NetBSD: elf_machdep.h,v 1.7 2001/10/31 17:44:43 thorpej Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.8 2001/10/31 18:05:36 thorpej Exp $ */
 
 /*
  * Alpha ELF uses different (non-standard) definitions of Elf64_Sword
  * and Elf64_Word.
  */
-typedef	__int64_t	Elf64_Sword;
+typedef	int64_t		Elf64_Sword;
 #define	ELF64_FSZ_SWORD	8
-typedef	__uint64_t	Elf64_Word;
+typedef	uint64_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	8
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */

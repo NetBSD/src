@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.57 2001/10/31 17:44:42 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.58 2001/10/31 18:05:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,46 +47,50 @@
  *	http://www.sco.com/developer/gabi/latest/ch4.eheader.html
  */
 
-#include <machine/int_types.h>
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
+#include <inttypes.h>
+#endif /* _KERNEL || _STANDALONE */
 
 #include <machine/elf_machdep.h>
 
-typedef	__uint8_t  	Elf_Byte;
+typedef	uint8_t  	Elf_Byte;
 
-typedef	__uint32_t	Elf32_Addr;
+typedef	uint32_t	Elf32_Addr;
 #define	ELF32_FSZ_ADDR	4
-typedef	__uint32_t Elf32_Off;
+typedef	uint32_t	Elf32_Off;
 #define	ELF32_FSZ_OFF	4
-typedef	__int32_t   Elf32_Sword;
+typedef	int32_t		Elf32_Sword;
 #define	ELF32_FSZ_SWORD	4
-typedef	__uint32_t Elf32_Word;
+typedef	uint32_t	Elf32_Word;
 #define	ELF32_FSZ_WORD	4
-typedef	__uint16_t Elf32_Half;
+typedef	uint16_t	Elf32_Half;
 #define	ELF32_FSZ_HALF	2
 
-typedef	__uint64_t	Elf64_Addr;
+typedef	uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
-typedef	__uint64_t	Elf64_Off;
+typedef	uint64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
-typedef	__int32_t	Elf64_Shalf;
+typedef	int32_t		Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
 
 #ifndef ELF64_FSZ_SWORD
-typedef	__int32_t	Elf64_Sword;
+typedef	int32_t		Elf64_Sword;
 #define	ELF64_FSZ_SWORD	4
 #endif /* ELF64_FSZ_SWORD */
 #ifndef ELF64_FSZ_WORD
-typedef	__uint32_t	Elf64_Word;
+typedef	uint32_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	4
 #endif /* ELF64_FSZ_WORD */
 
-typedef	__int64_t	Elf64_Sxword;
+typedef	int64_t		Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
-typedef	__uint64_t	Elf64_Xword;
+typedef	uint64_t	Elf64_Xword;
 #define	ELF64_FSZ_XWORD	8
-typedef	__uint32_t	Elf64_Half;
+typedef	uint32_t	Elf64_Half;
 #define	ELF64_FSZ_HALF	4
-typedef	__uint16_t	Elf64_Quarter;
+typedef	uint16_t	Elf64_Quarter;
 #define	ELF64_FSZ_QUARTER 2
 
 /*
