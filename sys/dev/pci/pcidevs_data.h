@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.381 2001/12/30 12:46:10 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.382 2002/01/01 21:47:34 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.378 2001/12/30 12:45:32 ichiro Exp 
+ *	NetBSD: pcidevs,v 1.379 2002/01/01 21:47:08 augustss Exp 
  */
 
 /*
@@ -2570,6 +2570,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Galileo Technology",
 	    "GT-64260 System Controller",
+	},
+	{
+	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO,
+	    0,
+	    "Guillemot",
+	    "MAXIRADIO",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
@@ -9799,6 +9805,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MEDIAQ, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "MediaQ Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_GUILLEMOT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Guillemot",
 	    NULL,
 	},
 	{
