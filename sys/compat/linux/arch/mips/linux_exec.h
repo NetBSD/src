@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.3 2001/09/22 21:15:18 manu Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.4 2002/08/15 06:31:30 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #include <sys/exec_aout.h>
 #include <sys/exec_elf.h>
 #include <sys/types.h>
-#include <sys/systm.h>
 
 /*
  * From Linux's include/asm-mips/elf.h
