@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.5 1997/11/20 01:26:45 mjacob Exp $	*/
+/*	$NetBSD: execl.c,v 1.6 1998/09/11 21:03:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execl.c,v 1.5 1997/11/20 01:26:45 mjacob Exp $");
+__RCSID("$NetBSD: execl.c,v 1.6 1998/09/11 21:03:18 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include "reentrant.h"
 
 #if __STDC__
 #include <stdarg.h>
@@ -60,6 +61,9 @@ __weak_alias(execl,_execl);
 
 
 extern char **environ;
+#ifdef _REENT
+extern rwlock_t __environ_lock;
+#endif
 
 int
 #if __STDC__
@@ -71,8 +75,12 @@ execl(name, arg, va_alist)
 	va_dcl
 #endif
 {
+	int r;
 #if defined(__i386__) || defined(__m68k__) || defined(__ns32k__)
-	return execve(name, (char **) &arg, environ);
+	rwlock_rdlock(&__environ_lock);
+	r = execve(name, (char **) &arg, environ);
+	rwlock_unlock(&__environ_lock);
+	return (r);
 #else
 	va_list ap;
 	char **argv;
@@ -91,6 +99,9 @@ execl(name, arg, va_alist)
 		;
 	va_end(ap);
 	
-	return execve(name, argv, environ);
+	rwlock_rdlock(&__environ_lock);
+	r = execve(name, argv, environ);
+	rwlock_unlock(&__environ_lock);
+	return (r);
 #endif
 }
