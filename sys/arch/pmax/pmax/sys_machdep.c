@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)sys_machdep.c	7.3 (Berkeley) 10/11/92
- * $Id: sys_machdep.c,v 1.1.1.1 1993/10/12 03:22:33 deraadt Exp $
+ * $Id: sys_machdep.c,v 1.2 1994/01/16 00:52:47 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -104,3 +104,23 @@ vdoualarm(arg)
 	nvualarm--;
 }
 #endif
+
+struct sysarch_args {
+	int op;
+	char *params;
+};
+
+sysarch(p, uap, retval)
+	struct proc *p;
+	register struct sysarch_args *uap;
+	int *retval;
+{
+	int error = 0;
+
+	switch(uap->op) {
+	default:
+		error = EINVAL;
+		break;
+	}
+	return(error);
+}
