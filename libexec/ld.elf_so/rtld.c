@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.47 2001/12/14 21:25:22 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.48 2002/02/03 23:34:42 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -176,8 +176,8 @@ _rtld_init(mapbase, pagesz)
 #define	_rnd_down(x)	((x) & ~((long)pagesz-1))
 #define	_rnd_up(x)	_rnd_down((x) + pagesz - 1)
 			objself.textsize = _rnd_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - _rnd_down(objself.phdr[i].p_vaddr);
-#undef	_rnd_down(x)
-#undef	_rnd_up(x)
+#undef	_rnd_down
+#undef	_rnd_up
 #else
 			objself.textsize = round_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - round_down(objself.phdr[i].p_vaddr);
 #endif
@@ -214,7 +214,7 @@ _rtld_init(mapbase, pagesz)
 	assert(objself.needed == NULL);
 
 #if !defined(__arm__) && !defined(__mips__) && !defined(__i386__) && \
-    !defined(__vax__)
+    !defined(__sh__) && !defined(__vax__)
 	/* no relocation for mips/i386 */
 	assert(!objself.textrel);
 #endif
