@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.31 2001/01/26 13:18:45 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.118 2001/01/26 13:14:29 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.32 2001/02/04 00:35:20 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.121 2001/02/01 16:43:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.31 2001/01/26 13:18:45 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.32 2001/02/04 00:35:20 itojun Exp $");
 #endif
 #endif
 
@@ -1349,7 +1349,8 @@ pr_pack(buf, cc, mhdr)
 
 	(void)gettimeofday(&tv, NULL);
 
-	if (!mhdr || !mhdr->msg_name || mhdr->msg_namelen != sizeof(*from) ||
+	if (!mhdr || !mhdr->msg_name ||
+	    mhdr->msg_namelen != sizeof(struct sockaddr_in6) ||
 	    ((struct sockaddr *)mhdr->msg_name)->sa_family != AF_INET6) {
 		if (options & F_VERBOSE)
 			warnx("invalid peername\n");
