@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_supio.c,v 1.1 1997/09/27 22:44:18 is Exp $	*/
+/*	$NetBSD: lpt_supio.c,v 1.2 1998/04/11 18:28:34 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 Ignatios Souvatzis.  All rights reserved.
@@ -124,10 +124,10 @@ lpt_supio_attach(parent, self, aux)
 	/* XXX this should be really in the interupt stuff */
 	needpsl = PSL_S | (supa->supio_ipl << 8);
 
-	if (amiga_ttyspl < needpsl) {
-		printf("%s: raising amiga_ttyspl from 0x%x to 0x%x\n",
-		    lsc->sc_dev.dv_xname, amiga_ttyspl, needpsl);
-		amiga_ttyspl = needpsl;
+	if (amiga_serialspl < needpsl) {
+		printf("%s: raising amiga_serialspl from 0x%x to 0x%x\n",
+		    lsc->sc_dev.dv_xname, amiga_serialspl, needpsl);
+		amiga_serialspl = needpsl;
 	}
 	sc->sc_isr.isr_intr = lpt_supio_intr;
 	sc->sc_isr.isr_arg = sc;
