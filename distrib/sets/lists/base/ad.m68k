@@ -1,4 +1,5 @@
 ./sbin/ldconfig
+./usr/lib/libm68k.so.0.0
 ./usr/libexec/ld.so
 ./usr/lkm/cd9660.o
 ./usr/lkm/fdesc.o
