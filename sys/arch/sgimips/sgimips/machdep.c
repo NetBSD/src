@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2000/06/29 07:44:11 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2000/07/14 18:35:41 jeffs Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -489,8 +489,6 @@ delay(n)
 
 	while (--N > 0);
 }
-
-void cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 extern int     crime_intr(void *);		/* XXX */
 
