@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.14 2003/08/07 16:32:38 agc Exp $	*/
+/*	$NetBSD: null.h,v 1.14.2.1 2004/05/23 10:46:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -122,4 +122,7 @@ extern struct vfsops nullfs_vfsops;
 
 void nullfs_init __P((void));
 
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_null_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
