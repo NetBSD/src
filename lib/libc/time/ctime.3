@@ -1,35 +1,32 @@
-.\"	$NetBSD: ctime.3,v 1.14 1998/03/19 16:26:35 tv Exp $
+.\"	$NetBSD: ctime.3,v 1.15 1999/05/04 15:34:50 kleink Exp $
 .TH CTIME 3
 .SH NAME
-asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
+asctime, asctime_r, ctime, ctime_r, difftime, gmtime, gmtime_r, localtime, localtime_r, mktime \- convert date and time to ASCII
+.SH LIBRARY
+Standard C Library (libc, -lc)
 .SH SYNOPSIS
 .nf
 .B #include <time.h>
 .PP
 .B extern char *tzname[2];
 .PP
-.B void tzset()
+.B void tzset();
 .PP
-.B #include <sys/types.h>
+.B char *ctime(const time_t *clock);
+.B char *ctime_r(const time_t *clock, char *buf);
 .PP
-.B char *ctime(clock)
-.B const time_t *clock;
+.B double difftime(time_t time1, time_t time0);
 .PP
-.B double difftime(time1, time0)
-.B time_t time1;
-.B time_t time0;
+.B char *asctime(const struct tm *tm);
+.B char *asctime_r(const struct tm *, char *buf);
 .PP
-.B char *asctime(tm)
-.B const struct tm *tm;
+.B struct tm *localtime(const time_t *clock);
+.B struct tm *localtime_r(const time_t *clock, struct tm *result);
 .PP
-.B struct tm *localtime(clock)
-.B const time_t *clock;
+.B struct tm *gmtime(const time_t *clock);
+.B struct tm *gmtime_r(const time_t *clock, struct tm *result);
 .PP
-.B struct tm *gmtime(clock)
-.B const time_t *clock;
-.PP
-.B time_t mktime(tm)
-.B struct tm *tm;
+.B time_t mktime(struct tm *tm);
 .PP
 .fi
 .SH DESCRIPTION
@@ -48,6 +45,14 @@ Thu Nov 24 18:22:48 1986\n\0
 .ec
 .br
 All the fields have constant width.
+.PP
+The
+.I ctime_r\^
+function provides the same functionality as
+.I ctime\^
+differing in that the caller must supply a buffer area
+.IR buf
+with a size of at least 26 bytes, in which the result is stored.
 .PP
 .IR Localtime\^
 and
@@ -70,12 +75,32 @@ return value.
 .I Gmtime\^
 converts to Coordinated Universal Time.
 .PP
+The
+.I gmtime_r\^
+and
+.I localtime_r\^
+functions provide the same functionality as
+.I gmtime\^
+and
+.I localtime\^
+differing in that the caller must supply a buffer area
+.IR result
+in which the result is stored.
+.PP
 .I Asctime\^
 converts a time value contained in a
 ``tm'' structure to a 26-character string,
 as shown in the above example,
 and returns a pointer
 to the string.
+.PP
+The
+.I asctime_r\^
+function provides the same functionality as
+.I asctime\^
+differing in that the caller must supply a buffer area
+.IR buf
+with a size of at least 26 bytes, in which the result is stored.
 .PP
 .I Mktime\^
 converts the broken-down time,
@@ -211,6 +236,15 @@ The
 tzset()
 function conforms to
 IEEE Std1003.1-1988 (``POSIX'').
+The
+ctime_r(),
+asctime_r(),
+localtime_r()
+and
+gmtime_r()
+functions conform to
+IEEE Std1003.1c-1995 (``POSIX'').
+The
 .SH NOTES
 The return values point to static data;
 the data is overwritten by each call.
