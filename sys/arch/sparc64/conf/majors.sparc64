@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.2 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: majors.sparc64,v 1.3 2002/09/28 19:46:46 martin Exp $
 #
 # Device majors for sparc64
 #
@@ -56,6 +56,13 @@ device-major	isdnbchan	char 74			isdnbchan
 device-major	isdntrc		char 75			isdntrc
 device-major	isdntel		char 76			isdntel
 device-major	sabtty		char 77			sabtty
+device-major	usb		char 78			usb
+device-major	uhid		char 79			uhid
+device-major	ulpt		char 80			ulpt
+device-major	ugen		char 81			ugen
+device-major	ucom		char 82			ucom
+device-major	urio		char 83			urio
+device-major	uscanner	char 84			uscanner
 
 device-major	cgfourteen	char 99			cgfourteen
 
