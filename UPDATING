@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.1 2000/08/17 20:17:43 abs Exp $
+$NetBSD: UPDATING,v 1.2 2000/08/20 15:43:43 mrg Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -15,6 +15,10 @@ Recent changes:
 
 Hints for a more successful build:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    Build a new kernel first:
+	This makes sure that any new system calls or features
+	   expected by the new userland will be present.  This
+	   helps to avoid critical errors when upgrading.
     Use object directories:
 	This helps to keep stale object
 	   files from polluting the build if a Makefile "forgets"
@@ -23,15 +27,18 @@ Hints for a more successful build:
 	   same source tree for multiple machines.
 	   To use object directories:
 	    a) cd /usr/src ; make cleandir
-	    b) Add "OBJMACHINE=obj.<arch>" to /etc/mk.conf
-	    c) cd /usr/src ; make obj
+	    b) Add "OBJMACHINE=yes" to /etc/mk.conf
+	    c) Add "MKOBJDIRS=yes" to /etc/mk.conf
 	    d) cd /usr/src ; make build
+	   Note that running "make obj" in a directory will create
+	   in obj.$MACHINE directory.
     Build to a DESTDIR:
 	This helps to keep old
 	   installed files (especially libraries) from interfering
 	   with the new build.
 	   To build to a DESTDIR, set the DESTDIR environment
-	   variable before running make build.
+	   variable before running make build.  It should be set to
+	   the pathname of an initially empty directory.
 	   Problems: you might need to update critical utilities
 		without using DESTDIR since nothing is executed
 		from what is installed in DESTDIR.
@@ -67,7 +74,9 @@ something like the following:
 Failsafe rebuild of the entire tree:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If you really want to make sure the source tree is clean and
-ready for a build try the following:
+ready for a build try the following.  Note that sourcing /etc/mk.conf
+(a make(1) Makefile) in this manner is not right, and will not work
+for anyone who uses any make(1) features in /etc/mk.conf.
 
 ---cut here---
 #!/bin/sh
@@ -99,6 +108,7 @@ Critical utilities:
 	usr.bin/make
 	usr.bin/yacc
 	usr.bin/lex
+	usr.sbin/config
 	crypto-*/usr.bin/compile_et
 	crypto-*/usr.bin/make_cmds
 
@@ -111,6 +121,9 @@ Symptom:Complaints involving a Makefile.
 Fix:	Make sure .mk files are up to date.
 	cd share/mk && make install
 Fix:	Rebuild usr.bin/make
+
+Symptom:Kernel `config' fails to configure any kernel, including GENERIC.
+Fix:	Rebuild usr.sbin/config
 
 Symptom:
 Fix:	Rebuild usr.bin/yacc
