@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.2 2001/04/10 12:37:49 fredette Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.3 2001/04/18 03:34:54 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,8 +42,10 @@
 
 #include <uvm/uvm_extern.h>
 
+#define _SUN2_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
+#include <machine/dvma.h>
 
 #include <sun2/sun2/control.h>
 #include <sun2/sun2/machdep.h>
@@ -74,6 +76,10 @@ static	int mbmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 static	int _mbmem_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
+static	int mbmem_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
+		    		bus_size_t, struct proc *, int));
+static	int mbmem_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
+		    		    bus_dma_segment_t *, int, bus_size_t, int));
 
 static struct sun2_bus_space_tag mbmem_space_tag = {
 	NULL,				/* cookie */
@@ -85,6 +91,8 @@ static struct sun2_bus_space_tag mbmem_space_tag = {
 	mbmem_bus_mmap,			/* bus_space_mmap */ 
 	NULL				/* bus_intr_establish */
 }; 
+
+static struct sun2_bus_dma_tag mbmem_dma_tag;
 
 static int
 mbmem_match(parent, cf, aux)
@@ -127,6 +135,11 @@ mbmem_attach(parent, self, aux)
 	mbmem_space_tag.cookie = sc;
 	mbmem_space_tag.parent = sc->sc_bustag;
 
+	mbmem_dma_tag = *sc->sc_dmatag;
+	mbmem_dma_tag._cookie = sc;
+	mbmem_dma_tag._dmamap_load = mbmem_dmamap_load;
+	mbmem_dma_tag._dmamap_load_raw = mbmem_dmamap_load_raw;
+
 	/*
 	 * Prepare the skeleton attach arguments for our devices.
 	 * The values we give in the locators are indications to
@@ -135,6 +148,7 @@ mbmem_attach(parent, self, aux)
 	 */
 	sub_ca = *ca;
 	sub_ca.ca_bustag = &mbmem_space_tag;
+	sub_ca.ca_dmatag = &mbmem_dma_tag;
 	sub_ca.ca_intpri = LOCATOR_OPTIONAL;
 	sub_ca.ca_intvec = LOCATOR_FORBIDDEN;
 
@@ -179,4 +193,38 @@ mbmem_bus_mmap(t, btype, paddr, flags, hp)
 	struct mbmem_softc *sc = t->cookie;
 
 	return (bus_space_mmap(sc->sc_bustag, PMAP_MBMEM, paddr, flags, hp));
+}
+
+static int
+mbmem_dmamap_load(t, map, buf, buflen, p, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+{
+	int error;
+
+	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
+	if (error == 0)
+		map->dm_segs[0].ds_addr &= DVMA_MBMEM_SLAVE_MASK;
+	return (error);
+}
+
+static int
+mbmem_dmamap_load_raw(t, map, segs, nsegs, size, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	bus_size_t size;
+	int flags;
+{
+	int error;
+
+	error = _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags);
+	if (error == 0)
+		map->dm_segs[0].ds_addr &= DVMA_MBMEM_SLAVE_MASK;
+	return (error);
 }
