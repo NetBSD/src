@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.152 2002/02/04 17:25:44 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.153 2002/02/07 07:43:24 pk Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -15,10 +15,14 @@ CFLAGS+=	${COPTS}
 
 # ELF platforms depend on crtbegin.o and crtend.o
 .if ${OBJECT_FMT} == "ELF"
-LIBCRTBEGIN?=	${DESTDIR}/usr/lib/crtbegin.o
+.ifndef LIBCRTBEGIN
+LIBCRTBEGIN=	${DESTDIR}/usr/lib/crtbegin.o
 .MADE: ${LIBCRTBEGIN}
-LIBCRTEND?=	${DESTDIR}/usr/lib/crtend.o
+.endif
+.ifndef LIBCRTEND
+LIBCRTEND=	${DESTDIR}/usr/lib/crtend.o
 .MADE: ${LIBCRTEND}
+.endif
 _SHLINKER=	${SHLINKDIR}/ld.elf_so
 .else
 LIBCRTBEGIN?=
@@ -26,115 +30,30 @@ LIBCRTEND?=
 _SHLINKER=	${SHLINKDIR}/ld.so
 .endif
 
-LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+.ifndef LIBCRT0
+LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 .MADE: ${LIBCRT0}
+.endif
 
-LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
-.MADE: ${LIBBZ2}
-LIBC?=		${DESTDIR}/usr/lib/libc.a
-.MADE: ${LIBC}
-LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
-.MADE: ${LIBC_PIC}
-LIBCDK?=	${DESTDIR}/usr/lib/libcdk.a
-.MADE: ${LIBCDK}
-LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
-.MADE: ${LIBCOM_ERR}
-LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
-.MADE: ${LIBCOMPAT}
-LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
-.MADE: ${LIBCRYPT}
-LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
-.MADE: ${LIBCRYPTO}
-LIBCRYPTO_RC5?=	${DESTDIR}/usr/lib/libcrypto_rc5.a
-.MADE: ${LIBCRYPTO_RC5}
-LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
-.MADE: ${LIBCRYPTO_IDEA}
-LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
-.MADE: ${LIBCURSES}
-LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
-.MADE: ${LIBDBM}
-LIBDES?=	${DESTDIR}/usr/lib/libdes.a
-.MADE: ${LIBDES}
-LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
-.MADE: ${LIBEDIT}
-LIBFORM?=	${DESTDIR}/usr/lib/libform.a
-.MADE: ${LIBFORM}
-LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
-.MADE: ${LIBGCC}
-LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
-.MADE: ${LIBGNUMALLOC}
-LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
-.MADE: ${LIBGSSAPI}
-LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
-.MADE: ${LIBHDB}
-LIBINTL?=	${DESTDIR}/usr/lib/libintl.a
-.MADE: ${LIBINTL}
-LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
-.MADE: ${LIBIPSEC}
-LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
-.MADE: ${LIBKADM}
-LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
-.MADE: ${LIBKADM5CLNT}
-LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
-.MADE: ${LIBKADM5SRV}
-LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
-.MADE: ${LIBKAFS}
-LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
-.MADE: ${LIBKDB}
-LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
-.MADE: ${LIBKRB}
-LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
-.MADE: ${LIBKRB5}
-LIBKSTREAM?=	${DESTDIR}/usr/lib/libkstream.a
-.MADE: ${LIBKSTREAM}
-LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
-.MADE: ${LIBKVM}
-LIBL?=		${DESTDIR}/usr/lib/libl.a
-.MADE: ${LIBL}
-LIBM?=		${DESTDIR}/usr/lib/libm.a
-.MADE: ${LIBM}
-LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
-.MADE: ${LIBMENU}
-LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
-.MADE: ${LIBOBJC}
-LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
-.MADE: ${LIBOSSAUDIO}
-LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
-.MADE: ${LIBPCAP}
-LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
-.MADE: ${LIBPCI}
-LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
-.MADE: ${LIBPOSIX}
-LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
-.MADE: ${LIBRESOLV}
-LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
-.MADE: ${LIBRMT}
-LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
-.MADE: ${LIBROKEN}
-LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
-.MADE: ${LIBRPCSVC}
-LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
-.MADE: ${LIBSKEY}
-LIBSS?=		${DESTDIR}/usr/lib/libss.a
-.MADE: ${LIBSS}
-LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
-.MADE: ${LIBSSL}
-LIBSL?=		${DESTDIR}/usr/lib/libsl.a
-.MADE: ${LIBSL}
-LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
-.MADE: ${LIBTERMCAP}
-LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
-.MADE: ${LIBTELNET}
-LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
-.MADE: ${LIBUSBHID}
-LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
-.MADE: ${LIBUTIL}
-LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
-.MADE: ${LIBWRAP}
-LIBY?=		${DESTDIR}/usr/lib/liby.a
-.MADE: ${LIBY}
-LIBZ?=		${DESTDIR}/usr/lib/libz.a
-.MADE: ${LIBZ}
+##### Installed system library definitions
+#     E.g. LIBC?=${DESTDIR}/usr/lib/libc.a
+#     etc..
+#
+__bsd_prog_mk_system_libs?= \
+	BZ2 C C_PIC CDK COM_ERR COMPAT CRYPT CRYPTO CRYPTO_RC5 CRYPTO_IDEA \
+	CURSES DBM DES EDIT FORM GCC GNUMALLOC GSSAPI HDB INTL IPSEC \
+	KADM KADM5CLNT KADM5SRV KAFS KDB KRB KRB5 KSTREAM KVM L M MENU \
+	OBJC OSSAUDIO PCAP PCI POSIX RESOLV RMT ROKEN RPCSVC SKEY SS SSL SL \
+	TERMCAP TELNET USBHID UTIL WRAP Y Z
+
+.for _n in ${__bsd_prog_mk_system_libs}
+.ifndef LIB${_n}
+LIB${_n}= ${DESTDIR}/usr/lib/lib${_n:tl}.a
+# XXX - note that ${DESTDIR} will expanded in the following rule
+.MADE: ${LIB${_n}}
+.endif
+.endfor
+.undef __bsd_prog_mk_system_libs
 
 ##### Build and install rules
 .if defined(SHAREDSTRINGS)
