@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.48 2000/11/20 00:48:20 wiz Exp $
+# $NetBSD: mi,v 1.49 2000/12/29 03:16:40 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -405,6 +405,9 @@
 ./usr/share/examples/postfix/sample-virtual.cf
 ./usr/share/examples/postfix/transport
 ./usr/share/examples/postfix/virtual
+./usr/share/examples/racoon/psk.txt.sample
+./usr/share/examples/racoon/racoon.conf.sample
+./usr/share/examples/racoon/racoon.conf.sample-gssapi
 ./usr/share/examples/supfiles/ftp.cs.umn.edu
 ./usr/share/examples/supfiles/sup.au.netbsd.org
 ./usr/share/examples/supfiles/sup.de.netbsd.org
