@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.16 1998/03/11 17:44:02 thorpej Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.17 1998/11/13 20:16:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.16 1998/03/11 17:44:02 thorpej Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.17 1998/11/13 20:16:49 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,18 @@ __RCSID("$NetBSD: sysctl.c,v 1.16 1998/03/11 17:44:02 thorpej Exp $");
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+#include <sys/mount.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
+
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
+
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -79,6 +89,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.16 1998/03/11 17:44:02 thorpej Exp $");
 struct ctlname topname[] = CTL_NAMES;
 struct ctlname kernname[] = CTL_KERN_NAMES;
 struct ctlname vmname[] = CTL_VM_NAMES;
+struct ctlname vfsname[] = CTL_VFS_NAMES;
 struct ctlname netname[] = CTL_NET_NAMES;
 struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname username[] = CTL_USER_NAMES;
@@ -98,7 +109,7 @@ struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_UNSPEC */
 	{ kernname, KERN_MAXID },	/* CTL_KERN */
 	{ vmname, VM_MAXID },		/* CTL_VM */
-	{ 0, 0 },			/* CTL_VFS */
+	{ vfsname, VFS_MAXID },		/* CTL_VFS */
 	{ netname, NET_MAXID },		/* CTL_NET */
 	{ 0, CTL_DEBUG_MAXID },		/* CTL_DEBUG */
 	{ hwname, HW_MAXID },		/* CTL_HW */
@@ -126,6 +137,8 @@ static void listall __P((char *, struct list *));
 static void parse __P((char *, int));
 static void debuginit __P((void));
 static int sysctl_inet __P((char *, char **, int[], int, int *));
+static int sysctl_vfs __P((char *, char **, int[], int, int *));
+static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
 static int findname __P((char *, char *, char **, struct list *));
 static void usage __P((void));
 
@@ -342,6 +355,14 @@ parse(string, flags)
 		break;
 
 	case CTL_VFS:
+		if (mib[1] == VFS_GENERIC)
+			len = sysctl_vfsgen(string, &bufp, mib, flags, &type);
+		else
+			len = sysctl_vfs(string, &bufp, mib, flags, &type);
+		if (len >= 0)
+			break;
+		return;
+
 	case CTL_USER:
 	case CTL_DDB:
 		break;
@@ -563,6 +584,93 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	mib[3] = indx;
 	*typep = lp->list[indx].ctl_type;
 	return (4);
+}
+
+struct ctlname ffsname[] = FFS_NAMES;
+struct ctlname nfsname[] = NFS_NAMES;
+struct list vfsvars[] = {
+	{ 0, 0 },			/* generic */
+	{ ffsname, FFS_MAXID },		/* FFS */
+	{ nfsname, NFS_MAXID },		/* NFS */
+	{ 0, 0 },			/* MFS */
+	{ 0, 0 },			/* MSDOS */
+	{ 0, 0 },			/* LFS */
+	{ 0, 0 },			/* old LOFS */
+	{ 0, 0 },			/* FDESC */
+	{ 0, 0 },			/* PORTAL */
+	{ 0, 0 },			/* NULL */
+	{ 0, 0 },			/* UMAP */
+	{ 0, 0 },			/* KERNFS */
+	{ 0, 0 },			/* PROCFS */
+	{ 0, 0 },			/* AFS */
+	{ 0, 0 },			/* CD9660 */
+	{ 0, 0 },			/* UNION */
+	{ 0, 0 },			/* ADOSFS */
+	{ 0, 0 },			/* EXT2FS */
+	{ 0, 0 },			/* CODA */
+	{ 0, 0 },			/* FILECORE */
+};
+
+/*
+ * handle vfs requests
+ */
+static int
+sysctl_vfs(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp = &vfsvars[mib[1]];
+	int indx;
+
+	if (lp->list == NULL) {
+		if (flags)
+			warnx("No variables defined for file system %s",
+			    string);
+		return (-1);
+	}
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (3);
+}
+
+struct ctlname vfsgenname[] = CTL_VFSGENCTL_NAMES;
+struct list vfsgenvars = { vfsgenname, VFSGEN_MAXID };
+
+/*
+ * handle vfs.generic requests
+ */
+static int
+sysctl_vfsgen(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp = &vfsgenvars;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
+		return (-1);
+	/* Don't bother with VFS_CONF. */
+	if (indx == VFS_CONF)
+		return (-1);
+	mib[2] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (3);
 }
 
 /*
