@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.24 2003/06/11 21:35:43 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.25 2003/06/12 10:51:41 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,22 +43,8 @@ message md_hello
 
 }
 
-message wdtype
-{Quel type de disque est %s?}
-
 message Select_type
 {Choix du type de disque}
-
-message sectforward
-{Est ce que votre disque réassigne AUTOMATIQUEMENT les secteurs défectueux ?}
-
-message dlgeom
-{Votre disque a déjà un label BSD. Ce label montre une géométrie différente
-de la géométrie réelle du disque. Les deux géométrie sont :
-
-disklabel:	%d cylindres, %d têtes, %d secteurs
-géom réelle:	%d cylindres, %d têtes, %d secteurs
-}
 
 message Choose_an_option
 {Choisissez une option}
@@ -91,12 +77,6 @@ message Use_serial_115200_bootblocks
 message dobootblks
 {Installation des block de démarrage sur %s ...
 }
-
-message cyl1024
-{ Le label (liste des partitions) que vous avez entré a une partition racine
-qui se termine après la limite du BIOS de 1024 cylindres. pour être sur que
-le système puisse etre toujours démaré, cette partition doit etre entièrement
-en dessous de cette limite. Vous pouvez: }
 
 message Reedit_both_MBR_and_label
 {Rééditer le secteur de boot et le label}
@@ -148,9 +128,6 @@ message biosmultmatch_row
 
 message pickdisk
 {Choisissez un disque: }
-
-message wmbrfail
-{L'écriture du MBR a échouée. Je ne peux pas continuer.}
 
 message partabovechs
 {La partition de votre disque réservée à NetBSD se trouve en-dehors de l'espace
