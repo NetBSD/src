@@ -30,7 +30,7 @@
  */
 
 /*
- * $Id: esp.c,v 1.7 1994/09/17 23:48:36 deraadt Exp $
+ * $Id: esp.c,v 1.8 1994/10/02 22:00:20 deraadt Exp $
  *
  * Based on aic6360 by Jarle Greipsland
  *
@@ -65,6 +65,7 @@
 int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/ 
 
 void	espattach	__P((struct device *, struct device *, void *));
+int	espmatch	__P((struct device *, struct cfdata *, void *));
 void	esp_minphys	__P((struct buf *));
 u_int	esp_adapter_info __P((struct esp_softc *));
 int	espprint	__P((void *, char *));
@@ -86,7 +87,7 @@ void	esp_timeout	__P((void *arg));
 
 /* Linkup to the rest of the kernel */
 struct cfdriver espcd = {
-	NULL, "esp", matchbyname, espattach,
+	NULL, "esp", espmatch, espattach,
 	DV_DULL, sizeof(struct esp_softc)
 };
 
@@ -215,6 +216,24 @@ espselect(sc, target, lun, cmd, clen)
 	sc->sc_state = ESP_SELECTING;
 }
 
+int
+espmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
+	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
+		ra->ra_len = NBPG;
+		return (probeget(ra->ra_vaddr, 1) != -1);
+	}
+	return (1);
+}
+
 /*
  * Attach this instance, and then all the sub-devices
  */
@@ -251,9 +270,14 @@ espattach(parent, self, aux)
 	}
 
 	/* Other settings */
-	sc->sc_node	= ca->ca_ra.ra_node;
-	sc->sc_id	= getpropint(sc->sc_node, "initiator-id", 7);
-	sc->sc_freq	= getpropint(sc->sc_node, "clock-frequency", -1);
+	sc->sc_node = ca->ca_ra.ra_node;
+	if (ca->ca_bustype == BUS_SBUS) {
+		sc->sc_id = getpropint(sc->sc_node, "initiator-id", 7);
+		sc->sc_freq = getpropint(sc->sc_node, "clock-frequency", -1);
+	} else {
+		sc->sc_id = 7;
+		sc->sc_freq = 24000000;
+	}
 	if (sc->sc_freq < 0)
 		sc->sc_freq = ((struct sbus_softc *)
 		    sc->sc_dev.dv_parent)->sc_clockfreq;
@@ -349,7 +373,8 @@ espattach(parent, self, aux)
 
 	/* add me to the sbus structures */
 	sc->sc_sd.sd_reset = (void *) esp_reset;
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	if (ca->ca_bustype == BUS_SBUS)
+		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	/* and the interuppts */
 	sc->sc_ih.ih_fun = (void *) espintr;
@@ -371,8 +396,17 @@ espattach(parent, self, aux)
 	 * below.
 	 */
 	bp = ca->ca_ra.ra_bp;
-	if (bp != NULL && strcmp(bp->name, "esp") == 0 && SAME_ESP(sc, bp, ca))
-		sc->sc_bp = bp + 1;
+	switch (ca->ca_bustype) {
+	case BUS_SBUS:
+		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
+		    SAME_ESP(sc, bp, ca))
+			sc->sc_bp = bp + 1;
+		break;
+	default:
+		if (bp != NULL && strcmp(bp->name, "esp") == 0)
+			sc->sc_bp = bp + 1;
+		break;
+	}
 
 	/*
 	 * Now try to attach all the sub-devices

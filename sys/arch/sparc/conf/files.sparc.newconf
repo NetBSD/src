@@ -1,5 +1,5 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.14 1994/09/17 23:43:23 deraadt Exp $
+# $Id: files.sparc.newconf,v 1.15 1994/10/02 22:00:03 deraadt Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
@@ -15,14 +15,14 @@ file	arch/sparc/dev/bsd_audio.c		bsdaudio audio needs-flag
 device auxreg at mainbus
 file	arch/sparc/sparc/auxreg.c
 
-device clock at mainbus
-device timer at mainbus
+device clock at mainbus, obio
+device timer at mainbus, obio
 file	arch/sparc/sparc/clock.c
 
 device cpu at mainbus
 file	arch/sparc/sparc/cpu.c
 
-device memreg at mainbus
+device memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
 
 device zs at mainbus, obio
@@ -40,12 +40,12 @@ major { sd = 7 }
 major { vn = 8 }
 major { cd = 18 }
 
-device dma at sbus
+device dma at sbus, obio
 device espdma at sbus	{ slot = -1, offset = -1 }
 device ledma at sbus	{ slot = -1, offset = -1 }
 file	arch/sparc/dev/dma.c		dma espdma ledma needs-flag
 
-device esp at sbus, espdma: scsi
+device esp at sbus, espdma, obio: scsi
 file	arch/sparc/dev/esp.c		dma needs-flag
 
 device scsibus at scsi	{ target = -1, drive = -1 }
@@ -74,7 +74,7 @@ file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 
 file	arch/sparc/dev/bt_subr.c	cgsix cgthree
 
-device le at sbus, ledma: ifnet, ether
+device le at sbus, ledma, obio: ifnet, ether
 file	arch/sparc/dev/if_le.c		le
 
 

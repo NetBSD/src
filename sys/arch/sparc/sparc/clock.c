@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.10 1994/09/18 00:02:17 deraadt Exp $
+ * $Id: clock.c,v 1.11 1994/10/02 22:00:42 deraadt Exp $
  */
 
 /*
@@ -82,6 +82,7 @@ extern struct idprom idprom;
 /* XXX fix comment to match value */
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
+int timerok;
 
 static int clockmatch __P((struct device *, struct cfdata *, void *));
 static void clockattach __P((struct device *, struct device *, void *));
@@ -106,6 +107,8 @@ clockmatch(parent, cf, aux)
 {
 	register struct confargs *ca = aux;
 
+	if (cputyp==CPU_SUN4)
+		return (strcmp(clockcd.cd_name, ca->ca_ra.ra_name) == 0);
 	return (strcmp("eeprom", ca->ca_ra.ra_name) == 0);
 }
 
@@ -179,6 +182,8 @@ timermatch(parent, cf, aux)
 {
 	register struct confargs *ca = aux;
 
+	if (cputyp==CPU_SUN4)
+		return (strcmp("timer", ca->ca_ra.ra_name) == 0);
 	return (strcmp("counter-timer", ca->ca_ra.ra_name) == 0);
 }
 
@@ -198,6 +203,7 @@ timerattach(parent, self, aux)
 	 * microtime() faster.
 	 */
 	(void)mapdev(ra->ra_paddr, TIMERREG_VA, sizeof(struct timerreg));
+	timerok = 1;
 	/* should link interrupt handlers here, rather than compiled-in? */
 }
 
@@ -257,6 +263,9 @@ delay(n)
 	register int n;
 {
 	register int c, t;
+
+	if (timerok==0)
+		return (0);
 
 	if (timercd.cd_ndevs == 0)
 		panic("delay");

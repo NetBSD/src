@@ -42,7 +42,7 @@
  *	@(#)auxreg.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: auxreg.c,v 1.11 92/11/26 03:04:44 torek Exp  (LBL)
- * $Id: auxreg.c,v 1.2 1994/09/18 00:02:16 deraadt Exp $
+ * $Id: auxreg.c,v 1.3 1994/10/02 22:00:40 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -93,6 +93,8 @@ auxregmatch(parent, cf, aux)
 {
 	register struct confargs *ca = aux;
 
+	if (cputyp==CPU_SUN4)
+		return (0);
 	return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
 }
 

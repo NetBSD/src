@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: espvar.h,v 1.1 1994/09/17 23:48:39 deraadt Exp $
+ *	$Id: espvar.h,v 1.2 1994/10/02 22:00:22 deraadt Exp $
  */
 
 #define ESP_SYNC_REQ_ACK_OFS 	0
@@ -307,10 +307,10 @@ struct esp_softc {
 #define	DMA_ENINTR(r)		((r->enintr)(r))
 #define	DMA_ISINTR(r)		((r->isintr)(r))
 #define	DMA_RESET(r)		((r->reset)(r))
-#define	DMA_START(a,b,c,d)	((a->start)(a, b, c, d))
+#define	DMA_START(a, b, c, d)	((a->start)(a, b, c, d))
 #define	DMA_INTR(r)		((r->intr)(r))
 
 #define DMA_DRAIN(sc)	if (sc->sc_rev < DMAREV_2) { \
 				DMACSR(sc) |= D_DRAIN; \
-				DMAWAIT1(sc->sc_reg); \
+				DMAWAIT1(sc); \
 			}
