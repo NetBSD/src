@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2002/03/15 21:12:07 eeh Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.6.1 2002/07/16 13:09:56 gehenna Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -64,14 +64,14 @@ static inline u_quad_t mftb(void);
 /* Stat clock runs at ~ 95Hz */
 #define PERIOD_POWER	21
 #define TCR_PERIOD	TCR_FP_2_21
-#endif  
+#endif
 
 
 void
 stat_intr(struct clockframe *frame)
 {
 	extern u_long intrcnt[];
-	
+
 	mtspr(SPR_TSR, TSR_FIS);	/* Clear TSR[FIS] */
 	intrcnt[CNT_STATCLOCK]++;
   	statclock(frame);
@@ -132,12 +132,12 @@ void
 cpu_initclocks(void)
 {
 	ticks_per_intr = ticks_per_sec / hz;
-	stathz = profhz = ticks_per_sec / (1<<PERIOD_POWER); 
+	stathz = profhz = ticks_per_sec / (1<<PERIOD_POWER);
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	mtspr(SPR_PIT, ticks_per_intr);
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
-	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);	
+	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
 }
 
 void
@@ -145,7 +145,7 @@ calc_delayconst(void)
 {
 	unsigned int processor_freq;
 
-	if (board_info_get("processor-frequency", 
+	if (board_info_get("processor-frequency",
 		&processor_freq, sizeof(processor_freq)) == -1)
 		panic("no processor-frequency");
 

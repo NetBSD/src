@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127.4.1 2002/05/17 13:49:58 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.127.4.2 2002/07/16 13:02:16 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -320,16 +320,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct reg *regs;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	regs = p->p_md.md_regs;
 
@@ -347,10 +348,24 @@ sendsig(catcher, sig, mask, code)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:
+		frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
 
 	/* Save the register context. */
 	frame.sf_sc.sc_fp = regs->r_fp;
@@ -393,10 +408,13 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.  Note the
+	 * trampoline version numbers are coordinated with machine-
+	 * dependent code in libc.
 	 */
 	regs->r_sp = (int)fp;
-	regs->r_pc = (int)p->p_sigctx.ps_sigcode;
+	regs->r_pc = (int)catcher;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

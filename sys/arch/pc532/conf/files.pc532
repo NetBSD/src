@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.46.8.2 2002/05/17 15:09:15 gehenna Exp $
+#	$NetBSD: files.pc532,v 1.46.8.3 2002/07/16 13:02:15 gehenna Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -72,5 +72,8 @@ file	netns/ns_cksum.c		ns
 # Binary compatibility with previous NetBSD releases.
 #
 file	arch/pc532/pc532/compat_13_machdep.c	compat_13
+
+# egcs-1.1.2 bug fix; see doc/HACKS - egcs-pc532-ip6_mroute
+file	netinet6/ip6_mroute.c		compile-with "${CC_OPT1}"
 
 include "arch/pc532/conf/majors.pc532"

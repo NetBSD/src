@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2000/06/29 07:51:46 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.8.14.1 2002/07/16 13:02:16 gehenna Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -97,9 +97,6 @@ define	REGS_USP		offsetof(struct reg, r_sp)
 define	REGS_FP 		offsetof(struct reg, r_fp)
 define	REGS_SB 		offsetof(struct reg, r_sb)
 define	REGS_PSR		offsetof(struct reg, r_psr)
-
-define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
-define	SIGF_SC 		offsetof(struct sigframe, sf_sc)
 
 define	IV_VEC			offsetof(struct iv, iv_vec)
 define	IV_ARG			offsetof(struct iv, iv_arg)
