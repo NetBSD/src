@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.105 2002/11/30 09:54:43 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.105 2002/11/30 09:54:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -266,7 +266,7 @@ exit1(struct proc *p, int rv)
 		 * means someone is screwing up. Since we reset the
 		 * trace flags, the logic in sys_wait4() would not be
 		 * triggered to reparent the process to its
-		 * original parent, so we must to this here.
+		 * original parent, so we must do this here.
 		 */
 		if (q->p_flag & P_TRACED) {
 			if (q->p_opptr != q->p_pptr) {
