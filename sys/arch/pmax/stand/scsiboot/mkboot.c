@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.9 1999/02/22 11:01:43 simonb Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.10 1999/03/01 11:52:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	8.1 (Berkeley) 6/10/93";
 #endif
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.9 1999/02/22 11:01:43 simonb Exp $";
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.10 1999/03/01 11:52:34 simonb Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int i, n;
+	int i, n;
 	int ifd, ofd1, ofd2;
 	int nsectors;
 	long loadAddr;
@@ -88,19 +88,17 @@ main(argc, argv)
 	ifd = open(bootfname, 0, 0);
 	if (ifd < 0) {
 		perror(bootfname);
-		exit(1);
+		die();
 	}
 	ofd1 = creat(xxboot, 0666);
 	if (ofd1 < 0) {
-	xxboot_err:
 		perror(xxboot);
-		exit(1);
+		die();
 	}
 	ofd2 = creat(bootxx, 0666);
 	if (ofd2 < 0) {
-	bootxx_err:
 		perror(bootxx);
-		exit(1);
+		die();
 	}
 
 	/*
@@ -108,7 +106,7 @@ main(argc, argv)
 	 */
 	if (!GetHeader(ifd, &loadAddr, &execAddr, &length)) {
 		fprintf(stderr, "Need impure text format (OMAGIC) file\n");
-		exit(1);
+		die();
 	}
 
 	/*
@@ -117,14 +115,16 @@ main(argc, argv)
 	read(ifd, &decBootInfo, sizeof(decBootInfo));
 	if (decBootInfo.magic != DEC_BOOT_MAGIC) {
 		fprintf(stderr, "bootfile does not contain boot sector\n");
-		exit(1);
+		die();
 	}
 	decBootInfo.map[0].numBlocks = nsectors =
 	    (length + DEV_BSIZE - 1) >> DEV_BSHIFT;
 	length -= sizeof(decBootInfo);
 	if (write(ofd1, (char *)&decBootInfo, sizeof(decBootInfo)) !=
-	    sizeof(decBootInfo) || close(ofd1) != 0)
-		goto xxboot_err;
+	    sizeof(decBootInfo) || close(ofd1) != 0) {
+		perror(xxboot);
+		die();
+	}
 
 	printf("load %x, start %x, len %d, nsectors %d avail %d\n",
 	    loadAddr, execAddr, length, nsectors, (15 * 512) - length);
@@ -148,10 +148,15 @@ main(argc, argv)
 			break;
 		}
 	}
-	if (length > 0)
+	if (length > 0) {
 		printf("Warning: didn't reach end of boot program!\n");
-	if (nsectors > 16)
+		die();
+	}
+	if (nsectors > 16) {
 		printf("\n!!!!!! WARNING: BOOT PROGRAM TOO BIG !!!!!!!\n\n");
+		die();
+	}
+
 	exit(0);
 }
 
@@ -162,6 +167,13 @@ usage()
 	printf("\t\"bootprog\" is a -N format file\n");
 	printf("\t\"xxboot\" is the file name for the first boot block\n");
 	printf("\t\"bootxx\" is the file name for the remaining boot blocks.\n");
+	exit(1);
+}
+
+die()
+{
+	unlink(xxboot);
+	unlink(bootxx);
 	exit(1);
 }
 
