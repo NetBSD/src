@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.22 2000/04/11 07:12:47 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.23 2000/06/26 04:55:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -616,7 +616,7 @@ int	bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 #endif /* _ATARI_BUS_H_ */

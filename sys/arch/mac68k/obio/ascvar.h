@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.5 2000/03/23 06:39:56 thorpej Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.6 2000/06/26 04:55:48 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
@@ -45,4 +45,4 @@ int	ascread __P((dev_t, struct uio *, int));
 int	ascwrite __P((dev_t, struct uio *, int));
 int	ascioctl __P((dev_t, int, caddr_t, int, struct proc *p));
 int	ascpoll __P((dev_t dev, int events, struct proc *p));
-int	ascmmap __P((dev_t dev, int off, int prot));
+paddr_t	ascmmap __P((dev_t dev, off_t off, int prot));

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2000/06/20 08:26:54 soda Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2000/06/26 04:55:26 simonb Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -754,8 +754,8 @@ struct arc_bus_dma_tag {
 	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 #define bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -844,8 +844,8 @@ int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, size_t size, caddr_t *kvap, int flags));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
-int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags));
 
 int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,

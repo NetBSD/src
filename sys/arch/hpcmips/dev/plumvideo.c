@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.11 2000/05/22 17:17:44 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.12 2000/06/26 04:55:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -94,7 +94,7 @@ int	plumvideo_match __P((struct device*, struct cfdata*, void*));
 void	plumvideo_attach __P((struct device*, struct device*, void*));
 
 int	plumvideo_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	plumvideo_mmap __P((void *, off_t, int));
+paddr_t	plumvideo_mmap __P((void *, off_t, int));
 
 struct cfattach plumvideo_ca = {
 	sizeof(struct plumvideo_softc), plumvideo_match, plumvideo_attach
@@ -550,7 +550,7 @@ plumvideo_ioctl(v, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
-int
+paddr_t
 plumvideo_mmap(ctx, offset, prot)
 	void *ctx;
 	off_t offset;

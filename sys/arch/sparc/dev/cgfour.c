@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.21 2000/04/04 21:47:17 pk Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.22 2000/06/26 04:56:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -417,14 +417,15 @@ cgfourpoll(dev, events, p)
  * As well, mapping at an offset of 0x04000000 causes the cg4 to map
  * only it's colour plane, at 0.
  */
-int
+paddr_t
 cgfourmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 	bus_space_handle_t bh;
-	int poff;
+	off_t poff;
 
 #define START_ENABLE	(128*1024)
 #define START_COLOR	((128*1024) + (128*1024))
@@ -474,7 +475,7 @@ cgfourmmap(dev, off, prot)
 			   BUS_SPACE_MAP_LINEAR, &bh))
 		return (-1);
 
-	return ((int)bh);
+	return ((paddr_t)bh);
 }
 
 #if defined(SUN4)

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.28 2000/06/17 07:11:50 soda Exp $ */
+/* $NetBSD: vga.c,v 1.29 2000/06/26 04:56:19 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -102,7 +102,7 @@ struct vga_config {
 	void *switchcbarg;
 
 #ifdef arc
-	int (*vc_mmap) __P((void *, off_t, int));
+	paddr_t (*vc_mmap) __P((void *, off_t, int));
 #endif
 
 	struct callout vc_switch_callout;
@@ -235,7 +235,7 @@ const struct wsscreen_list vga_screenlist = {
 };
 
 static int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	vga_mmap __P((void *, off_t, int));
+static paddr_t	vga_mmap __P((void *, off_t, int));
 static int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	vga_free_screen __P((void *, void *));
@@ -524,7 +524,7 @@ vga_extended_attach(self, iot, memt, type, map)
 	struct device *self;
 	bus_space_tag_t iot, memt;
 	int type;
-	int (*map) __P((void *, off_t, int));
+	int (*map) __P((void *, vaddr_t, int));
 {
 #endif /* arc */
 	int console;
@@ -636,7 +636,7 @@ vga_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-static int
+static paddr_t
 vga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

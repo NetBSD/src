@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.16 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.17 2000/06/26 04:56:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -129,14 +129,14 @@ int	   _isa_dmamem_map __P((struct isa_dma_state *, int, bus_addr_t,
 	       bus_size_t, caddr_t *, int));
 void	   _isa_dmamem_unmap __P((struct isa_dma_state *, int, caddr_t,
 	       size_t));
-int	   _isa_dmamem_mmap __P((struct isa_dma_state *, int, bus_addr_t,
-	       bus_size_t, int, int, int));
+paddr_t	   _isa_dmamem_mmap __P((struct isa_dma_state *, int, bus_addr_t,
+	       bus_size_t, off_t, int, int));
 
 int	   _isa_drq_isfree __P((struct isa_dma_state *, int));
 
 void      *_isa_malloc __P((struct isa_dma_state *, int, size_t, int, int));
 void	   _isa_free __P((void *, int));
-int	   _isa_mappage __P((void *, int, int));
+paddr_t	   _isa_mappage __P((void *, off_t, int));
 #endif /* _KERNEL */
 
 #endif /* _DEV_ISA_ISADMAVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 1999/12/04 21:20:14 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 2000/06/26 04:55:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,11 +61,6 @@
 #include <machine/pmap.h>
 
 #include "nvr.h"
-
-dev_type_open(mmopen);
-dev_type_close(mmclose);
-dev_type_mmap(mmmmap);
-dev_type_read(mmrw);
 
 extern u_int lowram;
 static caddr_t devzeropage;
@@ -203,10 +198,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);
