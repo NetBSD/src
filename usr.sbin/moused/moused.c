@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.8 2002/09/19 16:45:58 mycroft Exp $ */
+/* $NetBSD: moused.c,v 1.9 2002/09/20 19:49:59 mycroft Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.8 2002/09/19 16:45:58 mycroft Exp $");
+__RCSID("$NetBSD: moused.c,v 1.9 2002/09/20 19:49:59 mycroft Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -904,9 +904,9 @@ moused(char *wsm)
 	set[0].fd = rodent.mfd;
 	set[0].events = POLLIN;
 	set[1].fd = rodent.mremsfd;
-	set[1].events = rodent.mremsfd < 0 ? 0 : POLLIN;
+	set[1].events = POLLIN;
 	set[2].fd = rodent.mremcfd;
-	set[2].events = rodent.mremcfd < 0 ? 0 : POLLIN;
+	set[2].events = POLLIN;
 
 	c = poll(set, 3, (rodent.flags & Emulate3Button) ? 20 : INFTIM);
 	if (c < 0) {                    /* error */
