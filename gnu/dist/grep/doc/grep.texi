@@ -119,7 +119,7 @@ This document was produced for version @value{VERSION} of @sc{GNU} @sc{grep}.
 @cindex Searching for a pattern.
 @sc{grep} searches the input files for lines containing a match to a given
 pattern list.  When it finds a match in a line, it copies the line to standard
-output (by default), or does whatever othre sort of output you have requested
+output (by default), or does whatever other sort of output you have requested
 with options.  @sc{grep} expects to do the matching on text.
 Since newline is also a separator for the list of patterns, there
 is no way to match newline characters in a text.
