@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.25 1998/08/31 00:20:26 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.26 1998/08/31 01:10:15 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -110,6 +110,11 @@ struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
 
 struct pool uvm_vmspace_pool;
 
+/*
+ * pool for dynamically-allocated map entries.
+ */
+
+struct pool uvm_map_entry_pool;
 
 /*
  * macros
@@ -194,8 +199,7 @@ uvm_mapent_alloc(map)
 	UVMHIST_CALLED(maphist);
 
 	if (map->entries_pageable) {
-		MALLOC(me, vm_map_entry_t, sizeof(struct vm_map_entry), 
-						M_VMMAPENT, M_WAITOK);
+		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
 		me->flags = 0;
 		/* me can't be null, wait ok */
 
@@ -233,7 +237,7 @@ uvm_mapent_free(me)
 	UVMHIST_LOG(maphist,"<- freeing map entry=0x%x [flags=%d]", 
 		me, me->flags, 0, 0);
 	if ((me->flags & UVM_MAP_STATIC) == 0) {
-		FREE(me, M_VMMAPENT);
+		pool_put(&uvm_map_entry_pool, me);
 	} else {
 		s = splimp();	/* protect kentry_free list with splimp */
 		simple_lock(&uvm.kentry_lock);
@@ -321,6 +325,9 @@ uvm_map_init()
 	 */
 	pool_init(&uvm_vmspace_pool, sizeof(struct vmspace),
 	    0, 0, 0, "vmsppl", 0,
+	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
+	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
+	    0, 0, 0, "vmmpepl", 0,
 	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
 }
 
