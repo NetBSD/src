@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	5.2 (Berkeley) 5/24/91
- *	$Id: extern.h,v 1.2 1993/08/01 18:16:18 mycroft Exp $
+ *	$Id: extern.h,v 1.3 1993/10/27 17:52:30 jtc Exp $
  */
 
 #include <sys/cdefs.h>
@@ -65,6 +65,7 @@ PLAN	*c_nogroup __P((void));
 PLAN	*c_nouser __P((void));
 PLAN	*c_perm __P((char *));
 PLAN	*c_print __P((void));
+PLAN	*c_print0 __P((void));
 PLAN	*c_prune __P((void));
 PLAN	*c_size __P((char *));
 PLAN	*c_type __P((char *));
