@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pow.c	5.9 (Berkeley) 12/16/92";*/
-static char rcsid[] = "$Id: pow.c,v 1.3 1993/08/14 13:43:02 mycroft Exp $";
+static char rcsid[] = "$Id: pow.c,v 1.4 1993/10/19 01:31:09 cgd Exp $";
 #endif /* not lint */
 
 /* POW(X,Y)  
@@ -177,8 +177,22 @@ pow_P(x, y) double x, y;
 	struct Double s, t, log__D();
 	double  exp__D(), huge = 1e300, tiny = 1e-300;
 
-	if (x == 1)
+	if (x == zero)
+		if (y > zero)
+			return (zero);
+		else if (_IEEE)
+			return (huge*huge);
+		else
+			return (infnan(ERANGE));
+	if (x == one)
 		return (one);
+	if (!finite(x))
+		if (y < zero)
+			return (zero);
+		else if (_IEEE)
+			return (huge*huge);
+		else
+			return (infnan(ERANGE));
 	if (y >= 7e18)		/* infinity */
 		if (x < 1)
 			return(tiny*tiny);
