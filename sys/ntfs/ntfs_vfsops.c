@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.9 1999/09/05 10:45:03 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.10 1999/09/10 16:14:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -40,6 +40,8 @@
 #include <sys/buf.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
@@ -110,7 +112,10 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 #endif
 
 #ifdef __NetBSD__
-/*ARGSUSED*/
+/*
+ * Verify a remote client has export rights and return these rights via.
+ * exflagsp and credanonp.
+ */
 static int
 ntfs_checkexp(mp, nam, exflagsp, credanonp)
 	register struct mount *mp;
@@ -118,8 +123,19 @@ ntfs_checkexp(mp, nam, exflagsp, credanonp)
 	int *exflagsp;
 	struct ucred **credanonp;
 {
+	register struct netcred *np;
+	register struct ntfsmount *ntm = VFSTONTFS(mp);
 
-	return (EINVAL);
+	/*
+	 * Get the export permission structure for this <mp, client> tuple.
+	 */
+	np = vfs_export_lookup(mp, &ntm->ntm_export, nam);
+	if (np == NULL)
+		return (EACCES);
+
+	*exflagsp = np->netc_exflags;
+	*credanonp = &np->netc_anon;
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -141,25 +157,24 @@ ntfs_mountroot()
 {
 	return (EINVAL);
 }
-#endif
 
-#if defined(__FreeBSD__)
+static void
+ntfs_init ()
+{
+	ntfs_nthashinit();
+}
+
+#elif defined(__FreeBSD__)
+
 static int
 ntfs_init (
 	struct vfsconf *vcp )
-#elif defined(__NetBSD__)
-static void
-ntfs_init ()
-#else
-static int
-ntfs_init ()
-#endif
 {
 	ntfs_nthashinit();
-#if !defined(__NetBSD__)
 	return 0;
-#endif
 }
+
+#endif /* NetBSD */
 
 static int
 ntfs_mount ( 
@@ -179,6 +194,7 @@ ntfs_mount (
 	struct vnode	*devvp;
 	struct ntfs_args args;
 
+#ifdef __FreeBSD__
 	/*
 	 * Use NULL path to flag a root mount
 	 */
@@ -209,6 +225,7 @@ ntfs_mount (
 		goto dostatfs;		/* success*/
 
 	}
+#endif /* FreeBSD */
 
 	/*
 	 ***
@@ -226,57 +243,20 @@ ntfs_mount (
 	 * read/write; if there is no device name, that's all we do.
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
-		printf("ntfs_mount(): MNT_UPDATE not supported\n");
-		err = EINVAL;
-		goto error_1;
-
-#if 0
-		ump = VFSTOUFS(mp);
-		fs = ump->um_fs;
-		err = 0;
-		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
-			flags = WRITECLOSE;
-			if (mp->mnt_flag & MNT_FORCE)
-				flags |= FORCECLOSE;
-			if (vfs_busy(mp)) {
-				err = EBUSY;
-				goto error_1;
-			}
-			err = ffs_flushfiles(mp, flags, p);
-			vfs_unbusy(mp);
-		}
-		if (!err && (mp->mnt_flag & MNT_RELOAD))
-			err = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
-		if (err) {
-			goto error_1;
-		}
-		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
-			if (!fs->fs_clean) {
-				if (mp->mnt_flag & MNT_FORCE) {
-					printf("WARNING: %s was not properly dismounted.\n",fs->fs_fsmnt);
-				} else {
-					printf("WARNING: R/W mount of %s denied. Filesystem is not clean - run fsck.\n",
-					    fs->fs_fsmnt);
-					err = EPERM;
-					goto error_1;
-				}
-			}
-			fs->fs_ronly = 0;
-		}
-		if (fs->fs_ronly == 0) {
-			fs->fs_clean = 0;
-			ffs_sbupdate(ump, MNT_WAIT);
-		}
 		/* if not updating name...*/
 		if (args.fspec == 0) {
 			/*
 			 * Process export requests.  Jumping to "success"
 			 * will return the vfs_export() error code.
 			 */
-			err = vfs_export(mp, &ump->um_export, &args.export);
+			struct ntfsmount *ntm = VFSTONTFS(mp);
+			err = vfs_export(mp, &ntm->ntm_export, &args.export);
 			goto success;
 		}
-#endif
+
+		printf("ntfs_mount(): MNT_UPDATE not supported\n");
+		err = EINVAL;
+		goto error_1;
 	}
 
 	/*
@@ -361,7 +341,9 @@ ntfs_mount (
 		goto error_2;
 	}
 
+#ifdef __FreeBSD__
 dostatfs:
+#endif
 	/*
 	 * Initialize FS stat information in mount struct; uses both
 	 * mp->mnt_stat.f_mntonname and mp->mnt_stat.f_mntfromname
@@ -381,7 +363,7 @@ error_2:	/* error with devvp held*/
 error_1:	/* no state to back out*/
 
 success:
-	return( err);
+	return(err);
 }
 
 /*
@@ -804,8 +786,21 @@ ntfs_fhtovp(
 	struct ucred **credanonp)
 #endif
 {
-	printf("\ntfs_fhtovp():\n");
-	return 0;
+	struct vnode *nvp;
+	struct ntfid *ntfhp = (struct ntfid *)fhp;
+	int error;
+
+	ddprintf(("ntfs_fhtovp(): %s: %d\n", mp->mnt_stat->f_mntonname,
+		ntfhp->ntfid_ino));
+
+	if ((error = VFS_VGET(mp, ntfhp->ntfid_ino, &nvp)) != 0) {
+		*vpp = NULLVP;
+		return (error);
+	}
+	/* XXX as unlink/rmdir/mkdir/creat are not currently possible
+	 * with NTFS, we don't need to check anything else for now */
+	*vpp = nvp;
+	return (0);
 }
 
 static int
@@ -813,8 +808,18 @@ ntfs_vptofh(
 	struct vnode *vp,
 	struct fid *fhp)
 {
-	printf("ntfs_vptofh():\n");
-	return EOPNOTSUPP;
+	register struct ntnode *ntp;
+	register struct ntfid *ntfhp;
+
+	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat->f_mntonname,
+		vp));
+
+	ntp = VTONT(vp);
+	ntfhp = (struct ntfid *)fhp;
+	ntfhp->ntfid_len = sizeof(struct ntfid);
+	ntfhp->ntfid_ino = ntp->i_number;
+	/* ntfhp->ntfid_gen = ntp->i_gen; */
+	return (0);
 }
 
 int
@@ -979,7 +984,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_checkexp,
 	ntfs_vnodeopv_descs,
 };
-#else
+#else /* !NetBSD && !FreeBSD */
 static struct vfsops ntfs_vfsops = {
 	ntfs_mount,
 	ntfs_start,
