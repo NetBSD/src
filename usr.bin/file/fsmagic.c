@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.1.1.4 2000/05/14 22:44:20 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.1.1.5 2000/09/22 16:01:07 pooka Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -28,9 +28,6 @@
  */
 
 #include "file.h"
-#ifdef __CYGWIN__
-#include <errno.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -59,13 +56,13 @@
 #undef HAVE_MAJOR
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: fsmagic.c,v 1.31 2000/04/11 02:32:35 christos Exp ")
+FILE_RCSID("@(#)Id: fsmagic.c,v 1.33 2000/08/05 17:36:48 christos Exp ")
 #endif	/* lint */
 
 int
 fsmagic(fn, sb)
-const char *fn;
-struct stat *sb;
+	const char *fn;
+	struct stat *sb;
 {
 	int ret = 0;
 
@@ -173,7 +170,7 @@ struct stat *sb;
 	case S_IFLNK:
 		{
 			char buf[BUFSIZ+4];
-			register int nch;
+			int nch;
 			struct stat tstatbuf;
 
 			if ((nch = readlink(fn, buf, BUFSIZ-1)) <= 0) {
@@ -254,4 +251,3 @@ struct stat *sb;
 	}
 	return 0;
 }
-
