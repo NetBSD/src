@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 1997/09/19 13:55:37 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 1997/10/02 01:15:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -251,7 +251,7 @@ cpu_startup()
 	 * Also, offset some to avoid PROM scribbles.
 	 */
 	v = (caddr_t) KERNBASE;
-	msgbufaddr = (caddr_t)(v + 0x1000);
+	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
