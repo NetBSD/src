@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.1 2001/10/10 14:19:51 leo Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.2 2001/10/11 07:07:42 leo Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_EXEC_ELF_H_
-#define	_SYS_EXEC_ELF_H_
+#ifndef _LIBTOS_EXEC_ELF_H_
+#define	_LIBTOS_EXEC_ELF_H_
 
 /*
  * The current ELF ABI specification is available at:
@@ -669,4 +669,4 @@ struct elf_args {
 
 #endif /* _KERNEL */
 
-#endif /* !_SYS_EXEC_ELF_H_ */
+#endif /* !_LIBTOS_EXEC_ELF_H_ */

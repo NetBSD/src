@@ -1,4 +1,4 @@
-/*	$NetBSD: tosdefs.h,v 1.2 2001/10/11 07:07:42 leo Exp $	*/
+/*	$NetBSD: cread.h,v 1.1 2001/10/11 07:07:42 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,77 +36,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LIBTOS_TOSDEFS_H
-#define _LIBTOS_TOSDEFS_H
+#ifndef _LIBTOS_CREAD_H
+#define _LIBTOS_CREAD_H
 
-#include <sys/types.h>
+#include <libtos.h>
 
-#ifndef int8_t
-/*
- * My TOS/MiNT installation does not define these (Leo 09/10/2001).
- */
-typedef	unsigned char	u_int8_t;
-typedef	unsigned short	u_int16_t;
-typedef	unsigned long	u_int32_t;
-#endif /* int8_t */
+#ifdef COMPRESSED_READ
+#define	close	cclose
+#define	lseek	clseek
+#define	open	copen
+#define	read	cread
 
-#include "kparamb.h"
+EXTERN int	cclose	 PROTO((int));
+EXTERN off_t	clseek	 PROTO((int, off_t, int));
+EXTERN int	copen	 PROTO((const char *, int));
+EXTERN int	cread	 PROTO((int, void *, size_t));
 
-/*
- * TOS variables in low memory
- */
-struct _gem_mupb;
-struct _basepage;
-struct _osheader {
-	u_int16_t	 os_entry;
-	u_int16_t	 os_version;
-	void		 *reseth;
-	struct _osheader *os_beg;
-	void		 *os_end;
-	u_int32_t	 os_rsv1;
-	struct _gem_mupb *os_magic;
-	u_int32_t	 os_date;
-	u_int16_t	 os_conf;
-	u_int16_t	 os_dosdate;
-	char		 **p_root;
-	u_int8_t	 **pkbshift;
-	struct _basepage **p_run;
-	char		 *p_rsv2;
-};
+#endif /* COMPRESSED_READ */
 
-typedef	struct _osheader	OSH;
-
-#define	ADDR_P_COOKIE	((long**)0x5a0)	/* Pointer to cookie jar	*/
-#define	ADDR_OSHEAD	((OSH**)0x4f2)	/* Pointer Os-header		*/
-#define	ADDR_PHYSTOP	((long*)0x42e)	/* End of ST-ram		*/
-#define	ADDR_RAMTOP	((long*)0x5a4)	/* End of TT-ram (unofficial)	*/
-#define	ADDR_CHKRAMTOP	((long*)0x5a8)	/*  above is valid (unofficial)	*/
-
-#define	RAMTOP_MAGIC	(0x1357bd13)	/* Magic no. for ADDR_CHKRAMTOP	*/
-
-#define	TTRAM_BASE	(0x1000000)	/* Fastram always starts here	*/
-#define	CTRAM_BASE	(0x4000000)	/*  ... except on CT2 boards:	*/
-					/*         Logical : TTRAM_BASE */
-					/*         Physical: CTRAM_BASE */
-
-/*
- * Kernel parameter block
- */
-typedef struct osdsc {
-	const char *	ostype;
-	const char *	osname;
-	unsigned	rootfs;
-	struct kparamb 	kp;
-} osdsc_t;
-
-#define	ksize		kp.ksize
-#define	kstart		kp.kp
-#define	kentry		kp.entry
-#define	k_esym		kp.esym_loc
-#define	stmem_size	kp.stmem_size
-#define	ttmem_size	kp.ttmem_size
-#define	ttmem_start	kp.ttmem_start
-#define	cputype		kp.bootflags
-#define	boothowto	kp.boothowto
-
-#endif /* !_LIBTOS_TOSDEFS_H */
+#endif /* !_LIBTOS_CREAD_H */
