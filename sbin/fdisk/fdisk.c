@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.62 2003/04/30 19:47:10 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.63 2003/05/01 09:23:30 bjh21 Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.62 2003/04/30 19:47:10 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.63 2003/05/01 09:23:30 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2070,8 +2070,10 @@ change_active(int which)
 void
 get_params_to_use(void)
 {
+#if defined(__i386__) || defined(__x86_64__)
 	struct biosdisk_info *bip;
 	int i;
+#endif
 
 	if (b_flag) {
 		dos_cylinders = b_cyl;
