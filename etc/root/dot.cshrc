@@ -1,3 +1,5 @@
+#	$NetBSD: dot.cshrc,v 1.6.2.1 1997/10/28 04:43:40 mellon Exp $
+
 set history=1000
 set path=(/sbin /usr/sbin /usr/local/sbin /bin /usr/bin /usr/local/bin)
 
@@ -14,8 +16,8 @@ alias	ll	ls -l
 alias	x	exit
 alias	z	suspend
 
-alias	back	'set back=$old; set old=$cwd; cd $back; unset back; dirs'
-alias	cd	'set old=$cwd; chdir \!*'
+alias	back	'set back="$old"; set old="$cwd"; cd "$back"; unset back; dirs'
+alias	cd	'set old="$cwd"; chdir \!*'
 alias	pd	pushd
 alias	pd2	pushd +2
 alias	pd3	pushd +3
