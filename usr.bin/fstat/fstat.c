@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.65 2003/10/21 02:16:59 fvdl Exp $	*/
+/*	$NetBSD: fstat.c,v 1.66 2004/04/02 14:22:05 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.65 2003/10/21 02:16:59 fvdl Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.66 2004/04/02 14:22:05 aymeric Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,6 +580,8 @@ ext2fs_filestat(vp, fsp)
 	struct filestat *fsp;
 {
 	struct inode inode;
+	u_int16_t mode;
+	u_int32_t size;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
 		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
@@ -587,8 +589,20 @@ ext2fs_filestat(vp, fsp)
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
-	fsp->mode = (mode_t)inode.i_e2fs_mode;
-	fsp->size = inode.i_e2fs_size;
+
+	if (!KVM_READ(&inode.i_e2fs_mode, &mode, sizeof mode)) {
+		dprintf("can't read inode %p's mode at %p for pid %d", VTOI(vp),
+			&inode.i_e2fs_mode, Pid);
+		return 0;
+	}
+	fsp->mode = mode;
+
+	if (!KVM_READ(&inode.i_e2fs_size, &size, sizeof size)) {
+		dprintf("can't read inode %p's size at %p for pid %d", VTOI(vp),
+			&inode.i_e2fs_size, Pid);
+		return 0;
+	}
+	fsp->size = size;
 	fsp->rdev = 0;  /* XXX */
 	return 1;
 }
