@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.42 2002/08/30 15:43:40 hannken Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.43 2002/11/01 03:32:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.42 2002/08/30 15:43:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.43 2002/11/01 03:32:21 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -460,7 +460,7 @@ buf_inorder(struct buf *bp, struct buf *bq, int sortby)
 	int r;
 
 	if (bp == NULL || bq == NULL)
-		return(bq == NULL);
+		return (bq == NULL);
 
 	if (sortby == BUFQ_SORT_CYLINDER)
 		r = bp->b_cylinder - bq->b_cylinder;
@@ -470,7 +470,7 @@ buf_inorder(struct buf *bp, struct buf *bq, int sortby)
 	if (r == 0)
 		r = bp->b_rawblkno - bq->b_rawblkno;
 
-	return(r <= 0);
+	return (r <= 0);
 }
 
 
@@ -498,7 +498,7 @@ bufq_fcfs_get(struct bufq_state *bufq, int remove)
 	if (bp != NULL && remove)
 		TAILQ_REMOVE(&fcfs->bq_head, bp, b_actq);
 
-	return(bp);
+	return (bp);
 }
 
 
@@ -556,7 +556,8 @@ bufq_disksort_put(struct bufq_state *bufq, struct buf *bp)
 					if (buf_inorder(bp, nbq, sortby))
 						goto insert;
 					bq = nbq;
-				} while ((nbq = TAILQ_NEXT(bq, b_actq)) != NULL);
+				} while ((nbq =
+				    TAILQ_NEXT(bq, b_actq)) != NULL);
 				goto insert;		/* after last */
 			}
 			bq = nbq;
@@ -601,7 +602,7 @@ bufq_disksort_get(struct bufq_state *bufq, int remove)
 	if (bp != NULL && remove)
 		TAILQ_REMOVE(&disksort->bq_head, bp, b_actq);
 
-	return(bp);
+	return (bp);
 }
 
 
@@ -675,7 +676,6 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 		/*
 		 * If at least one list is empty, select the other.
 		 */
-
 		if (TAILQ_FIRST(&prio->bq_read) == NULL) {
 			prio->bq_next = prio->bq_write_next;
 			prio->bq_read_burst = 0;
@@ -688,11 +688,10 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 			 * to PRIO_READ_BURST times, then select the write
 			 * list PRIO_WRITE_REQ times.
 			 */
-	
 			if (prio->bq_read_burst++ < PRIO_READ_BURST)
 				prio->bq_next = TAILQ_FIRST(&prio->bq_read);
 			else if (prio->bq_read_burst <
-				     PRIO_READ_BURST + PRIO_WRITE_REQ)
+			    PRIO_READ_BURST + PRIO_WRITE_REQ)
 				prio->bq_next = prio->bq_write_next;
 			else {
 				prio->bq_next = TAILQ_FIRST(&prio->bq_read);
@@ -721,7 +720,7 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 		prio->bq_next = NULL;
 	}
 
-	return(bp);
+	return (bp);
 }
 
 /*
@@ -785,6 +784,7 @@ bufq_alloc(struct bufq_state *bufq, int flags)
 void
 bufq_free(struct bufq_state *bufq)
 {
+
 	KASSERT(bufq->bq_private != NULL);
 	KASSERT(BUFQ_PEEK(bufq) == NULL);
 
