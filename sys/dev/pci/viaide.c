@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.4 2003/10/18 12:40:09 enami Exp $	*/
+/*	$NetBSD: viaide.c,v 1.5 2003/10/23 14:27:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,6 +39,7 @@
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_apollo_reg.h>
 
+static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
 		    struct pci_attach_args *);
@@ -161,6 +162,16 @@ viaide_attach(struct device *parent, struct device *self, void *aux)
 	pciide_common_attach(sc, pa, pp);
 }
 
+static int
+via_pcib_match(struct pci_attach_args *pa)
+{
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH)
+		return (1);
+	return 0;
+}
+
 static void
 via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
@@ -170,8 +181,8 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	u_int32_t ideconf;
 	bus_size_t cmdsize, ctlsize;
-	pcitag_t pcib_tag;
 	pcireg_t pcib_id, pcib_class;
+	struct pci_attach_args pcib_pa;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -179,14 +190,14 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	switch (vendor) {
 	case PCI_VENDOR_VIATECH:
 		/*
-		 * get a PCI tag for the ISA bridge (function 0 of the
-		 * same device)
+		 * get a PCI tag for the ISA bridge.
 		 */
-		pcib_tag =
-		    pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
-		/* and read ID and rev of the ISA bridge */
-		pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
-		pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+		if (pci_enumerate_bus(
+		    (struct pci_softc *)sc->sc_wdcdev.sc_dev.dv_parent,
+		    via_pcib_match, &pcib_pa) == 0)
+			goto unknown;
+		pcib_id = pcib_pa.pa_id;
+		pcib_class = pcib_pa.pa_class;
 		aprint_normal("%s: VIA Technologies ",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 		switch (PCI_PRODUCT(pcib_id)) {
@@ -236,11 +247,12 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			aprint_normal("VT8235 ATA133 controller\n");
 			sc->sc_wdcdev.UDMA_cap = 6;
 			break;
-		case PCI_PRODUCT_VIATECH_VT8237_SATA:
+		case PCI_PRODUCT_VIATECH_VT8237:
 			aprint_normal("VT8237 ATA133 controller\n");
 			sc->sc_wdcdev.UDMA_cap = 6;
 			break;
 		default:
+unknown:
 			aprint_normal("unknown VIA ATA controller\n");
 			sc->sc_wdcdev.UDMA_cap = 0;
 		}
@@ -264,6 +276,7 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			sc->sc_wdcdev.UDMA_cap = 5;
 			break;
 		case PCI_PRODUCT_NVIDIA_NFORCE2_ATA133:
+		case PCI_PRODUCT_NVIDIA_NFORCE3_ATA133:
 			sc->sc_wdcdev.UDMA_cap = 6;
 			break;
 		}
