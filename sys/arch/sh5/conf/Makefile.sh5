@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.5 2002/09/28 10:42:54 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.6 2002/09/28 18:35:38 scw Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -66,6 +66,7 @@ AR=		sh5ar
 NM=		sh5nm
 RANLIB=		sh5ranlib
 SIZE=		sh5size
+OBJCOPY=	sh5objcopy
 
 CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
 CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
@@ -100,6 +101,13 @@ locore.o: ${THISSH5}/${MACHINE}/locore.S assym.h
 ##
 # LINKTEXT possibly set by individual sh5 port
 LINKTEXT?=	-Ttext 0xc0000000
+
+# The following is needed until we get a bootloader.
+SYSTEM_LD_TAIL_EXTRA=	; \
+	${OBJCOPY} --change-section-lma .text-0x40000000 \
+		   --change-section-lma .rodata-0x40000000 \
+		   --change-section-lma .data-0x40000000 \
+		   --set-start 0xffffffff80000001 $@ $@.bin
 
 ##
 ## (6) port specific target dependencies
