@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.98 1998/01/15 06:15:08 thorpej Exp $
+#	$NetBSD: files.i386,v 1.99 1998/01/15 07:40:06 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -7,9 +7,6 @@
 maxpartitions 8
 
 maxusers 2 16 64
-
-# Processor type options.
-defopt	opt_cputype.h I386_CPU I486_CPU I586_CPU I686_CPU
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
