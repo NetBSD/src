@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.22 1994/05/03 08:23:57 mycroft Exp $
+ *	$Id: clock.c,v 1.23 1994/05/03 20:32:24 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -102,6 +103,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/isa/clock.h>
 #include <i386/isa/rtc.h>
 #include <i386/isa/timerreg.h>
+#include <i386/isa/spkrreg.h>
 
 void spinwait __P((int));
 
