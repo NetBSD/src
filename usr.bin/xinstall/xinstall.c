@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.65 2002/01/21 20:00:02 tv Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.66 2002/01/28 19:44:03 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -53,7 +53,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.65 2002/01/21 20:00:02 tv Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.66 2002/01/28 19:44:03 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,7 @@ main(int argc, char *argv[])
 		/* makelink() handles checks for links */
 		if (!dolink) {
 			if (stat(*argv, &from_sb))
-				err(1, "%s", *argv);
+				err(1, "%s: stat", *argv);
 			if (!S_ISREG(to_sb.st_mode))
 				errx(1, "%s: not a regular file", to_name);
 			if (to_sb.st_dev == from_sb.st_dev &&
@@ -371,7 +371,7 @@ do_link(char *from_name, char *to_name)
 		    xdirname(to_name));
 		/* This usage is safe. The linker will bitch anyway. */
 		if (mktemp(tmpl) == NULL)
-			err(1, "%s", tmpl);
+			err(1, "%s: mktemp", tmpl);
 		ret = link(from_name, tmpl);
 		if (ret == 0) {
 			ret = rename(tmpl, to_name);
@@ -399,7 +399,7 @@ do_symlink(char *from_name, char *to_name)
 		    xdirname(to_name));
 		/* This usage is safe. The linker will bitch anyway. */
 		if (mktemp(tmpl) == NULL)
-			err(1, "%s", tmpl);
+			err(1, "%s: mktemp", tmpl);
 
 		if (symlink(from_name, tmpl) == -1)
 			err(1, "symlink %s -> %s", from_name, tmpl);
@@ -439,7 +439,7 @@ makelink(char *from_name, char *to_name)
 	if (dolink & LN_ABSOLUTE) {
 		/* Convert source path to absolute */
 		if (realpath(from_name, src) == NULL)
-			err(1, "%s", from_name);
+			err(1, "%s: realpath", from_name);
 		do_symlink(src, to_name);
 		metadata_log(to_name, "link", NULL, src);
 		return;
@@ -450,7 +450,7 @@ makelink(char *from_name, char *to_name)
 
 		/* Resolve pathnames */
 		if (realpath(from_name, src) == NULL)
-			err(1, "%s", from_name);
+			err(1, "%s: realpath", from_name);
 
 		/*
 		 * The last component of to_name may be a symlink,
@@ -458,7 +458,7 @@ makelink(char *from_name, char *to_name)
 		 */
 		cp = xdirname(to_name);
 		if (realpath(cp, dst) == NULL)
-			err(1, "%s", cp);
+			err(1, "%s: realpath", cp);
 		/* .. and add the last component */
 		if (strcmp(dst, "/") != 0) {
 			if (strlcat(dst, "/", sizeof(dst)) > sizeof(dst))
@@ -512,7 +512,7 @@ install(char *from_name, char *to_name, u_int flags)
 	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
 		if (!dolink) {
 			if (stat(from_name, &from_sb))
-				err(1, "%s", from_name);
+				err(1, "%s: stat", from_name);
 			if (!S_ISREG(from_sb.st_mode))
 				errx(1, "%s: not a regular file", from_name);
 		}
@@ -562,16 +562,16 @@ install(char *from_name, char *to_name, u_int flags)
 	/* Create target. */
 	if (dorename) {
 		if ((to_fd = mkstemp(to_name)) == -1)
-			err(1, "%s", to_name);
+			err(1, "%s: mkstemp", to_name);
 	} else {
 		if ((to_fd = open(to_name,
 		    O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) < 0)
-			err(1, "%s", to_name);
+			err(1, "%s: open", to_name);
 	}
 	if (!devnull) {
 		if ((from_fd = open(from_name, O_RDONLY, 0)) < 0) {
 			(void)unlink(to_name);
-			err(1, "%s", from_name);
+			err(1, "%s: open", from_name);
 		}
 		copy(from_fd, from_name, to_fd, to_name, from_sb.st_size);
 		(void)close(from_fd);
@@ -626,7 +626,7 @@ install(char *from_name, char *to_name, u_int flags)
 			warn("%s: futimes", to_name);
 #else
 		if (utimes(to_name, tv) == -1)
-			warn("%s: futimes", to_name);
+			warn("%s: utimes", to_name);
 #endif
 	}
 
@@ -639,7 +639,7 @@ install(char *from_name, char *to_name, u_int flags)
 	}
 
 	if (!docopy && !devnull && unlink(from_name))
-		err(1, "%s", from_name);
+		err(1, "%s: unlink", from_name);
 
 	/*
 	 * If provided a set of flags, set them, otherwise, preserve the
@@ -696,7 +696,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 			if (write(to_fd, p, size) != size) {
 				serrno = errno;
 				(void)unlink(to_name);
-				errx(1, "%s: %s",
+				errx(1, "%s: write: %s",
 				    to_name, strerror(serrno));
 			}
 		} else {
@@ -705,14 +705,14 @@ mmap_failed:
 				if ((nw = write(to_fd, buf, nr)) != nr) {
 					serrno = errno;
 					(void)unlink(to_name);
-					errx(1, "%s: %s", to_name,
+					errx(1, "%s: write: %s", to_name,
 					    strerror(nw > 0 ? EIO : serrno));
 				}
 			}
 			if (nr != 0) {
 				serrno = errno;
 				(void)unlink(to_name);
-				errx(1, "%s: %s", from_name, strerror(serrno));
+				errx(1, "%s: read: %s", from_name, strerror(serrno));
 			}
 		}
 	}
@@ -758,7 +758,7 @@ strip(char *to_name)
 		} else
 			execlp(stripprog, "strip", to_name, NULL);
 
-		warn("%s", stripprog);
+		warn("%s: exec of strip", stripprog);
 		_exit(1);
 		/*NOTREACHED*/
 	default:
@@ -816,7 +816,7 @@ install_dir(char *path, u_int flags)
                         *p = '\0';
                         if (stat(path, &sb)) {
                                 if (errno != ENOENT || mkdir(path, 0777) < 0) {
-					err(1, "%s", path);
+					err(1, "%s: mkdir", path);
                                 }
                         }
                         if (!(*p = ch))
@@ -826,7 +826,7 @@ install_dir(char *path, u_int flags)
 	if (!dounpriv && (
 	    ((flags & (HASUID | HASGID)) && chown(path, uid, gid) == -1)
 	    || chmod(path, mode) == -1 )) {
-                warn("%s", path);
+                warn("%s: chown/chmod", path);
 	}
 	metadata_log(path, "dir", NULL, NULL);
 }
