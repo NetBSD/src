@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.52 2001/04/22 18:40:54 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.53 2001/04/23 22:43:48 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3922,3 +3922,45 @@ usr.bin/top/top.c				1.7
 
   If the read() on stdin for a command fails, exit.  Prevents
   the program from spinning in certain conditions.
+
+sys/uvm/uvm_km.c				1.44
+
+  Use correct size for uvm_unmap() in error case of uvm_km_kmemalloc().
+
+usr.bin/file/magdir/hitachi-sh			1.1-1.2 (new)
+
+  Recognize Hitachi-SH COFF binaries.
+
+usr.sbin/pkg_install/admin/main.c		1.22
+
+  Update pkg_admin(8) usage message to include lsall and lsbest.
+
+sys/net/pfil.h					1.19 via patch
+
+  Include <sys/null.h> to define NULL for inline function.
+
+sys/dev/pci/if_tlp_pci.c			1.47-1.50 via patch
+sys/dev/pci/pcidevs				1.263,1.286
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/ic/tulipvar.h				1.38,1.43
+sys/dev/ic/tulip.c				1.73,1.87 via patch
+sys/arch/i386/conf/INSTALL_LAPTOP		patch
+
+  Support Accton EN2242 and other AmdTek AN985 compatible cards
+  with the tlp(4) driver.
+
+distrib/notes/common/sysinst			1.21
+distrib/notes/common/xfer			1.17
+distrib/notes/macppc/hardware			1.8
+distrib/notes/macppc/install			1.9
+distrib/notes/macppc/prep			1.11
+
+  Update to the macppc install documentation; OpenFirmware parts
+  reorganized and other changes.
+
+distrib/sets/lists/etc/mi			patch
+distrib/sets/lists/base/mi			patch
+distrib/i386/floppies/ramdisk-big/list		patch
+
+  /etc/dhclient-script moved to /sbin/dhclient-script.
