@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2002/03/09 23:35:59 chs Exp $	*/
+/*	$NetBSD: param.h,v 1.14 2002/09/06 19:26:26 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,13 +60,15 @@
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	NBPG
+#ifndef MAXPHYS
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#endif
 
 #define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
 
 #ifndef	MSGBUFSIZE
-#define	MSGBUFSIZE	NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	(2*NBPG)	/* default message buffer size */
 #endif
 
 #ifndef KERNBASE
