@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.2 1998/01/09 08:03:26 perry Exp $	*/
+/*	$NetBSD: help.c,v 1.3 1998/02/04 11:08:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,14 +34,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: help.c,v 1.3 1998/02/04 11:08:49 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <less.h>
-#include "pathnames.h"
+#include <stdio.h>
 
+#include "less.h"
+#include "pathnames.h"
+#include "extern.h"
+
+void
 help()
 {
 	char cmd[MAXPATHLEN + 20];

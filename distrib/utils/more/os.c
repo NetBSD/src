@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.3 1998/01/09 08:03:32 perry Exp $	*/
+/*	$NetBSD: os.c,v 1.4 1998/02/04 11:09:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)os.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: os.c,v 1.4 1998/02/04 11:09:01 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -57,12 +62,15 @@ static char sccsid[] = "@(#)os.c	8.1 (Berkeley) 6/6/93";
 #include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
-#include <less.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+
+#include "less.h"
+#include "extern.h"
 #include "pathnames.h"
 
 int reading;
-
-extern int screen_trashed;
 
 static jmp_buf read_label;
 
@@ -70,12 +78,13 @@ static jmp_buf read_label;
  * Pass the specified command to a shell to be executed.
  * Like plain "system()", but handles resetting terminal modes, etc.
  */
+void
 lsystem(cmd)
 	char *cmd;
 {
 	int inp;
 	char cmdbuf[256];
-	char *shell, *getenv();
+	char *shell;
 
 	/*
 	 * Print the command which is to be executed,
@@ -150,7 +159,7 @@ lsystem(cmd)
 	 * Since we were ignoring window change signals while we executed
 	 * the system command, we must assume the window changed.
 	 */
-	winch();
+	winch(SIGWINCH);
 #endif
 }
 
@@ -159,12 +168,13 @@ lsystem(cmd)
  * A call to intread() from a signal handler will interrupt
  * any pending iread().
  */
+int
 iread(fd, buf, len)
 	int fd;
 	char *buf;
 	int len;
 {
-	register int n;
+	int n;
 
 	if (setjmp(read_label))
 		/*
@@ -181,6 +191,7 @@ iread(fd, buf, len)
 	return (n);
 }
 
+void
 intread()
 {
 	(void)sigsetmask(0L);
@@ -192,8 +203,6 @@ intread()
  * The implementation of this is necessarily very operating system
  * dependent.  This implementation is unabashedly only for Unix systems.
  */
-FILE *popen();
-
 char *
 glob(filename)
 	char *filename;
@@ -201,7 +210,7 @@ glob(filename)
 	FILE *f;
 	char *p;
 	int ch;
-	char *cmd, *malloc(), *getenv();
+	char *cmd;
 	static char buffer[MAXPATHLEN];
 
 	if (filename[0] == '#')
@@ -252,9 +261,7 @@ bad_file(filename, message, len)
 	char *filename, *message;
 	u_int len;
 {
-	extern int errno;
 	struct stat statbuf;
-	char *strcat(), *strerror();
 
 	if (stat(filename, &statbuf) < 0) {
 		(void)sprintf(message, "%s: %s", filename, strerror(errno));
@@ -274,12 +281,11 @@ bad_file(filename, message, len)
  * Copy a string, truncating to the specified length if necessary.
  * Unlike strncpy(), the resulting string is guaranteed to be null-terminated.
  */
+void
 strtcpy(to, from, len)
 	char *to, *from;
 	int len;
 {
-	char *strncpy();
-
 	(void)strncpy(to, from, (int)len);
 	to[len-1] = '\0';
 }

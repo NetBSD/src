@@ -1,4 +1,4 @@
-/*	$NetBSD: linenum.c,v 1.2 1998/01/09 08:03:29 perry Exp $	*/
+/*	$NetBSD: linenum.c,v 1.3 1998/02/04 11:08:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)linenum.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: linenum.c,v 1.3 1998/02/04 11:08:55 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -64,7 +69,10 @@ static char sccsid[] = "@(#)linenum.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/types.h>
 #include <stdio.h>
-#include <less.h>
+#include <time.h>
+
+#include "less.h"
+#include "extern.h"
 
 /*
  * Structure to keep track of a line number and the associated file position.
@@ -98,15 +106,15 @@ static struct linenum *freelist;	/* Anchor of the unused entries */
 static struct linenum pool[NPOOL];	/* The pool itself */
 static struct linenum *spare;		/* We always keep one spare entry */
 
-extern int linenums;
-extern int sigs;
-
+static void calcgap __P((struct linenum *));
+static void longloopmessage __P((void));
 /*
  * Initialize the line number structures.
  */
+void
 clr_linenum()
 {
-	register struct linenum *p;
+	struct linenum *p;
 
 	/*
 	 * Put all the entries on the free list.
@@ -131,9 +139,9 @@ clr_linenum()
 /*
  * Calculate the gap for an entry.
  */
-static
+static void
 calcgap(p)
-	register struct linenum *p;
+	struct linenum *p;
 {
 	/*
 	 * Don't bother to compute a gap for the anchor.
@@ -151,15 +159,16 @@ calcgap(p)
  * The specified position (pos) should be the file position of the
  * FIRST character in the specified line.
  */
+void
 add_lnum(line, pos)
 	int line;
 	off_t pos;
 {
-	register struct linenum *p;
-	register struct linenum *new;
-	register struct linenum *nextp;
-	register struct linenum *prevp;
-	register off_t mingap;
+	struct linenum *p;
+	struct linenum *new;
+	struct linenum *nextp;
+	struct linenum *prevp;
+	off_t mingap;
 
 	/*
 	 * Find the proper place in the list for the new one.
@@ -238,7 +247,7 @@ add_lnum(line, pos)
  * If we get stuck in a long loop trying to figure out the
  * line number, print a message to tell the user what we're doing.
  */
-static
+static void
 longloopmessage()
 {
 	ierror("Calculating line numbers");
@@ -254,14 +263,15 @@ longloopmessage()
  * Find the line number associated with a given position.
  * Return 0 if we can't figure it out.
  */
+int
 find_linenum(pos)
 	off_t pos;
 {
-	register struct linenum *p;
-	register int lno;
-	register int loopcount;
-	off_t cpos, back_raw_line(), forw_raw_line();
-	time_t startime, time();
+	struct linenum *p;
+	int lno;
+	int loopcount;
+	off_t cpos;
+	time_t startime;
 
 	if (!linenums)
 		/*
@@ -374,10 +384,11 @@ find_linenum(pos)
  * The argument "where" tells which line is to be considered
  * the "current" line (e.g. TOP, BOTTOM, MIDDLE, etc).
  */
+int
 currline(where)
 	int where;
 {
-	off_t pos, ch_length(), position();
+	off_t pos;
 
 	if ((pos = position(where)) == NULL_POSITION)
 		pos = ch_length();

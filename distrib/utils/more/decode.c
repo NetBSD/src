@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.2 1998/01/09 08:03:25 perry Exp $	*/
+/*	$NetBSD: decode.c,v 1.3 1998/02/04 11:08:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)decode.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: decode.c,v 1.3 1998/02/04 11:08:45 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -57,7 +62,9 @@ static char sccsid[] = "@(#)decode.c	8.1 (Berkeley) 6/6/93";
 #include <sys/param.h>
 #include <sys/file.h>
 #include <stdio.h>
-#include <less.h>
+
+#include "less.h"
+#include "extern.h"
 
 /*
  * Command table is ordered roughly according to expected
@@ -130,6 +137,7 @@ static char *kp = kbuf;
  * Indicate that we're not in a prefix command
  * by resetting the command buffer pointer.
  */
+void
 noprefix()
 {
 	kp = kbuf;
@@ -138,10 +146,11 @@ noprefix()
 /*
  * Decode a command character and return the associated action.
  */
+int
 cmd_decode(c)
 	int c;
 {
-	register int action = A_INVALID;
+	int action = A_INVALID;
 
 	/*
 	 * Append the new command character to the command string in kbuf.
@@ -160,11 +169,12 @@ cmd_decode(c)
 /*
  * Search a command table for the current command string (in kbuf).
  */
+int
 cmd_search(table, endtable)
 	char *table;
 	char *endtable;
 {
-	register char *p, *q;
+	char *p, *q;
 
 	for (p = table, q = kbuf;  p < endtable;  p++, q++) {
 		if (*p == *q) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyin.c,v 1.2 1998/01/09 08:03:38 perry Exp $	*/
+/*	$NetBSD: ttyin.c,v 1.3 1998/02/04 11:09:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,15 +34,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ttyin.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: ttyin.c,v 1.3 1998/02/04 11:09:13 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
  * Routines dealing with getting input from the keyboard (i.e. from the user).
  */
 
-#include <less.h>
+#include <sys/types.h>
+
+#include "less.h"
+#include "extern.h"
 
 static int tty;
 
@@ -50,6 +58,7 @@ static int tty;
  * Open keyboard for input.
  * (Just use file descriptor 2.)
  */
+void
 open_getchr()
 {
 	tty = 2;
@@ -58,6 +67,7 @@ open_getchr()
 /*
  * Get a character from the keyboard.
  */
+int
 getchr()
 {
 	char c;
