@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.4 2002/03/23 15:38:22 taca Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.5 2002/03/27 19:51:39 augustss Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -78,8 +78,6 @@ SYSCTL_DECL(_debug_usb);
 SYSCTL_INT(_debug_usb, OID_AUTO, uvscom, CTLFLAG_RW,
 	   &uvscomdebug, 0, "uvscom debug level");
 
-#define UVSCOM_MODVER		1	/* module version */
-
 #endif
 
 #define DPRINTFN(n, x)  do { \
@@ -90,6 +88,10 @@ SYSCTL_INT(_debug_usb, OID_AUTO, uvscom, CTLFLAG_RW,
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
+
+#if defined(__FreeBSD__)
+#define UVSCOM_MODVER		1	/* module version */
+#endif
 
 #define	UVSCOM_CONFIG_INDEX	0
 #define	UVSCOM_IFACE_INDEX	0
