@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.8 1999/09/08 21:45:25 jsm Exp $	*/
+/*	$NetBSD: fly.c,v 1.9 2000/09/24 09:44:28 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: fly.c,v 1.8 1999/09/08 21:45:25 jsm Exp $");
+__RCSID("$NetBSD: fly.c,v 1.9 2000/09/24 09:44:28 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,18 +46,25 @@ __RCSID("$NetBSD: fly.c,v 1.8 1999/09/08 21:45:25 jsm Exp $");
 #undef UP
 #include <curses.h>
 
-#define abs(a)	((a) < 0 ? -(a) : (a))
 #define MIDR  (LINES/2 - 1)
 #define MIDC  (COLS/2 - 1)
 
-int     row, column;
-int     dr = 0, dc = 0;
-char    destroyed;
+static int     row, column;
+static int     dr = 0, dc = 0;
+static char    destroyed;
 int     ourclock = 120;		/* time for all the flights in the game */
-char    cross = 0;
-sig_t   oldsig;
+static char    cross = 0;
+static sig_t   oldsig;
 
-void
+static void blast __P((void));
+static void endfly __P((void));
+static void moveenemy __P((int));
+static void notarget __P((void));
+static void screen __P((void));
+static void succumb __P((int));
+static void target __P((void));
+
+static void
 succumb(dummy)
 	int     dummy __attribute__((__unused__));
 {
@@ -178,7 +185,7 @@ visual()
 	}
 }
 
-void
+static void
 screen()
 {
 	int     r, c, n;
@@ -195,7 +202,7 @@ screen()
 	refresh();
 }
 
-void
+static void
 target()
 {
 	int     n;
@@ -208,7 +215,7 @@ target()
 	}
 }
 
-void
+static void
 notarget()
 {
 	int     n;
@@ -221,7 +228,7 @@ notarget()
 	}
 }
 
-void
+static void
 blast()
 {
 	int     n;
@@ -243,7 +250,7 @@ blast()
 	alarm(1);
 }
 
-void
+static void
 moveenemy(dummy)
 	int     dummy __attribute__((__unused__));
 {
@@ -283,7 +290,7 @@ moveenemy(dummy)
 	alarm(1);
 }
 
-void
+static void
 endfly()
 {
 	alarm(0);
