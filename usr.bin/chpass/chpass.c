@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.5 1995/03/26 04:55:25 glass Exp $	*/
+/*	$NetBSD: chpass.c,v 1.6 1995/06/26 23:43:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,13 +43,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.5 1995/03/26 04:55:25 glass Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.6 1995/06/26 23:43:06 jtc Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
