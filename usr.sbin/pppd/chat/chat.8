@@ -1,4 +1,4 @@
-.\"	$NetBSD: chat.8,v 1.11 1999/08/25 02:52:15 christos Exp $
+.\"	$NetBSD: chat.8,v 1.12 2000/03/29 06:04:49 deberg Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
 .\" Id: chat.8,v 1.8 1999/05/12 06:13:22 paulus Exp
@@ -55,7 +55,8 @@ Request that the \fIchat\fR script be executed in a verbose mode. The
 \fIchat\fR program will then log the execution state of the chat
 script as well as all text received from the modem and the output
 strings sent to the modem.  The default is to log through the SYSLOG;
-the logging method may be altered with the -S and -s flags.
+the logging method may be altered with the -S and -s flags. SYSLOGs
+are logged to facility LOG_LOCAL2.
 .TP
 .B -V
 Request that the \fIchat\fR script be executed in a stderr verbose
@@ -71,7 +72,7 @@ sent to stderr.
 .B -S
 Do not use the SYSLOG.  By default, error messages are sent to the
 SYSLOG.  The use of -S will prevent both log messages from '-v' and
-error messages from being sent to the SYSLOG.
+error messages from being sent to the SYSLOG (to facility LOG_LOCAL2).
 .TP
 .B -T \fI<phone number>
 Pass in an arbitary string, usually a phone number, that will be
@@ -415,7 +416,7 @@ Pause for a fraction of a second. The delay is 1/10th of a second.
 .I (not valid in expect.)
 .TP
 .B \\\\q
-Suppress writing the string to the SYSLOG file. The string ?????? is
+Suppress writing the string to the SYSLOG. The string ?????? is
 written to the log in its place.
 .I (not valid in expect.)
 .TP
