@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.21 2001/11/20 12:56:43 lukem Exp $
+#	$NetBSD: TOKOCHAN,v 1.22 2001/11/25 01:27:49 minoura Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.21 $"
+#ident 		"TOKOCHAN-$Revision: 1.22 $"
 
 maxusers	10
 
@@ -16,10 +16,10 @@ maxusers	10
 ## Options for variants of the m68k MPU
 ## you must have at least the correct one; REQUIRED
 options 	M68030
-options 	M68040
+#options 	M68040
 #options 	M68060
 ## If you want an optimized kernel for a specific processor, use either:
-#makeoptions	CMACHFLAGS="-m68030"
+makeoptions	CMACHFLAGS="-m68030"
 #makeoptions	CMACHFLAGS="-m68040 -Wa,-m68030 -Wa,-m68851"
 #makeoptions	CMACHFLAGS="-m68060 -Wa,-m68030 -Wa,-m68851"
 
@@ -59,6 +59,10 @@ options 	KTRACE
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 options 	SHMMAXPGS=2048	# 1024 pages is the default
 
@@ -77,7 +81,7 @@ options 	SHMMAXPGS=2048	# 1024 pages is the default
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-options 	DDB_ONPANIC=0		# see also sysctl(8): `ddb.onpanic'
+options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 options 	PANICBUTTON		# interrupt switch invokes DDB
 
 ## You may also use gdb, on another computer connected to this machine over
@@ -252,10 +256,10 @@ vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106
 audio*	at vs?
 
 ## Network interfaces
+#ne*	at intio0 addr 0xece300 intr 249	# Nereid Ethernet
 neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
 neptune1 at intio0 addr 0xece400 intr 249	# Neptune-X at alt. addr.
 ne0	at neptune? addr 0x300			# NE2000 or clone
-#se0	at scsibus? target ? lun ?		# Ether+; broken
 
 
 #### Pseudo devices
@@ -302,15 +306,18 @@ pseudo-device	bpfilter	4
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
-pseudo-device	ipfilter
+#pseudo-device	ipfilter
 
 ## for IPv6
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 #pseudo-device	vlan
+
+## Simple inter-network traffic bridging
+#pseudo-device	bridge
 
 #### Other device configuration
 
