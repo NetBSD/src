@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.149 2001/11/28 10:21:11 lukem Exp $
+# $NetBSD: files.alpha,v 1.150 2002/01/21 21:57:02 jdolecek Exp $
 #
 # alpha-specific configuration info
 
@@ -87,7 +87,7 @@ include "dev/ata/files.ata"
 major { wd = 4 }
 
 # Memory Disk
-file	arch/alpha/alpha/md_root.c	memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major { md = 6 }
 
 # RAIDframe

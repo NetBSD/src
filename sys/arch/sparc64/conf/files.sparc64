@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.57 2001/12/04 23:14:49 lukem Exp $
+#	$NetBSD: files.sparc64,v 1.58 2002/01/21 21:57:05 jdolecek Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -269,4 +269,4 @@ file	arch/sparc64/sparc64/sunos32_machdep.c	compat_sunos & compat_netbsd32
 # Miscellaneous
 file	netns/ns_cksum.c		ns
 
-file	arch/sparc64/dev/md_root.c	memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
