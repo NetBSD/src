@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2000/06/29 08:17:59 mrg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2000/10/22 09:38:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ static int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
 paddr_t	kvtophys __P((vaddr_t));	/* XXX */
 
 /*
- * The default DMA tag for all busses on the DECstation.
+ * The default DMA tag for all busses on the hpcmips
  */
 struct hpcmips_bus_dma_tag hpcmips_default_bus_dma_tag = {
 	_bus_dmamap_create,
