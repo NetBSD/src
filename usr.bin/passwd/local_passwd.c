@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: local_passwd.c,v 1.5 1993/08/01 18:10:19 mycroft Exp $";
+static char rcsid[] = "$Id: local_passwd.c,v 1.6 1994/01/05 11:20:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,12 +109,12 @@ getnewpasswd(pw)
 			(void)printf("Password unchanged.\n");
 			pw_error(NULL, 0, 0);
 		}
-		if (strlen(p) <= 5 && (uid != 0 || ++tries < 2)) {
+		if (strlen(p) <= 5 && ++tries < 2) {
 			(void)printf("Please enter a longer password.\n");
 			continue;
 		}
 		for (t = p; *t && islower(*t); ++t);
-		if (!*t && (uid != 0 || ++tries < 2)) {
+		if (!*t && ++tries < 2) {
 			(void)printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
 			continue;
 		}
