@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 1999/04/09 10:24:42 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.5 1999/04/09 10:44:01 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -143,7 +143,7 @@ md_post_newfs()
 {
 
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 0, "/sbin/disklabel -B %s", diskdev);
+	run_prog(0, 0, NULL, "/sbin/disklabel -B %s", diskdev);
 	return 0;
 }
 

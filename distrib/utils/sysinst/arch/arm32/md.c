@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 1999/04/09 10:24:40 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.17 1999/04/09 10:43:59 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -283,7 +283,7 @@ int	md_post_newfs (void)
 #if 0
 	/* XXX boot blocks ... */
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
+	run_prog(0, 1, NULL, "/sbin/disklabel -B %s /dev/r%sc",
 	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 #endif
 	return 0;
@@ -297,7 +297,7 @@ int	md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf("%s", msg_string(MSG_dotar));
-	if (run_prog(0, 1, "pax -X -r -w -pe / /mnt") != 0)
+	if (run_prog(0, 1, NULL, "pax -X -r -w -pe / /mnt") != 0)
 		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
@@ -520,9 +520,9 @@ md_cleanup_install(void)
 	if (scripting)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
-	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
-	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
+	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
 #endif
 }
