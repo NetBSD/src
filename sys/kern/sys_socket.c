@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.30 2001/05/19 17:28:33 manu Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.31 2001/06/16 21:29:32 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -100,12 +100,7 @@ soo_ioctl(fp, cmd, data, p)
 		return (0);
 
 	case FIOASYNC:
-		if (
-#ifndef __HAVE_MINIMAL_EMUL
-		    (!(so->so_state & SS_ISAPIPE) ||
-		    (!(p->p_emul->e_flags & EMUL_NO_BSD_ASYNCIO_PIPE))) &&
-#endif
-		    *(int *)data) {
+		if (*(int *)data) {
 			so->so_state |= SS_ASYNC;
 			so->so_rcv.sb_flags |= SB_ASYNC;
 			so->so_snd.sb_flags |= SB_ASYNC;

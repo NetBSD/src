@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.38 2001/04/30 03:32:56 kml Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.39 2001/06/16 21:29:32 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -290,7 +290,7 @@ sb_lock(struct sockbuf *sb)
 /*
  * Wakeup processes waiting on a socket buffer.
  * Do asynchronous notification via SIGIO
- * if the socket has the SS_ASYNC flag set.
+ * if the socket buffer has the SB_ASYNC flag set.
  */
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
@@ -303,7 +303,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 		sb->sb_flags &= ~SB_WAIT;
 		wakeup((caddr_t)&sb->sb_cc);
 	}
-	if (so->so_state & SS_ASYNC) {
+	if (sb->sb_flags & SB_ASYNC) {
 		if (so->so_pgid < 0)
 			gsignal(-so->so_pgid, SIGIO);
 		else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
