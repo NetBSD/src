@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.45 1999/09/13 19:49:41 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.46 1999/09/13 21:33:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1133,6 +1133,7 @@ ohci_add_ed(sed, head)
 	ohci_soft_ed_t *sed; 
 	ohci_soft_ed_t *head; 
 {
+	SPLUSBCHECK;
 	sed->next = head->next;
 	sed->ed.ed_nexted = head->ed.ed_nexted;
 	head->next = sed;
@@ -1148,6 +1149,8 @@ ohci_rem_ed(sed, head)
 	ohci_soft_ed_t *head; 
 {
 	ohci_soft_ed_t *p; 
+
+	SPLUSBCHECK;
 
 	/* XXX */
 	for (p = head; p && p->next != sed; p = p->next)
@@ -1177,6 +1180,8 @@ ohci_hash_add_td(sc, std)
 {
 	int h = HASH(std->physaddr);
 
+	SPLUSBCHECK;
+
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
 
@@ -1186,6 +1191,8 @@ ohci_hash_rem_td(sc, std)
 	ohci_softc_t *sc;
 	ohci_soft_td_t *std;
 {
+	SPLUSBCHECK;
+
 	LIST_REMOVE(std, hnext);
 }
 
@@ -1404,6 +1411,8 @@ ohci_abort_req(reqh, status)
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
 	ohci_soft_ed_t *sed;
 
+	SPLUSBCHECK;
+
 	DPRINTF(("ohci_abort_req: reqh=%p pipe=%p\n", reqh, opipe));
 
 	reqh->status = status;
@@ -1549,11 +1558,13 @@ ohci_root_ctrl_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (ohci_root_ctrl_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (ohci_root_ctrl_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -1564,7 +1575,7 @@ ohci_root_ctrl_start(reqh)
 	usb_device_request_t *req;
 	void *buf;
 	int port, i;
-	int len, value, index, l, totlen = 0;
+	int s, len, value, index, l, totlen = 0;
 	usb_port_status_t ps;
 	usb_hub_descriptor_t hubd;
 	usbd_status r;
@@ -1853,7 +1864,9 @@ ohci_root_ctrl_start(reqh)
 	r = USBD_NORMAL_COMPLETION;
  ret:
 	reqh->status = r;
+	s = splusb();
 	usb_transfer_complete(reqh);
+	splx(s);
 	return (USBD_IN_PROGRESS);
 }
 
@@ -1880,11 +1893,13 @@ ohci_root_intr_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (ohci_root_intr_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (ohci_root_intr_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -1927,11 +1942,13 @@ ohci_device_ctrl_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (ohci_device_ctrl_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (ohci_device_ctrl_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -2001,11 +2018,13 @@ ohci_device_bulk_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (ohci_device_bulk_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (ohci_device_bulk_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status
@@ -2133,11 +2152,13 @@ ohci_device_intr_transfer(reqh)
 {
 	usbd_status r;
 
+	/* Insert last in queue. */
 	r = usb_insert_transfer(reqh);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	else
-		return (ohci_device_intr_start(reqh));
+
+	/* Pipe isn't running, start first */
+	return (ohci_device_intr_start(SIMPLEQ_FIRST(&reqh->pipe->queue)));
 }
 
 usbd_status

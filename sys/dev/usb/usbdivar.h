@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.32 1999/09/13 19:49:41 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.33 1999/09/13 21:33:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,6 +220,16 @@ void		usb_transfer_complete __P((usbd_request_handle reqh));
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
 void		usb_needs_explore __P((usbd_bus_handle));
+
+#ifdef DIAGNOSTIC
+#define SPLUSBCHECK \
+	do { int _s = splusb(), _su = splusb(); \
+             if (_s != _su) printf("SPLUSBCHECK failed %d!=%d, %s:%d\n", \
+				   _s, _su, __FILE__, __LINE__); \
+        } while (0)
+#else
+#define SPLUSBCHECK
+#endif
 
 /* Locator stuff. */
 

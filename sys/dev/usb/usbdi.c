@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.39 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.40 1999/09/13 21:33:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -681,6 +681,8 @@ usbd_ar_pipe(pipe)
 {
 	usbd_request_handle reqh;
 
+	SPLUSBCHECK;
+
 	DPRINTFN(2,("usbd_ar_pipe: pipe=%p\n", pipe));
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
@@ -716,6 +718,7 @@ usbd_init()
 	}
 }
 
+/* Called at splusb() */
 void
 usb_transfer_complete(reqh)
 	usbd_request_handle reqh;
@@ -724,8 +727,10 @@ usb_transfer_complete(reqh)
 	usb_dma_t *dmap = &reqh->dmabuf;
 	int polling;
 
-	DPRINTFN(5, ("usb_transfer_complete: pipe=%p reqh=%p actlen=%d\n",
-		     pipe, reqh, reqh->actlen));
+	SPLUSBCHECK;
+
+	DPRINTFN(5, ("usb_transfer_complete: pipe=%p reqh=%p status=%d actlen=%d\n",
+		     pipe, reqh, reqh->status, reqh->actlen));
 
 #ifdef DIAGNOSTIC
 	if (!pipe) {
@@ -776,9 +781,14 @@ usb_transfer_complete(reqh)
 	if ((reqh->flags & USBD_SYNCHRONOUS) && !polling)
 		wakeup(reqh);
 
-	if (!pipe->repeat && 
-	    reqh->status != USBD_CANCELLED && reqh->status != USBD_TIMEOUT)
-		usbd_start_next(pipe);
+	if (!pipe->repeat) {
+		/* XXX should we stop the queue on all errors? */
+		if (reqh->status == USBD_CANCELLED ||
+		    reqh->status == USBD_TIMEOUT)
+			pipe->running = 0;
+		else
+			usbd_start_next(pipe);
+	}
 }
 
 usbd_status
@@ -789,8 +799,8 @@ usb_insert_transfer(reqh)
 	usbd_status r;
 	int s;
 
-	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d\n", pipe,
-		    pipe->running));
+	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n", 
+		    pipe, pipe->running, reqh->timeout));
 	s = splusb();
 	SIMPLEQ_INSERT_TAIL(&pipe->queue, reqh, next);
 	if (pipe->running)
@@ -803,12 +813,15 @@ usb_insert_transfer(reqh)
 	return (r);
 }
 
+/* Called at splusb() */
 void
 usbd_start_next(pipe)
 	usbd_pipe_handle pipe;
 {
 	usbd_request_handle reqh;
 	usbd_status r;
+
+	SPLUSBCHECK;
 
 	DPRINTFN(10, ("usbd_start_next: pipe=%p\n", pipe));
 	
