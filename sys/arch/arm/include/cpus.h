@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.1 2001/02/23 21:23:47 reinoud Exp $	*/
+/*	$NetBSD: cpus.h,v 1.2 2001/02/25 18:40:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -102,7 +102,6 @@ typedef struct _cpu {
 /* These are generic CPU variables */
 
 	u_int	cpu_class;	/* The CPU class */
-	u_int	cpu_type;	/* The CPU type */
 	u_int	cpu_host;	/* The CPU host interface */
 	u_int	cpu_flags;	/* The CPU flags */
 	char	cpu_model[256];	/* Text description of CPU */
