@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.57 2003/05/10 14:03:19 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.58 2003/05/17 01:38:40 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -581,7 +581,7 @@ myetheraddr(cp)
 		int node, n;
 
 		node = findroot();
-		if (PROM_getprop(node, "idprom", sizeof *idp, &n, (void **)&idp) ||
+		if (PROM_getprop(node, "idprom", sizeof *idp, &n, (void *)&idp) ||
 		    n != 1) {
 			printf("\nmyetheraddr: clock not setup yet, "
 			       "and no idprom property in /\n");

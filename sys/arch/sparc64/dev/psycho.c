@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.61 2003/05/03 18:11:02 wiz Exp $	*/
+/*	$NetBSD: psycho.c,v 1.62 2003/05/17 01:38:39 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -711,7 +711,7 @@ psycho_alloc_extent(pp, node, ss, name)
 	bsize = BUS_ADDR(pr->size_hi, pr->size_lo);
 
 	/* get available lists */
-	if (PROM_getprop(node, "available", sizeof(*pa), &num, (void **)&pa)) {
+	if (PROM_getprop(node, "available", sizeof(*pa), &num, (void *)&pa)) {
 		printf("psycho_alloc_extent: PROM_getprop failed\n");
 		return NULL;
 	}
@@ -772,7 +772,7 @@ psycho_get_bus_range(node, brp)
 {
 	int n;
 
-	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, (void **)&brp))
+	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, (void *)&brp))
 		panic("could not get psycho bus-range");
 	if (n != 2)
 		panic("broken psycho bus-range");
@@ -943,7 +943,7 @@ psycho_iommu_init(sc, tsbsize)
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
 	if (!PROM_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
-		(void **)&vdma)) {
+		(void *)&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];
 #define	TSBCASE(x)	case 1<<((x)+23): tsbsize = (x); break

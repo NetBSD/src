@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 2003/05/10 14:10:54 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.142 2003/05/17 01:38:40 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ cpu_startup()
         size = MAXBSIZE * nbuf;         /* # bytes for buffers */
 
         /* allocate VM for buffers... area is not managed by VM system */
-        if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+        if (uvm_map(kernel_map, (void *) &buffers, round_page(size),
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
                                 UVM_ADV_NORMAL, 0)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 2003/05/10 13:35:10 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.74 2003/05/17 01:38:39 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -827,7 +827,7 @@ PROM_getpropstringA(node, name, buffer)
 {
 	int blen;
 
-	if (PROM_getprop(node, name, 1, &blen, (void **)&buffer) != 0)
+	if (PROM_getprop(node, name, 1, &blen, (void *)&buffer) != 0)
 		blen = 0;
 
 	buffer[blen] = '\0';	/* usually unnecessary */
