@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.65 2003/08/07 16:26:41 agc Exp $ */
+/*	$NetBSD: ite.c,v 1.66 2003/11/01 12:56:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.65 2003/08/07 16:26:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2003/11/01 12:56:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -154,7 +154,6 @@ static char sample[20] = {
 	-39,-75,-103,-121,-127,-121,-103,-75,-39
 };
 
-static char *index(const char *, char);
 void iteputchar(int c, struct ite_softc *ip);
 void ite_putstr(const char * s, int len, dev_t dev);
 void iteattach(struct device *, struct device *, void *);
@@ -1021,7 +1020,7 @@ ite_filter(u_char c, enum caller caller)
 		    0x5c /* / */, 0x5d /* * */
 		};
 		static char *out = "pqrstuvwxymlnMPQRS";
-		char *cp = index (in, c);
+		char *cp = strchr(in, c);
 
 		/*
 		 * keypad-appmode sends SS3 followed by the above
@@ -1049,7 +1048,7 @@ ite_filter(u_char c, enum caller caller)
 		 */
 		if (c >= 0x4c && c <= 0x4f && kbd_ite->cursor_appmode
 		    && !bcmp(str, "\x03\x1b[", 3) &&
-		    index("ABCD", str[3]))
+		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 
 		/*
@@ -1297,15 +1296,6 @@ atoi(const char *cp)
 
   return n;
 }
-
-static char *
-index(const char *cp, char ch)
-{
-  while (*cp && *cp != ch) cp++;
-  return *cp ? (char *) cp : 0;
-}
-
-
 
 inline static int
 ite_argnum(struct ite_softc *ip)
@@ -1817,7 +1807,7 @@ iteputchar(register int c, struct ite_softc *ip)
 				*ip->ap = 0;
 				y = atoi(ip->argbuf);
 				x = 0;
-				cp = index(ip->argbuf, ';');
+				cp = strchr(ip->argbuf, ';');
 				if (cp)
 					x = atoi(cp + 1);
 				if (x)
@@ -1927,7 +1917,7 @@ iteputchar(register int c, struct ite_softc *ip)
 				x = atoi(ip->argbuf);
 				x = x ? x : 1;
 				y = ip->rows;
-				cp = index(ip->argbuf, ';');
+				cp = strchr(ip->argbuf, ';');
 				if (cp) {
 					y = atoi(cp + 1);
 					y = y ? y : ip->rows;
