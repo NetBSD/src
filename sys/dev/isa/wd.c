@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.97 1994/10/20 17:03:09 mycroft Exp $
+ *	$Id: wd.c,v 1.98 1994/10/20 18:37:45 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -73,7 +73,9 @@
 
 #define WDCNDELAY	100000	/* delay = 100us; so 10s for a controller state change */
 #define WDCDELAY	100
-#define	RECOVERYTIME	hz/2	/* time to recover from an error */
+
+#define	WAITTIME	(4 * hz)	/* time to wait for a completion */
+#define	RECOVERYTIME	(hz / 2)	/* time to recover from an error */
 
 #if 0
 /* If you enable this, it will report any delays more than 100us * N long. */
@@ -137,7 +139,6 @@ struct wdc_softc {
 	u_char	sc_status;	/* copy of status register */
 	u_char	sc_error;	/* copy of error register */
 	u_short	sc_iobase;	/* i/o port base */
-	int	sc_timeout;	/* timeout counter */
 	int	sc_errors;	/* count of errors during current transfer */
 	TAILQ_HEAD(drivehead, wd_softc) sc_drives;
 };
@@ -256,7 +257,6 @@ wdcattach(parent, self, aux)
 		(void)config_found(self, &wa, wdprint);
 
 	TAILQ_INIT(&wdc->sc_drives);
-	wdctimeout(wdc);
 	wdc->sc_ih.ih_fun = wdcintr;
 	wdc->sc_ih.ih_arg = wdc;
 	wdc->sc_ih.ih_level = IPL_BIO;
@@ -517,7 +517,7 @@ loop:
 
 	/* Mark the controller active and set a timeout. */
 	wdc->sc_flags |= WDCF_ACTIVE;
-	wdc->sc_timeout = 4;
+	timeout(wdctimeout, wdc, WAITTIME);
     
 	/* Do control operations specially. */
 	if (wd->sc_state < OPEN) {
@@ -730,7 +730,7 @@ wdcintr(wdc)
 	}
 
 	wdc->sc_flags &= ~WDCF_ACTIVE;
-	wdc->sc_timeout = 0;
+	untimeout(wdctimeout, wdc);
     
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
@@ -1455,20 +1455,20 @@ void
 bad144intern(wd)
 	struct wd_softc *wd;
 {
-	int i;
+	struct dkbad *bt = &wd->sc_dk.dk_cpulabel.bad;
+	struct disklabel *lp = &wd->sc_dk.dk_label;
+	int i = 0;
 
-	for (i = 0; i < 127; i++)
-		wd->sc_badsect[i] = -1;
-	for (i = 0; i < 126; i++) {
-		if (wd->sc_dk.dk_cpulabel.bad.bt_bad[i].bt_cyl == 0xffff)
+	for (; i < 126; i++) {
+		if (bt->bt_bad[i].bt_cyl == 0xffff)
 			break;
 		wd->sc_badsect[i] =
-		    wd->sc_dk.dk_cpulabel.bad.bt_bad[i].bt_cyl *
-		    wd->sc_dk.dk_label.d_secpercyl +
-		    (wd->sc_dk.dk_cpulabel.bad.bt_bad[i].bt_trksec >> 8) *
-			wd->sc_dk.dk_label.d_nsectors +
-		    (wd->sc_dk.dk_cpulabel.bad.bt_bad[i].bt_trksec & 0x00ff);
+		    bt->bt_bad[i].bt_cyl * lp->d_secpercyl +
+		    (bt->bt_bad[i].bt_trksec >> 8) * lp->d_nsectors +
+		    (bt->bt_bad[i].bt_trksec & 0xff);
 	}
+	for (; i < 127; i++)
+		wd->sc_badsect[i] = -1;
 }
 
 static int
@@ -1498,8 +1498,9 @@ wdcrestart(arg)
 	void *arg;
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)arg;
-	int s = splbio();
+	int s;
 
+	s = splbio();
 	wdcstart(wdc);
 	splx(s);
 }
@@ -1517,7 +1518,7 @@ wdcunwedge(wdc)
 {
 	int lunit;
 
-	wdc->sc_timeout = 0;
+	untimeout(wdctimeout, wdc);
 	(void) wdcreset(wdc);
 
 	/* Schedule recalibrate for all drives on this controller. */
@@ -1572,13 +1573,11 @@ wdctimeout(arg)
 	void *arg;
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)arg;
-	int s = splbio();
+	int s;
 
-	if (wdc->sc_timeout && --wdc->sc_timeout == 0) {
-		wderror(wdc, NULL, "lost interrupt");
-		wdcunwedge(wdc);
-	}
-	timeout(wdctimeout, wdc, hz);
+	s = splbio();
+	wderror(wdc, NULL, "lost interrupt");
+	wdcunwedge(wdc);
 	splx(s);
 }
 
