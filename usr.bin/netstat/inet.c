@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.25 1997/12/11 07:00:01 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.26 1997/12/13 21:03:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.25 1997/12/11 07:00:01 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.26 1997/12/13 21:03:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,6 @@ tcp_stats(off, name)
 	p(tcps_sndurg, "\t\t%lu URG only packet%s\n");
 	p(tcps_sndprobe, "\t\t%lu window probe packet%s\n");
 	p(tcps_sndwinup, "\t\t%lu window update packet%s\n");
-	p(tcps_delwin, "\t\t%lu window update%s delayed\n");
 	p(tcps_sndctrl, "\t\t%lu control packet%s\n");
 	p(tcps_rcvtotal, "\t%lu packet%s received\n");
 	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%lu ack%s (for %lu byte%s)\n");
