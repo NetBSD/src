@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1997/12/11 09:04:28 sakamoto Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1998/01/12 04:57:13 sakamoto Exp $	*/
 /*	$OpenBSD: intr.h,v 1.1 1997/10/13 10:53:45 pefo Exp $ */
 
 /*
@@ -44,6 +44,7 @@
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
 #define	IPL_HIGH	0	/* everything */
+#define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
 
 /* Interrupt sharing types. */
@@ -149,13 +150,13 @@ set_sint(pending)
 
 #define	SINT_CLOCK	0x20000000
 #define	SINT_NET	0x40000000
-#define	SINT_TTY	0x80000000
+#define	SINT_SERIAL	0x80000000
 #define	SPL_CLOCK	0x00000001
-#define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_TTY)
+#define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
 
 #define	CNT_SINT_NET	29
 #define	CNT_SINT_CLOCK	30
-#define	CNT_SINT_TTY	31
+#define	CNT_SINT_SERIAL	31
 #define	CNT_CLOCK	0
 
 #define splbio()	splraise(imask[IPL_BIO])
@@ -163,14 +164,15 @@ set_sint(pending)
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(SPL_CLOCK|SINT_CLOCK|SINT_NET)
 #define splimp()	splraise(imask[IPL_IMP])
+#define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splhigh()
 #define	splsoftclock()	spllower(SINT_CLOCK)
 #define	splsoftnet()	splraise(SINT_NET)
-#define	splsofttty()	splraise(SINT_TTY)
+#define	splsoftserial()	splraise(SINT_SERIAL)
 
 #define	setsoftclock()	set_sint(SINT_CLOCK);
 #define	setsoftnet()	set_sint(SINT_NET);
-#define	setsofttty()	set_sint(SINT_TTY);
+#define	setsoftserial()	set_sint(SINT_SERIAL);
 
 #define	splhigh()	splraise(0xffffffff)
 #define	spl0()		spllower(0)
