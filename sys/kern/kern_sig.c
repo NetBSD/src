@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.62 1997/04/03 21:08:27 kleink Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.63 1997/04/23 18:59:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -396,10 +396,6 @@ sys_kill(cp, v, retval)
 	} */ *uap = v;
 	register struct proc *p;
 	register struct pcred *pc = cp->p_cred;
-
-#ifdef COMPAT_09
-	SCARG(uap, pid) = (short) SCARG(uap, pid);
-#endif
 
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);

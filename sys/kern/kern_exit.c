@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.41 1997/02/07 05:33:09 mikel Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.42 1997/04/23 18:59:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -289,10 +289,6 @@ sys_wait4(q, v, retval)
 	register int nfound;
 	register struct proc *p, *t;
 	int status, error;
-
-#ifdef COMPAT_09
-	SCARG(uap, pid) = (short)SCARG(uap, pid);
-#endif
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
