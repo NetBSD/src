@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.32 2000/10/10 20:24:50 is Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.33 2001/01/28 00:59:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.32 2000/10/10 20:24:50 is Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.33 2001/01/28 00:59:27 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -74,13 +74,13 @@ extern	char *__progname;
 static	size_t lineno;
 static	gid_t egid;
 static	int verbose;
-static	char *ccdconf = _PATH_CCDCONF;
+static	const char *ccdconf = _PATH_CCDCONF;
 
 static	char *core;
 static	char *kernel;
 
 struct	flagval {
-	char	*fv_flag;
+	const char *fv_flag;
 	int	fv_val;
 } flagvaltab[] = {
 	{ "CCDF_UNIFORM",	CCDF_UNIFORM },
@@ -470,7 +470,7 @@ do_io(path, cmd, cciop)
 	struct ccd_ioctl *cciop;
 {
 	int fd;
-	char *cp;
+	const char *cp;
 
 	if ((fd = open(path, O_RDWR, 0640)) < 0) {
 		warn("open: %s", path);
