@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.8 2004/01/28 18:03:45 jdolecek Exp $ */
+/* $NetBSD: lpt.c,v 1.9 2004/01/30 11:40:55 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.8 2004/01/28 18:03:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.9 2004/01/30 11:40:55 jdolecek Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -171,8 +171,7 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 				"not properly attached!\n");
 			return;
 		}
-	}
-	else {
+	} else {
 		sc->sc_inbuf = malloc(BUFSIZE, M_DEVBUF, M_WAITOK);
 		sc->sc_outbuf = malloc(BUFSIZE, M_DEVBUF, M_WAITOK);
 	}
@@ -236,8 +235,7 @@ lpt_detach(struct device * self, int flags)
 			&(lpt->sc_in_baddr), BUFSIZE); 
 		ppbus_dma_free(self->dv_parent, &(lpt->sc_outbuf), 
 			&(lpt->sc_out_baddr), BUFSIZE);
-	}
-	else {
+	} else {
 		free(lpt->sc_inbuf, M_DEVBUF);
 		free(lpt->sc_outbuf, M_DEVBUF);
 	}
@@ -597,16 +595,15 @@ lptread(dev_t dev_id, struct uio *uio, int ioflag)
 			min(BUFSIZE, uio->uio_resid), 0, &len);
 
 		/* If error or no more data, stop */
-		if(error) {
-			if(error != EWOULDBLOCK)
+		if (error) {
+			if (error != EWOULDBLOCK)
 				sc->sc_state |= INTERRUPTED;	
 			break;
 		} 
-		else if(len == 0)
+		if (len == 0)
 			break;
 
-		error = uiomove(sc->sc_outbuf, len, uio);
-		if (error)
+		if ((error = uiomove(sc->sc_outbuf, len, uio)))
 			break;
 	}
 
@@ -677,30 +674,25 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct proc *p)
 	}
 
 	switch (cmd) {
-	case LPTIO_ENABLE_DMA :
-		if((sc->ppbus_dev).capabilities & PPBUS_HAS_DMA) {
-			val = 1;
-			error = ppbus_write_ivar(dev->dv_parent, 
-				PPBUS_IVAR_DMA, &val);
-		}
-		else {
-			LPT_DPRINTF(("%s(%s): device does not have DMA "
-				"capability.\n", __func__, dev->dv_xname));
+	case LPTIO_ENABLE_DMA:
+		if (((sc->ppbus_dev).capabilities & PPBUS_HAS_DMA) == 0) {
 			error = ENODEV;
+			break;
 		}
+
+		val = 1;
+		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
 		break;
 
-	case LPTIO_DISABLE_DMA :
-		if((sc->ppbus_dev).capabilities & PPBUS_HAS_DMA) {
-			val = 0;
-			error = ppbus_write_ivar(dev->dv_parent, 
-				PPBUS_IVAR_DMA, &val);
+	case LPTIO_DISABLE_DMA:
+		if (((sc->ppbus_dev).capabilities & PPBUS_HAS_DMA) == 0) {
+			/* nop, 'success' */
+			error = 0;
+			break;
 		}
-		else {
-			LPT_DPRINTF(("%s(%s): device does not have DMA "
-				"capability.\n", __func__, dev->dv_xname));
-			error = ENODEV;
-		}
+
+		val = 0;
+		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
 		break;
 
 	case LPTIO_MODE_STD:
