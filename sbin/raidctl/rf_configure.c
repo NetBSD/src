@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.17 2003/06/23 11:53:41 agc Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.18 2003/07/13 07:37:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.17 2003/06/23 11:53:41 agc Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.18 2003/07/13 07:37:02 itojun Exp $");
 #endif
 
 
@@ -206,11 +206,12 @@ rf_MakeConfig(configname, cfgPtr)
 			cp = rf_find_non_white(buf);
 			if (!strncmp(cp, "START", strlen("START")))
 				break;
-			(void) strcpy(&cfgPtr->debugVars[c][0], cp);
+			(void) strlcpy(&cfgPtr->debugVars[c][0], cp,
+			    sizeof(cfgPtr->debugVars[c]));
 		}
 	}
 	rewind(fp);
-	strcpy(cfgPtr->diskQueueType, "fifo");
+	strlcpy(cfgPtr->diskQueueType, "fifo", sizeof(cfgPtr->diskQueueType));
 	cfgPtr->maxOutstandingDiskReqs = 1;
 	/* scan the file for the block related to disk queues */
 	if (rf_search_file_for_start_of("queue", buf, 256, fp)) {
@@ -542,8 +543,8 @@ rf_ReadSpareTable(req, fname)
 	if (buf[strlen(buf) - 1] == '\n')
 		buf[strlen(buf) - 1] = '\0';
 
-	sprintf(targString, "fdisk %d\n", req->fcol);
-	sprintf(errString,
+	snprintf(targString, sizeof(targString), "fdisk %d\n", req->fcol);
+	snprintf(errString, sizeof(errString),
 	    "Invalid sparemap file:  can't find \"fdisk %d\" line\n",
 	    req->fcol);
 	while (1) {
