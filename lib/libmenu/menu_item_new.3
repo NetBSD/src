@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_item_new.3,v 1.6 2002/02/20 11:47:23 wiz Exp $
+.\"	$NetBSD: menu_item_new.3,v 1.7 2002/10/01 19:26:59 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -48,11 +48,12 @@
 The
 .Fn free_item
 function destroys the item and frees all allocated storage for that
-item.  The
+item.
+The
 .Fn new_item
 allocates storage for a new item then copies in the item name and
-description for the new item.  A pointer to the newly created item is
-returned to the caller.
+description for the new item.
+A pointer to the newly created item is returned to the caller.
 .Sh RETURN VALUES
 The
 .Fn new_item

@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_item_current.3,v 1.7 2002/07/29 13:30:13 wiz Exp $
+.\"	$NetBSD: menu_item_current.3,v 1.8 2002/10/01 19:26:59 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -56,17 +56,21 @@
 .Sh DESCRIPTION
 The
 .Fn current_item
-returns a pointer to the current menu item.  The
+returns a pointer to the current menu item.
+The
 .Fn set_current_item
-can be used to set this to the item give.  The
+can be used to set this to the item give.
+The
 .Fn item_index
 function returns the index number in the array of items for the item
 pointed to by the
 .Fa item
-parameter.  The
+parameter.
+The
 .Fn set_top_row
 function sets the top row of the menu displayed to be the row given.
-The current item becomes the leftmost item of the top row.  The
+The current item becomes the leftmost item of the top row.
+The
 .Fn top_row
 call returns the row number that is currently at the top of the
 displayed menu.
