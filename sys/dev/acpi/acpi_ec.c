@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.10 2003/08/03 08:16:07 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.11 2003/10/31 20:54:18 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.10 2003/08/03 08:16:07 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.11 2003/10/31 20:54:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,31 +227,23 @@ static __inline int
 EcIsLocked(struct acpi_ec_softc *sc)
 {
  
-	return (acpi_is_global_locked() && (sc->sc_flags & EC_F_LOCKED));
+	return (sc->sc_flags & EC_F_LOCKED);
 }
 
-static __inline ACPI_STATUS
+static __inline void
 EcLock(struct acpi_ec_softc *sc)
 {
-	ACPI_STATUS status;
-	UINT32 handle;
 
-	status = acpi_acquire_global_lock(&handle);
-	if (ACPI_SUCCESS(status)) {
-		sc->sc_flags |= EC_F_LOCKED;
-		sc->sc_lockhandle = handle;
-	}
-
-	return (status);
+	sc->sc_flags |= EC_F_LOCKED;
+	AcpiOsAcquireLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
 }
 
 static __inline void
 EcUnlock(struct acpi_ec_softc *sc)
 {
-	if (!EcIsLocked(sc))
-		return;
+
+	AcpiOsReleaseLock (AcpiGbl_GpeLock, ACPI_NOT_ISR);
 	sc->sc_flags &= ~EC_F_LOCKED;
-	acpi_release_global_lock(sc->sc_lockhandle);
 }
 
 typedef struct {
@@ -296,7 +288,7 @@ acpiec_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "PNP0C09") == 0)
+	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "PNP0C09") == 0)
 		return (1);
 
 	return (0);
@@ -380,7 +372,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	 * events we cause while performing a transaction (e.g. IBE/OBF) get 
 	 * cleared before re-enabling the GPE.
 	 */
-	if ((rv = AcpiInstallGpeHandler(sc->sc_gpebit,
+	if ((rv = AcpiInstallGpeHandler(sc->sc_node->ad_handle, sc->sc_gpebit,
 	     ACPI_EVENT_LEVEL_TRIGGERED | ACPI_EVENT_EDGE_TRIGGERED,
 	     EcGpeHandler, sc)) != AE_OK) {
 		printf("%s: unable to install GPE handler: %d\n",
@@ -458,10 +450,9 @@ EcGpeQueryHandler(void *Context)
 	}
 
 	/* I know I request Level trigger cleanup */
-	if (AcpiClearEvent(sc->sc_gpebit, ACPI_EVENT_GPE) != AE_OK)
-		printf("%s: AcpiClearEvent failed\n", sc->sc_dev.dv_xname);
-	if (AcpiEnableEvent(sc->sc_gpebit, ACPI_EVENT_GPE, 0) != AE_OK)
-		printf("%s: AcpiEnableEvent failed\n", sc->sc_dev.dv_xname);
+	if (AcpiClearGpe(sc->sc_node->ad_handle, sc->sc_gpebit, ACPI_NOT_ISR)
+	    != AE_OK)
+		printf("%s: AcpiClearGpe failed\n", sc->sc_dev.dv_xname);
 
 	return_VOID;
 }
@@ -653,8 +644,7 @@ EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 {
 	ACPI_STATUS Status;
 
-	if ((Status = EcLock(sc)) != AE_OK)
-		return (Status);
+	EcLock(sc);
 
 	EC_CSR_WRITE(sc, EC_COMMAND_QUERY);
 	Status = EcWaitEvent(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
@@ -675,8 +665,7 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 {
 	ACPI_STATUS Status;
 
-	if ((Status = EcLock(sc)) != AE_OK)
-		return (Status);
+	EcLock(sc);
 
 	/*
 	 * Perform the transaction.
@@ -712,11 +701,9 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 		sc->sc_flags &= ~EC_F_PENDQUERY;
 	}
 
-	if (AcpiClearEvent(sc->sc_gpebit, ACPI_EVENT_GPE) != AE_OK)
+	if (AcpiClearGpe(sc->sc_node->ad_handle, sc->sc_gpebit, ACPI_NOT_ISR)
+	    != AE_OK)
 		printf("%s: EcRequest: unable to clear EC GPE\n",
-		    sc->sc_dev.dv_xname);
-	if (AcpiEnableEvent(sc->sc_gpebit, ACPI_EVENT_GPE, 0) != AE_OK)
-		printf("%s: EcRequest: unable to reenable EC GPE\n",
 		    sc->sc_dev.dv_xname);
 
 	EcUnlock(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.5 2003/10/27 06:15:52 christos Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.6 2003/10/31 20:54:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.5 2003/10/27 06:15:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.6 2003/10/31 20:54:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 		return (0);
 
 	for (i = 0; (id = pckbc_acpi_ids[i]) != NULL; ++i) {
-		if (strcmp(aa->aa_node->ad_devinfo.HardwareId, id) == 0)
+		if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, id) == 0)
 			return (1);
 	}
 
@@ -138,7 +138,7 @@ pckbc_acpi_attach(struct device *parent,
 	struct pckbc_internal *t;
 	struct acpi_attach_args *aa = aux;
 	bus_space_handle_t ioh_d, ioh_c;
-	const char *idstr = aa->aa_node->ad_devinfo.HardwareId;
+	const char *idstr = aa->aa_node->ad_devinfo.HardwareId.Value;
 	pckbc_slot_t peer;
 	struct acpi_resources res;
 	struct acpi_io *io0, *io1;
