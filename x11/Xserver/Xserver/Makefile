@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/01/07 13:07:49 minoura Exp $
+#	$NetBSD: Makefile,v 1.9 2004/01/10 04:34:33 fredb Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,10 @@ SUBDIR+=	X68k
 
 .if ${XSERVER_XFREE86} == "yes" 
 SUBDIR+=	XFree86
+.endif
+
+.if ${XSERVER_XMAC68K} == "yes"
+SUBDIR+=	Xmac68k
 .endif
 
 .include "Makefile.Xserver"
