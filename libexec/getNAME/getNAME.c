@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.14 1998/05/21 23:21:48 christos Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.15 1998/10/10 02:53:12 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.14 1998/05/21 23:21:48 christos Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.15 1998/10/10 02:53:12 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,21 +230,23 @@ oldman(pathname, name)
 		(void)memcpy(&linebuf[curlen], line, len);
 		curlen += len;
 		linebuf[curlen] = '\0';
-			
-		/* change the \- into (N) - */
-		if ((s = strstr(linebuf, "\\-")) != NULL) {
-			(void)memmove(s + extlen + 3, s + 1, 
-			    curlen - (s + 1 - linebuf));
-			curlen--;
-			if (extlen) {
-				*s++ = '(';
-				while (*ext)
-					*s++ = *ext++;
-				*s++ = ')';
-				*s++ = ' ';
-				curlen += extlen + 3;
+		
+		if(!tocrc && !intro) {
+			/* change the \- into (N) - */
+			if ((s = strstr(linebuf, "\\-")) != NULL) {
+				(void)memmove(s + extlen + 3, s + 1, 
+					      curlen - (s + 1 - linebuf));
+				curlen--;
+				if (extlen) {
+					*s++ = '(';
+					while (*ext)
+						*s++ = *ext++;
+					*s++ = ')';
+					*s++ = ' ';
+					curlen += extlen + 3;
+				}
+				linebuf[curlen] = '\0';
 			}
-			linebuf[curlen] = '\0';
 		}
 	}
 
@@ -339,12 +341,14 @@ newman(pathname, name)
 			 * Put section and dash between names and description.
 			 */
 			if (line[1] == 'N' && line[2] == 'd') {
-				if (extlen) {
-					linebuf[curlen++] = '(';
-					while (*ext)
-						linebuf[curlen++] = *ext++;
-					linebuf[curlen++] = ')';
-					linebuf[curlen++] = ' ';
+				if(!tocrc && !intro) {
+					if (extlen) {
+						linebuf[curlen++] = '(';
+						while (*ext)
+							linebuf[curlen++] = *ext++;
+						linebuf[curlen++] = ')';
+						linebuf[curlen++] = ' ';
+					}
 				}
 				linebuf[curlen++] = '-';
 				linebuf[curlen++] = ' ';
@@ -489,8 +493,9 @@ split(line, name)
 		}
 		printf("%s%s\t", sep, dp);
 		dorefname(name);
-		printf("\t%s", sp);
+		printf("\t- %s", sp);
 	}
+	putchar('\n');
 }
 
 static void
