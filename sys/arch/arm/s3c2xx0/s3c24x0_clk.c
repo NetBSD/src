@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.1 2003/07/31 19:49:43 bsh Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.2 2003/08/04 12:41:44 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.1 2003/07/31 19:49:43 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.2 2003/08/04 12:41:44 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ cpu_initclocks(void)
 	int prescaler, h;
 	int pclk = s3c2xx0_softc->sc_pclk;
 	bus_space_tag_t iot = sc->sc_sx.sc_iot;
-	bus_space_handle_t ioh = ioh;
+	bus_space_handle_t ioh = sc->sc_timer_ioh;
 	uint32_t  reg;
 
 	stathz = STATHZ;
@@ -309,9 +309,9 @@ cpu_initclocks(void)
 	bus_space_write_4(iot, ioh, TIMER_TB(3),
 	    ((prescaler - 1) << 16) | (time_constant(stathz) - 1));
 
-	s3c24x0_intr_establish(S3C24X0_INT_TIMER0, IPL_CLOCK, 
+	s3c24x0_intr_establish(S3C24X0_INT_TIMER4, IPL_CLOCK, 
 			       IST_NONE, hardintr, 0);
-	s3c24x0_intr_establish(S3C24X0_INT_TIMER1, IPL_STATCLOCK,
+	s3c24x0_intr_establish(S3C24X0_INT_TIMER3, IPL_STATCLOCK,
 			       IST_NONE, statintr, 0);
 
 	/* set prescaler1 */
@@ -330,6 +330,7 @@ cpu_initclocks(void)
 	/* start timers */
 	reg = bus_space_read_4(iot, ioh, TIMER_TCON);
 	reg &= ~(TCON_MASK(3)|TCON_MASK(4));
+
 	/* load the time constant */
 	bus_space_write_4(iot, ioh, TIMER_TCON, reg |
 	    TCON_MANUALUPDATE(3) | TCON_MANUALUPDATE(4));
