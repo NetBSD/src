@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.16 2003/09/23 21:25:20 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.17 2004/03/17 01:29:13 dan Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 23, 2003
+.Dd March 17, 2004
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -104,7 +104,7 @@ Generate a paramsfile (to stdout).
 .It Fl i Ar ivmeth
 Specify the IV method (default: encblkno).
 .It Fl k Ar kgmeth
-Specify the key generation method (default: pkcs5_pbkdf2).
+Specify the key generation method (default: pkcs5_pbkdf2/sha1).
 .It Fl o Ar outfile
 When generating a
 .Ar paramsfile ,
@@ -132,14 +132,22 @@ To generate the key which it will use,
 evaluates all of the key generation methods in the parameters file
 and uses the exclusive-or of the outputs of all the methods.
 The methods and descriptions are as follows:
-.Bl -tag -width indentxxxxxx
-.It pkcs5_pbkdf2
+.Bl -tag -width indentxxxxxxxxxxx
+.It pkcs5_pbkdf2/sha1
 This method requires a passphrase which is entered at configuration
 time.
 It is a salted hmac-based scheme detailed in
 .Dq PKCS#5 v2.0: Password-Based Cryptography Standard ,
 RSA Laboratories, March 25, 1999, pages 8-10.
 PKCS #5 was also republished as RFC 2898.
+.It pkcs5_pbkdf2
+This is an earlier, slightly incorrect and deprecated implementation
+of the above algorithm. 
+It is retained for backwards compatibility with existing parameters
+files, and will be removed. Existing parameters files should be
+converted to use the correct method using the
+.Fl G
+option, and a new passphrase.
 .It randomkey
 The method simply reads
 .Pa /dev/random
@@ -173,7 +181,8 @@ scan for a valid FFS file system.
 .It re-enter
 prompt for passphrase twice, and ensure entered passphrases are
 identical.
-This method only works with the pkcs5_pbkdf2 key generator.
+This method only works with the pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2 key 
+generators.
 .El
 .Ss /etc/cgd/cgd.conf
 The file
@@ -267,9 +276,9 @@ The keygen statement's statement block may contain the following statements:
 .It key Ar string
 The key.  Only used for the storedkey key generation method.
 .It iterations Ar integer
-The number of iterations.  Only used for pkcs5_pbkdf2.
+The number of iterations.  Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
 .It salt Ar base64
-The salt.  Only used for pkcs5_pbkdf2.
+The salt.  Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
 .El
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxxxxxxxxx -compact
@@ -325,7 +334,7 @@ An example parameters file which uses PKCS#5 PBKDF2:
 	iv-method encblkno;
 	keylength 128;
 	verify_method none;
-	keygen pkcs5_pbkdf2 {
+	keygen pkcs5_pbkdf2/sha1 {
 		iterations 39361;
 		salt AAAAgMoHiYonye6Kog \\
 		     dYJAobCHE=;

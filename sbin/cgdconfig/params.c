@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.8 2003/09/23 17:24:46 cb Exp $ */
+/* $NetBSD: params.c,v 1.9 2004/03/17 01:29:13 dan Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.8 2003/09/23 17:24:46 cb Exp $");
+__RCSID("$NetBSD: params.c,v 1.9 2004/03/17 01:29:13 dan Exp $");
 #endif
 
 #include <sys/types.h>
@@ -333,7 +333,7 @@ keygen_verify(const struct keygen *kg)
 	if (!kg)
 		return 1;
 	switch (kg->kg_method) {
-	case KEYGEN_PKCS5_PBKDF2:
+	case KEYGEN_PKCS5_PBKDF2_OLD:
 		if (kg->kg_iterations == -1) {
 			warnx("keygen pkcs5_pbkdf2 must provide `iterations'");
 			return 0;
@@ -342,6 +342,18 @@ keygen_verify(const struct keygen *kg)
 			warnx("keygen pkcs5_pbkdf2 does not need a `key'");
 		if (!kg->kg_salt) {
 			warnx("keygen pkcs5_pbkdf2 must provide a salt");
+			return 0;
+		}
+		break;
+	case KEYGEN_PKCS5_PBKDF2_SHA1:
+		if (kg->kg_iterations == -1) {
+			warnx("keygen pkcs5_pbkdf2/sha1 must provide `iterations'");
+			return 0;
+		}
+		if (kg->kg_key)
+			warnx("keygen pkcs5_pbkdf2/sha1 does not need a `key'");
+		if (!kg->kg_salt) {
+			warnx("keygen pkcs5_pbkdf2/sha1 must provide a salt");
 			return 0;
 		}
 		break;
@@ -397,7 +409,8 @@ keygen_filldefaults(struct keygen *kg, int keylen)
 	switch (kg->kg_method) {
 	case KEYGEN_RANDOMKEY:
 		break;
-	case KEYGEN_PKCS5_PBKDF2:
+	case KEYGEN_PKCS5_PBKDF2_OLD:
+	case KEYGEN_PKCS5_PBKDF2_SHA1:
 		kg->kg_salt = bits_getrandombits(DEFAULT_SALTLEN);
 		kg->kg_iterations =
 		    pkcs5_pbkdf2_calibrate(keylen, DEFAULT_ITERATION_TIME);
@@ -456,7 +469,9 @@ keygen_method(string_t *in)
 	const char *kgm = string_tocharstar(in);
 
 	if (!strcmp("pkcs5_pbkdf2", kgm))
-		kg->kg_method = KEYGEN_PKCS5_PBKDF2;
+		kg->kg_method = KEYGEN_PKCS5_PBKDF2_OLD;
+	if (!strcmp("pkcs5_pbkdf2/sha1", kgm))
+		kg->kg_method = KEYGEN_PKCS5_PBKDF2_SHA1;
 	if (!strcmp("randomkey", kgm))
 		kg->kg_method = KEYGEN_RANDOMKEY;
 	if (!strcmp("storedkey", kgm))
@@ -670,8 +685,14 @@ keygen_fput(struct keygen *kg, int ts, FILE *f)
 	case KEYGEN_RANDOMKEY:
 		fprintf(f, "randomkey;\n");
 		break;
-	case KEYGEN_PKCS5_PBKDF2:
+	case KEYGEN_PKCS5_PBKDF2_OLD:
 		fprintf(f, "pkcs5_pbkdf2 {\n");
+		print_kvpair_int(f, ts, "iterations", kg->kg_iterations);
+		print_kvpair_b64(f, 0, ts, "salt", kg->kg_salt);
+		fprintf(f, "};\n");
+		break;
+	case KEYGEN_PKCS5_PBKDF2_SHA1:
+		fprintf(f, "pkcs5_pbkdf2/sha1 {\n");
 		print_kvpair_int(f, ts, "iterations", kg->kg_iterations);
 		print_kvpair_b64(f, 0, ts, "salt", kg->kg_salt);
 		fprintf(f, "};\n");
