@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.61 1998/08/04 16:39:17 kim Exp $
+	$NetBSD: INSTALL,v 1.62 1998/08/21 01:33:28 thorpej Exp $
 #define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -603,6 +603,7 @@ Chuck Cranor		<chuck@NetBSD.ORG>		(mvme68k)
 Charles Hannum		<mycroft@NetBSD.ORG>		(i386)
 Ross Harvey		<ross@NetBSD.ORG>		(alpha)
 Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
+Eduardo Horvath		<eeh@NetBSD.ORG>		(sparc64)
 Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
 Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
 Tsubai Masanari		<tsubai@NetBSD.ORG>		(newsmips)
