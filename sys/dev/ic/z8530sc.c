@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.8 1998/03/05 22:03:34 wrstuden Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.9 1998/03/05 22:56:18 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -98,7 +98,7 @@ zs_iflush(cs)
 	 * Count how many times we loop. Some systems, such as some
 	 * Apple PowerBooks, claim to have SCC's which they really don't.
 	 */
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		/* Is there input available? */
 		rr0 = zs_read_csr(cs);
 		if ((rr0 & ZSRR0_RX_READY) == 0)
