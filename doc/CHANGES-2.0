@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.285 2004/06/21 09:24:25 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.286 2004/06/21 10:25:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4085,4 +4085,40 @@ gnu/dist/groff/Makefile.in			1.7
 	into the compat area (solaris loses here for instance). Fix by adding
 	CPPFLAGS onto CFLAGS and CCFLAGS definitions
 	[jmc, ticket #526]
+
+sys/miscfs/genfs/layer_extern.h			1.16
+sys/miscfs/genfs/layer_vnops.c			1.17
+sys/miscfs/nullfs/null_vnops.c			1.30
+sys/miscfs/overlay/overlay_vnops.c		1.13
+sys/miscfs/umapfs/umap_vnops.c			1.27
+
+	Do a LAYERFS_REMOVED hack for vop_rename as well.
+	[yamt, ticket #512]
+
+sys/nfs/nfs_bio.c				1.118
+
+	nfs_doio_read: use np->n_rcred instead of curproc->p_ucred for VDIR.
+	[yamt, ticket #513]
+
+sys/miscfs/genfs/layer_vnops.c			1.18
+sys/miscfs/umapfs/umap_vnops.c			1.28
+
+	umap_lookup/layer_lookup: NULL out *ap->a_vpp after calling
+	underlying filesystem because some caller including lookup()
+	assume that *vpp is NULL on error.
+	[yamt, ticket #514]
+
+sys/nfs/nfs_subs.c				1.134
+
+	nfs_searchdircache: fix a null dereference in the case that
+	offset!=0 and dircache hasn't been initialized yet.
+	[yamt, ticket #515]
+
+sys/kern/vfs_subr.c				1.227-1.228
+
+	getcleanvnode: add a comment on a VLAYER hack.
+	getcleanvnode: don't try to reclaim a vnode marked as VXLOCK.
+	Fix crashes with VOP_RECLAIM implementations which might block.
+	(eg. layered filesystems)
+	[yamt, ticket #516]
 
