@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.37 1998/02/14 01:28:15 thorpej Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.38 1998/02/20 18:09:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -1137,39 +1137,6 @@ linux_sys_setregid(p, v, retval)
 		(uid_t)-1 : SCARG(uap, egid);
 
 	return sys_setregid(p, &bsa, retval);
-}
-
-int
-linux_sys_getsid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_getsid_args /* {
-		syscallarg(int) pid;
-	} */ *uap = v;
-	struct proc *p1;
-	pid_t pid;
-
-	/*
-	 * NOTE: The Linux getsid(2) is different from the XPG getsid(2),
-	 * which is defined to return the process group ID of the session
-	 * leader.  Insetead, Linux returns the pointer to the session.
-	 */
-
-	pid = (pid_t)SCARG(uap, pid);
-
-	if (pid == 0) {
-		retval[0] = (register_t)p->p_session;
-		return 0;
-	}
-
-	p1 = pfind(pid);
-	if (p1 == NULL)
-		return ESRCH;
-
-	retval[0] = (register_t)p1->p_session;
-	return 0;
 }
 
 int
