@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.6 1999/09/08 21:17:49 jsm Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.7 2001/02/05 00:30:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.6 1999/09/08 21:17:49 jsm Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.7 2001/02/05 00:30:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,9 @@ __RCSID("$NetBSD: bdisp.c,v 1.6 1999/09/08 21:17:49 jsm Exp $");
 
 static	int	lastline;
 static	char	pcolor[] = "*O.?";
+
+extern int interactive;
+extern char *plyr[];
 
 /*
  * Initialize screen display.
@@ -122,7 +125,6 @@ bdwho(update)
 	int update;
 {
 	int i;
-	extern char *plyr[];
 
 	move(21, 0);
 	clrtoeol();
@@ -249,7 +251,6 @@ getline(buf, size)
 {
 	char *cp, *end;
 	int c;
-	extern int interactive;
 
 	c = 0;
 	cp = buf;
