@@ -1,3 +1,62 @@
+Mon Aug 24 01:21:38 PDT 1998 Jeff Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Sun Aug 23 00:47:52 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* regmove.c (optimize_reg_copy_3): Disable for egcs-1.1.
+
+Thu Aug 20 13:56:53 1998  Michael Meissner  <meissner@cygnus.com>
+
+	* config/i386/winnt.c: Include system.h, not stdio.h to get
+	sys/param.h pulled in before rtl.h in case the system defines MIN
+	and MAX.
+
+Wed Aug 19 21:33:19 1998  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.c (rs6000_output_load_toc_table): Use ld for 64-bit.
+	(output_toc): Use single TOC slot or llong minimal-toc for DFmode
+	and DImode 64-bit.  Use llong for minimal-toc SFmode and
+	SYMBOL_REF / LABEL_REF 64-bit.
+	(output_function_profiler): Use llong for profiler label and ld to
+	load 64-bit label address.
+
+Tue Aug 18 23:48:30 1998  Richard Henderson <rth@cygnus.com>
+
+	* c-common.c (decl_attributes): Issue an error if the argument
+	to alias is not a string.
+
+Tue Aug 18 13:05:59 BST 1998  Richard Earnshaw (rearnsha@arm.com)
+
+	* arm.c (arm_override_options): Remove lie about ignoring PIC flag.
+
+Tue Aug 18 10:32:11 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* haifa-sched.c (sched_analyze): Put all JUMP_INSNs on the last
+	pending memory flush list.
+
+	* regmove.c (fixup_match_2): Do not call reg_overlap_mentioned_p
+	on notes.
+
+	* regmove.c (optimize_reg_copy_1): Update REG_N_CALLS_CROSSED
+	and REG_LIVE_LENGTH as successful substitutions are made.
+
+Mon Aug 17 21:07:19 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* From Graham
+	* tree.c (build_index_type): Copy TYPE_SIZE_UNIT from sizetype
+	to itype.
+	* c-decl.c (finish_enum): Copy TYPE_SIZ_UNIT from enumtype to tem.
+
+	* rs6000.c (secondary_reload_class): For TARGET_ELF, indicate that
+	a BASE_REGS register is needed as an intermediate when copying
+	a symbolic value into any register class other than BASE_REGS.
+
+Mon Aug 17 11:25:52 1998  Richard Earnshaw <rearnsha@arm.com>
+
+	* arm.h (SECONDARY_INPUT_RELOAD_CLASS): Return NO_REGS if compiling
+	for architecture v4.
+
 Sun Aug 16 00:57:48 PDT 1998 Jeff Law  (law@cygnus.com)
 
 	* version.c: Bump for snapshot.
