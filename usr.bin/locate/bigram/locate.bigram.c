@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.bigram.c,v 1.8 2000/03/22 21:45:02 simonb Exp $	*/
+/*	$NetBSD: locate.bigram.c,v 1.9 2000/05/06 10:26:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: locate.bigram.c,v 1.8 2000/03/22 21:45:02 simonb Exp $");
+__RCSID("$NetBSD: locate.bigram.c,v 1.9 2000/05/06 10:26:45 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -79,17 +79,8 @@ static void
 add_bigram(i1, i2)
 	u_char i1, i2;
 {
-	if (i1 == '\n') {
-		bigrams[0].count++;
-		i1 = 0;
-	}
-	if (i2 == '\n') {
-		bigrams[0].count++;
-		i2 = i1;
-		i1 = 0;
-	}
-
-	bigrams[(i1<<8)+i2].count++;
+	if (i1 != '\n' && i2 != '\n')
+		bigrams[(i1<<8)+i2].count++;
 }
 
 static int
