@@ -1,12 +1,10 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.24 1993/10/01 00:22:00 jtc Exp $
+#	$Id: Makefile,v 1.25 1993/10/08 05:48:05 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
-
-SUBDIR= rpcsvc
 
 # Missing: mp.h
 
