@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.24 2003/02/02 10:24:38 wiz Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.25 2003/02/03 23:34:50 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
 	map->_dm_proc = NULL;
 
-	free(map, M_DEVBUF);
+	free(map, M_DMAMAP);
 }
 
 /*
