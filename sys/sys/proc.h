@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.18 2002/07/12 01:35:47 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.19 2002/07/12 03:04:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -85,7 +85,6 @@ struct pgrp {
  */
 struct exec_package;
 struct ps_strings;
-struct lwp;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -409,6 +408,7 @@ void	wakeup_one(void *chan);
 void	reaper(void *);
 void	exit1(struct lwp *, int);
 void	exit2(struct lwp *);
+void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
