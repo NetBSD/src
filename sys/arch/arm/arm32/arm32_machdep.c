@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.7 2001/11/22 18:34:33 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.8 2001/11/23 17:23:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -61,7 +61,6 @@
 #include <dev/cons.h>
 
 #include <arm/arm32/katelib.h>
-#include <machine/pte.h>
 #include <machine/bootconfig.h>
 
 #include "opt_ipkdb.h"
