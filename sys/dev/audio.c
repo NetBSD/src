@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.97 1998/08/10 01:13:20 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.98 1998/08/10 01:17:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2306,7 +2306,7 @@ audiosetinfo(sc, ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	int cleared;
-	int s, setmode, modechange;
+	int s, setmode, modechange = 0;
 	int error;
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params pp, rp;
