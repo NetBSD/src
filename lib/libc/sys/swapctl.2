@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.8 1998/02/03 15:37:36 perry Exp $
+.\"	$NetBSD: swapctl.2,v 1.9 1998/08/29 15:53:11 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -85,12 +85,21 @@ parameter should point to an array of at least
 struct swapent structures:
 .Bd -literal
 struct swapent {
-	dev_t	se_dev;
-	int	se_flags;
-	int	se_nblks;
-	int	se_inuse;
-	int	se_priority;
+	dev_t	se_dev;			/* device id */
+	int	se_flags;		/* entry flags */
+	int	se_nblks;		/* total blocks */
+	int	se_inuse;		/* blocks in use */
+	int	se_priority;		/* priority */
+	char	se_path[PATH_MAX+1];	/* path to entry */
 };
+.Ed
+.Pp
+The flags are defined as
+.Bd -literal
+	SWF_INUSE       in use: we have swapped here
+	SWF_ENABLE      enabled: we can swap here
+	SWF_BUSY        busy: I/O happening here
+	SWF_FAKE        fake: still being built
 .Ed
 .It
 If
@@ -208,3 +217,9 @@ The
 .Fn swapctl
 function call appeared in
 .Nx 1.3 .
+The
+.Fa se_path
+member was added to
+.Va struct swapent
+in
+.Nx 1.4 .
