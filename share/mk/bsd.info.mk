@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.9 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.info.mk,v 1.10 2000/01/22 19:31:01 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -38,9 +38,9 @@ FILESMODE_${F}=	${INFOMODE}
 FILESNAME_${F}=	${F:T}
 .endfor
 
-all: ${INFOFILES}
+realall: ${INFOFILES}
 .else
-all:
+realall:
 .endif
 
 .if ${MKINFO} != "no"
