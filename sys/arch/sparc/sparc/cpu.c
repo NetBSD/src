@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.185 2004/04/17 23:45:40 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.186 2004/05/07 14:59:26 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.185 2004/04/17 23:45:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.186 2004/05/07 14:59:26 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1782,6 +1782,9 @@ viking_module_error(void)
 	/* Report on MXCC error registers in each module */
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL)
+			continue;
 
 		if (cpi->ci_mxccregs == 0) {
 			printf("\tMXCC registers not mapped\n");
