@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.1.2.2 1997/07/01 22:37:08 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.1.2.3 1997/07/17 17:03:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
+#include "locators.h"
 
 #define SILENT_PRINTF(flags,string) if (!(flags & A_SILENT)) printf string
 
@@ -125,7 +126,8 @@ atapibussubmatch(parent, cf, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != sc_link->scsipi_atapi.drive)
+	if (cf->cf_loc[ATAPIBUSCF_DRIVE] != ATAPIBUSCF_DRIVE_DEFAULT &&
+		cf->cf_loc[ATAPIBUSCF_DRIVE] != sc_link->scsipi_atapi.drive)
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
