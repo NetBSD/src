@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.11 1993/10/26 12:19:38 mycroft Exp $
+#	$Id: TEST,v 1.12 1993/10/29 04:33:36 mycroft Exp $
 #
 
 # standard options
@@ -110,10 +110,10 @@ fd* at fdc? drive ?
 #ch* at tg? drive ?				# SCSI autochangers
 
 #ethernet
-#ed0 at isa? port 0x300				# Novell NE1000, NE2000
-#ed0 at isa? port 0x300 iomem 0xcc000		# SMC hardware config
-#ed0 at isa? port 0x300 iomem 0xd0000		# old SMC default
-#ed0 at isa? port 0x250 iomem 0xd8000		# 3C503 default config
+ed0 at isa? port 0x300 irq 9			# Novell NE1000, NE2000
+ed0 at isa? port 0x300 irq 10 iomem 0xcc000	# SMC hardware config
+ed0 at isa? port 0x280 irq 9 iomem 0xd0000	# SMC hardware config
+ed0 at isa? port 0x250 irq 9 iomem 0xd8000	# 3C503 default config
 #hp0 at isa? port 0x300
 #is0 at isa? port 0x280 drq 7			# IsoLAN AT 4141, IsoLink 4110
 

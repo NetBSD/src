@@ -40,7 +40,7 @@ file	arch/i386/isa/spkr.c		speaker needs-flag
 
 
 device	ed at isa: ether, ifnet
-file	arch/i386/isa/if_ed.c		ed
+file	arch/i386/isa/if_ed.c		ed needs-count
 #device	hp at isa: ether, ifnet
 #file	arch/i386/isa/if_hp.c		hp
 device	is at isa: ether, ifnet, dma
