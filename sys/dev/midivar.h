@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.4 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: midivar.h,v 1.5 1998/10/05 09:21:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct midi_softc {
 #if NSEQUENCER > 0
 	/* Synthesizer emulation stuff */
 	int	seqopen;
+	struct	midi_dev *seq_md; /* structure that links us with the seq. */
 #endif
 };
 
