@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.118 2004/07/07 04:19:45 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.119 2004/07/07 05:39:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.118 2004/07/07 04:19:45 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.119 2004/07/07 05:39:27 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,10 @@ static const struct ne2000dev {
       0, -1, { 0x00, 0x10, 0x7a } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_AMBICOM_AMB8110,
+      0, -1, { 0x00, 0x10, 0x7a }, NE2000DVF_AX88190 },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_PREMAX_PE200,
       0, 0x07f0, { 0x00, 0x20, 0xe0 } },
 
@@ -173,10 +177,14 @@ static const struct ne2000dev {
       PCMCIA_CIS_TAMARACK_ETHERNET,
       0, -1, { 0x00, 0x00, 0x00 } },
 
-
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_CNET_NE2000,
       0, -1, { 0x00, 0x80, 0xad } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_GENIUS_ME3000II,
+      0, -1, { 0x00, 0x40, 0x95 } },
+
 
     { PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
       PCMCIA_CIS_ZONET_ZEN,
@@ -554,6 +562,7 @@ ne_pcmcia_attach(parent, self, aux)
 	int i;
 	u_int8_t myea[6], *enaddr;
 	const char *typestr = "";
+	char devinfo[256];
 
 	psc->sc_pf = pa->pf;
 
@@ -657,7 +666,9 @@ ne_pcmcia_attach(parent, self, aux)
 		goto fail_4;
 	}
 
-	printf("\n");
+	/* Print out what we are. */
+	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
+	printf("\n%s: %s\n", self->dv_xname, devinfo);
 
 	/*
 	 * Read the station address from the board.
@@ -678,14 +689,10 @@ again:
 			goto found;
 		}
 	}
-	printf("%s (manf %08x prod %08x) cis %s %s: "
-	       "can't match ethernet vendor code\n",
-	       dsc->sc_dev.dv_xname,
-	       pa->manufacturer, pa->product,
-	       pa->card->cis1_info[0], pa->card->cis1_info[1]);
+	aprint_error("%s: can't match ethernet vendor code\n", self->dv_xname);
 	if (enaddr != NULL)
 		aprint_error("%s: ethernet vendor code %02x:%02x:%02x\n",
-	            dsc->sc_dev.dv_xname, enaddr[0], enaddr[1], enaddr[2]);
+	            self->dv_xname, enaddr[0], enaddr[1], enaddr[2]);
 	goto fail_5;
 
 found:
@@ -768,14 +775,6 @@ found:
 			dsc->sc_media_init = rtl80x9_media_init;
 		}
 	}
-
-	aprint_normal("%s: <%s, %s, %s, %s> <%04x, %04x>%s\n",
-	    dsc->sc_dev.dv_xname,
-	    pa->card->cis1_info[0] ?: "",
-	    pa->card->cis1_info[1] ?: "",
-	    pa->card->cis1_info[2] ?: "",
-	    pa->card->cis1_info[3] ?: "",
-	    pa->manufacturer, pa->product, typestr);
 
 	if (ne2000_attach(nsc, enaddr))
 		goto fail_5;
