@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1996/05/03 21:51:01 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2000/12/20 20:54:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,6 +35,8 @@
  *	@(#)extern.h	8.10 (Berkeley) 7/20/94
  */
 
+#ifndef _BTREE_EXTERN_H_
+#define _BTREE_EXTERN_H_
 int	 __bt_close __P((DB *));
 int	 __bt_cmp __P((BTREE *, const DBT *, EPG *));
 int	 __bt_crsrdel __P((BTREE *, EPGNO *));
@@ -70,3 +72,4 @@ void	 __bt_dump __P((DB *));
 #ifdef STATISTICS
 void	 __bt_stat __P((DB *));
 #endif
+#endif /* _BTREE_EXTERN_H_ */
