@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: m68k-nat.c,v 1.7 1995/04/16 03:07:49 gwr Exp $
+	$Id: m68k-nat.c,v 1.8 1995/04/18 21:05:25 gwr Exp $
 */
 
 #include <sys/types.h>
@@ -134,9 +134,9 @@ struct pcb *pcb;
 		supply_register(FP0_REGNUM+i, ip);
 
 	/* FPCR, FPSR, FPIAR */
-	supply_register(FPC_REGNUM, ip++);
-	supply_register(FPS_REGNUM, ip++);
-	supply_register(FPI_REGNUM, ip++);
+	supply_register(FPC_REGNUM, ip); ip += 3;
+	supply_register(FPS_REGNUM, ip); ip += 3;
+	supply_register(FPI_REGNUM, ip); ip += 3;
 
 	return;
 }
