@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1998/03/02 19:44:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.22 1998/09/01 03:16:49 enami Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
 	crypt.c lzw.c unlzw.c unlzh.c unpack.c getopt.c
 MAN=	gzexe.1 gzip.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
-CPPFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1
+CPPFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1 -Dunix
 
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "i386")
 SRCS+=	match.S
