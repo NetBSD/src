@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.1.2.1 2002/10/28 00:06:09 nathanw Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.1.2.2 2002/12/18 22:56:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	pthread_t self;
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
-	int retval, armed;
+	int retval;
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
@@ -257,17 +257,14 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	 * writers; i.e. prefer writers to readers. This strategy is dictated
 	 * by SUSv3.
 	 */
-	retval = armed = 0;
+	retval = 0;
 	while ((retval == 0) && ((rwlock->ptr_writer != NULL) ||
 	    (!PTQ_EMPTY(&rwlock->ptr_wblocked)))) {
-		if (!armed) {
-			armed = 1;
-			wait.ptw_thread = self;
-			wait.ptw_rwlock = rwlock;
-			wait.ptw_queue = &rwlock->ptr_rblocked;
-			pthread__alarm_add(self, &alarm, abs_timeout,
-			    pthread_rwlock__callback, &wait);
-		}
+		wait.ptw_thread = self;
+		wait.ptw_rwlock = rwlock;
+		wait.ptw_queue = &rwlock->ptr_rblocked;
+		pthread__alarm_add(self, &alarm, abs_timeout,
+		    pthread_rwlock__callback, &wait);
 		PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
@@ -278,6 +275,7 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 		pthread_spinunlock(self, &self->pt_statelock);
 		pthread__block(self, &rwlock->ptr_interlock);
 		/* interlock is not held when we return */
+		pthread__alarm_del(self, &alarm);
 		if (pthread__alarm_fired(&alarm))
 			retval = ETIMEDOUT;
 		pthread_spinlock(self, &rwlock->ptr_interlock);
@@ -286,8 +284,6 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	if (retval == 0)
 		rwlock->ptr_nreaders++;
 	pthread_spinunlock(self, &rwlock->ptr_interlock);
-	if (armed)
-		pthread__alarm_del(self, &alarm);
 
 	return retval;
 }
@@ -299,7 +295,7 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 {
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
-	int retval, armed;
+	int retval;
 	pthread_t self;
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
@@ -312,17 +308,14 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	 * Prefer writers to readers here; permit writers even if there are
 	 * waiting readers.
 	 */
-	retval = armed = 0;
+	retval = 0;
 	while (retval == 0 &&
 	    ((rwlock->ptr_nreaders > 0) || (rwlock->ptr_writer != NULL))) {
-		if (armed == 0) {
-			armed = 1;
-			wait.ptw_thread = self;
-			wait.ptw_rwlock = rwlock;
-			wait.ptw_queue = &rwlock->ptr_wblocked;
-			pthread__alarm_add(self, &alarm, abs_timeout,
-			    pthread_rwlock__callback, &wait);
-		}
+		wait.ptw_thread = self;
+		wait.ptw_rwlock = rwlock;
+		wait.ptw_queue = &rwlock->ptr_wblocked;
+		pthread__alarm_add(self, &alarm, abs_timeout,
+		    pthread_rwlock__callback, &wait);
 		PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
@@ -333,6 +326,7 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 		pthread_spinunlock(self, &self->pt_statelock);
 		pthread__block(self, &rwlock->ptr_interlock);
 		/* interlock is not held when we return */
+		pthread__alarm_del(self, &alarm);
 		if (pthread__alarm_fired(&alarm))
 			retval = ETIMEDOUT;
 		pthread_spinlock(self, &rwlock->ptr_interlock);
@@ -341,8 +335,6 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	if (retval == 0)
 		rwlock->ptr_writer = self;
 	pthread_spinunlock(self, &rwlock->ptr_interlock);
-	if (armed)
-		pthread__alarm_del(self, &alarm);
 
 	return 0;
 }
@@ -358,9 +350,18 @@ pthread_rwlock__callback(void *arg)
 	self = pthread__self();
 
 	pthread_spinlock(self, &a->ptw_rwlock->ptr_interlock);
-	PTQ_REMOVE(a->ptw_queue, a->ptw_thread, pt_sleep);
+	/*
+	 * Don't dequeue and schedule the thread if it's already been
+	 * queued up by a signal or broadcast (but hasn't yet run as far
+	 * as pthread__alarm_del(), or we wouldn't be here, and hence can't
+	 * have become blocked on some *other* queue).
+	 */
+	if (a->ptw_thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
+		PTQ_REMOVE(a->ptw_queue, a->ptw_thread, pt_sleep);
+		pthread__sched(self, a->ptw_thread);
+	}
 	pthread_spinunlock(self, &a->ptw_rwlock->ptr_interlock);
-	pthread__sched(self, a->ptw_thread);
+
 }
 
 
