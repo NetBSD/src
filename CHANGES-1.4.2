@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.30 1999/09/22 02:57:56 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.31 1999/09/22 03:00:05 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -273,7 +273,7 @@ distrib/sets/lists/xcomp/mi                     1.7-1.8
 distrib/sets/lists/xserver/md.arm32             1.5-1.7
 distrib/sets/lists/xserver/md.atari             1.4-1.5
 distrib/sets/lists/xserver/md.i386              1.10-1.11
-distrib/sets/lists/xserver/md.vax               1.3 (resurrected)
+distrib/sets/lists/xserver/md.vax               1.3 (new)
 
   Various changes to sync these files with xsrc.  Specifically:
    o Update for XFree86 3.3.4
@@ -372,7 +372,7 @@ sys/dev/pci/ncr.c				1.82
 sys/dev/pci/ncr.c				1.83
 
   Zero out DMA memory regions to avoid use of uninitialized
-  memory (and resutling "COMMAND FAILED" errors) on systems
+  memory (and resulting "COMMAND FAILED" errors) on systems
   which don't clear memory on boot.
 
 sys/dev/wscons/wsemul_vt100_keys.c              1.3
