@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.34.2.1 1997/03/02 16:05:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -368,7 +368,7 @@ emitload(fp)
 	register FILE *fp;
 {
 	register struct config *cf;
-	register const char *nm, *swname;
+	register const char *nm;
 	int first;
 
 	if (fputs("all:", fp) < 0)
@@ -381,9 +381,7 @@ emitload(fp)
 		return (1);
 	for (first = 1, cf = allcf; cf != NULL; cf = cf->cf_next) {
 		nm = cf->cf_name;
-		swname =
-		    cf->cf_root != NULL ? cf->cf_name : "generic";
-		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, swname) < 0)
+		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, nm) < 0)
 			return (1);
 		if (first) {
 			if (fputs(" newvers", fp) < 0)
@@ -395,16 +393,10 @@ emitload(fp)
 \t${SYSTEM_LD} swap%s.o\n\
 \t${SYSTEM_LD_TAIL}\n\
 \n\
-swap%s.o: ", swname, swname) < 0)
+swap%s.o: ", nm, nm) < 0)
 			return (1);
-		if (cf->cf_root != NULL) {
-			if (fprintf(fp, "swap%s.c\n", nm) < 0)
-				return (1);
-		} else {
-			if (fprintf(fp, "$S/arch/%s/%s/swapgeneric.c\n",
-			    machine, machine) < 0)
-				return (1);
-		}
+		if (fprintf(fp, "swap%s.c\n", nm) < 0)
+			return (1);
 		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
 			return (1);
 	}
