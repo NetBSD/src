@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.17 1998/01/21 22:25:37 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.18 1998/02/21 22:43:29 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -68,19 +68,22 @@
 #include <machine/pte.h>
 #include <machine/irqhandler.h>
 
+#include <arm32/arm32/disassem.h>
+
 #ifndef POSTMORTEM
 #define postmortem(x)
 #endif	/* POSTMORTEM */
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
+#ifdef PORTMASTER
 static int onfault_count = 0;
+#endif
 
 int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 int pmap_handled_emulation __P((pmap_t, vm_offset_t));
 pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
 
-u_int disassemble __P((u_int));
 int fetchuserword __P((u_int address, u_int *location));
 extern char fusubailout[];
 
@@ -127,7 +130,9 @@ data_abort_handler(frame)
 	u_int fault_status;
 	u_int fault_pc;
 	u_int fault_instruction;
+#ifdef PMAP_DEBUG
 	int s;
+#endif
 	int fault_code;
 	u_quad_t sticks = 0;
 	int error;
