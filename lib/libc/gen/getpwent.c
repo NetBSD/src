@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.21.2.2 1997/05/26 16:33:36 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.21.2.3 1997/06/02 05:01:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.21.2.2 1997/05/26 16:33:36 lukem Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.21.2.3 1997/06/02 05:01:12 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +72,7 @@ static DB *_pw_db;			/* password database */
 static int _pw_keynum;			/* key counter */
 static int _pw_stayopen;		/* keep fd's open */
 static int _pw_flags;			/* password flags */
+static int _pw_none;			/* true if getpwent got EOF */
 
 static int __hashpw __P((DBT *));
 static int __initdb __P((void));
@@ -295,7 +296,7 @@ _local_getpw(rv, cb_data, ap)
 	void	*cb_data;
 	va_list	 ap;
 {
-	DBT key;
+	DBT		 key;
 	char		 bf[MAX(UT_NAMESIZE, sizeof(_pw_keynum)) + 1];
 	uid_t		 uid;
 	int		 search, len, rval;
@@ -329,6 +330,10 @@ _local_getpw(rv, cb_data, ap)
 
 	key.data = (u_char *)bf;
 	rval = __hashpw(&key);
+	if (rval == NS_NOTFOUND && search == _PW_KEYBYNUM) {
+		_pw_none = 1;
+		rval = NS_SUCCESS;
+	}
 
 	if (!_pw_stayopen && (search != _PW_KEYBYNUM)) {
 		(void)(_pw_db->close)(_pw_db);
@@ -377,8 +382,11 @@ _dns_getpw(rv, cb_data, ap)
 	if (hp == NULL) {
 		switch (hes_error()) {
 		case HES_ER_NOTFOUND:
-			if (search == _PW_KEYBYNUM)
+			if (search == _PW_KEYBYNUM) {
 				_pw_hesnum = 0;
+				_pw_none = 1;
+				return NS_SUCCESS;
+			}
 			return NS_NOTFOUND;
 		case HES_ER_OK:
 			abort();
@@ -465,9 +473,8 @@ _nis_getpw(rv, cb_data, ap)
 	}
 
 	for (;;) {
-		data = NULL;
+		data = key = NULL;
 		if (__ypcurrent) {
-			key = NULL;
 			r = yp_next(__ypdomain, map,
 					__ypcurrent, __ypcurrentlen,
 					&key, &keylen, &data, &datalen);
@@ -479,15 +486,13 @@ _nis_getpw(rv, cb_data, ap)
 				break;
 			case YPERR_NOMORE:
 				__ypcurrent = NULL;
-				r = NS_NOTFOUND;
-				break;
+				_pw_none = 1;
+				if (key)
+					free(key);
+				return NS_SUCCESS;
 			default:
 				r = NS_UNAVAIL;
 				break;
-			}
-			if (r != 0) {
-				if (key)
-					free(key);
 			}
 		} else {
 			r = 0;
@@ -496,6 +501,8 @@ _nis_getpw(rv, cb_data, ap)
 				r = NS_UNAVAIL;
 		}
 		if (r != 0) {
+			if (key)
+				free(key);
 			if (data)
 				free(data);
 			return r;
@@ -537,7 +544,7 @@ __has_compatpw()
 	if ((_pw_db->get)(_pw_db, &key, &data, 0)
 	    && (_pw_db->get)(_pw_db, &pkey, &pdata, 0))
 		return 0;		/* No compat token */
-	return 1 ;
+	return 1;
 }
 
 /*
@@ -888,8 +895,11 @@ getpwent()
 		NS_COMPAT_CB(dtab, _compat_getpwent, NULL);
 	}
 
+	_pw_none = 0;
 	r = nsdispatch(NULL, dtab, NSDB_PASSWD, _PW_KEYBYNUM);
-	return (r == NS_SUCCESS ? &_pw_passwd : (struct passwd *)NULL);
+	if (_pw_none || r != NS_SUCCESS)
+		return (struct passwd *)NULL;
+	return &_pw_passwd;
 }
 
 struct passwd *
