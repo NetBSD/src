@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.18 2004/02/13 11:36:14 wiz Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.19 2004/04/06 20:37:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.18 2004/02/13 11:36:14 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.19 2004/04/06 20:37:07 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ procfs_getcpuinfstr(char *buf, int *len)
 	l = snprintf(p, left,
 		"processor\t: %d\n"
 		"vendor_id\t: %s\n"
-		"CPU family\t: %d\n"
+		"cpu family\t: %d\n"
 		"model\t\t: %d\n"
 		"model name\t: %s\n"
 		"stepping\t: ",
@@ -130,10 +130,10 @@ procfs_getcpuinfstr(char *buf, int *len)
 
 		freq = (cpu_info_list->ci_tsc_freq + 4999) / 1000000;
 		fraq = ((cpu_info_list->ci_tsc_freq + 4999) / 10000) % 100;
-		l = snprintf(p, left, "CPU MHz\t\t: %qd.%qd\n",
+		l = snprintf(p, left, "cpu MHz\t\t: %qd.%qd\n",
 		    freq, fraq);
 	} else
-		l = snprintf(p, left, "CPU MHz\t\t: unknown\n");
+		l = snprintf(p, left, "cpu MHz\t\t: unknown\n");
 
 	left -= l;
 	p += l;
