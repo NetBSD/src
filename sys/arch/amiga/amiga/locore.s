@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126 2001/11/07 23:25:03 aymeric Exp $	*/
+/*	$NetBSD: locore.s,v 1.127 2001/11/28 09:49:51 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1104,7 +1104,11 @@ GLOBAL(curpcb)
 	.long	0
 ASGLOBAL(pcbflag)
 	.byte	0		| copy of pcb_flags low byte
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 BSS(nullpcb,SIZEOF_PCB)
 	.text
 
@@ -1733,7 +1737,11 @@ Ldoboot1:
 	jmp	%a0@			| otherwise, jump to the ROM to reset
 	| reset needs to be on longword boundary
 	nop
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 Ldoreset:
 	| reset unconfigures all memory!
 	reset
@@ -1768,7 +1776,11 @@ LdbOnDraCo:
 	.word	0x4e7b,0x0004	| movc d0,ITT0
 	jmp	%a0@
 
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 LdoDraCoBoot:
 | turn off MMU now ... were more ore less guaranteed to run on 040/060:
 	movl	#0,%d0
@@ -1866,7 +1878,11 @@ ASLOCAL(zero)
 	.long	0
 Ldorebootend:
 
+#ifdef __ELF__
+	.align 4
+#else
 	.align 2
+#endif
 	nop
 ENTRY_NOPROFILE(delay)
 ENTRY_NOPROFILE(DELAY)
@@ -1957,7 +1973,11 @@ GLOBAL(intrnames)
 	.asciz	"fpe"
 #endif
 GLOBAL(eintrnames)
+#ifdef __ELF__
+	.align	4
+#else
 	.align	2
+#endif
 GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0
 #ifdef DRACO
