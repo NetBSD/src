@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.116 2002/07/08 18:43:54 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.117 2002/07/09 20:19:57 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.116 2002/07/08 18:43:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.117 2002/07/09 20:19:57 chuck Exp $");
 
 #include "bpfilter.h"
 
@@ -1962,8 +1962,10 @@ tlp_power(why, arg)
 
 	s = splnet();
 	switch (why) {
-	case PWR_SUSPEND:
 	case PWR_STANDBY:
+		/* do nothing! */
+		break;
+	case PWR_SUSPEND:
 		tlp_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
