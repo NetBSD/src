@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.8 2003/12/21 07:53:59 simonb Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.9 2003/12/28 23:00:36 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.8 2003/12/21 07:53:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.9 2003/12/28 23:00:36 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -327,3 +327,30 @@ mach_semaphore_cleanup(p)
 	
 	return;
 }
+
+int
+mach_sys_semaphore_wait_signal_trap(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct mach_sys_semaphore_wait_signal_trap_args /* {
+		syscallarg(mach_port_name_t) wait_name;
+		syscallarg(mach_port_name_t) signal_name;
+	} */ *uap = v;
+	struct mach_sys_semaphore_wait_trap_args cupwait;
+	struct mach_sys_semaphore_signal_trap_args cupsig;
+	int error;
+
+	SCARG(&cupwait, wait_name) = SCARG(uap, wait_name);
+	if ((error = mach_sys_semaphore_wait_trap(l, &cupwait, retval)) != 0)
+		return error;
+
+	SCARG(&cupsig, signal_name) = SCARG(uap, signal_name);
+	if ((error = mach_sys_semaphore_signal_trap(l, &cupsig, retval)) != 0)
+		return error;
+
+	return 0;
+}
+
+
