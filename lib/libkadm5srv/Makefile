@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/12/30 17:21:45 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.8 2001/02/07 14:06:57 joda Exp $
 
 .include <bsd.own.mk>
 
@@ -19,34 +19,46 @@ kadm5_err.c kadm5_err.h: kadm5_err.et
 
 ERR_FILES = kadm5_err.c
 
-SRCS	 =		\
-	acl.c		\
-	bump_pw_expire.c \
-	chpass_s.c	\
-	common_glue.c	\
-	context_s.c	\
-	create_s.c	\
-	delete_s.c	\
-	destroy_s.c	\
-	ent_setup.c	\
-	error.c		\
-	flush_s.c	\
-	free.c		\
-	get_princs_s.c	\
-	get_s.c		\
-	init_s.c	\
-	kadm5_err.c	\
-	keys.c		\
-	log.c		\
-	marshall.c	\
-	modify_s.c	\
-	privs_s.c	\
-	randkey_s.c	\
-	rename_s.c	\
-	set_keys.c	\
-	set_modifier.c	\
-	password_quality.c \
-	server_glue.c \
+SRCS	 =					\
+	acl.c					\
+	bump_pw_expire.c			\
+	chpass_c.c				\
+	chpass_s.c				\
+	common_glue.c				\
+	context_s.c				\
+	create_c.c				\
+	create_s.c				\
+	delete_c.c				\
+	delete_s.c				\
+	destroy_c.c				\
+	destroy_s.c				\
+	ent_setup.c				\
+	error.c					\
+	flush_c.c				\
+	flush_s.c				\
+	free.c					\
+	get_c.c					\
+	get_princs_c.c				\
+	get_princs_s.c				\
+	get_s.c					\
+	init_c.c				\
+	init_s.c				\
+	keys.c					\
+	log.c					\
+	marshall.c				\
+	modify_c.c				\
+	modify_s.c				\
+	password_quality.c			\
+	privs_c.c				\
+	privs_s.c				\
+	randkey_c.c				\
+	randkey_s.c				\
+	rename_c.c				\
+	rename_s.c				\
+	send_recv.c				\
+	server_glue.c				\
+	set_keys.c				\
+	set_modifier.c				\
 	$(ERR_FILES)
 
 ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
