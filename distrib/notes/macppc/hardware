@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.24 2002/04/23 19:48:42 bouyer Exp $
+.\"$NetBSD: hardware,v 1.24.2.1 2002/06/18 13:24:11 lukem Exp $
 .
 Currently,
 .Nx*M
@@ -109,11 +109,12 @@ Apple original iBook, iBook SE, and iBook (Dual USB)
 .It
 Apple iMac; Bondi Blue (Rev A and Rev B, 233 MHz),
 5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), iMac (Slot Loading), 
-iMac (Summer 2000), and iMac (Early 2001)
+iMac (Summer 2000), iMac (Early 2001), and iMac (Summer 2001)
 .It
 Apple PowerBook (G3 Series (bronze keyboard) and G3 (FireWire))
 .It
-Apple PowerBook G4 (Titanium) and PowerBook G4 (Gigabit Ethernet)
+Apple PowerBook G4 (Titanium), PowerBook G4 (Gigabit Ethernet), and
+PowerBook G4 (DVI)
 .It
 Apple PowerMacintosh G3 (Blue and White)
 .It
@@ -334,8 +335,9 @@ On-board video on most models
 .(Note
 Several models have been reported to not work with
 .Nx
-if the on-board video is in use, such as the Performa 54xx, 6360, 6400,
-PowerComputing PowerCenter and PowerTower, and UMAX C600 and Apus 3000.  
+if the on-board video is in use, such as the Performa 4400, 54xx, 6360,
+6400, Motorola Starmax 3000 and 4000, PowerComputing PowerCenter and
+PowerTower, APS Tech M*Power 604e/200, and UMAX C600 and Apus 3000.  
 Also, the video
 card that shipped with the PowerMacintosh 9500/150, 9500/180, and 9500/200
 systems is reported to have the same problem.
@@ -352,9 +354,11 @@ On-board audio on most models
 .Pq Em awacs
 .(Note
 This driver has only recently been introduced and is considered
-.Dq untested
+.Dq experimental
 meaning that it may cause your system to crash and/or is lacking some
-features you may expect
+features you may expect.  Due to interrupt conflicts with some G4 models,
+this driver is disabled by default and you will need to build a kernel
+with it enabled.
 .Note)
 .Pp
 .It
