@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.545 2003/03/10 08:01:11 lukem Exp $
+#	$NetBSD: mi,v 1.546 2003/03/22 12:44:02 jdolecek Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -330,6 +330,7 @@
 ./usr/include/miscfs/umapfs/umap.h	comp-c-include
 ./usr/include/miscfs/union		comp-c-include
 ./usr/include/miscfs/union/union.h	comp-c-include
+./usr/include/mntopts.h			comp-c-include
 ./usr/include/mpool.h			comp-c-include
 ./usr/include/msdosfs			comp-c-include
 ./usr/include/msdosfs/bootsect.h	comp-c-include
@@ -2066,6 +2067,7 @@
 ./usr/share/man/cat3/getmaxx.0		comp-c-catman
 ./usr/share/man/cat3/getmaxy.0		comp-c-catman
 ./usr/share/man/cat3/getmntinfo.0	comp-c-catman
+./usr/share/man/cat3/getmntopts.0	comp-c-catman
 ./usr/share/man/cat3/getmode.0	comp-c-catman
 ./usr/share/man/cat3/getnameinfo.0	comp-c-catman
 ./usr/share/man/cat3/getnetbyaddr.0	comp-c-catman
@@ -5117,6 +5119,7 @@
 ./usr/share/man/man3/getmaxx.3		comp-c-man
 ./usr/share/man/man3/getmaxy.3		comp-c-man
 ./usr/share/man/man3/getmntinfo.3		comp-c-man
+./usr/share/man/man3/getmntopts.3		comp-c-man
 ./usr/share/man/man3/getmode.3		comp-c-man
 ./usr/share/man/man3/getnameinfo.3		comp-c-man
 ./usr/share/man/man3/getnetbyaddr.3		comp-c-man
