@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.7 2003/09/22 02:27:59 uwe Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.8 2004/03/27 03:48:23 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,11 +36,15 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sdivsi3.S,v 1.7 2003/09/22 02:27:59 uwe Exp $")
+	RCSID("$NetBSD: sdivsi3.S,v 1.8 2004/03/27 03:48:23 uwe Exp $")
+#endif
+
+#ifdef PIC	/* XXX: uwe */
+	.hidden __sdivsi3
 #endif
 
 /* r0 <= r4 / r5 */
-ENTRY(__sdivsi3)
+NENTRY(__sdivsi3)
 	mov	r4, r0
 	mov	r5, r1
 
