@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.124 1999/01/29 05:33:49 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.125 1999/02/01 00:32:18 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 1999/01/29 05:33:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 1999/02/01 00:32:18 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -363,11 +363,10 @@ mach_init(argc, argv, code, cv)
 
 	/*
 	 * Init mapping for u page(s) for proc0, pm_tlbpid 1.
-	 * This also initializes nullproc for switch_exit().
 	 */
 	mips_init_proc0(kernend);
 
-	kernend += 2 * UPAGES * PAGE_SIZE;
+	kernend += UPAGES * PAGE_SIZE;
 
 	/*
 	 * Determine what model of computer we are running on.
