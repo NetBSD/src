@@ -78,22 +78,23 @@ BEGIN
     COMBOBOX        IDC_FBSELECT,55,36,75,109,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     PUSHBUTTON      "...",IDC_FBSETTING,130,40,10,8
-    PUSHBUTTON      "Boot",IDC_BOOT,51,114,45,12
     EDITTEXT        IDC_OPTIONS,55,51,85,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_CLIENTEDGE
-    RTEXT           "Kernel name:",IDC_STATIC,0,25,52,8
-    RTEXT           "Frame Buffer:",IDC_STATIC,0,40,52,8
-    RTEXT           "Options:",IDC_STATIC,0,55,52,8
-    LTEXT           "Welcome to PocketBSD!",IDC_STATIC,5,5,120,10
     CONTROL         "Pause before boot",IDC_PAUSE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,30,70,95,10
-    EDITTEXT        IDC_STATUS,5,150,135,10,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "Load debug info.",IDC_DEBUG,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,30,80,95,10
     CONTROL         "Serial port on",IDC_COMM,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,30,90,95,10
     CONTROL         "Reverse Video",IDC_REVERSEVIDEO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,30,100,96,9
+    PUSHBUTTON      "&Boot",IDC_BOOT,51,114,45,12
+    EDITTEXT        IDC_STATUS,5,150,135,10,ES_AUTOHSCROLL | ES_READONLY | 
+                    NOT WS_TABSTOP
+    LTEXT           "Welcome to PocketBSD!",IDC_STATIC,5,5,120,10
+    RTEXT           "Kernel name:",IDC_STATIC,0,25,52,8
+    RTEXT           "Frame Buffer:",IDC_STATIC,0,40,52,8
+    RTEXT           "Options:",IDC_STATIC,0,55,52,8
 END
 
 IDD_MAIN_640X240 DIALOGEX 0, 0, 240, 120
@@ -105,22 +106,23 @@ BEGIN
     COMBOBOX        IDC_FBSELECT,105,36,75,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     PUSHBUTTON      "...",IDC_FBSETTING,180,40,10,8
-    PUSHBUTTON      "Boot",IDC_BOOT,100,90,45,12
     EDITTEXT        IDC_OPTIONS,105,51,85,12,ES_AUTOHSCROLL | NOT WS_BORDER,
                     WS_EX_CLIENTEDGE
-    RTEXT           "Kernel name:",IDC_STATIC,50,25,52,8
-    RTEXT           "Frame Buffer:",IDC_STATIC,50,40,52,8
-    RTEXT           "Options:",IDC_STATIC,50,55,52,8
-    LTEXT           "Welcome to PocketBSD!",IDC_STATIC,20,6,120,10
     CONTROL         "Pause before boot",IDC_PAUSE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,50,66,80,10
-    EDITTEXT        IDC_STATUS,5,105,230,10,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "Load debug info.",IDC_DEBUG,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,135,66,80,10
     CONTROL         "Serial port on",IDC_COMM,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,50,78,64,10
     CONTROL         "Reverse Video",IDC_REVERSEVIDEO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,135,78,80,10
+    PUSHBUTTON      "&Boot",IDC_BOOT,100,90,45,12
+    RTEXT           "Kernel name:",IDC_STATIC,50,25,52,8
+    RTEXT           "Frame Buffer:",IDC_STATIC,50,40,52,8
+    RTEXT           "Options:",IDC_STATIC,50,55,52,8
+    LTEXT           "Welcome to PocketBSD!",IDC_STATIC,20,6,120,10
+    EDITTEXT        IDC_STATUS,5,105,230,10,ES_AUTOHSCROLL | ES_READONLY | 
+                    NOT WS_TABSTOP
 END
 
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 137, 119
