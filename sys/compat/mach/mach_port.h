@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.35 2004/07/24 15:46:02 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.36 2004/08/21 18:58:31 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -17,6 +17,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
  *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
