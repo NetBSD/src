@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.5 1999/03/15 11:13:10 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.6 1999/03/15 12:51:49 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.5 1999/03/15 11:13:10 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.6 1999/03/15 12:51:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.5 1999/03/15 11:13:10 nisimura Ex
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
 
-#include <dev/tc/tcvar.h>		/* !!! */
 #include <pmax/ibus/ibusvar.h>
 
 /* XXX XXX XXX */
@@ -95,14 +94,14 @@ void
 dec_5100_init()
 {
 	platform.iobus = "ibus";
-	/* XXX model ? */
+
 	platform.os_init = dec_5100_os_init;
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
 
 	dec_5100_os_init();
-	sprintf(cpu_model, "DECstation 5100 (MIPSMATE)");
+	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.21.4.2 1999/03/15 03:58:28 nisimura Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.21.4.3 1999/03/15 12:51:49 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,15 +14,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.4.2 1999/03/15 03:58:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21.4.3 1999/03/15 12:51:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/cons.h>
-
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
 
 #define	_PMAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -118,7 +115,7 @@ tc_ds_get_dma_tag(slot)
 #include "sfb.h"
 #include "tfb.h"
 
-#include <pmax/stand/dec_prom.h>
+#include <machine/dec_prom.h>
 
 int tc_fb_cnattach __P((int));
 
