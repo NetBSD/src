@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.5.12.1 2000/09/19 03:09:45 minoura Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.5.12.2 2000/09/26 09:03:35 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -44,11 +44,11 @@
  * or `unpacked' form consisting of:
  *	- sign
  *	- unbiased exponent
- *	- mantissa (`1.' + 63-bit fraction + guard + round)
+ *	- mantissa (`1.' + 80-bit fraction + guard + round)
  *	- sticky bit
- * Any implied `1' bit is inserted, giving a 64-bit mantissa that is
+ * Any implied `1' bit is inserted, giving a 81-bit mantissa that is
  * always nonzero.  Additional low-order `guard' and `round' bits are
- * scrunched in, making the entire mantissa 66 bits long.  This is divided
+ * scrunched in, making the entire mantissa 83 bits long.  This is divided
  * into three 32-bit words, with `spare' bits left over in the upper part
  * of the top word (the high bits of fp_mant[0]).  An internal `exploded'
  * number is thus kept within the half-open interval [1.0,2.0) (but see
@@ -76,10 +76,10 @@ struct fpn {
 	int	fp_sign;		/* 0 => positive, 1 => negative */
 	int	fp_exp;			/* exponent (unbiased) */
 	int	fp_sticky;		/* nonzero bits lost at right end */
-	u_int	fp_mant[3];		/* 66-bit mantissa */
+	u_int	fp_mant[3];		/* 83-bit mantissa */
 };
 
-#define	FP_NMANT	67		/* total bits in mantissa (incl g,r) */
+#define	FP_NMANT	83		/* total bits in mantissa (incl g,r) */
 #define	FP_NG		2		/* number of low-order guard bits */
 #define	FP_LG		((FP_NMANT - 1) & 31)	/* log2(1.0) for fp_mant[0] */
 #define	FP_QUIETBIT	(1 << (FP_LG - 1))	/* Quiet bit in NaNs (0.5) */
