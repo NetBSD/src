@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.13 2001/12/03 22:50:44 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.14 2001/12/04 20:00:16 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.13 2001/12/03 22:50:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.14 2001/12/04 20:00:16 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -545,7 +545,7 @@ mca_dmamap_create(t, size, flags, dmamp, dmach)
 
 	if (size > 65536) {
 		panic("mca_dmamap_create: dmamap sz %ld > 65536",
-			(long) size)
+		    (long) size);
 	}
 #endif
 

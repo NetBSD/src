@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.12 2001/12/02 17:04:41 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.13 2001/12/04 20:00:15 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.12 2001/12/02 17:04:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.13 2001/12/04 20:00:15 sommerfeld Exp $");
 
 #include "rnd.h"
 
@@ -391,10 +391,10 @@ edc_intr(arg)
 		sifr = le16toh(bus_space_read_2(sc->sc_iot, sc->sc_ioh, SIFR));
 		len = (sifr & 0xff00) >> 8;
 #ifdef DEBUG
-		if (len > DASD_MAX_CMD_RES_LEN)
+		if (len > EDC_MAX_CMD_RES_LEN)
 			panic("%s: maximum Status Length exceeded: %d > %d",
 				sc->sc_dev.dv_xname,
-				len, DASD_MAX_CMD_RES_LEN);
+				len, EDC_MAX_CMD_RES_LEN);
 #endif
 
 		/* Get command code */
