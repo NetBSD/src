@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1996/07/16 23:25:04 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 1998/07/28 18:34:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,7 +196,7 @@ cpu_coredump(p, vp, cred)
 		MachSaveCurFPState(p);
 
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL,
 	    p));
 }
 
