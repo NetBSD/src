@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.30 1997/03/13 20:15:04 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.31 1997/03/14 03:18:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.30 1997/03/13 20:15:04 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.31 1997/03/14 03:18:25 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1826,6 +1826,8 @@ tcpmux(ctrl, sep)
 	 * one per line.
 	 */
 	if (!strcasecmp(service, "help")) {
+		strwrite(ctrl, "+Available services:\r\n");
+		strwrite(ctrl, "help\r\n");
 		for (sep = servtab; sep; sep = sep->se_next) {
 			if (!ISMUX(sep))
 				continue;
