@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.99 2002/08/13 05:42:27 manu Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.100 2002/08/28 07:16:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.99 2002/08/13 05:42:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.100 2002/08/28 07:16:36 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.99 2002/08/13 05:42:27 manu Exp $");
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
+#include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/mount.h>
@@ -171,6 +172,10 @@ exit1(struct proc *p, int rv)
 	sigemptyset(&p->p_sigctx.ps_siglist);
 	p->p_sigctx.ps_sigcheck = 0;
 	callout_stop(&p->p_realit_ch);
+
+#if defined(__HAVE_RAS)
+	ras_purgeall(p);
+#endif
 
 	/*
 	 * Close open files and release open-file table.

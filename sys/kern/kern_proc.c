@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.50 2002/07/26 06:04:57 enami Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.51 2002/08/28 07:16:38 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.50 2002/07/26 06:04:57 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.51 2002/08/28 07:16:38 gmcgarry Exp $");
 
 #include "opt_kstack.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.50 2002/07/26 06:04:57 enami Exp $")
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+#include <sys/ras.h>
 
 /*
  * Structure associated with user cacheing.
@@ -151,6 +152,7 @@ struct pool pcred_pool;
 struct pool plimit_pool;
 struct pool pgrp_pool;
 struct pool rusage_pool;
+struct pool ras_pool;
 
 /*
  * The process list descriptors, used during pid allocation and
@@ -200,6 +202,8 @@ procinit()
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
 	    &pool_allocator_nointr);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
+	    &pool_allocator_nointr);
+	pool_init(&ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
 	    &pool_allocator_nointr);
 }
 
