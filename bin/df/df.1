@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.31 2003/04/18 12:48:25 grant Exp $
+.\"	$NetBSD: df.1,v 1.32 2003/04/18 12:49:12 grant Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -159,9 +159,10 @@ that file system.
 If the environment variable
 .Ev BLOCKSIZE
 is set, and the
-.Fl k
-and
+.Fl k ,
 .Fl m
+and
+.Fl g
 options are not specified, the block counts will be displayed in units of that
 size block.
 .El
