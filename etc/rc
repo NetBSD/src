@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.39 1994/03/28 05:47:28 cgd Exp $
+#	$Id: rc,v 1.40 1994/04/10 06:42:40 cgd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -62,6 +62,10 @@ swapon -a
 umount -a >/dev/null 2>&1
 mount -a -t nonfs
 rm -f /fastboot		# XXX (root now writeable)
+
+# set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
+echo 'setting tty flags'
+ttyflags -a
 
 # set hostname, turn on network
 echo 'starting network'
