@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.8 2002/04/09 01:47:32 thorpej Exp $	*/
+/*	$NetBSD: recover.c,v 1.9 2005/01/19 01:20:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)recover.c	10.21 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: recover.c,v 1.8 2002/04/09 01:47:32 thorpej Exp $");
+__RCSID("$NetBSD: recover.c,v 1.9 2005/01/19 01:20:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,8 +370,9 @@ rcv_mailfile(sp, issync, cp_path)
 		return (1);
 	dp = O_STR(sp, O_RECDIR);
 	(void)snprintf(mpath, sizeof(mpath), "%s/recover.XXXXXX", dp);
-	if ((fd = rcv_mktemp(sp, mpath, dp, S_IRUSR | S_IWUSR)) == -1)
-		return (1);
+	if ((fd = rcv_mktemp(sp, mpath, dp, S_IRUSR | S_IWUSR)) == -1 ||
+	    fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		goto err;
 
 	/*
 	 * XXX
