@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77 1999/09/25 00:00:38 shin Exp $	*/
+/*	$NetBSD: locore.S,v 1.78 1999/11/03 16:21:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -560,6 +560,7 @@ END(_splnone)
  */
 LEAF(copystr)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -568,6 +569,7 @@ LEAF(copystr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b			# less than maxlen
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG		# run out of space
 2:
 	beq	a3, zero, 3f			# return num. of copied bytes
@@ -591,6 +593,7 @@ LEAF(copyinstr)
 	blt	a0, zero, _C_LABEL(copystrerr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -599,6 +602,7 @@ LEAF(copyinstr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
@@ -622,6 +626,7 @@ LEAF(copyoutstr)
 	blt	a1, zero, _C_LABEL(copystrerr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	move	t0, a2
+	beq	a2, zero, 4f
 1:
 	lbu	v0, 0(a0)
 	subu	a2, a2, 1
@@ -630,6 +635,7 @@ LEAF(copyoutstr)
 	addu	a0, a0, 1
 	bne	a2, zero, 1b
 	addu	a1, a1, 1
+4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
