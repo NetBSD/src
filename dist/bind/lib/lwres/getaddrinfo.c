@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.1 2004/05/17 23:45:09 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.2 2004/05/19 19:19:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,10 @@
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/netdb.h>
+
+#ifdef __KAME__
+#include <net/if.h>
+#endif
 
 #define SA(addr)	((struct sockaddr *)(addr))
 #define SIN(addr)	((struct sockaddr_in *)(addr))
@@ -254,14 +258,18 @@ lwres_getaddrinfo(const char *hostname, const char *servname,
 			p = strchr(ntmp, '%');
 			ep = NULL;
 
-			/*
-			 * Vendors may want to support non-numeric
-			 * scopeid around here.
-			 */
+#ifdef __KAME__
+			if (p != NULL) {
+				scopeid = if_nametoindex(p + 1);
+				if (scopeid)
+					p = NULL;
+			}
+#endif
 
-			if (p != NULL)
+			if (p != NULL) {
 				scopeid = (lwres_uint32_t)strtoul(p + 1,
 								  &ep, 10);
+			}
 			if (p != NULL && ep != NULL && ep[0] == '\0')
 				*p = '\0';
 			else {
