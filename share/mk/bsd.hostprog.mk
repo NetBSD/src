@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.41 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.41.2.1 2004/05/22 17:35:48 he Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -29,6 +29,7 @@ LIBKRB?=	/usr/lib/libkrb.a
 LIBKVM?=	/usr/lib/libkvm.a
 LIBL?=		/usr/lib/libl.a
 LIBM?=		/usr/lib/libm.a
+LIBMAGIC?=	/usr/lib/libmagic.a
 LIBMENU?=	/usr/lib/libmenu.a
 LIBMP?=		/usr/lib/libmp.a
 LIBNTP?=	/usr/lib/libntp.a
