@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.101 2004/04/27 07:38:23 heas Exp $
+# $NetBSD: mi,v 1.102 2004/04/27 15:35:55 heas Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -202,7 +202,7 @@
 ./usr/share/doc/html/postfix/postsuper.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/proxymap.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/qshape.1.html	misc-postfix-htmldoc	obsolete
+./usr/share/doc/html/postfix/qshape.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/queuing.html	misc-postfix-htmldoc	obsolete
 ./usr/share/doc/html/postfix/rate.html		misc-postfix-htmldoc	obsolete
 ./usr/share/doc/html/postfix/receiving.html	misc-postfix-htmldoc	obsolete
@@ -543,6 +543,7 @@
 ./usr/share/examples/postfix/BASIC_CONFIGURATION_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/BUILTIN_FILTER_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/CONTENT_INSPECTION_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/DATABASE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/DEBUG_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ETRN_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/FILTER_README	misc-postfix-examples	postfix,doc
@@ -555,9 +556,10 @@
 ./usr/share/examples/postfix/NFS_README		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/OVERVIEW		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/PCRE_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/PGSQL_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/QMQP_README	misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/RELEASE_NOTES	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/QSHAPE_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/RELEASE_NOTES	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/RESTRICTION_CLASS_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/SASL_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/SCHEDULER_README	misc-postfix-examples	postfix,doc
@@ -577,11 +579,11 @@
 ./usr/share/examples/postfix/header_checks	misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/main.cf		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/master.cf		misc-postfix-examples	postfix,share
-./usr/share/examples/postfix/pcre_table		misc-postfix-examples	postfix,share
+./usr/share/examples/postfix/pcre_table		misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/post-install	misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/postfix-files	misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/postfix-script	misc-postfix-examples	postfix,share
-./usr/share/examples/postfix/regexp_table	misc-postfix-examples	postfix,share
+./usr/share/examples/postfix/regexp_table	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/relocated		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/sample-aliases.cf	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-auth.cf	misc-postfix-examples	obsolete
@@ -603,7 +605,7 @@
 ./usr/share/examples/postfix/sample-rate.cf	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-regexp-access.cf	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-regexp-body.cf	misc-postfix-examples	obsolete
-./usr/share/examples/postfix/sample-regexp-header.cf	misc-postfix-examples	postfix,share
+./usr/share/examples/postfix/sample-regexp-header.cf	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-regexp.cf	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-relocated.cf	misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-resource.cf	misc-postfix-examples	obsolete
