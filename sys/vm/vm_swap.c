@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.23 1994/06/29 06:48:43 cgd Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.23.2.1 1994/07/21 07:11:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -137,7 +137,9 @@ swapinit()
 #endif
 	if (nswap == 0)
 		printf("WARNING: no swap space found\n");
-	else if (error = swfree(p, 0)) {
+	else if ((error = swfree(p, 0)) == ENXIO)
+		printf("WARNING: primary swap device not configured\n");
+	else if (error) {
 		printf("swfree errno %d\n", error);	/* XXX */
 		panic("swapinit swfree 0");
 	}
