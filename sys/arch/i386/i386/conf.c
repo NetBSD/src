@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.109 1998/11/22 15:51:04 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.110 1998/11/29 06:56:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,20 +126,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 /* open, close, read, ioctl */
 #define cdev_satlink_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, ioctl, poll */
-#define	cdev_usbdev_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl */
-#define cdev_usb_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
