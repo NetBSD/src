@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.3 1996/06/26 17:44:32 thorpej Exp $	*/
+/*	$NetBSD: netio.c,v 1.4 1996/10/06 19:07:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe
@@ -57,6 +57,7 @@
 #include <netinet/in_systm.h>
 
 #include "stand.h"
+#include "samachdep.h"
 #include "net.h"
 #include "netif.h"
 #include "bootparam.h"
@@ -114,14 +115,16 @@ netclose(f)
 }
 
 int
-netioctl()
+netstrategy(devdata, func, dblk, size, v_buf, rsize)
+	void *devdata;
+	int func;
+	daddr_t dblk;
+	size_t size;
+	void *v_buf;
+	size_t *rsize;
 {
-	return EIO;
-}
 
-int
-netstrategy()
-{
+	*rsize = size;
 	return EIO;
 }
 
