@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.15.2.5 2004/06/22 08:36:08 tron Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.15.2.6 2004/07/23 14:33:14 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -190,6 +190,18 @@ int issetugid(void);
 #define isblank(x) ((x) == ' ' || (x) == '\t')
 #endif
 
+#if !HAVE_LCHFLAGS
+int lchflags(const char *, u_long);
+#endif
+
+#if !HAVE_LCHMOD
+int lchmod(const char *, mode_t);
+#endif
+
+#if !HAVE_LCHOWN
+int lchown(const char *, uid_t, gid_t);
+#endif
+
 #if !HAVE_MACHINE_BSWAP_H
 #define bswap16(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
 
@@ -220,15 +232,17 @@ ssize_t pread(int, void *, size_t, off_t);
 #endif
 
 #if !HAVE_PWCACHE_USERDB
-const char *user_from_uid(uid_t, int);
 int uid_from_user(const char *, uid_t *);
 int pwcache_userdb(int (*)(int), void (*)(void),
 		struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
-const char *group_from_gid(gid_t, int);
 int gid_from_group(const char *, gid_t *);
 int pwcache_groupdb(int (*)(int), void (*)(void),
 		struct group * (*)(const char *), struct group * (*)(gid_t));
 #endif
+/* Make them use our version */
+#  define user_from_uid __nbcompat_user_from_uid
+/* Make them use our version */
+#  define group_from_gid __nbcompat_group_from_gid
 
 #if !HAVE_PWRITE
 ssize_t pwrite(int, const void *, size_t, off_t);
@@ -265,6 +279,14 @@ size_t strlcpy(char *, const char *, size_t);
 
 #if !HAVE_STRSEP
 char *strsep(char **, const char *);
+#endif
+
+#if !HAVE_USER_FROM_UID
+const char *user_from_uid(uid_t, int);
+#endif
+
+#if !HAVE_GROUP_FROM_GID
+const char *group_from_gid(gid_t, int);
 #endif
 
 #if !HAVE_VASPRINTF

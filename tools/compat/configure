@@ -4582,11 +4582,11 @@ if test "$ac_cv_search_fparseln" != no; then
 fi
 
 for ac_func in asprintf asnprintf basename dirfd dirname \
-	fgetln flock fparseln futimes getopt getopt_long \
-	isblank issetugid lchmod lchown lutimes mkstemp mkdtemp \
+	fgetln flock fparseln futimes getopt getopt_long group_from_gid \
+	isblank issetugid lchflags lchmod lchown lutimes mkstemp mkdtemp \
 	pread pwcache_userdb pwrite random setenv setgroupent \
 	setprogname setpassent snprintf strlcat strlcpy strsep \
-	vasprintf vasnprintf vsnprintf
+	user_from_uid vasprintf vasnprintf vsnprintf
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:4592: checking for $ac_func" >&5

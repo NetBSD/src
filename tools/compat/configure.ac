@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.20.2.3 2002/12/01 19:10:27 he Exp $
+#	$NetBSD: configure.ac,v 1.20.2.4 2004/07/23 14:33:14 tron Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -94,11 +94,11 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 AC_FUNC_ALLOCA
 AC_SEARCH_LIBS(fparseln, util)
 AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
-	fgetln flock fparseln futimes getopt getopt_long \
-	isblank issetugid lchmod lchown lutimes mkstemp mkdtemp \
+	fgetln flock fparseln futimes getopt getopt_long group_from_gid \
+	isblank issetugid lchflags lchmod lchown lutimes mkstemp mkdtemp \
 	pread pwcache_userdb pwrite random setenv setgroupent \
 	setprogname setpassent snprintf strlcat strlcpy strsep \
-	vasprintf vasnprintf vsnprintf)
+	user_from_uid vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([setgroupent, setpassent],,, [
 #include <grp.h>

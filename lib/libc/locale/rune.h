@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.5 2002/03/17 22:14:30 tshiozak Exp $	*/
+/*	$NetBSD: rune.h,v 1.5.2.1 2004/07/23 14:33:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -45,6 +45,30 @@
 #include <wchar.h>
 #include "runetype.h"
 
-#define _DEFAULT_INVALID_RUNE	-3
+/*
+ * Other namespace conversion.
+ */
+
+#define rune_t			__nbrune_t
+#define _RUNE_ISCACHED		_NB_RUNE_ISCACHED
+#define _CACHED_RUNES		_NB_CACHED_RUNES
+#define _DEFAULT_INVALID_RUNE	_NB_DEFAULT_INVALID_RUNE
+#define _RuneEntry		_NBRuneEntry
+#define _RuneRange		_NBRuneRange
+#define _RuneLocale		_NBRuneLocale
+#define _RUNE_MAGIC_1		_NB_RUNE_MAGIC_1
+#define _RUNE_MODULE_1		_NB_RUNE_MODULE_1
+#define _RUNE_CODESET		_NB_RUNE_CODESET
+
+/*
+ * global variables
+ */
+extern size_t __mb_len_max_runtime;
+#define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
+
+extern _RuneLocale _DefaultRuneLocale;
+extern _RuneLocale *_CurrentRuneLocale;
+extern void **_StreamStateTable;
+extern char *_PathLocale;
 
 #endif	/*! _RUNE_H_ */

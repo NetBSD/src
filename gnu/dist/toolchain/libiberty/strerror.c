@@ -463,7 +463,7 @@ static int num_error_names = 0;
 static int sys_nerr;
 static const char **sys_errlist;
 
-#elif !defined(__NetBSD__)
+#elif !defined(__NetBSD__) && !defined(__FreeBSD__) && !defined(__APPLE__)
 
 extern int sys_nerr;
 extern char *sys_errlist[];

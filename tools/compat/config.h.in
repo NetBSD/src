@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.18.2.3 2002/12/01 19:09:59 he Exp $	*/
+/*	$NetBSD: config.h.in,v 1.18.2.4 2004/07/23 14:33:14 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -56,8 +56,10 @@
 #undef HAVE_FUTIMES
 #undef HAVE_GETOPT
 #undef HAVE_GETOPT_LONG
+#undef HAVE_GROUP_FROM_GID
 #undef HAVE_ISBLANK
 #undef HAVE_ISSETUGID
+#undef HAVE_LCHFLAGS
 #undef HAVE_LCHMOD
 #undef HAVE_LCHOWN
 #undef HAVE_LUTIMES
@@ -75,6 +77,7 @@
 #undef HAVE_STRLCAT
 #undef HAVE_STRLCPY
 #undef HAVE_STRSEP
+#undef HAVE_USER_FROM_UID
 #undef HAVE_VASPRINTF
 #undef HAVE_VASNPRINTF
 #undef HAVE_VSNPRINTF
