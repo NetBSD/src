@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.19 1998/01/28 02:31:10 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.20 1998/02/04 00:36:52 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -640,7 +640,7 @@ bha_create_ccbs(sc, mem, size, max_ccbs)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&ccb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	    (caddr_t *)&ccb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: can't map memory for ccbs\n",
 		    sc->sc_dev.dv_xname);
@@ -1244,7 +1244,7 @@ bha_init(sc)
 	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
-	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		panic("bha_init: can't create or map mailbox");
 
 	/*

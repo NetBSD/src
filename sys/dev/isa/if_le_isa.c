@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.15 1997/10/20 18:43:16 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.16 1998/02/04 00:37:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -486,7 +486,7 @@ le_isa_attach(parent, self, aux)
 		}
 		if (bus_dmamem_map(dmat, &seg, rseg, LE_ISA_MEMSIZE,
 		    (caddr_t *)&sc->sc_mem,
-		    BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 			printf("%s: couldn't map memory for card\n",
 			    sc->sc_dev.dv_xname);
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.279 1998/02/03 19:16:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.280 1998/02/04 00:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2264,7 +2264,8 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->dm_nsegs = 0;		/* no valid mappings */
+	map->dm_mapsize = 0;		/* no valid mappings */
+	map->dm_nsegs = 0;
 
 	*dmamp = map;
 	return (0);
@@ -2302,6 +2303,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
@@ -2310,8 +2312,10 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	seg = 0;
 	error = _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 	    &lastaddr, &seg, 1);
-	if (error == 0)
+	if (error == 0) {
+		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+	}
 	return (error);
 }
 
@@ -2332,6 +2336,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
 #ifdef DIAGNOSTIC
@@ -2350,8 +2355,10 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
-	if (error == 0)
+	if (error == 0) {
+		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+	}
 	return (error);
 }
 
@@ -2400,6 +2407,7 @@ _bus_dmamap_unload(t, map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
 
@@ -2507,7 +2515,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 * This is not necessary on x86-family
 			 * processors.
 			 */
-			if (flags & BUS_DMAMEM_NOSYNC)
+			if (flags & BUS_DMA_COHERENT)
 				pmap_changebit(addr, PG_N, ~0);
 			else
 				pmap_changebit(addr, 0, ~PG_N);
