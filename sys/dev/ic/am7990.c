@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.27 1997/03/17 03:14:03 thorpej Exp $	*/
+/*	$NetBSD: am7990.c,v 1.28 1997/03/17 18:29:56 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -256,6 +256,7 @@ am7990_meminit(sc)
 	struct leinit init;
 	struct lermd rmd;
 	struct letmd tmd;
+	u_int8_t *myaddr;
 
 #if NBPFILTER > 0
 	if (ifp->if_flags & IFF_PROMISC)
@@ -263,12 +264,11 @@ am7990_meminit(sc)
 	else
 #endif
 		init.init_mode = LE_MODE_NORMAL;
-	init.init_padr[0] =
-	    (LLADDR(ifp->if_sadl)[1] << 8) | LLADDR(ifp->if_sadl)[0];
-	init.init_padr[1] =
-	    (LLADDR(ifp->if_sadl)[3] << 8) | LLADDR(ifp->if_sadl)[2];
-	init.init_padr[2] =
-	    (LLADDR(ifp->if_sadl)[5] << 8) | LLADDR(ifp->if_sadl)[4];
+
+	myaddr = LLADDR(ifp->if_sadl);
+	init.init_padr[0] = (myaddr[1] << 8) | myaddr[0];
+	init.init_padr[1] = (myaddr[3] << 8) | myaddr[2];
+	init.init_padr[2] = (myaddr[5] << 8) | myaddr[4];
 	am7990_setladrf(&sc->sc_ethercom, init.init_ladrf);
 
 	sc->sc_last_rd = 0;
