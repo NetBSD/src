@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.35 2004/01/02 05:08:57 dbj Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.36 2004/01/10 16:23:36 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -161,6 +161,7 @@ void	softdep_initialize __P((void));
 void	softdep_reinitialize __P((void));
 int	softdep_mount __P((struct vnode *, struct mount *, struct fs *,
 	    struct ucred *));
+int	softdep_flushworklist __P((struct mount *, int *, struct proc *));
 int	softdep_flushfiles __P((struct mount *, int, struct proc *));
 void	softdep_update_inodeblock __P((struct inode *, struct buf *, int));
 void	softdep_load_inodeblock __P((struct inode *));
