@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.1 1995/09/17 19:56:40 pk Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.2 1995/10/04 23:57:25 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -57,8 +57,7 @@ extern struct tty *fbconstty;
 
 static void rcons_belltmr(void *);
 
-extern void rcons_puts(struct rconsole *, char *, int);
-extern void rcons_font(struct rconsole *);
+#include "rcons_subr.h"
 
 static struct rconsole *mydevicep;
 
@@ -91,8 +90,6 @@ rcons_output(tp)
 	tp->t_state |= TS_BUSY;
 	splx(s);
 	n = q_to_b(&tp->t_outq, buf, sizeof(buf));
-	for (i = 0; i < n; ++i)
-		buf[i] &= 0177;		/* strip parity (argh) */
 	rcons_puts(mydevicep, buf, n);
 
 	s = spltty();
@@ -192,9 +189,6 @@ rcons_init(rc)
 
 	rc->rc_ras_blank = RAS_CLEAR;
 
-	/* Setup the static font */
-	rcons_font(rc);
-
 	/* Impose upper bounds on rc_max{row,col} */
 	i = rc->rc_height / rc->rc_font->height;
 	if (rc->rc_maxrow > i)
@@ -227,12 +221,24 @@ rcons_init(rc)
 	}
 	rc->rc_emuheight = rc->rc_maxrow * rc->rc_font->height;
 
+#ifdef RASTERCONS_WONB
+	rc->rc_ras_blank = RAS_NOT(rc->rc_ras_blank);
+	rc->rc_bits |= FB_INVERT;
+#endif
+
 	if (rc->rc_row == NULL || rc->rc_col == NULL) {
-		/* No address passed; use private copies */
+		/*
+		 * No address passed; use private copies
+		 * go to LL corner and scroll.
+		 */
 		rc->rc_row = &row;
 		rc->rc_col = &col;
-		row = col = 0;
+		row = rc->rc_maxrow;
+		col = 0;
+#if 0
 		rcons_clear2eop(rc);	/* clear the display */
+#endif
+		rcons_scroll(rc, 1);
 		rcons_cursor(rc);	/* and draw the initial cursor */
 	} else {
 		/* Prom emulator cursor is currently visible */
