@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12 2001/10/05 15:27:56 pooka Exp $ */
+/*	$NetBSD: autoconf.h,v 1.13 2002/10/20 15:53:19 martin Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@
  */
 
 #include <machine/bus.h>
-#include <sparc64/dev/upavar.h>
 #include <dev/sbus/sbusvar.h>
 
 /* This is used to map device classes to IPLs */
@@ -103,6 +102,12 @@ extern struct intrmap intrmap[];
  * peripheral buses and things like FHC bus systems.
  */
 
+/* Encoding for one "reg" properties item */
+struct upa_reg {
+	int64_t	ur_paddr;
+	int64_t	ur_len;
+};
+
 /* 
  * Attach arguments presented by mainbus_attach() 
  *
@@ -115,7 +120,7 @@ struct mainbus_attach_args {
 	struct upa_reg	*ma_reg;	/* "reg" properties */
 	u_int		*ma_address;	/* "address" properties -- 32 bits */
 	u_int		*ma_interrupts;	/* "interrupts" properties */
-	int		ma_upaid;	/* UPA bus ID */
+	int		ma_upaid;	/* UPA port ID */
 	int		ma_node;	/* PROM handle */
 	int		ma_nreg;	/* Counts for those properties */
 	int		ma_naddress;
