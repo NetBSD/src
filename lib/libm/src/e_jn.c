@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_jn.c,v 1.9 1995/05/10 20:45:34 jtc Exp $";
+__RCSID("$NetBSD: e_jn.c,v 1.10 1997/10/09 11:29:18 lukem Exp $");
 #endif
 
 /*
@@ -69,6 +70,7 @@ static double zero  =  0.00000000000000000000e+00;
 	double a, b, temp, di;
 	double z, w;
 
+	temp = 0;
     /* J(-n,x) = (-1)^n * J(n, x), J(n, -x) = (-1)^n * J(n, x)
      * Thus, J(-n,x) = J(n,-x)
      */
@@ -229,6 +231,7 @@ static double zero  =  0.00000000000000000000e+00;
 	int32_t sign;
 	double a, b, temp;
 
+	temp = 0;
 	EXTRACT_WORDS(hx,lx,x);
 	ix = 0x7fffffff&hx;
     /* if Y(n,NaN) is NaN */
