@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.55 2002/07/21 12:58:02 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.56 2002/07/21 20:29:48 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1237,8 +1237,8 @@ if you are installing onto a drive that will be used with
 .Me "Re-install sets or install additional sets"
 from the main menu).
 .\}
+.if !\n[atari]:\n[macppc]:\n[sgimips] \{\
 .(bullet
-.if !\n[atari]:\n[macppc] \{\
 Which portion of the disk to use.
 .Pp
 You will be asked if you want to use the entire disk or
@@ -1455,7 +1455,7 @@ editing the
 disklabel.
 .Pp
 .\}
-.\} \" !\n[atari]:\n[macppc]
+.\} \" !\n[atari]:\n[macppc]:\n[sgimips]
 .if !r_mac68k \{\
 .Em Editing the NetBSD disklabel
 .Pp
@@ -1899,7 +1899,8 @@ use this configuration for normal operation.
 If so, these values will be installed in the network configuration files.
 The next menu will allow you to select the time zone that you're in,
 to make sure your clock has the right offset from UTC.
-Finally you can set a password for the "root" account, to prevent
+Finally you will be asked to select a password encryption algorithm
+and can than set a password for the "root" account, to prevent
 the machine coming up without access restrictions.
 .if r_macppc \{\
 .It
