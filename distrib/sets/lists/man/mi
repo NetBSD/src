@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.292 2000/12/14 03:06:39 onoe Exp $
+# $NetBSD: mi,v 1.293 2000/12/17 03:12:30 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -32,6 +32,7 @@
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/alias.0
+./usr/share/man/cat1/altqstat.0
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
 ./usr/share/man/cat1/at.0
@@ -902,6 +903,7 @@
 ./usr/share/man/cat5/access.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
+./usr/share/man/cat5/altq.conf.0
 ./usr/share/man/cat5/amd.conf.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bootparams.0
@@ -1021,6 +1023,7 @@
 ./usr/share/man/cat8/ac.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/adduser.0
+./usr/share/man/cat8/altqd.0
 ./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot.0
 ./usr/share/man/cat8/alpha/installboot.0
@@ -1392,6 +1395,7 @@
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
+./usr/share/man/cat8/tbrconfig.0
 ./usr/share/man/cat8/tcpdchk.0
 ./usr/share/man/cat8/tcpdmatch.0
 ./usr/share/man/cat8/tcpdump.0
@@ -1463,6 +1467,7 @@
 ./usr/share/man/man1/Mail.1
 ./usr/share/man/man1/[.1
 ./usr/share/man/man1/alias.1
+./usr/share/man/man1/altqstat.1
 ./usr/share/man/man1/apply.1
 ./usr/share/man/man1/apropos.1
 ./usr/share/man/man1/at.1
@@ -2333,6 +2338,7 @@
 ./usr/share/man/man5/access.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
+./usr/share/man/man5/altq.conf.5
 ./usr/share/man/man5/amd.conf.5
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bootparams.5
@@ -2452,6 +2458,7 @@
 ./usr/share/man/man8/ac.8
 ./usr/share/man/man8/accton.8
 ./usr/share/man/man8/adduser.8
+./usr/share/man/man8/altqd.8
 ./usr/share/man/man8/alpha/MAKEDEV.8
 ./usr/share/man/man8/alpha/boot.8
 ./usr/share/man/man8/alpha/installboot.8
@@ -2823,6 +2830,7 @@
 ./usr/share/man/man8/sysctl.8
 ./usr/share/man/man8/syslogd.8
 ./usr/share/man/man8/talkd.8
+./usr/share/man/man8/tbrconfig.8
 ./usr/share/man/man8/tcpdchk.8
 ./usr/share/man/man8/tcpdmatch.8
 ./usr/share/man/man8/tcpdump.8
