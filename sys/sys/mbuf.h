@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.24 1997/05/23 19:46:08 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.25 1997/06/06 16:37:41 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -56,7 +56,7 @@
 #define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
 #define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
 
-#define	MINCLSIZE	(MHLEN + MLEN)	/* smallest amount to put in cluster */
+#define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 
 /*
