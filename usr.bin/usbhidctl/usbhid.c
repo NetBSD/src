@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.24 2004/01/05 23:23:37 jmmv Exp $ */
+/*	$NetBSD: usbhid.c,v 1.25 2004/10/30 05:16:13 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.24 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.25 2004/10/30 05:16:13 dsainty Exp $");
 #endif
 
 #include <sys/types.h>
@@ -285,7 +285,7 @@ hidtestrule(struct Susbvar *var, struct usagedata *cache)
 
 /*
  * hidmatch() determines whether the item specified in 'item', and
- * nested within a heirarchy of collections specified in 'collist'
+ * nested within a hierarchy of collections specified in 'collist'
  * matches any of the rules in the list 'varlist'.  Returns the
  * matching rule on success, or NULL on no match.
  */
