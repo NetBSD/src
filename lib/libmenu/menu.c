@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.6 2000/04/20 12:17:57 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.7 2000/05/05 11:28:56 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -458,7 +458,7 @@ scale_menu(MENU *param_menu, int *rows, int *cols)
 	  /*
 	   * allow for spacing between columns...
 	   */
-	*cols += menu->cols - 1;
+	*cols += menu->cols;
 	
 	return E_OK;
 }
