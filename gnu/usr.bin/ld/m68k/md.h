@@ -1,5 +1,5 @@
 /*
- * $Id: md.h,v 1.3 1994/04/07 19:43:58 pk Exp $
+ * $Id: md.h,v 1.4 1995/01/17 06:44:40 mycroft Exp $
  *	- m68k dependent definitions
  */
 
@@ -88,6 +88,7 @@ typedef struct jmpslot {
 #define get_short(p)	( ( ((unsigned char *)(p))[0] << 8) | \
 			  ( ((unsigned char *)(p))[1]     )   \
 			)
+
 #define get_long(p)	( ( ((unsigned char *)(p))[0] << 24) | \
 			  ( ((unsigned char *)(p))[1] << 16) | \
 			  ( ((unsigned char *)(p))[2] << 8 ) | \
@@ -164,4 +165,3 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 #define put_long(where,what)		(*(long *)(where) = (what))
 
 #endif /* CROSS_LINKER */
-
