@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.8 1997/10/20 02:22:55 mrg Exp $	*/
+/*	$NetBSD: whereis.c,v 1.9 1999/03/11 10:42:43 fair Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.8 1997/10/20 02:22:55 mrg Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.9 1999/03/11 10:42:43 fair Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,9 +69,14 @@ main(argc, argv)
 	size_t len;
 	int ch, sverrno, mib[2];
 	char *p, *t, *std, path[MAXPATHLEN];
+	int useenvpath = 0;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "p")) != -1)
 		switch (ch) {
+		case 'p':
+			useenvpath = 1;	/* use environment for PATH */
+			break;
+
 		case '?':
 		default:
 			usage();
@@ -82,20 +87,25 @@ main(argc, argv)
 	if (argc == 0)
 		usage();
 
-	/* Retrieve the standard path. */
-	mib[0] = CTL_USER;
-	mib[1] = USER_CS_PATH;
-	if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
-		return (-1);
-	if (len == 0)
-		err(1, "user_cs_path: sysctl: zero length\n");
-	if ((std = malloc(len)) == NULL)
-		err(1, "%s", "");
-	if (sysctl(mib, 2, std, &len, NULL, 0) == -1) {
-		sverrno = errno;
-		free(std);
-		errno = sverrno;
-		err(1, "sysctl: user_cs_path");
+ 	if (useenvpath) {
+ 		if ((std = getenv("PATH")) == NULL)
+ 			err(1, "getenv: PATH" );
+	} else {
+		/* Retrieve the standard path. */
+		mib[0] = CTL_USER;
+		mib[1] = USER_CS_PATH;
+		if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
+			return (-1);
+		if (len == 0)
+			err(1, "user_cs_path: sysctl: zero length\n");
+		if ((std = malloc(len)) == NULL)
+			err(1, "%s", "");
+		if (sysctl(mib, 2, std, &len, NULL, 0) == -1) {
+			sverrno = errno;
+			free(std);
+			errno = sverrno;
+			err(1, "sysctl: user_cs_path");
+		}
 	}
 
 	/* For each path, for each program... */
@@ -123,6 +133,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: whereis program [...]\n");
+	(void)fprintf(stderr, "usage: whereis [-p] program [...]\n");
 	exit (1);
 }
