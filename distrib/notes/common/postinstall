@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.41 2002/07/21 13:00:45 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.42 2002/07/21 20:29:47 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ message
 .Pp
 and with the root file system
 .Pq Pa /
-mounted read-write.
+mounted read-only.
 When the system asks you to choose a shell, simply press
 .Key RETURN
 to get to a
@@ -184,6 +184,7 @@ For example:
 .if r_next68k .ds IFname xe0
 .if r_mac68k  .ds IFname sn0
 .if r_macppc  .ds IFname mc0
+.if r_sgimips .ds IFname sq0
 .
 .Dl ifconfig_\*[IFname]="inet 123.45.67.89 netmask 255.255.255.0"
 .Pp
@@ -207,10 +208,17 @@ for more information.
 Other files in
 .Pa /etc
 that may require modification or setting up include
+.ie r_sgimips \{\
+.Pa /etc/mailer.conf
+and
+.Pa /etc/nsswitch.conf .
+.\}
+.el \{\
 .Pa /etc/mailer.conf ,
 .Pa /etc/nsswitch.conf ,
 and
 .Pa /etc/wscons.conf .
+.\}
 .ie r_shark \{\
 .Pp
 For Digital DNARD machines you will need to edit

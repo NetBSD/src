@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.201 2002/07/19 15:43:37 lukem Exp $
+.\"	$NetBSD: main,v 1.202 2002/07/21 20:29:47 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1842,6 +1842,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
 .It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
 .It Ta Christos Zoulas Ta Mt christos@netbsd.org
+.It Ta Ta
 .
 .br_ne 2i
 .It-span Em "Other contributors:"
