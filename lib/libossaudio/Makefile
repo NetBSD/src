@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1997/11/01 05:04:51 mikel Exp $
+#	$NetBSD: Makefile,v 1.4 1997/11/07 05:34:07 mikel Exp $
 
 LIB=	ossaudio
 MAN=	ossaudio.3
 
 SRCS=	ossaudio.c
-NOPIC=
 
 CFLAGS+= -I${.CURDIR}
 
