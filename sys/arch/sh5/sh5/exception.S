@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.14 2002/09/11 10:55:05 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.15 2002/09/12 12:39:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1312,26 +1312,36 @@ ENTRY_NOPROFILE(proc_trampoline)
 
 /******************************************************************************
  *
- * void sh5_setasid(u_int asid)
+ * u_int sh5_setasid(u_int asid)
  *
- * Set the ASID bits in the Status Register to the specified value
+ * Set the ASID bits in the Status Register to the specified value.
+ * Return the previous ASID.
  */
 ENTRY(sh5_setasid)
+	ptabs/l	r18, tr0
+	pta/l	1f, tr1
 	getcon	sr, r1
 	LDC32(SH5_CONREG_SR_ASID_MASK << SH5_CONREG_SR_ASID_SHIFT, r0)
 	shlli	r2, SH5_CONREG_SR_ASID_SHIFT, r2 /* shift "asid" up */
+	and	r2, r0, r2		/* keep only valid asid bits */
+	and	r1, r0, r4		/* r4 == old asid */
+	beq/l	r2, r4, tr1		/* Just return if they're the same */
 	LDC32(SH5_CONREG_SR_BL | SH5_CONREG_SR_IMASK_ALL, r3)
 	or	r1, r3, r3		/* SR.BL=1, IMASK=0xf */
-	and	r2, r0, r2		/* keep only valid asid bits */
 	andc	r1, r0, r1		/* Clear current asid bits */
+	gettr	tr1, r0
 	putcon	r3, sr			/* Disable interrupts */
 	or	r1, r2, r1		/* r1 == required SR */
-	pta/u	1f, tr0
 	putcon	r1, ssr			/* Desired status register */
-	gettr	tr0, r0
 	putcon	r0, spc			/* Continuation point */
 	synci
 	synco
 	rte
-1:	ptabs/l	r18, tr0
+	nop
+	nop
+	nop
+	nop
+	nop
+1:	shlri	r4, SH5_CONREG_SR_ASID_SHIFT, r2 /* Return previous ASID */
 	blink	tr0, r63
+
