@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.27 1999/07/09 22:57:16 thorpej Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.28 1999/08/05 04:04:28 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_natm.h"
+#include "arp.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -108,6 +109,9 @@ domaininit()
 #endif
 #ifdef IPSEC
 	ADDDOMAIN(key);
+#endif
+#if NARP > 0
+	ADDDOMAIN(arp);
 #endif
 	ADDDOMAIN(route);
 #endif /* ! lint */
