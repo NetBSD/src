@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.40 2001/11/02 18:24:20 christos Exp $	*/
+/*	$NetBSD: termcap.c,v 1.41 2001/11/05 23:31:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.40 2001/11/02 18:24:20 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.41 2001/11/05 23:31:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,19 +448,12 @@ tgetstr(id, area)
 }
 
 /*
- * Get a string valued option specified by id and append it to the
- * given buffer.  If bufptr is NULL then a new buffer is allocated, if
- * bufptr is non-NULL then extend the memory allocation to allow the
- * new string to be appended to the buffer.  The pointer area is
- * updated to point to the start of the new entry and this address is
- * also returned to the caller.  If the string is not found or a
- * memory allocation fails then NULL is returned and bufptr and area
- * are unchanged.
+ * Return a string valued option specified by id, allocating memory to
+ * an internal buffer as necessary. The memory allocated can be
+ * free'd by a call to t_freent().
  *
- * XXX: This is horribly broken because realloc's can move memory and
- * invalidate attributes we've already returned. Only possible way to
- * fix it for now is to allocate a lot -- 8K, and leak if we need to
- * realloc. This API needs to be destroyed!.
+ * If the string is not found or memory allocation fails then NULL
+ * is returned.
  */
 #define BSIZE 256
 char *
