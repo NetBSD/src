@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1995/07/04 07:17:00 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1995/08/02 19:36:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,17 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+/*
+ * Swapdev is a fake block device implemented  in sw.c and only used 
+ * internally to get to swstrategy.  It cannot be provided to the
+ * users, because the swstrategy routine munches the b_dev and b_blkno
+ * entries before calling the appropriate driver.  This would horribly
+ * confuse, e.g. the hashing routines.   User access (e.g., for libkvm
+ * and ps) is provided through the /dev/drum character (raw) device.
+ */
+dev_t	swapdev = makedev(4, 0);
+
+
 cdev_decl(cn);
 cdev_decl(sw);
 cdev_decl(ctty);
@@ -115,6 +126,25 @@ cdev_decl(rz);
 cdev_decl(rcons);
 #include "fb.h"
 cdev_decl(fb);
+#include "pm.h"
+cdev_decl(pm);
+#include "cfb.h"
+cdev_decl(cfb);
+#include "xcfb.h"
+cdev_decl(xcfb);
+#include "mfb.h"
+cdev_decl(mfb);
+
+
+/* a framebuffer with an attached mouse: */
+/* open, close, ioctl, select, mmap */
+
+#define	cdev_fbm_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	dev_init(c,n,mmap) }
+
 
 struct cdevsw	cdevsw[] =
 {
@@ -126,17 +156,17 @@ struct cdevsw	cdevsw[] =
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
-	cdev_notdef(),			/* 8: 2100/3100 frame buffer */
+	cdev_fbm_init(NPM,pm),		/* 8: 2100/3100 frame buffer */
 	cdev_notdef(),			/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: Berkeley packet filter */
-	cdev_notdef(),			/* 13: color frame buffer */
-	cdev_notdef(),			/* 14: maxine color frame buffer */
+	cdev_fbm_init(NCFB,cfb),	/* 13: color frame buffer */
+	cdev_fbm_init(NXCFB,xcfb),	/* 14: maxine color frame buffer */
 	cdev_tty_init(NDTOP,dtop),	/* 15: desktop bus interface */
 	cdev_tty_init(NDC,dc),		/* 16: dc7085 serial interface */
 	cdev_tty_init(NSCC,scc),	/* 17: scc 82530 serial interface */
-	cdev_notdef(),			/* 18: mono frame buffer */
+	cdev_fbm_init(NMFB,mfb),	/* 18: mono frame buffer */
         cdev_notdef(),		        /* 19: mt */
 	cdev_tty_init(NPTY,pts),	/* 20: pty slave  */
         cdev_ptc_init(NPTY,ptc),        /* 21: pty master */
@@ -206,26 +236,16 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 83: fd */
 	cdev_notdef(),		/* 84: DTi */
 	cdev_tty_init(NRCONS,rcons),	/* 85: raster console pseudo-device */
-	cdev_fb_init(NFB,fb),	/* 86: frame buffer pseudo-device */
+	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
 int	mem_no = 2; 	/* major device number of memory special file */
 
 /*
- * Swapdev is a fake device implemented
- * in sw.c used only internally to get to swstrategy.
- * It cannot be provided to the users, because the
- * swstrategy routine munches the b_dev and b_blkno entries
- * before calling the appropriate driver.  This would horribly
- * confuse, e.g. the hashing routines. Instead, /dev/drum is
- * provided as a character (raw) device.
- */
-dev_t	swapdev = makedev(1, 0);
-
-/*
  * Routine that identifies /dev/mem and /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -240,6 +260,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -346,6 +367,7 @@ static int chrtoblktbl[] =  {
 /*
  * Routine to convert from character to block device number.
  */
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
