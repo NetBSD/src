@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.71 1998/06/15 19:55:08 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.72 1998/06/30 14:42:00 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.65 1998/06/15 19:54:48 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.66 1998/06/30 14:41:29 augustss Exp 
  */
 
 /*
@@ -488,6 +488,7 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
+#define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
@@ -731,6 +732,9 @@
 /* Essential Communications products */
 #define	PCI_PRODUCT_ESSENTIAL_RR_HIPPI	0x0001		/* RoadRunner HIPPI Interface */
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E Interface */
+
+/* 2 Micro Inc */
+#define	PCI_PRODUCT_2MICRO_OZ6832	0x6832		/* OZ6832 CardBus Controller */
 
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom PCI-GBus Interface */
