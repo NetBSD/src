@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/08/22 21:14:35 dsl Exp $
+#	$NetBSD: Makefile,v 1.18 2003/10/26 07:25:37 lukem Exp $
 
 LIB=sa
 
@@ -64,4 +64,4 @@ SOBJS=
 # Customized rules...
 
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "${MACHINE}"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "${MACHINE}"

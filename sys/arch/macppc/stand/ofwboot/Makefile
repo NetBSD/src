@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2003/02/28 05:24:57 matt Exp $
+#	$NetBSD: Makefile,v 1.38 2003/10/26 07:25:36 lukem Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -92,7 +92,7 @@ cleanlibdir:
 
 .PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
 
 all realall: ${PROG} ${PROG}.xcf ${PROG}.elf
 

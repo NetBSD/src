@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2003/10/08 01:40:23 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2003/10/26 07:25:36 lukem Exp $
 
 BINDIR= /usr/mdec
 
@@ -7,7 +7,7 @@ BINDIR= /usr/mdec
 .if exists(version)
 .PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
 SRCS+=  vers.c
 CLEANFILES+= vers.c
 .endif

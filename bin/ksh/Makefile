@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/10/21 10:01:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2003/10/26 07:25:33 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -22,20 +22,20 @@ CLEANFILES+=	siglist.out siglist.out.tmp
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
 	${_MKTARGET_CREATE}
-	sh $(.CURDIR)/siglist.sh "$(CC) -E $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > siglist.out.tmp \
+	${HOST_SH} $(.CURDIR)/siglist.sh "$(CC) -E $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > siglist.out.tmp \
 	    && mv siglist.out.tmp siglist.out
 
 # two steps to prevent the creation of a bogus emacs.out
 CLEANFILES+=	emacs.out emacs.out.tmp
 emacs.out: emacs.c
 	${_MKTARGET_CREATE}
-	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > emacs.out.tmp \
+	${HOST_SH} $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > emacs.out.tmp \
 	    && mv emacs.out.tmp emacs.out
 
 CLEANFILES+=	ksh.1 ksh.1.tmp
 ksh.1: ksh.Man mkman
 	${_MKTARGET_CREATE}
-	sh $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
+	${HOST_SH} $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
 	    && mv ksh.1.tmp ksh.1
 
 .include <bsd.prog.mk>

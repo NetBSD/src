@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/09/18 05:41:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/10/26 07:25:34 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 NOMAN=  	# defined
@@ -11,6 +11,6 @@ CPPFLAGS+=	-g -D__DBINTERFACE_PRIVATE -DDEBUG
 CLEANFILES+=	t1 t2 t3
 
 regress: dbtest
-	sh ${.CURDIR}/run.test
+	${HOST_SH} ${.CURDIR}/run.test
 
 .include <bsd.prog.mk>
