@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_netbsd.h,v 1.3 2001/11/11 01:36:16 jmc Exp $	*/
+/*	$NetBSD: setprogname.c,v 1.1 2001/12/11 21:18:00 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,10 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMPAT_NETBSD_H__
-#define __COMPAT_NETBSD_H__
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-extern void setprogname(const char *);
-extern const char *getprogname(void);
+#ifndef HAVE_SETPROGNAME
+static const char *__progname;
 
+void setprogname(const char *progname) {
+	__progname = progname;
+}
+
+const char *getprogname(void) {
+	return __progname;
+}
 #endif

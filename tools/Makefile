@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.21 2001/12/07 02:28:53 jmc Exp $
+#	$NetBSD: Makefile,v 1.22 2001/12/11 21:17:56 tv Exp $
 
 .include <bsd.own.mk>
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 .if !defined(NOSUBDIR)
-SUBDIR=	mkdep .WAIT \
+SUBDIR=	mkdep .WAIT compat .WAIT \
 	binstall .WAIT \
 		crunchgen gencat lint lint2 lorder mtree rpcgen \
 		texinfo tsort makewhatis \
@@ -15,6 +15,10 @@ SUBDIR=	mkdep .WAIT \
 	lex .WAIT \
 		asn1_compile compile_et config lint1 msgc menuc mklocale \
 		pwd_mkdb
+
+.if ${MKMAINTAINERTOOLS:Uno} != "no"
+SUBDIR+=	m4 .WAIT autoconf
+.endif
 .endif
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"
