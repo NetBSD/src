@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.81 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.82 2004/05/25 04:30:32 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.81 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.82 2004/05/25 04:30:32 atatat Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -282,44 +282,52 @@ SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "mbuf", NULL,
+		       CTLTYPE_NODE, "mbuf",
+		       SYSCTL_DESCR("mbuf control variables"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "msize", NULL,
+		       CTLTYPE_INT, "msize",
+		       SYSCTL_DESCR("mbuf base size"),
 		       NULL, msize, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MSIZE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "mclbytes", NULL,
+		       CTLTYPE_INT, "mclbytes",
+		       SYSCTL_DESCR("mbuf cluster size"),
 		       NULL, mclbytes, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLBYTES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nmbclusters", NULL,
+		       CTLTYPE_INT, "nmbclusters",
+		       SYSCTL_DESCR("Limit on the number of mbuf clusters"),
 		       sysctl_kern_mbuf, 0, &nmbclusters, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_NMBCLUSTERS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mblowat", NULL,
+		       CTLTYPE_INT, "mblowat",
+		       SYSCTL_DESCR("mbuf low water mark"),
 		       sysctl_kern_mbuf, 0, &mblowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MBLOWAT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mcllowat", NULL,
+		       CTLTYPE_INT, "mcllowat",
+		       SYSCTL_DESCR("mbuf cluster low water mark"),
 		       sysctl_kern_mbuf, 0, &mcllowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLLOWAT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "stats", NULL,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("mbuf allocation statistics"),
 		       NULL, 0, &mbstat, sizeof(mbstat),
 		       CTL_KERN, KERN_MBUF, MBUF_STATS, CTL_EOL);
 #ifdef MBUFTRACE
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "mowners", NULL,
+		       CTLTYPE_STRUCT, "mowners",
+		       SYSCTL_DESCR("Information about mbuf owners"),
 		       sysctl_kern_mbuf_mowners, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MOWNERS, CTL_EOL);
 #endif /* MBUFTRACE */
