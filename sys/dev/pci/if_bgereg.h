@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.8 2003/03/06 20:53:06 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.9 2003/03/07 18:57:53 jonathan Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2232,6 +2232,7 @@ struct bge_softc {
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_tbi;
+    	u_int8_t		bge_rx_alignment_bug;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_asicrev;
 	u_int32_t		bge_quirks;
