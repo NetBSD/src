@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 1998/05/22 17:18:02 tv Exp $
+# $NetBSD: Makefile,v 1.17 1998/07/25 11:19:24 mycroft Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -15,10 +15,6 @@ TARGET_ARCH?=$(MACHINE_ARCH)
 
 # Debugging?
 # CPPFLAGS=-g
-
-# Find out where libreadline.a lives.
-LIBREADLINE!=cd ${TOP}/lib/readline; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libreadline.a\n" | ${MAKE} -s -f-
 
 # Note: nm.h, tm.h are in $(.OBJDIR),
 # and config.h, xm.h are in $(.CURDIR)
@@ -71,8 +67,8 @@ COMMON_SRCS = version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
 SRCS=	main.c $(COMMON_SRCS) annotate.c inflow.c gnu-regex.c
 OBJS=	init.o
 
-LDADD+= $(LIBREADLINE)
-DPADD+= $(LIBREADLINE)
+LDADD+= -ledit
+DPADD+= $(LIBEDIT)
 
 LDADD+= -lbfd
 DPADD+= $(LIBBFD)
