@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.20 1996/10/13 13:13:59 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.21 1997/01/23 01:54:09 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -202,7 +202,7 @@ void mfbattach __P((struct device *, struct device *, void *));
 int mfb_intr __P((void *sc));
 
 struct cfattach mfb_ca = {
-	sizeof(struct device), mfbmatch, mfbattach
+	sizeof(struct fbinfo), mfbmatch, mfbattach
 };
 
 struct cfdriver mfb_cd = {
