@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.4 2000/06/29 02:40:37 mrg Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.5 2000/10/16 03:18:04 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,8 +41,9 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/mman.h> 
-#include <sys/mount.h> 
+#include <sys/mman.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
   
 #include <sys/syscallargs.h> 
  
