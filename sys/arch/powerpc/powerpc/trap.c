@@ -1,9 +1,8 @@
-/*	$NetBSD: trap.c,v 1.38 2001/02/11 20:24:49 manu Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 2001/02/12 21:20:32 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
- * Copyright (C) 2001 Emmanuel Dreyfus
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
