@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.3 1994/06/20 08:39:01 pk Exp $
+ *	$Id: ufs.c,v 1.4 1994/07/18 13:08:09 pk Exp $
  */
 
 /*
@@ -402,6 +402,7 @@ ufs_open(path, f)
 		rc = EINVAL;
 		goto out;
 	}
+	ffs_oldfscompat(fs);
 
 	/*
 	 * Calculate indirect block levels.
@@ -653,5 +654,33 @@ ufs_stat(f, sb)
 	sb->st_uid = fp->f_di.di_uid;
 	sb->st_gid = fp->f_di.di_gid;
 	sb->st_size = fp->f_di.di_size;
+	return (0);
+}
+
+/*
+ * Sanity checks for old file systems.
+ *
+ * XXX - goes away some day.
+ */
+ffs_oldfscompat(fs)
+	struct fs *fs;
+{
+	int i;
+
+	fs->fs_npsect = max(fs->fs_npsect, fs->fs_nsect);	/* XXX */
+	fs->fs_interleave = max(fs->fs_interleave, 1);		/* XXX */
+	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
+		fs->fs_nrpos = 8;				/* XXX */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
+		quad_t sizepb = fs->fs_bsize;			/* XXX */
+								/* XXX */
+		fs->fs_maxfilesize = fs->fs_bsize * NDADDR - 1;	/* XXX */
+		for (i = 0; i < NIADDR; i++) {			/* XXX */
+			sizepb *= NINDIR(fs);			/* XXX */
+			fs->fs_maxfilesize += sizepb;		/* XXX */
+		}						/* XXX */
+		fs->fs_qbmask = ~fs->fs_bmask;			/* XXX */
+		fs->fs_qfmask = ~fs->fs_fmask;			/* XXX */
+	}							/* XXX */
 	return (0);
 }
