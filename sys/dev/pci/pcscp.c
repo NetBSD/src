@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.6 1999/12/12 02:50:40 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.7 2000/01/14 13:20:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -586,12 +586,12 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	/* set up MDL */
 	mdl = esc->sc_mdladdr;
 	nseg = dmap->dm_nsegs;
-	seg = 0;
 
 	/* the first segment is possibly not aligned with 4k MDL boundary */
-	count = dmap->dm_segs[seg].ds_len;
-	s_offset = dmap->dm_segs[seg].ds_addr & MDL_SEG_OFFSET; 	
-	s_addr = dmap->dm_segs[seg].ds_addr - s_offset;
+	count = dmap->dm_segs[0].ds_len;
+	s_addr = dmap->dm_segs[0].ds_addr;
+	s_offset = s_addr & MDL_SEG_OFFSET; 	
+	s_addr -= s_offset;
 	rest = MDL_SEG_SIZE - s_offset;
 
 	/* set the first MDL and offset */
