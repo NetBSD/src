@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2001/01/14 02:38:21 mrg Exp $	*/
+/*	$NetBSD: md.h,v 1.19 2001/08/26 11:58:47 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,14 +58,10 @@
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On the pmax, we accept the current 'rz' driver and also accept
- * 'sd' in case this release of sysinst gets used after we switch to
- * the MI scsi code. 
  */
 EXTERN	char *disk_names[]
 #ifdef MAIN
-= {"rz", "sd", NULL}
+= {"sd", NULL}
 #endif
 ;
 
