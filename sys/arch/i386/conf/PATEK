@@ -1,31 +1,60 @@
 #
-# PATEK -- Mycroft's 486 testing system
+# PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.1 1993/09/14 17:28:06 mycroft Exp $
+#	$Id: PATEK,v 1.2 1994/01/05 17:05:56 mycroft Exp $
 #
 
 machine		"i386"
+cpu		"I386_CPU"
 cpu		"I486_CPU"
+options		"DUMMY_NOPS"
+options		"MACHINE_NONCONTIG"
+options		XSERVER,UCONSOLE
+
 ident		PATEK
-timezone	5 dst
 maxusers	16
-options		INET,NFSCLIENT,NFSSERVER
+timezone	5 dst
+
+options		SWAPPAGER
+options		VNODEPAGER,DEVPAGER
+options		DDB
+#options	DIAGNOSTIC
+options		KTRACE
+options		FIFO
+options		SYSVMSG
+options		SYSVSEM
+options		SYSVSHM
+#options	"SHMMAXPGS=1024"
+options		LKM
+
+options		"COMPAT_NOMID"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
-options		"COMPAT_NOMID"
-options		XSERVER,UCONSOLE
+
+#options	QUOTA
+options		FFS
+options		MFS
+options		NFSSERVER
+options		NFSCLIENT
 options		ISOFS
 options		MSDOSFS
+options		FDESC
 options		KERNFS
-options		SCSI
-options		DDB
-options		"DUMMY_NOPS"
-options		"SYMTAB_SPACE=65000"
 
-config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3
+options		GATEWAY
+options		INET
+#options	NS
+#options	CCITT
+#options	ISO
+#options	TPIP
+#options	EON
+
+options		SCSI
+
+config		netbsd	at 0xfe100000 root on sd0 swap on sd0 and sd1 and sd2 and sd3
 
 controller	isa0
-controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
+controller	uha0	at isa? port "IO_UHA0" bio irq 14 drq 5 vector uhaintr
 disk		sd0	at uha0 flags 0 drive ?
 disk		sd1	at uha0 flags 0 drive ?
 disk		sd2	at uha0 flags 0 drive ?
@@ -41,19 +70,17 @@ disk		fd1	at fdc0 drive 1
 
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
-#device		pms0	at isa? port "IO_KBD" tty vector pmsintr
+#device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
+#device		pms0	at isa? port "IO_KBD" tty irq 12 vector pmsintr
 
-device		ed0	at isa? port 0x300 net irq 10 iomem 0xd8000 vector edintr
+device		ed0	at isa? port 0x280 net irq 10 iomem 0xd8000 vector edintr
 
 pseudo-device	loop
 pseudo-device	ether
 pseudo-device	bpfilter 4
 pseudo-device	log
 pseudo-device	pty	32
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
