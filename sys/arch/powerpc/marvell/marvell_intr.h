@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.5 2003/04/09 15:44:27 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.6 2003/09/03 21:33:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@
 #define	NIST		6
 
 #if !defined(_LOCORE) && defined(_KERNEL)
+
+#define	CLKF_BASEPRI(frame)	((frame)->pri == IPL_NONE)
 
 /*
  * we support 128 IRQs:

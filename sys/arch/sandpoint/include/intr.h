@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2003/06/16 20:01:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2003/09/03 21:33:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
+#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
