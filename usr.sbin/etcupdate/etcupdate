@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.12 2003/03/03 14:07:11 martti Exp $
+# $NetBSD: etcupdate,v 1.13 2003/04/02 03:07:30 perry Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,6 +60,7 @@ VERBOSE=
 CONTINUE=
 BINARY=
 AUTOMATIC=
+LOCALSKIP=
 
 # Settings for post-installation procedures
 NEED_MTREE=
@@ -81,6 +82,8 @@ Options:
   -w width     Screen width                    (default: 80)
 
   -a           Automatically update unmodified files
+  -l           Automatically skip files with strictly local changes
+               (this option has no effect on files lacking RCS Ids)
   -h           This help text
   -v           Be more verbose
 
@@ -169,6 +172,18 @@ diff_and_merge_file() {
 		if [ "${SUM1}" = "${SUM2}" ] ; then
 			install_file "${1}"
 			install_checksum "${1}"
+			return
+		fi
+	fi
+
+	if [ "${LOCALSKIP}" = "YES" ] ; then
+		ID1=`ident -q "${TEMPROOT}${1}" | sed -n 2p`
+		ID1="${ID1:-0}"
+		ID2=`ident -q "${1}" | sed -n 2p`
+		ID2="${ID2:-1}"
+		if [ "${ID1}" = "${ID2}" ] ; then
+			verbose "===> ${1} (ok:RCS)"
+			rm -f "${TEMPROOT}${1}"
 			return
 		fi
 	fi
@@ -300,7 +315,7 @@ USERRC="${HOME}/.`basename $0`rc"
 [ -r ${USERRC} ] && . ${USERRC}
 
 # Read command line arguments
-ARGV=`getopt ab:hp:s:t:vw: $*`
+ARGV=`getopt ab:hlp:s:t:vw: $*`
 [ $? != 0 ] && usage
 set -- ${ARGV}
 for i; do
@@ -316,6 +331,10 @@ for i; do
 		;;
 	-h)
 		usage
+		;;
+	-l)
+		LOCALSKIP=YES
+		shift
 		;;
 	-p)
 		PAGER="${2}"
