@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.39 2003/02/05 13:57:50 nakayama Exp $	*/
+/*	$NetBSD: rnd.c,v 1.40 2003/05/16 15:34:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.39 2003/02/05 13:57:50 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.40 2003/05/16 15:34:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -832,7 +832,7 @@ rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
 
 	ts = rnd_counter();
 
-	strcpy(rs->data.name, name);
+	strlcpy(rs->data.name, name, sizeof(rs->data.name));
 	rs->data.last_time = ts;
 	rs->data.last_delta = 0;
 	rs->data.last_delta2 = 0;
