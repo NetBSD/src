@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.4 1999/11/12 18:14:19 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.5 2000/01/31 18:36:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -30,8 +30,8 @@
  */
 
 /*
- * Device driver for the Silicon Integrated Systems SiS900 10/100 PCI
- * Ethernet controller.
+ * Device driver for the Silicon Integrated Systems SiS 900 and
+ * SiS 7016 10/100 PCI Ethernet controllers.
  *    
  * Written by Jason R. Thorpe for Network Computer, Inc.
  */
@@ -93,6 +93,8 @@ const struct sip_product {
 } sip_products[] = {
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_900,
 	  "SiS 900 10/100 Ethernet" },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_7016,
+	  "SiS 7016 10/100 Ethernet" },
 
 	{ 0,			0,
 	  NULL },
@@ -170,6 +172,7 @@ struct sip_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
+	pci_product_id_t sc_model;	/* which model are we? */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -350,6 +353,8 @@ sip_attach(parent, self, aux)
 	}
 
 	printf(": %s\n", sip->sip_name);
+
+	sc->sc_model = PCI_PRODUCT(pa->pa_id);
 
 	/*
 	 * Map the device.
@@ -1868,11 +1873,12 @@ sip_mii_readreg(self, phy, reg)
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (phy != 0)
+	if (sc->sc_model == PCI_PRODUCT_SIS_900 && phy != 0)
 		return (0);
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
-	    (reg << ENPHY_REGADDR_SHIFT) | ENPHY_RWCMD | ENPHY_ACCESS);
+	    (phy << ENPHY_PHYADDR_SHIFT) | (reg << ENPHY_REGADDR_SHIFT) |
+	    ENPHY_RWCMD | ENPHY_ACCESS);
 	do {
 		enphy = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
 	} while (enphy & ENPHY_ACCESS);
@@ -1896,12 +1902,12 @@ sip_mii_writereg(self, phy, reg, val)
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (phy != 0)
+	if (sc->sc_model == PCI_PRODUCT_SIS_900 && phy != 0)
 		return;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
-	    (val << ENPHY_DATA_SHIFT) | (reg << ENPHY_REGADDR_SHIFT) |
-	    ENPHY_ACCESS);
+	    (val << ENPHY_DATA_SHIFT) | (phy << ENPHY_PHYADDR_SHIFT) |
+	    (reg << ENPHY_REGADDR_SHIFT) | ENPHY_ACCESS);
 	do {
 		enphy = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
 	} while (enphy & ENPHY_ACCESS);
