@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.9 2001/06/19 12:07:21 fvdl Exp $ */
+/* $NetBSD: sysident.h,v 1.10 2003/02/28 18:20:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -47,7 +47,7 @@
  *	string		OS name
  *
  * OSVERSION notes also have:
- *	long		OS version (NetBSD constant from param.h)
+ *	long		OS version (__NetBSD_Version__ constant from param.h)
  *
  * The DATUM fields should be padded out such that their actual (not
  * declared) sizes % 4 == 0.
@@ -70,7 +70,7 @@ __asm(
 	"\t.long   4\n"
 	"\t.long   " __S(ELF_NOTE_TYPE_NETBSD_TAG) "\n"
 	"\t.ascii \"NetBSD\\0\\0\"\n"
-	"\t.long   " __S(NetBSD) "\n\n"
+	"\t.long   " __S(__NetBSD_Version__) "\n\n"
 
 	"\t.p2align 2\n"
 );
