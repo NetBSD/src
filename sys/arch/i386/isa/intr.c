@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: intr.c,v 1.16 1994/04/07 07:31:09 mycroft Exp $
+ *	$Id: intr.c,v 1.17 1994/04/07 17:00:55 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -62,7 +62,7 @@ isa_defaultirq()
 {
 	int i;
 
-	imask[IPL_BIO] |= 0;
+	imask[IPL_BIO] |= SIR_CLOCKMASK;
 	imask[IPL_NET] |= SIR_NETMASK;
 	imask[IPL_TTY] |= SIR_TTYMASK;
 	imask[IPL_CLOCK] |= SIR_CLOCKMASK;
