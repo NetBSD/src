@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.33 2000/09/19 22:05:29 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.34 2000/09/19 23:26:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_inet.h"
 
@@ -134,6 +135,7 @@ extern struct nfsstats nfsstats;
 #define TRUE	1
 #define	FALSE	0
 
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 /*
  * Get or check for a lease for "vp", based on ND_CHECK flag.
  * The rules are as follows:
@@ -592,6 +594,7 @@ tryagain:
 			lph++;
 	}
 }
+#endif /* NFSSERVER || (NFS && !NFS_V2_ONLY) */
 
 #ifdef NFSSERVER
 /*
@@ -819,7 +822,7 @@ nfsmout:
 }
 #endif /* NFSSERVER */
 
-#ifdef NFS
+#if defined(NFS) && !defined(NFS_V2_ONLY)
 /*
  * Client get lease rpc function.
  */
@@ -971,7 +974,9 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	vrele(vp);
 	nfsm_srvdone;
 }
+#endif /* NFS && !NFS_V2_ONLY */
 
+#ifdef NFS /* Needed in V2_ONLY case for Kerberos stuff */
 /*
  * Nqnfs client helper daemon. Runs once a second to expire leases.
  * It also get authorization strings for "kerb" mounts.
@@ -988,11 +993,14 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	caddr_t argp;
 	struct proc *p;
 {
+#ifndef NFS_V2_ONLY
 	struct nfsnode *np;
 	struct vnode *vp;
 	struct nfsreq myrep;
+	int vpid;
+#endif
+	int error = 0, sleepreturn;
 	struct nfsuid *nuidp, *nnuidp;
-	int error = 0, vpid, sleepreturn;
 
 	/*
 	 * First initialize some variables
@@ -1037,6 +1045,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		sleepreturn = 0;
 		continue;
 	    }
+#ifndef NFS_V2_ONLY
 	    if (nmp->nm_flag & NFSMNT_NQNFS) {
 		/*
 		 * If there are no outstanding requests (and therefore no
@@ -1103,6 +1112,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			np = nmp->nm_timerhead.cqh_first;
 		}
 	    }
+#endif /* !NFS_V2_ONLY */
 
 	    /*
 	     * Get an authorization string, if required.
@@ -1139,7 +1149,9 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		error = 0;
 	return (error);
 }
+#endif /* NFS */
 
+#if defined(NFS) && !defined(NFS_V2_ONLY)
 /*
  * Update a client lease.
  */
@@ -1176,8 +1188,9 @@ nqnfs_clientlease(nmp, np, rwflag, cachable, expiry, frev)
 		CIRCLEQ_INSERT_AFTER(&nmp->nm_timerhead, tp, np, n_timer);
 	}
 }
-#endif /* NFS */
+#endif /* NFS && !NFS_V2_ONLY */
 
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 /*
  * Adjust all timer queue expiry times when the time of day clock is changed.
  * Called from the settimeofday() syscall.
@@ -1257,3 +1270,4 @@ nqsrv_unlocklease(lp)
 	if (lp->lc_flag & LC_WANTED)
 		wakeup((caddr_t)lp);
 }
+#endif /* NFSSERVER || NFS && !NFS_V2_ONLY */

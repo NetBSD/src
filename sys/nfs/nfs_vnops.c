@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.120 2000/09/19 22:18:03 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.121 2000/09/19 23:26:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -437,6 +437,7 @@ nfs_open(v)
 #endif
 		return (EACCES);
 	}
+#ifndef NFS_V2_ONLY
 	/*
 	 * Get a valid lease. If cached data is stale, flush it.
 	 */
@@ -457,7 +458,9 @@ nfs_open(v)
 			np->n_brev = np->n_lrev;
 		    }
 		}
-	} else {
+	} else
+#endif
+	{
 		if (np->n_flag & NMODIFIED) {
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
