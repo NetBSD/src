@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1996/05/05 06:18:14 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1996/05/15 02:51:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -461,6 +461,7 @@ bus_peek(bustype, paddr, sz)
 	va = (caddr_t)pgva + off;
 
 	mac68k_set_pte(pgva, pte);
+	TBIS(pgva);
 
 	/*
 	 * OK, try the access using one of the assembly routines
@@ -486,6 +487,7 @@ bus_peek(bustype, paddr, sz)
 	}
 
 	mac68k_set_pte(pgva, PG_NV);
+	TBIS(pgva);
 
 	return rv;
 }
