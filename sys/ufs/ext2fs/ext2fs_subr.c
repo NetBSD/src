@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.7 2003/01/24 21:55:20 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.8 2003/01/25 12:50:38 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.7 2003/01/24 21:55:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.8 2003/01/25 12:50:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ ext2fs_checkoverlap(bp, ip)
 			ep->b_blkno + btodb(ep->b_bcount) <= start)
 			continue;
 		vprint("Disk overlap", vp);
-		printf("\tstart %d, end %d overlap start %d, end %ld\n",
+		printf("\tstart %lld, end %lld overlap start %lld, end %lld\n",
 			start, last, ep->b_blkno,
 			ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
