@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.30 1998/11/25 15:48:35 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.31 1998/11/26 18:58:50 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1893,7 +1893,7 @@ svr4_sys_getmsg(p, v, retval)
 		if ((error = copyin(msg.msg_name, skp, sasize)) != 0)
 			return error;
 
-		sc.cmd = SVR4_TI_RECVFROM_REPLY;
+		sc.cmd = SVR4_TI_RECVFROM_IND;
 
 		switch (st->s_family) {
 		case AF_INET:
