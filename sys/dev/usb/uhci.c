@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.174 2003/07/03 11:24:13 drochner Exp $	*/
+/*	$NetBSD: uhci.c,v 1.175 2003/09/12 16:18:08 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.174 2003/07/03 11:24:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.175 2003/09/12 16:18:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1249,7 +1249,7 @@ uhci_intr1(uhci_softc_t *sc)
 	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
 
-	DPRINTFN(10, ("%s: uhci_intr: exit\n", USBDEVNAME(sc->sc_bus.bdev)));
+	DPRINTFN(15, ("%s: uhci_intr: exit\n", USBDEVNAME(sc->sc_bus.bdev)));
 
 	return (1);
 }
