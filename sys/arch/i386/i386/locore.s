@@ -45,12 +45,13 @@
  */
 
 #include "npx.h"
-
 #include "assym.s"
+
 #include "machine/psl.h"
 #include "machine/pte.h"
 
 #include "errno.h"
+#include "syscall.h"
 
 #include "machine/trap.h"
 
@@ -60,15 +61,17 @@
 
 #define	KDSEL		0x10
 #define	SEL_RPL_MASK	0x0003
-#define	TRAPF_CS_OFF	(13 * 4)
+
+/* XXX temporary kluge; these should not be here */
+#define	IOM_BEGIN	0x0a0000		/* Start of I/O Memory "hole" */
+#define	IOM_END		0x100000		/* End of I/O Memory "hole" */
+#define	IOM_SIZE	(IOM_END - IOM_BEGIN)
 
 /*
  * Note: This version greatly munged to avoid various assembler errors
  * that may be fixed in newer versions of gas. Perhaps newer versions
  * will have more pleasant appearance.
  */
-
-	.set	SYSPDROFF,0x3F8		# Page dir index of System Base
 
 #define	ALIGN_DATA	.align	2
 #define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
@@ -88,22 +91,20 @@
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
  */
-	.set	PDRPDROFF,0x3F7		# Page dir index of Page dir
 	.globl	_PTmap,_PTD,_PTDpde,_Sysmap
-	.set	_PTmap,0xFDC00000
-	.set	_PTD,0xFDFF7000
-	.set	_Sysmap,0xFDFF8000
-	.set	_PTDpde,0xFDFF7000+4*PDRPDROFF
+	.set	_PTmap,(PTDPTDI << PDSHIFT)
+	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
+	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 = sizeof pde
+	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
  * It's used when modifying another process's page tables.
  */
-	.set	APDRPDROFF,0x3FE		# Page dir index of Page dir
 	.globl	_APTmap,_APTD,_APTDpde
-	.set	_APTmap,0xFF800000
-	.set	_APTD,0xFFBFE000
-	.set	_APTDpde,0xFDFF7000+4*APDRPDROFF
+	.set	_APTmap,(APTDPTDI << PDSHIFT)
+	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
+	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 = sizeof pde
 
 /*
  * Access to each processes kernel stack is via a region of
@@ -112,8 +113,6 @@
  */
 	.set	_kstack,USRSTACK
 	.globl	_kstack
-	.set	PPDROFF,0x3F6
-	.set	PPTEOFF,0x400-UPAGES	# 0x3FE
 
 #define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
 #define	ALTENTRY(name)	.globl _/**/name; _/**/name:
@@ -149,7 +148,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	 * ( if we want to hold onto /boot, it's physical %esp up to _end)
 	 */
 
- 1:	movl	4(%esp),%eax
+1:	movl	4(%esp),%eax
 	movl	%eax,_boothowto-KERNBASE
 	movl	8(%esp),%eax
 	movl	%eax,_bootdev-KERNBASE
@@ -195,72 +194,39 @@ start:	movw	$0x1234,0x472	# warm boot
 	 * Oops, the gdt is in the carcass of the boot program so clearing
 	 * the rest of memory is still not possible.
 	 */
-	movl	$tmpstk-KERNBASE,%esp	# bootstrap stack end location
-
-#ifdef garbage
-	/* count up memory */
-
-	xorl	%eax,%eax		# start with base memory at 0x0
-	#movl	$0xA0000/NBPG,%ecx	# look every 4K up to 640K
-	movl	$0xA0,%ecx		# look every 4K up to 640K
-1:	movl	(%eax),%ebx		# save location to check
-	movl	$0xa55a5aa5,(%eax)	# write test pattern
-	/* flush stupid cache here! (with bcopy (0,0,512*1024) ) */
-	cmpl	$0xa55a5aa5,(%eax)	# does not check yet for rollover
-	jne	2f
-	movl	%ebx,(%eax)		# restore memory
-	addl	$NBPG,%eax
-	loop	1b
-2:	shrl	$12,%eax
-	movl	%eax,_Maxmem-KERNBASE
-
-	movl	$0x100000,%eax		# next, talley remaining memory
-	#movl	$((0xFFF000-0x100000)/NBPG),%ecx
-	movl	$(0xFFF-0x100),%ecx
-1:	movl	(%eax),%ebx		# save location to check
-	movl	$0xa55a5aa5,(%eax)	# write test pattern
-	cmpl	$0xa55a5aa5,(%eax)	# does not check yet for rollover
-	jne	2f
-	movl	%ebx,(%eax)		# restore memory
-	addl	$NBPG,%eax
-	loop	1b
-2:	shrl	$12,%eax
-	movl	%eax,_Maxmem-KERNBASE
-#endif
+	movl	$(tmpstk-KERNBASE),%esp	# bootstrap stack end location
 
 /*
  * Virtual address space of kernel:
  *
-!  *	text | data | bss | [syms] | page dir | proc0 kernel stack | usr stk map | Sysmap
- *			           0               1       2       3             4
+ *	text | data | bss | [syms] | page dir | usr stk map | proc0 kernel stack | Sysmap
+ *			           0          1             2          3         4
  */
-
-/* find end of kernel image */
-	movl	$_end-KERNBASE,%ecx
-	movl	%ecx,%esi
-	movl	$_edata-KERNBASE,%edi
-	subl	%edi,%ecx
-
 /* clear bss */
-	xorl	%eax,%eax	# pattern
+	movl	$(_edata-KERNBASE),%edi
+	movl	$(((_end-_edata)+3)>>2),%ecx
+	xorl	%eax,%eax
 	cld
 	rep
-	stosb
+	stosl
 
-	movl	%esi,%ecx	# if syms are not loaded
+/* find end of kernel image */
+	movl	$(_end-KERNBASE),%ecx
 #if	defined(DDB) && !defined(SYMTAB_SPACE)
 /* save the symbols (if loaded) */
-	cmpl	$0,_esym-KERNBASE
-	je	1f
-	movl	_esym-KERNBASE,%ecx
-	subl	$ KERNBASE,%ecx
+	movl	_esym-KERNBASE,%eax
+	testl	%eax,%eax
+	jz	1f
+	movl	%eax,%ecx
+	subl	$(KERNBASE),%ecx
+1:
 #endif
-1:	movl	%ecx,%edi	# edi= end || esym
-	addl	$ NBPG-1,%ecx	# page align up
-	andl	$~(NBPG-1),%ecx
+	movl	%ecx,%edi	# edi= end || esym
+	addl	$(NBPG-1),%ecx	# page align up
+	andl	$(~(NBPG-1)),%ecx
 	movl	%ecx,%esi	# esi=start of tables
 	subl	%edi,%ecx
-	addl	$(UPAGES+5)*NBPG,%ecx	# size of tables
+	addl	$((NKPDE+UPAGES+2)*NBPG),%ecx	# size of tables
 	
 /* clear memory for bootstrap tables */
 	xorl	%eax,%eax	# pattern
@@ -271,9 +237,15 @@ start:	movw	$0x1234,0x472	# warm boot
 /* physical address of Idle Address space */
 	movl	%esi,_IdlePTD-KERNBASE
 
+/*
+ * fillkpt
+ *	eax = pte (page frame | control | status)
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ */
 #define	fillkpt		\
 1:	movl	%eax,(%ebx)	; \
-	addl	$NBPG,%eax	; /* increment physical address */ \
+	addl	$(NBPG),%eax	; /* increment physical address */ \
 	addl	$4,%ebx		; /* next pte */ \
 	loop	1b		;
 
@@ -285,61 +257,57 @@ start:	movw	$0x1234,0x472	# warm boot
  * First step - build page tables
  */
 	movl	%esi,%ecx		# this much memory,
-	shrl	$PGSHIFT,%ecx		# for this many pte s
-	addl	$UPAGES+4,%ecx		# including our early context
-	cmpl	$0xa0,%ecx		# XXX - cover debugger pages
-	jae	1f
-	movl	$0xa0,%ecx
-1:
-	movl	$PG_V|PG_KW,%eax	#  having these bits set,
-	lea	(4*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
+	shrl	$(PGSHIFT),%ecx		# for this many pte s
+	addl	$(NKPDE+UPAGES+2),%ecx	# including our early context
+	movl	$(PG_V|PG_KW),%eax	#  having these bits set,
+	lea	((UPAGES+2)*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
 	movl	%ebx,_KPTphys-KERNBASE	#    in the kernel page table,
 	fillkpt
 
-/* map I/O memory map */
+/* map I/O memory */
 
-	movl	$0x100-0xa0,%ecx	# for this many pte s,
-	movl	$(0xa0000|PG_V|PG_UW),%eax # having these bits set,(perhaps URW?) XXX 06 Aug 92
-	movl	%ebx,_atdevphys-KERNBASE#   remember phys addr of ptes
+	movl	$(IOM_SIZE>>PGSHIFT),%ecx	# for this many pte s,
+	movl	$(IOM_BEGIN|PG_V|PG_UW/*|PG_N*/),%eax	# having these bits set
+	movl	%ebx,_atdevphys-KERNBASE	# remember phys addr of ptes
 	fillkpt
 
- /* map proc 0's kernel stack into user page table page */
+/* map proc 0's kernel stack into user page table page */
 
-	movl	$UPAGES,%ecx		# for this many pte s,
-	lea	(1*NBPG)(%esi),%eax	# physical address in proc 0
+	movl	$(UPAGES),%ecx		# for this many pte s,
+	lea	(2*NBPG)(%esi),%eax	# physical address in proc 0
 	lea	(KERNBASE)(%eax),%edx
 	movl	%edx,_proc0paddr-KERNBASE	# remember VA for 0th process init
-	orl	$PG_V|PG_KW,%eax	#  having these bits set,
-	lea	(3*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
-	addl	$(PPTEOFF*4),%ebx
+	orl	$(PG_V|PG_KW),%eax	#  having these bits set,
+	lea	(1*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
+	addl	$((NPTEPD-UPAGES)*4),%ebx
 	fillkpt
 
 /*
  * Construct a page table directory
  * (of page directory elements - pde's)
  */
-	/* install a pde for temporary double map of bottom of VA */
-	lea	(4*NBPG)(%esi),%eax	# physical address of kernel page table
-	orl     $PG_V|PG_UW,%eax	# pde entry is valid XXX 06 Aug 92
+	/* install a pde for temporary double map of kernel text */
+	movl	_KPTphys-KERNBASE,%eax	# physical address of kernel page tables
+	orl     $(PG_V|PG_UW),%eax	# pde entry is valid
 	movl	%eax,(%esi)		# which is where temp maps!
 
 	/* kernel pde's */
-	movl	$3,%ecx			# for this many pde s,
-	lea	SYSPDROFF*4(%esi),%ebx	# offset of pde for kernel
+	movl	$(NKPDE),%ecx		# for this many pde s,
+	lea	(KPTDI*4)(%esi),%ebx	# offset of pde for kernel
 	fillkpt
 
 	/* install a pde recursively mapping page directory as a page table! */
 	movl	%esi,%eax		# phys address of ptd in proc 0
-	orl	$PG_V|PG_UW,%eax	# pde entry is valid XXX 06 Aug 92
-	movl	%eax,PDRPDROFF*4(%esi)	# which is where PTmap maps!
+	orl	$(PG_V|PG_UW),%eax	# pde entry is valid
+	movl	%eax,(PTDPTDI*4)(%esi)	# which is where PTmap maps!
 
 	/* install a pde to map kernel stack for proc 0 */
-	lea	(3*NBPG)(%esi),%eax	# physical address of pt in proc 0
-	orl	$PG_V|PG_KW,%eax	# pde entry is valid
-	movl	%eax,PPDROFF*4(%esi)	# which is where kernel stack maps!
+	lea	(1*NBPG)(%esi),%eax	# physical address of pt in proc 0
+	orl	$(PG_V|PG_KW),%eax	# pde entry is valid
+	movl	%eax,(UPTDI*4)(%esi)	# which is where kernel stack maps!
 
 	/* copy and convert stuff from old gdt and idt for debugger */
-
+#ifdef BDB
 	cmpl	$0x0375c339,0x96104	# XXX - debugger signature
 	jne	1f
 	movb	$1,_bdb_exists-KERNBASE
@@ -381,10 +349,10 @@ start:	movw	$0x1234,0x472	# warm boot
 
 	addl	$2*6,%esp
 	popal
+#endif
 
 	/* load base of page directory and enable mapping */
 	movl	%esi,%eax		# phys address of ptd in proc 0
- 	orl	$I386_CR3PAT,%eax
 	movl	%eax,%cr3		# load ptd addr into mmu
 	movl	%cr0,%eax		# get control word
 	orl	$CR0_PE|CR0_PG,%eax	# enable paging
@@ -413,11 +381,8 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	movl	_proc0paddr,%eax
 	movl	%esi,PCB_CR3(%eax)
 
-	lea	7*NBPG(%esi),%esi	# skip past stack.
-	pushl	%esi
-	
+#ifdef BDB
 	/* relocate debugger gdt entries */
-
 	movl	$_gdt+8*9,%eax		# adjust slots 9-17
 	movl	$9,%ecx
 reloc_gdt:
@@ -429,7 +394,10 @@ reloc_gdt:
 	je	1f
 	int	$3
 1:
+#endif
 
+	lea	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
+	pushl	%esi
 	call	_init386		# wire 386 chip for unix operation
 	
 	movl	$0,_PTD
@@ -441,10 +409,10 @@ reloc_gdt:
 	 * now we've run main() and determined what cpu-type we are, we can
 	 * enable WP mode on i486 cpus and above.
 	 */
-	cmpl	$CPUCLASS_386,_cpu_class
+	cmpl	$(CPUCLASS_386),_cpu_class
 	je	1f			# 386s can't handle WP mode
 	movl	%cr0,%eax		# get control word
-	orl	$CR0_WP,%eax		# enable ring 0 Write Protection
+	orl	$(CR0_WP),%eax		# enable ring 0 Write Protection
 	movl	%eax,%cr0
 1:
 #endif
@@ -454,23 +422,22 @@ reloc_gdt:
 	movl	__udatasel,%ecx
 	# build outer stack frame
 	pushl	%ecx		# user ss
-	pushl	$USRSTACK	# user esp
+	pushl	$(USRSTACK)	# user esp
 	pushl	%eax		# user cs
 	pushl	$0		# user ip
 	movl	%cx,%ds
 	movl	%cx,%es
 	movl	%ax,%fs		# double map cs to fs
 	movl	%cx,%gs		# and ds to gs
-	lret	# goto user!
+	lret			# goto user!
 
+#ifdef DIAGNOSTIC
 	pushl	$lretmsg1	/* "should never get here!" */
 	call	_panic
 lretmsg1:
 	.asciz	"lret: toinit\n"
+#endif
 
-
-	.set	exec,59
-	.set	exit,1
 
 #define	LCALL(x,y)	.byte 0x9a ; .long y; .word x
 /*
@@ -481,25 +448,20 @@ ENTRY(icode)
 	pushl	$0		/* envp for execve() */
 
 #	pushl	$argv-_icode	/* can't do this 'cos gas 1.38 is broken */
-	movl	$argv,%eax
-	subl	$_icode,%eax
+	movl	$(argv),%eax
+	subl	$(_icode),%eax
 	pushl	%eax		/* argp for execve() */
 
 #	pushl	$init-_icode
-	movl	$init,%eax
-	subl	$_icode,%eax
+	movl	$(init),%eax
+	subl	$(_icode),%eax
 	pushl	%eax		/* fname for execve() */
-
 	pushl	%eax		/* dummy return address */
-
-	movl	$exec,%eax
-	LCALL(0x7,0x0)
-
+	movl	$(SYS_execve),%eax
+	LCALL(7,0)
 	/* exit if something botches up in the above exec */
-	pushl	%eax		/* exit code */
-	pushl	%eax		/* dummy return address */
-	movl	$exit,%eax
-	LCALL(0x7,0x0)
+	movl	$(SYS_exit),%eax
+	LCALL(7,0)
 
 init:
 	.asciz	"/sbin/init"
@@ -517,30 +479,17 @@ _szicode:
 ENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	lea	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
-					# copy at 8(%esp))
+					# copy at SIGF_SCP(%esp))
 	pushl	%eax
-	pushl	%eax		# junk to fake return address
-	movl	$103,%eax	# sigreturn()
-	LCALL(0x7,0)		# enter kernel with args on stack
-	hlt			# never gets here
+	pushl	%eax			# junk to fake return address
+	movl	$(SYS_sigreturn),%eax	
+	LCALL(7,0)			# enter kernel with args on stack
+	movl	$(SYS_exit),%eax
+	LCALL(7,0)			# exit if sigreturn fails
 
 	.globl	_esigcode
 _esigcode:
 
-	/*
-	 * Support routines for GCC
-	 */
-ENTRY(__udivsi3)
-	movl 4(%esp),%eax
-	xorl %edx,%edx
-	divl 8(%esp)
-	ret
-
-ENTRY(__divsi3)
-	movl 4(%esp),%eax
-	cltd
-	idivl 8(%esp)
-	ret
 
 	/*
 	 * I/O bus instructions via C
@@ -1358,14 +1307,12 @@ ENTRY(ltr)
 ENTRY(load_cr3)
 ALTENTRY(lcr3)
 	movl	4(%esp),%eax
- 	orl	$I386_CR3PAT,%eax
 	movl	%eax,%cr3
 	ret
 
 	# tlbflush()
 ENTRY(tlbflush)
 	movl	%cr3,%eax
- 	orl	$I386_CR3PAT,%eax
 	movl	%eax,%cr3
 	ret
 
@@ -1576,12 +1523,10 @@ ENTRY(swtch)
 1:
 #endif
 
-	movl	_CMAP2,%eax		# save temporary map PTE
-	movl	%eax,PCB_CMAP2(%ecx)	# in our context
 	movl	$0,_curproc		#  out of process
 
 	call	_splhigh
-	movw	%ax,PCB_IML(%ecx)	# save ipl
+	movl	%eax,PCB_IML(%ecx)	# save ipl
 
 	/* save is done, now choose a new process or idle */
 sw1:
@@ -1646,9 +1591,6 @@ swfnd:
 	movl	PCB_EIP(%edx),%eax
 	movl	%eax,(%esp)
 
-	movl	PCB_CMAP2(%edx),%eax	# get temporary map
-	movl	%eax,_CMAP2		# reload temporary map PTE
-
 	movl	%ecx,_curproc		# into next process
 	movl	%edx,_curpcb
 
@@ -1669,11 +1611,9 @@ swfnd:
 	sti				# splx() doesn't do an sti/cli
 	SHOW_STI
 
-	xorl	%eax,%eax
-	movw    PCB_IML(%edx),%ax
-	pushl   %eax
+	pushl	PCB_IML(%edx)
 	call    _splx			# restore the process's ipl
-	addl	$4, %esp
+	addl	$4,%esp
 
 	movl	%edx,%eax		# return (p);
 	ret
@@ -1707,8 +1647,8 @@ ENTRY(swtch_to_inactive)
  */
 ENTRY(savectx)
 	movl	4(%esp),%ecx
-	movw	_cpl,%ax
-	movw	%ax,PCB_IML(%ecx)
+	movl	_cpl,%eax
+	movl	%eax,PCB_IML(%ecx)
 	movl	(%esp),%eax	
 	movl	%eax,PCB_EIP(%ecx)
 	movl	%ebx,PCB_EBX(%ecx)
@@ -1754,9 +1694,6 @@ ENTRY(savectx)
 	popl	%ecx
 1:
 #endif
-
-	movl	_CMAP2,%edx		# save temporary map PTE
-	movl	%edx,PCB_CMAP2(%ecx)	# in our context
 
 	cmpl	$0,8(%esp)
 	je	1f
@@ -1995,7 +1932,7 @@ bpttraps:
 	movl	$KDSEL,%eax
 	movl	%ax,%ds
 	movl	%ax,%es
-	testb	$SEL_RPL_MASK,TRAPF_CS_OFF(%esp)
+	testb	$SEL_RPL_MASK,TF_CS(%esp)
 					# non-kernel mode?
 	jne	calltrap		# yes
 	call	_kgdb_trap_glue		

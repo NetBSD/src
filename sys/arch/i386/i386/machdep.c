@@ -1184,51 +1184,6 @@ init386(first_avail)
 	proc0.p_addr->u_pcb.pcb_ptd = IdlePTD;
 }
 
-extern struct pte	*CMAP1, *CMAP2;
-extern caddr_t		CADDR1, CADDR2;
-/*
- * zero out physical memory
- * specified in relocation units (NBPG bytes)
- */
-clearseg(n) {
-
-	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	load_cr3(rcr3());
-	bzero(CADDR2,NBPG);
-#ifndef MACHINE_NONCONTIG
-	*(int *) CADDR2 = 0;
-#endif /* MACHINE_NONCONTIG */
-}
-
-/*
- * copy a page of physical memory
- * specified in relocation units (NBPG bytes)
- */
-void
-copyseg(frm, n) {
-
-	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	load_cr3(rcr3());
-	bcopy((void *)frm, (void *)CADDR2, NBPG);
-}
-
-/*
- * copy a page of physical memory
- * specified in relocation units (NBPG bytes)
- */
-void
-physcopyseg(frm, to) {
-
-	*(int *)CMAP1 = PG_V | PG_KW | ctob(frm);
-	*(int *)CMAP2 = PG_V | PG_KW | ctob(to);
-	load_cr3(rcr3());
-	bcopy(CADDR1, CADDR2, NBPG);
-}
-
-/*aston() {
-	schednetisr(NETISR_AST);
-}*/
-
 void
 setsoftclock() {
 	schednetisr(NETISR_SCLK);
