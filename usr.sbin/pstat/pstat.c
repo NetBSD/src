@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.45 1999/07/04 22:09:30 fvdl Exp $	*/
+/*	$NetBSD: pstat.c,v 1.46 1999/10/01 23:11:24 soren Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.45 1999/07/04 22:09:30 fvdl Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.46 1999/10/01 23:11:24 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,7 +400,7 @@ vnode_print(avnode, vp)
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
-	(void)printf("%8lx %s %5s %4d %4ld %4d",
+	(void)printf("%8lx %s %5s %4ld %4ld %4d",
 	    (long)avnode, type, flags, vp->v_usecount, (long)vp->v_holdcnt,
 	    vp->v_tag);
 }
