@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.24 1995/12/11 12:43:28 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.25 1996/01/12 23:08:57 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -117,7 +117,6 @@ lematch(parent, match, aux)
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
 
-	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 2) != -1);
 }
 
