@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.20 1995/06/10 22:45:15 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.21 1995/06/24 20:29:23 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -102,7 +102,7 @@ svr4_wait(p, uap, retval)
 	SCARG(&w4, options) = 0;
 
 	if (SCARG(uap, status) == NULL) {
-		caddr_t sg = stackgap_init();
+		caddr_t sg = stackgap_init(p->p_emul);
 		SCARG(&w4, status) = stackgap_alloc(&sg, sz);
 	}
 	else
@@ -130,8 +130,8 @@ svr4_execv(p, uap, retval)
 {
 	struct execve_args ex;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ex, path) = SCARG(uap, path);
 	SCARG(&ex, argp) = SCARG(uap, argp);
@@ -147,8 +147,8 @@ svr4_execve(p, uap, retval)
 	register struct execve_args	*uap;
 	register_t			*retval;
 {
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return execve(p, uap, retval);
 }
@@ -358,8 +358,8 @@ svr4_mknod(p, uap, retval)
 	register struct svr4_mknod_args	*uap;
 	register_t			*retval;
 {
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode))) {
 		struct mkfifo_args ap;
@@ -552,7 +552,7 @@ svr4_times(p, uap, retval)
 	struct rusage		 r;
 	struct getrusage_args 	 ga;
 
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 	ru = stackgap_alloc(&sg, sizeof(struct rusage));
 
 	SCARG(&ga, who) = RUSAGE_SELF;
@@ -602,7 +602,7 @@ svr4_ulimit(p, uap, retval)
 			int error;
 			struct setrlimit_args srl;
 			struct rlimit krl;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 			struct rlimit *url = (struct rlimit *) 
 				stackgap_alloc(&sg, sizeof *url);
 
@@ -1027,13 +1027,13 @@ svr4_statvfs(p, uap, retval)
 	register_t				*retval;
 {
 	struct statfs_args	fs_args;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 	struct statfs *fs = stackgap_alloc(&sg, sizeof(struct statfs));
 	struct statfs bfs;
 	struct svr4_statvfs sfs;
 	int error;
 
-	CHECKALT(p, &sg, SCARG(uap, path));
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 
@@ -1056,7 +1056,7 @@ svr4_fstatvfs(p, uap, retval)
 	register_t				*retval;
 {
 	struct fstatfs_args	fs_args;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 	struct statfs *fs = stackgap_alloc(&sg, sizeof(struct statfs));
 	struct statfs bfs;
 	struct svr4_statvfs sfs;
@@ -1085,7 +1085,7 @@ svr4_alarm(p, uap, retval)
 	int error;
         struct itimerval *ntp, *otp, tp;
 	struct setitimer_args sa;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
         ntp = stackgap_alloc(&sg, sizeof(struct itimerval));
         otp = stackgap_alloc(&sg, sizeof(struct itimerval));
