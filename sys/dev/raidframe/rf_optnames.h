@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.9 2003/12/31 22:25:38 oster Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.10 2004/01/09 23:26:17 oster Exp $	*/
 /*
  * rf_optnames.h
  */
@@ -38,11 +38,6 @@ RF_DBG_OPTION(cscanDebug, 0)	/* debug CSCAN sorting */
 RF_DBG_OPTION(dagDebug, 0)
 RF_DBG_OPTION(degDagDebug, 0)
 RF_DBG_OPTION(diskDebug, 0)
-RF_DBG_OPTION(enableAtomicRMW, 0)	/* this debug var enables locking of
-					 * the disk arm during small-write
-					 * operations.  Setting this variable
-					 * to anything other than 0 will
-					 * result in deadlock.  (wvcii) */
 RF_DBG_OPTION(engineDebug, 0)
 RF_DBG_OPTION(fifoDebug, 0)	/* debug fifo queueing */
 RF_DBG_OPTION(floatingRbufDebug, 0)

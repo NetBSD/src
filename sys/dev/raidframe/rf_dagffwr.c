@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.14 2004/01/06 03:27:13 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.15 2004/01/09 23:26:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.14 2004/01/06 03:27:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.15 2004/01/09 23:26:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -491,7 +491,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	long    nfaults;
 
 	nfaults = qfuncs ? 2 : 1;
-	lu_flag = (rf_enableAtomicRMW) ? 1 : 0;	/* lock/unlock flag */
+	lu_flag = 0;	/* lock/unlock flag */
 
 	parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout),
 	    asmap->raidAddress, &which_ru);
