@@ -1,6 +1,5 @@
 # Host ARM running NetBSD
 XDEPFILES= ser-tcp.o
-NAT_CLIBS= -lkvm
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o armnbsd-nat.o kcore-nbsd.o
+NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o armnbsd-nat.o
 XM_FILE=xm-nbsd.h
 NAT_FILE=nm-nbsd.h
