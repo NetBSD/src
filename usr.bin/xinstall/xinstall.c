@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.77 2003/03/13 18:23:02 thorpej Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.78 2003/07/12 14:30:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.77 2003/03/13 18:23:02 thorpej Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.78 2003/07/12 14:30:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -499,9 +499,9 @@ makelink(char *from_name, char *to_name)
 		/* count the number of directories we need to backtrack */
 		for (++d, lnk[0] = '\0'; *d; d++)
 			if (*d == '/')
-				(void)strcat(lnk, "../");
+				(void)strlcat(lnk, "../", sizeof(lnk));
 
-		(void)strcat(lnk, ++s);
+		(void)strlcat(lnk, ++s, sizeof(lnk));
 
 		do_symlink(lnk, dst);
 		metadata_log(dst, "link", NULL, lnk);
