@@ -60,7 +60,7 @@ static char sccsid[] = "@(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #define	FATAL		1
 #define	NOTFATAL	0
 
-int	deliver __P((int, char *));
+int	deliver __P((int, char *, int));
 void	err __P((int, const char *, ...));
 void	notifybiff __P((char *));
 int	store __P((char *));
@@ -73,7 +73,7 @@ main(argc, argv)
 	extern int optind;
 	extern char *optarg;
 	struct passwd *pw;
-	int ch, fd, eval;
+	int ch, fd, eval, lockfile=0;
 	uid_t uid;
 	char *from;
 
@@ -89,6 +89,9 @@ main(argc, argv)
 			if (from)
 			    err(FATAL, "multiple -f options");
 			from = optarg;
+			break;
+		case 'l':
+			lockfile++;
 			break;
 		case '?':
 		default:
@@ -112,7 +115,7 @@ main(argc, argv)
 
 	fd = store(from);
 	for (eval = 0; *argv; ++argv)
-		eval |= deliver(fd, *argv);
+		eval |= deliver(fd, *argv, lockfile);
 	exit(eval);
 }
 
@@ -159,14 +162,15 @@ store(from)
 	return(fd);
 }
 
-deliver(fd, name)
+deliver(fd, name, lockfile)
 	int fd;
 	char *name;
+	int lockfile;
 {
 	struct stat sb;
 	struct passwd *pw;
-	int created, mbfd, nr, nw, off, rval;
-	char biffmsg[100], buf[8*1024], path[MAXPATHLEN];
+	int created, mbfd, nr, nw, off, rval, lfd=-1;
+	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
 	off_t curoff, lseek();
 
 	/*
@@ -180,28 +184,28 @@ deliver(fd, name)
 
 	(void)sprintf(path, "%s/%s", _PATH_MAILDIR, name);
 
+	if(lockfile) {
+		(void)sprintf(lpath, "%s/%s.lock", _PATH_MAILDIR, name);
+
+		if((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
+		    S_IRUSR|S_IWUSR)) < 0) {
+			err(NOTFATAL, "%s: %s", lpath, strerror(errno));
+			return(1);
+		}
+	}
+
 	if (!(created = lstat(path, &sb)) &&
 	    (sb.st_nlink != 1 || S_ISLNK(sb.st_mode))) {
 		err(NOTFATAL, "%s: linked file", path);
 		return(1);
 	}
-
-	/*
-	 * There's a race here -- two processes think they both created
-	 * the file.  This means the file cannot be unlinked.
-	 */
-	if ((mbfd =
-	    open(path, O_APPEND|O_CREAT|O_WRONLY, S_IRUSR|S_IWUSR)) < 0) {
+	if((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
+	    S_IRUSR|S_IWUSR)) < 0) {
+		if ((mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK,
+		    S_IRUSR|S_IWUSR)) < 0) {
 		err(NOTFATAL, "%s: %s", path, strerror(errno));
 		return(1);
 	}
-
-	rval = 0;
-	/* XXX: Open should allow flock'ing the file; see 4.4BSD. */
-	if (flock(mbfd, LOCK_EX)) {
-		err(NOTFATAL, "%s: %s", path, strerror(errno));
-		rval = 1;
-		goto bad;
 	}
 
 	curoff = lseek(mbfd, 0L, SEEK_END);
@@ -230,7 +234,14 @@ trunc:		(void)ftruncate(mbfd, curoff);
 	 * ownership or permissions were changed there was a reason for doing
 	 * so.
 	 */
-bad:	if (created) 
+bad:
+	if(lockfile) {
+		if(lfd >= 0) {
+			unlink(lpath);
+			close(lfd);
+		}
+	}
+	if (created) 
 		(void)fchown(mbfd, pw->pw_uid, pw->pw_gid);
 
 	(void)fsync(mbfd);		/* Don't wait for update. */
