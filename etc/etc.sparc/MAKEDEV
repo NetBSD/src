@@ -63,8 +63,13 @@
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
+
 for i
 do
+
+unit=`expr $i : '[a-z][a-z]*\([0-9][0-9]*\)'`
+[ "$unit" ] || unit=0
+
 case $i in
 
 all)
@@ -104,27 +109,22 @@ std)
 	;;
 
 bwtwo*)
-	unit=`expr $i : '.....\(.*\)'`
 	mknod bwtwo$unit	c 27 $unit; chmod 666 bwtwo$unit
 	;;
 
 cgthree*)
-	unit=`expr $i : '.......\(.*\)'`
 	mknod cgthree$unit	c 55 $unit; chmod 666 cgthree$unit
 	;;
 
 cgfour*)
-	unit=`expr $i : '......\(.*\)'`
 	mknod cgfour$unit	c 39 $unit; chmod 666 cgfour$unit
 	;;
 
 cgsix*)
-	unit=`expr $i : '.....\(.*\)'`
 	mknod cgsix$unit	c 67 $unit; chmod 666 cgsix$unit
 	;;
 
 cgeight*)
-	unit=`expr $i : '.....\(.*\)'`
 	mknod cgeight$unit	c 64 $unit; chmod 666 cgeight$unit
 	;;
 
@@ -137,7 +137,6 @@ openprom)
 	;;
 
 bpf*)
-	unit=`expr $i : 'bpf\(.*\)'`
 	rm -f bpf$unit
 	mknod bpf$unit c 105 $unit
 	chmod 600 bpf$unit
@@ -145,7 +144,6 @@ bpf*)
 	;;
 
 tun*)
-	unit=`expr $i : 'tun\(.*\)'`
 	rm -f tun$unit
 	mknod tun$unit c 111 $unit
 	chmod 600 tun$unit
@@ -153,7 +151,6 @@ tun*)
 	;;
 
 vnd*)
-	unit=`expr $i : '...\(.*\)'`
 	name=vnd; blk=8; chr=110
 	rm -f ${name}${unit}c r${name}${unit}c
 	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
@@ -163,7 +160,7 @@ vnd*)
 	;;
 
 fd*|sd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	umask 2
 	case $i in
 	fd*) name=fd; blk=16; chr=54;;
 	sd*) name=sd; blk=7; chr=17;;
@@ -198,7 +195,7 @@ fd*|sd*)
 	;;
 
 st*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	umask 2
 	case $i in
 	st*) name=st; blk=11; chr=18;;
 	esac
@@ -224,7 +221,7 @@ st*)
 	;;
 
 ch*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	umask 2
 	case $i in
 	ch*) name=ch;  chr=19;;
 	esac
@@ -236,7 +233,7 @@ ch*)
 	;;
 
 cd*)
-	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
+	umask 2
 	case $i in
 	cd*) name=cd; blk=18; chr=58;;
 	esac
@@ -258,8 +255,7 @@ lkm)
 	;;
 
 pty*)
-	class=`expr $i : 'pty\(.*\)'`
-	case $class in
+	case $unit in
 	0) offset=0 name=p;;
 	1) offset=16 name=q;;
 	2) offset=32 name=r;;
@@ -268,7 +264,7 @@ pty*)
 	4) offset=64 name=t;;
 	*) echo bad unit for pty in: $i;;
 	esac
-	case $class in
+	case $unit in
 	0|1|2|3|4)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
@@ -277,7 +273,7 @@ pty*)
 					mknod pty%s%x c 21 %d; ", \
 					n, i, b+i, n, i, b+i); }'`
 		umask 77
-		if [ $class = 1 ]; then
+		if [ $unit = 1 ]; then
 			mv ttyqf ttyv0; mv ptyqf ptyv0
 		fi
 		;;
