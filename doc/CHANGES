@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.454 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.455 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -15,3 +15,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		allow both the devices to attach through ACPI [cube 20050325]
 	gre(4): add support for IPv6 as inner protocol, contributed by
 		Gert Doering [is 20050330]
+	/rescue: Add tetris.  [lukem 20050401]

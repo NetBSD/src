@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.9 2005/01/10 10:47:36 lukem Exp $
+# $NetBSD: rescue.mi,v 1.10 2005/04/01 08:35:17 lukem Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -128,6 +128,7 @@
 ./rescue/systrace				base-rescue-root
 ./rescue/tar					base-rescue-root
 ./rescue/test					base-rescue-root
+./rescue/tetris					base-rescue-root
 ./rescue/ttyflags				base-rescue-root
 ./rescue/tunefs					base-rescue-root
 ./rescue/umount					base-rescue-root
