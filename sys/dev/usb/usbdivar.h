@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.5 1998/07/26 17:42:49 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.6 1998/08/01 18:16:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct usbd_bus {
 	struct usbd_device     *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
 	char			needs_explore;/* a hub a signalled a change */
+	char			use_polling;
 	struct usb_softc       *usbctl;
 	struct usb_device_stats	stats;
 };
@@ -162,7 +163,7 @@ void usbd_init __P((void));
 
 /* Routines from usb_subr.c */
 int		usbctlprint __P((void *, const char *));
-void		usbd_delay_ms __P((int));
+void		usbd_delay_ms __P((usbd_bus_handle, int));
 void		usbd_devinfo_vp __P((usbd_device_handle, char *, char *));
 usbd_status	usbd_set_config_no __P((usbd_device_handle, int));
 usbd_status	usbd_reset_port __P((usbd_device_handle dev,

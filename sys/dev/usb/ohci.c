@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.5 1998/07/26 17:42:48 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.6 1998/08/01 18:16:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -962,7 +962,7 @@ ohci_device_request(reqh)
 	sed->ed->ed_tailp = tail->physaddr;
 	opipe->tail = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
-	if (reqh->timeout && !usbd_use_polling)
+	if (reqh->timeout && !sc->sc_bus.use_polling)
 		timeout(ohci_timeout, reqh, MS_TO_TICKS(reqh->timeout));
 	splx(s);
 
@@ -1560,7 +1560,7 @@ ohci_root_ctrl_transfer(reqh)
 			DPRINTFN(5,("ohci_root_ctrl_transfer: reset port %d\n", index));
 			OWRITE4(sc, port, UPS_RESET);
 			for (i = 0; i < 10; i++) {
-				usbd_delay_ms(10);
+				usbd_delay_ms(&sc->sc_bus, 10);
 				if ((OREAD4(sc, port) & UPS_RESET) == 0)
 					break;
 			}
@@ -1653,6 +1653,7 @@ usbd_status
 ohci_device_ctrl_transfer(reqh)
 	usbd_request_handle reqh;
 {
+	ohci_softc_t *sc = (ohci_softc_t *)reqh->pipe->device->bus;
 	usbd_status r;
 
 	if (!reqh->isreq) {
@@ -1665,8 +1666,8 @@ ohci_device_ctrl_transfer(reqh)
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 
-	if (usbd_use_polling)
-		ohci_waitintr((ohci_softc_t *)reqh->pipe->device->bus, reqh);
+	if (sc->sc_bus.use_polling)
+		ohci_waitintr(sc, reqh);
 	return (USBD_IN_PROGRESS);
 }
 
@@ -1676,7 +1677,7 @@ ohci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
 	/* XXX call done */
 }
 
@@ -1693,7 +1694,7 @@ ohci_device_ctrl_close(pipe)
 	s = splusb();
 	sed->ed->ed_flags |= OHCI_ED_SKIP;
 	if ((sed->ed->ed_tailp & OHCI_TAILMASK) != sed->ed->ed_headp)
-		usbd_delay_ms(2);
+		usbd_delay_ms(&sc->sc_bus, 2);
 	ohci_rem_ed(sed, sc->sc_ctrl_head);
 	splx(s);
 	ohci_free_std(sc, opipe->tail);
@@ -1770,7 +1771,7 @@ ohci_device_bulk_transfer(reqh)
 	sed->ed->ed_tailp = tail->physaddr;
 	opipe->tail = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
-	if (reqh->timeout && !usbd_use_polling)
+	if (reqh->timeout && !sc->sc_bus.use_polling)
 		timeout(ohci_timeout, reqh, MS_TO_TICKS(reqh->timeout));
 	splx(s);
 
@@ -1790,10 +1791,10 @@ ohci_device_bulk_abort(reqh)
 #if 0
 	sed->ed->ed_flags |= OHCI_ED_SKIP;
 	if ((sed->ed->ed_tailp & OHCI_TAILMASK) != sed->ed->ed_headp)
-		usbd_delay_ms(2);
+		usbd_delay_ms(reqh->pipe->device->bus, 2);
 #endif
 	/* XXX inactivate */
-	usbd_delay_ms(1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
 	/* XXX call done */
 }
 
@@ -1880,7 +1881,7 @@ ohci_device_intr_transfer(reqh)
 	sed->ed->ed_tailp = tail->physaddr;
 	opipe->tail = tail;
 #if 0
-	if (reqh->timeout && !usbd_use_polling)
+	if (reqh->timeout && !sc->sc_bus.use_polling)
 		timeout(ohci_timeout, reqh, MS_TO_TICKS(reqh->timeout));
 #endif
 	sed->ed->ed_flags &= ~OHCI_ED_SKIP;
@@ -1912,7 +1913,7 @@ ohci_device_intr_abort(reqh)
 	struct uhci_pipe *opipe;
 
 	/* XXX inactivate */
-	usbd_delay_ms(1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
 		reqh->pipe->intrreqh = 0;
@@ -1939,7 +1940,7 @@ ohci_device_intr_close(pipe)
 	s = splusb();
 	sed->ed->ed_flags |= OHCI_ED_SKIP;
 	if ((sed->ed->ed_tailp & OHCI_TAILMASK) != sed->ed->ed_headp)
-		usbd_delay_ms(2);
+		usbd_delay_ms(&sc->sc_bus, 2);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
 		;

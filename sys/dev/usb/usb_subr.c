@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.4 1998/07/23 01:46:27 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.5 1998/08/01 18:16:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -217,11 +217,12 @@ usbd_devinfo(dev, showclass, cp)
 
 /* Delay for a certain number of ms */
 void
-usbd_delay_ms(ms)
+usbd_delay_ms(bus, ms)
+	usbd_bus_handle bus;
 	int ms;
 {
 	/* Wait at least two clock ticks so we know the time has passed. */
-	if (usbd_use_polling)
+	if (bus->use_polling)
 		delay((ms+1) * 1000);
 	else
 		tsleep(&ms, PRIBIO, "usbdly", (ms*hz+999)/1000 + 1);
@@ -250,7 +251,7 @@ usbd_reset_port(dev, port, ps)
 	n = 10;
 	do {
 		/* Wait for device to recover from reset. */
-		usbd_delay_ms(USB_PORT_RESET_DELAY);
+		usbd_delay_ms(dev->bus, USB_PORT_RESET_DELAY);
 		r = usbd_get_port_status(dev, port, ps);
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("usbd_reset_port: get status failed %d\n",r));
