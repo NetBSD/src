@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.15 1998/07/28 11:41:45 mycroft Exp $	*/
+/*	$NetBSD: lex.c,v 1.16 1999/03/19 12:57:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.15 1998/07/28 11:41:45 mycroft Exp $");
+__RCSID("$NetBSD: lex.c,v 1.16 1999/03/19 12:57:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1417,8 +1417,8 @@ reread:
 		    tpgrp != ctpgrp) {
 		    (void) tcsetpgrp(FSHTTY, tpgrp);
 		    (void) kill(-ctpgrp, SIGHUP);
-		    (void) fprintf(csherr, "Reset tty pgrp from %d to %d\n",
-				   ctpgrp, tpgrp);
+		    (void) fprintf(csherr, "Reset tty pgrp from %ld to %ld\n",
+				   (long)ctpgrp, (long)tpgrp);
 		    goto reread;
 		}
 		if (adrof(STRignoreeof)) {
