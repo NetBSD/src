@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.2 2003/06/23 11:01:16 martin Exp $	*/
+/* 	$NetBSD: lock.h,v 1.2.2.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,18 +44,6 @@
 #ifndef _HPPA_LOCK_H_
 #define	_HPPA_LOCK_H_
 
-#include "opt_multiprocessor.h"
-
-#ifdef	MULTIPROCESSOR
-
-/*
- * Semaphores must be aligned on 16-byte boundaries on the PA-RISC.
- */
-typedef __volatile struct {
-	int32_t sem __attribute__ ((aligned (16)));
-} __cpu_simple_lock_t;
-
-
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
@@ -64,7 +52,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 		"	stw	%1, %0		\n"
 		"	sync			\n"
 		"	; END __cpu_simple_lock_init"
-		: "=m" (*alp->sem)
+		: "=m" (*alp)
 		: "r" (__SIMPLELOCK_UNLOCKED));
 }
 
@@ -91,7 +79,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 		"	ldw		%1, %0		\n"
 		"2:	sync				\n"
 		"	; END __cpu_simple_lock\n"
-		: "=r" (t0), "+m" (*alp->sem));
+		: "=r" (t0), "+m" (*alp));
 }
 
 static __inline int
@@ -104,7 +92,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 		"	ldcw		%1, %0		\n"
 		"	sync				\n"
 		"	; END __cpu_simple_lock_try"
-		: "=r" (t0), "+m" (*alp->sem));
+		: "=r" (t0), "+m" (*alp));
 	return (t0 != 0);
 }
 
@@ -116,17 +104,8 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 		"	sync			\n"
 		"	stw	%1, %0		\n"
 		"	; END __cpu_simple_unlock"
-		: "+m" (*alp->sem)
+		: "+m" (*alp)
 		: "r" (__SIMPLELOCK_UNLOCKED));
 }
-
-#else	/* !MULTIPROCESSOR */
-
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
-
-#endif	/* !MULTIPROCESSOR */
 
 #endif /* _HPPA_LOCK_H_ */

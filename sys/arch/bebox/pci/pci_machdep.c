@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2002/09/27 15:35:55 provos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.6.1 2004/08/03 10:33:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,9 @@
  * using `options PCI_CONF_MODE=N', where `N' is the configuration mode
  * as defined section 3.6.4.1, `Generating Configuration Cycles'.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.6.1 2004/08/03 10:33:40 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

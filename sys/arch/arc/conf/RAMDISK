@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.40 2003/06/15 06:10:42 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.40.2.1 2004/08/03 10:32:21 skrll Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.40 $"
+#ident		"GENERIC-$Revision: 1.40.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -45,6 +45,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -69,6 +70,7 @@ options 	SYMTAB_SPACE=262144
 #options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
@@ -184,13 +186,8 @@ fdc0		at jazzio?
 fd*		at fdc? drive ?
 
 asc0		at jazzio? flags 0x000000	# NCR53C9x SCSI
-scsibus* 	at asc?
-
 osiop*		at jazzio? flags 0x00000	# NCR53C710 SCSI
-scsibus* 	at osiop?
-
-oosiop* 	at jazzio?
-scsibus* 	at oosiop?
+oosiop* 	at jazzio?			# NCR53C700 SCSI
 
 #### ISA bus devices
 
@@ -241,22 +238,6 @@ wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1		at isa? port 0x170 irq 15 flags 0x00
 wdc*		at isapnp?
 
-# IDE drives
-# Flags are used only with controllers that support DMA operations
-# and mode settings (e.g. some pciide controllers)
-# The lowest order four bits (rightmost digit) of the flags define the PIO
-# mode to use, the next set of four bits the DMA mode and the third set the
-# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
-# to use, and the last bit must be 1 for this setting to be used.
-# For DMA and UDMA, 0xf (1111) means 'disable'.
-# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
-# (0xc=1100, 0xa=1010, 0xf=1111)
-# 0x0000 means "use whatever the drive claims to support".
-wd*		at wdc? channel ? drive ? flags 0x0000
-
-# ATAPI bus support
-atapibus*	at wdc? channel ?
-
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x378 irq 7
 
@@ -272,7 +253,6 @@ we1		at isa? port 0x300 iomem 0xcc000 irq 10
 
 # XXX - should be configured
 #btl0		at isa? port 0x330 irq ? drq ?
-#scsibus*	at btl?
 
 #### PCI bus devices
 
@@ -286,19 +266,29 @@ pci*		at necpb?
 tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
 
 ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-scsibus*	at ahc?
-
 iha*		at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-scsibus*	at iha?
-
 pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
-scsibus* 	at pcscp?
-
 siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
-scsibus* 	at siop?
-
 trm*		at pci? dev ? function ?	# Tekram DC-395/315 SCSI
-scsibus*	at trm?
+
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
+#aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+#piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+#siside* 	at pci? dev ? function ?	# SiS IDE controllers
+slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+#viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
@@ -308,15 +298,6 @@ pcn*		at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
-
-# IDE and related devices
-# PCI IDE controllers - see pciide(4) for supported hardware.
-# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
-# how to set up DMA modes for this chip. This may work, or may cause
-# a machine hang with some controllers.
-pciide*		at pci ? dev ? function ? flags 0x0000
-wd*		at pciide? channel ? drive ? flags 0x0000
-atapibus*	at pciide? channel ?
 
 #### MII/PHY support
 
@@ -333,6 +314,9 @@ tlphy*		at mii? phy ?		# ThunderLAN PHYs
 tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
+# SCSI bus support
+scsibus*	at scsi?
+
 #### SCSI bus devices
 
 sd*		at scsibus? target ? lun ?
@@ -341,6 +325,25 @@ cd*		at scsibus? target ? lun ?
 ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
+
+# ATA (IDE) bus support
+atabus* 	at ata?
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+wd*		at atabus? drive ? flags 0x0000
+
+# ATAPI bus support
+atapibus*	at atapi?
 
 #### ATAPI bus devices
 

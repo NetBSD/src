@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2003/06/26 16:47:15 drochner Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.2.1 2004/08/03 10:35:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -74,16 +70,16 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include "opt_compat_netbsd.h"
+#include "opt_compat_oldboot.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
-#include "opt_vm86.h"
-#include "opt_user_ldt.h"
-#include "opt_dummy_nops.h"
-#include "opt_compat_oldboot.h"
-#include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "opt_realmem.h"
+#include "opt_user_ldt.h"
+#include "opt_vm86.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -129,7 +125,7 @@
 
 #define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg	
 #define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
-	
+
 #define CLEAR_RESCHED(reg)		movl	reg,CPUVAR(RESCHED)
 
 /* XXX temporary kluge; these should not be here */
@@ -242,7 +238,7 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 tmpstk:
 
 
-#define	_RELOC(x)	((x) - KERNBASE)
+#define	_RELOC(x)	((x) - KERNBASE_LOCORE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
 	.text
@@ -296,7 +292,7 @@ start:	movw	$0x1234,0x472			# warm boot
  	movl	16(%esp),%eax
 	testl	%eax,%eax
 	jz	1f
-	addl	$KERNBASE,%eax
+	addl	$KERNBASE_LOCORE,%eax
 1: 	movl	%eax,RELOC(esym)
 
 	movl	RELOC(biosextmem),%eax
@@ -516,7 +512,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f
-	subl	$KERNBASE,%eax
+	subl	$KERNBASE_LOCORE,%eax
 	movl	%eax,%edi
 1:
 #endif
@@ -632,10 +628,10 @@ try586:	/* Use the `cpuid' instruction. */
 	ret
 
 begin:
-	/* Now running relocated at KERNBASE.  Remove double mapping. */
+	/* Now running relocated at KERNBASE_LOCORE.  Remove double mapping. */
 	movl	_C_LABEL(nkpde),%ecx		# for this many pde s,
 	leal	(PROC0PDIR+0*4)(%esi),%ebx	# which is where temp maps!
-	addl	$(KERNBASE), %ebx	# now use relocated address
+	addl	$(KERNBASE_LOCORE), %ebx	# now use relocated address
 1:	movl	$0,(%ebx)
 	addl	$4,%ebx	# next pde
 	loop	1b
@@ -643,12 +639,12 @@ begin:
 	/* Relocate atdevbase. */
 	movl	_C_LABEL(nkpde),%edx
 	shll	$PGSHIFT,%edx
-	addl	$(TABLESIZE+KERNBASE),%edx
+	addl	$(TABLESIZE+KERNBASE_LOCORE),%edx
 	addl	%esi,%edx
 	movl	%edx,_C_LABEL(atdevbase)
 
 	/* Set up bootstrap stack. */
-	leal	(PROC0STACK+KERNBASE)(%esi),%eax
+	leal	(PROC0STACK+KERNBASE_LOCORE)(%esi),%eax
 	movl	%eax,_C_LABEL(proc0paddr)
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
@@ -705,11 +701,12 @@ NENTRY(proc_trampoline)
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
+	DO_DEFERRED_SWITCH(%eax)
 	INTRFASTEXIT
 	/* NOTREACHED */
 
 /*****************************************************************************/
-
+#ifdef COMPAT_16
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -722,12 +719,13 @@ NENTRY(sigcode)
 	leal	12(%esp),%eax		# get pointer to sigcontext
 	movl	%eax,4(%esp)		# put it in the argument slot
 					# fake return address already there
-	movl	$SYS___sigreturn14,%eax
+	movl	$SYS_compat_16___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
+#endif
 
 /*****************************************************************************/
 
@@ -775,7 +773,7 @@ ENTRY(kcopy)
 	pushl	%edi
 	GET_CURPCB(%eax)		# load curpcb into eax and set on-fault
 	pushl	PCB_ONFAULT(%eax)
-	movl	$_C_LABEL(copy_fault), PCB_ONFAULT(%eax)
+	movl	$_C_LABEL(kcopy_fault), PCB_ONFAULT(%eax)
 
 	movl	16(%esp),%esi
 	movl	20(%esp),%edi
@@ -868,6 +866,7 @@ _C_LABEL(copyin_func):
  */
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
+	DO_DEFERRED_SWITCH(%eax)
 	jmp	*_C_LABEL(copyout_func)
 
 #if defined(I386_CPU)
@@ -1009,6 +1008,7 @@ ENTRY(i486_copyout)
  */
 /* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
+	DO_DEFERRED_SWITCH(%eax)
 	jmp	*_C_LABEL(copyin_func)
 
 #if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU) || \
@@ -1059,6 +1059,19 @@ ENTRY(i386_copyin)
 NENTRY(copy_efault)
 	movl	$EFAULT,%eax
 
+/*
+ * kcopy_fault is used by kcopy and copy_fault is used by copyin/out.
+ *
+ * they're distinguished for lazy pmap switching.  see trap().
+ */
+/* LINTSTUB: Ignore */
+NENTRY(kcopy_fault)
+	GET_CURPCB(%edx)
+	popl	PCB_ONFAULT(%edx)
+	popl	%edi
+	popl	%esi
+	ret
+
 /* LINTSTUB: Ignore */
 NENTRY(copy_fault)
 	GET_CURPCB(%edx)
@@ -1079,6 +1092,8 @@ NENTRY(copy_fault)
 ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
+
+	DO_DEFERRED_SWITCH(%eax)
 
 	movl	12(%esp),%esi		# esi = from
 	movl	16(%esp),%edi		# edi = to
@@ -1197,6 +1212,9 @@ ENTRY(copyoutstr)
 ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
+	
+	DO_DEFERRED_SWITCH(%eax)
+
 	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
 
@@ -1308,6 +1326,7 @@ ENTRY(copystr)
  */
 /* LINTSTUB: Func: long fuword(const void *base) */
 ENTRY(fuword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1324,6 +1343,7 @@ ENTRY(fuword)
  */
 /* LINTSTUB: Func: int fusword(const void *base) */
 ENTRY(fusword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1341,6 +1361,8 @@ ENTRY(fusword)
  */
 /* LINTSTUB: Func: int fuswintr(const void *base) */
 ENTRY(fuswintr)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	jnz	_C_LABEL(fusuaddrfault)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1358,6 +1380,7 @@ ENTRY(fuswintr)
  */
 /* LINTSTUB: Func: int fubyte(const void *base) */
 ENTRY(fubyte)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1402,6 +1425,7 @@ NENTRY(fusuaddrfault)
  */
 /* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1449,6 +1473,7 @@ ENTRY(suword)
  */
 /* LINTSTUB: Func: int susword(void *base, short c) */
 ENTRY(susword)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1497,6 +1522,8 @@ ENTRY(susword)
  */
 /* LINTSTUB: Func: int suswintr(void *base, short c) */
 ENTRY(suswintr)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	jnz	_C_LABEL(fusuaddrfault)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1534,6 +1561,7 @@ ENTRY(suswintr)
  */
 /* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
+	DO_DEFERRED_SWITCH(%eax)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -1719,7 +1747,7 @@ ENTRY(cpu_switch)
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi
@@ -1746,12 +1774,9 @@ ENTRY(cpu_switch)
 	movl	PCB_ESP(%edi),%esp
 	movl	PCB_EBP(%edi),%ebp
 
-
-	/* Switch address space. */
-	movl	PCB_CR3(%edi),%ecx
-	movl	%ecx,%cr3
-
 	/* Switch TSS. Reset "task busy" flag before loading. */
+	movl	%cr3,%eax
+	movl	%eax,PCB_CR3(%edi)
 #ifdef MULTIPROCESSOR
 	movl	CPUVAR(GDT),%eax
 #else
@@ -1800,6 +1825,7 @@ idle_start:
 	jz	idle_loop
 idle_exit:	
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
+	sti
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
 #endif
@@ -1868,7 +1894,7 @@ switch_resume:
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi
@@ -1901,6 +1927,9 @@ switch_exited:
 	jnz	switch_restored
 #endif
 
+	/* Switch TSS. Reset "task busy" flag before loading. */
+	movl	%cr3,%eax
+	movl	%eax,PCB_CR3(%esi) /* XXX should be done by pmap_activate? */
 #ifdef MULTIPROCESSOR
 	movl	CPUVAR(GDT),%eax
 #else	
@@ -1909,7 +1938,6 @@ switch_exited:
 #endif
 	movl	L_MD_TSS_SEL(%edi),%edx
 
-	/* Switch TSS. Reset "task busy" flag before loading. */
 	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
@@ -1924,7 +1952,7 @@ switch_restored:
 	movl	PCB_CR0(%esi),%ecx
 #ifdef MULTIPROCESSOR
 	/* 
-	 * If our floating point registers are on a different cpu,
+	 * If our floating point registers are on a different CPU,
 	 * clear CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	movl	PCB_FPCPU(%esi),%ebx
@@ -1946,17 +1974,8 @@ switch_restored:
  */
 	movl	CPUVAR(CURLWP),%edi
 	movl	L_PROC(%edi),%esi
-	cmpl	$0,P_NRAS(%esi)
-	je	1f
-	movl	L_MD_REGS(%edi),%ebx
-	movl	TF_EIP(%ebx),%eax
-	pushl	%eax
-	pushl	%esi
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	1f
-	movl	%eax,TF_EIP(%ebx)
+	cmpl	$0,P_RASLIST(%esi)
+	jne	2f
 1:
 	movl	$1,%ebx
 
@@ -1964,9 +1983,12 @@ switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
 	call    _C_LABEL(sched_unlock_idle)
 #endif
+	cmpl	$0,CPUVAR(IPENDING)
+	jz	3f
 	pushl	$IPL_NONE		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 	addl	$4,%esp
+3:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
 
 	movl	%ebx,%eax
@@ -1975,6 +1997,18 @@ switch_return:
 	popl	%esi
 	popl	%ebx
 	ret
+
+2:					# check RAS list
+	movl	L_MD_REGS(%edi),%ebx
+	movl	TF_EIP(%ebx),%eax
+	pushl	%eax
+	pushl	%esi
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	1b
+	movl	%eax,TF_EIP(%ebx)
+	jmp	1b
 
 /*
  * void cpu_switchto(struct lwp *current, struct lwp *next)
@@ -2020,8 +2054,8 @@ ENTRY(cpu_switchto)
 	jmp	switch_resume
 
 /*
- * void switch_exit(struct lwp *l, void (*exit)(struct lwp *));
- * Switch to the appropriate idle context (lwp0's if uniprocessor; the cpu's 
+ * void cpu_exit(struct lwp *l)
+ * Switch to the appropriate idle context (lwp0's if uniprocessor; the CPU's 
  * if multiprocessor) and deallocate the address space and kernel stack for p. 
  * Then jump into cpu_switch(), as if we were in the idle proc all along.
  */
@@ -2030,10 +2064,9 @@ ENTRY(cpu_switchto)
 #endif
 	.globl  _C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
-/* LINTSTUB: Func: void switch_exit(struct lwp *l, void (*exit)(struct lwp *)) */
-ENTRY(switch_exit)
+/* LINTSTUB: Func: void cpu_exit(struct lwp *l) */
+ENTRY(cpu_exit)
 	movl	4(%esp),%edi		# old process
-	movl	8(%esp),%eax		# exit func
 #ifndef MULTIPROCESSOR
 	movl	$_C_LABEL(lwp0),%ebx
 	movl	L_ADDR(%ebx),%esi
@@ -2052,10 +2085,9 @@ ENTRY(switch_exit)
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 
-	/* Save exit func. */
-	pushl	%eax
-
-	/* Load TSS info. */
+	/* Switch TSS. Reset "task busy" flag before loading. */
+	movl	%cr3,%eax
+	movl	%eax,PCB_CR3(%esi)
 #ifdef MULTIPROCESSOR
 	movl	CPUVAR(GDT),%eax
 #else	
@@ -2063,11 +2095,6 @@ ENTRY(switch_exit)
 	movl	_C_LABEL(gdt),%eax
 #endif
 
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
-	/* Switch TSS. */
 	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
 	ltr	%dx
 
@@ -2084,11 +2111,10 @@ ENTRY(switch_exit)
 	sti
 
 	/*
-	 * Schedule the dead process's vmspace and stack to be freed.
+	 * Schedule the dead LWP's stack to be freed.
 	 */
-	movl	0(%esp),%eax		/* %eax = exit func */
-	movl	%edi,0(%esp)		/* {lwp_}exit2(l) */
-	call	*%eax
+	pushl	%edi
+	call	_C_LABEL(lwp_exit2)
 	addl	$4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
@@ -2132,6 +2158,12 @@ syscall1:
 	INTRENTRY
 
 #ifdef DIAGNOSTIC
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	1f
+	pushl	$6f
+	call	_C_LABEL(printf)
+	addl	$4, %esp
+1:
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
 	jz	1f
@@ -2146,8 +2178,11 @@ syscall1:
 	movl	CPUVAR(CURLWP),%edx
 	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
 	movl	L_PROC(%edx),%edx
+	pushl	%esp
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
-2:	/* Check for ASTs on exit to user mode. */
+	addl	$4,%esp
+.Lsyscall_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%eax)
 	je	1f
@@ -2155,12 +2190,16 @@ syscall1:
 	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
-	jmp	2b
+	addl	$4,%esp
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+1:	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -2174,7 +2213,11 @@ syscall1:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"	
+6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"	
 #endif /* DIAGNOSTIC */
+9:	sti
+	call	_C_LABEL(pmap_load)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
 #if NNPX > 0
 /*

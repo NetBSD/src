@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.2 2003/01/03 00:38:16 thorpej Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.2.4.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -91,15 +91,16 @@
  */
 	.text
 	.align	0
-.Lastpending:
-	.word	_C_LABEL(astpending)
 .Lcurrent_intr_depth:
 	.word	_C_LABEL(current_intr_depth)
+
+AST_ALIGNMENT_FAULT_LOCALS
 
 ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
+	ENABLE_ALIGNMENT_FAULTS
 
 	/*
 	 * Increment the interrupt nesting depth and call the interrupt
@@ -124,34 +125,7 @@ ASENTRY_NP(irq_entry)
 	 */
 	str	r6, [r5]
 
-	/*
-	 * If we're returning to user mode, check for pending ASTs.
-	 */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
-	teq	r0, #(PSR_USR32_MODE)
-	bne	2f			/* Nope, get out now */
-
-1:
-	ldr	r0, .Lastpending	/* Do we have an AST pending? */
-	ldr	r1, [r0]
-	teq	r1, #0x00000000
-	beq	2f			/* Nope, get out now */
-
-	mov	r1, #0x00000000
-	str	r1, [r0]		/* Clear astpending */
-
-	mrs	r4, cpsr		/* save CPSR */
-	bic	r0, r4, #(I32_bit)	/* Enable IRQs */
-	msr	cpsr_c, r0
-
-	mov	r0, sp
-	bl	_C_LABEL(ast)		/* ast(frame) */
-
-	msr	cpsr_c, r4		/* Disable IRQs */
-	b	1b			/* Check for more ASTs */
-
-2:
+	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
 

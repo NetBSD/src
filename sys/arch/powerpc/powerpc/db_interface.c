@@ -1,5 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.28 2003/02/03 17:10:11 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.28.2.1 2004/08/03 10:39:37 skrll Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.28.2.1 2004/08/03 10:39:37 skrll Exp $");
 
 #define USERACC
 
@@ -59,24 +62,25 @@ static void db_ppc4xx_useracc(db_expr_t, int, db_expr_t, char *);
 
 #ifdef DDB
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	ddb_trap();
 }
 #endif
 
 int
-ddb_trap_glue(frame)
-	struct trapframe *frame;
+ddb_trap_glue(struct trapframe *frame)
 {
 #ifdef PPC_IBM4XX
 	if ((frame->srr1 & PSL_PR) == 0)
 		return kdb_trap(frame->exc, frame);
 #else /* PPC_OEA */
 	if ((frame->srr1 & PSL_PR) == 0 &&
-	    (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC ||
+	    (frame->exc == EXC_TRC ||
+	     frame->exc == EXC_RUNMODETRC ||
 	     (frame->exc == EXC_PGM && (frame->srr1 & 0x20000)) ||
-	     frame->exc == EXC_BPT)) {
+	     frame->exc == EXC_BPT ||
+	     frame->exc == EXC_DSI)) {
 		int type = frame->exc;
 		if (type == EXC_PGM && (frame->srr1 & 0x20000)) {
 			type = T_BREAKPOINT;
@@ -88,24 +92,14 @@ ddb_trap_glue(frame)
 }
 
 int
-kdb_trap(type, v)
-	int type;
-	void *v;
+kdb_trap(int type, void *v)
 {
 	struct trapframe *frame = v;
 
 #ifdef DDB
-	switch (type) {
-	case T_BREAKPOINT:
-	case -1:
-		break;
-	default:
-		if (!db_onpanic && db_recover == 0)
-			return 0;
-		if (db_recover != 0) {
-			db_error("Faulted in DDB; continuing...\n");
-			/*NOTREACHED*/
-		}
+	if (db_recover != 0 && (type != -1 && type != T_BREAKPOINT)) {
+		db_error("Faulted in DDB; continuing...\n");
+		/* NOTREACHED */
 	}
 #endif
 
@@ -462,7 +456,7 @@ db_ppc4xx_useracc(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	}
 	addr &= ~0x3; /* align */
 	{
-		register char c, *cp = modif;
+		char c, *cp = modif;
 		while ((c = *cp++) != 0)
 			if (c == 'i')
 				instr = 1;

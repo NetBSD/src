@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.7 2002/02/11 17:08:55 uch Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.7.16.1 2004/08/03 10:34:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,15 +51,23 @@
 ElfLoader::ElfLoader(Console *&cons, MemoryManager *&mem)
 	: Loader(cons, mem)
 {
+
 	_sym_blk.enable = FALSE;
+	_ph = NULL;
+	_sh = NULL;
 
 	DPRINTF((TEXT("Loader: ELF\n")));
 }
 
 ElfLoader::~ElfLoader(void)
 {
+
 	if (_sym_blk.header != NULL)
-		free (_sym_blk.header);
+		free(_sym_blk.header);
+	if (_ph != NULL)
+		free(_ph);
+	if (_sh != NULL)
+		free(_sh);
 }
 
 BOOL
@@ -71,14 +79,30 @@ ElfLoader::setFile(File *&file)
 	// read ELF header and check it
 	if (!read_header())
 		return FALSE;
+
 	// read section header
 	sz = _eh.e_shnum * _eh.e_shentsize;
-	_file->read(_sh, _eh.e_shentsize * _eh.e_shnum, _eh.e_shoff);
+	if ((_sh = static_cast<Elf_Shdr *>(malloc(sz))) == NULL) {
+		DPRINTF((TEXT("can't allocate section header table.\n")));
+		return FALSE;
+	}
+	if (_file->read(_sh, sz, _eh.e_shoff) != sz) {
+		DPRINTF((TEXT("section header read error.\n")));
+		return FALSE;
+	}
 
 	// read program header
 	sz = _eh.e_phnum * _eh.e_phentsize;
+	if ((_ph = static_cast<Elf_Phdr *>(malloc(sz))) == NULL) {
+		DPRINTF((TEXT("can't allocate program header table.\n")));
+		return FALSE;
+	}
+	if (_file->read(_ph, sz, _eh.e_phoff) != sz) {
+		DPRINTF((TEXT("program header read error.\n")));
+		return FALSE;
+	}
 
-	return _file->read(_ph, sz, _eh.e_phoff) == sz;
+	return TRUE;
 }
 
 size_t
@@ -133,13 +157,13 @@ ElfLoader::load()
 			DPRINTF((TEXT("[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
 			    i, kv, filesz, memsz));
 			_load_segment(kv, memsz, fileofs, filesz);
-			kv += memsz;
+			kv += ROUND4(memsz);
 		}
 	}
 
 	load_symbol_block(kv);
 
-	// tag chain still opening 
+	// tag chain still opening
 
 	return _load_success();
 }
@@ -150,8 +174,8 @@ ElfLoader::load()
 //   ELF header
 //   section header
 //   shstrtab
-//   strtab
 //   symtab
+//   strtab
 //
 size_t
 ElfLoader::symbol_block_size()
@@ -169,8 +193,10 @@ ElfLoader::symbol_block_size()
 	_sym_blk.header = static_cast<char *>(malloc(_sym_blk.header_size));
 	if (_sym_blk.header == NULL) {
 		MessageBox(HPC_MENU._root->_window,
-		    TEXT("couldn't determine symbol block size"),
-		    TEXT("WARNING"), 0);
+		    TEXT("Can't determine symbol block size."),
+		    TEXT("WARNING"),
+		    MB_ICONWARNING | MB_OK);
+		UpdateWindow(HPC_MENU._root->_window);
 		return (0);
 	}
 
@@ -204,10 +230,13 @@ ElfLoader::symbol_block_size()
 	}
 
 	if (_sym_blk.shstr == NULL || _sym_blk.shsym == NULL) {
-		if (HPC_PREFERENCE.safety_message)
+		if (HPC_PREFERENCE.safety_message) {
 			MessageBox(HPC_MENU._root->_window,
-			    TEXT("no symbol and/or string table in binary. (not fatal)"),
-			    TEXT("Information"), 0);
+			    TEXT("No symbol and/or string table in binary.\n(not fatal)"),
+			    TEXT("Information"),
+			    MB_ICONINFORMATION | MB_OK);
+			UpdateWindow(HPC_MENU._root->_window);
+		}
 		free(_sym_blk.header);
 		_sym_blk.header = NULL;
 
@@ -215,18 +244,18 @@ ElfLoader::symbol_block_size()
 	}
 
 	// set Section Headers for symbol/string table
-	_sym_blk.shstr->sh_offset = shstrtab_offset + shstrsize;
-	_sym_blk.shsym->sh_offset = shstrtab_offset + shstrsize +
-	    ROUND4(_sym_blk.shstr->sh_size);
+	_sym_blk.shsym->sh_offset = shstrtab_offset + shstrsize;
+	_sym_blk.shstr->sh_offset = shstrtab_offset + shstrsize +
+	    ROUND4(_sym_blk.shsym->sh_size);
 	_sym_blk.enable = TRUE;
 
-	DPRINTF((TEXT("+[(symbol block: header %d string %d symbol %d byte)"),
-	    _sym_blk.header_size,_sym_blk.shstr->sh_size, 
-	    _sym_blk.shsym->sh_size));
+	DPRINTF((TEXT("+[(symbol block: header %d symbol %d string %d byte)"),
+	    _sym_blk.header_size,_sym_blk.shsym->sh_size,
+	    _sym_blk.shstr->sh_size));
 
 	// return total amount of symbol block
-	return (_sym_blk.header_size + ROUND4(_sym_blk.shstr->sh_size) +
-	    _sym_blk.shsym->sh_size);
+	return (_sym_blk.header_size + ROUND4(_sym_blk.shsym->sh_size) +
+	    _sym_blk.shstr->sh_size);
 }
 
 void
@@ -241,14 +270,14 @@ ElfLoader::load_symbol_block(vaddr_t kv)
 	_load_memory(kv, _sym_blk.header_size, _sym_blk.header);
 	kv += _sym_blk.header_size;
 
-	// load string table
-	sz = _sym_blk.shstr->sh_size;
-	_load_segment(kv, sz, _sym_blk.stroff, sz);
-	kv += ROUND4(sz);
-
 	// load symbol table
 	sz = _sym_blk.shsym->sh_size;
 	_load_segment(kv, sz, _sym_blk.symoff, sz);
+	kv += ROUND4(sz);
+
+	// load string table
+	sz = _sym_blk.shstr->sh_size;
+	_load_segment(kv, sz, _sym_blk.stroff, sz);
 }
 
 BOOL

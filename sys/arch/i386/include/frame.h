@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.20 2003/01/17 23:10:28 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.20.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -152,15 +148,29 @@ struct switchframe {
 	int	sf_eip;
 };
 
+#if (defined(COMPAT_16) || defined(COMPAT_IBCS2)) && defined(_KERNEL)
+/*
+ * XXX: Really COMPAT_IBCS2 should not be using our old signal frame.
+ */
 /*
  * Signal frame
  */
-struct sigframe {
+struct sigframe_sigcontext {
 	int	sf_ra;			/* return address for handler */
 	int	sf_signum;		/* "signum" argument for handler */
 	int	sf_code;		/* "code" argument for handler */
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
 	struct	sigcontext sf_sc;	/* actual saved context */
+};
+#endif
+
+struct sigframe_siginfo {
+	int		sf_ra;		/* return address for handler */
+	int		sf_signum;	/* "signum" argument for handler */
+	siginfo_t	*sf_sip;	/* "sip" argument for handler */
+	ucontext_t	*sf_ucp;	/* "ucp" argument for handler */
+	siginfo_t	sf_si;		/* actual saved siginfo */
+	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
 /*
@@ -174,5 +184,13 @@ struct saframe {
 	int		sa_interrupted;
 	void*		sa_arg;
 };
+
+#ifdef _KERNEL
+void *getframe(struct lwp *, int, int *);
+void buildcontext(struct lwp *, int, void *, void *);
+#ifdef COMPAT_16
+void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#endif
+#endif
 
 #endif  /* _I386_FRAME_H_ */

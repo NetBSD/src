@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.6 2003/02/03 17:10:11 matt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.6.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6.2.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include "opt_ddb.h"
 
 #if defined(DDB)
@@ -55,7 +58,8 @@
 #include <machine/trap.h>
 #include <machine/pmap.h>
 
-#include <powerpc/bat.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/spr.h>
 
 /*
  * Determine if the memory at va..(va+len) is valid.
@@ -146,14 +150,13 @@ kgdb_acc(vaddr_t va, size_t len)
  * and should be reviewed.
  */
 int 
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	switch (type) {
 #ifdef PPC_IBM4XX
 	case EXC_PIT:		/* 40x - Programmable interval timer */
 	case EXC_FIT:		/* 40x - Fixed interval timer */
-		return SIGALRM
+		return SIGALRM;
 
 	case EXC_CII:		/* 40x - Critical input interrupt */
 	case EXC_WDOG:		/* 40x - Watchdog timer */
@@ -223,9 +226,7 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	memcpy(gdb_regs, regs, 32 * sizeof(unsigned long));
 	gdb_regs[KGDB_PPC_PC_REG]  = regs->iar;
@@ -240,9 +241,7 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	regs->xer = gdb_regs[KGDB_PPC_XER_REG];
 	regs->ctr = gdb_regs[KGDB_PPC_CTR_REG];
@@ -258,10 +257,8 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
-
 	if (kgdb_dev < 0)
 		return;
 
@@ -282,7 +279,7 @@ kgdb_connect(verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");

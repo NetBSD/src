@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.5 2003/05/03 18:10:49 wiz Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.5.2.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.5.2.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +77,7 @@ struct vraiu_softc {
 	u_int	sc_encoding;	/* encoding type */
 	int	sc_precision;	/* 8 or 16 bits */
 				/* pointer to format conversion routine */
+	u_char	sc_volume;	/* volume */
 	void	(*sc_decodefunc)(struct vraiu_softc *, u_short *, void *, int);
 	void	(*sc_intr)(void *);	/* interrupt routine */
 	void	*sc_intrdata;		/* interrupt data */
@@ -153,6 +157,10 @@ static void vraiu_slinear16_1(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_slinear16_2(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_slinear16sw_1(struct vraiu_softc *, u_short *, void *, int);
 static void vraiu_slinear16sw_2(struct vraiu_softc *, u_short *, void *, int);
+/*
+ * software volume control
+ */
+static void vraiu_volume(struct vraiu_softc *, u_short *, void *, int);
 
 int
 vraiu_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -176,6 +184,7 @@ vraiu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dc = va->va_dc;
 	sc->sc_ac = va->va_ac;
 	sc->sc_dmat = &vrdcu_bus_dma_tag;
+	sc->sc_volume = 127;
 
 	if (!sc->sc_cc) {
 		printf(" not configured: cmu not found\n");
@@ -581,6 +590,7 @@ vraiu_start_output(void *self, void *block, int bsize,
 	DPRINTFN(2, ("vraiu_start_output: block %p, bsize %d\n",
 		     block, bsize));
 	sc->sc_decodefunc(sc, sc->sc_buf, block, bsize);
+	vraiu_volume(sc, sc->sc_buf, block, bsize);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, AUDIO_BUF_SIZE,
 			BUS_DMASYNC_PREWRITE);
 	sc->sc_intr = intr;
@@ -672,18 +682,36 @@ vraiu_getdev(void *self, struct audio_device *ret)
 int
 vraiu_set_port(void *self, mixer_ctrl_t *mc)
 {
+	struct vraiu_softc *sc = (struct vraiu_softc *)self;
 	DPRINTFN(3, ("vraiu_set_port\n"));
 
-	/* no mixer */
+	/* software mixer, 1ch */
+	if (mc->dev == 0) {
+		if (mc->type != AUDIO_MIXER_VALUE)
+			return EINVAL;
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		sc->sc_volume = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		return 0;
+	}
+
 	return EINVAL;
 }
 
 int
 vraiu_get_port(void *self, mixer_ctrl_t *mc)
 {
+	struct vraiu_softc *sc = (struct vraiu_softc *)self;
 	DPRINTFN(3, ("vraiu_get_port\n"));
 
-	/* no mixer */
+	/* software mixer, 1ch */
+	if (mc->dev == 0) {
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_volume;
+		return 0;
+	}
+	
 	return EINVAL;
 }
 
@@ -692,7 +720,24 @@ vraiu_query_devinfo(void *self, mixer_devinfo_t *di)
 {
 	DPRINTFN(3, ("vraiu_query_devinfo\n"));
 
-	/* no mixer */
+	/* software mixer, 1ch */
+	switch (di->index) {
+	case 0: /* inputs.dac mixer value */
+		di->mixer_class = 1;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		strcpy(di->label.name, AudioNdac);
+		di->type = AUDIO_MIXER_VALUE;
+		di->un.v.num_channels = 1;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		return 0;
+	case 1: /* outputs class */
+		di->mixer_class = 1;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		strcpy(di->label.name, AudioCinputs);
+		di->type = AUDIO_MIXER_CLASS;
+		return 0;
+	}
+
 	return ENXIO;
 }
 
@@ -949,4 +994,20 @@ vraiu_slinear16sw_2(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
 		short j = bswap16(*q++);
 		*dmap++ = (i >> 7) + (j >> 7) + 0x200;
 	}
+}
+
+static void
+vraiu_volume(struct vraiu_softc *sc, u_short *dmap, void *p, int n)
+{
+	int16_t *x = (int16_t *)dmap;
+	int i;
+	short j;
+	int vol = sc->sc_volume;
+
+	for (i = 0; i < n / 2; i++) {
+		j = x[i] - 512;
+		x[i] = ((j * vol) / 255) + 512;
+	}
+
+	return;
 }

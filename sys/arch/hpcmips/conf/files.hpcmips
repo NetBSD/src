@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.90 2003/05/01 07:01:58 igy Exp $
+#	$NetBSD: files.hpcmips,v 1.90.2.1 2004/08/03 10:35:05 skrll Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -53,7 +53,7 @@ file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
 
-file	arch/hpc/hpc/kloader.c			kloader
+file	dev/kloader.c				kloader
 file	arch/hpcmips/hpcmips/kloader_machdep.c	kloader
 file	arch/hpcmips/hpcmips/kloader_vr41.S	vr41xx & kloader
 file	arch/hpcmips/hpcmips/kloader_tx39.S	tx39xx & kloader
@@ -63,6 +63,11 @@ defflag	debug_kloader.h			KLOADER_DEBUG
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 
 defparam opt_memsize.h			MEMSIZE
+
+#
+# Workstation Console
+#
+include "dev/wscons/files.wscons"
 
 #
 # H/PC Platform common files.
@@ -83,17 +88,13 @@ include "arch/hpc/conf/files.debug"
 file	dev/cons.c
 
 #
-# Workstation Console
-#
-include "dev/wscons/files.wscons"
-
-#
 # power management
 #
-include "arch/hpcmips/dev/apm/files.apm"
+include "dev/hpc/apm/files.apm"
 device hpcapm: apmdevif
 attach hpcapm at mainbus
-file	arch/hpcmips/dev/hpcapm.c	hpcapm
+file	dev/hpc/hpcapm.c			hpcapm
+file	arch/hpcmips/hpcmips/hpcapm_machdep.c	hpcapm
 
 #
 # ISA bus support
@@ -165,9 +166,9 @@ file arch/hpcmips/vr/vrled.c			vrled needs-flag
 define	vrpiu_common
 file arch/hpcmips/vr/vrpiu.c			vrpiu_common
 device vrpiu: wsmousedev
-attach vrpiu at vripif: tpcalib, vrpiu_common
+attach vrpiu at vripif: hpctpanel, vrpiu_common
 device vrc4173piu: wsmousedev
-attach vrc4173piu at vripif: tpcalib, vrpiu_common
+attach vrc4173piu at vripif: hpctpanel, vrpiu_common
 
 device vrdsiu_mouse: wsmousedev
 attach vrdsiu_mouse at vripif
@@ -282,7 +283,7 @@ attach ucb at txsibif
 file arch/hpcmips/dev/ucb1200.c		ucb
 
 device ucbtp: wsmousedev
-attach ucbtp at ucbif: tpcalib
+attach ucbtp at ucbif: hpctpanel
 file arch/hpcmips/dev/ucbtp.c		ucbtp
 
 device ucbsnd
@@ -365,7 +366,6 @@ file	dev/hpc/video_subr.c		tx3912video | plumvideo
 #	Real-time clock (not optional)
 #
 file	arch/hpcmips/hpcmips/clock.c
-file	dev/clock_subr.c
 
 # Floppy disk controller
 device	fdc {drive = -1}

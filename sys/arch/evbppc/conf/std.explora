@@ -1,4 +1,4 @@
-#	$NetBSD: std.explora,v 1.1 2003/03/11 10:57:55 hannken Exp $
+#	$NetBSD: std.explora,v 1.1.2.1 2004/08/03 10:34:16 skrll Exp $
 #
 # Standard/required options for NetBSD/explora.
 
@@ -20,6 +20,5 @@ makeoptions	PPCDIR="ibm4xx"
 options 	PPC_INTR_IMPL="<powerpc/ibm4xx/ibm4xx_intr.h>"
 
 options 	INTSTK=8192
-options 	SPILLSTK=1024
 
 include		"arch/evbppc/conf/files.explora"

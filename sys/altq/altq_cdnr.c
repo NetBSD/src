@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.4 2001/11/12 23:14:21 lukem Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.4 2001/11/12 23:14:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -283,7 +283,7 @@ cdnr_cballoc(top, type, input_func)
 	MALLOC(cb, struct cdnr_block *, size, M_DEVBUF, M_WAITOK);
 	if (cb == NULL)
 		return (NULL);
-	bzero(cb, size);
+	(void)memset(cb, 0, size);
 	
 	cb->cb_len = size;
 	cb->cb_type = type;
@@ -1145,7 +1145,7 @@ cdnrcmd_get_stats(ap)
 		return (EBADF);
 
 	/* copy action stats */
-	bcopy(top->tc_cnts, ap->cnts, sizeof(ap->cnts));
+	(void)memcpy(ap->cnts, top->tc_cnts, sizeof(ap->cnts));
 
 	/* stats for each element */
 	nelements = ap->nelements;
@@ -1161,7 +1161,7 @@ cdnrcmd_get_stats(ap)
 			continue;
 		}
 
-		bzero(&tce, sizeof(tce));
+		(void)memset(&tce, 0, sizeof(tce));
 		tce.tce_handle = cb->cb_handle;
 		tce.tce_type = cb->cb_type;
 		switch (cb->cb_type) {
@@ -1211,7 +1211,7 @@ cdnropen(dev, flag, fmt, p)
 		init_machclk();
 
 	if (machclk_freq == 0) {
-		printf("cdnr: no cpu clock available!\n");
+		printf("cdnr: no CPU clock available!\n");
 		return (ENXIO);
 	}
 

@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.61 2003/04/16 20:43:29 is Exp $
+# $NetBSD: AMIGA,v 1.61.2.1 2004/08/03 10:31:46 skrll Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.12 2003/04/16 20:42:34 is Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.23 2004/06/28 21:07:47 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.61.2.1 $"
 
 
 maxusers	8
@@ -82,6 +82,19 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
 # Filesystems
 file-system 	FFS		# Berkeley fast file system
 file-system 	EXT2FS		# second extended file system (linux)
@@ -126,6 +139,8 @@ options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
 options 	COMPAT_14	# compatibility with NetBSD 1.4
+options 	COMPAT_15	# compatibility with NetBSD 1.5
+options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -144,6 +159,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #
 # Support for various kernel options
@@ -244,8 +260,8 @@ options        KFONT_CONS_ISO8859_1
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options 	WSEMUL_VT100
-#options 	FONT_BOLD8x16
 #options 	FONT_VT220L8x10
+#options	FONT_VT220ISO8x16
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -319,6 +335,9 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
+
+
+#wsmouse*	at ms?
 
 
 #
@@ -395,8 +414,9 @@ scsibus*	at empsc0
 # <<< comment out the wdc/atapibus entries below if the idesc lines above >>>
 # <<< are uncommented >>>
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
-wd*		at wdc? drive ?		#  + drives
-atapibus*	at wdc? channel ?	# ATAPI bus
+atabus* 	at wdc? channel ?	# ATA bus
+wd*		at atabus? drive ?	#  + drives
+atapibus*	at atabus?		# ATAPI bus
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
 sd*		at atapibus? drive ?	# ATAPI disk drives
 
@@ -441,10 +461,14 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+
+#pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
@@ -462,5 +486,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
 
 config	netbsd root on ? type ?

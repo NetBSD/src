@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.6 2002/10/02 05:07:44 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6.6.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6.6.1 2004/08/03 10:33:46 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,9 +36,8 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/autoconf.h> 
+#include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/intr_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -50,7 +52,7 @@ static int	icu_intr(void *);
 CFATTACH_DECL(pcib, sizeof(struct device),
     pcib_match, pcib_attach, NULL, NULL);
 
-static struct cobalt_intr icu[IO_ICUSIZE];
+static struct cobalt_intrhand icu[IO_ICUSIZE];
 
 static int
 pcib_match(parent, match, aux)
@@ -76,7 +78,7 @@ pcib_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("\n%s: %s, rev %d\n", self->dv_xname, devinfo,
 					PCI_REVISION(pa->pa_class));
 
@@ -93,21 +95,21 @@ pcib_attach(parent, self, aux)
 	cpu_intr_establish(4, IPL_NONE, icu_intr, NULL);
 }
 
-void *   
+void *
 icu_intr_establish(irq, type, level, func, arg)
-        int irq;
-        int type;
-        int level;
-        int (*func)(void *);
-        void *arg;
+	int irq;
+	int type;
+	int level;
+	int (*func)(void *);
+	void *arg;
 {
 	int i;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].func == NULL) {
+		if (icu[i].ih_func == NULL) {
 			icu[i].cookie_type = COBALT_COOKIE_TYPE_ICU;
-			icu[i].func = func;
-			icu[i].arg = arg;
+			icu[i].ih_func = func;
+			icu[i].ih_arg = arg;
 			return &icu[i];
 		}
 	}
@@ -119,11 +121,11 @@ void
 icu_intr_disestablish(cookie)
 	void *cookie;
 {
-	struct cobalt_intr *p = cookie;
+	struct cobalt_intrhand *ih = cookie;
 
-	if (p->cookie_type == COBALT_COOKIE_TYPE_ICU) {
-		p->func = NULL;
-		p->arg = NULL;
+	if (ih->cookie_type == COBALT_COOKIE_TYPE_ICU) {
+		ih->ih_func = NULL;
+		ih->ih_arg = NULL;
 	}
 }
 
@@ -134,10 +136,10 @@ icu_intr(arg)
 	int i;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].func == NULL)
+		if (icu[i].ih_func == NULL)
 			return 0;
 
-		(*icu[i].func)(icu[i].arg);
+		(*icu[i].ih_func)(icu[i].ih_arg);
 	}
 
 	return 0;

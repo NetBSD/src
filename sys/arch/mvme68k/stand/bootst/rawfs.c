@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.4 2001/11/09 18:27:59 scw Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.4.16.1 2004/08/03 10:38:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -61,7 +61,7 @@ static int
 rawfs_get_block __P((struct open_file *));
 
 int	rawfs_open(path, f)
-	char *path;
+	const char *path;
 	struct open_file *f;
 {
 	struct file *fs;

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.4 2003/05/13 08:07:39 bsh Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.4.2.1 2004/08/03 10:32:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -33,9 +33,9 @@
  */
 
 
-/*
- * Clock & Power Management
- */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.4.2.1 2004/08/03 10:32:50 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -54,9 +54,6 @@
 #endif
 
 #define TIMER_FREQUENCY(pclk) ((pclk)/32) /* divider=1/32 */
-
-#define TIMER_RELOAD_VAL  1000
-#define COUNTS_PER_USEC   100
 
 static unsigned int timer0_reload_value;
 static unsigned int timer0_prescaler;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.13 2002/10/02 15:52:27 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.13.6.1 2004/08/03 10:39:28 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.13.6.1 2004/08/03 10:39:28 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -239,6 +242,11 @@ do {									\
 #define	EMAC_READ(sc, reg) \
 	bus_space_read_stream_4((sc)->sc_st, (sc)->sc_sh, (reg))
 
+#define	EMAC_SET_FILTER(aht, category) \
+do {									\
+	(aht)[3 - ((category) >> 4)] |= 1 << ((category) & 0xf);	\
+} while (/*CONSTCOND*/0)
+
 static int	emac_match(struct device *, struct cfdata *, void *);
 static void	emac_attach(struct device *, struct device *, void *);
 
@@ -252,6 +260,7 @@ static void	emac_shutdown(void *);
 static void	emac_start(struct ifnet *);
 static void	emac_stop(struct ifnet *, int);
 static void	emac_watchdog(struct ifnet *);
+static int	emac_set_filter(struct emac_softc *);
 
 static int	emac_wol_intr(void *);
 static int	emac_serr_intr(void *);
@@ -295,6 +304,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_data *mii = &sc->sc_mii;
 	bus_dma_segment_t seg;
 	int error, i, nseg;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_st = oaa->opb_bt;
 	sc->sc_sh = oaa->opb_addr;
@@ -386,8 +396,16 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	emac_reset(sc);
 
+	/* Fetch the Ethernet address. */
+	if (prop_get(dev_propdb, &sc->sc_dev, "mac-addr", enaddr,
+		     sizeof(enaddr), NULL) != sizeof(enaddr)) {
+		printf("%s: unable to get mac-addr property\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(board_data.mac_address_local));
+	    ether_sprintf(enaddr));
 
 	/*
 	 * Initialise the media structures.
@@ -427,7 +445,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp, board_data.mac_address_local);
+	ether_ifattach(ifp, enaddr);
 
 #ifdef EMAC_EVENT_COUNTERS
 	/*
@@ -518,6 +536,8 @@ emac_start(struct ifnet *ifp)
 	struct emac_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
+
+	lasttx = 0;	/* XXX gcc */
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -673,7 +693,7 @@ emac_start(struct ifnet *ifp)
 #endif /* NBPFILTER > 0 */
 	}
 
-	if (txs == NULL || sc->sc_txfree == 0) {
+	if (sc->sc_txfree == 0) {
 		/* No more slots left; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
@@ -689,7 +709,7 @@ emac_init(struct ifnet *ifp)
 {
 	struct emac_softc *sc = ifp->if_softc;
 	struct emac_rxsoft *rxs;
-	unsigned char *enaddr = board_data.mac_address_local;
+	uint8_t *enaddr = LLADDR(ifp->if_sadl);
 	int error, i;
 
 	error = 0;
@@ -775,11 +795,9 @@ emac_init(struct ifnet *ifp)
 	/*
 	 * Enable Individual and (possibly) Broadcast Address modes,
 	 * runt packets, and strip padding.
-	 *
-	 * XXX:	promiscuous mode (and promiscuous multicast mode) need to be
-	 *	dealt with here!
 	 */
 	EMAC_WRITE(sc, EMAC_RMR, RMR_IAE | RMR_RRP | RMR_SP |
+	    (ifp->if_flags & IFF_PROMISC ? RMR_PME : 0) |
 	    (ifp->if_flags & IFF_BROADCAST ? RMR_BAE : 0));
 
 	/*
@@ -996,11 +1014,7 @@ emac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-#if 0
-			error = emac_set_filter(sc);	/* XXX not done yet */
-#else
-			error = emac_init(ifp);
-#endif
+			error = emac_set_filter(sc);
 		}
 		break;
 	}
@@ -1030,6 +1044,63 @@ emac_reset(struct emac_softc *sc)
 	/* set the MAL config register */
 	mtdcr(DCR_MAL0_CFG, MAL0_CFG_PLBB | MAL0_CFG_OPBBL | MAL0_CFG_LEA |
 	    MAL0_CFG_SD | MAL0_CFG_PLBLT);
+}
+
+static int
+emac_set_filter(struct emac_softc *sc)
+{
+	struct ether_multistep step;
+	struct ether_multi *enm;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	uint32_t rmr, crc, gaht[4] = {0, 0, 0, 0};
+	int category, cnt = 0;
+
+	rmr = EMAC_READ(sc, EMAC_RMR);
+	rmr &= ~(RMR_PMME | RMR_MAE);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo,
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			gaht[0] = gaht[1] = gaht[2] = gaht[3] = 0xffff;
+			break;
+		}
+
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 6 most significant bits. */
+		category = crc >> 26;
+		EMAC_SET_FILTER(gaht, category);
+
+		ETHER_NEXT_MULTI(step, enm);
+		cnt++;
+	}
+
+	if ((gaht[0] & gaht[1] & gaht[2] & gaht[3]) == 0xffff) {
+		/* All categories are true. */
+		ifp->if_flags |= IFF_ALLMULTI;
+		rmr |= RMR_PMME;
+	} else if (cnt != 0) {
+		/* Some categories are true. */
+		EMAC_WRITE(sc, EMAC_GAHT1, gaht[0]); 
+		EMAC_WRITE(sc, EMAC_GAHT2, gaht[1]);
+		EMAC_WRITE(sc, EMAC_GAHT3, gaht[2]);
+		EMAC_WRITE(sc, EMAC_GAHT4, gaht[3]);
+
+		rmr |= RMR_MAE;
+	}
+	EMAC_WRITE(sc, EMAC_RMR, rmr);
+
+	return 0;
 }
 
 /*

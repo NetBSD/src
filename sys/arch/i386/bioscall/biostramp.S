@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.11 2003/04/08 23:48:48 thorpej Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.11.2.1 2004/08/03 10:35:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@
 #define	addr32	.byte 0x67
 #define	data32	.byte 0x66
 
-	.set MYBASE,PAGE_SIZE
-	.set MYSCRATCH,PAGE_SIZE+PAGE_SIZE
+	.set MYBASE,NBPG
+	.set MYSCRATCH,NBPG*2
 	.set CR3_ADDR,(MYSCRATCH-4)
 	.set IDTR_SAVE_ADDR,CR3_ADDR-6
 	.set GDTR_SAVE_ADDR,IDTR_SAVE_ADDR-6

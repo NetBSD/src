@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.6 2002/11/09 05:36:49 cgd Exp $
+# $NetBSD: files.sbmips,v 1.6.6.1 2004/08/03 10:39:55 skrll Exp $
 
 maxpartitions 8
 
@@ -10,7 +10,6 @@ file arch/sbmips/sbmips/softintr.c
 file arch/sbmips/sbmips/console.c
 file arch/sbmips/sbmips/disksubr.c
 file arch/sbmips/sbmips/systemsw.c
-file dev/clock_subr.c
 file dev/cons.c
 
 file arch/sbmips/sbmips/sb1250_icu.c
@@ -48,7 +47,7 @@ include "dev/isa/files.isa"
 # XXXCGD machdep isa files
 
 # PC Keyboard Controller support
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # XXXCGD lots of junk isa devices, e.g. fd
 

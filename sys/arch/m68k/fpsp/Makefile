@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/06/04 21:39:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10.6.1 2004/08/03 10:36:40 skrll Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -35,6 +35,8 @@
 #
 #	Makefile for 68040 Floating Point Software Package
 #
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 TARGET = fpsp
 
@@ -78,9 +80,9 @@ SYS		= GCC
 PREFIX		= L_
 
 .sa.s:
-	sh ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
+	${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .h.defs:
-	sh ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
+	${HOST_SH} ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .s.o:
 	${CC} ${AFLAGS} ${CPPFLAGS} -c -o ${.TARGET} ${.IMPSRC}
 
@@ -253,7 +255,8 @@ $(LIB_O_FILES): l_fpsp.defs
 # the entry routines for each function.
 #
 l_entry.sa: L_ENTRY.AWK L_LIST MONADIC.$(SYS) DYADIC.$(SYS) l_fpsp.h
-	awk -f L_ENTRY.AWK SYS=$(SYS) PREFIX=$(PREFIX) - <L_LIST|sh>l_entry.sa
+	awk -f L_ENTRY.AWK SYS=$(SYS) PREFIX=$(PREFIX) - \
+	    <L_LIST | ${HOST_SH} >l_entry.sa
 
 #
 # Do_func.sa and round.sa need special editing to remove references that
@@ -345,4 +348,3 @@ clean:
 	rm -f $(LIB_TARGET)
 
 clobber:	clean
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.36 2003/01/06 13:04:58 wiz Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.36.2.1 2004/08/03 10:31:52 skrll Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.36 2003/01/06 13:04:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.36.2.1 2004/08/03 10:31:52 skrll Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -311,7 +311,7 @@ ul_load_code(gp)
 	bcopy(ul_ovl_palette, gup->gus_ovcmap, 3*4);
 
 	/*
-	 * Unflush cache, unhalt cpu -> nmi starts to run. This MUST NOT BE
+	 * Unflush cache, unhalt CPU -> nmi starts to run. This MUST NOT BE
 	 * DONE before the image color map initialization above, to guarantee
 	 * the index register in the BT458 is not used by more than one CPU
 	 * at once.
@@ -346,7 +346,7 @@ ul_load_code(gp)
 	 */
 
 
-	/* unflush cache, unhalt cpu first -> nmi starts to run */
+	/* unflush cache, unhalt CPU first -> nmi starts to run */
 	ba->ctrl &= ~(HLT|CF);
 
 	gcm.index = 0;

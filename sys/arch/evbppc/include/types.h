@@ -1,5 +1,6 @@
-/*	$NetBSD: types.h,v 1.1 2002/12/09 12:16:19 scw Exp $	*/
+/*	$NetBSD: types.h,v 1.1.8.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 #include <powerpc/types.h>
 
 #define	__HAVE_NWSCONS
+#define	__HAVE_DEVICE_REGISTER

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass_debug.h,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
+/*	$NetBSD: altq_rmclass_debug.h,v 1.3.22.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_rmclass_debug.h,v 1.2 2000/02/22 14:00:35 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ extern int cbqtrace_count;
 		cbqtrace_ptr = cbqtrace_buffer; \
 	else { \
 		cbqtrace_ptr = cbqtrace_buffer; \
-		bzero((void *)cbqtrace_ptr, sizeof(cbqtrace_buffer)); \
+		(void)memset(cbqtrace_ptr, 0, sizeof(cbqtrace_buffer)); \
 		cbqtrace_count = 0; \
 	} \
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
+/*	$NetBSD: tgets.c,v 1.2.6.1 2004/08/03 10:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,11 +32,9 @@
  */
 
 #include <sys/types.h>
+#include <arch/hp700/stand/common/libsa.h>
 
-time_t getsecs(void);
-int tgetchar(void);
-int getchar(void);
-int putchar(int);
+int tgets(char *);
 
 int
 tgets(char *buf)

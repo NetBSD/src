@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.24 2003/04/01 22:36:01 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.24.2.1 2004/08/03 10:32:09 skrll Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.1 2004/08/03 10:32:09 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -699,10 +702,8 @@ identifycpu()
 void
 cpu_startup()
 {
-	u_int i, base, residual;
 	caddr_t	v;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
@@ -716,64 +717,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses
-	 */
-	size = (int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0) {
-		panic("startup: no room for tables");
-	}
-	if (allocsys(v, NULL) - v != size) {
-		panic("startup: table size inconsistency");
-	}
-
-	/*
-	 * Now allocate buffers proper; they are different than the above
-	 * in that they usually occupy more virtual memory than physical
-	 */
-	size = MAXBSIZE * nbuf;
 	minaddr = 0;
-	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(size), NULL,
-		UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-		UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0) {
-		panic("startup: cannot allocate VM for buffers");
-	}
-	buffers = (char *)minaddr;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* Don't want to alloc more physical mem than ever needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.
-		 * Of that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL) {
-				panic("cpu_startup: not enough memory for "
-					"buffer cache");
-			}
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(kernel_map->pmap);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -796,13 +740,6 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up the buffers, so they can be used to read disk labels
-	 */
-	bufinit();
 }
 
 /*

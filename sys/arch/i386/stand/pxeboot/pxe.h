@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.h,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
+/*	$NetBSD: pxe.h,v 1.1.22.1 2004/08/03 10:36:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Alfred Perlstein <alfred@freebsd.org>
@@ -389,8 +389,8 @@ typedef struct {
 	uint32_t	BufferSize;
 	ADDR32_t	Buffer;
 	IP4_t		ServerIPAddress;
-	IP4_t		GatewayIPAdress;
-	IP4_t		McastIPAdress;
+	IP4_t		GatewayIPAddress;
+	IP4_t		McastIPAddress;
 	UDP_PORT_t	TFTPClntPort;
 	UDP_PORT_t	TFTPSrvPort;
 	uint16_t	TFTPOpenTimeOut;
@@ -401,7 +401,7 @@ typedef struct {
 typedef struct {
 	PXENV_STATUS_t	Status;
 	IP4_t		ServerIPAddress;
-	IP4_t		GatewayIPAdress;
+	IP4_t		GatewayIPAddress;
 	uint8_t		FileName[128];
 	uint32_t	FileSize;
 } __attribute__((__packed__)) t_PXENV_TFTP_GET_FSIZE;

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cesfic,v 1.4 2003/04/25 21:10:50 ragge Exp $
+#	$NetBSD: majors.cesfic,v 1.4.2.1 2004/08/03 10:33:45 skrll Exp $
 #
 # Device majors for cesfic
 #
@@ -19,9 +19,15 @@ device-major	bpf		char 12			bpfilter
 device-major	tun		char 13			tun
 device-major	lkm		char 14			lkm
 device-major	md		char 15  block 3	md
+device-major	raid		char 16  block 5	raid
+device-major	sd		char 17  block 6	sd
 
 device-major	rnd		char 21			rnd
 device-major	clockctl	char 22			clockctl
 device-major	systrace	char 23			systrace
 device-major	cgd		char 24  block 4	cgd
 device-major	ksyms		char 25			ksyms
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

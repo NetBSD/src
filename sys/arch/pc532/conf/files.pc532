@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.50 2003/06/24 04:57:58 thorpej Exp $
+#	$NetBSD: files.pc532,v 1.50.2.1 2004/08/03 10:38:46 skrll Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -22,14 +22,13 @@ device	rtc
 attach	rtc at mainbus
 device	clock
 attach	clock at mainbus
-file	dev/clock_subr.c
 file	arch/pc532/pc532/clock.c
 
 device	scn: tty
 attach	scn at mainbus
 file	arch/pc532/dev/scn.c		scn needs-flag
 
-device	lpt: ether, ifnet, arp
+#device	lpt: ether, ifnet, arp
 attach	lpt at mainbus
 file	arch/pc532/dev/lpt.c		lpt needs-flag
 
@@ -37,7 +36,8 @@ include "dev/scsipi/files.scsipi"
 
 device	ncr: scsi, ncr5380sbc
 attach	ncr at mainbus
-file	arch/pc532/dev/ncr.c		ncr needs-flag
+# gcc-3.3.2 bug fix; see doc/HACKS - gcc-pc532-duffs_device
+file	arch/pc532/dev/ncr.c		ncr needs-flag compile-with "${CC_NOERROR}"
 #device	aic: scsi
 #attach	aic at mainbus
 #file	arch/pc532/dev/aic.c		aic needs-flag
@@ -75,8 +75,10 @@ file	netns/ns_cksum.c		ns
 # Binary compatibility with previous NetBSD releases.
 #
 file	arch/pc532/pc532/compat_13_machdep.c	compat_13
+file	arch/pc532/pc532/compat_16_machdep.c	compat_16
 
 # egcs-1.1.2 bug fix; see doc/HACKS - egcs-pc532-ip6_mroute
 file	netinet6/ip6_mroute.c		compile-with "${CC_OPT1}"
+
 
 include "arch/pc532/conf/majors.pc532"

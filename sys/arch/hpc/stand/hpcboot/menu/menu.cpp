@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.5 2002/03/25 17:23:19 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.5.10.1 2004/08/03 10:34:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,10 +109,7 @@ MainTabWindow::init(HWND w)
 	SendDlgItemMessage(w, IDC_MAIN_DIR, CB_SETCURSEL, menu.dir_default(),
 	    0);
 	// platform
-	for (i = 0; entry = menu.platform_get(i); i++)
-		_insert_item(w, entry, IDC_MAIN_PLATFORM);
-	SendDlgItemMessage(w, IDC_MAIN_PLATFORM, CB_SETCURSEL,
-	    menu.platform_default(), 0);
+	_sort_platids(w);
 	// kernel file name.
 	Edit_SetText(GetDlgItem(w, IDC_MAIN_KERNEL), pref.kernel_user ?
 	    pref.kernel_user_file : TEXT("netbsd.gz"));
@@ -149,6 +146,68 @@ MainTabWindow::init(HWND w)
 	EnableWindow(_combobox_serial_speed, pref.boot_serial);
 }
 
+int
+MainTabWindow::_platcmp(const void *a, const void *b)
+{
+	const MainTabWindow::PlatMap *pa =
+		reinterpret_cast <const MainTabWindow::PlatMap *>(a);
+	const MainTabWindow::PlatMap *pb =
+		reinterpret_cast <const MainTabWindow::PlatMap *>(b);
+
+	return wcscmp(pa->name, pb->name);
+}
+
+void
+MainTabWindow::_sort_platids(HWND w)
+{
+	HpcMenuInterface &menu = HPC_MENU;
+	MainTabWindow::PlatMap *p;
+	TCHAR *entry;
+	int nids;
+	int i;
+
+	for (nids = 0; menu.platform_get(nids); ++nids)
+		continue;
+
+	_platmap = reinterpret_cast <MainTabWindow::PlatMap *>
+		(malloc(nids * sizeof(MainTabWindow::PlatMap)));
+
+	if (_platmap == NULL) {
+		// can't sort, present in the order of definition
+		for (i = 0; entry = menu.platform_get(i); i++)
+			_insert_item(w, entry, IDC_MAIN_PLATFORM);
+		SendDlgItemMessage(w, IDC_MAIN_PLATFORM, CB_SETCURSEL,
+				   menu.platform_default(), 0);
+		return;
+	}
+
+	for (i = 0, p = _platmap; i < nids; ++i, ++p) {
+		p->id = i;
+		p->name = menu.platform_get(i);
+	}
+
+	qsort(_platmap, nids, sizeof(MainTabWindow::PlatMap),
+	      MainTabWindow::_platcmp);
+
+	int defid = menu.platform_default();
+	int defitem = 0;
+	for (i = 0; i < nids; ++i) {
+		if (_platmap[i].id == defid)
+			defitem = i;
+		_insert_item(w, _platmap[i].name, IDC_MAIN_PLATFORM);
+	}
+	SendDlgItemMessage(w, IDC_MAIN_PLATFORM, CB_SETCURSEL, defitem, 0);
+}
+
+int
+MainTabWindow::_item_to_platid(int idx)
+{
+	if (_platmap == NULL)
+		return idx;
+	else
+		return _platmap[idx].id;
+}
+
 void
 MainTabWindow::layout()
 {
@@ -165,22 +224,22 @@ MainTabWindow::layout()
 	} else if (height <= 240) {
 		x = 250, y = 5;
 	} else {
-		x = 5, y = 125;		
+		x = 5, y = 125;
 	}
 
 	HWND h;
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_V);
-	SetWindowPos(h, HWND_TOP, x, y, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_S);
-	SetWindowPos(h, HWND_TOP, x, y + 20, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 20, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_A);
-	SetWindowPos(h, HWND_TOP, x, y + 40, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 40, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_D);
-	SetWindowPos(h, HWND_TOP, x, y + 60, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 60, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_H);
-	SetWindowPos(h, HWND_TOP, x, y + 80, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 80, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_H_SPEED);
-	SetWindowPos(h, HWND_TOP, x + 100, y + 80, 120, 10, TRUE);
+	SetWindowPos(h, 0, x + 100, y + 80, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 void
@@ -197,7 +256,7 @@ MainTabWindow::get()
 	pref.kernel_user = TRUE;
 
 	int i = ComboBox_GetCurSel(GetDlgItem(_window, IDC_MAIN_PLATFORM));
-	menu.platform_set(i);
+	menu.platform_set(_item_to_platid(i));
 
 	if (_is_checked(IDC_MAIN_ROOT_WD))
 		pref.rootfs = 0;
@@ -340,25 +399,19 @@ ConsoleTabWindow::print(TCHAR *buf, BOOL force_display)
 	}
 
  display:
-	// count # of '\n'
+	// count number of '\n'
 	for (cr = 0, p = buf; p = wcschr(p, TEXT('\n')); cr++, p++)
-		;
-	// total length of new buffer('\n' -> "\r\n" + '\0')
-	int ln = wcslen(buf) + cr + 1;
+		continue;
 
-	// get old buffer.
-	int lo = Edit_GetTextLength(_edit);
-	size_t sz =(lo  + ln) * sizeof(TCHAR);
+	// total length of new buffer ('\n' -> "\r\n" + '\0')
+	size_t sz = (wcslen(buf) + cr + 1) * sizeof(TCHAR);
 
 	p = reinterpret_cast <TCHAR *>(malloc(sz));
 	if (p == NULL)
 		return;
 
-	memset(p, 0, sz);
-	Edit_GetText(_edit, p, lo + 1);
-
-	// put new buffer to end of old buffer.
-	TCHAR *d = p + lo;
+	// convert newlines
+	TCHAR *d = p;
 	while (*buf != TEXT('\0')) {
 		TCHAR c = *buf++;
 		if (c == TEXT('\n'))
@@ -366,10 +419,12 @@ ConsoleTabWindow::print(TCHAR *buf, BOOL force_display)
 		*d++ = c;
 	}
 	*d = TEXT('\0');
-    
-	// display total buffer.
-	Edit_SetText(_edit, p);
-//  Edit_Scroll(_edit, Edit_GetLineCount(_edit), 0);
+
+	// append the text and scroll
+	int end = Edit_GetTextLength(_edit);
+	Edit_SetSel(_edit, end, end);
+	Edit_ReplaceSel(_edit, p);
+	Edit_ScrollCaret(_edit);
 	UpdateWindow(_edit);
 
 	free(p);
@@ -385,7 +440,7 @@ ConsoleTabWindow::init(HWND w)
 	MoveWindow(_edit, 5, 60, _rect.right - _rect.left - 10,
 	    _rect.bottom - _rect.top - 60, TRUE);
 	Edit_FmtLines(_edit, TRUE);
-	
+
 	// log file.
 	_filename_edit = GetDlgItem(w, IDC_CONS_FILENAME);
 	_filesave = FALSE;
@@ -436,7 +491,7 @@ ConsoleTabWindow::command(int id, int msg)
 		hook = &menu._cons_hook[id - IDC_CONS_BTN_];
 		if (hook->func)
 			hook->func(hook->arg, menu._cons_parameter);
-			
+
 		break;
 	}
 }
@@ -447,7 +502,7 @@ ConsoleTabWindow::_open_log_file()
 	TCHAR path[MAX_PATH];
 	TCHAR filename[MAX_PATH];
 	TCHAR filepath[MAX_PATH];
-	
+
 	if (!_find_pref_dir(path)) {
 		print(L"couldn't find temporary directory.\n", TRUE);
 		return FALSE;
@@ -462,7 +517,7 @@ ConsoleTabWindow::_open_log_file()
 
 	wsprintf(path, TEXT("log file is %s\n"), filepath);
 	print(path, TRUE);
-	
+
 	return TRUE;
 }
 

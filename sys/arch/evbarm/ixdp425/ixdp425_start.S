@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_start.S,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
+/*	$NetBSD: ixdp425_start.S,v 1.2.2.1 2004/08/03 10:34:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -124,6 +124,20 @@ Lunmapped:
 	orr	r3, r3, #(L1_TYPE_S)
 	str	r3, [r0]
 
+	/*
+	 * Step 4: Map VA 0xf0200000->0xf0300000 to PA 0xcc000000->0xcc100000.
+	 */
+	adr	r0, Ltable			/* r0 = &l1table */
+	ldr	r0, [r0]
+
+	add	r0, r0, #(0xf00 * 4)		/* offset to 0xf0200000 */
+	add	r0, r0, #(0x002 * 4)
+	mov	r3, #0xcc000000
+	add	r3, r3, #0x00100000
+	orr	r3, r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
+	str	r3, [r0]
+
 	/* OK!  Page table is set up.  Give it to the CPU. */
 	adr	r0, Ltable
 	ldr	r0, [r0]
@@ -137,7 +151,8 @@ Lunmapped:
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Get ready to jump to the "real" kernel entry point... */
-	ldr	r0, Lstart
+	ldr	r1, Lstart
+	mov	r1, r1			/* Make sure the load completes! */
 
 	/* OK, let's enable the MMU. */
 	mrc	p15, 0, r2, c1, c0, 0
@@ -152,7 +167,7 @@ Lunmapped:
 	/* CPWAIT sequence to make sure the MMU is on... */
 	mrc	p15, 0, r2, c2, c0, 0	/* arbitrary read of CP15 */
 	mov	r2, r2			/* force it to complete */
-	mov	pc, r0			/* leap to kernel entry point! */
+	mov	pc, r1			/* leap to kernel entry point! */
 
 Ltable:
 	.word	0x10200000 - 0x4000

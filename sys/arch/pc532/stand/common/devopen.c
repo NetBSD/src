@@ -1,9 +1,9 @@
-/*	$NetBSD: devopen.c,v 1.2 2001/07/26 22:47:35 wiz Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2.20.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -14,7 +14,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -36,43 +36,40 @@
 
 #include <pc532/stand/common/samachdep.h>
 
-static int	atoi __P((const char *));
-static void 	usage __P((void));
-static int	devlookup __P((const char *, int));
-static int	devparse __P((const char *, int *,
-				int *, int *, int *, int *, char **));
+static int	atoi(const char *);
+static void 	usage(void);
+static int	devlookup(const char *, int);
+static int	devparse(const char *, int *, int *, int *, int *, int *,
+		    char **);
 
 u_int opendev;
-	
-#define ispart(c)	((c) >= 'a' && (c) <= 'h')
+
+#define	ispart(c)	((c) >= 'a' && (c) <= 'h')
 
 static int
-atoi(cp)
-	const char *cp;
+atoi(const char *cp)
 {
 	int val = 0;
+
 	while (isdigit(*cp))
 		val = val * 10 + (*cp++ - '0');
 	return(val);
 }
 
 static void
-usage()
+usage(void)
 {
-	printf("\
-Usage: device(adaptor, controller, drive, partition)file\n\
-       <device><unit><partitionletter>:file\n\
-");
+
+	printf("Usage: device(adaptor, controller, drive, partition)file\n");
+	printf("       <device><unit><partitionletter>:file\n");
 }
 
 static int
-devlookup(d, len)
-	const char *d;
-	int len;
+devlookup(const char *d, int len)
 {
 	struct devsw *dp = devsw;
 	int i;
-    
+
 	for (i = 0; i < ndevs; i++, dp++)
 		if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
 			return(i);
@@ -94,14 +91,8 @@ devlookup(d, len)
  *    dev   unit  part
  */
 static int
-devparse(fname, dev, adapt, ctlr, unit, part, file)
-	const char *fname;
-	int *dev;
-	int *adapt;
-	int *ctlr;
-	int *unit;
-	int *part;
-	char **file;
+devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
+    int *part, char **file)
 {
 	int i;
 	const char *s, *args[4];
@@ -177,19 +168,16 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 
 	/* return the remaining unparsed part as the file to boot */
 	return(0);
-    
+
 bad:
 	usage();
 
 baddev:
 	return(-1);
-}    
+}
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int error, dev, adapt, ctlr, unit, part;
 	struct devsw *dp = &devsw[0];
@@ -209,7 +197,7 @@ devopen(f, fname, file)
 		return(ENODEV);
 
 	f->f_dev = dp;
-    
+
 	if ((error = (*dp->dv_open)(f, ctlr, unit, part)) == 0) {
 		opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
 		return(0);
@@ -219,4 +207,4 @@ devopen(f, fname, file)
 		adapt, ctlr, unit, part, strerror(error));
 
 	return(error);
-}    
+}

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.sdboot,v 1.1 2003/05/23 21:56:41 leo Exp $
+#	$NetBSD: Makefile.sdboot,v 1.1.2.1 2004/08/03 10:33:27 skrll Exp $
 
 PROG=	sdboot
-SRCS=	sdboot.s
+SRCS=	sdboot.S
 NOMAN=	# defined
 LIBCRT0=
 

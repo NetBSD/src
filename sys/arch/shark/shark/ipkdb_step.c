@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_step.c,v 1.1 2002/02/10 01:58:05 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_step.c,v 1.1.20.1 2004/08/03 10:40:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_step.c,v 1.1.20.1 2004/08/03 10:40:33 skrll Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.6 2003/01/17 22:28:50 thorpej Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.6.2.1 2004/08/03 10:32:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.6 2003/01/17 22:28:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.6.2.1 2004/08/03 10:32:36 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -83,7 +83,7 @@ static const char *exception_errors[] = {
 
 /*
  * Initialisation point. The kernel calls this during the configuration of
- * the cpu in order to install the FPE.
+ * the CPU in order to install the FPE.
  * The FPE specification needs to be filled in the specified cpu_t structure
  * and the FPE needs to be installed on the CPU undefined instruction vector.
  */

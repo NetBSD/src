@@ -1,4 +1,4 @@
-# $NetBSD: CARDBUS,v 1.70 2002/10/19 20:32:48 soren Exp $
+# $NetBSD: CARDBUS,v 1.70.6.1 2004/08/03 10:35:46 skrll Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 
@@ -38,6 +38,8 @@ adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
  
 # CardBus network cards
+ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 fxp*	at cardbus? dev ? function ?	# Intel i8255x
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139

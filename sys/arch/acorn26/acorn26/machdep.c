@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8 2003/05/31 00:38:05 kristerw Exp $ */
+/* $NetBSD: machdep.c,v 1.8.2.1 2004/08/03 10:30:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/05/31 00:38:05 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.1 2004/08/03 10:30:47 skrll Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -42,8 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/05/31 00:38:05 kristerw Exp $")
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/pcf8583var.h>
+
 #include <uvm/uvm_extern.h>
 
+#include <machine/machdep.h>
 #include <machine/memcreg.h>
 
 int physmem;
@@ -53,6 +57,9 @@ char cpu_model[] = "Archimedes";
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
+
+/* For reading NVRAM during bootstrap. */
+i2c_tag_t acorn26_i2c_tag;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -134,14 +141,12 @@ haltsys:
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	/* Stuff to do here: */
@@ -151,49 +156,8 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/* allocsys() is called from start() */
-
 	/* Various boilerplate memory allocations. */
-
-	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
+	minaddr = 0;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -217,13 +181,6 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
 
 	curpcb = &lwp0.l_addr->u_pcb;
 
@@ -237,18 +194,24 @@ cpu_startup()
 #endif
 }
 
-/*
- * machine dependent system variables.
- */
-
+/* Read a byte from CMOS RAM. */
 int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
+cmos_read(int location)
 {
+	uint8_t val;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	if (pcfrtc_bootstrap_read(acorn26_i2c_tag, 0x50,
+	    location, &val, 1) != 0)
+		return (-1);
+	return (val);
+}
 
-	return (EOPNOTSUPP);
+/* Write a byte to CMOS RAM. */
+int
+cmos_write(int location, int value)
+{
+	uint8_t val = value;
+
+	return (pcfrtc_bootstrap_write(acorn26_i2c_tag, 0x50,
+	    location, &val, 1));
 }

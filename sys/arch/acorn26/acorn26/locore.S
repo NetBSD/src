@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.5 2003/05/31 00:36:46 kristerw Exp $ */
+/* $NetBSD: locore.S,v 1.5.2.1 2004/08/03 10:30:47 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -118,8 +118,8 @@ _C_LABEL(kernel_text):
  * These take an exception and get up into a state to enter the kernel
  * proper.  This currently involves fixing up the return address (to
  * point to the faulting instruction in all cases), pushing a
- * trapframe onto the stack, calling the C handler restoring the
- * (possibly modified) trapframe and returning to userland.
+ * trapframe onto the stack, calling the C handler, restoring the
+ * (possibly modified) trapframe, and returning to userland.
  */
 #define TRAP_REGS r0-r14	
 	.macro	HANDLER	handler, lr_fixup
@@ -164,9 +164,7 @@ pull_trapframe:
 	bne	3f			/* If not, return */
 	ldr	r4, Lastpending
 1:
-#ifndef __APCS_26__
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
-#endif
 	ldr	r1, [r4]
 	cmp	r1, #0			/* AST pending? */
 	beq	2f			/* If not, return */
@@ -453,4 +451,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.5 2003/05/31 00:36:46 kristerw Exp $")
+RCSID("$NetBSD: locore.S,v 1.5.2.1 2004/08/03 10:30:47 skrll Exp $")

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2003/04/26 11:05:12 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,6 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $");
+
+#include "opt_explora.h"
+#include "ksyms.h"
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
@@ -54,12 +60,11 @@
 #include <machine/explora.h>
 #include <machine/bus.h>
 #include <machine/powerpc.h>
+#include <machine/tlb.h>
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
-
-#include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
@@ -152,7 +157,7 @@ void
 bootstrap(u_int startkernel, u_int endkernel)
 {
 	u_int i, j, t, br[4];
-	u_int maddr, msize, size;
+	u_int ntlb, maddr, msize, size;
 	struct cpu_info * const ci = &cpu_info[0];
 
 	consinit();
@@ -176,6 +181,14 @@ bootstrap(u_int startkernel, u_int endkernel)
 			size = maddr+msize;
 	}
 
+#ifdef COM_IS_CONSOLE
+	ntlb = TLB_NRESERVED-1;
+#else
+	ntlb = TLB_NRESERVED-2;
+#endif
+	if (size > ntlb*TLB_PG_SIZE)
+		size = ntlb*TLB_PG_SIZE;
+
 	phys_mem[0].start = 0;
 	phys_mem[0].size = size & ~PGOFSET;
 	avail_mem[0].start = startkernel;
@@ -188,19 +201,20 @@ bootstrap(u_int startkernel, u_int endkernel)
 
 	/*
 	 * Setup initial tlbs.
-	 * Physical memory is mapped into the first (reserved) tlbs.
-	 * Memory of potential console devices is mapped into the
-	 * last tlbs. They are only needed until the devices are configured.
+	 * Physical memory and  console device are
+	 * mapped into the first (reserved) tlbs.
 	 */
 
 	t = 0;
 	for (maddr = 0; maddr < phys_mem[0].size; maddr += TLB_PG_SIZE)
 		set_tlb(t++, maddr, 0);
 
-	t = NTLB-1;
-	set_tlb(t--, BASE_FB, TLB_I | TLB_G);
-	set_tlb(t--, BASE_FB2, TLB_I | TLB_G);
-	set_tlb(t--, BASE_COM, TLB_I | TLB_G);
+#ifdef COM_IS_CONSOLE
+	set_tlb(t++, BASE_COM, TLB_I | TLB_G);
+#else
+	set_tlb(t++, BASE_FB, TLB_I | TLB_G);
+	set_tlb(t++, BASE_FB2, TLB_I | TLB_G);
+#endif
 
 	/* Disable all external interrupts */
 	mtdcr(DCR_EXIER, 0);
@@ -219,7 +233,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
 	curpcb = &proc0paddr->u_pcb;
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+	curpcb->pcb_pm = pmap_kernel();
 
 	/*
 	 * Install trap vectors.
@@ -305,9 +319,7 @@ install_extint(void (*handler)(void))
 void
 cpu_startup(void)
 {
-	caddr_t v;
 	vaddr_t minaddr, maxaddr;
-	u_int sz, i, base, residual;
 	char pbuf[9];
 
 	/*
@@ -322,55 +334,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (u_int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	sz = MAXBSIZE * nbuf;
 	minaddr = 0;
-	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(sz),
-		NULL, UVM_UNKNOWN_OFFSET, 0,
-		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-			    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	buffers = (char *)minaddr;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* Don't want to alloc more physical mem than ever needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = NBPG * (i < residual ? base + 1 : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -392,13 +356,6 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up the buffers.
-	 */
-	bufinit();
 
 	/*
 	 * Set up the board properties database.

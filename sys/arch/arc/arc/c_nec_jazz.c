@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.4 2002/12/28 16:44:43 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.4.2.1 2004/08/03 10:32:10 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -29,6 +29,9 @@
 /*
  * for NEC EISA and NEC PCI platforms
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.4.2.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.5 2002/09/06 15:35:41 scw Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.5.6.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -136,7 +136,11 @@
 #define	_JBLEN		110
 #else
 #define	_JBLEN		220
+#if !defined(__lint__)
 #define	_JB_ATTRIBUTES	__attribute__ ((__aligned__(8)))
+#else
+#define	_JB_ATTRIBUTES	/**/
+#endif
 #endif
 
 #endif /* _SH5_SETJMP_H */

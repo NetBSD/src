@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.3 2000/07/01 03:34:05 mrg Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.3.24.1 2004/08/03 10:32:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.3.24.1 2004/08/03 10:32:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.1 2002/07/05 13:32:02 scw Exp $	*/
+/*	$NetBSD: varargs.h,v 1.1.10.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,11 +42,19 @@
 #include <machine/stdarg.h>
 
 #define	__va_ellipsis	...
+#ifndef __lint__
 #define	__va_alist_t	__builtin_va_alist_t
+#else
+#define	__va_alist_t	long
+#endif
 #define	va_alist	__builtin_va_alist
 #define	va_dcl		__va_alist_t __builtin_va_alist; __va_ellipsis
 
 #undef va_start
+#ifndef __lint__
 #define	va_start(ap)	__builtin_varargs_start((ap))
+#else
+#define	va_start(ap)	((ap) = (va_list)&__builtin_va_alist)
+#endif
 
 #endif /* !_SH5_VARARGS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 2002/05/22 15:01:33 uch Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4.8.1 2004/08/03 10:40:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,12 +39,12 @@
 #define	RAW_PART	2
 
 /* Pull in MBR partition definitions. */
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #ifndef __ASSEMBLER__
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct mbr_partition dosparts[NMBRPART];
+	struct mbr_partition dosparts[MBR_PART_COUNT];
 	struct dkbad bad;
 };
 #endif

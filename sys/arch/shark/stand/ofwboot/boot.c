@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.2 2002/02/10 18:28:13 wiz Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.20.1 2004/08/03 10:40:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <machine/cpu.h>
 
 #include "cache.h"
+#include "extern.h"
 #include "ofdev.h"
 #include "openfirm.h"
 
@@ -105,12 +106,15 @@ char bootfile[128];
 int boothowto;
 int debug;
 
+#ifdef notyet
 static int ofw_version = 0;
-static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.shark", NULL };
+#endif
+static const char *kernels[] = {
+    "/netbsd", "/netbsd.gz", "/netbsd.shark", NULL
+};
 
 static void
-prom2boot(dev)
-	char *dev;
+prom2boot(char *dev)
 {
 	char *cp, *ocp;
 	
@@ -125,9 +129,7 @@ prom2boot(dev)
 }
 
 static void
-parseargs(str, howtop)
-	char *str;
-	int *howtop;
+parseargs(char *str, int *howtop)
 {
 	char *cp;
 
@@ -150,12 +152,10 @@ parseargs(str, howtop)
 }
 
 static void
-chain(entry, args, ssym, esym)
-	void (*entry)();
-	char *args;
-	void *ssym, *esym;
+chain(void (*entry)(int (*)(void *), void *, u_int), char *args, void *ssym,
+    void *esym)
 {
-	extern char end[], *cp;
+	extern char end[];
 	u_int l, magic = 0x19730224;
 
 	freeall();
@@ -184,18 +184,18 @@ chain(entry, args, ssym, esym)
 }
 
 __dead void
-_rtt()
+_rtt(void)
 {
 
 	OF_exit();
 }
 
 void
-main()
+main(void)
 {
 	extern char bootprog_name[], bootprog_rev[],
 		    bootprog_maker[], bootprog_date[];
-	int chosen, options;
+	int chosen;
 	char bootline[512];		/* Should check size? */
 	char *cp, *startbuf, *endbuf;
 	u_long marks[MARK_MAX], size;

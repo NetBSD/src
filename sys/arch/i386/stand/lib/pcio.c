@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.14 2003/04/16 14:56:55 dsl Exp $	 */
+/*	$NetBSD: pcio.c,v 1.14.2.1 2004/08/03 10:36:20 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -47,7 +41,7 @@
 extern void conputc __P((int));
 extern int congetc __P((void));
 extern int coniskey __P((void));
-extern struct i386_boot_params boot_params;
+extern struct x86_boot_params boot_params;
 
 struct btinfo_console btinfo_console;
 
@@ -244,13 +238,21 @@ putchar(c)
 int
 getchar()
 {
-#ifdef SUPPORT_SERIAL
 	int c;
+#ifdef SUPPORT_SERIAL
 	switch (iodev) {
 	    default: /* to make gcc -Wall happy... */
 	    case CONSDEV_PC:
 #endif
-		return (congetc());
+		c = congetc();
+#ifdef CONSOLE_KEYMAP
+		{
+			char *cp = strchr(CONSOLE_KEYMAP, c);
+			if (cp != 0 && cp[1] != 0)
+				c = cp[1];
+		}
+#endif
+		return c;
 #ifdef SUPPORT_SERIAL
 	    case CONSDEV_COM0:
 	    case CONSDEV_COM1:
@@ -333,7 +335,7 @@ awaitkey(timeout, tell)
 
 out:
 	if (tell)
-		printf("0\n");
+		printf("0 \n");
 
 	return(c);
 }

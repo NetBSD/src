@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1 2002/06/05 01:04:22 fredette Exp $	*/
+/*	$NetBSD: frame.h,v 1.1.10.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 
@@ -55,6 +55,8 @@
 #define	HPPA_FRAME_ERP		(-24)
 #define	HPPA_FRAME_ESR4		(-28)
 #define	HPPA_FRAME_EDP		(-32)
+#define	HPPA_FRAME_ROUND(x) \
+	(((x) + HPPA_FRAME_SIZE - 1) & ~(HPPA_FRAME_SIZE - 1))
 
 /*
  * Macros to decode processor status word.
@@ -65,7 +67,7 @@
 #define	USERMODE(pc)    ((((register_t)pc) & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_KERN)
 #define	KERNMODE(pc)	(((register_t)pc) & ~HPPA_PC_PRIV_MASK)
 
-#ifndef _LOCORE
+#ifndef __ASSEMBLER__
 /*
  * the trapframe is divided into two parts:
  *	one is saved while we are in the physical mode (beginning of the trap),
@@ -144,6 +146,7 @@ struct trapframe {
 
 	u_int	tf_pad[3];	/* pad to 256 bytes */
 };
-#endif /* !_LOCORE */
+
+#endif /* !__ASSEMBLER__ */
 
 #endif /* !_HPPA_FRAME_H_ */

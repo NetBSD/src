@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.2 1997/05/12 07:48:23 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.2.56.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,16 +46,16 @@
 #include <hp300/dev/dioreg.h>
 
 int	internalhpib = IIOV(DIO_IHPIBADDR);
-int	fhpibppoll(), nhpibppoll();
 
 struct	hpib_softc hpib_softc[NHPIB];
 
+void
 hpibinit()
 {
 	extern struct hp_hw sc_table[];
-	register struct hp_hw *hw;
-	register struct hpib_softc *hs;
-	register int i, addr;
+	struct hp_hw *hw;
+	struct hpib_softc *hs;
+	int i;
 
 	i = 0;
 	for (hw = sc_table; i < NHPIB && hw < &sc_table[MAXCTLRS]; hw++) {
@@ -78,14 +74,16 @@ hpibinit()
 	}
 }
 
+int
 hpibalive(unit)
-	register int unit;
+	int unit;
 {
 	if (unit >= NHPIB || hpib_softc[unit].sc_alive == 0)
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 }
 
+int
 hpibid(unit, slave)
 	int unit, slave;
 {
@@ -93,39 +91,42 @@ hpibid(unit, slave)
 	int rv;
 
 	if (hpib_softc[unit].sc_type == HPIBC)
-		rv = fhpibrecv(unit, 31, slave, &id, 2);
+		rv = fhpibrecv(unit, 31, slave, (char *)&id, 2);
 	else
-		rv = nhpibrecv(unit, 31, slave, &id, 2);
+		rv = nhpibrecv(unit, 31, slave, (char *)&id, 2);
 	if (rv != 2)
-		return (0);
-	return (id);
+		return 0;
+	return id;
 }
 
+int
 hpibsend(unit, slave, sec, buf, cnt)
-	int unit, slave;
+	int unit, slave, sec;
 	char *buf;
 	int cnt;
 {
 	if (hpib_softc[unit].sc_type == HPIBC)
 		return (fhpibsend(unit, slave, sec, buf, cnt));
-	return (nhpibsend(unit, slave, sec, buf, cnt));
+	return nhpibsend(unit, slave, sec, buf, cnt);
 }
 
+int
 hpibrecv(unit, slave, sec, buf, cnt)
-	int unit, slave;
+	int unit, slave, sec;
 	char *buf;
 	int cnt;
 {
 	if (hpib_softc[unit].sc_type == HPIBC)
 		return (fhpibrecv(unit, slave, sec, buf, cnt));
-	return (nhpibrecv(unit, slave, sec, buf, cnt));
+	return nhpibrecv(unit, slave, sec, buf, cnt);
 }
 
+int
 hpibswait(unit, slave)
-	register int unit, slave;
+	int unit, slave;
 {
-	register int timo = 1000000;
-	register int (*poll)();
+	int timo = 1000000;
+	int (*poll)(int);
 
 	slave = 0x80 >> slave;
 	if (hpib_softc[unit].sc_type == HPIBC)
@@ -136,14 +137,17 @@ hpibswait(unit, slave)
 		if (--timo == 0)
 			break;
 	if (timo == 0)
-		return (-1);
-	return (0);
+		return -1;
+	return 0;
 }
 
+void
 hpibgo(unit, slave, sec, addr, count, flag)
-	int unit, slave;
+	int unit, slave, sec;
 	char *addr;
+	int count, flag;
 {
+
 	if (hpib_softc[unit].sc_type == HPIBC)
 		if (flag == F_READ)
 			fhpibrecv(unit, slave, sec, addr, count);

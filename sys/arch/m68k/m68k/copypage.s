@@ -1,11 +1,11 @@
-/*	$NetBSD: copypage.s,v 1.9 2003/04/08 22:57:56 thorpej Exp $	*/
+/*	$NetBSD: copypage.s,v 1.9.2.1 2004/08/03 10:36:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by J.T. Conklin <jtc@netbsd.org> and 
+ * by J.T. Conklin <jtc@NetBSD.org> and 
  * by Hiroshi Horitomo <horimoto@cs-aoi.cs.sist.ac.jp> 
  *
  * Redistribution and use in source and binary forms, with or without

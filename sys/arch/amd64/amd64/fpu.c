@@ -1,10 +1,39 @@
-/*	$NetBSD: fpu.c,v 1.2 2003/06/23 11:01:02 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1991 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)npx.c	7.2 (Berkeley) 5/12/91
+ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 William Jolitz.
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +69,9 @@
 /*
  * XXXfvdl update copyright notice. this started out as a stripped isa/npx.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -90,10 +122,12 @@
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
+#define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
 void fpudna(struct cpu_info *);
+static int x86fpflags_to_ksiginfo(u_int32_t);
 
 /*
  * Init the FPU.
@@ -120,7 +154,9 @@ fputrap(frame)
 {
 	register struct lwp *l = curcpu()->ci_fpcurlwp;
 	struct savefpu *sfp = &l->l_addr->u_pcb.pcb_savefpu;
+	u_int32_t mxcsr, statbits;
 	u_int16_t cw;
+	ksiginfo_t ksi;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -133,18 +169,50 @@ fputrap(frame)
 
 	fxsave(sfp);
 	if (frame->tf_trapno == T_XMM) {
+		mxcsr = sfp->fp_fxsave.fx_mxcsr;
+		statbits = mxcsr;
+		mxcsr &= ~0x3f;
+		ldmxcsr(&mxcsr);
 	} else {
 		fninit();
 		fwait();
 		cw = sfp->fp_fxsave.fx_fcw;
 		fldcw(&cw);
 		fwait();
+		statbits = sfp->fp_fxsave.fx_fsw;
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGFPE;
+	ksi.ksi_addr = (void *)frame->tf_rip;
+	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
+	ksi.ksi_trap = statbits;
 	KERNEL_PROC_LOCK(l);
-	(*l->l_proc->p_emul->e_trapsignal)(l, SIGFPE, frame->tf_err);
+	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 	KERNEL_PROC_UNLOCK(l);
+}
+
+static int
+x86fpflags_to_ksiginfo(u_int32_t flags)
+{
+	int i;
+	static int x86fp_ksiginfo_table[] = {
+		FPE_FLTINV, /* bit 0 - invalid operation */
+		FPE_FLTRES, /* bit 1 - denormal operand */
+		FPE_FLTDIV, /* bit 2 - divide by zero	*/
+		FPE_FLTOVF, /* bit 3 - fp overflow	*/
+		FPE_FLTUND, /* bit 4 - fp underflow	*/
+		FPE_FLTRES, /* bit 5 - fp precision	*/
+		FPE_FLTINV, /* bit 6 - stack fault	*/
+	};
+
+	for (i=0;i < sizeof(x86fp_ksiginfo_table)/sizeof(int); i++) {
+		if (flags & (1 << i))
+			return (x86fp_ksiginfo_table[i]);
+	}
+	/* punt if flags not set */
+	return (FPE_FLTINV);
 }
 
 /*
@@ -158,6 +226,7 @@ void
 fpudna(struct cpu_info *ci)
 {
 	u_int16_t cw;
+	u_int32_t mxcsr;
 	struct lwp *l;
 	int s;
 
@@ -178,14 +247,10 @@ fpudna(struct cpu_info *ci)
 	 * Initialize the FPU state to clear any exceptions.  If someone else
 	 * was using the FPU, save their state.
 	 */
-	if (ci->ci_fpcurlwp != 0 && ci->ci_fpcurlwp != l) 
+	KDASSERT(ci->ci_fpcurlwp != l);
+	if (ci->ci_fpcurlwp != 0)
 		fpusave_cpu(ci, 1);
-	else {
-		clts();
-		fninit();
-		fwait();
-		stts();
-	}
+
 	splx(s);
 
 	KDASSERT(ci->ci_fpcurlwp == NULL);
@@ -205,8 +270,11 @@ fpudna(struct cpu_info *ci)
 	splx(s);
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+		fninit();
 		cw = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw;
 		fldcw(&cw);
+		mxcsr = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_mxcsr;
+		ldmxcsr(&mxcsr);
 		l->l_md.md_flags |= MDP_USEDFPU;
 	} else
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
@@ -260,7 +328,6 @@ fpusave_lwp(struct lwp *l, int save)
 	struct cpu_info *oci;
 
 	KDASSERT(l->l_addr != NULL);
-	KDASSERT(l->l_flag & L_INMEM);
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)

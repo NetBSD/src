@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2003/03/18 16:40:21 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.2.1 2004/08/03 10:38:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,6 +37,9 @@
  * We try to detect the appropriate mechanism for this machine and set
  * up a few function pointers to access the correct method directly.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3.2.1 2004/08/03 10:38:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

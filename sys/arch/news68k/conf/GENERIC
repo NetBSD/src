@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2003/04/26 14:10:09 ragge Exp $
+# $NetBSD: GENERIC,v 1.46.2.1 2004/08/03 10:38:22 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.46.2.1 $"
 
 maxusers	8
 
@@ -43,9 +43,11 @@ options 	SYSVSEM			# System V semaphores
 #options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -67,6 +69,9 @@ options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_12		# NetBSD 1.2 binary compatibility
 options 	COMPAT_13		# NetBSD 1.3 binary compatibility
 options 	COMPAT_14		# NetBSD 1.4 binary compatibility
+options 	COMPAT_15		# NetBSD 1.5 binary compatibility
+options 	COMPAT_16		# NetBSD 1.6 binary compatibility
+options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
@@ -118,6 +123,19 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_DHCP
@@ -230,3 +248,5 @@ pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.15 2002/11/26 18:51:14 thorpej Exp $
+#	$NetBSD: Makefile.luna68k,v 1.15.6.1 2004/08/03 10:36:30 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -87,3 +87,8 @@ machdep.c trap.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

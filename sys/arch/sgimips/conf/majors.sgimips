@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.5 2003/04/25 21:11:01 ragge Exp $
+#	$NetBSD: majors.sgimips,v 1.5.2.1 2004/08/03 10:40:00 skrll Exp $
 #
 # Device majors for sgimips
 #
@@ -41,6 +41,7 @@ device-major	isdnbchan	char 40			isdnbchan
 device-major	isdntrc		char 41			isdntrc
 device-major	isdntel		char 42			isdntel
 device-major	svr4_net	char 43			compat_svr4
+device-major	ses		char 44			ses
 
 device-major	wsdisplay	char 50			wsdisplay
 device-major	wskbd		char 51			wskbd
@@ -66,3 +67,8 @@ device-major	midi		char 74			midi
 device-major	sequencer	char 75			sequencer
 device-major	uscanner	char 76			uscanner
 device-major	ksyms		char 77			ksyms
+device-major	lpt		char 78			lpt
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

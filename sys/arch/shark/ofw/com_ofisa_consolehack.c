@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_consolehack.c,v 1.3 2003/06/14 17:01:15 thorpej Exp $	*/
+/*	$NetBSD: com_ofisa_consolehack.c,v 1.3.2.1 2004/08/03 10:40:33 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,6 +36,9 @@
 /*
  *  OFW Attachment for 'com' serial driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa_consolehack.c,v 1.3.2.1 2004/08/03 10:40:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

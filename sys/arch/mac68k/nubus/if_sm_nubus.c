@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_nubus.c,v 1.4 2002/10/02 05:36:38 thorpej Exp $	*/
+/*	$NetBSD: if_sm_nubus.c,v 1.4.6.1 2004/08/03 10:37:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.4.6.1 2004/08/03 10:37:11 skrll Exp $");
 
 #include "opt_inet.h"
 

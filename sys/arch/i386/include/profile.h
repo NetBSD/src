@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.16 2001/11/30 06:53:56 enami Exp $	*/
+/*	$NetBSD: profile.h,v 1.16.18.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,6 +31,8 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
+#include <machine/cpufunc.h>
+
 #define	_MCOUNT_DECL static __inline void _mcount
 
 #ifdef __ELF__
@@ -47,7 +45,7 @@
 
 #define	MCOUNT \
 MCOUNT_COMPAT								\
-extern void mcount __P((void)) __asm__(MCOUNT_ENTRY);			\
+extern void mcount(void) __asm__(MCOUNT_ENTRY);			\
 void									\
 mcount()								\
 {									\
@@ -68,6 +66,6 @@ mcount()								\
 }
 
 #ifdef _KERNEL
-#define	MCOUNT_ENTER	(void)&s; __asm__("cli");
-#define	MCOUNT_EXIT	__asm__("sti");
+#define	MCOUNT_ENTER	do { s = (int)read_psl(); disable_intr(); } while (0)
+#define	MCOUNT_EXIT	do { write_psl(s); } while (0)
 #endif /* _KERNEL */

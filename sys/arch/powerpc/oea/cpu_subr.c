@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.8 2003/04/10 16:07:15 scw Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.8.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -33,6 +33,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8.2.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -41,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,6 +82,15 @@ static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 256KB L2 cache" },
+	{ 0 }
+};
+
+static const struct fmttab cpu_7457_l2cr_formats[] = {
+	{ L2CR_L2E, 0, " disabled" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
+	{ L2CR_L2E, ~0, " 512KB L2 cache" },
 	{ 0 }
 };
 
@@ -174,6 +187,7 @@ static const struct cputab models[] = {
 	{ "7410",	MPC7410,	REVFMT_MAJMIN },
 	{ "7450",	MPC7450,	REVFMT_MAJMIN },
 	{ "7455",	MPC7455,	REVFMT_MAJMIN },
+	{ "7457",	MPC7457,	REVFMT_MAJMIN },
 	{ "8240",	MPC8240,	REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
@@ -186,6 +200,7 @@ struct cpu_info cpu_info[1];
 #endif
 
 int cpu_altivec;
+int cpu_psluserset, cpu_pslusermod;
 char cpu_model[80];
 
 void
@@ -213,6 +228,7 @@ cpu_probe_cache(void)
 	case MPC750:
 	case MPC7450:
 	case MPC7455:
+	case MPC7457:
 		curcpu()->ci_ci.dcache_size = 32 K;
 		curcpu()->ci_ci.icache_size = 32 K;
 		assoc = 8;
@@ -292,6 +308,7 @@ cpu_attach_common(struct device *self, int id)
 		case MPC7410:
 		case MPC7450:
 		case MPC7455:
+		case MPC7457:
 			mtspr(SPR_PIR, id);
 		}
 		cpu_setup(self, ci);
@@ -348,6 +365,7 @@ cpu_setup(self, ci)
 		powersave = 1;
 		break;
 
+	case MPC7457:
 	case MPC7455:
 	case MPC7450:
 		/* Enable the 7450 branch caches */
@@ -401,6 +419,7 @@ cpu_setup(self, ci)
 		break;
 	case MPC7450:
 	case MPC7455:
+	case MPC7457:
 		bitmask = HID0_7450_BITMASK;
 		break;
 	default:
@@ -414,10 +433,10 @@ cpu_setup(self, ci)
 	 * Display speed and cache configuration.
 	 */
 	if (vers == MPC750 || vers == MPC7400 || vers == IBM750FX ||
-	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
+	    vers == MPC7410 || MPC745X_P(vers)) {
 		aprint_normal("%s: ", self->dv_xname);
 		cpu_print_speed();
-		if (vers == MPC7450 || vers == MPC7455) {
+		if (MPC745X_P(vers)) {
 			cpu_config_l3cr(vers);
 		} else {
 			cpu_config_l2cr(pvr);
@@ -452,6 +471,8 @@ cpu_setup(self, ci)
 		&ci->ci_ev_traps, self->dv_xname, "user DSI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_udsi_fatal, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_udsi, self->dv_xname, "user DSI failures");
+	evcnt_attach_dynamic(&ci->ci_ev_kisi, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_traps, self->dv_xname, "kernel ISI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_isi, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, self->dv_xname, "user ISI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_isi_fatal, EVCNT_TYPE_TRAP,
@@ -694,7 +715,8 @@ cpu_config_l3cr(int vers)
 	}
 	
 	aprint_normal(",");
-	cpu_fmttab_print(cpu_7450_l2cr_formats, l2cr);
+	cpu_fmttab_print(vers == MPC7457
+	    ? cpu_7457_l2cr_formats : cpu_7450_l2cr_formats, l2cr);
 
 	l3cr = mfspr(SPR_L3CR);
 
@@ -747,24 +769,30 @@ struct envsys_basic_info cpu_tau_info[] = {
 void
 cpu_tau_setup(struct cpu_info *ci)
 {
-	struct sysmon_envsys *sme;
+	struct {
+		struct sysmon_envsys sme;
+		struct envsys_tre_data tau_info;
+	} *datap;
 	int error;
 
-	sme = &ci->ci_sysmon;
-	sme->sme_nsensors = 1;
-	sme->sme_envsys_version = 1000;
-	sme->sme_ranges = cpu_tau_ranges;
-	sme->sme_sensor_info = cpu_tau_info;
-	sme->sme_sensor_data = &ci->ci_tau_info;
-	
-	sme->sme_sensor_data->sensor = 0;
-	sme->sme_sensor_data->warnflags = ENVSYS_WARN_OK;
-	sme->sme_sensor_data->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
-	sme->sme_cookie = ci;
-	sme->sme_gtredata = cpu_tau_gtredata;
-	sme->sme_streinfo = cpu_tau_streinfo;
+	datap = malloc(sizeof(*datap), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	if ((error = sysmon_envsys_register(sme)) != 0)
+	ci->ci_sysmon_cookie = &datap->sme;
+	datap->sme.sme_nsensors = 1;
+	datap->sme.sme_envsys_version = 1000;
+	datap->sme.sme_ranges = cpu_tau_ranges;
+	datap->sme.sme_sensor_info = cpu_tau_info;
+	datap->sme.sme_sensor_data = &datap->tau_info;
+	
+	datap->sme.sme_sensor_data->sensor = 0;
+	datap->sme.sme_sensor_data->warnflags = ENVSYS_WARN_OK;
+	datap->sme.sme_sensor_data->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
+	datap->sme.sme_cookie = ci;
+	datap->sme.sme_gtredata = cpu_tau_gtredata;
+	datap->sme.sme_streinfo = cpu_tau_streinfo;
+	datap->sme.sme_flags = 0;
+
+	if ((error = sysmon_envsys_register(&datap->sme)) != 0)
 		aprint_error("%s: unable to register with sysmon (%d)\n",
 		    ci->ci_dev->dv_xname, error);
 }
@@ -772,11 +800,8 @@ cpu_tau_setup(struct cpu_info *ci)
 
 /* Find the temperature of the CPU. */
 int
-cpu_tau_gtredata(sme, tred)
-	 struct sysmon_envsys *sme;
-	 struct envsys_tre_data *tred;
+cpu_tau_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
-	struct cpu_info *ci;
 	int i, threshold, count;
 
 	if (tred->sensor != 0) {
@@ -821,19 +846,16 @@ cpu_tau_gtredata(sme, tred)
 	}
 	threshold += 2;
 
-	ci = (struct cpu_info *)sme->sme_cookie;
 	/* Convert the temperature in degrees C to microkelvin */
-	ci->ci_tau_info.cur.data_us = (threshold * 1000000) + 273150000;
+	sme->sme_sensor_data->cur.data_us = (threshold * 1000000) + 273150000;
 	
-	*tred = ci->ci_tau_info;
+	*tred = *sme->sme_sensor_data;
 
 	return 0;
 }
 
 int
-cpu_tau_streinfo(sme, binfo)
-	 struct sysmon_envsys *sme;
-	 struct envsys_basic_info *binfo;
+cpu_tau_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 {
 
 	/* There is nothing to set here. */

@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.8 2002/10/02 15:52:27 thorpej Exp $ */
+/* $NetBSD: com_opb.c,v 1.8.6.1 2004/08/03 10:39:28 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,11 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.8.6.1 2004/08/03 10:39:28 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
-#include <sys/properties.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -83,14 +85,16 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = oaa->opb_bt;
 	sc->sc_iobase = oaa->opb_addr;
 
+	/* XXX console check */
+
 	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0,
 	    &sc->sc_ioh);
 
-	if (board_info_get("com-opb-frequency", &sc->sc_frequency,
-	    sizeof(sc->sc_frequency)) == -1)
-		panic("com_opb_attach: no com-opb-frequency property");
-
-	/* XXX console check */
+	if (prop_get(dev_propdb, &sc->sc_dev, "frequency",
+		     &sc->sc_frequency, sizeof(sc->sc_frequency), NULL) == -1) {
+		printf(": unable to get frequency property\n");
+		return;
+	}
 
 	com_attach_subr(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.4 2003/01/20 05:26:47 matt Exp $ */
+/*	$NetBSD: linux_sigcode.S,v 1.4.2.1 2004/08/03 10:39:37 skrll Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -29,13 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * The following code is just a copy from sys/arch/powerpc/powerpc/sigcode.S 
- * Obviously, there are little chance that it works for Linux emulation, so 
- * it will have to be rewritten. 
- * Emmanuel Dreyfus <p99dreyf@criens.u-psud.fr>
  */
 
 #include <compat/linux/linux_syscall.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 2002/12/28 23:57:39 reinoud Exp $	*/
+/*	$NetBSD: srt0.S,v 1.1.4.1 2004/08/03 10:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -33,17 +33,46 @@
  * (see srt1.c)
  */
 
+/* Minimum desired free memory */
+
+#ifndef BOOT_MIN_AVAIL_MEMORY
+#define BOOT_MIN_AVAIL_MEMORY	10 * 1024 * 1024
+#endif
+
+/* If enough above BOOT_MIN_AVAIL_MEMORY, leave BOOT_LEAVE_MEMORY unused */
+/* Avoids sparkfs failing on memory if we try to read a kernel from it */
+
+#ifndef BOOT_LEAVE_MEMORY
+#define BOOT_LEAVE_MEMORY	5 * 1024 * 1024
+#endif
+
+/*
+ * Both BOOT_LEAVE_MEMORY and BOOT_MIN_AVAIL_MEMORY + BOOT_LEAVE_MEMORY
+ * must fit into an immediate ATM constant - 8 bits with arbitrary rotation
+ */
 
 #include <machine/asm.h>
 #include <riscoscalls.h>
 
 ENTRY(_start)
+#ifdef BOOT_MAXIMISE_MEMORY
+	mvn	r0, #0
+	mvn	r1, #0
+	swi	Wimp_SlotSize
+	add	r0, r0, r2
+#if (BOOT_LEAVE_MEMORY > 0)
+	cmp	r0, #BOOT_MIN_AVAIL_MEMORY + BOOT_LEAVE_MEMORY
+	subhi	r0, r0, #BOOT_LEAVE_MEMORY
+#endif 
+	mvn	r1, #0
+	swi	Wimp_SlotSize
+#endif
 	swi	OS_GetEnv
 	ldr	r6, Lhimem
 	str	r1, [r6]
 	mov	sp, r1
 	mov	fp, #0
-	bl	__start
+	b	__start
 
 Lhimem:
 	.word	HIMEM

@@ -1,28 +1,28 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:50 tv Exp $
+#	$NetBSD: Makefile,v 1.2.16.1 2004/08/03 10:39:55 skrll Exp $
 
 S= ${.CURDIR}/../../../..
 
 NOMAN= # defined
 
 CPPFLAGS+= -D_STANDALONE
+CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I. -I${S} -I${.OBJDIR}
 CPPFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 
+CFLAGS= -Os -mmultiple -ffreestanding
+
 CLEANFILES+= machine powerpc
 
-.BEGIN: machine powerpc
-.NOPATH: machine powerpc
-realdepend realall: machine powerpc
+.PHONY: machine-links
+beforedepend: machine-links
 
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
+machine-links:
+	-rm -f machine
+	ln -s ${S}/arch/${MACHINE}/include machine
+	-rm -f ${MACHINE_ARCH}
+	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 
-powerpc::
-	-rm -f $@
-	ln -s ${S}/arch/powerpc/include $@
-
-${OBJS}: machine powerpc
+.include <bsd.prog.mk>
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -42,11 +42,9 @@ LIBSA=		${SALIB}
 
 LIBS= ${LIBSA} ${LIBZ} ${LIBKERN}
 
-realall: ${LIBS}
+realall: machine-links ${LIBS}
 
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
-
-.include <bsd.prog.mk>

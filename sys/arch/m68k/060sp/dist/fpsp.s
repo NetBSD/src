@@ -1,5 +1,5 @@
 #
-# $NetBSD: fpsp.s,v 1.3 2003/02/05 00:02:33 perry Exp $
+# $NetBSD: fpsp.s,v 1.3.2.1 2004/08/03 10:36:30 skrll Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11822,7 +11822,7 @@ fmul_unfl_ena:
 	bne.b		fmul_unfl_ena_sd	# no, sgl or dbl
 
 # if the rnd mode is anything but RZ, then we have to re-do the above
-# multiplication becuase we used RZ for all.
+# multiplication because we used RZ for all.
 	fmov.l		L_SCR3(%a6),%fpcr	# set FPCR
 
 fmul_unfl_ena_cont:

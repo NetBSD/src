@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.44 2003/05/03 18:10:54 wiz Exp $	*/
+/*	$NetBSD: esp.c,v 1.44.2.1 2004/08/03 10:38:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,11 @@
 
 /*
  * Grabbed from the sparc port at revision 1.73 for the NeXT.
- * Darrin B. Jewell <dbj@netbsd.org>  Sat Jul  4 15:41:32 1998
+ * Darrin B. Jewell <dbj@NetBSD.org>  Sat Jul  4 15:41:32 1998
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.44.2.1 2004/08/03 10:38:35 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -588,12 +591,8 @@ esp_dma_intr(sc)
 				ndidx = stat->nd_idx;
 				splx(s);
 
-				goto loop;
-
-			loop:
 			}
-			goto out;
-		out:
+		out: ;
 
 #ifdef ESP_DEBUG
 /* 			esp_dma_nest--; */
@@ -1443,7 +1442,7 @@ int esp_dma_int(arg)
 			*ndtracep = '\0';
 			printf ("ndtrace: %s\n", ndtrace);
 #endif
-			panic("%s: busexc/supdate occured.  Please email this output to chris@pin.lu.",
+			panic("%s: busexc/supdate occurred.  Please email this output to chris@pin.lu.",
 			      sc->sc_dev.dv_xname);
 #ifdef ESP_DEBUG
 			ndtraceshow++;

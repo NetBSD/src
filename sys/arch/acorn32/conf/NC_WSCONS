@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.18 2002/09/18 02:43:54 lukem Exp $
+#	$NetBSD: NC_WSCONS,v 1.18.8.1 2004/08/03 10:30:48 skrll Exp $
 #
 #	NC - with wscons
 #
@@ -78,6 +78,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_13	# NetBSD 1.3 compatibility.
 #options 	COMPAT_12	# NetBSD 1.2 compatibility.
@@ -107,6 +108,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 
@@ -130,7 +132,7 @@ options 	NFS_BOOT_DHCP
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # The IOMD
@@ -139,17 +141,12 @@ iomd0	at mainbus?
 # system clock via IOMD
 clock*	at iomd?
 
-# quadrature mouse via IOMD
-#qms*	at iomd?
-
 # IIC bus device
-iic*	at iomd?
+iomdiic* at iomd?
+iic0 at iomdiic?
 
 # RTC device via IIC bus
-rtc*	at iic? addr 0xa0
-
-# time-of-day device via rtc device
-todclock0	at rtc?
+pcfrtc*	at iic? addr 0x50
 
 # VIDC device
 vidc0		at mainbus?
@@ -178,6 +175,18 @@ wsdisplay*	at vidcvideo? console ?	# display itself
 rpckbd*		at iomd?		# based on old `kbd' driver
 wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
+iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
+
+#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+#options 	PCKBD_LAYOUT=KB_UK
+#wskbd*		at pckbd?
+
+pms*		at iomdkbc? slot ?	# PS/2 mouse
+wsmouse*	at pms?
+
+#qms*		at iomd?		# ws quadmouse driver
+#wsmouse*	at qms?			# wsmouse on ws quadmouse
+
 pseudo-device	wsmux
 
 
@@ -186,7 +195,6 @@ pseudo-device	wsmux
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-opms*		at iomd?		# PS/2 mouse
 
 # generic VT console device
 #vt0	at vidc?
@@ -200,38 +208,33 @@ opms*		at iomd?		# PS/2 mouse
 pioc0	at mainbus? base 0x00210000
 
 # IDE disk controller
-#wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
-#wd*	at wdc? channel ? drive ?
-#atapibus* at wdc? channel ?
+
+# ATA (IDE) bus support
+#atabus* at ata?
+
+#wd*	at atabus? drive ?
+#atapibus* at atapi?
 #cd*	at atapibus? drive ?
 #sd*	at atapibus? drive ?
 
 # Floppy disk controller
 #fdc*	at pioc? offset 0x03f0 irq 12 dack 0x2000
-#fdc*	at pioc? offset 0x0370 irq -1 dack 0x2000
 #fd0	at fdc? drive ?
 
 # Serial ports
 #com*	at pioc? offset 0x03f8 irq 10
-#com*	at pioc? offset 0x02f8 irq -1
-#com*	at pioc? offset 0x0338 irq -1
-#com*	at pioc? offset 0x0238 irq -1
 
 # Parallel ports
-lpt*	at pioc? offset 0x0278 irq 0
-#lpt*	at pioc? offset 0x0378 irq -1
-#lpt*	at pioc? offset 0x03bc irq -1
-
-# Crude sound device
-beep0	at vidc?
+lpt*	at pioc? offset 0x0278 irq 0	# Old driver
+#atppc*	at pioc? offset 0x0278 irq 0	# New driver
+#ppbus*	at atppc?
+#lpt*	at ppbus?		# Parallel printer
+#plip*	at ppbus?		# Parallel line IP
 
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
-
-# System beep
-sysbeep0	at vidc?
 
 # Podule bus device
 podulebus0	at root
@@ -266,15 +269,12 @@ podulebus0	at root
 
 #icside*	at podulebus?			# ICS IDE card
 #wd*	at icside? channel ? drive ?
-#atapibus* at icside? channel ?
 
 #rapide*	at podulebus?			# Yellowstone RapIDE card
 #wd*	at rapide? channel ? drive ?
-#atapibus* at rapide? channel ?
 
 #simide*	at podulebus?			# Simtec IDE card
 #wd*	at simide? channel ? drive ?
-#atapibus* at simide? channel ?
 
 #amps*	at podulebus?			# Atomwide Multi-Port Serial card
 #com*	at amps?

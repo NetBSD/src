@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.30 2002/09/18 02:44:06 lukem Exp $
+#	$NetBSD: INSTALL,v 1.30.6.1 2004/08/03 10:38:46 skrll Exp $
 #
 # INSTALL -- install kernel
 #
@@ -35,6 +35,7 @@ options 	INET				# IP + ICMP + TCP + UDP
 
 options 	USERCONF			# userconf(4) support
 options		PIPE_SOCKETPAIR			# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # pc532 special options
@@ -56,3 +57,5 @@ pseudo-device	loop 1				# loopback network
 pseudo-device	sl 1				# compressed SLIP
 pseudo-device	ppp 1				# Point-to-Point Protocol
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+
+pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.70 2003/02/05 12:16:41 nakayama Exp $ */
+/* $NetBSD: cpu.c,v 1.70.2.1 2004/08/03 10:31:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2003/02/05 12:16:41 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70.2.1 2004/08/03 10:31:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -395,7 +395,7 @@ recognized:
 static void
 cpu_announce_extensions(struct cpu_info *ci)
 {
-	u_long implver, amask;
+	u_long implver, amask = 0;
 	char bits[64];
 
 	implver = alpha_implver();

@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.2.14.1 2004/08/03 10:30:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -30,10 +30,10 @@
  * irq.c - IOC IRQ handler.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.2.14.1 2004/08/03 10:30:47 skrll Exp $");
+
 #include <sys/param.h>
-
-__RCSID("$NetBSD: irq.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
-
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -230,10 +230,11 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 	new->enabled = 1;
 	new->ev = ev;
 	if (irq_list_head.lh_first == NULL ||
-	    irq_list_head.lh_first->ipl <= ipl)
+	    irq_list_head.lh_first->ipl <= ipl) {
 		/* XXX This shouldn't need to be a special case */
 		LIST_INSERT_HEAD(&irq_list_head, new, link);
-	else {
+		h = NULL;
+	} else {
 		for (h = irq_list_head.lh_first;
 		     h->link.le_next != NULL && h->link.le_next->ipl > ipl;
 		     h = h->link.le_next);
@@ -242,7 +243,7 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 	if (new->mask & IOC_IRQ_CLEARABLE_MASK)
 		ioc_irq_clear(new->mask);
 #if NIOEB > 0
-	else if ((h->mask & IOEB_IRQ_CLEARABLE_MASK) && the_ioeb != NULL)
+	else if ((h && h->mask & IOEB_IRQ_CLEARABLE_MASK) && the_ioeb != NULL)
 		ioeb_irq_clear(h->mask);
 #endif
 	irq_genmasks();

@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.9 2002/10/13 14:54:49 bjh21 Exp $	*/
+/*	$NetBSD: fusu.S,v 1.9.8.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -106,12 +106,15 @@ ENTRY(fusword)
 	adr	r1, .Lfusufault
 	str	r1, [r2, #PCB_ONFAULT]
 
-	ldrt	r3, [r0]
-
+	ldrbt	r3, [r0], #1
+	ldrbt	ip, [r0]
+#ifdef __ARMEB__
+	orr	r0, ip, r3, asl #8
+#else
+	orr	r0, r3, ip, asl #8
+#endif
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
-	bic	r0, r3, #0xff000000
-	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
 /*
@@ -148,12 +151,16 @@ ENTRY(fuswintr)
 	adr	r1, _C_LABEL(fusubailout)
 	str	r1, [r2, #PCB_ONFAULT]
 
-	ldrt	r3, [r0]
+	ldrbt	r3, [r0], #1
+	ldrbt	ip, [r0]
+#ifdef __ARMEB__
+	orr	r0, ip, r3, asl #8
+#else
+	orr	r0, r3, ip, asl #8
+#endif
 
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
-	bic	r0, r3, #0xff000000
-	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
 Lblock_userspace_access:
@@ -305,8 +312,13 @@ ENTRY(suswintr)
 	adr	r3, _C_LABEL(fusubailout)
 	str	r3, [r2, #PCB_ONFAULT]
 
+#ifdef __ARMEB__
+	mov	ip, r1, lsr #8
+	strbt	ip, [r0], #1
+#else
 	strbt	r1, [r0], #1
 	mov	r1, r1, lsr #8
+#endif
 	strbt	r1, [r0]
 
 	mov	r0, #0x00000000
@@ -339,8 +351,13 @@ ENTRY(susword)
 	adr	r3, .Lfusufault
 	str	r3, [r2, #PCB_ONFAULT]
 
+#ifdef __ARMEB__
+	mov	ip, r1, lsr #8
+	strbt	ip, [r0], #1
+#else
 	strbt	r1, [r0], #1
 	mov	r1, r1, lsr #8
+#endif
 	strbt	r1, [r0]
 
 	mov	r0, #0x00000000

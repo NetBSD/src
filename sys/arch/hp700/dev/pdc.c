@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.8 2002/10/23 09:11:14 jdolecek Exp $	*/
+/*	$NetBSD: pdc.c,v 1.8.6.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.8.6.1 2004/08/03 10:34:47 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -63,8 +66,8 @@ iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
 int CONADDR;
 
-int pdcmatch __P((struct device *, struct cfdata *, void*));
-void pdcattach __P((struct device *, struct device *, void *));
+int pdcmatch(struct device *, struct cfdata *, void *);
+void pdcattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pdc, sizeof(pdcsoftc_t),
     pdcmatch, pdcattach, NULL, NULL);
@@ -85,13 +88,15 @@ const struct cdevsw pdc_cdevsw = {
 	pdcstop, pdctty, pdcpoll, nommap, ttykqfilter, D_TTY
 };
 
-void pdcstart __P((struct tty *tp));
-void pdctimeout __P((void *v));
-int pdcparam __P((struct tty *tp, struct termios *));
-int pdccnlookc __P((dev_t dev, int *cp));
+void pdcstart(struct tty *);
+void pdctimeout(void *);
+int pdcparam(struct tty *, struct termios *);
+int pdccnlookc(dev_t, int *);
+
+static struct cnm_state pdc_cnm_state;
 
 void
-pdc_init()
+pdc_init(void)
 {
 	static int kbd_iodc[IODC_MAXSIZE/sizeof(int)];
 	static int cn_iodc[IODC_MAXSIZE/sizeof(int)];
@@ -122,14 +127,14 @@ pdc_init()
 	cn_tab = &constab[0];
 	/* TODO: detect that we are on cereal, and set CONADDR */
 
+	cn_init_magic(&pdc_cnm_state);
+	cn_set_magic("+++++");
+
 	hp700_pagezero_unmap(pagezero_cookie);
 }
 
 int
-pdcmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pdcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -141,10 +146,7 @@ pdcmatch(parent, cf, aux)
 }
 
 void
-pdcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+pdcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pdc_softc *sc = (struct pdc_softc *)self;
 
@@ -157,10 +159,7 @@ pdcattach(parent, self, aux)
 }
 
 int
-pdcopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pdcopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct pdc_softc *sc;
@@ -195,7 +194,8 @@ pdcopen(dev, flag, mode, p)
 	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag)) {
 		splx(s);
 		return EBUSY;
-	}
+	} else
+		setuptimeout = 0;
 	tp->t_state |= TS_CARR_ON;
 
 	splx(s);
@@ -208,10 +208,7 @@ pdcopen(dev, flag, mode, p)
 }
 
 int
-pdcclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pdcclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -228,10 +225,7 @@ pdcclose(dev, flag, mode, p)
 }
 
 int
-pdcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pdcread(dev_t dev, struct uio *uio, int flag)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -245,10 +239,7 @@ pdcread(dev, uio, flag)
 }
 
 int
-pdcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pdcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -262,10 +253,7 @@ pdcwrite(dev, uio, flag)
 }
 
 int
-pdcpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+pdcpoll(dev_t dev, int events, struct proc *p)
 {  
 	struct pdc_softc *sc = pdc_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -274,12 +262,7 @@ pdcpoll(dev, events, p)
 }  
 
 int
-pdcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pdcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = minor(dev);
 	int error;
@@ -301,17 +284,14 @@ pdcioctl(dev, cmd, data, flag, p)
 }
 
 int
-pdcparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+pdcparam(struct tty *tp, struct termios *t)
 {
 
 	return 0;
 }
 
 void
-pdcstart(tp)
-	struct tty *tp;
+pdcstart(struct tty *tp)
 {
 	int s;
 
@@ -335,9 +315,7 @@ pdcstart(tp)
 }
 
 void
-pdcstop(tp, flag)
-	struct tty *tp;
-	int flag;
+pdcstop(struct tty *tp,	int flag)
 {
 	int s;
 
@@ -349,14 +327,14 @@ pdcstop(tp, flag)
 }
 
 void
-pdctimeout(v)
-	void *v;
+pdctimeout(void *v)
 {
 	struct pdc_softc *sc = v;
 	struct tty *tp = sc->sc_tty;
 	int c;
 
 	while (pdccnlookc(tp->t_dev, &c)) {
+		cn_check_magic(tp->t_dev, c, pdc_cnm_state);
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}
@@ -364,8 +342,7 @@ pdctimeout(v)
 }
 
 struct tty *
-pdctty(dev)
-	dev_t dev;
+pdctty(dev_t dev)
 {
 	int unit = minor(dev);
 	struct pdc_softc *sc;
@@ -377,16 +354,15 @@ pdctty(dev)
 }
 
 void
-pdccnprobe(cn)
-	struct consdev *cn;
+pdccnprobe(struct consdev *cn)
 {
+
 	cn->cn_dev = makedev(22,0);
 	cn->cn_pri = CN_NORMAL;
 }
 
 void
-pdccninit(cn)
-	struct consdev *cn;
+pdccninit(struct consdev *cn)
 {
 #ifdef DEBUG
 	printf("pdc0: console init\n");
@@ -394,53 +370,45 @@ pdccninit(cn)
 }
 
 int
-pdccnlookc(dev, cp)
-	dev_t dev;
-	int *cp;
+pdccnlookc(dev_t dev, int *cp)
 {
-	int err, l;
-	int s = splhigh();
-	int pagezero_cookie = hp700_pagezero_map();
+	int s, err, l, pagezero_cookie;
 
+	s = splhigh();
+	pagezero_cookie = hp700_pagezero_map();
 	err = pdc_call(pdc_kbdiodc, 0, pz_kbd->pz_hpa, IODC_IO_CONSIN,
 	    pz_kbd->pz_spa, pz_kbd->pz_layers, pdcret, 0, pdc_consbuf, 1, 0);
-
 	l = pdcret[0];
 	*cp = pdc_consbuf[0];
 	hp700_pagezero_unmap(pagezero_cookie);
 	splx(s);
+
 #ifdef DEBUG
 	if (err < 0)
 		printf("pdccnlookc: input error: %d\n", err);
 #endif
-
 	return l;
 }
 
 int
-pdccngetc(dev)
-	dev_t dev;
+pdccngetc(dev_t dev)
 {
 	int c;
 
 	if (!pdc)
 		return 0;
-
-	while(!pdccnlookc(dev, &c))
+	while (!pdccnlookc(dev, &c))
 		;
-
 	return (c);
 }
 
 void
-pdccnputc(dev, c)
-	dev_t dev;
-	int c;
+pdccnputc(dev_t dev, int c)
 {
-	register int err;
-	int s = splhigh();
-	int pagezero_cookie = hp700_pagezero_map();
+	int s, err, pagezero_cookie;
 
+	s = splhigh();
+	pagezero_cookie = hp700_pagezero_map();
 	*pdc_consbuf = c;
 	err = pdc_call(pdc_cniodc, 0, pz_cons->pz_hpa, IODC_IO_CONSOUT,
 	    pz_cons->pz_spa, pz_cons->pz_layers, pdcret, 0, pdc_consbuf, 1, 0);
@@ -464,9 +432,6 @@ pdccnputc(dev, c)
 }
 
 void
-pdccnpollc(dev, on)
-	dev_t dev;
-	int on;
+pdccnpollc(dev_t dev, int on)
 {
-
 }

@@ -1,11 +1,45 @@
-/*	$NetBSD: mcclock_isa.c,v 1.4 2002/10/02 04:59:48 thorpej Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.4.6.1 2004/08/03 10:32:22 skrll Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Ralph Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah Hdr: clock.c 1.18 91/01/21
+ *
+ *	@(#)clock.c	8.1 (Berkeley) 6/10/93
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -44,6 +78,9 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.6.1 2004/08/03 10:32:22 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -53,24 +90,22 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <dev/ic/mc146818reg.h>
+#include <dev/clock_subr.h>
 
-#include <arc/dev/mcclockvar.h>
+#include <dev/ic/mc146818reg.h>
+#include <dev/ic/mc146818var.h>
+
 #include <arc/isa/mcclock_isavar.h>
 
-int mcclock_isa_match __P((struct device *, struct cfdata *, void *));
-void mcclock_isa_attach __P((struct device *, struct device *, void *));
+int mcclock_isa_match(struct device *, struct cfdata *, void *);
+void mcclock_isa_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(mcclock_isa, sizeof(struct mcclock_softc),
+CFATTACH_DECL(mcclock_isa, sizeof(struct mc146818_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
 /* Deskstation clock access code */
-u_int mc_isa_read __P((struct mcclock_softc *, u_int));
-void mc_isa_write __P((struct mcclock_softc *, u_int, u_int));
-
-struct mcclock_busfns mcclock_isa_busfns = {
-	mc_isa_read, mc_isa_write
-};
+static u_int mc_isa_read(struct mc146818_softc *, u_int);
+static void mc_isa_write(struct mc146818_softc *, u_int, u_int);
 
 int mcclock_isa_conf = 0;
 
@@ -125,37 +160,45 @@ mcclock_isa_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)self;
+	struct mc146818_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
-	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh))
+	sc->sc_bst = ia->ia_iot;
+	if (bus_space_map(sc->sc_bst, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_bsh))
 		panic("mcclock_isa_attach: couldn't map clock I/O space");
 
-	mcclock_attach(sc, &mcclock_isa_busfns, 80);
+	sc->sc_year0 = 1980;
+	sc->sc_mcread  = mc_isa_read;
+	sc->sc_mcwrite = mc_isa_write;
+
+	mc146818_attach(sc);
+
+	printf("\n");
 
 	/* Turn interrupts off, just in case. */
-	mc146818_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+	mc_isa_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+
+	todr_attach(&sc->sc_handle);
 }
 
 u_int
 mc_isa_read(sc, reg)
-	struct mcclock_softc *sc;
+	struct mc146818_softc *sc;
 	u_int reg;
 {
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, reg);
-	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1));
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, reg);
+	return bus_space_read_1(sc->sc_bst, sc->sc_bsh, 1);
 }
 
 void
 mc_isa_write(sc, reg, datum)
-	struct mcclock_softc *sc;
+	struct mc146818_softc *sc;
 	u_int reg, datum;
 {
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, datum);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, reg);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, datum);
 }
 

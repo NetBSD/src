@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2003/04/27 10:42:52 ragge Exp $	*/
+/*	$NetBSD: locore.S,v 1.5.2.1 2004/08/03 10:39:22 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
@@ -97,17 +98,8 @@ __start:
 */
 
 /* compute end of kernel memory */
-#if NKSYMS || defined(DDB) || defined(LKM) || defined(KERNFS)
-	lis	7,_C_LABEL(startsym)@ha
-	addi	7,7,_C_LABEL(startsym)@l
-	stw	3,0(7)
-	lis	7,_C_LABEL(endsym)@ha
-	addi	7,7,_C_LABEL(endsym)@l
-	stw	4,0(7)
-#else
 	lis	4,_C_LABEL(end)@ha
 	addi	4,4,_C_LABEL(end)@l
-#endif
 
 	INIT_CPUINFO(4,1,9,0)
 
@@ -154,3 +146,8 @@ _C_LABEL(disable_intr):
  * Include common trap / execption code
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Include PIO routines
+ */
+#include <powerpc/powerpc/pio_subr.S>

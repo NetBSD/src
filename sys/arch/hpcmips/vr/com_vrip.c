@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.15 2003/06/14 17:01:12 thorpej Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.15.2.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.15.2.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include "opt_kgdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.6 2003/01/06 03:44:24 christos Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.6.2.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.6 2003/01/06 03:44:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.6.2.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -112,7 +112,7 @@ priq_attach(ifq, bandwidth)
 	       M_DEVBUF, M_WAITOK);
 	if (pif == NULL)
 		return (NULL);
-	bzero(pif, sizeof(struct priq_if));
+	(void)memset(pif, 0, sizeof(struct priq_if));
 	pif->pif_bandwidth = bandwidth;
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = ifq;
@@ -236,13 +236,13 @@ priq_class_create(pif, pri, qlimit, flags)
 		       M_DEVBUF, M_WAITOK);
 		if (cl == NULL)
 			return (NULL);
-		bzero(cl, sizeof(struct priq_class));
+		(void)memset(cl, 0, sizeof(struct priq_class));
 
 		MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
 		       M_DEVBUF, M_WAITOK);
 		if (cl->cl_q == NULL)
 			goto err_ret;
-		bzero(cl->cl_q, sizeof(class_queue_t));
+		(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 	}
 
 	pif->pif_classes[pri] = cl;
@@ -798,7 +798,7 @@ priqcmd_class_stats(ap)
 		if (cl != NULL)
 			get_class_stats(&stats, cl);
 		else
-			bzero(&stats, sizeof(stats));
+			(void)memset(&stats, 0, sizeof(stats));
 		if ((error = copyout((caddr_t)&stats, (caddr_t)usp++,
 				     sizeof(stats))) != 0)
 			return (error);

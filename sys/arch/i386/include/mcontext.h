@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/17 23:10:28 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,14 @@
 
 #ifndef _I386_MCONTEXT_H_
 #define _I386_MCONTEXT_H_
+
+
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define _UC_SETSTACK	0x00010000
+#define _UC_CLRSTACK	0x00020000
+#define _UC_VM		0x00040000
 
 /*
  * Layout of mcontext_t according to the System V Application Binary Interface,
@@ -103,8 +111,23 @@ typedef struct {
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
-#ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_vm86.h"
+#ifdef VM86
+/*#include <machine/psl.h>*/
+#define PSL_VM 0x00020000
+#define _UC_MACHINE_SP(uc) ((uc)->uc_mcontext.__gregs[_REG_UESP] + \
+	((uc)->uc_mcontext.__gregs[_REG_EFL] & PSL_VM ? \
+	 ((uc)->uc_mcontext.__gregs[_REG_SS] << 4) : 0))
+#endif /* VM86 */
+#endif /* _KERNEL_OPT */
+
+#ifndef _UC_MACHINE_SP
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_UESP])
 #endif
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EIP])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_EAX])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #endif	/* !_I386_MCONTEXT_H_ */

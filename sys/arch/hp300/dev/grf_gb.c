@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.23 2003/04/01 20:41:36 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,9 +37,43 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: grf_gb.c 1.18 93/08/13$
+ *
+ *	@(#)grf_gb.c	8.4 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -87,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23 2003/04/01 20:41:36 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -104,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23 2003/04/01 20:41:36 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
- 
+
 #include <dev/cons.h>
 
 #include <hp300/dev/diovar.h>
@@ -118,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.23 2003/04/01 20:41:36 thorpej Exp $");
 
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/itereg.h>
- 
+
 #include "ite.h"
 
 #define CRTC_DATA_LENGTH  0x0e
@@ -321,7 +355,7 @@ gb_microcode(gbp)
 	struct gboxfb *gbp;
 {
 	int i;
-	
+
 	for (i = 0; i < CRTC_DATA_LENGTH; i++) {
 		gbp->crtc_address = i;
 		gbp->crtc_data = crtc_init_data[i];
@@ -451,7 +485,7 @@ gbox_init(ip)
 	REGBASE->cmap_blu    = 0x00;
 	REGBASE->cmap_write  = 0x00;
 	gbcm_waitbusy(ip->regbase);
-	
+
 	REGBASE->creg_select = 0x01;
 	REGBASE->cmap_red    = 0xFF;
 	REGBASE->cmap_grn    = 0xFF;
@@ -491,16 +525,16 @@ gbox_deinit(ip)
 	gbox_windowmove(ip, 0, 0, 0, 0, ip->dheight, ip->dwidth, RR_CLEAR);
 	tile_mover_waitbusy(ip->regbase);
 
-   	ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
 void
 gbox_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
-        int dy, dx;
+	int dy, dx;
 	int c, mode;
 {
-        int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+	int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 
 	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			    dy * ip->ftheight, dx * ip->ftwidth,
@@ -510,7 +544,7 @@ gbox_putc(ip, c, dy, dx, mode)
 void
 gbox_cursor(ip, flag)
 	struct ite_data *ip;
-        int flag;
+	int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -528,7 +562,7 @@ gbox_clear(ip, sy, sx, h, w)
 	int sy, sx, h, w;
 {
 	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			sy * ip->ftheight, sx * ip->ftwidth, 
+			sy * ip->ftheight, sx * ip->ftwidth,
 			h  * ip->ftheight, w  * ip->ftwidth,
 			RR_CLEAR);
 }
@@ -544,14 +578,14 @@ gbox_clear(ip, sy, sx, h, w)
 
 void
 gbox_scroll(ip, sy, sx, count, dir)
-        struct ite_data *ip;
-        int sy, dir, sx, count;
+	struct ite_data *ip;
+	int sy, dir, sx, count;
 {
 	int height, dy, i;
-	
+
 	tile_mover_waitbusy(ip->regbase);
 	REGBASE->write_protect = 0x0;
-	
+
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
 		height = ip->rows - sy;
@@ -571,13 +605,13 @@ gbox_scroll(ip, sy, sx, count, dir)
 	else {
 		gbox_blockmove(ip, sy, sx, sy, sx - count,
 			       1, ip->cols - sx);
-	}		
+	}
 }
 
 void
 gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
-     struct ite_data *ip;
-     int sy, sx, dy, dx, mask, h, w;
+	struct ite_data *ip;
+	int sy, sx, dy, dx, mask, h, w;
 {
 	int src, dest;
 
@@ -618,7 +652,8 @@ gboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
-	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_GATORBOX)) {
+	if (badaddr(va) ||
+	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_GATORBOX)) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
 		return (1);
 	}

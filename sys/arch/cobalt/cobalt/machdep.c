@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2003/04/26 11:05:09 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.2.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.1 2004/08/03 10:33:46 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -57,8 +60,8 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/intr.h>
-#include <machine/intr_machdep.h>
 #include <mips/locore.h>
 
 #include <machine/nvram.h>
@@ -82,7 +85,7 @@
 /* For sysctl. */
 extern char cpu_model[];
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
@@ -91,6 +94,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */
+char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
@@ -104,8 +108,7 @@ int	bootpart = -1;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	configure(void);
-void	mach_init(unsigned int);
+void	mach_init(unsigned int, u_int, char*);
 void	decode_bootstring(void);
 static char *	strtok_light(char *, const char);
 
@@ -124,13 +127,21 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(memsize)
+mach_init(memsize, bim, bip)
 	unsigned int memsize;
+	u_int  bim;
+	char   *bip;
 {
 	caddr_t kernend, v;
-        u_long first, last;
-	vsize_t size;
+	u_long first, last;
 	extern char edata[], end[];
+	char *bi_msg;
+#if NKSYMS || defined(DDB) || defined(LKM)
+	int nsym = 0;
+	caddr_t ssym = 0;
+	caddr_t esym = 0;
+	struct btinfo_symtab *bi_syms;
+#endif
 
 	/*
 	 * Clear the BSS segment.
@@ -149,9 +160,37 @@ mach_init(memsize)
 		memset(edata, 0, kernend - edata);
 	}
 
+	/* Check for valid bootinfo passed from bootstrap */
+	if (bim == BOOTINFO_MAGIC) {
+		struct btinfo_magic *bi_magic;
+
+		bootinfo = bip;
+		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
+		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
+			bi_msg = "invalid bootinfo structure.\n";
+		else
+			bi_msg = NULL;
+	} else
+		bi_msg = "invalid bootinfo (standalone boot?)\n";
+
+#if NKSYMS || defined(DDB) || defined(LKM)
+	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+
+	/* Load symbol table if present */
+	if (bi_syms != NULL) {
+		nsym = bi_syms->nsym;
+		ssym = (caddr_t)bi_syms->ssym;
+		esym = (caddr_t)bi_syms->esym;
+		kernend = (caddr_t)mips_round_page(esym);
+	}
+#endif
+
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
 	consinit();
+
+	if (bi_msg != NULL)
+		printf(bi_msg);
 
 	uvm_setpagesize();
 
@@ -177,16 +216,20 @@ mach_init(memsize)
 	decode_bootstring();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, NULL, NULL);
+	/* init symbols if present */
+	if ((bi_syms != NULL) && (esym != NULL))
+		ksyms_init(esym - ssym, ssym, esym);
+	else
+		ksyms_init(0, NULL, NULL);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
 #ifdef KGDB
-        if (boothowto & RB_KDB)
-                kgdb_connect(0);
-#endif    
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
 
 	strcpy(cpu_model, "Cobalt Microserver");
 
@@ -203,32 +246,16 @@ mach_init(memsize)
 	 */
 	mips_init_msgbuf();
 
-	/*
-	 * Compute the size of system data structures.  pmap_bootstrap()
-	 * needs some of this information.
-	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-
 	pmap_bootstrap();
 
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
+	v = (caddr_t)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
-	 */
-	v = (caddr_t)uvm_pageboot_alloc(size); 
-	if ((allocsys(v, NULL) - v) != size)
-		panic("mach_init: table size inconsistency");
 }
 
 /*
@@ -237,9 +264,7 @@ mach_init(memsize)
 void
 cpu_startup()
 {
-	int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	/*
@@ -247,49 +272,9 @@ cpu_startup()
 	 */
 	printf(version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
+	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-		    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base + 1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-					"buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -309,14 +294,7 @@ cpu_startup()
 	 */
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf(", %s in %u buffers\n", pbuf, nbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
+	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;
@@ -420,7 +398,14 @@ delay(n)
 
 #define NINTR	6
 
-static struct cobalt_intr intrtab[NINTR];
+static struct cobalt_intrhand intrtab[NINTR];
+
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+};
 
 void *
 cpu_intr_establish(level, ipl, func, arg)
@@ -432,12 +417,12 @@ cpu_intr_establish(level, ipl, func, arg)
 	if (level < 0 || level >= NINTR)
 		panic("invalid interrupt level");
 
-	if (intrtab[level].func != NULL)
+	if (intrtab[level].ih_func != NULL)
 		panic("cannot share CPU interrupts");
 
 	intrtab[level].cookie_type = COBALT_COOKIE_TYPE_CPU;
-	intrtab[level].func = func;
-	intrtab[level].arg = arg;
+	intrtab[level].ih_func = func;
+	intrtab[level].ih_arg = arg;
 
 	return &intrtab[level];
 }
@@ -446,11 +431,11 @@ void
 cpu_intr_disestablish(cookie)
 	void *cookie;
 {
-	struct cobalt_intr *p = cookie;
+	struct cobalt_intrhand *ih = cookie;
 
-        if (p->cookie_type == COBALT_COOKIE_TYPE_CPU) {
-		p->func = NULL;
-		p->arg = NULL;
+	if (ih->cookie_type == COBALT_COOKIE_TYPE_CPU) {
+		ih->ih_func = NULL;
+		ih->ih_arg = NULL;
 	}
 }
 
@@ -484,8 +469,8 @@ cpu_intr(status, cause, pc, ipending)
 
 	for (i = 0; i < 5; i++) {
 		if (ipending & (MIPS_INT_MASK_0 << i))
-			if (intrtab[i].func != NULL)
-				if ((*intrtab[i].func)(intrtab[i].arg))
+			if (intrtab[i].ih_func != NULL)
+				if ((*intrtab[i].ih_func)(intrtab[i].ih_arg))
 					cause &= ~(MIPS_INT_MASK_0 << i);
 	}
 
@@ -504,20 +489,14 @@ cpu_intr(status, cause, pc, ipending)
 
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
-	/* 'softnet' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_1) {
-		clearsoftnet();
-		uvmexp.softs++;
-		netintr();
-	}
+	/* software interrupt */
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
+		return;
 
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		clearsoftclock();
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock(NULL);
-	}
+	_clrsoftintr(ipending);
+
+	softintr_dispatch(ipending);
 }
 
 
@@ -547,7 +526,7 @@ decode_bootstring(void)
 			} else
 			if(0 == memcmp("root=", work, 5)) {
 				root_bstr = (equ +1);
-			} 
+			}
 		} else
 
 		/* else it a single value, switch and process */
@@ -601,3 +580,30 @@ strtok_light(str, sep)
 	return head;
 }
 
+/*
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL) {
+		printf("##### help == NULL\n");
+		return (NULL);
+	}
+
+	do {
+		bt = (struct btinfo_common *)help;
+		printf("Type %d @0x%x\n", bt->type, (u_int)bt);
+		if (bt->type == type)
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
+}

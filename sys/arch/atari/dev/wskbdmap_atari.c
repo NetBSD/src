@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_atari.c,v 1.1 2003/02/02 17:56:55 thomas Exp $	*/
+/*	$NetBSD: wskbdmap_atari.c,v 1.1.2.1 2004/08/03 10:33:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.1 2003/02/02 17:56:55 thomas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.1.2.1 2004/08/03 10:33:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/pckbc/wskbdmap_mfii.h>
 
 #define KC(n) KS_KEYCODE(n)
 

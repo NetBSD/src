@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.17 2002/10/02 05:26:54 thorpej Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.17.6.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pwm.c,v 1.17.6.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +120,8 @@ struct platid_data vrc4172pwm_platid_param_table[] = {
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION,	&vrc4172pwm_sigmarion_param},
 	{ &platid_mask_MACH_NEC_MCR_700,	&vrc4172pwm_mcr700_param},
 	{ &platid_mask_MACH_NEC_MCR_700A,	&vrc4172pwm_mcr700_param},
+	{ &platid_mask_MACH_NEC_MCR_730,	&vrc4172pwm_mcr700_param},
+	{ &platid_mask_MACH_NEC_MCR_730A,	&vrc4172pwm_mcr700_param},
 	{ NULL, NULL}
 };
 

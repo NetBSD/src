@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.22 2003/03/19 11:31:55 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.22.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
  * Note that r1 holds the value of SR on entry to the exception and should
  * be written back to SR as soon as enough data contingent with the exception
  * has been saved by the handler. After _EXCEPTION_ENTRY, r2 points to the
- * cpu_info for this cpu so that handlers can retrieve exception contingent
+ * cpu_info for this CPU so that handlers can retrieve exception contingent
  * data, amongst other stuff.
  *
  * An explanation of why this code has to Tread Carefully is appropos...
@@ -656,7 +656,7 @@ Lsh5_vector_tlbmiss:
 	ori	r0, (SH5_PTEH_SH | SH5_PTEH_V), r0 /* Set SH and V bits */
 
 	/*
-	 * Invoke the cpu-specific TLB fill subroutine.
+	 * Invoke the CPU-specific TLB fill subroutine.
 	 *
 	 * It expects the following registers to be live:
 	 *
@@ -791,6 +791,7 @@ Lsh5_vector_interrupt:
  *     sy_flags, SYCALL_FULL_CTX (for example), so that trapa() can
  *     detect when the full context is required.
  */
+	.type	Lsh5_event_sync,@function
 Lsh5_event_sync:
 	ld.q	r2, ES(ES_EXPEVT), r0	/* Fetch contingent data */
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0 /* Save in stateframe */
@@ -815,14 +816,16 @@ Lsh5_event_sync:
 	pta/l	Ltrapepilogue, tr0
 	blink	tr0, r63
 
+	.type	Ltrapagain,@function
 Ltrapagain:
-	getcon	kcr0, r2		/* Get cpu_info for this cpu */
+	getcon	kcr0, r2		/* Get cpu_info for this CPU */
 	LEAF(_C_LABEL(trap), r0)
 	LDPTR	r2, CI_CURLWP, r2	/* Get lwp pointer */
 	ptabs/l	r0, tr0
 	or	r15, r63, r3
 	blink	tr0, r18		/* trap(curlwp, trapframe); */
 
+	.type	Ltrapepilogue,@function
 Ltrapepilogue:
 	/* Check for ASTs */
 	pta/l	Ltrapexit, tr0		/* Preload the No-AST path */
@@ -830,7 +833,7 @@ Ltrapepilogue:
 	shlri	r2, SH5_CONREG_SR_MD_SHIFT, r0
 	andi	r0, 1, r0		/* Going back to user-mode? */
 	bne/u	r0, r63, tr0		/* Nope. No need to check for ASTs */
-	getcon	kcr0, r1		/* Get cpu_info for this cpu */
+	getcon	kcr0, r1		/* Get cpu_info for this CPU */
 	LDPTR	r1, CI_CURLWP, r1	/* Get curlwp */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
 	LDPTR	r1, L_PROC, r1		/* r1 = l->l_proc */
@@ -847,6 +850,7 @@ Ltrapepilogue:
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
 	blink	tr0, r63		/* Go back around to deal with it */
 
+	.type	Ltrapexit,@function
 Ltrapexit:
 #if defined(PORTMASTER)
 	movi	SH5_CONREG_SR_IMASK_ALL, r0
@@ -869,6 +873,7 @@ Ltrapexit:
  * Space has been allocated on the stack for an interrupt frame, so save
  * caller-saved registers into it before invoking the C dispatcher.
  */
+	.type	Lsh5_event_interrupt,@function
 Lsh5_event_interrupt:
 	_INTR_FRAME_SAVE(SZ_INTRFRAME)
 
@@ -903,7 +908,7 @@ Lsh5_event_interrupt:
 	getcon	sr, r1			/* Need to disable interrupts */
 	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0
 	putcon	r0, sr
-	getcon	kcr0, r2		/* Get cpu_info for this cpu */
+	getcon	kcr0, r2		/* Get cpu_info for this CPU */
 	ld.l	r2, CI_INTR_DEPTH, r0	/* Fetch interrupt nesting level */
 	addi	r0, -1, r0		/* One less level */
 	st.l	r2, CI_INTR_DEPTH, r0	/* Write it back */
@@ -915,7 +920,7 @@ Lsh5_event_interrupt:
 	shlri	r2, SH5_CONREG_SR_MD_SHIFT, r0
 	andi	r0, 1, r0		/* Going back to user-mode? */
 	bne/u	r0, r63, tr0		/* Nope. No need to check for ASTs */
-	getcon	kcr0, r1		/* Get cpu_info for this cpu */
+	getcon	kcr0, r1		/* Get cpu_info for this CPU */
 	LDPTR	r1, CI_CURLWP, r1	/* Get curlwp */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
 	LDPTR	r1, L_PROC, r1		/* r1 = l->l_proc */
@@ -954,6 +959,7 @@ Lsh5_event_interrupt:
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
 	blink	tr0, r63		/* Go back around to deal with it */
 
+	.type	Lintrexit,@function
 Lintrexit:
 	_INTR_FRAME_RESTORE(SZ_INTRFRAME)
 	_EXCEPTION_EXIT(SZ_INTRFRAME, CRIT_ASYNC_EXCEPTION)
@@ -1303,7 +1309,7 @@ GLOBAL(sh5_resvec_vector_table)
  * RESVEC Offset: 0x0
  *        Length: 0x100
  *
- * Come here when a gross error occurs. This is generally when the cpu wants
+ * Come here when a gross error occurs. This is generally when the CPU wants
  * to take a synchronous exception, but they're blocked by SR.BL being set.
  *
  * By now, the MMU is off, and the program counter/status register values
@@ -1537,7 +1543,7 @@ Lcheck_softint_lower:
  * cpu_fork() arranges for the following information to be passed to us:
  *
  *    r10 - The kernel function to invoke before returning to userland
- *    r11 - A single paramter for the kernel function.
+ *    r11 - A single parameter for the kernel function.
  *
  * The kernel stack already has a valid trapframe, so all we need to do
  * is return through the normal trap/syscall exit path.

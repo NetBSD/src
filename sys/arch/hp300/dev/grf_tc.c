@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.26 2003/04/01 20:41:37 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.26.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,9 +37,43 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: grf_tc.c 1.20 93/08/13$
+ *
+ *	@(#)grf_tc.c	8.4 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -83,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.26 2003/04/01 20:41:37 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.26.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -97,10 +131,10 @@ __KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.26 2003/04/01 20:41:37 thorpej Exp $");
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-  
+
 #include <dev/cons.h>
 
 #include <hp300/dev/diovar.h>
@@ -221,7 +255,7 @@ topcat_intio_attach(parent, self, aux)
 	grf = (struct grfreg *)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
 
-	
+
 	topcat_common_attach(sc, (caddr_t)grf, grf->gr_id2);
 }
 
@@ -524,7 +558,7 @@ topcat_init(ip)
 
 	/*
 	 * Determine the number of planes by writing to the first frame
-	 * buffer display location, then reading it back. 
+	 * buffer display location, then reading it back.
 	 */
 	REGBASE->wen = ~0;
 	REGBASE->fben = ~0;
@@ -604,7 +638,7 @@ topcat_deinit(ip)
 	tc_waitbusy(ip->regbase, ip->planemask);
 
 	REGBASE->nblank = ~0;
-   	ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
 void
@@ -641,15 +675,15 @@ topcat_clear(ip, sy, sx, h, w)
 	int sy, sx, h, w;
 {
 	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			  sy * ip->ftheight, sx * ip->ftwidth, 
+			  sy * ip->ftheight, sx * ip->ftwidth,
 			  h  * ip->ftheight, w  * ip->ftwidth,
 			  RR_CLEAR);
 }
 
 void
 topcat_scroll(ip, sy, sx, count, dir)
-        struct ite_data *ip;
-        int sy, count, dir, sx;
+	struct ite_data *ip;
+	int sy, count, dir, sx;
 {
 	int dy;
 	int dx = sx;
@@ -673,7 +707,7 @@ topcat_scroll(ip, sy, sx, count, dir)
 		dy = sy;
 		dx = sx - count;
 		width = ip->cols - sx;
-	}		
+	}
 
 	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			  dy * ip->ftheight, dx * ip->ftwidth,
@@ -686,7 +720,7 @@ topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct ite_data *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
-  	struct tcboxfb *rp = REGBASE;
+	struct tcboxfb *rp = REGBASE;
 
 	if (h == 0 || w == 0)
 		return;
@@ -709,44 +743,44 @@ topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
 int
 topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
-        bus_space_handle_t bsh;
-        caddr_t va;
-        struct grfreg *grf;
-        struct grf_data *gp = &grf_cn;
-        u_int8_t *dioiidev;
-        int size;
+	bus_space_handle_t bsh;
+	caddr_t va;
+	struct grfreg *grf;
+	struct grf_data *gp = &grf_cn;
+	u_int8_t *dioiidev;
+	int size;
 
-        if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
-                return (1);
-        va = bus_space_vaddr(bst, bsh);
-        grf = (struct grfreg *)va;
+	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
+		return (1);
+	va = bus_space_vaddr(bst, bsh);
+	grf = (struct grfreg *)va;
 
-        if (grf->gr_id != GRFHWID) {
+	if (badaddr(va) || grf->gr_id != GRFHWID) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
-                return (1);
+		return (1);
 	}
 
-        switch (grf->gr_id2) {
-        case GID_TOPCAT:
-                gp->g_sw = &topcat_grfsw;
-                break;
+	switch (grf->gr_id2) {
+	case GID_TOPCAT:
+		gp->g_sw = &topcat_grfsw;
+		break;
 
-        case GID_LRCATSEYE:
-                gp->g_sw = &lrcatseye_grfsw;
-                break;
+	case GID_LRCATSEYE:
+		gp->g_sw = &lrcatseye_grfsw;
+		break;
 
-        case GID_HRCCATSEYE:
-                gp->g_sw = &hrcatseye_grfsw;
-                break;
+	case GID_HRCCATSEYE:
+		gp->g_sw = &hrcatseye_grfsw;
+		break;
 
-        case GID_HRMCATSEYE:
-                gp->g_sw = &hrmcatseye_grfsw;
-                break;
+	case GID_HRMCATSEYE:
+		gp->g_sw = &hrmcatseye_grfsw;
+		break;
 
-        default:
+	default:
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
-                return (1);
-        }
+		return (1);
+	}
 
 	if (scode > 132) {
 		dioiidev = (u_int8_t *)va;
@@ -754,29 +788,29 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	} else
 		size = DIOCSIZE;
 
-        bus_space_unmap(bst, bsh, PAGE_SIZE);
-        if (bus_space_map(bst, addr, size, 0, &bsh))
-                return (1);
-        va = bus_space_vaddr(bst, bsh);
+	bus_space_unmap(bst, bsh, PAGE_SIZE);
+	if (bus_space_map(bst, addr, size, 0, &bsh))
+		return (1);
+	va = bus_space_vaddr(bst, bsh);
 
 	/*
 	 * Initialize the framebuffer hardware.
 	 */
-        (void)tc_init(gp, scode, va);
+	(void)tc_init(gp, scode, va);
 	tcconscode = scode;
 	tcconaddr = va;
 
-        /*
-         * Set up required grf data.
-         */
-        gp->g_display.gd_id = gp->g_sw->gd_swid;
-        gp->g_flags = GF_ALIVE;
+	/*
+	 * Set up required grf data.
+	 */
+	gp->g_display.gd_id = gp->g_sw->gd_swid;
+	gp->g_flags = GF_ALIVE;
 
-        /*
-         * Initialize the terminal emulator.
-         */
-        itedisplaycnattach(gp, &topcat_itesw);
-        return (0);
+	/*
+	 * Initialize the terminal emulator.
+	 */
+	itedisplaycnattach(gp, &topcat_itesw);
+	return (0);
 }
 
 #endif /* NITE > 0 */

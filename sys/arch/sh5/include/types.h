@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2003/04/28 23:16:24 bjh21 Exp $	*/
+/*	$NetBSD: types.h,v 1.7.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -53,11 +53,7 @@ typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
 
-#ifndef _LP64
-typedef unsigned long long	register_t;
-#else
-typedef unsigned long		register_t;
-#endif
+typedef __uint64_t	register_t;
 
 #if defined(_KERNEL)
 /*
@@ -75,11 +71,19 @@ typedef struct label_t {
 } label_t;
 #endif
 
+typedef	__volatile __int64_t	__cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
+
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_RAS
 #define	__HAVE_FUNCTION_DESCRIPTORS
+
+#if defined(_KERNEL)
+#define	__HAVE_RAS
+#endif
 
 #ifdef notyet
 #define	__HAVE_AST_PERPROC	/* Not reqd. until we support SMP */

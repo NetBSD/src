@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.28 2003/04/02 07:36:02 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28.2.1 2004/08/03 10:38:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
  */
 
 #ifndef _NS532_VMPARAM_H_
-#define _NS532_VMPARAM_H_
+#define	_NS532_VMPARAM_H_
 
 /*
  * Machine dependent constants for 532.
@@ -68,7 +64,7 @@
 /*
  * INTSTACK is a temporary stack for the idle process and cpu_exit.
  */
-#define INTSTACK	(0xffc00000 + PAGE_SIZE - 4)
+#define	INTSTACK	(0xffc00000 + PAGE_SIZE - 4)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -91,7 +87,7 @@
  * Size of shared memory map
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	1024
+#define	SHMMAXPGS	1024
 #endif
 
 /*
@@ -99,7 +95,7 @@
  * One page is enough to handle 4Mb of simultaneous raw IO operations.
  */
 #ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
+#define	USRIOSIZE	(1 * NPTEPG)	/* 4mb */
 #endif
 
 /*
@@ -107,28 +103,28 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
 /* (PDSLOT_PTE << PDSHIFT) */
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xDFC00000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0xDFC00000)
 /* (PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT) */
-#define VM_MAX_ADDRESS		((vaddr_t)0xDFFDF000)
+#define	VM_MAX_ADDRESS		((vaddr_t)0xDFFDF000)
 /* PDSLOT_KERN << PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xE0000000)
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xE0000000)
 /* PDSLOT_APTE << PDSHIFT */
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF800000)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF800000)
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF \
+#define	VM_MAX_KERNEL_BUF \
 	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 1024 * 7 / 10 * 1024)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
+#define	VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-#define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
-#define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
+#define	VM_PHYSSEG_MAX		1	/* we have contiguous memory */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define	VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0

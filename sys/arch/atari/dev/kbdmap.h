@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.4 1997/01/10 21:24:27 leo Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.4.62.1 2004/08/03 10:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _MACHINE_KBDMAP_H_
+#define _MACHINE_KBDMAP_H_
 
 #define NUL	0
 #define SOH	1
@@ -143,3 +146,5 @@ struct kbdmap {
 extern struct kbdmap	ascii_kbdmap;
 extern unsigned char	acctable[KBD_NUM_ACC][64];
 #endif
+
+#endif /* _MACHINE_KBDMAP_H_ */

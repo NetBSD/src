@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.8 2003/05/01 07:01:58 igy Exp $
+#	$NetBSD: majors.hpcmips,v 1.8.2.1 2004/08/03 10:35:05 skrll Exp $
 #
 # Device majors for hpcmips
 #
@@ -61,3 +61,9 @@ device-major	pci		char 54			pci
 device-major	ksyms		char 55			ksyms
 device-major	flash		char 100		flash
 device-major	vr4181aiu	char 101		vr4181aiu
+device-major	wsfont		char 102		wsfont
+device-major	ses		char 103		ses
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

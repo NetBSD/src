@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.15 2003/06/03 12:53:47 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.15.2.1 2004/08/03 10:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -42,6 +42,7 @@
 #include <arm/arm32/pte.h>
 #include <machine/bootconfig.h>
 
+extern char end[];
 
 /* debugging flags */
 int debug = 1;
@@ -133,7 +134,7 @@ void	 get_memory_configuration(void);
 void	 get_memory_map(void);
 void	 create_initial_page_tables(void);
 void	 add_pagetables_at_top(void);
-void	 sort_memory_map(void);
+int	 page_info_cmp(const void *a, const void *);
 void	 add_initvectors(void);
 void	 create_configuration(int argc, char **argv, int start_args);
 void	 prepare_and_check_relocation_system(void);
@@ -159,11 +160,16 @@ void init_datastructures(void) {
 	/* Get number of pages and the memorytablesize */
 	osmemory_read_arrangement_table_size(&memory_table_size, &nbpp);
 
-	/* reserve some space for heap etc... 512 might be bigish though */
-	memory_image_size = (int) HIMEM - 512*1024;
-	if (memory_image_size <= 256*1024) panic("I need more memory to boot up; increase Wimp slot");
+	/* Allocate 99% - (small fixed amount) of the heap for memory_image */
+	memory_image_size = (int)HIMEM - (int)end - 512 * 1024;
+	memory_image_size /= 100;
+	memory_image_size *= 99;
+	if (memory_image_size <= 256*1024)
+		panic("Insufficient memory");
+
 	memory_image = alloc(memory_image_size);
-	if (!memory_image) panic("Can't alloc get my memory image ?");
+	if (!memory_image)
+		panic("Can't alloc get my memory image ?");
 
 	bottom_memory = memory_image;
 	top_memory    = memory_image + memory_image_size;
@@ -172,29 +178,46 @@ void init_datastructures(void) {
 	lastpage   = ((int) top_memory    / nbpp) - 1;
 	totalpages = lastpage - firstpage;
 
-	printf("Got %ld memory pages each %d kilobytes to mess with.\n\n", totalpages, nbpp>>10);
+	printf("Allocated %ld memory pages, each of %d kilobytes.\n\n",
+			totalpages, nbpp>>10 );
 
-	/* allocate some space for the relocation table */
-	reloc_tablesize = (MAX_RELOCPAGES+1)*3*sizeof(u_long);	/* 3 entry table */
+	/*
+	 * Setup the relocation table. Its a simple array of 3 * 32 bit
+	 * entries. The first word in the array is the number of relocations
+	 * to be done
+	 */
+	reloc_tablesize = (MAX_RELOCPAGES+1)*3*sizeof(u_long);
 	reloc_instruction_table = alloc(reloc_tablesize);
-	if (!reloc_instruction_table) panic("Can't alloc my relocate instructions pages");
-	
-	/* set up relocation table. First word gives number of relocations to be done */
+	if (!reloc_instruction_table)
+		panic("Can't alloc my relocate instructions pages");
+
 	reloc_entries = 0;
 	reloc_pos     = reloc_instruction_table;
 	*reloc_pos++  = 0;
 
-	/* set up the memory translation info structure; alloc one more for	*
-	 * end of list marker; see get_memory_map				*/
+	/*
+	 * Set up the memory translation info structure. We need to allocate
+	 * one more for the end of list marker. See get_memory_map.
+	 */
 	mem_pages_info = alloc((totalpages + 1)*sizeof(struct page_info));
-	if (!mem_pages_info) panic("Can't alloc my phys->virt page info");
+	if (!mem_pages_info)
+		panic("Can't alloc my phys->virt page info");
 
-	/* allocate memory for the memory arrangement table */
+	/*
+	 * Allocate memory for the memory arrangement table. We use this
+	 * structure to retrieve memory page properties to clasify them.
+	 */
 	memory_page_types = alloc(memory_table_size);
-	if (!memory_page_types) panic("Can't alloc my memory page type block");
+	if (!memory_page_types)
+		panic("Can't alloc my memory page type block");
 
-	initial_page_tables = alloc(16*1024);			/* size is 16 kb per definition */
-	if (!initial_page_tables) panic("Can't alloc my initial page tables");
+	/*
+	 * Initial page tables is 16 kb per definition since only sections are
+	 * used.
+	 */
+	initial_page_tables = alloc(16*1024);
+	if (!initial_page_tables)
+		panic("Can't alloc my initial page tables");
 }
 
 
@@ -207,8 +230,12 @@ void prepare_and_check_relocation_system(void) {
 	/* set the number of relocation entries in the 1st word */
 	*reloc_instruction_table = reloc_entries;
 
-	/* the relocate information needs to be in one sequential physical space	*/
-	relocate_size = (reloc_tablesize + nbpp-1) & ~(nbpp-1);	/* round space up	*/
+	/*
+	 * The relocate information needs to be in one sequential physical
+	 * space in order to be able to access it as one stream when the MMU
+	 * is switched off later.
+	 */
+	relocate_size = (reloc_tablesize + nbpp-1) & ~(nbpp-1);  /* round up */
 	printf("\nPreparing for booting %s ... ", booted_file);
 	relocate_pages = relocate_size / nbpp;
 
@@ -222,10 +249,10 @@ void prepare_and_check_relocation_system(void) {
 		if (pages < relocate_pages-1) {
 			/* check if next page is sequential physically */
 			if ((relocate_table_pages+pages+1)->physical - (relocate_table_pages+pages)->physical != nbpp) {
-				/* Ieee! non contigunous relocate area -> try again */
+				/* Non contigunous relocate area -> try again */
 				printf("*");
 				relocate_table_pages += pages;
-				pages = -1;			/* will be incremented till zero later */
+				continue;	/* while */
 			};
 		};
 		pages++;
@@ -491,7 +518,8 @@ void get_memory_map(void) {
 	osmemory_page_op(inout, mem_pages_info, totalpages);
 
 	printf(" ; sorting ");
-	sort_memory_map();
+	qsort(mem_pages_info, totalpages, sizeof(struct page_info),
+	    &page_info_cmp);
 	printf(".\n");
 
 	/* get the first DRAM index and show the physical memory fragments we got */
@@ -515,9 +543,9 @@ void get_memory_map(void) {
 	};
 	printf("\n\n");
 	if (first_mapped_PODRAM_page_index < 0) {
-		if (PODRAM_addr[0]) panic("Found no (S)DRAM mapped in the bootloader ... increase Wimpslot!");
+		if (PODRAM_addr[0]) panic("Found no (S)DRAM mapped in the bootloader");
 	};
-	if (first_mapped_DRAM_page_index < 0) panic("No DRAM  mapped in the bootloader ... increase Wimpslot!");
+	if (first_mapped_DRAM_page_index < 0) panic("No DRAM mapped in the bootloader");
 }
 
 
@@ -607,16 +635,19 @@ void create_configuration(int argc, char **argv, int start_args) {
 
 	/* fill in the bootconfig *bconfig structure : generic version II */
 	memset(bconfig, 0, sizeof(bconfig));
-	bconfig->magic			= BOOTCONFIG_MAGIC;
-	bconfig->version		= BOOTCONFIG_VERSION;
+	bconfig->magic		= BOOTCONFIG_MAGIC;
+	bconfig->version	= BOOTCONFIG_VERSION;
 	strcpy(bconfig->kernelname, booted_file);
 
 	/* get the kernel base name and update the RiscOS name to a Unix name */
-	i = strlen(bconfig->kernelname);
-	while ((i >= 0) && (bconfig->kernelname[i] != '.')) i--;
-	if (i) memcpy(bconfig->kernelname, bconfig->kernelname+i+1, strlen(booted_file)-i);
+	i = strlen(booted_file);
+	while ((i >= 0) && (booted_file[i] != '.')) i--;
+	if (i) {
+		strcpy(bconfig->kernelname, "/");
+		strcat(bconfig->kernelname, booted_file+i+1);
+	};
 
-	pos = bconfig->kernelname;
+	pos = bconfig->kernelname+1;
 	while (*pos) {
 		if (*pos == '/') *pos = '.';
 		pos++;
@@ -822,32 +853,18 @@ void *boot32_memset(void *dst, int c, size_t size) {
 }
 
 
-/* This sort routine needs to be re-implemented in either assembler or use other algorithm one day; its slow */
-void sort_memory_map(void) {
-	int out, in, count;
-	struct page_info *out_page, *in_page, temp_page;
-
-	count = 0;
-	for (out = 0, out_page = mem_pages_info; out < totalpages; out++, out_page++) {
-		for (in = out+1, in_page = out_page+1; in < totalpages; in++, in_page++) {
-			if (in_page->physical < out_page->physical) {
-				memcpy(&temp_page, in_page,    sizeof(struct page_info));
-				memcpy(in_page,    out_page,   sizeof(struct page_info));
-				memcpy(out_page,   &temp_page, sizeof(struct page_info));
-			};
-			count++;
-			if ((count & 0x3ffff) == 0) twirl();
-		};
-	};
+/* We can rely on the fact that two entries never have identical ->physical */
+int page_info_cmp(const void *a, const void *b) {
+	return (((struct page_info *)a)->physical <
+	    ((struct page_info *)b)->physical) ? -1 : 1;
 }
-
 
 struct page_info *get_relocated_page(u_long destination, int size) {
 	struct page_info *page;
 
 	/* get a page for a fragment */
 	page = free_relocation_page;
-	if (free_relocation_page->pagenumber < 0) panic("\n\nOut of pages; increase Wimpslot and try again");
+	if (free_relocation_page->pagenumber < 0) panic("\n\nOut of pages");
 	reloc_entries++;
 	if (reloc_entries >= MAX_RELOCPAGES) panic("\n\nToo many relocations! What are you loading ??");
 

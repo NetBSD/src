@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
+/*	$NetBSD: gdt.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -57,5 +57,5 @@ void set_sys_gdt(struct sys_segment_descriptor *, void *, size_t, int, int,
 		 int);
 #endif
 
-#define MINGDTSIZ       2048
+#define MINGDTSIZ       PAGE_SIZE
 #define MAXGDTSIZ       65536

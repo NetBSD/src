@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.41 2003/04/26 11:05:13 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.2.1 2004/08/03 10:35:28 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.2.1 2004/08/03 10:35:28 skrll Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -99,6 +102,8 @@
 #include <nfs/nfsmount.h>
 #endif
 
+#include <dev/hpc/apm/apmvar.h>
+
 #include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 #include <hpcsh/dev/hd6446x/hd6446xintcreg.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
@@ -158,6 +163,8 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 void main(void) __attribute__((__noreturn__));
 void machine_startup(int, char *[], struct bootinfo *)
 	__attribute__((__noreturn__));
+void (*__sleep_func)(void *);	/* model dependent sleep function holder */
+void *__sleep_ctx;
 
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
@@ -201,6 +208,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
 	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
 		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
+
+#ifndef RTC_OFFSET
+	/*
+	 * rtc_offset from bootinfo.timezone set by hpcboot.exe
+	 */
+	if (rtc_offset == 0
+	    && bootinfo->timezone > (-12*60)
+	    && bootinfo->timezone <= (12*60))
+		rtc_offset = bootinfo->timezone;
+#endif
 
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
@@ -298,39 +315,43 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 void
 cpu_startup()
 {
-	platid_t cpu;
 	int cpuclock, pclock;
 
 	cpuclock = sh_clock_get_cpuclock();
 	pclock = sh_clock_get_pclock();
+	sprintf(cpu_model, "%s\n", platid_name(&platid));
 
 	sh_startup();
-
-	memcpy(&cpu, &platid, sizeof(platid_t));
-	cpu.dw.dw1 = 0;	/* clear platform */
-	sprintf(cpu_model, "[%s] %s", platid_name(&platid), platid_name(&cpu));
-
-#define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
-	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
-	    MHZ(cpuclock), MHZ(pclock));
 }
 
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	default:
-	}
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	return (EOPNOTSUPP);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+}
+
+void
+machine_sleep()
+{
+
+	if (__sleep_func != NULL)
+		__sleep_func(__sleep_ctx);
+}
+
+void
+machine_standby()
+{
+	// notyet
 }
 
 void

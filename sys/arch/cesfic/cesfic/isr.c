@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.3 2002/12/13 18:49:35 drochner Exp $	*/
+/*	$NetBSD: isr.c,v 1.3.6.1 2004/08/03 10:33:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Link and dispatch interrupts.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.3.6.1 2004/08/03 10:33:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

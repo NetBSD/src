@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.29 2003/04/02 04:35:27 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.29.2.1 2004/08/03 10:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@
  * written so that different "ie" interfaces can be controled by the same
  * driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.29.2.1 2004/08/03 10:40:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +291,6 @@ ie_obio_attach(parent, self, aux)
 	bus_size_t msize;
 	u_long iebase;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
 	sc->bt = oba->oba_bustag;
 
@@ -418,7 +420,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 		return;
 	}
 
-	myetheraddr(myaddr);
+	prom_getether(0, myaddr);
 	i82586_attach(sc, "onboard", myaddr, media, NMEDIA, media[0]);
 
 	/* Establish interrupt channel */

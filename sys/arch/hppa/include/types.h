@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.5 2003/04/28 23:16:19 bjh21 Exp $	*/
+/*	$NetBSD: types.h,v 1.5.2.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -64,10 +60,27 @@ typedef unsigned long vm_size_t;
 
 #endif
 
+/*
+ * Semaphores must be aligned on 16-byte boundaries on the PA-RISC.
+ */
+typedef __volatile unsigned long __cpu_simple_lock_t __attribute__ ((aligned (16)));
+
+#define __SIMPLELOCK_LOCKED	0
+#define __SIMPLELOCK_UNLOCKED	1
+
 typedef int			register_t;
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
 #define	__HAVE_MD_RUNQUEUE
+#define	__HAVE_RAS
+
+/*
+ * On hppa, declaring RAS labels as functions doesn't work, since the toolchain
+ * will construct PLABELs for them.  Make them "const char []" instead.
+ */
+
+#define	RAS_DECL(name)							\
+extern const char __CONCAT(name,_ras_start[]), __CONCAT(name,_ras_end[])
 
 #endif	/* _HPPA_TYPES_H_ */

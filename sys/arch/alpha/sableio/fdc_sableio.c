@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $ */
+/* $NetBSD: fdc_sableio.c,v 1.4.6.1 2004/08/03 10:31:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.4 2002/10/02 04:06:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_sableio.c,v 1.4.6.1 2004/08/03 10:31:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

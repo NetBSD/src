@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62.2.1 2004/08/03 10:34:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -47,6 +46,51 @@
  *
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: autoconf.c 1.36 92/12/20$
+ *
+ *	@(#)autoconf.c	8.2 (Berkeley) 1/12/94
+ */
+
+/*
+ * Copyright (c) 1988 University of Utah.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -99,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62.2.1 2004/08/03 10:34:36 skrll Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -108,9 +152,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $"
 #include "rbox.h"
 #include "rbox.h"
 #include "topcat.h"
-#include "dca.h"
+#include "com_dio.h"
+#include "com_frodo.h"
 #include "dcm.h"
-#include "apci.h"
 #include "ite.h"
 
 #include <sys/param.h>
@@ -131,6 +175,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $"
 
 #include <dev/cons.h>
 
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
@@ -149,19 +197,21 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $"
 #include <hp300/dev/hilvar.h>
 
 #include <hp300/dev/hpibvar.h>
-#include <hp300/dev/scsivar.h>
 
+#if NCOM_DIO > 0
+#include <hp300/dev/com_diovar.h>
+#endif
+#if NCOM_FRODO > 0
+#include <hp300/dev/com_frodovar.h>
+#endif
 
 /* should go away with a cleanup */
-extern int dcacnattach(bus_space_tag_t, bus_addr_t, int);
 extern int dcmcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int apcicnattach(bus_space_tag_t, bus_addr_t, int);
 extern int dvboxcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int gboxcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int rboxcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int hypercnattach(bus_space_tag_t, bus_addr_t, int);
 extern int topcatcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int hilkbdcnattach(bus_space_tag_t, bus_addr_t);
 extern int dnkbdcnattach(bus_space_tag_t, bus_addr_t);
 
 int dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int));
@@ -435,7 +485,7 @@ device_register(dev, aux)
 
 	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
 	    memcmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	    memcmp(dev->dv_xname, "spc", 3) == 0) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
@@ -451,10 +501,10 @@ device_register(dev, aux)
 	}
 
 	if (memcmp(dev->dv_xname, "sd", 2) == 0) {
-		struct oscsi_attach_args *osa = aux;
+		struct scsipibus_attach_args *sa = aux;
 
-		dd->dd_slave = osa->osa_target;
-		dd->dd_punit = osa->osa_lun;
+		dd->dd_slave = sa->sa_periph->periph_target;
+		dd->dd_punit = sa->sa_periph->periph_lun;
 		goto linkup;
 	}
 
@@ -473,7 +523,7 @@ device_register(dev, aux)
 		return;
 	}
 
-	if (memcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (memcmp(dev->dv_xname, "spc", 3) == 0) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -553,8 +603,8 @@ findbootdev()
 	if (scsiboot) {
 		findbootdev_slave(&dev_data_list_scsi, ctlr,
 		     slave, punit);
-		if (booted_device == NULL)  
-			return; 
+		if (booted_device == NULL)
+			return;
 
 		/*
 		 * Sanity check.
@@ -563,7 +613,7 @@ findbootdev()
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
-			booted_device = NULL; 
+			booted_device = NULL;
 		}
 		goto out;
 	}
@@ -603,23 +653,11 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 	for (dd = dev_data_list.lh_first; dd != NULL;
 	    dd = dd->dd_list.le_next) {
 		/*
-		 * XXX We don't yet have the extra bus indirection
-		 * XXX for SCSI, so we have to do a little bit of
-		 * XXX extra work.
+		 * "sd" -> "scsibus" -> "spc"
+		 * "rd" -> "hpibbus" -> "fhpib"
 		 */
-		if (memcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
-			/*
-			 * "sd" -> "oscsi"
-			 */
-			if (dd->dd_dev->dv_parent != cdd->dd_dev)
-				continue;
-		} else {
-			/*
-			 * "rd" -> "hpibbus" -> "fhpib"
-			 */
-			if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
-				continue;
-		}
+		if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
+			continue;
 
 		if (dd->dd_slave == slave &&
 		    dd->dd_punit == punit) {
@@ -686,31 +724,15 @@ setbootdev()
 	 * Get parent's info.
 	 */
 	switch (type) {
-	case 2:
+	case 2: /* rd */
+	case 4: /* sd */
 		/*
 		 * "rd" -> "hpibbus" -> "fhpib"
+		 * "sd" -> "scsibus" -> "spc"
 		 */
 		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
 		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
 			if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
-				/*
-				 * Found it!
-				 */
-				bootdev = MAKEBOOTDEV(type,
-				    ctlr, dd->dd_slave, dd->dd_punit,
-				    DISKPART(rootdev));
-				break;
-			}
-		}
-		break;
-
-	case 4:
-		/*
-		 * "sd" -> "oscsi"
-		 */
-		for (cdd = dev_data_list_scsi.lh_first, ctlr = 0;
-		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) { 
-			if (cdd->dd_dev == root_device->dv_parent) {
 				/*
 				 * Found it!
 				 */
@@ -801,15 +823,22 @@ dev_data_insert(dd, ddlist)
 void
 hp300_cninit()
 {
+	struct bus_space_tag tag;
+	bus_space_tag_t bst;
+
+	bst = &tag;
+	memset(bst, 0, sizeof(struct bus_space_tag));
+	bst->bustype = HP300_BUS_SPACE_INTIO;
+
 	/*
 	 * Look for serial consoles first.
 	 */
-#if NAPCI > 0
-	if (!apcicnattach(HP300_BUS_SPACE_INTIO, 0x1c020, -1))
+#if NCOM_FRODO > 0
+	if (!com_frodo_cnattach(bst, 0x1c020, -1))
 		return;
 #endif
-#if NDCA > 0
-	if (!dio_scan(dcacnattach))
+#if NCOM_DIO > 0
+	if (!dio_scan(com_dio_cnattach))
 		return;
 #endif
 #if NDCM > 0
@@ -823,19 +852,19 @@ hp300_cninit()
 	 * Look for internal framebuffers.
 	 */
 #if NDVBOX > 0
-	if (!dvboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!dvboxcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #if NGBOX > 0
-	if (!gboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!gboxcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #if NRBOX > 0
-	if (!rboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!rboxcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #if NTOPCAT > 0
-	if (!topcatcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!topcatcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #endif	/* CONSCODE */
@@ -867,11 +896,11 @@ hp300_cninit()
 find_kbd:
 
 #if NDNKBD > 0
-	dnkbdcnattach(HP300_BUS_SPACE_INTIO, 0x1c000)
+	dnkbdcnattach(bst, 0x1c000)
 #endif
 
 #if NHIL > 0
-	hilkbdcnattach(HP300_BUS_SPACE_INTIO, 0x28000);
+	hilkbdcnattach(bst, 0x28000);
 #endif
 #endif	/* NITE */
 }
@@ -903,8 +932,13 @@ dio_scode_probe(scode, func)
 	int scode;
 	int (*func)(bus_space_tag_t, bus_addr_t, int);
 {
+	struct bus_space_tag tag;
+	bus_space_tag_t bst;
 	caddr_t pa, va;
 
+	bst = &tag;
+	memset(bst, 0, sizeof(struct bus_space_tag));
+	bst->bustype = HP300_BUS_SPACE_DIO;
 	pa = dio_scodetopa(scode);
 	va = iomap(pa, PAGE_SIZE);
 	if (va == 0)
@@ -915,7 +949,7 @@ dio_scode_probe(scode, func)
 	}
 	iounmap(va, PAGE_SIZE);
 
-	return ((*func)(HP300_BUS_SPACE_DIO, (bus_addr_t)pa, scode));
+	return ((*func)(bst, (bus_addr_t)pa, scode));
 }
 
 

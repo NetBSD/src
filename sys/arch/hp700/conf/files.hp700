@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.5 2003/04/06 10:06:14 tsutsui Exp $
+#	$NetBSD: files.hp700,v 1.5.2.1 2004/08/03 10:34:47 skrll Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -9,27 +9,44 @@ maxpartitions 16
 
 maxusers 2 8 64
 
+# Status LEDs
+defflag 			USELEDS
+
 # 
 # "workstation console" routines
 #
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 
+include "dev/pckbport/files.pckbport"
 #
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
 
-# I2O
+#
+# Machine-independent ATA drivers
+#
+include	"dev/ata/files.ata"
+
+#
+# Machine-independent I2O drivers
+#
 include "dev/i2o/files.i2o"
 
 #
-# MI ATAPI drivers
+# Machine-independent USB drivers
 #
-#include "dev/atapiscsi/files.atapiscsi"
-#include "dev/ata/files.ata"
+include	"dev/usb/files.usb"
 
-include "dev/pckbc/files.pckbc"
+#
+# Machine-independent IEEE1394 drivers
+#
+include	"dev/ieee1394/files.ieee1394"
+#
+# PCI Bus support
+#
+include "dev/pci/files.pci"
 
 #
 # ISA Bus support
@@ -41,10 +58,6 @@ include "dev/isa/files.isa"
 #
 include "dev/eisa/files.eisa"
 
-#
-# PCI Bus support
-#
-include "dev/pci/files.pci"
 
 #
 # Gonzo System Connect Bus
@@ -76,10 +89,16 @@ device	fpu
 attach	fpu at mainbus
 file	arch/hp700/dev/fpu.c		fpu
 
+# Phantom PseudoBC GSC+ Port
+device	phantomas {}
+attach	phantomas at mainbus
+file	arch/hp700/dev/phantomas.c	phantomas
+
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
 device	lasi: gscbus
-attach	lasi at mainbus
+attach	lasi at mainbus with lasi_mainbus
+attach	lasi at phantomas with lasi_phantomas
 file	arch/hp700/dev/lasi.c		lasi
 
 # all the older systems
@@ -88,17 +107,23 @@ attach	asp at mainbus
 file	arch/hp700/dev/asp.c		asp
 
 # 1FT4-0001, ASIC used on gecko cards
-device	wax: gscbus, isabus, eisabus
-attach	wax at mainbus
+device	wax: gscbus
+attach	wax at mainbus with wax_mainbus
+attach	wax at phantomas with wax_phantomas
 file	arch/hp700/dev/wax.c		wax
 
 device	mongoose: isabus, eisabus
 attach	mongoose at mainbus
 file	arch/hp700/dev/mongoose.c	mongoose
 
-device	dino: pcibus
-attach	dino at mainbus
+# Dino, GSC to PCI bridge. Includes ps/2, serial, and flying toaster interfaces
+# Cujo is a 64-bit data path Dino
+device	dino { }: pcibus
+attach	dino at phantomas
 file	arch/hp700/dev/dino.c		dino
+
+attach	com at dino with com_dino
+file	arch/hp700/dev/com_dino.c	com_dino
 
 device	sti: wsemuldisplaydev
 attach	sti at mainbus with sti_sgc
@@ -137,6 +162,10 @@ file	arch/hp700/gsc/lpt_gsc.c		lpt
 device	ie: ifnet, ether, arp, i82586
 attach	ie at gsc with ie_gsc
 file	arch/hp700/gsc/if_ie_gsc.c	ie_gsc
+
+device	iee: ifnet, ether, arp, i82596
+attach	iee at gsc with iee_gsc
+file	arch/hp700/gsc/if_iee_gsc.c	iee_gsc
 
 attach	siop at gsc with siop_gsc
 file	arch/hp700/gsc/siop_gsc.c	siop_gsc
@@ -185,12 +214,6 @@ file	arch/hp700/gsc/com_harmony.c	com_harmony
 #device	myri: ether
 #attach	myri at pci
 #file	dev/pci/myri.c			myri
-
-#
-# PC Keyboard controller (ps2)
-#
-
-#include "dev/pckbc/files.pckbc"
 
 #
 # Non-device files

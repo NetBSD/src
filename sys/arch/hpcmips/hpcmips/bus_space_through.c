@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_through.c,v 1.2 2002/04/14 07:59:59 takemura Exp $	*/
+/*	$NetBSD: bus_space_through.c,v 1.2.10.1 2004/08/03 10:35:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space_through.c,v 1.2.10.1 2004/08/03 10:35:17 skrll Exp $");
 
 #include <sys/systm.h>
 #include <machine/bus.h>

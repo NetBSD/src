@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.9.2.1 2003/07/02 15:25:14 darrenr Exp $ */
+/* $NetBSD: syscall.c,v 1.9.2.2 2004/08/03 10:31:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.2.1 2003/07/02 15:25:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.2.2 2004/08/03 10:31:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,8 +168,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
-
-	KERNEL_PROC_LOCK(l);
+	boolean_t needlock;
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -227,7 +226,15 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	rval[0] = 0;
 	rval[1] = 0;
+
+	needlock = (callp->sy_flags & SYCALL_MPSAFE) == 0;
+	if (needlock) {
+		KERNEL_PROC_LOCK(l);
+	}
 	error = (*callp->sy_call)(l, args, rval);
+	if (needlock) {
+		KERNEL_PROC_UNLOCK(l);
+	}
 
 	switch (error) {
 	case 0:
@@ -250,7 +257,6 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(l, code, error, rval);
 #endif
-	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
 
@@ -260,7 +266,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	const struct sysent *callp;
 	int error;
 	u_int64_t rval[2];
-	u_int64_t *args, copyargs[10];				/* XXX */
+	u_int64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
 
@@ -294,8 +300,11 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	default:
 		error = copyin((caddr_t)alpha_pal_rdusp(), &copyargs[6],
 		    (nargs - 6) * sizeof(u_int64_t));
-		if (error)
+		if (error) {
+			args = copyargs;
+			KERNEL_PROC_UNLOCK(l);
 			goto bad;
+		}
 	case 6:	
 		copyargs[5] = framep->tf_regs[FRAME_A5];
 	case 5:	
@@ -316,12 +325,15 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
 
 	switch (error) {
 	case 0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dma.c,v 1.1 2002/10/19 19:31:39 bsh Exp $ */
+/*	$NetBSD: pxa2x0_dma.c,v 1.1.8.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,6 +38,9 @@
  * (Currently used only for LCD frame buffer)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_dma.c,v 1.1.8.1 2004/08/03 10:32:58 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -52,6 +55,7 @@
 struct arm32_bus_dma_tag pxa2x0_bus_dma_tag = {
 	0,
 	0,
+	NULL,			/* _cookie */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

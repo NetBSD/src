@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 2003/03/13 15:36:07 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.2.2.1 2004/08/03 10:40:44 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -59,9 +59,12 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
+#include <lib/libsa/bootp.h>
+#include <lib/libsa/nfs.h>
 
 #include <lib/libkern/libkern.h>
 
+#include "extern.h"
 #include "ofdev.h"
 #include "netif_of.h"
 
@@ -75,8 +78,7 @@ static	int open_count;
  * This opens the low-level device and sets f->f_devdata.
  */
 int
-net_open(op)
-	struct of_dev *op;
+net_open(struct of_dev *op)
 {
 	int error = 0;
 
@@ -102,8 +104,7 @@ bad:
 }
 
 int
-net_close(op)
-	struct of_dev *op;
+net_close(struct of_dev *op)
 {
 	/*
 	 * On last close, do netif close, etc.
@@ -113,10 +114,11 @@ net_close(op)
 			netif_of_close(netdev_sock);
 			netdev_sock = -1;
 		}
+	return 0;
 }
 
 int
-net_mountroot()
+net_mountroot(void)
 {
 
 #ifdef	DEBUG

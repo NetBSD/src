@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.18 2003/06/14 19:32:54 thorpej Exp $
+#	$NetBSD: IQ80321,v 1.18.2.1 2004/08/03 10:33:54 skrll Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -78,6 +78,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_13	# NetBSD 1.3 compatibility.
@@ -119,6 +120,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 
@@ -130,8 +132,8 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=220000
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options 	SYMTAB_SPACE=250000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
@@ -141,7 +143,7 @@ config		netbsd-sd0	root on sd0 type ffs
 # The main bus device
 mainbus0	at root
 
-# The boot cpu
+# The boot CPU
 cpu0		at mainbus?
 
 # On-board device support
@@ -152,6 +154,9 @@ com0		at obio? addr 0xfe800000 xint 1	# on-board TI 165C50 UART
 iopxs*		at mainbus?
 
 iopaau*		at iopxs?		# Application Accelerator Unit
+iopiic*		at iopxs?		# I2C Controller Unit(s)
+iic0		at iopiic?
+iic1		at iopiic?
 iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
 
@@ -164,8 +169,15 @@ pci*		at ppb? bus ?
 #
 
 # PCI IDE/S-ATA controllers and devices
-pciide*		at pci? dev ? function ? flags 0x0000
-wd*		at pciide? channel ? drive ? flags 0x0000
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+
+atabus* 	at ata? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
 # PCI SCSI controllers
 ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI

@@ -1,4 +1,4 @@
-/* $Id: pxa2x0_lcd.c,v 1.5 2003/06/17 09:43:14 bsh Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.5.2.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -36,6 +36,10 @@
 /*
  * Support PXA2[15]0's integrated LCD controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.5.2.1 2004/08/03 10:32:58 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -313,7 +317,12 @@ init_pallet(uint16_t *buf, int depth)
 			buf[i] = 0xffff;
 #endif
 		break;
+	case 16:
+		/* pallet is not needed */
+		break;
 	default:
+		/* other depths are not supported */
+		break;
 	}
 }
 

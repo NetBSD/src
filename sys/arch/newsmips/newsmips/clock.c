@@ -1,14 +1,17 @@
-/*	$NetBSD: clock.c,v 1.7 2000/07/29 11:11:53 tsubai Exp $	*/
+/*      $NetBSD: clock.c,v 1.7.24.1 2004/08/03 10:38:29 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ *      The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department, Ralph Campbell, and Kazumasa Utashiro of
- * Software Research Associates, Inc.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *      This product includes software developed by the University of
+ *      California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,120 +37,108 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: clock.c 1.18 91/01/21$
- *
- *	@(#)clock.c	8.1 (Berkeley) 6/11/93
+ *      @(#)clock.c     8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.24.1 2004/08/03 10:38:29 skrll Exp $");
+
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <dev/clock_subr.h>
 
-#include <newsmips/newsmips/clockvar.h>
+#include <machine/cpu.h>
+#include <machine/intr.h>
 
-static struct clockfns *clockfns;
-static struct device *clockdev;
-static int clockinitted;
+static	todr_chip_handle_t todr_handle;
 
+/*
+ * Common parts of todclock autoconfiguration.
+ */
 void
-clockattach(dev, fns)
-	struct device *dev;
-	struct clockfns *fns;
+todr_attach(handle)
+	todr_chip_handle_t handle;
 {
-	if (clockfns != NULL)
-		panic("clockattach: multiple clocks");
 
-	clockdev = dev;
-	clockfns = fns;
+	if (todr_handle)
+		panic("todr_attach: too many todclocks configured");
+
+	todr_handle = handle;
 }
 
 /*
- * Machine-dependent clock routines.
+ * Set up the real-time and statistics clocks.  Leave stathz 0 only
+ * if no alternative timer is available.
  *
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
- *
- * Resettodr restores the time of day hardware after a time change.
+ * The frequencies of these clocks must be an even number of microseconds.
  */
+void
+cpu_initclocks()
+{
+
+	if (todr_handle == NULL)
+		panic("no todclock device configured");
+
+	/* Call the machine-specific initclocks hook. */
+	(*enable_timer)();
+}
 
 /*
- * We assume newhz is either stathz or profhz, and that neither will
- * change after being set up above.  Could recalculate intervals here
- * but that would be a drag.
+ * This does not need to do anything, as we have only one timer and
+ * profhz == stathz == hz.
  */
 void
 setstatclockrate(newhz)
 	int newhz;
 {
 
-	/* KU:XXX do something! */
+	/* nothing to do */
 }
 
 /*
- * Set up the real-time and statistics clocks.  Leave stathz 0 only if
- * no alternative timer is available.
- */
-void
-cpu_initclocks()
-{
-	(*clockfns->cf_init)(clockdev);
-}
-
-/*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
+ * Set up the system's time, given a `reasonable' time value.
  */
 void
 inittodr(base)
 	time_t base;
 {
-	int deltat, badbase = 0;
-	struct clock_ymdhms dt;
+	int badbase, waszero;
 
-	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = 6*SECYR + 186*SECDAY + SECDAY/2;
+	badbase = 0;
+	waszero = (base == 0);
+
+	if (base < 5 * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * in stead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		/* 1991/07/01	12:00:00 */
+		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
 
-	(*clockfns->cf_get)(clockdev, &dt);
-	clockinitted = 1;
-
-	/* simple sanity checks */
-	if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
-	    dt.dt_day < 1 || dt.dt_day > 31 ||
-	    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 59) {
-		printf("WARNING: preposterous clock chip time\n");
+	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
+		 * anything better, resetting the clock.
 		 */
 		time.tv_sec = base;
 		if (!badbase)
 			resettodr();
-		return;
-	}
+	} else {
+		int deltat = time.tv_sec - base;
 
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
+		if (waszero || deltat < 2 * SECDAY)
 			return;
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
@@ -160,20 +147,18 @@ inittodr(base)
 }
 
 /*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
+ * Reset the clock based on the current time.
+ * Used when the current clock is preposterous, when the time is changed,
+ * and when rebooting.  Do nothing if the time is not yet known, e.g.,
+ * when crashing during autoconfig.
  */
 void
 resettodr()
 {
-	struct clock_ymdhms dt;
 
-	if (! clockinitted)
+	if (time.tv_sec == 0)
 		return;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-	(*clockfns->cf_set)(clockdev, &dt);
+	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("resettodr: cannot set time in time-of-day clock\n");
 }

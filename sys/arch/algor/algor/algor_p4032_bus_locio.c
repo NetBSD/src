@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_bus_locio.c,v 1.1 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_bus_locio.c,v 1.1.24.1 2004/08/03 10:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific local bus I/O support for the Algorithmics P-4032.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_bus_locio.c,v 1.1.24.1 2004/08/03 10:31:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.1 2003/04/16 22:36:14 dsl Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.1.2.1 2004/08/03 10:36:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 /*
  * Code linked to 0x1000:0 and (usually) read from /boot by bootxx code
@@ -55,12 +55,12 @@
 	.code16
 ENTRY(boot_start)
 	jmp	boot_start_1
-	.align	4
+	.balign	4
 ENTRY(boot_magic)
 	.long	X86_BOOT_MAGIC_2	/* checked for by bootxx code */
 ENTRY(boot_params)
 	.long	boot_start_1 - boot_params
-#include "../bootxx/boot_params.S"
+#include <boot_params.S>
 	. = boot_start + 0x80		/* space for patchable variables */
 boot_start_1:
 

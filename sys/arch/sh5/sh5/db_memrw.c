@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 2002/08/26 10:16:44 scw Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.1.10.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
  * make sure to do the correct sized pointer access.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1.10.1 2004/08/03 10:40:24 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 
@@ -86,7 +89,7 @@
 void
 db_read_bytes(db_addr_t addr, size_t size, char *data)
 {
-	char *src = (char *)addr;
+	char *src = (char *)(intptr_t)addr;
 
 	if (size == 8) {
 		*((register_t*)data) = *((register_t*)src);
@@ -115,7 +118,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
 void
 db_write_bytes(db_addr_t addr, size_t size, char *data)
 {
-	char *dst = (char *)addr;
+	char *dst = (char *)(intptr_t)addr;
 	extern char etext[];
 	int in_text = 0;
 

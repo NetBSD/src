@@ -1,4 +1,4 @@
-/*	$NetBSD: i82802reg.h,v 1.1 2000/10/27 22:49:21 thorpej Exp $	*/
+/*	$NetBSD: i82802reg.h,v 1.1.28.1 2004/08/03 10:36:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,8 +34,8 @@
 /*
  * Intel 82802AB/82802AC Firmware Hub
  *
- * see:	ftp://download.intel.com/design/chipsets/datashts/29065802.pdf
- *	and http://developer.intel.com/design/chipsets/manuals/298029.pdf
+ * see:	ftp://download.intel.com/design/chipsets/datashts/29065804.pdf
+ *	and http://www.intel.com/design/chipsets/datashts/29065804.pdf
  */
 
 /*

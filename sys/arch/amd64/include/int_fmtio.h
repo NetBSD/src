@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.1 2003/04/26 18:39:42 fvdl Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,8 +147,8 @@
 #define	SCNdLEAST16	"hd"	/* int_least16_t	*/
 #define	SCNdLEAST32	"d"	/* int_least32_t	*/
 #define	SCNdLEAST64	"ld"	/* int_least64_t	*/
-#define	SCNdFAST8	"hhd"	/* int_fast8_t		*/
-#define	SCNdFAST16	"hd"	/* int_fast16_t		*/
+#define	SCNdFAST8	"d"	/* int_fast8_t		*/
+#define	SCNdFAST16	"d"	/* int_fast16_t		*/
 #define	SCNdFAST32	"d"	/* int_fast32_t		*/
 #define	SCNdFAST64	"ld"	/* int_fast64_t		*/
 #define	SCNdMAX		"ld"	/* intmax_t		*/
@@ -157,13 +157,13 @@
 #define	SCNi8		"hhi"	/* int8_t		*/
 #define	SCNi16		"hi"	/* int16_t		*/
 #define	SCNi32		"i"	/* int32_t		*/
-#define	SCNi64		"lli"	/* int64_t		*/
+#define	SCNi64		"li"	/* int64_t		*/
 #define	SCNiLEAST8	"hhi"	/* int_least8_t		*/
 #define	SCNiLEAST16	"hi"	/* int_least16_t	*/
 #define	SCNiLEAST32	"i"	/* int_least32_t	*/
 #define	SCNiLEAST64	"li"	/* int_least64_t	*/
-#define	SCNiFAST8	"hhi"	/* int_fast8_t		*/
-#define	SCNiFAST16	"hi"	/* int_fast16_t		*/
+#define	SCNiFAST8	"i"	/* int_fast8_t		*/
+#define	SCNiFAST16	"i"	/* int_fast16_t		*/
 #define	SCNiFAST32	"i"	/* int_fast32_t		*/
 #define	SCNiFAST64	"li"	/* int_fast64_t		*/
 #define	SCNiMAX		"li"	/* intmax_t		*/
@@ -179,8 +179,8 @@
 #define	SCNoLEAST16	"ho"	/* uint_least16_t	*/
 #define	SCNoLEAST32	"o"	/* uint_least32_t	*/
 #define	SCNoLEAST64	"lo"	/* uint_least64_t	*/
-#define	SCNoFAST8	"hho"	/* uint_fast8_t		*/
-#define	SCNoFAST16	"ho"	/* uint_fast16_t	*/
+#define	SCNoFAST8	"o"	/* uint_fast8_t		*/
+#define	SCNoFAST16	"o"	/* uint_fast16_t	*/
 #define	SCNoFAST32	"o"	/* uint_fast32_t	*/
 #define	SCNoFAST64	"lo"	/* uint_fast64_t	*/
 #define	SCNoMAX		"lo"	/* uintmax_t		*/
@@ -194,8 +194,8 @@
 #define	SCNuLEAST16	"hu"	/* uint_least16_t	*/
 #define	SCNuLEAST32	"u"	/* uint_least32_t	*/
 #define	SCNuLEAST64	"lu"	/* uint_least64_t	*/
-#define	SCNuFAST8	"hhu"	/* uint_fast8_t		*/
-#define	SCNuFAST16	"hu"	/* uint_fast16_t	*/
+#define	SCNuFAST8	"u"	/* uint_fast8_t		*/
+#define	SCNuFAST16	"u"	/* uint_fast16_t	*/
 #define	SCNuFAST32	"u"	/* uint_fast32_t	*/
 #define	SCNuFAST64	"lu"	/* uint_fast64_t	*/
 #define	SCNuMAX		"lu"	/* uintmax_t		*/

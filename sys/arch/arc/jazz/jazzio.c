@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.10 2003/05/03 18:10:45 wiz Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.10.2.1 2004/08/03 10:32:22 skrll Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -29,6 +29,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.10.2.1 2004/08/03 10:32:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,29 +75,14 @@ int	jazzio_no_handler __P((void *));
 /*
  *  Interrupt dispatch table for jazz i/o bus.
  */
-struct jazzio_intr_registry {
-	intr_handler_t	int_hand;	/* Interrupt handler */
-	void		*param;		/* Parameter to send to handler */
+struct jazzio_intrhand {
+	intr_handler_t	ih_func;	/* Interrupt handler */
+	void		*ih_arg;	/* Parameter to send to handler */
+	struct evcnt	ih_evcnt;	/* interrupt counter */
+	char		ih_evname[32];	/* event counter name */
 };
 
-struct jazzio_intr_registry jazzio_intrtab[] = {
-	{ jazzio_no_handler, (void *)NULL, },  /*  0 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  1 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  2 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  3 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  4 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  5 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  6 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  7 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  8 */
-	{ jazzio_no_handler, (void *)NULL, },  /*  9 */
-	{ jazzio_no_handler, (void *)NULL, },  /* 10 */
-	{ jazzio_no_handler, (void *)NULL, },  /* 11 */
-	{ jazzio_no_handler, (void *)NULL, },  /* 12 */
-	{ jazzio_no_handler, (void *)NULL, },  /* 13 */
-	{ jazzio_no_handler, (void *)NULL, },  /* 14 */
-	{ jazzio_no_handler, (void *)NULL, },  /* 15 */
-};
+struct jazzio_intrhand jazzio_intrtab[16];
 
 
 struct jazzio_config *jazzio_conf = NULL;
@@ -140,6 +128,12 @@ jazzioattach(parent, self, aux)
 
 	/* keep our CPU device description handy */
 	sc->sc_devs = jazzio_devconfig;
+
+	/* initialize interrupt handler table */
+	for (i = 0; i < sizeof(jazzio_intrtab)/sizeof(jazzio_intrtab[0]); i++) {
+		jazzio_intrtab[i].ih_func = jazzio_no_handler;
+		jazzio_intrtab[i].ih_arg = NULL;
+	}
 
 	/* set up interrupt handlers */
 	(*platform->set_intr)(MIPS_INT_MASK_1, jazzio_intr, 2);
@@ -189,17 +183,21 @@ jazzio_intr_establish(intr, handler, val)
 	intr_handler_t handler;
 	void *val;
 {
+	struct jazzio_intrhand *jirp;
+
 	if (intr < 0 ||
-	    intr >= sizeof(jazzio_intrtab)/sizeof(jazzio_intrtab[0])) {
+	    intr >= sizeof(jazzio_intrtab)/sizeof(jazzio_intrtab[0]))
 		panic("jazzio intr %d out of range", intr);
-	} else if (jazzio_intrtab[intr].int_hand != jazzio_no_handler) {
-		panic("jazzio intr %d already set to %p", intr,
-		    jazzio_intrtab[intr].int_hand);
-	} else {
-		jazzio_int_mask |= 1 << intr;
-		jazzio_intrtab[intr].int_hand = handler;
-		jazzio_intrtab[intr].param = val;
-	}
+	jirp = &jazzio_intrtab[intr];
+	if (jirp->ih_func != jazzio_no_handler)
+		panic("jazzio intr %d already set to %p", intr, jirp->ih_func);
+
+	jazzio_int_mask |= 1 << intr;
+	jirp->ih_func = handler;
+	jirp->ih_arg = val;
+	snprintf(jirp->ih_evname, sizeof(jirp->ih_evname), "intr %d", intr);
+	evcnt_attach_dynamic(&jirp->ih_evcnt, EVCNT_TYPE_INTR,
+	    NULL, "jazzio", jirp->ih_evname);
 
 	(*jazzio_conf->jc_set_iointr_mask)(jazzio_int_mask);
 }
@@ -208,9 +206,13 @@ void
 jazzio_intr_disestablish(intr)
 	int intr;
 {
+	struct jazzio_intrhand *jirp;
+
 	jazzio_int_mask &= ~(1 << intr);
-	jazzio_intrtab[intr].int_hand = jazzio_no_handler;
-	jazzio_intrtab[intr].param = (void *)NULL;
+	jirp = &jazzio_intrtab[intr];
+	jirp->ih_func = jazzio_no_handler;
+	jirp->ih_arg = NULL;
+	evcnt_detach(&jirp->ih_evcnt);
 
 	(*jazzio_conf->jc_set_iointr_mask)(jazzio_int_mask);
 }
@@ -219,6 +221,7 @@ int
 jazzio_no_handler(arg)
 	void *arg;
 {
+
 	panic("uncaught jazzio interrupt with arg %p", arg);
 }
 
@@ -231,17 +234,19 @@ jazzio_intr(mask, cf)
 	struct clockframe *cf;
 {
 	unsigned int vector;
-	struct jazzio_intr_registry *jirp;
+	struct jazzio_intrhand *jirp;
 
 	while ((vector = inb(jazzio_conf->jc_iointr_status_reg)) != 0) {
 		jirp = &jazzio_intrtab[(vector >> 2) - 1];
-		(*jirp->int_hand)(jirp->param);
+		(*jirp->ih_func)(jirp->ih_arg);
+		jirp->ih_evcnt.ev_count++;
 	}
-	return (~0);  /* Dont reenable */
+	return (~0);  /* Don't reenable */
 }
 
 void
 jazzio_reset()
 {
+
 	arc_sysreset(PICA_SYS_KBD, JAZZIO_KBCMDP);
 }

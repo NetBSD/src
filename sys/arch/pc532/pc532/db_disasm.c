@@ -1,38 +1,38 @@
-/*	$NetBSD: db_disasm.c,v 1.7 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7.22.1 2004/08/03 10:38:56 skrll Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * Copyright (c) 1992 Helsinki University of Technology
  * Copyright (c) 1992 Bob Krause, Bruce Culbertson
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON AND HELSINKI UNIVERSITY OF TECHNOLOGY AND BOB
  * KRAUSE AND BRUCE CULBERTSON ALLOW FREE USE OF THIS SOFTWARE IN ITS
  * "AS IS" CONDITION.  CARNEGIE MELLON AND HELSINKI UNIVERSITY OF
  * TECHNOLOGY AND BOB KRAUSE AND BRUCE CULBERTSON DISCLAIM ANY
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 /*
- * From Bruce Culbertson's and Bob Krause's ROM monitor for the pc532 
- * adapted to pc532 Mach by Tero Kivinen and Tatu Ylonen at Helsinki 
+ * From Bruce Culbertson's and Bob Krause's ROM monitor for the pc532
+ * adapted to pc532 Mach by Tero Kivinen and Tatu Ylonen at Helsinki
  * University of Technology.
  */
 
@@ -42,6 +42,9 @@
  * Not yet complete!
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7.22.1 2004/08/03 10:38:56 skrll Exp $");
 
 #define STATIC static
 
@@ -945,7 +948,7 @@ struct regTable regTable[] = {
 };
 
 #define REGTABLESZ ((sizeof regTable) / (sizeof (struct regTable)))
-    
+
 #define GetShort(x, y)	   ((((x) & 0x80) >> 7) + (((y) & 0x7) << 1))
 #define GetGen0(x)	   (((x) & 0xf8) >> 3)
 #define GetGen1(x,y)	   ((((x) & 0xc0) >> 6) + (((y) & 0x7) << 2))
@@ -987,15 +990,15 @@ void db_formatOperand(operand, loc)
 	db_addr_t loc;
 {
 	int need_comma, i, mask, textlen;
-	
+
 	switch (operand->o_mode) {
-		
+
 	      case AMODE_REG:
 	      case AMODE_AREG:
 	      case AMODE_MREG:
 		db_printf("%s", regTable[operand->o_reg0].name);
 		break;
-		
+
 	      case AMODE_MREL:
 		db_printsym((db_addr_t) operand->o_disp1, DB_STGY_ANY,
 		    db_printf);
@@ -1004,36 +1007,36 @@ void db_formatOperand(operand, loc)
 		    db_printf);
 		db_printf("(%s))",regTable[operand->o_reg0].name);
 		break;
-		
+
 	      case AMODE_QUICK:
 	      case AMODE_IMM:
 		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY,
 		    db_printf);
 		break;
-		
+
 	      case AMODE_ABS:
 		db_printf("@");
 		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_ANY,
 		    db_printf);
 		break;
-		
+
 	      case AMODE_EXT:
 		db_printf("ext(%ld)", operand->o_disp0);
 		if (operand->o_disp1)
 		    db_printf("+%ld", operand->o_disp1);
 		break;
-		
+
 	      case AMODE_TOS:
 		db_printf("tos");
 		break;
-		
+
 	      case AMODE_RREL:
 	      case AMODE_MSPC:
 		db_printsym((db_addr_t) operand->o_disp0, DB_STGY_XTRN,
 		    db_printf);
 		db_printf("(%s)",regTable[operand->o_reg0].name);
 		break;
-		
+
 	      case AMODE_REGLIST:
 		db_printf("[");
 		need_comma = 0;
@@ -1048,18 +1051,18 @@ void db_formatOperand(operand, loc)
 		}
 		db_printf("]");
 		break;
-		
+
 	      case AMODE_BLISTB:
 		i = 7;
 		goto bitlist;
-		
+
 	      case AMODE_BLISTW:
 		i = 15;
 		goto bitlist;
-		
+
 	      case AMODE_BLISTD:
 		i = 31;
-		
+
 bitlist:
 		db_printf("B'");
 		for (; i >= 0; i--, textlen++) {
@@ -1070,12 +1073,12 @@ bitlist:
 			    db_printf("0");
 		}
 		break;
-		
+
 	      case AMODE_SOPT:
 		i = operand->o_disp0>>1;
 		db_printf("%s", sopt_table[i]);
 		break;
-		
+
 	      case AMODE_CFG:
 		db_printf("[");
 		need_comma = 0;
@@ -1090,12 +1093,12 @@ bitlist:
 		}
 		db_printf("]");
 		break;
-		
+
 	      case AMODE_CINV:
 		{			/* print cache invalidate flags */
 			char *p;
 			int i, need_comma = 0;
-			
+
 			for (i = 4, p = "AID"; i; i >>= 1, ++p)
 			    if (i & operand->o_disp0) {
 				    if (need_comma)
@@ -1105,7 +1108,7 @@ bitlist:
 			    }
 		}
 		break;
-		
+
 	      case AMODE_INVALID:
 		db_printf("?");
 		break;
@@ -1122,7 +1125,7 @@ void db_formatAsm(insn, loc, altfmt)
 	boolean_t altfmt;
 {
 	int i, j;
-	
+
 	db_printf("%s\t", &insn->i_monic[0]);
 
 	for (i = 0; i < 4 && insn->i_opr[i].o_mode != AMODE_NONE; i++) {
@@ -1137,7 +1140,7 @@ void db_formatAsm(insn, loc, altfmt)
 		    insn->i_opr[i].o_mode == AMODE_RREL) {
 			register const struct db_variable *regp;
 			db_expr_t	value;
-			
+
 			if (strcmp(db_regs->name, "pc") == 0) {
 				value = loc;
 			} else {
@@ -1188,7 +1191,7 @@ int db_disp(loc, result)
 	long *result;
 {
 	unsigned int b;
-	
+
 	b = get_byte(loc);
 	if (!(b & 0x80)) {			/* one byte */
 		*result = ((b & 0x40) ? 0xffffffc0L : 0) | (b & 0x3f);
@@ -1200,7 +1203,7 @@ int db_disp(loc, result)
 		*result |= b;
 		return 2;
 	} else {					/* four byte */
-		*result = 
+		*result =
 		    ((b & 0x20) ? 0xe0000000L : 0) |	/* bug fix 8/28 */
 			((b & 0x1f) << 24);		/* bug fix 7/21 */
 		b = get_byte(loc + 1);
@@ -1221,9 +1224,9 @@ int db_decode_operand(loc, byte, operand, iol)
 {
 	register int i, consumed = 0;
 	unsigned long value;
-	
+
 	switch (byte) {
-		
+
 	      case GEN_R0:
 	      case GEN_R1:
 	      case GEN_R2:
@@ -1235,7 +1238,7 @@ int db_decode_operand(loc, byte, operand, iol)
 		operand->o_mode = AMODE_REG;
 		operand->o_reg0 = REG_R0 + byte;
 		break;
-		
+
 	      case GEN_RR0:
 	      case GEN_RR1:
 	      case GEN_RR2:
@@ -1247,22 +1250,22 @@ int db_decode_operand(loc, byte, operand, iol)
 		operand->o_mode = AMODE_RREL;
 		operand->o_reg0 = REG_R0 + (byte&0x7);
 		goto one_disp;
-		
+
 	      case GEN_FRMR:
 		operand->o_reg0 = REG_FP;
 		operand->o_mode = AMODE_MREL;
 		goto two_disp;
-		
+
 	      case GEN_SPMR:
 		operand->o_reg0 = REG_SP;
 		operand->o_mode = AMODE_MREL;
 		goto two_disp;
-		
+
 	      case GEN_SBMR:
 		operand->o_reg0 = REG_SB;
 		operand->o_mode = AMODE_MREL;
 		goto two_disp;
-		
+
 	      case GEN_IMM:
 		operand->o_mode = AMODE_IMM;
 		/* fix to sign extend */
@@ -1273,48 +1276,48 @@ int db_decode_operand(loc, byte, operand, iol)
 		operand->o_disp0 = value;
 		consumed = iol;
 		break;
-		
+
 	      case GEN_ABS:
 		operand->o_mode = AMODE_ABS;
 		goto one_disp;
-		
+
 	      case GEN_EXT:
 		operand->o_mode = AMODE_EXT;
 		goto two_disp;
-		
+
 	      case GEN_TOS:
 		operand->o_mode = AMODE_TOS;
 		break;
-		
+
 	      case GEN_FRM:
 		operand->o_mode = AMODE_MSPC;
 		operand->o_reg0 = REG_FP;
 		goto one_disp;
-		
+
 	      case GEN_SPM:
 		operand->o_mode = AMODE_MSPC;
 		operand->o_reg0 = REG_SP;
 		goto one_disp;
-		
+
 	      case GEN_SBM:
 		operand->o_mode = AMODE_MSPC;
 		operand->o_reg0 = REG_SB;
 		goto one_disp;
-		
+
 	      case GEN_PCM:
 		operand->o_mode = AMODE_MSPC;
 		operand->o_reg0 = REG_PC;
 		goto one_disp;
-		
+
 	      default:
 		operand->o_mode = AMODE_INVALID;
 		break;
-		
+
 two_disp:
 		consumed = db_disp(loc, &operand->o_disp0);
 		consumed += db_disp(loc + consumed, &operand->o_disp1);
 		break;
-	
+
 one_disp:
 		consumed = db_disp(loc, &operand->o_disp0);
 		break;
@@ -1330,13 +1333,13 @@ int db_gen(insn, loc, mask, byte0, byte1)
 {
 	int opr = 0, opr2, consumed = 0;
 	unsigned char gen0, gen1;
-	
+
 	gen0 = GetGen0(byte1);		/* mask and shift gen fields */
 	gen1 = GetGen1(byte0, byte1);	/* gen0 is really 1, gen1 is 2 */
-	
+
 	while (insn->i_opr[opr].o_mode != AMODE_NONE)
 	    opr++;
-	
+
 	if (mask & 0x1) {
 		if ((insn->i_opr[opr].o_iscale = GetGenSI(gen0)) != 0) {
 			ScaledFields(get_byte(loc),
@@ -1347,14 +1350,14 @@ int db_gen(insn, loc, mask, byte0, byte1)
 	} else {
 		opr2 = opr;
 	}
-	
+
 	if (mask & 0x2 &&
 	    (insn->i_opr[opr2].o_iscale = GetGenSI(gen1))) {
 		ScaledFields(get_byte(loc + consumed),
 			     insn->i_opr[opr2].o_ireg, gen1);
 		consumed++;
 	}
-	
+
 	if (mask & 0x1) {
 		consumed += db_decode_operand(loc + consumed, gen0,
 					   &insn->i_opr[opr], insn->i_iol);
@@ -1364,7 +1367,7 @@ int db_gen(insn, loc, mask, byte0, byte1)
 					   &insn->i_opr[opr2], insn->i_iol);
 	}
 	return(consumed);
-}	
+}
 
 int db_dasm_ns32k(insn, loc)
 	struct insn *insn;
@@ -1377,7 +1380,7 @@ int db_dasm_ns32k(insn, loc)
 
 	if (insn == NULL) {
 		insn = &dummy;
-		db_initInsn(insn);	
+		db_initInsn(insn);
 	}
 	insn->i_iol = IOL_NONE;		/* Don't assume any operand length */
 	byte0 = get_byte(loc);		/* look at first byte in insn */
@@ -1387,9 +1390,9 @@ int db_dasm_ns32k(insn, loc)
 	    j = ((fmttab[i] & 0xf0) >> 4);
 	else
 	    j = (fmttab[i]) & 0x0f;
-	
+
 	insn->i_format = j;	    /* set insn type */
-	
+
 	switch (j) {
 	      case ITYPE_FMT0:
 		insn->i_op = FMT0_COND(byte0);	 /* condition code field */
@@ -1402,7 +1405,7 @@ int db_dasm_ns32k(insn, loc)
 		consumed += db_disp(loc + consumed, &insn->i_opr[0].o_disp0);
 		insn->i_opr[0].o_disp0 += loc;
 		break;
-		
+
 	      case ITYPE_FMT1:
 		insn->i_op = FMT1_OP(byte0);
 		strcpy(insn->i_monic, fmt1_table[insn->i_op]);
@@ -1415,7 +1418,7 @@ int db_dasm_ns32k(insn, loc)
 			consumed += db_disp(loc + consumed,
 					 &insn->i_opr[0].o_disp0);
 			break;
-			
+
 		      case FMT1_BSR:
 			insn->i_opr[0].o_mode = AMODE_IMM; /* MSPC implied */
 			insn->i_opr[0].o_reg0 = REG_PC;
@@ -1423,7 +1426,7 @@ int db_dasm_ns32k(insn, loc)
 					    &insn->i_opr[0].o_disp0);
 			insn->i_opr[0].o_disp0 += loc;
 			break;
-			
+
 		      case FMT1_SAVE:
 		      case FMT1_RESTORE:
 		      case FMT1_ENTER:
@@ -1444,7 +1447,7 @@ int db_dasm_ns32k(insn, loc)
 			break;
 		}
 		break;
-		
+
 	      case ITYPE_FMT2:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1453,11 +1456,11 @@ int db_dasm_ns32k(insn, loc)
 		i = GetShort(byte0, byte1);
 		strcpy(insn->i_monic, fmt2_table[insn->i_op]);
 		switch (insn->i_op) {
-			
+
 		      case FMT2_SCOND:
 			strcat(insn->i_monic, cond_table[i]);
 			break;
-			
+
 		      case FMT2_ADDQ:
 		      case FMT2_CMPQ:
 		      case FMT2_ACB:
@@ -1470,7 +1473,7 @@ int db_dasm_ns32k(insn, loc)
 			}
 			insn->i_opr[0].o_mode = AMODE_QUICK;
 			break;
-			
+
 		      case FMT2_LPR:
 		      case FMT2_SPR:
 			insn->i_opr[0].o_reg0 = cpuRegTable [i];
@@ -1486,7 +1489,7 @@ int db_dasm_ns32k(insn, loc)
 			insn->i_opr[2].o_mode = AMODE_IMM;
 		}
 		break;
-		
+
 	      case ITYPE_FMT3:
 		insn->i_format = ITYPE_FMT3;
 		byte1 = get_byte(loc + consumed);
@@ -1496,14 +1499,14 @@ int db_dasm_ns32k(insn, loc)
 		strcpy(insn->i_monic, fmt3_table[insn->i_op]);
 		consumed += db_gen(insn, loc + consumed, 0x1, 0, byte1);
 		switch (insn->i_op) {
-			
+
 		      case FMT3_CXPD:
 		      case FMT3_JUMP:
 		      case FMT3_JSR:
 			if (insn->i_iol != IOL_DOUBLE)
 			    insn->i_format = ITYPE_UNDEF;
 			break;
-			
+
 		      case FMT3_BICPSR:
 		      case FMT3_BISPSR:
 			if (insn->i_iol == IOL_DOUBLE) {
@@ -1517,19 +1520,19 @@ int db_dasm_ns32k(insn, loc)
 				    insn->i_opr[0].o_mode = AMODE_BLISTW;
 			}
 			/* fall through */
-			
+
 		      case FMT3_CASE:
 		      case FMT3_ADJSP:
 			strcat(insn->i_monic, iol_table[insn->i_iol]);
 			break;
-			
+
 		      case FMT3_UNDEF:
 			insn->i_format = ITYPE_UNDEF;
 			break;
-			
+
 		}
 		break;
-		
+
 	      case ITYPE_FMT4:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1544,7 +1547,7 @@ int db_dasm_ns32k(insn, loc)
 		else
 		    strcat(insn->i_monic, iol_table[insn->i_iol]);
 		break;
-		
+
 	      case ITYPE_FMT5:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1559,7 +1562,7 @@ int db_dasm_ns32k(insn, loc)
 		insn->i_opr[0].o_disp0 = GetShort(byte1, byte2);
 		insn->i_iol = IOL(byte1);
 		switch (insn->i_op) {
-			
+
 		      case FMT5_MOVS:
 		      case FMT5_CMPS:
 		      case FMT5_SKPS:
@@ -1570,13 +1573,13 @@ int db_dasm_ns32k(insn, loc)
 				   iol_table[insn->i_iol]);
 			insn->i_opr[0].o_mode = AMODE_SOPT;
 			break;
-			
+
 		      case FMT5_SETCFG:
 			insn->i_opr[0].o_mode = AMODE_CFG;
 			break;
 		}
 		break;
-		
+
 	      case ITYPE_FMT6:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1599,7 +1602,7 @@ int db_dasm_ns32k(insn, loc)
 		}
 		consumed += db_gen(insn, loc + consumed, 0x3, byte1, byte2);
 		break;
-		
+
 	      case ITYPE_FMT7:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1611,7 +1614,7 @@ int db_dasm_ns32k(insn, loc)
 		strcat(insn->i_monic, iol_table[insn->i_iol]);
 		consumed += db_gen(insn, loc + consumed, 0x3, byte1, byte2);
 		switch (insn->i_op) {
-			
+
 		      case FMT7_MOVM:
 		      case FMT7_CMPM:
 			consumed += db_disp(loc + consumed,
@@ -1619,7 +1622,7 @@ int db_dasm_ns32k(insn, loc)
 			/* WBC bug fix */
 			insn->i_opr[2].o_mode = AMODE_IMM;
 			break;
-			
+
 		      case FMT7_INSS:
 		      case FMT7_EXTS:
 			byte2 = get_byte(loc + consumed);
@@ -1629,18 +1632,18 @@ int db_dasm_ns32k(insn, loc)
 			insn->i_opr[3].o_disp0 = ((byte2&0x1f) + 1);
 			insn->i_opr[3].o_mode = AMODE_IMM;
 			break;
-			
+
 		      case FMT7_MOVZD:
 		      case FMT7_MOVXD:
 			strcat(insn->i_monic, "d");
 			break;
-			
+
 		      case FMT7_UNDEF:
 			insn->i_format = ITYPE_UNDEF;
 			break;
 		}
 		break;
-		
+
 	      case ITYPE_FMT8:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1650,7 +1653,7 @@ int db_dasm_ns32k(insn, loc)
 		strcpy(insn->i_monic, fmt8_table[insn->i_op]);
 		insn->i_iol = IOL(byte1);
 		switch (insn->i_op) {
-			
+
 		      case FMT8_MOV:
 			if (FMT8_REG(byte1) == FMT8_SU)
 			    strcat(insn->i_monic, "su");
@@ -1659,7 +1662,7 @@ int db_dasm_ns32k(insn, loc)
 			else
 			    strcat(insn->i_monic, "??");
 			/* fall through */
-			
+
 		      case FMT8_EXT:
 		      case FMT8_INS:
 		      case FMT8_CHECK:
@@ -1667,7 +1670,7 @@ int db_dasm_ns32k(insn, loc)
 		      case FMT8_FFS:
 			strcat(insn->i_monic, iol_table[insn->i_iol]);
 			/* fall through */
-			
+
 		      case FMT8_CVTP:
 			if (insn->i_op != FMT8_FFS && insn->i_op != FMT8_MOV) {
 				insn->i_opr[0].o_reg0 =
@@ -1683,13 +1686,13 @@ int db_dasm_ns32k(insn, loc)
 				insn->i_opr[3].o_mode = AMODE_IMM;
 			}
 			break;
-			
+
 		      default:
 			insn->i_format = ITYPE_UNDEF;
 			break;
-		}   
+		}
 		break;
-		
+
 	      case ITYPE_FMT9:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1700,7 +1703,7 @@ int db_dasm_ns32k(insn, loc)
 		insn->i_iol = IOL(byte1);
 		i = FMT9_F(byte1);
 		switch (insn->i_op) {
-			
+
 		      case FMT9_MOV:
 			strcat(insn->i_monic, iol_table[insn->i_iol]);
 			strcat(insn->i_monic, fol_table[i]);
@@ -1710,17 +1713,17 @@ int db_dasm_ns32k(insn, loc)
 			    insn->i_opr[1].o_reg0 =
 				REG_F0 + (insn->i_opr[1].o_reg0 - REG_R0);
 			break;
-			
+
 		      case FMT9_LFSR:
 			consumed += db_gen(insn, loc + consumed, 0x1,
 					byte1, byte2);
 			break;
-			
+
 		      case FMT9_SFSR:
 			consumed += db_gen(insn, loc + consumed, 0x2,
 					byte1, byte2);
 			break;
-			
+
 		      case FMT9_MOVLF:
 		      case FMT9_MOVFL:
 			consumed += db_gen(insn, loc + consumed, 0x3, byte1,
@@ -1732,7 +1735,7 @@ int db_dasm_ns32k(insn, loc)
 			    insn->i_opr[1].o_reg0 =
 				REG_F0 + (insn->i_opr[1].o_reg0 - REG_R0);
 			break;
-			
+
 		      case FMT9_ROUND:
 		      case FMT9_TRUNC:
 		      case FMT9_FLOOR:
@@ -1751,7 +1754,7 @@ int db_dasm_ns32k(insn, loc)
 		insn->i_op = NOP;
 		strcpy(insn->i_monic, "nop");
 		break;
-		
+
 	      case ITYPE_FMT11:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1759,7 +1762,7 @@ int db_dasm_ns32k(insn, loc)
 		consumed++;
 		insn->i_op = FMT11_OP(byte1);
 		switch (insn->i_op) {
-			
+
 		      case FMT11_ADD:
 		      case FMT11_MOV:
 		      case FMT11_CMP:
@@ -1783,10 +1786,10 @@ int db_dasm_ns32k(insn, loc)
 		      default:
 			insn->i_format = ITYPE_UNDEF;
 			break;
-			
+
 		}
 		break;
-		
+
 	      case ITYPE_FMT12:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1794,7 +1797,7 @@ int db_dasm_ns32k(insn, loc)
 		consumed++;
 		insn->i_op = FMT12_OP(byte1);
 		switch (insn->i_op) {
-			
+
 		      case FMT12_POLY:
 		      case FMT12_DOT:
 		      case FMT12_SCALB:
@@ -1810,18 +1813,18 @@ int db_dasm_ns32k(insn, loc)
 			    insn->i_opr[1].o_reg0 =
 				REG_F0 + (insn->i_opr[1].o_reg0 - REG_R0);
 			break;
-			
+
 		      default:
 			insn->i_format = ITYPE_UNDEF;
 			break;
-			
+
 		}
 		break;
-		
+
 	      case ITYPE_UNDEF:
 		strcpy(insn->i_monic, "???");
 		break;
-		
+
 	      case ITYPE_FMT14:
 		byte1 = get_byte(loc + consumed);
 		consumed++;
@@ -1831,21 +1834,21 @@ int db_dasm_ns32k(insn, loc)
 		insn->i_iol = 4;
 		strcpy(insn->i_monic, fmt14_table[insn->i_op]);
 		switch (insn->i_op) {
-			
+
 		      case FMT14_CINV:
 			insn->i_opr[0].o_disp0 = GetShort(byte1, byte2);
 			insn->i_opr[0].o_mode = AMODE_CINV;
 			consumed += db_gen(insn, loc + consumed, 0x1,
 					byte1/* was 0*/, byte2);
 			break;
-			
+
 		      case FMT14_LMR:
 		      case FMT14_SMR:
 			insn->i_opr[0].o_reg0 =
 			    mmuRegTable[GetShort(byte1, byte2)];
 			insn->i_opr[0].o_mode = AMODE_REG;
 			/* fall through */
-			
+
 		      case FMT14_RDVAL:
 		      case FMT14_WRVAL:
 			consumed += db_gen(insn, loc + consumed, 0x1,
@@ -1853,7 +1856,7 @@ int db_dasm_ns32k(insn, loc)
 			break;
 		}
 		break;
-		
+
 	      default:
 		insn->i_format = ITYPE_UNDEF;
 		strcpy(insn->i_monic, "???");
@@ -1869,7 +1872,7 @@ void db_reverseBits (ip)
 	int *ip;
 {
 	int i, src, dst;
-	
+
 	src = *ip;
 	dst = 0;
 	for (i = 0; i < 8; ++i) {
@@ -1891,12 +1894,12 @@ db_disasm(loc, altfmt)
 {
 	int ate;
 	struct insn insn;
-	
-	db_initInsn(&insn);	
+
+	db_initInsn(&insn);
 	ate =  db_dasm_ns32k(&insn, loc);
 	if (altfmt) {
 		int i;
-		
+
 		for(i = 0; i < ate; i++) {
 			db_printf("%02x", get_byte(loc + i) & 0xff );
 		}

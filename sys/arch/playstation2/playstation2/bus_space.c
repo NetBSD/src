@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2002/09/27 15:36:35 provos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.6.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.6.1 2004/08/03 10:39:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

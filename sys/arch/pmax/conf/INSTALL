@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.49 2003/04/10 22:07:02 christos Exp $
+# 	$NetBSD: INSTALL,v 1.49.2.1 2004/08/03 10:39:10 skrll Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -9,6 +9,7 @@
 #
 #
 include		"arch/pmax/conf/std.pmax"
+include		"arch/pmax/conf/files.pmax_rcons"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -36,11 +37,11 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 # Standard system options
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
-#options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 #options 	NTP			# network time protocol
@@ -61,11 +62,6 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	INET			# Internet protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Raster console options
 options 	FONT_BOLD8x16		# Font for fb devices
@@ -147,3 +143,5 @@ pseudo-device	ccd		 4	# concatenated disks
 
 pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
 pseudo-device	fb		 1	# only 1 framebuffer supported
+
+pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.10 2003/01/28 22:35:09 wiz Exp $	*/
+/*	$NetBSD: inst.c,v 1.10.2.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <sys/disklabel.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <hp300/stand/common/samachdep.h>
 
@@ -91,17 +92,18 @@ extern	int netio_ask;
 
 char	*kernel_name = "/netbsd";
 
-void	dsklabel __P((void));
-void	miniroot __P((void));
-void	bootmini __P((void));
-void	resetsys __P((void));
-void	gethelp __P((void));
-int	opendisk __P((char *, char *, int, char, int *));
-void	disklabel_edit __P((struct disklabel *));
-void	disklabel_show __P((struct disklabel *));
-int	disklabel_write __P((char *, int, struct open_file *));
-void	get_fstype __P((struct disklabel *lp, int));
-int	a2int __P((char *));
+void	main(void);
+void	dsklabel(void);
+void	miniroot(void);
+void	bootmini(void);
+void	resetsys(void);
+void	gethelp(void);
+int	opendisk(char *, char *, int, char, int *);
+void	disklabel_edit(struct disklabel *);
+void	disklabel_show(struct disklabel *);
+int	disklabel_write(char *, int, struct open_file *);
+void	get_fstype(struct disklabel *lp, int);
+int	a2int(char *);
 
 struct	inst_command {
 	char	*ic_cmd;		/* command name */
@@ -116,9 +118,10 @@ struct	inst_command {
 };
 #define NCMDS	(sizeof(inst_commands) / sizeof(inst_commands[0]))
 
+void
 main()
 {
-	int i, currname = 0;
+	int i;
 
 	/*
 	 * We want netopen() to ask for IP address, etc, rather
@@ -134,7 +137,7 @@ main()
 
 	for (;;) {
 		printf("sys_inst> ");
-		bzero(line, sizeof(line));
+		memset(line, 0, sizeof(line));
 		gets(line);
 		if (line[0] == '\n' || line[0] == '\0')
 			continue;
@@ -190,9 +193,9 @@ dsklabel()
 
 	disk_ofp = &files[dfd];
 
-	bzero(block, sizeof(block));
-	if (error = (*disk_ofp->f_dev->dv_strategy)(disk_ofp->f_devdata,
-	    F_READ, LABELSECTOR, sizeof(block), block, &xfersize)) {
+	memset(block, 0, sizeof(block));
+	if ((error = (*disk_ofp->f_dev->dv_strategy)(disk_ofp->f_devdata,
+	    F_READ, LABELSECTOR, sizeof(block), block, &xfersize)) != 0) {
 		printf("cannot read disk %s, errno = %d\n", diskname, error);
 		return;
 	}
@@ -202,7 +205,7 @@ dsklabel()
 	lp = (struct disklabel *)((void *)(&block[LABELOFFSET]));
 
  disklabel_loop:
-	bzero(line, sizeof(line));
+	memset(line, 0, sizeof(line));
 	printf("(z)ap, (e)dit, (s)how, (w)rite, (d)one > ");
 	gets(line);
 	if (line[0] == '\n' || line[0] == '\0')
@@ -212,7 +215,7 @@ dsklabel()
 	case 'z':
 	case 'Z': {
 		char zap[DEV_BSIZE];
-		bzero(zap, sizeof(zap));
+		memset(zap, 0, sizeof(zap));
 		(void)(*disk_ofp->f_dev->dv_strategy)(disk_ofp->f_devdata,
 		    F_WRITE, LABELSECTOR, sizeof(zap), zap, &xfersize);
 		}
@@ -262,28 +265,28 @@ dsklabel()
 
 #define GETNUM(out, num)						\
 	printf((out), (num));						\
-	bzero(line, sizeof(line));					\
+	memset(line, 0, sizeof(line));					\
 	gets(line);							\
 	if (line[0])							\
 		(num) = atoi(line);
 
 #define GETNUM2(out, num1, num2)					\
 	printf((out), (num1), (num2));					\
-	bzero(line, sizeof(line));					\
+	memset(line, 0, sizeof(line));					\
 	gets(line);							\
 	if (line[0])							\
 		(num2) = atoi(line);
 
 #define GETSTR(out, str)						\
 	printf((out), (str));						\
-	bzero(line, sizeof(line));					\
+	memset(line, 0, sizeof(line));					\
 	gets(line);							\
 	if (line[0])							\
 		strcpy((str), line);
 
 #define FLAGS(out, flag)						\
 	printf((out), lp->d_flags & (flag) ? 'y' : 'n');		\
-	bzero(line, sizeof(line));					\
+	memset(line, 0, sizeof(line));					\
 	gets(line);							\
 	if (line[0] == 'y' || line[0] == 'Y')				\
 		lp->d_flags |= (flag);					\
@@ -451,7 +454,7 @@ void
 disklabel_show(lp)
 	struct disklabel *lp;
 {
-	int i, npart;
+	int i;
 	struct partition *pp;
 
 	/*
@@ -508,8 +511,8 @@ disklabel_write(block, len, ofp)
 	int error = 0;
 	size_t xfersize;
 
-	if (error = (*ofp->f_dev->dv_strategy)(ofp->f_devdata, F_WRITE,
-	    LABELSECTOR, len, block, &xfersize))
+	if ((error = (*ofp->f_dev->dv_strategy)(ofp->f_devdata, F_WRITE,
+	    LABELSECTOR, len, block, &xfersize)) != 0)
 		printf("cannot write disklabel, errno = %d\n", error);
 
 	return (error);
@@ -522,13 +525,13 @@ opendisk(question, diskname, len, partition, fdp)
 	char partition;
 	int *fdp;
 {
-	char fulldiskname[64], *filename;
-	int i, error = 0;
+	char fulldiskname[64];
+	int i;
 
  getdiskname:
 	printf("%s ", question);
-	bzero(diskname, len);
-	bzero(fulldiskname, sizeof(fulldiskname));
+	memset(diskname, 0, len);
+	memset(fulldiskname, 0, sizeof(fulldiskname));
 	gets(diskname);
 	if (diskname[0] == '\n' || diskname[0] == '\0')
 		goto getdiskname;
@@ -537,7 +540,7 @@ opendisk(question, diskname, len, partition, fdp)
 	 * devopen() is picky.  Make sure it gets the sort of string it
 	 * wants.
 	 */
-	bcopy(diskname, fulldiskname,
+	memcpy(fulldiskname, diskname,
 	    len < sizeof(fulldiskname) ? len : sizeof(fulldiskname));
 	for (i = 0; fulldiskname[i + 1] != '\0'; ++i)
 		/* Nothing. */ ;
@@ -552,10 +555,10 @@ opendisk(question, diskname, len, partition, fdp)
 	 */
 	if ((*fdp = open(fulldiskname, 1)) < 0) {
 		printf("cannot open %s\n", diskname);
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -584,7 +587,7 @@ miniroot()
 
  getsource:
 	printf("Source? (N)FS, (t)ape, (d)one > ");
-	bzero(line, sizeof(line));
+	memset(line, 0, sizeof(line));
 	gets(line);
 	if (line[0] == '\0')
 		goto getsource;
@@ -594,8 +597,8 @@ miniroot()
 	case 'N':
  name_of_nfs_miniroot:
 		printf("Name of miniroot file? ");
-		bzero(line, sizeof(line));
-		bzero(minirootname, sizeof(minirootname));
+		memset(line, 0, sizeof(line));
+		memset(minirootname, 0, sizeof(minirootname));
 		gets(line);
 		if (line[0] == '\0')
 			goto name_of_nfs_miniroot;
@@ -625,9 +628,9 @@ miniroot()
 	case 'T':
  name_of_tape_miniroot:
 		printf("Which tape device? ");
-		bzero(line, sizeof(line));
-		bzero(minirootname, sizeof(minirootname));
-		bzero(tapename, sizeof(tapename));
+		memset(line, 0, sizeof(line));
+		memset(minirootname, 0, sizeof(minirootname));
+		memset(tapename, 0, sizeof(tapename));
 		gets(line);
 		if (line[0] == '\0')
 			goto name_of_tape_miniroot;
@@ -635,7 +638,7 @@ miniroot()
 		strcat(tapename, line);
 
 		printf("File number (first == 1)? ");
-		bzero(line, sizeof(line));
+		memset(line, 0, sizeof(line));
 		gets(line);
 		fileno = a2int(line);
 		if (fileno < 1 || fileno > 8) {
@@ -657,7 +660,7 @@ miniroot()
 
 		ignoreshread = 0;
 		printf("Copy how many %d byte blocks? ", DEV_BSIZE);
-		bzero(line, sizeof(line));
+		memset(line, 0, sizeof(line));
 		gets(line);
 		nblks = a2int(line);
 		if (nblks < 0) {
@@ -736,8 +739,8 @@ bootmini()
 
  getdiskname:
 	printf("Disk to boot from? ");
-	bzero(diskname, sizeof(diskname));
-	bzero(bootname, sizeof(bootname));
+	memset(diskname, 0, sizeof(diskname));
+	memset(bootname, 0, sizeof(bootname));
 	gets(diskname);
 	if (diskname[0] == '\n' || diskname[0] == '\0')
 		goto getdiskname;

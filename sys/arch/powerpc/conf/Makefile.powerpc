@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.27 2003/02/24 07:15:40 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.27.2.1 2004/08/03 10:39:22 skrll Exp $
 #
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ GENASSYM=	${POWERPC}/${PPCDIR}/genassym.cf
 ##
 ## (2) compile settings
 ##
-CPPFLAGS+=	-D${MACHINE}
+CPPFLAGS+=	-D${MACHINE}=${MACHINE}
 CWARNFLAGS+=	-Wreturn-type
 CFLAGS+=	-msoft-float ${CCPUOPTS}
 AFLAGS+=	${AOPTS}
@@ -95,6 +95,8 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
+setfault.o: assym.h
+
 ##
 ## (7) misc settings
 ##
@@ -118,3 +120,8 @@ locore.o machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

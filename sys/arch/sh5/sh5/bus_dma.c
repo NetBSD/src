@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10.2.1 2003/07/02 15:25:31 darrenr Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10.2.2 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10.2.1 2003/07/02 15:25:31 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10.2.2 2004/08/03 10:40:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ _bus_dmamap_load_raw_direct(void *cookie, bus_dmamap_t map,
 	int i, j;
 
 	/* @@@ This routine doesn't enforce map boundary requirement
-	 * @@@ perhaps it should return an error instead of panicing
+	 * @@@ perhaps it should return an error instead of panicking
 	 */
 
 #ifdef DIAGNOSTIC

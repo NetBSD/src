@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.10 2003/04/29 01:07:31 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.10.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.10 2003/04/29 01:07:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.10.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -276,6 +276,7 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 	prevp = (struct aau_desc_4 **) &sc->sc_firstdesc;
 	prevpa = &sc->sc_firstdesc_pa;
 
+	cur = NULL;	/* XXX: gcc */
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 		cur = pool_cache_get(dc, PR_NOWAIT);
 		if (cur == NULL) {
@@ -499,6 +500,7 @@ iopaau_func_xor_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 	    }
 
 	default:
+		i = 0;	/* XXX: gcc */
 		error = EINVAL;
 	}
 
@@ -519,6 +521,7 @@ iopaau_func_xor_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 	prevp = (struct aau_desc_8 **) &sc->sc_firstdesc;
 	prevpa = &sc->sc_firstdesc_pa;
 
+	cur = NULL;	/* XXX: gcc */
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 		cur = pool_cache_get(dc, PR_NOWAIT);
 		if (cur == NULL) {

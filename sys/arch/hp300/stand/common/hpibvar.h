@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.1 1997/02/04 03:52:27 thorpej Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.1.60.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -58,4 +54,29 @@ struct	hpib_softc {
 	char	*sc_addr;
 };
 
-extern	struct hpib_softc hpib_softc[];
+extern struct hpib_softc hpib_softc[];
+extern int internalhpib;
+
+/* hpib.c */
+void hpibinit(void);
+int hpibalive(int);
+int hpibid(int, int);
+int hpibsend(int, int, int, char *, int);
+int hpibrecv(int, int, int, char *, int);
+int hpibswait(int, int);
+void hpibgo(int, int, int, char *, int, int);
+
+/* fhpib.c */
+int fhpibinit(int);
+void fhpibreset(int);
+int fhpibsend(int, int, int, char *, int);
+int fhpibrecv(int, int, int, char *, int);
+int fhpibppoll(int);
+
+/* nhpib.c */
+int nhpibinit(int);
+void nhpibreset(int);
+int nhpibsend(int, int, int, char *, int);
+int nhpibrecv(int, int, int, char *, int);
+int nhpibppoll(int);
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.39 2003/05/21 23:12:18 kristerw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.39.2.1 2004/08/03 10:35:49 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39 2003/05/21 23:12:18 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.2.1 2004/08/03 10:35:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ db_numargs(int *retaddrp)
 
 int
 db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
-	     int *argp, int is_trap, void (*pr) __P((const char *, ...)))
+	     int *argp, int is_trap, void (*pr)(const char *, ...))
 {
 	struct trapframe *tf;
 	struct i386tss *tss;
@@ -219,8 +219,7 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 	    default:
 
 		/* The only argument to trap() or syscall() is the trapframe. */
-		tf = (struct trapframe *)argp;
-		*ip = (db_addr_t)tf->tf_eip;
+		tf = *(struct trapframe **)argp;
 		switch (is_trap) {
 		case TRAP:
 			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
@@ -230,8 +229,10 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 			break;
 		case INTERRUPT:
 			(*pr)("--- interrupt ---\n");
+			tf = (struct trapframe *)argp;
 			break;
 		}
+		*ip = (db_addr_t)tf->tf_eip;
 		fp = (struct i386_frame *)tf->tf_ebp;
 		if (fp == NULL)
 			return 0;
@@ -244,8 +245,8 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 	/*
 	 * A bit of a hack. Since %ebp may be used in the stub code,
 	 * walk the stack looking for a valid interrupt frame. Such
-	 * a frame can be recognized by always having err 0 and
-	 * trapno T_ASTFLT.
+	 * a frame can be recognized by always having
+	 * err 0 or IREENT_MAGIC and trapno T_ASTFLT.
 	 */
 	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
 	    NULL) != (db_sym_t)0
@@ -254,10 +255,16 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 			ifp = (struct intrframe *)(argp + i);
 			err = db_get_value((int)&ifp->__if_err, 4, FALSE);
 			trapno = db_get_value((int)&ifp->__if_trapno, 4, FALSE);
-			if (err == 0 && trapno == T_ASTFLT) {
+			if ((err == 0 || err == IREENT_MAGIC) && trapno == T_ASTFLT) {
 				*nextframe = (int *)ifp - 1;
 				break;
 			}
+		}
+		if (i == 4) {
+			(*pr)("DDB lost frame for ");
+			db_printsym(*ip, DB_STGY_ANY, pr);
+			(*pr)(", trying %p\n",argp);
+			*nextframe = argp;
 		}
 	}
 	return 1;
@@ -293,7 +300,8 @@ db_frame_info(int *frame, db_addr_t callpc, char **namep, db_expr_t *offp,
 		} else if (!strcmp(name, "trap")) {
 			*is_trap = TRAP;
 			narg = 0;
-		} else if (!strcmp(name, "syscall")) {
+		} else if (!strcmp(name, "syscall_plain") ||
+		           !strcmp(name, "syscall_fancy")) {
 			*is_trap = SYSCALL;
 			narg = 0;
 		} else if (name[0] == 'X') {
@@ -357,7 +365,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	int *retaddr, *arg0;
 	int		*argp;
 	db_addr_t	callpc;
-	int		is_trap = 0;
+	int		is_trap;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 
@@ -381,8 +389,6 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	if (!have_addr) {
 		frame = (int *)ddb_regs.tf_ebp;
 		callpc = (db_addr_t)ddb_regs.tf_eip;
-		retaddr = frame + 1;
-		arg0 = frame + 2;
 	} else {
 		if (trace_thread) {
 			struct proc *p;
@@ -400,16 +406,26 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				return;
 			}
 			u = l->l_addr;
-			frame = (int *)u->u_pcb.pcb_ebp;
-			(*pr)("at %p\n", frame);
-		} else
+			if (p == curproc && l == curlwp) {
+				frame = (int *)ddb_regs.tf_ebp;
+				callpc = (db_addr_t)ddb_regs.tf_eip;
+				(*pr)(" at %p\n", frame);
+			} else {
+				frame = (int *)u->u_pcb.pcb_ebp;
+				callpc = (db_addr_t)
+				    db_get_value((int)(frame + 1), 4, FALSE);
+				(*pr)(" at %p\n", frame);
+				frame = (int *)*frame; /* XXXfvdl db_get_value? */
+			}
+		} else {
 			frame = (int *)addr;
-		callpc = (db_addr_t)
-			 db_get_value((int)(frame + 1), 4, FALSE);
-		frame = (int *)*frame; /* XXXfvdl db_get_value? */
-		retaddr = frame + 1;
-		arg0 = frame + 2;
+			callpc = (db_addr_t)
+			    db_get_value((int)(frame + 1), 4, FALSE);
+			frame = (int *)*frame; /* XXXfvdl db_get_value? */
+		}
 	}
+	retaddr = frame + 1;
+	arg0 = frame + 2;
 
 	lastframe = 0;
 	while (count && frame != 0) {
@@ -420,6 +436,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		char	*argnames[MAXNARG], **argnp = NULL;
 		db_addr_t	lastcallpc;
 
+		name = "?";
+		is_trap = NONE;
+		offset = 0;
 		sym = db_frame_info(frame, callpc, &name, &offset, &is_trap,
 				    &narg);
 

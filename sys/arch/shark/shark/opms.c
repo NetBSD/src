@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.9 2003/01/28 22:35:14 wiz Exp $        */
+/*      $NetBSD: opms.c,v 1.9.2.1 2004/08/03 10:40:33 skrll Exp $        */
 
 /*
  * Copyright 1997
@@ -90,6 +90,8 @@
 **--
 */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.9.2.1 2004/08/03 10:40:33 skrll Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -463,7 +465,7 @@ opmsopen(dev, flag, mode, p)
     i8042_flush(sc->sc_iot, sc->sc_ioh);
     sc->sc_protocol_byte = PMS_RD_BYTE1; 
     (void) i8042_cmd(sc->sc_iot, sc->sc_ioh, I8042_AUX_CMD, 
-                         I8042_NO_RESPONSE, NULL, PMS_MOUSE_ENABLE);
+                         I8042_NO_RESPONSE, 0, PMS_MOUSE_ENABLE);
     (void) I8042_AUXENABLE(sc->sc_iot, sc->sc_ioh);
     /* Enable interrupts on the axilliary device.
     */
@@ -520,7 +522,7 @@ opmsclose(dev, flag, mode, p)
     */
     i8042_flush(sc->sc_iot, sc->sc_ioh);
     (void) i8042_cmd(sc->sc_iot, sc->sc_ioh, I8042_AUX_CMD, 
-                         I8042_NO_RESPONSE, NULL, PMS_MOUSE_DISABLE);
+                         I8042_NO_RESPONSE, 0, PMS_MOUSE_DISABLE);
     i8042_flush(sc->sc_iot, sc->sc_ioh);
     (void) I8042_WRITECCB(sc->sc_iot, sc->sc_ioh, NOAUX_CMDBYTE);
     (void) I8042_AUXDISABLE(sc->sc_iot, sc->sc_ioh);

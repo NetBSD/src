@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.6 2002/10/07 02:57:39 itojun Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.6.6.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6 2002/10/07 02:57:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6.6.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -112,7 +112,7 @@ cbq_add_class(acp)
 		return (EBADF);
 
 	/* check parameters */
-	if (acp->cbq_class.priority >= RM_MAXPRIO ||
+	if (acp->cbq_class.priority >= CBQ_MAXPRI ||
 	    acp->cbq_class.maxq > CBQ_MAXQSIZE)
 		return (EINVAL);
 
@@ -193,9 +193,9 @@ cbq_modify_class(acp)
  *		struct rm_class *borrow)
  *
  * This function create a new traffic class in the CBQ class hierarchy of
- * given paramters.  The class that created is either the root, default,
- * or a new dynamic class.  If CBQ is not initilaized, the the root class
- * will be created.
+ * given parameters.  The class that created is either the root, default,
+ * or a new dynamic class.  If CBQ is not initilaized, the root class will
+ * be created.
  */
 static int
 cbq_class_create(cbqp, acp, parent, borrow)
@@ -620,7 +620,7 @@ cbq_ifattach(ifacep)
 	MALLOC(new_cbqp, cbq_state_t *, sizeof(cbq_state_t), M_DEVBUF, M_WAITOK);
 	if (new_cbqp == NULL)
 		return (ENOMEM);
-	bzero(new_cbqp, sizeof(cbq_state_t));
+	(void)memset(new_cbqp, 0, sizeof(cbq_state_t));
  	CALLOUT_INIT(&new_cbqp->cbq_callout);
 	MALLOC(new_cbqp->cbq_class_tbl, struct rm_class **,
 	       sizeof(struct rm_class *) * CBQ_MAX_CLASSES, M_DEVBUF, M_WAITOK);
@@ -628,7 +628,8 @@ cbq_ifattach(ifacep)
 		FREE(new_cbqp, M_DEVBUF);
 		return (ENOMEM);
 	}
-	bzero(new_cbqp->cbq_class_tbl, sizeof(struct rm_class *) * CBQ_MAX_CLASSES);
+	(void)memset(new_cbqp->cbq_class_tbl, 0,
+	    sizeof(struct rm_class *) * CBQ_MAX_CLASSES);
 	new_cbqp->cbq_qlen = 0;
 	new_cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
        

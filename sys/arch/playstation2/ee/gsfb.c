@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.6 2002/10/02 04:17:22 thorpej Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.6.6.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.6.6.1 2004/08/03 10:39:06 skrll Exp $");
 
 #include "debug_playstation2.h"
 
@@ -339,7 +342,13 @@ gsfbcninit(struct consdev *cndev)
 void
 gsfb_hwinit()
 {
-	gs_init(VESA_1A);
+	/*
+	  gs_init(VESA_1A) hang up on SCPH-50000.
+	  use bootloader's setting.
+	  EN1 | CRTMOD | MMOD | AMOD | ALP(all 1.0)
+	*/
+	_reg_write_8(GS_S_PMODE_REG, 0xffa5);
+
 	dmac_init();
 
 	/* reset GIF channel DMA */
@@ -528,7 +537,7 @@ paddr_t
 _gsfb_mmap(void *v, off_t offset, int prot)
 {
 
-	return (NULL); /* can't mmap */
+	return (-1); /* can't mmap */
 }
 
 int

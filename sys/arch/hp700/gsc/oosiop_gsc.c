@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop_gsc.c,v 1.1 2003/04/06 10:06:14 tsutsui Exp $	*/
+/*	$NetBSD: oosiop_gsc.c,v 1.1.2.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -59,6 +59,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.1.2.1 2004/08/03 10:34:48 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -93,10 +96,7 @@ CFATTACH_DECL(oosiop_gsc, sizeof(struct oosiop_softc),
     oosiop_gsc_match, oosiop_gsc_attach, NULL, NULL);
 
 int
-oosiop_gsc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+oosiop_gsc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
@@ -116,9 +116,7 @@ oosiop_gsc_match(parent, match, aux)
 }
 
 void
-oosiop_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+oosiop_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct oosiop_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;
@@ -159,8 +157,7 @@ oosiop_gsc_attach(parent, self, aux)
  * interrupt handler
  */
 int
-oosiop_gsc_intr(arg)
-	void *arg;
+oosiop_gsc_intr(void *arg)
 {
 	struct oosiop_softc *sc = arg;
 	int rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.c,v 1.3 2000/06/08 06:47:17 kleink Exp $	*/
+/*	$NetBSD: copystr.c,v 1.3.26.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: copystr.c,v 1.3.26.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -38,11 +42,7 @@
  * Emulate copyinstr.
  */
 int
-copystr(kfaddr, kdaddr, len, done)
-	const void *kfaddr;
-	void *kdaddr;
-	size_t len;
-	size_t *done;
+copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 {
 	const u_char *kfp = kfaddr;
 	u_char *kdp = kdaddr;

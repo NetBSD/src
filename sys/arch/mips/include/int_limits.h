@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.3 2002/11/03 19:55:23 thorpej Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.3.6.1 2004/08/03 10:37:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -186,16 +186,6 @@
 #define	SIZE_MAX	0xffffffffffffffffUL		/* size_t	  */
 #else
 #define	SIZE_MAX	0xffffffffU			/* size_t	  */
-#endif
-
-#ifndef WCHAR_MIN /* also possibly defined in <wchar.h> */
-/* limits of wchar_t */
-#define	WCHAR_MIN	(-0x7fffffff-1)			/* wchar_t	  */
-#define	WCHAR_MAX	0x7fffffff			/* wchar_t	  */
-
-/* limits of wint_t */
-#define	WINT_MIN	(-0x7fffffff-1)			/* wint_t	  */
-#define	WINT_MAX	0x7fffffff			/* wint_t	  */
 #endif
 
 #endif /* !_MIPS_INT_LIMITS_H_ */

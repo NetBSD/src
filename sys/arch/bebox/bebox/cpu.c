@@ -1,3 +1,8 @@
+/*	$NetBSD: cpu.c,v 1.4.2.1 2004/08/03 10:33:36 skrll Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.2.1 2004/08/03 10:33:36 skrll Exp $");
+
 static int cpumatch(struct device *, struct cfdata *, void *);
 static void cpuattach(struct device *, struct device *, void *);
 

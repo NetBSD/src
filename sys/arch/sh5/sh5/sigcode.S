@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.3 2002/10/02 08:10:34 scw Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3.6.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,8 +45,12 @@
  */
 
 /*
- * Dummy, zero-length, sigcode routine.
+ * Dummy sigcode routine.
+ * SH5 has never needed this trampoline, but other parts of the kernel
+ * assume it has a non-zero length.
  */
 
 ENTRY_NOPROFILE(sigcode)
+	movi	-1, r0		/* Completely bogus trapa code */
+	trapa	r0		/* This had better kill us ... */
 ENTRY_NOPROFILE(esigcode)

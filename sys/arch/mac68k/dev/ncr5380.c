@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.52 2003/05/03 18:10:50 wiz Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.52.2.1 2004/08/03 10:37:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.52.2.1 2004/08/03 10:37:06 skrll Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -289,13 +292,13 @@ ncr5380_scsi_request(chan, req, arg)
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph; 
 	struct ncr_softc *sc = (void *)chan->chan_adapter->adapt_dev;
-	int	sps;
+	int	sps, flags;
 	SC_REQ	*reqp, *link, *tmp;
-	int	flags = xs->xs_control;
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
+		flags = xs->xs_control;
 		periph = xs->xs_periph;
 
 		/*
@@ -338,70 +341,73 @@ ncr5380_scsi_request(chan, req, arg)
 		reqp->xcmd.bytes[0] |= reqp->targ_lun << 5;
 
 #ifdef REAL_DMA
-	/*
-	 * Check if DMA can be used on this request
-	 */
-	if (scsi_dmaok(reqp))
-		reqp->dr_flag |= DRIVER_DMAOK;
+		/*
+		 * Check if DMA can be used on this request
+		 */
+		if (scsi_dmaok(reqp))
+			reqp->dr_flag |= DRIVER_DMAOK;
 #endif /* REAL_DMA */
 
-	/*
-	 * Insert the command into the issue queue. Note that 'REQUEST SENSE'
-	 * commands are inserted at the head of the queue since any command
-	 * will clear the existing contingent allegience condition and the sense
-	 * data is only valid while the condition exists.
-	 * When possible, link the command to a previous command to the same
-	 * target. This is not very sensible when AUTO_SENSE is not defined!
-	 * Interrupts are disabled while we are fiddling with the issue-queue.
-	 */
-	sps = splbio();
-	link = NULL;
-	if ((issue_q == NULL) || (reqp->xcmd.opcode == REQUEST_SENSE)) {
-		reqp->next = issue_q;
-		issue_q    = reqp;
-	}
-	else {
-		tmp  = issue_q;
-		do {
-		    if (!link && (tmp->targ_id == reqp->targ_id) && !tmp->link)
-				link = tmp;
-		} while (tmp->next && (tmp = tmp->next));
-		tmp->next = reqp;
+		/*
+		 * Insert the command into the issue queue. Note that
+		 * 'REQUEST SENSE' commands are inserted at the head of the
+		 * queue since any command will clear the existing contingent
+		 * allegience condition and the sense data is only valid while
+		 * the condition exists.
+		 * When possible, link the command to a previous command to
+		 * the same target. This is not very sensible when AUTO_SENSE
+		 * is not defined!  Interrupts are disabled while we are
+		 * fiddling with the issue-queue.
+		 */
+		sps = splbio();
+		link = NULL;
+		if ((issue_q == NULL) || (reqp->xcmd.opcode == REQUEST_SENSE)) {
+			reqp->next = issue_q;
+			issue_q    = reqp;
+		} else {
+			tmp  = issue_q;
+			do {
+				if (!link && (tmp->targ_id == reqp->targ_id) &&
+				    !tmp->link)
+					link = tmp;
+			} while (tmp->next && (tmp = tmp->next));
+			tmp->next = reqp;
 #ifdef AUTO_SENSE
-		if (link && (ncr_will_link & (1<<reqp->targ_id))) {
-			link->link = reqp;
-			link->xcmd.bytes[link->xs->cmdlen-2] |= 1;
-		}
+			if (link && (ncr_will_link & (1<<reqp->targ_id))) {
+				link->link = reqp;
+				link->xcmd.bytes[link->xs->cmdlen-2] |= 1;
+			}
 #endif
-	}
+		}
 #ifdef AUTO_SENSE
-	/*
-	 * If we haven't already, check the target for link support.
-	 * Do this by prefixing the current command with a dummy
-	 * Request_Sense command, link the dummy to the current
-	 * command, and insert the dummy command at the head of the
-	 * issue queue.  Set the DRIVER_LINKCHK flag so that we'll
-	 * ignore the results of the dummy command, since we only
-	 * care about whether it was accepted or not.
-	 */
-	if (!link && !(ncr_test_link & (1<<reqp->targ_id)) &&
-	    (tmp = free_head) && !(reqp->dr_flag & DRIVER_NOINT)) {
-		free_head = tmp->next;
-		tmp->dr_flag = (reqp->dr_flag & ~DRIVER_DMAOK) | DRIVER_LINKCHK;
-		tmp->phase = NR_PHASE;
-		tmp->msgout = MSG_NOOP;
-		tmp->status = SCSGOOD;
-		tmp->xs = reqp->xs;
-		tmp->targ_id = reqp->targ_id;
-		tmp->targ_lun = reqp->targ_lun;
-		bcopy(sense_cmd, &tmp->xcmd, sizeof(sense_cmd));
-		tmp->xdata_ptr = (u_char *)&tmp->xs->sense.scsi_sense;
-		tmp->xdata_len = sizeof(tmp->xs->sense.scsi_sense);
-		ncr_test_link |= 1<<tmp->targ_id;
-		tmp->link = reqp;
-		tmp->xcmd.bytes[sizeof(sense_cmd)-2] |= 1;
-		tmp->next = issue_q;
-		issue_q = tmp;
+		/*
+		 * If we haven't already, check the target for link support.
+		 * Do this by prefixing the current command with a dummy
+		 * Request_Sense command, link the dummy to the current
+		 * command, and insert the dummy command at the head of the
+		 * issue queue.  Set the DRIVER_LINKCHK flag so that we'll
+		 * ignore the results of the dummy command, since we only
+		 * care about whether it was accepted or not.
+		 */
+		if (!link && !(ncr_test_link & (1<<reqp->targ_id)) &&
+		    (tmp = free_head) && !(reqp->dr_flag & DRIVER_NOINT)) {
+			free_head = tmp->next;
+			tmp->dr_flag =
+			    (reqp->dr_flag & ~DRIVER_DMAOK) | DRIVER_LINKCHK;
+			tmp->phase = NR_PHASE;
+			tmp->msgout = MSG_NOOP;
+			tmp->status = SCSGOOD;
+			tmp->xs = reqp->xs;
+			tmp->targ_id = reqp->targ_id;
+			tmp->targ_lun = reqp->targ_lun;
+			bcopy(sense_cmd, &tmp->xcmd, sizeof(sense_cmd));
+			tmp->xdata_ptr = (u_char *)&tmp->xs->sense.scsi_sense;
+			tmp->xdata_len = sizeof(tmp->xs->sense.scsi_sense);
+			ncr_test_link |= 1<<tmp->targ_id;
+			tmp->link = reqp;
+			tmp->xcmd.bytes[sizeof(sense_cmd)-2] |= 1;
+			tmp->next = issue_q;
+			issue_q = tmp;
 #ifdef DBG_REQ
 			if (dbg_target_mask & (1 << tmp->targ_id))
 				show_request(tmp, "LINKCHK");

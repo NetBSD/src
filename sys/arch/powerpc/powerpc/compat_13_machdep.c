@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6 2003/02/03 21:48:02 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.6.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6.2.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include "opt_ppcarch.h"
 
 #include <sys/param.h>
@@ -44,10 +47,7 @@
 #include <sys/syscallargs.h>
 
 int
-compat_13_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
@@ -68,7 +68,7 @@ compat_13_sys_sigreturn(l, v, retval)
 
 	/* Restore the register context. */
 	tf = trapframe(l);
-	if ((sc.sc_frame.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
+	if (!PSL_USEROK_P(sc.sc_frame.srr1))
 		return (EINVAL);
 
 	/* Restore register context. */

@@ -1,10 +1,42 @@
-/*	$NetBSD: exception.c,v 1.8.2.1 2003/07/02 15:25:31 darrenr Exp $	*/
+/*	$NetBSD: exception.c,v 1.8.2.2 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the University of Utah, and William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)trap.c	7.4 (Berkeley) 5/13/91
+ */
+
+/*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the University of Utah, and William Jolitz.
@@ -45,6 +77,9 @@
  *
  * T.Horiuchi 1998.06.8
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.8.2.2 2004/08/03 10:40:16 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -103,8 +138,8 @@ const char *exp_type[] = {
 };
 const int exp_types = sizeof exp_type / sizeof exp_type[0];
 
-void general_exception(struct lwp *, struct trapframe *);
-void tlb_exception(struct lwp *, struct trapframe *, u_int32_t);
+void general_exception(struct lwp *, struct trapframe *, uint32_t);
+void tlb_exception(struct lwp *, struct trapframe *, uint32_t);
 void syscall(struct lwp *, struct trapframe *);
 void ast(struct lwp *, struct trapframe *);
 
@@ -112,12 +147,14 @@ void ast(struct lwp *, struct trapframe *);
  * void general_exception(struct lwp *l, struct trapframe *tf):
  *	l  ... curlwp when exception occur.
  *	tf ... full user context.
+ *	va ... fault va for user mode EXPEVT_ADDR_ERR_{LD,ST}
  */
 void
-general_exception(struct lwp *l, struct trapframe *tf)
+general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
@@ -133,42 +170,71 @@ general_exception(struct lwp *l, struct trapframe *tf)
 	case EXPEVT_TRAPA | EXP_USER:
 		/* Check for debugger break */
 		if (_reg_read_4(SH_(TRA)) == (_SH_TRA_BREAK << 2)) {
-			trapsignal(l, SIGTRAP, tf->tf_expevt);
+			tf->tf_spc -= 2; /* back to the breakpoint address */
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_code = TRAP_BRKPT;
+			ksi.ksi_addr = (void *)tf->tf_spc;
+			goto trapsignal;
 		} else {
 			syscall(l, tf);
 			return;
 		}
 		break;
+
 	case EXPEVT_ADDR_ERR_LD:
 		/*FALLTHROUGH*/
 	case EXPEVT_ADDR_ERR_ST:
 		KDASSERT(l->l_md.md_pcb->pcb_onfault != NULL);
 		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
-		if (tf->tf_spc == NULL)
+		if (tf->tf_spc == 0)
 			goto do_panic;
 		break;
 
 	case EXPEVT_ADDR_ERR_LD | EXP_USER:
 		/*FALLTHROUGH*/
 	case EXPEVT_ADDR_ERR_ST | EXP_USER:
-		trapsignal(l, SIGSEGV, tf->tf_expevt);
-		break;
+		KSI_INIT_TRAP(&ksi);
+		if (((int)va) < 0) {
+		    ksi.ksi_signo = SIGSEGV;
+		    ksi.ksi_code = SEGV_ACCERR;
+		} else {
+		    ksi.ksi_signo = SIGBUS;
+		    ksi.ksi_code = BUS_ADRALN;
+		}
+		ksi.ksi_addr = (void *)va;
+		goto trapsignal;
 
 	case EXPEVT_RES_INST | EXP_USER:
 		/*FALLTHROUGH*/
 	case EXPEVT_SLOT_INST | EXP_USER:
-		trapsignal(l, SIGILL, tf->tf_expevt);
-		break;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC; /* XXX: could be ILL_PRVOPC */
+		ksi.ksi_addr = (void *)tf->tf_spc;
+		goto trapsignal;
 
 	case EXPEVT_BREAK | EXP_USER:
-		trapsignal(l, SIGTRAP, tf->tf_expevt);
-		break;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_BRKPT; /* XXX: ??? */
+		ksi.ksi_addr = (void *)tf->tf_spc;
+		goto trapsignal;
+
 	default:
 		goto do_panic;
 	}
 
 	if (usermode)
 		userret(l);
+	return;
+
+ trapsignal:
+	ksi.ksi_trap = tf->tf_expevt;
+	KERNEL_PROC_LOCK(l);
+	trapsignal(l, &ksi);
+	KERNEL_PROC_UNLOCK(l);
+	userret(l);
 	return;
 
  do_panic:
@@ -296,7 +362,7 @@ syscall(struct lwp *l, struct trapframe *tf)
 	if (error)
 		goto bad;
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;
@@ -334,13 +400,13 @@ syscall(struct lwp *l, struct trapframe *tf)
 }
 
 /*
- * void tlb_exception(struct lwp *l, struct trapframe *tf, u_int32_t va):
+ * void tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va):
  *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	va ... fault address.
  */
 void
-tlb_exception(struct lwp *l, struct trapframe *tf, u_int32_t va)
+tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 #define	TLB_ASSERT(assert, msg)						\
 do {									\
@@ -351,6 +417,7 @@ do {									\
 } while(/*CONSTCOND*/0)
 	struct vm_map *map;
 	pmap_t pmap;
+	ksiginfo_t ksi;
 	boolean_t usermode;
 	int err, track, ftype;
 	char *panic_msg;
@@ -381,7 +448,10 @@ do {									\
 		TLB_ASSERT((int)va > 0,
 		    "kernel virtual protection fault (load)");
 		if (usermode) {
-			trapsignal(l, SIGSEGV, tf->tf_expevt);
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			ksi.ksi_addr = (void *)va;
 			goto user_fault;
 		} else {
 			TLB_ASSERT(l && l->l_md.md_pcb->pcb_onfault != NULL,
@@ -394,6 +464,9 @@ do {									\
 		track = 0;	/* call uvm_fault first. (COW) */
 		ftype = VM_PROT_WRITE;
 		break;
+
+	default:
+		TLB_ASSERT(0, "impossible expevt");
 	}
 
 	/* Select address space */
@@ -434,6 +507,11 @@ do {									\
 		return;
 	}
 
+	if ((map != kernel_map) && (l->l_flag & L_SA)) {
+		l->l_savp->savp_faultaddr = (vaddr_t)va;
+		l->l_flag |= L_SA_PAGEFAULT;
+	}
+
 	err = uvm_fault(map, va, 0, ftype);
 
 	/* User stack extension */
@@ -442,7 +520,7 @@ do {									\
 	    (va < USRSTACK)) {
 		if (err == 0) {
 			struct vmspace *vm = l->l_proc->p_vmspace;
-			u_int32_t nss;
+			uint32_t nss;
 			nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -451,6 +529,8 @@ do {									\
 		}
 	}
 
+	if (map != kernel_map)
+		l->l_flag &= ~L_SA_PAGEFAULT;
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
 		boolean_t loaded = __pmap_pte_load(pmap, va, track);
@@ -462,7 +542,13 @@ do {									\
 
 	/* Page not found. */
 	if (usermode) {
-		trapsignal(l, err == ENOMEM ? SIGKILL : SIGSEGV, tf->tf_expevt);
+		KSI_INIT_TRAP(&ksi);
+		if (err == ENOMEM)
+			ksi.ksi_signo = SIGKILL;
+		else {
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+		}
 		goto user_fault;
 	} else {
 		TLB_ASSERT(l->l_md.md_pcb->pcb_onfault,
@@ -472,6 +558,10 @@ do {									\
 	return;
 
  user_fault:
+	ksi.ksi_trap = tf->tf_expevt
+	KERNEL_PROC_LOCK(l);
+	trapsignal(l, &ksi);
+	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 	ast(l, tf);
 	return;

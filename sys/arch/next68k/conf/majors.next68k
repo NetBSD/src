@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.5 2003/04/25 21:10:59 ragge Exp $
+#	$NetBSD: majors.next68k,v 1.5.2.1 2004/08/03 10:38:35 skrll Exp $
 #
 # Device majors for next68k
 #
@@ -15,7 +15,7 @@ device-major	zstty		char 12			zstty
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st
 device-major	cd		char 15  block 6	cd
-
+device-major	ses		char 16			ses
 device-major	ch		char 17			ch
 
 device-major	vnd		char 19  block 8	vnd
@@ -44,3 +44,8 @@ device-major	clockctl	char 46			clockctl
 device-major	systrace	char 47			systrace
 device-major	cgd		char 48  block 21	cgd
 device-major	ksyms		char 49			ksyms
+device-major	wsfont		char 50			wsfont
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

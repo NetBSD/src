@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21.2.1 2003/07/02 15:25:30 darrenr Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21.2.2 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -36,8 +36,8 @@
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 #include "opt_multiprocessor.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_mach.h"
+/* DO NOT INCLUDE opt_compat_XXX.h */
+/* If needed, they will be included by file that includes this one */
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -69,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21.2.1 2003/07/02 15:25:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21.2.2 2004/08/03 10:39:37 skrll Exp $");
 
 void
 child_return(void *arg)
@@ -277,8 +277,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		params = args;
 	}
 
-	if ((error = trace_enter(l, code, realcode, 
-	    callp - code, params, rval)) != 0)
+	if ((error = trace_enter(l, code, realcode, callp - code, params)) != 0)
 		goto syscall_bad;
 
 	rval[0] = 0;

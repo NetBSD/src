@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/01/17 22:34:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2004/08/03 10:33:26 skrll Exp $
 
 INCSDIR= /usr/include/atari
 
@@ -17,6 +17,7 @@ INCS=	ahdilabel.h ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

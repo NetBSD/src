@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.75 2003/06/18 02:58:09 bsh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.75.2.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -377,6 +377,9 @@ do {									\
 #define l2pte_index(v)		(((v) & L2_ADDR_BITS) >> L2_S_SHIFT)
 #define	l2pte_valid(pte)	((pte) != 0)
 #define	l2pte_pa(pte)		((pte) & L2_S_FRAME)
+#define l2pte_minidata(pte)	(((pte) & \
+				 (L2_B | L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X)))\
+				 == (L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X)))
 
 /* L1 and L2 page table macros */
 #define pmap_pde_v(pde)		l1pte_valid(*(pde))
@@ -404,6 +407,9 @@ void	pmap_pte_init_arm8(void);
 #if defined(CPU_ARM9)
 void	pmap_pte_init_arm9(void);
 #endif /* CPU_ARM9 */
+#if defined(CPU_ARM10)
+void	pmap_pte_init_arm10(void);
+#endif /* CPU_ARM10 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_SA1 == 1
@@ -417,6 +423,9 @@ void	pmap_zero_page_xscale(paddr_t);
 void	pmap_pte_init_xscale(void);
 
 void	xscale_setup_minidata(vaddr_t, vaddr_t, paddr_t);
+
+#define	PMAP_UAREA(va)		pmap_uarea(va)
+void	pmap_uarea(vaddr_t);
 #endif /* ARM_MMU_XSCALE == 1 */
 
 extern pt_entry_t		pte_l1_s_cache_mode;

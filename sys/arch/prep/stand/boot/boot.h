@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.3 2001/06/19 11:56:28 nonaka Exp $	*/
+/*	$NetBSD: boot.h,v 1.3.24.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 #define TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
 #define NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
@@ -36,7 +36,7 @@ int fdclose __P((struct open_file *));
 /*
  * inkernel
  */
-void init_in __P((void));
+void init_in __P((u_long loadaddr));
 int instrategy __P((void *, int , daddr_t, size_t, void *, size_t *));
 int inopen __P((struct open_file *));
 int inclose __P((struct open_file *));

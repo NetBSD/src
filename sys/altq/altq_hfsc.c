@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.7 2003/01/06 03:44:23 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.7.2.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.7 2003/01/06 03:44:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.7.2.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -169,7 +169,7 @@ hfsc_attach(ifq, bandwidth)
 	       M_DEVBUF, M_WAITOK);
 	if (hif == NULL)
 		return (NULL);
-	bzero(hif, sizeof(struct hfsc_if));
+	(void)memset(hif, 0, sizeof(struct hfsc_if));
 
 	hif->hif_eligible = ellist_alloc();
 	if (hif->hif_eligible == NULL) {
@@ -307,13 +307,13 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 	       M_DEVBUF, M_WAITOK);
 	if (cl == NULL)
 		return (NULL);
-	bzero(cl, sizeof(struct hfsc_class));
+	(void)memset(cl, 0, sizeof(struct hfsc_class));
 
 	MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
 	       M_DEVBUF, M_WAITOK);
 	if (cl->cl_q == NULL)
 		goto err_ret;
-	bzero(cl->cl_q, sizeof(class_queue_t));
+	(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 
 	cl->cl_actc = actlist_alloc();
 	if (cl->cl_actc == NULL)
@@ -363,7 +363,7 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
 		if (cl->cl_rsc == NULL)
 			goto err_ret;
-		bzero(cl->cl_rsc, sizeof(struct internal_sc));
+		(void)memset(cl->cl_rsc, 0, sizeof(struct internal_sc));
 		sc2isc(sc, cl->cl_rsc);
 		rtsc_init(&cl->cl_deadline, cl->cl_rsc, 0, 0);
 		rtsc_init(&cl->cl_eligible, cl->cl_rsc, 0, 0);
@@ -372,7 +372,7 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
 		if (cl->cl_fsc == NULL)
 			goto err_ret;
-		bzero(cl->cl_fsc, sizeof(struct internal_sc));
+		(void)memset(cl->cl_fsc, 0, sizeof(struct internal_sc));
 		sc2isc(sc, cl->cl_fsc);
 		rtsc_init(&cl->cl_virtual, cl->cl_fsc, 0, 0);
 	}
@@ -496,14 +496,18 @@ hfsc_class_modify(cl, rsc, fsc)
 		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
 		if (rsc_tmp == NULL)
 			return (ENOMEM);
-	}
+		(void)memset(rsc_tmp, 0, sizeof(struct internal_sc));
+	} else
+		rsc_tmp = NULL;
 	if (fsc != NULL && (fsc->m1 != 0 || fsc->m2 != 0) &&
 	    cl->cl_fsc == NULL) {
 		MALLOC(fsc_tmp, struct internal_sc *,
 		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
 		if (fsc_tmp == NULL)
 			return (ENOMEM);
-	}
+		(void)memset(fsc_tmp, 0, sizeof(struct internal_sc));
+	} else
+		fsc_tmp = NULL;
 
 	s = splnet();
 	if (!qempty(cl->cl_q))
@@ -518,7 +522,6 @@ hfsc_class_modify(cl, rsc, fsc)
 		} else {
 			if (cl->cl_rsc == NULL)
 				cl->cl_rsc = rsc_tmp;
-			bzero(cl->cl_rsc, sizeof(struct internal_sc));
 			sc2isc(rsc, cl->cl_rsc);
 			rtsc_init(&cl->cl_deadline, cl->cl_rsc, 0, 0);
 			rtsc_init(&cl->cl_eligible, cl->cl_rsc, 0, 0);
@@ -534,7 +537,6 @@ hfsc_class_modify(cl, rsc, fsc)
 		} else {
 			if (cl->cl_fsc == NULL)
 				cl->cl_fsc = fsc_tmp;
-			bzero(cl->cl_fsc, sizeof(struct internal_sc));
 			sc2isc(fsc, cl->cl_fsc);
 			rtsc_init(&cl->cl_virtual, cl->cl_fsc, 0, 0);
 		}
@@ -1407,7 +1409,7 @@ hfscopen(dev, flag, fmt, p)
 		init_machclk();
 
 	if (machclk_freq == 0) {
-		printf("hfsc: no cpu clock available!\n");
+		printf("hfsc: no CPU clock available!\n");
 		return (ENXIO);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2003/06/14 17:01:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.2.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.1 2004/08/03 10:39:55 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -65,7 +68,6 @@
 
 #include <net/netisr.h>
 
-#include <powerpc/bat.h>
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
 #include <machine/intr.h>
@@ -73,6 +75,7 @@
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 
+#include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
 
 #include <ddb/db_extern.h>
@@ -90,13 +93,6 @@
 #include "isa.h"
 #if (NISA > 0)
 void isa_intr_init(void);
-#endif
-
-#include "pckbc.h"
-#if (NPCKBC > 0)
-#include <dev/isa/isareg.h>
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
 #endif
 
 #include "com.h"
@@ -297,22 +293,6 @@ consinit(void)
 	panic("console device missing -- serial console not in kernel");
 	/* Of course, this is moot if there is no console... */
 }
-
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(pckbc_tag_t kbctag, pckbc_slot_t kbcslot)
-{
-#if (NPC > 0)
-	return (pcconskbd_cnattach(kbctag, kbcslot));
-#else
-	return (ENXIO);
-#endif
-}
-#endif
 
 /*
  * Stray interrupts.

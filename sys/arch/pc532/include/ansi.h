@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.15 2003/03/02 22:18:19 tshiozak Exp $	*/
+/*	$NetBSD: ansi.h,v 1.15.2.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,7 +68,7 @@
  * chosen over a long is that the is*() and to*() routines take ints (says
  * ANSI C), but they use _RUNE_T_ instead of int.  By changing it here, you
  * lose a bit of ANSI conformance, but your programs will still work.
- *    
+ *
  * Note that _WCHAR_T_ and _RUNE_T_ must be of the same type.  When wchar_t
  * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
  * defined for ctype.h.
@@ -80,8 +76,8 @@
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
 #define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_RUNE_T_		int		/* rune_t */
-#define _BSD_WCTRANS_T_		void *		/* wctrans_t */
-#define _BSD_WCTYPE_T_		void *		/* wctype_t */
+#define	_BSD_WCTRANS_T_		void *		/* wctrans_t */
+#define	_BSD_WCTYPE_T_		void *		/* wctype_t */
 
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte

@@ -35,7 +35,7 @@
 
 3. About version string
 
-  If you modify this program and update pbsdboot.uu, change version string
+  If you modify this program and update pbsdboot.exe.uue, change version string
   which is coded in main.c appropriately.
 
   The version string is in format:

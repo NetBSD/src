@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_bus_io.c,v 1.2 2001/06/14 18:48:23 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_bus_io.c,v 1.2.24.1 2004/08/03 10:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific PCI bus I/O support for the Algorithmics P-5064.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_bus_io.c,v 1.2.24.1 2004/08/03 10:31:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

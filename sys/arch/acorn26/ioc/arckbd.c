@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $ */
+/* $NetBSD: arckbd.c,v 1.5.6.1 2004/08/03 10:30:48 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -40,10 +40,10 @@
  * happen more than once at a time (I hope).
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.5.6.1 2004/08/03 10:30:48 skrll Exp $");
+
 #include <sys/param.h>
-
-__RCSID("$NetBSD: arckbd.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $");
-
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>

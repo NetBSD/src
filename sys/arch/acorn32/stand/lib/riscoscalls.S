@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.1 2002/12/28 23:57:38 reinoud Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.1.4.1 2004/08/03 10:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,14 +52,14 @@ ENTRY(os_readc)
 	swi	OS_ReadC
 	ldmdb	fp, {fp, sp, pc}
 
-ENTRY(os_CLI)
+ENTRY(os_cli)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	OS_CLI
 	ldmdb	fp, {fp, sp, pc}
 
-ENTRY(xos_CLI)
+ENTRY(xos_cli)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
@@ -96,7 +96,6 @@ ENTRY(xosargs_read)
 	teq	r3, #0
 	strne	r2, [r3]
 	mov	r0, #0
-	; movvc	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(xosargs_set)
@@ -162,8 +161,8 @@ ENTRY(os_get_env)
 	mov	ip, sp
 	stmfd	sp!, {r4, fp, ip, lr, pc}
 	sub	fp, ip, #4
-	mov	r0, r3
-	mov	r1, r4
+	mov	r3, r0
+	mov	r4, r1
 	swi	OS_GetEnv
 	teq	r3, #0
 	strne	r1, [r3]

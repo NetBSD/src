@@ -1,10 +1,9 @@
-#	$NetBSD: std.sgimips,v 1.13 2002/12/09 22:54:17 simonb Exp $
+#	$NetBSD: std.sgimips,v 1.13.6.1 2004/08/03 10:40:00 skrll Exp $
 
 machine sgimips mips
+makeoptions	MACHINE_ARCH="mipseb"
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	MIPS3_ENABLE_CLOCK_INTR
-
-makeoptions	DEFTEXTADDR="0x80069000"

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.29 2003/06/23 11:01:27 martin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.29.2.1 2004/08/03 10:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29.2.1 2004/08/03 10:37:09 skrll Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -96,6 +99,11 @@ fpu_attach(parent, self, args)
 	char *descr;
 
 	fputype = fpu_probe();
+
+	/* Generate a reference FPU idle frame. */
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
+
 	if ((0 <= fputype) && (fputype <= 3))
 		descr = fpu_descr[fputype];
 	else

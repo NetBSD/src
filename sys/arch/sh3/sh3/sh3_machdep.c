@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.48 2003/04/11 22:02:33 nathanw Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.48.2.1 2004/08/03 10:40:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -52,11 +52,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -74,6 +70,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.48.2.1 2004/08/03 10:40:18 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -250,9 +249,7 @@ sh_proc0_init()
 void
 sh_startup()
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	printf(version);
@@ -278,52 +275,7 @@ sh_startup()
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	buffers = 0;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-		UVM_ADV_NORMAL, 0)) != 0)
-		panic("sh3_startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-		/* don't want to alloc more physical mem than needed */
-		bufpages = btoc(MAXBSIZE) * nbuf;
-	}
-
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("sh3_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -339,13 +291,6 @@ sh_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
 }
 
 /*
@@ -407,8 +352,28 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 }
 
 /*
- * Send an interrupt to process.
- *
+ * Get the base address of the signal frame either on the lwp's stack
+ * or on the signal stack and set *onstack accordingly.  Caller then
+ * just subtracts the size of appropriate struct sigframe_foo.
+ */
+static void *
+getframe(struct lwp *l, int sig, int *onstack)
+{
+	struct proc *p = l->l_proc;
+	struct sigaltstack *sigstk= &p->p_sigctx.ps_sigstk;
+
+	/* Do we need to jump onto the signal stack? */
+	*onstack = (sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+		&& (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	if (*onstack)
+		return ((char *)sigstk->ss_sp + sigstk->ss_size);
+	else
+		return ((void *)l->l_md.md_regs->tf_r15);
+}
+
+#ifdef COMPAT_16
+/*
  * Stack is set up to allow sigcode stored
  * in u. to call routine, followed by kcall
  * to sigreturn routine below.  After sigreturn
@@ -416,31 +381,20 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
  * frame pointer, it returns to the user
  * specified pc, psl.
  */
-void
-sendsig(int sig, sigset_t *mask, u_long code)
+static void
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
-	int onstack;
+	struct trapframe *tf = l->l_md.md_regs;
+	int sig = ksi->ksi_info._signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct sigframe_sigcontext *fp, frame;
+	int onstack;
 
-	tf = l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_r15;
-	fp--;
+	fp = getframe(l, sig, &onstack);
+	--fp;
 
 	/* Save register context. */
 	frame.sf_sc.sc_ssr = tf->tf_ssr;
@@ -484,11 +438,9 @@ sendsig(int sig, sigset_t *mask, u_long code)
 	 * directly, only returning via the trampoline.
 	 */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
 		tf->tf_pr = (int)p->p_sigctx.ps_sigcode;
 		break;
-#endif /* COMPAT_16 */
 
 	case 1:
 		tf->tf_pr = (int)ps->sa_sigdesc[sig].sd_tramp;
@@ -496,20 +448,94 @@ sendsig(int sig, sigset_t *mask, u_long code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
+		printf("sendsig_sigcontext: bad version %d\n",
+		       ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
 	}
 
 	tf->tf_r4 = sig;
-	tf->tf_r5 = code;
+	tf->tf_r5 = ksi->ksi_code;
 	tf->tf_r6 = (int)&fp->sf_sc;
-	tf->tf_spc = (int)catcher;
+ 	tf->tf_spc = (int)catcher;
 	tf->tf_r15 = (int)fp;
 
-	/* Remember that we're now on the signal stack. */
+	/* Remember if we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+#endif /* COMPAT_16 */
+
+static void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
+	struct trapframe *tf = l->l_md.md_regs;
+	int sig = ksi->ksi_signo;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct sigframe_siginfo *fp, frame;
+	int onstack;
+
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 0:		/* handled by sendsig_sigcontext */
+	case 1:		/* handled by sendsig_sigcontext */
+	default:	/* unknown version */
+		printf("sendsig_siginfo: bad version %d\n",
+		       ps->sa_sigdesc[sig].sd_vers);
+		sigexit(l, SIGILL);
+	case 2:
+		break;
+	}
+
+	fp = getframe(l, sig, &onstack);
+	--fp;
+
+	frame.sf_si._info = ksi->ksi_info;
+	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_flags = _UC_SIGMASK;
+	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+		? _UC_SETSTACK : _UC_CLRSTACK;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_r4 = sig;		/* "signum" argument for handler */
+	tf->tf_r5 = (int)&fp->sf_si;	/* "sip" argument for handler */
+	tf->tf_r6 = (int)&fp->sf_uc;	/* "ucp" argument for handler */
+ 	tf->tf_spc = (int)catcher;
+	tf->tf_r15 = (int)fp;
+	tf->tf_pr = (int)ps->sa_sigdesc[sig].sd_tramp;
+
+	/* Remember if we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+/*
+ * Send an interrupt to process.
+ */
+void
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		sendsig_sigcontext(ksi, mask);
+	else
+#endif
+		sendsig_siginfo(ksi, mask);
+}
+
+#ifdef COMPAT_16
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -521,9 +547,9 @@ sendsig(int sig, sigset_t *mask, u_long code)
  * a machine fault.
  */
 int
-sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys___sigreturn14_args /* {
+	struct compat_16_sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;
@@ -577,6 +603,7 @@ sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	return (EJUSTRETURN);
 }
+#endif /* COMPAT_16 */
 
 void
 cpu_getmcontext(l, mcp, flags)
@@ -660,6 +687,18 @@ cpu_setmcontext(l, mcp, flags)
 		tf->tf_r0     = gr[_REG_R0];
 		tf->tf_r15    = gr[_REG_R15];
 	}
+
+#if 0
+	/* XXX: FPU context is currently not handled by the kernel. */
+	if (flags & _UC_FPU) {
+		/* TODO */;
+	}
+#endif
+
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	return (0);
 }

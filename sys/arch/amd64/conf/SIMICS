@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.2 2003/05/15 07:33:51 wiz Exp $
+#	$NetBSD: SIMICS,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -48,6 +48,7 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	LKM		# loadable kernel modules
 
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -336,7 +337,20 @@ wskbd* 		at pckbd? console ?
 # PCMCIA IDE controllers
 #wdc* 	at pcmcia? function ?
 
-pciide* 	at pci? dev ? function ? flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?	# Acard IDE controllers
+aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* at pci? dev ? function ?	# Cypress IDE controllers
+hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?	# Opti IDE controllers
+piixide* at pci? dev ? function ?	# Intel IDE controllers
+pdcide* at pci? dev ? function ?	# Promise IDE controllers
+satalink* at pci? dev ? function ?	# SiI SATALink controllers
+siside* at pci? dev ? function ?	# SiS IDE controllers
+slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ST506, ESDI, and ISA IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -345,13 +359,14 @@ pciide* 	at pci? dev ? function ? flags 0x0000
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
 
+# ATA (IDE) bus support
+atabus* at ata?
+
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
-wd* 	at pciide? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ?			# the drives themselves
 
 # ATAPI bus support
-atapibus* at wdc?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.25 2003/05/02 18:05:46 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.25.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -136,6 +132,16 @@
 #endif /* __ELF__ */
 
 #define _ALIGN_TEXT ALIGN_TEXT
+
+#ifdef GPROF
+#ifdef __ELF__
+#define	MCOUNT_ASM	call	_C_LABEL(__mcount)
+#else /* __ELF__ */
+#define	MCOUNT_ASM	call	_C_LABEL(mcount)
+#endif /* __ELF__ */
+#else /* GPROF */
+#define	MCOUNT_ASM	/* nothing */
+#endif /* GPROF */
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.6 2002/09/27 15:35:53 provos Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.6.6.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.6.6.1 2004/08/03 10:33:26 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

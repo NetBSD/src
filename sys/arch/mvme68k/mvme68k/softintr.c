@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.5 2001/07/06 19:00:14 scw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.5.24.1 2004/08/03 10:38:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Generic soft interrupt implementation for mvme68k.
  * Based heavily on the alpha implementation by Jason Thorpe.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5.24.1 2004/08/03 10:38:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

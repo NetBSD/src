@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 2003/05/17 09:31:33 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12.2.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1097,13 +1100,13 @@ db_disasm(db_addr_t loc, boolean_t dummy)
 	loc &= ~3;
 
 	if (loc < SH5_KSEG0_BASE) {
-		op = fuword((void *)loc);
+		op = fuword((void *)(intptr_t)loc);
 		if (op == 0xffffffff) {
 			db_printf("invalid address.\n");
 			return (loc);
 		}
 	} else
-		op = *((opcode_t *)loc);
+		op = *((opcode_t *)(intptr_t)loc);
 
 	extra_info[0] = '\0';
 
@@ -1440,9 +1443,9 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 			accmovi |= op;
 
 			if ((loc + 4) < SH5_KSEG0_BASE)
-				nextop = fuword((void *)(loc + 4));
+				nextop = fuword((void *)(intptr_t)(loc + 4));
 			else
-				nextop = *((opcode_t *)(loc + 4));
+				nextop = *((opcode_t *)(intptr_t)(loc + 4));
 
 			if ((nextop & 0xfc00000f) == 0xc8000000 &&
 			    ((nextop >> 4) & 0x3f) == d) {
@@ -1497,12 +1500,12 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 
 	case FMT_XSD16_OP_LABEL:
 		op = sh5_sign_extend(op, 16) * 4;
-		loc = (long)loc + (long)op;
+		loc = loc + (db_addr_t)op;
 		symname = NULL;
 		sym = db_search_symbol(loc, DB_STGY_PROC, &diff);
 		db_symbol_values(sym, &symname, NULL);
 		if (symname == NULL)
-			sprintf(ops, "0x%lx", loc);
+			sprintf(ops, "0x%llx", (long long) loc);
 		else {
 			if (diff)
 				sprintf(ops, "%s+0x%x", symname, (int) diff);

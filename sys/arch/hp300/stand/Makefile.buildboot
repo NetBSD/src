@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.20 2002/05/30 18:35:08 thorpej Exp $
+#	$NetBSD: Makefile.buildboot,v 1.20.6.1 2004/08/03 10:34:37 skrll Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -8,6 +8,7 @@ S=		${.CURDIR}/../../../..
 .PATH: ${.CURDIR}/../common
 
 PROG=		${PROGAOUT}.lif
+WARNS?=		1
 
 SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE}
 NOMAN=		# defined
@@ -18,14 +19,22 @@ CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
 CPPFLAGS+=	-Wno-main
+CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+CPPFLAGS+=	-D__daddr_t=int32_t
 CFLAGS=		-Os -msoft-float -ffreestanding
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp300 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp300 ${NEWVERSWHAT}
 
 ${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
 	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin

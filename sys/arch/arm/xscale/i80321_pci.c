@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.3 2003/06/30 15:27:12 thorpej Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * PCI configuration support for i80321 I/O Processor chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

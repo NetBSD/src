@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.4 2003/01/18 06:23:30 thorpej Exp $	*/
+/*	$NetBSD: userret.h,v 1.4.2.1 2004/08/03 10:39:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,8 @@
 
 #include "opt_altivec.h"
 
+#include <sys/userret.h>
+
 #include <powerpc/fpu.h>
 
 /*
@@ -42,44 +44,43 @@
 static __inline void
 userret(struct lwp *l, struct trapframe *frame)
 {
-	struct cpu_info *ci = curcpu();
-	struct pcb *pcb;
-	int sig;
+	struct cpu_info * const ci = curcpu();
+#ifdef PPC_HAVE_FPU
+	struct pcb * const pcb = &l->l_addr->u_pcb;
+#endif
 
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0) {
-		postsig(sig);
-	}
+	/* Invoke MI userret code */
+	mi_userret(l);
 
-	/* Invoke per-process kernel-exit handling, if any */
-	if (l->l_proc->p_userret)
-		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
-
-	/* Invoke any pending upcalls */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
-
-	pcb = &l->l_addr->u_pcb;
+	frame->srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
 	/*
 	 * If someone stole the fp or vector unit while we were away,
-	 * disable it
+	 * disable it.  Note that if the PSL FP/VEC bits aren't set, then
+	 * we don't own it.
 	 */
 #ifdef PPC_HAVE_FPU
-	if ((pcb->pcb_flags & PCB_FPU) &&
+	if ((frame->srr1 & PSL_FP) &&
 	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
-		frame->srr1 &= ~PSL_FP;
+		frame->srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
 	}
 #endif
 #ifdef ALTIVEC
-	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
-	    (l != ci->ci_veclwp || pcb->pcb_veccpu != ci)) {
-		frame->srr1 &= ~PSL_VEC;
+	/*
+	 * We need to manually restore PSL_VEC each time we return
+	 * to user mode since PSL_VEC is not preserved in SRR1.
+	 */
+	if (frame->srr1 & PSL_VEC) {
+		if (l != ci->ci_veclwp)
+			frame->srr1 &= ~PSL_VEC;
+	} else {
+		if (l == ci->ci_veclwp)
+			frame->srr1 |= PSL_VEC;
 	}
 
 	/*
 	 * If the new process isn't the current AltiVec process on this
-	 * cpu, we need to stop any data streams that are active (since
+	 * CPU, we need to stop any data streams that are active (since
 	 * it will be a different address space).
 	 */
 	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 2003/05/17 00:41:36 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28.2.1 2004/08/03 10:32:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,6 +42,9 @@
  *
  * Created      : 08/10/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28.2.1 2004/08/03 10:32:30 skrll Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -194,7 +197,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
@@ -208,7 +210,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf = pcb->pcb_tf;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
-	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
@@ -224,7 +225,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
  */
 
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
 {
 #ifdef ARMFPE
 	/* Abort any active FP operation and deactivate the context */
@@ -248,10 +249,13 @@ cpu_exit(struct lwp *l, int proc)
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
 	}
 #endif	/* STACKCHECKS */
-	uvmexp.swtch++;
-	switch_exit(l, &lwp0, proc ? exit2 : lwp_exit2);
 }
 
+void
+cpu_exit(struct lwp *l)
+{
+	switch_exit(l, &lwp0, lwp_exit2);
+}
 
 void
 cpu_swapin(l)

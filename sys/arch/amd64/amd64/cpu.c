@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -150,6 +153,8 @@ u_int32_t cpus_attached = 0;
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
 u_int32_t cpus_running = 0;
+
+extern char x86_64_doubleflt_stack[];
 
 void    	cpu_hatch __P((void *));
 static void    	cpu_boot_secondary __P((struct cpu_info *ci));
@@ -248,7 +253,7 @@ cpu_attach(parent, self, aux)
 		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL)
-			panic("cpu at apic id %d already attached?", cpunum);
+			panic("CPU at apic id %d already attached?", cpunum);
 		cpu_info[cpunum] = ci;
 #endif
 #ifdef TRAPLOG
@@ -259,7 +264,7 @@ cpu_attach(parent, self, aux)
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
-			panic("%s: running cpu is at apic %d"
+			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
 			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
 		}
@@ -300,6 +305,8 @@ cpu_attach(parent, self, aux)
 	pcb->pcb_tss.tss_rsp0 = kstack + USPACE - 16;
 	pcb->pcb_rbp = pcb->pcb_rsp = kstack + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = kstack + PAGE_SIZE - 16;
+	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack
+	    + PAGE_SIZE - 16;
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
@@ -499,7 +506,7 @@ cpu_boot_secondary(ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("cpu failed to start\n");
+		printf("CPU failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -510,7 +517,7 @@ cpu_boot_secondary(ci)
 /*
  * The CPU ends up here when its ready to run
  * This is called from code in mptramp.s; at this point, we are running
- * in the idle pcb/idle stack of the new cpu.  When this function returns,
+ * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
  *
  * XXX should share some of this with init386 in machdep.c
@@ -558,7 +565,7 @@ cpu_hatch(void *v)
 	enable_intr();
 
 	printf("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	if (ci->ci_feature_flags & CPUID_TSC)
 		cc_microset(ci);
 #endif
@@ -572,7 +579,7 @@ cpu_hatch(void *v)
 #include <machine/db_machdep.h>
 
 /*
- * Dump cpu information from ddb.
+ * Dump CPU information from ddb.
  */
 void
 cpu_debug_dump(void)
@@ -696,4 +703,7 @@ cpu_init_msrs(struct cpu_info *ci)
 	wrmsr(MSR_FSBASE, 0);
 	wrmsr(MSR_GSBASE, (u_int64_t)ci);
 	wrmsr(MSR_KERNELGSBASE, 0);
+
+	if (cpu_feature & CPUID_NOX)
+		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }

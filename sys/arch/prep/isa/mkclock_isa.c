@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.5 2002/10/02 15:52:29 thorpej Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.5.6.1 2004/08/03 10:39:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,20 +42,19 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.5 2002/10/02 15:52:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.5.6.1 2004/08/03 10:39:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <prep/prep/clockvar.h>
-
 #include <machine/bus.h>
 #include <machine/residual.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
+#include <dev/ic/mk48txxvar.h>
 
 #include <dev/isa/isavar.h>
 
@@ -68,44 +67,23 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.5 2002/10/02 15:52:29 thorpej Exp 
 #define	MKCLOCK_NPORTS	(MKCLOCK_DATA - MKCLOCK_STB0 + 1)
 
 
-struct mkclock_isa_softc {
-	struct device		sc_dev;		/* Base device */
-
-	bus_space_tag_t		sc_iot;		/* I/O space access */
-	bus_space_handle_t	sc_ioh;
-
-	todr_chip_handle_t	sc_todr;	/* MI todr interface handle */
-};
-
-
 /* Autoconfiguration interface */
 int	mkclock_isa_match(struct device *, struct cfdata *, void *);
 void	mkclock_isa_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(mkclock_isa, sizeof (struct mkclock_isa_softc),
+CFATTACH_DECL(mkclock_isa, sizeof (struct mk48txx_softc),
     mkclock_isa_match, mkclock_isa_attach, NULL, NULL);
 
 /* mk48txx interface */
-uint8_t	mkclock_isa_nvrd(bus_space_tag_t, bus_space_handle_t, int);
-void	mkclock_isa_nvwr(bus_space_tag_t, bus_space_handle_t, int, uint8_t);
-
-/* MI todr/PReP clock handling shim */
-void mkclock_isa_init(struct device *);
-void mkclock_isa_get(struct device *, time_t, struct clocktime *);
-void mkclock_isa_set(struct device *, struct clocktime *);
-
-struct clockfns mkclock_isa_clockfns = {
-	mkclock_isa_init,	/* cf_init	*/
-	mkclock_isa_get,	/* cf_get	*/
-	mkclock_isa_set		/* cf_set	*/
-};
+uint8_t	mkclock_isa_nvrd(struct mk48txx_softc *, int);
+void	mkclock_isa_nvwr(struct mk48txx_softc *, int, uint8_t);
 
 
 int
 mkclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	bus_space_handle_t ioh;
+	struct mk48txx_softc mk48txx, *sc;
 	uint8_t csr, ocsr;
 	unsigned int t1, t2;
 	int found;
@@ -135,34 +113,33 @@ mkclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 	/*
 	 * Map I/O space, then try to determine if it's really there.
 	 */
-	if (bus_space_map(ia->ia_iot, 0x74, MKCLOCK_NPORTS, 0, &ioh))
+	sc = &mk48txx;
+	sc->sc_bst = ia->ia_iot;
+	if (bus_space_map(sc->sc_bst, 0x74, MKCLOCK_NPORTS, 0, &sc->sc_bsh))
 		return (0);
 
 	/* Supposedly no control bits are set after POST; check for this. */
-	ocsr = mkclock_isa_nvrd(ia->ia_iot, ioh, MK48T18_CLKOFF + MK48TXX_ICSR);
+	ocsr = mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ICSR);
 	if (ocsr != 0)
 		goto unmap;
 
 	/* Set clock data to read mode, prohibiting updates from clock. */
 	csr = ocsr | MK48TXX_CSR_READ;
-	mkclock_isa_nvwr(ia->ia_iot, ioh, MK48T18_CLKOFF + MK48TXX_ICSR, csr);
+	mkclock_isa_nvwr(sc, MK48T18_CLKOFF + MK48TXX_ICSR, csr);
 	/* Compare. */
-	if (mkclock_isa_nvrd(ia->ia_iot, ioh, MK48T18_CLKOFF + MK48TXX_ICSR)
-	    != csr)
+	if (mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ICSR) != csr)
 		goto restore;
 
 	/* Read from the seconds counter. */
-	t1 = FROMBCD(mkclock_isa_nvrd(ia->ia_iot, ioh,
-	    MK48T18_CLKOFF + MK48TXX_ISEC));
+	t1 = FROMBCD(mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ISEC));
 	if (t1 > 59)
 		goto restore;
 
 	/* Make it tick again, wait, then look again. */
-	mkclock_isa_nvwr(ia->ia_iot, ioh, MK48T18_CLKOFF + MK48TXX_ICSR, ocsr);
+	mkclock_isa_nvwr(sc, MK48T18_CLKOFF + MK48TXX_ICSR, ocsr);
 	DELAY(1100000);
-	mkclock_isa_nvwr(ia->ia_iot, ioh, MK48T18_CLKOFF + MK48TXX_ICSR, csr);
-	t2 = FROMBCD(mkclock_isa_nvrd(ia->ia_iot, ioh,
-	    MK48T18_CLKOFF + MK48TXX_ISEC));
+	mkclock_isa_nvwr(sc, MK48T18_CLKOFF + MK48TXX_ICSR, csr);
+	t2 = FROMBCD(mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ISEC));
 	if (t2 > 59)
 		goto restore;
 
@@ -175,9 +152,9 @@ mkclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 		found = 1;
 
  restore:
-	mkclock_isa_nvwr(ia->ia_iot, ioh, MK48T18_CLKOFF + MK48TXX_ICSR, ocsr);
+	mkclock_isa_nvwr(sc, MK48T18_CLKOFF + MK48TXX_ICSR, ocsr);
  unmap:
-	bus_space_unmap(ia->ia_iot, ioh, MKCLOCK_NPORTS);
+	bus_space_unmap(sc->sc_bst, sc->sc_bsh, MKCLOCK_NPORTS);
 
 	if (found) {
 		ia->ia_nio = 1;
@@ -195,90 +172,43 @@ mkclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 void
 mkclock_isa_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct mk48txx_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct mkclock_isa_softc *sc = (struct mkclock_isa_softc *)self;
 
 	/* Map I/O space. */
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
-	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh))
+	sc->sc_bst = ia->ia_iot;
+	if (bus_space_map(sc->sc_bst, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_bsh))
 		panic("mkclock_isa_attach: couldn't map clock I/O space");
 
 	/* Attach to MI mk48txx driver. */
-	sc->sc_todr = mk48txx_attach(sc->sc_iot, sc->sc_ioh, "mk48t18", 1900,
-	    mkclock_isa_nvrd, mkclock_isa_nvwr);
-	if (sc->sc_todr == NULL)
-		panic("\nmkclock_isa_attach: mk48txx attach failed");
+	sc->sc_model = "mk48t18";
+	sc->sc_year0 = 1900;
+	sc->sc_nvrd = mkclock_isa_nvrd;
+	sc->sc_nvwr = mkclock_isa_nvwr;
+	mk48txx_attach(sc);
+	printf("\n");
 
-	clockattach(self, &mkclock_isa_clockfns);
-}
-
-/*
- * Shim to interface mk48txx's MI TODR handling with current PReP structure.
- */
-void
-mkclock_isa_init(struct device *self)
-{
-
-	/* Nothing to be done. */
-}
-
-void
-mkclock_isa_get(struct device *self, time_t base, struct clocktime *ct)
-{
-	struct mkclock_isa_softc *sc = (struct mkclock_isa_softc *)self;
-	struct clock_ymdhms dt;
-	struct timeval tv;
-
-	todr_gettime(sc->sc_todr, &tv);
-
-	/* Note: we ignore `tv_usec'. */
-	clock_secs_to_ymdhms(tv.tv_sec, &dt);
-
-	ct->year = dt.dt_year - 1900;
-	ct->mon  = dt.dt_mon;
-	ct->day  = dt.dt_day;
-	ct->hour = dt.dt_hour;
-	ct->min  = dt.dt_min;
-	ct->sec  = dt.dt_sec;
-	ct->dow  = dt.dt_wday;
-}
-
-void
-mkclock_isa_set(struct device *self, struct clocktime *ct)
-{
-	struct mkclock_isa_softc *sc = (struct mkclock_isa_softc *)self;
-	struct clock_ymdhms dt;
-	struct timeval tv;
-
-	dt.dt_year = ct->year + 1900;
-	if (dt.dt_year < 1970)
-		dt.dt_year += 100;
-	dt.dt_mon  = ct->mon;
-	dt.dt_day  = ct->day;
-	dt.dt_wday = ct->dow;
-	dt.dt_hour = ct->hour;
-	dt.dt_min  = ct->min;
-	dt.dt_sec  = ct->sec;
-	
-	tv.tv_sec = clock_ymdhms_to_secs(&dt);
-	tv.tv_usec = 0;
-
-	todr_settime(sc->sc_todr, &tv);
+	todr_attach(&sc->sc_handle);
 }
 
 /*
  * Bus access methods for MI mk48txx driver.
  */
 uint8_t
-mkclock_isa_nvrd(bus_space_tag_t iot, bus_space_handle_t ioh, int off)
+mkclock_isa_nvrd(struct mk48txx_softc *sc, int off)
 {
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	uint8_t datum;
 	int s;
 
 #ifdef DEBUG
 	printf("mkclock_isa_nvrd(%d)", off);
 #endif
+
+	iot = sc->sc_bst;
+	ioh = sc->sc_bsh;
 
 	s = splclock();
 	bus_space_write_1(iot, ioh, MKCLOCK_STB0, off & 0xff);
@@ -294,14 +224,17 @@ mkclock_isa_nvrd(bus_space_tag_t iot, bus_space_handle_t ioh, int off)
 }
 
 void
-mkclock_isa_nvwr(bus_space_tag_t iot, bus_space_handle_t ioh, int off,
-                 uint8_t datum)
+mkclock_isa_nvwr(struct mk48txx_softc *sc, int off, uint8_t datum)
 {
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int s;
 
 #ifdef DEBUG
 	printf("mkclock_isa_nvwr(%d, %02x)\n", off, datum);
 #endif
+	iot = sc->sc_bst;
+	ioh = sc->sc_bsh;
 
 	s = splclock();
 	bus_space_write_1(iot, ioh, MKCLOCK_STB0, off & 0xff);

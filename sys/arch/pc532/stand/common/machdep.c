@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1999/05/03 09:19:29 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.34.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip L. Budne.
@@ -48,43 +48,31 @@
 /* XXX TEMP; would like to use code more like hp300 scsi.c */
 
 int
-scsialive(ctlr)
-	int ctlr;
+scsialive(int ctlr)
 {
+
 	return 1;		/* controller always alive! */
 }
 
 int
-scsi_tt_read(ctlr, slave, buf, len, blk, nblk)
-	int ctlr, slave;
-	void *buf;
-	u_int len;
-	daddr_t blk;
-	u_int nblk;
+scsi_tt_read(int ctlr, int slave, void *buf, u_int len, daddr_t blk, u_int nblk)
 {
+
 	if (sc_rdwt(DISK_READ, blk, buf, nblk, 1 << slave, 0) == 0)
 		return 0;
 	return EIO;
 }
 
 int
-scsi_tt_write(ctlr, slave, buf, len, blk, nblk)
-	int ctlr, slave;
-	u_char *buf;
-	u_int len;
-	daddr_t blk;
-	u_int nblk;
+scsi_tt_write(int ctlr, int slave, void *buf, u_int len, daddr_t blk,
+    u_int nblk)
 {
+
 	return EIO;
 }
 
 void
-machdep_start(entry, howto, loadaddr, ssym, esym)
-	char *entry;
-	int howto;
-	char *loadaddr;
-	char *ssym;
-	char *esym;
+machdep_start(char *entry, int how_to, char *loadaddr, char *ssym, char *esym)
 {
 	char *load;
 	extern u_int opendev;
@@ -102,7 +90,7 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 
 	printf("\n");
 
-	run_prog((u_long)howto,		/* r7 */
+	run_prog((u_long)how_to,	/* r7 */
 		 (u_long)opendev,	/* r6 */
 		 (u_long)load,		/* r5 */
 		 (u_long)esym,		/* r4 */
@@ -111,8 +99,9 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 }
 
 void
-_rtt()
+_rtt(void)
 {
+
 	/* Use monitor scratch area as stack. */
 	lprd(sp, 0x2000);
 

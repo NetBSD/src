@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_spd.c,v 1.3 2002/10/02 04:17:21 thorpej Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.3.6.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.3.6.1 2004/08/03 10:39:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +75,9 @@
 
 struct wdc_spd_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc *wdc_chanptr;
-	struct channel_softc wdc_channel;
+	struct wdc_channel *wdc_chanlist[1];
+	struct wdc_channel wdc_channel;
+	struct ata_queue wdc_chqueue;
 	void *sc_ih;
 };
 
@@ -93,12 +97,12 @@ extern struct cfdriver wdc_cd;
 
 STATIC void __wdc_spd_enable(void);
 STATIC void __wdc_spd_disable(void) __attribute__((__unused__));
-STATIC void __wdc_spd_bus_space(struct channel_softc *);
+STATIC void __wdc_spd_bus_space(struct wdc_channel *);
 
 /*
  * wdc register is 16 bit wide.
  */
-#define VADDR(h, o)	((h) + ((o) << 1))
+#define VADDR(h, o)	((h) + (o))
 _BUS_SPACE_READ(_wdc_spd, 1, 8)
 _BUS_SPACE_READ(_wdc_spd, 2, 16)
 _BUS_SPACE_READ_MULTI(_wdc_spd, 1, 8)
@@ -168,7 +172,7 @@ int
 wdc_spd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct spd_attach_args *spa = aux;
-	struct channel_softc ch;
+	struct wdc_channel ch;
 	int i, result;
 
 	if (spa->spa_slot != SPD_HDD)
@@ -192,7 +196,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 	struct spd_attach_args *spa = aux;
 	struct wdc_spd_softc *sc = (void *)self;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
-	struct channel_softc *ch = &sc->wdc_channel;
+	struct wdc_channel *ch = &sc->wdc_channel;
 
 	printf(": %s\n", spa->spa_product_name);
 
@@ -201,19 +205,12 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 	wdc->cap =
 	    WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DATA16;
 	wdc->PIO_cap = 0;
-	sc->wdc_chanptr = &sc->wdc_channel;
-	wdc->channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	wdc->channels = sc->wdc_chanlist;
 	wdc->nchannels = 1;
-	ch->channel = 0;
-	ch->wdc = &sc->sc_wdcdev;
-	ch->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
-	    M_NOWAIT);
-	    
-	if (ch->ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
-		    wdc->sc_dev.dv_xname);
-		return;
-	}
+	ch->ch_channel = 0;
+	ch->ch_wdc = &sc->sc_wdcdev;
+	ch->ch_queue = &sc->wdc_chqueue;
 
 	spd_intr_establish(SPD_HDD, wdcintr, &sc->wdc_channel);
 
@@ -223,15 +220,18 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-__wdc_spd_bus_space(struct channel_softc *ch)
+__wdc_spd_bus_space(struct wdc_channel *ch)
 {
+	int i;
 
 	ch->cmd_iot = &_wdc_spd_space;
-	ch->cmd_ioh = SPD_HDD_IO_BASE;
+	for (i = 0; i < 8; i++)
+		ch->cmd_iohs[i] = SPD_HDD_IO_BASE + i * 2; /*  wdc register is 16 bit wide. */
+	wdc_init_shadow_regs(ch);
 	ch->ctl_iot = &_wdc_spd_space;
 	ch->ctl_ioh = SPD_HDD_IO_BASE + WDC_SPD_HDD_AUXREG_OFFSET;
 	ch->data32iot = ch->cmd_iot;
-	ch->data32ioh = ch->cmd_ioh;
+	ch->data32ioh = SPD_HDD_IO_BASE;
 }
 
 void

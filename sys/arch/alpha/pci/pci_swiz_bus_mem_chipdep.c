@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37 2002/07/22 20:05:23 mycroft Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37.6.1 2004/08/03 10:31:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@
  *			Size of the device-provided static storage area
  *			for the sparse memory space extent.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37.6.1 2004/08/03 10:31:20 skrll Exp $");
 
 #include <sys/extent.h>
 

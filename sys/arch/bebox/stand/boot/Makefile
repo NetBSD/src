@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/04/09 16:05:37 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.16.10.1 2004/08/03 10:33:40 skrll Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -12,7 +12,8 @@ CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
 
 CLEANFILES+= vers.c vers.o ${BOOTPROG}
 
-CPPFLAGS= -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
+COPTS+= -ffreestanding
+CPPFLAGS= -I. -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
 CPPFLAGS+= -I${S} -I${S}/lib/libsa
 CPPFLAGS+= -D_STANDALONE -DDBMONITOR -DRELOC=${RELOC}
 CPPFLAGS+= -DUSE_SCAN
@@ -31,9 +32,11 @@ BINMODE= 444
 
 RELOC= 0x700000
 
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.endif
 .NOPATH: machine powerpc
 CLEANFILES+= machine powerpc
 
@@ -55,7 +58,7 @@ LIBSA=		${SALIB}
 
 .PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "bebox" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "bebox" ${NEWVERSWHAT}
 
 realall: ${BOOTPROG}
 
@@ -66,6 +69,6 @@ ${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 .include <bsd.prog.mk>

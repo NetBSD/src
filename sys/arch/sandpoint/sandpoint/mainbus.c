@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2003/06/15 23:09:05 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14.2.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.2.1 2004/08/03 10:39:55 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/device.h>
@@ -48,11 +51,11 @@
 #error	A cpu device is now required
 #endif
 
-int	mainbus_match __P((struct device *, void *, void *));
+int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
-    (cfmatch_t)mainbus_match, mainbus_attach, NULL, NULL);
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print __P((void *, const char *));
 
@@ -67,7 +70,8 @@ union mainbus_attach_args {
 int
 mainbus_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 
 	return 1;

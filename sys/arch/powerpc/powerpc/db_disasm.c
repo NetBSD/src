@@ -1,5 +1,8 @@
-/*	$NetBSD: db_disasm.c,v 1.15 2003/05/17 19:17:43 he Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.15.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15.2.1 2004/08/03 10:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -87,7 +90,7 @@ op_class_func op_cl_x3e, op_cl_x3f;
 op_class_func *opcodes_base[] = {
 /*x00*/	op_ill,		op_ill,		op_base,	op_ill,
 /*x04*/	op_ill,		op_ill,		op_ill,		op_base,
-/*x08*/	op_base,	op_base,	op_ill,		op_base,	
+/*x08*/	op_base,	op_base,	op_base,	op_base,
 /*x0C*/ op_base,	op_base,	op_base/*XXX*/,	op_base/*XXX*/,
 /*x10*/ op_base,	op_base,	op_base,	op_cl_x13,
 /*x14*/	op_base,	op_base,	op_ill,		op_base,
@@ -201,7 +204,7 @@ const struct opcode opcodes_1e[] = {
 /* 1f * 4 = 7c */
 const struct opcode opcodes_1f[] = {
 /* 1f << 2 */
-	{ "cmp",	0xfc0007fe, 0x7c000000, Op_S | Op_A | Op_B | Op_me | Op_Rc },
+	{ "cmp",	0xfc0007fe, 0x7c000000, Op_crfD | Op_A | Op_B },
 	{ "tw",		0xfc0007fe, 0x7c000008, Op_TO | Op_A | Op_B },
 	{ "subfc",	0xfc0003fe, 0x7c000010, Op_D | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "mulhdu",	0xfc0007fe, 0x7c000012, Op_D | Op_A | Op_B | Op_Rc },
@@ -411,7 +414,11 @@ const struct specialreg sprregs[] = {
 	{ 0x019, "sdr1" },
 	{ 0x01a, "srr0" },
 	{ 0x01b, "srr1" },
+#ifdef PPC_IBM4XX
 	{ 0x100, "usprg0" },
+#else
+	{ 0x100, "vrsave" },
+#endif
 	{ 0x110, "sprg0" },
 	{ 0x111, "sprg1" },
 	{ 0x112, "sprg2" },
@@ -441,6 +448,22 @@ const struct specialreg sprregs[] = {
 	{ 0x21d, "dbat2l" },
 	{ 0x21e, "dbat3u" },
 	{ 0x21f, "dbat3l" },
+	{ 0x230, "ibat4u" },
+	{ 0x231, "ibat4l" },
+	{ 0x232, "ibat5u" },
+	{ 0x233, "ibat5l" },
+	{ 0x234, "ibat6u" },
+	{ 0x235, "ibat6l" },
+	{ 0x236, "ibat7u" },
+	{ 0x237, "ibat7l" },
+	{ 0x238, "dbat4u" },
+	{ 0x239, "dbat4l" },
+	{ 0x23a, "dbat5u" },
+	{ 0x23b, "dbat5l" },
+	{ 0x23c, "dbat6u" },
+	{ 0x23d, "dbat6l" },
+	{ 0x23e, "dbat7u" },
+	{ 0x23f, "dbat7l" },
 	{ 0x3b0, "zpr" },
 	{ 0x3b1, "pid" },
 	{ 0x3b3, "ccr0" },
@@ -462,12 +485,22 @@ const struct specialreg sprregs[] = {
 	{ 0x3db, "pit" },
 	{ 0x3de, "srr2" },
 	{ 0x3df, "srr3" },
+#ifdef PPC_IBM4XX
 	{ 0x3f0, "dbsr" },
 	{ 0x3f2, "dbcr0" },
 	{ 0x3f4, "iac1" },
 	{ 0x3f5, "iac2" },
 	{ 0x3f6, "dac1" },
 	{ 0x3f7, "dac2" },
+#else
+	{ 0x3f0, "hid0" },
+	{ 0x3f1, "hid1" },
+	{ 0x3f2, "iabr" },
+	{ 0x3f3, "hid2" },
+	{ 0x3f5, "dabr" },
+	{ 0x3f6, "msscr0" },
+	{ 0x3f7, "msscr1" },
+#endif
 	{ 0x3f9, "l2cr" },
 	{ 0x3fa, "dccr" },
 	{ 0x3fb, "iccr" },
@@ -588,7 +621,6 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 	func =  popcode->func;
 	if (func & Op_OE) {
 		u_int OE;
-		/* also for Op_S (they are the same) */
 		OE = extract_field(instr, 31 - 21, 1);
 		if (OE) {
 			APP_PSTRS("o");
@@ -696,7 +728,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 	}
 	if (func & Op_BI) {
 		u_int BI;
-		BI = extract_field(instr, 31 - 10, 5);
+		BI = extract_field(instr, 31 - 15, 5);
 		APP_PSTR("%d, ", BI);
 		func &= ~Op_BI;
 	}
@@ -794,18 +826,18 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		APP_PSTR(", 0x%x", me);
 		func &= ~Op_me;
 	}
-	if ((func & Op_MB) && (func & Op_sh_mb_sh)) {
-		u_int MB;
-		u_int ME;
-		MB = extract_field(instr, 31 - 20, 5);
-		APP_PSTR(", %d", MB);
-		ME = extract_field(instr, 31 - 25, 5);
-		APP_PSTR(", %d", ME);
-	}
 	if ((func & Op_SH) && (func & Op_sh_mb_sh)) {
 		u_int SH;
 		SH = extract_field(instr, 31 - 20, 5);
 		APP_PSTR(", %d", SH);
+	}
+	if ((func & Op_MB) && (func & Op_sh_mb_sh)) {
+		u_int MB;
+		u_int ME;
+		MB = extract_field(instr, 31 - 25, 5);
+		APP_PSTR(", %d", MB);
+		ME = extract_field(instr, 31 - 30, 5);
+		APP_PSTR(", %d", ME);
 	}
 	if ((func & Op_sh) && ! (func & Op_sh_mb_sh)) {
 		u_int sh, shl, shh;
@@ -932,7 +964,7 @@ dis_ppc(const struct opcode *opcodeset, instr_t instr, vaddr_t loc)
 	const struct opcode *op;
 	int found = 0;
 	int i;
-	char disasm_str[30];
+	char disasm_str[80];
 
 	for (i = 0, op = &opcodeset[0];
 	    found == 0 && op->mask != 0;

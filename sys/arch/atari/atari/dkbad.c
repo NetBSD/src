@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.3 1996/07/20 20:48:36 leo Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.3.62.1 2004/08/03 10:33:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -34,6 +30,9 @@
  *
  *	@(#)dkbad.c	7.2 (Berkeley) 12/16/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.3.62.1 2004/08/03 10:33:09 skrll Exp $");
 
 #ifndef NOBADSECT
 #include <sys/param.h>

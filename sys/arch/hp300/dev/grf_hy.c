@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.19 2003/04/01 20:41:36 thorpej Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.19.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,9 +37,45 @@
  */
 
 /*
- * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Mark Davies of the Department of Computer
+ * Science, Victoria University of Wellington, New Zealand.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: grf_hy.c 1.2 93/08/13$
+ *
+ *	@(#)grf_hy.c	8.4 (Berkeley) 1/12/94
+ */
+
+/*
+ * Copyright (c) 1991 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -84,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.19 2003/04/01 20:41:36 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.19.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -391,7 +427,7 @@ hyper_deinit(ip)
 	hyper_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 
 	REGBASE->nblank = 0x05;
-   	ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
 void
@@ -428,8 +464,8 @@ hyper_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
 	int c, dy, dx, mode;
 {
-        int wmrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
-	
+	int wmrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+
 	hyper_windowmove(ip, charY(ip, c), charX(ip, c),
 			 dy * ip->ftheight, dx * ip->ftwidth,
 			 ip->ftheight, ip->ftwidth, wmrr);
@@ -456,15 +492,15 @@ hyper_clear(ip, sy, sx, h, w)
 	int sy, sx, h, w;
 {
 	hyper_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 sy * ip->ftheight, sx * ip->ftwidth, 
+			 sy * ip->ftheight, sx * ip->ftwidth,
 			 h  * ip->ftheight, w  * ip->ftwidth,
 			 RR_CLEAR);
 }
 
 void
 hyper_scroll(ip, sy, sx, count, dir)
-        struct ite_data *ip;
-        int sy, count, dir, sx;
+	struct ite_data *ip;
+	int sy, count, dir, sx;
 {
 	int dy;
 	int dx = sx;
@@ -488,7 +524,7 @@ hyper_scroll(ip, sy, sx, count, dir)
 		dy = sy;
 		dx = sx - count;
 		width = ip->cols - sx;
-	}		
+	}
 
 	hyper_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			 dy * ip->ftheight, dx * ip->ftwidth,
@@ -504,8 +540,7 @@ hyper_scroll(ip, sy, sx, count, dir)
  * than having to do the multiple reads and masks that we'd
  * have to do if we thought it was partial.
  */
-int starttab[32] =
-    {
+int starttab[32] = {
 	0x00000000,
 	0x7FFFFFFF,
 	0x3FFFFFFF,
@@ -538,10 +573,9 @@ int starttab[32] =
 	0x00000007,
 	0x00000003,
 	0x00000001
-    };
+};
 
-int endtab[32] =
-    {
+int endtab[32] = {
 	0x00000000,
 	0x80000000,
 	0xC0000000,
@@ -574,7 +608,7 @@ int endtab[32] =
 	0xFFFFFFF8,
 	0xFFFFFFFC,
 	0xFFFFFFFE
-    };
+};
 
 void
 hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
@@ -584,168 +618,157 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	int width;		/* add to get to same position in next line */
 
 	unsigned int *psrcLine, *pdstLine;
-                                /* pointers to line with current src and dst */
-	unsigned int *psrc;  /* pointer to current src longword */
-	unsigned int *pdst;  /* pointer to current dst longword */
+				/* pointers to line with current src and dst */
+	unsigned int *psrc;	/* pointer to current src longword */
+	unsigned int *pdst;	/* pointer to current dst longword */
 
-                                /* following used for looping through a line */
+				/* following used for looping through a line */
 	unsigned int startmask, endmask;  /* masks for writing ends of dst */
 	int nlMiddle;		/* whole longwords in dst */
-	int nl;	/* temp copy of nlMiddle */
+	int nl;			/* temp copy of nlMiddle */
 	unsigned int tmpSrc;
-                                /* place to store full source word */
-	int xoffSrc;	/* offset (>= 0, < 32) from which to
-                                   fetch whole longwords fetched
-                                   in src */
+				/* place to store full source word */
+	int xoffSrc;		/* offset (>= 0, < 32) from which to
+				   fetch whole longwords fetched
+				   in src */
 	int nstart;		/* number of ragged bits at start of dst */
 	int nend;		/* number of ragged bits at end of dst */
+
 	int srcStartOver;	/* pulling nstart bits from src
-                                   overflows into the next word? */
+				   overflows into the next word? */
 
 	if (h == 0 || w == 0)
 		return;
 
 	width = ip->fbwidth >> 5;
 
-	if (sy < dy) /* start at last scanline of rectangle */
-	{
-	    psrcLine = ((unsigned int *) ip->fbbase) + ((sy+h-1) * width);
-	    pdstLine = ((unsigned int *) ip->fbbase) + ((dy+h-1) * width);
-	    width = -width;
-	}
-	else /* start at first scanline */
-	{
-	    psrcLine = ((unsigned int *) ip->fbbase) + (sy * width);
-	    pdstLine = ((unsigned int *) ip->fbbase) + (dy * width);
+	if (sy < dy) {
+		/* start at last scanline of rectangle */
+		psrcLine = ((unsigned int *) ip->fbbase) + ((sy+h-1) * width);
+		pdstLine = ((unsigned int *) ip->fbbase) + ((dy+h-1) * width);
+		width = -width;
+	} else {
+		/* start at first scanline */
+		psrcLine = ((unsigned int *) ip->fbbase) + (sy * width);
+		pdstLine = ((unsigned int *) ip->fbbase) + (dy * width);
 	}
 
 	/* x direction doesn't matter for < 1 longword */
-	if (w <= 32)
-	{
-	    int srcBit, dstBit;     /* bit offset of src and dst */
+	if (w <= 32) {
+		int srcBit, dstBit;     /* bit offset of src and dst */
 
-	    pdstLine += (dx >> 5);
-	    psrcLine += (sx >> 5);
-	    psrc = psrcLine;
-	    pdst = pdstLine;
-
-	    srcBit = sx & 0x1f;
-	    dstBit = dx & 0x1f;
-
-	    while(h--)
-	    {
-                getandputrop(psrc, srcBit, dstBit, w, pdst, func)
-	        pdst += width;
-		psrc += width;
-	    }
-	}
-	else
-        {
-	    maskbits(dx, w, startmask, endmask, nlMiddle)
-	    if (startmask)
-	      nstart = 32 - (dx & 0x1f);
-	    else
-	      nstart = 0;
-	    if (endmask)
-	      nend = (dx + w) & 0x1f;
-	    else
-	      nend = 0;
-
-	    xoffSrc = ((sx & 0x1f) + nstart) & 0x1f;
-	    srcStartOver = ((sx & 0x1f) + nstart) > 31;
-
-	    if (sx >= dx) /* move left to right */
-	    {
-	        pdstLine += (dx >> 5);
+		pdstLine += (dx >> 5);
 		psrcLine += (sx >> 5);
+		psrc = psrcLine;
+		pdst = pdstLine;
 
-		while (h--)
-		{
-		    psrc = psrcLine;
-		    pdst = pdstLine;
+		srcBit = sx & 0x1f;
+		dstBit = dx & 0x1f;
 
-		    if (startmask)
-		    {
-			getandputrop(psrc, (sx & 0x1f),
-				     (dx & 0x1f), nstart, pdst, func)
-			    pdst++;
-			if (srcStartOver)
-			    psrc++;
-		    }
-
-		    /* special case for aligned operations */
-		    if (xoffSrc == 0)
-		    {
-			nl = nlMiddle;
-			while (nl--)
-			{
-			    DoRop (*pdst, func, *psrc++, *pdst);
-			    pdst++;
-			}
-		    }
-		    else
-		    {
-			nl = nlMiddle + 1;
-			while (--nl)
-			{
-			    getunalignedword (psrc, xoffSrc, tmpSrc)
-				DoRop (*pdst, func, tmpSrc, *pdst);
-			    pdst++;
-			    psrc++;
-			}
-		    }
-
-		    if (endmask)
-		    {
-			getandputrop0(psrc, xoffSrc, nend, pdst, func);
-		    }
-
-		    pdstLine += width;
-		    psrcLine += width;
+		while (h--) {
+			getandputrop(psrc, srcBit, dstBit, w, pdst, func)
+			pdst += width;
+			psrc += width;
 		}
-	    }
-	    else /* move right to left */
-	    {
-		pdstLine += ((dx + w) >> 5);
-		psrcLine += ((sx + w) >> 5);
-		/* if fetch of last partial bits from source crosses
-		   a longword boundary, start at the previous longword
-		   */
-		if (xoffSrc + nend >= 32)
-		    --psrcLine;
+	} else {
+		maskbits(dx, w, startmask, endmask, nlMiddle)
+		if (startmask)
+			nstart = 32 - (dx & 0x1f);
+		else
+			nstart = 0;
+		if (endmask)
+			nend = (dx + w) & 0x1f;
+		else
+			nend = 0;
 
-		while (h--)
-		{
-		    psrc = psrcLine;
-		    pdst = pdstLine;
+		xoffSrc = ((sx & 0x1f) + nstart) & 0x1f;
+		srcStartOver = ((sx & 0x1f) + nstart) > 31;
 
-		    if (endmask)
-		    {
-			getandputrop0(psrc, xoffSrc, nend, pdst, func);
-		    }
+		if (sx >= dx) {
+			/* move left to right */
+			pdstLine += (dx >> 5);
+			psrcLine += (sx >> 5);
 
-		    nl = nlMiddle + 1;
-		    while (--nl)
-		    {
-			--psrc;
-			--pdst;
-			getunalignedword(psrc, xoffSrc, tmpSrc)
-                        DoRop(*pdst, func, tmpSrc, *pdst);
-		    }
+			while (h--) {
+				psrc = psrcLine;
+				pdst = pdstLine;
 
-		    if (startmask)
-		    {
-			if (srcStartOver)
-			    --psrc;
-			--pdst;
-			getandputrop(psrc, (sx & 0x1f),
-				     (dx & 0x1f), nstart, pdst, func)
-                    }
+				if (startmask) {
+					getandputrop(psrc, (sx & 0x1f),
+					    (dx & 0x1f), nstart, pdst, func)
+					pdst++;
+					if (srcStartOver)
+						psrc++;
+				}
 
-		    pdstLine += width;
-		    psrcLine += width;
-		}
-	    } /* move right to left */
+				/* special case for aligned operations */
+				if (xoffSrc == 0) {
+					nl = nlMiddle;
+					while (nl--) {
+						DoRop(*pdst, func, *psrc++,
+						    *pdst);
+						pdst++;
+					}
+				} else {
+					nl = nlMiddle + 1;
+					while (--nl) {
+						getunalignedword(psrc,
+						    xoffSrc, tmpSrc)
+						DoRop(*pdst, func, tmpSrc,
+						    *pdst);
+						pdst++;
+						psrc++;
+					}
+				}
+
+				if (endmask) {
+					getandputrop0(psrc, xoffSrc, nend,
+					    pdst, func);
+				}
+
+				pdstLine += width;
+				psrcLine += width;
+			}
+		} else {
+			/* move right to left */
+			pdstLine += ((dx + w) >> 5);
+			psrcLine += ((sx + w) >> 5);
+			/*
+			 * if fetch of last partial bits from source crosses
+			 * a longword boundary, start at the previous longword
+			 */
+			if (xoffSrc + nend >= 32)
+				--psrcLine;
+
+			while (h--) {
+				psrc = psrcLine;
+				pdst = pdstLine;
+
+				if (endmask) {
+					getandputrop0(psrc, xoffSrc, nend,
+					    pdst, func);
+				}
+
+				nl = nlMiddle + 1;
+				while (--nl) {
+					--psrc;
+					--pdst;
+					getunalignedword(psrc, xoffSrc, tmpSrc)
+					DoRop(*pdst, func, tmpSrc, *pdst);
+				}
+
+				if (startmask) {
+					if (srcStartOver)
+						--psrc;
+					--pdst;
+					getandputrop(psrc, (sx & 0x1f),
+					    (dx & 0x1f), nstart, pdst, func)
+				}
+
+				pdstLine += width;
+				psrcLine += width;
+			}
+		} /* move right to left */
 	}
 }
 
@@ -767,7 +790,8 @@ hypercnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
-	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_HYPERION)) {
+	if (badaddr(va) ||
+	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_HYPERION)) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
 		return (1);
 	}

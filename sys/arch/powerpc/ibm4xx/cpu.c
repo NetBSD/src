@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2003/06/13 04:29:39 simonb Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.2.1 2004/08/03 10:39:28 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.1 2004/08/03 10:39:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +75,8 @@ CFATTACH_DECL(cpu, sizeof(struct device),
 int ncpus;
 
 struct cpu_info cpu_info[1];
+
+char cpu_model[80];
 
 int cpufound = 0;
 
@@ -154,7 +159,7 @@ cpu_probe_cache()
 	int version;
 
 	/*
-	 * First we need to identify the cpu and determine the
+	 * First we need to identify the CPU and determine the
 	 * cache line size, or things like memset/memcpy may lose
 	 * badly.
 	 */

@@ -1,9 +1,43 @@
-/*	$NetBSD: rtc.c,v 1.6 2002/10/02 05:15:54 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6.6.1 2004/08/03 10:34:24 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: clock.c 1.18 91/01/21$
+ *
+ *	@(#)clock.c	8.2 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -47,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6 2002/10/02 05:15:54 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6.6.1 2004/08/03 10:34:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6 2002/10/02 05:15:54 thorpej Exp $");
 #include <hp300/dev/rtcreg.h>
 
 #include <dev/clock_subr.h>
-#include <hp300/hp300/clockvar.h>
 
 struct rtc_softc {
 	struct device sc_dev;
@@ -102,15 +135,18 @@ rtcattach(parent, self, aux)
 	struct intio_attach_args *ia = aux;
 	struct rtc_softc *sc = (struct rtc_softc *)self;
 	struct todr_chip_handle *todr_handle;
+	bus_space_tag_t bst = ia->ia_bst;
 
 	printf("\n");
 
-	if (bus_space_map(ia->ia_bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
+	if (bus_space_map(bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
 	    &sc->sc_bsh)) {
 		printf("%s: can't map registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	sc->sc_bst = bst;
 
 	MALLOC(todr_handle, struct todr_chip_handle *,
 	    sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
@@ -122,7 +158,7 @@ rtcattach(parent, self, aux)
 	todr_handle->todr_setcal = rtc_setcal;
 	todr_handle->todr_setwen = NULL;
 
-	clockattach(todr_handle);
+	todr_attach(todr_handle);
 }
 
 static int

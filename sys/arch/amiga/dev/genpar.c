@@ -1,4 +1,4 @@
-/*	$NetBSD: genpar.c,v 1.8 2002/01/26 13:40:54 aymeric Exp $ */
+/*	$NetBSD: genpar.c,v 1.8.16.1 2004/08/03 10:31:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: genpar.c,v 1.8.16.1 2004/08/03 10:31:52 skrll Exp $");
 
 #include <stdio.h>
 

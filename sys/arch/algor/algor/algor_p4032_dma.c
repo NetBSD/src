@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_dma.c,v 1.3 2001/06/22 05:57:26 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_dma.c,v 1.3.24.1 2004/08/03 10:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific DMA support for the Algorithmics P-4032.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_dma.c,v 1.3.24.1 2004/08/03 10:31:02 skrll Exp $");
 
 #include <sys/param.h>
 

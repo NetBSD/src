@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4 2002/08/25 20:19:59 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4.6.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 /*      
  * cache configuration, for most machines is the same
  * numbers, so it makes sense to do defines w/ numbers depending
- * on configured cpu types in the kernel.
+ * on configured CPU types in the kernel.
  */
 extern int icache_stride, icache_line_mask;
 extern int dcache_stride, dcache_line_mask;
@@ -77,34 +77,33 @@ extern int fpu_present;
 extern u_int fpu_version;
 extern u_int fpu_csw;
 extern paddr_t fpu_cur_uspace;
-void hppa_fpu_bootstrap __P((u_int));
-void hppa_fpu_flush __P((struct proc *));
-void hppa_fpu_emulate __P((struct trapframe *, struct proc *));
+void hppa_fpu_bootstrap(u_int);
+void hppa_fpu_flush(struct lwp *);
+void hppa_fpu_emulate(struct trapframe *, struct lwp *, u_int);
 
 /* Interrupt dispatching. */
 extern u_int hppa_intr_depth;
-void hppa_intr __P((struct trapframe *));
+void hppa_intr(struct trapframe *);
 
 /* Special pmap functions. */
-void pmap_bootstrap __P((vaddr_t *, vaddr_t *));
-void pmap_redzone __P((vaddr_t, vaddr_t, int));
+void pmap_bootstrap(vaddr_t *, vaddr_t *);
+void pmap_redzone(vaddr_t, vaddr_t, int);
 
 /* Functions to write low memory and the kernel text. */
-void hppa_ktext_stw __P((vaddr_t, int));
-void hppa_ktext_stb __P((vaddr_t, char));
+void hppa_ktext_stw(vaddr_t, int);
+void hppa_ktext_stb(vaddr_t, char);
 
 /* Machine check handling. */
 extern u_int os_hpmc;
 extern u_int os_hpmc_cont;
 extern u_int os_hpmc_cont_end;
-int os_toc __P((void));
+int os_toc(void);
 extern u_int os_toc_end;
-void hppa_machine_check __P((int));
+void hppa_machine_check(int);
 
 /* BTLB handling. */
-int hppa_btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
-		     vsize_t *lenp, u_int prot)); 
-int hppa_btlb_reload __P((void)); 
-int hppa_btlb_purge __P((pa_space_t, vaddr_t, vsize_t *));
+int hppa_btlb_insert(pa_space_t, vaddr_t, paddr_t, vsize_t *, u_int); 
+int hppa_btlb_reload(void);
+int hppa_btlb_purge(pa_space_t, vaddr_t, vsize_t *);
 
 #endif /* _KERNEL */

@@ -1,0 +1,8 @@
+#	$NetBSD: std.pdp10,v 1.1.4.2 2004/08/03 10:38:57 skrll Exp $
+#
+# Std pdp10files
+#
+machine	pdp10
+
+options 	EXEC_SCRIPT	# execve(2) support for scripts
+options 	EXEC_ELF36	# execve(2) support for ELF36 binaries

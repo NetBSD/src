@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.38 2002/10/23 09:11:43 jdolecek Exp $	*/
+/*	$NetBSD: lpt.c,v 1.38.6.1 2004/08/03 10:38:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -17,7 +17,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This software is a component of "386BSD" developed by 
+ *	This software is a component of "386BSD" developed by
  *	William F. Jolitz, TeleMuse.
  * 4. Neither the name of the developer nor the name "386BSD"
  *    may be used to endorse or promote products derived from this software
@@ -37,19 +37,19 @@
  */
 
 /*
- * THIS SOFTWARE IS A COMPONENT OF 386BSD DEVELOPED BY WILLIAM F. JOLITZ 
- * AND IS INTENDED FOR RESEARCH AND EDUCATIONAL PURPOSES ONLY. THIS 
- * SOFTWARE SHOULD NOT BE CONSIDERED TO BE A COMMERCIAL PRODUCT. 
- * THE DEVELOPER URGES THAT USERS WHO REQUIRE A COMMERCIAL PRODUCT 
+ * THIS SOFTWARE IS A COMPONENT OF 386BSD DEVELOPED BY WILLIAM F. JOLITZ
+ * AND IS INTENDED FOR RESEARCH AND EDUCATIONAL PURPOSES ONLY. THIS
+ * SOFTWARE SHOULD NOT BE CONSIDERED TO BE A COMMERCIAL PRODUCT.
+ * THE DEVELOPER URGES THAT USERS WHO REQUIRE A COMMERCIAL PRODUCT
  * NOT MAKE USE OF THIS WORK.
  *
  * FOR USERS WHO WISH TO UNDERSTAND THE 386BSD SYSTEM DEVELOPED
- * BY WILLIAM F. JOLITZ, WE RECOMMEND THE USER STUDY WRITTEN 
- * REFERENCES SUCH AS THE  "PORTING UNIX TO THE 386" SERIES 
- * (BEGINNING JANUARY 1991 "DR. DOBBS JOURNAL", USA AND BEGINNING 
- * JUNE 1991 "UNIX MAGAZIN", GERMANY) BY WILLIAM F. JOLITZ AND 
- * LYNNE GREER JOLITZ, AS WELL AS OTHER BOOKS ON UNIX AND THE 
- * ON-LINE 386BSD USER MANUAL BEFORE USE. A BOOK DISCUSSING THE INTERNALS 
+ * BY WILLIAM F. JOLITZ, WE RECOMMEND THE USER STUDY WRITTEN
+ * REFERENCES SUCH AS THE  "PORTING UNIX TO THE 386" SERIES
+ * (BEGINNING JANUARY 1991 "DR. DOBBS JOURNAL", USA AND BEGINNING
+ * JUNE 1991 "UNIX MAGAZIN", GERMANY) BY WILLIAM F. JOLITZ AND
+ * LYNNE GREER JOLITZ, AS WELL AS OTHER BOOKS ON UNIX AND THE
+ * ON-LINE 386BSD USER MANUAL BEFORE USE. A BOOK DISCUSSING THE INTERNALS
  * OF 386BSD ENTITLED "386BSD FROM THE INSIDE OUT" WILL BE AVAILABLE LATE 1992.
  */
 
@@ -58,6 +58,10 @@
  * This driver is based on the i386 lpt driver and
  * some IP code from Poul-Henning Kamp.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.38.6.1 2004/08/03 10:38:46 skrll Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -242,7 +246,7 @@ lptmatch(parent, cf, aux)
 	i8255->port_control = LPT_PROBE_CLR;
 	if ((i8255->port_c & LPT_PROBE_MASK) != 0)
 		return 0;
-	
+
 	i8255->port_control = LPT_PROBE_SET;
 	if ((i8255->port_c & LPT_PROBE_MASK) == 0)
 		return 0;
@@ -424,13 +428,13 @@ pushbytes(sc)
 	while (sc->sc_count > 0) {
 		i8255->port_control = LPT_IRQENABLE;
 		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptwrite", 0);
-		if (error != 0) 
+		if (error != 0)
 			return error;
 	}
 	return 0;
 }
 
-/* 
+/*
  * Copy a line from user space to a local buffer, then call pushbytes to
  * get the chars moved to the output queue.
  */
@@ -569,7 +573,7 @@ plipioctl(ifp, cmd, data)
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data; 
+	struct ifreq *ifr = (struct ifreq *)data;
 	struct sockaddr_dl *sdl;
 	int error = 0;
 

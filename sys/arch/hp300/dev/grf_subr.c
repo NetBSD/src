@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.9 2003/01/01 01:34:46 thorpej Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.9.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,11 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.9 2003/01/01 01:34:46 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.9.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h> 
+#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -66,7 +66,7 @@ grfdev_attach(sc, init, regs, sw)
 	struct grfdev_attach_args ga;
 	struct grf_data *gp;
 
-	if (sc->sc_isconsole) 
+	if (sc->sc_isconsole)
 		sc->sc_data = gp = &grf_cn;
 	else {
 		MALLOC(sc->sc_data, struct grf_data *, sizeof(struct grf_data),

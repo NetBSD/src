@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfcons.c,v 1.6 2002/11/23 09:14:14 scw Exp $	*/
+/*	$NetBSD: dtfcons.c,v 1.6.6.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,6 +43,9 @@
  * to the job and I can't find documentation for any other interface
  * hiding behind the host's DTF code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dtfcons.c,v 1.6.6.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sifbios.c,v 1.2 2001/10/19 05:47:41 shin Exp $	*/
+/*	$NetBSD: sifbios.c,v 1.2.22.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PlayStation 2 SIF BIOS Version 2.0 interface.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.2.22.1 2004/08/03 10:39:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +517,7 @@ iopmem_alloc(psize_t sz)
 	int result, sifbios_arg = sz;
 
 	if (sifbios_rpc_call(65, (void *)&sifbios_arg, &result) < 0)
-		return NULL;
+		return (paddr_t)0;
 	/* returns allocated IOP physical addr */
 	return (paddr_t)result;
 }

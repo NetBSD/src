@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -108,6 +104,9 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.2.1 2004/08/03 10:33:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +524,7 @@ pmap_init()
 	if (addr == 0)
 		panic("pmap_init: can't allocate data structures");
 	Segtabzero   = (u_int *) addr;
-	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
+	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)(void *)&Segtabzeropa);
 	addr += ATARI_STSIZE;
 	pv_table = (pv_entry_t) addr;
 	addr += page_cnt * sizeof(struct pv_entry);

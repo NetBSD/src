@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9 2003/05/10 21:10:25 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.9.2.1 2004/08/03 10:30:47 skrll Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -33,7 +33,7 @@
  * The MMU on ARM2 and ARM3 systems is an Acorn custom chip called MEMC
  * (Anna to her friends).  Each MEMC can handle up to 4MB of local DRAM,
  * split into 128 pages.  Thus, a system with 16MB of RAM will have four
- * MEMCs co-operating to run it.  In addition the the MMU, the master MEMC
+ * MEMCs co-operating to run it.  In addition the MMU, the master MEMC
  * in a system handles video and sound DMA, the system clocks and the
  * address decoding necessary to control accesses to the I/O system, ROMs
  * and VIDC.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2003/05/10 21:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9.2.1 2004/08/03 10:30:47 skrll Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -295,7 +295,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	UVMHIST_FUNC("pmap_steal_memory");
 
 	UVMHIST_CALLED(pmaphist);
-	addr = NULL;
+	addr = 0;
 	size = round_page(size);
 	for (i = 0; i < vm_nphysseg; i++) {
 		if (vm_physmem[i].avail_start < vm_physmem[i].avail_end) {

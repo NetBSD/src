@@ -1,26 +1,25 @@
-#	$NetBSD: Makefile.buildboot,v 1.4 2001/12/12 01:49:49 tv Exp $
+#	$NetBSD: Makefile.buildboot,v 1.4.16.1 2004/08/03 10:38:57 skrll Exp $
 
 S=		${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../common
 
 SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE} vers.c
-NOMAN=	# defined
+NOMAN=		# defined
 STRIP=
 BINMODE=	444
 
 CLEANFILES+=	${PROG}.sym ${PROG}
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
-CFLAGS=		-O3 -fno-inline
-#CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-format
+CFLAGS=		-O2 -fno-inline -ffreestanding
+WARNS?=		2
 
 # no lint here (yet?)
 lint:
 
 ${PROG}: ${PROG}.sym
-	cp ${PROG}.sym ${PROG}
-	strip ${PROG}
+	${STRIP} -o ${PROG} ${PROG}.sym
 
 .include <bsd.prog.mk>
 
@@ -42,9 +41,16 @@ LIBSA=		${SALIB}
 
 .PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "pc532" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "pc532" ${NEWVERSWHAT}
+
+CHECK!= ${LD} --version 2>&1; :
+.if ${CHECK:Minvalid} == ""
+RELOCFLAGS!=	echo ${RELOC} | sed -e 's/00$$/20/'
+.else
+RELOCFLAGS=	-z ${RELOC}
+.endif
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -Ttext ${RELOC} -z -e start -o ${PROG}.sym \
+	${LD} -Ttext ${RELOCFLAGS} -e start -o ${PROG}.sym \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
-	@size ${PROG}.sym
+	@${SIZE} ${PROG}.sym

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.50 2002/09/27 15:36:18 provos Exp $	*/
+/*	$NetBSD: macrom.c,v 1.50.6.1 2004/08/03 10:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -44,6 +44,9 @@
  * can be generalized somewhat for others.  It looks like most machines
  * are similar to the IIsi ("Universal ROMs"?).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.50.6.1 2004/08/03 10:37:09 skrll Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -175,7 +178,7 @@ mrg_DTInstall()
 	__asm __volatile ("movl %%a0,%0" : "=g" (ptr));
 
 	(caddr_t *)prev = &mrg_DTList;
-	while (*prev != NULL) 
+	while (*(caddr_t *)prev != NULL) 
 		prev = *(caddr_t *)prev;
 	*(caddr_t *)ptr = NULL;
 	*(caddr_t *)prev = ptr;
@@ -954,7 +957,7 @@ mrg_init()
 	jDTInstall = (caddr_t)mrg_DTInstall;
 
 	/* AV ROMs want this low memory vector to point to a jump table */
-	InitEgretJTVec = (u_int32_t **)&mrg_AVInitEgretJT;
+	InitEgretJTVec = (u_int32_t **)(void *)&mrg_AVInitEgretJT;
 
 	switch (mach_cputype()) {
 		case MACH_68020:	CPUFlag = 2;	break;

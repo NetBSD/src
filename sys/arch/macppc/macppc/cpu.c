@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33 2003/04/02 03:04:04 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.33.2.1 2004/08/03 10:37:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -32,6 +32,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.1 2004/08/03 10:37:30 skrll Exp $");
+
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -43,6 +46,7 @@
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
 #include <powerpc/oea/hid.h>
+#include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
 #include <powerpc/atomic.h>
 #include <powerpc/spr.h>
@@ -51,7 +55,6 @@
 #endif
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/fpu.h>
 #include <machine/pcb.h>
 #include <machine/pio.h>
@@ -214,10 +217,8 @@ cpu_spinup(self, ci)
 	cp += USPACE;
 	cpu_info[1].ci_idle_pcb = pcb;
 
-	cpu_info[1].ci_intstk = cp + 8192;
-	cp += 8192;
-	cpu_info[1].ci_spillstk = cp + 4096;
-	cp += 4096;
+	cpu_info[1].ci_intstk = cp + INTSTK;
+	cp += INTSTK;
 
 	/*
 	 * Initialize the idle stack pointer, reserving space for an
@@ -242,9 +243,11 @@ cpu_spinup(self, ci)
 	asm volatile ("sync; isync");
 
 	if (openpic_base) {
+		uint64_t tb;
 		u_int kl_base = 0x80000000;	/* XXX */
 		u_int gpio = kl_base + 0x5c;	/* XXX */
-		uint64_t tb;
+		u_int node, off;
+		char cpupath[32];
 
 		*(u_int *)EXC_RST =		/* ba cpu_spinup_trampoline */
 		    0x48000002 | (u_int)cpu_spinup_trampoline;
@@ -252,7 +255,18 @@ cpu_spinup(self, ci)
 
 		h->running = -1;
 
-		/* Start secondary cpu. */
+		/* see if there's an OF property for the reset register */
+		sprintf(cpupath, "/cpus/@%x", ci->ci_cpuid);
+		node = OF_finddevice(cpupath);
+		if (node == -1) {
+			printf(": no OF node for CPU %d?\n", ci->ci_cpuid);
+			return -1;
+		}
+		if (OF_getprop(node, "soft-reset", &off, 4) == 4) {
+			gpio = kl_base + off;
+		}
+
+		/* Start secondary CPU. */
 		out8(gpio, 4);
 		out8(gpio, 5);
 
@@ -271,7 +285,7 @@ cpu_spinup(self, ci)
 
 		delay(500000);
 	} else {
-		/* Start secondary cpu and stop timebase. */
+		/* Start secondary CPU and stop timebase. */
 		out32(0xf2800000, (int)cpu_spinup_trampoline);
 		out32(HH_INTR_SECONDARY, ~0);
 		out32(HH_INTR_SECONDARY, 0);
@@ -297,7 +311,7 @@ cpu_spinup(self, ci)
 	delay(100000);		/* wait for secondary printf */
 
 	if (h->running == 0) {
-		printf(": secondary cpu didn't start\n");
+		printf(": secondary CPU didn't start\n");
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.7 2002/10/02 05:28:13 thorpej Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.7.6.1 2004/08/03 10:38:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Device Driver back-end for the MVME147's parallel printer port
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.7.6.1 2004/08/03 10:38:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

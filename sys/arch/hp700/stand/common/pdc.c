@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: pdc.c,v 1.2.6.1 2004/08/03 10:34:55 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -131,7 +131,7 @@ pdc_init(void)
  * the (negative) error condition, or zero if at "EOF".
  */
 int
-iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf, 
+iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct hppa_dev *dp = devdata;
@@ -141,7 +141,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 #ifdef PDCDEBUG
 	if (debug)
 		printf("iodcstrategy(%p, %s, %u, %u, %p, %p)\n", devdata,
-		       rw==F_READ?"READ":"WRITE", blk, size, buf, rsize);
+		       rw==F_READ?"READ":"WRITE", (unsigned) blk, (unsigned) size, buf, rsize);
 
 	if (debug > 1)
 		PZDEV_PRINT(pzdev);
@@ -172,7 +172,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 
 #ifdef PDCDEBUG
 		if (debug)
-			printf("seek %d ", dp->last_blk);
+			printf("seek %d ", (int) dp->last_blk);
 #endif
 		for (; (dp->last_blk + dp->last_read) <= blk;
 		     dp->last_read = ret) {
@@ -180,7 +180,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 			dp->last_blk += dp->last_read;
 			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 				IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
-				pdcbuf, dp->last_blk, dp->buf, IODC_MAXIOSIZ,
+				pdcbuf, (unsigned) dp->last_blk, dp->buf, IODC_MAXIOSIZ,
 				IODC_MAXIOSIZ)) < 0) {
 #ifdef DEBUG
 				if (debug)
@@ -197,7 +197,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 		}
 #ifdef PDCDEBUG
 		if (debug)
-			printf("> %d[%d]\n", dp->last_blk, dp->last_read);
+			printf("> %d[%d]\n", (int)dp->last_blk, dp->last_read);
 #endif
 	}
 
@@ -212,27 +212,28 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 #ifdef PDCDEBUG
 		if (debug)
 			printf("off=%d,xfer=%d,size=%d,blk=%d\n",
-			       offset, xfer, size, blk);
+			       offset, xfer, size, (int)blk);
 #endif
 		bcopy(dp->buf + offset, buf, xfer);
-		buf += xfer;
+		buf = (char *) buf + xfer;
 	}
 
 	/*
 	 * double buffer it all the time, to cache
 	 */
-	for (; size; size -= ret, buf += ret, blk += ret, xfer += ret) {
+	for (; size;
+	    size -= ret, buf = (char *) buf + ret, blk += ret, xfer += ret) {
 		twiddle();
 		offset = blk & IOPGOFSET;
 		if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 				(rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
 				pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
-				blk - offset, dp->buf, IODC_MAXIOSIZ,
+				(int)blk - offset, dp->buf, IODC_MAXIOSIZ,
 				IODC_MAXIOSIZ)) < 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("iodc_read(%d,%d): %d\n",
-					blk - offset, IODC_MAXIOSIZ, ret);
+					(int)blk - offset, IODC_MAXIOSIZ, ret);
 #endif
 			if (xfer)
 				break;
@@ -249,7 +250,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 #ifdef PDCDEBUG
 		if (debug)
 			printf("read %d(%d,%d)@%x ", ret,
-			       dp->last_blk, dp->last_read, (u_int)buf);
+			       (int)dp->last_blk, dp->last_read, (u_int)buf);
 #endif
 	    }
 
@@ -381,7 +382,7 @@ pdc_findev(int unit, int class)
 
 		/* read i/o entry code */
 		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, io,
-			  	IODC_IO, iodc, IODC_MAXSIZE)) < 0) {
+				IODC_IO, iodc, IODC_MAXSIZE)) < 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("IODC_READ: %d\n", err);
@@ -405,15 +406,15 @@ pdc_findev(int unit, int class)
 static __inline void
 fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
-        int loop;
+	int loop;
 
-        for (; c_count--; c_base += c_stride)
-                for (loop = c_loop; loop--; )
+	for (; c_count--; c_base += c_stride)
+		for (loop = c_loop; loop--; )
 			if (data)
 				fdce(0, c_base);
 			else
 				fice(0, c_base);
-        
+
 }
 
 /*
@@ -423,37 +424,36 @@ fall(int c_base, int c_count, int c_loop, int c_stride, int data)
  */
 struct pdc_cache pdc_cacheinfo PDC_ALIGNMENT;
 
-void 
+void
 fcacheall(void)
 {
 	int err;
 
-        if ((err = (*pdc)(PDC_CACHE, PDC_CACHE_DFLT, &pdc_cacheinfo)) < 0) {
+	if ((err = (*pdc)(PDC_CACHE, PDC_CACHE_DFLT, &pdc_cacheinfo)) < 0) {
 #ifdef DEBUG
 		if (debug)
 			printf("fcacheall: PDC_CACHE failed (%d).\n", err);
 #endif
 		return;
-        }
+	}
 #if PDCDEBUG
 	if (debug)
 		printf("pdc_cache:\nic={%u,%x,%x,%u,%u,%u}\n"
 		       "dc={%u,%x,%x,%u,%u,%u}\n",
-		       pdc_cacheinfo.ic_size, *(u_int*)&pdc_cacheinfo.ic_conf, 
-		       pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_stride, 
+		       pdc_cacheinfo.ic_size, *(u_int*)&pdc_cacheinfo.ic_conf,
+		       pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_stride,
 		       pdc_cacheinfo.ic_count, pdc_cacheinfo.ic_loop,
-		       pdc_cacheinfo.dc_size, *(u_int*)&pdc_cacheinfo.ic_conf, 
-		       pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_stride, 
+		       pdc_cacheinfo.dc_size, *(u_int*)&pdc_cacheinfo.ic_conf,
+		       pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_stride,
 		       pdc_cacheinfo.dc_count, pdc_cacheinfo.dc_loop);
 #endif
-        /*
-         * Flush the instruction, then data cache.
-         */
-        fall(pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_count,
+	/*
+	 * Flush the instruction, then data cache.
+	 */
+	fall(pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_count,
 	     pdc_cacheinfo.ic_loop, pdc_cacheinfo.ic_stride, 0);
 	sync_caches();
-        fall(pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_count,
+	fall(pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_count,
 	     pdc_cacheinfo.dc_loop, pdc_cacheinfo.dc_stride, 1);
 	sync_caches();
 }
-

@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.33 2003/06/25 21:02:19 he Exp $
+# $NetBSD: files.next68k,v 1.33.2.1 2004/08/03 10:38:35 skrll Exp $
 
 # next68k-specific configuration info
 
@@ -65,8 +65,6 @@ file	arch/next68k/dev/nextdma.c	nextdma
 
 file	dev/cons.c
 file	dev/cninit.c
-
-file	dev/clock_subr.c
 
 include "dev/scsipi/files.scsipi"
 

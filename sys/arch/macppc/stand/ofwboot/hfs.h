@@ -1,6 +1,6 @@
-/*	$NetBSD: hfs.h,v 1.1 2000/11/14 11:25:35 tsubai Exp $	*/
+/*	$NetBSD: hfs.h,v 1.1.28.1 2004/08/03 10:37:31 skrll Exp $	*/
 
-int hfs_open(char *, struct open_file *);
+int hfs_open(const char *, struct open_file *);
 int hfs_close(struct open_file *);
 int hfs_read(struct open_file *, void *, size_t, size_t *);
 int hfs_write(struct open_file *, void *, size_t, size_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148 2003/05/10 21:10:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.148.2.1 2004/08/03 10:37:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -53,11 +53,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2003/05/10 21:10:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148.2.1 2004/08/03 10:37:49 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -124,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2003/05/10 21:10:33 thorpej Exp $");
 
 #include "opt_sysv.h"
 #include "opt_cputype.h"
+#include "opt_mips_cache.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,11 +260,10 @@ struct pool_allocator pmap_pv_page_allocator = {
  * Misc. functions.
  */
 
-#ifdef MIPS3_PLUS	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 void mips_dump_segtab(struct proc *);
-#endif
+static void mips_flushcache_allpvh(paddr_t);
 
-#if defined(MIPS3_L2CACHE_ABSENT)
 /*
  * Flush virtual addresses associated with a given physical address
  */
@@ -291,7 +287,7 @@ mips_flushcache_allpvh(paddr_t pa)
 	}
 #endif
 }
-#endif	/* MIPS3_L2CACHE_ABSENT */
+#endif /* MIPS3_PLUS */
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -300,6 +296,7 @@ mips_flushcache_allpvh(paddr_t pa)
 void
 pmap_bootstrap()
 {
+	vsize_t bufsz;
 
 	/*
 	 * Compute the number of pages kmem_map will have.
@@ -310,9 +307,14 @@ pmap_bootstrap()
 	 * Figure out how many PTE's are necessary to map the kernel.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
+
+	/* Get size of buffer cache and set an upper limit */
+	bufsz = buf_memcalc();
+	buf_setvalimit(bufsz);
+
 	Sysmapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
-		(maxproc * UPAGES) + nkmempages;
+		      bufsz + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
+		     (maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
 	Sysmapsize += shminfo.shmall;
@@ -979,9 +981,11 @@ pmap_procwr(p, va, len)
 	vaddr_t		va;
 	size_t		len;
 {
+#ifdef MIPS1
 	pmap_t pmap;
 
 	pmap = p->p_vmspace->vm_map.pmap;
+#endif /* MIPS1 */
 
 	if (MIPS_HAS_R4K_MMU) {
 #ifdef MIPS3_PLUS	/* XXX mmu XXX */
@@ -999,12 +1003,18 @@ pmap_procwr(p, va, len)
 		pt_entry_t *pte;
 		unsigned entry;
 
-		if (!(pte = pmap_segmap(pmap, va)))
-			return;
-		pte += (va >> PGSHIFT) & (NPTEPG - 1);
+		if (pmap == pmap_kernel()) {
+			pte = kvtopte(va);
+		} else {
+			if (!(pte = pmap_segmap(pmap, va))) {
+				return;
+			}
+			pte += (va >> PGSHIFT) & (NPTEPG - 1);
+		}
 		entry = pte->pt_entry;
 		if (!mips_pg_v(entry))
 			return;
+
 		/*
 		 * XXXJRT -- Wrong -- since page is physically-indexed, we
 		 * XXXJRT need to loop.
@@ -1578,7 +1588,7 @@ pmap_zero_page(phys)
 
 	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG0(phys));
 
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1590,7 +1600,7 @@ pmap_zero_page(phys)
 	 */
 	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0)
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
-#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS */
 }
 
 /*
@@ -1611,7 +1621,7 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%lx) dst nonphys\n", (u_long)dst);
 #endif
 
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS) /* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged cache,
 	 * and no L2 cache to warn of aliased mappings, we must force an
@@ -1630,12 +1640,12 @@ pmap_copy_page(src, dst)
 		mips_flushcache_allpvh(src);
 /*		mips_flushcache_allpvh(dst); */
 	}
-#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS */
 
 	mips_pagecopy((caddr_t)MIPS_PHYS_TO_KSEG0(dst),
 		      (caddr_t)MIPS_PHYS_TO_KSEG0(src));
 
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS) /* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1647,11 +1657,11 @@ pmap_copy_page(src, dst)
 	 *
 	 * XXXJRT -- This is totally disgusting.
 	 */
-	if (MIPS_HAS_R4K_MMU) {
+	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
 	}
-#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS */
 }
 
 /*
@@ -1877,7 +1887,7 @@ again:
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
-#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+#if defined(MIPS3_PLUS) /* XXX mmu XXX */
 		if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
 			/*
 			 * There is at least one other VA mapping this page.
@@ -1930,7 +1940,7 @@ again:
 			}
 #endif	/* !MIPS3_NO_PV_UNCACHED */
 		}
-#endif /* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
+#endif /* MIPS3_PLUS */
 
 		/*
 		 * There is at least one other VA mapping this page.

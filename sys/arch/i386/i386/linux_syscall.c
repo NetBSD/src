@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.24 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.24.2.1 2004/08/03 10:35:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.24 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.24.2.1 2004/08/03 10:35:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -72,8 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.24 2003/01/17 23:10:30 thorpej E
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/arch/i386/linux_machdep.h>
 
-void linux_syscall_plain __P((struct trapframe));
-void linux_syscall_fancy __P((struct trapframe));
+void linux_syscall_plain(struct trapframe *);
+void linux_syscall_fancy(struct trapframe *);
 extern struct sysent linux_sysent[];
 
 void
@@ -102,7 +102,7 @@ linux_syscall_intern(p)
  */
 void
 linux_syscall_plain(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register const struct sysent *callp;
 	struct lwp *l;
@@ -113,7 +113,7 @@ linux_syscall_plain(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = linux_sysent;
 
 	code &= (LINUX_SYS_NSYSENT - 1);
@@ -126,17 +126,17 @@ linux_syscall_plain(frame)
 		 */
 		switch (argsize >> 2) {
 		case 6:
-			args[5] = frame.tf_ebp;
+			args[5] = frame->tf_ebp;
 		case 5:
-			args[4] = frame.tf_edi;
+			args[4] = frame->tf_edi;
 		case 4:
-			args[3] = frame.tf_esi;
+			args[3] = frame->tf_esi;
 		case 3:
-			args[2] = frame.tf_edx;
+			args[2] = frame->tf_edx;
 		case 2:
-			args[1] = frame.tf_ecx;
+			args[1] = frame->tf_ecx;
 		case 1:
-			args[0] = frame.tf_ebx;
+			args[0] = frame->tf_ebx;
 			break;
 		default:
 			panic("linux syscall %d bogus argument size %d",
@@ -156,8 +156,8 @@ linux_syscall_plain(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -165,15 +165,15 @@ linux_syscall_plain(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 		error = native_to_linux_errno[error];
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -190,20 +190,18 @@ linux_syscall_plain(frame)
  */
 void
 linux_syscall_fancy(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register const struct sysent *callp;
 	struct lwp *l;
-	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
 	l = curlwp;
-	p = l->l_proc;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = linux_sysent;
 
 	code &= (LINUX_SYS_NSYSENT - 1);
@@ -216,17 +214,17 @@ linux_syscall_fancy(frame)
 		 */
 		switch (argsize >> 2) {
 		case 6:
-			args[5] = frame.tf_ebp;
+			args[5] = frame->tf_ebp;
 		case 5:
-			args[4] = frame.tf_edi;
+			args[4] = frame->tf_edi;
 		case 4:
-			args[3] = frame.tf_esi;
+			args[3] = frame->tf_esi;
 		case 3:
-			args[2] = frame.tf_edx;
+			args[2] = frame->tf_edx;
 		case 2:
-			args[1] = frame.tf_ecx;
+			args[1] = frame->tf_ecx;
 		case 1:
-			args[0] = frame.tf_ebx;
+			args[0] = frame->tf_ebx;
 			break;
 		default:
 			panic("linux syscall %d bogus argument size %d",
@@ -236,8 +234,10 @@ linux_syscall_fancy(frame)
 	}
 	KERNEL_PROC_LOCK(l);
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -246,8 +246,8 @@ linux_syscall_fancy(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -255,7 +255,7 @@ linux_syscall_fancy(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -263,8 +263,8 @@ linux_syscall_fancy(frame)
 	default:
 	bad:
 		error = native_to_linux_errno[error];
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.5 2002/12/20 16:23:47 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.5.2.1 2004/08/03 10:38:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.5.2.1 2004/08/03 10:38:22 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -46,6 +49,7 @@
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
+#include <dev/ic/mk48txxvar.h>
 
 #include <news68k/news68k/clockvar.h>
 
@@ -54,7 +58,7 @@
 int  mkclock_hb_match(struct device *, struct cfdata  *, void *);
 void mkclock_hb_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(mkclock_hb, sizeof(struct device),
+CFATTACH_DECL(mkclock_hb, sizeof(struct mk48txx_softc),
     mkclock_hb_match, mkclock_hb_attach, NULL, NULL);
 
 extern struct cfdriver mkclock_cd;
@@ -87,23 +91,19 @@ mkclock_hb_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct mk48txx_softc *sc = (void *)self;
 	struct hb_attach_args *ha = aux;
-	bus_space_tag_t bst = ha->ha_bust;
-	bus_space_handle_t bsh;
-	todr_chip_handle_t handle;
 
-	if (bus_space_map(bst, (bus_addr_t)ha->ha_address, ha->ha_size,
-	    0, &bsh) != 0)
+	sc->sc_bst = ha->ha_bust;
+	if (bus_space_map(sc->sc_bst, (bus_addr_t)ha->ha_address, ha->ha_size,
+	    0, &sc->sc_bsh) != 0)
 		printf("can't map device space\n");
 
-	handle = mk48txx_attach(bst, bsh, "mk48t02", 1900, NULL, NULL);
-	if (handle == NULL)
-		panic("can't attach tod clock");
+	sc->sc_model = "mk48t02";
+	sc->sc_year0 = 1900;
+	mk48txx_attach(sc);
 
 	printf("\n");
 
-	handle->bus_cookie = NULL;
-	handle->todr_setwen = NULL;
-
-        todclock_config(handle);
+	todr_attach(&sc->sc_handle);
 }

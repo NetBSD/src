@@ -1,4 +1,4 @@
-/*	$NetBSD: giovar.h,v 1.2 2002/03/13 13:12:27 simonb Exp $	*/
+/*	$NetBSD: giovar.h,v 1.2.12.1 2004/08/03 10:40:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -59,3 +59,5 @@ struct gio_attach_args {
 
 	u_int32_t	ga_product;
 };
+
+int gio_cnattach(void);

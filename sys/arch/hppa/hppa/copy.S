@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.1 2002/06/05 01:04:19 fredette Exp $	*/
+/*	$NetBSD: copy.S,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -108,37 +108,37 @@
 
 #define	FUSUX(name)				  \
 LEAF_ENTRY(name)				! \
-	ldil	L%VM_MAXUSER_ADDRESS, t1	! \
-	comb,>>= arg0, t1, fusubadaddr		! \
-	ldil	L%curproc, t1			! \
-	ldw	R%curproc(t1), t1		! \
-	ldw	P_ADDR(t1), t1			! \
-	ldil	L%fusufault, t2			! \
-	ldo	R%fusufault(t2), t2		! \
-	ldw	U_PCB+PCB_ONFAULT(t1), t3	! \
-	stw	t2, U_PCB+PCB_ONFAULT(t1)	! \
-	ldw	U_PCB+PCB_SPACE(t1), t2		! \
-	mtsp	t2, sr1
+	ldil	L%VM_MAXUSER_ADDRESS, %t1	! \
+	comb,>>= %arg0, %t1, fusubadaddr	! \
+	ldil	L%curlwp, %t1			! \
+	ldw	R%curlwp(%t1), %t1		! \
+	ldw	L_ADDR(%t1), %t1		! \
+	ldil	L%fusufault, %t2		! \
+	ldo	R%fusufault(%t2), %t2		! \
+	ldw	U_PCB+PCB_ONFAULT(%t1), %t3	! \
+	stw	%t2, U_PCB+PCB_ONFAULT(%t1)	! \
+	ldw	U_PCB+PCB_SPACE(%t1), %t2	! \
+	mtsp	%t2, %sr1
 
 #define	FUX(name,insn)				  \
 	FUSUX(name)				! \
-	insn	0(sr1, arg0), ret0		! \
-	bv	r0(rp)				! \
-	stw	r0, U_PCB+PCB_ONFAULT(t1)	! \
+	insn	0(%sr1, %arg0), %ret0		! \
+	bv	%r0(%rp)			! \
+	stw	%r0, U_PCB+PCB_ONFAULT(%t1)	! \
 EXIT(name)
 
 #define	SUX(name,insn)				  \
 	FUSUX(name)				! \
-	insn	arg1, 0(sr1, arg0)		! \
-	bv	r0(rp)				! \
-	stw	r0, U_PCB+PCB_ONFAULT(t1)	! \
+	insn	%arg1, 0(%sr1, %arg0)		! \
+	bv	%r0(%rp)			! \
+	stw	%r0, U_PCB+PCB_ONFAULT(%t1)	! \
 EXIT(name)
 
 LEAF_ENTRY(fusufault)
-	stw	r0, U_PCB+PCB_ONFAULT(t1)
+	stw	%r0, U_PCB+PCB_ONFAULT(%t1)
 ALTENTRY(fusubadaddr)
-	bv	0(rp)
-	ldi	-1, ret0
+	bv	0(%rp)
+	ldi	-1, %ret0
 EXIT(fusuexit)
 
 FUX(fubyte,   ldb)
@@ -154,9 +154,9 @@ SUX(suswintr, sth)
 
 LEAF_ENTRY(_copy_on_fault)
 	/* reset fault handler */
-	stw	r0, PCB_ONFAULT+U_PCB(r31)
+	stw	%r0, PCB_ONFAULT+U_PCB(%r31)
 ALTENTRY(copy_on_fault)
-	bv	0(rp)
+	bv	0(%rp)
 	ldi	EFAULT, %ret0
 EXIT(_copy_on_fault)
 
@@ -167,36 +167,36 @@ EXIT(_copy_on_fault)
  */
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
-	ldil	L%curproc, r31
-	ldw	R%curproc(r31), r31
-	ldw	P_ADDR(r31), r31
-	ldil	L%_copy_on_fault, t2
-	ldo	R%_copy_on_fault(t2), t2
-	stw	t2, PCB_ONFAULT+U_PCB(r31)
+	ldil	L%curlwp, %r31
+	ldw	R%curlwp(%r31), %r31
+	ldw	L_ADDR(%r31), %r31
+	ldil	L%_copy_on_fault, %t2
+	ldo	R%_copy_on_fault(%t2), %t2
+	stw	%t2, PCB_ONFAULT+U_PCB(%r31)
 
-	ldw	HPPA_FRAME_ARG(4)(sp), ret1
-	mfsp	sr2, ret0	/* XXX need this? */
-	mtsp	arg0, sr1
-	mtsp	arg2, sr2
-	add	ret1, arg1, ret1
-	copy	arg1, arg0
+	ldw	HPPA_FRAME_ARG(4)(%sp), %ret1
+	mfsp	%sr2, %ret0	/* XXX need this? */
+	mtsp	%arg0, %sr1
+	mtsp	%arg2, %sr2
+	add	%ret1, %arg1, %ret1
+	copy	%arg1, %arg0
 
-$spstrcpy_loop
-	ldbs,ma	1(sr1, arg1), t1
-	comb,=	ret1, arg1, $spstrcpy_exit
-	stbs,ma	t1, 1(sr2, arg3)
-	comb,<>,n r0, t1, $spstrcpy_loop
+$spstrcpy_loop:
+	ldbs,ma	1(%sr1, %arg1), %t1
+	comb,=	%ret1, %arg1, $spstrcpy_exit
+	stbs,ma	%t1, 1(%sr2, %arg3)
+	comb,<>,n %r0, %t1, $spstrcpy_loop
 
-$spstrcpy_exit
+$spstrcpy_exit:
 	/* reset fault handler */
-	stw	r0, PCB_ONFAULT+U_PCB(r31)
-	copy	r0, ret0
-	mtsp	ret0, sr2	/* XXX need this? */
-	sub	arg1, arg0, arg1
-	ldw	HPPA_FRAME_ARG(5)(sp), arg0
-	comb,=,n r0, arg0, 0
-	stw	arg1, 0(arg0)
-	bv,n	0(rp)
+	stw	%r0, PCB_ONFAULT+U_PCB(%r31)
+	copy	%r0, %ret0
+	mtsp	%ret0, %sr2	/* XXX need this? */
+	sub	%arg1, %arg0, %arg1
+	ldw	HPPA_FRAME_ARG(5)(%sp), %arg0
+	comb,=,n %r0, %arg0, 0
+	stw	%arg1, 0(%arg0)
+	bv,n	0(%rp)
 EXIT(spstrcpy)
 
 /*
@@ -238,9 +238,9 @@ EXIT(name)
 
 /* This loads curproc's space into the given register. */
 #define SPACE_CURPROC(reg)			  \
-	ldil	L%curproc, reg			! \
-	ldw	R%curproc(reg), reg		! \
-	ldw	P_ADDR(reg), reg		! \
+	ldil	L%curlwp, reg			! \
+	ldw	R%curlwp(reg), reg		! \
+	ldw	L_ADDR(reg), reg		! \
 	ldw	U_PCB+PCB_SPACE(reg), reg
 
 /* This loads the kernel's space into the given register. */
@@ -337,17 +337,17 @@ ENTRY(hppa_ktext_stb, HPPA_FRAME_SIZE)
 	 * Make the deposit location for the byte in the 
 	 * aligned word.
 	 */
-	ldi     7, t2
-	extru	%arg0, 31, 2, t1
-	sh3add	t1, t2, t1
-	mtsar	t1
+	ldi     7, %t2
+	extru	%arg0, 31, 2, %t1
+	sh3add	%t1, %t2, %t1
+	mtsar	%t1
 
 	/* Load the aligned word and deposit the byte. */
 	dep	%r0, 31, 2, %arg0
-	ldwas	0(%arg0), t2
-	vdep	%arg1, 8, t2
+	ldwas	0(%arg0), %t2
+	vdep	%arg1, 8, %t2
 
 	/* Jump to hppa_ktext_stw to finish. */
 	b	hppa_ktext_stw
-	copy	t2, %arg1
+	copy	%t2, %arg1
 EXIT(hppa_ktext_stb)

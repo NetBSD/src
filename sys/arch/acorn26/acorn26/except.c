@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.4 2003/01/17 21:55:24 thorpej Exp $ */
+/* $NetBSD: except.c,v 1.4.2.1 2004/08/03 10:30:47 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4 2003/01/17 21:55:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4.2.1 2004/08/03 10:30:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4 2003/01/17 21:55:24 thorpej Exp $");
 #endif
 
 #ifdef DDB
+#include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
 
@@ -120,11 +121,16 @@ prefetch_abort_handler(struct trapframe *tf)
 		l->l_addr->u_pcb.pcb_tf = tf;
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+#ifdef DDB
+		db_printf("Prefetch abort in kernel mode\n");
+		kdb_trap(T_FAULT, tf);
+#else
 #ifdef DEBUG
 		printf("Prefetch abort:\n");
 		printregs(tf);
 #endif
 		panic("prefetch abort in kernel mode");
+#endif
 	}
 
 	/* User-mode prefetch abort */
@@ -210,6 +216,8 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	}
 
 	if (error != 0) {
+		ksiginfo_t ksi;
+
 		curpcb = &l->l_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
 			tf->tf_r0 = error;
@@ -217,7 +225,11 @@ do_fault(struct trapframe *tf, struct lwp *l,
 			    (register_t)curpcb->pcb_onfault;
 			return;
 		}
-		trapsignal(l, SIGSEGV, va);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
+		ksi.ksi_addr = (void *) va;
+		trapsignal(l, &ksi);
 	}
 }
 
@@ -421,6 +433,7 @@ address_exception_handler(struct trapframe *tf)
 {
 	struct lwp *l;
 	vaddr_t pc;
+	ksiginfo_t ksi;
 
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
@@ -431,10 +444,21 @@ address_exception_handler(struct trapframe *tf)
 		l = &lwp0;
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
 		l->l_addr->u_pcb.pcb_tf = tf;
-	
+
+	if (curpcb->pcb_onfault != NULL) {
+		tf->tf_r0 = EFAULT;
+		tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
+		    (register_t)curpcb->pcb_onfault;
+		return;
+	}
+
 	pc = tf->tf_r15 & R15_PC;
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+#ifdef DDB
+		db_printf("Address exception in kernel mode\n");
+		kdb_trap(T_FAULT, tf);
+#else
 #ifdef DEBUG
 		printf("Address exception:\n");
 		printregs(tf);
@@ -442,9 +466,14 @@ address_exception_handler(struct trapframe *tf)
 		disassemble(pc);
 #endif
 		panic("address exception in kernel mode");
+#endif
 	}
 
-	trapsignal(l, SIGBUS, pc);
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGBUS;
+	ksi.ksi_code = BUS_ADRERR;
+	ksi.ksi_addr = (void *) pc;
+	trapsignal(l, &ksi);
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.5 2003/01/01 01:35:42 thorpej Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.5.2.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -33,6 +33,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.5.2.1 2004/08/03 10:34:47 skrll Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -169,7 +171,7 @@ struct mongoose_ctrl {
 #define	MONGOOSE_IOMAP	0x100000
 
 struct hppa_isa_iv {
-	int (*iv_handler) __P((void *arg));
+	int (*iv_handler)(void *arg);
 	void *iv_arg;
 	int iv_pri;
 
@@ -208,38 +210,38 @@ union mongoose_attach_args {
 	struct isabus_attach_args mongoose_isa;
 };
 
-void mg_eisa_attach_hook __P((struct device *, struct device *, struct eisabus_attach_args *));
-int mg_intr_map __P((void *, u_int, eisa_intr_handle_t *));
-const char *mg_intr_string __P((void *, int));
-void mg_isa_attach_hook __P((struct device *, struct device *, struct isabus_attach_args *));
-void *mg_intr_establish __P((void *, int, int, int, int (*) __P((void *)), void *));
-void mg_intr_disestablish __P((void *, void *));
-int mg_intr_check __P((void *, int, int));
-int mg_intr __P((void *));
-int mg_eisa_iomap __P((void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *));
-int mg_eisa_memmap __P((void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *));
-void mg_eisa_memunmap __P((void *, bus_space_handle_t, bus_size_t));
-void mg_isa_barrier __P((void *, bus_space_handle_t, bus_size_t, bus_size_t, int));
-u_int16_t mg_isa_r2 __P((void *, bus_space_handle_t, bus_size_t));
-u_int32_t mg_isa_r4 __P((void *, bus_space_handle_t, bus_size_t));
-void mg_isa_w2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t));
-void mg_isa_w4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t));
-void mg_isa_rm_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-void mg_isa_rm_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
-void mg_isa_wm_2 __P((void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t));
-void mg_isa_wm_4 __P((void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t));
-void mg_isa_sm_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t));
-void mg_isa_sm_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t));
-void mg_isa_rr_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-void mg_isa_rr_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
-void mg_isa_wr_2 __P((void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t));
-void mg_isa_wr_4 __P((void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t));
-void mg_isa_sr_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t));
-void mg_isa_sr_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t));
+void mg_eisa_attach_hook(struct device *, struct device *, struct eisabus_attach_args *);
+int mg_intr_map(void *, u_int, eisa_intr_handle_t *);
+const char *mg_intr_string(void *, int);
+void mg_isa_attach_hook(struct device *, struct device *, struct isabus_attach_args *);
+void *mg_intr_establish(void *, int, int, int, int (*)(void *), void *);
+void mg_intr_disestablish(void *, void *);
+int mg_intr_check(void *, int, int);
+int mg_intr(void *);
+int mg_eisa_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+int mg_eisa_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+void mg_eisa_memunmap(void *, bus_space_handle_t, bus_size_t);
+void mg_isa_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
+u_int16_t mg_isa_r2(void *, bus_space_handle_t, bus_size_t);
+u_int32_t mg_isa_r4(void *, bus_space_handle_t, bus_size_t);
+void mg_isa_w2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
+void mg_isa_w4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
+void mg_isa_rm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+void mg_isa_rm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
+void mg_isa_wm_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
+void mg_isa_wm_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
+void mg_isa_sm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
+void mg_isa_sm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
+void mg_isa_rr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+void mg_isa_rr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
+void mg_isa_wr_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
+void mg_isa_wr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
+void mg_isa_sr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
+void mg_isa_sr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
 
-int	mgmatch __P((struct device *, struct cfdata *, void *));
-void	mgattach __P((struct device *, struct device *, void *));
-int	mgprint __P((void *aux, const char *pnp));
+int	mgmatch(struct device *, struct cfdata *, void *);
+void	mgattach(struct device *, struct device *, void *);
+int	mgprint(void *, const char *);
 
 CFATTACH_DECL(mongoose, sizeof(struct mongoose_softc),
     mgmatch, mgattach, NULL, NULL);
@@ -277,7 +279,7 @@ mg_isa_attach_hook(struct device *parent, struct device *self,
 
 void *
 mg_intr_establish(void *v, int irq, int type, int pri,
-	int (*handler) __P((void *)), void *arg)
+	int (*handler)(void *), void *arg)
 {
 	struct hppa_isa_iv *iv;
 	struct mongoose_softc *sc = v;
@@ -407,14 +409,16 @@ mg_isa_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op
 u_int16_t
 mg_isa_r2(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	register u_int16_t r = *((volatile u_int16_t *)(h + o));
+	u_int16_t r = *((volatile u_int16_t *)(h + o));
+
 	return le16toh(r);
 }
 
 u_int32_t
 mg_isa_r4(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	register u_int32_t r = *((volatile u_int32_t *)(h + o));
+	u_int32_t r = *((volatile u_int32_t *)(h + o));
+
 	return le32toh(r);
 }
 
@@ -449,7 +453,8 @@ mg_isa_rm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_
 void
 mg_isa_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
 {
-	register u_int16_t r;
+	u_int16_t r;
+
 	h += o;
 	while (c--) {
 		r = *(a++);
@@ -460,7 +465,8 @@ mg_isa_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus
 void
 mg_isa_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
 {
-	register u_int32_t r;
+	u_int32_t r;
+
 	h += o;
 	while (c--) {
 		r = *(a++);
@@ -489,7 +495,8 @@ mg_isa_sm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_
 void
 mg_isa_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c)
 {
-	register u_int16_t r;
+	u_int16_t r;
+
 	h += o;
 	while (c--) {
 		r = *((volatile u_int16_t *)h)++;
@@ -500,7 +507,8 @@ mg_isa_rr_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_
 void
 mg_isa_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c)
 {
-	register u_int32_t r;
+	u_int32_t r;
+
 	h += o;
 	while (c--) {
 		r = *((volatile u_int32_t *)h)++;
@@ -511,7 +519,8 @@ mg_isa_rr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_
 void
 mg_isa_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c)
 {
-	register u_int16_t r;
+	u_int16_t r;
+
 	h += o;
 	while (c--) {
 		r = *(a++);
@@ -522,7 +531,8 @@ mg_isa_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus
 void
 mg_isa_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c)
 {
-	register u_int32_t r;
+	u_int32_t r;
+
 	h += o;
 	while (c--) {
 		r = *(a++);
@@ -549,12 +559,9 @@ mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_
 }
 
 int
-mgmatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mgmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
@@ -573,13 +580,10 @@ mgmatch(parent, cf, aux)
 }
 
 void
-mgattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mgattach(struct device *parent, struct device *self, void *aux)
 {
-	register struct confargs *ca = aux;
-	register struct mongoose_softc *sc = (struct mongoose_softc *)self;
+	struct confargs *ca = aux;
+	struct mongoose_softc *sc = (struct mongoose_softc *)self;
 	struct hppa_bus_space_tag *bt;
 	union mongoose_attach_args ea;
 	char brid[EISA_IDSTRINGLEN];
@@ -636,9 +640,10 @@ mgattach(parent, self, aux)
 	sc->sc_ec.ec_intr_disestablish = mg_intr_disestablish;
 	sc->sc_ec.ec_intr_string = mg_intr_string;
 	sc->sc_ec.ec_intr_map = mg_intr_map;
+
 	/* inherit the bus tags for eisa from the mainbus */
 	bt = &sc->sc_eiot;
-	bcopy(ca->ca_iot, bt, sizeof(*bt));
+	memcpy(bt, ca->ca_iot, sizeof(*bt));
 	bt->hbt_cookie = sc;
 	bt->hbt_map = mg_eisa_iomap;
 #define	R(n)	bt->__CONCAT(hbt_,n) = &__CONCAT(mg_isa_,n)
@@ -648,10 +653,11 @@ mgattach(parent, self, aux)
 	R(rr_2);R(rr_4);R(wr_2);R(wr_4);R(sr_2);R(sr_4);
 
 	bt = &sc->sc_ememt;
-	bcopy(ca->ca_iot, bt, sizeof(*bt));
+	memcpy(bt, ca->ca_iot, sizeof(*bt));
 	bt->hbt_cookie = sc;
 	bt->hbt_map = mg_eisa_memmap;
 	bt->hbt_unmap = mg_eisa_memunmap;
+
 	/* attachment guts */
 	ea.mongoose_eisa.eba_busname = "eisa";
 	ea.mongoose_eisa.eba_iot = &sc->sc_eiot;
@@ -665,12 +671,15 @@ mgattach(parent, self, aux)
 	sc->sc_ic.ic_intr_establish = mg_intr_establish;
 	sc->sc_ic.ic_intr_disestablish = mg_intr_disestablish;
 	sc->sc_ic.ic_intr_check = mg_intr_check;
+
 	/* inherit the bus tags for isa from the eisa */
 	bt = &sc->sc_imemt;
-	bcopy(&sc->sc_ememt, bt, sizeof(*bt));
+	memcpy(bt, &sc->sc_ememt, sizeof(*bt));
 	bt = &sc->sc_iiot;
-	bcopy(&sc->sc_eiot, bt, sizeof(*bt));
+	memcpy(bt, &sc->sc_eiot, sizeof(*bt));
+
 	/* TODO: DMA tags */
+
 	/* attachment guts */
 	ea.mongoose_isa.iba_busname = "isa";
 	ea.mongoose_isa.iba_iot = &sc->sc_iiot;
@@ -689,9 +698,7 @@ mgattach(parent, self, aux)
 }
 
 int
-mgprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mgprint(void *aux, const char *pnp)
 {
 	union mongoose_attach_args *ea = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/17 23:18:28 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2.2.1 2004/08/03 10:36:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,8 +40,14 @@
 #define _M68K_MCONTEXT_H_
 
 #ifdef _KERNEL
-#include <machine/frame.h>
+#include <m68k/cpuframe.h>
 #endif
+
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define _UC_SETSTACK	0x00010000
+#define _UC_CLRSTACK	0x00020000
 
 /*
  * General register state
@@ -101,5 +107,9 @@ typedef struct {
 #define _UC_M68K_UC_USER 0x40000000
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_A7])
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_D0])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #endif	/* !_M68K_MCONTEXT_H_ */

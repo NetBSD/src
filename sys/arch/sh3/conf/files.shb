@@ -1,4 +1,4 @@
-#	$NetBSD: files.shb,v 1.2 2002/05/10 15:28:45 uch Exp $
+#	$NetBSD: files.shb,v 1.2.14.1 2004/08/03 10:40:15 skrll Exp $
 #
 # SuperH internal devices.
 #
@@ -22,3 +22,7 @@ defparam opt_scif.h	SCIFCN_SPEED
 device	scif: tty
 attach	scif at shb
 file	arch/sh3/dev/scif.c		scif	needs-flag
+
+device	adc {}
+attach	adc at shb
+file	arch/sh3/dev/adc.c		adc

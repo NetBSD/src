@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.2 1997/06/29 20:30:51 leo Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.2.56.1 2004/08/03 10:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,6 +42,9 @@
  * from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
  */
 
+#ifndef _MACHINE_KBDREG_H_
+#define _MACHINE_KBDREG_H_
+
 struct kbdbell {
 	u_int volume;		/* volume of bell (0-64) */
 	u_int pitch;		/* pitch of bell (10-20000) */
@@ -59,3 +58,5 @@ struct kbdbell {
 #define	KIOCRINGBELL	_IOW('k', 15, struct kbdbell) /* ring bell */
 
 #define	TR_UNTRANS_EVENT	3
+
+#endif /* _MACHINE_KBDREG_H_ */

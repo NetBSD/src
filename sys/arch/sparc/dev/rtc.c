@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.9 2002/12/03 17:54:54 uwe Exp $ */
+/*	$NetBSD: rtc.c,v 1.9.6.1 2004/08/03 10:40:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -32,6 +32,9 @@
  * In Krups it's not used to store idprom so this driver doesn't
  * support it.  Don't know about other ms-IIep systems.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9.6.1 2004/08/03 10:40:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

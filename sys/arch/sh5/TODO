@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.10 2003/03/13 13:44:16 scw Exp $
+$NetBSD: TODO,v 1.10.2.1 2004/08/03 10:40:23 skrll Exp $
 
 TODO List For NetBSD/sh5
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6,8 +6,8 @@ TODO List For NetBSD/sh5
 In no particular order:
 
 
-DONE.	Enable the cpu cache.
-	There are two cache modes available in the current cpu: write-back
+DONE.	Enable the CPU cache.
+	There are two cache modes available in the current CPU: write-back
 	and write-through. The former would be very nice. However, I don't
 	want to enable caching until I'm happy enough with the stability
 	of the pmap. And anyway, the pmap doesn't pay lip-service to the

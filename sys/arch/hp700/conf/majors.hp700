@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.4 2003/04/25 21:10:53 ragge Exp $
+#	$NetBSD: majors.hp700,v 1.4.2.1 2004/08/03 10:34:47 skrll Exp $
 #
 # Device majors for hp700
 #
@@ -24,19 +24,26 @@ device-major	bpf		char 17			bpfilter
 device-major	tun		char 18			tun
 device-major	lkm		char 19			lkm
 device-major	rnd		char 20			rnd
-
+device-major	ipl		char 21			ipfilter
 device-major	pdc		char 22
 device-major	com		char 23			com
 device-major	fd		char 24  block 7	fd
-
+device-major	md		char 25  block 9	md
 device-major	lpt		char 26			lpt
 device-major	wsdisplay	char 27			wsdisplay
 device-major	wskbd		char 28			wskbd
 device-major	wsmouse		char 29			wsmouse
 device-major	wsmux		char 30			wsmux
-
+device-major	raid		char 31  block 10	raid
 device-major	xfs		char 32			xfs
 device-major	altq		char 33			altq
 device-major	systrace	char 34			systrace
 device-major	cgd		char 35  block 8	cgd
 device-major	ksyms		char 36			ksyms
+device-major	wsfont		char 37			wsfont
+device-major	clockctl	char 39			clockctl
+device-major	scsibus		char 38			scsibus
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

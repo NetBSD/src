@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2002/09/28 11:16:36 scw Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.1.10.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -106,11 +106,5 @@ struct sh5_pci_chipset_tag {
 	    (*(ct)->ct_intr_establish)((ct)->ct_cookie, (ih), (l), (fn), (arg))
 #define	pci_intr_disestablish(ct, cookie)	\
 	    (*(ct)->ct_intr_disestablish)((ct)->ct_cookie, (cookie))
-
-/*
- * Use the generic PCIbus enumeration code
- */
-#define	pci_enumerate_bus(sc, m, p)		\
-	    pci_enumerate_bus_generic((sc), (m), (p))
 
 #endif /* _SH5_PCI_MACHDEP_H */

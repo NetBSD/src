@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2003/05/01 07:01:59 igy Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82.2.1 2004/08/03 10:35:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -30,9 +30,44 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department, The Mach Operating System project at
+ * Carnegie-Mellon University and Ralph Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah Hdr: machdep.c 1.63 91/04/24
+ *
+ *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -73,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2003/05/01 07:01:59 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82.2.1 2004/08/03 10:35:17 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -157,9 +192,9 @@ static int __bicons_enable;
 
 /* the following is used externally (sysctl_hw) */
 extern	char cpu_model[];	
-char	cpu_name[40];			/* set cpu depend xx_init() */
+char	cpu_name[40];			/* set CPU depend xx_init() */
 
-struct cpu_info cpu_info_store;		/* only one cpu */
+struct cpu_info cpu_info_store;		/* only one CPU */
 int	cpuspeed = 1;			/* approx # instr per usec. */
 
 /* CPU core switch table */
@@ -230,8 +265,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	extern caddr_t esym;
 #endif
-	caddr_t kernend, v;
-	unsigned size;
+	caddr_t kernend;
 	char *cp;
 	int i;
 
@@ -498,38 +532,21 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	mips_init_msgbuf();
 
 	/*
-	 * Compute the size of system data structures.  pmap_bootstrap()
-	 * needs some of this information.
-	 */
-	size = (unsigned)allocsys(NULL, NULL);
-
-	/*
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
-
-	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
-	 */
-	v = (caddr_t)uvm_pageboot_alloc(size);
-	if ((allocsys(v, NULL) - v) != size)
-		panic("mach_init: table size inconsistency");
 }
 
 /*
  * Machine-dependent startup code.
- * allocate memory for variable-sized tables, initialize cpu.
+ * allocate memory for variable-sized tables, initialize CPU.
  */
 void
 cpu_startup()
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
+	u_int i;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -556,53 +573,7 @@ cpu_startup()
 		}
 	}
 
-	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-		UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
-
-	minaddr = (vaddr_t)buffers;
-	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-		bufpages = btoc(MAXBSIZE) * nbuf; /* do not overallocate RAM */
-	}
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-
-	/* now allocate RAM for buffers */
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -627,13 +598,6 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
 }
 
 void

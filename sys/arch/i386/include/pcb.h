@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.33 2002/10/08 20:24:58 fvdl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.33.6.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -81,7 +77,7 @@
 #ifndef _I386_PCB_H_
 #define _I386_PCB_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 
@@ -99,6 +95,7 @@ struct pcb {
 #define	pcb_cr3	pcb_tss.tss_cr3
 #define	pcb_esp	pcb_tss.tss_esp
 #define	pcb_ebp	pcb_tss.tss_ebp
+#define	pcb_cs	pcb_tss.__tss_cs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */
@@ -111,7 +108,6 @@ struct pcb {
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
-	struct pmap *pcb_pmap;		/* back pointer to our pmap */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 2002/09/27 02:24:19 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34.6.1 2004/08/03 10:38:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,11 +37,14 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time and initializes the vba 
+ * Configure() is called at boot time and initializes the vba
  * device tables and the memory controller monitoring.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34.6.1 2004/08/03 10:38:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

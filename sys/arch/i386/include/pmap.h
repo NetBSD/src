@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.73 2003/04/09 18:22:15 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.73.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*
  *
@@ -206,7 +206,7 @@
 
 #define PG_W		PG_AVAIL1	/* "wired" mapping */
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
-/* PG_AVAIL3 not used */
+#define PG_X		PG_AVAIL3	/* executable mapping */
 
 /*
  * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
@@ -247,6 +247,7 @@ struct pmap {
 	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
+	vaddr_t pm_hiexec;		/* highest executable mapping */
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
@@ -266,15 +267,8 @@ struct pmap {
  * describes one mapping).
  */
 
-struct pv_entry;
-
-struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
-};
-
 struct pv_entry {			/* locked by its list's pvh_lock */
-	struct pv_entry *pv_next;	/* next entry */
+	SPLAY_ENTRY(pv_entry) pv_node;	/* splay-tree node */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
@@ -344,28 +338,31 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * prototypes
  */
 
-void		pmap_activate __P((struct lwp *));
-void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_clear_attrs __P((struct vm_page *, int));
-void		pmap_deactivate __P((struct lwp *));
-void		pmap_page_remove  __P((struct vm_page *));
-void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_write_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
+void		pmap_activate(struct lwp *);
+void		pmap_bootstrap(vaddr_t);
+boolean_t	pmap_clear_attrs(struct vm_page *, int);
+void		pmap_deactivate(struct lwp *);
+void		pmap_deactivate2(struct lwp *);
+void		pmap_page_remove (struct vm_page *);
+void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
+boolean_t	pmap_test_attrs(struct vm_page *, int);
+void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
+int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
+		    struct pcb *);
+void		pmap_load(void);
 
-vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t, int32_t *));
-void	pmap_tlb_shootnow __P((int32_t));
-void	pmap_do_tlb_shootdown __P((struct cpu_info *));
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, int32_t *);
+void	pmap_tlb_shootnow(int32_t);
+void	pmap_do_tlb_shootdown(struct cpu_info *);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t			pmap_pageidlezero __P((paddr_t));
+boolean_t			pmap_pageidlezero(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*
@@ -496,11 +493,11 @@ kvtopte(vaddr_t va)
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
-paddr_t vtophys __P((vaddr_t));
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
+paddr_t vtophys(vaddr_t);
+vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 
 #if defined(USER_LDT)
-void	pmap_ldt_cleanup __P((struct lwp *));
+void	pmap_ldt_cleanup(struct lwp *);
 #define	PMAP_FORK
 #endif /* USER_LDT */
 

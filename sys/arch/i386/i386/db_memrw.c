@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.15 2003/02/26 21:28:21 fvdl Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.15.2.1 2004/08/03 10:35:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15 2003/02/26 21:28:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.15.2.1 2004/08/03 10:35:49 skrll Exp $");
 
 #include "opt_largepages.h"
 
@@ -175,7 +175,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		{
 			int cpumask = 0;
 			/*
-			 * shoot down in case other cpu mistakenly caches page.
+			 * shoot down in case other CPU mistakenly caches page.
 			 */
 			pmap_tlb_shootdown(pmap_kernel(), pgva, oldpte, &cpumask);
 			pmap_tlb_shootnow(cpumask);

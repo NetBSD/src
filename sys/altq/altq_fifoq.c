@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.4 2001/11/12 23:14:21 lukem Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.4 2001/11/12 23:14:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.4.16.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.4 2001/11/12 23:14:21 lukem Exp $")
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 #include <altq/altq_fifoq.h>
-
-#define	FIFOQ_STATS	/* collect statistics */
 
 /* fifoq_list keeps all fifoq_state_t's allocated. */
 static fifoq_state_t *fifoq_list = NULL;
@@ -181,7 +179,7 @@ fifoqioctl(dev, cmd, addr, flag, p)
 			error = ENOMEM;
 			break;
 		}
-		bzero(q, sizeof(fifoq_state_t));
+		(void)memset(q, 0, sizeof(fifoq_state_t));
 
 		q->q_ifq = &ifp->if_snd;
 		q->q_head = q->q_tail = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
+/*	$NetBSD: pte.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -113,9 +113,10 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define PG_AVAIL1	0x0000000000000200
 #define PG_AVAIL2	0x0000000000000400
 #define PG_AVAIL3	0x0000000000000800
-#define	PG_FRAME	0xfffffffffffff000
+#define	PG_FRAME	0x000ffffffffff000
+#define	PG_NX		0x8000000000000000
 
-#define	PG_LGFRAME	0xffffffffffc00000	/* large (2M) page frame mask */
+#define	PG_LGFRAME	0x000fffffffe00000	/* large (2M) page frame mask */
 
 /*
  * short forms of protection codes
@@ -131,5 +132,6 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define PGEX_P		0x01	/* protection violation (vs. no mapping) */
 #define PGEX_W		0x02	/* exception during a write cycle */
 #define PGEX_U		0x04	/* exception while in user mode (upl) */
+#define PGEX_X		0x10	/* exception during instruction fetch */
 
 #endif /* _AMD64_PTE_H_ */

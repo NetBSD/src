@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2002/10/02 05:17:47 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.8 2000/08/15 20:38:24 mickey Exp $	*/
 
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5.6.1 2004/08/03 10:34:47 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -53,17 +56,14 @@ struct cpu_softc {
 	void *sc_ih;
 };
 
-int	cpumatch __P((struct device *, struct cfdata *, void *));
-void	cpuattach __P((struct device *, struct device *, void *));
+int	cpumatch(struct device *, struct cfdata *, void *);
+void	cpuattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
     cpumatch, cpuattach, NULL, NULL);
 
 int
-cpumatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -78,10 +78,7 @@ cpumatch(parent, cf, aux)
 }
 
 void
-cpuattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpuattach(struct device *parent, struct device *self, void *aux)
 {
 	/* machdep.c */
 	extern struct pdc_cache pdc_cache;
@@ -89,8 +86,8 @@ cpuattach(parent, self, aux)
 	extern struct pdc_model pdc_model;
 	extern u_int cpu_ticksnum, cpu_ticksdenom;
 
-	register struct cpu_softc *sc = (struct cpu_softc *)self;
-	register struct confargs *ca = aux;
+	struct cpu_softc *sc = (struct cpu_softc *)self;
+	struct confargs *ca = aux;
 	char c;
 	const char lvls[4][4] = { "0", "1", "1.5", "2" };
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
@@ -176,5 +173,5 @@ cpuattach(parent, self, aux)
 	 * or below 27.
 	 */
 	int_reg_cpu.int_reg_allocatable_bits =
-		(1 << 28) | (1 << 27);
+		(1 << 28) | (1 << 27) | (1 << 26);
 }

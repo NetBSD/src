@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2003/05/13 09:35:16 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.4.2.1 2004/08/03 10:31:30 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -91,11 +91,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -120,6 +116,10 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_realmem.h"
+
+#include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
+#include "opt_compat_ibcs2.h"
 
 #include "assym.h"
 #include "lapic.h"
@@ -359,6 +359,11 @@ start:	movw	$0x1234,0x472			# warm boot
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx
 	movl	%ebx,RELOC(cpu_brand_id)
+
+	/* add AMD specific feature flags */
+	movl	$0x80000001,%eax
+	cpuid
+	orl	%edx,RELOC(cpu_feature)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
@@ -618,7 +623,7 @@ longmode_hi:
 
 	movq	$NKL4_KIMG_ENTRIES,%rcx
 	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys  address of PML4
-	addq	%r8, %rbx			# new, virtual adress of PML4
+	addq	%r8, %rbx			# new, virtual address of PML4
 1:	movq	$0,(%rbx)
 	addq	$8,%rbx
 	loop	1b
@@ -647,23 +652,6 @@ longmode_hi:
 	call 	_C_LABEL(main)
 
 /*****************************************************************************/
-
-/*
- * Signal trampoline; copied to top of user stack.
- */
-NENTRY(sigcode)
-	/*
-	 * Handler has returned here as if we called it.  The sigcontext
-	 * is now the first thing on the stack.
-	 */
-	movq	%rsp,%rdi
-	pushq	%rdi			/* fake return address */
-	movq	$SYS___sigreturn14,%rax
-	syscall
-	movq	$SYS_exit,%rax
-	syscall
-	.globl	_C_LABEL(esigcode)
-_C_LABEL(esigcode):
 
 /*
  * void lgdt(struct region_descriptor *rdp);
@@ -888,6 +876,7 @@ idle_start:
 	jz	idle_loop
 idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	sti
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
 	call	_C_LABEL(sched_lock_idle)
 #endif
@@ -1028,7 +1017,7 @@ switch_restored:
  */
 	movq	CPUVAR(CURLWP),%r12
 	movq	L_PROC(%r12),%rdi
-	cmpl	$0,P_NRAS(%rdi)
+	cmpq	$0,P_RASLIST(%rdi)
 	je	1f
 	movq	L_MD_REGS(%r12),%rbx
 	movq	TF_RIP(%rbx),%rsi
@@ -1194,6 +1183,7 @@ IDTVEC(syscall)
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
+	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%r15)
 1:	/* Check for ASTs on exit to user mode. */
 	cli
@@ -1203,6 +1193,7 @@ IDTVEC(syscall)
 	CLEAR_ASTPENDING(%r11)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	1b
 2:
@@ -1223,11 +1214,13 @@ syscall_return:
 	movw	TF_FS(%rsp),%fs
 	movw	TF_GS(%rsp),%gs
 	INTR_RESTORE_GPRS
+	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
+	movw	%r11,%ds
 	addq	$48,%rsp
 	popq	%rcx	/* return rip */
 	addq	$8,%rsp
 	popq	%r11	/* flags as set by sysret insn */
-	movq	(%rsp),%rsp
+	movq	%ss:(%rsp),%rsp
 	sysretq
 
 #ifdef DIAGNOSTIC
@@ -1266,10 +1259,13 @@ NENTRY(child_trampoline)
 	call	*%r12
 	jmp	syscall_return
 
+#if defined(COMPAT_16) || defined(COMPAT_IBCS2) || defined(COMPAT_NETBSD32)
+
 	.globl  _C_LABEL(osyscall_return)
 
+#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 /*
- * Old call gate entry for syscall. XXXfvdl: only needed if we're
+ * Old call gate entry for syscall. only needed if we're
  * going to support running old NetBSD or ibcs2 binaries, etc,
  * on NetBSD/amd64.
  */
@@ -1279,6 +1275,8 @@ IDTVEC(oosyscall)
 	popq	8(%rsp)
 	pushq	$7		# size of instruction for restart
 	jmp	osyscall1
+
+#endif
 
 /*
  * Trap gate entry for int $80 syscall, also used by sigreturn.
@@ -1292,6 +1290,7 @@ osyscall1:
 	movq	CPUVAR(CURLWP),%rdx
 	movq	%rsp,L_MD_REGS(%rdx)	# save pointer to frame
 	movq	L_PROC(%rdx),%rdx
+	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
@@ -1302,8 +1301,12 @@ _C_LABEL(osyscall_return):
 	CLEAR_ASTPENDING(%r11)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	2b
+
+#endif
+
 iret_return:
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT

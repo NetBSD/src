@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.7.2.1 2004/08/03 10:39:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.7.2.1 2004/08/03 10:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
@@ -64,10 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp 
  * Send a signal to a Darwin process.
  */
 void
-darwin_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+darwin_sendsig(ksi, mask)
+	const ksiginfo_t *ksi;
+	const sigset_t *mask;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -76,10 +76,14 @@ darwin_sendsig(sig, mask, code)
 	struct darwin_sigframe *sfp, sf;
 	int onstack;
 	size_t stack_size;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	sig_t catcher;
+	int sig;
 	int error;
 
 	tf = trapframe(l);
+
+	sig = ksi->ksi_signo;
+	catcher = SIGACTION(p, sig).sa_handler;
 
 	/* Use an alternate signal stack? */
 	onstack =
@@ -106,7 +110,7 @@ darwin_sendsig(sig, mask, code)
 	sf.dmc.es.exception = tf->exc;
 
 	sf.dmc.ss.srr0 = tf->srr0;
-	sf.dmc.ss.srr1 = tf->srr1;
+	sf.dmc.ss.srr1 = tf->srr1 & PSL_USERSRR1;
 	memcpy(&sf.dmc.ss.gpreg[0], &tf->fixreg[0], sizeof(sf.dmc.ss.gpreg));
 	sf.dmc.ss.cr = tf->cr;
 	sf.dmc.ss.xer = tf->xer;
@@ -125,7 +129,7 @@ darwin_sendsig(sig, mask, code)
 		sig = 0;
 	}
 
-	sf.duc.si.darwin_si_signo = sig;
+	native_to_darwin_siginfo(ksi, &sf.duc.si);
 	sf.duc.uctx.uc_onstack = onstack;
 	native_sigset_to_sigset13(mask, &sf.duc.uctx.uc_sigmask);
 	sf.duc.uctx.uc_stack.ss_sp = (char *)sfp;
@@ -157,8 +161,11 @@ darwin_sendsig(sig, mask, code)
 	/* Prepare registers */
 	tf->fixreg[1] = (u_long)sfp;
 	tf->fixreg[3] = (u_long)catcher;
-	tf->fixreg[4] = 1; /* 1 => without siginfo, 2 => with siginfo */
-	tf->fixreg[5] = (u_long)code;
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
+		tf->fixreg[4] = 2; /* with siginfo */
+	else
+		tf->fixreg[4] = 1; /* without siginfo */
+	tf->fixreg[5] = (u_long)sig;
 	tf->fixreg[6] = (u_long)&sfp->duc.si;
 	tf->fixreg[7] = (u_long)&sfp->duc.uctx;
 	tf->lr = (u_long)tf->srr0;
@@ -176,14 +183,13 @@ darwin_sendsig(sig, mask, code)
  * The signal trampoline calls this system call 
  * to get the process state restored like it was
  * before the signal delivery.
+ * 
+ * This is the version for X.2 binaries and older
  */
 int
-darwin_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sigreturn_x2(struct lwp *l, void *v, register_t *retval)
 {
-	struct darwin_sys_sigreturn_args /* {
+	struct darwin_sys_sigreturn_x2_args /* {
 		syscallarg(struct darwin_ucontext *) uctx;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -202,7 +208,7 @@ darwin_sys_sigreturn(l, v, retval)
 	if ((error = copyin(SCARG(uap, uctx), &uctx, sizeof(uctx))) != 0)
 		return (error);
 
-	/* Check mcontext size, as it is handed by used code */
+	/* Check mcontext size, as it is handed by user code */
 	mcsize = uctx.uc_mcsize;
 	if (mcsize > sizeof(mctx))
 		mcsize = sizeof(mctx);
@@ -212,9 +218,7 @@ darwin_sys_sigreturn(l, v, retval)
 
 	/* Check for security abuse */
 	tf = trapframe(l);
-	mctx.ss.srr1 &= ~(PSL_POW | PSL_ILE | PSL_IP | PSL_LE | PSL_RI);
-	mctx.ss.srr1 |= (PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_EE); 
-	if ((mctx.ss.srr1 & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC)) {
+	if (!PSL_USEROK_P(mctx.ss.srr1)) {
 		DPRINTF(("uctx.ss.srr1 = 0x%08x, rf->srr1 = 0x%08lx\n",
 		    mctx.ss.srr1, tf->srr1));
 		return (EINVAL);
@@ -247,6 +251,30 @@ darwin_sys_sigreturn(l, v, retval)
 }
 
 /*
+ * This is the version used starting with X.3 binaries
+ */
+int
+darwin_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+{
+	struct darwin_sys_sigreturn_args /* {
+		syscallarg(struct darwin_ucontext *) uctx;
+		syscallarg(int) ucvers;
+	} */ *uap = v;
+
+	switch (SCARG(uap, ucvers)) {
+	case DARWIN_UCVERS_X2:
+		return darwin_sys_sigreturn_x2(l, v, retval);
+		break;
+
+	default:
+		printf("darwin_sys_sigreturn: ucvers = %d\n", 
+		    SCARG(uap, ucvers));
+		break;
+	}
+	return (EJUSTRETURN);
+}
+
+/*
  * Set the return value for darwin binaries after a fork(). The userland
  * libSystem stub expects the child pid to be in retval[0] for the parent
  * and the child as well. It will perform the required operation to transform 
@@ -256,8 +284,7 @@ darwin_sys_sigreturn(l, v, retval)
  * works that way).
  */
 void
-darwin_fork_child_return(arg)
-	void *arg;
+darwin_fork_child_return(void *arg)
 {
 	struct lwp * const l = arg;
 	struct proc * const p = l->l_proc;

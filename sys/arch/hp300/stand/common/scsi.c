@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.2 2001/08/20 12:20:05 wiz Exp $	*/
+/*	$NetBSD: scsi.c,v 1.2.22.1 2004/08/03 10:34:38 skrll Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -7,9 +7,43 @@
 #define SLOWSCSI
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Van Jacobson of Lawrence Berkeley Laboratory and the Systems
+ * Programming Group of the University of Utah Computer Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: scsi.c 1.3 90/01/27$
+ *
+ *	@(#)scsi.c	8.1 (Berkeley) 6/10/93
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * Van Jacobson of Lawrence Berkeley Laboratory and the Systems
@@ -58,24 +92,33 @@
 #include <lib/libsa/stand.h>
 
 #define _IOCTL_
-#include <hp300/dev/scsireg.h>
 
 #include <hp300/stand/common/device.h>
+#include <hp300/stand/common/scsireg.h>
 #include <hp300/stand/common/scsivar.h>
 #include <hp300/stand/common/samachdep.h>
 
+static void scsireset(int);
+static int issue_select(volatile struct scsidevice *, u_char, u_char);
+static int wait_for_select(volatile struct scsidevice *hd);
+static int ixfer_start(volatile struct scsidevice *, int, u_char, int);
+static int ixfer_out(volatile struct scsidevice *, int, u_char *);
+static int ixfer_in(volatile struct scsidevice *hd, int, u_char *);
+static int scsiicmd(struct scsi_softc *, int, u_char *, int, u_char *, int,
+    u_char);
+
 struct	scsi_softc scsi_softc[NSCSI];
 
-void scsireset();
+
 int scsi_cmd_wait = 50000;	/* use the "real" driver init_wait value */
 int scsi_data_wait = 50000;	/* use the "real" driver init_wait value */
 
+void
 scsiinit()
 {
-	extern struct hp_hw sc_table[];
-	register struct hp_hw *hw;
-	register struct scsi_softc *hs;
-	register int i, addr;
+	struct hp_hw *hw;
+	struct scsi_softc *hs;
+	int i;
 	static int waitset = 0;
 	
 	i = 0;
@@ -101,24 +144,25 @@ scsiinit()
 	}
 }
 
+int
 scsialive(unit)
-	register int unit;
+	int unit;
 {
 	if (unit >= NSCSI || scsi_softc[unit].sc_alive == 0)
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 }
 
-void
+static void
 scsireset(unit)
-	register int unit;
+	int unit;
 {
-	volatile register struct scsidevice *hd;
-	register struct scsi_softc *hs;
+	volatile struct scsidevice *hd;
+	struct scsi_softc *hs;
 	u_int i;
 
 	hs = &scsi_softc[unit];
-	hd = (struct scsidevice *)hs->sc_addr;
+	hd = (void *)hs->sc_addr;
 	hd->scsi_id = 0xFF;
 	DELAY(100);
 	/*
@@ -154,10 +198,10 @@ scsireset(unit)
 }
 
 
-int
+void
 scsiabort(hs, hd)
-	register struct scsi_softc *hs;
-	volatile register struct scsidevice *hd;
+	struct scsi_softc *hs;
+	volatile struct scsidevice *hd;
 {
 	printf("scsi%d error: scsiabort\n", hs - scsi_softc);
 
@@ -167,11 +211,11 @@ scsiabort(hs, hd)
 
 static int
 issue_select(hd, target, our_addr)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	u_char target, our_addr;
 {
 	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
-		return (1);
+		return 1;
 
 	if (hd->scsi_ints & INTS_DISCON)
 		hd->scsi_ints = INTS_DISCON;
@@ -184,32 +228,32 @@ issue_select(hd, target, our_addr)
 	hd->scsi_tcl = 4;
 
 	hd->scsi_scmd = SCMD_SELECT;
-	return (0);
+	return 0;
 }
 
 static int
 wait_for_select(hd)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 {
-	register int wait;
+	int wait;
 	u_char ints;
 
 	wait = scsi_data_wait;
 	while ((ints = hd->scsi_ints) == 0) {
 		if (--wait < 0)
-			return (1);
+			return 1;
 		DELAY(1);
 	}
 	hd->scsi_ints = ints;
-	return (!(hd->scsi_ssts & SSTS_INITIATOR));
+	return !(hd->scsi_ssts & SSTS_INITIATOR);
 }
 
 static int
 ixfer_start(hd, len, phase, wait)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	int len;
 	u_char phase;
-	register int wait;
+	int wait;
 {
 
 	hd->scsi_tch = len >> 16;
@@ -222,38 +266,38 @@ ixfer_start(hd, len, phase, wait)
 	/* wait for xfer to start or svc_req interrupt */
 	while ((hd->scsi_ssts & SSTS_BUSY) == 0) {
 		if (hd->scsi_ints || --wait < 0)
-			return (0);
+			return 0;
 		DELAY(1);
 	}
-	return (1);
+	return 1;
 }
 
 static int
 ixfer_out(hd, len, buf)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	int len;
-	register u_char *buf;
+	u_char *buf;
 {
-	register int wait = scsi_data_wait;
+	int wait = scsi_data_wait;
 
 	for (; len > 0; --len) {
 		while (hd->scsi_ssts & SSTS_DREG_FULL) {
 			if (hd->scsi_ints || --wait < 0)
-				return (len);
+				return len;
 			DELAY(1);
 		}
 		hd->scsi_dreg = *buf++;
 	}
-	return (0);
+	return 0;
 }
 
 static int
 ixfer_in(hd, len, buf)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	int len;
-	register u_char *buf;
+	u_char *buf;
 {
-	register int wait = scsi_data_wait;
+	int wait = scsi_data_wait;
 
 	for (; len > 0; --len) {
 		while (hd->scsi_ssts & SSTS_DREG_EMPTY) {
@@ -262,13 +306,13 @@ ixfer_in(hd, len, buf)
 					*buf++ = hd->scsi_dreg;
 					--len;
 				}
-				return (len);
+				return len;
 			}
 			DELAY(1);
 		}
 		*buf++ = hd->scsi_dreg;
 	}
-	return (len);
+	return len;
 }
 
 static int
@@ -281,16 +325,15 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 	int len;
 	u_char xferphase;
 {
-	volatile register struct scsidevice *hd =
-				(struct scsidevice *)hs->sc_addr;
+	volatile struct scsidevice *hd = (void *)hs->sc_addr;
 	u_char phase, ints;
-	register int wait;
+	int wait;
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
 	if (issue_select(hd, target, hs->sc_scsi_addr))
-		return (-2);
+		return -2;
 	if (wait_for_select(hd))
-		return (-2);
+		return -2;
 	/*
 	 * Wait for a phase change (or error) then let the device
 	 * sequence us through the various SCSI phases.
@@ -339,7 +382,8 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 		case MESG_IN_PHASE:
 			if (ixfer_start(hd, sizeof(hs->sc_msg), phase, wait) ||
 			    !(hd->scsi_ssts & SSTS_DREG_EMPTY)) {
-				ixfer_in(hd, sizeof(hs->sc_msg), &hs->sc_msg);
+				ixfer_in(hd, sizeof(hs->sc_msg),
+				    (u_char *)&hs->sc_msg);
 				hd->scsi_scmd = SCMD_RST_ACK;
 			}
 			phase = BUS_FREE_PHASE;
@@ -379,45 +423,45 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 abort:
 	scsiabort(hs, hd);
 out:
-	return (hs->sc_stat);
+	return hs->sc_stat;
 }
 
 int
 scsi_test_unit_rdy(ctlr, slave)
 	int ctlr, slave;
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
 
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), (u_char *)0, 0,
-			 STATUS_PHASE));
+	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), NULL, 0,
+	    STATUS_PHASE);
 }
 
 int
 scsi_request_sense(ctlr, slave, buf, len)
 	int ctlr, slave;
 	u_char *buf;
-	unsigned len;
+	unsigned int len;
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
 
 	cdb.len = len;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_IN_PHASE));
+	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	    DATA_IN_PHASE);
 }
 
 int
 scsi_read_capacity(ctlr, slave, buf, len)
 	int ctlr, slave;
 	u_char *buf;
-	unsigned len;
+	unsigned int len;
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	static struct scsi_cdb10 cdb = { CMD_READ_CAPACITY };
 
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_IN_PHASE));
+	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	    DATA_IN_PHASE);
 }
 
 int
@@ -428,10 +472,10 @@ scsi_tt_read(ctlr, slave, buf, len, blk, nblk)
 	daddr_t blk;
 	u_int nblk;
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
 
-	bzero(&cdb, sizeof(cdb));
+	memset(&cdb, 0, sizeof(cdb));
 	cdb.cmd = CMD_READ_EXT;
 	cdb.lbah = blk >> 24;
 	cdb.lbahm = blk >> 16;
@@ -439,8 +483,8 @@ scsi_tt_read(ctlr, slave, buf, len, blk, nblk)
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_IN_PHASE));
+	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	    DATA_IN_PHASE);
 }
 
 int
@@ -451,10 +495,10 @@ scsi_tt_write(ctlr, slave, buf, len, blk, nblk)
 	daddr_t blk;
 	u_int nblk;
 {
-	register struct scsi_softc *hs = &scsi_softc[ctlr];
+	struct scsi_softc *hs = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
 
-	bzero(&cdb, sizeof(cdb));
+	memset(&cdb, 0, sizeof(cdb));
 	cdb.cmd = CMD_WRITE_EXT;
 	cdb.lbah = blk >> 24;
 	cdb.lbahm = blk >> 16;
@@ -462,6 +506,6 @@ scsi_tt_write(ctlr, slave, buf, len, blk, nblk)
 	cdb.lbal = blk;
 	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
 	cdb.lenl = nblk >> DEV_BSHIFT;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len,
-			 DATA_OUT_PHASE));
+	return scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb), buf, len,
+	    DATA_OUT_PHASE);
 }

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.13 2003/06/27 21:43:03 he Exp $
+#	$NetBSD: files.luna68k,v 1.13.2.1 2004/08/03 10:36:30 skrll Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -21,7 +21,6 @@ file arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file arch/m68k/m68k/pmap_motorola.c
 file arch/m68k/m68k/sys_machdep.c
 file arch/m68k/m68k/vm_machdep.c
-file dev/clock_subr.c
 file dev/cons.c
 file arch/luna68k/dev/lcd.c
 
@@ -52,10 +51,8 @@ attach fb at mainbus
 file arch/luna68k/dev/lunafb.c		fb
 file arch/luna68k/dev/omrasops.c	fb
 
-device spc: scsi
 attach spc at mainbus
 file arch/luna68k/dev/spc.c		spc
-file dev/ic/mb89352.c			spc
 
 # Machine-idependent SCSI driver.
 include "dev/scsipi/files.scsipi"

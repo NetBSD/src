@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.6 2003/06/14 17:01:09 thorpej Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.6.2.1 2004/08/03 10:32:10 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -30,6 +30,9 @@
  * for NEC PCI generation machines.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.6.2.1 2004/08/03 10:32:10 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kcore.h>
@@ -37,9 +40,13 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
 #include <mips/pte.h>
+
+#include <dev/clock_subr.h>
+#include <dev/ic/mc146818var.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -48,7 +55,6 @@
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
-#include <arc/dev/mcclockvar.h>
 #include <arc/jazz/mcclock_jazziovar.h>
 #include <arc/pci/necpbvar.h>
 
@@ -90,12 +96,14 @@ char *c_nec_pci_mainbusdevs[] = {
  * chipset-dependent mcclock routines.
  */
 
-u_int	mc_nec_pci_read __P((struct mcclock_softc *, u_int));
-void	mc_nec_pci_write __P((struct mcclock_softc *, u_int, u_int));
+static u_int	mc_nec_pci_read(struct mc146818_softc *, u_int);
+static void	mc_nec_pci_write(struct mc146818_softc *, u_int, u_int);
 
 struct mcclock_jazzio_config mcclock_nec_pci_conf = {
-	0x80004000, 2,
-	{ mc_nec_pci_read, mc_nec_pci_write }
+	0x80004000,		/* I/O base */
+	2,			/* I/O size */
+	mc_nec_pci_read,	/* read function */
+	mc_nec_pci_write	/* write function */
 };
 
 /*
@@ -143,29 +151,29 @@ static const u_int32_t nec_pci_ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
 };
 
-u_int
+static u_int
 mc_nec_pci_read(sc, reg)
-	struct mcclock_softc *sc;
+	struct mc146818_softc *sc;
 	u_int reg;
 {
-	int i, as;
+	u_int i, as;
 
-	as = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1) & 0x80;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, as | reg);
-	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
-	return (i);
+	as = bus_space_read_1(sc->sc_bst, sc->sc_bsh, 1) & 0x80;
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, as | reg);
+	i = bus_space_read_1(sc->sc_bst, sc->sc_bsh, 0);
+	return i;
 }
 
-void
+static void
 mc_nec_pci_write(sc, reg, datum)
-	struct mcclock_softc *sc;
+	struct mc146818_softc *sc;
 	u_int reg, datum;
 {
-	int as;
+	u_int as;
 
-	as = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1) & 0x80;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, as | reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, datum);
+	as = bus_space_read_1(sc->sc_bst, sc->sc_bsh, 1) & 0x80;
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, as | reg);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, datum);
 }
 
 /*
@@ -230,7 +238,7 @@ c_nec_pci_init()
 	 * increase this value by a option like below:
 	 *     options KSEG2IOBUFSIZE=0x1b000000 # 432MB consumes 432KB
 	 * If you met this symptom, please report it to
-	 * port-arc-maintainer@netbsd.org.
+	 * port-arc-maintainer@NetBSD.org.
 	 *
 	 * kseg2iobufsize will be refered from pmap_bootstrap().
 	 */

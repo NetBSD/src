@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 2003/04/02 03:04:03 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37.2.1 2004/08/03 10:37:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.2.1 2004/08/03 10:37:30 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -50,7 +53,6 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #include <dev/ic/wdcvar.h>
 
 void canonicalize_bootpath __P((void));
@@ -231,10 +233,11 @@ device_register(dev, aux)
 		return;
 	}
 	if (DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "pci") ||
-	    DEVICE_IS(dev, "scsibus"))
+	    DEVICE_IS(dev, "scsibus") || DEVICE_IS(dev, "atabus"))
 		return;
 
 	if (DEVICE_IS(dev->dv_parent, "atapibus") ||
+	    DEVICE_IS(dev->dv_parent, "atabus") ||
 	    DEVICE_IS(dev->dv_parent, "pci") ||
 	    DEVICE_IS(dev->dv_parent, "scsibus")) {
 		if (dev->dv_parent->dv_parent != parent)
@@ -286,7 +289,7 @@ device_register(dev, aux)
 		/* periph_target is target for scsi, drive # for atapi */
 		if (addr != sa->sa_periph->periph_target)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "pciide")) {
+	} else if (DEVICE_IS(dev->dv_parent->dv_parent, "pciide")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)
@@ -303,7 +306,7 @@ device_register(dev, aux)
 			return;
 		if (strtoul(p, &p, 16) != adev->adev_drv_data->drive)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "wdc")) {
+	} else if (DEVICE_IS(dev->dv_parent->dv_parent, "wdc")) {
 		struct ata_device *adev = aux;
 
 		if (addr != adev->adev_drv_data->drive)

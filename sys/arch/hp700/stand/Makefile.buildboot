@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 2002/11/28 06:00:28 chs Exp $
+#	$NetBSD: Makefile.buildboot,v 1.2.6.1 2004/08/03 10:34:54 skrll Exp $
 
 MACHINE_ARCH=hppa
 MACHINE=hp700
-RELOC=	700000
-HEAP_LIMIT=0x7c0000
+RELOC=	120000
+HEAP_LIMIT=0x1c0000
 #DEBUGFLAGS=-DDEBUG
 #DEBUGFLAGS+=-DDEBUGBUG
 #DEBUGFLAGS+=-DPDCDEBUG
@@ -11,6 +11,11 @@ HEAP_LIMIT=0x7c0000
 #DEBUGFLAGS+=-DEXEC_DEBUG
 #DEBUGFLAGS+=-DALLOC_TRACE
 #DEBUGLIBS=	no
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
 
 S=		${.CURDIR}/../../../..
 
@@ -33,7 +38,7 @@ CLEANFILES+=	vers.c
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp700 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp700 ${NEWVERSWHAT}
 
 CPPFLAGS+=		-D_STANDALONE -Dhp700 ${DEBUGFLAGS}
 CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT} 

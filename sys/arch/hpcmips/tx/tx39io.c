@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.15 2002/10/02 05:26:50 thorpej Exp $ */
+/*	$NetBSD: tx39io.c,v 1.15.6.1 2004/08/03 10:35:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.15.6.1 2004/08/03 10:35:20 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -44,17 +47,17 @@
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39icureg.h>
-#define __TX39IO_PRIVATE
+#define	__TX39IO_PRIVATE
 #include <hpcmips/tx/tx39iovar.h>
 #include <hpcmips/tx/tx39ioreg.h>
 
 #ifdef	TX39IO_DEBUG
-#define DPRINTF_ENABLE
-#define DPRINTF_DEBUG	tx39io_debug
+#define	DPRINTF_ENABLE
+#define	DPRINTF_DEBUG	tx39io_debug
 #endif
 #include <machine/debug.h>
 
-#define ISSET(x, s)	((x) & (1 << (s)))
+#define	ISSET(x, s)	((x) & (1 << (s)))
 
 int	tx39io_match(struct device *, struct cfdata *, void *);
 void	tx39io_attach(struct device *, struct device *, void *);
@@ -89,13 +92,13 @@ static void tx392x_io_update(hpcio_chip_t);
 static int tx392x_io_intr_map(int *, int, int);
 #endif
 #if defined TX391X && defined TX392X
-#define tx39_io_intr_map(t, s, p, m)					\
+#define	tx39_io_intr_map(t, s, p, m)					\
 	(IS_TX391X(t)
 	    ? tx391x_io_intr_map(s, p, m) : tx392x_io_intr_map(s, p, m))
 #elif defined TX391X
-#define tx39io_intr_map(t, s, p, m)	tx391x_io_intr_map(s, p, m)
+#define	tx39io_intr_map(t, s, p, m)	tx391x_io_intr_map(s, p, m)
 #elif defined TX392X
-#define tx39io_intr_map(t, s, p, m)	tx392x_io_intr_map(s, p, m)
+#define	tx39io_intr_map(t, s, p, m)	tx392x_io_intr_map(s, p, m)
 #endif
 static void io_dump(hpcio_chip_t);
 
@@ -115,7 +118,7 @@ tx39io_attach(struct device *parent, struct device *self, void *aux)
 	tx_chipset_tag_t tc;
 	struct hpcio_chip *io_hc = &sc->sc_io_ops;
 	struct hpcio_chip *mfio_hc = &sc->sc_mfio_ops;
-	
+
 	tc = sc->sc_tc = ta->ta_tc;
 
 	printf("\n");
@@ -170,8 +173,8 @@ tx39io_attach(struct device *parent, struct device *self, void *aux)
 #endif /* TX39IO_DEBUG */
 }
 
-/* 
- * TX391X, TX392X common 
+/*
+ * TX391X, TX392X common
  */
 static void *
 io_intr_establish(hpcio_chip_t arg, int port, int mode, int (*func)(void *),
@@ -196,7 +199,7 @@ mfio_intr_establish(hpcio_chip_t arg, int port, int mode, int (*func)(void *),
 
 	if (mfio_intr_map(&src, port, mode) != 0)
 		return (0);
-		
+
 	return (tx_intr_establish(sc->sc_tc, src, IST_EDGE, IPL_CLOCK, func,
 	    func_arg));
 }
@@ -258,7 +261,7 @@ mfio_intr_map(int *src, int port, int mode)
 		*src = MAKEINTR(4, (1 << port));
 		return (0);
 	}
-		
+
 	DPRINTF("invalid interrupt mode.\n");
 
 	return (1);
@@ -280,8 +283,8 @@ mfio_update(hpcio_chip_t arg)
 }
 
 #ifdef TX391X
-/* 
- * TMPR3912 specific 
+/*
+ * TMPR3912 specific
  */
 int
 tx391x_io_in(hpcio_chip_t arg, int port)
@@ -305,7 +308,7 @@ tx391x_io_out(hpcio_chip_t arg, int port, int onoff)
 
 	tc = sc->sc_tc;
 
-	/* IO [0:6] */ 
+	/* IO [0:6] */
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_stat_io.dir & pos))
@@ -336,7 +339,7 @@ tx391x_io_update(hpcio_chip_t arg)
 	reg = tx_conf_read(tc, TX39_IOCTRL_REG);
 	stat_io->dir		= TX391X_IOCTRL_IODIREC(reg);
 	stat_io->in		= TX391X_IOCTRL_IODIN(reg);
-	stat_io->out		= TX391X_IOCTRL_IODOUT(reg); 
+	stat_io->out		= TX391X_IOCTRL_IODOUT(reg);
 	stat_io->u.debounce	= TX391X_IOCTRL_IODEBSEL(reg);
 	reg = tx_conf_read(tc, TX39_IOIOPOWERDWN_REG);
 	stat_io->power = TX391X_IOIOPOWERDWN_IOPD(reg);
@@ -353,7 +356,7 @@ tx391x_io_intr_map(int *src, int port, int mode)
 		*src = MAKEINTR(5, (1 << port));
 		return (0);
 	}
-		
+
 	DPRINTF("invalid interrupt mode.\n");
 
 	return (1);
@@ -361,7 +364,7 @@ tx391x_io_intr_map(int *src, int port, int mode)
 #endif /* TX391X */
 
 #ifdef TX392X
-/* 
+/*
  * TMPR3922 specific
  */
 int
@@ -371,7 +374,7 @@ tx392x_io_in(hpcio_chip_t arg, int port)
 	txreg_t reg = tx_conf_read(sc->sc_tc, TX392X_IODATAINOUT_REG);
 
 	DPRINTF("port #%d\n", port);
-	
+
 	return (TX392X_IODATAINOUT_DIN(reg) & (1 << port));
 }
 
@@ -414,7 +417,7 @@ tx392x_io_intr_map(int *src, int port, int mode)
 		*src = MAKEINTR(8, (1 << port));
 		return (0);
 	}
-		
+
 	DPRINTF("invalid interrupt mode.\n");
 
 	return (1);
@@ -435,7 +438,7 @@ tx392x_io_update(hpcio_chip_t arg)
 	stat_io->u.debounce	= TX392X_IOCTRL_IODEBSEL(reg);
 	reg = tx_conf_read(tc, TX392X_IODATAINOUT_REG);
 	stat_io->in		= TX392X_IODATAINOUT_DIN(reg);
-	stat_io->out		= TX392X_IODATAINOUT_DOUT(reg); 
+	stat_io->out		= TX392X_IODATAINOUT_DOUT(reg);
 	reg = tx_conf_read(tc, TX39_IOIOPOWERDWN_REG);
 	stat_io->power = TX392X_IOIOPOWERDWN_IOPD(reg);
 }
@@ -451,14 +454,14 @@ mfio_dump(hpcio_chip_t arg)
 	const struct tx39io_mfio_map *map = tx39io_get_mfio_map(tc);
 	struct tx39io_port_status *stat;
 	int i;
-	
+
 	printf("%s", line);
 	stat = &sc->sc_stat_mfio;
 	for (i = TX39_IO_MFIO_MAX - 1; i >= 0 ; i--) {
 		/* MFIO port has power down state */
 		printf("MFIO %2d:     -       ", i);
 		__print_port_status(stat, i);
-		printf(ISSET(stat->u.select, i) ? "  MFIO(%s)\n" : "  %s\n", 
+		printf(ISSET(stat->u.select, i) ? "  MFIO(%s)\n" : "  %s\n",
 		       map[i].std_pin_name);
 	}
 	printf("%s", line);
@@ -469,7 +472,7 @@ io_dump(hpcio_chip_t arg)
 {
 	struct tx39io_softc *sc = arg->hc_sc;
 	struct tx39io_port_status *stat;
-	int i;	
+	int i;
 
 	printf("%s	 Debounce Direction DataOut DataIn PowerDown Select"
 	       "\n%s", line, line);

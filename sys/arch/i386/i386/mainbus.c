@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.52 2003/06/15 23:09:01 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.52.2.1 2004/08/03 10:35:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52 2003/06/15 23:09:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52.2.1 2004/08/03 10:35:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,13 +85,13 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.52 2003/06/15 23:09:01 fvdl Exp $");
 #include <arch/i386/bios/vesabios.h>
 #endif
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
-int	mainbus_print __P((void *, const char *));
+int	mainbus_print(void *, const char *);
 
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */

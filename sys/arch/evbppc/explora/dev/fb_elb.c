@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.2 2003/03/17 18:39:23 hannken Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -232,7 +235,13 @@ fb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 static paddr_t
 fb_mmap(void *v, off_t offset, int prot)
 {
-	return -1;
+	struct fb_elb_softc *sc = v;
+
+	if (offset < 0 || offset >= SIZE_FB)
+		return -1;
+
+	return bus_space_mmap(sc->sc_fb->fb_iot, BASE_FB, offset, prot,
+	    BUS_SPACE_MAP_LINEAR);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2002/10/26 13:50:28 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.6.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.15 2001/09/28 02:53:13 mickey Exp $	*/
 
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,6 +33,9 @@
  *     @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.5.6.1 2004/08/03 10:34:48 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <dev/cons.h>
@@ -52,10 +51,8 @@ struct  consdev constab[] = {
 	cons_init(wscons),
 #endif
 #endif
-#if 0
 #if NCOM > 0
 	cons_init(com),
-#endif
 #endif
 	{ 0 }
 };

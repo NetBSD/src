@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.79.2.1 2003/07/02 15:25:21 darrenr Exp $ */
+/*	$NetBSD: apm.c,v 1.79.2.2 2004/08/03 10:35:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.79.2.1 2003/07/02 15:25:21 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.79.2.2 2004/08/03 10:35:48 skrll Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -146,34 +146,34 @@ struct apm_softc {
 #define	APM_UNLOCK(apmsc)						\
 	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
 
-static void	apmattach __P((struct device *, struct device *, void *));
-static int	apmmatch __P((struct device *, struct cfdata *, void *));
+static void	apmattach(struct device *, struct device *, void *);
+static int	apmmatch(struct device *, struct cfdata *, void *);
 
 #if 0
-static void	apm_devpowmgt_enable __P((int, u_int));
-static void	apm_disconnect __P((void *));
+static void	apm_devpowmgt_enable(int, u_int);
+static void	apm_disconnect(void *);
 #endif
-static int	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
-static int	apm_get_event __P((struct bioscallregs *));
-static int	apm_get_powstat __P((struct bioscallregs *, u_int));
-static void	apm_get_powstate __P((u_int));
-static int	apm_periodic_check __P((struct apm_softc *));
-static void	apm_create_thread __P((void *));
-static void	apm_thread __P((void *));
-static void	apm_perror __P((const char *, struct bioscallregs *, ...))
+static int	apm_event_handle(struct apm_softc *, struct bioscallregs *);
+static int	apm_get_event(struct bioscallregs *);
+static int	apm_get_powstat(struct bioscallregs *, u_int);
+static void	apm_get_powstate(u_int);
+static int	apm_periodic_check(struct apm_softc *);
+static void	apm_create_thread(void *);
+static void	apm_thread(void *);
+static void	apm_perror(const char *, struct bioscallregs *, ...)
 		    __attribute__((__format__(__printf__,1,3)));
 #ifdef APM_POWER_PRINT
-static void	apm_power_print __P((struct apm_softc *, struct bioscallregs *));
+static void	apm_power_print(struct apm_softc *, struct bioscallregs *);
 #endif
-static void	apm_powmgt_enable __P((int));
-static void	apm_powmgt_engage __P((int, u_int));
-static int	apm_record_event __P((struct apm_softc *, u_int));
-static void	apm_get_capabilities __P((struct bioscallregs *));
-static void	apm_set_ver __P((struct apm_softc *));
-static void	apm_standby __P((struct apm_softc *));
-static const char *apm_strerror __P((int));
-static void	apm_suspend __P((struct apm_softc *));
-static void	apm_resume __P((struct apm_softc *, struct bioscallregs *));
+static void	apm_powmgt_enable(int);
+static void	apm_powmgt_engage(int, u_int);
+static int	apm_record_event(struct apm_softc *, u_int);
+static void	apm_get_capabilities(struct bioscallregs *);
+static void	apm_set_ver(struct apm_softc *);
+static void	apm_standby(struct apm_softc *);
+static const char *apm_strerror(int);
+static void	apm_suspend(struct apm_softc *);
+static void	apm_resume(struct apm_softc *, struct bioscallregs *);
 
 CFATTACH_DECL(apm, sizeof(struct apm_softc),
     apmmatch, apmattach, NULL, NULL);
@@ -337,7 +337,8 @@ apmcall_debug(func, regs, line)
 	int rv;
 	int print = (apmdebug & APMDEBUG_APMCALLS) != 0;
 	char *name;
-	int inf, outf;
+	int inf;
+	int outf = 0; /* XXX: gcc */
 		
 	if (print) {
 		if (func >= sizeof(aci) / sizeof(aci[0])) {
@@ -533,8 +534,11 @@ apm_suspend(sc)
 
 	dopowerhooks(PWR_SUSPEND);
 
-	/* XXX cgd */
-	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND);
+	if (apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND)) {
+		struct bioscallregs b;
+		b.BX = 0;
+		apm_resume(sc, &b);
+	}
 }
 
 static void
@@ -557,8 +561,11 @@ apm_standby(sc)
 
 	dopowerhooks(PWR_STANDBY);
 
-	/* XXX cgd */
-	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
+	if (apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY)) {
+		struct bioscallregs b;
+		b.BX = 0;
+		apm_resume(sc, &b);
+	}
 }
 
 static void
@@ -958,13 +965,11 @@ apm_set_ver(self)
 	struct apm_softc *self;
 {
 	struct bioscallregs regs;
-	int error;
 
 	regs.CX = 0x0102;	/* APM Version 1.2 */
 	regs.BX = APM_DEV_APM_BIOS;
 	
-	if (apm_v12_enabled &&
-	    (error = apmcall(APM_DRIVER_VERSION, &regs)) == 0) {
+	if (apm_v12_enabled && apmcall(APM_DRIVER_VERSION, &regs) == 0) {
 		apm_majver = 1;
 		apm_minver = 2;
 		goto ok;
@@ -973,8 +978,7 @@ apm_set_ver(self)
 	regs.CX = 0x0101;	/* APM Version 1.1 */
 	regs.BX = APM_DEV_APM_BIOS;
 	
-	if (apm_v11_enabled &&
-	    (error = apmcall(APM_DRIVER_VERSION, &regs)) == 0) {
+	if (apm_v11_enabled && apmcall(APM_DRIVER_VERSION, &regs) == 0) {
 		apm_majver = 1;
 		apm_minver = 1;
 	} else {

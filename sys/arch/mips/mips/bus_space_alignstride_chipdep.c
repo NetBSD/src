@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.5 2003/03/13 03:04:13 simonb Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.5.2.1 2004/08/03 10:37:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@
  *			Size of the device-provided static storage area
  *			for the memory or I/O memory space extent.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.5.2.1 2004/08/03 10:37:46 skrll Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>

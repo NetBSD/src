@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.4 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.4.2.1 2004/08/03 10:32:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -40,6 +40,9 @@
  * Created      : 11/10/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.4.2.1 2004/08/03 10:32:28 skrll Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -51,6 +54,8 @@
 #include <sys/signal.h>
 #include <sys/savar.h>
 #include <sys/vmmeter.h>
+#include <sys/userret.h>
+
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
@@ -74,20 +79,9 @@ int astpending;
 void
 userret(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-	int sig;
 
-	/* Take pending signals. */
-	while ((sig = (CURSIG(l))) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

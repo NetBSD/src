@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.94 2003/05/15 13:13:23 wiz Exp $
+#	$NetBSD: DISKLESS,v 1.94.2.1 2004/08/03 10:35:46 skrll Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -25,8 +25,6 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
 
-#options 	DUMMY_NOPS	# speed hack; recommended
-options 	XSERVER
 options 	INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users
@@ -49,7 +47,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 options 	COMPAT_09	# NetBSD 0.9

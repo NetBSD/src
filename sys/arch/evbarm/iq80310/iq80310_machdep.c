@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.60 2003/06/15 18:43:49 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.60.2.1 2004/08/03 10:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
  * Machine dependant functions for kernel setup for Intel IQ80310 evaluation
  * boards using RedBoot firmware.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.60.2.1 2004/08/03 10:34:02 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -179,7 +182,7 @@ extern int pmap_debug_level;
 #define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
 
 #define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	2
+#define	KERNEL_PT_KERNEL_NUM	4
 
 					/* L2 table for mapping i80312 */
 #define	KERNEL_PT_IOPXS		(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
@@ -367,7 +370,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	/* Calibrate the delay loop. */
 	iq80310_calibrate_delay();

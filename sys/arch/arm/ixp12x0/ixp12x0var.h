@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.3 2003/02/17 20:51:52 ichiro Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.3.2.1 2004/08/03 10:32:49 skrll Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -43,26 +43,16 @@
 
 #include <dev/pci/pcivar.h>
 
-#define IXPREG(reg)	*((volatile u_int32_t*) (reg))
-
 struct ixp12x0_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;		/* IRQ handle */
 
-	u_int32_t sc_intrmask;
-
-	/* Handles for the various subregions. */
-	/* PCI address */
+	/* Handles for the PCI */
 	bus_space_handle_t sc_pci_ioh;		/* PCI CSR */
 	bus_space_handle_t sc_conf0_ioh;	/* PCI Configuration 0 */
 	bus_space_handle_t sc_conf1_ioh;	/* PCI Configuration 1 */
 
-	/* I/O window vaddr */
-
-	/* Bus space, DMA, and PCI tags for the PCI bus */
-	struct bus_space ia_pci_iot;
-        struct bus_space ia_pci_memt;
+	/* DMA, and PCI chipset */
         struct arm32_bus_dma_tag ia_pci_dmat;
         struct arm32_pci_chipset ia_pci_chipset;
 
@@ -101,9 +91,8 @@ struct pmap_ent {
 	int		cache;
 };
 
-void	ixp12x0_bs_init(bus_space_tag_t, void *);
-void	ixp12x0_io_bs_init(bus_space_tag_t, void *);
-void	ixp12x0_mem_bs_init(bus_space_tag_t, void *);
+extern struct bus_space	ixp12x0_bs_tag;
+
 void	ixp12x0_pci_init(pci_chipset_tag_t, void *);
 void	ixp12x0_pci_dma_init(struct ixp12x0_softc *);
 void	ixp12x0_attach(struct ixp12x0_softc *);

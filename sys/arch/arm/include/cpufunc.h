@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.27 2003/05/23 00:57:24 ichiro Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.27.2.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -313,29 +313,58 @@ void	arm9_setttb		__P((u_int));
 
 void	arm9_tlb_flushID_SE	__P((u_int va));
 
-void	arm9_cache_flushID	__P((void));
-void	arm9_cache_flushID_SE	__P((u_int));
-void	arm9_cache_flushI	__P((void));
-void	arm9_cache_flushI_SE	__P((u_int));
-void	arm9_cache_flushD	__P((void));
-void	arm9_cache_flushD_SE	__P((u_int));
+void	arm9_icache_sync_all	__P((void));
+void	arm9_icache_sync_range	__P((vaddr_t, vsize_t));
 
-void	arm9_cache_cleanID	__P((void));
+void	arm9_dcache_wbinv_all	__P((void));
+void	arm9_dcache_wbinv_range __P((vaddr_t, vsize_t));
+void	arm9_dcache_inv_range	__P((vaddr_t, vsize_t));
+void	arm9_dcache_wb_range	__P((vaddr_t, vsize_t));
 
-void	arm9_cache_syncI	__P((void));
-void	arm9_cache_flushID_rng	__P((vaddr_t, vsize_t));
-void	arm9_cache_flushD_rng	__P((vaddr_t, vsize_t));
-void	arm9_cache_syncI_rng	__P((vaddr_t, vsize_t));
+void	arm9_idcache_wbinv_all	__P((void));
+void	arm9_idcache_wbinv_range __P((vaddr_t, vsize_t));
 
 void	arm9_context_switch	__P((void));
 
 void	arm9_setup		__P((char *string));
+
+extern unsigned arm9_dcache_sets_max;
+extern unsigned arm9_dcache_sets_inc;
+extern unsigned arm9_dcache_index_max;
+extern unsigned arm9_dcache_index_inc;
 #endif
 
-#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_SA1100) || \
-    defined(CPU_SA1110) || defined(CPU_XSCALE_80200) || \
-    defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0) || \
-    defined(CPU_XSCALE_IXP425)
+#ifdef CPU_ARM10
+void	arm10_setttb		__P((u_int));
+
+void	arm10_tlb_flushID_SE	__P((u_int));
+void	arm10_tlb_flushI_SE	__P((u_int));
+
+void	arm10_icache_sync_all	__P((void));
+void	arm10_icache_sync_range	__P((vaddr_t, vsize_t));
+
+void	arm10_dcache_wbinv_all	__P((void));
+void	arm10_dcache_wbinv_range __P((vaddr_t, vsize_t));
+void	arm10_dcache_inv_range	__P((vaddr_t, vsize_t));
+void	arm10_dcache_wb_range	__P((vaddr_t, vsize_t));
+
+void	arm10_idcache_wbinv_all	__P((void));
+void	arm10_idcache_wbinv_range __P((vaddr_t, vsize_t));
+
+void	arm10_context_switch	__P((void));
+
+void	arm10_setup		__P((char *string));
+
+extern unsigned arm10_dcache_sets_max;
+extern unsigned arm10_dcache_sets_inc;
+extern unsigned arm10_dcache_index_max;
+extern unsigned arm10_dcache_index_inc;
+#endif
+
+#if defined(CPU_ARM9) || defined(CPU_ARM10) || defined(CPU_SA110) || \
+    defined(CPU_SA1100) || defined(CPU_SA1110) || \
+    defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 
 void	armv4_tlb_flushID	__P((void));
 void	armv4_tlb_flushI	__P((void));
@@ -475,19 +504,19 @@ void cpu_reset		__P((void)) __attribute__((__noreturn__));
  */
 
 /* PRIMARY CACHE VARIABLES */
-int	arm_picache_size;
-int	arm_picache_line_size;
-int	arm_picache_ways;
+extern int	arm_picache_size;
+extern int	arm_picache_line_size;
+extern int	arm_picache_ways;
 
-int	arm_pdcache_size;	/* and unified */
-int	arm_pdcache_line_size;
-int	arm_pdcache_ways; 
+extern int	arm_pdcache_size;	/* and unified */
+extern int	arm_pdcache_line_size;
+extern int	arm_pdcache_ways; 
 
-int	arm_pcache_type;
-int	arm_pcache_unified;
+extern int	arm_pcache_type;
+extern int	arm_pcache_unified;
 
-int	arm_dcache_align;
-int	arm_dcache_align_mask;
+extern int	arm_dcache_align;
+extern int	arm_dcache_align_mask;
 
 #endif	/* _KERNEL */
 #endif	/* _ARM32_CPUFUNC_H_ */

@@ -1,0 +1,6 @@
+# $NetBSD: files.ioc,v 1.1.4.2 2004/08/03 10:40:07 skrll Exp $
+
+device ioc {[offset = -1], [intr = -1] }
+attach ioc at mainbus
+file arch/sgimips/ioc/ioc.c			ioc
+

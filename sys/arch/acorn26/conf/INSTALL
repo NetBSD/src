@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4 2002/09/18 02:43:53 lukem Exp $
+# $NetBSD: INSTALL,v 1.4.6.1 2004/08/03 10:30:48 skrll Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -134,8 +134,10 @@ iobus0		at root			# 16-bit I/O bus
 
 ioc0		at iobus0 base 0x200000	# I/O controller
 
-iic0		at ioc0			# I^2C serial bus
-rtc0		at iic0 addr 0xa0	# Real-time clock
+iociic0		at ioc0			# I^2C serial bus
+iic0		at iociic0
+
+pcfrtc0		at iic0 addr 0x50	# Real-time clock
 
 arckbd0 	at ioc0 bank 0 offset 0x04 # System keyboard
 arcwskbd0	at arckbd0		# Logical devices...
@@ -154,12 +156,10 @@ ea*		at podulebus0 slot ?	# Atomwide Ether3
 eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
-wd*		at dtide? channel ? drive ? # IDE hard discs
-atapibus*	at dtide? channel ?	# ATAPI devices
+atabus* 	at dtide? channel ?	# ATA bus
 
 hcide*		at podulebus0 slot ?	# HCCS IDE interface
-wd*		at hcide? channel ? drive ? # IDE hard discs
-atapibus*	at hcide? channel ?	# ATAPI devices
+atabus* 	at hcide? channel ?	# ATA bus
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?
@@ -171,9 +171,10 @@ upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 #com0		at upc0			# Serial port
 #lpt0		at upc0			# Parallel port
 wdc0		at upc0			# IDE controller
+atapibus*	at atabus?		# ATA bus
 
-wd*		at wdc? drive ?		# IDE hard discs
-atapibus*	at wdc?			# ATAPI devices
+wd*		at atabus? drive ?	# IDE hard discs
+atapibus*	at atabus?		# ATAPI devices
 cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
 #sd*		at atapibus? drive ?	# ATAPI disk drives
 #uk*		at atapibus? drive ?	# ATAPI unknown

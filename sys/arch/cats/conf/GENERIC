@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2003/05/04 01:27:53 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.48.2.1 2004/08/03 10:33:40 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,6 +33,10 @@ options 	INSECURE	# disable kernel securelevel
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
+# experimental ELF support when used on a CATS board running ABLE
+#options	ABLEELF
+#makeoptions	ABLEELF="1"
+
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
@@ -41,7 +45,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
-makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
+makeoptions	CPUFLAGS="-march=armv4 -mtune=strongarm"
 
 # FPA options
 
@@ -96,6 +100,19 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTPARAM
@@ -103,6 +120,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_13	# NetBSD 1.3 compatibility.
 #options 	COMPAT_12	# NetBSD 1.2 compatibility.
@@ -121,6 +139,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Device options
 
@@ -142,6 +161,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	PMAP_STATIC_L1S=128
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # if set defines a keycode for the fcom console to break into ddb.
 # 0x40 == @, see man ascii(7)
@@ -165,7 +185,6 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # Development and Debugging options
 
-#options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -173,14 +192,14 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options		SYMTAB_SPACE=380000
+#options		SYMTAB_SPACE=380000
 
 config		netbsd	root on ? type ?
 
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # Core logic
@@ -206,6 +225,13 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
+# Cryptographic Devices
+
+# PCI cryptographic devices
+hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
+ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
+
+
 # PCI serial interfaces
 #com*	at puc? port ?			# 16x50s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
@@ -230,6 +256,8 @@ pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 scsibus* at siop?
+esiop*	at pci? dev ? function ?	# NCR 53c875 SCSI and newer
+scsibus* at esiop?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -244,7 +272,23 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci? dev ? function ? flags 0x0000
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
+aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+siside* 	at pci? dev ? function ?	# SiS IDE controllers
+slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -257,10 +301,10 @@ pciide* at pci? dev ? function ? flags 0x0000
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at pciide? channel ? drive ? flags 0x0000	# the drives themselves
+wd*	at atabus? drive ? flags 0x0000	# the drives themselves
 
 # ATAPI bus support
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
@@ -344,7 +388,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
@@ -361,6 +405,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
 # Prolofic PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -459,7 +504,7 @@ lpt1	at isa? port 0x278 irq 5
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?			# PC speaker
 
-dsrtc0	at isa? port 0x72		# Dallas RTC
+ds1687rtc0	at isa? port 0x72	# Dallas 1687 RTC
 
 # ISA Plug-and-Play audio devices
 ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
@@ -493,6 +538,8 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 #joy0	at isa? port 0x201
 
 # Pseudo-Devices
+
+pseudo-device 	crypto			# opencrypto framework
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		2	# concatenated/striped disk devices
@@ -532,3 +579,5 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	wsmux
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

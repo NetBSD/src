@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.23 2003/06/24 19:57:05 martin Exp $
+#	$NetBSD: files.news68k,v 1.23.2.1 2004/08/03 10:38:22 skrll Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -27,7 +27,6 @@ file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
-file	dev/clock_subr.c
 file	dev/cons.c
 
 # Emulation modules
@@ -39,7 +38,7 @@ device hb { addr = 0, [ipl = -1], [vect = -1] }
 attach hb at mainbus
 file arch/news68k/dev/hb.c			hb
 
-# I/O Proccesser
+# I/O Processor
 #device iop { [addr = -1], [ipl = -1] }
 #attach iop at mainbus
 #file arch/news68k/dev/iop.c			iop

@@ -1,4 +1,4 @@
-/*	$NetBSD: fcnvff.c,v 1.1 2002/06/05 01:04:25 fredette Exp $	*/
+/*	$NetBSD: fcnvff.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $	*/
 
 /*	$OpenBSD: fcnvff.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -40,6 +40,9 @@
  * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fcnvff.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -148,7 +151,7 @@ unsigned int *status;
 	register int src_exponent, dest_exponent, dest_mantissa;
 	register int inexact = FALSE, guardbit = FALSE, stickybit = FALSE;
 	register int lsb_odd = FALSE;
-	int is_tiny;
+	int is_tiny = FALSE;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1);

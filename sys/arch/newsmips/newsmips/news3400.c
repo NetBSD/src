@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.11 2003/05/10 09:46:26 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.11.2.1 2004/08/03 10:38:29 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -26,6 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.11.2.1 2004/08/03 10:38:29 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -49,6 +52,7 @@ static void news3400_level0_intr(void);
 static void news3400_level1_intr(void);
 static void news3400_enable_intr(void);
 static void news3400_disable_intr(void);
+static void news3400_enable_timer(void);
 static void news3400_readidrom(u_char *);
 
 static int badaddr_flag;
@@ -244,6 +248,17 @@ news3400_disable_intr(void)
 }
 
 static void
+news3400_enable_timer(void)
+{
+
+	/* initialize interval timer */
+	*(volatile u_int8_t *)ITIMER = IOCLOCK / 6144 / 100 - 1;
+
+	/* enable timer interrupt */
+	*(volatile u_int8_t *)INTEN0 |= (u_int8_t)INTEN0_TIMINT;
+}
+
+static void
 news3400_readidrom(rom)
 	u_char *rom;
 {
@@ -262,6 +277,7 @@ news3400_init()
 
 	enable_intr = news3400_enable_intr;
 	disable_intr = news3400_disable_intr;
+	enable_timer = news3400_enable_timer;
 
 	news3400_readidrom((u_char *)&idrom);
 	hostid = idrom.id_serial;

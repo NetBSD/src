@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.5 2003/01/20 06:58:10 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.5.2.1 2004/08/03 10:39:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -119,6 +119,10 @@ typedef struct {
 /* Machine-dependent uc_flags */
 #define	_UC_POWERPC_VEC	0x00010000	/* Vector Register File valid */
 
-#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[1])
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_R1])
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R3])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #endif	/* !_POWERPC_MCONTEXT_H_ */

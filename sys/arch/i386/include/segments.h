@@ -1,11 +1,43 @@
-/*	$NetBSD: segments.h,v 1.36 2003/03/03 22:14:18 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.36.2.1 2004/08/03 10:36:04 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)segments.h	7.1 (Berkeley) 5/9/91
+ */
 
 /*-
  * Copyright (c) 1995, 1997
  *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1990 William F. Jolitz
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz.
@@ -54,11 +86,11 @@
  */
 
 #define	ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
-#define	SEL_KPL		0		/* kernel privilege level */	
-#define	SEL_UPL		3		/* user privilege level */	
+#define	SEL_KPL		0		/* kernel privilege level */
+#define	SEL_UPL		3		/* user privilege level */
 #define	SEL_RPL		3		/* requester's privilege level mask */
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
-#define	SEL_LDT		4		/* local descriptor table */	
+#define	SEL_LDT		4		/* local descriptor table */
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
@@ -135,17 +167,17 @@ struct region_descriptor {
 extern union descriptor *gdt, *ldt;
 extern struct gate_descriptor *idt;
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
-void setregion __P((struct region_descriptor *, void *, size_t));
-void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
-    int, int));
-void setgdt __P((int, void *, size_t, int, int, int, int));
-void unsetgate __P((struct gate_descriptor *));
-void cpu_init_idt __P((void));
+void setgate(struct gate_descriptor *, void *, int, int, int, int);
+void setregion(struct region_descriptor *, void *, size_t);
+void setsegment(struct segment_descriptor *, void *, size_t, int, int,
+    int, int);
+void setgdt(int, void *, size_t, int, int, int, int);
+void unsetgate(struct gate_descriptor *);
+void cpu_init_idt(void);
 
-int idt_vec_alloc __P((int, int));
-void idt_vec_set __P((int, void (*)(void)));
-void idt_vec_free __P((int));
+int idt_vec_alloc(int, int);
+void idt_vec_set(int, void (*)(void));
+void idt_vec_free(int);
 
 #endif /* _KERNEL */
 
@@ -219,7 +251,7 @@ void idt_vec_free __P((int));
  * Entries in the Interrupt Descriptor Table (IDT)
  */
 #define	NIDT	256
-#define	NRSVIDT	32		/* reserved entries for cpu exceptions */
+#define	NRSVIDT	32		/* reserved entries for CPU exceptions */
 
 /*
  * Entries in the Global Descriptor Table (GDT).
@@ -228,9 +260,9 @@ void idt_vec_free __P((int));
  * bioscall/biostramp.inc, as that relies on GBIOSCODE/GBIOSDATA and a
  * normal kernel build does not rebuild it (it's merely included whole-
  * sale from i386/bioscall.s)
- * 
- * Also, note that the GEXTBIOSDATA_SEL selector is special, as it maps 
- * to the value 0x0040 (when created as a KPL global selector).  Some 
+ *
+ * Also, note that the GEXTBIOSDATA_SEL selector is special, as it maps
+ * to the value 0x0040 (when created as a KPL global selector).  Some
  * BIOSes reference the extended BIOS data area at segment 0040 in a non
  * relocatable fashion (even when in protected mode); mapping the zero page
  * via the GEXTBIOSDATA_SEL allows these buggy BIOSes to continue to work
@@ -256,7 +288,8 @@ void idt_vec_free __P((int));
 #define	GPNPBIOSTRAMP_SEL 17
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
-#define	NGDT		20
+#define GUCODEBIG_SEL	20	/* User code with executable stack */
+#define	NGDT		21
 
 /*
  * Entries in the Local Descriptor Table (LDT)
@@ -266,6 +299,7 @@ void idt_vec_free __P((int));
 #define	LUCODE_SEL	2	/* User code descriptor */
 #define	LUDATA_SEL	3	/* User data descriptor */
 #define	LSOL26CALLS_SEL	4	/* Solaris 2.6 system call gate */
+#define	LUCODEBIG_SEL	5	/* User code with executable stack */
 #define	LBSDICALLS_SEL	16	/* BSDI system call gate */
 #define	NLDT		17
 

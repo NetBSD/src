@@ -1,4 +1,4 @@
-/* $NetBSD: bus.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: bus.c,v 1.2.14.1 2004/08/03 10:30:47 skrll Exp $ */
 /*-
  * Copyright (c) 1999, 2000 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * bus.c - bus space functions for Archimedes I/O bus
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.2.14.1 2004/08/03 10:30:47 skrll Exp $");
+
 #include <sys/param.h>
-
-__RCSID("$NetBSD: bus.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
-
 #include <machine/bus.h>
 #include <machine/memcreg.h>
 

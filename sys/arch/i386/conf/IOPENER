@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.37 2003/04/10 22:06:58 christos Exp $
+#	$NetBSD: IOPENER,v 1.37.2.1 2004/08/03 10:35:47 skrll Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.37 $"
+#ident 		"IOPENER-$Revision: 1.37.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -17,8 +17,6 @@ options 	I586_CPU
 # CPU-related options.
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-options 	DUMMY_NOPS
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -47,7 +45,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -69,6 +68,7 @@ options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
 options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -143,9 +143,19 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # builtin terminal emulations
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-# different kernel output - see dev/wscons/wsdisplayvar.h
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR=""
+#options 	WS_DEFAULT_MONOATTR=""
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+# customization of console border color
+options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -255,7 +265,23 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci? dev ? function ? flags 0x0000
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
+aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+siside* 	at pci? dev ? function ?	# SiS IDE controllers
+slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -268,7 +294,7 @@ pciide* at pci? dev ? function ? flags 0x0000
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # Network Interfaces
 

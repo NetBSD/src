@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.14 2003/04/10 22:06:51 christos Exp $
+#	$NetBSD: P4032,v 1.14.2.1 2004/08/03 10:31:02 skrll Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.14 $"
+#ident 		"P4032-$Revision: 1.14.2.1 $"
 
 maxusers 32
 
@@ -20,8 +20,6 @@ options 	ALGOR_P4032	# Algorithmics P-4032
 # that doesn't provide environment variables properly.
 #options 	MEMSIZE=48		# memory size, in MB
 #options 	ETHADDR="\"00:40:bc:03:00:6c\""
-
-options 	MIPS3_L2CACHE_ABSENT	# No L2 cache on this machine
 
 # Standard system options
 options 	KTRACE			# System call tracing support
@@ -66,6 +64,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_16
 
 # System V-like message queues
 options 	SYSVMSG
@@ -91,6 +90,7 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	PCMCIAVERBOSE
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -148,10 +148,23 @@ pci*	at	vtpbc?
 #mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 #ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #ohci*	at	pci? dev ? function ?		# USB Open Host Controller
-#pciide* at	pci? dev ? function ?		# PCI IDE controllers
+#pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+#acardide* at pci? dev ? function ?		# Acard IDE controllers
+#aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+#artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
+#cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
+#cypide* at pci? dev ? function ?		# Cypress IDE controllers
+#hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
+#optiide* at pci? dev ? function ?		# Opti IDE controllers
+#piixide* at pci? dev ? function ?		# Intel IDE controllers
+#pdcide* at pci? dev ? function ?		# Promise IDE controllers
+#satalink* at pci? dev ? function ?		# SiI SATALink controllers
+#siside* at pci? dev ? function ?		# SiS IDE controllers
+#slide* at pci? dev ? function ?		# Symphony Labs IDE controllers
+#viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 #pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-#rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+#rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 #sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 #sv*	at	pci? dev ? function ?		# S3 SonicVibes
 #tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
@@ -201,13 +214,14 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 #st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
-# ST506/ESDI/IDE devices
-#wd*	at	pciide? channel ?
-#wd*	at	wdc? drive ?
+# ATA (IDE) bus support
+#atabus* at ata?
+
+# IDE drives
+#wd*	at	atabus? drive ?
 
 # ATAPI bus support
-#atapibus* at	pciide? channel ?
-#atapibus* at	wdc?
+#atapibus* at	atapi?
 
 # ATAPI devices
 #sd*	at	atapibus? drive ?		# ATAPI disk devices
@@ -251,7 +265,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
+#atapibus* at umass?
 #scsibus* at umass? channel ?
 
 # USB Ethernet adapters

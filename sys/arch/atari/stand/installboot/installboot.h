@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.6 2000/09/24 12:32:33 jdolecek Exp $	*/
+/*	$NetBSD: installboot.h,v 1.6.24.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -31,6 +31,8 @@
  */
 
 #define	PATH_MDEC	"/usr/mdec/"
+#define	PATH_STD	"std/"
+#define	PATH_MILAN	"milan/"
 #define	PATH_NVRAM	"/dev/nvram"
 #define	NVRAM_BOOTPREF	1
 #define	BOOTPREF_NETBSD	0x20

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.4 2002/10/01 21:04:59 scw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.4.6.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -70,6 +70,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.4.6.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

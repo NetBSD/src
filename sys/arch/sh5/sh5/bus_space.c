@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2002/10/24 13:56:45 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.6.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -75,6 +75,9 @@
  * Implementation of bus_space for sh5.
  * Derived from the mvme68k bus_space implementation.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4.6.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +311,7 @@ _bus_space_alloc(void *cookie, bus_addr_t reg_start, bus_addr_t reg_end,
     int flags, bus_addr_t *addrp, bus_space_handle_t *bushp)
 {
 
-	/* Not required for the cpu bus */
+	/* Not required for the CPU bus */
 	return (EIO);
 }
 

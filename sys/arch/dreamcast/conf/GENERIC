@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36 2003/06/14 16:28:32 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.36.2.1 2004/08/03 10:33:53 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -36,6 +36,7 @@ options 	SYSTRACE	# system call vetting via sistrace(1)
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -45,6 +46,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -54,7 +56,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB			# remote debugger
 #options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=194000
+options 	SYMTAB_SPACE=204800
 #options 	SYSCALL_DEBUG
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
@@ -113,6 +115,19 @@ options 	INET6		# IPV6
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
@@ -167,6 +182,9 @@ ukphy*		at mii? phy ?
 
 mbe*		at g2bus?			# SEGA LAN Adapter
 
+aica*		at g2bus?			# AICA Sound Processing Unit
+audio*		at aica?
+
 #pseudo-device	cgd		2	# cryptographic disk devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		2	# disk-like interface to files
@@ -193,3 +211,5 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

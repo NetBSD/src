@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49 2003/06/29 22:28:37 fvdl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.49.2.1 2004/08/03 10:37:47 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.1 2004/08/03 10:37:47 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -175,39 +178,39 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 		*(struct frame *)curlwp->l_md.md_regs = *f;
 	else {
 		/* Synthetic full scale register context when trap happens */
-		tfp[TF_AST] = f->f_regs[AST];
-		tfp[TF_V0] = f->f_regs[V0];
-		tfp[TF_V1] = f->f_regs[V1];
-		tfp[TF_A0] = f->f_regs[A0];
-		tfp[TF_A1] = f->f_regs[A1];
-		tfp[TF_A2] = f->f_regs[A2];
-		tfp[TF_A3] = f->f_regs[A3];
-		tfp[TF_T0] = f->f_regs[T0];
-		tfp[TF_T1] = f->f_regs[T1];
-		tfp[TF_T2] = f->f_regs[T2];
-		tfp[TF_T3] = f->f_regs[T3];
-		tfp[TF_TA0] = f->f_regs[TA0];
-		tfp[TF_TA1] = f->f_regs[TA1];
-		tfp[TF_TA2] = f->f_regs[TA2];
-		tfp[TF_TA3] = f->f_regs[TA3];
-		tfp[TF_T8] = f->f_regs[T8];
-		tfp[TF_T9] = f->f_regs[T9];
-		tfp[TF_RA] = f->f_regs[RA];
-		tfp[TF_SR] = f->f_regs[SR];
-		tfp[TF_MULLO] = f->f_regs[MULLO];
-		tfp[TF_MULHI] = f->f_regs[MULHI];
-		tfp[TF_EPC] = f->f_regs[PC];
-		kdbaux[0] = f->f_regs[S0];
-		kdbaux[1] = f->f_regs[S1];
-		kdbaux[2] = f->f_regs[S2];
-		kdbaux[3] = f->f_regs[S3];
-		kdbaux[4] = f->f_regs[S4];
-		kdbaux[5] = f->f_regs[S5];
-		kdbaux[6] = f->f_regs[S6];
-		kdbaux[7] = f->f_regs[S7];
-		kdbaux[8] = f->f_regs[SP];
-		kdbaux[9] = f->f_regs[S8];
-		kdbaux[10] = f->f_regs[GP];
+		tfp[TF_AST] = f->f_regs[_R_AST];
+		tfp[TF_V0] = f->f_regs[_R_V0];
+		tfp[TF_V1] = f->f_regs[_R_V1];
+		tfp[TF_A0] = f->f_regs[_R_A0];
+		tfp[TF_A1] = f->f_regs[_R_A1];
+		tfp[TF_A2] = f->f_regs[_R_A2];
+		tfp[TF_A3] = f->f_regs[_R_A3];
+		tfp[TF_T0] = f->f_regs[_R_T0];
+		tfp[TF_T1] = f->f_regs[_R_T1];
+		tfp[TF_T2] = f->f_regs[_R_T2];
+		tfp[TF_T3] = f->f_regs[_R_T3];
+		tfp[TF_TA0] = f->f_regs[_R_TA0];
+		tfp[TF_TA1] = f->f_regs[_R_TA1];
+		tfp[TF_TA2] = f->f_regs[_R_TA2];
+		tfp[TF_TA3] = f->f_regs[_R_TA3];
+		tfp[TF_T8] = f->f_regs[_R_T8];
+		tfp[TF_T9] = f->f_regs[_R_T9];
+		tfp[TF_RA] = f->f_regs[_R_RA];
+		tfp[TF_SR] = f->f_regs[_R_SR];
+		tfp[TF_MULLO] = f->f_regs[_R_MULLO];
+		tfp[TF_MULHI] = f->f_regs[_R_MULHI];
+		tfp[TF_EPC] = f->f_regs[_R_PC];
+		kdbaux[0] = f->f_regs[_R_S0];
+		kdbaux[1] = f->f_regs[_R_S1];
+		kdbaux[2] = f->f_regs[_R_S2];
+		kdbaux[3] = f->f_regs[_R_S3];
+		kdbaux[4] = f->f_regs[_R_S4];
+		kdbaux[5] = f->f_regs[_R_S5];
+		kdbaux[6] = f->f_regs[_R_S6];
+		kdbaux[7] = f->f_regs[_R_S7];
+		kdbaux[8] = f->f_regs[_R_SP];
+		kdbaux[9] = f->f_regs[_R_S8];
+		kdbaux[10] = f->f_regs[_R_GP];
 	}
 
 	return (1);
@@ -232,39 +235,39 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 		*f = *(struct frame *)curlwp->l_md.md_regs;
 	else {
 		/* Synthetic full scale register context when trap happens */
-		f->f_regs[AST] = tfp[TF_AST];
-		f->f_regs[V0] = tfp[TF_V0];
-		f->f_regs[V1] = tfp[TF_V1];
-		f->f_regs[A0] = tfp[TF_A0];
-		f->f_regs[A1] = tfp[TF_A1];
-		f->f_regs[A2] = tfp[TF_A2];
-		f->f_regs[A3] = tfp[TF_A3];
-		f->f_regs[T0] = tfp[TF_T0];
-		f->f_regs[T1] = tfp[TF_T1];
-		f->f_regs[T2] = tfp[TF_T2];
-		f->f_regs[T3] = tfp[TF_T3];
-		f->f_regs[TA0] = tfp[TF_TA0];
-		f->f_regs[TA1] = tfp[TF_TA1];
-		f->f_regs[TA2] = tfp[TF_TA2];
-		f->f_regs[TA3] = tfp[TF_TA3];
-		f->f_regs[T8] = tfp[TF_T8];
-		f->f_regs[T9] = tfp[TF_T9];
-		f->f_regs[RA] = tfp[TF_RA];
-		f->f_regs[SR] = tfp[TF_SR];
-		f->f_regs[MULLO] = tfp[TF_MULLO];
-		f->f_regs[MULHI] = tfp[TF_MULHI];
-		f->f_regs[PC] = tfp[TF_EPC];
-		f->f_regs[S0] = kdbaux[0];
-		f->f_regs[S1] = kdbaux[1];
-		f->f_regs[S2] = kdbaux[2];
-		f->f_regs[S3] = kdbaux[3];
-		f->f_regs[S4] = kdbaux[4];
-		f->f_regs[S5] = kdbaux[5];
-		f->f_regs[S6] = kdbaux[6];
-		f->f_regs[S7] = kdbaux[7];
-		f->f_regs[SP] = kdbaux[8];
-		f->f_regs[S8] = kdbaux[9];
-		f->f_regs[GP] = kdbaux[10];
+		f->f_regs[_R_AST] = tfp[TF_AST];
+		f->f_regs[_R_V0] = tfp[TF_V0];
+		f->f_regs[_R_V1] = tfp[TF_V1];
+		f->f_regs[_R_A0] = tfp[TF_A0];
+		f->f_regs[_R_A1] = tfp[TF_A1];
+		f->f_regs[_R_A2] = tfp[TF_A2];
+		f->f_regs[_R_A3] = tfp[TF_A3];
+		f->f_regs[_R_T0] = tfp[TF_T0];
+		f->f_regs[_R_T1] = tfp[TF_T1];
+		f->f_regs[_R_T2] = tfp[TF_T2];
+		f->f_regs[_R_T3] = tfp[TF_T3];
+		f->f_regs[_R_TA0] = tfp[TF_TA0];
+		f->f_regs[_R_TA1] = tfp[TF_TA1];
+		f->f_regs[_R_TA2] = tfp[TF_TA2];
+		f->f_regs[_R_TA3] = tfp[TF_TA3];
+		f->f_regs[_R_T8] = tfp[TF_T8];
+		f->f_regs[_R_T9] = tfp[TF_T9];
+		f->f_regs[_R_RA] = tfp[TF_RA];
+		f->f_regs[_R_SR] = tfp[TF_SR];
+		f->f_regs[_R_MULLO] = tfp[TF_MULLO];
+		f->f_regs[_R_MULHI] = tfp[TF_MULHI];
+		f->f_regs[_R_PC] = tfp[TF_EPC];
+		f->f_regs[_R_S0] = kdbaux[0];
+		f->f_regs[_R_S1] = kdbaux[1];
+		f->f_regs[_R_S2] = kdbaux[2];
+		f->f_regs[_R_S3] = kdbaux[3];
+		f->f_regs[_R_S4] = kdbaux[4];
+		f->f_regs[_R_S5] = kdbaux[5];
+		f->f_regs[_R_S6] = kdbaux[6];
+		f->f_regs[_R_S7] = kdbaux[7];
+		f->f_regs[_R_SP] = kdbaux[8];
+		f->f_regs[_R_S8] = kdbaux[9];
+		f->f_regs[_R_GP] = kdbaux[10];
 	}
 }
 

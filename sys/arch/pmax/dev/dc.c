@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.74 2003/06/29 22:28:45 fvdl Exp $	*/
+/*	$NetBSD: dc.c,v 1.74.2.1 2004/08/03 10:39:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.74 2003/06/29 22:28:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.74.2.1 2004/08/03 10:39:10 skrll Exp $");
 
 /*
  * devDC7085.c --
@@ -154,7 +150,7 @@ static int	dc_timer;		/* true if timer started */
  * Pdma structures for fast output code
  */
 
-struct speedtab dcspeedtab[] = {
+const struct speedtab dcspeedtab[] = {
 	{ 0,	0,	},
 	{ 50,	LPR_B50    },
 	{ 75,	LPR_B75    },
@@ -206,6 +202,8 @@ static struct consdev dccons = {
 	NULL, NULL, dcGetc, dcPutc, dcPollc, NULL, NULL, NULL,
 	NODEV, CN_REMOTE
 };
+
+static boolean_t dc_getc_dotimeout;
 
 void
 dc_cnattach(addr, line)
@@ -331,13 +329,15 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	sc->dc_flags = 0;
 
 	switch (systype) {
-	  case DS_PMAX:
-	  case DS_3MAX:
+	case DS_PMAX:
+	case DS_3MAX:
 		sc->dc_flags |= DC_KBDMOUSE;
 		break;
-	  case DS_MIPSMATE:
+
+	case DS_MIPSMATE:
 		break;
-	  default:
+
+	default:
 		/* XXX error?? */
 		break;
 	}
@@ -453,7 +453,9 @@ dc_mouse_init(sc, dev)
 	 * mouse tracking required by Xservers.
 	 */
 	DELAY(10000);
+	dc_getc_dotimeout = TRUE;
 	lk_mouseinit(ctty.t_dev, dcPutc, dcGetc);
+	dc_getc_dotimeout = FALSE;
 	DELAY(10000);
 
 	splx(s);
@@ -705,7 +707,6 @@ dcparam(tp, t)
 	struct termios *t;
 {
 	struct dc_softc *sc;
-	dcregs *dcaddr;
 
 
 	/*
@@ -713,7 +714,6 @@ dcparam(tp, t)
 	 * cold_dcparam() for argument checking and execution.
 	 */
 	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
-	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
 	return (cold_dcparam(tp, t, sc));
 
 }
@@ -1020,12 +1020,11 @@ dcmctl(dev, bits, how)
 	struct dc_softc *sc;
 	dcregs *dcaddr;
 	int line, mbits;
-	int b, s;
+	int s;
 	int tcr, msr;
 
 	line = DCLINE(dev);
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
-	b = 1 << line;
 	dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
 	s = spltty();
 	/* only channel 2 has modem control on a DECstation 2100/3100 */
@@ -1219,9 +1218,7 @@ dcGetc(dev)
 	dev_t dev;
 {
 	dcregs *dcaddr;
-	int c;
-	int line;
-	int s;
+	int s, c, line, timeout;
 
 	line = DCLINE(dev);
 	if (cold && dc_cons_addr) {
@@ -1234,13 +1231,21 @@ dcGetc(dev)
 	if (!dcaddr)
 		return (0);
 	s = spltty();
+	timeout = 500000;
 	for (;;) {
-		if (!(dcaddr->dc_csr & CSR_RDONE))
+		if (!(dcaddr->dc_csr & CSR_RDONE)) {
+			DELAY(10);
+			if (dc_getc_dotimeout && --timeout == 0) {
+				splx(s);
+				return (-1);
+			}
 			continue;
+		}
 		c = dcaddr->dc_rbuf;
 		DELAY(10);
 		if (((c >> 8) & 03) == line)
 			break;
+		timeout = 500000;
 	}
 	splx(s);
 	return (c & 0xff);

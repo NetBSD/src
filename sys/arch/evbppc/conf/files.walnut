@@ -1,12 +1,11 @@
-#	$NetBSD: files.walnut,v 1.2 2003/03/04 07:50:57 matt Exp $
+#	$NetBSD: files.walnut,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $
 #
 # walnut-specific configuration info
 
 file	arch/evbppc/walnut/autoconf.c
 file	arch/evbppc/walnut/consinit.c
 file	arch/evbppc/walnut/machdep.c
-
-#file	arch/evbppc/evbppc/bus_dma.c
+file	arch/powerpc/ibm4xx/intr.c
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks
@@ -52,22 +51,10 @@ device	todclock
 attach	todclock at todservice
 file	arch/evbppc/walnut/dev/todclock.c	todclock	needs-count
 
-device	dsrtc: todservice
-attach	dsrtc at pbus
-file	arch/evbppc/walnut/dev/ds1743.c		dsrtc
+device	ds1743rtc: todservice
+attach	ds1743rtc at pbus
+file	arch/evbppc/walnut/dev/ds1743.c		ds1743rtc
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 attach	pckbc at pbus with pckbc_pbus
 file	arch/evbppc/walnut/dev/pckbc_pbus.c	pckbc_pbus
-
-#
-# Machine-independent CardBus drivers
-#
-
-# XXX dev/pcmcia needs fdc
-device fdc {drive = -1}
-
-include "dev/cardbus/files.cardbus"
-include "dev/pcmcia/files.pcmcia"
-
-file arch/macppc/macppc/rbus_machdep.c		cardbus

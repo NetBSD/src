@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30 2003/06/06 10:07:07 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.2.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -33,6 +33,10 @@
 /*
  * Interface to new debugger.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.1 2004/08/03 10:32:29 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
@@ -60,7 +64,7 @@
 #define db_printf	printf
 #endif
 
-static int nil;
+static long nil;
 
 int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
@@ -89,9 +93,9 @@ const struct db_variable db_regs[] = {
 	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, },
 	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, },
 	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, },
-	{ "und_sp", (long *)&nil, db_access_und_sp, },
-	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
-	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
+	{ "und_sp", &nil, db_access_und_sp, },
+	{ "abt_sp", &nil, db_access_abt_sp, },
+	{ "irq_sp", &nil, db_access_irq_sp, },
 };
 
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
@@ -139,8 +143,8 @@ kdb_trap(int type, db_regs_t *regs)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
-		db_printf("kernel: trap");
 		if (db_recover != 0) {
+			/* This will longjmp back into db_command_loop() */
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}
@@ -228,6 +232,9 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 	vaddr_t pgva;
 	size_t limit, savesize;
 	char *dst;
+
+	/* XXX: gcc */
+	oldpte = 0;
 
 	if ((savesize = size) == 0)
 		return;

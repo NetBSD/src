@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2002/10/02 05:26:48 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12.6.1 2004/08/03 10:35:17 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -54,6 +54,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.6.1 2004/08/03 10:35:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

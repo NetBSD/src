@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.1 2002/06/05 01:04:23 fredette Exp $	*/
+/*	$NetBSD: reg.h,v 1.1.10.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -166,7 +166,7 @@
 #define	HPPA_NREGS	(32)
 #define	HPPA_NFPREGS	(33)	/* 33rd is used for r0 in fpemul */
 
-#ifndef _LOCORE
+#ifndef __ASSEMBLER__
 
 struct reg {
 	u_int32_t r_regs[HPPA_NREGS];
@@ -176,6 +176,6 @@ struct reg {
 struct fpreg {
 	u_int64_t fpr_regs[HPPA_NFPREGS];
 };
-#endif /* !_LOCORE */
+#endif /* !__ASSEMBLER__ */
 
 #endif /* _HPPA_REG_H_ */

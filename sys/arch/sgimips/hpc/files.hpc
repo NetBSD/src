@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.4 2002/03/13 13:12:27 simonb Exp $
+# $NetBSD: files.hpc,v 1.4.12.1 2004/08/03 10:40:06 skrll Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
@@ -14,9 +14,17 @@ device	wdsc: sbic, scsi, hpcdma
 attach	wdsc at hpc
 file	arch/sgimips/hpc/wdsc.c		wdsc
 
+device	dpclock
+attach	dpclock at hpc
+file	arch/sgimips/hpc/dpclock_hpc.c	dpclock
+
 device	dsclock
 attach	dsclock at hpc
-file	arch/sgimips/hpc/dsclock_hpc.c
+file	arch/sgimips/hpc/dsclock_hpc.c	dsclock
+
+device	haltwo: audiobus, auconv, mulaw
+attach	haltwo at hpc
+file	arch/sgimips/hpc/haltwo.c	haltwo
 
 attach	zsc at hpc with zsc_hpc
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.16 2003/03/18 16:40:24 matt Exp $
+#	$NetBSD: files.sandpoint,v 1.16.2.1 2004/08/03 10:39:55 skrll Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -79,7 +79,7 @@ file	arch/sandpoint/isa/isaclock.c		isa
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma

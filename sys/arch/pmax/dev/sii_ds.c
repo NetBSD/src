@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.20 2002/10/02 04:15:08 thorpej Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.20.6.1 2004/08/03 10:39:12 skrll Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,6 +14,9 @@
  *
  * this driver contributed by Jonathan Stone
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.20.6.1 2004/08/03 10:39:12 skrll Exp $");
 
 #include "sii.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.5 2003/01/22 04:32:17 rafal Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.5.2.1 2004/08/03 10:37:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * have enough definitions to get some svr4_* files needed by COMPAT_IRIX
  * to build.  
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.5.2.1 2004/08/03 10:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,4 +96,3 @@ svr4_getmcontext(l, mc, flags)
 	printf("Warning: svr4_getmcontext() called\n");
 	return NULL;
 }
-

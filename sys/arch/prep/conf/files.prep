@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.42 2003/03/18 16:40:22 matt Exp $
+#	$NetBSD: files.prep,v 1.42.2.1 2004/08/03 10:39:48 skrll Exp $
 #
 # prep-specific configuration info
 #
@@ -8,7 +8,8 @@ maxusers 2 8 64
 
 defflag	opt_residual.h	RESIDUAL_DATA_DUMP
 
-defflag	opt_platform.h	PLATFORM_IBM_6040
+defflag	opt_platform.h	PLATFORM_IBM_6015
+			PLATFORM_IBM_6040
 			PLATFORM_IBM_6050
 			PLATFORM_IBM_7248
 			PLATFORM_IBM_7043_140
@@ -16,6 +17,7 @@ defflag	opt_platform.h	PLATFORM_IBM_6040
 
 # IBM
 file	arch/prep/prep/ibm_machdep.c
+file	arch/prep/prep/ibm_6015.c	platform_ibm_6015
 file	arch/prep/prep/ibm_6040.c	platform_ibm_6040
 file	arch/prep/prep/ibm_6050.c	platform_ibm_6050
 file	arch/prep/prep/ibm_7248.c	platform_ibm_7248
@@ -40,7 +42,6 @@ file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 
 # General files
-file	dev/clock_subr.c
 file	dev/cons.c
 
 #
@@ -120,9 +121,8 @@ file	arch/prep/isa/isapnp_machdep.c	isapnp
 # clock
 #
 # mc146818 and compat.
-device	mcclock
+device	mcclock: mc146818
 attach	mcclock at isa with mcclock_isa
-file	arch/prep/prep/mcclock.c	mcclock
 file	arch/prep/isa/mcclock_isa.c	mcclock_isa
 
 # mk48t18 and compat.
@@ -130,18 +130,7 @@ device	mkclock: mk48txx
 attach	mkclock at isa with mkclock_isa
 file	arch/prep/isa/mkclock_isa.c	mkclock_isa
 
-# attribute used to represent the "keyboard controller"
-# XXX should be a real device
-define pckbcport { [irq = -1], [port = -1] }
-
-# PC console support a la "pccons"
-device	pc: tty, pckbcport
-attach	pc at isa
-device	pcconskbd
-attach	pcconskbd at pckbc
-file	arch/prep/isa/pccons.c		pc | pcconskbd needs-flag
-
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # ISA speaker generates keyboard beep
 device	isabeep
@@ -157,9 +146,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 # Floppy disk controller
 device	fd: disk
 attach	fd at fdc
-
-# Game adapter (joystick)
-file	arch/prep/isa/joy_timer.c	joy
 
 device	paud { }: audiobus, isadma, ad1848, auconv
 attach	paud at isa with paud_isa
