@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.41 2003/06/28 14:22:21 darrenr Exp $	*/
+/*	$NetBSD: file.h,v 1.42 2003/06/29 05:43:56 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -49,11 +49,11 @@
 MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
 
-struct proc;
-struct uio;
 struct iovec;
-struct stat;
 struct knote;
+struct lwp;
+struct stat;
+struct uio;
 
 /*
  * Kernel descriptor table.
