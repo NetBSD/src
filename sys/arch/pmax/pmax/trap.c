@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 1995/04/28 21:48:11 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 1995/04/28 22:50:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -972,7 +972,8 @@ kmin_intr(mask, pc, statusReg, causeReg)
 	static int user_warned = 0;
 
 	old_mask = *imaskp & kmin_tc3_imask;
-	*imaskp = old_mask;
+	*imaskp = kmin_tc3_imask |
+		 (KMIN_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
 
 	if (mask & MACH_INT_MASK_4)
 		(*callv->_halt)((int *)0, 0);
@@ -1063,7 +1064,8 @@ xine_intr(mask, pc, statusReg, causeReg)
 	int temp;
 
 	old_mask = *imaskp & xine_tc3_imask;
-	*imaskp = old_mask;
+	*imaskp = xine_tc3_imask |
+		 (XINE_IM0 & ~(XINE_INTR_TC_0|XINE_INTR_TC_1));
 
 	if (mask & MACH_INT_MASK_4)
 		(*callv->_halt)((int *)0, 0);
@@ -1165,8 +1167,6 @@ kn03_intr(mask, pc, statusReg, causeReg)
 	static int user_warned = 0;
 
 	old_mask = *imaskp & kn03_tc3_imask;
-	*imaskp = old_mask;
-
 	/*
 	 * Enable all the `useful' interrupts, but only enable
 	 * interrupts from turbochannel slots that have been explicitly
@@ -1174,6 +1174,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 	 */
 	*imaskp = kn03_tc3_imask |
 		 (KN03_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
+
 	if (mask & MACH_INT_MASK_4)
 		(*callv->_halt)((int *)0, 0);
 
