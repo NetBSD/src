@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.7.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.7.2.2 2001/09/04 02:58:05 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.7.2.1 2001/08/08 16:13:44 nathanw Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.7.2.2 2001/09/04 02:58:05 nathanw Exp $");
 #endif
 #endif
  
@@ -341,6 +341,8 @@ clnt_vc_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 
 	_DIAGASSERT(h != NULL);
 
+	ct = (struct ct_data *) h->cl_private;
+
 #ifdef _REENTRANT
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
@@ -351,7 +353,6 @@ clnt_vc_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	mutex_unlock(&clnt_fd_lock);
 #endif
 
-	ct = (struct ct_data *) h->cl_private;
 	xdrs = &(ct->ct_xdrs);
 	msg_x_id = &ct->ct_u.ct_mcalli;
 
@@ -640,7 +641,7 @@ clnt_vc_destroy(cl)
 {
 	struct ct_data *ct;
 #ifdef _REENTRANT
-	int ct_fd = ct->ct_fd;
+	int ct_fd;
 	sigset_t mask;
 #endif
 	sigset_t newmask;
@@ -648,6 +649,7 @@ clnt_vc_destroy(cl)
 	_DIAGASSERT(cl != NULL);
 
 	ct = (struct ct_data *) cl->cl_private;
+	ct_fd = ct->ct_fd;
 
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
