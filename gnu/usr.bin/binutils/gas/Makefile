@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/13 03:31:56 tv Exp $
-
-TOP=		${.CURDIR}/../../..
-DIST=		${TOP}/dist/toolchain
+#	$NetBSD: Makefile,v 1.4 2002/09/19 03:09:33 lukem Exp $
 
 .include <bsd.own.mk>
+
+TOP=		${NETBSDSRCDIR}/gnu
+DIST=		${TOP}/dist/toolchain
+
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
 PROG=		as

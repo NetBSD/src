@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2002/02/03 00:50:36 perry Exp $
+#	$NetBSD: Makefile,v 1.6 2002/09/19 03:09:48 lukem Exp $
 
 # This Makefile is called only by src/etc, not by usr.sbin/postfix/Makefile
 
-DIST=	${.CURDIR}/../../../dist/postfix/conf
+.include <bsd.own.mk>
+
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/conf
 .PATH:	${DIST}
 
 BINDIR=	${PFIX_ETCDIR}

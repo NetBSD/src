@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 2002/02/02 23:21:46 perry Exp $
+#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:45 lukem Exp $
+
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
+
+.include <bsd.own.mk>
 
 LIB=	global
 
-DIST=	${.CURDIR}/../../../dist/postfix/src/${LIB}
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${LIB}
 .PATH:	${DIST}
 
 SRCS	= been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
@@ -28,10 +34,6 @@ SRCS	= been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
 	verp_sender.c match_parent_style.c
 # IPv6
 #SRCS+=	wildcard_inet_addr.c
-
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
 
 # only needed during build
 libinstall::

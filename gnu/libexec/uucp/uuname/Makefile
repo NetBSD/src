@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:01 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/19 03:09:32 lukem Exp $
 #
 # Makefile for uuname
+
+NOMAN=		# defined
 
 BINDIR=		$(bindir)
 BINOWN=		$(owner)
@@ -12,8 +14,6 @@ LDADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 DPADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-DVERSION=\"$(VERSION)\"
-
-NOMAN=		# defined
 
 .include <bsd.prog.mk>
 .PATH: $(.CURDIR)/../common_sources

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/04/24 08:18:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2002/09/19 03:09:43 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ MAN=		info.5 texinfo.5
 
 TEXINFO=	info-stnd.texi info.texi texinfo.txi
 
-DIST=		${.CURDIR}/../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 INFOFLAGS=	-I${DIST}/texinfo/doc
 
 .PATH: ${DIST}/texinfo ${DIST}/texinfo/doc ${DIST}/texinfo/po

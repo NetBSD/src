@@ -1,6 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 2001/12/12 01:49:00 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2002/09/19 03:09:31 lukem Exp $
 #
 # This subdirectory contains Unix specific support functions.
+
+NOLINT=		# defined
+NOMAN=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 LIB=		unix
 SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
@@ -15,11 +20,6 @@ SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
 		ftw.c corrup.c pipe.c priv.c uid.c tli.c tcp.c sync.c failed.c
 CPPFLAGS+=	-I$(.CURDIR)/../common_sources \
 		-DOWNER=\"$(owner)\" -DSBINDIR=\"$(sbindir)\"
-
-NOMAN=		# defined
-NOPROFILE=	# defined
-NOPIC=		# defined
-NOLINT=		# defined
 
 # only needed during build
 libinstall::

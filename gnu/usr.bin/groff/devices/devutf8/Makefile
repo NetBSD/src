@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/04/19 14:33:07 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/19 03:09:40 lukem Exp $
 
 .include "../../Makefile.path"
 
-.PATH:		${IIDIST}/font/devutf8
+.PATH:		${IDIST}/font/devutf8
 
 DEVICE=		utf8
 FONTFILES=	$(FONTS) DESC

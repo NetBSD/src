@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2000/04/28 06:20:01 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2002/09/19 03:09:55 lukem Exp $
 
-DIST=	${.CURDIR}/../../../../dist
+.include <bsd.own.mk>
+
+DIST=	${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/sendmail/doc/intro
 
 DIR=	smm/09.sendmail
