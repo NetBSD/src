@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2003/02/27 04:10:36 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.14 2003/03/28 23:10:33 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.13 2003/02/27 04:10:36 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.14 2003/03/28 23:10:33 atatat Exp $");
 #endif
 
 #include <string.h>
@@ -56,6 +56,8 @@ static void dump_vm_map(kvm_t *, pid_t, struct kinfo_proc2 *, struct kbit *,
 	struct kbit *, char *);
 static size_t dump_vm_map_entry(kvm_t *, pid_t, struct kinfo_proc2 *,
 	struct kbit *, struct kbit *, int);
+static void dump_amap(kvm_t *, struct kbit *);
+static void dump_vm_anon(kvm_t *, struct vm_anon **, int);
 static char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	struct kbit *, struct kbit *);
 static int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
@@ -237,7 +239,11 @@ dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
 			end = D(vm_map_entry, vm_map_entry)->start;
 		else if (verbose > 1 &&
 		    end != D(vm_map_entry, vm_map_entry)->start)
-			printf("%*s*\n", indent(2), "");
+			printf("%*s[%lu pages / %luK]\n", indent(2), "",
+			       (D(vm_map_entry, vm_map_entry)->start - end) /
+			       page_size,
+			       (D(vm_map_entry, vm_map_entry)->start - end) /
+			       1024);
 		total += (*dump_vm_map_entry)(kd, pid, proc, vmspace,
 		    vm_map_entry, 0);
 
@@ -310,6 +316,16 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		       vme->flags,
 		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
 		       vme->flags & UVM_MAP_KMEM ? " KMEM" : "");
+	}
+
+	if ((debug & PRINT_VM_AMAP) && (vme->aref.ar_amap != NULL)) {
+		struct kbit akbit, *amap;
+
+		amap = &akbit;
+		P(amap) = vme->aref.ar_amap;
+		S(amap) = sizeof(struct vm_amap);
+		KDEREF(kd, amap);
+		dump_amap(kd, amap);
 	}
 
 	if (ishead)
@@ -527,6 +543,139 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 	}
 
 	return (sz);
+}
+
+static void
+dump_amap(kvm_t *kd, struct kbit *amap)
+{
+	struct vm_anon **am_anon;
+	int *am_slots;
+	int *am_bckptr;
+	int *am_ppref;
+	size_t i, r, l, e;
+
+	printf("%*s  amap %p = { am_l = <struct simplelock>, am_ref = %d, "
+	       "am_flags = %x,\n"
+	       "%*s      am_maxslot = %d, am_nslot = %d, am_nused = %d, "
+	       "am_slots = %p,\n"
+	       "%*s      am_bckptr = %p, am_anon = %p, am_ppref = %p }\n",
+	       indent(2), "",
+	       P(amap),
+	       D(amap, amap)->am_ref,
+	       D(amap, amap)->am_flags,
+	       indent(2), "",
+	       D(amap, amap)->am_maxslot,
+	       D(amap, amap)->am_nslot,
+	       D(amap, amap)->am_nused,
+	       D(amap, amap)->am_slots,
+	       indent(2), "",
+	       D(amap, amap)->am_bckptr,
+	       D(amap, amap)->am_anon,
+	       D(amap, amap)->am_ppref);
+	
+	if (!(debug & DUMP_VM_AMAP_DATA))
+		return;
+
+	/*
+	 * Assume that sizeof(struct vm_anon *) >= sizeof(size_t) and
+	 * allocate that amount of space.
+	 */
+	l = sizeof(struct vm_anon *) * D(amap, amap)->am_maxslot;
+	am_anon = malloc(l);
+	_KDEREF(kd, (u_long)D(amap, amap)->am_anon, am_anon, l);
+
+	l = sizeof(int) * D(amap, amap)->am_maxslot;
+	am_bckptr = malloc(l);
+	_KDEREF(kd, (u_long)D(amap, amap)->am_bckptr, am_bckptr, l);
+
+	l = sizeof(int) * D(amap, amap)->am_maxslot;
+	am_slots = malloc(l);
+	_KDEREF(kd, (u_long)D(amap, amap)->am_slots, am_slots, l);
+
+	if (D(amap, amap)->am_ppref != NULL &&
+	    D(amap, amap)->am_ppref != PPREF_NONE) {
+		l = sizeof(int) * D(amap, amap)->am_maxslot;
+		am_ppref = malloc(l);
+		_KDEREF(kd, (u_long)D(amap, amap)->am_ppref, am_ppref, l);
+	} else {
+		am_ppref = NULL;
+	}
+
+	printf(" page# %9s  %8s", "am_bckptr", "am_slots");
+	if (am_ppref)
+		printf("  %8s               ", "am_ppref");
+	printf("  %10s\n", "am_anon");
+
+	l = 0;
+	e = verbose > 1 ? D(amap, amap)->am_maxslot : D(amap, amap)->am_nslot;
+	for (i = 0; i < e; i++) {
+		printf("  %4lx", (unsigned long)i);
+
+		if (am_anon[i] || verbose > 1)
+			printf("  %8x", am_bckptr[i]);
+		else
+			printf("  %8s", "-");
+
+		if (i < D(amap, amap)->am_nused || verbose > 1)
+			printf("  %8x", am_slots[i]);
+		else
+			printf("  %8s", "-");
+
+		if (am_ppref) {
+			if (l == 0 || r || verbose > 1)
+				printf("  %8d", am_ppref[i]);
+			else
+				printf("  %8s", "-");
+			r = 0;
+			if (l == 0) {
+				if (am_ppref[i] > 0) {
+					r = am_ppref[i] - 1;
+					l = 1;
+				} else {
+					r = -am_ppref[i] - 1;
+					l = am_ppref[i + 1];
+				}
+				printf("  (%4ld @ %4ld)", (long)l, (long)r);
+				r = (l > 1) ? 1 : 0;
+			}
+			else
+				printf("               ");
+			l--;
+		}
+
+		dump_vm_anon(kd, am_anon, i);
+	}
+
+	free(am_anon);
+	free(am_bckptr);
+	free(am_slots);
+	if (am_ppref)
+		free(am_ppref);
+}
+
+static void
+dump_vm_anon(kvm_t *kd, struct vm_anon **alist, int i)
+{
+
+	printf("  %10p", alist[i]);
+
+	if (debug & PRINT_VM_ANON) {
+		struct kbit kbit, *anon = &kbit;
+
+		A(anon) = (u_long)alist[i];
+		S(anon) = sizeof(struct vm_anon);
+		if (A(anon) == 0) {
+			printf(" = { }\n");
+			return;
+		}
+		else
+			KDEREF(kd, anon);
+
+		printf(" = { an_ref = %d, an_lock = <struct simplelock>, an_nxt/an_page = %p, an_swslot = %d }",
+		       D(anon, anon)->an_ref, D(anon, anon)->u.an_nxt, D(anon, anon)->an_swslot);
+	}
+
+	printf("\n");
 }
 
 static char*

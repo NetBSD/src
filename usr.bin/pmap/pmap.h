@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2003/01/08 20:25:13 atatat Exp $ */
+/*	$NetBSD: pmap.h,v 1.2 2003/03/28 23:10:34 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -91,6 +91,11 @@
 #define UVM_OBJ_IS_DEVICE(uobj)   ((uobj)->pgops == uvm_deviceops)
 #define UVM_OBJ_IS_UBCPAGER(uobj) ((uobj)->pgops == ubc_pager)
 
+/*
+ * stolen from #include <uvm/uvm_amap.h>
+ */
+#define PPREF_NONE ((int *) -1)
+
 /* the size of the object in the kernel */
 #define S(x)	((x)->k_size)
 /* the address of the object in kernel, two forms */
@@ -140,6 +145,8 @@ struct kbit {
 		struct inode inode;
 		struct iso_node iso_node;
 		struct uvm_device uvm_device;
+		struct vm_amap amap;
+		struct vm_anon anon;
 	} k_data;
 };
 #define struct_kbit
