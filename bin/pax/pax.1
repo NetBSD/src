@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.15 1999/03/07 20:28:55 mycroft Exp $
+.\"	$NetBSD: pax.1,v 1.16 1999/03/07 22:40:18 mycroft Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -500,10 +500,8 @@ Link files. (The letter ell).
 In the
 .Em copy
 mode
-.Po
-.Fl r
-.Fl w
-.Pc ,
+.Fl ( r
+.Fl w ) ,
 hard links are made between the source and destination file hierarchies
 whenever possible.
 .It Fl n
@@ -694,11 +692,9 @@ utility when used with the
 .Fl l
 option.
 Otherwise for all the other operational modes
-.Po
-.Em read , write ,
+.Em ( read , write ,
 and
-.Em copy
-.Pc ,
+.Em copy ) ,
 pathnames are written and flushed to
 .Dv standard error
 without a trailing
@@ -993,8 +989,7 @@ pathname created after all the file name modifications have completed.
 .El
 .Pp
 The options that operate on the names of files or archive members
-.Po
-.Fl c ,
+.Fl ( c ,
 .Fl i ,
 .Fl n ,
 .Fl s ,
@@ -1006,8 +1001,7 @@ The options that operate on the names of files or archive members
 .Fl U ,
 .Fl Y ,
 and
-.Fl Z
-.Pc
+.Fl Z )
 interact as follows.
 .Pp
 When extracting files during a
