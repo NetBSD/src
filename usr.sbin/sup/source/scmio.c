@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.9 2001/09/11 03:32:55 itojun Exp $	*/
+/*	$NetBSD: scmio.c,v 1.10 2002/07/10 18:53:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -155,7 +155,7 @@
  **********************************************************************
  */
 
-#include <libc.h>
+#include "libc.h"
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -197,10 +197,10 @@ struct buf {
 } buffers[2];
 struct buf *bufptr;			/* buffer pointer */
 
-static int writedata __P((int, char *));
-static int writeblock __P((int, char *));
-static int readdata __P((int, char *));
-static int readcount __P((int *));
+static int writedata(int, char *);
+static int writeblock(int, char *);
+static int readdata(int, char *);
+static int readcount(int *);
 
 
 /***********************************************

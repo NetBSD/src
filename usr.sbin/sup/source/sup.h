@@ -1,4 +1,4 @@
-/*	$NetBSD: sup.h,v 1.9 2001/06/11 01:50:59 wiz Exp $	*/
+/*	$NetBSD: sup.h,v 1.10 2002/07/10 18:53:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -247,8 +247,4 @@ typedef struct tliststruct TREELIST;
 #define MAXCHILDREN 3			/* maximum number of children allowed
 					   to sup at the same time */
 
-#ifdef __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
+#include <stdarg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.10 2001/09/24 13:22:39 wiz Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.11 2002/07/10 18:54:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -68,9 +68,9 @@ static LIST *gidL[LISTSIZE];
 
 extern COLLECTION *thisC;		/* collection list pointer */
 
-static int Lhash __P((char *));
-static void Linsert __P((LIST **, char *, int));
-static LIST *Llookup __P((LIST **, char *));
+static int Lhash(char *);
+static void Linsert(LIST **, char *, int);
+static LIST *Llookup(LIST **, char *);
 
 /*************************************************
  ***    P R I N T   U P D A T E   T I M E S    ***
@@ -256,13 +256,7 @@ int *uid,*gid,*mode;
  *********************************************/
 
 void
-#ifdef __STDC__
 notify (char *fmt,...)		/* record error message */
-#else
-/*VARARGS*//*ARGSUSED*/
-notify (va_alist)		/* record error message */
-va_dcl
-#endif
 {
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
@@ -270,14 +264,7 @@ va_dcl
 	static FILE *noteF = NULL;	/* mail program on pipe */
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap,fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap,char *);
-#endif
 	if (fmt == NULL) {
 		if (noteF && noteF != stdout)
 			(void) pclose (noteF);

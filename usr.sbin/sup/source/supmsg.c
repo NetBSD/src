@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.8 2001/09/24 13:22:39 wiz Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.9 2002/07/10 18:54:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -53,7 +53,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <libc.h>
+#include "libc.h"
 #include <c.h>
 #include "supcdefs.h"
 #include "supextern.h"
@@ -69,11 +69,11 @@ extern int	pgmversion;		/* my program version */
 extern char	*scmver;		/* scm version of partner */
 extern int	fspid;			/* process id of fileserver */
 
-static int refuseone __P((TREE *, void *));
-static int listone __P((TREE *, void *));
-static int needone __P((TREE *, void *));
-static int denyone __P((TREE *, void *));
-static int writeone __P((TREE *, void *));
+static int refuseone(TREE *, void *);
+static int listone(TREE *, void *);
+static int needone(TREE *, void *);
+static int denyone(TREE *, void *);
+static int writeone(TREE *, void *);
 
 int msgsignon ()
 {
@@ -448,25 +448,13 @@ void *v;
 }
 
 
-#ifdef __STDC__
 int msgrecv (int (*xferfile)(TREE *, va_list),...)
-#else
-/*VARARGS*//*ARGSUSED*/
-int msgrecv (va_alist)
-va_dcl
-#endif
 {
 	va_list args;
 	register int x;
 	register TREE *t = upgradeT;
-#ifdef __STDC__
-	va_start(args,xferfile);
-#else
-	int (*xferfile)(TREE *, void *);
 
-	va_start(args);
-	xferfile = va_arg(args, int (*)(TREE *, void *));
-#endif
+	va_start(args,xferfile);
 	if (server) {
 		x = writemsg (MSGRECV);
 		if (t == NULL) {
