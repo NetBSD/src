@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.1.1.15 2002/10/01 13:40:00 itojun Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.1.1.16 2003/04/03 05:57:36 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
 
 #include "includes.h"
 #include <sys/queue.h>
-RCSID("$OpenBSD: ssh-agent.c,v 1.104 2002/09/12 19:11:52 stevesk Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.108 2003/03/13 11:44:50 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -51,6 +51,8 @@ RCSID("$OpenBSD: ssh-agent.c,v 1.104 2002/09/12 19:11:52 stevesk Exp $");
 #include "authfd.h"
 #include "compat.h"
 #include "log.h"
+#include "readpass.h"
+#include "misc.h"
 
 #ifdef SMARTCARD
 #include "scard.h"
@@ -78,6 +80,7 @@ typedef struct identity {
 	Key *key;
 	char *comment;
 	u_int death;
+	u_int confirm;
 } Identity;
 
 typedef struct {
@@ -102,6 +105,9 @@ int locked = 0;
 char *lock_passwd = NULL;
 
 extern char *__progname;
+
+/* Default lifetime (0 == forever) */
+static int lifetime = 0;
 
 static void
 close_socket(SocketEntry *e)
@@ -154,6 +160,30 @@ lookup_identity(Key *key, int version)
 			return (id);
 	}
 	return (NULL);
+}
+
+/* Check confirmation of keysign request */
+static int
+confirm_key(Identity *id)
+{
+	char *p, prompt[1024];
+	int ret = -1;
+
+	p = key_fingerprint(id->key, SSH_FP_MD5, SSH_FP_HEX);
+	snprintf(prompt, sizeof(prompt), "Allow use of key %s?\n"
+	    "Key fingerprint %s.", id->comment, p);
+	xfree(p);
+	p = read_passphrase(prompt, RP_ALLOW_EOF);
+	if (p != NULL) {
+		/*
+		 * Accept empty responses and responses consisting 
+		 * of the word "yes" as affirmative.
+		 */
+		if (*p == '\0' || *p == '\n' || strcasecmp(p, "yes") == 0)
+			ret = 0;
+		xfree(p);
+	}
+	return (ret);
 }
 
 /* send list of supported public keys to 'client' */
@@ -219,7 +249,7 @@ process_authentication_challenge1(SocketEntry *e)
 		goto failure;
 
 	id = lookup_identity(key, 1);
-	if (id != NULL) {
+	if (id != NULL && (!id->confirm || confirm_key(id) == 0)) {
 		Key *private = id->key;
 		/* Decrypt the challenge using the private key. */
 		if (rsa_private_decrypt(challenge, challenge, private->rsa) <= 0)
@@ -279,7 +309,7 @@ process_sign_request2(SocketEntry *e)
 	key = key_from_blob(blob, blen);
 	if (key != NULL) {
 		Identity *id = lookup_identity(key, 2);
-		if (id != NULL)
+		if (id != NULL && (!id->confirm || confirm_key(id) == 0))
 			ok = key_sign(id->key, &signature, &slen, data, dlen);
 	}
 	key_free(key);
@@ -399,7 +429,7 @@ static void
 process_add_identity(SocketEntry *e, int version)
 {
 	Idtab *tab = idtab_lookup(version);
-	int type, success = 0, death = 0;
+	int type, success = 0, death = 0, confirm = 0;
 	char *type_name, *comment;
 	Key *k = NULL;
 
@@ -450,6 +480,17 @@ process_add_identity(SocketEntry *e, int version)
 		}
 		break;
 	}
+	/* enable blinding */
+	switch (k->type) {
+	case KEY_RSA:
+	case KEY_RSA1:
+		if (RSA_blinding_on(k->rsa, NULL) != 1) {
+			error("process_add_identity: RSA_blinding_on failed");
+			key_free(k);
+			goto send;
+		}
+		break;
+	}
 	comment = buffer_get_string(&e->request, NULL);
 	if (k == NULL) {
 		xfree(comment);
@@ -461,15 +502,21 @@ process_add_identity(SocketEntry *e, int version)
 		case SSH_AGENT_CONSTRAIN_LIFETIME:
 			death = time(NULL) + buffer_get_int(&e->request);
 			break;
+		case SSH_AGENT_CONSTRAIN_CONFIRM:
+			confirm = 1;
+			break;
 		default:
 			break;
 		}
 	}
+	if (lifetime && !death)
+		death = time(NULL) + lifetime;
 	if (lookup_identity(k, version) == NULL) {
 		Identity *id = xmalloc(sizeof(Identity));
 		id->key = k;
 		id->comment = comment;
 		id->death = death;
+		id->confirm = confirm;
 		TAILQ_INSERT_TAIL(&tab->idlist, id, next);
 		/* Increment the number of identities. */
 		tab->nentries++;
@@ -554,6 +601,7 @@ process_add_smartcard_key (SocketEntry *e)
 			id->key = k;
 			id->comment = xstrdup("smartcard key");
 			id->death = 0;
+			id->confirm = 0;
 			TAILQ_INSERT_TAIL(&tab->idlist, id, next);
 			tab->nentries++;
 			success = 1;
@@ -830,7 +878,7 @@ after_select(fd_set *readset, fd_set *writeset)
 					close(sock);
 					break;
 				}
-				if (getuid() != euid) {
+				if ((euid != 0) && (getuid() != euid)) {
 					error("uid mismatch: "
 					    "peer euid %u != uid %u",
 					    (u_int) euid, (u_int) getuid());
@@ -927,13 +975,15 @@ usage(void)
 	fprintf(stderr, "  -k          Kill the current agent.\n");
 	fprintf(stderr, "  -d          Debug mode.\n");
 	fprintf(stderr, "  -a socket   Bind agent socket to given name.\n");
+	fprintf(stderr, "  -t life     Default identity lifetime (seconds).\n");
 	exit(1);
 }
 
 int
 main(int ac, char **av)
 {
-	int sock, c_flag = 0, d_flag = 0, k_flag = 0, s_flag = 0, ch, nalloc;
+	int c_flag = 0, d_flag = 0, k_flag = 0, s_flag = 0;
+	int sock, fd,  ch, nalloc;
 	char *shell, *format, *pidstr, *agentsocket = NULL;
 	fd_set *readsetp = NULL, *writesetp = NULL;
 	struct sockaddr_un sunaddr;
@@ -949,7 +999,7 @@ main(int ac, char **av)
 
 	SSLeay_add_all_algorithms();
 
-	while ((ch = getopt(ac, av, "cdksa:")) != -1) {
+	while ((ch = getopt(ac, av, "cdksa:t:")) != -1) {
 		switch (ch) {
 		case 'c':
 			if (s_flag)
@@ -971,6 +1021,12 @@ main(int ac, char **av)
 			break;
 		case 'a':
 			agentsocket = optarg;
+			break;
+		case 't':
+			if ((lifetime = convtime(optarg)) == -1) {
+				fprintf(stderr, "Invalid lifetime\n");
+				usage();
+			}
 			break;
 		default:
 			usage();
@@ -1095,9 +1151,14 @@ main(int ac, char **av)
 	}
 
 	(void)chdir("/");
-	close(0);
-	close(1);
-	close(2);
+	if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+		/* XXX might close listen socket */
+		(void)dup2(fd, STDIN_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		(void)dup2(fd, STDERR_FILENO);
+		if (fd > 2)
+			close(fd);
+	}
 
 	/* deny core dumps, since memory contains unencrypted private keys */
 	rlim.rlim_cur = rlim.rlim_max = 0;

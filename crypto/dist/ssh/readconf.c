@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.14 2002/06/24 05:25:53 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.15 2003/04/03 05:57:27 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.100 2002/06/19 00:27:55 deraadt Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -115,6 +115,7 @@ typedef enum {
 	oDynamicForward, oPreferredAuthentications, oHostbasedAuthentication,
 	oHostKeyAlgorithms, oBindAddress, oSmartcardDevice,
 	oClearAllForwardings, oNoHostAuthenticationForLocalhost,
+	oEnableSSHKeysign, oRekeyLimit,
 	oDeprecated
 } OpCodes;
 
@@ -186,7 +187,9 @@ static struct {
 	{ "bindaddress", oBindAddress },
 	{ "smartcarddevice", oSmartcardDevice },
 	{ "clearallforwardings", oClearAllForwardings },
+	{ "enablesshkeysign", oEnableSSHKeysign },
 	{ "nohostauthenticationforlocalhost", oNoHostAuthenticationForLocalhost },
+	{ "rekeylimit", oRekeyLimit },
 	{ NULL, oBadOption }
 };
 
@@ -265,14 +268,16 @@ parse_token(const char *cp, const char *filename, int linenum)
  * Processes a single option line as used in the configuration files. This
  * only sets those values that have not already been set.
  */
+#define WHITESPACE " \t\r\n"
 
 int
 process_config_line(Options *options, const char *host,
 		    char *line, const char *filename, int linenum,
 		    int *activep)
 {
-	char buf[256], *s, *string, **charptr, *endofnumber, *keyword, *arg;
+	char buf[256], *s, **charptr, *endofnumber, *keyword, *arg;
 	int opcode, *intptr, value;
+	size_t len;
 	u_short fwd_port, fwd_host_port;
 	char sfwd_host_port[6];
 
@@ -418,6 +423,31 @@ parse_flag:
 		intptr = &options->compression_level;
 		goto parse_int;
 
+	case oRekeyLimit:
+		intptr = &options->rekey_limit;
+		arg = strdelim(&s);
+		if (!arg || *arg == '\0')
+			fatal("%.200s line %d: Missing argument.", filename, linenum);
+		if (arg[0] < '0' || arg[0] > '9')
+			fatal("%.200s line %d: Bad number.", filename, linenum);
+		value = strtol(arg, &endofnumber, 10);
+		if (arg == endofnumber)
+			fatal("%.200s line %d: Bad number.", filename, linenum);
+		switch (toupper(*endofnumber)) {
+		case 'K':
+			value *= 1<<10;
+			break;
+		case 'M':
+			value *= 1<<20;
+			break;
+		case 'G':
+			value *= 1<<30;
+			break;
+		}
+		if (*activep && *intptr == -1)
+			*intptr = value;
+		break;
+
 	case oIdentityFile:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
@@ -485,16 +515,9 @@ parse_string:
 
 	case oProxyCommand:
 		charptr = &options->proxy_command;
-		string = xstrdup("");
-		while ((arg = strdelim(&s)) != NULL && *arg != '\0') {
-			string = xrealloc(string, strlen(string) + strlen(arg) + 2);
-			strcat(string, " ");
-			strcat(string, arg);
-		}
+		len = strspn(s, WHITESPACE "=");
 		if (*activep && *charptr == NULL)
-			*charptr = string;
-		else
-			xfree(string);
+			*charptr = xstrdup(s + len);
 		return 0;
 
 	case oPort:
@@ -668,6 +691,10 @@ parse_int:
 			*intptr = value;
 		break;
 
+	case oEnableSSHKeysign:
+		intptr = &options->enable_ssh_keysign;
+		goto parse_flag;
+
 	case oDeprecated:
 		debug("%s line %d: Deprecated option \"%s\"",
 		    filename, linenum, keyword);
@@ -791,7 +818,9 @@ initialize_options(Options * options)
 	options->preferred_authentications = NULL;
 	options->bind_address = NULL;
 	options->smartcard_device = NULL;
+	options->enable_ssh_keysign = - 1;
 	options->no_host_authentication_for_localhost = - 1;
+	options->rekey_limit = - 1;
 }
 
 /*
@@ -906,6 +935,10 @@ fill_default_options(Options * options)
 		clear_forwardings(options);
 	if (options->no_host_authentication_for_localhost == - 1)
 		options->no_host_authentication_for_localhost = 0;
+	if (options->enable_ssh_keysign == -1)
+		options->enable_ssh_keysign = 0;
+	if (options->rekey_limit == -1)
+		options->rekey_limit = 0;
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */
