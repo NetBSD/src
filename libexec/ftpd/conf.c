@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.23 1999/12/07 05:30:54 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1999/12/12 14:05:54 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,13 +38,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.23 1999/12/07 05:30:54 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.24 1999/12/12 14:05:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <glob.h>
 #include <stdio.h>
@@ -80,7 +81,7 @@ parse_conf(findclass)
 	FILE		*f;
 	char		*buf, *p;
 	size_t		 len;
-	int		 none, match;
+	int		 none, match, rate;
 	char		*endp;
 	char		*class, *word, *arg;
 	const char	*infile;
@@ -88,11 +89,7 @@ parse_conf(findclass)
 	unsigned int	 timeout;
 	struct ftpconv	*conv, *cnext;
 
-#define REASSIGN(X,Y)	if (X) free(X); (X)=(Y)
-#define NEXTWORD(P, W)	while ((W = strsep(&P, " \t")) != NULL && *W == '\0')
-#define EMPTYSTR(W)	(W == NULL || *W == '\0')
-
-	REASSIGN(curclass.classname, findclass);
+	REASSIGN(curclass.classname, xstrdup(findclass));
 	for (conv = curclass.conversions; conv != NULL; conv = cnext) {
 		REASSIGN(conv->suffix, NULL);
 		REASSIGN(conv->types, NULL);
@@ -104,12 +101,20 @@ parse_conf(findclass)
 	curclass.checkportcmd = 0;
 	curclass.conversions =	NULL;
 	REASSIGN(curclass.display, NULL);
+	curclass.maxrateget =	0;
+	curclass.maxrateput =	0;
 	curclass.maxtimeout =	7200;		/* 2 hours */
 	curclass.modify =	1;
+	REASSIGN(curclass.motd, xstrdup(_PATH_FTPLOGINMESG));
 	REASSIGN(curclass.notify, NULL);
 	curclass.passive =	1;
+	curclass.maxrateget =	0;
+	curclass.maxrateput =	0;
+	curclass.rateget =	0;
+	curclass.rateput =	0;
 	curclass.timeout =	900;		/* 15 minutes */
 	curclass.umask =	027;
+	curclass.upload =	1;
 
 	if (strcasecmp(findclass, "guest") == 0) {
 		curclass.modify = 0;
@@ -151,6 +156,22 @@ parse_conf(findclass)
 				curclass.checkportcmd = 0;
 			else
 				curclass.checkportcmd = 1;
+
+		} else if (strcasecmp(word, "classtype") == 0) {
+			if (!none && !EMPTYSTR(arg)) {
+				if (strcasecmp(arg, "GUEST") == 0)
+					curclass.type = CLASS_GUEST;
+				else if (strcasecmp(arg, "CHROOT") == 0)
+					curclass.type = CLASS_CHROOT;
+				else if (strcasecmp(arg, "REAL") == 0)
+					curclass.type = CLASS_REAL;
+				else {
+					syslog(LOG_WARNING,
+				    "%s line %d: unknown class type `%s'",
+					    infile, (int)line, arg);
+					continue;
+				}
+			}
 
 		} else if (strcasecmp(word, "conversion") == 0) {
 			char *suffix, *types, *disable, *convcmd;
@@ -243,6 +264,14 @@ parse_conf(findclass)
 			else
 				curclass.modify = 1;
 
+		} else if (strcasecmp(word, "motd") == 0) {
+			if (none || EMPTYSTR(arg))
+				arg = NULL;
+			else
+				arg = xstrdup(arg);
+			REASSIGN(curclass.motd, arg);
+
+
 		} else if (strcasecmp(word, "notify") == 0) {
 			if (none || EMPTYSTR(arg))
 				arg = NULL;
@@ -256,6 +285,32 @@ parse_conf(findclass)
 				curclass.passive = 0;
 			else
 				curclass.passive = 1;
+
+		} else if (strcasecmp(word, "rateget") == 0) {
+			if (none || EMPTYSTR(arg))
+				continue;
+			rate = strsuftoi(arg);
+			if (rate == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid rateget %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.maxrateget = rate;
+			curclass.rateget = rate;
+
+		} else if (strcasecmp(word, "rateput") == 0) {
+			if (none || EMPTYSTR(arg))
+				continue;
+			rate = strsuftoi(arg);
+			if (rate == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid rateput %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.maxrateput = rate;
+			curclass.rateput = rate;
 
 		} else if (strcasecmp(word, "timeout") == 0) {
 			if (none || EMPTYSTR(arg))
@@ -296,6 +351,14 @@ parse_conf(findclass)
 			}
 			curclass.umask = umask;
 
+		} else if (strcasecmp(word, "upload") == 0) {
+			if (none ||
+			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0)) {
+				curclass.modify = 0;
+				curclass.upload = 0;
+			} else
+				curclass.upload = 1;
+
 		} else {
 			syslog(LOG_WARNING,
 			    "%s line %d: unknown directive '%s'",
@@ -323,9 +386,7 @@ show_chdir_messages(code)
 	time_t	 now, then;
 	int	 age;
 	char	 cwd[MAXPATHLEN + 1];
-	char	 line[BUFSIZ];
 	char	*cp, **rlist;
-	FILE	*f;
 
 		/* Setup list for directory cache */
 	if (slist == NULL)
@@ -348,19 +409,10 @@ show_chdir_messages(code)
 		syslog(LOG_WARNING, "can't add `%s' to stringlist", cp);
 
 		/* First check for a display file */
-	if (curclass.display != NULL && curclass.display[0] &&
-	    (f = fopen(curclass.display, "r")) != NULL) {
-		lreply(code, "");
-		while (fgets(line, BUFSIZ, f)) {
-			if ((cp = strchr(line, '\n')) != NULL)
-				*cp = '\0';
-			lreply(0, "%s", line);
-		}
-		fclose(f);
-	}
+	(void)format_file(curclass.display, code);
 
 		/* Now see if there are any notify files */
-	if (curclass.notify == NULL || curclass.notify[0] == '\0')
+	if (EMPTYSTR(curclass.notify))
 		return;
 
 	if (glob(curclass.notify, 0, NULL, &gl) != 0 || gl.gl_matchc == 0)
@@ -387,6 +439,82 @@ show_chdir_messages(code)
 	globfree(&gl);
 }
 
+int
+format_file(file, code)
+	const char *file;
+	int code;
+{
+	FILE   *f;
+	char   *buf, *p, *cwd;
+	size_t	len;
+	off_t	b;
+	time_t	now;
+
+#define PUTC(x)	putchar(x), b++
+
+	if (EMPTYSTR(file))
+		return(0);
+	if ((f = fopen(file, "r")) == NULL)
+		return (0);
+	lreply(code, "");
+
+	b = 0;
+	for (;
+	    (buf = fparseln(f, &len, NULL, "\0\0\0", 0)) != NULL; free(buf)) {
+		if (len > 0)
+			if (buf[len - 1] == '\n')
+				buf[--len] = '\0';
+		b += printf("    ");
+
+		for (p = buf; *p; p++) {
+			if (*p == '%') {
+				p++;
+				switch (*p) {
+				case 'C':
+					if (getcwd(cwd, sizeof(cwd)-1) == NULL){
+						syslog(LOG_WARNING,
+						    "can't getcwd: %s",
+						    strerror(errno));
+						continue;
+					}
+					b += printf("%s", cwd);
+					break;
+				case 'E':
+						/* XXXX email address */
+					break;
+				case 'L':
+					b += printf("%s", hostname);
+					break;
+				case 'R':
+					b += printf("%s", remotehost);
+					break;
+				case 'T':
+					now = time(NULL);
+					b += printf("%.25s", ctime(&now));
+					break;
+				case 'U':
+					b += printf("%s",
+					    pw ? pw->pw_name : "<unknown>");
+					break;
+				case '%':
+					PUTC('%');
+					break;
+				}
+			} else {
+				PUTC(*p);
+			}
+		}
+		PUTC('\r');
+		PUTC('\n');
+	}
+
+	total_bytes += b;
+	total_bytes_out += b;
+	(void)fflush(stdout);
+	(void)fclose(f);
+	return (1);
+}
+
 /*
  * Find s2 at the end of s1.  If found, return a string up to (but
  * not including) s2, otherwise returns NULL.
@@ -407,7 +535,7 @@ strend(s1, s2)
 	if (l2 >= l1)
 		return(NULL);
 	
-	strncpy(buf, s1, MAXPATHLEN);
+	strlcpy(buf, s1, sizeof(buf));
 	start = buf + (l1 - l2);
 
 	if (strcmp(start, s2) == 0) {
@@ -513,4 +641,45 @@ do_conversion(fname)
 	free(cmd);
 	errno = o_errno;
 	return(NULL);
+}
+
+/*
+ * Convert the string `arg' to an int, which may have an optional SI suffix
+ * (`b', `k', `m', `g'). Returns the number for success, -1 otherwise.
+ */
+int
+strsuftoi(arg)
+	const char *arg;
+{
+	char *cp;
+	long val;
+
+	if (!isdigit((unsigned char)arg[0]))
+		return (-1);
+
+	val = strtol(arg, &cp, 10);
+	if (cp != NULL) {
+		if (cp[0] != '\0' && cp[1] != '\0')
+			 return (-1);
+		switch (tolower((unsigned char)cp[0])) {
+		case '\0':
+		case 'b':
+			break;
+		case 'k':
+			val <<= 10;
+			break;
+		case 'm':
+			val <<= 20;
+			break;
+		case 'g':
+			val <<= 30;
+			break;
+		default:
+			return (-1);
+		}
+	}
+	if (val < 0 || val > INT_MAX)
+		return (-1);
+
+	return (val);
 }
