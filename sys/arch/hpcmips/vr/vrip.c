@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.22 2002/03/10 10:13:32 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.23 2002/03/22 09:18:09 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -274,6 +274,13 @@ vrip_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vrip_softc *sc = (struct vrip_softc *)parent;
 	struct vrip_attach_args va;
+	platid_mask_t mask;
+
+	if (cf->cf_loc[VRIPIFCF_PLATFORM] != VRIPIFCF_PLATFORM_DEFAULT) {
+		mask = PLATID_DEREF(cf->cf_loc[VRIPIFCF_PLATFORM]);
+		if (platid_match(&platid, &mask) == 0)	
+			return (0);
+	}
 
 	memset(&va, 0, sizeof(va));
 	va.va_vc = &sc->sc_chipset;
