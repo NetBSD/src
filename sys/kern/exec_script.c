@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.27.2.3 2002/10/18 02:44:50 nathanw Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.27.2.4 2002/11/11 22:13:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.27.2.3 2002/10/18 02:44:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.27.2.4 2002/11/11 22:13:30 nathanw Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -240,7 +240,11 @@ check_shell:
 	scriptvp = epp->ep_vp;
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
+#ifdef VERIFIED_EXEC
+	if ((error = check_exec(p, epp, 0)) == 0) {
+#else
 	if ((error = check_exec(p, epp)) == 0) {
+#endif
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;
 

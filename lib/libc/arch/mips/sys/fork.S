@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.8 2000/12/13 23:29:07 simonb Exp $	*/
+/*	$NetBSD: fork.S,v 1.8.2.1 2002/11/11 22:21:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)fork.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: fork.S,v 1.8 2000/12/13 23:29:07 simonb Exp $")
+	ASMSTR("$NetBSD: fork.S,v 1.8.2.1 2002/11/11 22:21:45 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
@@ -48,7 +48,7 @@ WEAK_ALIAS(fork, _fork)
 #endif
 
 LEAF(_fork)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set    noreorder
 	.cpload t9
 	.set    reorder

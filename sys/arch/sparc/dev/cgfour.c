@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.25.4.4 2002/10/18 02:39:51 nathanw Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.25.4.5 2002/11/11 22:04:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -144,14 +144,14 @@ dev_type_mmap(cgfourmmap);
 
 const struct cdevsw cgfour_cdevsw = {
 	cgfouropen, nullclose, noread, nowrite, cgfourioctl,
-	nostop, notty, nopoll, cgfourmmap,
+	nostop, notty, nopoll, cgfourmmap, nokqfilter,
 };
 
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgfourfbdriver = {
 	cgfourunblank, cgfouropen, nullclose, cgfourioctl, nopoll,
-	cgfourmmap
+	cgfourmmap, nokqfilter
 };
 
 static void cgfourloadcmap __P((struct cgfour_softc *, int, int));

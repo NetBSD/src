@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.1.2.10 2002/09/17 21:19:45 nathanw Exp $ */
+/*	$NetBSD: gem.c,v 1.1.2.11 2002/11/11 22:09:27 nathanw Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.1.2.10 2002/09/17 21:19:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.1.2.11 2002/11/11 22:09:27 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -252,7 +252,7 @@ gem_attach(sc, enaddr)
 	mii->mii_writereg = gem_mii_writereg;
 	mii->mii_statchg = gem_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, 0, gem_mediachange, gem_mediastatus);
+	ifmedia_init(&mii->mii_media, IFM_IMASK, gem_mediachange, gem_mediastatus);
 
 	gem_mifinit(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126.2.6 2002/06/24 22:03:26 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.126.2.7 2002/11/11 21:56:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -949,13 +949,12 @@ Lunshadow:
 #endif
 /* flush TLB and turn on caches */
 
-
-	jbsr	_ASM_LABEL(__TBIA)	| invalidate TLB
+	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
 	movl	#CACHE_ON,%d0
 	tstl	%d5
 	jeq	Lcacheon
 | is this needed? MLH
-	.word	0xf4f8		| cpusha bc - push & invalidate caches
+	.word	0xf4f8			| cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,%d0
 #ifdef M68060
 	cmpl	#CPU_68060,_C_LABEL(cputype)
@@ -1099,98 +1098,6 @@ BSS(want_resched,4)
  * Use common m68k process/lwp switch and context save subroutines.
  */
 #include <m68k/m68k/switch_subr.s>
-
-/*
- * Copy 1 relocation unit (NBPG bytes)
- * from user virtual address to physical address
- */
-ENTRY(copyseg)
-	movl	_C_LABEL(curpcb),%a1		| current pcb
-	movl	#Lcpydone,%a1@(PCB_ONFAULT)	| where to return to on a fault
-	movl	%sp@(8),%d0			| destination page number
-	moveq	#PGSHIFT,%d1
-	lsll	%d1,%d0				| convert to address
-	orl	#PG_CI+PG_RW+PG_V,%d0		| make sure valid and writable
-	movl	_C_LABEL(CMAP2),%a0
-	movl	_C_LABEL(CADDR2),%sp@-		| destination kernel VA
-	movl	%d0,%a0@			| load in page table
-	jbsr	_ASM_LABEL(__TBIS)		| invalidate any old mapping
-	addql	#4,%sp
-	movl	_C_LABEL(CADDR2),%a1		| destination addr
-	movl	%sp@(4),%a0			| source addr
-	movl	#NBPG/4-1,%d0			| count
-Lcpyloop:
-	movsl	%a0@+,%d1			| read longword
-	movl	%d1,%a1@+			| write longword
-	dbf	%d0,Lcpyloop			| continue until done
-Lcpydone:
-	movl	_C_LABEL(curpcb),%a1		| current pcb
-	clrl	%a1@(PCB_ONFAULT) 		| clear error catch
-	rts
-
-/*
- * Invalidate entire TLB.
- */
-ASLOCAL(__TBIA)
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jeq	Ltbia040
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851a			| 68851 implies no d-cache
-	pflusha					| flush entire TLB
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-Lmc68851a:
-	pflusha
-	rts
-Ltbia040:
-	.word	0xf518				| pflusha
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbiano60
-	movc	%cacr,%d0
-	orl	#IC60_CABC,%d0			| and clear all btc entries
-	movc	%d0,%cacr
-#endif
-Ltbiano60:
-	rts
-
-/*
- * Invalidate any TLB entry for given VA (TB Invalidate Single)
- */
-ASLOCAL(__TBIS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)		| being conservative?
-	jne	_ASM_LABEL(__TBIA)		| yes, flush entire TLB
-#endif
-	movl	%sp@(4),%a0			| get addr to flush
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jeq	Ltbis040
-	tstl	_C_LABEL(mmutype)
-	jpl	Lmc68851b			| is 68851?
-	pflush	#0,#0,%a0@			| flush address from both sides
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip data cache
-	rts
-Lmc68851b:
-	pflushs	#0,#0,%a0@			| flush address from both sides
-	rts
-Ltbis040:
-	moveq	#FC_SUPERD,%d0			| select supervisor
-	movc	%d0,%dfc
-	.word	0xf508				| pflush a0@
-	moveq	#FC_USERD,%d0			| select user
-	movc	%d0,%dfc
-	.word	0xf508				| pflush a0@
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jne	Ltbisno60
-	movc	%cacr,%d0
-	orl	#IC60_CABC,%d0			| and clear all btc entries
-	movc	%d0,%cacr
-Ltbisno60:
-#endif
-	rts
 
 ENTRY(ecacheon)
 	rts

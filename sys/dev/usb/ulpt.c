@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.41.2.9 2002/10/18 02:44:34 nathanw Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.41.2.10 2002/11/11 22:12:54 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.41.2.9 2002/10/18 02:44:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.41.2.10 2002/11/11 22:12:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ dev_type_ioctl(ulptioctl);
 
 const struct cdevsw ulpt_cdevsw = {
 	ulptopen, ulptclose, noread, ulptwrite, ulptioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(ulpt);

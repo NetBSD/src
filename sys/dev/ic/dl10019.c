@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.1.2.3 2001/11/14 19:14:20 nathanw Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.1.2.4 2002/11/11 22:09:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.1.2.3 2001/11/14 19:14:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.1.2.4 2002/11/11 22:09:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ dl10019_media_init(struct dp8390_softc *sc)
 	sc->sc_mii.mii_readreg = dl10019_mii_readreg;
 	sc->sc_mii.mii_writereg = dl10019_mii_writereg;
 	sc->sc_mii.mii_statchg = dl10019_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, dp8390_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, dp8390_mediachange,
 	    dp8390_mediastatus);
 
 	dl10019_mii_reset(sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.5.6.3 2002/02/28 04:14:38 nathanw Exp $ */
+/* $NetBSD: wsevent.c,v 1.5.6.4 2002/11/11 22:13:16 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.6.3 2002/02/28 04:14:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.6.4 2002/11/11 22:13:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -196,4 +196,62 @@ wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_wseventrdetach(struct knote *kn)
+{
+	struct wseventvar *ev = kn->kn_hook;
+	int s;
+
+	s = splwsevent();
+	SLIST_REMOVE(&ev->sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_wseventread(struct knote *kn, long hint)
+{
+	struct wseventvar *ev = kn->kn_hook;
+
+	if (ev->get == ev->put)
+		return (0);
+
+	if (ev->get < ev->put)
+		kn->kn_data = ev->put - ev->get;
+	else
+		kn->kn_data = (WSEVENT_QSIZE - ev->get) +
+		    ev->put;
+
+	kn->kn_data *= sizeof(struct wscons_event);
+
+	return (1);
+}
+
+static const struct filterops wsevent_filtops =
+	{ 1, NULL, filt_wseventrdetach, filt_wseventread };
+
+int
+wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &ev->sel.si_klist;
+		kn->kn_fop = &wsevent_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = ev;
+
+	s = splwsevent();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }

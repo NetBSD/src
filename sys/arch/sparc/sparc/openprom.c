@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.11.4.3 2002/09/17 21:17:49 nathanw Exp $ */
+/*	$NetBSD: openprom.c,v 1.11.4.4 2002/11/11 22:04:36 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/promlib.h>
@@ -63,7 +64,7 @@ dev_type_ioctl(openpromioctl);
 
 const struct cdevsw openprom_cdevsw = {
 	openpromopen, nullclose, noread, nowrite, openpromioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 static	int lastnode;			/* speed hack */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.1.2.4 2002/10/18 02:34:40 nathanw Exp $
+# $NetBSD: GENERIC.in,v 1.1.2.5 2002/11/11 21:56:12 nathanw Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.2.4 $"
+#ident 		"GENERIC-$Revision: 1.1.2.5 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -217,6 +217,10 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	NTP		# NTP phase/frequency locked loop
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 ')m4_dnl
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #
 # Misc. debugging options

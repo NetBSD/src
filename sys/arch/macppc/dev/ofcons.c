@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.7.8.4 2002/10/18 02:38:36 nathanw Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.7.8.5 2002/11/11 22:00:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -79,7 +79,7 @@ dev_type_poll(ofcpoll);
 
 const struct cdevsw macofcons_cdevsw = {
 	ofcopen, ofcclose, ofcread, ofcwrite, ofcioctl,
-	nostop, ofctty, ofcpoll, nommap, D_TTY
+	nostop, ofctty, ofcpoll, nommap, ttykqfilter, D_TTY
 };
 
 /* For polled ADB mode */

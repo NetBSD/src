@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2.4.6 2002/10/18 02:44:22 nathanw Exp $ */
+/*	$NetBSD: fb.c,v 1.2.4.7 2002/11/11 22:12:36 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.6 2002/10/18 02:44:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.7 2002/11/11 22:12:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,10 +76,11 @@ dev_type_close(fbclose);
 dev_type_ioctl(fbioctl);
 dev_type_poll(fbpoll);
 dev_type_mmap(fbmmap);
+dev_type_kqfilter(fbkqfilter);
 
 const struct cdevsw fb_cdevsw = {
 	fbopen, fbclose, noread, nowrite, fbioctl,
-	nostop, notty, fbpoll, fbmmap,
+	nostop, notty, fbpoll, fbmmap, fbkqfilter,
 };
 
 void
@@ -250,6 +251,15 @@ fbpoll(dev, events, p)
 {
 
 	return (devfb->fb_driver->fbd_poll)(dev, events, p);
+}
+
+int
+fbkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+
+	return (devfb->fb_driver->fbd_kqfilter)(dev, kn);
 }
 
 paddr_t

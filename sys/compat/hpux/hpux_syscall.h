@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscall.h,v 1.29.2.3 2002/05/29 21:48:43 nathanw Exp $ */
+/* $NetBSD: hpux_syscall.h,v 1.29.2.4 2002/11/11 22:06:48 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -440,3 +440,4 @@
 #define	HPUX_SYS_shmctl	314
 
 #define	HPUX_SYS_MAXSYSCALL	325
+#define	HPUX_SYS_NSYSENT	512

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.4.3 2002/09/17 21:16:41 nathanw Exp $ */
+/*	$NetBSD: mem.c,v 1.15.4.4 2002/11/11 22:02:14 nathanw Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -72,7 +72,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
 
 /*ARGSUSED*/

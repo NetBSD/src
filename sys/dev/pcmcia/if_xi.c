@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.9.2.8 2002/10/18 02:43:33 nathanw Exp $ */
+/*	$NetBSD: if_xi.c,v 1.9.2.9 2002/11/11 22:11:46 nathanw Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.9.2.8 2002/10/18 02:43:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.9.2.9 2002/11/11 22:11:46 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -95,9 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.9.2.8 2002/10/18 02:43:33 nathanw Exp $"
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
-
-#define ETHER_MIN_LEN 64
-#define ETHER_CRC_LEN 4
 
 /*
  * Maximum number of bytes to read per interrupt.  Linux recommends

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138.2.6 2002/06/24 22:06:01 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138.2.7 2002/11/11 22:00:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.6 2002/06/24 22:06:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.7 2002/11/11 22:00:49 nathanw Exp $");
 
 /*
  *	Manages physical address maps.
@@ -384,7 +384,7 @@ pmap_bootstrap()
 	 * they will produce a global bit to store in the tlb.
 	 */
 	if (MIPS_HAS_R4K_MMU) {
-		int i;
+		u_int i;
 		pt_entry_t *spte;
 
 		for (i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
@@ -428,7 +428,8 @@ pmap_steal_memory(size, vstartp, vendp)
 	vsize_t size;
 	vaddr_t *vstartp, *vendp;
 {
-	int bank, npgs, x;
+	int bank, x;
+	u_int npgs;
 	paddr_t pa;
 	vaddr_t va;
 

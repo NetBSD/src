@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.37.2.7 2002/04/17 00:05:46 nathanw Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.37.2.8 2002/11/11 22:09:44 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -131,7 +131,7 @@ struct isposinfo {
 #define	isp_scdmap		isp_osinfo.scdmap
 
 #define	ISP_MUSTPOLL(isp)	\
-	(isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints)
+ 	(isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints)
 
 #define	HANDLE_LOOPSTATE_IN_OUTER_LAYERS	1
 
@@ -146,7 +146,6 @@ struct isposinfo {
 #define	MEMZERO(dst, amt)	memset((dst), 0, (amt))
 #define	MEMCPY(dst, src, amt)	memcpy((dst), (src), (amt))
 #define	SNPRINTF		snprintf
-#define	STRNCAT			strncat
 #define	USEC_DELAY		DELAY
 #define	USEC_SLEEP(isp, x)		\
 	if (!ISP_MUSTPOLL(isp))		\
@@ -460,7 +459,7 @@ isp_wait_complete(struct ispsoftc *isp)
 		lim = 60;
 	else
 		lim = 5;
-	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
+	if (ISP_MUSTPOLL(isp)) {
 		int useclim = 1000000 * lim, usecs = 0;
 		/*
 		 * For sanity's sake, we don't delay longer

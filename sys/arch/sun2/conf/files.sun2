@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.5.8.5 2002/10/18 02:40:13 nathanw Exp $
+#	$NetBSD: files.sun2,v 1.5.8.6 2002/11/11 22:05:03 nathanw Exp $
 
 #
 # sun2-specific configuration info
@@ -15,7 +15,6 @@ file arch/sun2/sun2/machdep.c
 file arch/sun2/sun2/pmap.c
 file arch/sun2/sun2/control.c
 file arch/sun2/sun2/mem.c
-file arch/sun2/sun2/conf.c
 file arch/sun2/sun2/db_machdep.c		ddb
 file arch/sun2/sun2/db_memrw.c			ddb | kgdb
 file arch/sun2/sun2/leds.c
@@ -23,7 +22,7 @@ file arch/sun2/sun2/idprom.c
 file arch/sun2/sun2/promlib.c
 file arch/sun2/sun2/sys_machdep.c
 file arch/sun2/sun2/trap.c
-file arch/sun2/sun2/vm_machdep.c
+file arch/m68k/m68k/vm_machdep.c
 
 include "arch/m68k/fpe/files.fpe"
 
@@ -153,6 +152,13 @@ file dev/sun/sunms.c			ms_tty
 
 # Memory Disk for boot tape
 file dev/md_root.c			memory_disk_hooks
+
+#
+# wscons
+#
+
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 # Compatibility modules
 

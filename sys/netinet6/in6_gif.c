@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.18.2.6 2002/09/17 21:23:19 nathanw Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.18.2.7 2002/11/11 22:15:42 nathanw Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.18.2.6 2002/09/17 21:23:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.18.2.7 2002/11/11 22:15:42 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
 
 /* define it if you want to use encap_attach_func (it helps *BSD merge) */
-#define USE_ENCAPCHECK
+/*#define USE_ENCAPCHECK*/
 
 #include <sys/param.h>
 #include <sys/systm.h>

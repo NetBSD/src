@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.4.2.4 2002/10/18 02:44:55 nathanw Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.4.2.5 2002/11/11 22:14:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.4.2.4 2002/10/18 02:44:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.4.2.5 2002/11/11 22:14:00 nathanw Exp $");
 
 #include "opt_userconf.h"
 
@@ -230,7 +230,6 @@ userconf_pdev(devno)
 	const struct cfparent *cfp;
 	int   *l;
 	const char * const *ln;
-	char c;
 
 	if (devno > userconf_maxdev) {
 		printf("Unknown devno (max is %d)\n", userconf_maxdev);
@@ -242,7 +241,6 @@ userconf_pdev(devno)
 	printf("[%3d] ", devno);
 	userconf_pdevnam(devno);
 	printf(" at");
-	c = ' ';
 	cfp = cd->cf_pspec;
 	if (cfp == NULL)
 		printf(" root");
@@ -364,14 +362,13 @@ userconf_modify(item, val)
 	int ok = 0;
 	int a;
 	char *c;
-	int i;
 
 	while (!ok) {
 		printf("%s [", item);
 		userconf_pnum(*val);
 		printf("] ? ");
 
-		i = getsn(userconf_argbuf, sizeof(userconf_argbuf));
+		getsn(userconf_argbuf, sizeof(userconf_argbuf));
 
 		c = userconf_argbuf;
 		while (*c == ' ' || *c == '\t' || *c == '\n') c++;
@@ -670,14 +667,13 @@ userconf_add_read(prompt, field, dev, len, val)
 	int ok = 0;
 	int a;
 	char *c;
-	int i;
 
 	*val = -1;
 
 	while (!ok) {
 		printf("%s ? ", prompt);
 
-		i = getsn(userconf_argbuf, sizeof(userconf_argbuf));
+		getsn(userconf_argbuf, sizeof(userconf_argbuf));
 
 		c = userconf_argbuf;
 		while (*c == ' ' || *c == '\t' || *c == '\n') c++;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13.2.6 2002/10/18 02:44:46 nathanw Exp $ */
+/* $NetBSD: wsmouse.c,v 1.13.2.7 2002/11/11 22:13:21 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.2.6 2002/10/18 02:44:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.2.7 2002/11/11 22:13:21 nathanw Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -164,10 +164,11 @@ dev_type_close(wsmouseclose);
 dev_type_read(wsmouseread);
 dev_type_ioctl(wsmouseioctl);
 dev_type_poll(wsmousepoll);
+dev_type_kqfilter(wsmousekqfilter);
 
 const struct cdevsw wsmouse_cdevsw = {
 	wsmouseopen, wsmouseclose, wsmouseread, nowrite, wsmouseioctl,
-	nostop, notty, wsmousepoll, nommap,
+	nostop, notty, wsmousepoll, nommap, wsmousekqfilter,
 };
 
 #if NWSMUX > 0
@@ -611,6 +612,16 @@ wsmousepoll(dev_t dev, int events, struct proc *p)
 	if (sc->sc_base.me_evp == NULL)
 		return (EINVAL);
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));
+}
+
+int
+wsmousekqfilter(dev_t dev, struct knote *kn)
+{
+	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
+
+	if (sc->sc_base.me_evp == NULL)
+		return (1);
+	return (wsevent_kqfilter(sc->sc_base.me_evp, kn));
 }
 
 #if NWSMUX > 0

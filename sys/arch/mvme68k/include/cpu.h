@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.8.5 2002/02/28 04:10:52 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.8.6 2002/11/11 22:01:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,6 +192,7 @@ extern	u_long ether_data_buff_size;
 extern	u_char mvme_ea[6];
 
 struct frame;
+struct pcb;
 void	doboot __P((int)) 
 	__attribute__((__noreturn__));
 int	nmihand __P((void *));
@@ -200,7 +201,10 @@ void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
-paddr_t	kvtop __P((caddr_t));
+int	kvtop __P((caddr_t));
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	proc_trampoline __P((void));
 void	loadustp __P((paddr_t));
 
 /* Prototypes from sys_machdep.c: */

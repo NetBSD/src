@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.6.2.2 2001/10/08 20:20:33 nathanw Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.6.2.3 2002/11/11 22:22:40 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -46,10 +46,11 @@ static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #include <assert.h>
 #include <errno.h>
 #include <netconfig.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(getnetconfig,_getnetconfig)
@@ -452,7 +453,7 @@ getnetconfigent(netid)
 		return (NULL);
 	}
 	do {
-		int len;
+		ptrdiff_t len;
 		char *tmpp;	/* tmp string pointer */
 
 		do {
@@ -467,7 +468,7 @@ getnetconfigent(netid)
 			nc_error = NC_BADFILE;
 			break;
 		}
-		if (strlen(netid) == (len = tmpp - stringp) &&	/* a match */
+		if (strlen(netid) == (size_t) (len = tmpp - stringp) &&	/* a match */
 		    strncmp(stringp, netid, (size_t)len) == 0) {
 			if ((ncp = (struct netconfig *)
 			    malloc(sizeof (struct netconfig))) == NULL)
@@ -649,7 +650,7 @@ static struct netconfig *
 {
 	struct netconfig	*p;
 	char	*tmp;
-	int	i;
+	u_int	i;
 
 	_DIAGASSERT(ncp != NULL);
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38.6.6 2002/10/18 02:39:11 nathanw Exp $
+# $NetBSD: GENERIC,v 1.38.6.7 2002/11/11 22:02:04 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.38.6.6 $"
+#ident 		"GENERIC-$Revision: 1.38.6.7 $"
 
 maxusers	16
 
@@ -48,6 +48,10 @@ options 	LKM			# loadable kernel modules
 #options 	UCONSOLE		# users can redirect console (unsafe)
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10.8.2 2002/04/01 07:42:56 nathanw Exp $ */
+/*	$NetBSD: boot.c,v 1.10.8.3 2002/11/11 22:04:37 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/boot_flag.h>
 #include <sys/exec.h>
 
 #include <lib/libsa/stand.h>
@@ -96,20 +97,12 @@ bootoptions(ap)
 		return (0);
 
 	while (*ap != '\0' && *ap != ' ' && *ap != '\t' && *ap != '\n') {
-		switch (*ap) {
-		case 'a':
-			v |= RB_ASKNAME;
-			break;
-		case 's':
-			v |= RB_SINGLE;
-			break;
-		case 'd':
-			v |= RB_KDB;
-			debug = 1;
-			break;
-		}
+		BOOT_FLAG(*ap, v);
 		ap++;
 	}
+
+	if ((v & RB_KDB) != 0)
+		debug = 1;
 
 	return (v);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.8.3 2002/10/18 02:35:56 nathanw Exp $	*/
+/*	$NetBSD: view.c,v 1.17.8.4 2002/11/11 21:57:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -74,7 +74,7 @@ dev_type_mmap(viewmmap);
 
 const struct cdevsw view_cdevsw = {
 	viewopen, viewclose, nullread, nullwrite, viewioctl,
-	nostop, notty, nopoll, viewmmap,
+	nostop, notty, nopoll, viewmmap, nokqfilter,
 };
 
 /* 

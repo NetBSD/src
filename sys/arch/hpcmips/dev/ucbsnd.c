@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.7.2.4 2002/10/18 02:37:08 nathanw Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.7.2.5 2002/11/11 21:58:42 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ dev_type_write(ucbsndwrite);
 
 const struct cdevsw ucbsnd_cdevsw = {
 	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, nullioctl,
-	nostop, notty, nopoll, nullmmap,
+	nostop, notty, nopoll, nullmmap, nokqfilter,
 };
 
 int

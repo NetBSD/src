@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.31.2.7 2002/09/17 21:22:23 nathanw Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.31.2.8 2002/11/11 22:14:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.31.2.7 2002/09/17 21:22:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.31.2.8 2002/11/11 22:14:05 nathanw Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -290,7 +290,7 @@ ttyldisc_lookup(name)
 	do { \
 		if (ttyldisc_add(&(s), (v)) != (v)) \
 			panic("ttyldisc_init: " __STRING(s)); \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 /*
  * Register the basic line disciplines.

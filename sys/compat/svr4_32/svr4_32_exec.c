@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.c,v 1.1.4.4 2002/10/18 02:41:19 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_exec.c,v 1.1.4.5 2002/11/11 22:08:18 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.1.4.4 2002/10/18 02:41:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.1.4.5 2002/11/11 22:08:18 nathanw Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -67,7 +67,7 @@ const struct emul emul_svr4_32 = {
 	0,
 	native_to_svr4_errno,
 	SVR4_32_SYS_syscall,
-	SVR4_32_SYS_MAXSYSCALL,
+	SVR4_32_SYS_NSYSENT,
 #endif
 	svr4_32_sysent,
 	svr4_32_syscallnames,

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.58.2.6 2002/09/17 21:22:38 nathanw Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.58.2.7 2002/11/11 22:14:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.58.2.6 2002/09/17 21:22:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.58.2.7 2002/11/11 22:14:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ int	fdesc_read	__P((void *));
 int	fdesc_write	__P((void *));
 int	fdesc_ioctl	__P((void *));
 int	fdesc_poll	__P((void *));
+int	fdesc_kqfilter	__P((void *));
 #define	fdesc_mmap	genfs_eopnotsupp
 #define	fdesc_fcntl	genfs_fcntl
 #define	fdesc_fsync	genfs_nullop
@@ -150,6 +151,7 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, fdesc_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, fdesc_fcntl },		/* fcntl */
 	{ &vop_poll_desc, fdesc_poll },			/* poll */
+	{ &vop_kqfilter_desc, fdesc_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fdesc_revoke },		/* revoke */
 	{ &vop_mmap_desc, fdesc_mmap },			/* mmap */
 	{ &vop_fsync_desc, fdesc_fsync },		/* fsync */
@@ -942,6 +944,41 @@ fdesc_poll(v)
 	}
 
 	return (revents);
+}
+
+int
+fdesc_kqfilter(v)
+	void *v;
+{
+	struct vop_kqfilter_args /* {
+		struct vnode *a_vp;
+		struct knote *a_kn;
+	} */ *ap = v;
+	int error;
+	struct proc *p;
+	struct file *fp;
+
+	switch (VTOFDESC(ap->a_vp)->fd_type) {
+	case Fctty:
+		error = (*ctty_cdevsw.d_kqfilter)(devctty, ap->a_kn);
+		break;
+
+	case Fdesc:
+		/* just invoke kqfilter for the underlying descriptor */
+		p = curproc;	/* XXX hopefully ok to use curproc here */
+		if ((fp = fd_getfile(p->p_fd, VTOFDESC(ap->a_vp)->fd_fd)) == NULL)
+			return (1);
+			
+		FILE_USE(fp);
+		error = (*fp->f_ops->fo_kqfilter)(fp, ap->a_kn);
+		FILE_UNUSE(fp, p);
+		break;
+
+	default:
+		return (genfs_kqfilter(v));
+	}
+
+	return (error);
 }
 
 int

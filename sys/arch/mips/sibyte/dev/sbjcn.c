@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.1.12.3 2002/10/18 02:38:48 nathanw Exp $ */
+/* $NetBSD: sbjcn.c,v 1.1.12.4 2002/11/11 22:00:57 nathanw Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -184,7 +184,7 @@ dev_type_tty(sbjcntty);
 
 const struct cdevsw sbjcn_cdevsw = {
 	sbjcnopen, sbjcnclose, sbjcnread, sbjcnwrite, sbjcnioctl,
-	sbjcnstop, sbjcntty, nopoll, nommap, D_TTY
+	sbjcnstop, sbjcntty, nopoll, nommap, ttykqfilter, D_TTY
 };
 
 #define	integrate	static inline

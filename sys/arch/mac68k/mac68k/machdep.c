@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.14 2002/10/18 02:38:23 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.15 2002/11/11 21:59:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,7 @@
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
 #include "akbd.h"
@@ -112,6 +113,8 @@
 #endif
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
+
+#include <m68k/cacheops.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>

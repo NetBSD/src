@@ -1,4 +1,4 @@
-#	$NetBSD: files.pb1000,v 1.1.2.2 2002/09/17 21:14:20 nathanw Exp $
+#	$NetBSD: files.pb1000,v 1.1.2.3 2002/11/11 21:57:57 nathanw Exp $
 
 file	arch/evbmips/alchemy/pb1000_intr.c
 
@@ -7,7 +7,6 @@ file	arch/evbmips/alchemy/machdep.c
 
 file	arch/mips/mips/bus_dma.c
 file	arch/evbmips/evbmips/clock.c
-file	arch/evbmips/evbmips/conf_common.c
 file	arch/evbmips/evbmips/disksubr.c
 file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c

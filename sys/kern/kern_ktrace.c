@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53.2.7 2002/08/01 02:46:19 nathanw Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.8 2002/11/11 22:13:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.7 2002/08/01 02:46:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.8 2002/11/11 22:13:43 nathanw Exp $");
 
 #include "opt_ktrace.h"
 
@@ -90,6 +90,11 @@ ktrderef(struct proc *p)
 	if (fp == NULL)
 		return;
 	FILE_USE(fp);
+
+	/*
+	 * ktrace file descriptor can't be watched (are not visible to
+	 * userspace), so no kqueue stuff here
+	 */
 	closef(fp, NULL);
 
 	p->p_tracep = NULL;
@@ -122,7 +127,7 @@ ktrsyscall(struct proc *p, register_t code, register_t args[])
 	register_t *argp;
 	int argsize;
 	size_t len;
-	int i;
+	u_int i;
 
 	argsize = p->p_emul->e_sysent[code].sy_narg * sizeof (register_t);
 	len = sizeof(struct ktr_syscall) + argsize;

@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.6.6.3 2002/10/18 02:39:43 nathanw Exp $ */
+/* $NetBSD: wdog.c,v 1.6.6.4 2002/11/11 22:04:01 nathanw Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -67,7 +67,7 @@ dev_type_ioctl(wdogioctl);
 
 const struct cdevsw wdog_cdevsw = {
 	wdogopen, wdogclose, noread, nowrite, wdogioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void

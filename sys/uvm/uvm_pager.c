@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.41.2.11 2002/10/18 02:46:01 nathanw Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.41.2.12 2002/11/11 22:17:10 nathanw Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.11 2002/10/18 02:46:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.12 2002/11/11 22:17:10 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -83,7 +83,7 @@ static boolean_t emerginuse;
 void
 uvm_pager_init()
 {
-	int lcv;
+	u_int lcv;
 	vaddr_t sva, eva;
 
 	/*

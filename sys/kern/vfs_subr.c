@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.18 2002/09/17 21:22:30 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.19 2002/11/11 22:14:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.18 2002/09/17 21:22:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.19 2002/11/11 22:14:12 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.18 2002/09/17 21:22:30 nathanw 
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/time.h>
+#include <sys/event.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
@@ -172,6 +173,8 @@ struct pool vnode_pool;				/* memory pool for vnodes */
 void insmntque __P((struct vnode *, struct mount *));
 int getdevvp __P((dev_t, struct vnode **, enum vtype));
 void vgoneall __P((struct vnode *));
+
+void vclean(struct vnode *, int, struct proc *);
 
 static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
@@ -532,6 +535,9 @@ getnewvnode(tag, mp, vops, vpp)
 		KASSERT((vp->v_flag & VONWORKLST) == 0);
 		vp->v_flag = 0;
 		vp->v_socket = NULL;
+#ifdef VERIFIED_EXEC
+		vp->fp_status = FINGERPRINT_INVALID;
+#endif
 	}
 	vp->v_type = VNON;
 	vp->v_vnlock = &vp->v_lock;
@@ -1579,6 +1585,7 @@ vclean(vp, flags, p)
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
 	simple_lock(&vp->v_interlock);
+	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
 	vp->v_flag &= ~VXLOCK;
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
@@ -2800,7 +2807,6 @@ vfs_vnode_print(vp, full, pr)
 {
 	char buf[256];
 	const char *vtype, *vtag;
-	int tmp;
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
@@ -2812,10 +2818,10 @@ vfs_vnode_print(vp, full, pr)
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
 	      vp->v_holdcnt, vp->v_numoutput);
 
-	vtype = ((tmp = vp->v_type) >= 0 &&
+	vtype = (vp->v_type >= 0 &&
 		 vp->v_type < sizeof(vnode_types) / sizeof(vnode_types[0])) ?
 		vnode_types[vp->v_type] : "UNKNOWN";
-	vtag = ((tmp = vp->v_tag) >= 0 &&
+	vtag = (vp->v_tag >= 0 &&
 		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
 		vnode_tags[vp->v_tag] : "UNKNOWN";
 	

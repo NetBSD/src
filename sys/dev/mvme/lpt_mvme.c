@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.1.2.3 2002/09/17 21:20:10 nathanw Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.1.2.4 2002/11/11 22:10:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ dev_type_ioctl(lptioctl);
 
 const struct cdevsw lpt_cdevsw = {
 	lptopen, lptclose, noread, lptwrite, lptioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void

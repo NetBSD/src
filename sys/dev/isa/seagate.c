@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.39.2.8 2002/10/18 02:42:34 nathanw Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39.2.9 2002/11/11 22:10:23 nathanw Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.8 2002/10/18 02:42:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.39.2.9 2002/11/11 22:10:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1355,7 +1355,7 @@ sea_information_transfer(sea)
 					if (!(phase & STAT_IO)) {
 #ifdef SEA_ASSEMBLER
 						caddr_t junk;
-						asm("cld\n\t\
+						__asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :
 						    "=S" (scb->data),
@@ -1372,7 +1372,7 @@ sea_information_transfer(sea)
 					} else {
 #ifdef SEA_ASSEMBLER
 						caddr_t junk;
-						asm("cld\n\t\
+						__asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :
 						    "=D" (scb->data),

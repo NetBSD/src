@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.52.2.7 2002/08/27 23:48:01 nathanw Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.52.2.8 2002/11/11 22:15:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.7 2002/08/27 23:48:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.8 2002/11/11 22:15:24 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -85,6 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.7 2002/08/27 23:48:01 nathanw E
 #include <netinet/ip_mroute.h>
 #include <netinet/ip_encap.h>
 
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#endif
+
 #include <machine/stdarg.h>
 
 #define IP_MULTICASTOPTS 0
@@ -92,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.7 2002/08/27 23:48:01 nathanw E
 	do { \
 		if ((m) && ((m)->m_flags & M_EXT || (m)->m_len < (len))) \
 			(m) = m_pullup((m), (len)); \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 /*
  * Globals.  All but ip_mrouter and ip_mrtproto could be static,

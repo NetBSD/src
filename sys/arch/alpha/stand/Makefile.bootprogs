@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.18.2.4 2002/02/28 04:06:16 nathanw Exp $
+# $NetBSD: Makefile.bootprogs,v 1.18.2.5 2002/11/11 21:56:02 nathanw Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -8,9 +8,6 @@ STRIPFLAG=
 BINMODE= 444
 
 STRIP?=	strip
-
-# XXX Can't do warnings yet.
-WARNS=	0
 
 CHECKSIZE_CMD=	SIZE=${SIZE} sh ${.CURDIR}/../common/checksize.sh
 

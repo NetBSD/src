@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.1.2.2 2002/10/18 02:44:23 nathanw Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.1.2.3 2002/11/11 22:12:40 nathanw Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.1.2.2 2002/10/18 02:44:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.1.2.3 2002/11/11 22:12:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.1.2.2 2002/10/18 02:44:23 nathanw Exp $
 #include <sys/poll.h>
 #include <sys/file.h>
 
-#include <machine/vuid_event.h>
-#include <machine/kbd.h>
-#include <machine/kbio.h>
+#include <dev/sun/kbd_reg.h>
+#include <dev/sun/kbio.h>
+#include <dev/sun/vuid_event.h>
 #include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
 
@@ -86,7 +86,7 @@ static int	kbd_sun_set_leds(struct kbd_softc *, int, int);
 
 static void	kbd_sun_set_leds1(struct kbd_softc *, int); /* aux */
 
-struct kbd_ops kbd_ops_sun = {
+const struct kbd_ops kbd_ops_sun = {
 	kbd_sun_open,
 	kbd_sun_close,
 	kbd_sun_do_cmd,
@@ -99,7 +99,6 @@ static int 	kbd_sun_drain_tx(struct kbd_sun_softc *);
 /* helper functions for kbd_sun_input */
 static void	kbd_sun_was_reset(struct kbd_sun_softc *);
 static void	kbd_sun_new_layout(struct kbd_sun_softc *);
-static void	kbd_sun_repeat(void *);
 
 
 /***********************************************************************
@@ -128,12 +127,6 @@ kbd_sun_open(kbd)
 	if (k->k_isopen)
 		return (0);
 
-	/* stop pending autorepeat */
-	if (k->k_repeating) {
-		k->k_repeating = 0;
-		callout_stop(&k->k_repeat_ch);
-	}
-
 	/* open internal device */
 	if (k->k_deviopen)
 		(*k->k_deviopen)((struct device *)k, FREAD|FWRITE);
@@ -158,32 +151,30 @@ kbd_sun_open(kbd)
 		ks->kbd_id = KB_SUN2;
 	}
 
-	/* initialize the table pointers for this type */
+	/* earlier than type 4 does not know "layout" */
+	if (ks->kbd_id >= KB_SUN4) {
+		/* ask for the layout */
+		kbd_sun_output(k, KBD_CMD_GETLAYOUT);
+		kbd_sun_start_tx(k);
+		kbd_sun_drain_tx(k);
+
+		/* the wakeup for this is in kbd_new_layout() */
+		error = tsleep((caddr_t)&ks->kbd_layout, PZERO | PCATCH, devopn, hz);
+		if (error == EWOULDBLOCK) { /* no response */
+			log(LOG_ERR, "%s: no response to get_layout\n",
+			    kbd->k_dev.dv_xname);
+			error = 0;
+			ks->kbd_layout = 0; /* US layout */
+		}
+	}
+
+	/* initialize the table pointers for this type/layout */
 	kbd_xlate_init(ks);
 
-	/* earlier than type 4 does not know "layout" */
-	if (ks->kbd_id < KB_SUN4)
-		goto done;
-
-	/* ask for the layout */
-	kbd_sun_output(k, KBD_CMD_GETLAYOUT);
-	kbd_sun_start_tx(k);
-	kbd_sun_drain_tx(k);
-
-	/* the wakeup for this is in kbd_new_layout() */
-	error = tsleep((caddr_t)&ks->kbd_layout, PZERO | PCATCH, devopn, hz);
-	if (error == EWOULDBLOCK) { 	/* no response */
-		log(LOG_ERR, "%s: no response to get_layout\n",
-		    kbd->k_dev.dv_xname);
-		error = 0;
-		ks->kbd_layout = 0; /* US layout */
-	}
-  done:
 	splx(s);
 
 	if (error == 0)
 		k->k_isopen = 1;
-
 	return (error);
 }
 
@@ -395,17 +386,15 @@ kbd_sun_start_tx(k)
 
 /*
  * Called by underlying driver's softint() routine on input,
- * which passes us the raw hardware scan codes.
+ * which passes us the raw hardware make/break codes.
  * Called at spltty()
  */
 void
-kbd_sun_input(k, c)
+kbd_sun_input(k, code)
 	struct kbd_sun_softc *k;
-	int c;
+	int code;
 {
 	struct kbd_softc *kbd = (struct kbd_softc *)k;
-	struct kbd_state *ks = &kbd->k_state;
-	int keysym;
 
 	/* XXX - Input errors already handled. */
 
@@ -413,12 +402,12 @@ kbd_sun_input(k, c)
 	if (k->k_expect) {
 		if (k->k_expect & KBD_EXPECT_IDCODE) {
 			/* We read a KBD_RESET last time. */
-			ks->kbd_id = c;
+			kbd->k_state.kbd_id = code;
 			kbd_sun_was_reset(k);
 		}
 		if (k->k_expect & KBD_EXPECT_LAYOUT) {
 			/* We read a KBD_LAYOUT last time. */
-			ks->kbd_layout = c;
+			kbd->k_state.kbd_layout = code;
 			kbd_sun_new_layout(k);
 		}
 		k->k_expect = 0;
@@ -426,12 +415,12 @@ kbd_sun_input(k, c)
 	}
 
 	/* Is this one of the "special" input codes? */
-	if (KBD_SPECIAL(c)) {
-		switch (c) {
+	if (KBD_SPECIAL(code)) {
+		switch (code) {
 		case KBD_RESET:
 			k->k_expect |= KBD_EXPECT_IDCODE;
 			/* Fake an "all-up" to resync. translation. */
-			c = KBD_IDLE;
+			code = KBD_IDLE;
 			break;
 
 		case KBD_LAYOUT:
@@ -449,57 +438,7 @@ kbd_sun_input(k, c)
 		}
 	}
 
-	/*
-	 * If /dev/kbd is not connected in event mode, 
-	 * translate and send upstream (to console).
-	 */
-	if (!kbd->k_evmode) {
-
-		/* Any input stops auto-repeat (i.e. key release). */
-		if (k->k_repeating) {
-			k->k_repeating = 0;
-			callout_stop(&k->k_repeat_ch);
-		}
-
-		/* Translate this code to a keysym */
-		keysym = kbd_code_to_keysym(ks, c);
-
-		/* Pass up to the next layer. */
-		if (kbd_input_keysym(kbd, keysym)) {
-			log(LOG_WARNING, "%s: code=0x%x with mod=0x%x"
-					 " produced unexpected keysym 0x%x\n",
-			    kbd->k_dev.dv_xname,
-			    c, ks->kbd_modbits, keysym);
-			/* No point in auto-repeat here. */
-			return;
-		}
-
-		/* Does this symbol get auto-repeat? */
-		if (KEYSYM_NOREPEAT(keysym))
-			return;
-
-		/* Setup for auto-repeat after initial delay. */
-		k->k_repeating = 1;
-		k->k_repeatsym = keysym;
-		callout_reset(&k->k_repeat_ch, k->k_repeat_start,
-			      kbd_sun_repeat, k);
-		return;
-	}
-
-	/*
-	 * IDLEs confuse the MIT X11R4 server badly, so we must drop them.
-	 * This is bad as it means the server will not automatically resync
-	 * on all-up IDLEs, but I did not drop them before, and the server
-	 * goes crazy when it comes time to blank the screen....
-	 */
-	if (c == KBD_IDLE)
-		return;
-
-	/*
-	 * Keyboard is generating events.  Turn this keystroke into an
-	 * event and put it in the queue.
-	 */
-	kbd_input_event(kbd, c);
+	kbd_input(kbd, code);
 }
 
 
@@ -566,30 +505,4 @@ kbd_sun_new_layout(k)
 	wakeup((caddr_t)&ks->kbd_layout);
 
 	/* XXX: switch decoding tables? */
-}
-
-
-/*
- * This is the autorepeat callout function.
- * Autorepeat is scheduled by kbd_sun_input.
- * Called at splsoftclock().
- */
-static void
-kbd_sun_repeat(arg)
-	void *arg;
-{
-	struct kbd_sun_softc *k = (struct kbd_sun_softc *)arg;
-	int s;
-
-	s = spltty();
-	if (k->k_repeating && k->k_repeatsym >= 0) {
-
-		/* feed typematic keysym to the upper layer */
-		(void)kbd_input_keysym(&k->k_kbd, k->k_repeatsym);
-
-		/* reschedule next repeat */
-		callout_reset(&k->k_repeat_ch, k->k_repeat_step,
-			      kbd_sun_repeat, k);
-	}
-	splx(s);
 }

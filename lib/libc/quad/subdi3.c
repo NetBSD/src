@@ -1,4 +1,4 @@
-/*	$NetBSD: subdi3.c,v 1.3 1997/07/13 20:01:55 christos Exp $	*/
+/*	$NetBSD: subdi3.c,v 1.3.14.1 2002/11/11 22:22:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)subdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subdi3.c,v 1.3 1997/07/13 20:01:55 christos Exp $");
+__RCSID("$NetBSD: subdi3.c,v 1.3.14.1 2002/11/11 22:22:35 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: subdi3.c,v 1.3 1997/07/13 20:01:55 christos Exp $");
 
 /*
  * Subtract two quad values.  This is trivial since a one-bit carry
- * from a single u_long difference x-y occurs if and only if (x-y) > x.
+ * from a single u_int difference x-y occurs if and only if (x-y) > x.
  */
 quad_t
 __subdi3(a, b)

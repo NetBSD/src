@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.51.2.13 2002/10/18 05:11:03 nathanw Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.51.2.14 2002/11/11 22:13:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.13 2002/10/18 05:11:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.14 2002/11/11 22:13:45 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -147,16 +147,16 @@ do {									\
 #define	INTERLOCK_ACQUIRE(lkp, flags, s)				\
 do {									\
 	if ((flags) & LK_SPIN)						\
-		s = splsched();						\
+		s = spllock();						\
 	simple_lock(&(lkp)->lk_interlock);				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	INTERLOCK_RELEASE(lkp, flags, s)				\
 do {									\
 	simple_unlock(&(lkp)->lk_interlock);				\
 	if ((flags) & LK_SPIN)						\
 		splx(s);						\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #ifdef DDB /* { */
 #ifdef MULTIPROCESSOR
@@ -201,7 +201,7 @@ do {									\
 		SLOCK_TRACE();						\
 		SPINLOCK_SPINCHECK_DEBUGGER;				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	SPINLOCK_SPINCHECK_DECL			/* nothing */
 #define	SPINLOCK_SPINCHECK			/* nothing */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.39.2.3 2002/06/20 03:47:04 nathanw Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.39.2.4 2002/11/11 22:13:20 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -403,6 +403,14 @@
 #define KS_Execute		0xf38b
 #define KS_Find			0xf38c
 #define KS_Select		0xf38d
+#define KS_Again                0xf38e
+#define KS_Props                0xf38f
+#define KS_Undo                 0xf390
+#define KS_Front                0xf391
+#define KS_Copy                 0xf392
+#define KS_Open                 0xf393
+#define KS_Paste                0xf394
+#define KS_Cut                  0xf395
 
 #define KS_Menu			0xf3c0
 #define KS_Pause		0xf3c1

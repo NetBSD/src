@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.7.4.2 2002/09/17 21:18:15 nathanw Exp $ */
+/*	$NetBSD: fb.c,v 1.7.4.3 2002/11/11 22:05:15 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ dev_type_mmap(fbmmap);
 
 const struct cdevsw fb_cdevsw = {
 	fbopen, fbclose, noread, nowrite, fbioctl,
-	nostop, notty, nopoll, fbmmap,
+	nostop, notty, nopoll, fbmmap, nokqfilter,
 };
 
 static struct fbdevice *devfb;

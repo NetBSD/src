@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.15 2002/10/18 02:45:59 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.16 2002/11/11 22:17:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.15 2002/10/18 02:45:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.16 2002/11/11 22:17:02 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -100,8 +100,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.15 2002/10/18 02:45:59 nathanw Ex
 
 extern struct vm_map *pager_map;
 
-struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
-struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
+struct uvm_cnt map_ubackmerge, map_uforwmerge;
+struct uvm_cnt map_ubimerge, map_uforwmerge_fail, map_unomerge;
+struct uvm_cnt map_kbackmerge, map_kforwmerge;
+struct uvm_cnt map_kbimerge, map_kforwmerge_fail, map_knomerge;
+struct uvm_cnt uvm_map_call, uvm_mlk_call, uvm_mlk_hint;
 const char vmmapbsy[] = "vmmapbsy";
 
 /*
@@ -143,7 +146,7 @@ vaddr_t uvm_maxkaddr;
 	(entry)->next = (after_where)->next; \
 	(entry)->prev->next = (entry); \
 	(entry)->next->prev = (entry); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * uvm_map_entry_unlink: remove entry from a map
@@ -154,7 +157,7 @@ vaddr_t uvm_maxkaddr;
 	(map)->nentries--; \
 	(entry)->next->prev = (entry)->prev; \
 	(entry)->prev->next = (entry)->next; \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * SAVE_HINT: saves the specified entry as the hint for future lookups.
@@ -166,7 +169,7 @@ vaddr_t uvm_maxkaddr;
 	if ((map)->hint == (check)) \
 		(map)->hint = (value); \
 	simple_unlock(&(map)->hint_lock); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * VM_MAP_RANGE_CHECK: check and correct range
@@ -181,7 +184,7 @@ vaddr_t uvm_maxkaddr;
 		end = vm_map_max(map);          \
 	if (start > end)                        \
 		start = end;                    \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * local prototypes
@@ -344,9 +347,29 @@ uvm_map_init()
 	UVMHIST_LOG(maphist,"<starting uvm map system>", 0, 0, 0, 0);
 	UVMCNT_INIT(uvm_map_call,  UVMCNT_CNT, 0,
 	    "# uvm_map() successful calls", 0);
-	UVMCNT_INIT(map_backmerge, UVMCNT_CNT, 0, "# uvm_map() back merges", 0);
-	UVMCNT_INIT(map_forwmerge, UVMCNT_CNT, 0, "# uvm_map() missed forward",
-	    0);
+
+	UVMCNT_INIT(map_ubackmerge, UVMCNT_CNT, 0,
+	    "# uvm_map() back umerges", 0);
+	UVMCNT_INIT(map_uforwmerge, UVMCNT_CNT, 0,
+	    "# uvm_map() forward umerges", 0);
+	UVMCNT_INIT(map_ubimerge, UVMCNT_CNT, 0,
+	    "# uvm_map() dual umerge", 0);
+	UVMCNT_INIT(map_uforwmerge_fail, UVMCNT_CNT, 0,
+	    "# uvm_map() forward umerge fails", 0);
+	UVMCNT_INIT(map_unomerge, UVMCNT_CNT, 0,
+	    "# uvm_map() no umerge", 0);
+
+	UVMCNT_INIT(map_kbackmerge, UVMCNT_CNT, 0,
+	    "# uvm_map() back kmerges", 0);
+	UVMCNT_INIT(map_kforwmerge, UVMCNT_CNT, 0,
+	    "# uvm_map() forward kmerges", 0);
+	UVMCNT_INIT(map_kbimerge, UVMCNT_CNT, 0,
+	    "# uvm_map() dual kmerge", 0);
+	UVMCNT_INIT(map_kforwmerge_fail, UVMCNT_CNT, 0,
+	    "# uvm_map() forward kmerge fails", 0);
+	UVMCNT_INIT(map_knomerge, UVMCNT_CNT, 0,
+	    "# uvm_map() no kmerge", 0);
+
 	UVMCNT_INIT(uvm_mlk_call,  UVMCNT_CNT, 0, "# map lookup calls", 0);
 	UVMCNT_INIT(uvm_mlk_hint,  UVMCNT_CNT, 0, "# map lookup hint hits", 0);
 
@@ -522,7 +545,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	    UVM_MAXPROTECTION(flags);
 	vm_inherit_t inherit = UVM_INHERIT(flags);
 	int advice = UVM_ADVICE(flags);
-	int error;
+	int error, merged = 0, kmap = (vm_map_pmap(map) == pmap_kernel());
 	UVMHIST_FUNC("uvm_map");
 	UVMHIST_CALLED(maphist);
 
@@ -623,28 +646,31 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	 * for a stack, but we are currently allocating our stack in advance.
 	 */
 
-	if ((flags & UVM_FLAG_NOMERGE) == 0 &&
-	    prev_entry->end == *startp && prev_entry != &map->header &&
+	if (flags & UVM_FLAG_NOMERGE)
+		goto nomerge;
+
+	if (prev_entry->end == *startp &&
+	    prev_entry != &map->header &&
 	    prev_entry->object.uvm_obj == uobj) {
 
 		if (uobj && prev_entry->offset +
 		    (prev_entry->end - prev_entry->start) != uoffset)
-			goto nomerge;
+			goto forwardmerge;
 
 		if (UVM_ET_ISSUBMAP(prev_entry))
-			goto nomerge;
+			goto forwardmerge;
 
 		if (prev_entry->protection != prot ||
 		    prev_entry->max_protection != maxprot)
-			goto nomerge;
+			goto forwardmerge;
 
 		if (prev_entry->inheritance != inherit ||
 		    prev_entry->advice != advice)
-			goto nomerge;
+			goto forwardmerge;
 
 		/* wiring status must match (new area is unwired) */
 		if (VM_MAPENT_ISWIRED(prev_entry))
-			goto nomerge;
+			goto forwardmerge;
 
 		/*
 		 * can't extend a shared amap.  note: no need to lock amap to
@@ -654,7 +680,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 
 		if (prev_entry->aref.ar_amap &&
 		    amap_refs(prev_entry->aref.ar_amap) != 1) {
-			goto nomerge;
+			goto forwardmerge;
 		}
 
 		if (prev_entry->aref.ar_amap) {
@@ -668,7 +694,10 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 			}
 		}
 
-		UVMCNT_INCR(map_backmerge);
+		if (kmap)
+			UVMCNT_INCR(map_kbackmerge);
+		else
+			UVMCNT_INCR(map_ubackmerge);
 		UVMHIST_LOG(maphist,"  starting back merge", 0, 0, 0, 0);
 
 		/*
@@ -683,80 +712,200 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		map->size += size;
 
 		UVMHIST_LOG(maphist,"<- done (via backmerge)!", 0, 0, 0, 0);
-		vm_map_unlock(map);
 		if (new_entry) {
 			uvm_mapent_free(new_entry);
+			new_entry = NULL;
 		}
-		return 0;
+		merged++;
+	}
+
+forwardmerge:
+	if (prev_entry->next->start == (*startp + size) &&
+	    prev_entry->next != &map->header &&
+	    prev_entry->next->object.uvm_obj == uobj) {
+
+		if (uobj && prev_entry->next->offset != uoffset + size)
+			goto nomerge;
+
+		if (UVM_ET_ISSUBMAP(prev_entry->next))
+			goto nomerge;
+
+		if (prev_entry->next->protection != prot ||
+		    prev_entry->next->max_protection != maxprot)
+			goto nomerge;
+
+		if (prev_entry->next->inheritance != inherit ||
+		    prev_entry->next->advice != advice)
+			goto nomerge;
+
+		/* wiring status must match (new area is unwired) */
+		if (VM_MAPENT_ISWIRED(prev_entry->next))
+			goto nomerge;
+
+		/*
+		 * can't extend a shared amap.  note: no need to lock amap to
+		 * look at refs since we don't care about its exact value.
+		 * if it is one (i.e. we have only reference) it will stay there.
+		 *
+		 * note that we also can't merge two amaps, so if we
+		 * merged with the previous entry which has an amap,
+		 * and the next entry also has an amap, we give up.
+		 *
+		 * XXX should we attempt to deal with someone refilling
+		 * the deallocated region between two entries that are
+		 * backed by the same amap (ie, arefs is 2, "prev" and
+		 * "next" refer to it, and adding this allocation will
+		 * close the hole, thus restoring arefs to 1 and
+		 * deallocating the "next" vm_map_entry)?  -- @@@
+		 */
+
+		if (prev_entry->next->aref.ar_amap &&
+		    (amap_refs(prev_entry->next->aref.ar_amap) != 1 ||
+		     (merged && prev_entry->aref.ar_amap))) {
+			goto nomerge;
+		}
+
+		/* got it...almost */
+
+		if (prev_entry->next->aref.ar_amap) {
+			/*
+			 * XXX if not for this, we could have merged
+			 * forwards, so the number of times we missed
+			 * a *possible* chance to merge more.  note,
+			 * however, that only processes use amaps,
+			 * and they only *VERY* rarely present solely
+			 * forward mergeable allocations.  -- @@@
+			 */
+			if (kmap)
+				UVMCNT_INCR(map_kforwmerge_fail);
+			else
+				UVMCNT_INCR(map_uforwmerge_fail);
+			goto nomerge;
+		}
+
+		/*
+		 * XXX call amap_extend() to merge backwards here if needed.  -- @@@
+		 */
+		if (merged) {
+			/*
+			 * Try to extend the amap of the previous entry to
+			 * cover the next entry as well.  If it doesn't work
+			 * just skip on, don't actually give up, since we've
+			 * already completed the back merge.
+			 */
+			if (prev_entry->aref.ar_amap &&
+			    amap_extend(prev_entry, prev_entry->next->end -
+				prev_entry->next->start))
+				goto nomerge;
+		}
+
+		if (merged) {
+			if (kmap) {
+				UVMCNT_DECR(map_kbackmerge);
+				UVMCNT_INCR(map_kbimerge);
+			} else {
+				UVMCNT_DECR(map_ubackmerge);
+				UVMCNT_INCR(map_ubimerge);
+			}
+		} else {
+			if (kmap)
+				UVMCNT_INCR(map_kforwmerge);
+			else
+				UVMCNT_INCR(map_uforwmerge);
+		}
+		UVMHIST_LOG(maphist,"  starting forward merge", 0, 0, 0, 0);
+
+		/*
+		 * drop our reference to uobj since we are extending a reference
+		 * that we already have (the ref count can not drop to zero).
+		 * (if merged, we've already detached)
+		 */
+		if (uobj && uobj->pgops->pgo_detach && !merged)
+			uobj->pgops->pgo_detach(uobj);
+
+		if (merged) {
+			struct vm_map_entry *dead = prev_entry->next;
+			prev_entry->end = dead->end;
+			uvm_map_entry_unlink(map, dead);
+			uvm_mapent_free(dead);
+		} else {
+			prev_entry->next->start -= size;
+			map->size += size;
+			if (uobj)
+				prev_entry->next->offset = uoffset;
+		}
+
+		UVMHIST_LOG(maphist,"<- done forwardmerge", 0, 0, 0, 0);
+		if (new_entry) {
+			uvm_mapent_free(new_entry);
+			new_entry = NULL;
+		}
+		merged++;
 	}
 
 nomerge:
-	UVMHIST_LOG(maphist,"  allocating new map entry", 0, 0, 0, 0);
-
-	/*
-	 * check for possible forward merge (which we don't do) and count
-	 * the number of times we missed a *possible* chance to merge more
-	 */
-
-	if ((flags & UVM_FLAG_NOMERGE) == 0 &&
-	    prev_entry->next != &map->header &&
-	    prev_entry->next->start == (*startp + size))
-		UVMCNT_INCR(map_forwmerge);
-
-	/*
-	 * allocate new entry and link it in.
-	 */
-
-	if (new_entry == NULL) {
-		new_entry = uvm_mapent_alloc(map);
-	}
-	new_entry->start = *startp;
-	new_entry->end = new_entry->start + size;
-	new_entry->object.uvm_obj = uobj;
-	new_entry->offset = uoffset;
-
-	if (uobj)
-		new_entry->etype = UVM_ET_OBJ;
-	else
-		new_entry->etype = 0;
-
-	if (flags & UVM_FLAG_COPYONW) {
-		new_entry->etype |= UVM_ET_COPYONWRITE;
-		if ((flags & UVM_FLAG_OVERLAY) == 0)
-			new_entry->etype |= UVM_ET_NEEDSCOPY;
-	}
-
-	new_entry->protection = prot;
-	new_entry->max_protection = maxprot;
-	new_entry->inheritance = inherit;
-	new_entry->wired_count = 0;
-	new_entry->advice = advice;
-	if (flags & UVM_FLAG_OVERLAY) {
+	if (!merged) {
+		UVMHIST_LOG(maphist,"  allocating new map entry", 0, 0, 0, 0);
+		if (kmap)
+			UVMCNT_INCR(map_knomerge);
+		else
+			UVMCNT_INCR(map_unomerge);
 
 		/*
-		 * to_add: for BSS we overallocate a little since we
-		 * are likely to extend
+		 * allocate new entry and link it in.
 		 */
 
-		vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ?
-			UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
-		struct vm_amap *amap = amap_alloc(size, to_add, M_WAITOK);
-		new_entry->aref.ar_pageoff = 0;
-		new_entry->aref.ar_amap = amap;
-	} else {
-		new_entry->aref.ar_pageoff = 0;
-		new_entry->aref.ar_amap = NULL;
+		if (new_entry == NULL) {
+			new_entry = uvm_mapent_alloc(map);
+		}
+		new_entry->start = *startp;
+		new_entry->end = new_entry->start + size;
+		new_entry->object.uvm_obj = uobj;
+		new_entry->offset = uoffset;
+
+		if (uobj)
+			new_entry->etype = UVM_ET_OBJ;
+		else
+			new_entry->etype = 0;
+
+		if (flags & UVM_FLAG_COPYONW) {
+			new_entry->etype |= UVM_ET_COPYONWRITE;
+			if ((flags & UVM_FLAG_OVERLAY) == 0)
+				new_entry->etype |= UVM_ET_NEEDSCOPY;
+		}
+
+		new_entry->protection = prot;
+		new_entry->max_protection = maxprot;
+		new_entry->inheritance = inherit;
+		new_entry->wired_count = 0;
+		new_entry->advice = advice;
+		if (flags & UVM_FLAG_OVERLAY) {
+
+			/*
+			 * to_add: for BSS we overallocate a little since we
+			 * are likely to extend
+			 */
+
+			vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ?
+				UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
+			struct vm_amap *amap = amap_alloc(size, to_add, M_WAITOK);
+			new_entry->aref.ar_pageoff = 0;
+			new_entry->aref.ar_amap = amap;
+		} else {
+			new_entry->aref.ar_pageoff = 0;
+			new_entry->aref.ar_amap = NULL;
+		}
+		uvm_map_entry_link(map, prev_entry, new_entry);
+		map->size += size;
+
+		/*
+		 * Update the free space hint
+		 */
+
+		if ((map->first_free == prev_entry) &&
+		    (prev_entry->end >= new_entry->start))
+			map->first_free = new_entry;
 	}
-	uvm_map_entry_link(map, prev_entry, new_entry);
-	map->size += size;
-
-	/*
-	 * Update the free space hint
-	 */
-
-	if ((map->first_free == prev_entry) &&
-	    (prev_entry->end >= new_entry->start))
-		map->first_free = new_entry;
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 	vm_map_unlock(map);

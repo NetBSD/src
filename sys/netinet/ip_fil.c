@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.65.2.12 2002/09/20 23:40:46 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.65.2.13 2002/11/11 22:15:19 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -123,7 +123,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.65.2.12 2002/09/20 23:40:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.65.2.13 2002/11/11 22:15:19 nathanw Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
@@ -202,9 +202,11 @@ toid_t ipfr_slowtimer_ch;
 #if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000) && \
     defined(_KERNEL)
 #include <sys/conf.h>
+#include <sys/event.h>
+
 const struct cdevsw ipl_cdevsw = {
 	iplopen, iplclose, iplread, nowrite, iplioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 #endif
 

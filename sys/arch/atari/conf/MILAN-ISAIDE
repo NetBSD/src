@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.5.6.6 2002/10/18 02:35:49 nathanw Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.5.6.7 2002/11/11 21:57:12 nathanw Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
-#		NetBSD: GENERIC.in,v 1.27 2002/10/14 18:24:33 elric Exp $
+#		NetBSD: GENERIC.in,v 1.28 2002/10/19 05:58:25 junyoung Exp $
 
 #This configuration file is for a generic Milan
 
@@ -30,6 +30,10 @@ options 	UCONSOLE	# Allow xconsole to work
 #Standard system options
 options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
+
+#Enable experimental buffer queue strategy for better responsiness under 
+#high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #(Co)processors this kernel should support
 

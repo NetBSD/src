@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.6.6.4 2002/10/18 02:40:32 nathanw Exp $	*/
+/*	$NetBSD: qv.c,v 1.6.6.5 2002/11/11 22:05:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -280,10 +280,11 @@ dev_type_write(qvwrite);
 dev_type_ioctl(qvioctl);
 dev_type_stop(qvstop);
 dev_type_poll(qvpoll);
+dev_type_kqfilter(qvkqfilter);
 
 const struct cdevsw qv_cdevsw = {
 	qvopen, qvclose, qvread, qvwrite, qvioctl,
-	qvstop, notty, qvpoll, nommap,
+	qvstop, notty, qvpoll, nommap, qvkqfilter,
 };
 
 /*

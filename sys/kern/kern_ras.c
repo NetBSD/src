@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.1.6.5 2002/10/18 02:44:53 nathanw Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.1.6.6 2002/11/11 22:13:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.1.6.5 2002/10/18 02:44:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.1.6.6 2002/11/11 22:13:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.1.6.5 2002/10/18 02:44:53 nathanw Exp
 
 #define MAX_RAS_PER_PROC	16
 
-int ras_per_proc = MAX_RAS_PER_PROC;
+u_int ras_per_proc = MAX_RAS_PER_PROC;
 
 #ifdef DEBUG
 int ras_debug = 0;

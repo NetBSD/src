@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.15.2.6 2002/10/18 02:43:38 nathanw Exp $	*/
+/*	$NetBSD: dl.c,v 1.15.2.7 2002/11/11 22:11:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.15.2.6 2002/10/18 02:43:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.15.2.7 2002/11/11 22:11:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ dev_type_poll(dlpoll);
 
 const struct cdevsw dl_cdevsw = {
 	dlopen, dlclose, dlread, dlwrite, dlioctl,
-	dlstop, dltty, dlpoll, nommap, D_TTY
+	dlstop, dltty, dlpoll, nommap, ttykqfilter, D_TTY
 };
 
 #define	DL_READ_WORD(reg) \

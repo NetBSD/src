@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.6 2002/08/27 19:54:18 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.7 2002/11/11 22:03:04 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -35,15 +35,11 @@
 #include "opt_altivec.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
-#include "opt_compat_linux.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
-#include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #ifdef KTRACE
@@ -59,25 +55,48 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-#ifdef COMPAT_LINUX
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_errno.h>
-#include <compat/linux/linux_syscall.h>
-#include <compat/linux/common/linux_signal.h>
-#include <compat/linux/common/linux_siginfo.h>
-#include <compat/linux/arch/powerpc/linux_siginfo.h>
-#include <compat/linux/arch/powerpc/linux_machdep.h>
-#endif
-
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
 
-void syscall_plain(struct trapframe *frame);
-void syscall_fancy(struct trapframe *frame);
+#ifndef EMULNAME
+#include <sys/syscall.h>
+
+#define EMULNAME(x)	(x)
+#define EMULNAMEU(x)	(x)
+
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.7 2002/11/11 22:03:04 nathanw Exp $");
 
 void
-syscall_plain(struct trapframe *frame)
+child_return(void *arg)
+{
+	struct proc * const p = arg;
+	struct trapframe * const tf = trapframe(p);
+
+	KERNEL_PROC_UNLOCK(p);
+
+	tf->fixreg[FIRSTARG] = 0;
+	tf->fixreg[FIRSTARG + 1] = 1;
+	tf->cr &= ~0x10000000;
+	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
+					   be them. */
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+#ifdef	KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
+		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
+#endif
+	/* Profiling?							XXX */
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+}
+#endif
+
+static void EMULNAME(syscall_plain)(struct trapframe *);
+
+void
+EMULNAME(syscall_plain)(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -92,30 +111,37 @@ syscall_plain(struct trapframe *frame)
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
-	callp = p->p_emul->e_sysent;
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * code is first argument,
-		 * followed by actual args.
-		 */
-		code = *params++;
-		n -= 1;
-		break;
-	case SYS___syscall:
-		params++;
-		code = *params++;
-		n -= 2;
-		break;
-	default:
-		break;
+#ifdef COMPAT_MACH
+	if ((callp = mach_syscall_dispatch(code)) == NULL)
+#endif /* COMPAT_MACH */
+	{
+		switch (code) {
+		case EMULNAMEU(SYS_syscall):
+			/*
+			 * code is first argument,
+			 * followed by actual args.
+			 */
+			code = *params++;
+			n -= 1;
+			break;
+#if !defined(COMPAT_LINUX)
+		case EMULNAMEU(SYS___syscall):
+			params++;
+			code = *params++;
+			n -= 2;
+			break;
+#endif
+		default:
+			break;
+		}
+		
+		callp = p->p_emul->e_sysent +
+		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
 	}
 
-	code &= (SYS_NSYSENT - 1);
-	callp += code;
 	argsize = callp->sy_argsize;
 
 	if (argsize > n * sizeof(register_t)) {
@@ -169,8 +195,11 @@ syscall_bad:
 	userret(l, frame);
 }
 
+#if defined(KTRACE) || defined(SYSTRACE)
+static void EMULNAME(syscall_fancy)(struct trapframe *);
+
 void
-syscall_fancy(struct trapframe *frame)
+EMULNAME(syscall_fancy)(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -186,30 +215,37 @@ syscall_fancy(struct trapframe *frame)
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
-	callp = p->p_emul->e_sysent;
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * code is first argument,
-		 * followed by actual args.
-		 */
-		code = *params++;
-		n -= 1;
-		break;
-	case SYS___syscall:
-		params++;
-		code = *params++;
-		n -= 2;
-		break;
-	default:
-		break;
+#ifdef COMPAT_MACH
+	if ((callp = mach_syscall_dispatch(code)) == NULL)
+#endif /* COMPAT_MACH */
+	{
+		switch (code) {
+		case EMULNAMEU(SYS_syscall):
+			/*
+			 * code is first argument,
+			 * followed by actual args.
+			 */
+			code = *params++;
+			n -= 1;
+			break;
+#if !defined(COMPAT_LINUX)
+		case EMULNAMEU(SYS___syscall):
+			params++;
+			code = *params++;
+			n -= 2;
+			break;
+#endif
+		default:
+			break;
+		}
+
+		callp = p->p_emul->e_sysent +
+		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
 	}
 
-	code &= (SYS_NSYSENT - 1);
-	callp += code;
 	argsize = callp->sy_argsize;
 
 	if (argsize > n * sizeof(register_t)) {
@@ -256,56 +292,24 @@ syscall_bad:
 	trace_exit(l, code, params, rval, error);
 	userret(l, frame);
 }
+#endif /* KTRACE || SYSTRACE */
+
+void EMULNAME(syscall_intern)(struct proc *);
 
 void
-syscall_intern(struct proc *p)
+EMULNAME(syscall_intern)(struct proc *p)
 {
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 		return;
 	}
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = syscall_plain;
-}
-
-#ifdef COMPAT_LINUX
-void
-linux_syscall_intern(struct proc *p)
-{
-	p->p_md.md_syscall = syscall_fancy;
-}
-#endif
-
-void
-child_return(void *arg)
-{
-	struct lwp * const l = arg;
-	struct trapframe * const tf = trapframe(l);
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
-	KERNEL_PROC_UNLOCK(l);
-
-	tf->fixreg[FIRSTARG] = 0;
-	tf->fixreg[FIRSTARG + 1] = 1;
-	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
-					   be them. */
-	l->l_addr->u_pcb.pcb_fpcpu = NULL;
-#ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
-	}
-#endif
-	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
+	p->p_md.md_syscall = EMULNAME(syscall_plain);
 }

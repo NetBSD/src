@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.10.2.7 2002/06/20 03:44:50 nathanw Exp $ */
+/* $NetBSD: isp_target.c,v 1.10.2.8 2002/11/11 22:09:45 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.10.2.7 2002/06/20 03:44:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.10.2.8 2002/11/11 22:09:45 nathanw Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -642,28 +642,28 @@ isp_got_msg_fc(struct ispsoftc *isp, int bus, in_fcentry_t *inp)
 
 		if (inp->in_task_flags & TASK_FLAGS_ABORT_TASK) {
 			isp_prt(isp, ISP_LOGINFO, f1, "ABORT TASK",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_ABORT_TAG;
 		} else if (inp->in_task_flags & TASK_FLAGS_CLEAR_TASK_SET) {
 			isp_prt(isp, ISP_LOGINFO, f1, "CLEAR TASK SET",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_CLEAR_QUEUE;
 		} else if (inp->in_task_flags & TASK_FLAGS_TARGET_RESET) {
 			isp_prt(isp, ISP_LOGINFO, f1, "TARGET RESET",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_BUS_DEV_RESET;
 		} else if (inp->in_task_flags & TASK_FLAGS_CLEAR_ACA) {
 			isp_prt(isp, ISP_LOGINFO, f1, "CLEAR ACA",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			/* ???? */
 			msg.nt_msg[0] = MSG_REL_RECOVERY;
 		} else if (inp->in_task_flags & TASK_FLAGS_TERMINATE_TASK) {
 			isp_prt(isp, ISP_LOGINFO, f1, "TERMINATE TASK",
-			    inp->in_iid, msg.nt_lun, inp->in_seqid);
+			    inp->in_iid, lun, inp->in_seqid);
 			msg.nt_msg[0] = MSG_TERM_IO_PROC;
 		} else {
 			isp_prt(isp, ISP_LOGWARN, f2, "task flag",
-			    inp->in_status, msg.nt_lun, inp->in_iid,
+			    inp->in_status, lun, inp->in_iid,
 			    inp->in_task_flags,  inp->in_seqid);
 		}
 		if (msg.nt_msg[0]) {

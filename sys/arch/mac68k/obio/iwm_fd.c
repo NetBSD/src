@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11.12.2 2002/10/18 02:38:30 nathanw Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11.12.3 2002/11/11 22:00:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #define FSTYPENAMES
 #define DKTYPENAMES
@@ -241,7 +242,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /* disk(9) framework device switch */
@@ -1636,7 +1637,8 @@ fdstart_Exit(fd)
 	if (DISABLED && TRACE_STRAT)
 		printf(" Next buf (bufQueue first) at %p\n",
 		    BUFQ_PEEK(&fd->bufQueue));
-	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid);
+	disk_unbusy(&fd->diskInfo, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 	/* 
 	 * Stop motor after 10s

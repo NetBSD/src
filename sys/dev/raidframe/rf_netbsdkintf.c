@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.16 2002/10/18 02:43:51 nathanw Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.17 2002/11/11 22:11:57 nathanw Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.16 2002/10/18 02:43:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.17 2002/11/11 22:11:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -197,7 +197,7 @@ const struct bdevsw raid_bdevsw = {
 
 const struct cdevsw raid_cdevsw = {
 	raidopen, raidclose, raidread, raidwrite, raidioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -3374,5 +3374,5 @@ rf_disk_unbusy(desc)
 
 	bp = (struct buf *)desc->bp;
 	disk_unbusy(&raid_softc[desc->raidPtr->raidid].sc_dkdev, 
-			    (bp->b_bcount - bp->b_resid));
+	    (bp->b_bcount - bp->b_resid), (bp->b_flags & B_READ));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.7 2000/12/13 23:29:07 simonb Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.7.2.1 2002/11/11 22:21:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,11 +40,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ptrace.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: ptrace.S,v 1.7 2000/12/13 23:29:07 simonb Exp $")
+	ASMSTR("$NetBSD: ptrace.S,v 1.7.2.1 2002/11/11 22:21:47 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 LEAF(ptrace)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set    noreorder
 	.cpload t9
 	.set    reorder

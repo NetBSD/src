@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.23.6.5 2002/10/18 02:45:12 nathanw Exp $	*/
+/*	$NetBSD: if_media.h,v 1.23.6.6 2002/11/11 22:15:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,8 +101,8 @@ typedef	void (*ifm_stat_cb_t) __P((struct ifnet *ifp, struct ifmediareq *req));
  */
 struct ifmedia_entry {
 	TAILQ_ENTRY(ifmedia_entry) ifm_list;
-	int	ifm_media;	/* description of this media attachment */
-	int	ifm_data;	/* for driver-specific use */
+	u_int	ifm_media;	/* description of this media attachment */
+	u_int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
 };
 
@@ -111,8 +111,8 @@ struct ifmedia_entry {
  * It is used to keep general media state.
  */
 struct ifmedia {
-	int	ifm_mask;	/* mask of changes we don't care about */
-	int	ifm_media;	/* current user-set media word */
+	u_int	ifm_mask;	/* mask of changes we don't care about */
+	u_int	ifm_media;	/* current user-set media word */
 	struct ifmedia_entry *ifm_cur;	/* currently selected media */
 	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
 	ifm_change_cb_t	ifm_change;	/* media change driver callback */
@@ -138,11 +138,10 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 	    struct ifmedia *ifm, u_long cmd));
 
 /* Look up a media entry. */
-struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
-	    int mask));
+struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, u_int, u_int));
 
 /* Delete all media for a given media instance */
-void	ifmedia_delete_instance __P((struct ifmedia *, int));
+void	ifmedia_delete_instance __P((struct ifmedia *, u_int));
 
 /* Compute baudrate for a given media. */
 int	ifmedia_baudrate __P((int));
@@ -272,7 +271,7 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
-#define	IFM_INST_ANY	-1
+#define	IFM_INST_ANY	((u_int) -1)
 
 /*
  * Macro to create a media word.

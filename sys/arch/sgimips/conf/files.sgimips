@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.13.2.5 2002/09/17 21:17:19 nathanw Exp $
+#	$NetBSD: files.sgimips,v 1.13.2.6 2002/11/11 22:03:49 nathanw Exp $
 
 maxpartitions 16
 
@@ -68,7 +68,6 @@ file arch/sgimips/sgimips/ip32.c
 file arch/sgimips/sgimips/autoconf.c
 file arch/sgimips/sgimips/bus.c
 file arch/sgimips/sgimips/clock.c
-file arch/sgimips/sgimips/conf.c
 file arch/sgimips/sgimips/console.c
 file arch/sgimips/sgimips/disksubr.c
 file arch/sgimips/sgimips/machdep.c

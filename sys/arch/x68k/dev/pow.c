@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.8.12.1 2002/09/17 21:18:48 nathanw Exp $	*/
+/*	$NetBSD: pow.c,v 1.8.12.2 2002/11/11 22:06:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -69,7 +69,7 @@ dev_type_ioctl(powioctl);
 
 const struct cdevsw pow_cdevsw = {
 	powopen, powclose, noread, nowrite, powioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /* ARGSUSED */

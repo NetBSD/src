@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.56.4.5 2002/09/17 21:18:32 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.56.4.6 2002/11/11 22:05:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -96,14 +96,3 @@ struct	consdev constab[]={
 #endif
 	{ 0 }
 };
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-
-	return (major(dev) == mem_no && minor(dev) < 2);
-}

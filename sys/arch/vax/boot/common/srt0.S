@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1.2.3 2002/04/17 00:04:37 nathanw Exp $ */
+/*	$NetBSD: srt0.S,v 1.1.2.4 2002/11/11 22:05:47 nathanw Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,18 +45,20 @@
 	.set	nisse,0
 
 ALTENTRY(start)
-	nop;nop;
-	movl	$_C_LABEL(start), %sp	# Probably safe place for stack
-	pushr	$0x1fff		# save for later usage
+	nop; nop
 
 	subl3	$_C_LABEL(start), $_C_LABEL(edata), %r0
 	movab	_C_LABEL(start), %r1 # get where we are
 	movl	$_C_LABEL(start), %r3 # get where we want to be
 	cmpl	%r1,%r3		# are we where we want to be?
-	beql	relocated	# already relocated, skip copy
+	beql	1f		# already relocated, skip copy
 	movc3	%r0,(%r1),(%r3)	# copy
+1:
 	subl3	$_C_LABEL(edata), $_C_LABEL(end), %r2
 	movc5	$0,(%r3),$0,%r2,(%r3) # Zero bss
+
+	movl	$_C_LABEL(start), %sp	# set up boot stack
+	pushr	$0x1fff			# save for later usage
 
 	movpsl	-(%sp)
 	pushl	$relocated

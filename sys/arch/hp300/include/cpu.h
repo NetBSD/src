@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38.8.3 2001/12/08 08:22:40 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38.8.4 2002/11/11 21:58:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+#include <machine/hp300spu.h>
 
 /*
  * Get interrupt glue.
@@ -163,25 +164,6 @@ struct pcb;
 /* locore.s functions */
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-void	DCIA __P((void));
-void	DCIS __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-void	TBIA __P((void));
-void	TBIS __P((vaddr_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
-#if defined(M68040)
-void	DCFA __P((void));
-void	DCFP __P((paddr_t));
-void	DCFL __P((paddr_t));
-void	DCPL __P((paddr_t));
-void	DCPP __P((paddr_t));
-void	ICPL __P((paddr_t));
-void	ICPP __P((paddr_t));
-#endif
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct lwp *));
@@ -285,5 +267,23 @@ int	kvtop __P((caddr_t));
 
 #define	MMU_FAULT	(MMU_PTF|MMU_PF|MMU_WPF|MMU_BERR)
 #define	MMU_ENAB	(MMU_UMEN|MMU_SMEN|MMU_IEN|MMU_FPE)
+
+#if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
+#define M68K_CACHEOPS_MACHDEP
+#endif
+
+#ifdef CACHE_HAVE_PAC
+#define M68K_CACHEOPS_MACHDEP_PCIA
+#endif
+
+#ifdef CACHE_HAVE_VAC
+#define M68K_CACHEOPS_MACHDEP_DCIA
+#define M68K_CACHEOPS_MACHDEP_DCIS
+#define M68K_CACHEOPS_MACHDEP_DCIU
+#define M68K_CACHEOPS_MACHDEP_TBIA
+#define M68K_CACHEOPS_MACHDEP_TBIS
+#define M68K_CACHEOPS_MACHDEP_TBIAS
+#define M68K_CACHEOPS_MACHDEP_TBIAU
+#endif
 
 #endif /* _HP300_CPU_H_ */

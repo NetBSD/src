@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.15.4.3 2002/08/13 02:18:13 nathanw Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.15.4.4 2002/11/11 21:58:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -257,7 +257,7 @@ ite8181_attach(struct ite8181_softc *sc)
 	printf("%s: framebuffer address: 0x%08lx\n", 
 	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 	if (ite8181_lcd_control_disable)
-		printf("%s: ite8181 lcd coontrol is DISABLED.\n", 
+		printf("%s: ite8181 lcd control is DISABLED.\n", 
 		    sc->sc_dev.dv_xname);
 
 	/* set base offsets */

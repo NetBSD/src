@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.8.3 2001/12/08 08:22:42 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.8.4 2002/11/11 22:01:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -199,16 +199,6 @@ struct pcb;
 /* locore.s functions */
 void m68881_save __P((struct fpframe *));
 void m68881_restore __P((struct fpframe *));
-void DCIA __P((void));
-void DCIS __P((void));
-void DCIU __P((void));
-void ICIA __P((void));
-void ICPA __P((void));
-void PCIA __P((void));
-void TBIA __P((void));
-void TBIS __P((vaddr_t));
-void TBIAS __P((void));
-void TBIAU __P((void));
 
 int suline __P((caddr_t, caddr_t));
 void savectx __P((struct pcb *));
@@ -276,5 +266,19 @@ int kvtop __P((caddr_t));
 #define ISEIOVA(va) \
 	((char *)(va) >= extiobase && (char *)(va) < (char *)EIOSIZE)
 #define EIOV(pa)	(((u_int)(pa) - extiobase_phys) + (u_int)extiobase)
+
+#if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
+#define M68K_CACHEOPS_MACHDEP
+#endif
+
+#ifdef CACHE_HAVE_PAC
+#define M68K_CACHEOPS_MACHDEP_PCIA
+#endif
+
+#ifdef CACHE_HAVE_VAC
+#define M68K_CACHEOPS_MACHDEP_DCIA
+#define M68K_CACHEOPS_MACHDEP_DCIS
+#define M68K_CACHEOPS_MACHDEP_DCIU
+#endif
 
 #endif /* !_NEWS68K_CPU_H_ */

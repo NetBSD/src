@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.1.2.5 2002/06/20 03:44:43 nathanw Exp $ */
+/* $NetBSD: isic_l1.c,v 1.1.2.6 2002/11/11 22:09:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.5 2002/06/20 03:44:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.6 2002/11/11 22:09:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -56,6 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.5 2002/06/20 03:44:43 nathanw Exp 
 #include <dev/ic/isac.h>
 #include <dev/ic/ipac.h>
 #include <dev/ic/hscx.h>
+
+#include "nisac.h"
+#include "nisacsx.h"
 
 unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 
@@ -265,8 +268,18 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 static void
 isic_enable_intr(struct isic_softc *sc, int enable)
 {
+#if NNISACSX > 0
+	if (sc->sc_cardtyp == CARD_TYPEP_AVMA1PCIV2) {
+		if (enable)
+			isic_isacsx_init(sc);
+		else isic_isacsx_disable_intr(sc);
+		return;
+	}
+#endif /* NNISACSX > 0 */
+
+#if NNISAC > 0
 	if (enable) {
-		isic_isac_init(sc);
+			isic_isac_init(sc);
 	} else {
 		/* disable receiver */
 		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_DIM0);
@@ -277,4 +290,5 @@ isic_enable_intr(struct isic_softc *sc, int enable)
 			ISAC_WRITE(I_MASK, 0xff);
 		}
 	}
+#endif /* NNISAC > 0 */
 }

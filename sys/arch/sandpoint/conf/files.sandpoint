@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.9.4.4 2002/09/17 21:17:14 nathanw Exp $
+#	$NetBSD: files.sandpoint,v 1.9.4.5 2002/11/11 22:03:08 nathanw Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -9,7 +9,6 @@ maxusers 2 8 64
 file	arch/sandpoint/sandpoint/autoconf.c
 file	arch/sandpoint/sandpoint/bus_space.c
 file	arch/sandpoint/sandpoint/clock.c
-file	arch/sandpoint/sandpoint/conf.c
 file	arch/sandpoint/sandpoint/disksubr.c		disk
 file	arch/sandpoint/sandpoint/extintr.c
 file	arch/sandpoint/sandpoint/machdep.c
@@ -34,19 +33,6 @@ include "dev/ata/files.ata"
 # Memory Disk for install floppy
 #
 file dev/md_root.c	memory_disk_hooks
-
-#
-# Compatibility modules
-#
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # System bus types

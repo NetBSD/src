@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.2.4.5 2002/05/29 21:32:47 nathanw Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.2.4.6 2002/11/11 22:07:23 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.2.4.5 2002/05/29 21:32:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.2.4.6 2002/11/11 22:07:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,56 +87,62 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.2.4.5 2002/05/29 21:32:47 nathanw Ex
 
 #ifdef DEBUG_MACH
 static void mach_print_msg_header_t(mach_msg_header_t *);
+static char *mach_print_msg_bits_t(mach_msg_bits_t, char *, size_t);
+
+static char *
+mach_print_msg_bits_t(mach_msg_bits_t bits, char *buf, size_t bufsiz) {
+	switch (bits) {
+	case MACH_MSG_TYPE_MOVE_RECEIVE:
+		return "move_receive";
+	case MACH_MSG_TYPE_MOVE_SEND:
+		return "move_send";
+	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+		return "move_send_once";
+	case MACH_MSG_TYPE_COPY_SEND:
+		return "copy_send";
+	case MACH_MSG_TYPE_MAKE_SEND:
+		return "make_send";
+	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+		return "make_send_once";
+	case MACH_MSG_TYPE_COPY_RECEIVE:
+		return "copy_receive";
+	default:
+		(void)snprintf(buf, bufsiz, "%d", bits);
+		return buf;
+	}
+}
+
 
 static void
 mach_print_msg_header_t(mach_msg_header_t *mh) {
-	uprintf("msgh { bits=0x%x, size=%d, remote_port=%d, local_port=%d,"
-	    "reserved=%d,id=%d }\n",
-	    mh->msgh_bits, mh->msgh_size, mh->msgh_remote_port,
+	char lbuf[128];
+	char rbuf[128];
+	uprintf("msgh { bits=[l=%s|r=%s], size=%d, remote_port=%d, "
+	    "local_port=%d, reserved=%d, id=%d }\n",
+	    mach_print_msg_bits_t(MACH_MSGH_LOCAL_BITS(mh->msgh_bits),
+		lbuf, sizeof(lbuf)),
+	    mach_print_msg_bits_t(MACH_MSGH_REMOTE_BITS(mh->msgh_bits),
+		rbuf, sizeof(rbuf)),
+	    mh->msgh_size, mh->msgh_remote_port,
 	    mh->msgh_local_port, mh->msgh_reserved, mh->msgh_id);
 }
 #endif /* DEBUG_MACH */
-
-int
-mach_sys_reply_port(struct proc *p, void *vv, register_t *r) {
-	*r = 0;
-	DPRINTF(("mach_sys_reply_port();\n"));
-	return 0;
-}
-
-int
-mach_sys_thread_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0;
-	DPRINTF(("mach_sys_thread_self();\n"));
-	return 0;
-}
-
-
-int
-mach_sys_task_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0;
-	DPRINTF(("mach_sys_task_self();\n"));
-	return 0;
-}
-
-
-int
-mach_sys_host_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0;
-	DPRINTF(("mach_sys_host_self();\n"));
-	return 0;
-}
 
 
 int
 mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 	struct mach_sys_msg_overwrite_trap_args *ap = v;
 	int error;
+	struct mach_subsystem_namemap *namemap;
+#ifdef DEBUG_MACH
+	char buf[128];
+#endif
 	*r = 0;
 
-	DPRINTF(("mach_sys_msg_overwrite_trap(%p, 0x%x,"
+	DPRINTF(("mach_sys_msg_overwrite_trap(%p, %s,"
 	    " %d, %d, 0x%x, %d, 0x%x, %p, %d);\n",
-	    SCARG(ap, msg), SCARG(ap, option), SCARG(ap, send_size),
+	    SCARG(ap, msg), bitmask_snprintf(SCARG(ap, option),
+	    MACH_MSG_OPTION_BITS, buf, sizeof(buf)), SCARG(ap, send_size),
 	    SCARG(ap, rcv_size), SCARG(ap, rcv_name), SCARG(ap, timeout),
 	    SCARG(ap, notify), SCARG(ap, rcv_msg),
 	    SCARG(ap, scatter_list_size)));
@@ -151,6 +157,14 @@ mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 			mach_print_msg_header_t(&mh);
 #endif /* DEBUG_MACH */
+			for (namemap = mach_namemap; 
+			    namemap->map_id; namemap++)
+				if (namemap->map_id == mh.msgh_id)
+					break;
+			if (namemap->map_handler == NULL)
+				break;
+			DPRINTF(("mach_%s()\n", namemap->map_name));
+			return (*namemap->map_handler)(p, SCARG(ap, msg));
 		}
 		break;
 	default:
@@ -161,6 +175,40 @@ mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 	return 0;
 }
 
+int
+mach_sys_msg_trap(struct proc *p, void *v, register_t *r) {
+	struct mach_sys_msg_trap_args *ap = v;
+	int error;
+	struct mach_subsystem_namemap *namemap;
+	*r = 0;
+
+	switch (SCARG(ap, option)) {
+	case MACH_SEND_MSG|MACH_RCV_MSG:
+		if (SCARG(ap, msg)) {
+			mach_msg_header_t mh;
+			if ((error = copyin(SCARG(ap, msg), &mh,
+			    sizeof(mh))) != 0)
+				return error;
+#ifdef DEBUG_MACH
+			mach_print_msg_header_t(&mh);
+#endif /* DEBUG_MACH */
+			for (namemap = mach_namemap; 
+			    namemap->map_id; namemap++)
+				if (namemap->map_id == mh.msgh_id)
+					break;
+			if (namemap->map_handler == NULL)
+				break;
+			DPRINTF(("mach_%s()\n", namemap->map_name));
+			return (*namemap->map_handler)(p, SCARG(ap, msg));
+		}
+		break;
+	default:
+		uprintf("unhandled sys_msg_trap option %x\n",
+		    SCARG(ap, option));
+		break;
+	}
+	return 0;
+}
 
 int
 mach_sys_semaphore_signal_trap(struct proc *p, void *v, register_t *r) {

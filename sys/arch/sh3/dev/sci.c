@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.26.4.4 2002/10/18 02:39:43 nathanw Exp $ */
+/* $NetBSD: sci.c,v 1.26.4.5 2002/11/11 22:03:59 nathanw Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -273,7 +273,7 @@ dev_type_poll(scipoll);
 
 const struct cdevsw sci_cdevsw = {
 	sciopen, sciclose, sciread, sciwrite, sciioctl,
-	scistop, scitty, scipoll, nommap, D_TTY
+	scistop, scitty, scipoll, nommap, ttykqfilter, D_TTY
 };
 
 void InitializeSci (unsigned int);

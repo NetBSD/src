@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.10.2.7 2002/10/18 02:41:02 nathanw Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.10.2.8 2002/11/11 22:06:53 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.7 2002/10/18 02:41:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.8 2002/11/11 22:06:53 nathanw Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.7 2002/10/18 02:41:02 nathanw E
 #include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
+#include <compat/irix/irix_sysctl.h>
 #include <compat/irix/irix_usema.h>
 
 extern const int native_to_svr4_signo[];
@@ -90,7 +91,7 @@ const struct emul emul_irix_o32 = {
 	0,
 	native_to_irix_errno,
 	IRIX_SYS_syscall,
-	IRIX_SYS_MAXSYSCALL,
+	IRIX_SYS_NSYSENT,
 #endif
 	irix_sysent,
 #ifdef SYSCALL_DEBUG
@@ -111,7 +112,7 @@ const struct emul emul_irix_o32 = {
 #else
 	irix_syscall,
 #endif
-	NULL,
+	irix_sysctl,
 	irix_vm_fault,
 };
 
@@ -143,7 +144,7 @@ const struct emul emul_irix_n32 = {
 #else
 	irix_syscall,
 #endif
-	NULL,
+	irix_sysctl,
 	irix_vm_fault,
 };
 

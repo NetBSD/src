@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.46.2.10 2002/10/18 02:44:18 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.46.2.11 2002/11/11 22:12:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ struct scsipi_inquiry_pattern;
  *
  *	Note that `adapt_openings' is used by (the common case of) adapters
  *	which have per-adapter resources.  If an adapter's command resources
- *	are associated with a channel, the the 	`chan_openings' below will
+ *	are associated with a channel, then the `chan_openings' below will
  *	be used instead.
  *
  *	Note that all adapter entry points take a pointer to a channel,
@@ -193,7 +193,7 @@ struct scsipi_inquiry_pattern;
  */
 struct scsipi_adapter {
 	struct device *adapt_dev;	/* pointer to adapter's device */
-	int	adapt_nchannels;	/* numnber of adapter channels */
+	int	adapt_nchannels;	/* number of adapter channels */
 	int	adapt_refcnt;		/* adapter's reference count */
 	int	adapt_openings;		/* total # of command openings */
 	int	adapt_max_periph;	/* max openings per periph */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.14.8.3 2002/09/17 21:18:33 nathanw Exp $ */
+/*	$NetBSD: ctu.c,v 1.14.8.4 2002/11/11 22:06:01 nathanw Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -102,7 +102,7 @@ const struct bdevsw ctu_bdevsw = {
 #if 0 /* not yet */
 const struct cdevsw ctu_cdevsw = {
 	ctuopen, ctuclose, cturead, ctuwrite, noioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 #endif
 

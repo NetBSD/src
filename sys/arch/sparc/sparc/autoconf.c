@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157.4.9 2002/10/18 02:39:57 nathanw Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157.4.10 2002/11/11 22:04:32 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1766,8 +1766,8 @@ instance_match(dev, aux, bp)
 		iom = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: iommu device, "
 		    "want space %#x pa %#x have space %#x pa %#x\n",
-		     bp->val[0], bp->val[1], iom->iom_reg[0].ior_iospace,
-		     iom->iom_reg[0].ior_pa));
+		     bp->val[0], bp->val[1], iom->iom_reg[0].oa_space,
+		     iom->iom_reg[0].oa_base));
 		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].oa_space &&
 		    (u_int32_t)bp->val[1] == iom->iom_reg[0].oa_base)
 			return (1);

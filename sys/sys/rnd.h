@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.12.4.2 2002/08/27 23:48:25 nathanw Exp $	*/
+/*	$NetBSD: rnd.h,v 1.12.4.3 2002/11/11 22:16:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -152,14 +152,14 @@ u_int32_t	*rndpool_get_pool __P((rndpool_t *));
 u_int32_t	rndpool_get_poolsize __P((void));
 void		rndpool_add_data __P((rndpool_t *, void *, u_int32_t,
 		    u_int32_t));
-int		rndpool_extract_data __P((rndpool_t *, void *, u_int32_t,
+u_int32_t	rndpool_extract_data __P((rndpool_t *, void *, u_int32_t,
 		    u_int32_t));
 
 void		rnd_init __P((void));
 void		rnd_add_uint32 __P((rndsource_element_t *, u_int32_t));
 void		rnd_add_data __P((rndsource_element_t *, void *, u_int32_t,
 		    u_int32_t));
-int		rnd_extract_data __P((void *, u_int32_t, u_int32_t));
+u_int32_t	rnd_extract_data __P((void *, u_int32_t, u_int32_t));
 void		rnd_attach_source __P((rndsource_element_t *, char *,
 		    u_int32_t, u_int32_t));
 void		rnd_detach_source __P((rndsource_element_t *));

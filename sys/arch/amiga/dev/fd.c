@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48.4.5 2002/10/18 02:34:51 nathanw Exp $ */
+/*	$NetBSD: fd.c,v 1.48.4.6 2002/11/11 21:56:15 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48.4.5 2002/10/18 02:34:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48.4.6 2002/11/11 21:56:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver fddkdriver = { fdstrategy };
@@ -1577,7 +1577,8 @@ fddone(struct fd_softc *sc)
 	 */
 	(void)BUFQ_GET(&sc->bufq);
 
-	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 
 	biodone(bp);
 nobuf:

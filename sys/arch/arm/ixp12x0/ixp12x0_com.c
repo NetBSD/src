@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.3.2.3 2002/10/18 02:35:36 nathanw Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.3.2.4 2002/11/11 21:56:53 nathanw Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -154,7 +154,7 @@ dev_type_poll(ixpcompoll);
 
 const struct cdevsw ixpcom_cdevsw = {
 	ixpcomopen, ixpcomclose, ixpcomread, ixpcomwrite, nullioctl,
-	ixpcomstop, ixpcomtty, ixpcompoll, nommap, D_TTY
+	ixpcomstop, ixpcomtty, ixpcompoll, nommap, ttykqfilter, D_TTY
 };
 
 struct consdev ixpcomcons = {

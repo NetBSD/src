@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.8 2000/10/10 21:51:54 jeffs Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.8.2.1 2002/11/11 22:21:34 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -42,10 +42,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93")
-	ASMSTR("$NetBSD: bcopy.S,v 1.8 2000/10/10 21:51:54 jeffs Exp $")
+	ASMSTR("$NetBSD: bcopy.S,v 1.8.2.1 2002/11/11 22:21:34 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 #endif
 

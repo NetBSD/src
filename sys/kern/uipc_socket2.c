@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.37.2.6 2002/10/18 02:44:56 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.37.2.7 2002/11/11 22:14:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.37.2.6 2002/10/18 02:44:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.37.2.7 2002/11/11 22:14:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 {
 	struct proc	*p;
 
-	selwakeup(&sb->sb_sel);
+	selnotify(&sb->sb_sel, 0);
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;

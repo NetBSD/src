@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.26.2.3 2002/06/20 03:50:15 nathanw Exp $	*/
+/*	$NetBSD: queue.h,v 1.26.2.4 2002/11/11 22:16:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -343,6 +343,11 @@ struct {								\
 		panic("TAILQ_* forw %p %s:%d", (elm), __FILE__, __LINE__);\
 	if (*(elm)->field.tqe_prev != (elm))				\
 		panic("TAILQ_* back %p %s:%d", (elm), __FILE__, __LINE__);
+#define QUEUEDEBUG_TAILQ_PREREMOVE(head, elm, field)			\
+	if ((elm)->field.tqe_next == NULL &&				\
+	    (head)->tqh_last != &(elm)->field.tqe_next)			\
+		panic("TAILQ_PREREMOVE head %p elm %p %s:%d",		\
+		      (head), (elm), __FILE__, __LINE__);
 #define QUEUEDEBUG_TAILQ_POSTREMOVE(elm, field)				\
 	(elm)->field.tqe_next = (void *)1L;				\
 	(elm)->field.tqe_prev = (void *)1L;
@@ -350,6 +355,7 @@ struct {								\
 #define QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)
 #define QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)
 #define QUEUEDEBUG_TAILQ_OP(elm, field)
+#define QUEUEDEBUG_TAILQ_PREREMOVE(head, elm, field)
 #define QUEUEDEBUG_TAILQ_POSTREMOVE(elm, field)
 #endif
 
@@ -397,6 +403,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_REMOVE(head, elm, field) do {				\
+	QUEUEDEBUG_TAILQ_PREREMOVE((head), (elm), field)		\
 	QUEUEDEBUG_TAILQ_OP((elm), field)				\
 	if (((elm)->field.tqe_next) != NULL)				\
 		(elm)->field.tqe_next->field.tqe_prev = 		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.2.4.5 2002/10/18 02:41:18 nathanw Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.2.4.6 2002/11/11 22:08:13 nathanw Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.2.4.5 2002/10/18 02:41:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.2.4.6 2002/11/11 22:08:13 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -54,10 +54,12 @@ void syscall __P((void));
 const struct emul emul_sunos = {
 	"sunos32",
 	"/emul/sunos",
+#ifndef __HAVE_MINIMAL_EMUL
 	0,
 	NULL,
 	SUNOS32_SYS_syscall,
-	SUNOS32_SYS_MAXSYSCALL,
+	SUNOS32_SYS_NSYSENT,
+#endif
 	sunos32_sysent,
 #ifdef SYSCALL_DEBUG
 	sunos32_syscallnames,

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.14.2.4 2002/02/28 04:13:05 nathanw Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.14.2.5 2002/11/11 22:08:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.14.2.4 2002/02/28 04:13:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.14.2.5 2002/11/11 22:08:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ db_elf_search_symbol(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
 #endif
 
 		if (off >= symp->st_value) {
-			if ((off - symp->st_value) < diff) {
+			if ((db_expr_t)(off - symp->st_value) < diff) {
 				diff = off - symp->st_value;
 				rsymp = symp;
 				if (diff == 0) {
@@ -299,7 +299,7 @@ db_elf_search_symbol(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
 					      != STB_LOCAL)
 						break;
 				}
-			} else if ((off - symp->st_value) == diff) {
+			} else if ((db_expr_t)(off - symp->st_value) == diff) {
 				if (rsymp == NULL)
 					rsymp = symp;
 				else if (ELFDEFNNAME(ST_BIND)(rsymp->st_info)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.11 2000/06/26 15:37:28 mrg Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.11.2.1 2002/11/11 22:22:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getloadavg.c,v 1.11 2000/06/26 15:37:28 mrg Exp $");
+__RCSID("$NetBSD: getloadavg.c,v 1.11.2.1 2002/11/11 22:22:10 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,6 +73,7 @@ getloadavg(loadavg, nelem)
 	size_t size;
 
 	_DIAGASSERT(loadavg != NULL);
+	_DIAGASSERT(nelem >= 0);
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_LOADAVG;
@@ -80,7 +81,7 @@ getloadavg(loadavg, nelem)
 	if (sysctl(mib, 2, &loadinfo, &size, NULL, 0) < 0)
 		return (-1);
 
-	nelem = MIN(nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
+	nelem = MIN((size_t) nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
 	for (i = 0; i < nelem; i++)
 		loadavg[i] = (double) loadinfo.ldavg[i] / loadinfo.fscale;
 	return (nelem);

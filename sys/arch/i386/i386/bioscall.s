@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.s,v 1.4.24.2 2001/09/21 22:35:04 nathanw Exp $ */
+/*	$NetBSD: bioscall.s,v 1.4.24.3 2002/11/11 21:58:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #include <machine/asm.h>
 
+/* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <machine/bioscall.h> */
 
 	.globl	_C_LABEL(PTDpaddr)	/* from locore.s */

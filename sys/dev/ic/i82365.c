@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.62.2.5 2002/10/18 02:41:51 nathanw Exp $	*/
+/*	$NetBSD: i82365.c,v 1.62.2.6 2002/11/11 22:09:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.5 2002/10/18 02:41:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.6 2002/11/11 22:09:30 nathanw Exp $");
 
 #define	PCICDEBUG
 
@@ -145,8 +145,6 @@ pcic_vendor(h)
 		return (PCIC_VENDOR_I82365SLR0);
 	else
 		return (PCIC_VENDOR_I82365SLR1);
-
-	return (PCIC_VENDOR_UNKNOWN);
 }
 
 char *
@@ -1430,8 +1428,10 @@ pcic_chip_socket_enable(pch)
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 	pcic_delay(h, 20, "pccen2");
 
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(PCICDEBUG)
 	reg = pcic_read(h, PCIC_IF_STATUS);
+#endif
+#ifdef DIAGNOSTIC
 	if (!(reg & PCIC_IF_STATUS_POWERACTIVE)) {
 		printf("pcic_chip_socket_enable: status %x\n", reg);
 	}

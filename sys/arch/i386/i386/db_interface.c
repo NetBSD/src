@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.4.4 2002/10/18 02:37:38 nathanw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.4.5 2002/11/11 21:59:01 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.4.4 2002/10/18 02:37:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.4.5 2002/11/11 21:59:01 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -209,7 +209,7 @@ kdb_trap(type, code, regs)
 		 * Kernel mode - esp and ss not saved
 		 */
 		ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
-		asm("movw %%ss,%w0" : "=r" (ddb_regs.tf_ss));
+		__asm("movw %%ss,%w0" : "=r" (ddb_regs.tf_ss));
 	}
 
 	ddb_regs.tf_cs &= 0xffff;
@@ -322,7 +322,7 @@ ddb_suspend(struct trapframe *frame)
 		 * Kernel mode - esp and ss not saved
 		 */
 		regs.tf_esp = (int)&frame->tf_esp; /* kernel stack pointer */
-		asm("movw %%ss,%w0" : "=r" (regs.tf_ss));
+		__asm("movw %%ss,%w0" : "=r" (regs.tf_ss));
 	}
 
 	ci->ci_ddb_regs = &regs;

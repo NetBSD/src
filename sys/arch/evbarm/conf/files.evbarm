@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.4.2.8 2002/09/17 21:14:15 nathanw Exp $
+#	$NetBSD: files.evbarm,v 1.4.2.9 2002/11/11 21:57:54 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -30,7 +30,6 @@ include "dev/scsipi/files.scsipi"
 
 # Generic MD files
 file	arch/evbarm/evbarm/autoconf.c
-file	arch/arm/arm32/conf.c
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk

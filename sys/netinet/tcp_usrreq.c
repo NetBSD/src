@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.60.2.8 2002/08/01 02:46:50 nathanw Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.60.2.9 2002/11/11 22:15:33 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.60.2.8 2002/08/01 02:46:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.60.2.9 2002/11/11 22:15:33 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -180,7 +180,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 	struct tcpcb *tp = NULL;
 	int s;
 	int error = 0;
-	int ostate;
+#ifdef TCP_DEBUG
+	int ostate = 0;
+#endif
 	int family;	/* family of the socket */
 
 	family = so->so_proto->pr_domain->dom_family;
@@ -274,7 +276,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 #ifdef KPROF
 		tcp_acounts[tp->t_state][req]++;
 #endif
+#ifdef TCP_DEBUG
 		ostate = tp->t_state;
+#endif
 	}
 #endif
 #ifdef INET6
@@ -284,11 +288,11 @@ tcp_usrreq(so, req, m, nam, control, p)
 #ifdef KPROF
 		tcp_acounts[tp->t_state][req]++;
 #endif
+#ifdef TCP_DEBUG
 		ostate = tp->t_state;
+#endif
 	}
 #endif
-	else
-		ostate = 0;
 
 	switch (req) {
 
@@ -734,11 +738,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 }
 
 #ifndef TCP_SENDSPACE
-#define	TCP_SENDSPACE	1024*16;
+#define	TCP_SENDSPACE	1024*16
 #endif
 int	tcp_sendspace = TCP_SENDSPACE;
 #ifndef TCP_RECVSPACE
-#define	TCP_RECVSPACE	1024*16;
+#define	TCP_RECVSPACE	1024*16
 #endif
 int	tcp_recvspace = TCP_RECVSPACE;
 

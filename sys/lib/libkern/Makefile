@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.60.2.6 2002/10/18 02:44:59 nathanw Exp $
+#	$NetBSD: Makefile,v 1.60.2.7 2002/11/11 22:14:19 nathanw Exp $
 
-LIB=	kern
-NOPIC=	# defined
+LIB=		kern
+NOPIC=		# defined
+LLIBS=		# defined
 
 .include <bsd.own.mk>
 

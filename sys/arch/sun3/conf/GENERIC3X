@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.42.6.6 2002/10/18 02:40:16 nathanw Exp $
+# $NetBSD: GENERIC3X,v 1.42.6.7 2002/11/11 22:05:10 nathanw Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -30,6 +30,10 @@ options 	LKM		# loadable kernel modules
 #options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
@@ -234,6 +238,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

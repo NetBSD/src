@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.8.2.2 2002/10/18 03:20:33 nathanw Exp $	*/
+/*	$NetBSD: bthci.c,v 1.8.2.3 2002/11/11 22:09:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,10 +81,11 @@ extern struct cfdriver bthci_cd;
 dev_type_open(bthciopen);
 dev_type_close(bthciclose);
 dev_type_poll(bthcipoll);
+dev_type_kqfilter(bthcikqfilter);
 
 const struct cdevsw bthci_cdevsw = {
 	bthciopen, bthciclose, noread, nowrite, noioctl,
-	nostop, notty, bthcipoll, nommap,
+	nostop, notty, bthcipoll, nommap, bthcikqfilter,
 };
 
 #define BTHCIUNIT(dev) (minor(dev))
@@ -109,7 +110,8 @@ bthci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC_XXX
 	if (sc->sc_methods->bt_read == NULL ||
 	    sc->sc_methods->bt_write == NULL ||
-	    sc->sc_methods->bt_poll == NULL)
+	    sc->sc_methods->bt_poll == NULL ||
+	    sc->sc_methods->bt_kqfilter == NULL)
 		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
@@ -252,22 +254,6 @@ bthciioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = 0;
 		break;
 
-	case IRDA_SET_PARAMS:
-		error = irf_set_params(sc, vaddr);
-		break;
-
-	case IRDA_RESET_PARAMS:
-		error = irf_reset_params(sc);
-		break;
-
-	case IRDA_GET_SPEEDMASK:
-		error = sc->sc_methods->im_get_speeds(sc->sc_handle, vaddr);
-		break;
-
-	case IRDA_GET_TURNAROUNDMASK:
-		error = sc->sc_methods->im_get_turnarounds(sc->sc_handle,vaddr);
-		break;
-
 	default:
 		error = EINVAL;
 		break;
@@ -290,3 +276,16 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 	return (sc->sc_methods->bt_poll(sc->sc_handle, events, p));
 }
 
+int
+bthcikqfilter(dev_t dev, struct knote *kn)
+{
+	struct bthci_softc *sc;
+
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+		return (EIO);
+
+	return (sc->sc_methods->bt_kqfilter(sc->sc_handle, kn));
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.6.4 2002/10/18 02:35:51 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.6.5 2002/11/11 21:57:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -276,7 +276,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 static int
@@ -743,7 +743,8 @@ register struct fd_softc	*sc;
 #endif
 		bp->b_resid = sc->io_bytes;
 
-		disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 
 		biodone(bp);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.7.2.9 2002/10/18 02:42:45 nathanw Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.7.2.10 2002/11/11 22:10:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.7.2.9 2002/10/18 02:42:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.7.2.10 2002/11/11 22:10:26 nathanw Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -112,7 +112,7 @@ const struct bdevsw ed_bdevsw = {
 
 const struct cdevsw ed_cdevsw = {
 	edmcaopen, edmcaclose, edmcaread, edmcawrite, edmcaioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 static struct dkdriver eddkdriver = { edmcastrategy };

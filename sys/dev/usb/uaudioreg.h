@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.7.2.3 2002/10/18 02:44:30 nathanw Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.7.2.4 2002/11/11 22:12:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 
 #define UAUDIO_VERSION		0x100
 
-#define UDESC_CS_DEVICE		0x21
 #define UDESC_CS_CONFIG		0x22
 #define UDESC_CS_STRING		0x23
 #define UDESC_CS_INTERFACE	0x24

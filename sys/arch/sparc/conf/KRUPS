@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.2.4.6 2002/10/18 02:39:50 nathanw Exp $
+# $NetBSD: KRUPS,v 1.2.4.7 2002/11/11 22:04:22 nathanw Exp $
 # From: NetBSD: GENERIC,v 1.139 2002/09/25 11:49:54 martti Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -10,7 +10,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.2.4.6 $"
+#ident 		"KRUPS-$Revision: 1.2.4.7 $"
 
 maxusers	32
 
@@ -125,7 +125,7 @@ options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 ## such that gdb(1) can be used on a kernel coredump.
 
 #makeoptions	DEBUG="-g"
-makeoptions	COPTS="-mcpu=supersparc"
+makeoptions	COPTS="-mcpu=supersparc -O2"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will

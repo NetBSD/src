@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.6.8.2 2002/10/18 02:39:07 nathanw Exp $	*/
+/*	$NetBSD: si.c,v 1.6.8.3 2002/11/11 22:01:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <sys/buf.h>
 
 #include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>

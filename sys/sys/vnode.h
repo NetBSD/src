@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.89.2.8 2002/10/18 02:45:43 nathanw Exp $	*/
+/*	$NetBSD: vnode.h,v 1.89.2.9 2002/11/11 22:16:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #ifndef _SYS_VNODE_H_
 #define	_SYS_VNODE_H_
 
+#include <sys/event.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
 
@@ -111,6 +112,11 @@ struct vnode {
 	struct lock	v_lock;			/* lock for this vnode */
 	struct lock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
+	struct klist	v_klist;		/* knotes attached to vnode */
+#ifdef VERIFIED_EXEC
+	char fp_status;				/* fingerprint status
+						   (see below) */
+#endif
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
@@ -149,6 +155,19 @@ struct vnode {
 #define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
 
 #define	VSIZENOTSET	((voff_t)-1)
+
+/*
+ * Valid states for the fingerprint flag - if signed exec is being used
+ */
+#ifdef VERIFIED_EXEC
+#define FINGERPRINT_INVALID  0  /* fingerprint has not been evaluated */
+#define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
+#define FINGERPRINT_INDIRECT 2  /* fingerprint eval'd/matched but only
+                                   indirect execs allowed */
+#define FINGERPRINT_NOMATCH  3  /* fingerprint evaluated but does not match */
+#define FINGERPRINT_NOENTRY  4  /* fingerprint evaluated but no list entry */
+#define FINGERPRINT_NODEV    5  /* fingerprint evaluated but no dev list */
+#endif
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -313,6 +332,8 @@ vref(struct vnode *vp)
 #endif /* DIAGNOSTIC */
 
 #define	NULLVP	((struct vnode *)NULL)
+
+#define	VN_KNOTE(vp, b)		KNOTE(&vp->v_klist, (b))
 
 /*
  * Global vnode data.
@@ -482,58 +503,69 @@ struct uio;
 struct vattr;
 struct vnode;
 
+/* see vnode(9) */
 int 	bdevvp(dev_t dev, struct vnode **vpp);
 int 	cdevvp(dev_t dev, struct vnode **vpp);
+struct vnode *
+	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);
 int 	getnewvnode(enum vtagtype tag, struct mount *mp,
 			 int (**vops)(void *), struct vnode **vpp);
 void	ungetnewvnode(struct vnode *);
-int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
-void	vfs_getnewfsid(struct mount *);
-int	speedup_syncer(void);
+int	vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
+		     mode_t acc_mode, struct ucred *cred);
 void 	vattr_null(struct vattr *vap);
 int 	vcount(struct vnode *vp);
-void	vclean(struct vnode *, int, struct proc *);
-int	vfinddev(dev_t, enum vtype, struct vnode **);
-void	vflushbuf(struct vnode *vp, int sync);
-int	vflush(struct mount *mp, struct vnode *vp, int flags);
-void	vntblinit(void);
-void	vwakeup(struct buf *);
 void	vdevgone(int, int, int, enum vtype);
+int	vfinddev(dev_t, enum vtype, struct vnode **); 
+int	vflush(struct mount *mp, struct vnode *vp, int flags);
+void	vflushbuf(struct vnode *vp, int sync);
 int 	vget(struct vnode *vp, int lockflag);
 void 	vgone(struct vnode *vp);
 void	vgonel(struct vnode *vp, struct proc *p);
 int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
 	    struct proc *p, int slpflag, int slptimeo);
-int	vtruncbuf(struct vnode *vp, daddr_t lbn,
-	    int slpflag, int slptimeo);
 void	vprint(char *label, struct vnode *vp);
+void 	vput(struct vnode *vp);
 int	vrecycle(struct vnode *vp, struct simplelock *inter_lkp,
 	    struct proc *p);
+void 	vrele(struct vnode *vp);
+int	vtruncbuf(struct vnode *vp, daddr_t lbn,
+	    int slpflag, int slptimeo);
+void	vwakeup(struct buf *);
+
+/* see vnsubr(9) */
 int	vn_bwrite(void *ap);
 int 	vn_close(struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p);
+int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
 int	vn_lock(struct vnode *vp, int flags);
-u_int	vn_setrecurse(struct vnode *vp);
-void	vn_restorerecurse(struct vnode *vp, u_int flags);
+void	vn_markexec(struct vnode *);
+int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *ndp, int fmode, int cmode);
 int 	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, size_t *aresid, struct proc *p);
 int	vn_readdir(struct file *fp, char *buf, int segflg, u_int count,
 	    int *done, struct proc *p, off_t **cookies, int *ncookies);
+void	vn_restorerecurse(struct vnode *vp, u_int flags);
+u_int	vn_setrecurse(struct vnode *vp);
 int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
+int	vn_kqfilter(struct file *fp, struct knote *kn);
+int	vn_writechk(struct vnode *vp);
+
+/* initialise global vnode management */
+void	vntblinit(void);
+
+/* misc stuff */
 void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
 void	vn_syncer_remove_from_worklist(struct vnode *vp);
-int	vn_writechk(struct vnode *vp);
-void	vn_markexec(struct vnode *);
-int	vn_marktext(struct vnode *);
-int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
-struct vnode *
-	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);
-void 	vput(struct vnode *vp);
-void 	vrele(struct vnode *vp);
-int	vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
-		     mode_t acc_mode, struct ucred *cred);
+int	speedup_syncer(void);
+
+/* from vfs_syscalls.c - abused by compat code */
+int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
+
+/* see vfsops(9) */
+void	vfs_getnewfsid(struct mount *);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 #endif /* DDB */

@@ -1,5 +1,40 @@
-/*	$NetBSD: db_memrw.c,v 1.3 2000/06/29 08:13:52 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3.8.1 2002/11/11 21:59:39 nathanw Exp $	*/
 
+/*-
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Gordon W. Ross and Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -28,75 +63,153 @@
 
 /*
  * Interface to the debugger for virtual memory read/write.
- * This is a simple version for kernels with writable text.
- * For an example of read-only kernel text, see the file:
- * sys/arch/sun3/sun3/db_memrw.c
+ * This file is shared by DDB and KGDB, and must work even
+ * when only KGDB is included (thus no db_printf calls).
+ *
+ * To write in the text segment, we have to first make
+ * the page writable, do the write, then restore the PTE.
+ * For writes outside the text segment, and all reads,
+ * just do the access -- if it causes a fault, the debugger
+ * will recover with a longjmp to an appropriate place.
  *
  * ALERT!  If you want to access device registers with a
  * specific size, then the read/write functions have to
  * make sure to do the correct sized pointer access.
  */
 
-#include <sys/param.h>
-#include <sys/proc.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.3.8.1 2002/11/11 21:59:39 nathanw Exp $");
 
+#include <sys/param.h>
+
+#include <machine/cpu.h>
+#include <m68k/cacheops.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
-
 #include <ddb/db_access.h>
 
 /*
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	db_addr_t	addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(db_addr_t addr, size_t size, char *data)
 {
-	register char	*src = (char*)addr;
+	char *src = (char *)addr;
 
 	if (size == 4) {
-		*((int*)data) = *((int*)src);
+		*((uint32_t *)data) = *((uint32_t *)src);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)data) = *((short*)src);
+		*((uint16_t *)data) = *((uint16_t *)src);
 		return;
 	}
 
-	while (size > 0) {
-		--size;
+	while (size-- > 0) {
 		*data++ = *src++;
 	}
+}
+
+static void
+db_write_text(db_addr_t addr, size_t size, char *data)
+{
+	char *dst, *odst;
+	pt_entry_t *pte, oldpte, tmppte;
+	vaddr_t pgva;
+	int limit;
+
+	dst = (char *)addr;
+	while (size > 0) {
+
+		/*
+		 * Get the VA for the page.
+		 */
+		pgva = trunc_page((vaddr_t)dst);
+
+		/*
+		 * Save this destination address, for TLB flush.
+		 */
+		odst = dst;
+
+		/*
+		 * Compute number of bytes that can be written
+		 * with this mapping and subtract it from the total size.
+		 */
+		limit = round_page((vaddr_t)dst + 1) - (vaddr_t)dst;
+		if (limit > size)
+			limit = size;
+		size -= limit;
+
+#ifdef M68K_MMU_HP
+		/*
+		 * Flush the supervisor side of the VAC to
+		 * prevent a cache hit on the old, read-only PTE.
+		 */
+		if (ectype == EC_VIRT)
+			DCIS();
+#endif
+
+		/*
+		 * Make the page writable.  Note the mapping is
+		 * cache-inhibited to save hair.
+		 */
+		pte = kvtopte(pgva);
+		oldpte = *pte;
+		if ((oldpte & PG_V) == 0) {
+			printf(" address %p not a valid page\n", dst);
+			return;
+		}
+		tmppte = (oldpte & ~PG_RO) | PG_RW | PG_CI;
+		*pte = tmppte;
+		TBIS((vaddr_t)odst);
+
+		/*
+		 * Page is now writable.  Do as much access as we can.
+		 */
+		for (; limit > 0; limit--)
+			*dst++ = *data++;
+
+		/*
+		 * Restore the old PTE.
+		 */
+		*pte = oldpte;
+		TBIS((vaddr_t)odst);
+	}
+
+	/*
+	 * Invalidate the instruction cache so our changes take effect.
+	 */
+	ICIA();
 }
 
 /*
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	db_addr_t	addr;
-	register size_t	size;
-	register char	*data;
+db_write_bytes(db_addr_t addr, size_t size, char *data)
 {
-	register char	*dst = (char *)addr;
+	char *dst = (char *)addr;
+	extern char kernel_text[], etext[];
+
+	/* If any part is in kernel text, use db_write_text() */
+	if (dst + size > kernel_text && dst < etext) {
+		db_write_text(addr, size, data);
+		return;
+	}
 
 	if (size == 4) {
-		*((int*)dst) = *((int*)data);
+		*((uint32_t *)dst) = *((uint32_t *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)dst) = *((short*)data);
+		*((uint16_t *)dst) = *((uint16_t *)data);
 		return;
 	}
 
-	while (size > 0) {
-		--size;
+	while (size-- > 0) {
 		*dst++ = *data++;
 	}
 }
-

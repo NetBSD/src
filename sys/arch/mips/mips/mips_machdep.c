@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.23 2002/10/18 02:38:46 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.24 2002/11/11 22:00:47 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,11 +120,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.23 2002/10/18 02:38:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.24 2002/11/11 22:00:47 nathanw Exp $");
 
 #include "opt_cputype.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_ultrix.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,18 +130,14 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.23 2002/10/18 02:38:46 nath
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>			/* fsid_t for syscallargs */
-#include <sys/buf.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
-#include <sys/signal.h>
-#include <sys/signalvar.h>
-#include <sys/syscallargs.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/conf.h>
-#include <sys/device.h>
 #include <sys/core.h>
+#include <sys/device.h>
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
@@ -1082,18 +1076,20 @@ setregs(l, pack, stack)
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	memset(f, 0, sizeof(struct frame));
-	f->f_regs[SP] = (int) stack;
-	f->f_regs[PC] = (int) pack->ep_entry & ~3;
-	f->f_regs[T9] = (int) pack->ep_entry & ~3; /* abicall requirement */
+	f->f_regs[SP] = (int)stack;
+	f->f_regs[PC] = (int)pack->ep_entry & ~3;
+	f->f_regs[T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
 	f->f_regs[SR] = PSL_USERSET;
 	/*
-	 * Set up arguments for the rtld-capable crt0:
-	 *	a0	stack pointer
-	 *	a1	rtld cleanup (filled in by dynamic loader)
-	 *	a2	rtld object (filled in by dynamic loader)
-	 *	a3	ps_strings
+	 * Set up arguments for _start():
+	 *	_start(stack, obj, cleanup, ps_strings);
+	 *
+	 * Notes:
+	 *	- obj and cleanup are the auxiliary and termination
+	 *	  vectors.  They are fixed up by ld.elf_so.
+	 *	- ps_strings is a NetBSD extension.
 	 */
-	f->f_regs[A0] = (int) stack;
+	f->f_regs[A0] = (int)stack;
 	f->f_regs[A1] = 0;
 	f->f_regs[A2] = 0;
 	f->f_regs[A3] = (int)l->l_proc->p_psstr;
@@ -1153,225 +1149,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-
-
-#ifdef DEBUG
-int sigdebug = 0;
-int sigpid = 0;
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#endif
-
-/*
- * Send an interrupt to process.
- */
-void
-sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct sigframe *fp;
-	struct frame *f;
-	int onstack;
-	struct sigcontext ksc;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
-
-	f = (struct frame *)l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
-		fp = (struct sigframe *)(u_int32_t)f->f_regs[SP];
-	fp--;
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
-		       p->p_pid, sig, &onstack, fp, &fp->sf_sc);
-#endif
-
-	/* Build stack frame for signal trampoline. */
-	ksc.sc_pc = f->f_regs[PC];
-	ksc.mullo = f->f_regs[MULLO];
-	ksc.mulhi = f->f_regs[MULHI];
-
-	/* Save register context. */
-	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
-	memcpy(&ksc.sc_regs[1], &f->f_regs[1],
-	    sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
-
-	/* Save the floating-pointstate, if necessary, then copy it. */
-#ifndef SOFTFLOAT
-	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
-	if (ksc.sc_fpused) {
-		/* if FPU has current state, save it first */
-		if (l == fpcurlwp)
-			savefpregs(l);
-		*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
-	}
-#else
-	*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
-#endif
-
-	/* Save signal stack. */
-	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	ksc.sc_mask = *mask;
-
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &ksc.__sc_mask13);
-#endif
-
-	if (copyout(&ksc, &fp->sf_sc, sizeof(ksc))) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-#ifdef DEBUG
-		if ((sigdebug & SDB_FOLLOW) ||
-		    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-			printf("sendsig(%d): copyout failed on sig %d\n",
-			    p->p_pid, sig);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	/*
-	 * Set up the registers to directly invoke the signal
-	 * handler.  The return address will be set up to point
-	 * to the signal trampoline to bounce us back.
-	 */
-	f->f_regs[A0] = sig;
-	f->f_regs[A1] = code;
-	f->f_regs[A2] = (int)&fp->sf_sc;
-	f->f_regs[A3] = (int)catcher;		/* XXX ??? */
-
-	f->f_regs[PC] = (int)catcher;
-	f->f_regs[T9] = (int)catcher;
-	f->f_regs[SP] = (int)fp;
-
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
-	case 0:		/* legacy on-stack sigtramp */
-		f->f_regs[RA] = (int)p->p_sigctx.ps_sigcode;
-		break;
-#endif /* COMPAT_16 */
-
-	case 1:
-		f->f_regs[RA] = (int)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* Don't know what trampoline version; kill it. */
-		sigexit(l, SIGILL);
-	}
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
-#endif
-}
-
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper privileges or to cause
- * a machine fault.
- */
-/* ARGSUSED */
-int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext *scp, ksc;
-	struct frame *f;
-	struct proc *p = l->l_proc;
-	int error;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
-	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
-		return (error);
-
-	if ((int) ksc.sc_regs[ZERO] != 0xACEDBADE)	/* magic number */
-		return (EINVAL);
-
-	/* Restore the register context. */
-	f = (struct frame *)l->l_md.md_regs;
-	f->f_regs[PC] = ksc.sc_pc;
-	f->f_regs[MULLO] = ksc.mullo;
-	f->f_regs[MULHI] = ksc.mulhi;
-	memcpy(&f->f_regs[1], &scp->sc_regs[1],
-	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
-#ifndef	SOFTFLOAT
-	if (scp->sc_fpused) {
-		/* Disable the FPU to fault in FP registers. */
-		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
-		if (l == fpcurlwp) {
-			fpcurlwp = (struct lwp *)0;
-		}
-		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
-	}
-#else
-	l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
-#endif
-
-	/* Restore signal stack. */
-	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
-
-	return (EJUSTRETURN);
-}
 
 /*
  * These are imported from platform-specific code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.14 1999/09/29 06:04:50 scottr Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.14.20.1 2002/11/11 21:59:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -43,7 +43,6 @@
 					((sc)->sc_reg_map[reg]),	\
 					(val)))
 
-extern int	kvtop(caddr_t addr);
 #define	SONIC_GETDMA(p)	(u_int32_t)(kvtop((caddr_t)(p)))
 
 #define	SN_REGSIZE	SN_NREGS*4

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.2.2.6 2002/08/01 02:45:22 nathanw Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.2.2.7 2002/11/11 22:11:28 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.2.2.6 2002/08/01 02:45:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.2.2.7 2002/11/11 22:11:28 nathanw Exp $");
 
 #include "opt_pci.h"
 
@@ -153,6 +153,7 @@ typedef struct _s_pciconf_bus_t {
 
 static int	probe_bus(pciconf_bus_t *);
 static void	alloc_busno(pciconf_bus_t *, pciconf_bus_t *);
+static void	set_busreg(pci_chipset_tag_t, pcitag_t, int, int, int);
 static int	pci_do_device_query(pciconf_bus_t *, pcitag_t, int, int, int);
 static int	setup_iowins(pciconf_bus_t *);
 static int	setup_memwins(pciconf_bus_t *);
@@ -227,9 +228,9 @@ probe_bus(pciconf_bus_t *pb)
 
 #ifdef __PCI_BUS_DEVORDER
 	pci_bus_devorder(pb->pc, pb->busno, devs);
-	for (i=0; (device=devs[i]) < 32 && device >= 0; i++) {
+	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++) {
 #else
-	for (device=0; device < maxdevs; device++) {
+	for (device = 0; device < maxdevs; device++) {
 #endif
 		pcitag_t tag;
 		pcireg_t id, bhlcr;

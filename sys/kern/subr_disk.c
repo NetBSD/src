@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.29.6.6 2002/09/17 21:22:16 nathanw Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.29.6.7 2002/11/11 22:13:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.29.6.6 2002/09/17 21:22:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.29.6.7 2002/11/11 22:13:56 nathanw Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.29.6.6 2002/09/17 21:22:16 nathanw E
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/sysctl.h>
+#include <lib/libkern/libkern.h>
 
 /*
  * A global list of all disks attached to the system.  May grow or
@@ -286,7 +289,7 @@ disk_busy(struct disk *diskp)
  * time, and reset the timestamp.
  */
 void
-disk_unbusy(struct disk *diskp, long bcount)
+disk_unbusy(struct disk *diskp, long bcount, int read)
 {
 	int s;
 	struct timeval dv_time, diff_time;
@@ -305,8 +308,13 @@ disk_unbusy(struct disk *diskp, long bcount)
 
 	diskp->dk_timestamp = dv_time;
 	if (bcount > 0) {
-		diskp->dk_bytes += bcount;
-		diskp->dk_xfer++;
+		if (read) {
+			diskp->dk_rbytes += bcount;
+			diskp->dk_rxfer++;
+		} else {
+			diskp->dk_wbytes += bcount;
+			diskp->dk_wxfer++;
+		}
 	}
 }
 
@@ -321,8 +329,10 @@ disk_resetstat(struct disk *diskp)
 {
 	int s = splbio(), t;
 
-	diskp->dk_xfer = 0;
-	diskp->dk_bytes = 0;
+	diskp->dk_rxfer = 0;
+	diskp->dk_rbytes = 0;
+	diskp->dk_wxfer = 0;
+	diskp->dk_wbytes = 0;
 
 	t = splclock();
 	diskp->dk_attachtime = mono_time;
@@ -389,15 +399,26 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	size_t tocopy, left;
 	int error;
 
-	if (where == NULL) {
-		*sizep = disk_count * sizeof(struct disk_sysctl);
-		return (0);
-	}
-
+	/*
+	 * The original hw.diskstats call was broken and did not require
+	 * the userland to pass in it's size of struct disk_sysctl.  This
+	 * was fixed after NetBSD 1.6 was released, and any applications
+	 * that do not pass in the size are given an error only, unless
+	 * we care about 1.6 compatibility.
+	 */
 	if (namelen == 0)
-		tocopy = sizeof(sdisk);
+#ifdef COMPAT_16
+		tocopy = offsetof(struct disk_sysctl, dk_rxfer);
+#else
+		return (EINVAL);
+#endif
 	else
 		tocopy = name[0];
+
+	if (where == NULL) {
+		*sizep = disk_count * tocopy;
+		return (0);
+	}
 
 	error = 0;
 	left = *sizep;
@@ -406,12 +427,16 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 
 	simple_lock(&disklist_slock);
 	TAILQ_FOREACH(diskp, &disklist, dk_link) {
-		if (left < sizeof(struct disk_sysctl))
+		if (left < tocopy)
 			break;
 		strncpy(sdisk.dk_name, diskp->dk_name, sizeof(sdisk.dk_name));
-		sdisk.dk_xfer = diskp->dk_xfer;
+		sdisk.dk_xfer = diskp->dk_rxfer + diskp->dk_wxfer;
+		sdisk.dk_rxfer = diskp->dk_rxfer;
+		sdisk.dk_wxfer = diskp->dk_wxfer;
 		sdisk.dk_seek = diskp->dk_seek;
-		sdisk.dk_bytes = diskp->dk_bytes;
+		sdisk.dk_bytes = diskp->dk_rbytes + diskp->dk_wbytes;
+		sdisk.dk_rbytes = diskp->dk_rbytes;
+		sdisk.dk_wbytes = diskp->dk_wbytes;
 		sdisk.dk_attachtime_sec = diskp->dk_attachtime.tv_sec;
 		sdisk.dk_attachtime_usec = diskp->dk_attachtime.tv_usec;
 		sdisk.dk_timestamp_sec = diskp->dk_timestamp.tv_sec;
@@ -430,7 +455,6 @@ sysctl_diskstats(int *name, u_int namelen, void *vwhere, size_t *sizep)
 	simple_unlock(&disklist_slock);
 	return (error);
 }
-
 
 struct bufq_fcfs {
 	TAILQ_HEAD(, buf) bq_head;	/* actual list of buffers */
@@ -460,7 +484,7 @@ buf_inorder(struct buf *bp, struct buf *bq, int sortby)
 	int r;
 
 	if (bp == NULL || bq == NULL)
-		return(bq == NULL);
+		return (bq == NULL);
 
 	if (sortby == BUFQ_SORT_CYLINDER)
 		r = bp->b_cylinder - bq->b_cylinder;
@@ -470,7 +494,7 @@ buf_inorder(struct buf *bp, struct buf *bq, int sortby)
 	if (r == 0)
 		r = bp->b_rawblkno - bq->b_rawblkno;
 
-	return(r <= 0);
+	return (r <= 0);
 }
 
 
@@ -498,7 +522,7 @@ bufq_fcfs_get(struct bufq_state *bufq, int remove)
 	if (bp != NULL && remove)
 		TAILQ_REMOVE(&fcfs->bq_head, bp, b_actq);
 
-	return(bp);
+	return (bp);
 }
 
 
@@ -556,7 +580,8 @@ bufq_disksort_put(struct bufq_state *bufq, struct buf *bp)
 					if (buf_inorder(bp, nbq, sortby))
 						goto insert;
 					bq = nbq;
-				} while ((nbq = TAILQ_NEXT(bq, b_actq)) != NULL);
+				} while ((nbq =
+				    TAILQ_NEXT(bq, b_actq)) != NULL);
 				goto insert;		/* after last */
 			}
 			bq = nbq;
@@ -601,7 +626,7 @@ bufq_disksort_get(struct bufq_state *bufq, int remove)
 	if (bp != NULL && remove)
 		TAILQ_REMOVE(&disksort->bq_head, bp, b_actq);
 
-	return(bp);
+	return (bp);
 }
 
 
@@ -675,7 +700,6 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 		/*
 		 * If at least one list is empty, select the other.
 		 */
-
 		if (TAILQ_FIRST(&prio->bq_read) == NULL) {
 			prio->bq_next = prio->bq_write_next;
 			prio->bq_read_burst = 0;
@@ -688,11 +712,10 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 			 * to PRIO_READ_BURST times, then select the write
 			 * list PRIO_WRITE_REQ times.
 			 */
-	
 			if (prio->bq_read_burst++ < PRIO_READ_BURST)
 				prio->bq_next = TAILQ_FIRST(&prio->bq_read);
 			else if (prio->bq_read_burst <
-				     PRIO_READ_BURST + PRIO_WRITE_REQ)
+			    PRIO_READ_BURST + PRIO_WRITE_REQ)
 				prio->bq_next = prio->bq_write_next;
 			else {
 				prio->bq_next = TAILQ_FIRST(&prio->bq_read);
@@ -703,16 +726,17 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 
 	bp = prio->bq_next;
 
-	if (prio->bq_next != NULL && remove) {
-		if ((prio->bq_next->b_flags & B_READ) == B_READ)
-			TAILQ_REMOVE(&prio->bq_read, prio->bq_next, b_actq);
+	if (bp != NULL && remove) {
+		if ((bp->b_flags & B_READ) == B_READ)
+			TAILQ_REMOVE(&prio->bq_read, bp, b_actq);
 		else {
-			TAILQ_REMOVE(&prio->bq_write, prio->bq_next, b_actq);
 			/*
-			 * Advance the write pointer.
+			 * Advance the write pointer before removing
+			 * bp since it is actually prio->bq_write_next.
 			 */
 			prio->bq_write_next =
 			    TAILQ_NEXT(prio->bq_write_next, b_actq);
+			TAILQ_REMOVE(&prio->bq_write, bp, b_actq);
 			if (prio->bq_write_next == NULL)
 				prio->bq_write_next =
 				    TAILQ_FIRST(&prio->bq_write);
@@ -721,7 +745,7 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 		prio->bq_next = NULL;
 	}
 
-	return(bp);
+	return (bp);
 }
 
 /*
@@ -785,6 +809,7 @@ bufq_alloc(struct bufq_state *bufq, int flags)
 void
 bufq_free(struct bufq_state *bufq)
 {
+
 	KASSERT(bufq->bq_private != NULL);
 	KASSERT(BUFQ_PEEK(bufq) == NULL);
 

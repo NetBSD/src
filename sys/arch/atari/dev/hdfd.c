@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.28.8.5 2002/10/18 02:35:53 nathanw Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.28.8.6 2002/11/11 21:57:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -258,7 +258,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void	fdstart __P((struct fd_softc *));
@@ -1108,7 +1108,8 @@ loop:
 		return 1;
 
 	case SEEKCOMPLETE:
-		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
+		/* no data on seek */
+		disk_unbusy(&fd->sc_dk, 0, 0);
 
 		/* Make sure seek really happened. */
 		out_fdc(NE7CMD_SENSEI);
@@ -1133,7 +1134,8 @@ loop:
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		callout_stop(&fdc->sc_timo_ch);
 
-		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 
 		if (fdcresult(fdc) != 7 || (st1 & 0x37) != 0) {
 			/*

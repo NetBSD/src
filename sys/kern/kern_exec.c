@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.17 2002/10/18 02:44:51 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.18 2002/11/11 22:13:39 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.17 2002/10/18 02:44:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.18 2002/11/11 22:13:39 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -134,7 +134,7 @@ const struct emul emul_netbsd = {
 	EMUL_HAS_SYS___syscall,
 	NULL,
 	SYS_syscall,
-	SYS_MAXSYSCALL,
+	SYS_NSYSENT,
 #endif
 	sysent,
 #ifdef SYSCALL_DEBUG
@@ -177,6 +177,8 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  * ON ENTRY:
  *	exec package with appropriate namei info
  *	proc pointer of exec'ing proc
+ *      iff verified exec enabled then flag indicating a direct exec or
+ *        an indirect exec (i.e. for a shell script interpreter)
  *	NO SELF-LOCKED VNODES
  *
  * ON EXIT:
@@ -195,7 +197,11 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  *			exec header unmodified.
  */
 int
+#ifdef VERIFIED_EXEC
+check_exec(struct proc *p, struct exec_package *epp, int direct_exec)
+#else 
 check_exec(struct proc *p, struct exec_package *epp)
+#endif
 {
 	int		error, i;
 	struct vnode	*vp;
@@ -236,6 +242,13 @@ check_exec(struct proc *p, struct exec_package *epp)
 
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
+
+   
+#ifdef VERIFIED_EXEC
+        /* Evaluate signature for file... */
+        if ((error = check_veriexec(p, vp, epp, direct_exec)) != 0)
+                goto bad2;
+#endif
 
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);
@@ -393,7 +406,12 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #endif
 
 	/* see if we can run it. */
-	if ((error = check_exec(p, &pack)) != 0)
+#ifdef VERIFIED_EXEC
+        if ((error = check_exec(p, &pack, 1)) != 0)
+        //if ((error = check_exec(p, &pack, 0)) != 0)
+#else 
+        if ((error = check_exec(p, &pack)) != 0)
+#endif
 		goto freehdr;
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
@@ -699,6 +717,9 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 
+	/* notify others that we exec'd */
+	KNOTE(&p->p_klist, NOTE_EXEC);
+
 	/* setup new registers and do misc. setup. */
 	(*pack.ep_es->es_emul->e_setregs)(l, &pack, (u_long) stack);
 	if (pack.ep_es->es_setregs)
@@ -748,6 +769,18 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
 #endif
 	p->p_flag &= ~P_INEXEC;
+
+	if (p->p_flag & P_STOPEXEC) {
+		int s;
+
+		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
+		SCHED_LOCK(s);
+		p->p_stat = SSTOP;
+		mi_switch(p, NULL);
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+	}
+
 	return (EJUSTRETURN);
 
  bad:

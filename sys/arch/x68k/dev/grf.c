@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.20.8.6 2002/10/18 02:40:44 nathanw Exp $	*/
+/*	$NetBSD: grf.c,v 1.20.8.7 2002/11/11 22:06:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,7 +109,7 @@ dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, nopoll, grfmmap,
+	nostop, notty, nopoll, grfmmap, nokqfilter,
 };
 
 /*ARGSUSED*/

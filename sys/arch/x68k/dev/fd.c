@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.8.6 2002/10/18 02:40:44 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.8.7 2002/11/11 22:06:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdstart __P((struct fd_softc *fd));
@@ -317,7 +317,7 @@ fdc_dmastart(fdc, read, addr, count)
 {
 	int error;
 
-	DPRINTF(("fdc_dmastart: (%s, addr = %p, count = %ld\n",
+	DPRINTF(("fdc_dmastart: %s, addr = %p, count = %ld\n",
 		 read ? "read" : "write", (caddr_t) addr, count));
 
 	error = bus_dmamap_load(fdc->sc_dmat, fdc->sc_dmamap, addr, count,

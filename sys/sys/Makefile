@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25.2.10 2002/10/18 02:45:38 nathanw Exp $
+#	$NetBSD: Makefile,v 1.25.2.11 2002/11/11 22:16:18 nathanw Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -9,6 +9,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h conf.h core.h device.h \
 	dir.h dirent.h disk.h disklabel.h disklabel_acorn.h disklabel_mbr.h \
 	dkbad.h dkio.h dkstat.h domain.h dvdio.h endian.h envsys.h errno.h \
+	event.h \
 	exec.h exec_aout.h exec_coff.h exec_ecoff.h exec_elf.h exec_script.h \
 	extent.h fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
 	gmon.h hash.h inttypes.h ioccom.h \
@@ -23,7 +24,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	systm.h tablet.h termios.h time.h timeb.h timepps.h times.h timex.h \
 	tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h ttydev.h \
 	types.h ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h \
-	utsname.h vadvise.h vmmeter.h vnode.h vnode_if.h wait.h wdog.h
+	utsname.h vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h wait.h wdog.h
 
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \

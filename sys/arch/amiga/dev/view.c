@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.8.5 2002/10/18 02:35:05 nathanw Exp $ */
+/*	$NetBSD: view.c,v 1.17.8.6 2002/11/11 21:56:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.8.5 2002/10/18 02:35:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.8.6 2002/11/11 21:56:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ dev_type_mmap(viewmmap);
 
 const struct cdevsw view_cdevsw = {
 	viewopen, viewclose, nullread, nullwrite, viewioctl,
-	nostop, notty, nopoll, viewmmap,
+	nostop, notty, nopoll, viewmmap, nokqfilter,
 };
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: ffs_appleufs.c,v 1.1.4.2 2002/10/18 02:45:48 nathanw Exp $ */
+/* $NetBSD: ffs_appleufs.c,v 1.1.4.3 2002/11/11 22:16:50 nathanw Exp $ */
 /*
  * Copyright (c) 2002 Darrin B. Jewell
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.1.4.2 2002/10/18 02:45:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.1.4.3 2002/11/11 22:16:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -71,7 +71,7 @@ ffs_appleufs_cksum(appleufs)
 	}
 #if 0 /* sizeof(struct appleufslabel) is guaranteed to be even */
 	if (len == 1)
-		res += htons(*(u_char *)p<<8);
+		res += htobe16(*(u_char *)p<<8);
 #endif
 	res = (res >> 16) + (res & 0xffff);
 	res += (res >> 16);
@@ -90,7 +90,7 @@ ffs_appleufs_validate(name,o,n)
 	struct appleufslabel tmp;
 	if (!n) n = &tmp;
 
-	if (o->ul_magic != ntohl(APPLEUFS_LABEL_MAGIC)) {
+	if (o->ul_magic != be32toh(APPLEUFS_LABEL_MAGIC)) {
 		return EINVAL;
 	}
 	*n = *o;
@@ -103,10 +103,10 @@ ffs_appleufs_validate(name,o,n)
 #endif
 		return EINVAL;
 	}
-	n->ul_magic = ntohl(o->ul_magic);
-	n->ul_version = ntohl(o->ul_version);
-	n->ul_time = ntohl(o->ul_time);
-	n->ul_namelen = ntohs(o->ul_namelen);
+	n->ul_magic = be32toh(o->ul_magic);
+	n->ul_version = be32toh(o->ul_version);
+	n->ul_time = be32toh(o->ul_time);
+	n->ul_namelen = be16toh(o->ul_namelen);
 
 	if (n->ul_namelen > APPLEUFS_MAX_LABEL_NAME) {
 #if defined(DIAGNOSTIC) || !defined(_KERNEL)
@@ -146,10 +146,10 @@ ffs_appleufs_set(appleufs,name,t)
 	if (namelen > APPLEUFS_MAX_LABEL_NAME)
 		namelen = APPLEUFS_MAX_LABEL_NAME;
 	memset(appleufs, 0, sizeof(*appleufs));
-	appleufs->ul_magic   = htonl(APPLEUFS_LABEL_MAGIC);
-	appleufs->ul_version = htonl(APPLEUFS_LABEL_VERSION);
-	appleufs->ul_time    = htonl((u_int32_t)t);
-	appleufs->ul_namelen = htons(namelen);
+	appleufs->ul_magic   = htobe32(APPLEUFS_LABEL_MAGIC);
+	appleufs->ul_version = htobe32(APPLEUFS_LABEL_VERSION);
+	appleufs->ul_time    = htobe32((u_int32_t)t);
+	appleufs->ul_namelen = htobe16(namelen);
 	strncpy(appleufs->ul_name,name,namelen);
 	appleufs->ul_checksum = ffs_appleufs_cksum(appleufs);
 }

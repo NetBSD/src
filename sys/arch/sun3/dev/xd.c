@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.34.6.4 2002/10/18 02:40:21 nathanw Exp $	*/
+/*	$NetBSD: xd.c,v 1.34.6.5 2002/11/11 22:05:18 nathanw Exp $	*/
 
 /*
  *
@@ -284,7 +284,7 @@ const struct bdevsw xd_bdevsw = {
 
 const struct cdevsw xd_cdevsw = {
 	xdopen, xdclose, xdread, xdwrite, xdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -1725,7 +1725,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
 			    disk_unbusy(&iorq->xd->sc_dk,
-					(iorq->buf->b_bcount - iorq->buf->b_resid));
+					(iorq->buf->b_bcount - iorq->buf->b_resid),
+					(iorq->buf->b_flags & B_READ));
 			    biodone(iorq->buf);
 			    XDC_FREE(xdcsc, lcv);	/* add to free list */
 			    break;
@@ -1930,7 +1931,8 @@ xdc_remove_iorq(xdcsc)
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
 			disk_unbusy(&iorq->xd->sc_dk,
-			    (bp->b_bcount - bp->b_resid));
+			    (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 			XDC_FREE(xdcsc, rqno);
 			biodone(bp);
 			break;

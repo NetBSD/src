@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.58.2.5 2002/10/18 02:35:04 nathanw Exp $ */
+/*	$NetBSD: ser.c,v 1.58.2.6 2002/11/11 21:56:22 nathanw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.58.2.5 2002/10/18 02:35:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.58.2.6 2002/11/11 21:56:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ dev_type_poll(serpoll);
 
 const struct cdevsw ser_cdevsw = {
 	seropen, serclose, serread, serwrite, serioctl,
-	serstop, sertty, serpoll, nommap, D_TTY
+	serstop, sertty, serpoll, nommap, ttykqfilter, D_TTY
 };
 
 #ifndef SEROBUF_SIZE

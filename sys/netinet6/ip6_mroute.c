@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.17.2.10 2002/10/18 02:45:23 nathanw Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.17.2.11 2002/11/11 22:15:47 nathanw Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.10 2002/10/18 02:45:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.11 2002/11/11 22:15:47 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -76,6 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.10 2002/10/18 02:45:23 nathanw
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#ifdef MULTICAST_PMTUD
+#include <netinet/icmp6.h>
+#endif
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -181,7 +184,7 @@ static int pim6;
 	if (rt == NULL) { \
 		mrt6stat.mrt6s_mfc_misses++; \
 	} \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * Macros to compute elapsed time efficiently
@@ -203,7 +206,7 @@ static int pim6;
 			  delta += (1000000 * xxs); \
 	       } \
 	    } \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define TV_LT(a, b) (((a).tv_usec < (b).tv_usec && \
 	      (a).tv_sec <= (b).tv_sec) || (a).tv_sec < (b).tv_sec)
@@ -1257,7 +1260,7 @@ ip6_mdq(m, ifp, rt)
 		    register_send((ip6), (mifp), (m));		\
 		else						\
 		    phyint_send((ip6), (mifp), (m));		\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 	/*
 	 * Don't forward if it didn't arrive from the parent mif

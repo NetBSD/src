@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.65.2.9 2002/09/17 21:23:00 nathanw Exp $	*/
+/*	$NetBSD: in.c,v 1.65.2.10 2002/11/11 22:15:13 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.65.2.9 2002/09/17 21:23:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.65.2.10 2002/11/11 22:15:13 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -132,8 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.65.2.9 2002/09/17 21:23:00 nathanw Exp $");
 
 #ifdef INET
 
-static int in_mask2len __P((struct in_addr *));
-static void in_len2mask __P((struct in_addr *, int));
+static u_int in_mask2len __P((struct in_addr *));
+static void in_len2mask __P((struct in_addr *, u_int));
 static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));
 
@@ -267,11 +267,11 @@ in_setmaxmtu()
 		in_maxmtu = maxmtu;
 }
 
-static int
+static u_int
 in_mask2len(mask)
 	struct in_addr *mask;
 {
-	int x, y;
+	u_int x, y;
 	u_char *p;
 
 	p = (u_char *)mask;
@@ -292,9 +292,9 @@ in_mask2len(mask)
 static void
 in_len2mask(mask, len)
 	struct in_addr *mask;
-	int len;
+	u_int len;
 {
-	int i;
+	u_int i;
 	u_char *p;
 
 	p = (u_char *)mask;
@@ -323,7 +323,6 @@ in_control(so, cmd, data, ifp, p)
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
-	int newifaddr;
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -402,9 +401,7 @@ in_control(so, cmd, data, ifp, p)
 			}
 			ia->ia_ifp = ifp;
 			LIST_INIT(&ia->ia_multiaddrs);
-			newifaddr = 1;
-		} else
-			newifaddr = 0;
+		}
 		break;
 
 	case SIOCSIFBRDADDR:

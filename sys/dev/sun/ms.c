@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.20.2.2 2002/09/17 21:21:27 nathanw Exp $	*/
+/*	$NetBSD: ms.c,v 1.20.2.3 2002/11/11 22:12:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20.2.2 2002/09/17 21:21:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20.2.3 2002/11/11 22:12:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,11 @@ dev_type_close(msclose);
 dev_type_read(msread);
 dev_type_ioctl(msioctl);
 dev_type_poll(mspoll);
+dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw = {
 	msopen, msclose, msread, nowrite, msioctl,
-	nostop, notty, mspoll, nommap,
+	nostop, notty, mspoll, nommap, mskqfilter,
 };
 
 /****************************************************************
@@ -217,6 +218,16 @@ mspoll(dev, events, p)
 	return (ev_poll(&ms->ms_events, events, p));
 }
 
+int
+mskqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct ms_softc *ms;
+
+	ms = ms_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&ms->ms_events, kn));
+}
 
 /****************************************************************
  * Middle layer (translator)

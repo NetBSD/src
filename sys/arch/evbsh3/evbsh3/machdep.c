@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42.6.2 2002/06/21 16:59:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42.6.3 2002/11/11 21:58:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -220,11 +220,11 @@ haltsys:
 void
 initSH3(void *pc)	/* XXX return address */
 {
-	extern char edata[], end[];
+	extern char _edata[], _end[];
 	vaddr_t kernend;
 
 	/* Clear bss */
-	memset(edata, 0, end - edata);
+	memset(_edata, 0, _end - _edata);
 
 	/* Initilize CPU ops. */
 #if defined(SH3) && defined(SH4)
@@ -258,7 +258,7 @@ initSH3(void *pc)	/* XXX return address */
 	consinit();
 
 	/* Load memory to UVM */
-	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
+	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(_end)));
 	physmem = atop(IOM_RAM_SIZE);
 	uvm_page_physload(
 		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),

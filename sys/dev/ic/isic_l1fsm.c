@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.1.2.5 2002/10/18 02:41:54 nathanw Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.1.2.6 2002/11/11 22:09:37 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.1.2.5 2002/10/18 02:41:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.1.2.6 2002/11/11 22:09:37 nathanw Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.1.2.5 2002/10/18 02:41:54 nathanw E
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
+#include "nisac.h"
+#include "nisacsx.h"
 
 #if DO_I4B_DEBUG
 static char *state_text[N_STATES] = {
@@ -141,9 +143,19 @@ timer3_expired(struct isic_softc *sc)
 		sc->sc_I430T3 = 0;
 
 		/* XXX try some recovery here XXX */
-
-		isic_recover(sc);
-
+		switch(sc->sc_cardtyp) {
+#if NNISACSX > 0
+			case CARD_TYPEP_AVMA1PCIV2:
+				isic_isacsx_recover(sc);
+				break;
+#endif /* NNISACSX > 0 */
+			default:
+#if NNISAC > 0
+				isic_recover(sc);
+#endif /* NNISAC > 0 */
+				break;
+		}
+			
 		sc->sc_init_tries++;	/* increment retry count */
 
 /*XXX*/		if(sc->sc_init_tries > 4)
@@ -405,7 +417,18 @@ F_AR(struct isic_softc *sc)
 		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, 1, &info);
 	}
 
-	isic_isac_l1_cmd(sc, CMD_AR8);
+	switch(sc->sc_cardtyp) {
+#if NNISACSX > 0
+		case CARD_TYPEP_AVMA1PCIV2:
+			isic_isacsx_l1_cmd(sc, CMD_AR8);
+			break;
+#endif /* NNISACSX > 0 */
+		default:
+#if NNISAC > 0
+			isic_isac_l1_cmd(sc, CMD_AR8);
+#endif /* NNISAC > 0 */
+			break;
+	}
 
 	T3_start(sc);
 }

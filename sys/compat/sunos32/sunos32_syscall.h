@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscall.h,v 1.4.4.5 2002/05/29 21:48:56 nathanw Exp $ */
+/* $NetBSD: sunos32_syscall.h,v 1.4.4.6 2002/11/11 22:08:14 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -444,3 +444,4 @@
 #define	SUNOS32_SYS_uname	189
 
 #define	SUNOS32_SYS_MAXSYSCALL	190
+#define	SUNOS32_SYS_NSYSENT	256

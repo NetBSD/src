@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.1.4.4 2002/08/23 02:37:10 petrov Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.1.4.5 2002/11/11 22:07:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.1.4.4 2002/08/23 02:37:10 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.1.4.5 2002/11/11 22:07:52 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -77,7 +77,7 @@ netbsd32___semctl14(l, v, retval)
 	int semid = SCARG(uap, semid);
 	int semnum = SCARG(uap, semnum);
 	int cmd = SCARG(uap, cmd);
-	union netbsd32_semun *arg = (void*)(u_long)SCARG(uap, arg);
+	union netbsd32_semun *arg = (void*)NETBSD32PTR64(SCARG(uap, arg));
 	union netbsd32_semun real_arg;
 	struct ucred *cred = p->p_ucred;
 	int i, rval, eval;
@@ -122,8 +122,8 @@ netbsd32___semctl14(l, v, retval)
 			return(eval);
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
-		if ((eval = copyin((caddr_t)(u_long)real_arg.buf, (caddr_t)&sbuf,
-		    sizeof(sbuf))) != 0)
+		if ((eval = copyin((caddr_t)NETBSD32PTR64(real_arg.buf),
+		    (caddr_t)&sbuf, sizeof(sbuf))) != 0)
 			return(eval);
 		semaptr->sem_perm.uid = sbuf.sem_perm.uid;
 		semaptr->sem_perm.gid = sbuf.sem_perm.gid;
@@ -137,7 +137,8 @@ netbsd32___semctl14(l, v, retval)
 			return(eval);
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
-		eval = copyout((caddr_t)semaptr, (caddr_t)(u_long)real_arg.buf,
+		eval = copyout((caddr_t)semaptr,
+		    (caddr_t)NETBSD32PTR64(real_arg.buf),
 		    sizeof(struct semid_ds));
 		break;
 
@@ -301,7 +302,7 @@ netbsd32___msgctl13(l, v, retval)
 
 	NETBSD32TO64_UAP(msqid);
 	NETBSD32TO64_UAP(cmd);
-	ds32p = (struct netbsd32_msqid_ds *)(u_long)SCARG(uap, buf);
+	ds32p = (struct netbsd32_msqid_ds *)NETBSD32PTR64(SCARG(uap, buf));
 	if (ds32p) {
 		SCARG(&ua, buf) = NULL;
 		netbsd32_to_msqid_ds(ds32p, &ds);
@@ -445,7 +446,7 @@ netbsd32___shmctl13(l, v, retval)
 
 	NETBSD32TO64_UAP(shmid);
 	NETBSD32TO64_UAP(cmd);
-	ds32p = (struct netbsd32_shmid_ds *)(u_long)SCARG(uap, buf);
+	ds32p = (struct netbsd32_shmid_ds *)NETBSD32PTR64(SCARG(uap, buf));
 	if (ds32p) {
 		SCARG(&ua, buf) = NULL;
 		netbsd32_to_shmid_ds(ds32p, &ds);

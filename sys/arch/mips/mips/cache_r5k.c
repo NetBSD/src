@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.2.2.4 2002/02/28 04:10:44 nathanw Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.2.2.5 2002/11/11 22:00:33 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -127,7 +127,9 @@ r5k_icache_sync_range_32(vaddr_t va, vsize_t size)
 void
 r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 {
-	vaddr_t w2va, eva;
+	vaddr_t w2va, eva, orig_va;
+
+	orig_va = va;
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -142,7 +144,7 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(orig_va & mips_picache_way_mask);
 
 	eva = round_line(va + size);
 	va = trunc_line(va);

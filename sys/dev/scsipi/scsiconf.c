@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.17 2002/10/18 02:44:16 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.18 2002/11/11 22:12:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.17 2002/10/18 02:44:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.18 2002/11/11 22:12:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ dev_type_ioctl(scsibusioctl);
 
 const struct cdevsw scsibus_cdevsw = {
 	scsibusopen, scsibusclose, noread, nowrite, scsibusioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 int	scsibusprint __P((void *, const char *));

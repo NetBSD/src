@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14.8.5 2002/10/18 02:35:56 nathanw Exp $	*/
+/*	$NetBSD: ser.c,v 1.14.8.6 2002/11/11 21:57:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ dev_type_poll(serpoll);
 
 const struct cdevsw ser_cdevsw = {
 	seropen, serclose, serread, serwrite, serioctl,
-	serstop, sertty, serpoll, nommap, D_TTY
+	serstop, sertty, serpoll, nommap, ttykqfilter, D_TTY
 };
 
 /*ARGSUSED*/

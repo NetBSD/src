@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.51.2.6 2002/10/18 02:42:38 nathanw Exp $	*/
+/*	$NetBSD: wt.c,v 1.51.2.7 2002/11/11 22:10:25 nathanw Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.6 2002/10/18 02:42:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.7 2002/11/11 22:10:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ const struct bdevsw wt_bdevsw = {
 
 const struct cdevsw wt_cdevsw = {
 	wtopen, wtclose, wtread, wtwrite, wtioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 int wtwait __P((struct wt_softc *sc, int catch, char *msg));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.19.2.5 2002/10/22 18:09:44 thorpej Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.19.2.6 2002/11/11 22:16:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,6 +79,9 @@ int nfs_doio __P((struct buf *, struct proc *));
 
 /* nfs_boot.c */
 /* see nfsdiskless.h */
+
+/* nfs_kq.c */
+void nfs_kqinit __P((void));
 
 /* nfs_node.c */
 void nfs_nhinit __P((void));

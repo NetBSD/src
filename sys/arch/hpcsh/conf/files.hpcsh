@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.27.6.2 2002/09/17 21:14:51 nathanw Exp $
+#	$NetBSD: files.hpcsh,v 1.27.6.3 2002/11/11 21:58:46 nathanw Exp $
 #
 maxpartitions 8
 
@@ -11,7 +11,6 @@ defflag debug_hpcsh.h	BUS_SPACE_DEBUG
 
 defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 
-file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
 file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c

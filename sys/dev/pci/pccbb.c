@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.12 2002/10/18 02:43:12 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.13 2002/11/11 22:11:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.12 2002/10/18 02:43:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.13 2002/11/11 22:11:24 nathanw Exp $");
 
 /*
 #define CBB_DEBUG
@@ -325,6 +325,8 @@ const struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451), CB_TI12XX,
+	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 
 	/* Ricoh chips */
@@ -1853,7 +1855,7 @@ pccbb_intr_disestablish(sc, ih)
 #ifdef DIAGNOSTIC
 	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
 	     pil = LIST_NEXT(pil, pil_next)) {
-		printf("pccbb_intr_disestablish: pil %p\n", pil);
+		DPRINTF(("pccbb_intr_disestablish: pil %p\n", pil));
 		if (pil == ih) {
 			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
 			break;

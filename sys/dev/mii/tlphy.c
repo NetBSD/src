@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.27.2.7 2002/10/18 02:42:49 nathanw Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.27.2.8 2002/11/11 22:10:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.27.2.7 2002/10/18 02:42:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.27.2.8 2002/11/11 22:10:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
 	if (sc->sc_tlphycap) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.10 2002/10/18 02:39:42 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.11 2002/11/11 22:03:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -517,7 +517,7 @@ mach_init(argc, argv, magic, btinfo)
 	 * virtual address space.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(size);
-	if ((allocsys(v, NULL) - v) != size)
+	if ((vsize_t) (allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 }
 

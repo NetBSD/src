@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.9 2000/12/13 23:29:07 simonb Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.9.2.1 2002/11/11 22:21:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,14 +40,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigpending.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigpending.S,v 1.9 2000/12/13 23:29:07 simonb Exp $")
+	ASMSTR("$NetBSD: sigpending.S,v 1.9.2.1 2002/11/11 22:21:49 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 WARN_REFERENCES(sigpending, \
     "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 LEAF(sigpending)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set    noreorder
 	.cpload t9
 	.set    reorder

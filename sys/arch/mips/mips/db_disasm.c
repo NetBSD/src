@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7.8.2 2002/02/28 04:10:44 nathanw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7.8.3 2002/11/11 22:00:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -107,12 +107,21 @@ static char *fmt_name[16] = {
 	"fmtc", "fmtd", "fmte", "fmtf"
 };
 
+#if defined(__mips_n32) || defined(__mips_n64)
+static char *reg_name[32] = {
+	"zero", "at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3",
+	"a4",	"a5",	"a6",	"a7",	"t0",	"t1",	"t2",	"t3",
+	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7",
+	"t8",	"t9",	"k0",	"k1",	"gp",	"sp",	"s8",	"ra"
+};
+#else
 static char *reg_name[32] = {
 	"zero", "at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3",
 	"t0",	"t1",	"t2",	"t3",	"t4",	"t5",	"t6",	"t7",
 	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7",
 	"t8",	"t9",	"k0",	"k1",	"gp",	"sp",	"s8",	"ra"
 };
+#endif /* __mips_n32 || __mips_n64 */
 
 static char *c0_opname[64] = {
 	"c0op00","tlbr",  "tlbwi", "c0op03","c0op04","c0op05","tlbwr", "c0op07",

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.78.2.8 2002/08/27 23:48:23 nathanw Exp $	*/
+/*	$NetBSD: exec.h,v 1.78.2.9 2002/11/11 22:16:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -189,7 +189,14 @@ int	copyargs		__P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 void	setregs			__P((struct lwp *, struct exec_package *,
 				     u_long));
+#ifdef VERIFIED_EXEC
+int	check_veriexec		__P((struct proc *, struct vnode *,
+				     struct exec_package *, int));
+int	check_exec		__P((struct proc *, struct exec_package *,
+				     int));
+#else
 int	check_exec		__P((struct proc *, struct exec_package *));
+#endif
 int	exec_init		__P((int));
 int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
     void *, size_t));

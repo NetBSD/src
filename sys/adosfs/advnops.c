@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.57.2.4 2002/08/13 01:02:36 nathanw Exp $	*/
+/*	$NetBSD: advnops.c,v 1.57.2.5 2002/11/11 21:55:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.57.2.4 2002/08/13 01:02:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.57.2.5 2002/11/11 21:55:43 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -117,6 +117,7 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, adosfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
+	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, adosfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, adosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */

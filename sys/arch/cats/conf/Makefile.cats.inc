@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.1.2.5 2002/10/18 02:36:07 nathanw Exp $
-
-GENASSYM_EXTRAS+=	${ARM}/footbridge/genassym.cf
+#	$NetBSD: Makefile.cats.inc,v 1.1.2.6 2002/11/11 21:57:33 nathanw Exp $
 
 .if (${OBJECT_FMT} == "ELF")
 # Need to convert the kernel from ELF to a.out so that OpenFirmware
@@ -14,6 +12,7 @@ GENASSYM_EXTRAS+=	${ARM}/footbridge/genassym.cf
 LOADADDRESS=0xF0000020
 
 SYSTEM_LD_TAIL_EXTRA+=; \
+	echo "${DBSYM} $@ || true"; \
 	${DBSYM} $@ || true; \
 	echo OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
 	    ${ARM}/conf/elf2aout.sh $@ $@.aout; \

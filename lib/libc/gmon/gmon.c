@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.17.2.1 2002/06/21 18:18:13 nathanw Exp $	*/
+/*	$NetBSD: gmon.c,v 1.17.2.2 2002/11/11 22:22:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.17.2.1 2002/06/21 18:18:13 nathanw Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.17.2.2 2002/11/11 22:22:17 nathanw Exp $");
 #endif
 #endif
 
@@ -75,7 +75,7 @@ monstartup(lowpc, highpc)
 	u_long lowpc;
 	u_long highpc;
 {
-	long o;
+	u_long o;
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
 
@@ -118,7 +118,7 @@ monstartup(lowpc, highpc)
 #ifndef notdef
 		s_scale = ((float)p->kcountsize / o ) * SCALE_1_TO_1;
 #else /* avoid floating point */
-		int quot = o / p->kcountsize;
+		u_long quot = o / p->kcountsize;
 		
 		if (quot >= 0x10000)
 			s_scale = 1;

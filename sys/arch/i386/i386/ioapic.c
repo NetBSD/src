@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.3.2.2 2002/10/18 02:37:41 nathanw Exp $ */
+/* $NetBSD: ioapic.c,v 1.3.2.3 2002/11/11 21:59:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -445,7 +445,7 @@ apic_vectorset (sc, pin, minlevel, maxlevel)
 		 * case here!
 		 */
 		handler = apichandler[(nvector & 0xf) +
-		    ((maxlevel > IPL_HIGH) ? 0x10 : 0)]; /* XXX magic */
+		    ((maxlevel > IPL_SCHED) ? 0x10 : 0)]; /* XXX magic */
 		idt_vec_set(nvector, handler);
 		pp->ip_vector = nvector;
 		pp->ip_minlevel = minlevel;

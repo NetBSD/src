@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.142.2.9 2002/10/18 02:34:10 nathanw Exp $
+# $NetBSD: files.alpha,v 1.142.2.10 2002/11/11 21:56:00 nathanw Exp $
 #
 # alpha-specific configuration info
 
@@ -470,7 +470,6 @@ file	arch/alpha/jensenio/mcclock_jensenio.c	mcclock_jensenio
 file	arch/alpha/alpha/autoconf.c
 file	arch/alpha/alpha/clock.c
 file	dev/clock_subr.c
-file	arch/alpha/alpha/conf.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor

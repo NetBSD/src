@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.c,v 1.1.6.1 2001/11/14 19:13:34 nathanw Exp $	*/
+/*	$NetBSD: arc4.c,v 1.1.6.2 2002/11/11 22:08:28 nathanw Exp $	*/
 
 /*
  * ARC4 implementation
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.1.6.1 2001/11/14 19:13:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.1.6.2 2002/11/11 22:08:28 nathanw Exp $");
 
 #include <sys/types.h>
 
 #include <crypto/arc4/arc4.h>
 
 struct arc4_ctx {
-	int	x;
-	int	y;
-	int	state[256];
+	unsigned int	x;
+	unsigned int	y;
+	unsigned int	state[256];
 	/* was unsigned char, changed to int for performance -- onoe */
 };
 
@@ -53,7 +53,7 @@ void
 arc4_setkey(ctxp, key, keylen)
 	void *ctxp;
 	unsigned char *key;
-	int keylen;
+	unsigned int keylen;
 {
 	struct arc4_ctx *ctx = ctxp;
 	unsigned int i, t, u, ki, si;

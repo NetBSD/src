@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.118.2.12 2002/09/17 21:23:55 nathanw Exp $ */
+/* $NetBSD: syscall.h,v 1.118.2.13 2002/11/11 22:16:37 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -788,6 +788,12 @@
 
 /* syscall: "rasctl" ret: "int" args: "caddr_t" "size_t" "int" */
 #define	SYS_rasctl	343
+
+/* syscall: "kqueue" ret: "int" args: */
+#define	SYS_kqueue	344
+
+/* syscall: "kevent" ret: "int" args: "int" "const struct kevent *" "size_t" "struct kevent *" "size_t" "const struct timespec *" */
+#define	SYS_kevent	345
 
 #define	SYS_MAXSYSCALL	346
 #define	SYS_NSYSENT	512

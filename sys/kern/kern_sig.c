@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.32 2002/10/22 17:19:09 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.33 2002/11/11 22:13:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.32 2002/10/22 17:19:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.33 2002/11/11 22:13:47 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -802,6 +802,11 @@ psignal1(struct proc *p, int signum,
 	else
 		SCHED_ASSERT_LOCKED();
 #endif
+	/*
+	 * Notify any interested parties in the signal.
+	 */
+	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
+
 	prop = sigprop[signum];
 
 	/*
@@ -1811,3 +1816,46 @@ sigismasked(struct proc *p, int sig)
 	    sigismember(&p->p_sigctx.ps_sigmask, sig));
 }
 
+static int
+filt_sigattach(struct knote *kn)
+{
+	struct proc *p = curproc;
+
+	kn->kn_ptr.p_proc = p;
+	kn->kn_flags |= EV_CLEAR;               /* automatically set */
+
+	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+
+	return (0);
+}
+
+static void
+filt_sigdetach(struct knote *kn)
+{
+	struct proc *p = kn->kn_ptr.p_proc;
+
+	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+}
+
+/*
+ * signal knotes are shared with proc knotes, so we apply a mask to
+ * the hint in order to differentiate them from process hints.  This
+ * could be avoided by using a signal-specific knote list, but probably
+ * isn't worth the trouble.
+ */
+static int
+filt_signal(struct knote *kn, long hint)
+{
+
+	if (hint & NOTE_SIGNAL) {
+		hint &= ~NOTE_SIGNAL;
+
+		if (kn->kn_id == hint)
+			kn->kn_data++;
+	}
+	return (kn->kn_data != 0);
+}
+
+const struct filterops sig_filtops = {
+	0, filt_sigattach, filt_sigdetach, filt_signal
+};

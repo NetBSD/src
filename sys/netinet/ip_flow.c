@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.16.2.6 2002/08/01 02:46:47 nathanw Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.16.2.7 2002/11/11 22:15:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.16.2.6 2002/08/01 02:46:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.16.2.7 2002/11/11 22:15:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,13 +80,13 @@ static int ipflow_inuse;
 do { \
 	LIST_INSERT_HEAD((bucket), (ipf), ipf_hash); \
 	LIST_INSERT_HEAD(&ipflowlist, (ipf), ipf_list); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IPFLOW_REMOVE(ipf) \
 do { \
 	LIST_REMOVE((ipf), ipf_hash); \
 	LIST_REMOVE((ipf), ipf_list); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #ifndef IPFLOW_MAX
 #define	IPFLOW_MAX		256

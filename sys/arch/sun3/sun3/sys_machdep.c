@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13.8.3 2002/07/12 01:39:52 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13.8.4 2002/11/11 22:05:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -51,7 +51,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <sun3/sun3/machdep.h>
+#include <m68k/cacheops.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1

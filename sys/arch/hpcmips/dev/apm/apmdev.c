@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.6.4.3 2002/10/18 02:37:09 nathanw Exp $ */
+/*	$NetBSD: apmdev.c,v 1.6.4.4 2002/11/11 21:58:43 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -154,10 +154,11 @@ dev_type_open(apmdevopen);
 dev_type_close(apmdevclose);
 dev_type_ioctl(apmdevioctl);
 dev_type_poll(apmdevpoll);
+dev_type_kqfilter(apmdevkqfilter);
 
 const struct cdevsw apmdev_cdevsw = {
 	apmdevopen, apmdevclose, noread, nowrite, apmdevioctl,
-	nostop, notty, apmdevpoll, nommap,
+	nostop, notty, apmdevpoll, nommap, apmdevkqfilter,
 };
 
 /* configurable variables */
@@ -410,7 +411,7 @@ apm_record_event(struct apm_softc *sc, u_int event_type)
 	sc->event_ptr %= APM_NEVENTS;
 	evp->type = event_type;
 	evp->index = ++apm_evindex;
-	selwakeup(&sc->sc_rsel);
+	selnotify(&sc->sc_rsel, 0);
 	return (sc->sc_flags & SCFLAG_OWRITE) ? 0 : 1; /* user may handle */
 }
 
@@ -932,4 +933,51 @@ apmdevpoll(dev_t dev, int events, struct proc *p)
 	APM_UNLOCK(sc);
 
 	return (revents);
+}
+
+static void
+filt_apmrdetach(struct knote *kn)
+{
+	struct apm_softc *sc = kn->kn_hook;
+
+	APM_LOCK(sc); 
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	APM_UNLOCK(sc);
+}
+
+static int
+filt_apmread(struct knote *kn, long hint)
+{
+	struct apm_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->event_count;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops apmread_filtops =
+	{ 1, NULL, filt_apmrdetach, filt_apmread };
+
+int
+apmdevkqfilter(dev_t dev, struct knote *kn)
+{
+	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
+	struct klist *klist;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &apmread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	APM_LOCK(sc);
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	APM_UNLOCK(sc);
+
+	return (0);
 }

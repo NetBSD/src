@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.51.4.4 2002/09/17 21:17:00 nathanw Exp $	*/
+/*	$NetBSD: rcons.c,v 1.51.4.5 2002/11/11 22:02:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -94,7 +94,7 @@ dev_type_poll(rconspoll);
 
 const struct cdevsw rcons_cdevsw = {
 	rconsopen, rconsclose, rconsread, rconswrite, rconsioctl,
-	nostop, rconstty, rconspoll, nommap, D_TTY
+	nostop, rconstty, rconspoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

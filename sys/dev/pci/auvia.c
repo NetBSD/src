@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.11.2.6 2002/10/18 02:42:55 nathanw Exp $	*/
+/*	$NetBSD: auvia.c,v 1.11.2.7 2002/11/11 22:11:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.2.6 2002/10/18 02:42:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.2.7 2002/11/11 22:11:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,12 +594,14 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		if (mode == AUMODE_PLAY ) {
 			p = play;
 			ch = &sc->sc_play;
+			reg = AC97_REG_PCM_FRONT_DAC_RATE;
 		} else {
 			p = rec;
 			ch = &sc->sc_record;
+			reg = AC97_REG_PCM_LR_ADC_RATE;
 		}
 
-		if (ch->sc_base == VIA8233_MP_BASE) {
+		if (ch->sc_base == VIA8233_MP_BASE && mode == AUMODE_PLAY) {
 			ext_id = codec->vtbl->get_extcaps(codec);
 			if (p->channels == 1) {
 				/* ok */
@@ -622,9 +624,6 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
 		    (p->precision != 8 && p->precision != 16))
 			return (EINVAL);
-
-		reg = mode == AUMODE_PLAY ?
-			AC97_REG_PCM_FRONT_DAC_RATE : AC97_REG_PCM_LR_ADC_RATE;
 
 		if (IS_FIXED_RATE(codec)) {
 			/* Enable aurateconv */
@@ -685,9 +684,15 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				p->sw_code = mulaw_to_slinear16_le;
 				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 				p->hw_precision = 16;
-			} else {
+			} else if (!IS_FIXED_RATE(codec)) {
 				p->sw_code = ulinear8_to_mulaw;
 				p->hw_encoding = AUDIO_ENCODING_ULINEAR;
+			} else {
+				/* aurateconv supports no 8 bit PCM */
+				p->factor = 2;
+				p->sw_code = slinear16_to_mulaw_le;
+				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+				p->hw_precision = 16;
 			}
 			break;
 		case AUDIO_ENCODING_ALAW:
@@ -698,9 +703,15 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				p->sw_code = alaw_to_slinear16_le;
 				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 				p->hw_precision = 16;
-			} else {
+			} else if (!IS_FIXED_RATE(codec)) {
 				p->sw_code = ulinear8_to_alaw;
 				p->hw_encoding = AUDIO_ENCODING_ULINEAR;
+			} else {
+				/* aurateconv supports no 8 bit PCM */
+				p->factor = 2;
+				p->sw_code = slinear16_to_alaw_le;
+				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+				p->hw_precision = 16;
 			}
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.22.2.1 2001/08/08 16:13:45 nathanw Exp $	*/
+/*	$NetBSD: svc.c,v 1.22.2.2 2002/11/11 22:22:45 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.22.2.1 2001/08/08 16:13:45 nathanw Exp $");
+__RCSID("$NetBSD: svc.c,v 1.22.2.2 2002/11/11 22:22:45 nathanw Exp $");
 #endif
 #endif
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: svc.c,v 1.22.2.1 2001/08/08 16:13:45 nathanw Exp $");
 #include <rpc/pmap_clnt.h>
 #endif
 
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(svc_getreq,_svc_getreq)
@@ -83,9 +83,11 @@ __weak_alias(svcerr_systemerr,_svcerr_systemerr)
 __weak_alias(svcerr_weakauth,_svcerr_weakauth)
 __weak_alias(xprt_register,_xprt_register)
 __weak_alias(xprt_unregister,_xprt_unregister)
+__weak_alias(rpc_control,_rpc_control)
 #endif
 
-static SVCXPRT **xports;
+SVCXPRT **__svc_xports;
+int __svc_maxrec;
 
 #define	RQCRED_SIZE	400		/* this size is excessive */
 
@@ -115,6 +117,7 @@ extern rwlock_t svc_fd_lock;
 
 static struct svc_callout *svc_find __P((rpcprog_t, rpcvers_t,
 					 struct svc_callout **, char *));
+static void __xprt_do_unregister __P((SVCXPRT *xprt, bool_t dolock));
 
 /* ***************  SVCXPRT related stuff **************** */
 
@@ -132,27 +135,40 @@ xprt_register(xprt)
 	sock = xprt->xp_fd;
 
 	rwlock_wrlock(&svc_fd_lock);
-	if (xports == NULL) {
-		xports = (SVCXPRT **)
+	if (__svc_xports == NULL) {
+		__svc_xports = (SVCXPRT **)
 			mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
-		if (xports == NULL)
+		if (__svc_xports == NULL)
 			return;
-		memset(xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
+		memset(__svc_xports, '\0', FD_SETSIZE * sizeof(SVCXPRT *));
 	}
 	if (sock < FD_SETSIZE) {
-		xports[sock] = xprt;
+		__svc_xports[sock] = xprt;
 		FD_SET(sock, &svc_fdset);
 		svc_maxfd = max(svc_maxfd, sock);
 	}
 	rwlock_unlock(&svc_fd_lock);
 }
 
+void
+xprt_unregister(SVCXPRT *xprt)
+{
+	__xprt_do_unregister(xprt, TRUE);
+}
+
+void
+__xprt_unregister_unlocked(SVCXPRT *xprt)
+{
+	__xprt_do_unregister(xprt, FALSE);
+}
+
 /*
  * De-activate a transport handle. 
  */
-void
-xprt_unregister(xprt) 
+static void
+__xprt_do_unregister(xprt, dolock)
 	SVCXPRT *xprt;
+	bool_t dolock;
 { 
 	int sock;
 
@@ -160,17 +176,19 @@ xprt_unregister(xprt)
 
 	sock = xprt->xp_fd;
 
-	rwlock_wrlock(&svc_fd_lock);
-	if ((sock < FD_SETSIZE) && (xports[sock] == xprt)) {
-		xports[sock] = NULL;
+	if (dolock)
+		rwlock_wrlock(&svc_fd_lock);
+	if ((sock < FD_SETSIZE) && (__svc_xports[sock] == xprt)) {
+		__svc_xports[sock] = NULL;
 		FD_CLR(sock, &svc_fdset);
 		if (sock >= svc_maxfd) {
 			for (svc_maxfd--; svc_maxfd>=0; svc_maxfd--)
-				if (xports[svc_maxfd])
+				if (__svc_xports[svc_maxfd])
 					break;
 		}
 	}
-	rwlock_unlock(&svc_fd_lock);
+	if (dolock)
+		rwlock_unlock(&svc_fd_lock);
 }
 
 /*
@@ -646,7 +664,7 @@ svc_getreq_common(fd)
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
 	rwlock_rdlock(&svc_fd_lock);
-	xprt = xports[fd];
+	xprt = __svc_xports[fd];
 	rwlock_unlock(&svc_fd_lock);
 	if (xprt == NULL)
 		/* But do we control sock? */
@@ -702,7 +720,7 @@ svc_getreq_common(fd)
 		 * If so, then break.
 		 */
 		rwlock_rdlock(&svc_fd_lock);
-		if (xprt != xports[fd]) {
+		if (xprt != __svc_xports[fd]) {
 			rwlock_unlock(&svc_fd_lock);
 			break;
 		}
@@ -751,4 +769,25 @@ svc_getreq_poll(pfdp, pollretval)
 				svc_getreq_common(p->fd);
 		}
 	}
+}
+
+bool_t
+rpc_control(int what, void *arg)
+{
+	int val;
+
+	switch (what) {
+	case RPC_SVC_CONNMAXREC_SET:
+		val = *(int *)arg;
+		if (val <= 0)
+			return FALSE;
+		__svc_maxrec = val;
+		return TRUE;
+	case RPC_SVC_CONNMAXREC_GET:
+		*(int *)arg = __svc_maxrec;
+		return TRUE;
+	default:
+		break;
+	}
+	return FALSE;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.45.4.8 2002/10/18 02:36:50 nathanw Exp $	*/
+/*	$NetBSD: rd.c,v 1.45.4.9 2002/11/11 21:58:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.45.4.8 2002/10/18 02:36:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.45.4.9 2002/11/11 21:58:18 nathanw Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -300,7 +300,7 @@ const struct bdevsw rd_bdevsw = {
 
 const struct cdevsw rd_cdevsw = {
 	rdopen, rdclose, rdread, rdwrite, rdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 int
@@ -911,7 +911,8 @@ rdintr(arg)
 		return;
 	}
 #endif
-	disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 
 	if (rs->sc_flags & RDF_SEEK) {
 		rs->sc_flags &= ~RDF_SEEK;

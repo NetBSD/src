@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.29.4.5 2002/09/17 21:13:53 nathanw Exp $
+#	$NetBSD: files.bebox,v 1.29.4.6 2002/11/11 21:57:25 nathanw Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -9,7 +9,6 @@ maxusers 2 8 64
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/bus_space.c
 file	arch/bebox/bebox/clock.c
-file	arch/bebox/bebox/conf.c
 file	arch/bebox/bebox/disksubr.c		disk
 file	arch/bebox/bebox/extintr.c
 file	arch/bebox/bebox/machdep.c
@@ -18,19 +17,6 @@ file	arch/powerpc/powerpc/bus_dma.c
 
 # General files
 file	dev/cons.c
-
-#
-# Compatibility modules
-#
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # Machine-independent SCSI drivers

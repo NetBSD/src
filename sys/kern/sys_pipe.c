@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.4.2.13 2002/08/27 23:47:33 nathanw Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.4.2.14 2002/11/11 22:14:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.13 2002/08/27 23:47:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.14 2002/11/11 22:14:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.13 2002/08/27 23:47:33 nathanw Ex
  * is atomic.
  */
 #define vfs_timestamp(tv)	(*(tv) = time)
+
+/* we call it si_klist */
+#define	si_note			si_klist
+
 #endif
 
 /*
@@ -128,26 +132,17 @@ static struct fileops pipeops = {
 	pipe_stat, pipe_close
 };
 
-static void	filt_pipedetach(struct knote *kn);
-static int	filt_piperead(struct knote *kn, long hint);
-static int	filt_pipewrite(struct knote *kn, long hint);
-
-static struct filterops pipe_rfiltops =
-	{ 1, NULL, filt_pipedetach, filt_piperead };
-static struct filterops pipe_wfiltops =
-	{ 1, NULL, filt_pipedetach, filt_pipewrite };
-
 #define PIPE_GET_GIANT(pipe)							\
 	do {								\
 		PIPE_UNLOCK(wpipe);					\
 		mtx_lock(&Giant);					\
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define PIPE_DROP_GIANT(pipe)						\
 	do {								\
 		mtx_unlock(&Giant);					\
 		PIPE_LOCK(wpipe);					\
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #endif /* FreeBSD */
 
@@ -160,12 +155,13 @@ static int pipe_close(struct file *fp, struct proc *p);
 static int pipe_poll(struct file *fp, int events, struct proc *p);
 static int pipe_fcntl(struct file *fp, u_int com, caddr_t data,
 		struct proc *p);
+static int pipe_kqfilter(struct file *fp, struct knote *kn);
 static int pipe_stat(struct file *fp, struct stat *sb, struct proc *p);
 static int pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p);
 
 static struct fileops pipeops =
     { pipe_read, pipe_write, pipe_ioctl, pipe_fcntl, pipe_poll,
-      pipe_stat, pipe_close };
+      pipe_stat, pipe_close, pipe_kqfilter };
 
 /* XXXSMP perhaps use spinlocks & KERNEL_PROC_(UN)LOCK() ? just clear now */
 #define PIPE_GET_GIANT(pipe)
@@ -566,19 +562,21 @@ static __inline void
 pipeselwakeup(selp, sigp)
 	struct pipe *selp, *sigp;
 {
+
+#ifdef __FreeBSD__
 	if (selp->pipe_state & PIPE_SEL) {
 		selp->pipe_state &= ~PIPE_SEL;
 		selwakeup(&selp->pipe_sel);
 	}
-#ifdef __FreeBSD__
 	if (sigp && (sigp->pipe_state & PIPE_ASYNC) && sigp->pipe_sigio)
 		pgsigio(sigp->pipe_sigio, SIGIO, 0);
 	KNOTE(&selp->pipe_sel.si_note, 0);
 #endif
 
 #ifdef __NetBSD__
-	if (sigp && (sigp->pipe_state & PIPE_ASYNC)
-	    && sigp->pipe_pgid != NO_PID){
+	selnotify(&selp->pipe_sel, 0);
+	if (sigp && (sigp->pipe_state & PIPE_ASYNC) &&
+	    sigp->pipe_pgid != NO_PID) {
 		struct proc *p;
 
 		if (sigp->pipe_pgid < 0)
@@ -617,11 +615,11 @@ pipe_read(fp, offset, uio, cred, flags)
 
 	PIPE_LOCK(rpipe);
 	++rpipe->pipe_busy;
+	ocnt = rpipe->pipe_buffer.cnt;
+
 	error = pipelock(rpipe, 1);
 	if (error)
 		goto unlocked_error;
-
-	ocnt = rpipe->pipe_buffer.cnt;
 
 	while (uio->uio_resid) {
 		/*
@@ -1870,37 +1868,30 @@ pipeclose(cpipe)
 #endif
 }
 
-#ifdef __FreeBSD__
-/*ARGSUSED*/
-static int
-pipe_kqfilter(struct file *fp, struct knote *kn)
-{
-	struct pipe *cpipe;
-
-	cpipe = (struct pipe *)kn->kn_fp->f_data;
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		kn->kn_fop = &pipe_rfiltops;
-		break;
-	case EVFILT_WRITE:
-		kn->kn_fop = &pipe_wfiltops;
-		cpipe = cpipe->pipe_peer;
-		break;
-	default:
-		return (1);
-	}
-	kn->kn_hook = (caddr_t)cpipe;
-
-	PIPE_LOCK(cpipe);
-	SLIST_INSERT_HEAD(&cpipe->pipe_sel.si_note, kn, kn_selnext);
-	PIPE_UNLOCK(cpipe);
-	return (0);
-}
-
 static void
 filt_pipedetach(struct knote *kn)
 {
 	struct pipe *cpipe = (struct pipe *)kn->kn_fp->f_data;
+
+	switch(kn->kn_filter) {
+	case EVFILT_WRITE:
+		/* need the peer structure, not our own */
+		cpipe = cpipe->pipe_peer;
+
+		/* if reader end already closed, just return */
+		if (!cpipe)
+			return;
+
+		break;
+	default:
+		/* nothing to do */
+		break;
+	}
+
+#ifdef DIAGNOSTIC
+	if (kn->kn_hook != cpipe)
+		panic("filt_pipedetach: inconsistent knote");
+#endif
 
 	PIPE_LOCK(cpipe);
 	SLIST_REMOVE(&cpipe->pipe_sel.si_note, kn, knote, kn_selnext);
@@ -1950,7 +1941,41 @@ filt_pipewrite(struct knote *kn, long hint)
 	PIPE_UNLOCK(rpipe);
 	return (kn->kn_data >= PIPE_BUF);
 }
-#endif /* FreeBSD */
+
+static const struct filterops pipe_rfiltops =
+	{ 1, NULL, filt_pipedetach, filt_piperead };
+static const struct filterops pipe_wfiltops =
+	{ 1, NULL, filt_pipedetach, filt_pipewrite };
+
+/*ARGSUSED*/
+static int
+pipe_kqfilter(struct file *fp, struct knote *kn)
+{
+	struct pipe *cpipe;
+
+	cpipe = (struct pipe *)kn->kn_fp->f_data;
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &pipe_rfiltops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &pipe_wfiltops;
+		cpipe = cpipe->pipe_peer;
+		if (cpipe == NULL) {
+			/* other end of pipe has been closed */
+			return (EBADF);
+		}
+		break;
+	default:
+		return (1);
+	}
+	kn->kn_hook = cpipe;
+
+	PIPE_LOCK(cpipe);
+	SLIST_INSERT_HEAD(&cpipe->pipe_sel.si_note, kn, kn_selnext);
+	PIPE_UNLOCK(cpipe);
+	return (0);
+}
 
 #ifdef __NetBSD__
 static int

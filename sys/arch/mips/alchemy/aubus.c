@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.1.2.2 2002/10/18 02:38:42 nathanw Exp $ */
+/* $NetBSD: aubus.c,v 1.1.2.3 2002/11/11 22:00:19 nathanw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -200,10 +200,10 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 		ad = au1000_devs;
 		break;
 	case MIPS_AU1500:
-		ad = au1100_devs;
+		ad = au1500_devs;
 		break;
 	case MIPS_AU1100:
-		ad = au1500_devs;
+		ad = au1100_devs;
 		break;
 	default:
 		panic("Unknown Alchemy SOC identification %d",

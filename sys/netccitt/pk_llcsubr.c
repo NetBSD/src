@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.11.2.1 2001/11/14 19:17:38 nathanw Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.11.2.2 2002/11/11 22:15:10 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.11.2.1 2001/11/14 19:17:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_llcsubr.c,v 1.11.2.2 2002/11/11 22:15:10 nathanw Exp $");
 
 #include "opt_llc.h"
 
@@ -295,7 +295,7 @@ struct sockaddr_dl npdl_netmask = {
 struct sockaddr npdl_dummy;
 
 int             npdl_datasize = sizeof(struct sockaddr_dl) -
-((int) ((caddr_t) & ((struct sockaddr_dl *) 0)->sdl_data[0]));
+((int) ((unsigned long)&((struct sockaddr_dl *) 0)->sdl_data[0]));
 
 struct rtentry *
 npaidb_enter(key, value, rt, link)

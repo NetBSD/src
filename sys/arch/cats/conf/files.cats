@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.10.6.6 2002/10/18 02:36:07 nathanw Exp $
+#	$NetBSD: files.cats,v 1.10.6.7 2002/11/11 21:57:34 nathanw Exp $
 #
 # CATS-specific configuration info
 #
@@ -49,8 +49,6 @@ file	dev/md_root.c				md & memory_disk_hooks
 
 include "dev/scsipi/files.scsipi"
 
-file	arch/arm/arm32/conf.c
-
 # Generic MD files
 file	arch/cats/cats/autoconf.c
 file	arch/cats/cats/cats_machdep.c
@@ -60,9 +58,6 @@ file	arch/cats/cats/cats_machdep.c
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
-
-file	arch/arm/arm32/intr.c
-file	arch/arm/arm32/spl.S
 
 # ISA Plug 'n Play autoconfiguration glue.
 file	arch/arm/footbridge/isa/isapnp_machdep.c	isapnp

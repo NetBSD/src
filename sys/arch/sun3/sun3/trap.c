@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103.6.9 2002/09/26 20:04:53 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.103.6.10 2002/11/11 22:05:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,6 +72,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/reg.h>
+#include <m68k/cacheops.h>
 
 #include <sun3/sun3/fc.h>
 #include <sun3/sun3/machdep.h>

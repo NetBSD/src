@@ -1,9 +1,9 @@
-/*	$NetBSD: pmap.c,v 1.30.2.17 2002/10/18 02:35:22 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.18 2002/11/11 21:56:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
  * Copyright (c) 2001 Richard Earnshaw
- * Copyright (c) 2001 Christopher Gilbert
+ * Copyright (c) 2001-2002 Christopher Gilbert
  * All rights reserved.
  *
  * 1. Redistributions of source code must retain the above copyright
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.17 2002/10/18 02:35:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.18 2002/11/11 21:56:35 nathanw Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -1414,7 +1414,6 @@ static int
 pmap_allocpagedir(struct pmap *pmap)
 {
 	vaddr_t vptpt;
-	paddr_t pa;
 	struct l1pt *pt;
 	u_int gen;
 
@@ -1439,9 +1438,6 @@ pmap_allocpagedir(struct pmap *pmap)
 
 	/* Store the pointer to the l1 descriptor in the pmap. */
 	pmap->pm_l1pt = pt;
-
-	/* Get the physical address of the start of the l1 */
-	pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pt->pt_plist));
 
 	/* Store the virtual address of the l1 in the pmap. */
 	pmap->pm_pdir = (pd_entry_t *)pt->pt_va;
@@ -2358,6 +2354,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	paddr_t pa;
 	int pmap_active;
 	struct vm_page *pg;
+	struct pv_entry *pv_tofree = NULL;
 
 	/* Exit quick if there is no pmap */
 	if (!pmap)
@@ -2471,9 +2468,12 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 				struct pv_entry *pve;
 				simple_lock(&pg->mdpage.pvh_slock);
 				pve = pmap_remove_pv(pg, pmap, sva);
-				pmap_free_pv(pmap, pve);
 				pmap_vac_me_harder(pmap, pg, ptes, FALSE);
 				simple_unlock(&pg->mdpage.pvh_slock);
+				if (pve != NULL) {
+					pve->pv_next = pv_tofree;
+					pv_tofree = pve;
+				}
 			}
 		} else if (pmap_active == 0)
 			PTE_FLUSH(pte);
@@ -2503,6 +2503,10 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 
+	/* Delete pv entries */
+	if (pv_tofree != NULL)
+		pmap_free_pvs(pmap, pv_tofree);
+	
 	pmap_unmap_ptes(pmap);
 
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -2712,6 +2716,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	struct vm_page *pg;
 	struct pv_entry *pve;
 	int error, nflags;
+	struct vm_page *ptp = NULL;
 
 	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
 	    va, pa, pmap, prot, wired));
@@ -2747,12 +2752,9 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 * address, allocate one.
 	 */
 	ptes = pmap_map_ptes(pmap);		/* locks pmap */
-	if (pmap_pde_v(pmap_pde(pmap, va)) == 0) {
-		struct vm_page *ptp;
-
-		/* kernel should be pre-grown */
-		KASSERT(pmap != pmap_kernel());
-
+	/* kernel should be pre-grown */
+	if (pmap != pmap_kernel())
+	{
 		/* if failure is allowed then don't try too hard */
 		ptp = pmap_get_ptp(pmap, va & PD_FRAME);
 		if (ptp == NULL) {
@@ -2816,7 +2818,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	} else {
 		opa = 0;
 		pve = NULL;
-		pmap_pte_addref(pmap, va);
+
+		/* bump ptp ref */
+		if (ptp != NULL)
+			ptp->wire_count++;
 
 		/* pte is not valid so we must be hooking in a new page */
 		++pmap->pm_stats.resident_count;
@@ -2840,7 +2845,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 				}
 			}
 			/* enter_pv locks pvh when adding */
-			pmap_enter_pv(pg, pve, pmap, va, NULL, nflags);
+			pmap_enter_pv(pg, pve, pmap, va, ptp, nflags);
 		} else {
 			if (pve != NULL)
 				pmap_free_pv(pmap, pve);
@@ -3601,14 +3606,15 @@ static struct vm_page *
 pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 {
 	struct vm_page *ptp;
+	pd_entry_t	*pde;
 
 	KASSERT((va & PD_OFFSET) == 0);		/* XXX KDASSERT */
 
-	if (pmap_pde_page(pmap_pde(pmap, va))) {
-
+	pde = pmap_pde(pmap, va);
+	if (pmap_pde_v(pde)) {
 		/* valid... check hint (saves us a PA->PG lookup) */
 		if (pmap->pm_ptphint &&
-		    (pmap->pm_pdir[pmap_pdei(va)] & L2_S_FRAME) ==
+		    ((*pde) & L2_S_FRAME) ==
 		    VM_PAGE_TO_PHYS(pmap->pm_ptphint))
 			return (pmap->pm_ptphint);
 		ptp = uvm_pagelookup(&pmap->pm_obj, va);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34.2.1 2002/01/08 00:32:46 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.34.2.2 2002/11/11 22:14:20 nathanw Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -30,6 +30,9 @@ KERNLIB=	${KERNDST}/libkern.a
 KERNLIB_PROF=	${KERNDST}/libkern_p.a
 .endif
 
+LIBKERNLNBN=	llib-lkern.ln
+KERNLIBLN=	${KERNDST}/${LIBKERNLNBN}
+
 KERNMAKE= \
 	cd ${KERNDST} && ${MAKE} -f ${KERNDIR:Q}/Makefile \
 	    KERNDIR=${KERNDIR:Q} \
@@ -43,6 +46,7 @@ KERNMAKE= \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I${KERNDOTDIR}@g:Q} \
 	    KERNMISCCPPFLAGS=${KERNMISCCPPFLAGS:Q} \
+	    LINTFLAGS=${KERNLINTFLAGS:Q} \
 	    ${KERNMISCMAKEFLAGS}
 
 ${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib
@@ -60,6 +64,10 @@ ${KERNLIB_PROF}:	.NOTMAIN .MAKE __always_make_kernlib
 .else
 	@${KERNMAKE} libkern.po
 .endif
+
+${KERNLIBLN}:		.NOTMAIN .MAKE __always_make_kernlib
+	@echo making sure the kern lint library is up to date...
+	@${KERNMAKE} ${LIBKERNLNBN}
 
 clean:			.NOTMAIN cleankernlib
 cleankernlib:		.NOTMAIN 

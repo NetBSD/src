@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110.4.10 2002/10/18 02:38:31 nathanw Exp $
+# $NetBSD: GENERIC,v 1.110.4.11 2002/11/11 22:00:09 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110.4.10 $"
+#ident 		"GENERIC-$Revision: 1.110.4.11 $"
 
 maxusers	32
 
@@ -33,7 +33,7 @@ options 	ALTIVEC		# Include AltiVec support
 #options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSTRACE	# system call vetting via systrace(1)
 
@@ -50,6 +50,10 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -72,6 +76,8 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_MACH	# Mach binary compatibility (experimental)
+#options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.4.2.4 2002/10/18 02:37:28 nathanw Exp $
+# $NetBSD: GENERIC_ISDN,v 1.4.2.5 2002/11/11 21:58:52 nathanw Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -56,6 +56,9 @@ iwic* 	at pci?
 
 # AVM Fritz!PCI card
 ifpci* at pci?
+
+# AVM Fritz!PCI V2 card
+ifritz* at pci?
 
 #
 #---------------------------------------------------------------------

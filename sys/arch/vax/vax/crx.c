@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.5.12.1 2002/09/17 21:18:33 nathanw Exp $	*/
+/*	$NetBSD: crx.c,v 1.5.12.2 2002/11/11 22:06:00 nathanw Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -61,7 +61,7 @@ dev_type_read(crxrw);
 
 const struct cdevsw crx_cdevsw = {
 	crxopen, crxclose, crxrw, crxrw, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 extern struct	rx50device *rx50device_ptr;

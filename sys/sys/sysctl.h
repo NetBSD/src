@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.13 2002/08/27 23:48:25 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.14 2002/11/11 22:16:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -622,12 +622,16 @@ struct kinfo_lwp {
  */
 #define	PROC_PID_CORENAME	1
 #define	PROC_PID_LIMIT		2
-#define	PROC_PID_MAXID		3
+#define	PROC_PID_STOPFORK	3
+#define	PROC_PID_STOPEXEC	4
+#define	PROC_PID_MAXID		5
 
 #define	PROC_PID_NAMES { \
 	{ 0, 0 }, \
 	{ "corename", CTLTYPE_STRING }, \
 	{ "rlimit", CTLTYPE_NODE }, \
+	{ "stopfork", CTLTYPE_INT }, \
+	{ "stopexec", CTLTYPE_INT }, \
 }
 
 /* Limit types from <sys/resources.h> */
@@ -671,11 +675,13 @@ struct kinfo_lwp {
  * Second level identifier specifies which emulation variable.
  * Subsequent levels are specified in the emulations themselves.
  */
-#define	EMUL_LINUX	1
+#define	EMUL_IRIX	1
+#define	EMUL_LINUX	2
 
-#define	EMUL_MAXID	2
+#define	EMUL_MAXID	3
 #define	CTL_EMUL_NAMES { \
 	{ 0, 0 }, \
+	{ "irix", CTLTYPE_NODE }, \
 	{ "linux", CTLTYPE_NODE }, \
 }
 

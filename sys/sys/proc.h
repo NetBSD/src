@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.28 2002/10/18 03:36:05 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.29 2002/11/11 22:16:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -54,6 +54,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
+#include <sys/event.h>
 
 /*
  * One structure allocated per session.
@@ -217,6 +218,7 @@ struct proc {
 	void		*p_userret_arg;
 	
 	const struct execsw *p_execsw;	/* Exec package information */
+	struct klist	p_klist;	/* Knotes attached to this process */
 
 /*
  * End area that is zeroed on creation
@@ -288,6 +290,8 @@ struct proc {
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
 #define	P_SYSTRACE	0x200000 /* Process system call tracing active */
 #define	P_CHTRACED	0x400000 /* Child has been traced & reparented */
+#define	P_STOPFORK	0x800000 /* Child will be stopped on fork(2) */
+#define	P_STOPEXEC	0x1000000 /* Will be stopped on exec(2) */
 
 /*
  * Macro to compute the exit signal to be delivered.

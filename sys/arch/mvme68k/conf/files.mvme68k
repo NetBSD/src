@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.47.6.5 2002/09/17 21:16:02 nathanw Exp $
+#	$NetBSD: files.mvme68k,v 1.47.6.6 2002/11/11 22:01:21 nathanw Exp $
 
 # config file for mvme68k
 
@@ -89,19 +89,19 @@ file arch/mvme68k/mvme68k/bus_dma.c
 file arch/mvme68k/mvme68k/bus_space.c
 file arch/mvme68k/mvme68k/clock.c
 file arch/mvme68k/mvme68k/conf.c
-file arch/mvme68k/mvme68k/db_memrw.c		ddb | kgdb
 file arch/mvme68k/mvme68k/disksubr.c
 file arch/mvme68k/mvme68k/isr.c
 file arch/mvme68k/mvme68k/machdep.c
 file arch/mvme68k/mvme68k/mem.c
-file arch/mvme68k/mvme68k/pmap.c
 file arch/mvme68k/mvme68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file arch/mvme68k/mvme68k/procfs_machdep.c	procfs
 file arch/mvme68k/mvme68k/softintr.c
-file arch/mvme68k/mvme68k/sys_machdep.c
 file arch/mvme68k/mvme68k/trap.c
-file arch/mvme68k/mvme68k/vm_machdep.c
 file arch/m68k/m68k/cacheops.c
+file arch/m68k/m68k/db_memrw.c			ddb | kgdb
+file arch/m68k/m68k/pmap_motorola.c
+file arch/m68k/m68k/sys_machdep.c
+file arch/m68k/m68k/vm_machdep.c
 file dev/clock_subr.c
 file dev/cons.c
 file dev/cninit.c

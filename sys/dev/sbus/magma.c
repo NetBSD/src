@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.9.2.7 2002/10/18 02:44:09 nathanw Exp $	*/
+/*	$NetBSD: magma.c,v 1.9.2.8 2002/11/11 22:12:03 nathanw Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.7 2002/10/18 02:44:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.8 2002/11/11 22:12:03 nathanw Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -209,7 +209,7 @@ dev_type_poll(mttypoll);
 
 const struct cdevsw mtty_cdevsw = {
 	mttyopen, mttyclose, mttyread, mttywrite, mttyioctl,
-	mttystop, mttytty, mttypoll, nommap, D_TTY
+	mttystop, mttytty, mttypoll, nommap, ttykqfilter, D_TTY
 };
 
 dev_type_open(mbppopen);
@@ -219,7 +219,7 @@ dev_type_ioctl(mbppioctl);
 
 const struct cdevsw mbpp_cdevsw = {
 	mbppopen, mbppclose, mbpp_rw, mbpp_rw, mbppioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /************************************************************************

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.1.2.7 2002/10/18 02:39:48 nathanw Exp $       */
+/*      $NetBSD: pccons.c,v 1.1.2.8 2002/11/11 22:04:15 nathanw Exp $       */
 
 /*
  * Copyright 1997
@@ -375,7 +375,7 @@ dev_type_mmap(pcmmap);
 
 const struct cdevsw pc_cdevsw = {
 	pcopen, pcclose, pcread, pcwrite, pcioctl,
-	nostop, pctty, pcpoll, pcmmap, D_TTY
+	nostop, pctty, pcpoll, pcmmap, ttykqfilter, D_TTY
 };
 
 static unsigned int   addr_6845   = MONO_BASE;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7.6.6 2002/10/18 02:40:13 nathanw Exp $
+# $NetBSD: GENERIC,v 1.7.6.7 2002/11/11 22:05:01 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7.6.6 $"
+#ident 		"GENERIC-$Revision: 1.7.6.7 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -49,6 +49,10 @@ options 	LKM		# loadable kernel modules
 #options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB

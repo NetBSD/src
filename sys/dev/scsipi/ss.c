@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.33.2.7 2002/10/18 02:44:21 nathanw Exp $	*/
+/*	$NetBSD: ss.c,v 1.33.2.8 2002/11/11 22:12:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.33.2.7 2002/10/18 02:44:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.33.2.8 2002/11/11 22:12:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ dev_type_ioctl(ssioctl);
 
 const struct cdevsw ss_cdevsw = {
 	ssopen, ssclose, ssread, nowrite, ssioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void    ssstrategy __P((struct buf *));

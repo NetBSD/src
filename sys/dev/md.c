@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.25.2.5 2002/09/17 21:19:21 nathanw Exp $	*/
+/*	$NetBSD: md.c,v 1.25.2.6 2002/11/11 22:08:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.25.2.5 2002/09/17 21:19:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.25.2.6 2002/11/11 22:08:47 nathanw Exp $");
 
 #include "opt_md.h"
 
@@ -109,7 +109,7 @@ const struct bdevsw md_bdevsw = {
 
 const struct cdevsw md_cdevsw = {
 	mdopen, mdclose, mdread, mdwrite, mdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver mddkdriver = { mdstrategy };

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183.2.10 2002/09/17 21:19:43 nathanw Exp $	*/
+/*	$NetBSD: com.c,v 1.183.2.11 2002/11/11 22:09:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.10 2002/09/17 21:19:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.11 2002/11/11 22:09:20 nathanw Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -192,7 +192,7 @@ dev_type_poll(compoll);
 
 const struct cdevsw com_cdevsw = {
 	comopen, comclose, comread, comwrite, comioctl,
-	comstop, comtty, compoll, nommap, D_TTY
+	comstop, comtty, compoll, nommap, ttykqfilter, D_TTY
 };
 
 /*
@@ -1688,7 +1688,7 @@ comstart(struct tty *tp)
 
 	/* Output the first chunk of the contiguous buffer. */
 	if (!ISSET(sc->sc_hwflags, COM_HW_NO_TXPRELOAD)) {
-		int n;
+		u_int n;
 
 		n = sc->sc_tbc;
 		if (n > sc->sc_fifolen)
@@ -2159,7 +2159,7 @@ again:	do {
 
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
-			int n;
+			u_int n;
 
 			n = sc->sc_tbc;
 			if (n > sc->sc_fifolen)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.48.2.4 2002/06/21 18:18:09 nathanw Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.48.2.5 2002/11/11 22:22:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.48.2.4 2002/06/21 18:18:09 nathanw Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.48.2.5 2002/11/11 22:22:11 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1209,7 +1209,7 @@ __hashpw(key)
 	SCALAR(_pw_passwd.pw_expire);
 
 	/* See if there's any data left.  If so, read in flags. */
-	if (data.size > (p - (char *)data.data)) {
+	if (data.size > (size_t) (p - (char *)data.data)) {
 		SCALAR(_pw_flags);
 	} else
 		_pw_flags = _PASSWORD_NOUID|_PASSWORD_NOGID;	/* default */

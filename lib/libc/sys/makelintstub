@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.7.4.4 2002/10/18 02:17:01 nathanw Exp $
+# $NetBSD: makelintstub,v 1.7.4.5 2002/11/11 22:23:01 nathanw Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -66,9 +66,7 @@ header()
 	#include <sys/shm.h>
 	#include <sys/timex.h>
 	#include <sys/socket.h>
-	#ifdef WITH_KQUEUE
 	#include <sys/event.h>
-	#endif
 	#ifdef __STDC__
 	#include <stdarg.h>
 	#else
@@ -213,7 +211,7 @@ fi
 trap "rm -f $syscalldump" 0 1 2 15
 
 header
-printf '#include "'"$syscallhdr"'"' | ${CPP} -C >$syscalldump
+echo "#include \"$syscallhdr\"" | ${CPP} -C >$syscalldump
 for syscall; do
 	fnname=${syscall%.S}
 	if [ $pflag = YES ]; then

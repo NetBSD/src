@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9.6.6 2002/10/18 02:38:51 nathanw Exp $
+# $NetBSD: GENERIC,v 1.9.6.7 2002/11/11 22:01:15 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -43,6 +43,10 @@ options 	SYSVSHM			# System V shared memory
 options 	HZ=25
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Debugging options
 options 	DDB			# kernel dynamic debugger

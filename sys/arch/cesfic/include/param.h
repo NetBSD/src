@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2.8.2 2002/02/28 04:08:44 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.2.8.3 2002/11/11 21:57:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,14 @@
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#if defined(M68030) && !defined(M68040) && !defined(M68060)
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#elif (defined(M68040) || defined(M68060)) && !defined(M68030)
+#define	NBSEG		(32 * (1 << PGSHIFT))
+#else
+#define	NBSEG		((mmutype == MMU_68040) ? \
+				(32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
+#endif
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
 #define	KERNBASE	0x00002000	/* start of kernel virtual */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.1.4.4 2002/10/18 02:40:14 nathanw Exp $	*/
+/*	$NetBSD: kd.c,v 1.1.4.5 2002/11/11 22:05:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -99,8 +99,6 @@ static void kd_init __P((struct kd_softc *));
 static void kd_cons_input __P((int));
 static int  kdcngetc __P((dev_t));
 
-int	cons_ocount;		/* output byte count */
-
 dev_type_open(kdopen);
 dev_type_close(kdclose);
 dev_type_read(kdread);
@@ -111,7 +109,7 @@ dev_type_poll(kdpoll);
 
 const struct cdevsw kd_cdevsw = {
 	kdopen, kdclose, kdread, kdwrite, kdioctl,
-	nostop, kdtty, kdpoll, nommap, D_TTY
+	nostop, kdtty, kdpoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

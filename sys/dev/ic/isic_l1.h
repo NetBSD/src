@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.1.2.3 2002/04/17 00:05:41 nathanw Exp $ */
+/* $NetBSD: isic_l1.h,v 1.1.2.4 2002/11/11 22:09:36 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -195,6 +195,7 @@ struct isic_softc
 #define CARD_TYPEP_AVM_PNP	21	/* AVM FRITZ!CARD PnP		*/
 #define CARD_TYPEP_SIE_ISURF2 	22	/* Siemens I-Surf 2 PnP		*/
 #define CARD_TYPEP_ASUSCOMIPAC	23	/* Asuscom ISDNlink 128 K PnP	*/
+#define CARD_TYPEP_AVMA1PCIV2	24	/* AVM FRITZ!CARD V2 PCI	*/
 
 	int		sc_bustyp;	/* IOM1 or IOM2		*/
 #define BUS_TYPE_IOM1  0x01
@@ -358,6 +359,12 @@ extern int isic_probe_usrtai __P((struct isic_attach_args *ia));
 extern int isic_probe_itkix1 __P((struct isic_attach_args *ia));
 extern int isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_bri_driver *dchan_driver);
 extern int isic_detach_bri(struct isic_softc *sc);
+
+extern void isic_isacsx_disable_intr __P((struct isic_softc *sc));
+extern void isic_isacsx_recover __P((struct isic_softc *sc));
+extern void isic_isacsx_irq __P((struct isic_softc *sc, int r));
+extern void isic_isacsx_l1_cmd __P((struct isic_softc *sc, int command));
+extern int isic_isacsx_init __P((struct isic_softc *sc));
 
 #endif /* !_ISIC_L1_H */
 

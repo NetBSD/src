@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.12.2.6 2002/10/18 02:42:51 nathanw Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.12.2.7 2002/11/11 22:10:57 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.12.2.6 2002/10/18 02:42:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.12.2.7 2002/11/11 22:10:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,7 +79,7 @@ dev_type_poll(ofcons_poll);
 
 const struct cdevsw ofcons_cdevsw = {
 	ofcons_open, ofcons_close, ofcons_read, ofcons_write, ofcons_ioctl,
-	nostop, ofcons_tty, ofcons_poll, nommap, D_TTY
+	nostop, ofcons_tty, ofcons_poll, nommap, ttykqfilter, D_TTY
 };
 
 static int ofcons_probe __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.1.4.4 2002/10/18 02:43:10 nathanw Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.1.4.5 2002/11/11 22:11:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.1.4.4 2002/10/18 02:43:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.1.4.5 2002/11/11 22:11:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,10 @@ joy_pci_match(parent, match, aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_INPUT &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_INPUT_GAMEPORT &&
 	    PCI_INTERFACE(pa->pa_class) == 0x10)
+		return (1);
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CREATIVELABS
+	    && PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_SBJOY)
 		return (1);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.2.2.5 2002/10/18 02:37:47 nathanw Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.2.2.6 2002/11/11 21:59:10 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2.2.5 2002/10/18 02:37:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.2.2.6 2002/11/11 21:59:10 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -314,6 +314,7 @@ i686_mtrr_init_first(void)
 
 	mtrr_var_raw = &mtrr_raw[0];
 	mtrr_fixed_raw = &mtrr_raw[MTRR_I686_NVAR * 2];
+	mtrr_funcs = &i686_mtrr_funcs;
 
 	i686_raw2soft();
 }
@@ -707,5 +708,8 @@ static void
 i686_mtrr_commit(void)
 {
 	i686_soft2raw();
+#ifdef MULTIPROCESSOR
+	i386_broadcast_ipi(I386_IPI_MTRR);
+#endif
 	i686_mtrr_reload(1);
 }

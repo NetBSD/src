@@ -36,7 +36,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.6.14.1 2002/08/01 03:27:56 nathanw Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.6.14.2 2002/11/11 22:21:26 nathanw Exp $")
 #endif
 
 	/*
@@ -64,11 +64,15 @@ ENTRY(bcopy)
 	movl	16(%esp),%edi
 #endif
 	movl	20(%esp),%ecx
+#if defined(MEMCOPY)
+	movl	%ecx,%edx
+#else
 	movl	%edi,%edx
 	subl	%esi,%edx
 	cmpl	%ecx,%edx	/* overlapping? */
 	movl	%ecx,%edx
 	jb	1f
+#endif
 	cld			/* nope, copy forwards. */
 	shrl	$2,%ecx		/* copy by words */
 	rep
@@ -83,42 +87,6 @@ ENTRY(bcopy)
 1:
 	addl	%ecx,%edi	/* copy backwards. */
 	addl	%ecx,%esi
-
-#ifdef _DIAGNOSTIC
-				/* check pointer wraparound */
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	cmpl	12(%esp),%edi
-#else
-	cmpl	16(%esp),%edi
-#endif
-	jae	2f
-	pushl	$diagmes1
-	pushl	$func
-	pushl	$__LINE__-4
-	jmp	4f
-2:	
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	cmpl	16(%esp),%esi
-#else
-	cmpl	12(%esp),%esi
-#endif
-	jae	3f
-	pushl	$diagmes2
-	pushl	$func
-	pushl	$__LINE__-4
-4:	
-	pushl	$file
-	call	_C_LABEL(__diagassert13)
-	addl	$16,%esp
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	12(%esp),%eax
-#endif
-	popl	%edi
-	popl	%esi
-	ret
-3:
-#endif	/* _DIAGNOSTIC */
-
 	std
 	andl	$3,%ecx		/* any fractional bytes? */
 	decl	%edi
@@ -135,20 +103,3 @@ ENTRY(bcopy)
 	popl	%esi
 	cld
 	ret
-
-#ifdef _DIAGNOSTIC
-file:
-	.asciz	__FILE__
-func:
-#if defined(MEMCOPY)
-	.asciz	"memcpy"
-#elseif defined(MEMMOVE)
-	.asciz	"memmove"
-#else
-	.asciz	"bcopy"
-#endif
-diagmes1:
-	.asciz	"src + length > src"
-diagmes2:
-	.asciz	"dst + length > dst"
-#endif	/* _DIAGNOSTIC */

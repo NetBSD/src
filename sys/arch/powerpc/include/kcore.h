@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.2 1998/08/31 14:43:40 tsubai Exp $	*/
+/*	$NetBSD: kcore.h,v 1.2.30.1 2002/11/11 22:02:50 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_KCORE_H_
-#define	_MACHINE_KCORE_H_
+#ifndef	_POWERPC_KCORE_H_
+#define	_POWERPC_KCORE_H_
 
 #define	NPHYS_RAM_SEGS	4
 
@@ -42,4 +42,4 @@ typedef struct cpu_kcore_hdr {
 	phys_ram_seg_t	ram_segs[NPHYS_RAM_SEGS];
 } cpu_kcore_hdr_t;
 
-#endif	/* _MACHINE_KCORE_H_ */
+#endif	/* _POWERPC_KCORE_H_ */

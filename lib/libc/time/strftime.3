@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.7.6.6 2002/10/18 02:17:22 nathanw Exp $
+.\"	$NetBSD: strftime.3,v 1.7.6.7 2002/11/11 22:23:03 nathanw Exp $
 .\"
 .Dd August 18, 2002
 .Dt STRFTIME 3
@@ -152,7 +152,7 @@ The range of
 seconds is (00-61) instead of (00-59) to allow for the periodic occurance
 of leap seconds and double leap seconds.
 .It Cm %s
-is replaced by the number of seconds since the Epoch, UCT (see
+is replaced by the number of seconds since the Epoch, UTC (see
 .Xr mktime 3 ) .
 .It Cm \&%T
 is replaced by the time in the format

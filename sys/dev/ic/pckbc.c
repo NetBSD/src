@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.5.6.5 2002/10/18 02:41:58 nathanw Exp $ */
+/* $NetBSD: pckbc.c,v 1.5.6.6 2002/11/11 22:09:56 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.5.6.5 2002/10/18 02:41:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.5.6.6 2002/11/11 22:09:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,8 +165,9 @@ pckbc_poll_data1(pt, slot, checkaux)
 {
 	struct pckbc_internal *t = pt;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
-	int i, s;
+	int s;
 	u_char stat, c;
+	int i = 100000; /* if 1 port read takes 1us (?), this polls for 100ms */
 
 	s = splhigh();
 
@@ -178,8 +179,7 @@ pckbc_poll_data1(pt, slot, checkaux)
 		goto process;
 	}
 
-	/* if 1 port read takes 1us (?), this polls for 100ms */
-	for (i = 100000; i; i--) {
+	for (; i; i--) {
 		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
 		if (stat & KBS_DIB) {
 			KBD_DELAY;

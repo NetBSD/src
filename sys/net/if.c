@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.15 2002/10/18 02:45:10 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.16 2002/11/11 22:14:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.15 2002/10/18 02:45:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.16 2002/11/11 22:14:56 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -648,7 +648,7 @@ if_detach(ifp)
 do { \
 	extern struct ifqueue x; \
 	if_detach_queues(ifp, & x); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #ifdef INET
 #if NARP > 0
 	IF_DETACH_QUEUES(arpintrq);

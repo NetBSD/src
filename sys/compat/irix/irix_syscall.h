@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscall.h,v 1.18.2.8 2002/10/18 02:41:04 nathanw Exp $ */
+/* $NetBSD: irix_syscall.h,v 1.18.2.9 2002/11/11 22:06:56 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -425,4 +425,4 @@
 #define	IRIX_SYS_usync_cntl	223
 
 #define	IRIX_SYS_MAXSYSCALL	236
-#define	IRIX_SYS_NSYSENT	236
+#define	IRIX_SYS_NSYSENT	256

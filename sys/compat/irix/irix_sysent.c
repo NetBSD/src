@@ -1,4 +1,4 @@
-/* $NetBSD: irix_sysent.c,v 1.18.2.8 2002/10/18 02:41:05 nathanw Exp $ */
+/* $NetBSD: irix_sysent.c,v 1.18.2.9 2002/11/11 22:06:59 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.18.2.8 2002/10/18 02:41:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.18.2.9 2002/11/11 22:06:59 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -523,5 +523,45 @@ struct sysent irix_sysent[] = {
 	    sys_nosys },			/* 234 = unimplemented linkfollow */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 235 = unimplemented utimets */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 236 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 237 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 238 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 239 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 240 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 241 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 242 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 243 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 244 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 245 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 246 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 247 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 248 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 249 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 250 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 251 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 252 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 253 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 254 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 255 = filler */
 };
 

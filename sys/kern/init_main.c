@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.19 2002/10/18 02:44:50 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.20 2002/11/11 22:13:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.19 2002/10/18 02:44:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.20 2002/11/11 22:13:31 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.19 2002/10/18 02:44:50 nathanw
 #include <sys/reboot.h>
 #include <sys/user.h>
 #include <sys/sysctl.h>
+#include <sys/event.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -101,6 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.19 2002/10/18 02:44:50 nathanw
 #endif
 #ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
+#endif
+#ifdef LKM
+#include <sys/lkm.h>
 #endif
 
 #include <sys/syscall.h>
@@ -218,6 +222,9 @@ main(void)
 	 */
 	mbinit();
 
+	/* Initialize kqueues. */
+	kqueue_init();
+
 	/* Initialize sockets. */
 	soinit();
 
@@ -237,6 +244,11 @@ main(void)
 	 * Initialize process and pgrp structures.
 	 */
 	procinit();
+
+#ifdef LKM
+	/* Initialize the LKM system. */
+	lkm_init();
+#endif
 
 	/*
 	 * Create process 0 (the swapper).

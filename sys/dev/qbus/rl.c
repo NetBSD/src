@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.7.2.6 2002/10/18 02:43:40 nathanw Exp $	*/
+/*	$NetBSD: rl.c,v 1.7.2.7 2002/11/11 22:11:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.7.2.6 2002/10/18 02:43:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.7.2.7 2002/11/11 22:11:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.7.2.6 2002/10/18 02:43:40 nathanw Exp $");
 #include <sys/stat.h>
 #include <sys/dkio.h>
 #include <sys/fcntl.h>
+#include <sys/event.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -99,7 +100,7 @@ const struct bdevsw rl_bdevsw = {
 
 const struct cdevsw rl_cdevsw = {
 	rlopen, rlclose, rlread, rlwrite, rlioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 #define	MAXRLXFER (RL_BPS * RL_SPT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.39.2.4 2002/08/27 23:49:34 nathanw Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.39.2.5 2002/11/11 22:22:23 nathanw Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.39.2.4 2002/08/27 23:49:34 nathanw Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.39.2.5 2002/11/11 22:22:23 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -659,7 +659,7 @@ gethostbyaddr(addr, len, af)
 	int af;
 {
 	const u_char *uaddr = (const u_char *)addr;
-	int size;
+	socklen_t size;
 	struct hostent *hp;
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_gethtbyaddr, NULL)
@@ -1280,7 +1280,7 @@ _yphostent(line, af)
 	char **hap;
 	int addrok;
 	int more;
-	int naddrs;
+	size_t naddrs;
 
 	_DIAGASSERT(line != NULL);
 

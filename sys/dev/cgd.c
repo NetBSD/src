@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.2.2.2 2002/10/18 02:41:25 nathanw Exp $ */
+/* $NetBSD: cgd.c,v 1.2.2.3 2002/11/11 22:08:43 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.2.2.2 2002/10/18 02:41:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.2.2.3 2002/11/11 22:08:43 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,7 @@ const struct bdevsw cgd_bdevsw = {
 
 const struct cdevsw cgd_cdevsw = {
 	cgdopen, cgdclose, cgdread, cgdwrite, cgdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /* Internal Functions */
@@ -304,7 +304,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 		if (newaddr != addr)
 			free(newaddr, M_DEVBUF);
 		biodone(bp);
-		disk_unbusy(&dksc->sc_dkdev, 0);
+		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 		return;
 	}
 	cbp->cb_buf.b_data = newaddr;
@@ -372,7 +372,8 @@ cgdiodone(struct buf *vbp)
 	obp->b_resid = 0;
 	if (obp->b_flags & B_ERROR)
 		obp->b_resid = obp->b_bcount;
-	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid);
+	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
+	    (obp->b_flags & B_READ));
 	biodone(obp);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.13.6.4 2002/10/18 02:39:55 nathanw Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.13.6.5 2002/11/11 22:04:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,10 +70,11 @@ dev_type_open(tctrlopen);
 dev_type_close(tctrlclose);
 dev_type_ioctl(tctrlioctl);
 dev_type_poll(tctrlpoll);
+dev_type_kqfilter(tctrlkqfilter);
 
 const struct cdevsw tctrl_cdevsw = {
 	tctrlopen, tctrlclose, noread, nowrite, tctrlioctl,
-	nostop, notty, tctrlpoll, nommap,
+	nostop, notty, tctrlpoll, nommap, tctrlkqfilter,
 };
 
 static const char *tctrl_ext_statuses[16] = {
@@ -671,7 +672,7 @@ tctrl_apm_record_event(sc, event_type)
 		sc->sc_event_ptr %= APM_NEVENTS;
 		evp->type = event_type;
 		evp->index = ++tctrl_apm_evindex;
-		selwakeup(&sc->sc_rsel);
+		selnotify(&sc->sc_rsel, 0);
 		return(sc->sc_flags & TCTRL_APM_CTLOPEN) ? 0 : 1;
 	}
 	return(1);
@@ -1210,6 +1211,56 @@ tctrlpoll(dev, events, p)
 
 	return (revents);
 }
+
+static void
+filt_tctrlrdetach(struct knote *kn)
+{
+	struct tctrl_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splts102();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_tctrlread(struct knote *kn, long hint)
+{
+	struct tctrl_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_event_count;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops tctrlread_filtops =
+	{ 1, NULL, filt_tctrlrdetach, filt_tctrlread };
+
+int
+tctrlkqfilter(dev_t dev, struct knote *kn)
+{
+	struct tctrl_softc *sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &tctrlread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splts102();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 /* DO NOT SET THIS OPTION */
 #ifdef TADPOLE_BLINK
 void

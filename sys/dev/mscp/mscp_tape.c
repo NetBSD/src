@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.15.6.3 2002/10/18 02:42:49 nathanw Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.15.6.4 2002/11/11 22:10:55 nathanw Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.15.6.3 2002/10/18 02:42:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.15.6.4 2002/11/11 22:10:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -128,7 +128,7 @@ const struct bdevsw mt_bdevsw = {
 
 const struct cdevsw mt_cdevsw = {
 	mtopen, mtclose, mtread, mtwrite, mtioctl,
-	nostop, notty, nopoll, nommap, D_TAPE
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
 /*

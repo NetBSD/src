@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.35.2.8 2002/10/18 02:44:43 nathanw Exp $	*/
+/*	$NetBSD: xd.c,v 1.35.2.9 2002/11/11 22:13:09 nathanw Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.35.2.8 2002/10/18 02:44:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.35.2.9 2002/11/11 22:13:09 nathanw Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -301,7 +301,7 @@ const struct bdevsw xd_bdevsw = {
 
 const struct cdevsw xd_cdevsw = {
 	xdopen, xdclose, xdread, xdwrite, xdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */
@@ -1936,7 +1936,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 
 			    disk_unbusy(&xdcsc->reqs[lcv].xd->sc_dk,
 				(xdcsc->reqs[lcv].buf->b_bcount -
-				xdcsc->reqs[lcv].buf->b_resid));
+				xdcsc->reqs[lcv].buf->b_resid),
+				(iorq->buf->b_flags & B_READ));
 			    biodone(iorq->buf);
 			    XDC_FREE(xdcsc, lcv);	/* add to free list */
 			    break;
@@ -2145,7 +2146,8 @@ xdc_remove_iorq(xdcsc)
 			bus_dmamap_unload(xdcsc->dmatag, iorq->dmamap);
 
 			disk_unbusy(&iorq->xd->sc_dk,
-			    (bp->b_bcount - bp->b_resid));
+			    (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 			XDC_FREE(xdcsc, rqno);
 			biodone(bp);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.2.10 2002/10/18 02:44:33 nathanw Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.2.11 2002/11/11 22:12:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.10 2002/10/18 02:44:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.11 2002/11/11 22:12:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,10 +109,11 @@ dev_type_read(uhidread);
 dev_type_write(uhidwrite);
 dev_type_ioctl(uhidioctl);
 dev_type_poll(uhidpoll);
+dev_type_kqfilter(uhidkqfilter);
 
 const struct cdevsw uhid_cdevsw = {
 	uhidopen, uhidclose, uhidread, uhidwrite, uhidioctl,
-	nostop, notty, uhidpoll, nommap,
+	nostop, notty, uhidpoll, nommap, uhidkqfilter,
 };
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
@@ -242,7 +243,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 		DPRINTFN(5, ("uhid_intr: waking %p\n", &sc->sc_q));
 		wakeup(&sc->sc_q);
 	}
-	selwakeup(&sc->sc_rsel);
+	selnotify(&sc->sc_rsel, 0);
 	if (sc->sc_async != NULL) {
 		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
 		psignal(sc->sc_async, SIGIO);
@@ -563,4 +564,66 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_uhidrdetach(struct knote *kn)
+{
+	struct uhid_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_uhidread(struct knote *kn, long hint)
+{
+	struct uhid_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops uhidread_filtops =
+	{ 1, NULL, filt_uhidrdetach, filt_uhidread };
+
+static const struct filterops uhid_seltrue_filtops =
+	{ 1, NULL, filt_uhidrdetach, filt_seltrue };
+
+int
+uhidkqfilter(dev_t dev, struct knote *kn)
+{
+	struct uhid_softc *sc;
+	struct klist *klist;
+	int s;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+
+	if (sc->sc_dying)
+		return (EIO);
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &uhidread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &uhid_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splusb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }

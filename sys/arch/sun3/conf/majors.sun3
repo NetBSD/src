@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.2.2.3 2002/10/18 02:40:17 nathanw Exp $
+#	$NetBSD: majors.sun3,v 1.2.2.4 2002/11/11 22:05:11 nathanw Exp $
 #
 # Device majors for sun3/sun3x
 #
@@ -34,6 +34,8 @@ device-major	cgtwo		char 31			cgtwo
 device-major	ccd		char 33  block 9	ccd
 
 device-major	bpf		char 36			bpfilter
+
+device-major	ipl		char 37			ipfilter
 
 device-major	cgfour		char 39			cgfour
 

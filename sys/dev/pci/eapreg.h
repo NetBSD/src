@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.2 2000/04/30 21:59:58 augustss Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.2.8.1 2002/11/11 22:11:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 #define  EAP_M_SBB		0x00004000
 #define  E1371_SYNC_RES		0x00004000
 #define  EAP_MSFMTSEL		0x00008000
+#define  EAP_EN(i)		(EAP_DAC2_EN << (i))
 #define  EAP_SET_PCLKDIV(n)	(((n)&0x1fff)<<16)
 #define  EAP_GET_PCLKDIV(n)	(((n)>>16)&0x1fff)
 #define  EAP_PCLKBITS		0x1fff0000
@@ -112,9 +113,9 @@
 #define  E1371_SRC_DISP1	0x00200000
 #define  E1371_SRC_DISP2        0x00100000
 #define  E1371_SRC_DISREC       0x00080000
-#define  E1371_SRC_ADDR(a)	((a)<<25)
-#define  E1371_SRC_DATA(d)	(d)
 #define  E1371_SRC_DATAMASK	0x0000ffff
+#define  E1371_SRC_ADDR(a)	((a)<<25)
+#define  E1371_SRC_DATA(d)	((d) & E1371_SRC_DATAMASK)
 #define  E1371_SRC_CTLMASK	(E1371_SRC_DISABLE | E1371_SRC_DISP1 | \
 				 E1371_SRC_DISP2 | E1371_SRC_DISREC)
 #define  E1371_SRC_STATE_MASK   0x00870000
@@ -127,8 +128,8 @@
  */
 
 #define ESRC_ADC		0x78
-#define ESRC_DAC1		0x74
-#define ESRC_DAC2		0x70
+#define ESRC_DAC1		0x70
+#define ESRC_DAC2		0x74
 #define ESRC_ADC_VOLL		0x6c
 #define ESRC_ADC_VOLR		0x6d
 #define ESRC_DAC1_VOLL		0x7c
@@ -166,6 +167,9 @@
 #define  EAP_P1_LOOP_SEL	0x00002000
 #define  EAP_P2_LOOP_SEL	0x00004000
 #define  EAP_R1_LOOP_SEL	0x00008000
+#define  EAP_S_EB(i)		(EAP_P2_S_EB >> 2*(i))
+#define  EAP_S_MB(i)		(EAP_P2_S_MB >> 2*(i))
+#define  EAP_P_INTR_EN(i)	(EAP_P2_INTR_EN >> (i))
 #define  EAP_SET_P2_ST_INC(i)	((i) << 16)
 #define  EAP_SET_P2_END_INC(i)	((i) << 19)
 #define  EAP_INC_BITS		0x003f0000

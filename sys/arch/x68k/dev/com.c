@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.21.8.6 2002/10/18 02:40:43 nathanw Exp $	*/
+/*	$NetBSD: com.c,v 1.21.8.7 2002/11/11 22:06:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ dev_type_poll(compoll);
 
 const struct cdevsw xcom_cdevsw = {
 	comopen, comclose, comread, comwrite, comioctl,
-	comstop, comtty, compoll, nommap, D_TTY
+	comstop, comtty, compoll, nommap, ttykqfilter, D_TTY
 };
 
 #define	outb(addr, val)		*(u_char *)(addr) = (val)

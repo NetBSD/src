@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.9.2.2 2002/10/18 02:16:58 nathanw Exp $
+.\"	$NetBSD: kqueue.2,v 1.9.2.3 2002/11/11 22:23:00 nathanw Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd September 22, 2002
+.Dd October 23, 2002
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -147,8 +147,8 @@ struct kevent {
 	uint32_t  filter;	/* filter for event */
 	uint32_t  flags;	/* action flags for kqueue */
 	uint32_t  fflags;	/* filter flag value */
-	intptr_t  data;		/* filter data value */
-	void	  *udata;	/* opaque user data identifier */
+	int64_t   data;		/* filter data value */
+	intptr_t  udata;	/* opaque user data identifier */
 };
 .Ed
 .Pp
@@ -527,11 +527,8 @@ and
 functions first appeared in
 .Fx 4.1 ,
 and then in
-.Nx .
-This interface is currently only available on experimental kernel branch
-.Li kqueue
-in
-.Nx .
+.\" NEXTRELEASE
+.Nx 2.0 .
 .Sh AUTHORS
 The
 .Fn kqueue

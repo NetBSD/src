@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.162.6.8 2002/10/18 02:34:39 nathanw Exp $
+# $NetBSD: GENERIC,v 1.162.6.9 2002/11/11 21:56:11 nathanw Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,11 +28,15 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.162.6.8 $"
+#ident 		"GENERIC-$Revision: 1.162.6.9 $"
 
 
 maxusers	8
 options 	RTC_OFFSET=0
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #
 # mainboards to support (in addition to Amiga)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26.8.3 2001/12/08 08:22:44 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26.8.4 2002/11/11 22:06:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,6 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
-#include <m68k/cacheops.h>
 #define	M68K_MMU_MOTOROLA
 
 /*

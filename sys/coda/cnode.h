@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.7.12.1 2002/01/08 00:28:58 nathanw Exp $	*/
+/*	$NetBSD: cnode.h,v 1.7.12.2 2002/11/11 22:06:36 nathanw Exp $	*/
 
 /*
  * 
@@ -66,7 +66,7 @@ do {                                                                      \
     if (ptr == 0) {                                                       \
 	panic("kernel malloc returns 0 at %s:%d\n", __FILE__, __LINE__);  \
     }                                                                     \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define CODA_FREE(ptr, size)  free((ptr), M_CODA)
 
@@ -92,7 +92,7 @@ do {                            \
     if (coda_printf_delay)       \
 	DELAY(coda_printf_delay);\
     printf args ;               \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 struct cnode {
     struct vnode	*c_vnode;

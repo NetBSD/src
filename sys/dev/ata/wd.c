@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.212.2.7 2002/10/18 02:41:30 nathanw Exp $ */
+/*	$NetBSD: wd.c,v 1.212.2.8 2002/11/11 22:08:58 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,12 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.7 2002/10/18 02:41:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.8 2002/11/11 22:08:58 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
 #endif /* WDCDEBUG */
 
+#include "opt_bufq.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -203,7 +204,7 @@ const struct bdevsw wd_bdevsw = {
 
 const struct cdevsw wd_cdevsw = {
 	wdopen, wdclose, wdread, wdwrite, wdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -279,7 +280,11 @@ wdattach(parent, self, aux)
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	callout_init(&wd->sc_restart_ch);
+#ifdef NEW_BUFQ_STRATEGY
+	bufq_alloc(&wd->sc_q, BUFQ_READ_PRIO|BUFQ_SORT_RAWBLOCK);
+#else
 	bufq_alloc(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+#endif
 
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
@@ -650,7 +655,8 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 		bp->b_error = EIO;
 		break;
 	}
-	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 #if NRND > 0
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 #endif

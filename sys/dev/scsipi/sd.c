@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.11 2002/10/18 02:44:19 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.12 2002/11/11 22:12:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,9 +54,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.11 2002/10/18 02:44:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.12 2002/11/11 22:12:22 nathanw Exp $");
 
 #include "opt_scsi.h"
+#include "opt_bufq.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -124,7 +125,7 @@ const struct bdevsw sd_bdevsw = {
 
 const struct cdevsw sd_cdevsw = {
 	sdopen, sdclose, sdread, sdwrite, sdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver sddkdriver = { sdstrategy };
@@ -152,7 +153,11 @@ sdattach(parent, sd, periph, ops)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
+#ifdef NEW_BUFQ_STRATEGY
+	bufq_alloc(&sd->buf_queue, BUFQ_READ_PRIO|BUFQ_SORT_RAWBLOCK);
+#else
 	bufq_alloc(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+#endif
 
 	/*
 	 * Store information needed to contact our base driver
@@ -811,7 +816,7 @@ sdstart(periph)
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
 		if (error) {
-			disk_unbusy(&sd->sc_dk, 0);
+			disk_unbusy(&sd->sc_dk, 0, 0);
 			printf("%s: not queued, error %d\n",
 			    sd->sc_dev.dv_xname, error);
 		}
@@ -830,7 +835,8 @@ sddone(xs)
 	}
 
 	if (xs->bp != NULL) {
-		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
+		    (xs->bp->b_flags & B_READ));
 #if NRND > 0
 		rnd_add_uint32(&sd->rnd_source, xs->bp->b_rawblkno);
 #endif

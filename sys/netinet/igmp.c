@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.25.4.5 2002/08/27 23:47:57 nathanw Exp $	*/
+/*	$NetBSD: igmp.c,v 1.25.4.6 2002/11/11 22:15:13 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.25.4.5 2002/08/27 23:47:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.25.4.6 2002/11/11 22:15:13 nathanw Exp $");
 
 #include "opt_mrouting.h"
 
@@ -141,12 +141,12 @@ igmp_input(m, va_alist)
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct ip *ip = mtod(m, struct ip *);
 	struct igmp *igmp;
-	int minlen;
+	u_int minlen;
 	struct in_multi *inm;
 	struct in_multistep step;
 	struct router_info *rti;
 	struct in_ifaddr *ia;
-	int timer;
+	u_int timer;
 	va_list ap;
 	u_int16_t ip_len;
 

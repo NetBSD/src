@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.3.2.5 2002/10/18 02:42:55 nathanw Exp $	*/
+/*	$NetBSD: autri.c,v 1.3.2.6 2002/11/11 22:11:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -1226,6 +1226,8 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 	if (delta > 48000)
 		delta = 48000;
 
+	attribute = 0;
+
 	dch[1] = ((delta << 12) / 48000) & 0x0000ffff;
 	if (mode == AUMODE_PLAY) {
 		chst = &sc->sc_play;
@@ -1234,9 +1236,12 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 	} else {
 		chst = &sc->sc_rec;
 		dch[0] = ((48000 << 12) / delta) & 0x0000ffff;
-		if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018)
+		if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018) {
 			ctrl |= AUTRI_CTRL_MUTEVOL_SIS;
-		else
+			attribute = AUTRI_ATTR_PCMREC_SIS;
+			if (delta != 48000)
+				attribute |= AUTRI_ATTR_ENASRC_SIS;
+		} else
 			ctrl |= AUTRI_CTRL_MUTEVOL;
 	}
 
@@ -1244,7 +1249,6 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 	cso = alpha_fms = 0;
 	rvol = cvol = 0x7f;
 	fm_vol = 0x0 | ((rvol & 0x7f) << 7) | (cvol & 0x7f);
-	attribute = 0;
 
 	for (ch=0; ch<2; ch++) {
 
@@ -1257,6 +1261,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 				ctrl |= AUTRI_CTRL_MUTEVOL_SIS;
 			else
 				ctrl |= AUTRI_CTRL_MUTEVOL;
+			attribute = 0;
 		}
 
 		eso = dmalen - 1;
@@ -1280,7 +1285,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 			cr[0] = (cso << 16) | (alpha_fms & 0x0000ffff);
 			cr[1] = dmaaddr;
 			cr[2] = (eso << 16) | (dch[ch] & 0x0000ffff); 
-			cr[3] = (attribute << 16) | (fm_vol & 0x0000ffff);
+			cr[3] = attribute;
 			cr[4] = ctrl;
 			break;
 		case AUTRI_DEVICE_ID_ALI_M5451:
@@ -1444,6 +1449,7 @@ autri_startch(struct autri_softc *sc, int ch, int ch_intr)
 
 	reg = (ch & 0x20) ? AUTRI_START_B : AUTRI_START_A;
 	ch &= 0x1f;
+	ch_intr &= 0x1f;
 	chmask = (1 << ch) | (1 << ch_intr);
 
 	autri_reg_set_4(sc, reg, chmask);
@@ -1457,6 +1463,7 @@ autri_stopch(struct autri_softc *sc, int ch, int ch_intr)
 
 	reg = (ch & 0x20) ? AUTRI_STOP_B : AUTRI_STOP_A;
 	ch &= 0x1f;
+	ch_intr &= 0x1f;
 	chmask = (1 << ch) | (1 << ch_intr);
 
 	autri_reg_set_4(sc, reg, chmask);

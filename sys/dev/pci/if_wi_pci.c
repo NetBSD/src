@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.1.2.8 2002/10/18 02:43:08 nathanw Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.1.2.9 2002/11/11 22:11:12 nathanw Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.8 2002/10/18 02:43:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.9 2002/11/11 22:11:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.1.2.8 2002/10/18 02:43:08 nathanw Ex
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
 
+#define WI_PCI_CBMA		0x10	/* Configuration Base Memory Address */
 #define WI_PCI_PLX_LOMEM	0x10	/* PLX chip membase */
 #define WI_PCI_PLX_LOIO		0x14	/* PLX chip iobase */
 #define WI_PCI_LOMEM		0x18	/* ISA membase */

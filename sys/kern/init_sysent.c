@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.124.2.13 2002/09/17 21:21:58 nathanw Exp $ */
+/* $NetBSD: init_sysent.c,v 1.124.2.14 2002/11/11 22:13:33 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.13 2002/09/17 21:21:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.14 2002/11/11 22:13:33 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -891,9 +891,9 @@ struct sysent sysent[] = {
 	{ 3, s(struct sys_rasctl_args), 0,
 	    sys_rasctl },			/* 343 = rasctl */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 344 = unimplemented kqueue */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 345 = unimplemented kevent */
+	    sys_kqueue },			/* 344 = kqueue */
+	{ 6, s(struct sys_kevent_args), 0,
+	    sys_kevent },			/* 345 = kevent */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 346 = filler */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10.12.1 2002/09/17 21:13:48 nathanw Exp $	*/
+/*	$NetBSD: ms.c,v 1.10.12.2 2002/11/11 21:57:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -89,10 +89,11 @@ dev_type_close(msclose);
 dev_type_read(msread);
 dev_type_ioctl(msioctl);
 dev_type_poll(mspoll);
+dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw = {
 	msopen, msclose, msread, nowrite, msioctl,
-	nostop, notty, mspoll, nommap,
+	nostop, notty, mspoll, nommap, mskqfilter,
 };
 
 static	void	ms_3b_delay __P((struct ms_softc *));
@@ -423,5 +424,14 @@ struct proc	*p;
 
 	ms = &ms_softc[minor(dev)];
 	return(ev_poll(&ms->ms_events, events, p));
+}
+
+int
+mskqfilter(dev_t dev, struct knote *kn)
+{
+	struct ms_softc *ms;
+
+	ms = &ms_softc[minor(dev)];
+	return (ev_kqfilter(&ms->ms_events, kn));
 }
 #endif /* NMOUSE > 0 */

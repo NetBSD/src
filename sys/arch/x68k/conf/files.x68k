@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.39.8.5 2002/09/17 21:18:42 nathanw Exp $
+#	$NetBSD: files.x68k,v 1.39.8.6 2002/11/11 22:06:11 nathanw Exp $
 #
 # new style config file for x68k architecture
 #
@@ -33,15 +33,15 @@ file	arch/x68k/x68k/disksubr.c	disk
 file	arch/x68k/x68k/machdep.c
 file	arch/x68k/x68k/mem.c
 file	arch/x68k/x68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
-file	arch/x68k/x68k/pmap.c
 file	arch/x68k/x68k/procfs_machdep.c	procfs
-file	arch/x68k/x68k/sys_machdep.c
 file	arch/x68k/x68k/trap.c
-file	arch/x68k/x68k/vm_machdep.c
-file	arch/x68k/x68k/db_memrw.c	ddb
 file	arch/x68k/x68k/fpu.c
 file	arch/x68k/x68k/bus.c
 file	arch/m68k/m68k/cacheops.c
+file	arch/m68k/m68k/db_memrw.c	ddb
+file	arch/m68k/m68k/pmap_motorola.c
+file	arch/m68k/m68k/sys_machdep.c
+file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
 file	dev/cninit.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.5.2.5 2002/09/17 21:21:24 nathanw Exp $ */
+/*	$NetBSD: cgsix.c,v 1.5.2.6 2002/11/11 22:12:32 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.2.5 2002/09/17 21:21:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.2.6 2002/11/11 22:12:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,12 +135,13 @@ dev_type_mmap(cgsixmmap);
 
 const struct cdevsw cgsix_cdevsw = {
 	cgsixopen, cgsixclose, noread, nowrite, cgsixioctl,
-	nostop, notty, nopoll, cgsixmmap,
+	nostop, notty, nopoll, cgsixmmap, nokqfilter,
 };
 
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {
-	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, nopoll, cgsixmmap
+	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, nopoll, cgsixmmap,
+	nokqfilter
 };
 
 static void cg6_reset (struct cgsix_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.14 2002/10/18 02:37:51 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.15 2002/11/11 21:59:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.14 2002/10/18 02:37:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.15 2002/11/11 21:59:11 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,7 +144,7 @@ int trapwrite __P((unsigned));
 #define KVM86MODE (0)
 #endif
 
-const char *trap_type[] = {
+const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
@@ -163,7 +163,9 @@ const char *trap_type[] = {
 	"invalid TSS fault",			/* 15 T_TSSFLT */
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
-	"reserved trap",			/* 18 T_RESERVED */
+	"machine check fault",			/* 18 T_MCA */
+	"SSE FP exception",			/* 19 T_XMM */
+	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
@@ -466,6 +468,12 @@ copyfault:
 		if (simple_lock_held(&sched_lock))
 			goto we_re_toast;
 #endif
+		/*
+		 * fusubail is used by [fs]uswintr() to prevent page faulting
+		 * from inside the profiling interrupt.
+		 */
+		if (pcb->pcb_onfault == fusubail)
+			goto copyefault;
 #ifdef MULTIPROCESSOR
 		/*
 		 * process doing kernel-mode page fault must have
@@ -475,12 +483,6 @@ copyfault:
 			goto we_re_toast;
 #endif
 
-		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
-		 */
-		if (pcb->pcb_onfault == fusubail)
-			goto copyefault;
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
 		if (frame.tf_err & PGEX_P)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68.6.6 2002/10/18 02:36:42 nathanw Exp $
+# $NetBSD: GENERIC,v 1.68.6.7 2002/11/11 21:58:05 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68.6.6 $"
+#ident 		"GENERIC-$Revision: 1.68.6.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -60,6 +60,10 @@ options 	SYSVSEM		# System V-style semaphores
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Debugging options
 options 	DIAGNOSTIC	# Extra kernel sanity checks

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.148.2.17 2002/10/18 02:44:38 nathanw Exp $
+$NetBSD: usbdevs,v 1.148.2.18 2002/11/11 22:13:00 nathanw Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -457,6 +457,9 @@ product AOX USB101		0x0008	USB ethernet controller engine
 /* Apple Computer products */
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE SPEAKERS		0x1101	Speakers
+
+/* Asahi Optical products */
+product ASAHIOPTICAL OPTIO230  0x0004  PENTAX Optio230
 
 /* Asante products */
 product ASANTE EA		0x1427	Ethernet Adapter
@@ -927,6 +930,7 @@ product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
 product MELCO LUA2TX5		0x0009	LUA2-TX Ethernet
 product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
+product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -1224,7 +1228,7 @@ product SONY MSC		0x0032	MSC memory stick slot
 product SONY CLIE_35		0x0038	Sony Clie v3.5
 product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
 product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
-product SONY PS2MOUSE		0x0061	PlayStatoin2 mouse
+product SONY PS2MOUSE		0x0061	PlayStation2 mouse
 product SONY CLIE_40		0x0066	Sony Clie v4.0
 product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
 product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
