@@ -1,4 +1,4 @@
-/*	$NetBSD: slstats.c,v 1.10 1997/10/18 11:38:26 lukem Exp $	*/
+/*	$NetBSD: slstats.c,v 1.11 1998/07/06 07:50:20 mrg Exp $	*/
 
 /*
  * print serial line IP statistics:
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slstats.c,v 1.10 1997/10/18 11:38:26 lukem Exp $");
+__RCSID("$NetBSD: slstats.c,v 1.11 1998/07/06 07:50:20 mrg Exp $");
 #endif
 
 #define INET
@@ -87,8 +87,10 @@ main(argc, argv)
 	char *argv[];
 {
 	char errbuf[_POSIX2_LINE_MAX];
+	gid_t egid = getegid();
 	int ch;
 
+	setegid(getgid());
 	while ((ch = getopt(argc, argv, "i:M:N:v")) != -1) {
 		switch (ch) {
 		case 'i':
@@ -132,15 +134,23 @@ main(argc, argv)
 	}
 
 	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
 	 */
 	if (kmemf != NULL || kernel != NULL)
-		setgid(getgid());
+		(void)setgid(getgid());
+	else
+		(void)setegid(egid);
 
 	memset(errbuf, 0, sizeof(errbuf));
 	if ((kd = kvm_openfiles(kernel, kmemf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "can't open kvm: %s", errbuf);
+
+	/* get rid of it now anyway */
+	if (kmemf == NULL && kernel == NULL)
+		setgid(getgid());
 
 	if (kvm_nlist(kd, nl) < 0 || nl[0].n_type == 0)
 		errx(1, "%s: SLIP symbols not in namelist",
@@ -157,7 +167,7 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s [-M core] [-N system] [-i interval] %s",
+	(void)fprintf(stderr, "usage: %s [-M core] [-N system] [-i interval] %s",
 	    __progname, "[-v] [unit]\n");
 	exit(1);
 }
@@ -192,47 +202,46 @@ intpr()
 		(void)alarm(interval);
 
 		if ((line % 20) == 0) {
-			printf("%8.8s %6.6s %6.6s %6.6s %6.6s",
+			(void)printf("%8.8s %6.6s %6.6s %6.6s %6.6s",
 				"IN", "PACK", "COMP", "UNCOMP", "ERR");
 			if (vflag)
 				printf(" %6.6s %6.6s", "TOSS", "IP");
-			printf(" | %8.8s %6.6s %6.6s %6.6s %6.6s",
+			(void)printf(" | %8.8s %6.6s %6.6s %6.6s %6.6s",
 				"OUT", "PACK", "COMP", "UNCOMP", "IP");
 			if (vflag)
-				printf(" %6.6s %6.6s", "SEARCH", "MISS");
-			putchar('\n');
+				(void)printf(" %6.6s %6.6s", "SEARCH", "MISS");
+			(void)putchar('\n');
 		}
-		printf("%8lu %6ld %6u %6u %6u",
+		(void)printf("%8lu %6ld %6u %6u %6u",
 			V(sc_if.if_ibytes),
 			(long)V(sc_if.if_ipackets),
 			V(sc_comp.sls_compressedin),
 			V(sc_comp.sls_uncompressedin),
 			V(sc_comp.sls_errorin));
 		if (vflag)
-			printf(" %6u %6lu",
+			(void)printf(" %6u %6lu",
 				V(sc_comp.sls_tossed),
 				V(sc_if.if_ipackets) -
 				  V(sc_comp.sls_compressedin) -
 				  V(sc_comp.sls_uncompressedin) -
 				  V(sc_comp.sls_errorin));
-		printf(" | %8lu %6ld %6u %6u %6lu",
+		(void)printf(" | %8lu %6ld %6u %6u %6lu",
 			V(sc_if.if_obytes),
 			V(sc_if.if_opackets),
 			V(sc_comp.sls_compressed),
 			V(sc_comp.sls_packets) - V(sc_comp.sls_compressed),
 			V(sc_if.if_opackets) - V(sc_comp.sls_packets));
 		if (vflag)
-			printf(" %6u %6u",
+			(void)printf(" %6u %6u",
 				V(sc_comp.sls_searches),
 				V(sc_comp.sls_misses));
 
-		putchar('\n');
+		(void)putchar('\n');
 		fflush(stdout);
 		line++;
 		oldmask = sigblock(sigmask(SIGALRM));
-		if (! signalled) {
+		if (!signalled)
 			sigpause(0);
-		}
 		sigsetmask(oldmask);
 		signalled = 0;
 		(void)alarm(interval);
@@ -248,5 +257,6 @@ void
 catchalarm(dummy)
 	int dummy;
 {
+
 	signalled = 1;
 }

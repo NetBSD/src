@@ -1,4 +1,4 @@
-/*	$NetBSD: trsp.c,v 1.4 1997/07/23 18:20:49 thorpej Exp $	*/
+/*	$NetBSD: trsp.c,v 1.5 1998/07/06 07:50:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trsp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trsp.c,v 1.4 1997/07/23 18:20:49 thorpej Exp $");
+__RCSID("$NetBSD: trsp.c,v 1.5 1998/07/06 07:50:21 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,9 @@ main(argc, argv)
 {
 	int ch, i, npcbs = 0;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
+	gid_t egid = getegid();
 
+	(void)setegid(getgid());
 	system = core = NULL;
 
 	while ((ch = getopt(argc, argv, "azstjp:N:M:")) != -1) {
@@ -209,11 +211,17 @@ main(argc, argv)
 	 */
 	if (core != NULL || system != NULL)
 		setgid(getgid());
+	else
+		setegid(egid);
 
 	kd = kvm_openfiles(system, core, NULL, zflag ? O_RDWR : O_RDONLY,
 	    errbuf);
 	if (kd == NULL)
 		errx(1, "can't open kmem: %s", errbuf);
+
+	/* get rid of it now anyway */
+	if (core == NULL && system == NULL)
+		setgid(getgid());
 
 	if (kvm_nlist(kd, nl))
 		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);
