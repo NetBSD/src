@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.11 1997/05/24 14:39:44 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.12 1997/11/17 23:01:44 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -1326,10 +1326,6 @@ stripioctl(ifp, cmd, data)
 		break;
 
 	default:
-
-#ifdef DEBUG
-	  printf("stripioctl: unknown request 0x%lx\n", cmd);
-#endif
 		error = EINVAL;
 	}
 	splx(s);
