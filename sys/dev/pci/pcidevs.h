@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.338 2001/06/20 16:33:10 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.339 2001/06/20 19:52:19 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.332 2001/06/20 16:32:32 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.333 2001/06/20 19:51:12 thorpej Exp 
  */
 
 /*
@@ -601,7 +601,10 @@
 #define	PCI_PRODUCT_3COM_3C905CTX	0x9200		/* 3c905C-TX 10/100 Ethernet with mngmt */
 #define	PCI_PRODUCT_3COM_3C980SRV	0x9800		/* 3c980 Server Adapter 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C980CTXM	0x9805		/* 3c980C-TXM 10/100 Ethernet */
-#define	PCI_PRODUCT_3COM_3CR990TX97	0x9903		/* 3CR990-TX-97 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3CR990TX95	0x9902		/* 3CR990-TX-95 10/100 Ethernet with 3XP */
+#define	PCI_PRODUCT_3COM_3CR990TX97	0x9903		/* 3CR990-TX-97 10/100 Ethernet with 3XP */
+#define	PCI_PRODUCT_3COM_3CR990SVR95	0x9908		/* 3CR990-SVR-95 10/100 Ethernet with 3XP */
+#define	PCI_PRODUCT_3COM_3CR990SVR97	0x9909		/* 3CR990-SVR-97 10/100 Ethernet with 3XP */
 
 /* 3Dfx Interactive products */
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
