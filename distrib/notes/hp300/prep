@@ -1,7 +1,8 @@
-.\"	$NetBSD: prep,v 1.10 2001/07/20 19:00:38 nra Exp $
+.\"	$NetBSD: prep,v 1.11 2002/04/23 05:56:44 gmcgarry Exp $
 .
 Currently, only installing the miniroot from the network is supported.
-This may change in a future release.
+A ramdisk kernel with the sysinst installation utility is provided on
+the installation media, however it has not been extensively tested.
 .Pp
 You will need information about your disk's geometry, based on 512-byte
 sectors. You must have this information before proceeding. The
