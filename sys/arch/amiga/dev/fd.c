@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.50 2002/01/28 09:56:54 aymeric Exp $ */
+/*	$NetBSD: fd.c,v 1.51 2002/08/07 07:29:13 hannken Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2002/01/28 09:56:54 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2002/08/07 07:29:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ struct fdtype {
 struct fd_softc {
 	struct device sc_dv;	/* generic device info; must come first */
 	struct disk dkdev;	/* generic disk info */
-	struct buf_queue bufq;	/* queue pending I/O operations */
+	struct bufq_state bufq;	/* queue pending I/O operations */
 	struct buf curbuf;	/* state of current I/O operation */
 	struct callout calibrate_ch;
 	struct callout motor_ch;
@@ -383,7 +383,7 @@ fdattach(struct device *pdp, struct device *dp, void *auxp)
 	ap = auxp;
 	sc = (struct fd_softc *)dp;
 
-	BUFQ_INIT(&sc->bufq);
+	bufq_alloc(&sc->bufq, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
 	callout_init(&sc->calibrate_ch);
 	callout_init(&sc->motor_ch);
 
@@ -675,7 +675,7 @@ fdstrategy(struct buf *bp)
 	 * queue the buf and kick the low level code
 	 */
 	s = splbio();
-	disksort_cylinder(&sc->bufq, bp);
+	BUFQ_PUT(&sc->bufq, bp);
 	fdstart(sc);
 	splx(s);
 	return;
@@ -1176,7 +1176,7 @@ fdstart(struct fd_softc *sc)
 	 * get next buf if there.
 	 */
 	dp = &sc->curbuf;
-	if ((bp = BUFQ_FIRST(&sc->bufq)) == NULL) {
+	if ((bp = BUFQ_PEEK(&sc->bufq)) == NULL) {
 #ifdef FDDEBUG
 		printf("  nothing to do\n");
 #endif
@@ -1207,17 +1207,17 @@ printf("fdstart: disk changed\n");
 #endif
 		sc->flags &= ~FDF_HAVELABEL;
 		for (;;) {
+			bp = BUFQ_GET(&sc->bufq);
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
-			if (BUFQ_NEXT(bp) == NULL)
+			if (BUFQ_PEEK(&sc->bufq) == NULL)
 				break;
 			biodone(bp);
-			bp = BUFQ_NEXT(bp);
 		}
 		/*
 		 * do fddone() on last buf to allow other units to start.
 		 */
-		BUFQ_INSERT_HEAD(&sc->bufq, bp);
+		BUFQ_PUT(&sc->bufq, bp);
 		fddone(sc);
 		return;
 	}
@@ -1293,7 +1293,7 @@ fdcont(struct fd_softc *sc)
 	int trk, write;
 
 	dp = &sc->curbuf;
-	bp = BUFQ_FIRST(&sc->bufq);
+	bp = BUFQ_PEEK(&sc->bufq);
 	dp->b_data += (dp->b_bcount - bp->b_resid);
 	dp->b_blkno += (dp->b_bcount - bp->b_resid) / FDSECSIZE;
 	dp->b_bcount = bp->b_resid;
@@ -1533,7 +1533,7 @@ fddone(struct fd_softc *sc)
 		goto nobuf;
 
 	dp = &sc->curbuf;
-	if ((bp = BUFQ_FIRST(&sc->bufq)) == NULL)
+	if ((bp = BUFQ_PEEK(&sc->bufq)) == NULL)
 		panic ("fddone");
 	/*
 	 * check for an error that may have occurred
@@ -1573,7 +1573,7 @@ fddone(struct fd_softc *sc)
 	/*
 	 * remove from queue.
 	 */
-	BUFQ_REMOVE(&sc->bufq, bp);
+	(void)BUFQ_GET(&sc->bufq);
 
 	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
 
@@ -1618,7 +1618,7 @@ fdfindwork(int unit)
 		 * and it has no buf's queued do it now
 		 */
 		if (sc->flags & FDF_MOTOROFF) {
-			if (BUFQ_FIRST(&sc->bufq) == NULL)
+			if (BUFQ_PEEK(&sc->bufq) == NULL)
 				fdmotoroff(sc);
 			else {
 				/*
@@ -1638,7 +1638,7 @@ fdfindwork(int unit)
 		 * if we have no start unit and the current unit has
 		 * io waiting choose this unit to start.
 		 */
-		if (ssc == NULL && BUFQ_FIRST(&sc->bufq) != NULL)
+		if (ssc == NULL && BUFQ_PEEK(&sc->bufq) != NULL)
 			ssc = sc;
 	}
 	if (ssc)
