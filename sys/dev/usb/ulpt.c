@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.12 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.13 1999/07/14 19:12:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -313,10 +313,10 @@ ulptopen(dev, flag, mode, p)
 	USB_GET_SC_OPEN(ulpt, ULPTUNIT(dev), sc);
 
 	if (!sc || !sc->sc_iface || sc->sc_dying)
-		return ENXIO;
+		return (ENXIO);
 
 	if (sc->sc_state)
-		return EBUSY;
+		return (EBUSY);
 
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
@@ -328,14 +328,14 @@ ulptopen(dev, flag, mode, p)
 	for (spin = 0; (ulpt_status(sc) & LPS_SELECT) == 0; spin += STEP) {
 		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
-			return EBUSY;
+			return (EBUSY);
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
 		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "ulptop", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
-			return error;
+			return (error);
 		}
 	}
 
@@ -369,7 +369,7 @@ ulpt_statusmsg(status, sc)
 	else if (new & LPS_NERR)
 		log(LOG_NOTICE, "%s: output error\n", USBDEVNAME(sc->sc_dev));
 
-	return status;
+	return (status);
 }
 
 int
@@ -380,6 +380,10 @@ ulptclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+
+	if (sc->sc_state != ULPT_OPEN)
+		/* We are being forced to close before the open completed. */
+		return (0);
 
 	usbd_close_pipe(sc->sc_bulkpipe);
 	sc->sc_bulkpipe = 0;
