@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1995/02/16 21:42:50 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.24 1995/03/01 21:18:57 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -393,6 +393,18 @@ configure()
 
 		for (cf = cfdata; memregcf==NULL && cf->cf_driver; cf++) {
 			if (cf->cf_driver != &memregcd)
+				continue;
+			/*
+			 * On the 4/100 obio addresses must be mapped at
+			 * 0x0YYYYYYY, but alias higher up (we avoid the
+			 * alias condition because it causes pmap difficulties)
+			 * XXX: We also assume that 4/[23]00 obio addresses
+			 * must be 0xZYYYYYYY, where (Z != 0)
+			 * make sure we get the correct memreg cfdriver!
+			 */
+			if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
+				continue;
+			if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
 				continue;
 			for (p = cf->cf_parents; memregcf==NULL && *p >= 0; p++)
 				if (cfdata[*p].cf_driver == &obiocd)
