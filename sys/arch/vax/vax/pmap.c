@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2001/04/22 23:42:18 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.99 2001/04/23 23:58:09 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -812,23 +812,6 @@ if (startpmapdebug)
 
 	mtpr(0, PR_TBIA); /* Always; safety belt */
 	return 0;
-}
-
-void *
-pmap_bootstrap_alloc(size)
-	int size;
-{
-	void *mem;
-
-#ifdef PMAPDEBUG
-if(startpmapdebug)
-	printf("pmap_bootstrap_alloc: size 0x %x\n",size);
-#endif
-	size = round_page(size);
-	mem = (caddr_t)avail_start + KERNBASE;
-	avail_start += size;
-	memset(mem, 0, size);
-	return (mem);
 }
 
 vaddr_t
