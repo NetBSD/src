@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 1998/11/01 03:07:34 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.46 1999/08/02 15:23:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.45 1998/11/01 03:07:34 itohy Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.46 1999/08/02 15:23:11 hubertf Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.45 1998/11/01 03:07:34 itohy Exp $");
+__RCSID("$NetBSD: main.c,v 1.46 1999/08/02 15:23:11 hubertf Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -169,7 +169,7 @@ MainParseArgs(argc, argv)
 {
 	extern int optind;
 	extern char *optarg;
-	int c;
+	int c, rc;
 	int forceJobs = 0;
 
 	optind = 1;	/* since we're called more than once */
@@ -201,7 +201,11 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 #ifdef REMOTE
 		case 'L':
-			maxLocal = atoi(optarg);
+			rc = sscanf(optarg, "%d", &maxLocal);
+			if (rc < 1 || maxLocal < 1) {
+				(void) fprintf(stderr, "make: illegal argument to -L -- must be positive integer!\n");
+				exit(1);
+			}
 			Var_Append(MAKEFLAGS, "-L", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -282,7 +286,11 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'j':
 			forceJobs = TRUE;
-			maxJobs = atoi(optarg);
+			rc = sscanf(optarg, "%d", &maxJobs);
+			if (rc < 1 || maxJobs < 1) {
+				(void) fprintf(stderr, "make: illegal argument to -j -- must be positive integer!\n");
+				exit(1);
+			}
 #ifndef REMOTE
 			maxLocal = maxJobs;
 #endif
