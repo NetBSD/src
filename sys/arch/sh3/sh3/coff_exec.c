@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.5 1999/12/24 08:32:58 msaitoh Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.6 2000/01/02 13:39:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -44,21 +44,7 @@
 #include <sys/namei.h>
 #include <vm/vm.h>
 
-#include <machine/exec_coff.h>
-#include <machine/coff_machdep.h>
-
-int exec_coff_prep_omagic __P((struct proc *, struct exec_package *,
-				     struct coff_filehdr *,
-				     struct coff_aouthdr *));
-int exec_coff_prep_nmagic __P((struct proc *, struct exec_package *,
-				     struct coff_filehdr *,
-				     struct coff_aouthdr *));
-int exec_coff_prep_zmagic __P((struct proc *, struct exec_package *,
-				     struct coff_filehdr *,
-				     struct coff_aouthdr *));
-int exec_coff_setup_stack __P((struct proc *, struct exec_package *));
-void cpu_exec_coff_setup __P((int, struct proc *, struct exec_package *,
-				    void *));
+#include <sys/exec_coff.h>
 
 #if 0
 int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
@@ -67,32 +53,6 @@ int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
 static int coff_find_section __P((struct proc *, struct vnode *,
 				  struct coff_filehdr *, struct coff_scnhdr *,
 				  int));
-
-#if 0
-
-extern int bsd2ibcs_errno[];
-extern struct sysent ibcs2_sysent[];
-extern char *ibcs2_syscallnames[];
-extern void ibcs2_sendsig __P((sig_t, int, int, u_long));
-extern char sigcode[], esigcode[];
-
-const char ibcs2_emul_path[] = "/emul/ibcs2";
-
-struct emul emul_ibcs2 = {
-	"ibcs2",
-	bsd2ibcs_errno,
-	ibcs2_sendsig,
-	0,
-	IBCS2_SYS_MAXSYSCALL,
-	ibcs2_sysent,
-	ibcs2_syscallnames,
-	0,
-	copyargs,
-	ibcs2_setregs,
-	sigcode,
-	esigcode,
-};
-#endif
 
 /*
  * exec_coff_makecmds(): Check if it's an coff-format executable.
