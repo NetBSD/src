@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.98 1998/09/24 20:38:43 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.99 1998/09/25 11:40:16 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -962,7 +962,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #if defined(SUN4M)
 	static const char *const openboot_special4m[] = {
 		/* find these first */
-		"eccmemctl",	/* memory error registers */
 		"obio",		/* smart enough to get eeprom/etc mapped */
 		"",
 
