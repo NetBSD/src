@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.10 2000/01/08 02:57:23 takemura Exp $ */
+/* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -143,7 +143,7 @@ pmsattach(parent, self, aux)
 	sc->oldbuttons = 0;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       pmsinput, sc);
+			       pmsinput, sc, sc->sc_dev.dv_xname);
 
 	a.accessops = &pms_accessops;
 	a.accesscookie = sc;

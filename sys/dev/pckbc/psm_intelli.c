@@ -1,4 +1,4 @@
-/* $NetBSD: psm_intelli.c,v 1.7 2000/01/08 02:57:23 takemura Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.8 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -187,7 +187,7 @@ pmsiattach(parent, self, aux)
 	sc->oldbuttons = 0;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       pmsiinput, sc);
+			       pmsiinput, sc, sc->sc_dev.dv_xname);
 
 	a.accessops = &pmsi_accessops;
 	a.accesscookie = sc;
