@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1998/07/26 19:43:14 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 1998/07/27 16:43:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -48,9 +48,9 @@
 /*
  * ar_io.c
  */
-extern char *arcname;
-extern char *gzip_program;
-int ar_open __P((char *));
+extern const char *arcname;
+extern const char *gzip_program;
+int ar_open __P((const char *));
 void ar_close __P((void));
 void ar_drain __P((void));
 int ar_set_wr __P((void));
@@ -234,7 +234,7 @@ extern int pids;
 extern int exit_val;
 extern int docrc;
 extern char *dirptr;
-extern char *ltmfrmt;
+extern const char *ltmfrmt;
 extern char *argv0;
 int main __P((int, char **));
 void sig_cleanup __P((int));

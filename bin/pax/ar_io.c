@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.8 1998/03/06 09:13:01 mrg Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.9 1998/07/27 16:43:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.8 1998/03/06 09:13:01 mrg Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.9 1998/07/27 16:43:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,8 @@ static struct stat arsb;		/* stat of archive device at open */
 static int invld_rec;			/* tape has out of spec record size */
 static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
-char *arcname;                  	/* printable name of archive */
-char *gzip_program;			/* name of gzip program */
+const char *arcname;                  	/* printable name of archive */
+const char *gzip_program;		/* name of gzip program */
 
 static int get_phys __P((void));
 extern sigset_t s_mask;
@@ -103,11 +103,11 @@ static void ar_start_gzip __P((int));
 
 #if __STDC__
 int
-ar_open(char *name)
+ar_open(const char *name)
 #else
 int
 ar_open(name)
-	char *name;
+	const char *name;
 #endif
 {
         struct mtget mb;
@@ -1321,7 +1321,7 @@ ar_next()
 		 */
 		if (ar_open(buf) >= 0) {
 			if (freeit) {
-				(void)free(arcname);
+				(void)free((char *)arcname);
 				freeit = 0;
 			}
 			if ((arcname = strdup(buf)) == NULL) {

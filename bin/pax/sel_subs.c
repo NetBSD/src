@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.9 1998/04/01 14:14:43 kleink Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.10 1998/07/27 16:43:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.9 1998/04/01 14:14:43 kleink Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.10 1998/07/27 16:43:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: sel_subs.c,v 1.9 1998/04/01 14:14:43 kleink Exp $");
 #include "sel_subs.h"
 #include "extern.h"
 
-static int str_sec __P((char *, time_t *));
+static int str_sec __P((const char *, time_t *));
 static int usr_match __P((ARCHD *));
 static int grp_match __P((ARCHD *));
 static int trng_match __P((ARCHD *));
@@ -595,41 +595,52 @@ trng_match(arcn)
 
 #if __STDC__
 static int
-str_sec(char *str, time_t *tval)
+str_sec(const char *p, time_t *tval)
 #else
 static int
-str_sec(str, tval)
-	char *str;
+str_sec(p, tval)
+	const char *p;
 	time_t *tval;
 #endif
 {
 	struct tm *lt;
-	char *dot = NULL;
-	int yearset;
+	const char *dot, *t;
+	int yearset, len;
+
+	for (t = p, dot = NULL; *t; ++t) {
+		if (isdigit(*t))
+			continue;
+		if (*t == '.' && dot == NULL) {
+			dot = t;
+			continue;
+		}
+		return(-1);
+	}
 
 	lt = localtime(tval);
-	if ((dot = strchr(str, '.')) != NULL) {
-		/*
-		 * seconds (.ss)
-		 */
-		*dot++ = '\0';
-		if (strlen(dot) != 2)
+
+	if (dot != NULL) {
+		len = strlen(dot);
+		if (len != 3)
 			return(-1);
+		++dot;
 		lt->tm_sec = ATOI2(dot);
-	} else
+	} else {
+		len = 0;
 		lt->tm_sec = 0;
+	}
 
 	yearset = 0;
-	switch (strlen(str)) {
+	switch (strlen(p) - len) {
 	case 12:
-		lt->tm_year = ATOI2(str) * 100 - TM_YEAR_BASE;
+		lt->tm_year = ATOI2(p) * 100 - TM_YEAR_BASE;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:
 		if (yearset) {
-			lt->tm_year += ATOI2(str);
+			lt->tm_year += ATOI2(p);
 		} else {
-			yearset = ATOI2(str);
+			yearset = ATOI2(p);
 			if (yearset < 69)
 				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
 			else
@@ -637,17 +648,17 @@ str_sec(str, tval)
 		}
 		/* FALLTHROUGH */
 	case 8:
-		lt->tm_mon = ATOI2(str);
+		lt->tm_mon = ATOI2(p);
 		--lt->tm_mon;
 		/* FALLTHROUGH */
 	case 6:
-		lt->tm_mday = ATOI2(str);
+		lt->tm_mday = ATOI2(p);
 		/* FALLTHROUGH */
 	case 4:
-		lt->tm_hour = ATOI2(str);
+		lt->tm_hour = ATOI2(p);
 		/* FALLTHROUGH */
 	case 2:
-		lt->tm_min = ATOI2(str);
+		lt->tm_min = ATOI2(p);
 		break;
 	default:
 		return(-1);
