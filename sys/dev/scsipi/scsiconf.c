@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.152 2000/11/14 08:52:35 pk Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.153 2000/12/03 13:30:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -322,6 +322,7 @@ scsi_probe_bus(bus, target, lun)
 	int bus, target, lun;
 {
 	struct scsibus_softc *scsi;
+	struct scsipi_link *sc_link;
 	int maxtarget, mintarget, maxlun, minlun;
 	u_int8_t scsi_addr;
 	int error;
@@ -332,7 +333,8 @@ scsi_probe_bus(bus, target, lun)
 	if (scsi == NULL)
 		return (ENXIO);
 
-	scsi_addr = scsi->adapter_link->scsipi_scsi.adapter_target;
+	sc_link = scsi->adapter_link;
+	scsi_addr = sc_link->scsipi_scsi.adapter_target;
 
 	if (target == -1) {
 		maxtarget = scsi->sc_maxtarget;
@@ -352,7 +354,15 @@ scsi_probe_bus(bus, target, lun)
 		maxlun = minlun = lun;
 	}
 
-	if ((error = scsipi_adapter_addref(scsi->adapter_link)) != 0)
+	/*
+	 * Some HBAs provide an abstracted view of the bus; give them an
+	 * oppertunity to re-scan it before we do.
+	 */
+	if (sc_link->adapter->scsipi_ioctl != NULL)
+		(*sc_link->adapter->scsipi_ioctl)(sc_link, SCBUSIOLLSCAN, NULL,
+		    0, curproc);
+
+	if ((error = scsipi_adapter_addref(sc_link)) != 0)
 		return (error);
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == scsi_addr)
@@ -367,7 +377,7 @@ scsi_probe_bus(bus, target, lun)
 			/* otherwise something says we should look further */
 		}
 	}
-	scsipi_adapter_delref(scsi->adapter_link);
+	scsipi_adapter_delref(sc_link);
 	return (0);
 }
 
