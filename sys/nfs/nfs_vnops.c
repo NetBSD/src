@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.122 2000/10/02 04:28:13 itojun Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.123 2000/11/08 05:20:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2814,7 +2814,7 @@ loop:
 		 * the freelist.
 		 */
 		bremfree(bp);
-		if (commit)
+		if (commit && vp->v_type == VREG)
 			/*
 			 * Setting B_NOCACHE has the effect
 			 * effect of nfs_doio using a stable write
