@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.39 2003/07/22 12:18:39 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.40 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,7 +80,8 @@ do_upgrade(void)
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
-		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev, diskdev);
+		msg_display(MSG_pleasemountroot,
+		    diskdev, diskdev, diskdev, diskdev);
 		process_menu(MENU_ok, NULL);
 		return;
 	}
@@ -287,7 +288,8 @@ do_reinstall_sets(void)
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
-		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev, diskdev);
+		msg_display(MSG_pleasemountroot,
+		    diskdev, diskdev, diskdev, diskdev);
 		process_menu(MENU_ok, NULL);
 		return;
 	}

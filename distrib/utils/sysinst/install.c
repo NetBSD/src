@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.36 2003/06/27 22:20:15 dsl Exp $	*/
+/*	$NetBSD: install.c,v 1.37 2003/07/25 08:26:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,7 +75,8 @@ do_install(void)
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
-		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev, diskdev);
+		msg_display(MSG_pleasemountroot,
+		    diskdev, diskdev, diskdev, diskdev);
 		process_menu(MENU_ok, NULL);
 		return;
 	}

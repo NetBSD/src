@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.48 2003/07/14 09:59:00 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.49 2003/07/25 08:26:22 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,7 +85,7 @@
 
 struct part_id {
 	int id;
-	char *name;
+	const char *name;
 } part_ids[] = {
 	{0,			"unused"},
 	{MBR_PTYPE_NETBSD,	"NetBSD"},
@@ -181,7 +181,7 @@ remove_old_partitions(uint start, int size)
 }
 
 static int
-find_mbr_space(mbr_sector_t *mbr, uint *start, uint *size, int from, int ignore)
+find_mbr_space(mbr_sector_t *mbrs, uint *start, uint *size, int from, int ignore)
 {
 	int sz;
 	int i;
@@ -192,8 +192,8 @@ find_mbr_space(mbr_sector_t *mbr, uint *start, uint *size, int from, int ignore)
 	for (i = 0; i < NMBRPART; i++) {
 		if (i == ignore)
 			continue;
-		s = mbr->mbr_parts[i].mbrp_start;
-		e = s + mbr->mbr_parts[i].mbrp_size;
+		s = mbrs->mbr_parts[i].mbrp_start;
+		e = s + mbrs->mbr_parts[i].mbrp_size;
 		if (s <= from && e > from) {
 			from = e;
 			goto check_again;
@@ -1078,7 +1078,7 @@ set_mbr_header(menudesc *m, void *arg)
 int
 edit_mbr(mbr_info_t *mbri)
 {
-	mbr_sector_t *mbr = &mbri->mbr;
+	mbr_sector_t *mbrs = &mbri->mbr;
 	mbr_info_t *ext;
 	struct mbr_partition *part;
 	int i, j;
@@ -1091,7 +1091,7 @@ edit_mbr(mbr_info_t *mbri)
 
 	/* Ask full/part */
 
-	part = &mbr->mbr_parts[0];
+	part = &mbrs->mbr_parts[0];
 	msg_display(MSG_fullpart, diskdev);
 	process_menu(MENU_fullpart, &usefull);
 
@@ -1209,7 +1209,7 @@ edit_mbr(mbr_info_t *mbri)
 	return 1;
 }
 
-char *
+const char *
 get_partname(int typ)
 {
 	int j;
@@ -1227,7 +1227,7 @@ int
 read_mbr(const char *disk, mbr_info_t *mbri)
 {
 	struct mbr_partition *mbrp;
-	mbr_sector_t *mbr = &mbri->mbr;
+	mbr_sector_t *mbrs = &mbri->mbr;
 	mbr_info_t *ext = NULL;
 	char diskpath[MAXPATHLEN];
 	int fd, i;
@@ -1246,14 +1246,14 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 		goto bad_mbr;
 
 	for (;;) {
-		if (pread(fd, mbr, sizeof *mbr,
-		    (ext_base + next_ext) * (off_t)MBR_SECSIZE) < sizeof *mbr)
+		if (pread(fd, mbrs, sizeof *mbrs,
+		    (ext_base + next_ext) * (off_t)MBR_SECSIZE) < sizeof *mbrs)
 			break;
 
-		if (!valid_mbr(mbr))
+		if (!valid_mbr(mbrs))
 			break;
 
-		mbrp = &mbr->mbr_parts[0];
+		mbrp = &mbrs->mbr_parts[0];
 		if (ext_base != 0) {
 			/* sanity check extended chain */
 			if (MBR_IS_EXTENDED(mbrp[0].mbrp_typ))
@@ -1271,14 +1271,14 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 		}
 #if BOOTSEL
 		else {
-			if (mbr->mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC))
-				bootkey = mbr->mbr_bootsel.mbrb_defkey;
+			if (mbrs->mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC))
+				bootkey = mbrs->mbr_bootsel.mbrb_defkey;
 			else
 				bootkey = 0;
 			bootkey -= SCAN_1;
 		}
-		if (mbr->mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC))
-			memcpy(mbri->nametab, mbr->mbr_bootsel.mbrb_nametab,
+		if (mbrs->mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC))
+			memcpy(mbri->nametab, mbrs->mbr_bootsel.mbrb_nametab,
 				sizeof mbri->nametab);
 #endif
 		mbri->sector = next_ext + ext_base;
@@ -1349,7 +1349,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 		ext = malloc(sizeof *ext);
 		if (!ext)
 			break;
-		mbr = &ext->mbr;
+		mbrs = &ext->mbr;
 	}
 
     bad_mbr:
@@ -1357,8 +1357,8 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 	if (fd >= 0)
 		close(fd);
 	if (rval == -1) {
-		memset(&mbr->mbr_parts, 0, sizeof mbr->mbr_parts);
-		mbr->mbr_signature = htole16(MBR_MAGIC);
+		memset(&mbrs->mbr_parts, 0, sizeof mbrs->mbr_parts);
+		mbrs->mbr_signature = htole16(MBR_MAGIC);
 	}
 	return rval;
 }
@@ -1370,7 +1370,7 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 	int fd, i, ret = 0;
 	struct mbr_partition *mbrp;
 	u_int32_t pstart, psize;
-	mbr_sector_t *mbr;
+	mbr_sector_t *mbrs;
 	mbr_info_t *ext;
 #ifdef BOOTSEL
 	int netbsd_bootcode;
@@ -1389,15 +1389,15 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 		return -1;
 
 	for (ext = mbri; ext != NULL; ext = ext->extended) {
-		mbr = &ext->mbr;
+		mbrs = &ext->mbr;
 #ifdef BOOTSEL
 		if (netbsd_bootcode) {
-			mbr->mbr_bootsel.mbrb_magic = htole16(MBR_MAGIC);
-			memcpy(&mbr->mbr_bootsel.mbrb_nametab, &ext->nametab,
-			    sizeof mbr->mbr_bootsel.mbrb_nametab);
+			mbrs->mbr_bootsel.mbrb_magic = htole16(MBR_MAGIC);
+			memcpy(&mbrs->mbr_bootsel.mbrb_nametab, &ext->nametab,
+			    sizeof mbrs->mbr_bootsel.mbrb_nametab);
 		}
 #endif
-		mbrp = &mbr->mbr_parts[0];
+		mbrp = &mbrs->mbr_parts[0];
 		for (i = 0; i < NMBRPART; i++) {
 			if (mbrp[i].mbrp_start == 0 && mbrp[i].mbrp_size == 0) {
 				mbrp[i].mbrp_scyl = 0;
@@ -1429,12 +1429,12 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 #endif
 		}
 
-		mbr->mbr_signature = htole16(MBR_MAGIC);
+		mbrs->mbr_signature = htole16(MBR_MAGIC);
 		/*
 		 * Sector zero is written outside the loop after we have
 		 * set mbrb_defkey.
 		 */
-		if (ext->sector != 0 && pwrite(fd, mbr, sizeof *mbr,
+		if (ext->sector != 0 && pwrite(fd, mbrs, sizeof *mbrs,
 		    ext->sector * (off_t)MBR_SECSIZE) < 0)
 			ret = -1;
 	}
@@ -1447,10 +1447,10 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 }
 
 int
-valid_mbr(mbr_sector_t *mbr)
+valid_mbr(mbr_sector_t *mbrs)
 {
 
-	return (le16toh(mbr->mbr_signature) == MBR_MAGIC);
+	return (le16toh(mbrs->mbr_signature) == MBR_MAGIC);
 }
 
 static void
@@ -1494,8 +1494,8 @@ convert_mbr_chs(int cyl, int head, int sec,
 int
 guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)
 {
-	mbr_sector_t *mbr = &mbri->mbr;
-	struct mbr_partition *parts = &mbr->mbr_parts[0];
+	mbr_sector_t *mbrs = &mbri->mbr;
+	struct mbr_partition *parts = &mbrs->mbr_parts[0];
 	int xcylinders, xheads, xsectors, i, j;
 	int c1, h1, s1, c2, h2, s2;
 	unsigned long a1, a2;

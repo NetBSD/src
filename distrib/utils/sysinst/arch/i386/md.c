@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.92 2003/07/10 13:36:50 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.93 2003/07/25 08:26:27 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,7 +67,7 @@ static struct biosdisk_info *biosdisk = NULL;
 
 static int mbr_root_above_chs(void);
 static void md_upgrade_mbrtype(void);
-static int md_read_bootcode(const char *path, mbr_sector_t *mbr);
+static int md_read_bootcode(const char *, mbr_sector_t *);
 #if defined(__i386__)
 static unsigned int get_bootmodel(void);
 #endif
@@ -209,7 +209,7 @@ edit:
  * The existing partition table and bootselect configuration is kept.
  */
 static int
-md_read_bootcode(const char *path, mbr_sector_t *mbr)
+md_read_bootcode(const char *path, mbr_sector_t *mbrs)
 {
 	int fd;
 	struct stat st;
@@ -220,7 +220,7 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 	if (fd < 0)
 		return -1;
 
-	if (fstat(fd, &st) < 0 || st.st_size != sizeof *mbr) {
+	if (fstat(fd, &st) < 0 || st.st_size != sizeof *mbrs) {
 		close(fd);
 		return -1;
 	}
@@ -234,21 +234,21 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 	if (new_mbr.mbr_bootsel.mbrb_magic != htole16(MBR_MAGIC))
 		return -1;
 
-	if (mbr->mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC)) {
+	if (mbrs->mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC)) {
 		len = offsetof(mbr_sector_t, mbr_bootsel);
-		if (!(mbr->mbr_bootsel.mbrb_flags & BFL_NEWMBR))
+		if (!(mbrs->mbr_bootsel.mbrb_flags & BFL_NEWMBR))
 			/*
 			 * Meaning of keys has changed, force a sensible
 			 * default (old code didn't preseve the answer).
 			 */
-			mbr->mbr_bootsel.mbrb_defkey = SCAN_ENTER;
+			mbrs->mbr_bootsel.mbrb_defkey = SCAN_ENTER;
 	} else
 		len = offsetof(mbr_sector_t, mbr_parts);
 
-	memcpy(mbr, &new_mbr, len);
+	memcpy(mbrs, &new_mbr, len);
 	/* Keep flags from object file - indicate the properties */
-	mbr->mbr_bootsel.mbrb_flags = new_mbr.mbr_bootsel.mbrb_flags;
-	mbr->mbr_signature = htole16(MBR_MAGIC);
+	mbrs->mbr_bootsel.mbrb_flags = new_mbr.mbr_bootsel.mbrb_flags;
+	mbrs->mbr_signature = htole16(MBR_MAGIC);
 
 	return 0;
 }

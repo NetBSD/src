@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.90 2003/07/22 11:45:16 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.91 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,8 +99,8 @@ static void write_etc_hosts(FILE *f);
 #define DHCLIENT_EX "/sbin/dhclient"
 #include <signal.h>
 static int config_dhcp(char *);
-static void get_command_out(char *, int, char *, char *);
-static void get_dhcp_value(char *, char *);
+static void get_command_out(char *, int, const char *, const char *);
+static void get_dhcp_value(char *, const char *);
 
 #ifdef INET6
 static int is_v6kernel (void);
@@ -1047,11 +1047,11 @@ config_dhcp(char *inter)
 }
 
 static void
-get_command_out(char *targ, int af, char *command, char *search)
+get_command_out(char *targ, int af, const char *command, const char *search)
 {
 	int textsize;
 	char *textbuf;
-	char *t;
+	const char *t;
 #ifndef INET6
 	struct in_addr in;
 #else
@@ -1083,7 +1083,7 @@ get_command_out(char *targ, int af, char *command, char *search)
 }
 
 static void
-get_dhcp_value(char *targ, char *line)
+get_dhcp_value(char *targ, const char *line)
 {
 	int textsize;
 	char *textbuf;
