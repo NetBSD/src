@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2000/07/23 23:05:38 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2000/10/12 06:33:24 augustss Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -732,7 +732,7 @@ restart(i)
     int             i;
 {
 
-    log(LOG_NOTICE, 0, "% restart", versionstring);
+    log(LOG_NOTICE, 0, "%s restart", versionstring);
 
     /*
      * reset all the entries
