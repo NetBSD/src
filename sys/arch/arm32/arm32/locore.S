@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.5 1996/03/08 19:03:11 mark Exp $ */
+/* $NetBSD: locore.S,v 1.6 1996/03/13 21:34:17 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -30,7 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: locore.S,v 1.5 1996/03/08 19:03:11 mark Exp $
+ *	$Id: locore.S,v 1.6 1996/03/13 21:34:17 mark Exp $
  */
 
 #include "assym.h"
@@ -84,9 +84,9 @@ L1:
 	mov	fp, #0x00000000			/* trace back starts here */
 	bl	_initarm			/* Off we go */
 
-	ldr	sp, Lkstack			/* Set up a proper kstack */
-	ldr	r2, [sp]
-	add	sp, r2, #(UPAGES * NBPG)
+/* init arm will return the new stack pointer. */
+
+	mov	sp, r0
 
 /* Debug code */
 
@@ -128,9 +128,6 @@ Lstart:
 	.word	_edata
 	.word	_end
 	.word	svcstk + INIT_ARM_STACK_SIZE
-
-Lkstack:
-	.word	_kstack
 
 Lproc0:
 	.word	_proc0
