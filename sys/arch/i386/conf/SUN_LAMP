@@ -6,7 +6,7 @@ cpu		"i486"
 ident		SUN_LAMP
 timezone	8 dst
 maxusers	16
-options		INET,NFS,MFS
+options		INET,NFS,MFS,ISOFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		UCONSOLE, XSERVER
