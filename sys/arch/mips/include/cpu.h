@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 2001/01/14 00:10:28 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50 2001/01/14 21:18:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -166,24 +166,32 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)	{ want_resched = 1; aston(); }
+#define	need_resched(ci)						\
+do {									\
+	want_resched = 1;						\
+	if (curproc != NULL)						\
+		aston(curproc);						\
+} while (/*CONSTCOND*/0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	need_proftick(p)						\
+do {									\
+	(p)->p_flag |= P_OWEUPC;					\
+	aston(p);							\
+} while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	signotify(p)	aston(p)
 
-#define aston()		(astpending = 1)
+#define aston(p)	((p)->p_md.md_astpending = 1)
 
-extern __volatile int astpending;	/* AST pending on return to user mode */
 extern int want_resched;		/* resched() was called */
 #ifdef MIPS3
 extern u_int	mips_L2CacheSize;

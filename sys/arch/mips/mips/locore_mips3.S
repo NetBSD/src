@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.63 2001/01/13 23:49:13 thorpej Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.64 2001/01/14 21:18:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -562,7 +562,8 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(astpending)
+	lw	t0, _C_LABEL(curproc)
+	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
 /*
@@ -706,7 +707,8 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(astpending)
+	lw	t0, _C_LABEL(curproc)
+	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
 /*
@@ -994,10 +996,10 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	nop					# 3 nop hazard
 	nop
 	nop
+	lw	v0, _C_LABEL(curproc)
 	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
-	lw	v0, _C_LABEL(astpending)	# any pending ast?
-	nop					# ???
+	lw	v0, P_MD_ASTPENDING(t0)		# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 /*
  * Check pending asynchronous traps.

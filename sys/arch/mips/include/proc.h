@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.10 2000/03/28 02:58:46 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.11 2001/01/14 21:18:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,11 +44,12 @@
  * Machine-dependent part of the proc structure for MIPS
  */
 struct mdproc {
-	void *md_regs;		/* registers on current frame */
+	void	*md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	int	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
+	__volatile int md_astpending;	/* AST pending on return to userland */
 };
 
 /* md_flags */
