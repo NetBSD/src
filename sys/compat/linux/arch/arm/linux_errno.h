@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.2 2002/01/17 15:08:44 rjs Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.3 2002/01/17 21:17:57 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -136,3 +136,5 @@
 #define LINUX_EDQUOT		122
 #define LINUX_ENOMEDIUM		123
 #define LINUX_EMEDIUMTYPE	124
+
+#endif
