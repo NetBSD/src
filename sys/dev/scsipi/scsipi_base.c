@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.51 2001/07/18 20:19:24 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.52 2001/08/19 14:05:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2349,12 +2349,12 @@ scsipi_target_detach(chan, target, lun, flags)
 		maxlun = lun + 1;
 	}
 
-	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
+	for (ctarget = mintarget; ctarget < maxtarget; ctarget++) {
 		if (ctarget == chan->chan_id)
 			continue;
 
 		for (clun = minlun; clun < maxlun; clun++) {
-			periph = scsipi_lookup_periph(chan, target, clun);
+			periph = scsipi_lookup_periph(chan, ctarget, clun);
 			if (periph == NULL)
 				continue;
 			error = config_detach(periph->periph_dev, flags);
