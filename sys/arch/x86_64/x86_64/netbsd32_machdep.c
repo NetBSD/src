@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.9 2002/07/04 23:32:09 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.10 2002/07/07 23:25:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -54,18 +54,23 @@
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+#include <machine/mtrr.h>
 #include <machine/netbsd32_machdep.h>
+#include <machine/sysarch.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* Provide a the name of the architecture we're emulating */
-char	machine_arch32[] = "i386";	
+char	machine_arch32[] = "x86_64";	
 
 int process_read_fpregs32(struct proc *, struct fpreg32 *);
 int process_read_regs32(struct proc *, struct reg32 *);
 
 extern void (osyscall_return) __P((void));
+
+static int x86_64_get_mtrr32(struct proc *, void *, register_t *);
+static int x86_64_set_mtrr32(struct proc *, void *, register_t *);
 
 void
 netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
@@ -388,4 +393,165 @@ process_read_fpregs32(struct proc *p, struct fpreg32 *regs)
 
 	memcpy(regs, &frame, sizeof(*regs));
 	return (0);
+}
+
+int
+netbsd32_sysarch(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(netbsd32_voidp) parms;
+	} */ *uap = v;
+	int error;
+
+	switch (SCARG(uap, op)) {
+		case X86_64_IOPL:
+			error = x86_64_iopl(p,
+			    (void *)(uintptr_t)SCARG(uap, parms), retval);
+			break;
+		case X86_64_GET_MTRR:
+			error = x86_64_get_mtrr32(p,
+			    (void *)(uintptr_t)SCARG(uap, parms),
+			    retval);
+			break;
+		case X86_64_SET_MTRR:
+			error = x86_64_set_mtrr32(p,
+			    (void *)(uintptr_t)SCARG(uap, parms),
+			    retval);
+			break;
+		default:
+			error = EINVAL;
+			break;
+	}
+	return error;
+}
+
+static int
+x86_64_get_mtrr32(struct proc *p, void *args, register_t *retval)
+{
+	struct x86_64_get_mtrr_args32 args32;
+	int error, i;
+	int32_t n;
+	struct mtrr32 *m32p, m32;
+	struct mtrr *m64p, *mp;
+
+	m64p = NULL;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = suser(p->p_ucred, &p->p_acflag);
+	if (error != 0)
+		return error;
+
+	error = copyin(args, &args32, sizeof args32);
+	if (error != 0)
+		return error;
+
+	if (args32.mtrrp == 0) {
+		n = (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR);
+		return copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	}
+
+	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR))
+		return EINVAL;
+
+	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
+	if (m64p == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+	error = mtrr_get(m64p, &n, p, 0);
+	if (error != 0)
+		goto fail;
+	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
+	mp = m64p;
+	for (i = 0; i < n; i++) {
+		m32.base = mp->base;
+		m32.len = mp->len;
+		m32.type = mp->type;
+		m32.flags = mp->flags;
+		m32.owner = mp->owner;
+		error = copyout(&m32, m32p, sizeof m32);
+		if (error != 0)
+			break;
+		mp++;
+		m32p++;
+	}
+fail:
+	if (m64p != NULL)
+		free(m64p, M_TEMP);
+	if (error != 0)
+		n = 0;
+	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	return error;
+		
+}
+
+static int
+x86_64_set_mtrr32(struct proc *p, void *args, register_t *retval)
+{
+	struct x86_64_set_mtrr_args32 args32;
+	struct mtrr32 *m32p, m32;
+	struct mtrr *m64p, *mp;
+	int error, i;
+	int32_t n;
+
+	m64p = NULL;
+
+	if (mtrr_funcs == NULL)
+		return ENOSYS;
+
+	error = suser(p->p_ucred, &p->p_acflag);
+	if (error != 0)
+		return error;
+
+	error = copyin(args, &args32, sizeof args32);
+	if (error != 0)
+		return error;
+
+	error = copyin((void *)(uintptr_t)args32.n, &n, sizeof n);
+	if (error != 0)
+		return error;
+
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR)) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
+	if (m64p == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
+	mp = m64p;
+	for (i = 0; i < n; i++) {
+		error = copyin(m32p, &m32, sizeof m32);
+		if (error != 0)
+			goto fail;
+		mp->base = m32.base;
+		mp->len = m32.len;
+		mp->type = m32.type;
+		mp->flags = m32.flags;
+		mp->owner = m32.owner;
+		m32p++;
+		mp++;
+	}
+
+	error = mtrr_set(m64p, &n, p, 0);
+fail:
+	if (m64p != NULL)
+		free(m64p, M_TEMP);
+	if (error != 0)
+		n = 0;
+	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
+	return error;
 }
