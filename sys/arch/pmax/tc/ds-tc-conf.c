@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-tc-conf.c,v 1.1 1995/08/07 07:07:47 jonathan Exp $	*/
+/*	$NetBSD: ds-tc-conf.c,v 1.2 1995/08/24 22:32:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -51,15 +51,15 @@ static struct tc_slot_desc kmin_slot_addrs [4] = {
 	{ KV(KMIN_PHYS_TC_3_START), }	/* slot 3 - IOCTL asic on CPU board */
 };
 
-/* 3MIN turbochannel autoconfiguratin table */
+/* 3MIN turbochannel autoconfiguration table */
 struct tc_cpu_desc kmin_tc_desc =
 {
 	kmin_slot_addrs, KMIN_TC_NSLOTS,
-	tc3_devs, 7, /*XXX*/
+	tc3_devs, KMIN_TC_NSLOTS, /*XXX*/
 	tc_ds_ioasic_intr_setup,
 	tc_ds_ioasic_intr_establish,
 	tc_ds_ioasic_intr_disestablish,
-	kmin_intr
+	/*kmin_intr*/ (void*) -1
 };
 
 /************************************************************************/
@@ -86,7 +86,7 @@ struct tc_cpu_desc xine_tc_desc =
 	tc_ds_ioasic_intr_setup,
 	tc_ds_ioasic_intr_establish,
 	tc_ds_ioasic_intr_disestablish,
-	xine_intr
+	/*xine_intr*/ (void *) -1
 };
 
 /************************************************************************/
