@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.10 2003/03/15 19:24:21 wiz Exp $
+.\"     $NetBSD: named.conf.5,v 1.11 2003/03/31 17:54:04 perry Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -174,7 +174,7 @@ through
 .Li 65535 ,
 with values below 1024 typically restricted to
 root-owned processes.  In some cases an asterisk (``*'') character
-can be used as a placeholder to select a random high-numbered port.
+can be used as a place holder to select a random high-numbered port.
 .It Va ip_prefix
 An IP network specified in
 .Va dotted-decimal
@@ -785,7 +785,7 @@ This defaults to the hostname of the machine hosting the nameserver as found by 
 Its prime purpose is to be able to identify which of a number of anycast
 servers is actually answering your queries by sending a txt query for
 .Pa hostname.bind
-in class chaos to the anycast server and geting back a unique name.
+in class chaos to the anycast server and getting back a unique name.
 Setting
 the hostname to a empty string ("") will disable processing of the queries. 
 .It Ic version
@@ -1474,7 +1474,7 @@ sortlist {
 };
 .Ed
 .Pp
-The following example will give reasonable behaviour for the local host and
+The following example will give reasonable behavior for the local host and
 hosts on directly connected networks. It is similar to the behavior of the
 address sort in BIND 4.9.x. Responses sent to queries from the local host will
 favor any of the directly connected networks. Responses sent to queries from
@@ -1667,7 +1667,7 @@ If either no
 .Ic forwarders
 clause is present in the zone or an empty list for
 .Ic forwarders
-is given, then no forwarding will be done for the zone, cancelling the
+is given, then no forwarding will be done for the zone, canceling the
 effects of any
 .Ic forwarders
 in the
@@ -1676,7 +1676,7 @@ statement.
 Thus if you want to use this type of zone to change only the behavior of
 the global
 .Ic forward
-option, and not the servers used, then you also need to respecify the
+option, and not the servers used, then you also need to re-specify the
 global forwarders.
 .It Ic hint
 The initial set of root nameservers is specified using a
@@ -1931,7 +1931,7 @@ is
 .Li no .
 .Pp
 If the server supports IXFR you can tell named to attempt to
-perform a IXFR style zone transfer by specifing
+perform a IXFR style zone transfer by specifying
 .Ic support-ixfr
 .Li yes .
 The default value of
