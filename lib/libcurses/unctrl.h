@@ -1,4 +1,4 @@
-/*	$NetBSD: unctrl.h,v 1.2 2003/08/07 16:44:25 agc Exp $	*/
+/*	$NetBSD: unctrl.h,v 1.3 2004/02/14 18:23:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -31,10 +31,18 @@
  *	@(#)unctrl.h	8.1 (Berkeley) 5/31/93
  */
 
-/*
- * unctrl.h
- */
+#ifndef _UNCTRL_H_
+#define _UNCTRL_H_
 
-extern char	*_unctrl[];
+#include <sys/cdefs.h>
 
-# define	unctrl(ch)	(_unctrl[ch & 0177])
+__BEGIN_DECLS
+extern const char * const  __unctrl[];		/* Control strings. */
+extern const unsigned char __unctrllen[];	/* Control strings length. */
+__END_DECLS
+
+/* 8-bit ASCII characters. */
+#define	unctrl(c)		__unctrl[((unsigned char)c) & 0xff]
+#define	unctrllen(c)		__unctrllen[((unsigned char)c) & 0xff]
+
+#endif /* _UNCTRL_H_ */
