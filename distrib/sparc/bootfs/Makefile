@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1998/11/14 01:45:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 1999/01/10 13:21:27 mrg Exp $
 
 TOP=		${.CURDIR}/..
+MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
 
@@ -43,8 +44,8 @@ all:	netbsd.ram.gz
 	disklabel -W ${VND_CDEV}
 	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	TOPDIR=${TOP} CURDIR=${MINIROOT} OBJDIR=${.OBJDIR} \
+	    TARGDIR=${MOUNT_POINT} sh ${MINIROOT}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
