@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.9 2000/06/29 08:32:34 mrg Exp $ */
+/* $NetBSD: except.c,v 1.10 2000/08/13 12:32:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.9 2000/06/29 08:32:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.10 2000/08/13 12:32:48 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -419,6 +419,13 @@ data_abort_handler(struct trapframe *tf)
 	if (ret != KERN_SUCCESS) {
 #ifdef DEBUG
 		printf("unhandled fault at %p (ret = %d)\n", (void *)va, ret);
+		printf("Data abort:\n");
+		printregs(tf);
+		printf("pc -> ");
+		disassemble(tf->tf_r15 & R15_PC);
+#ifdef DDB
+		Debugger();
+#endif
 #endif
 		curpcb = &p->p_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
@@ -428,15 +435,6 @@ data_abort_handler(struct trapframe *tf)
 		}
 		if (curpcb->pcb_onfault_lj != NULL)
 			longjmp(curpcb->pcb_onfault_lj);
-#ifdef DEBUG
-		printf("Data abort:\n");
-		printregs(tf);
-		printf("pc -> ");
-		disassemble(tf->tf_r15 & R15_PC);
-#ifdef DDB
-		Debugger();
-#endif
-#endif
 		trapsignal(p, SIGSEGV, va);
 	}
 
