@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.54 2002/04/08 23:15:50 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.55 2002/04/10 16:14:11 lukem Exp $
 
-.include "${.CURDIR}/../Makefile.inc"
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
+
 .include <bsd.kernobj.mk>
 
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
@@ -24,7 +25,7 @@ MAKESUMS=	CKSUM=${CKSUM:Q} sh ${DISTRIBDIR}/sets/makesums
 .include "${ARCHDIR}/Makefile.inc"
 
 
-all:	check_DESTDIR .WAIT image
+realall: check_DESTDIR .WAIT image
 	@true
 
 release: check_RELEASEDIR .WAIT image
