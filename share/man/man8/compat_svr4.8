@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.18 2001/06/27 16:41:00 eeh Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.19 2001/09/05 23:47:15 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	Stolen from compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl 
+.\"	Stolen from compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl
 .\"
 .Dd April 19, 1999
 .Dt COMPAT_SVR4 8
@@ -47,18 +47,21 @@ i386 (with binaries from SCO OpenServer and XENIX), m68k (with binaries from
 and sparc (with binaries from Solaris) systems. Most programs should work,
 but not ones that use or depend on:
 .sp
-.Bl -tag -width 123 -compact -offset indent
-.It kernel internal data structures
-.br
-.It the /proc filesystem
-.br
-.It the ticotsord loopback rpc mechanism (nis uses this)
-.br
-.It sound and video interfaces
-.br
-.It threads (ttsession uses threads)
-.br
-.It the streams administrative driver
+.Bl -item -compact -offset indent
+.It
+kernel internal data structures
+.It
+the
+.Pa /proc
+filesystem
+.It
+the ticotsord loopback RPC mechanism (NIS uses this)
+.It
+sound and video interfaces
+.It
+threads (ttsession uses threads)
+.It
+the streams administrative driver
 .El
 .sp
 The SVR4 compatibility feature is active
@@ -79,52 +82,66 @@ and/or
 .Dv EXEC_ELF64
 (for 64-bit ELF support).
 .Pp
-Another compatibility feature is 
-.Dv COMPAT_SVR4_32,
+Another compatibility feature is
+.Dv COMPAT_SVR4_32 ,
 which allows the execution of 32-bit SVR4 binaries on a machine
 with a 64-bit kernel. This requires
 .Dv EXEC_ELF32
 and
 .Dv COMPAT_NETBSD32
 options as well as
-.Dv COMPAT_SVR4.
-It is configured the same way as 
+.Dv COMPAT_SVR4 .
+It is configured the same way as
 .Dv COMPAT_SVR4
-but uses the /emul/svr4_32 directory instead of /emul/svr4.  But
-typically, /emul/svr4_32 can be made to point to /emul/svr4 if the
-operating system donating the libraries has support for both 32-bit 
+but uses the
+.Pa /emul/svr4_32
+directory instead of
+.Pa /emul/svr4 .
+But typically,
+.Pa /emul/svr4_32
+can be made to point to
+.Pa /emul/svr4
+if the
+operating system donating the libraries has support for both 32-bit
 and 64-bit binaries.
 .Pp
 Execution of 32-bit SVR4 binaries on a machine with a 32-bit kernel uses
-.Dv COMPAT_SVR4,
+.Dv COMPAT_SVR4 ,
 not
-.Dv COMPAT_SVR4_32.
+.Dv COMPAT_SVR4_32 .
 .Pp
 Most SVR4 programs are dynamically linked. This means that you will
 also need the shared libraries that the program depends on and the
-runtime linker. Also, you will need to create a "shadow root"
+runtime linker. Also, you will need to create a
+.Dq shadow root
 directory for SVR4 binaries on your
 .Nx
 system. This directory
-is named /emul/svr4. Any file operations done by SVR4 programs
-run under
+is named
+.Pa /emul/svr4 .
+Any file operations done by SVR4 programs run under
 .Nx
 will look in this directory first. So, if a SVR4
-program opens, for example, /etc/passwd,
+program opens, for example,
+.Pa /etc/passwd ,
 .Nx
 will
-first try to open /emul/svr4/etc/passwd, and if that does not exist
-open the 'real' /etc/passwd file. It is recommended that you install
-SVR4 packages that include configuration files, etc under /emul/svr4,
+first try to open
+.Pa /emul/svr4/etc/passwd ,
+and if that does not exist open the
+.Sq real
+.Pa /etc/passwd
+file. It is recommended that you install
+SVR4 packages that include configuration files, etc under
+.Pa /emul/svr4 ,
 to avoid naming conflicts with possible
 .Nx
 counterparts. Shared
 libraries should also be installed in the shadow tree.
 .Pp
 The simplest way to setup your system for SVR4 binaries is:
-
-.Bl -tag -width 123 -compact
-.It 1.
+.Bl -enum -compact
+.It
 Make the necessary directories:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
@@ -137,7 +154,7 @@ Make the necessary directories:
 .It (me@netbsd) mkdir -p /emul/svr4/usr/dt/{bin,lib}
 .El
 .Pp
-.It 2.
+.It
 Copy files from an svr4 system:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
@@ -165,8 +182,7 @@ If you are running openwindows:
 .It rsh netbsd 'cd /emul/svr4/usr/dt/lib && tar -xpf -'
 .in -5
 .El
-.Pp
-.It 3.
+.It
 You will also probably need the timezone files from your Solaris
 system, otherwise emulated binaries will run on UTC time.
 .Pp
@@ -186,8 +202,7 @@ system, otherwise emulated binaries will run on UTC time.
 .It (me@netbsd) echo TZ=US/Pacific > /emul/svr4/etc/default/init
 .br
 .El
-.Pp
-.It 4.
+.It
 Setup the configuration files and devices:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
@@ -210,16 +225,21 @@ this can be overridden by setting the
 environment variable accordingly.
 .El
 .Pp
-An alternative method is to mount a whole SVR4 partition in /emul/svr4
-and then override with other mounts /emul/svr4/etc and /emul/svr4/dev.
+An alternative method is to mount a whole SVR4 partition in
+.Pa /emul/svr4
+and then override with other mounts
+.Pa /emul/svr4/etc
+and
+.Pa /emul/svr4/dev .
 .Sh BUGS
 Many system calls are still not emulated. The streams emulation is
 incomplete (socketpair does not work yet).
 .Pp
 Most SVR4 executables can not handle directory offset cookies > 32
 bits. More recent ones, compiled for large file support (Solaris 2.6
-and up) can. With older programs, you will see the message "svr4_getdents:
-dir offset too large for emulated program" when this happens. Currently,
+and up) can. With older programs, you will see the message
+.Dq svr4_getdents: dir offset too large for emulated program"
+when this happens. Currently,
 this can only happen on NFS mounted filesystems, mounted from servers
 that return offsets with information in the upper 32 bits. These errors
 should rarely happen, but can be avoided by mounting this filesystem with

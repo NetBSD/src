@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.12 2001/06/07 15:25:31 mrg Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.13 2001/09/05 23:47:15 wiz Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -48,8 +48,9 @@ executables.  Most executables will work.
 The exceptions include programs that use the
 .Tn SunOS
 kvm library,
-and various system calls, ioctl()'s, or kernel semantics
-that are difficult to emulate.
+and various system calls,
+.Fn ioctl Ns 's ,
+or kernel semantics that are difficult to emulate.
 The number of reasons why a program might fail to work is (thankfully)
 longer than the number of programs that fail to run.
 .Pp
@@ -119,7 +120,7 @@ When using
 on
 .Nx Ns Tn /sparc64 ,
 the
-.Sy COMPAT_NETBSD32
+.Dv COMPAT_NETBSD32
 option must also be used.
 .Sh BUGS
 A list of things which fail to work in compatibility mode should
@@ -127,10 +128,11 @@ be here.
 .Pp
 .Tn SunOS
 executables can not handle directory offset cookies > 32 bits.
-Should such an offset occur, you will see the message "sunos_getdents:
-dir offset too large for emulated program". Currently, this can only 
+Should such an offset occur, you will see the message
+.Dq sunos_getdents: dir offset too large for emulated program .
+Currently, this can only
 happen on NFS mounted filesystems, mounted from servers that return
-offsets with information in the upper 32 bits. These errors should 
+offsets with information in the upper 32 bits. These errors should
 rarely happen, but can be avoided by mounting this filesystem with offset
 translation enabled. See the
 .Fl X

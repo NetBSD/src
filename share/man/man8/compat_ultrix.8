@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ultrix.8,v 1.13 2001/04/04 11:22:05 wiz Exp $
+.\"	$NetBSD: compat_ultrix.8,v 1.14 2001/09/05 23:47:15 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -47,9 +47,11 @@ binaries on your machine.
 .Pp
 Most executables will work.  The exceptions include programs that use
 proprietary, Ultrix-specific features (LAT, CI support, DECnet
-support) and various system calls, ioctl()'s, or Ultrix kernel
-semantics that are difficult to emulate (e.g., Ultrix packetfilter) or
-buggy (e.g., Ultrix
+support) and various system calls,
+.Fn ioctl Ns 's ,
+or Ultrix kernel
+semantics that are difficult to emulate (e.g. Ultrix packetfilter) or
+buggy (e.g. Ultrix
 .Tn NIS ) .
 .Pp
 All Ultrix executables are static, so no shared libraries are required
@@ -63,7 +65,11 @@ or even
 equivalents, and may require
 incompatible configuration files.
 .Sh SYSTEM CONFIGURATION FILES
-Set up resolv.conf and svc.conf as below:
+Set up
+.Pa resolv.conf
+and
+.Pa svc.conf
+as below:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It # mkdir -p /emul/ultrix/etc
@@ -82,18 +88,26 @@ and
 .Sy nameserver
 lines in
 .Xr resolv.conf 5 .
-You should create a copy of /etc/resolv.conf containing only those
-commands and put it in /emul/ultrix/etc/resolv.conf.  Note that the
+You should create a copy of
+.Pa /etc/resolv.conf
+containing only those commands and put it in
+.Pa /emul/ultrix/etc/resolv.conf .
+Note that the
 domain search order used by Ultrix executables may not be the same as
 native binaries; there is no good way around this.
 .Pp
 .Ss /etc/svc.conf
-Ultrix uses /etc/svc.conf to select an ordered search of
+Ultrix uses
+.Pa /etc/svc.conf
+to select an ordered search of
 .Tn NIS ,
 Hesiod,
 or local flat-file mappings.  You should create an
-/emul/ultrix/etc/svc.conf specifying either local files or bind (DNS)
+.Pa /emul/ultrix/etc/svc.conf
+specifying either local files or bind (DNS)
 lookups for all Ultrix name services.
+.Sh SEE ALSO
+.Xr resolv.conf 5
 .Sh BUGS
 RISC Ultrix
 .Tn NIS
@@ -105,7 +119,8 @@ client will not inter-operate with the
 .Nx
 .Xr ypbind 8
 process.  The only workaround is to use
-/etc/svc.conf to disable
+.Pa /etc/svc.conf
+to disable
 .Tn NIS
 (YP).
 .Pp
@@ -125,5 +140,3 @@ with Ultrix 4.1.  An implementation of the Ultrix 4.2 Xws interface
 .Pp
 A complete list of things which fail to work in Ultrix compatibility
 mode should be added here.
-.Sh SEE ALSO
-.Xr resolv.conf 5
