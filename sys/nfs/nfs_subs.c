@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.30 1996/07/07 12:23:49 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.31 1996/10/10 23:31:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1080,20 +1080,20 @@ nfs_init()
 	 * Check to see if major data structures haven't bloated.
 	 */
 	if (sizeof (struct nfsnode) > NFS_NODEALLOC) {
-		printf("struct nfsnode bloated (> %dbytes)\n", NFS_NODEALLOC);
-		printf("Try reducing NFS_SMALLFH\n");
+		kprintf("struct nfsnode bloated (> %dbytes)\n", NFS_NODEALLOC);
+		kprintf("Try reducing NFS_SMALLFH\n");
 	}
 	if (sizeof (struct nfsmount) > NFS_MNTALLOC) {
-		printf("struct nfsmount bloated (> %dbytes)\n", NFS_MNTALLOC);
-		printf("Try reducing NFS_MUIDHASHSIZ\n");
+		kprintf("struct nfsmount bloated (> %dbytes)\n", NFS_MNTALLOC);
+		kprintf("Try reducing NFS_MUIDHASHSIZ\n");
 	}
 	if (sizeof (struct nfssvc_sock) > NFS_SVCALLOC) {
-		printf("struct nfssvc_sock bloated (> %dbytes)\n",NFS_SVCALLOC);
-		printf("Try reducing NFS_UIDHASHSIZ\n");
+		kprintf("struct nfssvc_sock bloated (> %dbytes)\n",NFS_SVCALLOC);
+		kprintf("Try reducing NFS_UIDHASHSIZ\n");
 	}
 	if (sizeof (struct nfsuid) > NFS_UIDALLOC) {
-		printf("struct nfsuid bloated (> %dbytes)\n",NFS_UIDALLOC);
-		printf("Try unionizing the nu_nickname and nu_flag fields\n");
+		kprintf("struct nfsuid bloated (> %dbytes)\n",NFS_UIDALLOC);
+		kprintf("Try unionizing the nu_nickname and nu_flag fields\n");
 	}
 #endif
 
