@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.28 2003/07/20 18:01:41 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.29 2003/07/22 03:21:21 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.28 2003/07/20 18:01:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.29 2003/07/22 03:21:21 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.28 2003/07/20 18:01:41 itojun Exp $")
 #include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <netkey/key.h>
+
 #include <crypto/des/des.h>
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
