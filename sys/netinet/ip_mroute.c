@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.13 1994/06/29 06:38:22 cgd Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.14 1995/04/13 06:34:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -86,10 +86,10 @@ static	int del_vif __P((vifi_t *vifip));
 static	int add_lgrp __P((struct lgrplctl *));
 static	int del_lgrp __P((struct lgrplctl *));
 static	int grplst_member __P((struct vif *, struct in_addr));
-static	u_long nethash __P((u_long in));
+static	u_int32_t nethash __P((u_int32_t in));
 static	int add_mrt __P((struct mrtctl *));
 static	int del_mrt __P((struct in_addr *));
-static	struct mrt *mrtfind __P((u_long));
+static	struct mrt *mrtfind __P((u_int32_t));
 static	void phyint_send __P((struct ip *, struct vif *, struct mbuf *));
 static	void srcrt_send __P((struct ip *, struct vif *, struct mbuf *));
 static	void encap_send __P((struct ip *, struct vif *, struct mbuf *));
@@ -143,8 +143,8 @@ struct ip multicast_encap_iphdr = {
  */
 static	vifi_t numvifs = 0;
 static	struct mrt *cached_mrt = NULL;
-static	u_long cached_origin;
-static	u_long cached_originmask;
+static	u_int32_t cached_origin;
+static	u_int32_t cached_originmask;
 
 static void (*encap_oldrawip)();
 
@@ -152,16 +152,16 @@ static void (*encap_oldrawip)();
  * one-back cache used by multiencap_decap to locate a tunnel's vif
  * given a datagram's src ip address.
  */
-static u_long last_encap_src;
+static u_int32_t last_encap_src;
 static struct vif *last_encap_vif;
 
 /*
  * A simple hash function: returns MRTHASHMOD of the low-order octet of
  * the argument's network or subnet number.
  */
-static u_long
+static u_int32_t
 nethash(n)
-	u_long n;
+	u_int32_t n;
 {
 	struct in_addr in;
 
@@ -197,7 +197,7 @@ struct mrt *mrtsrchash[MSRCHASHSIZ];
 
 static struct mrt *
 mrtfind(origin)
-	u_long origin;
+	u_int32_t origin;
 {
 	register struct mrt *rt;
 	register u_int hash;
@@ -582,7 +582,7 @@ grplst_member(vifp, gaddr)
 	struct in_addr gaddr;
 {
 	register int i, s;
-	register u_long addr;
+	register u_int32_t addr;
 
 	mrtstat.mrts_grp_lookups++;
 
@@ -615,7 +615,7 @@ add_mrt(mrtcp)
 	register struct mrtctl *mrtcp;
 {
 	struct mrt *rt;
-	u_long hash;
+	u_int32_t hash;
 	int s;
 
 	if (rt = mrtfind(mrtcp->mrtc_origin.s_addr)) {
@@ -661,7 +661,7 @@ del_mrt(origin)
 	register struct in_addr *origin;
 {
 	register struct mrt *rt, *prev_rt;
-	register u_long hash = nethash(origin->s_addr);
+	register u_int32_t hash = nethash(origin->s_addr);
 	register struct mrt **cmrt, **cmrtend;
 	register int s;
 
@@ -713,7 +713,7 @@ ip_mforward(m, ifp)
 	register struct vif *vifp;
 	register int vifi;
 	register u_char *ipoptions;
-	u_long tunnel_src;
+	u_int32_t tunnel_src;
 
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
 	    (ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR) {
@@ -755,7 +755,7 @@ ip_mforward(m, ifp)
 		if (ipoptions[0] != IPOPT_NOP ||
 		    ipoptions[2] != 11 ||	/* LSRR option length   */
 		    ipoptions[3] != 12 ||	/* LSRR address pointer */
-		    (tunnel_src = *(u_long *)(&ipoptions[4])) == 0) {
+		    (tunnel_src = *(u_int32_t *)(&ipoptions[4])) == 0) {
 			mrtstat.mrts_bad_tunnel++;
 			return (1);
 		}
@@ -919,9 +919,9 @@ srcrt_send(ip, vifp, m)
 	*cp++ = IPOPT_LSRR;
 	*cp++ = 11;		/* LSRR option length */
 	*cp++ = 8;		/* LSSR pointer to second element */
-	*(u_long*)cp = vifp->v_lcl_addr.s_addr;	/* local tunnel end-point */
+	*(u_int32_t*)cp = vifp->v_lcl_addr.s_addr; /* local tunnel end-point */
 	cp += 4;
-	*(u_long*)cp = ip->ip_dst.s_addr;		/* destination group */
+	*(u_int32_t*)cp = ip->ip_dst.s_addr;	   /* destination group */
 
 	error = ip_output(mb_opts, NULL, NULL, IP_FORWARDING, NULL);
 }

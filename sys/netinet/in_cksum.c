@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.9 1994/06/29 06:38:05 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.10 1995/04/13 06:27:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -53,24 +53,24 @@ in_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
 {
-	register u_short *w;
+	register u_int16_t *w;
 	register int sum = 0;
 	register int mlen = 0;
 	int byte_swapped = 0;
 
 	union {
-		char	c[2];
-		u_short	s;
+		u_int8_t  c[2];
+		u_int16_t s;
 	} s_util;
 	union {
-		u_short s[2];
-		long	l;
+		u_int16_t s[2];
+		u_int32_t l;
 	} l_util;
 
 	for (;m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_short *);
+		w = mtod(m, u_int16_t *);
 		if (mlen == -1) {
 			/*
 			 * The first byte of this mbuf is the continuation
@@ -80,9 +80,9 @@ in_cksum(m, len)
 			 * s_util.c[0] is already saved when scanning previous 
 			 * mbuf.
 			 */
-			s_util.c[1] = *(char *)w;
+			s_util.c[1] = *(u_int8_t *)w;
 			sum += s_util.s;
-			w = (u_short *)((char *)w + 1);
+			w = (u_int16_t *)((u_int8_t *)w + 1);
 			mlen = m->m_len - 1;
 			len--;
 		} else
@@ -93,11 +93,11 @@ in_cksum(m, len)
 		/*
 		 * Force to even boundary.
 		 */
-		if ((1 & (int) w) && (mlen > 0)) {
+		if ((1 & (long) w) && (mlen > 0)) {
 			REDUCE;
 			sum <<= 8;
-			s_util.c[0] = *(u_char *)w;
-			w = (u_short *)((char *)w + 1);
+			s_util.c[0] = *(u_int8_t *)w;
+			w = (u_int16_t *)((int8_t *)w + 1);
 			mlen--;
 			byte_swapped = 1;
 		}
@@ -129,13 +129,13 @@ in_cksum(m, len)
 			sum <<= 8;
 			byte_swapped = 0;
 			if (mlen == -1) {
-				s_util.c[1] = *(char *)w;
+				s_util.c[1] = *(u_int8_t *)w;
 				sum += s_util.s;
 				mlen = 0;
 			} else
 				mlen = -1;
 		} else if (mlen == -1)
-			s_util.c[0] = *(char *)w;
+			s_util.c[0] = *(u_int8_t *)w;
 	}
 	if (len)
 		printf("cksum: out of data\n");

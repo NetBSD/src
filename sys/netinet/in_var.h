@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.10 1995/03/29 22:09:30 briggs Exp $	*/
+/*	$NetBSD: in_var.h,v 1.11 1995/04/13 06:30:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -46,14 +46,14 @@ struct in_ifaddr {
 #define	ia_ifp		ia_ifa.ifa_ifp
 #define ia_flags	ia_ifa.ifa_flags
 					/* ia_{,sub}net{,mask} in host order */
-	u_long	ia_net;			/* network number of interface */
-	u_long	ia_netmask;		/* mask of net part */
-	u_long	ia_subnet;		/* subnet number, including net */
-	u_long	ia_subnetmask;		/* mask of subnet part */
+	u_int32_t ia_net;		/* network number of interface */
+	u_int32_t ia_netmask;		/* mask of net part */
+	u_int32_t ia_subnet;		/* subnet number, including net */
+	u_int32_t ia_subnetmask;	/* mask of subnet part */
 	struct	in_addr ia_netbroadcast; /* to recognize net broadcasts */
 	struct	in_ifaddr *ia_next;	/* next in list of internet addresses */
 	struct	sockaddr_in ia_addr;	/* reserve space for interface name */
-	struct	sockaddr_in ia_dstaddr; /* reserve space for broadcast addr */
+	struct	sockaddr_in ia_dstaddr;	/* reserve space for broadcast addr */
 #define	ia_broadaddr	ia_dstaddr
 	struct	sockaddr_in ia_sockmask; /* reserve space for general netmask */
 	struct	in_multi *ia_multiaddrs; /* list of multicast addresses */
@@ -198,5 +198,5 @@ int	in_ifinit __P((struct ifnet *,
 struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
 int	in_delmulti __P((struct in_multi *));
 void	in_ifscrub __P((struct ifnet *, struct in_ifaddr *));
-int	in_control __P((struct socket *, int, caddr_t, struct ifnet *));
+int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
 #endif
