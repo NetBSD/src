@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.7 2002/05/02 15:18:01 nonaka Exp $	*/
+/*	$NetBSD: platform.c,v 1.8 2002/05/30 16:10:09 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ static struct platform platform_unknown = {
 	platform_generic_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_setup */
 	pci_intr_nofixup,			/* pci_intr_fixup */
-	ext_intr,				/* ext_intr */
+	init_intr,				/* init_intr */
 	cpu_setup_unknown,			/* cpu_setup */
 	reset_unknown,				/* reset */
 	obiodevs_nodev,				/* obiodevs */
