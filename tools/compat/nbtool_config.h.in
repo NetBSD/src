@@ -1,4 +1,4 @@
-/*	$NetBSD: nbtool_config.h.in,v 1.1 2003/10/27 01:42:50 lukem Exp $	*/
+/*	$NetBSD: nbtool_config.h.in,v 1.2 2003/11/12 19:43:58 dbj Exp $	*/
 
 #ifndef	__NETBSD_NBTOOL_CONFIG_H__
 #define	__NETBSD_NBTOOL_CONFIG_H__
@@ -17,7 +17,7 @@
 #undef HAVE_NETDB_H
 #undef HAVE_MACHINE_BSWAP_H
 #undef HAVE_MALLOC_H
-#undef HAVE_POLL_H
+#undef HAVE_SYS_POLL_H
 #undef HAVE_STDDEF_H
 #undef HAVE_STRING_H
 #undef HAVE_SYS_DIR_H
