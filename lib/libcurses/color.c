@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.26 2003/10/05 08:26:02 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.27 2003/10/21 00:25:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.26 2003/10/05 08:26:02 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.27 2003/10/21 00:25:21 fvdl Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -588,7 +588,7 @@ __unset_color(WINDOW *win)
 void
 __restore_colors(void)
 {
-	if (__tc_cc != NULL)
+	if (__tc_cc != 0)
 		switch (_cursesi_screen->color_type) {
 		case COLOR_HP:
 			/* XXX: need to re-initialise HP style (Ip) */
