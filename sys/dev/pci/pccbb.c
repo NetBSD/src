@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.38 2000/04/06 09:11:57 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.39 2000/05/08 07:31:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -356,7 +356,7 @@ cb_chipset(pci_id, flagp)
 	/* Loop over except the last default entry. */
 	for (yc = yc_chipsets; yc < yc_chipsets +
 	    sizeof(yc_chipsets) / sizeof(yc_chipsets[0]) - 1; yc++)
-		if (pci_id != yc->yc_id)
+		if (pci_id == yc->yc_id)
 			break;
 
 	if (flagp != NULL)
