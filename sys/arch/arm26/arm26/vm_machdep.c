@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.5 2000/08/20 21:50:07 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.6 2000/08/22 21:22:51 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.5 2000/08/20 21:50:07 thorpej Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.6 2000/08/22 21:22:51 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -79,6 +79,7 @@ __RCSID("$NetBSD: vm_machdep.c,v 1.5 2000/08/20 21:50:07 thorpej Exp $");
 
 #include <machine/armreg.h>
 #include <machine/frame.h>
+#include <machine/intr.h>
 #include <machine/machdep.h>
 
 extern vm_map_t phys_map; /* XXX where? */
