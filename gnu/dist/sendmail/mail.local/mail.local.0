@@ -1,7 +1,5 @@
-
-
-
 MAIL.LOCAL(8)                                       MAIL.LOCAL(8)
+
 
 
 NNAAMMEE
@@ -58,18 +56,6 @@ EENNVVIIRROONNMMEENNTT
        TZ     Used to set the appropriate time zone on the times-
               tamp.
 
-
-
-
-                   Date: 2000/12/29 18:12:16                 1
-
-
-
-
-
-MAIL.LOCAL(8)                                       MAIL.LOCAL(8)
-
-
 FFIILLEESS
        /tmp/local.XXXXXX     temporary files
        /var/mail/user        user's mailbox directory
@@ -92,41 +78,4 @@ HHIISSTTOORRYY
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                   Date: 2000/12/29 18:12:16                 2
-
-
+                   Date: 2000/12/29 18:12:16     MAIL.LOCAL(8)
