@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/06 03:05:40 rtr Exp $
-
-XTODO=	only install on make distribution??
+#	$NetBSD: Makefile,v 1.4 2004/05/16 10:25:14 lukem Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.xc}/extras/fontconfig
 
-FILESDIR=/etc/fonts
-FILES=	fonts.conf fonts.dtd
+CONFIGFILES=	fonts.conf fonts.dtd
+FILESDIR=	/etc/fonts
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

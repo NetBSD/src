@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/05/16 10:25:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,12 +7,14 @@ SRCS=	auth.c choose.c info.c list.c lock.c log.c \
 	mainwin.c misc.c popup.c printhex.c prop.c remote.c \
 	restart.c save.c saveutil.c signals.c xsm.c xtwatch.c
 
+XSMDIR=	${X11ETCDIR}/xsm
+
 CPPFLAGS+=-DHAS_MKSTEMP
 CPPFLAGS.remote.c=	-DRSHCMD=\"rsh\"
-CPPFLAGS.restart.c=	-DSYSTEM_INIT_FILE=\"${X11LIBDIR}/xsm/system.xsm\"
+CPPFLAGS.restart.c=	-DSYSTEM_INIT_FILE=\"${XSMDIR}/system.xsm\"
 
-FILES=	system.xsm
-FILESDIR=${X11LIBDIR}/xsm
+CONFIGFILES=	system.xsm
+FILESDIR=	${XSMDIR}
 
 APPDEFS=XSm.ad
 

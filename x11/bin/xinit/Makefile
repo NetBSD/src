@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/04/24 03:42:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2004/05/16 10:25:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,8 @@
 PROG=	xinit
 MAN=	xinit.1 startx.1
 
+XINITDIR=	${X11ETCDIR}/xinit
+
 CPPFLAGS+=	-DHAS_VFORK ${X11FLAGS.CONNECTION} -DBINDIR=\"${X11BINDIR}\" \
 
 .if ${XSERVER_XFREE86} != "no"
@@ -14,19 +16,19 @@ CPPFLAGS+=	-DXFREE86
 .endif
 
 CPPSCRIPTS=	startx xinitrc
-CPPSCRIPTFLAGS_xinitrc=	-DXINITDIR=${X11LIBDIR}/xinit -DBINDIR=${X11BINDIR}
-CPPSCRIPTFLAGS_startx=	-DXINITDIR=${X11LIBDIR}/xinit -DBINDIR=${X11BINDIR} \
+CPPSCRIPTFLAGS_xinitrc=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR}
+CPPSCRIPTFLAGS_startx=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR} \
 		-DHAS_COOKIE_MAKER \
 		-DMK_COOKIE='dd if=/dev/urandom bs=16 count=1 2>/dev/null | hexdump -e \\"%08x\\"'
 
 SCRIPTS=	startx
-FILES=		xinitrc
-FILESDIR=	${X11LIBDIR}/xinit
+CONFIGFILES=	xinitrc
+FILESDIR=	${XINITDIR}
 
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
-X11EXTRAMANDEFS=-D__xinitdir__=${X11LIBDIR}/xinit
+X11EXTRAMANDEFS=-D__xinitdir__=${XINITDIR}
 
 .PATH:	${X11SRCDIR.xc}/programs/${PROG}
 

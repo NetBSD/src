@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/12/23 04:07:15 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/05/16 10:25:14 lukem Exp $
 
 LIB=		ext
 SRCS=		EVI.c appgroup.c bigreq.c cup.c dpms.c fontcache.c mitmisc.c \
@@ -11,8 +11,8 @@ SRCS=		EVI.c appgroup.c bigreq.c cup.c dpms.c fontcache.c mitmisc.c \
 SRCS+=	xf86vmode.c xf86misc.c xf86dga.c xf86dga2.c
 .endif
 
-FILESDIR=	${X11LIBDIR}/xserver
-FILES=		SecurityPolicy
+CONFIGFILES=	SecurityPolicy
+FILESDIR=	${X11ETCDIR}/xserver
 
 .include "../../Makefile.serverlib"
 .include "../Makefile.ext"

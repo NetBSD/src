@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.262 2004/05/12 03:58:47 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.263 2004/05/16 10:25:14 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -11,6 +11,18 @@
 ./dev/fd
 ./etc
 ./etc/X11
+./etc/X11/fs
+./etc/X11/lbxproxy
+./etc/X11/proxymngr
+./etc/X11/rstart
+./etc/X11/rstart/commands
+./etc/X11/rstart/commands/x11r6
+./etc/X11/rstart/contexts
+./etc/X11/twm
+./etc/X11/xdm
+./etc/X11/xinit
+./etc/X11/xserver
+./etc/X11/xsm
 ./etc/cgd			mode=0700
 ./etc/defaults
 ./etc/fonts
@@ -86,8 +98,6 @@
 ./usr/X11R6/lib/X11/fonts/local
 ./usr/X11R6/lib/X11/fonts/misc
 ./usr/X11R6/lib/X11/fonts/util
-./usr/X11R6/lib/X11/fs
-./usr/X11R6/lib/X11/lbxproxy
 ./usr/X11R6/lib/X11/locale
 ./usr/X11R6/lib/X11/locale/C
 ./usr/X11R6/lib/X11/locale/armscii-8
@@ -143,19 +153,10 @@
 ./usr/X11R6/lib/X11/locale/zh_TW
 ./usr/X11R6/lib/X11/locale/zh_TW.UTF-8
 ./usr/X11R6/lib/X11/locale/zh_TW.big5
-./usr/X11R6/lib/X11/proxymngr
-./usr/X11R6/lib/X11/rstart
-./usr/X11R6/lib/X11/rstart/commands
-./usr/X11R6/lib/X11/rstart/commands/x11r6
-./usr/X11R6/lib/X11/rstart/contexts
-./usr/X11R6/lib/X11/twm
 ./usr/X11R6/lib/X11/x11perfcomp
-./usr/X11R6/lib/X11/xdm
-./usr/X11R6/lib/X11/xdm/pixmaps
 ./usr/X11R6/lib/X11/xedit
 ./usr/X11R6/lib/X11/xedit/lisp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes
-./usr/X11R6/lib/X11/xinit
 ./usr/X11R6/lib/X11/xkb
 ./usr/X11R6/lib/X11/xkb/compat
 ./usr/X11R6/lib/X11/xkb/compiled
@@ -185,8 +186,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/sun
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68
 ./usr/X11R6/lib/X11/xkb/types
-./usr/X11R6/lib/X11/xserver
-./usr/X11R6/lib/X11/xsm
 ./usr/X11R6/lib/modules
 ./usr/X11R6/lib/modules/codeconv
 ./usr/X11R6/lib/modules/extensions

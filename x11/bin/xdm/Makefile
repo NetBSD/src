@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/05/12 03:58:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2004/05/16 10:25:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -21,9 +21,9 @@ CPPFLAGS.resource.c=	\
 	-DDEF_SYSTEM_PATH=\"/sbin:/usr/sbin:/bin:/usr/bin:${X11BINDIR}\" \
 	-DDEF_SYSTEM_SHELL=\"/bin/sh\" \
 	-DDEF_FAILSAFE_CLIENT=\"${X11BINDIR}/xterm\" \
-	-DDEF_XDM_CONFIG=\"${X11LIBDIR}/xdm/xdm-config\" \
+	-DDEF_XDM_CONFIG=\"${XDMDIR}/xdm-config\" \
 	-DDEF_AUTH_DIR=\"${XDMVARDIR}\" \
-	-DDEF_GREETER_LIB=\"${X11LIBDIR}/xdm/libXdmGreet.so\"
+	-DDEF_GREETER_LIB=\"${XDMGREETERLIB}\"
 
 LDADD+=		-lXau -lXdmcp -lXinerama -lXpm -lXmu
 LDADD+=		-lXt -lSM -lICE -lXext -lX11 -lcrypt
@@ -32,14 +32,21 @@ DPADD+=		${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBCRYPT}
 
 SUBDIR=		chooser config sessreg
 # SUBDIR+=	xdmshell	# XXX
+TARGETS+=	configinstall
 
 .PATH:		${X11SRCDIR.xc}/programs/${PROG}/greeter
 
 .include "Makefile.xdm"
 
-CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${CHOOSERPATH}\"
-X11EXTRAMANDEFS+=	-DCHOOSERPATH=${CHOOSERPATH}
-SYMLINKS+=		${CHOOSERPATH} ${X11LIBDIR}/xdm/chooser
+CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${XDMCHOOSERPATH}\"
+
+X11EXTRAMANDEFS+=	-DARC4_RANDOM \
+			-DCHOOSERPATH=${XDMCHOOSERPATH} \
+			-DGREETERLIBPATH=${XDMGREETERLIB} \
+			-DXDMDIR=${XDMDIR} \
+			-DXDMAUTHDIR=${XDMVARDIR} \
+			-DXDMLOGDIR=${XDMLOGDIR} \
+			-DXDMPIDDIR=${XDMPIDDIR}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

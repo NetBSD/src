@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.476 2004/05/12 03:58:47 lukem Exp $
+# $NetBSD: mi,v 1.477 2004/05/16 10:25:13 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -54,6 +54,18 @@
 ./dev/log					base-sys-root
 ./etc						base-sys-root
 ./etc/X11					base-x11-root
+./etc/X11/fs					base-x11-root
+./etc/X11/lbxproxy				base-x11-root
+./etc/X11/proxymngr				base-x11-root
+./etc/X11/rstart				base-x11-root
+./etc/X11/rstart/commands			base-x11-root
+./etc/X11/rstart/commands/x11r6			base-x11-root
+./etc/X11/rstart/contexts			base-x11-root
+./etc/X11/twm					base-x11-root
+./etc/X11/xdm					base-x11-root
+./etc/X11/xinit					base-x11-root
+./etc/X11/xserver				base-x11-root
+./etc/X11/xsm					base-x11-root
 ./etc/cgd					base-sys-root
 ./etc/defaults					base-sys-root
 ./etc/disklabels				base-obsolete		obsolete
@@ -233,8 +245,6 @@
 ./usr/X11R6/lib/X11/fonts/local			base-x11-root
 ./usr/X11R6/lib/X11/fonts/misc			base-x11-root
 ./usr/X11R6/lib/X11/fonts/util			base-x11-root
-./usr/X11R6/lib/X11/fs				base-x11-root
-./usr/X11R6/lib/X11/lbxproxy			base-x11-root
 ./usr/X11R6/lib/X11/locale			base-x11-root
 ./usr/X11R6/lib/X11/locale/C			base-x11-root
 ./usr/X11R6/lib/X11/locale/armscii-8		base-x11-root
@@ -290,19 +300,10 @@
 ./usr/X11R6/lib/X11/locale/zh_TW		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_TW.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_TW.big5		base-x11-root
-./usr/X11R6/lib/X11/proxymngr			base-x11-root
-./usr/X11R6/lib/X11/rstart			base-x11-root
-./usr/X11R6/lib/X11/rstart/commands		base-x11-root
-./usr/X11R6/lib/X11/rstart/commands/x11r6	base-x11-root
-./usr/X11R6/lib/X11/rstart/contexts		base-x11-root
-./usr/X11R6/lib/X11/twm				base-x11-root
 ./usr/X11R6/lib/X11/x11perfcomp			base-x11-root
-./usr/X11R6/lib/X11/xdm				base-x11-root
-./usr/X11R6/lib/X11/xdm/pixmaps			base-x11-root
 ./usr/X11R6/lib/X11/xedit			base-x11-root
 ./usr/X11R6/lib/X11/xedit/lisp			base-x11-root
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes	base-x11-root
-./usr/X11R6/lib/X11/xinit			base-x11-root
 ./usr/X11R6/lib/X11/xkb				base-x11-root
 ./usr/X11R6/lib/X11/xkb/compat			base-x11-root
 ./usr/X11R6/lib/X11/xkb/compiled		base-x11-root
@@ -332,8 +333,6 @@
 ./usr/X11R6/lib/X11/xkb/symbols/sun		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68		base-x11-root
 ./usr/X11R6/lib/X11/xkb/types			base-x11-root
-./usr/X11R6/lib/X11/xserver			base-x11-root
-./usr/X11R6/lib/X11/xsm				base-x11-root
 ./usr/X11R6/lib/modules				base-x11-root
 ./usr/X11R6/lib/modules/codeconv		base-x11-root
 ./usr/X11R6/lib/modules/drivers			base-x11-root

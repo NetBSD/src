@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/03/06 03:09:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.7 2004/05/16 10:25:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,9 @@ CPPFLAGS+=		-I${X11SRCDIR.xc}/programs/xfs/include \
 CONN_DEFINES=		${X11FLAGS.CONNECTION} -DFONT_t -DTRANS_SERVER \
 			-DTRANS_REOPEN
 
-CPPFLAGS.main.c=	-DDEFAULT_CONFIG_FILE=\"${X11LIBDIR}/fs/config\"
+XFSCONFIGDIR=		${X11ETCDIR}/fs
+
+CPPFLAGS.main.c=	-DDEFAULT_CONFIG_FILE=\"${XFSCONFIGDIR}/config\"
 CPPFLAGS.initfonts.c=	-DFONT_PCF -DFONT_FS -DFONT_SPEEDO -DFONTCACHE
 CPPFLAGS.connection.c=	${CONN_DEFINES} -DBSD44SOCKETS \
 			${X11FLAGS.OS_DEFINES}
@@ -33,14 +35,17 @@ CPPFLAGS.osglue.c=	${CONN_DEFINES} \
 			${X11FLAGS.OS_DEFINES}
 CPPFLAGS.config.c=	${CONN_DEFINES} -DFONTCACHE
 
+X11EXTRAMANDEFS+=	-DDEFAULT_CONFIG_FILE=${XFSCONFIGDIR}/config
+
 
 BUILDSYMLINKS=	config.cpp fsconfig.cpp
 CPPSCRIPTS=	fsconfig
 CPPSCRIPTFLAGS=	-DDEFAULTFONTPATH=${X11FONTDIR}/misc/,${X11FONTDIR}/Speedo/,${X11FONTDIR}/Type1/,${X11FONTDIR}/CID/,${X11FONTDIR}/75dpi/,${X11FONTDIR}/100dpi/ \
 		-DFSERRORS=/var/log/xfs.log
-FILES=		fsconfig
+
+CONFIGFILES=	fsconfig
 FILESNAME=	config
-FILESDIR=	${X11LIBDIR}/fs
+FILESDIR=	${XFSCONFIGDIR}
 
 
 LDADD+=	-lXfont -lfntstubs -lXfontcache -lXext -lX11 -lfreetype -lm -lz

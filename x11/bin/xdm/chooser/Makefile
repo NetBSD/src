@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/02 17:19:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/05/16 10:25:14 lukem Exp $
 
 NOMAN=	1
 
@@ -17,5 +17,5 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 .include "../Makefile.xdm"
 
 .include <bsd.x11.mk>
-BINDIR=	${CHOOSERPATH:H}
+BINDIR=	${XDMCHOOSERPATH:H}
 .include <bsd.prog.mk>
