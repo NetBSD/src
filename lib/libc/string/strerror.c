@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.8 1998/02/16 11:27:16 lukem Exp $	*/
+/*	$NetBSD: strerror.c,v 1.9 1998/07/26 13:36:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: strerror.c,v 1.8 1998/02/16 11:27:16 lukem Exp $");
+__RCSID("$NetBSD: strerror.c,v 1.9 1998/07/26 13:36:34 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: strerror.c,v 1.8 1998/02/16 11:27:16 lukem Exp $");
  * internal function __strerror().
  */
 
-char *
+const char *
 strerror(num)
 	int num;
 {
