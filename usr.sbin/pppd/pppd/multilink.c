@@ -1,5 +1,3 @@
-/*	$NetBSD: multilink.c,v 1.1.1.1 2000/09/23 22:14:52 christos Exp $	*/
-
 /*
  * multilink.c - support routines for multilink.
  *
@@ -51,7 +49,7 @@ static int owns_unit __P((TDB_DATA pid, int unit));
 	 || ((addr) & 0xfff00000) == 0xac100000		/* 172.16.x.x */  \
 	 || ((addr) & 0xffff0000) == 0xc0a80000)	/* 192.168.x.x */
 
-#define process_exists(n)	(kill(0, (n)) == 0 || errno != ESRCH)
+#define process_exists(n)	(kill((n), 0) == 0 || errno != ESRCH)
 
 void
 mp_check_options()
@@ -73,9 +71,6 @@ mp_check_options()
 	if (!wo->neg_endpoint && !noendpoint) {
 		/* get a default endpoint value */
 		wo->neg_endpoint = get_default_epdisc(&wo->endpoint);
-		if (wo->neg_endpoint)
-			dbglog("using default endpoint %s",
-			       epdisc_to_str(&wo->endpoint));
 	}
 }
 
@@ -88,8 +83,9 @@ mp_join_bundle()
 {
 	lcp_options *go = &lcp_gotoptions[0];
 	lcp_options *ho = &lcp_hisoptions[0];
+	lcp_options *ao = &lcp_allowoptions[0];
 	int unit, pppd_pid;
-	int l;
+	int l, mtu;
 	char *p;
 	TDB_DATA key, pid, rec;
 
@@ -97,13 +93,18 @@ mp_join_bundle()
 		/* not doing multilink */
 		if (go->neg_mrru)
 			notice("oops, multilink negotiated only for receive");
+		mtu = ho->neg_mru? ho->mru: PPP_MRU;
+		if (mtu > ao->mru)
+			mtu = ao->mru;
 		if (demand) {
 			/* already have a bundle */
 			cfg_bundle(0, 0, 0, 0);
+			netif_set_mtu(0, mtu);
 			return 0;
 		}
 		make_new_bundle(0, 0, 0, 0);
 		set_ifunit(1);
+		netif_set_mtu(0, mtu);
 		return 0;
 	}
 
@@ -136,8 +137,10 @@ mp_join_bundle()
 	 * For demand mode, we only need to configure the bundle
 	 * and attach the link.
 	 */
+	mtu = MIN(ho->mrru, ao->mru);
 	if (demand) {
 		cfg_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
+		netif_set_mtu(0, mtu);
 		script_setenv("BUNDLE", bundle_id + 7, 1);
 		return 0;
 	}
@@ -181,6 +184,7 @@ mp_join_bundle()
 	/* we have to make a new bundle */
 	make_new_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
 	set_ifunit(1);
+	netif_set_mtu(0, mtu);
 	script_setenv("BUNDLE", bundle_id + 7, 1);
 	tdb_writeunlock(pppdb);
 	info("New bundle %s created", ifname);
