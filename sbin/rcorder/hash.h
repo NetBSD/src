@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.1 1999/11/23 05:28:21 mrg Exp $	*/
+/*	$NetBSD: hash.h,v 1.2 2002/06/30 14:17:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@ typedef struct Hash_Entry {
 	struct	Hash_Entry *next;	/* Used to link together all the
 					 * entries associated with the same
 					 * bucket. */
-	ClientData	clientData;	/* Arbitrary piece of data associated
+	void		*clientData;	/* Arbitrary piece of data associated
 					 * with key. */
 	unsigned	namehash;	/* hash value of key */
 	char		name[1];	/* key string */
@@ -90,7 +90,7 @@ typedef struct Hash_Search {
  */
 
 /*
- * ClientData Hash_GetValue(h)
+ * void *Hash_GetValue(h)
  *     Hash_Entry *h;
  */
 
@@ -102,16 +102,14 @@ typedef struct Hash_Search {
  *     char *val;
  */
 
-#define Hash_SetValue(h, val) ((h)->clientData = (ClientData) (val))
+#define Hash_SetValue(h, val) ((h)->clientData = (void *) (val))
 
-#ifdef ORDER
 /*
  * Hash_GetKey(h);
  *     Hash_Entry *h;
  */
 
 #define Hash_GetKey(h) ((h)->name)
-#endif /* ORDER */
 
 /*
  * Hash_Size(n) returns the number of words in an object of n bytes
@@ -119,12 +117,12 @@ typedef struct Hash_Search {
 
 #define	Hash_Size(n)	(((n) + sizeof (int) - 1) / sizeof (int))
 
-void Hash_InitTable __P((Hash_Table *, int));
-void Hash_DeleteTable __P((Hash_Table *));
-Hash_Entry *Hash_FindEntry __P((Hash_Table *, char *));
-Hash_Entry *Hash_CreateEntry __P((Hash_Table *, char *, Boolean *));
-void Hash_DeleteEntry __P((Hash_Table *, Hash_Entry *));
-Hash_Entry *Hash_EnumFirst __P((Hash_Table *, Hash_Search *));
-Hash_Entry *Hash_EnumNext __P((Hash_Search *));
+void Hash_InitTable(Hash_Table *, int);
+void Hash_DeleteTable(Hash_Table *);
+Hash_Entry *Hash_FindEntry(Hash_Table *, char *);
+Hash_Entry *Hash_CreateEntry(Hash_Table *, char *, int *);
+void Hash_DeleteEntry(Hash_Table *, Hash_Entry *);
+Hash_Entry *Hash_EnumFirst(Hash_Table *, Hash_Search *);
+Hash_Entry *Hash_EnumNext(Hash_Search *);
 
 #endif /* _HASH */

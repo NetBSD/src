@@ -1,4 +1,4 @@
-/*	$NetBSD: ealloc.c,v 1.1 1999/11/23 05:28:20 mrg Exp $	*/
+/*	$NetBSD: ealloc.c,v 1.2 2002/06/30 14:17:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ealloc.c,v 1.1 1999/11/23 05:28:20 mrg Exp $");
+__RCSID("$NetBSD: ealloc.c,v 1.2 2002/06/30 14:17:44 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,15 +50,16 @@ __RCSID("$NetBSD: ealloc.c,v 1.1 1999/11/23 05:28:20 mrg Exp $");
 
 #include "ealloc.h"
 
-static void enomem __P((void));
+static void enomem(void);
 
 /*
  * enomem --
  *	die when out of memory.
  */
 static void
-enomem()
+enomem(void)
 {
+
 	errx(2, "Cannot allocate memory.");
 }
 
@@ -67,10 +68,9 @@ enomem()
  *	malloc, but die on error.
  */
 void *
-emalloc(len)
-	size_t len;
+emalloc(size_t len)
 {
-	void *p;
+	void	*p;
 
 	if ((p = malloc(len)) == NULL)
 		enomem();
@@ -82,10 +82,9 @@ emalloc(len)
  *	strdup, but die on error.
  */
 char *
-estrdup(str)
-	const char *str;
+estrdup(const char *str)
 {
-	char *p;
+	char	*p;
 
 	if ((p = strdup(str)) == NULL)
 		enomem();
@@ -97,10 +96,9 @@ estrdup(str)
  *	realloc, but die on error.
  */
 void *
-erealloc(ptr, size)
-	void *ptr;
-	size_t size;
+erealloc(void *ptr, size_t size)
 {
+
 	if ((ptr = realloc(ptr, size)) == NULL)
 		enomem();
 	return(ptr);
@@ -111,9 +109,7 @@ erealloc(ptr, size)
  *	calloc, but die on error.
  */
 void *
-ecalloc(nmemb, size)
-	size_t nmemb;
-	size_t size;
+ecalloc(size_t nmemb, size_t size)
 {
 	void	*ptr;
 
