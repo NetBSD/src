@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.88 2002/10/23 09:15:09 jdolecek Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.89 2002/12/31 15:00:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.88 2002/10/23 09:15:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.89 2002/12/31 15:00:18 yamt Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -2068,7 +2068,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 #endif
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
-	tvp->v_type = VNON;
 	vput(tvp);
 	return (error);
 }
