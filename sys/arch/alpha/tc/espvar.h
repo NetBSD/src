@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.1 1995/02/13 23:08:58 cgd Exp $	*/
+/*	$NetBSD: espvar.h,v 1.2 1995/08/03 00:52:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -305,9 +305,9 @@ struct esp_softc {
 
 #if ESP_DEBUG > 1
 #define	ESPCMD(sc, cmd) \
-	printf("cmd:0x%02x ", sc->sc_reg->esp_cmd = cmd); MB();
+	printf("cmd:0x%02x ", sc->sc_reg->esp_cmd = cmd); wbflush();
 #else
-#define	ESPCMD(sc, cmd)		sc->sc_reg->esp_cmd = cmd; MB();
+#define	ESPCMD(sc, cmd)		sc->sc_reg->esp_cmd = cmd; wbflush();
 #endif
 
 #define SAME_ESP(sc, bp, ca) \

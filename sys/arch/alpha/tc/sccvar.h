@@ -1,4 +1,4 @@
-/*	$NetBSD: sccvar.h,v 1.1 1995/02/13 23:09:05 cgd Exp $	*/
+/*	$NetBSD: sccvar.h,v 1.2 1995/08/03 00:52:23 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -97,7 +97,7 @@ typedef struct {
 #define	scc_get_datum(d, v) \
 	do { (v) = ((d) >> 8) & 0xff; } while (0)
 #define	scc_set_datum(d, v) \
-	do { (d) = (volatile unsigned int)(v) << 8; MB(); } while (0)
+	do { (d) = (volatile unsigned int)(v) << 8; wbflush(); } while (0)
 
 /*
  * Minor device numbers for scc.  Weird because B channel comes first and

@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.4 1995/06/28 01:03:57 cgd Exp $	*/
+/*	$NetBSD: asic.c,v 1.5 1995/08/03 00:52:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -140,7 +140,7 @@ asicattach(parent, self, aux)
 	if (cputype == ST_DEC_3000_300) {
 		*(volatile u_int *)ASIC_REG_CSR(sc->sc_base) |=
 		    ASIC_CSR_FASTMODE;
-		MB();
+		wbflush();
 		printf(": slow mode\n");
 	} else
 #endif
@@ -243,9 +243,9 @@ asic_intr(val)
 	gifound = 0;
 	do {
 		ifound = 0;
-		MB();
+		wbflush();
 		MAGIC_READ;
-		MB();
+		wbflush();
 
 		sir = *sirp;
 		for (i = 0; i < ASIC_MAX_NSLOTS; i++)
@@ -285,7 +285,7 @@ flamingo_set_leds(value)
 	 */
 	*(volatile u_int *)ASIC_REG_CSR(sc->sc_base) &= ~0x7f;
 	*(volatile u_int *)ASIC_REG_CSR(sc->sc_base) |= value & 0x7f;
-	MB();
+	wbflush();
 	DELAY(10000);
 }
 #endif
