@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 2000/11/01 23:55:39 lukem Exp $
+.\"	$NetBSD: prep,v 1.9 2000/11/02 08:20:27 mbw Exp $
 .
 .Ss2 Open Firmware System Preparation
 .
@@ -59,6 +59,19 @@ console.  The later models (Open Firmware versions 2.4 and 3) will default
 to using the on-board video and keyboard.  The instructions below describe
 how to set your system up to access Open Firmware from the on-board video 
 and keyboard.
+.Pp
+If, for some reason, you need to use a serial console, you can use a
+normal 
+.Sq printer
+cable (mini-DIN 8 to mini-DIN 8) and a 
+.Tn MacOS
+tool, such as ZTerm to
+connect a 
+.Tn MacOS
+system to your
+.Nx*M
+system.
+.Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/comm/term/zterm-101.hqx
 .
 .Ss2 Getting to the Open Firmware Prompt (Easy method using MacOS)
 .
@@ -324,6 +337,15 @@ You will need to re-enter them before booting
 .Nx
 again.
 .Note)
+.Pp
+.(Note
+Open Firmware 2.x systems will set the
+.Li real-base
+environment variable to its default value (which doesn't work) if you boot
+into 
+.Tn MacOS .
+.Note)
+.
 .
 .Ss2 Available Boot Media
 .
@@ -499,6 +521,19 @@ on a hard drive on your \*M system.
 If you will be running your system diskless (i.e. entirely over NFS, not
 using any local hard drives), then you do not need to run the installer
 although you may still do so.
+.Pp
+.(Note
+Some
+.Tn MacOS
+.Ic ftp
+clients default to downloading files in 
+.Sq ASCII
+mode.  This will render the
+.Nx
+files useless.  Make sure to set your ftp program to download in
+.Sq binary
+mode.
+.Note)
 .Pp
 Here are some common techniques for booting the
 .Nx

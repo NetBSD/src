@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6 2000/11/01 23:57:32 lukem Exp $
+.\"	$NetBSD: install,v 1.7 2000/11/02 08:20:27 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -214,6 +214,10 @@ See the
 .Nx*M
 FAQ for a thorough list.
 .Lk http://www.netbsd.org/Ports/macppc/faq.html
+.(Note
+You may find it necessary to remove all non-Apple devices in your
+machine.  Some users have found this necessary.
+.Note)
 .Pp
 .(bullet
 .Dq Li "DEFAULT CATCH!"
@@ -321,3 +325,34 @@ Try unplugging your Zip drive. If that doesn't work, see
 .bullet)
 .
 .so ../common/sysinst
+.
+Now, you can reboot to get to the Open Firmware prompt.  Once there, you
+can set Open Firmware to always boot into 
+.Nx
+from the media of your choice.  First, make sure you know what command you
+need to use to boot (see above).  If you are using a 
+.Sq partition zero
+style boot scheme, you would type something like the following:
+.Pp
+.Dl 0 > Ic "setenv auto-boot? true"
+.Dl 0 > Ic "setenv boot-device scsi/sd@0:0"
+.Dl 0 > Ic "setenv boot-file netbsd"
+.Pp
+replacing 
+.Ic scsi/sd@0:0
+with the actual device you will be booting from.  If you find that your
+system tries booting before your hard drive has spun up, you may need to
+also enter something like:
+.Pp
+.Dl 0 > Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
+.Pp
+If you are not using a
+.Sq partition zero
+style boot scheme, then you can still plug in all the information you
+need:
+.Pp
+.Dl 0 > Ic "setenv auto-boot? true"
+.Dl 0 > Ic "setenv boot-device ide0/disk@0:8,ofwboot.elf"
+.Dl 0 > Ic "setenv boot-file ide0/disk@0:13,/netbsd"
+.Dl 0 > Ic "setenv boot-command boot"
+.Pp
