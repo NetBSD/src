@@ -86,7 +86,9 @@ Boston, MA 02111-1307, USA.  */
   %{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} \
   %{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} \
   %{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3} \
-  %{membedded-pic} %{fpic:-k} %{fPIC:-k -K}"
+  %{membedded-pic} \
+  %{!mno-abicalls: \
+    %{!fno-PIC:%{!fno-pic:-KPIC}}}"
 
 /* Provide a LINK_SPEC appropriate for a NetBSD ELF target.  */
 
