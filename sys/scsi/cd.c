@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.88 1996/03/27 01:11:41 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.89 1996/03/29 14:50:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -639,7 +639,6 @@ cdread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 
 	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
 }
@@ -650,7 +649,6 @@ cdwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 
 	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
