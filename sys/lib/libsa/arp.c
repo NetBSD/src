@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.17 1997/06/26 19:11:30 drochner Exp $	*/
+/*	$NetBSD: arp.c,v 1.18 1997/07/07 15:52:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <netinet/in.h>
 
 #include <netinet/in_systm.h>
@@ -52,9 +53,28 @@
 #include <string.h>
 #endif
 
-#include "if_ether.h"
 #include "stand.h"
 #include "net.h"
+
+/*
+ * Ethernet Address Resolution Protocol.
+ *
+ * See RFC 826 for protocol description.  Structure below is adapted
+ * to resolving internet addresses.  Field names used correspond to 
+ * RFC 826.
+ */
+struct	ether_arp {
+	struct	 arphdr ea_hdr;			/* fixed-size header */
+	u_int8_t arp_sha[ETHER_ADDR_LEN];	/* sender hardware address */
+	u_int8_t arp_spa[4];			/* sender protocol address */
+	u_int8_t arp_tha[ETHER_ADDR_LEN];	/* target hardware address */
+	u_int8_t arp_tpa[4];			/* target protocol address */
+};
+#define	arp_hrd	ea_hdr.ar_hrd
+#define	arp_pro	ea_hdr.ar_pro
+#define	arp_hln	ea_hdr.ar_hln
+#define	arp_pln	ea_hdr.ar_pln
+#define	arp_op	ea_hdr.ar_op
 
 /* Cache stuff */
 #define ARP_NUM 8			/* need at most 3 arp entries */
