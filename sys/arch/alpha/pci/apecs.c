@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.34 1998/06/26 21:45:56 ross Exp $ */
+/* $NetBSD: apecs.c,v 1.35 1999/04/10 01:21:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.34 1998/06/26 21:45:56 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.35 1999/04/10 01:21:38 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ apecsattach(parent, self, aux)
 	if (!acp->ac_epic_pass2)
 		printf("WARNING: 21071-DA NOT PASS2... NO BETS...\n");
 
-	switch (hwrpb->rpb_type) {
+	switch (cputype) {
 #ifdef DEC_2100_A50
 	case ST_DEC_2100_A50:
 		pci_2100_a50_pickintr(acp);

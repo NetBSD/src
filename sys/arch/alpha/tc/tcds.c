@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.26 1999/03/02 01:44:30 nisimura Exp $ */
+/* $NetBSD: tcds.c,v 1.27 1999/04/10 01:21:38 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.26 1999/03/02 01:44:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.27 1999/04/10 01:21:38 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -179,9 +179,6 @@ tcdsattach(parent, self, aux)
 	struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
 	int i, error, gpi2;
-#ifdef __alpha__
-	extern int cputype;
-#endif
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
