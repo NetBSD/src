@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.18 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.19 2003/09/06 22:09:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.18 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.19 2003/09/06 22:09:20 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -263,6 +263,7 @@ compat_43_sys_killpg(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) signum;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
+	ksiginfo_t ksi;
 
 #ifdef COMPAT_09
 	SCARG(uap, pgid) = (short) SCARG(uap, pgid);
@@ -270,5 +271,10 @@ compat_43_sys_killpg(struct lwp *l, void *v, register_t *retval)
 
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
-	return (killpg1(p, SCARG(uap, signum), SCARG(uap, pgid), 0));
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SCARG(uap, signum);
+	ksi.ksi_code = SI_USER;
+	ksi.ksi_pid = p->p_pid;
+	ksi.ksi_uid = p->p_ucred->cr_uid;
+	return (killpg1(p, &ksi, SCARG(uap, pgid), 0));
 }

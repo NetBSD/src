@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.95 2003/08/24 17:52:43 chs Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.96 2003/09/06 22:09:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.95 2003/08/24 17:52:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.96 2003/09/06 22:09:21 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -192,15 +192,12 @@ linux_setregs(l, epp, stack)
  */
 
 void
-linux_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
-	if (SIGACTION(curproc, sig).sa_flags & SA_SIGINFO)
-		linux_rt_sendsig(sig, mask, code);
+	if (SIGACTION(curproc, ksi->ksi_signo).sa_flags & SA_SIGINFO)
+		linux_rt_sendsig(ksi->ksi_signo, mask, ksi->ksi_trap);
 	else
-		linux_old_sendsig(sig, mask, code);
+		linux_old_sendsig(ksi->ksi_signo, mask, ksi->ksi_trap);
 }
 
 
