@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.10 2004/07/07 21:54:21 mycroft Exp $	*/
+/*	$NetBSD: if_url.c,v 1.11 2004/10/22 09:39:06 augustss Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.10 2004/07/07 21:54:21 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.11 2004/10/22 09:39:06 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -159,7 +159,11 @@ static const struct url_type {
 	/* MELCO LUA-KTX */
 	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUAKTX }, 0},
 	/* Realtek RTL8150L Generic (GREEN HOUSE USBKR100) */
-	{{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8150L}, 0}
+	{{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8150L}, 0},
+	/* Longshine LCS-8138TX */
+	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_LCS8138TX}, 0},
+	/* Micronet SP128AR */
+	{{ USB_VENDOR_MICRONET, USB_PRODUCT_MICRONET_SP128AR}, 0},
 };
 #define url_lookup(v, p) ((struct url_type *)usb_lookup(url_devs, v, p))
 
