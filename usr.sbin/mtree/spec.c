@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.51 2003/09/19 06:15:55 itojun Exp $	*/
+/*	$NetBSD: spec.c,v 1.52 2003/10/10 11:08:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.51 2003/09/19 06:15:55 itojun Exp $");
+__RCSID("$NetBSD: spec.c,v 1.52 2003/10/10 11:08:54 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,8 +407,8 @@ replacenode(NODE *cur, NODE *new)
 {
 
 	if (cur->type != new->type)
-		mtree_err("existing entry type `%s' does not match type `%s'",
-		    nodetype(cur->type), nodetype(new->type));
+		mtree_err("existing entry for `%s', type `%s' does not match type `%s'",
+		    cur->name, nodetype(cur->type), nodetype(new->type));
 #define REPLACE(x)	cur->x = new->x
 #define REPLACESTR(x)	if (cur->x) free(cur->x); cur->x = new->x
 
