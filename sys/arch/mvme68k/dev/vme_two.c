@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.3 2000/06/04 19:14:50 cgd Exp $ */
+/*	$NetBSD: vme_two.c,v 1.3.2.1 2000/06/27 20:09:33 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@ static struct vmetwo_softc *vmetwo_sc;
 void vmetwo_master_range __P((struct vmetwo_softc *, int,
 			      struct vmetwo_range *));
 int vmetwo_local_isr_trampoline __P((void *));
-const struct evcnt *vmetwo_intr_evcnt __P((struct vmetwo_softc *, int));
 void vmetwo_intr_establish __P((struct vmetwo_softc *, int, int,
 	                      int (*) (void *), void *));
 void vmetwo_intr_disestablish __P((struct vmetwo_softc *, int, int));
@@ -565,7 +564,7 @@ _vmetwo_intmap(vsc, level, vector, handlep)
 }
 
 const struct evcnt *
-_vmetwo_intr_establish(vsc, handle, prior, func, arg)
+_vmetwo_intr_evcnt(vsc, handle)
 	void *vsc;
 	vme_intr_handle_t handle;
 {
