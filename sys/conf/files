@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.568 2002/10/10 23:04:33 thorpej Exp $
+#	$NetBSD: files,v 1.569 2002/10/11 01:00:35 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -443,9 +443,9 @@ file	dev/ic/gem.c			gem
 
 # 8390-family Ethernet controllers
 #
-defflag	opt_ipkdb.h		IPKDB_DP8390			: IPKDB
+defflag	opt_ipkdb.h		IPKDB_DP8390
 define	dp8390nic
-file	dev/ic/dp8390.c			dp8390nic | IPKDB_DP8390
+file	dev/ic/dp8390.c			dp8390nic | ipkdb_dp8390
 
 # National Semiconductor DP83905 AT/LANTIC Ethernet media support
 #
@@ -560,7 +560,7 @@ file	dev/ic/tms320av110.c		tms320av110
 #
 defflag	opt_ipkdb.h		IPKDB_NE			: IPKDB_DP8390
 device	ne: ether, ifnet, arp, dp8390nic, mii
-file	dev/ic/ne2000.c			ne | IPKDB_NE
+file	dev/ic/ne2000.c			ne | ipkdb_ne
 
 # 8250/16[45]50-based "com" ports
 # XXX In a perfect world, this would be done with attributes
