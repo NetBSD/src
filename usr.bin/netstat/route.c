@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.16 1997/01/02 08:00:55 mellon Exp $	*/
+/*	$NetBSD: route.c,v 1.17 1997/01/02 08:04:26 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.16 1997/01/02 08:00:55 mellon Exp $";
+static char *rcsid = "$NetBSD: route.c,v 1.17 1997/01/02 08:04:26 mellon Exp $";
 #endif
 #endif /* not lint */
 
@@ -673,7 +673,7 @@ short ns_bh[] = {-1,-1,-1};
 
 char *
 ns_print(sa)
-	const struct sockaddr *sa;
+	struct sockaddr *sa;
 {
 	register struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
 	struct ns_addr work;
