@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.71 2000/03/28 05:49:30 simonb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.72 2000/04/10 02:22:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -536,6 +536,9 @@ void 	vput __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
 int	vaccess __P((enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 		     mode_t acc_mode, struct ucred *cred));
+#ifdef DDB
+void	vfs_vnode_print __P((struct vnode *, int, void (*)(const char *, ...)));
+#endif /* DDB */
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VNODE_H_ */
