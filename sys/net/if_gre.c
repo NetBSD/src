@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.51 2004/05/13 11:29:40 tron Exp $ */
+/*	$NetBSD: if_gre.c,v 1.52 2004/08/19 20:58:24 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.51 2004/05/13 11:29:40 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.52 2004/08/19 20:58:24 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -203,17 +203,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	ip = NULL;
 
 #if NBPFILTER >0
-	if (ifp->if_bpf) {
-		/* see comment of other if_foo.c files */
-		struct mbuf m0;
-		u_int32_t af = dst->sa_family;
-
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(ifp->if_bpf, &m0);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 #endif
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);

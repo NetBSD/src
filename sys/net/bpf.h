@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.40 2004/08/19 18:33:24 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.41 2004/08/19 20:58:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -251,6 +251,10 @@ int	 bpf_validate(struct bpf_insn *, int);
 void	 bpf_tap(void *, u_char *, u_int);
 void	 bpf_mtap(void *, struct mbuf *);
 void	 bpf_mtap2(void *, void *, u_int, struct mbuf *);
+void	 bpf_mtap_af(void *, u_int32_t, struct mbuf *);
+void	 bpf_mtap_et(void *, u_int16_t, struct mbuf *);
+void	 bpf_mtap_sl_in(void *, u_char *, struct mbuf **);
+void	 bpf_mtap_sl_out(void *, u_char *, struct mbuf *);
 void	 bpfattach(struct ifnet *, u_int, u_int);
 void	 bpfattach2(struct ifnet *, u_int, u_int, void *);
 void	 bpfdetach(struct ifnet *);

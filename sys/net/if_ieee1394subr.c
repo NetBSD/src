@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.25 2003/10/26 19:09:44 christos Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.26 2004/08/19 20:58:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.25 2003/10/26 19:09:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.26 2004/08/19 20:58:24 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -186,19 +186,8 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		looutput(ifp, mcopy, dst, rt);
 #if NBPFILTER > 0
 	/* XXX: emulate DLT_EN10MB */
-	if (ifp->if_bpf) {
-		struct mbuf mb;
-
-		mb.m_flags = 0;
-		mb.m_next = m0;
-		mb.m_len = 14;
-		mb.m_data = mb.m_dat;
-		((u_int32_t *)mb.m_data)[0] = 0;
-		((u_int32_t *)mb.m_data)[1] = 0;
-		((u_int32_t *)mb.m_data)[2] = 0;
-		((u_int16_t *)mb.m_data)[6] = etype;
-		bpf_mtap(ifp->if_bpf, &mb);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_et(ifp->if_bpf, etype, m);
 #endif
 	myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
@@ -367,19 +356,8 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 	m_adj(m, sizeof(*ih) + sizeof(*iuh));
 #if NBPFILTER > 0
 	/* XXX: emulate DLT_EN10MB */
-	if (ifp->if_bpf) {
-		struct mbuf mb;
-
-		mb.m_flags = 0;
-		mb.m_next = m;
-		mb.m_len = 14;
-		mb.m_data = mb.m_dat;
-		((u_int32_t *)mb.m_data)[0] = 0;
-		((u_int32_t *)mb.m_data)[1] = 0;
-		((u_int32_t *)mb.m_data)[2] = 0;
-		((u_int16_t *)mb.m_data)[6] = iuh->iuh_etype;
-		bpf_mtap(ifp->if_bpf, &mb);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_et(ifp->if_bpf, iuh->iuh_etype, m);
 #endif
 
 	switch (etype) {

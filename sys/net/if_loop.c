@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.50 2004/04/21 18:40:39 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.51 2004/08/19 20:58:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.50 2004/04/21 18:40:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.51 2004/08/19 20:58:24 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -200,24 +200,8 @@ looutput(ifp, m, dst, rt)
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
 #if NBPFILTER > 0
-	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK)) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer to it).
-		 */
-		struct mbuf m0;
-		u_int32_t af = dst->sa_family;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(ifp->if_bpf, &m0);
-	}
+	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK))
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 #endif
 	m->m_pkthdr.rcvif = ifp;
 

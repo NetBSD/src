@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.39 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.40 2004/08/19 20:58:24 christos Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.39 2004/04/26 01:41:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.40 2004/08/19 20:58:24 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -397,28 +397,8 @@ stf_output(ifp, m, dst, rt)
 	}
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer a to it).
-		 */
-		struct mbuf m0;
-		u_int32_t af = AF_INET6;
-		
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-		
-#ifdef HAVE_OLD_BPF
-		bpf_mtap(ifp, &m0);
-#else
-		bpf_mtap(ifp->if_bpf, &m0);
-#endif
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, AF_INET6, m);
 #endif /*NBPFILTER > 0*/
 
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
@@ -673,28 +653,8 @@ in_stf_input(struct mbuf *m, ...)
 	m->m_pkthdr.rcvif = ifp;
 	
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer a to it).
-		 */
-		struct mbuf m0;
-		u_int32_t af = AF_INET6;
-		
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-		
-#ifdef HAVE_OLD_BPF
-		bpf_mtap(ifp, &m0);
-#else
-		bpf_mtap(ifp->if_bpf, &m0);
-#endif
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, AF_INET6, m);
 #endif /*NBPFILTER > 0*/
 
 	/*
