@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.22 2004/03/15 04:59:31 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.23 2004/03/15 05:05:49 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -130,3 +130,10 @@ sys/uvm/uvm_mmap.c			1.66
 	documented, and programs do not expect it.  Also fixes memory leaks 
 	in dlopen()/dlclose().
 	[skrll, ticket #1607]
+
+sys/dev/pci/eso.c			1.32
+
+	Audio 2's DMA current address register implements only the least
+	significant 20 bits, so make sure its memory allocation won't cross
+	a 1M boundary.
+	[kleink, ticket #1613]
