@@ -1,4 +1,4 @@
-# $Id: TDR,v 1.6 1994/02/27 08:46:17 deraadt Exp $
+# $Id: TDR,v 1.7 1994/03/03 13:17:15 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -66,3 +66,4 @@ pseudo-device	pty	32
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	bpfilter 16
+pseudo-device	kbd
