@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.40 2002/09/23 12:48:07 mycroft Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.41 2002/09/24 17:32:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.40 2002/09/23 12:48:07 mycroft Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.41 2002/09/24 17:32:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -728,11 +728,9 @@ main(argc, argv)
 	 * into the kernel for the mounts.
 	 */
 	for (;;) {
-		if (connect_type_cnt > 1) {
-			if (poll(set, 4, INFTIM) < 1) {
-				syslog(LOG_ERR, "select failed: %m");
-				exit(1);
-			}
+		if (poll(set, 4, INFTIM) < 1) {
+			syslog(LOG_ERR, "select failed: %m");
+			exit(1);
 		}
 
 		if (set[0].revents & POLLIN) {
@@ -795,7 +793,7 @@ main(argc, argv)
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tpipsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
-				syslog(LOG_ERR, "Accept failed: %m");
+				syslog(LOG_ERR, "accept failed: %m");
 				exit(1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET,
