@@ -27,6 +27,8 @@
 ./usr/share/man/cat1/atq.0
 ./usr/share/man/cat1/atrm.0
 ./usr/share/man/cat1/audioctl.0
+./usr/share/man/cat1/audioplay.0
+./usr/share/man/cat1/audiorecord.0
 ./usr/share/man/cat1/awk.0
 ./usr/share/man/cat1/banner.0
 ./usr/share/man/cat1/basename.0
@@ -1115,6 +1117,8 @@
 ./usr/share/man/man1/atq.1
 ./usr/share/man/man1/atrm.1
 ./usr/share/man/man1/audioctl.1
+./usr/share/man/man1/audioplay.1
+./usr/share/man/man1/audiorecord.1
 ./usr/share/man/man1/awk.1
 ./usr/share/man/man1/banner.1
 ./usr/share/man/man1/basename.1
