@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.51 1999/10/13 03:01:52 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.52 1999/10/13 09:00:49 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.51 1999/10/13 03:01:37 augustss Exp 
+ *	NetBSD: usbdevs,v 1.52 1999/10/13 09:00:21 augustss Exp 
  */
 
 /*
@@ -101,6 +101,7 @@
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
 #define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
+#define	USB_VENDOR_SANDISK	0x0781		/* SanDisk Corp */
 #define	USB_VENDOR_SIIG	0x07cc		/* SIIG */
 #define	USB_VENDOR_ACTIVEWIRE	0x0854		/* ActiveWire Inc. */
 #define	USB_VENDOR_MOTOROLA	0x1063		/* Motorola */
@@ -286,6 +287,9 @@
 #define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
 #define	USB_PRODUCT_ENTREGA_EZUSB	0x8000		/* EZ-USB */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
+
+/* SanDisk products */
+#define	USB_PRODUCT_SANDISK_IMAGEMATE	0x0001		/* USB ImageMate */
 
 /* SIIG products */
 #define	USB_PRODUCT_SIIG_DIGIFILMREADER	0x0004		/* DigiFilm-Combo Reader */
