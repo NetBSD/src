@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2002/05/26 12:51:55 jdolecek Exp $
+# $NetBSD: Makefile,v 1.5 2003/07/16 20:07:12 is Exp $
 
 # ite support for A2410, generate C source from TMS34010 assembler 
 grf_ultms.c: grf_ultms.g
@@ -9,4 +9,4 @@ grf_ultms.c: grf_ultms.g
 		-e 's/^/   /' >> ${.TARGET}
 	echo '*/' >> ${.TARGET}
 	echo >> ${.TARGET}
-	gspa -c tmscode < ${.ALLSRC} >> ${.TARGET}
+	gspa -c tmscode ${.ALLSRC} >> ${.TARGET}
