@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1997/03/22 09:03:29 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -29,7 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 
@@ -41,11 +40,11 @@
 #include <biosdisk.h>
 
 struct devsw devsw[] = {
-  { "disk", biosdiskstrategy, biosdiskopen, biosdiskclose, biosdiskioctl },
+	{"disk", biosdiskstrategy, biosdiskopen, biosdiskclose, biosdiskioctl},
 };
-int ndevs = sizeof(devsw)/sizeof(struct devsw);
+int ndevs = sizeof(devsw) / sizeof(struct devsw);
 
 struct fs_ops file_system[] = {
-  { ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+	{ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat},
 };
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+int nfsys = sizeof(file_system) / sizeof(struct fs_ops);
