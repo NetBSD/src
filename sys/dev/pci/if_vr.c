@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.7 1999/02/02 00:29:17 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.8 1999/02/02 00:32:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -95,6 +95,8 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+
 #include <dev/pci/if_vrreg.h>
 
 #if defined(__NetBSD__) && defined(__alpha__)
@@ -117,9 +119,9 @@ static struct vr_type {
 	pci_product_id_t	vr_did;
 	const char		*vr_name;
 } vr_devs[] = {
-	{ VIA_VENDORID, VIA_DEVICEID_RHINE,
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
 		"VIA VT3043 Rhine I 10/100BaseTX" },
-	{ VIA_VENDORID, VIA_DEVICEID_RHINE_II,
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 		"VIA VT86C100A Rhine II 10/100BaseTX" },
 	{ 0, 0, NULL }
 };
