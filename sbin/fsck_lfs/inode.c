@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.12 2001/09/25 00:03:25 wiz Exp $	 */
+/* $NetBSD: inode.c,v 1.12.2.1 2002/06/02 15:28:05 tv Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -41,6 +41,7 @@
 #include <ufs/ufs/dir.h>
 #include <sys/mount.h>		/* XXX */
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_extern.h>
 #ifndef SMALL
 #include <pwd.h>
 #endif
