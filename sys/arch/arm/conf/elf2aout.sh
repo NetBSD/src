@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: elf2aout.sh,v 1.1 2002/02/06 19:54:47 thorpej Exp $
+# $NetBSD: elf2aout.sh,v 1.2 2002/02/09 11:53:58 chris Exp $
 # Shell script to convert an ARM ELF kernel into a bootable a.out kernel by
 # changing the header block on the kernel, and shuffling bits around in the
 # file.  Care has to be taken with the sections as they need to be page
@@ -47,9 +47,12 @@ function r(v) { return sprintf("%d", ((v + 4095) / 4096)) * 4096 }
 {print r($2 + 32768 - (r($1) - $1)) - ($2 + 32768 - (r($1) - $1))}'`
 echo DPAD = $DPAD
 
-(${SIZE} ${infile} | tail +2 | awk "${AWKPROG}" ; \
+cp -f ${infile} ${infile}.elf
+(${SIZE} ${infile}.elf | tail +2 | awk "${AWKPROG}" ; \
   cat ${infile}.text ; dd if=/dev/zero bs=32k count=1; cat ${infile}.data; dd if=/dev/zero bs=$DPAD count=1 \
 ) > ${outfile}
+
+rm ${infile}.elf
 
 ${SIZE} ${outfile}
 chmod 755 ${outfile}
