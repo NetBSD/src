@@ -1,4 +1,4 @@
-/*	$NetBSD: mopa.out.c,v 1.3 1997/04/16 13:30:57 christos Exp $	*/
+/*	$NetBSD: mopa.out.c,v 1.4 1997/04/17 21:09:05 christos Exp $	*/
 
 /* mopa.out - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -48,10 +48,10 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: mopa.out.c,v 1.3 1997/04/16 13:30:57 christos Exp $";
+static char rcsid[] = "$NetBSD: mopa.out.c,v 1.4 1997/04/17 21:09:05 christos Exp $";
 #endif
 
-#include "common/os.h"
+#include "os.h"
 #include "common/common.h"
 #include "common/mopdef.h"
 #include "common/file.h"

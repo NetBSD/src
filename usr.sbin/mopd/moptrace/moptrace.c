@@ -1,4 +1,4 @@
-/*	$NetBSD: moptrace.c,v 1.3 1997/04/16 13:31:03 christos Exp $	*/
+/*	$NetBSD: moptrace.c,v 1.4 1997/04/17 21:09:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: moptrace.c,v 1.3 1997/04/16 13:31:03 christos Exp $";
+static char rcsid[] = "$NetBSD: moptrace.c,v 1.4 1997/04/17 21:09:33 christos Exp $";
 #endif
 
 /*
@@ -40,7 +40,7 @@ static char rcsid[] = "$NetBSD: moptrace.c,v 1.3 1997/04/16 13:31:03 christos Ex
  *		moptrace [ -d ] [ -3 | -4 ] interface
  */
 
-#include "common/os.h"
+#include "os.h"
 #include "common/common.h"
 #include "common/mopdef.h"
 #include "common/device.h"
