@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.4 1994/11/20 20:52:16 deraadt Exp $ */
+/*	$NetBSD: fb.c,v 1.5 1994/12/16 22:00:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@ fbopen(dev, flags, mode, p)
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return (cdevsw[devfb->fb_major].d_open(dev, flags, mode, p, NULL));
+	return (cdevsw[devfb->fb_major].d_open(dev, flags, mode, p));
 }
 
 int
