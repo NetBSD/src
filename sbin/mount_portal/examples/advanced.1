@@ -86,3 +86,25 @@ NoticeNoSlashHere
 # Or, rather than putting //, we can use the last nroff
 # configuration, nroff%, instead:
 % cat /p/nroff%/p/bzcat%/usr/share/man/man8/mount_portal.bz2
+
+# Also, we can provide read-only 'sysctlfs' functionality.  This
+# is provided by the shell script sysctlfs.sh, which should be in
+# /usr/share/examples/mount_portal.
+
+% cat /p/sysctl/kern.mbuf
+msize = 128
+mclbytes = 2048
+nmbclusters = 512
+mblowat = 16
+mcllowat = 8
+
+% cat /p/sysctl/kern/mbuf
+msize = 128
+mclbytes = 2048
+nmbclusters = 512
+mblowat = 16
+mcllowat = 8
+
+% cat /p/sysctl/kern/mbuf/msize
+128
+
