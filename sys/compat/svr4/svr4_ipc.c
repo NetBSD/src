@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.7 1998/10/19 22:43:00 tron Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.8 1999/08/25 04:53:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -73,8 +73,6 @@ static void bsd_to_svr4_semid_ds __P((const struct semid_ds *,
 				      struct svr4_semid_ds *));
 static void svr4_to_bsd_semid_ds __P((const struct svr4_semid_ds *,
 				      struct semid_ds *));
-static int svr4_setsemun __P((caddr_t *sgp, union semun **argp,
-			      union semun *usp));
 static int svr4_semop __P((struct proc *, void *, register_t *));
 static int svr4_semget __P((struct proc *, void *, register_t *));
 static int svr4_semctl __P((struct proc *, void *, register_t *));
@@ -109,13 +107,13 @@ svr4_to_bsd_ipc_perm(spp, bpp)
 	const struct svr4_ipc_perm *spp;
 	struct ipc_perm *bpp;
 {
-	bpp->key = spp->key;
+	bpp->_key = spp->key;
 	bpp->uid = spp->uid;
 	bpp->gid = spp->gid;
 	bpp->cuid = spp->cuid;
 	bpp->cgid = spp->cgid;
 	bpp->mode = spp->mode;
-	bpp->seq = spp->seq;
+	bpp->_seq = spp->seq;
 }
 
 static void
@@ -123,13 +121,13 @@ bsd_to_svr4_ipc_perm(bpp, spp)
 	const struct ipc_perm *bpp;
 	struct svr4_ipc_perm *spp;
 {
-	spp->key = bpp->key;
+	spp->key = bpp->_key;
 	spp->uid = bpp->uid;
 	spp->gid = bpp->gid;
 	spp->cuid = bpp->cuid;
 	spp->cgid = bpp->cgid;
 	spp->mode = bpp->mode;
-	spp->seq = bpp->seq;
+	spp->seq = bpp->_seq;
 }
 #endif
 
@@ -140,12 +138,10 @@ bsd_to_svr4_semid_ds(bds, sds)
 	struct svr4_semid_ds *sds;
 {
 	bsd_to_svr4_ipc_perm(&bds->sem_perm, &sds->sem_perm);
-	sds->sem_base = (struct svr4_sem *) bds->sem_base;
+	sds->sem_base = (struct svr4_sem *) bds->_sem_base;
 	sds->sem_nsems = bds->sem_nsems;
 	sds->sem_otime = bds->sem_otime;
-	sds->sem_pad1 = bds->sem_pad1;
 	sds->sem_ctime = bds->sem_ctime;
-	sds->sem_pad2 = bds->sem_pad2;
 }
 
 static void
@@ -154,22 +150,10 @@ svr4_to_bsd_semid_ds(sds, bds)
 	struct semid_ds *bds;
 {
 	svr4_to_bsd_ipc_perm(&sds->sem_perm, &bds->sem_perm);
-	bds->sem_base = (struct sem *) bds->sem_base;
+	bds->_sem_base = (struct __sem *) sds->sem_base;
 	bds->sem_nsems = sds->sem_nsems;
 	bds->sem_otime = sds->sem_otime;
-	bds->sem_pad1 = sds->sem_pad1;
 	bds->sem_ctime = sds->sem_ctime;
-	bds->sem_pad2 = sds->sem_pad2;
-}
-
-static int
-svr4_setsemun(sgp, argp, usp)
-	caddr_t *sgp;
-	union semun **argp;
-	union semun *usp;
-{
-	*argp = stackgap_alloc(sgp, sizeof(union semun));
-	return copyout((caddr_t)usp, *argp, sizeof(union semun));
 }
 
 struct svr4_sys_semctl_args {
@@ -177,7 +161,7 @@ struct svr4_sys_semctl_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
 	syscallarg(int) cmd;
-	syscallarg(union semun) arg;
+	syscallarg(union __semun) arg;
 };
 
 static int
@@ -186,108 +170,80 @@ svr4_semctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	int error;
 	struct svr4_sys_semctl_args *uap = v;
-	struct sys___semctl_args ap;
-	struct svr4_semid_ds ss;
-	struct semid_ds bs, *bsp;
-	caddr_t sg = stackgap_init(p->p_emul);
+	struct semid_ds sembuf;
+	struct svr4_semid_ds ssembuf;
+	int cmd, error;
+	void *pass_arg = NULL;
 
-	SCARG(&ap, semid) = SCARG(uap, semid);
-	SCARG(&ap, semnum) = SCARG(uap, semnum);
+	cmd = SCARG(uap, cmd);
 
-	switch (SCARG(uap, cmd)) {
-	case SVR4_SEM_GETZCNT:
-	case SVR4_SEM_GETNCNT:
-	case SVR4_SEM_GETPID:
-	case SVR4_SEM_GETVAL:
-		switch (SCARG(uap, cmd)) {
-		case SVR4_SEM_GETZCNT:
-			SCARG(&ap, cmd) = GETZCNT;
-			break;
-		case SVR4_SEM_GETNCNT:
-			SCARG(&ap, cmd) = GETNCNT;
-			break;
-		case SVR4_SEM_GETPID:
-			SCARG(&ap, cmd) = GETPID;
-			break;
-		case SVR4_SEM_GETVAL:
-			SCARG(&ap, cmd) = GETVAL;
-			break;
-		}
-		return sys___semctl(p, &ap, retval);
-
-	case SVR4_SEM_SETVAL:
-		error = svr4_setsemun(&sg, &SCARG(&ap, arg), &SCARG(uap, arg));
-		if (error)
-			return error;
-		SCARG(&ap, cmd) = SETVAL;
-		return sys___semctl(p, &ap, retval);
-
-	case SVR4_SEM_GETALL:
-		error = svr4_setsemun(&sg, &SCARG(&ap, arg), &SCARG(uap, arg));
-		if (error)
-			return error;
-		SCARG(&ap, cmd) = GETVAL;
-		return sys___semctl(p, &ap, retval);
-
-	case SVR4_SEM_SETALL:
-		error = svr4_setsemun(&sg, &SCARG(&ap, arg), &SCARG(uap, arg));
-		if (error)
-			return error;
-		SCARG(&ap, cmd) = SETVAL;
-		return sys___semctl(p, &ap, retval);
+	switch (cmd) {
+	case SVR4_IPC_SET:
+		pass_arg = &sembuf;
+		cmd = IPC_SET;
+		break;
 
 	case SVR4_IPC_STAT:
-                SCARG(&ap, cmd) = IPC_STAT;
-		bsp = stackgap_alloc(&sg, sizeof(bs));
-		error = svr4_setsemun(&sg, &SCARG(&ap, arg),
-				      (union semun *)&bsp);
-		if (error)
-			return error;
-                if ((error = sys___semctl(p, &ap, retval)) != 0)
-                        return error;
-		error = copyin((caddr_t)bsp, (caddr_t)&bs, sizeof(bs));
-                if (error)
-                        return error;
-                bsd_to_svr4_semid_ds(&bs, &ss);
-		return copyout(&ss, SCARG(uap, arg).buf, sizeof(ss));
-
-	case SVR4_IPC_SET:
-		SCARG(&ap, cmd) = IPC_SET;
-		bsp = stackgap_alloc(&sg, sizeof(bs));
-		error = svr4_setsemun(&sg, &SCARG(&ap, arg),
-				      (union semun *)&bsp);
-		if (error)
-			return error;
-		error = copyin(SCARG(uap, arg).buf, (caddr_t) &ss, sizeof ss);
-                if (error)
-                        return error;
-                svr4_to_bsd_semid_ds(&ss, &bs);
-		error = copyout(&bs, bsp, sizeof(bs));
-                if (error)
-                        return error;
-		return sys___semctl(p, &ap, retval);
+		pass_arg = &sembuf;
+		cmd = IPC_STAT;
+		break;
 
 	case SVR4_IPC_RMID:
-		SCARG(&ap, cmd) = IPC_RMID;
-		bsp = stackgap_alloc(&sg, sizeof(bs));
-		error = svr4_setsemun(&sg, &SCARG(&ap, arg),
-				      (union semun *)&bsp);
-		if (error)
-			return error;
-		error = copyin(SCARG(uap, arg).buf, &ss, sizeof ss);
-                if (error)
-                        return error;
-                svr4_to_bsd_semid_ds(&ss, &bs);
-		error = copyout(&bs, bsp, sizeof(bs));
-		if (error)
-			return error;
-		return sys___semctl(p, &ap, retval);
+		cmd = IPC_RMID;
+		break;
+
+	case SVR4_SEM_GETVAL:
+		cmd = GETVAL;
+		break;
+
+	case SVR4_SEM_GETPID:
+		cmd = GETPID;
+		break;
+
+	case SVR4_SEM_GETNCNT:
+		cmd = GETNCNT;
+		break;
+
+	case SVR4_SEM_GETZCNT:
+		cmd = GETZCNT;
+		break;
+
+	case SVR4_SEM_GETALL:
+		pass_arg = &SCARG(uap, arg);
+		cmd = GETALL;
+		break;
+
+	case SVR4_SEM_SETVAL:
+		pass_arg = &SCARG(uap, arg);
+		cmd = SETVAL;
+		break;
+
+	case SVR4_SEM_SETALL:
+		pass_arg = &SCARG(uap, arg);
+		cmd = SETALL;
+		break;
 
 	default:
-		return EINVAL;
+		return (EINVAL);
 	}
+
+	if (cmd == IPC_SET) {
+		error = copyin(SCARG(uap, arg).buf, &ssembuf, sizeof(ssembuf));
+		if (error)
+			return (error);
+		svr4_to_bsd_semid_ds(&ssembuf, &sembuf);
+	}
+
+	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	    pass_arg, retval);
+
+	if (error == 0 && cmd == IPC_STAT) {
+		bsd_to_svr4_semid_ds(&sembuf, &ssembuf);
+		error = copyout(&ssembuf, SCARG(uap, arg).buf, sizeof(ssembuf));
+	}
+
+	return (error);
 }
 
 struct svr4_sys_semget_args {
@@ -367,26 +323,22 @@ bsd_to_svr4_msqid_ds(bds, sds)
 	struct svr4_msqid_ds *sds;
 {
 	bsd_to_svr4_ipc_perm(&bds->msg_perm, &sds->msg_perm);
-	sds->msg_first = (struct svr4_msg *) bds->msg_first;
-	sds->msg_last = (struct svr4_msg *) bds->msg_last;
-	sds->msg_cbytes = bds->msg_cbytes;
+	sds->msg_first = (struct svr4_msg *) bds->_msg_first;
+	sds->msg_last = (struct svr4_msg *) bds->_msg_last;
+	sds->msg_cbytes = bds->_msg_cbytes;
 	sds->msg_qnum = bds->msg_qnum;
 	sds->msg_qbytes = bds->msg_qbytes;
 	sds->msg_lspid = bds->msg_lspid;
 	sds->msg_lrpid = bds->msg_lrpid;
 	sds->msg_stime = bds->msg_stime;
-	sds->msg_pad1 = bds->msg_pad1;
 	sds->msg_rtime = bds->msg_rtime;
-	sds->msg_pad2 = bds->msg_pad2;
 	sds->msg_ctime = bds->msg_ctime;
-	sds->msg_pad3 = bds->msg_pad3;
 
-	/* use the padding for the rest of the fields */
-	{
-		const short *pad = (const short *) bds->msg_pad4;
-		sds->msg_cv = pad[0];
-		sds->msg_qnum_cv = pad[1];
-	}
+#if 0
+	/* XXX What to put here? */
+	sds->msg_cv = 0;
+	sds->msg_qnum_cv = 0;
+#endif
 }
 
 static void
@@ -395,26 +347,21 @@ svr4_to_bsd_msqid_ds(sds, bds)
 	struct msqid_ds *bds;
 {
 	svr4_to_bsd_ipc_perm(&sds->msg_perm, &bds->msg_perm);
-	bds->msg_first = (struct msg *) sds->msg_first;
-	bds->msg_last = (struct msg *) sds->msg_last;
-	bds->msg_cbytes = sds->msg_cbytes;
+	bds->_msg_first = (struct __msg *) sds->msg_first;
+	bds->_msg_last = (struct __msg *) sds->msg_last;
+	bds->_msg_cbytes = sds->msg_cbytes;
 	bds->msg_qnum = sds->msg_qnum;
 	bds->msg_qbytes = sds->msg_qbytes;
 	bds->msg_lspid = sds->msg_lspid;
 	bds->msg_lrpid = sds->msg_lrpid;
 	bds->msg_stime = sds->msg_stime;
-	bds->msg_pad1 = sds->msg_pad1;
 	bds->msg_rtime = sds->msg_rtime;
-	bds->msg_pad2 = sds->msg_pad2;
 	bds->msg_ctime = sds->msg_ctime;
-	bds->msg_pad3 = sds->msg_pad3;
 
-	/* use the padding for the rest of the fields */
-	{
-		short *pad = (short *) bds->msg_pad4;
-		pad[0] = sds->msg_cv;
-		pad[1] = sds->msg_qnum_cv;
-	}
+#if 0
+	XXX sds->msg_cv
+	XXX sds->msg_qnum_cv
+#endif
 }
 
 struct svr4_sys_msgsnd_args {
@@ -505,7 +452,7 @@ svr4_msgctl(p, v, retval)
 {
 	int error;
 	struct svr4_sys_msgctl_args *uap = v;
-	struct sys_msgctl_args ap;
+	struct sys___msgctl13_args ap;
 	struct svr4_msqid_ds ss;
 	struct msqid_ds bs;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -517,7 +464,7 @@ svr4_msgctl(p, v, retval)
 	switch (SCARG(uap, cmd)) {
 	case SVR4_IPC_STAT:
 		SCARG(&ap, cmd) = IPC_STAT;
-		if ((error = sys_msgctl(p, &ap, retval)) != 0)
+		if ((error = sys___msgctl13(p, &ap, retval)) != 0)
 			return error;
 		error = copyin(&bs, SCARG(&ap, buf), sizeof bs);
 		if (error)
@@ -534,7 +481,7 @@ svr4_msgctl(p, v, retval)
 		error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
 		if (error)
 			return error;
-		return sys_msgctl(p, &ap, retval);
+		return sys___msgctl13(p, &ap, retval);
 
 	case SVR4_IPC_RMID:
 		SCARG(&ap, cmd) = IPC_RMID;
@@ -545,7 +492,7 @@ svr4_msgctl(p, v, retval)
 		error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
 		if (error)
 			return error;
-		return sys_msgctl(p, &ap, retval);
+		return sys___msgctl13(p, &ap, retval);
 
 	default:
 		return EINVAL;
@@ -589,7 +536,7 @@ bsd_to_svr4_shmid_ds(bds, sds)
 	sds->shm_lkcnt = 0;
 	sds->shm_lpid = bds->shm_lpid;
 	sds->shm_cpid = bds->shm_cpid;
-	sds->shm_amp = bds->shm_internal;
+	sds->shm_amp = bds->_shm_internal;
 	sds->shm_nattch = bds->shm_nattch;
 	sds->shm_cnattch = 0;
 	sds->shm_atime = bds->shm_atime;
@@ -609,7 +556,7 @@ svr4_to_bsd_shmid_ds(sds, bds)
 	bds->shm_segsz = sds->shm_segsz;
 	bds->shm_lpid = sds->shm_lpid;
 	bds->shm_cpid = sds->shm_cpid;
-	bds->shm_internal = sds->shm_amp;
+	bds->_shm_internal = sds->shm_amp;
 	bds->shm_nattch = sds->shm_nattch;
 	bds->shm_atime = sds->shm_atime;
 	bds->shm_dtime = sds->shm_dtime;
@@ -697,7 +644,7 @@ svr4_shmctl(p, v, retval)
 	struct svr4_sys_shmctl_args *uap = v;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
-	struct sys_shmctl_args ap;
+	struct sys___shmctl13_args ap;
 	struct shmid_ds bs;
 	struct svr4_shmid_ds ss;
 
@@ -730,7 +677,7 @@ svr4_shmctl(p, v, retval)
 	switch (SCARG(uap, cmd)) {
 	case SVR4_IPC_STAT:
 		SCARG(&ap, cmd) = IPC_STAT;
-		if ((error = sys_shmctl(p, &ap, retval)) != 0)
+		if ((error = sys___shmctl13(p, &ap, retval)) != 0)
 			return error;
 		if (SCARG(uap, buf) == NULL)
 			return 0;
@@ -742,7 +689,7 @@ svr4_shmctl(p, v, retval)
 
 	case SVR4_IPC_SET:
 		SCARG(&ap, cmd) = IPC_SET;
-		return sys_shmctl(p, &ap, retval);
+		return sys___shmctl13(p, &ap, retval);
 
 	case SVR4_IPC_RMID:
 	case SVR4_SHM_LOCK:
@@ -760,7 +707,7 @@ svr4_shmctl(p, v, retval)
 		default:
 			return EINVAL;
 		}
-		return sys_shmctl(p, &ap, retval);
+		return sys___shmctl13(p, &ap, retval);
 
 	default:
 		return EINVAL;
