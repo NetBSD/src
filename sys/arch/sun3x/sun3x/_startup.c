@@ -1,4 +1,4 @@
-/*	$NetBSD: _startup.c,v 1.17 1997/06/10 19:37:58 veego Exp $	*/
+/*	$NetBSD: _startup.c,v 1.18 1997/10/04 19:48:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -234,6 +234,9 @@ _bootstrap(keh)
 	 * and call some init functions.
 	 */
 	obio_init();
+
+	/* We now may enable the console.  (yea!) */
+	cninit();
 
 	/* handle kernel mapping, pmap_bootstrap(), etc. */
 	_vm_init(&keh);
