@@ -1,4 +1,4 @@
-/*	$NetBSD: pcs_bus_io_common.c,v 1.3 1996/06/09 23:49:24 cgd Exp $	*/
+/*	$NetBSD: pcs_bus_io_common.c,v 1.4 1996/06/11 21:16:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -43,6 +43,8 @@ int		__C(CHIP,_io_map) __P((void *, bus_io_addr_t, bus_io_size_t,
 		    bus_io_handle_t *));
 void		__C(CHIP,_io_unmap) __P((void *, bus_io_handle_t,
 		    bus_io_size_t));
+int		__C(CHIP,_io_subregion) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, bus_io_size_t, bus_io_handle_t *));
 u_int8_t	__C(CHIP,_io_read_1) __P((void *, bus_io_handle_t,
 		    bus_io_size_t));
 u_int16_t	__C(CHIP,_io_read_2) __P((void *, bus_io_handle_t,
@@ -86,6 +88,7 @@ __C(CHIP,_bus_io_init)(bc, iov)
 
 	bc->bc_i_map = __C(CHIP,_io_map);
 	bc->bc_i_unmap = __C(CHIP,_io_unmap);
+	bc->bc_i_subregion = __C(CHIP,_io_subregion);
 
 	bc->bc_ir1 = __C(CHIP,_io_read_1);
 	bc->bc_ir2 = __C(CHIP,_io_read_2);
@@ -128,6 +131,17 @@ __C(CHIP,_io_unmap)(v, ioh, iosize)
 {
 
 	/* XXX nothing to do. */
+}
+
+int
+__C(CHIP,_io_subregion)(v, ioh, offset, size, nioh)
+	void *v;
+	bus_io_handle_t ioh, *nioh;
+	bus_io_size_t offset, size;
+{
+
+	*nioh = ioh + offset;
+	return (0);
 }
 
 u_int8_t
