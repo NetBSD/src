@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.27 2002/06/06 00:56:50 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.28 2002/06/14 00:58:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.27 2002/06/06 00:56:50 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.28 2002/06/14 00:58:40 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ get_dinode (FS_INFO *fsp, ino_t ino)
         struct dinode *dip, *dib;
         struct lfs *lfsp;
 	char rdev[MNAMELEN];
-        IFILE *ifp;
+	BLOCK_INFO_15 bi;
 
         lfsp = &fsp->fi_lfs;
 
@@ -196,7 +196,13 @@ get_dinode (FS_INFO *fsp, ino_t ino)
 	 * Locate the inode block and find the inode.
 	 * Use this to know how large the file is.
 	 */
-	ifp = IFILE_ENTRY(lfsp, fsp->fi_ifilep, ino);
+	memset(&bi, 0, sizeof(bi));
+	bi.bi_inode = ino;
+	bi.bi_lbn = LFS_UNUSED_LBN; /* We want the inode */
+	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, &bi, 1) < 0)
+		return NULL;
+	if (bi.bi_daddr <= 0)
+		return NULL;
 
 	if (dev_fd <= 0) {
 		strcpy(rdev, "/dev/r"); /* XXX */
@@ -207,10 +213,8 @@ get_dinode (FS_INFO *fsp, ino_t ino)
 		syslog(LOG_ERR, "%s", rdev);
 		exit(1);
 	}
-
 	dib = (struct dinode *)malloc(lfsp->lfs_ibsize);
-	pread(dev_fd, dib, lfsp->lfs_ibsize,
-					fsbtob(lfsp, ifp->if_daddr));
+	pread(dev_fd, dib, lfsp->lfs_ibsize, fsbtob(lfsp, bi.bi_daddr));
 	for (dip = dib; dip != dib + lfsp->lfs_inopb; ++dip)
 		if (dip->di_u.inumber == ino)
 			break;
