@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17 2000/10/15 11:00:38 ragge Exp $	  */
+/*	$NetBSD: pte.h,v 1.18 2000/11/21 05:49:08 chs Exp $	  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -91,19 +91,19 @@ extern pt_entry_t *Sysmap;
 	r; \
 })
 #define kvtophys(va) ({ \
-	long r; \
+	paddr_t r; \
 	asm("extzv $9,$21,%1,%0;ashl $9,*" VAX_SYSMAP "[%0],%0;insv %1,$0,$9,%0" \
 	    : "=&r"(r) : "g"(va) : "cc"); \
 	r; \
 })
 #else /* __GNUC__ */
 #define kvtophys(va) \
-	(((kvtopte(va))->pg_pfn << VAX_PGSHIFT) | ((int)(va) & VAX_PGOFSET))
+	(((kvtopte(va))->pg_pfn << VAX_PGSHIFT) | ((paddr_t)(va) & VAX_PGOFSET))
 #define kvtopte(va) (&Sysmap[PG_PFNUM(va)])
 #endif /* __GNUC__ */
 #define uvtopte(va, pcb) \
-	(((unsigned)va < 0x40000000) ? \
-	&((pcb->P0BR)[PG_PFNUM(va)]) : \
-	&((pcb->P1BR)[PG_PFNUM(va)]))
+	(((vaddr_t)va < 0x40000000) ? \
+	&(((pcb)->P0BR)[PG_PFNUM(va)]) : \
+	&(((pcb)->P1BR)[PG_PFNUM(va)]))
 
 #endif
