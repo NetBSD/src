@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.7 2003/03/24 07:36:36 jdolecek Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.8 2003/04/04 08:20:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.7 2003/03/24 07:36:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.8 2003/04/04 08:20:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,9 @@ md_get_mem(struct mdchain *mdp, caddr_t target, int size, int type)
 	
 	while (size > 0) {
 		if (m == NULL) {
+#ifdef MCHAIN_DEBUG
 			MBERROR("incomplete copy\n");
+#endif
 			return EBADRPC;
 		}
 		s = mdp->md_pos;
