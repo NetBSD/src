@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.74 2000/05/10 03:31:30 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.74.4.1 2001/04/06 00:25:20 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -204,7 +204,7 @@ ip_output(m0, va_alist)
 
 #ifdef IPSEC
 	so = ipsec_getsocket(m);
-	ipsec_setsocket(m, NULL);
+	(void)ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
 #ifdef	DIAGNOSTIC
@@ -417,25 +417,6 @@ ip_output(m0, va_alist)
 		m->m_flags &= ~M_BCAST;
 
 sendit:
-#ifdef PFIL_HOOKS
-	/*
-	 * Run through list of hooks for output packets.
-	 */
-	m1 = m;
-	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
-	for (; pfh; pfh = pfh->pfil_link.tqe_next)
-		if (pfh->pfil_func) {
-		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
-			if (rv) {
-				error = EHOSTUNREACH;
-				goto done;
-			}
-			m = m1;
-			if (m == NULL)
-				goto done;
-			ip = mtod(m, struct ip *);
-		}
-#endif /* PFIL_HOOKS */
 
 #ifdef IPSEC
 	/* get SP for this packet */
@@ -556,6 +537,26 @@ sendit:
 skip_ipsec:
 #endif /*IPSEC*/
 
+#ifdef PFIL_HOOKS
+	/*
+	 * Run through list of hooks for output packets.
+	 */
+	m1 = m;
+	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
+	for (; pfh; pfh = pfh->pfil_link.tqe_next)
+		if (pfh->pfil_func) {
+		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
+			if (rv) {
+				error = EHOSTUNREACH;
+				goto done;
+			}
+			m = m1;
+			if (m == NULL)
+				goto done;
+			ip = mtod(m, struct ip *);
+		}
+#endif /* PFIL_HOOKS */
+
 	/*
 	 * If small enough for mtu of path, can just send directly.
 	 */
@@ -577,6 +578,10 @@ skip_ipsec:
 		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
+#ifdef IPSEC
+		/* clean ipsec history once it goes out of the node */
+		ipsec_delaux(m);
+#endif
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
@@ -700,6 +705,10 @@ sendorfree:
 				ia->ia_ifa.ifa_data.ifad_outbytes +=
 					ntohs(ip->ip_len);
 			}
+#endif
+#ifdef IPSEC
+			/* clean ipsec history once it goes out of the node */
+			ipsec_delaux(m);
 #endif
 			error = (*ifp->if_output)(ifp, m, sintosa(dst),
 			    ro->ro_rt);
