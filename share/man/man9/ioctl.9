@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.7 2001/06/21 11:59:00 wiz Exp $
+.\" $NetBSD: ioctl.9,v 1.8 2001/07/01 22:54:39 kristerw Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ the name as the ioctl is later known in a as second argument to a
 system call. E.g. ioctl(s,FOOIOCTL,...)
 .It Fn fun
 a macro which can be one of
-.Bl -tag -withh _IOWR
+.Bl -tag -width _IOWR
 .It _IOR
 the call only reads parameters from the kernel and does not
 pass any to it
