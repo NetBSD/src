@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.73 2003/07/14 18:19:13 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.74 2003/07/14 20:39:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.73 2003/07/14 18:19:13 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.74 2003/07/14 20:39:20 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.73 2003/07/14 18:19:13 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.74 2003/07/14 20:39:20 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -164,6 +164,8 @@ typedef struct Var {
 #define VAR_MATCH_START	0x08	/* Match at start of word */
 #define VAR_MATCH_END	0x10	/* Match at end of word */
 #define VAR_NOSUBST	0x20	/* don't expand vars in VarGetPattern */
+
+static Byte varSpace = ' ';	/* word separator in expansions */
 
 /* Var_Set flags */
 #define VAR_NO_EXPORT	0x01	/* do not export */
@@ -656,8 +658,8 @@ VarHead(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 
     slash = strrchr (word, '/');
     if (slash != (char *)NULL) {
-	if (addSpace) {
-	    Buf_AddByte (buf, (Byte)' ');
+	if (addSpace && varSpace) {
+	    Buf_AddByte (buf, varSpace);
 	}
 	*slash = '\0';
 	Buf_AddBytes (buf, strlen (word), (Byte *)word);
@@ -667,11 +669,9 @@ VarHead(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 	/*
 	 * If no directory part, give . (q.v. the POSIX standard)
 	 */
-	if (addSpace) {
-	    Buf_AddBytes(buf, 2, (const Byte *)" .");
-	} else {
-	    Buf_AddByte(buf, (Byte)'.');
-	}
+	if (addSpace && varSpace)
+	    Buf_AddByte(buf, varSpace);
+	Buf_AddByte(buf, (Byte)'.');
     }
     return(dummy ? TRUE : TRUE);
 }
@@ -703,8 +703,8 @@ VarTail(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 {
     char *slash;
 
-    if (addSpace) {
-	Buf_AddByte (buf, (Byte)' ');
+    if (addSpace && varSpace) {
+	Buf_AddByte (buf, varSpace);
     }
 
     slash = strrchr (word, '/');
@@ -746,8 +746,8 @@ VarSuffix(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 
     dot = strrchr (word, '.');
     if (dot != (char *)NULL) {
-	if (addSpace) {
-	    Buf_AddByte (buf, (Byte)' ');
+	if (addSpace && varSpace) {
+	    Buf_AddByte (buf, varSpace);
 	}
 	*dot++ = '\0';
 	Buf_AddBytes (buf, strlen (dot), (Byte *)dot);
@@ -784,8 +784,8 @@ VarRoot(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 {
     char *dot;
 
-    if (addSpace) {
-	Buf_AddByte (buf, (Byte)' ');
+    if (addSpace && varSpace) {
+	Buf_AddByte (buf, varSpace);
     }
 
     dot = strrchr (word, '.');
@@ -826,8 +826,8 @@ VarMatch(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 	 ClientData pattern)
 {
     if (Str_Match(word, (char *) pattern)) {
-	if (addSpace) {
-	    Buf_AddByte(buf, (Byte)' ');
+	if (addSpace && varSpace) {
+	    Buf_AddByte(buf, varSpace);
 	}
 	addSpace = TRUE;
 	Buf_AddBytes(buf, strlen(word), (Byte *)word);
@@ -868,8 +868,8 @@ VarSYSVMatch(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
     VarPattern 	  *pat = (VarPattern *) patp;
     char *varexp;
 
-    if (addSpace)
-	Buf_AddByte(buf, (Byte)' ');
+    if (addSpace && varSpace)
+	Buf_AddByte(buf, varSpace);
 
     addSpace = TRUE;
 
@@ -913,8 +913,8 @@ VarNoMatch(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 	   ClientData pattern)
 {
     if (!Str_Match(word, (char *) pattern)) {
-	if (addSpace) {
-	    Buf_AddByte(buf, (Byte)' ');
+	if (addSpace && varSpace) {
+	    Buf_AddByte(buf, varSpace);
 	}
 	addSpace = TRUE;
 	Buf_AddBytes(buf, strlen(word), (Byte *)word);
@@ -972,8 +972,8 @@ VarSubstitute(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 			 * if rhs is non-null.
 			 */
 			if (pattern->rightLen != 0) {
-			    if (addSpace) {
-				Buf_AddByte(buf, (Byte)' ');
+			    if (addSpace && varSpace) {
+				Buf_AddByte(buf, varSpace);
 			    }
 			    addSpace = TRUE;
 			    Buf_AddBytes(buf, pattern->rightLen,
@@ -990,8 +990,8 @@ VarSubstitute(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 		     * Matches at start but need to copy in trailing characters
 		     */
 		    if ((pattern->rightLen + wordLen - pattern->leftLen) != 0){
-			if (addSpace) {
-			    Buf_AddByte(buf, (Byte)' ');
+			if (addSpace && varSpace) {
+			    Buf_AddByte(buf, varSpace);
 			}
 			addSpace = TRUE;
 		    }
@@ -1023,8 +1023,8 @@ VarSubstitute(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 		 * by the right-hand-side.
 		 */
 		if (((cp - word) + pattern->rightLen) != 0) {
-		    if (addSpace) {
-			Buf_AddByte(buf, (Byte)' ');
+		    if (addSpace && varSpace) {
+			Buf_AddByte(buf, varSpace);
 		    }
 		    addSpace = TRUE;
 		}
@@ -1059,7 +1059,7 @@ VarSubstitute(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 		cp = Str_FindSubstring(word, pattern->lhs);
 		if (cp != (char *)NULL) {
 		    if (addSpace && (((cp - word) + pattern->rightLen) != 0)){
-			Buf_AddByte(buf, (Byte)' ');
+			Buf_AddByte(buf, varSpace);
 			addSpace = FALSE;
 		    }
 		    Buf_AddBytes(buf, cp-word, (const Byte *)word);
@@ -1079,8 +1079,8 @@ VarSubstitute(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 		}
 	    }
 	    if (wordLen != 0) {
-		if (addSpace) {
-		    Buf_AddByte(buf, (Byte)' ');
+		if (addSpace && varSpace) {
+		    Buf_AddByte(buf, varSpace);
 		}
 		Buf_AddBytes(buf, wordLen, (Byte *)word);
 	    }
@@ -1094,8 +1094,8 @@ VarSubstitute(GNode *ctx, char *word, Boolean addSpace, Buffer buf,
 	return (addSpace);
     }
  nosub:
-    if (addSpace) {
-	Buf_AddByte(buf, (Byte)' ');
+    if (addSpace && varSpace) {
+	Buf_AddByte(buf, varSpace);
     }
     Buf_AddBytes(buf, wordLen, (Byte *)word);
     return(TRUE);
@@ -1703,6 +1703,8 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
     dynamic = FALSE;
     start = str;
 
+    varSpace = ' ';			/* reset this */
+    
     if (str[1] != '(' && str[1] != '{') {
 	/*
 	 * If it's not bounded by braces of some sort, life is much simpler.
@@ -1968,6 +1970,10 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
      *		  :u		("uniq") Remove adjacent duplicate words.
      *		  :tu		Converts the variable contents to uppercase.
      *		  :tl		Converts the variable contents to lowercase.
+     *		  :ts[c]	Sets varSpace - the char used to
+     *				separate words to 'c'. If 'c' is
+     *				omitted then no separation is used.
+     *
      *		  :?<true-value>:<false-value>
      *				If the variable evaluates to true, return
      *				true value, else return the second value.
@@ -2025,6 +2031,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	    if (DEBUG(VAR)) {
 		printf("Applying :%c to \"%s\"\n", *tstr, nstr);
 	    }
+	    newStr = var_Error;
 	    switch (*tstr) {
 	        case ':':
 		    
@@ -2245,14 +2252,69 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		}
 	        case 't':
 		{
+		    cp = tstr + 1;	/* make sure it is set */
 		    if (tstr[1] != endc && tstr[1] != ':') {
-		        if (tstr[2] == endc || tstr[2] == ':') {
+			if (tstr[1] == 's') {
+			    /*
+			     * Use the char (if any) at tstr[2]
+			     * as the word separator.
+			     */
+			    VarPattern pattern;
+
+			    if (tstr[3] == endc || tstr[3] == ':') {
+				varSpace = tstr[2];
+				cp = tstr + 3;
+			    } else if (tstr[2] == endc || tstr[2] == ':') {
+				varSpace = 0; /* no separator */
+				cp = tstr + 2;
+			    } else if (tstr[2] == '\\') {
+				switch (tstr[3]) {
+				case 'n':
+				    varSpace = '\n';
+				    cp = tstr + 4;
+				    break;
+				case 't':
+				    varSpace = '\t';
+				    cp = tstr + 4;
+				    break;
+				default:
+				    if (isdigit(tstr[3])) {
+					char *ep;
+					
+					varSpace = strtoul(&tstr[3], &ep, 0);
+					cp = ep;
+				    } else {
+					goto bad_modifier;
+				    }
+				    break;
+				}
+			    } else				
+				break;	/* not us */
+
+			    termc = *cp;
+
+			    /*
+			     * We cannot be certain that VarModify
+			     * will be used - even if there is a
+			     * subsequent modifier, so do a no-op
+			     * VarSubstitute now to for str to be
+			     * re-expanded without the spaces.
+			     */
+			    pattern.flags = VAR_SUB_ONE;
+			    pattern.lhs = pattern.rhs = "\032";
+			    pattern.leftLen = pattern.rightLen = 1;
+
+			    newStr = VarModify(ctxt, str, VarSubstitute,
+					       (ClientData)&pattern);
+			} else if (tstr[2] == endc || tstr[2] == ':') {
                             if (tstr[1] == 'u' || tstr[1] == 'l') {
                                 newStr = VarChangeCase (nstr, (tstr[1] == 'u'));
                                 cp = tstr + 2;
                                 termc = *cp;
-                            }
-		        }
+                            } else {
+				goto bad_modifier;
+			    }
+			}
 		    }
 		    break;
 		}
@@ -2464,6 +2526,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			*lengthPtr = cp - start + 1;
 			VarREError(error, &pattern.re, "RE substitution error");
 			free(pattern.replace);
+			varSpace = ' ';	/* reset this */
 			return (var_Error);
 		    }
 
@@ -2706,9 +2769,15 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	free((Address)v->name);
 	free((Address)v);
     }
+    varSpace = ' ';			/* reset this */
     return (nstr);
 
+ bad_modifier:
+    Error("Bad modifier `:%.*s' for %s", (int)strcspn(tstr, ":)}"), tstr,
+	  v->name);
+
 cleanup:
+    varSpace = ' ';			/* reset this */
     *lengthPtr = cp - start + 1;
     if (*freePtr)
 	free(nstr);
