@@ -30,7 +30,7 @@
 // for printf()
 #include <stdio.h>
 
-#if defined(__linux__) || defined(__NetBSD__)
+#if defined(__linux__)
 #include <getopt.h>
 #endif
 #ifdef __linux__
@@ -42,6 +42,10 @@
 // for SIOUXsettings
 #include <SIOUX.h>
 #endif
+#endif
+
+#ifdef __unix__
+#include <unistd.h>
 #endif
 
 // for strncpy() & strlen()
