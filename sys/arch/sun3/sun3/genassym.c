@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.44 1998/05/24 19:32:47 is Exp $	*/
+/*	$NetBSD: genassym.c,v 1.45 1998/09/30 22:23:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -148,7 +148,8 @@ struct nv assyms[] = {
 	def1(NBSG),
 
 	/* system calls */
-	def1(SYS_sigreturn),
+	def1(SYS_exit),
+	def1(SYS___sigreturn14),
 
 	/* errno-isms */
 	def1(EFAULT),
