@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.14 1995/07/09 00:30:11 pk Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.15 1996/03/10 15:24:20 ragge Exp $";
 #endif
 
 /*
@@ -88,10 +88,6 @@ struct nlist nl[] = {
 	{ "_boottime" },
 #define X_HZ		5
 	{ "_hz" },
-#ifdef vax
-#define	X_AVENRUN	6
-	{ "_avenrun" },
-#endif
 	"",
 };
 struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
@@ -238,13 +234,6 @@ updatestat()
 		     sizeof (stats_all.s1.cp_time))
 	    != sizeof (stats_all.s1.cp_time)) {
 		syslog(LOG_ERR, "can't read cp_time from kmem");
-		exit(1);
-	}
-#endif
-#ifdef vax
- 	if (kvm_read(kfd, (long)nl[X_AVENRUN].n_value, (char *)avrun,
-		     sizeof (avrun)) != sizeof (avrun)) {
-		syslog(LOG_ERR, "can't read avenrun from kmem");
 		exit(1);
 	}
 #endif
