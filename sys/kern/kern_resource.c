@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.54 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.55 2000/05/26 00:36:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -381,7 +381,7 @@ calcru(p, up, sp, ip)
 
 	sec = p->p_rtime.tv_sec;
 	usec = p->p_rtime.tv_usec;
-	if (p == curproc) {
+	if (p->p_stat == SONPROC) {
 		/*
 		 * Adjust for the current time slice.  This is actually fairly
 		 * important since the error here is on the order of a time

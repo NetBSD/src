@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2000/05/09 18:59:58 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.15 2000/05/26 00:36:51 thorpej Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -51,6 +51,9 @@ include	<machine/cpu.h>
 define	P_PRIORITY	offsetof(struct proc, p_priority)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
+define	P_STAT		offsetof(struct proc, p_stat)
+
+define	SONPROC		SONPROC
 
 define	P0BR		offsetof(struct pcb, P0BR)
 define	P0LR		offsetof(struct pcb, P0LR)

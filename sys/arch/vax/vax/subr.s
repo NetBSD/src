@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.38 2000/05/20 13:38:58 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.39 2000/05/26 00:36:51 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -299,6 +299,7 @@ noque:	.asciz	"swtch"
 1:	bneq	2f			# more processes on queue?
 	bbsc	r3,_whichqs,2f		# no, clear bit in whichqs
 2:	clrl	4(r2)			# clear proc backpointer
+	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
 #if defined(MULTIPROCESSOR)
 	pushl	r0
 	calls	$0,*_vax_curcpu		# Get ptr to this cpu_info struct

@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.1 2000/05/25 22:11:57 is Exp $   */
+/*      $NetBSD: locore.S,v 1.2 2000/05/26 00:36:43 thorpej Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -377,6 +377,9 @@ ENTRY(cpu_switch)
 	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
+
+	li	3,SONPROC		/* p->p_stat = SONPROC */
+	stb	3,P_STAT(31)
 
 	/* record new process */
 	lis	4,_C_LABEL(curproc)@ha
