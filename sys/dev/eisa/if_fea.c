@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.18 1998/06/08 07:04:47 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.19 1998/07/05 00:51:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -32,6 +32,7 @@
  *	This module support the DEFEA EISA FDDI Controller.
  */
 
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.14 1998/06/10 22:58:05 tv Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.15 1998/07/05 00:51:22 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "ofnet.h"
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

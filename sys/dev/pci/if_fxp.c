@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.16 1998/06/08 06:55:56 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.17 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
  * Intel EtherExpress Pro/100B PCI Fast Ethernet driver
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

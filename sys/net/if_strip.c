@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.14 1997/11/20 08:03:06 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.15 1998/07/05 00:51:27 jonathan Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -96,6 +96,7 @@
 #include "strip.h"
 #if NSTRIP > 0
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

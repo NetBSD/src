@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.18 1998/05/01 03:58:55 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.19 1998/07/05 00:51:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -38,6 +38,8 @@
  *
  * Id: if_fddisubr.c,v 1.15 1997/03/21 22:35:50 thomas Exp
  */
+#include "opt_inet.h"
+#include "opt_atalk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

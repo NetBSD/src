@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.18 1998/05/02 16:45:30 scottr Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.19 1998/07/05 00:51:10 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

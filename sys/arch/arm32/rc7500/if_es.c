@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.11 1998/07/04 22:18:19 jonathan Exp $	*/
+/*	$NetBSD: if_es.c,v 1.12 1998/07/05 00:51:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -41,6 +41,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.22 1998/05/04 12:54:22 christos Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.23 1998/07/05 00:51:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,9 @@
 /*
  * Loopback interface driver for protocol testing and timing.
  */
+
+#include "opt_inet.h"
+#include "opt_atalk.h"
 
 #include "bpfilter.h"
 #include "loop.h"
