@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.34 1998/03/22 07:15:20 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.35 1998/03/22 07:25:40 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.34 1998/03/22 07:15:20 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.35 1998/03/22 07:25:40 jonathan Exp $");
 
 #ifdef alpha
 #include "opt_dec_3000_300.h"
@@ -417,7 +417,6 @@ sccmatch(parent, cf, aux)
 #ifdef SPARSE
 	sccaddr = (void *)TC_DENSE_TO_SPARSE((tc_addr_t)sccaddr);
 #endif
-
 	if (badaddr(sccaddr, 2))
 		return (0);
 
@@ -450,7 +449,7 @@ scc_alphaintr(onoff)
 		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2);
 #endif
 	}
-	alpha_mb();
+	tc_mb();
 }
 #endif /*alpha*/
 
@@ -511,7 +510,6 @@ sccattach(parent, self, aux)
 	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
 		DELAY(10000);
 #endif
-
 	pdp = &sc->scc_pdma[0];
 
 	/* init pseudo DMA structures */
@@ -634,8 +632,7 @@ sccattach(parent, self, aux)
 	 * Unit 1 is the remote console, wire it up now.
 	 */
 	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
-	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
-	 {
+	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0)) {
 		cn_tab = &scccons;
 		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
 
