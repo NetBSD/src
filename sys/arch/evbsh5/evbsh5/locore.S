@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2003/08/12 21:48:07 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2005/01/29 11:41:06 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -168,8 +168,12 @@ Lmapped_start:
 #include <sh5/sh5/locore_subr.S>
 #include <sh5/sh5/cpu_switch.S>
 #include <sh5/sh5/stb1_locore.S>
-#include <sh5/sh5/sigcode.S>
 #include <sh5/sh5/bus_subr.S>
+
+#include "opt_compat_netbsd.h"
+#if defined(COMPAT_16)
+#include <sh5/sh5/sigcode.S>
+#endif
 
 
 #include "dtfcons.h"
