@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.172 2004/01/02 11:35:24 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.173 2004/01/02 21:25:03 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -124,12 +124,13 @@ Mailing List:	bsd-locale@hauN.org
 Responsible:	itojun, tshiozak
 Notes:
 language C multilingualization support suite using wchar_t and other standards.
-minoura_xpg4dl branch has work-in-progress integration (a little bit dated,
-need update).
+The main development playground of Citrus is in NetBSD CVS, so you don't
+need to look for other CVS tree (like citrus CVS tree)
 main trunc has Citrus code in the following places:
-- src/lib/libc/locale, LC_CTYPE: 20010125 with lots of cleanup
-	(singlebyte only - multibyte will come shortly)
-- src/lib/libintl: 20010216 snapshot from cvs tree
+- src/lib/libc/locale, LC_CTYPE: single/multibyte support
+- src/lib/libintl: GNU libc compatible gettext(3) implementation.
+- src/lib/libc/citrus: multibyte LC_CTYPE handling and iconv(3) lower layer
+- src/lib/libc/iconv: iconv(3)
 
 Package:	cron
 Version:	3.0
