@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.32 2002/06/10 09:14:27 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.33 2002/07/19 19:04:36 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.32 2002/06/10 09:14:27 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.33 2002/07/19 19:04:36 yamt Exp $");
 #endif
 #endif
 
@@ -40,10 +40,10 @@ __RCSID("$NetBSD: perform.c,v 1.32 2002/06/10 09:14:27 yamt Exp $");
 static char *Home;
 
 static void
-make_dist(char *home, char *pkg, char *suffix, package_t *plist)
+make_dist(const char *home, const char *pkg, const char *suffix, const package_t *plist)
 {
 	char    tball[FILENAME_MAX];
-	plist_t *p;
+	const plist_t *p;
 	int     ret;
 	char   *args[50];	/* Much more than enough. */
 	int     nargs = 0;
@@ -207,7 +207,7 @@ cleanup(int sig)
 int
 pkg_perform(lpkg_head_t *pkgs)
 {
-	char   *pkg;
+	const char *pkg;
 	char   *cp;
 	FILE   *pkg_in, *fp;
 	package_t plist;
@@ -224,7 +224,7 @@ pkg_perform(lpkg_head_t *pkgs)
 		printf("Creating package %s\n", pkg);
 	get_dash_string(&Comment);
 	get_dash_string(&Desc);
-	if (!strcmp(Contents, "-"))
+	if (IS_STDIN(Contents))
 		pkg_in = stdin;
 	else {
 		pkg_in = fopen(Contents, "r");

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.28 2002/02/08 01:38:53 ross Exp $
+.\" $NetBSD: pkg_info.1,v 1.29 2002/07/19 19:04:38 yamt Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -188,9 +188,7 @@ can be overridden by specifying an alternative directory in the
 environment variable.
 .It Ev PKG_PATH
 This can be used to specify a semicolon-separated list of paths and URLs to search for
-package files.  The current directory is always searched first, even if
-.Ev PKG_PATH
-is set.  If
+package files. If
 .Ev PKG_PATH
 is used, the suffix
 .Pa .tgz
