@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.176 2003/09/05 22:09:38 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.177 2003/09/06 00:24:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.176 2003/09/05 22:09:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.177 2003/09/06 00:24:54 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -360,7 +360,7 @@ ip_init()
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
-	ip_id = arc4random() & 0xffff;
+	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddr);
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
