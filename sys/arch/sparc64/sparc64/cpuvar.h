@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.2 1999/11/06 20:18:13 eeh Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.2.12.1 2002/01/04 19:12:27 eeh Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ struct cpu_softc {
 	 *
 	 * XXXMP: much more needs to go here
 	 */
-	struct	proc 	*fpproc;		/* FPU owner */
+	struct	lwp 	*fplwp;		/* FPU owner */
 
 	/*
 	 * The following are function pointers to do interesting CPU-dependent

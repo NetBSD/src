@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.5 2002/01/04 10:03:37 petrov Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.6 2002/01/04 19:12:33 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -234,15 +234,16 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct pcb *npcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf2;
 	struct rwindow *rp;
+	extern struct lwp lwp0;
 
 	/*
-	 * Save all user registers to p1's stack or, in the case of
+	 * Save all user registers to l1's stack or, in the case of
 	 * user registers and invalid stack pointers, to opcb.
-	 * We then copy the whole pcb to p2; when switch() selects p2
+	 * We then copy the whole pcb to l2; when switch() selects l2
 	 * to run, it will run at the `proc_trampoline' stub, rather
 	 * than returning at the copying code below.
 	 *
-	 * If process p1 has an FPU state, we must copy it.  If it is
+	 * If process l1 has an FPU state, we must copy it.  If it is
 	 * the FPU user, we must save the FPU state first.
 	 */
 
@@ -271,9 +272,9 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
        	if (l1->l_md.md_fpstate) {
-		if (l1 == fpproc) {
+		if (l1 == fplwp) {
 			savefpstate(l1->l_md.md_fpstate);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
@@ -380,18 +381,13 @@ cpu_exit(l, proc)
 	register struct fpstate64 *fs;
 
 	if ((fs = l->l_md.md_fpstate) != NULL) {
-		if (l == fpproc) {
+		if (l == fplwp) {
 			savefpstate(fs);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-
-	/* XXX splhigh(); */
-	if (proc)
-		switchexit(l);
-	else
-		switch_lwp_exit(l);
+	switchexit(l, proc);
 	/* NOTREACHED */
 }
 
@@ -417,9 +413,9 @@ cpu_coredump(l, vp, cred, chdr)
 
 	md_core.md_tf = *l->l_md.md_tf;
 	if (l->l_md.md_fpstate) {
-		if (l == fpproc) {
+		if (l == fplwp) {
 			savefpstate(l->l_md.md_fpstate);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.61.6.2 2002/01/03 06:42:34 petrov Exp $ */
+/*	$NetBSD: db_interface.c,v 1.61.6.3 2002/01/04 19:12:27 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -225,6 +225,7 @@ extern char *trap_type[];
 
 void kdb_kbd_trap __P((struct trapframe64 *));
 void db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_lwp_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_proc_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_ctx_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_window __P((db_expr_t, int, db_expr_t, char *));
@@ -306,10 +307,10 @@ kdb_trap(type, tf)
 	write_all_windows();
 
 	ddb_regs.ddb_tf = *tf;
-	if (fpproc) {
-		savefpstate(fpproc->l_md.md_fpstate);
-		ddb_regs.ddb_fpstate = *fpproc->l_md.md_fpstate;
-		loadfpstate(fpproc->l_md.md_fpstate);
+	if (fplwp) {
+		savefpstate(fplwp->l_md.md_fpstate);
+		ddb_regs.ddb_fpstate = *fplwp->l_md.md_fpstate;
+		loadfpstate(fplwp->l_md.md_fpstate);
 	}
 	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
 /*	if (tf->tf_tstate & TSTATE_PRIV) { */
@@ -351,9 +352,9 @@ kdb_trap(type, tf)
 	db_active--;
 	splx(s);
 
-	if (fpproc) {	
-		*fpproc->l_md.md_fpstate = ddb_regs.ddb_fpstate;
-		loadfpstate(fpproc->l_md.md_fpstate);
+	if (fplwp) {	
+		*fplwp->l_md.md_fpstate = ddb_regs.ddb_fpstate;
+		loadfpstate(fplwp->l_md.md_fpstate);
 	}
 #if 0
 	/* We will not alter the machine's running state until we get everything else working */
@@ -699,6 +700,29 @@ db_page_cmd(addr, have_addr, count, modif)
 	    PHYS_TO_VM_PAGE(addr));
 }
 
+void
+db_lwp_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct lwp *l;
+
+	l = curproc;
+	if (have_addr) 
+		l = (struct lwp*) addr;
+	if (l == NULL) {
+		db_printf("no current lwp\n");
+		return;
+	}
+	db_printf("lwp %p: lid %d\n", l, l->l_lid);
+	db_printf("wchan:%p pri:%d upri:%d tf:%p\n",
+		  l->l_wchan, l->l_priority, l->l_usrpri, l->l_md.md_tf);
+	db_printf("pcb: %p fpstate: %p\n", &l->l_addr->u_pcb, 
+		l->l_md.md_fpstate);
+	return;
+}
 
 void
 db_proc_cmd(addr, have_addr, count, modif)
@@ -707,11 +731,9 @@ db_proc_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct lwp *l;
 	struct proc *p;
 
-	l = curproc;
-	p = l->l_proc;
+	p = curproc->l_proc;
 	if (have_addr) 
 		p = (struct proc*) addr;
 	if (p == NULL) {
@@ -719,24 +741,15 @@ db_proc_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	db_printf("process %p:", p);
-#if 0
-	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x wchan:%p pri:%d upri:%d\n",
+	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x\n",
 		  p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap, 
-		  p->p_vmspace->vm_map.pmap->pm_ctx,
-		  p->p_wchan, p->p_priority, p->p_usrpri);
-	db_printf("thread @ %p = %p tf:%p ", &p->p_thread, p->p_thread,
-		  p->p_md.md_tf);
-#endif
+		  p->p_vmspace->vm_map.pmap->pm_ctx);
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %ld sec %ld usec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
-#if 0
-	db_printf("pcb: %p fpstate: %p\n", &p->p_addr->u_pcb, 
-		p->p_md.md_fpstate);
-#endif
 	return;
 }
 
@@ -748,20 +761,22 @@ db_ctx_cmd(addr, have_addr, count, modif)
 	char *modif;
 {
 	struct proc *p;
+	struct lwp *l;
 
 	/* XXX LOCKING XXX */
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		if (p->p_stat) {
 			db_printf("process %p:", p);
-#if 0
-			db_printf("pid:%d pmap:%p ctx:%x tf:%p fpstate %p "
-				"lastcall:%s\n",
+			db_printf("pid:%d pmap:%p ctx:%x\n",
 				p->p_pid, p->p_vmspace->vm_map.pmap,
-				p->p_vmspace->vm_map.pmap->pm_ctx,
-				p->p_md.md_tf, p->p_md.md_fpstate,
-				(p->p_addr->u_pcb.lastcall)?
-				p->p_addr->u_pcb.lastcall : "Null");
-#endif
+				p->p_vmspace->vm_map.pmap->pm_ctx);
+			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+				db_printf("\tlwp %p: lid:%d tf:%p fpstate %p "
+					"lastcall:%s\n",
+					l, l->l_lid, l->l_md.md_tf, l->l_md.md_fpstate,
+					(l->l_addr->u_pcb.lastcall)?
+					l->l_addr->u_pcb.lastcall : "Null");
+			}
 		}
 	}
 	return;
@@ -832,14 +847,16 @@ db_setpcb(addr, have_addr, count, modif)
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 #if 0
+/* XXX Do we need to do the following too?: */
 			extern struct pcb *cpcb;
+
 			curproc = p;
 			cpcb = (struct pcb*)p->p_addr;
+#endif
 			if (p->p_vmspace->vm_map.pmap->pm_ctx) {
 				switchtoctx(p->p_vmspace->vm_map.pmap->pm_ctx);
 				return;
 			}
-#endif
 			db_printf("PID %ld has a null context.\n", addr);
 			return;
 		}
@@ -999,6 +1016,7 @@ const struct db_command db_machine_command_table[] = {
 	{ "fpstate",	db_dump_fpstate,0,	0 },
 	{ "kmap",	db_pmap_kernel,	0,	0 },
 	{ "lock",	db_lock,	0,	0 },
+	{ "lwp",	db_lwp_cmd,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
 	{ "pctx",	db_setpcb,	0,	0 },
 	{ "page",	db_page_cmd,	0,	0 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.2 2001/11/17 12:24:20 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.3 2002/01/04 19:12:31 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -68,8 +68,8 @@ static int ev_out32 __P((struct firm_event *, int, struct uio *));
  */
 /* ARGSUSED */
 void
-netbsd32_setregs(p, pack, stack)
-	struct proc *p;
+netbsd32_setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack; /* XXX */
 {
@@ -104,9 +104,9 @@ netbsd32_setregs(p, pack, stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == fpproc) {
+		if (p == fplwp) {
 			savefpstate(fs);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 		p->p_md.md_fpstate = NULL;
@@ -574,9 +574,9 @@ cpu_coredump32(p, vp, cred, chdr)
 	}
 
 	if (p->p_md.md_fpstate) {
-		if (p == fpproc) {
+		if (p == fplwp) {
 			savefpstate(p->p_md.md_fpstate);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		/* Copy individual fields */
 		for (i=0; i<32; i++)
@@ -663,7 +663,7 @@ netbsd32_cpu_getmcontext(p, mcp, flags)
 		 * with it later when it becomes necessary.
 		 * Otherwise, get it from the process's save area.
 		 */
-		if (p == fpproc) {
+		if (p == fplwp) {
 			fsp = &fs;
 			savefpstate(fsp);
 		} else {
@@ -754,7 +754,7 @@ netbsd32_cpu_setmcontext(p, mcp, flags)
 		if ((fsp = p->p_md.md_fpstate) == NULL) {
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			p->p_md.md_fpstate = fsp;
-		} else if (p == fpproc) {
+		} else if (p == fplwp) {
 			/* Drop the live context on the floor. */
 			savefpstate(fsp);
 			reload = 1;

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.4.2 2002/01/03 06:42:34 petrov Exp $
+#	$NetBSD: genassym.cf,v 1.25.4.3 2002/01/04 19:12:28 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@ include <sys/param.h>
 include <sys/buf.h>
 include <sys/proc.h>
 include <sys/map.h>
-include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
@@ -127,19 +126,15 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_MD_FPSTATE		offsetof(struct lwp, l_md.md_fpstate)
+define	L_FPSTATE		offsetof(struct lwp, l_md.md_fpstate)
 
 define	LSRUN		LSRUN
 define	LSONPROC	LSONPROC
 
 # proc fields and values
-#define	P_ADDR		offsetof(struct proc, p_addr)
-#define	P_STAT		offsetof(struct proc, p_stat)
-#define	P_WCHAN		offsetof(struct proc, p_wchan)
+define	P_STAT		offsetof(struct proc, p_stat)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_PID		offsetof(struct proc, p_pid)
-##define	P_FPSTATE	offsetof(struct proc, p_md.md_fpstate)
-
 
 # user structure fields
 define	USIZ		sizeof(struct user)
@@ -165,7 +160,7 @@ define	V_FAULTS	offsetof(struct uvmexp, faults)
 define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
 define	CI_CPCB		offsetof(struct cpu_info, ci_cpcb)
 define	CI_NEXT		offsetof(struct cpu_info, ci_next)
-define	CI_FPPROC	offsetof(struct cpu_info, ci_fpproc)
+define	CI_FPLWP	offsetof(struct cpu_info, ci_fplwp)
 define	CI_NUMBER	offsetof(struct cpu_info, ci_number)
 define	CI_UPAID	offsetof(struct cpu_info, ci_upaid)
 define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)

@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.8.8.2 2002/01/03 06:42:34 petrov Exp $	*/
+/*	$NetBSD: emul.c,v 1.8.8.3 2002/01/04 19:12:27 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -315,15 +315,15 @@ fixalign(l, tf)
 		uprintf("%c%d\n", REGNAME(code.i_asi.i_rs2));
 #endif
 #ifdef DIAGNOSTIC
-	if (op.bits.fl && l != fpproc)
+	if (op.bits.fl && l != fplwp)
 		panic("fp align without being the FP owning process");
 #endif
 
 	if (op.bits.st) {
 		if (op.bits.fl) {
-			if (l == fpproc) {
+			if (l == fplwp) {
 				savefpstate(l->l_md.md_fpstate);
-				fpproc = NULL;
+				fplwp = NULL;
 			}
 
 			error = readfpreg(l, code.i_op3.i_rd, &data.i[0]);
@@ -382,7 +382,7 @@ fixalign(l, tf)
 					return error;
 			}
 			loadfpstate(l->l_md.md_fpstate);
-			fpproc = l;
+			fplwp = l;
 		}
 		else {
 			error = writegpreg(tf, code.i_op3.i_rd, &data.i[0]);

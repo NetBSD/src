@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.2.12.2 2002/01/04 09:26:48 petrov Exp $ */
+/*	$NetBSD: locore2.c,v 1.2.12.3 2002/01/04 19:12:30 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,20 @@ setrunqueue(l)
 	l->l_back = sched_qs[bit].ph_rlink;
 	l->l_back->l_forw = l;
 	sched_qs[bit].ph_rlink = l;
+#if 0
+	register struct prochd *q;
+	register struct lwp *oldlast;
+	register int which = l->l_priority >> 2;
+
+	if (l->l_back != NULL)
+		panic("setrunqueue");
+	q = &sched_qs[which];
+	sched_whichqs |= 1 << which;
+	l->l_forw = (struct lwp *)q;
+	l->l_back = oldlast = q->ph_rlink;
+	q->ph_rlink = l;
+	oldlast->l_forw = l;
+#endif
 }
 
 /*
@@ -88,6 +102,19 @@ void
 remrunqueue(l)
 	register struct lwp *l;
 {
+#if 0
+	register int which = l->l_priority >> 2;
+	register struct prochd *q;
+
+	if ((sched_whichqs & (1 << which)) == 0)
+		panic("remrq");
+	l->l_forw->l_back = l->l_back;
+	l->l_back->l_forw = l->l_forw;
+	l->l_back = NULL;
+	q = &sched_qs[which];
+	if (q->ph_link == (struct lwp *)q)
+		sched_whichqs &= ~(1 << which);
+#endif
 	int bit;
 
 	bit = l->l_priority >> 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10.8.1 2002/01/03 06:42:36 petrov Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.10.8.2 2002/01/04 19:12:31 eeh Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -85,7 +85,7 @@ process_read_regs(l, regs)
 	int i;
 
 #ifdef __arch64__
-	if (!(curproc->l_proc->p_flag & P_32)) { /* XXX P_32 */
+	if (!(curproc->l_proc->p_flag & P_32)) {
 		/* 64-bit mode -- copy out regs */
 		regs->r_tstate = tf->tf_tstate;
 		regs->r_pc = tf->tf_pc;
@@ -173,7 +173,7 @@ process_set_pc(l, addr)
 int
 process_read_fpregs(l, regs)
 	struct lwp *l;
-	struct fpreg	*regs;
+	struct fpreg *regs;
 {
 	extern struct fpstate64	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
@@ -199,8 +199,8 @@ process_read_fpregs(l, regs)
 
 int
 process_write_fpregs(l, regs)
-	struct lwp	*l;
-	struct fpreg	*regs;
+	struct lwp *l;
+	struct fpreg *regs;
 {
 
 	extern struct fpstate64	initfpstate;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.6.2 2002/01/03 06:42:33 petrov Exp $ */
+/*	$NetBSD: cpu.h,v 1.29.6.3 2002/01/04 19:12:24 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ struct cpu_info {
 	struct pcb		*ci_cpcb;	/* also initial stack */
 	struct cpu_info		*ci_next;
 
-	struct proc		*ci_fpproc;
+	struct lwp		*ci_fplwp;
 	int			ci_number;
 	int			ci_upaid;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -133,6 +133,7 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_number()	(curcpu()->ci_number)
 #endif
 
+/* This really should be somewhere else. */
 #define	cpu_proc_fork(p1, p2)	/* nothing */
 
 /*
@@ -153,6 +154,7 @@ struct clockframe {
 #define	CLKF_INTR(framep)	((!CLKF_USERMODE(framep))&&\
 				(((framep)->t.tf_kstack < (vaddr_t)EINTSTACK)&&\
 				((framep)->t.tf_kstack > (vaddr_t)INTSTACK)))
+
 
 /*
  * Software interrupt request `register'.
@@ -204,7 +206,7 @@ int	want_resched;		/* resched() was called */
  *
  * XXX this must be per-cpu (eventually)
  */
-struct	lwp *fpproc;		/* FPU owner */
+struct	lwp *fplwp;		/* FPU owner */
 int	foundfpu;		/* true => we have an FPU */
 
 /*
