@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/04/23 19:34:34 scottr Exp $
+#	$NetBSD: Makefile,v 1.18 1997/04/25 18:16:44 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/17/94
 
 PROG=	savecore
@@ -9,6 +9,7 @@ PROG=	savecore
 	(${MACHINE} == "atari")   || \
 	(${MACHINE} == "hp300")   || \
 	(${MACHINE} == "mac68k")  || \
+	(${MACHINE} == "mvme68k") || \
 	(${MACHINE} == "pc532")   || \
 	(${MACHINE} == "powerpc") || \
 	(${MACHINE} == "sparc")   || \
