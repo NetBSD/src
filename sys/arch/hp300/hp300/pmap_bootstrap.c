@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
- *	$Id: pmap_bootstrap.c,v 1.1 1994/05/23 06:15:21 mycroft Exp $
+ *	$Id: pmap_bootstrap.c,v 1.2 1994/05/23 08:42:50 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -295,7 +295,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = &((u_int *)kptpa)[hp300_btop(KERNBASE)];
 	epte = &pte[hp300_btop(hp300_trunc_page(&etext))];
-#ifdef KGDB
+#if defined(KGDB) || defined(DDB)
 	protopte = firstpa | PG_RW | PG_V;	/* XXX RW for now */
 #else
 	protopte = firstpa | PG_RO | PG_V;
