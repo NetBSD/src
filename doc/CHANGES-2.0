@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.429 2004/09/05 10:51:58 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.430 2004/09/05 20:37:04 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7111,4 +7111,10 @@ sys/compat/linux/common/linux_misc.c		1.128
 	as required. This fixes Thomas Klausner's Heroes3 crash, and might
 	also fix PR 26687 by Jan Schaumann
 	[jdolecek, ticket #810]
+
+sys/dev/vinum/vinumvar.h			1.2
+
+	Change the defines for cdev and bdev majors to 162, which is assigned
+	to vinum now. Fixes PR kern/26855 by Andreas Wiese.
+	[jdolecek, ticket #811]
 
