@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2003/09/12 14:59:15 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2003/09/12 15:03:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef	_COBALT_INTR_H_
+#define	_COBALT_INTR_H_
 
 #define	IPL_NONE	0	/* Disable only this interrupt. */
 #define	IPL_BIO		1	/* Disable block I/O interrupts. */
@@ -93,3 +96,5 @@ extern unsigned int	intrcnt[];
 
 #endif /* !_LOCORE */
 #endif /* _LOCORE */
+
+#endif	/* !_COBALT_INTR_H_ */
