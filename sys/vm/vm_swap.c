@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.49 1997/11/29 00:35:43 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.50 1997/12/01 16:33:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -547,7 +547,8 @@ sys_swapctl(p, v, retval)
 
 		sdp = (struct swapdev *)
 			malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
-		sdp->swd_inuse = sdp->swd_flags = 0;
+		bzero(sdp, sizeof(*sdp));
+
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 
@@ -1257,22 +1258,27 @@ sw_reg_iodone(bp)
 		pbp->b_flags |= B_ERROR;
 		pbp->b_error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
+#ifdef SWAPDEBUG
+			if (vmswapdebug & VMSDB_SWFLOW)
+				printf("swiodone: pbp %p iodone: error %d\n",
+					pbp, vnx->vx_error);
+#endif
 			putvndxfer(vnx);
 			biodone(pbp);
 		}
-	}
+	} else if (pbp->b_resid == 0) {
 
-	if (pbp->b_resid == 0) {
-
+#ifdef DIAGNOSTIC
 		if (vnx->vx_pending != 0)
 			panic("swiodone: vnx pending: %d", vnx->vx_pending);
+#endif
 
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
-			putvndxfer(vnx);
 #ifdef SWAPDEBUG
 			if (vmswapdebug & VMSDB_SWFLOW)
 				printf("swiodone: pbp %p iodone\n", pbp);
 #endif
+			putvndxfer(vnx);
 			biodone(pbp);
 		}
 	}
