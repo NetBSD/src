@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.30 1997/04/03 17:30:49 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.31 1997/04/07 21:26:19 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -134,7 +134,6 @@ void netintr()
 	if (n & (1 << NETISR_ATALK))
 		atintr();
 #endif
-#ifdef ISO
 #ifdef NS
 	if (n & (1 << NETISR_NS))
 		nsintr();
