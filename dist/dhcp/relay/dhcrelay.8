@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.\" $Id: dhcrelay.8,v 1.5 2003/02/18 17:08:43 drochner Exp $
+.\" $Id: dhcrelay.8,v 1.6 2004/12/01 23:23:39 christos Exp $
 .\"
 .TH dhcrelay 8
 .SH NAME
@@ -92,10 +92,7 @@ means for relaying DHCP and BOOTP requests from a subnet to which
 no DHCP server is directly connected to one or more DHCP servers on other
 subnets.
 .SH SYSTEM REQUIREMENTS
-You must have the Berkeley                         
-Packet Filter (bpf) configured in your NetBSD kernel.   You must have  
-at least one /dev/bpf* file for each broadcast network interface that
-is attached to your system. 
+You must have the Berkeley Packet Filter (bpf) configured in your NetBSD kernel.
 .SH OPERATION
 .PP
 The DHCP Relay Agent listens for DHCP and BOOTP queries and responses.
