@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.13 1994/12/14 16:31:20 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.14 1994/12/14 18:47:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -472,7 +472,6 @@ union_open(ap)
 		int a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-		struct file *a_fp;
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.13 1994/12/13 20:14:39 mycroft Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.14 1994/12/14 18:45:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -137,7 +137,6 @@ fifo_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-		struct file *a_fp;
 	} */ *ap;
 {
 	register struct vnode *vp = ap->a_vp;

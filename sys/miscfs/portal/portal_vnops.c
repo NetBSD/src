@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.8 1994/11/14 06:07:01 christos Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.9 1994/12/14 18:47:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,7 +187,6 @@ portal_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
-		struct file *a_fp;
 	} */ *ap;
 {
 	struct socket *so = 0;
