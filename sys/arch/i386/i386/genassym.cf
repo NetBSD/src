@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24.2.9 2002/10/18 02:37:40 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.24.2.10 2002/10/18 03:32:49 nathanw Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
-define	L_CPU			offsetof(struct proc, l_cpu)
+define	L_CPU			offsetof(struct lwp, l_cpu)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
