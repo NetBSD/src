@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1995/12/09 23:07:02 tls Exp $
+#	$NetBSD: Makefile,v 1.28 1995/12/15 18:13:41 jtc Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -35,7 +35,7 @@ afterinstall:
 
 build:
 .if exists(domestic)
-	{cd ${.CURDIR}/domestic/include && ${MAKE} install)
+	(cd ${.CURDIR}/domestic/include && ${MAKE} install)
 .endif
 	(cd ${.CURDIR}/include && ${MAKE} install)
 	${MAKE} cleandir
