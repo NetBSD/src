@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.3 1999/06/25 20:50:09 perry Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.4 1999/09/03 08:57:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -352,7 +352,7 @@ lfs_vfree(v)
 		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {
-			printf("lfs_vfree: negative byte count (segment %d short by %d)\n", datosn(fs, old_iaddr), DINODE_SIZE - sup->su_nbytes);
+			printf("lfs_vfree: negative byte count (segment %d short by %d)\n", datosn(fs, old_iaddr), (int)DINODE_SIZE - sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
 			sup->su_nbytes = DINODE_SIZE;
 		}
