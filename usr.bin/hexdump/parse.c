@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.8 1998/12/19 16:43:39 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.8.10.1 2000/10/17 01:32:31 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.8 1998/12/19 16:43:39 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.8.10.1 2000/10/17 01:32:31 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,7 +425,7 @@ isint2:					switch(fu->bcnt) {
 	 * If, rep count is greater than 1, no trailing whitespace
 	 * gets output from the last iteration of the format unit.
 	 */
-	for (fu = fs->nextfu;; fu = fu->nextfu) {
+	for (fu = fs->nextfu; fu; fu = fu->nextfu) {
 		if (!fu->nextfu && fs->bcnt < blocksize &&
 		    !(fu->flags&F_SETREP) && fu->bcnt)
 			fu->reps += (blocksize - fs->bcnt) / fu->bcnt;
@@ -438,8 +438,6 @@ isint2:					switch(fu->bcnt) {
 			if (p2)
 				pr->nospace = p2;
 		}
-		if (!fu->nextfu)
-			break;
 	}
 #ifdef DEBUG
 	for (fu = fs->nextfu; fu; fu = fu->nextfu) {
