@@ -13,13 +13,7 @@
 # based on our current CPU:
 #
 DCPU=`uname -m`
-# workaround minor Makefile.kernio IP22 bug
-#if defined(DCPU) && ( $(DCPU) == "IP22" )
-CMODELWRKAROUND="COMPILATION_MODEL=32"
-#else
-CMODELWRKAROUND=
-#endif
-KFLAGS!= ${MAKE} -d v -n -f $(ROOT)/var/sysgen/Makefile.kernio CPUBOARD=$(DCPU) $(CMODELWRKAROUND) 2>/dev/null | sed -n -e '/^Global:CFLAGS =/h' -e '$$g' -e '$$s/Global:CFLAGS =//' -e '$$s/ -G *8 / /' -e '$$p'
+KFLAGS=`$(TOP)/IRIX/getkflags`
 #
 BINDEST=/usr/sbin
 SBINDEST=/usr/etc
@@ -34,13 +28,8 @@ CFLAGS=-g -I$(TOP)
 ML=mli_ipl.c
 MLD=$(ML)
 IPFILC=ip_fil.c
-#if defined(IPFLKM) && !empty(IPFLKM)
-MLFLAGS= -G 0
+MLFLAGS=-G 0
 LKM=ipflkm.o
-#else
-MLFLAGS= -G 8
-LKM=ipfilter.o
-#endif
 MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
 	'CFLAGS=$(CFLAGS) $(SOLARIS2)' "IPFLKM=$(IPFLKM)" \
 	"IPFLOG=$(IPFLOG)" "LOGFAC=$(LOGFAC)" "POLICY=$(POLICY)" \
@@ -213,7 +202,7 @@ clean:
 	-(for i in *; do \
 		if [ -d $${i} -a -f $${i}/Makefile ] ; then \
 			cd $${i}; (make clean); cd ..; \
-			${RM} $${i}/Makefile* ; \
+			${RM} $${i}/Makefile $${i}/Makefile.ipsend; \
 			rmdir $${i}; \
 		fi \
 	done)

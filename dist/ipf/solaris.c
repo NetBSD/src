@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.7 2000/08/09 20:49:48 veego Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.8 2001/03/26 03:53:32 mike Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.15.2.7 2000/08/05 14:50:30 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.15.2.8 2000/11/27 10:28:41 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -647,8 +647,8 @@ tryagain:
 		hlen = sizeof(ip6_t);
 		ip6 = (ip6_t *)ip;
 		/* XXX - might not be aligned (from ppp?) */
-		((char *)&tlen)[0] = ((char *)&ip->ip_len)[0];
-		((char *)&tlen)[1] = ((char *)&ip->ip_len)[1];
+		((char *)&tlen)[0] = ((char *)&ip6->ip6_plen)[0];
+		((char *)&tlen)[1] = ((char *)&ip6->ip6_plen)[1];
 		plen = ntohs(tlen);
 		sap = IP6_DL_SAP;
 	}
@@ -1691,7 +1691,7 @@ frdest_t *fdp;
 # ifdef	USE_INET6
 	else if (fin->fin_v == 6) {
 		p = ip6->ip6_nxt;
-		dir = ire_route_lookup_v6(&ip6->ip6_dst, 0xffffffff, 0, 0,
+		dir = ire_route_lookup_v6(&ip6->ip6_dst, NULL, 0, 0,
 					NULL, &gw, NULL, MATCH_IRE_DSTONLY|
 					MATCH_IRE_DEFAULT|MATCH_IRE_RECURSIVE);
 	}

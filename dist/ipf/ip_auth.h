@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.h,v 1.1.1.3 2000/05/23 06:11:20 veego Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.1.1.4 2001/03/26 03:52:27 mike Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed & Guido Van Rooij.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_auth.h,v 2.3.2.1 2000/05/22 10:26:11 darrenr Exp
+ * Id: ip_auth.h,v 2.3.2.2 2000/10/19 15:38:44 darrenr Exp
  *
  */
 #ifndef	__IP_AUTH_H__
@@ -48,8 +48,6 @@ typedef struct  fr_authstat {
 extern	frentry_t	*ipauth;
 extern	struct fr_authstat	fr_authstats;
 extern	int	fr_defaultauthage;
-extern	int	fr_authstart;
-extern	int	fr_authend;
 extern	int	fr_authsize;
 extern	int	fr_authused;
 extern	int	fr_auth_lock;

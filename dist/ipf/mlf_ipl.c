@@ -1,4 +1,4 @@
-/*	$NetBSD: mlf_ipl.c,v 1.1.1.3 2000/05/03 10:55:52 veego Exp $	*/
+/*	$NetBSD: mlf_ipl.c,v 1.1.1.4 2001/03/26 03:53:16 mike Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -95,8 +95,13 @@ SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_flags, CTLFLAG_RW, &fr_flags, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_pass, CTLFLAG_RW, &fr_pass, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_active, CTLFLAG_RD, &fr_active, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_chksrc, CTLFLAG_RW, &fr_chksrc, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_minttl, CTLFLAG_RW, &fr_minttl, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_minttllog, CTLFLAG_RW,
+	   &fr_minttllog, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcpidletimeout, CTLFLAG_RW,
 	   &fr_tcpidletimeout, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcphalfclosed, CTLFLAG_RW,
+	   &fr_tcphalfclosed, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcpclosewait, CTLFLAG_RW,
 	   &fr_tcpclosewait, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcplastack, CTLFLAG_RW,

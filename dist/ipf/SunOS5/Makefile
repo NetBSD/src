@@ -21,7 +21,8 @@ TOP=..
 #CPU:sh=uname -p
 #REV:sh=uname -r
 CPUDIR=`uname -p`-`uname -r`
-BITS=`optisa sparcv9 >/dev/null 2>&1; if [ $$? -eq 0 ] ; then echo "64"; else echo "32"; fi`
+#BITS:sh=optisa sparcv9 >/dev/null 2>&1; if [ $$? -eq 0 ] ; then echo "64"; else echo "32"; fi
+BITS=32
 CC=gcc -Wall
 DEBUG=-g
 LIBS=-lsocket -lnsl -lelf
@@ -247,7 +248,7 @@ ipf.pkg: ipf.pkg.common
 	    $(MAKE) PROTO=prototype64 PKG=ipfx OBJ=sparcv9 BITS=64 \
 		ipf.pkg.bin; \
 	else \
-	    $(MAKE) OBJ=. BITS= ipf.pkg.bin;\
+	    $(MAKE) OBJ=. BITS=${BITS} ipf.pkg.bin;\
 	fi
 	touch $(CPUDIR)/ipf.pkg
 	pkgtrans -s $(TMP) $(CPUDIR)/ipf.pkg `ls $(TMP)`
@@ -310,6 +311,7 @@ ipf.pkg.bin:
 	#-(cd $(CPUDIR); ln -s ../copyright ../postinstall ../postremove .)
 	-(cd $(CPUDIR); ln -s ../$(PROTO) prototype)
 	-sed -e 's/ipf/$(PKG)/' -e "s/NAME=.*/&$(BITTYPE)/" \
+	     -e "s/ARCH=.*/ARCH=`uname -p` (${BITS}-bit)/" \
 		< pkginfo > $(CPUDIR)/pkginfo
 	-if [ "$(BITS)" = 64 ]; then echo 'SUNW_ISA=sparcv9' >> $(CPUDIR)/pkginfo; fi
 	(cd $(CPUDIR); pkgmk -a `uname -p` -o -d $(TMP))

@@ -1,8 +1,9 @@
 #!/bin/sh
-id=`/usr/sbin/modinfo | grep ipf | awk ' { print $1 } ' -`
-pid=`ps -e | grep ipmon | awk ' { print $1 } ' -`
+id=`/usr/sbin/modinfo | awk '/ipf/ { print $1 } ' -`
+pid=`ps -e | awk '/ipmon/ { print $1 } ' -`
 PATH=${PATH}:/sbin:/opt/ipf/bin
 IPFILCONF=/etc/opt/ipf/ipf.conf
+IP6FILCONF=/etc/opt/ipf/ipf6.conf
 IPNATCONF=/etc/opt/ipf/ipnat.conf
 
 block_default_workaround() {
@@ -21,7 +22,7 @@ block_default_workaround() {
 
 case "$1" in
 	start)
-		if [ x$pid != x ] ; then
+		if [ x"$pid" != x ] ; then
 			kill -TERM $pid
 		fi
 		if [ x$id != x ] ; then
@@ -40,17 +41,26 @@ case "$1" in
 				ipf -s
 			fi
 		fi
+		if [ -r ${IP6FILCONF} ]; then
+			ipf -IFa -6f ${IP6FILCONF}
+			if [ $? != 0 ]; then
+				echo "$0: load of ${IPFILCONF} into alternate set failed"
+			else
+				ipf -IF a
+				ipf -6f ${IP6FILCONF}
+			fi
+		fi
 		if [ -r ${IPNATCONF} ]; then
 			ipnat -CF -f ${IPNATCONF}
 			if [ $? != 0 ]; then
 				echo "$0: load of ${IPNATCONF} failed"
 			fi
 		fi
-		ipmon -sn &
+		ipmon -s &
 		;;
 
 	stop)
-		if [ x$pid != x ] ; then
+		if [ x"$pid" != x ] ; then
 			kill -TERM $pid
 		fi
 		if [ x$id != x ] ; then
