@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.66 2000/01/09 16:01:22 joda Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.67 2000/01/18 17:20:32 jlam Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.65 2000/01/09 16:00:29 joda Exp 
+ *	NetBSD: pcmciadevs,v 1.66 2000/01/18 17:19:33 jlam Exp 
  */
 
 /*-
@@ -458,6 +458,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "WaveLAN/IEEE"	},
 	},
 	{
+	    PCMCIA_VENDOR_AIRONET, PCMCIA_PRODUCT_AIRONET_PC4500,
+	    PCMCIA_CIS_AIRONET_PC4500,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4500 Wireless LAN Adapter"	},
+	},
+	{
+	    PCMCIA_VENDOR_AIRONET, PCMCIA_PRODUCT_AIRONET_PC4800,
+	    PCMCIA_CIS_AIRONET_PC4800,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4800 Wireless LAN Adapter"	},
+	},
+	{
 	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
 	    PCMCIA_CIS_BAY_STACK_650,
 	    0,
@@ -749,6 +763,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Lucent Technologies",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_AIRONET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Aironet Wireless Communications",
 	    NULL,
 	},
 	{

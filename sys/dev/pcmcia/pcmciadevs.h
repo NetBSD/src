@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.66 2000/01/09 16:01:22 joda Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.67 2000/01/18 17:20:32 jlam Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.65 2000/01/09 16:00:29 joda Exp 
+ *	NetBSD: pcmciadevs,v 1.66 2000/01/18 17:19:33 jlam Exp 
  */
 
 /*-
@@ -66,6 +66,7 @@
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
+#define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_WEBGEAR	0x01a6	/* WebGear */
@@ -308,7 +309,15 @@
 #define	PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE	0x0002
 #define	PCMCIA_STR_LUCENT_WAVELAN_IEEE	"WaveLAN/IEEE"
 
-/* Bey Networks */
+/* Aironet */
+#define	PCMCIA_CIS_AIRONET_PC4500	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AIRONET_PC4500	0x0005
+#define	PCMCIA_STR_AIRONET_PC4500	"Aironet PC4500 Wireless LAN Adapter"
+#define	PCMCIA_CIS_AIRONET_PC4800	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AIRONET_PC4800	0x0005
+#define	PCMCIA_STR_AIRONET_PC4800	"Aironet PC4800 Wireless LAN Adapter"
+
+/* Bay Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BAY_STACK_650	0x0804
 #define	PCMCIA_STR_BAY_STACK_650	"BayStack 650 Wireless LAN"
