@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.35 2003/08/07 10:04:21 wiz Exp $	*/
+/*	$NetBSD: record.c,v 1.36 2003/10/21 02:15:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.35 2003/08/07 10:04:21 wiz Exp $");
+__RCSID("$NetBSD: record.c,v 1.36 2003/10/21 02:15:00 fvdl Exp $");
 #endif
 
 
@@ -516,7 +516,7 @@ write_header_wav(hdrp, lenp, leftp)
 
 	if (header_info)
 		warnx("header information not supported for WAV");
-	*leftp = NULL;
+	*leftp = 0;
 
 	switch (precision) {
 	case 8:
