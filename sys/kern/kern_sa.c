@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.49 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.50 2004/03/27 00:49:47 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.49 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.50 2004/03/27 00:49:47 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,7 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 
 	sa_yield(l);
 
-	return (0);
+	return (EJUSTRETURN);
 }
 
 void
@@ -865,6 +865,7 @@ sa_switch(struct lwp *l, int type)
 
 	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
 	    type, vp->savp_lwp ? vp->savp_lwp->l_lid : 0));
+
 	SCHED_ASSERT_LOCKED();
 
 	if (p->p_flag & P_WEXIT) {
