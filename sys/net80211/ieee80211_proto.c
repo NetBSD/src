@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.5 2003/10/13 04:23:56 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.3 2003/07/20 21:36:08 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.5 2003/10/13 04:23:56 dyoung Exp $");
 #endif
 
 /*
@@ -143,6 +143,7 @@ ieee80211_proto_detach(struct ifnet *ifp)
 	mtx_destroy(&ic->ic_mgtq.ifq_mtx);
 #else
 	IF_PURGE(&ic->ic_mgtq);
+	IF_PURGE(&ic->ic_pwrsaveq);
 #endif
 }
 
@@ -378,6 +379,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			IF_DRAIN(&ic->ic_mgtq);
 #else
 			IF_PURGE(&ic->ic_mgtq);
+			IF_PURGE(&ic->ic_pwrsaveq);
 #endif
 			if (ic->ic_wep_ctx != NULL) {
 				free(ic->ic_wep_ctx, M_DEVBUF);
