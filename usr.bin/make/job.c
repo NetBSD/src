@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.32 2000/01/21 17:08:35 mycroft Exp $	*/
+/*	$NetBSD: job.c,v 1.33 2000/04/20 11:23:25 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.32 2000/01/21 17:08:35 mycroft Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.33 2000/04/20 11:23:25 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.32 2000/01/21 17:08:35 mycroft Exp $");
+__RCSID("$NetBSD: job.c,v 1.33 2000/04/20 11:23:25 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -532,7 +532,8 @@ JobPrintCommand(cmdp, jobp)
     LstNode 	  cmdNode;  	    /* Node for replacing the command */
     char     	  *cmd = (char *) cmdp;
     Job           *job = (Job *) jobp;
-
+    char	*cp;
+    
     noSpecials = noExecute && !(job->node->type & OP_MAKE);
 
     if (strcmp(cmd, "...") == 0) {
@@ -640,6 +641,9 @@ JobPrintCommand(cmdp, jobp)
 	}
     }
 
+    if ((cp = Check_Cwd_Cmd(cmd)) != NULL) {
+	    DBPRINTF("cd %s; ", cp);
+    }		    
     DBPRINTF(cmdTemplate, cmd);
     free(cmdStart);
 
