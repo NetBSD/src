@@ -1,3 +1,5 @@
+/*	$NetBSD: clnt_perror.c,v 1.5 1995/02/25 03:01:39 cgd Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -30,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_perror.c,v 1.4 1995/02/20 21:20:22 jtc Exp $";
+static char *rcsid = "$NetBSD: clnt_perror.c,v 1.5 1995/02/25 03:01:39 cgd Exp $";
 #endif
 
 /*
