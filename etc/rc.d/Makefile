@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2002/01/31 01:26:05 lukem Exp $
+# $NetBSD: Makefile,v 1.27 2002/02/11 14:00:35 lukem Exp $
 
 NOPROG= noprog
 
@@ -8,7 +8,7 @@ FILES=	DAEMON LOGIN NETWORKING SERVERS \
 	accounting altqd amd apmd \
 	bootparams bootconf.sh ccd cleartmp cron \
 	dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
-	ifwatchd inetd ipfilter ipmon ipnat ipsec isdnd kdc \
+	ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd kdc \
 	ldconfig lkm1 lkm2 lkm3 local lpd \
 	mopd motd mountall mountcritlocal mountcritremote mountd \
 	moused mrouted \
