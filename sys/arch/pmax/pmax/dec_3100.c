@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $ */
+/*	$NetBSD: dec_3100.c,v 1.6.2.6 1999/05/07 02:33:30 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.6 1999/05/07 02:33:30 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ dec_3100_init()
 	platform.cons_init = dec_3100_cons_init;
 	platform.device_register = dec_3100_device_register;
 
-	strcpy(cpu_model, "DECstation 2100 or 3100 (PMAX)");
+	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
 
 	dec_3100_os_init();
 }

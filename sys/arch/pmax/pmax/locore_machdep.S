@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8.2.3 1999/01/28 06:46:46 nisimura Exp $ */
+/*	$NetBSD: locore_machdep.S,v 1.8.2.4 1999/05/07 02:33:31 nisimura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,75 +66,6 @@
 #include "opt_dec_3max.h"
 
 	.set	noreorder
-LEAF(_splraise)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, MIPS_INT_MASK		# extract INT bits
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	a0, a0, v0			# disable retaining other bits
-	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	nop
-	j	ra
-	and	v0, v0, MIPS_INT_MASK
-END(_splraise)
-
-LEAF(_spllower)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	li	v1, ~MIPS_INT_MASK
-	and	v1, v0, v1			# turn off INT bit
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	a0, a0, MIPS_INT_MASK		# extract INT bits
-	or	a0, a0, v1			# disable making other bits on
-	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	nop
-	j	ra
-	and	v0, v0, MIPS_INT_MASK
-END(_spllower)
-
-LEAF(_splset)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, MIPS_INT_MASK		# extract INT bits
-	li	v1, ~MIPS_INT_MASK
-	and	v1, v1, v0			# turn off every INT bit
-	or	v1, v1, a0			# set old INT bits
-	mtc0	v1, MIPS_COP_0_STATUS		# store back
-	nop
-	j	ra
-	and	v0, v0, MIPS_INT_MASK
-END(_splset)
-
-LEAF(_splget)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	nop
-	j	ra
-	and	v0, v0, MIPS_INT_MASK
-END(_splget)
-
-LEAF(_setsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-	nop; nop
-	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	nop
-	or	v0, v0, a0			# set soft intr. bits
-	mtc0	v0, MIPS_COP_0_CAUSE		# store back
-	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	j	ra
-	nop
-END(_setsoftintr)
-
-LEAF(_clrsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-	nop; nop
-	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	v0, v0, a0			# clear soft intr. bits
-	mtc0	v0, MIPS_COP_0_CAUSE		# store back
-	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	j	ra
-	nop
-END(_clrsoftintr)
-
 
 #if defined(DEC_3100) || defined(DEC_5100)
 /*
@@ -218,8 +149,8 @@ END(CopyFromBuffer)
  * circuit; This indicates write operations are pending or not.
  */
 LEAF(cop0_busy)
-ALIAS(kn01_wbflush)
-ALIAS(kn02_wbflush)
+ALEAF(kn01_wbflush)
+ALEAF(kn02_wbflush)
 1:					# spin
 	bc0f	1b			# until write buffer is drained
 	nop				# -delay slot-
@@ -235,8 +166,8 @@ END(cop0_busy)
  * circuit; This indicates write operations are pending or not.
  */
 LEAF(cop3_busy)
-ALIAS(kn210_wbflush)
-ALIAS(kn230_wbflush)
+ALEAF(kn210_wbflush)
+ALEAF(kn230_wbflush)
         mfc0	v0, MIPS_COP_0_STATUS	# save original SR in v0
 	li	t0, 0x80000000		# set CU3 bit
 	or	v1, v0 ,t0		# v1 = v0 | 0x80000000

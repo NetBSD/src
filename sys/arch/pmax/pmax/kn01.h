@@ -1,4 +1,4 @@
-/*	$NetBSD: kn01.h,v 1.4 1994/10/26 21:10:27 cgd Exp $	*/
+/*	$NetBSD: kn01.h,v 1.4.22.1 1999/05/07 02:33:30 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,8 +94,8 @@
  *	Definitions specific to the KN01 processor (pmax)
  */
 
-#ifndef	MIPS_KN01_H
-#define	MIPS_KN01_H	1
+#ifndef MIPS_KN01_H
+#define MIPS_KN01_H	1
 
 /*
  * KN01's Physical address space
@@ -111,12 +111,12 @@
 #define KN01_PHYS_MEMORY_START	0x00000000
 #define KN01_PHYS_MEMORY_END	0x01800000	/* 24 Meg in 8 slots */
 
-#define	KN01_PHYS_FBUF_START	0x0fc00000	/* frame buffer memory */
-#define	KN01_PHYS_FBUF_M_END	0x0fc20000	/* mono */
-#define	KN01_PHYS_FBUF_C_END	0x0fd00000	/* color */
+#define KN01_PHYS_FBUF_START	0x0fc00000	/* frame buffer memory */
+#define KN01_PHYS_FBUF_M_END	0x0fc20000	/* mono */
+#define KN01_PHYS_FBUF_C_END	0x0fd00000	/* color */
 
-#define	KN01_PHYS_COLMASK_START	0x10000000	/* Color Plane mask */
-#define	KN01_PHYS_COLMASK_END	0x11000000	/* Color Plane mask */
+#define KN01_PHYS_COLMASK_START 0x10000000	/* Color Plane mask */
+#define KN01_PHYS_COLMASK_END	0x11000000	/* Color Plane mask */
 
 
 /*
@@ -124,29 +124,19 @@
  */
 
 #define KN01_SYS_PCC		0x11000000	/* Progr. Cursor Chip */
-
 #define KN01_SYS_VDAC		0x12000000	/* Color map */
-
 #define KN01_SYS_ERRADR		0x17000000	/* Write error address */
-
 #define KN01_SYS_LANCE		0x18000000	/* Lance chip */
-
 #define KN01_SYS_LANCE_B_START	0x19000000	/* 64 Kb Lance Buffer */
 #define KN01_SYS_LANCE_B_END	0x19010000
-
 #define KN01_SYS_SII		0x1a000000	/* scsi SII chip */
-
 #define KN01_SYS_SII_B_START	0x1b000000	/* 128 Kb SCSI buffer */
 #define KN01_SYS_SII_B_END	0x1b020000
-
-#define	KN01_SYS_DZ		0x1c000000	/* Serial lines (DZ) */
-
-#define	KN01_SYS_CLOCK		0x1d000000	/* rtc chip */
-
-#define	KN01_SYS_CSR		0x1e000000	/* System control register */
-
-#define	KN01_SYS_ROM_START	0x1f000000	/* System ROM */
-#define	KN01_SYS_ROM_END	0x1f07ffff
+#define KN01_SYS_DZ		0x1c000000	/* Serial lines (DZ) */
+#define KN01_SYS_CLOCK		0x1d000000	/* rtc chip */
+#define KN01_SYS_CSR		0x1e000000	/* System control register */
+#define KN01_SYS_ROM_START	0x1f000000	/* System ROM */
+#define KN01_SYS_ROM_END	0x1f07ffff
 
 
 /*
@@ -190,7 +180,7 @@
 						/* Self-test ok pinout */
 #define KN01_CSR_MNFMOD		0x8000		/* ro */
 						/* Manifacturer MOD jumper */
-#define	KN01_CSR_MBZ		0x9800
+#define KN01_CSR_MBZ		0x9800
 
 /* Error address status register */
 
