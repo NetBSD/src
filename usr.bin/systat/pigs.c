@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.18 2000/06/04 16:06:26 thorpej Exp $	*/
+/*	$NetBSD: pigs.c,v 1.19 2000/06/04 18:29:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.18 2000/06/04 16:06:26 thorpej Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.19 2000/06/04 18:29:13 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -101,7 +101,7 @@ closepigs(w)
 void
 showpigs()
 {
-	int i, j, y, k;
+	int i, y, k;
 	struct	eproc *ep;
 	float total;
 	int factor;
@@ -144,9 +144,7 @@ showpigs()
 		mvwaddstr(wnd, y, 9, pidstr);
 		(void)snprintf(pidname, sizeof(pidname), "%9.9s", pname);
 		mvwaddstr(wnd, y, 15, pidname);
-		wmove(wnd, y, 25);
-		for (j = pt[k].pt_pctcpu*factor + 0.5; j > 0; j--)
-			waddch(wnd, 'X');
+		mvwhline(wnd, y, 25, 'X', pt[k].pt_pctcpu*factor + 0.5);
 	}
 	wmove(wnd, y, 0); wclrtobot(wnd);
 }
