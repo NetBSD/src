@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.344 2001/08/20 03:45:55 gehenna Exp $
+$NetBSD: pcidevs,v 1.345 2001/08/20 19:29:08 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -733,7 +733,9 @@ product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
 product AMD PBC756_IDE	0x7409	AMD756 IDE controller
 product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
 product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
-product AMD PBC766_ISA	0x7410	AMD766 PCI-to-ISA Bridge
+product AMD SC762_NB	0x700c	AMD762 NorthBridge
+product AMD SC762_PPB	0x700d	AMD762 AGP Bridge
+product AMD PBC766_ISA	0x7410	AMD766 SouthBridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
 product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
