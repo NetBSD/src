@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.12 2001/02/12 18:49:04 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.13 2001/06/11 01:19:53 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ ec_attach(parent, self, aux)
 
 	/*
 	 * Unmap PROM - select NIC registers.  The proper setting of the
-	 * transciever is set in later in ec_init_card() via dp8390_init().
+	 * transceiver is set in later in ec_init_card() via dp8390_init().
 	 */
 	bus_space_write_1(asict, asich, ELINK2_CR, ELINK2_CR_XSEL);
 
