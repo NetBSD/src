@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.19 1999/03/10 00:08:33 erh Exp $
+.\"	$NetBSD: fsck.8,v 1.20 2001/03/07 23:48:54 fair Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 23, 1996
+.Dd March 7, 2001
 .Dt FSCK 8
 .Os NetBSD 1
 .Sh NAME
@@ -57,7 +57,7 @@ option)
 .Nm
 reads the table
 .Pa /etc/fstab
-to determine which filesystems to check.
+to determine which filesystems to check, in what order.
 Only partitions in fstab that are mounted ``rw,'' ``rq'' or ``ro''
 and that have non-zero pass number are checked.
 Filesystems with pass number 1 (normally just the root filesystem)
@@ -89,6 +89,18 @@ Causes
 to assume no as the answer to all operator questions, except "CONTINUE?".
 .It Fl p
 Enter preen mode.
+In preen mode,
+.Nm
+will check all filesystems listed in
+.Pa /etc/fstab
+according to their pass number, and will make minor repairs without
+human intervention.
+Any major problems will cause
+.Nm
+to exit with a non-zero
+.Xr exit 2
+code, so as to alert any invoking program or script that human
+intervention is required.
 .It Fl t Ar fstype
 Invoke
 .Nm
