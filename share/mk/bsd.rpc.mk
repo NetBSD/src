@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.6 2003/07/28 15:25:06 lukem Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.7 2003/07/29 01:12:46 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -7,7 +7,7 @@ RPC_XDIR?=	${.CURDIR}/
 # We don't use implicit suffix rules here to avoid dependencies in the
 # Installed files.
 
-.if defined(RPC_INCS)
+.if defined(RPC_INCS)						# {
 
 .for I in ${RPC_INCS}
 ${I}: ${I:.h=.x}
@@ -16,11 +16,10 @@ ${I}: ${I:.h=.x}
 
 CLEANFILES += ${RPC_INCS}
 
-${DEPENDSRCS}: ${RPC_INCS}
+.endif								# }
 
-.endif
 
-.if defined(RPC_XDRFILES)
+.if defined(RPC_XDRFILES)					# {
 
 .for I in ${RPC_XDRFILES}
 ${I}: ${RPC_XDIR}${I:_xdr.c=.x}
@@ -29,11 +28,10 @@ ${I}: ${RPC_XDIR}${I:_xdr.c=.x}
 
 CLEANFILES += ${RPC_XDRFILES}
 
-${DEPENDSRCS}: ${RPC_XDRFILES}
+.endif								# }
 
-.endif
 
-.if defined(RPC_SVCFILES)
+.if defined(RPC_SVCFILES)					# {
 
 .for I in ${RPC_SVCCLASS}
 _RPCS += -s ${I}
@@ -48,10 +46,12 @@ ${I}: ${RPC_XDIR}${I:_svc.c=.x}
 
 CLEANFILES += ${RPC_SVCFILES}
 
-${DEPENDSRCS}: ${RPC_SVCFILES}
+.endif								# }
+
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
 
-.endif
+
+${DEPENDSRCS}: ${RPC_INCS} ${RPC_XDRFILES} ${RPC_SVCFILES}
