@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.6 2003/08/29 13:46:38 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.7 2003/09/03 03:17:22 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.6 2003/08/29 13:46:38 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.7 2003/09/03 03:17:22 mycroft Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1096,5 +1096,3 @@ s3c2xx0_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 
 	return dmat;
 }
-
-int wdcdebug_wd_mask=0;
