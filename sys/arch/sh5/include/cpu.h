@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2002/09/10 11:11:12 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2002/10/02 16:19:59 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -167,11 +167,10 @@ curcpu(void)
 #define	cpu_number()			0
 
 /*
- * Can't swapout u-area, (__SWAP_BROKEN)
- * since we use P1 converted address for trapframe.
+ * Can swapout u-area
  */
 #define	cpu_swapin(p)			/* nothing */
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+#define	cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
