@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.28 2003/01/08 17:36:56 wiz Exp $
+.\"	$NetBSD: compat_linux.8,v 1.29 2003/05/14 07:50:50 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -37,18 +37,20 @@
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
 .Nx
-supports running Linux binaries.  This applies to arm, alpha, i386, m68k and
-powerpc systems for now.  Both the a.out and ELF binary formats are supported.
+supports running Linux binaries.
+This applies to arm, alpha, i386, m68k and powerpc systems for now.
+Both the a.out and ELF binary formats are supported.
 Most programs should work, including the ones that use the Linux SVGAlib (only
-on i386).  Programs that will not work include some that use the Linux
+on i386).
+Programs that will not work include some that use the Linux
 .Pa /proc
 filesystem (which is different from the optional
 .Nx
 .Pa /proc
 filesystem), and i386-specific calls, such as
-enabling virtual 8086 mode. Currently, sound is only partially
-supported for Linux binaries (they will probably run, depending on
-what Linux sound support features are used).
+enabling virtual 8086 mode.
+Currently, sound is only partially supported for Linux binaries (they will
+probably run, depending on what Linux sound support features are used).
 .Pp
 The Linux compatibility feature is active
 for kernels compiled with the
@@ -66,19 +68,20 @@ and/or
 options (respectively) should be enabled in addition to
 .Dv COMPAT_LINUX .
 .Pp
-A lot of programs are dynamically linked. This means that you will
-also need the Linux shared libraries that the program depends on, and
-the runtime linker. Also, you will need to create a
+A lot of programs are dynamically linked.
+This means that you will also need the Linux shared libraries that the
+program depends on, and the runtime linker.
+Also, you will need to create a
 .Dq shadow root
 directory for Linux binaries on your
 .Nx
-system. This directory
-is named
+system.
+This directory is named
 .Pa /emul/linux .
 Any file operations done by Linux programs run under
 .Nx
-will look in this directory first. So, if a Linux
-program opens, for example,
+will look in this directory first.
+So, if a Linux program opens, for example,
 .Pa /etc/passwd ,
 .Nx
 will
@@ -87,19 +90,21 @@ first try to open
 and if that does not exist open the
 .Sq real
 .Pa /etc/passwd
-file. It is recommended that you install
+file.
+It is recommended that you install
 Linux packages that include configuration files, etc under
 .Pa /emul/linux ,
 to avoid naming conflicts with possible
 .Nx
-counterparts. Shared
-libraries should also be installed in the shadow tree.
+counterparts.
+Shared libraries should also be installed in the shadow tree.
 .Pp
 Generally, you will need to look for the shared libraries that Linux
 binaries depend on only the first few times that you install a Linux
 program on your
 .Nx
-system. After a while, you will have a sufficient
+system.
+After a while, you will have a sufficient
 set of Linux shared libraries on your system to be able to run newly
 imported Linux binaries without any extra work.
 .Ss Setting up shared libraries
@@ -113,19 +118,20 @@ do the necessary installation steps).
 .It
 For i386, you can simply install the SuSE shared libs using the
 .Pa pkgsrc/emulators/suse_linux
-package(s). On PowerPC ports, the
+package(s).
+On PowerPC ports, the
 .Pa pkgsrc/emulators/linuxppc_lib
 will install the needed libraries.
 If you are on other platforms, or this doesn't supply you with all
 the needed libraries, read on.
 .It
-You have access to a Linux system. In this case you can
-temporarily install the binary there, see what shared libraries
-it needs, and copy them to your
+You have access to a Linux system.
+In this case you can temporarily install the binary there, see what
+shared libraries it needs, and copy them to your
 .Nx
-system. Example: you have
-just ftp-ed the Linux binary of Doom. Put it on the Linux
-system you have access to, and check which shared libraries it
+system.
+Example: you have just ftp-ed the Linux binary of Doom.
+Put it on the Linux system you have access to, and check which shared libraries it
 needs by running
 .Sq ldd linuxxdoom :
 .Pp
@@ -142,8 +148,8 @@ You would need go get all the files from the last column, and
 put them under
 .Pa /emul/linux ,
 with the names in the first column
-as symbolic links pointing to them. This means you eventually have
-these files on your
+as symbolic links pointing to them.
+This means you eventually have these files on your
 .Nx
 system:
 .Bl -item -compact
@@ -168,11 +174,12 @@ Note that if you already have a Linux shared library with a
 matching major revision number to the first column of the
 .Xr ldd 1
 output, you won't need to copy the file named in the last column
-to your system, the one you already have should work. It is
-advisable to copy the shared library anyway if it is a newer version,
-though. You can remove the old one, as long as you make the symbolic
-link point to the new one. So, if you have these libraries
-on your system:
+to your system, the one you already have should work.
+It is advisable to copy the shared library anyway if it is a newer version,
+though.
+You can remove the old one, as long as you make the symbolic
+link point to the new one.
+So, if you have these libraries on your system:
 .Pp
 .Bl -item -compact
 .It
@@ -214,7 +221,8 @@ looking for matching major revision numbers itself, you
 don't need to worry about that.
 .Pp
 Finally, you must make sure that you have the Linux runtime linker
-and its config files on your system. You should copy these
+and its config files on your system.
+You should copy these
 files from the Linux system to their appropriate place on your
 .Nx
 system (in the
@@ -229,10 +237,10 @@ tree):
 .Pa /etc/ld.so.config
 .El
 .It
-You don't have access to a Linux system. In that case, you
-should get the extra files you need from various ftp sites.
-Information on where to look for the various files is appended
-below. For now, let's assume you know where to get the files.
+You don't have access to a Linux system.
+In that case, you should get the extra files you need from various ftp sites.
+Information on where to look for the various files is appended below.
+For now, let's assume you know where to get the files.
 .Pp
 Retrieve the following files (from _one_ ftp site to avoid
 any version mismatches), and install them under
@@ -258,11 +266,11 @@ and
 .Ic ldd
 don't necessarily need to be under
 .Pa /emul/linux ,
-you can install them elsewhere in the system too. Just make sure
-they don't conflict with their
+you can install them elsewhere in the system too.
+Just make sure they don't conflict with their
 .Nx
-counterparts. A good idea
-would be to install them in
+counterparts.
+A good idea would be to install them in
 .Pa /usr/local/bin
 as
 .Ic ldconfig-linux
@@ -272,8 +280,8 @@ and
 Create the file
 .Pa /emul/linux/etc/ld.so.conf ,
 containing the directories in which the Linux runtime linker should look
-for shared libs. It is a plain text file, containing a directory
-name on each line.
+for shared libs.
+It is a plain text file, containing a directory name on each line.
 .Pa /lib
 and
 .Pa /usr/lib
@@ -294,7 +302,8 @@ code, and should exist as such on your system.
 .Pp
 Run the Linux
 .Ic ldconfig
-program. It should be statically
+program.
+It should be statically
 linked, so it doesn't need any shared libraries by itself.
 It will create the file
 .Pa /emul/linux/etc/ld.so.cache
@@ -303,9 +312,11 @@ You should rerun the Linux version of
 each time you add a new shared library.
 .Pp
 You should now be set up for Linux binaries which only need
-a shared libc. You can test this by running the Linux
+a shared libc.
+You can test this by running the Linux
 .Ic ldd
-on itself. Suppose that you have it installed as
+on itself.
+Suppose that you have it installed as
 .Ic ldd-linux ,
 it should produce something like:
 .Pp
@@ -319,8 +330,8 @@ Whenever you install a new Linux program, you should check
 if it needs shared libraries, and if so, whether you have
 them installed in the
 .Pa /emul/linux
-tree. To do this, you run
-the Linux
+tree.
+To do this, you run the Linux
 .Ic ldd
 on the new program, and watch its output.
 .Ic ldd
@@ -328,23 +339,32 @@ on the new program, and watch its output.
 .Xr ldd 1 )
 will print a list
 of shared libraries that the program depends on, in the
-form  \*[Lt]majorname\*[Gt] (\*[Lt]jumpversion\*[Gt]) =\*[Gt] \*[Lt]fullname\*[Gt].
+form
+.Aq majorname
+.Pq Aq jumpversion
+=\*[Gt]
+.Aq fullname .
 .Pp
 If it prints
 .Dq not found
-instead of \*[Lt]fullname\*[Gt] it means that
-you need an extra library. Which library this is, is shown
-in \*[Lt]majorname\*[Gt], which will be of the form libXXXX.so.\*[Lt]N\*[Gt]
-You will need to find a libXXXX.so.\*[Lt]N\*[Gt].\*[Lt]mm\*[Gt] on a Linux ftp site,
-and install it on your system. The XXXX (name) and \*[Lt]N\*[Gt] (major
-revision number) should match; the minor number(s) \*[Lt]mm\*[Gt] are
-less important, though it is advised to take the most
-recent version.
+instead of
+.Aq fullname
+it means that you need an extra library.
+Which library this is, is shown in
+.Aq majorname ,
+which will be of the form libXXXX.so.\*[Lt]N\*[Gt]
+You will need to find a libXXXX.so.\*[Lt]N\*[Gt].\*[Lt]mm\*[Gt] on a
+Linux ftp site, and install it on your system.
+The XXXX (name) and
+.Aq N
+(major revision number) should match; the minor number(s)
+.Aq mm
+are less important, though it is advised to take the most recent version.
 .El
 .Ss Setting up procfs
 Some Linux binaries expect procfs to be mounted and that it would
-contain some Linux specific stuff. If it's not the case, they behave
-unexpectedly or even crash.
+contain some Linux specific stuff.
+If it's not the case, they behave unexpectedly or even crash.
 .Pp
 Mount procfs on
 .Nx
@@ -353,7 +373,7 @@ using following command:
 .It (me@netbsd) mount_procfs -o linux procfs /emul/linux/proc
 .El
 .Pp
-You can also setup your system so that procfs is mounted automatically
+You can also set up your system so that procfs is mounted automatically
 on system boot, by putting an entry like the one below to
 .Pa /etc/fstab .
 .Bl -tag -width 123 -offset indent
@@ -368,8 +388,8 @@ Newer version of Linux use
 .Pa /etc/nsswitch.conf
 for network information, such as
 .Tn NIS
-and DNS. You must create or get a valid copy of this file
-and put it in
+and DNS.
+You must create or get a valid copy of this file and put it in
 .Pa /emul/linux/etc .
 .Ss Finding the necessary files
 .Em Note :
@@ -379,17 +399,18 @@ such as names of ftp sites, directories and distribution names
 may have changed by the time you read this.
 .Pp
 Linux is distributed by several groups that make their own set
-of binaries that they distribute. Each distribution has its own
-name, like
+of binaries that they distribute.
+Each distribution has its own name, like
 .Dq Slackware
 or
 .Dq Yggdrasil .
 The distributions are
-available on a lot of ftp sites. Sometimes the files are unpacked,
+available on a lot of ftp sites.
+Sometimes the files are unpacked,
 and you can get the individual files you need, but mostly they
 are stored in distribution sets, usually consisting of subdirectories
-with gzipped tar files in them. The primary ftp sites for the
-distributions are:
+with gzipped tar files in them.
+The primary ftp sites for the distributions are:
 .Bl -item -compact -offset indent
 .It
 .Pa sunsite.unc.edu:/pub/Linux/distributions
@@ -407,19 +428,21 @@ Some European mirrors:
 .Pa src.doc.ic.ac.uk:/packages/linux/distributions
 .El
 .Pp
-For simplicity, let's concentrate on Slackware here. This distribution
+For simplicity, let's concentrate on Slackware here.
+This distribution
 consists of a number of subdirectories, containing separate packages.
 Normally, they're controlled by an install program, but you can
 retrieve files
 .Dq by hand
-too. First of all, you will need to look
-in the
+too.
+First of all, you will need to look in the
 .Pa contents
-subdir of the distribution. You will find
-a lot of small textfiles here describing the contents of the separate
-packages. The fastest way to look something up is to retrieve all
-the files in the contents subdirectory, and grep through them for the file
-you need. Here is an example of a list of files that you might need, and
+subdir of the distribution.
+You will find a lot of small textfiles here describing the contents of
+the separate packages.
+The fastest way to look something up is to retrieve all the files in the
+contents subdirectory, and grep through them for the file you need.
+Here is an example of a list of files that you might need, and
 in which contents-file you will find it by grepping through them:
 .Pp
 .Bd -literal -offset indent
@@ -479,7 +502,8 @@ Extract the files from these gzipped tarfiles in your /emul/linux directory
 (possibly omitting or afterwards removing files you don't need), and you
 are done.
 .Ss Programs using SVGAlib
-SVGAlib binaries require some extra care.  You need to have
+SVGAlib binaries require some extra care.
+You need to have
 .Cd options WSDISPLAY_COMPAT_USL
 in your kernel (see
 .Xr wscons 4 ) ,
@@ -512,16 +536,18 @@ some point.
 The information about Linux distributions may become outdated.
 .Pp
 Pathnames pointed to by symbolic links are not looked up in the
-shadow root when running a Linux executable. This is not consistent.
+shadow root when running a Linux executable.
+This is not consistent.
 .Pp
 Linux executables cannot handle directory offset cookies \*[Gt] 32 bits.
 Should such an offset occur, you will see the message
 .Dq linux_getdents: dir offset too large for emulated program .
 Currently, this can only
 happen on NFS mounted filesystems, mounted from servers that return
-offsets with information in the upper 32 bits. These errors should
-rarely happen, but can be avoided by mounting this filesystem with offset
-translation enabled. See the
+offsets with information in the upper 32 bits.
+These errors should rarely happen, but can be avoided by mounting this
+filesystem with offset translation enabled.
+See the
 .Fl X
 option to
 .Xr mount_nfs 8 .
