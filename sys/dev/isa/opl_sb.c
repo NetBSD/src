@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sb.c,v 1.1 1998/08/18 17:56:39 augustss Exp $	*/
+/*	$NetBSD: opl_sb.c,v 1.2 1998/08/26 12:10:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,9 +76,9 @@ opl_sb_match(parent, match, aux)
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
+	memset(&sc, 0, sizeof sc);
 	sc.ioh = ssc->sc_ioh;
 	sc.iot = ssc->sc_iot;
-	sc.offs = 0;
 	return (opl_find(&sc));
 }
 
@@ -94,6 +94,8 @@ opl_sb_attach(parent, self, aux)
 	sc->ioh = ssc->sc_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
+	sc->spkrctl = sbdsp_speaker_ctl;
+	sc->spkrarg = ssc;
 
 	opl_attach(sc);
 }
