@@ -1,4 +1,4 @@
-/*	$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $	*/
+/*	$NetBSD: vocab.c,v 1.3 1997/08/11 14:06:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,23 +38,29 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $";
+__RCSID("$NetBSD: vocab.c,v 1.3 1997/08/11 14:06:18 christos Exp $");
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: data structure routines               */
 
-# include "hdr.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "hdr.h"
+#include "extern.h"
 
+void
 dstroy(object)
 int object;
 {       move(object,0);
 }
 
+void
 juggle(object)
 int object;
 {       register int i,j;
@@ -66,6 +72,7 @@ int object;
 }
 
 
+void
 move(object,where)
 int object,where;
 {       register int from;
@@ -78,13 +85,14 @@ int object,where;
 	drop(object,where);
 }
 
-
+int
 put(object,where,pval)
 int object,where,pval;
 {       move(object,where);
 	return(-1-pval);
 }
 
+void
 carry(object,where)
 int object,where;
 {       register int temp;
@@ -95,14 +103,15 @@ int object,where;
 		holdng++;
 	}
 	if (atloc[where]==object)
-	{       atloc[where]=link[object];
+	{       atloc[where]=links[object];
 		return;
 	}
-	for (temp=atloc[where]; link[temp]!=object; temp=link[temp]);
-	link[temp]=link[object];
+	for (temp=atloc[where]; links[temp]!=object; temp=links[temp]);
+	links[temp]=links[object];
 }
 
 
+void
 drop(object,where)
 int object,where;
 {	if (object>100) fixed[object-100]=where;
@@ -111,11 +120,11 @@ int object,where;
 		place[object]=where;
 	}
 	if (where<=0) return;
-	link[object]=atloc[where];
+	links[object]=atloc[where];
 	atloc[where]=object;
 }
 
-
+int
 vocab(word,type,value)                  /* look up or store a word      */
 char *word;
 int type;       /* -2 for store, -1 for user word, >=0 for canned lookup*/
@@ -174,7 +183,7 @@ int value;                              /* used for storing only        */
 	}
 }
 
-
+void
 copystr(w1,w2)                          /* copy one string to another   */
 char *w1,*w2;
 {       register char *s,*t;
@@ -183,6 +192,7 @@ char *w1,*w2;
 	*t=0;
 }
 
+int
 weq(w1,w2)                              /* compare words                */
 char *w1,*w2;                           /* w1 is user, w2 is system     */
 {       register char *s,*t;
@@ -197,7 +207,7 @@ char *w1,*w2;                           /* w1 is user, w2 is system     */
 	return(TRUE);
 }
 
-
+int
 length(str)                             /* includes 0 at end            */
 char *str;
 {       register char *s;
@@ -206,6 +216,7 @@ char *str;
 	return(n+1);
 }
 
+void
 prht()                                  /* print hash table             */
 {       register int i,j,l;
 	char *c;
