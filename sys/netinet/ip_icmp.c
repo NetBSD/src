@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.15 1995/06/01 21:46:27 mycroft Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.16 1995/06/04 05:07:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -295,8 +295,7 @@ icmp_input(m, hlen)
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		if (ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput)
-			(*ctlfunc)(code, (struct sockaddr *)&icmpsrc,
-			    &icp->icmp_ip);
+			(*ctlfunc)(code, sintosa(&icmpsrc), &icp->icmp_ip);
 		break;
 
 	badcode:
@@ -318,7 +317,6 @@ icmp_input(m, hlen)
 		goto reflect;
 		
 	case ICMP_MASKREQ:
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
 		if (icmpmaskrepl == 0)
 			break;
 		/*
@@ -332,8 +330,8 @@ icmp_input(m, hlen)
 			icmpdst.sin_addr = ip->ip_src;
 		else
 			icmpdst.sin_addr = ip->ip_dst;
-		ia = (struct in_ifaddr *)ifaof_ifpforaddr(
-			    (struct sockaddr *)&icmpdst, m->m_pkthdr.rcvif);
+		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
+		    m->m_pkthdr.rcvif));
 		if (ia == 0)
 			break;
 		icp->icmp_type = ICMP_MASKREPLY;
@@ -374,11 +372,10 @@ reflect:
 				icp->icmp_gwaddr);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
-		rtredirect((struct sockaddr *)&icmpsrc,
-		    (struct sockaddr *)&icmpdst,
+		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
 		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		    (struct sockaddr *)&icmpgw, (struct rtentry **)0);
-		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&icmpsrc);
+		    sintosa(&icmpgw), (struct rtentry **)0);
+		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
 		break;
 
 	/*
@@ -439,8 +436,8 @@ icmp_reflect(m)
 	}
 	icmpdst.sin_addr = t;
 	if (ia == (struct in_ifaddr *)0)
-		ia = (struct in_ifaddr *)ifaof_ifpforaddr(
-			(struct sockaddr *)&icmpdst, m->m_pkthdr.rcvif);
+		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
+		    m->m_pkthdr.rcvif));
 	/*
 	 * The following happens if the packet was not addressed to us,
 	 * and was received on an interface with no IP address.

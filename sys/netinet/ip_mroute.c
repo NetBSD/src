@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.17 1995/06/02 04:23:05 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.18 1995/06/04 05:07:06 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -45,8 +45,6 @@
 		if ((m) && ((m)->m_flags & M_EXT || (m)->m_len < (len))) \
 			(m) = m_pullup((m), (len)); \
 	} while (0)
-
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
 
 static int ip_mdq();
 static void phyint_send();
@@ -539,7 +537,7 @@ add_vif(m)
 	
 	/* Find the interface with an address in AF_INET family. */
 	sin.sin_addr = vifcp->vifc_lcl_addr;
-	ifa = ifa_ifwithaddr((struct sockaddr *)&sin);
+	ifa = ifa_ifwithaddr(sintosa(&sin));
 	if (ifa == 0)
 		return (EADDRNOTAVAIL);
 	
@@ -894,9 +892,7 @@ socket_send(s, mm, src)
     struct sockaddr_in *src;
 {
     if (s) {
-	if (sbappendaddr(&s->so_rcv,
-			 (struct sockaddr *)src,
-			 mm, (struct mbuf *)0) != 0) {
+	if (sbappendaddr(&s->so_rcv, sintosa(src), mm, (struct mbuf *)0) != 0) {
 	    sorwakeup(s);
 	    return (0);
 	}

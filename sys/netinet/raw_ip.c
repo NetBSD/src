@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.18 1995/05/31 21:50:44 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.19 1995/06/04 05:07:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -104,8 +104,8 @@ rip_input(m)
 			struct mbuf *n;
 			if (n = m_copy(m, 0, (int)M_COPYALL)) {
 				if (sbappendaddr(&last->so_rcv,
-				    (struct sockaddr *)&ripsrc,
-				    n, (struct mbuf *)0) == 0)
+				    sintosa(&ripsrc), n,
+				    (struct mbuf *)0) == 0)
 					/* should notify about lost packet */
 					m_freem(n);
 				else
@@ -115,8 +115,8 @@ rip_input(m)
 		last = inp->inp_socket;
 	}
 	if (last) {
-		if (sbappendaddr(&last->so_rcv, (struct sockaddr *)&ripsrc,
-		    m, (struct mbuf *)0) == 0)
+		if (sbappendaddr(&last->so_rcv, sintosa(&ripsrc), m,
+		    (struct mbuf *)0) == 0)
 			m_freem(m);
 		else
 			sorwakeup(last);
@@ -300,7 +300,7 @@ rip_usrreq(so, req, m, nam, control)
 		    ((addr->sin_family != AF_INET) &&
 		     (addr->sin_family != AF_IMPLINK)) ||
 		    (addr->sin_addr.s_addr &&
-		     ifa_ifwithaddr((struct sockaddr *)addr) == 0)) {
+		     ifa_ifwithaddr(sintosa(addr)) == 0)) {
 			error = EADDRNOTAVAIL;
 			break;
 		}

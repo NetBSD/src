@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.16 1995/06/01 21:36:51 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.17 1995/06/04 05:07:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -203,8 +203,8 @@ udp_input(m, iphlen)
 
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
 					if (sbappendaddr(&last->so_rcv,
-						(struct sockaddr *)&udp_in,
-						n, (struct mbuf *)0) == 0) {
+						sintosa(&udp_in), n,
+						(struct mbuf *)0) == 0) {
 						m_freem(n);
 						udpstat.udps_fullsock++;
 					} else
@@ -233,8 +233,8 @@ udp_input(m, iphlen)
 			udpstat.udps_noportbcast++;
 			goto bad;
 		}
-		if (sbappendaddr(&last->so_rcv, (struct sockaddr *)&udp_in,
-		     m, (struct mbuf *)0) == 0) {
+		if (sbappendaddr(&last->so_rcv, sintosa(&udp_in), m,
+		    (struct mbuf *)0) == 0) {
 			udpstat.udps_fullsock++;
 			goto bad;
 		}
@@ -303,8 +303,8 @@ udp_input(m, iphlen)
 	m->m_len -= iphlen;
 	m->m_pkthdr.len -= iphlen;
 	m->m_data += iphlen;
-	if (sbappendaddr(&inp->inp_socket->so_rcv, (struct sockaddr *)&udp_in,
-	    m, opts) == 0) {
+	if (sbappendaddr(&inp->inp_socket->so_rcv, sintosa(&udp_in), m,
+	    opts) == 0) {
 		udpstat.udps_fullsock++;
 		goto bad;
 	}

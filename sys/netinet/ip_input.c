@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.18 1995/06/01 21:36:27 mycroft Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.19 1995/06/04 05:07:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -239,8 +239,6 @@ next:
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
 	for (ia = in_ifaddr; ia; ia = ia->ia_next) {
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
-
 		if (IA_SIN(ia)->sin_addr.s_addr == ip->ip_dst.s_addr)
 			goto ours;
 		if (
@@ -318,9 +316,8 @@ next:
 		}
 		goto ours;
 	}
-	if (ip->ip_dst.s_addr == INADDR_BROADCAST)
-		goto ours;
-	if (ip->ip_dst.s_addr == INADDR_ANY)
+	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
+	    ip->ip_dst.s_addr == INADDR_ANY)
 		goto ours;
 
 	/*
@@ -696,8 +693,7 @@ ip_dooptions(m)
 				goto bad;
 			}
 			ipaddr.sin_addr = ip->ip_dst;
-			ia = (struct in_ifaddr *)
-				ifa_ifwithaddr((struct sockaddr *)&ipaddr);
+			ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)));
 			if (ia == 0) {
 				if (opt == IPOPT_SSRR) {
 					type = ICMP_UNREACH;
@@ -845,7 +841,7 @@ ip_rtaddr(dst)
 {
 	register struct sockaddr_in *sin;
 
-	sin = (struct sockaddr_in *) &ipforward_rt.ro_dst;
+	sin = satosin(&ipforward_rt.ro_dst);
 
 	if (ipforward_rt.ro_rt == 0 || dst.s_addr != sin->sin_addr.s_addr) {
 		if (ipforward_rt.ro_rt) {
@@ -860,7 +856,7 @@ ip_rtaddr(dst)
 	}
 	if (ipforward_rt.ro_rt == 0)
 		return ((struct in_ifaddr *)0);
-	return ((struct in_ifaddr *) ipforward_rt.ro_rt->rt_ifa);
+	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
 }
 
 /*
@@ -1036,7 +1032,7 @@ ip_forward(m, srcrt)
 	}
 	ip->ip_ttl -= IPTTLDEC;
 
-	sin = (struct sockaddr_in *)&ipforward_rt.ro_dst;
+	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
 	    ip->ip_dst.s_addr != sin->sin_addr.s_addr) {
 		if (ipforward_rt.ro_rt) {
@@ -1073,15 +1069,13 @@ ip_forward(m, srcrt)
 	 * Also, don't send redirect if forwarding using a default route
 	 * or a route modified by a redirect.
 	 */
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
 	if (rt->rt_ifp == m->m_pkthdr.rcvif &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ipsendredirects && !srcrt) {
-#define	RTA(rt)	((struct in_ifaddr *)(rt->rt_ifa))
-		if (RTA(rt) &&
-		    (ip->ip_src.s_addr & RTA(rt)->ia_subnetmask) ==
-		    RTA(rt)->ia_subnet) {
+		if (rt->rt_ifa &&
+		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
+		    ifatoia(rt->rt_ifa)->ia_subnet) {
 		    if (rt->rt_flags & RTF_GATEWAY)
 			dest = satosin(rt->rt_gateway)->sin_addr.s_addr;
 		    else
