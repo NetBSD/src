@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.3 2000/08/22 21:22:48 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.4 2000/10/14 23:41:05 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.3 2000/08/22 21:22:48 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.4 2000/10/14 23:41:05 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -207,8 +207,8 @@ arckbd_attach(parent, self, aux)
 	       irq_string(sc->sc_rirq));
 	sc->sc_xirq = ioc_irq_establish(sc->sc_dev.dv_parent, IOC_IRQ_STX,
 					IPL_TTY, arckbd_xint, self);
+	irq_disable(sc->sc_xirq);
 	printf(" and %s (tx)", irq_string(sc->sc_xirq));
-	irq_enable(sc->sc_rirq);
 
        	/* Initialisation of IOC KART per IOC Data Sheet section 6.2.3. */
 
