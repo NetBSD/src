@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.99 2003/02/26 22:31:00 thorpej Exp $
+# $NetBSD: md.i386,v 1.100 2003/04/30 19:57:42 dsl Exp $
 ./lib/libm387.so.0			base-sys-shlib
 ./lib/libm387.so.0.0			base-sys-shlib
 ./sbin/fdisk				base-sysutil-root
@@ -32,6 +32,7 @@
 ./usr/mdec/installboot			base-sysutil-bin
 ./usr/mdec/mbr				base-sysutil-bin
 ./usr/mdec/mbr_bootsel			base-sysutil-bin
+./usr/mdec/mbr_ext			base-sysutil-bin
 ./usr/mdec/netboot_3c509.rom		base-sysutil-bin
 ./usr/mdec/netboot_3c590.rom		base-sysutil-bin
 ./usr/mdec/netboot_3c90xb.rom		base-sysutil-bin
