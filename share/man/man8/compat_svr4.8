@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.20 2002/02/13 08:18:22 ross Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.21 2002/06/30 00:21:16 dmcmahill Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -147,7 +147,7 @@ Make the necessary directories:
 .Bl -tag -width 123 -compact -offset indent
 .It (me@netbsd) mkdir -p /emul/svr4/{dev,etc}
 .br
-.It (me@netbsd) mkdir -p /emul/svr4/usr/{bin,lib}
+.It (me@netbsd) mkdir -p /emul/svr4/usr/{bin,lib,ucblib}
 .br
 .It (me@netbsd) mkdir -p /emul/svr4/usr/openwin/{bin,lib}
 .br
@@ -163,6 +163,15 @@ Copy files from an svr4 system:
 .It (me@svr4) tar -cf -\ . | \e
 .in +5
 .It rsh netbsd 'cd /emul/svr4/usr/lib \*[Am]\*[Am] tar -xpf -'
+.in -5
+.El
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It (me@svr4) cd /usr/ucblib
+.br 
+.It (me@svr4) tar -cf -\ . | \e
+.in +5
+.It rsh netbsd 'cd /emul/svr4/usr/ucblib \*[Am]\*[Am] tar -xpf -'
 .in -5
 .El
 .Pp
