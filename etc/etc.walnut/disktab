@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.1 2001/06/13 14:53:29 simonb Exp $
+#	$NetBSD: disktab,v 1.2 2002/04/09 12:40:45 tron Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -29,3 +29,10 @@
 # All partition sizes reserve space for bad sector tables.
 # (5 cylinders needed for maintenance + replacement sectors)
 #
+
+# This entry is required for the FFS regression test.
+floppy288|2.88MB 3.5in Extra High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
+	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pb#5760:ob#0:\
+	:pc#5760:oc#0:

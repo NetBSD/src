@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.1 1998/11/18 08:49:34 sakamoto Exp $
+#	$NetBSD: disktab,v 1.2 2002/04/09 12:40:35 tron Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -119,3 +119,10 @@ fuji513|Fujitsu M22XXXX: \
 	:pc#961632:oc#0: \
 	:ph#656208:oh#143136:bh#4096:fh#512:th=4.2BSD:
 
+
+# This entry is required for the FFS regression test.
+floppy288|2.88MB 3.5in Extra High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
+	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pb#5760:ob#0:\
+	:pc#5760:oc#0:
