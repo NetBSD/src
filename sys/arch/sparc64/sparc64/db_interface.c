@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.71 2003/08/24 17:52:38 chs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.72 2003/10/10 15:19:09 chs Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.71 2003/08/24 17:52:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2003/10/10 15:19:09 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -242,6 +242,7 @@ void db_setpcb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_dtlb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_itlb __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_dtsb __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_itsb __P((db_expr_t, int, db_expr_t, char *));
 void db_pmap_kernel __P((db_expr_t, int, db_expr_t, char *));
 void db_pload_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_pmap_cmd __P((db_expr_t, int, db_expr_t, char *));
@@ -721,6 +722,12 @@ db_lock(addr, have_addr, count, modif)
 #endif
 }
 
+#define TSBENTS (512 << tsbsize)
+extern pte_t *tsb_dmmu, *tsb_immu;
+extern int tsbsize;
+
+void db_dump_tsb_common(pte_t *);
+
 void
 db_dump_dtsb(addr, have_addr, count, modif)
 	db_expr_t addr;
@@ -728,22 +735,43 @@ db_dump_dtsb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern pte_t *tsb_dmmu;
-	extern int tsbsize;
-#define TSBENTS (512 << tsbsize)
+
+	db_printf("DTSB:\n");
+	db_dump_tsb_common(tsb_dmmu);
+}
+
+void
+db_dump_itsb(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+
+	db_printf("ITSB:\n");
+	db_dump_tsb_common(tsb_immu);
+}
+
+void
+db_dump_tsb_common(pte_t *tsb)
+{
+	uint64_t tag, data;
 	int i;
 
-	db_printf("TSB:\n");
 	for (i = 0; i < TSBENTS; i++) {
-		db_printf("%4d:%4d:%08x %08x:%08x ", i, 
-			  (int)((tsb_dmmu[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb_dmmu[i].tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb_dmmu[i].tag)),
-			  (int)(tsb_dmmu[i].data>>32), (int)tsb_dmmu[i].data);
+		tag = tsb[i].tag;
+		data = tsb[i].data;
+		db_printf("%4d:%4d:%08x %08x:%08x ", i,
+			  (int)((tag & TSB_TAG_G) ? -1 : TSB_TAG_CTX(tag)),
+			  (int)((i << 13) | TSB_TAG_VA(tag)),
+			  (int)(data >> 32), (int)data);
 		i++;
+		tag = tsb[i].tag;
+		data = tsb[i].data;
 		db_printf("%4d:%4d:%08x %08x:%08x\n", i,
-			  (int)((tsb_dmmu[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb_dmmu[i].tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb_dmmu[i].tag)),
-			  (int)(tsb_dmmu[i].data>>32), (int)tsb_dmmu[i].data);
+			  (int)((tag & TSB_TAG_G) ? -1 : TSB_TAG_CTX(tag)),
+			  (int)((i << 13) | TSB_TAG_VA(tag)),
+			  (int)(data >> 32), (int)data);
 	}
 }
 
@@ -909,7 +937,7 @@ db_setpcb(addr, have_addr, count, modif)
 		return;
 	}
     
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 #if 0
@@ -1116,7 +1144,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	char *modif;
 {
 
-	uvmhist_dump(uvm_histories.lh_first);
+	uvmhist_dump(LIST_FIRST(&uvm_histories));
 }
 
 #if NESP_SBUS
@@ -1128,6 +1156,7 @@ const struct db_command db_machine_command_table[] = {
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "itlb",	db_dump_itlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
+	{ "itsb",	db_dump_itsb,	0,	0 },
 #if NESP_SBUS
 	{ "esp",	db_esp,		0,	0 },
 #endif
