@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.51 2000/03/01 02:22:03 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2000/03/01 02:22:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ userret(p, pc, oticks)
 	u_int64_t pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
 
 	/* Do any deferred user pmap operations. */
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
@@ -193,18 +193,9 @@ userret(p, pc, oticks)
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
