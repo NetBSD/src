@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.6 2001/11/15 07:03:35 lukem Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.7 2002/05/15 18:14:41 mrg Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.6 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.7 2002/05/15 18:14:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,10 @@ wss_pnpbios_attach(parent, self, aux)
 		printf(": can't get DMA channel\n");
 		return;
 	}
-	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->wss_recdrq))
+	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->wss_recdrq)) {
+		printf(": can't get recording DMA channel");
 		sc->wss_recdrq = -1;
+	}
 
 	sc->sc_ad1848.sc_ad1848.sc_iot = sc->sc_iot;
 	bus_space_subregion(sc->sc_iot, sc->sc_ioh, wph->offset_ad1848, 4,
