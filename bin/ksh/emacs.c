@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.21 2003/08/26 09:06:50 wiz Exp $	*/
+/*	$NetBSD: emacs.c,v 1.22 2003/08/28 19:53:32 wiz Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.21 2003/08/26 09:06:50 wiz Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.22 2003/08/28 19:53:32 wiz Exp $");
 #endif
 
 
@@ -1785,12 +1785,15 @@ x_expand(c)
 
 	x_goto(xbuf + start);
 	x_delete(end - start, FALSE);
-	for (i = 0; i < nwords; i++)
-		if (x_ins(words[i]) < 0 || (i < nwords - 1 && x_ins(space) < 0))
+	for (i = 0; i < nwords;) {
+		if (x_escape(words[i], strlen(words[i]), x_emacs_putbuf) < 0 ||
+		    (++i < nwords && x_ins(space) < 0))
 		{
 			x_e_putc(BEL);
 			return KSTD;
 		}
+	}
+	x_adjust();
 
 	return KSTD;
 }
