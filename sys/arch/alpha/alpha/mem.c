@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
+/* $NetBSD: mem.c,v 1.26.4.1 2000/06/30 16:27:12 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.4.1 2000/06/30 16:27:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -190,10 +190,10 @@ kmemphys:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off;			/* XXX */
+	off_t off;
 	int prot;
 {
 	/*
@@ -210,7 +210,7 @@ mmmmap(dev, off, prot)
 	/*
 	 * Allow access only in RAM.
 	 */
-	if ((prot & alpha_pa_access(atop((paddr_t)off))) != prot)
+	if ((prot & alpha_pa_access(atop(off))) != prot)
 		return (-1);
 	return (alpha_btop(off));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.3 1999/12/06 19:25:58 drochner Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.3.4.1 2000/06/30 16:27:32 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -103,7 +103,7 @@ const struct wsscreen_list nextdisplay_screenlist_color = {
 };
 
 static int	nextdisplay_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	nextdisplay_mmap __P((void *, off_t, int));
+static paddr_t	nextdisplay_mmap __P((void *, off_t, int));
 static int	nextdisplay_alloc_screen __P((void *, const struct wsscreen_descr *,
 		void **, int *, int *, long *));
 static void	nextdisplay_free_screen __P((void *, void *));
@@ -307,7 +307,7 @@ nextdisplay_ioctl(v, cmd, data, flag, p)
 	return ENOTTY;
 }
 
-static int
+static paddr_t
 nextdisplay_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

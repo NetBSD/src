@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbvar.h,v 1.4 2000/05/08 21:56:32 uch Exp $	*/
+/*	$NetBSD: hpcfbvar.h,v 1.4.4.1 2000/06/30 16:27:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -41,7 +41,7 @@
  */
 struct hpcfb_accessops {
 	int	(*ioctl) __P((void *, u_long, caddr_t, int, struct proc *));
-	int	(*mmap) __P((void *, off_t, int));
+	paddr_t	(*mmap) __P((void *, off_t, int));
 	void	(*cursor) __P((void *, int, int, int, int, int));
 	void	(*bitblit) __P((void *, int, int, int, int, int, int));
 	void	(*erase) __P((void *, int, int, int, int, int));

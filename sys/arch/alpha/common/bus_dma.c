@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.36 2000/02/06 01:23:30 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.36.4.1 2000/06/30 16:27:13 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36 2000/02/06 01:23:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36.4.1 2000/06/30 16:27:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,11 +645,13 @@ _bus_dmamem_unmap(t, kva, size)
  * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
-int
+paddr_t
 _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.24 2000/03/26 10:32:52 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.24.4.1 2000/06/30 16:27:14 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.24 2000/03/26 10:32:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.24.4.1 2000/06/30 16:27:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ struct wsscreen_list cfb_screenlist = {
 };
 
 int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	cfbmmap __P((void *, off_t, int));
+paddr_t	cfbmmap __P((void *, off_t, int));
 
 int	cfbintr __P((void *));
 static int	cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -296,7 +296,7 @@ cfbioctl(v, cmd, data, flag, p)
 	return (-1);
 }
 
-int
+paddr_t
 cfbmmap(v, offset, prot)
 	void *v;
 	off_t offset;

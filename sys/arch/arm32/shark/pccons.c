@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.9 2000/03/23 06:35:16 thorpej Exp $       */
+/*      $NetBSD: pccons.c,v 1.9.4.1 2000/06/30 16:27:18 simonb Exp $       */
 
 /*
  * Copyright 1997
@@ -3325,9 +3325,9 @@ sget(struct pc_softc *sc)
 **
 **--
 */
-int
+paddr_t
 pcmmap(dev_t   dev, 
-       int     offset, 
+       off_t   offset, 
        int     nprot)
 {
 #ifdef SHARK

@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.4 2000/01/12 01:57:23 nisimura Exp $ */
+/* $NetBSD: lunafb.c,v 1.4.4.1 2000/06/30 16:27:27 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.4 2000/01/12 01:57:23 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.4.4.1 2000/06/30 16:27:27 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,12 +134,12 @@ static const struct wsscreen_list omfb_screenlist = {
 	sizeof(_omfb_scrlist) / sizeof(struct wsscreen_descr *), _omfb_scrlist
 };
 
-static int  omfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int  omfbmmap __P((void *, off_t, int));
-static int  omfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+static int   omfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static paddr_t omfbmmap __P((void *, off_t, int));
+static int   omfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
-static void omfb_free_screen __P((void *, void *));
-static int  omfb_show_screen __P((void *, void *, int,
+static void  omfb_free_screen __P((void *, void *));
+static int   omfb_show_screen __P((void *, void *, int,
 				void (*) (void *, int, int), void *));
 
 static const struct wsdisplay_accessops omfb_accessops = {
@@ -277,7 +277,7 @@ omfbioctl(v, cmd, data, flag, p)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-static int
+static paddr_t
 omfbmmap(v, offset, prot)
 	void *v;
 	off_t offset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.41.4.1 2000/06/29 15:04:55 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.41.4.2 2000/06/30 16:27:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -391,11 +391,11 @@ rconspoll(dev, events, p)
 }
 
 /*ARGSUSED*/
-int
-rconsmmap (dev, off, prot)
+paddr_t
+rconsmmap(dev, off, prot)
 	dev_t dev;
-	 int off;
-	 int prot;
+	off_t off;
+	int prot;
 {
 
 	return -1;
