@@ -5,5 +5,5 @@
 clock0	at mainbus0			# RTC
 pm0	at mainbus0			# 3100 onboard fb
 dc0	at mainbus0			# dc7083 four-port DZ device
-le*	at mainbus0			# 3100 onboard lance
+le0	at mainbus0			# 3100 onboard lance
 sii0	at mainbus0			# onboard scsi
