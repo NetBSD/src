@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.4 1994/01/11 00:20:10 briggs Exp $
+ *	$Id: pmap.c,v 1.5 1994/02/22 01:25:27 briggs Exp $
  */
 
 #define DEBUG
@@ -388,13 +388,24 @@ pmap_bootstrap(firstaddr, loadaddr)
  *	system needs to map virtual memory.
  */
 void
+#if defined(MACHINE_NONCONTIG)
+pmap_init()
+#else
 pmap_init(phys_start, phys_end)
 	vm_offset_t	phys_start, phys_end;
+#endif
 {
 	vm_offset_t	addr, addr2;
 	vm_size_t	npg, s;
 	int		rv;
 	extern char kstack[];
+
+#if defined(MACHINE_NONCONTIG)
+	vm_offset_t	phys_start, phys_end;
+
+	phys_start = 0;
+	phys_end = avail_end;
+#endif
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2305,3 +2316,59 @@ pmap_check_stab()
       panic("Sysseg!");
    }
 }
+
+#if defined (MACHINE_NONCONTIG)
+
+void remap_MMU (void)
+{
+  extern ddprintf (char *, long);
+
+  ddprintf ("Now in remap_MMU\n", 0);
+}
+
+unsigned int
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+	/* HACK */
+	return mac68k_btop (pa);
+}
+
+unsigned int
+pmap_free_pages()
+{
+	/* Returns # of free physical pages left */
+	return 0;  /*avail_remaining;*/
+}
+
+int
+pmap_next_page(addrp)
+	vm_offset_t *addrp;
+{
+/*
+	if (avail_next == avail_end) {
+		return FALSE;
+	}
+
+	if (avail_next == hole_start) {
+		avail_next = hold_end;
+	}
+
+	*addrp = avail_next;
+	avail_next += NBPG;
+	avail_remaining--;
+	return TRUE;
+*/
+}
+
+void
+pmap_virtual_space(startp, endp)
+	vm_offset_t *startp, *endp;
+{
+/*
+	*startp = virtual_avail;
+	*endp = virtual_end;
+*/
+}
+
+#endif /* MACHINE_NONCONTIG */
