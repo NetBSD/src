@@ -1,5 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.24 1996/03/07 23:22:53 ragge Exp $     */
-#define DEBUG
+/*      $NetBSD: pmap.c,v 1.25 1996/03/17 22:49:55 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -75,7 +74,7 @@ pv_entry_t      pv_table;               /* array of entries,
 unsigned *pte_cmap;
 void 	*scratch;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 int	startpmapdebug = 0;
 extern	int startsysc, faultdebug;
 #endif
@@ -177,7 +176,7 @@ pmap_bootstrap()
 	bzero(0, NBPG >> 1);
 	(cpu_calls[cpunumber].cpu_steal_pages)();
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
         printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
         printf("etext %x\n", &etext);
         printf("SYSPTSIZE %x, USRPTSIZE %x\n",sysptsize,USRPTSIZE);
@@ -239,7 +238,7 @@ pmap_create(phys_size)
 {
 	pmap_t   pmap;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_create: phys_size %x\n",phys_size);
 #endif
 	if (phys_size)
@@ -261,7 +260,7 @@ void
 pmap_release(pmap)
 	struct pmap *pmap;
 {
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
 #endif
 
@@ -290,7 +289,7 @@ pmap_destroy(pmap)
 {
 	int count;
   
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_destroy: pmap %x\n",pmap);
 #endif
 	if (pmap == NULL)
@@ -322,7 +321,7 @@ pmap_enter(pmap, v, p, prot, wired)
 	s = splimp();
 	pv = PHYS_TO_PV(p);
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)
 printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 	pmap,v,p,pv,prot);
@@ -414,7 +413,7 @@ pmap_map(virtuell, pstart, pend, prot)
 	vm_offset_t count;
 	int *pentry;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)
 	printf("pmap_map: virt %x, pstart %x, pend %x, Sysmap %x\n",
 	    virtuell, pstart, pend, Sysmap);
@@ -438,7 +437,7 @@ pmap_extract(pmap, va)
 {
 
 	int	*pte, nypte;
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
 #endif
 
@@ -459,7 +458,7 @@ pmap_protect(pmap, start, end, prot)
 {
 	int pte, *patch, s;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
 	pmap, start, end,prot);
 #endif
@@ -507,7 +506,7 @@ pmap_remove(pmap, start, slut)
 	pv_entry_t	pv;
 	vm_offset_t	countup;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 	   pmap, start, slut);
 #endif
@@ -535,7 +534,7 @@ if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 			ptestart=&temp[pmap->pm_pcb->P1LR];
 	}
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)
 printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 #endif
@@ -602,7 +601,7 @@ pmap_copy_page(src, dst)
 	int s;
 	extern uint vmmap;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
 #endif
 	s=splimp();
@@ -662,7 +661,7 @@ alloc_pv_entry()
 	if (temporary == 0)
 		panic("alloc_pv_entry");
 #endif
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("alloc_pv_entry: %x\n",temporary);
 #endif
 	} else {
@@ -738,7 +737,7 @@ pmap_clear_reference(pa)
  * Simulate page reference bit
  */
 	pv=PHYS_TO_PV(pa);
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 #endif
 
@@ -778,7 +777,7 @@ pmap_change_wiring(pmap, va, wired)
 	boolean_t       wired;
 {
 	int *pte;
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_change_wiring: pmap %x, va %x, wired %x\n",
 	pmap, va, wired);
 #endif
@@ -802,7 +801,7 @@ pmap_page_protect(pa, prot)
 	pv_entry_t pv,opv;
 	u_int s,*pte,*pte1,nyprot,kprot;
   
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 #endif
 	pv = PHYS_TO_PV(pa);
@@ -869,7 +868,7 @@ pmap_zero_page(phys)
 {
 	int	s;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_zero_page(phys %x, vmmap %x, pte_cmap %x\n",
 	phys,vmmap,pte_cmap);
 #endif

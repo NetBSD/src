@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.18 1996/03/09 23:37:20 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.19 1996/03/17 22:49:59 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,8 +56,9 @@
 #endif
 
 extern 	int want_resched,whichqs;
-volatile int startsysc=0,ovalidstart=0,faultdebug=0,haltfault=0;
-
+#ifdef TRAPDEBUG
+volatile int startsysc=0,faultdebug=0;
+#endif
 
 userret(p, pc, psl)
 	struct proc *p;
@@ -129,11 +130,12 @@ arithflt(frame)
 	type&=~(T_WRITE|T_PTEFETCH);
 
 
-
+#ifdef TRAPDEBUG
 if(frame->trap==7) goto fram;
 if(faultdebug)printf("Trap: type %x, code %x, pc %x, psl %x\n",
 		frame->trap, frame->code, frame->pc, frame->psl);
 fram:
+#endif
 	switch(type){
 
 	default:
@@ -197,10 +199,12 @@ faulter:
 		/* Fall into... */
 	case T_ACCFLT:
 	case T_ACCFLT|T_USER:
+#ifdef TRAPDEBUG
 if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
-
-		if(!p) panic("trap: access fault without process");
+#endif
+		if (!p)
+			panic("trap: access fault without process");
 		pm=&p->p_vmspace->vm_pmap;
 		if(frame->trap&T_PTEFETCH){
 			u_int faultaddr,testaddr=(u_int)frame->code&0x3fffffff;
@@ -256,8 +260,10 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 	case T_PTELEN:
 	case T_PTELEN|T_USER:	/* Page table length exceeded */
 		pm=&p->p_vmspace->vm_pmap;
+#ifdef TRAPDEBUG
 if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
+#endif
 		if(frame->code<0x40000000){ /* P0 */
 			int i;
 
@@ -367,9 +373,11 @@ syscall(frame)
 	struct trapframe *exptr;
 	struct proc *p=curproc;
 
+#ifdef TRAPDEBUG
 if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
                syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 		curproc->p_pid,frame);
+#endif
 
 	p->p_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
@@ -408,10 +416,12 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
 	err=(*callp->sy_call)(curproc,args,rval);
 	exptr=curproc->p_addr->u_pcb.framep;
 
+#ifdef TRAPDEBUG
 if(startsysc)
 	printf("retur %s pc %x, psl %x, sp %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
                syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
                 curproc->p_pid,err,rval[0],rval[1],exptr);
+#endif
 
 bad:
 	switch (err) {
