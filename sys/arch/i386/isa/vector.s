@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.46.2.1 2000/02/20 18:29:43 sommerfeld Exp $	*/
+/*	$NetBSD: vector.s,v 1.46.2.2 2001/07/19 08:57:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
-#define	IRQ_BYTE(irq_num)	((irq_num) / 8)
+#define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
 
 #ifdef ICU_SPECIAL_MASK_MODE
 
