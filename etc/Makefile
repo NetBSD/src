@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 1998/09/05 14:48:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.89 1998/10/29 20:24:56 bad Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -26,9 +26,9 @@ BIN1+=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	gettytab group hosts hosts.lpd inetd.conf ld.so.conf lkm.conf \
 	man.conf monthly monthly.conf mrouted.conf netstart networks \
 	newsyslog.conf phones printcap profile protocols rbootd.conf rc \
-	rc.conf rc.lkm rc.local rc.subr remote rpc security security.conf \
-	services shells syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
-	etc.${MACHINE}/disktab
+	rc.conf rc.lkm rc.local rc.subr rc.shutdown remote rpc security \
+	security.conf services shells syslog.conf weekly weekly.conf \
+	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
 # -rw-rw-r--
 BIN2+=	motd
