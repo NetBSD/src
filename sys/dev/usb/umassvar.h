@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.11 2001/12/24 13:25:53 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.12 2001/12/24 13:43:25 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -182,6 +182,7 @@ struct umass_softc {
 #define	UMASS_CPROTO_ATAPI	2
 #define	UMASS_CPROTO_UFI	3
 #define	UMASS_CPROTO_RBC	4
+#define UMASS_CPROTO_ISD_ATA	5
 
 	u_int32_t		sc_quirks;
 #define	UMASS_QUIRK_NO_TEST_UNIT_READY	0x00000001
