@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.5 2003/10/28 18:21:49 matt Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.6 2003/11/26 14:27:15 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.5 2003/10/28 18:21:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.6 2003/11/26 14:27:15 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -915,8 +915,8 @@ mvmebus_mod_string(addr, len, am, ds)
 	static const char *mode[] = {"BLT64)", "DATA)", "PROG)", "BLT32)"};
 	static const char *dsiz[] = {"(", "(D8,", "(D16,", "(D16-D8,",
 	"(D32,", "(D32,D8,", "(D32-D16,", "(D32-D8,"};
-	static const char *adrfmt[] = { "A32:%08x-%08x ", "A16:%04x-%04x ",
-	    "A24:%06x-%06x ", "USR:%08x-%08x " };
+	static const char *adrfmt[] = { "A32:%08x-%08x ", "USR:%08x-%08x ",
+	    "A16:%04x-%04x ", "A24:%06x-%06x " };
 	static char mstring[40];
 
 	sprintf(mstring,
