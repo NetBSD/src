@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.24 1999/05/18 23:52:55 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.25 1999/06/23 04:17:10 abs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -169,7 +169,7 @@ dp8390_mediachange(ifp)
 
 	if (sc->sc_mediachange)
 		return ((*sc->sc_mediachange)(sc));
-	return (EINVAL);
+	return (0);
 }
 
 /*

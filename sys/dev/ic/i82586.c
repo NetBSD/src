@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.22 1999/05/21 13:08:50 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.23 1999/06/23 04:17:10 abs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2145,7 +2145,7 @@ i82586_mediachange(ifp)
 
         if (sc->sc_mediachange)
                 return ((*sc->sc_mediachange)(sc));
-        return (EINVAL);
+        return (0);
 }
 
 /*
