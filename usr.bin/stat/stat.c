@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.15 2003/10/27 00:12:43 lukem Exp $ */
+/*	$NetBSD: stat.c,v 1.16 2003/10/27 00:16:21 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.15 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: stat.c,v 1.16 2003/10/27 00:16:21 lukem Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -670,14 +670,14 @@ format1(const struct stat *st,
 	case SHOW_st_atime:
 		gottime = 1;
 		secs = st->st_atime;
-#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 		nsecs = st->st_atimensec;
 #endif
 		/* FALLTHROUGH */
 	case SHOW_st_mtime:
 		if (!gottime) {
 			secs = st->st_mtime;
-#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 			nsecs = st->st_mtimensec;
 #endif
 		}
@@ -685,7 +685,7 @@ format1(const struct stat *st,
 	case SHOW_st_ctime:
 		if (!gottime) {
 			secs = st->st_ctime;
-#ifdef HAVE_STRUCT_STAT_ST_MTIMENSEC
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
 			nsecs = st->st_ctimensec;
 #endif
 		}
