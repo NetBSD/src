@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.4 2001/09/22 21:15:18 manu Exp $ */
+/* $NetBSD: linux_signal.h,v 1.5 2001/10/14 17:21:47 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct linux_pt_regs {
 	unsigned long lregs[32];
 	unsigned long llo;
 	unsigned long lhi;
-	unsigned long lcp0_spc;
+	unsigned long lcp0_epc;
 	unsigned long lcp0_badvaddr;
 	unsigned long lcp0_status;
 	unsigned long lcp0_cause;
