@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_rmap.c,v 1.16 1998/08/18 18:16:30 thorpej Exp $	*/
+/*	$NetBSD: subr_rmap.c,v 1.17 2001/11/12 15:25:22 lukem Exp $	*/
 
 /*
  * Copyright (C) 1992, 1994 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_rmap.c,v 1.17 2001/11/12 15:25:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/map.h>

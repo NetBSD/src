@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.5 2001/11/10 20:49:52 christos Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.6 2001/11/12 15:25:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.6 2001/11/12 15:25:03 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.55 2001/10/29 07:02:31 simonb Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.56 2001/11/12 15:25:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  *
  *	@(#)uipc_mbuf.c	8.4 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.56 2001/11/12 15:25:31 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.161 2001/10/30 15:32:03 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.162 2001/11/12 15:25:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@
 /*
  * External virtual filesystem routines
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.162 2001/11/12 15:25:39 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.24 2001/10/29 07:02:30 simonb Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.25 2001/11/12 15:25:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)subr_prof.c	8.4 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.25 2001/11/12 15:25:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

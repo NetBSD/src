@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.41 2001/08/05 08:25:39 enami Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.42 2001/11/12 15:25:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)uipc_socket2.c	8.2 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.42 2001/11/12 15:25:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

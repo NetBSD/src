@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_bmap.c,v 1.7 1997/01/24 00:27:29 cgd Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.8 2001/11/12 15:29:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,6 +39,9 @@
  *
  *	@(#)cd9660_bmap.c	8.4 (Berkeley) 12/5/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.8 2001/11/12 15:29:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>

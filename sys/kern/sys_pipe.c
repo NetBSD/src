@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.18 2001/11/06 07:30:15 chs Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.19 2001/11/12 15:25:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -56,6 +56,9 @@
  * its time context switching.  PIPE_SIZE is constrained by the
  * amount of kernel virtual memory.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.19 2001/11/12 15:25:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.50 2001/09/15 20:36:37 chs Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.51 2001/11/12 15:25:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,6 +40,9 @@
  *
  *	@(#)kern_physio.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.51 2001/11/12 15:25:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

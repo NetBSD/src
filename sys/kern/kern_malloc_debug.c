@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.3 2001/10/31 22:23:18 fvdl Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.4 2001/11/12 15:25:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -54,6 +54,9 @@
  *  - support for size >= PAGE_SIZE
  *  - add support to the fault handler to give better diagnostics if we fail.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.4 2001/11/12 15:25:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

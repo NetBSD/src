@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.61 2001/03/15 06:10:56 chs Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.62 2001/11/12 15:25:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.62 2001/11/12 15:25:27 lukem Exp $");
 
 #define SYSVSHM
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xxx.c,v 1.11 1998/03/01 02:22:32 fvdl Exp $	*/
+/*	$NetBSD: subr_xxx.c,v 1.12 2001/11/12 15:25:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,10 @@
  * Miscellaneous trivial functions, including many
  * that are often inline-expanded or done in assembler.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_xxx.c,v 1.12 2001/11/12 15:25:23 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 

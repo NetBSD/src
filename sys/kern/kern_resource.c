@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.60 2001/02/06 19:54:43 eeh Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.61 2001/11/12 15:25:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)kern_resource.c	8.8 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.61 2001/11/12 15:25:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
