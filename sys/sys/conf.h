@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.112 2003/08/07 16:34:00 agc Exp $	*/
+/*	$NetBSD: conf.h,v 1.113 2003/10/11 18:32:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -180,21 +180,7 @@ struct linesw *ttyldisc_lookup __P((char *));
 int	ttynullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif
 
-/*
- * Swap device table
- */
-struct swdevt {
-	dev_t	sw_dev;
-	int	sw_flags;
-	int	sw_nblks;
-	struct	vnode *sw_vp;
-};
-#define	SW_FREED	0x01
-#define	SW_SEQUENTIAL	0x02
-#define	sw_freed	sw_flags	/* XXX compat */
-
 #ifdef _KERNEL
-extern struct swdevt swdevt[];
 
 #define	DEV_MEM		0	/* minor device 0 is physical memory */
 #define	DEV_KMEM	1	/* minor device 1 is kernel memory */
