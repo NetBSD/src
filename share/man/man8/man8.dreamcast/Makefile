@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/05/27 21:14:28 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/04 17:25:59 marcus Exp $
 
-MAN=	MAKEDEV.8
+MAN=	MAKEDEV.8 boot.8
 MLINKS=	MAKEDEV.8 makedev.8
 MANSUBDIR=/dreamcast
 
