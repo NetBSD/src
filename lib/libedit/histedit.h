@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.10 1998/07/29 02:26:00 lukem Exp $	*/
+/*	$NetBSD: histedit.h,v 1.11 1998/12/20 17:52:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,8 +41,8 @@
 /*
  * histedit.h: Line editor and history interface.
  */
-#ifndef _h_editline
-#define _h_editline
+#ifndef _HISTEDIT_H_
+#define _HISTEDIT_H_
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -186,4 +186,4 @@ int 		history		__P((History *, HistEvent *, int, ...));
 #define H_SAVE		18	/* , const char *);	*/
 #define H_CLEAR		19	/* , void);		*/
 
-#endif /* _h_editline */
+#endif /* _HISTEDIT_H_ */
