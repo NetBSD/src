@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.8 1994/11/14 06:08:59 christos Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.9 1994/12/01 16:40:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -830,8 +830,10 @@ union_seek(ap)
 		struct ucred *a_cred;
 	} */ *ap;
 {
+	register struct vnode *ovp = OTHERVP(ap->a_vp);
 
-	return (VOP_SEEK(OTHERVP(ap->a_vp), ap->a_oldoff, ap->a_newoff, ap->a_cred));
+	ap->a_vp = ovp;
+	return (VCALL(ovp, VOFFSET(vop_seek), ap));
 }
 
 int
