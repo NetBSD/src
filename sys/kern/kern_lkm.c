@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.25 1995/10/07 06:28:18 mycroft Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.26 1995/10/10 00:23:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -188,6 +188,9 @@ lkmioctl(dev, cmd, data, flag)
 
 	switch(cmd) {
 	case LMRESERV:		/* reserve pages for a module */
+		if (securelevel > 0)
+			return EPERM;
+
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
 			return EPERM;
 
@@ -228,6 +231,9 @@ lkmioctl(dev, cmd, data, flag)
 		break;
 
 	case LMLOADBUF:		/* Copy in; stateful, follows LMRESERV */
+		if (securelevel > 0)
+			return EPERM;
+
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
 			return EPERM;
 
@@ -261,6 +267,9 @@ lkmioctl(dev, cmd, data, flag)
 		break;
 
 	case LMUNRESRV:		/* discard reserved pages for a module */
+		if (securelevel > 0)
+			return EPERM;
+
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
 			return EPERM;
 
@@ -271,6 +280,9 @@ lkmioctl(dev, cmd, data, flag)
 		break;
 
 	case LMREADY:		/* module loaded: call entry */
+		if (securelevel > 0)
+			return EPERM;
+
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
 			return EPERM;
 
@@ -312,6 +324,9 @@ lkmioctl(dev, cmd, data, flag)
 		break;
 
 	case LMUNLOAD:		/* unload a module */
+		if (securelevel > 0)
+			return EPERM;
+
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
 			return EPERM;
 
