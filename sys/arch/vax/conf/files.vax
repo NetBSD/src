@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.85 2001/05/16 05:36:54 matt Exp $
+#       $NetBSD: files.vax,v 1.86 2001/06/13 06:43:08 lukem Exp $
 #
 # new style config file for vax architecture
 #
@@ -299,12 +299,6 @@ file	arch/vax/uba/vp.c		vp needs-flag
 device	qv
 attach	qv at uba
 file	arch/vax/uba/qv.c		qv needs-flag
-
-# Interlan NP100 at UBA
-device	np: ifnet
-attach	np at uba
-file	arch/vax/if/if_ix.c		np needs-flag
-file	arch/vax/uba/np.c		np needs-flag
 
 # ACC LH/DH IMP on UBA
 device	acc: ifnet
