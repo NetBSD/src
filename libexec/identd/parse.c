@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.13 2003/03/27 22:32:59 jdolecek Exp $	*/
+/*	$NetBSD: parse.c,v 1.14 2003/05/17 21:17:43 itojun Exp $	*/
 
 /*
 ** parse.c                         This file contains the protocol parser
@@ -138,16 +138,11 @@ static int check_noident(homedir)
   struct stat sbuf;
   int rcode;
 
-
   if (!homedir)
     return 0;
 
-  tmp_path = (char *) malloc(strlen(homedir) + sizeof("/.noident") + 1);
-  if (!tmp_path)
+  if (asprintf(&tmp_path, "%s/.noident", homedir) < 0)
     return 0;
-
-  strcpy(tmp_path, homedir);
-  strcat(tmp_path, "/.noident");
 
   rcode = stat(tmp_path, &sbuf);
   free(tmp_path);
@@ -316,9 +311,9 @@ int parse(fp, laddr, faddr)
 	{
 	    char a1[64], a2[64], a3[64];
 
-	    strcpy(a1, inet_ntoa(*faddr));
-	    strcpy(a2, inet_ntoa(faddr2));
-	    strcpy(a3, inet_ntoa(laddr2));
+	    strlcpy(a1, inet_ntoa(*faddr), sizeof(a1));
+	    strlcpy(a2, inet_ntoa(faddr2), sizeof(a2));
+	    strlcpy(a3, inet_ntoa(laddr2), sizeof(a3));
 
 	    syslog(LOG_NOTICE,
 		   "from: %s (%s) PROXY REQUEST for %d, %d between %s and %s",
@@ -400,7 +395,7 @@ int parse(fp, laddr, faddr)
 	{
 	    char a1[64];
 
-	    strcpy(a1, inet_ntoa(*faddr));
+	    strlcpy(a1, inet_ntoa(*faddr), sizeof(a1));
 
 	    syslog(LOG_INFO,
 	   "from: %s (%s) REMOTE REQUEST for %d, %d from %s with password %s",
@@ -599,9 +594,9 @@ int parse(fp, laddr, faddr)
       continue;
     }
     if (grp)
-	sprintf (grname, "%.99s", grp->gr_name);
+	snprintf(grname, sizeof(grname), "%.99s", grp->gr_name);
     else
-	sprintf (grname, "%d", pwp->pw_gid);
+	snprintf(grname, sizeof(grname), "%d", pwp->pw_gid);
 #endif
 
     /*
@@ -652,21 +647,21 @@ int parse(fp, laddr, faddr)
 	{
 	  cp++;
 	  if (*cp == 0) break;
-	  else if (*cp == 'u') sprintf (&buff[bp], "%.*s", 490-bp, pwp->pw_name);
-	  else if (*cp == 'U') sprintf (&buff[bp], "%d",           pwp->pw_uid);
-	  else if (*cp == 'g') sprintf (&buff[bp], "%.*s", 490-bp, grname);
-	  else if (*cp == 'G') sprintf (&buff[bp], "%d",           pwp->pw_gid);
-	  else if (*cp == 'c') sprintf (&buff[bp], "%.*s", 490-bp, cmd);
-	  else if (*cp == 'C') sprintf (&buff[bp], "%.*s", 490-bp, cmd_and_args);
+	  else if (*cp == 'u') snprintf(&buff[bp], sizeof(buff) - bp, "%.*s", 490-bp, pwp->pw_name);
+	  else if (*cp == 'U') snprintf(&buff[bp], sizeof(buff) - bp, "%d",           pwp->pw_uid);
+	  else if (*cp == 'g') snprintf(&buff[bp], sizeof(buff) - bp, "%.*s", 490-bp, grname);
+	  else if (*cp == 'G') snprintf(&buff[bp], sizeof(buff) - bp, "%d",           pwp->pw_gid);
+	  else if (*cp == 'c') snprintf(&buff[bp], sizeof(buff) - bp, "%.*s", 490-bp, cmd);
+	  else if (*cp == 'C') snprintf(&buff[bp], sizeof(buff) - bp, "%.*s", 490-bp, cmd_and_args);
 	  else if (*cp == 'l') {
-	    sprintf (&buff[bp], "%.*s", 490-bp, grname);
+	    snprintf(&buff[bp], sizeof(buff) - bp, "%.*s", 490-bp, grname);
 	    bp += strlen(&buff[bp]); if (bp >= 490) break;
 	    setgrent();
 	    while ((grp = getgrent()) != NULL) {
 	      if (grp->gr_gid == pwp->pw_gid) continue;
 	      for (gmp = grp->gr_mem; *gmp && **gmp; gmp++) {
 		if (! strcmp(*gmp, pwp->pw_name)) {
-		  sprintf (&buff[bp], ",%.*s", 490-bp, grp->gr_name);
+		  snprintf(&buff[bp], sizeof(buff) - bp, ",%.*s", 490-bp, grp->gr_name);
 		  bp += strlen(&buff[bp]);
 		  break;
 		}
@@ -676,14 +671,14 @@ int parse(fp, laddr, faddr)
 	    endgrent();
 	  }
 	  else if (*cp == 'L') {
-	    sprintf (&buff[bp], "%d", pwp->pw_gid);
+	    snprintf(&buff[bp], sizeof(buff) - bp, "%d", pwp->pw_gid);
 	    bp += strlen(&buff[bp]); if (bp >= 490) break;
 	    setgrent();
 	    while ((grp = getgrent()) != NULL) {
 	      if (grp->gr_gid == pwp->pw_gid) continue;
 	      for (gmp = grp->gr_mem; *gmp && **gmp; gmp++) {
 		if (! strcmp(*gmp, pwp->pw_name)) {
-		  sprintf (&buff[bp], ",%d", grp->gr_gid);
+		  snprintf(&buff[bp], sizeof(buff) - bp, ",%d", grp->gr_gid);
 		  bp += strlen(&buff[bp]);
 		  break;
 		}
@@ -692,13 +687,16 @@ int parse(fp, laddr, faddr)
 	    }
 	    endgrent();
 	  }
-	  else if (*cp == 'p') sprintf (&buff[bp], "%d", pid);
+	  else if (*cp == 'p') snprintf(&buff[bp], sizeof(buff) - bp, "%d", pid);
 	  else { buff[bp] = *cp; buff[bp+1] = 0; }
 	  bp += strlen(&buff[bp]); if (bp >= 490) break;
 	}
 	else { buff[bp++] = *cp; if (bp >= 490) break; }
       }
-      if (bp >= 490) { sprintf(&buff[490], "..."); bp = 493; }
+      if (bp >= 490) {
+        snprintf(&buff[490], sizeof(buff) - 490, "...");
+        bp = 493;
+      }
       buff[bp] = 0;
       printf("%d , %d : USERID : %s%s%s :%s\r\n",
 	     lport, fport,
