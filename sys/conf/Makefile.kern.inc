@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.27 2002/11/02 07:57:05 perry Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.28 2002/11/03 21:12:27 chris Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -276,7 +276,7 @@ lint: ${LOBJS}
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
 MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
-.if !target(install-kernel-${MACHINE_NAME}})
+.if !target(install-kernel-${MACHINE_NAME})
 install-kernel-${MACHINE_NAME}:
 	rm -f ${DESTDIR}/onetbsd
 	ln ${DESTDIR}/netbsd ${DESTDIR}/onetbsd
