@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.19 2003/04/29 23:08:13 bjh21 Exp $	*/
+/*	$NetBSD: dirent.h,v 1.20 2003/05/28 20:04:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -68,6 +68,7 @@ struct _dirdesc {
 	off_t	dd_seek;	/* magic cookie returned by getdents */
 	long	dd_rewind;	/* magic cookie for rewinding */
 	int	dd_flags;	/* flags for readdir */
+	void	*dd_lock;	/* lock for concurrent access */
 };
 
 #define	dirfd(dirp)	((dirp)->dd_fd)
@@ -90,6 +91,8 @@ __BEGIN_DECLS
 int closedir __P((DIR *));
 DIR *opendir __P((const char *));
 struct dirent *readdir __P((DIR *));
+int readdir_r __P((DIR *, struct dirent * __restrict,
+    struct dirent ** __restrict));
 void rewinddir __P((DIR *));
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 void seekdir __P((DIR *, long));
