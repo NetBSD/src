@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.23 2000/05/29 00:03:18 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.23.2.1 2001/02/26 22:44:34 he Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.28 2000/05/28 23:25:07 itojun Exp $	*/
 
 /*
@@ -183,6 +183,16 @@ rip6_input(mp, offp, proto)
 		}
 		if (last) {
 			struct	mbuf *n;
+
+#ifdef IPSEC
+			/*
+			 * Check AH/ESP integrity.
+			 */
+			if (ipsec6_in_reject(m, last)) {
+				ipsec6stat.in_polvio++;
+				/* do not inject data into pcb */
+			} else
+#endif /*IPSEC*/
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -202,6 +212,17 @@ rip6_input(mp, offp, proto)
 		}
 		last = in6p;
 	}
+#ifdef IPSEC
+	/*
+	 * Check AH/ESP integrity.
+	 */
+	if (last && ipsec6_in_reject(m, last)) {
+		m_freem(m);
+		ipsec6stat.in_polvio++;
+		ip6stat.ip6s_delivered--;
+		/* do not inject data into pcb */
+	} else
+#endif /*IPSEC*/
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
