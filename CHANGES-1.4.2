@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.1 1999/08/20 04:47:28 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.2 1999/08/20 05:07:07 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -9,3 +9,27 @@ bin/pax/tar.c					1.15
 
   Add the ability to read V7 tar archives which use USTAR-style
   directories.  Addresses PR#8220.  (kleink)
+
+sbin/newfs_msdos/newfs_msdos.c			1.4
+
+  After determining the size of a file being used as an msdosfs image, seek
+  back to its start so subsequent writes go to the right places.  (cgd)
+
+lib/libkvm/kvm_file.c				1.14
+
+  Fix kvm_getfiles() so that it works properly on kernel core dumps.  (cgd)
+
+usr.bin/netstat/unix.c				1.18
+
+  Report error returns from kvm_getfiles() more correctly.  (cgd)
+
+sys/lib/libsa/ufs.c				1.26
+
+  Fix a problem that could cause files' seek pointers to be incorrect
+  after being opened.  (cgd)
+
+usr.sbin/mbrlabel/mbrlabel.c			1.4-1.5
+
+  Correct usage message and make the MBR examination code function
+  properly on architectures which enforce strict alignment.  (cgd)
+
