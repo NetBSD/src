@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.110 1998/02/16 03:59:55 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.111 1998/02/19 04:18:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 1998/02/16 03:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 1998/02/19 04:18:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1314,7 +1314,7 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
+	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
