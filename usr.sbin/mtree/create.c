@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.31 2001/10/04 04:51:27 lukem Exp $	*/
+/*	$NetBSD: create.c,v 1.32 2001/10/09 04:50:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.31 2001/10/04 04:51:27 lukem Exp $");
+__RCSID("$NetBSD: create.c,v 1.32 2001/10/09 04:50:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,9 @@ statf(FTSENT *p)
 	}
 	if (keys & F_MODE && (p->fts_statp->st_mode & MBITS) != mode)
 		output(&indent, "mode=%#o", p->fts_statp->st_mode & MBITS);
+	if (keys & F_DEV &&
+	    (S_ISBLK(p->fts_statp->st_mode) || S_ISCHR(p->fts_statp->st_mode)))
+		output(&indent, "device=%#x", p->fts_statp->st_rdev);
 	if (keys & F_NLINK && p->fts_statp->st_nlink != 1)
 		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
 	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
