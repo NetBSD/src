@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.13 2003/01/18 21:13:58 jmmv Exp $ */
+/* $NetBSD: mkdep.c,v 1.14 2003/01/18 22:32:20 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mkdep.c,v 1.13 2003/01/18 21:13:58 jmmv Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.14 2003/01/18 22:32:20 jmmv Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -115,6 +115,7 @@ main(argc, argv)
 	pflag = 0;
 	filename = DEFAULT_FILENAME;
 
+	opterr = 0;
 	while ((ch = getopt(argc, argv, "af:p")) != -1) {
 		switch (ch) {
 		case 'a':
@@ -127,8 +128,9 @@ main(argc, argv)
 			pflag = 1;
 			break;
 		default:
-			usage();
-			/* NOTREACHED */
+			/* We need to ignore unknown options, as they may
+			 * be cc related. */
+			break;
 		}
 	}
 	argc -= optind;
