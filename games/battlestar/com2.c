@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.18 2000/09/24 14:20:23 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.19 2000/09/25 00:28:54 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.18 2000/09/24 14:20:23 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.19 2000/09/25 00:28:54 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -182,25 +182,25 @@ murder()
 	if (n == NUMOFOBJECTS) {
 		if (testbit(inven, LASER)) {
 			printf("Your laser should do the trick.\n");
-			n = wordnumber + 1;
-			switch(wordvalue[n]) {
+			wordnumber++;
+			switch(wordvalue[wordnumber]) {
 			case NORMGOD:
 			case TIMER:
 			case NATIVE:
 			case MAN:
-				wordvalue[wordnumber] = SHOOT;
+				wordvalue[--wordnumber] = SHOOT;
 				cypher();
 				break;
 			case -1:
 				puts("Kill what?");
 				break;
 			default:
-				if (wordtype[n] != OBJECT ||
+				if (wordtype[wordnumber] != OBJECT ||
 				    wordvalue[wordnumber] == EVERYTHING)
 					puts("You can't kill that!");
 				else
 					printf("You can't kill the %s!\n",
-					    objsht[wordvalue[n]]);
+					    objsht[wordvalue[wordnumber]]);
 				break;
 			}
 		} else
