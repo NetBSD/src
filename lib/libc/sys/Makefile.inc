@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.56 1997/05/24 01:42:36 jonathan Exp $
+#	$NetBSD: Makefile.inc,v 1.57 1997/05/24 03:02:12 jonathan Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -73,7 +73,6 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
