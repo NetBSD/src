@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.190 2003/10/25 18:40:37 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.191 2003/10/25 19:37:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.190 2003/10/25 18:40:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191 2003/10/25 19:37:47 mycroft Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -376,6 +376,8 @@ copyfault:
 				    offsetof(struct trapframe, tf_gs));
 				resume = (int)resume_pop_gs;
 				break;
+			default:
+				goto we_re_toast;
 			}
 			break;
 		default:
