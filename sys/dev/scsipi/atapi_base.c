@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.10 1998/10/12 16:09:23 bouyer Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.11 1998/11/17 14:45:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@ atapi_interpret_sense(xs)
 	struct scsipi_link *sc_link = xs->sc_link;
 	char *msg = NULL;
 
-	key = (xs->sense.atapi_sense & 0xf0) >> 4;
 	/*
 	 * If the device has it's own error handler, call it first.
 	 * If it returns a legit error value, return that, otherwise
@@ -80,7 +79,14 @@ atapi_interpret_sense(xs)
 		if (error != SCSIRET_CONTINUE)
 			return (error);		/* error >= 0  better ? */
 	}
-	/* otherwise use the default */
+	/*
+	 * otherwise use the default, call the generic sense handler if we have
+	 * more than the sense key
+	 */
+	if (xs->error == XS_SENSE)
+		return (scsipi_interpret_sense(xs));
+
+	key = (xs->sense.atapi_sense & 0xf0) >> 4;
 	switch (key) {
 		case SKEY_RECOVERED_ERROR:
 			msg = "soft error (corrected)";
