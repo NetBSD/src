@@ -1,9 +1,15 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.9 1999/11/23 05:08:25 shin Exp $
+# 	$NetBSD: RAMDISK,v 1.10 2000/01/09 07:57:43 shin Exp $
 #
 
 include		"arch/hpcmips/conf/GENERIC"
 
 pseudo-device	md		1	# memory disk
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MINIROOTSIZE=12288	# size of memory disk, in blocks

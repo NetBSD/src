@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.4 2000/01/01 04:46:22 shin Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.5 2000/01/09 07:57:43 shin Exp $
 
 # Makefile for NetBSD
 #
@@ -103,7 +103,7 @@ SYSTEM_OBJ+=    locore_mips1.o
 .if !empty(IDENT:M-DMIPS3)
 SYSTEM_OBJ+=    locore_mips3.o
 .endif
-SYSTEM_OBJ+=    fp.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_OBJ+=    param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
@@ -171,12 +171,12 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
+SRCS=	${MIPS}/mips/locore.S \
 	${HPCMIPS}/hpcmips/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${HPCMIPS}/hpcmips/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if (${SFILES} != "")
@@ -210,9 +210,6 @@ locore_mips1.o: ${MIPS}/mips/locore_mips1.S assym.h
 	${NORMAL_S}
 
 locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
-	${NORMAL_S}
-
-fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 
 locore_machdep.o: ${HPCMIPS}/hpcmips/locore_machdep.S assym.h

@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.5 2000/01/08 21:07:04 uch Exp $
+#	$NetBSD: TX3912,v 1.6 2000/01/09 07:57:43 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -10,7 +10,8 @@ maxusers	8
 
 options		MIPS1			# R2000/R3000 CPUs
 options		ENABLE_MIPS_TX3900	# R3900 CPU core
-options		SOFTFLOAT		# No FPU
+options 	NOFPU			# No FPU
+options 	SOFTFLOAT		# emulate FPU insn
 #options	R3900_CACHE_DISABLE	# Disable I/D-cache
 
 options		TX39XX			# Toshiba TX39 series

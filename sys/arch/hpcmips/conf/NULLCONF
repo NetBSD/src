@@ -1,12 +1,13 @@
 #
-# 	$NetBSD: NULLCONF,v 1.3 1999/11/21 12:46:51 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.4 2000/01/09 07:57:43 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	VR41X1			# NEC VR41x1 series
 options		MIPS3_4100		# VR4100 core
-options		SOFTFLOAT		# No FPU
+options 	NOFPU			# No FPU
+options 	SOFTFLOAT		# emulate FPU insn
 options		MIPS3_L2CACHE_ABSENT
 options 	DDB			# in-kernel debugger
 options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool

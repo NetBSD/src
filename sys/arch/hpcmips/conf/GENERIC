@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.21 2000/01/09 07:55:57 shin Exp $
+# 	$NetBSD: GENERIC,v 1.22 2000/01/09 07:57:43 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -13,7 +13,8 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 # Support for specific models of H/PC MIPS
 options 	VR41X1			# NEC VR41x1 series
 options 	MIPS3_4100		# VR4100 core
-options 	SOFTFLOAT		# No FPU
+options 	NOFPU			# No FPU
+options 	SOFTFLOAT		# emulate FPU insn
 options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
