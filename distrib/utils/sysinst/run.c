@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.34 2001/01/14 02:38:15 mrg Exp $	*/
+/*	$NetBSD: run.c,v 1.35 2001/09/13 18:07:26 jdolecek Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,8 +70,9 @@
 /*
  * local prototypes 
  */
-char* va_prog_cmdstr (const char *cmd, va_list ap);
-int launch_subwin (WINDOW *actionwin, char **args, struct winsize *win, int display);
+static char* va_prog_cmdstr (const char *cmd, va_list ap);
+static int launch_subwin (WINDOW *actionwin, char **args, struct winsize *win,
+				int display, const char **errstr);
 int log_flip (menudesc *);
 int script_flip (menudesc *);
 
@@ -243,7 +244,7 @@ do_system(execstr)
  *  build command tring for do_system() from anonymous args.
  *  XXX return result is in a static buffer.
  */
-char *
+static char *
 va_prog_cmdstr(const char *cmd, va_list ap)
 {
 	static char command[STRSIZE];
@@ -257,13 +258,13 @@ va_prog_cmdstr(const char *cmd, va_list ap)
 /*
  * launch a program inside a subwindow, and report it's return status when done
  */
-
-int
-launch_subwin(actionwin, args, win, flags)
+static int
+launch_subwin(actionwin, args, win, flags, errstr)
 	WINDOW *actionwin;
 	char **args;
 	struct winsize *win;
 	int flags;
+	const char **errstr;
 {
 	int xcor,ycor;
 	int n, i, j;
@@ -278,7 +279,10 @@ launch_subwin(actionwin, args, win, flags)
 	struct termios rtt;
 	struct termios tt;
 
-	pipe(dataflow);
+	if (pipe(dataflow) < 0) {
+		*errstr = "pipe() failed";
+		return (1);
+	}
 
 	argzero = *args;
 	origargs = args;
@@ -289,8 +293,11 @@ launch_subwin(actionwin, args, win, flags)
 		strcat(command, " ");
 	}
 	(void)tcgetattr(STDIN_FILENO, &tt);
-	if (openpty(&master, &slave, NULL, &tt, win) == -1)
+	if (openpty(&master, &slave, NULL, &tt, win) == -1) {
+		*errstr = "openpty() failed";
 		return(1);
+	}
+
 #if 0
 	rtt = tt;
 	rtt.c_lflag |= (ICANON|ECHO); 
@@ -307,6 +314,7 @@ launch_subwin(actionwin, args, win, flags)
 	case -1:
 		ttysig_ignore = 0;
 		refresh();
+		*errstr = "fork() failed";
 		return -1;
 	case 0:
 		(void)close(STDIN_FILENO);
@@ -444,11 +452,13 @@ loop:
 
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
 
-	if (WIFEXITED(status))
+	if (WIFEXITED(status)) {
+		*errstr = "command failed";
 		return(WEXITSTATUS(status));
-	else if (WIFSIGNALED(status))
+	} else if (WIFSIGNALED(status)) {
+		*errstr = "command ended on signal";
 		return(WTERMSIG(status));
-	else
+	} else
 		return(0);
 }
 
@@ -467,6 +477,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	WINDOW *actionwin, *statuswin, *boxwin;
 	char buf2[MAXBUF];
 	char *command, *p, *args[51], **aps;
+	const char *errstr;
 
 	va_start(ap,cmd);
 	sprintf(buf2,"%s",va_prog_cmdstr(cmd,ap));
@@ -496,7 +507,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 		refresh();
 
 		if ((flags & RUN_FULLSCREEN) != 0) {
-			ret = launch_subwin(stdscr, args, &win, flags);
+			ret = launch_subwin(stdscr, args, &win, flags, &errstr);
 			if (ret != 0) {
 				waddstr(stdscr, "Press any key to continue");
 				wrefresh(stdscr);
@@ -552,11 +563,15 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 
 		wrefresh(actionwin);
 
-		ret = launch_subwin(actionwin, args, &win, flags);
+		ret = launch_subwin(actionwin, args, &win, flags, &errstr);
 
 		wmove(statuswin, 0, 13);
 		wstandout(statuswin);
-		waddstr(statuswin, ret ? "Failed" : "Finished");
+		if (ret) {
+			waddstr(statuswin, "Failed: ");
+			waddstr(statuswin, errstr);
+		} else
+			waddstr(statuswin, "Finished");
 		wstandend(statuswin);
 		waddstr(statuswin, "  ");
 		wmove(statuswin, 2, 5);
@@ -576,7 +591,7 @@ done:
 		clearok(stdscr, 1);
 		refresh();
 	} else { /* display */
-		ret = launch_subwin(NULL, args, &win, flags);
+		ret = launch_subwin(NULL, args, &win, flags, &errstr);
 	}
 	va_end(ap);
 	if ((flags & RUN_FATAL) != 0 && ret != 0)
