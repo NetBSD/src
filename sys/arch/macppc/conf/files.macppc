@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.57 2003/03/05 05:43:43 matt Exp $
+#	$NetBSD: files.macppc,v 1.58 2003/06/11 07:35:39 hamajima Exp $
 #
 # macppc-specific configuration info
 
@@ -90,6 +90,9 @@ file arch/macppc/pci/pchb.c			pchb
 device gm: ifnet, ether, arp, mii
 attach gm at pci
 file arch/macppc/dev/if_gm.c			gm
+
+attach wdc at pci with kauai
+file arch/macppc/dev/kauai.c			kauai
 
 define obio {}
 device obio: obio
