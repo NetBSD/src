@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.3,v 1.17 2002/02/21 11:09:07 wiz Exp $
+.\"	$NetBSD: signal.3,v 1.18 2002/06/28 21:55:08 jdolecek Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,12 +43,10 @@
 .Lb libc
 .Sh SYNOPSIS
 .Fd #include \*[Lt]signal.h\*[Gt]
-.Ft void
-.\" can not do this with just .Fn yet
-.br
-.Po
-.Fn *signal "int sig" "void (*func)(int)"
-.Pc Ns \*(lp\*(rp
+.\" The following is Quite Ugly, but syntactically correct.  Don't try to
+.\" fix it.
+.Ft void \*(lp*
+.Fn signal "int sig" "void \*(lp*func\*(rp\*(lpint\*(rp\*(rp\*(rp\*(lpint"
 .Sh DESCRIPTION
 This
 .Fn signal
@@ -173,11 +171,13 @@ or
 .Xr kill 1 ,
 .Xr kill 2 ,
 .Xr ptrace 2 ,
+.Xr psignal 3 ,
 .Xr sigaction 2 ,
 .Xr sigaltstack 2 ,
 .Xr sigprocmask 2 ,
 .Xr sigsuspend 2 ,
 .Xr setjmp 3 ,
+.Xr strsignal 3 ,
 .Xr tty 4 ,
 .Xr signal 7
 .Sh HISTORY
