@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.13 2002/12/27 19:57:47 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.14 2002/12/30 12:41:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.13 2002/12/27 19:57:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.14 2002/12/30 12:41:52 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -239,7 +239,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			printf("pid %d: message queued on port %p (id %d)\n", 
 			    p->p_pid, mp, rm->msgh_id);
 #endif
-			wakeup(mp->mp_recv);
+			wakeup(mp->mp_recv->mr_sethead);
 out3:			free(sm, M_EMULDATA);
 
 		} else {
@@ -255,14 +255,7 @@ out3:			free(sm, M_EMULDATA);
 			printf("pid %d: message queued on port %p (%d)\n", 
 			    p->p_pid, mp, sm->msgh_id);
 #endif
-			wakeup(mp->mp_recv);
-
-			 /* 
-			  * If the port is in a port set, wakup any process
-			  * sleeping on the port set head.
-			  */
-			 if (mp->mp_recv->mr_sethead != NULL)
-				wakeup(mp->mp_recv->mr_sethead);
+			wakeup(mp->mp_recv->mr_sethead);
 		}
 
 out1:
