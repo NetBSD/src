@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.161 2004/02/10 01:30:49 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.162 2004/03/11 15:03:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.161 2004/02/10 01:30:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.162 2004/03/11 15:03:47 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3633,6 +3633,7 @@ uvmspace_fork(struct vmspace *vm1)
 	new_map = &vm2->vm_map;		  /* XXX */
 
 	old_entry = old_map->header.next;
+	new_map->size = old_map->size;
 
 	/*
 	 * go entry-by-entry
@@ -3652,9 +3653,9 @@ uvmspace_fork(struct vmspace *vm1)
 		case MAP_INHERIT_NONE:
 
 			/*
-			 * drop the mapping
+			 * drop the mapping, modify size
 			 */
-
+			new_map->size -= old_entry->end - old_entry->start;
 			break;
 
 		case MAP_INHERIT_SHARE:
@@ -3827,7 +3828,6 @@ uvmspace_fork(struct vmspace *vm1)
 		old_entry = old_entry->next;
 	}
 
-	new_map->size = old_map->size;
 	vm_map_unlock(old_map);
 
 #ifdef SYSVSHM
