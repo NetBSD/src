@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.87 2003/11/19 20:28:19 jhawk Exp $
+#	$NetBSD: security,v 1.88 2004/02/09 09:04:13 jdolecek Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -482,7 +482,7 @@ if checkyesno check_homes; then
 	awk -v "usergroups=$permit_usergroups" '
 	     $1 != $4 && $4 != "root" \
 		{ print "user " $1 " home directory is owned by " $4 }
-	     $2 ~ /^-....w/ (!usergroups || $5 != $1) \
+	     $2 ~ /^-....w/ && (!usergroups || $5 != $1) \
 		{ print "user " $1 " home directory is group writable" }
 	     $2 ~ /^-.......w/ \
 		{ print "user " $1 " home directory is other writable" }' \
