@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.6 1998/02/17 11:38:27 kleink Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.7 1998/02/27 10:44:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: tn3270.c,v 1.6 1998/02/17 11:38:27 kleink Exp $";
+__RCSID("$NetBSD: tn3270.c,v 1.7 1998/02/27 10:44:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,10 +85,10 @@ static int
 #endif	/* defined(TN3270) */
 
 
+#if	defined(TN3270)
     void
 init_3270()
 {
-#if	defined(TN3270)
 #if	defined(unix)
     HaveInput = 0;
     sigiocount = 0;
@@ -98,8 +99,8 @@ init_3270()
     init_keyboard();
     init_screen();
     init_system();
-#endif	/* defined(TN3270) */
 }
+#endif	/* defined(TN3270) */
 
 
 #if	defined(TN3270)

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.8 1996/02/28 21:03:58 thorpej Exp $	*/
+/*	$NetBSD: externs.h,v 1.9 1998/02/27 10:44:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -230,80 +230,153 @@ extern FILE
     *NetTrace;		/* Where debugging output goes */
 extern unsigned char
     NetTraceFile[];	/* Name of file where debugging output goes */
-extern void
-    SetNetTrace P((char *));	/* Function to change where debugging goes */
 
 extern jmp_buf
     peerdied,
     toplevel;		/* For error conditions. */
 
-extern void
-    command P((int, char *, int)),
-    Dump P((int, unsigned char *, int)),
-    init_3270 P((void)),
-    printoption P((char *, int, int)),
-    printsub P((int, unsigned char *, int)),
-    sendnaws P((void)),
-    setconnmode P((int)),
-    setcommandmode P((void)),
-    setneturg P((void)),
-    sys_telnet_init P((void)),
-    telnet P((char *)),
-    tel_enter_binary P((int)),
-    TerminalFlushOutput P((void)),
-    TerminalNewMode P((int)),
-    TerminalRestoreState P((void)),
-    TerminalSaveState P((void)),
-    tninit P((void)),
-    upcase P((char *)),
-    willoption P((int)),
-    wontoption P((int));
 
-extern void
-    send_do P((int, int)),
-    send_dont P((int, int)),
-    send_will P((int, int)),
-    send_wont P((int, int));
+/* authenc.c */
+int net_write P((unsigned char *, int));
+void net_encrypt P((void));
+int telnet_spin P((void));
+char *telnet_getenv P((char *));
+char *telnet_gets P((char *, char *, int, int));
 
-extern void
-    lm_will P((unsigned char *, int)),
-    lm_wont P((unsigned char *, int)),
-    lm_do P((unsigned char *, int)),
-    lm_dont P((unsigned char *, int)),
-    lm_mode P((unsigned char *, int, int));
+/* commands.c */
+int send_tncmd P((void (*)(int, int), char *, char *));
+void _setlist_init P((void));
+void set_escape_char P((char *));
+int set_mode P((int));
+int clear_mode P((int));
+int modehelp P((int));
+int suspend P((int, char *[]));
+int shell P((int, char *[]));
+int quit P((int, char *[]));
+int logout P((int, char *[]));
+int env_cmd P((int, char *[]));
+struct env_lst *env_find P((unsigned char *));
+void env_init P((void));
+struct env_lst *env_define P((unsigned char *, unsigned char *));
+struct env_lst *env_undefine P((unsigned char *, unsigned char *));
+struct env_lst *env_export P((unsigned char *, unsigned char *));
+struct env_lst *env_unexport P((unsigned char *, unsigned char *));
+struct env_lst *env_send P((unsigned char *, unsigned char *));
+struct env_lst *env_list P((unsigned char *, unsigned char *));
+unsigned char *env_default P((int, int ));
+unsigned char *env_getvalue P((unsigned char *));
+void env_varval P((unsigned char *));
+int auth_cmd P((int, char *[]));
+int ayt_status P((void));
+int tn P((int, char *[]));
+void command P((int, char *, int));
+void cmdrc P((char *, char *));
+unsigned long sourceroute P((char *, char **, unsigned long *));
 
-extern void
-    slc_init P((void)),
-    slcstate P((void)),
-    slc_mode_export P((void)),
-    slc_mode_import P((int)),
-    slc_import P((int)),
-    slc_export P((void)),
-    slc P((unsigned char *, int)),
-    slc_check P((void)),
-    slc_start_reply P((void)),
-    slc_add_reply P((int, int, int)),
-    slc_end_reply P((void));
-extern int
-    slc_update P((void));
+/* main.c */
+void tninit P((void));
+void usage P((void));
 
-extern void
-    env_opt P((unsigned char *, int)),
-    env_opt_start P((void)),
-    env_opt_start_info P((void)),
-    env_opt_add P((unsigned char *)),
-    env_opt_end P((int));
+/* network.c */
+void init_network P((void));
+int stilloob P((void));
+void setneturg P((void));
+int netflush P((void));
 
-extern unsigned char
-    *env_default P((int, int)),
-    *env_getvalue P((unsigned char *));
+/* sys_bsd.c */
+void init_sys P((void));
+int TerminalWrite P((char *, int));
+int TerminalRead P((unsigned char *, int));
+int TerminalAutoFlush P((void));
+int TerminalSpecialChars P((int));
+void TerminalFlushOutput P((void));
+void TerminalSaveState P((void));
+cc_t *tcval P((int));
+void TerminalDefaultChars P((void));
+void TerminalRestoreState P((void));
+void TerminalNewMode P((int));
+void TerminalSpeeds P((long *, long *));
+int TerminalWindowSize P((long *, long *));
+int NetClose P((int));
+void NetNonblockingIO P((int, int));
+void NetSigIO P((int, int));
+void NetSetPgrp P((int));
+void sys_telnet_init P((void));
+int process_rings P((int , int , int , int , int , int));
 
-extern int
-    get_status P((void)),
-    dosynch P((void));
+/* telnet.c */
+void init_telnet P((void));
+void send_do P((int, int ));
+void send_dont P((int, int ));
+void send_will P((int, int ));
+void send_wont P((int, int ));
+void willoption P((int));
+void wontoption P((int));
+char **mklist P((char *, char *));
+int is_unique P((char *, char **, char **));
+int setupterm P((char *, int, int *));
+char *gettermname P((void));
+void lm_will P((unsigned char *, int));
+void lm_wont P((unsigned char *, int));
+void lm_do P((unsigned char *, int));
+void lm_dont P((unsigned char *, int));
+void lm_mode P((unsigned char *, int, int ));
+void slc_init P((void));
+void slcstate P((void));
+void slc_mode_export P((int));
+void slc_mode_import P((int));
+void slc_import P((int));
+void slc_export P((void));
+void slc P((unsigned char *, int));
+void slc_check P((void));
+void slc_start_reply P((void));
+void slc_add_reply P((unsigned int, unsigned int, cc_t));
+void slc_end_reply P((void));
+int slc_update P((void));
+void env_opt P((unsigned char *, int));
+void env_opt_start P((void));
+void env_opt_start_info P((void));
+void env_opt_add P((unsigned char *));
+int opt_welldefined P((char *));
+void env_opt_end P((int));
+int telrcv P((void));
+int rlogin_susp P((void));
+int Scheduler P((int));
+void telnet P((char *));
+void xmitAO P((void));
+void xmitEL P((void));
+void xmitEC P((void));
+int dosynch P((char *));
+int get_status P((char *));
+void intp P((void));
+void sendbrk P((void));
+void sendabort P((void));
+void sendsusp P((void));
+void sendeof P((void));
+void sendayt P((void));
+void sendnaws P((void));
+void tel_enter_binary P((int));
+void tel_leave_binary P((int));
 
-extern cc_t
-    *tcval P((int));
+/* terminal.c */
+void init_terminal P((void));
+int ttyflush P((int));
+int getconnmode P((void));
+void setconnmode P((int));
+void setcommandmode P((void));
+
+/* utilities.c */
+void upcase P((char *));
+int SetSockOpt P((int, int , int , int ));
+void SetNetTrace P((char *));
+void Dump P((int, unsigned char *, int));
+void printoption P((char *, int, int ));
+void optionstatus P((void));
+void printsub P((int, unsigned char *, int));
+void EmptyTerminal P((void));
+void SetForExit P((void));
+void Exit P((int)) __attribute__((__noreturn__));
+void ExitString P((char *, int)) __attribute__((__noreturn__));
 
 #ifndef	USE_TERMIO
 
@@ -469,9 +542,18 @@ extern char
     tline[],
     *transcom;		/* Transparent command */
 
-extern int
-    settranscom P((int, char**));
+/* tn3270.c */
+void init_3270 P((void));
+int DataToNetwork P((char *, int, int));
+void inputAvailable P((int));
+void outputPurge P((void));
+int DataToTerminal P((char *, int));
+int Push3270 P((void));
+void Finish3270 P((void));
+void StringToTerminal P((char *));
+void _putchar P((int));
+void SetIn3270 P((void));
+int tn3270_ttype P((void));
+int settranscom P((int, char *[]));
 
-extern void
-    inputAvailable P((int));
 #endif	/* defined(TN3270) */
