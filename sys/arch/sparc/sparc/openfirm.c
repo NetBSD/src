@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.1 1999/02/14 12:23:03 pk Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.2 2000/11/15 16:15:01 pk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -188,7 +188,7 @@ int
 OF_setprop(handle, prop, buf, buflen)
 	int handle;
 	char *prop;
-	void *buf;
+	const void *buf;
 	int buflen;
 {
 	struct {
