@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1996/10/13 04:10:39 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1996/10/25 19:58:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,6 +157,7 @@ consinit()
 void
 cpu_startup()
 {
+	extern	 void		etext __P((void));
 	register unsigned	i;
 	register caddr_t	v, firstaddr;
 		 int		base, residual;
@@ -315,12 +316,12 @@ again:
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, 16*NCARGS, TRUE);
+	exec_map = kmem_suballoc(kernel_map,&minaddr,&maxaddr, 16*NCARGS, TRUE);
 
 	/*
 	 * Allocate a submap for physio
 	 */
-	phys_map = kmem_suballoc(kernel_map,&minaddr,&maxaddr,VM_PHYS_SIZE,TRUE);
+	phys_map= kmem_suballoc(kernel_map,&minaddr,&maxaddr,VM_PHYS_SIZE,TRUE);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -331,6 +332,27 @@ again:
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+
+	/*
+	 * Tell the VM system that page 0 isn't mapped.
+	 *
+	 * XXX This is bogus; should just fix KERNBASE and
+	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
+	 */
+	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't mark page 0 off-limits");
+
+	/*
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 *
+	 * XXX Should be atari_trunc_page(&kernel_text) instead
+	 * XXX of NBPG.
+	 */
+	if (vm_map_protect(kernel_map, NBPG, atari_round_page(&etext),
+	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
+		panic("can't protect kernel text");
 
 	/*
 	 * Initialize callouts
@@ -795,7 +817,7 @@ boot(howto, bootstr)
 	char	*bootstr;
 {
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
+	if (curproc && curproc->p_addr)
 		savectx(&curproc->p_addr->u_pcb);
 
 	boothowto = howto;
