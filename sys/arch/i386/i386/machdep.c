@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.348 1999/04/01 00:17:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.349 1999/04/01 00:37:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -391,11 +391,9 @@ cpu_startup()
 {
 	unsigned i;
 	caddr_t v;
-	int sz;
+	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	struct pcb *pcb;
-	int x;
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
@@ -533,10 +531,17 @@ cpu_startup()
 
 	/* Safe for i/o port allocation to use malloc now. */
 	ioport_malloc_safe = 1;
+}
 
-	/*
-	 * Set up proc0's TSS and LDT.
-	 */
+/*
+ * Set up proc0's TSS and LDT.
+ */
+void
+i386_proc0_tss_ldt_init()
+{
+	struct pcb *pcb;
+	int x;
+
 	gdt_init();
 	curpcb = pcb = &proc0.p_addr->u_pcb;
 	pcb->pcb_flags = 0;
@@ -555,7 +560,6 @@ cpu_startup()
 	lldt(pcb->pcb_ldt_sel);
 
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 1999/03/28 19:55:51 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 1999/04/01 00:37:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,6 +106,9 @@ configure()
 
 	spl0();
 	cold = 0;
+
+	/* Set up proc0's TSS and LDT (after the FPU is configured). */
+	i386_proc0_tss_ldt_init();
 
 	/* XXX Finish deferred buffer cache allocation. */
 	i386_bufinit();
