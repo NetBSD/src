@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.201 1998/09/12 00:47:12 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.202 1998/10/01 04:37:15 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -807,6 +807,26 @@ NENTRY(linux_sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_linux_esigcode
 _linux_esigcode:
+
+NENTRY(linux_rt_sigcode)
+	call	LINUX_SIGF_HANDLER(%esp)
+	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
+					# copy at SIGF_SCP(%esp))
+#ifdef VM86
+	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
+	jnz	1f
+#endif
+	movl	LINUX_SC_FS(%ebx),%ecx
+	movl	LINUX_SC_GS(%ebx),%edx
+	movl	%cx,%fs
+	movl	%dx,%gs
+1:	pushl	%eax			# junk to fake return address
+	movl	$LINUX_SYS_rt_sigreturn,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$LINUX_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+	.globl	_linux_rt_esigcode
+_linux_rt_esigcode:
 #endif
 
 /*****************************************************************************/
