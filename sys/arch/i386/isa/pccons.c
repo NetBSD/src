@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.32 1993/09/16 03:25:02 brezak Exp $
+ *	$Id: pccons.c,v 1.33 1993/09/28 03:25:03 andrew Exp $
  */
 
 /*
@@ -59,6 +59,7 @@
 #include "i386/isa/ic/i8042.h"
 #include "i386/isa/kbd.h"
 #include "machine/pc/display.h"
+#include "machine/pccons.h"
 
 #include "pc.h"
 #if NPC > 0
@@ -75,7 +76,7 @@
 extern u_short *Crtat;
 
 #ifdef XSERVER						/* 15 Aug 92*/
-int pc_xmode;
+int pc_xmode = 0;
 #endif /* XSERVER */
 
 struct	tty *pc_tty[1];
@@ -148,6 +149,8 @@ void	pcstart();
 int	pcparam();
 int	ttrstrt();
 char	partab[];
+
+static void set_typematic(u_char data);
 
 
 extern pcopen(dev_t, int, int, struct proc *);
@@ -338,6 +341,7 @@ pcclose(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 pcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -348,6 +352,7 @@ pcread(dev, uio, flag)
 }
 
 /*ARGSUSED*/
+int
 pcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -362,6 +367,7 @@ pcwrite(dev, uio, flag)
  * the console processor wants to give us a character.
  * Catch the character, and see who it goes to.
  */
+void
 pcrint(dev, irq, cpl)
 	dev_t dev;
 {
@@ -387,12 +393,8 @@ pcrint(dev, irq, cpl)
 	} while (*cp);
 }
 
-#ifdef XSERVER						/* 15 Aug 92*/
-#define CONSOLE_X_MODE_ON _IO('t',121)
-#define CONSOLE_X_MODE_OFF _IO('t',122)
-#define CONSOLE_X_BELL _IOW('t',123,int[2])
-#endif /* XSERVER */
 
+int
 pcioctl(dev, cmd, data, flag)
 	dev_t dev;
 	caddr_t data;
@@ -420,6 +422,21 @@ pcioctl(dev, cmd, data, flag)
 		return (0);
 	}
 #endif /* XSERVER */
+ 	if (cmd == CONSOLE_SET_TYPEMATIC_RATE) {
+ 		u_char	rate;
+
+ 		if (!data)
+			return(EINVAL);
+		rate = *((u_char *)data);
+		/*
+		 * check that it isn't too big (which would then be confused as
+		 * a command)
+		 */
+		if (!(rate & 0x80))
+			set_typematic(rate);	/* set the new rate & delay */
+		else
+			return(EINVAL);
+ 	}
  
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
@@ -546,7 +563,7 @@ pccngetc(dev)
 	register char *cp;
 
 #ifdef XSERVER						/* 15 Aug 92*/
-	if (pc_xmode)
+	if (pc_xmode > 0)
 		return (0);
 #endif /* XSERVER */
 
@@ -563,7 +580,7 @@ pcgetchar(tp)
 	char *cp;
 
 #ifdef XSERVER						/* 15 Aug 92*/
-	if (pc_xmode)
+	if (pc_xmode > 0)
 		return (0);
 #endif /* XSERVER */
 
@@ -612,7 +629,7 @@ cursor(int a)
 { 	int pos = crtat - Crtat;
 
 #ifdef XSERVER						/* 15 Aug 92*/
-	if (!pc_xmode) {
+	if (pc_xmode <= 0) {
 #endif /* XSERVER */
 	outb(addr_6845, 14);
 	outb(addr_6845+1, pos>> 8);
@@ -662,7 +679,7 @@ static sputc(c, ka)
 	char fg_at, bg_at, at;
 
 #ifdef XSERVER						/* 15 Aug 92*/
-	if (pc_xmode)
+	if (pc_xmode > 0)
 		return;
 #endif /* XSERVER */
 
@@ -1404,11 +1421,14 @@ static Scan_def	scan_codes[] =
 
 
 
-update_led()
+void
+update_led(void)
 {
+#if 0
 	int response;
+#endif
 
-	if (kbd_cmd(KBC_STSIND) != 0)
+	if (kbd_cmd(KBC_MODEIND) != 0)
 		printf("Timeout for keyboard LED command\n");
 	else if (kbd_cmd(scroll | (num << 1) | (caps << 2)) != 0)
 		printf("Timeout for keyboard LED data\n");
@@ -1426,6 +1446,30 @@ update_led()
 	 */
 #endif
 }
+
+
+static void
+set_typematic(u_char data)
+{
+	if (kbd_cmd(KBC_TYPEMATIC) != 0)
+		printf("Timeout for keyboard typematic command\n");
+	else if (kbd_cmd(data) != 0)
+		printf("Timeout for keyboard typematic data\n");
+#if 0
+	else if ((response = kbd_response()) < 0)
+		printf("Timeout for keyboard typematic ack\n");
+	else if (response != KBR_ACK)
+		printf("Unexpected keyboard typematic ack %d\n", response);
+#else
+	/*
+	 * Skip waiting for and checking the response.  The waiting
+	 * would be too long (about 3 msec) and the checking might eat
+	 * fresh keystrokes.  The waiting should be done using timeout()
+	 * and the checking should be done in the interrupt handler.
+	 */
+#endif
+}
+
 
 /*
  *   sgetc(noblock):  get  characters  from  the  keyboard.  If
@@ -1446,7 +1490,12 @@ loop:
 #ifdef XSERVER						/* 15 Aug 92*/
 	if (inb(KBSTATP) & KBS_DIB) {
 		dt = inb(KBDATAP);
-		if (pc_xmode) {
+		if (pc_xmode > 0) {
+#if defined(DDB) && defined(XSERVER_DDB)
+			/* F12 enters the debugger while in X mode */
+			if (dt == 88)
+				Debugger();
+#endif
 			capchar[0] = dt;
 			/*
 			 *   Check for locking keys
