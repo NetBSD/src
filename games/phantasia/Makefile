@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2003/11/16 14:14:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2004/02/08 22:14:27 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -26,13 +26,16 @@ FILES+=${file}
 .endif
 .endfor
 
-CLEANFILES+=map setup setup.lo host_phantglobs.lo ${ALLFILES}
+CLEANFILES+=map setup setup.lo host_phantglobs.lo ${ALLFILES} files.stamp
 
 realall: ${FILES}
 
-${FILES}: setup monsters.asc
+${FILES}: files.stamp
+files.stamp: setup monsters.asc
 	${_MKMSG_CREATE} ${FILES}
+	rm -f ${.TARGET}
 	./setup -m ${.CURDIR}/monsters.asc
+	touch ${.TARGET}
 
 setup: host_phantglobs.lo setup.lo ${LIBM} 
 	${_MKTARGET_LINK}
