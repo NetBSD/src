@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.49 2000/04/24 09:27:30 itojun Exp $	*/
+/*	$NetBSD: namespace.h,v 1.50 2000/04/24 10:24:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -233,6 +233,10 @@
 #define hesiod_init		_hesiod_init
 #define hesiod_resolve		_hesiod_resolve
 #define hesiod_to_bind		_hesiod_to_bind
+#define if_freenameindex	_if_freenameindex
+#define if_indextoname		_if_indextoname
+#define if_nameindex		_if_nameindex
+#define if_nametoindex		_if_nametoindex
 #define in6addr_any		_in6addr_any
 #define in6addr_linklocal_allnodes	_in6addr_linklocal_allnodes
 #define in6addr_loopback	_in6addr_loopback
