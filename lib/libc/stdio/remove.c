@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.4 1995/02/02 02:10:23 jtc Exp $	*/
+/*	$NetBSD: remove.c,v 1.4.2.1 1995/03/02 20:24:07 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,12 +40,14 @@
 #if 0
 static char sccsid[] = "@(#)remove.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: remove.c,v 1.4 1995/02/02 02:10:23 jtc Exp $";
+static char rcsid[] = "$NetBSD: remove.c,v 1.4.2.1 1995/03/02 20:24:07 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <unistd.h>
 #include <stdio.h>
 
+int
 remove(file)
 	const char *file;
 {

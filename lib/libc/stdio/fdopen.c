@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.5 1995/02/02 02:09:05 jtc Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.5.2.1 1995/03/02 20:23:39 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,9 +40,10 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: fdopen.c,v 1.5 1995/02/02 02:09:05 jtc Exp $";
+static char rcsid[] = "$NetBSD: fdopen.c,v 1.5.2.1 1995/03/02 20:23:39 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
