@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.11 1997/10/05 18:35:09 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.12 1998/05/04 11:11:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -275,11 +275,11 @@ struct ncr53c9x_softc {
 	u_char	sc_msgpriq;	/* One or more messages to send (encoded) */
 	u_char	sc_msgout;	/* What message is on its way out? */
 	u_char	sc_msgoutq;	/* What messages have been sent so far? */
-	u_char	sc_omess[NCR_MAX_MSG_LEN];
-	caddr_t	sc_omp;	/* Message pointer (for multibyte messages) */
+	u_char	*sc_omess;	/* MSGOUT buffer */
+	caddr_t	sc_omp;		/* Message pointer (for multibyte messages) */
 	size_t	sc_omlen;
-	u_char	sc_imess[NCR_MAX_MSG_LEN + 1];
-	caddr_t	sc_imp;	/* Message pointer (for multibyte messages) */
+	u_char	*sc_imess;	/* MSGIN buffer */
+	caddr_t	sc_imp;		/* Message pointer (for multibyte messages) */
 	size_t	sc_imlen;
 
 	caddr_t	sc_cmdp;	/* Command pointer (for DMAed commands) */
