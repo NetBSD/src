@@ -1,5 +1,26 @@
-/*	$NetBSD: print-radius.c,v 1.1.1.1 2001/06/25 19:26:38 itojun Exp $	*/
+/*	$NetBSD: print-radius.c,v 1.1.1.2 2002/02/18 09:08:40 itojun Exp $	*/
 
+/*
+ * Copyright (C) 2000 Alfredo Andres Omella.  All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  
+ *   1. Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in
+ *      the documentation and/or other materials provided with the
+ *      distribution.
+ *   3. The names of the authors may not be used to endorse or promote
+ *      products derived from this software without specific prior
+ *      written permission.
+ *  
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ */
 /*
  * Radius printer routines as specified on:
  *
@@ -25,7 +46,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "Id: print-radius.c,v 1.7 2001/06/18 09:16:28 guy Exp";
+    "Id: print-radius.c,v 1.10 2001/10/22 06:58:33 itojun Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -500,7 +521,6 @@ print_attr_num(register u_char *data, u_int length, u_short attr_code )
       }
       else
       {
-      	 data++;
          data_value = EXTRACT_32BITS(data);
       }
       if ( data_value <= (attr_type[attr_code].siz_subtypes - 1 +
@@ -643,7 +663,7 @@ static void print_attr_time(register u_char *data, u_int length, u_short attr_co
    TCHECK2(data[0],4);
    
    attr_time = EXTRACT_32BITS(data);
-   strcpy(string, ctime(&attr_time));
+   strlcpy(string, ctime(&attr_time), sizeof(string));
    /* Get rid of the newline */
    string[24] = '\0';
    printf("{%.24s}", string);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pppoe.c,v 1.1.1.1 2001/06/25 19:26:37 itojun Exp $	*/
+/*	$NetBSD: print-pppoe.c,v 1.1.1.2 2002/02/18 09:08:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.14 2001/06/20 07:40:44 guy Exp (LBL)";
+"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.15 2001/07/05 18:54:17 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -102,6 +102,7 @@ pppoe_if_print(u_char *user, const struct pcap_pkthdr *h,
 	register u_int length = h->len;
 	register u_int caplen = h->caplen;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	/*
@@ -113,6 +114,10 @@ pppoe_if_print(u_char *user, const struct pcap_pkthdr *h,
 	snapend = p + caplen;
 
 	pppoe_print(p, length);
+	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }
 
 void

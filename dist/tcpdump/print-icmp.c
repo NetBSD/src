@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp.c,v 1.1.1.1 2001/06/25 19:26:35 itojun Exp $	*/
+/*	$NetBSD: print-icmp.c,v 1.1.1.2 2002/02/18 09:08:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-icmp.c,v 1.59 2001/06/15 22:17:32 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-icmp.c,v 1.62 2001/07/24 16:56:11 fenner Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -247,7 +247,7 @@ static struct tok type2str[] = {
 	{ ICMP_REDIRECT_NET,		"redirect %s to net %s" },
 	{ ICMP_REDIRECT_HOST,		"redirect %s to host %s" },
 	{ ICMP_REDIRECT_TOSNET,		"redirect-tos %s to net %s" },
-	{ ICMP_REDIRECT_TOSHOST,	"redirect-tos %s to net %s" },
+	{ ICMP_REDIRECT_TOSHOST,	"redirect-tos %s to host %s" },
 	{ 0,				NULL }
 };
 
@@ -270,15 +270,15 @@ struct id_rdiscovery {
 };
 
 void
-icmp_print(register const u_char *bp, u_int plen, register const u_char *bp2)
+icmp_print(const u_char *bp, u_int plen, const u_char *bp2)
 {
-	register char *cp;
-	register const struct icmp *dp;
-	register const struct ip *ip;
-	register const char *str, *fmt;
-	register const struct ip *oip;
-	register const struct udphdr *ouh;
-	register u_int hlen, dport, mtu;
+	char *cp;
+	const struct icmp *dp;
+	const struct ip *ip;
+	const char *str, *fmt;
+	const struct ip *oip;
+	const struct udphdr *ouh;
+	u_int hlen, dport, mtu;
 	char buf[MAXHOSTNAMELEN + 100];
 
 	dp = (struct icmp *)bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ntp.c,v 1.1.1.1 2001/06/25 19:26:37 itojun Exp $	*/
+/*	$NetBSD: print-ntp.c,v 1.1.1.2 2002/02/18 09:08:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ntp.c,v 1.31 2000/10/06 04:23:13 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ntp.c,v 1.32 2001/08/20 15:36:57 fenner Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -63,7 +63,6 @@ ntp_print(register const u_char *cp, u_int length)
 {
 	register const struct ntpdata *bp;
 	int mode, version, leapind;
-	static char rclock[5];
 
 	bp = (struct ntpdata *)cp;
 	/* Note funny sized packets */
@@ -158,9 +157,7 @@ ntp_print(register const u_char *cp, u_int length)
 		break;
 
 	case PRIM_REF:
-		strncpy(rclock, (char *)&(bp->refid), 4);
-		rclock[4] = '\0';
-		fputs(rclock, stdout);
+		fn_printn((char *)&(bp->refid), 4, NULL);
 		break;
 
 	case INFO_QUERY:

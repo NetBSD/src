@@ -1,4 +1,4 @@
-/*	$NetBSD: print-lane.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-lane.c,v 1.1.1.2 2002/02/18 09:08:19 itojun Exp $	*/
 
 /*
  * Marko Kiiskila carnil@cs.tut.fi 
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-lane.c,v 1.11 2000/12/22 22:45:11 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-lane.c,v 1.12 2001/07/05 18:54:15 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -83,6 +83,7 @@ lane_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	u_short ether_type;
 	u_short extracted_ethertype;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	if (caplen < sizeof(struct lecdatahdr_8023)) {
@@ -138,4 +139,7 @@ lane_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		default_print(p, caplen);
  out:
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }

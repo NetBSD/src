@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dhcp6.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-dhcp6.c,v 1.1.1.2 2002/02/18 09:07:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.13 2001/01/28 09:49:49 itojun Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.14 2001/09/17 21:57:59 fenner Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -63,7 +63,7 @@ static struct dhcp6_opt *dhcp6opttab_byname(char *);
 #endif
 static struct dhcp6_opt *dhcp6opttab_bycode(u_int);
 
-static char tstr[] = " [|dhcp6]";
+static const char tstr[] = " [|dhcp6]";
 
 static struct dhcp6_opt dh6opttab[] = {
 	/* IP Address Extension */

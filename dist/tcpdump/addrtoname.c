@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.1.1.1 2001/06/25 19:26:29 itojun Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.1.1.2 2002/02/18 09:07:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.78 2001/06/24 21:49:25 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.83 2001/09/17 21:57:50 fenner Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -73,7 +73,7 @@ static RETSIGTYPE nohostname(int);
 
 struct hnamemem {
 	u_int32_t addr;
-	char *name;
+	const char *name;
 	struct hnamemem *nxt;
 };
 
@@ -98,7 +98,7 @@ struct enamemem {
 	u_short e_addr0;
 	u_short e_addr1;
 	u_short e_addr2;
-	char *e_name;
+	const char *e_name;
 	u_char *e_nsap;			/* used only for nsaptable[] */
 #define e_bs e_nsap			/* for bytestringtable */
 	struct enamemem *e_nxt;
@@ -111,7 +111,7 @@ struct enamemem bytestringtable[HASHNAMESIZE];
 struct protoidmem {
 	u_int32_t p_oui;
 	u_short p_proto;
-	char *p_name;
+	const char *p_name;
 	struct protoidmem *p_nxt;
 };
 
@@ -120,7 +120,7 @@ struct protoidmem protoidtable[HASHNAMESIZE];
 /*
  * A faster replacement for inet_ntoa().
  */
-char *
+const char *
 intoa(u_int32_t addr)
 {
 	register char *cp;
@@ -172,16 +172,14 @@ nohostname(int signo)
  * Return a name for the IP address pointed to by ap.  This address
  * is assumed to be in network byte order.
  */
-char *
+const char *
 getname(const u_char *ap)
 {
 	register struct hostent *hp;
 	u_int32_t addr;
 	static struct hnamemem *p;		/* static for longjmp() */
 
-	addr = ((u_int32_t)ap[0] << 24) | ((u_int32_t)ap[1] << 16) |
-	    ((u_int32_t)ap[2] << 8) | ((u_int32_t)ap[3] << 0);
-
+	memcpy(&addr, ap, sizeof(addr));
 	p = &hnametable[addr & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (p->addr == addr)
@@ -231,18 +229,16 @@ getname(const u_char *ap)
  * Return a name for the IP6 address pointed to by ap.  This address
  * is assumed to be in network byte order.
  */
-char *
+const char *
 getname6(const u_char *ap)
 {
 	register struct hostent *hp;
 	struct in6_addr addr;
 	static struct h6namemem *p;		/* static for longjmp() */
-	register char *cp;
+	register const char *cp;
 	char ntop_buf[INET6_ADDRSTRLEN];
-	int i;
 
-	for (i = 0; i < sizeof(addr); i++)
-		addr.s6_addr[i] = ap[i];
+	memcpy(&addr, ap, sizeof(addr));
 	p = &h6nametable[*(u_int16_t *)&addr.s6_addr[14] & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (memcmp(&p->addr, &addr, sizeof(addr)) == 0)
@@ -287,7 +283,7 @@ getname6(const u_char *ap)
 			}
 		}
 	}
-	cp = (char *)inet_ntop(AF_INET6, &addr, ntop_buf, sizeof(ntop_buf));
+	cp = inet_ntop(AF_INET6, &addr, ntop_buf, sizeof(ntop_buf));
 	p->name = strdup(cp);
 	return (p->name);
 }
@@ -332,7 +328,7 @@ lookup_emem(const u_char *ep)
  */
 
 static inline struct enamemem *
-lookup_bytestring(register const u_char *bs, const int nlen)
+lookup_bytestring(register const u_char *bs, const unsigned int nlen)
 {
 	struct enamemem *tp;
 	register u_int i, j, k;
@@ -353,7 +349,7 @@ lookup_bytestring(register const u_char *bs, const int nlen)
 		if (tp->e_addr0 == i &&
 		    tp->e_addr1 == j &&
 		    tp->e_addr2 == k &&
-		    bcmp((char *)bs, (char *)(tp->e_bs), nlen) == 0)
+		    memcmp((const char *)bs, (const char *)(tp->e_bs), nlen) == 0)
 			return tp;
 		else
 			tp = tp->e_nxt;
@@ -363,7 +359,7 @@ lookup_bytestring(register const u_char *bs, const int nlen)
 	tp->e_addr2 = k;
 
 	tp->e_bs = (u_char *) calloc(1, nlen + 1);
-	bcopy(bs, tp->e_bs, nlen);
+	memcpy(tp->e_bs, bs, nlen);
 	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)
 		error("lookup_bytestring: calloc");
@@ -377,7 +373,7 @@ static inline struct enamemem *
 lookup_nsap(register const u_char *nsap)
 {
 	register u_int i, j, k;
-	int nlen = *nsap;
+	unsigned int nlen = *nsap;
 	struct enamemem *tp;
 	const u_char *ensap = nsap + nlen - 6;
 
@@ -395,7 +391,7 @@ lookup_nsap(register const u_char *nsap)
 		    tp->e_addr1 == j &&
 		    tp->e_addr2 == k &&
 		    tp->e_nsap[0] == nlen &&
-		    memcmp((char *)&(nsap[1]),
+		    memcmp((const char *)&(nsap[1]),
 			(char *)&(tp->e_nsap[1]), nlen) == 0)
 			return tp;
 		else
@@ -406,7 +402,7 @@ lookup_nsap(register const u_char *nsap)
 	tp->e_nsap = (u_char *)malloc(nlen + 1);
 	if (tp->e_nsap == NULL)
 		error("lookup_nsap: malloc");
-	memcpy((char *)tp->e_nsap, (char *)nsap, nlen + 1);
+	memcpy((char *)tp->e_nsap, (const char *)nsap, nlen + 1);
 	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)
 		error("lookup_nsap: calloc");
@@ -442,7 +438,7 @@ lookup_protoid(const u_char *pi)
 	return tp;
 }
 
-char *
+const char *
 etheraddr_string(register const u_char *ep)
 {
 	register u_int i, j;
@@ -456,7 +452,7 @@ etheraddr_string(register const u_char *ep)
 #ifdef USE_ETHER_NTOHOST
 	if (!nflag) {
 		char buf[128];
-		if (ether_ntohost(buf, (struct ether_addr *)ep) == 0) {
+		if (ether_ntohost(buf, (const struct ether_addr *)ep) == 0) {
 			tp->e_name = strdup(buf);
 			return (tp->e_name);
 		}
@@ -477,8 +473,8 @@ etheraddr_string(register const u_char *ep)
 	return (tp->e_name);
 }
 
-char *
-linkaddr_string(const u_char *ep, const int len)
+const char *
+linkaddr_string(const u_char *ep, const unsigned int len)
 {
 	register u_int i, j;
 	register char *cp;
@@ -507,7 +503,7 @@ linkaddr_string(const u_char *ep, const int len)
 	return (tp->e_name);
 }
 
-char *
+const char *
 etherproto_string(u_short port)
 {
 	register char *cp;
@@ -533,7 +529,7 @@ etherproto_string(u_short port)
 	return (tp->name);
 }
 
-char *
+const char *
 protoid_string(register const u_char *pi)
 {
 	register u_int i, j;
@@ -560,7 +556,7 @@ protoid_string(register const u_char *pi)
 	return (tp->p_name);
 }
 
-char *
+const char *
 llcsap_string(u_char sap)
 {
 	register struct hnamemem *tp;
@@ -579,7 +575,7 @@ llcsap_string(u_char sap)
 	return (tp->name);
 }
 
-char *
+const char *
 isonsap_string(const u_char *nsap)
 {
 	register u_int i, nlen = nsap[0];
@@ -604,7 +600,7 @@ isonsap_string(const u_char *nsap)
 	return (tp->e_name);
 }
 
-char *
+const char *
 tcpport_string(u_short port)
 {
 	register struct hnamemem *tp;
@@ -623,7 +619,7 @@ tcpport_string(u_short port)
 	return (tp->name);
 }
 
-char *
+const char *
 udpport_string(register u_short port)
 {
 	register struct hnamemem *tp;
@@ -697,8 +693,8 @@ init_eprotoarray(void)
 }
 
 static struct protoidlist {
-	u_char protoid[5];
-	char *name;
+	const u_char protoid[5];
+	const char *name;
 } protoidlist[] = {
 	{{ 0x00, 0x00, 0x0c, 0x01, 0x07 }, "CiscoMLS" },
 	{{ 0x00, 0x00, 0x0c, 0x20, 0x00 }, "CiscoCDP" },
@@ -742,8 +738,8 @@ init_protoidarray(void)
 }
 
 static struct etherlist {
-	u_char addr[6];
-	char *name;
+	const u_char addr[6];
+	const char *name;
 } etherlist[] = {
 	{{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }, "Broadcast" },
 	{{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, NULL }
@@ -794,7 +790,7 @@ init_etherarray(void)
 
 #ifdef USE_ETHER_NTOHOST
                 /* Use yp/nis version of name if available */
-                if (ether_ntohost(name, (struct ether_addr *)el->addr) == 0) {
+                if (ether_ntohost(name, (const struct ether_addr *)el->addr) == 0) {
                         tp->e_name = strdup(name);
 			continue;
 		}
@@ -864,7 +860,7 @@ init_addrtoname(u_int32_t localnet, u_int32_t mask)
 	init_protoidarray();
 }
 
-char *
+const char *
 dnaddr_string(u_short dnaddr)
 {
 	register struct hnamemem *tp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.1.1.1 2001/06/25 19:26:35 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.1.1.2 2002/02/18 09:08:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.55 2001/06/15 22:17:32 fenner Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.56 2001/06/27 02:48:43 itojun Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -45,6 +45,7 @@ static const char rcsid[] =
 #include <arpa/inet.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <netdb.h>
 
 #include "ip6.h"

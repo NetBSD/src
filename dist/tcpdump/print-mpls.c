@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mpls.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-mpls.c,v 1.1.1.2 2002/02/18 09:08:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 2001 WIDE Project.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-mpls.c,v 1.1 2001/06/21 17:56:04 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-mpls.c,v 1.2 2001/06/26 06:24:57 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -40,6 +40,8 @@ static const char rcsid[] =
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+
+#include <netinet/in.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-token.c,v 1.1.1.1 2001/06/25 19:26:40 itojun Exp $	*/
+/*	$NetBSD: print-token.c,v 1.1.1.2 2002/02/18 09:08:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -27,7 +27,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.11 2000/12/23 20:48:13 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.13 2001/09/18 15:46:37 fenner Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -55,8 +55,8 @@ static const char rcsid[] =
 static inline void
 extract_token_addrs(const struct token_header *trp, char *fsrc, char *fdst)
 {
-	memcpy(fdst, (char *)trp->token_dhost, 6);
-	memcpy(fsrc, (char *)trp->token_shost, 6);
+	memcpy(fdst, (const char *)trp->token_dhost, 6);
+	memcpy(fsrc, (const char *)trp->token_shost, 6);
 }
 
 /*
@@ -66,7 +66,7 @@ static inline void
 token_print(register const struct token_header *trp, register u_int length,
 	   register const u_char *fsrc, register const u_char *fdst)
 {
-	char *srcname, *dstname;
+	const char *srcname, *dstname;
 
 	srcname = etheraddr_string(fsrc);
 	dstname = etheraddr_string(fdst);
@@ -81,18 +81,18 @@ token_print(register const struct token_header *trp, register u_int length,
 		printf("%s %s %d: ", srcname, dstname, length);
 }
 
-static char *broadcast_indicator[] = {
+static const char *broadcast_indicator[] = {
 	"Non-Broadcast", "Non-Broadcast",
 	"Non-Broadcast", "Non-Broadcast",
 	"All-routes",    "All-routes",
 	"Single-route",  "Single-route"
 };
 
-static char *direction[] = {
+static const char *direction[] = {
 	"Forward", "Backward"
 };
 
-static char *largest_frame[] = {
+static const char *largest_frame[] = {
 	"516",
 	"1500",
 	"2052",
@@ -114,13 +114,14 @@ token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int caplen = h->caplen;
 	u_int length = h->len;
-	struct token_header *trp;
+	const struct token_header *trp;
 	u_short extracted_ethertype;
 	struct ether_header ehdr;
 	u_int route_len = 0, seg;
 
-	trp = (struct token_header *)p;
+	trp = (const struct token_header *)p;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	if (caplen < TOKEN_HDRLEN) {
@@ -209,4 +210,7 @@ token_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		default_print(p, caplen);
 out:
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }

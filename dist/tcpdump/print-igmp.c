@@ -1,4 +1,4 @@
-/*	$NetBSD: print-igmp.c,v 1.1.1.1 2001/06/25 19:26:35 itojun Exp $	*/
+/*	$NetBSD: print-igmp.c,v 1.1.1.2 2002/02/18 09:08:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-igmp.c,v 1.4 2001/05/11 02:13:19 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-igmp.c,v 1.5 2001/09/17 21:58:02 fenner Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -116,7 +116,7 @@ static struct tok igmpv3report2str[] = {
 static void 
 print_mtrace(register const u_char *bp, register u_int len)
 {
-    register struct tr_query *tr = (struct tr_query *)(bp + 8);
+    register const struct tr_query *tr = (const struct tr_query *)(bp + 8);
 
     printf("mtrace %lu: %s to %s reply-to %s",
         (u_long)TR_GETQID(ntohl(tr->tr_rttlqid)),
@@ -129,7 +129,7 @@ print_mtrace(register const u_char *bp, register u_int len)
 static void 
 print_mresp(register const u_char *bp, register u_int len)
 {
-    register struct tr_query *tr = (struct tr_query *)(bp + 8);
+    register const struct tr_query *tr = (const struct tr_query *)(bp + 8);
 
     printf("mresp %lu: %s to %s reply-to %s",
         (u_long)TR_GETQID(ntohl(tr->tr_rttlqid)),
@@ -140,11 +140,10 @@ print_mresp(register const u_char *bp, register u_int len)
 }
 
 static void 
-print_igmpv3_report(register const u_char *bp, register u_int len,
-       register const u_char *bp2)
+print_igmpv3_report(register const u_char *bp, register u_int len)
 {
-    int group, nsrcs, ngroups;
-    register int i, j;
+    u_int group, nsrcs, ngroups;
+    register u_int i, j;
 
     /* Minimum len is 16, and should be a multiple of 4 */
     if (len < 16 || len & 0x03) {
@@ -195,12 +194,12 @@ trunc:
 }
 
 static void
-print_igmpv3_query(register const u_char *bp, register u_int len,
-       register const u_char *bp2)
+print_igmpv3_query(register const u_char *bp, register u_int len)
 {
-    int mrt, mrc;
-    int nsrcs;
-    register int i;
+    u_int mrc;
+    int mrt;
+    u_int nsrcs;
+    register u_int i;
 
     (void)printf(" v3");
     /* Minimum len is 12, and should be a multiple of 4 */
@@ -246,8 +245,7 @@ trunc:
 }
 
 void
-igmp_print(register const u_char *bp, register u_int len,
-       register const u_char *bp2)
+igmp_print(register const u_char *bp, register u_int len)
 {
     if (qflag) {
         (void)printf("igmp");
@@ -259,7 +257,7 @@ igmp_print(register const u_char *bp, register u_int len,
     case 0x11:
         (void)printf("igmp query");
 	if (len >= 12)
-	    print_igmpv3_query(bp, len, bp2);
+	    print_igmpv3_query(bp, len);
 	else {
 	    if (bp[1]) {
 		(void)printf(" v2");
@@ -283,7 +281,7 @@ igmp_print(register const u_char *bp, register u_int len,
         break;
     case 0x22:
         (void)printf("igmp v3 report");
-	print_igmpv3_report(bp, len, bp2);
+	print_igmpv3_report(bp, len);
         break;
     case 0x17:
         (void)printf("igmp leave %s", ipaddr_string(&bp[4]));

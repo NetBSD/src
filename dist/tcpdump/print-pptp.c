@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pptp.c,v 1.1.1.1 2001/06/25 19:26:38 itojun Exp $	*/
+/*	$NetBSD: print-pptp.c,v 1.1.1.2 2002/02/18 09:08:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] = 
-     "@(#) Header: /tcpdump/master/tcpdump/print-pptp.c,v 1.2 2001/03/17 04:41:50 itojun Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-pptp.c,v 1.3 2001/10/31 08:54:31 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -452,7 +452,7 @@ pptp_phy_chan_id_print(const u_int32_t *phy_chan_id)
 static void
 pptp_pkt_proc_delay_print(const u_int16_t *pkt_proc_delay)
 {
-	printf(" PHY_CHAN_ID(%u)", ntohs(*pkt_proc_delay));
+	printf(" PROC_DELAY(%u)", ntohs(*pkt_proc_delay));
 }
 
 static void
