@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.28 2005/02/01 02:05:10 briggs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.29 2005/02/01 02:54:17 briggs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.28 2005/02/01 02:05:10 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.29 2005/02/01 02:54:17 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -371,11 +371,19 @@ adb_intr_cuda(void)
 	volatile int i, ending;
 	volatile unsigned int s;
 	struct adbCommand packet;
+	uint8_t reg;
 
 	s = splhigh();		/* can't be too careful - might be called */
-	/* from a routine, NOT an interrupt */
+				/* from a routine, NOT an interrupt */
 
-	ADB_VIA_CLR_INTR();	/* clear interrupt */
+	reg = read_via_reg(VIA1, vIFR);		/* Read the interrupts */
+	if ((reg & 0x80) == 0) {
+		splx(s);
+		return;				/* No interrupts to process */
+	}
+
+	write_via_reg(VIA1, vIFR, reg & 0x7f);	/* Clear 'em */
+
 	ADB_VIA_INTR_DISABLE();	/* disable ADB interrupt on IIs. */
 
 switch_start:
