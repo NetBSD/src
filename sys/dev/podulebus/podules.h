@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.9 2002/05/22 23:27:17 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.10 2002/05/22 23:46:54 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.11 2002/05/22 23:23:23 bjh21 Exp 
+ *	NetBSD: podules,v 1.12 2002/05/22 23:46:36 bjh21 Exp 
  */
 
 /*
@@ -149,11 +149,11 @@
 #define	PODULE_OAK_SCSI	0x0058		/* 16 bit SCSI interface */
 #define	PODULE_ETHER2	0x0061		/* Ether2 interface */
 #define	PODULE_ULTIMATE	0x0063		/* Ultimate micropodule carrier */
-#define	PODULE_WILDVISION_CENTRONICS	0x006f		/* Bi-directional Centronics */
 #define	PODULE_NEXUS	0x0064		/* Nexus interface (Podule) */
 #define	PODULE_MORLEY_SCSI	0x0067		/* SCSI interface */
 #define	PODULE_MORLEY_USERANALOGUE	0x006d		/* User and Analogue ports */
 #define	PODULE_HCCS_USERANALOGUE	0x006e		/* User and Analogue ports */
+#define	PODULE_WILDVISION_CENTRONICS	0x006f		/* Bi-directional Centronics */
 #define	PODULE_LINGENUITY_SCSI8SHARE	0x008c		/* 8 bit SCSIShare interface */
 #define	PODULE_VTI_SCSI	0x008d		/* SCSI interface */
 #define	PODULE_NEXUSNS	0x008f		/* Nexus interface (A3020 netslot) */
