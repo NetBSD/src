@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.5 1998/08/10 02:43:10 perry Exp $	*/
+/*	$NetBSD: md5c.c,v 1.6 1998/10/20 17:04:45 kleink Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -28,6 +28,10 @@
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
  */
+
+#if !defined(_KERNEL)
+#include "namespace.h"
+#endif
 
 #include <sys/types.h>
 
@@ -64,6 +68,12 @@ typedef u_int32_t UINT4;
 #define S42 10
 #define S43 15
 #define S44 21
+
+#if !defined(_KERNEL) && defined(__weak_alias)
+__weak_alias(MD5Init,_MD5Init);
+__weak_alias(MD5Update,_MD5Update);
+__weak_alias(MD5Final,_MD5Final);
+#endif
 
 static void MD5Transform __P((UINT4 [4], const unsigned char [64]));
 
