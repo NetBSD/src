@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.17 1999/09/17 00:09:34 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.18 1999/09/17 00:22:07 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.17 1999/09/17 00:09:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.18 1999/09/17 00:22:07 ad Exp $");
 
+#include "opt_rasops.h"
 #include "rasops_glue.h"
 
 #include <sys/types.h>
@@ -220,7 +221,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
 
 #ifdef DEBUG	
-	if (ri->ri_delta & 3)
+	if ((ri->ri_delta & 3) != 0)
 		panic("rasops_init: ri_delta not aligned on 32-bit boundary");
 #endif	
 	/* Clear the entire display */
@@ -421,9 +422,9 @@ rasops_copyrows(cookie, src, dst, num)
 	void *cookie;
 	int src, dst, num;
 {
-	struct rasops_info *ri;
 	int32_t *sp, *dp, *srp, *drp;
-	int n8, n1, cnt;
+	struct rasops_info *ri;
+	int n8, n1, cnt, delta;
 	
 	ri = (struct rasops_info *)cookie;
 
@@ -456,58 +457,38 @@ rasops_copyrows(cookie, src, dst, num)
 	n1 = (ri->ri_emustride >> 2) & 7;
 	
 	if (dst < src) {
-		sp = (int32_t *)(ri->ri_bits + src * ri->ri_yscale);
-		dp = (int32_t *)(ri->ri_bits + dst * ri->ri_yscale);
-	
-		while (num--) {
-			for (cnt = n8; cnt; cnt--) {
-				dp[0] = sp[0];
-				dp[1] = sp[1];
-				dp[2] = sp[2];
-				dp[3] = sp[3];
-				dp[4] = sp[4];
-				dp[5] = sp[5];
-				dp[6] = sp[6];
-				dp[7] = sp[7];
-				dp += 8;
-				sp += 8;
-			}
-			
-			for (cnt = n1; cnt; cnt--)
-				*dp++ = *sp++;
-				
-			DELTA(dp, ri->ri_delta, int32_t *);
-			DELTA(sp, ri->ri_delta, int32_t *);
-		}
+		srp = (int32_t *)(ri->ri_bits + src * ri->ri_yscale);
+		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_yscale);
+		delta = ri->ri_stride;
 	} else {
 		src = ri->ri_font->fontheight * src + num - 1;
 		dst = ri->ri_font->fontheight * dst + num - 1;
-		
 		srp = (int32_t *)(ri->ri_bits + src * ri->ri_stride);
 		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_stride);
+		delta = -ri->ri_stride;
+	}
+	
+	while (num--) {
+		dp = drp;
+		sp = srp;
+		DELTA(drp, delta, int32_t *);
+		DELTA(srp, delta, int32_t *);
 
-		while (num--) {
-			dp = drp;
-			sp = srp;
-			DELTA(srp, -ri->ri_stride, int32_t *);
-			DELTA(drp, -ri->ri_stride, int32_t *);
-		
-			for (cnt = n8; cnt; cnt--) {
-				dp[0] = sp[0];
-				dp[1] = sp[1];
-				dp[2] = sp[2];
-				dp[3] = sp[3];
-				dp[4] = sp[4];
-				dp[5] = sp[5];
-				dp[6] = sp[6];
-				dp[7] = sp[7];
-				dp += 8;
-				sp += 8;
-			}
-			
-			for (cnt = n1; cnt; cnt--)
-				*dp++ = *sp++;
+		for (cnt = n8; cnt; cnt--) {
+			dp[0] = sp[0];
+			dp[1] = sp[1];
+			dp[2] = sp[2];
+			dp[3] = sp[3];
+			dp[4] = sp[4];
+			dp[5] = sp[5];
+			dp[6] = sp[6];
+			dp[7] = sp[7];
+			dp += 8;
+			sp += 8;
 		}
+			
+		for (cnt = n1; cnt; cnt--)
+			*dp++ = *sp++;
 	}
 }
 
