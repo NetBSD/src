@@ -44,6 +44,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.12  1997/02/26 15:06:46  christos
+ * compare only the prefix "nfs", not the whole word, so we match "nfs3" too.
+ *
  * Revision 1.11  1996/12/31 18:08:08  christos
  * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
  * sup now works on the alpha!
@@ -1884,14 +1887,14 @@ struct stat *sinfo;
 
 		if (fstatvfs(handle, &sf) == -1)
 			return(-1);
-		return strcmp(sf.f_basetype, "nfs") != 0;
+		return strncmp(sf.f_basetype, "nfs", 3) != 0;
 	}
 #elif defined(__NetBSD__)
 	{
 		struct statfs sf;
 		if (fstatfs(handle, &sf) == -1)
 			return(-1);
-		return strcmp(sf.f_fstypename, "nfs") != 0;
+		return strncmp(sf.f_fstypename, "nfs", 3) != 0;
 	}
 #else
 	if (major(sb.st_dev) == 255 || major(sb.st_dev) == 130)
