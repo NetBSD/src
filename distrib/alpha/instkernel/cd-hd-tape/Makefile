@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1998/10/29 00:37:06 ross Exp $
+#	$NetBSD: Makefile,v 1.3 1999/03/22 08:44:57 ross Exp $
 
 IMAGE=		cdhdtape
-IMAGESIZE=	4000
+IMAGESIZE=	5760
 NFILES=		3
 
 INSTKERNEL!=cd ${.CURDIR}/../instkernel; \
