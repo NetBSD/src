@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.49 1995/06/18 14:46:48 cgd Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.50 1995/06/24 20:22:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,8 +114,8 @@ sunos_creat(p, uap, retval)
 {
 	struct sunos_open_args ouap;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -129,8 +129,8 @@ sunos_access(p, uap, retval)
 	struct sunos_access_args *uap;
 	register_t *retval;
 {
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return (access(p, uap, retval));
 }
@@ -141,8 +141,8 @@ sunos_stat(p, uap, retval)
 	struct sunos_stat_args *uap;
 	register_t *retval;
 {
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return (compat_43_stat(p, uap, retval));
 }
@@ -153,8 +153,8 @@ sunos_lstat(p, uap, retval)
 	struct sunos_lstat_args *uap;
 	register_t *retval;
 {
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return (compat_43_lstat(p, uap, retval));
 }
@@ -167,8 +167,8 @@ sunos_execv(p, uap, retval)
 {
 	struct execve_args ouap;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, argp) = SCARG(uap, argp);
@@ -621,8 +621,8 @@ sunos_open(p, uap, retval)
 	int noctty;
 	int ret;
 	
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	/* convert mode into NetBSD mode */
 	l = SCARG(uap, flags);
@@ -750,8 +750,8 @@ sunos_statfs(p, uap, retval)
 	int error;
 	struct nameidata nd;
 
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if (error = namei(&nd))
@@ -805,8 +805,8 @@ sunos_mknod(p, uap, retval)
 	struct sunos_mknod_args *uap;
 	register_t *retval;
 {
-	caddr_t sg = stackgap_init();
-	CHECKALT(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return mkfifo(p, uap, retval);
@@ -1129,4 +1129,62 @@ sunos_reboot(p, uap, retval)
 #endif	/* sun3 */
 
 	return (boot(bsd_howto));
+}
+
+/*
+ * Generalized interface signal handler, 4.3-compatible.
+ */
+/* ARGSUSED */
+int
+sunos_sigvec(p, uap, retval)
+	struct proc *p;
+	register struct compat_43_sigvec_args /* {
+		syscallarg(int) signum;
+		syscallarg(struct sigvec *) nsv;
+		syscallarg(struct sigvec *) osv;
+	} */ *uap;
+	register_t *retval;
+{
+	struct sigvec vec;
+	register struct sigacts *ps = p->p_sigacts;
+	register struct sigvec *sv;
+	register int signum;
+	int bit, error;
+
+	signum = SCARG(uap, signum);
+	if (signum <= 0 || signum >= NSIG ||
+	    signum == SIGKILL || signum == SIGSTOP)
+		return (EINVAL);
+	sv = &vec;
+	if (SCARG(uap, osv)) {
+		*(sig_t *)&sv->sv_handler = ps->ps_sigact[signum];
+		sv->sv_mask = ps->ps_catchmask[signum];
+		bit = sigmask(signum);
+		sv->sv_flags = 0;
+		if ((ps->ps_sigonstack & bit) != 0)
+			sv->sv_flags |= SV_ONSTACK;
+		if ((ps->ps_sigintr & bit) != 0)
+			sv->sv_flags |= SV_INTERRUPT;
+		if (error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
+		    sizeof (vec)))
+			return (error);
+	}
+	if (SCARG(uap, nsv)) {
+		if (error = copyin((caddr_t)SCARG(uap, nsv), (caddr_t)sv,
+		    sizeof (vec)))
+			return (error);
+		/*
+		 * SunOS uses this bit (4, aka SA_DISABLE) as SV_RESETHAND,
+		 * `reset to SIG_DFL on delivery'. We have no such option
+		 * now or ever!
+		 */
+		if (p->p_emul == &emul_sunos) {
+			if (sv->sv_flags & SA_DISABLE)
+				return (EINVAL);
+			sv->sv_flags |= SA_USERTRAMP;
+		}
+		sv->sv_flags ^= SA_RESTART;	/* opposite of SV_INTERRUPT */
+		setsigvec(p, signum, (struct sigaction *)sv);
+	}
+	return (0);
 }

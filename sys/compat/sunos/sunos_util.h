@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_util.h,v 1.1 1995/06/11 22:34:05 pk Exp $	*/
+/*	$NetBSD: sunos_util.h,v 1.2 1995/06/24 20:22:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,41 +31,11 @@
 #ifndef	_SUNOS_UTIL_H_
 #define	_SUNOS_UTIL_H_
 
-#include <machine/vmparam.h>
-
-extern	char	sigcode[], esigcode[];
-#define szsigcode (esigcode - sigcode)
-
-static __inline caddr_t
-stackgap_init()
-{
-	return STACKGAPBASE;
-}
-
-
-static __inline void *
-stackgap_alloc(sgp, sz)
-	caddr_t *sgp;
-	size_t   sz;
-{
-	void    *p = (void *) *sgp;
-	*sgp += ALIGN(sz);
-	return p;
-}
-
-#ifdef DEBUG_SUNOS
-#define DPRINTF(a)	printf a;
-#else
-#define DPRINTF(a)
-#endif
+#include <compat/common/compat_util.h>
 
 extern const char sunos_emul_path[];
-extern int sunos_error[];
 
-int sunos_emul_find __P((struct proc *, caddr_t *, 
-			const char *, char *, char **));
-
-#define CHECKALT(p, sgp, path) \
-    sunos_emul_find(p, sgp, sunos_emul_path, path, &(path))
+#define SUNOS_CHECK_ALT_EXIST(p, sgp, path) \
+    CHECK_ALT_EXIST(p, sgp, sunos_emul_path, path)
 
 #endif /* !_SUNOS_UTIL_H_ */
