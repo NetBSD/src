@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.1 1996/05/05 12:17:21 oki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.2 1997/01/18 21:04:34 oki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -301,7 +301,7 @@ struct midi {
 struct IODEVICE
 {
 	unsigned short gvram[0x100000]; /* 0x00c00000 */
-	unsigned short tvram[0x040000]; /* 0x00e00000 */
+	unsigned char  tvram[0x080000]; /* 0x00e00000 */
 	struct crtc io_crtc;		/* 0x00e80000 */
 	unsigned short gpalet[0x00100]; /* 0x00e82000 */
 	unsigned short tpalet[0x00100]; /* 0x00e82200 */
