@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.10 2002/10/02 05:26:47 thorpej Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.11 2003/01/03 04:36:31 takemura Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -731,6 +731,7 @@ ucbtp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
+	case WSMOUSEIO_GETID:
                 return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 		
 	default:
