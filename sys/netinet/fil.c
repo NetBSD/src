@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.63 2004/05/04 11:31:52 skd Exp $	*/
+/*	$NetBSD: fil.c,v 1.64 2004/05/10 01:34:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.63 2004/05/04 11:31:52 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.64 2004/05/10 01:34:59 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.7 2004/03/23 12:06:56 darrenr Exp";
@@ -4992,21 +4992,23 @@ void *data;
  * This array defines the expected size of objects coming into the kernel
  * for the various recognised object types.
  */
-static	int	fr_objbytes[] = {
-	0,			/* frentry */
-	sizeof(struct friostat),
-	sizeof(struct fr_info),
-	sizeof(struct fr_authstat),
-	sizeof(struct ipfrstat),
-	sizeof(struct ipnat),
-	sizeof(struct natstat),
-	sizeof(struct ipstate_save),
-	sizeof(struct nat_save),
-	sizeof(struct natlookup),
-	0,			/* ipstate */
-	sizeof(struct ips_stat),
-	sizeof(struct frauth),
-	sizeof(struct ipftune)
+#define	NUM_OBJ_TYPES	14
+
+static	int	fr_objbytes[NUM_OBJ_TYPES][2] = {
+	{ 1,	sizeof(struct frentry) },		/* frentry */
+	{ 0,	sizeof(struct friostat) },
+	{ 0,	sizeof(struct fr_info) },
+	{ 0,	sizeof(struct fr_authstat) },
+	{ 0,	sizeof(struct ipfrstat) },
+	{ 0,	sizeof(struct ipnat) },
+	{ 0,	sizeof(struct natstat) },
+	{ 0,	sizeof(struct ipstate_save) },
+	{ 1,	sizeof(struct nat_save) },		/* nat_save */
+	{ 0,	sizeof(struct natlookup) },
+	{ 1,	sizeof(struct ipstate) },		/* ipstate */
+	{ 0,	sizeof(struct ips_stat) },
+	{ 0,	sizeof(struct frauth) },
+	{ 0,	sizeof(struct ipftune) }
 };
 
 
@@ -5029,8 +5031,7 @@ int type;
 	ipfobj_t obj;
 	int error = 0;
 
-	if ((type < 0) ||
-	    (type > ((sizeof(fr_objbytes)/sizeof(fr_objbytes[0])) - 1)))
+	if ((type < 0) || (type > NUM_OBJ_TYPES-1))
 		return EINVAL;
 
 	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
@@ -5039,18 +5040,129 @@ int type;
 		return EINVAL;
 
 #ifndef	IPFILTER_COMPAT
-	if ((fr_objbytes[type] != 0) && (obj.ipfo_size != fr_objbytes[type]))
+	if ((fr_objbytes[type][0] & 1) != 0) {
+		if (obj.ipfo_size < fr_objbytes[type][1])
+			return EINVAL;
+	} else if (obj.ipfo_size != fr_objbytes[type][1])
 		return EINVAL;
 #else
 	if (obj.ipfo_rev != IPFILTER_VERSION)
 		/* XXX compatibility hook here */
 		;
-	if ((fr_objbytes[type] != 0) && (obj.ipfo_size != fr_objbytes[type]))
+	if ((fr_objbytes[type][0] & 1) != 0) {
+		if (obj.ipfo_size < fr_objbytes[type][1])
+			/* XXX compatibility hook here */
+			return EINVAL;
+	} else if (obj.ipfo_size != fr_objbytes[type][1])
 		/* XXX compatibility hook here */
 		return EINVAL;
 #endif
 
-	error = COPYIN((caddr_t)obj.ipfo_ptr, (caddr_t)ptr, obj.ipfo_size);
+	if ((fr_objbytes[type][0] & 1) != 0) {
+		error = COPYIN((caddr_t)obj.ipfo_ptr, (caddr_t)ptr,
+				fr_objbytes[type][1]);
+	} else {
+		error = COPYIN((caddr_t)obj.ipfo_ptr, (caddr_t)ptr,
+				obj.ipfo_size);
+	}
+	return error;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_inobjsz                                                  */
+/* Returns:     int     - 0 = success, else failure                         */
+/* Parameters:  data(I) - pointer to ioctl data                             */
+/*              ptr(I)  - pointer to store real data in                     */
+/*              type(I) - type of structure being moved                     */
+/*              sz(I)   - size of data to copy                              */
+/*                                                                          */
+/* As per fr_inobj, except the size of the object to copy in is passed in   */
+/* but it must not be smaller than the size defined for the type and the    */
+/* type must allow for varied sized objects.  The extra requirement here is */
+/* that sz must match the size of the object being passed in - this is not  */
+/* not possible nor required in fr_inobj().                                 */
+/* ------------------------------------------------------------------------ */
+int fr_inobjsz(data, ptr, type, sz)
+void *data;
+void *ptr;
+int type, sz;
+{
+	ipfobj_t obj;
+	int error;
+
+	if ((type < 0) || (type > NUM_OBJ_TYPES-1))
+		return EINVAL;
+	if (((fr_objbytes[type][0] & 1) == 0) || (sz < fr_objbytes[type][1]))
+		return EINVAL;
+
+	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
+
+	if (obj.ipfo_type != type)
+		return EINVAL;
+
+#ifndef	IPFILTER_COMPAT
+	if (obj.ipfo_size != sz)
+		return EINVAL;
+#else
+	if (obj.ipfo_rev != IPFILTER_VERSION)
+		/* XXX compatibility hook here */
+		;
+	if (obj.ipfo_size != sz)
+		/* XXX compatibility hook here */
+		return EINVAL;
+#endif
+
+	error = COPYIN((caddr_t)obj.ipfo_ptr, (caddr_t)ptr, sz);
+	return error;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_outobjsz                                                 */
+/* Returns:     int     - 0 = success, else failure                         */
+/* Parameters:  data(I) - pointer to ioctl data                             */
+/*              ptr(I)  - pointer to store real data in                     */
+/*              type(I) - type of structure being moved                     */
+/*              sz(I)   - size of data to copy                              */
+/*                                                                          */
+/* As per fr_outobj, except the size of the object to copy out is passed in */
+/* but it must not be smaller than the size defined for the type and the    */
+/* type must allow for varied sized objects.  The extra requirement here is */
+/* that sz must match the size of the object being passed in - this is not  */
+/* not possible nor required in fr_outobj().                                */
+/* ------------------------------------------------------------------------ */
+int fr_outobjsz(data, ptr, type, sz)
+void *data;
+void *ptr;
+int type, sz;
+{
+	ipfobj_t obj;
+	int error;
+
+	if ((type < 0) || (type > NUM_OBJ_TYPES-1) ||
+	    ((fr_objbytes[type][0] & 1) == 0) ||
+	    (sz < fr_objbytes[type][1]))
+		return EINVAL;
+
+	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
+
+	if (obj.ipfo_type != type)
+		return EINVAL;
+
+#ifndef	IPFILTER_COMPAT
+	if (obj.ipfo_size != sz)
+		return EINVAL;
+#else
+	if (obj.ipfo_rev != IPFILTER_VERSION)
+		/* XXX compatibility hook here */
+		;
+	if (obj.ipfo_size != sz)
+		/* XXX compatibility hook here */
+		return EINVAL;
+#endif
+
+	error = COPYOUT((caddr_t)ptr, (caddr_t)obj.ipfo_ptr, sz);
 	return error;
 }
 
@@ -5074,19 +5186,29 @@ int type;
 	ipfobj_t obj;
 	int error;
 
+	if ((type < 0) || (type > NUM_OBJ_TYPES-1))
+		return EINVAL;
+
 	BCOPYIN((caddr_t)data, (caddr_t)&obj, sizeof(obj));
 
 	if (obj.ipfo_type != type)
 		return EINVAL;
 
 #ifndef	IPFILTER_COMPAT
-	if ((fr_objbytes[type] != 0) && (obj.ipfo_size != fr_objbytes[type]))
+	if ((fr_objbytes[type][0] & 1) != 0) {
+		if (obj.ipfo_size < fr_objbytes[type][1])
+			return EINVAL;
+	} else if (obj.ipfo_size != fr_objbytes[type][1])
 		return EINVAL;
 #else
 	if (obj.ipfo_rev != IPFILTER_VERSION)
 		/* XXX compatibility hook here */
 		;
-	if ((fr_objbytes[type] != 0) && (obj.ipfo_size != fr_objbytes[type]))
+	if ((fr_objbytes[type][0] & 1) != 0) {
+		if (obj.ipfo_size < fr_objbytes[type][1])
+			/* XXX compatibility hook here */
+			return EINVAL;
+	} else if (obj.ipfo_size != fr_objbytes[type][1])
 		/* XXX compatibility hook here */
 		return EINVAL;
 #endif

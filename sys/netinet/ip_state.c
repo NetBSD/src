@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.44 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.45 2004/05/10 01:35:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,7 +110,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.44 2004/03/28 09:00:57 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.45 2004/05/10 01:35:02 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.4 2004/03/22 12:24:12 darrenr Exp";
@@ -545,7 +545,8 @@ caddr_t data;
 	}
 	ips.ips_next = isn->is_next;
 	bcopy((char *)isn, (char *)&ips.ips_is, sizeof(ips.ips_is));
-	if (isn->is_rule)
+	ips.ips_rule = isn->is_rule;
+	if (isn->is_rule != NULL)
 		bcopy((char *)isn->is_rule, (char *)&ips.ips_fr,
 		      sizeof(ips.ips_fr));
 	error = fr_outobj(data, &ips, IPFOBJ_STATESAVE);
@@ -583,9 +584,13 @@ caddr_t data;
 		return ENOMEM;
 
 	bcopy((char *)&ips.ips_is, (char *)isn, sizeof(*isn));
-	MUTEX_NUKE(&isn->is_lock);
+	bzero((char *)isn, offsetof(struct ipstate, is_pkts));
+	isn->is_sti.tqe_pnext = NULL;
+	isn->is_sti.tqe_next = NULL;
+	isn->is_sti.tqe_ifq = NULL;
+	isn->is_sti.tqe_parent = isn;
 	isn->is_sync = NULL;
-	fr = isn->is_rule;
+	fr = ips.ips_rule;
 	if (fr == NULL) {
 		fr_stinsert(isn, 0);
 		return 0;
@@ -2395,18 +2400,18 @@ u_32_t *passp;
 
 matched:
 	fr = is->is_rule;
-	if ((fin->fin_out == 0) && (fr->fr_nattag.ipt_num[0] != 0)) {
-		if (fin->fin_nattag == NULL)
-			return NULL;
-		if (fr_matchtag(&fr->fr_nattag, fin->fin_nattag) != 0)
-			return NULL;
-	}
-
-	fin->fin_rule = is->is_rulen;
 	if (fr != NULL) {
+		if ((fin->fin_out == 0) && (fr->fr_nattag.ipt_num[0] != 0)) {
+			if (fin->fin_nattag == NULL)
+				return NULL;
+			if (fr_matchtag(&fr->fr_nattag, fin->fin_nattag) != 0)
+				return NULL;
+		}
 		(void) strncpy(fin->fin_group, fr->fr_group, FR_GROUPLEN);
 		fin->fin_icode = fr->fr_icode;
 	}
+
+	fin->fin_rule = is->is_rulen;
 	pass = is->is_pass;
 	fr_updatestate(fin, is, ifq);
 	if (fin->fin_out == 1)
