@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.77 2003/06/24 07:43:44 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.78 2003/08/07 16:33:23 agc Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.77 2003/06/24 07:43:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.78 2003/08/07 16:33:23 agc Exp $");
 
 #include "opt_inet.h"
 

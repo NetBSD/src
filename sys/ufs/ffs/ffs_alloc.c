@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.68 2003/06/29 22:32:34 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.69 2003/08/07 16:34:28 agc Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.68 2003/06/29 22:32:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.69 2003/08/07 16:34:28 agc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl_compat.h,v 1.13 2002/12/01 22:57:17 matt Exp $	*/
+/*	$NetBSD: ioctl_compat.h,v 1.14 2003/08/07 16:34:05 agc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
