@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.144 2002/01/17 22:23:47 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.145 2002/01/29 01:15:50 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -5733,7 +5733,7 @@ _C_LABEL(cpu_initialize):
 	sethi	%hi(_C_LABEL(cpus)), %l1
 	ldxa	[%g0] ASI_MID_REG, %l2
 	LDPTR	[%l1 + %lo(_C_LABEL(cpus))], %l1
-	sllx	%l2, 17, %l2			! Isolate UPAID from CPU reg
+	srax	%l2, 17, %l2			! Isolate UPAID from CPU reg
 	and	%l2, 0x1f, %l2
 0:
 	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
