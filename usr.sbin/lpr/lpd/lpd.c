@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.25 2000/10/03 13:54:31 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.26 2001/02/02 14:20:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.25 2000/10/03 13:54:31 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.26 2001/02/02 14:20:33 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ static void       startup __P((void));
 static void       chkhost __P((struct sockaddr *));
 static int	  ckqueue __P((char *));
 static void	  usage __P((void));
-static int	  *socksetup __P((int, int));
+static int	  *socksetup __P((int, int, const char *));
 
 uid_t	uid, euid;
 int child_count;
@@ -143,7 +143,8 @@ main(argc, argv)
 	int lfd, errs, i, f, funix, *finet;
 	int child_max = 32;	/* more then enough to hose the system */
 	int options = 0;
-	struct servent *sp, serv;
+	struct servent *sp;
+	const char *port = "printer";
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
@@ -207,13 +208,12 @@ main(argc, argv)
 		if (i < 0 || i > USHRT_MAX)
 			errx(1, "port # %d is invalid", i);
 
-		serv.s_port = htons(i);
-		sp = &serv;
+		port = argv[0];
 		break;
 	case 0:
-		sp = getservbyname("printer", "tcp");
+		sp = getservbyname(port, "tcp");
 		if (sp == NULL)
-			errx(1, "printer/tcp: unknown service");
+			errx(1, "%s/tcp: unknown service", port);
 		break;
 	default:
 		usage();
@@ -290,7 +290,7 @@ main(argc, argv)
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);
 	if (!sflag || blist_addrs)
-		finet = socksetup(PF_UNSPEC, options);
+		finet = socksetup(PF_UNSPEC, options, port);
 	else
 		finet = NULL;	/* pretend we couldn't open TCP socket. */
 
@@ -696,8 +696,9 @@ usage()
 /* if af is PF_UNSPEC more than one socket may be returned */
 /* the returned list is dynamically allocated, so caller needs to free it */
 int *
-socksetup(af, options)
+socksetup(af, options, port)
         int af, options;
+	const char *port;
 {
 	struct addrinfo hints, *res, *r;
 	int error, maxs = 0, *s, *socks = NULL, blidx = 0;
@@ -709,7 +710,7 @@ socksetup(af, options)
 		hints.ai_family = af;
 		hints.ai_socktype = SOCK_STREAM;
 		error = getaddrinfo((blist_addrs == 0) ? NULL : blist[blidx],
-		    "printer", &hints, &res);
+		    port ? port : "printer", &hints, &res);
 		if (error) {
 			if (blist_addrs)
 				syslog(LOG_ERR, "%s: %s", blist[blidx],
