@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.s,v 1.1 2000/11/26 11:18:20 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.s,v 1.2 2001/05/21 06:13:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include <machine/asm.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
+/* LINTSTUB: Var: char ibcs2_sigcode[1], ibcs2_esigcode[1]; */
 NENTRY(ibcs2_sigcode)
 	call    SIGF_HANDLER(%esp)
 	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1 2000/11/26 11:18:21 jdolecek Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.2 2001/05/21 06:13:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
 /*
  * Signal trampoline; copied to top of user stack.
  */
-
+/* LINTSTUB: Var: char svr4_sigcode[1], svr4_esigcode[1]; */
 NENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
