@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37 2002/04/22 05:58:49 manu Exp $
+	$NetBSD: syscalls.master,v 1.38 2002/04/23 05:47:38 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -265,13 +265,14 @@
 144	STD		{ int irix_sys_setpgrp(int pid, int pgid); } 
 145	UNIMPL		vhangup
 146	NOARGS		{ int sys_fsync(int fd); }
-147	UNIMPL		fchdir
+147	NOARGS		{ int sys_fchdir(int fd); }
 148	UNIMPL		getrlimit
 149	UNIMPL		setrlimit
 150	UNIMPL		cacheflush
 151	UNIMPL		cachectl
-152	UNIMPL		fchown
-153	UNIMPL		fchmod
+152	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
+			    fchown
+153	NOARGS		{ int sys_fchmod(int fd, int mode); }
 154	UNIMPL		wait3
 155	UNIMPL		socketpair
 156	STD		{ long irix_sys_systeminfo(int what, char *buf, \
