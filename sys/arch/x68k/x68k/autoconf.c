@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.1.1.4.1 1996/07/08 19:50:27 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -36,7 +36,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <machine/disklabel.h>
+#include <sys/malloc.h>
 #include <machine/cpu.h>
 
 void configure __P((void));
@@ -51,6 +51,18 @@ int x68k_realconfig;
 #include <sys/kernel.h>
 
 /*
+ * The mountroot_hook is provided as a mechanism for devices to perform
+ * a special function if they're the root device, such as the floppy
+ * drive ejecting the current disk and prompting for a filesystem floppy.
+ */
+struct mountroot_hook {
+	LIST_ENTRY(mountroot_hook) mr_link;
+	struct	device *mr_device;
+	void	(*mr_func) __P((struct device *));
+};
+LIST_HEAD(, mountroot_hook) mrh_list;
+
+/*
  * called at boot time, configure all devices on system
  */
 void
@@ -59,6 +71,9 @@ configure()
 	extern int x68k_realconfig;
 	
 	x68k_realconfig = 1;
+
+	/* Initialize the mountroot_hook list. */
+	LIST_INIT(&mrh_list);
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
@@ -162,6 +177,24 @@ swapconf()
 		dumplo = 0;
 }
 
+void
+mountroot_hook_establish(func, dev)
+	void (*func) __P((struct device *));
+	struct device *dev;
+{
+	struct mountroot_hook *mrhp;
+
+	mrhp = (struct mountroot_hook *)malloc(sizeof(struct mountroot_hook),
+	    M_DEVBUF, M_NOWAIT);
+	if (mrhp == NULL)
+		panic("no memory for mountroot_hook");
+
+	bzero(mrhp, sizeof(struct mountroot_hook));
+	mrhp->mr_device = dev;
+	mrhp->mr_func = func;
+	LIST_INSERT_HEAD(&mrh_list, mrhp, mr_link);
+}
+
 #define	DOSWAP	/* change swdevt and dumpdev */
 dev_t	bootdev = 0;
 
@@ -179,6 +212,9 @@ setroot()
 	int majdev, mindev, unit, part, adaptor;
 	dev_t temp, orootdev;
 	struct swdevt *swp;
+	extern int (*mountroot) __P((void *));
+	struct mountroot_hook *mrhp;
+	struct device *bootdv = 0, *dv;
 
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
@@ -195,11 +231,30 @@ setroot()
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
 	 */
-	if (rootdev == orootdev)
-		return;
-	printf("changing root device to %c%c%d%c\n",
+	printf("root on %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		unit, part + 'a');
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (devname[majdev][0] == dv->dv_xname[0] &&
+		    devname[majdev][1] == dv->dv_xname[1] &&
+		    unit + '0' == dv->dv_xname[2]) {
+			bootdv = dv;
+			break;
+		}
+	}
+	/*
+	 * Find mountroot hook and execute.
+	 */
+	for (mrhp = mrh_list.lh_first; mrhp != NULL;
+	     mrhp = mrhp->mr_link.le_next)
+		if (mrhp->mr_device == bootdv) {
+			(*mrhp->mr_func)(bootdv);
+			break;
+		}
+
+	if (rootdev == orootdev)
+		return;
+
 #ifdef DOSWAP
 	mindev = DISKUNIT(rootdev);
 	for (swp = swdevt; swp->sw_dev; swp++) {
