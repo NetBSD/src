@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.8 2001/12/22 08:05:25 lukem Exp $	*/
+/*	$NetBSD: rcache.c,v 1.9 2001/12/22 08:45:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -265,7 +265,6 @@ bread(daddr_t blkno, char *buf, int size)
 		return;
 	}
 
-
 retry:
 	while(size > 0) {
 		int	i;
@@ -345,12 +344,12 @@ retry:
 		/* No more to do? */
 		if (size == 0)
 			break;
-			
+
 		/*
 		 * This does actually not happen if fs blocks are not greater
 		 * than nblksread.
 		 */
-		if (numBlocks > nblksread) {
+		if (numBlocks > nblksread || blkno >= ufsib->ufs_dsize) {
 			rawread(oblkno, obuf, osize);
 			break;
 		} else {
