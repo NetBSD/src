@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.78 2002/10/11 19:14:06 fvdl Exp $	*/
+/*	$NetBSD: gus.c,v 1.79 2003/04/06 18:20:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  *	  Maybe use the double-speed sampling/hardware deinterleave trick
  *	  from the GUS SDK?)  A 486/33 isn't quite fast enough to keep
  *	  up with 44.1kHz 16-bit stereo output without some drop-outs.
- *	. use CS4231 for 16-bit sampling, for a-law and mu-law playback.
+ *	. use CS4231 for 16-bit sampling, for A-law and mu-law playback.
  *	. actually test full-duplex sampling(recording) and playback.
  */
 
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.78 2002/10/11 19:14:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.79 2003/04/06 18:20:13 wiz Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1050,7 +1050,7 @@ gusattach(parent, self, aux)
 
 	/*
 	 * Set some default values
-	 * XXX others start with 8kHz mono mulaw
+	 * XXX others start with 8kHz mono mu-law
 	 */
 
 	sc->sc_irate = sc->sc_orate = 44100;

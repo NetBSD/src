@@ -27,7 +27,7 @@
  *	isdntelctl - i4b set telephone interface options
  *	------------------------------------------------
  *
- *	$Id: main.c,v 1.2 2002/03/16 17:03:44 martin Exp $
+ *	$Id: main.c,v 1.3 2003/04/06 18:20:14 wiz Exp $
  *
  * $FreeBSD$
  *
@@ -141,15 +141,15 @@ main(int argc, char **argv)
 
 		if(format == CVT_NONE)
 		{
-			printf("device %s does not do A-law/u-law format conversion\n", namebuffer);
+			printf("device %s does not do A-law/mu-law format conversion\n", namebuffer);
 		}
 		else if(format == CVT_ALAW2ULAW)
 		{
-			printf("device %s does ISDN: A-law -> user: u-law format conversion\n", namebuffer);
+			printf("device %s does ISDN: A-law -> user: mu-law format conversion\n", namebuffer);
 		}
 		else if(format == CVT_ULAW2ALAW)
 		{
-			printf("device %s does ISDN: u-law -> user: A-law format conversion\n", namebuffer);
+			printf("device %s does ISDN: mu-law -> user: A-law format conversion\n", namebuffer);
 		}
 		else
 		{
@@ -217,9 +217,9 @@ usage(void)
 	fprintf(stderr, "       -c            clear input queue\n");
 	fprintf(stderr, "       -g            get current settings\n");
 	fprintf(stderr, "       -u unit       specify unit number\n");	
-	fprintf(stderr, "       -A            set conversion ISDN: A-law -> user: u-law\n");
-	fprintf(stderr, "       -U            set conversion ISDN: u-law -> user: A-law\n");
-	fprintf(stderr, "       -N            set conversion to no A-law/u-law conversion\n");
+	fprintf(stderr, "       -A            set conversion ISDN: A-law -> user: mu-law\n");
+	fprintf(stderr, "       -U            set conversion ISDN: mu-law -> user: A-law\n");
+	fprintf(stderr, "       -N            set conversion to no A-law/mu-law conversion\n");
 	fprintf(stderr, "\n");
 	exit(1);
 }
