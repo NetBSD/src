@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.8 1994/11/04 01:00:38 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.9 1994/12/13 13:42:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -646,50 +646,42 @@ pcrint(void)
 void
 pcstart(register struct tty *tp)
 {
-	register struct clist *rbp;
+	register struct clist *cl;
 	int s, len, n;
 	u_char buf[PCVT_PCBURST];
 
 	s = spltty();
-
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
 		goto out;
-
 	tp->t_state |= TS_BUSY;
-
 	splx(s);
-
 	/*
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
-
-	rbp = &tp->t_outq;
-
-	while (len = q_to_b(rbp, buf, PCVT_PCBURST))
-		sput(&buf[0], 0, len, minor(tp->t_dev));
-
+	cl = &tp->t_outq;
+	len = q_to_b(cl, buf, PCVT_PCBURST);
+	sput(&buf[0], 0, len, minor(tp->t_dev));
 	s = spltty();
-
 	tp->t_state &= ~TS_BUSY;
-
-	if (rbp->c_cc)
-	{
+	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
 		timeout(ttrstrt, tp, 1);
 	}
-
-	if (rbp->c_cc <= tp->t_lowat)
-	{
-		if (tp->t_state&TS_ASLEEP)
-		{
+	if (cl->c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)rbp);
+			wakeup(cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s);
+}
+
+void
+pcstop(register struct tty *tp, int flag)
+{
 }
 
 #else /* !PCVT_NETBSD */	/* 386BSD 0.1 || FreeBSD */
