@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.82 2003/08/26 21:48:53 manu Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.83 2003/08/28 14:54:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.82 2003/08/26 21:48:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.83 2003/08/28 14:54:32 enami Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -490,8 +490,8 @@ free(void *addr, struct malloc_type *ksp)
 	 * have allocated in the first place.  That is, check
 	 * to see that the address is within kmem_map.
 	 */
-	if (__predict_false((vaddr_t)addr < kmem_map->header.start ||
-	    (vaddr_t)addr >= kmem_map->header.end))
+	if (__predict_false((vaddr_t)addr < vm_map_min(kmem_map) ||
+	    (vaddr_t)addr >= vm_map_max(kmem_map)))
 		panic("free: addr %p not within kmem_map", addr);
 #endif
 
