@@ -1,5 +1,7 @@
 echo Setting up the environment for debugging gdb.\n
 
+set complaints 1
+
 b fatal
 
 b info_command
@@ -8,8 +10,14 @@ commands
 	return
 end
 
-define rr
-    run
-end
+dir ../../dist/gdb
+dir ../../dist/readline
 
-set prompt (top-gdb)
+dir ../../lib/bfd
+
+dir ../../dist/bfd
+dir ../../dist/opcodes
+dir ../../dist/libiberty
+dir ../../dist/include
+
+set prompt (top-gdb) 
