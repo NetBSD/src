@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2003/06/13 11:57:34 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2003/07/11 14:48:42 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,26 +55,9 @@
 
 int
 md_get_info(void)
-{	struct disklabel disklabel;
-
-	if (get_real_geom(diskdev, &disklabel) == 0) {
-		endwin();
-		fprintf (stderr, "Can't get disklabel for %s: %s\n", diskdev,
-		    strerror(errno));
-		exit(1);
-	}
-
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
+{
 
 	disktype = "SCSI";
-	dlcyl  = disk->dd_cyl;
-	dlhead = disk->dd_head;
-	dlsec  = disk->dd_sec;
-
 	return 1;
 }
 
