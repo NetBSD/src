@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.67 2001/06/06 23:12:49 scottr Exp $	*/
+/*	$NetBSD: defs.h,v 1.68 2002/02/03 22:21:55 skrll Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -397,3 +397,6 @@ void	unwind_mounts (void);
 /* from bsddisklabel.c */
 void	show_cur_filesystems (void);
 extern int layout_swap, layout_usr, layout_tmp, layout_var, layout_home;
+
+/* from aout2elf.c */
+int move_aout_libs (void);
