@@ -255,7 +255,7 @@ emitfiles(fp, suffix)
 		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 			if (cf->cf_root == NULL)
 				(void)sprintf(swapname,
-				    "$S/%s/%s/swapgeneric.c",
+				    "$S/arch/%s/%s/swapgeneric.c",
 				    machine, machine);
 			else
 				(void)sprintf(swapname, "swap%s.c",
@@ -353,7 +353,7 @@ swap%s.o: ", swname, swname) < 0)
 			if (fprintf(fp, "swap%s.c\n", nm) < 0)
 				return (1);
 		} else {
-			if (fprintf(fp, "$S/%s/%s/swapgeneric.c\n",
+			if (fprintf(fp, "$S/arch/%s/%s/swapgeneric.c\n",
 			    machine, machine) < 0)
 				return (1);
 		}

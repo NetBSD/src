@@ -3,7 +3,7 @@
 YACC= byacc
 LEX = flex
 CC= 	gcc
-PROG=	config
+PROG=	config.new
 SRCS=	files.c gram.y hash.c main.c mkheaders.c mkioconf.c mkmakefile.c \
 	mkswap.c pack.c scan.l sem.c util.c
 CFLAGS=-I${.CURDIR} -I. 
