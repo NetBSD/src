@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.30 2000/03/19 06:31:17 tsarna Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.31 2000/04/14 23:11:08 tsarna Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -476,6 +476,7 @@
 #define KB_SWAPCTRLCAPS		0x0008	/* Swap Left-Control and Caps-Lock */
 #define KB_DVORAK		0x0010	/* Dvorak layout */
 #define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
+#define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
 
 #define KB_ENCTAB \
 	{ KB_USER,	"user" }, \
@@ -495,6 +496,7 @@
 	{ KB_LK401,	"lk401" }, \
 	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
 	{ KB_DVORAK,	"dvorak" }, \
-	{ KB_METAESC,	"metaesc" }
+	{ KB_METAESC,	"metaesc" }, \
+	{ KB_IOPENER,	"iopener" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
