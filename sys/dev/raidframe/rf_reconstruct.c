@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.62 2003/12/31 03:51:28 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.63 2003/12/31 04:00:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.62 2003/12/31 03:51:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.63 2003/12/31 04:00:01 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -451,45 +451,43 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		return(retcode);
 		
-	} else {
-		/* Ok, so we can at least do a lookup... 
-		   How about actually getting a vp for it? */
-		
-		if ((retcode = VOP_GETATTR(vp, &va, proc->p_ucred, 
-					   proc)) != 0) {
-			RF_LOCK_MUTEX(raidPtr->mutex);
-			raidPtr->reconInProgress--;
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return(retcode);
-		}
-		retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
-				    FREAD, proc->p_ucred, proc);
-		if (retcode) {
-			RF_LOCK_MUTEX(raidPtr->mutex);
-			raidPtr->reconInProgress--;
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
-			return(retcode);
-		}
-		RF_LOCK_MUTEX(raidPtr->mutex);
-		raidPtr->Disks[col].blockSize =	dpart.disklab->d_secsize;
-		
-		raidPtr->Disks[col].numBlocks = dpart.part->p_size - 
-			rf_protectedSectors;
-		
-		raidPtr->raid_cinfo[col].ci_vp = vp;
-		raidPtr->raid_cinfo[col].ci_dev = va.va_rdev;
-		
-		raidPtr->Disks[col].dev = va.va_rdev;
-		
-		/* we allow the user to specify that only a fraction
-		   of the disks should be used this is just for debug:
-		   it speeds up * the parity scan */
-		raidPtr->Disks[col].numBlocks = raidPtr->Disks[col].numBlocks *
-			rf_sizePercentage / 100;
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
 	}
+
+	/* Ok, so we can at least do a lookup... 
+	   How about actually getting a vp for it? */
 	
+	if ((retcode = VOP_GETATTR(vp, &va, proc->p_ucred, proc)) != 0) {
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		raidPtr->reconInProgress--;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		return(retcode);
+	}
+
+	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
+			    FREAD, proc->p_ucred, proc);
+	if (retcode) {
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		raidPtr->reconInProgress--;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		return(retcode);
+	}
+	RF_LOCK_MUTEX(raidPtr->mutex);
+	raidPtr->Disks[col].blockSize =	dpart.disklab->d_secsize;
 	
+	raidPtr->Disks[col].numBlocks = dpart.part->p_size - 
+		rf_protectedSectors;
+	
+	raidPtr->raid_cinfo[col].ci_vp = vp;
+	raidPtr->raid_cinfo[col].ci_dev = va.va_rdev;
+	
+	raidPtr->Disks[col].dev = va.va_rdev;
+	
+	/* we allow the user to specify that only a fraction
+	   of the disks should be used this is just for debug:
+	   it speeds up * the parity scan */
+	raidPtr->Disks[col].numBlocks = raidPtr->Disks[col].numBlocks *
+		rf_sizePercentage / 100;
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	
 	spareDiskPtr = &raidPtr->Disks[col];
 	spareDiskPtr->status = rf_ds_used_spare;
