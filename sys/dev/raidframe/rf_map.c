@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.9 2001/11/13 07:11:14 lukem Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.10 2002/01/07 02:27:42 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.9 2001/11/13 07:11:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.10 2002/01/07 02:27:42 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -701,9 +701,12 @@ void
 rf_PrintAccessStripeMap(asm_h)
 	RF_AccessStripeMapHeader_t *asm_h;
 {
+#if DEBUG
 	rf_PrintFullAccessStripeMap(asm_h, 0);
+#endif
 }
 
+#if DEBUG
 void 
 rf_PrintFullAccessStripeMap(asm_h, prbuf)
 	RF_AccessStripeMapHeader_t *asm_h;
@@ -903,3 +906,4 @@ rf_ASMCheckStatus(
 	    rf_RaidAddressToStripeUnitID(&raidPtr->Layout, pda_p->raidAddress + pda_p->numSector - 1));
 	RF_ASSERT(pda_p->col != -1);
 }
+#endif /* DEBUG */
