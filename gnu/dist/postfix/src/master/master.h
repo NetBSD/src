@@ -106,10 +106,6 @@ extern void master_refresh(void);
  /*
   * master_vars.c
   */
-extern char *var_program_dir;
-extern int var_proc_limit;
-extern int var_use_limit;
-extern int var_idle_limit;
 extern void master_vars_init(void);
 
  /*

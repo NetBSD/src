@@ -180,7 +180,7 @@ int     match_hostname(int flags, const char *name, const char *pattern)
 /* match_parse_mask - parse net/mask pattern */
 
 static int match_parse_mask(const char *pattern, unsigned long *net_bits,
-			            int *mask_shift)
+			            unsigned int *mask_shift)
 {
     char   *saved_pattern;
     char   *mask;
@@ -189,7 +189,7 @@ static int match_parse_mask(const char *pattern, unsigned long *net_bits,
 
     saved_pattern = mystrdup(pattern);
     if ((mask = split_at(saved_pattern, '/')) != 0) {
-	if ((*mask_shift = atoi(mask)) <= 0 || *mask_shift > BITS_PER_ADDR
+	if (!alldig(mask) || (*mask_shift = atoi(mask)) > BITS_PER_ADDR
 	    || (*net_bits = inet_addr(saved_pattern)) == INADDR_NONE) {
 	    msg_fatal("bad net/mask pattern: %s", pattern);
 	}
@@ -203,7 +203,7 @@ static int match_parse_mask(const char *pattern, unsigned long *net_bits,
 int     match_hostaddr(int unused_flags, const char *addr, const char *pattern)
 {
     char   *myname = "match_hostaddr";
-    int     mask_shift;
+    unsigned int mask_shift;
     unsigned long mask_bits;
     unsigned long net_bits;
     unsigned long addr_bits;
@@ -242,7 +242,8 @@ int     match_hostaddr(int unused_flags, const char *addr, const char *pattern)
 	addr_bits = inet_addr(addr);
 	if (addr_bits == INADDR_NONE)
 	    msg_fatal("%s: bad address argument: %s", myname, addr);
-	mask_bits = htonl((0xffffffff) << (BITS_PER_ADDR - mask_shift));
+	mask_bits = mask_shift > 0 ?
+	    htonl((0xffffffff) << (BITS_PER_ADDR - mask_shift)) : 0;
 	if ((addr_bits & mask_bits) == net_bits)
 	    return (1);
 	if (net_bits & ~mask_bits) {
