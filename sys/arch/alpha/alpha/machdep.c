@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.209 2000/06/01 03:41:23 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2000/06/01 03:41:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,6 +202,8 @@ int	unusedmem;		/* amount of memory for OS that we don't use */
 int	unknownmem;		/* amount of memory with an unknown use */
 
 int	cputype;		/* system type, from the RPB */
+
+int	bootdev_debug = 0;	/* patchable, or from DDB */
 
 /*
  * XXX We need an address to which we can assign things so that they
