@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.4 1998/12/19 22:14:30 christos Exp $	*/
+/*	$NetBSD: shlock.c,v 1.5 2000/10/11 14:46:18 is Exp $	*/
 
 /*
 ** Program to produce reliable locks for shell scripts.
@@ -55,9 +55,9 @@
 
 int	Debug = FALSE;
 char	*Pname;
-char	*USAGE = "%s: USAGE: shlock -f file -p pid [-d][-u]\n";
-char	*E_unlk = "%s: unlink(%s): %s\n";
-char	*E_open = "%s: open(%s): %s\n";
+const char USAGE[] = "%s: USAGE: shlock -f file -p pid [-d][-u]\n";
+const char E_unlk[] = "%s: unlink(%s): %s\n";
+const char E_open[] = "%s: open(%s): %s\n";
 
 #define	dprintf	if (Debug) printf
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.19 2000/08/31 06:49:42 jhawk Exp $	*/
+/*	$NetBSD: iso.c,v 1.20 2000/10/11 14:46:14 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.19 2000/08/31 06:49:42 jhawk Exp $");
+__RCSID("$NetBSD: iso.c,v 1.20 2000/10/11 14:46:14 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,19 +276,20 @@ iso_protopr1(kern_addr, istp)
 	u_long kern_addr;
 	int istp;
 {
-
+	int width = 22;
 	if (first) {
 		printf("Active ISO net connections");
 		if (aflag)
 			printf(" (including servers)");
 		putchar('\n');
-		if (Aflag)
+		if (Aflag) {
+			width = 18;
 			printf("%-8.8s ", "PCB");
-		printf(Aflag ?
-			"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-			"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+		}
+		printf( "%-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
 			"Proto", "Recv-Q", "Send-Q",
-			"Local Address", "Foreign Address", "(state)");
+			width, width, "Local Address", 
+			width, width, "Foreign Address", "(state)");
 		first = 0;
 	}
 	if (Aflag)
