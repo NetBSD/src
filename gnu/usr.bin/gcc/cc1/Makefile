@@ -1,12 +1,10 @@
-#	from: @(#)Makefile	6.2 (Berkeley) 2/2/91
-#	$NetBSD: Makefile,v 1.2 1996/03/05 00:06:04 jtc Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/09 05:07:31 mycroft Exp $
 
-PROG=		cc1
-
+PROG=	cc1
 SRCS=	c-parse.c c-lang.c 
 
 CLEANFILES+=	c-parse.c
 
 .PATH:	${.CURDIR}/../common
 
-.include <../Makefile.cc1>
+.include "../Makefile.cc1"
