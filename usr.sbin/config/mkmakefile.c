@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.42 1999/07/09 18:45:31 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.43 2000/01/20 00:08:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,9 @@
  */
 
 static const char *srcpath __P((struct files *)); 
-                        
+
+static const char *prefix_prologue __P((const char *));
+
 static int emitdefs __P((FILE *));
 static int emitfiles __P((FILE *, int));
 
@@ -176,6 +178,17 @@ srcpath(fi)
 #endif
 }
 
+static const char *
+prefix_prologue(path)
+	const char *path;
+{
+
+	if (*path == '/')
+		return ("");
+	else
+		return ("$S/");
+}
+
 static int
 emitdefs(fp)
 	FILE *fp;
@@ -266,8 +279,9 @@ emitobjs(fp)
 				return (1);
 		} else {
 			if (oi->oi_prefix != NULL) {
-				if (fprintf(fp, "%c$S/%s/%s", sp, oi->oi_prefix,
-				    oi->oi_path) < 0)
+				if (fprintf(fp, "%c%s%s/%s", sp,
+				    prefix_prologue(oi->oi_prefix),
+				    oi->oi_prefix, oi->oi_path) < 0)
 					return (1);
 			} else {
 				if (fprintf(fp, "%c$S/%s", sp, oi->oi_path) < 0)
@@ -337,8 +351,9 @@ emitfiles(fp, suffix)
 				return (1);
 		} else {
 			if (fi->fi_prefix != NULL) {
-				if (fprintf(fp, "%c$S/%s/%s", sp, fi->fi_prefix,
-				    fi->fi_path) < 0)
+				if (fprintf(fp, "%c%s%s/%s", sp,
+				    prefix_prologue(fi->fi_prefix),
+				    fi->fi_prefix, fi->fi_path) < 0)
 					return (1);
 			} else {
 				if (fprintf(fp, "%c$S/%s", sp, fi->fi_path) < 0)
@@ -396,7 +411,8 @@ emitrules(fp)
 				return (1);
 		} else {
 			if (fi->fi_prefix != NULL) {
-				if (fprintf(fp, "%s.o: $S/%s/%s\n", fi->fi_base,
+				if (fprintf(fp, "%s.o: %s%s/%s\n", fi->fi_base,
+				    prefix_prologue(fi->fi_prefix),
 				    fi->fi_prefix, fpath) < 0)
 					return (1);
 			} else {
@@ -477,7 +493,8 @@ emitincludes(fp)
 	struct prefix *pf;
 
 	for (pf = allprefixes; pf != NULL; pf = pf->pf_next) {
-		if (fprintf(fp, "INCLUDES+=\t-I$S/%s\n", pf->pf_prefix) < 0)
+		if (fprintf(fp, "INCLUDES+=\t-I%s%s\n",
+		    prefix_prologue(pf->pf_prefix), pf->pf_prefix) < 0)
 			return (1);
 	}
 
