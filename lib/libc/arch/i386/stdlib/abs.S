@@ -34,13 +34,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)abs.s	5.2 (Berkeley) 12/17/90
- *	$Id: abs.S,v 1.2 1993/10/08 00:01:04 jtc Exp $
+ *	$Id: abs.S,v 1.3 1993/10/21 01:40:17 jtc Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: abs.S,v 1.2 1993/10/08 00:01:04 jtc Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: abs.S,v 1.3 1993/10/21 01:40:17 jtc Exp $"
+#endif
 
 #include "DEFS.h"
 

@@ -32,13 +32,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: memmove.s,v 1.1 1993/10/07 00:19:28 cgd Exp $
+ *	$Id: memmove.s,v 1.2 1993/10/21 01:40:34 jtc Exp $
  */
 
-#if defined(LIBC_RCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: memmove.s,v 1.1 1993/10/07 00:19:28 cgd Exp $"
-#endif /* LIBC_RCS and not lint */
+	.asciz "$Id: memmove.s,v 1.2 1993/10/21 01:40:34 jtc Exp $"
+#endif
 
 #include "DEFS.h"
 
