@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.5 2002/04/28 17:21:58 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.6 2002/04/28 17:56:53 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.5 2002/04/28 17:21:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.6 2002/04/28 17:56:53 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -88,10 +88,13 @@ irix_sys_prctl(p, v, retval)
 		/* We do nothing */
 		break;
 	case IRIX_PR_GETNSHARE:		/* Number of sproc share group memb.*/
-		/* sproc needed here, we do nothing until we have it */
-		*retval = 1; /* one thread in the process */
+		/* XXX This only gives threads that share VM space ... */
+		*retval = p->p_vmspace->vm_refcnt;
 		break;
-
+	case IRIX_PR_TERMCHILD:		/* Send SIGHUP to parrent on exit */
+		p->p_exitsig = SIGHUP;
+		*retval = 0;
+		break;
 	default:
 		printf("Warning: call to unimplemented prctl() command %d\n",
 		    option);
