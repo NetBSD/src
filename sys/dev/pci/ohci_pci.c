@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.14 1999/10/12 11:21:24 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.15 2000/04/25 09:20:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ int	ohci_pci_detach __P((device_ptr_t, int));
 struct ohci_pci_softc {
 	ohci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
-	bus_size_t		sc_size;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -117,7 +116,7 @@ ohci_pci_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf("%s: can't map mem space\n", devname);
 		return;
 	}
@@ -183,13 +182,13 @@ ohci_pci_detach(self, flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	if (sc->sc_ih) {
+	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 	}
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
-		sc->sc_size = 0;
+	if (sc->sc.sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 	return (0);
 }

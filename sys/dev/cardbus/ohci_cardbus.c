@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.5 2000/03/07 00:32:52 mycroft Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.6 2000/04/25 09:20:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@ struct ohci_cardbus_softc {
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;
-	bus_size_t		sc_size;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -130,7 +129,7 @@ ohci_cardbus_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf("%s: can't map mem space\n", devname);
 		return;
 	}
@@ -208,10 +207,10 @@ ohci_cardbus_detach(self, flags)
 		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-	if (sc->sc_size) {
+	if (sc->sc.sc_size) {
 		Cardbus_mapreg_unmap(ct, CARDBUS_CBMEM, sc->sc.iot,
-		    sc->sc.ioh, sc->sc_size);
-		sc->sc_size = 0;
+		    sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.15 2000/04/25 09:20:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@ int	uhci_pci_detach __P((device_ptr_t, int));
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
-	bus_size_t		sc_size;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -110,7 +109,7 @@ uhci_pci_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf("%s: can't map i/o space\n", devname);
 		return;
 	}
@@ -197,13 +196,13 @@ uhci_pci_detach(self, flags)
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	if (sc->sc_ih) {
+	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 	}
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
-		sc->sc_size = 0;
+	if (sc->sc.sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 	return (0);
 }
