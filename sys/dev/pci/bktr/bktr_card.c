@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.3 2000/05/07 14:43:32 veego Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.4 2000/05/20 16:16:15 augustss Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.9 2000/02/12 08:49:21 peter Exp */
 
@@ -1172,7 +1172,7 @@ checkPLLEnd:
 	bktr->card.tuner_pllAddr = tuner_i2c_address;
 
 	if ( verbose ) {
-		printf( "%s", bktr->card.name );
+		printf( "bktr%d: %s", unit, bktr->card.name );
 		if ( bktr->card.tuner )
 			printf( ", %s tuner", bktr->card.tuner->name );
 		if ( bktr->card.dbx )
