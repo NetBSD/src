@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.21 2003/04/19 16:37:21 tsutsui Exp $
+# 	$NetBSD: LIBERO,v 1.22 2003/11/08 12:17:53 tsutsui Exp $
 
 #	NEWS1750 config file;
 #
@@ -164,3 +164,4 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	rnd			# /dev/random and in-kernle generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsmux
+pseudo-device	ksyms
