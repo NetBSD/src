@@ -1,4 +1,4 @@
-	$Id: syscalls.master,v 1.3 1994/05/23 08:03:32 mycroft Exp $
+	$Id: syscalls.master,v 1.4 1994/06/22 03:04:03 mycroft Exp $
 ;	from: @(#)syscalls.master	8.3 (Berkeley) 2/7/94
 ; System call name/number master file (or rather, slave, from HP-UX).
 ; Processed to created hpux_sysent.c, hpux_syscalls.c and hpux_syscall.h.
@@ -275,7 +275,7 @@
 228	UNIMPL	0 nosys
 229	NOTIMPL	0 async_daemon
 230	NOTIMPL	3 nfs_fcntl
-231	STD	4 getdirentries
+231	COMPAT	4 getdirentries
 232	COMPAT	2 getdomainname
 233	NOTIMPL	2 nfs_getfh
 234	NOTIMPL	4 vfsmount
@@ -312,7 +312,7 @@
 265	UNIMPL	0 nosys
 266	UNIMPL	0 nosys
 267	UNIMPL	0 nosys
-268	STD	0 getdtablesize getnumfds
+268	COMPAT	0 getdtablesize getnumfds
 269	UNIMPL	0 nosys
 270	UNIMPL	0 nosys
 271	UNIMPL	0 nosys
