@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.4 1998/12/28 19:12:26 mjacob Exp $ */
-/* release_12_28_98_A */
+/* $NetBSD: isp_sbus.c,v 1.5 1999/01/10 06:22:12 mjacob Exp $ */
+/* release_12_28_98_A+ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -70,7 +70,7 @@ static struct ispmdvec mdvec = {
 	ISP_CODE_LENGTH,
 	ISP_CODE_ORG,
 	ISP_CODE_VERSION,
-	0,
+	BIU_BURST_ENABLE,
 	0
 };
 
@@ -166,6 +166,11 @@ isp_sbus_attach(parent, self, aux)
 #endif
 	}
 	sbc->sbus_mdvec.dv_clock = freq;
+
+	/*
+	 * XXX: Now figure out what the proper burst sizes, etc., to use.
+	 */
+	sbc->sbus_mdvec.dv_conf1 |= BIU_SBUS_CONF1_FIFO_8;
 
 	/*
 	 * Some early versions of the PTI SBus adapter
