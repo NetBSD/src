@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.4 1997/10/19 16:57:55 christos Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.5 2001/03/25 20:44:00 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.4 1997/10/19 16:57:55 christos Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.5 2001/03/25 20:44:00 jsm Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -29,7 +29,7 @@ dodone()
 /*ARGSUSED*/
 void
 done1(n)
-	int n;
+	int n __attribute__((__unused__));
 {
 	(void) signal(SIGINT, SIG_IGN);
 	pline("Really quit?");
@@ -51,7 +51,7 @@ int             done_hup;
 /*ARGSUSED*/
 void
 done_intr(n)
-	int n;
+	int n __attribute__((__unused__));
 {
 	done_stopprint++;
 	(void) signal(SIGINT, SIG_IGN);
@@ -95,7 +95,7 @@ done_in_by(mtmp)
 /* Be careful not to call panic from here! */
 void
 done(st1)
-	char           *st1;
+	const char           *st1;
 {
 
 #ifdef WIZARD
@@ -265,8 +265,8 @@ topten()
 	int             rank, rank0 = -1, rank1 = 0;
 	int             occ_cnt = PERSMAX;
 	struct toptenentry *t0, *t1, *tprev;
-	char           *recfile = RECORD;
-	char           *reclock = "record_lock";
+	const char     *recfile = RECORD;
+	const char     *reclock = "record_lock";
 	int             sleepct = 300;
 	FILE           *rfile;
 	int 		flg = 0;
@@ -439,8 +439,7 @@ outheader()
 
 /* so>0: standout line; so=0: ordinary line; so<0: no output, return lth */
 int
-outentry(rank, t1, so)
-	struct toptenentry *t1;
+outentry(int rank, struct toptenentry *t1, int so)
 {
 	boolean         quit = FALSE, killed = FALSE, starv = FALSE;
 	char            linebuf[BUFSZ];
@@ -527,7 +526,7 @@ itoa(a)
 	return (buf);
 }
 
-char           *
+const char           *
 ordin(n)
 	int             n;
 {
@@ -593,7 +592,7 @@ prscore(argc, argv)
 	int             playerct;
 	int             rank;
 	struct toptenentry *t1, *t2;
-	char           *recfile = RECORD;
+	const char           *recfile = RECORD;
 	FILE           *rfile;
 	int		flg = 0;
 	int             i;

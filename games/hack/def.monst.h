@@ -1,4 +1,4 @@
-/*	$NetBSD: def.monst.h,v 1.5 2001/01/16 02:50:28 cgd Exp $	*/
+/*	$NetBSD: def.monst.h,v 1.6 2001/03/25 20:43:58 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -7,7 +7,7 @@
 #define _DEF_MONST_H_
 struct monst {
 	struct monst *nmon;
-	struct permonst *data;
+	const struct permonst *data;
 	unsigned m_id;
 	xchar mx,my;
 	xchar mdx,mdy;		/* if mdispl then pos where last displayed */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.cmd.c,v 1.5 2001/01/16 02:50:28 cgd Exp $	*/
+/*	$NetBSD: hack.cmd.c,v 1.6 2001/03/25 20:43:59 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,14 +6,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.cmd.c,v 1.5 2001/01/16 02:50:28 cgd Exp $");
+__RCSID("$NetBSD: hack.cmd.c,v 1.6 2001/03/25 20:43:59 jsm Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
 #include	"extern.h"
 #include	"def.func_tab.h"
 
-struct func_tab cmdlist[] = {
+const struct func_tab cmdlist[] = {
 	{ '\020', doredotopl },
 	{ '\022', doredraw },
 	{ '\024', dotele },
@@ -77,7 +77,7 @@ struct func_tab cmdlist[] = {
 	{ 0, 0 }
 };
 
-struct ext_func_tab extcmdlist[] = {
+const struct ext_func_tab extcmdlist[] = {
 	{ "dip", dodip },
 	{ "pray", dopray },
 	{ (char *) 0, donull }
@@ -85,9 +85,9 @@ struct ext_func_tab extcmdlist[] = {
 
 void
 rhack(cmd)
-	char  *cmd;
+	const char  *cmd;
 {
-	struct func_tab *tlist = cmdlist;
+	const struct func_tab *tlist = cmdlist;
 	boolean         firsttime = FALSE;
 	int res;
 
@@ -190,7 +190,7 @@ doextcmd()
 {				/* here after # - now read a full-word
 				 * command */
 	char            buf[BUFSZ];
-	struct ext_func_tab *efp = extcmdlist;
+	const struct ext_func_tab *efp = extcmdlist;
 
 	pline("# ");
 	getlin(buf);

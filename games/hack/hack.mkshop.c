@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkshop.c,v 1.5 1997/10/19 16:58:31 christos Exp $	*/
+/*	$NetBSD: hack.mkshop.c,v 1.6 2001/03/25 20:44:01 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkshop.c,v 1.5 1997/10/19 16:58:31 christos Exp $");
+__RCSID("$NetBSD: hack.mkshop.c,v 1.6 2001/03/25 20:44:01 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -16,7 +16,7 @@ __RCSID("$NetBSD: hack.mkshop.c,v 1.5 1997/10/19 16:58:31 christos Exp $");
 #include "def.mkroom.h"
 #include "def.eshk.h"
 #define	ESHK	((struct eshk *)(&(shk->mextra[0])))
-schar           shprobs[] = {3, 3, 5, 5, 10, 10, 14, 50};	/* their probabilities */
+const schar shprobs[] = {3, 3, 5, 5, 10, 10, 14, 50}; /* their probabilities */
 
 void
 mkshop()
@@ -217,7 +217,7 @@ mkzoo(type)
 		}
 }
 
-struct permonst *
+const struct permonst *
 morguemon()
 {
 	int             i = rn2(100), hd = rn2(dlevel);

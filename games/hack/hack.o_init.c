@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.o_init.c,v 1.5 1997/10/19 16:58:37 christos Exp $	*/
+/*	$NetBSD: hack.o_init.c,v 1.6 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.o_init.c,v 1.5 1997/10/19 16:58:37 christos Exp $");
+__RCSID("$NetBSD: hack.o_init.c,v 1.6 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -31,7 +31,8 @@ void
 init_objects()
 {
 	int             i, j, first, last, sum, end;
-	char            let, *tmp;
+	char            let;
+	const char *tmp;
 	/*
 	 * init base; if probs given check that they add up to 100, otherwise
 	 * compute probs; shuffle descriptions

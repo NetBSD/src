@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.7 2001/02/05 00:37:43 christos Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.8 2001/03/25 20:44:03 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.7 2001/02/05 00:37:43 christos Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.8 2001/03/25 20:44:03 jsm Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -127,7 +127,7 @@ gethdate(name)
 	 */
 #define		MAXPATHLEN	1024
 
-	char           *np, *path;
+	const char           *np, *path;
 	char            filename[MAXPATHLEN + 1];
 	if (strchr(name, '/') != NULL || (path = getenv("PATH")) == NULL)
 		path = "";
@@ -154,7 +154,7 @@ gethdate(name)
 }
 
 int
-uptodate(fd)
+uptodate(int fd)
 {
 	if (fstat(fd, &buf)) {
 		pline("Cannot get status of saved level? ");
@@ -247,7 +247,7 @@ getlock()
 		if (locknum)
 			lock[0] = 'a' + i++;
 
-		if ((fd = open(lock, 0)) == -1) {
+		if ((fd = open(lock, O_RDONLY)) == -1) {
 			if (errno == ENOENT)
 				goto gotlock;	/* no such file */
 			perror(lock);

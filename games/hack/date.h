@@ -1,3 +1,3 @@
-/*	$NetBSD: date.h,v 1.3 1995/03/23 08:29:17 cgd Exp $ */
+/*	$NetBSD: date.h,v 1.4 2001/03/25 20:43:58 jsm Exp $ */
 
-char datestring[] = "Tue Jul 23 1985";
+const char datestring[] = "Tue Jul 23 1985";

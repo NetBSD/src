@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.wield.c,v 1.4 1997/10/19 16:59:27 christos Exp $	*/
+/*	$NetBSD: hack.wield.c,v 1.5 2001/03/25 20:44:03 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.wield.c,v 1.4 1997/10/19 16:59:27 christos Exp $");
+__RCSID("$NetBSD: hack.wield.c,v 1.5 2001/03/25 20:44:03 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -76,8 +76,8 @@ chwepon(otmp, amount)
 	struct obj     *otmp;
 	int amount;
 {
-	char           *color = (amount < 0) ? "black" : "green";
-	char           *time;
+	const char *color = (amount < 0) ? "black" : "green";
+	const char *time;
 	if (!uwep || uwep->olet != WEAPON_SYM) {
 		strange_feeling(otmp,
 				(amount > 0) ? "Your hands twitch."
