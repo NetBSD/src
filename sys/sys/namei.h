@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.9 1995/03/26 20:24:29 jtc Exp $	*/
+/*	$NetBSD: namei.h,v 1.10 1995/04/15 08:12:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -66,7 +66,7 @@ struct nameidata {
 	/*
 	 * Shared between namei and lookup/commit routines.
 	 */
-	long	ni_pathlen;		/* remaining chars in path */
+	size_t	ni_pathlen;		/* remaining chars in path */
 	char	*ni_next;		/* next location in pathname */
 	u_long	ni_loopcnt;		/* count of symlinks encountered */
 	/*
