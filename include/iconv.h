@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.1 2003/06/27 05:21:56 tshiozak Exp $	*/
+/*	$NetBSD: iconv.h,v 1.2 2003/07/01 08:54:57 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -38,7 +38,8 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
-typedef	void	*iconv_t;
+struct __tag_iconv_t;
+typedef	struct __tag_iconv_t	*iconv_t;
 
 __BEGIN_DECLS
 iconv_t	iconv_open	__P((const char *, const char *));
