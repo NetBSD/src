@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 1997/10/20 08:13:53 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 1997/11/02 08:05:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -721,9 +721,7 @@ zs_set_modes(cs, cflag)
 		if (cflag & MDMBUF)
 			return (EINVAL);
 		cflag |= CLOCAL;
-		cs->cs_rr0_dcd = 0;	/* don't look at the dcd input! */
-	} else
-		cs->cs_rr0_dcd = ZSRR0_DCD;	/* can look at pin */
+	}
 	if ((xcs->cs_hwflags & ZS_HWFLAG_NO_CTS) && (cflag & (CRTSCTS | CDTRCTS)))
 		return (EINVAL);
 
@@ -735,15 +733,10 @@ zs_set_modes(cs, cflag)
 	 * status interrupt to detect CTS changes.
 	 */
 	s = splzs();
-#if 0
-	if (cflag & CLOCAL) {
-		/* cs->cs_rr0_dcd = 0; */
-		cs->cs_preg[15] &= ~ZSWR15_DCD_IE;
-	} else {
-		/* cs->cs_rr0_dcd = ZSRR0_DCD; */
-		cs->cs_preg[15] |= ZSWR15_DCD_IE;
-	}
-#endif
+	if ((cflag & (CLOCAL | MDMBUF)) != 0)
+		cs->cs_rr0_dcd = 0;
+	else
+		cs->cs_rr0_dcd = ZSRR0_DCD;
 	/*
 	 * The mac hardware only has one output, DTR (HSKo in Mac
 	 * parlance). In HFC mode, we use it for the functions
@@ -757,21 +750,22 @@ zs_set_modes(cs, cflag)
 	 * In CDTRCTS, we use CTS to tell us to stop, but we use DTR to
 	 * shut up the other side.
 	 */
-	if (cflag & CRTSCTS) {
+	if ((cflag & CRTSCTS) != 0) {
 		cs->cs_wr5_dtr = ZSWR5_DTR;
 		cs->cs_wr5_rts = 0;
 		cs->cs_rr0_cts = ZSRR0_CTS;
-		cs->cs_preg[15] |= ZSWR15_CTS_IE;
-	} else if (cflag & CDTRCTS) {
+	} else if ((cflag & CDTRCTS) != 0) {
 		cs->cs_wr5_dtr = 0;
 		cs->cs_wr5_rts = ZSWR5_DTR;
 		cs->cs_rr0_cts = ZSRR0_CTS;
-		cs->cs_preg[15] |= ZSWR15_CTS_IE;
+	} else if ((cflag & MDMBUF) != 0) {
+		cs->cs_wr5_dtr = 0;
+		cs->cs_wr5_rts = ZSWR5_DTR;
+		cs->cs_rr0_cts = ZSRR0_DCD;
 	} else {
 		cs->cs_wr5_dtr = ZSWR5_DTR;
 		cs->cs_wr5_rts = 0;
 		cs->cs_rr0_cts = 0;
-		cs->cs_preg[15] &= ~ZSWR15_CTS_IE;
 	}
 	splx(s);
 
