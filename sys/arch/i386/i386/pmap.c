@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2001/06/02 18:09:13 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128 2001/07/05 20:54:28 hubertf Exp $	*/
 
 /*
  *
@@ -750,7 +750,7 @@ pmap_bootstrap(kva_start)
 
 #ifdef LARGEPAGES
 	/*
-	 * enable large pages of they are supported.
+	 * enable large pages if they are supported.
 	 */
 
 	if (cpu_feature & CPUID_PSE) {
