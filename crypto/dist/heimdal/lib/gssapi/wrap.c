@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: wrap.c,v 1.1.1.2 2000/08/02 19:59:10 assar Exp $");
+RCSID("$Id: wrap.c,v 1.2 2000/08/03 03:38:25 assar Exp $");
 
 OM_uint32 gss_wrap_size_limit (
             OM_uint32 * minor_status,
@@ -110,10 +110,10 @@ OM_uint32 gss_wrap
   memset (p + 8 + input_message_buffer->length, padlength, padlength);
 
   /* checksum */
-  MD5Init (&md5);
-  MD5Update (&md5, p - 24, 8);
-  MD5Update (&md5, p, input_message_buffer->length + padlength + 8);
-  MD5Final (hash, &md5);
+  MD5_Init (&md5);
+  MD5_Update (&md5, p - 24, 8);
+  MD5_Update (&md5, p, input_message_buffer->length + padlength + 8);
+  MD5_Final (hash, &md5);
 
   memset (&zero, 0, sizeof(zero));
   gss_krb5_getsomekey(context_handle, &key);

@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: crypto.c,v 1.1.1.2 2000/08/02 19:59:26 assar Exp $");
+RCSID("$Id: crypto.c,v 1.2 2000/08/03 03:38:26 assar Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -239,12 +239,12 @@ DES_AFS3_Transarc_string_to_key (krb5_data pw,
     memcpy(&temp_key, "kerberos", 8);
     des_set_odd_parity (&temp_key);
     des_set_key (&temp_key, schedule);
-    des_cbc_cksum ((des_cblock *)password, &ivec, passlen, schedule, &ivec);
+    des_cbc_cksum ((const void *)password, &ivec, passlen, schedule, &ivec);
 
     memcpy(&temp_key, &ivec, 8);
     des_set_odd_parity (&temp_key);
     des_set_key (&temp_key, schedule);
-    des_cbc_cksum ((des_cblock *)password, key, passlen, schedule, &ivec);
+    des_cbc_cksum ((const void *)password, key, passlen, schedule, &ivec);
     memset(&schedule, 0, sizeof(schedule));
     memset(&temp_key, 0, sizeof(temp_key));
     memset(&ivec, 0, sizeof(ivec));
@@ -348,8 +348,8 @@ DES3_string_to_key(krb5_context context,
 	    des_set_key(keys + i, s[i]);
 	}
 	memset(&ivec, 0, sizeof(ivec));
-	des_ede3_cbc_encrypt((des_cblock *)tmp,
-			     (des_cblock *)tmp, sizeof(tmp), 
+	des_ede3_cbc_encrypt((const void *)tmp,
+			     (void *)tmp, sizeof(tmp), 
 			     s[0], s[1], s[2], &ivec, DES_ENCRYPT);
 	memset(s, 0, sizeof(s));
 	memset(&ivec, 0, sizeof(ivec));
@@ -813,7 +813,7 @@ CRC32_checksum(krb5_context context,
     u_int32_t crc;
     unsigned char *r = C->checksum.data;
     _krb5_crc_init_table ();
-    crc = _krb5_crc_update (data, len, 0);
+    crc = _krb5_crc_update ((void *)data, len, 0);
     r[0] = crc & 0xff;
     r[1] = (crc >> 8)  & 0xff;
     r[2] = (crc >> 16) & 0xff;
@@ -853,8 +853,8 @@ RSA_MD4_DES_checksum(krb5_context context,
     MD4Update (&md4, data, len);
     MD4Final (p + 8, &md4);
     memset (&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt((des_cblock*)p, 
-		    (des_cblock*)p, 
+    des_cbc_encrypt((const void *)p, 
+		    (void *)p, 
 		    24, 
 		    key->schedule->data, 
 		    &ivec, 
@@ -903,9 +903,9 @@ RSA_MD5_checksum(krb5_context context,
 {
     MD5_CTX m;
 
-    MD5Init  (&m);
-    MD5Update(&m, data, len);
-    MD5Final (C->checksum.data, &m);
+    MD5_Init  (&m);
+    MD5_Update(&m, data, len);
+    MD5_Final (C->checksum.data, &m);
 }
 
 static void
@@ -921,13 +921,13 @@ RSA_MD5_DES_checksum(krb5_context context,
     unsigned char *p = C->checksum.data;
     
     krb5_generate_random_block(p, 8);
-    MD5Init (&md5);
-    MD5Update (&md5, p, 8);
-    MD5Update (&md5, data, len);
-    MD5Final (p + 8, &md5);
+    MD5_Init (&md5);
+    MD5_Update (&md5, p, 8);
+    MD5_Update (&md5, data, len);
+    MD5_Final (p + 8, &md5);
     memset (&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt((des_cblock*)p, 
-		    (des_cblock*)p, 
+    des_cbc_encrypt((const void *)p, 
+		    (void *)p, 
 		    24, 
 		    key->schedule->data, 
 		    &ivec, 
@@ -956,10 +956,10 @@ RSA_MD5_DES_verify(krb5_context context,
 		    sched[0],
 		    &ivec,
 		    DES_DECRYPT);
-    MD5Init (&md5);
-    MD5Update (&md5, tmp, 8); /* confounder */
-    MD5Update (&md5, data, len);
-    MD5Final (res, &md5);
+    MD5_Init (&md5);
+    MD5_Update (&md5, tmp, 8); /* confounder */
+    MD5_Update (&md5, data, len);
+    MD5_Final (res, &md5);
     if(memcmp(res, tmp + 8, sizeof(res)) != 0)
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     memset(tmp, 0, sizeof(tmp));
@@ -981,13 +981,13 @@ RSA_MD5_DES3_checksum(krb5_context context,
     des_key_schedule *sched = key->schedule->data;
     
     krb5_generate_random_block(p, 8);
-    MD5Init (&md5);
-    MD5Update (&md5, p, 8);
-    MD5Update (&md5, data, len);
-    MD5Final (p + 8, &md5);
+    MD5_Init (&md5);
+    MD5_Update (&md5, p, 8);
+    MD5_Update (&md5, data, len);
+    MD5_Final (p + 8, &md5);
     memset (&ivec, 0, sizeof(ivec));
-    des_ede3_cbc_encrypt((des_cblock*)p, 
-			 (des_cblock*)p, 
+    des_ede3_cbc_encrypt((const void *)p, 
+			 (void *)p, 
 			 24, 
 			 sched[0], sched[1], sched[2],
 			 &ivec, 
@@ -1016,10 +1016,10 @@ RSA_MD5_DES3_verify(krb5_context context,
 			 sched[0], sched[1], sched[2],
 			 &ivec,
 			 DES_DECRYPT);
-    MD5Init (&md5);
-    MD5Update (&md5, tmp, 8); /* confounder */
-    MD5Update (&md5, data, len);
-    MD5Final (res, &md5);
+    MD5_Init (&md5);
+    MD5_Update (&md5, tmp, 8); /* confounder */
+    MD5_Update (&md5, data, len);
+    MD5_Final (res, &md5);
     if(memcmp(res, tmp + 8, sizeof(res)) != 0)
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     memset(tmp, 0, sizeof(tmp));
@@ -1035,11 +1035,11 @@ SHA1_checksum(krb5_context context,
 	      unsigned usage,
 	      Checksum *C)
 {
-    SHA1_CTX m;
+    SHA_CTX m;
 
-    SHA1Init(&m);
-    SHA1Update(&m, data, len);
-    SHA1Final(C->checksum.data, &m);
+    SHA1_Init(&m);
+    SHA1_Update(&m, data, len);
+    SHA1_Final(C->checksum.data, &m);
 }
 
 /* HMAC according to RFC2104 */
@@ -1131,14 +1131,14 @@ HMAC_MD5_checksum(krb5_context context,
     hmac(context, c, signature, sizeof(signature), 0, key, &ksign_c);
     ksign.key = &kb;
     kb.keyvalue = ksign_c.checksum;
-    MD5Init (&md5);
+    MD5_Init (&md5);
     t[0] = (usage >>  0) & 0xFF;
     t[1] = (usage >>  8) & 0xFF;
     t[2] = (usage >> 16) & 0xFF;
     t[3] = (usage >> 24) & 0xFF;
-    MD5Update (&md5, t, 4);
-    MD5Update (&md5, data, len);
-    MD5Final (tmp, &md5);
+    MD5_Update (&md5, t, 4);
+    MD5_Update (&md5, data, len);
+    MD5_Final (tmp, &md5);
     hmac(context, c, tmp, sizeof(tmp), 0, &ksign, result);
 }
 
@@ -2757,9 +2757,9 @@ krb5_get_keyid(krb5_context context,
     MD5_CTX md5;
     unsigned char tmp[16];
 
-    MD5Init (&md5);
-    MD5Update (&md5, key->keyvalue.data, key->keyvalue.length);
-    MD5Final (tmp, &md5);
+    MD5_Init (&md5);
+    MD5_Update (&md5, key->keyvalue.data, key->keyvalue.length);
+    MD5_Final (tmp, &md5);
     *keyid = (tmp[12] << 24) | (tmp[13] << 16) | (tmp[14] << 8) | tmp[15];
     return 0;
 }

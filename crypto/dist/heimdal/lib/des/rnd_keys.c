@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: rnd_keys.c,v 1.1.1.2 2000/08/02 20:00:09 assar Exp $");
+RCSID("$Id: rnd_keys.c,v 1.2 2000/08/03 03:38:25 assar Exp $");
 #endif
 
 #include <des.h>
@@ -77,6 +77,26 @@ RCSID("$Id: rnd_keys.c,v 1.1.1.2 2000/08/02 20:00:09 assar Exp $");
 #ifdef HAVE_WINSOCK_H
 #include <winsock.h>
 #endif
+
+/* kludge prototypes */
+
+void
+des_rand_data(unsigned char *data, int size);
+
+void
+des_generate_random_block(des_cblock *block);
+
+void
+des_rand_data_key(des_cblock *key);
+
+void
+des_set_sequence_number(unsigned char *ll);
+
+void
+des_set_random_generator_seed(des_cblock *seed);
+
+int
+des_new_random_key(des_cblock *key);
 
 /*
  * Generate "random" data by checksumming a file.
@@ -194,6 +214,7 @@ sigALRM(int sig)
 #endif
 #endif
 
+#if 0
 static void
 des_not_rand_data(unsigned char *data, int size)
 {
@@ -204,6 +225,7 @@ des_not_rand_data(unsigned char *data, int size)
   for(i = 0; i < size; ++i)
     data[i] ^= random() % 0x100;
 }
+#endif
 
 #if !defined(WIN32) && !defined(__EMX__) && !defined(__OS2__) && !defined(__CYGWIN32__)
 
@@ -352,11 +374,6 @@ des_rand_data_key(des_cblock *key)
  * It's neccessary to be root to run it. Returns -1 if there were any
  * problems with permissions.
  */
-int
-des_mem_rand8(unsigned char *data)
-{
-  return 1;
-}
 
 /*
  * In case the generator does not get initialized use this as fallback.
@@ -458,9 +475,9 @@ des_init_random_number_generator(des_cblock *seed)
 
 /* This is for backwards compatibility. */
 void
-des_random_key(des_cblock ret)
+des_random_key(des_cblock *ret)
 {
-    des_new_random_key((des_cblock *)ret);
+    des_new_random_key(ret);
 }
 
 #ifdef TESTRUN
