@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.11 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.12 2004/03/24 00:31:15 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.11 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.12 2004/03/24 00:31:15 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -1467,6 +1467,7 @@ cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	ifp->if_ipackets++;
+	m->m_flags |= M_HASFCS;
 
 #if NBPFILTER > 0
 	/*
