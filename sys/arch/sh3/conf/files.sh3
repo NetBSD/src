@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.2 1999/09/13 16:26:19 msaitoh Exp $
+#	$NetBSD: files.sh3,v 1.3 1999/09/14 10:22:34 tsubai Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -21,9 +21,8 @@ file	arch/sh3/sh3/kgdb_machdep.c	kgdb
 file	arch/sh3/sh3/Locore.c
 file	arch/sh3/sh3/math_emulate.c	math_emulate
 file	arch/sh3/sh3/mem.c
-file	arch/sh3/sh3/ns_cksum.c	ns
-file	arch/sh3/sh3/pmap.c		!pmap_new
-file	arch/sh3/sh3/pmap.new.c		pmap_new
+file	arch/sh3/sh3/ns_cksum.c		ns
+file	arch/sh3/sh3/pmap.c
 file	arch/sh3/sh3/process_machdep.c
 file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/trap.c
@@ -75,4 +74,4 @@ file	arch/sh3/sh3/compat_13_machdep.c	compat_13
 file arch/sh3/sh3/coff_exec.c	exec_coff
 
 # network devices MII bus
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"
