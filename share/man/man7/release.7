@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.10 2000/10/06 02:42:20 hubertf Exp $
+.\"	$NetBSD: release.7,v 1.11 2000/11/01 04:29:47 tv Exp $
 .\"
 .\" Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,32 +136,27 @@ The root of the release hierarchy is
 .Sy / .
 .Xc
 .Sm on
-For files which may be shared by all systems of the same
-.Em <machine_arch> ,
-(e.g. the
-.Sy games
-and
-.Sy xbase
-sets for m68k-based platforms), this hierarchy will have a second root of
+.Pp
+Files which may be shared by all systems of the same
+.Em <machine_arch>
+will be located in
 .Sm off
 .Xo
 .Sy .../NetBSD-
 .Em <rel>
-.Sy /
+.Sy /shared/
 .Em <machine_arch>
 .Sy /
 .Xc
 .Sm on
-which will contain those files.  For files which are completely
-machine-independent (e.g. the
-.Sy xfont
-set), this hierarchy will have a third root of
-.Sy .../NetBSD- Ns Em <rel> Ns Sy /mi/
-which will contain those files.
-Unless otherwise noted, all files may be symbolic links to common
-.Em <machine_arch>
-or machine-independent files located in their respective directory
-hierarchies.
+with symbolic links pointing to these files from the
+.Em <machine>
+subdirectory.  Files which are completely machine-independent will be
+located in
+.Sy .../NetBSD- Ns Em <rel> Ns Sy /shared/ALL/
+with symbolic links pointing to these files from the
+.Em <machine>
+subdirectory.
 
 Sources should be put into
 .Sy .../NetBSD- Ns Em <rel> Ns Sy /source/
