@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16450reg.h,v 1.3 1994/10/27 04:18:42 cgd Exp $	*/
+/*	$NetBSD: ns16450reg.h,v 1.4 1997/10/03 16:40:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,7 +45,7 @@
 #define	com_ier		1	/* interrupt enable (W) */
 #define	com_iir		2	/* interrupt identification (R) */
 #define	com_lctl	3	/* line control register (R/W) */
-#define	 com_cfcr	3	/* line control register (R/W) */
+#define	com_cfcr	3	/* line control register (R/W) */
 #define	com_mcr		4	/* modem control register (R/W) */
 #define	com_lsr		5	/* line status register (R/W) */
 #define	com_msr		6	/* modem status register (R/W) */
