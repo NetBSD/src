@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/06/01 02:08:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.23 2003/09/02 05:26:43 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -39,7 +39,8 @@ CPPFLAGS+=	-nostdinc++ -I${.CURDIR}/arch/${MACHINE_ARCH} \
 
 CXXFLAGS+=	${G_XCXXFLAGS:M-f*}
 
-TEXINFO=	iostream.texi
+# GCC3 doesn't have this, so lets just not install it anymore...
+#TEXINFO=	iostream.texi
 
 .PATH: ${DIST}/libstdc++ ${DIST}/libstdc++/stl ${DIST}/libio ${DIST}/libiberty
 
