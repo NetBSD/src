@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.8 2003/06/26 17:17:10 dsl Exp $	*/
+/*	$NetBSD: resize.c,v 1.9 2003/07/30 11:11:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.8 2003/06/26 17:17:10 dsl Exp $");
+__RCSID("$NetBSD: resize.c,v 1.9 2003/07/30 11:11:55 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,8 +48,6 @@ __RCSID("$NetBSD: resize.c,v 1.8 2003/06/26 17:17:10 dsl Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
-
-extern struct __winlist	*winlistp;
 
 static int __resizewin(WINDOW *win, int nlines, int ncols);
 
@@ -121,7 +119,7 @@ resizeterm(int nlines, int ncols)
 #endif
 
 
-	for (list = __winlistp; list != NULL; list = list->nextp) {
+	for (list = _cursesi_screen->winlistp; list != NULL; list = list->nextp) {
 		win = list->winp;
 
 		newlines = win->reqy;
@@ -144,7 +142,7 @@ resizeterm(int nlines, int ncols)
 	COLS = ncols;
 
 	  /* tweak the flags now that we have updated the LINES and COLS */
-	for (list = __winlistp; list != NULL; list = list->nextp) {
+	for (list = _cursesi_screen->winlistp; list != NULL; list = list->nextp) {
 		if (!(win->flags & __ISPAD))
 			__swflags(list->winp);
 	}
