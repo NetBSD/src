@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.38 1999/05/24 13:05:40 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.39 1999/06/19 18:17:14 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.35 1999/05/24 13:05:12 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.36 1999/06/19 18:16:07 mjl Exp 
  */
 
 /*-
@@ -222,6 +222,9 @@
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
 #define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
+#define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER	0xc102
+#define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"NewMedia BusToaster SCSI Host Adapter"
 
 /* Standard Microsystems Corporation Products */
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
