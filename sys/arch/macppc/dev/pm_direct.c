@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.16 2001/09/16 16:40:44 wiz Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.17 2002/01/02 20:28:43 dbj Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1034,8 +1034,22 @@ pm_adb_op(buffer, compRout, data, command)
 #endif
 #endif
 		if ((--timo) < 0) {
-			splx(s);
-			return 1;
+			/* Try to take an interrupt anyway, just in case.
+			 * This has been observed to happen on my ibook
+			 * when i press a key after boot and before adb
+			 * is attached;  For example, when booting with -d.
+			 */
+			pm_intr();
+			if (adbWaiting) {
+				printf("pm_adb_op: timeout. command = 0x%x\n",command);
+				splx(s);
+				return 1;
+			}
+#ifdef ADB_DEBUG
+			else {
+				printf("pm_adb_op: missed interrupt. cmd=0x%x\n",command);
+			}
+#endif
 		}
 	}
 
