@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.75 2004/07/01 06:40:36 petrov Exp $	*/
+/*	$NetBSD: iommu.c,v 1.75.6.1 2005/02/12 12:32:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.75 2004/07/01 06:40:36 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.75.6.1 2005/02/12 12:32:18 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -130,7 +130,7 @@ iommu_init(name, is, tsbsize, iovabase)
 		(paddr_t)PAGE_SIZE, (paddr_t)0, &pglist, 1, 0) != 0)
 		panic("iommu_init: no memory");
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		panic("iommu_init: no memory");
 	is->is_tsb = (int64_t *)va;
@@ -1059,7 +1059,7 @@ iommu_dvmamem_map(t, sb, segs, nsegs, size, kvap, flags)
 	 * into this space.
 	 */
 	size = round_page(size);
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -1116,5 +1116,5 @@ iommu_dvmamem_unmap(t, sb, kva, size)
 	size = round_page(size);
 	pmap_kremove((vaddr_t)kva, size);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
