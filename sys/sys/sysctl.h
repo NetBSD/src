@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.116 2004/03/26 22:54:42 he Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.116.2.1 2004/04/08 19:32:47 jdc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -840,7 +840,12 @@ struct buf_sysctl {
 	{ "darwin", CTLTYPE_NODE }, \
 }
 
-#ifdef	_KERNEL
+#ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
+#include "opt_sysctl.h"
+#endif
+
 /*
  * A log of nodes created by a setup function or set of setup
  * functions so that they can be torn down in one "transaction"
@@ -970,6 +975,12 @@ int	sysctl_destroyv(struct sysctlnode *, ...);
 void	sysctl_dump(const struct sysctlnode *);
 void	sysctl_free(struct sysctlnode *);
 void	sysctl_teardown(struct sysctllog **);
+
+#if SYSCTL_NO_DESCR
+#define SYSCTL_DESCR(s) NULL
+#else /* SYSCTL_NO_DESCR */
+#define SYSCTL_DESCR(s) s
+#endif /* SYSCTL_NO_DESCR */
 
 /*
  * simple interface similar to old interface for in-kernel consumption
