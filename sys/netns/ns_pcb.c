@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.20 2004/02/24 15:22:01 wiz Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.21 2004/04/18 19:14:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.20 2004/02/24 15:22:01 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.21 2004/04/18 19:14:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,9 @@ ns_pcballoc(so, head)
 {
 	struct nspcb *nsp;
 
-	nsp = malloc(sizeof(*nsp), M_PCB, M_NOWAIT);
+	nsp = malloc(sizeof(*nsp), M_PCB, M_NOWAIT|M_ZERO);
 	if (nsp == 0)
 		return (ENOBUFS);
-	bzero((caddr_t)nsp, sizeof(*nsp));
 	nsp->nsp_socket = so;
 	insque(nsp, head);
 	so->so_pcb = nsp;
