@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24.4.5 2002/04/27 20:24:49 sommerfeld Exp $	*/
+/*	$NetBSD: types.h,v 1.24.4.6 2002/08/19 01:22:37 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,6 +55,8 @@ typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
 
+typedef int		pmc_evid_t;
+typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
 
 /* The x86 does not have strict alignment requirements. */

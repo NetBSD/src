@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.20.2.2 2001/09/22 23:07:34 sommerfeld Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.20.2.3 2002/08/19 01:22:35 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,6 +170,24 @@ tlbflushg(void)
 void	setidt	__P((int idx, /*XXX*/caddr_t func, int typ, int dpl));
 #endif
 
+/* debug register */
+void dr0(caddr_t, u_int32_t, u_int32_t, u_int32_t);
+
+static __inline u_int
+rdr6(void)
+{
+	u_int val;
+
+	__asm __volatile("movl %%dr6,%0" : "=r" (val));
+	return val;
+}
+
+static __inline void
+ldr6(u_int val)
+{
+
+	__asm __volatile("movl %0,%%dr6" : : "r" (val));
+}
 
 /* XXXX ought to be in psl.h with spl() functions */
 

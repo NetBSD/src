@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.300.2.30 2002/06/25 15:44:45 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.300.2.31 2002/08/19 01:22:17 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.300.2.30 $"
+#ident 		"GENERIC-$Revision: 1.300.2.31 $"
 
 maxusers	32		# estimated number of users
 
@@ -64,7 +64,7 @@ options 	MTRR		# memory-type range register syscall support
 # Standard system options
 
 options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-options 	INSECURE	# disable kernel security levels
+options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
@@ -79,7 +79,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	LKM		# loadable kernel modules
 
@@ -203,6 +203,12 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	PCDISPLAY_SOFTCURSOR
 # modify the screen type of the console; defaults to "80x25"
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# work around a hardware bug that loaded fonts don't work; found on ATI cards
+#options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -272,6 +278,9 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# System Controllers
+elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -358,7 +367,7 @@ vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
-wskbd* 		at pckbd? console ?
+wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
 pcppi0		at isa?
@@ -642,7 +651,7 @@ ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
-wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
@@ -730,10 +739,14 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 #ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? dev ? function ?	# Open Host Controller
 
+# ISA USB controllers
+#slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
+
 # USB bus support
 #usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
+#usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -1032,4 +1045,3 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-

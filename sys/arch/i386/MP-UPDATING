@@ -1,3 +1,9 @@
+Last Synchronized: Sun Aug 18 19:21:52 EDT 2002
+
+merged with -current as of today.
+rearranged gdt init to deal with KVM86 changes; however, KVM86 has no
+chance of working yet; good thing it's not part of GENERIC
+
 Last Synchronized: Tue Jun 25 10:28:59 EDT 2002
 
 merged with -current as of today.

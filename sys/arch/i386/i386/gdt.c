@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.22.2.8 2002/02/24 01:58:57 sommerfeld Exp $	*/
+/*	$NetBSD: gdt.c,v 1.22.2.9 2002/08/19 01:22:27 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.8 2002/02/24 01:58:57 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.22.2.9 2002/08/19 01:22:27 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,10 @@ setgdt(int sel, void *base, size_t limit,
 	struct cpu_info *ci;
 
 	setsegment(sd, base, limit, type, dpl, def32, gran);
-	for (CPU_INFO_FOREACH(cii, ci))
-		ci->ci_gdt[sel].sd = *sd;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci->ci_gdt != NULL)
+			ci->ci_gdt[sel].sd = *sd;
+	}
 }
 
 #if 0
@@ -169,26 +171,18 @@ gdt_compact()
 #endif
 
 /*
- * Initialize the GDT subsystem.  Called from autoconf() relatively
- * late in boot.
+ * Initialize the GDT subsystem.  Called from autoconf().
  */
 void
 gdt_init()
-{
-
-	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
-}
-
-/*
- * Initialize the boot cpu's GDT; called very early in boot.
- */
-void
-gdt_init_cpu0(struct cpu_info *ci)
 {
 	size_t max_len, min_len;
 	union descriptor *old_gdt;
 	struct vm_page *pg;
 	vaddr_t va;
+	struct cpu_info *ci = &cpu_info_primary;
+
+	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
 
 	max_len = MAXGDTSIZ * sizeof(gdt[0]);
 	min_len = MINGDTSIZ * sizeof(gdt[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.18.18.3 2001/07/19 08:57:29 sommerfeld Exp $	*/
+/*	$NetBSD: microtime.s,v 1.18.18.4 2002/08/19 01:22:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #include <machine/asm.h>
 #include <dev/isa/isareg.h>
-#include <i386/isa/timerreg.h>
+#include <dev/ic/i8253reg.h>
 
 /* LINTSTUB: include <sys/time.h> */
 
@@ -53,14 +53,14 @@ ENTRY(i8254_microtime)
 	cli				# disable interrupts
 
 	# select timer 0 and latch its counter
-	outb	%al,$TIMER_MODE
+	outb	%al,$IO_TIMER1+TIMER_MODE
 	inb	$IO_ICU1,%al		# as close to timer latch as possible
 	movb	%al,%ch			# %ch is current ICU mask
 
 	# Read counter value into [%al %dl], LSB first
-	inb	$TIMER_CNTR0,%al
-	movb	%al,%dl			# %dl has LSB
-	inb	$TIMER_CNTR0,%al	# %al has MSB
+	inb	$IO_TIMER1+TIMER_CNTR0,%al
+	movb	%al,%dl				# %dl has LSB
+	inb	$IO_TIMER1+TIMER_CNTR0,%al	# %al has MSB
 
 	# save state of IIR in ICU, and of ipending, for later perusal
 	movb	_C_LABEL(ipending) + IRQ_BYTE(0),%cl # %cl is interrupt pending

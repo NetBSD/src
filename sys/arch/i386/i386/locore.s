@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.33 2002/06/25 15:44:51 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.34 2002/08/19 01:22:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -372,9 +372,9 @@ start:	movw	$0x1234,0x472			# warm boot
 	testl	%eax, %eax
 	jz	1f
 	movl	(%eax), %ebx		/* number of entries */
-	movl	$RELOC(bootinfo), %edx
-	movl	%ebx, (%edx)
-	addl	$4, %edx
+	movl	$RELOC(bootinfo), %edi
+	movl	%ebx, (%edi)
+	addl	$4, %edi
 2:
 	testl	%ebx, %ebx
 	jz	1f
@@ -383,9 +383,9 @@ start:	movw	$0x1234,0x472			# warm boot
 	pushl	%eax
 	pushl	(%ecx)			/* len */
 	pushl	%ecx
-	pushl	%edx
-	addl	(%ecx), %edx		/* update dest pointer */
-	cmpl	$_RELOC(_C_LABEL(bootinfo) + BOOTINFO_MAXSIZE), %edx
+	pushl	%edi
+	addl	(%ecx), %edi		/* update dest pointer */
+	cmpl	$_RELOC(_C_LABEL(bootinfo) + BOOTINFO_MAXSIZE), %edi
 	jg	2f
 	call	_C_LABEL(memcpy)
 	addl	$12, %esp
@@ -394,8 +394,8 @@ start:	movw	$0x1234,0x472			# warm boot
 	jmp	2b
 2:	/* cleanup for overflow case */
 	addl	$16, %esp
-	movl	$RELOC(bootinfo), %edx
-	subl	%ebx, (%edx)		/* correct number of entries */
+	movl	$RELOC(bootinfo), %edi
+	subl	%ebx, (%edi)		/* correct number of entries */
 1:
 
  	movl	16(%esp),%eax

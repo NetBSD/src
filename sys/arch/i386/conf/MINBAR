@@ -1,4 +1,4 @@
-#	$NetBSD: MINBAR,v 1.20.2.11 2002/06/25 15:44:48 sommerfeld Exp $
+#	$NetBSD: MINBAR,v 1.20.2.12 2002/08/19 01:22:22 sommerfeld Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	MINBAR -- offshore CVS server
@@ -58,7 +58,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 #options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	NMBCLUSTERS=2048
 options 	BUFCACHE=10
