@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.8 1999/05/03 15:45:16 ad Exp $ */
+/* $NetBSD: psm.c,v 1.9 1999/12/03 22:48:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -28,8 +28,9 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <machine/bus.h>
+
+#include <dev/ic/pckbcvar.h>
 
 #include <dev/pckbc/psmreg.h>
 

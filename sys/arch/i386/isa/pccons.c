@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.136 1999/07/26 19:31:54 wrstuden Exp $	*/
+/*	$NetBSD: pccons.c,v 1.137 1999/12/03 22:48:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
 #include "pc.h"
 #if (NPCCONSKBD > 0)
 #include <machine/bus.h>
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/pckbcvar.h>
 #else
 /* consistency check: plain pccons can't coexist with pckbc */
 #include "pckbc.h"

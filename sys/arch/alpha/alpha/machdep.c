@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.186 1999/12/03 07:29:57 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.187 1999/12/03 22:48:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.186 1999/12/03 07:29:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 1999/12/03 22:48:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -858,7 +858,7 @@ consinit()
 #include "pckbd.h"
 #if (NPCKBC > 0) && (NPCKBD == 0)
 
-#include <dev/isa/pckbcvar.h>
+#include <dev/ic/pckbcvar.h>
 
 /*
  * This is called by the pbkbc driver if no pckbd is configured.

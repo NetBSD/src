@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.335 1999/12/03 18:02:15 mjacob Exp $
+#	$NetBSD: files,v 1.336 1999/12/03 22:48:24 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -332,6 +332,10 @@ file	dev/ic/ne2000.c			ne
 defopt	opt_com.h	COM16650 COM_HAYESP COM_DEBUG
 device	com: tty
 file	dev/ic/com.c			com needs-flag
+
+# PC-like keyboard controller
+device	pckbc { [slot = -1] }
+file	dev/ic/pckbc.c			pckbc needs-flag
 
 # Cirrus Logic CD240[01] 4-port Multi-Protocol Communications Controller
 device	clmpcc: tty
