@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.304 2001/02/04 18:16:42 briggs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.305 2001/02/11 15:33:53 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp 
+ *	NetBSD: pcidevs,v 1.299 2001/02/11 15:33:25 ad Exp 
  */
 
 /*
@@ -618,6 +618,7 @@
 
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
+#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID (ASIC) */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
