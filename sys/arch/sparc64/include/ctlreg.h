@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.31 2004/03/14 18:18:54 chs Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.32 2004/03/22 12:24:37 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -857,7 +857,7 @@ stxa(paddr_t loc, int asi, u_int64_t value)
 
 	_stxa_lo = value; 
 	_stxa_hi = ((u_int64_t)value)>>32;
-	_loc_hi = (((u_int64_t)(u_long)loc)>>32);
+	_loc_hi = (((u_int64_t)loc)>>32);
 
 	if (PHYS_ASI(asi)) {
 		__asm __volatile("wr %7,%%g0,%%asi; sllx %4,32,%1; "
@@ -903,7 +903,7 @@ casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 	_casxa_lo = value; 
 	_casxa_hi = ((u_int64_t)value)>>32;
 	_oval_hi = ((u_int64_t)oldvalue)>>32;
-	_loc_hi = (((u_int64_t)(u_long)loc)>>32);
+	_loc_hi = (((u_int64_t)loc)>>32);
 
 #ifdef __notyet
 /*
