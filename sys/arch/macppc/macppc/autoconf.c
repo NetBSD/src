@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2002/09/22 03:10:14 dbj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2002/09/22 03:21:44 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -319,6 +319,7 @@ device_register(dev, aux)
 		return;
 	} else {
 		booted_device = dev;
+		booted_partition = 0; /* XXX -- should be extracted from bootpath */
 		return;
 	}
 }
