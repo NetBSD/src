@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.79 2003/06/29 22:30:58 fvdl Exp $	*/
+/*	$NetBSD: usb.c,v 1.80 2003/11/07 17:03:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 
 /*
  * USB specifications and other documentation can be found at
- * http://www.usb.org/developers/data/ and
- * http://www.usb.org/developers/index.html .
+ * http://www.usb.org/developers/docs/ and
+ * http://www.usb.org/developers/devclass_docs/
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.79 2003/06/29 22:30:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.80 2003/11/07 17:03:25 wiz Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
