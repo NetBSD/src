@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.3 1998/06/03 22:38:31 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.4 1998/07/28 00:31:42 pk Exp $	*/
 /*
  * magma.c
  *
@@ -57,20 +57,16 @@
 #include <sys/conf.h>
 #include <sys/errno.h>
 
+#include <machine/conf.h>
 #include <machine/bus.h>
-#include <sparc/dev/sbusvar.h>
-#include <sparc/autoconf.h>
-#include <sparc/conf.h>
-#include <sparc/cpu.h>
-#include <sparc/ctlreg.h>
-
-#include <sparc/sparc/asm.h>
+#include <machine/autoconf.h>
+#include <dev/sbus/sbusvar.h>
 
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cd1190reg.h>
 
-#include <machine/mbppio.h>
-#include "magmareg.h"
+#include <dev/sbus/mbppio.h>
+#include <dev/sbus/magmareg.h>
 
 /*
  * Select tty soft interrupt bit based on TTY ipl. (stole from zs.c)
