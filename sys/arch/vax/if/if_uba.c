@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.12 1996/08/20 14:07:46 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.13 1998/11/05 19:48:46 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -289,7 +289,7 @@ rcv_xmtbuf(ifw)
 {
 	register struct mbuf *m;
 	struct mbuf **mprev;
-	register i;
+	register int i;
 	char *cp;
 
 	while ((i = ffs((long)ifw->ifw_xswapd)) != 0) {
@@ -318,7 +318,7 @@ static void
 restor_xmtbuf(ifw)
 	register struct ifxmt *ifw;
 {
-	register i;
+	register int i;
 
 	for (i = 0; i < ifw->ifw_nmr; i++)
 		ifw->ifw_wmap[i] = ifw->ifw_mr[i];

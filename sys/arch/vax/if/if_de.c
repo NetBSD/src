@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.33 1998/07/05 06:49:09 jonathan Exp $	*/
+/*	$NetBSD: if_de.c,v 1.34 1998/11/05 19:48:46 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -679,7 +679,7 @@ dewait(ds, fn)
 	char *fn;
 {
 	volatile struct dedevice *addr = ds->ds_vaddr;
-	register csr0;
+	register int csr0;
 
 	while ((addr->pcsr0 & PCSR0_INTR) == 0)
 		;
