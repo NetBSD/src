@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isapnp.c,v 1.1 2004/01/28 19:31:07 jdolecek Exp $ */
+/* $NetBSD: atppc_isapnp.c,v 1.2 2004/01/28 19:33:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.1 2004/01/28 19:31:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.2 2004/01/28 19:33:10 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
@@ -91,7 +91,7 @@ atppc_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	int pri, variant;
 
-	pri = isapnp_devmatch(aux, &isapnp_sb_devinfo, &variant);
+	pri = isapnp_devmatch(aux, &isapnp_atppc_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
 	return (pri);
