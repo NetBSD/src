@@ -1,7 +1,4 @@
-#	$NetBSD: obsolete.gcc,v 1.1 2003/08/10 08:44:42 mrg Exp $
-# XXX for now
-./usr/include/i386/_G_config.h
-./usr/include/sparc/_G_config.h
+#	$NetBSD: obsolete.gcc,v 1.2 2003/09/02 06:17:03 mrg Exp $
 ./usr/include/g++/PlotFile.h
 ./usr/include/g++/SFile.h
 ./usr/include/g++/_G_config.h
@@ -123,5 +120,3 @@
 ./usr/include/g++/tree.h
 ./usr/include/g++/type_traits.h
 ./usr/include/g++/vector.h
-./usr/share/man/cat1/cccp.0
-./usr/share/man/man1/cccp.1
