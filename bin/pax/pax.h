@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.6 1999/07/03 14:42:39 kleink Exp $	*/
+/*	$NetBSD: pax.h,v 1.7 1999/10/22 10:43:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -125,6 +125,8 @@ typedef struct {
 #define PAX_HLK		8		/* hard link */
 #define PAX_HRG		9		/* hard link to a regular file */
 #define PAX_CTG		10		/* high performance file */ 
+#define PAX_GLL		11		/* GNU long symlink */ 
+#define PAX_GLF		12		/* GNU long file */ 
 } ARCHD;
 
 /*
