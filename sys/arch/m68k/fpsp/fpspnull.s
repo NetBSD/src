@@ -1,6 +1,6 @@
 | dummy FPSP entries
-
 	.text
+#ifndef FPSP
 
 	.globl	fpsp_unimp
 	.globl	fpsp_bsun,fpsp_unfl,fpsp_operr
@@ -17,3 +17,6 @@ fpsp_unsupp:
 	jbsr	_panic
 LnoFPSP:
 	.asciz	"68040 FPSP not installed"
+#else
+XXXFPSPwantasym:
+#endif
