@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.78 2004/02/19 06:40:14 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.79 2004/02/19 06:44:18 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.78 2004/02/19 06:40:14 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.79 2004/02/19 06:44:18 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,9 +200,9 @@ struct handlespec {
 					printother,	NULL,	"identd" },
 
 	{ { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_DRLIST },
-					printother,	NULL,	"something else" },
+					printother,	NULL,	"ndp" },
 	{ { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_PRLIST },
-					printother,	NULL,	"something else" },
+					printother,	NULL,	"ndp" },
 
 
 	{ { CTL_NET, PF_KEY, KEYCTL_DUMPSA },
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 		usage(); */
 	/* if (aflag && Mflag)
 		usage(); */
-	if ((Aflag || Mflag) && argc == 0)
+	if ((Aflag || Mflag) && argc == 0 && fn == NULL)
 		aflag = 1;
 
 	if (Aflag)
@@ -1449,7 +1449,8 @@ display_number(const struct sysctlnode *node, const char *name,
 	}
 
 	if (xflag > 1) {
-		printf("\n");
+		if (n != DISPLAY_NEW)
+			printf("\n");
 		hex_dump(data, sz);
 		return;
 	}
@@ -1506,7 +1507,8 @@ display_string(const struct sysctlnode *node, const char *name,
 	}
 
 	if (xflag > 1) {
-		printf("\n");
+		if (n != DISPLAY_NEW)
+			printf("\n");
 		hex_dump(data, sz);
 		return;
 	}
@@ -1564,7 +1566,8 @@ display_struct(const struct sysctlnode *node, const char *name,
         }
 
 	if (xflag > 1) {
-		printf("\n");
+		if (n != DISPLAY_NEW)
+			printf("\n");
 		hex_dump(data, sz);
 		return;
 	}
@@ -1698,9 +1701,11 @@ kern_clockrate(HANDLER_ARGS)
 	if (sz != sizeof(clkinfo))
 		errx(1, "%s: !returned size wrong!", sname);
 
-	if (xflag || rflag)
+	if (xflag || rflag) {
 		display_struct(pnode, sname, &clkinfo, sz,
 			       DISPLAY_VALUE);
+		return;
+	}
 	else if (!nflag)
 		printf("%s: ", sname);
 	printf("tick = %d, tickadj = %d, hz = %d, profhz = %d, stathz = %d\n",
@@ -1783,9 +1788,11 @@ kern_cp_time(HANDLER_ARGS)
 	if (sz != sizeof(cp_time))
 		errx(1, "%s: !returned size wrong!", sname);
 
-	if (xflag || rflag)
+	if (xflag || rflag) {
 		display_struct(pnode, sname, &cp_time, sz,
 			       DISPLAY_VALUE);
+		return;
+	}
 	else if (!nflag)
 		printf("%s: ", sname);
 	printf("user = %" PRIu64
@@ -1818,10 +1825,12 @@ vm_loadavg(HANDLER_ARGS)
 	if (sz != sizeof(loadavg))
 		errx(1, "%s: !returned size wrong!", sname);
 
-	if (xflag || rflag)
+	if (xflag || rflag) {
 		display_struct(pnode, sname, &loadavg, sz,
 			       DISPLAY_VALUE);
-	else if (!nflag)
+		return;
+	}
+	if (!nflag)
 		printf("%s: ", sname);
 	printf("%.2f %.2f %.2f\n",
 	       (double) loadavg.ldavg[0] / loadavg.fscale,
