@@ -1,10 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.8 1999/03/03 19:54:05 tron Exp $
+# $NetBSD: Makefile.inc,v 1.8.18.1 2000/09/19 18:15:12 is Exp $
 
 BINDIR=/usr/share/keymaps/amiga
 MKMAN=	no
 CLEANFILES=${FILES}
 
-all: ${PROG} ${FILES}
+realall: ${PROG} ${FILES}
 
 ${FILES}: ${PROG}
 	./${PROG} > $@
