@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.13 1997/03/17 22:09:04 gwr Exp $
+#	$NetBSD: files.mvme68k,v 1.14 1997/03/18 21:39:01 thorpej Exp $
 
 # config file for mvme68k
 
@@ -73,6 +73,7 @@ file arch/mvme68k/dev/wdsc.c			wdsc_pcc
 file arch/mvme68k/mvme68k/autoconf.c
 file arch/mvme68k/mvme68k/clock.c
 file arch/mvme68k/mvme68k/conf.c
+file arch/mvme68k/mvme68k/db_memrw.c		ddb | kgdb
 file arch/mvme68k/mvme68k/disksubr.c
 file arch/mvme68k/mvme68k/dkbad.c
 file arch/mvme68k/mvme68k/isr.c
@@ -86,7 +87,6 @@ file arch/mvme68k/mvme68k/vm_machdep.c
 file arch/m68k/m68k/copy.s
 file arch/m68k/m68k/bcopy.s
 file arch/m68k/m68k/copypage.s
-file arch/m68k/m68k/db_memrw.c			ddb
 file arch/m68k/m68k/sig_machdep.c
 file dev/cons.c
 file dev/cninit.c
