@@ -1,4 +1,4 @@
-#  $NetBSD: platid.awk,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $
+#  $NetBSD: platid.awk,v 1.1 2001/01/28 02:52:18 uch Exp $
 #
 #  Copyright (c) 1999
 #          Shin Takemura and PocketBSD Project. All rights reserved.
