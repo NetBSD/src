@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.7 2001/02/13 22:54:26 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.8 2001/04/29 15:13:45 bjh21 Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.7 2001/02/13 22:54:26 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.8 2001/04/29 15:13:45 bjh21 Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -91,17 +91,6 @@ fuiword(base)
 	const void *base;
 {
 	panic("fuiword not implemented");
-}
-
-int
-cpu_sysctl(name, namelen, oldval, oldlenp, newval, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldval, *newval;
-	size_t *oldlenp, newlen;
-	struct proc *p;
-{
-	panic("cpu_sysctl not implemented");
 }
 
 void
