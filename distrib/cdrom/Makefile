@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2003/07/26 17:06:38 salo Exp $
+# $NetBSD: Makefile,v 1.21 2004/02/29 01:08:22 jmc Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -74,7 +74,7 @@ MKISOFS?=	/usr/pkg/bin/mkisofs
 RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	${TOOL_INSTALLBOOT} -m alpha -o sunsum,append
 PMAX_IBOOT?=	${TOOL_INSTALLBOOT} -m pmax -o sunsum,append
-VAX_IBOOT?=	${TOLL_INSTALLBOOT} -m vax -o sunsum,append
+VAX_IBOOT?=	${TOOL_INSTALLBOOT} -m vax -o sunsum,append
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 .endif
