@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.11 2001/01/03 10:09:02 takemura Exp $	*/
+/*	$NetBSD: ansi.h,v 1.12 2002/06/01 09:22:44 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,6 +38,7 @@
 #ifndef	_ANSI_H_
 #define	_ANSI_H_
 
+#include <sys/cdefs.h>
 #include <machine/int_types.h>
 
 /*
@@ -58,12 +59,15 @@
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
-
+#define	_BSD_VA_LIST_		__va_list	/* va_list */
 typedef struct {
+#if __GNUC_PREREQ__(3, 0)
+	__builtin_va_list __va;
+#else
 	char __gpr, __fpr, __pad[2];
 	char *__stack, *__base;
+#endif
 } __va_list;
-#define	_BSD_VA_LIST_		__va_list	/* va_list */
 
 /*
  * NOTE: rune_t is not covered by ANSI nor other standards, and should not

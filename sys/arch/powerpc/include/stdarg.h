@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.8 2001/05/31 09:19:25 tsubai Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.9 2002/06/01 09:22:44 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -30,7 +30,6 @@
 #define _POWERPC_STDARG_H_
 
 #include <machine/ansi.h>
-#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
 #if 0
@@ -49,6 +48,15 @@ typedef _BSD_VA_LIST_	va_list;
 
 #define va_start(ap, last)	((ap) = *(va_list *)0)
 #define va_arg(ap, type)	(*(type *)(void *)&(ap))
+#define va_end(ap)
+#define __va_copy(dest, src)	((dest) = (src))
+
+#elif __GNUC_PREREQ__(3, 0)
+
+#define va_start(ap, last)	__builtin_stdarg_start((ap).__va, last)
+#define va_arg(ap, type)	__builtin_va_arg((ap).__va, type)
+#define va_end(ap)		__builtin_va_end((ap).__va)
+#define __va_copy(dest, src)	__builtin_va_copy((dest).__va, (src).__va)
 
 #else
 
@@ -84,6 +92,7 @@ typedef _BSD_VA_LIST_	va_list;
 	 (__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS ||	\
 	  __builtin_classify_type(*(type *)0) == __INTEGER_TYPE_CLASS))
 #else
+/* XXX gcc bug compatibility */
 #define __va_longlong(type)						\
 	(__builtin_classify_type(*(type *)0) == __INTEGER_TYPE_CLASS &&	\
 	 sizeof(type) == 8)
@@ -128,15 +137,15 @@ typedef _BSD_VA_LIST_	va_list;
 		   __va_double(type) ? __va_fpr(ap, type) :		\
 		   __va_gpr(ap, type)))
 
-#endif /* __lint__ */
-
 #define va_end(ap)
+#define __va_copy(dest, src)	((dest) = (src))
+
+#endif /* __lint__ */
 
 #if !defined(_ANSI_SOURCE) &&						\
     (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) ||		\
      defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
-#define va_copy(dest, src)						\
-	((dest) = (src))
+#define va_copy(dest, src)	__va_copy(dest, src)
 #endif
 
 #endif /* _POWERPC_STDARG_H_ */
