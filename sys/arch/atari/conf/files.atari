@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.40 1997/06/04 14:34:02 leo Exp $
+#	$NetBSD: files.atari,v 1.41 1997/07/30 15:43:28 leo Exp $
 
 maxpartitions 16
 
@@ -35,9 +35,9 @@ attach	zs at mainbus
 file	arch/atari/dev/zs.c		zs needs-count
 
 # printer
-device lpt
-attach	lpt at mainbus
-file	arch/atari/dev/lpt.c		lpt needs-flag
+device lp
+attach	lp at mainbus
+file	arch/atari/dev/lpt.c		lp needs-flag
 
 # memory disk
 file	arch/atari/dev/md_root.c	memory_disk_hooks
