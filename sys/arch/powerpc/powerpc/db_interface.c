@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 2002/12/19 13:45:03 scw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.24 2002/12/20 15:23:12 scw Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -69,6 +69,7 @@ int
 ddb_trap_glue(frame)
 	struct trapframe *frame;
 {
+#ifndef PPC_IBM4XX
 	if (!(frame->srr1 & PSL_PR)
 	    && (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC
 		|| (frame->exc == EXC_PGM
@@ -81,6 +82,9 @@ ddb_trap_glue(frame)
 		return kdb_trap(type, frame);
 	}
 	return 0;
+#else
+	return kdb_trap(frame->exc, frame);
+#endif
 }
 
 int
@@ -160,6 +164,33 @@ kdb_trap(type, v)
 }
 
 #ifdef PPC_IBM4XX
+db_addr_t
+branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
+{
+
+	if ((inst & M_B ) == I_B || (inst & M_B ) == I_BL) {
+		db_expr_t off;
+		off = ((db_expr_t)((inst & 0x03fffffc) << 6)) >> 6;
+		return (((inst & 0x2) ? 0 : pc) + off);
+	}
+
+	if ((inst & M_BC) == I_BC || (inst & M_BC) == I_BCL) {
+		db_expr_t off;
+		off = ((db_expr_t)((inst & 0x0000fffc) << 16)) >> 16;
+		return (((inst & 0x2) ? 0 : pc) + off);
+	}
+
+	if ((inst & M_RTS) == I_RTS || (inst & M_RTS) == I_BLRL)
+		return (regs->lr);
+
+	if ((inst & M_BCTR) == I_BCTR || (inst & M_BCTR) == I_BCTRL)
+		return (regs->ctr);
+
+	db_printf("branch_taken: can't figure out branch target for 0x%x!\n",
+	    inst);
+	return (0);
+}
+
 const struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ppc4xx_ctx,		0,	0 },
 	{ "pv",		db_ppc4xx_pv,		0,	0 },
