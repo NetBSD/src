@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.11 2003/12/25 03:19:53 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.12 2003/12/25 03:44:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,10 +147,12 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 			// inquire current options.
 			menu.get_options();
 			if (menu._pref.safety_message) {
+				UINT mb_icon = menu._pref.pause_before_boot ?
+					MB_ICONQUESTION : MB_ICONWARNING;
 				if (MessageBox(_window,
 				    TEXT("Data in memory will be lost.\nAre you sure?"),
 				    TEXT("WARNING"),
-				    MB_ICONQUESTION | MB_YESNO) != IDYES)
+				    mb_icon | MB_YESNO) != IDYES)
 					break;
 				UpdateWindow(w);
 			}
