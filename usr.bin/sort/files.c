@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.12 2001/01/13 17:27:21 itojun Exp $	*/
+/*	$NetBSD: files.c,v 1.13 2001/01/13 20:10:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.12 2001/01/13 17:27:21 itojun Exp $");
+__RCSID("$NetBSD: files.c,v 1.13 2001/01/13 20:10:52 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 	u_char *bufend;
 	struct field *dummy2;
 {
-	static size_t olen;
+	static char *opos;
 	char *pos;
 	static int fileno = 0, overflow = 0;
 	static FILE *fp = 0;
@@ -141,7 +141,8 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 
 	pos = (char *) buffer->data;
 	if (overflow) {
-		pos += olen;
+		memmove(pos, opos, bufend - (u_char *) opos);
+		pos += ((char *)bufend - opos);
 		overflow = 0;
 	}
 	for (;;) {
@@ -164,8 +165,7 @@ makeline(flno, top, filelist, nfiles, buffer, bufend, dummy2)
 		if (pos >= (char *)bufend) {
 			if (buffer->data < bufend) {
 				overflow = 1;
-				olen = (size_t) (((char *) bufend) - 
-						((char *) buffer->data));
+				opos = (char *)buffer->data;
 			}
 			return (BUFFEND);
 		} else if (c == EOF) {
