@@ -1,5 +1,5 @@
 /*
-**	$Id: paths.h,v 1.2 1994/02/04 23:18:03 cgd Exp $
+**	$NetBSD: paths.h,v 1.3 1996/08/30 17:41:41 thorpej Exp $
 **
 ** paths.h		Common path definitions for the in.identd daemon
 **

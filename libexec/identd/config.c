@@ -1,5 +1,5 @@
 /*
-**	$Id: config.c,v 1.2 1994/02/04 23:17:50 cgd Exp $
+**	$NetBSD: config.c,v 1.3 1996/08/30 17:41:30 thorpej Exp $
 **
 ** config.c                         This file handles the config file
 **
