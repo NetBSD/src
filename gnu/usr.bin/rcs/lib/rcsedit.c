@@ -36,7 +36,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(editId, "$Id: rcsedit.c,v 1.2 1993/08/02 17:47:20 mycroft Exp $")
+libId(editId, "$Id: rcsedit.c,v 1.3 1994/06/29 05:26:36 mycroft Exp $")
 
 static void keyreplace P((enum markers,struct hshentry const*,FILE*));
 
@@ -841,10 +841,13 @@ keyreplace(marker,delta,out)
         case Date:
 		aputs(date2str(date,datebuf), out);
                 break;
-        case Id:
 	case Header:
+        case Id:
+#ifdef NETBSD_DEVELOPMENT
+	case NetBSDH:
+#endif
 		aprintf(out, "%s %s %s %s %s",
-			  marker==Id || RCSv<VERSION(4)
+			  marker!=Header || RCSv<VERSION(4)
 			? basename(RCSfilename)
 			: getfullRCSname(),
 			delta->num,
