@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.70 1999/09/21 12:57:51 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.71 1999/09/21 13:17:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.70 1999/09/21 12:57:51 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.71 1999/09/21 13:17:22 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1083,7 +1083,8 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			struct timeval then, now, td;
 			off_t bufrem;
 
-			(void)gettimeofday(&then, NULL);
+			if (rate_get)
+				(void)gettimeofday(&then, NULL);
 			bufrem = rate_get ? rate_get : BUFSIZ;
 			while (bufrem > 0) {
 				len = fread(buf, sizeof(char),

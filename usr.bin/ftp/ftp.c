@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.61 1999/09/14 22:49:14 mycroft Exp $	*/
+/*	$NetBSD: ftp.c,v 1.62 1999/09/21 13:17:22 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.61 1999/09/14 22:49:14 mycroft Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.62 1999/09/21 13:17:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,12 +125,20 @@ union sockunion {
 #endif
 		u_short si_port;
 #ifndef BSD4_4
-		u_char  si_pad[sizeof(struct sockaddr_in6) - sizeof(u_int)];
+		u_char  si_pad[
+#ifdef INET6
+				sizeof(struct sockaddr_in6)
+#else
+				sizeof(struct sockaddr_in)
+#endif
+				- sizeof(u_int)];
 		u_char	si_len;
 #endif
 	} su_si;
 	struct sockaddr_in  su_sin;
+#ifdef INET6
 	struct sockaddr_in6 su_sin6;
+#endif
 };
 
 #define su_len		su_si.si_len
@@ -795,7 +803,8 @@ sendrequest(cmd, local, remote, printnames)
 			off_t bufrem, bufsize;
 
 			bufsize = sizeof(buf);
-			(void)gettimeofday(&then, NULL);
+			if (rate_put)
+				(void)gettimeofday(&then, NULL);
 			errno = c = d = 0;
 			bufrem = rate_put ? rate_put : bufsize;
 			while (bufrem > 0) {
@@ -1150,7 +1159,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			struct timeval then, now, td;
 			off_t bufrem;
 
-			(void)gettimeofday(&then, NULL);
+			if (rate_get)
+				(void)gettimeofday(&then, NULL);
 			errno = c = d = 0;
 			bufrem = rate_get ? rate_get : bufsize;
 			while (bufrem > 0) {
@@ -1347,11 +1357,13 @@ initconn()
 	u_int af, hal, pal;
 	char *pasvcmd = NULL;
 
+#ifdef INET6
 	if (myctladdr.su_family == AF_INET6
 	 && (IN6_IS_ADDR_LINKLOCAL(&myctladdr.su_sin6.sin6_addr)
 	  || IN6_IS_ADDR_SITELOCAL(&myctladdr.su_sin6.sin6_addr))) {
 		warnx("use of scoped address can be troublesome");
 	}
+#endif
 reinit:
 	if (passivemode) {
 		data_addr = myctladdr;
@@ -1383,6 +1395,7 @@ reinit:
 			if (result != COMPLETE)
 				result = command(pasvcmd = "PASV");
 			break;
+#ifdef INET6
 		case AF_INET6:
 			result = command(pasvcmd = "EPSV");
 			/* this code is to be friendly with broken BSDI ftpd */
@@ -1395,6 +1408,7 @@ reinit:
 			if (result != COMPLETE)
 				result = command(pasvcmd = "LPSV");
 			break;
+#endif
 		default:
 			result = COMPLETE + 1;
 			break;
@@ -1485,6 +1499,7 @@ reinit:
 					htonl(pack4(addr, 0));
 				data_addr.su_port = htons(pack2(port, 0));
 				break;
+#ifdef INET6
 			case AF_INET6:
 				error = sscanf(pasv,
 "%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",
@@ -1522,6 +1537,7 @@ reinit:
 			    }
 				data_addr.su_port = htons(pack2(port, 0));
 				break;
+#endif
 			default:
 				error = 1;
 			}
