@@ -22,6 +22,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 
 #include "defs.h"
 #include "inferior.h"
@@ -87,6 +88,50 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
   memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
 	  &core_reg->freg, sizeof (struct fpreg));
 }
+
+#ifdef	FETCH_KCORE_REGISTERS
+/*
+ * Get registers from a kernel crash dump or live kernel.
+ * Called by kcore-nbsd.c:get_kcore_registers().
+ */
+void
+fetch_kcore_registers (pcb)
+     struct pcb *pcb;
+{
+  int i, *ip, tmp=0;
+
+  /* D0,D1 */
+  ip = &tmp;
+  supply_register(0, (char *)ip);
+  supply_register(1, (char *)ip);
+  /* D2-D7 */
+  ip = &pcb->pcb_regs[0];
+  for (i = 2; i < 8; i++, ip++)
+    supply_register(i, (char *)ip);
+
+  /* A0,A1 */
+  ip = &tmp;
+  supply_register(8, (char *)ip);
+  supply_register(9, (char *)ip);
+  /* A2-A7 */
+  ip = &pcb->pcb_regs[6];
+  for (i = 10; i < 16; i++, (char *)ip++)
+    supply_register(i, (char *)ip);
+
+  /* PS (sr) */
+  tmp = pcb->pcb_ps & 0xFFFF;
+  supply_register(PS_REGNUM, (char *)&tmp);
+
+  /* PC (use return address) */
+  tmp = pcb->pcb_regs[10] + 4;
+  if (target_read_memory(tmp, (char *)&tmp, sizeof(tmp)))
+    tmp = 0;
+  supply_register(PC_REGNUM, (char *)&tmp);
+
+  /* The kernel does not use the FPU, so ignore it. */
+  registers_fetched ();
+}
+#endif	/* FETCH_KCORE_REGISTERS */
 
 /* Register that we are able to handle m68knbsd core file formats.
    FIXME: is this really bfd_target_unknown_flavour? */
