@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.33 1995/06/04 23:21:35 pk Exp $
+ *	$Id: rtld.c,v 1.34 1995/06/05 00:08:38 pk Exp $
  */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@
 #define MAP_COPY	MAP_PRIVATE
 #endif
 #include <err.h>
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <a.out.h>
 #include <stab.h>
@@ -167,6 +168,9 @@ static struct ld_entry	ld_entry = {
 };
 
        void		xprintf __P((char *, ...));
+       int		rtld __P((int, struct crt_ldso *, struct _dynamic *));
+       void		binder_entry __P((void));
+       long		binder __P((jmpslot_t *));
 static void		load_objects __P((	struct crt_ldso *,
 						struct _dynamic *));
 static struct so_map	*map_object __P((struct sod *, struct so_map *));
@@ -180,8 +184,6 @@ static void		reloc_map __P((struct so_map *));
 static void		reloc_copy __P((struct so_map *));
 static void		init_map __P((struct so_map *, char *));
 static char		*rtfindlib __P((char *, int, int, int *, char *));
-void			binder_entry __P((void));
-long			binder __P((jmpslot_t *));
 static struct nzlist	*lookup __P((char *, struct so_map **, int));
 static inline struct rt_symbol	*lookup_rts __P((char *));
 static struct rt_symbol	*enter_rts __P((char *, long, int, caddr_t,
@@ -208,9 +210,9 @@ strcmp (register const char *s1, register const char *s2)
  */
 int
 rtld(version, crtp, dp)
-int			version;
-struct crt_ldso		*crtp;
-struct _dynamic		*dp;
+	int			version;
+	struct crt_ldso		*crtp;
+	struct _dynamic		*dp;
 {
 	int			n;
 	int			nreloc;		/* # of ld.so relocations */
@@ -334,8 +336,8 @@ struct _dynamic		*dp;
 
 static void
 load_objects(crtp, dp)
-struct crt_ldso	*crtp;
-struct _dynamic	*dp;
+	struct crt_ldso	*crtp;
+	struct _dynamic	*dp;
 {
 	struct so_map	*smp;
 	int		tracing = (int)getenv("LD_TRACE_LOADED_OBJECTS");
@@ -557,9 +559,9 @@ again:
 
 static inline void
 check_text_reloc(r, smp, addr)
-struct relocation_info	*r;
-struct so_map		*smp;
-caddr_t			addr;
+	struct relocation_info	*r;
+	struct so_map		*smp;
+	caddr_t			addr;
 {
 	char	*sym;
 
@@ -704,7 +706,7 @@ init_map(smp, sym)
 
 	np = lookup(sym, &src_map, 1);
 	if (np)
-		(*(void (*)())(src_map->som_addr + np->nz_value))();
+		(*(void (*) __P((void)))(src_map->som_addr + np->nz_value))();
 }
 
 /*
