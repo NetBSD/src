@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.37 2004/04/30 22:07:21 dyoung Exp $	*/
+/*	$NetBSD: bpf.h,v 1.38 2004/05/29 08:56:19 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -134,6 +134,7 @@ struct bpf_version {
 #define BIOCGDLTLIST	_IOWR('B',119, struct bpf_dltlist)
 #define BIOCGSEESENT	 _IOR('B',120, u_int)
 #define BIOCSSEESENT	 _IOW('B',121, u_int)
+#define BIOCMMAPINFO	_IOWR('B',122, struct bpf_mmapinfo)
 
 /*
  * Structure prepended to each packet.
@@ -244,6 +245,20 @@ struct bpf_insn {
 struct bpf_dltlist {
 	u_int	bfl_len;	/* number of bfd_list array */
 	u_int	*bfl_list;	/* array of DLTs */
+};
+
+/*
+ * Structure to pass information for use with mmap'd regions
+ */
+typedef enum bpf_mmapops {
+	BPM_RELEASE = 0,
+	BPM_ACQUIRE
+} bpf_mmapops_t;
+
+struct bpf_mmapinfo {
+	bpf_mmapops_t	bpm_op;		/* operation to perform */
+	int		bpm_which;	/* which buffer is ready */
+	int		bpm_len;	/* # of bytes ready to process */
 };
 
 #ifdef _KERNEL
