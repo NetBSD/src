@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.18 1997/05/21 22:26:38 pk Exp $	*/
+/*	$NetBSD: umount.c,v 1.19 1997/09/15 11:34:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: umount.c,v 1.18 1997/05/21 22:26:38 pk Exp $";
+__RCSID("$NetBSD: umount.c,v 1.19 1997/09/15 11:34:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,9 @@ char	*nfshost;
 
 char	*getmntname __P((char *, mntwhat, char *));
 void	 maketypelist __P((char *));
-int	 selected __P((const char *));
+int	 main __P((int, char *[]));
 int	 namematch __P((struct hostent *));
+int	 selected __P((const char *));
 int	 umountall __P((void));
 int	 umountfs __P((char *));
 void	 usage __P((void));
@@ -93,7 +94,7 @@ main(argc, argv)
 	sync();
 
 	all = 0;
-	while ((ch = getopt(argc, argv, "aFfh:t:v")) != EOF)
+	while ((ch = getopt(argc, argv, "aFfh:t:v")) != -1)
 		switch (ch) {
 		case 'a':
 			all = 1;
@@ -123,7 +124,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0 && !all || argc != 0 && all)
+	if ((argc == 0 && !all) || (argc != 0 && all))
 		usage();
 
 	/* -h implies "-t nfs" if no -t flag. */
@@ -148,7 +149,7 @@ umountall()
 
 	n = getmntinfo(&fs, MNT_NOWAIT);
 	if (n == 0)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	rval = 0;
 	while (--n >= 0) {
@@ -179,6 +180,8 @@ umountfs(name)
 	char *delimp, *hostp, *mntpt, rname[MAXPATHLEN], type[MFSNAMELEN];
 	mntwhat what;
 
+	hp = NULL;
+	delimp = NULL;
 	if (realpath(name, rname) == NULL) {
 		warn("%s", rname);
 		return (1);
@@ -347,14 +350,18 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	/* Count the number of types. */
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+	for (i = 1, nextcp = fslist;
+	    (nextcp = strchr(nextcp, ',')) != NULL;
+	    i++)
 		++nextcp;
 
 	/* Build an array of that many types. */
 	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	av[0] = fslist;
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+	for (i = 1, nextcp = fslist;
+	    (nextcp = strchr(nextcp, ',')) != NULL;
+	    i++) {
 		*nextcp = '\0';
 		av[i] = ++nextcp;
 	}
