@@ -1,5 +1,5 @@
 /*
- * $Id: etc.c,v 1.1 1993/10/16 21:52:27 pk Exp $
+ * $Id: etc.c,v 1.2 1993/10/21 00:52:52 pk Exp $
  */
 
 #include <sys/param.h>
@@ -186,7 +186,7 @@ mywrite (buf, count, eltsize, desc)
 	while (bytes > 0) {
 		val = write (desc, buf, bytes);
 		if (val <= 0)
-			perror_name (output_filename);
+			perror(output_filename);
 		buf += val;
 		bytes -= val;
 	}
