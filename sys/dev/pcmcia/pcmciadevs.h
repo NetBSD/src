@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.41 1999/06/23 10:41:08 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.42 1999/07/14 22:24:07 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.37 1999/06/23 10:36:19 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.39 1999/07/14 22:13:27 sommerfeld Exp 
  */
 
 /*-
@@ -62,6 +62,7 @@
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
+#define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
@@ -193,6 +194,11 @@
 #define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288	0x0100
 #define	PCMCIA_STR_SIMPLETECH_COMMUNICATOR288	"Simple Technology 28.8 Communicator"
+/* Simpletech ID also used by Symbol */
+#define	PCMCIA_CIS_SIMPLETECH_SPECTRUM24	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24	0x801
+#define	PCMCIA_STR_SIMPLETECH_SPECTRUM24	"Symbol Spectrum24 WLAN Adapter"
+
 
 /* Socket Communications Products */
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }
@@ -239,6 +245,11 @@
 #define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
 #define	PCMCIA_STR_SMC_EZCARD	"SMC EXCard 10 PCMCIA"
+
+/* Lucent WaveLAN/IEEE */
+#define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE	0x0002
+#define	PCMCIA_STR_LUCENT_WAVELAN_IEEE	"WaveLAN/IEEE"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
