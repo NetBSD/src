@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.16 2001/08/16 16:52:36 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.17 2001/08/16 16:56:25 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -226,3 +226,8 @@ sys/dev/tc/xcfb.c				1.23
 sys/net/if_ppp.c				1.71
 
   Use unsigned variable types to make bounds checking more correct.
+
+sbin/disklabel/disklabel.c			1.97
+
+  Make disklabel viewing work on platforms that use MBR, for devices
+  without a valid MBR (such as CD-ROMs).
