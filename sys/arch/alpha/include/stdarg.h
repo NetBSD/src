@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.8 1998/07/27 13:55:32 mycroft Exp $ */
+/* $NetBSD: stdarg.h,v 1.9 1999/05/03 16:30:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,6 +43,7 @@
 #ifdef __lint__
 #define	__builtin_saveregs()		(0)
 #define	__builtin_classify_type(t)	(0)
+#define	__builtin_next_arg(t)		((t) ? 0 : 0)
 #endif
 
 typedef _BSD_VA_LIST_	va_list;
