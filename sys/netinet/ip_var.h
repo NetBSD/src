@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.60 2003/11/17 21:34:27 jonathan Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.61 2003/11/25 14:44:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -264,7 +264,7 @@ ip_newid(void)
 {
 #ifdef RANDOM_IP_ID
 	if (ip_do_randomid)
-	    return ip_randomid();
+		return ip_randomid();
 #endif	/* RANDOM_IP_ID */
 
 	return htons(ip_id++);
