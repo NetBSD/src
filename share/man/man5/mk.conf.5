@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.23 2005/03/12 16:13:38 salo Exp $
+.\"	$NetBSD: mk.conf.5,v 1.24 2005/03/13 09:37:06 wiz Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -79,10 +79,14 @@ Unset.
 .Bl -tag -width MKDYNAMICROOT
 .
 .It Sy NETBSDSRCDIR
-The path to the top level of the NetBSD sources.
+The path to the top level of the
+.Nx
+sources.
 If
 .Xr make 1
-is run from within the NetBSD source tree, the default is the top
+is run from within the
+.Nx
+source tree, the default is the top
 level of that tree (as determined by the presence of
 .Pa build.sh
 and
@@ -94,12 +98,16 @@ will be used.
 .It Sy BSDOBJDIR
 The real path to the
 .Sq obj
-tree for the NetBSD source tree.
+tree for the
+.Nx
+source tree.
 .DFLT
 .Pa /usr/obj
 .
 .It Sy BSDSRCDIR
-The real path to the NetBSD source tree.
+The real path to the
+.Nx
+source tree.
 .DFLT
 .Pa /usr/src
 .
@@ -172,7 +180,7 @@ upon them (such as the binutils,
 .Xr ld 1 ,
 .Xr dbsym 8 ,
 or
-.Xr mdsetimage 8)
+.Xr mdsetimage 8 )
 should be built.
 .DFLTy
 .
@@ -199,19 +207,19 @@ acts as
 .It Sy MKCRYPTO_IDEA
 .YorN
 Indicates whether IDEA support will be built into
-.Sy libcrypto_idea.a.
+.Sy libcrypto_idea.a .
 .DFLTn
 .
 .It Sy MKCRYPTO_MDC2
 .YorN
 Indicates whether MDC2 support will be built into
-.Sy libcrypto_mdc2.a.
+.Sy libcrypto_mdc2.a .
 .DFLTn
 .
 .It Sy MKCRYPTO_RC5
 .YorN
 Indicates whether RC5 support will be built into
-.Sy libcrypto_rc5.a.
+.Sy libcrypto_rc5.a .
 .DFLTn
 .
 .It Sy MKCVS
@@ -278,7 +286,9 @@ then for programs intended to be run on the compile host,
 the name, release, and architecture of the host operating system
 will be suffixed to the name of the object directory created by
 .Dq make obj .
-(This allows multiple host systems to compile NetBSD for a single target.)
+(This allows multiple host systems to compile
+.Nx
+for a single target.)
 If set to
 .Dq no ,
 then programs built to be run on the compile host will use the same
@@ -305,7 +315,7 @@ build.
 .
 .It Sy MKIPFILTER
 .YorN
-Indicates wether the 
+Indicates wether the
 .Xr ipf 4
 programs, headers and LKM will be compiled and installed during a build.
 .DFLTy
