@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.3 1997/02/24 01:37:52 jeremy Exp $	*/
+/*	$NetBSD: dvma.c,v 1.4 1997/10/07 16:51:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -272,4 +272,25 @@ dvma_mapout(dvma_addr, len)
 	rmfree(dvmamap, btoc(len), btoc(kva));
 	wakeup(dvmamap);
 	splx(s);
+}
+
+/*
+ * Allocate actual memory pages in DVMA space.
+ * (For sun3 compatibility - the ie driver.)
+ */
+void *
+dvma_malloc(bytes)
+	size_t bytes;
+{
+	void *new_mem, *dvma_mem;
+	vm_size_t new_size;
+
+	if (!bytes)
+		return NULL;
+	new_size = m68k_round_page(bytes);
+	new_mem = (void*)kmem_alloc(kernel_map, new_size);
+    if (!new_mem)
+		return NULL;
+	dvma_mem = dvma_mapin(new_mem, new_size, 1);
+	return (dvma_mem);
 }
