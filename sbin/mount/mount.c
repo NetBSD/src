@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.67 2003/09/19 08:29:58 itojun Exp $	*/
+/*	$NetBSD: mount.c,v 1.68 2004/03/27 06:11:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.67 2003/09/19 08:29:58 itojun Exp $");
+__RCSID("$NetBSD: mount.c,v 1.68 2004/03/27 06:11:48 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,15 @@ main(argc, argv)
 					continue;
 				if (hasopt(fs->fs_mntops, "noauto"))
 					continue;
-				if (mountfs(fs->fs_vfstype, fs->fs_spec,
+				if (strcmp(fs->fs_spec, "from_mount") == 0) {
+					if ((mntbuf = getmntpt(fs->fs_file)) == NULL)
+						errx(1,
+						    "unknown file system %s.",
+						    fs->fs_file);
+					mntfromname = mntbuf->f_mntfromname;
+				} else
+					mntfromname = fs->fs_spec;
+				if (mountfs(fs->fs_vfstype, mntfromname,
 				    fs->fs_file, init_flags, options,
 				    fs->fs_mntops, !forceall, NULL, 0))
 					rval = 1;
@@ -199,12 +207,13 @@ main(argc, argv)
 				errx(1,
 				    "unknown special file or file system %s.",
 				    *argv);
+			mntfromname = mntbuf->f_mntfromname;
 			if ((fs = getfsfile(mntbuf->f_mntonname)) != NULL) {
-				mntfromname = fs->fs_spec;
+				if (strcmp(fs->fs_spec, "from_mount") != 0)
+					mntfromname = fs->fs_spec;
 				/* ignore the fstab file options.  */
 				fs->fs_mntops = NULL;
-			} else
-				mntfromname = mntbuf->f_mntfromname;
+			}
 			mntonname  = mntbuf->f_mntonname;
 			fstypename = mntbuf->f_fstypename;
 			mountopts  = NULL;
@@ -217,7 +226,14 @@ main(argc, argv)
 			if (BADTYPE(fs->fs_type))
 				errx(1, "%s has unknown file system type.",
 				    *argv);
-			mntfromname = fs->fs_spec;
+			if (strcmp(fs->fs_spec, "from_mount") == 0) {
+				if ((mntbuf = getmntpt(*argv)) == NULL)
+					errx(1,
+					    "unknown special file or file system %s.",
+					    *argv);
+				mntfromname = mntbuf->f_mntfromname;
+			} else
+				mntfromname = fs->fs_spec;
 			mntonname   = fs->fs_file;
 			fstypename  = fs->fs_vfstype;
 			mountopts   = fs->fs_mntops;
