@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.7 1998/02/18 14:50:32 drochner Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.8 1998/02/24 15:58:09 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -431,7 +431,8 @@ register vm_offset_t	end;
  *	 [4] <uobj,UVM_UNKNOWN_OFFSET>	== uvm_map finds offset based on VA
  *	
  *    case [4] is for kernel mappings where we don't know the offset until
- *    we've found a virtual address.
+ *    we've found a virtual address.   note that kernel object offsets are
+ *    always relative to vm_map_min(kernel_map).
  * => XXXCDC: need way to map in external amap?
  */
 
@@ -518,8 +519,13 @@ uvm_flag_t flags;
   if (uobj == NULL) {
     uoffset = 0;
   } else {
-    if (uoffset == UVM_UNKNOWN_OFFSET)
-      uoffset = *startp - vm_map_min(map);
+    if (uoffset == UVM_UNKNOWN_OFFSET) {
+#ifdef DIAGNOSTIC
+      if (uobj->uo_refs != UVM_OBJ_KERN)
+	panic("uvm_map: unknown offset with non-kernel object");
+#endif
+      uoffset = *startp - vm_map_min(kernel_map);
+    }
   }
 
   /*
@@ -1017,10 +1023,12 @@ vm_map_entry_t *entry_list;	/* OUT */
 #endif
 
       /*
-       * remove pages from kernel object
+       * remove pages from a kernel object (offsets are always relative
+       * to vm_map_min(kernel_map)).
        */
-      uvm_km_pgremove(entry->object.uvm_obj, entry->start - vm_map_min(map),
-		      entry->end - vm_map_min(map));
+      uvm_km_pgremove(entry->object.uvm_obj, 
+		      entry->start - vm_map_min(kernel_map),
+		      entry->end - vm_map_min(kernel_map));
 
       already_removed = TRUE;
 
