@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.10 1999/08/24 00:46:12 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.11 1999/09/07 07:41:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2760,7 +2760,8 @@ key_mature(sa)
 			printf("key_mature: protocol and algorithm mismated.\n");
 			return(EINVAL);
 		}
-		if (ntohl(sa->spi) >= 0x10000) {
+		if ((sa->flags & SADB_X_EXT_RAWCPI) == 0
+		 && ntohl(sa->spi) >= 0x10000) {
 			printf("key_mature: invalid cpi for IPComp.\n");
 			return(EINVAL);
 		}
