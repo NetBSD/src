@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.55 1995/01/30 11:47:56 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.56 1995/01/30 11:50:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -775,7 +775,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPAUSE:
 		return cd_pause(cd, 0);
 	case CDIOCSTART:
-		return scsi_start(cd->sc_link, SSS_START|SSS_LOEJ, 0);
+		return scsi_start(cd->sc_link, SSS_START, 0);
 	case CDIOCSTOP:
 		return scsi_start(cd->sc_link, SSS_STOP, 0);
 	case CDIOCEJECT:
