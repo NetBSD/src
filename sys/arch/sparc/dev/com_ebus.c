@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.7 2002/10/02 16:02:14 thorpej Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.8 2002/10/08 18:00:46 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,12 +45,9 @@
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
-#include <dev/pci/pcireg.h>	/* XXX: for PCI_INTERRUPT_PIN */
-
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
-#include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
