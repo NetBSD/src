@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1999/09/13 10:31:15 itojun Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2000/01/25 22:13:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ typedef	u_long bus_space_handle_t;
  */
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 int bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t size,
 	int, bus_space_handle_t *));
