@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2002/03/03 14:28:50 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2002/03/04 02:19:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/user.h>
 
 #include <sys/reboot.h>
@@ -411,7 +412,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
