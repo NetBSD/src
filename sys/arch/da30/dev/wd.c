@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.2 1994/06/18 12:10:20 paulus Exp $
+ *	$Id: wd.c,v 1.3 1994/07/08 12:02:35 paulus Exp $
  */
 
 #include "wd.h"
@@ -293,8 +293,8 @@ struct wfcsoftc {
     volatile struct wdc *wfc_adr;
     int			wfc_active;
     int			wfc_errcnt;
-    struct buf		*wfc_actf;
-    struct buf		*wfc_actl;
+    struct wfdsoftc	*wfc_actf;
+    struct wfdsoftc	*wfc_actl;
 };
 
 struct cfdriver wfccd = {
@@ -349,6 +349,7 @@ void fdattach __P((struct device *, struct device *, void *));
 struct wfdsoftc {
     struct device	wfd_dev;
     struct disk		wfd_drive;
+    struct wfdsoftc	*wfd_actf;
     struct buf		wfd_utab;
     struct dkbad	wfd_bad;
     struct evcnt	wfd_xfer;
@@ -515,12 +516,12 @@ register struct wfdsoftc *dv;
 	bp = dp->b_actf;
 	if (bp == NULL)
 		return;	
-	dp->b_actf = NULL;
+	dv->wfd_actf = NULL;
 	if (wfp->wfc_actf == NULL)  /* link unit into active list */
-		wfp->wfc_actf = dp;
+		wfp->wfc_actf = dv;
 	else
-		wfp->wfc_actl->b_actf = dp;
-	wfp->wfc_actl = dp;
+		wfp->wfc_actl->wfd_actf = dv;
+	wfp->wfc_actl = dv;
 	dp->b_active = 1;		/* mark the drive as busy */
 }
 
@@ -545,12 +546,13 @@ struct wfcsoftc *wfp;
 	int	unit, s;
 
 loop:
-	dp = wfp->wfc_actf;
+	dv = wfp->wfc_actf;
 	if (dp == NULL)
 		return;
+	dp = &dv->wfd_utab;
 	bp = dp->b_actf;
 	if (bp == NULL) {
-		wfp->wfc_actf = dp->b_actf;
+		wfp->wfc_actf = dv->wfd_actf;
 		goto loop;
 	}
 	unit = wdunit(bp->b_dev);
@@ -723,9 +725,9 @@ int unit;
 #ifdef	WDDEBUG
 	printf("I ");
 #endif
-	dp = wfp->wfc_actf;
+	dv = wfp->wfc_actf;
+	dp = &dv->wfd_utab;
 	bp = dp->b_actf;
-	dv = (struct wfdsoftc *) wd_cfd(bp->b_dev)->cd_devs[wdunit(bp->b_dev)];
 	du = &dv->wfd_drive;
 	partch = wdpart(bp->b_dev) + 'a';
 	secsize = du->dk_dd.d_secsize;
@@ -881,13 +883,13 @@ struct wfcsoftc *wfp;
 	register struct	disk *du;
 	register struct buf *bp, *dp;
 
-	dp = wfp->wfc_actf;
+	dv = wfp->wfc_actf;
+	dp = &dv->wfd_utab;
 	bp = dp->b_actf;
-	dv = (struct wfdsoftc *) wd_cfd(bp->b_dev)->cd_devs[wdunit(bp->b_dev)];
 	du = &dv->wfd_drive;
 
 	du->dk_skip = 0;
-	wfp->wfc_actf = dp->b_actf;
+	wfp->wfc_actf = dv->wfd_actf;
 	wfp->wfc_errcnt = 0;
 	wfp->wfc_active = 0;
 	dp->b_actf = bp->b_actf;
@@ -1368,9 +1370,8 @@ wdformat(bp)
 }
 #endif
 
-wdsize(dev, blksize)
+wdsize(dev)
 	dev_t dev;
-	int *blksize;
 {
 	register unit = wdunit(dev);
 	register part = wdpart(dev);
@@ -1387,7 +1388,6 @@ wdsize(dev, blksize)
 		if (val < 0)
 			return (-1);
 	}
-	*blksize = du->dk_dd.d_secsize;
 	return du->dk_dd.d_partitions[part].p_size;
 }
 

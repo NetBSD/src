@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: id.c,v 1.2 1994/06/18 12:10:16 paulus Exp $
+ *	$Id: id.c,v 1.3 1994/07/08 12:02:28 paulus Exp $
  */
 
 #include "id.h"
@@ -51,6 +51,7 @@
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <vm/vm.h>
 #include <machine/cpu.h>
 #include <da30/da30/iio.h>
@@ -109,12 +110,19 @@ struct	disk {
 	u_long  dk_openpart;    /* all units open on this drive */
 	short	dk_wlabel;	/* label writable? */
 	int	dk_flags;
+	int	dk_idle;	/* how long since we did anything */
 	struct disklabel dk_dd;	/* device configuration data */
 };
 
 /* Values for flags */
 #define NO_LABEL	1	/* don't look for label on disk */
 #define NO_BADSECT	2	/* don't look for bad sector table */
+#define STOPPED		4	/* disk has been put in standby mode */
+#define TIMINGOUT	8	/* have 10s timeout running */
+
+#define B_STOP		0x10000000
+
+int id_idle_timeout = 60;	/* 10 minutes */
 
 /*
  * This label is used as a default when initializing a new or raw disk.
@@ -164,8 +172,8 @@ struct idcsoftc {
     volatile struct idc *idc_adr;
     int			idc_active;
     int			idc_errcnt;
-    struct buf		*idc_actf;
-    struct buf		*idc_actl;
+    struct idsoftc	*idc_actf;
+    struct idsoftc	*idc_actl;
 };
 
 struct cfdriver idccd = {
@@ -224,6 +232,7 @@ void idattach __P((struct device *, struct device *, void *));
 struct idsoftc {
     struct device	id_dev;
     struct disk		id_drive;
+    struct idsoftc	*id_actf;
     struct buf		id_utab;
     struct buf		id_rbuf;
     struct dkbad	id_bad;
@@ -367,12 +376,12 @@ idustart(dv)
     bp = dp->b_actf;
     if (bp == NULL)
 	return;	
-    dp->b_actf = NULL;
+    dv->id_actf = NULL;
     if (cv->idc_actf  == NULL)	/* link unit into active list */
-	cv->idc_actf = dp;
+	cv->idc_actf = dv;
     else
-	cv->idc_actl->b_actf = dp;
-    cv->idc_actl = dp;
+	cv->idc_actl->id_actf = dv;
+    cv->idc_actl = dv;
     dp->b_active = 1;		/* mark the drive as busy */
 }
 
@@ -397,17 +406,29 @@ idstart(cv)
     int	unit, s;
 
  loop:
-    dp = cv->idc_actf;
-    if (dp == NULL)
+    dv = cv->idc_actf;
+    if (dv == NULL)
 	return;
+    dp = &dv->id_utab;
     bp = dp->b_actf;
     if (bp == NULL) {
-	cv->idc_actf = dp->b_actf;
+	cv->idc_actf = dv->id_actf;
 	goto loop;
     }
     unit = idunit(bp->b_dev);
-    dv = (struct idsoftc *) idcd.cd_devs[unit];
     du = &dv->id_drive;
+    if (bp->b_flags & B_STOP) {
+	idc->sdh = du->dk_sdh;
+	if( (idc->csr & IDCS_READY) == 0 ){
+	    dp->b_actf = bp->b_actf;
+	    goto loop;
+	}
+	idc->csr = IDCC_STANDBY;
+	cv->idc_active = 1;
+	return;
+    }
+    du->dk_idle = 0;
+    du->dk_flags &= ~STOPPED;
     if (DISKSTATE(du->dk_state) <= RDLABEL) {
 	if (idcontrol(bp)) {
 	    dp->b_actf = bp->b_actf;
@@ -568,9 +589,9 @@ idintr(unit)
 #ifdef	IDDEBUG
     printf("I ");
 #endif
-    dp = cv->idc_actf;
+    dv = cv->idc_actf;
+    dp = &dv->id_utab;
     bp = dp->b_actf;
-    dv = (struct idsoftc *) idcd.cd_devs[idunit(bp->b_dev)];
     du = &dv->id_drive;
     partch = idpart(bp->b_dev) + 'a';
     secsize = du->dk_dd.d_secsize;
@@ -578,6 +599,10 @@ idintr(unit)
 	if (idcontrol(bp))
 	    goto done;
 	return 1;
+    }
+    if (bp->b_flags & B_STOP) {
+	du->dk_flags |= STOPPED;
+	goto done;
     }
 
     if( (status & (IDCS_ERR | IDCS_ECCCOR)) != 0 ){
@@ -723,13 +748,13 @@ iddone(cv)
     register struct disk *du;
     register struct buf *bp, *dp;
 
-    dp = cv->idc_actf;
+    dv = cv->idc_actf;
+    dp = &dv->id_utab;
     bp = dp->b_actf;
-    dv = (struct idsoftc *) idcd.cd_devs[idunit(bp->b_dev)];
     du = &dv->id_drive;
 
     du->dk_skip = 0;
-    cv->idc_actf = dp->b_actf;
+    cv->idc_actf = dv->id_actf;
     cv->idc_errcnt = 0;
     cv->idc_active = 0;
     dp->b_actf = bp->b_actf;
@@ -739,6 +764,34 @@ iddone(cv)
     biodone(bp);
     if (dp->b_actf)
 	idustart(dv);		/* requeue disk if more io to do */
+}
+
+void
+ididletimer(arg)
+    void *arg;
+{
+    register struct idsoftc *dv = (struct idsoftc *) arg;
+    register struct disk *du = &dv->id_drive;
+    register struct buf *bp;
+    struct idcsoftc *cv;
+    int s;
+
+    timeout(ididletimer, arg, 10*hz);
+    s = splbio();
+    if (++du->dk_idle >= id_idle_timeout && !(du->dk_flags & STOPPED)
+	&& !dv->id_utab.b_active && dv->id_utab.b_actf == NULL) {
+	bp = &dv->id_rbuf;
+	bp->b_dev = du->dk_unit << 3;
+	bp->b_flags = B_STOP | B_READ;
+	bp->b_actf = NULL;
+	dv->id_utab.b_actf = bp;
+	idustart(dv);
+	cv = (struct idcsoftc *) dv->id_dev.dv_parent;
+	if (!cv->idc_active)
+	    idstart(cv);
+    }
+    splx(s);
+    return;
 }
 
 /*
@@ -792,6 +845,11 @@ idopen(dev, flags, fmt, p)
      */
     du->dk_dd = dflt_sizes;
     idsetsdh(du);
+
+    if (!(du->dk_flags & TIMINGOUT)) {
+	du->dk_flags |= TIMINGOUT;
+	timeout(ididletimer, (void *) dv, 10*hz);
+    }
 
     /*
      * Recal, read of disk label will be done in idcontrol
@@ -1174,9 +1232,8 @@ idformat(bp)
 #endif
 
 int
-idsize(dev, blksize)
+idsize(dev)
     dev_t dev;
-    int *blksize;
 {
     register unit = idunit(dev);
     register part = idpart(dev);
@@ -1194,7 +1251,6 @@ idsize(dev, blksize)
 	if (val != 0)
 	    return (-1);
     }
-    *blksize = du->dk_dd.d_secsize;
     return du->dk_dd.d_partitions[part].p_size;
 }
 

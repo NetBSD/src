@@ -8,7 +8,7 @@
  * warranty, express or implied.  The author makes no representations
  * about the suitability of this software for any purpose.
  *
- *	$Id: raw_diskio.c,v 1.2 1994/06/18 12:10:04 paulus Exp $
+ *	$Id: raw_diskio.c,v 1.3 1994/07/08 12:02:23 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -38,7 +38,7 @@ raw_disk_io(int dev, struct uio *uio, int blocksize)
     if( uio->uio_rw == UIO_READ )
 	bp->b_flags |= B_READ;
     bp->b_dev = dev;
-    bp->b_proc = uio->uio_procp;
+    bp->b_proc = curproc;
 
     while (uio->uio_resid != 0) {
 	iov = uio->uio_iov;
@@ -71,9 +71,11 @@ rawio_piece(struct buf *bp, int blocksize,
     while( iov->iov_len != 0 ){
 	bp->b_data = iov->iov_base;
 	bp->b_flags &= ~B_DONE;
+	bp->b_bufsize = iov->iov_len;
 	bp->b_bcount = todo = min(iov->iov_len, MAXPHYS);
 	bp->b_blkno = uio->uio_offset / blocksize;
 
+	++bp->b_proc->p_holdcnt;
 	vslock(iov->iov_base, todo);
 	vmapbuf(bp);
 
@@ -85,6 +87,7 @@ rawio_piece(struct buf *bp, int blocksize,
 
 	vunmapbuf(bp);
 	vsunlock(iov->iov_base, todo, uio->uio_rw == UIO_READ);
+	--bp->b_proc->p_holdcnt;
 
 	done = todo - bp->b_resid;
 	iov->iov_len -= done;

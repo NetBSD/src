@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sd.c,v 1.2 1994/06/18 12:10:18 paulus Exp $
+ *	$Id: sd.c,v 1.3 1994/07/08 12:02:32 paulus Exp $
  */
 /*
  * Preliminary version of a SCSI-disk driver.
@@ -37,6 +37,7 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <machine/cpu.h>
 #include <da30/da30/iio.h>
 
@@ -61,13 +62,16 @@ struct target {
     short	isopen;
     char	active;
     char	we_label;
-    short	op;
+    char	op;
+    char	stopped;
     char	scsi_id;	/* info about the disk */
     char	lun;
+    char	timingout;
     short	status;
     short	open_error;
     int 	nblocks;
     int 	blocksize;
+    int		idle;
     u_char	*ptr;		/* current SCSI pointers */
     u_long	count;
     u_char	*base_ptr;	/* saved SCSI pointers */
@@ -78,16 +82,19 @@ struct target {
     int		req_size;	/* byte 5 of SCSI cmd */
     u_char	*open_buf;
     u_char	sense_data[8];
+    struct target *actf;
     struct disklabel label;
     struct buf	uq;
 };
 
 /* Values for op field above */
 #define INQUIRY		0
-#define TESTREADY	1
-#define MODESENSE	2
-#define READLABEL	3
-#define BUFIO		4
+#define STARTUNIT	1
+#define TESTREADY	2
+#define MODESENSE	3
+#define READLABEL	4
+#define BUFIO		5
+#define STOP		6
 #define REQSENSE	8	/* ORed into above values */
 
 /* Info about host adaptor (SBIC) */
@@ -98,6 +105,7 @@ struct host {
     short	connected;
     struct target *first;
     struct target *last;
+    int		timingout;
 };
 
 /* I/O register layout */
@@ -126,6 +134,9 @@ struct disklabel sd_default_label = {
 /* Software interrupt identifier */
 unsigned long sir_scsi;
 void sbic_int_routine();
+
+int sd_show_starter;
+unsigned sd_idle_timeout = 30;
 
 /*
  * Autoconfiguration stuff
@@ -310,12 +321,38 @@ sdustart(struct target *tp)
 {
     struct buf *bp;
     struct host *hp;
+    unsigned idle;
 
+    if (tp->op != STOP) {
+	idle = tp->idle;
+	tp->idle = 0;
+    } else if (tp->stopped) {
+	tp->op = BUFIO;
+	if (tp->uq.b_actf == NULL)
+	    return;
+    }
     if( tp->active )
 	return;
     hp = (struct host *) tp->dev.dv_parent;
 
-    if( (tp->op & REQSENSE) != 0 ){
+    if (tp->stopped) {
+	if (tp->op == STOP) {
+	    sdudone(tp, 0);
+	    return;
+	}
+	if (sd_show_starter) {
+	    printf("sd%d starting: op=%x idle=%d", tp->op, idle);
+	    if (tp->op == BUFIO)
+		printf(" blk=%x bcount=%x", tp->uq.b_actf->b_ablkno,
+		       tp->uq.b_actf->b_bcount);
+	    printf("\n");
+	}
+	tp->count = 0;
+	tp->reading = 0;
+	tp->cmd = 0x1B;		/* start/stop unit */
+	tp->blk = 0;
+	tp->req_size = 1;
+    } else if( (tp->op & REQSENSE) != 0 ){
 	tp->ptr = tp->sense_data;
 	tp->count = sizeof(tp->sense_data);
 	tp->reading = 1;
@@ -331,6 +368,14 @@ sdustart(struct target *tp)
 	    tp->cmd = 0x12;		/* Inquiry command */
 	    tp->blk = 0;
 	    tp->req_size = 255;
+	    break;
+
+	case STARTUNIT:
+	    tp->count = 0;
+	    tp->reading = 0;
+	    tp->cmd = 0x1B;		/* start/stop unit */
+	    tp->blk = 0;
+	    tp->req_size = 1;
 	    break;
 
 	case TESTREADY:
@@ -370,17 +415,27 @@ sdustart(struct target *tp)
 	    tp->cmd = tp->reading? 8: 0xA;	/* read or write cmd */
 	    tp->blk = bp->b_ablkno;
 	    tp->req_size = bp->b_bcount / tp->blocksize;
+	    break;
+
+	case STOP:
+	    tp->count = 0;
+	    tp->reading = 0;
+	    tp->cmd = 0x1B;		/* start/stop unit */
+	    tp->blk = 0x10000;		/* immediate completion flag */
+	    tp->req_size = 0;
+	    break;
+
 	}
     }
 
     /* Link into host adaptor's queue of requests */
     tp->base_ptr = tp->ptr;
     tp->base_count = tp->count;
-    tp->uq.b_actf = NULL;
+    tp->actf = NULL;
     if( hp->first == NULL )
 	hp->first = tp;
     else
-	hp->last->uq.b_actf = (struct buf *) tp;
+	hp->last->actf = tp;
     hp->last = tp;
     tp->active = 1;
 }
@@ -395,6 +450,12 @@ sdudone(struct target *tp, int err)
 
     unit = tp->dev.dv_unit;
     tp->active = 0;
+
+    if (tp->stopped) {
+	tp->stopped = 0;
+	sdustart(tp);
+	return;
+    }
 
     if( (tp->op & REQSENSE) != 0 ){
 	/* we just did a request sense command */
@@ -443,6 +504,9 @@ sdudone(struct target *tp, int err)
 	}
 	break;
 
+    case STARTUNIT:
+	break;
+
     case TESTREADY:
 	break;
 
@@ -479,6 +543,12 @@ sdudone(struct target *tp, int err)
 	}
 	bp->b_resid = tp->count;
 	biodone(bp);
+	break;
+
+    case STOP:
+	tp->stopped = 1;
+	tp->op = BUFIO;
+	break;
     }
 
     if( tp->op < BUFIO && ++tp->op == BUFIO ){
@@ -514,8 +584,10 @@ int
 scsi_decode_sense(struct target *tp, int err)
 {
 
-    /* ignore unit attention condition on test-ready phase of open */
-    if( tp->op == TESTREADY && err == 0 && (tp->sense_data[0] & 0x7F) == 0x70
+    /* ignore unit attention condition on test-ready
+       or start-unit phase of open */
+    if( (tp->op == TESTREADY || tp->op == STARTUNIT)
+       && err == 0 && (tp->sense_data[0] & 0x7F) == 0x70
        && (tp->sense_data[2] & 0x0F) == 6 )
 	return 0;
 
@@ -712,7 +784,7 @@ sbic_intr(hp)
 	/* Unit operation is complete */
 	hp->active = hp->connected = 0;
 	if( (tp = hp->first) != NULL ){
-	    hp->first = (struct target *) tp->uq.b_actf;
+	    hp->first = tp->actf;
 	    tp->status = status;
 	    sdudone(tp, err);
 	}
@@ -746,6 +818,29 @@ sbic_intr(hp)
     }
 }
 
+void
+sd_idle(arg)
+    caddr_t arg;
+{
+    struct target *tp = (struct target *) arg;
+    struct host *hp;
+
+    timeout(sd_idle, arg, 10*hz);
+    if (tp->active || tp->op != BUFIO) {
+	tp->idle = 0;
+	return;
+    }
+    if (++tp->idle >= sd_idle_timeout) {
+	tp->op = STOP;
+	sdustart(tp);
+	hp = (struct host *) tp->dev.dv_parent;
+	if( !hp->active ){
+	    sbic_start(hp);
+	    sbic_poll(hp);
+	}
+    }
+}
+
 /*
  * Open a drive partition; initialize the drive if necessary.
  */
@@ -760,6 +855,11 @@ sdopen(dev_t dev, int flags, int fmt)
        || (tp = (struct target *) sdcd.cd_devs[unit]) == NULL )
 	return ENXIO;
     hp = (struct host *) tp->dev.dv_parent;
+
+    if (!tp->timingout) {
+	timeout(sd_idle, (caddr_t) tp, 10*hz);
+	tp->timingout = 1;
+    }
 
     x = spl_scsi();
     if( tp->isopen++ > 0 ){
@@ -875,9 +975,8 @@ sdioctl(dev_t dev, int cmd, caddr_t addr, int flag,
     return 0;
 }
 
-sdsize(dev, blksize)
+sdsize(dev)
     dev_t dev;
-    int *blksize;
 {
     int unit, part;
     daddr_t size;
@@ -894,7 +993,6 @@ sdsize(dev, blksize)
 	sdclose(dev, 0, 0);
     }
 
-    *blksize = tp->blocksize;
     return tp->label.d_partitions[part].p_size;
 }
 

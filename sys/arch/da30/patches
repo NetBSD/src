@@ -1,7 +1,7 @@
-*** spec_vnops.c.orig	Thu Jun  9 20:16:12 1994
---- spec_vnops.c	Sat Jun 18 17:14:49 1994
+*** spec_vnops.c.orig	Fri Jul  8 04:51:48 1994
+--- spec_vnops.c	Fri Jul  8 04:52:44 1994
 ***************
-*** 217,223 ****
+*** 218,224 ****
    	struct proc *p = uio->uio_procp;
   	struct buf *bp;
   	daddr_t bn, nextbn;
@@ -9,7 +9,7 @@
   	struct partinfo dpart;
   	int n, on, majordev, (*ioctl)();
   	int error = 0;
---- 217,223 ----
+--- 218,224 ----
    	struct proc *p = uio->uio_procp;
   	struct buf *bp;
   	daddr_t bn, nextbn;
@@ -18,7 +18,7 @@
   	int n, on, majordev, (*ioctl)();
   	int error = 0;
 ***************
-*** 245,260 ****
+*** 246,261 ****
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
@@ -35,7 +35,7 @@
   			on = uio->uio_offset % bsize;
   			n = min((unsigned)(bsize - on), uio->uio_resid);
   			if (vp->v_lastr + bscale == bn) {
---- 245,265 ----
+--- 246,266 ----
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
@@ -58,7 +58,7 @@
   			n = min((unsigned)(bsize - on), uio->uio_resid);
   			if (vp->v_lastr + bscale == bn) {
 ***************
-*** 299,305 ****
+*** 300,306 ****
   	struct proc *p = uio->uio_procp;
   	struct buf *bp;
   	daddr_t bn;
@@ -66,7 +66,7 @@
   	struct partinfo dpart;
   	register int n, on;
   	int error = 0;
---- 304,310 ----
+--- 305,311 ----
   	struct proc *p = uio->uio_procp;
   	struct buf *bp;
   	daddr_t bn;
@@ -75,7 +75,7 @@
   	register int n, on;
   	int error = 0;
 ***************
-*** 326,341 ****
+*** 327,342 ****
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
@@ -92,7 +92,7 @@
   			on = uio->uio_offset % bsize;
   			n = min((unsigned)(bsize - on), uio->uio_resid);
   			if (n == bsize)
---- 331,349 ----
+--- 332,350 ----
   		if (uio->uio_offset < 0)
   			return (EINVAL);
   		bsize = BLKDEV_IOSIZE;
