@@ -1,8 +1,8 @@
 #	from: @{#}Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.6 1998/08/17 22:29:57 tv Exp $
+#	$NetBSD: Makefile,v 1.7 1998/08/17 22:37:57 tv Exp $
 
 PROG=		g77
-SRCS=		gcc.c g77spec.c g77version.c version.c choose-temp.c \
+SRCS=		gcc.c g77spec.c g77version.o version.c choose-temp.c \
 		pexecute.c prefix.c mkstemp.c obstack.c
 BINDIR=		/usr/bin
 CPPFLAGS+=	-DLANG_SPECIFIC_DRIVER
