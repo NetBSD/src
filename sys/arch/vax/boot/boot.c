@@ -1,4 +1,4 @@
-/*	$NetBSD */
+/*	$NetBSD: boot.c,v 1.2 1995/03/29 21:24:03 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -44,16 +44,16 @@
  * Boot program... arguments passed in r10 and r11 determine
  * whether boot stops to ask for system name and which device
  * boot comes from.
- * UGLY! Why must they always pass arguments in registers???
- * I'll take this away someday...
  */
 
 char line[100];
 volatile u_int devtype, bootdev;
 extern	unsigned opendev;
 
-main(howto, bdev)
+main()
 {
+	register howto asm("r11");
+	register bdev  asm("r10");
 	int io, retry, type;
 
 	io=0;
@@ -149,8 +149,8 @@ copyunix(howto, devtype, aio)
 		howto &= ~RB_KDB;
 	for (i = 0; i < 128*512; i++)	/* slop */
 		*addr++ = 0;
-	printf(" start 0x%x\n", x.a_entry);
-	(*((int (*)()) x.a_entry))(howto, devtype);
+	printf(" start 0x%x\n", (x.a_entry&0x7fffffff));
+	hoppabort((x.a_entry&0x7fffffff),howto,devtype);
 	return;
 shread:
 	printf("Short read\n");
@@ -226,7 +226,6 @@ loadpcs()
 	jp = (int *)0;
 	for (i=0; i < PCS_BITCNT; i++) {
 		extzv(i,jp,ip,1);
-/*		asm("	extzv	r10,$1,(r9),(r11)+"); */
 	}
 	*((int *)PCS_PATCHBIT) = 0;
 
@@ -237,7 +236,6 @@ loadpcs()
 	jp = (int *)1024;
 	for (i=j=0; j < PCS_MICRONUM * 4; i+=20, j++) {
 		extzv(i,jp,ip,20);
-/*		asm("	extzv	r10,$20,(r9),(r11)+"); */
 	}
 
 	/*

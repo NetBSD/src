@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1995/02/13 00:41:08 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.2 1995/03/29 21:24:07 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@ struct	devsw devsw[]={
 	{"ts",nodev, nodev, nullsys, noioctl},
 	{"mt",nodev, nodev, nullsys, noioctl},
 	{"tu",nodev, nodev, nullsys, noioctl},
-	{"ra",nodev, nodev, nullsys, noioctl},
+	{"ra",rastrategy, raopen, nullsys, noioctl},
 };
 
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));

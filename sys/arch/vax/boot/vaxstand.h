@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.1 1995/02/13 00:41:13 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.2 1995/03/29 21:24:18 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,8 @@
  /* All bugs are subject to removal without further notice */
 		
 /* Variables used in autoconf */
-extern int nmba, nuba, nbi, nsbi, *ubaaddr, *mbaaddr;
+extern int nmba, nuba, nbi, nsbi, nuda;
+extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr;
 
 #define MAXNMBA 8 /* Massbussadapters */
 #define MAXNUBA 8 /* Unibusadapters */

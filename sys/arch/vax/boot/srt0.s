@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.1 1995/02/13 00:41:12 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.2 1995/03/29 21:24:14 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,17 +50,20 @@ start:	.globl	start
 1:	movl	(sp)+,r0
 	bicl2	$0x1ff,r0
 
-	subl3	sp,$_end,r4	# Get size to copy
+	subl3	sp,$_end,r4	# Get size to copy, size < 64K
 	movc3	r4,(r0),(sp)	# Copy all
 
-	pushl	$0		# Nothing in psl
 	pushl	$cont		# new run address
-	rei			# Doit
+	rsb			# Doit
 
 cont:	movl    $start, sp
-	pushl	r10		# save these.
-	pushl	r11
-	calls	$2,_main	# Were here!
+	calls	$0,_main	# Were here!
 	halt			# no return
 
+        .globl _hoppabort
+_hoppabort: .word 0x0
+        movl    4(ap),r6
+        movl    8(ap),r11
+        movl    0xc(ap),r10
+        calls   $0,(r6)
 
