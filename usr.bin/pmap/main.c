@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2004/01/31 18:25:27 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.16 2004/01/31 20:53:55 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.15 2004/01/31 18:25:27 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2004/01/31 20:53:55 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -312,7 +312,7 @@ main(int argc, char *argv[])
 
 		memset(vmspace, 0, sizeof(*vmspace));
 		A(at) = address;
-		S(at) = -1;
+		S(at) = (size_t)-1;
 
 		switch (which) {
 		    case VMSPACE_ADDRESS:
@@ -498,7 +498,7 @@ load_symbols(kvm_t *kd)
 #define get_map_address(m) do {\
 	if (kmaps[CONCAT(NL_,m)].n_value != 0) \
 		_KDEREF(kd, kmaps[CONCAT(NL_,m)].n_value, &m, sizeof(m)); \
-	} while (0)
+	} while (0/*CONSTCOND*/)
 
 	get_map_address(kmem_map);
 	get_map_address(mb_map);
