@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.132 2003/09/07 11:47:07 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.133 2003/09/29 15:12:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.132 2003/09/07 11:47:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.133 2003/09/29 15:12:08 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -120,26 +120,12 @@ static void lfs_cluster_callback(struct buf *);
 	((fs)->lfs_fsbpseg - ((fs)->lfs_offset - (fs)->lfs_curseg) > \
 	fragstofsb((fs), (fs)->lfs_frag))
 
-void	 lfs_callback(struct buf *);
-int	 lfs_gather(struct lfs *, struct segment *,
-	     struct vnode *, int (*)(struct lfs *, struct buf *));
-int	 lfs_gatherblock(struct segment *, struct buf *, int *);
-void	 lfs_iset(struct inode *, daddr_t, time_t);
 int	 lfs_match_fake(struct lfs *, struct buf *);
-int	 lfs_match_data(struct lfs *, struct buf *);
-int	 lfs_match_dindir(struct lfs *, struct buf *);
-int	 lfs_match_indir(struct lfs *, struct buf *);
-int	 lfs_match_tindir(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
 /* XXX ondisk32 */
 void	 lfs_shellsort(struct buf **, int32_t *, int, int);
 void	 lfs_supercallback(struct buf *);
 void	 lfs_updatemeta(struct segment *);
-int	 lfs_vref(struct vnode *);
-void	 lfs_vunref(struct vnode *);
-void	 lfs_writefile(struct lfs *, struct segment *, struct vnode *);
-int	 lfs_writeinode(struct lfs *, struct segment *, struct inode *);
-int	 lfs_writeseg(struct lfs *, struct segment *);
 void	 lfs_writesuper(struct lfs *, daddr_t);
 int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
 	    struct segment *sp, int dirops);
