@@ -1,4 +1,4 @@
-/*	$NetBSD: palette.c,v 1.2 1998/01/05 20:52:32 perry Exp $	*/
+/*	$NetBSD: palette.c,v 1.3 2003/05/17 10:38:55 isaki Exp $	*/
 /*
  * pelette - manipulate text colormap for NetBSD/x68k.
  * author: Masaru Oki
@@ -15,9 +15,8 @@
 #define PALETTE_OFFSET 0x2000 /* physical addr: 0xe82000 */
 #define PALETTE_SIZE   0x1000 /* at least 1 page */
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+int
+main(int argc, char *argv[])
 {
 	int fd;
 	u_short *palette;
