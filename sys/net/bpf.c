@@ -38,7 +38,7 @@
  *	@(#)bpf.c	7.5 (Berkeley) 7/15/91
  *
  * static char rcsid[] =
- * "$Header: /cvsroot/src/sys/net/bpf.c,v 1.3 1993/04/05 22:04:09 deraadt Exp $";
+ * "$Header: /cvsroot/src/sys/net/bpf.c,v 1.4 1993/04/09 11:02:51 glass Exp $";
  */
 
 #include "bpfilter.h"
@@ -47,12 +47,6 @@
 
 #ifndef __386BSD__
 #define __386BSD__
-#endif
-
-#ifndef __GNUC__
-#define inline
-#else
-#define inline __inline__
 #endif
 
 #include <sys/param.h>
