@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.37 2003/07/14 16:16:42 itojun Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.38 2003/07/14 16:23:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.37 2003/07/14 16:16:42 itojun Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.38 2003/07/14 16:23:40 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,13 +49,8 @@ __RCSID("$NetBSD: sys_term.c,v 1.37 2003/07/14 16:16:42 itojun Exp $");
 
 #include <sys/cdefs.h>
 
-#ifdef	UTMPX
-#include <utmpx.h>
-struct	utmpx wtmp;
-#else
 #include <utmp.h>
 struct	utmp wtmp;
-#endif /* UTMPX */
 
 #define SCPYN(a, b)	(void) strncpy(a, b, sizeof(a))
 #define SCMPN(a, b)	strncmp(a, b, sizeof(a))
@@ -620,29 +615,7 @@ start_login(host, autologin, name)
 	char	defstrs[TABBUFSIZ];
 #undef	TABBUFSIZ
 	const char *loginprog = NULL;
-#ifdef	UTMPX
-	register int pid = getpid();
-	struct utmpx utmpx;
-#endif
 
-#ifdef	UTMPX
-	/*
-	 * Create utmp entry for child
-	 */
-
-	memset(&utmpx, 0, sizeof(utmpx));
-	SCPYN(utmpx.ut_user, ".telnet");
-	SCPYN(utmpx.ut_line, line + sizeof("/dev/") - 1);
-	utmpx.ut_pid = pid;
-	utmpx.ut_id[0] = 't';
-	utmpx.ut_id[1] = 'n';
-	utmpx.ut_id[2] = SC_WILDC;
-	utmpx.ut_id[3] = SC_WILDC;
-	utmpx.ut_type = LOGIN_PROCESS;
-	(void) time(&utmpx.ut_tv.tv_sec);
-	if (makeutx(&utmpx) == NULL)
-		fatal(net, "makeutx failed");
-#endif
 
 	scrub_env();
 
