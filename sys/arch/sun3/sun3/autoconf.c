@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1995/06/27 14:44:47 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 1995/08/21 21:36:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -134,8 +134,12 @@ swapconf()
 	int nblks;
 	
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+
+		/* If root on swap, leave swap size at zero. */
+		if (swp->sw_dev == rootdev)
+			continue;
+
 		maj = major(swp->sw_dev);
-		
 		if (maj > nblkdev) /* paranoid? */
 			break;
 		
