@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.25 2002/03/14 21:46:55 martin Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.26 2002/05/02 17:12:06 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.17.2.25 2002/01/01 15:10:49 darrenr Exp
+ * Id: ip_nat.h,v 2.17.2.26 2002/04/20 16:42:05 darrenr Exp
  */
 
 #ifndef _NETINET_IP_NAT_H_
@@ -280,6 +280,8 @@ typedef	struct	natlog {
 			    (sd) = (s2) - (s1); \
 			    (sd) = ((sd) & 0xffff) + ((sd) >> 16); }
 
+#define	NAT_SYSSPACE		0x80000000
+#define	NAT_LOCKHELD		0x40000000
 
 extern	u_int	ipf_nattable_sz;
 extern	u_int	ipf_natrules_sz;

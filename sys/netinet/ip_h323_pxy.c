@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.2 2002/04/01 16:45:24 jdolecek Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.3 2002/05/02 17:12:05 martti Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -27,7 +27,7 @@
 # include <sys/ioctl.h>
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.2 2002/04/01 16:45:24 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.3 2002/05/02 17:12:05 martti Exp $");
 
 #define IPF_H323_PROXY
 
@@ -56,18 +56,27 @@ unsigned char *data;
 int datlen, *off;
 unsigned short *port;
 {
+	u_32_t addr;
+	u_char *dp;
+	int offset;
+
 	if (datlen < 6)
 		return -1;
 	
 	*port = 0;
-	for (*off = 0; *off <= datlen - 6; *off = *off + 1) {
-		if (ipaddr == *(int *)(data + *off))
+	offset = *off;
+	dp = (u_char *)data;
+
+	for (offset = 0; offset <= datlen - 6; offset++, dp++) {
+		addr = (dp[0] << 24) | (dp[1] << 16) | (dp[2] << 8) | dp[3];
+		if (ipaddr == addr)
 		{
-			*port = (*(data + *off + 4) << 8) + *(data + *off +5);
+			*port = (*(dp + 4) << 8) | *(dp + 5);
 			break;
 		}
 	}
-  	return (*off > datlen - 6) ? -1 : 0;
+	*off = offset;
+  	return (offset > datlen - 6) ? -1 : 0;
 }
 
 /*
@@ -113,11 +122,15 @@ ap_session_t *aps;
 			 * We are lucky here because this function is not
 			 * called with ipf_nat locked.
 			 */
-			if (nat_ioctl((caddr_t)ipn, SIOCRMNAT, FWRITE) == -1) {
+			if (nat_ioctl((caddr_t)ipn, SIOCRMNAT, NAT_SYSSPACE|
+				      NAT_LOCKHELD|FWRITE) == -1) {
 				/* log the error */
 			}
 		}
 		KFREES(aps->aps_data, aps->aps_psiz);
+		/* avoid double free */
+		aps->aps_data = NULL;
+		aps->aps_psiz = 0;
 	}
 	return;
 }
@@ -148,7 +161,7 @@ nat_t *nat;
 	ipaddr = ip->ip_src.s_addr;
 	
 	data = (unsigned char *)tcp + (tcp->th_off << 2);
-	datlen = ip->ip_len - (ip->ip_hl << 2) - (tcp->th_off << 2);
+	datlen = fin->fin_dlen - (tcp->th_off << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
 		ipnat_t *ipn;
 		char *newarray;
@@ -181,13 +194,16 @@ nat_t *nat;
 		 * of calling nat_ioctl(), we add the nat rule ourself.
 		 */
 		RWLOCK_EXIT(&ipf_nat);
-		if (nat_ioctl((caddr_t)ipn, SIOCADNAT, FWRITE) == -1) {
+		if (nat_ioctl((caddr_t)ipn, SIOCADNAT,
+			      NAT_SYSSPACE|FWRITE) == -1) {
 			READ_ENTER(&ipf_nat);
 			return -1;
 		}
 		READ_ENTER(&ipf_nat);
-		bcopy(aps->aps_data, newarray, aps->aps_psiz);
-		KFREES(aps->aps_data, aps->aps_psiz);
+		if (aps->aps_data != NULL && aps->aps_psiz > 0) {
+			bcopy(aps->aps_data, newarray, aps->aps_psiz);
+			KFREES(aps->aps_data, aps->aps_psiz);
+		}
 		aps->aps_data = newarray;
 		aps->aps_psiz += sizeof(*ipn);
 	}
@@ -260,8 +276,10 @@ nat_t *nat;
 #ifdef	IPFILTER_LOG
 				nat_log(ipn, (u_int)(nat->nat_ptr->in_redir));
 #endif
-				*(int *)(data + off) = ip->ip_src.s_addr;
-				*(short *)(data + off + 4) = ipn->nat_outport;
+				bcopy((u_char*)&ip->ip_src.s_addr,
+				      data + off, 4);
+				bcopy((u_char*)&ipn->nat_outport,
+				      data + off + 4, 2);
 			}
 		}
 	}

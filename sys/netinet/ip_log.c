@@ -1,21 +1,22 @@
-/*	$NetBSD: ip_log.c,v 1.18 2002/03/14 12:34:02 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.19 2002/05/02 17:12:05 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_log.c,v 2.5.2.17 2002/03/13 03:57:05 darrenr Exp
+ * Id: ip_log.c,v 2.5.2.19 2002/04/25 16:32:48 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.18 2002/03/14 12:34:02 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.19 2002/05/02 17:12:05 martti Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) && !defined(_KERNEL)
 # define       _KERNEL
 #endif
-#if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM)
+#if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
+    defined(_KERNEL)
 # include "opt_ipfilter_log.h"
 #endif
 #ifdef  __FreeBSD__
@@ -90,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.18 2002/03/14 12:34:02 martti Exp $");
 # include <net/route.h>
 # include <netinet/in.h>
 # ifdef __sgi
+#  define _KMEMUSER
 #  include <sys/ddi.h>
 #  ifdef IFF_DRVRLOCK /* IRIX6 */
 #   include <sys/hashing.h>
