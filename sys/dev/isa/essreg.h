@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.3 $ (SHARK) $Date: 1998/08/04 13:14:42 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.4 $ (SHARK) $Date: 1998/08/05 16:40:22 $
 **
 **++
 **
@@ -152,6 +152,7 @@
 /*
  * Macros to detect valid hardware configuration data.
  */
+#define ESS_BASE_VALID(base) ((base) == 0x220 || (base) == 0x230 || (base) == 0x240 || (base) == 0x250)
 #define ESS_IRQ1_VALID(irq)  ((irq) == 5 || (irq) == 7 || (irq) == 9 || (irq) == 10)
 
 #define ESS_IRQ2_VALID(irq)  ((irq) == 15)
