@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.22 1995/01/02 20:54:01 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.23 1995/01/02 21:27:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -271,8 +271,8 @@ static int command_and_wait __P((struct ie_softc *, int,
 static void start_receiver __P((struct ie_softc *));
 static int ieget __P((struct ie_softc *, struct mbuf **,
 		      struct ether_header *, int *));
-static caddr_t setup_rfa __P((caddr_t ptr, struct ie_softc *));
-static int mc_setup __P((struct ie_softc *, caddr_t));
+void iememinit __P((void *, struct ie_softc *));
+static int mc_setup __P((struct ie_softc *, void *));
 static void mc_reset __P((struct ie_softc *));
 #ifdef IEDEBUG
 void print_rbd __P((volatile struct ie_recv_buf_desc *));
@@ -292,11 +292,6 @@ struct cfdriver iecd = {
 
 #define PORT sc->sc_iobase
 #define MEM sc->sc_maddr
-
-#define bis(c, b)	do { const register int com_ad = (c); \
-			     outb(com_ad, inb(com_ad) | (b)); } while(0)
-#define bic(c, b)	do { const register int com_ad = (c); \
-			     outb(com_ad, inb(com_ad) &~ (b)); } while(0)
 
 /*
  * Here are a few useful functions.  We could have done these as macros,
@@ -321,16 +316,6 @@ ie_setup_config(cmd, promiscuous, manchester)
 	cmd->ie_crs_cdt = 0;
 	cmd->ie_min_len = 64;
 	cmd->ie_junk = 0xff;
-}
-
-static inline caddr_t
-Align(ptr)
-      caddr_t ptr;
-{
-	u_long l = (u_long)ptr;
-
-	l = (l + 3) & ~3L;
-	return (caddr_t)l;
 }
 
 static inline void
@@ -612,7 +597,7 @@ loop:
 
 	if (status & IE_ST_RNR) {
 		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_ierrors++;
+		sc->sc_arpcom.ac_if.if_ierrors++;
 		iereset(sc);
 	}
 
@@ -1330,8 +1315,7 @@ check_ie_present(sc, where, size)
 	 * Now relocate the ISCP to its real home, and reset the controller
 	 * again.
 	 */
-	iscp = (void *)Align((caddr_t)(realbase + IE_SCP_ADDR - 
-	    sizeof(struct ie_int_sys_conf_ptr)));
+	iscp = (void *)ALIGN(realbase + IE_SCP_ADDR - sizeof(*iscp));
 	bzero((char *)iscp, sizeof *iscp);
 	
 	scp->ie_iscp_ptr = (caddr_t)((caddr_t)iscp - (caddr_t)realbase);
@@ -1587,26 +1571,22 @@ start_receiver(sc)
 	splx(s);
 }
 
+#define	_ALLOC(p, n)	(bzero(p, n), p += n, p - n)
+#define	ALLOC(p, n)	_ALLOC(p, ALIGN(n))
+
 /*
- * Here is a helper routine for ieinit().  This sets up the RFA.
+ * Here is a helper routine for ieinit().  This sets up the buffers.
  */
-static caddr_t
-setup_rfa(ptr, sc)
-	caddr_t ptr;
+void
+iememinit(ptr, sc)
+	void *ptr;
 	struct ie_softc *sc;
 {
-	volatile struct ie_recv_frame_desc *rfd = (void *)ptr;
-	volatile struct ie_recv_buf_desc *rbd;
 	int i;
 	
 	/* First lay them out */
-	for (i = 0; i < NFRAMES; i++) {
-		sc->rframes[i] = rfd;
-		bzero((char *)rfd, sizeof *rfd);
-		rfd++;
-	}
-	
-	ptr = (caddr_t)Align((caddr_t)rfd);
+	for (i = 0; i < NFRAMES; i++)
+		sc->rframes[i] = ALLOC(ptr, sizeof(*sc->rframes[i]));
 	
 	/* Now link them together */
 	for (i = 0; i < NFRAMES; i++)
@@ -1615,23 +1595,17 @@ setup_rfa(ptr, sc)
 	
 	/* Finally, set the EOL bit on the last one. */
 	sc->rframes[NFRAMES - 1]->ie_fd_last |= IE_FD_LAST;
-	
+
 	/*
 	 * Now lay out some buffers for the incoming frames.  Note that
 	 * we set aside a bit of slop in each buffer, to make sure that
 	 * we have enough space to hold a single frame in every buffer.
 	 */
-	rbd = (void *)ptr;
-	
 	for (i = 0; i < NRXBUF; i++) {
-		sc->rbuffs[i] = rbd;
-		bzero((char *)rbd, sizeof *rbd);
-		ptr = (caddr_t)Align(ptr + sizeof *rbd);
-		rbd->ie_rbd_length = IE_RBUF_SIZE;
-		rbd->ie_rbd_buffer = MK_24(MEM, ptr);
-		sc->cbuffs[i] =  (void *)ptr;
-		ptr += IE_RBUF_SIZE;
-		rbd = (void *)ptr;
+		sc->rbuffs[i] = ALLOC(ptr, sizeof(*sc->rbuffs[i]));
+		sc->rbuffs[i]->ie_rbd_length = IE_RBUF_SIZE;
+		sc->rbuffs[i]->ie_rbd_buffer = MK_24(MEM, ptr);
+		sc->cbuffs[i] = ALLOC(ptr, IE_RBUF_SIZE);
 	}
 	
 	/* Now link them together */
@@ -1652,8 +1626,16 @@ setup_rfa(ptr, sc)
 	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
 	sc->rframes[0]->ie_fd_buf_desc = MK_16(MEM, sc->rbuffs[0]);
 	
-	ptr = Align(ptr);
-	return ptr;
+	/*
+	 * Finally, the transmit command and buffer are the last little bit of work.
+	 */
+	for (i = 0; i < NTXBUF; i++) {
+		sc->xmit_cmds[i] = ALLOC(ptr, sizeof(*sc->xmit_cmds[i]));
+		sc->xmit_buffs[i] = ALLOC(ptr, sizeof(*sc->xmit_buffs[i]));
+	}
+	
+	for (i = 0; i < NTXBUF; i++)
+		sc->xmit_cbuffs[i] = ALLOC(ptr, IE_TBUF_SIZE);
 }
 
 /*
@@ -1663,9 +1645,9 @@ setup_rfa(ptr, sc)
 static int
 mc_setup(sc, ptr)
 	struct ie_softc *sc;
-	caddr_t ptr;
+	void *ptr;
 {
-	volatile struct ie_mcast_cmd *cmd = (void *)ptr;
+	volatile struct ie_mcast_cmd *cmd = ptr;
 	
 	cmd->com.ie_cmd_status = 0;
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
@@ -1699,16 +1681,16 @@ ieinit(sc)
 	struct ie_softc *sc;
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
-	caddr_t ptr;
+	void *ptr;
 	int n;
 	
-	ptr = (caddr_t)Align((caddr_t)scb + sizeof *scb);
+	ptr = (void *)ALIGN(scb + 1);
 	
 	/*
 	 * Send the configure command first.
 	 */
 	{
-		volatile struct ie_config_cmd *cmd = (void *)ptr;
+		volatile struct ie_config_cmd *cmd = ptr;
 		
 		ie_setup_config(cmd, sc->promisc, sc->hard_type == IE_STARLAN10);
 		cmd->com.ie_cmd_status = 0;
@@ -1727,7 +1709,7 @@ ieinit(sc)
 	 * Now send the Individual Address Setup command.
 	 */
 	{
-		volatile struct ie_iasetup_cmd *cmd = (void *)ptr;
+		volatile struct ie_iasetup_cmd *cmd = ptr;
 		
 		cmd->com.ie_cmd_status = 0;
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
@@ -1748,7 +1730,7 @@ ieinit(sc)
 	/*
 	 * Now run the time-domain reflectometer.
 	 */
-	run_tdr(sc, (void *)ptr);
+	run_tdr(sc, ptr);
 	
 	/*
 	 * Acknowledge any interrupts we have generated thus far.
@@ -1758,27 +1740,7 @@ ieinit(sc)
 	/*
 	 * Set up the RFA.
 	 */
-	ptr = setup_rfa(ptr, sc);
-	
-	/*
-	 * Finally, the transmit command and buffer are the last little bit of work.
-	 */
-	for (n = 0; n < NTXBUF; n++) {
-		sc->xmit_cmds[n] = (void *)ptr;
-		bzero(ptr, sizeof *sc->xmit_cmds[n]);
-		ptr += sizeof *sc->xmit_cmds[n];
-		ptr = Align(ptr);
-		sc->xmit_buffs[n] = (void *)ptr;
-		bzero(ptr, sizeof *sc->xmit_buffs[n]);
-		ptr += sizeof *sc->xmit_buffs[n];
-		ptr = Align(ptr);
-	}
-	
-	for (n = 0; n < NTXBUF; n++) {
-		sc->xmit_cbuffs[n] = (void *)ptr;
-		ptr += IE_TBUF_SIZE;
-		ptr = Align(ptr);
-	}
+	iememinit(ptr, sc);
 	
 	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING; /* tell higher levels that we are here */
 	start_receiver(sc);
