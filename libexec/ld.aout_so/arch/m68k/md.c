@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 1998/09/05 13:08:38 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.11 1998/10/17 17:08:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -273,6 +273,8 @@ struct exec *hp;
 		return 1;
 #if 0
 	return (((md_swap_long(hp->a_midmag)&0x00ff0000) >> 16) == MID_SUN020);
+#else
+	return 0;
 #endif
 }
 #endif /* RTLD */
