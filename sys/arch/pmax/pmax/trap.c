@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 1996/03/31 03:38:41 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 1996/05/19 01:54:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/cpu.h>
+#include <machine/locore.h>
 #include <machine/pte.h>
 #include <machine/mips_opcode.h>
 
@@ -83,84 +84,168 @@ int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int status,
 /*
  * Exception-handling functions, called via machExceptionTable from locore
  */
-extern void MachKernGenException __P((void));
-extern void MachUserGenException __P((void));
-extern void MachKernIntr __P((void));
-extern void MachUserIntr __P((void));
 extern void MachTLBModException  __P((void));
 extern void MachTLBMissException __P((void));
+
+extern void mips_r2000_KernGenException __P((void));
+extern void mips_r2000_UserGenException __P((void));
+extern void mips_r2000_KernIntr __P((void));
+extern void mips_r2000_UserIntr __P((void));
+extern void mips_r2000_TLBModException  __P((void));
+extern void mips_r2000_TLBMissException __P((void));
+
+
+extern void mips_r4000_KernGenException __P((void));
+extern void mips_r4000_UserGenException __P((void));
+extern void mips_r4000_KernIntr __P((void));
+extern void mips_r4000_UserIntr __P((void));
+extern void mips_r4000_TLBModException  __P((void));
+extern void mips_r4000_TLBMissException __P((void));
+
+void (*mips_r2000_ExceptionTable[]) __P((void)) = {
+/*
+ * The kernel exception handlers.
+ */
+    mips_r2000_KernIntr,			/* 0 external interrupt */
+    mips_r2000_KernGenException,		/* 1 TLB modification */
+    mips_r2000_TLBMissException,		/* 2 TLB miss (load or instr. fetch) */
+    mips_r2000_TLBMissException,		/* 3 TLB miss (store) */
+    mips_r2000_KernGenException,		/* 4 address error (load or I-fetch) */
+    mips_r2000_KernGenException,		/* 5 address error (store) */
+    mips_r2000_KernGenException,		/* 6 bus error (I-fetch) */
+    mips_r2000_KernGenException,		/* 7 bus error (load or store) */
+    mips_r2000_KernGenException,		/* 8 system call */
+    mips_r2000_KernGenException,		/* 9 breakpoint */
+    mips_r2000_KernGenException,		/* 10 reserved instruction */
+    mips_r2000_KernGenException,		/* 11 coprocessor unusable */
+    mips_r2000_KernGenException,		/* 12 arithmetic overflow */
+    mips_r2000_KernGenException,		/* 13 r4k trap excpt, r3k reserved */
+    mips_r2000_KernGenException,		/* 14 r4k virt coherence, r3k reserved */
+    mips_r2000_KernGenException,		/* 15 r4k FP exception, r3k reserved */
+    mips_r2000_KernGenException,		/* 16 reserved */
+    mips_r2000_KernGenException,		/* 17 reserved */
+    mips_r2000_KernGenException,		/* 18 reserved */
+    mips_r2000_KernGenException,		/* 19 reserved */
+    mips_r2000_KernGenException,		/* 20 reserved */
+    mips_r2000_KernGenException,		/* 21 reserved */
+    mips_r2000_KernGenException,		/* 22 reserved */
+    mips_r2000_KernGenException,		/* 23 watch exception */
+    mips_r2000_KernGenException,		/* 24 reserved */
+    mips_r2000_KernGenException,		/* 25 reserved */
+    mips_r2000_KernGenException,		/* 26 reserved */
+    mips_r2000_KernGenException,		/* 27 reserved */
+    mips_r2000_KernGenException,		/* 28 reserved */
+    mips_r2000_KernGenException,		/* 29 reserved */
+    mips_r2000_KernGenException,		/* 30 reserved */
+    mips_r2000_KernGenException,		/* 31 virt. coherence exception data */
+/*
+ * The user exception handlers.
+ */
+    mips_r2000_UserIntr,		        /*  0 */
+    mips_r2000_UserGenException,	        /*  1 */
+    mips_r2000_UserGenException,	        /*  2 */
+    mips_r2000_UserGenException,	        /*  3 */
+    mips_r2000_UserGenException,	        /*  4 */
+    mips_r2000_UserGenException,	        /*  5 */
+    mips_r2000_UserGenException,	        /*  6 */
+    mips_r2000_UserGenException,	        /*  7 */
+    mips_r2000_UserGenException,	        /*  8 */
+    mips_r2000_UserGenException,	        /*  9 */
+    mips_r2000_UserGenException,	        /* 10 */
+    mips_r2000_UserGenException,	        /* 11 */
+    mips_r2000_UserGenException,	        /* 12 */
+    mips_r2000_UserGenException,	        /* 13 */
+    mips_r2000_UserGenException,	        /* 14 */
+    mips_r2000_UserGenException,	        /* 15 */
+    mips_r2000_UserGenException,		/* 16 */
+    mips_r2000_UserGenException,		/* 17 */
+    mips_r2000_UserGenException,		/* 18 */
+    mips_r2000_UserGenException,		/* 19 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 21 */
+    mips_r2000_UserGenException,		/* 22 */
+    mips_r2000_UserGenException,		/* 23 */
+    mips_r2000_UserGenException,		/* 24 */
+    mips_r2000_UserGenException,		/* 25 */
+    mips_r2000_UserGenException,		/* 26 */
+    mips_r2000_UserGenException,		/* 27 */
+    mips_r2000_UserGenException,		/* 28 */
+    mips_r2000_UserGenException,		/* 29 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 31 */
+};
 
 void (*machExceptionTable[]) __P((void)) = {
 /*
  * The kernel exception handlers.
  */
-	MachKernIntr,			/* 0 external interrupt */
-	MachKernGenException,		/* 1 TLB modification */
-	MachTLBMissException,		/* 2 TLB miss (load or instr. fetch) */
-	MachTLBMissException,		/* 3 TLB miss (store) */
-	MachKernGenException,		/* 4 address error (load or I-fetch) */
-	MachKernGenException,		/* 5 address error (store) */
-	MachKernGenException,		/* 6 bus error (I-fetch) */
-	MachKernGenException,		/* 7 bus error (load or store) */
-	MachKernGenException,		/* 8 system call */
-	MachKernGenException,		/* 9 breakpoint */
-	MachKernGenException,		/* 10 reserved instruction */
-	MachKernGenException,		/* 11 coprocessor unusable */
-	MachKernGenException,		/* 12 arithmetic overflow */
-	MachKernGenException,		/* 13 r4k trap excpt, r3k reserved */
-	MachKernGenException,		/* 14 r4k virt coherence, r3k reserved */
-	MachKernGenException,		/* 15 r4k FP exception, r3k reserved */
-	MachKernGenException,		/* 16 reserved */
-	MachKernGenException,		/* 17 reserved */
-	MachKernGenException,		/* 18 reserved */
-	MachKernGenException,		/* 19 reserved */
-	MachKernGenException,		/* 20 reserved */
-	MachKernGenException,		/* 21 reserved */
-	MachKernGenException,		/* 22 reserved */
-	MachKernGenException,		/* 23 watch exception */
-	MachKernGenException,		/* 24 reserved */
-	MachKernGenException,		/* 25 reserved */
-	MachKernGenException,		/* 26 reserved */
-	MachKernGenException,		/* 27 reserved */
-	MachKernGenException,		/* 28 reserved */
-	MachKernGenException,		/* 29 reserved */
-	MachKernGenException,		/* 30 reserved */
-	MachKernGenException,		/* 31 virt. coherence exception data */
+    mips_r2000_KernIntr,			/* 0 external interrupt */
+    mips_r2000_KernGenException,		/* 1 TLB modification */
+    mips_r2000_TLBMissException,		/* 2 TLB miss (load or instr. fetch) */
+    mips_r2000_TLBMissException,		/* 3 TLB miss (store) */
+    mips_r2000_KernGenException,		/* 4 address error (load or I-fetch) */
+    mips_r2000_KernGenException,		/* 5 address error (store) */
+    mips_r2000_KernGenException,		/* 6 bus error (I-fetch) */
+    mips_r2000_KernGenException,		/* 7 bus error (load or store) */
+    mips_r2000_KernGenException,		/* 8 system call */
+    mips_r2000_KernGenException,		/* 9 breakpoint */
+    mips_r2000_KernGenException,		/* 10 reserved instruction */
+    mips_r2000_KernGenException,		/* 11 coprocessor unusable */
+    mips_r2000_KernGenException,		/* 12 arithmetic overflow */
+    mips_r2000_KernGenException,		/* 13 r4k trap excpt, r3k reserved */
+    mips_r2000_KernGenException,		/* 14 r4k virt coherence, r3k reserved */
+    mips_r2000_KernGenException,		/* 15 r4k FP exception, r3k reserved */
+    mips_r2000_KernGenException,		/* 16 reserved */
+    mips_r2000_KernGenException,		/* 17 reserved */
+    mips_r2000_KernGenException,		/* 18 reserved */
+    mips_r2000_KernGenException,		/* 19 reserved */
+    mips_r2000_KernGenException,		/* 20 reserved */
+    mips_r2000_KernGenException,		/* 21 reserved */
+    mips_r2000_KernGenException,		/* 22 reserved */
+    mips_r2000_KernGenException,		/* 23 watch exception */
+    mips_r2000_KernGenException,		/* 24 reserved */
+    mips_r2000_KernGenException,		/* 25 reserved */
+    mips_r2000_KernGenException,		/* 26 reserved */
+    mips_r2000_KernGenException,		/* 27 reserved */
+    mips_r2000_KernGenException,		/* 28 reserved */
+    mips_r2000_KernGenException,		/* 29 reserved */
+    mips_r2000_KernGenException,		/* 30 reserved */
+    mips_r2000_KernGenException,		/* 31 virt. coherence exception data */
 /*
  * The user exception handlers.
  */
-	MachUserIntr,		        /*  0 */
-	MachUserGenException,	        /*  1 */
-	MachUserGenException,	        /*  2 */
-	MachUserGenException,	        /*  3 */
-	MachUserGenException,	        /*  4 */
-	MachUserGenException,	        /*  5 */
-	MachUserGenException,	        /*  6 */
-	MachUserGenException,	        /*  7 */
-	MachUserGenException,	        /*  8 */
-	MachUserGenException,	        /*  9 */
-	MachUserGenException,	        /* 10 */
-	MachUserGenException,	        /* 11 */
-	MachUserGenException,	        /* 12 */
-	MachUserGenException,	        /* 13 */
-	MachUserGenException,	        /* 14 */
-	MachUserGenException,	        /* 15 */
-	MachUserGenException,		/* 16 */
-	MachUserGenException,		/* 17 */
-	MachUserGenException,		/* 18 */
-	MachUserGenException,		/* 19 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 21 */
-	MachUserGenException,		/* 22 */
-	MachUserGenException,		/* 23 */
-	MachUserGenException,		/* 24 */
-	MachUserGenException,		/* 25 */
-	MachUserGenException,		/* 26 */
-	MachUserGenException,		/* 27 */
-	MachUserGenException,		/* 28 */
-	MachUserGenException,		/* 29 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 31 */
+    mips_r2000_UserIntr,		        /*  0 */
+    mips_r2000_UserGenException,	        /*  1 */
+    mips_r2000_UserGenException,	        /*  2 */
+    mips_r2000_UserGenException,	        /*  3 */
+    mips_r2000_UserGenException,	        /*  4 */
+    mips_r2000_UserGenException,	        /*  5 */
+    mips_r2000_UserGenException,	        /*  6 */
+    mips_r2000_UserGenException,	        /*  7 */
+    mips_r2000_UserGenException,	        /*  8 */
+    mips_r2000_UserGenException,	        /*  9 */
+    mips_r2000_UserGenException,	        /* 10 */
+    mips_r2000_UserGenException,	        /* 11 */
+    mips_r2000_UserGenException,	        /* 12 */
+    mips_r2000_UserGenException,	        /* 13 */
+    mips_r2000_UserGenException,	        /* 14 */
+    mips_r2000_UserGenException,	        /* 15 */
+    mips_r2000_UserGenException,		/* 16 */
+    mips_r2000_UserGenException,		/* 17 */
+    mips_r2000_UserGenException,		/* 18 */
+    mips_r2000_UserGenException,		/* 19 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 21 */
+    mips_r2000_UserGenException,		/* 22 */
+    mips_r2000_UserGenException,		/* 23 */
+    mips_r2000_UserGenException,		/* 24 */
+    mips_r2000_UserGenException,		/* 25 */
+    mips_r2000_UserGenException,		/* 26 */
+    mips_r2000_UserGenException,		/* 27 */
+    mips_r2000_UserGenException,		/* 28 */
+    mips_r2000_UserGenException,		/* 29 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 31 */
 };
 
 char	*trap_type[] = {
@@ -226,9 +311,8 @@ u_int MachEmulateBranch __P((unsigned *regsPtr,
 extern void MachFPInterrupt __P((u_int status, u_int cause, u_int pc));
 extern void clearsoftclock __P((void));
 extern void clearsoftnet __P((void));
-extern void splx __P((int));
+extern int splx __P((int));
 extern int splhigh __P((void));
-extern void MachTLBUpdate __P((u_int, u_int));
 extern void MachSwitchFPState __P((struct proc *from, struct user *to));
 
 /* only called by locore */
@@ -246,6 +330,7 @@ extern void MachEmptyWriteBuffer __P((void));
 extern void MachUTLBMiss __P((void));
 extern void setsoftclock __P((void));
 extern int main __P((void*));
+extern void lememinit __P((void*));
 #endif	/* DEBUG */
 
 
@@ -1374,11 +1459,21 @@ specialframe:
 		goto done;
 	}
 
+/*
+ * check for PC between two entry points
+ */
+# define Between(x, y, z) \
+		( ((x) <= (y)) && ((y) < (z)) )
+# define pcBetween(a,b) \
+		Between((unsigned)a, pc, (unsigned)b)
+
+
 	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (unsigned)MachKernIntr && pc < (unsigned)MachUserIntr) {
+#ifdef CPU_R3000
+	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("MachKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)MachKernIntr, a0, a1, a2);
+		(*printfn)("r3000 KernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips_r3000_KernIntr, a0, a1, a2);
 		a0 = kdbpeek(sp + 36);
 		a1 = kdbpeek(sp + 40);
 		a2 = kdbpeek(sp + 44);
@@ -1389,26 +1484,63 @@ specialframe:
 		sp = sp + 108;
 		goto specialframe;
 	}
+#endif	/* CPU_R3000 */
+
+#ifdef CPU_R4000
+	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr) {
+		/* NOTE: the offsets depend on the code in locore.s */
+		(*printfn)("R4000 KernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips_r4000_KernIntr, a0, a1, a2);
+		a0 = kdbpeek(sp + 36);
+		a1 = kdbpeek(sp + 40);
+		a2 = kdbpeek(sp + 44);
+		a3 = kdbpeek(sp + 48);
+
+		pc = kdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
+		ra = kdbpeek(sp + 92);	/* ra at time of exception */
+		sp = sp + 108;
+		goto specialframe;
+	}
+#endif	/* cpu_r4000 */
 
 
-# define Between(x, y, z) \
-		( ((x) <= (y)) && ((y) < (z)) )
-# define pcBetween(a,b) \
-		Between((unsigned)a, pc, (unsigned)b)
 
 	/*
 	 * Check for current PC in  exception handler code that don't
 	 * have a preceding "j ra" at the tail of the preceding function. 
 	 * Depends on relative ordering of functions in locore.
 	 */
-	if (pcBetween(MachKernGenException, MachUserGenException))
-		subr = (unsigned) MachKernGenException;
-	else if (pcBetween(MachUserGenException,MachKernIntr))
-		subr = (unsigned) MachUserGenException;
-	else if (pcBetween(MachKernIntr, MachUserIntr))
-		subr = (unsigned) MachKernIntr;
-	else if (pcBetween(MachUserIntr, MachTLBMissException))
-		subr = (unsigned) MachUserIntr;
+
+	/* XXX fixup tests after cutting and pasting in locore.S */
+	/* R4000  exception handlers */
+
+	if (pcBetween(mips_r2000_KernGenException, mips_r2000_UserGenException))
+		subr = (unsigned) mips_r2000_KernGenException;
+	else if (pcBetween(mips_r2000_UserGenException,mips_r2000_KernIntr))
+		subr = (unsigned) mips_r2000_UserGenException;
+	else if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr))
+		subr = (unsigned) mips_r2000_KernIntr;
+	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
+		subr = (unsigned) mips_r2000_UserIntr;
+
+	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
+		subr = (unsigned) mips_r2000_UserIntr;
+
+	/* R4000  exception handlers */
+#ifdef CPU_4000
+	else if (pcBetween(mips_r4000_KernGenException, mips_r4000_UserGenException))
+		subr = (unsigned) mips_r4000_KernGenException;
+	else if (pcBetween(mips_r4000_UserGenException,mips_r4000_KernIntr))
+		subr = (unsigned) mips_r4000_UserGenException;
+	else if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr))
+		subr = (unsigned) mips_r4000_KernIntr;
+
+
+	else if (pcBetween(mips_r4000_UserIntr, mips_r4000_TLBMissException))
+		subr = (unsigned) mips_r4000_UserIntr;
+#endif /* CPU_R4000 */
+
+
 	else if (pcBetween(splx, MachEmptyWriteBuffer))
 		subr = (unsigned) splx;
 	else if (pcBetween(cpu_switch, fuword))
@@ -1575,10 +1707,23 @@ static struct { void *addr; char *name;} names[] = {
 	Name(main),
 	Name(interrupt),
 	Name(trap),
-	Name(MachKernGenException),
-	Name(MachUserGenException),
-	Name(MachKernIntr),
-	Name(MachUserIntr),
+#ifdef pmax
+	Name(lememinit),
+#endif
+#ifdef CPU_R3000
+	Name(mips_r2000_KernGenException),
+	Name(mips_r2000_UserGenException),
+	Name(mips_r2000_KernIntr),
+	Name(mips_r2000_UserIntr),
+#endif	/* CPU_R3000 */
+
+#ifdef CPU_R4000
+	Name(mips_r4000_KernGenException),
+	Name(mips_r4000_UserGenException),
+	Name(mips_r4000_KernIntr),
+	Name(mips_r4000_UserIntr),
+#endif	/* CPU_R4000 */
+
 	Name(splx),
 	Name(idle),
 	Name(cpu_switch),
