@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158 2004/12/01 09:48:03 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.159 2004/12/03 01:54:14 chs Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2004/12/01 09:48:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2004/12/03 01:54:14 chs Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -261,30 +261,7 @@ int	pmap_pages_stolen = 0;
 #define	DPRINTF(n, f)
 #endif
 
-#ifdef NOTDEF_DEBUG
-void pv_check __P((void));
-void
-pv_check()
-{
-	int i, j, s;
-
-	s = splhigh();
-	for (i = 0; i < physmem; i++) {
-		struct pv_entry *pv;
-		for (pv = &pv_table[i]; pv; pv = pv->pv_next) {
-			if (pv->pv_pmap &&
-			    !(pseg_get(pv->pv_pmap, pv->pv_va) & TLB_V)) {
-		printf("pv_check(): unreferenced pv=%p pa=%p va=%p pm=%p\n",
-		       i, ptoa(first_phys_addr+i), pv->pv_va, pv->pv_pmap);
-				Debugger();
-			}
-		}
-	}
-	splx(s);
-}
-#else
 #define pv_check()
-#endif
 
 /*
  *
@@ -2916,7 +2893,7 @@ pmap_page_protect(pg, prot)
 
 		firstpv = pv;
 
-		/* First remove the entire list of continuation pv's*/
+		/* First remove the entire list of continuation pv's */
 		for (npv = pv->pv_next; npv; npv = pv->pv_next) {
 			pmap = npv->pv_pmap;
 			va = npv->pv_va & PV_VAMASK;
@@ -2999,9 +2976,9 @@ pmap_page_protect(pg, prot)
 			/* dump the first pv */
 			if (npv) {
 				/* First save mod/ref bits */
+				pv->pv_pmap = npv->pv_pmap;
 				pv->pv_va |= npv->pv_va & PV_MASK;
 				pv->pv_next = npv->pv_next;
-				pv->pv_pmap = npv->pv_pmap;
 				pool_put(&pmap_pv_pool, npv);
 			} else {
 				pv->pv_pmap = NULL;
@@ -3298,15 +3275,11 @@ pmap_remove_pv(pmap, va, pg)
 			pvh->pv_next = NULL;
 			pvh->pv_va &= (PV_REF|PV_MOD);
 		}
-#ifdef DEBUG
-		remove_stats.pvfirst++;
-#endif
+		REMOVE_STAT(pvfirst);
 	} else {
 		for (pv = pvh, npv = pvh->pv_next; npv;
 		     pv = npv, npv = npv->pv_next) {
-#ifdef DEBUG
-			remove_stats.pvsearch++;
-#endif
+			REMOVE_STAT(pvsearch);
 			if (pmap == npv->pv_pmap && PV_MATCH(npv, va))
 				break;
 		}
