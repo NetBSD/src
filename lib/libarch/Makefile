@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 1999/08/31 13:50:47 simonb Exp $
+#	$NetBSD: Makefile,v 1.14 2000/02/26 19:39:35 thorpej Exp $
 
-ARCHDIRS= arm32 i386 m68k
+ARCHDIRS= alpha arm32 i386 m68k
 
 .for arch in ${ARCHDIRS}
 .include "${.CURDIR}/${arch:C/mipse[bl]/mips/}/Makefile.inc"
