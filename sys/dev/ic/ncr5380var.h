@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.16 2000/03/18 17:07:46 mycroft Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.17 2000/03/18 17:14:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -214,7 +214,7 @@ struct ncr5380_softc {
 
 void	ncr5380_attach __P((struct ncr5380_softc *));
 int	ncr5380_detach __P((struct ncr5380_softc *, int));
-int 	ncr5380_intr __P((struct ncr5380_softc *));
+int 	ncr5380_intr __P((void *));
 int 	ncr5380_scsi_cmd __P((struct scsipi_xfer *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
