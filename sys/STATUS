@@ -5,7 +5,7 @@ adv			compiles
 adw			compiles
 aha			compiles
 ahb			compiles
-ahc			broken
+ahc			OK (sparc64)
 aic			compiles
 asc			OK (pmax, as MI SCSI xasc)
 bha			compiles
@@ -62,13 +62,13 @@ hpcmips
 
 hpcsh
 
-i386		compiles, except ahc
+i386		compiles
 
 luna68k
 
 mac68k
 
-macppc			compiles, mesh & esp at obio works 
+macppc		compiles, mesh & esp at obio works 
 
 mipsco
 
@@ -98,7 +98,7 @@ sh3
 
 sparc
 
-sparc64		compiles		tested on U5(+siop)
+sparc64		compiles		tested on U5(+siop+ahc)
 
 sun3/3x		compile			si0 at obio0 OK
 
