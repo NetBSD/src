@@ -524,6 +524,7 @@
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/lkm.conf.0
 ./usr/share/man/cat5/magic.0
+./usr/share/man/cat5/mailer.conf.0
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
 ./usr/share/man/cat5/master.passwd.0
@@ -653,6 +654,7 @@
 ./usr/share/man/cat8/lpd.0
 ./usr/share/man/cat8/mail.local.0
 ./usr/share/man/cat8/mailstats.0
+./usr/share/man/cat8/mailwrapper.0
 ./usr/share/man/cat8/makedbm.0
 ./usr/share/man/cat8/makekey.0
 ./usr/share/man/cat8/makemap.0
@@ -1610,6 +1612,7 @@
 ./usr/share/man/man5/link.5
 ./usr/share/man/man5/lkm.conf.5
 ./usr/share/man/man5/magic.5
+./usr/share/man/man5/mailer.conf.5
 ./usr/share/man/man5/man.conf.5
 ./usr/share/man/man5/map3270.5
 ./usr/share/man/man5/master.passwd.5
@@ -1739,6 +1742,7 @@
 ./usr/share/man/man8/lpd.8
 ./usr/share/man/man8/mail.local.8
 ./usr/share/man/man8/mailstats.8
+./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
 ./usr/share/man/man8/makekey.8
 ./usr/share/man/man8/makemap.8
