@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.20 2005/02/28 10:42:10 wiz Exp $
+.\"	$NetBSD: poll.2,v 1.21 2005/03/10 00:29:37 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,21 +34,23 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 28, 2005
+.Dd March 10, 2005
 .Dt POLL 2
 .Os
 .Sh NAME
-.Nm poll
+.Nm poll, pollts
 .Nd synchronous I/O multiplexing
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.In sys/types.h
 .In poll.h
 .Ft int
 .Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
+.In poll.h
+.In signal.h
+.In time.h
 .Ft int
-.Fn pollts "struct pollfd *fds" "nfds_t nfds" "const struct timespec *ts" "const sigset_t *sigmask"
+.Fn pollts "struct pollfd * restrict fds" "nfds_t nfds" "const struct timespec * restrict ts" "const sigset_t * restrict sigmask"
 .Sh DESCRIPTION
 .Fn poll
 and
@@ -234,8 +236,12 @@ The specified time limit is negative.
 .Sh HISTORY
 The
 .Fn poll
-function call appeared in
+function appeared in
 .At V.3 .
+The 
+.Fn pollts
+function first appeared in
+.Nx 3.0
 .Sh BUGS
 The distinction between some of the fields in the
 .Fa events
