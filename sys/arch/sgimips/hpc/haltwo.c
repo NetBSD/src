@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.2 2003/10/04 09:19:23 tsutsui Exp $ */
+/* $NetBSD: haltwo.c,v 1.3 2003/12/29 06:33:57 sekiya Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.2 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.3 2003/12/29 06:33:57 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,14 +226,14 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 	/* Build descriptor chain for looping DMA, triggering interrupt every
 	 * blksize bytes */
 	for (i = 0; i < dmabuf->dma_map->dm_nsegs; i++) {
-		descp->hdd_bufptr = segp->ds_addr;
-		descp->hdd_ctl = segp->ds_len;
+		descp->hpc3_hdd_bufptr = segp->ds_addr;
+		descp->hpc3_hdd_ctl = segp->ds_len;
 
 		KASSERT(next_intr >= segp->ds_len);
 
 		if (next_intr == segp->ds_len) {
 			/* Generate intr after this DMA buffer */
-			descp->hdd_ctl |= HDD_CTL_INTR;
+			descp->hpc3_hdd_ctl |= HDD_CTL_INTR;
 			next_intr = blksize;
 		} else
 			next_intr -= segp->ds_len;
@@ -245,8 +245,8 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 			descp->hdd_descptr = codec->dma_seg.ds_addr;
 
 		DPRINTF(("haltwo_setup_dma: hdd_bufptr = %x hdd_ctl = %x"
-		    " hdd_descptr = %x\n", descp->hdd_bufptr, descp->hdd_ctl,
-		    descp->hdd_descptr));
+		    " hdd_descptr = %x\n", descp->hpc3_hdd_bufptr,
+		    descp->hpc3_hdd_ctl, descp->hdd_descptr));
 
 		segp++;
 		descp++;
