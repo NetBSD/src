@@ -1,8 +1,8 @@
-/*	$NetBSD: cmdtab.c,v 1.5 1999/02/21 21:48:07 jwise Exp $	*/
+/*      $NetBSD: ps.h,v 1.1 1999/02/21 21:48:07 jwise Exp $  */
 
 /*-
- * Copyright (c) 1980, 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1999
+ *      The NetBSD Foundation, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,39 +33,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
-#endif
-__RCSID("$NetBSD: cmdtab.c,v 1.5 1999/02/21 21:48:07 jwise Exp $");
-#endif /* not lint */
-
-#include "systat.h"
-#include "extern.h"
-
-struct	cmdtab cmdtab[] = {
-	{ "pigs",	showpigs,	fetchpigs,	labelpigs,
-	  initpigs,	openpigs,	closepigs,	0,
-	  CF_LOADAV },
-	{ "swap",	showswap,	fetchswap,	labelswap,
-	  initswap,	openswap,	closeswap,	0,
-	  CF_LOADAV },
-	{ "mbufs",	showmbufs,	fetchmbufs,	labelmbufs,
-	  initmbufs,	openmbufs,	closembufs,	0,
-	  CF_LOADAV },
-	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
-	  initiostat,	openiostat,	closeiostat,	cmdiostat,
-	  CF_LOADAV },
-	{ "vmstat",	showkre,	fetchkre,	labelkre,
-	  initkre,	openkre,	closekre,	cmdkre,
-	  0 },
-	{ "netstat",	shownetstat,	fetchnetstat,	labelnetstat,
-	  initnetstat,	opennetstat,	closenetstat,	cmdnetstat,
-	  CF_LOADAV },
-	{ "ps",		showps,		fetchpigs,	labelps,
-	  initpigs,	openpigs,	closepigs,	0,
-	  CF_LOADAV },
-	{ 0 }
-};
-struct  cmdtab *curcmd = &cmdtab[0];
+extern int nproc;       
+extern struct p_times {       
+	float pt_pctcpu;
+	struct kinfo_proc *pt_kp;
+} *pt;
+ 
+extern long	stime[CPUSTATES];       
+extern int	fscale;       
+extern double	lccpu; 
+extern long	mempages;
