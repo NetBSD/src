@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.5 2000/01/26 02:25:47 augustss Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.6 2000/01/26 22:28:38 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -93,6 +93,8 @@
 
 #include <dev/pcmcia/if_rayreg.h>
 
+#define RAY_USE_AMEM 0
+
 #define	RAY_DEBUG
 
 #ifndef	RAY_PID_COUNTRY_CODE_DEFAULT
@@ -147,7 +149,7 @@ struct ray_softc {
 	struct pcmcia_function		*sc_pf;
 	struct pcmcia_mem_handle	sc_mem;
 	int				sc_window;
-#if 0
+#if RAY_USE_AMEM
 	struct pcmcia_mem_handle	sc_amem;
 	int				sc_awindow;
 #endif
@@ -340,12 +342,11 @@ static void ray_dump_mbuf __P((struct ray_softc *, struct mbuf *));
 
 #endif	/* !RAY_DEBUG */
 
-
 /*
  * macros for writing to various regions in the mapped memory space
  */
 
-#if 0
+#if RAY_USE_AMEM
 /* read and write the registers in the CCR (attribute) space */
 #define	REG_WRITE(sc, off, val) \
 	bus_space_write_1((sc)->sc_amem.memt, (sc)->sc_amem.memh, (off), (val))
@@ -475,7 +476,7 @@ ray_attach(parent, self, aux)
 	sc->sc_pf = pa->pf;
 	ifp = &sc->sc_if;
 	sc->sc_window = -1;
-#if 0
+#if RAY_USE_AMEM
 	sc->sc_awindow = -1;
 #endif
 
@@ -514,7 +515,7 @@ ray_attach(parent, self, aux)
 		goto fail;
 	}
 
-#if 0
+#if RAY_USE_AMEM
 	/* use the already mapped ccrt in our pf */
 	/*
 	 * map in the memory
@@ -607,7 +608,7 @@ fail:
 	pcmcia_function_disable(sc->sc_pf);
 
 	/* free the alloc/map */
-#if 0
+#if RAY_USE_AMEM
 	if (sc->sc_awindow != -1) {
 		pcmcia_mem_unmap(sc->sc_pf, sc->sc_awindow);
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_amem);
@@ -633,7 +634,7 @@ ray_detach(self, flags)
 		ray_disable(sc);
 
 	/* give back the memory */
-#if 0
+#if RAY_USE_AMEM
 	if (sc->sc_awindow != -1) {
 		pcmcia_mem_unmap(sc->sc_pf, sc->sc_awindow);
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_amem);
