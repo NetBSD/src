@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.tmpl,v 1.7 1999/04/19 22:44:37 minoura Exp $
+#	$NetBSD: upgrade.tmpl,v 1.8 1999/05/01 10:59:55 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -199,10 +199,7 @@ echo	"Done."
 
 echo	""
 echo -n	"Copying new fsck binary to your hard disk..."
-if [ ! -d /mnt/sbin ]; then
-	mkdir /mnt/sbin
-fi
-cp /sbin/fsck /mnt/sbin/fsck
+cd / ; pax -wr sbin/fsck* /mnt
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: COPY FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
