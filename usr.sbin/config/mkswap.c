@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.9 1997/10/18 07:59:30 lukem Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.10 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,14 +52,14 @@
 #include "config.h"
 #include "sem.h"
 
-static	char   *mkdevstr __P((dev_t));
-static	int	mkoneswap __P((struct config *));
+static	char   *mkdevstr(dev_t);
+static	int	mkoneswap(struct config *);
 
 /*
  * Make the various swap*.c files.  Nothing to do for generic swap.
  */
 int
-mkswap()
+mkswap(void)
 {
 	struct config *cf;
 
@@ -70,8 +70,7 @@ mkswap()
 }
 
 static char *
-mkdevstr(d)
-	dev_t d;
+mkdevstr(dev_t d)
 {
 	static char buf[32];
 
@@ -83,8 +82,7 @@ mkdevstr(d)
 }
 
 static int
-mkoneswap(cf)
-	struct config *cf;
+mkoneswap(struct config *cf)
 {
 	struct nvlist *nv;
 	FILE *fp;

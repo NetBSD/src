@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.44 2000/02/01 05:13:17 enami Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.45 2000/10/02 19:48:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,26 +57,26 @@
  * Make the Makefile.
  */
 
-static const char *srcpath __P((struct files *)); 
+static const char *srcpath(struct files *); 
 
-static const char *prefix_prologue __P((const char *));
+static const char *prefix_prologue(const char *);
 
-static int emitdefs __P((FILE *));
-static int emitfiles __P((FILE *, int));
+static int emitdefs(FILE *);
+static int emitfiles(FILE *, int);
 
-static int emitobjs __P((FILE *));
-static int emitcfiles __P((FILE *));
-static int emitsfiles __P((FILE *));
-static int emitrules __P((FILE *));
-static int emitload __P((FILE *));
-static int emitincludes __P((FILE *));
+static int emitobjs(FILE *);
+static int emitcfiles(FILE *);
+static int emitsfiles(FILE *);
+static int emitrules(FILE *);
+static int emitload(FILE *);
+static int emitincludes(FILE *);
 
 int
-mkmakefile()
+mkmakefile(void)
 {
 	FILE *ifp, *ofp;
 	int lineno;
-	int (*fn) __P((FILE *));
+	int (*fn)(FILE *);
 	char *ifname;
 	char line[BUFSIZ], buf[200];
 
@@ -158,8 +158,7 @@ bad:
  * get the .o from the obj-directory.
  */
 static const char *
-srcpath(fi)
-	struct files *fi;
+srcpath(struct files *fi)
 {
 #if 1
 	/* Always have source, don't support object dirs for kernel builds. */
@@ -179,8 +178,7 @@ srcpath(fi)
 }
 
 static const char *
-prefix_prologue(path)
-	const char *path;
+prefix_prologue(const char *path)
 {
 
 	if (*path == '/')
@@ -190,8 +188,7 @@ prefix_prologue(path)
 }
 
 static int
-emitdefs(fp)
-	FILE *fp;
+emitdefs(FILE *fp)
 {
 	struct nvlist *nv;
 	char *sp;
@@ -233,8 +230,7 @@ emitdefs(fp)
 }
 
 static int
-emitobjs(fp)
-	FILE *fp;
+emitobjs(FILE *fp)
 {
 	struct files *fi;
 	struct objects *oi;
@@ -297,25 +293,21 @@ emitobjs(fp)
 }
 
 static int
-emitcfiles(fp)
-	FILE *fp;
+emitcfiles(FILE *fp)
 {
 
 	return (emitfiles(fp, 'c'));
 }
 
 static int
-emitsfiles(fp)
-	FILE *fp;
+emitsfiles(FILE *fp)
 {
 
 	return (emitfiles(fp, 's'));
 }
 
 static int
-emitfiles(fp, suffix)
-	FILE *fp;
-	int suffix;
+emitfiles(FILE *fp, int suffix)
 {
 	struct files *fi;
 	struct config *cf;
@@ -393,8 +385,7 @@ emitfiles(fp, suffix)
  * Emit the make-rules.
  */
 static int
-emitrules(fp)
-	FILE *fp;
+emitrules(FILE *fp)
 {
 	struct files *fi;
 	const char *cp, *fpath;
@@ -441,8 +432,7 @@ emitrules(fp)
  * This function is not to be called `spurt'.
  */
 static int
-emitload(fp)
-	FILE *fp;
+emitload(FILE *fp)
 {
 	struct config *cf;
 	const char *nm, *swname;
@@ -487,8 +477,7 @@ swap%s.o: ", swname, swname) < 0)
  * Emit include headers (for any prefixes encountered)
  */
 static int
-emitincludes(fp)
-	FILE *fp;
+emitincludes(FILE *fp)
 {
 	struct prefix *pf;
 
