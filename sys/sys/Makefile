@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/01/28 19:58:52 mjacob Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/04 04:36:10 explorer Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -24,6 +24,7 @@ SYMLINKS= sys/fcntl.h /usr/include/fcntl.h \
 	sys/inttypes.h /usr/include/inttypes.h \
 	sys/md5.h /usr/include/md5.h \
 	sys/poll.h /usr/include/poll.h \
+	sys/sha1.h /usr/include/sha1.h \
 	sys/syslog.h /usr/include/syslog.h \
 	sys/termios.h /usr/include/termios.h
 
