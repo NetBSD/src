@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.28 1998/07/06 21:47:07 fair Exp $	*/
+/*	$NetBSD: fstat.c,v 1.29 1998/07/06 22:59:58 fair Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.28 1998/07/06 21:47:07 fair Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.29 1998/07/06 22:59:58 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ int maxfiles;
 		free(ofiles); \
 		ofiles = malloc((d) * sizeof(struct file *)); \
 		if (ofiles == NULL) { \
-			err(1, NULL); \
+			err(1, "malloc(%u)", (d) * sizeof(struct file *)); \
 		} \
 		maxfiles = (d); \
 	}
