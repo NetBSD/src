@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/10/04 09:19:23 tsutsui Exp 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include <sgimips/dev/crimevar.h>
 
 /*
  * PCI doesn't have any special needs; just use
@@ -88,7 +90,10 @@ pci_bus_maxdevs(pc, busno)
 	int busno;
 {
 
-	return 5;	/* 2 on-board SCSI chips, slots 0, 1 and 2 */
+	if (busno == 0)
+		return 5;	/* 2 on-board SCSI chips, slots 0, 1 and 2 */
+	else
+		return 0;	/* XXX */
 }
 
 pcitag_t
@@ -199,8 +204,6 @@ pci_intr_evcnt(pc, ih)
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
 }
-
-extern void *	crime_intr_establish(int, int, int, int (*)(void *), void *);
 
 void *
 pci_intr_establish(pc, ih, level, func, arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2003/10/04 09:19:23 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2003/10/05 15:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2003/10/04 09:19:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2003/10/05 15:38:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_execfmt.h"
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
+#include "opt_mips_cache.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,14 +78,18 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2003/10/04 09:19:23 tsutsui Exp $")
 
 #include <mips/locore.h>
 #include <mips/cache.h>
-#if 0
 #include <mips/cache_r5k.h>
+#ifdef ENABLE_MIPS4_CACHE_R10K
+#include <mips/cache_r10k.h>
 #endif
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
+#if defined(IP32)
 #include <sgimips/dev/crimereg.h>
+#include <sgimips/dev/crimevar.h>
+#endif
 
 #include "ksyms.h"
 
@@ -144,6 +149,8 @@ void	ip20_init(void);
 
 #ifdef IP22
 void	ip22_init(void);
+extern void      ip22_sdcache_disable(void);
+extern void      ip22_sdcache_enable(void);
 #endif
 
 #ifdef IP32
@@ -217,11 +224,6 @@ mach_init(argc, argv, magic, btinfo)
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
 	int i, rv, nsym;
-
-#if 0
-	/* Clear the BSS segment.  XXX Is this really necessary? */
-	memset(_edata, 0, _end - _edata);
-#endif
 
 	/*
 	 * Initialize ARCS.  This will set up the bootstrap console.
@@ -693,6 +695,9 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
+#if defined(IP32)
+	u_int64_t scratch;
+#endif
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
 		savectx((struct user *)curpcb);
@@ -718,7 +723,6 @@ cpu_reboot(howto, bootstr)
 		resettodr();
 	}
 
-#if 1
 	/* Clear and disable watchdog timer. */
 	switch (mach_type) {
 	case MACH_SGI_IP22:
@@ -726,13 +730,17 @@ cpu_reboot(howto, bootstr)
 		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
 		break;
 
+#if defined(IP32)
 	case MACH_SGI_IP32:
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG) = 0;
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(CRIME_CONTROL)
-		    &= ~CRIME_CONTROL_DOG_ENABLE;
+		bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+		    CRIME_WATCHDOG, 0);
+		scratch = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
+		    CRIME_CONTROL) & ~CRIME_CONTROL_DOG_ENABLE;
+		bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+		    CRIME_CONTROL, scratch);
 		break;
-	}
 #endif
+	}
 
 	splhigh();
 
@@ -917,6 +925,9 @@ lookup_bootinfo(int type)
 
 void ddb_trap_hook(int where)
 {
+#if defined(IP32)
+	u_int64_t scratch;
+#endif
 	switch (where) {
 	case 1:		/* Entry to DDB, turn watchdog off */
 		switch (mach_type) {
@@ -924,14 +935,16 @@ void ddb_trap_hook(int where)
 			*(volatile u_int32_t *)0xbfa00014 = 0;
 			*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
 			break;
-
+#if defined(IP32)
 		case MACH_SGI_IP32:
-			*(volatile u_int32_t *)
-			    MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG)= 0;
-			*(volatile u_int32_t *)
-			    MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) \
-			        &= ~CRIME_CONTROL_DOG_ENABLE;
+			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+			    CRIME_WATCHDOG, 0);
+			scratch = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
+			    CRIME_CONTROL) & ~CRIME_CONTROL_DOG_ENABLE;
+			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+			    CRIME_CONTROL, scratch);
 			break;
+#endif
 		}
 		break;
 
@@ -941,14 +954,16 @@ void ddb_trap_hook(int where)
 			*(volatile u_int32_t *)0xbfa00004 |= 0x100;
 			*(volatile u_int32_t *)0xbfa00014 = 0;
 			break;
-
+#if defined(IP32)
 		case MACH_SGI_IP32:
-			*(volatile u_int32_t *)
-			    MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) \
-			        |= CRIME_CONTROL_DOG_ENABLE;
-			*(volatile u_int32_t *)
-			    MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG) = 0;
+			scratch = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
+			    CRIME_CONTROL) | CRIME_CONTROL_DOG_ENABLE;
+			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+			    CRIME_CONTROL, scratch);
+			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
+			    CRIME_WATCHDOG, 0);
 			break;
+#endif
 		}
 		break;
 	}
@@ -960,33 +975,49 @@ void mips_machdep_cache_config(void)
 {
 	volatile u_int32_t cpu_config;
 
-	if (mach_type == MACH_SGI_IP32)
-	{
-#if 1
-		/* L2 cache does not work on IP32 (yet) */
+	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
+
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+#if defined(IP22)
+	case MIPS_R4600:
+		/*
+		 * R4600 is on Indy-class machines only.  Disable and
+		 * flush pcache.
+		 */
 		mips_sdcache_size = 0;
 		mips_sdcache_line_size = 0;
-
+		ip22_sdcache_disable();
+		break;
+#endif
+#ifndef ENABLE_MIPS_R3NKK
+	case MIPS_R5000:
+#endif
+	case MIPS_RM5200:
 		cpu_config = mips3_cp0_config_read();
+#ifdef notyet	/* disable r5ksc for now */
+		if ((cpu_config & MIPS3_CONFIG_SC) == 0)
+			r5k_enable_sdcache();
+		else
+#else
 		cpu_config &= ~MIPS3_CONFIG_SE;
 		mips3_cp0_config_write(cpu_config);
-#else
-		arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
-
-		cpu_config = mips3_cp0_config_read();
-		printf("\nbefore mips_machdep_cache_config: SE = %x\n",
-				cpu_config & MIPS3_CONFIG_SE);
-
-		r5k_enable_sdcache();
-
-		cpu_config = mips3_cp0_config_read();
-		printf("after mips_machdep_cache_config: SE = %x\n",
-				cpu_config & MIPS3_CONFIG_SE);
 #endif
-	}
-	else /* IP22 works, maybe */
-	{
-		arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
+		{
+			mips_sdcache_size = 0;
+			mips_sdcache_line_size = 0;
+		}
+		break;
+#ifdef ENABLE_MIPS4_CACHE_R10K
+	case MIPS_R10000:
+		cpu_config = mips3_cp0_config_read();
+#ifdef DEBUG
+		printf("\nr10k cpu config is %x\n", cpu_config);
+#endif
+		break;
+#endif	/* ENABLE_MIPS4_CACHE_R10K */
+	default:
+		printf("Don't know how to configure SC on this platform.\n");
+		break;
 	}
 }
 
