@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.3 2003/04/16 23:16:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -260,7 +260,8 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
  fail_8:
 	for (--i; i >= 0; i--) {
 		request_t *req = &mpt->request_pool[i];
-		bus_dmamap_destroy(mpt->sc_dmat, req->dmap);
+		if (req->dmap != NULL)
+			bus_dmamap_destroy(mpt->sc_dmat, req->dmap);
 	}
 	bus_dmamap_unload(mpt->sc_dmat, mpt->request_dmap);
  fail_7:
