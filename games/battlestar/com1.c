@@ -1,4 +1,4 @@
-/*	$NetBSD: com1.c,v 1.9 1999/09/18 19:38:46 jsm Exp $	*/
+/*	$NetBSD: com1.c,v 1.10 2000/07/23 23:57:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com1.c,v 1.9 1999/09/18 19:38:46 jsm Exp $");
+__RCSID("$NetBSD: com1.c,v 1.10 2000/07/23 23:57:23 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
 int
-move(thataway, token)
+moveplayer(thataway, token)
 	int     thataway, token;
 {
 	wordnumber++;
