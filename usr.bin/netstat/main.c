@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1997/02/28 00:14:21 jonathan Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1997/04/03 04:46:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$NetBSD: main.c,v 1.10 1997/02/28 00:14:21 jonathan Exp $";
+static char *rcsid = "$NetBSD: main.c,v 1.11 1997/04/03 04:46:48 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,15 +136,21 @@ struct nlist nl[] = {
 	{ "_msize" },
 #define N_MCLBYTES	33
 	{ "_mclbytes" },
-	"",
+#define N_DDPSTAT	34
+	{ "_ddpstat"},
+#define N_DDPCB		35
+	{ "_ddpcb"},
+	{ "" },
 };
 
 struct protox {
 	u_char	pr_index;		/* index into nlist of cb head */
 	u_char	pr_sindex;		/* index into nlist of stat block */
 	u_char	pr_wanted;		/* 1 if wanted, 0 otherwise */
-	void	(*pr_cblocks)();	/* control blocks printing routine */
-	void	(*pr_stats)();		/* statistics printing routine */
+	void	(*pr_cblocks)		/* control blocks printing routine */
+			__P((u_long, char *));
+	void	(*pr_stats)		/* statistics printing routine */
+			__P((u_long, char *));
 	char	*pr_name;		/* well-known name */
 } protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
@@ -157,6 +163,13 @@ struct protox {
 	  icmp_stats,	"icmp" },
 	{ -1,		N_IGMPSTAT,	1,	0,
 	  igmp_stats,	"igmp" },
+	{ -1,		-1,		0,	0,
+	  0,		0 }
+};
+
+struct protox atalkprotox[] = {
+	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
+	  ddp_stats,	"ddp" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
@@ -185,12 +198,15 @@ struct protox isoprotox[] = {
 	  0,		0 }
 };
 
-struct protox *protoprotox[] = { protox, nsprotox, isoprotox, NULL };
+struct protox *protoprotox[] = { protox, atalkprotox,
+					 nsprotox, isoprotox, NULL };
 
+int main __P((int, char *[]));
 static void printproto __P((struct protox *, char *));
 static void usage __P((void));
 static struct protox *name2protox __P((char *));
 static struct protox *knownname __P((char *));
+
 
 kvm_t *kvmd;
 
@@ -203,7 +219,6 @@ main(argc, argv)
 	extern int optind;
 	register struct protoent *p;
 	register struct protox *tp;	/* for printing cblocks & stats */
-	register char *cp;
 	int ch;
 	char *nlistf = NULL, *memf = NULL;
 	char buf[_POSIX2_LINE_MAX];
@@ -230,6 +245,8 @@ main(argc, argv)
 				af = AF_UNIX;
 			else if (strcmp(optarg, "iso") == 0)
 				af = AF_ISO;
+			else if (strcmp(optarg, "atalk") == 0)
+				af = AF_APPLETALK;
 			else {
 				(void)fprintf(stderr,
 				    "%s: %s: unknown address family\n",
@@ -374,7 +391,7 @@ main(argc, argv)
 		setprotoent(1);
 		setservent(1);
 		/* ugh, this is O(MN) ... why do we do this? */
-		while (p = getprotoent()) {
+		while ((p = getprotoent()) != NULL) {
 			for (tp = protox; tp->pr_name; tp++)
 				if (strcmp(tp->pr_name, p->p_name) == 0)
 					break;
@@ -384,6 +401,9 @@ main(argc, argv)
 		}
 		endprotoent();
 	}
+	if (af == AF_APPLETALK || af == AF_UNSPEC)
+		for (tp = atalkprotox; tp->pr_name; tp++)
+			printproto(tp, tp->pr_name);
 	if (af == AF_NS || af == AF_UNSPEC)
 		for (tp = nsprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
@@ -405,7 +425,7 @@ printproto(tp, name)
 	register struct protox *tp;
 	char *name;
 {
-	void (*pr)();
+	void (*pr) __P((u_long, char *));
 	u_long off;
 
 	if (sflag) {
@@ -482,11 +502,11 @@ name2protox(name)
 	 * Try to find the name in the list of "well-known" names. If that
 	 * fails, check if name is an alias for an Internet protocol.
 	 */
-	if (tp = knownname(name))
+	if ((tp = knownname(name)) != NULL)
 		return (tp);
 
 	setprotoent(1);			/* make protocol lookup cheaper */
-	while (p = getprotoent()) {
+	while ((p = getprotoent()) != NULL) {
 		/* assert: name not same as p->name */
 		for (alias = p->p_aliases; *alias; alias++)
 			if (strcmp(name, *alias) == 0) {
