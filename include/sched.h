@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.5 2004/12/10 16:40:40 nathanw Exp $	*/
+/*	$NetBSD: sched.h,v 1.6 2004/12/13 16:08:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ int	sched_rr_get_interval(pid_t, struct timespec *);
 
 /* Not optional in the presence of _POSIX_THREADS */
 int	sched_yield(void);
-void	__libc_thr_yield(void);
+int	__libc_thr_yield(void);
 __END_DECLS
 
 #ifndef __LIBPTHREAD_SOURCE__
