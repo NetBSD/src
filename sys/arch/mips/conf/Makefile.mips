@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.15 2001/07/15 06:38:07 takemura Exp $
+#	$NetBSD: Makefile.mips,v 1.16 2001/07/19 01:46:15 oster Exp $
 
 # Makefile for NetBSD
 #
@@ -220,7 +220,7 @@ depend: .depend
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
-	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@sed -e 's/.*\.o:.*\.c /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
 
 dependall: depend all
