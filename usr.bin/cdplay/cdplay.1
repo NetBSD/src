@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdplay.1,v 1.6 2000/06/14 14:38:52 ad Exp $
+.\"	$NetBSD: cdplay.1,v 1.7 2000/08/30 10:13:52 abs Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran.
 .\" All rights reserved.
@@ -112,6 +112,10 @@ Set the volume of left channel to
 .Ar left_channel
 and the volume of right channel to 
 .Ar right_channel . 
+Allowed values are in the range 0-255. 
+.It Cm volume Ar value
+Set the volume of both left channel right channel to 
+.Ar value . 
 Allowed values are in the range 0-255. 
 .It Cm volume Ar mute
 Turn the sound off.
