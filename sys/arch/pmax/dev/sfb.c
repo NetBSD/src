@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.12 1996/05/29 06:15:52 mhitch Exp $	*/
+/*	$NetBSD: sfb.c,v 1.13 1996/08/22 04:17:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -119,13 +119,14 @@ extern int pmax_boardtype;
  * Forward references.
  */
 
-int sfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
+int sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 int sfbmatch __P((struct device *, void *, void *));
 void sfbattach __P((struct device *, struct device *, void *));
+int sfb_intr __P((void *sc));
 
 struct cfattach sfb_ca = {
 	sizeof(struct device), sfbmatch, sfbattach
@@ -198,8 +199,25 @@ sfbattach(parent, self, aux)
 		return;
 
 #if 0 /*XXX*/
+
+	/*
+	 * Sean Davidson (davidson@sean.zk3.dec.com) reports this
+	 *  isn't sufficient on a 3MIN, Use an interrupt handler instead.
+	 */
+
 	*(sfbaddr + SFB_INTERRUPT_ENABLE) = 0;
+
 #endif
+	/*
+	 * By default, the SFB  requests an interrupt during every vertical-retrace period.
+	 * We never enable interrupts from SFB cards, except on the
+	 * 3MIN, where TC options interrupt at spl0 through spl2, and
+	 * disabling of TC option interrupts doesn't work.
+	 */
+	if (pmax_boardtype == DS_3MIN) {
+		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
+				  sfb_intr, fi);
+	}
 }
 
 
@@ -301,6 +319,32 @@ sfbinit(fi, base, unit, silent)
 
 	fbconnect ("PMAGB-BA", fi, silent);
 	return (1);
+}
+
+
+/*
+ * The  TURBOChannel sfb interrupts by default on every vertical retrace,
+ * and we don't know to disable those interrupt requests.
+ * The 4.4BSD/pamx kernel never enabled delivery of those interrupts from the TC bus,
+ * but there's a kernel design bug on the 3MIN, where disabling
+ * (or enabling) TC option interrupts has no effect; each slot interrupt is
+ * mapped directly to a separate R3000 interrupt  and they always seem to be taken.
+ *
+ * This function simply dismisses SFB interrupts, or the interrupt
+ * request from the card will still be active.
+ */
+int
+sfb_intr(sc)
+	void *sc;
+{
+	struct fbinfo *fi = /* XXX (struct fbinfo *)sc */ &sfbfi;
+	
+	char *slot_addr = (((char *)fi->fi_base) - SFB_ASIC_OFFSET);
+	
+	/* reset vertical-retrace interrupt by writing a dont-care */
+	*(int*) (slot_addr + SFB_CLEAR) = 0;
+
+	return (0);
 }
 
 /* old bt459 code used to be here */
