@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.451 2001/07/08 16:18:56 abs Exp $
+#	$NetBSD: files,v 1.452 2001/07/14 02:05:54 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -34,7 +34,7 @@ defopt	opt_poollog.h	POOL_LOGSIZE
 
 defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT EXEC_ELF_CATCHALL
+defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT EXEC_ELF_CATCHALL
 
 # compatibility options
 defopt	COMPAT_FREEBSD
@@ -49,6 +49,7 @@ defopt	COMPAT_NETBSD32
 defopt	COMPAT_AOUT
 defopt	COMPAT_AOUT_M68K
 defopt	COMPAT_M68K4K
+defopt	COMPAT_MACH
 defopt	COMPAT_VAX1K
 defopt	COMPAT_43
 defopt	COMPAT_PECOFF
@@ -830,6 +831,7 @@ file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
 file	kern/exec_elf_common.c		exec_elf32 | exec_elf64
+file	kern/exec_macho.c		exec_macho
 file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c
