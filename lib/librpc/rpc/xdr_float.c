@@ -42,14 +42,19 @@ static char sccsid[] = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
  */
 
 #include <stdio.h>
-
+#include <sys/types.h>
+#include <sys/param.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
 /*
  * NB: Not portable.
- * This routine works on Suns (Sky / 68000's) and Vaxen.
+ * This routine works on Suns (Sky / 68000's), i386's and Vaxen.
  */
+
+#if defined(mc68000) || defined(sparc) || defined(i386)
+#define IEEEFP
+#endif
 
 #ifdef vax
 
@@ -87,7 +92,7 @@ xdr_float(xdrs, fp)
 	register XDR *xdrs;
 	register float *fp;
 {
-#if !defined(mc68000) && !defined(sparc)
+#ifndef IEEEFP
 	struct ieee_single is;
 	struct vax_single vs, *vsp;
 	struct sgl_limits *lim;
@@ -96,7 +101,7 @@ xdr_float(xdrs, fp)
 	switch (xdrs->x_op) {
 
 	case XDR_ENCODE:
-#if defined(mc68000) || defined(sparc)
+#ifdef IEEEFP 
 		return (XDR_PUTLONG(xdrs, (long *)fp));
 #else
 		vs = *((struct vax_single *)fp);
@@ -118,7 +123,7 @@ xdr_float(xdrs, fp)
 #endif
 
 	case XDR_DECODE:
-#if defined(mc68000) || defined(sparc)
+#ifdef IEEEFP
 		return (XDR_GETLONG(xdrs, (long *)fp));
 #else
 		vsp = (struct vax_single *)fp;
@@ -148,7 +153,7 @@ xdr_float(xdrs, fp)
 }
 
 /*
- * This routine works on Suns (Sky / 68000's) and Vaxen.
+ * This routine works on Suns (Sky / 68000's), i386's and Vaxen.
  */
 
 #ifdef vax
@@ -193,7 +198,7 @@ xdr_double(xdrs, dp)
 	double *dp;
 {
 	register long *lp;
-#if !defined(mc68000) && !defined(sparc)
+#ifndef IEEEFP
 	struct	ieee_double id;
 	struct	vax_double vd;
 	register struct dbl_limits *lim;
@@ -203,8 +208,13 @@ xdr_double(xdrs, dp)
 	switch (xdrs->x_op) {
 
 	case XDR_ENCODE:
-#if defined(mc68000) || defined(sparc)
+#ifdef IEEEFP
 		lp = (long *)dp;
+#if BYTE_ORDER == BIG_ENDIAN
+		return (XDR_PUTLONG(xdrs, lp++) && XDR_PUTLONG(xdrs, lp));
+#else
+		return (XDR_PUTLONG(xdrs, lp+1) && XDR_PUTLONG(xdrs, lp));
+#endif
 #else
 		vd = *((struct vax_double *)dp);
 		for (i = 0, lim = dbl_limits;
@@ -227,13 +237,17 @@ xdr_double(xdrs, dp)
 	shipit:
 		id.sign = vd.sign;
 		lp = (long *)&id;
-#endif
 		return (XDR_PUTLONG(xdrs, lp++) && XDR_PUTLONG(xdrs, lp));
+#endif
 
 	case XDR_DECODE:
-#if defined(mc68000) || defined(sparc)
+#ifdef IEEEFP
 		lp = (long *)dp;
+#if BYTE_ORDER == BIG_ENDIAN
 		return (XDR_GETLONG(xdrs, lp++) && XDR_GETLONG(xdrs, lp));
+#else
+		return (XDR_GETLONG(xdrs, lp+1) && XDR_GETLONG(xdrs, lp));
+#endif
 #else
 		lp = (long *)&id;
 		if (!XDR_GETLONG(xdrs, lp++) || !XDR_GETLONG(xdrs, lp))
