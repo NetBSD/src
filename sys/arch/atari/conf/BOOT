@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.9 1996/05/15 12:57:32 leo Exp $
+#	$NetBSD: BOOT,v 1.9.4.1 1996/12/05 04:45:04 rat Exp $
 #
 # BOOT
 #
@@ -99,3 +99,4 @@ pseudo-device	rd	1	# Boot ramdisk
 #
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
+lpt0   at mainbus0             # centronics printer
