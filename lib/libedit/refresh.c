@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.9 1999/10/15 17:01:19 jdolecek Exp $	*/
+/*	$NetBSD: refresh.c,v 1.10 1999/11/12 01:05:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.9 1999/10/15 17:01:19 jdolecek Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.10 1999/11/12 01:05:07 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -66,6 +66,9 @@ private	void	re_fastputc		__P((EditLine *, int));
 
 private	void	re__strncopy		__P((char *, char *, size_t));
 private	void	re__copy_and_pad	__P((char *, char *, size_t));
+
+private	coord_t	re_rprompt;
+
 
 #ifdef DEBUG_REFRESH
 private	void	re_printstr		__P((EditLine *, char *, char *,
@@ -161,7 +164,6 @@ re_putc(el, c)
     }
 } /* end re_putc */
 
-
 /* re_refresh():
  *	draws the new virtual screen image from the current input
  *  	line, then goes line-by-line changing the real image to the new
@@ -172,11 +174,20 @@ protected void
 re_refresh(el)
     EditLine *el;
 {
-    int i;
-    char *cp;
-    coord_t     cur;
+    int		i, rhdiff;
+    char	*cp;
+    coord_t	cur;
 
     ELRE_DEBUG(1,(__F, "el->el_line.buffer = :%s:\r\n", el->el_line.buffer),);
+
+    /* reset the Drawing cursor */
+    el->el_refresh.r_cursor.h = 0;
+    el->el_refresh.r_cursor.v = 0;
+
+    /* temporarily draw rprompt to calculate its size */
+    prompt_print(el, EL_RPROMPT);
+    re_rprompt.h = el->el_refresh.r_cursor.h;
+    re_rprompt.v = el->el_refresh.r_cursor.v;
 
     /* reset the Drawing cursor */
     el->el_refresh.r_cursor.h = 0;
@@ -185,7 +196,7 @@ re_refresh(el)
     cur.h = -1;			/* set flag in case I'm not set */
     cur.v = 0;
 
-    prompt_print(el);
+    prompt_print(el, EL_PROMPT);
 
     /* draw the current input buffer */
     for (cp = el->el_line.buffer; cp < el->el_line.lastchar; cp++) {
@@ -200,6 +211,23 @@ re_refresh(el)
 	cur.h = el->el_refresh.r_cursor.h;
 	cur.v = el->el_refresh.r_cursor.v;
     }
+
+    rhdiff = el->el_term.t_size.h - el->el_refresh.r_cursor.h - re_rprompt.h;
+    if (re_rprompt.h && !re_rprompt.v && !el->el_refresh.r_cursor.v &&
+	rhdiff > 1) {
+				/*
+				 * have a right-hand side prompt that will fit
+				 * on the end of the first line with at least
+				 * one character gap to the input buffer.
+				 */
+	while (--rhdiff > 0)	/* pad out with spaces */
+	    re_putc(el, ' ');
+    	prompt_print(el, EL_RPROMPT);
+    } else {
+	re_rprompt.h = 0;		/* flag "not using rprompt" */
+	re_rprompt.v = 0;
+    }
+
     /* must be done BEFORE the NUL is written */
     el->el_refresh.r_newcv = el->el_refresh.r_cursor.v;
     re_putc(el, '\0');		/* put NUL on end */
@@ -952,11 +980,18 @@ re_fastaddc(el)
     EditLine *el;
 {
     char c;
+    int rhdiff;
 
     c = el->el_line.cursor[-1];
 
     if (c == '\t' || el->el_line.cursor != el->el_line.lastchar) {
 	re_refresh(el);		/* too hard to handle */
+	return;
+    }
+
+    rhdiff = el->el_term.t_size.h - el->el_cursor.h - re_rprompt.h;
+    if (re_rprompt.h && rhdiff < 3) {
+	re_refresh(el);		/* clear out rprompt if less than 1 char gap */
 	return;
     }				/* else (only do at end of line, no TAB) */
 
