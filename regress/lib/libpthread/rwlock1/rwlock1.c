@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock1.c,v 1.1 2004/08/03 11:36:23 yamt Exp $	*/
+/*	$NetBSD: rwlock1.c,v 1.2 2004/08/03 12:02:09 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -26,17 +26,17 @@
  * SUCH DAMAGE.
  */
 
+#include <err.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 pthread_rwlock_t lk;
 
 int main(void);
 void *do_nothing(void *);
 
-struct timespec to = {1, 0};
+struct timespec to;
 
 /* ARGSUSED */
 void *
@@ -54,7 +54,7 @@ main()
 
 	error = pthread_create(&t, NULL, do_nothing, NULL);
 	if (error)
-		exit(7);
+		exit(1000);
 
 	error = pthread_rwlock_init(&lk, NULL);
 	if (error)
@@ -76,9 +76,30 @@ main()
 	if (error != EBUSY)
 		exit(5);
 
+	if (clock_gettime(CLOCK_REALTIME, &to))
+		err(101, "clock_gettime");
+	to.tv_sec++;
 	error = pthread_rwlock_timedwrlock(&lk, &to);
 	if (error != ETIMEDOUT && error != EDEADLK)
 		exit(6);
+
+	error = pthread_rwlock_unlock(&lk);
+	if (error)
+		exit(7);
+
+	if (clock_gettime(CLOCK_REALTIME, &to))
+		err(102, "clock_gettime");
+	to.tv_sec++;
+	error = pthread_rwlock_timedwrlock(&lk, &to);
+	if (error)
+		exit(8);
+
+	if (clock_gettime(CLOCK_REALTIME, &to))
+		err(103, "clock_gettime");
+	to.tv_sec++;
+	error = pthread_rwlock_timedwrlock(&lk, &to);
+	if (error != ETIMEDOUT && error != EDEADLK)
+		exit(9);
 
 	exit(0);
 
