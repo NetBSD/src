@@ -1,3 +1,5 @@
+/*	$NetBSD: comsat.c,v 1.10 1997/10/07 10:57:11 mrg Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.9 1997/08/25 19:31:47 kleink Exp $";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
+static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: comsat.c,v 1.10 1997/10/07 10:57:11 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,6 +81,7 @@ void mailfor __P((char *));
 void notify __P((struct utmp *, off_t));
 void onalrm __P((int));
 void reapchildren __P((int));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -265,8 +268,8 @@ jkfprintf(tp, name, offset)
 				continue;
 			}
 			if (line[0] == ' ' || line[0] == '\t' ||
-			    strncmp(line, "From:", 5) &&
-			    strncmp(line, "Subject:", 8))
+			    (strncmp(line, "From:", 5) &&
+			    strncmp(line, "Subject:", 8)))
 				continue;
 		}
 		if (linecnt <= 0 || charcnt <= 0) {
