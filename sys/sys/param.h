@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.210 2005/02/15 21:11:01 cube Exp $	*/
+/*	$NetBSD: param.h,v 1.211 2005/02/26 22:25:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -146,16 +146,16 @@
 #include <machine/limits.h>
 
 /*
- * Stack macros.  On most architectures, the stack grows down, 
- * towards lower addresses; it is the rare architecture where 
+ * Stack macros.  On most architectures, the stack grows down,
+ * towards lower addresses; it is the rare architecture where
  * it grows up, towards higher addresses.
- * 
- * STACK_GROW and STACK_SHRINK adjust a stack pointer by some 
+ *
+ * STACK_GROW and STACK_SHRINK adjust a stack pointer by some
  * size, no questions asked.  STACK_ALIGN aligns a stack pointer.
  *
- * STACK_ALLOC returns a pointer to allocated stack space of 
- * some size; given such a pointer and a size, STACK_MAX gives 
- * the maximum (in the "maxsaddr" sense) stack address of the 
+ * STACK_ALLOC returns a pointer to allocated stack space of
+ * some size; given such a pointer and a size, STACK_MAX gives
+ * the maximum (in the "maxsaddr" sense) stack address of the
  * allocated memory.
  */
 #if defined(_KERNEL) || defined(__EXPOSE_STACK)
@@ -197,7 +197,7 @@
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
 #define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
 				   the interlock */
-#define PNOEXITERR     	0x400   /* OR'd with pri for tsleep to not exit 
+#define PNOEXITERR     	0x400   /* OR'd with pri for tsleep to not exit
 				   with an error code when LWPs are exiting */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
@@ -289,16 +289,16 @@
 #define	FSHIFT	11		/* bits to right of fixed binary point */
 #define	FSCALE	(1<<FSHIFT)
 
-/* 
- * The time for a process to be blocked before being very swappable. 
- * This is a number of seconds which the system takes as being a non-trivial 
- * amount of real time.  You probably shouldn't change this; 
- * it is used in subtle ways (fractions and multiples of it are, that is, like 
- * half of a ``long time'', almost a long time, etc.) 
- * It is related to human patience and other factors which don't really 
- * change over time. 
- */ 
-#define        MAXSLP          20 
+/*
+ * The time for a process to be blocked before being very swappable.
+ * This is a number of seconds which the system takes as being a non-trivial
+ * amount of real time.  You probably shouldn't change this;
+ * it is used in subtle ways (fractions and multiples of it are, that is, like
+ * half of a ``long time'', almost a long time, etc.)
+ * It is related to human patience and other factors which don't really
+ * change over time.
+ */
+#define        MAXSLP          20
 
 /*
  * Defaults for Unified Buffer Cache parameters.

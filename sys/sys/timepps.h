@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.7 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: timepps.h,v 1.8 2005/02/26 22:25:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -181,7 +181,7 @@ time_pps_getparams(handle, ppsparams)
 	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
 }
 
-static __inline int 
+static __inline int
 time_pps_getcap(handle, mode)
 	pps_handle_t handle;
 	int *mode;

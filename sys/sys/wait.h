@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.22 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: wait.h,v 1.23 2005/02/26 22:25:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -94,11 +94,11 @@
 #define	__WCLONE	WALTSIG
 #define	__WALL		WALLSIG
 
-/* 
+/*
  * These bits are used in order to support SVR4 (etc) functionality
  * without replicating sys_wait4 5 times.
  */
-#define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */ 
+#define	WNOWAIT		0x00010000	/* Don't mark child 'P_WAITED' */
 #define	WNOZOMBIE	0x00020000	/* Ignore zombies */
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
