@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.12 2000/03/26 04:31:40 tsutsui Exp $
+#	$NetBSD: CATSINST,v 1.13 2000/04/03 00:03:29 augustss Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -326,6 +326,7 @@ wskbd*	at ukbd? console ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio

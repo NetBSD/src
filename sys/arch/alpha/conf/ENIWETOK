@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.20 2000/03/22 00:58:16 cgd Exp $
+# $NetBSD: ENIWETOK,v 1.21 2000/04/03 00:03:28 augustss Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -383,6 +383,7 @@ fd*	at	fdc? drive ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
 #scsibus* at umass? channel ?
 
 # USB Ethernet adapters

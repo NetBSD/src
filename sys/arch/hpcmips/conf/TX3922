@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.11 2000/03/25 15:08:26 uch Exp $
+#	$NetBSD: TX3922,v 1.12 2000/04/03 00:03:29 augustss Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -132,6 +132,7 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 #ujoy*	at uhub? configuration ? interface ?
 

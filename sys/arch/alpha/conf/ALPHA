@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.117 2000/03/22 00:58:16 cgd Exp $
+# $NetBSD: ALPHA,v 1.118 2000/04/03 00:03:28 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.117 $"
+ident		"ALPHA-$Revision: 1.118 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -394,6 +394,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio
