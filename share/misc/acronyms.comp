@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.29 2004/01/03 12:05:59 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.30 2004/01/13 22:53:56 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -6,6 +6,7 @@ ADC	analog [to] digital converter
 AGP	accelerated graphics port
 ANSI	American National Standards Institute
 API	application programming interface
+ARP	address resolution protocol
 APIC	advanced programmable interrupt controller
 AT	advanced technology
 ATA	advanced technology attachment
@@ -21,6 +22,7 @@ CAV	constant angular velocity (as opposed to CLV)
 CD	compact disc
 CDRAM	cache dynamic random access memory
 CGA	color graphics array
+CGI	common gateway interface
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CLI	command line interface
@@ -34,6 +36,7 @@ DAC	digital [to] analog converter
 DDC	display data channel
 DDR	double data rate
 DDWG	digital display working group
+DHCP	dynamic host configuration protocol
 DMA	direct memory access
 DNS	domain name system
 DRAM	dynamic random access memory
@@ -50,6 +53,7 @@ EISA	extended industry standard architecture
 EPP	enhanced parallel port
 EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
+FAT	file allocation table
 FBRAM	frame buffer random access memory
 FFS	fast file system
 FLOPS	floating [point] operations per second
@@ -96,12 +100,14 @@ LAN	local area network
 LBA	logical block addressing
 LCD	liquid crystal display
 LDAP	lightweight directory access protocol
+LED	light emitting diode
 LSB	least significant bit [or: byte]
 LUN	logical unit number
 MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
 MIDI	musical instrument digital interface
+MIME	multipurpose internet mail extensions
 MIPS	million instructions per second
 MMU	memory management unit
 MSB	most significant bit [or: byte]
@@ -109,9 +115,11 @@ MTA	mail transfer agent
 MTU	maximum transmission unit
 MUA	mail user agent
 NAT	network address translation
+NFS	networking file system
 NIC	network interface card
 NIS	network information service
 NUMA	non uniform memory access
+OEM	original equipment manufacturer
 OTP	one time password
 PAX	portable archive exchange
 PCI	peripheral component interconnect
@@ -161,6 +169,7 @@ TCL	tool command language
 TCP	transmission control protocol
 TFT	thin film transistor
 TLA	top level aggregator
+TLB	transition lookaside buffer
 TLD	top level domain
 TMDS	transition minimized differential signaling
 TTY	teletype
@@ -173,11 +182,15 @@ URL	uniform resource locator
 USB	universal serial bus
 USWC	uncacheable speculative write combining
 UUCP	unix-to-unix copy protocol
+VAX	virtual address extension
 VCM	virtual channel memory
 VESA	video electronics standards association
 VGA	video graphics array
+VM	virtual memory
 VPN	virtual private network
 VRAM	video random access memory
+WAN	wide area network
+WAP	wireless application protocol
 WRAM	window random access memory
 WWW	world wide web
 XGA	extended graphics array
