@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.17 1997/05/07 19:34:16 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.18 1997/05/09 07:56:01 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -67,11 +67,9 @@ ${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
 		${.ALLSRC} ${.TARGET}
 .endif
 
-.if !target(lint)
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
 	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
-.endif
 .endif
 
 .if !target(load)
