@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/31 23:04:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2002/01/22 16:55:21 mrg Exp $
 
 # XXX - This gdb.new directory should be renamed to "gdb" after all platforms
 # have been migrated to the new toolchain.
@@ -14,7 +14,7 @@ DIST=		${TOP}/dist/toolchain
 
 PROG=		gdb
 
-SRCS=		${G_LIBGDB_OBS:.o=.c} ${G_OBJECTS:Nxmalloc.o:.o=.c} main.c
+SRCS=		${G_LIBGDB_OBS:.o=.c} ${G_OBJECTS:Nxmalloc.o:.o=.c} ${G_SIM_OBS:.o=.c} main.c
 CPPFLAGS=	-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		${G_INTERNAL_CFLAGS:M-[ID]*:N*readline*:N*intl*:N-I.*} \
 		${G_CCFLAGS:M-DRL_*} \
@@ -40,6 +40,13 @@ DPADD+=		${BFDOBJ}/libbfd_pic.a
 IBERTYOBJ!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${IBERTYOBJ} -liberty
 DPADD+=		${IBERTYOBJ}/libiberty.a
+
+# PSIM support for PowerPC.
+.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
+PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
+LDADD+=		-L${PSIMOBJ} -lsim
+DPADD+=		${PSIMOBJ}/libsim.a
+.endif
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/tui ${DIST}/gdb/doc \
 	${DIST}/readline ${.CURDIR}/../arch/${MACHINE_ARCH}
