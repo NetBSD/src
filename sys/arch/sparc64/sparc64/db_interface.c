@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.45 2000/10/19 05:30:29 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.46 2000/11/21 16:34:53 chs Exp $ */
 
 /*
  * Mach Operating System
@@ -572,7 +572,6 @@ db_page_cmd(addr, have_addr, count, modif)
 	}
 
 	db_printf("pa %llx pg %p\n", addr, PHYS_TO_VM_PAGE(addr));
-	
 }
 
 
@@ -831,44 +830,6 @@ db_watch(addr, have_addr, count, modif)
 }
 
 
-#include <sys/buf.h>
-
-void
-db_dump_buf(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	struct buf *buf;
-	static const char flagnames[] =
-		"\20\034VFLUSH\033XXX\032WRITEINPROG\031WRITE\030WANTED"
-		"\027UAREA\026TAPE\025READ\024RAW\023PHYS\022PAGIN\021PAGET"
-		"\020NOCACHE\017LOCKED\016INVAL\015GATHERED\014ERROR\013EINTR"
-		"\012DONE\011DIRTY\010DELWRI\007CALL\006CACHE\005BUSY\004BAD"
-		"\003ASYNC\002NEEDCOMMIT\001AGE";
-
-	char sbuf[sizeof(flagnames) + 64];
-
-	if (!have_addr) {
-		db_printf("No buf address\n");
-		return;
-	}
-	buf = (struct buf*) addr;
-	db_printf("buf %p:\nhash:%p vnbufs:%p freelist:%p actq next:%p\n",
-		  buf, buf->b_hash, buf->b_vnbufs, buf->b_freelist,
-		  BUFQ_NEXT(buf));
-	bitmask_snprintf(buf->b_flags, flagnames, sbuf, sizeof(sbuf));
-	db_printf("flags:%x => %s\n", buf->b_flags, sbuf);
-	db_printf("error:%x bufsiz:%x bcount:%x resid:%x dev:%x un.addr:%x\n",
-		  buf->b_error, buf->b_bufsize, buf->b_bcount, buf->b_resid,
-		  buf->b_dev, buf->b_data);
-	db_printf("saveaddr:%p lblkno:%x blkno:%x iodone:%x",
-		  buf->b_saveaddr, buf->b_lblkno, buf->b_blkno, buf->b_iodone);
-	db_printsym((long)buf->b_iodone, DB_STGY_PROC, db_printf);
-	db_printf("\nvp:%p dirtyoff:%x dirtyend:%x\n", buf->b_vp, buf->b_dirtyoff, buf->b_dirtyend);
-}
-
 #include <uvm/uvm.h>
 
 void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
@@ -887,7 +848,6 @@ db_uvmhistdump(addr, have_addr, count, modif)
 }
 
 struct db_command sparc_db_command_table[] = {
-	{ "buf",	db_dump_buf,	0,	0 },
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
