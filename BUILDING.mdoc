@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.1 2001/10/29 19:46:47 tv Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.2 2001/10/29 20:02:01 tv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,6 +33,10 @@
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" =====
+.\" NOTE: After changing this file, run "make build-docs" to generate the
+.\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
 .Dd October 29, 2001
 .Dt BUILDING 8
@@ -104,10 +108,12 @@ is not currently supported.
 .Ss Source tree layout
 .
 .Bl -tag -width "BUILDING.mdoc"
-.It Sy BUILDING
-This document (in formatted plaintext).
 .It Sy BUILDING.mdoc
-This document (in -mdoc troff format).
+This document (in -mdoc troff format; the original copy).
+.It Sy BUILDING.html
+This document (in formatted HTML).
+.It Sy BUILDING.txt
+This document (in plaintext).
 .It Sy Makefile
 The main Makefile for
 .Nx ;
