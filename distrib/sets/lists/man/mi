@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.305 2001/01/14 05:22:34 itojun Exp $
+# $NetBSD: mi,v 1.306 2001/01/22 01:29:59 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -517,6 +517,7 @@
 ./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/ch.0
 ./usr/share/man/cat4/clcs.0
+./usr/share/man/cat4/clct.0
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cmpci.0
@@ -1986,6 +1987,7 @@
 ./usr/share/man/man4/cd.4
 ./usr/share/man/man4/ch.4
 ./usr/share/man/man4/clcs.4
+./usr/share/man/man4/clct.4
 ./usr/share/man/man4/clnp.4
 ./usr/share/man/man4/cltp.4
 ./usr/share/man/man4/cmpci.4
