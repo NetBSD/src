@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.116 2000/03/23 06:30:12 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.117 2000/03/28 18:39:03 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1974,8 +1974,8 @@ ttyinfo(tp)
 			utime.tv_sec += 1;
 			utime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%ld.%02ldu ", utime.tv_sec,
-		    utime.tv_usec / 10000);
+		ttyprintf(tp, "%ld.%02ldu ", (long int)utime.tv_sec,
+		    (long int)utime.tv_usec / 10000);
 
 		/* Round up and print system time. */
 		stime.tv_usec += 5000;
@@ -1983,8 +1983,8 @@ ttyinfo(tp)
 			stime.tv_sec += 1;
 			stime.tv_usec -= 1000000;
 		}
-		ttyprintf(tp, "%ld.%02lds ", stime.tv_sec,
-		    stime.tv_usec / 10000);
+		ttyprintf(tp, "%ld.%02lds ", (long int)stime.tv_sec,
+		    (long int)stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((u_long) ((a) * NBPG) / 1024))
 		/* Print percentage cpu. */
