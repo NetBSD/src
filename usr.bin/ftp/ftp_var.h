@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.55 2000/07/18 07:16:55 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.56 2000/07/28 11:03:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ enum {
 	FEAT_REST_STREAM,	/* RESTart STREAM */
 	FEAT_SIZE,		/* SIZE */
 	FEAT_TVFS,		/* TVFS (not used) */
-	FEAT_max,
+	FEAT_max
 };
 
 
