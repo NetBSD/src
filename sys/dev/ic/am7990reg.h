@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.4 1997/03/27 21:01:49 veego Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.5 1998/07/21 17:26:45 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -38,9 +38,6 @@
  *
  *	@(#)if_lereg.h	8.1 (Berkeley) 6/10/93
  */
-
-#define	LEBLEN		1536	/* ETHERMTU + header + CRC */
-#define	LEMINSIZE	60	/* should be 64 if mode DTCR is set */
 
 /*
  * Receive message descriptor
@@ -87,67 +84,6 @@ struct leinit {
 	u_int16_t init_tlen;		/* +0x0016 */
 	int16_t	  pad0[4];		/* Pad to 16 shorts */
 };
-
-#define	LE_INITADDR(sc)		(sc->sc_initaddr)
-#define	LE_RMDADDR(sc, bix)	(sc->sc_rmdaddr + sizeof(struct lermd) * (bix))
-#define	LE_TMDADDR(sc, bix)	(sc->sc_tmdaddr + sizeof(struct letmd) * (bix))
-#define	LE_RBUFADDR(sc, bix)	(sc->sc_rbufaddr[bix])
-#define	LE_TBUFADDR(sc, bix)	(sc->sc_tbufaddr[bix])
-
-/* register addresses */
-#define	LE_CSR0		0x0000		/* Control and status register */
-#define	LE_CSR1		0x0001		/* low address of init block */
-#define	LE_CSR2		0x0002		/* high address of init block */
-#define	LE_CSR3		0x0003		/* Bus master and control */
-
-/* Control and status register 0 (csr0) */
-#define	LE_C0_ERR	0x8000		/* error summary */
-#define	LE_C0_BABL	0x4000		/* transmitter timeout error */
-#define	LE_C0_CERR	0x2000		/* collision */
-#define	LE_C0_MISS	0x1000		/* missed a packet */
-#define	LE_C0_MERR	0x0800		/* memory error */
-#define	LE_C0_RINT	0x0400		/* receiver interrupt */
-#define	LE_C0_TINT	0x0200		/* transmitter interrupt */
-#define	LE_C0_IDON	0x0100		/* initalization done */
-#define	LE_C0_INTR	0x0080		/* interrupt condition */
-#define	LE_C0_INEA	0x0040		/* interrupt enable */
-#define	LE_C0_RXON	0x0020		/* receiver on */
-#define	LE_C0_TXON	0x0010		/* transmitter on */
-#define	LE_C0_TDMD	0x0008		/* transmit demand */
-#define	LE_C0_STOP	0x0004		/* disable all external activity */
-#define	LE_C0_STRT	0x0002		/* enable external activity */
-#define	LE_C0_INIT	0x0001		/* begin initalization */
-
-#define	LE_C0_BITS \
-    "\20\20ERR\17BABL\16CERR\15MISS\14MERR\13RINT\
-\12TINT\11IDON\10INTR\07INEA\06RXON\05TXON\04TDMD\03STOP\02STRT\01INIT"
-
-/* Control and status register 3 (csr3) */
-#define	LE_C3_BSWP	0x0004		/* byte swap */
-#define	LE_C3_ACON	0x0002		/* ALE control, eh? */
-#define	LE_C3_BCON	0x0001		/* byte control */
-
-/* Initialzation block (mode) */
-#define	LE_MODE_PROM	0x8000		/* promiscuous mode */
-/*			0x7f80		   reserved, must be zero */
-/* 0x4000 - 0x0080 are not available on LANCE 7990 */
-#define	LE_MODE_DRCVBC	0x4000		/* disable receive brodcast */
-#define	LE_MODE_DRCVPA	0x2000		/* disable physical address detection */
-#define	LE_MODE_DLNKTST	0x1000		/* disable link status */
-#define	LE_MODE_DAPC	0x0800		/* disable automatic polarity correction */
-#define	LE_MODE_MENDECL	0x0400		/* MENDEC loopback mode */
-#define	LE_MODE_LRTTSEL	0x0200		/* lower receice threshold /
-					   transmit mode selection */
-#define	LE_MODE_PSEL1	0x0100		/* port selection bit1 */
-#define	LE_MODE_PSEL0	0x0080		/* port selection bit0 */
-#define	LE_MODE_INTL	0x0040		/* internal loopback */
-#define	LE_MODE_DRTY	0x0020		/* disable retry */
-#define	LE_MODE_COLL	0x0010		/* force a collision */
-#define	LE_MODE_DTCR	0x0008		/* disable transmit CRC */
-#define	LE_MODE_LOOP	0x0004		/* loopback mode */
-#define	LE_MODE_DTX	0x0002		/* disable transmitter */
-#define	LE_MODE_DRX	0x0001		/* disable receiver */
-#define	LE_MODE_NORMAL	0		/* none of the above */
 
 /* Receive message descriptor 1 (rmd1_bits) */ 
 #define	LE_R1_OWN	0x80		/* LANCE owns the packet */
