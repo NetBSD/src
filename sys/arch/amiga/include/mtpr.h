@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.12 1998/07/25 07:21:20 is Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.13 1998/07/25 11:01:11 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,9 +50,14 @@
  * SOFTINT bit)
  */
 
+/*
+ * this makes it pretty machine dependant. Should this go into
+ * <amiga/amiga/mtpr.h> ?
+ */
 #include <amiga/amiga/custom.h>
 #ifdef DRACO
 #include <amiga/amiga/drcustom.h>
+#include <m68k/include/asm_single.h>
 #endif
 
 extern unsigned char ssir;
@@ -63,18 +68,24 @@ extern unsigned char ssir;
 
 #define siroff(x)	ssir &= ~(x)
 #ifdef DRACO
-#define setsoftint()	(is_draco()? (*draco_intfrc |= DRIRQ_SOFT) :\
-			    (custom.intreq = INTF_SETCLR|INTF_SOFTINT))
-#define clrsoftint()	(is_draco()? (*draco_intfrc &= ~DRIRQ_SOFT) :\
-			    (custom.intreq = INTF_SOFTINT))
+#define setsoftint()	do { if (is_draco()) \
+				single_inst_bset_b(*draco_intfrc, DRIRQ_SOFT); \
+			    else \
+				custom.intreq = INTF_SETCLR|INTF_SOFTINT; \
+			} while (0)
+#define clrsoftint()	do { if (is_draco()) \
+				single_inst_bclr_b(*draco_intfrc, DRIRQ_SOFT); \
+			    else \
+				custom.intreq = INTF_SOFTINT; \
+			} while (0)
 #else
-#define setsoftint()	(custom.intreq = INTF_SETCLR|INTF_SOFTINT)
-#define clrsoftint()	(custom.intreq = INTF_SOFTINT)
+#define setsoftint()	do {custom.intreq = INTF_SETCLR|INTF_SOFTINT;} while (0)
+#define clrsoftint()	do {custom.intreq = INTF_SOFTINT;} while (0)
 #endif
 
-#define setsoftnet()	(ssir |= SIR_NET, setsoftint())
-#define setsoftclock()	(ssir |= SIR_CLOCK, setsoftint())
-#define setsoftcback()	(ssir |= SIR_CBACK, setsoftint())
+#define setsoftnet()	do {ssir |= SIR_NET; setsoftint(); } while (0)
+#define setsoftclock()	do {ssir |= SIR_CLOCK; setsoftint(); } while (0)
+#define setsoftcback()	do {ssir |= SIR_CBACK; setsoftint(); } while (0)
 
 void softintr_schedule __P((void *));
 void *softintr_establish __P((int,  void (*)(void *), void *));
