@@ -1,4 +1,4 @@
-/*      $NetBSD: adv.h,v 1.5 1999/03/04 20:16:56 dante Exp $        */
+/*      $NetBSD: adv.h,v 1.6 1999/08/07 07:20:15 thorpej Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -79,6 +79,7 @@ typedef struct adv_ccb ADV_CCB;
 struct adv_control
 {
 	ADV_CCB	ccbs[ADV_MAX_CCB];	/* all our control blocks */
+	u_int8_t overrun_buf[ASC_OVERRUN_BSIZE];
 };
 
 /*
