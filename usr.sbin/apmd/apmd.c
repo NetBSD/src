@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.19 2001/04/06 11:13:47 wiz Exp $	*/
+/*	$NetBSD: apmd.c,v 1.20 2001/09/15 02:42:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
     int acon = 0;
     int lowbattnow = 0;
 
+    memset(&bstate, 0, sizeof(bstate));
     if (ioctl(fd, APM_IOC_GETPOWER, &bstate) == 0) {
 	/* various conditions under which we report status:  something changed
 	   enough since last report, or asked to force a print */
