@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2002/02/11 23:01:37 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2002/02/24 10:56:54 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -268,12 +268,12 @@ initppc(startkernel, endkernel, args, btinfo)
 	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA I/O 256 MB area */
-	battable[1].batl = BATL(PREP_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
-	battable[1].batu = BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
+	battable[8].batl = BATL(PREP_BUS_SPACE_IO, BAT_I, BAT_PP_RW);
+	battable[8].batu = BATU(PREP_BUS_SPACE_IO, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA MEMORY 256 MB area */
-	battable[2].batl = BATL(PREP_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
-	battable[2].batu = BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
+	battable[9].batl = BATL(PREP_BUS_SPACE_MEM, BAT_I, BAT_PP_RW);
+	battable[9].batu = BATU(PREP_BUS_SPACE_MEM, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
@@ -284,9 +284,9 @@ initppc(startkernel, endkernel, args, btinfo)
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
+		      :: "r"(battable[8].batl), "r"(battable[8].batu));
 	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[2].batl), "r"(battable[2].batu));
+		      :: "r"(battable[9].batl), "r"(battable[9].batu));
 
 	asm volatile ("sync; isync");
 	/*
