@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass2.c	8.6 (Berkeley) 10/27/94";*/
-static char *rcsid = "$Id: pass2.c,v 1.10 1994/12/28 00:03:53 mycroft Exp $";
+static char *rcsid = "$Id: pass2.c,v 1.11 1994/12/28 00:15:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -288,15 +288,15 @@ chk1:
 		proto.d_type = 0;
 	proto.d_namlen = 2;
 	(void)strcpy(proto.d_name, "..");
-#if BYTE_ORDER == LITTLE_ENDIAN
-	if (!newinofmt) {
-		u_char tmp;
+#	if BYTE_ORDER == LITTLE_ENDIAN
+		if (!newinofmt) {
+			u_char tmp;
 
-		tmp = proto.d_type;
-		proto.d_type = proto.d_namlen;
-		proto.d_namlen = tmp;
-	}
-#endif
+			tmp = proto.d_type;
+			proto.d_type = proto.d_namlen;
+			proto.d_namlen = tmp;
+		}
+#	endif
 	entrysize = DIRSIZ(0, &proto);
 	if (idesc->id_entryno == 0) {
 		n = DIRSIZ(0, dirp);
