@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.4 1997/10/10 05:39:55 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.5 1998/06/17 07:46:35 ross Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -39,6 +39,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+
+#define	dbtoqb(b) dbtob((int64_t)(b))
 
 /*
  * NOTE:  This file is separate from swapctl.c so that pstat can grab it.
@@ -99,29 +102,30 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 			/* XXX handle se_dev == NODEV */
 			(void)printf("/dev/%-6s %*ld ",
 			    devname(sep->se_dev, S_IFBLK),
-				hlen, dbtob(size) / blocksize);
+				hlen, (long)(dbtoqb(size) / blocksize));
 
 			(void)printf("%8ld %8ld %5.0f%%    %d\n",
-			    dbtob(inuse) / blocksize,
-			    dbtob(size - inuse) / blocksize,
+			    (long)(dbtoqb(inuse) / blocksize),
+			    (long)(dbtoqb(size - inuse) / blocksize),
 			    (double)inuse / (double)size * 100.0,
 			    sep->se_priority);
 		}
 	}
 	if (tflag)
 		(void)printf("%dM/%dM swap space\n",
-		    dbtob(totalinuse) / (1024 * 1024),
-		    dbtob(totalsize) / (1024 * 1024));
+		    (int)(dbtoqb(totalinuse) / (1024 * 1024)),
+		    (int)(dbtoqb(totalsize) / (1024 * 1024)));
 	else if (dolong == 0)
-(void)printf("total: %dk bytes allocated = %dk used, %dk available\n",
-		    dbtob(totalsize) / 1024,
-		    dbtob(totalinuse) / 1024,
-		    dbtob(totalsize - totalinuse) / 1024);
+		    printf("total: %ldk bytes allocated = %ldk used,"
+			   "%ldk available\n",
+		    (long)(dbtoqb(totalsize) / 1024),
+		    (long)(dbtoqb(totalinuse) / 1024),
+		    (long)(dbtoqb(totalsize - totalinuse) / 1024));
 	else if (ncounted > 1)
-		(void)printf("%-11s %*ld %8ld %8ld %5.0f%%\n", "Total", hlen,
-		    dbtob(totalsize) / blocksize,
-		    dbtob(totalinuse) / blocksize,
-		    dbtob(totalsize - totalinuse) / blocksize,
+		    printf("%-11s %*ld %8ld %8ld %5.0f%%\n", "Total", hlen,
+		    (long)(dbtoqb(totalsize) / blocksize),
+		    (long)(dbtoqb(totalinuse) / blocksize),
+		    (long)(dbtoqb(totalsize - totalinuse) / blocksize),
 		    (double)(totalinuse) / (double)totalsize * 100.0);
 	if (fsep)
 		(void)free(fsep);
