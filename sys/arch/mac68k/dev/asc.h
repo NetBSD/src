@@ -30,36 +30,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: console.h,v 1.3 1993/12/21 03:16:04 briggs Exp $
+ */
+
+
+/*
+ * ASC driver code and asc_ringbell() support header
+ *
+ * $Id: asc.h,v 1.1 1993/12/21 03:16:06 briggs Exp $
+ *
+ * 12/12/93 01:14:45 grantham
+ *	initial revision
+ *
+ * $Log: asc.h,v $
+ * Revision 1.1  1993/12/21 03:16:06  briggs
+ * Add basic sound support and a beeping (instead of flashing) console...
+ * from Brad Grantham.
  *
  */
 
-struct beeps{
-	int freq;
-	int length;
-	int vol;
-};
+int asc_ringbell();
 
-/* Must #include <sys/ioctl.h> for these to work: */
-#define CON_GETCURSOR TIOCMGET
-#define CON_SETCURSOR TIOCMSET
-#define CON_SETVT  	_IOW('t',190,int)
-#define CON_GETBEEP  	_IOR('t', 191, struct beeps)
-#define CON_SETBEEP  	_IOW('t', 192, struct beeps)
+int asc_getbellparams(
+	int *freq,
+	int *length,
+	int *volume);
 
-/* Text attributes */
-#define T_NORMAL	0
-#define T_BOLD		1
-#define T_UNDERLINE	2
-#define T_REVERSE	4
-
-/* Cursor types */
-#define C_BLOCK		1
-#define C_UNDERLINE	2
-#define C_SOLID		4
-#define C_SLOW		8
-#define C_FAST		16
-
-/* Cursor masks */
-#define C_MSHAPE (C_BLOCK|C_UNDERLINE)
-#define C_MBLINK (C_SOLID|C_SLOW|C_FAST)
+int asc_setbellparams(
+	int freq,
+	int length,
+	int volume);
