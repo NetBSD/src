@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.297 2000/02/02 20:17:13 augustss Exp $
+#	$NetBSD: GENERIC,v 1.298 2000/02/02 20:39:35 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.297 $"
+#ident 		"GENERIC-$Revision: 1.298 $"
 
 maxusers	32		# estimated number of users
 
@@ -248,11 +248,11 @@ isapnp0	at isa?
 pcic*	at isapnp?
 
 # CardBus bus support
-cbb*		at pci? dev ? function ?
-cardslot*	at cbb?	
+#cbb*		at pci? dev ? function ?
+#cardslot*	at cbb?	
 
-cardbus*	at cardslot?
-pcmcia*		at cardslot?
+#cardbus*	at cardslot?
+#pcmcia* 	at cardslot?
 
 # Coprocessor Support
 
@@ -383,7 +383,7 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # SCSI bus support
 scsibus* at adv?
@@ -555,9 +555,9 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
-ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-fxp*	at cardbus? dev ? function ?	# Intel i8255x
-tlp*	at cardbus? dev ? function ?	# DECchip 21143
+#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
+#fxp*	at cardbus? dev ? function ?	# Intel i8255x
+#tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -580,7 +580,7 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 
 # CardBus USB controllers
-ohci*	at cardbus? dev ? function ?	# Open Host Controller
+#ohci*	at cardbus? dev ? function ?	# Open Host Controller
 
 # USB bus support
 usb*	at uhci?
