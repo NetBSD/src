@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.162 2003/02/26 22:23:04 fvdl Exp $	*/
+/*	$NetBSD: pccons.c,v 1.163 2003/03/06 23:47:35 taca Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.162 2003/02/26 22:23:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.163 2003/03/06 23:47:35 taca Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1140,7 +1140,7 @@ int
 pccnattach()
 {
 	static struct consdev pccons = {
-		NULL, NULL, pccngetc, pccnputc, pccnpollc,
+		NULL, NULL, pccngetc, pccnputc, pccnpollc, NULL, NULL,
 		    NULL, NODEV, CN_NORMAL
 	};
 
