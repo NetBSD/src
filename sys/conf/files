@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.125 1997/06/11 10:40:25 bouyer Exp $
+#	$NetBSD: files,v 1.126 1997/07/06 05:14:51 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -329,7 +329,8 @@ file netinet/tcp_subr.c			inet
 file netinet/tcp_timer.c		inet
 file netinet/tcp_usrreq.c		inet
 file netinet/udp_usrreq.c		inet
-file netinet/ip_fil.c			ipfilter	needs-flag
+file netinet/ip_auth.c			ipfilter	needs-flag
+file netinet/ip_fil.c			ipfilter
 file netinet/fil.c			ipfilter
 file netinet/ip_nat.c			ipfilter
 file netinet/ip_frag.c			ipfilter
