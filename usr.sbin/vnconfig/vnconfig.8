@@ -139,21 +139,21 @@ option.
 .El
 .Sh EXAMPLES
 .Pp
-.Dl vnconfig /dev/vn0c /tmp/diskimage
+.Dl vnconfig /dev/vnd0c /tmp/diskimage
 .Pp
 Configures the vnode disk
-.Pa vn0c .
+.Pa vnd0c .
 .Pp
-.Dl vnconfig -e /dev/vn0c /var/swapfile swap
+.Dl vnconfig -e /dev/vnd0c /var/swapfile swap
 .Pp
 Configures
-.Pa vn0c
+.Pa vnd0c
 and enables swapping on it.
 .Pp
-.Dl vnconfig -d /dev/vn0c myfilesystem mount=/mnt
+.Dl vnconfig -d /dev/vnd0c myfilesystem mount=/mnt
 .Pp
 Unmounts (disables)
-.Pa vn0c .
+.Pa vnd0c .
 .Pp
 .Dl vnconfig -ae
 .Pp
