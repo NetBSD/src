@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.10 1998/08/09 22:11:48 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.11 1998/08/10 01:27:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -652,12 +652,15 @@ eap_set_params(addr, setmode, usemode, play, rec)
 	/*
 	 * This device only has one clock, so make the sample rates match.
 	 */
-	if (play->sample_rate != rec->sample_rate) {
-		if ((usemode | setmode) == AUMODE_PLAY)
+	if (play->sample_rate != rec->sample_rate &&
+	    usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
+		if (setmode == AUMODE_PLAY) {
 			rec->sample_rate = play->sample_rate;
-		else if ((usemode | setmode) == AUMODE_RECORD)
+			setmode |= AUMODE_RECORD;
+		} else if (setmode == AUMODE_RECORD) {
 			play->sample_rate = rec->sample_rate;
-		else
+			setmode |= AUMODE_PLAY;
+		} else
 			return (EINVAL);
 	}
 
@@ -725,7 +728,10 @@ eap_set_params(addr, setmode, usemode, play, rec)
 	 * The -2 isn't documented, but seemed to make the wall time match
 	 * what I expect.  - mycroft
 	 */
-	div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ / play->sample_rate - 2);
+	if (usemode == AUMODE_RECORD)
+		div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ / rec->sample_rate - 2);
+	else
+		div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ / play->sample_rate - 2);
 	div |= EAP_CCB_INTRM;
 	EWRITE4(sc, EAP_ICSC, div);
 	DPRINTFN(2, ("eap_set_params: set ICSC = 0x%08x\n", div));
