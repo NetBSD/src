@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.59 2001/09/23 19:10:25 perry Exp $
+#	$NetBSD: security,v 1.60 2001/09/23 19:51:20 perry Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -536,7 +536,7 @@ if checkyesno check_devices; then
 	# Check for block and character disk devices that are readable or
 	# writeable or not owned by root.operator.
 	>$TMP1
-	DISKLIST="acd ccd cd ch fd hk hp mcd md ra rb rd rl rx \
+	DISKLIST="acd ccd ch hk hp md ra raid rb rd rl rx \
 	    sd se ss uk up vnd wd xd xy"
 #	DISKLIST="$DISKLIST ct mt st wt"
 	for i in $DISKLIST; do
