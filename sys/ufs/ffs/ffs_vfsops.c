@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.93 2002/03/08 20:48:46 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.94 2002/03/17 00:02:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.93 2002/03/08 20:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.94 2002/03/17 00:02:34 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -691,6 +691,21 @@ ffs_mountfs(devvp, mp, p)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	bp = NULL;
+
+	/*
+	 * verify that we can access the last block in the fs.
+	 */
+
+	error = bread(devvp, fsbtodb(fs, fs->fs_size - 1), fs->fs_fsize, cred,
+	    &bp);
+	if (bp->b_bcount != fs->fs_fsize)
+		error = EINVAL;
+	bp->b_flags |= B_INVAL;
+	if (error)
+		goto out;
+	brelse(bp);
+	bp = NULL;
+
 	fs->fs_ronly = ronly;
 	if (ronly == 0) {
 		fs->fs_clean <<= 1;
