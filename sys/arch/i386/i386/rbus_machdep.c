@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.4 2000/05/31 16:39:56 uch Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.5 2000/06/02 08:41:13 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.c,v 1.4 2000/05/31 16:39:56 uch Exp $ */
+
 #include "opt_pcibios.h"
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@
 #include <arch/i386/pci/pci_addr_fixup.h>
 #endif
 
-/**********************************************************************
+/*
  * void _i386_memio_unmap(bus_space_tag bst, bus_space_handle bsh,
  *                        bus_size_t size, bus_addr_t *adrp)
  *
@@ -69,57 +69,58 @@
  *
  *   I suppose this function should be in arch/i386/i386/machdep.c,
  *   but it is not.
- **********************************************************************/
+ */
 void
 _i386_memio_unmap(t, bsh, size, adrp)
-     bus_space_tag_t t;
-     bus_space_handle_t bsh;
-     bus_size_t size;
-     bus_addr_t *adrp;
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+	bus_addr_t *adrp;
 {
-  u_long va, endva;
-  bus_addr_t bpa;
+	u_long va, endva;
+	bus_addr_t bpa;
 
-  /*
-   * Find the correct extent and bus physical address.
-   */
-  if (t == I386_BUS_SPACE_IO) {
-    bpa = bsh;
-  } else if (t == I386_BUS_SPACE_MEM) {
-    if (bsh >= atdevbase && (bsh + size) <= (atdevbase + IOM_SIZE)) {
-      bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
-    } else {
+	/*
+	 * Find the correct extent and bus physical address.
+	 */
+	if (t == I386_BUS_SPACE_IO) {
+		bpa = bsh;
+	} else if (t == I386_BUS_SPACE_MEM) {
+		if (bsh >= atdevbase && (bsh + size) <= (atdevbase + IOM_SIZE)) {
+			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+		} else {
 
-      va = i386_trunc_page(bsh);
-      endva = i386_round_page(bsh + size);
+			va = i386_trunc_page(bsh);
+			endva = i386_round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
-      if (endva <= va) {
-	panic("_i386_memio_unmap: overflow");
-      }
+			if (endva <= va) {
+				panic("_i386_memio_unmap: overflow");
+			}
 #endif
 
 #if __NetBSD_Version__ > 104050000
-      if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
-	panic("_i386_memio_unmap:i386/rbus_machdep.c wrong virtual address");
-      }
-      bpa += (bsh & PGOFSET);
+			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
+				panic("_i386_memio_unmap:"
+				    "i386/rbus_machdep.c wrong virtual address");
+			}
+			bpa += (bsh & PGOFSET);
 #else
-      bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+			bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
 #endif
 
-      /*
-       * Free the kernel virtual mapping.
-       */
-      uvm_km_free(kernel_map, va, endva - va);
-    }
-  } else {
-    panic("_i386_memio_unmap: bad bus space tag");
-  }
+			/*
+			 * Free the kernel virtual mapping.
+			 */
+			uvm_km_free(kernel_map, va, endva - va);
+		}
+	} else {
+		panic("_i386_memio_unmap: bad bus space tag");
+	}
 
-  if (adrp != NULL) {
-    *adrp = bpa;
-  }
+	if (adrp != NULL) {
+		*adrp = bpa;
+	}
 }
 
 
