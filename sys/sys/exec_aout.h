@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.20 1998/09/09 10:58:40 thorpej Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.21 1998/11/13 12:04:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -112,17 +112,20 @@ struct exec {
  * The macros below will set/get the needed fields.
  */
 #define	N_GETMAGIC(ex) \
-    ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : ((ex).a_midmag))
+    ((((ex).a_midmag)&0xffff0000) ? \
+    (ntohl((u_int32_t)(((ex).a_midmag))&0xffff)) : ((ex).a_midmag))
 #define	N_GETMAGIC2(ex) \
-    ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : \
-    (((ex).a_midmag) | 0x10000) )
+    ((((ex).a_midmag)&0xffff0000) ? \
+    (ntohl((u_int32_t)(((ex).a_midmag))&0xffff)) : (((ex).a_midmag) | 0x10000))
 #define	N_GETMID(ex) \
-    ( (((ex).a_midmag)&0xffff0000) ? ((ntohl(((ex).a_midmag))>>16)&0x03ff) : MID_ZERO )
+    ((((ex).a_midmag)&0xffff0000) ? \
+    ((ntohl((u_int32_t)(((ex).a_midmag))>>16)&0x03ff)) : MID_ZERO)
 #define	N_GETFLAG(ex) \
-    ( (((ex).a_midmag)&0xffff0000) ? ((ntohl(((ex).a_midmag))>>26)&0x3f) : 0 )
+    ((((ex).a_midmag)&0xffff0000) ? \
+    ((ntohl((u_int32_t)(((ex).a_midmag))>>26)&0x3f)) : 0)
 #define	N_SETMAGIC(ex,mag,mid,flag) \
-    ( (ex).a_midmag = htonl( (((flag)&0x3f)<<26) | (((mid)&0x03ff)<<16) | \
-    (((mag)&0xffff)) ) )
+    ((ex).a_midmag = htonl((u_int32_t) \
+    ((((flag)&0x3f)<<26)|(((mid)&0x03ff)<<16)|(((mag)&0xffff)))))
 
 #define	N_ALIGN(ex,x) \
 	(N_GETMAGIC(ex) == ZMAGIC || N_GETMAGIC(ex) == QMAGIC ? \
