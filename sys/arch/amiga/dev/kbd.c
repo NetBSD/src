@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.31 1998/02/28 21:53:15 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.32 1998/03/08 19:59:15 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -175,9 +175,6 @@ kbdenable()
 			goto LnoMFII;
 		kbd_softc.k_mf2 = 1;
 		draco_ioct->io_control &= ~DRCNTRL_KBDINTENA;
-		/*draco_ioct->io_control &= ~DRCNTRL_KBDKBDACK;*/
-		printf("ioctrl: 0x%02x, iostat: 0x%02x\n",
-			draco_ioct->io_control, draco_ioct->io_status);
 
 		ciaa.icr = CIA_ICR_SP;  /* CIA SP interrupt disable */
 		ciaa.cra &= ~(1<<6);	/* serial line == input */
@@ -206,6 +203,7 @@ kbdenable()
 	splx(s);
 }
 
+#ifdef DRACO
 /*
  * call this with kbd interupt blocked
  */
@@ -337,6 +335,7 @@ drkbdputc2(c1, c2)
 	} while (rc == 0xfe);
 	return (!(rc == 0xfa));
 }
+#endif
 
 int
 kbdopen(dev, flags, mode, p)
@@ -518,10 +517,6 @@ kbdgetcn ()
 	u_char ints, mask, c, in;
 
 #ifdef DRACO
-	/*
-	 * XXX todo: if CIA DraCo, get from cia if cia kbd 
-	 * installed.
-	 */
 	if (is_draco() && kbd_softc.k_mf2) {
 		do {
 			c = 0;
