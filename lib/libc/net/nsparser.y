@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.8 2002/03/19 00:04:09 lukem Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.9 2004/01/25 16:38:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,17 +39,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsparser.y,v 1.8 2002/03/19 00:04:09 lukem Exp $");
+__RCSID("$NetBSD: nsparser.y,v 1.9 2004/01/25 16:38:15 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <assert.h>
-#include <err.h>
 #define _NS_PRIVATE
 #include <nsswitch.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 
 
 static	void	_nsaddsrctomap __P((const char *));
@@ -94,9 +94,10 @@ Entry
 
 			lineno = _nsyylineno - (*_nsyytext == '\n' ? 1 : 0);
 			if (_nsdbtput(&curdbt) == -1)
-					/* XXX: syslog the following */
-				warn("%s line %d: error adding entry",
-				    _PATH_NS_CONF, lineno);
+				syslog(LOG_WARNING,
+				    "libc nsdispatch: %s line %d: %s",
+				    _PATH_NS_CONF, lineno,
+				    "error adding entry");
 		}
 	| error NL
 		{
@@ -171,24 +172,27 @@ _nsaddsrctomap(elem)
 	if (curdbt.srclistsize > 0) {
 		if ((strcasecmp(elem, NSSRC_COMPAT) == 0) ||
 		    (strcasecmp(curdbt.srclist[0].name, NSSRC_COMPAT) == 0)) {
-				/* XXX: syslog the following */
-			warnx("%s line %d: 'compat' used with other sources",
-			    _PATH_NS_CONF, lineno);
+			syslog(LOG_WARNING,
+			    "libc nsdispatch: %s line %d: %s",
+			    _PATH_NS_CONF, lineno,
+			    "'compat' used with other sources");
 			return;
 		}
 	}
 	for (i = 0; i < curdbt.srclistsize; i++) {
 		if (strcasecmp(curdbt.srclist[i].name, elem) == 0) {
-				/* XXX: syslog the following */
-			warnx("%s line %d: duplicate source '%s'",
-			    _PATH_NS_CONF, lineno, elem);
+			syslog(LOG_WARNING,
+			    "libc nsdispatch: %s line %d: %s '%s'",
+			    _PATH_NS_CONF, lineno,
+			    "duplicate source", elem);
 			return;
 		}
 	}
 	cursrc.name = elem;
 	if (_nsdbtaddsrc(&curdbt, &cursrc) == -1) {
-			/* XXX: syslog the following */
-		warn("%s line %d: error adding '%s'",
-		    _PATH_NS_CONF, lineno, elem);
+		syslog(LOG_WARNING,
+		    "libc nsdispatch: %s line %d: %s '%s'",
+		    _PATH_NS_CONF, lineno,
+		    "error adding", elem);
 	}
 }
