@@ -1,5 +1,7 @@
-# $NetBSD: md.alpha,v 1.21 2000/01/24 07:25:01 mycroft Exp $
+# $NetBSD: md.alpha,v 1.22 2000/02/27 23:46:01 mycroft Exp $
 ./usr/bin/fdformat
+./usr/lib/libalpha.so.0
+./usr/lib/libalpha.so.0.0
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
