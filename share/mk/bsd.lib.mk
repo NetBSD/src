@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.85 1997/03/14 00:52:50 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.86 1997/03/15 11:35:04 jonathan Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -19,6 +19,60 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .SUFFIXES:
 .SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .ln .m4
 
+
+# Set PICFLAGS to cc flags for producing position-independent code,
+# if not already set.  Includes -DPIC, if required.
+
+# Data-driven table using make variables to control  how shared libraries
+# are built for different platforms and object formats.
+# SHLIB_TYPE:		currently either "ELF" or "a.out".
+# SHLIB_SOVERSION:  	version number to be compiled into a shared library
+#                    	via -soname. Usualy ${SHLIB_MAJOR} on ELF.
+#   			NetBSD/pmax used to use ${SHLIB_MAJOR}.{SHLIB-MINOR}.
+# SHLIB_LDSTARTFILE:	???
+# SHLIB_LDENDTILE:	??
+# CPICFLAGS:	flags to compile .c files for .so objects.
+# APICFLAGS:	flags to assemble .S files for .so objects.
+
+.if (${MACHINE_ARCH} == "alpha")
+
+SHLIB_TYPE=ELF
+SHLIB_LDSTARTFILE= ${DESTDIR}/usr/lib/crtbeginS.o
+SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
+SHLIB_SOVERSION=${SHLIB_MAJOR}
+CPICFLAGS ?= -fpic -DPIC
+APICFLAGS ?= -DPIC
+
+.elif (${MACHINE_ARCH} == "mips")
+
+SHLIB_TYPE=ELF
+# still use gnu-derived ld.so on pmax; don't have or need lib<>.so support.
+SHLIB_LDSTARTFILE=
+SHLIB_LDENDFILE=
+SHLIB_SOVERSION=${SHLIB_MAJOR}
+
+# On mips, all libs need to be compiled with ABIcalls, not just sharedlibs.
+CPICFLAGS?=
+APICFLAGS?=
+#CPICFLAGS?= -fpic -DPIC
+#APICFLAGS?= -DPIC
+
+# so turn shlib PIC flags on for ${CPP}, ${CC}, and ${AS} as follows:
+AINC+=-DPIC -DABICALLS
+COPTS+=	-fPIC ${AINC}
+AFLAGS+= -fPIC
+AS+=	-KPIC
+
+.else
+
+SHLIB_TYPE=a.out
+SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
+CPICFLAGS?= -fpic -DPIC
+APICFLAGS?= -fpic -DPIC
+
+.endif
+
+
 CFLAGS+=	${COPTS}
 
 .c.o:
@@ -34,8 +88,8 @@ CFLAGS+=	${COPTS}
 	@rm -f ${.TARGET}.o
 
 .c.so:
-	@echo ${COMPILE.c:Q} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.c:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.c} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -55,8 +109,8 @@ CFLAGS+=	${COPTS}
 	@rm -f ${.TARGET}.o
 
 .cc.so .C.so:
-	@echo ${COMPILE.cc:Q} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.cc:Q} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.cc} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -73,14 +127,11 @@ CFLAGS+=	${COPTS}
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	@echo ${COMPILE.S:Q} ${PICFLAG} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
-	@${COMPILE.S} ${PICFLAG} -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@echo ${COMPILE.S:Q} ${APICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.S} ${APICFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if !defined(PICFLAG)
-PICFLAG=-fpic
-.endif
 
 .if !defined(NOPROFILE)
 _LIBS=lib${LIB}.a lib${LIB}_p.a
@@ -126,15 +177,14 @@ lib${LIB}_pic.a:: ${SOBJS}
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-.if (${MACHINE_ARCH} != "alpha")
+.if (${SHLIB_TYPE} == "a.out")
 	$(LD) -x -Bshareable -Bforcearchive \
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
-.else
-	$(LD) -shared -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    -soname lib${LIB}.so.${SHLIB_MAJOR} \
-	    ${DESTDIR}/usr/lib/crtbeginS.o \
+.elif (${SHLIB_TYPE} == "ELF")
+	$(LD) -x -shared -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    -soname lib${LIB}.so.${SHLIB_SOVERSION}  ${SHLIB_LDSTARTFILE} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
-	    ${DESTDIR}/usr/lib/crtendS.o
+	    ${SHLIB_LDENDFILE}
 .endif
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
@@ -194,7 +244,7 @@ realinstall:
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
-.if (${MACHINE_ARCH} == "alpha")
+.if (${SHLIB_TYPE} == "ELF")
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
