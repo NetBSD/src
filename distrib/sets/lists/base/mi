@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.125 1999/09/21 14:20:38 hubertf Exp $
+# $NetBSD: mi,v 1.126 1999/09/26 20:28:00 jdolecek Exp $
 .
 ./altroot
 ./bin
@@ -1004,6 +1004,8 @@
 ./usr/share/nls/C/libc.cat
 ./usr/share/nls/Pig
 ./usr/share/nls/Pig/libc.cat
+./usr/share/nls/cs
+./usr/share/nls/cs/libc.cat
 ./usr/share/nls/de
 ./usr/share/nls/de/libc.cat
 ./usr/share/nls/es
