@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.9 1994/02/10 21:21:28 pk Exp $
+ *	$Id: md.h,v 1.10 1994/08/21 15:15:43 pk Exp $
  */
 
 /*
@@ -105,6 +105,14 @@
 
 #define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
 #define JMPSLOT_NEEDS_RELOC		(1)
+
+/*
+ * Define the range of usable Global Offset Table offsets
+ * when using sparc 13 bit relocation types (-4096 - 4092).
+ */
+#define MAX_GOTSIZE			(8192)
+#define MAX_GOTOFF			(4092)
+#define MIN_GOTOFF			(-4096)
 
 #define CHECK_GOT_RELOC(r) \
 		((r)->r_type == RELOC_PC10 || (r)->r_type == RELOC_PC22)
