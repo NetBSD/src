@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.21 2001/11/13 07:26:33 lukem Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.22 2001/12/15 13:23:22 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.21 2001/11/13 07:26:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.22 2001/12/15 13:23:22 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ mbe_pcmcia_get_enaddr_from_mem(psc, ea)
 {
 	struct mb86960_softc *sc = &psc->sc_mb86960;
 	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
+	bus_size_t offset;
 	int i, mwindow, rv = 1;
 
 	if (ea->maddr < 0)

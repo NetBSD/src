@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcicvar.h,v 1.1 1999/09/13 10:31:13 itojun Exp $	*/
+/*	$NetBSD: shpcicvar.h,v 1.2 2001/12/15 13:23:21 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -151,7 +151,7 @@ int	shpcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
 void	shpcic_chip_mem_free __P((pcmcia_chipset_handle_t,
 	    struct pcmcia_mem_handle *));
 int	shpcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *));
+	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *));
 void	shpcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
 
 int	shpcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t,
