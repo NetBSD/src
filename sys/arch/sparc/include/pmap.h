@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.74 2005/01/16 23:19:52 chs Exp $ */
+/*	$NetBSD: pmap.h,v 1.75 2005/01/17 04:37:20 atatat Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -246,7 +246,7 @@ int	pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t);
 #define	pmap_resident_count(pm)	((pm)->pm_stats.resident_count)
 #define	pmap_wired_count(pm)	((pm)->pm_stats.wired_count)
 
-#define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
+#define PMAP_PREFER(fo, ap, sz, td)	pmap_prefer((fo), (ap))
 
 #define PMAP_EXCLUDE_DECLS	/* tells MI pmap.h *not* to include decls */
 

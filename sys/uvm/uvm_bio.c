@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.35 2005/01/16 06:48:38 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.36 2005/01/17 04:37:20 atatat Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.35 2005/01/16 06:48:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.36 2005/01/17 04:37:20 atatat Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -166,7 +166,7 @@ ubc_init(void)
 	}
 	va = (vaddr_t)1L;
 #ifdef PMAP_PREFER
-	PMAP_PREFER(0, &va);
+	PMAP_PREFER(0, &va, 0, 0);	/* kernel is never topdown */
 	ubc_nqueues = va >> ubc_winshift;
 	if (ubc_nqueues == 0) {
 		ubc_nqueues = 1;
