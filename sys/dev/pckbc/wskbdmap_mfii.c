@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.5 1999/01/09 16:21:10 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.6 1999/01/10 16:56:36 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -130,12 +130,12 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(83), 			KS_KP_Delete,	KS_KP_Decimal,
     KC(87), 			KS_f11,
     KC(88), 			KS_f12,
-    /*  127, break, */
+    KC(127),			KS_Pause,
     KC(156),			KS_KP_Enter,
     KC(157),			KS_Control_R,
-    /*  170, print screen, */
+    KC(170),			KS_Print_Screen,
     KC(181),			KS_KP_Divide,
-    /*  183, print screen, */
+    KC(183),			KS_Print_Screen,
     KC(184),			KS_Alt_R,	KS_Multi_key,
     KC(199),			KS_Home,
     KC(200),			KS_Up,
@@ -147,9 +147,9 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(209),			KS_Next,
     KC(210),			KS_Insert,
     KC(211),			KS_KP_Delete,
-    /*  219, left win, */
-    /*  220, right win, */
-    /*  221, menu, */
+    KC(219),			KS_Meta_L,
+    KC(220),			KS_Meta_R,
+    KC(221),			KS_Menu,
 };
 
 static const keysym_t pckbd_keydesc_de[] = {
