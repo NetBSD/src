@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.44 2002/05/03 16:45:22 rjs Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.45 2002/05/22 19:06:23 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1749,7 +1749,6 @@ xscale_setup(args)
 		 | CPU_CONTROL_CPCLK;
 
 	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
-cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
