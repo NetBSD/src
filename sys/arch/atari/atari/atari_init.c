@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.44 1999/10/28 13:38:35 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.45 1999/12/06 15:34:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -571,6 +571,18 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
+
+	/*
+	 * Allocate the physical RAM from the extent map
+	 */
+	for (i = 0; boot_segs[i].end != 0; i++) {
+		if (extent_alloc_region(iomem_ex, boot_segs[i].start,
+			  boot_segs[i].end - boot_segs[i].start, EX_NOWAIT)) {
+			/* XXX: Ahum, should not happen ;-) */
+			printf("Warning: Cannot allocate boot memory from"
+			       " extent map!?\n");
+		}
+	}
 
 	/*
 	 * Initialize interrupt mapping.
