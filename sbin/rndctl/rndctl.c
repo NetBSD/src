@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.13 2002/08/18 23:45:48 gmcgarry Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.14 2003/05/17 23:16:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -164,7 +164,7 @@ do_list(int all, u_int32_t type, char *name)
 		err(1, "open");
 
 	if (all == 0 && type == 0xff) {
-		strncpy(rstat_name.name, name, 16);
+		strncpy(rstat_name.name, name, sizeof(rstat_name.name));
 		res = ioctl(fd, RNDGETSRCNAME, &rstat_name);
 		if (res < 0)
 			err(1, "ioctl(RNDGETSRCNAME)");
@@ -288,7 +288,7 @@ main(int argc, char **argv)
 			cmd = 'd';
 
 			type = 0xff;
-			strncpy(name, optarg, 16);
+			strlcpy(name, optarg, sizeof(name));
 			break;
 		case 's':
 			sflag++;
@@ -321,7 +321,7 @@ main(int argc, char **argv)
 	 */
 	if (mflag != 0) {
 		rctl.type = type;
-		strncpy(rctl.name, name, 16);
+		strncpy(rctl.name, name, sizeof(rctl.name));
 		do_ioctl(&rctl);
 
 		exit(0);
