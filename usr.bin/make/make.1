@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.37 1999/10/08 20:13:42 msaitoh Exp $
+.\"	$NetBSD: make.1,v 1.38 2000/02/08 12:56:28 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1026,7 +1026,7 @@ command in the file.
 .It Ic .SUFFIXES
 Each source specifies a suffix to
 .Nm "" .
-If no sources are specified, any previous specified suffices are deleted.
+If no sources are specified, any previous specified suffixes are deleted.
 .El
 .Sh ENVIRONMENT
 .Nm
@@ -1036,8 +1036,26 @@ utilizes the following environment variables, if they exist:
 .Ev MAKE ,
 .Ev MAKEFLAGS ,
 .Ev MAKEOBJDIR ,
+.Ev MAKEOBJDIRPREFIX ,
 and
 .Ev PWD .
+
+If
+.Ev MAKEOBJDIRPREFIX
+is set, then
+.Nm
+will 
+.Xr chdir 2
+to ${MAKEOBJDIRPREFIX}${.CURDIR} if it exists.
+Otherwise if
+.Ev MAKEOBJDIR
+and the named directory exists
+.Nm
+will 
+.Xr chdir 2
+to it.
+These actions are taken before any makefiles are read which is why they 
+need to be set in the environment.
 .Sh FILES
 .Bl -tag -width /usr/share/mk -compact
 .It .depend
