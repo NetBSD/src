@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.11 1995/11/29 06:12:08 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.12 1995/12/13 23:38:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -286,7 +286,8 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	register size_t rsize;
 {
 	register ssize_t cc;
-	register time_t t, tmo, tlast, tleft;
+	register time_t t, tmo, tlast;
+	long tleft;
 
 #ifdef NET_DEBUG
 	if (debug)
@@ -298,7 +299,7 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	t = getsecs();
 	for (;;) {
 		if (tleft <= 0) {
-			if (tmo == MAXTMO) {
+			if (tmo >= MAXTMO) {
 				errno = ETIMEDOUT;
 				return -1;
 			}
