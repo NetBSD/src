@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.12 2003/11/16 09:02:42 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.13 2004/01/10 06:30:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.12 2003/11/16 09:02:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.13 2004/01/10 06:30:35 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1510,13 +1510,12 @@ atw_rf3000_init(sc)
 	if (rc != 0)
 		goto out;
 
-	/* magic derived from binary-only driver */
-	rc = atw_rf3000_write(sc, RF3000_MAGIC0, RF3000_MAGIC0_VAL);
+	rc = atw_rf3000_write(sc, RF3000_OPTIONS1, 0x0);
 
 	if (rc != 0)
 		goto out;
 
-	rc = atw_rf3000_write(sc, RF3000_MAGIC1, RF3000_MAGIC1_VAL);
+	rc = atw_rf3000_write(sc, RF3000_OPTIONS2, RF3000_OPTIONS2_LNAGS_DELAY);
 
 	if (rc != 0)
 		goto out;
