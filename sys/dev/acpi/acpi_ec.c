@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.21 2004/03/24 11:32:09 kanaoka Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.22 2004/03/24 14:47:19 kanaoka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.21 2004/03/24 11:32:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.22 2004/03/24 14:47:19 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,8 +470,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: unable to evaluate _GLK: %s\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		sc->sc_glk = 0;
-	}
-	sc->sc_glk = v;
+	} else
+		sc->sc_glk = v;
 	/*
 	 * Install a handler for this EC's GPE bit.  Note that EC SCIs are 
 	 * treated as both edge- and level-triggered interrupts; in other words
