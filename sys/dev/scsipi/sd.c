@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.219 2004/06/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: sd.c,v 1.220 2004/08/21 22:02:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.219 2004/06/28 20:24:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.220 2004/08/21 22:02:31 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -94,45 +94,44 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.219 2004/06/28 20:24:16 martin Exp $");
 
 #define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
 
-int	sdlock __P((struct sd_softc *));
-void	sdunlock __P((struct sd_softc *));
-void	sdminphys __P((struct buf *));
-void	sdgetdefaultlabel __P((struct sd_softc *, struct disklabel *));
-void	sdgetdisklabel __P((struct sd_softc *));
-void	sdstart __P((struct scsipi_periph *));
-void	sddone __P((struct scsipi_xfer *));
-void	sd_shutdown __P((void *));
-int	sd_reassign_blocks __P((struct sd_softc *, u_long));
-int	sd_interpret_sense __P((struct scsipi_xfer *));
+static int	sdlock(struct sd_softc *);
+static void	sdunlock(struct sd_softc *);
+static void	sdminphys(struct buf *);
+static void	sdgetdefaultlabel(struct sd_softc *, struct disklabel *);
+static void	sdgetdisklabel(struct sd_softc *);
+static void	sdstart(struct scsipi_periph *);
+static void	sddone(struct scsipi_xfer *);
+static void	sd_shutdown(void *);
+static int	sd_interpret_sense(struct scsipi_xfer *);
 
-int	sd_mode_sense __P((struct sd_softc *, u_int8_t, void *, size_t, int,
-	    int, int *));
-int	sd_mode_select __P((struct sd_softc *, u_int8_t, void *, size_t, int,
-	    int));
-int	sd_get_simplifiedparms __P((struct sd_softc *, struct disk_parms *,
-	    int));
-int	sd_get_capacity __P((struct sd_softc *, struct disk_parms *, int));
-int	sd_get_parms __P((struct sd_softc *, struct disk_parms *, int));
-int	sd_get_parms_page4 __P((struct sd_softc *, struct disk_parms *, 
-	    int));
-int	sd_get_parms_page5 __P((struct sd_softc *, struct disk_parms *, 
-	    int));
+static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
+		    int, int *);
+static int	sd_mode_select(struct sd_softc *, u_int8_t, void *, size_t, int,
+		    int);
+static int	sd_get_simplifiedparms(struct sd_softc *, struct disk_parms *,
+		    int);
+static int	sd_get_capacity(struct sd_softc *, struct disk_parms *, int);
+static int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
+static int	sd_get_parms_page4(struct sd_softc *, struct disk_parms *, 
+		    int);
+static int	sd_get_parms_page5(struct sd_softc *, struct disk_parms *, 
+		    int);
 
-int	sd_flush __P((struct sd_softc *, int));
-int	sd_getcache __P((struct sd_softc *, int *));
-int	sd_setcache __P((struct sd_softc *, int));
+static int	sd_flush(struct sd_softc *, int);
+static int	sd_getcache(struct sd_softc *, int *);
+static int	sd_setcache(struct sd_softc *, int);
 
-int	sdmatch __P((struct device *, struct cfdata *, void *));
-void	sdattach __P((struct device *, struct device *, void *));
-int	sdactivate __P((struct device *, enum devact));
-int	sddetach __P((struct device *, int));
+static int	sdmatch(struct device *, struct cfdata *, void *);
+static void	sdattach(struct device *, struct device *, void *);
+static int	sdactivate(struct device *, enum devact);
+static int	sddetach(struct device *, int);
 
 CFATTACH_DECL(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
     sdactivate);
 
 extern struct cfdriver sd_cd;
 
-const struct scsipi_inquiry_pattern sd_patterns[] = {
+static const struct scsipi_inquiry_pattern sd_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "",         "",                 ""},
 	{T_DIRECT, T_REMOV,
@@ -147,14 +146,14 @@ const struct scsipi_inquiry_pattern sd_patterns[] = {
 	 "",         "",                 ""},
 };
 
-dev_type_open(sdopen);
-dev_type_close(sdclose);
-dev_type_read(sdread);
-dev_type_write(sdwrite);
-dev_type_ioctl(sdioctl);
-dev_type_strategy(sdstrategy);
-dev_type_dump(sddump);
-dev_type_size(sdsize);
+static dev_type_open(sdopen);
+static dev_type_close(sdclose);
+static dev_type_read(sdread);
+static dev_type_write(sdwrite);
+static dev_type_ioctl(sdioctl);
+static dev_type_strategy(sdstrategy);
+static dev_type_dump(sddump);
+static dev_type_size(sdsize);
 
 const struct bdevsw sd_bdevsw = {
 	sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, D_DISK
@@ -165,9 +164,9 @@ const struct cdevsw sd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-struct dkdriver sddkdriver = { sdstrategy };
+static struct dkdriver sddkdriver = { sdstrategy };
 
-const struct scsipi_periphsw sd_switch = {
+static const struct scsipi_periphsw sd_switch = {
 	sd_interpret_sense,	/* check our error handler first */
 	sdstart,		/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -192,11 +191,8 @@ struct sd_mode_sense_data {
  * The routine called by the low level scsi routine when it discovers
  * A device suitable for this driver
  */
-int
-sdmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+sdmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -211,10 +207,8 @@ sdmatch(parent, match, aux)
 /*
  * Attach routine common to atapi & scsi.
  */
-void
-sdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+sdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sd_softc *sd = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
@@ -323,10 +317,8 @@ sdattach(parent, self, aux)
 #endif
 }
 
-int
-sdactivate(self, act)
-	struct device *self;
-	enum devact act;
+static int
+sdactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -344,10 +336,8 @@ sdactivate(self, act)
 	return (rv);
 }
 
-int
-sddetach(self, flags)
-	struct device *self;
-	int flags;
+static int
+sddetach(struct device *self, int flags)
 {
 	struct sd_softc *sd = (struct sd_softc *) self;
 	struct buf *bp;
@@ -401,9 +391,8 @@ sddetach(self, flags)
  * XXX
  * Several drivers do this; it should be abstracted and made MP-safe.
  */
-int
-sdlock(sd)
-	struct sd_softc *sd;
+static int
+sdlock(struct sd_softc *sd)
 {
 	int error;
 
@@ -419,9 +408,8 @@ sdlock(sd)
 /*
  * Unlock and wake up any waiters.
  */
-void
-sdunlock(sd)
-	struct sd_softc *sd;
+static void
+sdunlock(struct sd_softc *sd)
 {
 
 	sd->flags &= ~SDF_LOCKED;
@@ -434,11 +422,8 @@ sdunlock(sd)
 /*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
-int
-sdopen(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+static int
+sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct sd_softc *sd;
 	struct scsipi_periph *periph;
@@ -612,11 +597,8 @@ bad4:
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
-int
-sdclose(dev, flag, fmt, p)
-	dev_t dev;
-	int flag, fmt;
-	struct proc *p;
+static int
+sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -677,9 +659,8 @@ sdclose(dev, flag, fmt, p)
  * can understand.  The transfer is described by a buf and will include
  * only one physical transfer.
  */
-void
-sdstrategy(bp)
-	struct buf *bp;
+static void
+sdstrategy(struct buf *bp)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -799,9 +780,8 @@ done:
  * must be called at the correct (highish) spl level
  * sdstart() is called at splbio from sdstrategy and scsipi_done
  */
-void
-sdstart(periph)
-	struct scsipi_periph *periph;
+static void
+sdstart(struct scsipi_periph *periph)
 {
 	struct sd_softc *sd = (void *)periph->periph_dev;
 	struct disklabel *lp = sd->sc_dk.dk_label;
@@ -919,9 +899,8 @@ sdstart(periph)
 	}
 }
 
-void
-sddone(xs)
-	struct scsipi_xfer *xs;
+static void
+sddone(struct scsipi_xfer *xs)
 {
 	struct sd_softc *sd = (void *)xs->xs_periph->periph_dev;
 
@@ -939,9 +918,8 @@ sddone(xs)
 	}
 }
 
-void
-sdminphys(bp)
-	struct buf *bp;
+static void
+sdminphys(struct buf *bp)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
 	long max;
@@ -969,21 +947,15 @@ sdminphys(bp)
 	scsipi_adapter_minphys(sd->sc_periph->periph_channel, bp);
 }
 
-int
-sdread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+static int
+sdread(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
 }
 
-int
-sdwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+static int
+sdwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
@@ -993,13 +965,8 @@ sdwrite(dev, uio, ioflag)
  * Perform special action on behalf of the user
  * Knows about the internals of this device
  */
-int
-sdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+static int
+sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -1214,10 +1181,8 @@ bad:
 #endif
 }
 
-void
-sdgetdefaultlabel(sd, lp)
-	struct sd_softc *sd;
-	struct disklabel *lp;
+static void
+sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 {
 
 	memset(lp, 0, sizeof(struct disklabel));
@@ -1264,9 +1229,8 @@ sdgetdefaultlabel(sd, lp)
 /*
  * Load the label information on the named device
  */
-void
-sdgetdisklabel(sd)
-	struct sd_softc *sd;
+static void
+sdgetdisklabel(struct sd_softc *sd)
 {
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	const char *errstring;
@@ -1291,9 +1255,8 @@ sdgetdisklabel(sd)
 	}
 }
 
-void
-sd_shutdown(arg)
-	void *arg;
+static void
+sd_shutdown(void *arg)
 {
 	struct sd_softc *sd = arg;
 
@@ -1315,9 +1278,8 @@ sd_shutdown(arg)
 /*
  * Check Errors
  */
-int
-sd_interpret_sense(xs)
-	struct scsipi_xfer *xs;
+static int
+sd_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
@@ -1388,9 +1350,8 @@ sd_interpret_sense(xs)
 }
 
 
-int
-sdsize(dev)
-	dev_t dev;
+static int
+sdsize(dev_t dev)
 {
 	struct sd_softc *sd;
 	int part, unit, omask;
@@ -1431,12 +1392,8 @@ static int sddoingadump;
  * dump all of physical memory into the partition specified, starting
  * at offset 'dumplo' into the partition.
  */
-int
-sddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+static int
+sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct sd_softc *sd;	/* disk unit to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
@@ -1548,14 +1505,9 @@ sddump(dev, blkno, va, size)
 	return (0);
 }
 
-int
-sd_mode_sense(sd, byte2, sense, size, page, flags, big)
-	struct sd_softc *sd;
-	u_int8_t byte2;
-	void *sense;
-	size_t size;
-	int page, flags;
-	int *big;
+static int
+sd_mode_sense(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
+    int page, int flags, int *big)
 {
 
 	if ((sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) &&
@@ -1572,13 +1524,9 @@ sd_mode_sense(sd, byte2, sense, size, page, flags, big)
 	}
 }
 
-int
-sd_mode_select(sd, byte2, sense, size, flags, big)
-	struct sd_softc *sd;
-	u_int8_t byte2;
-	void *sense;
-	size_t size;
-	int flags, big;
+static int
+sd_mode_select(struct sd_softc *sd, u_int8_t byte2, void *sense, size_t size,
+    int flags, int big)
 {
 
 	if (big) {
@@ -1598,11 +1546,8 @@ sd_mode_select(sd, byte2, sense, size, flags, big)
 	}
 }
 
-int
-sd_get_simplifiedparms(sd, dp, flags)
-	struct sd_softc *sd;
-	struct disk_parms *dp;
-	int flags;
+static int
+sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	struct {
 		struct scsipi_mode_header header;
@@ -1662,11 +1607,8 @@ sd_get_simplifiedparms(sd, dp, flags)
  * Get the scsi driver to send a full inquiry to the * device and use the
  * results to fill out the disk parameter structure.
  */
-int
-sd_get_capacity(sd, dp, flags)
-	struct sd_softc *sd;
-	struct disk_parms *dp;
-	int flags;
+static int
+sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	u_int64_t sectors;
 	int error;
@@ -1757,11 +1699,8 @@ printf("page 0 ok\n");
 	return (0);
 }
 
-int
-sd_get_parms_page4(sd, dp, flags)
-	struct sd_softc *sd;
-	struct disk_parms *dp;
-	int flags;
+static int
+sd_get_parms_page4(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	struct sd_mode_sense_data scsipi_sense;
 	int error;
@@ -1835,11 +1774,8 @@ printf("page 4 ok\n");
 	return (0);
 }
 
-int
-sd_get_parms_page5(sd, dp, flags)
-	struct sd_softc *sd;
-	struct disk_parms *dp;
-	int flags;
+static int
+sd_get_parms_page5(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	struct sd_mode_sense_data scsipi_sense;
 	int error;
@@ -1906,11 +1842,8 @@ printf("page 5 ok\n");
 	return (0);
 }
 
-int
-sd_get_parms(sd, dp, flags)
-	struct sd_softc *sd;
-	struct disk_parms *dp;
-	int flags;
+static int
+sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	int error;
 
@@ -1957,10 +1890,8 @@ page0:
 	return (SDGP_RESULT_OK);
 }
 
-int
-sd_flush(sd, flags)
-	struct sd_softc *sd;
-	int flags;
+static int
+sd_flush(struct sd_softc *sd, int flags)
 {
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsi_synchronize_cache cmd;
@@ -1991,10 +1922,8 @@ sd_flush(sd, flags)
 	    SDRETRIES, 100000, NULL, flags | XS_CTL_IGNORE_ILLEGAL_REQUEST));
 }
 
-int
-sd_getcache(sd, bitsp)
-	struct sd_softc *sd;
-	int *bitsp;
+static int
+sd_getcache(struct sd_softc *sd, int *bitsp)
 {
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct sd_mode_sense_data scsipi_sense;
@@ -2044,10 +1973,8 @@ sd_getcache(sd, bitsp)
 	return (0);
 }
 
-int
-sd_setcache(sd, bits)
-	struct sd_softc *sd;
-	int bits;
+static int
+sd_setcache(struct sd_softc *sd, int bits)
 {
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct sd_mode_sense_data scsipi_sense;
