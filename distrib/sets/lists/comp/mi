@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.284 2000/12/15 01:26:43 thorpej Exp $
+#	$NetBSD: mi,v 1.285 2000/12/15 01:28:39 thorpej Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -54,6 +54,7 @@
 ./usr/include/a.out.h		comp-c-include
 ./usr/include/adosfs		comp-c-include
 ./usr/include/adosfs/adosfs.h	comp-c-include
+./usr/include/altq		comp-c-include
 ./usr/include/altq/altq.h	comp-c-include
 ./usr/include/altq/altq_afmap.h	comp-c-include
 ./usr/include/altq/altq_blue.h	comp-c-include
