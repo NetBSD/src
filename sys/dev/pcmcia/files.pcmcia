@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.11 1998/10/31 01:44:17 thorpej Exp $
+#	$NetBSD: files.pcmcia,v 1.12 1998/11/26 15:32:44 pk Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -10,7 +10,7 @@ file	dev/pcmcia/pcmcia.c			pcmcia
 file	dev/pcmcia/pcmcia_cis.c			pcmcia
 
 # device declaration in sys/conf/files
-attach	pcmcia at pcic
+attach	pcmcia at pcmciabus
 
 # 3Com 3c589 Ethernet and 3c562 multifunction Ethernet controllers
 # device declaration in sys/conf/files
