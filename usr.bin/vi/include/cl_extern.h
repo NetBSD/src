@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_extern.h,v 1.2 1998/01/09 08:08:17 perry Exp $	*/
+/*	$NetBSD: cl_extern.h,v 1.3 1999/10/04 23:31:51 lukem Exp $	*/
 
 #ifndef HAVE_CURSES_ADDNSTR
 int addnstr __P((char *, int));
@@ -53,4 +53,4 @@ int cl_fmap __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
 int cl_optchange __P((SCR *, int, char *, u_long *));
 int cl_omesg __P((SCR *, CL_PRIVATE *, int));
 int cl_ssize __P((SCR *, int, size_t *, size_t *, int *));
-void cl_putchar __P((int));
+int cl_putchar __P((int));
