@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.27 1994/04/07 06:50:09 mycroft Exp $
+ *      $Id: aha1742.c,v 1.28 1994/04/08 18:22:18 mycroft Exp $
  */
 
 /*
@@ -606,7 +606,10 @@ ahbintr(ahb)
 	printf("ahbintr ");
 #endif /*AHBDEBUG */
 
-	while (inb(port + G2STAT) & G2STAT_INT_PEND) {
+	if (!(inb(port + G2STAT) & G2STAT_INT_PEND))
+		return 0;
+
+	do {
 		/*
 		 * First get all the information and then 
 		 * acknowlege the interrupt
@@ -667,7 +670,7 @@ ahbintr(ahb)
 			untimeout((timeout_t)ahb_timeout, (caddr_t)ecb);
 			ahb_done(ahb, ecb, stat != AHB_ECB_OK);
 		}
-	}
+	} while (inb(port + G2STAT) & G2STAT_INT_PEND);
 	return 1;
 }
 
