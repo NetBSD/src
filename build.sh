@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.67 2002/09/13 23:27:13 thorpej Exp $
+#  $NetBSD: build.sh,v 1.68 2002/09/18 15:20:53 thorpej Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -275,22 +275,24 @@ if $do_rebuildmake; then
 	$runcmd rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
 fi
 
+EXTERNAL_TOOLCHAIN=`getmakevar EXTERNAL_TOOLCHAIN`
 if [ "$runcmd" = "echo" ]; then
-	USE_NEW_TOOLCHAIN=yes
+	TOOLCHAIN_MISSING=no
 else
-	USE_NEW_TOOLCHAIN=`getmakevar USE_NEW_TOOLCHAIN`
+	TOOLCHAIN_MISSING=`getmakevar TOOLCHAIN_MISSING`
 fi
-if [ "${USE_NEW_TOOLCHAIN}" = "" ]; then
-	echo "ERROR: build.sh (new toolchain) is not yet enabled for"
+if [ "${TOOLCHAIN_MISSING}" = "yes" -a \
+     "${EXTERNAL_TOOLCHAIN}" = "" ]; then
+	echo "ERROR: build.sh (in-tree cross-toolchain) is not yet available for"
 	echo
 	echo "MACHINE: ${MACHINE}"
 	echo "MACHINE_ARCH: ${MACHINE_ARCH}"
 	echo
 	echo "All builds for this platform should be done via a traditional make"
 	echo
-	echo "If you wish to test using the new toolchain set"
+	echo "If you wish to use an external cross-toolchain, set"
 	echo
-	echo "USE_NEW_TOOLCHAIN=yes"
+	echo "EXTERNAL_TOOLCHAIN=<path to toolchain root>"
 	echo
 	echo "in either the environment or mk.conf and rerun"
 	echo
@@ -389,7 +391,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.67 2002/09/13 23:27:13 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.68 2002/09/18 15:20:53 thorpej Exp $
 #
 
 EOF
