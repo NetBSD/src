@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.6 1997/10/11 02:07:23 lukem Exp $	*/
+/*	$NetBSD: globals.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.6 1997/10/11 02:07:23 lukem Exp $");
+__RCSID("$NetBSD: globals.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: globals.c,v 1.6 1997/10/11 02:07:23 lukem Exp $");
 int     WEIGHT = MAXWEIGHT;
 int     CUMBER = MAXCUMBER;
 
-char   *objdes[NUMOFOBJECTS] = {
+const char   *const objdes[NUMOFOBJECTS] = {
 	"There is a knife here",
 	"There is an exquisitely crafted sword and scabbard here.",
 	0,			/* can land from here */
@@ -115,7 +115,7 @@ char   *objdes[NUMOFOBJECTS] = {
 
 };
 
-char   *objsht[NUMOFOBJECTS] = {
+const char   *const objsht[NUMOFOBJECTS] = {
 	"knife",
 	"fine sword",
 	0,
@@ -182,7 +182,7 @@ char   *objsht[NUMOFOBJECTS] = {
 	"diamond block"
 };
 
-char   *ouch[NUMOFINJURIES] = {
+const char   *const ouch[NUMOFINJURIES] = {
 	"some minor abrasions",
 	"some minor lacerations",
 	"a minor puncture wound",
@@ -198,7 +198,7 @@ char   *ouch[NUMOFINJURIES] = {
 	"a broken neck"
 };
 
-int     objwt[NUMOFOBJECTS] = {
+const int     objwt[NUMOFOBJECTS] = {
 	1, 5, 0, 10, 15, 2, 10, 10,
 	3, 5, 50, 2500, 2, 1, 100, 1,
 	2, 1, 1, 1, 60, 10, 5, 0,
@@ -209,7 +209,7 @@ int     objwt[NUMOFOBJECTS] = {
 	50, 45, 45, 100, 2000, 30, 20, 10
 };
 
-int     objcumber[NUMOFOBJECTS] = {
+const int     objcumber[NUMOFOBJECTS] = {
 	1, 5, 0, 150, 10, 1, 5, 2,
 	2, 1, 5, 10, 1, 1, 10, 1,
 	1, 1, 1, 1, 7, 5, 4, 0,

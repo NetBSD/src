@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1998/09/13 15:27:26 hubertf Exp $ */
+/*	$NetBSD: extern.h,v 1.10 1999/02/10 01:36:50 hubertf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -223,7 +223,7 @@
 #define MAXCUMBER	10
 
 struct room {
-	char   *name;
+	const char   *name;
 	int     link[8];
 #define north	link[0]
 #define south	link[1]
@@ -233,7 +233,7 @@ struct room {
 #define access	link[5]
 #define down	link[6]
 #define flyhere	link[7]
-	char   *desc;
+	const char   *desc;
 	unsigned int objects[NUMOFWORDS];
 };
 extern struct room dayfile[];
@@ -241,11 +241,11 @@ extern struct room nightfile[];
 struct room *location;
 
  /* object characteristics */
-char   *objdes[NUMOFOBJECTS];
-char   *objsht[NUMOFOBJECTS];
-char   *ouch[NUMOFINJURIES];
-int     objwt[NUMOFOBJECTS];
-int     objcumber[NUMOFOBJECTS];
+const char   *const objdes[NUMOFOBJECTS];
+const char   *const objsht[NUMOFOBJECTS];
+const char   *const ouch[NUMOFINJURIES];
+const int     objwt[NUMOFOBJECTS];
+const int     objcumber[NUMOFOBJECTS];
 
  /* current input line */
 #define NWORD	20		/* words per line */
@@ -286,7 +286,7 @@ char    injuries[NUMOFINJURIES];
 char    uname[9];
 
 struct wlist {
-	char   *string;
+	const char   *string;
 	int     value, article;
 	struct wlist *next;
 };
@@ -300,13 +300,13 @@ struct objs {
 	short   room;
 	short   obj;
 };
-extern struct objs dayobjs[];
-extern struct objs nightobjs[];
+extern const struct objs dayobjs[];
+extern const struct objs nightobjs[];
 
 void blast __P((void));
 void bury __P((void));
-int card __P((char *, int));
-int checkout __P((char *));
+int card __P((const char *, int));
+int checkout __P((const char *));
 void chime __P((void));
 void convert __P((int));
 void crash __P((void));
@@ -317,14 +317,14 @@ void dig __P((void));
 int draw __P((void));
 void drink __P((void));
 int drive __P((void));
-int drop __P((char *));
+int drop __P((const char *));
 int eat __P((void));
 void endfly __P((void));
 int fight __P((int, int));
 int follow __P((void));
 void getutmp __P((char *));
 int give __P((void));
-int hash __P((char *));
+int hash __P((const char *));
 void initialize __P((char));
 void install __P((struct wlist *));
 int jump __P((void));
@@ -355,18 +355,18 @@ void succumb __P((int));
 int take __P((unsigned int[]));
 int takeoff __P((void));
 void target __P((void));
-int throw __P((char *));
-int ucard __P((unsigned int *));
+int throw __P((const char *));
+int ucard __P((const unsigned int *));
 int use __P((void));
 int visual __P((void));
 int wearit __P((void));
 void whichway __P((struct room));
-int wizard __P((char *));
+int wizard __P((const char *));
 void wordinit __P((void));
 void writedes __P((void));
 int zzz __P((void));
-char   *getcom __P((char *, int, char *, char *));
+char   *getcom __P((char *, int, const char *, const char *));
 char   *getword __P((char *, char *, int));
-char   *rate __P((void));
-char   *truedirec __P((int, char));
-struct wlist *lookup __P((char *));
+const char   *rate __P((void));
+const char   *truedirec __P((int, char));
+struct wlist *lookup __P((const char *));
