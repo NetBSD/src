@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.68 2001/11/19 04:46:07 perry Exp $
+#	$NetBSD: bsd.man.mk,v 1.69 2001/11/28 05:01:28 jmc Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -10,18 +10,20 @@ realinstall:	${MANINSTALL}
 
 ##### Default values
 .if ${USETOOLS} == "yes"
-TMACDIR?=	${TOOLDIR}/share/groff/tmac
+TMACDEPDIR?=	${TOOLDIR}/share/groff/tmac
 .else
-TMACDIR?=	${DESTDIR}/usr/share/tmac
+TMACDEPDIR?=	${DESTDIR}/usr/share/tmac
 .endif
 
+TMACDIR?=	${DESTDIR}/usr/share/tmac
+
 HTMLDIR?=	${DESTDIR}/usr/share/man
-CATDEPS?=	${TMACDIR}/tmac.andoc \
-		${TMACDIR}/tmac.doc \
-		${TMACDIR}/tmac.doc-ditroff \
-		${TMACDIR}/tmac.doc-common \
-		${TMACDIR}/tmac.doc-nroff \
-		${TMACDIR}/tmac.doc-syms
+CATDEPS?=	${TMACDEPDIR}/tmac.andoc \
+		${TMACDEPDIR}/tmac.doc \
+		${TMACDEPDIR}/tmac.doc-ditroff \
+		${TMACDEPDIR}/tmac.doc-common \
+		${TMACDEPDIR}/tmac.doc-nroff \
+		${TMACDEPDIR}/tmac.doc-syms
 MANTARGET?=	cat
 
 GROFF_HTML?=	${GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
