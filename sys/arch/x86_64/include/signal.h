@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 2003/01/26 00:05:38 fvdl Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 2003/03/15 23:41:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -47,6 +47,7 @@ typedef int sig_atomic_t;
  */
 #include <machine/trap.h>
 #include <machine/fpu.h>
+#include <machine/mcontext.h>
 
 /*
  * Information pushed on stack when a signal is delivered.
@@ -56,100 +57,33 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 struct sigcontext {
-	int		sc_gs;
-	int		sc_fs;
-	int		sc_es;
-	int		sc_ds;
-	u_int64_t	sc_r8;
-	u_int64_t	sc_r9;
-	u_int64_t	sc_r10;
-	u_int64_t	sc_r11;
-	u_int64_t	sc_r12;
-	u_int64_t	sc_r13;
-	u_int64_t	sc_r14;
-	u_int64_t	sc_r15;
-	u_int64_t	sc_rdi;
-	u_int64_t	sc_rsi;
-	u_int64_t	sc_rbp;
-	u_int64_t	sc_rbx;
-	u_int64_t	sc_rdx;
-	u_int64_t	sc_rcx;
-	u_int64_t	sc_rax;
-	u_int64_t	sc_trapno;
-	u_int64_t	sc_err;
-	u_int64_t	sc_rip;
-	int		sc_cs;
-	int		sc_pad0;
-	u_int64_t	sc_rflags;
-	u_int64_t	sc_rsp_onsig;
-	struct fxsave64 *sc_fpstate;	/* XXXfvdl compat with Linux, but.. */
-	int		sc_ss;
-	int		sc_pad1;
-
-	sigset_t	sc_mask;	/* signal mask to restore (new style) */
-	u_int64_t	sc_onstack;	/* sigstack state to restore */
-
-	u_int64_t	sc_rsp;
+	struct fxsave64 *sc_fpstate;
+	u_int64_t	sc_onstack;
+	sigset_t	sc_mask;
+	u_int64_t	sc_pad0;
+	mcontext_t	sc_mcontext;
 };
 
 #define _MCONTEXT_TO_SIGCONTEXT(uc, sc) 				\
 do {									\
-	(sc)->sc_gs  = (uc)->uc_mcontext.__gregs[_REG_GS];		\
-	(sc)->sc_fs  = (uc)->uc_mcontext.__gregs[_REG_FS];		\
-	(sc)->sc_es  = (uc)->uc_mcontext.__gregs[_REG_ES];		\
-	(sc)->sc_ds  = (uc)->uc_mcontext.__gregs[_REG_DS];		\
-	(sc)->sc_r8  = (uc)->uc_mcontext.__gregs[_REG_R8];		\
-	(sc)->sc_r9  = (uc)->uc_mcontext.__gregs[_REG_R9];		\
-	(sc)->sc_r10 = (uc)->uc_mcontext.__gregs[_REG_R10];		\
-	(sc)->sc_r11 = (uc)->uc_mcontext.__gregs[_REG_R11];		\
-	(sc)->sc_r12 = (uc)->uc_mcontext.__gregs[_REG_R12];		\
-	(sc)->sc_r13 = (uc)->uc_mcontext.__gregs[_REG_R13];		\
-	(sc)->sc_r14 = (uc)->uc_mcontext.__gregs[_REG_R14];		\
-	(sc)->sc_r15 = (uc)->uc_mcontext.__gregs[_REG_R15];		\
-	(sc)->sc_rdi = (uc)->uc_mcontext.__gregs[_REG_RDI];		\
-	(sc)->sc_rsi = (uc)->uc_mcontext.__gregs[_REG_RSI];		\
-	(sc)->sc_rbp = (uc)->uc_mcontext.__gregs[_REG_RBP];		\
-	(sc)->sc_rbx = (uc)->uc_mcontext.__gregs[_REG_RBX];		\
-	(sc)->sc_rdx = (uc)->uc_mcontext.__gregs[_REG_RDX];		\
-	(sc)->sc_rcx = (uc)->uc_mcontext.__gregs[_REG_RCX];		\
-	(sc)->sc_rax = (uc)->uc_mcontext.__gregs[_REG_RAX];		\
-	(sc)->sc_trapno = (uc)->uc_mcontext.__gregs[_REG_TRAPNO];	\
-	(sc)->sc_err = (uc)->uc_mcontext.__gregs[_REG_ERR];		\
-	(sc)->sc_rip = (uc)->uc_mcontext.__gregs[_REG_RIP];		\
-	(sc)->sc_cs  = (uc)->uc_mcontext.__gregs[_REG_CS];		\
-	(sc)->sc_rflags  = (uc)->uc_mcontext.__gregs[_REG_RFL];		\
-	(sc)->sc_ss  = (uc)->uc_mcontext.__gregs[_REG_SS];		\
-	(sc)->sc_rsp  = (uc)->uc_mcontext.__gregs[_REG_URSP];		\
+	memcpy(&(sc)->sc_mcontext.__gregs, &(uc)->uc_mcontext.__gregs,	\
+	    sizeof ((uc)->uc_mcontext.__gregs));			\
+	if ((uc)->uc_flags & _UC_FPU) {					\
+		memcpy(&(sc)->sc_mcontext.__fpregs,			\
+		    &(uc)->uc_mcontext.__fpregs,			\
+		    sizeof ((uc)->uc_mcontext.__fpregs));		\
+	}								\
 } while (/*CONSTCOND*/0)
 
 #define _SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
 do {									\
-	(uc)->uc_mcontext.__gregs[_REG_GS]  = (sc)->sc_gs;		\
-	(uc)->uc_mcontext.__gregs[_REG_FS]  = (sc)->sc_fs;		\
-	(uc)->uc_mcontext.__gregs[_REG_ES]  = (sc)->sc_es;		\
-	(uc)->uc_mcontext.__gregs[_REG_DS]  = (sc)->sc_ds;		\
-	(uc)->uc_mcontext.__gregs[_REG_R8]  = (sc)->sc_r8;		\
-	(uc)->uc_mcontext.__gregs[_REG_R9]  = (sc)->sc_r9;		\
-	(uc)->uc_mcontext.__gregs[_REG_R10] = (sc)->sc_r10;		\
-	(uc)->uc_mcontext.__gregs[_REG_R11] = (sc)->sc_r11;		\
-	(uc)->uc_mcontext.__gregs[_REG_R12] = (sc)->sc_r12;		\
-	(uc)->uc_mcontext.__gregs[_REG_R13] = (sc)->sc_r13;		\
-	(uc)->uc_mcontext.__gregs[_REG_R14] = (sc)->sc_r14;		\
-	(uc)->uc_mcontext.__gregs[_REG_R15] = (sc)->sc_r15;		\
-	(uc)->uc_mcontext.__gregs[_REG_RDI] = (sc)->sc_rdi;		\
-	(uc)->uc_mcontext.__gregs[_REG_RSI] = (sc)->sc_rsi;		\
-	(uc)->uc_mcontext.__gregs[_REG_RBP] = (sc)->sc_rbp;		\
-	(uc)->uc_mcontext.__gregs[_REG_RBX] = (sc)->sc_rbx;		\
-	(uc)->uc_mcontext.__gregs[_REG_RDX] = (sc)->sc_rdx;		\
-	(uc)->uc_mcontext.__gregs[_REG_RCX] = (sc)->sc_rcx;		\
-	(uc)->uc_mcontext.__gregs[_REG_RAX] = (sc)->sc_rax;		\
-	(uc)->uc_mcontext.__gregs[_REG_TRAPNO]  = (sc)->sc_trapno;	\
-	(uc)->uc_mcontext.__gregs[_REG_ERR] = (sc)->sc_err;		\
-	(uc)->uc_mcontext.__gregs[_REG_RIP] = (sc)->sc_rip;		\
-	(uc)->uc_mcontext.__gregs[_REG_CS]  = (sc)->sc_cs;		\
-	(uc)->uc_mcontext.__gregs[_REG_RFL] = (sc)->sc_rflags;		\
-	(uc)->uc_mcontext.__gregs[_REG_SS]  = (sc)->sc_ss;		\
-	(uc)->uc_mcontext.__gregs[_REG_URSP]  = (sc)->sc_rsp;		\
+	memcpy(&(uc)->uc_mcontext.__gregs, &(sc)->sc_mcontext.__gregs,	\
+	    sizeof ((uc)->uc_mcontext.__gregs));			\
+	if ((uc)->uc_flags & _UC_FPU) {					\
+		memcpy(&(uc)->uc_mcontext.__fpregs,			\
+		    &(sc)->sc_mcontext.__fpregs,			\
+		    sizeof ((uc)->uc_mcontext.__fpregs));		\
+	}								\
 } while (/*CONSTCOND*/0)
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2003/03/06 00:47:00 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2003/03/15 23:41:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -519,13 +519,16 @@ sendsig(sig, mask, code)
 	fp = (struct sigframe *)sp - 1;
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		frame.sf_sc.sc_fpstate = &fp->sf_fp;
-		memcpy(&frame.sf_fp, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		frame.sf_sc.sc_fpstate =
+		    (struct fxsave64 *)&fp->sf_sc.sc_mcontext.__fpregs;
+		memcpy(&frame.sf_sc.sc_mcontext.__fpregs,
+		    &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (struct fxsave64));
 		tocopy = sizeof (struct sigframe);
 	} else {
 		frame.sf_sc.sc_fpstate = NULL;
-		tocopy = sizeof (struct sigframe) - sizeof (struct fxsave64);
+		tocopy = sizeof (struct sigframe) -
+		    sizeof (fp->sf_sc.sc_mcontext.__fpregs);
 	}
 
 	/* Build stack frame for signal trampoline. */
@@ -546,32 +549,7 @@ sendsig(sig, mask, code)
 	}
 
 	/* Save register context. */
-	frame.sf_sc.sc_es = tf->tf_es;
-	frame.sf_sc.sc_ds = tf->tf_ds;
-	frame.sf_sc.sc_fs = tf->tf_fs;
-	frame.sf_sc.sc_gs = tf->tf_gs;
-	frame.sf_sc.sc_rflags = tf->tf_rflags;
-	frame.sf_sc.sc_r15 = tf->tf_r15;
-	frame.sf_sc.sc_r14 = tf->tf_r14;
-	frame.sf_sc.sc_r13 = tf->tf_r13;
-	frame.sf_sc.sc_r12 = tf->tf_r12;
-	frame.sf_sc.sc_r11 = tf->tf_r11;
-	frame.sf_sc.sc_r10 = tf->tf_r10;
-	frame.sf_sc.sc_r9 = tf->tf_r9;
-	frame.sf_sc.sc_r8 = tf->tf_r8;
-	frame.sf_sc.sc_rdi = tf->tf_rdi;
-	frame.sf_sc.sc_rsi = tf->tf_rsi;
-	frame.sf_sc.sc_rbp = tf->tf_rbp;
-	frame.sf_sc.sc_rbx = tf->tf_rbx;
-	frame.sf_sc.sc_rdx = tf->tf_rdx;
-	frame.sf_sc.sc_rcx = tf->tf_rcx;
-	frame.sf_sc.sc_rax = tf->tf_rax;
-	frame.sf_sc.sc_rip = tf->tf_rip;
-	frame.sf_sc.sc_cs = tf->tf_cs;
-	frame.sf_sc.sc_rsp = tf->tf_rsp;
-	frame.sf_sc.sc_ss = tf->tf_ss;
-	frame.sf_sc.sc_trapno = tf->tf_trapno;
-	frame.sf_sc.sc_err = tf->tf_err;
+	memcpy(&frame.sf_sc.sc_mcontext.__gregs, tf, sizeof (*tf));
 
 	/* Save signal stack. */
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -666,6 +644,7 @@ sys___sigreturn14(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
+	uint64_t rflags;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -674,7 +653,7 @@ sys___sigreturn14(l, v, retval)
 	 */
 	scp = SCARG(uap, sigcntxp);
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
+		return EFAULT;
 
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
@@ -684,34 +663,12 @@ sys___sigreturn14(l, v, retval)
 	 * automatically and generate a trap on violations.  We handle
 	 * the trap, rather than doing all of the checking here.
 	 */
-	if (((context.sc_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_cs, context.sc_rflags))
-		return (EINVAL);
+	rflags = context.sc_mcontext.__gregs[_REG_RFL];
+	if (((rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(context.sc_mcontext.__gregs[_REG_CS], rflags))
+		return EINVAL;
 
-	tf->tf_ds = context.sc_ds;
-	tf->tf_es = context.sc_es;
-	tf->tf_fs = context.sc_fs;
-	tf->tf_gs = context.sc_gs;
-	tf->tf_rflags = context.sc_rflags;
-	tf->tf_r15 = context.sc_r15;
-	tf->tf_r14 = context.sc_r14;
-	tf->tf_r13 = context.sc_r13;
-	tf->tf_r12 = context.sc_r12;
-	tf->tf_r11 = context.sc_r11;
-	tf->tf_r10 = context.sc_r10;
-	tf->tf_r9 = context.sc_r9;
-	tf->tf_r8 = context.sc_r8;
-	tf->tf_rdi = context.sc_rdi;
-	tf->tf_rsi = context.sc_rsi;
-	tf->tf_rbp = context.sc_rbp;
-	tf->tf_rbx = context.sc_rbx;
-	tf->tf_rdx = context.sc_rdx;
-	tf->tf_rcx = context.sc_rcx;
-	tf->tf_rax = context.sc_rax;
-	tf->tf_rip = context.sc_rip;
-	tf->tf_cs = context.sc_cs;
-	tf->tf_rsp = context.sc_rsp;
-	tf->tf_ss = context.sc_ss;
+	memcpy(tf, &context.sc_mcontext.__gregs, sizeof (*tf));
 
 	/* Restore (possibly fixed up) FP state and force it to be reloaded */
 	if (l->l_md.md_flags & MDP_USEDFPU) {
@@ -731,7 +688,7 @@ sys___sigreturn14(l, v, retval)
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
 
-	return (EJUSTRETURN);
+	return EJUSTRETURN;
 }
 
 int	waittime = -1;
