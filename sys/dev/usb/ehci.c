@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.40 2002/11/19 19:18:09 martin Exp $	*/
+/*	$NetBSD: ehci.c,v 1.41 2003/01/31 05:25:57 thorpej Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.40 2002/11/19 19:18:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.41 2003/01/31 05:25:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,26 +303,26 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 
 	version = EREAD2(sc, EHCI_HCIVERSION);
-	printf("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
+	aprint_normal("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
 	       version >> 8, version & 0xff);
 
 	sparams = EREAD4(sc, EHCI_HCSPARAMS);
 	DPRINTF(("ehci_init: sparams=0x%x\n", sparams));
 	sc->sc_npcomp = EHCI_HCS_N_PCC(sparams);
 	if (EHCI_HCS_N_CC(sparams) != sc->sc_ncomp) {
-		printf("%s: wrong number of companions (%d != %d)\n",
+		aprint_error("%s: wrong number of companions (%d != %d)\n",
 		       USBDEVNAME(sc->sc_bus.bdev),
 		       EHCI_HCS_N_CC(sparams), sc->sc_ncomp);
 		return (USBD_IOERROR);
 	}
 	if (sc->sc_ncomp > 0) {
-		printf("%s: companion controller%s, %d port%s each:",
+		aprint_normal("%s: companion controller%s, %d port%s each:",
 		    USBDEVNAME(sc->sc_bus.bdev), sc->sc_ncomp!=1 ? "s" : "",
 		    EHCI_HCS_N_PCC(sparams),
 		    EHCI_HCS_N_PCC(sparams)!=1 ? "s" : "");
 		for (i = 0; i < sc->sc_ncomp; i++)
-			printf(" %s", USBDEVNAME(sc->sc_comps[i]->bdev));
-		printf("\n");
+			aprint_normal(" %s", USBDEVNAME(sc->sc_comps[i]->bdev));
+		aprint_normal("\n");
 	}
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
@@ -347,7 +347,8 @@ ehci_init(ehci_softc_t *sc)
 			break;
 	}
 	if (hcr) {
-		printf("%s: reset timeout\n", USBDEVNAME(sc->sc_bus.bdev));
+		aprint_error("%s: reset timeout\n",
+		    USBDEVNAME(sc->sc_bus.bdev));
 		return (USBD_IOERROR);
 	}
 
@@ -426,7 +427,7 @@ ehci_init(ehci_softc_t *sc)
 			break;
 	}
 	if (hcr) {
-		printf("%s: run timeout\n", USBDEVNAME(sc->sc_bus.bdev));
+		aprint_error("%s: run timeout\n", USBDEVNAME(sc->sc_bus.bdev));
 		return (USBD_IOERROR);
 	}
 
