@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.10 1998/05/19 19:00:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.11 1998/05/19 22:09:00 thorpej Exp $	*/
 
 /*
  *
@@ -257,7 +257,7 @@ simple_lock_data_t pvalloc_lock;
 simple_lock_data_t pmaps_lock;
 simple_lock_data_t pmap_copy_page_lock;
 simple_lock_data_t pmap_zero_page_lock;
-simple_lock_date_t pmap_tmpptp_lock;
+simple_lock_data_t pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
      lockmgr(&pmap_main_lock, LK_SHARED, (void *) 0, curproc)
