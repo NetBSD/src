@@ -1,3 +1,5 @@
+.\"	$NetBSD: ipfstat.8,v 1.1.1.2.2.3 1998/07/23 00:28:20 mellon Exp $
+.\"
 .TH ipfstat 8
 .SH NAME
 ipfstat \- reports on packet filter statistics and filter list
@@ -28,7 +30,7 @@ Display the accounting filter list and show bytes counted against each rule.
 Display packet authentication statistics.
 .TP
 .BR \-d \0<device>
-Use a device other than \fB/dev/ipstate\fP for interfacing with the kernel.
+Use a device other than \fB/dev/ipl\fP for interfacing with the kernel.
 .TP
 .B \-f
 Show fragment state information (statistics) and held state information (in
@@ -68,6 +70,8 @@ the appropriate list of filter rules currently installed and in use by the
 kernel.
 .SH FILES
 /dev/kmem
+.br
+/dev/ipl
 .br
 /dev/ipstate
 .br
