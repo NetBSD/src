@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.1 1995/08/07 07:07:43 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.2 1995/08/10 04:30:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -193,7 +193,9 @@ asicattach(parent, self, aux)
 	sc->sc_bus.ab_cvtaddr = asic_cvtaddr;
 	sc->sc_bus.ab_matchname = asic_matchname;
 
-#ifndef pmax	/* Alpha AXP: select ASIC speed  */
+#ifdef pmax
+	printf("\n");
+#else	/* Alpha AXP: select ASIC speed  */
 #ifdef DEC_3000_300
 	if (cputype == ST_DEC_3000_300) {
 		*(volatile u_int *)ASIC_REG_CSR(sc->sc_base) |=
@@ -201,13 +203,13 @@ asicattach(parent, self, aux)
 		MB();
 		printf(": slow mode\n");
 	} else
-#endif
+#endif /*DEC_3000_300*/
 		printf(": fast mode\n");
 	
 	/* Decstations use hand-craft code to enable asic interrupts */
 	BUS_INTR_ESTABLISH(ca, asic_intr, sc);
 
-#endif /*!pmax*/
+#endif 	/* Alpha AXP: select ASIC speed  */
 
 
 /* The MAXINE has seven pseudo-slots in its system slot */
@@ -216,7 +218,7 @@ asicattach(parent, self, aux)
         /* Try to configure each CPU-internal device */
         for (i = 0; i < ASIC_MAX_NSLOTS; i++) {
 
-#ifdef DEBUG
+#ifdef DEBUG_ASIC
 		printf("asicattach: entry %d\n", i);		/*XXX*/
 #endif
 
@@ -226,7 +228,7 @@ asicattach(parent, self, aux)
 			break;
                 nca->ca_bus = &sc->sc_bus;
 
-#ifdef DEBUG
+#ifdef DEBUG_ASIC
 		printf(" adding %s subslot %d offset %x\n",	/*XXX*/
 		       nca->ca_name, nca->ca_slot, nca->ca_offset);
 #endif
@@ -284,12 +286,12 @@ asic_intr_establish(ca, handler, val)
 	 * to "priority" (software pseudo-slot number).
 	 */
 #ifdef pmax
-#ifdef	DEBUG
+#ifdef	DEBUG_ASIC
 	printf("asic:%s%d:  intr for entry %d(%d) slot %d\n", 
 		 ca->ca_name, val, ca->ca_slot, ca->ca_slotpri,
 		 asic_slots[ca->ca_slot].as_val);
-	tc_enable_interrupt(ca->ca_slotpri, handler, (int)val, 1);
 #endif	/*DEBUG*/
+	tc_enable_interrupt(ca->ca_slotpri, handler, (int)val, 1);
 
 #else	/* Alpha AXP */
 
