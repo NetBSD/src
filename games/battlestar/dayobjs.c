@@ -1,4 +1,4 @@
-/*	$NetBSD: dayobjs.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
+/*	$NetBSD: dayobjs.c,v 1.8 1999/09/18 16:42:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dayobjs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dayobjs.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
+__RCSID("$NetBSD: dayobjs.c,v 1.8 1999/09/18 16:42:29 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -141,5 +141,5 @@ const struct objs dayobjs[] = {
 	{130, BRACELET},
 	{93, GIRL},
 	{268, LAMPON},
-	{0}
+	{0, 0}
 };
