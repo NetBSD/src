@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.59 2002/09/15 19:25:07 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.60 2002/09/16 23:40:57 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.59 2002/09/15 19:25:07 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.60 2002/09/16 23:40:57 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,10 @@ rf_UnconfigureArray()
 	         * We must wait until now, because the AllocList module
 	         * uses the DebugMem module.
 	         */
+#if RF_DEBUG_MEM
 		if (rf_memDebug)
 			rf_print_unfreed();
+#endif
 	}
 	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
 }
