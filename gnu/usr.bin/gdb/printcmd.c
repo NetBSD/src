@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printcmd.c	6.5 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: printcmd.c,v 1.2 1993/08/01 18:47:45 mycroft Exp $";
+static char rcsid[] = "$Id: printcmd.c,v 1.3 1993/12/03 05:13:07 paulus Exp $";
 #endif /* not lint */
 
 /* Print values for GNU debugger GDB.
@@ -293,17 +293,19 @@ print_scalar_formatted (valaddr, type, format, size, stream)
       switch (size)
 	{
 	case 'b':
-	  fprintf_filtered (stream, "0x%02llx", val_long);
+	  fprintf_filtered (stream, "0x%02qx", val_long);
 	  break;
 	case 'h':
-	  fprintf_filtered (stream, "0x%04llx", val_long);
+	  fprintf_filtered (stream, "0x%04qx", val_long);
 	  break;
 	case 0:		/* no size specified, like in print */
+	  fprintf_filtered (stream, "%#qx", val_long);
+	  break;
 	case 'w':
-	  fprintf_filtered (stream, "0x%08llx", val_long);
+	  fprintf_filtered (stream, "0x%08qx", val_long);
 	  break;
 	case 'g':
-	  fprintf_filtered (stream, "0x%016llx", val_long);
+	  fprintf_filtered (stream, "0x%016qx", val_long);
 	  break;
 	default:
 	  error ("Undefined output size \"%c\".", size);
@@ -332,7 +334,7 @@ print_scalar_formatted (valaddr, type, format, size, stream)
 
     case 'd':
 #ifdef LONG_LONG
-      fprintf_filtered (stream, "%lld", val_long);
+      fprintf_filtered (stream, "%qd", val_long);
 #else
       fprintf_filtered (stream, "%d", val_long);
 #endif
@@ -340,7 +342,7 @@ print_scalar_formatted (valaddr, type, format, size, stream)
 
     case 'u':
 #ifdef LONG_LONG
-      fprintf_filtered (stream, "%llu", val_long);
+      fprintf_filtered (stream, "%qu", val_long);
 #else
       fprintf_filtered (stream, "%u", val_long);
 #endif
@@ -349,7 +351,7 @@ print_scalar_formatted (valaddr, type, format, size, stream)
     case 'o':
       if (val_long)
 #ifdef LONG_LONG
-	fprintf_filtered (stream, "0%llo", val_long);
+	fprintf_filtered (stream, "0%qo", val_long);
 #else
 	fprintf_filtered (stream, "0%o", val_long);
 #endif
@@ -1547,10 +1549,12 @@ printf_command (arg)
       if (*f++ == '%')
 	{
 	  lcount = 0;
-	  while (index ("0123456789.hlL-+ #", *f)) 
+	  while (index ("0123456789.hlLq-+ #", *f)) 
 	    {
 	      if (*f == 'l' || *f == 'L')
 		lcount++;
+	      else if (*f == 'q')
+		lcount += 2;
 	      f++;
 	    }
 	  if (*f == 's')
