@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.7 1996/06/14 20:02:52 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1996/09/17 22:00:25 cgd Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
 BOOT_PROG = boot
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 
-BOOT_SRCS = start.S boot.c disk.c conf.c prom.c prom_disp.S OSFpal.c
+BOOT_SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
+
 BOOT_SRCS+= alloc.c bzero.c close.c dev.c devopen.c disklabel.c dkcksum.c
 BOOT_SRCS+= getfile.c gets.c ioctl.c lseek.c open.c printf.c read.c
 BOOT_SRCS+= strcmp.c ufs.c write.c bcopy.c filesystem.c strlen.c
@@ -14,7 +15,7 @@ BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
 
 HEADERSIZE_PROG = headersize
 
-DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ECOFF
+DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
 
 AFLAGS += -DASSEMBLER ${DEFNS}
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../..
