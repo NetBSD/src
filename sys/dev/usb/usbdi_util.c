@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.14 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.15 1999/08/02 19:50:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -497,6 +497,7 @@ usbd_bulk_transfer(reqh, pipe, flags, buf, size, lbl)
 	error = tsleep((caddr_t)reqh, PZERO | PCATCH, lbl, 0);
 	splx(s);
 	if (error) {
+		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));
 		usbd_abort_pipe(pipe);
 		return (USBD_INTERRUPTED);
 	}
