@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1983, 1988, 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,21 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1988, 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)rlogind.c	5.53 (Berkeley) 4/20/91";
+static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
-
-#ifdef KERBEROS
-/* From:
- *	$Source: /cvsroot/src/libexec/rlogind/rlogind.c,v $
- *	$Header: /cvsroot/src/libexec/rlogind/rlogind.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
- */
-#endif
 
 /*
  * remote login server:
@@ -111,15 +104,27 @@ int	check_all = 0;
 
 struct	passwd *pwd;
 
+void	doit __P((int, struct sockaddr_in *));
+int	control __P((int, char *, int));
+void	protocol __P((int, int));
+void	cleanup __P((int));
+void	fatal __P((int, char *, int));
+int	do_rlogin __P((struct sockaddr_in *));
+void	getstr __P((char *, int, char *));
+void	setup_term __P((int));
+int	do_krb_login __P((struct sockaddr_in *));
+void	usage __P((void));
+int	local_domain __P((char *));
+char	*topdomain __P((char *));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int opterr, optind;
-	extern int _check_rhosts_file;
-	int ch;
-	int on = 1, fromlen;
+	extern int __check_rhosts_file;
 	struct sockaddr_in from;
+	int ch, fromlen, on;
 
 	openlog("rlogind", LOG_PID | LOG_CONS, LOG_AUTH);
 
@@ -130,7 +135,7 @@ main(argc, argv)
 			check_all = 1;
 			break;
 		case 'l':
-			_check_rhosts_file = 0;
+			__check_rhosts_file = 0;
 			break;
 		case 'n':
 			keepalive = 0;
@@ -167,6 +172,7 @@ main(argc, argv)
 		syslog(LOG_ERR,"Can't get peer name of remote host: %m");
 		fatal(STDERR_FILENO, "Can't get peer name of remote host", 1);
 	}
+	on = 1;
 	if (keepalive &&
 	    setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof (on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
@@ -177,24 +183,22 @@ main(argc, argv)
 }
 
 int	child;
-void	cleanup();
 int	netf;
 char	line[MAXPATHLEN];
 int	confirmed;
-extern	char	*inet_ntoa();
 
 struct winsize win = { 0, 0, 0, 0 };
 
 
+void
 doit(f, fromp)
 	int f;
 	struct sockaddr_in *fromp;
 {
-	int i, master, pid, on = 1;
-	int authenticated = 0, hostok = 0;
+	int master, pid, on = 1;
+	int authenticated = 0;
 	register struct hostent *hp;
-	char remotehost[2 * MAXHOSTNAMELEN + 1];
-	struct hostent hostent;
+	char hostname[2 * MAXHOSTNAMELEN + 1];
 	char c;
 
 	alarm(60);
@@ -210,39 +214,15 @@ doit(f, fromp)
 	alarm(0);
 	fromp->sin_port = ntohs((u_short)fromp->sin_port);
 	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof(struct in_addr),
-		fromp->sin_family);
-	if (hp == 0) {
-		/*
-		 * Only the name is used below.
-		 */
-		hp = &hostent;
-		hp->h_name = inet_ntoa(fromp->sin_addr);
-		hostok++;
-	} else if (check_all || local_domain(hp->h_name)) {
-		/*
-		 * If name returned by gethostbyaddr is in our domain,
-		 * attempt to verify that we haven't been fooled by someone
-		 * in a remote net; look up the name and check that this
-		 * address corresponds to the name.
-		 */
-		strncpy(remotehost, hp->h_name, sizeof(remotehost) - 1);
-		remotehost[sizeof(remotehost) - 1] = 0;
-		hp = gethostbyname(remotehost);
-		if (hp)
-		    for (; hp->h_addr_list[0]; hp->h_addr_list++)
-			if (!bcmp(hp->h_addr_list[0], (caddr_t)&fromp->sin_addr,
-			    sizeof(fromp->sin_addr))) {
-				hostok++;
-				break;
-			}
-	} else
-		hostok++;
+	    fromp->sin_family);
+	if (hp)
+		(void)strcpy(hostname, hp->h_name);
+	else
+		(void)strcpy(hostname, inet_ntoa(fromp->sin_addr));
 
 #ifdef	KERBEROS
 	if (use_kerberos) {
-		if (!hostok)
-			fatal(f, "rlogind: Host address mismatch.", 0);
-		retval = do_krb_login(hp->h_name, fromp);
+		retval = do_krb_login(fromp);
 		if (retval == 0)
 			authenticated++;
 		else if (retval > 0)
@@ -252,42 +232,43 @@ doit(f, fromp)
 	} else
 #endif
 	{
-	    if (fromp->sin_family != AF_INET ||
-	        fromp->sin_port >= IPPORT_RESERVED ||
-	        fromp->sin_port < IPPORT_RESERVED/2) {
-		    syslog(LOG_NOTICE, "Connection from %s on illegal port",
-			    inet_ntoa(fromp->sin_addr));
-		    fatal(f, "Permission denied", 0);
-	    }
+		if (fromp->sin_family != AF_INET ||
+		    fromp->sin_port >= IPPORT_RESERVED ||
+		    fromp->sin_port < IPPORT_RESERVED/2) {
+			syslog(LOG_NOTICE, "Connection from %s on illegal port",
+				inet_ntoa(fromp->sin_addr));
+			fatal(f, "Permission denied", 0);
+		}
 #ifdef IP_OPTIONS
-	    {
-	    u_char optbuf[BUFSIZ/3], *cp;
-	    char lbuf[BUFSIZ], *lp;
-	    int optsize = sizeof(optbuf), ipproto;
-	    struct protoent *ip;
+		{
+		u_char optbuf[BUFSIZ/3], *cp;
+		char lbuf[BUFSIZ], *lp;
+		int optsize = sizeof(optbuf), ipproto;
+		struct protoent *ip;
 
-	    if ((ip = getprotobyname("ip")) != NULL)
-		    ipproto = ip->p_proto;
-	    else
-		    ipproto = IPPROTO_IP;
-	    if (getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf,
-		&optsize) == 0 && optsize != 0) {
-		    lp = lbuf;
-		    for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
-			    sprintf(lp, " %2.2x", *cp);
-		    syslog(LOG_NOTICE,
-			"Connection received using IP options (ignored):%s",
-			lbuf);
-		    if (setsockopt(0, ipproto, IP_OPTIONS,
-			(char *)NULL, optsize) != 0) {
-			    syslog(LOG_ERR, "setsockopt IP_OPTIONS NULL: %m");
-			    exit(1);
-		    }
-	        }
-	    }
+		if ((ip = getprotobyname("ip")) != NULL)
+			ipproto = ip->p_proto;
+		else
+			ipproto = IPPROTO_IP;
+		if (getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf,
+		    &optsize) == 0 && optsize != 0) {
+			lp = lbuf;
+			for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
+				sprintf(lp, " %2.2x", *cp);
+			syslog(LOG_NOTICE,
+			    "Connection received using IP options (ignored):%s",
+			    lbuf);
+			if (setsockopt(0, ipproto, IP_OPTIONS,
+			    (char *)NULL, optsize) != 0) {
+				syslog(LOG_ERR,
+				    "setsockopt IP_OPTIONS NULL: %m");
+				exit(1);
+			}
+		}
+		}
 #endif
-	    if (do_rlogin(hp->h_name) == 0 && hostok)
-		    authenticated++;
+		if (do_rlogin(fromp) == 0)
+			authenticated++;
 	}
 	if (confirmed == 0) {
 		write(f, "", 1);
@@ -296,14 +277,9 @@ doit(f, fromp)
 #ifdef	KERBEROS
 #ifdef	CRYPT
 	if (doencrypt)
-		(void) des_write(f, SECURE_MESSAGE, sizeof(SECURE_MESSAGE));
+		(void) des_write(f, SECURE_MESSAGE, sizeof(SECURE_MESSAGE) - 1);
 #endif
-	if (use_kerberos == 0)
 #endif
-	   if (!authenticated && !hostok)
-		write(f, "rlogind: Host address mismatch.\r\n",
-		    sizeof("rlogind: Host address mismatch.\r\n") - 1);
-
 	netf = f;
 
 	pid = forkpty(&master, line, NULL, &win);
@@ -314,7 +290,7 @@ doit(f, fromp)
 			fatal(f, "Forkpty", 1);
 	}
 	if (pid == 0) {
-		if (f > 2)	/* f should always be 0, but... */ 
+		if (f > 2)	/* f should always be 0, but... */
 			(void) close(f);
 		setup_term(0);
 		if (authenticated) {
@@ -323,14 +299,14 @@ doit(f, fromp)
 				syslog(LOG_INFO|LOG_AUTH,
 				    "ROOT Kerberos login from %s.%s@%s on %s\n",
 				    kdata->pname, kdata->pinst, kdata->prealm,
-				    hp->h_name);
+				    hostname);
 #endif
 
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hp->h_name, "-f", lusername, 0);
+			    "-h", hostname, "-f", lusername, (char *)NULL);
 		} else
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hp->h_name, lusername, 0);
+			    "-h", hostname, lusername, (char *)NULL);
 		fatal(STDERR_FILENO, _PATH_LOGIN, 1);
 		/*NOTREACHED*/
 	}
@@ -350,7 +326,7 @@ doit(f, fromp)
 	signal(SIGCHLD, cleanup);
 	protocol(f, master);
 	signal(SIGCHLD, SIG_IGN);
-	cleanup();
+	cleanup(0);
 }
 
 char	magic[2] = { 0377, 0377 };
@@ -361,6 +337,7 @@ char	oobdata[] = {TIOCPKT_WINDOW};
  * in the data stream.  For now, we are only willing to handle
  * window size changes.
  */
+int
 control(pty, cp, n)
 	int pty;
 	char *cp;
@@ -383,6 +360,7 @@ control(pty, cp, n)
 /*
  * rlogin "protocol" machine.
  */
+void
 protocol(f, p)
 	register int f, p;
 {
@@ -543,7 +521,8 @@ protocol(f, p)
 }
 
 void
-cleanup()
+cleanup(signo)
+	int signo;
 {
 	char *p;
 
@@ -559,9 +538,11 @@ cleanup()
 	exit(1);
 }
 
+void
 fatal(f, msg, syserr)
-	int f, syserr;
+	int f;
 	char *msg;
+	int syserr;
 {
 	int len;
 	char buf[BUFSIZ], *bp = buf;
@@ -581,8 +562,9 @@ fatal(f, msg, syserr)
 	exit(1);
 }
 
-do_rlogin(host)
-	char *host;
+int
+do_rlogin(dest)
+	struct sockaddr_in *dest;
 {
 	getstr(rusername, sizeof(rusername), "remuser too long");
 	getstr(lusername, sizeof(lusername), "locuser too long");
@@ -590,13 +572,14 @@ do_rlogin(host)
 
 	pwd = getpwnam(lusername);
 	if (pwd == NULL)
-		return(-1);
+		return (-1);
 	if (pwd->pw_uid == 0)
-		return(-1);
-	return(ruserok(host, 0, rusername, lusername));
+		return (-1);
+	/* XXX why don't we syslog() failure? */
+	return (iruserok(dest->sin_addr.s_addr, 0, rusername, lusername));
 }
 
-
+void
 getstr(buf, cnt, errmsg)
 	char *buf;
 	int cnt;
@@ -615,6 +598,7 @@ getstr(buf, cnt, errmsg)
 
 extern	char **environ;
 
+void
 setup_term(fd)
 	int fd;
 {
@@ -666,8 +650,8 @@ setup_term(fd)
  * Return -1 on valid authentication, no authorization
  * Return >0 for error conditions
  */
-do_krb_login(host, dest)
-	char *host;
+int
+do_krb_login(dest)
 	struct sockaddr_in *dest;
 {
 	int rc;
@@ -685,7 +669,7 @@ do_krb_login(host, dest)
 	if (doencrypt) {
 		rc = sizeof(faddr);
 		if (getsockname(0, (struct sockaddr *)&faddr, &rc))
-			return(-1);
+			return (-1);
 		authopts = KOPT_DO_MUTUAL;
 		rc = krb_recvauth(
 			authopts, 0,
@@ -703,7 +687,7 @@ do_krb_login(host, dest)
 			kdata, "", (bit_64 *) 0, version);
 
 	if (rc != KSUCCESS)
-		return(rc);
+		return (rc);
 
 	getstr(lusername, sizeof(lusername), "locuser");
 	/* get the "cmd" in the rcmd protocol */
@@ -711,17 +695,18 @@ do_krb_login(host, dest)
 
 	pwd = getpwnam(lusername);
 	if (pwd == NULL)
-		return(-1);
+		return (-1);
 
 	/* returns nonzero for no access */
-	if (kuserok(kdata,lusername) != 0)
-		return(-1);
+	if (kuserok(kdata, lusername) != 0)
+		return (-1);
 	
-	return(0);
+	return (0);
 
 }
 #endif /* KERBEROS */
 
+void
 usage()
 {
 #ifdef KERBEROS
@@ -739,19 +724,20 @@ usage()
  * assume that the host is local, as it will be
  * interpreted as such.
  */
+int
 local_domain(h)
 	char *h;
 {
 	char localhost[MAXHOSTNAMELEN];
-	char *p1, *p2, *topdomain();
+	char *p1, *p2;
 
 	localhost[0] = 0;
 	(void) gethostname(localhost, sizeof(localhost));
 	p1 = topdomain(localhost);
 	p2 = topdomain(h);
 	if (p1 == NULL || p2 == NULL || !strcasecmp(p1, p2))
-		return(1);
-	return(0);
+		return (1);
+	return (0);
 }
 
 char *
