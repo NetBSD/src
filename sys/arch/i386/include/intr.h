@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1996/05/12 22:52:23 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1996/05/12 23:06:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -30,13 +30,13 @@
  */
 
 /* Interrupt priority `levels'; not mutually exclusive. */
-#define	IPL_HIGH	-2	/* everything */
-#define	IPL_NONE	-1
 #define	IPL_BIO		0	/* block I/O */
 #define	IPL_NET		1	/* network */
 #define	IPL_TTY		2	/* terminal */
 #define	IPL_CLOCK	3	/* clock */
 #define	IPL_IMP		4	/* memory allocation */
+#define	IPL_NONE	5	/* nothing */
+#define	IPL_HIGH	6	/* everything */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
