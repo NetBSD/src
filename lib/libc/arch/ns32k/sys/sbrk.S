@@ -18,25 +18,29 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: sbrk.S,v 1.2 1994/03/07 23:20:48 phil Exp $
+ *	$Id: sbrk.S,v 1.3 1994/05/03 20:40:37 phil Exp $
  */
 
 #include "SYS.h"
 
-	.globl	_end
-	.globl	_curbrk
-	.globl	_minbrk
-
 	.data
+	.globl	_end
+	.globl	_curbrk; .type _curbrk, @object; .size _curbrk, 4
+	.globl	_minbrk; .type _minbrk, @object; .size _minbrk, 4
 _curbrk:	.long	_end
 _minbrk:	.long	_end
+
 	.text
 
 ENTRY(sbrk)
-	addd	_curbrk(pc), S_ARG0
-	movd	SYS_break,r0
+	PIC_PROLOGUE
+	addd	PIC_GOT(_curbrk), PIC_S_ARG0
+	PIC_EPILOGUE
+	movd	SYS_break, r0
 	SVC
 	bcs	cerror
-	movd	_curbrk(pc), r0
-	movd	S_ARG0,_curbrk(pc)		/* XXX check this b*/
+	PIC_PROLOGUE
+	movd	PIC_GOT(_curbrk), r0
+	movd	PIC_S_ARG0, PIC_GOT(_curbrk)	/* XXX check this b */
+	PIC_EPILOGUE
 	ret	0

@@ -18,17 +18,17 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: exect.S,v 1.2 1994/02/25 07:41:18 phil Exp $
+ *	$Id: exect.S,v 1.3 1994/05/03 20:40:35 phil Exp $
  */
 
 #include "SYS.h"
-#include <machine/psl.h>
 
 ENTRY(exect)
-	sprb	us,r0
-	orb	PSL_T,r0
-	lprb	us,r0
-	movd	SYS_execve,r0
+	sprb	us, r0
+	orb	PSL_T, r0
+	lprb	us, r0
+	movd	SYS_execve, r0
 	SVC
 	bcs	cerror
 	ret	0
+
