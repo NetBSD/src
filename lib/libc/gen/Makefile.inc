@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.26 1993/12/02 07:18:57 mycroft Exp $
+#	$Id: Makefile.inc,v 1.27 1993/12/02 19:48:08 mycroft Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen
@@ -105,10 +105,3 @@ MLINKS+=tcsetattr.3 cfgetispeed.3 tcsetattr.3 cfsetispeed.3 \
 	tcsetattr.3 tcgetattr.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=tzset.3 tzsetwall.3
-
-errlst.o errlst.po:
-	${CC} -S ${CFLAGS} ${.IMPSRC}
-	sed -e "s/.data/.text/" <errlst.s >xx
-	mv xx errlst.s
-	${AS} -o ${.TARGET} errlst.s
-	rm -f errlst.s xx
