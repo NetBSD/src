@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.58 2002/03/24 00:11:00 sommerfeld Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.58.2.1 2002/11/15 00:39:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.58 2002/03/24 00:11:00 sommerfeld Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.58.2.1 2002/11/15 00:39:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -661,6 +661,9 @@ parse(char *string, int flags)
 		return;
 
 	case CTLTYPE_STRING:
+		/* If sysctl() didn't return any data, don't print a string. */
+		if (size == 0)
+			buf[0] = '\0';
 		if (newsize == 0) {
 			if (!nflag)
 				printf("%s = ", string);
