@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.6 1999/09/28 06:10:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.7 1999/09/29 15:36:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -113,3 +113,5 @@ int ntfs_writeattr_plain __P((struct ntfsmount *, struct ntnode *, u_int32_t, ch
 void ntfs_toupper_init __P((void));
 int ntfs_toupper_use __P((struct mount *, struct ntfsmount *));
 void ntfs_toupper_unuse __P((void));
+int ntfs_fget __P((struct ntfsmount *, struct ntnode *, int, char *, struct fnode **));
+void ntfs_frele __P((struct fnode *));
