@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.92 2003/04/02 10:39:45 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.93 2003/04/04 13:39:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.92 2003/04/02 10:39:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.93 2003/04/04 13:39:58 drochner Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -2182,7 +2182,7 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 
                 if (ip->i_size < off + bsize) {
                         UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
-                            vp, ip->i_ffs_size, off + bsize, 0);
+                            vp, ip->i_size, off + bsize, 0);
                         ip->i_size = off + bsize;
 			DIP(ip, size) = ip->i_size;
                 }
