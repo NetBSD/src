@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.12 2001/06/13 10:45:58 wiz Exp $	*/
+/*	$NetBSD: field.c,v 1.13 2001/06/28 11:38:19 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -397,7 +397,7 @@ field_status(FIELD *field)
 int
 set_max_field(FIELD *fptr, int max)
 {
-	FIELD *field = (field == NULL)? &_formi_default_field : fptr;
+	FIELD *field = (fptr == NULL)? &_formi_default_field : fptr;
 
 	if ((field->opts & O_STATIC) == O_STATIC) /* check if field dynamic */
 		return E_BAD_ARGUMENT;
