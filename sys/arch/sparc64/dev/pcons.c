@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.2 2000/06/24 16:51:36 eeh Exp $	*/
+/*	$NetBSD: pcons.c,v 1.3 2000/07/10 20:24:23 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -273,13 +273,25 @@ pcons_poll(aux)
 	struct pconssoftc *sc = aux;
 	struct tty *tp = sc->of_tty;
 	char ch;
-static int nas = 0;
+#ifdef DDB
+static int nplus = 0;
+#endif
 
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
-		if (ch == 'a') {
-			if (nas++ > 3) Debugger();
-		} else nas = 0;
+#ifdef DDB
+		if (ch == '+') {
+			if (nplus++ > 3) {
+				extern int db_active;
+
+				if (!db_active)
+					Debugger();
+				else
+					/* Debugger is probably hozed */
+					callrom();
+			}
+		} else nplus = 0;
+#endif
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*linesw[tp->t_line].l_rint)(ch, tp);
 	}
@@ -317,4 +329,10 @@ pcons_cnpollc(dev, on)
 			callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 		}
 	}
+}
+
+void pcons_dopoll __P((void));
+void
+pcons_dopoll() {
+		pcons_poll((void*)pcons_cd.cd_devs[0]);
 }
