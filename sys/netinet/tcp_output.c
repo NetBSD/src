@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_output.c,v 1.47.6.2 1999/07/06 11:02:48 itojun Exp $	*/
+
 /*
 %%% portions-copyright-nrl-95
 Portions of this software are Copyright 1995-1998 by Randall Atkinson,
@@ -39,8 +41,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	$NetBSD: tcp_output.c,v 1.47.6.1 1999/06/28 06:37:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -247,9 +247,11 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	}
 #ifdef INET6
 	else if (in6p && tp->t_family == AF_INET) {
+#ifdef IPSEC
 		size_t t = ipsec4_hdrsiz_tcp(tp);
 		if (t < size)
 			size -= t;
+#endif
 		/* XXX size -= ip_optlen(in6p); */
 	}
 	else if (in6p && tp->t_family == AF_INET6) {

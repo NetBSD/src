@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_subr.c,v 1.66.6.2 1999/07/06 11:02:49 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	$NetBSD: tcp_subr.c,v 1.66.6.1 1999/06/28 06:37:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,9 @@
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
+#ifdef IPSEC_ESP
 #include <netinet6/esp.h>
+#endif
 #endif /*IPSEC*/
 
 #ifdef INET6

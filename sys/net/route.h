@@ -1,33 +1,4 @@
-/*	$NetBSD: route.h,v 1.17.6.1 1999/06/28 06:36:57 itojun Exp $	*/
-
-/*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+/*	$NetBSD: route.h,v 1.17.6.2 1999/07/06 11:02:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -77,8 +48,6 @@
  * are set by making entries for all directly connected interfaces.
  */
 
-#ifndef _ROUTE_H_
-#define _ROUTE_H_
 /*
  * A route consists of a destination address and a reference
  * to a routing entry.  These are often held by protocols
@@ -122,26 +91,6 @@ struct rt_metrics {
  * gateways are marked so that the output routines know to address the
  * gateway rather than the ultimate destination.
  */
-#ifdef RADISH
-#ifndef _RADISH_H_
-#include <net/radish.h>
-#endif
-struct rtentry {
-	struct radish *rt_radish;
-#define	rt_key(r)	((r)->rt_radish->rd_route)
-#define	rt_mask(r)	((r)->rt_radish->rd_mask)
-	struct	sockaddr *rt_gateway;	/* value */
-	short	rt_flags;		/* up/down?, host/net */
-	short	rt_refcnt;		/* # held references */
-	u_long	rt_use;			/* raw # packets forwarded */
-	struct	ifnet *rt_ifp;		/* the answer: interface to use */
-	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
-	struct	sockaddr *rt_genmask;	/* for generation of cloned routes */
-	caddr_t	rt_llinfo;		/* pointer to link level info cache */
-	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
-	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
-};
-#else /* RADISH */
 #ifndef RNF_NORMAL
 #include <net/radix.h>
 #endif
@@ -161,7 +110,6 @@ struct rtentry {
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 };
-#endif /* RADISH */
 
 /*
  * Following structure necessary for 4.3 compatibility;
@@ -321,11 +269,7 @@ do { \
 
 struct	route_cb route_cb;
 struct	rtstat	rtstat;
-#ifdef RADISH
-struct	radish_head *rt_tables[AF_MAX+1];
-#else /* RADISH */
 struct	radix_node_head *rt_tables[AF_MAX+1];
-#endif /* RADISH */
 
 struct socket;
 
@@ -366,5 +310,4 @@ void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
 int	 rtrequest __P((int, struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
 #endif /* _KERNEL */
-#endif /* _ROUTE_H_ */
 #endif /* _NET_ROUTE_H_ */

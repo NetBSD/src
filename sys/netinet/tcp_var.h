@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_var.h,v 1.58.2.1.4.2 1999/07/06 11:02:50 itojun Exp $	*/
+
 /*
 %%% portions-copyright-nrl-98
 Portions of this software are Copyright 1998 by Randall Atkinson,
@@ -39,8 +41,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	$NetBSD: tcp_var.h,v 1.58.2.1.4.1 1999/06/28 06:37:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
