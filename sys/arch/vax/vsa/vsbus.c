@@ -1,6 +1,6 @@
-/*	$NetBSD: vsbus.c,v 1.19 1999/08/27 17:45:57 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.20 1999/10/22 21:10:12 ragge Exp $ */
 /*
- * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * This code is derived from software contributed to Ludd by Bertram Barth.
@@ -46,6 +46,8 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/stat.h>
+
+#include <vm/vm.h>
 
 #define	_VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -261,14 +263,66 @@ vsbus_clrintr(mask)
 	*sc->sc_intclr = mask;
 }
 
-#ifdef notyet
 /*
- * Allocate/free DMA pages and other bus resources.
- * VS2000: All DMA and register access must be exclusive.
- * VS3100: DMA area may be accessed by anyone anytime.
- *   MFM/SCSI: Don't touch reg's while DMA is active.
- *   SCSI/SCSI: Legal to touch any register anytime.
+ * Copy data from/to a user process' space from the DMA area.
+ * Use the physical memory directly.
  */
+void
+vsbus_copytoproc(p, from, to, len)
+	struct proc *p;
+	caddr_t from, to;
+	int len;
+{
+	struct pte *pte;
+	paddr_t pa;
 
+	pte = uvtopte(TRUNC_PAGE(to), (&p->p_addr->u_pcb));
+	if ((vaddr_t)to & PGOFSET) {
+		int cz = ROUND_PAGE(to) - (vaddr_t)to;
 
-#endif
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		bcopy(from, (caddr_t)pa, min(cz, len));
+		from += cz;
+		to += cz;
+		len -= cz;
+		pte += 8; /* XXX */
+	}
+	while (len > 0) {
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
+		bcopy(from, (caddr_t)pa, min(NBPG, len));
+		from += NBPG;
+		to += NBPG;
+		len -= NBPG;
+		pte += 8; /* XXX */
+	}
+}
+
+void
+vsbus_copyfromproc(p, from, to, len)
+	struct proc *p;
+	caddr_t from, to;
+	int len;
+{
+	struct pte *pte;
+	paddr_t pa;
+
+	pte = uvtopte(TRUNC_PAGE(from), (&p->p_addr->u_pcb));
+	if ((vaddr_t)from & PGOFSET) {
+		int cz = ROUND_PAGE(from) - (vaddr_t)from;
+
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		bcopy((caddr_t)pa, to, min(cz, len));
+		from += cz;
+		to += cz;
+		len -= cz;
+		pte += 8; /* XXX */
+	}
+	while (len > 0) {
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
+		bcopy((caddr_t)pa, to, min(NBPG, len));
+		from += NBPG;
+		to += NBPG;
+		len -= NBPG;
+		pte += 8; /* XXX */
+	}
+}
