@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.296 2004/10/28 07:07:39 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.297 2004/11/18 22:14:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.296 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.297 2004/11/18 22:14:53 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1760,7 +1760,13 @@ wd_flushcache(struct wd_softc *wd, int flags)
 {
 	struct ata_command ata_c;
 
-	if (wd->drvp->ata_vers < 4) /* WDCC_FLUSHCACHE is here since ATA-4 */
+	/*
+	 * WDCC_FLUSHCACHE is here since ATA-4, but some drives report
+	 * only ATA-2 and still support it.
+	 */
+	if (wd->drvp->ata_vers < 4 &&
+	    ((wd->sc_params.atap_cmd_set2 & WDC_CMD2_FC) == 0 ||
+	    wd->sc_params.atap_cmd_set2 == 0xffff))
 		return ENODEV;
 	memset(&ata_c, 0, sizeof(struct ata_command));
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
