@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.86 2004/03/07 12:26:38 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.87 2004/03/18 20:35:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.86 2004/03/07 12:26:38 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.87 2004/03/18 20:35:55 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,8 @@ union {
 	(dp)->dp1.di_##field : (dp)->dp2.di_##field)
 
 char *iobuf;
-int iobufsize;
+int iobufsize;			/* size to end of 2nd inode block */
+int iobuf_memsize;		/* Actual buffer size */
 
 int	fsi, fso;
 
@@ -458,9 +459,11 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
 	if (512 % sizeof *fscs_0)
 		errx(1, "cylinder group summary doesn't fit in sectors");
-	fscs_0 = calloc(1, 2 * sblock.fs_fsize);
+	fscs_0 = mmap(0, 2 * sblock.fs_fsize, PROT_READ|PROT_WRITE,
+			MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (fscs_0 == NULL)
 		exit(39);
+	memset(fscs_0, 0, 2 * sblock.fs_fsize);
 	fs_csaddr = sblock.fs_csaddr;
 	fscs_next = fscs_0;
 	fscs_end = (void *)((char *)fscs_0 + 2 * sblock.fs_fsize);
@@ -546,11 +549,25 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		iobufsize = SBLOCKSIZE + 3 * sblock.fs_bsize;
 	else
 		iobufsize = 4 * sblock.fs_bsize;
-	if ((iobuf = malloc(iobufsize)) == 0) {
+	iobuf_memsize = iobufsize;
+	if (!mfs && sblock.fs_magic == FS_UFS1_MAGIC) {
+		/* A larger buffer so we can write multiple inode blks */
+		iobuf_memsize += 14 * sblock.fs_bsize;
+	}
+	for (;;) {
+		iobuf = mmap(0, iobuf_memsize, PROT_READ|PROT_WRITE,
+				MAP_ANON|MAP_PRIVATE, -1, 0);
+		if (iobuf != NULL)
+			break;
+		if (iobuf_memsize != iobufsize) {
+			/* Try again with the smaller size */
+			iobuf_memsize = iobufsize;
+			continue;
+		}
 		printf("Cannot allocate I/O buffer\n");
 		exit(38);
 	}
-	memset(iobuf, 0, iobufsize);
+	memset(iobuf, 0, iobuf_memsize);
 
 	/*
 	 * We now start writing to the filesystem
@@ -643,13 +660,12 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	/*
 	 * Write out the super-block and zeros until the first cg info
 	 */
-	memset(iobuf, 0, iobufsize);
-        memcpy(iobuf, &sblock, sizeof sblock);
+	i = cgsblock(&sblock, 0) * sblock.fs_fsize - sblock.fs_sblockloc,
+	memset(iobuf, 0, i);
+	memcpy(iobuf, &sblock, sizeof sblock);
 	if (needswap)
 		ffs_sb_swap(&sblock, (struct fs *)iobuf);
-        wtfs(sblock.fs_sblockloc / sectorsize,
-	    cgsblock(&sblock, 0) * sblock.fs_fsize - sblock.fs_sblockloc,
-	    iobuf);
+	wtfs(sblock.fs_sblockloc / sectorsize, i, iobuf);
 
 	/* Write out first and last cylinder summary sectors */
 	if (needswap)
@@ -662,6 +678,10 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		fs_csaddr++;
 		wtfs(fsbtodb(&sblock, fs_csaddr), sblock.fs_fsize, fscs_reset);
 	}
+
+	/* mfs doesn't need these permanently allocated */
+	munmap(iobuf, iobuf_memsize);
+	munmap(fscs_0, 2 * sblock.fs_fsize);
 
 	/*
 	 * Update information about this partion in pack
@@ -685,7 +705,7 @@ void
 initcg(int cylno, const struct timeval *tv)
 {
 	daddr_t cbase, dmax;
-	int32_t i, j, d, dlower, dupper, blkno;
+	int32_t i, d, dlower, dupper, blkno;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	int start;
@@ -831,6 +851,7 @@ initcg(int cylno, const struct timeval *tv)
 	}
 	*fscs_next++ = acg.cg_cs;
 	if (fscs_next == fscs_end) {
+		/* write block of cylinder group summary info into cyl 0 */
 		if (needswap)
 			ffs_csum_swap(fscs_reset, fscs_reset, sblock.fs_fsize);
 		fs_csaddr++;
@@ -863,18 +884,21 @@ initcg(int cylno, const struct timeval *tv)
 	/*
 	 * For the old file system, we have to initialize all the inodes.
 	 */
-	if (Oflag <= 1) {
-		for (i = 2 * sblock.fs_frag;
-		     i < sblock.fs_ipg / INOPF(&sblock);
-		     i += sblock.fs_frag) {
-			dp1 = (struct ufs1_dinode *)(&iobuf[start]);
-			for (j = 0; j < INOPB(&sblock); j++) {
-				dp1->di_gen = arc4random() & INT32_MAX;
-				dp1++;
-			}
-			wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
-			    sblock.fs_bsize, &iobuf[start]);
-		}
+	if (sblock.fs_magic != FS_UFS1_MAGIC)
+		return;
+
+	/* Write 'd' (usually 16 * fs_frag) file-system fragments at once */
+	d = (iobuf_memsize - start) / sblock.fs_bsize * sblock.fs_frag;
+	dupper = sblock.fs_ipg / INOPF(&sblock);
+	for (i = 2 * sblock.fs_frag; i < dupper; i += d) {
+		if (d > dupper - i)
+			d = dupper - i;
+		dp1 = (struct ufs1_dinode *)(&iobuf[start]);
+		do
+			dp1->di_gen = arc4random() & INT32_MAX;
+		while ((char *)++dp1 < &iobuf[iobuf_memsize]);
+		wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
+		    d * sblock.fs_bsize / sblock.fs_frag, &iobuf[start]);
 	}
 }
 
