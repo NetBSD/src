@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.9 2003/07/14 14:59:01 lukem Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.10 2003/07/17 18:16:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.9 2003/07/14 14:59:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.10 2003/07/17 18:16:58 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -298,24 +298,39 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	lwpid_t target_lid;
 	struct lwp *t;
 	struct proc *p;
+	int error;
+	int s;
 
 	p = l->l_proc;
 	target_lid = SCARG(uap, target);
+
+	SCHED_LOCK(s);
+
 
 	LIST_FOREACH(t, &p->p_lwps, l_sibling)
 		if (t->l_lid == target_lid)
 			break;
 
-	if (t == NULL)
-		return (ESRCH);
+	if (t == NULL) {
+		error = ESRCH;
+		goto exit;
+	}
 
-	if (t->l_stat != LSSLEEP)
-		return (ENODEV);
+	if (t->l_stat != LSSLEEP) {
+		error = ENODEV;
+		goto exit;
+	}
 
-	if ((t->l_flag & L_SINTR) == 0)
-		return (EBUSY);
+	if ((t->l_flag & L_SINTR) == 0) {
+		error = EBUSY;
+		goto exit;
+	}
 
 	setrunnable(t);
+	error = 0;
+exit:
+	SCHED_UNLOCK(s);
+
 
 	return 0;
 }

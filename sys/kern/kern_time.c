@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.70 2003/05/28 22:27:57 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.71 2003/07/17 18:16:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70 2003/05/28 22:27:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.71 2003/07/17 18:16:59 fvdl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -869,6 +869,17 @@ timerupcall(struct lwp *l, void *arg)
 	struct ptimers *pt = (struct ptimers *)arg;
 	unsigned int i, fired, done;
 	KERNEL_PROC_LOCK(l);
+
+	{
+		struct proc	*p = l->l_proc;
+		struct sadata *sa = p->p_sa;	
+
+		/* Bail out if we do not own the virtual processor */
+		if (sa->sa_vp != l) {
+			KERNEL_PROC_UNLOCK(l);
+			return ;
+		}
+	}
 	
 	fired = pt->pts_fired;
 	done = 0;
@@ -1188,8 +1199,9 @@ void
 itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
+#if 0
 	int s;
-
+#endif
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
 		/*
 		 * No RT signal infrastructure exists at this time;
@@ -1215,17 +1227,24 @@ itimerfire(struct ptimer *pt)
 			 * makes testing for sa_idle alone insuffucent to
 			 * determine if we really should call setrunnable.
 			 */
+#if 0
+
 		        if ((sa->sa_idle) && (p->p_stat != SSTOP)) {
 				SCHED_LOCK(s);
 				setrunnable(sa->sa_idle);
 				SCHED_UNLOCK(s);
 			}
+#endif
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
 			i = 1 << pt->pt_entry;
 			p->p_timers->pts_fired = i;
 			p->p_userret = timerupcall;
 			p->p_userret_arg = p->p_timers;
+			
+			if (sa->sa_idle)
+				wakeup(sa->sa_idle);
+
 		} else if (p->p_userret == timerupcall) {
 			i = 1 << pt->pt_entry;
 			if ((p->p_timers->pts_fired & i) == 0) {
