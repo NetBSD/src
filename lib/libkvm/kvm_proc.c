@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.40 2000/07/16 02:20:03 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.41 2000/10/04 16:11:27 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.40 2000/07/16 02:20:03 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.41 2000/10/04 16:11:27 sommerfeld Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -303,14 +303,14 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 
 	for (; cnt < maxcnt && p != NULL; p = proc.p_list.le_next) {
 		if (KREAD(kd, (u_long)p, &proc)) {
-			_kvm_err(kd, kd->program, "can't read proc at %x", p);
+			_kvm_err(kd, kd->program, "can't read proc at %p", p);
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)proc.p_cred, &eproc.e_pcred) == 0)
 			if (KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
 			    &eproc.e_ucred)) {
 				_kvm_err(kd, kd->program,
-				    "can't read proc credentials at %x", p);
+				    "can't read proc credentials at %p", p);
 				return -1;
 			}
 
@@ -345,7 +345,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 		 */
 		eproc.e_paddr = p;
 		if (KREAD(kd, (u_long)proc.p_pgrp, &pgrp)) {
-			_kvm_err(kd, kd->program, "can't read pgrp at %x",
+			_kvm_err(kd, kd->program, "can't read pgrp at %p",
 				 proc.p_pgrp);
 			return (-1);
 		}
@@ -353,14 +353,14 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 		eproc.e_pgid = pgrp.pg_id;
 		eproc.e_jobc = pgrp.pg_jobc;
 		if (KREAD(kd, (u_long)pgrp.pg_session, &sess)) {
-			_kvm_err(kd, kd->program, "can't read session at %x",
+			_kvm_err(kd, kd->program, "can't read session at %p",
 				pgrp.pg_session);
 			return (-1);
 		}
 		if ((proc.p_flag & P_CONTROLT) && sess.s_ttyp != NULL) {
 			if (KREAD(kd, (u_long)sess.s_ttyp, &tty)) {
 				_kvm_err(kd, kd->program,
-					 "can't read tty at %x", sess.s_ttyp);
+					 "can't read tty at %p", sess.s_ttyp);
 				return (-1);
 			}
 			eproc.e_tdev = tty.t_dev;
@@ -368,7 +368,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			if (tty.t_pgrp != NULL) {
 				if (KREAD(kd, (u_long)tty.t_pgrp, &pgrp)) {
 					_kvm_err(kd, kd->program,
-						 "can't read tpgrp at &x",
+						 "can't read tpgrp at %p",
 						tty.t_pgrp);
 					return (-1);
 				}
@@ -1127,7 +1127,7 @@ kvm_ureadm(kd, p, uva, buf, len)
 
 		dp = _kvm_ureadm(kd, p, uva, &cnt);
 		if (dp == NULL) {
-			_kvm_err(kd, 0, "invalid address (%x)", uva);
+			_kvm_err(kd, 0, "invalid address (%lx)", uva);
 			return 0;
 		}
 		cc = (size_t)MIN(cnt, len);
