@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.5 1998/07/05 18:27:18 jonathan Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.6 1999/01/26 14:22:14 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -60,7 +60,7 @@ struct usl_syncdata {
 #define SF_ATTACHPENDING 2
 	int s_acqsig, s_relsig;
 	int s_frsig; /* unused */
-	void (*s_callback) __P((void *, int));
+	void (*s_callback) __P((void *, int, int));
 	void *s_cbarg;
 };
 
@@ -70,10 +70,12 @@ static void usl_sync_done __P((struct usl_syncdata *));
 static int usl_sync_check __P((struct usl_syncdata *));
 static struct usl_syncdata *usl_sync_get __P((struct wsscreen *));
 
-static int usl_detachproc __P((void *, int, void (*)(void *, int), void *));
+static int usl_detachproc __P((void *, int,
+			       void (*)(void *, int, int), void *));
 static int usl_detachack __P((struct usl_syncdata *, int));
 static void usl_detachtimeout __P((void *));
-static int usl_attachproc __P((void *, int));
+static int usl_attachproc __P((void *, int,
+			       void (*)(void *, int, int), void *));
 static int usl_attachack __P((struct usl_syncdata *, int));
 static void usl_attachtimeout __P((void *));
 
@@ -121,10 +123,12 @@ usl_sync_done(sd)
 {
 	if (sd->s_flags & SF_DETACHPENDING) {
 		untimeout(usl_detachtimeout, sd);
-		(*sd->s_callback)(sd->s_cbarg, 0);
+		(*sd->s_callback)(sd->s_cbarg, 0, 0);
 	}
-	if (sd->s_flags & SF_ATTACHPENDING)
+	if (sd->s_flags & SF_ATTACHPENDING) {
 		untimeout(usl_attachtimeout, sd);
+		(*sd->s_callback)(sd->s_cbarg, ENXIO, 0);
+	}
 	wsscreen_detach_sync(sd->s_scr);
 	free(sd, M_DEVBUF);
 }
@@ -155,7 +159,7 @@ static int
 usl_detachproc(cookie, waitok, callback, cbarg)
 	void *cookie;
 	int waitok;
-	void (*callback) __P((void *, int));
+	void (*callback) __P((void *, int, int));
 	void *cbarg;
 {
 	struct usl_syncdata *sd = cookie;
@@ -190,8 +194,8 @@ usl_detachack(sd, ack)
 	untimeout(usl_detachtimeout, sd);
 	sd->s_flags &= ~SF_DETACHPENDING;
 
-	if (ack && sd->s_callback)
-		(*sd->s_callback)(sd->s_cbarg, 1);
+	if (sd->s_callback)
+		(*sd->s_callback)(sd->s_cbarg, (ack ? 0 : EIO), 1);
 
 	return (0);
 }
@@ -210,22 +214,27 @@ usl_detachtimeout(arg)
 	}
 
 	sd->s_flags &= ~SF_DETACHPENDING;
-#if 0
-	psignal(sd->s_proc, SIGKILL);
-#endif
+
+	if (sd->s_callback)
+		(*sd->s_callback)(sd->s_cbarg, EIO, 0);
+
 	(void) usl_sync_check(sd);
 }
 
 static int
-usl_attachproc(cookie, waitok)
+usl_attachproc(cookie, waitok, callback, cbarg)
 	void *cookie;
 	int waitok;
+	void (*callback) __P((void *, int, int));
+	void *cbarg;
 {
 	struct usl_syncdata *sd = cookie;
 
 	if (!usl_sync_check(sd))
 		return (0);
 
+	sd->s_callback = callback;
+	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
 	psignal(sd->s_proc, sd->s_acqsig);
 	timeout(usl_attachtimeout, sd, 5*hz);
@@ -245,6 +254,10 @@ usl_attachack(sd, ack)
 
 	untimeout(usl_attachtimeout, sd);
 	sd->s_flags &= ~SF_ATTACHPENDING;
+
+	if (sd->s_callback)
+		(*sd->s_callback)(sd->s_cbarg, (ack ? 0 : EIO), 1);
+
 	return (0);
 }
 
@@ -262,9 +275,10 @@ usl_attachtimeout(arg)
 	}
 
 	sd->s_flags &= ~SF_ATTACHPENDING;
-#if 0
-	psignal(sd->s_proc, SIGKILL);
-#endif
+
+	if (sd->s_callback)
+		(*sd->s_callback)(sd->s_cbarg, EIO, 0);
+
 	(void) usl_sync_check(sd);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.9 1999/01/13 16:21:02 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.10 1999/01/26 14:22:14 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -143,8 +143,8 @@ struct wsemuldisplaydev_attach_args {
 #define	WSEMULDISPLAYDEVCF_CONSOLE_UNK	(WSEMULDISPLAYDEVCF_CONSOLE_DEFAULT)
 
 struct wscons_syncops {
-	int (*detach) __P((void *, int, void (*)(void *, int), void *));
-	int (*attach) __P((void *, int));
+	int (*detach) __P((void *, int, void (*)(void *, int, int), void *));
+	int (*attach) __P((void *, int, void (*)(void *, int, int), void *));
 	int (*check) __P((void *));
 	void (*destroy) __P((void *));
 };
