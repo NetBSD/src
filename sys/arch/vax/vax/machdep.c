@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.109 2000/10/18 21:38:52 matt Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -435,6 +435,7 @@ sendsig(catcher, sig, mask, code)
 
 	gtrampf.arg = (int) sigctx;
 	gtrampf.pc = (unsigned) catcher;
+	/* r0..r5 are saved by the popr in the sigcode snippet */
 	gtrampf.scp = (int) sigctx;
 	gtrampf.code = code;
 	gtrampf.sig = sig;
