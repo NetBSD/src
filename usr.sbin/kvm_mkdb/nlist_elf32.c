@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.1 1996/09/29 02:19:59 cgd Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.2 1996/10/03 04:56:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: nlist_elf32.c,v 1.1 1996/09/29 02:19:59 cgd Exp $";
+static char *rcsid = "$NetBSD: nlist_elf32.c,v 1.2 1996/10/03 04:56:11 cgd Exp $";
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -99,8 +99,8 @@ ELFNAMEEND(create_knlist)(name, db)
 	Elf_Ehdr *ehdrp;
 	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
 	Elf_Sym *symp;
-	Elf32_Off shdr_off;
-	Elf32_Word shdr_size;
+	Elf_Off shdr_off;
+	Elf_Word shdr_size;
 #if (ELFSIZE == 32)
 	Elf32_Half nshdr;
 #elif (ELFSIZE == 64)
