@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.5 2003/09/13 21:27:43 itojun Exp $	*/
+/*	$NetBSD: randomid.c,v 1.6 2003/09/13 21:29:57 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,7 +88,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.5 2003/09/13 21:27:43 itojun Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.6 2003/09/13 21:29:57 itojun Exp $");
 #endif
 
 #include "namespace.h"
@@ -221,8 +221,9 @@ initid(struct randomid_ctx *p)
 	p->ru_seed2 = arc4random() & (~0U >> (32 - p->ru_bits + 1));
 
 	/* Determine the LCG we use */
-	p->ru_b = arc4random() | 1;
-	p->ru_a = pmod(p->ru_agen, arc4random() & (~1U), p->ru_m);
+	p->ru_b = (arc4random() & (~0U >> (32 - p->ru_bits))) | 1;
+	p->ru_a = pmod(p->ru_agen,
+	    (arc4random() & (~0U >> (32 - p->ru_bits))) & (~1U), p->ru_m);
 	while (p->ru_b % 3 == 0)
 		p->ru_b += 2;
 
