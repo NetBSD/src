@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.89 2004/07/15 03:29:55 atatat Exp $
+.\"	$NetBSD: rc.conf.5,v 1.90 2004/07/15 03:47:18 atatat Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -784,6 +784,15 @@ Runs
 .Xr sendmail 8
 and passes
 .Sy sendmail_flags .
+The default setting for this is a function that determines if sendmail
+is actually needed, which means the
+.Xr rc.d 8
+script that starts sendmail will check to see if
+.Xr sendmail 8
+needs to run in order to facilitate local mail delivery.
+See
+.Pa /etc/defaults/rc.conf
+for more details.
 .It Sy sendmail_suidroot
 .Sq YES
 or
@@ -795,6 +804,10 @@ If this is set to
 you can remove the submit.cf file, and then turn off the
 .Sy smmsp
 process.
+Note that setting this to
+.Sq YES
+does not change or remove anything; you must still change the mode of
+the sendmail binary and remove the submit.cf file manually.
 .It Sy smmsp
 .Sq YES
 or
