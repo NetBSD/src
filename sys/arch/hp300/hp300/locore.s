@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 1994/12/30 07:22:21 hpeyerl Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 1995/02/08 14:18:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1259,7 +1259,7 @@ Lmlloop:
 	jne	Lmlloop
 	rts
 
-#include <hp300/hp300/copy.s>
+#include <m68k/m68k/copy.s>
 
 /*
  * non-local gotos
