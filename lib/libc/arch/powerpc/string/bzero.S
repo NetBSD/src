@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.5 2002/07/30 06:07:58 matt Exp $ */
+/*	$NetBSD: bzero.S,v 1.6 2003/03/15 14:10:21 hannken Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
@@ -244,7 +244,9 @@ cb_aligned_w:	/* Cache block align, fill wordwise until dst aligned */
 		/* I know I have something to do since we had > 2*CL initially */
 		/* so no need to check for r_len = 0 */
 
-		rlwinm.	%r5, r_dst, 30, 29, 31
+		subi	%r6, %r9, 1		/* CL mask */
+		and.	%r5, r_dst, %r6
+		srwi	%r5, %r5, 2
 		srwi	%r6, %r9, 2
 		beq	cb_aligned_cb		/* already on CL boundary? */
 
