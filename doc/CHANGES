@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.324 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.325 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -67,3 +67,4 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	XFree86: support absolute mouse positioning events on i386
 		and other platforms using the same mouse code
 		[tsarna 20040603]
+	hp700: Add FFS/LFS primary bootstrap (xxboot).  [itohy 20040615]
