@@ -1,4 +1,5 @@
-/*	$NetBSD: gifconfig.c,v 1.6 2000/01/22 10:16:23 tron Exp $	*/
+/*	$NetBSD: gifconfig.c,v 1.7 2000/05/13 07:55:06 itojun Exp $	*/
+/*	$KAME: gifconfig.c,v 1.8 2000/05/13 07:52:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -93,6 +94,7 @@ int	flags;
 int	metric;
 int	mtu;
 int	setpsrc = 0;
+int	newaddr = 0;
 int	s;
 kvm_t	*kvmd;
 
@@ -103,7 +105,7 @@ char ntop_buf[INET6_ADDRSTRLEN];	/*inet_ntop()*/
 void setifpsrc __P((char *, int));
 void setifpdst __P((char *, int));
 void setifflags __P((char *, int));
-
+void delifaddrs __P((char *, int));
 
 #define	NEXTARG		0xffffff
 
@@ -114,6 +116,7 @@ struct	cmd {
 } cmds[] = {
 	{ "up",		IFF_UP,		setifflags } ,
 	{ "down",	-IFF_UP,	setifflags },
+	{ "delete",	0,		delifaddrs },
 	{ 0,		0,		setifpsrc },
 	{ 0,		0,		setifpdst },
 };
@@ -220,8 +223,12 @@ main(argc, argv)
 	int all;
 
 	if (argc < 2) {
-		fprintf(stderr, "usage: gifconfig interface %s",
-		    "[ af ] physsrc physdst\n");
+		fprintf(stderr,
+		    "usage: gifconfig interface [af] [physsrc physdst]\n");
+		fprintf(stderr,
+		    "       gifconfig interface delete\n");
+		fprintf(stderr,
+		    "       gifconfig -a\n");
 		exit(1);
 	}
 	argc--, argv++;
@@ -396,10 +403,13 @@ ifconfig(argc, argv, af, rafp)
 		}
 		argc--, argv++;
 	}
-	if (1 /*newaddr*/) {
+	if (newaddr) {
 		strncpy(rafp->af_addreq, name, sizeof ifr.ifr_name);
 		if (ioctl(s, rafp->af_pifaddr, rafp->af_addreq) < 0)
 			Perror("ioctl (SIOCSIFPHYADDR)");
+	}
+	else if (setpsrc) {
+		errx(1, "destination is not specified");
 	}
 	return(0);
 }
@@ -425,6 +435,7 @@ setifpdst(addr, param)
 {
 	param = 0;	/*fool gcc*/
 	(*afp->af_getaddr)(addr, PDST);
+	newaddr = 1;
 }
 
 void
@@ -447,6 +458,19 @@ setifflags(vname, value)
 	ifr.ifr_flags = flags;
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
 		Perror(vname);
+}
+
+/* ARGSUSED */
+void
+delifaddrs(vname, param)
+	char *vname;
+	int param;
+{
+	param = 0;		/* fool gcc */
+	vname = NULL;		/* ditto */
+
+	if (ioctl(s, SIOCDIFPHYADDR, (caddr_t)&ifr) < 0)
+		err(1, "ioctl(SIOCDIFPHYADDR)");
 }
 
 #define	IFFBITS \
@@ -513,7 +537,7 @@ status()
 			}
 		} else for (p = afs; p->af_name; p++) {
 			if (p->af_af == info.rti_info[RTAX_IFA]->sa_family &&
-			    p->af_status != ether_status) 
+			    p->af_status != ether_status)
 				(*p->af_status)(0);
 		}
 	}
@@ -554,7 +578,7 @@ phys_status(force)
 
 	if (0 <= ioctl(s, srccmd, (caddr_t)ifrp)) {
 		getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
-			    hostname, NI_MAXHOST, 0, 0, flags);
+			    hostname, sizeof(hostname), 0, 0, flags);
 #ifdef INET6
 		if (ifrp->ifr_addr.sa_family == AF_INET6)
 			ver = "6";
@@ -563,7 +587,7 @@ phys_status(force)
 	}
 	if (0 <= ioctl(s, dstcmd, (caddr_t)ifrp)) {
 		getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
-			    hostname, NI_MAXHOST, 0, 0, flags);
+			    hostname, sizeof(hostname), 0, 0, flags);
 		sprintf(pdstaddr, "%s", hostname);
 	}
 	printf("\tphysical address %s --> %s\n", psrcaddr, pdstaddr);
@@ -617,12 +641,13 @@ in6_status(force)
 	int force;
 {
 	struct sockaddr_in6 *sin, null_sin;
-#if 0
-	char *inet_ntop();
-#endif
-	
+	char hostname[NI_MAXHOST];
+	int niflags = NI_NUMERICHOST;
 
 	memset(&null_sin, 0, sizeof(null_sin));
+#ifdef NI_WITHSCOPEID
+	niflags |= NI_WITHSCOPEID;
+#endif
 
 	sin = (struct sockaddr_in6 *)info.rti_info[RTAX_IFA];
 	if (!sin || sin->sin6_family != AF_INET6) {
@@ -631,8 +656,17 @@ in6_status(force)
 		/* warnx("%s has no AF_INET6 IFA address!", name); */
 		sin = &null_sin;
 	}
-	printf("\tinet6 %s ", inet_ntop(AF_INET6, &sin->sin6_addr,
-				ntop_buf, sizeof(ntop_buf)));
+#ifdef __KAME__
+	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
+		sin->sin6_scope_id =
+			ntohs(*(u_int16_t *)&sin->sin6_addr.s6_addr[2]);
+		sin->sin6_addr.s6_addr[2] = 0;
+		sin->sin6_addr.s6_addr[3] = 0;
+	}
+#endif
+	getnameinfo((struct sockaddr *)sin, sin->sin6_len,
+		    hostname, sizeof(hostname), 0, 0, niflags);
+	printf("\tinet6 %s ", hostname);
 
 	if (flags & IFF_POINTOPOINT) {
 		/* note RTAX_BRD overlap with IFF_BROADCAST */
@@ -642,10 +676,17 @@ in6_status(force)
 		 * address.
 		 */
 		if (sin->sin6_family == AF_INET6) {
-			if (!sin)
-				sin = &null_sin;
-			printf("--> %s ", inet_ntop(AF_INET6, &sin->sin6_addr,
-						ntop_buf, sizeof(ntop_buf)));
+#ifdef __KAME__
+			if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
+				sin->sin6_scope_id =
+					ntohs(*(u_int16_t *)&sin->sin6_addr.s6_addr[2]);
+				sin->sin6_addr.s6_addr[2] = 0;
+				sin->sin6_addr.s6_addr[3] = 0;
+			}
+#endif
+			getnameinfo((struct sockaddr *)sin, sin->sin6_len,
+				    hostname, sizeof(hostname), 0, 0, flags);
+			printf("--> %s ", hostname);
 		}
 	}
 

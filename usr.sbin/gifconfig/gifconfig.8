@@ -1,3 +1,6 @@
+.\"	$NetBSD: gifconfig.8,v 1.5 2000/05/13 07:55:06 itojun Exp $
+.\"	$KAME: gifconfig.8,v 1.5 2000/05/13 07:48:10 itojun Exp $
+.\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
 .\" 
@@ -25,9 +28,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $NetBSD: gifconfig.8,v 1.4 1999/12/09 15:30:43 itojun Exp $
-.\"     KAME Id: gifconfig.8,v 1.2 1999/10/07 04:25:54 itojun Exp
-.\"
 .Dd May 17, 1998
 .Dt GIFCONFIG 8
 .Os
@@ -42,8 +42,10 @@
 .Op Ar af
 .Op Ar physsrc physdest
 .Nm gifconfig
+.Ar interface
+.Ic delete
+.Nm gifconfig
 .Fl a
-.\"
 .Sh DESCRIPTION
 .Nm
 configures the physical address for the generic IP tunnel 
@@ -63,11 +65,19 @@ and
 .Ar Af
 can be
 .Li inet
-or 
+or
 .Li inet6 ,
 and will be treated as
 .Li inet
 if ommitted.
+.Pp
+If a special argument
+.Ic delete
+is specified,
+.Nm
+just deletes the existing source and destination addresses on
+.Ar interface .
+If no outer addresses are specified, this usage has no effect.
 .Pp
 .Nm
 takes the following optional argument:
@@ -81,7 +91,6 @@ when you configure tunnel over same address family
 .Po
 e.g. IPv4-over-IPv4
 .Pc .
-.\"
 .Sh EXAMPLES
 If you would like to configure IPv6 over IPv4
 .Pq aka IPv6 in IPv4
@@ -125,10 +134,8 @@ This is also possible to use IPv6 as outer proto, by replacing
 to
 .Li inet6 ,
 and IPv4 addresses to some appropriate IPv6 addresses in above example.
-.\"
 .Sh RETURN VALUES
 The command exits with exit status of 1 on errors, 0 on success.
-.\"
 .Sh SEE ALSO
 .Xr gif 4 ,
 .Xr ifconfig 8
@@ -136,5 +143,3 @@ The command exits with exit status of 1 on errors, 0 on success.
 The
 .Nm
 command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
-.\" .Sh BUGS
-.\" (to be written)
